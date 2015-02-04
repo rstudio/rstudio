@@ -2011,6 +2011,11 @@ public class TextEditingTarget implements
       reformatHelper_.insertPrettyNewlines();
    }
    
+   public void withSavedDoc(Command onsaved)
+   {
+      docUpdateSentinel_.withSavedDoc(onsaved);
+   }
+   
    @Handler
    void onLintRSourceDocument()
    {

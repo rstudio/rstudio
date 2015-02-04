@@ -159,21 +159,11 @@ json::Array lintAsJson(const LintItems& items)
    return jsonArray;
 }
 
-void emitLintEvent(const std::string& documentId,
-                   const LintItems& lint)
+Error lintRSourceDocument(const json::JsonRpcRequest& request,
+                          json::JsonRpcResponse* pResponse)
 {
-   json::Object eventDataJson;
+   using namespace source_database;
    
-   eventDataJson["lint"] = lintAsJson(lint);
-   eventDataJson["document_id"] = documentId;
-   
-   ClientEvent event(client_events::kUpdateGutterMarkers, eventDataJson);
-   module_context::enqueClientEvent(event);
-}
-
-Error lint(const json::JsonRpcRequest& request,
-           json::JsonRpcResponse* pResponse)
-{
    std::string documentId;
    Error error = json::readParams(request.params, &documentId);
    
@@ -184,8 +174,8 @@ Error lint(const json::JsonRpcRequest& request,
    }
    
    // Try to get the contents from the database
-   boost::shared_ptr<source_database::SourceDocument> pDoc;
-   error = source_database::get(documentId, pDoc);
+   boost::shared_ptr<SourceDocument> pDoc(new SourceDocument());
+   error = get(documentId, pDoc);
    if (error)
    {
       LOG_ERROR(error);
@@ -203,49 +193,10 @@ Error lint(const json::JsonRpcRequest& request,
    
 }
 
-void lintFileAndUpdateGutter(const std::string& documentId,
-                             const std::string& contents)
-{
-   ParseResults results = parse(contents);
-   emitLintEvent(documentId, results.lint());
-}
-
-typedef std::map<std::string, std::string> IdToFile;
-void onSourceDocUpdated(boost::shared_ptr<source_database::SourceDocument> pDoc)
-{
-   // ignore if the file doesn't have a path
-   if (pDoc->path().empty())
-      return;
-
-   // resolve to a full path
-   FilePath filePath = module_context::resolveAliasedPath(pDoc->path());
-   std::string absolutePath = filePath.absolutePath();
-
-   // verify it's a lintable R file.
-   // TODO: linting of '.Rmd. and so on?
-   
-   // schedule work
-   module_context::scheduleDelayedWork(
-            boost::posix_time::milliseconds(3000),
-            boost::bind(lintFileAndUpdateGutter, pDoc->id(), pDoc->contents()),
-            true); // require idle
-}
-
 } // anonymous namespace
 
 core::Error initialize()
 {
-   // on client init, schedule incremental work
-   // onDocUpdated, schedule work
-   source_database::events().onDocUpdated.connect(
-             boost::bind(onSourceDocUpdated, _1));
-//    source_database::events().onDocRemoved.connect(
-//                 boost::bind(onSourceDocRemoved, pIdToFile, _1));
-//       source_database::events().onRemoveAll.connect(
-//                 boost::bind(onAllSourceDocsRemoved, pIdToFile));
-
-   
-   // stateful object: shared_ptr<> 
    using namespace rstudio::core;
    using boost::bind;
    using namespace module_context;
@@ -253,7 +204,7 @@ core::Error initialize()
    ExecBlock initBlock;
    initBlock.addFunctions()
          (bind(sourceModuleRFile, "SessionLinter.R"))
-         (bind(registerRpcMethod, "lint", lint));
+         (bind(registerRpcMethod, "lint_r_source_document", lintRSourceDocument));
 
    return initBlock.execute();
 

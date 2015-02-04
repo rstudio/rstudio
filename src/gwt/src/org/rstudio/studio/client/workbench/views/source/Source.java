@@ -86,14 +86,12 @@ import org.rstudio.studio.client.workbench.views.data.events.ViewDataEvent;
 import org.rstudio.studio.client.workbench.views.data.events.ViewDataHandler;
 import org.rstudio.studio.client.workbench.views.output.find.events.FindInFilesEvent;
 import org.rstudio.studio.client.workbench.views.output.lint.LintManager;
-import org.rstudio.studio.client.workbench.views.output.lint.events.LintEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetSource;
 import org.rstudio.studio.client.workbench.views.source.editors.codebrowser.CodeBrowserEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.data.DataEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.profiler.ProfilerEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.profiler.model.ProfilerContents;
-import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetPresentationHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetRMarkdownHelper;
@@ -196,8 +194,7 @@ public class Source implements InsertSourceHandler,
                  WorkbenchContext workbenchContext,
                  Provider<FileMRUList> pMruList,
                  UIPrefs uiPrefs,
-                 RnwWeaveRegistry rnwWeaveRegistry,
-                 LintManager lintManager)
+                 RnwWeaveRegistry rnwWeaveRegistry)
    {
       commands_ = commands;
       view_ = view;
@@ -215,8 +212,8 @@ public class Source implements InsertSourceHandler,
       pMruList_ = pMruList;
       uiPrefs_ = uiPrefs;
       rnwWeaveRegistry_ = rnwWeaveRegistry;
-      lintManager_ = lintManager;
       
+      lintManager_ = new LintManager(this);
       vimCommands_ = new SourceVimCommands();
 
       view_.addTabClosingHandler(this);
@@ -403,21 +400,6 @@ public class Source implements InsertSourceHandler,
          }
       });
       
-      events.addHandler(LintEvent.TYPE, new LintEvent.Handler()
-      {
-         @Override
-         public void onLintEvent(LintEvent event)
-         {
-            String documentId = event.getDocumentId();
-            final EditingTarget target = getEditingTargetForId(documentId);
-            if (target != null && target instanceof TextEditingTarget)
-            {
-               DocDisplay display = ((TextEditingTarget) target).getDocDisplay();
-               lintManager_.displayLint(display, event.getLint());
-            }
-         }
-      });
-
       restoreDocuments(session);
 
       new IntStateValue(MODULE_SOURCE, KEY_ACTIVETAB, ClientState.PROJECT_PERSISTENT,
@@ -2904,7 +2886,7 @@ public class Source implements InsertSourceHandler,
       view_.selectTab(idx);
    }
    
-   private EditingTarget getActiveEditor()
+   public EditingTarget getActiveEditor()
    {
       return activeEditor_;
    }

@@ -14,17 +14,139 @@
  */
 package org.rstudio.studio.client.workbench.views.output.lint;
 
+import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.Invalidation;
+import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.views.output.lint.model.AceAnnotation;
 import org.rstudio.studio.client.workbench.views.output.lint.model.LintItem;
+import org.rstudio.studio.client.workbench.views.output.lint.model.LintServerOperations;
+import org.rstudio.studio.client.workbench.views.source.Source;
+import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
+import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
+
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.Event;
+import com.google.gwt.user.client.Event.NativePreviewHandler;
+import com.google.gwt.user.client.Timer;
+import com.google.gwt.user.client.Event.NativePreviewEvent;
+import com.google.inject.Inject;
 
 public class LintManager
 {
+   public LintManager(Source source)
+   {
+      RStudioGinjector.INSTANCE.injectMembers(this);
+      source_ = source;
+      invalidation_ = new Invalidation();
+      timer_ = new Timer()
+      {
+         
+         @Override
+         public void run()
+         {
+            invalidation_.invalidate();
+            Invalidation.Token token =
+                  invalidation_.getInvalidationToken();
+            lintActiveDocument(token);
+         }
+      };
+      
+      Event.addNativePreviewHandler(new NativePreviewHandler()
+      {
+         @Override
+         public void onPreviewNativeEvent(NativePreviewEvent event)
+         {
+            if (event.getTypeInt() == Event.ONKEYDOWN)
+            {
+               schedule(1000);
+            }
+         }
+      });
+   }
+   
+   @Inject
+   void initialize(EventBus events,
+                   LintServerOperations server)
+   {
+      events_ = events;
+      server_ = server;
+   }
+   
+   private void lintActiveDocument(final Invalidation.Token token)
+   {
+      EditingTarget editor = source_.getActiveEditor();
+      if (editor != null && editor instanceof TextEditingTarget)
+      {
+         final TextEditingTarget target = (TextEditingTarget) editor;
+         final DocDisplay docDisplay = target.getDocDisplay();
+         final String documentId = editor.getId();
+         
+         target.withSavedDoc(new Command()
+         {
+            @Override
+            public void execute()
+            {
+               performLintServerRequest(
+                     token,
+                     documentId,
+                     docDisplay);
+            }
+         });
+      }
+   }
+
+   private void performLintServerRequest(final Invalidation.Token token,
+                                         final String documentId,
+                                         final DocDisplay docDisplay)
+   {
+      
+      if (token.isInvalid())
+         return;
+      
+      server_.lintRSourceDocument(
+            documentId,
+            new ServerRequestCallback<JsArray<LintItem>>()
+            {
+               @Override
+               public void onResponseReceived(JsArray<LintItem> lint)
+               {
+                  if (token.isInvalid())
+                     return;
+                  
+                  displayLint(docDisplay, lint);
+               }
+
+               @Override
+               public void onError(ServerError error)
+               {
+                  Debug.logError(error);
+               }
+            });
+
+   }
+   
    public void displayLint(DocDisplay display,
                            JsArray<LintItem> lint)
    {
       JsArray<AceAnnotation> annotations = LintItem.asAceAnnotations(lint);
       display.setAnnotations(annotations);
    }
+   
+   public void schedule(int milliseconds)
+   {
+      timer_.schedule(milliseconds);
+   }
+   
+   private final Timer timer_;
+   private final Source source_;
+   private final Invalidation invalidation_;
+   
+   private LintServerOperations server_;
+   private EventBus events_;
+   
 }
