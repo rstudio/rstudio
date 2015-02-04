@@ -282,8 +282,11 @@ public class CppCompletionRequest
          docDisplay_.setSelectionRange(Range.fromPoints(pos, pos));
       }
       
-      if (uiPrefs_.showSignatureTooltips().getValue())
+      if (completion.hasParameters() &&
+          uiPrefs_.showSignatureTooltips().getValue())
+      {
          new CppCompletionSignatureTip(completion, docDisplay_);
+      }
    }
    
    private InputEditorSelection getReplacementSelection()
