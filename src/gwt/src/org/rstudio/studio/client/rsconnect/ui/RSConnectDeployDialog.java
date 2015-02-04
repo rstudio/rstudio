@@ -171,8 +171,7 @@ public class RSConnectDeployDialog
             }
             else
             {
-               // TODO Populate with accounts properly
-               // contents_.setAccountList(accounts);
+               contents_.setAccountList(accounts);
                if (defaultAccount_ != null)
                   contents_.setDefaultAccount(defaultAccount_);
                updateApplicationList();
