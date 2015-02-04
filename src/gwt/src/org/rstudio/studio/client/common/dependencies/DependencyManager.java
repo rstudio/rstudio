@@ -18,7 +18,6 @@ package org.rstudio.studio.client.common.dependencies;
 import java.util.ArrayList;
 
 import org.rstudio.core.client.CommandWith2Args;
-import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.Operation;
