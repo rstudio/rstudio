@@ -17,7 +17,10 @@ package com.google.gwt.core.client.interop;
 
 import com.google.gwt.core.client.js.JsExport;
 
-class MyClassExportsMethod {
+/**
+ * A test class that exhibits a variety of @JsExports.
+ */
+public class MyClassExportsMethod {
   public static boolean calledFromJs = false;
 
   @JsExport("exportedFromJava")
@@ -28,6 +31,9 @@ class MyClassExportsMethod {
   static boolean calledFromFoo = false;
   static boolean calledFromBar = false;
 
+  /**
+   * Static inner class A.
+   */
   public static class A {
     public void bar() {
       calledFromBar = true;
@@ -38,6 +44,9 @@ class MyClassExportsMethod {
     }
   }
 
+  /**
+   * Static inner subclass of A.
+   */
   public static class SubclassOfA extends A {
     @Override
     public void foo() { }
@@ -56,7 +65,7 @@ class MyClassExportsMethod {
   }
 
   @JsExport("newA")
-  private static A newA() {
+  public static A newA() {
     return new A();
   }
 }
