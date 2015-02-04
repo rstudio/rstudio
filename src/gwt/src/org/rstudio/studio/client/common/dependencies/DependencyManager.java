@@ -57,28 +57,28 @@ public class DependencyManager implements InstallShinyEvent.Handler
    public void withDependencies(String progressCaption,
                                 CommandWith2Args<String,Command> userPrompt,
                                 Dependency[] dependencies, 
-                                boolean silentUpdate,
+                                boolean silentEmbeddedUpdate,
                                 Command command)
    {
       withDependencies(progressCaption,
                        null,
                        userPrompt,
                        dependencies,
-                       silentUpdate,
+                       silentEmbeddedUpdate,
                        command);
    }
    
    public void withDependencies(String progressCaption,
                                 String userAction,
                                 Dependency[] dependencies, 
-                                boolean silentUpdate,
+                                boolean silentEmbeddedUpdate,
                                 final Command command)
    {
       withDependencies(progressCaption, 
                        userAction, 
                        null, 
                        dependencies, 
-                       silentUpdate,
+                       silentEmbeddedUpdate,
                        command);
    }
 
@@ -110,7 +110,7 @@ public class DependencyManager implements InstallShinyEvent.Handler
           Dependency.cranPackage("packrat", "0.4.3"),
           Dependency.embeddedPackage("rsconnect")
         },
-        false,
+        true, // we want the embedded rsconnect package to be updated if needed
         command
       );
    }
@@ -187,7 +187,7 @@ public class DependencyManager implements InstallShinyEvent.Handler
                                  final String userAction,
                                  final CommandWith2Args<String,Command> userPrompt,
                                  Dependency[] dependencies, 
-                                 final boolean silentUpdate,
+                                 final boolean silentEmbeddedUpdate,
                                  final Command command)
    {
       // convert dependencies to JsArray
@@ -204,7 +204,8 @@ public class DependencyManager implements InstallShinyEvent.Handler
       
       // query for unsatisfied dependencies
       server_.unsatisfiedDependencies(
-            deps, silentUpdate, new ServerRequestCallback<JsArray<Dependency>>() {
+            deps, silentEmbeddedUpdate, 
+            new ServerRequestCallback<JsArray<Dependency>>() {
 
          @Override
          public void onResponseReceived(
@@ -238,7 +239,7 @@ public class DependencyManager implements InstallShinyEvent.Handler
                      }
                      installDependencies(
                            newArray, 
-                           silentUpdate, command);
+                           silentEmbeddedUpdate, command);
                   }
                };
                
@@ -267,7 +268,7 @@ public class DependencyManager implements InstallShinyEvent.Handler
    }
    
    private void installDependencies(final JsArray<Dependency> dependencies,
-                                    final boolean silentUpdate,
+                                    final boolean silentEmbeddedUpdate,
                                     final Command onSuccess)
    {
       server_.installDependencies(
@@ -287,7 +288,8 @@ public class DependencyManager implements InstallShinyEvent.Handler
                      @Override
                      public void onProcessExit(ProcessExitEvent event)
                      {
-                        ifDependenciesSatisifed(dependencies, silentUpdate, new Command(){
+                        ifDependenciesSatisifed(dependencies, 
+                              silentEmbeddedUpdate, new Command(){
                            @Override
                            public void execute()
                            {
@@ -302,11 +304,12 @@ public class DependencyManager implements InstallShinyEvent.Handler
    }
    
    private void ifDependenciesSatisifed(JsArray<Dependency> dependencies,
-                                        boolean silentUpdate,
+                                        boolean silentEmbeddedUpdate,
                                         final Command onInstalled)
    {
       server_.unsatisfiedDependencies(
-        dependencies, silentUpdate, new SimpleRequestCallback<JsArray<Dependency>>() {
+        dependencies, silentEmbeddedUpdate, 
+        new SimpleRequestCallback<JsArray<Dependency>>() {
            
            @Override
            public void onResponseReceived(JsArray<Dependency> dependencies)
