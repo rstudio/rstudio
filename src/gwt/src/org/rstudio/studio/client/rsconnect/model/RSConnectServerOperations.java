@@ -54,4 +54,7 @@ public interface RSConnectServerOperations
    void registerUserToken(String serverName, String accountName, int userId, 
                 RSConnectPreAuthToken token, 
                 ServerRequestCallback<Void> requestCallback);
+   
+   void getLintResults(String target,
+                ServerRequestCallback<RSConnectLintResults> resultCallback);
 }

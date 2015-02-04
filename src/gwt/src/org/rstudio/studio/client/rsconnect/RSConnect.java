@@ -21,6 +21,8 @@ import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.widget.ModalDialogTracker;
+import org.rstudio.core.client.widget.ProgressIndicator;
+import org.rstudio.core.client.widget.ProgressOperation;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.FilePathUtils;
@@ -34,6 +36,7 @@ import org.rstudio.studio.client.rsconnect.model.RSConnectAccount;
 import org.rstudio.studio.client.rsconnect.model.RSConnectApplicationInfo;
 import org.rstudio.studio.client.rsconnect.model.RSConnectDeploymentRecord;
 import org.rstudio.studio.client.rsconnect.model.RSConnectDirectoryState;
+import org.rstudio.studio.client.rsconnect.model.RSConnectLintResults;
 import org.rstudio.studio.client.rsconnect.model.RSConnectServerOperations;
 import org.rstudio.studio.client.rsconnect.ui.RSAccountConnector;
 import org.rstudio.studio.client.rsconnect.ui.RSConnectDeployDialog;
@@ -156,39 +159,83 @@ public class RSConnect implements SessionInitHandler,
    public void onRSConnectDeployInitiated(
          final RSConnectDeployInitiatedEvent event)
    {
-      server_.deployShinyApp(event.getPath(), 
-                             event.getSourceFile(),
-                             event.getRecord().getAccountName(), 
-                             event.getRecord().getServer(),
-                             event.getRecord().getName(), 
-      new ServerRequestCallback<Boolean>()
+      server_.getLintResults(event.getPath(), 
+            new ServerRequestCallback<RSConnectLintResults>()
       {
          @Override
-         public void onResponseReceived(Boolean status)
+         public void onResponseReceived(RSConnectLintResults results)
          {
-            if (status)
+            if (results.getErrorMessage().length() > 0)
             {
-               dirState_.addDeployment(event.getPath(), event.getRecord());
-               dirStateDirty_ = true;
-               launchBrowser_ = event.getLaunchBrowser();
-               events_.fireEvent(new RSConnectDeploymentStartedEvent(
-                     event.getPath()));
+               display_.showYesNoMessage(GlobalDisplay.MSG_QUESTION, 
+                     "Lint Failed", 
+                     "The content you tried to publish could not be checked " +
+                     "for errors. Do you want to proceed? \n\n" +
+                     results.getErrorMessage(), false, 
+                     new ProgressOperation() 
+                     {
+                        @Override
+                        public void execute(ProgressIndicator indicator)
+                        {
+                           // "Publish Anyway"
+                           doDeployment(event);
+                           indicator.onCompleted();
+                        }
+                     }, 
+                     new ProgressOperation() 
+                     {
+                        @Override
+                        public void execute(ProgressIndicator indicator)
+                        {
+                           // "Cancel"
+                           indicator.onCompleted();
+                        }
+                     },
+                     "Publish Anyway", "Cancel", false);
+            }
+            else if (results.hasLint())
+            {
+               display_.showYesNoMessage(GlobalDisplay.MSG_QUESTION, 
+                     "Publish Content Issues Found", 
+                     "Some issues were found in your content, which may " +
+                     "prevent it from working correctly after publishing. " +
+                     "Do you want to review these issues or publish anyway? "
+                     , false, 
+                     new ProgressOperation()
+                     {
+                        @Override
+                        public void execute(ProgressIndicator indicator)
+                        {
+                           // "Review Issues" -- we automatically show the
+                           // markers so they're already behind the dialog.
+                           indicator.onCompleted();
+                        }
+                     }, 
+                     new ProgressOperation() {
+                        @Override
+                        public void execute(ProgressIndicator indicator)
+                        {
+                           // "Publish Anyway"
+                           doDeployment(event);
+                           indicator.onCompleted();
+                        }
+                     }, 
+                     "Review Issues", "Publish Anyway", true);
             }
             else
             {
-               display_.showErrorMessage("Deployment In Progress", 
-                     "Another deployment is currently in progress; only one " + 
-                     "deployment can be performed at a time.");
+               // no lint and no errors -- good to go for deployment
+               doDeployment(event);
             }
          }
 
          @Override
          public void onError(ServerError error)
          {
-            display_.showErrorMessage("Error Deploying Application", 
-                  "Could not deploy application '" + 
-                  event.getRecord().getName() + 
-                  "': " + error.getMessage());
+            // we failed to lint, which is not encouraging, but we don't want to
+            // fail the whole deployment lest a balky linter prevent people from
+            // getting their work published, so forge on ahead.
+            doDeployment(event);
          }
       });
    }
@@ -260,6 +307,44 @@ public class RSConnect implements SessionInitHandler,
    
    // Private methods ---------------------------------------------------------
    
+   private void doDeployment(final RSConnectDeployInitiatedEvent event)
+   {
+      server_.deployShinyApp(event.getPath(), 
+                             event.getSourceFile(),
+                             event.getRecord().getAccountName(), 
+                             event.getRecord().getServer(),
+                             event.getRecord().getName(), 
+      new ServerRequestCallback<Boolean>()
+      {
+         @Override
+         public void onResponseReceived(Boolean status)
+         {
+            if (status)
+            {
+               dirState_.addDeployment(event.getPath(), event.getRecord());
+               dirStateDirty_ = true;
+               launchBrowser_ = event.getLaunchBrowser();
+               events_.fireEvent(new RSConnectDeploymentStartedEvent(
+                     event.getPath()));
+            }
+            else
+            {
+               display_.showErrorMessage("Deployment In Progress", 
+                     "Another deployment is currently in progress; only one " + 
+                     "deployment can be performed at a time.");
+            }
+         }
+
+         @Override
+         public void onError(ServerError error)
+         {
+            display_.showErrorMessage("Error Deploying Application", 
+                  "Could not deploy application '" + 
+                  event.getRecord().getName() + 
+                  "': " + error.getMessage());
+         }
+      });
+   }
    // Manage, step 1: create a list of apps deployed from this directory
    private void configureShinyApp(final String dir)
    {
