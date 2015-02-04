@@ -152,6 +152,8 @@ context("Linter")
       
       EXPECT_NO_ERRORS("{if(!(a)){};if(b){}}");
       
+      EXPECT_NO_ERRORS("lapply(x, `[[`, 1)");
+      
       EXPECT_ERRORS("for {i in 1:10}");
       EXPECT_ERRORS("((()})");
       

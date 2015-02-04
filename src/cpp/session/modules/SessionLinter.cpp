@@ -124,7 +124,7 @@ ParseResults parse(const std::string& rCode)
    {
       BOOST_FOREACH(const ParseItem& item, unresolvedItems)
       {
-         if (objects.count(item.symbol) == 0)
+         if (objects.count(string_utils::strippedOfBackQuotes(item.symbol)) == 0)
          {
             addUnreferencedSymbol(item, results.lint());
          }

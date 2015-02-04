@@ -460,6 +460,21 @@ void trimLeadingLines(int maxLines, std::string* pLines)
    }
 }
 
+std::string strippedOfBackQuotes(const std::string& string)
+{
+   if (string.length() < 2)
+      return string;
+   
+   std::size_t startIndex = 0;
+   std::size_t n = string.length();
+   std::size_t endIndex = n;
+   
+   startIndex += string[0] == '`';
+   endIndex   -= string[n - 1] == '`';
+   
+   return string.substr(startIndex, endIndex - startIndex);
+}
+
 void stripQuotes(std::string* pStr)
 {
    if (pStr->length() > 0 && (pStr->at(0) == '\'' || pStr->at(0) == '"'))

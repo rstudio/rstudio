@@ -200,6 +200,8 @@ void trimLeadingLines(int maxLines, std::string* pLines);
 
 void stripQuotes(std::string* pStr);
 
+std::string strippedOfBackQuotes(const std::string& string);
+
 std::size_t countNewLines(const std::wstring& string);
 std::size_t countNewLines(const std::string& string);
 
