@@ -2041,16 +2041,14 @@ public class AceEditor implements DocDisplay,
    public void showLint(JsArray<LintItem> lint)
    {
       setAnnotations(LintItem.asAceAnnotations(lint));
-      clearOldLintMarkers();
+      clearLintMarkers();
+      
       for (int i = 0; i < lint.length(); i++)
       {
          LintItem item = lint.get(i);
-         AnchoredSelection selection =
-               createAnchoredSelection(
-                     Position.create(item.getStartRow(), item.getStartColumn()),
-                     Position.create(item.getEndRow(), item.getEndColumn()));
-         
-         Debug.logObject(selection);
+         Range range = createAnchoredRange(
+               Position.create(item.getStartRow(), item.getStartColumn()),
+               Position.create(item.getEndRow(), item.getEndColumn()));
          
          String clazz = "unknown";
          if (item.getType() == "error")
@@ -2061,16 +2059,23 @@ public class AceEditor implements DocDisplay,
             clazz = lintStyles_.info();
          
          int id = getSession().addMarker(
-               selection.getRange(), clazz, "text", true);
-         markerIds_.add(id);
+               range, clazz, "text", true);
+         
+         lintMarkerIds_.add(id);
       }
    }
    
-   private void clearOldLintMarkers()
+   private void clearLintMarkers()
    {
-      for (int i = 0; i < markerIds_.size(); i++)
-         getSession().removeMarker(markerIds_.get(i));
-      markerIds_.clear();
+      for (int i = 0; i < lintMarkerIds_.size(); i++)
+         getSession().removeMarker(lintMarkerIds_.get(i));
+      lintMarkerIds_.clear();
+   }
+   
+   public Range createAnchoredRange(Position start,
+                                    Position end) 
+   {
+      return widget_.getEditor().getSession().createAnchoredRange(start, end);
    }
 
    private static final int DEBUG_CONTEXT_LINES = 2;
@@ -2088,7 +2093,8 @@ public class AceEditor implements DocDisplay,
    private Integer lineHighlightMarkerId_ = null;
    private Integer lineDebugMarkerId_ = null;
    private Integer executionLine_ = null;
-   private ArrayList<Integer> markerIds_ = new ArrayList<Integer>();
+   
+   private ArrayList<Integer> lintMarkerIds_ = new ArrayList<Integer>();
    private LintResources.Styles lintStyles_ = LintResources.INSTANCE.styles();
    
    private static final ExternalJavaScriptLoader aceLoader_ =

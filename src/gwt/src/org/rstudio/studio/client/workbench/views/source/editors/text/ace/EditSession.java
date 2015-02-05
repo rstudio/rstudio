@@ -196,4 +196,18 @@ public class EditSession extends JavaScriptObject
    public native final JsArray<AceAnnotation> getAnnotations() /*-{
       return this.getAnnotations();
    }-*/;
+   
+   public native final Markers getMarkers(boolean inFront) /*-{
+      return this.getMarkers(inFront);
+   }-*/;
+   
+   public final native Range createAnchoredRange(Position start,
+                                                 Position end) /*-{
+      var Range = $wnd.require("ace/range").Range;
+      var result = new Range();
+      result.start = this.doc.createAnchor(start.row, start.column);
+      result.end = this.doc.createAnchor(end.row, end.column);
+      return result;
+   }-*/;
+   
 }

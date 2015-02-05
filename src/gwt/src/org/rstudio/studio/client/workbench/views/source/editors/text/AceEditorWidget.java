@@ -18,6 +18,7 @@ import java.util.ArrayList;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.*;
@@ -93,6 +94,20 @@ public class AceEditorWidget extends Composite
             {
                ValueChangeEvent.fire(AceEditorWidget.this, null);            
                updateBreakpoints(changeEvent);
+               
+               // Immediately re-render on change if we have markers, to
+               // ensure they're re-drawn in the correct locations.
+               if (editor_.getSession().getMarkers(true).size() > 0)
+               {
+                  Scheduler.get().scheduleDeferred(new ScheduledCommand()
+                  {
+                     @Override
+                     public void execute()
+                     {
+                        editor_.getRenderer().forceImmediateRender();
+                     }
+                  });
+               }
             }
             catch (Exception ex)
             {
