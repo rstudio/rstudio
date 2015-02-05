@@ -285,26 +285,10 @@ public class Wizard<I,T> extends ModalDialog<T>
       
       // determine behavior based on whether this is standard page or 
       // a navigation page
-      Widget fromWidget;
-      final boolean okButtonVisible;
+      final boolean okButtonVisible = pageIsFinal(page);
+      activeParentNavigationPage_ = activePage_;
       
-      // are we navigating from the first page?
-      if (activePage_ == null)
-      {
-         fromWidget = firstPage_;
-         okButtonVisible = !(page instanceof WizardNavigationPage<?,?>);
-         activeParentNavigationPage_ = null;   
-      }
-      // otherwise we must be navigating from a navigation page
-      else 
-      {
-         fromWidget = activePage_;
-         okButtonVisible = true;
-         activeParentNavigationPage_ = activePage_;
-      }
-     
-      
-      animate(fromWidget, page, true, new Command() {
+      animate(activePage_, page, true, new Command() {
          @Override
          public void execute()
          {
@@ -337,24 +321,18 @@ public class Wizard<I,T> extends ModalDialog<T>
    private void goBack()
    {
       final boolean isNavigationPage = activeParentNavigationPage_ != null;
-      
+
       // determine behavior based on whether we are going back to a
       // navigation page or a selector page
-      Widget toWidget;
-      if (activeParentNavigationPage_ != null)
-      {
-         toWidget = activeParentNavigationPage_;
-      }
-      else
-      {
-         toWidget = firstPage_;
-      }
+      final Widget toWidget = isNavigationPage ? 
+         activeParentNavigationPage_ :
+         firstPage_;
       
       final String pageCaptionLabel = isNavigationPage ? 
                         activeParentNavigationPage_.getPageCaption() : "";
       
       final WizardPage<I,T> newActivePage =
-         isNavigationPage ? activeParentNavigationPage_ : null;
+         isNavigationPage ? activeParentNavigationPage_ : firstPage_;
       
       final CanFocus focusWidget = (CanFocus)toWidget;
       
@@ -369,10 +347,14 @@ public class Wizard<I,T> extends ModalDialog<T>
             
             // update header
             subCaptionLabel_.setVisible(!isNavigationPage);
-            backButton_.setVisible(isNavigationPage);
             pageCaptionLabel_.setVisible(isNavigationPage);
             pageCaptionLabel_.setText(pageCaptionLabel);
-           
+            
+            nextButton_.setVisible(
+                  newActivePage instanceof WizardIntermediatePage<?,?>);
+            backButton_.setVisible(
+                  newActivePage != firstPage_);
+
             // make ok button invisible
             setOkButtonVisible(false);
             
@@ -405,6 +387,11 @@ public class Wizard<I,T> extends ModalDialog<T>
       setOkButtonCaption(okCaption_);
    }
  
+   private boolean pageIsFinal(WizardPage<I, T> page)
+   {
+      return page.getSubPages() == null ||
+            page.getSubPages().size() == 0;
+   }
    
    private final I initialData_; 
    
