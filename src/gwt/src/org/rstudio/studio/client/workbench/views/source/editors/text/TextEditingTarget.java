@@ -107,7 +107,6 @@ import org.rstudio.studio.client.workbench.views.files.events.FileChangeHandler;
 import org.rstudio.studio.client.workbench.views.files.model.FileChange;
 import org.rstudio.studio.client.workbench.views.help.events.ShowHelpEvent;
 import org.rstudio.studio.client.workbench.views.output.compilepdf.events.CompilePdfEvent;
-import org.rstudio.studio.client.workbench.views.output.lint.model.LintItem;
 import org.rstudio.studio.client.workbench.views.presentation.events.SourceFileSaveCompletedEvent;
 import org.rstudio.studio.client.workbench.views.presentation.model.PresentationState;
 import org.rstudio.studio.client.workbench.views.source.SourceBuildHelper;
@@ -2013,43 +2012,6 @@ public class TextEditingTarget implements
    public void withSavedDoc(Command onsaved)
    {
       docUpdateSentinel_.withSavedDoc(onsaved);
-   }
-   
-   @Handler
-   void onLintRSourceDocument()
-   {
-      if (!docDisplay_.getFileType().isR())
-         return;
-      
-      docUpdateSentinel_.withSavedDoc(new Command()
-      {
-         @Override
-         public void execute()
-         {
-            server_.lintRSourceDocument(
-                  docUpdateSentinel_.getId(),
-                  true,
-                  new ServerRequestCallback<JsArray<LintItem>>()
-                  {
-                     @Override
-                     public void onResponseReceived(JsArray<LintItem> items)
-                     {
-                        showLint(items);
-                     }
-
-                     @Override
-                     public void onError(ServerError error)
-                     {
-                        Debug.logError(error);
-                     }
-                  });
-         }
-      });
-   }
-   
-   void showLint(JsArray<LintItem> lint)
-   {
-      docDisplay_.showLint(lint);
    }
    
    @Handler

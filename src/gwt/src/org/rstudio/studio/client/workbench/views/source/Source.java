@@ -2578,6 +2578,12 @@ public class Source implements InsertSourceHandler,
          attemptSourceNavigation(navigation, commands_.sourceNavigateForward());
    }
    
+   @Handler
+   void onLintActiveDocument()
+   {
+      lintManager_.schedule(0);
+   }
+   
    private void attemptSourceNavigation(final SourceNavigation navigation,
                                         final AppCommand retryCommand)
    {
@@ -2891,7 +2897,7 @@ public class Source implements InsertSourceHandler,
    {
       return activeEditor_;
    }
-
+   
    ArrayList<EditingTarget> editors_ = new ArrayList<EditingTarget>();
    ArrayList<Integer> tabOrder_ = new ArrayList<Integer>();
    private EditingTarget activeEditor_;

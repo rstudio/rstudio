@@ -156,7 +156,7 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="reflowComment"/>
          <cmd refid="commentUncomment"/>
          <cmd refid="reformatCode"/>
-         <cmd refid="lintRSourceDocument"/>
+         <cmd refid="lintActiveDocument"/>
          <separator/>
          <cmd refid="executeCode"/>
          <cmd refid="executeLastCode"/>
@@ -389,7 +389,7 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="reindent" value="Cmd+I"/>
          <shortcut refid="reflowComment" value="Cmd+Shift+/"/>
          <shortcut refid="reformatCode" value="Cmd+Shift+A"/>
-         <shortcut refid="lintRSourceDocument" value="Cmd+Shift+Z"/>
+         <shortcut refid="lintActiveDocument" value="Cmd+Shift+Z"/>
          <shortcut refid="fold" value="Alt+L" if="!org.rstudio.core.client.BrowseCap.isMacintosh()" title="Collapse Fold"/>
          <shortcut refid="fold" value="Cmd+Alt+L" if="org.rstudio.core.client.BrowseCap.isMacintosh()" title="Collapse Fold"/>
          <shortcut refid="unfold" value="Shift+Alt+L" if="!org.rstudio.core.client.BrowseCap.isMacintosh()" title="Expand Fold"/>
@@ -880,9 +880,9 @@ well as menu structures (for main menu and popup menus).
    <cmd id="reformatCode"
         menuLabel="Reformat Code"
         desc="Re-format and indent the current line/selection"/>
-   <cmd id="lintRSourceDocument"
+   <cmd id="lintActiveDocument"
         menuLabel="Lint"
-        desc="Identify errors in the R code of the current document"/>
+        desc="Lint the active document"/>
    <cmd id="reindent"
         menuLabel="_Reindent Lines"
         desc="Reindent the current line/selection"/>
