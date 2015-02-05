@@ -233,6 +233,8 @@ Error lintRSourceDocument(const json::JsonRpcRequest& request,
                                   &documentId,
                                   &showMarkersTab);
    
+   pResponse->setResult(json::Array());
+   
    if (error)
    {
       LOG_ERROR(error);
