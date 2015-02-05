@@ -31,28 +31,33 @@ namespace clang {
 
 namespace {
 
-json::Object locationToJson(const FileLocation& location,
-                            bool includeFile = true)
+json::Object locationToPositionJson(const FileLocation& location)
 {
    json::Object locationJson;
-   if (includeFile)
-      locationJson["file"] = module_context::createAliasedPath(location.filePath);
    locationJson["line"] = safe_convert::numberTo<double>(location.line, 1);
    locationJson["column"] = safe_convert::numberTo<double>(location.column, 1);
    return locationJson;
 }
 
-json::Object rangeToJson(const FileRange& range, bool includeFile = true)
+json::Object rangeToJson(const FileRange& range)
 {
    json::Object rangeJson;
-   rangeJson["start"] = locationToJson(range.start, includeFile);
-   rangeJson["end"] = locationToJson(range.end, includeFile);
+   rangeJson["start"] = locationToPositionJson(range.start);
+   rangeJson["end"] = locationToPositionJson(range.end);
    return rangeJson;
 }
 
-json::Object rangeToJson(const SourceRange& range, bool includeFile = true)
+json::Object rangeToJson(const SourceRange& range)
 {
-   return rangeToJson(range.getFileRange(), includeFile);
+   return rangeToJson(range.getFileRange());
+}
+
+json::Object fixitToJson(const FixIt& fixit)
+{
+   json::Object fixitJson;
+   fixitJson["range"] = rangeToJson(fixit.sourceRange());
+   fixitJson["replacement"] = fixit.replacement();
+   return fixitJson;
 }
 
 } // anonymous namespace
@@ -68,9 +73,14 @@ json::Object diagnosticToJson(const TranslationUnit& tu,
    diagnosticJson["category"] = safe_convert::numberTo<double>(
                                              diagnostic.category(), 0);
    diagnosticJson["category_text"] = diagnostic.categoryText();
+
+   diagnosticJson["enable_option"] = diagnostic.enableOption();
+   diagnosticJson["disable_option"] = diagnostic.disableOption();
+
    diagnosticJson["message"] = diagnostic.spelling();
    FileLocation location = diagnostic.location().getSpellingLocation();
-   diagnosticJson["location"] = locationToJson(location);
+   diagnosticJson["file"] = module_context::createAliasedPath(location.filePath);
+   diagnosticJson["position"] = locationToPositionJson(location);
 
    // source ranges (if there are no source ranges then create one based on
    // the token at the location of the diagnostic)
@@ -79,7 +89,7 @@ json::Object diagnosticToJson(const TranslationUnit& tu,
    if (numRanges > 0)
    {
       for (unsigned int i=0; i < diagnostic.numRanges(); i++)
-         jsonRanges.push_back(rangeToJson(diagnostic.getSourceRange(i), false));
+         jsonRanges.push_back(rangeToJson(diagnostic.getSourceRange(i)));
    }
    else
    {
@@ -94,7 +104,7 @@ json::Object diagnosticToJson(const TranslationUnit& tu,
          FileRange tokenRange = token.extent().getFileRange();
          if (tokenRange.start == location)
          {
-            jsonRanges.push_back(rangeToJson(tokenRange, false));
+            jsonRanges.push_back(rangeToJson(tokenRange));
             break;
          }
       }
@@ -102,8 +112,23 @@ json::Object diagnosticToJson(const TranslationUnit& tu,
    diagnosticJson["ranges"] = jsonRanges;
 
    // fixits
+   json::Array fixitsJson;
+   for (unsigned int i = 0; i<diagnostic.numFixIts(); i++)
+      fixitsJson.push_back(fixitToJson(diagnostic.getFixIt(i)));
+   diagnosticJson["fixits"] = fixitsJson;
 
-
+   // recurse over children
+   json::Array childrenJson;
+   boost::shared_ptr<DiagnosticSet> pChildren = diagnostic.children();
+   if (pChildren)
+   {
+      for (unsigned i = 0; i < pChildren->diagnostics(); i++)
+      {
+         childrenJson.push_back(
+            diagnosticToJson(tu, *pChildren->getDiagnostic(i)));
+      }
+   }
+   diagnosticJson["children"] = childrenJson;
 
    return diagnosticJson;
 }

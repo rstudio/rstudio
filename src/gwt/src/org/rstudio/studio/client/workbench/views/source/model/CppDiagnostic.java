@@ -15,8 +15,8 @@
 package org.rstudio.studio.client.workbench.views.source.model;
 
 
-import org.rstudio.core.client.FileLocation;
 import org.rstudio.core.client.FilePosition;
+import org.rstudio.core.client.FileRange;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
@@ -45,16 +45,36 @@ public class CppDiagnostic extends JavaScriptObject
    public native final String getCategoryText() /*-{
       return this.category_text;
    }-*/;
-    
+   
+   public native final String getEnableOption() /*-{
+      return this.enable_option;
+   }-*/;
+   
+   public native final String getDisableOption() /*-{
+      return this.disable_option;
+   }-*/;
+
    public native final String getMessage() /*-{
       return this.message;
    }-*/;
 
-   public native final FileLocation getLocation() /*-{
-      return this.location;
+   public native final String getFile() /*-{
+      return this.file;
    }-*/;
    
-   public native final JsArray<FilePosition> getRanges() /*-{
+   public native final FilePosition getPosition() /*-{
+      return this.position;
+   }-*/;
+   
+   public native final JsArray<FileRange> getRanges() /*-{
       return this.ranges;
+   }-*/;
+   
+   public native final JsArray<CppDiagnosticFixIt> getFixIts() /*-{
+      return this.fixits;
+   }-*/;
+   
+   public native final JsArray<CppDiagnostic> getChildren() /*-{
+      return this.children;
    }-*/;
 }

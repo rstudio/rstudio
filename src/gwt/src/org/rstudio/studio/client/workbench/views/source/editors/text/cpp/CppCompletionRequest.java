@@ -16,7 +16,6 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text.cpp;
 
 import org.rstudio.core.client.CommandWithArg;
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.Invalidation;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.server.ServerError;
@@ -28,7 +27,6 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Positio
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.model.CppCompletion;
 import org.rstudio.studio.client.workbench.views.source.model.CppCompletionResult;
-import org.rstudio.studio.client.workbench.views.source.model.CppDiagnostic;
 import org.rstudio.studio.client.workbench.views.source.model.CppServerOperations;
 
 import com.google.gwt.core.client.JsArray;
@@ -182,10 +180,12 @@ public class CppCompletionRequest
          updateUI(true);
       }
       
-      // show diagnostics 
+      // show diagnostics
+      /*
       JsArray<CppDiagnostic> diagnostics = result.getDiagnostics();
       for (int i = 0; i < diagnostics.length(); i++)
          Debug.prettyPrint(diagnostics.get(i));
+      */
    }
    
    private void showCompletionPopup(String message)

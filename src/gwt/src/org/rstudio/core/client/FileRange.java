@@ -20,11 +20,11 @@ public class FileRange extends JavaScriptObject
 {
    protected FileRange() {}
 
-   public native final FileLocation getStart() /*-{
+   public native final FilePosition getStart() /*-{
       return this.start;
    }-*/;
    
-   public native final FileLocation getEnd() /*-{
+   public native final FilePosition getEnd() /*-{
       return this.end;
    }-*/;
 }
