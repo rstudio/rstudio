@@ -14,6 +14,8 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
+import java.util.ArrayList;
+
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.Scheduler;
@@ -35,6 +37,7 @@ import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.ExternalJavaScriptLoader;
 import org.rstudio.core.client.ExternalJavaScriptLoader.Callback;
@@ -63,7 +66,9 @@ import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEdito
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorPosition;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorSelection;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorUtil;
+import org.rstudio.studio.client.workbench.views.output.lint.LintResources;
 import org.rstudio.studio.client.workbench.views.output.lint.model.AceAnnotation;
+import org.rstudio.studio.client.workbench.views.output.lint.model.LintItem;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.*;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceClickEvent.Handler;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Mode.InsertChunkInfo;
@@ -2032,6 +2037,41 @@ public class AceEditor implements DocDisplay,
    {
       widget_.getEditor().getSession().setAnnotations(annotations);
    }
+   
+   public void showLint(JsArray<LintItem> lint)
+   {
+      setAnnotations(LintItem.asAceAnnotations(lint));
+      clearOldLintMarkers();
+      for (int i = 0; i < lint.length(); i++)
+      {
+         LintItem item = lint.get(i);
+         AnchoredSelection selection =
+               createAnchoredSelection(
+                     Position.create(item.getStartRow(), item.getStartColumn()),
+                     Position.create(item.getEndRow(), item.getEndColumn()));
+         
+         Debug.logObject(selection);
+         
+         String clazz = "unknown";
+         if (item.getType() == "error")
+            clazz = lintStyles_.error();
+         else if (item.getType() == "warning")
+            clazz = lintStyles_.warning();
+         else if (item.getType() == "info")
+            clazz = lintStyles_.info();
+         
+         int id = getSession().addMarker(
+               selection.getRange(), clazz, "text", false);
+         markerIds_.add(id);
+      }
+   }
+   
+   private void clearOldLintMarkers()
+   {
+      for (int i = 0; i < markerIds_.size(); i++)
+         getSession().removeMarker(markerIds_.get(i));
+      markerIds_.clear();
+   }
 
    private static final int DEBUG_CONTEXT_LINES = 2;
    private final HandlerManager handlers_ = new HandlerManager(this);
@@ -2048,6 +2088,8 @@ public class AceEditor implements DocDisplay,
    private Integer lineHighlightMarkerId_ = null;
    private Integer lineDebugMarkerId_ = null;
    private Integer executionLine_ = null;
+   private ArrayList<Integer> markerIds_ = new ArrayList<Integer>();
+   private LintResources.Styles lintStyles_ = LintResources.INSTANCE.styles();
    
    private static final ExternalJavaScriptLoader aceLoader_ =
          new ExternalJavaScriptLoader(AceResources.INSTANCE.acejs().getSafeUri().asString());
@@ -2059,4 +2101,5 @@ public class AceEditor implements DocDisplay,
          new ExternalJavaScriptLoader(AceResources.INSTANCE.keybindingEmacsJs().getSafeUri().asString());
    
    private boolean popupVisible_;
+   
 }

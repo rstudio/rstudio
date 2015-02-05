@@ -107,7 +107,6 @@ import org.rstudio.studio.client.workbench.views.files.events.FileChangeHandler;
 import org.rstudio.studio.client.workbench.views.files.model.FileChange;
 import org.rstudio.studio.client.workbench.views.help.events.ShowHelpEvent;
 import org.rstudio.studio.client.workbench.views.output.compilepdf.events.CompilePdfEvent;
-import org.rstudio.studio.client.workbench.views.output.lint.model.AceAnnotation;
 import org.rstudio.studio.client.workbench.views.output.lint.model.LintItem;
 import org.rstudio.studio.client.workbench.views.presentation.events.SourceFileSaveCompletedEvent;
 import org.rstudio.studio.client.workbench.views.presentation.model.PresentationState;
@@ -2035,7 +2034,7 @@ public class TextEditingTarget implements
                      @Override
                      public void onResponseReceived(JsArray<LintItem> items)
                      {
-                        showLintItems(items);
+                        showLint(items);
                      }
 
                      @Override
@@ -2048,12 +2047,9 @@ public class TextEditingTarget implements
       });
    }
    
-   void showLintItems(JsArray<LintItem> items)
+   void showLint(JsArray<LintItem> lint)
    {
-      JsArray<AceAnnotation> annotations =
-            LintItem.asAceAnnotations(items);
-      
-      docDisplay_.setAnnotations(annotations);
+      docDisplay_.showLint(lint);
    }
    
    @Handler

@@ -19,7 +19,6 @@ import org.rstudio.core.client.Invalidation;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.workbench.views.output.lint.model.AceAnnotation;
 import org.rstudio.studio.client.workbench.views.output.lint.model.LintItem;
 import org.rstudio.studio.client.workbench.views.output.lint.model.LintServerOperations;
 import org.rstudio.studio.client.workbench.views.source.Source;
@@ -131,8 +130,7 @@ public class LintManager
    public void displayLint(DocDisplay display,
                            JsArray<LintItem> lint)
    {
-      JsArray<AceAnnotation> annotations = LintItem.asAceAnnotations(lint);
-      display.setAnnotations(annotations);
+      display.showLint(lint);
    }
    
    public void schedule(int milliseconds)
@@ -145,4 +143,8 @@ public class LintManager
    private final Invalidation invalidation_;
    
    private LintServerOperations server_;
+   
+   static {
+      LintResources.INSTANCE.styles().ensureInjected();
+   }
 }

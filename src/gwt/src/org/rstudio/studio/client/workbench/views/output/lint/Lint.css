@@ -1,0 +1,16 @@
+/* TODO: Confirm that they look correct in all environments we support. */
+
+.error {
+   position: absolute;
+   background-color: rgba(192, 0, 0, 0.8);
+}
+
+.warning {
+   position: absolute;
+   background-color: rgba(192, 128, 0, 0.8);
+}
+
+.info {
+   position: absolute;
+   border-bottom: 2px dotted grey;
+}
