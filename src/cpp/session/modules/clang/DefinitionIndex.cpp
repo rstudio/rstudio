@@ -84,6 +84,9 @@ CXChildVisitResult cursorVisitor(CXCursor cxCursor,
       case CXCursor_EnumDecl:
          kind = CppEnumDefinition;
          break;
+      case CXCursor_EnumConstantDecl:
+         kind = CppEnumValue;
+         break;
       case CXCursor_FunctionDecl:
       case CXCursor_FunctionTemplate:
          kind = CppFunctionDefinition;
@@ -133,7 +136,8 @@ CXChildVisitResult cursorVisitor(CXCursor cxCursor,
    // recurse if necessary
    if (kind == CppNamespaceDefinition ||
        kind == CppClassDefinition ||
-       kind == CppStructDefinition)
+       kind == CppStructDefinition ||
+       kind == CppEnumDefinition)
    {
       return CXChildVisit_Recurse;
    }
@@ -218,6 +222,9 @@ std::ostream& operator<<(std::ostream& os, const CppDefinition& definition)
       case CppEnumDefinition:
          kindStr = "E";
          break;
+      case CppEnumValue:
+         kindStr = "V";
+         break;
       case CppFunctionDefinition:
          kindStr = "F";
          break;
@@ -262,7 +269,7 @@ bool findUSR(const std::string& USR,
    }
 }
 
-typedef std::map<std::string,CXTranslationUnit> TranslationUnits;
+typedef std::map<std::string,TranslationUnit> TranslationUnits;
 
 } // anonymous namespace
 
@@ -291,7 +298,8 @@ FileLocation findDefinitionLocation(const FileLocation& location)
 
          // visit the cursors
          libclang::clang().visitChildren(
-              libclang::clang().getTranslationUnitCursor(unit.second),
+              libclang::clang().getTranslationUnitCursor(
+                     unit.second.getCXTranslationUnit()),
               cursorVisitor,
               (CXClientData)&visitor);
 
@@ -375,7 +383,8 @@ void searchDefinitions(const std::string& term,
 
       // visit the cursors
       libclang::clang().visitChildren(
-           libclang::clang().getTranslationUnitCursor(unit.second),
+           libclang::clang().getTranslationUnitCursor(
+                                 unit.second.getCXTranslationUnit()),
            cursorVisitor,
            (CXClientData)&visitor);
    }

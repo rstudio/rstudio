@@ -179,6 +179,13 @@ public class CppCompletionRequest
       {
          updateUI(true);
       }
+      
+      // show diagnostics
+      /*
+      JsArray<CppDiagnostic> diagnostics = result.getDiagnostics();
+      for (int i = 0; i < diagnostics.length(); i++)
+         Debug.prettyPrint(diagnostics.get(i));
+      */
    }
    
    private void showCompletionPopup(String message)
@@ -282,8 +289,11 @@ public class CppCompletionRequest
          docDisplay_.setSelectionRange(Range.fromPoints(pos, pos));
       }
       
-      if (uiPrefs_.showSignatureTooltips().getValue())
+      if (completion.hasParameters() &&
+          uiPrefs_.showSignatureTooltips().getValue())
+      {
          new CppCompletionSignatureTip(completion, docDisplay_);
+      }
    }
    
    private InputEditorSelection getReplacementSelection()

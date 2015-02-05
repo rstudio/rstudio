@@ -1,5 +1,5 @@
 /*
- * CppCompletionResult.java
+ * FileRange.java
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -12,24 +12,19 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-
-package org.rstudio.studio.client.workbench.views.source.model;
+package org.rstudio.core.client;
 
 import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.core.client.JsArray;
 
-public class CppCompletionResult extends JavaScriptObject
+public class FileRange extends JavaScriptObject
 {
-   protected CppCompletionResult()
-   {
-   }
-   
-   public native final JsArray<CppCompletion> getCompletions() /*-{
-      return this.completions;
+   protected FileRange() {}
+
+   public native final FilePosition getStart() /*-{
+      return this.start;
    }-*/;
    
-   public native final JsArray<CppDiagnostic> getDiagnostics() /*-{
-      return this.diagnostics;
+   public native final FilePosition getEnd() /*-{
+      return this.end;
    }-*/;
-   
 }

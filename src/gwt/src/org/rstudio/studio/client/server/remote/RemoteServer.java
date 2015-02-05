@@ -90,6 +90,7 @@ import org.rstudio.studio.client.rsconnect.model.RSConnectApplicationInfo;
 import org.rstudio.studio.client.rsconnect.model.RSConnectAuthUser;
 import org.rstudio.studio.client.rsconnect.model.RSConnectDeploymentFiles;
 import org.rstudio.studio.client.rsconnect.model.RSConnectDeploymentRecord;
+import org.rstudio.studio.client.rsconnect.model.RSConnectLintResults;
 import org.rstudio.studio.client.rsconnect.model.RSConnectPreAuthToken;
 import org.rstudio.studio.client.rsconnect.model.RSConnectServerInfo;
 import org.rstudio.studio.client.server.Bool;
@@ -132,6 +133,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.IconvListRe
 import org.rstudio.studio.client.workbench.views.source.model.CheckForExternalEditResult;
 import org.rstudio.studio.client.workbench.views.source.model.CppCapabilities;
 import org.rstudio.studio.client.workbench.views.source.model.CppCompletionResult;
+import org.rstudio.studio.client.workbench.views.source.model.CppDiagnostic;
 import org.rstudio.studio.client.workbench.views.source.model.CppSourceLocation;
 import org.rstudio.studio.client.workbench.views.source.model.DataItem;
 import org.rstudio.studio.client.workbench.views.source.model.RdShellResult;
@@ -587,6 +589,13 @@ public class RemoteServer implements Server
       params.set(2, new JSONNumber(column));
       params.set(3,  new JSONString(userText));
       sendRequest(RPC_SCOPE, "get_cpp_completions", params, requestCallback);
+   }
+   
+   public void getCppDiagnostics(
+                 String docPath,
+                 ServerRequestCallback<JsArray<CppDiagnostic>> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, "get_cpp_diagnostics", docPath, requestCallback);
    }
    
    public void printCppCompletions(String docId, 
@@ -3699,8 +3708,20 @@ public class RemoteServer implements Server
             GET_DEPLOYMENT_FILES,
             params,
             requestCallback);
-      
    }
+   
+   @Override
+   public void getLintResults(String target, 
+         ServerRequestCallback<RSConnectLintResults> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(target));
+      sendRequest(RPC_SCOPE,
+            GET_RSCONNECT_LINT_RESULTS,
+            params,
+            requestCallback);
+   }
+  
    @Override
    public void getRMarkdownContext(
                   ServerRequestCallback<RMarkdownContext> requestCallback)
@@ -4241,6 +4262,7 @@ public class RemoteServer implements Server
    private static final String GET_AUTH_TOKEN = "get_auth_token";
    private static final String GET_USER_FROM_TOKEN = "get_user_from_token";
    private static final String REGISTER_USER_TOKEN = "register_user_token";
+   private static final String GET_RSCONNECT_LINT_RESULTS = "get_rsconnect_lint_results";
 
    private static final String RENDER_RMD = "render_rmd";
    private static final String RENDER_RMD_SOURCE = "render_rmd_source";

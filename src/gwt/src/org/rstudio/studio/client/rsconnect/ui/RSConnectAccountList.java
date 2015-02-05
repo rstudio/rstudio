@@ -64,13 +64,16 @@ public class RSConnectAccountList extends Composite
       final RSConnectAccount account_;
    }
    
-   public RSConnectAccountList(RSConnectServerOperations server, GlobalDisplay display)
+   public RSConnectAccountList(RSConnectServerOperations server, 
+         GlobalDisplay display,
+         boolean refreshImmediately)
    {
       server_ = server;
       display_ = display;
       accountList_ = new WidgetListBox<AccountEntry>();
       accountList_.setEmptyText("No accounts connected.");
-      refreshAccountList();
+      if (refreshImmediately)
+         refreshAccountList();
       initWidget(accountList_);
    }
    

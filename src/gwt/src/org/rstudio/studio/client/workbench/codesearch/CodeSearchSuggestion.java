@@ -71,6 +71,9 @@ class CodeSearchSuggestion implements Suggestion
       case SourceItem.ENUM:
          image = CodeIcons.INSTANCE.enumType();
          break;
+      case SourceItem.ENUM_VALUE:
+         image = CodeIcons.INSTANCE.enumValue();
+         break;
       case SourceItem.NAMESPACE:
          image = CodeIcons.INSTANCE.namespace();
          break;

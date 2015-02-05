@@ -1,7 +1,7 @@
 /*
- * CppCompletionResult.java
+ * RSConnectLintResults.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-15 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -11,25 +11,21 @@
  * MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
- */
-
-package org.rstudio.studio.client.workbench.views.source.model;
+ */package org.rstudio.studio.client.rsconnect.model;
 
 import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.core.client.JsArray;
 
-public class CppCompletionResult extends JavaScriptObject
+public class RSConnectLintResults extends JavaScriptObject
 {
-   protected CppCompletionResult()
+   protected RSConnectLintResults()
    {
    }
    
-   public native final JsArray<CppCompletion> getCompletions() /*-{
-      return this.completions;
+   public final native String getErrorMessage() /*-{
+      return this.error_message || "";
    }-*/;
-   
-   public native final JsArray<CppDiagnostic> getDiagnostics() /*-{
-      return this.diagnostics;
+
+   public final native boolean hasLint() /*-{
+      return this.has_lint;
    }-*/;
-   
 }

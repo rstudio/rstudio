@@ -169,13 +169,14 @@
         identical(funBody[[idx]], NA_complex_) || 
         identical(funBody[[idx]], NA_integer_) || 
         identical(funBody[[idx]], NA_real_) || 
+        identical(funBody[[idx]], NaN) ||
         is.pairlist(funBody[[idx]])) 
        next
 
     # if this expression was replaced by trace(), copy the source references
     # from the original expression over each expression injected by trace()
     if (length(funBody[[idx]]) != length(originalFunBody[[idx]]) ||
-        sum(funBody[[idx]] != originalFunBody[[idx]]) > 0)
+        isTRUE(sum(funBody[[idx]] != originalFunBody[[idx]]) > 0))
     {
       attr(funBody[[idx]], "srcref") <-
         rep(list(attr(originalFunBody, "srcref")[[idx]]), length(funBody[[idx]]))

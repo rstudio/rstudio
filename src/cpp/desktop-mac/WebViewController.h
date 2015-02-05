@@ -56,8 +56,5 @@
 // evaluate javascript
 - (id) evaluateJavaScript: (NSString*) js;
 
-// prepare to navigate to an external url (once)
-- (void) prepareExternalNavigate: (NSString*) url;
-
 @end
 

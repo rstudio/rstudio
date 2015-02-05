@@ -69,7 +69,7 @@ public class PublishingPreferencesPane extends PreferencesPane
       nudgeRight(accountLabel);
       accountPanel.add(accountLabel);
       
-      accountList_ = new RSConnectAccountList(server, globalDisplay);
+      accountList_ = new RSConnectAccountList(server, globalDisplay, true);
       accountList_.setHeight("200px");
       accountList_.setWidth("300px");
       accountList_.getElement().getStyle().setMarginBottom(15, Unit.PX);

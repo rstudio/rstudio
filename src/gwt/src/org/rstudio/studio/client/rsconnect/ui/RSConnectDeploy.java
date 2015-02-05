@@ -80,7 +80,7 @@ public class RSConnectDeploy extends Composite
                           final GlobalDisplay display,
                           final Session session)
    {
-      accountList = new RSConnectAccountList(server, display);
+      accountList = new RSConnectAccountList(server, display, false);
       initWidget(uiBinder.createAndBindUi(this));
 
       // Validate the application name on every keystroke

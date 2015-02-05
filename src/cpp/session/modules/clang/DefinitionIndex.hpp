@@ -41,8 +41,9 @@ enum CppDefinitionKind
    CppClassDefinition = 2,
    CppStructDefinition = 3,
    CppEnumDefinition = 4,
-   CppFunctionDefinition = 5,
-   CppMemberFunctionDefinition = 6
+   CppEnumValue = 5,
+   CppFunctionDefinition = 6,
+   CppMemberFunctionDefinition = 7
 };
 
 // C++ symbol definition

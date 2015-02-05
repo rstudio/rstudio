@@ -72,7 +72,7 @@ CXFile TranslationUnit::getFile(const std::string& filename) const
 CXResult TranslationUnit::findReferencesInFile(
                               Cursor cursor,
                               CXCursorAndRangeVisitor visitor,
-                              const std::string& filename)
+                              const std::string& filename) const
 {
    CXFile file = getFile(filename);
    if (file == NULL)
@@ -93,14 +93,14 @@ boost::shared_ptr<Diagnostic>
                      new Diagnostic(clang().getDiagnostic(tu_, index)));
 }
 
-Cursor TranslationUnit::getCursor()
+Cursor TranslationUnit::getCursor() const
 {
    return Cursor(clang().getTranslationUnitCursor(tu_));
 }
 
 Cursor TranslationUnit::getCursor(const std::string& filename,
                                   unsigned line,
-                                  unsigned column)
+                                  unsigned column) const
 {
    // get the file
    CXFile file = clang().getFile(tu_, filename.c_str());
@@ -122,7 +122,7 @@ Cursor TranslationUnit::getCursor(const std::string& filename,
 boost::shared_ptr<CodeCompleteResults> TranslationUnit::codeCompleteAt(
                                             const std::string& filename,
                                             unsigned line,
-                                            unsigned column)
+                                            unsigned column) const
 {
    CXCodeCompleteResults* pResults = clang().codeCompleteAt(
                                  tu_,
@@ -147,7 +147,7 @@ boost::shared_ptr<CodeCompleteResults> TranslationUnit::codeCompleteAt(
    }
 }
 
-void TranslationUnit::printResourceUsage(std::ostream& ostr, bool detailed)
+void TranslationUnit::printResourceUsage(std::ostream& ostr, bool detailed) const
 {
    CXTUResourceUsage usage = clang().getCXTUResourceUsage(tu_);
 
