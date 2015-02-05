@@ -39,12 +39,15 @@ public class Wizard<I,T> extends ModalDialog<T>
                  String subCaption,
                  String okCaption,
                  I initialData,
+                 WizardPage<I, T> firstPage,
                  final ProgressOperationWithInput<T> operation)
    {
       super(caption, operation);
       initialData_ = initialData;
       subCaption_ = subCaption;
       okCaption_ = okCaption;
+      firstPage_ = firstPage;
+      activePage_ = firstPage;
       
       resetOkButtonCaption();
       setOkButtonVisible(false);
@@ -62,30 +65,7 @@ public class Wizard<I,T> extends ModalDialog<T>
          }
       });
       nextButton_.setVisible(false);
-   }
-   
-   protected void addPage(WizardPage<I,T> page)
-   {
-      pages_.add(page);
-      
-      CommandWithArg<WizardPage<I,T>> showPageCmd = 
-            new CommandWithArg<WizardPage<I,T>>() 
-      {
-         @Override
-         public void execute(WizardPage<I, T> page)
-         {
-            showPage(page);
-         };
-      };
-
-      if (page instanceof WizardNavigationPage<?,?>)
-      {
-         ((WizardNavigationPage<I,T>) page).setSelectionHandler(showPageCmd);
-      }
-      else if (page instanceof WizardIntermediatePage<?,?>) 
-      {
-         ((WizardIntermediatePage<I,T>) page).setNextHandler(showPageCmd);
-      }
+      addButton(nextButton_);
    }
    
    @Override
@@ -160,58 +140,53 @@ public class Wizard<I,T> extends ModalDialog<T>
       bodyPanel_.getElement().getStyle().setProperty("overflowX", "hidden");
       mainWidget.add(bodyPanel_);
      
-      firstPageWidget_ = createFirstPage(); 
-
-      bodyPanel_.add(firstPageWidget_);
-      bodyPanel_.setWidgetTopBottom(firstPageWidget_, 0, Unit.PX, 0, Unit.PX);
-      bodyPanel_.setWidgetLeftRight(firstPageWidget_, 0, Unit.PX, 0, Unit.PX);
-      bodyPanel_.setWidgetVisible(firstPageWidget_, true);
-    
-      // add pages and make them invisible
-      for (int i=0; i<pages_.size(); i++)
-      {
-         WizardPage<I,T> page = pages_.get(i);
-         addAndInitializePage(page);
-      }
+      // add first page (and all sub-pages recursively)
+      addAndInitializePage(firstPage_, true);
+      
+      nextButton_.setVisible(firstPage_ instanceof WizardIntermediatePage<?,?>);
       
       return mainWidget;
    }
    
-   
-   private void addAndInitializePage(WizardPage<I,T> page)
+   private void addAndInitializePage(WizardPage<I,T> page, boolean visible)
    {
       page.setSize("100%", "100%");
       
       bodyPanel_.add(page);
       bodyPanel_.setWidgetTopBottom(page, 0, Unit.PX, 0, Unit.PX);
       bodyPanel_.setWidgetLeftRight(page, 0, Unit.PX, 0, Unit.PX);
-      bodyPanel_.setWidgetVisible(page, false);
+      bodyPanel_.setWidgetVisible(page, visible);
       
       page.initialize(initialData_);
       
-      // recursively initialize child pages
-      if (page instanceof WizardNavigationPage<?,?>)
+      CommandWithArg<WizardPage<I,T>> showPageCmd = 
+            new CommandWithArg<WizardPage<I,T>>() 
       {
-         WizardNavigationPage<I,T> navPage = (WizardNavigationPage<I,T>)page;
-         ArrayList<WizardPage<I,T>> pages = navPage.getPages();
-         for (int i=0; i<pages.size(); i++)
-            addAndInitializePage(pages.get(i));
-      }
-   }
-   
-   // by default, the first page is a page selector, but specific wizards may
-   // override this with their own first page
-   protected Widget createFirstPage()
-   {
-      return new WizardPageSelector<I,T>(
-            pages_, 
-            new CommandWithArg<WizardPage<I,T>>() {
          @Override
          public void execute(WizardPage<I, T> page)
          {
             showPage(page);
+         };
+      };
+
+      if (page instanceof WizardNavigationPage<?,?>)
+      {
+         ((WizardNavigationPage<I,T>) page).setSelectionHandler(showPageCmd);
+      }
+      else if (page instanceof WizardIntermediatePage<?,?>) 
+      {
+         ((WizardIntermediatePage<I,T>) page).setNextHandler(showPageCmd);
+      }
+
+      // recursively initialize child pages
+      ArrayList<WizardPage<I,T>> subPages = page.getSubPages();
+      if (subPages != null)
+      {
+         for (int i = 0; i < subPages.size(); i++)
+         {
+            addAndInitializePage(subPages.get(i), false);
          }
-      });
+      }
    }
    
    @Override
@@ -313,10 +288,10 @@ public class Wizard<I,T> extends ModalDialog<T>
       Widget fromWidget;
       final boolean okButtonVisible;
       
-      // are we navigating from the main selector?
+      // are we navigating from the first page?
       if (activePage_ == null)
       {
-         fromWidget = firstPageWidget_;
+         fromWidget = firstPage_;
          okButtonVisible = !(page instanceof WizardNavigationPage<?,?>);
          activeParentNavigationPage_ = null;   
       }
@@ -372,7 +347,7 @@ public class Wizard<I,T> extends ModalDialog<T>
       }
       else
       {
-         toWidget = firstPageWidget_;
+         toWidget = firstPage_;
       }
       
       final String pageCaptionLabel = isNavigationPage ? 
@@ -443,8 +418,7 @@ public class Wizard<I,T> extends ModalDialog<T>
    private ThemedButton nextButton_;
    
    private LayoutPanel bodyPanel_;
-   private Widget firstPageWidget_;
-   private ArrayList<WizardPage<I,T>> pages_ = new ArrayList<WizardPage<I,T>>();
+   private WizardPage<I,T> firstPage_ = null;
    private WizardPage<I,T> activePage_ = null;
    private WizardPage<I,T> activeParentNavigationPage_ = null;
    private boolean isAnimating_ = false;

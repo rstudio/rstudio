@@ -14,12 +14,14 @@
  */
 package org.rstudio.core.client.widget;
 
+import java.util.ArrayList;
+
 import org.rstudio.core.client.CommandWithArg;
 
 import com.google.gwt.resources.client.ImageResource;
 
-// An intermediate wizard page collects input but passes that input to the next
-// page rather than completing the wizard.
+// An intermediate wizard page collects input but passes that input to a single
+// next page rather than completing the wizard.
 public abstract class WizardIntermediatePage<I,T> extends WizardPage<I,T>
 {
    public WizardIntermediatePage(String title, String subTitle,
@@ -39,6 +41,16 @@ public abstract class WizardIntermediatePage<I,T> extends WizardPage<I,T>
    {
       if (nextHandler_ != null)
          nextHandler_.execute(nextPage_);
+   }
+   
+   @Override
+   public ArrayList<WizardPage<I, T>> getSubPages()
+   {
+      // we have a single subpage, which is the next page we were initialized
+      // with
+      ArrayList<WizardPage<I, T>> subPage = new ArrayList<WizardPage<I, T>>();
+      subPage.add(nextPage_);
+      return subPage;
    }
    
    private CommandWithArg<WizardPage<I, T>> nextHandler_;
