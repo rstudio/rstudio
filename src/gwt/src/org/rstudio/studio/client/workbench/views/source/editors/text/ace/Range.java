@@ -19,6 +19,15 @@ import com.google.gwt.core.client.JavaScriptObject;
 public class Range extends JavaScriptObject
 {
    protected Range() {}
+   
+   public static final native Range create(int startRow,
+                                           int startColumn,
+                                           int endRow,
+                                           int endColumn)
+   /*-{
+      var Range = $wnd.require('ace/range').Range;
+      return new Range(startRow, startColumn, endRow, endColumn);
+   }-*/;
 
    public static native Range fromPoints(Position start, Position end) /*-{
       var Range = $wnd.require('ace/range').Range;

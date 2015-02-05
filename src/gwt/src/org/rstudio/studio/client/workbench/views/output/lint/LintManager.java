@@ -82,7 +82,12 @@ public class LintManager
       final TextEditingTarget target = (TextEditingTarget) editor;
       final DocDisplay docDisplay = target.getDocDisplay();
       final String documentId = editor.getId();
-
+      
+      // TODO: For C++, we display lint when completions are returned,
+      // so we don't fire the timer here.
+      if (target.getTextFileType().isCpp())
+         return;
+      
       target.withSavedDoc(new Command()
       {
          @Override

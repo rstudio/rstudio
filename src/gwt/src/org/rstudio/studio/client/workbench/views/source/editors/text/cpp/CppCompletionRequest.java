@@ -16,17 +16,22 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text.cpp;
 
 import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.Invalidation;
+import org.rstudio.core.client.regex.Match;
+import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorSelection;
+import org.rstudio.studio.client.workbench.views.output.lint.model.LintItem;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.model.CppCompletion;
 import org.rstudio.studio.client.workbench.views.source.model.CppCompletionResult;
+import org.rstudio.studio.client.workbench.views.source.model.CppDiagnostic;
 import org.rstudio.studio.client.workbench.views.source.model.CppServerOperations;
 
 import com.google.gwt.core.client.JsArray;
@@ -181,11 +186,97 @@ public class CppCompletionRequest
       }
       
       // show diagnostics
-      /*
       JsArray<CppDiagnostic> diagnostics = result.getDiagnostics();
+      showLint(diagnostics);
+   }
+   
+   private void showLint(JsArray<CppDiagnostic> diagnostics)
+   {
+      Debug.logObject(diagnostics);
+      JsArray<LintItem> lint = asLintArray(diagnostics);
+      docDisplay_.showLint(lint);
+   }
+   
+   static Pattern RE_NO_MEMBER_NAMED =
+         Pattern.create("^no member named '(.*)' in '(.*)'$");
+   
+   static Pattern RE_USE_UNDECLARED_IDENTIFIER =
+         Pattern.create("^use of undeclared identifier '(.*)'");
+   
+   private Range createRangeFromMatch(CppDiagnostic diagnostic,
+                                      Match match)
+   {
+      return Range.create(
+            diagnostic.getPosition().getLine() - 1,
+            diagnostic.getPosition().getColumn() - 1,
+            diagnostic.getPosition().getLine() - 1,
+            diagnostic.getPosition().getColumn() - 1 +
+               match.getGroup(1).length());
+   }
+   
+   private Range getRangeForSpecializedDiagnostic(CppDiagnostic diagnostic)
+   {
+      String message = diagnostic.getMessage();
+      Match match;
+      
+      match = RE_NO_MEMBER_NAMED.match(message, 0);
+      if (match != null)
+         return createRangeFromMatch(diagnostic, match);
+      
+      match = RE_USE_UNDECLARED_IDENTIFIER.match(message, 0);
+      if (match != null)
+         return createRangeFromMatch(diagnostic, match);
+      
+      return null;
+   }
+   
+   private Range getRangeForDiagnostic(CppDiagnostic diagnostic)
+   {
+      // Try to get a range for specialized diagnostics
+      Range range;
+      
+      range = getRangeForSpecializedDiagnostic(diagnostic);
+      if (range != null)
+         return range;
+      
+      // Default range -- override if we infer a better range
+      return Range.create(
+            diagnostic.getPosition().getLine() - 1,
+            diagnostic.getPosition().getColumn() - 1,
+            diagnostic.getPosition().getLine() - 1,
+            diagnostic.getPosition().getColumn());
+   }
+   
+   private JsArray<LintItem> asLintArray(JsArray<CppDiagnostic> diagnostics)
+   {
+      JsArray<LintItem> lint = JsArray.createArray(diagnostics.length()).cast();
       for (int i = 0; i < diagnostics.length(); i++)
-         Debug.prettyPrint(diagnostics.get(i));
-      */
+      {
+         CppDiagnostic d = diagnostics.get(i);
+         Range range = getRangeForDiagnostic(d);
+            lint.set(i, LintItem.create(
+                  range.getStart().getRow(),
+                  range.getStart().getColumn(),
+                  range.getEnd().getRow(),
+                  range.getEnd().getColumn(),
+                  d.getMessage(),
+                  cppDiagnosticSeverityToLintType(d.getSeverity())));
+      }
+      
+      return lint;
+   }
+   
+   private String cppDiagnosticSeverityToLintType(int type)
+   {
+      switch (type)
+      {
+         case CppDiagnostic.IGNORED: return "ignored";
+         case CppDiagnostic.NOTE:    return "note";
+         case CppDiagnostic.WARNING: return "warning";
+         case CppDiagnostic.ERROR:   return "error";
+         case CppDiagnostic.FATAL:   return "fatal";
+         default: return "";
+      }
    }
    
    private void showCompletionPopup(String message)

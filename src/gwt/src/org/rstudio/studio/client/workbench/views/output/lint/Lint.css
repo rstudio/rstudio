@@ -1,6 +1,6 @@
 /* TODO: Confirm that they look correct in all environments we support. */
 
-.error {
+.error, .fatal {
    position: absolute;
    background-color: rgba(255, 0, 0, 0.3);
 }
@@ -10,7 +10,7 @@
    background-color: rgba(255, 168, 0, 0.3);
 }
 
-.info {
+.info, .ignored, .note {
    position: absolute;
    background-color: rgba(0, 197, 255, 0.3);
 }

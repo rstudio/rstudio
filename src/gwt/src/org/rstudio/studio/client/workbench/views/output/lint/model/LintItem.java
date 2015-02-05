@@ -21,6 +21,24 @@ public class LintItem extends JavaScriptObject
 {
    protected LintItem() {}
    
+   public static final native LintItem create(int startRow,
+                                              int startColumn,
+                                              int endRow,
+                                              int endColumn,
+                                              String text,
+                                              String type) /*-{
+      
+      return {
+         "start.row": startRow,
+         "start.column": startColumn,
+         "end.row": endRow,
+         "end.column": endColumn,
+         "text": text,
+         "type": type
+      };
+                                
+   }-*/;
+   
    public final native int getStartRow() /*-{
       return this["start.row"];
    }-*/;

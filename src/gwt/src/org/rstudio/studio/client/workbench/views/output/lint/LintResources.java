@@ -22,9 +22,14 @@ public interface LintResources extends ClientBundle
 {
    public static interface Styles extends CssResource
    {
-      String error();
-      String warning();
+      String ignored();
+      String note();
       String info();
+      
+      String warning();
+      
+      String error();
+      String fatal();
    }
    
    @Source("Lint.css")
