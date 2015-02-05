@@ -63,6 +63,11 @@ public class Position extends JavaScriptObject
    {
       return compareTo(other) >= 0;
    }
+   
+   public final boolean isEqualTo(Position other)
+   {
+      return compareTo(other) == 0;
+   }
 
    public native final void setRow(int row) /*-{
       this.row = row;
@@ -71,4 +76,6 @@ public class Position extends JavaScriptObject
    public native final void setColumn(int column) /*-{
       this.column = column;
    }-*/;
+   
+      
 }

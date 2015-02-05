@@ -97,6 +97,12 @@ public class AceEditorWidget extends Composite
                
                // Immediately re-render on change if we have markers, to
                // ensure they're re-drawn in the correct locations.
+               //
+               // We may also need to fix up the selection anchor, as it is
+               // right-inclusive (and hence modifications immediately after
+               // a lint item will extend that selection)
+               final Position start = changeEvent.getRange().getStart();
+               final Position end = changeEvent.getRange().getEnd();
                if (editor_.getSession().getMarkers(true).size() > 0)
                {
                   Scheduler.get().scheduleDeferred(new ScheduledCommand()
@@ -104,6 +110,7 @@ public class AceEditorWidget extends Composite
                      @Override
                      public void execute()
                      {
+                        editor_.getSession().fixupMarker(start, end);
                         editor_.getRenderer().forceImmediateRender();
                      }
                   });
