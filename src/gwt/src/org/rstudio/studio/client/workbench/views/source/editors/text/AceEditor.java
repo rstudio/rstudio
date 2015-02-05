@@ -37,7 +37,6 @@ import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.ExternalJavaScriptLoader;
 import org.rstudio.core.client.ExternalJavaScriptLoader.Callback;
@@ -2073,7 +2072,7 @@ public class AceEditor implements DocDisplay,
    }
    
    public Range createAnchoredRange(Position start,
-                                    Position end) 
+                                    Position end)
    {
       return widget_.getEditor().getSession().createAnchoredRange(start, end);
    }

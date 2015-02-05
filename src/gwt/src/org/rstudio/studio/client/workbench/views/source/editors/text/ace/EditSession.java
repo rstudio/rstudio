@@ -207,23 +207,8 @@ public class EditSession extends JavaScriptObject
       var result = new Range();
       result.start = this.doc.createAnchor(start.row, start.column);
       result.end = this.doc.createAnchor(end.row, end.column);
+      result.end.$insertRight = true;
       return result;
    }-*/;
 
-   public final void fixupMarker(Position start, Position end)
-   {
-      Markers markers = getMarkers(true);
-      int[] markerIds = markers.getIds();
-      
-      for (int i = 0; i < markerIds.length; i++)
-      {
-         Marker marker = markers.get(markerIds[i]);
-         if (marker.getRange().getEnd().isEqualTo(end))
-         {
-            marker.getRange().setEnd(start);
-            break;
-         }
-      }
-   }
-   
 }
