@@ -250,12 +250,30 @@ Error lintRSourceDocument(const json::JsonRpcRequest& request,
       return error;
    }
    
-   // TODO: Handle R code in multi-mode documents
-   if (pDoc->type() != "r_source")
+   std::string content;
+   if (pDoc->type() == SourceDocument::SourceDocumentTypeRSource)
+   {
+      content = pDoc->contents();
+   }
+   else if (pDoc->type() == SourceDocument::SourceDocumentTypeRMarkdown)
+   {
+      r::exec::RFunction extract(".rs.extractRCodeFromRMarkdownDocument");
+      extract.addParam(pDoc->contents());
+      error = extract.call(&content);
+      if (error)
+      {
+         LOG_ERROR(error);
+         return error;
+      }
+   }
+   else
+   {
+      // TODO: implement for other R containing documents
       return Success();
+   }
    
    FilePath origin = module_context::resolveAliasedPath(pDoc->path());
-   ParseResults results = parse(pDoc->contents(), origin);
+   ParseResults results = parse(content, origin);
    
    pResponse->setResult(lintAsJson(results.lint()));
    

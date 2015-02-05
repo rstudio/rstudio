@@ -119,11 +119,11 @@ public:
    bool canContainRCode()
    {
       return type_.size() > 0 && (
-               type_ == "sweave" ||
-               type_ == "r_source" ||
-               type_ == "r_markdown" ||
-               type_ == "r_html" ||
-               type_ == "cpp");
+               type_ == SourceDocumentTypeSweave ||
+               type_ == SourceDocumentTypeRSource ||
+               type_ == SourceDocumentTypeRMarkdown ||
+               type_ == SourceDocumentTypeRHTML ||
+               type_ == SourceDocumentTypeCpp);
    }
 
    core::Error readFromJson(core::json::Object* pDocJson);
@@ -148,6 +148,15 @@ private:
    bool sourceOnSave_;
    int relativeOrder_;
    core::json::Object properties_;
+   
+public:
+   
+   static const std::string SourceDocumentTypeSweave;
+   static const std::string SourceDocumentTypeRSource;
+   static const std::string SourceDocumentTypeRMarkdown;
+   static const std::string SourceDocumentTypeRHTML;
+   static const std::string SourceDocumentTypeCpp;
+   
 };
 
 bool sortByCreated(const boost::shared_ptr<SourceDocument>& pDoc1,

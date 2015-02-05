@@ -97,3 +97,31 @@
       )
    })
 })
+
+.rs.addFunction("extractRCodeFromRMarkdownDocument", function(content)
+{
+   splat <- strsplit(content, "\n", fixed = TRUE)[[1]]
+   starts <- grep("^\\s*[`]{3}{r.*}\\s*$", splat, perl = TRUE)
+   ends <- grep("^\\s*[`]{3}\\s*$", splat, perl = TRUE)
+   
+   if (length(starts) != length(ends))
+      return(.rs.scalar(""))
+   
+   new <- character(length(splat))
+   for (i in seq_along(starts))
+   {
+      start <- starts[i]
+      end <- ends[i]
+      
+      # Ignore pairs that include 'engine=', assuming they're non-R chunks
+      if (grepl("engine\\s*=", splat[[start]], perl = TRUE))
+         next
+      
+      new[(start + 1):(end - 1)] <- splat[(start + 1):(end - 1)]
+   }
+   
+   .rs.scalar(paste(new, collapse = "\n"))
+})
+
+
+
