@@ -16,7 +16,6 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text.cpp;
 
 import org.rstudio.core.client.CommandWithArg;
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.Invalidation;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
@@ -184,17 +183,6 @@ public class CppCompletionRequest
       {
          updateUI(true);
       }
-      
-      // show diagnostics
-      JsArray<CppDiagnostic> diagnostics = result.getDiagnostics();
-      showLint(diagnostics);
-   }
-   
-   private void showLint(JsArray<CppDiagnostic> diagnostics)
-   {
-      Debug.logObject(diagnostics);
-      JsArray<LintItem> lint = asLintArray(diagnostics);
-      docDisplay_.showLint(lint);
    }
    
    static Pattern RE_NO_MEMBER_NAMED =
@@ -203,7 +191,7 @@ public class CppCompletionRequest
    static Pattern RE_USE_UNDECLARED_IDENTIFIER =
          Pattern.create("^use of undeclared identifier '(.*)'");
    
-   private Range createRangeFromMatch(CppDiagnostic diagnostic,
+   private static Range createRangeFromMatch(CppDiagnostic diagnostic,
                                       Match match)
    {
       return Range.create(
@@ -214,7 +202,7 @@ public class CppCompletionRequest
                match.getGroup(1).length());
    }
    
-   private Range getRangeForSpecializedDiagnostic(CppDiagnostic diagnostic)
+   private static Range getRangeForSpecializedDiagnostic(CppDiagnostic diagnostic)
    {
       String message = diagnostic.getMessage();
       Match match;
@@ -230,7 +218,7 @@ public class CppCompletionRequest
       return null;
    }
    
-   private Range getRangeForDiagnostic(CppDiagnostic diagnostic)
+   private static Range getRangeForDiagnostic(CppDiagnostic diagnostic)
    {
       // Try to get a range for specialized diagnostics
       Range range;
@@ -247,7 +235,8 @@ public class CppCompletionRequest
             diagnostic.getPosition().getColumn());
    }
    
-   private JsArray<LintItem> asLintArray(JsArray<CppDiagnostic> diagnostics)
+   public static JsArray<LintItem> asLintArray(
+         JsArray<CppDiagnostic> diagnostics)
    {
       JsArray<LintItem> lint = JsArray.createArray(diagnostics.length()).cast();
       for (int i = 0; i < diagnostics.length(); i++)
@@ -266,7 +255,7 @@ public class CppCompletionRequest
       return lint;
    }
    
-   private String cppDiagnosticSeverityToLintType(int type)
+   private static String cppDiagnosticSeverityToLintType(int type)
    {
       switch (type)
       {

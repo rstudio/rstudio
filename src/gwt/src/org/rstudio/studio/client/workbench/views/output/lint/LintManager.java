@@ -25,6 +25,8 @@ import org.rstudio.studio.client.workbench.views.source.Source;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
+import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionRequest;
+import org.rstudio.studio.client.workbench.views.source.model.CppDiagnostic;
 
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.user.client.Command;
@@ -83,11 +85,6 @@ public class LintManager
       final DocDisplay docDisplay = target.getDocDisplay();
       final String documentId = editor.getId();
       
-      // TODO: For C++, we display lint when completions are returned,
-      // so we don't fire the timer here.
-      if (target.getTextFileType().isCpp())
-         return;
-      
       target.withSavedDoc(new Command()
       {
          @Override
@@ -96,6 +93,7 @@ public class LintManager
             performLintServerRequest(
                   token,
                   documentId,
+                  target,
                   docDisplay);
          }
       });
@@ -103,12 +101,54 @@ public class LintManager
 
    private void performLintServerRequest(final Invalidation.Token token,
                                          final String documentId,
+                                         final TextEditingTarget target,
                                          final DocDisplay docDisplay)
    {
       
       if (token.isInvalid())
          return;
       
+      if (target.getTextFileType().isCpp())
+         performCppLintServerRequest(token, documentId, target, docDisplay);
+      else
+         performRLintServerRequest(token, documentId, target, docDisplay);
+   }
+
+   private void performCppLintServerRequest(final Invalidation.Token token,
+                                            final String documentId,
+                                            final TextEditingTarget target,
+                                            final DocDisplay docDisplay) 
+   {
+      server_.getCppDiagnostics(
+            target.getPath(),
+            new ServerRequestCallback<JsArray<CppDiagnostic>>()
+            {
+               
+               @Override
+               public void onResponseReceived(JsArray<CppDiagnostic> diag)
+               {
+                  if (token.isInvalid())
+                     return;
+
+                  JsArray<LintItem> lint = CppCompletionRequest.asLintArray(
+                        diag);
+                  displayLint(docDisplay, lint);
+               }
+               
+               @Override
+               public void onError(ServerError error)
+               {
+                  Debug.logError(error);
+               }
+            });
+   }
+
+   private void performRLintServerRequest(final Invalidation.Token token,
+                                          final String documentId,
+                                          final TextEditingTarget target,
+                                          final DocDisplay docDisplay)
+   {
+
       server_.lintRSourceDocument(
             documentId,
             false,
@@ -119,7 +159,7 @@ public class LintManager
                {
                   if (token.isInvalid())
                      return;
-                  
+
                   displayLint(docDisplay, lint);
                }
 
@@ -129,7 +169,6 @@ public class LintManager
                   Debug.logError(error);
                }
             });
-
    }
    
    public void displayLint(DocDisplay display,
