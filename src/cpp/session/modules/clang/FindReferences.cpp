@@ -129,7 +129,13 @@ CXChildVisitResult findReferencesVisitor(CXCursor cxCursor,
             if (token.kind() == CXToken_Identifier &&
                 token.spelling() == cursor.spelling())
             {
+               // record spelling if necessary
+               if (pData->spelling.empty())
+                  pData->spelling = cursor.spelling();
+
+               // record the range
                foundRange = token.extent().getFileRange();
+
                break;
             }
          }
@@ -146,10 +152,6 @@ CXChildVisitResult findReferencesVisitor(CXCursor cxCursor,
              (pData->references.back() != foundRange))
          {
             pData->references.push_back(foundRange);
-
-            // record spelling if necessary
-            if (pData->spelling.empty())
-               pData->spelling = referencedCursor.spelling();
          }
       }
    }
@@ -301,7 +303,8 @@ void findReferences(std::string USR,
                (CXClientData)&findReferencesData);
 
    // copy the locations to the out parameter
-   *pSpelling = findReferencesData.spelling;
+   if (!findReferencesData.spelling.empty())
+      *pSpelling = findReferencesData.spelling;
    std::copy(findReferencesData.references.begin(),
              findReferencesData.references.end(),
              std::back_inserter(*pRefs));
