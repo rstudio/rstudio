@@ -45,6 +45,28 @@ namespace r_util {
 
 using namespace collection;
 
+class ParseOptions
+{
+public:
+   
+   ParseOptions()
+      : recordStyleLint_(false)
+   {}
+   
+   void setRecordStyleLint(bool record)
+   {
+      recordStyleLint_ = record;
+   }
+   
+   bool getRecordStyleLint()
+   {
+      return recordStyleLint_;
+   }
+
+private:
+   bool recordStyleLint_;
+};
+
 struct ParseItem;
 typedef Stack<ParseItem> BraceStack;
 
@@ -132,7 +154,13 @@ class LintItems
 public:
    
    LintItems()
-      : errorCount_(0) {}
+      : errorCount_(0)
+   {}
+   
+   explicit LintItems(const ParseOptions& parseOptions)
+      : errorCount_(0),
+        parseOptions_(parseOptions)
+   {}
    
    // default ctors: copyable members
    
@@ -247,6 +275,9 @@ public:
    
    void expectedWhitespace(const AnnotatedRToken& token)
    {
+      if (!parseOptions_.getRecordStyleLint())
+         return;
+      
       LintItem lint(token.row(),
                     token.column(),
                     token.row(),
@@ -258,6 +289,9 @@ public:
    
    void unnecessaryWhitespace(const AnnotatedRToken& token)
    {
+      if (!parseOptions_.getRecordStyleLint())
+         return;
+      
       LintItem lint(token.row(),
                     token.column(),
                     token.row(),
@@ -304,6 +338,7 @@ public:
 private:
    std::vector<LintItem> lintItems_;
    std::size_t errorCount_;
+   ParseOptions parseOptions_;
 };
 
 }
@@ -576,11 +611,12 @@ class ParseStatus {
    
 public:
    
-   ParseStatus()
+   explicit ParseStatus(const ParseOptions& parseOptions)
       : pRoot_(ParseNode::createRootNode()),
-        pNode_(pRoot_.get())
-   {
-   }
+        pNode_(pRoot_.get()),
+        lint_(parseOptions),
+        parseOptions_(parseOptions)
+   {}
    
    ParseNode* node() { return pNode_; }
    BraceStack& stack() { return stack_; }
@@ -626,6 +662,7 @@ private:
    ParseNode* pNode_;
    BraceStack stack_;
    LintItems lint_;
+   ParseOptions parseOptions_;
 };
 
 class ParseResults {
@@ -658,7 +695,8 @@ private:
    LintItems lint_;
 };
 
-ParseResults parse(const std::string& string);
+ParseResults parse(const std::string& string,
+                   const ParseOptions& parseOptions = ParseOptions());
 
 } // namespace r_util
 } // namespace core

@@ -923,7 +923,8 @@ void handleFunction(TokenCursor& cursor,
 
 } // end anonymous namespace
 
-ParseResults parse(const std::string& rCode)
+ParseResults parse(const std::string& rCode,
+                   const ParseOptions& parseOptions)
 {
    if (rCode.empty() ||
        rCode.find_first_not_of(" \n\t\v") == std::string::npos)
@@ -933,7 +934,7 @@ ParseResults parse(const std::string& rCode)
    
    RTokens tokens(string_utils::utf8ToWide(rCode));
    AnnotatedRTokens rTokens(tokens);
-   ParseStatus status;
+   ParseStatus status(parseOptions);
    TokenCursor cursor(rTokens);
    
    cursor.fwdOverWhitespaceAndComments();
