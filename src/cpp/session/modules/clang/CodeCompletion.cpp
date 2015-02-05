@@ -220,7 +220,7 @@ Error getCppCompletions(const core::json::JsonRpcRequest& request,
          for (unsigned i = 0; i<pResults->getNumDiagnostics(); i++)
          {
             diagnosticsJson.push_back(
-                          diagnosticToJson(*pResults->getDiagnostic(i)));
+                          diagnosticToJson(tu, *pResults->getDiagnostic(i)));
          }
 
       }

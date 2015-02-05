@@ -98,6 +98,11 @@ public class Debug
    {
       Debug.log(new JSONObject(object).toString());
    }
+   
+   public static native void prettyPrint(JavaScriptObject obj) /*-{
+      var str = JSON.stringify(obj, undefined, 2);
+      console.log(str);
+   }-*/ ;
 
    public static void logAttachDetachException(AttachDetachException ade)
    {

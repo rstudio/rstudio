@@ -185,15 +185,7 @@ public class CppCompletionRequest
       // show diagnostics 
       JsArray<CppDiagnostic> diagnostics = result.getDiagnostics();
       for (int i = 0; i < diagnostics.length(); i++)
-      {
-         CppDiagnostic diagnostic = diagnostics.get(i);
-         StringBuilder msg = new StringBuilder();
-         msg.append(diagnostic.getFile());
-         msg.append(" [" + diagnostic.getLine() + ":" + 
-                           diagnostic.getColumn() + "] ");
-         msg.append(diagnostic.getMessage());
-         Debug.logToConsole(msg.toString());
-      }
+         Debug.prettyPrint(diagnostics.get(i));
    }
    
    private void showCompletionPopup(String message)

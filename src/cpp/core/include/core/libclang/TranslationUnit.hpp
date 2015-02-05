@@ -62,27 +62,27 @@ public:
 
    CXResult findReferencesInFile(Cursor cursor,
                                  CXCursorAndRangeVisitor visitor,
-                                 const std::string& filename = std::string());
+                                 const std::string& filename = std::string()) const;
 
    unsigned getNumDiagnostics() const;
    boost::shared_ptr<Diagnostic> getDiagnostic(unsigned index) const;
 
    // get the cursor for the translation unit
-   Cursor getCursor();
+   Cursor getCursor() const;
 
    // NOTE: this can return a null cursor if no cursor is found
    Cursor getCursor(const std::string& filename,
                     unsigned line,
-                    unsigned column);
+                    unsigned column) const;
 
    // NOTE: this can return an empty code completion object
    // if the operation fails
    boost::shared_ptr<CodeCompleteResults> codeCompleteAt(
                                       const std::string& filename,
                                       unsigned line,
-                                      unsigned column);
+                                      unsigned column) const;
 
-   void printResourceUsage(std::ostream& ostr, bool detailed = false);
+   void printResourceUsage(std::ostream& ostr, bool detailed = false) const;
 
 private:
    std::string filename_;

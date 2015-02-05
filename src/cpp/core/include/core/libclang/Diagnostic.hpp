@@ -59,9 +59,9 @@ public:
    std::string format() const;
    std::string format(unsigned options) const;
 
-   CXDiagnosticSeverity getSeverity() const;
-   SourceLocation getLocation() const;
-   std::string getSpelling() const;
+   CXDiagnosticSeverity severity() const;
+   SourceLocation location() const;
+   std::string spelling() const;
 
    unsigned category() const;
    std::string categoryText() const;
