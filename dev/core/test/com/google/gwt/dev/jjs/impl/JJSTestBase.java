@@ -257,6 +257,7 @@ public abstract class JJSTestBase extends TestCase {
   /**
    * Returns the program that results from compiling the specified code snippet
    * as the body of an entry point method.
+   *
    * @param returnType the return type of the method to compile; use "void" if
    *          the code snippet has no return statement
    * @param params the parameter list of the method to compile

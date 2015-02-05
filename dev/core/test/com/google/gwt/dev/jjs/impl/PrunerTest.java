@@ -18,6 +18,7 @@ package com.google.gwt.dev.jjs.impl;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.js.JsniMethodBody;
+import com.google.gwt.dev.util.arg.SourceLevel;
 
 /**
  * Test for {@link Pruner}.
@@ -25,6 +26,7 @@ import com.google.gwt.dev.jjs.ast.js.JsniMethodBody;
 public class PrunerTest extends OptimizerTestBase {
   @Override
   protected void setUp() throws Exception {
+    sourceLevel = SourceLevel.JAVA8;
     super.setUp();
     runDeadCodeElimination = true;
   }
@@ -231,6 +233,66 @@ public class PrunerTest extends OptimizerTestBase {
     );
 
     EqualityNormalizer.exec(result.getOptimizedProgram());
+  }
+
+  public void testInterface() throws Exception {
+    runDeadCodeElimination = false;
+    addSnippetClassDecl("interface I { int bar(); }");
+    addSnippetClassDecl("static class A implements I { public int bar() { return 1; } }");
+    Result result =
+        optimize("void", "A a = new A(); a.bar();");
+    assertNotNull(result.findClass("EntryPoint$I"));
+    assertNotNull(result.findClass("EntryPoint$A"));
+    assertNotNull(OptimizerTestBase.findMethod(result.findClass("EntryPoint$A"), "bar"));
+    assertNull(OptimizerTestBase.findMethod(result.findClass("EntryPoint$I"), "bar"));
+  }
+
+  public void testDefaultInterface() throws Exception {
+    runDeadCodeElimination = false;
+    addSnippetClassDecl("interface I {default int bar() {return 1;} "
+        + "default int foo() {return 1;} }");
+    addSnippetClassDecl("static class A implements I { }");
+    addSnippetClassDecl("interface I2 {default int foo() {return fun();}"
+        + "default int fun() {return 1;}"
+        + "default int goo() {return 0;}"
+        + "static int s1() { return s2();}"
+        + "static int s2() { return 0;}"
+        + "static int s3() { return 1;}"
+        + "}");
+    Result result = optimize("void", "A a = new A(); a.bar(); "
+        + "I2 i = new I2() {}; i.foo(); I2.s1();");
+    assertNotNull(result.findClass("EntryPoint$A"));
+    assertNotNull(result.findClass("EntryPoint$I"));
+    assertNotNull(result.findClass("EntryPoint$I2"));
+    assertNotNull(OptimizerTestBase.findMethod(result.findClass("EntryPoint$I"), "bar"));
+    assertNotNull(OptimizerTestBase.findMethod(result.findClass("EntryPoint$A"), "bar"));
+    assertNull(OptimizerTestBase.findMethod(result.findClass("EntryPoint$I"), "foo"));
+    assertNotNull(OptimizerTestBase.findMethod(result.findClass("EntryPoint$I2"), "foo"));
+    assertNotNull(OptimizerTestBase.findMethod(result.findClass("EntryPoint$I2"), "fun"));
+    assertNull(OptimizerTestBase.findMethod(result.findClass("EntryPoint$I2"), "goo"));
+    assertNotNull(OptimizerTestBase.findMethod(result.findClass("EntryPoint$I2"), "s1"));
+    assertNotNull(OptimizerTestBase.findMethod(result.findClass("EntryPoint$I2"), "s2"));
+    assertNull(OptimizerTestBase.findMethod(result.findClass("EntryPoint$I2"), "s3"));
+  }
+
+  public void testPruneParamsAndLocalsInMethodBody() throws Exception {
+    runDeadCodeElimination = false;
+    addSnippetClassDecl("interface I {default int bar() {int a = 0; return 1;} "
+        + "static int fun(int b) {int a = 0; return 1;} }");
+    Result result = optimize("void", "I i = new I() {}; i.bar(); I.fun(0);");
+    assertNotNull(result.findClass("EntryPoint$I"));
+    JMethod bar = OptimizerTestBase.findMethod(result.findClass("EntryPoint$I"), "bar");
+    assertNotNull(bar);
+    assertEquals("public int bar(){\n" +
+        "  0;\n" +
+        "  return 1;\n" +
+        "}", bar.toSource());
+    JMethod fun = OptimizerTestBase.findMethod(result.findClass("EntryPoint$I"), "fun");
+    assertNotNull(fun);
+    assertEquals("public static int fun(){\n" +
+        "  0;\n" +
+        "  return 1;\n" +
+        "}", fun.toSource());
   }
 
   @Override

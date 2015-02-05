@@ -241,6 +241,16 @@ public class MakeCallsStatic {
       }
       return false;
     }
+
+    public JMethod getOrCreateStaticImpl(JProgram program, JMethod method) {
+      assert !method.isStatic();
+      JMethod staticImpl = program.getStaticImpl(method);
+      if (staticImpl == null) {
+        accept(method);
+        staticImpl = program.getStaticImpl(method);
+      }
+      return staticImpl;
+    }
   }
 
   private static String getStaticMethodName(JMethod x) {

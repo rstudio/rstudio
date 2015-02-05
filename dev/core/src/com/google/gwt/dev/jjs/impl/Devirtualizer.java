@@ -181,14 +181,15 @@ public class Devirtualizer {
             findOverridingMethod(method, program.typeOracle.getSingleJsoImpl(targetType));
         assert overridingMethod != null;
 
-        JMethod jsoStaticImpl = getStaticImpl(overridingMethod);
+        JMethod jsoStaticImpl =
+            staticImplCreator.getOrCreateStaticImpl(program, overridingMethod);
         devirtualMethodByMethod.put(method, jsoStaticImpl);
       } else if (program.typeOracle.isJavaScriptObject(targetType)) {
         // A virtual dispatch on a target that is already known to be a JavaScriptObject, this
         // should have been handled by MakeCallsStatic.
         // TODO(rluble): verify that this case can not arise in optimized mode and if so
         // remove as is an unnecessary optimization.
-        JMethod devirtualMethod = getStaticImpl(method);
+        JMethod devirtualMethod = staticImplCreator.getOrCreateStaticImpl(program, method);
         devirtualMethodByMethod.put(method, devirtualMethod);
       } else {
         JMethod devirtualMethod = getOrCreateDevirtualMethod(method);
@@ -449,7 +450,8 @@ public class Devirtualizer {
       JMethod overridingMethod = findOverridingMethod(method, program.getTypeJavaLangString());
       assert overridingMethod != null : method.getEnclosingType().getName() + "::" +
           method.getName() + " not overridden by String";
-      dispatchToMethodByTargetType.put(STRING, getStaticImpl(overridingMethod));
+      dispatchToMethodByTargetType.put(STRING,
+          staticImplCreator.getOrCreateStaticImpl(program, overridingMethod));
     }
     if ((possibleTargetTypes & JSO) != 0) {
       JMethod overridingMethod = findOverridingMethod(method,
@@ -459,14 +461,16 @@ public class Devirtualizer {
       }
       assert overridingMethod != null : method.getEnclosingType().getName() + "::" +
           method.getName() + " not overridden by JavaScriptObject";
-      dispatchToMethodByTargetType.put(JSO, getStaticImpl(overridingMethod));
+      dispatchToMethodByTargetType.put(JSO,
+          staticImplCreator.getOrCreateStaticImpl(program, overridingMethod));
     }
     if ((possibleTargetTypes & JAVA_ARRAY) != 0) {
       // Arrays only implement Object methods as the Clonable interface is not supported in GWT.
       JMethod overridingMethod = findOverridingMethod(method, program.getTypeJavaLangObject());
       assert overridingMethod != null : method.getEnclosingType().getName() + "::" +
           method.getName() + " not overridden by Object";
-      dispatchToMethodByTargetType.put(JAVA_ARRAY, getStaticImpl(overridingMethod));
+      dispatchToMethodByTargetType.put(JAVA_ARRAY,
+          staticImplCreator.getOrCreateStaticImpl(program, overridingMethod));
     }
     if ((possibleTargetTypes & HAS_JAVA_VIRTUAL_DISPATCH) != 0) {
       dispatchToMethodByTargetType.put(HAS_JAVA_VIRTUAL_DISPATCH, method);
@@ -553,15 +557,5 @@ public class Devirtualizer {
     methodByDevirtualMethod.put(method, devirtualMethod);
 
     return devirtualMethod;
-  }
-
-  private JMethod getStaticImpl(JMethod method) {
-    assert !method.isStatic();
-    JMethod staticImpl = program.getStaticImpl(method);
-    if (staticImpl == null) {
-      staticImplCreator.accept(method);
-      staticImpl = program.getStaticImpl(method);
-    }
-    return staticImpl;
   }
 }

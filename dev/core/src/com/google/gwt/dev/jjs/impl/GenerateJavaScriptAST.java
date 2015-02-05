@@ -558,7 +558,7 @@ public class GenerateJavaScriptAST {
           JsName polyName;
           if (x.isPrivate()) {
             polyName = interfaceScope.declareName(mangleNameForPrivatePoly(x), name);
-          } else if (x.isDefault()) {
+          } else if (x.isPackagePrivate()) {
             polyName = interfaceScope.declareName(mangleNameForPackagePrivatePoly(x), name);
             // Also add the mapping from the top of the package private overriding chain, so
             // so that it can be referred when generating the vtable of a subclass that
@@ -3507,7 +3507,7 @@ public class GenerateJavaScriptAST {
   }
 
   String mangleNameForPackagePrivatePoly(JMethod x) {
-    assert x.isDefault() && !x.isStatic();
+    assert x.isPackagePrivate() && !x.isStatic();
     StringBuilder sb = new StringBuilder();
     /*
      * Package private instance methods in different classes should not override each

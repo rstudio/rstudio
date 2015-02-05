@@ -86,6 +86,7 @@ import com.google.gwt.dev.jjs.impl.OptimizerContext;
 import com.google.gwt.dev.jjs.impl.OptimizerStats;
 import com.google.gwt.dev.jjs.impl.Pruner;
 import com.google.gwt.dev.jjs.impl.RecordRebinds;
+import com.google.gwt.dev.jjs.impl.ReplaceDefenderMethodReferences;
 import com.google.gwt.dev.jjs.impl.ResolveRebinds;
 import com.google.gwt.dev.jjs.impl.ResolveRuntimeTypeReferences.TypeMapper;
 import com.google.gwt.dev.jjs.impl.SameParameterValueOptimizer;
@@ -966,6 +967,9 @@ public abstract class JavaToJavaScriptCompiler {
         obfuscateEnums();
 
         // (4) Normalize the unresolved Java AST
+        // Replace defender method references
+        ReplaceDefenderMethodReferences.exec(jprogram);
+
         FixAssignmentsToUnboxOrCast.exec(jprogram);
         if (options.isEnableAssertions()) {
           AssertionNormalizer.exec(jprogram);

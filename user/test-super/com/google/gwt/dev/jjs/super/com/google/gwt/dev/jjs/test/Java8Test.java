@@ -43,12 +43,19 @@ public class Java8Test extends GWTTestCase {
     boolean run(String a, String b);
   }
 
+  interface Lambda3<String> {
+    boolean run(String a);
+  }
+
   class AcceptsLambda<T> {
     public T accept(Lambda<T> foo) {
       return foo.run(10, 20);
     }
     public boolean accept2(Lambda2<String> foo) {
       return foo.run("a", "b");
+    }
+    public boolean accept3(Lambda3<String> foo) {
+      return foo.run("hello");
     }
   }
 
@@ -63,6 +70,70 @@ public class Java8Test extends GWTTestCase {
 
     public int fooInstance(int a, int b) {
       return a + b + x + y;
+    }
+  }
+
+  interface DefaultInterface {
+    void method1();
+    // CHECKSTYLE_OFF
+    default int method2() { return 42; }
+    default int redeclaredAsAbstract() {
+        return 88;
+    }
+    default Integer addInts(int x, int y) { return x + y; }
+    default String print() { return "DefaultInterface"; }
+    // CHECKSTYLE_ON
+  }
+
+  interface DefaultInterface2 {
+    void method3();
+    // CHECKSTYLE_OFF
+    default int method4() { return 23; }
+    default int redeclaredAsAbstract() {
+      return 77;
+    }
+    // CHECKSTYLE_ON
+  }
+
+  interface DefaultInterfaceSubType extends DefaultInterface {
+    // CHECKSTYLE_OFF
+    default int method2() { return 43; }
+    default String print() {
+      return "DefaultInterfaceSubType " + DefaultInterface.super.print();
+    }
+    // CHECKSTYLE_ON
+  }
+
+  static abstract class DualImplementorSuper implements DefaultInterface {
+    public void method1() {
+    }
+
+    public abstract int redeclaredAsAbstract();
+  }
+
+  static class DualImplementorBoth extends VirtualUpRef implements DefaultInterface, DefaultInterface2 {
+    public void method1() {
+    }
+    public void method3() {
+    }
+  }
+
+  static class DualImplementor extends DualImplementorSuper implements DefaultInterface2 {
+    public void method3() {
+    }
+
+    public int redeclaredAsAbstract() {
+      return DefaultInterface2.super.redeclaredAsAbstract();
+    }
+  }
+
+  // this doesn't implement DefaultInterface, but will provide implementation in subclasses
+  static class VirtualUpRef {
+    public int method2() {
+      return 99;
+    }
+    public int redeclaredAsAbstract() {
+      return 44;
     }
   }
 
@@ -89,6 +160,33 @@ public class Java8Test extends GWTTestCase {
     public static Integer staticMethod(int x, int y) {
       return null;
     }
+  }
+
+  static class DefaultInterfaceImpl implements DefaultInterface {
+    public void method1() {
+    }
+  }
+
+  static class DefaultInterfaceImpl2 implements DefaultInterface {
+    public void method1() {
+    }
+    public int method2() {
+      return 100;
+    }
+  }
+
+  static class DefaultInterfaceImplVirtualUpRef extends VirtualUpRef implements DefaultInterface {
+    public void method1() {
+    }
+  }
+
+  static class DefaultInterfaceImplVirtualUpRefTwoInterfaces extends VirtualUpRef
+      implements DefaultInterfaceSubType {
+    public void method1() {
+    }
+    // CHECKSTYLE_OFF
+    public String print() { return "DefaultInterfaceImplVirtualUpRefTwoInterfaces"; }
+    // CHECKSTYLE_ON
   }
 
   @Override
@@ -163,6 +261,7 @@ public class Java8Test extends GWTTestCase {
 
   public void testImplicitQualifierReferenceBinding() throws Exception {
     assertFalse(new AcceptsLambda<String>().accept2(String::equalsIgnoreCase));
+    assertTrue(new AcceptsLambda<String>().accept3("hello world"::contains));
   }
 
   public void testConstructorReferenceBinding() {
@@ -321,5 +420,243 @@ public class Java8Test extends GWTTestCase {
 
   public void testPrivateConstructorReference() {
     new X2().foo();
+  }
+
+  public void testDefaultInterfaceMethod() {
+    assertEquals(42, new DefaultInterfaceImpl().method2());
+  }
+
+  public void testDefaultInterfaceMethodVirtualUpRef() {
+    assertEquals(99, new DefaultInterfaceImplVirtualUpRef().method2());
+    assertEquals(99, new DefaultInterfaceImplVirtualUpRefTwoInterfaces().method2());
+    assertEquals("SimpleB", new com.google.gwt.dev.jjs.test.package3.SimpleC().m());
+    assertEquals("SimpleASimpleB", new com.google.gwt.dev.jjs.test.package1.SimpleD().m());
+  }
+
+  public void testDefaultInterfaceMethodMultiple() {
+    assertEquals(42, new DualImplementor().method2());
+    assertEquals(23, new DualImplementor().method4());
+    assertEquals(77, new DualImplementor().redeclaredAsAbstract());
+    assertEquals(44, new DualImplementorBoth().redeclaredAsAbstract());
+    DefaultInterfaceImplVirtualUpRefTwoInterfaces instanceImplementInterfaceSubType =
+        new DefaultInterfaceImplVirtualUpRefTwoInterfaces();
+    DefaultInterfaceSubType interfaceSubType1 = instanceImplementInterfaceSubType;
+    assertEquals("DefaultInterfaceImplVirtualUpRefTwoInterfaces",
+        instanceImplementInterfaceSubType.print());
+    assertEquals("DefaultInterfaceImplVirtualUpRefTwoInterfaces", interfaceSubType1.print());
+    DefaultInterfaceSubType interfaceSubType2 = new DefaultInterfaceSubType() {
+      @Override
+      public void method1() { }
+    };
+    assertEquals("DefaultInterfaceSubType DefaultInterface",
+        interfaceSubType2.print());
+    DefaultInterfaceSubType interfaceSubType3 = () -> { };
+    assertEquals("DefaultInterfaceSubType DefaultInterface",
+        interfaceSubType3.print());
+  }
+
+  public void testDefenderMethodByInterfaceInstance() {
+    DefaultInterfaceImpl2 interfaceImpl2 = new DefaultInterfaceImpl2();
+    DefaultInterface interface1 = interfaceImpl2;
+    assertEquals(100, interfaceImpl2.method2());
+    assertEquals(100, interface1.method2());
+  }
+
+  public void testDefaultMethodReference() {
+    DefaultInterfaceImplVirtualUpRef x = new DefaultInterfaceImplVirtualUpRef();
+    assertEquals(30, (int) new AcceptsLambda<Integer>().accept(x::addInts));
+  }
+
+  interface InterfaceWithTwoDefenderMethods {
+    // CHECKSTYLE_OFF
+    default String foo() { return "interface.foo"; }
+    default String bar() { return this.foo() + " " + foo(); }
+    // CHECKSTYLE_ON
+  }
+
+  class ClassImplementOneDefenderMethod implements InterfaceWithTwoDefenderMethods {
+    public String foo() {
+      return "class.foo";
+    }
+  }
+
+  public void testThisRefInDefenderMethod() {
+    ClassImplementOneDefenderMethod c = new ClassImplementOneDefenderMethod();
+    InterfaceWithTwoDefenderMethods i1 = c;
+    InterfaceWithTwoDefenderMethods i2 = new InterfaceWithTwoDefenderMethods() { };
+    assertEquals("class.foo class.foo", c.bar());
+    assertEquals("class.foo class.foo", i1.bar());
+    assertEquals("interface.foo interface.foo", i2.bar());
+  }
+
+  interface InterfaceImplementOneDefenderMethod extends InterfaceWithTwoDefenderMethods {
+    // CHECKSTYLE_OFF
+    default String foo() { return "interface1.foo"; }
+    // CHECKSTYLE_ON
+  }
+
+  interface InterfaceImplementZeroDefenderMethod extends InterfaceWithTwoDefenderMethods {
+  }
+
+  class ClassImplementsTwoInterfaces implements InterfaceImplementOneDefenderMethod,
+      InterfaceImplementZeroDefenderMethod {
+  }
+
+  public void testClassImplementsTwoInterfacesWithSameDefenderMethod() {
+    ClassImplementsTwoInterfaces c = new ClassImplementsTwoInterfaces();
+    assertEquals("interface1.foo", c.foo());
+  }
+
+  class AbstractClass implements InterfaceWithTwoDefenderMethods {
+  }
+
+  class Child1 extends AbstractClass {
+    public String foo() {
+      return super.foo() + " child1.foo";
+    }
+  }
+
+  class Child2 extends AbstractClass {
+  }
+
+  public void testAbstractClassImplementsInterface() {
+    Child1 child1 = new Child1();
+    Child2 child2 = new Child2();
+    assertEquals("interface.foo child1.foo", child1.foo());
+    assertEquals("interface.foo", child2.foo());
+  }
+
+  interface InterfaceI {
+    // CHECKSTYLE_OFF
+    default String print() { return "interface1"; }
+    // CHECKSTYLE_ON
+  }
+  interface InterfaceII {
+    // CHECKSTYLE_OFF
+    default String print() { return "interface2"; }
+    // CHECKSTYLE_ON
+  }
+  class ClassI {
+    public String print() {
+      return "class1";
+    }
+  }
+  class ClassII extends ClassI implements InterfaceI, InterfaceII {
+    public String print() {
+      return super.print() + " " + InterfaceI.super.print() + " " + InterfaceII.super.print();
+    }
+  }
+
+  public void testSuperRefInDefenderMethod() {
+    ClassII c = new ClassII();
+    assertEquals("class1 interface1 interface2", c.print());
+  }
+
+  interface II {
+    // CHECKSTYLE_OFF
+    default String fun() { return "fun() in i: " + this.foo(); };
+    default String foo() { return "foo() in i.\n"; };
+    // CHECKSTYLE_ON
+  }
+  interface JJ extends II {
+    // CHECKSTYLE_OFF
+    default String fun() { return "fun() in j: " + this.foo() + II.super.fun(); };
+    default String foo() { return "foo() in j.\n"; }
+    // CHECKSTYLE_ON
+  }
+  class AA {
+    public String fun() {
+      return "fun() in a: " + this.foo();
+    }
+    public String foo() {
+      return "foo() in a.\n";
+    }
+  }
+  class BB extends AA implements JJ {
+    public String fun() {
+      return "fun() in b: " + this.foo() + super.fun() + JJ.super.fun();
+    }
+    public String foo() {
+      return "foo() in b.\n";
+    }
+  }
+  class CC extends BB implements JJ {
+    public String fun() {
+      return "fun() in c: " + super.fun();
+    }
+  }
+
+  public void testSuperThisRefsInDefenderMethod() {
+    CC c = new CC();
+    II i1 = c;
+    JJ j1 = c;
+    BB b = new BB();
+    II i2 = b;
+    JJ j2 = b;
+    JJ j3 = new JJ() { };
+    II i3 = j3;
+    II i4 = new II() { };
+    String c_fun = "fun() in c: fun() in b: foo() in b.\n"
+        + "fun() in a: foo() in b.\n"
+        + "fun() in j: foo() in b.\n"
+        + "fun() in i: foo() in b.\n";
+    String b_fun = "fun() in b: foo() in b.\n"
+        + "fun() in a: foo() in b.\n"
+        + "fun() in j: foo() in b.\n"
+        + "fun() in i: foo() in b.\n";
+    String j_fun = "fun() in j: foo() in j.\n"
+        + "fun() in i: foo() in j.\n";
+    String i_fun = "fun() in i: foo() in i.\n";
+    assertEquals(c_fun, c.fun());
+    assertEquals(c_fun, i1.fun());
+    assertEquals(c_fun, j1.fun());
+    assertEquals(b_fun, b.fun());
+    assertEquals(b_fun, i2.fun());
+    assertEquals(b_fun, j2.fun());
+    assertEquals(j_fun, j3.fun());
+    assertEquals(j_fun, i3.fun());
+    assertEquals(i_fun, i4.fun());
+  }
+
+  interface OuterInterface {
+    // CHECKSTYLE_OFF
+    default String m() {
+      return "I.m;" + new InnerClass().n();
+    }
+    default String n() {
+      return "I.n;" + this.m();
+    }
+    // CHECKSTYLE_ON
+    class InnerClass {
+      public String n() {
+        return "A.n;" + m();
+      }
+      public String m() {
+        return "A.m;";
+      }
+    }
+  }
+  class OuterClass {
+    public String m() {
+      return "B.m;";
+    }
+    public String n1() {
+      OuterInterface i = new OuterInterface() { };
+      return "B.n1;" + i.n() + OuterClass.this.m();
+    }
+    public String n2() {
+      OuterInterface i = new OuterInterface() {
+        @Override
+        public String n() {
+          return this.m() + OuterClass.this.m();
+        }
+      };
+      return "B.n2;" + i.n() + OuterClass.this.m();
+    }
+  }
+  public void testNestedInterfaceClass() {
+    OuterClass outerClass = new OuterClass();
+    assertEquals("B.n1;I.n;I.m;A.n;A.m;B.m;", outerClass.n1());
+    assertEquals("B.n2;I.m;A.n;A.m;B.m;B.m;", outerClass.n2());
   }
 }

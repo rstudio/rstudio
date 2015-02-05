@@ -399,8 +399,8 @@ public class Pruner {
     }
 
     @Override
-    public boolean visit(JClassType type, Context ctx) {
-      assert (referencedTypes.contains(type));
+    public boolean visit(JDeclaredType type, Context ctx) {
+      assert (referencedTypes.contains(type) || type instanceof JInterfaceType);
       Predicate<JNode> notReferenced = Predicates.not(Predicates.in(referencedNonTypes));
       removeFields(notReferenced, type);
       removeMethods(notReferenced, type);
@@ -408,22 +408,6 @@ public class Pruner {
       for (JMethod method : type.getMethods()) {
         accept(method);
       }
-
-      return false;
-    }
-
-    @Override
-    public boolean visit(JInterfaceType type, Context ctx) {
-      Predicate<JNode> notReferenced = Predicates.not(Predicates.in(referencedNonTypes));
-      boolean typeReferenced = referencedTypes.contains(type);
-      boolean typeInstantiated = program.typeOracle.isInstantiatedType(type);
-
-      Predicate<JNode> notReferencedField =
-          typeReferenced ? notReferenced : Predicates.<JNode>alwaysTrue();
-      Predicate<JNode> notReferencedMethod =
-          typeInstantiated ? notReferenced : Predicates.<JNode>alwaysTrue();
-      removeFields(notReferencedField, type);
-      removeMethods(notReferencedMethod, type);
 
       return false;
     }

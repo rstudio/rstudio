@@ -50,6 +50,7 @@ public class JMethod extends JNode implements HasEnclosingType, HasName, HasType
   private boolean noExport = false;
   private boolean inliningAllowed = true;
   private boolean hasSideEffects = true;
+  private boolean defaultMethod = false;
 
   public boolean isNoExport() {
     return noExport;
@@ -116,6 +117,14 @@ public class JMethod extends JNode implements HasEnclosingType, HasName, HasType
 
   public void setHasSideEffects(boolean hasSideEffects) {
     this.hasSideEffects = hasSideEffects;
+  }
+
+  public void setDefaultMethod() {
+    this.defaultMethod = true;
+  }
+
+  public boolean isDefaultMethod() {
+    return defaultMethod;
   }
 
   /**
@@ -331,7 +340,7 @@ public class JMethod extends JNode implements HasEnclosingType, HasName, HasType
    * visibility.
    */
   public boolean exposesOverriddenPackagePrivateMethod() {
-    if (isPrivate() || isDefault()) {
+    if (isPrivate() || isPackagePrivate()) {
       return false;
     }
 
@@ -339,7 +348,7 @@ public class JMethod extends JNode implements HasEnclosingType, HasName, HasType
       if (overriddenMethod.getEnclosingType() instanceof JInterfaceType) {
         continue;
       }
-      if (overriddenMethod.isDefault()) {
+      if (overriddenMethod.isPackagePrivate()) {
         return true;
       }
     }
@@ -448,7 +457,7 @@ public class JMethod extends JNode implements HasEnclosingType, HasName, HasType
     return false;
   }
 
-  public boolean isDefault() {
+  public boolean isPackagePrivate() {
     return access == AccessModifier.DEFAULT.ordinal();
   }
 

@@ -1629,7 +1629,14 @@ public class GwtAstBuilder {
       try {
         // Oddly enough, super refs can be modeled as this refs, because
         // whatever expression they qualify has already been resolved.
-        endVisit((QualifiedThisReference) x, scope);
+        SourceInfo info = makeSourceInfo(x);
+        ReferenceBinding targetType = (ReferenceBinding) x.qualification.resolvedType.erasure();
+        if (targetType.isInterface()) {
+          // Java8 super reference to default method from subtype, X.super.someDefaultMethod
+          push(makeThisRef(info));
+        } else {
+          push(makeThisReference(info, targetType, true, scope));
+        }
       } catch (Throwable e) {
         throw translateException(x, e);
       }
@@ -2902,6 +2909,7 @@ public class GwtAstBuilder {
     private JExpression makeThisReference(SourceInfo info, ReferenceBinding targetType,
         boolean exactMatch, BlockScope scope) {
       targetType = (ReferenceBinding) targetType.erasure();
+
       Object[] path = scope.getEmulationPath(targetType, exactMatch, false);
       if (path == null) {
         throw new InternalCompilerException("No emulation path.");
@@ -3891,6 +3899,11 @@ public class GwtAstBuilder {
     if (b.isSynthetic()) {
       method.setSynthetic();
     }
+
+    if (b.isDefaultMethod()) {
+      method.setDefaultMethod();
+    }
+
     enclosingType.addMethod(method);
     JsInteropUtil.maybeSetJsinteropMethodProperties(x, method);
     processAnnotations(x, method);

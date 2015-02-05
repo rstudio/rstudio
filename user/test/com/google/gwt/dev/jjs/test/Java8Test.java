@@ -111,4 +111,37 @@ public class Java8Test extends GWTTestCase {
 
   public void testPrivateConstructorReference() {
   }
+
+  public void testDefaultInterfaceMethod() {
+  }
+
+  public void testDefaultInterfaceMethodVirtualUpRef() {
+  }
+
+  public void testDefaultInterfaceMethodMultiple() {
+  }
+
+  public void testDefaultMethodReference() {
+  }
+
+  public void testDefenderMethodByInterfaceInstance() {
+  }
+
+  public void testThisRefInDefenderMethod() {
+  }
+
+  public void testClassImplementsTwoInterfacesWithSameDefenderMethod() {
+  }
+
+  public void testAbstractClassImplementsInterface() {
+  }
+
+  public void testSuperRefInDefenderMethod() {
+  }
+
+  public void testSuperThisRefsInDefenderMethod() {
+  }
+
+  public void testNestedInterfaceClass() {
+  }
 }
