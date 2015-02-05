@@ -37,31 +37,54 @@ public class Wizard<I,T> extends ModalDialog<T>
 {
    public Wizard(String caption, 
                  String subCaption,
+                 String okCaption,
                  I initialData,
                  final ProgressOperationWithInput<T> operation)
    {
       super(caption, operation);
       initialData_ = initialData;
       subCaption_ = subCaption;
+      okCaption_ = okCaption;
       
-      setOkButtonCaption("Create Project");
+      resetOkButtonCaption();
       setOkButtonVisible(false);
+
+      // add next button
+      nextButton_ = new ThemedButton("Next", new ClickHandler()
+      {
+         @Override
+         public void onClick(ClickEvent arg0)
+         {
+            if (activePage_ instanceof WizardIntermediatePage<?,?>) 
+            {
+               ((WizardIntermediatePage<I, T>) activePage_).advance();
+            }
+         }
+      });
+      nextButton_.setVisible(false);
    }
    
    protected void addPage(WizardPage<I,T> page)
    {
       pages_.add(page);
       
+      CommandWithArg<WizardPage<I,T>> showPageCmd = 
+            new CommandWithArg<WizardPage<I,T>>() 
+      {
+         @Override
+         public void execute(WizardPage<I, T> page)
+         {
+            showPage(page);
+         };
+      };
+
       if (page instanceof WizardNavigationPage<?,?>)
       {
-         ((WizardNavigationPage<I,T>) page).setSelectionHandler(
-                                    new CommandWithArg<WizardPage<I,T>>() {
-            @Override
-            public void execute(WizardPage<I, T> page)
-            {
-               showPage(page);
-            }      
-         });
+         ((WizardNavigationPage<I,T>) page).setSelectionHandler(showPageCmd);
+      }
+      else if (page instanceof WizardIntermediatePage<?,?>) 
+      {
+         ((WizardIntermediatePage<I,T>) page).setNextHandler(showPageCmd);
       }
    }
    
@@ -77,7 +100,7 @@ public class Wizard<I,T> extends ModalDialog<T>
       headerPanel_ = new LayoutPanel();
       headerPanel_.addStyleName(styles.headerPanel());
       
-      // layout consants
+      // layout constants
       final int kTopMargin = 5;
       final int kLeftMargin = 8;
       final int kCaptionWidth = 400;
@@ -137,20 +160,12 @@ public class Wizard<I,T> extends ModalDialog<T>
       bodyPanel_.getElement().getStyle().setProperty("overflowX", "hidden");
       mainWidget.add(bodyPanel_);
      
-      // page selection panel
-      pageSelector_ = new WizardPageSelector<I,T>(
-            pages_, 
-            new CommandWithArg<WizardPage<I,T>>() {
-         @Override
-         public void execute(WizardPage<I, T> page)
-         {
-            showPage(page);
-         }
-      });
-      bodyPanel_.add(pageSelector_);
-      bodyPanel_.setWidgetTopBottom(pageSelector_, 0, Unit.PX, 0, Unit.PX);
-      bodyPanel_.setWidgetLeftRight(pageSelector_, 0, Unit.PX, 0, Unit.PX);
-      bodyPanel_.setWidgetVisible(pageSelector_, true);
+      firstPageWidget_ = createFirstPage(); 
+
+      bodyPanel_.add(firstPageWidget_);
+      bodyPanel_.setWidgetTopBottom(firstPageWidget_, 0, Unit.PX, 0, Unit.PX);
+      bodyPanel_.setWidgetLeftRight(firstPageWidget_, 0, Unit.PX, 0, Unit.PX);
+      bodyPanel_.setWidgetVisible(firstPageWidget_, true);
     
       // add pages and make them invisible
       for (int i=0; i<pages_.size(); i++)
@@ -158,8 +173,6 @@ public class Wizard<I,T> extends ModalDialog<T>
          WizardPage<I,T> page = pages_.get(i);
          addAndInitializePage(page);
       }
-      
-     
       
       return mainWidget;
    }
@@ -184,6 +197,21 @@ public class Wizard<I,T> extends ModalDialog<T>
          for (int i=0; i<pages.size(); i++)
             addAndInitializePage(pages.get(i));
       }
+   }
+   
+   // by default, the first page is a page selector, but specific wizards may
+   // override this with their own first page
+   protected Widget createFirstPage()
+   {
+      return new WizardPageSelector<I,T>(
+            pages_, 
+            new CommandWithArg<WizardPage<I,T>>() {
+         @Override
+         public void execute(WizardPage<I, T> page)
+         {
+            showPage(page);
+         }
+      });
    }
    
    @Override
@@ -288,7 +316,7 @@ public class Wizard<I,T> extends ModalDialog<T>
       // are we navigating from the main selector?
       if (activePage_ == null)
       {
-         fromWidget = pageSelector_;
+         fromWidget = firstPageWidget_;
          okButtonVisible = !(page instanceof WizardNavigationPage<?,?>);
          activeParentNavigationPage_ = null;   
       }
@@ -317,6 +345,10 @@ public class Wizard<I,T> extends ModalDialog<T>
             // make ok button visible
             setOkButtonVisible(okButtonVisible);
             
+            // if this is an intermediate page, make Next visible
+            nextButton_.setVisible(
+                  page instanceof WizardIntermediatePage<?,?>);
+            
             // call hook
             onPageActivated(page, okButtonVisible);
             
@@ -340,7 +372,7 @@ public class Wizard<I,T> extends ModalDialog<T>
       }
       else
       {
-         toWidget = pageSelector_;
+         toWidget = firstPageWidget_;
       }
       
       final String pageCaptionLabel = isNavigationPage ? 
@@ -392,21 +424,26 @@ public class Wizard<I,T> extends ModalDialog<T>
       return input;
    }
     
+   
+   private void resetOkButtonCaption()
+   {
+      setOkButtonCaption(okCaption_);
+   }
  
    
    private final I initialData_; 
    
    private final String subCaption_;
+   private final String okCaption_;
    
    private LayoutPanel headerPanel_;
    private Label subCaptionLabel_;
    private Label backButton_;
    private Label pageCaptionLabel_;
-   
-   
+   private ThemedButton nextButton_;
    
    private LayoutPanel bodyPanel_;
-   private WizardPageSelector<I,T> pageSelector_;
+   private Widget firstPageWidget_;
    private ArrayList<WizardPage<I,T>> pages_ = new ArrayList<WizardPage<I,T>>();
    private WizardPage<I,T> activePage_ = null;
    private WizardPage<I,T> activeParentNavigationPage_ = null;

@@ -35,6 +35,7 @@ public class NewProjectWizard extends Wizard<NewProjectInput,NewProjectResult>
    {
       super("New Project", 
             "Create project from:", 
+            "Create Project",
             input, 
             operation);
     
