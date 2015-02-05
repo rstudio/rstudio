@@ -144,12 +144,6 @@ public class CppCompletionRequest
          {
             showCompletionPopup(filtered);
          }
-         
-         // log diagnostics to console
-         /*
-         for (int i = 0; i < diagnostics_.length(); i++)
-            Debug.logToConsole(diagnostics_.get(i).getFormat());
-         */
       }
    }
    
@@ -176,7 +170,6 @@ public class CppCompletionRequest
        
       // get the completions
       completions_ = result.getCompletions();
-      diagnostics_ = result.getDiagnostics();
       
       // check for none found condition on explicit completion
       if ((completions_.length() == 0) && explicit_)
@@ -187,6 +180,19 @@ public class CppCompletionRequest
       else
       {
          updateUI(true);
+      }
+      
+      // show diagnostics 
+      JsArray<CppDiagnostic> diagnostics = result.getDiagnostics();
+      for (int i = 0; i < diagnostics.length(); i++)
+      {
+         CppDiagnostic diagnostic = diagnostics.get(i);
+         StringBuilder msg = new StringBuilder();
+         msg.append(diagnostic.getFile());
+         msg.append(" [" + diagnostic.getLine() + ":" + 
+                           diagnostic.getColumn() + "] ");
+         msg.append(diagnostic.getMessage());
+         Debug.logToConsole(msg.toString());
       }
    }
    
@@ -321,7 +327,6 @@ public class CppCompletionRequest
    
    private CppCompletionPopupMenu popup_;
    private JsArray<CppCompletion> completions_;
-   private JsArray<CppDiagnostic> diagnostics_;
    
    private boolean terminated_ = false;
 }

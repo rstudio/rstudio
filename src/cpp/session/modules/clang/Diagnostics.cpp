@@ -42,9 +42,9 @@ json::Object diagnosticToJson(const Diagnostic& diagnostic)
 {
    json::Object diagnosticJson;
 
-   diagnosticJson["format"] = diagnostic.format();
    diagnosticJson["severity"] = safe_convert::numberTo<int>(
                                              diagnostic.getSeverity(), 0);
+   diagnosticJson["message"] = diagnostic.getSpelling();
    FileLocation loc = diagnostic.getLocation().getSpellingLocation();
    diagnosticJson["file"] = module_context::createAliasedPath(loc.filePath);
    diagnosticJson["line"] = safe_convert::numberTo<int>(loc.line, 1);

@@ -30,14 +30,14 @@ public class CppDiagnostic extends JavaScriptObject
    public static final int ERROR = 3;
    public static final int FATAL = 4; 
    
-   public native final String getFormat() /*-{
-      return this.format;
-   }-*/;
-   
    public native final int getSeverity() /*-{
       return this.severity;
-   }-*/;   
+   }-*/; 
    
+   public native final String getMessage() /*-{
+      return this.message;
+   }-*/;
+
    public native final String getFile() /*-{
       return this.file;
    }-*/;
