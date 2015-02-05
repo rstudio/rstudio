@@ -347,7 +347,7 @@ using namespace linter;
 
 std::string complement(const std::string& bracket);
 
-class ParseNode
+class ParseNode : public boost::noncopyable
 {
 public:
    
