@@ -2041,26 +2041,13 @@ public class AceEditor implements DocDisplay,
       widget_.getEditor().getSession().setAnnotations(annotations);
    }
    
-   public void showLint(JsArray<LintItem> lint,
-                        boolean removeOldMarkers)
+   public void showLint(JsArray<LintItem> lint)
    {
+      clearLintMarkers();
+      
       // First, set the gutter annotations.
       JsArray<AceAnnotation> annotations = LintItem.asAceAnnotations(lint);
-      
-      // Copy the old annotations to this array if we want to
-      // preserve them.
-      if (!removeOldMarkers)
-      {
-         JsArray<AceAnnotation> oldAnnotations = getAnnotations();
-         for (int i = 0; i < oldAnnotations.length(); i++)
-            annotations.push(oldAnnotations.get(i));
-      }
-      
       setAnnotations(annotations);
-      
-      // Now, set the markers (inline highlighting / underlining)
-      if (removeOldMarkers)
-         clearLintMarkers();
       
       for (int i = 0; i < lint.length(); i++)
       {

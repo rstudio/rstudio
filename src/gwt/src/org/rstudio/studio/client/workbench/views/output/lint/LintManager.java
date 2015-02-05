@@ -111,20 +111,10 @@ public class LintManager
       if (token.isInvalid())
          return;
       
-      boolean removeOldMarkers = true;
-      
       if (target.getTextFileType().isCpp())
-      {
          performCppLintServerRequest(token, documentId, target, docDisplay);
-         removeOldMarkers = false;
-      }
-      
-      performRLintServerRequest(
-            token,
-            documentId,
-            target,
-            docDisplay,
-            removeOldMarkers);
+      else
+         performRLintServerRequest(token, documentId, target, docDisplay);
    }
 
    private void performCppLintServerRequest(final Invalidation.Token token,
@@ -143,9 +133,34 @@ public class LintManager
                   if (token.isInvalid())
                      return;
 
-                  JsArray<LintItem> lint = CppCompletionRequest.asLintArray(
-                        diag);
-                  displayLint(docDisplay, lint);
+                  final JsArray<LintItem> cppLint =
+                        CppCompletionRequest.asLintArray(diag);
+                  
+                  server_.lintRSourceDocument(
+                        documentId,
+                        false,
+                        new ServerRequestCallback<JsArray<LintItem>>()
+                        {
+                           @Override
+                           public void onResponseReceived(JsArray<LintItem> rLint)
+                           {
+                              if (token.isInvalid())
+                                 return;
+                              
+                              JsArray<LintItem> lint = cppLint;
+                              for (int i = 0; i < rLint.length(); i++)
+                                 lint.push(rLint.get(i));
+                              
+                              docDisplay.showLint(lint);
+                           }
+
+                           @Override
+                           public void onError(ServerError error)
+                           {
+                              Debug.logError(error);
+                              
+                           }
+                        });
                }
                
                @Override
@@ -159,8 +174,7 @@ public class LintManager
    private void performRLintServerRequest(final Invalidation.Token token,
                                           final String documentId,
                                           final TextEditingTarget target,
-                                          final DocDisplay docDisplay,
-                                          final boolean removeOldMarkers)
+                                          final DocDisplay docDisplay)
    {
 
       server_.lintRSourceDocument(
@@ -174,7 +188,7 @@ public class LintManager
                   if (token.isInvalid())
                      return;
 
-                  displayLint(docDisplay, lint, removeOldMarkers);
+                  displayLint(docDisplay, lint);
                }
 
                @Override
@@ -188,15 +202,7 @@ public class LintManager
    public void displayLint(DocDisplay display,
                            JsArray<LintItem> lint)
    {
-      display.showLint(lint, true);
-   }
-   
-   
-   public void displayLint(DocDisplay display,
-                           JsArray<LintItem> lint,
-                           boolean removeOldMarkers)
-   {
-      display.showLint(lint, removeOldMarkers);
+      display.showLint(lint);
    }
    
    public void schedule(int milliseconds)
