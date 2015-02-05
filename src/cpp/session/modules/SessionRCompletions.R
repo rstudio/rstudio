@@ -2514,6 +2514,8 @@ assign(x = ".rs.acCompletionTypes",
    ## completions just so the user has a small hint that, even though we provide the
    ## completions, the package isn't actually loaded.
    packages <- .rs.listInferredPackages(documentId)
+   if (!length(packages))
+      return(.rs.emptyCompletions())
    
    # Remove any packages that are on the search path
    searchNames <- paste("package", packages, sep = ":")
