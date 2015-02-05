@@ -61,7 +61,10 @@ public class LintManager
          @Override
          public void onPreviewNativeEvent(NativePreviewEvent event)
          {
-            if (event.getTypeInt() == Event.ONKEYDOWN)
+            if (event.getTypeInt() == Event.ONKEYUP ||
+                event.getTypeInt() == Event.ONKEYDOWN ||
+                event.getTypeInt() == Event.ONMOUSEDOWN ||
+                event.getTypeInt() == Event.ONMOUSEUP)
             {
                schedule(1000);
             }
@@ -108,10 +111,20 @@ public class LintManager
       if (token.isInvalid())
          return;
       
+      boolean removeOldMarkers = true;
+      
       if (target.getTextFileType().isCpp())
+      {
          performCppLintServerRequest(token, documentId, target, docDisplay);
-      else
-         performRLintServerRequest(token, documentId, target, docDisplay);
+         removeOldMarkers = false;
+      }
+      
+      performRLintServerRequest(
+            token,
+            documentId,
+            target,
+            docDisplay,
+            removeOldMarkers);
    }
 
    private void performCppLintServerRequest(final Invalidation.Token token,
@@ -146,7 +159,8 @@ public class LintManager
    private void performRLintServerRequest(final Invalidation.Token token,
                                           final String documentId,
                                           final TextEditingTarget target,
-                                          final DocDisplay docDisplay)
+                                          final DocDisplay docDisplay,
+                                          final boolean removeOldMarkers)
    {
 
       server_.lintRSourceDocument(
@@ -160,7 +174,7 @@ public class LintManager
                   if (token.isInvalid())
                      return;
 
-                  displayLint(docDisplay, lint);
+                  displayLint(docDisplay, lint, removeOldMarkers);
                }
 
                @Override
@@ -174,7 +188,15 @@ public class LintManager
    public void displayLint(DocDisplay display,
                            JsArray<LintItem> lint)
    {
-      display.showLint(lint);
+      display.showLint(lint, true);
+   }
+   
+   
+   public void displayLint(DocDisplay display,
+                           JsArray<LintItem> lint,
+                           boolean removeOldMarkers)
+   {
+      display.showLint(lint, removeOldMarkers);
    }
    
    public void schedule(int milliseconds)

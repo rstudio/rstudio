@@ -1257,7 +1257,6 @@ public class AceEditor implements DocDisplay,
          {
             widget_.onResize();
             widget_.onActivate();
-
             return false;
          }
       });
@@ -2032,15 +2031,36 @@ public class AceEditor implements DocDisplay,
       return widget_.getEditor().getSession().getTabSize();
    }
    
+   public JsArray<AceAnnotation> getAnnotations()
+   {
+      return widget_.getEditor().getSession().getAnnotations();
+   }
+   
    public void setAnnotations(JsArray<AceAnnotation> annotations)
    {
       widget_.getEditor().getSession().setAnnotations(annotations);
    }
    
-   public void showLint(JsArray<LintItem> lint)
+   public void showLint(JsArray<LintItem> lint,
+                        boolean removeOldMarkers)
    {
-      setAnnotations(LintItem.asAceAnnotations(lint));
-      clearLintMarkers();
+      // First, set the gutter annotations.
+      JsArray<AceAnnotation> annotations = LintItem.asAceAnnotations(lint);
+      
+      // Copy the old annotations to this array if we want to
+      // preserve them.
+      if (!removeOldMarkers)
+      {
+         JsArray<AceAnnotation> oldAnnotations = getAnnotations();
+         for (int i = 0; i < oldAnnotations.length(); i++)
+            annotations.push(oldAnnotations.get(i));
+      }
+      
+      setAnnotations(annotations);
+      
+      // Now, set the markers (inline highlighting / underlining)
+      if (removeOldMarkers)
+         clearLintMarkers();
       
       for (int i = 0; i < lint.length(); i++)
       {

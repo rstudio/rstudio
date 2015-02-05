@@ -222,6 +222,20 @@ module_context::SourceMarkerSet asSourceMarkerSet(const LintItems& items,
    return SourceMarkerSet("Linter", markers);
 }
 
+Error extractRCode(const std::string& contents,
+                   const std::string& reOpen,
+                   const std::string& reClose,
+                   std::string* pContent)
+{
+   using namespace r::exec;
+   RFunction extract(".rs.extractRCode");
+   extract.addParam(contents);
+   extract.addParam(reOpen);
+   extract.addParam(reClose);
+   Error error = extract.call(pContent);
+   return error;
+}
+
 Error lintRSourceDocument(const json::JsonRpcRequest& request,
                           json::JsonRpcResponse* pResponse)
 {
@@ -252,24 +266,29 @@ Error lintRSourceDocument(const json::JsonRpcRequest& request,
    
    std::string content;
    if (pDoc->type() == SourceDocument::SourceDocumentTypeRSource)
-   {
       content = pDoc->contents();
-   }
    else if (pDoc->type() == SourceDocument::SourceDocumentTypeRMarkdown)
-   {
-      r::exec::RFunction extract(".rs.extractRCodeFromRMarkdownDocument");
-      extract.addParam(pDoc->contents());
-      error = extract.call(&content);
-      if (error)
-      {
-         LOG_ERROR(error);
-         return error;
-      }
-   }
+      error = extractRCode(pDoc->contents(),
+                           "^\\s*[`]{3}{\\s*r.*}\\s*$",
+                           "^\\s*[`]{3}\\s*$",
+                           &content);
+   else if (pDoc->type() == SourceDocument::SourceDocumentTypeSweave)
+      error = extractRCode(pDoc->contents(),
+                           "^\\s*<<.*>>=\\s*$",
+                           "^\\s*@\\s*$",
+                           &content);
+   else if (pDoc->type() == SourceDocument::SourceDocumentTypeCpp)
+      error = extractRCode(pDoc->contents(),
+                           "^\\s*/[*]{3,}\\s+[rR]\\s*$",
+                           "^\\s*[*]+/",
+                           &content);
    else
-   {
-      // TODO: implement for other R containing documents
       return Success();
+   
+   if (error)
+   {
+      LOG_ERROR(error);
+      return error;
    }
    
    FilePath origin = module_context::resolveAliasedPath(pDoc->path());

@@ -240,7 +240,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    boolean hasBreakpoints();
    
    void setAnnotations(JsArray<AceAnnotation> annotations);
-   void showLint(JsArray<LintItem> lint);
+   void showLint(JsArray<LintItem> lint, boolean removeOldMarkers);
    
    void setPopupVisible(boolean visible);
    boolean isPopupVisible();

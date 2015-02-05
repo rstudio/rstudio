@@ -213,9 +213,10 @@ public class Source implements InsertSourceHandler,
       uiPrefs_ = uiPrefs;
       rnwWeaveRegistry_ = rnwWeaveRegistry;
       
-      lintManager_ = new LintManager(this);
       vimCommands_ = new SourceVimCommands();
 
+      lintManager_ = new LintManager(this);
+      
       view_.addTabClosingHandler(this);
       view_.addTabCloseHandler(this);
       view_.addTabClosedHandler(this);

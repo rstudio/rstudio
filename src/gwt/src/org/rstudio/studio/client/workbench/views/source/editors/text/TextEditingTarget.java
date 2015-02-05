@@ -2049,7 +2049,7 @@ public class TextEditingTarget implements
    
    void showLint(JsArray<LintItem> lint)
    {
-      docDisplay_.showLint(lint);
+      docDisplay_.showLint(lint, true);
    }
    
    @Handler

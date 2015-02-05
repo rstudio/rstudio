@@ -98,23 +98,32 @@
    })
 })
 
-.rs.addFunction("extractRCodeFromRMarkdownDocument", function(content)
+.rs.addFunction("extractRCode", function(content,
+                                         reStart,
+                                         reEnd)
 {
    splat <- strsplit(content, "\n", fixed = TRUE)[[1]]
-   starts <- grep("^\\s*[`]{3}{r.*}\\s*$", splat, perl = TRUE)
-   ends <- grep("^\\s*[`]{3}\\s*$", splat, perl = TRUE)
+   starts <- grep(reStart, splat, perl = TRUE)
+   ends <- grep(reEnd, splat, perl = TRUE)
    
-   if (length(starts) != length(ends))
-      return(.rs.scalar(""))
+   # Get start/end pairs
+   pairs <- lapply(starts, function(i) {
+      following <- ends[ends > i]
+      if (!length(following)) return(NULL)
+      c(i, following[[1]])
+   })
+   
+   # Drop NULL
+   pairs[unlist(lapply(pairs, is.null))] <- NULL
    
    new <- character(length(splat))
-   for (i in seq_along(starts))
+   for (pair in pairs)
    {
-      start <- starts[i]
-      end <- ends[i]
+      start <- pair[[1]]
+      end <- pair[[2]]
       
       # Ignore pairs that include 'engine=', assuming they're non-R chunks
-      if (grepl("engine\\s*=", splat[[start]], perl = TRUE))
+      if (grepl(",\\s*engine\\s*=", splat[[start]], perl = TRUE))
          next
       
       new[(start + 1):(end - 1)] <- splat[(start + 1):(end - 1)]
@@ -122,6 +131,3 @@
    
    .rs.scalar(paste(new, collapse = "\n"))
 })
-
-
-
