@@ -2,15 +2,15 @@
 
 .error {
    position: absolute;
-   background-color: rgba(192, 0, 0, 0.8);
+   background-color: rgba(255, 0, 0, 0.3);
 }
 
 .warning {
    position: absolute;
-   background-color: rgba(192, 128, 0, 0.8);
+   background-color: rgba(255, 168, 0, 0.3);
 }
 
 .info {
    position: absolute;
-   border-bottom: 2px dotted grey;
+   background-color: rgba(0, 197, 255, 0.3);
 }

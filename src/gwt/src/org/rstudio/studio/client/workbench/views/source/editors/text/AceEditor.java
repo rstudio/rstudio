@@ -2061,7 +2061,7 @@ public class AceEditor implements DocDisplay,
             clazz = lintStyles_.info();
          
          int id = getSession().addMarker(
-               selection.getRange(), clazz, "text", false);
+               selection.getRange(), clazz, "text", true);
          markerIds_.add(id);
       }
    }
