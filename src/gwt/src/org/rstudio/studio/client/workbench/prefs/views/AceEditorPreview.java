@@ -85,6 +85,7 @@ public class AceEditorPreview extends DynamicIFrame
                               "editor.renderer.setHScrollBarAlwaysVisible(false);\n" +
                               "editor.renderer.setTheme({});\n" +
                               "editor.setHighlightActiveLine(false);\n" +
+                              "editor.setReadOnly(true);\n" +
                               "editor.renderer.setShowGutter(false);\n" +
                               "editor.renderer.setDisplayIndentGuides(false);\n" +
                               "var RMode = require('mode/r').Mode;\n" +
