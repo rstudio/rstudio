@@ -115,6 +115,14 @@ public abstract class WizardPage<I,T> extends Composite
       return null;
    }
    
+   public void setIntermediateResult(T result)
+   {
+   }
+   
+   public void onActivate()
+   {
+   }
+   
    abstract protected Widget createWidget();
    
    abstract protected void initialize(I initData);

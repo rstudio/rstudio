@@ -8,9 +8,11 @@
 	<g:HTML>
 	<p>
 		To publish content, you first need to connect RStudio to an account on the
-		service you want to publish to. Once you've authorized this computer to
-		publish content to an account, you can publish any time without re-entering
-		your credentials.
+		service you want to publish to.
+	</p>
+	<p>
+	    Once you've authorized this computer to publish content to an account, you
+	    can publish any time without re-entering your credentials.
 	</p>
 	<p>
 	 	You can connect or disconnect accounts at any time by going to <br />

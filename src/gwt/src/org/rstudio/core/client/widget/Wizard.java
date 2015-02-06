@@ -58,7 +58,12 @@ public class Wizard<I,T> extends ModalDialog<T>
          {
             if (activePage_ instanceof WizardIntermediatePage<?,?>) 
             {
-               ((WizardIntermediatePage<I, T>) activePage_).advance();
+               T result = activePage_.collectInput();
+               if (activePage_.validate(result))
+               {
+                  intermediateResult_ = result;
+                  ((WizardIntermediatePage<I, T>) activePage_).advance();
+               }
             }
          }
       });
@@ -281,6 +286,9 @@ public class Wizard<I,T> extends ModalDialog<T>
       if (!page.acceptNavigation())
          return;
       
+      // give the page the currently accumulated result, if any
+      page.setIntermediateResult(intermediateResult_);
+            
       // determine behavior based on whether this is standard page or 
       // a navigation page
       final boolean okButtonVisible = pageIsFinal(page);
@@ -305,8 +313,9 @@ public class Wizard<I,T> extends ModalDialog<T>
             // if this is an intermediate page, make Next visible
             setNextButtonState(page);
             
-            // call hook
+            // let wizard and page know that the new page is active
             onPageActivated(page, okButtonVisible);
+            page.onActivate();
             
             // set focus
             FocusHelper.setFocusDeferred(page);
@@ -398,6 +407,7 @@ public class Wizard<I,T> extends ModalDialog<T>
    }
    
    private final I initialData_; 
+   private T intermediateResult_;
    
    private final String okCaption_;
    

@@ -157,6 +157,8 @@ public class RSAccountConnector implements WindowClosedEvent.Handler,
          final OperationWithInput<Boolean> onCompleted)
    {
       RSConnectAccountWizard wizard = new RSConnectAccountWizard(
+            server_,
+            display_,
             forFirstAccount,
             SessionUtils.showExternalPublishUi(session_, pUiPrefs_.get()),
             new ProgressOperationWithInput<NewRSConnectAccountResult>()

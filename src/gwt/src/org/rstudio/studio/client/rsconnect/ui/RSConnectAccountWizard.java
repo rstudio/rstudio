@@ -20,19 +20,23 @@ import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.core.client.widget.Wizard;
 import org.rstudio.core.client.widget.WizardNavigationPage;
 import org.rstudio.core.client.widget.WizardPage;
+import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.rsconnect.model.NewRSConnectAccountInput;
 import org.rstudio.studio.client.rsconnect.model.NewRSConnectAccountResult;
+import org.rstudio.studio.client.rsconnect.model.RSConnectServerOperations;
 
 public class RSConnectAccountWizard 
    extends Wizard<NewRSConnectAccountInput,NewRSConnectAccountResult>
 {
    public RSConnectAccountWizard(
+         RSConnectServerOperations server,
+         GlobalDisplay display,
          boolean forFirstAccount,
          boolean showCloudPage,
          ProgressOperationWithInput<NewRSConnectAccountResult> operation)
    {
       super("Connect Account", "Connect Account",
-            new NewRSConnectAccountInput(), 
+            new NewRSConnectAccountInput(server, display), 
             forFirstAccount ? 
                createIntroPage(showCloudPage) : 
                createSelectorPage(showCloudPage),

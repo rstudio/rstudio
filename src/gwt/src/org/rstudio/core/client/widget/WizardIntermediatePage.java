@@ -36,13 +36,18 @@ public abstract class WizardIntermediatePage<I,T> extends WizardPage<I,T>
    {
       nextHandler_ = command;
    }
-
-   protected void advance() 
+   
+   public void collectIntermediateInput(ProgressIndicator indicator,
+         OperationWithInput<T> result)
    {
-      if (nextHandler_ != null)
-         nextHandler_.execute(nextPage_);
+      result.execute(intermediateResult_);
    }
    
+   public void setIntermediateResult(T result) 
+   {
+      intermediateResult_ = result;
+   }
+
    @Override
    public ArrayList<WizardPage<I, T>> getSubPages()
    {
@@ -52,6 +57,19 @@ public abstract class WizardIntermediatePage<I,T> extends WizardPage<I,T>
       subPage.add(nextPage_);
       return subPage;
    }
+   
+   protected void advance() 
+   {
+      if (nextHandler_ != null)
+         nextHandler_.execute(nextPage_);
+   }
+   
+   protected T getIntermediateResult()
+   {
+      return intermediateResult_;
+   }
+   
+   private T intermediateResult_;
    
    private CommandWithArg<WizardPage<I, T>> nextHandler_;
    private WizardPage<I, T> nextPage_;
