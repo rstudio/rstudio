@@ -310,8 +310,13 @@ RToken RTokenizer::matchOperator()
 
    switch (peek())
    {
-   case L':':
-      return consumeToken(RToken::OPER, 1 + (cNext == L':') + (cNextNext == L':'));
+   case L':': // :::, ::, :=
+   {
+      if (cNext == L'=')
+         return consumeToken(RToken::OPER, 2);
+      else
+         return consumeToken(RToken::OPER, 1 + (cNext == L':') + (cNextNext == L':'));
+   }
       
    case L'|':
       return consumeToken(RToken::OPER, cNext == L'|' ? 2 : 1);
@@ -337,7 +342,7 @@ RToken RTokenizer::matchOperator()
       else
          return consumeToken(RToken::OPER, 1);
       
-   case L'+': case L'*': case L'/':
+   case L'+': case L'*': case L'/': case L'?':
    case L'^': case L'~': case L'$': case L'@':
       // single-character operators
       return consumeToken(RToken::OPER, 1) ;

@@ -258,13 +258,13 @@ inline bool isLocalRightAssign(const RToken& token)
             token.content() == L"->");
 }
 
-inline bool isGlobalLeftAssign(const RToken& token)
+inline bool isParentLeftAssign(const RToken& token)
 {
    return token.isType(RToken::OPER) &&
          token.content() == L"<<-";
 }
 
-inline bool isGlobalRightAssign(const RToken& token)
+inline bool isParentRightAssign(const RToken& token)
 {
    return token.isType(RToken::OPER) &&
          token.content() == L"->>";
@@ -363,7 +363,8 @@ inline bool isValidAsUnaryOperator(const RToken& rToken)
 {
    return rToken.contentEquals(L"-") ||
           rToken.contentEquals(L"+") ||
-          rToken.contentEquals(L"!");
+          rToken.contentEquals(L"!") ||
+          rToken.contentEquals(L"?");
 }
 
 inline bool canStartExpression(const RToken& rToken)
