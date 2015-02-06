@@ -358,7 +358,8 @@ core::Error findReferences(const core::libclang::FileLocation& location,
             // get the compilation arguments for this file and use them to
             // create a temporary translation unit to search
             std::vector<std::string> compileArgs =
-               rCompilationDatabase().compileArgsForTranslationUnit(filename);
+               rCompilationDatabase().compileArgsForTranslationUnit(filename,
+                                                                    true);
 
             if (compileArgs.empty())
                continue;

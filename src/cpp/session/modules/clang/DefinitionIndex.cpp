@@ -160,7 +160,7 @@ void fileChangeHandler(const core::system::FileChangeEvent& event)
       // get the compilation arguments for this file and use them to
       // create a translation unit
       std::vector<std::string> compileArgs =
-         rCompilationDatabase().compileArgsForTranslationUnit(file);
+         rCompilationDatabase().compileArgsForTranslationUnit(file, false);
 
       if (!compileArgs.empty())
       {
@@ -424,8 +424,8 @@ Error initializeDefinitionIndex()
            new IncrementalFileChangeHandler(
                   boost::bind(isIndexableFile, _1, srcPath, includePath),
                   fileChangeHandler,
-                  boost::posix_time::milliseconds(200),
-                  boost::posix_time::milliseconds(20),
+                  boost::posix_time::milliseconds(0),
+                  boost::posix_time::milliseconds(50),
                   true);
          pFileChangeHandler->subscribeToFileMonitor("Go to C/C++ Definition");
       }

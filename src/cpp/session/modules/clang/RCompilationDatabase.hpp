@@ -44,7 +44,7 @@ public:
    virtual ~RCompilationDatabase() {}
 
    std::vector<std::string> compileArgsForTranslationUnit(
-                                             const std::string& filename);
+           const std::string& filename, bool usePrecompiledHeaders);
 
    bool isProjectTranslationUnit(const std::string& filename) const;
 

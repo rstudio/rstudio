@@ -530,7 +530,7 @@ std::vector<std::string> RCompilationDatabase::projectTranslationUnits() const
 
 
 std::vector<std::string> RCompilationDatabase::compileArgsForTranslationUnit(
-                                            const std::string& filename)
+       const std::string& filename, bool usePrecompiledHeaders)
 {
    // args to return
    std::vector<std::string> args;
@@ -569,7 +569,8 @@ std::vector<std::string> RCompilationDatabase::compileArgsForTranslationUnit(
    std::copy(config.args.begin(), config.args.end(), std::back_inserter(args));
 
    // add precompiled headers if necessary
-   if (usePrecompiledHeaders_ && !config.PCH.empty() && config.isCpp &&
+   if (usePrecompiledHeaders && usePrecompiledHeaders_ &&
+       !config.PCH.empty() && config.isCpp &&
        (filePath.extensionLowerCase() != ".c") &&
        (filePath.extensionLowerCase() != ".m"))
    {
@@ -908,7 +909,7 @@ core::libclang::CompilationDatabase rCompilationDatabase()
                   &instance);
    compilationDatabase.compileArgsForTranslationUnit =
       boost::bind(&RCompilationDatabase::compileArgsForTranslationUnit,
-                  &instance, _1);
+                  &instance, _1, _2);
    return compilationDatabase;
 }
 
