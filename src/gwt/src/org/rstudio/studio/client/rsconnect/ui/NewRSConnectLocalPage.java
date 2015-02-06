@@ -56,8 +56,16 @@ public class NewRSConnectLocalPage
          final ProgressIndicator indicator, 
          final OperationWithInput<NewRSConnectAccountResult> onResult) 
    {
+      // get the current configuration and abort if it's not valid
+      NewRSConnectAccountResult result = collectInput();
+      if (!validate(result))
+      {
+         onResult.execute(result);
+         return;
+      }
+
+      setIntermediateResult(result);
       indicator.onProgress("Checking server connection...");
-      setIntermediateResult(collectInput());
       server_.validateServerUrl(getIntermediateResult().getServerUrl(), 
             new ServerRequestCallback<RSConnectServerInfo>()
       {
@@ -71,7 +79,6 @@ public class NewRSConnectLocalPage
             }
             else
             {
-               indicator.onCompleted();
                display_.showErrorMessage("Server Validation Failed", 
                      "The URL '" + getIntermediateResult().getServerUrl() + 
                      "' does not appear to belong to a valid server. Please " +
@@ -120,7 +127,8 @@ public class NewRSConnectLocalPage
    @Override
    protected boolean validate(NewRSConnectAccountResult input)
    {
-      return input.getServerUrl() != null && 
+      return input != null &&
+            input.getServerUrl() != null && 
             !input.getServerUrl().isEmpty();
    }
 

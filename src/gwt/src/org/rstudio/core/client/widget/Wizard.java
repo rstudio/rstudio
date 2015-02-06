@@ -23,12 +23,15 @@ import org.rstudio.core.client.theme.res.ThemeResources;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.logical.shared.CloseEvent;
+import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.layout.client.Layout.AnimationCallback;
 import com.google.gwt.layout.client.Layout.Layer;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.LayoutPanel;
+import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -49,6 +52,15 @@ public class Wizard<I,T> extends ModalDialog<T>
       
       resetOkButtonCaption();
       setOkButtonVisible(false);
+      
+      addCloseHandler(new CloseHandler<PopupPanel>()
+      {
+         @Override
+         public void onClose(CloseEvent<PopupPanel> arg0)
+         {
+            cleanupPage(firstPage_);
+         }
+      });
 
       // add next button
       nextButton_ = new ThemedButton("Next", new ClickHandler()
@@ -416,6 +428,25 @@ public class Wizard<I,T> extends ModalDialog<T>
       boolean isIntermediate = page instanceof WizardIntermediatePage<?,?>;
       nextButton_.setVisible(isIntermediate);
       setDefaultOverrideButton(isIntermediate ? nextButton_ : null);
+   }
+   
+   private void cleanupPage(WizardPage<I,T> page)
+   {
+      if (page == null)
+         return;
+
+      // notify child pages first (do cleanup in reverse order of construction)
+      ArrayList<WizardPage<I,T>> subPages = page.getSubPages();
+      if (subPages != null)
+      {
+         for (int i = 0; i < subPages.size(); i++)
+         {
+            cleanupPage(subPages.get(i));
+         }
+      }
+      
+      // clean this page
+      page.onWizardClosing();
    }
    
    private final I initialData_; 

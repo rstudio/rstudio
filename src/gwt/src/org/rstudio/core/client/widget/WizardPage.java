@@ -123,6 +123,10 @@ public abstract class WizardPage<I,T> extends Composite
    {
    }
    
+   public void onWizardClosing()
+   {
+   }
+   
    abstract protected Widget createWidget();
    
    abstract protected void initialize(I initData);

@@ -15,6 +15,7 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
+import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.Widget;
 
 public class NewRSConnectAuthPage 
@@ -56,6 +57,7 @@ public class NewRSConnectAuthPage
 
       // begin waiting for user to complete authentication
       waitingForAuth_ = true;
+      contents_.showWaiting();
       
       // prepare a new window with the auth URL loaded
       NewWindowOptions options = new NewWindowOptions();
@@ -77,14 +79,31 @@ public class NewRSConnectAuthPage
       if (event.getName().equals(AUTH_WINDOW_NAME))
       {
          waitingForAuth_ = false;
+         
+         // check to see if the user successfully authenticated
          onAuthCompleted();
       }
+   }
+   
+   @Override
+   public void onWizardClosing()
+   {
+      // this will cause us to stop polling for auth (if we haven't already)
+      waitingForAuth_ = false;
    }
 
    @Override
    protected Widget createWidget()
    {
       contents_ = new RSConnectAuthWait();
+      contents_.setOnTryAgain(new Command()
+      {
+         @Override
+         public void execute()
+         {
+            onActivate();
+         }
+      });
       return contents_;
    }
    
@@ -104,7 +123,7 @@ public class NewRSConnectAuthPage
    @Override
    protected boolean validate(NewRSConnectAccountResult input)
    {
-      return input != null && !waitingForAuth_;
+      return input != null && input.getAuthUser() != null;
    }
 
    private void pollForAuthCompleted()
@@ -150,7 +169,7 @@ public class NewRSConnectAuthPage
                                  AUTH_WINDOW_NAME);
                         }
                        
-                        onAuthCompleted();
+                        onUserAuthVerified();
                      }
 
                      @Override
