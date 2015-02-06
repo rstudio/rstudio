@@ -50,7 +50,7 @@ int entryFilter(const struct dirent *entry)
 // the file monitor attempts to access LC_COLLATE just as
 // R is replacing it). to avoid this, we use strcmp and
 // don't sort according to locale.
-#if defined(__APPLE__) && !defined(HAVE_SCANDIR_POSIX)
+#if !defined(HAVE_SCANDIR_POSIX)
 int alphasort(const void* voidlhs, const void* voidrhs)
 {
    const dirent** lhs = (const dirent**)voidlhs;
