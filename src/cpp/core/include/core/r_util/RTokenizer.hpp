@@ -59,25 +59,27 @@ class RToken : public virtual RToken_lock
 {
 public:
 
-   static const char LPAREN;
-   static const char RPAREN;
-   static const char LBRACKET;
-   static const char RBRACKET;
-   static const char LBRACE;
-   static const char RBRACE;
-   static const char COMMA;
-   static const char SEMI;
-   static const char WHITESPACE;
-   static const char NEWLINE;
-   static const char STRING;
-   static const char NUMBER;
-   static const char ID;
-   static const char OPER;
-   static const char UOPER;
-   static const char ERR;
-   static const char LDBRACKET;
-   static const char RDBRACKET;
-   static const char COMMENT;
+   enum TokenType {
+      LPAREN,
+      RPAREN,
+      LBRACKET,
+      RBRACKET,
+      LBRACE,
+      RBRACE,
+      COMMA,
+      SEMI,
+      WHITESPACE,
+      NEWLINE,
+      STRING,
+      NUMBER,
+      ID,
+      OPER,
+      UOPER,
+      ERR,
+      LDBRACKET,
+      RDBRACKET,
+      COMMENT
+   };
 
 public:
    RToken()
@@ -85,7 +87,7 @@ public:
    {
    }
 
-   RToken(char type,
+   RToken(TokenType type,
           std::wstring::const_iterator begin,
           std::wstring::const_iterator end,
           std::size_t offset)
@@ -94,7 +96,7 @@ public:
    }
    
    // accessors
-   char type() const { return type_; }
+   TokenType type() const { return type_; }
    std::wstring content() const { return std::wstring(begin_, end_); }
    std::string contentAsUtf8() const;
    std::size_t offset() const { return offset_; }
@@ -124,7 +126,7 @@ public:
               std::equal(begin_, end_, op.begin());
    }
 
-   bool isType(char type) const
+   bool isType(TokenType type) const
    {
       return type_ == type;
    }
@@ -154,7 +156,7 @@ public:
    }
 
 private:
-   char type_;
+   TokenType type_;
    std::wstring::const_iterator begin_;
    std::wstring::const_iterator end_;
    std::size_t offset_;
@@ -194,7 +196,7 @@ private:
    wchar_t eat();
    std::wstring peek(const boost::wregex& regex);
    void eatUntil(const boost::wregex& regex);
-   RToken consumeToken(char tokenType, std::size_t length);
+   RToken consumeToken(RToken::TokenType tokenType, std::size_t length);
    
 private:
    std::wstring data_;
@@ -380,6 +382,23 @@ inline bool isExtractionOperator(const RToken& rToken)
           isAt(rToken);
 }
 
+inline RToken::TokenType typeComplement(RToken::TokenType lhsType)
+{
+   switch (lhsType)
+   {
+   case RToken::LPAREN:    return RToken::RPAREN;
+   case RToken::LBRACE:    return RToken::RBRACE;
+   case RToken::LBRACKET:  return RToken::RBRACKET;
+   case RToken::LDBRACKET: return RToken::RDBRACKET;
+      
+   case RToken::RPAREN:    return RToken::LPAREN;
+   case RToken::RBRACE:    return RToken::LBRACE;
+   case RToken::RBRACKET:  return RToken::LBRACKET;
+   case RToken::RDBRACKET: return RToken::LDBRACKET;
+   default: return RToken::ERR;
+   }
+}
+
 } // end namespace token_utils
 
 class AnnotatedRToken
@@ -395,8 +414,8 @@ public:
    const std::size_t row() const { return row_; }
    const std::size_t column() const { return column_; }
    
-   char type() const { return token_.type(); }
-   bool isType(char type) const { return token_.isType(type); }
+   RToken::TokenType type() const { return token_.type(); }
+   bool isType(RToken::TokenType type) const { return token_.isType(type); }
    std::wstring content() const { return token_.content(); }
    std::string contentAsUtf8() const { return token_.contentAsUtf8(); }
    
@@ -499,8 +518,6 @@ private:
    AnnotatedRToken dummyToken_;
    
 };
-
-
 
 } // namespace r_util
 } // namespace core 

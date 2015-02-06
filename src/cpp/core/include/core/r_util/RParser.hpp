@@ -345,7 +345,7 @@ private:
 
 using namespace linter;
 
-std::string complement(const std::string& bracket);
+std::string& complement(const std::string& bracket);
 
 class ParseNode : public boost::noncopyable
 {
@@ -619,7 +619,7 @@ public:
    {}
    
    ParseNode* node() { return pNode_; }
-   BraceStack& stack() { return stack_; }
+   BraceStack& braceStack() { return braceStack_; }
    LintItems& lint() { return lint_; }
    boost::shared_ptr<ParseNode> root() { return pRoot_; }
    
@@ -635,21 +635,26 @@ public:
       pNode_ = pNode_->getParent();
    }
    
-   void push(const AnnotatedRToken& token)
+   void pushBracket(const AnnotatedRToken& token)
    {
       DEBUG("*** Pushing " << token << " on to brace stack");
-      stack_.push(ParseItem(
+      braceStack_.push(ParseItem(
                      token.contentAsUtf8(),
                      Position(token.row(), token.column()),
                      pNode_));
    }
    
-   void pop(const AnnotatedRToken& token)
+   const ParseItem& peekBracket()
    {
-      DEBUG("*** Popping " << token << " from brace stack");
-      if (stack_.peek().symbol != complement(token.contentAsUtf8()))
-         lint_.unexpectedClosingBracket(token, stack_);
-      stack_.pop();
+      return braceStack_[braceStack_.size() - 1];
+   }
+   
+   void popBracket(const AnnotatedRToken& expectedAsComplement)
+   {
+      DEBUG("*** Popping " << expectedAsComplement << " from brace stack");
+      if (braceStack_.peek().symbol != complement(expectedAsComplement.contentAsUtf8()))
+         lint_.unexpectedClosingBracket(expectedAsComplement, braceStack_);
+      braceStack_.pop();
    }
    
    bool hasLint() const
@@ -657,12 +662,89 @@ public:
       return !lint_.get().empty();
    }
    
+   enum ParseState {
+      
+      // if (<cond>) <expr>
+      ParseStateIfCondition,
+      ParseStateIfExpression,
+      
+      // while (<cond>) <expr>
+      ParseStateWhileCondition,
+      ParseStateWhileExpression,
+      
+      // for (<id> in <cond>) <expr>
+      ParseStateForCondition,
+      ParseStateForExpression,
+      
+      // function(<arglist>) <expr>
+      ParseStateFunctionArgumentList,
+      ParseStateFunctionExpression,
+      
+      // <id> ( <arglist> )
+      ParseStateArgumentList
+      
+   };
+   
+   Stack<ParseState>& parseStateStack()
+   {
+      return parseStateStack_;
+   }
+
+   void pushState(ParseState state)
+   {
+      parseStateStack_.push(state);
+   }
+   
+   void popState(const AnnotatedRToken& rToken)
+   {
+      if (parseStateStack_.empty())
+      {
+         lint().unexpectedToken(rToken);
+         return;
+      }
+      
+      parseStateStack_.pop();
+   }
+   
+   void popState(const AnnotatedRToken& rToken,
+                 ParseState expectedState)
+   {
+      if (parseStateStack_.empty())
+      {
+         lint().unexpectedToken(rToken);
+         return;
+      }
+      
+      if (expectedState != parseStateStack_.peek())
+         lint().unexpectedToken(rToken);
+      
+      parseStateStack_.pop();
+   }
+   
+   ParseState peekState()
+   {
+      return parseStateStack_.peek();
+   }
+   
+   bool inArgumentList()
+   {
+      switch (parseStateStack_.peek())
+      {
+      case ParseStateArgumentList:
+      case ParseStateFunctionArgumentList:
+         return true;
+      default:
+         return false;
+      }
+   }
+   
 private:
    boost::shared_ptr<ParseNode> pRoot_;
    ParseNode* pNode_;
-   BraceStack stack_;
+   BraceStack braceStack_;
    LintItems lint_;
    ParseOptions parseOptions_;
+   Stack<ParseState> parseStateStack_;
 };
 
 class ParseResults {

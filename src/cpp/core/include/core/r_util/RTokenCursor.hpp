@@ -177,12 +177,12 @@ public:
       return currentToken().contentEquals(content);
    }
    
-   char type() const
+   RToken::TokenType type() const
    {
       return currentToken().type();
    }
    
-   bool isType(char type) const
+   bool isType(RToken::TokenType type) const
    {
       return currentToken().isType(type);
    }
@@ -274,8 +274,8 @@ public:
    
 private:
    
-   bool doFwdToMatchingToken(char leftTokenType,
-                             char rightTokenType)
+   bool doFwdToMatchingToken(RToken::TokenType leftTokenType,
+                             RToken::TokenType rightTokenType)
    {
       if (!isType(leftTokenType))
          return false;
@@ -298,8 +298,8 @@ private:
       return false;
    }
    
-   bool doBwdToMatchingToken(char leftTokenType,
-                             char rightTokenType)
+   bool doBwdToMatchingToken(RToken::TokenType leftTokenType,
+                             RToken::TokenType rightTokenType)
    {
       if (!isType(rightTokenType))
          return false;
@@ -321,9 +321,9 @@ private:
       return false;
    }
    
-   static std::map<char, char> makeComplementMap()
+   static std::map<RToken::TokenType, RToken::TokenType> makeComplementMap()
    {
-      std::map<char, char> map;
+      std::map<RToken::TokenType, RToken::TokenType> map;
 
 #define RSTUDIO_ADD_COMPLEMENT_2(__MAP__, __X__, __Y__)                        \
    do                                                                          \
@@ -346,9 +346,11 @@ private:
       return map;
    }
    
-   static std::map<char, char> complements()
+   static std::map<RToken::TokenType, RToken::TokenType> complements()
    {
-      static std::map<char, char> map = makeComplementMap();
+      static std::map<RToken::TokenType, RToken::TokenType> map = 
+            makeComplementMap();
+      
       return map;
    }
 

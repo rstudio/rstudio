@@ -77,26 +77,6 @@ TokenPatterns& tokenPatterns()
 
 } // anonymous namespace
 
-const char RToken::LPAREN         =  1;
-const char RToken::RPAREN         =  2;
-const char RToken::LBRACKET       =  3;
-const char RToken::RBRACKET       =  4;
-const char RToken::LBRACE         =  5;
-const char RToken::RBRACE         =  6;
-const char RToken::COMMA          =  7;
-const char RToken::SEMI           =  8;
-const char RToken::WHITESPACE     =  9;
-const char RToken::STRING         = 10;
-const char RToken::NUMBER         = 11;
-const char RToken::ID             = 12;
-const char RToken::OPER           = 13;
-const char RToken::UOPER          = 14;
-const char RToken::ERR            = 15;
-const char RToken::LDBRACKET      = 16;
-const char RToken::RDBRACKET      = 17;
-const char RToken::COMMENT        = 18;
-
-
 RToken RTokenizer::nextToken()
 {
   if (eol())
@@ -415,7 +395,8 @@ void RTokenizer::eatUntil(const boost::wregex& regex)
 }
 
 
-RToken RTokenizer::consumeToken(char tokenType, std::size_t length)
+RToken RTokenizer::consumeToken(RToken::TokenType tokenType,
+                                std::size_t length)
 {
    if (length == 0)
    {

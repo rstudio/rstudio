@@ -96,7 +96,7 @@ bool advancePastNextToken(
 
 bool advancePastNextToken(RTokens::const_iterator* pBegin,
                           RTokens::const_iterator end,
-                          const wchar_t type)
+                          RToken::TokenType type)
 {
    return advancePastNextToken(pBegin,
                                end,
