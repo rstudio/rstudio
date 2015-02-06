@@ -57,6 +57,7 @@ public class NewRSConnectLocalPage
          final OperationWithInput<NewRSConnectAccountResult> onResult) 
    {
       indicator.onProgress("Checking server connection...");
+      setIntermediateResult(collectInput());
       server_.validateServerUrl(getIntermediateResult().getServerUrl(), 
             new ServerRequestCallback<RSConnectServerInfo>()
       {
@@ -70,6 +71,7 @@ public class NewRSConnectLocalPage
             }
             else
             {
+               indicator.onCompleted();
                display_.showErrorMessage("Server Validation Failed", 
                      "The URL '" + getIntermediateResult().getServerUrl() + 
                      "' does not appear to belong to a valid server. Please " +
@@ -77,6 +79,7 @@ public class NewRSConnectLocalPage
                      "if the problem persists.\n\n" +
                      info.getMessage());
                onResult.execute(null);
+               indicator.clearProgress();
             }
          }
 
@@ -87,6 +90,7 @@ public class NewRSConnectLocalPage
                   "The server couldn't be validated. " + 
                    error.getMessage());
             onResult.execute(null);
+            indicator.clearProgress();
          }
       });
    }
@@ -137,7 +141,7 @@ public class NewRSConnectLocalPage
             newResult.setPreAuthToken(token);
             newResult.setServerInfo(serverInfo);
             onResult.execute(newResult);
-            indicator.onCompleted();
+            indicator.clearProgress();
          }
 
          @Override
@@ -148,7 +152,7 @@ public class NewRSConnectLocalPage
                   "request to authorize an account.\n\n"+
                   serverInfo.getInfoString() + "\n" +
                   error.getMessage());
-            indicator.onCompleted();
+            indicator.clearProgress();
             onResult.execute(null);
          }
       });

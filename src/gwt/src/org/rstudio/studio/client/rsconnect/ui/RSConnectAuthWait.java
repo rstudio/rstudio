@@ -19,6 +19,8 @@ import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Anchor;
 import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.HTMLPanel;
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 
 public class RSConnectAuthWait extends Composite
@@ -43,5 +45,30 @@ public class RSConnectAuthWait extends Composite
       claimLink_.setHref(url);
    }
    
+   public void showError(String header, String message)
+   {
+      errorHeader_.setText(header);
+      errorMessage_.setText(message);
+
+      // toggle panel visibility
+      successPanel_.setVisible(false);
+      waitingPanel_.setVisible(false);
+      errorPanel_.setVisible(true);
+   }
+   
+   public void showSuccess(String serverName, String accountName)
+   {
+    
+      // toggle panel visibility
+      successPanel_.setVisible(true);
+      waitingPanel_.setVisible(false);
+      errorPanel_.setVisible(false);
+   }
+   
    @UiField Anchor claimLink_;
+   @UiField HTMLPanel waitingPanel_;
+   @UiField HTMLPanel successPanel_;
+   @UiField HTMLPanel errorPanel_;
+   @UiField Label errorHeader_;
+   @UiField Label errorMessage_;
 }

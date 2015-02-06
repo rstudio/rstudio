@@ -104,7 +104,7 @@ public class NewRSConnectAuthPage
    @Override
    protected boolean validate(NewRSConnectAccountResult input)
    {
-      return waitingForAuth_;
+      return input != null && !waitingForAuth_;
    }
 
    private void pollForAuthCompleted()
@@ -149,6 +149,8 @@ public class NewRSConnectAuthPage
                            Desktop.getFrame().closeNamedWindow(
                                  AUTH_WINDOW_NAME);
                         }
+                       
+                        onAuthCompleted();
                      }
 
                      @Override
@@ -174,7 +176,7 @@ public class NewRSConnectAuthPage
          {
             if (!user.isValidUser())
             {
-               display_.showErrorMessage("Account Not Connected", 
+               contents_.showError("Account Not Connected", 
                      "Authentication failed. If you did not cancel " +
                      "authentication, try again, or contact your server " +
                      "administrator for assistance.");
@@ -189,7 +191,7 @@ public class NewRSConnectAuthPage
          @Override
          public void onError(ServerError error)
          {
-            display_.showErrorMessage("Account Validation Failed", 
+            contents_.showError("Account Validation Failed", 
                   "RStudio failed to determine whether the account was " +
                   "valid. Try again; if the error persists, contact your " +
                   "server administrator.\n\n" +
@@ -219,7 +221,11 @@ public class NewRSConnectAuthPage
                   result_.getAuthUser().getLastName().toLowerCase());
          }
       }
+      
+      contents_.showSuccess(result_.getServerName(), 
+            result_.getAccountNickname());
    }
+
    private NewRSConnectAccountResult result_;
    private RSConnectServerOperations server_;
    private GlobalDisplay display_;

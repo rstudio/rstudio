@@ -58,12 +58,24 @@ public class Wizard<I,T> extends ModalDialog<T>
          {
             if (activePage_ instanceof WizardIntermediatePage<?,?>) 
             {
-               T result = activePage_.collectInput();
-               if (activePage_.validate(result))
-               {
-                  intermediateResult_ = result;
-                  ((WizardIntermediatePage<I, T>) activePage_).advance();
-               }
+               final WizardIntermediatePage<I, T> page = 
+                     (WizardIntermediatePage<I, T>) activePage_;
+               
+               // collect input from this page asynchronously and advance when
+               // we have input
+               page.collectIntermediateInput(getProgressIndicator(), 
+                     new OperationWithInput<T>()
+                     {
+                        @Override
+                        public void execute(T input)
+                        {
+                           if (page.validate(input))
+                           {
+                              intermediateResult_ = input;
+                              page.advance();
+                           }
+                        }
+                     });
             }
          }
       });

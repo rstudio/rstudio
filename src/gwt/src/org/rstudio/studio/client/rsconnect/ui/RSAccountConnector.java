@@ -20,11 +20,8 @@ import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
-import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
-import org.rstudio.studio.client.common.GlobalDisplay.NewWindowOptions;
-import org.rstudio.studio.client.common.satellite.events.WindowClosedEvent;
 import org.rstudio.studio.client.rsconnect.events.EnableRStudioConnectUIEvent;
 import org.rstudio.studio.client.rsconnect.model.NewRSConnectAccountResult;
 import org.rstudio.studio.client.rsconnect.model.NewRSConnectAccountResult.AccountType;
@@ -42,17 +39,12 @@ import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.prefs.views.PublishingPreferencesPane;
 import org.rstudio.studio.client.workbench.ui.OptionsLoader;
 
-import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.core.client.Scheduler.RepeatingCommand;
-import com.google.gwt.event.logical.shared.CloseEvent;
-import com.google.gwt.event.logical.shared.CloseHandler;
-import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
 
 @Singleton
-public class RSAccountConnector implements WindowClosedEvent.Handler, 
+public class RSAccountConnector implements 
    EnableRStudioConnectUIEvent.Handler
 {
    public interface Binder
@@ -82,7 +74,6 @@ public class RSAccountConnector implements WindowClosedEvent.Handler,
       pUiPrefs_ = pUiPrefs;
       session_ = session;
 
-      events.addHandler(WindowClosedEvent.TYPE, this);
       events.addHandler(EnableRStudioConnectUIEvent.TYPE, this);
 
       binder.bind(commands, this);
@@ -109,15 +100,6 @@ public class RSAccountConnector implements WindowClosedEvent.Handler,
    }
    
    // Event handlers ---------------------------------------------------------
-
-   @Override
-   public void onWindowClosed(WindowClosedEvent event)
-   {
-      if (event.getName() == AUTH_WINDOW_NAME)
-      {
-         notifyAuthClosed();
-      }
-   }
 
    @Override
    public void onEnableRStudioConnectUI(EnableRStudioConnectUIEvent event)
@@ -265,285 +247,15 @@ public class RSAccountConnector implements WindowClosedEvent.Handler,
          final NewRSConnectAccountResult result,
          final ProgressIndicator indicator,
          final OperationWithInput<AccountConnectResult> onConnected)
-   {
-      indicator.onProgress("Checking server connection...");
-      server_.validateServerUrl(result.getServerUrl(), 
-            new ServerRequestCallback<RSConnectServerInfo>()
-      {
-         @Override
-         public void onResponseReceived(RSConnectServerInfo info)
-         {
-            if (info.isValid()) 
-            {
-               getPreAuthToken(result, info, indicator, onConnected);
-            }
-            else
-            {
-               display_.showErrorMessage("Server Validation Failed", 
-                     "The URL '" + result.getServerUrl() + "' does not " +
-                     "appear to belong to a valid server. Please double " +
-                     "check the URL, and contact your administrator if " + 
-                     "the problem persists.\n\n" +
-                     info.getMessage());
-               onConnected.execute(AccountConnectResult.Incomplete);
-            }
-         }
 
-         @Override
-         public void onError(ServerError error)
-         {
-            display_.showErrorMessage("Error Connecting Account", 
-                  "The server couldn't be validated. " + 
-                   error.getMessage());
-            onConnected.execute(AccountConnectResult.Incomplete);
-         }
-      });
-   }
-   
-   private void getPreAuthToken(
-         final NewRSConnectAccountResult result,
-         final RSConnectServerInfo serverInfo,
-         final ProgressIndicator indicator,
-         final OperationWithInput<AccountConnectResult> onConnected)
-   {
-      indicator.onProgress("Setting up an account...");
-      server_.getPreAuthToken(serverInfo.getName(), 
-            new ServerRequestCallback<RSConnectPreAuthToken>()
-      {
-         @Override
-         public void onResponseReceived(final RSConnectPreAuthToken token)
-         {
-            indicator.onProgress("Waiting for authentication...");
-
-            // set up pending state -- these will be used to complete the wizard
-            // once the user finishes using the wizard to authenticate
-            pendingAuthToken_ = token;
-            pendingServerInfo_ = serverInfo;
-            pendingAuthIndicator_ = indicator;
-            pendingOnConnected_ = onConnected;
-            pendingWizardResult_ = result;
-            
-            // prepare a new window with the auth URL loaded
-            NewWindowOptions options = new NewWindowOptions();
-            options.setName(AUTH_WINDOW_NAME);
-            options.setAllowExternalNavigation(true);
-            options.setShowDesktopToolbar(false);
-            display_.openWebMinimalWindow(
-                  pendingAuthToken_.getClaimUrl(), 
-                  false, 
-                  700, 800, options);
-            
-            if (!Desktop.isDesktop())
-            {
-               // in the browser we have no control over the window, so show
-               // a dialog to help guide the user
-               waitDialog_ = new RSConnectAuthWaitDialog(
-                     serverInfo, token);
-               waitDialog_.addCloseHandler(new CloseHandler<PopupPanel>()
-               {
-                  @Override
-                  public void onClose(CloseEvent<PopupPanel> arg0)
-                  {
-                     waitDialog_ = null;
-                     notifyAuthClosed();
-                  }
-               });
-               waitDialog_.showModal();
-            }
-            
-            // we'll finish auth automatically when the satellite closes, but we
-            // also want to close it ourselves when we detect that auth has
-            // completed
-            pollForAuthCompleted();
-         }
-
-         @Override
-         public void onError(ServerError error)
-         {
-            display_.showErrorMessage("Error Connecting Account", 
-                  "The server appears to be valid, but rejected the " + 
-                  "request to authorize an account.\n\n"+
-                  serverInfo.getInfoString() + "\n" +
-                  error.getMessage());
-            onConnected.execute(AccountConnectResult.Incomplete);
-         }
-      });
-   }
-   
-   private void pollForAuthCompleted()
-   {
-      Scheduler.get().scheduleFixedDelay(new RepeatingCommand()
-      {
-         @Override
-         public boolean execute()
-         {
-            // don't keep polling once auth is complete or window is closed
-            if (pendingAuthToken_ == null ||
-                pendingServerInfo_ == null)
-               return false;
-            
-            // if we're already running a check but it hasn't returned for some
-            // reason, just wait for it to finish
-            if (runningAuthCompleteCheck_)
-               return true;
-            
-            runningAuthCompleteCheck_ = true;
-            server_.getUserFromToken(pendingServerInfo_.getUrl(), 
-                  pendingAuthToken_, 
-                  new ServerRequestCallback<RSConnectAuthUser>()
-                  {
-                     @Override
-                     public void onResponseReceived(RSConnectAuthUser user)
-                     {
-                        runningAuthCompleteCheck_ = false;
-                        
-                        // expected if user hasn't finished authenticating yet,
-                        // just wait and try again
-                        if (!user.isValidUser())
-                           return;
-                        
-                        // user is valid--cache account info and close the
-                        // window
-                        pendingAuthUser_ = user;
-                        
-                        if (Desktop.isDesktop())
-                        {
-                           // on the desktop, we can close the window by name
-                           Desktop.getFrame().closeNamedWindow(
-                                 AUTH_WINDOW_NAME);
-                        }
-                        
-                        // on the server, we open a waiting dialog; if that
-                        // exists, close it
-                        if (waitDialog_ != null)
-                        {
-                           waitDialog_.closeDialog();
-                           waitDialog_ = null;
-                        }
-                     }
-
-                     @Override
-                     public void onError(ServerError error)
-                     {
-                        // ignore this error
-                        runningAuthCompleteCheck_ = false;
-                     }
-                  });
-            return true;
-         }
-      }, 1000);
-   }
-   
-   private void notifyAuthClosed()
-   {
-      if (pendingAuthToken_ != null &&
-          pendingServerInfo_ != null &&
-          pendingAuthIndicator_ != null &&
-          pendingOnConnected_ != null &&
-          pendingWizardResult_ != null)
-      {
-         if (pendingAuthUser_ == null)
-         {
-            // the window closed because the user closed it manually--check to
-            // see if the token is now valid
-            onAuthCompleted(pendingWizardResult_,
-                  pendingServerInfo_, 
-                  pendingAuthToken_, 
-                  pendingAuthIndicator_, 
-                  pendingOnConnected_);
-         }
-         else
-         {
-            // the window closed because we detected that the token became
-            // valid--add the user directly
-            onUserAuthVerified(pendingWizardResult_,
-                  pendingServerInfo_, 
-                  pendingAuthToken_, 
-                  pendingAuthUser_, 
-                  pendingAuthIndicator_, 
-                  pendingOnConnected_);
-            
-         }
-      }
-      pendingWizardResult_ = null;
-      pendingAuthToken_ = null;
-      pendingServerInfo_ = null;
-      pendingAuthIndicator_ = null;
-      pendingOnConnected_ = null;
-   }
-
-   private void onAuthCompleted(
-         final NewRSConnectAccountResult result,
-         final RSConnectServerInfo serverInfo,
-         final RSConnectPreAuthToken token,
-         final ProgressIndicator indicator,
-         final OperationWithInput<AccountConnectResult> onConnected)
-   {
-      indicator.onProgress("Validating account...");
-      server_.getUserFromToken(serverInfo.getUrl(), token, 
-            new ServerRequestCallback<RSConnectAuthUser>()
-      {
-         @Override 
-         public void onResponseReceived(RSConnectAuthUser user)
-         {
-            if (!user.isValidUser())
-            {
-               display_.showErrorMessage("Account Not Connected", 
-                     "Authentication failed. If you did not cancel " +
-                     "authentication, try again, or contact your server " +
-                     "administrator for assistance.");
-               onConnected.execute(AccountConnectResult.Incomplete);
-            }
-            else
-            {
-               onUserAuthVerified(result, serverInfo, token, user, 
-                                  indicator, onConnected);
-            }
-         }
-
-         @Override
-         public void onError(ServerError error)
-         {
-            display_.showErrorMessage("Account Validation Failed", 
-                  "RStudio failed to determine whether the account was " +
-                  "valid. Try again; if the error persists, contact your " +
-                  "server administrator.\n\n" +
-                  serverInfo.getInfoString() + "\n" +
-                  error.getMessage());
-            onConnected.execute(AccountConnectResult.Incomplete);
-         }
-      });
-   }
-   
-   private void onUserAuthVerified(
-         final NewRSConnectAccountResult result,
-         final RSConnectServerInfo serverInfo,
-         final RSConnectPreAuthToken token,
-         final RSConnectAuthUser user,
-         final ProgressIndicator indicator,
-         final OperationWithInput<AccountConnectResult> onConnected)
    {
       indicator.onProgress("Adding account...");
-      String accountName;
-      if (result.getAccountNickname().length() > 0)
-      {
-         // if the user specified a nickname, that trumps everything else
-         accountName = result.getAccountNickname();
-      }
-      else if (user.getUsername().length() > 0) 
-      {
-         // if we have a username already, just use it 
-         accountName = user.getUsername();
-      }
-      else
-      {
-         // if we don't have any username, guess one based on user's given name
-         // on the server
-         accountName = (user.getFirstName().substring(0, 1) + 
-               user.getLastName()).toLowerCase();
-      }
+      final RSConnectAuthUser user = result.getAuthUser();
+      final RSConnectServerInfo serverInfo = result.getServerInfo();
+      final RSConnectPreAuthToken token = result.getPreAuthToken();
        
-      server_.registerUserToken(serverInfo.getName(), accountName, 
+      server_.registerUserToken(serverInfo.getName(), 
+            result.getAccountNickname(), 
             user.getId(), token, new ServerRequestCallback<Void>()
       {
          @Override
@@ -572,16 +284,4 @@ public class RSAccountConnector implements WindowClosedEvent.Handler,
    private final OptionsLoader.Shim optionsLoader_;
    private final Provider<UIPrefs> pUiPrefs_;
    private final Session session_;
-   
-   private RSConnectPreAuthToken pendingAuthToken_;
-   private RSConnectServerInfo pendingServerInfo_;
-   private ProgressIndicator pendingAuthIndicator_;
-   private OperationWithInput<AccountConnectResult> pendingOnConnected_;
-   private RSConnectAuthUser pendingAuthUser_;
-   private NewRSConnectAccountResult pendingWizardResult_;
-   private boolean runningAuthCompleteCheck_ = false;
-   private RSConnectAuthWaitDialog waitDialog_;
-   
-   private final static String AUTH_WINDOW_NAME = "rstudio_rsconnect_auth";
-
 }
