@@ -371,11 +371,13 @@ public class RCompletionManager implements CompletionManager
                   && modifier == KeyboardShortcut.NONE)
          {
             goToHelp();
+            return true;
          }
          else if (keycode == 113 // F2
                   && modifier == KeyboardShortcut.NONE)
          {
             goToFunctionDefinition();
+            return true;
          }
       }
       else
