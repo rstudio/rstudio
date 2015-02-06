@@ -20,6 +20,7 @@ operator_theme_map <- list(
    "twilight" = "#7587A6",
    "idle_fingers" = "#6892B2",
    "clouds" = light_theme_operator,
+   "clouds_midnight" = "#A53553",
    "cobalt" = "#BED6FF",
    "dawn" = light_theme_operator,
    "eclipse" = light_theme_operator,
@@ -106,7 +107,10 @@ mix_colors <- function(x, y, p) {
 }
 
 add_content <- function(content, ..., replace)
-   c(content, sprintf(paste(..., sep = "\n"), replace))
+   c(
+      content,
+      do.call(sprintf, list(paste(..., sep = "\n"), replace))
+   )
 
 create_line_marker_rule <- function(markerName, markerColor) {
    sprintf(paste(sep = "\n",
@@ -145,6 +149,7 @@ themeFiles <- list.files(
 for (file in themeFiles) {
    
    content <- suppressWarnings(readLines(file))
+   fileName <- gsub("\\.css$", "", basename(file))
    
    ## Guess the theme name -- all rules should start with it.
    stripped <- sub(" .*", "", content)
@@ -251,13 +256,14 @@ for (file in themeFiles) {
       warning("No field for layer '", layerName, "' in file '", basename(file), "'")
       next
    }
-      
-   ## This might be a hex name or an RGB field.
-   value <- if (grepl("rgb", borderField)) {
-      gsub(".*rgb", "rgb", borderField)
-   } else {
-      gsub(".*#", "#", borderField)
-   }
+   
+   jsContents <- readLines(sub("css$", "js", file))
+   isDark <- any(grepl("exports.isDark = true;", jsContents))
+   
+   operatorBgColor <- if (isDark)
+      "rgba(128, 128, 128, 0.5)"
+   else
+      "rgba(192, 192, 192, 0.5)"
    
    content <- add_content(
       content,
@@ -266,12 +272,8 @@ for (file in themeFiles) {
       "  border: 0 !important;",
       "  background-color: %s;",
       "}",
-      replace = value
+      replace = operatorBgColor
    )
-   
-   ## Marker line stuff.
-   jsContents <- readLines(sub("css$", "js", file))
-   isDark <- any(grepl("exports.isDark = true;", jsContents))
    
    ## Get the default background, foreground color for the theme.
    background <- parsed$ace_editor$`background-color`
@@ -299,8 +301,6 @@ for (file in themeFiles) {
    ## Generate a color used for chunks, e.g. in .Rmd documents.
    backgroundRgb <- parse_css_color(background)
    foregroundRgb <- parse_css_color(foreground)
-   
-   fileName <- gsub("\\.css$", "", basename(file))
    
    ## Determine an appropriate mixing proportion, and override for certain
    ## themes.
