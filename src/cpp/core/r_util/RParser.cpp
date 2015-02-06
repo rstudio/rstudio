@@ -1027,6 +1027,12 @@ void doParse(TokenCursor& cursor,
          }
          
          status.pushBracket(cursor);
+         
+         if (cursor.isType(RToken::LPAREN))
+            status.pushState(ParseStatus::ParseStateWithinParens);
+         else if (cursor.isType(RToken::LBRACE))
+            status.pushState(ParseStatus::ParseStateWithinBraces);
+         
          MOVE_TO_NEXT_SIGNIFICANT_TOKEN_WARN_ON_BLANK(cursor, status);
          goto START;
       }

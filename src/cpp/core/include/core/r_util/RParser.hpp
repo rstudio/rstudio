@@ -664,6 +664,12 @@ public:
    
    enum ParseState {
       
+      // within () but not an argument list
+      ParseStateWithinParens,
+      
+      // within {}
+      ParseStateWithinBraces,
+      
       // if (<cond>) <expr>
       ParseStateIfCondition,
       ParseStateIfExpression,
