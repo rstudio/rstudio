@@ -130,7 +130,7 @@
 .ace_bracket {
   margin: 0 !important;
   border: 0 !important;
-  background-color: rgba(102, 108, 104, 0.50);
+  background-color: rgba(128, 128, 128, 0.5);
 }
 .ace_marker-layer .ace_foreign_line {
   position: absolute;
