@@ -38,7 +38,6 @@ public class NewProjectWizard extends Wizard<NewProjectInput,NewProjectResult>
          ProgressOperationWithInput<NewProjectResult> operation)
    {
       super("New Project", 
-            "Create project from:", 
             "Create Project",
             input, 
             createFirstPage(sessionInfo),

@@ -89,11 +89,12 @@ public class RSAccountConnector implements WindowClosedEvent.Handler,
    }
    
    public void showAccountWizard(
+         boolean forFirstAccount,
          final OperationWithInput<Boolean> onCompleted)
    {
       if (pUiPrefs_.get().enableRStudioConnect().getGlobalValue())
       {
-         showAccountTypeWizard(onCompleted);
+         showAccountTypeWizard(forFirstAccount, onCompleted);
       }
       else
       {
@@ -152,9 +153,11 @@ public class RSAccountConnector implements WindowClosedEvent.Handler,
    }
 
    private void showAccountTypeWizard(
+         boolean forFirstAccount,
          final OperationWithInput<Boolean> onCompleted)
    {
       RSConnectAccountWizard wizard = new RSConnectAccountWizard(
+            forFirstAccount,
             SessionUtils.showExternalPublishUi(session_, pUiPrefs_.get()),
             new ProgressOperationWithInput<NewRSConnectAccountResult>()
       {

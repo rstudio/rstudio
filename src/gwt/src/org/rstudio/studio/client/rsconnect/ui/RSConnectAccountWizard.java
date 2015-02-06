@@ -27,17 +27,21 @@ public class RSConnectAccountWizard
    extends Wizard<NewRSConnectAccountInput,NewRSConnectAccountResult>
 {
    public RSConnectAccountWizard(
+         boolean forFirstAccount,
          boolean showCloudPage,
          ProgressOperationWithInput<NewRSConnectAccountResult> operation)
    {
-      super("Connect Account", "Select the type of account", "Connect Account",
-            new NewRSConnectAccountInput(), createFirstPage(showCloudPage),
+      super("Connect Account", "Connect Account",
+            new NewRSConnectAccountInput(), 
+            forFirstAccount ? 
+               createIntroPage(showCloudPage) : 
+               createSelectorPage(showCloudPage),
             operation);
    }
    
    
    protected static WizardPage<NewRSConnectAccountInput,
-                               NewRSConnectAccountResult> createFirstPage(
+                               NewRSConnectAccountResult> createIntroPage(
                                      boolean showCloudPage)
    {
       return new NewRSConnectAccountPage("Connect Publishing Account", 

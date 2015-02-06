@@ -243,7 +243,7 @@ public class PublishingPreferencesPane extends PreferencesPane
    
    private void showAccountWizard()
    {
-      connector_.showAccountWizard(new OperationWithInput<Boolean>() 
+      connector_.showAccountWizard(false, new OperationWithInput<Boolean>() 
       {
          @Override
          public void execute(Boolean successful)

@@ -36,7 +36,6 @@ import com.google.gwt.user.client.ui.Widget;
 public class Wizard<I,T> extends ModalDialog<T>
 {
    public Wizard(String caption, 
-                 String subCaption,
                  String okCaption,
                  I initialData,
                  WizardPage<I, T> firstPage,
@@ -44,7 +43,6 @@ public class Wizard<I,T> extends ModalDialog<T>
    {
       super(caption, operation);
       initialData_ = initialData;
-      subCaption_ = subCaption;
       okCaption_ = okCaption;
       firstPage_ = firstPage;
       activePage_ = firstPage;
@@ -88,7 +86,7 @@ public class Wizard<I,T> extends ModalDialog<T>
       final int kPageUILeftMargin = 123;
       
       // first page caption
-      subCaptionLabel_ = new Label(subCaption_);
+      subCaptionLabel_ = new Label(firstPage_.getPageCaption());
       subCaptionLabel_.addStyleName(styles.headerLabel());
       headerPanel_.add(subCaptionLabel_);
       headerPanel_.setWidgetLeftWidth(subCaptionLabel_,
@@ -345,8 +343,9 @@ public class Wizard<I,T> extends ModalDialog<T>
             activePage_ = newActivePage;
             
             // update header
-            subCaptionLabel_.setVisible(!isNavigationPage);
-            pageCaptionLabel_.setVisible(isNavigationPage);
+            subCaptionLabel_.setVisible(newActivePage == firstPage_);
+            pageCaptionLabel_.setVisible(
+                  newActivePage != firstPage_ && isNavigationPage);
             pageCaptionLabel_.setText(pageCaptionLabel);
             
             setNextButtonState(newActivePage);
@@ -400,7 +399,6 @@ public class Wizard<I,T> extends ModalDialog<T>
    
    private final I initialData_; 
    
-   private final String subCaption_;
    private final String okCaption_;
    
    private LayoutPanel headerPanel_;

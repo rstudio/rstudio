@@ -160,7 +160,7 @@ public class RSConnectDeployDialog
                // The user has no accounts connected--hide ourselves and 
                // ask the user to connect an account before we continue.
                hide();
-               connector_.showAccountWizard(new OperationWithInput<Boolean>() 
+               connector_.showAccountWizard(true, new OperationWithInput<Boolean>() 
                {
                   @Override
                   public void execute(Boolean input)
