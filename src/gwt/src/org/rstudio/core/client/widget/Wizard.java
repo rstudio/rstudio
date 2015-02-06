@@ -65,7 +65,7 @@ public class Wizard<I,T> extends ModalDialog<T>
          }
       });
       nextButton_.setVisible(false);
-      addButton(nextButton_);
+      addActionButton(nextButton_);
    }
    
    @Override
@@ -143,8 +143,8 @@ public class Wizard<I,T> extends ModalDialog<T>
       // add first page (and all sub-pages recursively)
       addAndInitializePage(firstPage_, true);
       
-      nextButton_.setVisible(firstPage_ instanceof WizardIntermediatePage<?,?>);
-      
+      setNextButtonState(firstPage_);
+
       return mainWidget;
    }
    
@@ -305,8 +305,7 @@ public class Wizard<I,T> extends ModalDialog<T>
             setOkButtonVisible(okButtonVisible);
             
             // if this is an intermediate page, make Next visible
-            nextButton_.setVisible(
-                  page instanceof WizardIntermediatePage<?,?>);
+            setNextButtonState(page);
             
             // call hook
             onPageActivated(page, okButtonVisible);
@@ -350,8 +349,7 @@ public class Wizard<I,T> extends ModalDialog<T>
             pageCaptionLabel_.setVisible(isNavigationPage);
             pageCaptionLabel_.setText(pageCaptionLabel);
             
-            nextButton_.setVisible(
-                  newActivePage instanceof WizardIntermediatePage<?,?>);
+            setNextButtonState(newActivePage);
             backButton_.setVisible(
                   newActivePage != firstPage_);
 
@@ -391,6 +389,13 @@ public class Wizard<I,T> extends ModalDialog<T>
    {
       return page.getSubPages() == null ||
             page.getSubPages().size() == 0;
+   }
+   
+   private void setNextButtonState(WizardPage<I, T> page)
+   {
+      boolean isIntermediate = page instanceof WizardIntermediatePage<?,?>;
+      nextButton_.setVisible(isIntermediate);
+      setDefaultOverrideButton(isIntermediate ? nextButton_ : null);
    }
    
    private final I initialData_; 

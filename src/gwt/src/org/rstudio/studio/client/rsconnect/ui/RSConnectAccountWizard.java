@@ -40,10 +40,10 @@ public class RSConnectAccountWizard
                                NewRSConnectAccountResult> createFirstPage(
                                      boolean showCloudPage)
    {
-      return new NewRSConnectAccountPage("Connect Account", 
-            "Pick an account", "Hello world", 
-            RSConnectAccountResources.INSTANCE.cloudAccountIcon(),
-            RSConnectAccountResources.INSTANCE.cloudAccountIconLarge(),
+      return new NewRSConnectAccountPage("Connect Publishing Account", 
+            "Pick an account", "Connect Publishing Account", 
+            RSConnectAccountResources.INSTANCE.publishIcon(),
+            RSConnectAccountResources.INSTANCE.publishIconLarge(),
             createSelectorPage(showCloudPage));
    }
    
@@ -54,11 +54,11 @@ public class RSConnectAccountWizard
       return new WizardNavigationPage<
          NewRSConnectAccountInput,
          NewRSConnectAccountResult>(
+               "Choose Account Type", 
+               "Choose Account Type", 
                "Connect Account", 
-               "Select the type of account", 
-               "Connect Account", 
-               RSConnectAccountResources.INSTANCE.cloudAccountIcon(), 
-               RSConnectAccountResources.INSTANCE.cloudAccountIconLarge(), 
+               null, 
+               null, 
                createPages(showCloudPage));
    }
    
