@@ -13,7 +13,7 @@
  *
  */
 
-#define RSTUDIO_ENABLE_DEBUG_MACROS
+// #define RSTUDIO_ENABLE_DEBUG_MACROS
 #define RSTUDIO_DEBUG_LABEL "parser"
 #include <core/Macros.hpp>
 
@@ -25,6 +25,12 @@ namespace core {
 namespace r_util {
 
 using namespace token_utils;
+
+void LintItems::dump()
+{
+   for (std::size_t i = 0; i < lintItems_.size(); ++i)
+      std::cerr << lintItems_[i].message << std::endl;
+}
 
 namespace {
 
@@ -942,8 +948,6 @@ void handleFunction(TokenCursor& cursor,
    status.setParentAsCurrent();
 }
 
-
-
 } // end anonymous namespace
 
 void doParse(TokenCursor&, ParseStatus&);
@@ -970,24 +974,39 @@ ParseResults parse(const std::string& rCode,
    return ParseResults(status.root(), status.lint());
 }
 
+#define GOTO_INVALID_TOKEN(__CURSOR__)                                         \
+   do                                                                          \
+   {                                                                           \
+      DEBUG("xx Invalid token xx: " << __CURSOR__);                            \
+      goto INVALID_TOKEN;                                                      \
+   } while (0)
+
 void doParse(TokenCursor& cursor,
              ParseStatus& status)
 {
+   DEBUG("Beginning parse...");
    cursor.fwdOverWhitespaceAndComments();
    
-   RToken::TokenType lhsType = RToken::ERR;
-   RToken::TokenType rhsType = RToken::ERR;
    bool startedWithUnaryOperator = false;
    
    while (true)
    {
       
-   START:
+START:
       
       DEBUG("Start: " << cursor);
       
       if (cursor.isAtEndOfDocument())
          return;
+      
+      // Move over semi-colons (empty expressions).
+      while (cursor.isType(RToken::SEMI))
+      {
+         if (status.inArgumentList())
+            status.lint().unexpectedToken(cursor);
+         
+         MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
+      }
       
       // Check for keywords.
       if (cursor.contentEquals(L"function"))
@@ -998,15 +1017,6 @@ void doParse(TokenCursor& cursor,
          goto WHILE_START;
       else if (cursor.contentEquals(L"if"))
          goto IF_START;
-      
-      // Move over semi-colons (empty expressions).
-      while (cursor.isType(RToken::SEMI))
-      {
-         if (status.inArgumentList())
-            status.lint().unexpectedToken(cursor);
-         
-         MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
-      }
       
       // Move over unary operators -- any sequence is valid.
       startedWithUnaryOperator = false;
@@ -1023,11 +1033,11 @@ void doParse(TokenCursor& cursor,
          if (cursor.isType(RToken::LBRACKET) ||
              cursor.isType(RToken::LDBRACKET))
          {
-            goto INVALID_TOKEN;
+            GOTO_INVALID_TOKEN(cursor);
          }
          
+         // Update status and state.
          status.pushBracket(cursor);
-         
          if (cursor.isType(RToken::LPAREN))
             status.pushState(ParseStatus::ParseStateWithinParens);
          else if (cursor.isType(RToken::LBRACE))
@@ -1044,7 +1054,7 @@ void doParse(TokenCursor& cursor,
          if (startedWithUnaryOperator ||
              status.parseStateStack().empty())
          {
-            goto INVALID_TOKEN;
+            GOTO_INVALID_TOKEN(cursor);
          }
          
          switch (status.peekState())
@@ -1059,7 +1069,7 @@ void doParse(TokenCursor& cursor,
             goto ARGUMENT_START;
             
          default:
-            goto INVALID_TOKEN;
+            GOTO_INVALID_TOKEN(cursor);
          }
       }
       
@@ -1068,41 +1078,45 @@ void doParse(TokenCursor& cursor,
       if (isRightBracket(cursor))
       {
          if (startedWithUnaryOperator)
-            goto INVALID_TOKEN;
+            GOTO_INVALID_TOKEN(cursor);
          
-   RIGHT_BRACKET:
+RIGHT_BRACKET:
          
-         // We need to compare the parse stack to the brace stack
-         // to determine the appropriate action here.
-         int diff =
-               status.braceStack().size() - status.parseStateStack().size();
-         
-         // diff > 0: this is closing an extra bracket, and not closing 
-         // a parse scope. For example,
-         //
-         //    foo((1) + (2))
-         //                ^
-         if (diff > 0)
+         switch (status.peekState())
          {
-            status.popBracket(cursor);
+         
+         // Closing a condition in a control flow expression.
+         // NOTE: These blocks have the responsibility of popping
+         // the brace stack.
+         case ParseStatus::ParseStateIfCondition:
+            goto IF_CONDITION_END;
+         case ParseStatus::ParseStateForCondition:
+            goto FOR_CONDITION_END;
+         case ParseStatus::ParseStateWhileCondition:
+            goto WHILE_CONDITION_END;
+         case ParseStatus::ParseStateFunctionArgumentList:
+            goto FUNCTION_ARGUMENT_LIST_END;
+         case ParseStatus::ParseStateArgumentList:
+            goto ARGUMENT_LIST_END;
+         case ParseStatus::ParseStateForExpression:
+         case ParseStatus::ParseStateIfExpression:
+         case ParseStatus::ParseStateWhileExpression:
+            goto EXPRESSION_END;
             
+         default:
+            status.popBracket(cursor);
+            status.popState(cursor);
             MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
             if (isBinaryOp(cursor))
                goto BINARY_OPERATOR;
-            else
-               goto START;
-         }
-         
-         // diff == 0: this bracket closes a parse scope
-         else if (diff == 0 && !status.parseStateStack().empty())
-         {
-            goto EXPRESSION_END;
+            goto START;
          }
       }
       
       // Encountered an identifier or string.
       if (isValidAsIdentifier(cursor))
       {
+         DEBUG("-- Identifier -- " << cursor);
          if (cursor.isAtEndOfDocument())
             break;
          
@@ -1119,7 +1133,6 @@ void doParse(TokenCursor& cursor,
          }
          
          bool isNumber = cursor.isType(RToken::NUMBER);
-         
          MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
          
          if (isBinaryOp(cursor))
@@ -1135,35 +1148,34 @@ void doParse(TokenCursor& cursor,
          }
          
          if (isRightBracket(cursor))
+         {
+            DEBUG("---- Right bracket followed cursor");
             goto RIGHT_BRACKET;
+         }
+         
+         if (!status.braceStack().empty() &&
+             isRightBracket(cursor.nextSignificantToken()))
+         {
+            MOVE_TO_NEXT_SIGNIFICANT_TOKEN_WARN_ON_BLANK(cursor, status);
+            goto RIGHT_BRACKET;
+         }
          
          if (cursor.isAtEndOfExpression())
          {
-            MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
-            if (status.braceStack().empty() ||
-                status.parseStateStack().empty())
-            {
-               goto START;
-            }
-            else
-            {
-               goto EXPRESSION_END;
-            }
+            goto EXPRESSION_END;
          }
          
-         goto INVALID_TOKEN;
+         GOTO_INVALID_TOKEN(cursor);
       }
       
-      goto INVALID_TOKEN;
+      GOTO_INVALID_TOKEN(cursor);
       
       // end START
       
-   BINARY_OPERATOR:
+BINARY_OPERATOR:
       
       MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
       goto START;
-      
-      // end BINARY_OPERATOR
       
       // Argument list for a function / subset call, e.g.
       //
@@ -1171,17 +1183,16 @@ void doParse(TokenCursor& cursor,
       //    b[]
       //    c[[]]
       //
-   ARGUMENT_LIST:
+ARGUMENT_LIST:
+      
+      DEBUG("-- Begin argument list " << cursor);
       
       if (!(cursor.isType(RToken::LPAREN) ||
             cursor.isType(RToken::LBRACKET) ||
             cursor.isType(RToken::LDBRACKET)))
       {
-         goto INVALID_TOKEN;
+         GOTO_INVALID_TOKEN(cursor);
       }
-      
-      lhsType = cursor.type();
-      rhsType = token_utils::typeComplement(lhsType);
       
       status.pushBracket(cursor);
       status.pushState(ParseStatus::ParseStateArgumentList);
@@ -1190,61 +1201,87 @@ void doParse(TokenCursor& cursor,
       
       if (isRightBracket(cursor))
       {
-         if (cursor.isType(rhsType))
+         if (cursor.isType(typeComplement(status.peekBracket().type())))
             goto ARGUMENT_LIST_END;
          else
             status.lint().unexpectedClosingBracket(cursor, status.braceStack());
       }
       
-   ARGUMENT_START:
+ARGUMENT_START:
       
       while (cursor.isType(RToken::COMMA))
          MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
       
-      if (cursor.isType(rhsType))
+      if (cursor.isType(typeComplement(status.peekBracket().type())))
          goto ARGUMENT_LIST_END;
       
       goto START;
       
-   ARGUMENT_LIST_END:
+ARGUMENT_LIST_END:
       
       DEBUG("Argument list end: " << cursor);
       
       // We should be on the closing token of this argument list.
-      if (!cursor.isType(rhsType))
-         goto INVALID_TOKEN;
+      if (!cursor.isType(typeComplement(status.peekBracket().type())))
+         GOTO_INVALID_TOKEN(cursor);
       
       status.popBracket(cursor);
       status.popState(cursor, ParseStatus::ParseStateArgumentList);
       
       // Following the end of an argument list, we may see:
       //
-      // 1. The end of the document / expression
+      // 1. The end of the document / expression,
       // 2. Another argument list,
-      // 3. A binary operator.
+      // 3. A binary operator,
+      // 4. Another closing bracket (closing a parent expression).
+      //
+      // NOTE: The following two expressions are parsed differently
+      // at the top level.
+      //
+      //    foo(1)  (2)
+      //    foo(2)\n(2)
+      //
+      // In the first case, this is identical to `foo(1)(2)`; in
+      // the second, it's `foo(1); (2)`.
       if (cursor.isAtEndOfDocument())
       {
          return;
+      }
+      
+      // Newlines end function calls at the top level.
+      else if (status.parseStateStack().empty() &&
+               isWhitespaceWithNewline(cursor.nextToken()))
+      {
+         MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
+         goto START;
+      }
+      
+      // Left brackets following are sticky beyond whitespace
+      // and comments.
+      else if (isLeftBracket(cursor.nextSignificantToken()))
+      {
+         MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
+         goto ARGUMENT_LIST;
       }
       else if (cursor.isAtEndOfExpression())
       {
          MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
          goto START;
       }
-      else if (isLeftBracket(cursor.nextSignificantToken()))
-      {
-         MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
-         goto ARGUMENT_LIST;
-      }
       else if (isBinaryOp(cursor.nextSignificantToken()))
       {
          MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
          goto BINARY_OPERATOR;
       }
+      else if (isRightBracket(cursor.nextSignificantToken()))
+      {
+         MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
+         goto RIGHT_BRACKET;
+      }
       
-      goto INVALID_TOKEN;
+      GOTO_INVALID_TOKEN(cursor);
       
-   FUNCTION_START:
+FUNCTION_START:
       
       ENSURE_CONTENT(cursor, status, L"function");
       MOVE_TO_NEXT_SIGNIFICANT_TOKEN_WARN_ON_BLANK(cursor, status);
@@ -1255,7 +1292,7 @@ void doParse(TokenCursor& cursor,
       if (cursor.isType(RToken::RPAREN))
          goto FUNCTION_ARGUMENT_LIST_END;
       
-   FUNCTION_ARGUMENT_START:
+FUNCTION_ARGUMENT_START:
       
       if (cursor.isType(RToken::ID) &&
           cursor.nextSignificantToken().contentEquals(L"="))
@@ -1278,17 +1315,23 @@ void doParse(TokenCursor& cursor,
             MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
       }
       
-   FUNCTION_ARGUMENT_LIST_END:
+FUNCTION_ARGUMENT_LIST_END:
       
       ENSURE_TYPE(cursor, status, RToken::RPAREN);
-      MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
       status.popBracket(cursor);
+      MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
       status.popState(cursor, ParseStatus::ParseStateFunctionArgumentList);
       status.pushState(ParseStatus::ParseStateFunctionExpression);
+      if (cursor.isType(RToken::LBRACE))
+      {
+         status.pushBracket(cursor);
+         MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
+      }
       goto START;
       
-   FOR_START:
+FOR_START:
       
+      DEBUG("For start: " << cursor);
       ENSURE_CONTENT(cursor, status, L"for");
       MOVE_TO_NEXT_SIGNIFICANT_TOKEN_WARN_IF_NO_WHITESPACE(cursor, status);
       ENSURE_TYPE(cursor, status, RToken::LPAREN);
@@ -1301,16 +1344,24 @@ void doParse(TokenCursor& cursor,
       status.pushState(ParseStatus::ParseStateForCondition);
       goto START;
       
-   FOR_CONDITION_END:
+FOR_CONDITION_END:
       
+      DEBUG("** For condition end ** " << cursor);
       ENSURE_TYPE(cursor, status, RToken::RPAREN);
       status.popBracket(cursor);
       MOVE_TO_NEXT_SIGNIFICANT_TOKEN_WARN_IF_NO_WHITESPACE(cursor, status);
       status.popState(cursor, ParseStatus::ParseStateForCondition);
       status.pushState(ParseStatus::ParseStateForExpression);
+      if (cursor.isType(RToken::LBRACE))
+      {
+         status.pushBracket(cursor);
+         MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
+      }
       goto START;
       
-   WHILE_START:
+WHILE_START:
+      
+      DEBUG("** While start **");
       
       ENSURE_CONTENT(cursor, status, L"while");
       MOVE_TO_NEXT_SIGNIFICANT_TOKEN_WARN_ON_BLANK(cursor, status);
@@ -1320,16 +1371,25 @@ void doParse(TokenCursor& cursor,
       status.pushState(ParseStatus::ParseStateWhileCondition);
       goto START;
       
-   WHILE_CONDITION_END:
+WHILE_CONDITION_END:
+      
+      DEBUG("** While condition end ** " << cursor);
       
       ENSURE_TYPE(cursor, status, RToken::RPAREN);
-      MOVE_TO_NEXT_SIGNIFICANT_TOKEN_WARN_IF_NO_WHITESPACE(cursor, status);
       status.popBracket(cursor);
+      MOVE_TO_NEXT_SIGNIFICANT_TOKEN_WARN_IF_NO_WHITESPACE(cursor, status);
       status.popState(cursor, ParseStatus::ParseStateWhileCondition);
       status.pushState(ParseStatus::ParseStateWhileExpression);
+      if (cursor.isType(RToken::LBRACE))
+      {
+         status.pushBracket(cursor);
+         MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
+      }
       goto START;
+ 
+IF_START:
       
-   IF_START:
+      DEBUG("** If start ** " << cursor);
       
       ENSURE_CONTENT(cursor, status, L"if");
       MOVE_TO_NEXT_SIGNIFICANT_TOKEN_WARN_ON_BLANK(cursor, status);
@@ -1339,16 +1399,31 @@ void doParse(TokenCursor& cursor,
       status.pushState(ParseStatus::ParseStateIfCondition);
       goto START;
       
-   IF_CONDITION_END:
+IF_CONDITION_END:
+      
+      DEBUG("** If condition end ** " << cursor);
       
       ENSURE_TYPE(cursor, status, RToken::RPAREN);
-      MOVE_TO_NEXT_SIGNIFICANT_TOKEN_WARN_IF_NO_WHITESPACE(cursor, status);
       status.popBracket(cursor);
+      MOVE_TO_NEXT_SIGNIFICANT_TOKEN_WARN_IF_NO_WHITESPACE(cursor, status);
       status.popState(cursor, ParseStatus::ParseStateIfCondition);
       status.pushState(ParseStatus::ParseStateIfExpression);
+      if (cursor.isType(RToken::LBRACE))
+      {
+         status.pushBracket(cursor);
+         MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
+      }
       goto START;
       
-   EXPRESSION_END:
+EXPRESSION_END:
+      
+      DEBUG("** Expression end **");
+      if (status.parseStateStack().empty())
+      {
+         while (cursor.isType(RToken::SEMI))
+            MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
+         goto START;
+      }
       
       // This expression may be closing a control-flow
       // parse state. Check each.
@@ -1363,11 +1438,44 @@ void doParse(TokenCursor& cursor,
          goto WHILE_CONDITION_END;
       case ParseStatus::ParseStateForCondition:
          goto FOR_CONDITION_END;
+         
+      // For arguments, the following token should either be a
+      // comma (signalling more arguments to come), or a right
+      // paren (signalling we're done)
       case ParseStatus::ParseStateFunctionArgumentList:
-         goto FUNCTION_ARGUMENT_LIST_END;
+         
+         if (cursor.isType(RToken::RPAREN))
+            goto FUNCTION_ARGUMENT_LIST_END;
+         else if (cursor.isType(RToken::COMMA))
+            goto FUNCTION_ARGUMENT_START;
+         
+         MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
+         
+         if (cursor.isType(RToken::RPAREN))
+            goto FUNCTION_ARGUMENT_LIST_END;
+         else if (cursor.isType(RToken::COMMA))
+            goto FUNCTION_ARGUMENT_START;
+         
+         GOTO_INVALID_TOKEN(cursor);
+         
       case ParseStatus::ParseStateArgumentList:
-         goto ARGUMENT_LIST_END;
-
+         
+         if (cursor.isType(RToken::RPAREN))
+            goto ARGUMENT_LIST_END;
+         else if (cursor.isType(RToken::COMMA))
+            goto ARGUMENT_START;
+         
+         MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
+         
+         if (cursor.isType(RToken::RPAREN))
+            goto ARGUMENT_LIST_END;
+         else if (cursor.isType(RToken::COMMA))
+            goto ARGUMENT_START;
+         
+         GOTO_INVALID_TOKEN(cursor);
+         
+      // At the end of an 'if' expression, we check for a following
+      // 'else' (which continues that if expression)
       case ParseStatus::ParseStateIfExpression:
          if (cursor.nextSignificantToken().contentEquals(L"else"))
          {
@@ -1376,21 +1484,27 @@ void doParse(TokenCursor& cursor,
             goto START;
          }
 
-         // ending an expression: go back to start
+      // Ending a control flow expression. Note that these expressions
+      // may or may not have associated brackets.
       case ParseStatus::ParseStateWhileExpression:
       case ParseStatus::ParseStateForExpression:
       case ParseStatus::ParseStateFunctionExpression:
+         
+         if (status.parseStateStack().size() > status.braceStack().size())
+            status.popState(cursor);
+         else
+         {
+            status.popBracket(cursor);
+            status.popState(cursor);
+         }
          MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
          goto START;
 
       default:
-         goto INVALID_TOKEN;
+         GOTO_INVALID_TOKEN(cursor);
       }
       
-      MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
-      goto START;
-      
-   INVALID_TOKEN:
+INVALID_TOKEN:
       
       status.lint().unexpectedToken(cursor);
       MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);

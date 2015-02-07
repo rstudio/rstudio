@@ -358,6 +358,13 @@ SEXP rs_lintRFile(SEXP filePathSEXP)
    return builder;
 }
 
+SEXP rs_parse(SEXP rCodeSEXP)
+{
+   ParseResults results = parse(CHAR(STRING_ELT(rCodeSEXP, 0)), FilePath());
+   r::sexp::Protect protect;
+   return r::sexp::create((int) results.lint().size(), &protect);
+}
+
 } // anonymous namespace
 
 core::Error initialize()
@@ -367,6 +374,7 @@ core::Error initialize()
    using namespace module_context;
    
    RS_REGISTER_CALL_METHOD(rs_lintRFile, 1);
+   RS_REGISTER_CALL_METHOD(rs_parse, 1);
    
    ExecBlock initBlock;
    initBlock.addFunctions()

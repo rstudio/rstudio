@@ -68,7 +68,7 @@ private:
 };
 
 struct ParseItem;
-typedef Stack<ParseItem> BraceStack;
+typedef Stack<AnnotatedRToken> BraceStack;
 
 class ParseNode;
 
@@ -131,13 +131,13 @@ struct LintItem
         type(type),
         message(message) {}
    
-   LintItem(const ParseItem& item,
+   LintItem(const AnnotatedRToken& item,
             LintType type,
             const std::string& message)
-      : startRow(item.position.row),
-        startColumn(item.position.column),
-        endRow(item.position.row),
-        endColumn(item.position.column + item.symbol.length()),
+      : startRow(item.row()),
+        startColumn(item.column()),
+        endRow(item.row()),
+        endColumn(item.column() + item.contentAsUtf8().length()),
         type(type),
         message(message) {}
 
@@ -223,11 +223,11 @@ public:
       
       if (!braceStack.empty())
       {
-         const ParseItem& topOfStack = braceStack.peek();
+         const AnnotatedRToken& topOfStack = braceStack.peek();
          
          LintItem info(topOfStack,
                        LintTypeInfo,
-                       "unmatched bracket '" + topOfStack.symbol + "' here");
+                       "unmatched bracket '" + topOfStack.contentAsUtf8() + "' here");
          lintItems_.push_back(info);
       }
    }
@@ -334,6 +334,7 @@ public:
    
    std::size_t errorCount() const { return errorCount_; }
    bool hasErrors() const { return errorCount_ > 0; }
+   void dump();
    
 private:
    std::vector<LintItem> lintItems_;
@@ -638,13 +639,10 @@ public:
    void pushBracket(const AnnotatedRToken& token)
    {
       DEBUG("*** Pushing " << token << " on to brace stack");
-      braceStack_.push(ParseItem(
-                     token.contentAsUtf8(),
-                     Position(token.row(), token.column()),
-                     pNode_));
+      braceStack_.push(token);
    }
    
-   const ParseItem& peekBracket()
+   const AnnotatedRToken& peekBracket()
    {
       return braceStack_[braceStack_.size() - 1];
    }
@@ -652,8 +650,11 @@ public:
    void popBracket(const AnnotatedRToken& expectedAsComplement)
    {
       DEBUG("*** Popping " << expectedAsComplement << " from brace stack");
-      if (braceStack_.peek().symbol != complement(expectedAsComplement.contentAsUtf8()))
+      if (!braceStack_.peek().isType(
+             token_utils::typeComplement(expectedAsComplement.type())))
+      {
          lint_.unexpectedClosingBracket(expectedAsComplement, braceStack_);
+      }
       braceStack_.pop();
    }
    
@@ -734,10 +735,30 @@ public:
    
    bool inArgumentList()
    {
+      if (parseStateStack_.empty())
+         return false;
+      
       switch (parseStateStack_.peek())
       {
       case ParseStateArgumentList:
       case ParseStateFunctionArgumentList:
+         return true;
+      default:
+         return false;
+      }
+   }
+   
+   bool inNakedControlFlowExpression()
+   {
+      if (parseStateStack_.size() == braceStack_.size())
+         return false;
+      
+      switch (parseStateStack_.peek())
+      {
+      case ParseStateForExpression:
+      case ParseStateFunctionExpression:
+      case ParseStateIfExpression:
+      case ParseStateWhileExpression:
          return true;
       default:
          return false;

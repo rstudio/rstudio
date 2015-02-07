@@ -382,6 +382,11 @@ inline bool isExtractionOperator(const RToken& rToken)
           isAt(rToken);
 }
 
+inline bool isWhitespaceWithNewline(const RToken& rToken)
+{
+   return isWhitespace(rToken) && rToken.contentContains(L'\n');
+}
+
 inline RToken::TokenType typeComplement(RToken::TokenType lhsType)
 {
    switch (lhsType)
