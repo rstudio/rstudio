@@ -38,11 +38,13 @@ import com.google.gwt.resources.rg.ImageBundleBuilder.ImageRect;
 import com.google.gwt.safehtml.shared.UriUtils;
 import com.google.gwt.user.rebind.SourceWriter;
 import com.google.gwt.user.rebind.StringSourceWriter;
+import com.google.gwt.util.tools.Utility;
 
 import java.awt.geom.AffineTransform;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.net.URLConnection;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
@@ -577,12 +579,11 @@ public final class ImageResourceGenerator extends AbstractResourceGenerator
          * they actually offer a space-savings.
          */
         try {
-          URL contentLocation = localizedImage.getUrl();
-          int originalSize = contentLocation.openConnection().getContentLength();
+          int originalSize = getContentLength(localizedImage.getUrl());
 
           // Re-encode the data
           URL reencodedContents = reencodeToTempFile(logger, rect);
-          int newSize = reencodedContents.openConnection().getContentLength();
+          int newSize = getContentLength(reencodedContents);
 
           // But only use it if we did a better job on compression
           if (newSize < originalSize) {
@@ -605,6 +606,19 @@ public final class ImageResourceGenerator extends AbstractResourceGenerator
 
     if (image.isFlipRtl()) {
       displayed.setRtlImage(localizedImage);
+    }
+  }
+
+  /**
+   * Helper method to read the contentLength of a given URL, automatically
+   * closing the InputStream that is opened as a side effect.
+   */
+  private int getContentLength(URL url) throws IOException {
+    URLConnection conn = url.openConnection();
+    try {
+      return conn.getContentLength();
+    } finally {
+      Utility.close(conn.getInputStream());
     }
   }
 

@@ -24,10 +24,7 @@ import java.io.InputStream;
 import java.io.LineNumberReader;
 import java.io.OutputStream;
 import java.io.PrintWriter;
-import java.io.Reader;
 import java.io.StringReader;
-import java.io.Writer;
-import java.net.Socket;
 import java.net.URI;
 import java.net.URL;
 import java.util.Iterator;
@@ -58,64 +55,12 @@ public final class Utility {
    * Helper that ignores exceptions during close, because what are you going to
    * do?
    */
-  public static void close(InputStream is) {
+  public static void close(AutoCloseable closeable) {
     try {
-      if (is != null) {
-        is.close();
+      if (closeable != null) {
+        closeable.close();
       }
-    } catch (IOException e) {
-    }
-  }
-
-  /**
-   * Helper that ignores exceptions during close, because what are you going to
-   * do?
-   */
-  public static void close(OutputStream os) {
-    try {
-      if (os != null) {
-        os.close();
-      }
-    } catch (IOException e) {
-    }
-  }
-
-  /**
-   * Helper that ignores exceptions during close, because what are you going to
-   * do?
-   */
-  public static void close(Reader reader) {
-    try {
-      if (reader != null) {
-        reader.close();
-      }
-    } catch (IOException e) {
-    }
-  }
-
-  /**
-   * Helper that ignores exceptions during close, because what are you going to
-   * do?
-   */
-  public static void close(Socket socket) {
-    try {
-      if (socket != null) {
-        socket.close();
-      }
-    } catch (IOException e) {
-    }
-  }
-
-  /**
-   * Helper that ignores exceptions during close, because what are you going to
-   * do?
-   */
-  public static void close(Writer writer) {
-    try {
-      if (writer != null) {
-        writer.close();
-      }
-    } catch (IOException e) {
+    } catch (Exception e) {
     }
   }
 

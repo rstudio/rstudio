@@ -31,6 +31,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.PrintWriter;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -693,17 +694,16 @@ class ImageBundleBuilder {
     // Be safe by default and assume that the incoming image is lossy
     boolean lossy = true;
     // Load the image
-    try {
+    try (InputStream is = imageUrl.openStream();
+         MemoryCacheImageInputStream imageInputStream = new MemoryCacheImageInputStream(is)) {
       /*
        * ImageIO uses an SPI pattern API. We don't care about the particulars of
        * the implementation, so just choose the first ImageReader.
        */
-      MemoryCacheImageInputStream input = new MemoryCacheImageInputStream(
-          imageUrl.openStream());
-      Iterator<ImageReader> it = ImageIO.getImageReaders(input);
+      Iterator<ImageReader> it = ImageIO.getImageReaders(imageInputStream);
       readers : while (it.hasNext()) {
         ImageReader reader = it.next();
-        reader.setInput(input);
+        reader.setInput(imageInputStream);
 
         int numImages = reader.getNumImages(true);
         if (numImages == 0) {
