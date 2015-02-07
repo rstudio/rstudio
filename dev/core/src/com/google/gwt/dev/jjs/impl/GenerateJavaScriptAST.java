@@ -439,6 +439,9 @@ public class GenerateJavaScriptAST {
         if (specialObfuscatedFields.containsKey(x)) {
           jsName = scopeStack.peek().declareName(mangleNameSpecialObfuscate(x));
           jsName.setObfuscatable(false);
+        } else if (typeOracle.isJsTypeField(x)) {
+          jsName = scopeStack.peek().declareName(name, name);
+          jsName.setObfuscatable(false);
         } else {
           jsName = scopeStack.peek().declareName(mangleName, name);
         }
@@ -569,10 +572,9 @@ public class GenerateJavaScriptAST {
             polyName = interfaceScope.declareName(mangleNameSpecialObfuscate(x));
             polyName.setObfuscatable(false);
             // if a JsType and we can set set the interface method to non-obfuscatable
-          } else if (!x.isNoExport() && typeOracle.isJsTypeMethod(x) &&
-              !typeOracle.needsJsInteropBridgeMethod(x)) {
-              polyName = interfaceScope.declareName(name, name);
-              polyName.setObfuscatable(false);
+          } else if (typeOracle.isJsTypeMethod(x) && !typeOracle.needsJsInteropBridgeMethod(x)) {
+            polyName = interfaceScope.declareName(name, name);
+            polyName.setObfuscatable(false);
           } else {
             polyName = interfaceScope.declareName(mangleNameForPoly(x), name);
           }
@@ -2955,9 +2957,8 @@ public class GenerateJavaScriptAST {
 
     private boolean isMethodPotentiallyCalledAcrossClasses(JMethod method) {
       assert !hasWholeWorldKnowledge || crossClassTargets != null;
-      return crossClassTargets == null || crossClassTargets.contains(method) ||
-          typeOracle.isExportedMethod(method) ||
-          typeOracle.isJsTypeMethod(method);
+      return crossClassTargets == null || crossClassTargets.contains(method)
+          || typeOracle.isExportedMethod(method) || typeOracle.isJsTypeMethod(method);
     }
 
     /**

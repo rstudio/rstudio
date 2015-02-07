@@ -218,8 +218,7 @@ public class JMethod extends JNode implements HasEnclosingType, HasName, HasType
   protected transient String signature;
 
   /**
-   * The access modifier; stored as an int to reduce memory / serialization
-   * footprint.
+   * The access modifier; stored as an int to reduce memory / serialization footprint.
    */
   private int access;
 
@@ -286,13 +285,10 @@ public class JMethod extends JNode implements HasEnclosingType, HasName, HasType
    * Construct a bare-bones deserialized external method.
    */
   private JMethod(String signature, JDeclaredType enclosingType, boolean isStatic) {
-    super(SourceOrigin.UNKNOWN);
-    this.name = StringInterner.get().intern(signature.substring(0, signature.indexOf('(')));
-    this.enclosingType = enclosingType;
+    this(SourceOrigin.UNKNOWN, StringInterner.get().intern(
+        signature.substring(0, signature.indexOf('('))), enclosingType, null, false, isStatic,
+        false, AccessModifier.PUBLIC);
     this.signature = signature;
-    this.isAbstract = false;
-    this.isStatic = isStatic;
-    this.access = AccessModifier.PUBLIC.ordinal();
   }
 
   /**
@@ -481,6 +477,10 @@ public class JMethod extends JNode implements HasEnclosingType, HasName, HasType
 
   public boolean isPrivate() {
     return access == AccessModifier.PRIVATE.ordinal();
+  }
+
+  public boolean isPublic() {
+    return access == AccessModifier.PUBLIC.ordinal();
   }
 
   @Override

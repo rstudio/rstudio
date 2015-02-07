@@ -1151,20 +1151,49 @@ public class JTypeOracle implements Serializable {
     return false;
   }
 
+  /**
+   * Returns whether the given method is exported by an @JsType annotation.
+   * <p>
+   * A method is a JsType method if it is a public instance method that has not been marked NoExport
+   * and is in a concrete class that has been annotated @JsType or overrides some other JsType
+   * method.
+   */
   public boolean isJsTypeMethod(JMethod x) {
-    if (!isJsInteropEnabled()) {
-      return false;
-    }
-
-    if (!x.isNoExport() && isJsType(x.getEnclosingType())) {
+    if (isImmediateJsTypeMethod(x)) {
       return true;
     }
     for (JMethod overriddenMethod : getOverriddenMethodsOf(x)) {
-      if (!overriddenMethod.isNoExport() && isJsType(overriddenMethod.getEnclosingType())) {
+      if (isImmediateJsTypeMethod(overriddenMethod)) {
         return true;
       }
     }
     return false;
+  }
+
+  /**
+   * Returns whether the given method is exported by an @JsType annotation.
+   * <p>
+   * A method is a JsType method if it is a public instance method that has not been marked NoExport
+   * and is in a concrete class that has been annotated @JsType .
+   */
+  private boolean isImmediateJsTypeMethod(JMethod x) {
+    if (!isJsInteropEnabled() || !x.isPublic() || x.isNoExport() || !x.needsVtable()) {
+      return false;
+    }
+    return isJsType(x.getEnclosingType());
+  }
+
+  /**
+   * Returns whether the given field is exported by an @JsType annotation.
+   * <p>
+   * A field is a JsType field if it is a public instance field on a concrete class that has been
+   * annotated @JsType.
+   */
+  public boolean isJsTypeField(JField x) {
+    if (!isJsInteropEnabled() || !x.isPublic() || x.isStatic()) {
+      return false;
+    }
+    return isJsType(x.getEnclosingType());
   }
 
   public boolean isSingleJsoImpl(JType type) {

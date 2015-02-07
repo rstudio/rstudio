@@ -1405,7 +1405,8 @@ public class GwtAstBuilder {
     private JField createLambdaField(SourceInfo info, String fieldName, JType fieldType,
         JClassType enclosingType) {
       JField outerField;
-      outerField = new JField(info, fieldName, enclosingType, fieldType, false, Disposition.NONE);
+      outerField = new JField(info, fieldName, enclosingType, fieldType, false, Disposition.NONE,
+          AccessModifier.PRIVATE);
       enclosingType.addField(outerField);
       return outerField;
     }
@@ -2493,8 +2494,7 @@ public class GwtAstBuilder {
           if (m.getExportName() != null) {
             continue;
           }
-          if (m.getAccess() == AccessModifier.PUBLIC
-              && (m.isStatic() || (m instanceof JConstructor))) {
+          if (m.isPublic() && (m.isStatic() || (m instanceof JConstructor))) {
             m.setExportName("");
           }
         }
@@ -2805,7 +2805,8 @@ public class GwtAstBuilder {
       // fields with the same name. The increased name size won't affect optimized output since
       // references are pruned and renamed.
       String fieldName = intern(intern(arg.name) + arg.resolvedPosition);
-      JField field = new JField(info, fieldName, enclosingType, type, false, disposition);
+      JField field = new JField(info, fieldName, enclosingType, type, false, disposition,
+          AccessModifier.PRIVATE);
       enclosingType.addField(field);
       curClass.syntheticFields.put(arg, field);
       if (arg.matchingField != null) {
@@ -3425,8 +3426,8 @@ public class GwtAstBuilder {
         MethodBinding createValueOfMapBinding = createValueOfMapBindings[0];
         mapType = createValueOfMapBinding.returnType;
 
-        mapField =
-            new JField(info, "$MAP", mapClass, typeMap.get(mapType), true, Disposition.FINAL);
+        mapField = new JField(info, "$MAP", mapClass, typeMap.get(mapType), true, Disposition.FINAL,
+            AccessModifier.PRIVATE);
         mapClass.addField(mapField);
 
         JMethodCall call = new JMethodCall(info, null, typeMap.get(createValueOfMapBinding));
@@ -3869,13 +3870,12 @@ public class GwtAstBuilder {
     JField field;
     if (x.initialization != null && x.initialization instanceof AllocationExpression
         && ((AllocationExpression) x.initialization).enumConstant != null) {
-      field =
-          new JEnumField(info, intern(binding.name), binding.original().id,
-              (JEnumType) enclosingType, (JClassType) type);
+      field = new JEnumField(info, intern(binding.name), binding.original().id,
+          (JEnumType) enclosingType, (JClassType) type, AccessModifier.fromFieldBinding(binding));
     } else {
       field =
           new JField(info, intern(binding.name), enclosingType, type, binding.isStatic(),
-              getFieldDisposition(binding));
+              getFieldDisposition(binding), AccessModifier.fromFieldBinding(binding));
     }
     enclosingType.addField(field);
     JsInteropUtil.maybeSetExportedField(x, field);

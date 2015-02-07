@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Google Inc.
+ * Copyright 2015 Google Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,15 +15,14 @@
  */
 package com.google.gwt.core.client.interop;
 
-import com.google.gwt.core.client.js.JsType;
+/**
+ * A regular class with no exports.
+ */
+public class PlainParentType {
 
-@JsType
-class MyJsTypeClass {
-  public int shouldBeAvailable() {
-    return 1138;
-  }
-
-  private int shouldNotBeAvailable() {
-    return 0;
+  /**
+   * A simple function that is not itself exported.
+   */
+  public void run() {
   }
 }

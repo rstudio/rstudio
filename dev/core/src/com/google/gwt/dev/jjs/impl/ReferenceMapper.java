@@ -259,9 +259,9 @@ public class ReferenceMapper {
 
   private JField createField(FieldBinding binding) {
     JDeclaredType enclosingType = (JDeclaredType) get(binding.declaringClass);
-    JField field =
-        new JField(SourceOrigin.UNKNOWN, intern(binding.name), enclosingType, get(binding.type),
-            binding.isStatic(), GwtAstBuilder.getFieldDisposition(binding));
+    JField field = new JField(SourceOrigin.UNKNOWN, intern(binding.name), enclosingType,
+        get(binding.type), binding.isStatic(), GwtAstBuilder.getFieldDisposition(binding),
+        AccessModifier.fromFieldBinding(binding));
     enclosingType.addField(field);
     return field;
   }

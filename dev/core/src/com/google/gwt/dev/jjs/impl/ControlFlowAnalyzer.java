@@ -696,8 +696,8 @@ public class ControlFlowAnalyzer {
       accept(type);
       if (type instanceof JDeclaredType) {
           /*
-           * For @JsType, we rescue all JsType methods
-           * methods because we don't know if they'll be called from JS or not.
+           * For @JsType, we rescue all JsType exposed fields and methods
+           * because we don't know if they'll be called from JS or not.
            * That is, the Java implementor may be called because the interface
            * was passed into JS, or it may be called via exported functions.
            *
@@ -709,17 +709,22 @@ public class ControlFlowAnalyzer {
            */
         JDeclaredType dtype = (JDeclaredType) type;
 
+        // On the surface this would appear to fail to correctly rescue any exported method that is
+        // on a subclass of a @JsType annotated type. But actually since such an exported method is
+        // an override and since it overrides something that has been rescued, such methods are
+        // already safely rescued by other ControlFlow logic.
         if (dtype.isJsType()) {
           for (JMethod method : dtype.getMethods()) {
-            if (method.needsVtable()) {
+            if (program.typeOracle.isJsTypeMethod(method)) {
               rescue(method);
             }
           }
+          for (JField field : dtype.getFields()) {
+            if (program.typeOracle.isJsTypeField(field)) {
+              rescue(field);
+            }
+          }
         }
-      }
-
-      if (!(type instanceof JDeclaredType)) {
-        return;
       }
     }
 

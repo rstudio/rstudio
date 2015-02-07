@@ -15,6 +15,7 @@
  */
 package com.google.gwt.dev.jjs.ast;
 
+import org.eclipse.jdt.internal.compiler.lookup.FieldBinding;
 import org.eclipse.jdt.internal.compiler.lookup.MethodBinding;
 
 /**
@@ -34,15 +35,27 @@ public enum AccessModifier {
     assert PRIVATE.ordinal() == 3;
   }
 
-  public static AccessModifier fromMethodBinding(MethodBinding b) {
-    if (b.isPublic()) {
+  public static AccessModifier fromFieldBinding(FieldBinding fieldBinding) {
+    if (fieldBinding.isPublic()) {
       return PUBLIC;
-    } else if (b.isProtected()) {
+    } else if (fieldBinding.isProtected()) {
       return PROTECTED;
-    } else if (b.isPrivate()) {
+    } else if (fieldBinding.isPrivate()) {
       return PRIVATE;
     }
-    assert b.isDefault();
+    assert fieldBinding.isDefault();
+    return DEFAULT;
+  }
+
+  public static AccessModifier fromMethodBinding(MethodBinding methodBinding) {
+    if (methodBinding.isPublic()) {
+      return PUBLIC;
+    } else if (methodBinding.isProtected()) {
+      return PROTECTED;
+    } else if (methodBinding.isPrivate()) {
+      return PRIVATE;
+    }
+    assert methodBinding.isDefault();
     return DEFAULT;
   }
 }
