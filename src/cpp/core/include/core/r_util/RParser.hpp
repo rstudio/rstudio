@@ -68,7 +68,6 @@ private:
 };
 
 struct ParseItem;
-typedef Stack<RToken> BraceStack;
 
 class ParseNode;
 
@@ -206,8 +205,7 @@ public:
       unexpectedToken(token, string_utils::wideToUtf8(expected));
    }
    
-   void unexpectedClosingBracket(const RToken& token,
-                                 const BraceStack& braceStack)
+   void unexpectedClosingBracket(const RToken& token)
    {
       std::string content = token.contentAsUtf8();
       
@@ -220,16 +218,6 @@ public:
       
       lintItems_.push_back(lint);
       ++errorCount_;
-      
-      if (!braceStack.empty())
-      {
-         const RToken& topOfStack = braceStack.peek();
-         
-         LintItem info(topOfStack,
-                       LintTypeInfo,
-                       "unmatched bracket '" + topOfStack.contentAsUtf8() + "' here");
-         lintItems_.push_back(info);
-      }
    }
    
    void unexpectedEndOfDocument(const RToken& token)
@@ -628,11 +616,10 @@ public:
    }
    
    ParseNode* node() { return pNode_; }
-   BraceStack& braceStack() { return braceStack_; }
    LintItems& lint() { return lint_; }
    boost::shared_ptr<ParseNode> root() { return pRoot_; }
    
-   void addChildAndSetAsCurrentNode(boost::shared_ptr<ParseNode>& pChild,
+   void addChildAndSetAsCurrentNode(boost::shared_ptr<ParseNode> pChild,
                                     const Position& position)
    {
       node()->addChild(pChild, position);
@@ -642,28 +629,6 @@ public:
    void setParentAsCurrent()
    {
       pNode_ = pNode_->getParent();
-   }
-   
-   void pushBracket(const RToken& token)
-   {
-      DEBUG("*** Pushing " << token << " on to brace stack");
-      braceStack_.push(token);
-   }
-   
-   const RToken& peekBracket()
-   {
-      return braceStack_[braceStack_.size() - 1];
-   }
-   
-   void popBracket(const RToken& expectedAsComplement)
-   {
-      DEBUG("*** Popping " << expectedAsComplement << " from brace stack");
-      if (!braceStack_.peek().isType(
-             token_utils::typeComplement(expectedAsComplement.type())))
-      {
-         lint_.unexpectedClosingBracket(expectedAsComplement, braceStack_);
-      }
-      braceStack_.pop();
    }
    
    bool hasLint() const
@@ -720,22 +685,21 @@ public:
 
    void pushState(ParseState state)
    {
+      if (state == ParseStateFunctionExpression)
+         addChildAndSetAsCurrentNode(
+                  ParseNode::createNode("function"),
+                  getCachedPosition());
+         
       parseStateStack_.push(state);
    }
    
-   void popState(const RToken& rToken)
+   void popState()
    {
+      if (currentState() == ParseStateFunctionExpression)
+         setParentAsCurrent();
+      
       if (currentState() != ParseStateTopLevel)
          parseStateStack_.pop();
-   }
-   
-   void popState(const RToken& rToken,
-                 ParseState expectedState)
-   {
-      if (expectedState != parseStateStack_.peek())
-         lint().unexpectedToken(rToken);
-      
-      popState(rToken);
    }
    
    ParseState peekState(std::size_t depth = 0) const
@@ -874,7 +838,6 @@ public:
 private:
    boost::shared_ptr<ParseNode> pRoot_;
    ParseNode* pNode_;
-   BraceStack braceStack_;
    LintItems lint_;
    ParseOptions parseOptions_;
    Stack<ParseState> parseStateStack_;

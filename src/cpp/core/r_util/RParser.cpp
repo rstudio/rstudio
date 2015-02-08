@@ -364,7 +364,7 @@ START:
          // statement, pop that state and then confirm that we
          // are in an argument list.
          if (status.isInControlFlowStatement())
-            status.popState(cursor);
+            status.popState();
          
          // Commas can close statements, when within argument lists.
          switch (status.currentState())
@@ -410,7 +410,7 @@ START:
          case ParseStatus::ParseStateWhileCondition:
             goto WHILE_CONDITION_END;
          case ParseStatus::ParseStateWithinParens:
-            status.popState(cursor);
+            status.popState();
             MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
             if (isBinaryOp(cursor))
                goto BINARY_OPERATOR;
@@ -435,14 +435,14 @@ START:
          if (status.currentState() == ParseStatus::ParseStateIfExpression &&
              cursor.nextSignificantToken().contentEquals(L"else"))
          {
-            status.popState(cursor);
+            status.popState();
             MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
             MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
             goto START;
          }
          
          DEBUG("Status: " << status.currentStateAsString());
-         status.popState(cursor);
+         status.popState();
          
          MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
          if (isBinaryOp(cursor) &&
@@ -467,7 +467,7 @@ START:
       {
          // Pop the state if we're in a control flow statement.
          if (status.isInControlFlowStatement())
-            status.popState(cursor);
+            status.popState();
          
          if (startedWithUnaryOperator)
             GOTO_INVALID_TOKEN(cursor);
@@ -494,7 +494,7 @@ START:
          // Check to see if this closes a control flow
          // statement.
          if (status.isInControlFlowStatement())
-            status.popState(cursor);
+            status.popState();
          
          goto START;
       }
@@ -503,7 +503,7 @@ START:
       if (status.isInControlFlowStatement() &&
           cursor.contentContains(L'\n'))
       {
-         status.popState(cursor);
+         status.popState();
          MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
          goto START;
       }
@@ -547,7 +547,7 @@ START:
               status.currentState() == ParseStatus::ParseStateTopLevel) &&
              cursor.nextToken().contentContains(L'\n'))
          {
-            status.popState(cursor);
+            status.popState();
             MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
             goto START;
          }
@@ -571,7 +571,7 @@ START:
          if (status.isInControlFlowStatement() &&
              isRightBracket(cursor))
          {
-            status.popState(cursor);
+            status.popState();
          }
          
          goto START;
@@ -632,7 +632,7 @@ ARGUMENT_START:
 ARGUMENT_LIST_END:
       
       DEBUG("Argument list end: " << cursor);
-      status.popState(cursor);
+      status.popState();
       
       // An argument list may end _two_ states, e.g. in this:
       //
@@ -645,7 +645,7 @@ ARGUMENT_LIST_END:
                status.currentState() == ParseStatus::ParseStateIfStatement &&
                cursor.nextSignificantToken().contentEquals(L"else");
          
-         status.popState(cursor);
+         status.popState();
          if (hasElse)
          {
             MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
@@ -699,7 +699,6 @@ FUNCTION_START:
       ENSURE_TYPE(cursor, status, RToken::LPAREN);
       status.pushState(ParseStatus::ParseStateFunctionArgumentList);
       MOVE_TO_NEXT_SIGNIFICANT_TOKEN_WARN_ON_BLANK(cursor, status);
-      status.setCachedPosition(cursor.currentPosition());
       if (cursor.isType(RToken::RPAREN))
          goto FUNCTION_ARGUMENT_LIST_END;
       
@@ -731,7 +730,7 @@ FUNCTION_ARGUMENT_START:
 FUNCTION_ARGUMENT_LIST_END:
       
       ENSURE_TYPE(cursor, status, RToken::RPAREN);
-      status.popState(cursor, ParseStatus::ParseStateFunctionArgumentList);
+      status.popState();
       MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
       if (cursor.isType(RToken::LBRACE))
       {
@@ -762,7 +761,7 @@ FOR_CONDITION_END:
       DEBUG("** For condition end ** " << cursor);
       ENSURE_TYPE(cursor, status, RToken::RPAREN);
       MOVE_TO_NEXT_SIGNIFICANT_TOKEN_WARN_IF_NO_WHITESPACE(cursor, status);
-      status.popState(cursor, ParseStatus::ParseStateForCondition);
+      status.popState();
       if (cursor.isType(RToken::LBRACE))
       {
          status.pushState(ParseStatus::ParseStateForExpression);
@@ -813,7 +812,7 @@ IF_CONDITION_END:
       DEBUG("** If condition end ** " << cursor);
       ENSURE_TYPE(cursor, status, RToken::RPAREN);
       MOVE_TO_NEXT_SIGNIFICANT_TOKEN_WARN_IF_NO_WHITESPACE(cursor, status);
-      status.popState(cursor, ParseStatus::ParseStateIfCondition);
+      status.popState();
       if (cursor.isType(RToken::LBRACE))
       {
          status.pushState(ParseStatus::ParseStateIfExpression);
