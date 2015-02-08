@@ -1,33 +1,46 @@
 
 ## v0.99 - Release Notes
 
-### Source Editing
+### Data Viewer
 
-* Improvements to R code completion:
-    - Completions provided automatically without an explicit gesture
-    - All objects visible from the current scope are now included in completions
-    - Completions in more contexts including S3 and S4 methods and dplyr pipelines
-    - Automatic insertion of closing parens when appropriate
-    - Inline help tooltip for signatures of completed functions
-    - Completion for statements spanning multiple lines
-    - Specialized autocompletions provided for `library`, `data`, `vignette`, `?`
-    - For Shiny applications, autocompletions for `ui.R` + `server.R` pairs
-    - Completions for dimension names in `[`, `[[` calls
-    - Completions from packages in `library`, `require` calls automatically
-      inferred and supplied even when not loaded
-    - Completions for knitr options, e.g. in `opts_chunk$get()`, are now supplied
-    - Completions for dynamic symbols within `.C`, `.Call`, `.Fortran`, `.External`
-* Improvements to C/C++ editing mode:
-    - Code completion
-    - F2 code navigation (go to definition)
-    - Go to file/function for C/C++
-    - Find usages for C++ symbols
-    - Intelligent auto-indentation
-    - Scope tree for quick intra-file navigation
+- Support for viewing large data sets (removed 1k row limit)
+- Data can be filtered, searched, and sorted
+- Viewer updates to reflect changes in data
+
+### R Code Completion
+
+ - Completions provided automatically without an explicit gesture
+ - All objects visible from the current scope are now included in completions
+ - Completions in more contexts including S3 and S4 methods and dplyr pipelines
+ - Automatic insertion of closing parens when appropriate
+ - Inline help tooltip for signatures of completed functions
+ - Completion for statements spanning multiple lines
+ - Specialized autocompletions provided for library, data, vignette, ?
+ - For Shiny applications, autocompletions for ui.R + server.R pairs
+ - Completions for dimension names in [, [[ calls
+ - Completions from packages in library, require calls automatically
+   inferred and supplied even when not loaded
+ - Completions for knitr options, e.g. in opts_chunk$get(), are now supplied
+ - Completions for dynamic symbols within .C, .Call, .Fortran, .External
+
+### Source Editor
+
 * Improvements in file/function navigation:
     - Fuzzy matching on search terms
     - Navigate to file posititions using file:line:col
     - Include parameters in function navigation menu
+* Multiple cursors:
+   - Create a new cursor above / below the current cursor with CTRL + ALT + {up / down}
+   - Move the active cursor up / down with CTRL + SHIFT + ALT + {up / down}
+   - Create multiple cursors by pressing CTRL + ALT and clicking + dragging the mouse
+* Improved Vim mode:
+    - Various bug fixes
+    - Visual block selection (CTRL + v)
+    - Multiple-cursor aware
+    - Macros (q)
+    - Marks (m)
+    - Quick find (/)
+    - Support a subset of commands in :
 * Editor tabs in the source pane can now be rearranged
 * Support for multiple cursors via Ctrl+Alt+Up/Down
 * Alt+Enter to run code while retaining cursor position
@@ -37,33 +50,22 @@
 * Find All option added in Find/Replace
 * New option to control comment continuation on insertion of new lines
 * Updated to Ace (source editor component) v1.1.8
-* Improved Vim mode:
-    - Various bug fixes
-    - Visual block selection (CTRL + v)
-    - Multiple-cursor aware
-    - Macros (`q`)
-    - Marks (`m`)
-    - Quick find (`/`)
-    - Support a subset of commands in `:`
-* Syntax highlighting modes for many new languages including Clojure, CoffeeScript, C#, Go, Groovy, Haskell, Java, Julia, Lisp, Lua, Matlab, Perl, Ruby, Rust, and Scala.
-* Syntax highlighting for GraphViz and mermaid.js diagrams. 
-* Diagram previews using the `DiagrammeR` package (requires recent version from GitHub).
+* Syntax highlighting modes for many new languages including Clojure, CoffeeScript, C#, Graphviz, Go, Groovy, Haskell, Java, Julia, Lisp, Lua, Matlab, Perl, Ruby, Rust, and Scala.
 * A wide variety of new editor themes (color schemes) are now available.
-* Multiple cursors:
-   - Create a new cursor above / below the current cursor with CTRL + ALT + {up / down}
-   - Move the active cursor up / down with CTRL + SHIFT + ALT + {up / down}
-   - Create multiple cursors by pressing CTRL + ALT and clicking + dragging the mouse
 * Increase file size limit to 5MB (was previously 2MB)
 
-### Data Viewer
-
-- Support for viewing large data sets (removed 1k row limit)
-- Data can be filtered, searched, and sorted
-- Viewer updates to reflect changes in data
+### C/C++ Development
+    
+ - Code completion
+ - F2 code navigation (go to definition)
+ - Go to file/function for C/C++
+ - Find usages for C++ symbols
+ - Intelligent auto-indentation
+ - Scope tree for quick intra-file navigation
 
 ### Workspace
 
-* Improved handling of objects containing or consisting of NULL `externalptr`
+* Improved handling of objects containing or consisting of NULL externalptr
 
 ### Debugging
 
@@ -105,6 +107,7 @@
 * Command to sync current working directory and Files pane to project directory
 * Eliminated rstudio and manipulate packages (both now available on CRAN)
 * Added global RStudio.Version function for getting basic version info
+* Diagram previews using the DiagrammeR package (requires recent version from GitHub).
 * Added Markers pane and sourceMarker API for externals tools (e.g. linters)
 
 ### Server
