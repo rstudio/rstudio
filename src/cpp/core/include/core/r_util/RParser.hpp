@@ -732,8 +732,15 @@ public:
       popState(rToken);
    }
    
-   ParseState peekState() const { return parseStateStack_.peek(); }
-   ParseState currentState() const { return peekState(); }
+   ParseState peekState(std::size_t depth = 0) const
+   {
+      if (depth > parseStateStack_.size())
+         return ParseStateTopLevel;
+      return parseStateStack_[parseStateStack_.size() - depth - 1];
+   }
+   
+   ParseState currentState() const { return parseStateStack_.peek(); }
+   
    std::string currentStateAsString() const
    {
 #define CASE(__X__) \

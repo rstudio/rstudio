@@ -157,6 +157,8 @@ context("Linter")
       EXPECT_NO_ERRORS("x(x,,a)");
       EXPECT_NO_ERRORS("x[1,,]");
       EXPECT_NO_ERRORS("x(1,,)");
+      
+      EXPECT_NO_ERRORS("c(a=function()a,)");
 
       EXPECT_NO_ERRORS("{if(!(a)){};if(b){}}");
 

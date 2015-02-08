@@ -13,7 +13,7 @@
  *
  */
 
-#define RSTUDIO_ENABLE_PROFILING
+// #define RSTUDIO_ENABLE_PROFILING
 // #define RSTUDIO_ENABLE_DEBUG_MACROS
 #define RSTUDIO_DEBUG_LABEL "parser"
 #include <core/Macros.hpp>
@@ -358,6 +358,17 @@ START:
          if (startedWithUnaryOperator)
             GOTO_INVALID_TOKEN(cursor);
          
+         // Commas can end statements in argument lists, e.g.
+         //
+         //    c(function() a,)
+         //
+         // If we encounter a comma and we're in a control flow
+         // statement, pop that state and then confirm that we
+         // are in an argument list.
+         if (status.isInControlFlowStatement())
+            status.popState(cursor);
+         
+         // Commas can close statements, when within argument lists.
          switch (status.currentState())
          {
          case ParseStatus::ParseStateParenArgumentList:
