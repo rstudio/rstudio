@@ -515,7 +515,8 @@ START:
          if (cursor.isAtEndOfDocument())
             break;
          
-         if (cursor.isType(RToken::ID))
+         if (!status.isInParentheticalScope() &&
+             cursor.isType(RToken::ID))
             handleIdentifier(cursor, status);
          
          // Identifiers following identifiers on the same line is

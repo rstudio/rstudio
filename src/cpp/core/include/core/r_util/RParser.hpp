@@ -685,7 +685,7 @@ public:
 
    void pushState(ParseState state)
    {
-      if (state == ParseStateFunctionExpression)
+      if (state == ParseStateFunctionArgumentList)
          addChildAndSetAsCurrentNode(
                   ParseNode::createNode("function"),
                   getCachedPosition());
@@ -695,8 +695,11 @@ public:
    
    void popState()
    {
-      if (currentState() == ParseStateFunctionExpression)
+      if (currentState() == ParseStateFunctionExpression ||
+          currentState() == ParseStateFunctionStatement)
+      {
          setParentAsCurrent();
+      }
       
       if (currentState() != ParseStateTopLevel)
          parseStateStack_.pop();
