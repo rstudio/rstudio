@@ -424,8 +424,8 @@ Error initializeDefinitionIndex()
            new IncrementalFileChangeHandler(
                   boost::bind(isIndexableFile, _1, srcPath, includePath),
                   fileChangeHandler,
-                  boost::posix_time::milliseconds(0),
-                  boost::posix_time::milliseconds(50),
+                  boost::posix_time::seconds(3),
+                  boost::posix_time::milliseconds(500),
                   true);
          pFileChangeHandler->subscribeToFileMonitor("Go to C/C++ Definition");
       }
