@@ -89,8 +89,11 @@ public:
    RToken(TokenType type,
           std::wstring::const_iterator begin,
           std::wstring::const_iterator end,
-          std::size_t offset)
-      : type_(type), begin_(begin), end_(end), offset_(offset)
+          std::size_t offset,
+          std::size_t row,
+          std::size_t column)
+      : type_(type), begin_(begin), end_(end),
+        offset_(offset), row_(row), column_(column)
    {
    }
    
@@ -100,6 +103,8 @@ public:
    std::string contentAsUtf8() const;
    std::size_t offset() const { return offset_; }
    std::size_t length() const { return end_ - begin_; }
+   std::size_t row() const { return row_; }
+   std::size_t column() const { return column_; }
 
    // efficient comparison operations
    bool contentEquals(const std::wstring& text) const
@@ -153,12 +158,16 @@ public:
    {
       return end_;
    }
+   
+   std::string asString() const;
 
 private:
    TokenType type_;
    std::wstring::const_iterator begin_;
    std::wstring::const_iterator end_;
    std::size_t offset_;
+   std::size_t row_;
+   std::size_t column_;
 };
 
 // Tokenize R code. Note that the RToken instances which are returned are
@@ -172,7 +181,9 @@ public:
       : data_(data),
         begin_(data_.begin()),
         end_(data_.end()),
-        pos_(data_.begin())
+        pos_(data_.begin()),
+        row_(0),
+        column_(0)
    {
    }
 
@@ -205,6 +216,8 @@ private:
    std::wstring::const_iterator begin_;
    std::wstring::const_iterator end_;
    std::wstring::const_iterator pos_;
+   std::size_t row_;
+   std::size_t column_;
    std::vector<char> braceStack_; // needed for tokenization of `[[`, `[`
 };
 
@@ -212,8 +225,10 @@ private:
 // Set of RTokens. Note that the RTokens returned from the set
 // are conceptually iterators so are only valid for the lifetime of
 // the RTokens object which yielded them.
-class RTokens : public std::deque<RToken>, boost::noncopyable
+class RTokens
 {
+   typedef std::vector<RToken> Tokens;
+   
 public:
    enum Flags
    {
@@ -223,6 +238,22 @@ public:
    };
 
 public:
+   
+   void push_back(const RToken& rToken) { tokens_.push_back(rToken); }
+   std::size_t size() const { return tokens_.size(); }
+   
+   const RToken& at(std::size_t offset) const
+   {
+      if (offset >= tokens_.size())
+         return dummyToken_;
+      return tokens_[offset];
+   }
+   
+   typedef Tokens::const_iterator const_iterator;
+   typedef Tokens::iterator iterator;
+   
+   const_iterator begin() const { return tokens_.begin(); }
+   const_iterator end() const { return tokens_.end(); }
    
    RTokens()
       : tokenizer_(L"")
@@ -246,6 +277,8 @@ public:
 
 private:
     RTokenizer tokenizer_;
+    Tokens tokens_;
+    RToken dummyToken_;
 };
 
 namespace token_utils {
@@ -434,124 +467,6 @@ inline RToken::TokenType typeComplement(RToken::TokenType lhsType)
 }
 
 } // end namespace token_utils
-
-class AnnotatedRToken
-{
-public:
-   
-   AnnotatedRToken(std::size_t row,
-                   std::size_t column,
-                   const RToken& token)
-      : token_(token), row_(row), column_(column) {}
-   
-   const RToken& get() const { return token_; }
-   const std::size_t row() const { return row_; }
-   const std::size_t column() const { return column_; }
-   
-   RToken::TokenType type() const { return token_.type(); }
-   bool isType(RToken::TokenType type) const { return token_.isType(type); }
-   std::wstring content() const { return token_.content(); }
-   std::string contentAsUtf8() const { return token_.contentAsUtf8(); }
-   
-   bool contentEquals(const std::wstring& text) const
-   {
-      return text.size() && token_.contentEquals(text);
-   }
-   
-   bool contentContains(wchar_t character) const
-   {
-      return token_.contentContains(character);
-   }
-   
-   const RToken& token() const { return token_; }
-   operator const RToken&() const { return token_; }
-   
-   std::string asString() const
-   {
-      std::stringstream ss;
-      ss << "("
-         << row_ + 1
-         << ", "
-         << column_ + 1
-         << ", '"
-         << string_utils::jsonLiteralEscape(token_.contentAsUtf8())
-         << "')";
-      
-      return ss.str();
-   }
-   
-   friend std::ostream& operator <<(std::ostream& os,
-                                    const AnnotatedRToken& token)
-   {
-      os << token.asString();
-      return os;
-   } 
-   
-private:
-   RToken token_;
-   std::size_t row_;
-   std::size_t column_;
-};
-
-class AnnotatedRTokens
-{
-public:
-   
-   // NOTE: Must be constructed from tokens that have not
-   // stripped whitespace
-  explicit AnnotatedRTokens(const RTokens& rTokens)
-      : dummyText_(L"ERR"),
-        dummyToken_(
-            AnnotatedRToken(-1, -1, RToken(RToken::ERR, dummyText_.begin(),
-                                           dummyText_.end(), rTokens.size())))
-   {
-      std::size_t row = 0;
-      std::size_t column = 0;
-      
-      std::size_t n = rTokens.size();
-      for (std::size_t i = 0; i < n; ++i)
-      {
-         // Add the token if it's not whitespace
-         const RToken& token = rTokens.at(i);
-         tokens_.push_back(
-                  AnnotatedRToken(row, column, token));
-         
-         // Update the current row, column
-         std::wstring content = token.content();
-         std::size_t numNewLines =
-               string_utils::countNewLines(content);
-         
-         if (numNewLines > 0)
-         {
-            row += numNewLines;
-            column = content.length() - content.find_last_of(L"\r\n") - 1;
-         }
-         else
-         {
-            column += content.length();
-         }
-      }
-   }
-   
-   const AnnotatedRToken& at(std::size_t index) const
-   {
-      if (index >= tokens_.size())
-         return dummyToken_;
-      
-      return tokens_[index];
-   }
-   
-   const std::size_t size() const
-   {
-      return tokens_.size();
-   }
-   
-private:
-   std::vector<AnnotatedRToken> tokens_;
-   std::wstring dummyText_;
-   AnnotatedRToken dummyToken_;
-   
-};
 
 } // namespace r_util
 } // namespace core 

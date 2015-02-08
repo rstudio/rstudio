@@ -253,10 +253,8 @@ ParseResults parse(const std::wstring& rCode,
    
    TIMER(timer);
    
-   RTokens tokens(rCode);
+   RTokens rTokens(rCode);
    REPORT(timer, "Tokenization");
-   AnnotatedRTokens rTokens(tokens);
-   REPORT(timer, "Annotation");
    
    ParseStatus status(parseOptions);
    TokenCursor cursor(rTokens);
@@ -701,6 +699,7 @@ FUNCTION_START:
       ENSURE_TYPE(cursor, status, RToken::LPAREN);
       status.pushState(ParseStatus::ParseStateFunctionArgumentList);
       MOVE_TO_NEXT_SIGNIFICANT_TOKEN_WARN_ON_BLANK(cursor, status);
+      status.setCachedToken(cursor);
       if (cursor.isType(RToken::RPAREN))
          goto FUNCTION_ARGUMENT_LIST_END;
       
@@ -709,6 +708,7 @@ FUNCTION_ARGUMENT_START:
       if (cursor.isType(RToken::ID) &&
           cursor.nextSignificantToken().contentEquals(L"="))
       {
+         handleIdentifier(cursor, status);
          MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
          MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
          goto START;
@@ -716,6 +716,7 @@ FUNCTION_ARGUMENT_START:
       
       if (cursor.isType(RToken::ID))
       {
+         handleIdentifier(cursor, status);
          if (cursor.nextSignificantToken().isType(RToken::COMMA))
          {
             MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
@@ -749,6 +750,7 @@ FOR_START:
       ENSURE_TYPE(cursor, status, RToken::LPAREN);
       MOVE_TO_NEXT_SIGNIFICANT_TOKEN_WARN_ON_BLANK(cursor, status);
       ENSURE_TYPE(cursor, status, RToken::ID);
+      handleIdentifier(cursor, status);
       MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
       ENSURE_CONTENT(cursor, status, L"in");
       MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);

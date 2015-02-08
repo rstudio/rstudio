@@ -68,7 +68,7 @@ private:
 };
 
 struct ParseItem;
-typedef Stack<AnnotatedRToken> BraceStack;
+typedef Stack<RToken> BraceStack;
 
 class ParseNode;
 
@@ -131,7 +131,7 @@ struct LintItem
         type(type),
         message(message) {}
    
-   LintItem(const AnnotatedRToken& item,
+   LintItem(const RToken& item,
             LintType type,
             const std::string& message)
       : startRow(item.row()),
@@ -181,7 +181,7 @@ public:
       lintItems_.push_back(lint);
    }
    
-   void unexpectedToken(const AnnotatedRToken& token,
+   void unexpectedToken(const RToken& token,
                            const std::string& expected = std::string())
    {
       std::string content = token.contentAsUtf8();
@@ -200,13 +200,13 @@ public:
       ++errorCount_;
    }
    
-   void unexpectedToken(const AnnotatedRToken& token,
+   void unexpectedToken(const RToken& token,
                            const std::wstring& expected)
    {
       unexpectedToken(token, string_utils::wideToUtf8(expected));
    }
    
-   void unexpectedClosingBracket(const AnnotatedRToken& token,
+   void unexpectedClosingBracket(const RToken& token,
                                  const BraceStack& braceStack)
    {
       std::string content = token.contentAsUtf8();
@@ -223,7 +223,7 @@ public:
       
       if (!braceStack.empty())
       {
-         const AnnotatedRToken& topOfStack = braceStack.peek();
+         const RToken& topOfStack = braceStack.peek();
          
          LintItem info(topOfStack,
                        LintTypeInfo,
@@ -232,7 +232,7 @@ public:
       }
    }
    
-   void unexpectedEndOfDocument(const AnnotatedRToken& token)
+   void unexpectedEndOfDocument(const RToken& token)
    {
       LintItem lint(token.row(),
                     token.column() + token.contentAsUtf8().length(),
@@ -273,7 +273,7 @@ public:
       lintItems_.push_back(lint);
    }
    
-   void expectedWhitespace(const AnnotatedRToken& token)
+   void expectedWhitespace(const RToken& token)
    {
       if (!parseOptions_.getRecordStyleLint())
          return;
@@ -287,7 +287,7 @@ public:
       lintItems_.push_back(lint);
    }
    
-   void unnecessaryWhitespace(const AnnotatedRToken& token)
+   void unnecessaryWhitespace(const RToken& token)
    {
       if (!parseOptions_.getRecordStyleLint())
          return;
@@ -406,7 +406,7 @@ public:
       definedSymbols_[name].push_back(Position(row, column));
    }
 
-   void addDefinedSymbol(const AnnotatedRToken& rToken)
+   void addDefinedSymbol(const RToken& rToken)
    {
       DEBUG("--- Adding defined variable '" << rToken.contentAsUtf8() << "'");
       definedSymbols_[rToken.contentAsUtf8()].push_back(
@@ -420,7 +420,7 @@ public:
       referencedSymbols_[name].push_back(Position(row, column));
    }
 
-   void addReferencedSymbol(const AnnotatedRToken& rToken)
+   void addReferencedSymbol(const RToken& rToken)
    {
       referencedSymbols_[rToken.contentAsUtf8()].push_back(
             Position(rToken.row(), rToken.column()));
@@ -638,18 +638,18 @@ public:
       pNode_ = pNode_->getParent();
    }
    
-   void pushBracket(const AnnotatedRToken& token)
+   void pushBracket(const RToken& token)
    {
       DEBUG("*** Pushing " << token << " on to brace stack");
       braceStack_.push(token);
    }
    
-   const AnnotatedRToken& peekBracket()
+   const RToken& peekBracket()
    {
       return braceStack_[braceStack_.size() - 1];
    }
    
-   void popBracket(const AnnotatedRToken& expectedAsComplement)
+   void popBracket(const RToken& expectedAsComplement)
    {
       DEBUG("*** Popping " << expectedAsComplement << " from brace stack");
       if (!braceStack_.peek().isType(
@@ -717,13 +717,13 @@ public:
       parseStateStack_.push(state);
    }
    
-   void popState(const AnnotatedRToken& rToken)
+   void popState(const RToken& rToken)
    {
       if (currentState() != ParseStateTopLevel)
          parseStateStack_.pop();
    }
    
-   void popState(const AnnotatedRToken& rToken,
+   void popState(const RToken& rToken,
                  ParseState expectedState)
    {
       if (expectedState != parseStateStack_.peek())
@@ -855,6 +855,16 @@ public:
       }
    }
    
+   void setCachedToken(const RToken& token)
+   {
+      token_ = token;
+   }
+   
+   const RToken& getCachedToken() const
+   {
+      return token_;
+   }
+   
 private:
    boost::shared_ptr<ParseNode> pRoot_;
    ParseNode* pNode_;
@@ -862,6 +872,7 @@ private:
    LintItems lint_;
    ParseOptions parseOptions_;
    Stack<ParseState> parseStateStack_;
+   RToken token_;
 };
 
 class ParseResults {

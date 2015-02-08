@@ -31,21 +31,28 @@ namespace token_utils {
 using namespace collection;
 using core::r_util::ParseItem;
 
+// NOTE: TokenCursors store a reference to the set of tokens
+// they use, so they are only valid as long as the underlying
+// tokens are valid.
 class TokenCursor
 {
 private:
    
-   TokenCursor(const AnnotatedRTokens &rTokens,
+   TokenCursor(const RTokens &rTokens,
                std::size_t offset,
                std::size_t n)
-      : rTokens_(rTokens), offset_(offset), n_(n) {}
+      : rTokens_(rTokens),
+        offset_(offset),
+        n_(n),
+        dummyToken_()
+   {}
    
 public:
    
-   explicit TokenCursor(const AnnotatedRTokens& rTokens)
+   explicit TokenCursor(const RTokens& rTokens)
       : rTokens_(rTokens), offset_(0), n_(rTokens.size()) {}
    
-   TokenCursor(const AnnotatedRTokens &rTokens,
+   TokenCursor(const RTokens &rTokens,
                std::size_t offset)
       : rTokens_(rTokens), offset_(offset), n_(rTokens.size()) {}
    
@@ -54,7 +61,7 @@ public:
       return TokenCursor(rTokens_, offset_, n_);
    }
    
-   const AnnotatedRTokens& tokens() const
+   const RTokens& tokens() const
    {
       return rTokens_;
    }
@@ -77,28 +84,28 @@ public:
       return true;
    }
    
-   const AnnotatedRToken& currentToken() const
+   const RToken& currentToken() const
    {
       return rTokens_.at(offset_);
    }
    
    const Position currentPosition() const
    {
-      const AnnotatedRToken& token = currentToken();
+      const RToken& token = currentToken();
       return Position(token.row(), token.column());
    }
    
-   const AnnotatedRToken& nextToken() const
+   const RToken& nextToken() const
    {
       return rTokens_.at(offset_ + 1);
    }
    
-   const AnnotatedRToken& previousToken() const
+   const RToken& previousToken() const
    {
       return rTokens_.at(offset_ - 1);
    }
    
-   const AnnotatedRToken& nextSignificantToken(std::size_t times = 1) const
+   const RToken& nextSignificantToken(std::size_t times = 1) const
    {
       int offset = 0;
       while (times != 0)
@@ -113,7 +120,7 @@ public:
       return rTokens_.at(offset_ + offset);
    }
    
-   const AnnotatedRToken& previousSignificantToken(std::size_t times = 1) const
+   const RToken& previousSignificantToken(std::size_t times = 1) const
    {
       int offset = 0;
       while (times != 0)
@@ -128,14 +135,9 @@ public:
       return rTokens_.at(offset_ - offset);
    }
    
-   operator const AnnotatedRToken&() const
-   {
-      return rTokens_.at(offset_);
-   }
-   
    operator const RToken&() const
    {
-      return rTokens_.at(offset_).token();
+      return rTokens_.at(offset_);
    }
    
    operator ParseItem() const
@@ -254,7 +256,7 @@ public:
    
    bool finishesExpression()
    {
-      const AnnotatedRToken& token = currentToken();
+      const RToken& token = currentToken();
       bool isSemi = token.isType(RToken::SEMI);
       bool isComma = token.isType(RToken::COMMA);
       bool hasNewline = token.isType(RToken::WHITESPACE) &&
@@ -392,9 +394,10 @@ public:
   
 private:
    
-   const AnnotatedRTokens& rTokens_;
+   const RTokens& rTokens_;
    std::size_t offset_;
    std::size_t n_;
+   RToken dummyToken_;
 };
 
 } // namespace token_utils

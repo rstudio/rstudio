@@ -202,14 +202,18 @@ void stripQuotes(std::string* pStr);
 
 std::string strippedOfBackQuotes(const std::string& string);
 
-std::size_t countNewLines(const std::wstring& string);
-std::size_t countNewLines(const std::string& string);
+std::size_t countNewlines(const std::wstring& string);
+std::size_t countNewlines(const std::string& string);
 
-std::size_t countNewLines(std::string::iterator begin,
+std::size_t countNewlines(std::string::iterator begin,
                           std::string::iterator end);
 
-std::size_t countNewLines(std::wstring::iterator begin,
+std::size_t countNewlines(std::wstring::iterator begin,
                           std::wstring::iterator end);
+
+std::wstring::const_iterator countNewlines(std::wstring::const_iterator begin,
+                                           std::wstring::const_iterator end,
+                                           std::size_t* pCount);
 
 } // namespace string_utils
 } // namespace core 

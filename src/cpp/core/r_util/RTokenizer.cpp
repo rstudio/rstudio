@@ -32,6 +32,7 @@
 #include <boost/regex.hpp>
 
 #include <iostream>
+#include <sstream>
 
 #include <core/Error.hpp>
 #include <core/Log.hpp>
@@ -73,6 +74,29 @@ TokenPatterns& tokenPatterns()
 {
    static TokenPatterns instance;
    return instance;
+}
+
+void updatePosition(std::wstring::const_iterator pos,
+                    std::size_t length,
+                    std::size_t* pRow,
+                    std::size_t* pColumn)
+{
+   std::size_t newlineCount;
+   std::wstring::const_iterator it =
+         string_utils::countNewlines(pos, pos + length, &newlineCount);
+   
+   if (newlineCount == 0)
+   {
+      *pColumn += length;
+   }
+   else
+   {
+      *pRow += newlineCount;
+      
+      // The column is now the token length, minus the
+      // index of the last newline.
+      *pColumn = length - (it - pos) - 1;
+   }
 }
 
 } // anonymous namespace
@@ -225,6 +249,10 @@ RToken RTokenizer::matchStringLiteral()
          // out of the string
       }
    }
+   
+   std::size_t row = row_;
+   std::size_t column = column_;
+   updatePosition(start, pos_ - start, &row_, &column_); 
 
    // NOTE: the Java version of the tokenizer returns a special RStringToken
    // subclass which includes the wellFormed flag as an attribute. Our
@@ -234,7 +262,9 @@ RToken RTokenizer::matchStringLiteral()
    return RToken(RToken::STRING,
                  start,
                  pos_,
-                 start - data_.begin());
+                 start - data_.begin(),
+                 row,
+                 column);
 }
 
 RToken RTokenizer::matchNumber()
@@ -252,10 +282,17 @@ RToken RTokenizer::matchIdentifier()
    eat();
    while (string_utils::isalnum(peek()) || peek() == L'.' || peek() == L'_')
       eat();
+   
+   std::size_t row = row_;
+   std::size_t column = column_;
+   updatePosition(start, pos_ - start, &row_, &column_);
+   
    return RToken(RToken::ID,
                  start,
                  pos_,
-                 start - data_.begin()) ;
+                 start - data_.begin(),
+                 row,
+                 column);
 }
 
 RToken RTokenizer::matchQuotedIdentifier()
@@ -408,18 +445,34 @@ RToken RTokenizer::consumeToken(RToken::TokenType tokenType,
       LOG_WARNING_MESSAGE("Premature EOF");
       return RToken();
    }
-
+   
+   // Get the row, column for this token
+   std::size_t row = row_;
+   std::size_t column = column_;
+   
+   // Update the row, column for the next token.
+   updatePosition(pos_, length, &row_, &column_);
+   
    std::wstring::const_iterator start = pos_ ;
    pos_ += length ;
    return RToken(tokenType,
                  start,
                  pos_,
-                 start - data_.begin()) ;
+                 start - data_.begin(),
+                 row,
+                 column);
 }
 
 std::string RToken::contentAsUtf8() const
 {
    return string_utils::wideToUtf8(content());
+}
+
+std::string RToken::asString() const
+{
+   std::stringstream ss;
+   ss << "(" << contentAsUtf8() << ", " << row_ << ", " << column_ << ")";
+   return ss.str();
 }
 
 } // namespace r_util
