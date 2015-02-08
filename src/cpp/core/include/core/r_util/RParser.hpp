@@ -413,6 +413,12 @@ public:
             Position(rToken.row(), rToken.column()));
    }
    
+   void addDefinedSymbol(const RToken& rToken,
+                         const Position& position)
+   {
+      definedSymbols_[rToken.contentAsUtf8()].push_back(position);
+   }
+   
    void addReferencedSymbol(int row,
                               int column,
                               const std::string& name)
@@ -855,14 +861,14 @@ public:
       }
    }
    
-   void setCachedToken(const RToken& token)
+   void setCachedPosition(const Position& position)
    {
-      token_ = token;
+      position_ = position;
    }
    
-   const RToken& getCachedToken() const
+   const Position& getCachedPosition() const
    {
-      return token_;
+      return position_;
    }
    
 private:
@@ -872,7 +878,7 @@ private:
    LintItems lint_;
    ParseOptions parseOptions_;
    Stack<ParseState> parseStateStack_;
-   RToken token_;
+   Position position_;
 };
 
 class ParseResults {

@@ -699,7 +699,7 @@ FUNCTION_START:
       ENSURE_TYPE(cursor, status, RToken::LPAREN);
       status.pushState(ParseStatus::ParseStateFunctionArgumentList);
       MOVE_TO_NEXT_SIGNIFICANT_TOKEN_WARN_ON_BLANK(cursor, status);
-      status.setCachedToken(cursor);
+      status.setCachedPosition(cursor.currentPosition());
       if (cursor.isType(RToken::RPAREN))
          goto FUNCTION_ARGUMENT_LIST_END;
       
@@ -708,7 +708,7 @@ FUNCTION_ARGUMENT_START:
       if (cursor.isType(RToken::ID) &&
           cursor.nextSignificantToken().contentEquals(L"="))
       {
-         handleIdentifier(cursor, status);
+         status.node()->addDefinedSymbol(cursor, status.getCachedPosition());
          MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
          MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
          goto START;
@@ -716,7 +716,7 @@ FUNCTION_ARGUMENT_START:
       
       if (cursor.isType(RToken::ID))
       {
-         handleIdentifier(cursor, status);
+         status.node()->addDefinedSymbol(cursor, status.getCachedPosition());
          if (cursor.nextSignificantToken().isType(RToken::COMMA))
          {
             MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
