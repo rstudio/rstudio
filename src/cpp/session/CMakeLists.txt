@@ -317,6 +317,7 @@ if(APPLE)
         ${SESSION_SYSTEM_LIBRARIES}
         ${MAC_APPKIT_LIBRARY})
 endif()
+
 target_link_libraries(rsession
    rstudio-core
    rstudio-core-hunspell
@@ -328,6 +329,7 @@ target_link_libraries(rsession
    ${SESSION_SYSTEM_LIBRARIES}
    ${LIBR_LIBRARIES}
    ${CMAKE_DL_LIBS}
+   ${Boost_LIBRARIES}
 )
 
 # configure and install r-ldpaths script

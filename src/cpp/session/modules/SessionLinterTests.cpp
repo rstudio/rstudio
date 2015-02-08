@@ -119,52 +119,59 @@ context("Linter")
 {
    test_that("valid expressions generate no lint")
    {
-     EXPECT_NO_ERRORS("print(1)");
-     EXPECT_NO_ERRORS("1 + 1");
-     EXPECT_NO_ERRORS("1; 2; 3; 4; 5");
-   
-     EXPECT_NO_ERRORS("{{{}}}");
-   
-     EXPECT_NO_ERRORS("for (i in 1) 1");
-     EXPECT_NO_ERRORS("(for (i in 1:10) i)");
-     EXPECT_NO_ERRORS("for (i in 10) {}");
-   
-     EXPECT_NO_ERRORS("while ((for (i in 10) {})) 1");
-     EXPECT_NO_ERRORS("while (for (i in 0) 0) 0");
-   
-     EXPECT_NO_ERRORS("if (foo) bar");
-     EXPECT_NO_ERRORS("if (foo) bar else baz");
-     EXPECT_NO_ERRORS("if (foo) bar else if (baz) bam");
-     EXPECT_NO_ERRORS("if (foo) bar else if (baz) bam else bat");
-     EXPECT_NO_ERRORS("if (foo) {()} else {()}");
-    
+      EXPECT_NO_ERRORS("print(1)");
+      EXPECT_NO_ERRORS("1 + 1");
+      EXPECT_NO_ERRORS("1; 2; 3; 4; 5");
+
+      EXPECT_NO_ERRORS("(1)(1, 2, 3)");
+
+      EXPECT_NO_ERRORS("{{{}}}");
+
+      EXPECT_NO_ERRORS("for (i in 1) 1");
+      EXPECT_NO_ERRORS("(for (i in 1:10) i)");
+      EXPECT_NO_ERRORS("for (i in 10) {}");
+      EXPECT_NO_ERRORS("(1) * (2)");
+      EXPECT_NO_ERRORS("while ((for (i in 10) {})) 1");
+      EXPECT_NO_ERRORS("while (for (i in 0) 0) 0");
+
+      EXPECT_NO_ERRORS("if (foo) bar");
+      EXPECT_NO_ERRORS("if (foo) bar else baz");
+      EXPECT_NO_ERRORS("if (foo) bar else if (baz) bam");
+      EXPECT_NO_ERRORS("if (foo) bar else if (baz) bam else bat");
+      EXPECT_NO_ERRORS("if (foo) {} else if (bar) {}");
+      EXPECT_NO_ERRORS("if (foo) {()} else {()}");
+      EXPECT_NO_ERRORS("if(foo){bar}else{baz}");
+      EXPECT_NO_ERRORS("if (a) a() else if (b()) b");
+
       EXPECT_NO_ERRORS("a(b()); b");
       EXPECT_NO_ERRORS("a(x = b()); b");
       EXPECT_NO_ERRORS("a({a();})");
       EXPECT_NO_ERRORS("a({a(); if (b) c})");
       EXPECT_NO_ERRORS("{a()\nb()}");
-    
+      EXPECT_NO_ERRORS("a()[[1]]");
+
       EXPECT_NO_ERRORS("a[,a]");
       EXPECT_NO_ERRORS("a[,,]");
       EXPECT_NO_ERRORS("a(,,1,,,{{}},)");
       EXPECT_NO_ERRORS("x[x,,a]");
-    EXPECT_NO_ERRORS("x(x,,a)");
-    EXPECT_NO_ERRORS("x[1,,]");
-    EXPECT_NO_ERRORS("x(1,,)");
+      EXPECT_NO_ERRORS("x(x,,a)");
+      EXPECT_NO_ERRORS("x[1,,]");
+      EXPECT_NO_ERRORS("x(1,,)");
 
-    EXPECT_NO_ERRORS("{if(!(a)){};if(b){}}");
-  
-    EXPECT_NO_ERRORS("lapply(x, `[[`, 1)");
-  
-    EXPECT_NO_ERRORS("a((function() {})())");
-  
-    EXPECT_ERRORS("for {i in 1:10}");
-    EXPECT_ERRORS("((()})");
-  
-    EXPECT_NO_LINT("(function(a) a)");
+      EXPECT_NO_ERRORS("{if(!(a)){};if(b){}}");
+
+      EXPECT_NO_ERRORS("lapply(x, `[[`, 1)");
+
+      EXPECT_NO_ERRORS("a((function() {})())");
+      EXPECT_NO_ERRORS("function(a=1,b=2) {}");
+
+      EXPECT_ERRORS("for {i in 1:10}");
+      EXPECT_ERRORS("((()})");
+
+      EXPECT_NO_LINT("(function(a) a)");
    }
    
-// lintRStudioRFiles();
+ // lintRStudioRFiles();
 }
 
 } // namespace linter

@@ -617,7 +617,9 @@ public:
         pNode_(pRoot_.get()),
         lint_(parseOptions),
         parseOptions_(parseOptions)
-   {}
+   {
+      parseStateStack_.push(ParseStateTopLevel);
+   }
    
    ParseNode* node() { return pNode_; }
    BraceStack& braceStack() { return braceStack_; }
@@ -665,30 +667,43 @@ public:
    
    enum ParseState {
       
+      // top level
+      ParseStateTopLevel,
+      
       // within () but not an argument list
       ParseStateWithinParens,
       
       // within {}
       ParseStateWithinBraces,
       
-      // if (<cond>) <expr>
+      // if '(' <cond> ')' (<statement> | <expr>)
       ParseStateIfCondition,
+      ParseStateIfStatement,
       ParseStateIfExpression,
       
-      // while (<cond>) <expr>
+      // while '(' <cond> ')' (<statement> | <expr>)
       ParseStateWhileCondition,
+      ParseStateWhileStatement,
       ParseStateWhileExpression,
       
-      // for (<id> in <cond>) <expr>
+      // for '(' <id> in <cond> ')' (<statement> | <expr>)
       ParseStateForCondition,
+      ParseStateForStatement,
       ParseStateForExpression,
+      
+      // repeat (<statement> | <expr>)
+      ParseStateRepeatStatement,
+      ParseStateRepeatExpression,
       
       // function(<arglist>) <expr>
       ParseStateFunctionArgumentList,
+      ParseStateFunctionStatement,
       ParseStateFunctionExpression,
       
       // <id> ( <arglist> )
-      ParseStateArgumentList
+      ParseStateParenArgumentList,
+      ParseStateSingleBracketArgumentList,
+      ParseStateDoubleBracketArgumentList,
       
    };
    
@@ -704,43 +719,65 @@ public:
    
    void popState(const AnnotatedRToken& rToken)
    {
-      if (parseStateStack_.empty())
-      {
-         lint().unexpectedToken(rToken);
-         return;
-      }
-      
-      parseStateStack_.pop();
+      if (currentState() != ParseStateTopLevel)
+         parseStateStack_.pop();
    }
    
    void popState(const AnnotatedRToken& rToken,
                  ParseState expectedState)
    {
-      if (parseStateStack_.empty())
-      {
-         lint().unexpectedToken(rToken);
-         return;
-      }
-      
       if (expectedState != parseStateStack_.peek())
          lint().unexpectedToken(rToken);
       
-      parseStateStack_.pop();
+      popState(rToken);
    }
    
-   ParseState peekState()
+   ParseState peekState() const { return parseStateStack_.peek(); }
+   ParseState currentState() const { return peekState(); }
+   std::string currentStateAsString() const
    {
-      return parseStateStack_.peek();
-   }
-   
-   bool inArgumentList()
-   {
-      if (parseStateStack_.empty())
-         return false;
+#define CASE(__X__) \
+   case __X__: return #__X__
       
-      switch (parseStateStack_.peek())
+      switch (currentState())
       {
-      case ParseStateArgumentList:
+      CASE(ParseStateTopLevel);
+      CASE(ParseStateWithinParens);
+      CASE(ParseStateWithinBraces);
+      CASE(ParseStateIfCondition);
+      CASE(ParseStateIfStatement);
+      CASE(ParseStateIfExpression);
+      CASE(ParseStateWhileCondition);
+      CASE(ParseStateWhileStatement);
+      CASE(ParseStateWhileExpression);
+      CASE(ParseStateForCondition);
+      CASE(ParseStateForStatement);
+      CASE(ParseStateForExpression);
+      CASE(ParseStateRepeatStatement);
+      CASE(ParseStateRepeatExpression);
+      CASE(ParseStateFunctionArgumentList);
+      CASE(ParseStateFunctionStatement);
+      CASE(ParseStateFunctionExpression);
+      CASE(ParseStateParenArgumentList);
+      CASE(ParseStateSingleBracketArgumentList);
+      CASE(ParseStateDoubleBracketArgumentList);
+      default: return "<unknown>";
+      }
+#undef CASE
+   }
+   
+   bool isAtTopLevel()
+   {
+      return currentState() == ParseStateTopLevel;
+   }
+   
+   bool isInArgumentList()
+   {
+      switch (currentState())
+      {
+      case ParseStateParenArgumentList:
+      case ParseStateSingleBracketArgumentList:
+      case ParseStateDoubleBracketArgumentList:
       case ParseStateFunctionArgumentList:
          return true;
       default:
@@ -748,17 +785,63 @@ public:
       }
    }
    
-   bool inNakedControlFlowExpression()
+   bool isInControlFlowStatement()
    {
-      if (parseStateStack_.size() == braceStack_.size())
+      switch (currentState())
+      {
+      case ParseStateForStatement:
+      case ParseStateWhileStatement:
+      case ParseStateIfStatement:
+      case ParseStateRepeatStatement:
+      case ParseStateFunctionStatement:
+         return true;
+      default:
          return false;
-      
-      switch (parseStateStack_.peek())
+      }
+   }
+   
+   bool isInControlFlowExpression()
+   {
+      switch (currentState())
       {
       case ParseStateForExpression:
-      case ParseStateFunctionExpression:
-      case ParseStateIfExpression:
       case ParseStateWhileExpression:
+      case ParseStateIfExpression:
+      case ParseStateRepeatExpression:
+      case ParseStateFunctionExpression:
+         return true;
+      default:
+         return false;
+      }
+   }
+   
+   bool isInControlFlowCondition()
+   {
+      switch (currentState())
+      {
+      case ParseStateForCondition:
+      case ParseStateWhileCondition:
+      case ParseStateIfCondition:
+         return true;
+      default:
+         return false;
+      }
+   }
+   
+   bool isInParentheticalScope()
+   {
+      switch (currentState())
+      {
+      case ParseStateForCondition:
+      case ParseStateWhileCondition:
+      case ParseStateIfCondition:
+         
+      case ParseStateParenArgumentList:
+      case ParseStateSingleBracketArgumentList:
+      case ParseStateDoubleBracketArgumentList:
+      case ParseStateFunctionArgumentList:
+         
+      case ParseStateWithinParens:
          return true;
       default:
          return false;
@@ -804,8 +887,12 @@ private:
    LintItems lint_;
 };
 
-ParseResults parse(const std::string& string,
+ParseResults parse(const std::string& rCode,
                    const ParseOptions& parseOptions = ParseOptions());
+
+ParseResults parse(const std::wstring& rCode,
+                   const ParseOptions& parseOptions = ParseOptions());
+
 
 } // namespace r_util
 } // namespace core

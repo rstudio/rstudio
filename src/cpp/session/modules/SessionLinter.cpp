@@ -13,6 +13,7 @@
  *
  */
 
+// #define RSTUDIO_ENABLE_PROFILING
 // #define RSTUDIO_ENABLE_DEBUG_MACROS
 #define RSTUDIO_DEBUG_LABEL "linter"
 #include <core/Macros.hpp>
@@ -134,18 +135,20 @@ Error getAllAvailableRSymbols(const FilePath& filePath,
 
 } // end anonymous namespace
 
-ParseResults parse(const std::string& rCode,
+ParseResults parse(const std::wstring& rCode,
                    const FilePath& origin)
 {
-   ParseResults results = r_util::parse(rCode);
+   ParseResults results;
+   results = r_util::parse(rCode);
+   
    ParseNode* pRoot = results.parseTree();
    if (!pRoot)
    {
       std::string codeSnippet;
       if (rCode.length() > 40)
-         codeSnippet = rCode.substr(0, 40) + "...";
+         codeSnippet = string_utils::wideToUtf8(rCode.substr(0, 40)) + "...";
       else
-         codeSnippet = rCode;
+         codeSnippet = string_utils::wideToUtf8(rCode);
       
       std::string message = std::string() +
             "Parse failed: no parse tree available for code " +
@@ -176,6 +179,12 @@ ParseResults parse(const std::string& rCode,
    }
    
    return results;
+}
+
+ParseResults parse(const std::string& rCode,
+                   const FilePath& origin)
+{
+   return parse(string_utils::utf8ToWide(rCode), origin);
 }
 
 namespace {
@@ -358,9 +367,18 @@ SEXP rs_lintRFile(SEXP filePathSEXP)
    return builder;
 }
 
+static std::wstring s_rCode;
+
+SEXP rs_loadString(SEXP rCodeSEXP)
+{
+   s_rCode = string_utils::utf8ToWide(CHAR(STRING_ELT(rCodeSEXP, 0)));
+   return R_NilValue;
+}
+
 SEXP rs_parse(SEXP rCodeSEXP)
 {
-   ParseResults results = parse(CHAR(STRING_ELT(rCodeSEXP, 0)), FilePath());
+   std::string code = r::sexp::safeAsString(rCodeSEXP);
+   ParseResults results = parse(code, FilePath());
    r::sexp::Protect protect;
    return r::sexp::create((int) results.lint().size(), &protect);
 }
@@ -374,6 +392,7 @@ core::Error initialize()
    using namespace module_context;
    
    RS_REGISTER_CALL_METHOD(rs_lintRFile, 1);
+   RS_REGISTER_CALL_METHOD(rs_loadString, 1);
    RS_REGISTER_CALL_METHOD(rs_parse, 1);
    
    ExecBlock initBlock;

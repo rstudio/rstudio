@@ -64,20 +64,19 @@ public:
       RPAREN,
       LBRACKET,
       RBRACKET,
+      LDBRACKET,
+      RDBRACKET,
       LBRACE,
       RBRACE,
       COMMA,
       SEMI,
       WHITESPACE,
-      NEWLINE,
       STRING,
       NUMBER,
       ID,
       OPER,
       UOPER,
       ERR,
-      LDBRACKET,
-      RDBRACKET,
       COMMENT
    };
 
@@ -170,7 +169,10 @@ class RTokenizer : boost::noncopyable
 {
 public:
    explicit RTokenizer(const std::wstring& data)
-      : data_(data), pos_(data_.begin())
+      : data_(data),
+        begin_(data_.begin()),
+        end_(data_.end()),
+        pos_(data_.begin())
    {
    }
 
@@ -200,6 +202,8 @@ private:
    
 private:
    std::wstring data_;
+   std::wstring::const_iterator begin_;
+   std::wstring::const_iterator end_;
    std::wstring::const_iterator pos_;
    std::vector<char> braceStack_; // needed for tokenization of `[[`, `[`
 };
@@ -219,6 +223,11 @@ public:
    };
 
 public:
+   
+   RTokens()
+      : tokenizer_(L"")
+   {}
+   
    explicit RTokens(const std::wstring& code, int flags = None)
       : tokenizer_(code)
    {
@@ -382,10 +391,30 @@ inline bool isExtractionOperator(const RToken& rToken)
           isAt(rToken);
 }
 
+inline bool isBlank(const RToken& rToken)
+{
+   return isWhitespace(rToken) && !rToken.contentContains(L'\n');
+}
+
 inline bool isWhitespaceWithNewline(const RToken& rToken)
 {
    return isWhitespace(rToken) && rToken.contentContains(L'\n');
 }
+
+inline bool canOpenArgumentList(const RToken& rToken)
+{
+   return rToken.isType(RToken::LPAREN) ||
+          rToken.isType(RToken::LBRACKET) ||
+          rToken.isType(RToken::LDBRACKET);
+}
+
+inline bool canCloseArgumentList(const RToken& rToken)
+{
+   return rToken.isType(RToken::RPAREN) ||
+          rToken.isType(RToken::RBRACKET) ||
+          rToken.isType(RToken::RDBRACKET);
+}
+
 
 inline RToken::TokenType typeComplement(RToken::TokenType lhsType)
 {
