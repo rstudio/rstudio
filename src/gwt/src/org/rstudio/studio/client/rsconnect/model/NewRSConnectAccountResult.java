@@ -57,14 +57,53 @@ public class NewRSConnectAccountResult
       return accountNickname_;
    }
    
+   public void setAccountNickname(String nick)
+   {
+      accountNickname_ = nick;
+   }
+   
    public AccountType getAccountType()
    {
       return type_;
    }
    
+   public RSConnectServerInfo getServerInfo()
+   {
+      return serverInfo_;
+   }
+   
+   public RSConnectPreAuthToken getPreAuthToken()
+   {
+      return preAuthToken_;
+   }
+   
+   public RSConnectAuthUser getAuthUser()
+   {
+      return authUser_;
+   }
+   
+   public void setServerInfo (RSConnectServerInfo info)
+   {
+      serverInfo_ = info;
+   }
+   
+   public void setPreAuthToken (RSConnectPreAuthToken token)
+   {
+      preAuthToken_ = token;
+   }
+   
+   public void setAuthUser (RSConnectAuthUser user)
+   {
+      authUser_ = user;
+   }
+
    private AccountType type_;
    private String cloudSecret_;
    private String serverName_;
    private String serverUrl_;
    private String accountNickname_;
+   
+   private RSConnectServerInfo serverInfo_;
+   private RSConnectPreAuthToken preAuthToken_;
+   private RSConnectAuthUser authUser_;
 }

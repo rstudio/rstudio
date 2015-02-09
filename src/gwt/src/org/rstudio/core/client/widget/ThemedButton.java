@@ -100,6 +100,11 @@ public class ThemedButton extends FocusWidget implements HasClickHandlers
 
    interface MyUiBinder extends UiBinder<ButtonElement, ThemedButton>{}
    private static MyUiBinder uiBinder = GWT.create(MyUiBinder.class);
+   
+   public ThemedButton()
+   {
+      this("");
+   }
 
    public ThemedButton(String title)
    {

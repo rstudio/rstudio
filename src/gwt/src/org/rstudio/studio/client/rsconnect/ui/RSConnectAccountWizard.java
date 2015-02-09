@@ -14,25 +14,75 @@
  */
 package org.rstudio.studio.client.rsconnect.ui;
 
+import java.util.ArrayList;
+
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.core.client.widget.Wizard;
+import org.rstudio.core.client.widget.WizardNavigationPage;
+import org.rstudio.core.client.widget.WizardPage;
+import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.rsconnect.model.NewRSConnectAccountInput;
 import org.rstudio.studio.client.rsconnect.model.NewRSConnectAccountResult;
+import org.rstudio.studio.client.rsconnect.model.RSConnectServerOperations;
 
 public class RSConnectAccountWizard 
    extends Wizard<NewRSConnectAccountInput,NewRSConnectAccountResult>
 {
    public RSConnectAccountWizard(
+         RSConnectServerOperations server,
+         GlobalDisplay display,
+         boolean forFirstAccount,
          boolean showCloudPage,
          ProgressOperationWithInput<NewRSConnectAccountResult> operation)
    {
-      super("Connect Account", "Select the type of account", 
-            new NewRSConnectAccountInput(), operation);
-      setOkButtonCaption("Connect Account");
+      super("Connect Account", "Connect Account",
+            new NewRSConnectAccountInput(server, display), 
+            forFirstAccount ? 
+               createIntroPage(showCloudPage) : 
+               createSelectorPage(showCloudPage),
+            operation);
+   }
+   
+   
+   protected static WizardPage<NewRSConnectAccountInput,
+                               NewRSConnectAccountResult> createIntroPage(
+                                     boolean showCloudPage)
+   {
+      return new NewRSConnectAccountPage("Connect Publishing Account", 
+            "Pick an account", "Connect Publishing Account", 
+            RSConnectAccountResources.INSTANCE.publishIcon(),
+            RSConnectAccountResources.INSTANCE.publishIconLarge(),
+            createSelectorPage(showCloudPage));
+   }
+   
+   protected static WizardPage<NewRSConnectAccountInput,
+                               NewRSConnectAccountResult> createSelectorPage(
+                                     boolean showCloudPage)
+   {
+      return new WizardNavigationPage<
+         NewRSConnectAccountInput,
+         NewRSConnectAccountResult>(
+               "Choose Account Type", 
+               "Choose Account Type", 
+               "Connect Account", 
+               null, 
+               null, 
+               createPages(showCloudPage));
+   }
+   
+   protected static ArrayList<WizardPage<NewRSConnectAccountInput, 
+                                         NewRSConnectAccountResult>> createPages(boolean showCloudPage)
+   {
+      ArrayList<WizardPage<NewRSConnectAccountInput, 
+                           NewRSConnectAccountResult>> pages =
+           new ArrayList<WizardPage<NewRSConnectAccountInput, 
+                                    NewRSConnectAccountResult>>();
+
       if (showCloudPage)
       {
-         addPage(new NewRSConnectCloudPage());
+         pages.add(new NewRSConnectCloudPage());
       }
-      addPage(new NewRSConnectLocalPage());
+      pages.add(new NewRSConnectLocalPage());
+      return pages;
    }
 }

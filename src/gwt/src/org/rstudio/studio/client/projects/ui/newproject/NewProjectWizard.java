@@ -14,14 +14,18 @@
  */
 package org.rstudio.studio.client.projects.ui.newproject;
 
+import java.util.ArrayList;
+
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.core.client.widget.Wizard;
+import org.rstudio.core.client.widget.WizardNavigationPage;
 import org.rstudio.studio.client.projects.model.NewProjectInput;
 import org.rstudio.core.client.widget.WizardPage;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.projects.model.NewProjectResult;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+
 import com.google.gwt.user.client.ui.CheckBox;
 
 
@@ -34,23 +38,14 @@ public class NewProjectWizard extends Wizard<NewProjectInput,NewProjectResult>
          ProgressOperationWithInput<NewProjectResult> operation)
    {
       super("New Project", 
-            "Create project from:", 
+            "Create Project",
             input, 
+            createFirstPage(sessionInfo),
             operation);
     
-      setOkButtonCaption("Create Project");
-      
- 
       openInNewWindow_ = new CheckBox("Open in new window");
       addLeftWidget(openInNewWindow_);
       openInNewWindow_.setVisible(false);
-      
-      
-      addPage(new NewDirectoryNavigationPage(sessionInfo));
-      addPage(new ExistingDirectoryPage());
-
-      if (sessionInfo.getAllowVcs())
-         addPage(new VersionControlNavigationPage(sessionInfo));
    }  
    
    @Override
@@ -79,6 +74,28 @@ public class NewProjectWizard extends Wizard<NewProjectInput,NewProjectResult>
       {
          return null;
       }
+   }
+   
+   private static WizardPage<NewProjectInput, NewProjectResult> createFirstPage(
+         SessionInfo sessionInfo)
+   {
+      return new WizardNavigationPage<NewProjectInput, NewProjectResult>(
+            "New Project", "Create project from:", "Create Project", 
+            null, null, createSubPages(sessionInfo));
+   }
+   
+   private static ArrayList<WizardPage<NewProjectInput, NewProjectResult>> createSubPages(
+         SessionInfo sessionInfo)
+   {
+      ArrayList<WizardPage<NewProjectInput, NewProjectResult>> subPages = 
+            new ArrayList<WizardPage<NewProjectInput, NewProjectResult>>();
+      subPages.add(new NewDirectoryNavigationPage(sessionInfo));
+      subPages.add(new ExistingDirectoryPage());
+
+      if (sessionInfo.getAllowVcs())
+         subPages.add(new VersionControlNavigationPage(sessionInfo));
+
+      return subPages;
    }
    
    private final CheckBox openInNewWindow_;

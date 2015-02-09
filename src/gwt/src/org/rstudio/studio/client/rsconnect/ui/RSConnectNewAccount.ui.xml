@@ -1,0 +1,26 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+	xmlns:g="urn:import:com.google.gwt.user.client.ui">
+	<ui:style>
+	
+	</ui:style>
+	<g:HTMLPanel>
+	<g:HTML>
+	<p>
+		To publish content, you first need to connect RStudio to an account on the
+		service you want to publish to.
+	</p>
+	<p>
+	    Once you've authorized this computer to publish content to an account, you
+	    can publish any time without re-entering your credentials.
+	</p>
+	<p>
+	 	You can connect or disconnect accounts at any time by going to <br />
+	 	<strong>Tools -&gt; Global Options -&gt; Publishing.</strong>
+	</p>
+	<p>
+		Click Next to choose an account type to connect.
+	</p>
+	</g:HTML>
+	</g:HTMLPanel>
+</ui:UiBinder> 

@@ -98,7 +98,7 @@ public class RSConnectDeploy extends Composite
          @Override
          public void onClick(ClickEvent event)
          {
-            connector.showAccountWizard(new OperationWithInput<Boolean>() 
+            connector.showAccountWizard(false, new OperationWithInput<Boolean>() 
             {
                @Override
                public void execute(Boolean successful)

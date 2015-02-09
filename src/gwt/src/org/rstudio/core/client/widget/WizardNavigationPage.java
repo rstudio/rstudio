@@ -47,8 +47,7 @@ public class WizardNavigationPage<I,T> extends WizardPage<I,T>
                                                                   onSelected);
    }
 
-   
-   public ArrayList<WizardPage<I,T>> getPages()
+   public ArrayList<WizardPage<I,T>> getSubPages()
    {
       return pages_;
    }
