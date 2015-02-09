@@ -528,9 +528,16 @@ void addScheduledCommand(boost::shared_ptr<ScheduledCommand> pCommand,
 
 void executeScheduledCommands(ScheduledCommands* pCommands)
 {
+   // make a copy of scheduled commands before executing them
+   // (this is because a scheduled command could result in
+   // R code executing which in turn could cause the list of
+   // scheduled commands to be mutated and these iterators
+   // invalidated)
+   ScheduledCommands commands = *pCommands;
+
    // execute all commands
-   std::for_each(pCommands->begin(),
-                 pCommands->end(),
+   std::for_each(commands.begin(),
+                 commands.end(),
                  boost::bind(&ScheduledCommand::execute, _1));
 
    // remove any commands which are finished
