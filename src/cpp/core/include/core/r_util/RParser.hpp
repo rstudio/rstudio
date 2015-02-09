@@ -49,8 +49,8 @@ class ParseOptions
 {
 public:
    
-   ParseOptions()
-      : recordStyleLint_(false)
+   explicit ParseOptions(bool recordStyleLint = false)
+      : recordStyleLint_(recordStyleLint)
    {}
    
    void setRecordStyleLint(bool record)
@@ -286,6 +286,34 @@ public:
                     token.column(),
                     LintTypeStyle,
                     "unnecessary whitespace");
+      lintItems_.push_back(lint);
+   }
+   
+   void unexpectedWhitespaceAroundOperator(const RToken& token)
+   {
+      if (!parseOptions_.getRecordStyleLint())
+         return;
+      
+      LintItem lint(token.row(),
+                    token.column(),
+                    token.row(),
+                    token.column(),
+                    LintTypeStyle,
+                    "unexpected whitespace around extraction operator");
+      lintItems_.push_back(lint);
+   }
+   
+   void expectedWhitespaceAroundOperator(const RToken& token)
+   {
+      if (!parseOptions_.getRecordStyleLint())
+         return;
+      
+      LintItem lint(token.row(),
+                    token.column(),
+                    token.row(),
+                    token.column(),
+                    LintTypeStyle,
+                    "expected whitespace around binary operator");
       lintItems_.push_back(lint);
    }
    

@@ -35,6 +35,8 @@ namespace session {
 namespace modules {
 namespace linter {
 
+static const core::r_util::ParseOptions s_parseOptions(true);
+
 using namespace core;
 using namespace core::r_util;
 
@@ -43,14 +45,14 @@ using namespace core::r_util;
 #define EXPECT_ERRORS(__STRING__)                                              \
    do                                                                          \
    {                                                                           \
-      ParseResults results = parse(__STRING__);                                \
+      ParseResults results = parse(__STRING__, s_parseOptions);                \
       expect_true(results.lint().hasErrors());                                 \
    } while (0)
 
 #define EXPECT_NO_ERRORS(__STRING__)                                           \
    do                                                                          \
    {                                                                           \
-      ParseResults results = parse(__STRING__);                                \
+      ParseResults results = parse(__STRING__, s_parseOptions);                \
       if (results.lint().hasErrors())                                          \
          results.lint().dump();                                                \
       expect_false(results.lint().hasErrors());                                \
@@ -59,14 +61,14 @@ using namespace core::r_util;
 #define EXPECT_LINT(__STRING__)                                                \
    do                                                                          \
    {                                                                           \
-      ParseResults results = parse(__STRING__);                                \
+      ParseResults results = parse(__STRING__, s_parseOptions);                \
       expect_false(results.lint().get().empty());                              \
    } while (0)
 
 #define EXPECT_NO_LINT(__STRING__)                                             \
    do                                                                          \
    {                                                                           \
-      ParseResults results = parse(__STRING__);                                \
+      ParseResults results = parse(__STRING__, s_parseOptions);                \
       expect_true(results.lint().get().empty());                               \
    } while (0)
 
@@ -171,6 +173,11 @@ context("Linter")
       EXPECT_ERRORS("((()})");
 
       EXPECT_NO_LINT("(function(a) a)");
+      
+      EXPECT_LINT("a+b");
+      EXPECT_NO_LINT("a +\nb");
+      EXPECT_NO_LINT("a()$'b'");
+      EXPECT_LINT("a$1");
    }
    
  // lintRStudioRFiles();

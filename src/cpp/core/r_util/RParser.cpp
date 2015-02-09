@@ -286,6 +286,38 @@ bool closesArgumentList(const TokenCursor& cursor,
    }
 }
 
+void checkBinaryOperatorWhitespace(TokenCursor& cursor,
+                                   ParseStatus& status)
+{
+   // There should not be whitespace around extraction operators.
+   //
+   //    x $ foo
+   //
+   // is bad style.
+   if (isExtractionOperator(cursor))
+   {
+      if (isWhitespace(cursor.previousToken()) ||
+          isWhitespace(cursor.nextToken()))
+      {
+         status.lint().unexpectedWhitespaceAroundOperator(cursor);
+      }
+   }
+   
+   // There should be whitespace around other operators.
+   //
+   //    x+1
+   //
+   // is bad style.
+   else
+   {
+      if (!isWhitespace(cursor.previousToken()) ||
+          !isWhitespace(cursor.nextToken()))
+      {
+         status.lint().expectedWhitespaceAroundOperator(cursor);
+      }
+   }
+}
+
 } // anonymous namespace
 
 #define GOTO_INVALID_TOKEN(__CURSOR__)                                         \
@@ -572,12 +604,15 @@ START:
       
 BINARY_OPERATOR:
       
-      // TODO: Warn about spacing around certain binary
-      // operators.
-      
-      // TODO: Not all binary operators are equal. For
-      // example, it is a parse error if the token
-      // following a '$' is not a string or symbol.
+      checkBinaryOperatorWhitespace(cursor, status);
+      if (isExtractionOperator(cursor))
+      {
+         if (!(cursor.nextSignificantToken().isType(RToken::ID) ||
+              (cursor.nextSignificantToken().isType(RToken::STRING))))
+         {
+            status.lint().unexpectedToken(cursor.nextSignificantToken());
+         }
+      }
       
       MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
       goto START;
