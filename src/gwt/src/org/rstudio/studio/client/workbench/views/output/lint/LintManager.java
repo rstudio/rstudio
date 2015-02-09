@@ -38,10 +38,29 @@ import com.google.inject.Inject;
 
 public class LintManager
 {
+   class LintContext
+   {
+      public LintContext(Invalidation.Token token,
+            boolean showMarkers)
+      {
+         this.token = token;
+         this.showMarkers = showMarkers;
+      }
+      
+      public final Invalidation.Token token;
+      public final boolean showMarkers;
+   }
+   
+   private void reset()
+   {
+      showMarkers_ = false;
+   }
+   
    public LintManager(Source source)
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
       source_ = source;
+      showMarkers_ = false;
       invalidation_ = new Invalidation();
       timer_ = new Timer()
       {
@@ -50,9 +69,11 @@ public class LintManager
          public void run()
          {
             invalidation_.invalidate();
-            Invalidation.Token token =
-                  invalidation_.getInvalidationToken();
-            lintActiveDocument(token);
+            LintContext context = new LintContext(
+                  invalidation_.getInvalidationToken(),
+                  showMarkers_);
+            reset();
+            lintActiveDocument(context);
          }
       };
       
@@ -78,7 +99,7 @@ public class LintManager
       server_ = server;
    }
    
-   private void lintActiveDocument(final Invalidation.Token token)
+   private void lintActiveDocument(final LintContext context)
    {
       EditingTarget editor = source_.getActiveEditor();
       if (editor == null || !(editor instanceof TextEditingTarget))
@@ -94,7 +115,7 @@ public class LintManager
          public void execute()
          {
             performLintServerRequest(
-                  token,
+                  context,
                   documentId,
                   target,
                   docDisplay);
@@ -102,22 +123,22 @@ public class LintManager
       });
    }
 
-   private void performLintServerRequest(final Invalidation.Token token,
+   private void performLintServerRequest(final LintContext context,
                                          final String documentId,
                                          final TextEditingTarget target,
                                          final DocDisplay docDisplay)
    {
       
-      if (token.isInvalid())
+      if (context.token.isInvalid())
          return;
       
       if (target.getTextFileType().isCpp())
-         performCppLintServerRequest(token, documentId, target, docDisplay);
+         performCppLintServerRequest(context, documentId, target, docDisplay);
       else
-         performRLintServerRequest(token, documentId, target, docDisplay);
+         performRLintServerRequest(context, documentId, target, docDisplay);
    }
 
-   private void performCppLintServerRequest(final Invalidation.Token token,
+   private void performCppLintServerRequest(final LintContext context,
                                             final String documentId,
                                             final TextEditingTarget target,
                                             final DocDisplay docDisplay) 
@@ -130,7 +151,7 @@ public class LintManager
                @Override
                public void onResponseReceived(JsArray<CppDiagnostic> diag)
                {
-                  if (token.isInvalid())
+                  if (context.token.isInvalid())
                      return;
 
                   final JsArray<LintItem> cppLint =
@@ -138,13 +159,13 @@ public class LintManager
                   
                   server_.lintRSourceDocument(
                         documentId,
-                        false,
+                        context.showMarkers,
                         new ServerRequestCallback<JsArray<LintItem>>()
                         {
                            @Override
                            public void onResponseReceived(JsArray<LintItem> rLint)
                            {
-                              if (token.isInvalid())
+                              if (context.token.isInvalid())
                                  return;
                               
                               JsArray<LintItem> lint = cppLint;
@@ -171,7 +192,7 @@ public class LintManager
             });
    }
 
-   private void performRLintServerRequest(final Invalidation.Token token,
+   private void performRLintServerRequest(final LintContext context,
                                           final String documentId,
                                           final TextEditingTarget target,
                                           final DocDisplay docDisplay)
@@ -179,13 +200,13 @@ public class LintManager
 
       server_.lintRSourceDocument(
             documentId,
-            false,
+            context.showMarkers,
             new ServerRequestCallback<JsArray<LintItem>>()
             {
                @Override
                public void onResponseReceived(JsArray<LintItem> lint)
                {
-                  if (token.isInvalid())
+                  if (context.token.isInvalid())
                      return;
 
                   displayLint(docDisplay, lint);
@@ -210,9 +231,16 @@ public class LintManager
       timer_.schedule(milliseconds);
    }
    
+   public void lint(boolean showMarkers)
+   {
+      showMarkers_ = true;
+      timer_.schedule(0);
+   }
+   
    private final Timer timer_;
    private final Source source_;
    private final Invalidation invalidation_;
+   private boolean showMarkers_;
    
    private LintServerOperations server_;
    

@@ -111,7 +111,7 @@ public:
       while (times != 0)
       {
          ++offset;
-         while (isWhitespace(rTokens_.at(offset_ + offset)))
+         while (isWhitespaceOrComment(rTokens_.at(offset_ + offset)))
             ++offset;
          
          --times;
@@ -126,7 +126,7 @@ public:
       while (times != 0)
       {
          ++offset;
-         while (isWhitespace(rTokens_.at(offset_ - offset)))
+         while (isWhitespaceOrComment(rTokens_.at(offset_ - offset)))
             ++offset;
          
          --times;
@@ -273,6 +273,9 @@ public:
       os << cursor.currentToken().asString();
       return os;
    }
+   
+   std::size_t row() const { return currentToken().row(); }
+   std::size_t column() const { return currentToken().column(); }
    
 private:
    

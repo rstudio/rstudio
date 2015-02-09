@@ -471,7 +471,7 @@ std::string RToken::contentAsUtf8() const
 std::string RToken::asString() const
 {
    std::stringstream ss;
-   ss << "(" << contentAsUtf8() << ", " << row_ << ", " << column_ << ")";
+   ss << "('" << contentAsUtf8() << "', " << row_ << ", " << column_ << ")";
    return ss.str();
 }
 

@@ -390,6 +390,12 @@ inline bool isWhitespace(const RToken& rToken)
    return rToken.isType(RToken::WHITESPACE);
 }
 
+inline bool isWhitespaceOrComment(const RToken& rToken)
+{
+   return rToken.isType(RToken::WHITESPACE) ||
+          rToken.isType(RToken::COMMENT);
+}
+
 inline bool isValidAsIdentifier(const RToken& rToken)
 {
    return rToken.isType(RToken::ID) ||
@@ -447,7 +453,6 @@ inline bool canCloseArgumentList(const RToken& rToken)
           rToken.isType(RToken::RBRACKET) ||
           rToken.isType(RToken::RDBRACKET);
 }
-
 
 inline RToken::TokenType typeComplement(RToken::TokenType lhsType)
 {

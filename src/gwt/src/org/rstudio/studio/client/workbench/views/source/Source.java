@@ -2581,7 +2581,7 @@ public class Source implements InsertSourceHandler,
    @Handler
    void onLintActiveDocument()
    {
-      lintManager_.schedule(0);
+      lintManager_.lint(true);
    }
    
    private void attemptSourceNavigation(final SourceNavigation navigation,

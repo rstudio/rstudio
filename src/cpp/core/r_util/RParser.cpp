@@ -454,6 +454,10 @@ START:
             status.lint().unexpectedToken(cursor, L")");
          
          // Check for 'else' following for 'if' expressions.
+         DEBUG("Current state: " << status.currentStateAsString());
+         DEBUG("Current token: " << cursor);
+         DEBUG("Next token: " << cursor.nextSignificantToken());
+         
          if (status.currentState() == ParseStatus::ParseStateIfExpression &&
              cursor.nextSignificantToken().contentEquals(L"else"))
          {
@@ -488,7 +492,7 @@ START:
       if (cursor.isType(RToken::SEMI))
       {
          // Pop the state if we're in a control flow statement.
-         if (status.isInControlFlowStatement())
+         while (status.isInControlFlowStatement())
             status.popState();
          
          if (startedWithUnaryOperator)
@@ -513,11 +517,6 @@ START:
          if (isWhitespace(cursor))
             MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
          
-         // Check to see if this closes a control flow
-         // statement.
-         if (status.isInControlFlowStatement())
-            status.popState();
-         
          goto START;
       }
       
@@ -537,9 +536,10 @@ START:
          if (cursor.isAtEndOfDocument())
             break;
          
-         if (!status.isInParentheticalScope() &&
-             cursor.isType(RToken::ID))
+         if (cursor.isType(RToken::ID))
+         {
             handleIdentifier(cursor, status);
+         }
          
          // Identifiers following identifiers on the same line is
          // illegal (except for else), e.g.
@@ -552,23 +552,30 @@ START:
          if (status.currentState() == ParseStatus::ParseStateIfStatement &&
              cursor.nextSignificantToken().contentEquals(L"else"))
          {
+            DEBUG("-- Found 'else' following end of 'if' statement");
+            status.popState();
             MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
             MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
             goto START;
          }
          
-         if (isBlank(cursor.nextToken()) &&
+         if (cursor.nextSignificantToken().row() == cursor.row() &&
              isValidAsIdentifier(cursor.nextSignificantToken()))
          {
             MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
             GOTO_INVALID_TOKEN(cursor);
          }
          
+         // Check to see if we're in a statement, and the next
+         // token contains a newline. We check this first as
+         // normally newlines are considered non-significant;
+         // they are significant in this context.
          if ((status.isInControlFlowStatement() ||
               status.currentState() == ParseStatus::ParseStateTopLevel) &&
              cursor.nextToken().contentContains(L'\n'))
          {
-            status.popState();
+            while (status.isInControlFlowStatement())
+               status.popState();
             MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
             goto START;
          }
@@ -589,11 +596,19 @@ START:
          }
          
          // Statement implicitly ended by closing bracket following.
+         // Note that this will end _all_ control flow statements, 
+         // e.g.
+         //
+         //    if (foo) if (bar) if (baz) bat
+         //
+         // The 'bat' identifier (well, the newline following)
+         // closes all statements.
          if (status.isInControlFlowStatement() && (
              isRightBracket(cursor) ||
              isComma(cursor)))
          {
-            status.popState();
+            while (status.isInControlFlowStatement())
+               status.popState();
          }
          
          goto START;
@@ -774,7 +789,7 @@ FOR_START:
       ENSURE_TYPE(cursor, status, RToken::LPAREN);
       MOVE_TO_NEXT_SIGNIFICANT_TOKEN_WARN_ON_BLANK(cursor, status);
       ENSURE_TYPE(cursor, status, RToken::ID);
-      handleIdentifier(cursor, status);
+      status.node()->addDefinedSymbol(cursor, cursor.currentPosition());
       MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
       ENSURE_CONTENT(cursor, status, L"in");
       MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
@@ -810,9 +825,9 @@ WHILE_START:
 WHILE_CONDITION_END:
       
       DEBUG("** While condition end ** " << cursor);
-      
       ENSURE_TYPE(cursor, status, RToken::RPAREN);
       MOVE_TO_NEXT_SIGNIFICANT_TOKEN_WARN_IF_NO_WHITESPACE(cursor, status);
+      status.popState();
       if (cursor.isType(RToken::LBRACE))
       {
          status.pushState(ParseStatus::ParseStateWhileExpression);

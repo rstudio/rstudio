@@ -135,6 +135,7 @@ context("Linter")
       EXPECT_NO_ERRORS("(1) * (2)");
       EXPECT_NO_ERRORS("while ((for (i in 10) {})) 1");
       EXPECT_NO_ERRORS("while (for (i in 0) 0) 0");
+      EXPECT_NO_ERRORS("({while(1){}})");
 
       EXPECT_NO_ERRORS("if (foo) bar");
       EXPECT_NO_ERRORS("if (foo) bar else baz");
@@ -144,6 +145,9 @@ context("Linter")
       EXPECT_NO_ERRORS("if (foo) {()} else {()}");
       EXPECT_NO_ERRORS("if(foo){bar}else{baz}");
       EXPECT_NO_ERRORS("if (a) a() else if (b()) b");
+      
+      EXPECT_NO_ERRORS("if(1)if(2)if(3)if(4)if(5)5");
+      EXPECT_NO_ERRORS("if(1)if(2)if(3)if(4)if(5)5 else 6");
 
       EXPECT_NO_ERRORS("a(b()); b");
       EXPECT_NO_ERRORS("a(x = b()); b");
@@ -159,6 +163,7 @@ context("Linter")
       EXPECT_NO_ERRORS("x(x,,a)");
       EXPECT_NO_ERRORS("x[1,,]");
       EXPECT_NO_ERRORS("x(1,,)");
+      EXPECT_NO_ERRORS("a=1 #\nb");
       
       EXPECT_NO_ERRORS("c(a=function()a,)");
 
@@ -174,11 +179,11 @@ context("Linter")
 
       EXPECT_NO_LINT("(function(a) a)");
       
-      EXPECT_LINT("a+b");
-      EXPECT_NO_LINT("a +\nb");
-      EXPECT_NO_LINT("a()$'b'");
-      EXPECT_LINT("a$1");
-      EXPECT_LINT("- a");
+      EXPECT_LINT("a <- 1\nb <- 2\na+b");
+      EXPECT_NO_LINT("a <- 1\nb <- 2\na +\nb");
+      EXPECT_NO_LINT("a <- 1\nb <- 2\na()$'b'");
+      EXPECT_LINT("a <- 1\na$1");
+      EXPECT_LINT("- 1");
    }
    
  // lintRStudioRFiles();
