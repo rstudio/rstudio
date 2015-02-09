@@ -312,7 +312,7 @@ public class Projects implements OpenProjectFileHandler,
                VcsCloneOptions cloneOptions = newProject.getVcsCloneOptions();
                
                if (cloneOptions.getVcsName().equals((VCSConstants.GIT_ID)))
-                  indicator.onProgress("Cloning Git repoistory...");
+                  indicator.onProgress("Cloning Git repository...");
                else
                   indicator.onProgress("Checking out SVN repository...");
                

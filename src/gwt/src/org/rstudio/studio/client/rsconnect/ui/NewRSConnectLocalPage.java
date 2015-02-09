@@ -14,16 +14,23 @@
  */
 package org.rstudio.studio.client.rsconnect.ui;
 
-
-import org.rstudio.core.client.widget.WizardPage;
+import org.rstudio.core.client.widget.OperationWithInput;
+import org.rstudio.core.client.widget.ProgressIndicator;
+import org.rstudio.core.client.widget.WizardIntermediatePage;
+import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.rsconnect.model.NewRSConnectAccountInput;
 import org.rstudio.studio.client.rsconnect.model.NewRSConnectAccountResult;
+import org.rstudio.studio.client.rsconnect.model.RSConnectPreAuthToken;
+import org.rstudio.studio.client.rsconnect.model.RSConnectServerInfo;
+import org.rstudio.studio.client.rsconnect.model.RSConnectServerOperations;
+import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerRequestCallback;
 
 import com.google.gwt.user.client.ui.Widget;
 
 public class NewRSConnectLocalPage 
-            extends WizardPage<NewRSConnectAccountInput,
-                               NewRSConnectAccountResult>
+            extends WizardIntermediatePage<NewRSConnectAccountInput,
+                                           NewRSConnectAccountResult>
 {
 
    public NewRSConnectLocalPage()
@@ -33,7 +40,8 @@ public class NewRSConnectLocalPage
             "collaborate privately and securely.",
             "RStudio Connect Account",
             RSConnectAccountResources.INSTANCE.localAccountIcon(), 
-            RSConnectAccountResources.INSTANCE.localAccountIconLarge());
+            RSConnectAccountResources.INSTANCE.localAccountIconLarge(),
+            new NewRSConnectAuthPage());
    }
 
    @Override
@@ -43,6 +51,57 @@ public class NewRSConnectLocalPage
          local_.focus();
    }
 
+   @Override
+   public void collectIntermediateInput(
+         final ProgressIndicator indicator, 
+         final OperationWithInput<NewRSConnectAccountResult> onResult) 
+   {
+      // get the current configuration and abort if it's not valid
+      NewRSConnectAccountResult result = collectInput();
+      if (!validate(result))
+      {
+         onResult.execute(result);
+         return;
+      }
+
+      setIntermediateResult(result);
+      indicator.onProgress("Checking server connection...");
+      server_.validateServerUrl(getIntermediateResult().getServerUrl(), 
+            new ServerRequestCallback<RSConnectServerInfo>()
+      {
+         @Override
+         public void onResponseReceived(RSConnectServerInfo info)
+         {
+            if (info.isValid()) 
+            {
+               getPreAuthToken(getIntermediateResult(), info, indicator, 
+                     onResult);
+            }
+            else
+            {
+               display_.showErrorMessage("Server Validation Failed", 
+                     "The URL '" + getIntermediateResult().getServerUrl() + 
+                     "' does not appear to belong to a valid server. Please " +
+                     "double check the URL, and contact your administrator " +
+                     "if the problem persists.\n\n" +
+                     info.getMessage());
+               onResult.execute(null);
+               indicator.clearProgress();
+            }
+         }
+
+         @Override
+         public void onError(ServerError error)
+         {
+            display_.showErrorMessage("Error Connecting Account", 
+                  "The server couldn't be validated. " + 
+                   error.getMessage());
+            onResult.execute(null);
+            indicator.clearProgress();
+         }
+      });
+   }
+   
    @Override
    protected Widget createWidget()
    {
@@ -54,6 +113,8 @@ public class NewRSConnectLocalPage
    @Override
    protected void initialize(NewRSConnectAccountInput initData)
    {
+      server_ = initData.getServer();
+      display_ = initData.getDisplay();
    }
 
    @Override
@@ -66,9 +127,46 @@ public class NewRSConnectLocalPage
    @Override
    protected boolean validate(NewRSConnectAccountResult input)
    {
-      return local_.getServerUrl() != null && 
-             !local_.getServerUrl().isEmpty();
+      return input != null &&
+            input.getServerUrl() != null && 
+            !input.getServerUrl().isEmpty();
    }
-   
+
+   private void getPreAuthToken(
+         final NewRSConnectAccountResult result,
+         final RSConnectServerInfo serverInfo,
+         final ProgressIndicator indicator,
+         final OperationWithInput<NewRSConnectAccountResult> onResult)
+   {
+      indicator.onProgress("Setting up an account...");
+      server_.getPreAuthToken(serverInfo.getName(), 
+            new ServerRequestCallback<RSConnectPreAuthToken>()
+      {
+         @Override
+         public void onResponseReceived(final RSConnectPreAuthToken token)
+         {
+            NewRSConnectAccountResult newResult = result;
+            newResult.setPreAuthToken(token);
+            newResult.setServerInfo(serverInfo);
+            onResult.execute(newResult);
+            indicator.clearProgress();
+         }
+
+         @Override
+         public void onError(ServerError error)
+         {
+            display_.showErrorMessage("Error Connecting Account", 
+                  "The server appears to be valid, but rejected the " + 
+                  "request to authorize an account.\n\n"+
+                  serverInfo.getInfoString() + "\n" +
+                  error.getMessage());
+            indicator.clearProgress();
+            onResult.execute(null);
+         }
+      });
+   }
+
+   private RSConnectServerOperations server_;
+   private GlobalDisplay display_;
    private RSConnectLocalAccount local_;
 }

@@ -32,6 +32,7 @@ public abstract class ModalDialog<T> extends ModalDialogBase
                       Operation cancelOperation)
    {
       super();
+      progressIndicator_ = null;
     
       ThemedButton okButton = new ThemedButton("OK", new ClickHandler() {
          public void onClick(ClickEvent event) {
@@ -70,7 +71,7 @@ public abstract class ModalDialog<T> extends ModalDialogBase
    {
       super();
 
-      final ProgressIndicator progressIndicator = addProgressIndicator();
+      progressIndicator_ = addProgressIndicator();
       
       ThemedButton okButton = new ThemedButton("OK", new ClickHandler() {
          public void onClick(ClickEvent event) {
@@ -80,7 +81,7 @@ public abstract class ModalDialog<T> extends ModalDialogBase
                @Override
                public void execute()
                {
-                  operation.execute(input, progressIndicator);
+                  operation.execute(input, progressIndicator_);
                   onSuccess();
                }
             });
@@ -117,7 +118,13 @@ public abstract class ModalDialog<T> extends ModalDialogBase
       if (validate(input))
          executeOnSuccess.execute();
    }
+   
+   protected ProgressIndicator getProgressIndicator()
+   {
+      return progressIndicator_;
+   }
 
    protected abstract boolean validate(T input);
   
+   private final ProgressIndicator progressIndicator_;
 }

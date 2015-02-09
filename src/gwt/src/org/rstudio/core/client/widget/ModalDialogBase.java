@@ -286,6 +286,15 @@ public abstract class ModalDialogBase extends DialogBox
       allButtons_.add(button);
    }
    
+   // inserts an action button--in the same panel as OK/cancel, but preceding
+   // them (presuming they're already present)
+   protected void addActionButton(ThemedButton button)
+   {
+      button.addStyleDependentName("DialogAction");
+      buttonPanel_.insert(button, 0);
+      allButtons_.add(button);
+   }
+   
    protected void setButtonAlignment(HorizontalAlignmentConstant alignment)
    {
       bottomPanel_.setCellHorizontalAlignment(buttonPanel_, alignment);

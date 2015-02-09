@@ -14,6 +14,8 @@
  */
 package org.rstudio.core.client.widget;
 
+import java.util.ArrayList;
+
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.Composite;
@@ -106,6 +108,23 @@ public abstract class WizardPage<I,T> extends Composite
    public ImageResource getLargeImage()
    {
       return largeImage_;
+   }
+   
+   public ArrayList<WizardPage<I,T>> getSubPages()
+   {
+      return null;
+   }
+   
+   public void setIntermediateResult(T result)
+   {
+   }
+   
+   public void onActivate()
+   {
+   }
+   
+   public void onWizardClosing()
+   {
    }
    
    abstract protected Widget createWidget();

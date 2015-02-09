@@ -14,8 +14,27 @@
  */
 package org.rstudio.studio.client.rsconnect.model;
 
+import org.rstudio.studio.client.common.GlobalDisplay;
+
 public class NewRSConnectAccountInput
 {
-   // This class is a stand-in type for input to the New Account wizard for
-   // publishing content.
+   public NewRSConnectAccountInput(RSConnectServerOperations server,
+         GlobalDisplay display)
+   {
+      server_ = server;
+      display_ = display;
+   }
+   
+   public RSConnectServerOperations getServer()
+   {
+      return server_;
+   }
+   
+   public GlobalDisplay getDisplay()
+   {
+      return display_;
+   }
+   
+   private final RSConnectServerOperations server_;
+   private final GlobalDisplay display_;
 }
