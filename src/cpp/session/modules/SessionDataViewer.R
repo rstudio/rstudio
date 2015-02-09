@@ -40,6 +40,15 @@
 {
   colNames <- names(x)
 
+  # get the variable labels, if any--labels may be provided either by this 
+  # global attribute or by a 'label' attribute on an individual column (as in
+  # e.g. Hmisc), which takes precedence if both are present
+  colLabels <- attr(x, "variable.labels", exact = TRUE)
+  if (!is.character(colLabels)) 
+  {
+    colLabels <- character()
+  }
+
   # truncate to maximum displayed number of columns
   colNames <- colNames[1:min(length(colNames), maxCols)]
 
@@ -54,6 +63,16 @@
     col_max <- 0
     col_vals <- ""
     col_search_type <- ""
+
+    # extract label, if any, or use global label, if any
+    label <- attr(x[[idx]], "label", exact = TRUE)
+    if (is.character(label))
+      col_label <- label
+    else if (idx <= length(colLabels))
+      col_label <- colLabels[[idx]]
+    else 
+      col_label <- ""
+
     # ensure that the column contains some scalar values we can examine 
     # (treat vector-valued columns as of unknown type) 
     if (length(x[[idx]]) > 0 && length(x[[idx]][1]) == 1)
@@ -104,6 +123,7 @@
       col_min         = .rs.scalar(col_min),
       col_max         = .rs.scalar(col_max),
       col_search_type = .rs.scalar(col_search_type),
+      col_label       = .rs.scalar(col_label),
       col_vals        = col_vals
     )
   })
@@ -113,6 +133,7 @@
       col_min         = .rs.scalar(0),
       col_max         = .rs.scalar(0),
       col_search_type = .rs.scalar("none"),
+      col_label       = .rs.scalar(""),
       col_vals        = ""
     )), colAttrs)
 })
