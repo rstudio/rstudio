@@ -178,6 +178,7 @@ context("Linter")
       EXPECT_NO_LINT("a +\nb");
       EXPECT_NO_LINT("a()$'b'");
       EXPECT_LINT("a$1");
+      EXPECT_LINT("- a");
    }
    
  // lintRStudioRFiles();
