@@ -116,19 +116,11 @@ Error getAllAvailableRSymbols(const FilePath& filePath,
    if (error)
       return error;
 
-   // TODO: Think a little more about how to handle cross-file symbol
-   // resolution, especially for packages.
+   // If this is an R package project, get the symbols for all functions
+   // etc. in the project.
    if (filePath.isWithin(projects::projectContext().directory()))
    {
-      using namespace session::modules::code_search;
-      BOOST_FOREACH(const boost::shared_ptr<RSourceIndex>& pIndex,
-                    rSourceIndex().indexMap() | boost::adaptors::map_values)
-      {
-         BOOST_FOREACH(const RSourceItem& item, pIndex->items())
-         {
-            pSymbols->insert(item.name());
-         }
-      }
+      code_search::addAllProjectSymbols(pSymbols);
    }
    return Success();
 }

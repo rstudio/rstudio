@@ -874,6 +874,10 @@ private:
       return false;
 
    }
+   
+public:
+   
+   boost::shared_ptr<EntryTree> entries() const { return pEntries_; }
 
 private:
    // index entries
@@ -2413,6 +2417,20 @@ Error initialize()
    return initBlock.execute();
 }
 
+void addAllProjectSymbols(std::set<std::string>* pSymbols)
+{
+   BOOST_FOREACH(const Entry& entry, *s_projectIndex.entries())
+   {
+      if (!entry.hasIndex())
+         continue;
+      
+      const std::vector<r_util::RSourceItem>& items = entry.pIndex->items();
+      BOOST_FOREACH(const r_util::RSourceItem& item, items)
+      {
+         pSymbols->insert(item.name());
+      }
+   }
+}
 
 } // namespace code_search
 } // namespace modules

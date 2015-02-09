@@ -89,6 +89,8 @@ void searchSource(const std::string& term,
                   std::vector<core::r_util::RSourceItem>* pItems,
                   bool* pMoreAvailable);
 
+void addAllProjectSymbols(std::set<std::string>* pSymbols);
+
 core::Error initialize();
    
 } // namespace code_search
