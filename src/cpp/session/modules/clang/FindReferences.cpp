@@ -17,6 +17,7 @@
 
 #include <boost/foreach.hpp>
 
+#include <boost/algorithm/string/predicate.hpp>
 #include <boost/algorithm/string/split.hpp>
 
 #include <core/FileSerializer.hpp>
@@ -51,6 +52,28 @@ struct FindReferencesData
    std::vector<FileRange> references;
 };
 
+// if the USR's differ only by an ending # consider them equal
+// we do this because references to function declarations seem to
+// accue an extra # within their USRs
+bool equalUSR(const std::string& USR1, const std::string& USR2)
+{
+   using namespace boost::algorithm;
+   bool endHashUSR1 = ends_with(USR1, "#");
+   bool endHashUSR2 = ends_with(USR2, "#");
+   if ((endHashUSR1 && endHashUSR2) || (!endHashUSR1 && !endHashUSR2))
+   {
+      return USR1 == USR2;
+   }
+   else if (endHashUSR1)
+   {
+      return USR1.substr(0, USR1.length() - 1) == USR2;
+   }
+   else
+   {
+      return USR2.substr(0, USR2.length() - 1) == USR1;
+   }
+}
+
 CXChildVisitResult findReferencesVisitor(CXCursor cxCursor,
                                          CXCursor,
                                          CXClientData data)
@@ -75,7 +98,7 @@ CXChildVisitResult findReferencesVisitor(CXCursor cxCursor,
    if (referencedCursor.isValid() && referencedCursor.isDeclaration())
    {
       // check for matching USR
-      if (referencedCursor.getUSR() == pData->USR)
+      if (equalUSR(referencedCursor.getUSR(), pData->USR))
       {
          // tokenize to extract identifer location for cursors that
          // represent larger source constructs
@@ -106,7 +129,13 @@ CXChildVisitResult findReferencesVisitor(CXCursor cxCursor,
             if (token.kind() == CXToken_Identifier &&
                 token.spelling() == cursor.spelling())
             {
+               // record spelling if necessary
+               if (pData->spelling.empty())
+                  pData->spelling = cursor.spelling();
+
+               // record the range
                foundRange = token.extent().getFileRange();
+
                break;
             }
          }
@@ -123,10 +152,6 @@ CXChildVisitResult findReferencesVisitor(CXCursor cxCursor,
              (pData->references.back() != foundRange))
          {
             pData->references.push_back(foundRange);
-
-            // record spelling if necessary
-            if (pData->spelling.empty())
-               pData->spelling = referencedCursor.spelling();
          }
       }
    }
@@ -278,7 +303,8 @@ void findReferences(std::string USR,
                (CXClientData)&findReferencesData);
 
    // copy the locations to the out parameter
-   *pSpelling = findReferencesData.spelling;
+   if (!findReferencesData.spelling.empty())
+      *pSpelling = findReferencesData.spelling;
    std::copy(findReferencesData.references.begin(),
              findReferencesData.references.end(),
              std::back_inserter(*pRefs));
@@ -332,7 +358,8 @@ core::Error findReferences(const core::libclang::FileLocation& location,
             // get the compilation arguments for this file and use them to
             // create a temporary translation unit to search
             std::vector<std::string> compileArgs =
-               rCompilationDatabase().compileArgsForTranslationUnit(filename);
+               rCompilationDatabase().compileArgsForTranslationUnit(filename,
+                                                                    true);
 
             if (compileArgs.empty())
                continue;

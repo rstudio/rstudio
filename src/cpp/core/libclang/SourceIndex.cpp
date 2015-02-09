@@ -146,7 +146,7 @@ TranslationUnit SourceIndex::getTranslationUnit(const std::string& filename,
    std::vector<std::string> args;
    if (compilationDB_.compileArgsForTranslationUnit)
    {
-      args = compilationDB_.compileArgsForTranslationUnit(filename);
+      args = compilationDB_.compileArgsForTranslationUnit(filename, true);
       if (args.empty())
          return TranslationUnit();
    }
