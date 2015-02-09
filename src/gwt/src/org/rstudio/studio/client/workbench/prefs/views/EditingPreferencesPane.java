@@ -119,11 +119,16 @@ public class EditingPreferencesPane extends PreferencesPane
       completionPanel.add(checkboxPref("Insert spaces around equals for argument completions", prefs.insertSpacesAroundEquals()));
       completionPanel.add(checkboxPref("Use tab for multiline autocompletions", prefs.allowTabMultilineCompletion()));
       
+      VerticalPanel diagnosticsPanel = new VerticalPanel();
+      diagnosticsPanel.add(checkboxPref("Show inline diagnostics for R and C/C++ code", prefs.showDiagnostics()));
+      
+      
       DialogTabLayoutPanel tabPanel = new DialogTabLayoutPanel();
       tabPanel.setSize("435px", "498px");     
       tabPanel.add(editingPanel, "Editing");
       tabPanel.add(displayPanel, "Display");
       tabPanel.add(completionPanel, "Completion");
+      tabPanel.add(diagnosticsPanel, "Diagnostics");
       tabPanel.selectTab(0);
       add(tabPanel);
    }

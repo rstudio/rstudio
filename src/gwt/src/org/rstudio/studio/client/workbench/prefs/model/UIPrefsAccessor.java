@@ -141,6 +141,11 @@ public class UIPrefsAccessor extends Prefs
       return bool("show_signature_tooltips", true);
    }
    
+   public PrefValue<Boolean> showDiagnostics()
+   {
+      return bool("show_diagnostics", true);
+   }
+   
    public PrefValue<Boolean> autoAppendNewline()
    {
       return bool("auto_append_newline", false);
