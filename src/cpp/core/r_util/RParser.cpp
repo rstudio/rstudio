@@ -356,16 +356,6 @@ START:
          if (startedWithUnaryOperator)
             GOTO_INVALID_TOKEN(cursor);
          
-         // Commas can end statements in argument lists, e.g.
-         //
-         //    c(function() a,)
-         //
-         // If we encounter a comma and we're in a control flow
-         // statement, pop that state and then confirm that we
-         // are in an argument list.
-         if (status.isInControlFlowStatement())
-            status.popState();
-         
          // Commas can close statements, when within argument lists.
          switch (status.currentState())
          {
@@ -542,8 +532,6 @@ START:
             GOTO_INVALID_TOKEN(cursor);
          }
          
-         // If we're in a control flow statement, newlines following
-         // will end that statement.
          if ((status.isInControlFlowStatement() ||
               status.currentState() == ParseStatus::ParseStateTopLevel) &&
              cursor.nextToken().contentContains(L'\n'))
@@ -569,8 +557,9 @@ START:
          }
          
          // Statement implicitly ended by closing bracket following.
-         if (status.isInControlFlowStatement() &&
-             isRightBracket(cursor))
+         if (status.isInControlFlowStatement() && (
+             isRightBracket(cursor) ||
+             isComma(cursor)))
          {
             status.popState();
          }

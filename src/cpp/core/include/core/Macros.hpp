@@ -81,8 +81,6 @@
 template <typename T>
 bool return_true(const T& object) { return true; }
 
-// Some insanity to ensure the __LINE__ macro is expanded
-
 #define TIMER(x)                                                               \
    ::boost::timer::cpu_timer x;                                                \
    x.start();
@@ -92,6 +90,8 @@ bool return_true(const T& object) { return true; }
    std::cout << ::boost::timer::format(timer.elapsed(), 3);                    \
    timer.stop(); \
    timer = ::boost::timer::cpu_timer();
+
+// Some insanity to ensure the __LINE__ macro is expanded
 
 # define RSTUDIO_PROFILE(x) RSTUDIO_PROFILE_1(x, __LINE__)
 # define RSTUDIO_PROFILE_1(x, l) RSTUDIO_PROFILE_2(x, l)
