@@ -104,7 +104,7 @@ public class AceEditorWidget extends Composite
                      @Override
                      public void execute()
                      {
-                        editor_.getRenderer().forceImmediateRender();
+                        editor_.getRenderer().renderMarkers();
                      }
                   });
                }

@@ -118,6 +118,10 @@ public class Renderer extends JavaScriptObject
    public native final void forceImmediateRender() /*-{
       this.$renderChanges(this.CHANGE_FULL);
    }-*/;
+   
+   public native final void renderMarkers() /*-{
+      this.$renderChanges(this.CHANGE_MARKER);
+   }-*/;
 
    public native final void fixVerticalOffsetBug() /*-{
       this.scroller.scrollTop = 0;
