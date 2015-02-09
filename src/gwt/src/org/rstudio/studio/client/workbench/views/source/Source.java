@@ -2179,9 +2179,11 @@ public class Source implements InsertSourceHandler,
    public void onTabReorder(TabReorderEvent event)
    {
       syncTabOrder();
-
-      // sanity check: make sure we're moving from a valid location
-      if (event.getOldPos() < 0 || event.getOldPos() >= tabOrder_.size())
+      
+      // sanity check: make sure we're moving from a valid location and to a
+      // valid location
+      if (event.getOldPos() < 0 || event.getOldPos() >= tabOrder_.size() ||
+          event.getNewPos() < 0 || event.getNewPos() >= tabOrder_.size())
       {
          return;
       }
@@ -2190,10 +2192,8 @@ public class Source implements InsertSourceHandler,
       int idx = tabOrder_.get(event.getOldPos());
       tabOrder_.remove(new Integer(idx));  // force type box 
 
-      // add it to its new position (less one if that position was shifted left
-      // by removal above)
-      tabOrder_.add(event.getNewPos() - 
-            (event.getOldPos() < event.getNewPos() ? 1 : 0), idx);
+      // add it to its new position 
+      tabOrder_.add(event.getNewPos(), idx);
       
       // sort the document IDs and send to the server
       ArrayList<String> ids = new ArrayList<String>();
