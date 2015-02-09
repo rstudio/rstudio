@@ -36,7 +36,6 @@
 #include <boost/foreach.hpp>
 #include <boost/algorithm/string.hpp>
 
-// #define RSTUDIO_ENABLE_DEBUG_MACROS
 #include <core/Macros.hpp>
 
 namespace rstudio {
@@ -713,10 +712,14 @@ public:
 
    void pushState(ParseState state)
    {
+      DEBUG("Pushing state: " << stateAsString(state));
       if (state == ParseStateFunctionArgumentList)
+      {
+         DEBUG("*** Entering function scope");
          addChildAndSetAsCurrentNode(
                   ParseNode::createNode("function"),
                   getCachedPosition());
+      }
          
       parseStateStack_.push(state);
    }
@@ -726,9 +729,11 @@ public:
       if (currentState() == ParseStateFunctionExpression ||
           currentState() == ParseStateFunctionStatement)
       {
+         DEBUG("*** Exitting function scope");
          setParentAsCurrent();
       }
       
+      DEBUG("Popping state: " << stateAsString(currentState()));
       if (currentState() != ParseStateTopLevel)
          parseStateStack_.pop();
    }
@@ -742,12 +747,12 @@ public:
    
    ParseState currentState() const { return parseStateStack_.peek(); }
    
-   std::string currentStateAsString() const
+   std::string stateAsString(ParseState state) const
    {
 #define CASE(__X__) \
    case __X__: return #__X__
       
-      switch (currentState())
+      switch (state)
       {
       CASE(ParseStateTopLevel);
       CASE(ParseStateWithinParens);
@@ -773,6 +778,8 @@ public:
       }
 #undef CASE
    }
+   
+   std::string currentStateAsString() const { return stateAsString(currentState()); }
    
    bool isAtTopLevel()
    {

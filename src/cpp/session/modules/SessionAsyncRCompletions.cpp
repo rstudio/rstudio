@@ -29,20 +29,7 @@
 
 #include <session/SessionModuleContext.hpp>
 
-#define SESSION_ASYNC_R_DEBUG_LEVEL 0
-
-#if SESSION_ASYNC_R_DEBUG_LEVEL > 0
-
-# define DEBUG(x) \
-   std::cerr << x << std::endl;
-# define GENERIC_DEBUG(x) x
-
-#else
-
-# define DEBUG(x)
-# define GENERIC_DEBUG(x)
-
-#endif
+#include <core/Macros.hpp>
 
 namespace rstudio {
 namespace session {
@@ -182,7 +169,8 @@ void AsyncRCompletions::update()
    // alias for readability
    const std::vector<std::string>& pkgs = s_pkgsToUpdate_;
    
-   GENERIC_DEBUG(
+   DEBUG_BLOCK
+   {
       if (!pkgs.empty())
       {
          std::cerr << "Updating packages: [";
@@ -197,7 +185,7 @@ void AsyncRCompletions::update()
       {
          std::cerr << "No packages to update; bailing out" << std::endl;
       }
-   );
+   }
    
    if (pkgs.empty())
    {

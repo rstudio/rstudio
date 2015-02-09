@@ -263,7 +263,10 @@ ParseResults parse(const std::wstring& rCode,
    REPORT(timer, "Parse");
    
    if (status.node()->getParent() != NULL)
+   {
+      DEBUG("** Parent is not null (not at top level): failed to close all scopes?");
       status.lint().unexpectedEndOfDocument(cursor.currentToken());
+   }
    
    return ParseResults(status.root(), status.lint());
 }
@@ -341,11 +344,6 @@ void doParse(TokenCursor& cursor,
       
 START:
       
-      DEBUG("Start: " << cursor);
-      
-      if (cursor.isAtEndOfDocument())
-         return;
-      
       // Move over unary operators -- any sequence is valid,
       // but certain tokens are not accepted following
       // unary operators.
@@ -412,6 +410,7 @@ START:
       //    3. Parens wrapping statement
       if (canCloseArgumentList(cursor))
       {
+         DEBUG("** canCloseArgumentList: " << cursor);
          DEBUG("State: " << status.currentStateAsString());
          
          if (startedWithUnaryOperator)
@@ -432,7 +431,10 @@ START:
          case ParseStatus::ParseStateWhileCondition:
             goto WHILE_CONDITION_END;
          case ParseStatus::ParseStateWithinParens:
+            DEBUG("Within parens");
             status.popState();
+            while (status.isInControlFlowStatement()) status.popState();
+            if (cursor.isAtEndOfDocument()) return;
             MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
             if (isBinaryOp(cursor))
                goto BINARY_OPERATOR;
@@ -444,7 +446,11 @@ START:
          }
       }
       
-      // Right brace. Closes an expression.
+      // Right brace. Closes an expression and parent statements, as in
+      // e.g.
+      //
+      //    if (foo) { while (1) 1 }
+      //
       if (cursor.isType(RToken::RBRACE))
       {
          if (startedWithUnaryOperator)
@@ -454,10 +460,6 @@ START:
             status.lint().unexpectedToken(cursor, L")");
          
          // Check for 'else' following for 'if' expressions.
-         DEBUG("Current state: " << status.currentStateAsString());
-         DEBUG("Current token: " << cursor);
-         DEBUG("Next token: " << cursor.nextSignificantToken());
-         
          if (status.currentState() == ParseStatus::ParseStateIfExpression &&
              cursor.nextSignificantToken().contentEquals(L"else"))
          {
@@ -467,8 +469,11 @@ START:
             goto START;
          }
          
-         DEBUG("Status: " << status.currentStateAsString());
+         // Close an explicit expression, and any parent
+         // control flow statements.
          status.popState();
+         while (status.isInControlFlowStatement()) status.popState();
+         if (cursor.isAtEndOfDocument()) return;
          
          MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
          if (isBinaryOp(cursor) &&
@@ -534,7 +539,11 @@ START:
       {
          DEBUG("-- Identifier -- " << cursor);
          if (cursor.isAtEndOfDocument())
-            break;
+         {
+            while (status.isInControlFlowStatement())
+               status.popState();
+            return;
+         }
          
          if (cursor.isType(RToken::ID))
          {
@@ -572,10 +581,12 @@ START:
          // they are significant in this context.
          if ((status.isInControlFlowStatement() ||
               status.currentState() == ParseStatus::ParseStateTopLevel) &&
-             cursor.nextToken().contentContains(L'\n'))
+             (cursor.nextToken().contentContains(L'\n') ||
+              cursor.isAtEndOfDocument()))
          {
             while (status.isInControlFlowStatement())
                status.popState();
+            if (cursor.isAtEndOfDocument()) return;
             MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
             goto START;
          }
@@ -694,6 +705,9 @@ ARGUMENT_LIST_END:
          }
       }
       
+      while (status.isInControlFlowStatement())
+         status.popState();
+      
       // Following the end of an argument list, we may see:
       //
       // 1. The end of the document / expression,
@@ -710,9 +724,7 @@ ARGUMENT_LIST_END:
       // In the first case, this is identical to `foo(1)(2)`; in
       // the second, it's `foo(1); (2)`.
       if (cursor.isAtEndOfDocument())
-      {
          return;
-      }
       
       // Newlines end function calls at the top level.
       else if (status.isAtTopLevel() &&
@@ -744,6 +756,7 @@ FUNCTION_START:
       
 FUNCTION_ARGUMENT_START:
       
+      DEBUG("** Function argument start");
       if (cursor.isType(RToken::ID) &&
           cursor.nextSignificantToken().contentEquals(L"="))
       {

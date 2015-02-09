@@ -20,15 +20,7 @@
 #include <core/StringUtils.hpp>
 
 #include <core/r_util/RTokenizer.hpp>
-
-#define R_SOURCE_INDEX_DEBUG_LEVEL 0
-
-#if R_SOURCE_INDEX_DEBUG_LEVEL > 0
-#define DEBUG(x) \
-   std::cerr << x << std::endl;
-#else
-#define DEBUG(x)
-#endif
+#include <core/Macros.hpp>
 
 namespace rstudio {
 namespace core {

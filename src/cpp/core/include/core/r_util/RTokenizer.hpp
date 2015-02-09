@@ -29,6 +29,8 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/regex_fwd.hpp>
 
+#include <core/Macros.hpp>
+
 // On Linux confirm that wchar_t is Unicode
 #if !defined(_WIN32) && !defined(__APPLE__) && !defined(__STDC_ISO_10646__)
    #error "wchar_t is not Unicode"
@@ -81,10 +83,14 @@ public:
    };
 
 public:
+   
    RToken()
       : offset_(-1)
-   {
-   }
+   {}
+   
+   explicit RToken(TokenType type)
+      : type_(RToken::ERR), offset_(-1)
+   {}
 
    RToken(TokenType type,
           std::wstring::const_iterator begin,
@@ -242,9 +248,11 @@ public:
    void push_back(const RToken& rToken) { tokens_.push_back(rToken); }
    std::size_t size() const { return tokens_.size(); }
    
+   // Safe 'at' method that returns a dummy token if
+   // an out of bounds offset is specified.
    const RToken& at(std::size_t offset) const
    {
-      if (offset >= tokens_.size())
+      if (UNLIKELY(offset >= tokens_.size()))
          return dummyToken_;
       return tokens_[offset];
    }
@@ -256,7 +264,8 @@ public:
    const_iterator end() const { return tokens_.end(); }
    
    RTokens()
-      : tokenizer_(L"")
+      : tokenizer_(L""),
+        dummyToken_(RToken::ERR)
    {}
    
    explicit RTokens(const std::wstring& code, int flags = None)

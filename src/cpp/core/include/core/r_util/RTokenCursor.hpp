@@ -43,8 +43,7 @@ private:
                std::size_t n)
       : rTokens_(rTokens),
         offset_(offset),
-        n_(n),
-        dummyToken_()
+        n_(n)
    {}
    
 public:
@@ -251,7 +250,16 @@ public:
    // more significant tokens following.
    bool isAtEndOfDocument()
    {
-      return !clone().moveToNextSignificantToken();
+      if (offset_ == n_ - 1)
+         return true;
+      
+      TokenCursor cursor = clone();
+      ++cursor.offset_;
+      cursor.fwdOverWhitespaceAndComments();
+      if (cursor.offset_ == n_ - 1)
+         return true;
+      
+      return false;
    }
    
    bool finishesExpression()
@@ -400,7 +408,6 @@ private:
    const RTokens& rTokens_;
    std::size_t offset_;
    std::size_t n_;
-   RToken dummyToken_;
 };
 
 } // namespace token_utils
