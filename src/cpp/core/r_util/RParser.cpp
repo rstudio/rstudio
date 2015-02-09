@@ -334,6 +334,10 @@ void doParse(TokenCursor& cursor,
              ParseStatus& status)
 {
    DEBUG("Beginning parse...");
+   // Return early if the document is empty (only whitespace or comments)
+   if (cursor.isAtEndOfDocument())
+      return;
+   
    cursor.fwdOverWhitespaceAndComments();
    bool startedWithUnaryOperator = false;
    
