@@ -134,17 +134,17 @@ public class CppCompletionSignatureTip extends CppCompletionToolTip
                   
                }
                
-               // do we have enough vertical space? if not then show at bottom
-               int top = cursorBounds_.getTop() - offsetHeight - V_PAD;
-               int spaceTop = top - offsetHeight - MARGIN;
-               if (spaceTop < 0)
+               // do we have enough vertical space? if not then show at top
+               int top = cursorBounds_.getTop() + 
+                         cursorBounds_.getHeight() + 
+                         (V_PAD);
+               
+               int bottom = top + offsetHeight + MARGIN;
+               if (bottom > Window.getClientHeight())
                {
-                  top = cursorBounds_.getTop() + 
-                        cursorBounds_.getHeight() 
-                        + (V_PAD * 2);
+                  top = cursorBounds_.getTop() - offsetHeight - (V_PAD * 2);
                }
-               
-               
+                  
                setPopupPosition(left_, top); 
             }
          }); 
