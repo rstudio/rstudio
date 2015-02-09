@@ -14,7 +14,6 @@
  */
 package org.rstudio.studio.client.workbench.prefs.model;
 
-import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.application.Desktop;
@@ -93,6 +92,11 @@ public class UIPrefsAccessor extends Prefs
       return bool("show_indent_guides", false);
    }
    
+   public PrefValue<Boolean> continueCommentsOnNewline()
+   {
+      return bool("continue_comments_on_newline", false);
+   }
+   
    public PrefValue<Boolean> useVimMode()
    {
       return bool("use_vim_mode", false);
@@ -101,6 +105,40 @@ public class UIPrefsAccessor extends Prefs
    public PrefValue<Boolean> insertMatching()
    {
       return bool("insert_matching", true);
+   }
+   
+   public static final String COMPLETION_ALWAYS = "always";
+   public static final String COMPLETION_WHEN_TRIGGERED = "triggered";
+   public static final String COMPLETION_MANUAL = "manual";
+   
+   public PrefValue<Boolean> allowTabMultilineCompletion()
+   {
+      return bool("tab_multiline_completion", false);
+   }
+ 
+   public PrefValue<String> codeComplete()
+   {
+      return string("code_complete", COMPLETION_ALWAYS);
+   }
+   
+   public PrefValue<Boolean> alwaysCompleteInConsole()
+   {
+      return bool("always_complete_console", true);
+   }
+   
+   public PrefValue<Boolean> insertParensAfterFunctionCompletion()
+   {
+      return bool("insert_parens_after_function_completion", true);
+   }
+   
+   public PrefValue<Boolean> insertSpacesAroundEquals()
+   {
+      return bool("insert_spaces_around_equals", true);
+   }
+   
+   public PrefValue<Boolean> showSignatureTooltips()
+   {
+      return bool("show_signature_tooltips", true);
    }
    
    public PrefValue<Boolean> autoAppendNewline()
@@ -251,35 +289,9 @@ public class UIPrefsAccessor extends Prefs
    public static final String PDF_PREVIEW_DESKTOP_SYNCTEX = "desktop-synctex";
    public static final String PDF_PREVIEW_SYSTEM = "system";
    
-   public static boolean internalPdfPreviewSupported()
-   {
-      // PDF.js doesn't play nicely with Qt and is therefore only supported
-      // on Cocoa desktop or in server mode
-      return BrowseCap.isCocoaDesktop() || !Desktop.isDesktop();
-   }
-
    public PrefValue<String> pdfPreview()
    {
       return string("pdf_previewer", getDefaultPdfPreview());
-   }
-   
-   // provide a straight value accessor for pdfPreview which will
-   // automatically prevent the use of the internal viewer on osx
-   public String getPdfPreviewValue()
-   {
-      // get the underlying value
-      String pdfPreview = pdfPreview().getValue();
-      
-      // if this system doesn't support the internal previewer, silently map
-      // that option to the system previewer
-      if (!internalPdfPreviewSupported() && 
-          pdfPreview.equals(PDF_PREVIEW_RSTUDIO))
-      {
-         pdfPreview = PDF_PREVIEW_SYSTEM;
-      }
-      
-      // return the (potentially) adjusted value
-      return pdfPreview;
    }
    
    public PrefValue<Boolean> alwaysEnableRnwConcordance()
@@ -372,6 +384,16 @@ public class UIPrefsAccessor extends Prefs
    {
       return integer("rmd_viewer_type", RmdOutput.RMD_VIEWER_TYPE_WINDOW);
    }
+   
+   public PrefValue<Boolean> showPublishUi()
+   {
+      return bool("show_publish_ui", true);
+   }
+
+   public PrefValue<Boolean> enableRStudioConnect()
+   {
+      return bool("enable_rstudio_connect", false);
+   }
 
    private String getDefaultPdfPreview()
    {
@@ -383,18 +405,10 @@ public class UIPrefsAccessor extends Prefs
             return PDF_PREVIEW_DESKTOP_SYNCTEX;
          }
          
-         // otherwise default to the system viewer on linux and the internal 
-         // viewer on mac (windows will always have a desktop synctex viewer)
+         // otherwise default to the internal viewer
          else
          {
-            if (BrowseCap.isLinux())
-            {
-               return PDF_PREVIEW_SYSTEM;
-            }
-            else
-            {
-               return PDF_PREVIEW_RSTUDIO;
-            }
+            return PDF_PREVIEW_RSTUDIO;
          }
       }
       

@@ -21,6 +21,7 @@
 
 #include <core/system/Environment.hpp>
 
+namespace rstudio {
 namespace core {
 namespace system {
      
@@ -90,4 +91,5 @@ std::string generateShortenedUuid()
 
 } // namespace system
 } // namespace core
+} // namespace rstudio
 

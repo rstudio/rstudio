@@ -34,6 +34,7 @@
 #define kRStudioInitialEnvironment     "RS_INITIAL_ENV"
 #define kRStudioInitialProject         "RS_INITIAL_PROJECT"
 
+namespace rstudio {
 namespace core {
 namespace r_util {
 
@@ -70,6 +71,7 @@ RVersionInfo nextSessionRVersion(SessionType sessionType,
 
 } // namespace r_util
 } // namespace core 
+} // namespace rstudio
 
 
 #endif // CORE_R_UTIL_R_SESSION_CONTEXT_HPP

@@ -50,8 +50,9 @@
 
 #define kShinyContentWarning "Warning: Shiny application in a static R Markdown document"
 
-using namespace core;
+using namespace rstudio::core;
 
+namespace rstudio {
 namespace session {
 namespace modules {
 namespace rmarkdown {
@@ -174,7 +175,7 @@ private:
       }
 
       std::string extraParams;
-      std::string targetFile(targetFile_.filename());
+      std::string targetFile = targetFile_.absolutePath();
 
       std::string renderOptions("encoding = '" + encoding + "'");
 
@@ -207,13 +208,26 @@ private:
                         "auto_reload = FALSE, ";
          extraParams += "dir = '" + targetFile_.parent().absolutePath() + "', ";
 
+         std::string rsIFramePath("rsiframe.js");
+
+#ifndef __APPLE__
+         // on Qt platforms, rsiframe.js needs to have its origin specified
+         // explicitly; Qt 5.4 disables document.referrer
+         if (session::options().programMode() == kSessionProgramModeDesktop)
+         {
+             rsIFramePath += "?origin=" +
+                     session::options().wwwAddress() + ":" +
+                     session::options().wwwPort();
+         }
+#endif
+
          std::string extraDependencies("htmltools::htmlDependency("
                      "name = 'rstudio-iframe', "
                      "version = '0.1', "
                      "src = '" +
                          session::options().rResourcesPath().absolutePath() +
                      "', "
-                     "script = 'rsiframe.js')");
+                     "script = '" + rsIFramePath + "')");
 
          std::string outputOptions("extra_dependencies = list(" + 
                extraDependencies + ")");
@@ -359,6 +373,8 @@ private:
 
    void terminate(bool succeeded)
    {
+      using namespace module_context;
+
       markCompleted();
 
       // if a quiet terminate was requested, don't queue any client events
@@ -367,14 +383,13 @@ private:
 
       json::Object resultJson;
       resultJson["succeeded"] = succeeded;
-      resultJson["target_file"] =
-            module_context::createAliasedPath(targetFile_);
+      resultJson["target_file"] = createAliasedPath(targetFile_);
       resultJson["target_encoding"] = encoding_;
       resultJson["target_line"] = sourceLine_;
 
-      std::string outputFile = module_context::createAliasedPath(outputFile_);
+      std::string outputFile = createAliasedPath(outputFile_);
       resultJson["output_file"] = outputFile;
-      resultJson["knitr_errors"] = build::compileErrorsAsJson(knitrErrors_);
+      resultJson["knitr_errors"] = sourceMarkersAsJson(knitrErrors_);
 
       std::string outputUrl(kRmdOutput "/");
 
@@ -491,12 +506,12 @@ private:
          {
             // looks like a knitr error; compose a compile error object and
             // emit it to the client when the render is complete
-            build::CompileError err(
-                     build::CompileError::Error,
+            SourceMarker err(
+                     SourceMarker::Error,
                      targetFile_.parent().complete(matches[3].str()),
                      boost::lexical_cast<int>(matches[1].str()),
                      1,
-                     matches[4].str(),
+                     core::html_utils::HTML(matches[4].str()),
                      true);
             knitrErrors_.push_back(err);
          }
@@ -516,7 +531,7 @@ private:
    std::string encoding_;
    bool sourceNavigation_;
    json::Object outputFormat_;
-   std::vector<build::CompileError> knitrErrors_;
+   std::vector<module_context::SourceMarker> knitrErrors_;
    std::string allOutput_;
 };
 
@@ -656,14 +671,14 @@ private:
       {
          // we found the start of the MathJax section; add the MathJax config
          // block if we're in a configuration that requires it
-#ifdef __APPLE__
-         return match[0];
-#else
+#if defined(_WIN32)
          if (session::options().programMode() != kSessionProgramModeDesktop)
             return match[0];
 
          result.append(kQtMathJaxConfigScript "\n");
          result.append(match[0]);
+#else
+         return match[0];
 #endif
       }
       else if (hasMathjax_)
@@ -1038,4 +1053,5 @@ Error initialize()
 } // namespace rmarkdown
 } // namespace modules
 } // namespace session
+} // namespace rstudio
 

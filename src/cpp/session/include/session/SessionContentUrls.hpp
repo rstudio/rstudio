@@ -18,11 +18,14 @@
 
 #include <string>
 
+namespace rstudio {
 namespace core {
    class Error;
    class FilePath;
 }
+}
  
+namespace rstudio {
 namespace session {    
 namespace content_urls {
 
@@ -36,5 +39,6 @@ core::Error initialize();
    
 } // namespace content_urls
 } // namesapce session
+} // namespace rstudio
 
 #endif // SESSION_SESSION_CONTENT_URLS_HPP

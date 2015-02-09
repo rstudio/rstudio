@@ -14,9 +14,6 @@
  */
 package org.rstudio.core.client.widget;
 
-import org.rstudio.core.client.BrowseCap;
-import org.rstudio.studio.client.application.Desktop;
-
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Frame;
@@ -45,13 +42,7 @@ public class ImageFrame extends Frame
             }
             else
             {
-               // under Qt 4.8 on the Mac if we set the width and height of
-               // the image in the iframe to 100% then the cpu gets pegged for 
-               // ~3 seconds every time we replace the image url
                String sizing = "width=\"100%\" height=\"100%\"";
-               if (Desktop.isDesktop() && BrowseCap.isMacintosh())
-                  sizing = "";
-               
                setupContent(getElement(), sizing);
                replaceLocation(getElement(), url_);
             }

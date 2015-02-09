@@ -16,14 +16,12 @@
 #include <session/SessionConsoleProcess.hpp>
 #include <session/SessionModuleContext.hpp>
 
-#include <core/FilePath.hpp>
 #include <core/system/Environment.hpp>
 #include <core/system/Process.hpp>
 
 #include <session/SessionAsyncRProcess.hpp>
 
-using namespace core;
-
+namespace rstudio {
 namespace session {
 namespace async_r {
 
@@ -35,7 +33,8 @@ AsyncRProcess::AsyncRProcess():
 
 void AsyncRProcess::start(const char* rCommand, 
                           const core::FilePath& workingDir, 
-                          AsyncRProcessOptions rOptions)
+                          AsyncRProcessOptions rOptions,
+                          const std::vector<core::FilePath>& rSourceFiles)
 {
    // R binary
    core::FilePath rProgramPath;
@@ -47,27 +46,66 @@ void AsyncRProcess::start(const char* rCommand,
       return;
    }
 
-   // program path and args
-   core::FilePath programPath;
-   std::vector<std::string> args;
-
-   // call R through a login shell on OSX so that it can pickup
-   // the /etc/paths variables which are stripped by OSX Yosemite
-#ifdef __APPLE__
-   programPath = FilePath("/bin/bash");
-   args.push_back("--login");
-   args.push_back(rProgramPath.absolutePath());
-   // call R directly on other platforms
-#else
-   programPath = rProgramPath;
-#endif
-
    // args
+   std::vector<std::string> args;
    args.push_back("--slave");
    if (rOptions & R_PROCESS_VANILLA)
       args.push_back("--vanilla");
    args.push_back("-e");
-   args.push_back(rCommand);
+
+   bool needsQuote = false;
+
+   // On Windows, we turn the vector of strings into a single
+   // string to send over the command line, so we must ensure
+   // that the arguments following '-e' are quoted, so that
+   // they are all interpretted as a single argument (rather
+   // than multiple arguments) to '-e'.
+
+#ifdef _WIN32
+   needsQuote = strlen(rCommand) > 0 && rCommand[0] != '"';
+#endif
+
+   std::stringstream command;
+   if (needsQuote)
+      command << "\"";
+
+   if (rSourceFiles.size())
+   {
+      // Use shims for the main RStudio functions
+      command << "options(error = traceback); ";
+
+      command << ".rs.Env <- attach(NULL, name = 'tools:rstudio'); ";
+
+      command << ".rs.addFunction <- function(name, FN, attrs = list()) {"
+              << "   fullName = paste('.rs.', name, sep=''); "
+              << "   for (attrib in names(attrs)) "
+              << "     attr(FN, attrib) <- attrs[[attrib]];"
+              << "   assign(fullName, FN, .rs.Env); "
+              << "   environment(.rs.Env[[fullName]]) <- .rs.Env; "
+              << "};";
+
+      // similarly for .rs.addJsonRpcHandler
+      command << ".rs.addJsonRpcHandler <- function(name, FN) {"
+              << "   .rs.addFunction(paste('rpc.', name, sep = ''), FN, TRUE);"
+              << "};";
+
+      // add in the r source files requested
+      for (std::vector<core::FilePath>::const_iterator it = rSourceFiles.begin();
+           it != rSourceFiles.end();
+           ++it)
+         command << "source('" << it->absolutePath() << "');";
+      
+      command << rCommand;
+   }
+   else
+   {
+      command << rCommand;
+   }
+
+   if (needsQuote)
+      command << "\"";
+
+   args.push_back(command.str());
 
    // options
    core::system::ProcessOptions options;
@@ -106,7 +144,7 @@ void AsyncRProcess::start(const char* rCommand,
                              AsyncRProcess::shared_from_this(),
                              _1);
    error = module_context::processSupervisor().runProgram(
-            programPath.absolutePath(),
+            rProgramPath.absolutePath(),
             args,
             options,
             cb);
@@ -163,4 +201,5 @@ AsyncRProcess::~AsyncRProcess()
 
 } // namespace async_r
 } // namespace session
+} // namespace rstudio
 

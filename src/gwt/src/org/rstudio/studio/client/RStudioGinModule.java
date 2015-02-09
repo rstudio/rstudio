@@ -47,7 +47,6 @@ import org.rstudio.studio.client.common.rnw.RnwWeaveRegistry;
 import org.rstudio.studio.client.common.rpubs.model.RPubsServerOperations;
 import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
-import org.rstudio.studio.client.common.shiny.model.ShinyAppsServerOperations;
 import org.rstudio.studio.client.common.shiny.model.ShinyServerOperations;
 import org.rstudio.studio.client.common.spelling.model.SpellingServerOperations;
 import org.rstudio.studio.client.common.synctex.Synctex;
@@ -58,6 +57,10 @@ import org.rstudio.studio.client.common.vcs.SVNServerOperations;
 import org.rstudio.studio.client.common.vcs.VCSServerOperations;
 import org.rstudio.studio.client.common.vcs.ignore.Ignore;
 import org.rstudio.studio.client.common.vcs.ignore.IgnoreDialog;
+import org.rstudio.studio.client.dataviewer.DataTableView;
+import org.rstudio.studio.client.dataviewer.DataViewerPanel;
+import org.rstudio.studio.client.dataviewer.DataViewerPresenter;
+import org.rstudio.studio.client.dataviewer.DataViewerWindow;
 import org.rstudio.studio.client.htmlpreview.HTMLPreview;
 import org.rstudio.studio.client.htmlpreview.HTMLPreviewPresenter;
 import org.rstudio.studio.client.htmlpreview.model.HTMLPreviewServerOperations;
@@ -74,11 +77,13 @@ import org.rstudio.studio.client.rmarkdown.model.RMarkdownServerOperations;
 import org.rstudio.studio.client.rmarkdown.ui.RmdOutputPanel;
 import org.rstudio.studio.client.rmarkdown.ui.RmdOutputPresenter;
 import org.rstudio.studio.client.rmarkdown.ui.RmdOutputWindow;
+import org.rstudio.studio.client.rsconnect.RSConnect;
+import org.rstudio.studio.client.rsconnect.model.RSConnectServerOperations;
+import org.rstudio.studio.client.rsconnect.ui.RSAccountConnector;
 import org.rstudio.studio.client.server.Server;
 import org.rstudio.studio.client.server.remote.RemoteServer;
 import org.rstudio.studio.client.shiny.ShinyApplication;
 import org.rstudio.studio.client.shiny.ShinyApplicationPresenter;
-import org.rstudio.studio.client.shiny.ShinyApps;
 import org.rstudio.studio.client.shiny.ui.ShinyApplicationPanel;
 import org.rstudio.studio.client.shiny.ui.ShinyApplicationView;
 import org.rstudio.studio.client.shiny.ui.ShinyApplicationWindow;
@@ -109,6 +114,7 @@ import org.rstudio.studio.client.workbench.views.console.ConsolePane;
 import org.rstudio.studio.client.workbench.views.console.model.ConsoleServerOperations;
 import org.rstudio.studio.client.workbench.views.console.shell.Shell;
 import org.rstudio.studio.client.workbench.views.console.shell.ShellPane;
+import org.rstudio.studio.client.workbench.views.console.shell.assist.HelpStrategy;
 import org.rstudio.studio.client.workbench.views.data.Data;
 import org.rstudio.studio.client.workbench.views.data.DataPane;
 import org.rstudio.studio.client.workbench.views.data.DataTab;
@@ -128,8 +134,12 @@ import org.rstudio.studio.client.workbench.views.output.find.FindOutputPane;
 import org.rstudio.studio.client.workbench.views.output.find.FindOutputPresenter;
 import org.rstudio.studio.client.workbench.views.output.find.FindOutputTab;
 import org.rstudio.studio.client.workbench.views.output.find.model.FindInFilesServerOperations;
+import org.rstudio.studio.client.workbench.views.output.markers.MarkersOutputPane;
+import org.rstudio.studio.client.workbench.views.output.markers.MarkersOutputPresenter;
+import org.rstudio.studio.client.workbench.views.output.markers.MarkersOutputTab;
+import org.rstudio.studio.client.workbench.views.output.markers.model.MarkersServerOperations;
 import org.rstudio.studio.client.workbench.views.output.renderrmd.RenderRmdOutputTab;
-import org.rstudio.studio.client.workbench.views.output.shinyappsdeploy.ShinyAppsDeployOutputTab;
+import org.rstudio.studio.client.workbench.views.output.rsconnectdeploy.RSConnectDeployOutputTab;
 import org.rstudio.studio.client.workbench.views.output.sourcecpp.SourceCppOutputPane;
 import org.rstudio.studio.client.workbench.views.output.sourcecpp.SourceCppOutputPresenter;
 import org.rstudio.studio.client.workbench.views.output.sourcecpp.SourceCppOutputTab;
@@ -166,6 +176,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.profiler.Profile
 import org.rstudio.studio.client.workbench.views.source.editors.profiler.model.ProfilerServerOperations;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
+import org.rstudio.studio.client.workbench.views.source.model.CppServerOperations;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
 import org.rstudio.studio.client.workbench.views.source.model.TexServerOperations;
 import org.rstudio.studio.client.workbench.views.vcs.VCSTab;
@@ -221,8 +232,10 @@ public class RStudioGinModule extends AbstractGinModule
       bind(BreakpointManager.class).asEagerSingleton();
       bind(DebugCommander.class).asEagerSingleton();
       bind(ShortcutViewer.class).asEagerSingleton();
-      bind(ShinyApps.class).asEagerSingleton();
+      bind(RSConnect.class).asEagerSingleton();
       bind(RmdOutput.class).in(Singleton.class);
+      bind(HelpStrategy.class).in(Singleton.class);
+      bind(RSAccountConnector.class).in(Singleton.class);
 
       bind(ApplicationView.class).to(ApplicationWindow.class)
             .in(Singleton.class) ;
@@ -234,6 +247,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(HTMLPreviewApplicationView.class).to(HTMLPreviewApplicationWindow.class);
       bind(ShinyApplicationView.class).to(ShinyApplicationWindow.class);
       bind(RmdOutputView.class).to(RmdOutputWindow.class);
+      bind(DataTableView.class).to(DataViewerWindow.class);
       
       bind(Server.class).to(RemoteServer.class) ;
       bind(WorkbenchServerOperations.class).to(RemoteServer.class) ;
@@ -259,6 +273,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(Ignore.Display.class).to(IgnoreDialog.class);
       bind(FindOutputPresenter.Display.class).to(FindOutputPane.class);
       bind(SourceCppOutputPresenter.Display.class).to(SourceCppOutputPane.class);
+      bind(MarkersOutputPresenter.Display.class).to(MarkersOutputPane.class);
       bindTab("History", HistoryTab.class);
       bindTab("Data", DataTab.class);
       bindTab("Files", FilesTab.class);
@@ -274,7 +289,8 @@ public class RStudioGinModule extends AbstractGinModule
       bindTab("R Markdown", RenderRmdOutputTab.class);
       bindTab("Find", FindOutputTab.class);
       bindTab("Source Cpp", SourceCppOutputTab.class);
-      bindTab("Deploy", ShinyAppsDeployOutputTab.class);
+      bindTab("Deploy", RSConnectDeployOutputTab.class);
+      bindTab("Markers", MarkersOutputTab.class);
 
       bind(Shell.Display.class).to(ShellPane.class) ;
            
@@ -290,6 +306,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(HTMLPreviewPresenter.Display.class).to(HTMLPreviewPanel.class);
       bind(ShinyApplicationPresenter.Display.class).to(ShinyApplicationPanel.class);
       bind(RmdOutputPresenter.Display.class).to(RmdOutputPanel.class);
+      bind(DataViewerPresenter.Display.class).to(DataViewerPanel.class);
       
       bind(GlobalDisplay.class)
             .to(DefaultGlobalDisplay.class)
@@ -323,7 +340,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(SynctexServerOperations.class).to(RemoteServer.class);
       bind(HTMLPreviewServerOperations.class).to(RemoteServer.class);
       bind(ShinyServerOperations.class).to(RemoteServer.class);
-      bind(ShinyAppsServerOperations.class).to(RemoteServer.class);
+      bind(RSConnectServerOperations.class).to(RemoteServer.class);
       bind(RPubsServerOperations.class).to(RemoteServer.class);
       bind(BuildServerOperations.class).to(RemoteServer.class);
       bind(PresentationServerOperations.class).to(RemoteServer.class);
@@ -335,6 +352,8 @@ public class RStudioGinModule extends AbstractGinModule
       bind(RMarkdownServerOperations.class).to(RemoteServer.class);
       bind(DependencyServerOperations.class).to(RemoteServer.class);
       bind(PackratServerOperations.class).to(RemoteServer.class);
+      bind(CppServerOperations.class).to(RemoteServer.class);
+      bind(MarkersServerOperations.class).to(RemoteServer.class);
 
       bind(WorkbenchMainView.class).to(WorkbenchScreen.class) ;
 

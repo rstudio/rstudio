@@ -32,8 +32,9 @@
 #include <session/SessionConsoleProcess.hpp>
 #include <session/projects/SessionProjects.hpp>
 
-using namespace core;
+using namespace rstudio::core;
 
+namespace rstudio {
 namespace session {
 
 namespace {
@@ -199,9 +200,10 @@ void silentUpdateEmbeddedPackage(const EmbeddedPackage& pkg)
 Error unsatisfiedDependencies(const json::JsonRpcRequest& request,
                               json::JsonRpcResponse* pResponse)
 {
-   // get list of dependencies
+   // get list of dependencies and silentUpdate flag
    json::Array depsJson;
-   Error error = json::readParams(request.params, &depsJson);
+   bool silentUpdate;
+   Error error = json::readParams(request.params, &depsJson, &silentUpdate);
    if (error)
       return error;
    std::vector<Dependency> deps = dependenciesFromJson(depsJson);
@@ -228,22 +230,26 @@ Error unsatisfiedDependencies(const json::JsonRpcRequest& request,
          {
             unsatisfiedDeps.push_back(dep);
          }
-         // package installed was from IDE but is out of date -- silent update
-         else if (embeddedPackageRequiresUpdate(pkg))
+         // silent update if necessary (as long as we aren't packified)
+         else if (silentUpdate && !packratContext().packified)
          {
-            silentUpdateEmbeddedPackage(pkg);
-         }
-         // package installed wasn't from the IDE but is older than
-         // the version we currently have embedded -- silent update
-         else if (!isPackageVersionInstalled(pkg.name, pkg.version))
-         {
-            silentUpdateEmbeddedPackage(pkg);
-         }
-         else
-         {
-            // the only remaining case is a newer version of the package is
-            // already installed (e.g. directly from github). in this case
-            // we do nothing
+            // package installed was from IDE but is out of date
+            if (embeddedPackageRequiresUpdate(pkg))
+            {
+               silentUpdateEmbeddedPackage(pkg);
+            }
+            // package installed wasn't from the IDE but is older than
+            // the version we currently have embedded
+            else if (!isPackageVersionInstalled(pkg.name, pkg.version))
+            {
+               silentUpdateEmbeddedPackage(pkg);
+            }
+            else
+            {
+               // the only remaining case is a newer version of the package is
+               // already installed (e.g. directly from github). in this case
+               // we do nothing
+            }
          }
 
          break;
@@ -392,4 +398,5 @@ Error installEmbeddedPackage(const std::string& name)
 } // anonymous namespace
 
 } // namesapce session
+} // namespace rstudio
 

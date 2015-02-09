@@ -34,6 +34,7 @@
 #include "Request.hpp"
 #include "Util.hpp"
 
+namespace rstudio {
 namespace core {
    
 class ErrorLocation;
@@ -358,5 +359,6 @@ std::ostream& operator << (std::ostream& stream, const Response& r) ;
 
 } // namespace http
 } // namespace core
+} // namespace rstudio
 
 #endif // CORE_HTTP_RESPONSE_HPP

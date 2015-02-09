@@ -163,19 +163,14 @@ public class GlobalToolbar extends Toolbar
          addLeftWidget(vcsButton);
       }
       
-      if (sessionInfo.getShinyappsInstalled())
-      {
-         addLeftSeparator();
-         ToolbarButton deployButton = 
-               commands_.shinyAppsDeploy().createToolbarButton();
-         deployButton.setText("Publish");
-         addLeftWidget(deployButton);
-      }
-      
       // project popup menu
       ProjectPopupMenu projectMenu = new ProjectPopupMenu(sessionInfo,
                                                           commands_);
       addRightWidget(projectMenu.getToolbarButton());
+      
+     
+      
+      
    }
    
    @Override

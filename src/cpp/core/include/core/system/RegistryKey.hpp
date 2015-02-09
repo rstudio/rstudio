@@ -28,6 +28,7 @@
 
 #include <core/Error.hpp>
 
+namespace rstudio {
 namespace core {
 namespace system {
 
@@ -53,5 +54,6 @@ private:
 
 } // namespace system
 } // namespace core
+} // namespace rstudio
 
 #endif // REGISTRYKEY_HPP

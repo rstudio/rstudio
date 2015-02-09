@@ -108,6 +108,11 @@ endif()
 # include directories and libraries
 set(SERVER_SYSTEM_LIBRARIES ${DL_LIBRARIES})
 
+# add tests
+if (RSTUDIO_UNIT_TESTS_ENABLED)
+   file(GLOB_RECURSE SERVER_TEST_FILES "*Tests.cpp")
+   list(APPEND SERVER_SOURCE_FILES ${SERVER_TEST_FILES})
+endif()
 
 # set include directories
 include_directories(
@@ -122,6 +127,13 @@ include_directories(
 
 # define executable
 add_executable(rserver ${SERVER_SOURCE_FILES} ${SERVER_HEADER_FILES})
+
+# add origin rpath for suse/sles
+if(RSTUDIO_PACKAGE_BUILD_SLES)
+   set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
+   set_target_properties(rserver PROPERTIES
+                         INSTALL_RPATH \$ORIGIN)
+endif()
 
 # set link dependencies
 target_link_libraries(rserver 

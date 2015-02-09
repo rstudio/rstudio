@@ -1,0 +1,544 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <link rel="stylesheet" type="text/css" href="../src/org/rstudio/studio/client/workbench/views/source/editors/text/themes/tomorrow_night_bright.css" />
+  <!script type="text/javascript" src="../tools/ace/build_support/mini_require.js"></script>
+  <script type="text/javascript" src="../src/org/rstudio/studio/client/workbench/views/source/editors/text/ace/ace-uncompressed.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/auto_brace_insert.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/tex_highlight_rules.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/token_cursor.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/token_utils.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/r_highlight_rules.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/r_matching_brace_outdent.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/r.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/r_code_model.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/r_scope_tree.js"></script>
+  <script type="text/javascript" src="../tools/ace/build/src/keybinding-vim.js"></script>
+  <style type="text/css">
+  pre {
+    margin-bottom: 30px;
+    padding: 3px;
+    border: 1px solid #999;
+  }
+  </style>
+</head>
+<body>
+
+<h2>Interactive Tester</h2>
+<div id="editor" style="width: 600px; height: 200px; border: 1px solid #999"></div>
+<div id="testEditor" style="display: none;"></div>
+
+<h2>Configure Editor</h2>
+<button onclick="require('mode/r_code_model').setVerticallyAlignFunctionArgs(!require('mode/r_code_model').getVerticallyAlignFunctionArgs())">Toggle Vertical Alignment</button>
+<button onclick="editor.getSession().reindent()">Reindent</button>
+<button onclick="editor.setKeyboardHandler(vim.handler);">Toggle Vim Mode</button>
+
+<h2 style="margin-top: 100">Automated Tests</h2>
+<p>Passed: <span id="passed"></span>, Failed: <span id="failed"></span></p>
+<ol id="testcontainer" style="display: none;">
+<li><pre data-expected="2">
+doPlot &lt;- function()
+</pre></li>
+<li><pre data-expected="2">
+doPlot &lt;- function() {
+</pre></li>
+<li><pre data-expected="4">
+  doPlot &lt;- function() {
+</pre></li>
+<li><pre data-expected="2">
+doPlot &lt;- function()
+{
+</pre></li>
+<li><pre data-expected="2">
+plot(
+</pre></li>
+<li><pre data-expected="2" data-expected-vertical-args="5">
+plot(x,
+</pre></li>
+<li><pre data-expected="2" data-expected-vertical-args="5">
+plot(x,
+     y,
+</pre></li>
+<li><pre data-expected="7">
+plot(x,
+     c(foo,
+</pre></li>
+<li><pre data-expected="2" data-expected-vertical-args="5">
+plot(x,
+     c(foo,
+       bar),
+</pre></li>
+<li><pre data-expected="2">
+plot(
+  x,
+  c(foo,
+    bar),
+</pre></li>
+<li><pre data-expected="0">
+plot(x, c(foo, bar))
+</pre></li>
+<li><pre data-expected="0">
+plot(
+  x, c(foo, bar))
+</pre></li>
+<li><pre data-expected="0">
+plot(x,
+     c(foo, bar))
+</pre></li>
+<li><pre data-expected="2">
+  plot(x,
+       c(foo, bar))
+</pre></li>
+<li><pre data-expected="4">
+  if (foo())
+</pre></li>
+<li><pre data-expected="4">
+  if (foo())
+    bar
+  else
+</pre></li>
+
+<li><pre data-expected="0">
+if (foo)
+    x = 1
+</pre></li>
+
+<li><pre data-expected="0">
+else if (foo)
+    x = 1
+</pre></li>
+
+<li><pre data-expected="0">
+else
+    x = 1
+</pre></li>
+
+<li><pre data-expected="4">
+if (foo &&
+</pre></li>
+
+<li><pre data-expected="4" data-expected-vertical-args="7">
+while (foo &&
+</pre></li>
+
+<li><pre data-expected="4">
+  if (foo())
+    bar
+  else
+# annoyingly placed comment
+</pre></li>
+<li><pre data-expected="0">
+if (foo())
+  bar
+else NULL
+</pre></li>
+<li><pre data-expected="4">
+  for (i = 0;
+       i &lt; (20 * intervals);
+       i += 1)
+                  # annoyingly placed comment
+</pre></li>
+<li><pre data-expected="4">
+function() {
+  for (i = 0;
+       i &lt; (20 * intervals);
+       i += 1)
+</pre></li>
+<li><pre data-expected="2">
+function() {
+  for (i = 0;
+       i &lt; (20 * intervals);
+       i += 1) NULL
+</pre></li>
+<li><pre data-expected="2">
+function() {
+  for (i = 0;
+       i &lt; (20 * intervals);
+       i += 1) ()
+</pre></li>
+<li><pre data-expected="4">
+function() {
+  for (i = 0;
+       i &lt; (20 * intervals);
+       i += 1)
+  {
+</pre></li>
+<li><pre data-expected="4">
+function() {
+  for (i = 0;
+       i &lt; (20 * intervals);
+       i += 1) {
+</pre></li>
+<li><pre data-expected="4">
+  if (x) {
+</pre></li>
+<li><pre data-expected="4">
+  if (foo(
+</pre></li>
+<li><pre data-expected="4" data-expected-vertical-args="6">
+  if (foo(
+        bar),
+</pre></li>
+<li><pre data-expected="2">
+  while (foo())
+    NULL
+</pre></li>
+<li><pre data-expected="4">
+  while (foo())
+  {
+</pre></li>
+<li><pre data-expected="2">
+  # Invalid parse tree
+  while (foo())
+  {
+    foo (()
+  }
+</pre></li>
+<li><pre data-expected="2">
+  repeat
+    foo()
+</pre></li>
+<li><pre data-expected="4">
+function() {
+  repeat
+</pre></li>
+<li><pre data-expected="4">
+function() {
+  repeat {
+</pre></li>
+<li><pre data-expected="2">
+5 *
+</pre></li>
+<li><pre data-expected="2">
+# One expression continued over more than two lines
+5 ~
+  5 +
+</pre></li>
+<li><pre data-expected="4">
+else
+  5 +
+</pre></li>
+<li><pre data-expected="4">
+if (foo())
+  5 +
+</pre></li>
+<li><pre data-expected="2">
+xyplot(ysim ~ xsim) +
+  layer(panel.ablineq(lm(y ~ x), r.sq = TRUE, rot = TRUE,
+                      at = 0.8, pos = 3), style = 1) +
+</pre></li>
+<li><pre data-expected="2">
+verylongfunction(a=1,
+  b=2, 
+</pre></li>
+<li><pre data-expected="2">
+verylongfunction(a=1,
+  b=2 + 3 + 
+    4, 
+</pre></li>
+<li><pre data-expected="2">
+verylongfunction(a=1,
+  b="Multi line
+strings are evil" 
+</pre></li>
+<li><pre data-expected="2">
+verylongfunction(a=1,
+  "Single line strings are OK"
+</pre></li>
+<li><pre data-expected="2" data-expected-vertical-args="17">
+verylongfunction(a=1,
+</pre></li>
+<li><pre data-expected="2" data-expected-vertical-args="17">
+verylongfunction("Multi 
+line strings are evil"
+</pre></li>
+<li><pre data-expected="2" data-expected-vertical-args="17">
+verylongfunction(x=1
+
+
+</pre></li>
+<li><pre data-expected="2" data-expected-vertical-args="3">
+verylongfunction(x=1
+   # I'm about to document an arg
+</pre></li>
+
+<li><pre data-expected="2">
+x <- 1
+  y <- 2
+</pre></li>
+
+<li><pre data-expected="0">
+x[1,
+  2,
+  3] <- 1
+</pre></li>
+
+<li><pre data-expected="4">
+if (foo) {
+  x <-
+</pre></li>
+
+<li><pre data-expected="2">
+x <-
+  y <-
+</pre></li>
+
+<li><pre data-expected="2">
+x <-
+  1 +
+</pre></li>
+
+<li><pre data-expected="4">
+{
+  x <-
+</pre></li>
+
+<li><pre data-expected="4">
+{
+  x <-
+    1 +
+</pre></li>
+
+<li><pre data-expected="4">
+plot(
+  x +
+</pre></li>
+
+<li><pre data-expected="2">
+foo(bar, function(x)
+{
+</pre></li>
+
+<li><pre data-expected="0">
+if (length(foo))
+    x <- bar()
+</pre></li>
+
+<li><pre data-expected="2">
+if () {}
+foo <- foo &
+</pre></li>
+
+<li><pre data-expected="0">
+foo <- function()
+  function() {}
+</pre></li>
+
+<li><pre data-expected="0">
+foo <- function(x, y)
+   if (x) y else x
+</pre></li>
+
+<li><pre data-expected="0">
+if ()
+  x$y <- 1
+</pre></li>
+
+<li><pre data-expected="0">
+while ()
+  x[
+    1, 2, 3
+  ] <- 1
+</pre></li>
+
+<li><pre data-expected="4">
+{
+  else {}
+  foo$bar <- x &
+</pre></li>
+
+<li><pre data-expected="4">
+{
+  x %in%
+</pre></li>
+
+<li><pre data-expected="8" data-expected-vertical-args="5">
+if (foo &&
+    (bar &&
+</pre></li>
+
+<li><pre data-expected="4" data-expected-vertical-args="4">
+if ()
+  x <-
+</pre></li>
+
+<li><pre data-expected="4" data-expected-vertical-args="4">
+else
+  x <-
+</pre></li>
+
+</ol>
+
+<script type="text/javascript">
+var vim = require("ace/keyboard/vim");
+var RCodeModel = require('mode/r_code_model').RCodeModel;
+var Document = require('ace/document').Document;
+var RMode = require('mode/r').Mode;
+var EditSession = require("ace/edit_session").EditSession;
+var Range = require('ace/range').Range;
+require('mode/auto_brace_insert').setInsertMatching(true);
+
+var editor = ace.edit('editor');
+editor.renderer.setHScrollBarAlwaysVisible(false);
+editor.setHighlightActiveLine(false);
+editor.getSession().setTabSize(2);
+editor.getSession().setUseSoftTabs(true);
+var RMode = require('mode/r').Mode;
+
+editor.getSession().setMode(
+  new RMode(false,
+            editor.getSession()));
+
+(function() {
+  
+  this.reindent = function(start, end) {
+    var mode = this.getMode();
+    if (!mode.getNextLineIndent)
+      return;
+    
+    if (typeof start === "undefined") {
+      start = 0;
+    }
+
+    if (typeof end === "undefined") {
+      end = this.getDocument().$lines.length - 1;
+    }
+      
+    for (var i = start; i <= end; i++) {
+
+      // First line is always unindented
+      if (i == 0) {
+        this.applyIndent(i, "");
+      }
+      else {
+        var state = this.getState(i-1);
+        if (state == 'qstring' || state == 'qqstring')
+          continue;
+
+        var line = this.getLine(i-1);
+        var newline = this.getLine(i);
+
+        var newIndent = mode.getNextLineIndent(state,
+                                               line,
+                                               this.getTabString(),
+                                               i-1,
+                                               true);
+
+        this.applyIndent(i, newIndent);
+        mode.autoOutdent(state, this, i);
+        
+      }
+    }
+  };
+  
+  this.applyIndent = function(lineNum, indent) {
+    var line = this.getLine(lineNum);
+      var matchLen = line.match(/^\s*/g)[0].length;
+      console.log(matchLen);
+      console.log(lineNum);
+    this.replace(new Range(lineNum, 0, lineNum, matchLen), indent);
+  };
+
+}).call(EditSession.prototype);
+
+
+// A test editor that is used for the indent tests
+testEditor = ace.edit('testEditor');
+testEditor.getSession().setMode(
+  new RMode(false, testEditor.getSession())
+);
+testEditor.getSession().setTabSize(2);
+
+function doIndentTest(el, state) {
+  
+  var doc = testEditor.getSession().getDocument();
+  doc.$lines = new Array(1);
+
+  var codeModel = testEditor.getSession().getMode().codeModel;
+  codeModel.$removeRows(
+    0,
+    codeModel.$tokens.length
+  );
+
+  testEditor.insert((el.innerText || el.textContent).trimRight());
+  testEditor.insert("\n");
+
+  var line = doc.$lines[doc.getLength() - 1];
+  var indent = line.match(/^(\s*)/)[1];
+
+  el.appendChild(document.createTextNode(indent + "|"));
+  var attrName = "data-expected"; 
+  if (state.length > 0 && 
+      el.getAttribute(attrName + "-" + state)) 
+  {
+     attrName += ("-" + state);
+  }
+  var expected = el.getAttribute(attrName);
+  if (expected == indent.length + "")
+  {
+    el.style.backgroundColor = '#BFB';
+    return true;
+  }
+  else
+  {
+    el.style.backgroundColor = 'pink';
+    return false;
+  }
+}
+
+var test = document.getElementById("runme");
+var container = document.getElementById("testcontainer");
+var passed = 0, failed = 0;
+var states = [ "", "vertical-args" ];
+for (var i = 0; i < states.length; i++) 
+{
+   // Set up the state to be tested
+   require('mode/r_code_model').setVerticallyAlignFunctionArgs(
+      states[i] === "vertical-args");
+
+   // Clone the tests for the new state
+   var testnode = container.cloneNode(true);
+   var header = document.createElement("h2");
+   header.innerText = "Test " + i + (
+      states[i].length > 0 ? 
+         ": " + states[i] : 
+         "");
+   container.parentNode.appendChild(header);
+   container.parentNode.appendChild(testnode);
+   testnode.style.display = "block";
+   pres = testnode.getElementsByTagName("pre");
+   for (var j = 0; j < pres.length; j++)
+   {
+     if (!test)
+     {
+       if (doIndentTest(pres[j], states[i]))
+         passed++;
+       else
+         failed++;
+     }
+     else
+     {
+       if (pres[j] != test)
+         pres[j].style.display = 'none';
+     }
+   }
+}
+if (test)
+{
+  if (doIndentTest(test))
+    passed++;
+  else
+    failed++;
+}
+
+document.getElementById('passed').innerText = passed;
+document.getElementById('failed').innerText = failed;
+
+session = editor.getSession();
+mode = session.getMode();
+codeModel = mode.codeModel;
+scopes = codeModel.$scopes;
+
+</script>
+</body>
+</html>

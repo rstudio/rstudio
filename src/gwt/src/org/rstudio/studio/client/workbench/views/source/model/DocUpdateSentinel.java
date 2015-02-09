@@ -21,6 +21,7 @@ import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.Window.ClosingEvent;
 import com.google.gwt.user.client.Window.ClosingHandler;
+
 import org.rstudio.core.client.Barrier.Token;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.TimeBufferedCommand;
@@ -135,7 +136,6 @@ public class DocUpdateSentinel
                public void onLastChanceSave(LastChanceSaveEvent event)
                {
                   // We're quitting. Save one last time.
-
                   final Token token = event.acquire();
                   boolean saving = doSave(null, null, null,
                                           new ProgressIndicator()
@@ -174,6 +174,32 @@ public class DocUpdateSentinel
             });
    }
 
+   public void withSavedDoc(final Command onSaved)
+   {
+      if (changeTracker_.hasChanged())
+      {
+         boolean saved = doSave(null, null, null, new ProgressIndicator() {
+
+            @Override
+            public void onCompleted()
+            {
+               onSaved.execute(); 
+            }
+   
+            @Override public void onProgress(String message) {}
+            @Override public void onError(String message) {}
+            @Override public void clearProgress() {}
+         });
+         
+         if (!saved)
+            onSaved.execute();
+      }
+      else
+      {
+         onSaved.execute();
+      }
+   }
+   
    private boolean maybeAutoSave()
    {
       if (changeTracker_.hasChanged())
@@ -241,11 +267,38 @@ public class DocUpdateSentinel
          }
       });
    }
+   
+   private boolean doSave(String path,
+                          String fileType,
+                          String encoding,
+                          ProgressIndicator progress)
+   {
+      boolean didSave = false;
+      try
+      {
+         didSave = doSaveImpl(path, fileType, encoding, progress);
+      }
+      catch (Exception ex)
+      {
+         // log the exception that caused the problem (not all progress
+         // indicators, even if present, will report it)
+         Debug.log("Exception occurred during save: ");
+         Debug.logException(ex);
+         
+         // report error to progress indicator if present
+         if (progress != null)
+         {
+            progress.onError("Could not save " + path + ": " +
+                             ex.getMessage());
+         }
+      }
+      return didSave;
+   }
 
-   private boolean doSave(final String path,
-                          final String fileType,
-                          final String encoding,
-                          final ProgressIndicator progress)
+   private boolean doSaveImpl(final String path,
+                              final String fileType,
+                              final String encoding,
+                              final ProgressIndicator progress)
    {
       /* We need to fork the change tracker so that we can "mark" the moment
          in history when we took the contents from the source doc, so that
@@ -314,14 +367,24 @@ public class DocUpdateSentinel
                   {
                      // If the document hasn't changed further since the version
                      // we saved, then we know we're all synced up.
-                     if (!thisChangeTracker.hasChanged())
-                        changeTracker_.reset();
+                     try
+                     {
+                        if (!thisChangeTracker.hasChanged())
+                           changeTracker_.reset();
 
-                     onSuccessfulUpdate(newContents,
-                                        newHash,
-                                        path,
-                                        fileType,
-                                        encoding);
+                        onSuccessfulUpdate(newContents,
+                                           newHash,
+                                           path,
+                                           fileType,
+                                           encoding);
+                     }
+                     catch(Exception ex)
+                     {
+                        // log exception, but continue (we want to guarantee the
+                        // progress indicator is updated)
+                        Debug.log("Exception in post-save update " + path + 
+                                  " to " + newHash + ": " + ex.getMessage());
+                     }
                      if (progress != null)
                         progress.onCompleted();
                   }
@@ -540,6 +603,11 @@ public class DocUpdateSentinel
          if (code.charAt(i) >= 128)
             return false;
       return true;
+   }
+   
+   public String getId()
+   {
+      return sourceDoc_.getId();
    }
 
    private boolean changesPending_ = false;

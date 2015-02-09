@@ -20,6 +20,7 @@
 
 #include <core/Error.hpp>
 
+namespace rstudio {
 namespace core {
 
 
@@ -46,5 +47,6 @@ Error waitWithTimeout(const boost::function<WaitResult()>& connectFunction,
                       int maxWaitSec = 10);
 
 } // namespace core
+} // namespace rstudio
 
 #endif // CORE_WAITUTILS_HPP

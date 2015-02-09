@@ -19,6 +19,7 @@
 
 #include <core/Error.hpp>
 
+namespace rstudio {
 namespace core {
 namespace system {
 
@@ -87,5 +88,6 @@ Error setCpuAffinity(const CpuAffinity& cpus)
 
 } // namespace system
 } // namespace core
+} // namespace rstudio
 
 

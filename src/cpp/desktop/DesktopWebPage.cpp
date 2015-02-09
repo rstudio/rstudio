@@ -20,6 +20,7 @@
 #include <core/FilePath.hpp>
 
 #include <QWidget>
+#include <QWebFrame>
 #include <QtDebug>
 #include "DesktopNetworkAccessManager.hpp"
 #include "DesktopWindowTracker.hpp"
@@ -29,10 +30,11 @@
 
 #include "DesktopUtils.hpp"
 
-using namespace core;
+using namespace rstudio::core;
 
 extern QString sharedSecret;
 
+namespace rstudio {
 namespace desktop {
 
 namespace {
@@ -41,10 +43,11 @@ WindowTracker s_windowTracker;
 
 } // anonymous namespace
 
-WebPage::WebPage(QUrl baseUrl, QWidget *parent) :
+WebPage::WebPage(QUrl baseUrl, QWidget *parent, bool allowExternalNavigate) :
       QWebPage(parent),
       baseUrl_(baseUrl),
-      navigated_(false)
+      navigated_(false),
+      allowExternalNav_(allowExternalNavigate)
 {
    settings()->setAttribute(QWebSettings::DeveloperExtrasEnabled, true);
    settings()->setAttribute(QWebSettings::JavascriptCanOpenWindows, true);
@@ -58,87 +61,107 @@ void WebPage::setBaseUrl(const QUrl& baseUrl)
    baseUrl_ = baseUrl;
 }
 
-void WebPage::activateSatelliteWindow(QString name)
+void WebPage::activateWindow(QString name)
 {
-   BrowserWindow* pSatellite = s_windowTracker.getWindow(name);
-   if (pSatellite)
-      desktop::raiseAndActivateWindow(pSatellite);
+   BrowserWindow* pWindow = s_windowTracker.getWindow(name);
+   if (pWindow)
+      desktop::raiseAndActivateWindow(pWindow);
 }
 
-void WebPage::prepareForSatelliteWindow(
-                              const PendingSatelliteWindow& pendingWnd)
+void WebPage::closeWindow(QString name)
 {
-   pendingSatelliteWindow_ = pendingWnd;
+   BrowserWindow* pWindow = s_windowTracker.getWindow(name);
+   if (pWindow)
+      desktop::closeWindow(pWindow);
+}
+
+void WebPage::prepareForWindow(const PendingWindow& pendingWnd)
+{
+   pendingWindow_ = pendingWnd;
 }
 
 QWebPage* WebPage::createWindow(QWebPage::WebWindowType)
 {
+   QString name;
+   bool isSatellite = false;
+   bool showToolbar = true;
+   bool allowExternalNavigate = false;
+   int width = 0;
+   int height = 0;
+   MainWindow* pMainWindow = NULL;
+   BrowserWindow* pWindow = NULL;
+
    // check if this is a satellite window
-   if (!pendingSatelliteWindow_.isEmpty())
+   if (!pendingWindow_.isEmpty())
    {
       // capture pending window params then clear them (one time only)
-      QString name = pendingSatelliteWindow_.name;
-      MainWindow* pMainWindow = pendingSatelliteWindow_.pMainWindow;
+      name = pendingWindow_.name;
+      isSatellite = pendingWindow_.isSatellite;
+      showToolbar = pendingWindow_.showToolbar;
+      pMainWindow = pendingWindow_.pMainWindow;
+      allowExternalNavigate = pendingWindow_.allowExternalNavigate;
 
       // get width and height, and adjust for high DPI
       double dpiZoomScaling = getDpiZoomScaling();
-      int width = pendingSatelliteWindow_.width * dpiZoomScaling;
-      int height = pendingSatelliteWindow_.height * dpiZoomScaling;
+      width = pendingWindow_.width * dpiZoomScaling;
+      height = pendingWindow_.height * dpiZoomScaling;
 
-      pendingSatelliteWindow_ = PendingSatelliteWindow();
+      pendingWindow_ = PendingWindow();
 
       // check for an existing window of this name
-      BrowserWindow* pSatellite = s_windowTracker.getWindow(name);
-      if (pSatellite)
+      pWindow = s_windowTracker.getWindow(name);
+      if (pWindow)
       {
          // activate the browser then return NULL to indicate
          // we didn't create a new WebView
-         desktop::raiseAndActivateWindow(pSatellite);
+         desktop::raiseAndActivateWindow(pWindow);
          return NULL;
       }
-      // create a new window if we didn't find one
-      else
+   }
+
+   if (isSatellite)
+   {
+      // create and size
+      pWindow = new SatelliteWindow(pMainWindow, name);
+      pWindow->resize(width, height);
+
+      // try to tile the window (but leave pdf window alone
+      // since it is so large)
+      if (name != QString::fromUtf8("pdf"))
       {
-         // create and size
-         pSatellite = new SatelliteWindow(pMainWindow);
-         pSatellite->resize(width, height);
+         // calculate location to move to
 
-         // try to tile the window (but leave pdf window alone
-         // since it is so large)
-         if (name != QString::fromAscii("pdf"))
-         {
-            // calculate location to move to
+         // y always attempts to be 25 pixels above then faults back
+         // to 25 pixels below if that would be offscreen
+         const int OVERLAP = 25;
+         int moveY = pMainWindow->y() - OVERLAP;
+         if (moveY < 0)
+            moveY = pMainWindow->y() + OVERLAP;
 
-            // y always attempts to be 25 pixels above then faults back
-            // to 25 pixels below if that would be offscreen
-            const int OVERLAP = 25;
-            int moveY = pMainWindow->y() - OVERLAP;
-            if (moveY < 0)
-               moveY = pMainWindow->y() + OVERLAP;
+         // x is based on centering over main window
+         int moveX = pMainWindow->x() +
+                     (pMainWindow->width() / 2) -
+                     (width / 2);
 
-            // x is based on centering over main window
-            int moveX = pMainWindow->x() +
-                        (pMainWindow->width() / 2) -
-                        (width / 2);
-
-            // perform movve
-            pSatellite->move(moveX, moveY);
-         }
-
-         // add to tracker
-         s_windowTracker.addWindow(name, pSatellite);
-
-         // show and return the browser
-         pSatellite->show();
-         return pSatellite->webView()->webPage();
+         // perform move
+         pWindow->move(moveX, moveY);
       }
    }
    else
    {
-      SecondaryWindow* pWindow = new SecondaryWindow(baseUrl_);
-      pWindow->show();
-      return pWindow->webView()->webPage();
+      pWindow = new SecondaryWindow(showToolbar, name, baseUrl_, NULL, this,
+                                    allowExternalNavigate);
    }
+
+   // if we have a name set, start tracking this window
+   if (!name.isEmpty())
+   {
+      s_windowTracker.addWindow(name, pWindow);
+   }
+
+   // show and return the browser
+   pWindow->show();
+   return pWindow->webView()->webPage();
 }
 
 void WebPage::closeRequested()
@@ -160,7 +183,7 @@ void WebPage::javaScriptConsoleMessage(const QString& message, int /*lineNumber*
 
 QString WebPage::userAgentForUrl(const QUrl &url) const
 {
-   return this->QWebPage::userAgentForUrl(url) + QString::fromAscii(" Qt/") + QString::fromAscii(qVersion());
+   return this->QWebPage::userAgentForUrl(url) + QString::fromUtf8(" Qt/") + QString::fromUtf8(qVersion());
 }
 
 bool WebPage::acceptNavigationRequest(QWebFrame* pWebFrame,
@@ -169,13 +192,13 @@ bool WebPage::acceptNavigationRequest(QWebFrame* pWebFrame,
 {
    QUrl url = request.url();
 
-   if (url.toString() == QString::fromAscii("about:blank"))
+   if (url.toString() == QString::fromUtf8("about:blank"))
       return true;
 
-   if (url.scheme() != QString::fromAscii("http")
-       && url.scheme() != QString::fromAscii("https")
-       && url.scheme() != QString::fromAscii("mailto")
-       && url.scheme() != QString::fromAscii("data"))
+   if (url.scheme() != QString::fromUtf8("http")
+       && url.scheme() != QString::fromUtf8("https")
+       && url.scheme() != QString::fromUtf8("mailto")
+       && url.scheme() != QString::fromUtf8("data"))
    {
       qDebug() << url.toString();
       return false;
@@ -212,6 +235,11 @@ bool WebPage::acceptNavigationRequest(QWebFrame* pWebFrame,
       {
          desktop::openUrl(url);
       }
+      else if (allowExternalNav_)
+      {
+         navigated_ = true;
+         return true;
+      }
 
       if (!navigated_)
          this->view()->window()->deleteLater();
@@ -246,7 +274,7 @@ void WebPage::handleBase64Download(QWebFrame* pWebFrame, QUrl url)
    {
       QWebElement a = aElements.at(i);
       QString href = a.attribute(QString::fromUtf8("href"));
-      href.replace(QChar::fromAscii('\n'), QString::fromUtf8(""));
+      href.replace(QChar::fromLatin1('\n'), QString::fromUtf8(""));
       if (href == urlString)
       {
          aTag = a;
@@ -312,7 +340,7 @@ void WebPage::handleBase64Download(QWebFrame* pWebFrame, QUrl url)
 void WebPage::setViewerUrl(const QString& viewerUrl)
 {
    // record about:blank literally
-   if (viewerUrl == QString::fromAscii("about:blank"))
+   if (viewerUrl == QString::fromUtf8("about:blank"))
    {
       viewerUrl_ = viewerUrl;
       return;
@@ -321,8 +349,8 @@ void WebPage::setViewerUrl(const QString& viewerUrl)
    // extract the authority (domain and port) from the URL; we'll agree to
    // serve requests for the viewer pane that match this prefix. 
    QUrl url(viewerUrl);
-   viewerUrl_ = url.scheme() + QString::fromAscii("://") + 
-                url.authority() + QString::fromAscii("/");
+   viewerUrl_ = url.scheme() + QString::fromUtf8("://") +
+                url.authority() + QString::fromUtf8("/");
 }
-
+}
 }

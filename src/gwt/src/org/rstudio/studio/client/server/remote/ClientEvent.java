@@ -105,13 +105,17 @@ class ClientEvent extends JavaScriptObject
    public static final String RmdTemplateDiscovered = "rmd_template_discovered";
    public static final String RmdTemplateDiscoveryCompleted = "rmd_template_discovery_completed";
    public static final String RmdShinyDocStarted = "rmd_shiny_doc_started";
-   public static final String ShinyAppsDeploymentOutput = "shiny_apps_deployment_output";
-   public static final String ShinyAppsDeploymentCompleted = "shiny_apps_deployment_completed";
+   public static final String RSConnectDeploymentOutput = "rsconnect_deployment_output";
+   public static final String RSConnectDeploymentCompleted = "rsconnect_deployment_completed";
    public static final String UserPrompt = "user_prompt";
    public static final String InstallRtools = "install_r_tools";
    public static final String InstallShiny = "install_shiny";
    public static final String SuspendAndRestart = "suspend_and_restart";
    public static final String PackratRestoreNeeded = "packrat_restore_needed";
+   public static final String DataViewChanged = "data_view_changed";
+   public static final String ViewFunction = "view_function";
+   public static final String MarkersChanged = "markers_changed";
+   public static final String EnableRStudioConnect = "enable_rstudio_connect";
    
    protected ClientEvent()
    {

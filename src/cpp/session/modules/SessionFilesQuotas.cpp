@@ -32,8 +32,9 @@
 
 #include <session/SessionModuleContext.hpp>
 
-using namespace core ;
+using namespace rstudio::core ;
 
+namespace rstudio {
 namespace session {
 namespace modules { 
 namespace files {
@@ -241,4 +242,5 @@ void checkQuotaStatus()
 } // namepsace files
 } // namespace modules
 } // namesapce session
+} // namespace rstudio
 

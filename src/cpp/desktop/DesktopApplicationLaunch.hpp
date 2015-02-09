@@ -21,6 +21,7 @@
 #include <QApplication>
 #include <boost/scoped_ptr.hpp>
 
+namespace rstudio {
 namespace desktop {
 
 class ApplicationLaunch : public QWidget
@@ -44,7 +45,9 @@ public:
 protected:
     explicit ApplicationLaunch();
 #ifdef _WIN32
-    bool winEvent(MSG *message, long *result);
+    bool nativeEvent(const QByteArray & eventType,
+                     void * message,
+                     long * result);
 #endif
 
 signals:
@@ -58,5 +61,6 @@ private:
 };
 
 } // namespace desktop
+} // namespace rstudio
 
 #endif // DESKTOPAPPLICATIONLAUNCH_HPP

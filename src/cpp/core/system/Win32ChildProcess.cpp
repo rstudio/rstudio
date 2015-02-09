@@ -31,6 +31,7 @@
 
 #include "CriticalSection.hpp"
 
+namespace rstudio {
 namespace core {
 namespace system {
 
@@ -643,5 +644,6 @@ bool AsyncChildProcess::exited()
 
 } // namespace system
 } // namespace core
+} // namespace rstudio
 
 

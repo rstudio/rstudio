@@ -29,10 +29,13 @@
 
 #include <core/r_util/RSessionLaunchProfile.hpp>
 
+namespace rstudio {
 namespace core {
    class Error;
 }
+}
 
+namespace rstudio {
 namespace server {
 
 // singleton
@@ -100,6 +103,7 @@ core::Error launchSession(const std::string& username,
 
 
 } // namespace server
+} // namespace rstudio
 
 #endif // SERVER_SESSION_MANAGER_HPP
 

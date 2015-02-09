@@ -70,8 +70,9 @@ extern "C" SA_TYPE SaveAction;
 // constants for graphics scratch subdirectory
 #define kGraphicsPath "graphics"
 
-using namespace core ;
+using namespace rstudio::core ;
 
+namespace rstudio {
 namespace r {
 namespace session {
 
@@ -388,6 +389,12 @@ Error initialize()
    Error error = r::sourceManager().sourceTools(toolsFilePath);
    if (error)
       return error ;
+
+   // install RStudio API
+   FilePath apiFilePath = s_options.rSourcePath.complete("Api.R");
+   error = r::sourceManager().sourceTools(apiFilePath);
+   if (error)
+      return error;
 
    // initialize graphics device -- use a stable directory for server mode
    // and temp directory for desktop mode (so that we can support multiple
@@ -744,11 +751,19 @@ int RReadConsole (const char *pmt,
          return 0; // terminate
       }
    }
-   catch(r::exec::InterruptException)
+   catch(r::exec::InterruptException&)
    {
-      // this will result in a longjmp
+      // set interrupts pending
       r::exec::setInterruptsPending(true);
+
+      // only issue an interrupt when not on Windows -- let the regular
+      // event loop handle interrupts there. note that this will longjmp
+#ifndef _WIN32
       r::exec::checkUserInterrupt();
+#endif
+
+      // return success
+      return 1;
    }
    catch(const std::exception& e)
    {
@@ -1630,6 +1645,15 @@ bool isPackratModeOn()
    return !core::system::getenv("R_PACKRAT_MODE").empty();
 }
 
+bool isDevtoolsDevModeOn()
+{
+   bool isDevtoolsDevModeOn;
+   Error error = r::exec::RFunction(".rs.devModeOn").call(&isDevtoolsDevModeOn);
+   if (error)
+      LOG_ERROR(error);
+   return isDevtoolsDevModeOn;
+}
+
 bool isDefaultPrompt(const std::string& prompt)
 {
    return prompt == r::options::getOption<std::string>("prompt");
@@ -1679,3 +1703,4 @@ SuppressOutputInScope::~SuppressOutputInScope()
    
 } // namespace session
 } // namespace r
+} // namespace rstudio

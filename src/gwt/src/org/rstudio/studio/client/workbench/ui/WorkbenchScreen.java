@@ -81,6 +81,8 @@ public class WorkbenchScreen extends Composite
                           FontSizeManager fontSizeManager,
                           OptionsLoader.Shim optionsLoader)
    {
+     
+      
       globalDisplay_ = globalDisplay;
       eventBus_ = eventBus;
       session_ = session;
@@ -262,10 +264,11 @@ public class WorkbenchScreen extends Composite
       Size plotsSize = new Size(
                Math.max(deckPanelSize.width, 0),
                Math.max(deckPanelSize.height - Toolbar.DEFAULT_HEIGHT, 0));
-   
+      
       WorkbenchMetrics metrics = WorkbenchMetrics.create(consoleWidth,
                                                          plotsSize.width,
-                                                         plotsSize.height);
+                                                         plotsSize.height,
+                                                         BrowseCap.devicePixelRatio());
 
       // make sure we don't send very similar metrics values twice (it is
       // an expensive operation since it involves at least 2 http requests)
@@ -338,7 +341,7 @@ public class WorkbenchScreen extends Composite
 
    private TimeBufferedCommand paneSizesChangedCommand_;
 
-   private WorkbenchMetrics lastMetrics_ = WorkbenchMetrics.create(0,0,0);
+   private WorkbenchMetrics lastMetrics_ = WorkbenchMetrics.create(0,0,0,1.0);
    
    private final GlobalDisplay globalDisplay_;
    private final EventBus eventBus_;

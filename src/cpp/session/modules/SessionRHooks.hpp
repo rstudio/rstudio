@@ -18,10 +18,13 @@
 
 #define kSessionInitHook "rstudio.sessionInit"
 
+namespace rstudio {
 namespace core {
    class Error;
 }
+}
 
+namespace rstudio {
 namespace session {
 namespace modules { 
 namespace rhooks {
@@ -38,6 +41,7 @@ core::Error invokeHook(const std::string& hookName, const ParamType& param)
 } // namespace packrat
 } // namespace modules
 } // namespace rhooks
+} // namespace rstudio
 
 #endif // SESSION_RHOOKS_HPP
 

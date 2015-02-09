@@ -21,6 +21,7 @@
 
 #include <boost/utility.hpp>
 
+namespace rstudio {
 namespace core {
 namespace http {
 
@@ -45,6 +46,7 @@ private:
 
 } // namespace http
 } // namespace core
+} // namespace rstudio
 
 
 #endif // CORE_HTTP_MULTIPART_RELATED_HPP

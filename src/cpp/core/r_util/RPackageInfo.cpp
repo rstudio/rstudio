@@ -21,6 +21,7 @@
 
 #include <core/text/DcfParser.hpp>
 
+namespace rstudio {
 namespace core {
 namespace r_util {
 
@@ -73,6 +74,11 @@ Error RPackageInfo::read(const FilePath& packageDir)
    if (it != fields.end())
       linkingTo_ = it->second;
 
+   // SystemRequirements field
+   it = fields.find("SystemRequirements");
+   if (it != fields.end())
+      systemRequirements_ = it->second;
+
    // Type field
    it = fields.find("Type");
    if (it != fields.end())
@@ -118,6 +124,7 @@ bool isPackageDirectory(const FilePath& dir)
 
 } // namespace r_util
 } // namespace core 
+} // namespace rstudio
 
 
 

@@ -18,6 +18,7 @@
 #include <core/FilePath.hpp>
 #include <core/SafeConvert.hpp>
 
+namespace rstudio {
 namespace core {
 namespace shell_utils {
 
@@ -123,5 +124,6 @@ ShellArgs& ShellArgs::operator<<(const std::vector<FilePath> args)
    return *this;
 }
 
+}
 }
 }

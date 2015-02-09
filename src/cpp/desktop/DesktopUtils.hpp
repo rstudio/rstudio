@@ -21,21 +21,26 @@
 #include <QMainWindow>
 #include <QFileDialog>
 
+namespace rstudio {
 namespace core {
    class FilePath;
 }
+}
 
+namespace rstudio {
 namespace desktop {
 
 void reattachConsoleIfNecessary();
 
 core::FilePath userLogPath();
 
-bool isRetina(QMainWindow* pMainWindow);
+double devicePixelRatio(QMainWindow* pMainWindow);
 
 bool isOSXMavericks();
 
 void raiseAndActivateWindow(QWidget* pWindow);
+
+void closeWindow(QWidget* pWindow);
 
 QMessageBox::Icon safeMessageBoxIcon(QMessageBox::Icon icon);
 
@@ -74,5 +79,6 @@ double getDpiZoomScaling();
 QFileDialog::Options standardFileDialogOptions();
 
 } // namespace desktop
+} // namespace rstudio
 
 #endif // DESKTOP_UTILS_HPP

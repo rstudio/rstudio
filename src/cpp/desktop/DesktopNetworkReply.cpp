@@ -34,8 +34,9 @@
 
 #include "DesktopNetworkIOService.hpp"
 
-using namespace core;
+using namespace rstudio::core;
 
+namespace rstudio {
 namespace desktop {
 
 struct NetworkReply::Impl
@@ -123,8 +124,7 @@ NetworkReply::NetworkReply(const std::string& localPeer,
    if (req.url().hasQuery())
    {
       uri.append("?");
-      QByteArray queryString = req.url().encodedQuery();
-      uri.append(queryString.begin(), queryString.end());
+      uri.append(req.url().query().toStdString());
    }
    request.setUri(uri);
 
@@ -182,10 +182,18 @@ qint64 NetworkReply::bytesAvailable() const
 {
    // check for bytes available
    qint64 avail = pImpl_->replyData.size() - pImpl_->replyReadOffset;
+   return avail;
 
-   // Qt will never call readData unless you tell it that at least
-   // 512 bytes are available
-   return std::max(avail, (qint64)512);
+   // NOTE: In Qt 4.7 (and perhaps some versions of Qt5 Qt would never call
+   // readData unless you told it that at least 512 bytes were available,
+   // so formerly we did this:
+   //
+   //     return std::max(avail, (qint64)512);
+   //
+   // However, in Qt 5.3 this caused us to hang for requests that were
+   // smaller than some threshold. Just returning the avail bytes
+   // (as we do above) seems to work fine in Qt 5.3, but it's worth noting
+   // that the std::max hack used to be required
 }
 
 bool NetworkReply::isSequential() const
@@ -285,3 +293,4 @@ void NetworkReply::onError(const Error& networkError)
 
 
 } // namespace desktop
+} // namespace rstudio

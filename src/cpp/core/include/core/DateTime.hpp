@@ -20,6 +20,7 @@
 
 #include <boost/date_time/posix_time/posix_time.hpp>
 
+namespace rstudio {
 namespace core {
 namespace date_time {
 
@@ -39,6 +40,7 @@ std::string format(const boost::posix_time::ptime& datetime,
 
 } // namespace date_time
 } // namespace core 
+} // namespace rstudio
 
 
 #endif // CORE_DATE_TIME_HPP

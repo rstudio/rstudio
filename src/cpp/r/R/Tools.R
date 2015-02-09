@@ -16,6 +16,9 @@
 # target environment for rstudio supplemental tools
 .rs.Env <- attach(NULL,name="tools:rstudio")
 
+# environment for completion hooks
+assign(".rs.RCompletionHooksEnv", new.env(parent = emptyenv()), envir = .rs.Env)
+
 # add a function to the tools:rstudio environment
 assign( envir = .rs.Env, ".rs.addFunction", function(
    name, FN, attrs = list())
@@ -27,11 +30,25 @@ assign( envir = .rs.Env, ".rs.addFunction", function(
    environment(.rs.Env[[fullName]]) <- .rs.Env
 })
 
+# add a global (non-scoped) variable to the tools:rstudio environment
+assign(envir = .rs.Env, ".rs.addGlobalVariable", function(name, var)
+{ 
+   assign(name, var, .rs.Env)
+   environment(.rs.Env[[name]]) <- .rs.Env
+})
+
 # add a global (non-scoped) function to the tools:rstudio environment
 assign( envir = .rs.Env, ".rs.addGlobalFunction", function(name, FN)
 { 
    assign(name, FN, .rs.Env)
    environment(.rs.Env[[name]]) <- .rs.Env
+})
+
+# add an rpc handler to the tools:rstudio environment
+.rs.addFunction( "addApiFunction", function(name, FN)
+{
+   fullName = paste("api.", name, sep="")
+   .rs.addFunction(fullName, FN)
 })
 
 assign( envir = .rs.Env, ".rs.setVar", function(name, var)
@@ -47,6 +64,12 @@ assign( envir = .rs.Env, ".rs.clearVar", function(name)
    remove(list=fullName, pos=.rs.Env)
 })
 
+assign(envir = .rs.Env, ".rs.getVar", function(name)
+{
+   fullName <- paste(".rs.", name, sep = "")
+   .rs.Env[[fullName]]
+})
+
 .rs.addFunction( "evalInGlobalEnv", function(code)
 {
    eval(parse(text=code), envir=globalenv())
@@ -56,7 +79,7 @@ assign( envir = .rs.Env, ".rs.clearVar", function(name)
 .rs.addFunction( "saveOptions", function(filename)
 {
    opt = options();
-   save(opt, file=filename)
+   suppressWarnings(save(opt, file=filename))
 })
 
 # restore options() from file
@@ -575,3 +598,15 @@ assign( envir = .rs.Env, ".rs.clearVar", function(name)
       end_character_number = .rs.scalar(srcref[6]))
 })
 
+.rs.addFunction("haveRequiredRSvnRev", function(requiredSvnRev) {
+   svnRev <- R.version$`svn rev`
+   if (!is.null(svnRev)) {
+      svnRevNumeric <- suppressWarnings(as.numeric(svnRev))
+      if (!is.na(svnRevNumeric) && length(svnRevNumeric) == 1)
+         svnRevNumeric >= requiredSvnRev
+      else
+         FALSE
+   } else {
+      FALSE
+   }
+})

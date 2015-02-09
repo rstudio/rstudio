@@ -33,8 +33,17 @@
 
 #include <core/r_util/RTokenizer.hpp>
 
+namespace rstudio {
 namespace core {
 namespace r_util {
+
+struct AsyncLibraryCompletions
+{
+   std::string package;
+   std::vector<std::string> exports;
+   std::vector<int> types;
+   std::map< std::string, std::vector<std::string> > functions;
+};
 
 class RS4MethodParam
 {
@@ -116,6 +125,9 @@ private:
 public:
    // accessors
    int type() const { return type_; }
+   bool isFunction() const { return type_ == Function; }
+   bool isMethod() const { return type_ == Method; }
+   bool isClass() const { return type_ == Class; }
    const std::string& context() const { return context_; }
    const std::string& name() const { return name_; }
    const std::vector<RS4MethodParam>& signature() const { return signature_; }
@@ -131,6 +143,11 @@ public:
          return boost::algorithm::starts_with(name_, term);
       else
          return boost::algorithm::istarts_with(name_, term);
+   }
+
+   bool nameIsSubsequence(const std::string& term, bool caseSensitive) const
+   {
+      return string_utils::isSubsequence(name_, term, !caseSensitive);
    }
 
    bool nameContains(const std::string& term, bool caseSensitive) const
@@ -240,7 +257,7 @@ public:
             predicate = boost::bind(&RSourceItem::nameStartsWith,
                                        _1, term, caseSensitive);
          else
-            predicate = boost::bind(&RSourceItem::nameContains,
+            predicate = boost::bind(&RSourceItem::nameIsSubsequence,
                                        _1, term, caseSensitive);
       }
 
@@ -255,15 +272,75 @@ public:
    {
       return search(term, context_, prefixOnly, caseSensitive, out);
    }
+   
+public:
+
+   static const std::set<std::string>& getAllInferredPackages()
+   {
+      return s_allInferredPkgNames_;
+   }
+
+   const std::set<std::string>& getInferredPackages()
+   {
+      return inferredPkgNames_;
+   }
+   
+   static void addCompletions(const std::string& package,
+                              const AsyncLibraryCompletions& asyncCompletions)
+   {
+      s_completions_[package] = asyncCompletions;
+   }
+
+   static bool hasCompletions(const std::string& package)
+   {
+      return s_completions_.find(package) != s_completions_.end();
+   }
+   
+   static const AsyncLibraryCompletions& getCompletions(const std::string& package)
+   {
+      return s_completions_[package];
+   }
+
+   static const std::vector<std::string> getAllUnindexedPackages()
+   {
+      std::vector<std::string> result;
+      typedef std::set<std::string>::const_iterator iterator_t;
+      for (iterator_t it = s_allInferredPkgNames_.begin();
+           it != s_allInferredPkgNames_.end();
+           ++it)
+      {
+         if (s_completions_.count(*it) == 0)
+            result.push_back(*it);
+      }
+      return result;
+   }
+
+   void addInferredPackage(const std::string& packageName)
+   {
+      inferredPkgNames_.insert(packageName);
+      s_allInferredPkgNames_.insert(packageName);
+   }
 
 private:
    std::string context_;
    std::vector<RSourceItem> items_;
+   
+   // private fields related to the current set of library completions
+   // NOTE: each index tracks the 'library' calls encountered within,
+   // but we share that state in a static variable (so that we can
+   // cache and share across all indexes)
+   std::set<std::string> inferredPkgNames_;
+   static std::set<std::string> s_allInferredPkgNames_;
+   
+   // NOTE: All source indexes share a set of completions
+   static std::map<std::string, AsyncLibraryCompletions> s_completions_;
+   
 };
 
 
 } // namespace r_util
 } // namespace core 
+} // namespace rstudio
 
 
 #endif // CORE_R_UTIL_R_SOURCE_INDEX_HPP

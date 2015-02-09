@@ -19,6 +19,7 @@
 #include <boost/utility.hpp>
 #include <boost/scoped_ptr.hpp>
 
+namespace rstudio {
 namespace core {
 
 class Error;
@@ -46,6 +47,7 @@ private:
 };
 
 } // namespace core
+} // namespace rstudio
 
 
 #endif // CORE_FILE_LOCK_HPP

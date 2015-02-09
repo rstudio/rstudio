@@ -64,14 +64,15 @@
 
 #include "session-config.h"
 
-using namespace core;
-using namespace core::shell_utils;
-using session::console_process::ConsoleProcess;
-using namespace session::modules::vcs_utils;
-using session::modules::source_control::FileWithStatus;
-using session::modules::source_control::VCSStatus;
-using session::modules::source_control::StatusResult;
+using namespace rstudio::core;
+using namespace rstudio::core::shell_utils;
+using rstudio::session::console_process::ConsoleProcess;
+using namespace rstudio::session::modules::vcs_utils;
+using rstudio::session::modules::source_control::FileWithStatus;
+using rstudio::session::modules::source_control::VCSStatus;
+using rstudio::session::modules::source_control::StatusResult;
 
+namespace rstudio {
 namespace session {
 namespace modules {
 namespace git {
@@ -271,7 +272,7 @@ protected:
                       std::string* pStdErr=NULL,
                       int* pExitCode=NULL)
    {
-      using namespace core::system;
+      using namespace rstudio::core::system;
 
       ProcessResult result;
       Error error = gitExec(args, root_, &result);
@@ -2855,3 +2856,4 @@ core::Error initialize()
 } // namespace git
 } // namespace modules
 } // namespace session
+} // namespace rstudio

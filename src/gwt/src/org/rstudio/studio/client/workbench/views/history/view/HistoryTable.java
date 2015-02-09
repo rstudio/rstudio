@@ -68,7 +68,7 @@ public class HistoryTable extends FastSelectTable<HistoryEntry, String, Long>
                Element el = DOM.eventGetTarget((Event) event.getNativeEvent());
                if (el != null
                    && el.getTagName().equalsIgnoreCase("div")
-                   && el.getClassName().equals(res.styles().disclosure()))
+                   && el.getClassName().contains(res.styles().disclosure()))
                {
                   // disclosure click
                   commands.historyShowContext().execute();

@@ -1,0 +1,46 @@
+@eval fixedWidthFont org.rstudio.core.client.theme.ThemeFonts.getFixedWidthFont();
+
+@external gwt-Image, gwt-Label;
+@external fixedWidthFont;
+
+.toolTip {
+   color: #000023;
+   background-color: #ffffca;
+   padding: 5px;
+   border: 1px solid #ccc;
+   box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+   -webkit-box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.pagingWidget {
+   white-space: nowrap;
+   margin-right: 4px;
+}
+
+.pagingWidget .gwt-Label {
+   margin-right: 4px;
+}
+
+.pagingWidget .gwt-Image {
+   margin-right: 4px;
+}
+
+.itemMenu {
+   padding: 2px;
+   font-family: fixedWidthFont;
+}
+
+.itemImage {
+   position: relative;
+   top: 2px;
+   margin-left: 1px;
+   margin-right: 7px;
+   padding-top: 1px;
+   padding-bottom: 2px;
+   
+}
+
+.itemName {
+   position: relative;
+   top: -1px;
+}

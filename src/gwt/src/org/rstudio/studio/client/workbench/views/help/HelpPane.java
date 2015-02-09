@@ -15,6 +15,7 @@
 
 package org.rstudio.studio.client.workbench.views.help;
 
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
@@ -163,6 +164,14 @@ public class HelpPane extends WorkbenchPane
          });
       } ;
       $wnd.helpNavigate = function(url) {
+         // on some platforms url may arrive unencoded; on others it will already be encoded. to
+         // ascertain the difference, check to see if the url contains any characters that require
+         // encoding. 
+         var re = new RegExp("^([!#$&-;=?-[]_a-z~]|%[0-9a-fA-F]{2})+$");
+         if (!re.test(url)) 
+         {
+            url = encodeURI(url);
+         }
          thiz.@org.rstudio.studio.client.workbench.views.help.HelpPane::showHelp(Ljava/lang/String;)(url);
       } ;
       
@@ -330,6 +339,14 @@ public class HelpPane extends WorkbenchPane
             @Override
             public void onKeyUp(KeyUpEvent event)
             {     
+               // ignore modifier key release
+               if (event.getNativeKeyCode() == KeyCodes.KEY_CTRL || 
+                   event.getNativeKeyCode() == KeyCodes.KEY_ALT || 
+                   event.getNativeKeyCode() == KeyCodes.KEY_SHIFT)
+               {
+                  return;
+               }
+
                WindowEx contentWindow = getContentWindow();
                if (contentWindow != null)
                {
@@ -491,10 +508,19 @@ public class HelpPane extends WorkbenchPane
 
    public String getUrl()
    {
-      if (getIFrameEx() != null)
-         return getIFrameEx().getContentWindow().getLocationHref() ;
-      else
-         return null;
+      String url = null;
+      try 
+      {
+         if (getIFrameEx() != null)
+            url = getIFrameEx().getContentWindow().getLocationHref();
+      }
+      catch (Exception e)
+      {
+         // attempting to get the URL can throw with a DOM security exception if
+         // the current URL is on another domain--in this case we'll just want 
+         // to return null, so eat the exception.
+      }
+      return url;
    }
    
    public String getDocTitle()
@@ -532,8 +558,8 @@ public class HelpPane extends WorkbenchPane
                }
                else
                {
-                  getIFrameEx().getContentWindow().replaceLocationHref(targetUrl_);
                   frame_.setUrl(targetUrl_);
+                  replaceFrameUrl(frame_.getIFrame().cast(), targetUrl_);
                }
                return false;
             }
@@ -630,6 +656,12 @@ public class HelpPane extends WorkbenchPane
                findInputSource);
       }     
    }
+   
+   private final native void replaceFrameUrl(JavaScriptObject frame, String url) /*-{
+   	 frame.contentWindow.setTimeout(function() {
+   	  	this.location.replace(url);
+   	 }, 0);
+   }-*/;
 
 
    private final VirtualHistory navStack_ = new VirtualHistory() ;

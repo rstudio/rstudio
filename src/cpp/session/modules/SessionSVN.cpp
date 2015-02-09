@@ -50,11 +50,12 @@
 #include "SessionWorkbench.hpp"
 #include "SessionGit.hpp"
 
-using namespace core;
-using namespace core::shell_utils;
-using namespace session::modules::vcs_utils;
-using namespace session::console_process;
+using namespace rstudio::core;
+using namespace rstudio::core::shell_utils;
+using namespace rstudio::session::modules::vcs_utils;
+using namespace rstudio::session::console_process;
 
+namespace rstudio {
 namespace session {
 namespace modules {
 namespace svn {
@@ -159,6 +160,19 @@ core::system::ProcessOptions procOptions()
 {
    return procOptions(s_isSvnSshRepository);
 }
+
+void initEnvironment()
+{
+#ifdef _WIN32
+   r::exec::RFunction sysSetenv("Sys.setenv");
+   sysSetenv.addParam("RSTUDIO_MSYS_SSH",
+                      session::options().msysSshPath().absolutePath());
+   Error error = sysSetenv.call();
+   if (error)
+      LOG_ERROR(error);
+#endif
+}
+
 
 void maybeAttachPasswordManager(boost::shared_ptr<ConsoleProcess> pCP)
 {
@@ -1784,6 +1798,8 @@ Error augmentSvnIgnore()
 
 Error initialize()
 {
+   initEnvironment();
+
    initSvnBin();
 
    // initialize password manager
@@ -1839,3 +1855,4 @@ Error initializeSvn(const core::FilePath& workingDir)
 } // namespace svn
 } // namespace modules
 } //namespace session
+} // namespace rstudio

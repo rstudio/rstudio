@@ -35,7 +35,7 @@ download()
 }
 
 # get pandoc
-PANDOC_VERSION=1.12.4.2
+PANDOC_VERSION=1.13.1
 PANDOC_DIR=pandoc/$PANDOC_VERSION
 if [ -d "$PANDOC_DIR" ]
 then
@@ -50,23 +50,20 @@ else
    then
       cp ${PANDOC_NAME}/mac/pandoc* ${PANDOC_DIR}
    else
-      # copy binaries for appropriate distro/arch. debian and fedora
-      # use the fully static debian binaries (so we don't run into 
-      # problems with libgmp.so.3 being missing on later versions 
-      # of fedora. rhel 5 and 6 use the rpm binaries
-      if [[ -x /usr/bin/dpkg ]] || [[ -f /etc/fedora-release ]]; then
-        BINARY_TYPE=debian
-      else
-        BINARY_TYPE=rpm
-        INCLUDE_STATIC="1"
-      fi
       ARCH=`uname -m`
-      cp ${PANDOC_NAME}/linux/${BINARY_TYPE}/${ARCH}/pandoc* ${PANDOC_DIR}
-      if [ "$INCLUDE_STATIC" == "1" ]
+      # copy binaries for appropriate distro/arch. 
+      if grep -q -i -s "release 5" /etc/redhat-release
       then
-        cp ${PANDOC_NAME}/linux/debian/${ARCH}/pandoc ${PANDOC_DIR}/pandoc-static
-        cp ${PANDOC_NAME}/linux/debian/${ARCH}/pandoc-citeproc ${PANDOC_DIR}/pandoc-citeproc-static
+         BINARY_TYPE=rpm
+
+         # rhel5 itself won't use these, but we also build for sles on rhel5
+         PANDOC_STATIC_DIR=${PANDOC_DIR}/static
+         mkdir -p ${PANDOC_STATIC_DIR}
+         cp ${PANDOC_NAME}/linux/debian/${ARCH}/pandoc* ${PANDOC_STATIC_DIR}
+      else 
+         BINARY_TYPE=debian
       fi
+      cp ${PANDOC_NAME}/linux/${BINARY_TYPE}/${ARCH}/pandoc* ${PANDOC_DIR}
    fi
    rm $PANDOC_ZIP
    rm -rf $PANDOC_NAME

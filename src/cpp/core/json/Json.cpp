@@ -26,6 +26,7 @@
 
 #include "spirit/json_spirit.h"
 
+namespace rstudio {
 namespace core {
 namespace json {
 
@@ -40,6 +41,50 @@ json_spirit::Value_type NullType = json_spirit::null_type;
 json::Value toJsonString(const std::string& val)
 {
    return json::Value(val);
+}
+
+bool fillVectorString(const Array& array, std::vector<std::string>* pVector)
+{
+   for (Array::const_iterator it = array.begin();
+        it != array.end();
+        ++it)
+   {
+      if (!isType<std::string>(*it))
+         return false;
+      pVector->push_back(it->get_str());
+   }
+   
+   return true;
+}
+
+bool fillVectorInt(const Array& array, std::vector<int>* pVector)
+{
+   for (Array::const_iterator it = array.begin();
+        it != array.end();
+        ++it)
+   {
+      if (!isType<int>(*it))
+         return false;
+      pVector->push_back(it->get_int());
+   }
+
+   return true;
+}
+
+bool fillMap(const Object& object, std::map< std::string, std::vector<std::string> >* pMap)
+{
+   for (Object::const_iterator it = object.begin();
+        it != object.end();
+        ++it)
+   {
+      std::vector<std::string> strings;
+      const json::Array& array = it->second.get_array();
+      if (!fillVectorString(array, &strings))
+         return false;
+      
+      (*pMap)[it->first] = strings;
+   }
+   return true;
 }
 
 bool parse(const std::string& input, Value* pValue)
@@ -74,6 +119,7 @@ void writeFormatted(const Value& value, std::ostream& os)
    
 } // namespace json
 } // namespace core
+} // namespace rstudio
 
 
 

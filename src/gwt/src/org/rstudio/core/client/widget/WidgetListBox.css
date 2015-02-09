@@ -7,7 +7,6 @@
 .anyItem
 {
 	width: 100%;
-	cursor: pointer;
 	box-sizing: border-box;
 	-moz-box-sizing: border-box;
 	-webkit-box-sizing: border-box;
@@ -17,6 +16,11 @@
 {
 	margin: 0px;
 	padding: 0px;
+}
+
+.outerPanel:focus
+{
+	outline: none;
 }
 
 .listPanel
@@ -29,4 +33,16 @@
 	-moz-box-sizing: border-box;
 	-webkit-box-sizing: border-box;
 	overflow: auto;
+}
+
+.listPanel:focus
+{
+	outline: none;
+}
+
+.emptyMessage
+{
+	color: #c0c0c0;
+	padding-top: 30%;
+	text-align: center;
 }

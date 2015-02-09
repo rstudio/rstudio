@@ -18,6 +18,7 @@
 
 #include "DesktopBrowserWindow.hpp"
 
+namespace rstudio {
 namespace desktop {
 
 class GwtWindow : public BrowserWindow
@@ -26,6 +27,7 @@ class GwtWindow : public BrowserWindow
 public:
     explicit GwtWindow(bool showToolbar,
                        bool adjustTitle,
+                       QString name,
                        QUrl baseUrl = QUrl(),
                        QWidget *parent = NULL);
 
@@ -40,5 +42,6 @@ private:
 };
 
 } // namespace desktop
+} // namespace rstudio
 
 #endif // DESKTOP_GWT_WINDOW_HPP

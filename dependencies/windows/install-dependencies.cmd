@@ -8,28 +8,34 @@ set WGET_ARGS=--no-check-certificate
 set UNZIP_ARGS=-q
 
 set BASEURL=https://s3.amazonaws.com/rstudio-buildtools/
-set BOOST_FILE=boost-1.50-win.zip
-set MINGW_FILE=mingw64-2010-10-03.zip
+set BOOST_GCC491_FILE=boost-1.50-win-gcc491.zip
+set MINGW_FILE=mingw64-x86_64-posix-sjlj-4.9.1.zip
 set GIN_FILE=gin-1.5.zip
-set GWT_FILE=gwt-2.6.0.zip
+set GWT_FILE=gwt-2.7.0.zip
 set JUNIT_FILE=junit-4.9b3.jar
 set GNUDIFF_FILE=gnudiff.zip
 set GNUGREP_FILE=gnugrep-2.5.4.zip
-set MSYS_SSH_FILE=msys_ssh.zip
+set MSYS_SSH_FILE=msys-ssh-1000-18.zip
 set SUMATRA_PDF_FILE=SumatraPDF-2.4.zip
 
-set PANDOC_VERSION=1.12.4.2
+set PANDOC_VERSION=1.13.1
 set PANDOC_NAME=pandoc-%PANDOC_VERSION%
 set PANDOC_FILE=%PANDOC_NAME%.zip
 
-if not exist boost-1.50-win (
-  wget %WGET_ARGS% "%BASEURL%%BOOST_FILE%"
-  echo Unzipping %BOOST_FILE%
-  unzip %UNZIP_ARGS% "%BOOST_FILE%"
-  del "%BOOST_FILE%"
+set LIBCLANG_VERSION=3.4
+set LIBCLANG_NAME=libclang-%LIBCLANG_VERSION%
+set LIBCLANG_FILE=%LIBCLANG_NAME%.zip
+set LIBCLANG_HEADERS=builtin-headers
+set LIBCLANG_HEADERS_FILE=libclang-%LIBCLANG_HEADERS%.zip
+
+if not exist boost-1.50-win-gcc491 (
+  wget %WGET_ARGS% "%BASEURL%%BOOST_GCC491_FILE%"
+  echo Unzipping %BOOST_GCC491_FILE%
+  unzip %UNZIP_ARGS% "%BOOST_GCC491_FILE%"
+  del "%BOOST_GCC491_FILE%"
 )
 
-if not exist mingw64 (
+if not exist mingw64-x86_64-posix-sjlj-4.9.1 (
   wget %WGET_ARGS% "%BASEURL%%MINGW_FILE%"
   echo Unzipping %MINGW_FILE%
   unzip %UNZIP_ARGS% "%MINGW_FILE%"
@@ -52,11 +58,11 @@ if not exist gnugrep (
   del "%GNUGREP_FILE%"
 )
 
-if not exist msys_ssh (
+if not exist msys-ssh-1000-18 (
   wget %WGET_ARGS% "%BASEURL%%MSYS_SSH_FILE%"
-  mkdir msys_ssh
+  mkdir msys-ssh-1000-18
   echo Unzipping %MSYS_SSH_FILE%
-  unzip %UNZIP_ARGS% "%MSYS_SSH_FILE%" -d msys_ssh
+  unzip %UNZIP_ARGS% "%MSYS_SSH_FILE%" -d msys-ssh-1000-18
   del "%MSYS_SSH_FILE%"
 )
 
@@ -81,12 +87,12 @@ if not exist gin\1.5 (
   del "%GIN_FILE%"
 )
 
-if not exist gwt\2.6.0 (
+if not exist gwt\2.7.0 (
   wget %WGET_ARGS% "%BASEURL%%GWT_FILE%"
   echo Unzipping %GWT_FILE%
   unzip %UNZIP_ARGS% "%GWT_FILE%"
   mkdir gwt
-  move gwt-2.6.0 gwt\2.6.0
+  move gwt-2.7.0 gwt\2.7.0
   del "%GWT_FILE%"
 )
 
@@ -129,6 +135,24 @@ if not exist pandoc\%PANDOC_VERSION% (
   del %PANDOC_FILE%
   rmdir /s /q %PANDOC_NAME%
 )
+
+if not exist libclang\%LIBCLANG_VERSION% (
+  wget %WGET_ARGS% "%BASEURL%%LIBCLANG_FILE%"
+  echo Unzipping %LIBCLANG_FILE%
+  unzip %UNZIP_ARGS% "%LIBCLANG_FILE%"
+  mkdir libclang\%LIBCLANG_VERSION%
+  xcopy /s "%LIBCLANG_NAME%\windows\mingw" "libclang\%LIBCLANG_VERSION%"
+  del %LIBCLANG_FILE%
+  rmdir /s /q %LIBCLANG_NAME%
+)
+
+if not exist libclang\%LIBCLANG_HEADERS% (
+  wget %WGET_ARGS% "%BASEURL%%LIBCLANG_HEADERS_FILE%"
+  echo Unzipping %LIBCLANG_HEADERS%
+  unzip %UNZIP_ARGS% "%LIBCLANG_HEADERS_FILE%" -d libclang
+  del %LIBCLANG_HEADERS_FILE%
+)
+
 
 
 install-packages.cmd

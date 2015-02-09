@@ -33,8 +33,9 @@
 
 #include "ViewerHistory.hpp"
 
-using namespace core;
+using namespace rstudio::core;
 
+namespace rstudio {
 namespace session {
 namespace modules { 
 namespace viewer {
@@ -135,7 +136,7 @@ Error getViewerExportContext(const json::JsonRpcRequest& request,
 
    // get supported formats
    using namespace module_context;
-   using namespace r::session::graphics;
+   using namespace rstudio::r::session::graphics;
    json::Array formats;
    formats.push_back(plotExportFormat("PNG", kPngFormat));
    formats.push_back(plotExportFormat("JPEG", kJpegFormat));
@@ -404,4 +405,5 @@ Error initialize()
 } // namespace viewer
 } // namespace modules
 } // namesapce session
+} // namespace rstudio
 

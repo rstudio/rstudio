@@ -19,6 +19,8 @@
 
 #include <QtGui>
 #include <QtWebKit>
+#include <QToolBar>
+#include <QWebFrame>
 
 #include <boost/bind.hpp>
 #include <boost/format.hpp>
@@ -34,12 +36,13 @@
 #include "DesktopUtils.hpp"
 #include "DesktopSessionLauncher.hpp"
 
-using namespace core;
+using namespace rstudio::core;
 
+namespace rstudio {
 namespace desktop {
 
 MainWindow::MainWindow(QUrl url) :
-      GwtWindow(false, false, url, NULL),
+      GwtWindow(false, false, QString(), url, NULL),
       menuCallback_(this),
       gwtCallback_(this, this),
       pSessionLauncher_(NULL),
@@ -98,9 +101,9 @@ MainWindow::MainWindow(QUrl url) :
            this, SLOT(commitDataRequest(QSessionManager&)),
            Qt::DirectConnection);
 
-   setWindowIcon(QIcon(QString::fromAscii(":/icons/RStudio.ico")));
+   setWindowIcon(QIcon(QString::fromUtf8(":/icons/RStudio.ico")));
 
-   setWindowTitle(QString::fromAscii("RStudio"));
+   setWindowTitle(QString::fromUtf8("RStudio"));
 
 #ifdef Q_OS_MAC
    QMenuBar* pDefaultMenu = new QMenuBar();
@@ -110,13 +113,13 @@ MainWindow::MainWindow(QUrl url) :
    desktop::enableFullscreenMode(this, true);
 
    //setContentsMargins(10000, 0, -10000, 0);
-   setStyleSheet(QString::fromAscii("QMainWindow { background: #e1e2e5; }"));
+   setStyleSheet(QString::fromUtf8("QMainWindow { background: #e1e2e5; }"));
 }
 
 QString MainWindow::getSumatraPdfExePath()
 {
    QWebFrame* pMainFrame = webView()->page()->mainFrame();
-   QString sumatraPath = pMainFrame->evaluateJavaScript(QString::fromAscii(
+   QString sumatraPath = pMainFrame->evaluateJavaScript(QString::fromUtf8(
                     "window.desktopHooks.getSumatraPdfExePath()")).toString();
    return sumatraPath;
 }
@@ -142,7 +145,7 @@ void MainWindow::onCloseWindowShortcut()
    QWebFrame* pMainFrame = webView()->page()->mainFrame();
 
    bool closeSourceDocEnabled = pMainFrame->evaluateJavaScript(
-      QString::fromAscii(
+      QString::fromUtf8(
          "window.desktopHooks.isCommandEnabled('closeSourceDoc')")).toBool();
 
    if (!closeSourceDocEnabled)
@@ -161,12 +164,12 @@ void MainWindow::onWorkbenchInitialized()
    // see if there is a project dir to display in the titlebar
    // if there are unsaved changes then resolve them before exiting
    QVariant vProjectDir = webView()->page()->mainFrame()->evaluateJavaScript(
-         QString::fromAscii("window.desktopHooks.getActiveProjectDir()"));
+         QString::fromUtf8("window.desktopHooks.getActiveProjectDir()"));
    QString projectDir = vProjectDir.toString();
    if (projectDir.length() > 0)
-      setWindowTitle(projectDir + QString::fromAscii(" - RStudio"));
+      setWindowTitle(projectDir + QString::fromUtf8(" - RStudio"));
    else
-      setWindowTitle(QString::fromAscii("RStudio"));
+      setWindowTitle(QString::fromUtf8("RStudio"));
 
    avoidMoveCursorIfNecessary();
 }
@@ -208,19 +211,19 @@ void MainWindow::onJavaScriptWindowObjectCleared()
       webView()->setDpiAwareZoomFactor(zoomLevel);
 
    webView()->page()->mainFrame()->addToJavaScriptWindowObject(
-         QString::fromAscii("desktop"),
+         QString::fromUtf8("desktop"),
          &gwtCallback_,
-         QScriptEngine::QtOwnership);
+         QWebFrame::QtOwnership);
    webView()->page()->mainFrame()->addToJavaScriptWindowObject(
-         QString::fromAscii("desktopMenuCallback"),
+         QString::fromUtf8("desktopMenuCallback"),
          &menuCallback_,
-         QScriptEngine::QtOwnership);
+         QWebFrame::QtOwnership);
 }
 
 void MainWindow::invokeCommand(QString commandId)
 {
    webView()->page()->mainFrame()->evaluateJavaScript(
-         QString::fromAscii("window.desktopHooks.invokeCommand('") + commandId + QString::fromAscii("');"));
+         QString::fromUtf8("window.desktopHooks.invokeCommand('") + commandId + QString::fromUtf8("');"));
 }
 
 void MainWindow::zoomIn()
@@ -251,15 +254,15 @@ void MainWindow::manageCommand(QString cmdId, QAction* action)
 {
    QWebFrame* pMainFrame = webView()->page()->mainFrame();
    action->setVisible(pMainFrame->evaluateJavaScript(
-         QString::fromAscii("window.desktopHooks.isCommandVisible('") + cmdId + QString::fromAscii("')")).toBool());
+         QString::fromUtf8("window.desktopHooks.isCommandVisible('") + cmdId + QString::fromUtf8("')")).toBool());
    action->setEnabled(pMainFrame->evaluateJavaScript(
-         QString::fromAscii("window.desktopHooks.isCommandEnabled('") + cmdId + QString::fromAscii("')")).toBool());
+         QString::fromUtf8("window.desktopHooks.isCommandEnabled('") + cmdId + QString::fromUtf8("')")).toBool());
    action->setText(pMainFrame->evaluateJavaScript(
-         QString::fromAscii("window.desktopHooks.getCommandLabel('") + cmdId + QString::fromAscii("')")).toString());
+         QString::fromUtf8("window.desktopHooks.getCommandLabel('") + cmdId + QString::fromUtf8("')")).toString());
    if (action->isCheckable())
    {
       action->setChecked(pMainFrame->evaluateJavaScript(
-         QString::fromAscii("window.desktopHooks.isCommandChecked('") + cmdId + QString::fromAscii("')")).toBool());
+         QString::fromUtf8("window.desktopHooks.isCommandChecked('") + cmdId + QString::fromUtf8("')")).toBool());
    }
 }
 
@@ -269,7 +272,7 @@ void MainWindow::manageCommandVisibility(QString cmdId, QAction* action)
 {
    QWebFrame* pMainFrame = webView()->page()->mainFrame();
    action->setVisible(pMainFrame->evaluateJavaScript(
-         QString::fromAscii("window.desktopHooks.isCommandVisible('") + cmdId + QString::fromAscii("')")).toBool());
+         QString::fromUtf8("window.desktopHooks.isCommandVisible('") + cmdId + QString::fromUtf8("')")).toBool());
 }
 
 void MainWindow::evaluateJavaScript(QString jsCode)
@@ -287,7 +290,7 @@ void MainWindow::closeEvent(QCloseEvent* pEvent)
        return;
    }
 
-   QVariant hasQuitR = pFrame->evaluateJavaScript(QString::fromAscii("!!window.desktopHooks"));
+   QVariant hasQuitR = pFrame->evaluateJavaScript(QString::fromUtf8("!!window.desktopHooks"));
 
    if (quitConfirmed_
        || !hasQuitR.toBool()
@@ -298,7 +301,7 @@ void MainWindow::closeEvent(QCloseEvent* pEvent)
    }
    else
    {
-      pFrame->evaluateJavaScript(QString::fromAscii("window.desktopHooks.quitR()"));
+      pFrame->evaluateJavaScript(QString::fromUtf8("window.desktopHooks.quitR()"));
       pEvent->ignore();
    }
 }
@@ -315,19 +318,19 @@ void MainWindow::openFileInRStudio(QString path)
    if (!fileInfo.isAbsolute() || !fileInfo.exists() || !fileInfo.isFile())
       return;
 
-   path = path.replace(QString::fromAscii("\\"), QString::fromAscii("\\\\"))
-          .replace(QString::fromAscii("\""), QString::fromAscii("\\\""))
-          .replace(QString::fromAscii("\n"), QString::fromAscii("\\n"));
+   path = path.replace(QString::fromUtf8("\\"), QString::fromUtf8("\\\\"))
+          .replace(QString::fromUtf8("\""), QString::fromUtf8("\\\""))
+          .replace(QString::fromUtf8("\n"), QString::fromUtf8("\\n"));
 
    webView()->page()->mainFrame()->evaluateJavaScript(
-         QString::fromAscii("window.desktopHooks.openFile(\"") + path + QString::fromAscii("\")"));
+         QString::fromUtf8("window.desktopHooks.openFile(\"") + path + QString::fromUtf8("\")"));
 }
 
 void MainWindow::onPdfViewerClosed(QString pdfPath)
 {
    webView()->page()->mainFrame()->evaluateJavaScript(
-            QString::fromAscii("window.synctexNotifyPdfViewerClosed(\"") +
-                                         pdfPath + QString::fromAscii("\")"));
+            QString::fromUtf8("window.synctexNotifyPdfViewerClosed(\"") +
+                                         pdfPath + QString::fromUtf8("\")"));
 }
 
 void MainWindow::onPdfViewerSyncSource(QString srcFile, int line, int column)
@@ -360,13 +363,14 @@ int MainWindow::collectPendingQuitRequest()
 bool MainWindow::desktopHooksAvailable()
 {
    return webView()->page()->mainFrame()->evaluateJavaScript(
-                        QString::fromAscii("!!window.desktopHooks")).toBool();
+                        QString::fromUtf8("!!window.desktopHooks")).toBool();
 }
 
 void MainWindow::onActivated()
 {
    if (desktopHooksAvailable())
-      invokeCommand(QString::fromAscii("vcsRefreshNoError"));
+      invokeCommand(QString::fromUtf8("vcsRefreshNoError"));
 }
 
 } // namespace desktop
+} // namespace rstudio

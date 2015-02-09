@@ -21,6 +21,7 @@
 
 #include <boost/function.hpp>
 
+namespace rstudio {
 namespace desktop {
 
 class StringSlotBinder : public QObject
@@ -63,5 +64,6 @@ private:
 };
 
 } // namespace desktop
+} // namespace rstudio
 
 #endif // DESKTOP_STRING_SLOT_BINDER_HPP

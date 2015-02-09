@@ -30,10 +30,10 @@
 #include <session/SessionModuleContext.hpp>
 
 #include "SessionBuildErrors.hpp"
-#include "SessionBuildEnvironment.hpp"
 
-using namespace core ;
+using namespace rstudio::core ;
 
+namespace rstudio {
 namespace session {  
 namespace modules {
 namespace build {
@@ -92,8 +92,8 @@ void enqueSourceCppCompleted(const FilePath& sourceFile,
    // parse errors
    std::string allOutput = output + "\n" + errorOutput;
    CompileErrorParser errorParser = gccErrorParser(sourceFile.parent());
-   std::vector<CompileError> errors = errorParser(allOutput);
-   sourceCppState.errors = compileErrorsAsJson(errors);
+   std::vector<SourceMarker> errors = errorParser(allOutput);
+   sourceCppState.errors = sourceMarkersAsJson(errors);
 
    // enque event
    ClientEvent event(client_events::kSourceCppCompleted,
@@ -122,7 +122,7 @@ public:
       // fixup path if necessary
       std::string path = core::system::getenv("PATH");
       std::string newPath = path;
-      if (build::addRtoolsToPathIfNecessary(&newPath, &rToolsWarning_))
+      if (module_context::addRtoolsToPathIfNecessary(&newPath, &rToolsWarning_))
       {
           previousPath_ = path;
           core::system::setenv("PATH", newPath);
@@ -296,3 +296,4 @@ Error initialize()
 } // namespace build
 } // namespace modules
 } // namespace session
+} // namespace rstudio

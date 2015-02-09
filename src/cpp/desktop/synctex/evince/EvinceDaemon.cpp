@@ -15,12 +15,13 @@
 
 #include "EvinceDaemon.hpp"
 
+namespace rstudio {
 namespace desktop {
 namespace synctex {
 
 EvinceDaemon::EvinceDaemon(QObject *parent)
-    : QDBusAbstractInterface(QString::fromAscii("org.gnome.evince.Daemon"),
-                             QString::fromAscii("/org/gnome/evince/Daemon"),
+    : QDBusAbstractInterface(QString::fromUtf8("org.gnome.evince.Daemon"),
+                             QString::fromUtf8("/org/gnome/evince/Daemon"),
                              staticInterfaceName(),
                              QDBusConnection::sessionBus(),
                              parent)
@@ -33,4 +34,5 @@ EvinceDaemon::~EvinceDaemon()
 
 } // namespace synctex
 } // namespace desktop
+} // namespace rstudio
 

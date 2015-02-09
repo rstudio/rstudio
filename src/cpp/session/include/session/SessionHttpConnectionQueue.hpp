@@ -26,10 +26,13 @@
 
 #include <session/SessionHttpConnection.hpp>
 
+namespace rstudio {
 namespace core {
    class Error;
 }
+}
 
+namespace rstudio {
 namespace session {
 
 class HttpConnectionQueue : boost::noncopyable
@@ -71,6 +74,7 @@ private:
 };
 
 } // namespace session
+} // namespace rstudio
 
 #endif // SESSION_HTTP_CONNECTION_QUEUE_HPP
 

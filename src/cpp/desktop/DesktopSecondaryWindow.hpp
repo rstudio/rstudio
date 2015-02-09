@@ -20,13 +20,16 @@
 #include <QtWebKit>
 #include "DesktopBrowserWindow.hpp"
 
+namespace rstudio {
 namespace desktop {
 
 class SecondaryWindow : public BrowserWindow
 {
     Q_OBJECT
 public:
-    explicit SecondaryWindow(QUrl baseUrl, QWidget* pParent = NULL);
+    explicit SecondaryWindow(bool showToolbar, QString name, QUrl baseUrl,
+                             QWidget* pParent = NULL, WebPage *pOpener = NULL,
+                             bool allowExternalNavigate = false);
 
 signals:
 
@@ -46,5 +49,6 @@ private:
 };
 
 } // namespace desktop
+} // namespace rstudio
 
 #endif // DESKTOP_SECONDARY_WINDOW_HPP

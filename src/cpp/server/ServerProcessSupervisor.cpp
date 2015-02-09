@@ -23,8 +23,9 @@
 
 #include <server/ServerScheduler.hpp>
 
-using namespace core ;
+using namespace rstudio::core ;
 
+namespace rstudio {
 namespace server {
 namespace process_supervisor {
 
@@ -91,3 +92,4 @@ Error initialize()
 
 } // namespace process_supervisor
 } // namespace server
+} // namespace rstudio

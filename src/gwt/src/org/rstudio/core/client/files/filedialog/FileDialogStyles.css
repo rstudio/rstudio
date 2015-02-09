@@ -106,9 +106,13 @@
 }
 
 .breadcrumb table.path a.home {
-   background: none;
    padding-left: 28px;
    background: HOME 0 1px no-repeat;
+}
+
+.project {
+   margin-bottom: 2px;
+   margin-right: 4px;
 }
 
 .breadcrumb table.path a.last {
@@ -124,10 +128,8 @@
 }
 
 .goUp {
-   cursor: pointer;
    margin: 0 3px 0 12px;
 }
 
 .browse {
-   cursor: pointer;
 }

@@ -19,6 +19,7 @@
 
 #include <core/Error.hpp>
 
+namespace rstudio {
 namespace core {
 namespace system {
 
@@ -33,10 +34,10 @@ void addLastDLErrorMessage(Error* pError)
 
 } // anonymous namespace
 
-Error loadLibrary(const std::string& libPath, int options, void** ppLib)
+Error loadLibrary(const std::string& libPath, void** ppLib)
 {
    *ppLib = NULL;
-   *ppLib = ::dlopen(libPath.c_str(), options);
+   *ppLib = ::dlopen(libPath.c_str(), RTLD_NOW);
    if (*ppLib == NULL)
    {
       Error error = systemError(
@@ -88,3 +89,4 @@ Error closeLibrary(void* pLib)
 
 } // namespace system
 } // namespace core
+} // namespace rstudio

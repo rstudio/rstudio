@@ -25,8 +25,9 @@
 #include <core/FilePath.hpp>
 #include <core/FileSerializer.hpp>
 
-using namespace core;
+using namespace rstudio::core;
 
+namespace rstudio {
 namespace r {
 namespace session {
     
@@ -320,4 +321,5 @@ void ClientState::currentState(json::Object* pCurrentState) const
 
 } // namespace session
 } // namespace r
+} // namespace rstudio
 

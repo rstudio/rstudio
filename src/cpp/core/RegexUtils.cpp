@@ -26,6 +26,7 @@
 
 #include <core/StringUtils.hpp>
 
+namespace rstudio {
 namespace core {
 namespace regex_utils {
 
@@ -47,6 +48,16 @@ boost::regex wildcardPatternToRegex(const std::string& pattern)
       regex.append("\\E");
    }
    return boost::regex(regex);
+}
+
+boost::regex regexIfWildcardPattern(const std::string& term)
+{
+   // create wildcard pattern if the search has a '*'
+   bool hasWildcard = term.find('*') != std::string::npos;
+   boost::regex pattern;
+   if (hasWildcard)
+      pattern = regex_utils::wildcardPatternToRegex(term);
+   return pattern;
 }
 
 bool textMatches(const std::string& text,
@@ -112,6 +123,7 @@ Error filterString(const std::string& input,
 
 } // namespace regex_utils
 } // namespace core 
+} // namespace rstudio
 
 
 

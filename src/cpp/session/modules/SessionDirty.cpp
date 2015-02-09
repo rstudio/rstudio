@@ -36,10 +36,11 @@
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionUserSettings.hpp>
 
-using namespace core ;
-using namespace r::sexp;
-using namespace r::exec;
+using namespace rstudio::core ;
+using namespace rstudio::r::sexp;
+using namespace rstudio::r::exec;
 
+namespace rstudio {
 namespace session {
 namespace modules {
 namespace dirty {
@@ -129,4 +130,5 @@ Error initialize()
 } // namepsace dirty
 } // namespace modules
 } // namesapce session
+} // namespace rstudio
 

@@ -35,7 +35,6 @@ import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
-import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.ExternalJavaScriptLoader;
 import org.rstudio.core.client.ExternalJavaScriptLoader.Callback;
@@ -54,6 +53,7 @@ import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.model.ChangeTracker;
 import org.rstudio.studio.client.workbench.model.EventBasedChangeTracker;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionManager;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionManager.InitCompletionFilter;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionPopupPanel;
@@ -70,6 +70,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Rendere
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.spelling.CharClassifier;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.spelling.TokenPredicate;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.spelling.WordIterable;
+import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionContext;
 import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionManager;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.*;
 import org.rstudio.studio.client.workbench.views.source.events.RecordNavigationPositionEvent;
@@ -108,20 +109,24 @@ public class AceEditor implements DocDisplay,
          Range range = getSession().getSelection().getRange();
          if (!range.isEmpty())
             return false;
-
+         
          // Don't consider Tab to be a completion if we're at the start of a
          // line (e.g. only zero or more whitespace characters between the
          // beginning of the line and the cursor)
-
          if (event != null && event.getKeyCode() != KeyCodes.KEY_TAB)
             return true;
-
+         
+         // Short-circuit if the user has explicitly opted in
+         if (uiPrefs_.allowTabMultilineCompletion().getValue())
+            return true;
+         
          int col = range.getStart().getColumn();
          if (col == 0)
             return false;
+         
+         String line = getSession().getLine(range.getStart().getRow());
+         return line.substring(0, col).trim().length() != 0;
 
-         String row = getSession().getLine(range.getStart().getRow());
-         return row.substring(0, col).trim().length() != 0;
       }
    }
 
@@ -198,8 +203,20 @@ public class AceEditor implements DocDisplay,
             {
                public void onLoaded()
                {
-                  if (command != null)
-                     command.execute();
+                  vimLoader_.addCallback(new Callback()
+                  {
+                     public void onLoaded()
+                     {
+                        emacsLoader_.addCallback(new Callback()
+                        {
+                           public void onLoaded()
+                           {
+                              if (command != null)
+                                 command.execute();
+                           }
+                        });
+                     }
+                  });
                }
             });
          }
@@ -271,6 +288,9 @@ public class AceEditor implements DocDisplay,
          @Override
          public void onPaste(PasteEvent event)
          {
+            if (completionManager_ != null)
+               completionManager_.onPaste(event);
+            
             final Position start = getSelectionStart();
 
             Scheduler.get().scheduleDeferred(new ScheduledCommand()
@@ -332,7 +352,7 @@ public class AceEditor implements DocDisplay,
          }
       });
    }
-
+   
    private void indentPastedRange(Range range)
    {
       if (fileType_ == null ||
@@ -359,9 +379,11 @@ public class AceEditor implements DocDisplay,
    }
 
    @Inject
-   void initialize(CodeToolsServerOperations server)
+   void initialize(CodeToolsServerOperations server,
+                   UIPrefs uiPrefs)
    {
       server_ = server;
+      uiPrefs_ = uiPrefs;
    }
 
    public TextFileType getFileType()
@@ -392,6 +414,18 @@ public class AceEditor implements DocDisplay,
    {
       rnwContext_ = rnwContext;
    }
+   
+   @Override
+   public void setCppCompletionContext(CppCompletionContext cppContext)
+   {
+      cppContext_ = cppContext;
+   }
+   
+   @Override
+   public void setRCompletionContext(RCompletionContext rContext)
+   {
+      rContext_ = rContext;
+   }
 
    private void updateLanguage(boolean suppressCompletion)
    {
@@ -409,16 +443,20 @@ public class AceEditor implements DocDisplay,
                   new CompletionPopupPanel(),
                   server_,
                   new Filter(),
-                  fileType_.canExecuteChunks() ? rnwContext_ : null);
+                  rContext_,
+                  fileType_.canExecuteChunks() ? rnwContext_ : null,
+                  this,
+                  false);
             
             // if this is cpp then we use our own completion manager
             // that can optionally delegate to the R completion manager
-            if (fileType_.isCpp() || fileType_.isRmd())
+            if (fileType_.isC() || fileType_.isRmd())
             {
-               completionManager = new CppCompletionManager(this,
-                                                            this,
-                                                            new Filter(),
-                                                            completionManager);
+               completionManager = new CppCompletionManager(
+                                                     this,
+                                                     new Filter(),
+                                                     cppContext_,
+                                                     completionManager);
             }
          }
          else
@@ -499,18 +537,10 @@ public class AceEditor implements DocDisplay,
       // reset keyboard handlers
       widget_.getEditor().setKeyboardHandler(null);
       
-      // if required add vim handlers (to main editor and our previewer)
+      // if required add vim handlers to main editor
       if (useVimMode_)
       {
          widget_.getEditor().addKeyboardHandler(KeyboardHandler.vim());
-         previewer.addHandler(
-            new AceVimCommandHandler(new CommandWithArg<Boolean>() {
-               @Override
-               public void execute(Boolean arg)
-               {
-                 fireEvent(new FindRequestedEvent(arg));
-               }             
-            }));
       }
       
       // add the previewer's handler
@@ -605,9 +635,7 @@ public class AceEditor implements DocDisplay,
    
    public void insertCode(String code, boolean blockMode)
    {
-      // TODO: implement block mode
-      getSession().replace(
-            getSession().getSelection().getRange(), code);
+      widget_.getEditor().insert(code);
    }
 
    public String getCode(Position start, Position end)
@@ -752,7 +780,11 @@ public class AceEditor implements DocDisplay,
 
    public boolean hasSelection()
    {
-      return true;
+      return !getSession().getSelection().getRange().isEmpty();
+   }
+   
+   public final Selection getNativeSelection() {
+      return widget_.getEditor().getSession().getSelection();
    }
 
    public InputEditorSelection getSelection()
@@ -821,6 +853,12 @@ public class AceEditor implements DocDisplay,
       // HACK: This cast is gross, InputEditorPosition should just become
       // AceInputEditorPosition
       return Position.create((Integer) pos.getLine(), pos.getPosition());
+   }
+   
+   @Override
+   public InputEditorPosition createInputEditorPosition(Position pos)
+   {
+      return new AceInputEditorPosition(getSession(), pos);
    }
 
    @Override
@@ -922,6 +960,10 @@ public class AceEditor implements DocDisplay,
       else
          widget_.getEditor().blur();
    }
+   
+   public void replaceRange(Range range, String text) {
+      getSession().replace(range, text);
+   }
 
    public String replaceSelection(String value, boolean collapseSelection)
    {
@@ -982,6 +1024,34 @@ public class AceEditor implements DocDisplay,
    {
       int row = getSession().getSelection().getRange().getStart().getRow();
       return getSession().getLine(row);
+   }
+   
+   public char getCharacterAtCursor()
+   {
+      Position cursorPos = getCursorPosition();
+      int column = cursorPos.getColumn();
+      String line = getLine(cursorPos.getRow());
+      if (column == line.length())
+         return '\0';
+      
+      return line.charAt(column);
+   }
+   
+   public char getCharacterBeforeCursor()
+   {
+      Position cursorPos = getCursorPosition();
+      int column = cursorPos.getColumn();
+      if (column == 0)
+         return '\0';
+      
+      String line = getLine(cursorPos.getRow());
+      return line.charAt(column - 1);
+   }
+   
+   
+   public String getCurrentLineUpToCursor()
+   {
+      return getCurrentLine().substring(0, getCursorPosition().getColumn());
    }
 
    public int getCurrentLineNum()
@@ -1258,6 +1328,18 @@ public class AceEditor implements DocDisplay,
       useVimMode_ = use;
       updateKeyboardHandlers();
    }
+   
+   @Override
+   public boolean isVimModeOn()
+   {
+      return useVimMode_;
+   }
+   
+   @Override
+   public boolean isVimInInsertMode()
+   {
+      return useVimMode_ && widget_.getEditor().isVimInInsertMode();
+   }
 
    public void setPadding(int padding)
    {
@@ -1335,6 +1417,28 @@ public class AceEditor implements DocDisplay,
       return getSession().getMode().getCodeModel().getCurrentScope(
             getCursorPosition());
    }
+   
+   @Override
+   public String getNextLineIndent()
+   {
+      EditSession session = getSession();
+      
+      Position cursorPosition = getCursorPosition();
+      int row = cursorPosition.getRow();
+      String state = getSession().getState(row);
+      
+      String line = getCurrentLine().substring(
+            0, cursorPosition.getColumn());
+      String tab = session.getTabString();
+      int tabSize = session.getTabSize();
+      
+      return session.getMode().getNextLineIndent(
+            state,
+            line,
+            tab,
+            tabSize,
+            row);
+   }
 
    public Scope getCurrentChunk()
    {
@@ -1354,7 +1458,7 @@ public class AceEditor implements DocDisplay,
    }
    
    @Override
-   public Scope getFunctionAtPosition(Position position)
+   public ScopeFunction getFunctionAtPosition(Position position)
    {
       return getSession().getMode().getCodeModel().getCurrentFunction(
             position);
@@ -1402,6 +1506,12 @@ public class AceEditor implements DocDisplay,
       int screenRow = getSession().documentToScreenRow(getCursorPosition());     
       if (!widget_.getEditor().isRowFullyVisible(screenRow))
          moveCursorNearTop();
+   }
+   
+   @Override
+   public boolean isCursorInSingleLineString()
+   {
+      return StringUtil.isEndOfLineInRStringState(getCurrentLineUpToCursor());
    }
    
    public void scrollToBottom()
@@ -1598,6 +1708,9 @@ public class AceEditor implements DocDisplay,
                          boolean addToHistory,
                          boolean highlightLine)
    {  
+      // get existing cursor position
+      Position previousCursorPos = getCursorPosition();
+      
       // set cursor to function line
       Position position = Position.create(srcPosition.getRow(), 
                                           srcPosition.getColumn());
@@ -1616,7 +1729,7 @@ public class AceEditor implements DocDisplay,
       // scroll as necessary
       if (srcPosition.getScrollPosition() != -1)
          scrollToY(srcPosition.getScrollPosition());
-      else
+      else if (position.getRow() != previousCursorPos.getRow())
          moveCursorNearTop();
       
       // set focus
@@ -1666,7 +1779,7 @@ public class AceEditor implements DocDisplay,
       widget_.getEditor().getRenderer().updateFontSize();
       widget_.forceResize();
    }
-
+   
    public HandlerRegistration addValueChangeHandler(
          ValueChangeHandler<Void> handler)
    {
@@ -1752,7 +1865,7 @@ public class AceEditor implements DocDisplay,
       return widget_.addFocusHandler(handler);
    }
 
-   public Widget getWidget()
+   public AceEditorWidget getWidget()
    {
       return widget_;
    }
@@ -1888,21 +2001,56 @@ public class AceEditor implements DocDisplay,
          executionLine_ = null;
       }
    }
+   
+   public void setPopupVisible(boolean visible)
+   {
+      popupVisible_ = visible;
+   }
+   
+   public boolean isPopupVisible()
+   {
+      return popupVisible_;
+   }
+   
+   public void selectAll(String needle)
+   {
+      widget_.getEditor().findAll(needle);
+   }
+   
+   public void moveCursorLeft()
+   {
+      widget_.getEditor().moveCursorLeft();
+   }
+   
+   public int getTabSize()
+   {
+      return widget_.getEditor().getSession().getTabSize();
+   }
 
    private static final int DEBUG_CONTEXT_LINES = 2;
    private final HandlerManager handlers_ = new HandlerManager(this);
    private final AceEditorWidget widget_;
    private CompletionManager completionManager_;
    private CodeToolsServerOperations server_;
+   private UIPrefs uiPrefs_;
    private TextFileType fileType_;
    private boolean passwordMode_;
    private boolean useVimMode_ = false;
    private RnwCompletionContext rnwContext_;
+   private CppCompletionContext cppContext_;
+   private RCompletionContext rContext_;
    private Integer lineHighlightMarkerId_ = null;
    private Integer lineDebugMarkerId_ = null;
    private Integer executionLine_ = null;
+   
    private static final ExternalJavaScriptLoader aceLoader_ =
          new ExternalJavaScriptLoader(AceResources.INSTANCE.acejs().getSafeUri().asString());
    private static final ExternalJavaScriptLoader aceSupportLoader_ =
          new ExternalJavaScriptLoader(AceResources.INSTANCE.acesupportjs().getSafeUri().asString());
+   private static final ExternalJavaScriptLoader vimLoader_ =
+         new ExternalJavaScriptLoader(AceResources.INSTANCE.keybindingVimJs().getSafeUri().asString());
+   private static final ExternalJavaScriptLoader emacsLoader_ =
+         new ExternalJavaScriptLoader(AceResources.INSTANCE.keybindingEmacsJs().getSafeUri().asString());
+   
+   private boolean popupVisible_;
 }

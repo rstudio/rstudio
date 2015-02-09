@@ -15,7 +15,9 @@
 package org.rstudio.studio.client.workbench;
 
 import com.google.inject.Inject;
+
 import org.rstudio.core.client.Barrier.Token;
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.TimeBufferedCommand;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -69,9 +71,18 @@ public class ClientStateUpdater extends TimeBufferedCommand
          public void onLastChanceSave(LastChanceSaveEvent event)
          {
             // We're quitting. Save client state one more time.
-
             barrierToken_ = event.acquire();
-            nudge();
+            try
+            {
+               nudge();
+            }
+            catch(Exception ex)
+            {
+               Debug.log("Exception on scheduling client state save for shutdown: ");
+               Debug.logException(ex);
+               if (barrierToken_ != null)
+                  barrierToken_.release();
+            }
          }
       });
    }
@@ -96,23 +107,34 @@ public class ClientStateUpdater extends TimeBufferedCommand
          return;
       }
 
-      server_.updateClientState(
-            state.getTemporaryData(),
-            state.getPersistentData(),
-            state.getProjectPersistentData(),
-            new ServerRequestCallback<Void>() {
-               @Override
-               public void onError(ServerError error)
-               {
-                  onComplete(shouldSchedulePassive);
-               }
+      try
+      {
+         server_.updateClientState(
+               state.getTemporaryData(),
+               state.getPersistentData(),
+               state.getProjectPersistentData(),
+               new ServerRequestCallback<Void>() {
+                  @Override
+                  public void onError(ServerError error)
+                  {
+                     onComplete(shouldSchedulePassive);
+                  }
 
-               @Override
-               public void onResponseReceived(Void response)
-               {
-                  onComplete(shouldSchedulePassive);
-               }
-            });
+                  @Override
+                  public void onResponseReceived(Void response)
+                  {
+                     onComplete(shouldSchedulePassive);
+                  }
+               });
+      }
+      catch (Exception ex)
+      {
+         Debug.log("Exception updating client state: ");
+         Debug.logException(ex);
+         
+         // complete (ensure barrier token is released)
+         onComplete(shouldSchedulePassive);
+      }
    }
 
    private void onComplete(boolean shouldSchedulePassive)

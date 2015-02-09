@@ -19,18 +19,50 @@
 
 #include <core/Error.hpp>
 
+namespace rstudio {
 namespace core {
 namespace system {
 
-Error loadLibrary(const std::string& libPath, int options, void** ppLib)
+namespace {
+  
+std::string getLastErrorMessage()
+{
+   LPVOID lpMsgBuf;
+   DWORD dw = ::GetLastError();
+
+   DWORD length = ::FormatMessage(
+       FORMAT_MESSAGE_ALLOCATE_BUFFER |
+       FORMAT_MESSAGE_FROM_SYSTEM |
+       FORMAT_MESSAGE_IGNORE_INSERTS,
+       NULL,
+       dw,
+       MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+       (LPTSTR) &lpMsgBuf,
+       0, NULL );
+
+   if (length != 0)
+   {
+      std::string msg((LPTSTR)lpMsgBuf);
+      LocalFree(lpMsgBuf);
+      return msg;
+   }
+   else
+   {
+     return "Unknown error";
+   }
+}
+  
+} // anonymous namespace
+
+Error loadLibrary(const std::string& libPath, void** ppLib)
 {
    // use
    *ppLib = NULL;
-   *ppLib = (void*)::LoadLibraryEx(libPath.c_str(), NULL, options);
+   *ppLib = (void*)::LoadLibraryEx(libPath.c_str(), NULL, 0);
    if (*ppLib == NULL)
    {
       Error error = systemError(::GetLastError(), ERROR_LOCATION);
-      error.addProperty("lib-path", libPath);
+      error.addProperty("dlerror", libPath + " - " + getLastErrorMessage());
       return error;
    }
    else
@@ -46,7 +78,7 @@ Error loadSymbol(void* pLib, const std::string& name, void** ppSymbol)
    if (*ppSymbol == NULL)
    {
       Error error = systemError(::GetLastError(), ERROR_LOCATION);
-      error.addProperty("symbol", name);
+      error.addProperty("dlerror", name + " - " + getLastErrorMessage());
       return error;
    }
    else
@@ -58,10 +90,17 @@ Error loadSymbol(void* pLib, const std::string& name, void** ppSymbol)
 Error closeLibrary(void* pLib)
 {
    if (!::FreeLibrary((HMODULE)pLib))
-      return systemError(::GetLastError(), ERROR_LOCATION);
-   else
+   {
+      Error error = systemError(::GetLastError(), ERROR_LOCATION);
+      error.addProperty("dlerror", getLastErrorMessage());
+      return error;
+   }
+   else 
+   {
       return Success();
+   }
 }
 
 } // namespace system
 } // namespace core
+} // namespace rstudio

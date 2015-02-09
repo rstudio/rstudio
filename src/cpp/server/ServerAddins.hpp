@@ -16,10 +16,13 @@
 #ifndef SERVER_ADDINS_HPP
 #define SERVER_ADDINS_HPP
 
+namespace rstudio {
 namespace core {
    class Error;
 }
+}
 
+namespace rstudio {
 namespace server {
 namespace addins {
    
@@ -27,6 +30,7 @@ core::Error initialize();
 
 } // namespace addins
 } // namespace server
+} // namespace rstudio
 
 #endif // SERVER_ADDINS_HPP
 

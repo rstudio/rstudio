@@ -28,6 +28,7 @@
 // TODO: satisfy outselves that it is safe to query for symlink status
 // in all cases and eliminate its "optional" semantics
 
+namespace rstudio {
 namespace core {
 
 class FileInfo
@@ -104,9 +105,7 @@ private:
    
 inline int fileInfoPathCompare(const FileInfo& a, const FileInfo& b)
 {
-   // use stcoll because that is what alphasort (comp function passed to
-   // scandir) uses for its sorting)
-   int result = ::strcoll(a.absolutePath().c_str(), b.absolutePath().c_str());
+   int result = ::strcmp(a.absolutePath().c_str(), b.absolutePath().c_str());
 
    if (result != 0)
       return result;
@@ -138,11 +137,21 @@ inline FileInfo toFileInfo(const FilePath& filePath)
    return FileInfo(filePath);
 }
 
+inline std::string fileInfoAbsolutePath(const FileInfo& fileInfo)
+{
+   return fileInfo.absolutePath();
+}
+
+inline bool fileInfoIsDirectory(const FileInfo& fileInfo)
+{
+   return fileInfo.isDirectory();
+}
    
 std::ostream& operator << (std::ostream& stream, const FileInfo& fileInfo) ;
 
    
 } // namespace core 
+} // namespace rstudio
 
 
 #endif // CORE_FILE_INFO_HPP

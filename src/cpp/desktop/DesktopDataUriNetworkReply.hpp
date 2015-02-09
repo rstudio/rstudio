@@ -19,6 +19,7 @@
 #include <QNetworkReply>
 #include <QNetworkRequest>
 
+namespace rstudio {
 namespace desktop {
 
 class DataUriNetworkReply : public QNetworkReply
@@ -63,5 +64,6 @@ private:
 
 
 } // namespace desktop
+} // namespace rstudio
 
 #endif // DESKTOP_DATA_URI_NETWORK_REPLY_HPP

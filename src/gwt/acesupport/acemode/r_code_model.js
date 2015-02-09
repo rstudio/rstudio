@@ -17,6 +17,7 @@ define("mode/r_code_model", function(require, exports, module) {
 
 var Range = require("ace/range").Range;
 var TokenIterator = require("ace/token_iterator").TokenIterator;
+var RTokenCursor = require("mode/token_cursor").RTokenCursor;
 
 var $verticallyAlignFunctionArgs = false;
 
@@ -27,168 +28,40 @@ function comparePoints(pos1, pos2)
    return pos1.column - pos2.column;
 }
 
-var ScopeManager = require("mode/r_scope_tree").ScopeManager;
+function isOneOf(object, array)
+{
+   for (var i = 0; i < array.length; i++)
+      if (object === array[i])
+         return true;
+   return false;
+}
 
-var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
-   this.$doc = doc;
+var ScopeManager = require("mode/r_scope_tree").ScopeManager;
+var ScopeNode = require("mode/r_scope_tree").ScopeNode;
+
+var RCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) {
+
+   this.$session = session;
+   this.$doc = session.getDocument();
    this.$tokenizer = tokenizer;
-   this.$tokens = new Array(doc.getLength());
-   this.$endStates = new Array(doc.getLength());
+   this.$tokens = new Array(this.$doc.getLength());
+   this.$endStates = new Array(this.$doc.getLength());
    this.$statePattern = statePattern;
    this.$codeBeginPattern = codeBeginPattern;
-   this.$scopes = new ScopeManager();
+   this.$scopes = new ScopeManager(ScopeNode);
 
    var that = this;
    this.$doc.on('change', function(evt) {
       that.$onDocChange.apply(that, [evt]);
    });
-
-   this.$TokenCursor = function(row, offset)
-   {
-      this.$row = row || 0;
-      this.$offset = offset || 0;
-   };
-   (function() {
-      this.moveToStartOfRow = function(row)
-      {
-         this.$row = row;
-         this.$offset = 0;
-      };
-
-      this.moveToPreviousToken = function()
-      {
-         while (this.$offset == 0 && this.$row > 0)
-         {
-            this.$row--;
-            this.$offset = that.$tokens[this.$row].length;
-         }
-
-         if (this.$offset == 0)
-            return false;
-
-         this.$offset--;
-
-         return true;
-      };
-
-      this.moveToNextToken = function(maxRow)
-      {
-         if (this.$row > maxRow)
-            return;
-
-         this.$offset++;
-
-         while (this.$offset >= that.$tokens[this.$row].length && this.$row < maxRow)
-         {
-            this.$row++;
-            this.$offset = 0;
-         }
-
-         if (this.$offset >= that.$tokens[this.$row].length)
-            return false;
-
-         return true;
-      };
-
-      this.seekToNearestToken = function(position, maxRow)
-      {
-         if (position.row > maxRow)
-            return false;
-         this.$row = position.row;
-         var rowTokens = that.$tokens[this.$row] || [];
-         for (this.$offset = 0; this.$offset < rowTokens.length; this.$offset++)
-         {
-            var token = rowTokens[this.$offset];
-            if (token.column >= position.column)
-            {
-               return true;
-            }
-         }
-         return this.moveToNextToken(maxRow);
-      };
-
-      this.moveBackwardOverMatchingParens = function()
-      {
-         if (!this.moveToPreviousToken())
-            return false;
-         if (this.currentValue() !== ")")
-            return false;
-
-         var success = false;
-         var parenCount = 0;
-         while (this.moveToPreviousToken())
-         {
-            if (this.currentValue() === "(")
-            {
-               if (parenCount == 0)
-               {
-                  success = true;
-                  break;
-               }
-               parenCount--;
-            }
-            else if (this.currentValue() === ")")
-            {
-               parenCount++;
-            }
-         }
-         return success;
-      };
-
-      this.findToken = function(predicate, maxRow)
-      {
-         do
-         {
-            var t = this.currentToken();
-            if (t && predicate(t))
-               return t;
-         }
-         while (this.moveToNextToken(maxRow));
-         return null;
-      };
-
-      this.currentToken = function()
-      {
-         return (that.$tokens[this.$row] || [])[this.$offset];
-      };
-
-      this.currentValue = function()
-      {
-         return this.currentToken().value;
-      };
-
-      this.currentPosition = function()
-      {
-         var token = this.currentToken();
-         if (token === null)
-            return null;
-         else
-            return {row: this.$row, column: token.column};
-      };
-
-      this.cloneCursor = function()
-      {
-         var clone = new that.$TokenCursor();
-         clone.$row = this.$row;
-         clone.$offset = this.$offset;
-         return clone;
-      };
-
-      this.isFirstSignificantTokenOnLine = function()
-      {
-         return this.$offset == 0;
-      };
-
-      this.isLastSignificantTokenOnLine = function()
-      {
-         return this.$offset == (that.$tokens[this.$row] || []).length - 1;
-      };
-
-   }).call(this.$TokenCursor.prototype);
-
+   
 };
 
 (function () {
+
+   this.getTokenCursor = function() {
+      return new RTokenCursor(this.$tokens, 0, 0, this);
+   };
 
    this.$complements = {
       '(': ')',
@@ -198,6 +71,28 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
       '{': '}',
       '}': '{'
    };
+
+   var $normalizeWhitespace = function(text) {
+      text = text.trim();
+      text = text.replace(/[\n\s]+/g, " ");
+      return text;
+   };
+
+   var $truncate = function(text, width) {
+      
+      if (typeof width === "undefined")
+         width = 80;
+      
+      if (text.length > width)
+         text = text.substring(0, width) + "...";
+      
+      return text;
+   };
+
+   var $normalizeAndTruncate = function(text, width) {
+      return $truncate($normalizeWhitespace(text), width);
+   };
+   
 
    function pFunction(t)
    {
@@ -214,26 +109,576 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
       return /\bidentifier\b/.test(t.type);
    }
 
+   // Find the associated function token from an open brace, e.g.
+   //
+   //   foo <- function(a, b, c) {
+   //          ^<<<<<<<<<<<<<<<<<^
    function findAssocFuncToken(tokenCursor)
    {
-      if (tokenCursor.currentValue() !== "{")
+      var clonedCursor = tokenCursor.cloneCursor();
+      if (clonedCursor.currentValue() !== "{")
          return false;
-      if (!tokenCursor.moveBackwardOverMatchingParens())
+      if (!clonedCursor.moveBackwardOverMatchingParens())
          return false;
-      if (!tokenCursor.moveToPreviousToken())
+      if (!clonedCursor.moveToPreviousToken())
          return false;
-      if (!pFunction(tokenCursor.currentToken()))
-         return false;
-      if (!tokenCursor.moveToPreviousToken())
-         return false;
-      if (!pAssign(tokenCursor.currentToken()))
-         return false;
-      if (!tokenCursor.moveToPreviousToken())
-         return false;
-      if (!pIdentifier(tokenCursor.currentToken()))
+      if (!pFunction(clonedCursor.currentToken()))
          return false;
 
+      tokenCursor.$row = clonedCursor.$row;
+      tokenCursor.$offset = clonedCursor.$offset;
       return true;
+
+   }
+
+   // Determine whether the token cursor lies within the
+   // argument list for a control flow statement, e.g.
+   //
+   //    if (foo &&
+   //        (bar
+   //         ^
+   function isWithinControlFlowArgList(tokenCursor)
+   {
+      while (tokenCursor.findOpeningBracket("(") &&
+             tokenCursor.moveToPreviousToken())
+         if (isOneOf(
+            tokenCursor.currentValue(),
+            ["if", "for", "while"]))
+             return true;
+
+      return false;
+   }
+
+   // Move from the function token to the end of a function name.
+   // Note that it is legal to define functions in multi-line strings,
+   // hence the somewhat awkward name / interface.
+   //
+   //     "some function" <- function(a, b, c) {
+   //                   ^~~~~^
+   function moveFromFunctionTokenToEndOfFunctionName(tokenCursor)
+   {
+      var clonedCursor = tokenCursor.cloneCursor();
+      if (!pFunction(clonedCursor.currentToken()))
+         return false;
+      if (!clonedCursor.moveToPreviousToken())
+         return false;
+      if (!pAssign(clonedCursor.currentToken()))
+         return false;
+      if (!clonedCursor.moveToPreviousToken())
+         return false;
+
+      tokenCursor.$row = clonedCursor.$row;
+      tokenCursor.$offset = clonedCursor.$offset;
+      return true;
+   }
+
+   this.getFunctionsInScope = function(pos) {
+      this.$buildScopeTreeUpToRow(pos.row);
+      return this.$scopes.getFunctionsInScope(pos);
+   };
+
+   this.getAllFunctionScopes = function(row) {
+      if (typeof row === "undefined")
+         row = this.$doc.getLength();
+      this.$buildScopeTreeUpToRow(row);
+      return this.$scopes.getAllFunctionScopes();
+   };
+
+   function pInfix(token)
+   {
+      return /\binfix\b/.test(token.type);
+   }
+
+   this.getDplyrJoinContextFromInfixChain = function(cursor)
+   {
+      var clone = cursor.cloneCursor();
+      
+      var token = "";
+      if (clone.currentType() === "identifier")
+         token = clone.currentValue();
+      
+      // We're expecting to be within e.g.
+      //
+      //    mtcars %>% semi_join(foo, by = c("a" =
+      //                                           ^
+      // Here, we get:
+      // 1. The name of the 'right table' (foo), and
+      // 2. The cursor position (left or right of '=')
+      var cursorPos = "left";
+      if (clone.currentValue() === "=")
+         cursorPos = "right";
+
+      if (clone.currentType() === "identifier")
+      {
+         if (!clone.moveToPreviousToken())
+            return null;
+         
+         if (clone.currentValue() === "=")
+            cursorPos = "right";
+      }
+
+      // Move to the first opening paren
+      if (!clone.findOpeningBracket("(", true))
+         return null;
+
+      if (!clone.moveToPreviousToken())
+         return null;
+
+      // Look back until we find a 'join' verb
+      while (clone.findOpeningBracket("(", true))
+      {
+         if (!clone.moveToPreviousToken())
+            return null;
+
+         if (!/_join$/.test(clone.currentValue()))
+            continue;
+
+         // If we get here, it looks like a dplyr join in a magrittr chain
+         // get the data name and the join verb
+         var verb = clone.currentValue();
+
+         if (!clone.moveToNextToken())
+            return null;
+
+         if (!clone.moveToNextToken())
+            return null;
+
+         var rightData = clone.currentValue();
+
+         var leftData = "";
+         var data = this.moveToDataObjectFromInfixChain(clone);
+         if (data === false)
+            return null;
+         
+         leftData = clone.currentValue();
+         
+         return {
+            "token": token,
+            "leftData": leftData,
+            "rightData": rightData,
+            "verb": verb,
+            "cursorPos": cursorPos
+         };
+      }
+      return null;
+   };
+
+   // If the token cursor lies within an infix chain, try to retrieve:
+   // 1. The data object name, and
+   // 2. Any custom variable names (e.g. set through 'mutate', 'summarise')
+   this.getDataFromInfixChain = function(tokenCursor)
+   {
+      var data = this.moveToDataObjectFromInfixChain(tokenCursor);
+      
+      var additionalArgs = [];
+      var excludeArgs = [];
+      var name = "";
+      var excludeArgsFromObject = false;
+      if (data !== false)
+      {
+         if (data.excludeArgsFromObject)
+            excludeArgsFromObject = data.excludeArgsFromObject;
+         
+         name = tokenCursor.currentValue();
+         additionalArgs = data.additionalArgs;
+         excludeArgs = data.excludeArgs;
+      }
+
+      return {
+         "name": name,
+         "additionalArgs": additionalArgs,
+         "excludeArgs": excludeArgs,
+         "excludeArgsFromObject": excludeArgsFromObject
+      };
+      
+   };
+
+   var $dplyrMutaterVerbs = [
+      "mutate", "summarise", "summarize", "rename", "transmute",
+      "select", "rename_vars",
+      "inner_join", "left_join", "right_join", "semi_join", "anti_join",
+      "outer_join", "full_join"
+   ];
+
+   // Add arguments from a function call in a chain.
+   //
+   //     select(x, y = 1)
+   //     ^~~~~~~|~~|~~~~x
+   var addDplyrArguments = function(cursor, data, limit, fnName)
+   {
+      if (!cursor.moveToNextToken())
+         return false;
+
+      if (cursor.currentValue() !== "(")
+         return false;
+
+      if (!cursor.moveToNextToken())
+         return false;
+
+      if (cursor.currentValue() === ")")
+         return false;
+
+      if (cursor.currentType() === "identifier")
+         data.additionalArgs.push(cursor.currentValue());
+      
+      if (fnName === "rename")
+      {
+         if (!cursor.moveToNextToken())
+            return false;
+         data.excludeArgs.push(cursor.currentValue());
+      }
+
+      if (fnName === "select")
+      {
+         data.excludeArgsFromObject = true;
+      }
+
+      do
+      {
+         if (cursor.currentValue() === ")")
+            break;
+         
+         if ((cursor.$row > limit.$row) ||
+             (cursor.$row === limit.$row && cursor.$offset >= limit.$offset))
+            break;
+         
+         if (cursor.fwdToMatchingToken())
+         {
+            if (!cursor.moveToNextToken())
+               break;
+            continue;
+         }
+
+         if (lookingAtComma(cursor))
+         {
+            if (!cursor.moveToNextToken())
+               return false;
+
+            if (cursor.currentType() === "identifier")
+               data.additionalArgs.push(cursor.currentValue());
+            
+            if (!cursor.moveToNextToken())
+               return false;
+
+            if (cursor.currentValue() === "=")
+            {
+               if (isOneOf(fnName, ["rename", "rename_vars"]))
+               {
+                  if (!cursor.moveToNextToken())
+                     return false;
+                  if (cursor.currentType() === "identifier")
+                     data.excludeArgs.push(cursor.currentValue());
+               }
+
+            }
+            
+
+         }
+         
+      } while (cursor.moveToNextToken());
+
+      return true;
+      
+   };
+
+   var findChainScope = function(cursor)
+   {
+      var clone = cursor.cloneCursor();
+      while (clone.findOpeningBracket("(", false))
+      {
+         // Move off of the opening paren
+         if (!clone.moveToPreviousToken())
+            return false;
+
+         // Move off of identifier
+         if (!clone.moveToPreviousToken())
+            return false;
+
+         // Move over '::' qualifiers
+         if (clone.currentValue() === ":")
+         {
+            while (clone.currentValue() === ":")
+               if (!clone.moveToPreviousToken())
+                  return false;
+
+            // Move off of identifier
+            if (!clone.moveToPreviousToken())
+               return false;
+         }
+
+         // If it's an infix operator, we use this scope
+         // Ensure it's a '%%' operator (allow for other pipes)
+         if (pInfix(clone.currentToken()))
+         {
+            cursor.$row = clone.$row;
+            cursor.$offset = clone.$offset;
+            return true;
+         }
+
+         // keep trying!
+         
+      }
+
+      // give up
+      return false;
+      
+   };
+
+   // Attempt to move a token cursor from a function call within
+   // a chain back to the starting data object.
+   //
+   //     df %.% foo %>>% bar() %>% baz(foo,
+   //     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+   this.moveToDataObjectFromInfixChain = function(tokenCursor)
+   {
+      // Find an opening paren associated with the nearest chain,
+      // Find the outermost opening paren
+      var clone = tokenCursor.cloneCursor();
+      if (!findChainScope(clone))
+         return false;
+
+      // Fill custom args
+      var data = {
+         additionalArgs: [],
+         excludeArgs: []
+      };
+      
+      // Repeat the walk -- keep walking as we can find '%%'
+      while (true)
+      {
+         if (clone.$row === 0 && clone.$offset === 0)
+         {
+            tokenCursor.$row = 0;
+            tokenCursor.$offset = 0;
+            return data;
+         }
+
+         // Move over parens to identifier if necessary
+         //
+         //    foo(bar, baz)
+         //    ^~~~~~~~~~~~^
+         clone.moveBackwardOverMatchingParens();
+
+         // Move off of '%>%' (or '(') onto identifier
+         if (!clone.moveToPreviousToken())
+            return false;
+
+         // If this identifier is a dplyr 'mutate'r, then parse
+         // those variables.
+         var value = clone.currentValue();
+         if ($dplyrMutaterVerbs.some(function(x) {
+            return x === value;
+         }))
+         {
+            addDplyrArguments(clone.cloneCursor(), data, tokenCursor, value);
+         }
+
+         // Move off of identifier, on to new infix operator.
+         // Note that we may already be at the start of the document,
+         // so check for that.
+         if (!clone.moveToPreviousToken())
+         {
+            if (clone.$row === 0 && clone.$offset === 0)
+            {
+               tokenCursor.$row = 0;
+               tokenCursor.$offset = 0;
+               return data;
+            }
+            return false;
+         }
+
+         // Move over '::' qualifiers
+         if (clone.currentValue() === ":")
+         {
+            while (clone.currentValue() === ":")
+               if (!clone.moveToPreviousToken())
+                  return false;
+
+            // Move off of identifier
+            if (!clone.moveToPreviousToken())
+               return false;
+         }
+
+         // We should be on an infix operator now. If we are, keep walking;
+         // if not, then the identifier we care about is the next token.
+         if (!pInfix(clone.currentToken()))
+            break;
+      }
+
+      if (!clone.moveToNextToken())
+         return false;
+
+      tokenCursor.$row = clone.$row;
+      tokenCursor.$offset = clone.$offset;
+      return data;
+   };
+
+   function addForInToken(tokenCursor, scopedVariables)
+   {
+      var clone = tokenCursor.cloneCursor();
+      if (clone.currentValue() !== "for")
+         return false;
+
+      if (!clone.moveToNextToken())
+         return false;
+
+      if (clone.currentValue() !== "(")
+         return false;
+
+      if (!clone.moveToNextToken())
+         return false;
+
+      var maybeForInVariable = clone.currentValue();
+      if (!clone.moveToNextToken())
+         return false;
+
+      if (clone.currentValue() !== "in")
+         return false;
+
+      scopedVariables[maybeForInVariable] = "variable";
+      return true;
+   }
+
+   // Moves out of an argument list for a function, e.g.
+   //
+   //     x <- function(a, b|
+   //          ^~~~~~~~~~~~~^
+   //
+   // The cursor will be placed on the associated 'function' token
+   // on success, and unmoved on failure.
+   var moveOutOfArgList = function(tokenCursor)
+   {
+      var clone = tokenCursor.cloneCursor();
+      if (!clone.findOpeningBracket("(", true))
+         return false;
+
+      if (!clone.moveToPreviousToken())
+         return false;
+      
+      if (clone.currentValue() !== "function")
+         return false;
+
+      tokenCursor.$row = clone.$row;
+      tokenCursor.$offset = clone.$offset;
+      return true;
+   };
+
+   this.getVariablesInScope = function(pos) {
+
+      var tokenCursor = this.getTokenCursor();
+      if (!tokenCursor.moveToPosition(pos))
+         return [];
+
+      // If we're in a function call, avoid grabbing the parameters and
+      // function name itself within the call. This is so that in e.g.
+      //
+      //     func <- foo(x = 1, y = 2, |
+      //
+      // we don't pick up 'func', 'x', and 'y' as potential completions
+      // since they will not be valid in all contexts
+      if (moveOutOfArgList(tokenCursor))
+         if (moveFromFunctionTokenToEndOfFunctionName(tokenCursor))
+            if (tokenCursor.findStartOfEvaluationContext())
+               {} // previous statements will move the cursor as necessary
+
+      var scopedVariables = {};
+      do
+      {
+         if (tokenCursor.bwdToMatchingToken())
+            continue;
+
+         // Handle 'for (x in bar)'
+         addForInToken(tokenCursor, scopedVariables);
+         
+         // Default -- assignment case
+         if (pAssign(tokenCursor.currentToken()))
+         {
+            // Check to see if this is a function (simple check)
+            var type = "variable";
+            var functionCursor = tokenCursor.cloneCursor();
+            if (functionCursor.moveToNextToken())
+            {
+               if (functionCursor.currentValue() === "function")
+               {
+                  type = "function";
+               }
+            }
+            
+            var clone = tokenCursor.cloneCursor();
+            if (!clone.moveToPreviousToken()) continue;
+            
+            if (pIdentifier(clone.currentToken()))
+            {
+               var arg = clone.currentValue();
+               scopedVariables[arg] = type;
+               continue;
+            }
+            
+         }
+      } while (tokenCursor.moveToPreviousToken());
+
+      var result = [];
+      for (var key in scopedVariables)
+         result.push({
+            "token": key,
+            "type": scopedVariables[key]
+         });
+      
+      result.sort();
+      return result;
+      
+   };
+
+   function lookingAtComma(cursor) {
+      return /,\s*$/.test(cursor.currentValue()) && cursor.currentType() === "text";
+   }
+
+   // Get function arguments, starting at the start of a function definition, e.g.
+   //
+   // x <- function(a = 1, b = 2, c = list(a = 1, b = 2), ...)
+   //      ?~~~~~~~?^~~~~~~^~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~^~~|
+   function $getFunctionArgs(tokenCursor)
+   {
+      if (pFunction(tokenCursor.currentToken()))
+         if (!tokenCursor.moveToNextToken())
+            return [];
+
+      if (tokenCursor.currentValue() === "(")
+         if (!tokenCursor.moveToNextToken())
+            return [];
+
+      if (tokenCursor.currentValue() === ")")
+         return [];
+
+      var functionArgs = [];
+      if (pIdentifier(tokenCursor.currentToken()))
+         functionArgs.push(tokenCursor.currentValue());
+      
+      while (tokenCursor.moveToNextToken())
+      {
+         if (tokenCursor.fwdToMatchingToken())
+            continue;
+
+         if (tokenCursor.currentValue() === ")")
+            break;
+
+         // Yuck: '...' and ',' can get tokenized together as
+         // text. All we can really do is ask if a particular token is
+         // type 'text' and ends with a comma.
+         // Once we encounter such a token, we look ahead to find an
+         // identifier (it signifies an argument name)
+         if (lookingAtComma(tokenCursor))
+         {
+            while (lookingAtComma(tokenCursor))
+               if (!tokenCursor.moveToNextToken())
+                  break;
+            
+            if (pIdentifier(tokenCursor.currentToken()))
+               functionArgs.push(tokenCursor.currentValue());
+         }
+      }
+      return functionArgs;
+      
    }
 
    this.$buildScopeTreeUpToRow = function(maxrow)
@@ -250,6 +695,10 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
       }
 
       function getChunkLabel(reOptions, comment) {
+
+         if (typeof reOptions === "undefined")
+            return "";
+         
          var match = reOptions.exec(comment);
          if (!match)
             return null;
@@ -279,11 +728,10 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
       // on the identifier of a function whose open brace is a few tokens later.
       // Seems like it would be rare indeed for this distance to be more than 30
       // rows.
-      maxRow = Math.min(maxrow + 30, this.$doc.getLength() - 1);
+      var maxRow = Math.min(maxrow + 30, this.$doc.getLength() - 1);
       this.$tokenizeUpToRow(maxRow);
 
-      //console.log("Seeking to " + this.$scopes.parsePos.row + "x"+ this.$scopes.parsePos.column);
-      var tokenCursor = new this.$TokenCursor();
+      var tokenCursor = this.getTokenCursor();
       if (!tokenCursor.seekToNearestToken(this.$scopes.parsePos, maxRow))
          return;
 
@@ -292,8 +740,6 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
          this.$scopes.parsePos = tokenCursor.currentPosition();
          this.$scopes.parsePos.column += tokenCursor.currentValue().length;
 
-         //console.log("                                 Token: " + tokenCursor.currentValue() + " [" + tokenCursor.currentPosition().row + "x" + tokenCursor.currentPosition().column + "]");
-
          var tokenType = tokenCursor.currentToken().type;
          if (/\bsectionhead\b/.test(tokenType))
          {
@@ -301,7 +747,7 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
                   tokenCursor.currentValue());
 
             var label = "" + sectionHeadMatch[1];
-            if (label.length == 0)
+            if (label.length === 0)
                label = "(Untitled)";
             if (label.length > 50)
                label = label.substring(0, 50) + "...";
@@ -337,15 +783,55 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
          else if (tokenCursor.currentValue() === "{")
          {
             var localCursor = tokenCursor.cloneCursor();
+            var bracePos = localCursor.currentPosition();
+            
             var startPos;
             if (findAssocFuncToken(localCursor))
             {
+               var argsCursor = localCursor.cloneCursor();
+               argsCursor.moveToNextToken();
+               var argsStartPos = argsCursor.currentPosition();
+
+               var functionName = null;
+               if (moveFromFunctionTokenToEndOfFunctionName(localCursor))
+               {
+                  var functionEndCursor = localCursor.cloneCursor();
+                  if (localCursor.findStartOfEvaluationContext())
+                  {
+                     var functionStartPos = localCursor.currentPosition();
+                     var functionEndPos = functionEndCursor.currentPosition();
+                     functionName = this.$doc.getTextRange(new Range(
+                        functionStartPos.row,
+                        functionStartPos.column,
+                        functionEndPos.row,
+                        functionEndPos.column + functionEndCursor.currentValue().length
+                     ));
+                  }
+               }
+               
                startPos = localCursor.currentPosition();
                if (localCursor.isFirstSignificantTokenOnLine())
                   startPos.column = 0;
-               this.$scopes.onFunctionScopeStart(localCursor.currentValue(),
+
+               var functionArgsString = this.$doc.getTextRange(new Range(
+                  argsStartPos.row, argsStartPos.column,
+                  bracePos.row, bracePos.column
+               ));
+
+               var functionLabel;
+               if (functionName === null)
+                  functionLabel = $normalizeWhitespace("<function>" + functionArgsString);
+               else
+                  functionLabel = $normalizeWhitespace(functionName + functionArgsString);
+
+               // Obtain the function arguments by walking through the tokens
+               var functionArgs = $getFunctionArgs(argsCursor);
+
+               this.$scopes.onFunctionScopeStart(functionLabel,
                                                  startPos,
-                                                 tokenCursor.currentPosition());
+                                                 tokenCursor.currentPosition(),
+                                                 functionName,
+                                                 functionArgs);
             }
             else
             {
@@ -519,7 +1005,7 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
    this.getCurrentScope = function(position, filter)
    {
       if (!filter)
-         filter = function(scope) { return true; }
+         filter = function(scope) { return true; };
 
       if (!position)
          return "";
@@ -554,7 +1040,7 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
    {
       if (this.$tokenizeUpToRow(pos.row))
       {
-         var tokenCursor = new this.$TokenCursor();
+         var tokenCursor = this.getTokenCursor();
          if (tokenCursor.seekToNearestToken(pos, pos.row)
                    && tokenCursor.currentValue() == "{"
                && tokenCursor.moveBackwardOverMatchingParens())
@@ -566,13 +1052,29 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
       return this.$getIndent(this.$getLine(pos.row));
    };
 
-   this.getNextLineIndent = function(lastRow, line, endState, tab, tabSize)
+   this.getIndentForRow = function(row)
    {
-      if (endState == "qstring" || endState == "qqstring")
+      return this.getNextLineIndent(
+         "start",
+         this.$getLine(row),
+         this.$session.getTabString()
+      );
+   };
+
+   // NOTE: 'row' is used purely for testing. If it's non-numeric then we need to
+   // set it with the current cursor position.
+   this.getNextLineIndent = function(state, line, tab, row)
+   {
+      if (state == "qstring" || state == "qqstring")
          return "";
 
-      // TODO: optimize
-      var tabAsSpaces = Array(tabSize + 1).join(" ");
+      // NOTE: Pressing enter will already have moved the cursor to the next row,
+      // so we need to push that back a single row.
+      if (typeof row !== "number")
+         row = this.$session.getSelection().getCursor().row - 1;
+
+      var tabSize = this.$session.getTabSize();
+      var tabAsSpaces = new Array(tabSize + 1).join(" ");
 
       // This lineOverrides nonsense is necessary because the line has not 
       // changed in the real document yet. We need to simulate it by replacing
@@ -582,39 +1084,61 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
       // block of code, and in the editor hit Enter in the middle of a line 
       // that contains a }.
       this.$lineOverrides = null;
-      if (!(this.$doc.getLine(lastRow) === line))
+      if (!(this.$doc.getLine(row) === line))
       {
          this.$lineOverrides = {};
-         this.$lineOverrides[lastRow] = line;
-         this.$invalidateRow(lastRow);
+         this.$lineOverrides[row] = line;
+         this.$invalidateRow(row);
       }
       
       try
       {
-         var defaultIndent = lastRow < 0 ? "" 
-                                         : this.$getIndent(this.$getLine(lastRow));
+         var defaultIndent = row < 0 ?
+                "" : 
+                this.$getIndent(this.$getLine(row));
 
          // jcheng 12/7/2013: It doesn't look to me like $tokenizeUpToRow can return
          // anything but true, at least not today.
-         if (!this.$tokenizeUpToRow(lastRow))
+         if (!this.$tokenizeUpToRow(row))
             return defaultIndent;
 
          // If we're in an Sweave/Rmd/etc. document and this line isn't R, then
          // don't auto-indent
-         if (this.$statePattern && !this.$statePattern.test(endState))
+         if (this.$statePattern && !this.$statePattern.test(state))
             return defaultIndent;
-
-         // Used to add extra whitspace if the next line is a continuation of the
-         // previous line (i.e. the last significant token is a binary operator).
-         var continuationIndent = "";
 
          // The significant token (no whitespace, comments) that most immediately
          // precedes this line. We don't look back further than 10 rows or so for
          // performance reasons.
-         var prevToken = this.$findPreviousSignificantToken({row: lastRow, column: this.$getLine(lastRow).length},
-                                                            lastRow - 10);
+         var startPos = {
+            row: row,
+            column: this.$getLine(row).length
+         };
 
-         if (prevToken
+         var prevToken = this.$findPreviousSignificantToken(
+            startPos,
+            row - 10
+         );
+
+         // Used to add extra whitspace if the next line is a continuation of the
+         // previous line (i.e. the last significant token is a binary operator).
+         var continuationIndent = "";
+         var startedOnOperator = false;
+
+         if (prevToken &&
+             /\boperator\b/.test(prevToken.token.type) &&
+             !/\bparen\b/.test(prevToken.token.type))
+         {
+            // Fix issue 2579: If the previous significant token is an operator
+            // (commonly, "+" when used with ggplot) then this line is a
+            // continuation of an expression that was started on a previous
+            // line. This line's indent should then be whatever would normally
+            // be used for a complete statement starting here, plus a tab.
+            continuationIndent = tab;
+            startedOnOperator = true;
+         }
+
+         else if (prevToken
                && /\bparen\b/.test(prevToken.token.type)
                && /\)$/.test(prevToken.token.value))
          {
@@ -655,140 +1179,332 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
             // and increase by one level.
             return this.$getIndent(this.$getLine(prevToken.row)) + tab;
          }
-         else if (prevToken && /\boperator\b/.test(prevToken.token.type) && !/\bparen\b/.test(prevToken.token.type))
+
+         // Walk backwards looking for an open paren, square bracket, curly
+         // brace, or assignment token. We use the first found token to provide
+         // context for the indentation.
+         var tokenCursor = this.getTokenCursor();
+
+         // moveToPosition can fail if there are no tokens previous to
+         // the cursor
+         if (!tokenCursor.moveToPosition(startPos))
+            return "";
+
+         // The first loop looks for an open brace for indentation.
+         do
          {
-            // Fix issue 2579: If the previous significant token is an operator
-            // (commonly, "+" when used with ggplot) then this line is a
-            // continuation of an expression that was started on a previous
-            // line. This line's indent should then be whatever would normally
-            // be used for a complete statement starting here, plus a tab.
-            continuationIndent = tab;
-         }
+            var currentValue = tokenCursor.currentValue();
+             
+            // Walk over matching braces ('()', '{}', '[]')
+            if (tokenCursor.bwdToMatchingToken())
+               continue;
 
-         // Walk backwards looking for an open paren, square bracket, or curly
-         // brace, *ignoring matched pairs along the way*. (That's the "balanced"
-         // in $walkParensBalanced.)
-         var openBracePos = this.$walkParensBalanced(
-               lastRow,
-               0,
-               function(parens, paren, pos)
-               {
-                  return /[\[({]/.test(paren) && parens.length === 0;
-               },
-               null);
+            // If we found a '{', we break out and loop back -- this is because
+            // we may want to indent either on a '<-' token or on a '{'
+            // token.
+            if (currentValue === "{")
+               break;
 
-         if (openBracePos != null)
-         {
-            // OK, we found an open brace; this just means we're not a
-            // top-level expression.
+            // If we find an open parenthesis or bracket, we
+            // can use this to provide the indentation context.
+            if (["[", "("].some(function(x) {
+               return x === tokenCursor.currentValue();
+            }))
+            {
+               var openBracePos = tokenCursor.currentPosition();
+               var nextTokenPos = null;
 
-            var nextTokenPos = null;
-
-            if ($verticallyAlignFunctionArgs) {
-               // If the user has selected verticallyAlignFunctionArgs mode in the
-               // prefs, for example:
-               //
-               // soDomethingAwesome(a = 1,
-               //                    b = 2,
-               //                    c = 3)
-               //
-               // Then we simply follow the example of the next significant
-               // token. BTW implies that this mode also supports this:
-               //
-               // soDomethingAwesome(
-               //   a = 1,
-               //   b = 2,
-               //   c = 3)
-               //
-               // But not this:
-               //
-               // soDomethingAwesome(a = 1,
-               //   b = 2,
-               //   c = 3)
-               nextTokenPos = this.$findNextSignificantToken(
+               if ($verticallyAlignFunctionArgs) {
+                  // If the user has selected
+                  // verticallyAlignFunctionArgs mode in the prefs,
+                  // for example:
+                  //
+                  // soDomethingAwesome(a = 1,
+                  //                    b = 2,
+                  //                    c = 3)
+                  //
+                  // Then we simply follow the example of the next significant
+                  // token. BTW implies that this mode also supports this:
+                  //
+                  // soDomethingAwesome(
+                  //   a = 1,
+                  //   b = 2,
+                  //   c = 3)
+                  //
+                  // But not this:
+                  //
+                  // soDomethingAwesome(a = 1,
+                  //   b = 2,
+                  //   c = 3)
+                  nextTokenPos = this.$findNextSignificantToken(
                      {
                         row: openBracePos.row,
                         column: openBracePos.column + 1
-                     }, lastRow);
-            }
-
-            if (!nextTokenPos)
-            {
-               // Either there wasn't a significant token between the new
-               // line and the previous open brace, or, we're not in
-               // vertical argument alignment mode. Either way, we need
-               // to just indent one level from the open brace's level.
-               return this.getIndentForOpenBrace(openBracePos) +
-                      tab + continuationIndent;
-            }
-            else
-            {
-               // Return indent up to next token position.
-               // Note that in hard tab mode, the tab character only counts 
-               // as a single character unfortunately. What we really want
-               // is the screen column, but what we have is the document
-               // column, which we can't convert to screen column without
-               // copy-and-pasting a bunch of code from layer/text.js.
-               // As a shortcut, we just pull off the leading whitespace
-               // from the line and include it verbatim in the new indent.
-               // This strategy works fine unless there is a tab in the
-               // line that comes after a non-whitespace character, which
-               // seems like it should be rare.
-               var line = this.$getLine(nextTokenPos.row);
-               var leadingIndent = line.replace(/[^\s].*$/, '');
-
-               var indentWidth = nextTokenPos.column - leadingIndent.length;
-               var tabsToUse = Math.floor(indentWidth / tabSize);
-               var spacesToAdd = indentWidth - (tabSize * tabsToUse);
-               var buffer = "";
-               for (var i = 0; i < tabsToUse; i++)
-                  buffer += tab;
-               for (var j = 0; j < spacesToAdd; j++)
-                  buffer += " ";
-               var result = leadingIndent + buffer;
-
-               // Compute the size of the indent in spaces (e.g. if a tab
-               // is 4 spaces, and result is "\t\t ", the size is 9)
-               var resultSize = result.replace("\t", tabAsSpaces).length;
-
-               // Sometimes even though verticallyAlignFunctionArgs is used,
-               // the user chooses to manually "break the rules" and use the
-               // non-aligned style, like so:
-               //
-               // plot(foo,
-               //   bar, baz,
-               //
-               // Without the below loop, hitting Enter after "baz," causes
-               // the cursor to end up aligned with foo. The loop simply
-               // replaces the indentation with the minimal indentation.
-               //
-               // TODO: Perhaps we can skip the above few lines of code if
-               // there are other lines present
-               var thisIndent;
-               for (var i = nextTokenPos.row + 1; i <= lastRow; i++) {
-                  // If a line contains only whitespace, it doesn't count
-                  if (!/[^\s]/.test(this.$getLine(i)))
-                     continue;
-                  // If this line is is a continuation of a multi-line string, 
-                  // ignore it.
-                  var rowEndState = this.$endStates[i-1];
-                  if (rowEndState === "qstring" || rowEndState === "qqstring") 
-                     continue;
-                  thisIndent = this.$getLine(i).replace(/[^\s].*$/, '');
-                  thisIndentSize = thisIndent.replace("\t", tabAsSpaces).length;
-                  if (thisIndentSize < resultSize) {
-                     result = thisIndent;
-                     resultSize = thisIndentSize;
-                  }
+                     }, row);
                }
 
-               return result + continuationIndent;
+               if (!nextTokenPos)
+               {
+                  // Either there wasn't a significant token between the new
+                  // line and the previous open brace, or, we're not in
+                  // vertical argument alignment mode. Either way, we need
+                  // to just indent one level from the open brace's level.
+                  return this.getIndentForOpenBrace(openBracePos) +
+                     tab + continuationIndent;
+               }
+               else
+               {
+                  // Return indent up to next token position.
+                  // Note that in hard tab mode, the tab character only counts 
+                  // as a single character unfortunately. What we really want
+                  // is the screen column, but what we have is the document
+                  // column, which we can't convert to screen column without
+                  // copy-and-pasting a bunch of code from layer/text.js.
+                  // As a shortcut, we just pull off the leading whitespace
+                  // from the line and include it verbatim in the new indent.
+                  // This strategy works fine unless there is a tab in the
+                  // line that comes after a non-whitespace character, which
+                  // seems like it should be rare.
+                  var line = this.$getLine(nextTokenPos.row);
+                  var leadingIndent = line.replace(/[^\s].*$/, '');
+
+                  var indentWidth = nextTokenPos.column - leadingIndent.length;
+                  var tabsToUse = Math.floor(indentWidth / tabSize);
+                  var spacesToAdd = indentWidth - (tabSize * tabsToUse);
+                  var buffer = "";
+                  for (var i = 0; i < tabsToUse; i++)
+                     buffer += tab;
+                  for (var j = 0; j < spacesToAdd; j++)
+                     buffer += " ";
+                  var result = leadingIndent + buffer;
+
+                  // Compute the size of the indent in spaces (e.g. if a tab
+                  // is 4 spaces, and result is "\t\t ", the size is 9)
+                  var resultSize = result.replace("\t", tabAsSpaces).length;
+
+                  // Sometimes even though verticallyAlignFunctionArgs is used,
+                  // the user chooses to manually "break the rules" and use the
+                  // non-aligned style, like so:
+                  //
+                  // plot(foo,
+                  //   bar, baz,
+                  //
+                  // Without the below loop, hitting Enter after "baz," causes
+                  // the cursor to end up aligned with foo. The loop simply
+                  // replaces the indentation with the minimal indentation.
+                  //
+                  // TODO: Perhaps we can skip the above few lines of code if
+                  // there are other lines present
+                  var thisIndent;
+                  for (var i = nextTokenPos.row + 1; i <= row; i++) {
+                     // If a line contains only whitespace, it doesn't count
+                     if (!/[^\s]/.test(this.$getLine(i)))
+                        continue;
+                     // If this line is is a continuation of a multi-line string, 
+                     // ignore it.
+                     var rowEndState = this.$endStates[i-1];
+                     if (rowEndState === "qstring" || rowEndState === "qqstring") 
+                        continue;
+                     thisIndent = this.$getLine(i).replace(/[^\s].*$/, '');
+                     var thisIndentSize = thisIndent.replace("\t", tabAsSpaces).length;
+                     if (thisIndentSize < resultSize) {
+                        result = thisIndent;
+                        resultSize = thisIndentSize;
+                     }
+                  }
+
+                  // We want to tweak vertical alignment; e.g. in this
+                  // case:
+                  //
+                  //    if (foo &&
+                  //        |
+                  //
+                  // vs.
+                  //
+                  //    plot(x +
+                  //             |
+                  //
+                  // Ie, normally, we might want a continuation indent if
+                  // the line ended with an operator; however, in some
+                  // cases (notably with multi-line if statements) we
+                  // would prefer not including that indentation.
+                  if (isWithinControlFlowArgList(tokenCursor))
+                     return result;
+                  else
+                     return result + continuationIndent;
+
+               }
+
             }
+
+         } while (tokenCursor.moveToPreviousToken());
+
+         // If we got here, either the scope is provided by a '{'
+         // or we failed otherwise. For '{' scopes, we may want to
+         // short-circuit and indent based on a '<-', hence the second
+         // pass through here.
+         if (!tokenCursor.moveToPosition(startPos))
+            return "";
+         
+         do
+         {
+            // Walk over matching parens
+            if (tokenCursor.bwdToMatchingToken())
+               continue;
+            
+            // If we find an open brace, use its associated indentation
+            // plus a tab.
+            if (tokenCursor.currentValue() === "{")
+            {
+               return this.getIndentForOpenBrace(
+                  tokenCursor.currentPosition()
+               ) + tab + continuationIndent;
+            }
+                  
+            // If we found an assignment token, use that for indentation
+            if (pAssign(tokenCursor.currentToken()))
+            {
+               while (pAssign(tokenCursor.currentToken()))
+               {
+                  // Move off of the assignment token
+                  if (!tokenCursor.moveToPreviousToken())
+                     break;
+
+                  if (!tokenCursor.findStartOfEvaluationContext())
+                     break;
+
+                  // Make sure this isn't the only assignment within a 'naked'
+                  // control flow section
+                  //
+                  //    if (foo)
+                  //        x <- 1
+                  //
+                  // In such cases, we rely on the 'naked' control identifier
+                  // to provide the appropriate indentation.
+                  var clone = tokenCursor.cloneCursor();
+                  if (clone.moveToPreviousToken())
+                  {
+                     if (clone.currentValue() === "else" ||
+                         clone.currentValue() === "repeat")
+                     {
+                        return this.$getIndent(
+                           this.$doc.getLine(clone.$row)
+                        ) + continuationIndent + continuationIndent;
+                     }
+
+                     var tokenIsClosingParen = clone.currentValue() === ")";
+                     if (tokenIsClosingParen &&
+                         clone.bwdToMatchingToken() &&
+                         clone.moveToPreviousToken())
+                     {
+                        var currentValue = clone.currentValue();
+                        if (["if", "for", "while", "repeat", "else"].some(function(x) {
+                           return x === currentValue;
+                        }))
+                        {
+                           return this.$getIndent(
+                              this.$doc.getLine(clone.$row)
+                           ) + continuationIndent + continuationIndent;
+                        }
+                     }
+                  }
+
+                  // If the previous token is an assignment operator,
+                  // move on to it
+                  if (pAssign(tokenCursor.peekBwd().currentToken()))
+                     tokenCursor.moveToPreviousToken();
+
+               }
+
+               // We broke out of the loop; we should be on the
+               // appropriate line to provide for indentation now.
+               return this.$getIndent(
+                  this.$getLine(tokenCursor.$row)
+               ) + continuationIndent;
+            }
+
+         } while (tokenCursor.moveToPreviousToken());
+
+         // Fix some edge-case indentation issues, mainly for naked
+         // 'if' and 'else' blocks.
+         if (startedOnOperator)
+         {
+            var maxTokensToWalk = 20;
+            var count = 0;
+            
+            tokenCursor = this.getTokenCursor();
+            tokenCursor.moveToPosition(startPos);
+
+            // Move off of the operator
+            tokenCursor.moveToPreviousToken();
+               
+            do
+            {
+               // If we encounter an 'if' or 'else' statement, add to
+               // the continuation indent
+               if (isOneOf(tokenCursor.currentValue(), ["if", "else"]))
+               {
+                  continuationIndent += tab;
+                  break;
+               }
+               
+               // If we're on a constant, then we need to find an
+               // operator beforehand, or give up.
+               if (/\bconstant\b|\bidentifier\b/.test(tokenCursor.currentType()))
+               {
+
+                  if (!tokenCursor.moveToPreviousToken())
+                     break;
+
+                  // Check if we're already on an if / else
+                  if (isOneOf(tokenCursor.currentValue(), ["if", "else"]))
+                  {
+                     continuationIndent += tab;
+                     break;
+                  }
+
+                  // If we're on a ')', check if it's associated with an 'if'
+                  if (tokenCursor.currentValue() === ")")
+                  {
+                     if (!tokenCursor.bwdToMatchingToken())
+                        break;
+
+                     if (!tokenCursor.moveToPreviousToken())
+                        break;
+
+                     if (isOneOf(tokenCursor.currentValue(), ["if", "else"]))
+                     {
+                        continuationIndent += tab;
+                        break;
+                     }
+
+                  }
+
+                  if (!/\boperator\b/.test(tokenCursor.currentType()))
+                     break;
+
+                  continue;
+               }
+               
+               // Move over a generic 'evaluation', e.g.
+               // foo::bar()[1]
+               if (!tokenCursor.findStartOfEvaluationContext())
+                  break;
+
+            } while (tokenCursor.moveToPreviousToken() &&
+                     count++ < maxTokensToWalk);
          }
 
-         var firstToken = this.$findNextSignificantToken({row: 0, column: 0}, lastRow);
+         // All else fails -- just indent based on the first token.
+         var firstToken = this.$findNextSignificantToken(
+            {row: 0, column: 0},
+            row
+         );
+         
          if (firstToken)
-            return this.$getIndent(this.$getLine(firstToken.row)) + continuationIndent;
+            return this.$getIndent(
+               this.$getLine(firstToken.row)
+            ) + continuationIndent;
          else
             return "" + continuationIndent;
       }
@@ -797,48 +1513,43 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
          if (this.$lineOverrides)
          {
             this.$lineOverrides = null;
-            this.$invalidateRow(lastRow);
+            this.$invalidateRow(row);
          }
       }
    };
 
-   this.getBraceIndent = function(lastRow)
+   this.getBraceIndent = function(row)
    {
-      this.$tokenizeUpToRow(lastRow);
+      var tokenCursor = this.getTokenCursor();
+      var pos = {
+         row: row,
+         column: this.$getLine(row).length
+      };
 
-      var prevToken = this.$findPreviousSignificantToken({row: lastRow, column: this.$getLine(lastRow).length},
-                                                         lastRow - 10);
-      if (prevToken
-            && /\bparen\b/.test(prevToken.token.type)
-            && /\)$/.test(prevToken.token.value))
+      if (!tokenCursor.moveToPosition(pos))
+         return "";
+
+      if (tokenCursor.currentValue() === ")")
       {
-         var lastPos = this.$walkParensBalanced(
-               prevToken.row,
-               prevToken.row - 10,
-               null,
-               function(parens, paren, pos)
-               {
-                  return parens.length == 0;
-               });
-
-         if (lastPos != null)
+         if (tokenCursor.bwdToMatchingToken() &&
+             tokenCursor.moveToPreviousToken())
          {
-            var preParenToken = this.$findPreviousSignificantToken(lastPos, 0);
-            if (preParenToken && preParenToken.token.type === "keyword"
-                  && /^(if|while|for|function)$/.test(preParenToken.token.value))
+            var preParenValue = tokenCursor.currentValue();
+            if (isOneOf(preParenValue, ["if", "while", "for", "function"]))
             {
-               return this.$getIndent(this.$getLine(preParenToken.row));
+               return this.$getIndent(this.$getLine(tokenCursor.$row));
             }
          }
       }
-      else if (prevToken
-                  && prevToken.token.type === "keyword"
-                  && (prevToken.token.value === "repeat" || prevToken.token.value === "else"))
+      else if (isOneOf(tokenCursor.currentValue(),
+                       ["else", "repeat", "<-", "<<-", "="]) ||
+        tokenCursor.currentType().indexOf("infix") !== -1 ||
+        tokenCursor.currentType() === "keyword.operator")
       {
-         return this.$getIndent(this.$getLine(prevToken.row));
+         return this.$getIndent(this.$getLine(tokenCursor.$row));
       }
 
-      return this.$getIndent(lastRow);
+      return this.getIndentForRow(row);
    };
 
    /**
@@ -878,6 +1589,7 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
 
    this.$tokenizeUpToRow = function(lastRow)
    {
+
       // Don't let lastRow be past the end of the document
       lastRow = Math.min(lastRow, this.$endStates.length - 1);
 
@@ -894,7 +1606,9 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
 
          var state = (row === 0) ? 'start' : this.$endStates[row-1];
          var lineTokens = this.$tokenizer.getLineTokens(this.$getLine(row), state);
-         if (!this.$statePattern || this.$statePattern.test(lineTokens.state) || this.$statePattern.test(state))
+         if (!this.$statePattern ||
+             this.$statePattern.test(lineTokens.state) ||
+             this.$statePattern.test(state))
             this.$tokens[row] = this.$filterWhitespaceAndComments(lineTokens.tokens);
          else
             this.$tokens[row] = [];
@@ -1123,11 +1837,11 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
    this.findNextSignificantToken = function(pos)
    {
 	   return this.$findNextSignificantToken(pos, this.$tokens.length - 1);
-   }
+   };
    
    this.$findPreviousSignificantToken = function(pos, firstRow)
    {
-      if (this.$tokens.length == 0)
+      if (this.$tokens.length === 0)
          return null;
       firstRow = Math.max(0, firstRow);
       
@@ -1135,7 +1849,7 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
       for ( ; row >= firstRow; row--)
       {
          var tokens = this.$tokens[row];
-         if (tokens.length == 0)
+         if (tokens.length === 0)
             continue;
          
          if (row != pos.row)
@@ -1210,5 +1924,8 @@ exports.setVerticallyAlignFunctionArgs = function(verticallyAlign) {
    $verticallyAlignFunctionArgs = verticallyAlign;
 };
 
+exports.getVerticallyAlignFunctionArgs = function() {
+   return $verticallyAlignFunctionArgs;
+};
 
 });

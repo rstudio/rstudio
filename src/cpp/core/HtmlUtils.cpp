@@ -20,11 +20,23 @@
 
 #include <core/Base64.hpp>
 #include <core/FileSerializer.hpp>
+#include <core/StringUtils.hpp>
 
 #include <core/http/Util.hpp>
 
+namespace rstudio {
 namespace core {
 namespace html_utils {
+
+
+HTML::HTML(const std::string& text, bool isHTML)
+{
+   if (!isHTML)
+      text_ = string_utils::htmlEscape(text);
+   else
+      text_ = text;
+}
+
 
 std::string defaultTitle(const std::string& htmlContent)
 {
@@ -120,6 +132,7 @@ std::string CssUrlFilter::toBase64Url(const boost::cmatch& match)
 
 } // namespace html_utils
 } // namespace core 
+} // namespace rstudio
 
 
 

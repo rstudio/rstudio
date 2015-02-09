@@ -1,4 +1,9 @@
 
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+#endif
+
 #include <iostream>
 
 #include <boost/algorithm/string/predicate.hpp>
@@ -20,8 +25,9 @@
 
 #define kMinimalSuffix @"_minimal"
 
-using namespace core;
-using namespace desktop;
+using namespace rstudio;
+using namespace rstudio::core;
+using namespace rstudio::desktop;
 
 namespace {
    
@@ -421,19 +427,20 @@ private:
    [self showFile: path];
 }
 
-- (Boolean) isRetina
+
+- (double) devicePixelRatio
 {
    NSWindow* mainWindow = [[MainFrameController instance] window];
    if ([mainWindow respondsToSelector:@selector(backingScaleFactor)])
    {
-      double scaleFactor = [mainWindow backingScaleFactor];
-      return scaleFactor == 2.0;
+      return [mainWindow backingScaleFactor];
    }
    else
    {
-      return false;
+      return 1.0;
    }
 }
+
 
 - (void) openMinimalWindow: (NSString*) name url: (NSString*) url
                      width: (int) width height: (int) height
@@ -451,7 +458,8 @@ private:
       controller = [[WebViewController alloc] initWithURLRequest:
                   [NSURLRequest requestWithURL: [NSURL URLWithString: url]]
                                           name: windowName
-                                    clientName: name];
+                                    clientName: name
+                         allowExternalNavigate: false];
       
       if ([windowName isEqualToString: @"_rstudio_viewer_zoom_minimal"])
          [[controller window] setTitle: @"Viewer Zoom"];
@@ -491,6 +499,18 @@ private:
                                           height: height];
 }
 
+- (void) prepareForNamedWindow: (NSString*) name
+         allowExternalNavigate: (bool) allowExternalNavigate
+{
+   [WebViewController prepareForNamedWindow: name
+                      allowExternalNavigate: allowExternalNavigate];
+}
+
+- (void) closeNamedWindow: (NSString*) name
+{
+   [WebViewController closeNamedWindow: name];
+   [self bringMainFrameToFront];
+}
 
 - (void) copyImageToClipboard: (int) left top: (int) top
                         width: (int) width height: (int) height
@@ -534,7 +554,7 @@ private:
    NSImage* image = [[NSImage alloc] initWithCGImage: imageRef size: NSZeroSize];
    
    // downsample if this is a retina display
-   if ([self isRetina])
+   if ([self devicePixelRatio] != 1.0)
    {
       // allocate the imageRep
       NSSize size = regionRect.size;
@@ -542,7 +562,7 @@ private:
                                     initWithBitmapDataPlanes:NULL
                                     pixelsWide: size.width
                                     pixelsHigh: size.height
-                                    bitsPerSample: 8
+                                    bitsPerSample: (4 * [self devicePixelRatio])
                                     samplesPerPixel: 4
                                     hasAlpha: YES
                                     isPlanar: NO
@@ -1085,7 +1105,11 @@ enum RS_NSActivityOptions : uint64_t
       return @"setWindowTitle";
    else if (sel == @selector(reloadViewerZoomWindow:))
       return @"reloadViewerZoomWindow";
-  
+   else if (sel == @selector(prepareForNamedWindow:allowExternalNavigate:))
+      return @"prepareForNamedWindow";
+   else if (sel == @selector(closeNamedWindow:))
+      return @"closeNamedWindow";
+   
    return nil;
 }
 
@@ -1098,4 +1122,8 @@ enum RS_NSActivityOptions : uint64_t
 }
 
 @end
+
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
 

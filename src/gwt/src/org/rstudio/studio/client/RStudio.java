@@ -49,14 +49,15 @@ import org.rstudio.studio.client.application.ui.appended.ApplicationEndedPopupPa
 import org.rstudio.studio.client.application.ui.serializationprogress.ApplicationSerializationProgress;
 import org.rstudio.studio.client.application.ui.support.SupportPopupMenu;
 import org.rstudio.studio.client.common.StudioResources;
-import org.rstudio.studio.client.common.compile.errorlist.CompileErrorListResources;
 import org.rstudio.studio.client.common.mirrors.ChooseMirrorDialog;
 import org.rstudio.studio.client.common.rpubs.ui.RPubsUploadDialog;
+import org.rstudio.studio.client.common.sourcemarkers.SourceMarkerListResources;
 import org.rstudio.studio.client.common.spelling.ui.SpellingCustomDictionariesWidget;
 import org.rstudio.studio.client.common.vcs.CreateKeyDialog;
 import org.rstudio.studio.client.common.vcs.ShowPublicKeyDialog;
 import org.rstudio.studio.client.common.vcs.SshKeyWidget;
 import org.rstudio.studio.client.common.vcs.ignore.IgnoreDialog;
+import org.rstudio.studio.client.dataviewer.DataViewerSatellite;
 import org.rstudio.studio.client.htmlpreview.HTMLPreviewApplication;
 import org.rstudio.studio.client.impl.BrowserFence;
 import org.rstudio.studio.client.notebookv2.CompileNotebookv2OptionsDialog;
@@ -82,6 +83,7 @@ import org.rstudio.studio.client.workbench.views.packages.ui.actions.ActionCente
 import org.rstudio.studio.client.workbench.views.plots.ui.manipulator.ManipulatorResources;
 import org.rstudio.studio.client.workbench.views.source.editors.codebrowser.CodeBrowserEditingTargetWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
+import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionResources;
 import org.rstudio.studio.client.workbench.views.source.editors.text.findreplace.FindReplaceBar;
 import org.rstudio.studio.client.workbench.views.vcs.common.ChangelistTable;
 import org.rstudio.studio.client.workbench.views.vcs.common.diff.LineTableView;
@@ -115,7 +117,7 @@ public class RStudio implements EntryPoint
       str.append("<img src=\"");
       str.append(progressUrl);
       str.append("\"");
-      if (BrowseCap.isRetina())
+      if (BrowseCap.devicePixelRatio() > 1.0)
          str.append("width=24 height=24");
       str.append("/>");
       div.setInnerHTML(str.toString());
@@ -185,6 +187,12 @@ public class RStudio implements EntryPoint
                            RootLayoutPanel.get(), 
                            dismissProgressAnimation);
                   }
+                  else if (DataViewerSatellite.NAME.equals(view))
+                  {
+                     RStudioGinjector.INSTANCE.getDataViewerSatellite().go(
+                           RootLayoutPanel.get(), 
+                           dismissProgressAnimation);
+                  }
                   else
                   {
                      RStudioGinjector.INSTANCE.getApplication().go(
@@ -209,7 +217,7 @@ public class RStudio implements EntryPoint
       FilesListCellTableResources.INSTANCE.cellTableStyle().ensureInjected();
       ExportPlotResources.INSTANCE.styles().ensureInjected();
       CodeSearchResources.INSTANCE.styles().ensureInjected();
-      CompileErrorListResources.INSTANCE.styles().ensureInjected();
+      SourceMarkerListResources.INSTANCE.styles().ensureInjected();
       BuildPaneResources.INSTANCE.styles().ensureInjected();
       
       ProgressDialog.ensureStylesInjected();
@@ -252,6 +260,7 @@ public class RStudio implements EntryPoint
       PackratResolveConflictDialog.ensureStylesInjected();
       PackratActionDialog.ensureStylesInjected();
       LocalRepositoriesWidget.ensureStylesInjected();
+      CppCompletionResources.INSTANCE.styles().ensureInjected();
       
       StyleInjector.inject(
             "button::-moz-focus-inner {border:0}");

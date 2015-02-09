@@ -31,8 +31,9 @@
 
 #include <r/RErrorCategory.hpp>
 
-using namespace core;
+using namespace rstudio::core;
 
+namespace rstudio {
 namespace r {
 namespace session {
 namespace graphics { 
@@ -221,4 +222,5 @@ void logAndReportError(const Error& error, const ErrorLocation& location)
 } // namespace graphics
 } // namespace session
 } // namesapce r
+} // namespace rstudio
 

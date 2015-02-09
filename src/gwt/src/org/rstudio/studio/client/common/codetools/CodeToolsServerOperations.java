@@ -14,17 +14,57 @@
  */
 package org.rstudio.studio.client.common.codetools;
 
+import java.util.List;
+
 import org.rstudio.studio.client.server.*;
 import org.rstudio.studio.client.workbench.codesearch.model.CodeSearchServerOperations;
 import org.rstudio.studio.client.workbench.views.help.model.HelpServerOperations;
+import org.rstudio.studio.client.workbench.views.source.model.CppServerOperations;
+
+import com.google.gwt.core.client.JsArrayString;
 
 public interface CodeToolsServerOperations extends HelpServerOperations,
-                                                   CodeSearchServerOperations
+                                                   CodeSearchServerOperations,
+                                                   CppServerOperations
 {
-   void getCompletions(String line, int cursorPos, 
+   void isFunction(
+         String functionName,
+         String envName,
+         ServerRequestCallback<Boolean> result);
+   
+   void getCompletions(
+         String token,
+         List<String> assocData,
+         List<Integer> dataType,
+         List<Integer> numCommas,
+         String chainObjectName,
+         String functionCallString,
+         JsArrayString chainAdditionalArgs,
+         JsArrayString chainExcludeArgs,
+         boolean chainExcludeArgsFromObject,
+         String filePath,
+         String documentId,
+         ServerRequestCallback<Completions> completions);
+   
+   void getDplyrJoinCompletions(
+         String token,
+         String leftDataName,
+         String rightDataName,
+         String joinVerb,
+         String cursorPos,
+         ServerRequestCallback<Completions> completions);
+   
+   void getDplyrJoinCompletionsString(
+         String token,
+         String string,
+         String cursorPos,
          ServerRequestCallback<Completions> completions);
 
    void getHelpAtCursor(
          String line, int cursorPos,
          ServerRequestCallback<org.rstudio.studio.client.server.Void> callback);
+   
+   void getArgs(String name,
+                String source,
+                ServerRequestCallback<String> callback);
 }

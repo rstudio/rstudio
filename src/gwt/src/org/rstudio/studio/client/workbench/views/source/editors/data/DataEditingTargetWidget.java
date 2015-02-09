@@ -1,7 +1,7 @@
 /*
  * DataEditingTargetWidget.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-15 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -12,7 +12,9 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
+
 package org.rstudio.studio.client.workbench.views.source.editors.data;
+
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.Unit;
@@ -22,8 +24,11 @@ import com.google.gwt.user.client.ui.*;
 
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.IFrameElementEx;
+import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.widget.RStudioFrame;
 import org.rstudio.core.client.widget.Toolbar;
+import org.rstudio.studio.client.common.AutoGlassPanel;
+import org.rstudio.studio.client.dataviewer.DataTable;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.source.PanelWithToolbars;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetToolbar;
@@ -31,7 +36,8 @@ import org.rstudio.studio.client.workbench.views.source.editors.urlcontent.UrlCo
 import org.rstudio.studio.client.workbench.views.source.model.DataItem;
 
 public class DataEditingTargetWidget extends Composite
-   implements UrlContentEditingTarget.Display
+   implements UrlContentEditingTarget.Display, 
+              DataTable.Host
 {
    interface Resources extends ClientBundle
    {
@@ -62,8 +68,9 @@ public class DataEditingTargetWidget extends Composite
 
       frame_ = new RStudioFrame(dataItem.getContentUrl());
       frame_.setSize("100%", "100%");
+      table_ = new DataTable(this);
 
-      Widget mainWidget = frame_;
+      Widget mainWidget;
 
       if (dataItem.getDisplayedObservations() != dataItem.getTotalObservations())
       {
@@ -89,40 +96,68 @@ public class DataEditingTargetWidget extends Composite
 
          DockLayoutPanel dockPanel = new DockLayoutPanel(Unit.PX);
          dockPanel.addSouth(statusBar, 20);
-         dockPanel.add(frame_);
+         dockPanel.add(new AutoGlassPanel(frame_));
          dockPanel.setSize("100%", "100%");
          mainWidget = dockPanel;
       }
+      else
+      {
+         mainWidget = new AutoGlassPanel(frame_);
+      }
+      
 
-      PanelWithToolbars panel = new PanelWithToolbars(createToolbar(dataItem,
-                                                                  styles),
-                                                    mainWidget);
+      PanelWithToolbars panel = new PanelWithToolbars(
+            createToolbar(dataItem, styles), 
+            mainWidget);
 
       initWidget(panel);
-
    }
 
    private Toolbar createToolbar(DataItem dataItem, Styles styles)
    {
-      Label description = new Label(
-            StringUtil.formatGeneralNumber(dataItem.getTotalObservations())
-            + " observations of " +
-            StringUtil.formatGeneralNumber(dataItem.getVariables())
-            + " variables",
-            false);
-      description.addStyleName(styles.description());
 
       Toolbar toolbar = new EditingTargetToolbar(commands_);
       toolbar.addLeftWidget(commands_.popoutDoc().createToolbarButton());
-      toolbar.addRightWidget(description);
+      toolbar.addLeftSeparator();
       
+      table_.initToolbar(toolbar);
+
       return toolbar;
+   }
+   
+   private WindowEx getWindow()
+   {
+      IFrameElementEx frameEl = (IFrameElementEx) frame_.getElement().cast();
+      return frameEl.getContentWindow();
    }
 
    public void print()
    {
-      IFrameElementEx frameEl = (IFrameElementEx) frame_.getElement().cast();
-      frameEl.getContentWindow().print();
+      getWindow().print();
+   }
+   
+   public void setFilterUIVisible(boolean visible)
+   {
+      if (table_ != null)
+         table_.setFilterUIVisible(visible);
+   }
+   
+   public void refreshData(boolean structureChanged, boolean sizeChanged)
+   {
+      if (table_ != null)
+         table_.refreshData(structureChanged, sizeChanged);
+   }
+   
+   public void applySizeChange()
+   {
+      if (table_ != null)
+         table_.applySizeChange();
+   }
+   
+   @Override
+   public RStudioFrame getDataTableFrame()
+   {
+      return frame_;
    }
 
    public Widget asWidget()
@@ -132,4 +167,5 @@ public class DataEditingTargetWidget extends Composite
 
    private final Commands commands_;
    private RStudioFrame frame_;
+   private DataTable table_;
 }

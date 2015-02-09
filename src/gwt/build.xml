@@ -20,7 +20,7 @@
             classname="com.google.javascript.jscomp.ant.CompileTask"
             classpath="./tools/compiler/compiler.jar"/>
    <!-- Configure path to GWT SDK -->
-   <property name="gwt.sdk" value="lib/gwt/2.6.0"/>
+   <property name="gwt.sdk" value="lib/gwt/2.7.0"/>
 
    <property name="gwt.extra.args" value=""/>
    <property name="gwt.main.module" value="org.rstudio.studio.RStudio"/>
@@ -49,12 +49,18 @@
          </sources>
          <sources dir="acesupport/acemode">
             <file name="auto_brace_insert.js"/>
+            <file name="token_utils.js"/>
+            <file name="token_cursor.js"/>
+            <file name="utils.js"/>
             <file name="r_background_highlighter.js"/>
             <file name="r_highlight_rules.js"/>
             <file name="r_matching_brace_outdent.js"/>
             <file name="r_code_model.js"/>
             <file name="r_scope_tree.js"/>
             <file name="r.js"/>
+            <file name="markdown_highlight_rules.js"/>
+            <file name="markdown_folding.js"/>
+            <file name="markdown.js"/>
             <file name="tex_highlight_rules.js"/>
             <file name="tex.js"/>
             <file name="sweave_background_highlighter.js"/>
@@ -62,28 +68,22 @@
             <file name="sweave.js"/>
             <file name="rdoc_highlight_rules.js"/>
             <file name="rdoc.js"/>
-            <file name="markdown_highlight_rules.js"/>
-            <file name="markdown_folding.js"/>
-            <file name="markdown.js"/>
             <file name="rmarkdown_highlight_rules.js"/>
             <file name="rmarkdown.js"/>
             <file name="rhtml_highlight_rules.js"/>
             <file name="rhtml.js"/>
             <file name="dcf_highlight_rules.js"/>
             <file name="dcf.js"/>
+            <file name="mermaid_highlight_rules.js"/>
+            <file name="mermaid.js"/>
+            <file name="cpp_scope_tree.js"/>
+            <file name="cpp_code_model.js"/>
             <file name="doc_comment_highlight_rules.js"/>
+            <file name="c_cpp_matching_brace_outdent.js"/>
+            <file name="c_cpp_style_behaviour.js"/>
             <file name="c_cpp_highlight_rules.js"/>
             <file name="c_cpp.js"/>
             <file name="c_cpp_fold_mode.js"/>
-            <file name="python_highlight_rules.js"/>
-            <file name="python.js"/>
-            <file name="pythonic_fold_mode.js"/>
-            <file name="sql_highlight_rules.js"/>
-            <file name="sql.js"/>
-            <file name="sh_highlight_rules.js"/>
-            <file name="sh.js"/>
-            <file name="yaml_highlight_rules.js"/>
-            <file name="yaml.js"/>
             <file name="xml.js"/>
             <file name="xml_behavior.js"/>
             <file name="xml_fold_mode.js"/>
@@ -113,9 +113,12 @@
              destdir="bin"
              source="1.5" target="1.5" nowarn="true" deprecation="true"
              debug="true" debuglevel="lines,vars,source"
-             includeantruntime="false">
+             includeantruntime="false"
+             fork="true">
          <classpath refid="project.class.path"/>
          <compilerarg value="-Xlint"/>
+         <compilerarg value="-J-Xms256m"/>
+         <compilerarg value="-J-Xmx512m"/>
       </javac>
       <copy todir="bin">
          <fileset dir="src" excludes="**/*.java"/>
@@ -163,6 +166,24 @@
       </antcall>
    </target>
 	
+   <target name="devmode" depends="ext,javac" description="Run development mode">
+      <java failonerror="true" fork="true" classname="com.google.gwt.dev.DevMode">
+         <classpath>
+            <pathelement location="src"/>
+            <path refid="project.class.path"/>
+         </classpath>
+         <jvmarg value="-Xmx2048M"/>
+         <arg value="-war"/>
+         <arg value="www"/>
+         <arg value="-noserver"/>
+         <arg value="-startupUrl"/>
+         <arg value="http://localhost:8787"/>
+         <arg line="-bindAddress 127.0.0.1"/>
+         <!-- Additional arguments like -logLevel DEBUG -->
+         <arg value="org.rstudio.studio.RStudioSuperDevMode"/>
+      </java>
+   </target>
+   
    <target name="superdevmode" description="Run super dev mode">
    	<antcall target="gwtc">
           <param name="gwt.main.module" value="org.rstudio.studio.RStudioSuperDevMode"/>

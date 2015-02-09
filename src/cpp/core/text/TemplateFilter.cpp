@@ -20,6 +20,7 @@
 #include <core/http/Request.hpp>
 #include <core/http/Response.hpp>
 
+namespace rstudio {
 namespace core {
 namespace text {
 
@@ -56,5 +57,6 @@ void handleSecureTemplateRequest(const std::string& username,
 
 } // namespace text
 } // namespace core
+} // namespace rstudio
 
 

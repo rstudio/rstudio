@@ -158,7 +158,9 @@ public class RPubsUploadDialog extends ModalDialogBase
          commentTextArea_.addStyleName(styles.commentTextArea());
          verticalPanel.add(commentTextArea_);
          
-         // not using comments for now
+         // not using either for now
+         titleLabel.setVisible(false);
+         titleTextBox_.setVisible(false);
          commentLabel.setVisible(false);
          commentTextArea_.setVisible(false);
          
@@ -253,7 +255,7 @@ public class RPubsUploadDialog extends ModalDialogBase
    {
       super.onDialogShown();
       
-      if (titleTextBox_ != null)
+      if (hasTitle())
          titleTextBox_.setFocus(true);
    }
    
@@ -265,7 +267,7 @@ public class RPubsUploadDialog extends ModalDialogBase
    
    private String getTitleText()
    {
-      if (titleTextBox_ != null)
+      if (hasTitle())
          return titleTextBox_.getText().trim();
       else
          return title_;
@@ -273,10 +275,20 @@ public class RPubsUploadDialog extends ModalDialogBase
    
    private String getCommentText()
    {
-      if (commentTextArea_ != null)
+      if (hasComment())
          return commentTextArea_.getText().trim();
       else
          return "";
+   }
+   
+   private boolean hasTitle()
+   {
+      return (titleTextBox_ != null) && titleTextBox_.isVisible();
+   }
+   
+   private boolean hasComment()
+   {
+      return (commentTextArea_ != null) && commentTextArea_.isVisible();
    }
   
    private void performUpload(final boolean modify)

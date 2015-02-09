@@ -199,6 +199,19 @@
          <key>CFBundleTypeRole</key>
          <string>Editor</string>
       </dict>
+      <dict>
+         <key>CFBundleTypeExtensions</key>
+         <array>
+             <string>c</string>
+             <string>cpp</string>
+             <string>h</string>
+             <string>hpp</string>
+         </array>
+         <key>CFBundleTypeName</key>
+         <string>C/C++ File</string>
+         <key>CFBundleTypeRole</key>
+         <string>Editor</string>
+      </dict>
    </array>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>English</string>

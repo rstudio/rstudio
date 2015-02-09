@@ -28,6 +28,7 @@
 #include <core/system/Types.hpp>
 #include <core/FilePath.hpp>
 
+namespace rstudio {
 namespace core {
 
 class Error;
@@ -324,5 +325,6 @@ private:
 
 } // namespace system
 } // namespace core
+} // namespace rstudio
 
 #endif // CORE_SYSTEM_PROCESS_HPP

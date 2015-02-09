@@ -25,7 +25,8 @@
 #include "DesktopOptions.hpp"
 #include "desktop-config.h"
 
-using namespace core;
+using namespace rstudio::core;
+using namespace rstudio::desktop;
 
 AboutDialog::AboutDialog(QWidget *parent) :
       QDialog(parent, Qt::Dialog),
@@ -33,23 +34,23 @@ AboutDialog::AboutDialog(QWidget *parent) :
 {
    ui->setupUi(this);
 
-   ui->buttonBox->addButton(new QPushButton(QString::fromAscii("OK")),
+   ui->buttonBox->addButton(new QPushButton(QString::fromUtf8("OK")),
                             QDialogButtonBox::AcceptRole);
-   ui->lblIcon->setPixmap(QPixmap(QString::fromAscii(":/icons/resources/freedesktop/icons/64x64/rstudio.png")));
-   ui->lblVersion->setText(QString::fromAscii(
+   ui->lblIcon->setPixmap(QPixmap(QString::fromUtf8(":/icons/resources/freedesktop/icons/64x64/rstudio.png")));
+   ui->lblVersion->setText(QString::fromUtf8(
              "Version " RSTUDIO_VERSION " - © 2009-2012 RStudio, Inc."));
 
    setWindowModality(Qt::ApplicationModal);
 
    // read notice file
-   FilePath supportingFilePath = desktop::options().supportingFilePath();
+   FilePath supportingFilePath = options().supportingFilePath();
    FilePath noticePath = supportingFilePath.complete("NOTICE");
    std::string notice;
    Error error = readStringFromFile(noticePath, &notice);
    if (!error)
    {
-      ui->textBrowser->setFontFamily(desktop::options().fixedWidthFont());
-#ifdef Q_WS_MACX
+      ui->textBrowser->setFontFamily(options().fixedWidthFont());
+#ifdef Q_OS_MAC
       ui->textBrowser->setFontPointSize(11);
 #else
       ui->textBrowser->setFontPointSize(9);

@@ -1,19 +1,23 @@
 
-
 #include <string>
 #include <vector>
+#include <set>
 
 #include <core/FilePath.hpp>
 
 #include <core/system/System.hpp>
 #include <core/system/Environment.hpp>
 
+#include <crt_externs.h>
+
 #import <Cocoa/Cocoa.h>
 
 #import "Utils.hpp"
 
-using namespace core;
+using namespace rstudio;
+using namespace rstudio::core;
 
+namespace rstudio {
 namespace desktop {
 namespace utils {
       
@@ -228,7 +232,56 @@ NSData *base64Decode(NSString *input)
    return [NSData dataWithBytes: &output[0] length: output.size()];
 }
 
+
+namespace
+{
+// Unexposed--extract an environment variable name from its NAME=VALUE
+// representation
+std::string varname(const char* line)
+{
+   size_t nameLen = strcspn(line, "=");
+   if (nameLen == strlen(line)) {
+      return std::string();
+   } else {
+      return std::string(line, nameLen);
+   }
+}
+}
+   
+void cleanDuplicateEnvVars()
+{
+   std::set<std::string> seen;
+   std::set<std::string> dupes;
+   
+   // Create a list of the environment variables that appear more than once
+   for (char **read = *_NSGetEnviron(); *read; read++) {
+      std::string name = varname(*read);
+      if (name.size() == 0) {
+         continue;
+      }
+      if (seen.find(name) != seen.end()) {
+         dupes.insert(name);
+      } else {
+         seen.insert(name);
+      }
+   }
+   
+   // Loop over the list of duplicated variables
+   for (std::set<std::string>::iterator dupe = dupes.begin(); dupe != dupes.end(); dupe++) {
+      const char *name = (*dupe).c_str();
+      char *val = getenv(name);
+      if (val != NULL) {
+         // unsetenv removes *all* instances of the variable from the environment
+         unsetenv(name);
+         
+         // replace with the value from getenv (in practice appears to be the
+         // first value in the list)
+         setenv(name, val, 0);
+      }
+   }
+}
    
 } // namespace utils
 } // namespace desktop
+} // namespace rstudio
 

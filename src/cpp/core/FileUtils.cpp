@@ -13,11 +13,15 @@
  *
  */
 
+#include <fstream>
+#include <iostream>
+
 #include <core/FileUtils.hpp>
 #include <core/FilePath.hpp>
 
 #include <core/system/System.hpp>
 
+namespace rstudio {
 namespace core {
 namespace file_utils {
 
@@ -41,5 +45,26 @@ FilePath uniqueFilePath(const FilePath& parent, const std::string& prefix)
    return parent.childPath(prefix + core::system::generateUuid(false));
 }
 
+std::string readFile(const FilePath& filePath)
+{
+   std::ifstream stream(
+            filePath.absolutePath().c_str(),
+            std::ios::in | std::ios::binary);
+   
+   std::string content;
+   if (stream)
+   {
+      stream.seekg(0, std::ios::end);
+      std::streamsize size = stream.tellg();
+      content.resize(size);
+      stream.seekg(0, std::ios::beg);
+      stream.read(&content[0], size);
+      stream.close();
+   }
+   
+   return content;
+}
+
 } // namespace file_utils
 } // namespace core
+} // namespace rstudio

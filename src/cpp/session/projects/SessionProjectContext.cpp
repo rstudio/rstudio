@@ -27,14 +27,16 @@
 #include <core/system/FileMonitor.hpp>
 
 #include <r/RExec.hpp>
+#include <r/RRoutines.hpp>
 
 #include <session/SessionUserSettings.hpp>
 #include <session/SessionModuleContext.hpp>
 
 #include "SessionProjectFirstRun.hpp"
 
-using namespace core;
+using namespace rstudio::core;
 
+namespace rstudio {
 namespace session {
 namespace projects {
 
@@ -260,9 +262,36 @@ void ProjectContext::augmentRbuildignore()
    }
 }
 
+SEXP rs_getProjectDirectory()
+{
+   SEXP absolutePathSEXP = R_NilValue;
+   if (projectContext().hasProject())
+   {
+      r::sexp::Protect protect;
+      absolutePathSEXP = r::sexp::create(
+               projectContext().directory().absolutePath(), &protect);
+   }
+   return absolutePathSEXP;
+}
+
+SEXP rs_hasFileMonitor()
+{
+   r::sexp::Protect protect;
+   return r::sexp::create(projectContext().hasFileMonitor(), &protect);
+}
 
 Error ProjectContext::initialize()
 {
+   r::routines::registerCallMethod(
+            "rs_getProjectDirectory",
+            (DL_FUNC) rs_getProjectDirectory,
+            0);
+   
+   r::routines::registerCallMethod(
+            "rs_hasFileMonitor",
+            (DL_FUNC) rs_hasFileMonitor,
+            0);
+   
    if (hasProject())
    {
       // read build options for the side effect of updating buildOptions_
@@ -648,7 +677,7 @@ Error ProjectContext::readBuildOptions(RProjectBuildOptions* pOptions)
                                        true);
    pOptions->autoRoxygenizeForBuildAndReload = optionsFile.getBool(
                                        "auto_roxygenize_for_build_and_reload",
-                                       false);
+                                       true);
 
    // opportunistically sync in-memory representation to what we read from disk
    buildOptions_ = *pOptions;
@@ -682,4 +711,5 @@ Error ProjectContext::writeBuildOptions(const RProjectBuildOptions& options)
 
 } // namespace projects
 } // namesapce session
+} // namespace rstudio
 

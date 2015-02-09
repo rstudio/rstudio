@@ -38,8 +38,9 @@
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
 #endif
 
-using namespace core;
+using namespace rstudio::core;
 
+namespace rstudio {
 namespace core {
 namespace system {
 namespace crypto {
@@ -317,4 +318,5 @@ core::Error rsaPrivateDecrypt(const std::string& cipherText, std::string* pPlain
 } // namespace crypto
 } // namespace system
 } // namespace core
+} // namespace rstudio
 

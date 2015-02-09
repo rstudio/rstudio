@@ -2,6 +2,6 @@
 
 set -e
 
-./make-package Server $1 $2
+./make-package Server $1 $2 $3
 
 

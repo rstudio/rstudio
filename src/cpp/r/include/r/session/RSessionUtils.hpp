@@ -18,11 +18,14 @@
 
 #include <string>
 
+namespace rstudio {
 namespace core {
    class Error;
    class FilePath;
 }
+}
 
+namespace rstudio {
 namespace r {
 namespace session {
 namespace utils {
@@ -31,6 +34,8 @@ namespace utils {
 bool isR3();
 
 bool isPackratModeOn();
+
+bool isDevtoolsDevModeOn();
 
 bool isDefaultPrompt(const std::string& prompt);
 
@@ -56,6 +61,7 @@ public:
 } // namespace utils
 } // namespace session
 } // namespace r
+} // namespace rstudio
 
 #endif // R_SESSION_UTILS_HPP
 

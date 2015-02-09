@@ -18,6 +18,7 @@
 
 #include <boost/system/error_code.hpp>
 
+namespace rstudio {
 namespace r {
 namespace errc {
 
@@ -35,12 +36,13 @@ enum errc_t {
 
 } // namespace errc
 } // namespace r
+} // namespace rstudio
 
 
 namespace boost {
 namespace system {
 template <>
-struct is_error_code_enum<r::errc::errc_t>
+struct is_error_code_enum<rstudio::r::errc::errc_t>
  { static const bool value = true; };
 } // namespace system
 } // namespace boost
@@ -49,6 +51,7 @@ struct is_error_code_enum<r::errc::errc_t>
 
 #include <core/Error.hpp>
 
+namespace rstudio {
 namespace r {
 
 const boost::system::error_category& rCategory() ;
@@ -79,6 +82,7 @@ std::string endUserErrorMessage(const core::Error& error);
    
 
 } // namespace r
+} // namespace rstudio
 
 
 #endif // R_R_ERROR_CATEGORY_HPP

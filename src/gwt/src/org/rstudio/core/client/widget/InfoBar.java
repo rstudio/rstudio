@@ -55,6 +55,8 @@ public class InfoBar extends Composite
      
       initWidget(binder.createAndBindUi(this));
       
+      dismiss_.addStyleName(ThemeResources.INSTANCE.themeStyles().handCursor());
+      
       if (dismissHandler != null)
          dismiss_.addClickHandler(dismissHandler);
       else

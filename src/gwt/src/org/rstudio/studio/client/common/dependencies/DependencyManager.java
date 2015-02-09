@@ -1,7 +1,7 @@
 /*
  * DependencyManager.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-15 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,7 +17,7 @@ package org.rstudio.studio.client.common.dependencies;
 
 import java.util.ArrayList;
 
-import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.CommandWith2Args;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.Operation;
@@ -55,38 +55,64 @@ public class DependencyManager implements InstallShinyEvent.Handler
    }
    
    public void withDependencies(String progressCaption,
+                                CommandWith2Args<String,Command> userPrompt,
                                 Dependency[] dependencies, 
-                                Command command)
-   {
-      withDependencies(progressCaption,
-                       null,
-                       null,
-                       dependencies,
-                       command);
-   }
-   
-   public void withDependencies(String progressCaption,
-                                CommandWithArg<Command> userPrompt,
-                                Dependency[] dependencies, 
+                                boolean silentEmbeddedUpdate,
                                 Command command)
    {
       withDependencies(progressCaption,
                        null,
                        userPrompt,
                        dependencies,
+                       silentEmbeddedUpdate,
                        command);
    }
    
    public void withDependencies(String progressCaption,
                                 String userAction,
                                 Dependency[] dependencies, 
+                                boolean silentEmbeddedUpdate,
                                 final Command command)
    {
       withDependencies(progressCaption, 
                        userAction, 
                        null, 
                        dependencies, 
+                       silentEmbeddedUpdate,
                        command);
+   }
+
+   public void withPackrat(String userAction, final Command command)
+   {
+      withDependencies(
+         "Packrat",
+         userAction,
+         new Dependency[] {
+            Dependency.cranPackage("packrat", "0.4.3")
+         },
+         false,
+         command);
+   }
+   
+   public void withRSConnect(String userAction, 
+         CommandWith2Args<String, Command> userPrompt, 
+         final Command command)
+   {
+      withDependencies(
+        "Publishing",
+        userAction,
+        userPrompt,
+        new Dependency[] {
+          Dependency.cranPackage("digest", "0.6"),
+          Dependency.cranPackage("RCurl", "1.95"),
+          Dependency.cranPackage("RJSONIO", "1.0"),
+          Dependency.cranPackage("PKI", "0.1"),
+          Dependency.cranPackage("packrat", "0.4.3"),
+          Dependency.embeddedPackage("rsconnect")
+        },
+        true, // we want the embedded rsconnect package to be updated if needed
+        command
+      );
    }
    
    public void withRMarkdown(String userAction, final Command command)
@@ -100,8 +126,9 @@ public class DependencyManager implements InstallShinyEvent.Handler
           Dependency.cranPackage("htmltools", "0.2.4"),
           Dependency.cranPackage("caTools", "1.14"),
           Dependency.cranPackage("bitops", "1.0-6"),
-          Dependency.embeddedPackage("rmarkdown")
+          Dependency.cranPackage("rmarkdown", "0.4.2")
         }, 
+        false,
         command
      );
    }
@@ -109,9 +136,10 @@ public class DependencyManager implements InstallShinyEvent.Handler
    public void withShiny(final String userAction, final Command command)
    {
       // create user prompt command
-      CommandWithArg<Command> userPrompt = new CommandWithArg<Command>() {
+      CommandWith2Args<String, Command> userPrompt =
+            new CommandWith2Args<String, Command>() {
          @Override
-         public void execute(final Command yesCommand)
+         public void execute(final String unmetDeps, final Command yesCommand)
          {
             globalDisplay_.showYesNoMessage(
               MessageDialog.QUESTION,
@@ -143,6 +171,7 @@ public class DependencyManager implements InstallShinyEvent.Handler
             Dependency.cranPackage("htmltools", "0.2.4"),
             Dependency.cranPackage("shiny", "0.10.0")
           }, 
+          true,
           command
        ); 
    }
@@ -156,8 +185,9 @@ public class DependencyManager implements InstallShinyEvent.Handler
    
    private void withDependencies(String progressCaption,
                                  final String userAction,
-                                 final CommandWithArg<Command> userPrompt,
+                                 final CommandWith2Args<String,Command> userPrompt,
                                  Dependency[] dependencies, 
+                                 final boolean silentEmbeddedUpdate,
                                  final Command command)
    {
       // convert dependencies to JsArray
@@ -174,7 +204,8 @@ public class DependencyManager implements InstallShinyEvent.Handler
       
       // query for unsatisfied dependencies
       server_.unsatisfiedDependencies(
-            deps, new ServerRequestCallback<JsArray<Dependency>>() {
+            deps, silentEmbeddedUpdate, 
+            new ServerRequestCallback<JsArray<Dependency>>() {
 
          @Override
          public void onResponseReceived(
@@ -196,13 +227,26 @@ public class DependencyManager implements InstallShinyEvent.Handler
                   @Override
                   public void execute()
                   {
-                     installDependencies(unsatisfiedDeps, command);
+                     // the incoming JsArray from the server may not serialize
+                     // as expected when this code is executed from a satellite
+                     // (see RemoteServer.sendRequestViaMainWorkbench), so we
+                     // clone it before passing to the dependency installer
+                     JsArray<Dependency> newArray = JsArray.createArray().cast();
+                     newArray.setLength(unsatisfiedDeps.length());
+                     for (int i = 0; i < unsatisfiedDeps.length(); i++)
+                     {
+                        newArray.set(i, unsatisfiedDeps.get(i));
+                     }
+                     installDependencies(
+                           newArray, 
+                           silentEmbeddedUpdate, command);
                   }
                };
                
                if (userPrompt != null)
                {
-                  userPrompt.execute(installCommand);
+                  userPrompt.execute(describeDepPkgs(unsatisfiedDeps), 
+                                     installCommand);
                }
                else
                {
@@ -224,6 +268,7 @@ public class DependencyManager implements InstallShinyEvent.Handler
    }
    
    private void installDependencies(final JsArray<Dependency> dependencies,
+                                    final boolean silentEmbeddedUpdate,
                                     final Command onSuccess)
    {
       server_.installDependencies(
@@ -243,7 +288,8 @@ public class DependencyManager implements InstallShinyEvent.Handler
                      @Override
                      public void onProcessExit(ProcessExitEvent event)
                      {
-                        ifDependenciesSatisifed(dependencies, new Command(){
+                        ifDependenciesSatisifed(dependencies, 
+                              silentEmbeddedUpdate, new Command(){
                            @Override
                            public void execute()
                            {
@@ -258,10 +304,12 @@ public class DependencyManager implements InstallShinyEvent.Handler
    }
    
    private void ifDependenciesSatisifed(JsArray<Dependency> dependencies,
+                                        boolean silentEmbeddedUpdate,
                                         final Command onInstalled)
    {
       server_.unsatisfiedDependencies(
-        dependencies, new SimpleRequestCallback<JsArray<Dependency>>() {
+        dependencies, silentEmbeddedUpdate, 
+        new SimpleRequestCallback<JsArray<Dependency>>() {
            
            @Override
            public void onResponseReceived(JsArray<Dependency> dependencies)
@@ -286,12 +334,9 @@ public class DependencyManager implements InstallShinyEvent.Handler
       }
       else
       {
-         ArrayList<String> deps = new ArrayList<String>();
-         for (int i = 0; i < dependencies.length(); i++)
-            deps.add(dependencies.get(i).getName());
          
          msg = "requires updated versions of the following packages: " + 
-               StringUtil.join(deps, ", ") + ". " +
+               describeDepPkgs(dependencies) + ". " +
                "\n\nDo you want to install these packages now?";
       }
       
@@ -315,6 +360,14 @@ public class DependencyManager implements InstallShinyEvent.Handler
       {
          onConfirmed.execute();
       }
+   }
+   
+   private String describeDepPkgs(JsArray<Dependency> dependencies)
+   {
+      ArrayList<String> deps = new ArrayList<String>();
+      for (int i = 0; i < dependencies.length(); i++)
+         deps.add(dependencies.get(i).getName());
+      return StringUtil.join(deps, ", ");
    }
    
    private final GlobalDisplay globalDisplay_;

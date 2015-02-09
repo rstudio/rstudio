@@ -35,8 +35,9 @@
 #undef TRUE
 #undef FALSE
 
-using namespace core ;
+using namespace rstudio::core ;
 
+namespace rstudio {
 namespace r {
    
 using namespace exec ;
@@ -69,6 +70,19 @@ double asReal(SEXP object)
 bool asLogical(SEXP object)
 {
    return Rf_asLogical(object) ? true : false;
+}
+
+bool fillVectorString(SEXP object, std::vector<std::string>* pVector)
+{
+   if (TYPEOF(object) != STRSXP)
+      return false;
+   
+   int n = Rf_length(object);
+   pVector->reserve(pVector->size() + n);
+   for (int i = 0; i < n; i++)
+      pVector->push_back(std::string(CHAR(STRING_ELT(object, i))));
+   
+   return true;
 }
    
 SEXP findNamespace(const std::string& name)
@@ -211,6 +225,23 @@ bool isNull(SEXP object)
 SEXP getNames(SEXP sexp)
 {
    return Rf_getAttrib(sexp, R_NamesSymbol);
+}
+
+bool setNames(SEXP sexp, const std::vector<std::string>& names)
+{
+   std::size_t n = names.size();
+   if (static_cast<std::size_t>(Rf_length(sexp)) != n)
+      return false;
+
+   Rf_setAttrib(sexp,
+                R_NamesSymbol,
+                Rf_allocVector(STRSXP, names.size()));
+
+   SEXP namesSEXP = Rf_getAttrib(sexp, R_NamesSymbol);
+   for (std::size_t i = 0; i < n; ++i)
+      SET_STRING_ELT(namesSEXP, i, Rf_mkChar(names[i].c_str()));
+
+   return true;
 }
    
 Error getNames(SEXP sexp, std::vector<std::string>* pNames)   
@@ -543,6 +574,7 @@ SEXP create(const std::vector<bool>& value, Protect *pProtect)
    
    return valueSEXP;
 }
+
    
 namespace {  
 int secondsSinceEpoch(boost::posix_time::ptime date)
@@ -573,6 +605,28 @@ SEXP create(const std::vector<boost::posix_time::ptime>& value,
    // return it
    return posixCtSEXP;
 }
+
+SEXP create(const std::map<std::string, std::vector<std::string> > &value,
+            Protect *pProtect)
+{
+   SEXP listSEXP, namesSEXP;
+   std::size_t n = value.size();
+   pProtect->add(listSEXP = Rf_allocVector(VECSXP, n));
+   pProtect->add(namesSEXP = Rf_allocVector(STRSXP, n));
+   
+   int index = 0;
+   typedef std::map< std::string, std::vector<std::string> >::const_iterator iterator;
+   for (iterator it = value.begin(); it != value.end(); ++it)
+   {
+      SET_STRING_ELT(namesSEXP, index, Rf_mkChar(it->first.c_str()));
+      SET_VECTOR_ELT(listSEXP, index, r::sexp::create(it->second, pProtect));
+      ++index;
+   }
+   
+   Rf_setAttrib(listSEXP, R_NamesSymbol, namesSEXP);
+   
+   return listSEXP;
+}
    
 SEXP create(const std::vector<std::pair<std::string,std::string> >& value, 
             Protect* pProtect)
@@ -599,6 +653,39 @@ SEXP create(const std::vector<std::pair<std::string,std::string> >& value,
    
    // return the vector
    return charSEXP;   
+}
+
+SEXP create(const std::set<std::string> &value, Protect *pProtect)
+{
+   SEXP charSEXP;
+   pProtect->add(charSEXP = Rf_allocVector(STRSXP, value.size()));
+   
+   int index = 0;
+   for (std::set<std::string>::const_iterator it = value.begin();
+        it != value.end();
+        ++it)
+   {
+      SET_STRING_ELT(charSEXP, index, Rf_mkChar(it->c_str()));
+      ++index;
+   }
+   
+   return charSEXP;
+}
+
+SEXP createList(std::vector<std::string> names, Protect* pProtect)
+{
+   std::size_t n = names.size();
+   SEXP listSEXP;
+   pProtect->add(listSEXP = Rf_allocVector(VECSXP, n));
+
+   SEXP namesSEXP;
+   pProtect->add(namesSEXP = Rf_allocVector(STRSXP, n));
+   for (std::size_t i = 0; i < n; ++i)
+      SET_STRING_ELT(namesSEXP, i, Rf_mkChar(names[i].c_str()));
+
+   Rf_setAttrib(listSEXP, R_NamesSymbol, namesSEXP);
+
+   return listSEXP;
 }
    
 Protect::~Protect()
@@ -665,9 +752,19 @@ void PreservedSEXP::releaseNow()
    }
 }
 
+void printValue(SEXP object)
+{
+   Error error = r::exec::executeSafely(
+      boost::bind(Rf_PrintValue, object)
+   );
+   
+   if (error)
+      LOG_ERROR(error);
+}
 
 } // namespace sexp   
 } // namespace r
+} // namespace rstudio
 
 
 

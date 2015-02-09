@@ -38,9 +38,10 @@
 #include "SessionRnwConcordance.hpp"
 #include "SessionCompilePdfSupervisor.hpp"
 
-using namespace core;
-using namespace session::modules::tex::rnw_concordance;
+using namespace rstudio::core;
+using namespace rstudio::session::modules::tex::rnw_concordance;
 
+namespace rstudio {
 namespace session {
 namespace modules { 
 namespace tex {
@@ -499,17 +500,6 @@ void runWeave(const core::FilePath& rnwPath,
    FilePath rBinPath = rBin.complete("R");
 #endif
 
-   // program path and args
-   FilePath programPath;
-   std::vector<std::string> args;
-#ifdef __APPLE__
-   programPath = FilePath("/bin/bash");
-   args.push_back("--login");
-   args.push_back(rBinPath.absolutePath());
-#else
-   programPath = rBinPath;
-#endif
-
    // determine the active sweave engine
    std::string weaveType = weaveTypeForFile(magicComments);
    boost::shared_ptr<RnwWeave> pRnwWeave = weaveRegistry()
@@ -518,14 +508,13 @@ void runWeave(const core::FilePath& rnwPath,
    // run the weave
    if (pRnwWeave)
    {
-      std::vector<std::string> cArgs = pRnwWeave->commandArgs(
+      std::vector<std::string> args = pRnwWeave->commandArgs(
                                                          rnwPath.filename(),
                                                          encoding);
-      std::copy(cArgs.begin(), cArgs.end(), std::back_inserter(args));
 
       // call back-end
       Error error = compile_pdf_supervisor::runProgram(
-               programPath,
+               rBinPath,
                args,
                core::system::Options(),
                rnwPath.parent(),
@@ -589,4 +578,5 @@ void getTypesInstalledStatus(json::Object* pObj)
 } // namespace tex
 } // namespace modules
 } // namesapce session
+} // namespace rstudio
 

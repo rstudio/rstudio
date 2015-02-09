@@ -22,25 +22,27 @@
 
 #include <core/json/Json.hpp>
 
+namespace rstudio {
 namespace core {
    class Error;
    namespace r_util {
       class RSourceIndex;
    }
 }
+}
  
+namespace rstudio {
 namespace session {
 namespace modules { 
 namespace source {
    
 core::Error clientInitDocuments(core::json::Array* pJsonDocs) ;
 
-std::vector<boost::shared_ptr<core::r_util::RSourceIndex> > rIndexes();
-
 core::Error initialize();
                        
 } // namespace source
 } // namespace modules
 } // namesapce session
+} // namespace rstudio
 
 #endif // SESSION_SOURCE_HPP

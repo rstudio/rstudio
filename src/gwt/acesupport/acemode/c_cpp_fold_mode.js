@@ -29,9 +29,8 @@
 
 define("mode/c_cpp_fold_mode", function(require, exports, module) {
 
-
 var oop = require("ace/lib/oop");
-var Range = require("ace/lib/range").Range;
+var Range = require("ace/range").Range;
 var BaseFoldMode = require("ace/mode/folding/fold_mode").FoldMode;
 
 var FoldMode = exports.FoldMode = function() {};

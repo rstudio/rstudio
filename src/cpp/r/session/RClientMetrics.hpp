@@ -16,10 +16,13 @@
 #ifndef R_SESSION_CLIENT_METRICS_HPP
 #define R_SESSION_CLIENT_METRICS_HPP
 
+namespace rstudio {
 namespace core {
    class Settings;
 }
+}
 
+namespace rstudio {
 namespace r {
 namespace session {
    
@@ -35,6 +38,7 @@ void restore(const core::Settings& settings);
 } // namespace client_metrics
 } // namespace session
 } // namespace r
+} // namespace rstudio
 
 #endif // R_SESSION_CLIENT_METRICS_HPP 
 

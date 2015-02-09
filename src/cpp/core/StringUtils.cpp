@@ -19,6 +19,7 @@
 #include <ostream>
 
 #include <algorithm>
+#include <boost/algorithm/string/case_conv.hpp>
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/replace.hpp>
 #include <boost/algorithm/string/split.hpp>
@@ -33,8 +34,120 @@
 #include <winnls.h>
 #endif
 
+namespace rstudio {
 namespace core {
-namespace string_utils {   
+namespace string_utils {
+
+bool isSubsequence(std::string const& self,
+                   std::string const& other,
+                   std::string::size_type other_n)
+{
+   std::string::size_type self_n = self.length();
+
+   if (other_n == 0)
+      return true;
+
+   if (other_n > other.length())
+      other_n = other.length();
+
+   if (other_n > self_n)
+      return false;
+
+   std::string::size_type self_idx = 0;
+   std::string::size_type other_idx = 0;
+
+   while (self_idx < self_n)
+   {
+      char selfChar = self[self_idx];
+      char otherChar = other[other_idx];
+
+      if (otherChar == selfChar)
+      {
+         ++other_idx;
+         if (other_idx == other_n)
+         {
+            return true;
+         }
+      }
+      ++self_idx;
+   }
+   return false;
+}
+
+
+bool isSubsequence(std::string const& self,
+                   std::string const& other,
+                   std::string::size_type other_n,
+                   bool caseInsensitive)
+{
+   return caseInsensitive ?
+            isSubsequence(boost::algorithm::to_lower_copy(self),
+                          boost::algorithm::to_lower_copy(other),
+                          other_n) :
+            isSubsequence(self, other, other_n)
+            ;
+}
+
+bool isSubsequence(std::string const& self,
+                   std::string const& other)
+{
+   return isSubsequence(self, other, other.length());
+}
+
+bool isSubsequence(std::string const& self,
+                   std::string const& other,
+                   bool caseInsensitive)
+{
+   return isSubsequence(self, other, other.length(), caseInsensitive);
+}
+
+std::vector<int> subsequenceIndices(std::string const& sequence,
+                                    std::string const& query)
+{
+   int query_n = query.length();
+   std::vector<int> result;
+   result.reserve(query.length());
+
+   int prevMatchIndex = -1;
+   for (int i = 0; i < query_n; i++)
+   {
+      result[i] = sequence.find(query[i], prevMatchIndex + 1);
+      prevMatchIndex = result[i];
+   }
+   return result;
+}
+
+bool subsequenceIndices(std::string const& sequence,
+                        std::string const& query,
+                        std::vector<int> *pIndices)
+{
+   pIndices->clear();
+   pIndices->reserve(query.length());
+   
+   int query_n = query.length();
+   int prevMatchIndex = -1;
+   
+   for (int i = 0; i < query_n; i++)
+   {
+      int index = sequence.find(query[i], prevMatchIndex + 1);
+      if (index == -1)
+         return false;
+      
+      pIndices->push_back(index);
+      prevMatchIndex = index;
+   }
+   
+   return true;
+}
+
+std::string getExtension(std::string const& x)
+{
+   std::size_t lastDotIndex = x.rfind('.');
+   if (lastDotIndex != std::string::npos)
+      return x.substr(lastDotIndex);
+   else
+      return std::string();
+}
 
 void convertLineEndings(std::string* pStr, LineEnding type)
 {
@@ -358,8 +471,71 @@ void stripQuotes(std::string* pStr)
       *pStr = pStr->substr(0, len -1);
 }
 
+template <typename T, typename U>
+inline std::size_t countNewLinesImpl(const T& string,
+                                     const U& CR,
+                                     const U& LF)
+{
+   return countNewLinesImpl(string.begin(),
+                            string.end(),
+                            CR,
+                            LF);
+}
+
+template <typename Iter, typename U>
+inline std::size_t countNewLinesImpl(Iter begin,
+                                     Iter end,
+                                     const U& CR,
+                                     const U& LF)
+{
+   std::size_t numNewLines = 0;
+   Iter it = begin;
+   for (; it != end; ++it)
+   {
+      // Detect '\r\n'
+      if (*it == CR)
+      {
+         if (it + 1 != end &&
+             *(it + 1) == LF)
+         {
+            ++it;
+            ++numNewLines;
+         }
+      }
+      
+      // Detect '\n'
+      if (*it == LF)
+         ++numNewLines;
+   }
+   
+   return numNewLines;
+}
+
+std::size_t countNewLines(const std::wstring& string)
+{
+   return countNewLinesImpl(string.begin(), string.end(), L'\r', L'\n');
+}
+
+std::size_t countNewLines(const std::string& string)
+{
+   return countNewLinesImpl(string.begin(), string.end(), '\r', '\n');
+}
+
+std::size_t countNewLines(std::string::iterator begin,
+                          std::string::iterator end)
+{
+   return countNewLinesImpl(begin, end, '\r', '\n');
+}
+
+std::size_t countNewLines(std::wstring::iterator begin,
+                          std::wstring::iterator end)
+{
+   return countNewLinesImpl(begin, end, '\r', '\n');
+}
+
 } // namespace string_utils
 } // namespace core 
+} // namespace rstudio
 
 
 

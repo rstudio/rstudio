@@ -18,6 +18,7 @@
 
 #include <string>
 
+namespace rstudio {
 namespace core {
 
 class FilePath;
@@ -38,6 +39,7 @@ void handleLogRequest(const std::string& username,
                            
 } // namespace gwt
 } // namespace core
+} // namespace rstudio
 
 #endif // CORE_GWT_LOG_HANDLER_HPP
 

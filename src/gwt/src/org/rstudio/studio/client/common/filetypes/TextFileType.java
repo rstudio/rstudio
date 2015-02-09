@@ -34,8 +34,6 @@ import java.util.HashSet;
 
 public class TextFileType extends EditableFileType
 {
-   public static final String R_LANG_MODE = "R";
-
    TextFileType(String id,
                 String label,
                 EditorLanguage editorLanguage,
@@ -52,7 +50,8 @@ public class TextFileType extends EditableFileType
                 boolean canExecuteChunks,
                 boolean canAutoIndent,
                 boolean canCheckSpelling,
-                boolean canShowScopeTree)
+                boolean canShowScopeTree,
+                boolean canPreviewFromR)
    {
       super(id, label, defaultIcon);
       editorLanguage_ = editorLanguage;
@@ -69,6 +68,7 @@ public class TextFileType extends EditableFileType
       canAutoIndent_ = canAutoIndent;
       canCheckSpelling_ = canCheckSpelling;
       canShowScopeTree_ = canShowScopeTree;
+      canPreviewFromR_ = canPreviewFromR;
    }
 
    @Override
@@ -173,6 +173,11 @@ public class TextFileType extends EditableFileType
    {
       return canShowScopeTree_;
    }
+  
+   public boolean canPreviewFromR()
+   {
+      return canPreviewFromR_;
+   }
 
    public boolean isR()
    {
@@ -237,6 +242,11 @@ public class TextFileType extends EditableFileType
       return false;
    }
    
+   public String createPreviewCommand(String file)
+   {
+      return null;
+   }
+   
    public boolean isScript()
    {
       return false;
@@ -261,15 +271,17 @@ public class TextFileType extends EditableFileType
       results.add(commands.vcsViewOnGitHub());
       results.add(commands.vcsBlameOnGitHub());
       results.add(commands.goToLine());
-      if (canExecuteCode())
+      if (canExecuteCode() || isC())
       {
+         results.add(commands.reindent());
+      }
+      if (canExecuteCode()) {
          results.add(commands.executeCode());
          results.add(commands.executeCodeWithoutFocus());
          results.add(commands.executeLastCode());
          results.add(commands.extractFunction());
          results.add(commands.extractLocalVariable());
          results.add(commands.commentUncomment());
-         results.add(commands.reindent());
          results.add(commands.reflowComment());
       }
       if (canExecuteAllCode())
@@ -390,7 +402,8 @@ public class TextFileType extends EditableFileType
    private final boolean canExecuteChunks_;
    private final boolean canAutoIndent_;
    private final boolean canCheckSpelling_;
-   private boolean canShowScopeTree_;
+   private final boolean canShowScopeTree_;
+   private final boolean canPreviewFromR_;
    private final String defaultExtension_;
 
    private static Pattern reTextType_ = Pattern.create("\\btext\\b");

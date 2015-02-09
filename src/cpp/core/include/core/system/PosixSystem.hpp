@@ -26,10 +26,13 @@ typedef pid_t PidType;
 typedef rlim_t RLimitType;
 
 
+namespace rstudio {
 namespace core {
    class Error;
 }
+}
 
+namespace rstudio {
 namespace core {
 namespace system {
 
@@ -145,6 +148,9 @@ struct ProcessLimits
    RLimitType filesLimit;
 };
 
+void setProcessLimits(ProcessLimits limits);
+
+
 struct ProcessConfig
 {
    ProcessConfig()
@@ -184,6 +190,7 @@ core::Error restorePriv();
 
 } // namespace system
 } // namespace core
+} // namespace rstudio
 
 #endif // CORE_SYSTEM_POSIX_SYSTEM_HPP
 

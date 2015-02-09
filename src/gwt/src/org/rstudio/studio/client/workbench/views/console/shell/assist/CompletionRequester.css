@@ -1,0 +1,21 @@
+.completionIcon {
+	margin-bottom: -1px;
+	padding-left: 2px;
+	padding-right: 6px;
+}
+
+.fileIcon {
+	margin-bottom: -3px;
+	padding-left: 2px;
+	padding-right: 6px;
+}
+
+.completion {
+	
+}
+
+.packageName {
+	padding-right: 8px;
+	float: right;
+	color: #999;
+}

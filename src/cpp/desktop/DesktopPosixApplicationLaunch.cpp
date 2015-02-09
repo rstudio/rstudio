@@ -18,6 +18,7 @@
 #include "DesktopPosixApplication.hpp"
 
 
+namespace rstudio {
 namespace desktop {
 
 namespace {
@@ -88,3 +89,4 @@ QString ApplicationLaunch::startupOpenFileRequest() const
 }
 
 } // namespace desktop
+} // namespace rstudio

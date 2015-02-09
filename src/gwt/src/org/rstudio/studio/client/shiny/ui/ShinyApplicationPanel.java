@@ -20,7 +20,6 @@ import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.StringUtil;
@@ -31,9 +30,9 @@ import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.rsconnect.RSConnect;
+import org.rstudio.studio.client.rsconnect.events.RSConnectActionEvent;
 import org.rstudio.studio.client.shiny.ShinyApplicationPresenter;
-import org.rstudio.studio.client.shiny.ShinyApps;
-import org.rstudio.studio.client.shiny.events.ShinyAppsActionEvent;
 import org.rstudio.studio.client.shiny.model.ShinyApplicationParams;
 
 public class ShinyApplicationPanel extends SatelliteFramePanel<RStudioFrame>
@@ -41,11 +40,11 @@ public class ShinyApplicationPanel extends SatelliteFramePanel<RStudioFrame>
 {
    @Inject
    public ShinyApplicationPanel(Commands commands, EventBus events,
-                                ShinyApps shinyApps)
+                                RSConnect rsconnect)
    {
       super(commands);
       events_ = events;
-      shinyApps.ensureSessionInit();
+      rsconnect.ensureSessionInit();
    }
    
    @Override 
@@ -64,9 +63,15 @@ public class ShinyApplicationPanel extends SatelliteFramePanel<RStudioFrame>
       popoutButton.setText("Open in Browser");
       toolbar.addLeftWidget(popoutButton);
 
-      deployButtonSeparator_ = toolbar.addLeftSeparator();
+      toolbar.addLeftSeparator();
+      ToolbarButton refreshButton = 
+            commands.reloadShinyApp().createToolbarButton();
+      refreshButton.setLeftImage(commands.viewerRefresh().getImageResource());
+      refreshButton.getElement().getStyle().setMarginTop(1, Unit.PX);
+      toolbar.addLeftWidget(refreshButton);
+      
       deployButton_ = new ToolbarButton("Publish", 
-            commands.shinyAppsDeploy().getImageResource(), 
+            commands.rsconnectDeploy().getImageResource(), 
             new ClickHandler()
       {
          @Override
@@ -81,19 +86,13 @@ public class ShinyApplicationPanel extends SatelliteFramePanel<RStudioFrame>
                if (!deployPath.endsWith("/"))
                   deployPath += "/";
                deployPath += "server.R";
-               events_.fireEvent(new ShinyAppsActionEvent(
-                     ShinyAppsActionEvent.ACTION_TYPE_DEPLOY,
+               events_.fireEvent(new RSConnectActionEvent(
+                     RSConnectActionEvent.ACTION_TYPE_DEPLOY,
                      deployPath));
             }
          }
       });
-      toolbar.addLeftWidget(deployButton_);
-
-      ToolbarButton refreshButton = 
-            commands.reloadShinyApp().createToolbarButton();
-      refreshButton.setLeftImage(commands.viewerRefresh().getImageResource());
-      refreshButton.getElement().getStyle().setMarginTop(2, Unit.PX);
-      toolbar.addRightWidget(refreshButton);
+      toolbar.addRightWidget(deployButton_);
    }
    
    @Override
@@ -101,7 +100,6 @@ public class ShinyApplicationPanel extends SatelliteFramePanel<RStudioFrame>
    {
       appParams_ = params;
 
-      deployButtonSeparator_.setVisible(showDeploy);
       deployButton_.setVisible(showDeploy);
          
       String url = params.getUrl();
@@ -149,7 +147,6 @@ public class ShinyApplicationPanel extends SatelliteFramePanel<RStudioFrame>
    private Label urlBox_;
    private ShinyApplicationParams appParams_;
    private ToolbarButton deployButton_;
-   private Widget deployButtonSeparator_;
    
    private final EventBus events_; 
 }

@@ -13,7 +13,6 @@ src/gwt/tools/ace/
 src/gwt/tools/pdfjs/
 src/gwt/.ant-targets-build.xml
 /src/gwt/.gwt/.gwt-log
-rstudio*.Rproj
 .Rproj.user
 .Rhistory
 .RData
@@ -23,3 +22,7 @@ rstudio*.Rproj
 NEWS.html
 CMakeLists.txt.user
 .idea/
+**/\.tern-port
+.#*
+*.autosave
+*~

@@ -23,6 +23,8 @@ import org.rstudio.studio.client.shiny.model.ShinyApplicationParams;
 import org.rstudio.studio.client.shiny.events.ShinyApplicationStatusEvent;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.model.SessionUtils;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.user.client.ui.IsWidget;
@@ -54,7 +56,8 @@ public class ShinyApplicationPresenter implements
                                final Commands commands,
                                EventBus eventBus,
                                Satellite satellite,
-                               Session session)
+                               Session session,
+                               UIPrefs prefs)
    {
       view_ = view;
       satellite_ = satellite;
@@ -62,6 +65,7 @@ public class ShinyApplicationPresenter implements
       globalDisplay_ = globalDisplay;
       disconnect_ = new ShinyDisconnectNotifier(this);
       session_ = session;
+      prefs_ = prefs;
       
       binder.bind(commands, this);  
       
@@ -111,7 +115,7 @@ public class ShinyApplicationPresenter implements
    public void loadApp(ShinyApplicationParams params) 
    {
       params_ = params;
-      view_.showApp(params, session_.getSessionInfo().getShinyappsInstalled());
+      view_.showApp(params, SessionUtils.showPublishUi(session_, prefs_));
    }
    
    private native void initializeEvents() /*-{  
@@ -155,6 +159,7 @@ public class ShinyApplicationPresenter implements
    private final GlobalDisplay globalDisplay_;
    private final ShinyDisconnectNotifier disconnect_;
    private final Session session_;
+   private final UIPrefs prefs_;
    
    private ShinyApplicationParams params_;
    private boolean appStopped_ = false;

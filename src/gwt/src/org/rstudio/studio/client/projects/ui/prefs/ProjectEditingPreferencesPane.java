@@ -37,7 +37,7 @@ public class ProjectEditingPreferencesPane extends ProjectPreferencesPane
    public ProjectEditingPreferencesPane(final SourceServerOperations server)
    {
       // source editing options
-      enableCodeIndexing_ = new CheckBox("Index R source files (for code search/navigation)", false);
+      enableCodeIndexing_ = new CheckBox("Index source files (for code search/navigation)", false);
       enableCodeIndexing_.addStyleName(RESOURCES.styles().enableCodeIndexing());
       add(enableCodeIndexing_);
       

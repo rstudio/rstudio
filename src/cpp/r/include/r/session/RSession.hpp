@@ -27,23 +27,27 @@
 
 #define EX_CONTINUE 100
 
+namespace rstudio {
 namespace core {
 	class Error ;
    class Settings;
 } 
+}
 
+namespace rstudio {
 namespace r {
 namespace session {
    
 struct RClientMetrics
 {   
    RClientMetrics() 
-      : consoleWidth(0), graphicsWidth(0), graphicsHeight(0)
+      : consoleWidth(0), graphicsWidth(0), graphicsHeight(0), devicePixelRatio(1.0)
    {
    }
    int consoleWidth ;
    int graphicsWidth ;
    int graphicsHeight;
+   double devicePixelRatio;
 };
    
 struct ROptions
@@ -185,6 +189,7 @@ void quit(bool saveWorkspace, int status = EXIT_SUCCESS);
 
 } // namespace session
 } // namespace r
+} // namespace rstudio
 
 #endif // R_RSESSION_HPP
 

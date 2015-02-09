@@ -38,6 +38,13 @@ public class Debug
       logToConsole(message) ;
    }
    
+   public static native void logObject(Object object) /*-{
+      if (typeof(console) != "undefined")
+      {
+         console.log(object);
+      }
+   }-*/;
+   
    public static native void logToConsole(String message) /*-{
     if (typeof(console) != "undefined")
     {
@@ -65,6 +72,11 @@ public class Debug
    {
       Debug.log(error.toString());
    }
+   
+   public static void logException(Exception e)
+   {
+      Debug.log(e.toString());
+   }
 
    /**
     * Same as log() but for short-term messages that should not be checked
@@ -86,6 +98,11 @@ public class Debug
    {
       Debug.log(new JSONObject(object).toString());
    }
+   
+   public static native void prettyPrint(JavaScriptObject obj) /*-{
+      var str = JSON.stringify(obj, undefined, 2);
+      console.log(str);
+   }-*/ ;
 
    public static void logAttachDetachException(AttachDetachException ade)
    {

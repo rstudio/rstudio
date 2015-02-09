@@ -14,18 +14,18 @@
  */
 
 #include <iostream>
+#include <fstream>
 
 #include <boost/test/minimal.hpp>
-#include <boost/foreach.hpp>
 
 #include <core/Error.hpp>
 #include <core/Log.hpp>
 #include <core/system/System.hpp>
 
-#include <core/r_util/RVersionInfo.hpp>
-#include <core/r_util/RVersionsPosix.hpp>
+#include <core/libclang/LibClang.hpp>
 
-using namespace core ;
+using namespace rstudio;
+using namespace rstudio::core;
 
 int test_main(int argc, char * argv[])
 {
@@ -39,21 +39,45 @@ int test_main(int argc, char * argv[])
       if (error)
          LOG_ERROR(error);
 
-      using namespace core::r_util;
+      // write a C++ file
+      std::string cpp =
+        "#include <string>\n"
+        "class X { public:\n"
+        "   void test(int y, int x = 10);\n"
+        "}\n"
+        "void X::test(int y, int x) {}\n"
+        "void foobar() {\n"
+        "   X x;\n"
+        "   x."
+        "}";
+      std::ofstream ostr("foo.cpp");
+      ostr << cpp;
+      ostr.close();
 
-      std::vector<RVersionNumber> vers;
-      vers.push_back(RVersionNumber::parse("3.0"));
-      vers.push_back(RVersionNumber::parse("2.14.3"));
-      vers.push_back(RVersionNumber::parse("3.0.1"));
-      vers.push_back(RVersionNumber::parse("2.15"));
-      vers.push_back(RVersionNumber::parse("3.1.0"));
-
-      std::sort(vers.begin(), vers.end());
-      std::reverse(vers.begin(), vers.end());
-
-      BOOST_FOREACH(RVersionNumber ver, vers)
+      // load libclang
+      using namespace libclang;
+      std::string diagnostics;
+      clang().load(EmbeddedLibrary(), LibraryVersion(3,4,0), &diagnostics);
+      if (!clang().isLoaded())
       {
-         std::cerr << ver << std::endl;
+         std::cerr << "Failed to load libclang: " << diagnostics << std::endl;
+         return EXIT_FAILURE;
+      }
+
+      // create a source index and get a translation unit for it
+      SourceIndex sourceIndex;
+      TranslationUnit tu = sourceIndex.getTranslationUnit("foo.cpp");
+      if (tu.empty())
+      {
+         std::cerr << "No translation unit foo.cpp" << std::endl;
+         return EXIT_FAILURE;
+      }
+
+      // code complete
+      CodeCompleteResults results = tu.codeCompleteAt("foo.cpp", 8, 6);
+      for (unsigned i = 0; i<results.getNumResults(); i++) {
+        std::cout << results.getResult(i).getTypedText() << std::endl;
+        std::cout << "   " << results.getResult(i).getText() << std::endl;
       }
 
       return EXIT_SUCCESS;

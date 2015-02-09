@@ -24,11 +24,12 @@
 
 #include "SessionRHooks.hpp"
 
+namespace rstudio {
 namespace session {
 namespace modules { 
 namespace rhooks {
 
-using namespace core;
+using namespace rstudio::core;
 
 Error initialize()
 {
@@ -43,4 +44,5 @@ Error initialize()
 } // namespace rhooks
 } // namespace modules
 } // namespace session
+} // namespace rstudio
 

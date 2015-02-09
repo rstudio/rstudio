@@ -22,11 +22,14 @@
 
 typedef struct SEXPREC *SEXP;
 
+namespace rstudio {
 namespace core {
    class Error;
    class FilePath;
 }
+}
 
+namespace rstudio {
 namespace r {
 namespace session {
 namespace graphics {
@@ -76,6 +79,7 @@ struct GraphicsDeviceFunctions
 } // namespace graphics
 } // namespace session
 } // namespace r
+} // namespace rstudio
 
 
 #endif // R_SESSION_GRAPHICS_TYPES_HPP 

@@ -20,6 +20,7 @@
 
 #include <QNetworkReply>
 
+namespace rstudio {
 namespace core {
    class Error;
    class FilePath;
@@ -28,7 +29,9 @@ namespace core {
       class Response;
    }
 }
+}
 
+namespace rstudio {
 namespace desktop {
 
 class NetworkReply : public QNetworkReply
@@ -70,5 +73,6 @@ private:
 };
 
 } // namespace desktop
+} // namespace rstudio
 
 #endif // DESKTOPNETWORKREPLY_HPP

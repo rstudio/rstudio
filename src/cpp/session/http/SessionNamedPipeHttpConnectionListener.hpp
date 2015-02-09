@@ -48,20 +48,15 @@
 #endif
 
 // Mingw doesn't have this declaration
-#ifndef _WIN64
-#define SDDL_REVISION_1 1
-extern "C" BOOL WINAPI ConvertStringSecurityDescriptorToSecurityDescriptorA(
-                           LPCSTR, DWORD, LPVOID *, PULONG);
-#endif
-
 #include <session/SessionOptions.hpp>
 
 #include "SessionHttpConnectionUtils.hpp"
 
-using namespace core ;
+using namespace rstudio::core ;
 
 #define kReadBufferSize 4096
 
+namespace rstudio {
 namespace session {
 
 class NamedPipeHttpConnection : public HttpConnection,
@@ -485,3 +480,4 @@ private:
 };
 
 } // namespace session
+} // namespace rstudio

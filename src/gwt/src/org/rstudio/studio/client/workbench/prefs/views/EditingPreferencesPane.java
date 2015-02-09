@@ -14,13 +14,22 @@
  */
 package org.rstudio.studio.client.workbench.prefs.views;
 
+import com.google.gwt.event.dom.client.ChangeEvent;
+import com.google.gwt.event.dom.client.ChangeHandler;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.CheckBox;
+import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.inject.Inject;
+
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
+import org.rstudio.core.client.theme.DialogTabLayoutPanel;
 import org.rstudio.core.client.widget.NumericValueWidget;
+import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefsAccessor;
 
 public class EditingPreferencesPane extends PreferencesPane
 {
@@ -28,28 +37,148 @@ public class EditingPreferencesPane extends PreferencesPane
    public EditingPreferencesPane(UIPrefs prefs)
    {
       prefs_ = prefs;
+      
+      VerticalPanel editingPanel = new VerticalPanel();
+      editingPanel.add(tight(spacesForTab_ = checkboxPref("Insert spaces for tab", prefs.useSpacesForTab())));
+      editingPanel.add(indent(tabWidth_ = numericPref("Tab width", prefs.numSpacesForTab())));   
+      editingPanel.add(checkboxPref("Insert matching parens/quotes", prefs_.insertMatching()));
+      editingPanel.add(checkboxPref("Auto-indent code after paste", prefs_.reindentOnPaste()));
+      editingPanel.add(checkboxPref("Vertically align arguments in auto-indent", prefs_.verticallyAlignArgumentIndent()));
+      editingPanel.add(checkboxPref("Soft-wrap R source files", prefs_.softWrapRFiles()));
+      editingPanel.add(checkboxPref("Ensure that source files end with newline", prefs_.autoAppendNewline()));
+      editingPanel.add(checkboxPref("Strip trailing horizontal whitespace when saving", prefs_.stripTrailingWhitespace()));
+      editingPanel.add(checkboxPref("Focus console after executing from source", prefs_.focusConsoleAfterExec()));
+      editingPanel.add(checkboxPref("Enable vim editing mode", prefs_.useVimMode()));
+      editingPanel.add(checkboxPref(
+            "Continue comment when inserting new line",
+            prefs_.continueCommentsOnNewline(),
+            "When enabled, pressing enter will continue comments on new lines. Press Shift + Enter to exit a comment."));
+      
+      VerticalPanel displayPanel = new VerticalPanel();
+      displayPanel.add(checkboxPref("Highlight selected word", prefs.highlightSelectedWord()));
+      displayPanel.add(checkboxPref("Highlight selected line", prefs.highlightSelectedLine()));
+      displayPanel.add(checkboxPref("Show line numbers", prefs.showLineNumbers()));
+      displayPanel.add(tight(showMargin_ = checkboxPref("Show margin", prefs.showMargin())));
+      displayPanel.add(indent(marginCol_ = numericPref("Margin column", prefs.printMarginColumn())));
+      displayPanel.add(checkboxPref("Show whitespace characters", prefs_.showInvisibles()));
+      displayPanel.add(checkboxPref("Show indent guides", prefs_.showIndentGuides()));
+      displayPanel.add(checkboxPref("Blinking cursor", prefs_.blinkingCursor()));
+      displayPanel.add(checkboxPref("Show syntax highlighting in console input", prefs_.syntaxColorConsole()));
+      
+      VerticalPanel completionPanel = new VerticalPanel();
+      showCompletions_ = new SelectWidget(
+            "Show code completions:",
+            new String[] {
+                  "Always",
+                  "When Triggered",
+                  "Manually (Tab)"
+            },
+            new String[] {
+                  UIPrefsAccessor.COMPLETION_ALWAYS,
+                  UIPrefsAccessor.COMPLETION_WHEN_TRIGGERED,
+                  UIPrefsAccessor.COMPLETION_MANUAL
+            },
+            false, 
+            true, 
+            false);
+      
+      spaced(showCompletions_);
+      completionPanel.add(showCompletions_);
+      
+      final CheckBox alwaysCompleteInConsole = checkboxPref(
+                       "Allow automatic completions in console",
+                       prefs.alwaysCompleteInConsole());
+      completionPanel.add(alwaysCompleteInConsole);
+      showCompletions_.addChangeHandler(new ChangeHandler() {
 
-      add(checkboxPref("Highlight selected word", prefs.highlightSelectedWord()));
-      add(checkboxPref("Highlight selected line", prefs.highlightSelectedLine()));
-      add(checkboxPref("Show line numbers", prefs.showLineNumbers()));
-      add(tight(spacesForTab_ = checkboxPref("Insert spaces for tab", prefs.useSpacesForTab())));
-      add(indent(tabWidth_ = numericPref("Tab width", prefs.numSpacesForTab())));
-      add(tight(showMargin_ = checkboxPref("Show margin", prefs.showMargin())));
-      add(indent(marginCol_ = numericPref("Margin column", prefs.printMarginColumn())));
-      add(checkboxPref("Show whitespace characters", prefs_.showInvisibles()));
-      add(checkboxPref("Show indent guides", prefs_.showIndentGuides()));
-      add(checkboxPref("Blinking cursor", prefs_.blinkingCursor()));
-      add(checkboxPref("Insert matching parens/quotes", prefs_.insertMatching()));
-      add(checkboxPref("Auto-indent code after paste", prefs_.reindentOnPaste()));
-      add(checkboxPref("Vertically align arguments in auto-indent", prefs_.verticallyAlignArgumentIndent()));
-      add(checkboxPref("Soft-wrap R source files", prefs_.softWrapRFiles()));
-      add(checkboxPref("Ensure that source files end with newline", prefs_.autoAppendNewline()));
-      add(checkboxPref("Strip trailing horizontal whitespace when saving", prefs_.stripTrailingWhitespace()));
-      add(checkboxPref("Focus console after executing from source", prefs_.focusConsoleAfterExec()));
-      add(checkboxPref("Show syntax highlighting in console input", prefs_.syntaxColorConsole()));
-      add(checkboxPref("Enable vim editing mode", prefs_.useVimMode()));
+         @Override
+         public void onChange(ChangeEvent event)
+         {
+            alwaysCompleteInConsole.setVisible(
+                   showCompletions_.getValue().equals(
+                                        UIPrefsAccessor.COMPLETION_ALWAYS));
+            
+         }
+      });
+      
+      final CheckBox insertParensAfterFunctionCompletionsCheckbox =
+           checkboxPref("Insert parentheses after function completions",
+                 prefs.insertParensAfterFunctionCompletion());
+      
+      final CheckBox showSignatureTooltipsCheckbox =
+           checkboxPref("Show help tooltip after function completions",
+                 prefs.showSignatureTooltips());
+      
+      addEnabledDependency(
+            insertParensAfterFunctionCompletionsCheckbox,
+            showSignatureTooltipsCheckbox);
+      
+      completionPanel.add(insertParensAfterFunctionCompletionsCheckbox);
+      completionPanel.add(showSignatureTooltipsCheckbox);
+      
+      completionPanel.add(checkboxPref("Insert spaces around equals for argument completions", prefs.insertSpacesAroundEquals()));
+      completionPanel.add(checkboxPref("Use tab for multiline autocompletions", prefs.allowTabMultilineCompletion()));
+      
+      DialogTabLayoutPanel tabPanel = new DialogTabLayoutPanel();
+      tabPanel.setSize("435px", "498px");     
+      tabPanel.add(editingPanel, "Editing");
+      tabPanel.add(displayPanel, "Display");
+      tabPanel.add(completionPanel, "Completion");
+      tabPanel.selectTab(0);
+      add(tabPanel);
+   }
+   
+   private void disable(CheckBox checkBox)
+   {
+      checkBox.setValue(false);
+      checkBox.setEnabled(false);
+      checkBox.setVisible(false);
+   }
+   
+   private void enable(CheckBox checkBox)
+   {
+      checkBox.setValue(true);
+      checkBox.setEnabled(true);
+      checkBox.setVisible(true);
+   }
+   
+   private void addEnabledDependency(final CheckBox speaker,
+                                     final CheckBox listener)
+   {
+      if (speaker.getValue() == false)
+         disable(listener);
+      
+      speaker.addValueChangeHandler(
+            new ValueChangeHandler<Boolean>()
+            {
+               @Override
+               public void onValueChange(ValueChangeEvent<Boolean> event)
+               {
+                  if (event.getValue() == false)
+                     disable(listener);
+                  else
+                     enable(listener);
+               }
+            });
    }
 
+   @Override
+   protected void initialize(RPrefs prefs)
+   {
+      showCompletions_.setValue(prefs_.codeComplete().getValue());
+   }
+   
+   @Override
+   public boolean onApply(RPrefs prefs)
+   {
+      boolean reload = super.onApply(prefs);
+      
+      prefs_.codeComplete().setGlobalValue(showCompletions_.getValue());
+      
+      return reload;
+   }
+   
+   
  
    @Override
    public ImageResource getIcon()
@@ -67,19 +196,16 @@ public class EditingPreferencesPane extends PreferencesPane
    @Override
    public String getName()
    {
-      return "Code Editing";
+      return "Code";
    }
-
-   @Override
-   protected void initialize(RPrefs prefs)
-   {
-   }
-   
 
    private final UIPrefs prefs_;
    private final NumericValueWidget tabWidth_;
    private final NumericValueWidget marginCol_;
    private final CheckBox spacesForTab_;
    private final CheckBox showMargin_;
+   private final SelectWidget showCompletions_;
+   
+   
    
 }

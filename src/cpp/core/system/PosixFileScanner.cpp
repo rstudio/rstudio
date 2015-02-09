@@ -27,10 +27,12 @@
 
 #include "config.h"
 
+namespace rstudio {
 namespace core {
 namespace system {
 
 namespace {
+
 #if defined(__APPLE__) && !defined(HAVE_SCANDIR_POSIX)
 int entryFilter(struct dirent *entry)
 #else
@@ -43,6 +45,23 @@ int entryFilter(const struct dirent *entry)
       return 1;
 }
 
+// note: because R may change LC_COLLATE, we cannot
+// use strcoll (otherwise we run into race issues where
+// the file monitor attempts to access LC_COLLATE just as
+// R is replacing it). to avoid this, we use strcmp and
+// don't sort according to locale.
+#if !defined(HAVE_SCANDIR_POSIX)
+int alphasort(const void* voidlhs, const void* voidrhs)
+{
+   const dirent** lhs = (const dirent**)voidlhs;
+   const dirent** rhs = (const dirent**)voidrhs;
+#else
+int alphasort(const dirent** lhs, const dirent** rhs)
+{
+#endif
+   return strcmp((*lhs)->d_name, (*rhs)->d_name);
+}
+
 // wrapper for scandir api
 Error scanDir(const std::string& dirPath, std::vector<std::string>* pNames)
 {
@@ -51,7 +70,7 @@ Error scanDir(const std::string& dirPath, std::vector<std::string>* pNames)
    int entries = ::scandir(dirPath.c_str(),
                            &namelist,
                            entryFilter,
-                           ::alphasort);
+                           alphasort);
    if (entries == -1)
    {
       Error error = systemError(errno, ERROR_LOCATION);
@@ -183,4 +202,5 @@ Error scanFiles(const tree<FileInfo>::iterator_base& fromNode,
 
 } // namespace system
 } // namespace core
+} // namespace rstudio
 

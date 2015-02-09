@@ -27,7 +27,8 @@
 #include "DesktopRVersion.hpp"
 #include "DesktopUtils.hpp"
 
-using namespace desktop;
+using namespace rstudio::core;
+using namespace rstudio::desktop;
 
 namespace {
 
@@ -54,10 +55,10 @@ ChooseRHome::ChooseRHome(QList<RVersion> list, QWidget *parent) :
     pOK_(NULL)
 {
     ui->setupUi(this);
-    if (!core::system::isWin64())
+    if (!rstudio::core::system::isWin64())
        ui->radioDefault64->setVisible(false);
 
-    setWindowIcon(QIcon(QString::fromAscii(":/icons/RStudio.ico")));
+    setWindowIcon(QIcon(QString::fromUtf8(":/icons/RStudio.ico")));
 
     setWindowFlags(
           (windowFlags() | Qt::Dialog)
@@ -98,7 +99,7 @@ void ChooseRHome::chooseOther()
 {
    if (lastDir_.isEmpty())
    {
-      lastDir_ = QString::fromLocal8Bit(core::system::getenv("ProgramFiles").c_str());
+      lastDir_ = QString::fromLocal8Bit(rstudio::core::system::getenv("ProgramFiles").c_str());
    }
 
    QString dir = QFileDialog::getExistingDirectory(
@@ -155,16 +156,16 @@ void ChooseRHome::chooseOther()
 
    switch (rVer.validate())
    {
-   case desktop::ValidateSuccess:
+   case rstudio::desktop::ValidateSuccess:
       break;
-   case desktop::ValidateNotFound:
+   case rstudio::desktop::ValidateNotFound:
       showWarning(
             this,
             QString::fromUtf8("Invalid R Directory"),
             QString::fromUtf8("This directory does not appear to contain a "
                               "valid R installation.\n\nPlease try again."));
       return;
-   case desktop::ValidateBadArchitecture:
+   case rstudio::desktop::ValidateBadArchitecture:
       showWarning(
             this,
             QString::fromUtf8("Incompatible R Build"),
@@ -172,7 +173,7 @@ void ChooseRHome::chooseOther()
                               "for a different CPU architecture and cannot "
                               "be used with this version of RStudio."));
       return;
-   case desktop::ValidateVersionTooOld:
+   case rstudio::desktop::ValidateVersionTooOld:
    default:
       showWarning(
             this,
@@ -204,9 +205,9 @@ void ChooseRHome::done(int r)
       if (!ui->radioCustom->isChecked())
       {
          Architecture arch = preferR64() ? ArchX64 : ArchX86;
-         if (desktop::autoDetect(arch).isEmpty())
+         if (rstudio::desktop::autoDetect(arch).isEmpty())
          {
-            if (desktop::allRVersions().length() > 0)
+            if (rstudio::desktop::allRVersions().length() > 0)
             {
                QString name = QString::fromUtf8(preferR64() ? "R64" : "R");
 
@@ -232,7 +233,7 @@ void ChooseRHome::done(int r)
                                        "You can download R from the official R Project "
                                        "website. Would you like to go there now?")))
                {
-                  desktop::openUrl(QUrl(QString::fromAscii("http://www.rstudio.org/links/r-project")));
+                  rstudio::desktop::openUrl(QUrl(QString::fromUtf8("http://www.rstudio.org/links/r-project")));
                }
             }
          }

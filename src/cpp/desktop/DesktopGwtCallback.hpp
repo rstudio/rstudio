@@ -25,6 +25,7 @@
 #include "DesktopWordViewer.hpp"
 #endif
 
+namespace rstudio {
 namespace desktop {
 
 class MainWindow;
@@ -81,13 +82,15 @@ public slots:
    QString chooseRVersion();
    bool canChooseRVersion();
 
-   bool isRetina();
+   double devicePixelRatio();
 
    void openMinimalWindow(QString name, QString url, int width, int height);
    void activateMinimalWindow(QString name);
    void activateSatelliteWindow(QString name);
    void prepareForSatelliteWindow(QString name, int width, int height);
-
+   void prepareForNamedWindow(QString name, bool allowExternalNavigate,
+                              bool showToolbar);
+   void closeNamedWindow(QString name);
 
    // Image coordinates are relative to the window contents
    void copyImageToClipboard(int left, int top, int width, int height);
@@ -195,5 +198,6 @@ private:
 };
 
 } // namespace desktop
+} // namespace rstudio
 
 #endif // DESKTOP_GWT_CALLBACK_HPP

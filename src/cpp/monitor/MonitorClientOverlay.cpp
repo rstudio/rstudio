@@ -16,6 +16,7 @@
 #include <monitor/MonitorClient.hpp>
 #include "MonitorClientImpl.hpp"
 
+namespace rstudio {
 namespace monitor {
 
 void SyncClient::logMessage(const std::string& programIdentity,
@@ -58,5 +59,6 @@ void AsyncClient::logEvent(const Event& event)
 
 
 } // namespace monitor
+} // namespace rstudio
 
 

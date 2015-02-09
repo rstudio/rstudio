@@ -27,6 +27,7 @@ public abstract class
    public abstract AppCommand setWorkingDir();
    
    // Source
+   public abstract AppCommand reformatCode();
    public abstract AppCommand newSourceDoc();
    public abstract AppCommand newTextDoc();
    public abstract AppCommand newCppDoc();
@@ -48,6 +49,7 @@ public abstract class
    public abstract AppCommand sourceActiveDocument();
    public abstract AppCommand sourceActiveDocumentWithEcho();
    public abstract AppCommand executeCode();
+   public abstract AppCommand executeCodeWithoutMovingCursor();
    public abstract AppCommand executeCodeWithoutFocus();
    public abstract AppCommand executeToCurrentLine();
    public abstract AppCommand executeFromCurrentLine();
@@ -82,6 +84,7 @@ public abstract class
    public abstract AppCommand findReplace();
    public abstract AppCommand findNext();
    public abstract AppCommand findPrevious();
+   public abstract AppCommand findSelectAll();
    public abstract AppCommand findFromSelection();
    public abstract AppCommand replaceAndFind();
    public abstract AppCommand findInFiles();
@@ -97,6 +100,7 @@ public abstract class
    public abstract AppCommand reflowComment();
    public abstract AppCommand setWorkingDirToActiveDoc();
    public abstract AppCommand codeCompletion();
+   public abstract AppCommand findUsages();
    public abstract AppCommand editRmdFormatOptions();
  
    // Projects
@@ -117,6 +121,7 @@ public abstract class
    public abstract AppCommand closeProject();
    public abstract AppCommand projectOptions();
    public abstract AppCommand projectSweaveOptions();
+   public abstract AppCommand setWorkingDirToProjectDir();
 
    // Console
    public abstract AppCommand consoleClear();
@@ -365,10 +370,10 @@ public abstract class
    public abstract AppCommand shinyRunInViewer();
    public abstract AppCommand shinyRunInBrowser();
    
-   // ShinyApps connectivity
-   public abstract AppCommand shinyAppsDeploy();
-   public abstract AppCommand shinyAppsManageAccounts();
-   public abstract AppCommand shinyAppsTerminate();
+   // RSConnect connectivity
+   public abstract AppCommand rsconnectDeploy();
+   public abstract AppCommand rsconnectConfigure();
+   public abstract AppCommand rsconnectManageAccounts();
 
    // Other
    public abstract AppCommand checkSpelling();   

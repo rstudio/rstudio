@@ -32,6 +32,10 @@ public class Pattern extends JavaScriptObject
    public static native Pattern create(String pattern, String flags) /*-{
       return new RegExp(pattern, flags) ;
    }-*/ ;
+   
+   public final native int search(String string) /*-{
+      return string.search(this);
+   }-*/;
 
    public final native Match match(String input, int index) /*-{
       this.lastIndex = index ;
@@ -47,6 +51,10 @@ public class Pattern extends JavaScriptObject
          match: result
       } ;
    }-*/ ;
+   
+   public final native boolean test(String input) /*-{
+      return this.test(input);
+   }-*/;
 
    public static String escape(String str)
    {

@@ -42,6 +42,13 @@ public class Mode extends JavaScriptObject
    public native final CodeModel getCodeModel() /*-{
       return this.codeModel || {};
    }-*/;
+   
+   public native final CodeModel getRCodeModel() /*-{
+      if (typeof this.r_codeModel !== "undefined")
+         return this.r_codeModel;
+      else
+         return this.codeModel || {};
+   }-*/;
 
    public native final String getLanguageMode(Position position) /*-{
       if (!this.getLanguageMode)
@@ -55,5 +62,18 @@ public class Mode extends JavaScriptObject
 
    public native final InsertChunkInfo getInsertChunkInfo() /*-{
       return this.insertChunkInfo || null;
+   }-*/;
+   
+   public native final String getNextLineIndent(
+         String state,
+         String line,
+         String tab,
+         int tabSize,
+         int row) /*-{
+      return this.getNextLineIndent(state, line, tab, tabSize, row);
+   }-*/;
+   
+   public native final Tokenizer getTokenizer() /*-{
+      return this.$tokenizer;
    }-*/;
 }

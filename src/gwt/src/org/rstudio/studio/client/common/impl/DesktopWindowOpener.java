@@ -53,6 +53,21 @@ public class DesktopWindowOpener extends WebWindowOpener
    }
 
    @Override
+   public void openWebMinimalWindow(GlobalDisplay globalDisplay,
+                                    String url,
+                                    NewWindowOptions options,
+                                    int width,
+                                    int height,
+                                    boolean showLocation)
+   {
+      Desktop.getFrame().prepareForNamedWindow(options.getName(),
+            options.allowExternalNavigation(),
+            options.showDesktopToolbar());
+      super.openWebMinimalWindow(globalDisplay, url, options, width, 
+                                 height, showLocation);
+   }
+
+   @Override
    public void openMinimalWindow(GlobalDisplay globalDisplay,
                                  String url,
                                  NewWindowOptions options,

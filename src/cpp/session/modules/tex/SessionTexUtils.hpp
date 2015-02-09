@@ -22,10 +22,13 @@
 #include <core/system/Types.hpp>
 #include <core/system/Process.hpp>
 
+namespace rstudio {
 namespace core {
    class Error;
 }
+}
  
+namespace rstudio {
 namespace session {
 namespace modules { 
 namespace tex {
@@ -61,5 +64,6 @@ core::Error runTexCompile(
 } // namespace tex
 } // namespace modules
 } // namesapce session
+} // namespace rstudio
 
 #endif // SESSION_MODULES_TEX_UTILS_HPP

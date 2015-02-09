@@ -11,12 +11,16 @@
 #import "AppDelegate.h"
 #import "Utils.hpp"
 
-using namespace core;
+using namespace rstudio;
+using namespace rstudio::core;
 
 int main(int argc, char* argv[])
 {
    // initialize autorelease pool
    NSAutoreleasePool * pool = [[NSAutoreleasePool alloc] init];
+   
+   // clean duplicate environment variables (work around Yosemite bug)
+   desktop::utils::cleanDuplicateEnvVars();
    
    // initialize language environment variables
    desktop::utils::initializeLang();
@@ -32,14 +36,14 @@ int main(int argc, char* argv[])
       LOG_ERROR(error);
    
    // initialize application instance
-   [NSApplication sharedApplication];
+   NSApplication* app = [NSApplication sharedApplication];
    
    // create our app delegate
    AppDelegate* appDelegate = [[[AppDelegate alloc] init] autorelease];
-   [NSApp setDelegate: appDelegate];
+   [app setDelegate: appDelegate];
    
    // run the event loop
-   [NSApp run];
+   [app run];
 
    // free the autorelease pool
    [pool drain];

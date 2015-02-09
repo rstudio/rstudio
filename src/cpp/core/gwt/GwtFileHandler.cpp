@@ -25,6 +25,7 @@
 #include <core/http/Response.hpp>
 
 
+namespace rstudio {
 namespace core {
 namespace gwt {   
    
@@ -212,4 +213,5 @@ http::UriHandlerFunction fileHandlerFunction(
 
 } // namespace gwt
 } // namespace core
+} // namespace rstudio
 

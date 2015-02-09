@@ -18,9 +18,11 @@
 #include <QtGlobal>
 #include <QTimer>
 #include <QDebug>
+#include <QString>
 
 #include "DesktopUtils.hpp"
 
+namespace rstudio {
 namespace desktop {
 
 // NOTE: this does not yet actually work. PNGs served back through this
@@ -49,8 +51,8 @@ void DataUriNetworkReply::createReply()
    // get the content type
    QByteArray contentTypeBytes = urlBytes.mid(colonLoc + 1,
                                               semicolonLoc - colonLoc - 1);
-   QString contentType = QString::fromAscii(contentTypeBytes.data(),
-                                            contentTypeBytes.size());
+   QString contentType = QString::fromUtf8(contentTypeBytes.data(),
+                                           contentTypeBytes.size());
    setHeader(QNetworkRequest::ContentTypeHeader, contentType);
 
    // get the base64 encoded data
@@ -61,7 +63,7 @@ void DataUriNetworkReply::createReply()
    // set status OK
    setAttribute(QNetworkRequest::HttpStatusCodeAttribute, 200);
    setAttribute(QNetworkRequest::HttpReasonPhraseAttribute,
-                QString::fromAscii("OK"));
+                QString::fromUtf8("OK"));
 
    open(ReadOnly | Unbuffered);
    setHeader(QNetworkRequest::ContentLengthHeader, QVariant(content_.size()));
@@ -89,3 +91,4 @@ qint64 DataUriNetworkReply::readData(char *data, qint64 maxSize)
 
 
 } // namespace desktop
+} // namespace rstudio

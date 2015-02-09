@@ -29,6 +29,7 @@
 
 #include <core/system/FileChangeEvent.hpp>
 
+namespace rstudio {
 namespace session {
 
 // singleton
@@ -167,6 +168,9 @@ public:
    bool useDevtools() const;
    void setUseDevtools(bool useDevtools);
 
+   int clangVerbose() const;
+   void setClangVerbose(int level);
+
 private:
 
    void onSettingsFileChanged(
@@ -207,6 +211,7 @@ private:
 };
    
 } // namespace session
+} // namespace rstudio
 
 #endif // SESSION_USER_SETTINGS_HPP
 

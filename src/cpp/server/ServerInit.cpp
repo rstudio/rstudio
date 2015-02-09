@@ -21,8 +21,9 @@
 
 #include <server/ServerOptions.hpp>
 
-using namespace core;
+using namespace rstudio::core;
 
+namespace rstudio {
 namespace server {
 
 http::AsyncServer* httpServerCreate()
@@ -38,4 +39,5 @@ Error httpServerInit(http::AsyncServer* pAsyncServer)
 }
 
 } // namespace server
+} // namespace rstudio
 

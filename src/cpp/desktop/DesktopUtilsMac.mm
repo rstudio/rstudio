@@ -21,21 +21,38 @@
 
 #include <core/system/Environment.hpp>
 
+#import <Foundation/NSString.h>
+#import <AppKit/NSView.h>
+#import <AppKit/NSWindow.h>
+
+
+
+using namespace rstudio;
+
+namespace rstudio {
 namespace desktop {
 
-bool isRetina(QMainWindow* pMainWindow)
+namespace {
+
+NSWindow* nsWindowForMainWindow(QMainWindow* pMainWindow)
 {
-   OSWindowRef macWindow = qt_mac_window_for(pMainWindow);
-   NSWindow* pWindow = (NSWindow*)macWindow;
+   NSView *nsview = (NSView *) pMainWindow->winId();
+   return [nsview window];
+}
+
+}
+
+double devicePixelRatio(QMainWindow* pMainWindow)
+{
+   NSWindow* pWindow = nsWindowForMainWindow(pMainWindow);
 
    if ([pWindow respondsToSelector:@selector(backingScaleFactor)])
    {
-      double scaleFactor = [pWindow backingScaleFactor];
-      return scaleFactor == 2.0;
+      return [pWindow backingScaleFactor];
    }
    else
    {
-      return false;
+      return 1.0;
    }
 }
 
@@ -56,13 +73,6 @@ bool isOSXMavericks()
 
 
 namespace {
-
-NSWindow* nsWindowForMainWindow(QMainWindow* pMainWindow)
-{
-   OSWindowRef macWindow = qt_mac_window_for(pMainWindow);
-   NSWindow* pWindow = (NSWindow*)macWindow;
-   return pWindow;
-}
 
 bool supportsFullscreenMode(NSWindow* pWindow)
 {
@@ -172,3 +182,4 @@ void initializeLang()
 }
 
 } // namespace desktop
+} // namespace rstudio

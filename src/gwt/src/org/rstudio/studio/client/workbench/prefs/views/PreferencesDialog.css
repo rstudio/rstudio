@@ -3,7 +3,7 @@
 
 .panelContainer {
    width: 550px;
-   height: 460px;
+   height: 500px;
 }
 
 .sshKeyWidget {
@@ -43,4 +43,6 @@
 
 .themeChooser select {
    width: 148px;
+   overflow-x: hidden;
+   overflow-y: scroll;
 }

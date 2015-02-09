@@ -18,12 +18,13 @@
 
 #include <QAction>
 #include <QMainWindow>
-#include <QWebView>
+#include <QtWebKitWidgets/QWebView>
 #include <QLineEdit>
 
 #include "DesktopWebView.hpp"
 #include "DesktopGwtCallbackOwner.hpp"
 
+namespace rstudio {
 namespace desktop {
 
 class BrowserWindow : public QMainWindow, public GwtCallbackOwner
@@ -32,8 +33,11 @@ class BrowserWindow : public QMainWindow, public GwtCallbackOwner
 public:
     explicit BrowserWindow(bool showToolbar,
                            bool adjustTitle,
+                           QString name,
                            QUrl baseUrl = QUrl(),
-                           QWidget *parent = NULL);
+                           QWidget *parent = NULL,
+                           WebPage *pOpener = NULL,
+                           bool allowExternalNavigate = false);
     WebView* webView();
 
 protected slots:
@@ -41,10 +45,8 @@ protected slots:
      void adjustTitle();
      void setProgress(int p);
      virtual void finishLoading(bool);
-     virtual void onJavaScriptWindowObjectCleared() {}
+     virtual void onJavaScriptWindowObjectCleared();
      void printRequested(QWebFrame* frame);
-
-     void onCloseRequested();
 
 protected:
      void avoidMoveCursorIfNecessary();
@@ -54,6 +56,7 @@ protected:
      virtual WebPage* webPage();
      virtual void postWebViewEvent(QEvent *event);
      virtual void triggerPageAction(QWebPage::WebAction action);
+     virtual void closeEvent(QCloseEvent *event);
 
      // hooks for subclasses
      virtual QSize printDialogMinimumSize()
@@ -68,8 +71,11 @@ protected:
 private:
      int progress_;
      bool adjustTitle_;
+     QString name_;
+     WebPage* pOpener_;
 };
 
 } // namespace desktop
+} // namespace rstudio
 
 #endif // DESKTOP_BROWSER_WINDOW_HPP

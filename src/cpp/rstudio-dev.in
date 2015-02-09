@@ -1,0 +1,36 @@
+#!/bin/bash
+
+#
+# rstudio-dev
+#
+# Copyright (C) 2009-14 by RStudio, Inc.
+#
+# Unless you have received this program directly from RStudio pursuant
+# to the terms of a commercial license agreement with RStudio, then
+# this program is licensed to you under the terms of version 3 of the
+# GNU Affero General Public License. This program is distributed WITHOUT
+# ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+# MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+# AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+#
+#
+
+PLUGIN_PREFIX=""
+
+if [[ -e ~/Qt5.4.0/5.4/gcc_64/plugins ]] 
+then
+  # 64 bit systems
+  PLUGIN_PREFIX=~/Qt5.4.0/5.4/gcc_64/plugins
+elif [[ -e ~/Qt5.40/5.4/gcc/plugins ]]
+then
+  # 32 bit systems
+  PLUGIN_PREFIX=~/Qt5.4.0/5.4/gcc/plugins
+fi
+
+if [[ $PLUGIN_PREFIX ==  "" ]]
+then
+  desktop/rstudio
+else
+  QT_PLUGIN_PATH=$PLUGIN_PREFIX desktop/rstudio
+fi
+

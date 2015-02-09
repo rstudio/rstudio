@@ -33,6 +33,7 @@
 #include <core/FilePath.hpp>
 #include <core/StringUtils.hpp>
 
+namespace rstudio {
 namespace core {
 
 template <typename CollectionType>
@@ -343,6 +344,7 @@ Error readStringFromFile(
 bool stripBOM(std::string* pStr);
 
 } // namespace core
+} // namespace rstudio
 
 
 #endif // CORE_FILE_SERIALIZER_HPP

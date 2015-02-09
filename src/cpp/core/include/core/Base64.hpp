@@ -18,6 +18,7 @@
 
 #include <string>
 
+namespace rstudio {
 namespace core {
 
 class Error;
@@ -32,6 +33,7 @@ Error encode(const FilePath& inputFile, std::string* pOutput);
          
 } // namespace base64
 } // namespace core
+} // namespace rstudio
 
 #endif // CORE_SYSTEM_BASE64_HPP
 

@@ -27,10 +27,9 @@
 #include <session/SessionConsoleProcess.hpp>
 #include <session/SessionUserSettings.hpp>
 
-#include "SessionBuildEnvironment.hpp"
+using namespace rstudio::core ;
 
-using namespace core ;
-
+namespace rstudio {
 namespace session {  
 namespace modules {
 namespace build {
@@ -63,6 +62,7 @@ Error installRtools()
    std::string version, url;
    FilePath installPath("C:\\Rtools");
    std::vector<r_util::RToolsInfo> availableRtools;
+   availableRtools.push_back(r_util::RToolsInfo("3.2", installPath));
    availableRtools.push_back(r_util::RToolsInfo("3.1", installPath));
    availableRtools.push_back(r_util::RToolsInfo("3.0", installPath));
    availableRtools.push_back(r_util::RToolsInfo("2.15", installPath));
@@ -72,7 +72,7 @@ Error installRtools()
    availableRtools.push_back(r_util::RToolsInfo("2.11", installPath));
    BOOST_FOREACH(const r_util::RToolsInfo& rTools, availableRtools)
    {
-      if (isRtoolsCompatible(rTools))
+      if (module_context::isRtoolsCompatible(rTools))
       {
          version = rTools.name();
 
@@ -135,3 +135,4 @@ Error installRtools()
 } // namespace build
 } // namespace modules
 } // namespace session
+} // namespace rstudio

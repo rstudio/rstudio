@@ -16,10 +16,13 @@
 #ifndef SESSION_LIMITS_HPP
 #define SESSION_LIMITS_HPP
 
+namespace rstudio {
 namespace core {
    class Error;
 }
+}
  
+namespace rstudio {
 namespace session {
 namespace modules { 
 namespace limits {
@@ -29,5 +32,6 @@ core::Error initialize();
 } // namespace limits
 } // namespace modules
 } // namesapce session
+} // namespace rstudio
 
 #endif // SESSION_LIMITS_HPP

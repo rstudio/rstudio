@@ -19,6 +19,7 @@
 #include <core/FilePath.hpp>
 #include <core/LogWriter.hpp>
 
+namespace rstudio {
 namespace core {
 
 class FileLogWriter : public LogWriter
@@ -46,5 +47,6 @@ private:
 };
 
 } // namespace core
+} // namespace rstudio
 
 #endif // FILE_LOG_WRITER_HPP

@@ -48,6 +48,9 @@ public interface DesktopFrame extends JavaScriptPassthrough
    void activateMinimalWindow(String name);
    void activateSatelliteWindow(String name);
    void prepareForSatelliteWindow(String name, int width, int height);
+   void prepareForNamedWindow(String name, boolean allowExternalNavigation,
+         boolean showDesktopToolbar);
+   void closeNamedWindow(String name);
    
    // interface for plot export where coordinates are specified relative to
    // the iframe where the image is located within
@@ -91,7 +94,7 @@ public interface DesktopFrame extends JavaScriptPassthrough
    String chooseRVersion();
    boolean canChooseRVersion();
 
-   boolean isRetina();
+   double devicePixelRatio();
    
    void cleanClipboard();
    

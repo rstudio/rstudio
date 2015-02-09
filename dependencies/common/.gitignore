@@ -4,9 +4,12 @@ overlay/
 CEF/
 node-webkit/
 pandoc/
+libclang/
 packrat/
 packrat*.tar.gz
 rmarkdown/
 rmarkdown*.tar.gz
-shiny/
-shiny*.tar.gz
+shinyapps/
+shinyapps*.tar.gz
+rsconnect/
+rsconnect*.tar.gz

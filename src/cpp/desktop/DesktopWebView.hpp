@@ -18,9 +18,11 @@
 
 #include <QtGui>
 #include <QWebView>
+#include <QWebInspector>
 
 #include "DesktopWebPage.hpp"
 
+namespace rstudio {
 namespace desktop {
 
 class MainWindow;
@@ -31,12 +33,13 @@ class WebView : public ::QWebView
 
 public:
    explicit WebView(QUrl baseUrl = QUrl(),
-                    QWidget *parent = NULL);
+                    QWidget *parent = NULL,
+                    bool allowExternalNavigate = false);
 
    void setBaseUrl(const QUrl& baseUrl);
 
    void activateSatelliteWindow(QString name);
-   void prepareForSatelliteWindow(const PendingSatelliteWindow& pendingWnd);
+   void prepareForWindow(const PendingWindow& pendingWnd);
    void setDpiAwareZoomFactor(qreal factor);
    qreal dpiAwareZoomFactor();
 
@@ -66,5 +69,6 @@ private:
 };
 
 } // namespace desktop
+} // namespace rstudio
 
 #endif // DESKTOP_WEB_VIEW_HPP

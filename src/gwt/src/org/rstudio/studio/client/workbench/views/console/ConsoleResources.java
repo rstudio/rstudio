@@ -34,6 +34,7 @@ public interface ConsoleResources extends ClientBundle
       String command();
       String completionPopup();
       String completionGrid();
+      String helpPopup();
       String functionInfo();
       String functionInfoSignature();
       String functionInfoSummary();
@@ -43,6 +44,9 @@ public interface ConsoleResources extends ClientBundle
       String error();
       String selected();
       String paddedOutput();
+      String packageName();
+      String packageDescription();
+      String truncatedLabel();
    }
    
    public static final String KEYWORD_CLASS_NAME = " ace_keyword";

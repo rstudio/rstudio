@@ -30,10 +30,13 @@
 
 #include <session/SessionConstants.hpp>
 
+namespace rstudio {
 namespace core {
    class ProgramStatus;
 }
+}
 
+namespace rstudio {
 namespace session {
  
 
@@ -55,6 +58,11 @@ public:
    // read options  
    core::ProgramStatus read(int argc, char * const argv[]);   
    virtual ~Options() {}
+   
+   bool runTests() const
+   {
+      return runTests_;
+   }
    
    bool verifyInstallation() const
    {
@@ -159,11 +167,6 @@ public:
       return core::FilePath(sessionLibraryPath_.c_str());
    }
    
-   core::FilePath sessionPackagesPath() const
-   {
-      return core::FilePath(sessionPackagesPath_.c_str());
-   }
-
    core::FilePath sessionPackageArchivesPath() const
    {
       return core::FilePath(sessionPackageArchivesPath_.c_str());
@@ -256,6 +259,16 @@ public:
       return core::FilePath(pandocPath_.c_str());
    }
 
+   core::FilePath libclangPath() const
+   {
+      return core::FilePath(libclangPath_.c_str());
+   }
+
+   core::FilePath libclangHeadersPath() const
+   {
+      return core::FilePath(libclangHeadersPath_.c_str());
+   }
+
    bool allowFileDownloads() const
    {
       return allowOverlay() || allowFileDownloads_;
@@ -294,6 +307,16 @@ public:
    bool allowRpubsPublish() const
    {
       return allowOverlay() || allowRpubsPublish_;
+   }
+
+   bool allowExternalPublish() const
+   {
+      return allowOverlay() || allowExternalPublish_;
+   }
+
+   bool allowPublish() const
+   {
+      return allowOverlay() || allowPublish_;
    }
 
    // user info
@@ -392,12 +415,17 @@ private:
                             std::string* pPath);
    void resolvePandocPath(const core::FilePath& resourcePath, std::string* pPath);
 
+   void resolveRsclangPath(const core::FilePath& resourcePath, std::string* pPath);
+
    void addOverlayOptions(boost::program_options::options_description* pOpt);
    bool validateOverlayOptions(std::string* pErrMsg);
    void resolveOverlayOptions();
    bool allowOverlay() const;
 
 private:
+   // tests
+   bool runTests_;
+   
    // verify
    bool verifyInstallation_;
    std::string verifyInstallationHomeDir_;
@@ -436,7 +464,6 @@ private:
    std::string coreRSourcePath_;
    std::string modulesRSourcePath_;
    std::string sessionLibraryPath_;
-   std::string sessionPackagesPath_;
    std::string sessionPackageArchivesPath_;
    std::string rLibsUser_;
    std::string rCRANRepos_;
@@ -462,6 +489,8 @@ private:
    std::string hunspellDictionariesPath_;
    std::string mathjaxPath_;
    std::string pandocPath_;
+   std::string libclangPath_;
+   std::string libclangHeadersPath_;
 
    bool allowFileDownloads_;
    bool allowShell_;
@@ -471,6 +500,8 @@ private:
    bool allowVcsExecutableEdit_;
    bool allowRemovePublicFolder_;
    bool allowRpubsPublish_;
+   bool allowExternalPublish_;
+   bool allowPublish_;
 
    // user info
    bool showUserIdentity_;
@@ -493,6 +524,7 @@ private:
 };
   
 } // namespace session
+} // namespace rstudio
 
 #endif // SESSION_SESSION_OPTIONS_HPP
 

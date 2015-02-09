@@ -13,8 +13,6 @@
  *
  */
 
-#include "SessionBuildEnvironment.hpp"
-
 #include <string>
 #include <vector>
 
@@ -32,11 +30,11 @@
 
 #include <session/SessionModuleContext.hpp>
 
-using namespace core ;
+using namespace rstudio::core ;
 
-namespace session {  
-namespace modules {
-namespace build {
+namespace rstudio {
+namespace session {
+namespace module_context {
 
 #ifdef _WIN32
 
@@ -112,7 +110,7 @@ bool doAddRtoolsToPathIfNecessary(T* pTarget, std::string* pWarningMessage)
        r_util::RToolsInfo rTools = scanPathForRTools();
        if (!rTools.empty())
        {
-          if (!isRtoolsCompatible(rTools))
+          if (!module_context::isRtoolsCompatible(rTools))
           {
             boost::format fmt(
              "WARNING: Rtools version %1% is on the PATH (intalled at %2%) "
@@ -145,7 +143,7 @@ bool doAddRtoolsToPathIfNecessary(T* pTarget, std::string* pWarningMessage)
     std::vector<r_util::RToolsInfo>::const_reverse_iterator it = rTools.rbegin();
     for ( ; it != rTools.rend(); ++it)
     {
-       if (isRtoolsCompatible(*it))
+       if (module_context::isRtoolsCompatible(*it))
        {
           r_util::prependToSystemPath(*it, pTarget);
           return true;
@@ -191,7 +189,6 @@ bool doAddRtoolsToPathIfNecessary(T* pTarget, std::string* pWarningMessage)
 
 } // anonymous namespace
 
-
 bool isRtoolsCompatible(const r_util::RToolsInfo& rTools)
 {
    bool isCompatible = false;
@@ -201,7 +198,6 @@ bool isRtoolsCompatible(const r_util::RToolsInfo& rTools)
       LOG_ERROR(error);
    return isCompatible;
 }
-
 
 bool addRtoolsToPathIfNecessary(std::string* pPath,
                                 std::string* pWarningMessage)
@@ -223,8 +219,6 @@ bool isRtoolsCompatible(const r_util::RToolsInfo& rTools)
    return false;
 }
 
-
-
 bool addRtoolsToPathIfNecessary(std::string* pPath,
                                 std::string* pWarningMessage)
 {
@@ -236,10 +230,8 @@ bool addRtoolsToPathIfNecessary(core::system::Options* pEnvironment,
 {
    return false;
 }
-
 #endif
 
-
-} // namespace build
-} // namespace modules
+} // namespace module_context
 } // namespace session
+} // namespace rstudio

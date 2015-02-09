@@ -23,10 +23,13 @@
 #include <core/FilePath.hpp>
 #include <core/json/Json.hpp>
 
+namespace rstudio {
 namespace core {
 	class Error;
 } 
+}
 
+namespace rstudio {
 namespace r {
 namespace session {
 
@@ -91,6 +94,7 @@ private:
       
 } // namespace session
 } // namespace r
+} // namespace rstudio
 
 #endif // R_SESSION_CLIENT_STATE_HPP
 

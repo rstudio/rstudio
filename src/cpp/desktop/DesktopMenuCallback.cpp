@@ -23,6 +23,7 @@
 #include <ApplicationServices/ApplicationServices.h>
 #endif
 
+namespace rstudio {
 namespace desktop {
 
 MenuCallback::MenuCallback(QObject *parent) :
@@ -63,7 +64,7 @@ QAction* MenuCallback::addCustomAction(QString commandId,
 {
 
    QAction* pAction = NULL;
-   if (commandId == QString::fromAscii("zoomIn"))
+   if (commandId == QString::fromUtf8("zoomIn"))
    {
       pAction = menuStack_.top()->addAction(QIcon(),
                                             label,
@@ -71,7 +72,7 @@ QAction* MenuCallback::addCustomAction(QString commandId,
                                             SIGNAL(zoomIn()),
                                             QKeySequence::ZoomIn);
    }
-   else if (commandId == QString::fromAscii("zoomOut"))
+   else if (commandId == QString::fromUtf8("zoomOut"))
    {
       pAction = menuStack_.top()->addAction(QIcon(),
                                             label,
@@ -80,7 +81,7 @@ QAction* MenuCallback::addCustomAction(QString commandId,
                                             QKeySequence::ZoomOut);
    }
 #ifdef Q_OS_LINUX
-   else if (commandId == QString::fromAscii("nextTab"))
+   else if (commandId == QString::fromUtf8("nextTab"))
    {
       pAction = menuStack_.top()->addAction(QIcon(),
                                             label,
@@ -89,7 +90,7 @@ QAction* MenuCallback::addCustomAction(QString commandId,
                                             QKeySequence(Qt::CTRL +
                                                          Qt::Key_PageDown));
    }
-   else if (commandId == QString::fromAscii("previousTab"))
+   else if (commandId == QString::fromUtf8("previousTab"))
    {
       pAction = menuStack_.top()->addAction(QIcon(),
                                             label,
@@ -119,11 +120,11 @@ void MenuCallback::addCommand(QString commandId,
                               QString shortcut,
                               bool checkable)
 {
-   shortcut = shortcut.replace(QString::fromUtf8("Enter"), QString::fromAscii("\n"));
+   shortcut = shortcut.replace(QString::fromUtf8("Enter"), QString::fromUtf8("\n"));
 
    QKeySequence keySequence(shortcut);
-#ifndef Q_WS_MAC
-   if (shortcut.contains(QString::fromAscii("\n")))
+#ifndef Q_OS_MAC
+   if (shortcut.contains(QString::fromUtf8("\n")))
    {
       int value = (keySequence[0] & Qt::MODIFIER_MASK) + Qt::Key_Enter;
       keySequence = QKeySequence(value);
@@ -199,7 +200,7 @@ void MenuActionBinder::onHideMenu()
 WindowMenu::WindowMenu(QWidget *parent) : QMenu(QString::fromUtf8("&Window"), parent)
 {
    pMinimize_ = addAction(QString::fromUtf8("Minimize"));
-   pMinimize_->setShortcut(QKeySequence(QString::fromAscii("Meta+M")));
+   pMinimize_->setShortcut(QKeySequence(QString::fromUtf8("Meta+M")));
    connect(pMinimize_, SIGNAL(triggered()),
            this, SLOT(onMinimize()));
 
@@ -209,7 +210,7 @@ WindowMenu::WindowMenu(QWidget *parent) : QMenu(QString::fromUtf8("&Window"), pa
 
    addSeparator();
 
-   pWindowPlaceholder_ = addAction(QString::fromAscii("__PLACEHOLDER__"));
+   pWindowPlaceholder_ = addAction(QString::fromUtf8("__PLACEHOLDER__"));
    pWindowPlaceholder_->setVisible(false);
 
    addSeparator();
@@ -244,7 +245,7 @@ void WindowMenu::onZoom()
 
 void WindowMenu::onBringAllToFront()
 {
-#ifdef Q_WS_MAC
+#ifdef Q_OS_MAC
    CFURLRef appUrlRef = CFBundleCopyBundleURL(CFBundleGetMainBundle());
    if (appUrlRef)
    {
@@ -309,3 +310,4 @@ void WindowMenu::showWindow()
 }
 
 } // namespace desktop
+} // namespace rstudio

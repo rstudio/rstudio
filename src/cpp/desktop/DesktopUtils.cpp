@@ -26,15 +26,16 @@
 
 #include "DesktopOptions.hpp"
 
-#ifdef Q_WS_WIN
+#ifdef Q_OS_WIN
 #include <windows.h>
 #endif
 
-using namespace core;
+using namespace rstudio::core;
 
+namespace rstudio {
 namespace desktop {
 
-#ifdef Q_WS_WIN
+#ifdef Q_OS_WIN
 
 void reattachConsoleIfNecessary()
 {
@@ -68,9 +69,9 @@ FilePath userLogPath()
 }
 
 #ifndef Q_OS_MAC
-bool isRetina(QMainWindow* pMainWindow)
+double devicePixelRatio(QMainWindow* pMainWindow)
 {
-   return false;
+   return 1.0;
 }
 
 bool isOSXMavericks()
@@ -114,11 +115,16 @@ void raiseAndActivateWindow(QWidget* pWindow)
    pWindow->activateWindow();
 }
 
+void closeWindow(QWidget* pWindow)
+{
+   pWindow->close();
+}
+
 QMessageBox::Icon safeMessageBoxIcon(QMessageBox::Icon icon)
 {
    // if a gtk theme has a missing or corrupt icon for one of the stock
    // dialog images, qt crashes when attempting to show the dialog
-#ifdef Q_WS_X11
+#ifdef Q_OS_LINUX
    return QMessageBox::NoIcon;
 #else
    return icon;
@@ -205,11 +211,11 @@ void launchProjectInNewInstance(QString projectFilename)
 bool isFixedWidthFont(const QFont& font)
 {
    QFontMetrics metrics(font);
-   int width = metrics.width(QChar::fromAscii(' '));
+   int width = metrics.width(QChar::fromLatin1(' '));
    char chars[] = {'m', 'i', 'A', '/', '-', '1', 'l', '!', 'x', 'X', 'y', 'Y'};
    for (size_t i = 0; i < sizeof(chars); i++)
    {
-      if (metrics.width(QChar::fromAscii(chars[i])) != width)
+      if (metrics.width(QChar::fromLatin1(chars[i])) != width)
          return false;
    }
    return true;
@@ -247,8 +253,8 @@ void openUrl(const QUrl& url)
    // we allow default handling for  mailto and file schemes because qt
    // does custom handling for them and they aren't affected by the chrome
    //job object issue noted above
-   if (url.scheme() == QString::fromAscii("mailto") ||
-       url.scheme() == QString::fromAscii("file"))
+   if (url.scheme() == QString::fromUtf8("mailto") ||
+       url.scheme() == QString::fromUtf8("file"))
    {
       QDesktopServices::openUrl(url);
    }
@@ -304,3 +310,4 @@ QFileDialog::Options standardFileDialogOptions()
 #endif
 
 } // namespace desktop
+} // namespace rstudio

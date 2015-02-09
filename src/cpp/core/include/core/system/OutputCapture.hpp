@@ -20,6 +20,7 @@
 
 #include <boost/function.hpp>
 
+namespace rstudio {
 namespace core {
 
 class Error;
@@ -32,6 +33,7 @@ Error captureStandardStreams(
 
 } // namespace system
 } // namespace core
+} // namespace rstudio
 
 #endif // CORE_SYSTEM_OUTPUT_CAPTURE_HPP
 

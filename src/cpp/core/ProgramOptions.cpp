@@ -28,6 +28,7 @@
 
 using namespace boost::program_options ;
 
+namespace rstudio {
 namespace core {
 
 namespace program_options {
@@ -79,6 +80,7 @@ void reportWarnings(const std::string& warningMessages,
 ProgramStatus read(const OptionsDescription& optionsDescription,
                    int argc,
                    char * const argv[],
+                   std::vector<std::string>* pUnrecognized,
                    bool* pHelp)
 {
    *pHelp = false;
@@ -103,9 +105,20 @@ ProgramStatus read(const OptionsDescription& optionsDescription,
       // parse the command line
       variables_map vm ;
       command_line_parser parser(argc, const_cast<char**>(argv));
-      store(parser.options(commandLineOptions).
-            positional(optionsDescription.positionalOptions).run(), vm);
+      parser.options(commandLineOptions);
+      parser.positional(optionsDescription.positionalOptions);
+      if (pUnrecognized != NULL)
+         parser.allow_unregistered();
+      parsed_options parsed = parser.run();
+      store(parsed, vm);
       notify(vm) ;
+
+      // collect unrecognized if necessary
+      if (pUnrecognized != NULL)
+      {
+         *pUnrecognized = collect_unrecognized(parsed.options,
+                                               include_positional);
+      }
 
       // "none" is a special sentinel value for the config-file which
       // explicitly prevents us from reading the defautl config file above
@@ -191,3 +204,4 @@ ProgramStatus read(const OptionsDescription& optionsDescription,
    
 } // namespace program_options
 } // namespace core
+} // namespace rstudio

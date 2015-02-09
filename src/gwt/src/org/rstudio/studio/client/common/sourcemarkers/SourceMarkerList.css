@@ -1,0 +1,83 @@
+
+.iconCell {
+   vertical-align: top;
+   width: 34px;
+   padding: 2px 3px;
+}
+
+.lineCell {
+   color: #777;
+   vertical-align: top;
+   white-space: nowrap;
+   width: 1%;
+   padding-right: 8px;
+}
+
+.selectedRow .lineCell {
+   color: #666;
+}
+
+.messageCell {
+   width: 100%;
+   vertical-align: top;
+   padding-right: 8px;
+}
+
+.messageCell strong {
+   font-weight: normal;
+   color: #66A;
+}
+
+.selectedRow {
+   background-color: #ccc;
+}
+*:focus .selectedRow {
+   background-color: rgb(146, 193, 240)
+}
+@if user.agent ie8 {
+   .selectedRow {
+      background-color: rgb(146, 193, 240)
+   }
+}
+
+.headerRow td {
+   font-weight: bold;
+   padding: 2px 2px 2px 3px;
+   width: 100%;
+}
+
+.table {
+   outline: none;
+}
+
+@sprite .errorIcon {
+   gwt-image: 'error';
+}
+
+@sprite .warningIcon {
+   gwt-image: 'warning';
+}
+
+@sprite .boxIcon {
+   gwt-image: 'badbox';
+}
+
+@sprite .infoIcon {
+   gwt-image: 'info';
+}
+
+@sprite .styleIcon {
+   gwt-image: 'style';
+}
+
+.noIcon {
+  width: 3%;
+}
+
+div.disclosure {
+   margin-top: 1px;
+   margin-right: 3px;
+}
+@sprite .selectedRow div.disclosure {
+   gwt-image: 'logContextButton';
+}

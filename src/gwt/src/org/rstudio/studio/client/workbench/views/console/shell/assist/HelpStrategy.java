@@ -14,200 +14,290 @@
  */
 package org.rstudio.studio.client.workbench.views.console.shell.assist;
 
+import java.util.HashMap;
+
 import org.rstudio.core.client.Debug;
-import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
+import org.rstudio.studio.client.common.codetools.RCompletionType;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionRequester.QualifiedName;
 import org.rstudio.studio.client.workbench.views.help.model.HelpInfo;
-import org.rstudio.studio.client.workbench.views.help.model.HelpServerOperations;
+import org.rstudio.studio.client.workbench.views.help.model.HelpInfo.ParsedInfo;
 
-public abstract class HelpStrategy
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
+
+@Singleton
+public class HelpStrategy
 {
-   public abstract void showHelp(QualifiedName selectedItem, 
-                                 CompletionPopupDisplay display) ;
+   final CodeToolsServerOperations server_;
    
-   public abstract void showHelpTopic(QualifiedName selectedItem) ;
-
-   public abstract boolean isNull();
-
-   public static HelpStrategy createFunctionStrategy(
-         HelpServerOperations server)
+   @Inject
+   public HelpStrategy(CodeToolsServerOperations server)
    {
-      return new FunctionStrategy(server) ;
+      server_ = server;
+      cache_ = new HashMap<QualifiedName, ParsedInfo>();
    }
    
-   public static HelpStrategy createParameterStrategy(
-         HelpServerOperations server,
-         String functionName)
+   public void showHelpTopic(final QualifiedName selectedItem)
    {
-      return new ParameterStrategy(server, functionName) ;
+      server_.showHelpTopic(
+            selectedItem.name,
+            selectedItem.source,
+            selectedItem.type);
    }
-
-   public static HelpStrategy createNullStrategy()
+   
+   public void showHelp(final QualifiedName item,
+                        final CompletionPopupDisplay display)
    {
-      return new NullStrategy();
-   }
-
-   static class NullStrategy extends HelpStrategy
-   {
-      public NullStrategy() {}
-
-      @Override
-      public void showHelp(QualifiedName selectedItem, CompletionPopupDisplay display)
+      switch (item.type)
       {
+         case RCompletionType.PACKAGE:
+            showPackageHelp(item, display);
+            break;
+         case RCompletionType.ARGUMENT:
+         case RCompletionType.OPTION:
+            showParameterHelp(item, display);
+            break;
+         default:
+            showDefaultHelp(item, display);
+            break;
+      }
+   }
+   
+   public void clearCache()
+   {
+      cache_.clear();
+   }
+   
+   private void showDefaultHelp(final QualifiedName selectedItem,
+                                final CompletionPopupDisplay display)
+   {
+      ParsedInfo cachedHelp = cache_.get(selectedItem);
+      if (cachedHelp != null)
+      {
+         display.displayHelp(cachedHelp);
+         return;
       }
       
-      @Override
-      public void showHelpTopic(QualifiedName selectedItem)
-      {
-      }
+      server_.getHelp(selectedItem.name,
+                      selectedItem.source,
+                      selectedItem.type,
+                      new ServerRequestCallback<HelpInfo>() {
+         @Override
+         public void onError(ServerError error)
+         {
+            Debug.logError(error);
+            RStudioGinjector.INSTANCE.getGlobalDisplay().showErrorMessage(
+                  "Error Retrieving Help", error.getUserMessage());
+            display.clearHelp(false) ;
+         }
 
-      @Override
-      public boolean isNull()
-      {
-         return true;
-      }
+         public void onResponseReceived(HelpInfo result)
+         {
+            if (result != null)
+            {
+               HelpInfo.ParsedInfo help = result.parse(selectedItem.name) ;
+               if (help.hasInfo())
+               {
+                  cache_.put(selectedItem, help);
+                  display.displayHelp(help) ;
+                  return;
+               }
+            }
+            display.setHelpVisible(false);
+            display.clearHelp(false) ;
+         }
+      }) ;
+
    }
    
-   static class FunctionStrategy extends HelpStrategy
+   private void showParameterHelp(final QualifiedName selectedItem,
+                                  final CompletionPopupDisplay display)
    {
-      public FunctionStrategy(HelpServerOperations server)
+      
+      final String name = selectedItem.name.replaceAll("\\s*=\\s*$", "");
+      ParsedInfo cachedHelp = cache_.get(selectedItem);
+      if (cachedHelp != null)
       {
-         super() ;
-         server_ = server ;
+         doShowParameterHelp(cachedHelp, name, display);
+         return;
       }
 
-      @Override
-      public void showHelp(final QualifiedName selectedItem,
-                           final CompletionPopupDisplay display)
-      {
-         server_.getHelp(selectedItem.name, selectedItem.pkgName, 0, 
-               new ServerRequestCallback<HelpInfo>() {
+         server_.getHelp(selectedItem.source,
+                         null,
+                         selectedItem.type,
+                         new ServerRequestCallback<HelpInfo>() {
             @Override
             public void onError(ServerError error)
             {
-               Debug.logError(error);
-               RStudioGinjector.INSTANCE.getGlobalDisplay().showErrorMessage(
-                     "Error Retrieving Help", error.getUserMessage());
                display.clearHelp(false) ;
             }
-            
-            public void onResponseReceived(HelpInfo result)
-            {
-               if (result != null)
-               {
-                  HelpInfo.ParsedInfo help = result.parse(selectedItem.name) ;
-                  if (help.hasInfo())
-                  {
-                     display.displayFunctionHelp(help) ;
-                     return;
-                  }
-               }
 
-               display.clearHelp(false) ;
+            @Override
+            public void onResponseReceived(HelpInfo response)
+            {
+               if (response != null)
+               {
+                  ParsedInfo info = response.parse(selectedItem.source);
+                  cache_.put(selectedItem, info);
+                  doShowParameterHelp(info, name, display);
+               }
+               else
+               {
+                  display.setHelpVisible(false);
+                  display.clearHelp(false);
+               }
             }
          }) ;
-         
-      }
-      
-      @Override
-      public void showHelpTopic(QualifiedName selectedItem)
-      {
-         server_.showHelpTopic(selectedItem.name, selectedItem.pkgName) ;
-      }
-
-      @Override
-      public boolean isNull()
-      {
-         return false;
-      }
-
-      protected final HelpServerOperations server_ ;
    }
    
-   static class ParameterStrategy extends FunctionStrategy
+   private void doShowParameterHelp(final ParsedInfo info,
+                                    final String parameter,
+                                    final CompletionPopupDisplay display)
    {
-      public ParameterStrategy(HelpServerOperations server, String functionName)
+      String desc = null;
+      
+      HashMap<String, String> mapToUse = info.getArgs();
+      if (mapToUse != null)
       {
-         super(server) ;
-         functionName_ = functionName ;
+         desc = mapToUse.get(parameter) ;
       }
       
-      @Override
-      public void showHelp(QualifiedName qname,
-                           final CompletionPopupDisplay display)
+      if (desc == null)
       {
-         String selectedItem = qname.name ;
-         
-         if (selectedItem.endsWith(" = "))
+         mapToUse = info.getSlots();
+         if (mapToUse != null)
          {
-            assert StringUtil.isNullOrEmpty(qname.pkgName)
-                              : "Completion parameter had a package name!? " +
-                                qname.pkgName + "::" + qname.name;
-            selectedItem = selectedItem.substring(0, selectedItem.length() - 3) ;
-            
-            parameter_ = selectedItem ;
-            if (helpInfo_ != null)
-            {
-               doShow(display) ;
-            }
-            else
-            {
-               server_.getHelp(functionName_, null, 0,
-                     new ServerRequestCallback<HelpInfo>() {
-                        @Override
-                        public void onError(ServerError error)
-                        {
-                           display.clearHelp(false) ;
-                        }
+            desc = mapToUse.get(parameter);
+         }
+      }
+      
+      if (desc == null)
+      {
+         display.setHelpVisible(false);
+         display.clearHelp(false) ;
+      }
+      else
+      {
+         display.displayParameterHelp(mapToUse, parameter) ;
+      }
+   }
    
-                        @Override
-                        public void onResponseReceived(HelpInfo response)
-                        {
-                           if (response != null)
-                              helpInfo_ = response.parse(functionName_) ;
-                           else
-                              helpInfo_ = null;
-
-                           if (helpInfo_ != null)
-                              doShow(display) ;
-                           else
-                              display.clearHelp(false);
-                        }
-                     }) ;
-            }
-         }
-         else
-         {
-            super.showHelp(qname, display) ;
-         }
+   @SuppressWarnings("unused")
+   private void showDataHelp(final QualifiedName selectedItem,
+                             final CompletionPopupDisplay display)
+   {
+      ParsedInfo cachedHelp = cache_.get(selectedItem);
+      if (cachedHelp != null)
+      {
+         doShowDataHelp(cachedHelp, display);
+         return;
       }
       
-      @Override
-      public void showHelpTopic(QualifiedName selectedItem)
-      {
-         server_.showHelpTopic(functionName_, null) ;
-      }
-      
-      private void doShow(CompletionPopupDisplay display)
-      {
-         assert helpInfo_ != null && parameter_ != null && display != null ;
-         String desc = helpInfo_.getArgs().get(parameter_) ;
-         if (desc == null)
+      server_.getHelp(
+            selectedItem.name,
+            selectedItem.source,
+            selectedItem.type,
+            new ServerRequestCallback<HelpInfo>() {
+         
+         @Override
+         public void onError(ServerError error)
          {
             display.clearHelp(false) ;
          }
-         else
+
+         @Override
+         public void onResponseReceived(HelpInfo response)
          {
-            display.displayParameterHelp(helpInfo_, parameter_) ;
+            if (response != null)
+            {
+               ParsedInfo info = response.parse(selectedItem.name);
+               cache_.put(selectedItem, info);
+               doShowDataHelp(info, display);
+            }
+            else
+            {
+               display.setHelpVisible(false);
+               display.clearHelp(false);
+            }
          }
+      }) ;
+   }
+   
+   private void doShowDataHelp(final ParsedInfo info,
+                               final CompletionPopupDisplay display)
+   {
+      if (info.hasInfo())
+      {
+         display.displayDataHelp(info) ;
+      }
+      else
+      {
+         display.setHelpVisible(false);
+         display.clearHelp(false) ;
+      }
+   }
+   
+   
+   
+   private void showPackageHelp(final QualifiedName selectedItem,
+                                final CompletionPopupDisplay display)
+   {
+      ParsedInfo cachedHelp = cache_.get(selectedItem);
+      if (cachedHelp != null)
+      {
+         doShowPackageHelp(cachedHelp, display);
+         return;
       }
       
-      private final String functionName_ ;
-      
-      private HelpInfo.ParsedInfo helpInfo_ ;
-      private String parameter_ ;
+      final String packageName = selectedItem.name;
+      server_.getHelp(
+            packageName,
+            null,
+            selectedItem.type,
+            new ServerRequestCallback<HelpInfo>() {
+         
+         @Override
+         public void onError(ServerError error)
+         {
+            display.clearHelp(false) ;
+         }
+
+         @Override
+         public void onResponseReceived(HelpInfo response)
+         {
+            if (response != null)
+            {
+               ParsedInfo info = response.parse(packageName);
+               cache_.put(selectedItem, info);
+               doShowPackageHelp(info, display);
+            }
+            else
+            {
+               display.setHelpVisible(false);
+               display.clearHelp(false);
+            }
+         }
+      }) ;
    }
+   
+   private void doShowPackageHelp(final ParsedInfo info,
+                                  final CompletionPopupDisplay display)
+   {
+      if (info.hasInfo())
+      {
+         display.displayPackageHelp(info) ;
+      }
+      else
+      {
+         display.setHelpVisible(false);
+         display.clearHelp(false) ;
+      }
+   }
+   
+   HashMap<QualifiedName, ParsedInfo> cache_;
+   
 }

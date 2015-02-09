@@ -26,6 +26,7 @@
 #include "DesktopApplicationLaunch.hpp"
 #include "DesktopMainWindow.hpp"
 
+namespace rstudio {
 namespace desktop {
 
 class SessionLauncher : public QObject
@@ -80,5 +81,6 @@ private:
 };
 
 } // namespace desktop
+} // namespace rstudio
 
 #endif // DESKTOP_SESSION_LAUNCHER_HPP

@@ -29,6 +29,7 @@
 #define KEY_WOW64_32KEY 0x0200
 #endif
 
+namespace rstudio {
 namespace core {
 namespace r_util {
 
@@ -92,7 +93,14 @@ RToolsInfo::RToolsInfo(const std::string& name, const FilePath& installPath)
    else if (name == "3.1")
    {
       versionMin = "3.0.0";
-      versionMax = "3.2.0";
+      versionMax = "3.1.99";
+      relativePathEntries.push_back("bin");
+      relativePathEntries.push_back("gcc-4.6.3/bin");
+   }
+   else if (name == "3.2")
+   {
+      versionMin = "3.1.0";
+      versionMax = "3.2.99";
       relativePathEntries.push_back("bin");
       relativePathEntries.push_back("gcc-4.6.3/bin");
    }
@@ -179,6 +187,7 @@ Error scanRegistryForRTools(std::vector<RToolsInfo>* pRTools)
 
 } // namespace r_util
 } // namespace core 
+} // namespace rstudio
 
 
 

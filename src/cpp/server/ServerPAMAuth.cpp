@@ -38,6 +38,7 @@
 #include <server/ServerUriHandlers.hpp>
 #include <server/ServerSessionProxy.hpp>
 
+namespace rstudio {
 namespace server {
 namespace pam_auth {
 
@@ -398,3 +399,4 @@ Error initialize()
 
 } // namespace pam_auth
 } // namespace server
+} // namespace rstudio

@@ -48,13 +48,13 @@
 #include <session/SessionUserSettings.hpp>
 #include <session/SessionModuleContext.hpp>
 
-#include "SessionBuildEnvironment.hpp"
 #include "SessionBuildErrors.hpp"
 #include "SessionSourceCpp.hpp"
 #include "SessionInstallRtools.hpp"
 
-using namespace core;
+using namespace rstudio::core;
 
+namespace rstudio {
 namespace session {
 
 namespace {
@@ -349,6 +349,18 @@ private:
       boost::algorithm::split(roclets,
                               projectConfig().packageRoxygenize,
                               boost::algorithm::is_any_of(","));
+
+      // remove vignette roclet if we don't have the requisite roxygen2 version
+      bool haveVignetteRoclet = module_context::isPackageVersionInstalled(
+                                                   "roxygen2", "4.1.0.9001");
+      if (!haveVignetteRoclet)
+      {
+         std::vector<std::string>::iterator it =
+                      std::find(roclets.begin(), roclets.end(), "vignette");
+         if (it != roclets.end())
+            roclets.erase(it);
+      }
+
       BOOST_FOREACH(std::string& roclet, roclets)
       {
          roclet = "'" + roclet + "'";
@@ -402,6 +414,13 @@ private:
       {
          terminateWithError("Locating R script", error);
          return;
+      }
+
+      // check for required version of roxygen
+      if (!module_context::isMinimumRoxygenInstalled())
+      {
+         terminateWithError("roxygen2 v4.0 (or later) required to "
+                            "generate documentation");
       }
 
       // build the roxygenize command
@@ -503,7 +522,7 @@ private:
       core::system::setenv(&childEnv, "NOT_CRAN", "true");
 
       // add r tools to path if necessary
-      addRtoolsToPathIfNecessary(&childEnv, &buildToolsWarning_);
+      module_context::addRtoolsToPathIfNecessary(&childEnv, &buildToolsWarning_);
 
       pkgOptions.environment = childEnv;
 
@@ -883,6 +902,7 @@ private:
 
       pkgOptions.workingDir = testsPath;
       enqueCommandString("Sourcing R files in 'tests' directory");
+      successMessage_ = "\nTests complete";
       module_context::processSupervisor().runCommand(cmd,
                                                      pkgOptions,
                                                      cb);
@@ -1065,7 +1085,7 @@ private:
    bool useDevtools()
    {
       return projectConfig().packageUseDevtools &&
-             module_context::isPackageVersionInstalled("devtools", "1.4.1");
+             module_context::isMinimumDevtoolsInstalled();
    }
 
 public:
@@ -1157,10 +1177,10 @@ private:
       // call the error parser if one has been specified
       if (errorParser_)
       {
-         std::vector<CompileError> errors = errorParser_(outputAsText());
+         std::vector<SourceMarker> errors = errorParser_(outputAsText());
          if (!errors.empty())
          {
-            errorsJson_ = compileErrorsAsJson(errors);
+            errorsJson_ = sourceMarkersAsJson(errors);
             enqueBuildErrors(errorsJson_);
          }
       }
@@ -1229,6 +1249,53 @@ private:
       module_context::enqueClientEvent(event);
    }
 
+   std::string parseLibrarySwitchFromInstallArgs()
+   {
+      std::string libPath;
+
+      std::string extraArgs = projectConfig().packageInstallArgs;
+      std::size_t n = extraArgs.size();
+      std::size_t index = extraArgs.find("--library=");
+
+      if (index != std::string::npos &&
+          index < n - 2) // ensure some space for path
+      {
+         std::size_t startIndex = index + std::string("--library=").length();
+         std::size_t endIndex = startIndex + 1;
+
+         // The library path can be specified with quotes + spaces, or without
+         // quotes (but no spaces), so handle both cases.
+         char firstChar = extraArgs[startIndex];
+         if (firstChar == '\'' || firstChar == '\"')
+         {
+            while (++endIndex < n)
+            {
+               // skip escaped characters
+               if (extraArgs[endIndex] == '\\')
+               {
+                  ++endIndex;
+                  continue;
+               }
+
+               if (extraArgs[endIndex] == firstChar)
+                  break;
+            }
+
+            libPath = extraArgs.substr(startIndex + 1, endIndex - startIndex - 1);
+         }
+         else
+         {
+            while (++endIndex < n)
+            {
+               if (std::isspace(extraArgs[endIndex]))
+                  break;
+            }
+            libPath = extraArgs.substr(startIndex, endIndex - startIndex + 1);
+         }
+      }
+      return libPath;
+   }
+   
    void enqueBuildCompleted()
    {
       isRunning_ = false;
@@ -1242,7 +1309,21 @@ private:
       // enque event
       std::string afterRestartCommand;
       if (restartR_)
-         afterRestartCommand = "library(" + pkgInfo_.name() + ")";
+      {
+         afterRestartCommand = "library(" + pkgInfo_.name();
+         
+         // if --library="" was specified and we're not in devmode,
+         // use it
+         if (!(r::session::utils::isPackratModeOn() ||
+               r::session::utils::isDevtoolsDevModeOn()))
+         {
+            std::string libPath = parseLibrarySwitchFromInstallArgs();
+            if (!libPath.empty())
+               afterRestartCommand += ", lib.loc = \"" + libPath + "\"";
+         }
+         
+         afterRestartCommand += ")";
+      }
       json::Object dataJson;
       dataJson["restart_r"] = restartR_;
       dataJson["after_restart_command"] = afterRestartCommand;
@@ -1473,7 +1554,7 @@ SEXP rs_addRToolsToPath()
     s_previousPath = core::system::getenv("PATH");
     std::string newPath = s_previousPath;
     std::string warningMsg;
-    build::addRtoolsToPathIfNecessary(&newPath, &warningMsg);
+    module_context::addRtoolsToPathIfNecessary(&newPath, &warningMsg);
     core::system::setenv("PATH", newPath);
 
 #endif
@@ -1531,7 +1612,7 @@ SEXP rs_installBuildTools()
 
 SEXP rs_installPackage(SEXP pkgPathSEXP, SEXP libPathSEXP)
 {
-   using namespace r::sexp;
+   using namespace rstudio::r::sexp;
    Error error = module_context::installPackage(safeAsString(pkgPathSEXP),
                                                 safeAsString(libPathSEXP));
    if (error)
@@ -1723,7 +1804,7 @@ bool canBuildCpp()
    core::system::Options childEnv;
    core::system::environment(&childEnv);
    std::string warningMsg;
-   modules::build::addRtoolsToPathIfNecessary(&childEnv, &warningMsg);
+   module_context::addRtoolsToPathIfNecessary(&childEnv, &warningMsg);
    options.environment = childEnv;
 
    core::system::ProcessResult result;
@@ -1754,4 +1835,5 @@ bool installRBuildTools(const std::string& action)
 }
 
 } // namesapce session
+} // namespace rstudio
 

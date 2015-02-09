@@ -16,19 +16,30 @@
 # use html help 
 options(help_type = "html")
 
+.rs.addFunction( "httpdPortIsFunction", function() {
+   .rs.haveRequiredRSvnRev(67550)
+})
+
 .rs.addFunction( "httpdPort", function()
 {
-   as.character(tools:::httpdPort)
+   if (.rs.httpdPortIsFunction())
+      as.character(tools:::httpdPort())
+   else
+      as.character(tools:::httpdPort)
 })
 
 .rs.addFunction("initHelp", function(port, isDesktop)
 { 
-   # function to set the help port directly
+   # function to set the help port
    setHelpPort <- function() {
-      env <- environment(tools::startDynamicHelp)
-      unlockBinding("httpdPort", env)
-      assign("httpdPort", port, envir = env)
-      lockBinding("httpdPort", env)
+      if (.rs.httpdPortIsFunction()) {
+         tools:::httpdPort(port)
+      } else {
+         env <- environment(tools::startDynamicHelp)
+         unlockBinding("httpdPort", env)
+         assign("httpdPort", port, envir = env)
+         lockBinding("httpdPort", env)   
+      }
    }
    
    # for desktop mode see if R can successfully initialize the httpd
@@ -40,12 +51,12 @@ options(help_type = "html")
       # (suppress warnings and messages because if there is a problem
       # binding to a local port we are going to patch this up by 
       # redirecting all traffic to our local peer)
-      if (tools:::httpdPort <= 0L)
+      if (.rs.httpdPort() <= 0L)
          suppressWarnings(suppressMessages(tools::startDynamicHelp()))
       
       # if couldn't start it then set the help port directly so that
       # help requests still flow through our local peer connection
-      if (tools:::httpdPort <= 0L)
+      if (.rs.httpdPort() <= 0L)
       {
          setHelpPort()
          return (TRUE)
@@ -59,7 +70,7 @@ options(help_type = "html")
    else 
    { 
       # stop the help server if it was previously started e.g. by .Rprofile
-      if (tools:::httpdPort > 0L)
+      if (.rs.httpdPort() > 0L)
          suppressMessages(tools::startDynamicHelp(start=FALSE))
       
       # set the help port
@@ -73,11 +84,11 @@ options(help_type = "html")
 .rs.addFunction( "handlerLookupError", function(path, query=NULL, ...)
 {
    payload = paste(
-         "<h3>R Custom HTTP Handler Not Found</h3>",
-         "<p>Unable to locate custom HTTP handler for",
-          "<i>", path, "</i>",
-         "<p>Is the package which implements this HTTP handler loaded?</p>")
-
+      "<h3>R Custom HTTP Handler Not Found</h3>",
+      "<p>Unable to locate custom HTTP handler for",
+      "<i>", path, "</i>",
+      "<p>Is the package which implements this HTTP handler loaded?</p>")
+   
    list(payload, "text/html", character(), 404)
 });
 
@@ -87,14 +98,309 @@ options(help_type = "html")
       sort(utils:::matchAvailableTopics("", prefix))
    else
       sort(utils:::matchAvailableTopics(prefix))
-});
+})
 
-.rs.addJsonRpcHandler("get_help", function(topic, package, options)
+.rs.addFunction("getHelpFromObject", function(object, envir)
 {
-   helpfiles = help(topic, help_type="html")
+   # Try to find the associated namespace of the object
+   namespace <- NULL
+   if (is.primitive(object))
+      namespace <- "base"
+   else if (is.function(object))
+   {
+      envString <- capture.output(environment(object))[1]
+      
+      # Strip out the irrelevant bits of the package name. We'd like
+      # to just use 'regexpr' but its output is funky with older versions
+      # of R.
+      if (!grepl("namespace:", envString))
+         return()
+      
+      namespace <- sub(".*namespace:", "", envString)
+      namespace <- sub(">.*", "", namespace)
+   }
+   else if (isS4(object))
+      namespace <- attr(class(object), "package")
+   
+   if (is.null(namespace))
+      return()
+   
+   # Get objects from that namespace
+   ns <- asNamespace(namespace)
+   
+   # Datasets don't live in the namespace -- ennumerate them separately
+   # We have to avoid the 'base' package, though.
+   datasets <- tryCatch(
+      suppressWarnings(data(package = namespace)),
+      error = function(e) NULL
+   )
+   
+   objectNames <- objects(ns, all.names = TRUE)
+   datasetNames <- unname(grep(" ", datasets$results[, "Item"], fixed = TRUE, value = TRUE, invert = TRUE))
+   
+   objects <- tryCatch(
+      mget(objectNames, envir = ns, inherits = TRUE),
+      error = function(e) NULL
+   )
+   
+   # Try to get the datasets from the namespace. These will only exist if they have
+   # been explicitly loaded, so be careful to tryCatch here.
+   data <- lapply(datasetNames, function(x) {
+      tryCatch(
+         get(x, envir = ns),
+         error = function(e) NULL
+      )
+   })
+   
+   # Combine them together
+   if (length(data))
+   {
+      objects <- c(objects, data)
+      objectNames <- c(objectNames, datasetNames)
+   }
+   
+   # Find which object is actually identical to the one we have
+   success <- FALSE
+   for (i in seq_along(objects))
+   {
+      # Once again, 'ignore.environment' is not available in older R's
+      # identical, so construct and eval a call to 'base::identical'.
+      formals <- as.list(formals(base::identical))
+      formals$x <- object
+      formals$y <- objects[[i]]
+      if ("ignore.environment" %in% names(formals))
+         formals[["ignore.environment"]] <- TRUE
+      
+      result <- tryCatch(
+         do.call(base::identical, formals),
+         error = function(e) FALSE
+      )
+      
+      if (result)
+      {
+         success <- TRUE
+         break
+      }
+   }
+   
+   if (success)
+   {
+      # Use that name for the help lookup
+      object <- objects[[i]]
+      objectName <- objectNames[[i]]
+      
+      # Get the associated signature for functions
+      signature <- NULL
+      if (is.function(object))
+         signature <- sub("function ", objectName, .rs.getSignature(object))
+      
+      result <- .rs.getHelp(topic = objectName, package = namespace, sig = signature)
+      if (length(result))
+         return(result)
+      
+      # If the previous lookup failed, perhaps it was an S3 method for which no
+      # documentation was available. Fall back to generic documentation.
+      dotPos <- gregexpr(".", objectName, fixed = TRUE)[[1]]
+      for (i in seq_along(dotPos))
+      {
+         maybeGeneric <- substring(objectName, 1, dotPos[[i]] - 1)
+         methods <- suppressWarnings(
+            tryCatch(
+               eval(substitute(methods(x), list(x = maybeGeneric)), envir = envir),
+               error = function(e) NULL
+            )
+         )
+         
+         if (objectName %in% methods)
+         {
+            result <- .rs.getHelp(maybeGeneric)
+            if (length(result))
+               return(result)
+         }
+      }
+   }
+   
+   # Fail -- return NULL
+   NULL
+})
+
+.rs.addJsonRpcHandler("get_help", function(what, from, type)
+{
+   # Protect against missing type
+   if (!length(type))
+      return()
+   
+   # If we've encoded the package and function in 'what', pull it out
+   if (grepl("|||", what, fixed = TRUE))
+   {
+      splat <- strsplit(what, "|||", fixed = TRUE)[[1]]
+      from <- splat[[1]]
+      what <- splat[[2]]
+   }
+   
+   # Avoid install.packages hook
+   if (what == "install.packages" &&
+       type == .rs.acCompletionTypes$ARGUMENT &&
+       is.null(from))
+      return(.rs.getHelp("install.packages", "utils"))
+   
+   # Help for options
+   if (type == .rs.acCompletionTypes$OPTION)
+      return(.rs.getHelp("options", "base", subset = FALSE))
+   
+   if (type %in% c(.rs.acCompletionTypes$S4_GENERIC,
+                   .rs.acCompletionTypes$S4_METHOD))
+   {
+      # Try getting methods for the method from the associated package
+      if (!is.null(help <- .rs.getHelp(paste(what, "-methods"), from)))
+         return(help)
+      
+      # Try getting help from anywhere
+      if (!is.null(help <- .rs.getHelp(what)))
+         return(help)
+      
+      # Give up
+      return()
+   }
+   
+   if (type %in% c(.rs.acCompletionTypes$FUNCTION,
+                   .rs.acCompletionTypes$S4_GENERIC,
+                   .rs.acCompletionTypes$S4_METHOD,
+                   .rs.acCompletionTypes$R5_METHOD))
+      return(.rs.getHelpFunction(what, from))
+   else if (type == .rs.acCompletionTypes$ARGUMENT)
+      return(.rs.getHelpArgument(what, from, parent.frame()))
+   else if (type == .rs.acCompletionTypes$PACKAGE)
+      return(.rs.getHelpPackage(what))
+   else if (length(from) && length(what))
+      return(.rs.getHelp(what, from))
+   else
+      return()
+})
+
+.rs.addFunction("getHelpFunction", function(name, src, envir = parent.frame())
+{
+   # If 'src' is the name of something on the searchpath, get that object
+   # from the seach path, then attempt to get help based on that object
+   pos <- match(src, search(), nomatch = -1L)
+   if (pos >= 0)
+   {
+      object <- tryCatch(get(name, pos = pos), error = function(e) NULL)
+      if (!is.null(object))
+         return(.rs.getHelpFromObject(object, envir))
+   }
+   
+   # Otherwise, check to see if there is an object 'src' in the global env
+   # from which we can pull the object
+   container <- tryCatch(eval(parse(text = src), envir = .GlobalEnv), error = function(e) NULL)
+   if (!is.null(container))
+   {
+      object <- tryCatch(eval(call("$", container, name)), error = function(e) NULL)
+      if (!is.null(object))
+         return(.rs.getHelpFromObject(object, envir))
+   }
+   
+   # Otherwise, try to get help in the vanilla way
+   .rs.getHelp(name, src, getSignature = TRUE)
+})
+
+.rs.addFunction("getHelpPackage", function(pkgName)
+{
+   # We might be getting the completion with colons appended, so strip those out.
+   pkgName <- sub(":*$", "", pkgName, perl = TRUE)
+   topic <- paste(pkgName, "-package", sep = "")
+   .rs.getHelp(topic, pkgName)
+})
+
+.rs.addFunction("getHelpArgument", function(functionName, src, envir)
+{
+   if (is.null(src))
+   {
+      object <- .rs.getAnywhere(functionName, envir)
+      if (!is.null(object))
+         return(.rs.getHelpFromObject(object, envir))
+   }
+   else
+   {
+      pos <- match(src, search(), nomatch = -1L)
+      
+      if (pos >= 0)
+      {
+         object <- tryCatch(get(functionName, pos = pos), error = function(e) NULL)
+         if (!is.null(object))
+            return(.rs.getHelpFromObject(object, envir))
+      }
+   }
+   
+   .rs.getHelp(functionName, src)
+})
+
+.rs.addFunction("makeHelpCall", function(topic,
+                                         package = NULL,
+                                         help_type = "html")
+{
+   substitute(utils::help(TOPIC, package = PACKAGE, help_type = "html"),
+              list(TOPIC = topic,
+                   PACKAGE = package))
+})
+
+.rs.addFunction("getHelp", function(topic,
+                                    package = "",
+                                    sig = NULL,
+                                    subset = TRUE,
+                                    getSignature = FALSE)
+{
+   # Completions from the search path might have the 'package:' prefix, so
+   # lets strip that out.
+   package <- sub("package:", "", package, fixed = TRUE)
+   
+   # Ensure topic is not zero-length
+   if (!length(topic))
+      topic <- ""
+   
+   # If the topic is not provided, but we're getting help on e.g.
+   # 'stats::rnorm', then split up the topic into the appropriate pieces.
+   if (!length(package) && any(grepl(":{2,3}", topic, perl = TRUE)))
+   {
+      splat <- strsplit(topic, ":{2,3}", perl = TRUE)[[1]]
+      topic <- splat[[2]]
+      package <- splat[[1]]
+   }
+   
+   # If 'package' is the name of something on the search path, then we
+   # attempt to resolve the object and get its help.
+   if (length(package))
+   {
+      pos <- match(package, search(), nomatch = -1L)
+      if (pos >= 0)
+      {
+         object <- tryCatch(get(topic, pos = pos), error = function(e) NULL)
+         if (is.null(object))
+            return(NULL)
+         return(.rs.getHelpFromObject(object, envir))
+      }
+   }
+   
+   helpfiles <- NULL
+   if (!length(package) || package == "") {
+      helpfiles <- utils::help(topic, help_type = "html")
+   } else {
+      helpfiles <- tryCatch(
+         
+         expr = {
+            call <- .rs.makeHelpCall(topic, package)
+            eval(call)
+         },
+         
+         error = function(e) {
+            return(NULL)
+         }
+      )
+   }
+   
    if (length(helpfiles) <= 0)
       return ()
-
+   
    file = helpfiles[[1]]
    path <- dirname(file)
    dirpath <- dirname(path)
@@ -107,7 +413,7 @@ options(help_type = "html")
                               ".html", sep=""),
                         NULL,
                         NULL)$payload
-
+   
    match = suppressWarnings(regexpr('<body>.*</body>', html))
    if (match < 0)
    {
@@ -116,33 +422,106 @@ options(help_type = "html")
    else
    {
       html = substring(html, match + 6, match + attr(match, 'match.length') - 1 - 7)
-
-      match = suppressWarnings(regexpr('<h3>Details</h3>', html))
-      if (match >= 0)
-         html = substring(html, 1, match - 1)
+      
+      if (subset)
+      {   
+         slotsMatch <- suppressWarnings(regexpr('<h3>Slots</h3>', html))
+         detailsMatch <- suppressWarnings(regexpr('<h3>Details</h3>', html))
+         
+         match <- if (slotsMatch > detailsMatch) slotsMatch else detailsMatch
+         if (match >= 0)
+            html = substring(html, 1, match - 1)
+      }
    }
-
-   obj = tryCatch(get(topic, pos=globalenv()),
-                  error = function(e) NULL)
    
-   if (is.function(obj))
+   # Try to resolve function signatures for help
+   if (is.null(sig) && getSignature)
    {
-      sig = .rs.getSignature(obj)
-      sig = gsub('^function ', topic, sig)
-   }
-   else
-   {
-      sig = NULL
+      object <- NULL
+      if (length(package) &&
+             package != "" &&
+             package %in% loadedNamespaces())
+      {
+         object <- tryCatch(
+            get(topic, envir = asNamespace(package)),
+            error = function(e) NULL
+         )
+      }
+      
+      if (!length(object))
+      {
+         object <- tryCatch(
+            get(topic, pos = globalenv()),
+            error = function(e) NULL
+         )
+      }
+      
+      sig <- .rs.getSignature(object)
+      sig <- gsub('^function ', topic, sig)
    }
    
    list('html' = html, 'signature' = sig, 'pkgname' = pkgname)
-});
+})
 
-.rs.addJsonRpcHandler("show_help_topic", function(topic, package)
+.rs.addJsonRpcHandler("show_help_topic", function(what, from, type)
 {
+   if (type == .rs.acCompletionTypes$FUNCTION)
+      .rs.showHelpTopicFunction(what, from)
+   else if (type == .rs.acCompletionTypes$ARGUMENT)
+      .rs.showHelpTopicArgument(from)
+   else if (type == .rs.acCompletionTypes$PACKAGE)
+      .rs.showHelpTopicPackage(what)
+   else
+      .rs.showHelpTopic(what, from)
+})
+
+.rs.addFunction("showHelpTopicFunction", function(topic, package)
+{
+   # Package may actually be a name from the search path, so strip that off.
+   package <- sub("^package:", "", package, perl = TRUE)
+   
+   if (is.null(package) && grepl(":{2,3}", topic, perl = TRUE))
+   {
+      splat <- strsplit(topic, ":{2,3}", perl = TRUE)[[1]]
+      topic <- splat[[2]]
+      package <- splat[[1]]
+   }
+   
    if (!is.null(package))
-      require(package, character.only = TRUE)
-   print(help(topic, help_type="html"))
+      requireNamespace(package, quietly = TRUE)
+   
+   call <- .rs.makeHelpCall(topic, package)
+   print(eval(call, envir = parent.frame()))
+})
+
+.rs.addFunction("showHelpTopicArgument", function(functionName)
+{
+   topic <- functionName
+   pkgName <- NULL
+   
+   if (grepl(":{2,3}", functionName, perl = TRUE))
+   {
+      splat <- strsplit(functionName, ":{2,3}", perl = TRUE)[[1]]
+      topic <- splat[[2]]
+      pkgName <- splat[[1]]
+   }
+   
+   call <- .rs.makeHelpCall(topic, pkgName)
+   print(eval(call, envir = parent.frame()))
+})
+
+.rs.addFunction("showHelpTopicPackage", function(pkgName)
+{
+   pkgName <- sub(":*$", "", pkgName)
+   topic <- paste(pkgName, "-package", sep = "")
+   call <- .rs.makeHelpCall(topic, pkgName)
+   print(eval(call, envir = parent.frame()))
+})
+
+.rs.addFunction("showHelpTopic", function(topic, package)
+{
+   call <- .rs.makeHelpCall(topic, package)
+   print(eval(call, envir = parent.frame()))
 })
 
 .rs.addJsonRpcHandler("search", function(query)

@@ -15,355 +15,403 @@
 
 package org.rstudio.studio.client.workbench.views.source.editors.text.cpp;
 
-import org.rstudio.core.client.Debug;
+
+import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Invalidation;
-import org.rstudio.core.client.Rectangle;
-import org.rstudio.core.client.Invalidation.Token;
-import org.rstudio.core.client.events.SelectionCommitEvent;
-import org.rstudio.core.client.events.SelectionCommitHandler;
-import org.rstudio.core.client.js.JsUtil;
+import org.rstudio.core.client.command.KeyboardShortcut;
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
-import org.rstudio.studio.client.common.filetypes.TextFileType;
-import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionListPopupPanel;
+import org.rstudio.studio.client.common.filetypes.DocumentMode;
+import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefsAccessor;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionManager;
-import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorDisplay;
-import org.rstudio.studio.client.workbench.views.source.editors.text.NavigableSourceEditor;
+import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionUtils;
+import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorSelection;
+import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.PasteEvent;
+import org.rstudio.studio.client.workbench.views.source.model.CppServerOperations;
+import org.rstudio.studio.client.workbench.views.source.model.CppSourceLocation;
 
-
-import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.event.logical.shared.CloseEvent;
-import com.google.gwt.event.logical.shared.CloseHandler;
-import com.google.gwt.user.client.ui.PopupPanel;
-import com.google.gwt.user.client.ui.PopupPanel.PositionCallback;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.inject.Inject;
 
 public class CppCompletionManager implements CompletionManager
 {
-   public CppCompletionManager(InputEditorDisplay input,
-                               NavigableSourceEditor navigableSourceEditor,
+   public void onPaste(PasteEvent event)
+   {
+      CppCompletionPopupMenu popup = getCompletionPopup();
+      if (popup != null)
+         popup.hide();
+   }
+   
+   public CppCompletionManager(DocDisplay docDisplay,
                                InitCompletionFilter initFilter,
+                               CppCompletionContext completionContext,
                                CompletionManager rCompletionManager)
    {
-      input_ = input;
-      navigableSourceEditor_ = navigableSourceEditor;
+      RStudioGinjector.INSTANCE.injectMembers(this);
+      docDisplay_ = docDisplay;
       initFilter_ = initFilter;
-      rCompletionManager_ = rCompletionManager;
-   }
-
-   // return false to indicate key not handled
-   @Override
-   public boolean previewKeyDown(NativeEvent event)
-   {
-      if (isCursorInRMode())
-         return rCompletionManager_.previewKeyDown(event);
-      
-      /*
-      if (popup_ == null)
-      { 
-         if (false) // check for user completion key combo 
-                    // (we don't have any right now)
+      completionContext_ = completionContext;
+      rCompletionManager_ = rCompletionManager; 
+      docDisplay_.addClickHandler(new ClickHandler()
+      {
+         public void onClick(ClickEvent event)
          {
-            if (initFilter_ == null || initFilter_.shouldComplete(event))
-            {
-               beginSuggest();
-               return true;
-            }
+            terminateCompletionRequest();
          }
+      });
+   }
+ 
+   @Inject
+   void initialize(CppServerOperations server, 
+                   FileTypeRegistry fileTypeRegistry,
+                   UIPrefs uiPrefs)
+   {
+      server_ = server;
+      fileTypeRegistry_ = fileTypeRegistry;
+      uiPrefs_ = uiPrefs;
+   }
+   
+   // close the completion popup (if any)
+   @Override
+   public void close()
+   {
+      // delegate to R mode if necessary
+      if (DocumentMode.isCursorInRMode(docDisplay_) ||
+            DocumentMode.isCursorInMarkdownMode(docDisplay_))
+      {
+         rCompletionManager_.close();
       }
       else
       {
-         switch (event.getKeyCode())
-         {
-         case KeyCodes.KEY_SHIFT:
-         case KeyCodes.KEY_CTRL:
-         case KeyCodes.KEY_ALT:
-            return false ; // bare modifiers should do nothing
-         }
-         
-         if (event.getKeyCode() == KeyCodes.KEY_ESCAPE)
-         {
-            close();
-            return true;
-         }
-         else if (event.getKeyCode() == KeyCodes.KEY_ENTER)
-         {
-            input_.setText(popup_.getSelectedValue());
-            close();
-            return true;
-         }
-         else if (event.getKeyCode() == KeyCodes.KEY_UP)
-         {
-            popup_.selectPrev();
-            return true;
-         }
-         else if (event.getKeyCode() == KeyCodes.KEY_DOWN)
-         {
-            popup_.selectNext();
-            return true;
-         }
-         else if (event.getKeyCode() == KeyCodes.KEY_UP)
-            return popup_.selectPrev() ;
-         else if (event.getKeyCode() == KeyCodes.KEY_DOWN)
-            return popup_.selectNext() ;
-         else if (event.getKeyCode() == KeyCodes.KEY_PAGEUP)
-            return popup_.selectPrevPage() ;
-         else if (event.getKeyCode() == KeyCodes.KEY_PAGEDOWN)
-            return popup_.selectNextPage() ;
-         else if (event.getKeyCode() == KeyCodes.KEY_HOME)
-            return popup_.selectFirst() ;
-         else if (event.getKeyCode() == KeyCodes.KEY_END)
-            return popup_.selectLast() ;
-         else if (event.getKeyCode() == KeyCodes.KEY_LEFT)
-         {
-            close();
-            return true ;
-         }
-
-         close();
-         return false;
+         terminateCompletionRequest();
       }
-      */
-      
-      return false;
    }
-
-   // return false to indicate key not handled
+   
+   
+   // perform completion at the current cursor location
    @Override
-   public boolean previewKeyPress(char c)
+   public void codeCompletion()
    {
-      if (isCursorInRMode())
-         return rCompletionManager_.previewKeyPress(c);
-      
-      /*
-      if (popup_ != null)
+      // delegate to R mode if necessary
+      if (DocumentMode.isCursorInRMode(docDisplay_) ||
+            DocumentMode.isCursorInMarkdownMode(docDisplay_))
       {
-         // right now additional suggestions will be for attributes names
-         // and parameters (identifiers) so we use these characters to 
-         // indicate to do another completion query (note that _ and : are
-         // valid R identifier chars but not package identifier chars)
-         if ((c >= 'a' && c <= 'z') || 
-             (c >= 'A' && c <= 'Z') || 
-             (c >= '0' && c <= '9') || 
-             c == '.' || c == '_' || c == ':')
-         {
-            Scheduler.get().scheduleDeferred(new ScheduledCommand()
-            {
-               @Override
-               public void execute()
-               {
-                  beginSuggest() ;
-               }
-            });
-         }
+         rCompletionManager_.codeCompletion();
       }
-      else
+      // check whether it's okay to do a completion
+      else if (shouldComplete(null))
       {
-         if (isAttributeCompletionValidHere(c))
-         {
-            Scheduler.get().scheduleDeferred(new ScheduledCommand()
-            {
-               @Override
-               public void execute()
-               {
-                  beginSuggest() ;
-               }
-            });
-         }
-         else if (!input_.isSelectionCollapsed())
-         {
-            switch(c)
-            {
-            case '"':
-            case '\'':
-               encloseSelection(c, c);
-               return true;
-            case '(':
-               encloseSelection('(', ')');
-               return true;
-            case '{':
-               encloseSelection('{', '}');
-               return true;
-            case '[':
-               encloseSelection('[', ']');
-               return true;     
-            }
-         }
+         suggestCompletions(true); 
       }
-      */
-      
-      return false ;
-   }
-   
-   
-   @SuppressWarnings("unused")
-   private void encloseSelection(char beginChar, char endChar) 
-   {
-      StringBuilder builder = new StringBuilder();
-      builder.append(beginChar);
-      builder.append(input_.getSelectionValue());
-      builder.append(endChar);
-      input_.replaceSelection(builder.toString(), true);
    }
 
-   @SuppressWarnings("unused")
-   private boolean isAttributeCompletionValidHere(char c)
-   {     
-      // TODO: we can't just append the character since it could
-      // be anywhere withinh the line -- need to insert it into 
-      // the right spot
-      String line = input_.getText() + c;
-      if (line.matches("\\s*//\\s+\\[\\[.*"))
-      {
-         // get text up to selection
-         String linePart = input_.getText().substring(
-                           0, input_.getSelection().getStart().getPosition());
-         return true;
-      }
-      return false;
-   }
-   
-   
    // go to help at the current cursor location
    @Override
    public void goToHelp()
    {
-      if (isCursorInRMode())
+      // delegate to R mode if necessary
+      if (DocumentMode.isCursorInRMode(docDisplay_))
+      {
          rCompletionManager_.goToHelp();
+      }
+      else
+      {
+         // no implementation here yet since we don't have access
+         // to C/C++ help (we could implement this via using libclang
+         // to parse doxygen though)   
+      }
    }
 
    // find the definition of the function at the current cursor location
    @Override
    public void goToFunctionDefinition()
    {  
-      if (isCursorInRMode())
+      // delegate to R mode if necessary
+      if (DocumentMode.isCursorInRMode(docDisplay_))
+      {
          rCompletionManager_.goToFunctionDefinition();
-   }
-
-   // perform completion at the current cursor location
-   @Override
-   public void codeCompletion()
-   {
-      if (isCursorInRMode())
-      {
-         rCompletionManager_.codeCompletion();
       }
       else
       {
-         if (initFilter_ == null || initFilter_.shouldComplete(null))
+         if (completionContext_.isCompletionEnabled())
          {
-         
-         }
-      }
-   }
-
-   // close the completion popup (if any)
-   @Override
-   public void close()
-   {
-      if (isCursorInRMode())
-      {
-         rCompletionManager_.close();
-      }
-      else
-      {
-         if (popup_ != null)
-         {
-            popup_.hide();
-            popup_ = null;
-         }
-      }
-   }
-   
-   @SuppressWarnings("unused")
-   private void beginSuggest()
-   {
-      completionRequestInvalidation_.invalidate();
-      final Token token = completionRequestInvalidation_.getInvalidationToken();
-
-      String value = input_.getText();
-      Debug.logToConsole(value);
-      
-      getCompletions(value,
-            new SimpleRequestCallback<JsArrayString>()
-            {
+            completionContext_.withUpdatedDoc(new CommandWithArg<String>() {
                @Override
-               public void onResponseReceived(JsArrayString resp)
+               public void execute(final String docPath)
                {
-                  if (token.isInvalid())
-                     return;
-
-                  if (resp.length() == 0)
-                  {
-                     popup_ = new CompletionListPopupPanel(new String[0]);
-                     popup_.setText("(No matching commands)");
-                  }
-                  else
-                  {
-                     String[] entries = JsUtil.toStringArray(resp);
-                     popup_ = new CompletionListPopupPanel(entries);
-                  }
-
-                  popup_.setMaxWidth(input_.getBounds().getWidth());
-                  popup_.setPopupPositionAndShow(new PositionCallback()
-                  {
-                     public void setPosition(int offsetWidth, int offsetHeight)
-                     {
-                        Rectangle bounds = input_.getBounds();
-
-                        int top = bounds.getTop() - offsetHeight;
-                        if (top < 20)
-                           top = bounds.getBottom();
-
-                        popup_.selectLast();
-                        popup_.setPopupPosition(bounds.getLeft() - 6, top);
-                     }
-                  });
-
-                  popup_.addSelectionCommitHandler(new SelectionCommitHandler<String>()
-                  {
-                     public void onSelectionCommit(SelectionCommitEvent<String> e)
-                     {
-                        input_.setText(e.getSelectedItem());
-                        close();
-                     }
-                  });
+                  Position pos = docDisplay_.getCursorPosition();
                   
-                  popup_.addCloseHandler(new CloseHandler<PopupPanel>() {
-
-                     @Override
-                     public void onClose(CloseEvent<PopupPanel> event)
-                     {
-                        popup_ = null;          
-                     }
-                     
-                  });
+                  server_.goToCppDefinition(
+                      docPath, 
+                      pos.getRow() + 1, 
+                      pos.getColumn() + 1, 
+                      new SimpleRequestCallback<CppSourceLocation>() {
+                         @Override
+                         public void onResponseReceived(CppSourceLocation loc)
+                         {
+                            if (loc != null)
+                            {
+                               fileTypeRegistry_.editFile(loc.getFile(), 
+                                                          loc.getPosition());  
+                            }
+                         }
+                      });
+                  
                }
             });
+         }
+      }
    }
    
-   
-   private void getCompletions(
-         String line, 
-         ServerRequestCallback<JsArrayString> requestCallback) 
+   // return false to indicate key not handled
+   @Override
+   public boolean previewKeyDown(NativeEvent event)
    {
+      // delegate to R mode if appropriate
+      if (DocumentMode.isCursorInRMode(docDisplay_) ||
+            DocumentMode.isCursorInMarkdownMode(docDisplay_))
+         return rCompletionManager_.previewKeyDown(event);
+      
+      // if there is no completion request active then 
+      // check for a key-combo that triggers completion or 
+      // navigation / help
+      int modifier = KeyboardShortcut.getModifierValue(event);
+      if ((request_ == null) || request_.isTerminated())
+      {  
+         // check for user completion key combo 
+         if (CompletionUtils.isCompletionRequest(event, modifier) &&
+             shouldComplete(event)) 
+         {
+            return suggestCompletions(true);
+         }
+         else if (event.getKeyCode() == 112 // F1
+                  && modifier == KeyboardShortcut.NONE)
+         {
+            goToHelp();
+            return true;
+         }
+         else if (event.getKeyCode() == 113 // F2
+                  && modifier == KeyboardShortcut.NONE)
+         {
+            goToFunctionDefinition();
+            return true;
+         }
+         else
+         {
+            return false;
+         }
+      }
+      // otherwise handle keys within the completion popup
+      else
+      {   
+         // get the key code
+         int keyCode = event.getKeyCode();
+         
+         // chrome on ubuntu now sends this before every keydown
+         // so we need to explicitly ignore it. see:
+         // https://github.com/ivaynberg/select2/issues/2482
+         if (keyCode == KeyCodes.KEY_WIN_IME)
+         {
+            return false ;
+         }
+         
+         // modifier keys always no-op
+         if (keyCode == KeyCodes.KEY_SHIFT ||
+             keyCode == KeyCodes.KEY_CTRL ||
+             keyCode == KeyCodes.KEY_ALT ||
+             keyCode == KeyCodes.KEY_MAC_FF_META ||
+             keyCode == KeyCodes.KEY_WIN_KEY_LEFT_META)
+         {          
+            return false ; 
+         }
+         
+         // if there is no popup then bail
+         CppCompletionPopupMenu popup = getCompletionPopup();
+         if ((popup == null) || !popup.isVisible())
+            return false;
+         
+         // let the document know that a popup is showing
+         docDisplay_.setPopupVisible(true);
+         
+         // backspace triggers completion if the popup is visible
+         if (keyCode == KeyCodes.KEY_BACKSPACE)
+         {
+            delayedSuggestCompletions(false);
+            return false;
+         }
+         
+         // tab accepts the current selection (popup handles Enter)
+         else if (event.getKeyCode() == KeyCodes.KEY_TAB)
+         {
+            popup.acceptSelected();
+            return true;
+         }
+         
+         // non c++ identifier keys (that aren't navigational) close the popup
+         else if (!CppCompletionUtils.isCppIdentifierKey(event))
+         {
+            terminateCompletionRequest();
+            return false;
+         }
+         
+         // otherwise leave it alone
+         else
+         {   
+            return false;
+         }
+      }
    }
 
-   private boolean isCursorInRMode()
+   // return false to indicate key not handled
+   @Override
+   public boolean previewKeyPress(char c)
    {
-      String mode = input_.getLanguageMode(input_.getCursorPosition());
-      if (mode == null)
-         return false;
-      if (mode.equals(TextFileType.R_LANG_MODE))
+      // delegate to R mode if necessary
+      if (DocumentMode.isCursorInRMode(docDisplay_) || 
+            DocumentMode.isCursorInMarkdownMode(docDisplay_))
+      {
+         return rCompletionManager_.previewKeyPress(c);
+      }
+      else if (CompletionUtils.handleEncloseSelection(docDisplay_, c))
+      {
          return true;
-      return false;
+      }
+      else
+      {
+         // don't do implicit completions if the user has set completion to manual
+         // (but always do them if the completion popup is visible)
+         if (!uiPrefs_.codeComplete().getValue().equals(UIPrefsAccessor.COMPLETION_MANUAL) ||
+             isCompletionPopupVisible())
+         {
+            delayedSuggestCompletions(false);
+         }
+         
+         return false;
+      }
    }
-  
    
-   private final InputEditorDisplay input_ ;
-   @SuppressWarnings("unused")
-   private final NavigableSourceEditor navigableSourceEditor_;
-   private CompletionListPopupPanel popup_;
+   private void delayedSuggestCompletions(final boolean explicit)
+   {
+      Scheduler.get().scheduleDeferred(new ScheduledCommand() {
+         @Override
+         public void execute()
+         {
+            suggestCompletions(explicit);  
+         }
+      });
+   }
+   
+   private boolean suggestCompletions(final boolean explicit)
+   {
+      // check for completions disabled
+      if (!completionContext_.isCompletionEnabled())
+         return false;
+      
+      // check for no selection
+      InputEditorSelection selection = docDisplay_.getSelection() ;
+      if (selection == null)
+         return false;
+      
+      // check for contiguous selection
+      if (!docDisplay_.isSelectionCollapsed())
+         return false;    
+  
+      // calculate explicit value for getting completion position (if a 
+      // previous request was explicit then count this as explicit)
+      boolean positionExplicit = explicit || 
+                                 ((request_ != null) && request_.isExplicit());
+      
+      // see if we even have a completion position
+      boolean alwaysComplete = uiPrefs_.codeComplete().getValue().equals(
+                                            UIPrefsAccessor.COMPLETION_ALWAYS);
+      final CompletionPosition completionPosition = 
+            CppCompletionUtils.getCompletionPosition(docDisplay_,
+                                                     positionExplicit,
+                                                     alwaysComplete);
+      if (completionPosition == null)
+      {
+         terminateCompletionRequest();
+         return false;
+      }
+      
+      if ((request_ != null) &&
+          !request_.isTerminated() &&
+          request_.getCompletionPosition().isSupersetOf(completionPosition))
+      {
+         request_.updateUI(false);
+      }
+      else
+      {
+         terminateCompletionRequest();
+         
+         final Invalidation.Token invalidationToken = 
+               completionRequestInvalidation_.getInvalidationToken();
+         
+         completionContext_.withUpdatedDoc(new CommandWithArg<String>() {
+
+            @Override
+            public void execute(String docPath)
+            {
+               if (invalidationToken.isInvalid())
+                  return;
+               
+               request_ = new CppCompletionRequest(
+                  docPath,
+                  completionPosition,
+                  docDisplay_,
+                  invalidationToken,
+                  explicit);
+            }
+         });
+         
+      }
+      
+      return true;
+   }
+     
+   private CppCompletionPopupMenu getCompletionPopup()
+   {
+      CppCompletionPopupMenu popup = request_ != null ?
+            request_.getCompletionPopup() : null;
+      return popup;
+   }
+   
+   private boolean isCompletionPopupVisible()
+   {
+      CppCompletionPopupMenu popup = getCompletionPopup();
+      return (popup != null) && popup.isVisible();
+   }
+   
+   private void terminateCompletionRequest()
+   {
+      completionRequestInvalidation_.invalidate();
+      if (request_ != null)
+      {
+         request_.terminate();
+         request_ = null;
+      }
+   }
+
+   private boolean shouldComplete(NativeEvent event)
+   {
+      return initFilter_ == null || initFilter_.shouldComplete(event);
+   }
+   
+   private CppServerOperations server_;
+   private UIPrefs uiPrefs_;
+   private FileTypeRegistry fileTypeRegistry_;
+   private final DocDisplay docDisplay_;
+   private final CppCompletionContext completionContext_;
+   private CppCompletionRequest request_;
    private final InitCompletionFilter initFilter_ ;
    private final CompletionManager rCompletionManager_;
    private final Invalidation completionRequestInvalidation_ = new Invalidation();

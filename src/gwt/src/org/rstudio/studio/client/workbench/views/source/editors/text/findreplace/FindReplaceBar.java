@@ -73,6 +73,7 @@ public class FindReplaceBar extends Composite implements Display, RequiresResize
       Commands cmds = RStudioGinjector.INSTANCE.getCommands();
       findReplacePanel.add(btnFindNext_ = new SmallButton(cmds.findNext()));
       findReplacePanel.add(btnFindPrev_ = new SmallButton(cmds.findPrevious()));
+      findReplacePanel.add(btnSelectAll_ = new SmallButton(cmds.findSelectAll()));
       
       findReplacePanel.add(txtReplace_ = new FindTextBox("Replace"));
       txtReplace_.addStyleName(RES.styles().replaceTextBox());
@@ -133,6 +134,7 @@ public class FindReplaceBar extends Composite implements Display, RequiresResize
       // keyboard shortcut for both find and replace
       btnFindNext_.setTabIndex(-1);
       btnFindPrev_.setTabIndex(-1);
+      btnSelectAll_.setTabIndex(-1);
       btnReplace_.setTabIndex(-1);
       btnReplaceAll_.setTabIndex(-1);
      
@@ -140,6 +142,7 @@ public class FindReplaceBar extends Composite implements Display, RequiresResize
       shelf.addRightWidget(btnClose_ = new Button());
       btnClose_.setStyleName(RES.styles().closeButton());
       btnClose_.addStyleName(ThemeStyles.INSTANCE.closeTabButton());
+      btnClose_.addStyleName(ThemeStyles.INSTANCE.handCursor());
       btnClose_.getElement().appendChild(
             new Image(ThemeResources.INSTANCE.closeTab()).getElement());
 
@@ -151,10 +154,12 @@ public class FindReplaceBar extends Composite implements Display, RequiresResize
             {
                event.preventDefault();
                event.stopPropagation();
-               if (defaultForward_)
-                  btnFindNext_.click();
-               else
+               if (event.isAltKeyDown())
+                  btnSelectAll_.click();
+               else if (event.isShiftKeyDown() && defaultForward_)
                   btnFindPrev_.click();
+               else
+                  btnFindNext_.click();
                focusFindField(false);
             }
          }
@@ -325,6 +330,7 @@ public class FindReplaceBar extends Composite implements Display, RequiresResize
    private FindTextBox txtReplace_;
    private SmallButton btnFindNext_;
    private SmallButton btnFindPrev_;
+   private SmallButton btnSelectAll_;
    private SmallButton btnReplace_;
    private SmallButton btnReplaceAll_;
    private CheckBox chkWholeWord_;

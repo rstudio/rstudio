@@ -60,6 +60,11 @@
    padding: 0;
 }
 
+.helpPopup {
+   background: white;
+   z-index: 1003;
+}
+
 .completionGrid td {
    font-family: fixedWidthFont;
    font-size: 12px;
@@ -79,7 +84,6 @@
 }
 
 .functionInfo, .paramInfoName {
-   background-color: #fff;
    padding: 2px 2px 2px 3px;
 
 }
@@ -101,6 +105,7 @@
 }
 
 .functionInfoSummary {
+   font-size: 12px;
    color: black;
 }
 
@@ -109,9 +114,18 @@
    color: black;
 }
 
+.packageName {
+	font-weight: bold;
+	font-size: 14px;
+}
+
+.packageDescription {
+	color: black;
+}
+
 .promptFullHelp {
-   height: 16px;
-   background: #f0f0f4;
+   height: 11px;
+   background: #eaeaca;
    font-size: 9px;
    padding: 3px;
 }
@@ -122,4 +136,10 @@
 	-webkit-box-sizing: border-box;
 	width: 100%;
 	padding: 6px;
+}
+
+.truncatedLabel {
+	padding: 4px;
+	font-style: italic;
+	color: #888888;
 }

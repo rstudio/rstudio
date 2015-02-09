@@ -21,11 +21,14 @@
 
 #include <boost/utility.hpp>
 
+namespace rstudio {
 namespace core {
    class Error;
    class FilePath;
 }
+}
  
+namespace rstudio {
 namespace session {
 namespace modules { 
 namespace history {
@@ -66,5 +69,6 @@ private:
 } // namespace history
 } // namespace modules
 } // namesapce session
+} // namespace rstudio
 
 #endif // SESSION_HISTORY_ARCHIVE_HPP

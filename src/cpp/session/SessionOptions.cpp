@@ -35,13 +35,17 @@
 
 #include <session/SessionConstants.hpp>
 
-using namespace core ;
+#include "session-config.h"
 
+using namespace rstudio::core ;
+
+namespace rstudio {
 namespace session {  
 
 namespace {
 const char* const kDefaultPandocPath = "bin/pandoc";
 const char* const kDefaultPostbackPath = "bin/postback/rpostback";
+const char* const kDefaultRsclangPath = "bin/rsclang";
 } // anonymous namespace
 
 Options& options()
@@ -78,12 +82,19 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
    if (resourcePath.complete("x64").exists())
       resourcePath = resourcePath.parent();
 #endif
+   
+   // run tests flag
+   options_description runTests("tests");
+   runTests.add_options()
+         (kRunTestsSessionOption,
+          value<bool>(&runTests_)->default_value(false)->implicit_value(true),
+          "run unit tests");
 
    // verify installation flag
    options_description verify("verify");
    verify.add_options()
      (kVerifyInstallationSessionOption,
-     value<bool>(&verifyInstallation_)->default_value(false),
+     value<bool>(&verifyInstallation_)->default_value(false)->implicit_value(true),
      "verify the current installation");
 
    // program - name and execution
@@ -186,7 +197,13 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
          "allow removal of the user public folder")
       ("allow-rpubs-publish",
          value<bool>(&allowRpubsPublish_)->default_value(true),
-        "allow publishing to rpubs");
+        "allow publishing content to external services")
+      ("allow-external-publish",
+         value<bool>(&allowExternalPublish_)->default_value(true),
+        "allow publishing content to external services")
+      ("allow-publish",
+         value<bool>(&allowPublish_)->default_value(true),
+        "allow publishing content");
 
    // r options
    bool rShellEscape; // no longer works but don't want to break any
@@ -203,9 +220,6 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
       ("r-session-library",
          value<std::string>(&sessionLibraryPath_)->default_value("R/library"),
          "R library path")
-      ("r-session-packages",
-         value<std::string>(&sessionPackagesPath_)->default_value("R/packages"),
-         "R packages path")
       ("r-session-package-archives",
           value<std::string>(&sessionPackageArchivesPath_)->default_value("R/packages"),
          "R package archives path")
@@ -263,7 +277,7 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
        value<std::string>(&gnugrepPath_)->default_value("bin/gnugrep"),
        "Path to gnugrep utilities (windows-only)")
       ("external-msysssh-path",
-       value<std::string>(&msysSshPath_)->default_value("bin/msys_ssh"),
+       value<std::string>(&msysSshPath_)->default_value("bin/msys-ssh-1000-18"),
        "Path to msys_ssh utilities (windows-only)")
       ("external-sumatra-path",
        value<std::string>(&sumatraPath_)->default_value("bin/sumatra"),
@@ -276,7 +290,14 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
         "Path to mathjax library")
       ("external-pandoc-path",
         value<std::string>(&pandocPath_)->default_value(kDefaultPandocPath),
-        "Path to pandoc binaries");
+        "Path to pandoc binaries")
+      ("external-libclang-path",
+        value<std::string>(&libclangPath_)->default_value(kDefaultRsclangPath),
+        "Path to libclang shared library")
+      ("external-libclang-headers-path",
+        value<std::string>(&libclangHeadersPath_)->default_value(
+                                       "resources/libclang/builtin-headers"),
+        "Path to libclang builtin headers");
 
    // user options (default user identity to current username)
    std::string currentUsername = core::system::username();
@@ -301,6 +322,7 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
                                                          configFile);
 
    optionsDesc.commandLine.add(verify);
+   optionsDesc.commandLine.add(runTests);
    optionsDesc.commandLine.add(program);
    optionsDesc.commandLine.add(log);
    optionsDesc.commandLine.add(agreement);
@@ -404,7 +426,7 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
          ERROR_LOCATION);
       saveActionDefault_ = r::session::kSaveActionAsk;
    }
-
+   
    // convert relative paths by completing from the app resource path
    resolvePath(resourcePath, &rResourcesPath_);
    resolvePath(resourcePath, &agreementFilePath_);
@@ -413,7 +435,6 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
    resolvePath(resourcePath, &coreRSourcePath_);
    resolvePath(resourcePath, &modulesRSourcePath_);
    resolvePath(resourcePath, &sessionLibraryPath_);
-   resolvePath(resourcePath, &sessionPackagesPath_);
    resolvePath(resourcePath, &sessionPackageArchivesPath_);
    resolvePostbackPath(resourcePath, &rpostbackPath_);
 #ifdef _WIN32
@@ -425,7 +446,19 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
 #endif
    resolvePath(resourcePath, &hunspellDictionariesPath_);
    resolvePath(resourcePath, &mathjaxPath_);
+   resolvePath(resourcePath, &libclangHeadersPath_);
    resolvePandocPath(resourcePath, &pandocPath_);
+
+   // rsclang
+   if (libclangPath_ != kDefaultRsclangPath)
+   {
+#ifdef _WIN32
+      libclangPath_ += "/3.4";
+#else
+      libclangPath_ += "/3.5";
+#endif
+   }
+   resolveRsclangPath(resourcePath, &libclangPath_);
 
    // shared secret with parent
    secret_ = core::system::getenv("RS_SHARED_SECRET");
@@ -510,6 +543,20 @@ void Options::resolvePandocPath(const FilePath& resourcePath,
    }
 }
 
+void Options::resolveRsclangPath(const FilePath& resourcePath,
+                                 std::string* pPath)
+{
+   if (*pPath == kDefaultRsclangPath)
+   {
+      FilePath path = resourcePath.parent().complete("MacOS/rsclang");
+      *pPath = path.absolutePath();
+   }
+   else
+   {
+      resolvePath(resourcePath, pPath);
+   }
+}
+
 #else
 
 void Options::resolvePostbackPath(const FilePath& resourcePath,
@@ -524,8 +571,12 @@ void Options::resolvePandocPath(const FilePath& resourcePath,
    resolvePath(resourcePath, pPath);
 }
 
-
-
+void Options::resolveRsclangPath(const FilePath& resourcePath,
+                                 std::string* pPath)
+{
+   resolvePath(resourcePath, pPath);
+}
 #endif
    
 } // namespace session
+} // namespace rstudio

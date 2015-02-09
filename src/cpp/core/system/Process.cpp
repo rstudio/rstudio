@@ -29,6 +29,7 @@
 
 #include "ChildProcess.hpp"
 
+namespace rstudio {
 namespace core {
 namespace system {
 
@@ -278,12 +279,22 @@ bool ProcessSupervisor::poll()
    pImpl_->isPolling = true;
    scope::SetOnExit<bool> setOnExit(&pImpl_->isPolling, false);
 
-   // call poll on all of our children
-   std::for_each(pImpl_->children.begin(),
-                 pImpl_->children.end(),
+   // call poll on all of our children via a copy of the std::vector that
+   // holds all of the children. we do this because 'poll' can end up
+   // executing R code (e.g. via onContinue) which can in term end up
+   // executing background tasks that result in a call to processSupervisor
+   // runProgram or runCommand. This would then result in a push_back on
+   // the children vector and if this requried a realloc would invalidate
+   // all of the iterators currently pointing into the container
+   std::vector<boost::shared_ptr<AsyncChildProcess> > children = pImpl_->children;
+   std::for_each(children.begin(),
+                 children.end(),
                  boost::bind(&AsyncChildProcess::poll, _1));
 
-   // remove any children who have exited from our list
+   // remove any children who have exited from our list. note that it's safe
+   // in this case to use pImpl_->children directly because the call to
+   // AsyncChildProcess::exited just checks a member variable rather than
+   // executing code that could cause re-entry
    pImpl_->children.erase(std::remove_if(
                              pImpl_->children.begin(),
                              pImpl_->children.end(),
@@ -332,5 +343,6 @@ bool ProcessSupervisor::wait(
 
 } // namespace system
 } // namespace core
+} // namespace rstudio
 
 

@@ -25,11 +25,14 @@
 #include <core/system/Types.hpp>
 #include <core/system/Process.hpp>
 
+namespace rstudio {
 namespace core {
    class Error;
    class FilePath;
 }
+}
  
+namespace rstudio {
 namespace session {
 namespace modules { 
 namespace tex {
@@ -85,5 +88,6 @@ bool latexProgramForFile(const core::tex::TexMagicComments& magicComments,
 } // namespace tex
 } // namespace modules
 } // namesapce session
+} // namespace rstudio
 
 #endif // SESSION_MODULES_TEX_PDFLATEX_HPP

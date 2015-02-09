@@ -24,6 +24,18 @@ public class EditSession extends JavaScriptObject
    public native final String getValue() /*-{
       return this.toString();
    }-*/;
+   
+   public native final String getState(int row) /*-{
+      return this.getState(row);
+   }-*/;
+   
+   public native final String getTabString() /*-{
+      return this.getTabString();
+   }-*/;
+   
+   public native final int getTabSize() /*-{
+      return this.getTabSize();
+   }-*/;
 
    public native final void setValue(String code) /*-{
       this.setValue(code);
@@ -81,7 +93,7 @@ public class EditSession extends JavaScriptObject
       if (existingMode && existingMode.constructor == Mode)
          return;
 
-      this.setMode(new Mode(suppressHighlighting, this.getDocument(), this));
+      this.setMode(new Mode(suppressHighlighting, this));
    }-*/;
 
    public native final Mode getMode() /*-{

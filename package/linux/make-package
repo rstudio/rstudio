@@ -37,12 +37,17 @@ then
    cd $PACKAGE_DIR
 fi
 
-
 if [ "$1" == "Desktop" ]
 then
   INSTALL_DIR=rstudio
 else
   INSTALL_DIR=rstudio-server
+fi
+
+# build for SLES if requested
+if [ "$4" == "SLES" ]
+then
+  RSTUDIO_PACKAGE_BUILD_SLES=1
 fi
 
 mkdir -p $BUILD_DIR
@@ -52,6 +57,7 @@ rm -rf $BUILD_DIR/_CPack_Packages
 cmake -DRSTUDIO_TARGET=$1 \
       -DCMAKE_BUILD_TYPE=$CMAKE_BUILD_TYPE \
       -DRSTUDIO_PACKAGE_BUILD=1 \
+      -DRSTUDIO_PACKAGE_BUILD_SLES=$RSTUDIO_PACKAGE_BUILD_SLES \
       -DCMAKE_INSTALL_PREFIX=/usr/lib/$INSTALL_DIR \
       ../../..
 
@@ -62,6 +68,7 @@ then
   fakeroot cpack -G $2
 else
   cpack -G $2
+  ../fix-debian-permissions `ls *.deb`
 fi
 
 cd ..

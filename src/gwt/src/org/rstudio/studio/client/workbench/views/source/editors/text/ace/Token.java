@@ -19,6 +19,24 @@ import com.google.gwt.core.client.JavaScriptObject;
 public class Token extends JavaScriptObject
 {
    protected Token() {}
+   
+   public static native final Token create() /*-{
+      return {
+         "value": "",
+         "type": "",
+         "column": 0
+      };
+   }-*/;
+   
+   public static native final Token create(String value,
+                                           String type,
+                                           int column) /*-{
+      return {
+         "value": value,
+         "type": type,
+         "column": column
+      };
+   }-*/;
 
    public native final String getValue() /*-{
       return this.value;
@@ -26,5 +44,16 @@ public class Token extends JavaScriptObject
 
    public native final String getType() /*-{
       return this.type;
+   }-*/;
+   
+   public native final int getColumn() /*-{
+      return this.column;
+   }-*/;
+   
+   // NOTE: Tokens attached to a document should be considered immutable;
+   // use setters only when applying to a tokenized line separate from an
+   // active editor!
+   public native final void setValue(String value) /*-{
+      this.value = value;
    }-*/;
 }

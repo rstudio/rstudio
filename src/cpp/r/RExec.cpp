@@ -33,8 +33,9 @@ LibExtern int R_interrupts_pending;
 LibExtern int UserBreak;
 #endif
 
-using namespace core ;
+using namespace rstudio::core ;
 
+namespace rstudio {
 namespace r {
    
 namespace exec {
@@ -241,7 +242,7 @@ Error evaluateString(const std::string& str,
    r::sourceManager().reloadIfNecessary();
    
    // surrond the string with try in silent mode so we can capture error text
-   std::string rCode = "try(" + str + ", TRUE)";
+   std::string rCode = "base::try(" + str + ", TRUE)";
 
    // parse expression
    SEXP ps;
@@ -548,6 +549,7 @@ DisableDebugScope::~DisableDebugScope()
 
 } // namespace exec   
 } // namespace r
+} // namespace rstudio
 
 
 

@@ -44,10 +44,11 @@
             return (paste(.rs.getSingleClass(val), " (empty)"))
          if (length(val) == 1)
          {
-            if (nchar(val) < 1024)
-                return (deparse(val))
+            quotedVal <- deparse(val)
+            if (nchar(quotedVal) < 1024)
+                return (quotedVal)
             else
-                return (paste(substr(val, 1, 1024), " ..."))
+                return (paste(substr(quotedVal, 1, 1024), " ..."))
          }
          else if (length(val) > 1)
             return (.rs.valueFromStr(val))
@@ -299,7 +300,7 @@
          return(paste(dim(obj)[1],
                       "obs. of",
                       dim(obj)[2],
-                      "variables",
+                      ifelse(dim(obj)[2] == 1, "variable", "variables"),
                       sep=" "))
       }
       else if (is.environment(obj))
@@ -393,10 +394,23 @@
 .rs.addFunction("describeObject", function(env, objName)
 {
    obj <- get(objName, env)
-   val <- "(unknown)"
-   desc <- ""
-   size <- object.size(obj)
-   len <- length(obj)
+   # objects containing null external pointers can crash when
+   # evaluated--display generically (see case 4092)
+   hasNullPtr <- .rs.hasNullExternalPointer(obj)
+   if (hasNullPtr) 
+   {
+      val <- "<Object with null pointer>"
+      desc <- "An R object containing a null external pointer"
+      size <- 0
+      len <- 0
+   }
+   else 
+   {
+      val <- "(unknown)"
+      desc <- ""
+      size <- object.size(obj)
+      len <- length(obj)
+   }
    class <- .rs.getSingleClass(obj)
    contents <- list()
    contents_deferred <- FALSE
@@ -405,14 +419,14 @@
    {
       val <- deparse(obj)
    }
-   else
+   else if (!hasNullPtr)
    {
       # for large objects (> half MB), don't try to get the value, just show
       # the size. Some functions (e.g. str()) can cause the object to be
       # copied, which is slow for large objects.
       if (size > 524288)
       {
-         len <- if (len > 1) 
+         len_desc <- if (len > 1) 
                    paste(len, " elements, ", sep="")
                 else 
                    ""
@@ -424,7 +438,7 @@
          }
          else
          {
-            val <- paste("Large ", class, " (", len, 
+            val <- paste("Large ", class, " (", len_desc, 
                          capture.output(print(size, units="auto")), ")", sep="")
          }
          contents_deferred <- TRUE
@@ -453,7 +467,7 @@
       value = .rs.scalar(val),
       description = .rs.scalar(desc),
       size = .rs.scalar(size),
-      length = .rs.scalar(length(obj)),
+      length = .rs.scalar(len),
       contents = contents,
       contents_deferred = .rs.scalar(contents_deferred))
 })
@@ -572,5 +586,32 @@
 .rs.addFunction("getObjectContents", function(objName, env)
 {
    .rs.valueContents(get(objName, env));
+})
+
+# attempt to determine whether the given object contains a null external
+# pointer
+.rs.addFunction("hasNullExternalPointer", function(obj)
+{
+   if (isS4(obj)) 
+   {
+      # this is an S4 object; recursively check its slots for null pointers
+      any(sapply(slotNames(obj), function(name) {
+         hasNullPtr <- FALSE
+         # it's possible to cheat the S4 object system and destroy the contents
+         # of a slot via attr<- assignments; in this case slotNames will
+         # contain slots that don't exist, and trying to access those slots 
+         # throws an error.
+         tryCatch({
+           hasNullPtr <- .rs.hasNullExternalPointer(slot(obj, name))
+           }, 
+           error = function(err) {})
+         hasNullPtr
+      }))
+   } 
+   else
+   {
+      # check the object itself for a null pointer
+      is(obj, "externalptr") && capture.output(print(obj)) == "<pointer: 0x0>"
+   }
 })
 

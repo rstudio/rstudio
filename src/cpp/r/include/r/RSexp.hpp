@@ -20,6 +20,7 @@
 #include <vector>
 #include <deque>
 #include <map>
+#include <set>
 
 #include <boost/shared_ptr.hpp>
 #include <boost/any.hpp>
@@ -37,6 +38,7 @@
 // See comment in RInternal.hpp for more info on this
 
 
+namespace rstudio {
 namespace r {
 namespace sexp {
    
@@ -64,6 +66,8 @@ std::string classOf(SEXP objectSEXP);
 int length(SEXP object);
    
 SEXP getNames(SEXP sexp);
+bool setNames(SEXP sexp, const std::vector<std::string>& names);
+
 core::Error getNames(SEXP sexp, std::vector<std::string>* pNames);  
 bool isActiveBinding(const std::string&, const SEXP);
 
@@ -82,6 +86,8 @@ std::string safeAsString(SEXP object,
 int asInteger(SEXP object);
 double asReal(SEXP object);
 bool asLogical(SEXP object);
+
+bool fillVectorString(SEXP object, std::vector<std::string>* pVector);
 
 SEXP getAttrib(SEXP object, SEXP attrib);
 SEXP getAttrib(SEXP object, const std::string& attrib);
@@ -115,12 +121,18 @@ SEXP create(const std::vector<double>& value, Protect*pProtect);
 SEXP create(const std::vector<bool>& value, Protect*pProtect);
 SEXP create(const std::vector<boost::posix_time::ptime>& value,
             Protect* pProtect);
+SEXP create(const std::map<std::string, std::vector<std::string> >& value,
+            Protect* pProtect);
 
 SEXP create(const std::vector<std::pair<std::string,std::string> >& value, 
             Protect* pProtect);
+SEXP create(const std::set<std::string>& value, Protect* pProtect);
 SEXP create(const core::json::Array& value, Protect* pProtect);
 SEXP create(const core::json::Object& value, Protect* pProtect);
 
+
+// Create a named list
+SEXP createList(std::vector<std::string> names, Protect* pProtect);
 
 inline int indexOfElementNamed(SEXP listSEXP, const std::string& name)
 {
@@ -272,8 +284,70 @@ private:
    SEXP sexp_;
 };
 
+class ListBuilder : boost::noncopyable
+{
+public:
+   explicit ListBuilder(Protect* pProtect)
+      : pProtect_(pProtect) {}
+   
+   void add(const std::string& name, SEXP object)
+   {
+      objects_.push_back(object);
+      names_.push_back(name);
+   }
+   
+   void add(SEXP object)
+   {
+      objects_.push_back(object);
+      names_.push_back(std::string());
+   }
+
+   template <typename T>
+   void add(const std::string& name, const T& object)
+   {
+      objects_.push_back(create(object, pProtect_));
+      names_.push_back(name);
+   }
+   
+   template <typename T>
+   void add(const T& object)
+   {
+      objects_.push_back(create(object, pProtect_));
+      names_.push_back(std::string());
+   }
+
+   operator SEXP() const
+   {
+      int n = names_.size();
+
+      SEXP resultSEXP;
+
+      pProtect_->add(resultSEXP = Rf_allocVector(VECSXP, n));
+
+      SEXP namesSEXP;
+      pProtect_->add(namesSEXP = Rf_allocVector(STRSXP, n));
+
+      for (int i = 0; i < n; i++)
+      {
+         SET_VECTOR_ELT(resultSEXP, i, objects_[i]);
+         SET_STRING_ELT(namesSEXP, i, Rf_mkChar(names_[i].c_str()));
+      }
+
+      Rf_setAttrib(resultSEXP, R_NamesSymbol, namesSEXP);
+      return resultSEXP;
+   }
+
+private:
+   std::vector<SEXP> objects_;
+   std::vector<std::string> names_;
+   Protect* pProtect_;
+};
+
+void printValue(SEXP object);
+
 } // namespace sexp
 } // namespace r
+} // namespace rstudio
    
 
 #endif // R_R_SEXP_HPP 

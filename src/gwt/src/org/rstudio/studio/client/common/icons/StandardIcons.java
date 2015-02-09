@@ -31,10 +31,13 @@ public interface StandardIcons extends ClientBundle
    ImageResource empty_command();
    ImageResource show_log();
    ImageResource help();
-   ImageResource function();
    ImageResource git();
    ImageResource svn();
    ImageResource viewer_window();
    ImageResource run();
+   ImageResource mermaid();
    ImageResource export_menu();
+   ImageResource functionLetter();
+   ImageResource methodLetter();
+   ImageResource lambdaLetter();
 }

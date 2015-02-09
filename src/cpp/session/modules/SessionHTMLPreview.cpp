@@ -54,8 +54,9 @@
 #define kHTMLPreview "html_preview"
 #define kHTMLPreviewLocation "/" kHTMLPreview "/"
 
-using namespace core;
+using namespace rstudio::core;
 
+namespace rstudio {
 namespace session {
 namespace modules { 
 namespace html_preview {
@@ -758,13 +759,7 @@ void modifyOutputForPreview(std::string* pOutput)
             boost::regex("tt, code, pre \\{\\n\\s+font-family:[^\n]+;"),
            "tt, code, pre {\n   font-family: " + preFontFamily() + ";");
 
-#ifdef __APPLE__
-      // use SVG fonts on MacOS (because HTML-CSS fonts crash QtWebKit)
-       boost::algorithm::replace_first(
-                *pOutput,
-                "config=TeX-AMS-MML_HTMLorMML",
-                "config=TeX-AMS-MML_SVG");
-#else
+#if defined(_WIN32)
       // add HTML-CSS options required for correct qtwebkit rendering
       std::string target = "<!-- MathJax scripts -->";
       boost::algorithm::replace_first(
@@ -1027,4 +1022,5 @@ Error initialize()
 } // namespace html_preview
 } // namespace modules
 } // namesapce session
+} // namespace rstudio
 

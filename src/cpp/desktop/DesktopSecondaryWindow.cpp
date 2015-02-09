@@ -14,31 +14,40 @@
  */
 
 #include "DesktopSecondaryWindow.hpp"
+
+#include <QApplication>
+#include <QToolBar>
+#include <QDesktopWidget>
+
 #include "DesktopWebView.hpp"
 
+namespace rstudio {
 namespace desktop {
 
 namespace {
 
 QIcon icon(const char* name)
 {
-#ifdef Q_WS_MACX
-   static QString suffix(QString::fromAscii("_mac"));
+#ifdef Q_OS_MAC
+   static QString suffix(QString::fromUtf8("_mac"));
 #else
-   static QString suffix(QString::fromAscii(""));
+   static QString suffix(QString::fromUtf8(""));
 #endif
-   return QIcon(QString::fromAscii(":/icons/") + QString::fromAscii(name) + suffix + QString::fromAscii(".png"));
+   return QIcon(QString::fromUtf8(":/icons/") + QString::fromUtf8(name) + suffix + QString::fromUtf8(".png"));
 }
 
 }
 
-SecondaryWindow::SecondaryWindow(QUrl baseUrl, QWidget* pParent) :
-    BrowserWindow(true, true, baseUrl, pParent)
+SecondaryWindow::SecondaryWindow(bool showToolbar, QString name, QUrl baseUrl,
+                                 QWidget* pParent, WebPage* pOpener,
+                                 bool allowExternalNavigate) :
+    BrowserWindow(showToolbar, true, name, baseUrl, pParent, pOpener,
+                  allowExternalNavigate)
 {
    setAttribute(Qt::WA_QuitOnClose, false);
    setAttribute(Qt::WA_DeleteOnClose, true);
 
-#ifdef Q_WS_MACX
+#ifdef Q_OS_MAC
    setIconSize(QSize(26, 22));
 #else
    setIconSize(QSize(26, 20));
@@ -95,3 +104,4 @@ void SecondaryWindow::manageCommandState()
 }
 
 } // namespace desktop
+} // namespace rstudio

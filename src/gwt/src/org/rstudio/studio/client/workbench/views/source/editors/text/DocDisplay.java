@@ -29,6 +29,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Positio
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.spelling.CharClassifier;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.spelling.TokenPredicate;
+import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionContext;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.BreakpointMoveEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.BreakpointSetEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CommandClickEvent;
@@ -45,6 +46,7 @@ import com.google.gwt.event.dom.client.HasKeyDownHandlers;
 import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.IsWidget;
+
 import org.rstudio.studio.client.workbench.views.source.model.RnwCompletionContext;
 import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
 
@@ -68,6 +70,8 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void setFileType(TextFileType fileType, boolean suppressCompletion);
    void setFileType(TextFileType fileType, CompletionManager completionManager);
    void setRnwCompletionContext(RnwCompletionContext rnwContext);
+   void setCppCompletionContext(CppCompletionContext cppContext);
+   void setRCompletionContext(RCompletionContext rContext);
    String getCode();
    void setCode(String code, boolean preserveCursorPosition);
    void insertCode(String code, boolean blockMode);
@@ -79,6 +83,8 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void goToFunctionDefinition();
    String getSelectionValue();
    String getCurrentLine();
+   String getCurrentLineUpToCursor();
+   String getNextLineIndent();
    // This returns null for most file types, but for Sweave it returns "R" or
    // "TeX". Use SweaveFileType constants to test for these values.
    String getLanguageMode(Position position);
@@ -115,8 +121,11 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void setPrintMarginColumn(int column);
    void setShowInvisibles(boolean show);
    void setShowIndentGuides(boolean show);
-   void setUseVimMode(boolean use);
    void setBlinkingCursor(boolean blinking);
+   
+   void setUseVimMode(boolean use);
+   boolean isVimModeOn();
+   boolean isVimInInsertMode();
 
    JsArray<AceFold> getFolds();
    void addFold(Range range);
@@ -140,7 +149,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void moveCursorNearTop();
    void moveCursorNearTop(int rowOffset);
    void ensureCursorVisible();
-
+   boolean isCursorInSingleLineString();
    
    InputEditorSelection search(String needle,
                                boolean backwards,
@@ -164,7 +173,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    Scope getCurrentChunk(Position position);
    Scope getCurrentFunction();
    Scope getCurrentSection();
-   Scope getFunctionAtPosition(Position position);
+   ScopeFunction getFunctionAtPosition(Position position);
    Scope getSectionAtPosition(Position position);
    boolean hasScopeTree();
    JsArray<Scope> getScopeTree();
@@ -189,6 +198,9 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
 
    String getLine(int row);
    
+   char getCharacterAtCursor();
+   char getCharacterBeforeCursor();
+   
    String debug_getDocumentDump();
    void debug_setSessionValueDirectly(String s);
 
@@ -197,6 +209,8 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    
    // HACK: InputEditorPosition should just become AceInputEditorPosition
    Position selectionToPosition(InputEditorPosition pos);
+   
+   InputEditorPosition createInputEditorPosition(Position pos);
 
    Iterable<Range> getWords(TokenPredicate tokenPredicate,
                             CharClassifier charClassifier,
@@ -222,4 +236,10 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void removeAllBreakpoints();
    void toggleBreakpointAtCursor();
    boolean hasBreakpoints();
+   
+   void setPopupVisible(boolean visible);
+   boolean isPopupVisible();
+   void selectAll(String needle);
+   
+   int getTabSize();
 }

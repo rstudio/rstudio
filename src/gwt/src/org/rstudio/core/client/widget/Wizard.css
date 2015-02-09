@@ -19,6 +19,7 @@
    color: #707070;
    margin-top: 3px;
    cursor: default;
+   width: 420px;
 }
 
 .wizardBodyPanel {
@@ -36,7 +37,6 @@
    gwt-image: 'wizardBackButton';
    border: none;
    font-weight: bold;
-   cursor: pointer;
    padding-left: 26px;
    padding-top: 6px;
 }

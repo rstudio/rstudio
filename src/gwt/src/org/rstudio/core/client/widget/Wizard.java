@@ -18,6 +18,7 @@ package org.rstudio.core.client.widget;
 import java.util.ArrayList;
 
 import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.theme.res.ThemeResources;
 
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -98,6 +99,7 @@ public class Wizard<I,T> extends ModalDialog<T>
       ImageResource bkImg = res.wizardBackButton();
       backButton_ = new Label("Back");
       backButton_.addStyleName(styles.wizardBackButton());
+      backButton_.addStyleName(ThemeResources.INSTANCE.themeStyles().handCursor());
       headerPanel_.add(backButton_);
       headerPanel_.setWidgetLeftWidth(backButton_,
                                       kTopMargin - 2, Unit.PX, 

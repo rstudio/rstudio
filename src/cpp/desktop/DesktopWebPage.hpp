@@ -18,23 +18,35 @@
 
 #include <QtGui>
 #include <QtWebKit>
+#include <QWebPage>
 
+namespace rstudio {
 namespace desktop {
 
 class MainWindow;
 
-struct PendingSatelliteWindow
+struct PendingWindow
 {
-   PendingSatelliteWindow()
-      : name(), pMainWindow(NULL), width(-1), height(-1)
+   PendingWindow()
+      : name(), pMainWindow(NULL), width(-1), height(-1),
+        isSatellite(false), allowExternalNavigate(false), showToolbar(false)
    {
    }
 
-   PendingSatelliteWindow(QString name,
-                          MainWindow* pMainWindow,
-                          int width,
-                          int height)
-      : name(name), pMainWindow(pMainWindow), width(width), height(height)
+   PendingWindow(QString name,
+                 MainWindow* pMainWindow,
+                 int width,
+                 int height)
+      : name(name), pMainWindow(pMainWindow), width(width), height(height),
+        isSatellite(true), allowExternalNavigate(false), showToolbar(false)
+   {
+   }
+
+   PendingWindow(QString name, bool allowExternalNavigation,
+                 bool showDesktopToolbar)
+      : name(name), pMainWindow(NULL), isSatellite(false),
+        allowExternalNavigate(allowExternalNavigation),
+        showToolbar(showDesktopToolbar)
    {
    }
 
@@ -46,6 +58,9 @@ struct PendingSatelliteWindow
 
    int width;
    int height;
+   bool isSatellite;
+   bool allowExternalNavigate;
+   bool showToolbar;
 };
 
 
@@ -54,13 +69,16 @@ class WebPage : public QWebPage
    Q_OBJECT
 
 public:
-   explicit WebPage(QUrl baseUrl = QUrl(), QWidget *parent = NULL);
+   explicit WebPage(QUrl baseUrl = QUrl(), QWidget *parent = NULL,
+                    bool allowExternalNavigate = false);
 
    void setBaseUrl(const QUrl& baseUrl);
    void setViewerUrl(const QString& viewerUrl);
+   void prepareExternalNavigate(const QString& externalUrl);
 
-   void activateSatelliteWindow(QString name);
-   void prepareForSatelliteWindow(const PendingSatelliteWindow& pendingWnd);
+   void activateWindow(QString name);
+   void prepareForWindow(const PendingWindow& pendingWnd);
+   void closeWindow(QString name);
 
 public slots:
    bool shouldInterruptJavaScript();
@@ -81,10 +99,12 @@ private:
    QUrl baseUrl_;
    QString viewerUrl_;
    bool navigated_;
-   PendingSatelliteWindow pendingSatelliteWindow_;
+   bool allowExternalNav_;
+   PendingWindow pendingWindow_;
    QDir defaultSaveDir_;
 };
 
 } // namespace desktop
+} // namespace rstudio
 
 #endif // DESKTOP_WEB_PAGE_HPP

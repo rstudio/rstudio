@@ -18,12 +18,15 @@
 
 #include <string>
 
+namespace rstudio {
 namespace core {
    class FilePath;
+}
 }
 
 #include <core/json/Json.hpp>
  
+namespace rstudio {
 namespace session {
 namespace modules {      
 namespace rmarkdown {
@@ -39,5 +42,6 @@ void ammendResults(const std::string& formatName,
 } // namespace rmarkdown
 } // namepace modules
 } // namesapce session
+} // namespace rstudio
 
 #endif // SESSION_SESSION_RMARKDOWN_PRESENTATION_HPP

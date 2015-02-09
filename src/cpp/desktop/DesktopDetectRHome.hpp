@@ -21,11 +21,13 @@
 #include "DesktopOptions.hpp"
 #include "DesktopRVersion.hpp"
 
+namespace rstudio {
 namespace desktop {
 
 bool prepareEnvironment(Options& settings);
 
 } // namespace desktop
+} // namespace rstudio
 
 
 #endif // DESKTOP_DETECT_R_HOME_HPP

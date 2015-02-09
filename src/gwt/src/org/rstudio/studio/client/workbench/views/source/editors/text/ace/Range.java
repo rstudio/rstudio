@@ -32,6 +32,14 @@ public class Range extends JavaScriptObject
    public final native Position getEnd() /*-{
       return this.end;
    }-*/;
+   
+   public final native Position setStart(Position start) /*-{
+      this.start = start;
+   }-*/;
+   
+   public final native Position setEnd(Position end) /*-{
+      this.end = end;
+   }-*/;
 
    public final native boolean isEmpty() /*-{
       return this.isEmpty();
@@ -39,5 +47,9 @@ public class Range extends JavaScriptObject
 
    public final native Range extend(int row, int column) /*-{
       return this.extend(row, column);
+   }-*/;
+   
+   public final native Range toScreenRange(EditSession session) /*-{
+      return this.toScreenRange(session);
    }-*/;
 }

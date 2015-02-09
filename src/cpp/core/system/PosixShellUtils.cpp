@@ -17,6 +17,7 @@
 #include <boost/regex.hpp>
 #include <core/system/ShellUtils.hpp>
 
+namespace rstudio {
 namespace core {
 namespace shell_utils {
 
@@ -77,6 +78,7 @@ const FilePath& devnull()
 }
 
 
+}
 }
 }
 

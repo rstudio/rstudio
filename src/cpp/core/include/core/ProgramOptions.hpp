@@ -24,6 +24,7 @@
 
 #include <core/ProgramStatus.hpp>
 
+namespace rstudio {
 namespace core {
    
 class Error;
@@ -53,7 +54,25 @@ struct OptionsDescription
 ProgramStatus read(const OptionsDescription& optionsDescription,
                    int argc,
                    char * const argv[],
+                   std::vector<std::string>* pUnrecognized,
                    bool* pHelp);
+
+inline ProgramStatus read(const OptionsDescription& optionsDescription,
+                          int argc,
+                          char * const argv[],
+                          bool* pHelp)
+{
+   return read(optionsDescription, argc, argv, NULL, pHelp);
+}
+
+inline ProgramStatus read(const OptionsDescription& optionsDescription,
+                          int argc,
+                          char * const argv[],
+                          std::vector<std::string>* pUnrecognized)
+{
+   bool help;
+   return read(optionsDescription, argc, argv, pUnrecognized, &help);
+}
 
 inline ProgramStatus read(const OptionsDescription& optionsDescription,
                           int argc,
@@ -71,6 +90,7 @@ void reportWarnings(const std::string& warningMessages,
    
 } // namespace program_options
 } // namespace core 
+} // namespace rstudio
 
 #endif // CORE_PROGRAM_OPTIONS_HPP
 

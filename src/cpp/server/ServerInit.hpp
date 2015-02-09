@@ -18,13 +18,16 @@
 
 #include <string>
 
+namespace rstudio {
 namespace core {
    class Error;
    namespace http {
       class AsyncServer;
    }
 }
+}
 
+namespace rstudio {
 namespace server {
 
 core::http::AsyncServer* httpServerCreate();
@@ -32,6 +35,7 @@ core::Error httpServerInit(core::http::AsyncServer* pAsyncServer);
 
 
 } // namespace server
+} // namespace rstudio
 
 #endif // SERVER_INIT_HPP
 

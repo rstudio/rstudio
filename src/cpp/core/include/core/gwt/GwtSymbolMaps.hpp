@@ -23,6 +23,7 @@
 
 #include <core/FilePath.hpp>
 
+namespace rstudio {
 namespace core {
 
 class Error;
@@ -60,5 +61,6 @@ private:
 
 } // namespace gwt
 } // namespace core
+} // namespace rstudio
 
 #endif // CORE_GWT_SYMBOL_MAPS_HPP

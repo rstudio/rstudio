@@ -21,6 +21,8 @@
 #include "Utils.hpp"
 
 
+using namespace rstudio;
+
 @interface FileDownloader : NSObject<NSURLDownloadDelegate> {
    NSString* targetPath_;
    bool openWhenComplete_;
@@ -128,6 +130,7 @@ openWhenComplete: (bool) open
 @end
 
 
+namespace rstudio {
 namespace desktop {
 
 void downloadAndShowFile(NSURLRequest* request)
@@ -143,5 +146,6 @@ void downloadAndSaveFile(NSURLRequest* request, NSString* destinaton)
 }
 
 } // namespace desktop
+} // namespace rstudio
 
 

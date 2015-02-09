@@ -17,6 +17,7 @@ package org.rstudio.core.client.widget;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.ButtonElement;
 import com.google.gwt.dom.client.DivElement;
+import com.google.gwt.dom.client.TableElement;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.HasClickHandlers;
@@ -183,10 +184,17 @@ public class ThemedButton extends FocusWidget implements HasClickHandlers
    {
       button_.click();
    }
+   
+   public void setWrapperWidth(String width)
+   {
+      wrapper_.setWidth(width);
+   }
 
    ButtonElement button_;
    boolean isDefault_ = false;
 
    @UiField
    DivElement content_;
+   @UiField
+   TableElement wrapper_;
 }

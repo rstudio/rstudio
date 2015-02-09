@@ -30,18 +30,35 @@ import java.util.HashMap;
 @Singleton
 public class AceThemes
 {
-   public static final String TEXTMATE = "TextMate";
-   public static final String ECLIPSE = "Eclipse";
-   public static final String TOMORROW = "Tomorrow";
+   public static final String AMBIANCE = "Ambiance";
+   public static final String CHAOS = "Chaos";
+   public static final String CHROME = "Chrome";
+   public static final String CLOUDS_MIDNIGHT = "Clouds Midnight";
+   public static final String CLOUDS = "Clouds";
    public static final String COBALT = "Cobalt";
+   public static final String CRIMSON_EDITOR = "Crimson Editor";
+   public static final String DAWN = "Dawn";
+   public static final String DREAMWEAVER = "Dreamweaver";
+   public static final String ECLIPSE = "Eclipse";
    public static final String IDLE_FINGERS = "Idle Fingers";
-   public static final String TWILIGHT = "Twilight";
-   public static final String TOMORROW_NIGHT = "Tomorrow Night";
+   public static final String KATZENMILCH = "Katzenmilch";
+   public static final String KR_THEME = "Kr Theme";
+   public static final String MERBIVORE_SOFT = "Merbivore Soft";
+   public static final String MERBIVORE = "Merbivore";
+   public static final String MONO_INDUSTRIAL = "Mono Industrial";
+   public static final String MONOKAI = "Monokai";
+   public static final String PASTEL_ON_DARK = "Pastel On Dark";
+   public static final String SOLARIZED_DARK = "Solarized Dark";
+   public static final String SOLARIZED_LIGHT = "Solarized Light";
+   public static final String TEXTMATE = "TextMate";
    public static final String TOMORROW_NIGHT_BLUE = "Tomorrow Night Blue";
    public static final String TOMORROW_NIGHT_BRIGHT = "Tomorrow Night Bright";
-   public static final String TOMORROW_NIGHT_80S = "Tomorrow Night 80's";
-   public static final String SOLARIZED = "Solarized";
-   public static final String SOLARIZED_DARK = "Solarized Dark";
+   public static final String TOMORROW_NIGHT_EIGHTIES = "Tomorrow Night 80s";
+   public static final String TOMORROW_NIGHT = "Tomorrow Night";
+   public static final String TOMORROW = "Tomorrow";
+   public static final String TWILIGHT = "Twilight";
+   public static final String VIBRANT_INK = "Vibrant Ink";
+   public static final String XCODE = "Xcode";
    
    @Inject
    public AceThemes(AceThemeResources res,
@@ -50,20 +67,36 @@ public class AceThemes
    {
       themes_ = new ArrayList<String>();
       themesByName_ = new HashMap<String, String>();
-
-      addTheme(TEXTMATE, res.textmate());
-      addTheme(ECLIPSE, res.eclipse());
-      addTheme(TOMORROW, res.tomorrow());
+      
+      addTheme(AMBIANCE, res.ambiance());
+      addTheme(CHAOS, res.chaos());
+      addTheme(CHROME, res.chrome());
+      addTheme(CLOUDS_MIDNIGHT, res.clouds_midnight());
+      addTheme(CLOUDS, res.clouds());
       addTheme(COBALT, res.cobalt());
+      addTheme(CRIMSON_EDITOR, res.crimson_editor());
+      addTheme(DAWN, res.dawn());
+      addTheme(DREAMWEAVER, res.dreamweaver());
+      addTheme(ECLIPSE, res.eclipse());
       addTheme(IDLE_FINGERS, res.idle_fingers());
-      addTheme(TWILIGHT, res.twilight());
-      addTheme(TOMORROW_NIGHT, res.tomorrow_night());
+      addTheme(KATZENMILCH, res.katzenmilch());
+      addTheme(KR_THEME, res.kr_theme());
+      addTheme(MERBIVORE_SOFT, res.merbivore_soft());
+      addTheme(MERBIVORE, res.merbivore());
+      addTheme(MONO_INDUSTRIAL, res.mono_industrial());
+      addTheme(MONOKAI, res.monokai());
+      addTheme(PASTEL_ON_DARK, res.pastel_on_dark());
+      addTheme(SOLARIZED_DARK, res.solarized_dark());
+      addTheme(SOLARIZED_LIGHT, res.solarized_light());
+      addTheme(TEXTMATE, res.textmate());
       addTheme(TOMORROW_NIGHT_BLUE, res.tomorrow_night_blue());
       addTheme(TOMORROW_NIGHT_BRIGHT, res.tomorrow_night_bright());
-      addTheme(TOMORROW_NIGHT_80S, res.tomorrow_night_eighties());
-      addTheme(SOLARIZED, res.solarized());
-      addTheme(SOLARIZED_DARK, res.solarizedDark());
-    
+      addTheme(TOMORROW_NIGHT_EIGHTIES, res.tomorrow_night_eighties());
+      addTheme(TOMORROW_NIGHT, res.tomorrow_night());
+      addTheme(TOMORROW, res.tomorrow());
+      addTheme(TWILIGHT, res.twilight());
+      addTheme(VIBRANT_INK, res.vibrant_ink());
+      addTheme(XCODE, res.xcode());
 
       prefs.get().theme().bind(new CommandWithArg<String>()
       {
@@ -113,7 +146,7 @@ public class AceThemes
 
    private final ArrayList<String> themes_;
    private final HashMap<String, String> themesByName_;
-   private final String defaultThemeName_ = "TextMate";
+   private final String defaultThemeName_ = TEXTMATE;
 
    private LinkElement currentStyleEl_;
 }

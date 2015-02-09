@@ -15,6 +15,7 @@
 
 #include <windows.h>
 #include <shlwapi.h>
+#include <shellapi.h>
 
 #include <iostream>
 
@@ -27,7 +28,7 @@ int main(int argc, char** argv)
    try
    {
       // initialize log
-      initializeSystemLog("urlopener", core::system::kLogLevelWarning);
+      initializeSystemLog("urlopener", rstudio::core::system::kLogLevelWarning);
 
       // check arguments
       if (argc < 2)

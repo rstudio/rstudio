@@ -14,73 +14,331 @@
  */
 package org.rstudio.studio.client.workbench.views.console.shell.assist;
 
+import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.JsArrayBoolean;
+import com.google.gwt.core.client.JsArrayInteger;
 import com.google.gwt.core.client.JsArrayString;
-import org.rstudio.core.client.dom.DomUtils;
+import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+
+import org.rstudio.core.client.SafeHtmlUtil;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.js.JsUtil;
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
 import org.rstudio.studio.client.common.codetools.Completions;
-import org.rstudio.studio.client.common.r.RToken;
-import org.rstudio.studio.client.common.r.RTokenizer;
+import org.rstudio.studio.client.common.codetools.RCompletionType;
+import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
+import org.rstudio.studio.client.common.icons.code.CodeIcons;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.workbench.codesearch.CodeSearchOracle;
+import org.rstudio.studio.client.workbench.views.console.shell.assist.RCompletionManager.AutocompletionContext;
+import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
+import org.rstudio.studio.client.workbench.views.source.editors.text.NavigableSourceEditor;
+import org.rstudio.studio.client.workbench.views.source.editors.text.RFunction;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ScopeFunction;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.CodeModel;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.DplyrJoinContext;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.RScopeObject;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.TokenCursor;
 import org.rstudio.studio.client.workbench.views.source.model.RnwChunkOptions;
 import org.rstudio.studio.client.workbench.views.source.model.RnwChunkOptions.RnwOptionCompletionResult;
 import org.rstudio.studio.client.workbench.views.source.model.RnwCompletionContext;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
 
 
 public class CompletionRequester
 {
    private final CodeToolsServerOperations server_ ;
+   private final NavigableSourceEditor editor_ ;
 
    private String cachedLinePrefix_ ;
-   private CompletionResult cachedResult_ ;
+   private HashMap<String, CompletionResult> cachedCompletions_ =
+         new HashMap<String, CompletionResult>();
    private RnwCompletionContext rnwContext_ ;
    
    public CompletionRequester(CodeToolsServerOperations server,
-                              RnwCompletionContext rnwContext)
+                              RnwCompletionContext rnwContext,
+                              NavigableSourceEditor editor)
    {
       server_ = server ;
       rnwContext_ = rnwContext;
+      editor_ = editor;
    }
    
-   public void getCompletions(
-                     final String line, 
-                     final int pos,
-                     final boolean implicit,
-                     final ServerRequestCallback<CompletionResult> callback)
+   private boolean usingCache(
+         String token,
+         final ServerRequestCallback<CompletionResult> callback)
    {
-      if (cachedResult_ != null && cachedResult_.guessedFunctionName == null)
+      return usingCache(token, false, callback);
+   }
+   
+   private boolean usingCache(
+         String token,
+         boolean isHelpCompletion,
+         final ServerRequestCallback<CompletionResult> callback)
+   {
+      if (isHelpCompletion)
+         token = token.substring(token.lastIndexOf(':') + 1);
+      
+      if (cachedLinePrefix_ == null)
+         return false;
+      
+      CompletionResult cachedResult = cachedCompletions_.get("");
+      if (cachedResult == null)
+         return false;
+      
+      if (token.toLowerCase().startsWith(cachedLinePrefix_.toLowerCase()))
       {
-         if (line.substring(0, pos).startsWith(cachedLinePrefix_))
+         String diff = token.substring(cachedLinePrefix_.length(), token.length());
+
+         // if we already have a cached result for this diff, use it
+         CompletionResult cached = cachedCompletions_.get(diff);
+         if (cached != null)
          {
-            String diff = line.substring(cachedLinePrefix_.length(), pos) ;
-            if (diff.length() > 0)
-            {
-               ArrayList<RToken> tokens = RTokenizer.asTokens("a" + diff) ;
-               
-               // when we cross a :: the list may actually grow, not shrink
-               if (!diff.endsWith("::"))
-               {
-                  while (tokens.size() > 0 
-                        && tokens.get(tokens.size()-1).getContent().equals(":"))
-                  {
-                     tokens.remove(tokens.size()-1) ;
-                  }
-               
-                  if (tokens.size() == 1
-                        && tokens.get(0).getTokenType() == RToken.ID)
-                  {
-                     callback.onResponseReceived(narrow(diff)) ;
-                     return ;
-                  }
-               }
-            }
+            callback.onResponseReceived(cached);
+            return true;
+         }
+
+         // otherwise, produce a new completion list
+         if (diff.length() > 0 && !diff.endsWith("::"))
+         {
+            callback.onResponseReceived(narrow(token, diff, cachedResult)) ;
+            return true;
          }
       }
       
-      doGetCompletions(line, pos, new ServerRequestCallback<Completions>()
+      return false;
+      
+   }
+   
+   private String basename(String absolutePath)
+   {
+      return absolutePath.substring(absolutePath.lastIndexOf('/') + 1);
+   }
+   
+   private boolean filterStartsWithDot(String item,
+                                       String token)
+   {
+      return !(!token.startsWith(".") && item.startsWith("."));
+   }
+   
+   private CompletionResult narrow(final String token,
+                                   final String diff,
+                                   CompletionResult cachedResult)
+   {
+      ArrayList<QualifiedName> newCompletions = new ArrayList<QualifiedName>();
+      newCompletions.ensureCapacity(cachedResult.completions.size());
+      
+      // For completions that are files or directories, we need to post-process
+      // the token and the qualified name to strip out just the basename (filename).
+      // Note that we normalize the paths such that files will have no trailing slash,
+      // while directories will have one trailing slash (but we defend against multiple
+      // trailing slashes)
+      
+      // Transform the token once beforehand for completions.
+      final String tokenSub = token.substring(
+            token.lastIndexOf('/') + 1);
+      
+      for (QualifiedName qname : cachedResult.completions)
+      {
+         // File types are narrowed only by the file name
+         if (RCompletionType.isFileType(qname.type))
+         {
+            if (StringUtil.isSubsequence(basename(qname.name), tokenSub, true))
+               newCompletions.add(qname);
+         }
+         else
+         {
+            if (StringUtil.isSubsequence(qname.name, token, true) &&
+                filterStartsWithDot(qname.name, token))
+               newCompletions.add(qname) ;
+         }
+      }
+      
+      java.util.Collections.sort(newCompletions, new Comparator<QualifiedName>() {
+         
+         @Override
+         public int compare(QualifiedName lhs,
+                            QualifiedName rhs)
+         {
+            int lhsScore;
+            if (RCompletionType.isFileType(lhs.type))
+               lhsScore = CodeSearchOracle.scoreMatch(
+                     basename(lhs.name), tokenSub, true);
+            else
+               lhsScore = CodeSearchOracle.scoreMatch(lhs.name, token, false);
+            
+            int rhsScore;
+            if (RCompletionType.isFileType(rhs.type))
+               rhsScore = CodeSearchOracle.scoreMatch(
+                     basename(rhs.name), tokenSub, true);
+            else
+               rhsScore = CodeSearchOracle.scoreMatch(rhs.name, token, false);
+            
+            // Place arguments higher (give less penalty)
+            if (lhs.type == RCompletionType.ARGUMENT) lhsScore -= 3;
+            if (rhs.type == RCompletionType.ARGUMENT) rhsScore -= 3;
+
+            if (lhsScore == rhsScore)
+               return lhs.name.length() - rhs.name.length();
+            else
+               return lhsScore < rhsScore ? -1 : 1;
+         }
+      });
+      
+      CompletionResult result = new CompletionResult(
+            token,
+            newCompletions,
+            cachedResult.guessedFunctionName,
+            cachedResult.suggestOnAccept,
+            cachedResult.dontInsertParens) ;
+      
+      cachedCompletions_.put(diff, result);
+      return result;
+   }
+   
+   public void getDplyrJoinCompletionsString(
+         final String token,
+         final String string,
+         final String cursorPos,
+         final boolean implicit,
+         final ServerRequestCallback<CompletionResult> callback)
+   {
+      if (usingCache(token, callback))
+         return;
+      
+      server_.getDplyrJoinCompletionsString(
+            token,
+            string,
+            cursorPos,
+            new ServerRequestCallback<Completions>() {
+               
+               @Override
+               public void onResponseReceived(Completions response)
+               {
+                  cachedLinePrefix_ = token;
+                  fillCompletionResult(response, implicit, callback);
+               }
+
+               @Override
+               public void onError(ServerError error)
+               {
+                  callback.onError(error);
+               }
+
+            });
+      
+      
+   }
+   
+   public void getDplyrJoinCompletions(
+         final DplyrJoinContext joinContext,
+         final boolean implicit,
+         final ServerRequestCallback<CompletionResult> callback)
+   {
+      final String token = joinContext.getToken();
+      if (usingCache(token, callback))
+         return;
+      
+      server_.getDplyrJoinCompletions(
+            joinContext.getToken(),
+            joinContext.getLeftData(),
+            joinContext.getRightData(),
+            joinContext.getVerb(),
+            joinContext.getCursorPos(),
+            new ServerRequestCallback<Completions>() {
+
+               @Override
+               public void onError(ServerError error)
+               {
+                  callback.onError(error);
+               }
+               
+               @Override
+               public void onResponseReceived(Completions response)
+               {
+                  cachedLinePrefix_ = token;
+                  fillCompletionResult(response, implicit, callback);
+               }
+               
+            });
+   }
+   
+   private void fillCompletionResult(
+         Completions response,
+         boolean implicit,
+         ServerRequestCallback<CompletionResult> callback)
+   {
+      JsArrayString comp = response.getCompletions();
+      JsArrayString pkgs = response.getPackages();
+      JsArrayBoolean quote = response.getQuote();
+      JsArrayInteger type = response.getType();
+      ArrayList<QualifiedName> newComp = new ArrayList<QualifiedName>();
+      for (int i = 0; i < comp.length(); i++)
+      {
+         newComp.add(new QualifiedName(comp.get(i), pkgs.get(i), quote.get(i), type.get(i)));
+      }
+
+      CompletionResult result = new CompletionResult(
+            response.getToken(),
+            newComp,
+            response.getGuessedFunctionName(),
+            response.getSuggestOnAccept(),
+            response.getOverrideInsertParens());
+
+      if (response.isCacheable())
+      {
+         cachedCompletions_.put("", result);
+      }
+
+      if (!implicit || result.completions.size() != 0)
+         callback.onResponseReceived(result);
+
+   }
+   
+   public void getCompletions(
+         final String token,
+         final List<String> assocData,
+         final List<Integer> dataType,
+         final List<Integer> numCommas,
+         final String functionCallString,
+         final String chainDataName,
+         final JsArrayString chainAdditionalArgs,
+         final JsArrayString chainExcludeArgs,
+         final boolean chainExcludeArgsFromObject,
+         final String filePath,
+         final String documentId,
+         final boolean implicit,
+         final ServerRequestCallback<CompletionResult> callback)
+   {
+      boolean isHelp = dataType.size() > 0 &&
+            dataType.get(0) == AutocompletionContext.TYPE_HELP;
+      
+      if (usingCache(token, isHelp, callback))
+         return;
+      
+      doGetCompletions(
+            token,
+            assocData,
+            dataType,
+            numCommas,
+            functionCallString,
+            chainDataName,
+            chainAdditionalArgs,
+            chainExcludeArgs,
+            chainExcludeArgsFromObject,
+            filePath,
+            documentId,
+            new ServerRequestCallback<Completions>()
       {
          @Override
          public void onError(ServerError error)
@@ -91,43 +349,245 @@ public class CompletionRequester
          @Override
          public void onResponseReceived(Completions response)
          {
-            cachedLinePrefix_ = line.substring(0, pos);
+            cachedLinePrefix_ = token;
+            String token = response.getToken();
 
             JsArrayString comp = response.getCompletions();
             JsArrayString pkgs = response.getPackages();
+            JsArrayBoolean quote = response.getQuote();
+            JsArrayInteger type = response.getType();
             ArrayList<QualifiedName> newComp = new ArrayList<QualifiedName>();
-
+            
+            // Get function completions from the server
             for (int i = 0; i < comp.length(); i++)
-               newComp.add(new QualifiedName(comp.get(i), pkgs.get(i)));
-
+               if (comp.get(i).endsWith(" = "))
+                  newComp.add(new QualifiedName(comp.get(i), pkgs.get(i), quote.get(i), type.get(i)));
+            
+            // Try getting our own function argument completions
+            if (!response.getExcludeOtherCompletions())
+            {
+               addFunctionArgumentCompletions(token, newComp);
+               addScopedArgumentCompletions(token, newComp);
+            }
+            
+            // Get variable completions from the current scope
+            if (!response.getExcludeOtherCompletions())
+            {
+               addScopedCompletions(token, newComp, "variable");
+               addScopedCompletions(token, newComp, "function");
+            }
+            
+            // Get other server completions
+            for (int i = 0; i < comp.length(); i++)
+               if (!comp.get(i).endsWith(" = "))
+                  newComp.add(new QualifiedName(comp.get(i), pkgs.get(i), quote.get(i), type.get(i)));
+            
+            // Remove duplicates
+            newComp = resolveDuplicates(newComp);
+            
             CompletionResult result = new CompletionResult(
                   response.getToken(),
                   newComp,
                   response.getGuessedFunctionName(),
-                  response.getSuggestOnAccept());
+                  response.getSuggestOnAccept(),
+                  response.getOverrideInsertParens());
 
-            cachedResult_ = response.isCacheable() ? result : null;
+            if (response.isCacheable())
+            {
+               cachedCompletions_.put("", result);
+            }
 
-            if (!implicit || result.completions.size() != 0)
-               callback.onResponseReceived(result);
+            callback.onResponseReceived(result);
          }
       }) ;
    }
+   
+   private ArrayList<QualifiedName> resolveDuplicates(ArrayList<QualifiedName> completions)
+   {
+      LinkedHashSet<QualifiedName> set = new LinkedHashSet<QualifiedName>();
+      set.addAll(completions);
+      ArrayList<QualifiedName> withoutDupes = new ArrayList<QualifiedName>();
+      withoutDupes.addAll(set);
+      return withoutDupes;
+   }
+   
+   private void addScopedArgumentCompletions(
+         String token,
+         ArrayList<QualifiedName> completions)
+   {
+      AceEditor editor = (AceEditor) editor_;
+
+      // NOTE: this will be null in the console, so protect against that
+      if (editor != null)
+      {
+         Position cursorPosition =
+               editor.getSession().getSelection().getCursor();
+         CodeModel codeModel = editor.getSession().getMode().getRCodeModel();
+         JsArray<RFunction> scopedFunctions =
+               codeModel.getFunctionsInScope(cursorPosition);
+         
+         if (scopedFunctions.length() == 0)
+            return;
+         
+         String tokenLower = token.toLowerCase();
+         
+         for (int i = 0; i < scopedFunctions.length(); i++)
+         {
+            RFunction scopedFunction = scopedFunctions.get(i);
+            String functionName = scopedFunction.getFunctionName();
+
+            JsArrayString argNames = scopedFunction.getFunctionArgs();
+            for (int j = 0; j < argNames.length(); j++)
+            {
+               String argName = argNames.get(j);
+               if (argName.toLowerCase().startsWith(tokenLower))
+               {
+                  if (functionName == null || functionName == "")
+                  {
+                     completions.add(new QualifiedName(
+                           argName,
+                           "<anonymous function>",
+                           false,
+                           RCompletionType.CONTEXT
+                     ));
+                  }
+                  else
+                  {
+                     completions.add(new QualifiedName(
+                           argName,
+                           functionName,
+                           false,
+                           RCompletionType.CONTEXT
+                     ));
+                  }
+               }
+            }
+         } 
+      }
+   }
+      
+   private void addScopedCompletions(
+         String token,
+         ArrayList<QualifiedName> completions,
+         String type)
+   {
+      AceEditor editor = (AceEditor) editor_;
+
+      // NOTE: this will be null in the console, so protect against that
+      if (editor != null)
+      {
+         Position cursorPosition =
+               editor.getSession().getSelection().getCursor();
+         CodeModel codeModel = editor.getSession().getMode().getRCodeModel();
+      
+         JsArray<RScopeObject> scopeVariables =
+               codeModel.getVariablesInScope(cursorPosition);
+         
+         String tokenLower = token.toLowerCase();
+         for (int i = 0; i < scopeVariables.length(); i++)
+         {
+            RScopeObject variable = scopeVariables.get(i);
+            if (variable.getType() == type &&
+                variable.getToken().toLowerCase().startsWith(tokenLower))
+               completions.add(new QualifiedName(
+                     variable.getToken(),
+                     variable.getType(),
+                     false,
+                     RCompletionType.CONTEXT
+               ));
+         }
+      }
+   }
+   
+   private void addFunctionArgumentCompletions(
+         String token,
+         ArrayList<QualifiedName> completions)
+   {
+      AceEditor editor = (AceEditor) editor_;
+
+      if (editor != null)
+      {
+         Position cursorPosition =
+               editor.getSession().getSelection().getCursor();
+         CodeModel codeModel = editor.getSession().getMode().getRCodeModel();
+         
+         // Try to see if we can find a function name
+         TokenCursor cursor = codeModel.getTokenCursor();
+         
+         // NOTE: This can fail if the document is empty
+         if (!cursor.moveToPosition(cursorPosition))
+            return;
+         
+         String tokenLower = token.toLowerCase();
+         if (cursor.currentValue() == "(" || cursor.findOpeningBracket("(", false))
+         {
+            if (cursor.moveToPreviousToken())
+            {
+               // Check to see if this really is the name of a function
+               JsArray<ScopeFunction> functionsInScope =
+                     codeModel.getAllFunctionScopes();
+               
+               String tokenName = cursor.currentValue();
+               for (int i = 0; i < functionsInScope.length(); i++)
+               {
+                  ScopeFunction rFunction = functionsInScope.get(i);
+                  String fnName = rFunction.getFunctionName();
+                  if (tokenName == fnName)
+                  {
+                     JsArrayString args = rFunction.getFunctionArgs();
+                     for (int j = 0; j < args.length(); j++)
+                     {
+                        String arg = args.get(j);
+                        if (arg.toLowerCase().startsWith(tokenLower))
+                           completions.add(new QualifiedName(
+                                 args.get(j) + " = ",
+                                 fnName,
+                                 false,
+                                 RCompletionType.CONTEXT
+                           ));
+                     }
+                  }
+               }
+            }
+         }
+      }
+   }
 
    private void doGetCompletions(
-         String line,
-         int pos,
-         ServerRequestCallback<Completions> requestCallback)
+         final String token,
+         final List<String> assocData,
+         final List<Integer> dataType,
+         final List<Integer> numCommas,
+         final String functionCallString,
+         final String chainObjectName,
+         final JsArrayString chainAdditionalArgs,
+         final JsArrayString chainExcludeArgs,
+         final boolean chainExcludeArgsFromObject,
+         final String filePath,
+         final String documentId,
+         final ServerRequestCallback<Completions> requestCallback)
    {
       int optionsStartOffset;
       if (rnwContext_ != null &&
-          (optionsStartOffset = rnwContext_.getRnwOptionsStart(line, pos)) >= 0)
+          (optionsStartOffset = rnwContext_.getRnwOptionsStart(token, token.length())) >= 0)
       {
-         doGetSweaveCompletions(line, optionsStartOffset, pos, requestCallback);
+         doGetSweaveCompletions(token, optionsStartOffset, token.length(), requestCallback);
       }
       else
       {
-         server_.getCompletions(line, pos, requestCallback);
+         server_.getCompletions(
+               token,
+               assocData,
+               dataType,
+               numCommas,
+               functionCallString,
+               chainObjectName,
+               chainAdditionalArgs,
+               chainExcludeArgs,
+               chainExcludeArgsFromObject,
+               filePath,
+               documentId,
+               requestCallback);
       }
    }
 
@@ -147,13 +607,21 @@ public class CompletionRequester
                   optionsStartOffset,
                   cursorPos,
                   rnwContext_ == null ? null : rnwContext_.getActiveRnwWeave());
+            
+            String[] pkgNames = new String[result.completions.length()];
+            Arrays.fill(pkgNames, "`chunk-option`");
 
             Completions response = Completions.createCompletions(
                   result.token,
                   result.completions,
-                  JsUtil.createEmptyArray(result.completions.length())
-                        .<JsArrayString>cast(),
-                  null);
+                  JsUtil.toJsArrayString(pkgNames),
+                  JsUtil.toJsArrayBoolean(new ArrayList<Boolean>(result.completions.length())),
+                  JsUtil.toJsArrayInteger(new ArrayList<Integer>(result.completions.length())),
+                  "",
+                  false,
+                  false,
+                  true);
+            
             // Unlike other completion types, Sweave completions are not
             // guaranteed to narrow the candidate list (in particular
             // true/false).
@@ -163,6 +631,7 @@ public class CompletionRequester
             {
                response.setSuggestOnAccept(true);
             }
+            
             requestCallback.onResponseReceived(response);
          }
 
@@ -177,67 +646,198 @@ public class CompletionRequester
    public void flushCache()
    {
       cachedLinePrefix_ = null ;
-      cachedResult_ = null ;
+      cachedCompletions_.clear();
    }
    
-   private CompletionResult narrow(String diff)
-   {
-      assert cachedResult_.guessedFunctionName == null ;
-      
-      String token = cachedResult_.token + diff ;
-      ArrayList<QualifiedName> newCompletions = new ArrayList<QualifiedName>() ;
-      for (QualifiedName qname : cachedResult_.completions)
-         if (qname.name.startsWith(token))
-            newCompletions.add(qname) ;
-      
-      return new CompletionResult(token, newCompletions, null,
-                                  cachedResult_.suggestOnAccept) ;
-   }
-
    public static class CompletionResult
    {
-      public CompletionResult(String token, ArrayList<QualifiedName> completions,
+      public CompletionResult(String token,
+                              ArrayList<QualifiedName> completions,
                               String guessedFunctionName,
-                              boolean suggestOnAccept)
+                              boolean suggestOnAccept,
+                              boolean dontInsertParens)
       {
          this.token = token ;
          this.completions = completions ;
          this.guessedFunctionName = guessedFunctionName ;
          this.suggestOnAccept = suggestOnAccept ;
+         this.dontInsertParens = dontInsertParens ;
       }
       
       public final String token ;
       public final ArrayList<QualifiedName> completions ;
       public final String guessedFunctionName ;
       public final boolean suggestOnAccept ;
+      public final boolean dontInsertParens ;
    }
    
    public static class QualifiedName implements Comparable<QualifiedName>
    {
-      public QualifiedName(String name, String pkgName)
+      
+      public QualifiedName(
+            String name, String source, boolean shouldQuote, int type)
       {
-         this.name = name ;
-         this.pkgName = pkgName ;
+         this.name = name;
+         this.source = source;
+         this.shouldQuote = shouldQuote;
+         this.type = type;
+      }
+      
+      public QualifiedName(String name, String source)
+      {
+         this.name = name;
+         this.source = source;
+         this.shouldQuote = false;
+         this.type = RCompletionType.UNKNOWN;
       }
       
       @Override
       public String toString()
       {
-         return DomUtils.textToHtml(name) + getFormattedPackageName();
+         SafeHtmlBuilder sb = new SafeHtmlBuilder();
+         
+         // Get an icon for the completion
+         // We use separate styles for file icons, so we can nudge them
+         // a bit differently
+         String style = RES.styles().completionIcon();
+         if (RCompletionType.isFileType(type))
+            style = RES.styles().fileIcon();
+            
+         SafeHtmlUtil.appendImage(
+               sb,
+               style,
+               getIcon());
+         
+         // Get the display name. Note that for file completions this requires
+         // some munging of the 'name' and 'package' fields.
+         addDisplayName(sb);
+         
+         return sb.toSafeHtml().asString();
       }
-
-      private String getFormattedPackageName()
+      
+      private void addDisplayName(SafeHtmlBuilder sb)
       {
-         return pkgName == null || pkgName.length() == 0
-               ? ""
-               : " <span class=\"packageName\">{"
-                  + DomUtils.textToHtml(pkgName)
-                  + "}</span>";
+         // Handle files specially
+         if (RCompletionType.isFileType(type))
+            doAddDisplayNameFile(sb);
+         else
+            doAddDisplayNameGeneric(sb);
+      }
+      
+      private void doAddDisplayNameFile(SafeHtmlBuilder sb)
+      {
+         ArrayList<Integer> slashIndices =
+               StringUtil.indicesOf(name, '/');
+
+         if (slashIndices.size() < 1)
+         {
+            SafeHtmlUtil.appendSpan(
+                  sb,
+                  RES.styles().completion(),
+                  name);
+         }
+         else
+         {
+            int lastSlashIndex = slashIndices.get(
+                  slashIndices.size() - 1);
+
+            int firstSlashIndex = 0;
+            if (slashIndices.size() > 2)
+               firstSlashIndex = slashIndices.get(
+                     slashIndices.size() - 3);
+
+            String endName = name.substring(lastSlashIndex + 1);
+            String startName = "";
+            if (slashIndices.size() > 2)
+               startName += "...";
+            startName += name.substring(firstSlashIndex, lastSlashIndex);
+
+            SafeHtmlUtil.appendSpan(
+                  sb,
+                  RES.styles().completion(),
+                  endName);
+
+            SafeHtmlUtil.appendSpan(
+                  sb,
+                  RES.styles().packageName(),
+                  startName);
+         }
+
+      }
+      
+      private void doAddDisplayNameGeneric(SafeHtmlBuilder sb)
+      {
+         // Get the name for the completion
+         SafeHtmlUtil.appendSpan(
+               sb,
+               RES.styles().completion(),
+               name);
+
+         // Get the associated package for functions
+         if (RCompletionType.isFunctionType(type))
+         {
+            SafeHtmlUtil.appendSpan(
+                  sb,
+                  RES.styles().packageName(),
+                  "{" + source.replaceAll("package:", "") + "}");
+         }
+      }
+      
+      private ImageResource getIcon()
+      {
+         if (RCompletionType.isFunctionType(type))
+            return ICONS.function();
+         
+         switch(type)
+         {
+         case RCompletionType.UNKNOWN:
+            return ICONS.variable();
+         case RCompletionType.VECTOR:
+            return ICONS.variable();
+         case RCompletionType.ARGUMENT:
+            return ICONS.variable();
+         case RCompletionType.ARRAY:
+         case RCompletionType.DATAFRAME:
+            return ICONS.dataFrame();
+         case RCompletionType.LIST:
+            return ICONS.clazz();
+         case RCompletionType.ENVIRONMENT:
+            return ICONS.environment();
+         case RCompletionType.S4_CLASS:
+         case RCompletionType.S4_OBJECT:
+         case RCompletionType.R5_CLASS:
+         case RCompletionType.R5_OBJECT:
+            return ICONS.clazz();
+         case RCompletionType.FILE:
+            return getIconForFilename(name);
+         case RCompletionType.DIRECTORY:
+            return ICONS.folder();
+         case RCompletionType.CHUNK:
+         case RCompletionType.ROXYGEN:
+            return ICONS.keyword();
+         case RCompletionType.HELP:
+            return ICONS.help();
+         case RCompletionType.STRING:
+            return ICONS.variable();
+         case RCompletionType.PACKAGE:
+            return ICONS.rPackage();
+         case RCompletionType.KEYWORD:
+            return ICONS.keyword();
+         case RCompletionType.CONTEXT:
+            return ICONS.context();
+         default:
+            return ICONS.variable();
+         }
+      }
+      
+      private ImageResource getIconForFilename(String name)
+      {
+         return FILE_TYPE_REGISTRY.getIconForFilename(name);
       }
 
       public static QualifiedName parseFromText(String val)
       {
-         String name, pkgName = null;
+         String name, pkgName = "";
          int idx = val.indexOf('{') ;
          if (idx < 0)
          {
@@ -261,12 +861,46 @@ public class CompletionRequester
          if (result != 0)
             return result ;
          
-         String pkg = pkgName == null ? "" : pkgName ;
-         String opkg = o.pkgName == null ? "" : o.pkgName ;
+         String pkg = source == null ? "" : source ;
+         String opkg = o.source == null ? "" : o.source ;
          return pkg.compareTo(opkg) ;
+      }
+      
+      @Override
+      public boolean equals(Object object)
+      {
+         if (!(object instanceof QualifiedName))
+            return false;
+         
+         QualifiedName other = (QualifiedName) object;
+         return name.equals(other.name) &&
+                type == other.type;
+      }
+      
+      @Override
+      public int hashCode()
+      {
+         int hash = 17;
+         hash = 31 * hash + name.hashCode();
+         hash = 31 * hash + type;
+         return hash;
       }
 
       public final String name ;
-      public final String pkgName ;
+      public final String source ;
+      public final boolean shouldQuote ;
+      public final int type ;
+      private static final FileTypeRegistry FILE_TYPE_REGISTRY =
+            RStudioGinjector.INSTANCE.getFileTypeRegistry();
    }
+   
+   private static final CompletionRequesterResources RES =
+         CompletionRequesterResources.INSTANCE;
+   
+   private static final CodeIcons ICONS = CodeIcons.INSTANCE;
+   
+   static {
+      RES.styles().ensureInjected();
+   }
+   
 }

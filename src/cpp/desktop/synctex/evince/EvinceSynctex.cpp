@@ -28,8 +28,9 @@
 #include "EvinceDaemon.hpp"
 #include "EvinceWindow.hpp"
 
-using namespace core;
+using namespace rstudio::core;
 
+namespace rstudio {
 namespace desktop {
 namespace synctex {
 
@@ -144,12 +145,12 @@ void EvinceSynctex::syncView(EvinceWindow* pWindow, const SyncRequest& req)
       QStringList args;
       if (req.hasPage())
       {
-         args.append(QString::fromAscii("-i"));
+         args.append(QString::fromUtf8("-i"));
          args.append(QString::fromStdString(
                            safe_convert::numberToString(req.page)));
       }
       args.append(req.pdfFile);
-      QProcess::startDetached(QString::fromAscii("evince"), args);
+      QProcess::startDetached(QString::fromUtf8("evince"), args);
    }
 }
 
@@ -206,3 +207,4 @@ void EvinceSynctex::onSyncSource(const QString& srcFile,
 
 } // namesapce synctex
 } // namespace desktop
+} // namespace rstudio

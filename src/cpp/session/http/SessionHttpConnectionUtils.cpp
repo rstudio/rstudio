@@ -35,6 +35,7 @@
 #include <session/SessionOptions.hpp>
 
 
+namespace rstudio {
 namespace session {
 
 void HttpConnection::sendJsonRpcError(const core::Error& error)
@@ -185,7 +186,7 @@ bool checkForSuspend(boost::shared_ptr<HttpConnection> ptrConnection)
 
 bool checkForSuspend(boost::shared_ptr<HttpConnection> ptrConnection)
 {
-   using namespace core::json;
+   using namespace rstudio::core::json;
    if (isMethod(ptrConnection, "suspend_session"))
    {
       bool force = false;
@@ -203,7 +204,7 @@ bool checkForSuspend(boost::shared_ptr<HttpConnection> ptrConnection)
       else
       {
          // send a signal to this process to suspend
-         using namespace core::system;
+         using namespace rstudio::core::system;
          sendSignalToSelf(force ? SigUsr2 : SigUsr1);
 
          // send response
@@ -232,5 +233,6 @@ bool authenticate(boost::shared_ptr<HttpConnection> ptrConnection,
 
 } // namespace connection
 } // namespace session
+} // namespace rstudio
 
 

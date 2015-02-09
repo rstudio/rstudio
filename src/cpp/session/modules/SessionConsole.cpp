@@ -30,8 +30,9 @@
 
 #include <session/SessionModuleContext.hpp>
 
-using namespace core;
+using namespace rstudio::core;
 
+namespace rstudio {
 namespace session {
 namespace modules { 
 namespace console {
@@ -142,7 +143,8 @@ SEXP rs_getPendingInput()
    
 Error initialize()
 {    
-   if (!session::options().verifyInstallation())
+   if (!(session::options().verifyInstallation() ||
+         session::options().runTests()))
    {
       // capture standard streams
       Error error = initializeOutputCapture();
@@ -178,4 +180,5 @@ Error initialize()
 } // namespace console
 } // namespace modules
 } // namesapce session
+} // namespace rstudio
 

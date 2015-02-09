@@ -15,23 +15,34 @@
 
 #include "DesktopBrowserWindow.hpp"
 #include <QWebFrame>
+#include <QToolBar>
+#include <QShortcut>
+
+#include <QtPrintSupport/QPrintPreviewDialog>
+
 #include "DesktopWebView.hpp"
 
 #include "DesktopUtils.hpp"
 #include "DesktopOptions.hpp"
 
+namespace rstudio {
 namespace desktop {
 
 BrowserWindow::BrowserWindow(bool showToolbar,
                              bool adjustTitle,
+                             QString name,
                              QUrl baseUrl,
-                             QWidget* pParent) :
-   QMainWindow(pParent)
+                             QWidget* pParent,
+                             WebPage* pOpener,
+                             bool allowExternalNavigate) :
+   QMainWindow(pParent),
+   name_(name),
+   pOpener_(pOpener)
 {
    adjustTitle_ = adjustTitle;
    progress_ = 0;
 
-   pView_ = new WebView(baseUrl, this);
+   pView_ = new WebView(baseUrl, this, allowExternalNavigate);
    QWebFrame* mainFrame = pView_->page()->mainFrame();
    connect(mainFrame, SIGNAL(javaScriptWindowObjectCleared()),
            this, SLOT(onJavaScriptWindowObjectCleared()));
@@ -74,9 +85,33 @@ void BrowserWindow::printRequested(QWebFrame* frame)
    dialog.exec();
 }
 
-void BrowserWindow::onCloseRequested()
+void BrowserWindow::closeEvent(QCloseEvent *event)
 {
-   close();
+   if (pOpener_ == NULL)
+   {
+      // if we don't know where we were opened from, check window.opener
+      // (note that this could also be empty)
+      QString cmd = QString::fromUtf8("if (window.opener && "
+         "window.opener.unregisterDesktopChildWindow))"
+         "   window.opener.unregisterDesktopChildWindow('");
+      cmd.append(name_);
+      cmd.append(QString::fromUtf8("');"));
+      webView()->page()->mainFrame()->evaluateJavaScript(cmd);
+   }
+   else if (pOpener_->mainFrame())
+   {
+      // if we do know where we were opened from and it has the appropriate
+      // handlers, let it know we're closing
+      QString cmd = QString::fromUtf8(
+                  "if (window.unregisterDesktopChildWindow) "
+                  "   window.unregisterDesktopChildWindow('");
+      cmd.append(name_);
+      cmd.append(QString::fromUtf8("');"));
+      pOpener_->mainFrame()->evaluateJavaScript(cmd);
+   }
+
+   // forward the close event to the web view
+   webView()->event(event);
 }
 
 void BrowserWindow::adjustTitle()
@@ -104,9 +139,9 @@ WebView* BrowserWindow::webView()
 
 void BrowserWindow::avoidMoveCursorIfNecessary()
 {
-#ifdef Q_WS_MACX
+#ifdef Q_OS_MAC
    webView()->page()->mainFrame()->evaluateJavaScript(
-         QString::fromAscii("document.body.className = document.body.className + ' avoid-move-cursor'"));
+         QString::fromUtf8("document.body.className = document.body.className + ' avoid-move-cursor'"));
 #endif
 }
 
@@ -130,4 +165,16 @@ void BrowserWindow::triggerPageAction(QWebPage::WebAction action)
    webView()->triggerPageAction(action);
 }
 
+void BrowserWindow::onJavaScriptWindowObjectCleared()
+{
+   QString cmd = QString::fromUtf8("if (window.opener && "
+      "window.opener.registerDesktopChildWindow))"
+      "   window.opener.registerDesktopChildWindow('");
+   cmd.append(name_);
+   cmd.append(QString::fromUtf8("', window);"));
+
+   webView()->page()->mainFrame()->evaluateJavaScript(cmd);
+}
+
 } // namespace desktop
+} // namespace rstudio

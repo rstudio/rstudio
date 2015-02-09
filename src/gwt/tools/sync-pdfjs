@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 set -e
 
@@ -10,7 +10,7 @@ cd pdfjs
 git clean -dfx
 
 # Use this commit
-git checkout c132a99
+git checkout 997096f
 
 node make generic singlefile
 cd ..
@@ -19,24 +19,35 @@ minify () {
   echo "Minifying $1.js (original preserved as $1.full.js)"
   CC_OPTS="--compilation_level SIMPLE_OPTIMIZATIONS --language_in ECMASCRIPT5"
   mv ../../cpp/session/resources/pdfjs/$1.js ../../cpp/session/resources/pdfjs/$1.full.js
-  java -jar "compiler/compiler.jar" $CC_OPTS --js ../../cpp/session/resources/pdfjs/$1.full.js --js_output_file ../../cpp/session/resources/pdfjs/$1.js
+  java -Xmx128M -jar "compiler/compiler.jar" $CC_OPTS --js ../../cpp/session/resources/pdfjs/$1.full.js --js_output_file ../../cpp/session/resources/pdfjs/$1.js
 }
 
+PDFJS_BUILD_DIR=pdfjs/build/generic
+PDFJS_TARGET_DIR=../../cpp/session/resources/pdfjs
+PDFJS_TARGET_WEB=${PDFJS_TARGET_DIR}/web
+
 echo "Copying literal resources"
-cp pdfjs/build/generic/web/viewer.css ../../cpp/session/resources/pdfjs/web
-cp pdfjs/build/generic/web/viewer.html ../../cpp/session/resources/pdfjs/web
-cp pdfjs/build/generic/web/images/*.png ../../cpp/session/resources/pdfjs/web/images
-cp pdfjs/build/generic/web/images/*.svg ../../cpp/session/resources/pdfjs/web/images
-cp pdfjs/build/generic/web/locale/locale.properties ../../cpp/session/resources/pdfjs/web/locale
-cp pdfjs/build/generic/web/locale/en-US/viewer.properties ../../cpp/session/resources/pdfjs/web/locale/en-US
+cp ${PDFJS_BUILD_DIR}/web/viewer.css ${PDFJS_TARGET_WEB}
+cp ${PDFJS_BUILD_DIR}/web/viewer.html ${PDFJS_TARGET_WEB}
+cp ${PDFJS_BUILD_DIR}/web/images/*.png ${PDFJS_TARGET_WEB}/images
+cp ${PDFJS_BUILD_DIR}/web/images/*.svg ${PDFJS_TARGET_WEB}/images
+cp ${PDFJS_BUILD_DIR}/web/locale/locale.properties ${PDFJS_TARGET_WEB}/locale
+cp ${PDFJS_BUILD_DIR}/web/locale/en-US/viewer.properties ${PDFJS_TARGET_WEB}/locale/en-US
 
 echo "Copying scripts"
-cp pdfjs/build/generic/build/pdf.js ../../cpp/session/resources/pdfjs/build
-cp pdfjs/build/generic/build/pdf.worker.js ../../cpp/session/resources/pdfjs/build
-cp pdfjs/build/generic/web/compatibility.js ../../cpp/session/resources/pdfjs/web
-cp pdfjs/build/generic/web/debugger.js ../../cpp/session/resources/pdfjs/web
-cp pdfjs/build/generic/web/viewer.js ../../cpp/session/resources/pdfjs/web
-cp pdfjs/build/generic/web/l10n.js ../../cpp/session/resources/pdfjs/web
+cp ${PDFJS_BUILD_DIR}/build/pdf.js ${PDFJS_TARGET_DIR}/build
+cp ${PDFJS_BUILD_DIR}/build/pdf.worker.js ${PDFJS_TARGET_DIR}/build
+cp ${PDFJS_BUILD_DIR}/web/compatibility.js ${PDFJS_TARGET_WEB}
+cp ${PDFJS_BUILD_DIR}/web/debugger.js ${PDFJS_TARGET_WEB}
+cp ${PDFJS_BUILD_DIR}/web/viewer.js ${PDFJS_TARGET_WEB}
+cp ${PDFJS_BUILD_DIR}/web/l10n.js ${PDFJS_TARGET_WEB}
+
+echo "Renaming Retina images" 
+pushd .
+cd ../../cpp/session/resources/pdfjs/web/images
+for i in *@2x.png ; do mv "$i" "${i/@2x/_2x}" ; done
+popd
+sed -i -e "s/@2x.png/_2x.png/g" ${PDFJS_TARGET_WEB}/viewer.css
 
 if [ "$1" != "debug" ]; then
    echo "Minifying scripts"

@@ -23,17 +23,20 @@
 #include <boost/signals.hpp>
 #include <boost/shared_ptr.hpp>
 
+#include <core/HtmlUtils.hpp>
 #include <core/system/System.hpp>
 #include <core/system/ShellUtils.hpp>
 #include <core/system/FileChangeEvent.hpp>
 #include <core/http/UriHandler.hpp>
 #include <core/json/JsonRpc.hpp>
+#include <core/r_util/RToolsInfo.hpp>
 #include <core/Thread.hpp>
 
 #include <session/SessionOptions.hpp>
 #include <session/SessionClientEvent.hpp>
 #include <session/SessionSourceDatabase.hpp>
 
+namespace rstudio {
 namespace core {
    class Error;
    class Success;
@@ -48,13 +51,17 @@ namespace core {
       class ShellCommand;
    }
 }
+}
 
+namespace rstudio {
 namespace r {
 namespace session {
    struct RSuspendOptions;
 }
 }
+}
 
+namespace rstudio {
 namespace session {   
 namespace module_context {
 
@@ -111,6 +118,14 @@ bool isPackageInstalled(const std::string& packageName);
 // check if a package is installed with a specific version
 bool isPackageVersionInstalled(const std::string& packageName,
                                const std::string& version);
+
+// check if the required versions of various packages are installed
+bool isMinimumDevtoolsInstalled();
+bool isMinimumRoxygenInstalled();
+
+std::string packageVersion(const std::string& packageName);
+
+bool hasMinimumRVersion(const std::string& version);
 
 // check if a package is installed with a specific version and RStudio protocol
 // version (used to allow packages to disable compatibility with older RStudio
@@ -280,6 +295,7 @@ struct Events : boost::noncopyable
    boost::signal<void (ChangeSource)>        onDetectChanges;
    boost::signal<void (core::FilePath)>      onSourceEditorFileSaved;
    boost::signal<void(bool)>                 onDeferredInit;
+   boost::signal<void(bool)>                 afterSessionInitHook;
    boost::signal<void(bool)>                 onBackgroundProcessing;
    boost::signal<void(bool)>                 onShutdown;
    boost::signal<void ()>                    onQuit;
@@ -413,6 +429,11 @@ std::string libPathsString();
 bool canBuildCpp();
 bool installRBuildTools(const std::string& action);
 bool haveRcppAttributes();
+bool isRtoolsCompatible(const core::r_util::RToolsInfo& rTools);
+bool addRtoolsToPathIfNecessary(std::string* pPath,
+                                std::string* pWarningMessage);
+bool addRtoolsToPathIfNecessary(core::system::Options* pEnvironment,
+                                std::string* pWarningMessage);
 
 #ifdef __APPLE__
 bool isOSXMavericks();
@@ -686,8 +707,78 @@ core::json::Object plotExportFormat(const std::string& name,
 core::Error createSelfContainedHtml(const core::FilePath& sourceFilePath,
                                     const core::FilePath& targetFilePath);
 
+bool isUserFile(const core::FilePath& filePath);
+
+
+struct SourceMarker
+{
+   enum Type {
+      Error = 0, Warning = 1, Box = 2, Info = 3, Style = 4, Usage = 5
+   };
+
+   SourceMarker(Type type,
+                const core::FilePath& path,
+                int line,
+                int column,
+                const core::html_utils::HTML& message,
+                bool showErrorList)
+      : type(type), path(path), line(line), column(column), message(message),
+        showErrorList(showErrorList)
+   {
+   }
+
+   Type type;
+   core::FilePath path;
+   int line;
+   int column;
+   core::html_utils::HTML message;
+   bool showErrorList;
+};
+
+SourceMarker::Type sourceMarkerTypeFromString(const std::string& type);
+
+core::json::Array sourceMarkersAsJson(const std::vector<SourceMarker>& markers);
+
+struct SourceMarkerSet
+{  
+   SourceMarkerSet() {}
+
+   SourceMarkerSet(const std::string& name,
+                   const std::vector<SourceMarker>& markers)
+      : name(name),
+        markers(markers)
+   {
+   }
+
+   SourceMarkerSet(const std::string& name,
+                   const core::FilePath& basePath,
+                   const std::vector<SourceMarker>& markers)
+      : name(name),
+        basePath(basePath),
+        markers(markers)
+   {
+   }
+
+   bool empty() const { return name.empty(); }
+
+   std::string name;
+   core::FilePath basePath;
+   std::vector<SourceMarker> markers;
+};
+
+enum MarkerAutoSelect
+{
+   MarkerAutoSelectNone = 0,
+   MarkerAutoSelectFirst = 1,
+   MarkerAutoSelectFirstError = 2
+};
+
+void showSourceMarkers(const SourceMarkerSet& markerSet,
+                       MarkerAutoSelect autoSelect);
+
 } // namespace module_context
 } // namespace session
+} // namespace rstudio
 
 #endif // SESSION_MODULE_CONTEXT_HPP
 

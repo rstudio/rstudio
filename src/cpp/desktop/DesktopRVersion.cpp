@@ -31,8 +31,9 @@
 #define KEY_WOW64_64KEY 0x0100
 #endif
 
-using namespace core;
+using namespace rstudio::core;
 
+namespace rstudio {
 namespace desktop {
 
 namespace {
@@ -156,11 +157,11 @@ QString binDirToHomeDir(QString binDir)
 
    // For R-2.12 and later (bin/i386 and bin/x64)
    if (dir.dirName() != QString::fromUtf8("bin"))
-      dir.setPath(QDir::cleanPath(dir.filePath(QString::fromAscii(".."))));
+      dir.setPath(QDir::cleanPath(dir.filePath(QString::fromUtf8(".."))));
 
    // The parent of the bin dir is the home dir
    if (dir.dirName() == QString::fromUtf8("bin"))
-      return QDir::cleanPath(dir.filePath(QString::fromAscii("..")));
+      return QDir::cleanPath(dir.filePath(QString::fromUtf8("..")));
 
    return QString();
 }
@@ -213,7 +214,7 @@ void enumProgramFiles(QList<RVersion>* pResults)
 
 void enumRegistry(Architecture architecture, QList<RVersion>* pResults)
 {
-   using namespace core::system;
+   using namespace rstudio::core::system;
 
    REGSAM flags;
    switch (architecture)
@@ -295,7 +296,7 @@ QList<RVersion> allRVersions(QList<RVersion> versions)
 
 RVersion detectPreferredFromRegistry(Architecture architecture)
 {
-   using namespace core::system;
+   using namespace rstudio::core::system;
 
    REGSAM flags;
    switch (architecture)
@@ -583,3 +584,4 @@ bool RVersion::operator==(const RVersion& other) const
 
 
 } // namespace desktop
+} // namespace rstudio

@@ -18,17 +18,19 @@
 
 #include <string>
 
+namespace rstudio {
 namespace core {
 
 class Error;
 
 namespace system {
 
-Error loadLibrary(const std::string& libPath, int options, void** ppLib);
+Error loadLibrary(const std::string& libPath, void** ppLib);
 Error loadSymbol(void* pLib, const std::string& name, void** ppSymbol);
 Error closeLibrary(void* pLib);
 
 } // namespace system
 } // namespace core
+} // namespace rstudio
 
 #endif // CORE_SYSTEM_LIBRARY_LOADER_HPP

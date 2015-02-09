@@ -15,6 +15,7 @@
 
 #include "RGraphicsHandler.hpp"
 
+namespace rstudio {
 namespace r {
 namespace session {
 namespace graphics {
@@ -23,7 +24,7 @@ namespace handler {
 DeviceContext* (*allocate)(pDevDesc dev);
 void (*destroy)(DeviceContext* pDC);
 
-bool (*initialize)(int width, int height, DeviceContext* pDC);
+bool (*initialize)(int width, int height, double devicePixelRatio, DeviceContext* pDC);
 
 void (*setSize)(pDevDesc pDev);
 void (*setDeviceAttributes)(pDevDesc pDev);
@@ -117,5 +118,6 @@ void (*onBeforeExecute)(DeviceContext* pDC);
 } // namespace graphics
 } // namespace session
 } // namespace r
+} // namespace rstudio
 
 

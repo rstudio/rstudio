@@ -15,15 +15,11 @@
 package org.rstudio.studio.client.workbench.views.console.shell.assist;
 
 import com.google.gwt.event.dom.client.*;
-import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.logical.shared.HasSelectionHandlers;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.user.client.DOM;
-import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HTMLTable.Cell;
 import com.google.gwt.user.client.ui.HTMLTable.CellFormatter;
@@ -86,7 +82,7 @@ class CompletionList<TItem> extends Composite
       private boolean firstEvent_ = true;
       private Point lastMouseMoveCoordinates_;
    }
-
+   
    public CompletionList(TItem[] items,
                          int visibleItems,
                          boolean asHtml,
@@ -111,7 +107,7 @@ class CompletionList<TItem> extends Composite
       scrollPanel_ = new ScrollPanel() ;
       scrollPanel_.getElement().getStyle().setProperty("overflowX", "hidden");
       scrollPanel_.add(grid) ;
-      scrollPanel_.setHeight((visibleItems * 20) + "px") ;
+      scrollPanel_.setHeight((visibleItems * 26) + "px") ;
       
       initWidget(scrollPanel_) ;
       grid_ = grid ;
@@ -260,37 +256,14 @@ class CompletionList<TItem> extends Composite
                       el.getOffsetHeight()) ;
    }
    
-   private class GridEx extends Grid implements HasMouseMoveHandlers
-   {
-      public GridEx(int rows, int cols)
-      {
-         super(rows, cols) ;
-         sinkEvents(Event.ONMOUSEMOVE) ;
-      }
-
-      public HandlerRegistration addMouseMoveHandler(MouseMoveHandler handler)
-      {
-         return addHandler(handler, MouseMoveEvent.getType()) ;
-      }
-      
-      public int getRowForEvent(MouseMoveEvent event)
-      {
-         Element td = getEventTargetCell(Event.as(event.getNativeEvent()));
-         if (td == null) {
-           return -1;
-         }
-
-         Element tr = DOM.getParent(td);
-         Element body = DOM.getParent(tr);
-         int row = DOM.getChildIndex(body, tr);
-
-         return row ;
-       }
-   }
-
    public void setMaxWidth(int maxWidthInPixels)
    {
       maxWidthInPixels_ = maxWidthInPixels;
+   }
+   
+   public TItem[] getItems()
+   {
+      return items_;
    }
 
    private int selectedIndex_ = -1 ;

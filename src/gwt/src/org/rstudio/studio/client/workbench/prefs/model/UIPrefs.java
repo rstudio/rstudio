@@ -116,9 +116,30 @@ public class UIPrefs extends UIPrefsAccessor implements UiPrefsChangedHandler
          useVimMode().setGlobalValue(
                               newUiPrefs.useVimMode().getGlobalValue());
          
+         continueCommentsOnNewline().setGlobalValue(
+                              newUiPrefs.continueCommentsOnNewline().getGlobalValue());
+         
          // insert matching
          insertMatching().setGlobalValue(
                                  newUiPrefs.insertMatching().getGlobalValue());
+              
+         codeComplete().setGlobalValue(
+                                 newUiPrefs.codeComplete().getGlobalValue());
+         
+         alwaysCompleteInConsole().setGlobalValue(
+                                 newUiPrefs.alwaysCompleteInConsole().getGlobalValue());
+         
+         insertParensAfterFunctionCompletion().setGlobalValue(
+                                 newUiPrefs.insertParensAfterFunctionCompletion().getGlobalValue());
+         
+         allowTabMultilineCompletion().setGlobalValue(
+                                 newUiPrefs.allowTabMultilineCompletion().getGlobalValue());
+         
+         insertSpacesAroundEquals().setGlobalValue(
+                                 newUiPrefs.insertSpacesAroundEquals().getGlobalValue());
+         
+         showSignatureTooltips().setGlobalValue(
+                                 newUiPrefs.showSignatureTooltips().getGlobalValue());
          
          autoAppendNewline().setGlobalValue(
                                  newUiPrefs.autoAppendNewline().getGlobalValue());
@@ -289,6 +310,10 @@ public class UIPrefs extends UIPrefsAccessor implements UiPrefsChangedHandler
          // preferred R Markdown template
          rmdPreferredTemplatePath().setGlobalValue(
                newUiPrefs.rmdPreferredTemplatePath().getGlobalValue());
+
+         // whether to show publish UI 
+         showPublishUi().setGlobalValue(
+               newUiPrefs.showPublishUi().getGlobalValue());
       }
       else if (e.getType().equals(UiPrefsChangedEvent.PROJECT_TYPE))
       {

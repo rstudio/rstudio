@@ -21,17 +21,23 @@ import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.*;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
+
 import org.rstudio.core.client.events.HasSelectionCommitHandlers;
 import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.events.SelectionCommitHandler;
 import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.theme.res.ThemeResources;
+import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.common.filetypes.FileIconResources;
+import org.rstudio.studio.client.workbench.model.Session;
 
 public class PathBreadcrumbWidget
       extends Composite
@@ -40,6 +46,8 @@ public class PathBreadcrumbWidget
 {
    public PathBreadcrumbWidget(FileSystemContext context)
    {
+      RStudioGinjector.INSTANCE.injectMembers(this);
+      
       context_ = context;
   
       pathPanel_ = new HorizontalPanel();
@@ -51,6 +59,7 @@ public class PathBreadcrumbWidget
          linkUp_.setTitle("Go to parent directory");
          linkUp_.setVisible(false);
          linkUp_.setStylePrimaryName(RES.styles().goUp());
+         linkUp_.addStyleName(ThemeStyles.INSTANCE.handCursor());
          Image image = new Image(FileIconResources.INSTANCE.iconUpFolder());
          linkUp_.getElement().appendChild(image.getElement());
       }
@@ -90,11 +99,12 @@ public class PathBreadcrumbWidget
          });
       }
 
-      DockLayoutPanel frame = new DockLayoutPanel(Unit.PX);
+      frame_ = new DockLayoutPanel(Unit.PX);
+      eastFrame_ = new FlowPanel();
 
       Image browse = new Image(RES.browse());
       browse.setStyleName(STYLES.browse());
-      frame.addEast(browse, RES.browse().getWidth());
+      browse.addStyleName(ThemeResources.INSTANCE.themeStyles().handCursor());
       browse.addClickHandler(new ClickHandler()
       {
          public void onClick(ClickEvent event)
@@ -102,16 +112,62 @@ public class PathBreadcrumbWidget
             browse();
          }
       });
+      eastFrame_.add(browse);
+      frame_.addEast(eastFrame_, browse.getWidth());
       
-      frame.add(outer_);
-      frame.setStyleName(STYLES.breadcrumbFrame());
-      initWidget(frame);
+      frame_.add(outer_);
+      frame_.setStyleName(STYLES.breadcrumbFrame());
+      initWidget(frame_);
+   }
+   
+   @Inject
+   public void initialize(Provider<Session> pSession)
+   {
+      pSession_ = pSession;
+   }
+   
+   private void maybeAddProjectIcon()
+   {
+      if (projectIconsAdded_)
+         return;
+      
+      if (pSession_ == null ||
+          pSession_.get() == null)
+         return;
+      
+      final FileSystemItem projDir =
+            pSession_.get().getSessionInfo().getActiveProjectDir();
+      
+      if (projDir != null)
+      {
+         Image projIcon = new Image(RES.projectImage());
+         projIcon.addStyleName(ThemeResources.INSTANCE.themeStyles().handCursor());
+
+         projIcon.addClickHandler(new ClickHandler()
+         {
+            public void onClick(ClickEvent event)
+            {
+               SelectionCommitEvent.fire(PathBreadcrumbWidget.this, projDir);
+            }
+         });
+         projIcon.addStyleName(RES.styles().project());
+         
+         eastFrame_.insert(projIcon, 0);
+         
+         // TODO: infer from contents
+         double width = 42;
+         
+         frame_.setWidgetSize(eastFrame_, width);
+         projectIconsAdded_ = true;
+         
+      }
    }
 
    public void setDirectory(FileSystemItem[] pathElements)
    {
       pathPanel_.clear();
-
+      maybeAddProjectIcon();
+      
       if (linkUp_ != null)
          linkUp_.setVisible(pathElements.length > 1);
 
@@ -153,6 +209,8 @@ public class PathBreadcrumbWidget
       if (isHome)
          link.addStyleName(RES.styles().home());
 
+      link.addStyleName(ThemeResources.INSTANCE.themeStyles().handCursor());
+      
       link.addClickHandler(new ClickHandler()
       {
          public void onClick(ClickEvent event)
@@ -229,4 +287,9 @@ public class PathBreadcrumbWidget
    private FileDialogStyles STYLES = RES.styles();
    private static final boolean INCLUDE_UP_LINK = false;
    private SimplePanel outer_;
+   private FlowPanel eastFrame_;
+   private boolean projectIconsAdded_ = false;
+   private final DockLayoutPanel frame_;
+   
+   private Provider<Session> pSession_;
 }

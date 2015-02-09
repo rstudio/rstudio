@@ -30,7 +30,7 @@ define("mode/r_highlight_rules", function(require, exports, module)
    {
 
       var keywords = lang.arrayToMap(
-            ("function|if|in|break|next|repeat|else|for|return|switch|while|try|tryCatch|stop|warning|require|library|attach|detach|source|setMethod|setGeneric|setGroupGeneric|setClass|setRefClass|new")
+            ("function|if|in|break|next|repeat|else|for|return|switch|while|try|tryCatch|stop|warning|require|library|attach|detach|source|setMethod|setGeneric|setGroupGeneric|setClass|setRefClass")
                   .split("|")
             );
 
@@ -60,34 +60,49 @@ define("mode/r_highlight_rules", function(require, exports, module)
                regex : "#.*$"
             },
             {
+               token : "string", // single line
+               regex : '["](?:(?:\\\\.)|(?:[^"\\\\]))*?["]'
+            },
+            {
+               token : "string", // single line
+               regex : "['](?:(?:\\\\.)|(?:[^'\\\\]))*?[']"
+            },
+            {
                token : "string", // multi line string start
+               merge : true,
                regex : '["]',
                next : "qqstring"
             },
             {
                token : "string", // multi line string start
+               merge : true,
                regex : "[']",
                next : "qstring"
             },
             {
                token : "constant.numeric", // hex
-               regex : "0[xX][0-9a-fA-F]+[Li]?\\b"
+               regex : "0[xX][0-9a-fA-F]+[Li]?\\b",
+               merge : false
             },
             {
                token : "constant.numeric", // number + integer
-               regex : "\\d+(?:\\.\\d*)?(?:[eE][+\\-]?\\d*)?[iL]?\\b"
+               regex : "\\d+(?:\\.\\d*)?(?:[eE][+\\-]?\\d*)?[iL]?\\b",
+               merge : false
             },
             {
                token : "constant.numeric", // number + integer with leading decimal
-               regex : "\\.\\d+(?:[eE][+\\-]?\\d*)?[iL]?\\b"
+               regex : "\\.\\d+(?:[eE][+\\-]?\\d*)?[iL]?\\b",
+               merge : false
             },
             {
                token : "constant.language.boolean",
-               regex : "(?:TRUE|FALSE|T|F)\\b"
+               regex : "(?:TRUE|FALSE|T|F)\\b",
+               merge : false
             },
             {
                token : "identifier",
-               regex : "`.*?`"
+               regex : "`.*?`",
+               merge : false
             },
             {
                token : function(value)
@@ -96,26 +111,29 @@ define("mode/r_highlight_rules", function(require, exports, module)
                      return "keyword";
                   else if (buildinConstants[value])
                      return "constant.language";
-                  else if (value == '...' || value.match(/^\.\.\d+$/))
+                  else if (value.match(/^\.\.\d+$/))
                      return "variable.language";
                   else
                      return "identifier";
                },
-               regex : "[a-zA-Z.][a-zA-Z0-9._]*\\b"
+               regex : "[a-zA-Z.][a-zA-Z0-9._]*"
             },
             {
                token : "keyword.operator",
-               regex : "%%|>=|<=|==|!=|\\->|<\\-|\\|\\||&&|=|\\+|\\-|\\*|/|\\^|>|<|!|&|\\||~|\\$|:|@"
+               regex : ":::|::|%%|>=|<=|==|!=|\\->|<\\-|<<\\-|\\|\\||&&|=|\\+|\\-|\\*|/|\\^|>|<|!|&|\\||~|\\$|:|@",
+               merge : false
             },
             {
-               token : "keyword.operator", // infix operators
-               regex : "%.*?%"
+               token : "keyword.operator.infix", // infix operators
+               regex : "%.*?%",
+               merge : false
             },
             {
                // Obviously these are neither keywords nor operators, but
                // labelling them as such was the easiest way to get them
                // to be colored distinctly from regular text
                token : "paren.keyword.operator",
+               merge : false,
                regex : "[[({]"
             },
             {
@@ -123,11 +141,13 @@ define("mode/r_highlight_rules", function(require, exports, module)
                // labelling them as such was the easiest way to get them
                // to be colored distinctly from regular text
                token : "paren.keyword.operator",
+               merge : false,
                regex : "[\\])}]"
             },
             {
                token : "text",
-               regex : "\\s+"
+               regex : "\\s+",
+               merge : true
             }
          ],
          "qqstring" : [
@@ -138,7 +158,8 @@ define("mode/r_highlight_rules", function(require, exports, module)
             },
             {
                token : "string",
-               regex : '.+'
+               regex : '.+',
+               merge : true
             }
          ],
          "qstring" : [
@@ -149,7 +170,8 @@ define("mode/r_highlight_rules", function(require, exports, module)
             },
             {
                token : "string",
-               regex : '.+'
+               regex : '.+',
+               merge : true
             }
          ]
       };

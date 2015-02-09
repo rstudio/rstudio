@@ -20,6 +20,7 @@ import org.rstudio.core.client.SerializedCommandQueue;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressIndicator;
@@ -53,6 +54,7 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
+import org.rstudio.studio.client.server.remote.RResult;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.events.SessionInitHandler;
@@ -121,6 +123,8 @@ public class Projects implements OpenProjectFileHandler,
             boolean hasProject = activeProjectFile != null;
             commands.closeProject().setEnabled(hasProject);
             commands.projectOptions().setEnabled(hasProject);
+            if (!hasProject)
+               commands.setWorkingDirToProjectDir().remove();
             
             // remove version control commands if necessary
             if (!sessionInfo.isVcsEnabled())
@@ -163,6 +167,12 @@ public class Projects implements OpenProjectFileHandler,
       });
    }
    
+   @Handler
+   public void onClearRecentProjects()
+   {  
+      // Clear the contents of the most rencently used list of projects
+      pMRUList_.get().clear();
+   }
    
    @Handler
    public void onNewProject()
@@ -302,7 +312,7 @@ public class Projects implements OpenProjectFileHandler,
                VcsCloneOptions cloneOptions = newProject.getVcsCloneOptions();
                
                if (cloneOptions.getVcsName().equals((VCSConstants.GIT_ID)))
-                  indicator.onProgress("Cloning Git repoistory...");
+                  indicator.onProgress("Cloning Git repository...");
                else
                   indicator.onProgress("Checking out SVN repository...");
                
@@ -345,26 +355,81 @@ public class Projects implements OpenProjectFileHandler,
          }, false);
       }
 
-      // Next, create the project file
+      // Next, create the project itself -- depending on the type, this
+      // could involve creating an R package, or Shiny application, and so on.
       createProjectCmds.addCommand(new SerializedCommand()
       {
          @Override
          public void onExecute(final Command continuation)
          {
-            indicator.onProgress("Creating project...");
+            
+            // Validate the package name if we're creating a package
+            if (newProject.getNewPackageOptions() != null)
+            {
+               final String packageName =
+                     newProject.getNewPackageOptions().getPackageName();
 
-            projServer_.createProject(
-                  newProject.getProjectFile(),
-                  newProject.getNewPackageOptions(),
-                  newProject.getNewShinyAppOptions(),
-                  new VoidServerRequestCallback(indicator)
-                  {
-                     @Override
-                     public void onSuccess()
+               if (!PACKAGE_NAME_PATTERN.test(packageName))
+               {
+                  indicator.onError(
+                        "Invalid package name '" + packageName + "': " +
+                              "package names must start with a letter, and contain " +
+                              "only letters and numbers."
+                        );
+                  return;
+               }
+            }
+            
+            indicator.onProgress("Creating project...");
+            
+            if (newProject.getNewPackageOptions() == null)
+            {
+               projServer_.createProject(
+                     newProject.getProjectFile(),
+                     newProject.getNewPackageOptions(),
+                     newProject.getNewShinyAppOptions(),
+                     new VoidServerRequestCallback(indicator)
                      {
-                        continuation.execute();
-                     }
-                  });
+                        @Override
+                        public void onSuccess()
+                        {
+                           continuation.execute();
+                        }
+                     });
+            }
+            else
+            {
+               String projectFile = newProject.getProjectFile();
+               String packageDirectory = projectFile.substring(0,
+                     projectFile.lastIndexOf('/'));
+               
+               projServer_.packageSkeleton(
+                     newProject.getNewPackageOptions().getPackageName(),
+                     packageDirectory,
+                     newProject.getNewPackageOptions().getCodeFiles(),
+                     newProject.getNewPackageOptions().getUsingRcpp(),
+                     new ServerRequestCallback<RResult<Void>>()
+                     {
+                        
+                        @Override
+                        public void onResponseReceived(RResult<Void> response)
+                        {
+                           if (response.failed())
+                              indicator.onError(response.errorMessage());
+                           else
+                              continuation.execute();
+                        }
+
+                        @Override
+                        public void onError(ServerError error)
+                        {
+                           Debug.logError(error);
+                           indicator.onError(error.getUserMessage());
+                        }
+                     });
+                     
+            }
+
          }
       }, false);
       
@@ -710,7 +775,7 @@ public class Projects implements OpenProjectFileHandler,
    private final Provider<UIPrefs> pUIPrefs_;
    
    public static final String NONE = "none";
-
+   public static final Pattern PACKAGE_NAME_PATTERN =
+         Pattern.create("^[a-zA-Z][a-zA-Z0-9.]*$", "");
    
-  
 }

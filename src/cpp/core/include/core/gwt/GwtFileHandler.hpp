@@ -18,6 +18,7 @@
 
 #include <core/http/UriHandler.hpp>
 
+namespace rstudio {
 namespace core {
 namespace gwt {
       
@@ -30,6 +31,7 @@ http::UriHandlerFunction fileHandlerFunction(
    
 } // namespace gwt
 } // namespace core
+} // namespace rstudio
 
 #endif // CORE_GWT_FILE_HANDLER_HPP
 

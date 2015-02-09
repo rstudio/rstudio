@@ -26,10 +26,12 @@
 - (id)initWithURLRequest: (NSURLRequest*) request
                     name: (NSString*) name
               clientName: (NSString*) clientName
+   allowExternalNavigate: (bool) allowExternalNavigate
 {
    if (self = [super initWithURLRequest: request
                                    name: name
-                             clientName: clientName])
+                             clientName: clientName
+                  allowExternalNavigate: allowExternalNavigate])
    {
       toolbarItems_ = [[NSArray alloc] initWithObjects: kBackCommand,
                                                         kForwardCommand,

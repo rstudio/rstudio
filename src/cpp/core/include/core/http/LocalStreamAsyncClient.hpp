@@ -26,6 +26,7 @@
 #include <core/http/AsyncClient.hpp>
 #include <core/http/LocalStreamSocketUtils.hpp>
 
+namespace rstudio {
 namespace core {
 namespace http {  
 
@@ -103,5 +104,6 @@ private:
    
 } // namespace http
 } // namespace core
+} // namespace rstudio
 
 #endif // CORE_HTTP_LOCAL_STREAM_ASYNC_CLIENT_HPP

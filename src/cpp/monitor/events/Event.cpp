@@ -21,6 +21,7 @@
 
 #include <core/http/Util.hpp>
 
+namespace rstudio {
 namespace monitor {
 
 std::ostream& operator<<(std::ostream& ostr, const Event& event)
@@ -79,4 +80,5 @@ std::ostream& operator<<(std::ostream& ostr, const Event& event)
 }
 
 } // namespace monitor
+} // namespace rstudio
 

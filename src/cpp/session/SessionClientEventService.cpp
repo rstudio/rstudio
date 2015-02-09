@@ -34,8 +34,9 @@
 
 #include "SessionClientEventQueue.hpp"
 
-using namespace core;
+using namespace rstudio::core;
 
+namespace rstudio {
 namespace session {
    
 namespace {
@@ -194,7 +195,7 @@ void ClientEventService::run()
       time_duration maxTotalBatchDelay = seconds(2);
 
       // make much shorter for desktop mode
-      if (session::options().programMode() == kSessionProgramModeDesktop)
+      if (options().programMode() == kSessionProgramModeDesktop)
       {
          batchDelay = milliseconds(2);
          maxTotalBatchDelay = milliseconds(10);
@@ -351,3 +352,4 @@ void ClientEventService::run()
 }
       
 } // namespace session
+} // namespace rstudio

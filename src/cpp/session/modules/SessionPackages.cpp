@@ -42,8 +42,9 @@
 
 #include "session-config.h"
 
-using namespace core;
+using namespace rstudio::core;
 
+namespace rstudio {
 namespace session {
 namespace modules { 
 namespace packages {
@@ -58,13 +59,24 @@ Error availablePackagesBegin(const core::json::JsonRpcRequest& request,
          pContribUrls);
 }
 
-class AvailablePackagesCache
+class AvailablePackagesCache : public boost::noncopyable
 {
 public:
+   
+   static AvailablePackagesCache& get()
+   {
+      static AvailablePackagesCache instance;
+      return instance;
+   }
+   
+private:
+   
    AvailablePackagesCache()
       : pMutex_(new boost::mutex())
    {
    }
+   
+public:
 
    void insert(const std::string& contribUrl,
                const std::vector<std::string>& availablePackages)
@@ -74,6 +86,18 @@ public:
          cache_[contribUrl] = availablePackages;
       }
       END_LOCK_MUTEX
+   }
+   
+   bool find(const std::string& contribUrl)
+   {
+      LOCK_MUTEX(*pMutex_)
+      {
+         return cache_.find(contribUrl) != cache_.end();
+      }
+      END_LOCK_MUTEX
+            
+      // happy compiler
+      return false;
    }
 
 
@@ -99,8 +123,51 @@ public:
       // keep compiler happy
       return false;
    }
+   
+   void ensurePopulated(const std::string& contribUrl)
+   {
+      LOCK_MUTEX(*pMutex_)
+      {
+         if (cache_.find(contribUrl) != cache_.end())
+            return;
+         
+         // make an HTTP request for the available packages
+         http::URL url(contribUrl + "/PACKAGES");
+         http::Request pkgRequest;
+         pkgRequest.setMethod("GET");
+         pkgRequest.setHost(url.hostname());
+         pkgRequest.setUri(url.path());
+         pkgRequest.setHeader("Accept", "*/*");
+         pkgRequest.setHeader("Connection", "close");
+         http::Response pkgResponse;
+
+         Error error = http::sendRequest(url.hostname(),
+                                         safe_convert::numberToString(url.port()),
+                                         pkgRequest,
+                                         &pkgResponse);
+
+         // we don't log errors or bad http status codes because we expect these
+         // requests will fail frequently due to either being offline or unable to
+         // navigate a proxy server
+         if (!error && (pkgResponse.statusCode() == 200))
+         {
+            std::string body = pkgResponse.body();
+            boost::regex re("^Package:\\s*([^\\s]+?)\\s*$");
+
+            boost::sregex_iterator matchBegin(body.begin(), body.end(), re);
+            boost::sregex_iterator matchEnd;
+            std::vector<std::string> results;
+            for (; matchBegin != matchEnd; matchBegin++)
+               results.push_back((*matchBegin)[1]);
+            cache_[contribUrl] = results;
+         }
+         
+      }
+      END_LOCK_MUTEX
+   }
 
 private:
+   
    // make mutex heap based to avoid boost mutex assertions when
    // it is destructucted in a multicore forked child
    boost::mutex* pMutex_;
@@ -110,56 +177,36 @@ private:
 void downloadAvailablePackages(const std::string& contribUrl,
                                std::vector<std::string>* pAvailablePackages)
 {
-   // cache available packages to minimize http round trips
-   static AvailablePackagesCache s_availablePackagesCache;
+   AvailablePackagesCache& cache = AvailablePackagesCache::get();
+   cache.ensurePopulated(contribUrl);
+   cache.lookup(contribUrl, pAvailablePackages);
+}
 
-   // check cache first
+void downloadAvailablePackages(const std::string& contribUrl)
+{
+   AvailablePackagesCache& cache = AvailablePackagesCache::get();
+   cache.ensurePopulated(contribUrl);
+}
+
+// Populate the package cache for a particular URL
+SEXP rs_downloadAvailablePackages(SEXP contribUrlSEXP)
+{
+   std::string contribUrl = r::sexp::asString(contribUrlSEXP);
+   downloadAvailablePackages(contribUrl);
+   return R_NilValue;
+}
+
+SEXP rs_getCachedAvailablePackages(SEXP contribUrlSEXP)
+{
+   r::sexp::Protect protect;
+   std::string contribUrl = r::sexp::asString(contribUrlSEXP);
+   AvailablePackagesCache& s_availablePackagesCache = AvailablePackagesCache::get();
+   
    std::vector<std::string> availablePackages;
    if (s_availablePackagesCache.lookup(contribUrl, &availablePackages))
-   {
-      std::copy(availablePackages.begin(),
-                availablePackages.end(),
-                std::back_inserter(*pAvailablePackages));
-      return;
-   }
-
-   http::URL url(contribUrl + "/PACKAGES");
-   http::Request pkgRequest;
-   pkgRequest.setMethod("GET");
-   pkgRequest.setHost(url.hostname());
-   pkgRequest.setUri(url.path());
-   pkgRequest.setHeader("Accept", "*/*");
-   pkgRequest.setHeader("Connection", "close");
-   http::Response pkgResponse;
-
-   Error error = http::sendRequest(url.hostname(),
-                                   safe_convert::numberToString(url.port()),
-                                   pkgRequest,
-                                   &pkgResponse);
-
-   // we don't log errors or bad http status codes because we expect these
-   // requests will fail frequently due to either being offline or unable to
-   // navigate a proxy server
-   if (!error && (pkgResponse.statusCode() == 200))
-   {
-      std::string body = pkgResponse.body();
-      boost::regex re("^Package:\\s*([^\\s]+?)\\s*$");
-
-      boost::sregex_iterator matchBegin(body.begin(), body.end(), re);
-      boost::sregex_iterator matchEnd;
-      std::vector<std::string> results;
-      for (; matchBegin != matchEnd; matchBegin++)
-      {
-         // copy to temporary list for insertion into cache
-         results.push_back((*matchBegin)[1]);
-
-         // append to out param
-         pAvailablePackages->push_back((*matchBegin)[1]);
-      }
-
-      // add to cache
-      s_availablePackagesCache.insert(contribUrl, results);
-   }
+      return r::sexp::create(availablePackages, &protect);
+   else
+      return R_NilValue;
 }
 
 Error availablePackagesEnd(const core::json::JsonRpcRequest& request,
@@ -283,38 +330,8 @@ void onDetectChanges(module_context::ChangeSource source)
       detectLibPathsChanges();
 }
 
-
-void initializeRStudioPackages(bool newSession)
-{
-#ifdef RSTUDIO_UNVERSIONED_BUILD
-   bool force = true;
-#else
-   bool force = false;
-#endif
-   
-   if (newSession || (options().programMode() == kSessionProgramModeServer))
-   {
-      std::string libDir = core::string_utils::utf8ToSystem(
-                              options().sessionLibraryPath().absolutePath());
-      std::string pkgSrcDir = core::string_utils::utf8ToSystem(
-                              options().sessionPackagesPath().absolutePath());
-      std::string rsVersion = RSTUDIO_VERSION;
-      Error error = r::exec::RFunction(".rs.initializeRStudioPackages",
-                                                                  libDir,
-                                                                  pkgSrcDir,
-                                                                  rsVersion,
-                                                                  force)
-                                                                       .call();
-      if (error)
-         LOG_ERROR(error);
-   }
-}
-
 void onDeferredInit(bool newSession)
 {
-   // initialize rstudio packages
-   initializeRStudioPackages(newSession);
-
    // monitor libPaths for changes
    detectLibPathsChanges();
    module_context::events().onDetectChanges.connect(onDetectChanges);
@@ -376,6 +393,17 @@ Error initialize()
    methodDef3.fun = (DL_FUNC) rs_packageLibraryMutated ;
    methodDef3.numArgs = 0;
    r::routines::addCallMethod(methodDef3);
+   
+   r::routines::registerCallMethod(
+            "rs_getCachedAvailablePackages",
+            (DL_FUNC) rs_getCachedAvailablePackages,
+            1);
+   
+   r::routines::registerCallMethod(
+            "rs_downloadAvailablePackages",
+            (DL_FUNC) rs_downloadAvailablePackages,
+            1);
+   
 
    using boost::bind;
    using namespace module_context;
@@ -395,4 +423,5 @@ Error initialize()
 } // namespace packages
 } // namespace modules
 } // namesapce session
+} // namespace rstudio
 

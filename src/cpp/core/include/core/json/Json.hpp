@@ -24,6 +24,7 @@
 
 #include <core/json/spirit/json_spirit_value.h>
 
+namespace rstudio {
 namespace core {
 namespace json {
    
@@ -79,6 +80,10 @@ json::Array toJsonArray(const std::vector<T>& val)
    return results;
 }
 
+bool fillVectorString(const Array& array, std::vector<std::string>* pVector);
+bool fillVectorInt(const Array& array, std::vector<int>* pVector);
+bool fillMap(const Object& array, std::map< std::string, std::vector<std::string> >* pMap);
+
 bool parse(const std::string& input, Value* pValue);
 
 void write(const Value& value, std::ostream& os);
@@ -86,6 +91,7 @@ void writeFormatted(const Value& value, std::ostream& os);
    
 } // namespace json
 } // namespace core
+} // namespace rstudio
 
 #endif // CORE_JSON_HPP
 

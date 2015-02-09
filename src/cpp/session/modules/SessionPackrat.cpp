@@ -36,7 +36,7 @@
 #include "SessionPackages.hpp"
 #include "session-config.h"
 
-using namespace core;
+using namespace rstudio::core;
 
 #ifdef TRACE_PACKRAT_OUTPUT
 #define PACKRAT_TRACE(x) \
@@ -64,6 +64,7 @@ using namespace core;
 // compatibility with older versions of RStudio
 #define kPackratRStudioProtocolVersion 1
 
+namespace rstudio {
 namespace session {
 
 namespace modules { 
@@ -627,7 +628,7 @@ void onConsoleInput(const std::string& input)
    // if there is about to be a devtools not found error then print
    // a message indicating that packrat::devtools should be used
    if (boost::algorithm::starts_with(input, "devtools::install_github") &&
-       !module_context::isPackageInstalled("devtools"))
+       !module_context::isMinimumDevtoolsInstalled())
    {
       module_context::scheduleDelayedWork(boost::posix_time::milliseconds(50),
                                           printDevtoolsMessage);
@@ -860,7 +861,7 @@ void activatePackagesIfPendingActions()
    }
 }
 
-void onDeferredInit(bool newSession)
+void afterSessionInitHook(bool newSession)
 {
    // additional stuff if we are in packrat mode
    if (module_context::packratContext().modeOn)
@@ -980,7 +981,10 @@ Error initialize()
    // we need to wait until all other modules initialize and all R routines
    // are initialized -- otherwise the package load hook attempts to call
    // rs_packageLoaded and can't find it
-   module_context::events().onDeferredInit.connect(onDeferredInit);
+   //
+   // we want this to occur _after_ packrat has done its own initialization,
+   // so we ensure that the package hooks are run before this
+   module_context::events().afterSessionInitHook.connect(afterSessionInitHook);
 
    // register packrat action hook
    R_CallMethodDef onPackratActionMethodDef ;
@@ -1160,4 +1164,5 @@ json::Object packratOptionsAsJson()
 
 } // namespace module_context
 } // namespace session
+} // namespace rstudio
 

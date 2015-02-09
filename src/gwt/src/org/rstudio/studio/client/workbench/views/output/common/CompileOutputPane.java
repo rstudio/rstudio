@@ -27,12 +27,12 @@ import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.events.EnsureVisibleEvent;
 import org.rstudio.core.client.events.HasSelectionCommitHandlers;
 import org.rstudio.core.client.widget.*;
-import org.rstudio.studio.client.common.compile.CompileError;
 import org.rstudio.studio.client.common.compile.CompileOutput;
 import org.rstudio.studio.client.common.compile.CompileOutputBufferWithHighlight;
 import org.rstudio.studio.client.common.compile.CompilePanel;
-import org.rstudio.studio.client.common.compile.errorlist.CompileErrorList;
 import org.rstudio.studio.client.common.icons.StandardIcons;
+import org.rstudio.studio.client.common.sourcemarkers.SourceMarker;
+import org.rstudio.studio.client.common.sourcemarkers.SourceMarkerList;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 
 public class CompileOutputPane extends WorkbenchPane
@@ -113,11 +113,11 @@ public class CompileOutputPane extends WorkbenchPane
    
 
    @Override
-   public void showErrors(JsArray<CompileError> errors)
+   public void showErrors(JsArray<SourceMarker> errors)
    {
-      compilePanel_.showErrors(null, errors, CompileErrorList.AUTO_SELECT_FIRST);
+      compilePanel_.showErrors(null, errors, SourceMarkerList.AUTO_SELECT_FIRST);
       
-      if (CompileError.showErrorList(errors))
+      if (SourceMarker.showErrorList(errors))
          ensureVisible(true);
    }
 

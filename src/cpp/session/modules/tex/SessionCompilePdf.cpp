@@ -46,8 +46,9 @@
 #include "SessionCompilePdfSupervisor.hpp"
 #include "SessionViewPdf.hpp"
 
-using namespace core;
+using namespace rstudio::core;
 
+namespace rstudio {
 namespace session {
 namespace modules { 
 namespace tex {
@@ -252,7 +253,7 @@ void enqueErrorsEvent(const json::Array& logEntriesJson)
    module_context::enqueClientEvent(event);
 }
 
-// NOTE: sync changes with SessionBuildErrors.cpp compileErrorJson
+// NOTE: sync changes with SessionModuleContext.cpp sourceMarkerJson
 json::Object logEntryJson(const core::tex::LogEntry& logEntry)
 {
    json::Object obj;
@@ -260,7 +261,7 @@ json::Object logEntryJson(const core::tex::LogEntry& logEntry)
    obj["path"] = module_context::createAliasedPath(logEntry.filePath());
    obj["line"] = logEntry.line();
    obj["column"] = 1;
-   obj["message"] = logEntry.message();
+   obj["message"] = core::html_utils::HTML(logEntry.message()).text();
    obj["log_path"] = module_context::createAliasedPath(logEntry.logFilePath());
    obj["log_line"] = logEntry.logLine();
    obj["show_error_list"] = true;
@@ -885,4 +886,5 @@ Error initialize()
 } // namespace tex
 } // namespace modules
 } // namesapce session
+} // namespace rstudio
 

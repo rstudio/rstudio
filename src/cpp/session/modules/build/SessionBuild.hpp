@@ -18,10 +18,13 @@
 
 #include <core/json/Json.hpp>
 
+namespace rstudio {
 namespace core {
    class Error;
 }
+}
  
+namespace rstudio {
 namespace session {
 namespace modules { 
 namespace build {
@@ -33,5 +36,6 @@ core::Error initialize();
 } // namespace build
 } // namespace modules
 } // namesapce session
+} // namespace rstudio
 
 #endif // SESSION_BUILD_HPP

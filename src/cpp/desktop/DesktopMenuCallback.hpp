@@ -25,6 +25,7 @@
 #include <QKeyEvent>
 #include <DesktopSubMenu.hpp>
 
+namespace rstudio {
 namespace desktop {
 
 class MenuCallback : public QObject
@@ -117,5 +118,6 @@ private:
 };
 
 } // namespace desktop
+} // namespace rstudio
 
 #endif // DESKTOP_MENU_CALLBACK_HPP

@@ -29,6 +29,7 @@
 
 #include <DesktopSynctex.hpp>
 
+namespace rstudio {
 namespace desktop {
 namespace synctex {
 
@@ -59,7 +60,7 @@ public Q_SLOTS: // METHODS
        {
           QFileInfo srcFileInfo(srcFilePath);
           srcFilePath = srcFileInfo.canonicalPath() +
-                        QString::fromAscii("/./") +
+                        QString::fromUtf8("/./") +
                         srcFileInfo.fileName();
        }
 
@@ -80,11 +81,12 @@ private:
 
 } // namespace synctex
 } // namespace desktop
+} // namespace rstudio
 
 namespace org {
   namespace gnome {
     namespace evince {
-      typedef desktop::synctex::EvinceWindow Window;
+      typedef rstudio::desktop::synctex::EvinceWindow Window;
     }
   }
 }

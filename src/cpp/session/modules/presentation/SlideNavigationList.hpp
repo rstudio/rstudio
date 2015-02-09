@@ -24,6 +24,7 @@
 
 #include "SlideParser.hpp"
 
+namespace rstudio {
 namespace session {
 namespace modules { 
 namespace presentation {
@@ -53,5 +54,6 @@ private:
 } // namespace presentation
 } // namespace modules
 } // namesapce session
+} // namespace rstudio
 
 #endif // SESSION_PRESENTATION_SLIDE_NAVIGATION_LIST_HPP

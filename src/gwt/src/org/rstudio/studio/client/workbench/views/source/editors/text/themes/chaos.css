@@ -1,0 +1,180 @@
+.ace_gutter {
+  background: #141414;
+  color: #595959;
+  border-right: 1px solid #282828;
+}
+.ace_gutter-cell.ace_warning {
+  background-image: none;
+  background: #FC0;
+  border-left: none;
+  padding-left: 0;
+  color: #000;
+}
+.ace_gutter-cell.ace_error {
+  background-position: -6px center;
+  background-image: none;
+  background: #F10;
+  border-left: none;
+  padding-left: 0;
+  color: #000;
+}
+.ace_print-margin {
+  border-left: 1px solid #555;
+  right: 0;
+  background: #1D1D1D;
+}
+.ace_editor {
+  background-color: #161616;
+  color: #E6E1DC;
+}
+
+.ace_cursor {
+  border-left: 2px solid #FFFFFF;
+}
+.ace_cursor.ace_overwrite {
+  border-left: 0px;
+  border-bottom: 1px solid #FFFFFF;
+}
+.ace_marker-layer .ace_selection {
+  background: #494836;
+}
+.ace_marker-layer .ace_step {
+  background: rgb(198, 219, 174);
+}
+.ace_marker-layer .ace_bracket {
+  margin: -1px 0 0 -1px;
+  border: 1px solid #FCE94F;
+}
+.ace_marker-layer .ace_active-line {
+  background: #333;
+}
+.ace_gutter-active-line {
+  background-color: #222;
+}
+.ace_invisible {
+  color: #404040;
+}
+.ace_keyword {
+  color:#00698F;
+}
+.ace_keyword.ace_operator {
+  color:#FF308F;
+}
+.ace_constant {
+  color:#1EDAFB;
+}
+.ace_constant.ace_language {
+  color:#FDC251;
+}
+.ace_constant.ace_library {
+  color:#8DFF0A;
+}
+.ace_constant.ace_numeric {
+  color:#58C554;
+}
+.ace_invalid {
+  color:#FFFFFF;
+  background-color:#990000;
+}
+.ace_invalid.ace_deprecated {
+  color:#FFFFFF;
+  background-color:#990000;
+}
+.ace_support {
+  color: #999;
+}
+.ace_support.ace_function {
+  color:#00AEEF;
+}
+.ace_function {
+  color:#00AEEF;
+}
+.ace_string {
+  color:#58C554;
+}
+.ace_comment {
+  color:#555;
+  font-style:italic;
+  padding-bottom: 0px;
+}
+.ace_variable {
+  color:#997744;
+}
+.ace_meta.ace_tag {
+  color:#BE53E6;
+}
+.ace_entity.ace_other.ace_attribute-name {
+  color:#FFFF89;
+}
+.ace_markup.ace_underline {
+  text-decoration: underline;
+}
+.ace_fold-widget {
+  text-align: center;
+}
+
+.ace_fold-widget:hover {
+  color: #777;
+}
+
+.ace_fold-widget.ace_start,
+.ace_fold-widget.ace_end,
+.ace_fold-widget.ace_closed{
+  background: none;
+  border: none;
+  box-shadow: none;
+}
+
+.ace_fold-widget.ace_start:after {
+  content: '▾'
+}
+
+.ace_fold-widget.ace_end:after {
+  content: '▴'
+}
+
+.ace_fold-widget.ace_closed:after {
+  content: '‣'
+}
+
+.ace_indent-guide {
+  border-right:1px dotted #333;
+  margin-right:-1px;
+}
+
+.ace_fold { 
+  background: #222; 
+  border-radius: 3px; 
+  color: #7AF; 
+  border: none; 
+}
+.ace_fold:hover {
+  background: #CCC; 
+  color: #000;
+}
+.nocolor.ace_editor .ace_line span {
+  color: #00698f !important;
+}
+.ace_bracket {
+  margin: 0 !important;
+  border: 0 !important;
+  background-color: rgba(128, 128, 128, 0.5);
+}
+.ace_marker-layer .ace_foreign_line {
+  position: absolute;
+  z-index: -1;
+  background-color: #2A2A29;
+}
+.ace_marker-layer .ace_find_line {
+  position: absolute;
+  z-index: -1;
+  background-color: #3F3E3D;
+}
+.ace_marker-layer .ace_active_debug_line {
+  position: absolute;
+  z-index: -1;
+  background-color: #8A7A27;
+}
+.ace_console_error {
+  background-color: #3F3E3D;
+}

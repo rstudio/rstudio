@@ -21,10 +21,13 @@
 
 #include <session/SessionModuleContext.hpp>
 
+namespace rstudio {
 namespace core {
    class Error;
 }
+}
  
+namespace rstudio {
 namespace session {
 namespace modules { 
 namespace viewer {
@@ -63,5 +66,6 @@ private:
 } // namespace viewer
 } // namespace modules
 } // namesapce session
+} // namespace rstudio
 
 #endif // SESSION_VIEWER_HISTORY_HPP

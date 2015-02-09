@@ -16,6 +16,7 @@
 #include <core/json/Json.hpp>
 #include <r/RSexp.hpp>
 
+namespace rstudio {
 namespace session {
 namespace modules {
 namespace environment {
@@ -28,3 +29,4 @@ void sourceRefToJson(const SEXP srcref, core::json::Object* pObject);
 } // namespace environment
 } // namespace modules
 } // namespace session
+} // namespace rstudio

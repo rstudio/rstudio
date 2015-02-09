@@ -32,8 +32,9 @@
 
 #include <Rembedded.h>
 
-using namespace core ;
+using namespace rstudio::core ;
 
+namespace rstudio {
 namespace r {
 namespace session {
 namespace graphics {
@@ -106,12 +107,18 @@ Error shadowDevDesc(DeviceContext* pDC, pDevDesc* pDev)
 
       PreserveCurrentDeviceScope preserveCurrentDeviceScope;
 
+      // determine width, height, and res
+      int width = pDC->width * pDC->devicePixelRatio;
+      int height = pDC->height * pDC->devicePixelRatio;
+      int res = 72 * pDC->devicePixelRatio;
+
       // create PNG device (completely bail on error)
-      boost::format fmt("grDevices:::png(\"%1%\", %2%, %3% %4%, pointsize = 16)");
+      boost::format fmt("grDevices:::png(\"%1%\", %2%, %3%, res = %4% %5%, pointsize = 16)");
       std::string code = boost::str(fmt %
                                     string_utils::utf8ToSystem(pDC->targetPath.absolutePath()) %
-                                    pDC->width %
-                                    pDC->height %
+                                    width %
+                                    height %
+                                    res %
                                     r::session::graphics::extraBitmapParams());
       Error err = r::exec::executeString(code);
       if (err)
@@ -197,11 +204,12 @@ void shadowDevSync(DeviceContext* pDC)
 } // anonymous namespace
 
 
-bool initialize(int width, int height, DeviceContext* pDC)
+bool initialize(int width, int height, double devicePixelRatio, DeviceContext* pDC)
 {
    pDC->targetPath = tempFile("png");
    pDC->width = width;
    pDC->height = height;
+   pDC->devicePixelRatio = devicePixelRatio;
 
    return true;
 }
@@ -318,12 +326,13 @@ Error writeToPNG(const FilePath& targetPath, DeviceContext* pDC)
    pDevDesc dev = pDC->dev;
    int width = pDC->width;
    int height = pDC->height;
+   double devicePixelRatio = pDC->devicePixelRatio;
    handler::destroy(pDC);
    pDC = handler::allocate(dev);
    dev->deviceSpecific = pDC;
 
    // re-create with the correct size
-   if (!handler::initialize(width, height, pDC))
+   if (!handler::initialize(width, height, devicePixelRatio, pDC))
       return systemError(boost::system::errc::not_connected, ERROR_LOCATION);
 
    // now update the device structure
@@ -560,6 +569,7 @@ void installShadowHandler()
 } // namespace graphics
 } // namespace session
 } // namespace r
+} // namespace rstudio
 
 
 

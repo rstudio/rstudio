@@ -24,8 +24,9 @@
 #include <core/FileSerializer.hpp>
 #include <core/system/System.hpp>
 
-using namespace core ;
+using namespace rstudio::core ;
 
+namespace rstudio {
 namespace session {
 
 namespace client_events {
@@ -114,12 +115,16 @@ const int kRmdRenderCompleted = 90;
 const int kRmdTemplateDiscovered = 91;
 const int kRmdTemplateDiscoveryCompleted = 92;
 const int kRmdShinyDocStarted = 93;
-const int kRmdShinyAppsDeploymentOutput = 94;
-const int kRmdShinyAppsDeploymentCompleted = 95;
+const int kRmdRSConnectDeploymentOutput = 94;
+const int kRmdRSConnectDeploymentCompleted = 95;
 const int kUserPrompt = 96;
 const int kInstallRtools = 97;
 const int kInstallShiny = 98;
 const int kSuspendAndRestart = 99;
+const int kDataViewChanged = 100;
+const int kViewFunction = 101;
+const int kMarkersChanged = 102;
+const int kEnableRStudioConnect = 103;
 }
 
 void ClientEvent::init(int type, const json::Value& data)
@@ -309,10 +314,10 @@ std::string ClientEvent::typeName() const
          return "rmd_template_discovery_completed";
       case client_events::kRmdShinyDocStarted:
          return "rmd_shiny_doc_started";
-      case client_events::kRmdShinyAppsDeploymentOutput:
-         return "shiny_apps_deployment_output";
-      case client_events::kRmdShinyAppsDeploymentCompleted:
-         return "shiny_apps_deployment_completed";
+      case client_events::kRmdRSConnectDeploymentOutput:
+         return "rsconnect_deployment_output";
+      case client_events::kRmdRSConnectDeploymentCompleted:
+         return "rsconnect_deployment_completed";
       case client_events::kUserPrompt:
          return "user_prompt";
       case client_events::kInstallRtools:
@@ -321,6 +326,14 @@ std::string ClientEvent::typeName() const
          return "install_shiny";
       case client_events::kSuspendAndRestart:
          return "suspend_and_restart";
+      case client_events::kDataViewChanged:
+         return "data_view_changed";
+      case client_events::kViewFunction:
+         return "view_function";
+      case client_events::kMarkersChanged:
+         return "markers_changed";
+      case client_events::kEnableRStudioConnect:
+         return "enable_rstudio_connect";
       default:
          LOG_WARNING_MESSAGE("unexpected event type: " + 
                              safe_convert::numberToString(type_));
@@ -361,3 +374,4 @@ ClientEvent showErrorMessageEvent(const std::string& title,
    
    
 } // namespace session
+} // namespace rstudio

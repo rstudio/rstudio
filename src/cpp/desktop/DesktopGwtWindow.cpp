@@ -17,13 +17,15 @@
 
 
 
+namespace rstudio {
 namespace desktop {
 
 GwtWindow::GwtWindow(bool showToolbar,
                      bool adjustTitle,
+                     QString name,
                      QUrl baseUrl,
                      QWidget* pParent) :
-   BrowserWindow(showToolbar, adjustTitle, baseUrl, pParent)
+   BrowserWindow(showToolbar, adjustTitle, name, baseUrl, pParent)
 {
 }
 
@@ -37,3 +39,4 @@ bool GwtWindow::event(QEvent* pEvent)
 
 
 } // namespace desktop
+} // namespace rstudio
