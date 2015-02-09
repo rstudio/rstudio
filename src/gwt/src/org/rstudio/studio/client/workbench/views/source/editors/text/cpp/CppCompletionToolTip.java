@@ -15,6 +15,8 @@
 
 package org.rstudio.studio.client.workbench.views.source.editors.text.cpp;
 
+import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
+
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.PopupPanel;
@@ -51,6 +53,22 @@ public class CppCompletionToolTip extends PopupPanel
    public void setMaxWidth(int maxWidth)
    {
       getElement().getStyle().setPropertyPx("maxWidth", maxWidth);
+   }
+   
+   // show the tooltip immediately above (however, if there is code
+   // on the line above that would be obstructed by the tooltip
+   // then bump it up some more)
+   public static int tooltipTopPadding(DocDisplay docDisplay)
+   {
+      int topPad = 9;
+      int lineNumberAbove = docDisplay.getCurrentLineNum() - 1;
+      if (lineNumberAbove > 0)
+      {
+         if (docDisplay.getLine(lineNumberAbove).length() > 
+             docDisplay.getLength(docDisplay.getCurrentLineNum()))
+           topPad = 18;
+      }
+      return topPad;
    }
    
    private Label label_;
