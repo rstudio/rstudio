@@ -35,7 +35,6 @@ var CppCodeModel = require("mode/cpp_code_model").CppCodeModel;
 var CppTokenCursor = require("mode/token_cursor").CppTokenCursor;
 var TextMode = require("ace/mode/text").Mode;
 
-var $addNamespaceComment = true;
 var $fillinDoWhile = true;
 
 var CStyleBehaviour = function(codeModel) {
@@ -193,7 +192,7 @@ var CStyleBehaviour = function(codeModel) {
          if (match) {
             var indent = this.$getIndent(line);
             return {
-               text: '\n' + indent + '\n' + indent,
+               text: '\n' + indent,
                selection: [1, indent.length, 1, indent.length]
             };
          }
@@ -306,26 +305,13 @@ var CStyleBehaviour = function(codeModel) {
                line = line.substr(0, commentMatch.index - 1);
             }
 
-            // namespace specific indenting -- note that 'lineTrimmed'
-            // does not contain the now-inserted '{'
-            if ($addNamespaceComment) {
-               
-               var anonNamespace = /\s*namespace\s*$/.test(lineTrimmed);
-               var namedNamespace = lineTrimmed.match(/\s*namespace\s+(\S+)\s*/);
-
-               if (namedNamespace) {
-                  return {
-                     text: '{} // namespace ' + namedNamespace[1],
-                     selection: [1, 1]
-                  };
-               }
-
-               if (anonNamespace) {
-                  return {
-                     text: '{} // anonymous namespace',
-                     selection: [1, 1]
-                  };
-               }
+            // if we're inserting a namespace, don't auto-insert closing '}'
+            if (/^\s*namespace/.test(lineTrimmed))
+            {
+               return {
+                  text: '{',
+                  selection: [1, 1]
+               };
             }
 
             // if we're assigning, e.g. through an initializor list, then
@@ -423,13 +409,6 @@ var CStyleBehaviour = function(codeModel) {
             return range;
          }
 
-         // Undo an auto-inserted namespace closer
-         if (/^\s*namespace\s*\{\} \/\/ end anonymous namespace\s*$/.test(line) ||
-             /^\s*namespace\s+.+\{\} \/\/ end namespace .+\s*$/.test(line)) {
-            range.end.column = line.length;
-            return range;
-         }
-         
          var rightChar = line.substring(range.end.column, range.end.column + 1);
          var rightRightChar =
                 line.substring(range.end.column + 1, range.end.column + 2);
@@ -688,14 +667,6 @@ var CStyleBehaviour = function(codeModel) {
 oop.inherits(CStyleBehaviour, Behaviour);
 
 exports.CStyleBehaviour = CStyleBehaviour;
-
-exports.setAddNamespaceComment = function(x) {
-   $addNamespaceComment = x;
-};
-
-exports.getAddNamespaceComment = function() {
-   return $addNamespaceComment;
-}
 
 exports.setFillinDoWhile = function(x) {
    $fillinDoWhile = x;
