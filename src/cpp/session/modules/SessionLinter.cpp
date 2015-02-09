@@ -119,9 +119,8 @@ Error getAllAvailableRSymbols(const FilePath& filePath,
    // If this is an R package project, get the symbols for all functions
    // etc. in the project.
    if (filePath.isWithin(projects::projectContext().directory()))
-   {
       code_search::addAllProjectSymbols(pSymbols);
-   }
+   
    return Success();
 }
 

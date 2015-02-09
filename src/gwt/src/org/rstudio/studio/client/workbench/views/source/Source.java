@@ -85,7 +85,6 @@ import org.rstudio.studio.client.workbench.ui.unsaved.UnsavedChangesDialog;
 import org.rstudio.studio.client.workbench.views.data.events.ViewDataEvent;
 import org.rstudio.studio.client.workbench.views.data.events.ViewDataHandler;
 import org.rstudio.studio.client.workbench.views.output.find.events.FindInFilesEvent;
-import org.rstudio.studio.client.workbench.views.output.lint.LintManager;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetSource;
 import org.rstudio.studio.client.workbench.views.source.editors.codebrowser.CodeBrowserEditingTarget;
@@ -214,8 +213,6 @@ public class Source implements InsertSourceHandler,
       rnwWeaveRegistry_ = rnwWeaveRegistry;
       
       vimCommands_ = new SourceVimCommands();
-
-      lintManager_ = new LintManager(this);
       
       view_.addTabClosingHandler(this);
       view_.addTabCloseHandler(this);
@@ -284,6 +281,7 @@ public class Source implements InsertSourceHandler,
       dynamicCommands_.add(commands.vcsBlameOnGitHub());
       dynamicCommands_.add(commands.editRmdFormatOptions());
       dynamicCommands_.add(commands.reformatCode());
+      dynamicCommands_.add(commands.lintActiveDocument());
       for (AppCommand command : dynamicCommands_)
       {
          command.setVisible(false);
@@ -2578,12 +2576,6 @@ public class Source implements InsertSourceHandler,
          attemptSourceNavigation(navigation, commands_.sourceNavigateForward());
    }
    
-   @Handler
-   void onLintActiveDocument()
-   {
-      lintManager_.lint(true);
-   }
-   
    private void attemptSourceNavigation(final SourceNavigation navigation,
                                         final AppCommand retryCommand)
    {
@@ -2922,7 +2914,6 @@ public class Source implements InsertSourceHandler,
    private final SourceNavigationHistory sourceNavigationHistory_ = 
                                               new SourceNavigationHistory(30);
    private final SourceVimCommands vimCommands_;
-   private final LintManager lintManager_;
 
    private boolean suspendSourceNavigationAdding_;
   

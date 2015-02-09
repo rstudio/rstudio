@@ -2041,6 +2041,26 @@ public class AceEditor implements DocDisplay,
       widget_.getEditor().getSession().setAnnotations(annotations);
    }
    
+   public void removeAnnotationsOnLine(int line)
+   {
+      JsArray<AceAnnotation> oldAnnotations = getAnnotations();
+      
+      JsArray<AceAnnotation> newAnnotations = JsArray.createArray().cast();
+      for (int i = 0; i < oldAnnotations.length(); i++)
+      {
+         if (oldAnnotations.get(i).row() != line)
+         {
+            newAnnotations.push(oldAnnotations.get(i));
+         }
+         else
+         {
+            getSession().removeMarker(lintMarkerIds_.get(i));
+         }
+      }
+      
+      setAnnotations(newAnnotations);
+   }
+   
    public void showLint(JsArray<LintItem> lint)
    {
       clearLintMarkers();

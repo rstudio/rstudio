@@ -107,6 +107,7 @@ import org.rstudio.studio.client.workbench.views.files.events.FileChangeHandler;
 import org.rstudio.studio.client.workbench.views.files.model.FileChange;
 import org.rstudio.studio.client.workbench.views.help.events.ShowHelpEvent;
 import org.rstudio.studio.client.workbench.views.output.compilepdf.events.CompilePdfEvent;
+import org.rstudio.studio.client.workbench.views.output.lint.LintManager;
 import org.rstudio.studio.client.workbench.views.presentation.events.SourceFileSaveCompletedEvent;
 import org.rstudio.studio.client.workbench.views.presentation.model.PresentationState;
 import org.rstudio.studio.client.workbench.views.source.SourceBuildHelper;
@@ -367,6 +368,7 @@ public class TextEditingTarget implements
 
       docDisplay_ = docDisplay;
       dirtyState_ = new DirtyState(docDisplay_, false);
+      lintManager_ = new LintManager(this);
       prefs_ = prefs;
       codeExecution_ = new EditingTargetCodeExecution(docDisplay_, this);
       compilePdfHelper_ = new TextEditingTargetCompilePdfHelper(docDisplay_);
@@ -2007,6 +2009,12 @@ public class TextEditingTarget implements
       }
       
       reformatHelper_.insertPrettyNewlines();
+   }
+   
+   @Handler
+   void onLintActiveDocument()
+   {
+      lintManager_.lint(true);
    }
    
    public void withSavedDoc(Command onsaved)
@@ -4597,6 +4605,7 @@ public class TextEditingTarget implements
    private final TextEditingTargetScopeHelper scopeHelper_;
    private TextEditingTargetSpelling spelling_;
    private BreakpointManager breakpointManager_;
+   private final LintManager lintManager_;
 
    // Allows external edit checks to supercede one another
    private final Invalidation externalEditCheckInvalidation_ =

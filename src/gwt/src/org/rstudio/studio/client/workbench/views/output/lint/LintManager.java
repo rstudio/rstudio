@@ -21,8 +21,6 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.views.output.lint.model.LintItem;
 import org.rstudio.studio.client.workbench.views.output.lint.model.LintServerOperations;
-import org.rstudio.studio.client.workbench.views.source.Source;
-import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionRequest;
@@ -30,10 +28,7 @@ import org.rstudio.studio.client.workbench.views.source.model.CppDiagnostic;
 
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.Event;
-import com.google.gwt.user.client.Event.NativePreviewHandler;
 import com.google.gwt.user.client.Timer;
-import com.google.gwt.user.client.Event.NativePreviewEvent;
 import com.google.inject.Inject;
 
 public class LintManager
@@ -56,10 +51,11 @@ public class LintManager
       showMarkers_ = false;
    }
    
-   public LintManager(Source source)
+   public LintManager(TextEditingTarget target)
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
-      source_ = source;
+      target_ = target;
+      docDisplay_ = target.getDocDisplay();
       showMarkers_ = false;
       invalidation_ = new Invalidation();
       timer_ = new Timer()
@@ -76,21 +72,6 @@ public class LintManager
             lintActiveDocument(context);
          }
       };
-      
-      Event.addNativePreviewHandler(new NativePreviewHandler()
-      {
-         @Override
-         public void onPreviewNativeEvent(NativePreviewEvent event)
-         {
-            if (event.getTypeInt() == Event.ONKEYUP ||
-                event.getTypeInt() == Event.ONKEYDOWN ||
-                event.getTypeInt() == Event.ONMOUSEDOWN ||
-                event.getTypeInt() == Event.ONMOUSEUP)
-            {
-               schedule(1000);
-            }
-         }
-      });
    }
    
    @Inject
@@ -101,50 +82,32 @@ public class LintManager
    
    private void lintActiveDocument(final LintContext context)
    {
-      EditingTarget editor = source_.getActiveEditor();
-      if (editor == null || !(editor instanceof TextEditingTarget))
-         return;
-      
-      final TextEditingTarget target = (TextEditingTarget) editor;
-      final DocDisplay docDisplay = target.getDocDisplay();
-      final String documentId = editor.getId();
-      
-      target.withSavedDoc(new Command()
+      target_.withSavedDoc(new Command()
       {
          @Override
          public void execute()
          {
-            performLintServerRequest(
-                  context,
-                  documentId,
-                  target,
-                  docDisplay);
+            performLintServerRequest(context);
          }
       });
    }
 
-   private void performLintServerRequest(final LintContext context,
-                                         final String documentId,
-                                         final TextEditingTarget target,
-                                         final DocDisplay docDisplay)
+   private void performLintServerRequest(final LintContext context)
    {
       
       if (context.token.isInvalid())
          return;
       
-      if (target.getTextFileType().isCpp())
-         performCppLintServerRequest(context, documentId, target, docDisplay);
+      if (target_.getTextFileType().isCpp())
+         performCppLintServerRequest(context);
       else
-         performRLintServerRequest(context, documentId, target, docDisplay);
+         performRLintServerRequest(context);
    }
 
-   private void performCppLintServerRequest(final LintContext context,
-                                            final String documentId,
-                                            final TextEditingTarget target,
-                                            final DocDisplay docDisplay) 
+   private void performCppLintServerRequest(final LintContext context)
    {
       server_.getCppDiagnostics(
-            target.getPath(),
+            target_.getPath(),
             new ServerRequestCallback<JsArray<CppDiagnostic>>()
             {
                
@@ -158,7 +121,7 @@ public class LintManager
                         CppCompletionRequest.asLintArray(diag);
                   
                   server_.lintRSourceDocument(
-                        documentId,
+                        target_.getId(),
                         context.showMarkers,
                         new ServerRequestCallback<JsArray<LintItem>>()
                         {
@@ -172,7 +135,7 @@ public class LintManager
                               for (int i = 0; i < rLint.length(); i++)
                                  lint.push(rLint.get(i));
                               
-                              docDisplay.showLint(lint);
+                              docDisplay_.showLint(lint);
                            }
 
                            @Override
@@ -192,14 +155,11 @@ public class LintManager
             });
    }
 
-   private void performRLintServerRequest(final LintContext context,
-                                          final String documentId,
-                                          final TextEditingTarget target,
-                                          final DocDisplay docDisplay)
+   private void performRLintServerRequest(final LintContext context)
    {
 
       server_.lintRSourceDocument(
-            documentId,
+            target_.getId(),
             context.showMarkers,
             new ServerRequestCallback<JsArray<LintItem>>()
             {
@@ -209,7 +169,7 @@ public class LintManager
                   if (context.token.isInvalid())
                      return;
 
-                  displayLint(docDisplay, lint);
+                  docDisplay_.showLint(lint);
                }
 
                @Override
@@ -218,12 +178,6 @@ public class LintManager
                   Debug.logError(error);
                }
             });
-   }
-   
-   public void displayLint(DocDisplay display,
-                           JsArray<LintItem> lint)
-   {
-      display.showLint(lint);
    }
    
    public void schedule(int milliseconds)
@@ -238,7 +192,8 @@ public class LintManager
    }
    
    private final Timer timer_;
-   private final Source source_;
+   private final TextEditingTarget target_;
+   private final DocDisplay docDisplay_;
    private final Invalidation invalidation_;
    private boolean showMarkers_;
    

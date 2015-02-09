@@ -274,6 +274,7 @@ public class TextFileType extends EditableFileType
       if (canExecuteCode() || isC())
       {
          results.add(commands.reindent());
+         results.add(commands.lintActiveDocument());
       }
       if (canExecuteCode()) {
          results.add(commands.executeCode());
@@ -283,6 +284,7 @@ public class TextFileType extends EditableFileType
          results.add(commands.extractLocalVariable());
          results.add(commands.commentUncomment());
          results.add(commands.reflowComment());
+         results.add(commands.reformatCode());
       }
       if (canExecuteAllCode())
       {

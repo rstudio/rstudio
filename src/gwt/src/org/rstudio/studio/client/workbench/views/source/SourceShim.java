@@ -107,8 +107,6 @@ public class SourceShim extends Composite
       public abstract void onSourceNavigateForward();
       @Handler
       public abstract void onShowProfiler();
-      @Handler
-      public abstract void onLintActiveDocument();
       
       @Override
       protected void preInstantiationHook(Command continuation)
