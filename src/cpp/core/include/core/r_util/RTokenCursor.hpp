@@ -146,6 +146,11 @@ public:
                        NULL);
    }
    
+   std::wstring content() const
+   {
+      return currentToken().content();
+   }
+   
    std::string contentAsUtf8() const
    {
       return currentToken().contentAsUtf8();
@@ -407,10 +412,14 @@ public:
             isValidAsIdentifier(nextSignificantToken());
   }
   
-  bool moveToEndOfStatement(bool inParens)
+  bool moveToEndOfStatement(bool inParens,
+                            boost::function<void(const TokenCursor&)> callback = NULL)
   {
      while (true)
      {
+        if (callback)
+           callback(*this);
+        
         // When we're in a parenthetical statement, newlines are no
         // longer significant. This means that, for example,
         //

@@ -22,6 +22,7 @@
 #include <core/r_util/RTokenCursor.hpp>
 
 #include <boost/timer/timer.hpp>
+#include <boost/bind.hpp>
 
 namespace rstudio {
 namespace core {
@@ -203,6 +204,14 @@ std::wstring typeToWideString(char type)
       __STATUS__.lint().unexpectedToken(__CURSOR__);                           \
    } while (0)
 
+void warnIfCursorEncountersSymbol(const TokenCursor& cursor,
+                                  const std::wstring& symbol,
+                                  LintItems* pLint)
+{
+   if (cursor.contentEquals(symbol))
+      pLint->noSymbolNamed(cursor);
+}
+
 void handleIdentifier(TokenCursor& cursor,
                       ParseStatus& status)
 {
@@ -220,9 +229,37 @@ void handleIdentifier(TokenCursor& cursor,
    if (cursor.isType(RToken::ID) ||
        cursor.isType(RToken::STRING))
    {
+      // Before we add a reference to this symbol, run ahead
+      // in the statement and see if we reference that identifier
+      // anywhere. We want to identify and warn about the case
+      // where someone writes:
+      //
+      //    x <- x + 1
+      //
+      // and `x` isn't actually defined yet.
+      if (isLocalLeftAssign(cursor.nextSignificantToken()) &&
+          !status.node()->symbolHasDefinitionInTree(cursor.contentAsUtf8(), cursor.currentPosition()))
+      {
+         TokenCursor clone = cursor.clone();
+         if (clone.moveToNextSignificantToken() &&
+             clone.moveToNextSignificantToken())
+         {
+            clone.moveToEndOfStatement(
+                     status.isInParentheticalScope(),
+                     boost::bind(
+                        warnIfCursorEncountersSymbol,
+                        _1,
+                        cursor.content(),
+                        &status.lint()));
+         }
+      }
+      
       if (isLocalLeftAssign(cursor.nextSignificantToken()) ||
           isLocalRightAssign(cursor.previousSignificantToken()))
+      {
          status.node()->addDefinedSymbol(cursor);
+      }
+      
    }
    
    // If this is truly an identifier, add a reference.

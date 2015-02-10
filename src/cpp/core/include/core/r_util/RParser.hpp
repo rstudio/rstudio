@@ -231,7 +231,7 @@ public:
    }
    
    void noSymbolNamed(const ParseItem& item,
-                      const std::string& candidate)
+                      const std::string& candidate = std::string())
    {
       std::string message("no symbol named '" + item.symbol + "' in scope");
       if (!candidate.empty())
@@ -509,8 +509,6 @@ public:
          (**it).findAllUnresolvedSymbols(pItems);
       }
    }
-   
-private:
    
    bool symbolExistsInSearchPath(const std::string& symbol,
                                  const std::set<std::string>& searchPathObjects) const
