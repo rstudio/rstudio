@@ -37,6 +37,7 @@
 #include <r/RSexp.hpp>
 #include <r/RExec.hpp>
 #include <r/RRoutines.hpp>
+#include <r/RUtil.hpp>
 
 #include <core/FileUtils.hpp>
 #include <core/r_util/RTokenizer.hpp>
@@ -162,7 +163,8 @@ ParseResults parse(const std::wstring& rCode,
    {
       BOOST_FOREACH(const ParseItem& item, unresolvedItems)
       {
-         if (objects.count(string_utils::strippedOfBackQuotes(item.symbol)) == 0)
+         if (!r::util::isRKeyword(item.symbol) &&
+             objects.count(string_utils::strippedOfBackQuotes(item.symbol)) == 0)
          {
             addUnreferencedSymbol(item, results.lint());
          }
