@@ -42,12 +42,15 @@ public:
 
    std::string getText() const { return text_; }
 
+   std::string getComment() const { return comment_; }
+
 private:
    CXCursorKind kind_;
    CXAvailabilityKind availability_;
    unsigned priority_;
    std::string typedText_;
    std::string text_;
+   std::string comment_;
 };
 
 

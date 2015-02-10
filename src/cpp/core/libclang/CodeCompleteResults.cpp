@@ -132,6 +132,7 @@ CodeCompleteResult::CodeCompleteResult(CXCompletionResult result)
 
    availability_ = clang().getCompletionAvailability(cs);
    priority_ = clang().getCompletionPriority(cs);
+   comment_ = toStdString(clang().getCompletionBriefComment(cs));
 }
 
 CodeCompleteResults:: ~CodeCompleteResults()
