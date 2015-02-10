@@ -2,7 +2,7 @@
 @eval fixedWidthFont org.rstudio.core.client.theme.ThemeFonts.getFixedWidthFont();
 
 @external fixedWidthFont;
-@external ace_editor, ace_text-layer, ace_gutter, ace_gutter-layer, ace_gutter-cell;
+@external ace_editor, ace_text-layer, ace_gutter, ace_gutter-layer, ace_gutter-cell, ace_info;
 @external ace_breakpoint, ace_inactive-breakpoint, ace_pending-breakpoint, ace_executing-line;
 @external ace_sb;
 @external cueText;
@@ -106,6 +106,7 @@
 @url INACTIVEBREAKPOINT inactiveBreakpoint;
 @url PENDINGBREAKPOINT pendingBreakpoint;
 @url EXECUTINGLINE executingLine;
+@url INFO infoSmall;
 
 @url HANDCURSOR handCursor;
 
@@ -246,7 +247,7 @@ pre {
 
 .ace_breakpoint
 {
-   background-image: ACTIVEBREAKPOINT;	
+   background-image: ACTIVEBREAKPOINT;
 }
 
 .ace_pending-breakpoint
@@ -1285,4 +1286,9 @@ body.ubuntu_mono .searchBox {
   border-bottom-right-radius: 4px;
 }
 
+/* Use an alternate info icon for the gutter,
+   that looks nice with both light and dark themes */
+.ace_gutter-cell.ace_info {
+   background-image: INFO;
+}
 
