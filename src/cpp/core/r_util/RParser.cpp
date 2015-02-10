@@ -283,7 +283,7 @@ ParseResults parse(const std::wstring& rCode,
    using namespace boost::timer;
    
    if (rCode.empty() ||
-       rCode.find_first_not_of(L" \n\t\v") == std::string::npos)
+       rCode.find_first_not_of(L" \r\n\t\v") == std::string::npos)
    {
       return ParseResults();
    }
@@ -405,6 +405,8 @@ START:
          goto WHILE_START;
       else if (cursor.contentEquals(L"if"))
          goto IF_START;
+      else if (cursor.contentEquals(L"repeat"))
+         goto REPEAT_START;
       
       // Left paren.
       if (cursor.isType(RToken::LPAREN))
@@ -915,6 +917,20 @@ IF_CONDITION_END:
       }
       else
          status.pushState(ParseStatus::ParseStateIfStatement);
+      goto START;
+      
+REPEAT_START:
+      
+      DEBUG("** Repeat start ** " << cursor);
+      ENSURE_CONTENT(cursor, status, L"repeat");
+      MOVE_TO_NEXT_SIGNIFICANT_TOKEN_WARN_ON_BLANK(cursor, status);
+      if (cursor.isType(RToken::LBRACE))
+      {
+         status.pushState(ParseStatus::ParseStateRepeatExpression);
+         MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
+      }
+      else
+         status.pushState(ParseStatus::ParseStateRepeatStatement);
       goto START;
       
 INVALID_TOKEN:

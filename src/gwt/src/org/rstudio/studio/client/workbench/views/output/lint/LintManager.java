@@ -19,6 +19,7 @@ import org.rstudio.core.client.Invalidation;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.views.output.lint.model.LintItem;
 import org.rstudio.studio.client.workbench.views.output.lint.model.LintServerOperations;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
@@ -27,6 +28,8 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppComp
 import org.rstudio.studio.client.workbench.views.source.model.CppDiagnostic;
 
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Timer;
 import com.google.inject.Inject;
@@ -72,6 +75,15 @@ public class LintManager
             lintActiveDocument(context);
          }
       };
+      
+      docDisplay_.addValueChangeHandler(new ValueChangeHandler<Void>()
+      {
+         @Override
+         public void onValueChange(ValueChangeEvent<Void> event)
+         {
+            timer_.schedule(3000);
+         }
+      });
    }
    
    @Inject

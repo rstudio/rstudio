@@ -466,12 +466,12 @@ public:
    
    // Tree-related operations
    
-   ParseNode* getParent() const
+   ParseNode* const getParent() const
    {
       return pParent_;
    }
    
-   ParseNode* getRoot() const
+   ParseNode* const getRoot() const
    {
       ParseNode* pNode = const_cast<ParseNode*>(this);
       while (pNode->pParent_ != NULL)
