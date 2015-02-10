@@ -1,16 +1,26 @@
 /* TODO: Confirm that they look correct in all environments we support. */
 
+@url ERROR error;
+@url WARNING warning;
+@url NOTE note;
+
 .error, .fatal {
    position: absolute;
-   background-color: rgba(255, 0, 0, 0.3);
+   background-image: ERROR;
+   background-repeat: repeat-x;
+   margin-top: 18px !important;
 }
 
 .warning {
    position: absolute;
-   background-color: rgba(255, 168, 0, 0.3);
+   background-image: WARNING;
+   background-repeat: repeat-x;
+   margin-top: 18px !important;
 }
 
 .info, .ignored, .note {
    position: absolute;
-   background-color: rgba(0, 197, 255, 0.3);
+   background-image: NOTE;
+   background-repeat: repeat-x;
+   margin-top: 18px !important;
 }

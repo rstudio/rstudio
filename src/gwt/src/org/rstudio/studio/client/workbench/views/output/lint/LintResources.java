@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.views.output.lint;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
+import com.google.gwt.resources.client.ImageResource;
 
 public interface LintResources extends ClientBundle
 {
@@ -35,6 +36,14 @@ public interface LintResources extends ClientBundle
    @Source("Lint.css")
    Styles styles();
    
+   @Source("error.png")
+   ImageResource error();
+   
+   @Source("warning.png")
+   ImageResource warning();
+   
+   @Source("note.png")
+   ImageResource note();
    
    public static final LintResources INSTANCE =
          GWT.create(LintResources.class);
