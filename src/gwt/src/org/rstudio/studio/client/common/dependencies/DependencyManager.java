@@ -108,6 +108,7 @@ public class DependencyManager implements InstallShinyEvent.Handler
           Dependency.cranPackage("RJSONIO", "1.0"),
           Dependency.cranPackage("PKI", "0.1"),
           Dependency.cranPackage("packrat", "0.4.3"),
+          Dependency.cranPackage("rstudioapi", "0.2"),
           Dependency.embeddedPackage("rsconnect")
         },
         true, // we want the embedded rsconnect package to be updated if needed
