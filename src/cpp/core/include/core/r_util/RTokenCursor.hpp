@@ -407,6 +407,54 @@ public:
             isValidAsIdentifier(nextSignificantToken());
   }
   
+  bool moveToEndOfStatement(bool inParens)
+  {
+     while (true)
+     {
+        // When we're in a parenthetical statement, newlines are no
+        // longer significant. This means that, for example,
+        //
+        //    (someFunction
+        //     (1, 2, 3))
+        //
+        // is actually a function call to `someFunction(1, 2, 3)`, while
+        //
+        //    someFunction
+        //    (1, 2, 3)
+        //
+        // is actually two separate statements (the second being invalid)
+        if (!inParens && nextToken().contentContains(L'\n'))
+           return true;
+        
+        if (isLeftBracket(nextSignificantToken()))
+        {
+           if (!moveToNextSignificantToken())
+              return false;
+           
+           if (!fwdToMatchingToken())
+              return false;
+           
+           if (!inParens && nextToken().contentContains(L'\n'))
+              return true;
+           
+           continue;
+        }
+        
+        if (isBinaryOp(nextSignificantToken()))
+        {
+           if (!moveToNextSignificantToken())
+              return false;
+           
+           if (!moveToNextSignificantToken())
+              return false;
+           
+           continue;
+        }
+        
+        return true;
+     }
+  }
+  
 private:
    
    const RTokens& rTokens_;
