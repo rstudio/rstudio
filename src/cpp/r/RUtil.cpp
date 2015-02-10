@@ -190,12 +190,12 @@ std::set<std::string> makeRKeywords()
 }
 
 static const std::set<std::string> s_rKeywords = makeRKeywords();
-static const boost::regex s_isRDotNumber("\\.\\.[0-9]+");
+static const boost::regex s_reDotDotNumbers("\\.\\.[0-9]+");
 
 bool isRKeyword(const std::string &name)
 {
    return s_rKeywords.count(name) != 0 ||
-          regex_utils::textMatches(name, s_isRDotNumber, false, false);
+          regex_utils::textMatches(name, s_reDotDotNumbers, false, false);
 }
 
 } // namespace util
