@@ -265,4 +265,36 @@ public final class JdtUtil {
       return null;
     }
   }
+
+  public static String signature(FieldBinding binding) {
+    StringBuilder sb = new StringBuilder();
+    sb.append(binding.declaringClass.constantPoolName());
+    sb.append('.');
+    sb.append(binding.name);
+    sb.append(':');
+    sb.append(binding.type.signature());
+    return sb.toString();
+  }
+
+  public static String signature(MethodBinding binding) {
+    StringBuilder sb = new StringBuilder();
+    sb.append(binding.declaringClass.constantPoolName());
+    sb.append('.');
+    sb.append(binding.selector);
+    sb.append('(');
+    for (TypeBinding paramType : binding.parameters) {
+      sb.append(paramType.signature());
+    }
+    sb.append(')');
+    sb.append(binding.returnType.signature());
+    return sb.toString();
+  }
+
+  public static String signature(TypeBinding binding) {
+    if (binding.isBaseType()) {
+      return String.valueOf(binding.sourceName());
+    } else {
+      return String.valueOf(binding.constantPoolName());
+    }
+  }
 }

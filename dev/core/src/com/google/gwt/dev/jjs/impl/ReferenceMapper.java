@@ -81,7 +81,7 @@ public class ReferenceMapper {
 
   public JField get(FieldBinding binding) {
     binding = binding.original();
-    String key = signature(binding);
+    String key = JdtUtil.signature(binding);
     JField sourceField = sourceFields.get(key);
     if (sourceField != null) {
       assert !sourceField.isExternal();
@@ -98,7 +98,7 @@ public class ReferenceMapper {
 
   public JMethod get(MethodBinding binding) {
     binding = binding.original();
-    String key = signature(binding);
+    String key = JdtUtil.signature(binding);
     JMethod sourceMethod = sourceMethods.get(key);
     if (sourceMethod != null) {
       assert !sourceMethod.isExternal();
@@ -119,7 +119,7 @@ public class ReferenceMapper {
 
   public JType get(TypeBinding binding) {
     binding = binding.erasure();
-    String key = signature(binding);
+    String key = JdtUtil.signature(binding);
     JReferenceType sourceType = sourceTypes.get(key);
 
     if (sourceType != null) {
@@ -184,17 +184,17 @@ public class ReferenceMapper {
   }
 
   public void setField(FieldBinding binding, JField field) {
-    String key = signature(binding);
+    String key = JdtUtil.signature(binding);
     sourceFields.put(key, field);
   }
 
   public void setMethod(MethodBinding binding, JMethod method) {
-    String key = signature(binding);
+    String key = JdtUtil.signature(binding);
     sourceMethods.put(key, method);
   }
 
   public void setSourceType(SourceTypeBinding binding, JDeclaredType type) {
-    String key = signature(binding);
+    String key = JdtUtil.signature(binding);
     sourceTypes.put(key, type);
   }
 
@@ -348,38 +348,6 @@ public class ReferenceMapper {
   private void put(JType... baseTypes) {
     for (JType type : baseTypes) {
       types.put(type.getName(), type);
-    }
-  }
-
-  private String signature(FieldBinding binding) {
-    StringBuilder sb = new StringBuilder();
-    sb.append(binding.declaringClass.constantPoolName());
-    sb.append('.');
-    sb.append(binding.name);
-    sb.append(':');
-    sb.append(binding.type.signature());
-    return sb.toString();
-  }
-
-  private String signature(MethodBinding binding) {
-    StringBuilder sb = new StringBuilder();
-    sb.append(binding.declaringClass.constantPoolName());
-    sb.append('.');
-    sb.append(binding.selector);
-    sb.append('(');
-    for (TypeBinding paramType : binding.parameters) {
-      sb.append(paramType.signature());
-    }
-    sb.append(')');
-    sb.append(binding.returnType.signature());
-    return sb.toString();
-  }
-
-  private String signature(TypeBinding binding) {
-    if (binding.isBaseType()) {
-      return String.valueOf(binding.sourceName());
-    } else {
-      return String.valueOf(binding.constantPoolName());
     }
   }
 }

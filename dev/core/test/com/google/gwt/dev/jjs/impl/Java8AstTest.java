@@ -486,6 +486,164 @@ public class Java8AstTest extends JJSTestBase {
         formatSource(samMethod.toSource()));
   }
 
+  public void testIntersectionCast() throws Exception {
+    addSnippetClassDecl("static class A {void print() {} }");
+    addSnippetClassDecl("interface I1 {}");
+    addSnippetClassDecl("interface I2 {}");
+    addSnippetClassDecl("interface I3 {}");
+    addSnippetClassDecl("static class B extends A implements I1 {}");
+    addSnippetClassDecl("static class C extends A implements I1, I2, I3 {}");
+    String cast1 = "B b = new B(); ((A & I1) b).print();";
+    assertEqualBlock("EntryPoint$B b=new EntryPoint$B();((EntryPoint$A)(EntryPoint$I1)b).print();",
+        cast1);
+    String cast2 = "C c = new C(); ((A & I1 & I2 & I3)c).print();";
+    assertEqualBlock("EntryPoint$C c=new EntryPoint$C();"
+        + "((EntryPoint$A)(EntryPoint$I1)(EntryPoint$I2)(EntryPoint$I3)c).print();", cast2);
+  }
+
+  public void testIntersectionCastOfLambda() throws Exception {
+    addSnippetClassDecl("interface I1 { public void foo(); }");
+    addSnippetClassDecl("interface I2 { }");
+    String lambda = "Object o = (I2 & I1) () -> {};";
+    assertEqualBlock("Object o=(EntryPoint$I2)(EntryPoint$I1)new EntryPoint$lambda$0$Type();",
+        lambda);
+
+    JProgram program = compileSnippet("void", lambda, false);
+    // created by JDT, should exist
+    assertNotNull(getMethod(program, "lambda$0"));
+
+    // created by GwtAstBuilder
+    JClassType lambdaInnerClass = (JClassType) getType(program, "test.EntryPoint$lambda$0$Type");
+    assertNotNull(lambdaInnerClass);
+
+    // no fields
+    assertEquals(0, lambdaInnerClass.getFields().size());
+
+    // should have constructor taking no args
+    JMethod ctor = findMethod(lambdaInnerClass, "EntryPoint$lambda$0$Type");
+    assertTrue(ctor instanceof JConstructor);
+    assertEquals(0, ctor.getParams().size());
+
+    // should implements I1 and I2
+    assertTrue(
+        lambdaInnerClass.getImplements().contains(program.getFromTypeMap("test.EntryPoint$I1")));
+    assertTrue(
+        lambdaInnerClass.getImplements().contains(program.getFromTypeMap("test.EntryPoint$I2")));
+    // should implement foo method
+    JMethod samMethod = findMethod(lambdaInnerClass, "foo");
+    assertEquals("public final void foo(){EntryPoint.lambda$0();}",
+        formatSource(samMethod.toSource()));
+  }
+
+  public void testMultipleIntersectionCastOfLambda() throws Exception {
+    addSnippetClassDecl("interface I1 { public void foo(); }");
+    addSnippetClassDecl("interface I2 { }");
+    addSnippetClassDecl("interface I3 { }");
+    String lambda = "I2 o = (I3 & I2 & I1) () -> {};";
+    assertEqualBlock(
+        "EntryPoint$I2 o=(EntryPoint$I3)(EntryPoint$I2)(EntryPoint$I1)new EntryPoint$lambda$0$Type();",
+        lambda);
+
+    JProgram program = compileSnippet("void", lambda, false);
+    // created by JDT, should exist
+    assertNotNull(getMethod(program, "lambda$0"));
+
+    // created by GwtAstBuilder
+    JClassType lambdaInnerClass = (JClassType) getType(program, "test.EntryPoint$lambda$0$Type");
+    assertNotNull(lambdaInnerClass);
+
+    // no fields
+    assertEquals(0, lambdaInnerClass.getFields().size());
+
+    // should have constructor taking no args
+    JMethod ctor = findMethod(lambdaInnerClass, "EntryPoint$lambda$0$Type");
+    assertTrue(ctor instanceof JConstructor);
+    assertEquals(0, ctor.getParams().size());
+
+    // should extends java.lang.Object, implements I1, I2 and I3
+    assertEquals("java.lang.Object", lambdaInnerClass.getSuperClass().getName());
+    assertTrue(
+        lambdaInnerClass.getImplements().contains(program.getFromTypeMap("test.EntryPoint$I1")));
+    assertTrue(
+        lambdaInnerClass.getImplements().contains(program.getFromTypeMap("test.EntryPoint$I2")));
+    assertTrue(
+        lambdaInnerClass.getImplements().contains(program.getFromTypeMap("test.EntryPoint$I3")));
+    // should implement foo method
+    JMethod samMethod = findMethod(lambdaInnerClass, "foo");
+    assertEquals("public final void foo(){EntryPoint.lambda$0();}",
+        formatSource(samMethod.toSource()));
+  }
+
+  public void testIntersectionCastOfLambdaWithClassType() throws Exception {
+    addSnippetClassDecl("interface I1 { public void foo(); }");
+    addSnippetClassDecl("class A { }");
+    String lambda = "Object o = (A & I1) () -> {};";
+    assertEqualBlock("Object o=(EntryPoint$A)(EntryPoint$I1)new EntryPoint$lambda$0$Type();",
+        lambda);
+
+    JProgram program = compileSnippet("void", lambda, false);
+
+    assertNotNull(getMethod(program, "lambda$0"));
+
+    JClassType lambdaInnerClass = (JClassType) getType(program, "test.EntryPoint$lambda$0$Type");
+    assertNotNull(lambdaInnerClass);
+    assertEquals("java.lang.Object", lambdaInnerClass.getSuperClass().getName());
+    assertEquals(1, lambdaInnerClass.getImplements().size());
+    assertTrue(
+        lambdaInnerClass.getImplements().contains(program.getFromTypeMap("test.EntryPoint$I1")));
+    // should implement foo method
+    JMethod samMethod = findMethod(lambdaInnerClass, "foo");
+    assertEquals("public final void foo(){EntryPoint.lambda$0();}",
+        formatSource(samMethod.toSource()));
+  }
+
+  public void testIntersectionCastOfLambdaOneAbstractMethod() throws Exception {
+    addSnippetClassDecl("interface I1 { public void foo(); }");
+    addSnippetClassDecl("interface I2 extends I1{ public void foo();}");
+    String lambda = "Object o = (I1 & I2) () -> {};";
+    // (I1 & I2) is resolved to I2 by JDT.
+    assertEqualBlock("Object o=(EntryPoint$I2)new EntryPoint$lambda$0$Type();",
+        lambda);
+
+    JProgram program = compileSnippet("void", lambda, false);
+
+    assertNotNull(getMethod(program, "lambda$0"));
+
+    JClassType lambdaInnerClass = (JClassType) getType(program, "test.EntryPoint$lambda$0$Type");
+    assertNotNull(lambdaInnerClass);
+    assertEquals("java.lang.Object", lambdaInnerClass.getSuperClass().getName());
+    assertEquals(1, lambdaInnerClass.getImplements().size()); // only implements I2.
+    assertTrue(
+        lambdaInnerClass.getImplements().contains(program.getFromTypeMap("test.EntryPoint$I2")));
+    // should implement foo method
+    JMethod samMethod = findMethod(lambdaInnerClass, "foo");
+    assertEquals("public final void foo(){EntryPoint.lambda$0();}",
+        formatSource(samMethod.toSource()));
+  }
+
+  public void testIntersectionCastMultipleAbstractMethods() throws Exception {
+    addSnippetClassDecl("interface I1 { public void foo(); }");
+    addSnippetClassDecl("interface I2 { public void bar(); public void fun();}");
+    String lambda = "Object o = (I1 & I2) () -> {};";
+    assertEqualBlock("Object o=(EntryPoint$I1)(EntryPoint$I2)new EntryPoint$lambda$0$Type();",
+        lambda);
+
+    JProgram program = compileSnippet("void", lambda, false);
+
+    assertNotNull(getMethod(program, "lambda$0"));
+
+    JClassType lambdaInnerClass = (JClassType) getType(program, "test.EntryPoint$lambda$0$Type");
+    assertNotNull(lambdaInnerClass);
+    assertEquals("java.lang.Object", lambdaInnerClass.getSuperClass().getName());
+    assertEquals(1, lambdaInnerClass.getImplements().size());
+    assertTrue(
+        lambdaInnerClass.getImplements().contains(program.getFromTypeMap("test.EntryPoint$I1")));
+    // should implement foo method
+    JMethod samMethod = findMethod(lambdaInnerClass, "foo");
+    assertEquals("public final void foo(){EntryPoint.lambda$0();}",
+        formatSource(samMethod.toSource()));
+  }
+
   private static final MockJavaResource LAMBDA_METAFACTORY =
       JavaResourceBase.createMockJavaResource("java.lang.invoke.LambdaMetafactory",
           "package java.lang.invoke;",

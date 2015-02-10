@@ -115,6 +115,7 @@ import com.google.gwt.dev.util.collect.Stack;
 import com.google.gwt.thirdparty.guava.common.base.Function;
 import com.google.gwt.thirdparty.guava.common.base.Preconditions;
 import com.google.gwt.thirdparty.guava.common.collect.Interner;
+import com.google.gwt.thirdparty.guava.common.collect.Iterables;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
 import com.google.gwt.thirdparty.guava.common.collect.Maps;
 import com.google.gwt.thirdparty.guava.common.collect.Sets;
@@ -208,12 +209,15 @@ import org.eclipse.jdt.internal.compiler.lookup.BlockScope;
 import org.eclipse.jdt.internal.compiler.lookup.ClassScope;
 import org.eclipse.jdt.internal.compiler.lookup.CompilationUnitScope;
 import org.eclipse.jdt.internal.compiler.lookup.FieldBinding;
+import org.eclipse.jdt.internal.compiler.lookup.IntersectionTypeBinding18;
 import org.eclipse.jdt.internal.compiler.lookup.LocalTypeBinding;
 import org.eclipse.jdt.internal.compiler.lookup.LocalVariableBinding;
 import org.eclipse.jdt.internal.compiler.lookup.MethodBinding;
 import org.eclipse.jdt.internal.compiler.lookup.MethodScope;
+import org.eclipse.jdt.internal.compiler.lookup.MethodVerifier;
 import org.eclipse.jdt.internal.compiler.lookup.NestedTypeBinding;
 import org.eclipse.jdt.internal.compiler.lookup.ReferenceBinding;
+import org.eclipse.jdt.internal.compiler.lookup.Scope;
 import org.eclipse.jdt.internal.compiler.lookup.SourceTypeBinding;
 import org.eclipse.jdt.internal.compiler.lookup.SyntheticArgumentBinding;
 import org.eclipse.jdt.internal.compiler.lookup.SyntheticMethodBinding;
@@ -540,11 +544,16 @@ public class GwtAstBuilder {
 
     @Override
     public void endVisit(CastExpression x, BlockScope scope) {
+      /**
+       * Our output of a ((A & I1 & I2) a) looks like this:
+       *
+       * ((A)(I1)(I2)a).
+       */
       try {
         SourceInfo info = makeSourceInfo(x);
-        JType type = typeMap.get(x.resolvedType);
+        JType[] type = processCastType(x.resolvedType);
         JExpression expression = pop(x.expression);
-        push(new JCastOperation(info, type, expression));
+        push(buildCastOperation(info, type, expression));
       } catch (Throwable e) {
         throw translateException(x, e);
       }
@@ -1201,17 +1210,26 @@ public class GwtAstBuilder {
       TypeBinding binding = x.expectedType();
       // Find the single abstract method of this interface
       MethodBinding samBinding = binding.getSingleAbstractMethod(blockScope, false);
+      assert (samBinding != null && samBinding.isValidBinding());
 
       // Lookup the JMethod version
       JMethod interfaceMethod = typeMap.get(samBinding);
       // And its JInterface container we must implement
-      JInterfaceType funcType = (JInterfaceType) typeMap.get(binding);
+      // There may be more than more JInterface containers to be implemented
+      // if the lambda expression is cast to a IntersectionCastType.
+      JInterfaceType[] funcType;
+      if (binding instanceof IntersectionTypeBinding18) {
+        funcType = processIntersectionTypeForLambda((IntersectionTypeBinding18) binding, blockScope,
+            JdtUtil.signature(samBinding));
+      } else {
+        funcType = new JInterfaceType[] {(JInterfaceType) typeMap.get(binding)};
+      }
       SourceInfo info = makeSourceInfo(x);
 
       // Create an inner class to implement the interface and SAM method.
       // class lambda$0$Type implements T {}
       JClassType innerLambdaClass = createInnerClass(JdtUtil.asDottedString(x.binding.declaringClass.compoundName) +
-          "$" + new String(x.binding.selector), x, funcType, info);
+          "$" + new String(x.binding.selector), x, info, funcType);
       JConstructor ctor = new JConstructor(info, innerLambdaClass);
 
       // locals captured by the lambda and saved as fields on the anonymous inner class
@@ -1400,11 +1418,13 @@ public class GwtAstBuilder {
       return outerParam;
     }
 
-    private JClassType createInnerClass(String name, FunctionalExpression x,
-        JInterfaceType funcType, SourceInfo info) {
+    private JClassType createInnerClass(String name, FunctionalExpression x, SourceInfo info,
+        JInterfaceType... funcType) {
       JClassType innerLambdaClass = new JClassType(info, name + "$Type", false, true);
       innerLambdaClass.setEnclosingType((JDeclaredType) typeMap.get(x.binding.declaringClass));
-      innerLambdaClass.addImplements(funcType);
+      for (JInterfaceType type : funcType) {
+        innerLambdaClass.addImplements(type);
+      }
       innerLambdaClass.setSuperClass(javaLangObject);
 
       createSyntheticMethod(info, CLINIT_NAME, innerLambdaClass, JPrimitiveType.VOID, false, true,
@@ -1461,7 +1481,7 @@ public class GwtAstBuilder {
             ReferenceBinding targetType =
                 scope.enclosingSourceType().enclosingTypeAt(
                     (x.bits & ASTNode.DepthMASK) >> ASTNode.DepthSHIFT);
-            receiver = makeThisReference(info, targetType, true, scope);
+            receiver = resolveThisReference(info, targetType, true, scope);
           } else if (x.receiver.sourceStart == 0) {
             // Synthetic this ref with bad source info; fix the info.
             JThisRef oldRef = (JThisRef) receiver;
@@ -1635,7 +1655,7 @@ public class GwtAstBuilder {
           // Java8 super reference to default method from subtype, X.super.someDefaultMethod
           push(makeThisRef(info));
         } else {
-          push(makeThisReference(info, targetType, true, scope));
+          push(resolveThisReference(info, targetType, true, scope));
         }
       } catch (Throwable e) {
         throw translateException(x, e);
@@ -1647,7 +1667,7 @@ public class GwtAstBuilder {
       try {
         SourceInfo info = makeSourceInfo(x);
         ReferenceBinding targetType = (ReferenceBinding) x.qualification.resolvedType;
-        push(makeThisReference(info, targetType, true, scope));
+        push(resolveThisReference(info, targetType, true, scope));
       } catch (Throwable e) {
         throw translateException(x, e);
       }
@@ -1718,7 +1738,7 @@ public class GwtAstBuilder {
       List<JExpression> enclosingThisRefs = new ArrayList<JExpression>();
 
       if (innerLambdaClass == null) {
-        innerLambdaClass = createInnerClass(lambdaName, x, funcType, info);
+        innerLambdaClass = createInnerClass(lambdaName, x, info, funcType);
         lambdaNameToInnerLambdaType.put(lambdaName, innerLambdaClass);
         newTypes.add(innerLambdaClass);
 
@@ -1745,7 +1765,7 @@ public class GwtAstBuilder {
           if (JdtUtil.isInnerClass(targetBinding)) {
             for (ReferenceBinding argType : targetBinding.syntheticEnclosingInstanceTypes()) {
               argType = (ReferenceBinding) argType.erasure();
-              JExpression enclosingThisRef = makeThisReference(info, argType, false, blockScope);
+              JExpression enclosingThisRef = resolveThisReference(info, argType, false, blockScope);
               JField enclosingInstance = createAndBindCapturedLambdaParameter(info,
                   String.valueOf(argType.readableName()).replace('.', '_'),
                   enclosingThisRef.getType(), ctor, ctorBody);
@@ -2906,7 +2926,7 @@ public class GwtAstBuilder {
       return new JThisRef(info, curClass.getClassOrInterface());
     }
 
-    private JExpression makeThisReference(SourceInfo info, ReferenceBinding targetType,
+    private JExpression resolveThisReference(SourceInfo info, ReferenceBinding targetType,
         boolean exactMatch, BlockScope scope) {
       targetType = (ReferenceBinding) targetType.erasure();
 
@@ -3095,7 +3115,7 @@ public class GwtAstBuilder {
           call.addArg(qualifier);
         } else {
           // Get implicit outer object.
-          call.addArg(makeThisReference(call.getSourceInfo(), targetType, false, curMethod.scope));
+          call.addArg(resolveThisReference(call.getSourceInfo(), targetType, false, curMethod.scope));
         }
       }
     }
@@ -3197,7 +3217,7 @@ public class GwtAstBuilder {
             if (qualifier != null && argType == targetEnclosingType) {
               call.addArg(qualExpr);
             } else {
-              JExpression thisRef = makeThisReference(info, argType, false, scope);
+              JExpression thisRef = resolveThisReference(info, argType, false, scope);
               call.addArg(thisRef);
             }
           }
@@ -3329,7 +3349,7 @@ public class GwtAstBuilder {
         assert field != null;
         JExpression thisRef = null;
         if (!b.isStatic()) {
-          thisRef = makeThisReference(info, (ReferenceBinding) x.actualReceiverType, false, scope);
+          thisRef = resolveThisReference(info, (ReferenceBinding) x.actualReceiverType, false, scope);
         }
         result = new JFieldRef(info, thisRef, field, curClass.type);
       } else {
@@ -3437,6 +3457,119 @@ public class GwtAstBuilder {
         call.addArgs(mapRef, nameRef);
         implementMethod(method, call);
       }
+    }
+
+    private JCastOperation buildCastOperation(SourceInfo info, JType[] castTypes,
+        JExpression expression) {
+      return buildCastOperation(info, castTypes, expression, 0);
+    }
+
+    private JCastOperation buildCastOperation(SourceInfo info, JType[] castTypes,
+        JExpression expression, int idx) {
+      if (idx == castTypes.length - 1) {
+        return new JCastOperation(info, castTypes[idx], expression);
+      } else {
+        return new JCastOperation(info, castTypes[idx],
+            buildCastOperation(info, castTypes, expression, idx + 1));
+      }
+    }
+
+    private JReferenceType[] processIntersectionCastType(IntersectionTypeBinding18 type) {
+      JReferenceType[] castTypes = new JReferenceType[type.intersectingTypes.length];
+      int i = 0;
+      for (ReferenceBinding intersectingTypeBinding : type.intersectingTypes) {
+        JType intersectingType = typeMap.get(intersectingTypeBinding);
+        assert (intersectingType instanceof JReferenceType);
+        castTypes[i++] = ((JReferenceType) intersectingType);
+      }
+      return castTypes;
+    }
+
+    private JType[] processCastType(TypeBinding type) {
+      if (type instanceof IntersectionTypeBinding18) {
+        return processIntersectionCastType((IntersectionTypeBinding18) type);
+      } else {
+        return new JType[] {typeMap.get(type)};
+      }
+    }
+
+    private JInterfaceType[] processIntersectionTypeForLambda(IntersectionTypeBinding18 type,
+        BlockScope scope, String samSignature) {
+      List<JInterfaceType> interfaces = Lists.newArrayList();
+      for (ReferenceBinding intersectingTypeBinding : type.intersectingTypes) {
+        if (shouldImplements(intersectingTypeBinding, scope, samSignature)) {
+          JType intersectingType = typeMap.get(intersectingTypeBinding);
+          assert (intersectingType instanceof JInterfaceType);
+          interfaces.add(((JInterfaceType) intersectingType));
+        }
+      }
+      return Iterables.toArray(interfaces, JInterfaceType.class);
+    }
+
+    private boolean isFunctionalInterfaceWithMethod(ReferenceBinding referenceBinding, Scope scope,
+        String samSignature) {
+      if (!referenceBinding.isInterface()) {
+        return false;
+      }
+      MethodBinding abstractMethod = referenceBinding.getSingleAbstractMethod(scope, false);
+      return abstractMethod != null && abstractMethod.isValidBinding()
+          && JdtUtil.signature(abstractMethod).equals(samSignature);
+    }
+
+    private boolean isInterfaceHasNoAbstractMethod(ReferenceBinding referenceBinding, Scope scope) {
+      List<MethodBinding> abstractMethods = getInterfaceAbstractMethods(referenceBinding, scope);
+      return abstractMethods != null && abstractMethods.size() == 0;
+    }
+
+    private boolean shouldImplements(ReferenceBinding referenceBinding, Scope scope,
+        String samSignature) {
+      return isFunctionalInterfaceWithMethod(referenceBinding, scope, samSignature)
+          || isInterfaceHasNoAbstractMethod(referenceBinding, scope);
+    }
+
+    /**
+     * Collect all abstract methods in an interface and its super interfaces.
+     *
+     * In the case of multiple inheritance like this,
+     *
+     * interface I {m();}
+     * interface J {default m();}
+     * interface K extends I, J{}
+     *
+     * the abstract methods of K include m();
+     */
+    private List<MethodBinding> getInterfaceAbstractMethods(ReferenceBinding referenceBinding,
+        Scope scope) {
+      if (!referenceBinding.isInterface() || !referenceBinding.isValidBinding()) {
+        return null;
+      }
+      List<MethodBinding> abstractMethods = Lists.newLinkedList();
+
+      // add all abstract methods from super interfaces.
+      for (ReferenceBinding superInterface : referenceBinding.superInterfaces()) {
+        List<MethodBinding> abstractMethodsFromSupers =
+            getInterfaceAbstractMethods(superInterface, scope);
+        if (abstractMethodsFromSupers != null && abstractMethodsFromSupers.size() > 0) {
+          abstractMethods.addAll(abstractMethodsFromSupers);
+        }
+      }
+      for (MethodBinding method : referenceBinding.methods()) {
+        if (method == null || method.isStatic() || method.redeclaresPublicObjectMethod(scope)) {
+          continue;
+        }
+        // remove the overridden methods in the super interfaces.
+        for (MethodBinding abstractMethodFromSupers : abstractMethods) {
+          if (MethodVerifier.doesMethodOverride(method, abstractMethodFromSupers,
+              scope.environment())) {
+            abstractMethods.remove(abstractMethodFromSupers);
+          }
+        }
+        // add method to abstract methods if it is not a default method.
+        if (!method.isDefaultMethod()) {
+          abstractMethods.add(method);
+        }
+      }
+      return abstractMethods;
     }
   }
 

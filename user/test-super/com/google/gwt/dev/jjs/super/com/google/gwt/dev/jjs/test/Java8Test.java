@@ -659,4 +659,119 @@ public class Java8Test extends GWTTestCase {
     assertEquals("B.n1;I.n;I.m;A.n;A.m;B.m;", outerClass.n1());
     assertEquals("B.n2;I.m;A.n;A.m;B.m;B.m;", outerClass.n2());
   }
+
+  class EmptyA { }
+  interface EmptyI { }
+  interface EmptyJ { }
+  class EmptyB extends EmptyA implements EmptyI { }
+  class EmptyC extends EmptyA implements EmptyI, EmptyJ { }
+  public void testBaseIntersectionCast() {
+    EmptyA localB = new EmptyB();
+    EmptyA localC = new EmptyC();
+    EmptyB b2BI = (EmptyB & EmptyI) localB;
+    EmptyC c2CIJ = (EmptyC & EmptyI & EmptyJ) localC;
+    EmptyI ii1 = (EmptyB & EmptyI) localB;
+    EmptyI ii2 = (EmptyC & EmptyI) localC;
+    EmptyI ii3 = (EmptyC & EmptyJ) localC;
+    EmptyI ii4 = (EmptyC & EmptyI & EmptyJ) localC;
+    EmptyJ jj1 = (EmptyC & EmptyI & EmptyJ) localC;
+    EmptyJ jj2 = (EmptyC & EmptyI) localC;
+    EmptyJ jj3 = (EmptyC & EmptyJ) localC;
+    EmptyJ jj4 = (EmptyI & EmptyJ) localC;
+
+    try {
+      EmptyC b2CIJ = (EmptyC & EmptyI & EmptyJ) localB;
+      fail("Should have thrown a ClassCastException");
+    } catch (ClassCastException e) {
+      // Expected.
+    }
+    try {
+      EmptyB c2BI = (EmptyB & EmptyI) localC;
+      fail("Should have thrown a ClassCastException");
+    } catch (ClassCastException e) {
+      // Expected.
+    }
+    try {
+      EmptyJ jj = (EmptyB & EmptyJ) localB;
+      fail("Should have thrown a ClassCastException");
+    } catch (ClassCastException e) {
+      // Expected.
+    }
+  }
+
+  interface SimpleI {
+    int fun();
+  }
+  interface SimpleJ {
+    int foo();
+    int bar();
+  }
+  interface SimpleK {
+  }
+  public void testIntersectionCastWithLambdaExpr() {
+    SimpleI simpleI1 = (SimpleI & EmptyI) () -> { return 11; };
+    assertEquals(11, simpleI1.fun());
+    SimpleI simpleI2 = (EmptyI & SimpleI) () -> { return 22; };
+    assertEquals(22, simpleI2.fun());
+    EmptyI emptyI = (EmptyI & SimpleI) () -> { return 33; };
+    try {
+      ((EmptyA & SimpleI) () -> { return 33; }).fun();
+      fail("Should have thrown a ClassCastException");
+    } catch (ClassCastException e) {
+      // expected.
+    }
+    try {
+      ((SimpleI & SimpleJ) () -> { return 44; }).fun();
+      fail("Should have thrown a ClassCastException");
+    } catch (ClassCastException e) {
+      // expected.
+    }
+    try {
+      ((SimpleI & SimpleJ) () -> { return 44; }).foo();
+      fail("Should have thrown a ClassCastException");
+    } catch (ClassCastException e) {
+      // expected.
+    }
+    try {
+      ((SimpleI & SimpleJ) () -> { return 44; }).bar();
+      fail("Should have thrown a ClassCastException");
+    } catch (ClassCastException e) {
+      // expected.
+    }
+    assertEquals(55, ((SimpleI & SimpleK) () -> { return 55; }).fun());
+  }
+
+  class SimpleA {
+    public int bar() {
+      return 11;
+    }
+  }
+
+  class SimpleB extends SimpleA implements SimpleI {
+    public int fun() {
+      return 22;
+    }
+  }
+
+  class SimpleC extends SimpleA implements SimpleI {
+    public int fun() {
+      return 33;
+    }
+
+    public int bar() {
+      return 44;
+    }
+  }
+
+  public void testIntersectionCastPolymorphism() {
+    SimpleA bb = new SimpleB();
+    assertEquals(22, ((SimpleB & SimpleI) bb).fun());
+    assertEquals(11, ((SimpleB & SimpleI) bb).bar());
+    SimpleA cc = new SimpleC();
+    assertEquals(33, ((SimpleC & SimpleI) cc).fun());
+    assertEquals(44, ((SimpleC & SimpleI) cc).bar());
+    assertEquals(33, ((SimpleA & SimpleI) cc).fun());
+    SimpleI ii = (SimpleC & SimpleI) cc;
+    assertEquals(33, ii.fun());
+  }
 }
