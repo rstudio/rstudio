@@ -208,8 +208,11 @@ void warnIfCursorEncountersSymbol(const TokenCursor& cursor,
                                   const std::wstring& symbol,
                                   LintItems* pLint)
 {
-   if (cursor.contentEquals(symbol))
+   if (!cursor.nextSignificantToken().isType(RToken::LPAREN) &&
+       cursor.contentEquals(symbol))
+   {
       pLint->noSymbolNamed(cursor);
+   }
 }
 
 void handleIdentifier(TokenCursor& cursor,
@@ -236,7 +239,13 @@ void handleIdentifier(TokenCursor& cursor,
       //
       //    x <- x + 1
       //
-      // and `x` isn't actually defined yet.
+      // and `x` isn't actually defined yet. Note that we need to be careful
+      // because, for example,
+      //
+      //    foo <- foo()
+      //
+      // is legal, and `foo` might be an object on the search path. (For
+      // variables, we prefer not searching the search path)
       if (isLocalLeftAssign(cursor.nextSignificantToken()) &&
           !status.node()->symbolHasDefinitionInTree(cursor.contentAsUtf8(), cursor.currentPosition()))
       {
