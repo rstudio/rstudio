@@ -348,6 +348,7 @@ void doParse(TokenCursor& cursor,
       
 START:
       
+      DEBUG("Start: " << cursor);
       // Move over unary operators -- any sequence is valid,
       // but certain tokens are not accepted following
       // unary operators.

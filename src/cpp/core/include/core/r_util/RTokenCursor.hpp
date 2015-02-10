@@ -255,8 +255,12 @@ public:
       
       TokenCursor cursor = clone();
       ++cursor.offset_;
+      
+      if (!isWhitespaceOrComment(cursor))
+         return false;
+      
       cursor.fwdOverWhitespaceAndComments();
-      if (cursor.offset_ == n_ - 1)
+      if (isWhitespaceOrComment(cursor) && cursor.offset_ == n_ - 1)
          return true;
       
       return false;
