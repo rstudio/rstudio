@@ -19,17 +19,18 @@ import org.rstudio.core.client.Invalidation;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.views.output.lint.model.LintItem;
 import org.rstudio.studio.client.workbench.views.output.lint.model.LintServerOperations;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionRequest;
-import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedEvent;
-import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedHandler;
 import org.rstudio.studio.client.workbench.views.source.model.CppDiagnostic;
 
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Timer;
 import com.google.inject.Inject;
@@ -86,12 +87,15 @@ public class LintManager
       };
       
       // Background linting
-      docDisplay_.addCursorChangedHandler(new CursorChangedHandler()
+      docDisplay_.addValueChangeHandler(new ValueChangeHandler<Void>()
       {
          @Override
-         public void onCursorChanged(CursorChangedEvent event)
+         public void onValueChange(ValueChangeEvent<Void> event)
          {
             if (!docDisplay_.isFocused())
+               return;
+            
+            if (docDisplay_.isPopupVisible())
                return;
             
             docDisplay_.removeAnnotationsOnLine(
@@ -121,7 +125,6 @@ public class LintManager
 
    private void performLintServerRequest(final LintContext context)
    {
-      
       if (context.token.isInvalid())
          return;
       
@@ -210,6 +213,12 @@ public class LintManager
    private void showLint(LintContext context,
                          JsArray<LintItem> lint)
    {
+      if (docDisplay_.isPopupVisible() ||
+          !docDisplay_.isFocused())
+      {
+         return;
+      }
+      
       // Filter out items at the last cursor position, if the cursor
       // hasn't moved.
       if (context.excludeCurrentStatement &&
