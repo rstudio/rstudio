@@ -166,6 +166,11 @@ public:
    }
    
    std::string asString() const;
+   friend std::ostream& operator <<(std::ostream& os,
+                                    const RToken& self)
+   {
+      return os << self.asString();
+   }
 
 private:
    TokenType type_;

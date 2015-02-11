@@ -208,8 +208,26 @@ void warnIfCursorEncountersSymbol(const TokenCursor& cursor,
                                   const std::wstring& symbol,
                                   LintItems* pLint)
 {
-   if (!cursor.nextSignificantToken().isType(RToken::LPAREN) &&
-       cursor.contentEquals(symbol))
+   if (!cursor.isType(RToken::ID))
+      return;
+   
+   // Don't warn about function calls, or if the token is
+   // expressed as part of an extraction.
+   const RToken& next = cursor.nextSignificantToken();
+   const RToken& prev = cursor.previousSignificantToken();
+   
+   if (next.isType(RToken::LPAREN))
+      return;
+   
+   if (isExtractionOperator(prev) ||
+       isExtractionOperator(next))
+      return;
+   
+   if (isLeftAssign(next) ||
+       isRightAssign(prev))
+      return;
+   
+   if (cursor.contentEquals(symbol))
    {
       pLint->noSymbolNamed(cursor);
    }

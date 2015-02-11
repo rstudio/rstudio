@@ -19,6 +19,8 @@
 #include "RTokenizer.hpp"
 #include "RParser.hpp"
 
+#include <boost/function.hpp>
+
 #include <core/collection/Position.hpp>
 
 #include <core/Macros.hpp>
@@ -287,8 +289,7 @@ public:
    friend std::ostream& operator <<(std::ostream& os,
                                     const TokenCursor& cursor)
    {
-      os << cursor.currentToken().asString();
-      return os;
+      return os << cursor.currentToken().asString();
    }
    
    std::size_t row() const { return currentToken().row(); }
@@ -297,7 +298,8 @@ public:
 private:
    
    bool doFwdToMatchingToken(RToken::TokenType leftTokenType,
-                             RToken::TokenType rightTokenType)
+                             RToken::TokenType rightTokenType,
+                             boost::function<void(const TokenCursor&)> callback = NULL)
    {
       if (!isType(leftTokenType))
          return false;
@@ -307,6 +309,9 @@ private:
       
       while (cursor.moveToNextToken())
       {
+         if (callback)
+            callback(cursor);
+         
          stack += cursor.isType(leftTokenType);
          stack -= cursor.isType(rightTokenType);
          
@@ -321,7 +326,8 @@ private:
    }
    
    bool doBwdToMatchingToken(RToken::TokenType leftTokenType,
-                             RToken::TokenType rightTokenType)
+                             RToken::TokenType rightTokenType,
+                             boost::function<void(const TokenCursor&)> callback = NULL)
    {
       if (!isType(rightTokenType))
          return false;
@@ -331,6 +337,9 @@ private:
       
       while (cursor.moveToPreviousToken())
       {
+         if (callback)
+            callback(cursor);
+         
          stack += cursor.isType(rightTokenType) ? 1 : 0;
          stack -= cursor.isType(leftTokenType) ? 1 : 0;
          
@@ -377,18 +386,16 @@ private:
    }
 
 public:
-  bool fwdToMatchingToken()
+  bool fwdToMatchingToken(boost::function<void(const TokenCursor&)> callback)
   {
-     return doFwdToMatchingToken(type(),
-                                 complements()[type()]);
+     return doFwdToMatchingToken(type(), complements()[type()], callback);
   }
 
-  bool bwdToMatchingToken()
+  bool bwdToMatchingToken(boost::function<void(const TokenCursor&)> callback)
   {
-     return doBwdToMatchingToken(type(),
-                                 complements()[type()]);
+     return doBwdToMatchingToken(type(), complements()[type()], callback);
   }
-  
+
 public:
   
   bool isAtEndOfExpression() const
@@ -440,7 +447,7 @@ public:
            if (!moveToNextSignificantToken())
               return false;
            
-           if (!fwdToMatchingToken())
+           if (!fwdToMatchingToken(callback))
               return false;
            
            if (!inParens && nextToken().contentContains(L'\n'))
