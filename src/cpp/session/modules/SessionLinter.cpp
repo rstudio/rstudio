@@ -412,6 +412,15 @@ void onFilesChanged(const std::vector<core::system::FileChangeEvent>& events)
    }
 }
 
+void afterSessionInitHook(bool newSession)
+{
+   if (projects::projectContext().hasProject() &&
+       projects::projectContext().directory().complete("NAMESPACE").exists())
+   {
+      onNAMESPACEchanged();
+   }
+}
+
 } // anonymous namespace
 
 core::Error initialize()
@@ -420,6 +429,7 @@ core::Error initialize()
    using boost::bind;
    using namespace module_context;
    
+   events().afterSessionInitHook.connect(afterSessionInitHook);
    session::projects::FileMonitorCallbacks cb;
    cb.onFilesChanged = onFilesChanged;
    projects::projectContext().subscribeToFileMonitor("Linter", cb);
