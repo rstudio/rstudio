@@ -1,5 +1,5 @@
 /*
- * SessionHelpResources.hpp
+ * SessionHelpHome.hpp
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -13,8 +13,8 @@
  *
  */
 
-#ifndef SESSION_SESSION_HELP_RESOURCES_HPP
-#define SESSION_SESSION_HELP_RESOURCES_HPP
+#ifndef SESSION_SESSION_HELP_HOME_HPP
+#define SESSION_SESSION_HELP_HOME_HPP
 
 #include <string>
 
@@ -31,9 +31,9 @@ namespace session {
 namespace modules {      
 namespace help {
 
-void handleHelpResourcesRequest(const core::http::Request& request,
-                                const std::string& jsCallbacks,
-                                core::http::Response* pResponse);
+void handleHelpHomeRequest(const core::http::Request& request,
+                           const std::string& jsCallbacks,
+                           core::http::Response* pResponse);
 
    
 } // namespace help
@@ -41,4 +41,4 @@ void handleHelpResourcesRequest(const core::http::Request& request,
 } // namesapce session
 } // namespace rstudio
 
-#endif // SESSION_SESSION_HELP_RESOURCES_HPP
+#endif // SESSION_SESSION_HELP_HOME_HPP

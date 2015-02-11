@@ -143,9 +143,9 @@ public class Help extends BasePresenter implements ShowHelpHandler
                // mark us initialized
                historyInitialized_ = true ;
                
-               if (session.getSessionInfo().getShowHelpResources())
+               if (session.getSessionInfo().getShowHelpHome())
                {
-                  resources();
+                  home();
                }
                else if (!view_.navigated())
                {
@@ -196,15 +196,10 @@ public class Help extends BasePresenter implements ShowHelpHandler
    {
       view_.bringToFront();
    }
-
+   
    private void home()
    {
-      resources();
-   }
-   
-   private void resources()
-   {
-      showHelp("help/doc/resources/");
+      showHelp("help/doc/home/");
    }
    
    public Display getDisplay()

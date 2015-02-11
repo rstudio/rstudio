@@ -92,7 +92,7 @@ set (SESSION_SOURCE_FILES
    modules/SessionFind.cpp
    modules/SessionGit.cpp
    modules/SessionHelp.cpp
-   modules/SessionHelpResources.cpp
+   modules/SessionHelpHome.cpp
    modules/SessionHistory.cpp
    modules/SessionHistoryArchive.cpp
    modules/SessionHTMLPreview.cpp

@@ -1,5 +1,5 @@
 /*
- * SessionHelpResources.cpp
+ * SessionHelpHome.cpp
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -13,7 +13,7 @@
  *
  */
 
-#include "SessionHelpResources.hpp"
+#include "SessionHelpHome.hpp"
 
 #include <core/text/TemplateFilter.hpp>
 
@@ -30,7 +30,7 @@ namespace {
 
 } // anonymous namespace
 
-void handleHelpResourcesRequest(const core::http::Request& request,
+void handleHelpHomeRequest(const core::http::Request& request,
                                 const std::string& jsCallbacks,
                                 core::http::Response* pResponse)
 {
@@ -39,7 +39,7 @@ void handleHelpResourcesRequest(const core::http::Request& request,
 
    // resolve the file reference
    std::string path = http::util::pathAfterPrefix(request,
-                                                  "/help/doc/resources/");
+                                                  "/help/doc/home/");
 
    // if it's empty then this is the root template
    if (path.empty())

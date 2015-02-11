@@ -368,7 +368,7 @@ public class SessionInfo extends JavaScriptObject
       return this.clang_available;
    }-*/;
    
-   public final native boolean getShowHelpResources() /*-{
-      return this.show_help_resources;
+   public final native boolean getShowHelpHome() /*-{
+      return this.show_help_home;
    }-*/;
 }

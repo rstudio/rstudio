@@ -58,7 +58,7 @@ public class HelpTab extends DelayLoadWorkbenchTab<Help>
       events.addHandler(SessionInitEvent.TYPE, new SessionInitHandler() {
          public void onSessionInit(SessionInitEvent sie)
          {
-            if (session.getSessionInfo().getShowHelpResources())
+            if (session.getSessionInfo().getShowHelpHome())
             {
                shim.bringToFront();
             }
