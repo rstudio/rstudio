@@ -951,6 +951,7 @@ assign(x = ".rs.acCompletionTypes",
       return(blacklist)
    
    object <- .rs.getAnywhere(string, envir)
+   
    if (!is.null(object))
    {
       allNames <- character()
@@ -1011,6 +1012,10 @@ assign(x = ".rs.acCompletionTypes",
          # Other objects
          else
          {
+            # '$' operator is invalid for atomic vectors
+            if (is.atomic(object))
+               return(.rs.emptyCompletions(excludeOtherCompletions = TRUE))
+            
             # Don't allow S4 objects for dollar name resolution
             # They will need to have defined a .DollarNames method, which
             # should have been resolved previously
