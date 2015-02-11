@@ -2014,7 +2014,7 @@ public class TextEditingTarget implements
    @Handler
    void onLintActiveDocument()
    {
-      lintManager_.lint(true);
+      lintManager_.lint(true, false);
    }
    
    public void withSavedDoc(Command onsaved)

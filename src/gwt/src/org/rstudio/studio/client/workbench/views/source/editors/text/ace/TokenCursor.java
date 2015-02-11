@@ -121,5 +121,16 @@ public class TokenCursor extends JavaScriptObject
       return this.findStartOfEvaluationContext();
    }-*/;
    
+   public native final boolean moveToStartOfCurrentStatement() /*-{
+      return this.moveToStartOfCurrentStatement &&
+             this.moveToStartOfCurrentStatement();
+   }-*/;
+   
+   public native final boolean moveToEndOfCurrentStatement() /*-{
+      return this.moveToEndOfCurrentStatement &&
+             this.moveToEndOfCurrentStatement();
+   }-*/;
+   
+   
 }
 

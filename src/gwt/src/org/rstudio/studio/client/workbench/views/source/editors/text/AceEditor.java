@@ -14,8 +14,6 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
-import java.util.ArrayList;
-
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.Scheduler;
@@ -51,6 +49,7 @@ import org.rstudio.core.client.widget.DynamicIFrame;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
 import org.rstudio.studio.client.common.debugging.model.Breakpoint;
+import org.rstudio.studio.client.common.filetypes.DocumentMode;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.model.ChangeTracker;
@@ -65,7 +64,6 @@ import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEdito
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorPosition;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorSelection;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorUtil;
-import org.rstudio.studio.client.workbench.views.output.lint.LintResources;
 import org.rstudio.studio.client.workbench.views.output.lint.model.AceAnnotation;
 import org.rstudio.studio.client.workbench.views.output.lint.model.LintItem;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.*;
@@ -245,6 +243,7 @@ public class AceEditor implements DocDisplay,
             ValueChangeEvent.fire(AceEditor.this, null);
          }
       });
+      
       widget_.addFoldChangeHandler(new FoldChangeEvent.Handler()
       {
          @Override
@@ -2031,71 +2030,62 @@ public class AceEditor implements DocDisplay,
       return widget_.getEditor().getSession().getTabSize();
    }
    
+   // TODO: Enable similar logic for C++ mode?
+   public int getStartOfCurrentStatement()
+   {
+      if (!DocumentMode.isSelectionInRMode(this))
+         return -1;
+      
+      TokenCursor cursor =
+            getSession().getMode().getCodeModel().getTokenCursor();
+      
+      if (!cursor.moveToPosition(getCursorPosition()))
+         return -1;
+      
+      if (!cursor.moveToStartOfCurrentStatement())
+         return -1;
+      
+      return cursor.getRow();
+   }
+   
+   // TODO: Enable similar logic for C++ mode?
+   public int getEndOfCurrentStatement()
+   {
+      if (!DocumentMode.isSelectionInRMode(this))
+         return -1;
+      
+      TokenCursor cursor =
+            getSession().getMode().getCodeModel().getTokenCursor();
+      
+      if (!cursor.moveToPosition(getCursorPosition()))
+         return -1;
+      
+      if (!cursor.moveToEndOfCurrentStatement())
+         return -1;
+      
+      return cursor.getRow();
+   }
+   
+   // ---- Annotation related operations
+   
    public JsArray<AceAnnotation> getAnnotations()
    {
-      return widget_.getEditor().getSession().getAnnotations();
+      return widget_.getAnnotations();
    }
    
    public void setAnnotations(JsArray<AceAnnotation> annotations)
    {
-      widget_.getEditor().getSession().setAnnotations(annotations);
+      widget_.setAnnotations(annotations);
    }
    
-   public void removeAnnotationsOnLine(int line)
+   public void removeAnnotationsOnLine(final int line)
    {
-      JsArray<AceAnnotation> oldAnnotations = getAnnotations();
-      
-      JsArray<AceAnnotation> newAnnotations = JsArray.createArray().cast();
-      for (int i = 0; i < oldAnnotations.length(); i++)
-      {
-         if (oldAnnotations.get(i).row() != line)
-         {
-            newAnnotations.push(oldAnnotations.get(i));
-         }
-         else
-         {
-            getSession().removeMarker(lintMarkerIds_.get(i));
-         }
-      }
-      
-      setAnnotations(newAnnotations);
+      widget_.removeAnnotationsOnLine(line);
    }
    
    public void showLint(JsArray<LintItem> lint)
    {
-      clearLintMarkers();
-      
-      // First, set the gutter annotations.
-      JsArray<AceAnnotation> annotations = LintItem.asAceAnnotations(lint);
-      setAnnotations(annotations);
-      
-      for (int i = 0; i < lint.length(); i++)
-      {
-         LintItem item = lint.get(i);
-         Range range = createAnchoredRange(
-               Position.create(item.getStartRow(), item.getStartColumn()),
-               Position.create(item.getEndRow(), item.getEndColumn()));
-         
-         String clazz = "unknown";
-         if (item.getType() == "error")
-            clazz = lintStyles_.error();
-         else if (item.getType() == "warning")
-            clazz = lintStyles_.warning();
-         else if (item.getType() == "info")
-            clazz = lintStyles_.info();
-         
-         int id = getSession().addMarker(
-               range, clazz, "text", true);
-         
-         lintMarkerIds_.add(id);
-      }
-   }
-   
-   private void clearLintMarkers()
-   {
-      for (int i = 0; i < lintMarkerIds_.size(); i++)
-         getSession().removeMarker(lintMarkerIds_.get(i));
-      lintMarkerIds_.clear();
+      widget_.showLint(lint);
    }
    
    public Range createAnchoredRange(Position start,
@@ -2103,7 +2093,7 @@ public class AceEditor implements DocDisplay,
    {
       return widget_.getEditor().getSession().createAnchoredRange(start, end);
    }
-
+   
    private static final int DEBUG_CONTEXT_LINES = 2;
    private final HandlerManager handlers_ = new HandlerManager(this);
    private final AceEditorWidget widget_;
@@ -2119,9 +2109,6 @@ public class AceEditor implements DocDisplay,
    private Integer lineHighlightMarkerId_ = null;
    private Integer lineDebugMarkerId_ = null;
    private Integer executionLine_ = null;
-   
-   private ArrayList<Integer> lintMarkerIds_ = new ArrayList<Integer>();
-   private LintResources.Styles lintStyles_ = LintResources.INSTANCE.styles();
    
    private static final ExternalJavaScriptLoader aceLoader_ =
          new ExternalJavaScriptLoader(AceResources.INSTANCE.acejs().getSafeUri().asString());

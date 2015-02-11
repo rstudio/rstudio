@@ -223,6 +223,9 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
 
    Anchor createAnchor(Position pos);
    
+   int getStartOfCurrentStatement();
+   int getEndOfCurrentStatement();
+   
    void highlightDebugLocation(
          SourcePosition startPos,
          SourcePosition endPos,

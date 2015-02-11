@@ -19,17 +19,17 @@ import org.rstudio.core.client.Invalidation;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.views.output.lint.model.LintItem;
 import org.rstudio.studio.client.workbench.views.output.lint.model.LintServerOperations;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionRequest;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedHandler;
 import org.rstudio.studio.client.workbench.views.source.model.CppDiagnostic;
 
 import com.google.gwt.core.client.JsArray;
-import com.google.gwt.event.logical.shared.ValueChangeEvent;
-import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Timer;
 import com.google.inject.Inject;
@@ -39,19 +39,26 @@ public class LintManager
    class LintContext
    {
       public LintContext(Invalidation.Token token,
-            boolean showMarkers)
+                         Position cursorPosition,
+                         boolean showMarkers,
+                         boolean excludeCurrentStatement)
       {
+         this.cursorPosition = cursorPosition;
          this.token = token;
          this.showMarkers = showMarkers;
+         this.excludeCurrentStatement = excludeCurrentStatement;
       }
       
       public final Invalidation.Token token;
+      public final Position cursorPosition;
       public final boolean showMarkers;
+      public final boolean excludeCurrentStatement;
    }
    
    private void reset()
    {
       showMarkers_ = false;
+      excludeCurrentStatement_ = true;
    }
    
    public LintManager(TextEditingTarget target)
@@ -70,18 +77,26 @@ public class LintManager
             invalidation_.invalidate();
             LintContext context = new LintContext(
                   invalidation_.getInvalidationToken(),
-                  showMarkers_);
+                  docDisplay_.getCursorPosition(),
+                  showMarkers_,
+                  excludeCurrentStatement_);
             reset();
             lintActiveDocument(context);
          }
       };
       
-      docDisplay_.addValueChangeHandler(new ValueChangeHandler<Void>()
+      // Background linting
+      docDisplay_.addCursorChangedHandler(new CursorChangedHandler()
       {
          @Override
-         public void onValueChange(ValueChangeEvent<Void> event)
+         public void onCursorChanged(CursorChangedEvent event)
          {
-            timer_.schedule(3000);
+            if (!docDisplay_.isFocused())
+               return;
+            
+            docDisplay_.removeAnnotationsOnLine(
+                  docDisplay_.getCurrentLineNum());
+            timer_.schedule(1000);
          }
       });
    }
@@ -147,7 +162,7 @@ public class LintManager
                               for (int i = 0; i < rLint.length(); i++)
                                  lint.push(rLint.get(i));
                               
-                              docDisplay_.showLint(lint);
+                              showLint(context, lint);
                            }
 
                            @Override
@@ -181,7 +196,7 @@ public class LintManager
                   if (context.token.isInvalid())
                      return;
 
-                  docDisplay_.showLint(lint);
+                  showLint(context, lint);
                }
 
                @Override
@@ -192,14 +207,48 @@ public class LintManager
             });
    }
    
+   private void showLint(LintContext context,
+                         JsArray<LintItem> lint)
+   {
+      // Filter out items at the last cursor position, if the cursor
+      // hasn't moved.
+      if (context.excludeCurrentStatement &&
+          docDisplay_.getCursorPosition().isEqualTo(context.cursorPosition))
+      {
+         int startRow = docDisplay_.getStartOfCurrentStatement();
+         int endRow = docDisplay_.getEndOfCurrentStatement();
+         
+         if (startRow != -1 && endRow != -1)
+         {
+            JsArray<LintItem> filteredLint = JsArray.createArray().cast();
+            for (int i = 0; i < lint.length(); i++)
+            {
+               if (lint.get(i).getStartRow() < startRow ||
+                     lint.get(i).getStartRow() > endRow)
+               {
+                  filteredLint.push(lint.get(i));
+               }
+            }
+
+            docDisplay_.showLint(filteredLint);
+         }
+      }
+      else
+      {
+         docDisplay_.showLint(lint);
+      }
+   }
+   
    public void schedule(int milliseconds)
    {
       timer_.schedule(milliseconds);
    }
    
-   public void lint(boolean showMarkers)
+   public void lint(boolean showMarkers,
+                    boolean excludeCurrentStatement)
    {
-      showMarkers_ = true;
+      showMarkers_ = showMarkers;
+      excludeCurrentStatement_ = excludeCurrentStatement;
       timer_.schedule(0);
    }
    
@@ -207,7 +256,9 @@ public class LintManager
    private final TextEditingTarget target_;
    private final DocDisplay docDisplay_;
    private final Invalidation invalidation_;
+   
    private boolean showMarkers_;
+   private boolean excludeCurrentStatement_;
    
    private LintServerOperations server_;
    
