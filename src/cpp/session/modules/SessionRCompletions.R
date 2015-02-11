@@ -895,9 +895,15 @@ assign(x = ".rs.acCompletionTypes",
    idx <- completions$type == .rs.acCompletionTypes$PACKAGE
    scores[idx] <- scores[idx] + 10
    
-   order <- order(scores, nchar(completions$results))
+   # Protect against NULL / otherwise invalid scores.
+   # TODO: figure out what, upstream, might cause this
+   if (length(scores))
+   {
+      order <- order(scores, nchar(completions$results))
+      completions <- .rs.subsetCompletions(completions, order)
+   }
    
-   .rs.subsetCompletions(completions, order)
+   completions
 })
 
 .rs.addFunction("blackListEvaluationDataTable", function(token, string, envir)
