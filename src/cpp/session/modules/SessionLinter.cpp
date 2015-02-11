@@ -20,6 +20,7 @@
 
 #include "SessionLinter.hpp"
 #include "SessionCodeSearch.hpp"
+#include "SessionAsyncNAMESPACECompletions.hpp"
 
 #include <set>
 
@@ -108,6 +109,20 @@ void addUnreferencedSymbol(const ParseItem& item,
    }
 }
 
+void addNAMESPACEImportedSymbols(std::set<std::string>* pSymbols)
+{
+   std::map< std::string, std::vector<std::string> > completions =
+         r_completions::AsyncNAMESPACECompletions::get();
+   
+   DEBUG("Number of completion items: " << completions.size());
+   
+   BOOST_FOREACH(const std::vector<std::string>& exports,
+                 completions | boost::adaptors::map_values)
+   {
+      pSymbols->insert(exports.begin(), exports.end());
+   }
+}
+
 Error getAllAvailableRSymbols(const FilePath& filePath,
                               std::set<std::string>* pSymbols)
 {
@@ -116,6 +131,9 @@ Error getAllAvailableRSymbols(const FilePath& filePath,
    Error error = RFunction(".rs.availableRSymbols").call(pSymbols);
    if (error)
       return error;
+   
+   if (projects::projectContext().directory().complete("NAMESPACE").exists())
+      addNAMESPACEImportedSymbols(pSymbols);
 
    // If this is an R package project, get the symbols for all functions
    // etc. in the project.
@@ -376,6 +394,24 @@ SEXP rs_parse(SEXP rCodeSEXP)
    return r::sexp::create((int) results.lint().size(), &protect);
 }
 
+void onNAMESPACEchanged()
+{
+   r_completions::AsyncNAMESPACECompletions::update();
+}
+
+void onFilesChanged(const std::vector<core::system::FileChangeEvent>& events)
+{
+   BOOST_FOREACH(const core::system::FileChangeEvent& event, events)
+   {
+      if (event.fileInfo().absolutePath() ==
+          projects::projectContext().directory().complete("NAMESPACE").absolutePath())
+      {
+         onNAMESPACEchanged();
+         return;
+      }
+   }
+}
+
 } // anonymous namespace
 
 core::Error initialize()
@@ -383,6 +419,10 @@ core::Error initialize()
    using namespace rstudio::core;
    using boost::bind;
    using namespace module_context;
+   
+   session::projects::FileMonitorCallbacks cb;
+   cb.onFilesChanged = onFilesChanged;
+   projects::projectContext().subscribeToFileMonitor("Linter", cb);
    
    RS_REGISTER_CALL_METHOD(rs_lintRFile, 1);
    RS_REGISTER_CALL_METHOD(rs_loadString, 1);

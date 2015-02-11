@@ -1,5 +1,5 @@
 /*
- * SessionAsyncRCompletions.hpp
+ * SessionAsyncNAMESPACECompletions.hpp
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -17,6 +17,9 @@
 #define SESSION_ASYNC_R_COMPLETIONS_HPP
 
 #include <core/r_util/RSourceIndex.hpp>
+
+#include <boost/thread/mutex.hpp>
+
 #include <session/SessionAsyncRProcess.hpp>
 
 namespace rstudio {
@@ -24,11 +27,12 @@ namespace session {
 namespace modules {
 namespace r_completions {
 
-class AsyncRCompletions : public async_r::AsyncRProcess
+class AsyncNAMESPACECompletions : public async_r::AsyncRProcess
 {
 public:
+   typedef std::map< std::string, std::vector<std::string> > Completions;
    static void update();
-   
+   static Completions get();
    friend class CompleteUpdateOnExit;
 
 protected:
@@ -47,10 +51,10 @@ protected:
 
 private:
    static bool s_isUpdating_;
-   static std::vector<std::string> s_pkgsToUpdate_;
-
    std::stringstream stdOut_;
-
+   
+   // TODO: Does access to this need to be moderated by mutex?
+   static Completions s_completions_;
 };
 
 } // end namespace r_completions
@@ -59,3 +63,4 @@ private:
 } // end namespace rstudio
 
 #endif
+

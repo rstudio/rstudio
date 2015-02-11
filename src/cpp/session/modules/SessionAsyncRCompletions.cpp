@@ -215,26 +215,14 @@ void AsyncRCompletions::update()
    boost::shared_ptr<AsyncRCompletions> pProcess(
          new AsyncRCompletions());
    
-   // R files we wish to source to provide functionality to async process
-   const core::FilePath modulesPath =
-         session::options().modulesRSourcePath();
-   
-   const core::FilePath sessionCodeTools = modulesPath.childPath("SessionCodeTools.R");
-   const core::FilePath sessionRCompletions = modulesPath.childPath("SessionRCompletions.R");
-   
-   std::vector<core::FilePath> rSourceFiles;
-   rSourceFiles.push_back(sessionCodeTools);
-   rSourceFiles.push_back(sessionRCompletions);
-   
    pProcess->start(
             finalCmd.c_str(),
             core::FilePath(),
-            async_r::R_PROCESS_VANILLA,
-            rSourceFiles);
+            async_r::R_PROCESS_VANILLA | async_r::R_PROCESS_AUGMENTED);
    
 }
 
 } // end namespace r_completions
 } // end namespace modules
 } // end namespace session
-}
+} // end namespace rstudio

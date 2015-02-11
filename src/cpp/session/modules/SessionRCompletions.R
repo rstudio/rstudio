@@ -2631,3 +2631,61 @@ assign(x = ".rs.acCompletionTypes",
    
    return(FALSE)
 })
+
+.rs.addFunction("asyncNAMESPACECompletions", function(project)
+{
+   output <- list()
+   
+   if (is.null(project))
+      return(output)
+   
+   NAMESPACE <- file.path(project, "NAMESPACE")
+   if (!file.exists(NAMESPACE))
+      return(output)
+   
+   parsed = tryCatch(
+      suppressWarnings(parse(NAMESPACE)),
+      error = function(e) NULL
+   )
+   
+   if (is.null(parsed))
+      return(output)
+   
+   # Loop over parsed entries and fill 'output'
+   for (i in seq_along(parsed))
+   {
+      directive <- parsed[[i]]
+      name <- as.character(directive[[1]])
+      if (name == "import")
+      {
+         pkg <- as.character(directive[[2]])
+         capture.output(suppressPackageStartupMessages(
+            ns <- asNamespace(pkg)
+         ))
+         output[[pkg]] <- sort(unique(c(
+            output[[pkg]], getNamespaceExports(ns)
+         )))
+         next
+      }
+      
+      if (name == "importFrom")
+      {
+         pkg <- as.character(directive[[2]])
+         exports <- character(length(directive) - 2)
+         for (i in 3:length(directive))
+            exports[[i - 2]] <- as.character(directive[[i]])
+         output[[pkg]] <- sort(unique(c(output[[pkg]], exports)))
+         next
+      }
+   }
+   
+   # Transform to JSON-friendly format
+   result <- lapply(seq_along(output), function(i) {
+      list(
+         package = I(names(output)[i]),
+         exports = as.character(output[[i]])
+      )
+   })
+   
+   cat(.rs.toJSON(result))
+})

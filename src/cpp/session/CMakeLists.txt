@@ -79,6 +79,7 @@ set (SESSION_SOURCE_FILES
    modules/SessionAgreement.cpp
    modules/SessionAskPass.cpp
    modules/SessionAsyncRCompletions.cpp
+   modules/SessionAsyncNAMESPACECompletions.cpp
    modules/SessionAuthoring.cpp
    modules/SessionBreakpoints.cpp
    modules/SessionCodeSearch.cpp
