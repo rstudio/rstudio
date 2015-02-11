@@ -402,6 +402,9 @@ ScreenOrientation
 ScriptProcessorNode
 SecurityPolicy
 Selection
+ServiceWorker
+ServiceWorkerContainer
+ServiceWorkerRegistration
 ShadowRoot
 SharedWorker
 SpeechInputEvent
