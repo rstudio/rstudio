@@ -199,6 +199,7 @@ inline bool stringNotEmpty(const std::string& str)
 void trimLeadingLines(int maxLines, std::string* pLines);
 
 void stripQuotes(std::string* pStr);
+std::string strippedOfQuotes(const std::string& str);
 
 std::string strippedOfBackQuotes(const std::string& string);
 

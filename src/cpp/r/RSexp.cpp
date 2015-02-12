@@ -425,6 +425,29 @@ Error extract(SEXP valueSEXP, std::set<std::string>* pSet)
    
    return Success();
 }
+
+Error extract(SEXP valueSEXP, std::map< std::string, std::set<std::string> >* pMap)
+{
+   if (TYPEOF(valueSEXP) != VECSXP)
+      return Error(errc::UnexpectedDataTypeError, ERROR_LOCATION);
+   
+   SEXP namesSEXP = r::sexp::getNames(valueSEXP);
+   if (Rf_isNull(namesSEXP))
+      return Error(errc::UnexpectedDataTypeError, ERROR_LOCATION);
+   
+   for (int i = 0; i < Rf_length(valueSEXP); ++i)
+   {
+      SEXP el = VECTOR_ELT(valueSEXP, i);
+      std::set<std::string> contents;
+      for (int j = 0; j < Rf_length(el); ++j)
+         contents.insert(std::string(Rf_translateChar(STRING_ELT(el, j))));
+      
+      std::string name = std::string(Rf_translateChar(STRING_ELT(namesSEXP, i)));
+      pMap->operator [](name) = contents;
+   }
+   
+   return Success();
+}
    
 SEXP create(const json::Value& value, Protect* pProtect)
 {

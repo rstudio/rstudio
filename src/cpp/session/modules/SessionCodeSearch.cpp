@@ -2183,50 +2183,6 @@ SEXP rs_scoreMatches(SEXP suggestionsSEXP,
    return r::sexp::create(scores, &protect);
 }
 
-SEXP rs_getSourceFileLibraryCompletions(SEXP packagesSEXP)
-{
-   using namespace rstudio::core::r_util;
-
-   std::vector<std::string> packages;
-   if (!r::sexp::fillVectorString(packagesSEXP, &packages))
-      return R_NilValue;
-
-   r::sexp::Protect protect;
-   r::sexp::ListBuilder parent(&protect);
-   
-   for (std::vector<std::string>::const_iterator it = packages.begin();
-        it != packages.end();
-        ++it)
-   {
-      DEBUG("Adding entry for '" << *it << "'");
-      AsyncLibraryCompletions completions =
-            RSourceIndex::getCompletions(*it);
-      
-      r::sexp::ListBuilder builder(&protect);
-      builder.add("exports", completions.exports);
-      builder.add("types", completions.types);
-      builder.add("functions", completions.functions);
-      parent.add(*it, builder);
-   }
-   
-   return r::sexp::create(parent, &protect);
-}
-
-SEXP rs_updateSourceFileLibraryCompletions(SEXP documentIdSEXP)
-{
-   std::string documentId = r::sexp::asString(documentIdSEXP);
-   boost::shared_ptr<core::r_util::RSourceIndex> index = rSourceIndex().get(documentId);
-   
-   if (index == NULL)
-      return R_NilValue;
-
-   r::sexp::Protect protect;
-   r_completions::AsyncRCompletions::update();
-
-   return r::sexp::create(true, &protect);
-   
-}
-
 inline SEXP pathResultsSEXP(std::vector<std::string> const& paths,
                             bool moreAvailable)
 {
@@ -2332,24 +2288,6 @@ SEXP rs_viewFunction(SEXP functionSEXP, SEXP nameSEXP, SEXP namespaceSEXP)
    return R_NilValue;
 }
 
-SEXP rs_listInferredPackages(SEXP documentIdSEXP)
-{
-   std::string documentId = r::sexp::asString(documentIdSEXP);
-   boost::shared_ptr<core::r_util::RSourceIndex> index = rSourceIndex().get(documentId);
-
-   // NOTE: can occur when user edits file not in source index
-   if (index == NULL)
-      return R_NilValue;
-   
-   std::set<std::string> pkgs = index->getInferredPackages();
-   pkgs.insert(index->getNAMESPACEPackages().begin(),
-               index->getNAMESPACEPackages().end());
-   
-   r::sexp::Protect protect;
-   return r::sexp::create(pkgs, &protect);
-   
-}
-
 } // anonymous namespace
    
 Error initialize()
@@ -2391,21 +2329,6 @@ Error initialize()
             (DL_FUNC) rs_listIndexedFilesAndFolders,
             3);
    
-   r::routines::registerCallMethod(
-            "rs_listInferredPackages",
-            (DL_FUNC) rs_listInferredPackages,
-            1);
-   
-   r::routines::registerCallMethod(
-            "rs_getSourceFileLibraryCompletions",
-            (DL_FUNC) rs_getSourceFileLibraryCompletions,
-            1);
-   
-   r::routines::registerCallMethod(
-            "rs_updateSourceFileLibraryCompletions",
-            (DL_FUNC) rs_updateSourceFileLibraryCompletions,
-            1);
-
    // initialize r source indexes
    rSourceIndex().initialize();
    

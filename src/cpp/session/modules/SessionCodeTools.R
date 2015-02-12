@@ -957,3 +957,50 @@
    result <- paste(substring(splat, common, nchar(string)), collapse = "\n")
    .rs.trimWhitespace(sprintf(result, ...))
 })
+
+.rs.addFunction("parseNamespaceImports", function(path)
+{
+   output <- list(
+      import = character(),
+      importFrom = list()
+   )
+   
+   if (!file.exists(path))
+      return(output)
+   
+   parsed = tryCatch(
+      suppressWarnings(parse(path)),
+      error = function(e) NULL
+   )
+   
+   if (is.null(parsed))
+      return(output)
+   
+   # Loop over parsed entries and fill 'output'
+   for (i in seq_along(parsed))
+   {
+      directive <- parsed[[i]]
+      if (length(directive) < 2) next
+      
+      directiveName <- as.character(directive[[1]])
+      pkgName <- as.character(directive[[2]])
+      
+      if (directiveName == "import")
+      {
+         output$import <- sort(unique(c(output$import, pkgName)))
+         next
+      }
+      
+      if (directiveName == "importFrom")
+      {
+         exports <- character(length(directive) - 2)
+         for (i in 3:length(directive))
+            exports[[i - 2]] <- as.character(directive[[i]])
+         output$importFrom[[pkgName]] <- sort(unique(c(output$importFrom[[pkgName]], exports)))
+         next
+      }
+   }
+   
+   output
+   
+})

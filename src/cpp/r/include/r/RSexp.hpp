@@ -112,6 +112,7 @@ core::Error extract(SEXP valueSEXP, std::vector<int>* pVector);
 core::Error extract(SEXP valueSEXP, std::string* pString);
 core::Error extract(SEXP valueSEXP, std::vector<std::string>* pVector);
 core::Error extract(SEXP valueSEXP, std::set<std::string>* pSet);
+core::Error extract(SEXP valueSEXP, std::map< std::string, std::set<std::string> >* pMap);
       
 // create SEXP from c++ type
 SEXP create(const core::json::Value& value, Protect* pProtect);

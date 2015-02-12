@@ -23,7 +23,8 @@
 #include <boost/function.hpp>
 #include <boost/utility.hpp>
 #include <boost/regex.hpp>
-
+#include <boost/foreach.hpp>
+#include <boost/range/adaptors.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 
 #include <core/Algorithm.hpp>
@@ -296,6 +297,11 @@ public:
       return s_completions_.find(package) != s_completions_.end();
    }
    
+   static const std::map<std::string, AsyncLibraryCompletions>& getAllCompletions()
+   {
+      return s_completions_;
+   }
+   
    static const AsyncLibraryCompletions& getCompletions(const std::string& package)
    {
       return s_completions_[package];
@@ -321,19 +327,33 @@ public:
       s_allInferredPkgNames_.insert(packageName);
    }
    
-   static void setNAMESPACEPackages(const std::vector<std::string>& pkgNames)
+   static void setImportedPackages(const std::set<std::string>& pkgNames)
    {
-      s_NAMESPACEPkgNames_.clear();
-      s_NAMESPACEPkgNames_.insert(pkgNames.begin(), pkgNames.end());
+      s_importedPackages_.clear();
+      s_importedPackages_.insert(pkgNames.begin(), pkgNames.end());
       s_allInferredPkgNames_.insert(pkgNames.begin(), pkgNames.end());
    }
    
-   const std::set<std::string>& getNAMESPACEPackages() const
+   static const std::set<std::string>& getImportedPackages()
    {
-      return s_NAMESPACEPkgNames_;
+      return s_importedPackages_;
    }
    
-public:
+   typedef std::map< std::string, std::set<std::string> > ImportFromMap;
+   
+   static void setImportFromDirectives(const ImportFromMap& map)
+   {
+      s_importFromDirectives_ = map;
+      BOOST_FOREACH(const std::string& pkg, map | boost::adaptors::map_keys)
+      {
+         s_allInferredPkgNames_.insert(pkg);
+      }
+   }
+   
+   static ImportFromMap& getImportFromDirectives()
+   {
+      return s_importFromDirectives_;
+   }
    
    const std::vector<RSourceItem>& items() const
    {
@@ -349,7 +369,8 @@ private:
    // but we share that state in a static variable (so that we can
    // cache and share across all indexes)
    std::set<std::string> inferredPkgNames_;
-   static std::set<std::string> s_NAMESPACEPkgNames_;
+   static std::set<std::string> s_importedPackages_;
+   static ImportFromMap s_importFromDirectives_;
    static std::set<std::string> s_allInferredPkgNames_;
    
    // NOTE: All source indexes share a set of completions

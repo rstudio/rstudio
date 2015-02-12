@@ -411,6 +411,12 @@ void checkBinaryOperatorWhitespace(TokenCursor& cursor,
       {
          status.lint().unexpectedWhitespaceAroundOperator(cursor);
       }
+      
+      // Extraction operators must be followed by a string or an
+      // identifier
+      const RToken& next = cursor.nextSignificantToken();
+      if (!(next.isType(RToken::ID) || next.isType(RToken::STRING)))
+         status.lint().unexpectedToken(next);
    }
    
    // There should be whitespace around other operators.

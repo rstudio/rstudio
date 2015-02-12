@@ -20,7 +20,6 @@
 
 #include "SessionLinter.hpp"
 #include "SessionCodeSearch.hpp"
-#include "SessionAsyncNAMESPACECompletions.hpp"
 #include "SessionAsyncRCompletions.hpp"
 
 #include <set>
@@ -43,7 +42,6 @@
 #include <r/RRoutines.hpp>
 #include <r/RUtil.hpp>
 
-#include <core/FileUtils.hpp>
 #include <core/r_util/RTokenizer.hpp>
 #include <core/r_util/RParser.hpp>
 #include <core/r_util/RSourceIndex.hpp>
@@ -89,17 +87,13 @@ void addUnreferencedSymbol(const ParseItem& item,
    }
 }
 
-void addNAMESPACEImportedSymbols(std::set<std::string>* pSymbols)
+void addInferredSymbols(std::set<std::string>* pSymbols)
 {
-   std::map< std::string, std::vector<std::string> > completions =
-         r_completions::AsyncNAMESPACECompletions::get();
-   
-   DEBUG("Number of completion items: " << completions.size());
-   
-   BOOST_FOREACH(const std::vector<std::string>& exports,
-                 completions | boost::adaptors::map_values)
+   BOOST_FOREACH(const AsyncLibraryCompletions& completions,
+                 RSourceIndex::getAllCompletions() | boost::adaptors::map_values)
    {
-      pSymbols->insert(exports.begin(), exports.end());
+      pSymbols->insert(completions.exports.begin(),
+                       completions.exports.end());
    }
 }
 
@@ -112,8 +106,10 @@ Error getAllAvailableRSymbols(const FilePath& filePath,
    if (error)
       return error;
    
+   // Get all of the symbols made available either by `library()`
+   // calls, or from a NAMESPACE file
    if (projects::projectContext().directory().complete("NAMESPACE").exists())
-      addNAMESPACEImportedSymbols(pSymbols);
+      addInferredSymbols(pSymbols);
 
    // If this is an R package project, get the symbols for all functions
    // etc. in the project.
@@ -380,6 +376,9 @@ SEXP rs_parse(SEXP rCodeSEXP)
 
 void onNAMESPACEchanged()
 {
+   using namespace r::exec;
+   using namespace r::sexp;
+   
    if (!projects::projectContext().hasProject())
       return;
    
@@ -387,30 +386,38 @@ void onNAMESPACEchanged()
    if (!NAMESPACE.exists())
       return;
    
-   std::vector<std::string> contents;
-   Error error = readStringVectorFromFile(NAMESPACE, &contents);
+   RFunction parseNamespace(".rs.parseNamespaceImports");
+   parseNamespace.addParam(NAMESPACE.absolutePath());
+   
+   r::sexp::Protect protect;
+   SEXP result;
+   Error error = parseNamespace.call(&result, &protect);
    if (error)
    {
       LOG_ERROR(error);
       return;
    }
    
-   // Find all the 'import' statements, and add them
-   std::vector<std::string> importPkgNames;
-   boost::regex reImport("^\\s*import\\s*\\(['\"]?\\s*(.*)\\s*['\"]?\\)\\s*$");
-   
-   BOOST_FOREACH(const std::string& directive, contents)
+   std::set<std::string> importPkgNames;
+   error = getNamedListElement(result, "import", &importPkgNames);
+   if (error)
    {
-      boost::cmatch matches;
-      if (boost::regex_match(directive.c_str(), matches, reImport) &&
-          matches.size() >= 2)
-      {
-         std::string pkgName(matches[1].first, matches[1].second);
-         importPkgNames.push_back(pkgName);
-      }
+      LOG_ERROR(error);
+      return;
    }
    
-   RSourceIndex::setNAMESPACEPackages(importPkgNames);
+   RSourceIndex::ImportFromMap importFromSymbols;
+   error = getNamedListElement(result, "importFrom", &importFromSymbols);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+   
+   RSourceIndex::setImportedPackages(importPkgNames);
+   RSourceIndex::setImportFromDirectives(importFromSymbols);
+   
+   // Kick off an update of the cached async completions
    r_completions::AsyncRCompletions::update();
 }
 

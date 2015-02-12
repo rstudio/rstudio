@@ -486,6 +486,13 @@ void stripQuotes(std::string* pStr)
       *pStr = pStr->substr(0, len -1);
 }
 
+std::string strippedOfQuotes(const std::string &str)
+{
+   std::string copy = str;
+   stripQuotes(&copy);
+   return copy;
+}
+
 template <typename Iter, typename U>
 Iter countNewlinesImpl(Iter begin,
                        Iter end,

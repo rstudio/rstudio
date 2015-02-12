@@ -1268,20 +1268,33 @@ assign(x = ".rs.acCompletionTypes",
                        type = types[keep])
 })
 
-.rs.addFunction("getNAMESPACEImportedSymbols", function()
+.rs.addFunction("getNAMESPACEImportedSymbols", function(documentId)
 {
-   .Call("rs_getNAMESPACEImportedSymbols")
+   .Call("rs_getNAMESPACEImportedSymbols", documentId)
 })
 
-.rs.addFunction("getCompletionsNAMESPACEExports", function(token)
+.rs.addFunction("getCompletionsNAMESPACE", function(token, documentId)
 {
-   symbols <- .rs.getNAMESPACEImportedSymbols()
-   results <- .rs.namedVectorAsList(symbols)
-   keep <- .rs.fuzzyMatches(results$values, token)
+   symbols <- .rs.getNAMESPACEImportedSymbols(documentId)
+   
+   if (!length(symbols))
+      return(.rs.emptyCompletions())
+   
+   n <- vapply(symbols, function(x) length(x[[1]]), USE.NAMES = FALSE, FUN.VALUE = numeric(1))
+   total <- sum(n)
+   
+   output <- list(
+      exports = unlist(lapply(symbols, `[[`, "exports"), use.names = FALSE),
+      types = unlist(lapply(symbols, `[[`, "types"), use.names = FALSE),
+      packages = rep.int(names(symbols), times = n)
+   )
+   
+   keep <- .rs.fuzzyMatches(output$exports, token)
    
    .rs.makeCompletions(token = token,
-                       results = results$values[keep],
-                       packages = results$names[keep],
+                       results = output$exports[keep],
+                       packages = output$packages[keep],
+                       type = output$types[keep],
                        quote = FALSE)
 })
 
@@ -1549,7 +1562,7 @@ assign(x = ".rs.acCompletionTypes",
       # Otherwise, complete from the seach path + available packages
       completions <- Reduce(.rs.appendCompletions, list(
          .rs.getCompletionsSearchPath(token),
-         .rs.getCompletionsNAMESPACEExports(token),
+         .rs.getCompletionsNAMESPACE(token, documentId),
          .rs.getCompletionsPackages(token, TRUE),
          .rs.getCompletionsActiveFrame(token, envir),
          .rs.getCompletionsLibraryContext(token,
@@ -1767,7 +1780,7 @@ assign(x = ".rs.acCompletionTypes",
       completions <- Reduce(.rs.appendCompletions, list(
          completions,
          .rs.getCompletionsSearchPath(token),
-         .rs.getCompletionsNAMESPACEExports(token),
+         .rs.getCompletionsNAMESPACE(token, documentId),
          .rs.getCompletionsActiveFrame(token, envir)
       ))
       
@@ -2515,14 +2528,9 @@ assign(x = ".rs.acCompletionTypes",
    .Call("rs_listInferredPackages", documentId)
 })
 
-.rs.addFunction("getSourceFileLibraryCompletions", function(packages = character())
+.rs.addFunction("getInferredCompletions", function(packages = character())
 {
-   .Call("rs_getSourceFileLibraryCompletions", as.character(packages))
-})
-
-.rs.addFunction("updateSourceFileLibraryCompletions", function(documentId)
-{
-   .Call("rs_updateSourceFileLibraryCompletions", documentId)
+   .Call("rs_getInferredCompletions", as.character(packages))
 })
 
 .rs.addFunction("getCompletionsLibraryContext", function(token,
@@ -2554,7 +2562,7 @@ assign(x = ".rs.acCompletionTypes",
    if (!length(packages))
       return(.rs.emptyCompletions())
    
-   completions <- .rs.getSourceFileLibraryCompletions(packages)
+   completions <- .rs.getInferredCompletions(packages)
    
    # If we're getting completions for a particular function's arguments,
    # use those
@@ -2649,62 +2657,4 @@ assign(x = ".rs.acCompletionTypes",
       return(TRUE)
    
    return(FALSE)
-})
-
-.rs.addFunction("asyncNAMESPACECompletions", function(project)
-{
-   output <- list()
-   
-   if (is.null(project))
-      return(output)
-   
-   NAMESPACE <- file.path(project, "NAMESPACE")
-   if (!file.exists(NAMESPACE))
-      return(output)
-   
-   parsed = tryCatch(
-      suppressWarnings(parse(NAMESPACE)),
-      error = function(e) NULL
-   )
-   
-   if (is.null(parsed))
-      return(output)
-   
-   # Loop over parsed entries and fill 'output'
-   for (i in seq_along(parsed))
-   {
-      directive <- parsed[[i]]
-      name <- as.character(directive[[1]])
-      if (name == "import")
-      {
-         pkg <- as.character(directive[[2]])
-         capture.output(suppressPackageStartupMessages(
-            ns <- asNamespace(pkg)
-         ))
-         output[[pkg]] <- sort(unique(c(
-            output[[pkg]], getNamespaceExports(ns)
-         )))
-         next
-      }
-      
-      if (name == "importFrom")
-      {
-         pkg <- as.character(directive[[2]])
-         exports <- character(length(directive) - 2)
-         for (i in 3:length(directive))
-            exports[[i - 2]] <- as.character(directive[[i]])
-         output[[pkg]] <- sort(unique(c(output[[pkg]], exports)))
-         next
-      }
-   }
-   
-   # Transform to JSON-friendly format
-   result <- lapply(seq_along(output), function(i) {
-      list(
-         package = I(names(output)[i]),
-         exports = as.character(output[[i]])
-      )
-   })
-   
-   cat(.rs.toJSON(result))
 })
