@@ -151,6 +151,8 @@ public:
    int saveActionDefault() const { return saveActionDefault_; }
 
    unsigned int minimumUserId() const { return 100; }
+
+   bool showHelpHome() const { return showHelpHome_; }
    
    core::FilePath coreRSourcePath() const 
    { 
@@ -459,6 +461,7 @@ private:
    bool rProfileOnResumeDefault_;
    int saveActionDefault_;
    bool standalone_;
+   bool showHelpHome_;
 
    // r
    std::string coreRSourcePath_;
