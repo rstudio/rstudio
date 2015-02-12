@@ -4,6 +4,7 @@ setlocal
 
 set PATH=%PATH%;%CD%\tools
 
+call:install rmarkdown master
 call:install rsconnect master
 
 GOTO:EOF
