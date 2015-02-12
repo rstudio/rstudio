@@ -638,6 +638,7 @@ public:
         parseOptions_(parseOptions)
    {
       parseStateStack_.push(ParseStateTopLevel);
+      functionNames_.push(std::wstring(L""));
    }
    
    ParseNode* node() { return pNode_; }
@@ -707,6 +708,18 @@ public:
    {
       return parseStateStack_;
    }
+   
+   void pushFunctionCallState(ParseState state,
+                              const std::wstring& functionName)
+   {
+      parseStateStack_.push(state);
+      functionNames_.push(functionName);
+   }
+   
+   const std::wstring& currentFunctionName() const
+   {
+      return functionNames_.peek();
+   }
 
    void pushState(ParseState state)
    {
@@ -718,20 +731,35 @@ public:
                   ParseNode::createNode("function"),
                   getCachedPosition());
       }
-         
+      
       parseStateStack_.push(state);
+   }
+   
+   void popFunctionName()
+   {
+      if (functionNames_.peek().length())
+         functionNames_.pop();
    }
    
    void popState()
    {
-      if (currentState() == ParseStateFunctionExpression ||
-          currentState() == ParseStateFunctionStatement)
+      switch (currentState())
       {
-         DEBUG("*** Exitting function scope");
+      case ParseStateFunctionExpression:
+      case ParseStateFunctionStatement:
          setParentAsCurrent();
+         break;
+      case ParseStateParenArgumentList:
+      case ParseStateSingleBracketArgumentList:
+      case ParseStateDoubleBracketArgumentList:
+         popFunctionName();
+         break;
+         
+      // suppress compiler warnings
+      default:
+         break;
       }
-      
-      DEBUG("Popping state: " << stateAsString(currentState()));
+
       if (currentState() != ParseStateTopLevel)
          parseStateStack_.pop();
    }
@@ -877,6 +905,7 @@ private:
    LintItems lint_;
    ParseOptions parseOptions_;
    Stack<ParseState> parseStateStack_;
+   Stack<std::wstring> functionNames_;
    Position position_;
 };
 

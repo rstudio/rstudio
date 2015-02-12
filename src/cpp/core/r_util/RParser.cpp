@@ -21,6 +21,7 @@
 #include <core/r_util/RParser.hpp>
 #include <core/r_util/RTokenCursor.hpp>
 
+#include <boost/container/flat_set.hpp>
 #include <boost/timer/timer.hpp>
 #include <boost/bind.hpp>
 
@@ -37,6 +38,44 @@ void LintItems::dump()
 }
 
 namespace {
+
+using boost::container::flat_set;
+
+flat_set<std::wstring> makeNSEFunctions()
+{
+   flat_set<std::wstring> s;
+   s.reserve(16);
+   
+   // base R non-standard eval
+   s.insert(std::wstring(L"library"));
+   s.insert(std::wstring(L"require"));
+   s.insert(std::wstring(L"quote"));
+   s.insert(std::wstring(L"substitute"));
+   s.insert(std::wstring(L"enquote"));
+   s.insert(std::wstring(L"expression"));
+   s.insert(std::wstring(L"evalq"));
+   s.insert(std::wstring(L"subset"));
+   
+   // other functions (std::wstring(e.g. dplyr))
+   // TODO: Should probably provide some kind of hook that packages can set to
+   // help the linter properly understand which functions perform NSE
+   s.insert(std::wstring(L"summarise"));
+   s.insert(std::wstring(L"mutate"));
+   s.insert(std::wstring(L"select"));
+   s.insert(std::wstring(L"arrange"));
+   s.insert(std::wstring(L"filter"));
+   s.insert(std::wstring(L"n"));
+   s.insert(std::wstring(L"mutate_each"));
+   
+   return s;
+}
+
+static flat_set<std::wstring> s_nseFunctions = makeNSEFunctions();
+
+bool isNseFunction(const std::wstring& fnName)
+{
+   return s_nseFunctions.find(fnName) != s_nseFunctions.end();
+}
 
 std::map<std::string, std::string> makeComplementMap()
 {
@@ -238,6 +277,10 @@ void handleIdentifier(TokenCursor& cursor,
 {
    // Check to see if we are defining a symbol at this location.
    // Note that both string and id are valid for assignments.
+   
+   // Bail if we're within an NSE function.
+   if (isNseFunction(status.currentFunctionName()))
+      return;
    
    // Don't cache identifiers if the previous or next tokens
    // are 'extraction' operators (e.g. '$').
@@ -727,13 +770,19 @@ ARGUMENT_LIST:
       switch (cursor.type())
       {
       case RToken::LPAREN:
-         status.pushState(ParseStatus::ParseStateParenArgumentList);
+         status.pushFunctionCallState(
+                  ParseStatus::ParseStateParenArgumentList,
+                  cursor.previousSignificantToken().content());
          break;
       case RToken::LBRACKET:
-         status.pushState(ParseStatus::ParseStateSingleBracketArgumentList);
+         status.pushFunctionCallState(
+                  ParseStatus::ParseStateSingleBracketArgumentList,
+                  cursor.previousSignificantToken().content());
          break;
       case RToken::LDBRACKET:
-         status.pushState(ParseStatus::ParseStateDoubleBracketArgumentList);
+         status.pushFunctionCallState(
+                  ParseStatus::ParseStateDoubleBracketArgumentList,
+                  cursor.previousSignificantToken().content());
          break;
       default:
          GOTO_INVALID_TOKEN(cursor);

@@ -62,29 +62,6 @@ using namespace core::collection;
 
 namespace {
 
-std::vector<std::string> makeNSEFunctions()
-{
-   std::vector<std::string> s;
-   
-   s.push_back("library");
-   s.push_back("require");
-   s.push_back("quote");
-   s.push_back("substitute");
-   s.push_back("enquote");
-   s.push_back("expression");
-   s.push_back("evalq");
-   s.push_back("subset");
-   
-   return s;
-}
-
-static std::vector<std::string> s_nseFunctions =
-      makeNSEFunctions();
-
-} // anonymous namespace
-
-namespace {
-
 void addUnreferencedSymbol(const ParseItem& item,
                            LintItems& lint)
 {

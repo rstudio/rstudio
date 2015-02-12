@@ -17,7 +17,6 @@
 #define CORE_R_UTIL_RTOKENCURSOR_HPP
 
 #include "RTokenizer.hpp"
-#include "RParser.hpp"
 
 #include <boost/function.hpp>
 
