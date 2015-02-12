@@ -44,6 +44,7 @@ namespace rstudio {
 namespace r {
 namespace sexp {
    
+class ListBuilder;
 class Protect;
    
 // environments and namespaces
@@ -133,10 +134,10 @@ SEXP create(const std::vector<std::pair<std::string,std::string> >& value,
 SEXP create(const std::set<std::string>& value, Protect* pProtect);
 SEXP create(const core::json::Array& value, Protect* pProtect);
 SEXP create(const core::json::Object& value, Protect* pProtect);
-
+SEXP create(const ListBuilder& builder, Protect* pProtect);
 
 // Create a named list
-SEXP createList(std::vector<std::string> names, Protect* pProtect);
+SEXP createList(const std::vector<std::string>& names, Protect* pProtect);
 
 inline int indexOfElementNamed(SEXP listSEXP, const std::string& name)
 {
@@ -308,34 +309,14 @@ public:
       names_.push_back(std::string());
    }
    
-   void add(const ListBuilder& builder)
+   const std::vector<SEXP>& objects() const
    {
-      objects_.push_back(static_cast<SEXP>(builder));
-      names_.push_back(std::string());
+      return objects_;
    }
-
-   operator SEXP() const
+   
+   const std::vector<std::string>& names() const
    {
-      int n = names_.size();
-
-      SEXP resultSEXP;
-
-      pProtect_->add(resultSEXP = Rf_allocVector(VECSXP, n));
-
-      SEXP namesSEXP;
-      pProtect_->add(namesSEXP = Rf_allocVector(STRSXP, n));
-
-      for (int i = 0; i < n; i++)
-      {
-         SET_VECTOR_ELT(resultSEXP, i, objects_[i]);
-         SET_STRING_ELT(namesSEXP, i, Rf_mkChar(names_[i].c_str()));
-      }
-
-      // NOTE: empty lists are unnamed
-      if (n > 0)
-         Rf_setAttrib(resultSEXP, R_NamesSymbol, namesSEXP);
-      
-      return resultSEXP;
+      return names_;
    }
 
 private:

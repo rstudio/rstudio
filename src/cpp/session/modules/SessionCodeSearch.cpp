@@ -2205,11 +2205,10 @@ SEXP rs_getSourceFileLibraryCompletions(SEXP packagesSEXP)
       builder.add("exports", completions.exports);
       builder.add("types", completions.types);
       builder.add("functions", completions.functions);
-      
-      parent.add(*it, static_cast<SEXP>(builder));
+      parent.add(*it, builder);
    }
    
-   return parent;
+   return r::sexp::create(parent, &protect);
 }
 
 SEXP rs_updateSourceFileLibraryCompletions(SEXP documentIdSEXP)
@@ -2234,7 +2233,7 @@ inline SEXP pathResultsSEXP(std::vector<std::string> const& paths,
    r::sexp::ListBuilder builder(&protect);
    builder.add("paths", paths);
    builder.add("more_available", moreAvailable);
-   return builder;
+   return r::sexp::create(builder, &protect);
 }
 
 SEXP rs_listIndexedFiles(SEXP termSEXP, SEXP absolutePathSEXP, SEXP maxResultsSEXP)

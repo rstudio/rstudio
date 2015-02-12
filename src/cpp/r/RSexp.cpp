@@ -597,7 +597,6 @@ SEXP create(const std::vector<bool>& value, Protect *pProtect)
    
    return valueSEXP;
 }
-
    
 namespace {  
 int secondsSinceEpoch(boost::posix_time::ptime date)
@@ -695,7 +694,30 @@ SEXP create(const std::set<std::string> &value, Protect *pProtect)
    return charSEXP;
 }
 
-SEXP createList(std::vector<std::string> names, Protect* pProtect)
+SEXP create(const ListBuilder& builder, Protect *pProtect)
+{
+   int n = builder.names().size();
+
+   SEXP resultSEXP;
+   pProtect->add(resultSEXP = Rf_allocVector(VECSXP, n));
+
+   SEXP namesSEXP;
+   pProtect->add(namesSEXP = Rf_allocVector(STRSXP, n));
+
+   for (int i = 0; i < n; i++)
+   {
+      SET_VECTOR_ELT(resultSEXP, i, builder.objects()[i]);
+      SET_STRING_ELT(namesSEXP, i, Rf_mkChar(builder.names()[i].c_str()));
+   }
+
+   // NOTE: empty lists are unnamed
+   if (n > 0)
+      Rf_setAttrib(resultSEXP, R_NamesSymbol, namesSEXP);
+   
+   return resultSEXP;
+}
+
+SEXP createList(const std::vector<std::string>& names, Protect* pProtect)
 {
    std::size_t n = names.size();
    SEXP listSEXP;

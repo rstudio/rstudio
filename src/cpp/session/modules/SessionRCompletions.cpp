@@ -288,7 +288,7 @@ SEXP rs_scanFiles(SEXP pathSEXP,
    builder.add("paths", paths);
    builder.add("more_available", moreAvailable);
 
-   return builder;
+   return r::sexp::create(builder, &protect);
 }
 
 SEXP rs_isSubsequence(SEXP stringsSEXP, SEXP querySEXP)

@@ -338,7 +338,7 @@ SEXP rs_lintRFile(SEXP filePathSEXP)
    FilePath filePath(module_context::resolveAliasedPath(path));
    
    if (!filePath.exists())
-      return builder;
+      return r::sexp::create(builder, &protect);
    
    std::string contents;
    Error error = module_context::readAndDecodeFile(
@@ -350,7 +350,7 @@ SEXP rs_lintRFile(SEXP filePathSEXP)
    if (error)
    {
       LOG_ERROR(error);
-      return builder;
+      return r::sexp::create(builder, &protect);
    }
    
    std::string rCode = file_utils::readFile(filePath);
@@ -375,7 +375,7 @@ SEXP rs_lintRFile(SEXP filePathSEXP)
       builder.add(el);
    }
    
-   return builder;
+   return r::sexp::create(builder, &protect);
 }
 
 static std::wstring s_rCode;
