@@ -15,10 +15,14 @@
 package org.rstudio.studio.client.workbench.views.help;
 
 import com.google.inject.Inject;
+
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.events.SessionInitEvent;
+import org.rstudio.studio.client.workbench.events.SessionInitHandler;
+import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.ui.DelayLoadTabShim;
 import org.rstudio.studio.client.workbench.ui.DelayLoadWorkbenchTab;
 import org.rstudio.studio.client.workbench.views.help.events.ActivateHelpEvent;
@@ -33,19 +37,32 @@ public class HelpTab extends DelayLoadWorkbenchTab<Help>
                                                 ActivateHelpHandler
    {
       @Handler public abstract void onHelpHome();
+      
+      public abstract void bringToFront();
    }
    
    public interface Binder extends CommandBinder<Commands, HelpTab.Shim> {}
 
    @Inject
-   public HelpTab(Shim shim,
+   public HelpTab(final Shim shim,
                   Binder binder,
                   Commands commands,
-                  EventBus events)
+                  EventBus events,
+                  final Session session)
    {
       super("Help", shim);
       binder.bind(commands, shim);
       events.addHandler(ShowHelpEvent.TYPE, shim);
       events.addHandler(ActivateHelpEvent.TYPE, shim);
+      
+      events.addHandler(SessionInitEvent.TYPE, new SessionInitHandler() {
+         public void onSessionInit(SessionInitEvent sie)
+         {
+            if (session.getSessionInfo().getShowHelpHome())
+            {
+               shim.bringToFront();
+            }
+         }
+      });
    }
 }

@@ -654,6 +654,8 @@ void handleClientInit(const boost::function<void()>& initFunction,
 
    sessionInfo["clang_available"] = modules::clang::isAvailable();
 
+   sessionInfo["show_help_home"] = options.showHelpHome();
+
    // send response  (we always set kEventsPending to false so that the client
    // won't poll for events until it is ready)
    json::JsonRpcResponse jsonRpcResponse ;

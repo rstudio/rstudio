@@ -51,6 +51,8 @@
 
 #include "presentation/SlideRequestHandler.hpp"
 
+#include "SessionHelpHome.hpp"
+
 // protect R against windows TRUE/FALSE defines
 #undef TRUE
 #undef FALSE
@@ -706,6 +708,12 @@ void handleHttpdRequest(const std::string& location,
          pResponse->setFile(helpFile, request, filter);
          return;
       }
+   }
+
+   if (boost::algorithm::starts_with(path, "/doc/home/"))
+   {
+      handleHelpHomeRequest(request, kJsCallbacks, pResponse);
+      return;
    }
 
    // evalute the handler

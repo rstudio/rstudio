@@ -23,12 +23,14 @@ import org.rstudio.core.client.CsvReader;
 import org.rstudio.core.client.CsvWriter;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
+import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.WorkbenchList;
 import org.rstudio.studio.client.workbench.WorkbenchListManager;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.ListChangedEvent;
 import org.rstudio.studio.client.workbench.events.ListChangedHandler;
+import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.help.events.*;
 import org.rstudio.studio.client.workbench.views.help.model.HelpServerOperations;
@@ -76,7 +78,9 @@ public class Help extends BasePresenter implements ShowHelpHandler
                HelpServerOperations server,
                WorkbenchListManager listManager,
                Commands commands,
-               Binder binder)
+               Binder binder,
+               final Session session,
+               final EventBus eventBus)
    {
       super(view);
       server_ = server ;
@@ -139,7 +143,11 @@ public class Help extends BasePresenter implements ShowHelpHandler
                // mark us initialized
                historyInitialized_ = true ;
                
-               if (!view_.navigated())
+               if (session.getSessionInfo().getShowHelpHome())
+               {
+                  home();
+               }
+               else if (!view_.navigated())
                {
                   ArrayList<Link> links = history.getLinks();
                   if (links.size() > 0)
@@ -183,10 +191,15 @@ public class Help extends BasePresenter implements ShowHelpHandler
       view_.bringToFront();
       view_.focus();
    }
-
+   
+   public void bringToFront()
+   {
+      view_.bringToFront();
+   }
+   
    private void home()
    {
-      showHelp("help/doc/html/index.html");
+      showHelp("help/doc/home/");
    }
    
    public Display getDisplay()

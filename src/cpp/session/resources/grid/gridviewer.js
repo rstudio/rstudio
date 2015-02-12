@@ -474,6 +474,15 @@ var createHeader = function(idx, col) {
     th.title += " with " + col.col_vals.length + " levels";
   }
 
+  // add the column label, if it has one
+  if (col.col_label && col.col_label.length > 0) {
+    var label = document.createElement("div");
+    label.className = "colLabel";  
+    label.textContent = col.col_label;
+    label.title = col.col_label;
+    th.appendChild(label);
+  }
+
   return th;
 };
 

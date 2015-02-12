@@ -141,6 +141,9 @@ public class UIPrefs extends UIPrefsAccessor implements UiPrefsChangedHandler
          showSignatureTooltips().setGlobalValue(
                                  newUiPrefs.showSignatureTooltips().getGlobalValue());
          
+         showDiagnostics().setGlobalValue(
+                                 newUiPrefs.showDiagnostics().getGlobalValue());
+         
          autoAppendNewline().setGlobalValue(
                                  newUiPrefs.autoAppendNewline().getGlobalValue());
          
