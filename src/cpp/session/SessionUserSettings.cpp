@@ -275,6 +275,9 @@ void UserSettings::updatePrefsCache(const json::Object& prefs) const
 
    int shinyViewerType = readPref<int>(prefs, "shiny_viewer_type", modules::shiny_viewer::SHINY_VIEWER_WINDOW);
    pShinyViewerType_.reset(new int(shinyViewerType));
+   
+   bool enableStyleDiagnostics = readPref<bool>(prefs, "enable_style_diagnostics", false);
+   pEnableStyleDiagnostics_.reset(new bool(enableStyleDiagnostics));
 }
 
 
@@ -333,6 +336,11 @@ bool UserSettings::handleErrorsInUserCodeOnly() const
 int UserSettings::shinyViewerType() const
 {
    return readUiPref<int>(pShinyViewerType_);
+}
+
+bool UserSettings::enableStyleDiagnostics() const
+{
+   return readUiPref<bool>(pEnableStyleDiagnostics_);
 }
 
 std::vector<std::string> UserSettings::spellingCustomDictionaries() const
@@ -655,5 +663,5 @@ void UserSettings::setClangVerbose(int level)
    settings_.set("clangVerbose", level);
 }
 
-}// namespace session
+} // namespace session
 } // namespace rstudio

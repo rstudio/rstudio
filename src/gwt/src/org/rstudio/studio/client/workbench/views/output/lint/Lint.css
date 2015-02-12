@@ -4,7 +4,7 @@
 @url WARNING warning;
 @url NOTE note;
 
-.error, .fatal, .warning, .info, .ignored, .note {
+.error, .fatal, .warning, .info, .ignored, .note, .style {
    position: absolute;
    background-repeat: repeat-x;
    background-position: left bottom;
@@ -20,6 +20,6 @@
    background-image: WARNING;
 }
 
-.info, .ignored, .note {
+.info, .ignored, .note, .style {
    background-image: NOTE;
 }

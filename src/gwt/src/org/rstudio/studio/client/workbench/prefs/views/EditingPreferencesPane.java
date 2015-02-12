@@ -120,11 +120,22 @@ public class EditingPreferencesPane extends PreferencesPane
       completionPanel.add(checkboxPref("Use tab for multiline autocompletions", prefs.allowTabMultilineCompletion()));
       
       VerticalPanel diagnosticsPanel = new VerticalPanel();
-      diagnosticsPanel.add(checkboxPref("Show inline diagnostics for R and C/C++ code", prefs.showDiagnostics()));
       
+      final CheckBox showDiagnostics =
+            checkboxPref("Show inline diagnostics for R and C/C++ code", prefs.showDiagnostics());
+      
+      final CheckBox enableStyleDiagnostics =
+            checkboxPref("Enable style-related diagnostics for R", prefs.enableStyleDiagnostics());
+      
+      addEnabledDependency(
+            showDiagnostics,
+            enableStyleDiagnostics);
+      
+      diagnosticsPanel.add(showDiagnostics);
+      diagnosticsPanel.add(enableStyleDiagnostics);
       
       DialogTabLayoutPanel tabPanel = new DialogTabLayoutPanel();
-      tabPanel.setSize("435px", "498px");     
+      tabPanel.setSize("435px", "498px");
       tabPanel.add(editingPanel, "Editing");
       tabPanel.add(displayPanel, "Display");
       tabPanel.add(completionPanel, "Completion");
@@ -210,7 +221,6 @@ public class EditingPreferencesPane extends PreferencesPane
    private final CheckBox spacesForTab_;
    private final CheckBox showMargin_;
    private final SelectWidget showCompletions_;
-   
    
    
 }

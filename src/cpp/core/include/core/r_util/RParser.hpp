@@ -135,7 +135,7 @@ struct LintItem
       : startRow(item.row()),
         startColumn(item.column()),
         endRow(item.row()),
-        endColumn(item.column() + item.contentAsUtf8().length()),
+        endColumn(item.column() + item.length()),
         type(type),
         message(message) {}
 
@@ -222,9 +222,9 @@ public:
    void unexpectedEndOfDocument(const RToken& token)
    {
       LintItem lint(token.row(),
-                    token.column() + token.contentAsUtf8().length(),
+                    token.column() + token.length(),
                     token.row(),
-                    token.column() + token.contentAsUtf8().length(),
+                    token.column() + token.length(),
                     LintTypeError,
                     "unexpected end of document");
       lintItems_.push_back(lint);
@@ -282,7 +282,7 @@ public:
       LintItem lint(token.row(),
                     token.column(),
                     token.row(),
-                    token.column(),
+                    token.column() + token.length(),
                     LintTypeStyle,
                     "unnecessary whitespace");
       lintItems_.push_back(lint);
@@ -296,7 +296,7 @@ public:
       LintItem lint(token.row(),
                     token.column(),
                     token.row(),
-                    token.column(),
+                    token.column() + token.length(),
                     LintTypeStyle,
                     "unexpected whitespace around extraction operator");
       lintItems_.push_back(lint);
@@ -310,7 +310,7 @@ public:
       LintItem lint(token.row(),
                     token.column(),
                     token.row(),
-                    token.column(),
+                    token.column() + token.length(),
                     LintTypeStyle,
                     "expected whitespace around binary operator");
       lintItems_.push_back(lint);

@@ -26,6 +26,7 @@ public interface LintResources extends ClientBundle
       String ignored();
       String note();
       String info();
+      String style();
       
       String warning();
       

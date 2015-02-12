@@ -736,6 +736,8 @@ public class AceEditorWidget extends Composite
             clazz = lintStyles_.warning();
          else if (item.getType() == "info")
             clazz = lintStyles_.info();
+         else if (item.getType() == "style")
+            clazz = lintStyles_.style();
          
          int id = editor_.getSession().addMarker(
                range, clazz, "text", true);

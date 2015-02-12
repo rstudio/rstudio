@@ -146,6 +146,11 @@ public class UIPrefsAccessor extends Prefs
       return bool("show_diagnostics", true);
    }
    
+   public PrefValue<Boolean> enableStyleDiagnostics()
+   {
+      return bool("enable_style_diagnostics", false);
+   }
+   
    public PrefValue<Boolean> autoAppendNewline()
    {
       return bool("auto_append_newline", false);

@@ -29,6 +29,7 @@
 #include <core/Error.hpp>
 #include <core/FileSerializer.hpp>
 
+#include <session/SessionUserSettings.hpp>
 #include <session/SessionModuleContext.hpp>
 #include <session/projects/SessionProjects.hpp>
 
@@ -128,7 +129,11 @@ ParseResults parse(const std::wstring& rCode,
                    const FilePath& origin)
 {
    ParseResults results;
-   results = r_util::parse(rCode);
+   
+   ParseOptions options;
+   options.setRecordStyleLint(userSettings().enableStyleDiagnostics());
+   
+   results = r_util::parse(rCode, options);
    
    ParseNode* pRoot = results.parseTree();
    if (!pRoot)
