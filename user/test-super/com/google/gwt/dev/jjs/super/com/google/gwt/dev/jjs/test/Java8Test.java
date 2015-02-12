@@ -507,7 +507,7 @@ public class Java8Test extends GWTTestCase {
     assertEquals("interface1.foo", c.foo());
   }
 
-  class AbstractClass implements InterfaceWithTwoDefenderMethods {
+  abstract class AbstractClass implements InterfaceWithTwoDefenderMethods {
   }
 
   class Child1 extends AbstractClass {
