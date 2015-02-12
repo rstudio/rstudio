@@ -325,6 +325,15 @@ public class BindingProperty extends Property {
     return generatedValues.allConditionsHaveOneValue();
   }
 
+  /**
+   * Undo any value restrictions that have been put in place specifically on the set of values used
+   * for code generation as opposed to being present in the actual module definition.
+   */
+  public void resetGeneratedValues() {
+    generatedValues.valueMap.clear();
+    generatedValues.valueMap.putAll(allowedValues.valueMap);
+  }
+
   public void setFallback(String token) {
     fallback = token;
   }

@@ -425,8 +425,7 @@ public class Recompiler {
 
     // Undo all permutation restriction customizations from previous compiles.
     for (BindingProperty bindingProperty : moduleDef.getProperties().getBindingProperties()) {
-      String[] allowedValues = bindingProperty.getAllowedValues(bindingProperty.getRootCondition());
-      bindingProperty.setRootGeneratedValues(allowedValues);
+      bindingProperty.resetGeneratedValues();
     }
 
     // A snapshot of the module's configuration before we modified it.
