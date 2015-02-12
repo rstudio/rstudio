@@ -13,8 +13,8 @@
  *
  */
 
-#ifndef SESSION_ASYNC_R_COMPLETIONS_HPP
-#define SESSION_ASYNC_R_COMPLETIONS_HPP
+#ifndef SESSION_ASYNC_NAMESPACE_COMPLETIONS_HPP
+#define SESSION_ASYNC_NAMESPACE_COMPLETIONS_HPP
 
 #include <core/r_util/RSourceIndex.hpp>
 
@@ -58,7 +58,7 @@ private:
 };
 
 } // end namespace r_completions
-} // end namesapce modules
+} // end namespace modules
 } // end namespace session
 } // end namespace rstudio
 

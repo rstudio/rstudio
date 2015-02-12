@@ -2342,6 +2342,8 @@ SEXP rs_listInferredPackages(SEXP documentIdSEXP)
       return R_NilValue;
    
    std::set<std::string> pkgs = index->getInferredPackages();
+   pkgs.insert(index->getNAMESPACEPackages().begin(),
+               index->getNAMESPACEPackages().end());
    
    r::sexp::Protect protect;
    return r::sexp::create(pkgs, &protect);

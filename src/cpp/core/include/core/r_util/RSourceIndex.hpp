@@ -321,6 +321,18 @@ public:
       s_allInferredPkgNames_.insert(packageName);
    }
    
+   static void setNAMESPACEPackages(const std::vector<std::string>& pkgNames)
+   {
+      s_NAMESPACEPkgNames_.clear();
+      s_NAMESPACEPkgNames_.insert(pkgNames.begin(), pkgNames.end());
+      s_allInferredPkgNames_.insert(pkgNames.begin(), pkgNames.end());
+   }
+   
+   const std::set<std::string>& getNAMESPACEPackages() const
+   {
+      return s_NAMESPACEPkgNames_;
+   }
+   
 public:
    
    const std::vector<RSourceItem>& items() const
@@ -337,13 +349,13 @@ private:
    // but we share that state in a static variable (so that we can
    // cache and share across all indexes)
    std::set<std::string> inferredPkgNames_;
+   static std::set<std::string> s_NAMESPACEPkgNames_;
    static std::set<std::string> s_allInferredPkgNames_;
    
    // NOTE: All source indexes share a set of completions
    static std::map<std::string, AsyncLibraryCompletions> s_completions_;
    
 };
-
 
 } // namespace r_util
 } // namespace core 

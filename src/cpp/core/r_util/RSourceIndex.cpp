@@ -28,6 +28,7 @@ namespace r_util {
 
 // static members
 std::set<std::string> RSourceIndex::s_allInferredPkgNames_;
+std::set<std::string> RSourceIndex::s_NAMESPACEPkgNames_;
 std::map<std::string, AsyncLibraryCompletions> RSourceIndex::s_completions_;
 
 namespace {

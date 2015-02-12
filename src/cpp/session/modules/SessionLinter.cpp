@@ -21,11 +21,13 @@
 #include "SessionLinter.hpp"
 #include "SessionCodeSearch.hpp"
 #include "SessionAsyncNAMESPACECompletions.hpp"
+#include "SessionAsyncRCompletions.hpp"
 
 #include <set>
 
 #include <core/Exec.hpp>
 #include <core/Error.hpp>
+#include <core/FileSerializer.hpp>
 
 #include <session/SessionModuleContext.hpp>
 #include <session/projects/SessionProjects.hpp>
@@ -396,7 +398,38 @@ SEXP rs_parse(SEXP rCodeSEXP)
 
 void onNAMESPACEchanged()
 {
-   r_completions::AsyncNAMESPACECompletions::update();
+   if (!projects::projectContext().hasProject())
+      return;
+   
+   FilePath NAMESPACE(projects::projectContext().directory().complete("NAMESPACE"));
+   if (!NAMESPACE.exists())
+      return;
+   
+   std::vector<std::string> contents;
+   Error error = readStringVectorFromFile(NAMESPACE, &contents);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+   
+   // Find all the 'import' statements, and add them
+   std::vector<std::string> importPkgNames;
+   boost::regex reImport("^\\s*import\\s*\\(['\"]?\\s*(.*)\\s*['\"]?\\)\\s*$");
+   
+   BOOST_FOREACH(const std::string& directive, contents)
+   {
+      boost::cmatch matches;
+      if (boost::regex_match(directive.c_str(), matches, reImport) &&
+          matches.size() >= 2)
+      {
+         std::string pkgName(matches[1].first, matches[1].second);
+         importPkgNames.push_back(pkgName);
+      }
+   }
+   
+   RSourceIndex::setNAMESPACEPackages(importPkgNames);
+   r_completions::AsyncRCompletions::update();
 }
 
 void onFilesChanged(const std::vector<core::system::FileChangeEvent>& events)
