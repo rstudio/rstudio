@@ -1268,6 +1268,23 @@ assign(x = ".rs.acCompletionTypes",
                        type = types[keep])
 })
 
+.rs.addFunction("getNAMESPACEImportedSymbols", function()
+{
+   .Call("rs_getNAMESPACEImportedSymbols")
+})
+
+.rs.addFunction("getCompletionsNAMESPACEExports", function(token)
+{
+   symbols <- .rs.getNAMESPACEImportedSymbols()
+   results <- .rs.namedVectorAsList(symbols)
+   keep <- .rs.fuzzyMatches(results$values, token)
+   
+   .rs.makeCompletions(token = token,
+                       results = results$values[keep],
+                       packages = results$names[keep],
+                       quote = FALSE)
+})
+
 .rs.addFunction("getCompletionsSearchPath", function(token,
                                                      overrideInsertParens = FALSE)
 {
@@ -1532,6 +1549,7 @@ assign(x = ".rs.acCompletionTypes",
       # Otherwise, complete from the seach path + available packages
       completions <- Reduce(.rs.appendCompletions, list(
          .rs.getCompletionsSearchPath(token),
+         .rs.getCompletionsNAMESPACEExports(token),
          .rs.getCompletionsPackages(token, TRUE),
          .rs.getCompletionsActiveFrame(token, envir),
          .rs.getCompletionsLibraryContext(token,
@@ -1749,6 +1767,7 @@ assign(x = ".rs.acCompletionTypes",
       completions <- Reduce(.rs.appendCompletions, list(
          completions,
          .rs.getCompletionsSearchPath(token),
+         .rs.getCompletionsNAMESPACEExports(token),
          .rs.getCompletionsActiveFrame(token, envir)
       ))
       

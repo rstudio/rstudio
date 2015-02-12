@@ -14,8 +14,11 @@
  */
 
 #include "SessionRCompletions.hpp"
+#include "SessionAsyncNAMESPACECompletions.hpp"
 
 #include <core/Exec.hpp>
+
+#include <boost/range/adaptors.hpp>
 
 #include <r/RSexp.hpp>
 #include <r/RInternal.hpp>
@@ -327,6 +330,14 @@ SEXP rs_getActiveFrame(SEXP depthSEXP)
    return context->cloenv;
 }
 
+SEXP rs_getNAMESPACEImportedSymbols()
+{
+   const std::map< std::string, std::vector<std::string> >&
+         map = AsyncNAMESPACECompletions::get();
+   r::sexp::Protect protect;
+   return r::sexp::create(map, &protect);
+}
+
 } // end anonymous namespace
 
 Error initialize() {
@@ -355,6 +366,8 @@ Error initialize() {
             "rs_getActiveFrame",
             (DL_FUNC) rs_getActiveFrame,
             1);
+   
+   RS_REGISTER_CALL_METHOD(rs_getNAMESPACEImportedSymbols, 0);
    
    using boost::bind;
    using namespace module_context;

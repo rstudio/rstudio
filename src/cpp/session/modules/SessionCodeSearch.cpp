@@ -2198,6 +2198,7 @@ SEXP rs_getSourceFileLibraryCompletions(SEXP packagesSEXP)
         it != packages.end();
         ++it)
    {
+      DEBUG("Adding entry for '" << *it << "'");
       AsyncLibraryCompletions completions =
             RSourceIndex::getCompletions(*it);
       
