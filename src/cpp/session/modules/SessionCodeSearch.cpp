@@ -13,6 +13,9 @@
  *
  */
 
+#define RSTUDIO_DEBUG_LABEL "codesearch"
+// #define RSTUDIO_ENABLE_DEBUG_MACROS
+
 #include "SessionCodeSearch.hpp"
 
 #include <iostream>
@@ -53,8 +56,6 @@
 #include "SessionSource.hpp"
 #include "clang/DefinitionIndex.hpp"
 
-#define RSTUDIO_DEBUG_LABEL "codesearch"
-// #define RSTUDIO_ENABLE_DEBUG_MACROS
 #include <core/Macros.hpp>
 
 using namespace rstudio::core ;
@@ -322,7 +323,9 @@ public:
          }
          else
          {
-            DEBUG("- Already has this entry; skipping");
+            // We update the entry (because its associated index may
+            // have changed)
+            *it = entry;
          }
       }
 
@@ -2421,12 +2424,14 @@ void addAllProjectSymbols(std::set<std::string>* pSymbols)
 {
    BOOST_FOREACH(const Entry& entry, *s_projectIndex.entries())
    {
+      DEBUG("Entry: " << entry.fileInfo.absolutePath());
       if (!entry.hasIndex())
          continue;
       
       const std::vector<r_util::RSourceItem>& items = entry.pIndex->items();
       BOOST_FOREACH(const r_util::RSourceItem& item, items)
       {
+         DEBUG("Item: " << item.name());
          pSymbols->insert(item.name());
       }
    }
