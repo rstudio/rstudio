@@ -4,23 +4,22 @@
 @url WARNING warning;
 @url NOTE note;
 
-.error, .fatal {
+.error, .fatal, .warning, .info, .ignored, .note {
    position: absolute;
-   background-image: ERROR;
    background-repeat: repeat-x;
-   margin-top: 18px !important;
+   background-position: bottom;
+   background-size: 6px 2px;
+   margin-top: -1px; /* hug text a tiny bit more */
+}
+
+.error, .fatal {
+   background-image: ERROR;
 }
 
 .warning {
-   position: absolute;
    background-image: WARNING;
-   background-repeat: repeat-x;
-   margin-top: 18px !important;
 }
 
 .info, .ignored, .note {
-   position: absolute;
    background-image: NOTE;
-   background-repeat: repeat-x;
-   margin-top: 18px !important;
 }
