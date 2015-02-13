@@ -1560,9 +1560,9 @@ public class AceEditor implements DocDisplay,
    }
 
    @Override
-   public void jumpToMatching()
+   public void jumpToMatching(boolean select, boolean expand)
    {
-      widget_.getEditor().jumpToMatching();
+      widget_.getEditor().jumpToMatching(select, expand);
    }
    
    @Override

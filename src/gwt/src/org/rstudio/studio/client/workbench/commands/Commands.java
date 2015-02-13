@@ -93,6 +93,8 @@ public abstract class
    public abstract AppCommand foldAll();
    public abstract AppCommand unfoldAll();
    public abstract AppCommand jumpToMatching();
+   public abstract AppCommand selectToMatching();
+   public abstract AppCommand expandToMatching();
    public abstract AppCommand extractFunction();
    public abstract AppCommand extractLocalVariable();
    public abstract AppCommand commentUncomment();
