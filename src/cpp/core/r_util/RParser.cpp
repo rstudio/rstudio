@@ -236,6 +236,19 @@ std::wstring typeToWideString(char type)
       }                                                                        \
    } while (0)
 
+#define ENSURE_TYPE_NOT(__CURSOR__, __STATUS__, __TYPE__)                      \
+   do                                                                          \
+   {                                                                           \
+      if (__CURSOR__.isType(__TYPE__))                                         \
+      {                                                                        \
+         DEBUG("(" << __LINE__ << "): Unexpected "                             \
+                   << string_utils::wideToUtf8(typeToWideString(__TYPE__)));   \
+         __STATUS__.lint().unexpectedToken(__CURSOR__);                        \
+         return;                                                               \
+      }                                                                        \
+   } while (0)
+
+
 #define UNEXPECTED_TOKEN(__CURSOR__, __STATUS__)                               \
    do                                                                          \
    {                                                                           \
@@ -990,6 +1003,7 @@ FOR_START:
       MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
       ENSURE_CONTENT(cursor, status, L"in");
       MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
+      ENSURE_TYPE_NOT(cursor, status, RToken::RPAREN);
       status.pushState(ParseStatus::ParseStateForCondition);
       goto START;
       
@@ -1016,6 +1030,7 @@ WHILE_START:
       ENSURE_TYPE(cursor, status, RToken::LPAREN);
       status.pushState(ParseStatus::ParseStateWhileCondition);
       MOVE_TO_NEXT_SIGNIFICANT_TOKEN_WARN_ON_BLANK(cursor, status);
+      ENSURE_TYPE_NOT(cursor, status, RToken::RPAREN);
       DEBUG("** Entering while condition: " << cursor);
       goto START;
       
@@ -1041,6 +1056,7 @@ IF_START:
       MOVE_TO_NEXT_SIGNIFICANT_TOKEN_WARN_IF_NO_WHITESPACE(cursor, status);
       ENSURE_TYPE(cursor, status, RToken::LPAREN);
       MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
+      ENSURE_TYPE_NOT(cursor, status, RToken::RPAREN);
       status.pushState(ParseStatus::ParseStateIfCondition);
       goto START;
       
