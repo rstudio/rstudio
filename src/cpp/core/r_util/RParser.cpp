@@ -962,7 +962,7 @@ WHILE_START:
       
       DEBUG("** While start **");
       ENSURE_CONTENT(cursor, status, L"while");
-      MOVE_TO_NEXT_SIGNIFICANT_TOKEN_WARN_ON_BLANK(cursor, status);
+      MOVE_TO_NEXT_SIGNIFICANT_TOKEN_WARN_IF_NO_WHITESPACE(cursor, status);
       ENSURE_TYPE(cursor, status, RToken::LPAREN);
       status.pushState(ParseStatus::ParseStateWhileCondition);
       MOVE_TO_NEXT_SIGNIFICANT_TOKEN_WARN_ON_BLANK(cursor, status);
@@ -988,7 +988,7 @@ IF_START:
       
       DEBUG("** If start ** " << cursor);
       ENSURE_CONTENT(cursor, status, L"if");
-      MOVE_TO_NEXT_SIGNIFICANT_TOKEN_WARN_ON_BLANK(cursor, status);
+      MOVE_TO_NEXT_SIGNIFICANT_TOKEN_WARN_IF_NO_WHITESPACE(cursor, status);
       ENSURE_TYPE(cursor, status, RToken::LPAREN);
       MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
       status.pushState(ParseStatus::ParseStateIfCondition);
@@ -1013,7 +1013,7 @@ REPEAT_START:
       
       DEBUG("** Repeat start ** " << cursor);
       ENSURE_CONTENT(cursor, status, L"repeat");
-      MOVE_TO_NEXT_SIGNIFICANT_TOKEN_WARN_ON_BLANK(cursor, status);
+      MOVE_TO_NEXT_SIGNIFICANT_TOKEN_WARN_IF_NO_WHITESPACE(cursor, status);
       if (cursor.isType(RToken::LBRACE))
       {
          status.pushState(ParseStatus::ParseStateRepeatExpression);
