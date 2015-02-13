@@ -317,15 +317,6 @@ for (file in themeFiles) {
       create_line_marker_rule(".ace_foreign_line", color_as_hex(mergedColor))
    )
    
-   ## Generate a background used for 'find_line'; most
-   ## promently used for highlighting lines after a failed
-   ## compile
-   findBackground <- color_as_hex(mix_colors(backgroundRgb, foregroundRgb, 0.8))
-   content <- c(
-      content,
-      create_line_marker_rule(".ace_find_line", findBackground)
-   )
-   
    ## Generate a color used for 'debugging' backgrounds.
    debugPrimary <- parse_css_color("#FFDE38")
    debugBg <- color_as_hex(mix_colors(backgroundRgb, debugPrimary, 0.5))
@@ -335,14 +326,26 @@ for (file in themeFiles) {
       create_line_marker_rule(".ace_active_debug_line", debugBg)
    )
    
-   ## Generate a background for console errors.
-   errorBg <- color_as_hex(mix_colors(backgroundRgb, foregroundRgb, 0.8))
+   ## Generate a background color used for console errors, as well as
+   ## 'find_line' (used for highlighting e.g. 'sourceCpp' errors).
+   
+   ## Dark backgrounds need a bit more contrast than light ones for
+   ## a nice visual display.
+   mixingProportion <- if (isDark) 0.8 else 0.9
+   errorBgColor <-
+      color_as_hex(mix_colors(backgroundRgb, foregroundRgb, mixingProportion))
+   
+   content <- c(
+      content,
+      create_line_marker_rule(".ace_find_line", errorBgColor)
+   )
+   
    content <- add_content(
       content,
       ".ace_console_error {",
       "  background-color: %s;",
       "}",
-      replace = errorBg
+      replace = errorBgColor
    )
    
    ## Add operator colors if necessary.
