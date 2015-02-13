@@ -243,33 +243,68 @@ std::wstring typeToWideString(char type)
       __STATUS__.lint().unexpectedToken(__CURSOR__);                           \
    } while (0)
 
-void warnIfCursorEncountersSymbol(const TokenCursor& cursor,
-                                  const std::wstring& symbol,
-                                  LintItems* pLint)
+void lookAheadAndWarnOnUsagesOfSymbol(const TokenCursor& startCursor,
+                                      TokenCursor& clone,
+                                      ParseStatus& status)
 {
-   if (!cursor.isType(RToken::ID))
-      return;
+   std::size_t braceBalance = 0;
+   std::wstring symbol = startCursor.content();
    
-   // Don't warn about function calls, or if the token is
-   // expressed as part of an extraction.
-   const RToken& next = cursor.nextSignificantToken();
-   const RToken& prev = cursor.previousSignificantToken();
-   
-   if (next.isType(RToken::LPAREN))
-      return;
-   
-   if (isExtractionOperator(prev) ||
-       isExtractionOperator(next))
-      return;
-   
-   if (isLeftAssign(next) ||
-       isRightAssign(prev))
-      return;
-   
-   if (cursor.contentEquals(symbol))
+   do
    {
-      pLint->noSymbolNamed(cursor);
-   }
+      // Skip over 'for' arg-list
+      if (clone.contentEquals(L"for"))
+      {
+         if (!clone.moveToNextSignificantToken())
+            return;
+         
+         if (!clone.fwdToMatchingToken())
+            return;
+         
+         continue;
+      }
+      
+      // Skip over functions
+      if (clone.contentEquals(L"function"))
+      {
+         if (!clone.moveToNextSignificantToken())
+            return;
+         
+         if (!clone.fwdToMatchingToken())
+            return;
+         
+         if (!clone.moveToNextSignificantToken())
+            return;
+         
+         if (clone.isType(RToken::LBRACE))
+         {
+            if (!clone.fwdToMatchingToken())
+               return;
+         }
+         else
+         {
+            if (!clone.moveToEndOfStatement(status.isInParentheticalScope()))
+               return;
+         }
+         
+         continue;
+      }
+      
+      if (clone.contentEquals(symbol) &&
+          !isLeftAssign(clone.nextSignificantToken()) &&
+          !isRightAssign(clone.previousSignificantToken()) &&
+          !isLeftBracket(clone.nextSignificantToken()))
+      {
+         status.lint().noSymbolNamed(clone);
+      }
+      
+      braceBalance += isLeftBracket(clone);
+      braceBalance -= isRightBracket(clone);
+      
+      if (braceBalance <= 0)
+         return;
+      
+   } while (clone.moveToNextSignificantToken());
 }
 
 void handleIdentifier(TokenCursor& cursor,
@@ -314,13 +349,7 @@ void handleIdentifier(TokenCursor& cursor,
          if (clone.moveToNextSignificantToken() &&
              clone.moveToNextSignificantToken())
          {
-            clone.moveToEndOfStatement(
-                     status.isInParentheticalScope(),
-                     boost::bind(
-                        warnIfCursorEncountersSymbol,
-                        _1,
-                        cursor.content(),
-                        &status.lint()));
+            lookAheadAndWarnOnUsagesOfSymbol(cursor, clone, status);
          }
       }
       
@@ -405,7 +434,9 @@ void checkBinaryOperatorWhitespace(TokenCursor& cursor,
    //
    // is bad style. Note that ':' is the other 'no-whitespace-preferred'
    // binary operator.
-   if (isExtractionOperator(cursor) || cursor.contentEquals(L":"))
+   bool isExtraction = isExtractionOperator(cursor);
+   bool isColon = cursor.contentEquals(L":");
+   if (isExtraction || isColon)
    {
       if (isWhitespace(cursor.previousToken()) ||
           isWhitespace(cursor.nextToken()))
@@ -415,9 +446,12 @@ void checkBinaryOperatorWhitespace(TokenCursor& cursor,
       
       // Extraction operators must be followed by a string or an
       // identifier
-      const RToken& next = cursor.nextSignificantToken();
-      if (!(next.isType(RToken::ID) || next.isType(RToken::STRING)))
-         status.lint().unexpectedToken(next);
+      if (isExtraction)
+      {
+         const RToken& next = cursor.nextSignificantToken();
+         if (!(next.isType(RToken::ID) || next.isType(RToken::STRING)))
+            status.lint().unexpectedToken(next);
+      }
    }
    
    // There should be whitespace around other operators.

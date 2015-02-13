@@ -297,8 +297,7 @@ public:
 private:
    
    bool doFwdToMatchingToken(RToken::TokenType leftTokenType,
-                             RToken::TokenType rightTokenType,
-                             boost::function<void(const TokenCursor&)> callback = NULL)
+                             RToken::TokenType rightTokenType)
    {
       if (!isType(leftTokenType))
          return false;
@@ -308,9 +307,6 @@ private:
       
       while (cursor.moveToNextToken())
       {
-         if (callback)
-            callback(cursor);
-         
          stack += cursor.isType(leftTokenType);
          stack -= cursor.isType(rightTokenType);
          
@@ -325,8 +321,7 @@ private:
    }
    
    bool doBwdToMatchingToken(RToken::TokenType leftTokenType,
-                             RToken::TokenType rightTokenType,
-                             boost::function<void(const TokenCursor&)> callback = NULL)
+                             RToken::TokenType rightTokenType)
    {
       if (!isType(rightTokenType))
          return false;
@@ -336,9 +331,6 @@ private:
       
       while (cursor.moveToPreviousToken())
       {
-         if (callback)
-            callback(cursor);
-         
          stack += cursor.isType(rightTokenType) ? 1 : 0;
          stack -= cursor.isType(leftTokenType) ? 1 : 0;
          
@@ -385,14 +377,14 @@ private:
    }
 
 public:
-  bool fwdToMatchingToken(boost::function<void(const TokenCursor&)> callback)
+  bool fwdToMatchingToken()
   {
-     return doFwdToMatchingToken(type(), complements()[type()], callback);
+     return doFwdToMatchingToken(type(), complements()[type()]);
   }
 
-  bool bwdToMatchingToken(boost::function<void(const TokenCursor&)> callback)
+  bool bwdToMatchingToken()
   {
-     return doBwdToMatchingToken(type(), complements()[type()], callback);
+     return doBwdToMatchingToken(type(), complements()[type()]);
   }
 
 public:
@@ -418,14 +410,10 @@ public:
             isValidAsIdentifier(nextSignificantToken());
   }
   
-  bool moveToEndOfStatement(bool inParens,
-                            boost::function<void(const TokenCursor&)> callback = NULL)
+  bool moveToEndOfStatement(bool inParens)
   {
      while (true)
      {
-        if (callback)
-           callback(*this);
-        
         // When we're in a parenthetical statement, newlines are no
         // longer significant. This means that, for example,
         //
@@ -446,7 +434,7 @@ public:
            if (!moveToNextSignificantToken())
               return false;
            
-           if (!fwdToMatchingToken(callback))
+           if (!fwdToMatchingToken())
               return false;
            
            if (!inParens && nextToken().contentContains(L'\n'))
