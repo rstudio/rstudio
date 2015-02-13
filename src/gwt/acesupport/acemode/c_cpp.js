@@ -66,7 +66,7 @@ var Mode = function(suppressHighlighting, session) {
    // R-related tokenization
    this.$r_outdent = {};
    oop.implement(this.$r_outdent, RMatchingBraceOutdent);
-   this.r_codeModel = new RCodeModel(session, this.$tokenizer, /^r-/, /^\s*\/\*{3,}\s*[Rr]\s*$/);
+   this.r_codeModel = new RCodeModel(session, this.$tokenizer, /^r-/, /^\s*\/\*{3,}\s*([Rr])\s*$/);
 
    // C/C++ related tokenization
    this.codeModel = new CppCodeModel(session, this.$tokenizer);
