@@ -112,15 +112,15 @@
   z-index: -1;
   background-color: #0E3640;
 }
-.ace_marker-layer .ace_find_line {
-  position: absolute;
-  z-index: -1;
-  background-color: #1D424B;
-}
 .ace_marker-layer .ace_active_debug_line {
   position: absolute;
   z-index: -1;
   background-color: #7F8437;
+}
+.ace_marker-layer .ace_find_line {
+  position: absolute;
+  z-index: -1;
+  background-color: #1D424B;
 }
 .ace_console_error {
   background-color: #1D424B;

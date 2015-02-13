@@ -18,7 +18,9 @@
 #include <deque>
 
 #include <core/FilePath.hpp>
+#include <core/DateTime.hpp>
 #include <core/PerformanceTimer.hpp>
+#include <core/FileSerializer.hpp>
 #include <core/libclang/LibClang.hpp>
 #include <core/system/ProcessArgs.hpp>
 #include <session/IncrementalFileChangeHandler.hpp>
@@ -42,15 +44,22 @@ namespace {
 // flag indicating whether we are initialized
 bool s_initialized = false;
 
+struct CppDefinitions
+{
+   std::string file;
+   std::time_t fileLastWrite;
+   std::deque<CppDefinition> definitions;
+};
+
 // store definitions by file
-typedef std::map<std::string,std::deque<CppDefinition> > DefinitionsByFile;
+typedef std::map<std::string,CppDefinitions> DefinitionsByFile;
 DefinitionsByFile s_definitionsByFile;
 
 // visitor used to populate deque
 bool insertDefinition(const CppDefinition& definition,
-                      std::deque<CppDefinition>* pDefinitions)
+                      CppDefinitions* pDefinitions)
 {
-   pDefinitions->push_back(definition);
+   pDefinitions->definitions.push_back(definition);
    return true;
 }
 
@@ -149,8 +158,26 @@ CXChildVisitResult cursorVisitor(CXCursor cxCursor,
 
 void fileChangeHandler(const core::system::FileChangeEvent& event)
 {
-   // always remove existing definitions
+   // alias the filename
    std::string file = event.fileInfo().absolutePath();
+
+   // special case: we write all definitions to disk at shutdown, when
+   // we come back up all of the files will come back in as "add" events,
+   // for this case we need to ignore the add if we already have a fresh
+   // enough index of the file
+   if (event.type() == core::system::FileChangeEvent::FileAdded)
+   {
+      // if we have a definition
+      DefinitionsByFile::const_iterator it = s_definitionsByFile.find(file);
+      if (it != s_definitionsByFile.end())
+      {
+         // if the definition is fresh enough then bail
+         if (it->second.fileLastWrite >= event.fileInfo().lastWriteTime())
+            return;
+      }
+   }
+
+   // always remove existing definitions
    s_definitionsByFile.erase(file);
 
    // if this is an add or an update then re-index
@@ -183,8 +210,11 @@ void fileChangeHandler(const core::system::FileChangeEvent& event)
                                CXTranslationUnit_Incomplete);
 
 
-         // create deque of definitions and wire visitor to it
-         s_definitionsByFile[file] = std::deque<CppDefinition>();
+         // create definitions and wire visitor to it
+         CppDefinitions definitions;
+         definitions.file = file;
+         definitions.fileLastWrite = event.fileInfo().lastWriteTime();
+         s_definitionsByFile[file] = definitions;
          DefinitionVisitor visitor =
             boost::bind(insertDefinition, _1, &s_definitionsByFile[file]);
 
@@ -313,7 +343,7 @@ FileLocation findDefinitionLocation(const FileLocation& location)
       BOOST_FOREACH(const DefinitionsByFile::value_type& defs,
                     s_definitionsByFile)
       {
-         BOOST_FOREACH(const CppDefinition& def, defs.second)
+         BOOST_FOREACH(const CppDefinition& def, defs.second.definitions)
          {
             if (def.USR == USR)
                return def.location;
@@ -360,6 +390,163 @@ bool insertMatching(const std::string& term,
    return true;
 }
 
+
+json::Object cppDefinitionToJson(const CppDefinition& definition)
+{
+   using namespace safe_convert;
+   json::Object definitionJson;
+   definitionJson["usr"] = definition.USR;
+   definitionJson["kind"] = numberTo<int>(definition.kind, 0);
+   definitionJson["parent_name"] = definition.parentName;
+   definitionJson["name"] = definition.name;
+   definitionJson["file"] = definition.location.filePath.absolutePath();
+   definitionJson["line"] = numberTo<int>(definition.location.line, 1);
+   definitionJson["column"] = numberTo<int>(definition.location.column, 1);
+   return definitionJson;
+}
+
+CppDefinition cppDefinitionFromJson(const json::Object& object)
+{
+   // read json
+   int kind;
+   int line, column;
+   std::string file;
+   CppDefinition definition;
+   Error error = json::readObject(object,
+                                  "usr", &definition.USR,
+                                  "kind", &kind,
+                                  "parent_name", &definition.parentName,
+                                  "name", &definition.name,
+                                  "file", &file,
+                                  "line", &line,
+                                  "column", &column);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return CppDefinition();
+   }
+
+   // required data transforms
+   using namespace safe_convert;
+   definition.kind = static_cast<CppDefinitionKind>(kind);
+   definition.location.filePath = FilePath(file);
+   definition.location.line = numberTo<unsigned>(line, 1);
+   definition.location.column = numberTo<unsigned>(column, 1);
+
+   // return definition
+   return definition;
+}
+
+FilePath definitionIndexFilePath()
+{
+   return module_context::scopedScratchPath().childPath("cpp-definition-index");
+}
+
+void loadDefinitionIndex()
+{
+   using namespace safe_convert;
+
+   FilePath indexFilePath = definitionIndexFilePath();
+   if (!indexFilePath.exists())
+      return;
+
+   std::string contents;
+   Error error = readStringFromFile(indexFilePath, &contents);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+
+   json::Value indexValueJson;
+   if (!json::parse(contents, &indexValueJson) ||
+       !json::isType<json::Array>(indexValueJson))
+   {
+      LOG_ERROR_MESSAGE("Error parsing definition index: " + contents);
+      return;
+   }
+
+   json::Array indexJson = indexValueJson.get_array();
+   BOOST_FOREACH(const json::Value& definitionsJson, indexJson)
+   {
+      if (!json::isType<json::Object>(definitionsJson))
+      {
+         LOG_ERROR_MESSAGE("Unexpected non-object type in definition index");
+         continue;
+      }
+
+      json::Array defsArrayJson;
+      double fileLastWrite;
+      CppDefinitions definitions;
+      Error error = json::readObject(definitionsJson.get_obj(),
+                                     "file", &definitions.file,
+                                     "file_last_write", &fileLastWrite,
+                                     "definitions", &defsArrayJson);
+      if (error)
+      {
+         LOG_ERROR(error);
+         continue;
+      }
+      definitions.fileLastWrite = numberTo<std::time_t>(fileLastWrite, 0);
+
+      // if the file doesn't exist then bail
+      if (!FilePath::exists(definitions.file))
+         continue;
+
+      BOOST_FOREACH(const json::Value& defJson, defsArrayJson)
+      {
+         if (!json::isType<json::Object>(defJson))
+         {
+            LOG_ERROR_MESSAGE("Unexpected non-object type in definition index");
+            continue;
+         }
+
+         CppDefinition definition = cppDefinitionFromJson(defJson.get_obj());
+         if (!definition.empty())
+            definitions.definitions.push_back(definition);
+      }
+
+      s_definitionsByFile[definitions.file] = definitions;
+   }
+}
+
+
+void saveDefinitionIndex()
+{
+   using namespace safe_convert;
+
+   json::Array indexJson;
+   BOOST_FOREACH(const DefinitionsByFile::value_type& defs, s_definitionsByFile)
+   {
+      const CppDefinitions& definitions = defs.second;
+      json::Object definitionsJson;
+      definitionsJson["file"] = definitions.file;
+      definitionsJson["file_last_write"] = numberTo<double>(
+                                               definitions.fileLastWrite, 0);
+      json::Array defsArrayJson;
+      std::transform(definitions.definitions.begin(),
+                     definitions.definitions.end(),
+                     std::back_inserter(defsArrayJson),
+                     cppDefinitionToJson);
+      definitionsJson["definitions"] = defsArrayJson;
+
+      indexJson.push_back(definitionsJson);
+   }
+
+   std::ostringstream ostr;
+   json::writeFormatted(indexJson, ostr);
+   Error error = writeStringToFile(definitionIndexFilePath(), ostr.str());
+   if (error)
+      LOG_ERROR(error);
+}
+
+void onShutdown(bool terminatedNormally)
+{
+   if (terminatedNormally)
+      saveDefinitionIndex();
+}
+
+
 } // anonymous namespace
 
 void searchDefinitions(const std::string& term,
@@ -399,7 +586,7 @@ void searchDefinitions(const std::string& term,
       if (units.find(defs.first) != units.end())
          continue;
 
-      BOOST_FOREACH(const CppDefinition& def, defs.second)
+      BOOST_FOREACH(const CppDefinition& def, defs.second.definitions)
       {
          if (matches(term, pattern, def))
             pDefinitions->push_back(def);
@@ -412,6 +599,9 @@ Error initializeDefinitionIndex()
    using namespace projects;
    if (projectContext().config().buildType == r_util::kBuildTypePackage)
    {
+      // read in any index saved on disk
+      loadDefinitionIndex();
+
       // check for src and inst/include dirs
       FilePath pkgPath = projects::projectContext().buildTargetPath();
       FilePath srcPath = pkgPath.childPath("src");
@@ -432,6 +622,9 @@ Error initializeDefinitionIndex()
 
       // set initialized flag
       s_initialized = true;
+
+      // setup handler to save index at shutdown
+      module_context::events().onShutdown.connect(onShutdown);
    }
 
    return Success();
