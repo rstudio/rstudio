@@ -179,6 +179,8 @@ context("Linter")
 
       EXPECT_ERRORS("for {i in 1:10}");
       EXPECT_ERRORS("((()})");
+      
+      EXPECT_NO_ERRORS("myvar <- con; readLines(con = stdin())");
 
       EXPECT_NO_LINT("(function(a) a)");
       

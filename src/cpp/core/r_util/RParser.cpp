@@ -804,6 +804,14 @@ ARGUMENT_START:
       if (closesArgumentList(cursor, status))
          goto ARGUMENT_LIST_END;
       
+      // Step over named arguments.
+      if (cursor.isType(RToken::ID) &&
+          cursor.nextSignificantToken().contentEquals(L"="))
+      {
+         MOVE_TO_NEXT_SIGNIFICANT_TOKEN_WARN_IF_NO_WHITESPACE(cursor, status);
+         MOVE_TO_NEXT_SIGNIFICANT_TOKEN_WARN_IF_NO_WHITESPACE(cursor, status);
+      }
+      
       goto START;
       
 ARGUMENT_LIST_END:
