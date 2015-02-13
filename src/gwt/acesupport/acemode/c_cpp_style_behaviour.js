@@ -283,109 +283,58 @@ var CStyleBehaviour = function(codeModel) {
          var selected = session.doc.getTextRange(selection);
          if (selected === "") {
 
-            var row = editor.selection.getCursor().row;
-            var col = editor.selection.getCursor().column;
-            var doc = session.getDocument();
-            var line = this.codeModel.getLineSansComments(doc, row, true);
-            var prevLine = "";
-            if (row > 0) {
-               prevLine = this.codeModel.getLineSansComments(doc, row - 1, true);
-               for (var i = row - 1; i >= 0; i--) {
-                  if (!/^\s*$/.test(prevLine)) break;
-                  prevLine = this.codeModel.getLineSansComments(doc, i, true);
+            // Get a token cursor, and place it at the cursor position.
+            var cursor = this.codeModel.getTokenCursor();
+            console.log(editor.getCursorPosition());
+            cursor.moveToPosition(editor.getCursorPosition());
+            console.log(cursor.currentPosition());
+            console.log(cursor.currentToken());
+
+            do
+            {
+               if (cursor.bwdToMatchingArrow())
+                  continue;
+
+               var value = cursor.currentValue();
+               if (value === "namespace")
+               {
+                  return {
+                     text: "{",
+                     selection: [1, 1]
+                  };
                }
-            }
-            
-            var lineTrimmed = line.substring(0, col);
-            var cursor = editor.getCursorPosition();
 
-            // TODO: getLineSansComments
-            var commentMatch = line.match(/\/\//);
-            if (commentMatch) {
-               line = line.substr(0, commentMatch.index - 1);
-            }
+               if (value === "class" ||
+                   value === "struct" ||
+                   value === "=")
+               {
+                  return {
+                     text: "{};",
+                     selection: [1, 1]
+                  };
+               }
 
-            // if we're inserting a namespace, don't auto-insert closing '}'
-            if (/^\s*namespace/.test(lineTrimmed))
-            {
-               return {
-                  text: '{',
-                  selection: [1, 1]
-               };
-            }
+               if ($fillinDoWhile && value === "do")
+               {
+                  return {
+                     text: "{} while ();",
+                     selection: [1, 1]
+                  };
+               }
 
-            // if we're assigning, e.g. through an initializor list, then
-            // we should include a semi-colon
-            if (line.match(/\=\s*$/) &&
-                line.indexOf(";") === -1) {
-               return {
-                  text: '{};',
-                  selection: [1, 1]
-               };
-            }
-
-            // If we're defining a function, don't include a semi-colon.
-            // We can only use the tokenizer if the open brace was inserted
-            // on a new line (it has not yet been tokenized)
-            if (/\)\s*$/.test(line) ||
-                (/\)\s*$/.test(prevLine) && /^\s*$/.test(line)))
-            {
-               return {
-                  text: '{}',
-                  selection: [1, 1]
-               };
-            }
-
-            // if we're making a block define, don't add a semi-colon
-            if (line.match(/#define\s+\w+/)) {
-               return {
-                  text: '{}',
-                  selection: [1, 1]
-               };
-            }
-
-            // if we're constructing a 'do-while' loop, fill in the pieces
-            if ($fillinDoWhile &&
-                (/^\s*do\s*$/.test(line) ||
-                (/^\s*do\s*$/.test(prevLine) && /^\s*$/.test(line)))) {
-               return {
-                  text: "{} while ();",
-                  selection: [1, 1]
-               };
-            }
-
-            // Short-circuit for some special cases
-            if (/^\s*if\s*$/.test(line) ||
-                /else\s*$/.test(line)) {
-               return {
-                  text: '{}',
-                  selection: [1, 1]
-               };
-            }
-
-            // If class-style indentation can produce an appropriate indentation for
-            // the brace, then insert a closing brace with a semi-colon.
-            var heuristicRow = codeModel.getRowForOpenBraceIndent(
-               session, row, true
-            );
-
-            if (heuristicRow >= 0 && line.indexOf(";") === -1) {
-               return {
-                  text: '{};',
-                  selection: [1, 1]
-               };
-            }
-
-            // if it looks like we're using a initializor eg 'obj {', then
-            // include a closing ;
-            if (/\S+\s*$/.test(line) && line.indexOf(";") === -1) {
-               return {
-                  text: '{};',
-                  selection: [1, 1]
-               };
-            }
-
-            
+               if (value === ";" ||
+                   value === ")" ||
+                   value === "{" ||
+                   value === "if" ||
+                   value === "else" ||
+                   value[0] === '#')
+               {
+                  return {
+                     text: "{}",
+                     selection: [1, 1]
+                  };
+               }
+            } while (cursor.moveToPreviousToken());
          }
 
       }

@@ -58,7 +58,11 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
 (function() {
 
    this.getTokenCursor = function() {
-      return new CppTokenCursor(this.$tokens);
+      return new CppTokenCursor(this.$tokens, 0, 0, this);
+   };
+
+   this.$tokenizeUpToRow = function(row) {
+      this.$tokenUtils.$tokenizeUpToRow(row);
    };
 
    var $walkBackForScope = function(cursor, that) {
@@ -1248,12 +1252,8 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
                   } 
                }
 
-               var tokenCursor = new CppTokenCursor(
-                  this.$tokens,
-                  row,
-                  this.$tokens[row].length - 1
-               );
-
+               var tokenCursor = this.getTokenCursor();
+               
                // If 'dontSubset' is false, then we want to plonk the token cursor
                // on the first token before the cursor.
                if (!dontSubset)
