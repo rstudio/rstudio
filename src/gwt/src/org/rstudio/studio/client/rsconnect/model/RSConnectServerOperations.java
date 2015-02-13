@@ -36,7 +36,7 @@ public interface RSConnectServerOperations
    void getRSConnectDeployments(String dir, 
                ServerRequestCallback<JsArray<RSConnectDeploymentRecord>> requestCallback); 
    
-   void getDeploymentFiles (String dir, 
+   void getDeploymentFiles (String target, 
                ServerRequestCallback<RSConnectDeploymentFiles> requestCallback);
    
    void deployShinyApp(String dir, String file, String account, String server, String appName, 

@@ -60,7 +60,8 @@ public class RSConnectDeployDialog
                                 boolean isSatellite)
                                 
    {
-      super(server, display, new RSConnectDeploy(server, connector, display, session));
+      super(server, display, new RSConnectDeploy(server, connector, display, session,
+            StringUtil.getExtension(sourceFile).toLowerCase().equals("rmd")));
       setText("Publish to Server");
       setWidth("350px");
       deployButton_ = new ThemedButton("Publish");
@@ -96,7 +97,10 @@ public class RSConnectDeployDialog
       indicator_ = addProgressIndicator(false);
 
       // Get the files to be deployed
-      server_.getDeploymentFiles(sourceDir,
+      server_.getDeploymentFiles(
+            StringUtil.getExtension(sourceFile).toLowerCase() == "rmd" ?
+                  sourceDir + "/" + sourceFile : 
+                  sourceDir,
             new ServerRequestCallback<RSConnectDeploymentFiles>()
             {
                @Override 

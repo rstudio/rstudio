@@ -115,8 +115,8 @@
       <g:FlowPanel>
         <g:InlineLabel styleName="{style.deployLabel}" ui:field="deployLabel_"></g:InlineLabel>
         <g:ScrollPanel styleName="{style.fileList}">
-          <g:FlowPanel ui:field="fileListPanel_">
-          </g:FlowPanel>
+          <g:VerticalPanel ui:field="fileListPanel_">
+          </g:VerticalPanel>
         </g:ScrollPanel>
       </g:FlowPanel>
      </g:customCell>

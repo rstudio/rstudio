@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.rsconnect.ui;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.rstudio.core.client.StringUtil;
@@ -43,13 +44,14 @@ import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.Anchor;
+import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.InlineLabel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.TextBox;
+import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 public class RSConnectDeploy extends Composite
@@ -78,8 +80,10 @@ public class RSConnectDeploy extends Composite
    public RSConnectDeploy(final RSConnectServerOperations server, 
                           final RSAccountConnector connector,    
                           final GlobalDisplay display,
-                          final Session session)
+                          final Session session, 
+                          boolean forDocument)
    {
+      forDocument_ = forDocument;
       accountList = new RSConnectAccountList(server, display, false);
       initWidget(uiBinder.createAndBindUi(this));
 
@@ -170,10 +174,24 @@ public class RSConnectDeploy extends Composite
    
    public void setFileList(JsArrayString files)
    {
+      if (forDocument_)
+      {
+         fileChecks_ = new ArrayList<CheckBox>();
+      }
+      
       for (int i = 0; i < files.length(); i++)
       {
-         Label fileLabel = new Label(files.get(i));
-         fileListPanel_.add(fileLabel);
+         if (forDocument_)
+         {
+            CheckBox fileCheck = new CheckBox(files.get(i));
+            fileCheck.setValue(true);
+            fileListPanel_.add(fileCheck);
+            fileChecks_.add(fileCheck);
+         }
+         else
+         {
+            fileListPanel_.add(new Label(files.get(i)));
+         }
       }
    }
    
@@ -260,9 +278,12 @@ public class RSConnectDeploy extends Composite
    @UiField HTMLPanel appInfoPanel;
    @UiField HTMLPanel nameValidatePanel;
    @UiField DeployStyle style;
-   @UiField FlowPanel fileListPanel_;
+   @UiField VerticalPanel fileListPanel_;
    @UiField InlineLabel deployLabel_;
+   
+   private ArrayList<CheckBox> fileChecks_;
    
    private Command onDeployEnabled_;
    private Command onDeployDisabled_;
+   private final boolean forDocument_;
 }

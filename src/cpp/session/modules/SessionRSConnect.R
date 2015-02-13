@@ -172,10 +172,26 @@
                       subdir_contents))
 })
 
-.rs.addFunction("rsconnectDeployList", function(dir) {
+.rs.addFunction("rmdDeployList", function(target) {
+  deploy_frame <- rmarkdown::find_external_resources(target) 
+  file_list <- c(deploy_frame$path, basename(target))
+  list (
+    contents = paste("./", file_list),
+    cur_size = sum(
+       file.info(file.path(dirname(target), file_list))$size))
+})
+
+.rs.addFunction("makeDeploymentList", function(target, max_size) {
+   if (identical(tolower(tools::file_ext(target)), "rmd")) 
+     .rs.rmdDeployList(target)
+   else
+     .rs.maxDirectoryList(dir, ".", 0, max_size, 
+                          c("rsconnect", "packrat"), "Rproj")
+})
+
+.rs.addFunction("rsconnectDeployList", function(target) {
   max_size <- 104857600   # 100MB
-  dirlist <- .rs.maxDirectoryList(dir, ".", 0, max_size, 
-                                  c("rsconnect", "packrat"), "Rproj")
+  dirlist <- .rs.makeDeploymentList(target, max_size)
   list (
     # if the directory is too large, no need to bother sending a potentially
     # large blob of data to the client
@@ -193,8 +209,8 @@
   invisible(enable)
 })
 
-.rs.addJsonRpcHandler("get_deployment_files", function(dir) {
-   .rs.rsconnectDeployList(dir)
+.rs.addJsonRpcHandler("get_deployment_files", function(target) {
+  .rs.rsconnectDeployList(target)
 })
 
 # The parameter to this function is a string containing the R command from
