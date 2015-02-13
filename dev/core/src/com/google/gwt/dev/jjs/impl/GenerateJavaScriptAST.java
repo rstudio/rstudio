@@ -1854,7 +1854,7 @@ public class GenerateJavaScriptAST {
 
       Set<JDeclaredType> preambleTypes = generatePreamble(x, globalStmts);
 
-      if (compilePerFile) {
+      if (incremental) {
         // Record the names of preamble types so that it's possible to invalidate caches when the
         // preamble types are known to have become stale.
         if (!minimalRebuildCache.hasPreambleTypeNames()) {
@@ -1932,7 +1932,7 @@ public class GenerateJavaScriptAST {
       SortedSet<JDeclaredType> reachableClasses =
           computeReachableTypes(METHODS_PROVIDED_BY_PREAMBLE);
 
-      assert !compilePerFile || checkCoreModulePreambleComplete(program,
+      assert !incremental || checkCoreModulePreambleComplete(program,
           program.getTypeClassLiteralHolder().getClinitMethod());
 
       Set<JDeclaredType> orderedPreambleClasses = Sets.newLinkedHashSet();
@@ -2220,7 +2220,7 @@ public class GenerateJavaScriptAST {
     private JsExpression buildJsCastMapLiteral(
         List<JsExpression> runtimeTypeIdLiterals,
         SourceInfo sourceInfo) {
-      if (JjsUtils.closureStyleLiteralsNeeded(compilePerFile, jsInteropMode,
+      if (JjsUtils.closureStyleLiteralsNeeded(incremental, jsInteropMode,
           jsExportClosureStyle)) {
         return buildCastMapFromArrayLiteral(runtimeTypeIdLiterals, sourceInfo);
       } else {
@@ -2946,10 +2946,12 @@ public class GenerateJavaScriptAST {
       clinitFunc.setImpliedExecute(superClinit);
       List<JsStatement> statements = clinitFunc.getBody().getStatements();
       SourceInfo sourceInfo = clinitFunc.getSourceInfo();
-      // self-assign to the global noop method immediately (to prevent reentrancy)
+      // Self-assign to the global noop method immediately (to prevent reentrancy). In incremental
+      // mode the more costly Object constructor function is used as the noop method since doing so
+      // provides a better debug experience that does not step into already used clinits.
 
-      JsFunction emptyFunctionFn =
-          indexedFunctions.get("JavaClassHierarchySetupUtil.emptyMethod");
+      JsFunction emptyFunctionFn = incremental ? getObjectConstructorFunction()
+          : indexedFunctions.get("JavaClassHierarchySetupUtil.emptyMethod");
       JsExpression asg = createAssignment(clinitFunc.getName().makeRef(sourceInfo),
           emptyFunctionFn.getName().makeRef(sourceInfo));
       statements.add(0, asg.makeStmt());
@@ -3364,7 +3366,7 @@ public class GenerateJavaScriptAST {
 
   private final TreeLogger logger;
 
-  private final boolean compilePerFile;
+  private final boolean incremental;
 
   /**
    * All of the fields in String and Array need special handling for interop.
@@ -3406,6 +3408,8 @@ public class GenerateJavaScriptAST {
 
   private OptionMethodNameDisplayMode.Mode methodNameMappingMode;
 
+  private JsFunction objectConstructorFunction;
+
   private GenerateJavaScriptAST(TreeLogger logger, JProgram program, JsProgram jsProgram,
       CompilerContext compilerContext, TypeMapper<?> typeMapper,
       Map<StandardSymbolData, JsName> symbolTable, PermProps props) {
@@ -3423,7 +3427,7 @@ public class GenerateJavaScriptAST {
     this.methodNameMappingMode = compilerContext.getOptions().getMethodNameDisplayMode();
     assert methodNameMappingMode != null;
     this.hasWholeWorldKnowledge = !compilerContext.getOptions().isIncrementalCompileEnabled();
-    this.compilePerFile = compilerContext.getOptions().isIncrementalCompileEnabled();
+    this.incremental = compilerContext.getOptions().isIncrementalCompileEnabled();
     this.symbolTable = symbolTable;
     this.typeMapper = typeMapper;
     this.props = props;
@@ -3661,5 +3665,13 @@ public class GenerateJavaScriptAST {
 
   private JsFunction getJsFunctionFor(JMethod jMethod) {
     return methodBodyMap.get(jMethod.getBody());
+  }
+
+  private JsFunction getObjectConstructorFunction() {
+    if (objectConstructorFunction == null) {
+      objectConstructorFunction =
+          new JsFunction(SourceOrigin.UNKNOWN, topScope, topScope.findExistingName("Object"));
+    }
+    return objectConstructorFunction;
   }
 }
