@@ -32,7 +32,10 @@ import com.google.gwt.thirdparty.guava.common.io.Files;
 import junit.framework.TestCase;
 
 import java.io.File;
+import java.io.FilenameFilter;
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -41,6 +44,23 @@ import java.util.Map;
  * Tests for {@link Recompiler}
  */
 public class RecompilerTest extends TestCase {
+
+  private static File findCompiledJsFile(Result result) {
+    File outputDir = new File(result.outputDir.getWarDir(), result.outputModuleName);
+    File[] files = outputDir.listFiles(new FilenameFilter() {
+      @Override
+      public boolean accept(File dir, String name) {
+        return name.endsWith(".js") && !name.endsWith("nocache.js");
+      }
+    });
+    Arrays.sort(files, new Comparator<File>() {
+      @Override
+      public int compare(File thisFile, File thatFile) {
+        return -Long.compare(thisFile.length(), thatFile.length());
+      }
+    });
+    return files[0];
+  }
 
   private static void writeResourcesTo(List<MockResource> resources, File dir) throws IOException {
     for (MockResource applicationResource : resources) {
@@ -98,6 +118,44 @@ public class RecompilerTest extends TestCase {
           "<entry-point class='com.foo.TestEntryPoint'/>",
           "</module>");
 
+  private MockResource propertyIsFooModuleResource =
+      JavaResourceBase.createMockResource("com/foo/PropertyModule.gwt.xml",
+          "<module>",
+          "<source path=''/>",
+          "<entry-point class='com.foo.PropertyEntryPoint'/>",
+          "<define-property name=\"target\" values=\"foo,bar\" />",
+          "<set-property name=\"target\" value=\"foo\" />",
+          "<replace-with class=\"com.foo.Foo\">",
+          "  <when-type-is class=\"com.foo.Bar\"/>",
+          "  <when-property-is name=\"target\" value=\"foo\"/>",
+          "</replace-with>",
+          "</module>");
+
+  private MockResource propertyIsBarModuleResource =
+      JavaResourceBase.createMockResource("com/foo/PropertyModule.gwt.xml",
+          "<module>",
+          "<source path=''/>",
+          "<entry-point class='com.foo.PropertyEntryPoint'/>",
+          "<define-property name=\"target\" values=\"foo,bar\" />",
+          "<set-property name=\"target\" value=\"bar\" />",
+          "<replace-with class=\"com.foo.Foo\">",
+          "  <when-type-is class=\"com.foo.Bar\"/>",
+          "  <when-property-is name=\"target\" value=\"foo\"/>",
+          "</replace-with>",
+          "</module>");
+
+  private MockJavaResource performsRebindEntryPointResource =
+      JavaResourceBase.createMockJavaResource("com.foo.PropertyEntryPoint",
+          "package com.foo;",
+          "import com.google.gwt.core.client.EntryPoint;",
+          "import com.google.gwt.core.client.GWT;",
+          "public class PropertyEntryPoint implements EntryPoint {",
+          "  @Override",
+          "  public void onModuleLoad() {",
+          "    GWT.create(Bar.class);",
+          "  }",
+          "}");
+
   public void testIncrementalRecompile_compileErrorDoesntCorruptMinimalRebuildCache()
       throws UnableToCompleteException, IOException, InterruptedException {
     PrintWriterTreeLogger logger = new PrintWriterTreeLogger();
@@ -142,6 +200,53 @@ public class RecompilerTest extends TestCase {
     result = compileWithChanges(logger, runner, outbox, sourcePath,
         Lists.<MockResource> newArrayList(referencesBarEntryPointResource));
     assertFalse(result.isOk());
+  }
+
+  public void testIncrementalRecompile_modulePropertyEditsWork() throws UnableToCompleteException,
+      IOException, InterruptedException {
+    PrintWriterTreeLogger logger = new PrintWriterTreeLogger();
+    logger.setMaxDetail(TreeLogger.ERROR);
+
+    File sourcePath = Files.createTempDir();
+    // Setup options to perform a per-file compile and compile the given module.
+    Options options = new Options();
+    options.parseArgs(new String[] {
+        "-incremental", "-src", sourcePath.getAbsolutePath(), "com.foo.PropertyModule"});
+
+    // Prepare the basic resources in the test application.
+    List<MockResource> originalResources = Lists.newArrayList(propertyIsFooModuleResource,
+        performsRebindEntryPointResource, barReferencesBazResource, bazReferencesFooResource,
+        fooResource);
+    writeResourcesTo(originalResources, sourcePath);
+
+    File baseCacheDir = Files.createTempDir();
+    UnitCache unitCache = UnitCacheSingleton.get(logger, null, baseCacheDir);
+    MinimalRebuildCacheManager minimalRebuildCacheManager =
+        new MinimalRebuildCacheManager(logger, baseCacheDir);
+    Recompiler recompiler = new Recompiler(OutboxDir.create(Files.createTempDir(), logger), null,
+        "com.foo.PropertyModule", options, unitCache, minimalRebuildCacheManager);
+    Outbox outbox = new Outbox("Transactional Cache", recompiler, options, logger);
+    OutboxTable outboxes = new OutboxTable();
+    outboxes.addOutbox(outbox);
+    JobRunner runner = new JobRunner(new JobEventTable(), minimalRebuildCacheManager);
+
+    // Perform a first compile with configuration to rebind Bar to Foo.
+    Result result =
+        compileWithChanges(logger, runner, outbox, sourcePath, Lists.<MockResource> newArrayList());
+    assertTrue(result.isOk());
+    File compiledJsFile1 = findCompiledJsFile(result);
+
+    // Perform a second compile with a changed property value that will result in NOT rebinding Bar
+    // to Foo.
+    result = compileWithChanges(logger, runner, outbox, sourcePath,
+        Lists.<MockResource> newArrayList(propertyIsBarModuleResource));
+    assertTrue(result.isOk());
+    File compiledJsFile2 = findCompiledJsFile(result);
+
+    // The compiled Js files are different files on disk and their contents are not the same as
+    // evidenced by their names being different (the names are a hash of content).
+    assertFalse(compiledJsFile1.equals(compiledJsFile2));
+    assertFalse(compiledJsFile1.getName().equals(compiledJsFile2.getName()));
   }
 
   @Override

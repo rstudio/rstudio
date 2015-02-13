@@ -33,6 +33,8 @@ import com.google.gwt.dev.cfg.ConfigProps;
 import com.google.gwt.dev.cfg.ConfigurationProperty;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.cfg.ModuleDefLoader;
+import com.google.gwt.dev.cfg.PropertyPermutations;
+import com.google.gwt.dev.cfg.PropertyPermutations.PermutationDescription;
 import com.google.gwt.dev.cfg.ResourceLoader;
 import com.google.gwt.dev.cfg.ResourceLoaders;
 import com.google.gwt.dev.codeserver.Job.Result;
@@ -52,6 +54,7 @@ import com.google.gwt.thirdparty.guava.common.io.Resources;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -73,7 +76,7 @@ public class Recompiler {
 
   private final AtomicReference<CompileDir> lastBuild = new AtomicReference<CompileDir>();
 
-  private InputSummary lastBuildInput;
+  private InputSummary previousInputSummary;
 
   private CompileDir publishedCompileDir;
   private final AtomicReference<ResourceLoader> resourceLoader =
@@ -305,25 +308,41 @@ public class Recompiler {
     // We need to generate the stub before restricting permutations
     String recompileJs = generateModuleRecompileJs(module, compileLogger);
 
-    Map<String, String> bindingProperties = restrictPermutations(compileLogger, module,
-        job.getBindingProperties());
+    Map<String, String> bindingProperties =
+        restrictPermutations(compileLogger, module, job.getBindingProperties());
 
     // Propagates module rename.
     String newModuleName = module.getName();
     outputModuleName.set(newModuleName);
 
+    // Check if the module definition + job specific binding property restrictions expanded to more
+    // than permutation.
+    PropertyPermutations propertyPermutations =
+        new PropertyPermutations(module.getProperties(), module.getActiveLinkerNames());
+    List<PropertyPermutations> permutationPropertySets = propertyPermutations.collapseProperties();
+    if (options.isIncrementalCompileEnabled() && permutationPropertySets.size() > 1) {
+      compileLogger.log(Type.INFO,
+          "Current binding properties are expanding to more than one permutation "
+          + "but incremental compilation requires that each compile operate on only "
+          + "one permutation.");
+      job.setCompileStrategy(CompileStrategy.SKIPPED);
+      return true;
+    }
+    PropertyPermutations permutationPropertySet = permutationPropertySets.get(0);
+    PermutationDescription permutationDescription =
+        permutationPropertySet.getPermutationDescription(0);
+
     // Check if we can skip the compile altogether.
-    InputSummary input = new InputSummary(bindingProperties, module);
-    if (input.equals(lastBuildInput)) {
+    InputSummary inputSummary = new InputSummary(bindingProperties, module);
+    if (inputSummary.equals(previousInputSummary)) {
       compileLogger.log(Type.INFO, "skipped compile because no input files have changed");
       job.setCompileStrategy(CompileStrategy.SKIPPED);
       return true;
     }
     // Force a recompile if we don't succeed.
-    lastBuildInput = null;
+    previousInputSummary = null;
 
     job.onProgress("Compiling");
-    // TODO: use speed tracer to get more compiler events?
 
     CompilerOptions runOptions = new CompilerOptionsImpl(compileDir, newModuleName, options);
     compilerContext = compilerContextBuilder.options(runOptions).build();
@@ -331,7 +350,8 @@ public class Recompiler {
     MinimalRebuildCache minimalRebuildCache = new NullRebuildCache();
     if (options.isIncrementalCompileEnabled()) {
       // Returns a copy of the intended cache, which is safe to modify in this compile.
-      minimalRebuildCache = minimalRebuildCacheManager.getCache(inputModuleName, bindingProperties);
+      minimalRebuildCache =
+          minimalRebuildCacheManager.getCache(inputModuleName, permutationDescription);
     }
     job.setCompileStrategy(minimalRebuildCache.isPopulated() ? CompileStrategy.INCREMENTAL
         : CompileStrategy.FULL);
@@ -339,9 +359,9 @@ public class Recompiler {
     boolean success = new Compiler(runOptions, minimalRebuildCache).run(compileLogger, module);
     if (success) {
       publishedCompileDir = compileDir;
-      lastBuildInput = input;
+      previousInputSummary = inputSummary;
       if (options.isIncrementalCompileEnabled()) {
-        minimalRebuildCacheManager.putCache(inputModuleName, bindingProperties,
+        minimalRebuildCacheManager.putCache(inputModuleName, permutationDescription,
             minimalRebuildCache);
       }
       String moduleName = outputModuleName.get();
@@ -505,7 +525,6 @@ public class Recompiler {
   /**
    * Restricts the compiled permutations by applying the given binding properties, if possible.
    * In some cases, a different binding may be chosen instead.
-   * @return a map of the actual properties used.
    */
   private Map<String, String> restrictPermutations(TreeLogger logger, ModuleDef moduleDef,
       Map<String, String> bindingProperties) {

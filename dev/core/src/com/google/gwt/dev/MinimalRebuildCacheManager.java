@@ -14,6 +14,7 @@
 package com.google.gwt.dev;
 
 import com.google.gwt.core.ext.TreeLogger;
+import com.google.gwt.dev.cfg.PropertyPermutations.PermutationDescription;
 import com.google.gwt.dev.util.CompilerVersion;
 import com.google.gwt.thirdparty.guava.common.annotations.VisibleForTesting;
 import com.google.gwt.thirdparty.guava.common.cache.Cache;
@@ -32,7 +33,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -87,15 +87,15 @@ public class MinimalRebuildCacheManager {
    * If it is still not found a new empty cache will be returned.
    */
   public synchronized MinimalRebuildCache getCache(String moduleName,
-      Map<String, String> bindingProperties) {
-    String cacheName = computeMinimalRebuildCacheName(moduleName, bindingProperties);
+      PermutationDescription permutationDescription) {
+    String cacheName = computeMinimalRebuildCacheName(moduleName, permutationDescription);
 
     MinimalRebuildCache minimalRebuildCache = minimalRebuildCachesByName.getIfPresent(cacheName);
 
     // If there's no cache already in memory, try to load a cache from disk.
     if (minimalRebuildCache == null && haveCacheDir()) {
       // Might return null.
-      minimalRebuildCache = syncReadDiskCache(moduleName, bindingProperties);
+      minimalRebuildCache = syncReadDiskCache(moduleName, permutationDescription);
       if (minimalRebuildCache != null) {
         minimalRebuildCachesByName.put(cacheName, minimalRebuildCache);
       }
@@ -119,11 +119,12 @@ public class MinimalRebuildCacheManager {
    * <p>
    * A copy of the cache will be lazily persisted to disk as well.
    */
-  public synchronized void putCache(String moduleName, Map<String, String> bindingProperties,
+  public synchronized void putCache(String moduleName,
+      PermutationDescription permutationDescription,
       MinimalRebuildCache knownGoodMinimalRebuildCache) {
-    syncPutMemoryCache(moduleName, bindingProperties, knownGoodMinimalRebuildCache);
+    syncPutMemoryCache(moduleName, permutationDescription, knownGoodMinimalRebuildCache);
     if (haveCacheDir()) {
-      enqueueAsyncWriteDiskCache(moduleName, bindingProperties, knownGoodMinimalRebuildCache);
+      enqueueAsyncWriteDiskCache(moduleName, permutationDescription, knownGoodMinimalRebuildCache);
     }
   }
 
@@ -151,13 +152,13 @@ public class MinimalRebuildCacheManager {
    */
   @VisibleForTesting
   synchronized Future<MinimalRebuildCache> enqueueAsyncReadDiskCache(final String moduleName,
-      final Map<String, String> bindingProperties) {
+      final PermutationDescription permutationDescription) {
     return executorService.submit(new Callable<MinimalRebuildCache>() {
       @Override
       public MinimalRebuildCache call() {
         // Find the cache file unique to this module, binding properties and working directory.
         File minimalRebuildCacheFile =
-            computeMinimalRebuildCacheFile(moduleName, bindingProperties);
+            computeMinimalRebuildCacheFile(moduleName, permutationDescription);
 
         // If the file exists.
         if (minimalRebuildCacheFile.exists()) {
@@ -200,12 +201,13 @@ public class MinimalRebuildCacheManager {
    */
   @VisibleForTesting
   synchronized Future<Void> enqueueAsyncWriteDiskCache(final String moduleName,
-      final Map<String, String> bindingProperties, final MinimalRebuildCache minimalRebuildCache) {
+      final PermutationDescription permutationDescription,
+      final MinimalRebuildCache minimalRebuildCache) {
     return executorService.submit(new Callable<Void>() {
       @Override
       public Void call() {
         File oldMinimalRebuildCacheFile =
-            computeMinimalRebuildCacheFile(moduleName, bindingProperties);
+            computeMinimalRebuildCacheFile(moduleName, permutationDescription);
         File newMinimalRebuildCacheFile =
             new File(oldMinimalRebuildCacheFile.getAbsoluteFile() + ".new");
 
@@ -252,24 +254,24 @@ public class MinimalRebuildCacheManager {
    */
   @VisibleForTesting
   synchronized MinimalRebuildCache syncReadDiskCache(String moduleName,
-      Map<String, String> bindingProperties) {
-    return Futures.getUnchecked(enqueueAsyncReadDiskCache(moduleName, bindingProperties));
+      PermutationDescription permutationDescription) {
+    return Futures.getUnchecked(enqueueAsyncReadDiskCache(moduleName, permutationDescription));
   }
 
   private File computeMinimalRebuildCacheFile(String moduleName,
-      Map<String, String> bindingProperties) {
+      PermutationDescription permutationDescription) {
     return new File(minimalRebuildCacheDir,
-        computeMinimalRebuildCacheName(moduleName, bindingProperties));
+        computeMinimalRebuildCacheName(moduleName, permutationDescription));
   }
 
   private String computeMinimalRebuildCacheName(String moduleName,
-      Map<String, String> bindingProperties) {
+      PermutationDescription permutationDescription) {
     String currentWorkingDirectory = System.getProperty("user.dir");
     String compilerVersionHash = CompilerVersion.getHash();
-    String bindingPropertiesString = bindingProperties.toString();
+    String permutationDescriptionString = permutationDescription.toString();
 
     String consistentHash = StringUtils.toHexString(Md5Utils.getMd5Digest((
-        compilerVersionHash + moduleName + currentWorkingDirectory + bindingPropertiesString)
+        compilerVersionHash + moduleName + currentWorkingDirectory + permutationDescriptionString)
         .getBytes()));
     return REBUILD_CACHE_PREFIX + "-" + consistentHash;
   }
@@ -282,9 +284,9 @@ public class MinimalRebuildCacheManager {
     minimalRebuildCachesByName.invalidateAll();
   }
 
-  private void syncPutMemoryCache(String moduleName, Map<String, String> bindingProperties,
+  private void syncPutMemoryCache(String moduleName, PermutationDescription permutationDescription,
       MinimalRebuildCache knownGoodMinimalRebuildCache) {
-    String cacheName = computeMinimalRebuildCacheName(moduleName, bindingProperties);
+    String cacheName = computeMinimalRebuildCacheName(moduleName, permutationDescription);
     minimalRebuildCachesByName.put(cacheName, knownGoodMinimalRebuildCache);
   }
 }

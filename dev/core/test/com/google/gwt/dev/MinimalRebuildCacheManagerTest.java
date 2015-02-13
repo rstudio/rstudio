@@ -14,9 +14,9 @@
 package com.google.gwt.dev;
 
 import com.google.gwt.core.ext.TreeLogger;
+import com.google.gwt.dev.cfg.PropertyPermutations.PermutationDescription;
 import com.google.gwt.dev.jjs.ast.JTypeOracle;
 import com.google.gwt.thirdparty.guava.common.collect.ImmutableMap;
-import com.google.gwt.thirdparty.guava.common.collect.Maps;
 import com.google.gwt.thirdparty.guava.common.collect.Sets;
 import com.google.gwt.thirdparty.guava.common.io.Files;
 
@@ -40,7 +40,7 @@ public class MinimalRebuildCacheManagerTest extends TestCase {
     // Construct and empty cache and also ask the manager to get a cache which does not exist.
     MinimalRebuildCache emptyCache = new MinimalRebuildCache();
     MinimalRebuildCache noSuchCache = minimalRebuildCacheManager.getCache("com.google.FooModule",
-        Maps.<String, String> newHashMap());
+        new PermutationDescription());
 
     // Show that the manager created a new empty cache for the request of a cache that does not
     // exist.
@@ -54,13 +54,13 @@ public class MinimalRebuildCacheManagerTest extends TestCase {
     String moduleName = "com.google.FooModule";
     MinimalRebuildCacheManager minimalRebuildCacheManager =
         new MinimalRebuildCacheManager(TreeLogger.NULL, cacheDir);
-    Map<String, String> bindingProperites = Maps.<String, String> newHashMap();
+    PermutationDescription permutationDescription = new PermutationDescription();
 
     // Make sure we start with a blank slate.
     minimalRebuildCacheManager.deleteCaches();
 
     MinimalRebuildCache startingCache =
-        minimalRebuildCacheManager.getCache(moduleName, bindingProperites);
+        minimalRebuildCacheManager.getCache(moduleName, permutationDescription);
 
     // Record and compute a bunch of random data.
     Map<String, Long> currentModifiedBySourcePath = new ImmutableMap.Builder<String, Long>().put(
@@ -88,7 +88,7 @@ public class MinimalRebuildCacheManagerTest extends TestCase {
         new JTypeOracle(null, startingCache, true));
 
     // Save and reload the cache.
-    minimalRebuildCacheManager.putCache(moduleName, bindingProperites, startingCache);
+    minimalRebuildCacheManager.putCache(moduleName, permutationDescription, startingCache);
 
     // Shutdown the cache manager and make sure it was successful.
     assertTrue(minimalRebuildCacheManager.shutdown());
@@ -99,7 +99,7 @@ public class MinimalRebuildCacheManagerTest extends TestCase {
 
     // Reread the previously saved cache.
     MinimalRebuildCache reloadedCache =
-        reloadedMinimalRebuildCacheManager.syncReadDiskCache(moduleName, bindingProperites);
+        reloadedMinimalRebuildCacheManager.syncReadDiskCache(moduleName, permutationDescription);
 
     // Show that the reread cache is a different instance.
     assertFalse(startingCache == reloadedCache);

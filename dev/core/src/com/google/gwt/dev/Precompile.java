@@ -204,8 +204,8 @@ public class Precompile {
 
   static AbstractCompiler getCompiler(ModuleDef module) {
     ConfigurationProperty compilerClassProp =
-        module.getProperties().createConfiguration("x.compiler.class", false);
-    String compilerClassName = compilerClassProp.getValue();
+        module.getProperties().findConfigProp("x.compiler.class");
+    String compilerClassName = compilerClassProp != null ? compilerClassProp.getValue() : null;
     if (compilerClassName == null || compilerClassName.length() == 0) {
       return new JavaScriptCompiler();
     }
