@@ -285,17 +285,28 @@ var CStyleBehaviour = function(codeModel) {
 
             // Get a token cursor, and place it at the cursor position.
             var cursor = this.codeModel.getTokenCursor();
-            console.log(editor.getCursorPosition());
-            cursor.moveToPosition(editor.getCursorPosition());
-            console.log(cursor.currentPosition());
-            console.log(cursor.currentToken());
+
+            if (!cursor.moveToPosition(editor.getCursorPosition()))
+               return autoPairInsertion("{", text, editor, session);
 
             do
             {
+               // In case we're walking over a template class, e.g. for something like:
+               //
+               //    class Foo : public A<T>, public B<T>
+               //
+               // then we want to move over those matching arrows,
+               // as their contents is non-informative for semi-colon insertion inference.
                if (cursor.bwdToMatchingArrow())
                   continue;
 
                var value = cursor.currentValue();
+               if (!value || !value.length) break;
+
+               // If we encounter a 'namespace' token, just insert a
+               // single opening bracket. This is because we might be
+               // enclosing some other namespaces following (and so the
+               // automatic closing brace may be undesired)
                if (value === "namespace")
                {
                   return {
@@ -304,6 +315,19 @@ var CStyleBehaviour = function(codeModel) {
                   };
                }
 
+               // If we encounter a 'class' or 'struct' token, this implies
+               // we're defining a class -- add a semi-colon.
+               //
+               // We also do this for '=' operators, for C++11-style
+               // braced initialization:
+               //
+               //    int foo = {1, 2, 3};
+               //
+               // TODO: Figure out if we can infer the same for braced initialization with
+               // no equals; e.g.
+               //
+               //    MyClass object{1, 2, 3};
+               //
                if (value === "class" ||
                    value === "struct" ||
                    value === "=")
@@ -314,6 +338,7 @@ var CStyleBehaviour = function(codeModel) {
                   };
                }
 
+               // Fill in the '{} while ()' bits for a do-while loop.
                if ($fillinDoWhile && value === "do")
                {
                   return {
@@ -322,9 +347,15 @@ var CStyleBehaviour = function(codeModel) {
                   };
                }
 
+               // If, while walking backwards, we encounter certain tokens that
+               // tell us we do not want semi-colon insertion, then stop there and return.
                if (value === ";" ||
+                   value === "[" ||
+                   value === "]" ||
+                   value === "(" ||
                    value === ")" ||
                    value === "{" ||
+                   value === "}" ||
                    value === "if" ||
                    value === "else" ||
                    value[0] === '#')
