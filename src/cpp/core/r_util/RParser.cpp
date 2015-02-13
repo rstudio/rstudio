@@ -403,8 +403,9 @@ void checkBinaryOperatorWhitespace(TokenCursor& cursor,
    //
    //    x $ foo
    //
-   // is bad style.
-   if (isExtractionOperator(cursor))
+   // is bad style. Note that ':' is the other 'no-whitespace-preferred'
+   // binary operator.
+   if (isExtractionOperator(cursor) || cursor.contentEquals(L":"))
    {
       if (isWhitespace(cursor.previousToken()) ||
           isWhitespace(cursor.nextToken()))
