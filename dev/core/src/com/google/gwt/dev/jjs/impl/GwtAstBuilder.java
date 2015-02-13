@@ -913,9 +913,8 @@ public class GwtAstBuilder {
          * }
          * </pre>
            */
-          JLocal arrayVar =
-              JProgram.createLocal(info, elementVarName + "$array", collection.getType(), true,
-                  curMethod.body);
+          JLocal arrayVar = JProgram.createLocal(info, elementVarName + "$array",
+              typeMap.get(x.collection.resolvedType), true, curMethod.body);
           JLocal indexVar =
               JProgram.createLocal(info, elementVarName + "$index", JPrimitiveType.INT, false,
                   curMethod.body);
@@ -3597,10 +3596,12 @@ public class GwtAstBuilder {
   static class CudInfo {
     public final CompilationUnitScope scope;
     public final int[] separatorPositions;
+    public final CompilationUnitDeclaration cud;
 
     public CudInfo(CompilationUnitDeclaration cud) {
       separatorPositions = cud.compilationResult().getLineSeparatorPositions();
       scope = cud.scope;
+      this.cud = cud;
     }
   }
 
@@ -3769,25 +3770,13 @@ public class GwtAstBuilder {
   /**
    * Builds all the GWT AST nodes that correspond to one Java source file.
    *
-   * @param cud The compiled form of the Java source from the JDT.
-   * @param sourceMapPath the path that should be included in a sourcemap.
-   * @param jsniMethods Native methods to add to the AST.
-   * @param jsniRefs Map from JSNI references to their JDT definitions.
-   * @param compilerContext the compiler context.
    * @return All the types seen in this source file.
    */
-  public List<JDeclaredType> process(CompilationUnitDeclaration cud, String sourceMapPath,
-      Map<MethodDeclaration, JsniMethod> jsniMethods, Map<String, Binding> jsniRefs,
-      CompilerContext compilerContext) {
+  private List<JDeclaredType> processImpl() {
+    CompilationUnitDeclaration cud = curCud.cud;
     if (cud.types == null) {
       return Collections.emptyList();
     }
-    this.sourceMapPath = sourceMapPath;
-    this.jsniRefs = jsniRefs;
-    this.jsniMethods = jsniMethods;
-    this.compilerContext = compilerContext;
-    newTypes = Lists.newArrayList();
-    curCud = new CudInfo(cud);
 
     for (TypeDeclaration typeDecl : cud.types) {
       createTypes(typeDecl);
@@ -3811,20 +3800,25 @@ public class GwtAstBuilder {
       // Build the code.
       typeDecl.traverse(astVisitor, cud.scope);
     }
+    return newTypes;
+  }
 
-    List<JDeclaredType> result = newTypes;
-
-    // Clean up.
-    typeMap.clearSource();
+  public GwtAstBuilder(CompilationUnitDeclaration cud, String sourceMapPath,
+      Map<MethodDeclaration, JsniMethod> jsniMethods, Map<String, Binding> jsniRefs,
+      CompilerContext compilerContext) {
+    this.sourceMapPath = sourceMapPath;
     this.jsniRefs = jsniRefs;
     this.jsniMethods = jsniMethods;
-    newTypes = null;
-    curCud = null;
-    javaLangObject = null;
-    javaLangString = null;
-    javaLangClass = null;
-    javaLangThrowable = null;
-    return result;
+    this.compilerContext = compilerContext;
+    newTypes = Lists.newArrayList();
+    curCud = new CudInfo(cud);
+  }
+
+  public static List<JDeclaredType> process(CompilationUnitDeclaration cud, String sourceMapPath,
+      Map<MethodDeclaration, JsniMethod> jsniMethods, Map<String, Binding> jsniRefs,
+      CompilerContext compilerContext) {
+    return new GwtAstBuilder(cud, sourceMapPath, jsniMethods, jsniRefs, compilerContext)
+        .processImpl();
   }
 
   SourceInfo makeSourceInfo(AbstractMethodDeclaration x) {

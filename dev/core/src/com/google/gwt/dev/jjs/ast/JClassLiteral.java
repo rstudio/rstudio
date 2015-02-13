@@ -54,6 +54,7 @@ public class JClassLiteral extends JLiteral {
 
   @Override
   public JType getType() {
+    assert field != null;
     return field.getType();
   }
 

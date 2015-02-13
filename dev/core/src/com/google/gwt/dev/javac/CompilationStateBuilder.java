@@ -126,7 +126,7 @@ public class CompilationStateBuilder {
             if (!cud.compilationResult().hasErrors()) {
               // The above checks might have recorded errors; so we need to check here again.
               // So only construct the GWT AST if no JDT errors and no errors from our checks.
-              types = astBuilder.process(cud, builder.getSourceMapPath(), jsniMethods, jsniRefs,
+              types = GwtAstBuilder.process(cud, builder.getSourceMapPath(), jsniMethods, jsniRefs,
                   compilerContext);
             }
 
@@ -188,8 +188,6 @@ public class CompilationStateBuilder {
      * units, to make sure they can be recompiled if necessary.
      */
     private final Map<String, CompiledClass> allValidClasses = Maps.newHashMap();
-
-    private final GwtAstBuilder astBuilder = new GwtAstBuilder();
 
     private transient LinkedBlockingQueue<CompilationUnitBuilder> buildQueue;
 
