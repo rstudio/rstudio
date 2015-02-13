@@ -195,6 +195,21 @@ public class RSConnectDeploy extends Composite
       }
    }
    
+   public ArrayList<String> getFileList()
+   {
+      ArrayList<String> files = new ArrayList<String>();
+      if (fileChecks_ == null)
+         return files;
+      for (int i = 0; i < fileChecks_.size(); i++)
+      {
+         if (fileChecks_.get(i).getValue())
+         {
+            files.add(fileChecks_.get(i).getText());
+         }
+      }
+      return files;
+   }
+   
    public String getNewAppName()
    {
       return appName.getText();

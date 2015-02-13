@@ -176,7 +176,7 @@
   deploy_frame <- rmarkdown::find_external_resources(target) 
   file_list <- c(deploy_frame$path, basename(target))
   list (
-    contents = paste("./", file_list),
+    contents = paste("./", file_list, sep = ""),
     cur_size = sum(
        file.info(file.path(dirname(target), file_list))$size))
 })

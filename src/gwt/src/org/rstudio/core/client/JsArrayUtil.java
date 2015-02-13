@@ -14,6 +14,7 @@
  */
 package org.rstudio.core.client;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import com.google.gwt.core.client.JavaScriptObject;
@@ -50,5 +51,25 @@ public class JsArrayUtil
       for (int i = 0; i < jsArray.length(); ++i) {
          list.add(jsArray.get(i));
       }
+   }
+   
+   public static JsArrayString toJsArrayString(List<String> in)
+   {
+      JsArrayString out = JavaScriptObject.createArray().cast();
+      for (int i = 0; i < in.size(); i ++)
+      {
+         out.push(in.get(i));
+      }
+      return out;
+   }
+   
+   public static ArrayList<String> fromJsArrayString(JsArrayString in)
+   {
+      ArrayList<String> out = new ArrayList<String>();
+      for (int i = 0; i < in.length(); i++)
+      {
+         out.add(in.get(i));
+      }
+      return out;
    }
 }

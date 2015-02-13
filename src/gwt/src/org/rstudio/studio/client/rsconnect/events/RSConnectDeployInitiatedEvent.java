@@ -14,6 +14,8 @@
  */
 package org.rstudio.studio.client.rsconnect.events;
 
+import java.util.ArrayList;
+
 import org.rstudio.studio.client.rsconnect.model.RSConnectDeploymentRecord;
 
 import com.google.gwt.event.shared.EventHandler;
@@ -30,11 +32,13 @@ public class RSConnectDeployInitiatedEvent extends GwtEvent<RSConnectDeployIniti
       new GwtEvent.Type<RSConnectDeployInitiatedEvent.Handler>();
    
    public RSConnectDeployInitiatedEvent(String path, 
+                                        ArrayList<String> deployFiles,
                                         String sourceFile,
                                         boolean launchBrowser, 
                                         RSConnectDeploymentRecord record)
    {
       path_ = path;
+      deployFiles_ = deployFiles;
       record_ = record;
       sourceFile_ = sourceFile;
       launchBrowser_ = launchBrowser;
@@ -55,6 +59,11 @@ public class RSConnectDeployInitiatedEvent extends GwtEvent<RSConnectDeployIniti
       return sourceFile_;
    }
    
+   public ArrayList<String> getDeployFiles()
+   {
+      return deployFiles_;
+   }
+   
    public boolean getLaunchBrowser()
    {
       return launchBrowser_; 
@@ -72,8 +81,9 @@ public class RSConnectDeployInitiatedEvent extends GwtEvent<RSConnectDeployIniti
       return TYPE;
    }
    
-   private RSConnectDeploymentRecord record_;
-   private String path_;
-   private String sourceFile_;
-   private boolean launchBrowser_;
+   private final RSConnectDeploymentRecord record_;
+   private final String path_;
+   private final String sourceFile_;
+   private final boolean launchBrowser_;
+   private final ArrayList<String> deployFiles_;
 }

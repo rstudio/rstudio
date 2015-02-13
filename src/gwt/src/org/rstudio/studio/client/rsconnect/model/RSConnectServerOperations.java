@@ -14,6 +14,8 @@
  */
 package org.rstudio.studio.client.rsconnect.model;
 
+import java.util.ArrayList;
+
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 
@@ -39,7 +41,8 @@ public interface RSConnectServerOperations
    void getDeploymentFiles (String target, 
                ServerRequestCallback<RSConnectDeploymentFiles> requestCallback);
    
-   void deployShinyApp(String dir, String file, String account, String server, String appName, 
+   void deployShinyApp(String dir, ArrayList<String> deployFiles, String file, 
+               String account, String server, String appName, 
                ServerRequestCallback<Boolean> requestCallback);
 
    void validateServerUrl (String url, 

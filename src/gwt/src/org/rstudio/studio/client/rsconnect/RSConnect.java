@@ -17,6 +17,7 @@ package org.rstudio.studio.client.rsconnect;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.js.JsObject;
@@ -54,6 +55,7 @@ import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -299,10 +301,11 @@ public class RSConnect implements SessionInitHandler,
    
    public static native void deployFromSatellite(
          String path,
+         JsArrayString deployFiles,
          String file, 
          boolean launch, 
          JavaScriptObject record) /*-{
-      $wnd.opener.deployToRSConnect(path, file, launch, record);
+      $wnd.opener.deployToRSConnect(path, deployFiles, file, launch, record);
    }-*/;
    
    // Private methods ---------------------------------------------------------
@@ -310,6 +313,7 @@ public class RSConnect implements SessionInitHandler,
    private void doDeployment(final RSConnectDeployInitiatedEvent event)
    {
       server_.deployShinyApp(event.getPath(), 
+                             event.getDeployFiles(),
                              event.getSourceFile(),
                              event.getRecord().getAccountName(), 
                              event.getRecord().getServer(),
@@ -448,13 +452,14 @@ public class RSConnect implements SessionInitHandler,
    private final native void exportNativeCallbacks() /*-{
       var thiz = this;     
       $wnd.deployToRSConnect = $entry(
-         function(path, file, launch, record) {
-            thiz.@org.rstudio.studio.client.rsconnect.RSConnect::deployToRSConnect(Ljava/lang/String;Ljava/lang/String;ZLcom/google/gwt/core/client/JavaScriptObject;)(path, file, launch, record);
+         function(path, deployFiles, file, launch, record) {
+            thiz.@org.rstudio.studio.client.rsconnect.RSConnect::deployToRSConnect(Ljava/lang/String;Lcom/google/gwt/core/client/JsArrayString;Ljava/lang/String;ZLcom/google/gwt/core/client/JavaScriptObject;)(path, deployFiles, file, launch, record);
          }
       ); 
    }-*/;
    
-   private void deployToRSConnect(String path, String file, boolean launch, 
+   private void deployToRSConnect(String path, JsArrayString deployFiles, 
+                                  String file, boolean launch, 
                                   JavaScriptObject jsoRecord)
    {
       // this can be invoked by a satellite, so bring the main frame to the
@@ -464,9 +469,12 @@ public class RSConnect implements SessionInitHandler,
       else
          WindowEx.get().focus();
       
+      ArrayList<String> deployFilesList = 
+            JsArrayUtil.fromJsArrayString(deployFiles);
+      
       RSConnectDeploymentRecord record = jsoRecord.cast();
       events_.fireEvent(new RSConnectDeployInitiatedEvent(
-            path, file, launch, record));
+            path, deployFilesList, file, launch, record));
    }
    
    private final Commands commands_;

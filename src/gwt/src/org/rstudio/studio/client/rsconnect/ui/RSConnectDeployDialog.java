@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
@@ -367,6 +368,7 @@ public class RSConnectDeployDialog
          // deployment
          RSConnect.deployFromSatellite(
                sourceDir_, 
+               JsArrayUtil.toJsArrayString(contents_.getFileList()),
                sourceFile_, 
                launchCheck_.getValue(), 
                RSConnectDeploymentRecord.create(appName, account, ""));
@@ -386,6 +388,7 @@ public class RSConnectDeployDialog
          // in the main window, initiate the deployment directly
          events_.fireEvent(new RSConnectDeployInitiatedEvent(
                sourceDir_,
+               contents_.getFileList(),
                sourceFile_,
                launchCheck_.getValue(),
                RSConnectDeploymentRecord.create(appName, account, "")));
