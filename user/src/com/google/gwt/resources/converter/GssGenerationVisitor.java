@@ -15,6 +15,12 @@
  */
 package com.google.gwt.resources.converter;
 
+import com.google.common.base.Predicate;
+import com.google.common.base.Splitter;
+import com.google.common.base.Strings;
+import com.google.common.css.SourceCode;
+import com.google.common.css.compiler.ast.GssParser;
+import com.google.common.css.compiler.ast.GssParserException;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.TreeLogger.Type;
 import com.google.gwt.dev.util.TextOutput;
@@ -37,12 +43,6 @@ import com.google.gwt.resources.css.ast.CssSelector;
 import com.google.gwt.resources.css.ast.CssSprite;
 import com.google.gwt.resources.css.ast.CssUnknownAtRule;
 import com.google.gwt.resources.css.ast.CssUrl;
-import com.google.gwt.thirdparty.common.css.SourceCode;
-import com.google.gwt.thirdparty.common.css.compiler.ast.GssParser;
-import com.google.gwt.thirdparty.common.css.compiler.ast.GssParserException;
-import com.google.gwt.thirdparty.guava.common.base.Predicate;
-import com.google.gwt.thirdparty.guava.common.base.Splitter;
-import com.google.gwt.thirdparty.guava.common.base.Strings;
 
 import java.util.ArrayList;
 import java.util.List;

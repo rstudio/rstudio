@@ -15,12 +15,12 @@
  */
 package com.google.gwt.resources.gss;
 
+import com.google.common.base.Preconditions;
+import com.google.common.css.compiler.ast.CssClassSelectorNode;
+import com.google.common.css.compiler.ast.CssTree;
+import com.google.common.css.compiler.ast.DefaultTreeVisitor;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.resources.rg.GssResourceGenerator;
-import com.google.gwt.thirdparty.common.css.compiler.ast.CssClassSelectorNode;
-import com.google.gwt.thirdparty.common.css.compiler.ast.CssTree;
-import com.google.gwt.thirdparty.common.css.compiler.ast.DefaultTreeVisitor;
-import com.google.gwt.thirdparty.guava.common.base.Preconditions;
 
 import java.util.HashSet;
 import java.util.Set;

@@ -15,6 +15,9 @@
  */
 package com.google.gwt.dev.codeserver;
 
+import com.google.common.base.Charsets;
+import com.google.common.collect.Lists;
+import com.google.common.io.Files;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.MinimalRebuildCacheManager;
@@ -25,9 +28,6 @@ import com.google.gwt.dev.javac.testing.impl.JavaResourceBase;
 import com.google.gwt.dev.javac.testing.impl.MockJavaResource;
 import com.google.gwt.dev.javac.testing.impl.MockResource;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
-import com.google.gwt.thirdparty.guava.common.base.Charsets;
-import com.google.gwt.thirdparty.guava.common.collect.Lists;
-import com.google.gwt.thirdparty.guava.common.io.Files;
 
 import junit.framework.TestCase;
 

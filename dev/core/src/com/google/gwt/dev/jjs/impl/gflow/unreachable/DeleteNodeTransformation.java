@@ -15,6 +15,7 @@
  */
 package com.google.gwt.dev.jjs.impl.gflow.unreachable;
 
+import com.google.common.base.Preconditions;
 import com.google.gwt.dev.jjs.ast.JBlock;
 import com.google.gwt.dev.jjs.ast.JNode;
 import com.google.gwt.dev.jjs.impl.gflow.TransformationFunction.Transformation;
@@ -24,7 +25,6 @@ import com.google.gwt.dev.jjs.impl.gflow.cfg.CfgNopNode;
 import com.google.gwt.dev.jjs.impl.gflow.cfg.CfgStatementNode;
 import com.google.gwt.dev.jjs.impl.gflow.cfg.CfgTransformer;
 import com.google.gwt.dev.jjs.impl.gflow.cfg.CfgUtil;
-import com.google.gwt.thirdparty.guava.common.base.Preconditions;
 
 class DeleteNodeTransformation implements Transformation<CfgTransformer, Cfg> {
   private final Cfg graph;

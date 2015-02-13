@@ -15,6 +15,7 @@
  */
 package com.google.gwt.validation.rebind;
 
+import com.google.common.base.Function;
 import com.google.gwt.core.ext.typeinfo.JArrayType;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JField;
@@ -22,7 +23,6 @@ import com.google.gwt.core.ext.typeinfo.JParameterizedType;
 import com.google.gwt.core.ext.typeinfo.JRawType;
 import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.core.ext.typeinfo.NotFoundException;
-import com.google.gwt.thirdparty.guava.common.base.Function;
 
 import javax.validation.metadata.BeanDescriptor;
 import javax.validation.metadata.PropertyDescriptor;
@@ -33,7 +33,7 @@ import javax.validation.metadata.PropertyDescriptor;
  */
 public final class BeanHelper {
 
-  public static final Function<BeanHelper, Class<?>> TO_CLAZZ = 
+  public static final Function<BeanHelper, Class<?>> TO_CLAZZ =
       new Function<BeanHelper, Class<?>>() {
     @Override
     public Class<?> apply(BeanHelper helper) {

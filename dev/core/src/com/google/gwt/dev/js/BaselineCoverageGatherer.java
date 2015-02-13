@@ -15,6 +15,12 @@
  */
 package com.google.gwt.dev.js;
 
+import com.google.common.base.Charsets;
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Multimap;
+import com.google.common.collect.Sets;
+import com.google.common.io.Files;
 import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.ast.Context;
@@ -31,12 +37,6 @@ import com.google.gwt.dev.jjs.ast.JVisitor;
 import com.google.gwt.dev.jjs.ast.js.JsniMethodBody;
 import com.google.gwt.dev.js.ast.JsContext;
 import com.google.gwt.dev.js.ast.JsExpression;
-import com.google.gwt.thirdparty.guava.common.base.Charsets;
-import com.google.gwt.thirdparty.guava.common.collect.HashMultimap;
-import com.google.gwt.thirdparty.guava.common.collect.ImmutableSet;
-import com.google.gwt.thirdparty.guava.common.collect.Multimap;
-import com.google.gwt.thirdparty.guava.common.collect.Sets;
-import com.google.gwt.thirdparty.guava.common.io.Files;
 
 import java.io.File;
 import java.io.IOException;

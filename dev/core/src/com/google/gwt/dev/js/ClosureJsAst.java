@@ -14,12 +14,12 @@
 
 package com.google.gwt.dev.js;
 
-import com.google.gwt.thirdparty.guava.common.base.Preconditions;
-import com.google.gwt.thirdparty.javascript.jscomp.AbstractCompiler;
-import com.google.gwt.thirdparty.javascript.jscomp.SourceAst;
-import com.google.gwt.thirdparty.javascript.jscomp.SourceFile;
-import com.google.gwt.thirdparty.javascript.rhino.InputId;
-import com.google.gwt.thirdparty.javascript.rhino.Node;
+import com.google.common.base.Preconditions;
+import com.google.javascript.jscomp.AbstractCompiler;
+import com.google.javascript.jscomp.SourceAst;
+import com.google.javascript.jscomp.SourceFile;
+import com.google.javascript.rhino.InputId;
+import com.google.javascript.rhino.Node;
 
 /**
  * Maps the JavaScript AST to a Closure Compiler input source.

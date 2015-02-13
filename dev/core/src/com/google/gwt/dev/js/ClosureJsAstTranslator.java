@@ -13,6 +13,8 @@
  */
 package com.google.gwt.dev.js;
 
+import com.google.common.base.Preconditions;
+import com.google.common.collect.Sets;
 import com.google.gwt.dev.jjs.HasSourceInfo;
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.js.ast.HasName;
@@ -69,15 +71,14 @@ import com.google.gwt.dev.js.ast.JsVars;
 import com.google.gwt.dev.js.ast.JsVars.JsVar;
 import com.google.gwt.dev.js.ast.JsWhile;
 import com.google.gwt.dev.js.ast.NodeKind;
-import com.google.gwt.thirdparty.guava.common.base.Preconditions;
-import com.google.gwt.thirdparty.guava.common.collect.Sets;
-import com.google.gwt.thirdparty.javascript.jscomp.AstValidator;
-import com.google.gwt.thirdparty.javascript.rhino.IR;
-import com.google.gwt.thirdparty.javascript.rhino.InputId;
-import com.google.gwt.thirdparty.javascript.rhino.Node;
-import com.google.gwt.thirdparty.javascript.rhino.Token;
-import com.google.gwt.thirdparty.javascript.rhino.jstype.SimpleSourceFile;
-import com.google.gwt.thirdparty.javascript.rhino.jstype.StaticSourceFile;
+import com.google.javascript.jscomp.AbstractCompiler;
+import com.google.javascript.jscomp.AstValidator;
+import com.google.javascript.rhino.IR;
+import com.google.javascript.rhino.InputId;
+import com.google.javascript.rhino.Node;
+import com.google.javascript.rhino.Token;
+import com.google.javascript.rhino.jstype.SimpleSourceFile;
+import com.google.javascript.rhino.jstype.StaticSourceFile;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -108,9 +109,12 @@ public class ClosureJsAstTranslator {
 
   private final JsProgram program;
 
-  ClosureJsAstTranslator(boolean validate, JsProgram program) {
+  private final AbstractCompiler abstractCompiler;
+
+  ClosureJsAstTranslator(boolean validate, JsProgram program, AbstractCompiler abstractCompiler) {
     this.program = program;
     this.validate = validate;
+    this.abstractCompiler = abstractCompiler;
   }
 
   public Node translate(JsProgramFragment fragment, InputId inputId, String source) {
@@ -123,7 +127,7 @@ public class ClosureJsAstTranslator {
     }
     // Validate the structural integrity of the AST.
     if (validate) {
-      new AstValidator().validateScript(script);
+      new AstValidator(abstractCompiler).validateScript(script);
     }
     return script;
   }

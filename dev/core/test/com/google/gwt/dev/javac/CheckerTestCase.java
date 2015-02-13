@@ -15,6 +15,7 @@
  */
 package com.google.gwt.dev.javac;
 
+import com.google.common.base.Joiner;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.TreeLogger.Type;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
@@ -22,7 +23,6 @@ import com.google.gwt.dev.javac.testing.impl.MockJavaResource;
 import com.google.gwt.dev.javac.testing.impl.StaticJavaResource;
 import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.util.UnitTestTreeLogger;
-import com.google.gwt.thirdparty.guava.common.base.Joiner;
 
 import junit.framework.TestCase;
 

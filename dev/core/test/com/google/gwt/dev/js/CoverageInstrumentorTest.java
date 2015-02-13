@@ -16,6 +16,11 @@
 
 package com.google.gwt.dev.js;
 
+import com.google.common.base.Splitter;
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.LinkedHashMultimap;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Multimap;
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.js.ast.JsBlock;
 import com.google.gwt.dev.js.ast.JsContext;
@@ -26,11 +31,6 @@ import com.google.gwt.dev.js.ast.JsName;
 import com.google.gwt.dev.js.ast.JsObjectLiteral;
 import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.js.ast.JsStatement;
-import com.google.gwt.thirdparty.guava.common.base.Splitter;
-import com.google.gwt.thirdparty.guava.common.collect.HashMultimap;
-import com.google.gwt.thirdparty.guava.common.collect.LinkedHashMultimap;
-import com.google.gwt.thirdparty.guava.common.collect.Maps;
-import com.google.gwt.thirdparty.guava.common.collect.Multimap;
 
 import junit.framework.TestCase;
 

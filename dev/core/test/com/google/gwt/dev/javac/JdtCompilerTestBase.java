@@ -17,14 +17,14 @@ package com.google.gwt.dev.javac;
 
 import static org.junit.Assert.assertArrayEquals;
 
+import com.google.common.base.Joiner;
+import com.google.common.collect.Lists;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.CompilerContext;
 import com.google.gwt.dev.javac.testing.impl.JavaResourceBase;
 import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.util.arg.SourceLevel;
-import com.google.gwt.thirdparty.guava.common.base.Joiner;
-import com.google.gwt.thirdparty.guava.common.collect.Lists;
 
 import junit.framework.TestCase;
 

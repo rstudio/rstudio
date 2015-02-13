@@ -15,7 +15,9 @@
  */
 package com.google.gwt.dev.js;
 
-
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
 import com.google.gwt.dev.jjs.SourceOrigin;
 import com.google.gwt.dev.jjs.ast.AccessModifier;
 import com.google.gwt.dev.jjs.ast.HasName;
@@ -32,9 +34,6 @@ import com.google.gwt.dev.js.ast.JsStatement;
 import com.google.gwt.dev.js.ast.JsVisitor;
 import com.google.gwt.dev.util.DefaultTextOutput;
 import com.google.gwt.dev.util.TextOutput;
-import com.google.gwt.thirdparty.guava.common.collect.ImmutableList;
-import com.google.gwt.thirdparty.guava.common.collect.ImmutableMap;
-import com.google.gwt.thirdparty.guava.common.collect.Maps;
 
 import junit.framework.TestCase;
 

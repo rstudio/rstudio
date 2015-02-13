@@ -13,7 +13,7 @@
  */
 package com.google.gwt.dev.util.arg;
 
-import com.google.gwt.thirdparty.guava.common.collect.ListMultimap;
+import com.google.common.collect.ListMultimap;
 
 /**
  * Option to set property values.

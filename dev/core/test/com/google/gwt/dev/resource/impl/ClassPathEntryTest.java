@@ -15,10 +15,10 @@
  */
 package com.google.gwt.dev.resource.impl;
 
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.common.io.Files;
 import com.google.gwt.core.ext.TreeLogger;
-import com.google.gwt.thirdparty.guava.common.collect.Lists;
-import com.google.gwt.thirdparty.guava.common.collect.Maps;
-import com.google.gwt.thirdparty.guava.common.io.Files;
 
 import java.io.File;
 import java.io.IOException;

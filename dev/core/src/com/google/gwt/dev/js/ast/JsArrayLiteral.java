@@ -13,8 +13,8 @@
  */
 package com.google.gwt.dev.js.ast;
 
+import com.google.common.collect.Lists;
 import com.google.gwt.dev.jjs.SourceInfo;
-import com.google.gwt.thirdparty.guava.common.collect.Lists;
 
 import java.util.Collections;
 import java.util.List;

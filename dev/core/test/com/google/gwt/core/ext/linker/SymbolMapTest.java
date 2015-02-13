@@ -15,15 +15,15 @@
  */
 package com.google.gwt.core.ext.linker;
 
+import com.google.common.base.Function;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Maps;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.CompilerOptionsImpl;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.arg.OptionOptimize;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
-import com.google.gwt.thirdparty.guava.common.base.Function;
-import com.google.gwt.thirdparty.guava.common.collect.Iterables;
-import com.google.gwt.thirdparty.guava.common.collect.Maps;
 import com.google.gwt.util.tools.Utility;
 
 import junit.framework.TestCase;

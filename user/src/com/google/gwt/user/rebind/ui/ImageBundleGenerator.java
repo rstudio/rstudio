@@ -15,6 +15,7 @@
  */
 package com.google.gwt.user.rebind.ui;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.gwt.core.ext.Generator;
 import com.google.gwt.core.ext.Generator.RunsLocal;
 import com.google.gwt.core.ext.GeneratorContext;
@@ -25,7 +26,6 @@ import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JMethod;
 import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
-import com.google.gwt.thirdparty.guava.common.annotations.VisibleForTesting;
 import com.google.gwt.user.client.ui.ImageBundle;
 import com.google.gwt.user.client.ui.ImageBundle.Resource;
 import com.google.gwt.user.rebind.ClassSourceFileComposerFactory;

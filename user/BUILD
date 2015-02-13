@@ -55,6 +55,30 @@ AugmentedJar(
     wrap_javalibrary = 0,
 )
 
+GSS_DEPS = [
+  "//java/com/google/common/css",
+  "//java/com/google/common/css/compiler/ast",
+  "//java/com/google/common/css/compiler/ast:gssparser",
+  "//java/com/google/common/css/compiler/gssfunctions",
+  "//java/com/google/common/css/compiler/passes",
+]
+
+GUAVA_DEPS = [
+    "//java/com/google/common/annotations",
+    "//java/com/google/common/base",
+    "//java/com/google/common/collect",
+    "//java/com/google/common/io",
+    "//java/com/google/common/primitives",
+]
+
+JS_COMP_DEPS = [
+  "//java/com/google/javascript/jscomp",
+  "//third_party/java_src/jscomp/java/com/google/debugging/sourcemap:common",
+  "//third_party/java_src/jscomp/java/com/google/debugging/sourcemap:consumption",
+  "//third_party/java_src/jscomp/java/com/google/debugging/sourcemap:shared",
+  "//third_party/java_src/jscomp/java/com/google/debugging/sourcemap/proto:mapping_proto",
+]
+
 # The gwt-user classes for GWT internal use only.
 # They must be jarjar-ed and dependencies stripped before exposing to google3.
 java_library(
@@ -73,7 +97,7 @@ java_library(
         "//third_party/java_src/gwt/svn/tools:user_deps",
         "//third_party/java_src/gwt/svn/trunk/dev:compiler.standalone.super",
         "//third_party/java_src/gwt/svn/trunk/dev:gwt-dev-bare",
-    ],
+    ] + JS_COMP_DEPS + GUAVA_DEPS + GSS_DEPS,
 )
 
 # This target is used by a java_plugin over in java/gwt/BUILD. It's
@@ -363,7 +387,7 @@ java_library(
         "//third_party/java_src/gwt/svn/tools:servlet_deps",
         "//third_party/java_src/gwt/svn/trunk/dev:compiler.standalone.super",
         "//third_party/java_src/gwt/svn/trunk/dev:servlet-deps",
-    ],
+    ] + JS_COMP_DEPS + GUAVA_DEPS,
 )
 
 # The minimum requirements for GWT-RPC serializable object definition.
@@ -453,6 +477,8 @@ java_library(
     ),
     deps = [
         ":gwt-user-bare",
+        "//java/com/google/common/base",
+        "//java/com/google/common/collect",
         "//third_party/java/junit",
         "//third_party/java_src/gwt/svn/tools:dev_deps",
         "//third_party/java_src/gwt/svn/tools:servlet_api_3",
@@ -524,7 +550,7 @@ AugmentedJar(
         "//third_party/java/jsr305_annotations",
         "//third_party/java/junit",
         "//third_party/java_src/gwt/svn/tools:testtool_deps",
-    ],
+    ] + GUAVA_DEPS + GSS_DEPS,
 )
 
 # This target should only be dependent from platform tests that care about tck.
@@ -548,6 +574,8 @@ AugmentedJar(
     ],
     dojarjar = 1,
     deps = [
+        "//java/com/google/common/base",
+        "//java/com/google/common/collect",
         "//third_party/java/junit",
         "//third_party/java_src/gwt/svn/tools:validator_deps",
         "//third_party/java_src/gwt/svn/tools:validator_tck_deps",

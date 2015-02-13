@@ -18,7 +18,7 @@ package com.google.gwt.dev;
 import junit.framework.TestCase;
 
 /**
- * Tests the methods in About
+ * Tests the methods in About.
  */
 public class AboutTest extends TestCase {
 

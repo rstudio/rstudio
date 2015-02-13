@@ -15,6 +15,11 @@
  */
 package com.google.gwt.dev.resource.impl;
 
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.MapMaker;
+import com.google.common.collect.SetMultimap;
+import com.google.common.collect.Sets;
+import com.google.common.io.Files;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.dev.cfg.ResourceLoader;
 import com.google.gwt.dev.cfg.ResourceLoaders;
@@ -24,11 +29,6 @@ import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 import com.google.gwt.dev.util.msg.Message0;
 import com.google.gwt.dev.util.msg.Message1String;
-import com.google.gwt.thirdparty.guava.common.collect.HashMultimap;
-import com.google.gwt.thirdparty.guava.common.collect.MapMaker;
-import com.google.gwt.thirdparty.guava.common.collect.SetMultimap;
-import com.google.gwt.thirdparty.guava.common.collect.Sets;
-import com.google.gwt.thirdparty.guava.common.io.Files;
 
 import java.io.File;
 import java.io.IOException;

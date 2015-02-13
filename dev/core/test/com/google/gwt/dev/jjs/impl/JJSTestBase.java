@@ -15,6 +15,9 @@
  */
 package com.google.gwt.dev.jjs.impl;
 
+import com.google.common.base.Joiner;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.CompilerContext;
@@ -43,9 +46,6 @@ import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.util.arg.SourceLevel;
 import com.google.gwt.dev.util.log.AbstractTreeLogger;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
-import com.google.gwt.thirdparty.guava.common.base.Joiner;
-import com.google.gwt.thirdparty.guava.common.collect.Lists;
-import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
 import junit.framework.TestCase;
 

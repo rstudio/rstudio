@@ -15,6 +15,11 @@
  */
 package com.google.gwt.dev.js;
 
+import com.google.common.base.Preconditions;
+import com.google.common.collect.HashMultiset;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Multiset;
+import com.google.common.collect.Sets;
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.js.ast.JsArrayLiteral;
@@ -38,11 +43,6 @@ import com.google.gwt.dev.js.ast.JsStringLiteral;
 import com.google.gwt.dev.js.ast.JsVars;
 import com.google.gwt.dev.js.ast.JsVars.JsVar;
 import com.google.gwt.dev.js.ast.JsVisitor;
-import com.google.gwt.thirdparty.guava.common.base.Preconditions;
-import com.google.gwt.thirdparty.guava.common.collect.HashMultiset;
-import com.google.gwt.thirdparty.guava.common.collect.Maps;
-import com.google.gwt.thirdparty.guava.common.collect.Multiset;
-import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
 import java.util.Collection;
 import java.util.Map;

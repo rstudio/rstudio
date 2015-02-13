@@ -15,6 +15,13 @@
  */
 package com.google.gwt.dev.cfg;
 
+import com.google.common.base.Charsets;
+import com.google.common.base.Predicates;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterators;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.google.gwt.core.ext.Linker;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
@@ -37,13 +44,6 @@ import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
-import com.google.gwt.thirdparty.guava.common.base.Charsets;
-import com.google.gwt.thirdparty.guava.common.base.Predicates;
-import com.google.gwt.thirdparty.guava.common.collect.ImmutableList;
-import com.google.gwt.thirdparty.guava.common.collect.Iterators;
-import com.google.gwt.thirdparty.guava.common.collect.Lists;
-import com.google.gwt.thirdparty.guava.common.collect.Maps;
-import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
 import java.io.File;
 import java.security.MessageDigest;

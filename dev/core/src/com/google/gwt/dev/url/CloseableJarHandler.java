@@ -13,8 +13,8 @@
  */
 package com.google.gwt.dev.url;
 
-import com.google.gwt.thirdparty.guava.common.collect.HashMultimap;
-import com.google.gwt.thirdparty.guava.common.collect.Multimap;
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimap;
 
 import java.io.IOException;
 import java.io.InputStream;

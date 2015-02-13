@@ -13,8 +13,8 @@
  */
 package com.google.gwt.core.ext;
 
+import com.google.common.base.Preconditions;
 import com.google.gwt.dev.cfg.RuleGenerateWith;
-import com.google.gwt.thirdparty.guava.common.base.Preconditions;
 
 import java.util.Set;
 

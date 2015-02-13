@@ -15,10 +15,10 @@
  */
 package com.google.gwt.dev.jjs.impl.codesplitter;
 
+import com.google.common.collect.Lists;
 import com.google.gwt.dev.jjs.SourceOrigin;
 import com.google.gwt.dev.jjs.ast.JNullLiteral;
 import com.google.gwt.dev.jjs.ast.JRunAsync;
-import com.google.gwt.thirdparty.guava.common.collect.Lists;
 
 import junit.framework.TestCase;
 

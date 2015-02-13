@@ -15,6 +15,8 @@
  */
 package com.google.gwt.dev.js;
 
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.google.gwt.dev.js.ast.JsBlock;
 import com.google.gwt.dev.js.ast.JsContext;
 import com.google.gwt.dev.js.ast.JsFunction;
@@ -26,8 +28,6 @@ import com.google.gwt.dev.js.ast.JsNameRef;
 import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.js.ast.JsVisitor;
 import com.google.gwt.dev.util.collect.Stack;
-import com.google.gwt.thirdparty.guava.common.collect.Maps;
-import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
 import java.util.Map;
 import java.util.Set;

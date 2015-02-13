@@ -15,6 +15,8 @@
  */
 package com.google.gwt.dev.javac;
 
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.Lists;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.TreeLogger.Type;
 import com.google.gwt.core.ext.UnableToCompleteException;
@@ -24,8 +26,6 @@ import com.google.gwt.dev.util.StringInterningObjectInputStream;
 import com.google.gwt.dev.util.log.speedtracer.DevModeEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
-import com.google.gwt.thirdparty.guava.common.annotations.VisibleForTesting;
-import com.google.gwt.thirdparty.guava.common.collect.Lists;
 import com.google.gwt.util.tools.Utility;
 
 import java.io.BufferedInputStream;

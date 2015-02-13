@@ -15,7 +15,7 @@
  */
 package com.google.gwt.resources.gss;
 
-import com.google.gwt.thirdparty.common.css.SubstitutionMap;
+import com.google.common.css.SubstitutionMap;
 
 import java.util.HashMap;
 import java.util.HashSet;

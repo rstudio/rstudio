@@ -15,7 +15,7 @@
  */
 package com.google.gwt.dev.util.collect;
 
-import com.google.gwt.thirdparty.guava.common.collect.Lists;
+import com.google.common.collect.Lists;
 
 import java.util.ArrayList;
 import java.util.Iterator;

@@ -15,6 +15,8 @@
  */
 package com.google.gwt.dev.javac;
 
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Lists;
 import com.google.gwt.core.client.UnsafeNativeLong;
 import com.google.gwt.dev.jdt.SafeASTVisitor;
 import com.google.gwt.dev.jjs.SourceInfo;
@@ -26,8 +28,6 @@ import com.google.gwt.dev.js.ast.JsNameRef;
 import com.google.gwt.dev.util.InstalledHelpInfo;
 import com.google.gwt.dev.util.JsniRef;
 import com.google.gwt.dev.util.collect.Stack;
-import com.google.gwt.thirdparty.guava.common.collect.ImmutableSet;
-import com.google.gwt.thirdparty.guava.common.collect.Lists;
 
 import org.eclipse.jdt.core.compiler.CharOperation;
 import org.eclipse.jdt.internal.compiler.ast.ASTNode;

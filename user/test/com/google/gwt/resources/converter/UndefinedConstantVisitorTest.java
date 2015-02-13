@@ -22,6 +22,8 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.resources.css.ast.CssProperty;
 import com.google.gwt.resources.css.ast.CssProperty.FunctionValue;
@@ -29,8 +31,6 @@ import com.google.gwt.resources.css.ast.CssProperty.IdentValue;
 import com.google.gwt.resources.css.ast.CssProperty.ListValue;
 import com.google.gwt.resources.css.ast.CssProperty.Value;
 import com.google.gwt.resources.css.ast.CssRule;
-import com.google.gwt.thirdparty.guava.common.collect.Lists;
-import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
 import junit.framework.TestCase;
 

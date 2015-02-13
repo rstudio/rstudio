@@ -16,6 +16,10 @@
 
 package com.google.gwt.dev.codeserver;
 
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.LinkedListMultimap;
+import com.google.common.collect.ListMultimap;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.dev.ArgProcessorBase;
 import com.google.gwt.dev.cfg.ModuleDef;
@@ -34,10 +38,6 @@ import com.google.gwt.dev.util.arg.OptionMethodNameDisplayMode;
 import com.google.gwt.dev.util.arg.OptionSetProperties;
 import com.google.gwt.dev.util.arg.OptionSourceLevel;
 import com.google.gwt.dev.util.arg.SourceLevel;
-import com.google.gwt.thirdparty.guava.common.collect.ImmutableList;
-import com.google.gwt.thirdparty.guava.common.collect.ImmutableSet;
-import com.google.gwt.thirdparty.guava.common.collect.LinkedListMultimap;
-import com.google.gwt.thirdparty.guava.common.collect.ListMultimap;
 import com.google.gwt.util.tools.ArgHandler;
 import com.google.gwt.util.tools.ArgHandlerDir;
 import com.google.gwt.util.tools.ArgHandlerExtra;

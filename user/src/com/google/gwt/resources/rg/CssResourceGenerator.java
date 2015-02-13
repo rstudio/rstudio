@@ -15,6 +15,7 @@
  */
 package com.google.gwt.resources.rg;
 
+import com.google.common.base.Joiner;
 import com.google.gwt.core.ext.BadPropertyValueException;
 import com.google.gwt.core.ext.ConfigurationProperty;
 import com.google.gwt.core.ext.Generator;
@@ -70,7 +71,6 @@ import com.google.gwt.resources.ext.ClientBundleRequirements;
 import com.google.gwt.resources.ext.ResourceContext;
 import com.google.gwt.resources.ext.ResourceGeneratorUtil;
 import com.google.gwt.resources.ext.SupportsGeneratorResultCaching;
-import com.google.gwt.thirdparty.guava.common.base.Joiner;
 import com.google.gwt.user.rebind.SourceWriter;
 import com.google.gwt.user.rebind.StringSourceWriter;
 

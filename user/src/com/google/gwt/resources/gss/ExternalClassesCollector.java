@@ -15,20 +15,20 @@
  */
 package com.google.gwt.resources.gss;
 
-import com.google.gwt.thirdparty.common.css.SourceCodeLocation;
-import com.google.gwt.thirdparty.common.css.compiler.ast.CssClassSelectorNode;
-import com.google.gwt.thirdparty.common.css.compiler.ast.CssCompilerPass;
-import com.google.gwt.thirdparty.common.css.compiler.ast.CssCompositeValueNode;
-import com.google.gwt.thirdparty.common.css.compiler.ast.CssLiteralNode;
-import com.google.gwt.thirdparty.common.css.compiler.ast.CssStringNode;
-import com.google.gwt.thirdparty.common.css.compiler.ast.CssUnknownAtRuleNode;
-import com.google.gwt.thirdparty.common.css.compiler.ast.CssValueNode;
-import com.google.gwt.thirdparty.common.css.compiler.ast.DefaultTreeVisitor;
-import com.google.gwt.thirdparty.common.css.compiler.ast.ErrorManager;
-import com.google.gwt.thirdparty.common.css.compiler.ast.GssError;
-import com.google.gwt.thirdparty.common.css.compiler.ast.MutatingVisitController;
-import com.google.gwt.thirdparty.guava.common.collect.ImmutableSet;
-import com.google.gwt.thirdparty.guava.common.collect.ImmutableSet.Builder;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.ImmutableSet.Builder;
+import com.google.common.css.SourceCodeLocation;
+import com.google.common.css.compiler.ast.CssClassSelectorNode;
+import com.google.common.css.compiler.ast.CssCompilerPass;
+import com.google.common.css.compiler.ast.CssCompositeValueNode;
+import com.google.common.css.compiler.ast.CssLiteralNode;
+import com.google.common.css.compiler.ast.CssStringNode;
+import com.google.common.css.compiler.ast.CssUnknownAtRuleNode;
+import com.google.common.css.compiler.ast.CssValueNode;
+import com.google.common.css.compiler.ast.DefaultTreeVisitor;
+import com.google.common.css.compiler.ast.ErrorManager;
+import com.google.common.css.compiler.ast.GssError;
+import com.google.common.css.compiler.ast.MutatingVisitController;
 
 import java.util.ArrayList;
 import java.util.HashSet;

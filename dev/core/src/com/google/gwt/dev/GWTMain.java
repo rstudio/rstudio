@@ -15,8 +15,8 @@
  */
 package com.google.gwt.dev;
 
+import com.google.common.base.Strings;
 import com.google.gwt.dev.util.Util;
-import com.google.gwt.thirdparty.guava.common.base.Strings;
 
 /**
  * Executable class provides help to users who run the jar by indicating the

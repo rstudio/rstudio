@@ -15,6 +15,7 @@
  */
 package com.google.gwt.dev.jjs.impl.gflow.constants;
 
+import com.google.common.base.Preconditions;
 import com.google.gwt.dev.jjs.ast.JBooleanLiteral;
 import com.google.gwt.dev.jjs.ast.JExpression;
 import com.google.gwt.dev.jjs.ast.JValueLiteral;
@@ -28,7 +29,6 @@ import com.google.gwt.dev.jjs.impl.gflow.cfg.CfgNode;
 import com.google.gwt.dev.jjs.impl.gflow.cfg.CfgReadNode;
 import com.google.gwt.dev.jjs.impl.gflow.cfg.CfgTransformer;
 import com.google.gwt.dev.jjs.impl.gflow.cfg.CfgVisitor;
-import com.google.gwt.thirdparty.guava.common.base.Preconditions;
 
 /**
  * Transformation function for ConstantsAnalysis. Checks if current node can

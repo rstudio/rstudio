@@ -15,8 +15,8 @@
  */
 package com.google.gwt.dev.cfg;
 
+import com.google.common.base.Objects;
 import com.google.gwt.core.ext.TreeLogger;
-import com.google.gwt.thirdparty.guava.common.base.Objects;
 
 /**
  * A deferred binding condition to determine whether the type being rebound is

@@ -16,6 +16,8 @@
 
 package com.google.gwt.dev.jjs.impl;
 
+import com.google.common.base.Predicate;
+import com.google.common.collect.Sets;
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JConstructor;
@@ -32,8 +34,6 @@ import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.ast.JVisitor;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
-import com.google.gwt.thirdparty.guava.common.base.Predicate;
-import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
 import java.util.Set;
 

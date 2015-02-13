@@ -15,11 +15,11 @@
  */
 package com.google.gwt.dev.jjs.impl;
 
+import com.google.common.collect.Lists;
 import com.google.gwt.core.ext.soyc.Range;
 import com.google.gwt.dev.jjs.JsSourceMap;
 import com.google.gwt.dev.util.editdistance.GeneralEditDistance;
 import com.google.gwt.dev.util.editdistance.GeneralEditDistances;
-import com.google.gwt.thirdparty.guava.common.collect.Lists;
 
 import java.util.ArrayList;
 import java.util.Arrays;

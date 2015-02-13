@@ -171,7 +171,6 @@ public class ScriptChunkingTest extends TestCase {
         + ';' + stmt4, split);
   }
 
-
   /**
    * Test that with the default chunk separator (""), splitting is a no-op.
    */

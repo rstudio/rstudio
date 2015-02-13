@@ -15,9 +15,9 @@
  */
 package com.google.gwt.core.ext.soyc;
 
+import com.google.debugging.sourcemap.FilePosition;
+import com.google.debugging.sourcemap.SourceMapGenerator;
 import com.google.gwt.dev.jjs.SourceInfo;
-import com.google.gwt.thirdparty.debugging.sourcemap.FilePosition;
-import com.google.gwt.thirdparty.debugging.sourcemap.SourceMapGenerator;
 
 /**
  * Writes a sorted stream of mappings to a sourcemap. Automatically merges mappings that have

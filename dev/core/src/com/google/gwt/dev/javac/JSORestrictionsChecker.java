@@ -15,10 +15,10 @@
  */
 package com.google.gwt.dev.javac;
 
+import com.google.common.base.Strings;
 import com.google.gwt.dev.jdt.SafeASTVisitor;
 import com.google.gwt.dev.util.InstalledHelpInfo;
 import com.google.gwt.dev.util.collect.Stack;
-import com.google.gwt.thirdparty.guava.common.base.Strings;
 
 import org.eclipse.jdt.core.compiler.CharOperation;
 import org.eclipse.jdt.internal.compiler.ast.ASTNode;

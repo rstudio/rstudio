@@ -15,9 +15,9 @@
  */
 package com.google.gwt.dev.util;
 
+import com.google.common.base.Preconditions;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
-import com.google.gwt.thirdparty.guava.common.base.Preconditions;
 
 import java.io.File;
 import java.io.IOException;

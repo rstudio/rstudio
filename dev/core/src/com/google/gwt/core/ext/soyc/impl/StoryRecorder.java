@@ -15,6 +15,7 @@
  */
 package com.google.gwt.core.ext.soyc.impl;
 
+import com.google.common.collect.Lists;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.soyc.ClassMember;
 import com.google.gwt.core.ext.soyc.Member;
@@ -27,7 +28,6 @@ import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.util.Util;
-import com.google.gwt.thirdparty.guava.common.collect.Lists;
 import com.google.gwt.util.tools.Utility;
 
 import java.io.IOException;

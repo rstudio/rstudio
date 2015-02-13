@@ -15,9 +15,9 @@
  */
 package com.google.gwt.core.server;
 
-import com.google.gwt.thirdparty.debugging.sourcemap.SourceMapConsumerFactory;
-import com.google.gwt.thirdparty.debugging.sourcemap.SourceMapping;
-import com.google.gwt.thirdparty.debugging.sourcemap.proto.Mapping;
+import com.google.debugging.sourcemap.SourceMapConsumerFactory;
+import com.google.debugging.sourcemap.SourceMapping;
+import com.google.debugging.sourcemap.proto.Mapping;
 
 import java.io.BufferedReader;
 import java.io.File;

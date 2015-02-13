@@ -15,12 +15,12 @@
  */
 package com.google.gwt.dev.cfg;
 
+import com.google.common.base.Splitter;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableMap.Builder;
+import com.google.common.collect.Lists;
 import com.google.gwt.core.ext.BadPropertyValueException;
 import com.google.gwt.core.ext.DefaultConfigurationProperty;
-import com.google.gwt.thirdparty.guava.common.base.Splitter;
-import com.google.gwt.thirdparty.guava.common.collect.ImmutableMap;
-import com.google.gwt.thirdparty.guava.common.collect.ImmutableMap.Builder;
-import com.google.gwt.thirdparty.guava.common.collect.Lists;
 
 import java.io.Serializable;
 import java.util.Collections;

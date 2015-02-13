@@ -26,9 +26,7 @@ import java.io.ByteArrayOutputStream;
  * Test for {@link CompiledClass}.
  */
 public class CompiledClassTest extends TestCase {
-  static byte[] dummyByteCode = {
-    (byte) 0xDE, (byte) 0xAD, (byte)0xBE, (byte)0xEF
-  };
+  static byte[] dummyByteCode = {(byte) 0xDE, (byte) 0xAD, (byte) 0xBE, (byte) 0xEF};
 
   public void testCompiledClassSerialization() throws Exception {
     CompiledClass writeObject = new CompiledClass(dummyByteCode, null, false,

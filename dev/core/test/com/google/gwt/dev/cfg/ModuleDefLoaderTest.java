@@ -15,19 +15,19 @@
  */
 package com.google.gwt.dev.cfg;
 
+import com.google.common.collect.Sets;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.CompilerContext;
 import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.util.UnitTestTreeLogger;
-import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
 import junit.framework.TestCase;
 
 import java.util.Set;
 
 /**
- * Test for the module def loading
+ * Test for the module def loading.
  */
 public class ModuleDefLoaderTest extends TestCase {
 

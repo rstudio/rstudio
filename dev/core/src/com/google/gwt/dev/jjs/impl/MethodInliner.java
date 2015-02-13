@@ -15,6 +15,8 @@
  */
 package com.google.gwt.dev.jjs.impl;
 
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JCastOperation;
@@ -41,8 +43,6 @@ import com.google.gwt.dev.util.collect.Stack;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
-import com.google.gwt.thirdparty.guava.common.collect.Lists;
-import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
 import java.util.List;
 import java.util.Set;

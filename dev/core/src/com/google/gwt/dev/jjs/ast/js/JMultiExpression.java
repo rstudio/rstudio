@@ -15,13 +15,13 @@
  */
 package com.google.gwt.dev.jjs.ast.js;
 
+import com.google.common.collect.Lists;
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JExpression;
 import com.google.gwt.dev.jjs.ast.JPrimitiveType;
 import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.ast.JVisitor;
-import com.google.gwt.thirdparty.guava.common.collect.Lists;
 
 import java.util.Arrays;
 import java.util.Collection;

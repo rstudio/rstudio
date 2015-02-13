@@ -15,11 +15,11 @@
  */
 package com.google.gwt.dev.javac;
 
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.javac.testing.impl.JavaResourceBase;
 import com.google.gwt.dev.javac.testing.impl.MockJavaResource;
-import com.google.gwt.thirdparty.guava.common.collect.Lists;
-import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
 import java.util.Collection;
 import java.util.List;

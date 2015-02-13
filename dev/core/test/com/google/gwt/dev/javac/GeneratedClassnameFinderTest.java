@@ -149,8 +149,6 @@ public class GeneratedClassnameFinderTest extends TestCase {
   public void testTopLevel() {
     assertEquals(1, new TopLevelTester().getGeneratedClasses().size());
   }
-
-
 }
 
 /**

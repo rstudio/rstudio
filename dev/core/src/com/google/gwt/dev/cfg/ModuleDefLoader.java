@@ -15,6 +15,9 @@
  */
 package com.google.gwt.dev.cfg;
 
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.MapMaker;
+import com.google.common.collect.Maps;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.CompilerContext;
@@ -23,9 +26,6 @@ import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 import com.google.gwt.dev.util.xml.ReflectiveParser;
-import com.google.gwt.thirdparty.guava.common.annotations.VisibleForTesting;
-import com.google.gwt.thirdparty.guava.common.collect.MapMaker;
-import com.google.gwt.thirdparty.guava.common.collect.Maps;
 import com.google.gwt.util.tools.Utility;
 
 import java.io.File;

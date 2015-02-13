@@ -13,7 +13,7 @@
  */
 package com.google.gwt.dev.cfg;
 
-import com.google.gwt.thirdparty.guava.common.collect.Maps;
+import com.google.common.collect.Maps;
 
 import java.util.Map;
 

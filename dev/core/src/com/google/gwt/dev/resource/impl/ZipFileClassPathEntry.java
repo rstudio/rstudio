@@ -15,14 +15,14 @@
  */
 package com.google.gwt.dev.resource.impl;
 
+import com.google.common.collect.MapMaker;
+import com.google.common.collect.Maps;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.dev.util.collect.IdentityHashMap;
 import com.google.gwt.dev.util.collect.IdentityHashSet;
 import com.google.gwt.dev.util.collect.IdentityMaps;
 import com.google.gwt.dev.util.collect.Sets;
 import com.google.gwt.dev.util.msg.Message1String;
-import com.google.gwt.thirdparty.guava.common.collect.MapMaker;
-import com.google.gwt.thirdparty.guava.common.collect.Maps;
 
 import java.io.File;
 import java.io.IOException;

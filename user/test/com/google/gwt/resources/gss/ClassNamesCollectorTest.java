@@ -19,11 +19,11 @@ import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import com.google.common.css.compiler.ast.CssClassSelectorNode;
+import com.google.common.css.compiler.ast.CssTree;
+import com.google.common.css.compiler.ast.VisitController;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.resources.client.CssResource.ImportedWithPrefix;
-import com.google.gwt.thirdparty.common.css.compiler.ast.CssClassSelectorNode;
-import com.google.gwt.thirdparty.common.css.compiler.ast.CssTree;
-import com.google.gwt.thirdparty.common.css.compiler.ast.VisitController;
 
 import junit.framework.TestCase;
 

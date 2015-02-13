@@ -15,6 +15,8 @@
  */
 package com.google.gwt.dev.js;
 
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.Multimap;
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.js.ast.JsBinaryOperation;
 import com.google.gwt.dev.js.ast.JsBinaryOperator;
@@ -29,8 +31,6 @@ import com.google.gwt.dev.js.ast.JsObjectLiteral;
 import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.js.ast.JsPropertyInitializer;
 import com.google.gwt.dev.js.ast.JsStringLiteral;
-import com.google.gwt.thirdparty.guava.common.annotations.VisibleForTesting;
-import com.google.gwt.thirdparty.guava.common.collect.Multimap;
 
 import java.util.List;
 

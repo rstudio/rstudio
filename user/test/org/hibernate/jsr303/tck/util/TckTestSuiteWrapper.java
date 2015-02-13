@@ -15,14 +15,14 @@
  */
 package org.hibernate.jsr303.tck.util;
 
-import static com.google.gwt.thirdparty.guava.common.base.Predicates.and;
-import static com.google.gwt.thirdparty.guava.common.base.Predicates.not;
-import static com.google.gwt.thirdparty.guava.common.base.Predicates.or;
-import static com.google.gwt.thirdparty.guava.common.collect.ImmutableList.copyOf;
-import static com.google.gwt.thirdparty.guava.common.collect.Iterables.filter;
+import static com.google.common.base.Predicates.and;
+import static com.google.common.base.Predicates.not;
+import static com.google.common.base.Predicates.or;
+import static com.google.common.collect.ImmutableList.copyOf;
+import static com.google.common.collect.Iterables.filter;
 
 import com.google.gwt.junit.tools.GWTTestSuite;
-import com.google.gwt.thirdparty.guava.common.base.Predicate;
+import com.google.common.base.Predicate;
 
 import junit.framework.Test;
 
@@ -55,7 +55,7 @@ public class TckTestSuiteWrapper extends GWTTestSuite {
   private static final Predicate<Method> EXCLUDE_NON_TCK_TEST = createHasProperty(NonTckTest.EXCLUDE);
 
   @SuppressWarnings("unchecked")
-  private static final Predicate<Method> METHOD_FILTER = 
+  private static final Predicate<Method> METHOD_FILTER =
       and(
          or(INCLUDE_NOT_SUPPORTED, not(HAS_NOT_SUPPORTED)),
          or(INCLUDE_TEST_NOT_COMPATIBLE, not(HAS_TEST_NOT_COMPATIBLE)),

@@ -15,6 +15,8 @@
  */
 package com.google.gwt.dev.jjs.impl.codesplitter;
 
+import com.google.common.base.Predicates;
+import com.google.common.collect.Sets;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JClassLiteral;
@@ -32,8 +34,6 @@ import com.google.gwt.dev.jjs.impl.ControlFlowAnalyzer;
 import com.google.gwt.dev.js.ast.JsStatement;
 import com.google.gwt.dev.util.collect.HashMap;
 import com.google.gwt.dev.util.collect.HashSet;
-import com.google.gwt.thirdparty.guava.common.base.Predicates;
-import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
 import java.util.ArrayDeque;
 import java.util.Collection;

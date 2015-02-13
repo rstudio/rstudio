@@ -15,10 +15,10 @@
  */
 package com.google.gwt.dev.jjs.impl.codesplitter;
 
+import com.google.common.base.Preconditions;
+import com.google.common.collect.Sets;
 import com.google.gwt.dev.jjs.ast.JRunAsync;
 import com.google.gwt.dev.js.ast.JsStatement;
-import com.google.gwt.thirdparty.guava.common.base.Preconditions;
-import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
 import java.util.Collection;
 import java.util.List;

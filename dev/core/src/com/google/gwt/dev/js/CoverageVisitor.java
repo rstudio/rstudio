@@ -15,6 +15,7 @@
  */
 package com.google.gwt.dev.js;
 
+import com.google.common.collect.Sets;
 import com.google.gwt.dev.js.ast.JsArrayAccess;
 import com.google.gwt.dev.js.ast.JsBinaryOperation;
 import com.google.gwt.dev.js.ast.JsContext;
@@ -29,7 +30,6 @@ import com.google.gwt.dev.js.ast.JsPostfixOperation;
 import com.google.gwt.dev.js.ast.JsPrefixOperation;
 import com.google.gwt.dev.js.ast.JsUnaryOperator;
 import com.google.gwt.dev.js.ast.JsWhile;
-import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
 import java.util.Set;
 

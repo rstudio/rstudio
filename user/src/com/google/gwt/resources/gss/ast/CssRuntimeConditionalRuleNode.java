@@ -15,10 +15,10 @@
  */
 package com.google.gwt.resources.gss.ast;
 
-import com.google.gwt.thirdparty.common.css.compiler.ast.CssConditionalRuleNode;
-import com.google.gwt.thirdparty.common.css.compiler.ast.CssValueNode;
-import com.google.gwt.thirdparty.guava.common.base.Preconditions;
-import com.google.gwt.thirdparty.guava.common.collect.ImmutableList;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
+import com.google.common.css.compiler.ast.CssConditionalRuleNode;
+import com.google.common.css.compiler.ast.CssValueNode;
 
 /**
  * Represents a conditional rule that needs to be evaluated at runtime.

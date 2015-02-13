@@ -16,6 +16,8 @@
 
 package com.google.gwt.core.linker;
 
+import com.google.common.base.Joiner;
+import com.google.common.base.Splitter;
 import com.google.gwt.core.ext.LinkerContext;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
@@ -35,8 +37,6 @@ import com.google.gwt.core.ext.linker.impl.SelectionScriptLinker;
 import com.google.gwt.dev.About;
 import com.google.gwt.dev.util.DefaultTextOutput;
 import com.google.gwt.dev.util.TextOutput;
-import com.google.gwt.thirdparty.guava.common.base.Joiner;
-import com.google.gwt.thirdparty.guava.common.base.Splitter;
 import com.google.gwt.util.tools.Utility;
 import com.google.gwt.util.tools.shared.StringUtils;
 

@@ -13,13 +13,13 @@
  */
 package com.google.gwt.dev.jjs.impl;
 
+import com.google.common.collect.Maps;
 import com.google.gwt.dev.jjs.SourceOrigin;
 import com.google.gwt.dev.jjs.ast.JArrayType;
 import com.google.gwt.dev.jjs.ast.JCastMap;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
-import com.google.gwt.thirdparty.guava.common.collect.Maps;
 
 import java.util.Map;
 

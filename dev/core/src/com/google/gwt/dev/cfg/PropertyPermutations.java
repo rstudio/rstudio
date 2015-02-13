@@ -15,12 +15,12 @@
  */
 package com.google.gwt.dev.cfg;
 
+import com.google.common.base.Objects;
+import com.google.common.collect.Lists;
 import com.google.gwt.core.ext.PropertyOracle;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.util.CollapsedPropertyKey;
-import com.google.gwt.thirdparty.guava.common.base.Objects;
-import com.google.gwt.thirdparty.guava.common.collect.Lists;
 
 import java.util.ArrayList;
 import java.util.Arrays;

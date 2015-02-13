@@ -15,15 +15,15 @@
  */
 package com.google.gwt.resources.gss;
 
-import com.google.gwt.thirdparty.common.css.compiler.ast.CssCompilerPass;
-import com.google.gwt.thirdparty.common.css.compiler.ast.CssConstantReferenceNode;
-import com.google.gwt.thirdparty.common.css.compiler.ast.CssDefinitionNode;
-import com.google.gwt.thirdparty.common.css.compiler.ast.CssTree;
-import com.google.gwt.thirdparty.common.css.compiler.ast.CssValueNode;
-import com.google.gwt.thirdparty.common.css.compiler.ast.DefaultTreeVisitor;
-import com.google.gwt.thirdparty.common.css.compiler.ast.MutatingVisitController;
-import com.google.gwt.thirdparty.common.css.compiler.passes.CollectConstantDefinitions;
-import com.google.gwt.thirdparty.common.css.compiler.passes.ConstantDefinitions;
+import com.google.common.css.compiler.ast.CssCompilerPass;
+import com.google.common.css.compiler.ast.CssConstantReferenceNode;
+import com.google.common.css.compiler.ast.CssDefinitionNode;
+import com.google.common.css.compiler.ast.CssTree;
+import com.google.common.css.compiler.ast.CssValueNode;
+import com.google.common.css.compiler.ast.DefaultTreeVisitor;
+import com.google.common.css.compiler.ast.MutatingVisitController;
+import com.google.common.css.compiler.passes.CollectConstantDefinitions;
+import com.google.common.css.compiler.passes.ConstantDefinitions;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -15,12 +15,12 @@
  */
 package com.google.gwt.dev.cfg;
 
+import com.google.common.base.Objects;
+import com.google.common.collect.ImmutableMap;
 import com.google.gwt.core.ext.linker.PropertyProviderGenerator;
 import com.google.gwt.dev.util.collect.IdentityHashSet;
 import com.google.gwt.dev.util.collect.Lists;
 import com.google.gwt.dev.util.collect.Sets;
-import com.google.gwt.thirdparty.guava.common.base.Objects;
-import com.google.gwt.thirdparty.guava.common.collect.ImmutableMap;
 
 import java.io.Serializable;
 import java.util.ArrayList;

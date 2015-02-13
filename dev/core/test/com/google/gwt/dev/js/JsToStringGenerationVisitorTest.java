@@ -13,6 +13,7 @@
  */
 package com.google.gwt.dev.js;
 
+import com.google.common.collect.Maps;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.linker.impl.NamedRange;
 import com.google.gwt.dev.cfg.BindingProperty;
@@ -21,7 +22,6 @@ import com.google.gwt.dev.cfg.ConfigurationProperty;
 import com.google.gwt.dev.jjs.impl.FullCompileTestBase;
 import com.google.gwt.dev.util.DefaultTextOutput;
 import com.google.gwt.dev.util.TextOutput;
-import com.google.gwt.thirdparty.guava.common.collect.Maps;
 
 import java.util.List;
 import java.util.Map;

@@ -68,7 +68,7 @@ public class SelectionScriptJavaScriptTest extends TestCase {
   }
 
   /**
-   * Test a meta tag specifying a base for this module
+   * Test a meta tag specifying a base for this module.
    */
   public void testModuleSpecificMetas1() throws IOException {
     StringBuilder metas = new StringBuilder();
@@ -133,7 +133,7 @@ public class SelectionScriptJavaScriptTest extends TestCase {
   }
 
   /**
-   * Test the default href
+   * Test the default href.
    */
   public void testDefault() throws IOException {
     StringBuilder testCode = new StringBuilder();
@@ -165,7 +165,7 @@ public class SelectionScriptJavaScriptTest extends TestCase {
   }
 
   /**
-   * Test getting the base URL from a meta property with an absolute URL
+   * Test getting the base URL from a meta property with an absolute URL.
    */
   public void testScriptBaseFromMetas() throws IOException {
     StringBuilder testCode = new StringBuilder();
@@ -180,7 +180,7 @@ public class SelectionScriptJavaScriptTest extends TestCase {
   }
 
   /**
-   * Test getting the base URL from a meta property with a relative URL
+   * Test getting the base URL from a meta property with a relative URL.
    */
   public void testRelativeScriptBaseFromMetas() throws IOException {
     StringBuilder testCode = new StringBuilder();
@@ -213,7 +213,7 @@ public class SelectionScriptJavaScriptTest extends TestCase {
   }
 
   /**
-   * Test getting a the base URL from the HTML base tag
+   * Test getting a the base URL from the HTML base tag.
    */
   public void testScriptBaseFromBaseTag() throws IOException {
     StringBuilder hostPage = new StringBuilder();

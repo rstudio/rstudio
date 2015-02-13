@@ -6,10 +6,10 @@ package com.google.gwt.dev.shell.remoteui;
 public final class RemoteMessageProto {
   private RemoteMessageProto() {}
   public static void registerAllExtensions(
-      com.google.gwt.dev.protobuf.ExtensionRegistry registry) {
+      com.google.protobuf.ExtensionRegistry registry) {
   }
   public interface MessageOrBuilder
-      extends com.google.gwt.dev.protobuf.MessageOrBuilder {
+      extends com.google.protobuf.MessageOrBuilder {
 
     // optional string protocolVersion = 1;
     /**
@@ -38,7 +38,7 @@ public final class RemoteMessageProto {
      * we can make use of it to detect protocol incompatibilities
      * </pre>
      */
-    com.google.gwt.dev.protobuf.ByteString
+    com.google.protobuf.ByteString
         getProtocolVersionBytes();
 
     // optional .com.google.gwt.dev.shell.remoteui.Message.MessageType messageType = 2;
@@ -111,14 +111,14 @@ public final class RemoteMessageProto {
    * </pre>
    */
   public static final class Message extends
-      com.google.gwt.dev.protobuf.GeneratedMessage
+      com.google.protobuf.GeneratedMessage
       implements MessageOrBuilder {
     // Use Message.newBuilder() to construct.
-    private Message(com.google.gwt.dev.protobuf.GeneratedMessage.Builder<?> builder) {
+    private Message(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
       super(builder);
       this.unknownFields = builder.getUnknownFields();
     }
-    private Message(boolean noInit) { this.unknownFields = com.google.gwt.dev.protobuf.UnknownFieldSet.getDefaultInstance(); }
+    private Message(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
 
     private static final Message defaultInstance;
     public static Message getDefaultInstance() {
@@ -129,20 +129,20 @@ public final class RemoteMessageProto {
       return defaultInstance;
     }
 
-    private final com.google.gwt.dev.protobuf.UnknownFieldSet unknownFields;
+    private final com.google.protobuf.UnknownFieldSet unknownFields;
     @java.lang.Override
-    public final com.google.gwt.dev.protobuf.UnknownFieldSet
+    public final com.google.protobuf.UnknownFieldSet
         getUnknownFields() {
       return this.unknownFields;
     }
     private Message(
-        com.google.gwt.dev.protobuf.CodedInputStream input,
-        com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
       initFields();
       int mutable_bitField0_ = 0;
-      com.google.gwt.dev.protobuf.UnknownFieldSet.Builder unknownFields =
-          com.google.gwt.dev.protobuf.UnknownFieldSet.newBuilder();
+      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+          com.google.protobuf.UnknownFieldSet.newBuilder();
       try {
         boolean done = false;
         while (!done) {
@@ -220,40 +220,40 @@ public final class RemoteMessageProto {
             }
           }
         }
-      } catch (com.google.gwt.dev.protobuf.InvalidProtocolBufferException e) {
+      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
         throw e.setUnfinishedMessage(this);
       } catch (java.io.IOException e) {
-        throw new com.google.gwt.dev.protobuf.InvalidProtocolBufferException(
+        throw new com.google.protobuf.InvalidProtocolBufferException(
             e.getMessage()).setUnfinishedMessage(this);
       } finally {
         this.unknownFields = unknownFields.build();
         makeExtensionsImmutable();
       }
     }
-    public static final com.google.gwt.dev.protobuf.Descriptors.Descriptor
+    public static final com.google.protobuf.Descriptors.Descriptor
         getDescriptor() {
       return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_descriptor;
     }
 
-    protected com.google.gwt.dev.protobuf.GeneratedMessage.FieldAccessorTable
+    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
         internalGetFieldAccessorTable() {
       return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
               com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.class, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Builder.class);
     }
 
-    public static com.google.gwt.dev.protobuf.Parser<Message> PARSER =
-        new com.google.gwt.dev.protobuf.AbstractParser<Message>() {
+    public static com.google.protobuf.Parser<Message> PARSER =
+        new com.google.protobuf.AbstractParser<Message>() {
       public Message parsePartialFrom(
-          com.google.gwt.dev.protobuf.CodedInputStream input,
-          com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
         return new Message(input, extensionRegistry);
       }
     };
 
     @java.lang.Override
-    public com.google.gwt.dev.protobuf.Parser<Message> getParserForType() {
+    public com.google.protobuf.Parser<Message> getParserForType() {
       return PARSER;
     }
 
@@ -265,7 +265,7 @@ public final class RemoteMessageProto {
      * </pre>
      */
     public enum MessageType
-        implements com.google.gwt.dev.protobuf.ProtocolMessageEnum {
+        implements com.google.protobuf.ProtocolMessageEnum {
       /**
        * <code>REQUEST = 0;</code>
        */
@@ -305,27 +305,27 @@ public final class RemoteMessageProto {
         }
       }
 
-      public static com.google.gwt.dev.protobuf.Internal.EnumLiteMap<MessageType>
+      public static com.google.protobuf.Internal.EnumLiteMap<MessageType>
           internalGetValueMap() {
         return internalValueMap;
       }
-      private static com.google.gwt.dev.protobuf.Internal.EnumLiteMap<MessageType>
+      private static com.google.protobuf.Internal.EnumLiteMap<MessageType>
           internalValueMap =
-            new com.google.gwt.dev.protobuf.Internal.EnumLiteMap<MessageType>() {
+            new com.google.protobuf.Internal.EnumLiteMap<MessageType>() {
               public MessageType findValueByNumber(int number) {
                 return MessageType.valueOf(number);
               }
             };
 
-      public final com.google.gwt.dev.protobuf.Descriptors.EnumValueDescriptor
+      public final com.google.protobuf.Descriptors.EnumValueDescriptor
           getValueDescriptor() {
         return getDescriptor().getValues().get(index);
       }
-      public final com.google.gwt.dev.protobuf.Descriptors.EnumDescriptor
+      public final com.google.protobuf.Descriptors.EnumDescriptor
           getDescriptorForType() {
         return getDescriptor();
       }
-      public static final com.google.gwt.dev.protobuf.Descriptors.EnumDescriptor
+      public static final com.google.protobuf.Descriptors.EnumDescriptor
           getDescriptor() {
         return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.getDescriptor().getEnumTypes().get(0);
       }
@@ -333,7 +333,7 @@ public final class RemoteMessageProto {
       private static final MessageType[] VALUES = values();
 
       public static MessageType valueOf(
-          com.google.gwt.dev.protobuf.Descriptors.EnumValueDescriptor desc) {
+          com.google.protobuf.Descriptors.EnumValueDescriptor desc) {
         if (desc.getType() != getDescriptor()) {
           throw new java.lang.IllegalArgumentException(
             "EnumValueDescriptor is not for this type.");
@@ -353,7 +353,7 @@ public final class RemoteMessageProto {
     }
 
     public interface RequestOrBuilder
-        extends com.google.gwt.dev.protobuf.MessageOrBuilder {
+        extends com.google.protobuf.MessageOrBuilder {
 
       // optional .com.google.gwt.dev.shell.remoteui.Message.Request.ServiceType serviceType = 1;
       /**
@@ -401,14 +401,14 @@ public final class RemoteMessageProto {
      * </pre>
      */
     public static final class Request extends
-        com.google.gwt.dev.protobuf.GeneratedMessage
+        com.google.protobuf.GeneratedMessage
         implements RequestOrBuilder {
       // Use Request.newBuilder() to construct.
-      private Request(com.google.gwt.dev.protobuf.GeneratedMessage.Builder<?> builder) {
+      private Request(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
         super(builder);
         this.unknownFields = builder.getUnknownFields();
       }
-      private Request(boolean noInit) { this.unknownFields = com.google.gwt.dev.protobuf.UnknownFieldSet.getDefaultInstance(); }
+      private Request(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
 
       private static final Request defaultInstance;
       public static Request getDefaultInstance() {
@@ -419,20 +419,20 @@ public final class RemoteMessageProto {
         return defaultInstance;
       }
 
-      private final com.google.gwt.dev.protobuf.UnknownFieldSet unknownFields;
+      private final com.google.protobuf.UnknownFieldSet unknownFields;
       @java.lang.Override
-      public final com.google.gwt.dev.protobuf.UnknownFieldSet
+      public final com.google.protobuf.UnknownFieldSet
           getUnknownFields() {
         return this.unknownFields;
       }
       private Request(
-          com.google.gwt.dev.protobuf.CodedInputStream input,
-          com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
         initFields();
         int mutable_bitField0_ = 0;
-        com.google.gwt.dev.protobuf.UnknownFieldSet.Builder unknownFields =
-            com.google.gwt.dev.protobuf.UnknownFieldSet.newBuilder();
+        com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+            com.google.protobuf.UnknownFieldSet.newBuilder();
         try {
           boolean done = false;
           while (!done) {
@@ -487,40 +487,40 @@ public final class RemoteMessageProto {
               }
             }
           }
-        } catch (com.google.gwt.dev.protobuf.InvalidProtocolBufferException e) {
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
           throw e.setUnfinishedMessage(this);
         } catch (java.io.IOException e) {
-          throw new com.google.gwt.dev.protobuf.InvalidProtocolBufferException(
+          throw new com.google.protobuf.InvalidProtocolBufferException(
               e.getMessage()).setUnfinishedMessage(this);
         } finally {
           this.unknownFields = unknownFields.build();
           makeExtensionsImmutable();
         }
       }
-      public static final com.google.gwt.dev.protobuf.Descriptors.Descriptor
+      public static final com.google.protobuf.Descriptors.Descriptor
           getDescriptor() {
         return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_descriptor;
       }
 
-      protected com.google.gwt.dev.protobuf.GeneratedMessage.FieldAccessorTable
+      protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
           internalGetFieldAccessorTable() {
         return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_fieldAccessorTable
             .ensureFieldAccessorsInitialized(
                 com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.class, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.Builder.class);
       }
 
-      public static com.google.gwt.dev.protobuf.Parser<Request> PARSER =
-          new com.google.gwt.dev.protobuf.AbstractParser<Request>() {
+      public static com.google.protobuf.Parser<Request> PARSER =
+          new com.google.protobuf.AbstractParser<Request>() {
         public Request parsePartialFrom(
-            com.google.gwt.dev.protobuf.CodedInputStream input,
-            com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
-            throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+            com.google.protobuf.CodedInputStream input,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws com.google.protobuf.InvalidProtocolBufferException {
           return new Request(input, extensionRegistry);
         }
       };
 
       @java.lang.Override
-      public com.google.gwt.dev.protobuf.Parser<Request> getParserForType() {
+      public com.google.protobuf.Parser<Request> getParserForType() {
         return PARSER;
       }
 
@@ -535,7 +535,7 @@ public final class RemoteMessageProto {
        * </pre>
        */
       public enum ServiceType
-          implements com.google.gwt.dev.protobuf.ProtocolMessageEnum {
+          implements com.google.protobuf.ProtocolMessageEnum {
         /**
          * <code>VIEWER = 0;</code>
          */
@@ -566,27 +566,27 @@ public final class RemoteMessageProto {
           }
         }
 
-        public static com.google.gwt.dev.protobuf.Internal.EnumLiteMap<ServiceType>
+        public static com.google.protobuf.Internal.EnumLiteMap<ServiceType>
             internalGetValueMap() {
           return internalValueMap;
         }
-        private static com.google.gwt.dev.protobuf.Internal.EnumLiteMap<ServiceType>
+        private static com.google.protobuf.Internal.EnumLiteMap<ServiceType>
             internalValueMap =
-              new com.google.gwt.dev.protobuf.Internal.EnumLiteMap<ServiceType>() {
+              new com.google.protobuf.Internal.EnumLiteMap<ServiceType>() {
                 public ServiceType findValueByNumber(int number) {
                   return ServiceType.valueOf(number);
                 }
               };
 
-        public final com.google.gwt.dev.protobuf.Descriptors.EnumValueDescriptor
+        public final com.google.protobuf.Descriptors.EnumValueDescriptor
             getValueDescriptor() {
           return getDescriptor().getValues().get(index);
         }
-        public final com.google.gwt.dev.protobuf.Descriptors.EnumDescriptor
+        public final com.google.protobuf.Descriptors.EnumDescriptor
             getDescriptorForType() {
           return getDescriptor();
         }
-        public static final com.google.gwt.dev.protobuf.Descriptors.EnumDescriptor
+        public static final com.google.protobuf.Descriptors.EnumDescriptor
             getDescriptor() {
           return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.getDescriptor().getEnumTypes().get(0);
         }
@@ -594,7 +594,7 @@ public final class RemoteMessageProto {
         private static final ServiceType[] VALUES = values();
 
         public static ServiceType valueOf(
-            com.google.gwt.dev.protobuf.Descriptors.EnumValueDescriptor desc) {
+            com.google.protobuf.Descriptors.EnumValueDescriptor desc) {
           if (desc.getType() != getDescriptor()) {
             throw new java.lang.IllegalArgumentException(
               "EnumValueDescriptor is not for this type.");
@@ -614,7 +614,7 @@ public final class RemoteMessageProto {
       }
 
       public interface ViewerRequestOrBuilder
-          extends com.google.gwt.dev.protobuf.MessageOrBuilder {
+          extends com.google.protobuf.MessageOrBuilder {
 
         // optional .com.google.gwt.dev.shell.remoteui.Message.Request.ViewerRequest.RequestType requestType = 1;
         /**
@@ -718,14 +718,14 @@ public final class RemoteMessageProto {
        * </pre>
        */
       public static final class ViewerRequest extends
-          com.google.gwt.dev.protobuf.GeneratedMessage
+          com.google.protobuf.GeneratedMessage
           implements ViewerRequestOrBuilder {
         // Use ViewerRequest.newBuilder() to construct.
-        private ViewerRequest(com.google.gwt.dev.protobuf.GeneratedMessage.Builder<?> builder) {
+        private ViewerRequest(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
           super(builder);
           this.unknownFields = builder.getUnknownFields();
         }
-        private ViewerRequest(boolean noInit) { this.unknownFields = com.google.gwt.dev.protobuf.UnknownFieldSet.getDefaultInstance(); }
+        private ViewerRequest(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
 
         private static final ViewerRequest defaultInstance;
         public static ViewerRequest getDefaultInstance() {
@@ -736,20 +736,20 @@ public final class RemoteMessageProto {
           return defaultInstance;
         }
 
-        private final com.google.gwt.dev.protobuf.UnknownFieldSet unknownFields;
+        private final com.google.protobuf.UnknownFieldSet unknownFields;
         @java.lang.Override
-        public final com.google.gwt.dev.protobuf.UnknownFieldSet
+        public final com.google.protobuf.UnknownFieldSet
             getUnknownFields() {
           return this.unknownFields;
         }
         private ViewerRequest(
-            com.google.gwt.dev.protobuf.CodedInputStream input,
-            com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
-            throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+            com.google.protobuf.CodedInputStream input,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws com.google.protobuf.InvalidProtocolBufferException {
           initFields();
           int mutable_bitField0_ = 0;
-          com.google.gwt.dev.protobuf.UnknownFieldSet.Builder unknownFields =
-              com.google.gwt.dev.protobuf.UnknownFieldSet.newBuilder();
+          com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+              com.google.protobuf.UnknownFieldSet.newBuilder();
           try {
             boolean done = false;
             while (!done) {
@@ -856,40 +856,40 @@ public final class RemoteMessageProto {
                 }
               }
             }
-          } catch (com.google.gwt.dev.protobuf.InvalidProtocolBufferException e) {
+          } catch (com.google.protobuf.InvalidProtocolBufferException e) {
             throw e.setUnfinishedMessage(this);
           } catch (java.io.IOException e) {
-            throw new com.google.gwt.dev.protobuf.InvalidProtocolBufferException(
+            throw new com.google.protobuf.InvalidProtocolBufferException(
                 e.getMessage()).setUnfinishedMessage(this);
           } finally {
             this.unknownFields = unknownFields.build();
             makeExtensionsImmutable();
           }
         }
-        public static final com.google.gwt.dev.protobuf.Descriptors.Descriptor
+        public static final com.google.protobuf.Descriptors.Descriptor
             getDescriptor() {
           return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_descriptor;
         }
 
-        protected com.google.gwt.dev.protobuf.GeneratedMessage.FieldAccessorTable
+        protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
             internalGetFieldAccessorTable() {
           return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_fieldAccessorTable
               .ensureFieldAccessorsInitialized(
                   com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.class, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.Builder.class);
         }
 
-        public static com.google.gwt.dev.protobuf.Parser<ViewerRequest> PARSER =
-            new com.google.gwt.dev.protobuf.AbstractParser<ViewerRequest>() {
+        public static com.google.protobuf.Parser<ViewerRequest> PARSER =
+            new com.google.protobuf.AbstractParser<ViewerRequest>() {
           public ViewerRequest parsePartialFrom(
-              com.google.gwt.dev.protobuf.CodedInputStream input,
-              com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
-              throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+              com.google.protobuf.CodedInputStream input,
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+              throws com.google.protobuf.InvalidProtocolBufferException {
             return new ViewerRequest(input, extensionRegistry);
           }
         };
 
         @java.lang.Override
-        public com.google.gwt.dev.protobuf.Parser<ViewerRequest> getParserForType() {
+        public com.google.protobuf.Parser<ViewerRequest> getParserForType() {
           return PARSER;
         }
 
@@ -901,7 +901,7 @@ public final class RemoteMessageProto {
          * </pre>
          */
         public enum RequestType
-            implements com.google.gwt.dev.protobuf.ProtocolMessageEnum {
+            implements com.google.protobuf.ProtocolMessageEnum {
           /**
            * <code>CAPABILITY_EXCHANGE = 0;</code>
            */
@@ -968,27 +968,27 @@ public final class RemoteMessageProto {
             }
           }
 
-          public static com.google.gwt.dev.protobuf.Internal.EnumLiteMap<RequestType>
+          public static com.google.protobuf.Internal.EnumLiteMap<RequestType>
               internalGetValueMap() {
             return internalValueMap;
           }
-          private static com.google.gwt.dev.protobuf.Internal.EnumLiteMap<RequestType>
+          private static com.google.protobuf.Internal.EnumLiteMap<RequestType>
               internalValueMap =
-                new com.google.gwt.dev.protobuf.Internal.EnumLiteMap<RequestType>() {
+                new com.google.protobuf.Internal.EnumLiteMap<RequestType>() {
                   public RequestType findValueByNumber(int number) {
                     return RequestType.valueOf(number);
                   }
                 };
 
-          public final com.google.gwt.dev.protobuf.Descriptors.EnumValueDescriptor
+          public final com.google.protobuf.Descriptors.EnumValueDescriptor
               getValueDescriptor() {
             return getDescriptor().getValues().get(index);
           }
-          public final com.google.gwt.dev.protobuf.Descriptors.EnumDescriptor
+          public final com.google.protobuf.Descriptors.EnumDescriptor
               getDescriptorForType() {
             return getDescriptor();
           }
-          public static final com.google.gwt.dev.protobuf.Descriptors.EnumDescriptor
+          public static final com.google.protobuf.Descriptors.EnumDescriptor
               getDescriptor() {
             return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.getDescriptor().getEnumTypes().get(0);
           }
@@ -996,7 +996,7 @@ public final class RemoteMessageProto {
           private static final RequestType[] VALUES = values();
 
           public static RequestType valueOf(
-              com.google.gwt.dev.protobuf.Descriptors.EnumValueDescriptor desc) {
+              com.google.protobuf.Descriptors.EnumValueDescriptor desc) {
             if (desc.getType() != getDescriptor()) {
               throw new java.lang.IllegalArgumentException(
                 "EnumValueDescriptor is not for this type.");
@@ -1016,7 +1016,7 @@ public final class RemoteMessageProto {
         }
 
         public interface CapabilityExchangeOrBuilder
-            extends com.google.gwt.dev.protobuf.MessageOrBuilder {
+            extends com.google.protobuf.MessageOrBuilder {
         }
         /**
          * Protobuf type {@code com.google.gwt.dev.shell.remoteui.Message.Request.ViewerRequest.CapabilityExchange}
@@ -1027,14 +1027,14 @@ public final class RemoteMessageProto {
          * </pre>
          */
         public static final class CapabilityExchange extends
-            com.google.gwt.dev.protobuf.GeneratedMessage
+            com.google.protobuf.GeneratedMessage
             implements CapabilityExchangeOrBuilder {
           // Use CapabilityExchange.newBuilder() to construct.
-          private CapabilityExchange(com.google.gwt.dev.protobuf.GeneratedMessage.Builder<?> builder) {
+          private CapabilityExchange(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
             super(builder);
             this.unknownFields = builder.getUnknownFields();
           }
-          private CapabilityExchange(boolean noInit) { this.unknownFields = com.google.gwt.dev.protobuf.UnknownFieldSet.getDefaultInstance(); }
+          private CapabilityExchange(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
 
           private static final CapabilityExchange defaultInstance;
           public static CapabilityExchange getDefaultInstance() {
@@ -1045,19 +1045,19 @@ public final class RemoteMessageProto {
             return defaultInstance;
           }
 
-          private final com.google.gwt.dev.protobuf.UnknownFieldSet unknownFields;
+          private final com.google.protobuf.UnknownFieldSet unknownFields;
           @java.lang.Override
-          public final com.google.gwt.dev.protobuf.UnknownFieldSet
+          public final com.google.protobuf.UnknownFieldSet
               getUnknownFields() {
             return this.unknownFields;
           }
           private CapabilityExchange(
-              com.google.gwt.dev.protobuf.CodedInputStream input,
-              com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
-              throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+              com.google.protobuf.CodedInputStream input,
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+              throws com.google.protobuf.InvalidProtocolBufferException {
             initFields();
-            com.google.gwt.dev.protobuf.UnknownFieldSet.Builder unknownFields =
-                com.google.gwt.dev.protobuf.UnknownFieldSet.newBuilder();
+            com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+                com.google.protobuf.UnknownFieldSet.newBuilder();
             try {
               boolean done = false;
               while (!done) {
@@ -1075,40 +1075,40 @@ public final class RemoteMessageProto {
                   }
                 }
               }
-            } catch (com.google.gwt.dev.protobuf.InvalidProtocolBufferException e) {
+            } catch (com.google.protobuf.InvalidProtocolBufferException e) {
               throw e.setUnfinishedMessage(this);
             } catch (java.io.IOException e) {
-              throw new com.google.gwt.dev.protobuf.InvalidProtocolBufferException(
+              throw new com.google.protobuf.InvalidProtocolBufferException(
                   e.getMessage()).setUnfinishedMessage(this);
             } finally {
               this.unknownFields = unknownFields.build();
               makeExtensionsImmutable();
             }
           }
-          public static final com.google.gwt.dev.protobuf.Descriptors.Descriptor
+          public static final com.google.protobuf.Descriptors.Descriptor
               getDescriptor() {
             return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_CapabilityExchange_descriptor;
           }
 
-          protected com.google.gwt.dev.protobuf.GeneratedMessage.FieldAccessorTable
+          protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
               internalGetFieldAccessorTable() {
             return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_CapabilityExchange_fieldAccessorTable
                 .ensureFieldAccessorsInitialized(
                     com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.CapabilityExchange.class, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.CapabilityExchange.Builder.class);
           }
 
-          public static com.google.gwt.dev.protobuf.Parser<CapabilityExchange> PARSER =
-              new com.google.gwt.dev.protobuf.AbstractParser<CapabilityExchange>() {
+          public static com.google.protobuf.Parser<CapabilityExchange> PARSER =
+              new com.google.protobuf.AbstractParser<CapabilityExchange>() {
             public CapabilityExchange parsePartialFrom(
-                com.google.gwt.dev.protobuf.CodedInputStream input,
-                com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
-                throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+                com.google.protobuf.CodedInputStream input,
+                com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+                throws com.google.protobuf.InvalidProtocolBufferException {
               return new CapabilityExchange(input, extensionRegistry);
             }
           };
 
           @java.lang.Override
-          public com.google.gwt.dev.protobuf.Parser<CapabilityExchange> getParserForType() {
+          public com.google.protobuf.Parser<CapabilityExchange> getParserForType() {
             return PARSER;
           }
 
@@ -1123,7 +1123,7 @@ public final class RemoteMessageProto {
             return true;
           }
 
-          public void writeTo(com.google.gwt.dev.protobuf.CodedOutputStream output)
+          public void writeTo(com.google.protobuf.CodedOutputStream output)
                               throws java.io.IOException {
             getSerializedSize();
             getUnknownFields().writeTo(output);
@@ -1148,24 +1148,24 @@ public final class RemoteMessageProto {
           }
 
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.CapabilityExchange parseFrom(
-              com.google.gwt.dev.protobuf.ByteString data)
-              throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+              com.google.protobuf.ByteString data)
+              throws com.google.protobuf.InvalidProtocolBufferException {
             return PARSER.parseFrom(data);
           }
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.CapabilityExchange parseFrom(
-              com.google.gwt.dev.protobuf.ByteString data,
-              com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
-              throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+              com.google.protobuf.ByteString data,
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+              throws com.google.protobuf.InvalidProtocolBufferException {
             return PARSER.parseFrom(data, extensionRegistry);
           }
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.CapabilityExchange parseFrom(byte[] data)
-              throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+              throws com.google.protobuf.InvalidProtocolBufferException {
             return PARSER.parseFrom(data);
           }
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.CapabilityExchange parseFrom(
               byte[] data,
-              com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
-              throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+              throws com.google.protobuf.InvalidProtocolBufferException {
             return PARSER.parseFrom(data, extensionRegistry);
           }
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.CapabilityExchange parseFrom(java.io.InputStream input)
@@ -1174,7 +1174,7 @@ public final class RemoteMessageProto {
           }
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.CapabilityExchange parseFrom(
               java.io.InputStream input,
-              com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
               throws java.io.IOException {
             return PARSER.parseFrom(input, extensionRegistry);
           }
@@ -1184,18 +1184,18 @@ public final class RemoteMessageProto {
           }
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.CapabilityExchange parseDelimitedFrom(
               java.io.InputStream input,
-              com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
               throws java.io.IOException {
             return PARSER.parseDelimitedFrom(input, extensionRegistry);
           }
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.CapabilityExchange parseFrom(
-              com.google.gwt.dev.protobuf.CodedInputStream input)
+              com.google.protobuf.CodedInputStream input)
               throws java.io.IOException {
             return PARSER.parseFrom(input);
           }
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.CapabilityExchange parseFrom(
-              com.google.gwt.dev.protobuf.CodedInputStream input,
-              com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
+              com.google.protobuf.CodedInputStream input,
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
               throws java.io.IOException {
             return PARSER.parseFrom(input, extensionRegistry);
           }
@@ -1209,7 +1209,7 @@ public final class RemoteMessageProto {
 
           @java.lang.Override
           protected Builder newBuilderForType(
-              com.google.gwt.dev.protobuf.GeneratedMessage.BuilderParent parent) {
+              com.google.protobuf.GeneratedMessage.BuilderParent parent) {
             Builder builder = new Builder(parent);
             return builder;
           }
@@ -1222,14 +1222,14 @@ public final class RemoteMessageProto {
            * </pre>
            */
           public static final class Builder extends
-              com.google.gwt.dev.protobuf.GeneratedMessage.Builder<Builder>
+              com.google.protobuf.GeneratedMessage.Builder<Builder>
              implements com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.CapabilityExchangeOrBuilder {
-            public static final com.google.gwt.dev.protobuf.Descriptors.Descriptor
+            public static final com.google.protobuf.Descriptors.Descriptor
                 getDescriptor() {
               return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_CapabilityExchange_descriptor;
             }
 
-            protected com.google.gwt.dev.protobuf.GeneratedMessage.FieldAccessorTable
+            protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
                 internalGetFieldAccessorTable() {
               return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_CapabilityExchange_fieldAccessorTable
                   .ensureFieldAccessorsInitialized(
@@ -1242,12 +1242,12 @@ public final class RemoteMessageProto {
             }
 
             private Builder(
-                com.google.gwt.dev.protobuf.GeneratedMessage.BuilderParent parent) {
+                com.google.protobuf.GeneratedMessage.BuilderParent parent) {
               super(parent);
               maybeForceBuilderInitialization();
             }
             private void maybeForceBuilderInitialization() {
-              if (com.google.gwt.dev.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
+              if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
               }
             }
             private static Builder create() {
@@ -1263,7 +1263,7 @@ public final class RemoteMessageProto {
               return create().mergeFrom(buildPartial());
             }
 
-            public com.google.gwt.dev.protobuf.Descriptors.Descriptor
+            public com.google.protobuf.Descriptors.Descriptor
                 getDescriptorForType() {
               return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_CapabilityExchange_descriptor;
             }
@@ -1286,7 +1286,7 @@ public final class RemoteMessageProto {
               return result;
             }
 
-            public Builder mergeFrom(com.google.gwt.dev.protobuf.Message other) {
+            public Builder mergeFrom(com.google.protobuf.Message other) {
               if (other instanceof com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.CapabilityExchange) {
                 return mergeFrom((com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.CapabilityExchange)other);
               } else {
@@ -1306,13 +1306,13 @@ public final class RemoteMessageProto {
             }
 
             public Builder mergeFrom(
-                com.google.gwt.dev.protobuf.CodedInputStream input,
-                com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
+                com.google.protobuf.CodedInputStream input,
+                com.google.protobuf.ExtensionRegistryLite extensionRegistry)
                 throws java.io.IOException {
               com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.CapabilityExchange parsedMessage = null;
               try {
                 parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
-              } catch (com.google.gwt.dev.protobuf.InvalidProtocolBufferException e) {
+              } catch (com.google.protobuf.InvalidProtocolBufferException e) {
                 parsedMessage = (com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.CapabilityExchange) e.getUnfinishedMessage();
                 throw e;
               } finally {
@@ -1335,7 +1335,7 @@ public final class RemoteMessageProto {
         }
 
         public interface AddLogOrBuilder
-            extends com.google.gwt.dev.protobuf.MessageOrBuilder {
+            extends com.google.protobuf.MessageOrBuilder {
 
           // optional .com.google.gwt.dev.shell.remoteui.Message.Request.ViewerRequest.AddLog.LogType type = 1;
           /**
@@ -1397,14 +1397,14 @@ public final class RemoteMessageProto {
          * </pre>
          */
         public static final class AddLog extends
-            com.google.gwt.dev.protobuf.GeneratedMessage
+            com.google.protobuf.GeneratedMessage
             implements AddLogOrBuilder {
           // Use AddLog.newBuilder() to construct.
-          private AddLog(com.google.gwt.dev.protobuf.GeneratedMessage.Builder<?> builder) {
+          private AddLog(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
             super(builder);
             this.unknownFields = builder.getUnknownFields();
           }
-          private AddLog(boolean noInit) { this.unknownFields = com.google.gwt.dev.protobuf.UnknownFieldSet.getDefaultInstance(); }
+          private AddLog(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
 
           private static final AddLog defaultInstance;
           public static AddLog getDefaultInstance() {
@@ -1415,20 +1415,20 @@ public final class RemoteMessageProto {
             return defaultInstance;
           }
 
-          private final com.google.gwt.dev.protobuf.UnknownFieldSet unknownFields;
+          private final com.google.protobuf.UnknownFieldSet unknownFields;
           @java.lang.Override
-          public final com.google.gwt.dev.protobuf.UnknownFieldSet
+          public final com.google.protobuf.UnknownFieldSet
               getUnknownFields() {
             return this.unknownFields;
           }
           private AddLog(
-              com.google.gwt.dev.protobuf.CodedInputStream input,
-              com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
-              throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+              com.google.protobuf.CodedInputStream input,
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+              throws com.google.protobuf.InvalidProtocolBufferException {
             initFields();
             int mutable_bitField0_ = 0;
-            com.google.gwt.dev.protobuf.UnknownFieldSet.Builder unknownFields =
-                com.google.gwt.dev.protobuf.UnknownFieldSet.newBuilder();
+            com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+                com.google.protobuf.UnknownFieldSet.newBuilder();
             try {
               boolean done = false;
               while (!done) {
@@ -1496,40 +1496,40 @@ public final class RemoteMessageProto {
                   }
                 }
               }
-            } catch (com.google.gwt.dev.protobuf.InvalidProtocolBufferException e) {
+            } catch (com.google.protobuf.InvalidProtocolBufferException e) {
               throw e.setUnfinishedMessage(this);
             } catch (java.io.IOException e) {
-              throw new com.google.gwt.dev.protobuf.InvalidProtocolBufferException(
+              throw new com.google.protobuf.InvalidProtocolBufferException(
                   e.getMessage()).setUnfinishedMessage(this);
             } finally {
               this.unknownFields = unknownFields.build();
               makeExtensionsImmutable();
             }
           }
-          public static final com.google.gwt.dev.protobuf.Descriptors.Descriptor
+          public static final com.google.protobuf.Descriptors.Descriptor
               getDescriptor() {
             return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_AddLog_descriptor;
           }
 
-          protected com.google.gwt.dev.protobuf.GeneratedMessage.FieldAccessorTable
+          protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
               internalGetFieldAccessorTable() {
             return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_AddLog_fieldAccessorTable
                 .ensureFieldAccessorsInitialized(
                     com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog.class, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog.Builder.class);
           }
 
-          public static com.google.gwt.dev.protobuf.Parser<AddLog> PARSER =
-              new com.google.gwt.dev.protobuf.AbstractParser<AddLog>() {
+          public static com.google.protobuf.Parser<AddLog> PARSER =
+              new com.google.protobuf.AbstractParser<AddLog>() {
             public AddLog parsePartialFrom(
-                com.google.gwt.dev.protobuf.CodedInputStream input,
-                com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
-                throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+                com.google.protobuf.CodedInputStream input,
+                com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+                throws com.google.protobuf.InvalidProtocolBufferException {
               return new AddLog(input, extensionRegistry);
             }
           };
 
           @java.lang.Override
-          public com.google.gwt.dev.protobuf.Parser<AddLog> getParserForType() {
+          public com.google.protobuf.Parser<AddLog> getParserForType() {
             return PARSER;
           }
 
@@ -1542,7 +1542,7 @@ public final class RemoteMessageProto {
            * </pre>
            */
           public enum LogType
-              implements com.google.gwt.dev.protobuf.ProtocolMessageEnum {
+              implements com.google.protobuf.ProtocolMessageEnum {
             /**
              * <code>MAIN = 0;</code>
              */
@@ -1582,27 +1582,27 @@ public final class RemoteMessageProto {
               }
             }
 
-            public static com.google.gwt.dev.protobuf.Internal.EnumLiteMap<LogType>
+            public static com.google.protobuf.Internal.EnumLiteMap<LogType>
                 internalGetValueMap() {
               return internalValueMap;
             }
-            private static com.google.gwt.dev.protobuf.Internal.EnumLiteMap<LogType>
+            private static com.google.protobuf.Internal.EnumLiteMap<LogType>
                 internalValueMap =
-                  new com.google.gwt.dev.protobuf.Internal.EnumLiteMap<LogType>() {
+                  new com.google.protobuf.Internal.EnumLiteMap<LogType>() {
                     public LogType findValueByNumber(int number) {
                       return LogType.valueOf(number);
                     }
                   };
 
-            public final com.google.gwt.dev.protobuf.Descriptors.EnumValueDescriptor
+            public final com.google.protobuf.Descriptors.EnumValueDescriptor
                 getValueDescriptor() {
               return getDescriptor().getValues().get(index);
             }
-            public final com.google.gwt.dev.protobuf.Descriptors.EnumDescriptor
+            public final com.google.protobuf.Descriptors.EnumDescriptor
                 getDescriptorForType() {
               return getDescriptor();
             }
-            public static final com.google.gwt.dev.protobuf.Descriptors.EnumDescriptor
+            public static final com.google.protobuf.Descriptors.EnumDescriptor
                 getDescriptor() {
               return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog.getDescriptor().getEnumTypes().get(0);
             }
@@ -1610,7 +1610,7 @@ public final class RemoteMessageProto {
             private static final LogType[] VALUES = values();
 
             public static LogType valueOf(
-                com.google.gwt.dev.protobuf.Descriptors.EnumValueDescriptor desc) {
+                com.google.protobuf.Descriptors.EnumValueDescriptor desc) {
               if (desc.getType() != getDescriptor()) {
                 throw new java.lang.IllegalArgumentException(
                   "EnumValueDescriptor is not for this type.");
@@ -1630,7 +1630,7 @@ public final class RemoteMessageProto {
           }
 
           public interface ModuleLogOrBuilder
-              extends com.google.gwt.dev.protobuf.MessageOrBuilder {
+              extends com.google.protobuf.MessageOrBuilder {
 
             // required string name = 1;
             /**
@@ -1644,7 +1644,7 @@ public final class RemoteMessageProto {
             /**
              * <code>required string name = 1;</code>
              */
-            com.google.gwt.dev.protobuf.ByteString
+            com.google.protobuf.ByteString
                 getNameBytes();
 
             // optional bytes icon = 2;
@@ -1655,7 +1655,7 @@ public final class RemoteMessageProto {
             /**
              * <code>optional bytes icon = 2;</code>
              */
-            com.google.gwt.dev.protobuf.ByteString getIcon();
+            com.google.protobuf.ByteString getIcon();
 
             // optional string sessionKey = 3;
             /**
@@ -1669,7 +1669,7 @@ public final class RemoteMessageProto {
             /**
              * <code>optional string sessionKey = 3;</code>
              */
-            com.google.gwt.dev.protobuf.ByteString
+            com.google.protobuf.ByteString
                 getSessionKeyBytes();
 
             // optional string userAgent = 4;
@@ -1684,7 +1684,7 @@ public final class RemoteMessageProto {
             /**
              * <code>optional string userAgent = 4;</code>
              */
-            com.google.gwt.dev.protobuf.ByteString
+            com.google.protobuf.ByteString
                 getUserAgentBytes();
 
             // optional string url = 5;
@@ -1699,7 +1699,7 @@ public final class RemoteMessageProto {
             /**
              * <code>optional string url = 5;</code>
              */
-            com.google.gwt.dev.protobuf.ByteString
+            com.google.protobuf.ByteString
                 getUrlBytes();
 
             // optional string tabKey = 6;
@@ -1714,7 +1714,7 @@ public final class RemoteMessageProto {
             /**
              * <code>optional string tabKey = 6;</code>
              */
-            com.google.gwt.dev.protobuf.ByteString
+            com.google.protobuf.ByteString
                 getTabKeyBytes();
 
             // optional string remoteHost = 7;
@@ -1729,7 +1729,7 @@ public final class RemoteMessageProto {
             /**
              * <code>optional string remoteHost = 7;</code>
              */
-            com.google.gwt.dev.protobuf.ByteString
+            com.google.protobuf.ByteString
                 getRemoteHostBytes();
           }
           /**
@@ -1740,14 +1740,14 @@ public final class RemoteMessageProto {
            * </pre>
            */
           public static final class ModuleLog extends
-              com.google.gwt.dev.protobuf.GeneratedMessage
+              com.google.protobuf.GeneratedMessage
               implements ModuleLogOrBuilder {
             // Use ModuleLog.newBuilder() to construct.
-            private ModuleLog(com.google.gwt.dev.protobuf.GeneratedMessage.Builder<?> builder) {
+            private ModuleLog(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
               super(builder);
               this.unknownFields = builder.getUnknownFields();
             }
-            private ModuleLog(boolean noInit) { this.unknownFields = com.google.gwt.dev.protobuf.UnknownFieldSet.getDefaultInstance(); }
+            private ModuleLog(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
 
             private static final ModuleLog defaultInstance;
             public static ModuleLog getDefaultInstance() {
@@ -1758,20 +1758,20 @@ public final class RemoteMessageProto {
               return defaultInstance;
             }
 
-            private final com.google.gwt.dev.protobuf.UnknownFieldSet unknownFields;
+            private final com.google.protobuf.UnknownFieldSet unknownFields;
             @java.lang.Override
-            public final com.google.gwt.dev.protobuf.UnknownFieldSet
+            public final com.google.protobuf.UnknownFieldSet
                 getUnknownFields() {
               return this.unknownFields;
             }
             private ModuleLog(
-                com.google.gwt.dev.protobuf.CodedInputStream input,
-                com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
-                throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+                com.google.protobuf.CodedInputStream input,
+                com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+                throws com.google.protobuf.InvalidProtocolBufferException {
               initFields();
               int mutable_bitField0_ = 0;
-              com.google.gwt.dev.protobuf.UnknownFieldSet.Builder unknownFields =
-                  com.google.gwt.dev.protobuf.UnknownFieldSet.newBuilder();
+              com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+                  com.google.protobuf.UnknownFieldSet.newBuilder();
               try {
                 boolean done = false;
                 while (!done) {
@@ -1824,40 +1824,40 @@ public final class RemoteMessageProto {
                     }
                   }
                 }
-              } catch (com.google.gwt.dev.protobuf.InvalidProtocolBufferException e) {
+              } catch (com.google.protobuf.InvalidProtocolBufferException e) {
                 throw e.setUnfinishedMessage(this);
               } catch (java.io.IOException e) {
-                throw new com.google.gwt.dev.protobuf.InvalidProtocolBufferException(
+                throw new com.google.protobuf.InvalidProtocolBufferException(
                     e.getMessage()).setUnfinishedMessage(this);
               } finally {
                 this.unknownFields = unknownFields.build();
                 makeExtensionsImmutable();
               }
             }
-            public static final com.google.gwt.dev.protobuf.Descriptors.Descriptor
+            public static final com.google.protobuf.Descriptors.Descriptor
                 getDescriptor() {
               return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_AddLog_ModuleLog_descriptor;
             }
 
-            protected com.google.gwt.dev.protobuf.GeneratedMessage.FieldAccessorTable
+            protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
                 internalGetFieldAccessorTable() {
               return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_AddLog_ModuleLog_fieldAccessorTable
                   .ensureFieldAccessorsInitialized(
                       com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog.ModuleLog.class, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog.ModuleLog.Builder.class);
             }
 
-            public static com.google.gwt.dev.protobuf.Parser<ModuleLog> PARSER =
-                new com.google.gwt.dev.protobuf.AbstractParser<ModuleLog>() {
+            public static com.google.protobuf.Parser<ModuleLog> PARSER =
+                new com.google.protobuf.AbstractParser<ModuleLog>() {
               public ModuleLog parsePartialFrom(
-                  com.google.gwt.dev.protobuf.CodedInputStream input,
-                  com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
-                  throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+                  com.google.protobuf.CodedInputStream input,
+                  com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+                  throws com.google.protobuf.InvalidProtocolBufferException {
                 return new ModuleLog(input, extensionRegistry);
               }
             };
 
             @java.lang.Override
-            public com.google.gwt.dev.protobuf.Parser<ModuleLog> getParserForType() {
+            public com.google.protobuf.Parser<ModuleLog> getParserForType() {
               return PARSER;
             }
 
@@ -1879,8 +1879,8 @@ public final class RemoteMessageProto {
               if (ref instanceof java.lang.String) {
                 return (java.lang.String) ref;
               } else {
-                com.google.gwt.dev.protobuf.ByteString bs =
-                    (com.google.gwt.dev.protobuf.ByteString) ref;
+                com.google.protobuf.ByteString bs =
+                    (com.google.protobuf.ByteString) ref;
                 java.lang.String s = bs.toStringUtf8();
                 if (bs.isValidUtf8()) {
                   name_ = s;
@@ -1891,23 +1891,23 @@ public final class RemoteMessageProto {
             /**
              * <code>required string name = 1;</code>
              */
-            public com.google.gwt.dev.protobuf.ByteString
+            public com.google.protobuf.ByteString
                 getNameBytes() {
               java.lang.Object ref = name_;
               if (ref instanceof java.lang.String) {
-                com.google.gwt.dev.protobuf.ByteString b =
-                    com.google.gwt.dev.protobuf.ByteString.copyFromUtf8(
+                com.google.protobuf.ByteString b =
+                    com.google.protobuf.ByteString.copyFromUtf8(
                         (java.lang.String) ref);
                 name_ = b;
                 return b;
               } else {
-                return (com.google.gwt.dev.protobuf.ByteString) ref;
+                return (com.google.protobuf.ByteString) ref;
               }
             }
 
             // optional bytes icon = 2;
             public static final int ICON_FIELD_NUMBER = 2;
-            private com.google.gwt.dev.protobuf.ByteString icon_;
+            private com.google.protobuf.ByteString icon_;
             /**
              * <code>optional bytes icon = 2;</code>
              */
@@ -1917,7 +1917,7 @@ public final class RemoteMessageProto {
             /**
              * <code>optional bytes icon = 2;</code>
              */
-            public com.google.gwt.dev.protobuf.ByteString getIcon() {
+            public com.google.protobuf.ByteString getIcon() {
               return icon_;
             }
 
@@ -1938,8 +1938,8 @@ public final class RemoteMessageProto {
               if (ref instanceof java.lang.String) {
                 return (java.lang.String) ref;
               } else {
-                com.google.gwt.dev.protobuf.ByteString bs =
-                    (com.google.gwt.dev.protobuf.ByteString) ref;
+                com.google.protobuf.ByteString bs =
+                    (com.google.protobuf.ByteString) ref;
                 java.lang.String s = bs.toStringUtf8();
                 if (bs.isValidUtf8()) {
                   sessionKey_ = s;
@@ -1950,17 +1950,17 @@ public final class RemoteMessageProto {
             /**
              * <code>optional string sessionKey = 3;</code>
              */
-            public com.google.gwt.dev.protobuf.ByteString
+            public com.google.protobuf.ByteString
                 getSessionKeyBytes() {
               java.lang.Object ref = sessionKey_;
               if (ref instanceof java.lang.String) {
-                com.google.gwt.dev.protobuf.ByteString b =
-                    com.google.gwt.dev.protobuf.ByteString.copyFromUtf8(
+                com.google.protobuf.ByteString b =
+                    com.google.protobuf.ByteString.copyFromUtf8(
                         (java.lang.String) ref);
                 sessionKey_ = b;
                 return b;
               } else {
-                return (com.google.gwt.dev.protobuf.ByteString) ref;
+                return (com.google.protobuf.ByteString) ref;
               }
             }
 
@@ -1981,8 +1981,8 @@ public final class RemoteMessageProto {
               if (ref instanceof java.lang.String) {
                 return (java.lang.String) ref;
               } else {
-                com.google.gwt.dev.protobuf.ByteString bs =
-                    (com.google.gwt.dev.protobuf.ByteString) ref;
+                com.google.protobuf.ByteString bs =
+                    (com.google.protobuf.ByteString) ref;
                 java.lang.String s = bs.toStringUtf8();
                 if (bs.isValidUtf8()) {
                   userAgent_ = s;
@@ -1993,17 +1993,17 @@ public final class RemoteMessageProto {
             /**
              * <code>optional string userAgent = 4;</code>
              */
-            public com.google.gwt.dev.protobuf.ByteString
+            public com.google.protobuf.ByteString
                 getUserAgentBytes() {
               java.lang.Object ref = userAgent_;
               if (ref instanceof java.lang.String) {
-                com.google.gwt.dev.protobuf.ByteString b =
-                    com.google.gwt.dev.protobuf.ByteString.copyFromUtf8(
+                com.google.protobuf.ByteString b =
+                    com.google.protobuf.ByteString.copyFromUtf8(
                         (java.lang.String) ref);
                 userAgent_ = b;
                 return b;
               } else {
-                return (com.google.gwt.dev.protobuf.ByteString) ref;
+                return (com.google.protobuf.ByteString) ref;
               }
             }
 
@@ -2024,8 +2024,8 @@ public final class RemoteMessageProto {
               if (ref instanceof java.lang.String) {
                 return (java.lang.String) ref;
               } else {
-                com.google.gwt.dev.protobuf.ByteString bs =
-                    (com.google.gwt.dev.protobuf.ByteString) ref;
+                com.google.protobuf.ByteString bs =
+                    (com.google.protobuf.ByteString) ref;
                 java.lang.String s = bs.toStringUtf8();
                 if (bs.isValidUtf8()) {
                   url_ = s;
@@ -2036,17 +2036,17 @@ public final class RemoteMessageProto {
             /**
              * <code>optional string url = 5;</code>
              */
-            public com.google.gwt.dev.protobuf.ByteString
+            public com.google.protobuf.ByteString
                 getUrlBytes() {
               java.lang.Object ref = url_;
               if (ref instanceof java.lang.String) {
-                com.google.gwt.dev.protobuf.ByteString b =
-                    com.google.gwt.dev.protobuf.ByteString.copyFromUtf8(
+                com.google.protobuf.ByteString b =
+                    com.google.protobuf.ByteString.copyFromUtf8(
                         (java.lang.String) ref);
                 url_ = b;
                 return b;
               } else {
-                return (com.google.gwt.dev.protobuf.ByteString) ref;
+                return (com.google.protobuf.ByteString) ref;
               }
             }
 
@@ -2067,8 +2067,8 @@ public final class RemoteMessageProto {
               if (ref instanceof java.lang.String) {
                 return (java.lang.String) ref;
               } else {
-                com.google.gwt.dev.protobuf.ByteString bs =
-                    (com.google.gwt.dev.protobuf.ByteString) ref;
+                com.google.protobuf.ByteString bs =
+                    (com.google.protobuf.ByteString) ref;
                 java.lang.String s = bs.toStringUtf8();
                 if (bs.isValidUtf8()) {
                   tabKey_ = s;
@@ -2079,17 +2079,17 @@ public final class RemoteMessageProto {
             /**
              * <code>optional string tabKey = 6;</code>
              */
-            public com.google.gwt.dev.protobuf.ByteString
+            public com.google.protobuf.ByteString
                 getTabKeyBytes() {
               java.lang.Object ref = tabKey_;
               if (ref instanceof java.lang.String) {
-                com.google.gwt.dev.protobuf.ByteString b =
-                    com.google.gwt.dev.protobuf.ByteString.copyFromUtf8(
+                com.google.protobuf.ByteString b =
+                    com.google.protobuf.ByteString.copyFromUtf8(
                         (java.lang.String) ref);
                 tabKey_ = b;
                 return b;
               } else {
-                return (com.google.gwt.dev.protobuf.ByteString) ref;
+                return (com.google.protobuf.ByteString) ref;
               }
             }
 
@@ -2110,8 +2110,8 @@ public final class RemoteMessageProto {
               if (ref instanceof java.lang.String) {
                 return (java.lang.String) ref;
               } else {
-                com.google.gwt.dev.protobuf.ByteString bs =
-                    (com.google.gwt.dev.protobuf.ByteString) ref;
+                com.google.protobuf.ByteString bs =
+                    (com.google.protobuf.ByteString) ref;
                 java.lang.String s = bs.toStringUtf8();
                 if (bs.isValidUtf8()) {
                   remoteHost_ = s;
@@ -2122,23 +2122,23 @@ public final class RemoteMessageProto {
             /**
              * <code>optional string remoteHost = 7;</code>
              */
-            public com.google.gwt.dev.protobuf.ByteString
+            public com.google.protobuf.ByteString
                 getRemoteHostBytes() {
               java.lang.Object ref = remoteHost_;
               if (ref instanceof java.lang.String) {
-                com.google.gwt.dev.protobuf.ByteString b =
-                    com.google.gwt.dev.protobuf.ByteString.copyFromUtf8(
+                com.google.protobuf.ByteString b =
+                    com.google.protobuf.ByteString.copyFromUtf8(
                         (java.lang.String) ref);
                 remoteHost_ = b;
                 return b;
               } else {
-                return (com.google.gwt.dev.protobuf.ByteString) ref;
+                return (com.google.protobuf.ByteString) ref;
               }
             }
 
             private void initFields() {
               name_ = "";
-              icon_ = com.google.gwt.dev.protobuf.ByteString.EMPTY;
+              icon_ = com.google.protobuf.ByteString.EMPTY;
               sessionKey_ = "";
               userAgent_ = "";
               url_ = "";
@@ -2158,7 +2158,7 @@ public final class RemoteMessageProto {
               return true;
             }
 
-            public void writeTo(com.google.gwt.dev.protobuf.CodedOutputStream output)
+            public void writeTo(com.google.protobuf.CodedOutputStream output)
                                 throws java.io.IOException {
               getSerializedSize();
               if (((bitField0_ & 0x00000001) == 0x00000001)) {
@@ -2192,31 +2192,31 @@ public final class RemoteMessageProto {
 
               size = 0;
               if (((bitField0_ & 0x00000001) == 0x00000001)) {
-                size += com.google.gwt.dev.protobuf.CodedOutputStream
+                size += com.google.protobuf.CodedOutputStream
                   .computeBytesSize(1, getNameBytes());
               }
               if (((bitField0_ & 0x00000002) == 0x00000002)) {
-                size += com.google.gwt.dev.protobuf.CodedOutputStream
+                size += com.google.protobuf.CodedOutputStream
                   .computeBytesSize(2, icon_);
               }
               if (((bitField0_ & 0x00000004) == 0x00000004)) {
-                size += com.google.gwt.dev.protobuf.CodedOutputStream
+                size += com.google.protobuf.CodedOutputStream
                   .computeBytesSize(3, getSessionKeyBytes());
               }
               if (((bitField0_ & 0x00000008) == 0x00000008)) {
-                size += com.google.gwt.dev.protobuf.CodedOutputStream
+                size += com.google.protobuf.CodedOutputStream
                   .computeBytesSize(4, getUserAgentBytes());
               }
               if (((bitField0_ & 0x00000010) == 0x00000010)) {
-                size += com.google.gwt.dev.protobuf.CodedOutputStream
+                size += com.google.protobuf.CodedOutputStream
                   .computeBytesSize(5, getUrlBytes());
               }
               if (((bitField0_ & 0x00000020) == 0x00000020)) {
-                size += com.google.gwt.dev.protobuf.CodedOutputStream
+                size += com.google.protobuf.CodedOutputStream
                   .computeBytesSize(6, getTabKeyBytes());
               }
               if (((bitField0_ & 0x00000040) == 0x00000040)) {
-                size += com.google.gwt.dev.protobuf.CodedOutputStream
+                size += com.google.protobuf.CodedOutputStream
                   .computeBytesSize(7, getRemoteHostBytes());
               }
               size += getUnknownFields().getSerializedSize();
@@ -2232,24 +2232,24 @@ public final class RemoteMessageProto {
             }
 
             public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog.ModuleLog parseFrom(
-                com.google.gwt.dev.protobuf.ByteString data)
-                throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+                com.google.protobuf.ByteString data)
+                throws com.google.protobuf.InvalidProtocolBufferException {
               return PARSER.parseFrom(data);
             }
             public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog.ModuleLog parseFrom(
-                com.google.gwt.dev.protobuf.ByteString data,
-                com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
-                throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+                com.google.protobuf.ByteString data,
+                com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+                throws com.google.protobuf.InvalidProtocolBufferException {
               return PARSER.parseFrom(data, extensionRegistry);
             }
             public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog.ModuleLog parseFrom(byte[] data)
-                throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+                throws com.google.protobuf.InvalidProtocolBufferException {
               return PARSER.parseFrom(data);
             }
             public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog.ModuleLog parseFrom(
                 byte[] data,
-                com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
-                throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+                com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+                throws com.google.protobuf.InvalidProtocolBufferException {
               return PARSER.parseFrom(data, extensionRegistry);
             }
             public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog.ModuleLog parseFrom(java.io.InputStream input)
@@ -2258,7 +2258,7 @@ public final class RemoteMessageProto {
             }
             public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog.ModuleLog parseFrom(
                 java.io.InputStream input,
-                com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
+                com.google.protobuf.ExtensionRegistryLite extensionRegistry)
                 throws java.io.IOException {
               return PARSER.parseFrom(input, extensionRegistry);
             }
@@ -2268,18 +2268,18 @@ public final class RemoteMessageProto {
             }
             public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog.ModuleLog parseDelimitedFrom(
                 java.io.InputStream input,
-                com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
+                com.google.protobuf.ExtensionRegistryLite extensionRegistry)
                 throws java.io.IOException {
               return PARSER.parseDelimitedFrom(input, extensionRegistry);
             }
             public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog.ModuleLog parseFrom(
-                com.google.gwt.dev.protobuf.CodedInputStream input)
+                com.google.protobuf.CodedInputStream input)
                 throws java.io.IOException {
               return PARSER.parseFrom(input);
             }
             public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog.ModuleLog parseFrom(
-                com.google.gwt.dev.protobuf.CodedInputStream input,
-                com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
+                com.google.protobuf.CodedInputStream input,
+                com.google.protobuf.ExtensionRegistryLite extensionRegistry)
                 throws java.io.IOException {
               return PARSER.parseFrom(input, extensionRegistry);
             }
@@ -2293,7 +2293,7 @@ public final class RemoteMessageProto {
 
             @java.lang.Override
             protected Builder newBuilderForType(
-                com.google.gwt.dev.protobuf.GeneratedMessage.BuilderParent parent) {
+                com.google.protobuf.GeneratedMessage.BuilderParent parent) {
               Builder builder = new Builder(parent);
               return builder;
             }
@@ -2305,14 +2305,14 @@ public final class RemoteMessageProto {
              * </pre>
              */
             public static final class Builder extends
-                com.google.gwt.dev.protobuf.GeneratedMessage.Builder<Builder>
+                com.google.protobuf.GeneratedMessage.Builder<Builder>
                implements com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog.ModuleLogOrBuilder {
-              public static final com.google.gwt.dev.protobuf.Descriptors.Descriptor
+              public static final com.google.protobuf.Descriptors.Descriptor
                   getDescriptor() {
                 return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_AddLog_ModuleLog_descriptor;
               }
 
-              protected com.google.gwt.dev.protobuf.GeneratedMessage.FieldAccessorTable
+              protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
                   internalGetFieldAccessorTable() {
                 return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_AddLog_ModuleLog_fieldAccessorTable
                     .ensureFieldAccessorsInitialized(
@@ -2325,12 +2325,12 @@ public final class RemoteMessageProto {
               }
 
               private Builder(
-                  com.google.gwt.dev.protobuf.GeneratedMessage.BuilderParent parent) {
+                  com.google.protobuf.GeneratedMessage.BuilderParent parent) {
                 super(parent);
                 maybeForceBuilderInitialization();
               }
               private void maybeForceBuilderInitialization() {
-                if (com.google.gwt.dev.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
+                if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
                 }
               }
               private static Builder create() {
@@ -2341,7 +2341,7 @@ public final class RemoteMessageProto {
                 super.clear();
                 name_ = "";
                 bitField0_ = (bitField0_ & ~0x00000001);
-                icon_ = com.google.gwt.dev.protobuf.ByteString.EMPTY;
+                icon_ = com.google.protobuf.ByteString.EMPTY;
                 bitField0_ = (bitField0_ & ~0x00000002);
                 sessionKey_ = "";
                 bitField0_ = (bitField0_ & ~0x00000004);
@@ -2360,7 +2360,7 @@ public final class RemoteMessageProto {
                 return create().mergeFrom(buildPartial());
               }
 
-              public com.google.gwt.dev.protobuf.Descriptors.Descriptor
+              public com.google.protobuf.Descriptors.Descriptor
                   getDescriptorForType() {
                 return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_AddLog_ModuleLog_descriptor;
               }
@@ -2414,7 +2414,7 @@ public final class RemoteMessageProto {
                 return result;
               }
 
-              public Builder mergeFrom(com.google.gwt.dev.protobuf.Message other) {
+              public Builder mergeFrom(com.google.protobuf.Message other) {
                 if (other instanceof com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog.ModuleLog) {
                   return mergeFrom((com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog.ModuleLog)other);
                 } else {
@@ -2471,13 +2471,13 @@ public final class RemoteMessageProto {
               }
 
               public Builder mergeFrom(
-                  com.google.gwt.dev.protobuf.CodedInputStream input,
-                  com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
+                  com.google.protobuf.CodedInputStream input,
+                  com.google.protobuf.ExtensionRegistryLite extensionRegistry)
                   throws java.io.IOException {
                 com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog.ModuleLog parsedMessage = null;
                 try {
                   parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
-                } catch (com.google.gwt.dev.protobuf.InvalidProtocolBufferException e) {
+                } catch (com.google.protobuf.InvalidProtocolBufferException e) {
                   parsedMessage = (com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog.ModuleLog) e.getUnfinishedMessage();
                   throw e;
                 } finally {
@@ -2503,7 +2503,7 @@ public final class RemoteMessageProto {
               public java.lang.String getName() {
                 java.lang.Object ref = name_;
                 if (!(ref instanceof java.lang.String)) {
-                  java.lang.String s = ((com.google.gwt.dev.protobuf.ByteString) ref)
+                  java.lang.String s = ((com.google.protobuf.ByteString) ref)
                       .toStringUtf8();
                   name_ = s;
                   return s;
@@ -2514,17 +2514,17 @@ public final class RemoteMessageProto {
               /**
                * <code>required string name = 1;</code>
                */
-              public com.google.gwt.dev.protobuf.ByteString
+              public com.google.protobuf.ByteString
                   getNameBytes() {
                 java.lang.Object ref = name_;
                 if (ref instanceof String) {
-                  com.google.gwt.dev.protobuf.ByteString b =
-                      com.google.gwt.dev.protobuf.ByteString.copyFromUtf8(
+                  com.google.protobuf.ByteString b =
+                      com.google.protobuf.ByteString.copyFromUtf8(
                           (java.lang.String) ref);
                   name_ = b;
                   return b;
                 } else {
-                  return (com.google.gwt.dev.protobuf.ByteString) ref;
+                  return (com.google.protobuf.ByteString) ref;
                 }
               }
               /**
@@ -2553,7 +2553,7 @@ public final class RemoteMessageProto {
                * <code>required string name = 1;</code>
                */
               public Builder setNameBytes(
-                  com.google.gwt.dev.protobuf.ByteString value) {
+                  com.google.protobuf.ByteString value) {
                 if (value == null) {
     throw new NullPointerException();
   }
@@ -2564,7 +2564,7 @@ public final class RemoteMessageProto {
               }
 
               // optional bytes icon = 2;
-              private com.google.gwt.dev.protobuf.ByteString icon_ = com.google.gwt.dev.protobuf.ByteString.EMPTY;
+              private com.google.protobuf.ByteString icon_ = com.google.protobuf.ByteString.EMPTY;
               /**
                * <code>optional bytes icon = 2;</code>
                */
@@ -2574,13 +2574,13 @@ public final class RemoteMessageProto {
               /**
                * <code>optional bytes icon = 2;</code>
                */
-              public com.google.gwt.dev.protobuf.ByteString getIcon() {
+              public com.google.protobuf.ByteString getIcon() {
                 return icon_;
               }
               /**
                * <code>optional bytes icon = 2;</code>
                */
-              public Builder setIcon(com.google.gwt.dev.protobuf.ByteString value) {
+              public Builder setIcon(com.google.protobuf.ByteString value) {
                 if (value == null) {
     throw new NullPointerException();
   }
@@ -2613,7 +2613,7 @@ public final class RemoteMessageProto {
               public java.lang.String getSessionKey() {
                 java.lang.Object ref = sessionKey_;
                 if (!(ref instanceof java.lang.String)) {
-                  java.lang.String s = ((com.google.gwt.dev.protobuf.ByteString) ref)
+                  java.lang.String s = ((com.google.protobuf.ByteString) ref)
                       .toStringUtf8();
                   sessionKey_ = s;
                   return s;
@@ -2624,17 +2624,17 @@ public final class RemoteMessageProto {
               /**
                * <code>optional string sessionKey = 3;</code>
                */
-              public com.google.gwt.dev.protobuf.ByteString
+              public com.google.protobuf.ByteString
                   getSessionKeyBytes() {
                 java.lang.Object ref = sessionKey_;
                 if (ref instanceof String) {
-                  com.google.gwt.dev.protobuf.ByteString b =
-                      com.google.gwt.dev.protobuf.ByteString.copyFromUtf8(
+                  com.google.protobuf.ByteString b =
+                      com.google.protobuf.ByteString.copyFromUtf8(
                           (java.lang.String) ref);
                   sessionKey_ = b;
                   return b;
                 } else {
-                  return (com.google.gwt.dev.protobuf.ByteString) ref;
+                  return (com.google.protobuf.ByteString) ref;
                 }
               }
               /**
@@ -2663,7 +2663,7 @@ public final class RemoteMessageProto {
                * <code>optional string sessionKey = 3;</code>
                */
               public Builder setSessionKeyBytes(
-                  com.google.gwt.dev.protobuf.ByteString value) {
+                  com.google.protobuf.ByteString value) {
                 if (value == null) {
     throw new NullPointerException();
   }
@@ -2687,7 +2687,7 @@ public final class RemoteMessageProto {
               public java.lang.String getUserAgent() {
                 java.lang.Object ref = userAgent_;
                 if (!(ref instanceof java.lang.String)) {
-                  java.lang.String s = ((com.google.gwt.dev.protobuf.ByteString) ref)
+                  java.lang.String s = ((com.google.protobuf.ByteString) ref)
                       .toStringUtf8();
                   userAgent_ = s;
                   return s;
@@ -2698,17 +2698,17 @@ public final class RemoteMessageProto {
               /**
                * <code>optional string userAgent = 4;</code>
                */
-              public com.google.gwt.dev.protobuf.ByteString
+              public com.google.protobuf.ByteString
                   getUserAgentBytes() {
                 java.lang.Object ref = userAgent_;
                 if (ref instanceof String) {
-                  com.google.gwt.dev.protobuf.ByteString b =
-                      com.google.gwt.dev.protobuf.ByteString.copyFromUtf8(
+                  com.google.protobuf.ByteString b =
+                      com.google.protobuf.ByteString.copyFromUtf8(
                           (java.lang.String) ref);
                   userAgent_ = b;
                   return b;
                 } else {
-                  return (com.google.gwt.dev.protobuf.ByteString) ref;
+                  return (com.google.protobuf.ByteString) ref;
                 }
               }
               /**
@@ -2737,7 +2737,7 @@ public final class RemoteMessageProto {
                * <code>optional string userAgent = 4;</code>
                */
               public Builder setUserAgentBytes(
-                  com.google.gwt.dev.protobuf.ByteString value) {
+                  com.google.protobuf.ByteString value) {
                 if (value == null) {
     throw new NullPointerException();
   }
@@ -2761,7 +2761,7 @@ public final class RemoteMessageProto {
               public java.lang.String getUrl() {
                 java.lang.Object ref = url_;
                 if (!(ref instanceof java.lang.String)) {
-                  java.lang.String s = ((com.google.gwt.dev.protobuf.ByteString) ref)
+                  java.lang.String s = ((com.google.protobuf.ByteString) ref)
                       .toStringUtf8();
                   url_ = s;
                   return s;
@@ -2772,17 +2772,17 @@ public final class RemoteMessageProto {
               /**
                * <code>optional string url = 5;</code>
                */
-              public com.google.gwt.dev.protobuf.ByteString
+              public com.google.protobuf.ByteString
                   getUrlBytes() {
                 java.lang.Object ref = url_;
                 if (ref instanceof String) {
-                  com.google.gwt.dev.protobuf.ByteString b =
-                      com.google.gwt.dev.protobuf.ByteString.copyFromUtf8(
+                  com.google.protobuf.ByteString b =
+                      com.google.protobuf.ByteString.copyFromUtf8(
                           (java.lang.String) ref);
                   url_ = b;
                   return b;
                 } else {
-                  return (com.google.gwt.dev.protobuf.ByteString) ref;
+                  return (com.google.protobuf.ByteString) ref;
                 }
               }
               /**
@@ -2811,7 +2811,7 @@ public final class RemoteMessageProto {
                * <code>optional string url = 5;</code>
                */
               public Builder setUrlBytes(
-                  com.google.gwt.dev.protobuf.ByteString value) {
+                  com.google.protobuf.ByteString value) {
                 if (value == null) {
     throw new NullPointerException();
   }
@@ -2835,7 +2835,7 @@ public final class RemoteMessageProto {
               public java.lang.String getTabKey() {
                 java.lang.Object ref = tabKey_;
                 if (!(ref instanceof java.lang.String)) {
-                  java.lang.String s = ((com.google.gwt.dev.protobuf.ByteString) ref)
+                  java.lang.String s = ((com.google.protobuf.ByteString) ref)
                       .toStringUtf8();
                   tabKey_ = s;
                   return s;
@@ -2846,17 +2846,17 @@ public final class RemoteMessageProto {
               /**
                * <code>optional string tabKey = 6;</code>
                */
-              public com.google.gwt.dev.protobuf.ByteString
+              public com.google.protobuf.ByteString
                   getTabKeyBytes() {
                 java.lang.Object ref = tabKey_;
                 if (ref instanceof String) {
-                  com.google.gwt.dev.protobuf.ByteString b =
-                      com.google.gwt.dev.protobuf.ByteString.copyFromUtf8(
+                  com.google.protobuf.ByteString b =
+                      com.google.protobuf.ByteString.copyFromUtf8(
                           (java.lang.String) ref);
                   tabKey_ = b;
                   return b;
                 } else {
-                  return (com.google.gwt.dev.protobuf.ByteString) ref;
+                  return (com.google.protobuf.ByteString) ref;
                 }
               }
               /**
@@ -2885,7 +2885,7 @@ public final class RemoteMessageProto {
                * <code>optional string tabKey = 6;</code>
                */
               public Builder setTabKeyBytes(
-                  com.google.gwt.dev.protobuf.ByteString value) {
+                  com.google.protobuf.ByteString value) {
                 if (value == null) {
     throw new NullPointerException();
   }
@@ -2909,7 +2909,7 @@ public final class RemoteMessageProto {
               public java.lang.String getRemoteHost() {
                 java.lang.Object ref = remoteHost_;
                 if (!(ref instanceof java.lang.String)) {
-                  java.lang.String s = ((com.google.gwt.dev.protobuf.ByteString) ref)
+                  java.lang.String s = ((com.google.protobuf.ByteString) ref)
                       .toStringUtf8();
                   remoteHost_ = s;
                   return s;
@@ -2920,17 +2920,17 @@ public final class RemoteMessageProto {
               /**
                * <code>optional string remoteHost = 7;</code>
                */
-              public com.google.gwt.dev.protobuf.ByteString
+              public com.google.protobuf.ByteString
                   getRemoteHostBytes() {
                 java.lang.Object ref = remoteHost_;
                 if (ref instanceof String) {
-                  com.google.gwt.dev.protobuf.ByteString b =
-                      com.google.gwt.dev.protobuf.ByteString.copyFromUtf8(
+                  com.google.protobuf.ByteString b =
+                      com.google.protobuf.ByteString.copyFromUtf8(
                           (java.lang.String) ref);
                   remoteHost_ = b;
                   return b;
                 } else {
-                  return (com.google.gwt.dev.protobuf.ByteString) ref;
+                  return (com.google.protobuf.ByteString) ref;
                 }
               }
               /**
@@ -2959,7 +2959,7 @@ public final class RemoteMessageProto {
                * <code>optional string remoteHost = 7;</code>
                */
               public Builder setRemoteHostBytes(
-                  com.google.gwt.dev.protobuf.ByteString value) {
+                  com.google.protobuf.ByteString value) {
                 if (value == null) {
     throw new NullPointerException();
   }
@@ -2981,7 +2981,7 @@ public final class RemoteMessageProto {
           }
 
           public interface ServerLogOrBuilder
-              extends com.google.gwt.dev.protobuf.MessageOrBuilder {
+              extends com.google.protobuf.MessageOrBuilder {
 
             // required string name = 1;
             /**
@@ -2995,7 +2995,7 @@ public final class RemoteMessageProto {
             /**
              * <code>required string name = 1;</code>
              */
-            com.google.gwt.dev.protobuf.ByteString
+            com.google.protobuf.ByteString
                 getNameBytes();
 
             // optional bytes icon = 2;
@@ -3006,7 +3006,7 @@ public final class RemoteMessageProto {
             /**
              * <code>optional bytes icon = 2;</code>
              */
-            com.google.gwt.dev.protobuf.ByteString getIcon();
+            com.google.protobuf.ByteString getIcon();
           }
           /**
            * Protobuf type {@code com.google.gwt.dev.shell.remoteui.Message.Request.ViewerRequest.AddLog.ServerLog}
@@ -3016,14 +3016,14 @@ public final class RemoteMessageProto {
            * </pre>
            */
           public static final class ServerLog extends
-              com.google.gwt.dev.protobuf.GeneratedMessage
+              com.google.protobuf.GeneratedMessage
               implements ServerLogOrBuilder {
             // Use ServerLog.newBuilder() to construct.
-            private ServerLog(com.google.gwt.dev.protobuf.GeneratedMessage.Builder<?> builder) {
+            private ServerLog(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
               super(builder);
               this.unknownFields = builder.getUnknownFields();
             }
-            private ServerLog(boolean noInit) { this.unknownFields = com.google.gwt.dev.protobuf.UnknownFieldSet.getDefaultInstance(); }
+            private ServerLog(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
 
             private static final ServerLog defaultInstance;
             public static ServerLog getDefaultInstance() {
@@ -3034,20 +3034,20 @@ public final class RemoteMessageProto {
               return defaultInstance;
             }
 
-            private final com.google.gwt.dev.protobuf.UnknownFieldSet unknownFields;
+            private final com.google.protobuf.UnknownFieldSet unknownFields;
             @java.lang.Override
-            public final com.google.gwt.dev.protobuf.UnknownFieldSet
+            public final com.google.protobuf.UnknownFieldSet
                 getUnknownFields() {
               return this.unknownFields;
             }
             private ServerLog(
-                com.google.gwt.dev.protobuf.CodedInputStream input,
-                com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
-                throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+                com.google.protobuf.CodedInputStream input,
+                com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+                throws com.google.protobuf.InvalidProtocolBufferException {
               initFields();
               int mutable_bitField0_ = 0;
-              com.google.gwt.dev.protobuf.UnknownFieldSet.Builder unknownFields =
-                  com.google.gwt.dev.protobuf.UnknownFieldSet.newBuilder();
+              com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+                  com.google.protobuf.UnknownFieldSet.newBuilder();
               try {
                 boolean done = false;
                 while (!done) {
@@ -3075,40 +3075,40 @@ public final class RemoteMessageProto {
                     }
                   }
                 }
-              } catch (com.google.gwt.dev.protobuf.InvalidProtocolBufferException e) {
+              } catch (com.google.protobuf.InvalidProtocolBufferException e) {
                 throw e.setUnfinishedMessage(this);
               } catch (java.io.IOException e) {
-                throw new com.google.gwt.dev.protobuf.InvalidProtocolBufferException(
+                throw new com.google.protobuf.InvalidProtocolBufferException(
                     e.getMessage()).setUnfinishedMessage(this);
               } finally {
                 this.unknownFields = unknownFields.build();
                 makeExtensionsImmutable();
               }
             }
-            public static final com.google.gwt.dev.protobuf.Descriptors.Descriptor
+            public static final com.google.protobuf.Descriptors.Descriptor
                 getDescriptor() {
               return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_AddLog_ServerLog_descriptor;
             }
 
-            protected com.google.gwt.dev.protobuf.GeneratedMessage.FieldAccessorTable
+            protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
                 internalGetFieldAccessorTable() {
               return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_AddLog_ServerLog_fieldAccessorTable
                   .ensureFieldAccessorsInitialized(
                       com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog.ServerLog.class, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog.ServerLog.Builder.class);
             }
 
-            public static com.google.gwt.dev.protobuf.Parser<ServerLog> PARSER =
-                new com.google.gwt.dev.protobuf.AbstractParser<ServerLog>() {
+            public static com.google.protobuf.Parser<ServerLog> PARSER =
+                new com.google.protobuf.AbstractParser<ServerLog>() {
               public ServerLog parsePartialFrom(
-                  com.google.gwt.dev.protobuf.CodedInputStream input,
-                  com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
-                  throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+                  com.google.protobuf.CodedInputStream input,
+                  com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+                  throws com.google.protobuf.InvalidProtocolBufferException {
                 return new ServerLog(input, extensionRegistry);
               }
             };
 
             @java.lang.Override
-            public com.google.gwt.dev.protobuf.Parser<ServerLog> getParserForType() {
+            public com.google.protobuf.Parser<ServerLog> getParserForType() {
               return PARSER;
             }
 
@@ -3130,8 +3130,8 @@ public final class RemoteMessageProto {
               if (ref instanceof java.lang.String) {
                 return (java.lang.String) ref;
               } else {
-                com.google.gwt.dev.protobuf.ByteString bs =
-                    (com.google.gwt.dev.protobuf.ByteString) ref;
+                com.google.protobuf.ByteString bs =
+                    (com.google.protobuf.ByteString) ref;
                 java.lang.String s = bs.toStringUtf8();
                 if (bs.isValidUtf8()) {
                   name_ = s;
@@ -3142,23 +3142,23 @@ public final class RemoteMessageProto {
             /**
              * <code>required string name = 1;</code>
              */
-            public com.google.gwt.dev.protobuf.ByteString
+            public com.google.protobuf.ByteString
                 getNameBytes() {
               java.lang.Object ref = name_;
               if (ref instanceof java.lang.String) {
-                com.google.gwt.dev.protobuf.ByteString b =
-                    com.google.gwt.dev.protobuf.ByteString.copyFromUtf8(
+                com.google.protobuf.ByteString b =
+                    com.google.protobuf.ByteString.copyFromUtf8(
                         (java.lang.String) ref);
                 name_ = b;
                 return b;
               } else {
-                return (com.google.gwt.dev.protobuf.ByteString) ref;
+                return (com.google.protobuf.ByteString) ref;
               }
             }
 
             // optional bytes icon = 2;
             public static final int ICON_FIELD_NUMBER = 2;
-            private com.google.gwt.dev.protobuf.ByteString icon_;
+            private com.google.protobuf.ByteString icon_;
             /**
              * <code>optional bytes icon = 2;</code>
              */
@@ -3168,13 +3168,13 @@ public final class RemoteMessageProto {
             /**
              * <code>optional bytes icon = 2;</code>
              */
-            public com.google.gwt.dev.protobuf.ByteString getIcon() {
+            public com.google.protobuf.ByteString getIcon() {
               return icon_;
             }
 
             private void initFields() {
               name_ = "";
-              icon_ = com.google.gwt.dev.protobuf.ByteString.EMPTY;
+              icon_ = com.google.protobuf.ByteString.EMPTY;
             }
             private byte memoizedIsInitialized = -1;
             public final boolean isInitialized() {
@@ -3189,7 +3189,7 @@ public final class RemoteMessageProto {
               return true;
             }
 
-            public void writeTo(com.google.gwt.dev.protobuf.CodedOutputStream output)
+            public void writeTo(com.google.protobuf.CodedOutputStream output)
                                 throws java.io.IOException {
               getSerializedSize();
               if (((bitField0_ & 0x00000001) == 0x00000001)) {
@@ -3208,11 +3208,11 @@ public final class RemoteMessageProto {
 
               size = 0;
               if (((bitField0_ & 0x00000001) == 0x00000001)) {
-                size += com.google.gwt.dev.protobuf.CodedOutputStream
+                size += com.google.protobuf.CodedOutputStream
                   .computeBytesSize(1, getNameBytes());
               }
               if (((bitField0_ & 0x00000002) == 0x00000002)) {
-                size += com.google.gwt.dev.protobuf.CodedOutputStream
+                size += com.google.protobuf.CodedOutputStream
                   .computeBytesSize(2, icon_);
               }
               size += getUnknownFields().getSerializedSize();
@@ -3228,24 +3228,24 @@ public final class RemoteMessageProto {
             }
 
             public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog.ServerLog parseFrom(
-                com.google.gwt.dev.protobuf.ByteString data)
-                throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+                com.google.protobuf.ByteString data)
+                throws com.google.protobuf.InvalidProtocolBufferException {
               return PARSER.parseFrom(data);
             }
             public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog.ServerLog parseFrom(
-                com.google.gwt.dev.protobuf.ByteString data,
-                com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
-                throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+                com.google.protobuf.ByteString data,
+                com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+                throws com.google.protobuf.InvalidProtocolBufferException {
               return PARSER.parseFrom(data, extensionRegistry);
             }
             public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog.ServerLog parseFrom(byte[] data)
-                throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+                throws com.google.protobuf.InvalidProtocolBufferException {
               return PARSER.parseFrom(data);
             }
             public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog.ServerLog parseFrom(
                 byte[] data,
-                com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
-                throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+                com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+                throws com.google.protobuf.InvalidProtocolBufferException {
               return PARSER.parseFrom(data, extensionRegistry);
             }
             public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog.ServerLog parseFrom(java.io.InputStream input)
@@ -3254,7 +3254,7 @@ public final class RemoteMessageProto {
             }
             public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog.ServerLog parseFrom(
                 java.io.InputStream input,
-                com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
+                com.google.protobuf.ExtensionRegistryLite extensionRegistry)
                 throws java.io.IOException {
               return PARSER.parseFrom(input, extensionRegistry);
             }
@@ -3264,18 +3264,18 @@ public final class RemoteMessageProto {
             }
             public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog.ServerLog parseDelimitedFrom(
                 java.io.InputStream input,
-                com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
+                com.google.protobuf.ExtensionRegistryLite extensionRegistry)
                 throws java.io.IOException {
               return PARSER.parseDelimitedFrom(input, extensionRegistry);
             }
             public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog.ServerLog parseFrom(
-                com.google.gwt.dev.protobuf.CodedInputStream input)
+                com.google.protobuf.CodedInputStream input)
                 throws java.io.IOException {
               return PARSER.parseFrom(input);
             }
             public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog.ServerLog parseFrom(
-                com.google.gwt.dev.protobuf.CodedInputStream input,
-                com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
+                com.google.protobuf.CodedInputStream input,
+                com.google.protobuf.ExtensionRegistryLite extensionRegistry)
                 throws java.io.IOException {
               return PARSER.parseFrom(input, extensionRegistry);
             }
@@ -3289,7 +3289,7 @@ public final class RemoteMessageProto {
 
             @java.lang.Override
             protected Builder newBuilderForType(
-                com.google.gwt.dev.protobuf.GeneratedMessage.BuilderParent parent) {
+                com.google.protobuf.GeneratedMessage.BuilderParent parent) {
               Builder builder = new Builder(parent);
               return builder;
             }
@@ -3301,14 +3301,14 @@ public final class RemoteMessageProto {
              * </pre>
              */
             public static final class Builder extends
-                com.google.gwt.dev.protobuf.GeneratedMessage.Builder<Builder>
+                com.google.protobuf.GeneratedMessage.Builder<Builder>
                implements com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog.ServerLogOrBuilder {
-              public static final com.google.gwt.dev.protobuf.Descriptors.Descriptor
+              public static final com.google.protobuf.Descriptors.Descriptor
                   getDescriptor() {
                 return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_AddLog_ServerLog_descriptor;
               }
 
-              protected com.google.gwt.dev.protobuf.GeneratedMessage.FieldAccessorTable
+              protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
                   internalGetFieldAccessorTable() {
                 return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_AddLog_ServerLog_fieldAccessorTable
                     .ensureFieldAccessorsInitialized(
@@ -3321,12 +3321,12 @@ public final class RemoteMessageProto {
               }
 
               private Builder(
-                  com.google.gwt.dev.protobuf.GeneratedMessage.BuilderParent parent) {
+                  com.google.protobuf.GeneratedMessage.BuilderParent parent) {
                 super(parent);
                 maybeForceBuilderInitialization();
               }
               private void maybeForceBuilderInitialization() {
-                if (com.google.gwt.dev.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
+                if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
                 }
               }
               private static Builder create() {
@@ -3337,7 +3337,7 @@ public final class RemoteMessageProto {
                 super.clear();
                 name_ = "";
                 bitField0_ = (bitField0_ & ~0x00000001);
-                icon_ = com.google.gwt.dev.protobuf.ByteString.EMPTY;
+                icon_ = com.google.protobuf.ByteString.EMPTY;
                 bitField0_ = (bitField0_ & ~0x00000002);
                 return this;
               }
@@ -3346,7 +3346,7 @@ public final class RemoteMessageProto {
                 return create().mergeFrom(buildPartial());
               }
 
-              public com.google.gwt.dev.protobuf.Descriptors.Descriptor
+              public com.google.protobuf.Descriptors.Descriptor
                   getDescriptorForType() {
                 return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_AddLog_ServerLog_descriptor;
               }
@@ -3380,7 +3380,7 @@ public final class RemoteMessageProto {
                 return result;
               }
 
-              public Builder mergeFrom(com.google.gwt.dev.protobuf.Message other) {
+              public Builder mergeFrom(com.google.protobuf.Message other) {
                 if (other instanceof com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog.ServerLog) {
                   return mergeFrom((com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog.ServerLog)other);
                 } else {
@@ -3412,13 +3412,13 @@ public final class RemoteMessageProto {
               }
 
               public Builder mergeFrom(
-                  com.google.gwt.dev.protobuf.CodedInputStream input,
-                  com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
+                  com.google.protobuf.CodedInputStream input,
+                  com.google.protobuf.ExtensionRegistryLite extensionRegistry)
                   throws java.io.IOException {
                 com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog.ServerLog parsedMessage = null;
                 try {
                   parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
-                } catch (com.google.gwt.dev.protobuf.InvalidProtocolBufferException e) {
+                } catch (com.google.protobuf.InvalidProtocolBufferException e) {
                   parsedMessage = (com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog.ServerLog) e.getUnfinishedMessage();
                   throw e;
                 } finally {
@@ -3444,7 +3444,7 @@ public final class RemoteMessageProto {
               public java.lang.String getName() {
                 java.lang.Object ref = name_;
                 if (!(ref instanceof java.lang.String)) {
-                  java.lang.String s = ((com.google.gwt.dev.protobuf.ByteString) ref)
+                  java.lang.String s = ((com.google.protobuf.ByteString) ref)
                       .toStringUtf8();
                   name_ = s;
                   return s;
@@ -3455,17 +3455,17 @@ public final class RemoteMessageProto {
               /**
                * <code>required string name = 1;</code>
                */
-              public com.google.gwt.dev.protobuf.ByteString
+              public com.google.protobuf.ByteString
                   getNameBytes() {
                 java.lang.Object ref = name_;
                 if (ref instanceof String) {
-                  com.google.gwt.dev.protobuf.ByteString b =
-                      com.google.gwt.dev.protobuf.ByteString.copyFromUtf8(
+                  com.google.protobuf.ByteString b =
+                      com.google.protobuf.ByteString.copyFromUtf8(
                           (java.lang.String) ref);
                   name_ = b;
                   return b;
                 } else {
-                  return (com.google.gwt.dev.protobuf.ByteString) ref;
+                  return (com.google.protobuf.ByteString) ref;
                 }
               }
               /**
@@ -3494,7 +3494,7 @@ public final class RemoteMessageProto {
                * <code>required string name = 1;</code>
                */
               public Builder setNameBytes(
-                  com.google.gwt.dev.protobuf.ByteString value) {
+                  com.google.protobuf.ByteString value) {
                 if (value == null) {
     throw new NullPointerException();
   }
@@ -3505,7 +3505,7 @@ public final class RemoteMessageProto {
               }
 
               // optional bytes icon = 2;
-              private com.google.gwt.dev.protobuf.ByteString icon_ = com.google.gwt.dev.protobuf.ByteString.EMPTY;
+              private com.google.protobuf.ByteString icon_ = com.google.protobuf.ByteString.EMPTY;
               /**
                * <code>optional bytes icon = 2;</code>
                */
@@ -3515,13 +3515,13 @@ public final class RemoteMessageProto {
               /**
                * <code>optional bytes icon = 2;</code>
                */
-              public com.google.gwt.dev.protobuf.ByteString getIcon() {
+              public com.google.protobuf.ByteString getIcon() {
                 return icon_;
               }
               /**
                * <code>optional bytes icon = 2;</code>
                */
-              public Builder setIcon(com.google.gwt.dev.protobuf.ByteString value) {
+              public Builder setIcon(com.google.protobuf.ByteString value) {
                 if (value == null) {
     throw new NullPointerException();
   }
@@ -3552,7 +3552,7 @@ public final class RemoteMessageProto {
           }
 
           public interface MainLogOrBuilder
-              extends com.google.gwt.dev.protobuf.MessageOrBuilder {
+              extends com.google.protobuf.MessageOrBuilder {
           }
           /**
            * Protobuf type {@code com.google.gwt.dev.shell.remoteui.Message.Request.ViewerRequest.AddLog.MainLog}
@@ -3563,14 +3563,14 @@ public final class RemoteMessageProto {
            * </pre>
            */
           public static final class MainLog extends
-              com.google.gwt.dev.protobuf.GeneratedMessage
+              com.google.protobuf.GeneratedMessage
               implements MainLogOrBuilder {
             // Use MainLog.newBuilder() to construct.
-            private MainLog(com.google.gwt.dev.protobuf.GeneratedMessage.Builder<?> builder) {
+            private MainLog(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
               super(builder);
               this.unknownFields = builder.getUnknownFields();
             }
-            private MainLog(boolean noInit) { this.unknownFields = com.google.gwt.dev.protobuf.UnknownFieldSet.getDefaultInstance(); }
+            private MainLog(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
 
             private static final MainLog defaultInstance;
             public static MainLog getDefaultInstance() {
@@ -3581,19 +3581,19 @@ public final class RemoteMessageProto {
               return defaultInstance;
             }
 
-            private final com.google.gwt.dev.protobuf.UnknownFieldSet unknownFields;
+            private final com.google.protobuf.UnknownFieldSet unknownFields;
             @java.lang.Override
-            public final com.google.gwt.dev.protobuf.UnknownFieldSet
+            public final com.google.protobuf.UnknownFieldSet
                 getUnknownFields() {
               return this.unknownFields;
             }
             private MainLog(
-                com.google.gwt.dev.protobuf.CodedInputStream input,
-                com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
-                throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+                com.google.protobuf.CodedInputStream input,
+                com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+                throws com.google.protobuf.InvalidProtocolBufferException {
               initFields();
-              com.google.gwt.dev.protobuf.UnknownFieldSet.Builder unknownFields =
-                  com.google.gwt.dev.protobuf.UnknownFieldSet.newBuilder();
+              com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+                  com.google.protobuf.UnknownFieldSet.newBuilder();
               try {
                 boolean done = false;
                 while (!done) {
@@ -3611,40 +3611,40 @@ public final class RemoteMessageProto {
                     }
                   }
                 }
-              } catch (com.google.gwt.dev.protobuf.InvalidProtocolBufferException e) {
+              } catch (com.google.protobuf.InvalidProtocolBufferException e) {
                 throw e.setUnfinishedMessage(this);
               } catch (java.io.IOException e) {
-                throw new com.google.gwt.dev.protobuf.InvalidProtocolBufferException(
+                throw new com.google.protobuf.InvalidProtocolBufferException(
                     e.getMessage()).setUnfinishedMessage(this);
               } finally {
                 this.unknownFields = unknownFields.build();
                 makeExtensionsImmutable();
               }
             }
-            public static final com.google.gwt.dev.protobuf.Descriptors.Descriptor
+            public static final com.google.protobuf.Descriptors.Descriptor
                 getDescriptor() {
               return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_AddLog_MainLog_descriptor;
             }
 
-            protected com.google.gwt.dev.protobuf.GeneratedMessage.FieldAccessorTable
+            protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
                 internalGetFieldAccessorTable() {
               return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_AddLog_MainLog_fieldAccessorTable
                   .ensureFieldAccessorsInitialized(
                       com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog.MainLog.class, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog.MainLog.Builder.class);
             }
 
-            public static com.google.gwt.dev.protobuf.Parser<MainLog> PARSER =
-                new com.google.gwt.dev.protobuf.AbstractParser<MainLog>() {
+            public static com.google.protobuf.Parser<MainLog> PARSER =
+                new com.google.protobuf.AbstractParser<MainLog>() {
               public MainLog parsePartialFrom(
-                  com.google.gwt.dev.protobuf.CodedInputStream input,
-                  com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
-                  throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+                  com.google.protobuf.CodedInputStream input,
+                  com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+                  throws com.google.protobuf.InvalidProtocolBufferException {
                 return new MainLog(input, extensionRegistry);
               }
             };
 
             @java.lang.Override
-            public com.google.gwt.dev.protobuf.Parser<MainLog> getParserForType() {
+            public com.google.protobuf.Parser<MainLog> getParserForType() {
               return PARSER;
             }
 
@@ -3659,7 +3659,7 @@ public final class RemoteMessageProto {
               return true;
             }
 
-            public void writeTo(com.google.gwt.dev.protobuf.CodedOutputStream output)
+            public void writeTo(com.google.protobuf.CodedOutputStream output)
                                 throws java.io.IOException {
               getSerializedSize();
               getUnknownFields().writeTo(output);
@@ -3684,24 +3684,24 @@ public final class RemoteMessageProto {
             }
 
             public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog.MainLog parseFrom(
-                com.google.gwt.dev.protobuf.ByteString data)
-                throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+                com.google.protobuf.ByteString data)
+                throws com.google.protobuf.InvalidProtocolBufferException {
               return PARSER.parseFrom(data);
             }
             public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog.MainLog parseFrom(
-                com.google.gwt.dev.protobuf.ByteString data,
-                com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
-                throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+                com.google.protobuf.ByteString data,
+                com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+                throws com.google.protobuf.InvalidProtocolBufferException {
               return PARSER.parseFrom(data, extensionRegistry);
             }
             public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog.MainLog parseFrom(byte[] data)
-                throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+                throws com.google.protobuf.InvalidProtocolBufferException {
               return PARSER.parseFrom(data);
             }
             public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog.MainLog parseFrom(
                 byte[] data,
-                com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
-                throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+                com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+                throws com.google.protobuf.InvalidProtocolBufferException {
               return PARSER.parseFrom(data, extensionRegistry);
             }
             public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog.MainLog parseFrom(java.io.InputStream input)
@@ -3710,7 +3710,7 @@ public final class RemoteMessageProto {
             }
             public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog.MainLog parseFrom(
                 java.io.InputStream input,
-                com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
+                com.google.protobuf.ExtensionRegistryLite extensionRegistry)
                 throws java.io.IOException {
               return PARSER.parseFrom(input, extensionRegistry);
             }
@@ -3720,18 +3720,18 @@ public final class RemoteMessageProto {
             }
             public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog.MainLog parseDelimitedFrom(
                 java.io.InputStream input,
-                com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
+                com.google.protobuf.ExtensionRegistryLite extensionRegistry)
                 throws java.io.IOException {
               return PARSER.parseDelimitedFrom(input, extensionRegistry);
             }
             public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog.MainLog parseFrom(
-                com.google.gwt.dev.protobuf.CodedInputStream input)
+                com.google.protobuf.CodedInputStream input)
                 throws java.io.IOException {
               return PARSER.parseFrom(input);
             }
             public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog.MainLog parseFrom(
-                com.google.gwt.dev.protobuf.CodedInputStream input,
-                com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
+                com.google.protobuf.CodedInputStream input,
+                com.google.protobuf.ExtensionRegistryLite extensionRegistry)
                 throws java.io.IOException {
               return PARSER.parseFrom(input, extensionRegistry);
             }
@@ -3745,7 +3745,7 @@ public final class RemoteMessageProto {
 
             @java.lang.Override
             protected Builder newBuilderForType(
-                com.google.gwt.dev.protobuf.GeneratedMessage.BuilderParent parent) {
+                com.google.protobuf.GeneratedMessage.BuilderParent parent) {
               Builder builder = new Builder(parent);
               return builder;
             }
@@ -3758,14 +3758,14 @@ public final class RemoteMessageProto {
              * </pre>
              */
             public static final class Builder extends
-                com.google.gwt.dev.protobuf.GeneratedMessage.Builder<Builder>
+                com.google.protobuf.GeneratedMessage.Builder<Builder>
                implements com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog.MainLogOrBuilder {
-              public static final com.google.gwt.dev.protobuf.Descriptors.Descriptor
+              public static final com.google.protobuf.Descriptors.Descriptor
                   getDescriptor() {
                 return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_AddLog_MainLog_descriptor;
               }
 
-              protected com.google.gwt.dev.protobuf.GeneratedMessage.FieldAccessorTable
+              protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
                   internalGetFieldAccessorTable() {
                 return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_AddLog_MainLog_fieldAccessorTable
                     .ensureFieldAccessorsInitialized(
@@ -3778,12 +3778,12 @@ public final class RemoteMessageProto {
               }
 
               private Builder(
-                  com.google.gwt.dev.protobuf.GeneratedMessage.BuilderParent parent) {
+                  com.google.protobuf.GeneratedMessage.BuilderParent parent) {
                 super(parent);
                 maybeForceBuilderInitialization();
               }
               private void maybeForceBuilderInitialization() {
-                if (com.google.gwt.dev.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
+                if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
                 }
               }
               private static Builder create() {
@@ -3799,7 +3799,7 @@ public final class RemoteMessageProto {
                 return create().mergeFrom(buildPartial());
               }
 
-              public com.google.gwt.dev.protobuf.Descriptors.Descriptor
+              public com.google.protobuf.Descriptors.Descriptor
                   getDescriptorForType() {
                 return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_AddLog_MainLog_descriptor;
               }
@@ -3822,7 +3822,7 @@ public final class RemoteMessageProto {
                 return result;
               }
 
-              public Builder mergeFrom(com.google.gwt.dev.protobuf.Message other) {
+              public Builder mergeFrom(com.google.protobuf.Message other) {
                 if (other instanceof com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog.MainLog) {
                   return mergeFrom((com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog.MainLog)other);
                 } else {
@@ -3842,13 +3842,13 @@ public final class RemoteMessageProto {
               }
 
               public Builder mergeFrom(
-                  com.google.gwt.dev.protobuf.CodedInputStream input,
-                  com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
+                  com.google.protobuf.CodedInputStream input,
+                  com.google.protobuf.ExtensionRegistryLite extensionRegistry)
                   throws java.io.IOException {
                 com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog.MainLog parsedMessage = null;
                 try {
                   parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
-                } catch (com.google.gwt.dev.protobuf.InvalidProtocolBufferException e) {
+                } catch (com.google.protobuf.InvalidProtocolBufferException e) {
                   parsedMessage = (com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog.MainLog) e.getUnfinishedMessage();
                   throw e;
                 } finally {
@@ -3980,7 +3980,7 @@ public final class RemoteMessageProto {
             return true;
           }
 
-          public void writeTo(com.google.gwt.dev.protobuf.CodedOutputStream output)
+          public void writeTo(com.google.protobuf.CodedOutputStream output)
                               throws java.io.IOException {
             getSerializedSize();
             if (((bitField0_ & 0x00000001) == 0x00000001)) {
@@ -4005,19 +4005,19 @@ public final class RemoteMessageProto {
 
             size = 0;
             if (((bitField0_ & 0x00000001) == 0x00000001)) {
-              size += com.google.gwt.dev.protobuf.CodedOutputStream
+              size += com.google.protobuf.CodedOutputStream
                 .computeEnumSize(1, type_.getNumber());
             }
             if (((bitField0_ & 0x00000002) == 0x00000002)) {
-              size += com.google.gwt.dev.protobuf.CodedOutputStream
+              size += com.google.protobuf.CodedOutputStream
                 .computeMessageSize(2, moduleLog_);
             }
             if (((bitField0_ & 0x00000004) == 0x00000004)) {
-              size += com.google.gwt.dev.protobuf.CodedOutputStream
+              size += com.google.protobuf.CodedOutputStream
                 .computeMessageSize(3, serverLog_);
             }
             if (((bitField0_ & 0x00000008) == 0x00000008)) {
-              size += com.google.gwt.dev.protobuf.CodedOutputStream
+              size += com.google.protobuf.CodedOutputStream
                 .computeMessageSize(4, mainLog_);
             }
             size += getUnknownFields().getSerializedSize();
@@ -4033,24 +4033,24 @@ public final class RemoteMessageProto {
           }
 
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog parseFrom(
-              com.google.gwt.dev.protobuf.ByteString data)
-              throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+              com.google.protobuf.ByteString data)
+              throws com.google.protobuf.InvalidProtocolBufferException {
             return PARSER.parseFrom(data);
           }
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog parseFrom(
-              com.google.gwt.dev.protobuf.ByteString data,
-              com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
-              throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+              com.google.protobuf.ByteString data,
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+              throws com.google.protobuf.InvalidProtocolBufferException {
             return PARSER.parseFrom(data, extensionRegistry);
           }
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog parseFrom(byte[] data)
-              throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+              throws com.google.protobuf.InvalidProtocolBufferException {
             return PARSER.parseFrom(data);
           }
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog parseFrom(
               byte[] data,
-              com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
-              throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+              throws com.google.protobuf.InvalidProtocolBufferException {
             return PARSER.parseFrom(data, extensionRegistry);
           }
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog parseFrom(java.io.InputStream input)
@@ -4059,7 +4059,7 @@ public final class RemoteMessageProto {
           }
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog parseFrom(
               java.io.InputStream input,
-              com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
               throws java.io.IOException {
             return PARSER.parseFrom(input, extensionRegistry);
           }
@@ -4069,18 +4069,18 @@ public final class RemoteMessageProto {
           }
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog parseDelimitedFrom(
               java.io.InputStream input,
-              com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
               throws java.io.IOException {
             return PARSER.parseDelimitedFrom(input, extensionRegistry);
           }
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog parseFrom(
-              com.google.gwt.dev.protobuf.CodedInputStream input)
+              com.google.protobuf.CodedInputStream input)
               throws java.io.IOException {
             return PARSER.parseFrom(input);
           }
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog parseFrom(
-              com.google.gwt.dev.protobuf.CodedInputStream input,
-              com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
+              com.google.protobuf.CodedInputStream input,
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
               throws java.io.IOException {
             return PARSER.parseFrom(input, extensionRegistry);
           }
@@ -4094,7 +4094,7 @@ public final class RemoteMessageProto {
 
           @java.lang.Override
           protected Builder newBuilderForType(
-              com.google.gwt.dev.protobuf.GeneratedMessage.BuilderParent parent) {
+              com.google.protobuf.GeneratedMessage.BuilderParent parent) {
             Builder builder = new Builder(parent);
             return builder;
           }
@@ -4106,14 +4106,14 @@ public final class RemoteMessageProto {
            * </pre>
            */
           public static final class Builder extends
-              com.google.gwt.dev.protobuf.GeneratedMessage.Builder<Builder>
+              com.google.protobuf.GeneratedMessage.Builder<Builder>
              implements com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLogOrBuilder {
-            public static final com.google.gwt.dev.protobuf.Descriptors.Descriptor
+            public static final com.google.protobuf.Descriptors.Descriptor
                 getDescriptor() {
               return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_AddLog_descriptor;
             }
 
-            protected com.google.gwt.dev.protobuf.GeneratedMessage.FieldAccessorTable
+            protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
                 internalGetFieldAccessorTable() {
               return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_AddLog_fieldAccessorTable
                   .ensureFieldAccessorsInitialized(
@@ -4126,12 +4126,12 @@ public final class RemoteMessageProto {
             }
 
             private Builder(
-                com.google.gwt.dev.protobuf.GeneratedMessage.BuilderParent parent) {
+                com.google.protobuf.GeneratedMessage.BuilderParent parent) {
               super(parent);
               maybeForceBuilderInitialization();
             }
             private void maybeForceBuilderInitialization() {
-              if (com.google.gwt.dev.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
+              if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
                 getModuleLogFieldBuilder();
                 getServerLogFieldBuilder();
                 getMainLogFieldBuilder();
@@ -4170,7 +4170,7 @@ public final class RemoteMessageProto {
               return create().mergeFrom(buildPartial());
             }
 
-            public com.google.gwt.dev.protobuf.Descriptors.Descriptor
+            public com.google.protobuf.Descriptors.Descriptor
                 getDescriptorForType() {
               return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_AddLog_descriptor;
             }
@@ -4224,7 +4224,7 @@ public final class RemoteMessageProto {
               return result;
             }
 
-            public Builder mergeFrom(com.google.gwt.dev.protobuf.Message other) {
+            public Builder mergeFrom(com.google.protobuf.Message other) {
               if (other instanceof com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog) {
                 return mergeFrom((com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog)other);
               } else {
@@ -4268,13 +4268,13 @@ public final class RemoteMessageProto {
             }
 
             public Builder mergeFrom(
-                com.google.gwt.dev.protobuf.CodedInputStream input,
-                com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
+                com.google.protobuf.CodedInputStream input,
+                com.google.protobuf.ExtensionRegistryLite extensionRegistry)
                 throws java.io.IOException {
               com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog parsedMessage = null;
               try {
                 parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
-              } catch (com.google.gwt.dev.protobuf.InvalidProtocolBufferException e) {
+              } catch (com.google.protobuf.InvalidProtocolBufferException e) {
                 parsedMessage = (com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog) e.getUnfinishedMessage();
                 throw e;
               } finally {
@@ -4324,7 +4324,7 @@ public final class RemoteMessageProto {
 
             // optional .com.google.gwt.dev.shell.remoteui.Message.Request.ViewerRequest.AddLog.ModuleLog moduleLog = 2;
             private com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog.ModuleLog moduleLog_ = com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog.ModuleLog.getDefaultInstance();
-            private com.google.gwt.dev.protobuf.SingleFieldBuilder<
+            private com.google.protobuf.SingleFieldBuilder<
                 com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog.ModuleLog, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog.ModuleLog.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog.ModuleLogOrBuilder> moduleLogBuilder_;
             /**
              * <code>optional .com.google.gwt.dev.shell.remoteui.Message.Request.ViewerRequest.AddLog.ModuleLog moduleLog = 2;</code>
@@ -4425,11 +4425,11 @@ public final class RemoteMessageProto {
             /**
              * <code>optional .com.google.gwt.dev.shell.remoteui.Message.Request.ViewerRequest.AddLog.ModuleLog moduleLog = 2;</code>
              */
-            private com.google.gwt.dev.protobuf.SingleFieldBuilder<
+            private com.google.protobuf.SingleFieldBuilder<
                 com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog.ModuleLog, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog.ModuleLog.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog.ModuleLogOrBuilder>
                 getModuleLogFieldBuilder() {
               if (moduleLogBuilder_ == null) {
-                moduleLogBuilder_ = new com.google.gwt.dev.protobuf.SingleFieldBuilder<
+                moduleLogBuilder_ = new com.google.protobuf.SingleFieldBuilder<
                     com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog.ModuleLog, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog.ModuleLog.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog.ModuleLogOrBuilder>(
                         moduleLog_,
                         getParentForChildren(),
@@ -4441,7 +4441,7 @@ public final class RemoteMessageProto {
 
             // optional .com.google.gwt.dev.shell.remoteui.Message.Request.ViewerRequest.AddLog.ServerLog serverLog = 3;
             private com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog.ServerLog serverLog_ = com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog.ServerLog.getDefaultInstance();
-            private com.google.gwt.dev.protobuf.SingleFieldBuilder<
+            private com.google.protobuf.SingleFieldBuilder<
                 com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog.ServerLog, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog.ServerLog.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog.ServerLogOrBuilder> serverLogBuilder_;
             /**
              * <code>optional .com.google.gwt.dev.shell.remoteui.Message.Request.ViewerRequest.AddLog.ServerLog serverLog = 3;</code>
@@ -4542,11 +4542,11 @@ public final class RemoteMessageProto {
             /**
              * <code>optional .com.google.gwt.dev.shell.remoteui.Message.Request.ViewerRequest.AddLog.ServerLog serverLog = 3;</code>
              */
-            private com.google.gwt.dev.protobuf.SingleFieldBuilder<
+            private com.google.protobuf.SingleFieldBuilder<
                 com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog.ServerLog, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog.ServerLog.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog.ServerLogOrBuilder>
                 getServerLogFieldBuilder() {
               if (serverLogBuilder_ == null) {
-                serverLogBuilder_ = new com.google.gwt.dev.protobuf.SingleFieldBuilder<
+                serverLogBuilder_ = new com.google.protobuf.SingleFieldBuilder<
                     com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog.ServerLog, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog.ServerLog.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog.ServerLogOrBuilder>(
                         serverLog_,
                         getParentForChildren(),
@@ -4558,7 +4558,7 @@ public final class RemoteMessageProto {
 
             // optional .com.google.gwt.dev.shell.remoteui.Message.Request.ViewerRequest.AddLog.MainLog mainLog = 4;
             private com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog.MainLog mainLog_ = com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog.MainLog.getDefaultInstance();
-            private com.google.gwt.dev.protobuf.SingleFieldBuilder<
+            private com.google.protobuf.SingleFieldBuilder<
                 com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog.MainLog, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog.MainLog.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog.MainLogOrBuilder> mainLogBuilder_;
             /**
              * <code>optional .com.google.gwt.dev.shell.remoteui.Message.Request.ViewerRequest.AddLog.MainLog mainLog = 4;</code>
@@ -4659,11 +4659,11 @@ public final class RemoteMessageProto {
             /**
              * <code>optional .com.google.gwt.dev.shell.remoteui.Message.Request.ViewerRequest.AddLog.MainLog mainLog = 4;</code>
              */
-            private com.google.gwt.dev.protobuf.SingleFieldBuilder<
+            private com.google.protobuf.SingleFieldBuilder<
                 com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog.MainLog, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog.MainLog.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog.MainLogOrBuilder>
                 getMainLogFieldBuilder() {
               if (mainLogBuilder_ == null) {
-                mainLogBuilder_ = new com.google.gwt.dev.protobuf.SingleFieldBuilder<
+                mainLogBuilder_ = new com.google.protobuf.SingleFieldBuilder<
                     com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog.MainLog, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog.MainLog.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog.MainLogOrBuilder>(
                         mainLog_,
                         getParentForChildren(),
@@ -4685,7 +4685,7 @@ public final class RemoteMessageProto {
         }
 
         public interface LogDataOrBuilder
-            extends com.google.gwt.dev.protobuf.MessageOrBuilder {
+            extends com.google.protobuf.MessageOrBuilder {
 
           // required string summary = 1;
           /**
@@ -4699,7 +4699,7 @@ public final class RemoteMessageProto {
           /**
            * <code>required string summary = 1;</code>
            */
-          com.google.gwt.dev.protobuf.ByteString
+          com.google.protobuf.ByteString
               getSummaryBytes();
 
           // optional string level = 2;
@@ -4714,7 +4714,7 @@ public final class RemoteMessageProto {
           /**
            * <code>optional string level = 2;</code>
            */
-          com.google.gwt.dev.protobuf.ByteString
+          com.google.protobuf.ByteString
               getLevelBytes();
 
           // optional bool needsAttention = 3;
@@ -4739,7 +4739,7 @@ public final class RemoteMessageProto {
           /**
            * <code>optional string details = 4;</code>
            */
-          com.google.gwt.dev.protobuf.ByteString
+          com.google.protobuf.ByteString
               getDetailsBytes();
 
           // optional .com.google.gwt.dev.shell.remoteui.Message.Request.ViewerRequest.LogData.HelpInfo helpInfo = 5;
@@ -4764,14 +4764,14 @@ public final class RemoteMessageProto {
          * </pre>
          */
         public static final class LogData extends
-            com.google.gwt.dev.protobuf.GeneratedMessage
+            com.google.protobuf.GeneratedMessage
             implements LogDataOrBuilder {
           // Use LogData.newBuilder() to construct.
-          private LogData(com.google.gwt.dev.protobuf.GeneratedMessage.Builder<?> builder) {
+          private LogData(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
             super(builder);
             this.unknownFields = builder.getUnknownFields();
           }
-          private LogData(boolean noInit) { this.unknownFields = com.google.gwt.dev.protobuf.UnknownFieldSet.getDefaultInstance(); }
+          private LogData(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
 
           private static final LogData defaultInstance;
           public static LogData getDefaultInstance() {
@@ -4782,20 +4782,20 @@ public final class RemoteMessageProto {
             return defaultInstance;
           }
 
-          private final com.google.gwt.dev.protobuf.UnknownFieldSet unknownFields;
+          private final com.google.protobuf.UnknownFieldSet unknownFields;
           @java.lang.Override
-          public final com.google.gwt.dev.protobuf.UnknownFieldSet
+          public final com.google.protobuf.UnknownFieldSet
               getUnknownFields() {
             return this.unknownFields;
           }
           private LogData(
-              com.google.gwt.dev.protobuf.CodedInputStream input,
-              com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
-              throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+              com.google.protobuf.CodedInputStream input,
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+              throws com.google.protobuf.InvalidProtocolBufferException {
             initFields();
             int mutable_bitField0_ = 0;
-            com.google.gwt.dev.protobuf.UnknownFieldSet.Builder unknownFields =
-                com.google.gwt.dev.protobuf.UnknownFieldSet.newBuilder();
+            com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+                com.google.protobuf.UnknownFieldSet.newBuilder();
             try {
               boolean done = false;
               while (!done) {
@@ -4846,45 +4846,45 @@ public final class RemoteMessageProto {
                   }
                 }
               }
-            } catch (com.google.gwt.dev.protobuf.InvalidProtocolBufferException e) {
+            } catch (com.google.protobuf.InvalidProtocolBufferException e) {
               throw e.setUnfinishedMessage(this);
             } catch (java.io.IOException e) {
-              throw new com.google.gwt.dev.protobuf.InvalidProtocolBufferException(
+              throw new com.google.protobuf.InvalidProtocolBufferException(
                   e.getMessage()).setUnfinishedMessage(this);
             } finally {
               this.unknownFields = unknownFields.build();
               makeExtensionsImmutable();
             }
           }
-          public static final com.google.gwt.dev.protobuf.Descriptors.Descriptor
+          public static final com.google.protobuf.Descriptors.Descriptor
               getDescriptor() {
             return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_LogData_descriptor;
           }
 
-          protected com.google.gwt.dev.protobuf.GeneratedMessage.FieldAccessorTable
+          protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
               internalGetFieldAccessorTable() {
             return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_LogData_fieldAccessorTable
                 .ensureFieldAccessorsInitialized(
                     com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.LogData.class, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.LogData.Builder.class);
           }
 
-          public static com.google.gwt.dev.protobuf.Parser<LogData> PARSER =
-              new com.google.gwt.dev.protobuf.AbstractParser<LogData>() {
+          public static com.google.protobuf.Parser<LogData> PARSER =
+              new com.google.protobuf.AbstractParser<LogData>() {
             public LogData parsePartialFrom(
-                com.google.gwt.dev.protobuf.CodedInputStream input,
-                com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
-                throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+                com.google.protobuf.CodedInputStream input,
+                com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+                throws com.google.protobuf.InvalidProtocolBufferException {
               return new LogData(input, extensionRegistry);
             }
           };
 
           @java.lang.Override
-          public com.google.gwt.dev.protobuf.Parser<LogData> getParserForType() {
+          public com.google.protobuf.Parser<LogData> getParserForType() {
             return PARSER;
           }
 
           public interface HelpInfoOrBuilder
-              extends com.google.gwt.dev.protobuf.MessageOrBuilder {
+              extends com.google.protobuf.MessageOrBuilder {
 
             // optional string url = 1;
             /**
@@ -4898,7 +4898,7 @@ public final class RemoteMessageProto {
             /**
              * <code>optional string url = 1;</code>
              */
-            com.google.gwt.dev.protobuf.ByteString
+            com.google.protobuf.ByteString
                 getUrlBytes();
 
             // optional string text = 2;
@@ -4913,7 +4913,7 @@ public final class RemoteMessageProto {
             /**
              * <code>optional string text = 2;</code>
              */
-            com.google.gwt.dev.protobuf.ByteString
+            com.google.protobuf.ByteString
                 getTextBytes();
           }
           /**
@@ -4924,14 +4924,14 @@ public final class RemoteMessageProto {
            * </pre>
            */
           public static final class HelpInfo extends
-              com.google.gwt.dev.protobuf.GeneratedMessage
+              com.google.protobuf.GeneratedMessage
               implements HelpInfoOrBuilder {
             // Use HelpInfo.newBuilder() to construct.
-            private HelpInfo(com.google.gwt.dev.protobuf.GeneratedMessage.Builder<?> builder) {
+            private HelpInfo(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
               super(builder);
               this.unknownFields = builder.getUnknownFields();
             }
-            private HelpInfo(boolean noInit) { this.unknownFields = com.google.gwt.dev.protobuf.UnknownFieldSet.getDefaultInstance(); }
+            private HelpInfo(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
 
             private static final HelpInfo defaultInstance;
             public static HelpInfo getDefaultInstance() {
@@ -4942,20 +4942,20 @@ public final class RemoteMessageProto {
               return defaultInstance;
             }
 
-            private final com.google.gwt.dev.protobuf.UnknownFieldSet unknownFields;
+            private final com.google.protobuf.UnknownFieldSet unknownFields;
             @java.lang.Override
-            public final com.google.gwt.dev.protobuf.UnknownFieldSet
+            public final com.google.protobuf.UnknownFieldSet
                 getUnknownFields() {
               return this.unknownFields;
             }
             private HelpInfo(
-                com.google.gwt.dev.protobuf.CodedInputStream input,
-                com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
-                throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+                com.google.protobuf.CodedInputStream input,
+                com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+                throws com.google.protobuf.InvalidProtocolBufferException {
               initFields();
               int mutable_bitField0_ = 0;
-              com.google.gwt.dev.protobuf.UnknownFieldSet.Builder unknownFields =
-                  com.google.gwt.dev.protobuf.UnknownFieldSet.newBuilder();
+              com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+                  com.google.protobuf.UnknownFieldSet.newBuilder();
               try {
                 boolean done = false;
                 while (!done) {
@@ -4983,40 +4983,40 @@ public final class RemoteMessageProto {
                     }
                   }
                 }
-              } catch (com.google.gwt.dev.protobuf.InvalidProtocolBufferException e) {
+              } catch (com.google.protobuf.InvalidProtocolBufferException e) {
                 throw e.setUnfinishedMessage(this);
               } catch (java.io.IOException e) {
-                throw new com.google.gwt.dev.protobuf.InvalidProtocolBufferException(
+                throw new com.google.protobuf.InvalidProtocolBufferException(
                     e.getMessage()).setUnfinishedMessage(this);
               } finally {
                 this.unknownFields = unknownFields.build();
                 makeExtensionsImmutable();
               }
             }
-            public static final com.google.gwt.dev.protobuf.Descriptors.Descriptor
+            public static final com.google.protobuf.Descriptors.Descriptor
                 getDescriptor() {
               return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_LogData_HelpInfo_descriptor;
             }
 
-            protected com.google.gwt.dev.protobuf.GeneratedMessage.FieldAccessorTable
+            protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
                 internalGetFieldAccessorTable() {
               return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_LogData_HelpInfo_fieldAccessorTable
                   .ensureFieldAccessorsInitialized(
                       com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.LogData.HelpInfo.class, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.LogData.HelpInfo.Builder.class);
             }
 
-            public static com.google.gwt.dev.protobuf.Parser<HelpInfo> PARSER =
-                new com.google.gwt.dev.protobuf.AbstractParser<HelpInfo>() {
+            public static com.google.protobuf.Parser<HelpInfo> PARSER =
+                new com.google.protobuf.AbstractParser<HelpInfo>() {
               public HelpInfo parsePartialFrom(
-                  com.google.gwt.dev.protobuf.CodedInputStream input,
-                  com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
-                  throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+                  com.google.protobuf.CodedInputStream input,
+                  com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+                  throws com.google.protobuf.InvalidProtocolBufferException {
                 return new HelpInfo(input, extensionRegistry);
               }
             };
 
             @java.lang.Override
-            public com.google.gwt.dev.protobuf.Parser<HelpInfo> getParserForType() {
+            public com.google.protobuf.Parser<HelpInfo> getParserForType() {
               return PARSER;
             }
 
@@ -5038,8 +5038,8 @@ public final class RemoteMessageProto {
               if (ref instanceof java.lang.String) {
                 return (java.lang.String) ref;
               } else {
-                com.google.gwt.dev.protobuf.ByteString bs =
-                    (com.google.gwt.dev.protobuf.ByteString) ref;
+                com.google.protobuf.ByteString bs =
+                    (com.google.protobuf.ByteString) ref;
                 java.lang.String s = bs.toStringUtf8();
                 if (bs.isValidUtf8()) {
                   url_ = s;
@@ -5050,17 +5050,17 @@ public final class RemoteMessageProto {
             /**
              * <code>optional string url = 1;</code>
              */
-            public com.google.gwt.dev.protobuf.ByteString
+            public com.google.protobuf.ByteString
                 getUrlBytes() {
               java.lang.Object ref = url_;
               if (ref instanceof java.lang.String) {
-                com.google.gwt.dev.protobuf.ByteString b =
-                    com.google.gwt.dev.protobuf.ByteString.copyFromUtf8(
+                com.google.protobuf.ByteString b =
+                    com.google.protobuf.ByteString.copyFromUtf8(
                         (java.lang.String) ref);
                 url_ = b;
                 return b;
               } else {
-                return (com.google.gwt.dev.protobuf.ByteString) ref;
+                return (com.google.protobuf.ByteString) ref;
               }
             }
 
@@ -5081,8 +5081,8 @@ public final class RemoteMessageProto {
               if (ref instanceof java.lang.String) {
                 return (java.lang.String) ref;
               } else {
-                com.google.gwt.dev.protobuf.ByteString bs =
-                    (com.google.gwt.dev.protobuf.ByteString) ref;
+                com.google.protobuf.ByteString bs =
+                    (com.google.protobuf.ByteString) ref;
                 java.lang.String s = bs.toStringUtf8();
                 if (bs.isValidUtf8()) {
                   text_ = s;
@@ -5093,17 +5093,17 @@ public final class RemoteMessageProto {
             /**
              * <code>optional string text = 2;</code>
              */
-            public com.google.gwt.dev.protobuf.ByteString
+            public com.google.protobuf.ByteString
                 getTextBytes() {
               java.lang.Object ref = text_;
               if (ref instanceof java.lang.String) {
-                com.google.gwt.dev.protobuf.ByteString b =
-                    com.google.gwt.dev.protobuf.ByteString.copyFromUtf8(
+                com.google.protobuf.ByteString b =
+                    com.google.protobuf.ByteString.copyFromUtf8(
                         (java.lang.String) ref);
                 text_ = b;
                 return b;
               } else {
-                return (com.google.gwt.dev.protobuf.ByteString) ref;
+                return (com.google.protobuf.ByteString) ref;
               }
             }
 
@@ -5120,7 +5120,7 @@ public final class RemoteMessageProto {
               return true;
             }
 
-            public void writeTo(com.google.gwt.dev.protobuf.CodedOutputStream output)
+            public void writeTo(com.google.protobuf.CodedOutputStream output)
                                 throws java.io.IOException {
               getSerializedSize();
               if (((bitField0_ & 0x00000001) == 0x00000001)) {
@@ -5139,11 +5139,11 @@ public final class RemoteMessageProto {
 
               size = 0;
               if (((bitField0_ & 0x00000001) == 0x00000001)) {
-                size += com.google.gwt.dev.protobuf.CodedOutputStream
+                size += com.google.protobuf.CodedOutputStream
                   .computeBytesSize(1, getUrlBytes());
               }
               if (((bitField0_ & 0x00000002) == 0x00000002)) {
-                size += com.google.gwt.dev.protobuf.CodedOutputStream
+                size += com.google.protobuf.CodedOutputStream
                   .computeBytesSize(2, getTextBytes());
               }
               size += getUnknownFields().getSerializedSize();
@@ -5159,24 +5159,24 @@ public final class RemoteMessageProto {
             }
 
             public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.LogData.HelpInfo parseFrom(
-                com.google.gwt.dev.protobuf.ByteString data)
-                throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+                com.google.protobuf.ByteString data)
+                throws com.google.protobuf.InvalidProtocolBufferException {
               return PARSER.parseFrom(data);
             }
             public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.LogData.HelpInfo parseFrom(
-                com.google.gwt.dev.protobuf.ByteString data,
-                com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
-                throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+                com.google.protobuf.ByteString data,
+                com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+                throws com.google.protobuf.InvalidProtocolBufferException {
               return PARSER.parseFrom(data, extensionRegistry);
             }
             public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.LogData.HelpInfo parseFrom(byte[] data)
-                throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+                throws com.google.protobuf.InvalidProtocolBufferException {
               return PARSER.parseFrom(data);
             }
             public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.LogData.HelpInfo parseFrom(
                 byte[] data,
-                com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
-                throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+                com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+                throws com.google.protobuf.InvalidProtocolBufferException {
               return PARSER.parseFrom(data, extensionRegistry);
             }
             public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.LogData.HelpInfo parseFrom(java.io.InputStream input)
@@ -5185,7 +5185,7 @@ public final class RemoteMessageProto {
             }
             public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.LogData.HelpInfo parseFrom(
                 java.io.InputStream input,
-                com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
+                com.google.protobuf.ExtensionRegistryLite extensionRegistry)
                 throws java.io.IOException {
               return PARSER.parseFrom(input, extensionRegistry);
             }
@@ -5195,18 +5195,18 @@ public final class RemoteMessageProto {
             }
             public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.LogData.HelpInfo parseDelimitedFrom(
                 java.io.InputStream input,
-                com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
+                com.google.protobuf.ExtensionRegistryLite extensionRegistry)
                 throws java.io.IOException {
               return PARSER.parseDelimitedFrom(input, extensionRegistry);
             }
             public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.LogData.HelpInfo parseFrom(
-                com.google.gwt.dev.protobuf.CodedInputStream input)
+                com.google.protobuf.CodedInputStream input)
                 throws java.io.IOException {
               return PARSER.parseFrom(input);
             }
             public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.LogData.HelpInfo parseFrom(
-                com.google.gwt.dev.protobuf.CodedInputStream input,
-                com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
+                com.google.protobuf.CodedInputStream input,
+                com.google.protobuf.ExtensionRegistryLite extensionRegistry)
                 throws java.io.IOException {
               return PARSER.parseFrom(input, extensionRegistry);
             }
@@ -5220,7 +5220,7 @@ public final class RemoteMessageProto {
 
             @java.lang.Override
             protected Builder newBuilderForType(
-                com.google.gwt.dev.protobuf.GeneratedMessage.BuilderParent parent) {
+                com.google.protobuf.GeneratedMessage.BuilderParent parent) {
               Builder builder = new Builder(parent);
               return builder;
             }
@@ -5232,14 +5232,14 @@ public final class RemoteMessageProto {
              * </pre>
              */
             public static final class Builder extends
-                com.google.gwt.dev.protobuf.GeneratedMessage.Builder<Builder>
+                com.google.protobuf.GeneratedMessage.Builder<Builder>
                implements com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.LogData.HelpInfoOrBuilder {
-              public static final com.google.gwt.dev.protobuf.Descriptors.Descriptor
+              public static final com.google.protobuf.Descriptors.Descriptor
                   getDescriptor() {
                 return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_LogData_HelpInfo_descriptor;
               }
 
-              protected com.google.gwt.dev.protobuf.GeneratedMessage.FieldAccessorTable
+              protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
                   internalGetFieldAccessorTable() {
                 return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_LogData_HelpInfo_fieldAccessorTable
                     .ensureFieldAccessorsInitialized(
@@ -5252,12 +5252,12 @@ public final class RemoteMessageProto {
               }
 
               private Builder(
-                  com.google.gwt.dev.protobuf.GeneratedMessage.BuilderParent parent) {
+                  com.google.protobuf.GeneratedMessage.BuilderParent parent) {
                 super(parent);
                 maybeForceBuilderInitialization();
               }
               private void maybeForceBuilderInitialization() {
-                if (com.google.gwt.dev.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
+                if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
                 }
               }
               private static Builder create() {
@@ -5277,7 +5277,7 @@ public final class RemoteMessageProto {
                 return create().mergeFrom(buildPartial());
               }
 
-              public com.google.gwt.dev.protobuf.Descriptors.Descriptor
+              public com.google.protobuf.Descriptors.Descriptor
                   getDescriptorForType() {
                 return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_LogData_HelpInfo_descriptor;
               }
@@ -5311,7 +5311,7 @@ public final class RemoteMessageProto {
                 return result;
               }
 
-              public Builder mergeFrom(com.google.gwt.dev.protobuf.Message other) {
+              public Builder mergeFrom(com.google.protobuf.Message other) {
                 if (other instanceof com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.LogData.HelpInfo) {
                   return mergeFrom((com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.LogData.HelpInfo)other);
                 } else {
@@ -5341,13 +5341,13 @@ public final class RemoteMessageProto {
               }
 
               public Builder mergeFrom(
-                  com.google.gwt.dev.protobuf.CodedInputStream input,
-                  com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
+                  com.google.protobuf.CodedInputStream input,
+                  com.google.protobuf.ExtensionRegistryLite extensionRegistry)
                   throws java.io.IOException {
                 com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.LogData.HelpInfo parsedMessage = null;
                 try {
                   parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
-                } catch (com.google.gwt.dev.protobuf.InvalidProtocolBufferException e) {
+                } catch (com.google.protobuf.InvalidProtocolBufferException e) {
                   parsedMessage = (com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.LogData.HelpInfo) e.getUnfinishedMessage();
                   throw e;
                 } finally {
@@ -5373,7 +5373,7 @@ public final class RemoteMessageProto {
               public java.lang.String getUrl() {
                 java.lang.Object ref = url_;
                 if (!(ref instanceof java.lang.String)) {
-                  java.lang.String s = ((com.google.gwt.dev.protobuf.ByteString) ref)
+                  java.lang.String s = ((com.google.protobuf.ByteString) ref)
                       .toStringUtf8();
                   url_ = s;
                   return s;
@@ -5384,17 +5384,17 @@ public final class RemoteMessageProto {
               /**
                * <code>optional string url = 1;</code>
                */
-              public com.google.gwt.dev.protobuf.ByteString
+              public com.google.protobuf.ByteString
                   getUrlBytes() {
                 java.lang.Object ref = url_;
                 if (ref instanceof String) {
-                  com.google.gwt.dev.protobuf.ByteString b =
-                      com.google.gwt.dev.protobuf.ByteString.copyFromUtf8(
+                  com.google.protobuf.ByteString b =
+                      com.google.protobuf.ByteString.copyFromUtf8(
                           (java.lang.String) ref);
                   url_ = b;
                   return b;
                 } else {
-                  return (com.google.gwt.dev.protobuf.ByteString) ref;
+                  return (com.google.protobuf.ByteString) ref;
                 }
               }
               /**
@@ -5423,7 +5423,7 @@ public final class RemoteMessageProto {
                * <code>optional string url = 1;</code>
                */
               public Builder setUrlBytes(
-                  com.google.gwt.dev.protobuf.ByteString value) {
+                  com.google.protobuf.ByteString value) {
                 if (value == null) {
     throw new NullPointerException();
   }
@@ -5447,7 +5447,7 @@ public final class RemoteMessageProto {
               public java.lang.String getText() {
                 java.lang.Object ref = text_;
                 if (!(ref instanceof java.lang.String)) {
-                  java.lang.String s = ((com.google.gwt.dev.protobuf.ByteString) ref)
+                  java.lang.String s = ((com.google.protobuf.ByteString) ref)
                       .toStringUtf8();
                   text_ = s;
                   return s;
@@ -5458,17 +5458,17 @@ public final class RemoteMessageProto {
               /**
                * <code>optional string text = 2;</code>
                */
-              public com.google.gwt.dev.protobuf.ByteString
+              public com.google.protobuf.ByteString
                   getTextBytes() {
                 java.lang.Object ref = text_;
                 if (ref instanceof String) {
-                  com.google.gwt.dev.protobuf.ByteString b =
-                      com.google.gwt.dev.protobuf.ByteString.copyFromUtf8(
+                  com.google.protobuf.ByteString b =
+                      com.google.protobuf.ByteString.copyFromUtf8(
                           (java.lang.String) ref);
                   text_ = b;
                   return b;
                 } else {
-                  return (com.google.gwt.dev.protobuf.ByteString) ref;
+                  return (com.google.protobuf.ByteString) ref;
                 }
               }
               /**
@@ -5497,7 +5497,7 @@ public final class RemoteMessageProto {
                * <code>optional string text = 2;</code>
                */
               public Builder setTextBytes(
-                  com.google.gwt.dev.protobuf.ByteString value) {
+                  com.google.protobuf.ByteString value) {
                 if (value == null) {
     throw new NullPointerException();
   }
@@ -5536,8 +5536,8 @@ public final class RemoteMessageProto {
             if (ref instanceof java.lang.String) {
               return (java.lang.String) ref;
             } else {
-              com.google.gwt.dev.protobuf.ByteString bs =
-                  (com.google.gwt.dev.protobuf.ByteString) ref;
+              com.google.protobuf.ByteString bs =
+                  (com.google.protobuf.ByteString) ref;
               java.lang.String s = bs.toStringUtf8();
               if (bs.isValidUtf8()) {
                 summary_ = s;
@@ -5548,17 +5548,17 @@ public final class RemoteMessageProto {
           /**
            * <code>required string summary = 1;</code>
            */
-          public com.google.gwt.dev.protobuf.ByteString
+          public com.google.protobuf.ByteString
               getSummaryBytes() {
             java.lang.Object ref = summary_;
             if (ref instanceof java.lang.String) {
-              com.google.gwt.dev.protobuf.ByteString b =
-                  com.google.gwt.dev.protobuf.ByteString.copyFromUtf8(
+              com.google.protobuf.ByteString b =
+                  com.google.protobuf.ByteString.copyFromUtf8(
                       (java.lang.String) ref);
               summary_ = b;
               return b;
             } else {
-              return (com.google.gwt.dev.protobuf.ByteString) ref;
+              return (com.google.protobuf.ByteString) ref;
             }
           }
 
@@ -5579,8 +5579,8 @@ public final class RemoteMessageProto {
             if (ref instanceof java.lang.String) {
               return (java.lang.String) ref;
             } else {
-              com.google.gwt.dev.protobuf.ByteString bs =
-                  (com.google.gwt.dev.protobuf.ByteString) ref;
+              com.google.protobuf.ByteString bs =
+                  (com.google.protobuf.ByteString) ref;
               java.lang.String s = bs.toStringUtf8();
               if (bs.isValidUtf8()) {
                 level_ = s;
@@ -5591,17 +5591,17 @@ public final class RemoteMessageProto {
           /**
            * <code>optional string level = 2;</code>
            */
-          public com.google.gwt.dev.protobuf.ByteString
+          public com.google.protobuf.ByteString
               getLevelBytes() {
             java.lang.Object ref = level_;
             if (ref instanceof java.lang.String) {
-              com.google.gwt.dev.protobuf.ByteString b =
-                  com.google.gwt.dev.protobuf.ByteString.copyFromUtf8(
+              com.google.protobuf.ByteString b =
+                  com.google.protobuf.ByteString.copyFromUtf8(
                       (java.lang.String) ref);
               level_ = b;
               return b;
             } else {
-              return (com.google.gwt.dev.protobuf.ByteString) ref;
+              return (com.google.protobuf.ByteString) ref;
             }
           }
 
@@ -5638,8 +5638,8 @@ public final class RemoteMessageProto {
             if (ref instanceof java.lang.String) {
               return (java.lang.String) ref;
             } else {
-              com.google.gwt.dev.protobuf.ByteString bs =
-                  (com.google.gwt.dev.protobuf.ByteString) ref;
+              com.google.protobuf.ByteString bs =
+                  (com.google.protobuf.ByteString) ref;
               java.lang.String s = bs.toStringUtf8();
               if (bs.isValidUtf8()) {
                 details_ = s;
@@ -5650,17 +5650,17 @@ public final class RemoteMessageProto {
           /**
            * <code>optional string details = 4;</code>
            */
-          public com.google.gwt.dev.protobuf.ByteString
+          public com.google.protobuf.ByteString
               getDetailsBytes() {
             java.lang.Object ref = details_;
             if (ref instanceof java.lang.String) {
-              com.google.gwt.dev.protobuf.ByteString b =
-                  com.google.gwt.dev.protobuf.ByteString.copyFromUtf8(
+              com.google.protobuf.ByteString b =
+                  com.google.protobuf.ByteString.copyFromUtf8(
                       (java.lang.String) ref);
               details_ = b;
               return b;
             } else {
-              return (com.google.gwt.dev.protobuf.ByteString) ref;
+              return (com.google.protobuf.ByteString) ref;
             }
           }
 
@@ -5706,7 +5706,7 @@ public final class RemoteMessageProto {
             return true;
           }
 
-          public void writeTo(com.google.gwt.dev.protobuf.CodedOutputStream output)
+          public void writeTo(com.google.protobuf.CodedOutputStream output)
                               throws java.io.IOException {
             getSerializedSize();
             if (((bitField0_ & 0x00000001) == 0x00000001)) {
@@ -5734,23 +5734,23 @@ public final class RemoteMessageProto {
 
             size = 0;
             if (((bitField0_ & 0x00000001) == 0x00000001)) {
-              size += com.google.gwt.dev.protobuf.CodedOutputStream
+              size += com.google.protobuf.CodedOutputStream
                 .computeBytesSize(1, getSummaryBytes());
             }
             if (((bitField0_ & 0x00000002) == 0x00000002)) {
-              size += com.google.gwt.dev.protobuf.CodedOutputStream
+              size += com.google.protobuf.CodedOutputStream
                 .computeBytesSize(2, getLevelBytes());
             }
             if (((bitField0_ & 0x00000004) == 0x00000004)) {
-              size += com.google.gwt.dev.protobuf.CodedOutputStream
+              size += com.google.protobuf.CodedOutputStream
                 .computeBoolSize(3, needsAttention_);
             }
             if (((bitField0_ & 0x00000008) == 0x00000008)) {
-              size += com.google.gwt.dev.protobuf.CodedOutputStream
+              size += com.google.protobuf.CodedOutputStream
                 .computeBytesSize(4, getDetailsBytes());
             }
             if (((bitField0_ & 0x00000010) == 0x00000010)) {
-              size += com.google.gwt.dev.protobuf.CodedOutputStream
+              size += com.google.protobuf.CodedOutputStream
                 .computeMessageSize(5, helpInfo_);
             }
             size += getUnknownFields().getSerializedSize();
@@ -5766,24 +5766,24 @@ public final class RemoteMessageProto {
           }
 
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.LogData parseFrom(
-              com.google.gwt.dev.protobuf.ByteString data)
-              throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+              com.google.protobuf.ByteString data)
+              throws com.google.protobuf.InvalidProtocolBufferException {
             return PARSER.parseFrom(data);
           }
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.LogData parseFrom(
-              com.google.gwt.dev.protobuf.ByteString data,
-              com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
-              throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+              com.google.protobuf.ByteString data,
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+              throws com.google.protobuf.InvalidProtocolBufferException {
             return PARSER.parseFrom(data, extensionRegistry);
           }
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.LogData parseFrom(byte[] data)
-              throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+              throws com.google.protobuf.InvalidProtocolBufferException {
             return PARSER.parseFrom(data);
           }
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.LogData parseFrom(
               byte[] data,
-              com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
-              throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+              throws com.google.protobuf.InvalidProtocolBufferException {
             return PARSER.parseFrom(data, extensionRegistry);
           }
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.LogData parseFrom(java.io.InputStream input)
@@ -5792,7 +5792,7 @@ public final class RemoteMessageProto {
           }
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.LogData parseFrom(
               java.io.InputStream input,
-              com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
               throws java.io.IOException {
             return PARSER.parseFrom(input, extensionRegistry);
           }
@@ -5802,18 +5802,18 @@ public final class RemoteMessageProto {
           }
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.LogData parseDelimitedFrom(
               java.io.InputStream input,
-              com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
               throws java.io.IOException {
             return PARSER.parseDelimitedFrom(input, extensionRegistry);
           }
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.LogData parseFrom(
-              com.google.gwt.dev.protobuf.CodedInputStream input)
+              com.google.protobuf.CodedInputStream input)
               throws java.io.IOException {
             return PARSER.parseFrom(input);
           }
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.LogData parseFrom(
-              com.google.gwt.dev.protobuf.CodedInputStream input,
-              com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
+              com.google.protobuf.CodedInputStream input,
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
               throws java.io.IOException {
             return PARSER.parseFrom(input, extensionRegistry);
           }
@@ -5827,7 +5827,7 @@ public final class RemoteMessageProto {
 
           @java.lang.Override
           protected Builder newBuilderForType(
-              com.google.gwt.dev.protobuf.GeneratedMessage.BuilderParent parent) {
+              com.google.protobuf.GeneratedMessage.BuilderParent parent) {
             Builder builder = new Builder(parent);
             return builder;
           }
@@ -5839,14 +5839,14 @@ public final class RemoteMessageProto {
            * </pre>
            */
           public static final class Builder extends
-              com.google.gwt.dev.protobuf.GeneratedMessage.Builder<Builder>
+              com.google.protobuf.GeneratedMessage.Builder<Builder>
              implements com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.LogDataOrBuilder {
-            public static final com.google.gwt.dev.protobuf.Descriptors.Descriptor
+            public static final com.google.protobuf.Descriptors.Descriptor
                 getDescriptor() {
               return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_LogData_descriptor;
             }
 
-            protected com.google.gwt.dev.protobuf.GeneratedMessage.FieldAccessorTable
+            protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
                 internalGetFieldAccessorTable() {
               return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_LogData_fieldAccessorTable
                   .ensureFieldAccessorsInitialized(
@@ -5859,12 +5859,12 @@ public final class RemoteMessageProto {
             }
 
             private Builder(
-                com.google.gwt.dev.protobuf.GeneratedMessage.BuilderParent parent) {
+                com.google.protobuf.GeneratedMessage.BuilderParent parent) {
               super(parent);
               maybeForceBuilderInitialization();
             }
             private void maybeForceBuilderInitialization() {
-              if (com.google.gwt.dev.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
+              if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
                 getHelpInfoFieldBuilder();
               }
             }
@@ -5895,7 +5895,7 @@ public final class RemoteMessageProto {
               return create().mergeFrom(buildPartial());
             }
 
-            public com.google.gwt.dev.protobuf.Descriptors.Descriptor
+            public com.google.protobuf.Descriptors.Descriptor
                 getDescriptorForType() {
               return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_LogData_descriptor;
             }
@@ -5945,7 +5945,7 @@ public final class RemoteMessageProto {
               return result;
             }
 
-            public Builder mergeFrom(com.google.gwt.dev.protobuf.Message other) {
+            public Builder mergeFrom(com.google.protobuf.Message other) {
               if (other instanceof com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.LogData) {
                 return mergeFrom((com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.LogData)other);
               } else {
@@ -5990,13 +5990,13 @@ public final class RemoteMessageProto {
             }
 
             public Builder mergeFrom(
-                com.google.gwt.dev.protobuf.CodedInputStream input,
-                com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
+                com.google.protobuf.CodedInputStream input,
+                com.google.protobuf.ExtensionRegistryLite extensionRegistry)
                 throws java.io.IOException {
               com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.LogData parsedMessage = null;
               try {
                 parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
-              } catch (com.google.gwt.dev.protobuf.InvalidProtocolBufferException e) {
+              } catch (com.google.protobuf.InvalidProtocolBufferException e) {
                 parsedMessage = (com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.LogData) e.getUnfinishedMessage();
                 throw e;
               } finally {
@@ -6022,7 +6022,7 @@ public final class RemoteMessageProto {
             public java.lang.String getSummary() {
               java.lang.Object ref = summary_;
               if (!(ref instanceof java.lang.String)) {
-                java.lang.String s = ((com.google.gwt.dev.protobuf.ByteString) ref)
+                java.lang.String s = ((com.google.protobuf.ByteString) ref)
                     .toStringUtf8();
                 summary_ = s;
                 return s;
@@ -6033,17 +6033,17 @@ public final class RemoteMessageProto {
             /**
              * <code>required string summary = 1;</code>
              */
-            public com.google.gwt.dev.protobuf.ByteString
+            public com.google.protobuf.ByteString
                 getSummaryBytes() {
               java.lang.Object ref = summary_;
               if (ref instanceof String) {
-                com.google.gwt.dev.protobuf.ByteString b =
-                    com.google.gwt.dev.protobuf.ByteString.copyFromUtf8(
+                com.google.protobuf.ByteString b =
+                    com.google.protobuf.ByteString.copyFromUtf8(
                         (java.lang.String) ref);
                 summary_ = b;
                 return b;
               } else {
-                return (com.google.gwt.dev.protobuf.ByteString) ref;
+                return (com.google.protobuf.ByteString) ref;
               }
             }
             /**
@@ -6072,7 +6072,7 @@ public final class RemoteMessageProto {
              * <code>required string summary = 1;</code>
              */
             public Builder setSummaryBytes(
-                com.google.gwt.dev.protobuf.ByteString value) {
+                com.google.protobuf.ByteString value) {
               if (value == null) {
     throw new NullPointerException();
   }
@@ -6096,7 +6096,7 @@ public final class RemoteMessageProto {
             public java.lang.String getLevel() {
               java.lang.Object ref = level_;
               if (!(ref instanceof java.lang.String)) {
-                java.lang.String s = ((com.google.gwt.dev.protobuf.ByteString) ref)
+                java.lang.String s = ((com.google.protobuf.ByteString) ref)
                     .toStringUtf8();
                 level_ = s;
                 return s;
@@ -6107,17 +6107,17 @@ public final class RemoteMessageProto {
             /**
              * <code>optional string level = 2;</code>
              */
-            public com.google.gwt.dev.protobuf.ByteString
+            public com.google.protobuf.ByteString
                 getLevelBytes() {
               java.lang.Object ref = level_;
               if (ref instanceof String) {
-                com.google.gwt.dev.protobuf.ByteString b =
-                    com.google.gwt.dev.protobuf.ByteString.copyFromUtf8(
+                com.google.protobuf.ByteString b =
+                    com.google.protobuf.ByteString.copyFromUtf8(
                         (java.lang.String) ref);
                 level_ = b;
                 return b;
               } else {
-                return (com.google.gwt.dev.protobuf.ByteString) ref;
+                return (com.google.protobuf.ByteString) ref;
               }
             }
             /**
@@ -6146,7 +6146,7 @@ public final class RemoteMessageProto {
              * <code>optional string level = 2;</code>
              */
             public Builder setLevelBytes(
-                com.google.gwt.dev.protobuf.ByteString value) {
+                com.google.protobuf.ByteString value) {
               if (value == null) {
     throw new NullPointerException();
   }
@@ -6203,7 +6203,7 @@ public final class RemoteMessageProto {
             public java.lang.String getDetails() {
               java.lang.Object ref = details_;
               if (!(ref instanceof java.lang.String)) {
-                java.lang.String s = ((com.google.gwt.dev.protobuf.ByteString) ref)
+                java.lang.String s = ((com.google.protobuf.ByteString) ref)
                     .toStringUtf8();
                 details_ = s;
                 return s;
@@ -6214,17 +6214,17 @@ public final class RemoteMessageProto {
             /**
              * <code>optional string details = 4;</code>
              */
-            public com.google.gwt.dev.protobuf.ByteString
+            public com.google.protobuf.ByteString
                 getDetailsBytes() {
               java.lang.Object ref = details_;
               if (ref instanceof String) {
-                com.google.gwt.dev.protobuf.ByteString b =
-                    com.google.gwt.dev.protobuf.ByteString.copyFromUtf8(
+                com.google.protobuf.ByteString b =
+                    com.google.protobuf.ByteString.copyFromUtf8(
                         (java.lang.String) ref);
                 details_ = b;
                 return b;
               } else {
-                return (com.google.gwt.dev.protobuf.ByteString) ref;
+                return (com.google.protobuf.ByteString) ref;
               }
             }
             /**
@@ -6253,7 +6253,7 @@ public final class RemoteMessageProto {
              * <code>optional string details = 4;</code>
              */
             public Builder setDetailsBytes(
-                com.google.gwt.dev.protobuf.ByteString value) {
+                com.google.protobuf.ByteString value) {
               if (value == null) {
     throw new NullPointerException();
   }
@@ -6265,7 +6265,7 @@ public final class RemoteMessageProto {
 
             // optional .com.google.gwt.dev.shell.remoteui.Message.Request.ViewerRequest.LogData.HelpInfo helpInfo = 5;
             private com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.LogData.HelpInfo helpInfo_ = com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.LogData.HelpInfo.getDefaultInstance();
-            private com.google.gwt.dev.protobuf.SingleFieldBuilder<
+            private com.google.protobuf.SingleFieldBuilder<
                 com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.LogData.HelpInfo, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.LogData.HelpInfo.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.LogData.HelpInfoOrBuilder> helpInfoBuilder_;
             /**
              * <code>optional .com.google.gwt.dev.shell.remoteui.Message.Request.ViewerRequest.LogData.HelpInfo helpInfo = 5;</code>
@@ -6366,11 +6366,11 @@ public final class RemoteMessageProto {
             /**
              * <code>optional .com.google.gwt.dev.shell.remoteui.Message.Request.ViewerRequest.LogData.HelpInfo helpInfo = 5;</code>
              */
-            private com.google.gwt.dev.protobuf.SingleFieldBuilder<
+            private com.google.protobuf.SingleFieldBuilder<
                 com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.LogData.HelpInfo, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.LogData.HelpInfo.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.LogData.HelpInfoOrBuilder>
                 getHelpInfoFieldBuilder() {
               if (helpInfoBuilder_ == null) {
-                helpInfoBuilder_ = new com.google.gwt.dev.protobuf.SingleFieldBuilder<
+                helpInfoBuilder_ = new com.google.protobuf.SingleFieldBuilder<
                     com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.LogData.HelpInfo, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.LogData.HelpInfo.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.LogData.HelpInfoOrBuilder>(
                         helpInfo_,
                         getParentForChildren(),
@@ -6392,7 +6392,7 @@ public final class RemoteMessageProto {
         }
 
         public interface AddLogBranchOrBuilder
-            extends com.google.gwt.dev.protobuf.MessageOrBuilder {
+            extends com.google.protobuf.MessageOrBuilder {
 
           // required uint32 parentLogHandle = 1;
           /**
@@ -6436,14 +6436,14 @@ public final class RemoteMessageProto {
          * </pre>
          */
         public static final class AddLogBranch extends
-            com.google.gwt.dev.protobuf.GeneratedMessage
+            com.google.protobuf.GeneratedMessage
             implements AddLogBranchOrBuilder {
           // Use AddLogBranch.newBuilder() to construct.
-          private AddLogBranch(com.google.gwt.dev.protobuf.GeneratedMessage.Builder<?> builder) {
+          private AddLogBranch(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
             super(builder);
             this.unknownFields = builder.getUnknownFields();
           }
-          private AddLogBranch(boolean noInit) { this.unknownFields = com.google.gwt.dev.protobuf.UnknownFieldSet.getDefaultInstance(); }
+          private AddLogBranch(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
 
           private static final AddLogBranch defaultInstance;
           public static AddLogBranch getDefaultInstance() {
@@ -6454,20 +6454,20 @@ public final class RemoteMessageProto {
             return defaultInstance;
           }
 
-          private final com.google.gwt.dev.protobuf.UnknownFieldSet unknownFields;
+          private final com.google.protobuf.UnknownFieldSet unknownFields;
           @java.lang.Override
-          public final com.google.gwt.dev.protobuf.UnknownFieldSet
+          public final com.google.protobuf.UnknownFieldSet
               getUnknownFields() {
             return this.unknownFields;
           }
           private AddLogBranch(
-              com.google.gwt.dev.protobuf.CodedInputStream input,
-              com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
-              throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+              com.google.protobuf.CodedInputStream input,
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+              throws com.google.protobuf.InvalidProtocolBufferException {
             initFields();
             int mutable_bitField0_ = 0;
-            com.google.gwt.dev.protobuf.UnknownFieldSet.Builder unknownFields =
-                com.google.gwt.dev.protobuf.UnknownFieldSet.newBuilder();
+            com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+                com.google.protobuf.UnknownFieldSet.newBuilder();
             try {
               boolean done = false;
               while (!done) {
@@ -6508,40 +6508,40 @@ public final class RemoteMessageProto {
                   }
                 }
               }
-            } catch (com.google.gwt.dev.protobuf.InvalidProtocolBufferException e) {
+            } catch (com.google.protobuf.InvalidProtocolBufferException e) {
               throw e.setUnfinishedMessage(this);
             } catch (java.io.IOException e) {
-              throw new com.google.gwt.dev.protobuf.InvalidProtocolBufferException(
+              throw new com.google.protobuf.InvalidProtocolBufferException(
                   e.getMessage()).setUnfinishedMessage(this);
             } finally {
               this.unknownFields = unknownFields.build();
               makeExtensionsImmutable();
             }
           }
-          public static final com.google.gwt.dev.protobuf.Descriptors.Descriptor
+          public static final com.google.protobuf.Descriptors.Descriptor
               getDescriptor() {
             return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_AddLogBranch_descriptor;
           }
 
-          protected com.google.gwt.dev.protobuf.GeneratedMessage.FieldAccessorTable
+          protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
               internalGetFieldAccessorTable() {
             return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_AddLogBranch_fieldAccessorTable
                 .ensureFieldAccessorsInitialized(
                     com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLogBranch.class, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLogBranch.Builder.class);
           }
 
-          public static com.google.gwt.dev.protobuf.Parser<AddLogBranch> PARSER =
-              new com.google.gwt.dev.protobuf.AbstractParser<AddLogBranch>() {
+          public static com.google.protobuf.Parser<AddLogBranch> PARSER =
+              new com.google.protobuf.AbstractParser<AddLogBranch>() {
             public AddLogBranch parsePartialFrom(
-                com.google.gwt.dev.protobuf.CodedInputStream input,
-                com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
-                throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+                com.google.protobuf.CodedInputStream input,
+                com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+                throws com.google.protobuf.InvalidProtocolBufferException {
               return new AddLogBranch(input, extensionRegistry);
             }
           };
 
           @java.lang.Override
-          public com.google.gwt.dev.protobuf.Parser<AddLogBranch> getParserForType() {
+          public com.google.protobuf.Parser<AddLogBranch> getParserForType() {
             return PARSER;
           }
 
@@ -6630,7 +6630,7 @@ public final class RemoteMessageProto {
             return true;
           }
 
-          public void writeTo(com.google.gwt.dev.protobuf.CodedOutputStream output)
+          public void writeTo(com.google.protobuf.CodedOutputStream output)
                               throws java.io.IOException {
             getSerializedSize();
             if (((bitField0_ & 0x00000001) == 0x00000001)) {
@@ -6652,15 +6652,15 @@ public final class RemoteMessageProto {
 
             size = 0;
             if (((bitField0_ & 0x00000001) == 0x00000001)) {
-              size += com.google.gwt.dev.protobuf.CodedOutputStream
+              size += com.google.protobuf.CodedOutputStream
                 .computeUInt32Size(1, parentLogHandle_);
             }
             if (((bitField0_ & 0x00000002) == 0x00000002)) {
-              size += com.google.gwt.dev.protobuf.CodedOutputStream
+              size += com.google.protobuf.CodedOutputStream
                 .computeUInt32Size(2, indexInParent_);
             }
             if (((bitField0_ & 0x00000004) == 0x00000004)) {
-              size += com.google.gwt.dev.protobuf.CodedOutputStream
+              size += com.google.protobuf.CodedOutputStream
                 .computeMessageSize(3, logData_);
             }
             size += getUnknownFields().getSerializedSize();
@@ -6676,24 +6676,24 @@ public final class RemoteMessageProto {
           }
 
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLogBranch parseFrom(
-              com.google.gwt.dev.protobuf.ByteString data)
-              throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+              com.google.protobuf.ByteString data)
+              throws com.google.protobuf.InvalidProtocolBufferException {
             return PARSER.parseFrom(data);
           }
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLogBranch parseFrom(
-              com.google.gwt.dev.protobuf.ByteString data,
-              com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
-              throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+              com.google.protobuf.ByteString data,
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+              throws com.google.protobuf.InvalidProtocolBufferException {
             return PARSER.parseFrom(data, extensionRegistry);
           }
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLogBranch parseFrom(byte[] data)
-              throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+              throws com.google.protobuf.InvalidProtocolBufferException {
             return PARSER.parseFrom(data);
           }
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLogBranch parseFrom(
               byte[] data,
-              com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
-              throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+              throws com.google.protobuf.InvalidProtocolBufferException {
             return PARSER.parseFrom(data, extensionRegistry);
           }
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLogBranch parseFrom(java.io.InputStream input)
@@ -6702,7 +6702,7 @@ public final class RemoteMessageProto {
           }
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLogBranch parseFrom(
               java.io.InputStream input,
-              com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
               throws java.io.IOException {
             return PARSER.parseFrom(input, extensionRegistry);
           }
@@ -6712,18 +6712,18 @@ public final class RemoteMessageProto {
           }
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLogBranch parseDelimitedFrom(
               java.io.InputStream input,
-              com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
               throws java.io.IOException {
             return PARSER.parseDelimitedFrom(input, extensionRegistry);
           }
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLogBranch parseFrom(
-              com.google.gwt.dev.protobuf.CodedInputStream input)
+              com.google.protobuf.CodedInputStream input)
               throws java.io.IOException {
             return PARSER.parseFrom(input);
           }
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLogBranch parseFrom(
-              com.google.gwt.dev.protobuf.CodedInputStream input,
-              com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
+              com.google.protobuf.CodedInputStream input,
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
               throws java.io.IOException {
             return PARSER.parseFrom(input, extensionRegistry);
           }
@@ -6737,7 +6737,7 @@ public final class RemoteMessageProto {
 
           @java.lang.Override
           protected Builder newBuilderForType(
-              com.google.gwt.dev.protobuf.GeneratedMessage.BuilderParent parent) {
+              com.google.protobuf.GeneratedMessage.BuilderParent parent) {
             Builder builder = new Builder(parent);
             return builder;
           }
@@ -6749,14 +6749,14 @@ public final class RemoteMessageProto {
            * </pre>
            */
           public static final class Builder extends
-              com.google.gwt.dev.protobuf.GeneratedMessage.Builder<Builder>
+              com.google.protobuf.GeneratedMessage.Builder<Builder>
              implements com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLogBranchOrBuilder {
-            public static final com.google.gwt.dev.protobuf.Descriptors.Descriptor
+            public static final com.google.protobuf.Descriptors.Descriptor
                 getDescriptor() {
               return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_AddLogBranch_descriptor;
             }
 
-            protected com.google.gwt.dev.protobuf.GeneratedMessage.FieldAccessorTable
+            protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
                 internalGetFieldAccessorTable() {
               return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_AddLogBranch_fieldAccessorTable
                   .ensureFieldAccessorsInitialized(
@@ -6769,12 +6769,12 @@ public final class RemoteMessageProto {
             }
 
             private Builder(
-                com.google.gwt.dev.protobuf.GeneratedMessage.BuilderParent parent) {
+                com.google.protobuf.GeneratedMessage.BuilderParent parent) {
               super(parent);
               maybeForceBuilderInitialization();
             }
             private void maybeForceBuilderInitialization() {
-              if (com.google.gwt.dev.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
+              if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
                 getLogDataFieldBuilder();
               }
             }
@@ -6801,7 +6801,7 @@ public final class RemoteMessageProto {
               return create().mergeFrom(buildPartial());
             }
 
-            public com.google.gwt.dev.protobuf.Descriptors.Descriptor
+            public com.google.protobuf.Descriptors.Descriptor
                 getDescriptorForType() {
               return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_AddLogBranch_descriptor;
             }
@@ -6843,7 +6843,7 @@ public final class RemoteMessageProto {
               return result;
             }
 
-            public Builder mergeFrom(com.google.gwt.dev.protobuf.Message other) {
+            public Builder mergeFrom(com.google.protobuf.Message other) {
               if (other instanceof com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLogBranch) {
                 return mergeFrom((com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLogBranch)other);
               } else {
@@ -6888,13 +6888,13 @@ public final class RemoteMessageProto {
             }
 
             public Builder mergeFrom(
-                com.google.gwt.dev.protobuf.CodedInputStream input,
-                com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
+                com.google.protobuf.CodedInputStream input,
+                com.google.protobuf.ExtensionRegistryLite extensionRegistry)
                 throws java.io.IOException {
               com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLogBranch parsedMessage = null;
               try {
                 parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
-              } catch (com.google.gwt.dev.protobuf.InvalidProtocolBufferException e) {
+              } catch (com.google.protobuf.InvalidProtocolBufferException e) {
                 parsedMessage = (com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLogBranch) e.getUnfinishedMessage();
                 throw e;
               } finally {
@@ -6974,7 +6974,7 @@ public final class RemoteMessageProto {
 
             // required .com.google.gwt.dev.shell.remoteui.Message.Request.ViewerRequest.LogData logData = 3;
             private com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.LogData logData_ = com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.LogData.getDefaultInstance();
-            private com.google.gwt.dev.protobuf.SingleFieldBuilder<
+            private com.google.protobuf.SingleFieldBuilder<
                 com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.LogData, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.LogData.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.LogDataOrBuilder> logDataBuilder_;
             /**
              * <code>required .com.google.gwt.dev.shell.remoteui.Message.Request.ViewerRequest.LogData logData = 3;</code>
@@ -7075,11 +7075,11 @@ public final class RemoteMessageProto {
             /**
              * <code>required .com.google.gwt.dev.shell.remoteui.Message.Request.ViewerRequest.LogData logData = 3;</code>
              */
-            private com.google.gwt.dev.protobuf.SingleFieldBuilder<
+            private com.google.protobuf.SingleFieldBuilder<
                 com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.LogData, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.LogData.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.LogDataOrBuilder>
                 getLogDataFieldBuilder() {
               if (logDataBuilder_ == null) {
-                logDataBuilder_ = new com.google.gwt.dev.protobuf.SingleFieldBuilder<
+                logDataBuilder_ = new com.google.protobuf.SingleFieldBuilder<
                     com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.LogData, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.LogData.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.LogDataOrBuilder>(
                         logData_,
                         getParentForChildren(),
@@ -7101,7 +7101,7 @@ public final class RemoteMessageProto {
         }
 
         public interface AddLogEntryOrBuilder
-            extends com.google.gwt.dev.protobuf.MessageOrBuilder {
+            extends com.google.protobuf.MessageOrBuilder {
 
           // required uint32 logHandle = 1;
           /**
@@ -7145,14 +7145,14 @@ public final class RemoteMessageProto {
          * </pre>
          */
         public static final class AddLogEntry extends
-            com.google.gwt.dev.protobuf.GeneratedMessage
+            com.google.protobuf.GeneratedMessage
             implements AddLogEntryOrBuilder {
           // Use AddLogEntry.newBuilder() to construct.
-          private AddLogEntry(com.google.gwt.dev.protobuf.GeneratedMessage.Builder<?> builder) {
+          private AddLogEntry(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
             super(builder);
             this.unknownFields = builder.getUnknownFields();
           }
-          private AddLogEntry(boolean noInit) { this.unknownFields = com.google.gwt.dev.protobuf.UnknownFieldSet.getDefaultInstance(); }
+          private AddLogEntry(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
 
           private static final AddLogEntry defaultInstance;
           public static AddLogEntry getDefaultInstance() {
@@ -7163,20 +7163,20 @@ public final class RemoteMessageProto {
             return defaultInstance;
           }
 
-          private final com.google.gwt.dev.protobuf.UnknownFieldSet unknownFields;
+          private final com.google.protobuf.UnknownFieldSet unknownFields;
           @java.lang.Override
-          public final com.google.gwt.dev.protobuf.UnknownFieldSet
+          public final com.google.protobuf.UnknownFieldSet
               getUnknownFields() {
             return this.unknownFields;
           }
           private AddLogEntry(
-              com.google.gwt.dev.protobuf.CodedInputStream input,
-              com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
-              throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+              com.google.protobuf.CodedInputStream input,
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+              throws com.google.protobuf.InvalidProtocolBufferException {
             initFields();
             int mutable_bitField0_ = 0;
-            com.google.gwt.dev.protobuf.UnknownFieldSet.Builder unknownFields =
-                com.google.gwt.dev.protobuf.UnknownFieldSet.newBuilder();
+            com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+                com.google.protobuf.UnknownFieldSet.newBuilder();
             try {
               boolean done = false;
               while (!done) {
@@ -7217,40 +7217,40 @@ public final class RemoteMessageProto {
                   }
                 }
               }
-            } catch (com.google.gwt.dev.protobuf.InvalidProtocolBufferException e) {
+            } catch (com.google.protobuf.InvalidProtocolBufferException e) {
               throw e.setUnfinishedMessage(this);
             } catch (java.io.IOException e) {
-              throw new com.google.gwt.dev.protobuf.InvalidProtocolBufferException(
+              throw new com.google.protobuf.InvalidProtocolBufferException(
                   e.getMessage()).setUnfinishedMessage(this);
             } finally {
               this.unknownFields = unknownFields.build();
               makeExtensionsImmutable();
             }
           }
-          public static final com.google.gwt.dev.protobuf.Descriptors.Descriptor
+          public static final com.google.protobuf.Descriptors.Descriptor
               getDescriptor() {
             return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_AddLogEntry_descriptor;
           }
 
-          protected com.google.gwt.dev.protobuf.GeneratedMessage.FieldAccessorTable
+          protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
               internalGetFieldAccessorTable() {
             return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_AddLogEntry_fieldAccessorTable
                 .ensureFieldAccessorsInitialized(
                     com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLogEntry.class, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLogEntry.Builder.class);
           }
 
-          public static com.google.gwt.dev.protobuf.Parser<AddLogEntry> PARSER =
-              new com.google.gwt.dev.protobuf.AbstractParser<AddLogEntry>() {
+          public static com.google.protobuf.Parser<AddLogEntry> PARSER =
+              new com.google.protobuf.AbstractParser<AddLogEntry>() {
             public AddLogEntry parsePartialFrom(
-                com.google.gwt.dev.protobuf.CodedInputStream input,
-                com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
-                throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+                com.google.protobuf.CodedInputStream input,
+                com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+                throws com.google.protobuf.InvalidProtocolBufferException {
               return new AddLogEntry(input, extensionRegistry);
             }
           };
 
           @java.lang.Override
-          public com.google.gwt.dev.protobuf.Parser<AddLogEntry> getParserForType() {
+          public com.google.protobuf.Parser<AddLogEntry> getParserForType() {
             return PARSER;
           }
 
@@ -7339,7 +7339,7 @@ public final class RemoteMessageProto {
             return true;
           }
 
-          public void writeTo(com.google.gwt.dev.protobuf.CodedOutputStream output)
+          public void writeTo(com.google.protobuf.CodedOutputStream output)
                               throws java.io.IOException {
             getSerializedSize();
             if (((bitField0_ & 0x00000001) == 0x00000001)) {
@@ -7361,15 +7361,15 @@ public final class RemoteMessageProto {
 
             size = 0;
             if (((bitField0_ & 0x00000001) == 0x00000001)) {
-              size += com.google.gwt.dev.protobuf.CodedOutputStream
+              size += com.google.protobuf.CodedOutputStream
                 .computeUInt32Size(1, logHandle_);
             }
             if (((bitField0_ & 0x00000002) == 0x00000002)) {
-              size += com.google.gwt.dev.protobuf.CodedOutputStream
+              size += com.google.protobuf.CodedOutputStream
                 .computeUInt32Size(2, indexInLog_);
             }
             if (((bitField0_ & 0x00000004) == 0x00000004)) {
-              size += com.google.gwt.dev.protobuf.CodedOutputStream
+              size += com.google.protobuf.CodedOutputStream
                 .computeMessageSize(3, logData_);
             }
             size += getUnknownFields().getSerializedSize();
@@ -7385,24 +7385,24 @@ public final class RemoteMessageProto {
           }
 
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLogEntry parseFrom(
-              com.google.gwt.dev.protobuf.ByteString data)
-              throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+              com.google.protobuf.ByteString data)
+              throws com.google.protobuf.InvalidProtocolBufferException {
             return PARSER.parseFrom(data);
           }
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLogEntry parseFrom(
-              com.google.gwt.dev.protobuf.ByteString data,
-              com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
-              throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+              com.google.protobuf.ByteString data,
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+              throws com.google.protobuf.InvalidProtocolBufferException {
             return PARSER.parseFrom(data, extensionRegistry);
           }
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLogEntry parseFrom(byte[] data)
-              throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+              throws com.google.protobuf.InvalidProtocolBufferException {
             return PARSER.parseFrom(data);
           }
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLogEntry parseFrom(
               byte[] data,
-              com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
-              throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+              throws com.google.protobuf.InvalidProtocolBufferException {
             return PARSER.parseFrom(data, extensionRegistry);
           }
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLogEntry parseFrom(java.io.InputStream input)
@@ -7411,7 +7411,7 @@ public final class RemoteMessageProto {
           }
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLogEntry parseFrom(
               java.io.InputStream input,
-              com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
               throws java.io.IOException {
             return PARSER.parseFrom(input, extensionRegistry);
           }
@@ -7421,18 +7421,18 @@ public final class RemoteMessageProto {
           }
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLogEntry parseDelimitedFrom(
               java.io.InputStream input,
-              com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
               throws java.io.IOException {
             return PARSER.parseDelimitedFrom(input, extensionRegistry);
           }
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLogEntry parseFrom(
-              com.google.gwt.dev.protobuf.CodedInputStream input)
+              com.google.protobuf.CodedInputStream input)
               throws java.io.IOException {
             return PARSER.parseFrom(input);
           }
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLogEntry parseFrom(
-              com.google.gwt.dev.protobuf.CodedInputStream input,
-              com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
+              com.google.protobuf.CodedInputStream input,
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
               throws java.io.IOException {
             return PARSER.parseFrom(input, extensionRegistry);
           }
@@ -7446,7 +7446,7 @@ public final class RemoteMessageProto {
 
           @java.lang.Override
           protected Builder newBuilderForType(
-              com.google.gwt.dev.protobuf.GeneratedMessage.BuilderParent parent) {
+              com.google.protobuf.GeneratedMessage.BuilderParent parent) {
             Builder builder = new Builder(parent);
             return builder;
           }
@@ -7458,14 +7458,14 @@ public final class RemoteMessageProto {
            * </pre>
            */
           public static final class Builder extends
-              com.google.gwt.dev.protobuf.GeneratedMessage.Builder<Builder>
+              com.google.protobuf.GeneratedMessage.Builder<Builder>
              implements com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLogEntryOrBuilder {
-            public static final com.google.gwt.dev.protobuf.Descriptors.Descriptor
+            public static final com.google.protobuf.Descriptors.Descriptor
                 getDescriptor() {
               return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_AddLogEntry_descriptor;
             }
 
-            protected com.google.gwt.dev.protobuf.GeneratedMessage.FieldAccessorTable
+            protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
                 internalGetFieldAccessorTable() {
               return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_AddLogEntry_fieldAccessorTable
                   .ensureFieldAccessorsInitialized(
@@ -7478,12 +7478,12 @@ public final class RemoteMessageProto {
             }
 
             private Builder(
-                com.google.gwt.dev.protobuf.GeneratedMessage.BuilderParent parent) {
+                com.google.protobuf.GeneratedMessage.BuilderParent parent) {
               super(parent);
               maybeForceBuilderInitialization();
             }
             private void maybeForceBuilderInitialization() {
-              if (com.google.gwt.dev.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
+              if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
                 getLogDataFieldBuilder();
               }
             }
@@ -7510,7 +7510,7 @@ public final class RemoteMessageProto {
               return create().mergeFrom(buildPartial());
             }
 
-            public com.google.gwt.dev.protobuf.Descriptors.Descriptor
+            public com.google.protobuf.Descriptors.Descriptor
                 getDescriptorForType() {
               return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_AddLogEntry_descriptor;
             }
@@ -7552,7 +7552,7 @@ public final class RemoteMessageProto {
               return result;
             }
 
-            public Builder mergeFrom(com.google.gwt.dev.protobuf.Message other) {
+            public Builder mergeFrom(com.google.protobuf.Message other) {
               if (other instanceof com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLogEntry) {
                 return mergeFrom((com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLogEntry)other);
               } else {
@@ -7597,13 +7597,13 @@ public final class RemoteMessageProto {
             }
 
             public Builder mergeFrom(
-                com.google.gwt.dev.protobuf.CodedInputStream input,
-                com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
+                com.google.protobuf.CodedInputStream input,
+                com.google.protobuf.ExtensionRegistryLite extensionRegistry)
                 throws java.io.IOException {
               com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLogEntry parsedMessage = null;
               try {
                 parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
-              } catch (com.google.gwt.dev.protobuf.InvalidProtocolBufferException e) {
+              } catch (com.google.protobuf.InvalidProtocolBufferException e) {
                 parsedMessage = (com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLogEntry) e.getUnfinishedMessage();
                 throw e;
               } finally {
@@ -7683,7 +7683,7 @@ public final class RemoteMessageProto {
 
             // required .com.google.gwt.dev.shell.remoteui.Message.Request.ViewerRequest.LogData logData = 3;
             private com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.LogData logData_ = com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.LogData.getDefaultInstance();
-            private com.google.gwt.dev.protobuf.SingleFieldBuilder<
+            private com.google.protobuf.SingleFieldBuilder<
                 com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.LogData, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.LogData.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.LogDataOrBuilder> logDataBuilder_;
             /**
              * <code>required .com.google.gwt.dev.shell.remoteui.Message.Request.ViewerRequest.LogData logData = 3;</code>
@@ -7784,11 +7784,11 @@ public final class RemoteMessageProto {
             /**
              * <code>required .com.google.gwt.dev.shell.remoteui.Message.Request.ViewerRequest.LogData logData = 3;</code>
              */
-            private com.google.gwt.dev.protobuf.SingleFieldBuilder<
+            private com.google.protobuf.SingleFieldBuilder<
                 com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.LogData, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.LogData.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.LogDataOrBuilder>
                 getLogDataFieldBuilder() {
               if (logDataBuilder_ == null) {
-                logDataBuilder_ = new com.google.gwt.dev.protobuf.SingleFieldBuilder<
+                logDataBuilder_ = new com.google.protobuf.SingleFieldBuilder<
                     com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.LogData, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.LogData.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.LogDataOrBuilder>(
                         logData_,
                         getParentForChildren(),
@@ -7810,7 +7810,7 @@ public final class RemoteMessageProto {
         }
 
         public interface DisconnectLogOrBuilder
-            extends com.google.gwt.dev.protobuf.MessageOrBuilder {
+            extends com.google.protobuf.MessageOrBuilder {
 
           // required uint32 logHandle = 1;
           /**
@@ -7831,14 +7831,14 @@ public final class RemoteMessageProto {
          * </pre>
          */
         public static final class DisconnectLog extends
-            com.google.gwt.dev.protobuf.GeneratedMessage
+            com.google.protobuf.GeneratedMessage
             implements DisconnectLogOrBuilder {
           // Use DisconnectLog.newBuilder() to construct.
-          private DisconnectLog(com.google.gwt.dev.protobuf.GeneratedMessage.Builder<?> builder) {
+          private DisconnectLog(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
             super(builder);
             this.unknownFields = builder.getUnknownFields();
           }
-          private DisconnectLog(boolean noInit) { this.unknownFields = com.google.gwt.dev.protobuf.UnknownFieldSet.getDefaultInstance(); }
+          private DisconnectLog(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
 
           private static final DisconnectLog defaultInstance;
           public static DisconnectLog getDefaultInstance() {
@@ -7849,20 +7849,20 @@ public final class RemoteMessageProto {
             return defaultInstance;
           }
 
-          private final com.google.gwt.dev.protobuf.UnknownFieldSet unknownFields;
+          private final com.google.protobuf.UnknownFieldSet unknownFields;
           @java.lang.Override
-          public final com.google.gwt.dev.protobuf.UnknownFieldSet
+          public final com.google.protobuf.UnknownFieldSet
               getUnknownFields() {
             return this.unknownFields;
           }
           private DisconnectLog(
-              com.google.gwt.dev.protobuf.CodedInputStream input,
-              com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
-              throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+              com.google.protobuf.CodedInputStream input,
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+              throws com.google.protobuf.InvalidProtocolBufferException {
             initFields();
             int mutable_bitField0_ = 0;
-            com.google.gwt.dev.protobuf.UnknownFieldSet.Builder unknownFields =
-                com.google.gwt.dev.protobuf.UnknownFieldSet.newBuilder();
+            com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+                com.google.protobuf.UnknownFieldSet.newBuilder();
             try {
               boolean done = false;
               while (!done) {
@@ -7885,40 +7885,40 @@ public final class RemoteMessageProto {
                   }
                 }
               }
-            } catch (com.google.gwt.dev.protobuf.InvalidProtocolBufferException e) {
+            } catch (com.google.protobuf.InvalidProtocolBufferException e) {
               throw e.setUnfinishedMessage(this);
             } catch (java.io.IOException e) {
-              throw new com.google.gwt.dev.protobuf.InvalidProtocolBufferException(
+              throw new com.google.protobuf.InvalidProtocolBufferException(
                   e.getMessage()).setUnfinishedMessage(this);
             } finally {
               this.unknownFields = unknownFields.build();
               makeExtensionsImmutable();
             }
           }
-          public static final com.google.gwt.dev.protobuf.Descriptors.Descriptor
+          public static final com.google.protobuf.Descriptors.Descriptor
               getDescriptor() {
             return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_DisconnectLog_descriptor;
           }
 
-          protected com.google.gwt.dev.protobuf.GeneratedMessage.FieldAccessorTable
+          protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
               internalGetFieldAccessorTable() {
             return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_DisconnectLog_fieldAccessorTable
                 .ensureFieldAccessorsInitialized(
                     com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.DisconnectLog.class, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.DisconnectLog.Builder.class);
           }
 
-          public static com.google.gwt.dev.protobuf.Parser<DisconnectLog> PARSER =
-              new com.google.gwt.dev.protobuf.AbstractParser<DisconnectLog>() {
+          public static com.google.protobuf.Parser<DisconnectLog> PARSER =
+              new com.google.protobuf.AbstractParser<DisconnectLog>() {
             public DisconnectLog parsePartialFrom(
-                com.google.gwt.dev.protobuf.CodedInputStream input,
-                com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
-                throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+                com.google.protobuf.CodedInputStream input,
+                com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+                throws com.google.protobuf.InvalidProtocolBufferException {
               return new DisconnectLog(input, extensionRegistry);
             }
           };
 
           @java.lang.Override
-          public com.google.gwt.dev.protobuf.Parser<DisconnectLog> getParserForType() {
+          public com.google.protobuf.Parser<DisconnectLog> getParserForType() {
             return PARSER;
           }
 
@@ -7955,7 +7955,7 @@ public final class RemoteMessageProto {
             return true;
           }
 
-          public void writeTo(com.google.gwt.dev.protobuf.CodedOutputStream output)
+          public void writeTo(com.google.protobuf.CodedOutputStream output)
                               throws java.io.IOException {
             getSerializedSize();
             if (((bitField0_ & 0x00000001) == 0x00000001)) {
@@ -7971,7 +7971,7 @@ public final class RemoteMessageProto {
 
             size = 0;
             if (((bitField0_ & 0x00000001) == 0x00000001)) {
-              size += com.google.gwt.dev.protobuf.CodedOutputStream
+              size += com.google.protobuf.CodedOutputStream
                 .computeUInt32Size(1, logHandle_);
             }
             size += getUnknownFields().getSerializedSize();
@@ -7987,24 +7987,24 @@ public final class RemoteMessageProto {
           }
 
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.DisconnectLog parseFrom(
-              com.google.gwt.dev.protobuf.ByteString data)
-              throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+              com.google.protobuf.ByteString data)
+              throws com.google.protobuf.InvalidProtocolBufferException {
             return PARSER.parseFrom(data);
           }
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.DisconnectLog parseFrom(
-              com.google.gwt.dev.protobuf.ByteString data,
-              com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
-              throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+              com.google.protobuf.ByteString data,
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+              throws com.google.protobuf.InvalidProtocolBufferException {
             return PARSER.parseFrom(data, extensionRegistry);
           }
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.DisconnectLog parseFrom(byte[] data)
-              throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+              throws com.google.protobuf.InvalidProtocolBufferException {
             return PARSER.parseFrom(data);
           }
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.DisconnectLog parseFrom(
               byte[] data,
-              com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
-              throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+              throws com.google.protobuf.InvalidProtocolBufferException {
             return PARSER.parseFrom(data, extensionRegistry);
           }
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.DisconnectLog parseFrom(java.io.InputStream input)
@@ -8013,7 +8013,7 @@ public final class RemoteMessageProto {
           }
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.DisconnectLog parseFrom(
               java.io.InputStream input,
-              com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
               throws java.io.IOException {
             return PARSER.parseFrom(input, extensionRegistry);
           }
@@ -8023,18 +8023,18 @@ public final class RemoteMessageProto {
           }
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.DisconnectLog parseDelimitedFrom(
               java.io.InputStream input,
-              com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
               throws java.io.IOException {
             return PARSER.parseDelimitedFrom(input, extensionRegistry);
           }
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.DisconnectLog parseFrom(
-              com.google.gwt.dev.protobuf.CodedInputStream input)
+              com.google.protobuf.CodedInputStream input)
               throws java.io.IOException {
             return PARSER.parseFrom(input);
           }
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.DisconnectLog parseFrom(
-              com.google.gwt.dev.protobuf.CodedInputStream input,
-              com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
+              com.google.protobuf.CodedInputStream input,
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
               throws java.io.IOException {
             return PARSER.parseFrom(input, extensionRegistry);
           }
@@ -8048,7 +8048,7 @@ public final class RemoteMessageProto {
 
           @java.lang.Override
           protected Builder newBuilderForType(
-              com.google.gwt.dev.protobuf.GeneratedMessage.BuilderParent parent) {
+              com.google.protobuf.GeneratedMessage.BuilderParent parent) {
             Builder builder = new Builder(parent);
             return builder;
           }
@@ -8061,14 +8061,14 @@ public final class RemoteMessageProto {
            * </pre>
            */
           public static final class Builder extends
-              com.google.gwt.dev.protobuf.GeneratedMessage.Builder<Builder>
+              com.google.protobuf.GeneratedMessage.Builder<Builder>
              implements com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.DisconnectLogOrBuilder {
-            public static final com.google.gwt.dev.protobuf.Descriptors.Descriptor
+            public static final com.google.protobuf.Descriptors.Descriptor
                 getDescriptor() {
               return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_DisconnectLog_descriptor;
             }
 
-            protected com.google.gwt.dev.protobuf.GeneratedMessage.FieldAccessorTable
+            protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
                 internalGetFieldAccessorTable() {
               return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_DisconnectLog_fieldAccessorTable
                   .ensureFieldAccessorsInitialized(
@@ -8081,12 +8081,12 @@ public final class RemoteMessageProto {
             }
 
             private Builder(
-                com.google.gwt.dev.protobuf.GeneratedMessage.BuilderParent parent) {
+                com.google.protobuf.GeneratedMessage.BuilderParent parent) {
               super(parent);
               maybeForceBuilderInitialization();
             }
             private void maybeForceBuilderInitialization() {
-              if (com.google.gwt.dev.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
+              if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
               }
             }
             private static Builder create() {
@@ -8104,7 +8104,7 @@ public final class RemoteMessageProto {
               return create().mergeFrom(buildPartial());
             }
 
-            public com.google.gwt.dev.protobuf.Descriptors.Descriptor
+            public com.google.protobuf.Descriptors.Descriptor
                 getDescriptorForType() {
               return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_DisconnectLog_descriptor;
             }
@@ -8134,7 +8134,7 @@ public final class RemoteMessageProto {
               return result;
             }
 
-            public Builder mergeFrom(com.google.gwt.dev.protobuf.Message other) {
+            public Builder mergeFrom(com.google.protobuf.Message other) {
               if (other instanceof com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.DisconnectLog) {
                 return mergeFrom((com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.DisconnectLog)other);
               } else {
@@ -8161,13 +8161,13 @@ public final class RemoteMessageProto {
             }
 
             public Builder mergeFrom(
-                com.google.gwt.dev.protobuf.CodedInputStream input,
-                com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
+                com.google.protobuf.CodedInputStream input,
+                com.google.protobuf.ExtensionRegistryLite extensionRegistry)
                 throws java.io.IOException {
               com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.DisconnectLog parsedMessage = null;
               try {
                 parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
-              } catch (com.google.gwt.dev.protobuf.InvalidProtocolBufferException e) {
+              } catch (com.google.protobuf.InvalidProtocolBufferException e) {
                 parsedMessage = (com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.DisconnectLog) e.getUnfinishedMessage();
                 throw e;
               } finally {
@@ -8224,7 +8224,7 @@ public final class RemoteMessageProto {
         }
 
         public interface InitializeOrBuilder
-            extends com.google.gwt.dev.protobuf.MessageOrBuilder {
+            extends com.google.protobuf.MessageOrBuilder {
 
           // optional string clientId = 1;
           /**
@@ -8238,7 +8238,7 @@ public final class RemoteMessageProto {
           /**
            * <code>optional string clientId = 1;</code>
            */
-          com.google.gwt.dev.protobuf.ByteString
+          com.google.protobuf.ByteString
               getClientIdBytes();
 
           // repeated string startupURLs = 2;
@@ -8258,21 +8258,21 @@ public final class RemoteMessageProto {
           /**
            * <code>repeated string startupURLs = 2;</code>
            */
-          com.google.gwt.dev.protobuf.ByteString
+          com.google.protobuf.ByteString
               getStartupURLsBytes(int index);
         }
         /**
          * Protobuf type {@code com.google.gwt.dev.shell.remoteui.Message.Request.ViewerRequest.Initialize}
          */
         public static final class Initialize extends
-            com.google.gwt.dev.protobuf.GeneratedMessage
+            com.google.protobuf.GeneratedMessage
             implements InitializeOrBuilder {
           // Use Initialize.newBuilder() to construct.
-          private Initialize(com.google.gwt.dev.protobuf.GeneratedMessage.Builder<?> builder) {
+          private Initialize(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
             super(builder);
             this.unknownFields = builder.getUnknownFields();
           }
-          private Initialize(boolean noInit) { this.unknownFields = com.google.gwt.dev.protobuf.UnknownFieldSet.getDefaultInstance(); }
+          private Initialize(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
 
           private static final Initialize defaultInstance;
           public static Initialize getDefaultInstance() {
@@ -8283,20 +8283,20 @@ public final class RemoteMessageProto {
             return defaultInstance;
           }
 
-          private final com.google.gwt.dev.protobuf.UnknownFieldSet unknownFields;
+          private final com.google.protobuf.UnknownFieldSet unknownFields;
           @java.lang.Override
-          public final com.google.gwt.dev.protobuf.UnknownFieldSet
+          public final com.google.protobuf.UnknownFieldSet
               getUnknownFields() {
             return this.unknownFields;
           }
           private Initialize(
-              com.google.gwt.dev.protobuf.CodedInputStream input,
-              com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
-              throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+              com.google.protobuf.CodedInputStream input,
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+              throws com.google.protobuf.InvalidProtocolBufferException {
             initFields();
             int mutable_bitField0_ = 0;
-            com.google.gwt.dev.protobuf.UnknownFieldSet.Builder unknownFields =
-                com.google.gwt.dev.protobuf.UnknownFieldSet.newBuilder();
+            com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+                com.google.protobuf.UnknownFieldSet.newBuilder();
             try {
               boolean done = false;
               while (!done) {
@@ -8319,7 +8319,7 @@ public final class RemoteMessageProto {
                   }
                   case 18: {
                     if (!((mutable_bitField0_ & 0x00000002) == 0x00000002)) {
-                      startupURLs_ = new com.google.gwt.dev.protobuf.LazyStringArrayList();
+                      startupURLs_ = new com.google.protobuf.LazyStringArrayList();
                       mutable_bitField0_ |= 0x00000002;
                     }
                     startupURLs_.add(input.readBytes());
@@ -8327,43 +8327,43 @@ public final class RemoteMessageProto {
                   }
                 }
               }
-            } catch (com.google.gwt.dev.protobuf.InvalidProtocolBufferException e) {
+            } catch (com.google.protobuf.InvalidProtocolBufferException e) {
               throw e.setUnfinishedMessage(this);
             } catch (java.io.IOException e) {
-              throw new com.google.gwt.dev.protobuf.InvalidProtocolBufferException(
+              throw new com.google.protobuf.InvalidProtocolBufferException(
                   e.getMessage()).setUnfinishedMessage(this);
             } finally {
               if (((mutable_bitField0_ & 0x00000002) == 0x00000002)) {
-                startupURLs_ = new com.google.gwt.dev.protobuf.UnmodifiableLazyStringList(startupURLs_);
+                startupURLs_ = new com.google.protobuf.UnmodifiableLazyStringList(startupURLs_);
               }
               this.unknownFields = unknownFields.build();
               makeExtensionsImmutable();
             }
           }
-          public static final com.google.gwt.dev.protobuf.Descriptors.Descriptor
+          public static final com.google.protobuf.Descriptors.Descriptor
               getDescriptor() {
             return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_Initialize_descriptor;
           }
 
-          protected com.google.gwt.dev.protobuf.GeneratedMessage.FieldAccessorTable
+          protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
               internalGetFieldAccessorTable() {
             return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_Initialize_fieldAccessorTable
                 .ensureFieldAccessorsInitialized(
                     com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.Initialize.class, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.Initialize.Builder.class);
           }
 
-          public static com.google.gwt.dev.protobuf.Parser<Initialize> PARSER =
-              new com.google.gwt.dev.protobuf.AbstractParser<Initialize>() {
+          public static com.google.protobuf.Parser<Initialize> PARSER =
+              new com.google.protobuf.AbstractParser<Initialize>() {
             public Initialize parsePartialFrom(
-                com.google.gwt.dev.protobuf.CodedInputStream input,
-                com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
-                throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+                com.google.protobuf.CodedInputStream input,
+                com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+                throws com.google.protobuf.InvalidProtocolBufferException {
               return new Initialize(input, extensionRegistry);
             }
           };
 
           @java.lang.Override
-          public com.google.gwt.dev.protobuf.Parser<Initialize> getParserForType() {
+          public com.google.protobuf.Parser<Initialize> getParserForType() {
             return PARSER;
           }
 
@@ -8385,8 +8385,8 @@ public final class RemoteMessageProto {
             if (ref instanceof java.lang.String) {
               return (java.lang.String) ref;
             } else {
-              com.google.gwt.dev.protobuf.ByteString bs =
-                  (com.google.gwt.dev.protobuf.ByteString) ref;
+              com.google.protobuf.ByteString bs =
+                  (com.google.protobuf.ByteString) ref;
               java.lang.String s = bs.toStringUtf8();
               if (bs.isValidUtf8()) {
                 clientId_ = s;
@@ -8397,23 +8397,23 @@ public final class RemoteMessageProto {
           /**
            * <code>optional string clientId = 1;</code>
            */
-          public com.google.gwt.dev.protobuf.ByteString
+          public com.google.protobuf.ByteString
               getClientIdBytes() {
             java.lang.Object ref = clientId_;
             if (ref instanceof java.lang.String) {
-              com.google.gwt.dev.protobuf.ByteString b =
-                  com.google.gwt.dev.protobuf.ByteString.copyFromUtf8(
+              com.google.protobuf.ByteString b =
+                  com.google.protobuf.ByteString.copyFromUtf8(
                       (java.lang.String) ref);
               clientId_ = b;
               return b;
             } else {
-              return (com.google.gwt.dev.protobuf.ByteString) ref;
+              return (com.google.protobuf.ByteString) ref;
             }
           }
 
           // repeated string startupURLs = 2;
           public static final int STARTUPURLS_FIELD_NUMBER = 2;
-          private com.google.gwt.dev.protobuf.LazyStringList startupURLs_;
+          private com.google.protobuf.LazyStringList startupURLs_;
           /**
            * <code>repeated string startupURLs = 2;</code>
            */
@@ -8436,14 +8436,14 @@ public final class RemoteMessageProto {
           /**
            * <code>repeated string startupURLs = 2;</code>
            */
-          public com.google.gwt.dev.protobuf.ByteString
+          public com.google.protobuf.ByteString
               getStartupURLsBytes(int index) {
             return startupURLs_.getByteString(index);
           }
 
           private void initFields() {
             clientId_ = "";
-            startupURLs_ = com.google.gwt.dev.protobuf.LazyStringArrayList.EMPTY;
+            startupURLs_ = com.google.protobuf.LazyStringArrayList.EMPTY;
           }
           private byte memoizedIsInitialized = -1;
           public final boolean isInitialized() {
@@ -8454,7 +8454,7 @@ public final class RemoteMessageProto {
             return true;
           }
 
-          public void writeTo(com.google.gwt.dev.protobuf.CodedOutputStream output)
+          public void writeTo(com.google.protobuf.CodedOutputStream output)
                               throws java.io.IOException {
             getSerializedSize();
             if (((bitField0_ & 0x00000001) == 0x00000001)) {
@@ -8473,13 +8473,13 @@ public final class RemoteMessageProto {
 
             size = 0;
             if (((bitField0_ & 0x00000001) == 0x00000001)) {
-              size += com.google.gwt.dev.protobuf.CodedOutputStream
+              size += com.google.protobuf.CodedOutputStream
                 .computeBytesSize(1, getClientIdBytes());
             }
             {
               int dataSize = 0;
               for (int i = 0; i < startupURLs_.size(); i++) {
-                dataSize += com.google.gwt.dev.protobuf.CodedOutputStream
+                dataSize += com.google.protobuf.CodedOutputStream
                   .computeBytesSizeNoTag(startupURLs_.getByteString(i));
               }
               size += dataSize;
@@ -8498,24 +8498,24 @@ public final class RemoteMessageProto {
           }
 
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.Initialize parseFrom(
-              com.google.gwt.dev.protobuf.ByteString data)
-              throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+              com.google.protobuf.ByteString data)
+              throws com.google.protobuf.InvalidProtocolBufferException {
             return PARSER.parseFrom(data);
           }
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.Initialize parseFrom(
-              com.google.gwt.dev.protobuf.ByteString data,
-              com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
-              throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+              com.google.protobuf.ByteString data,
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+              throws com.google.protobuf.InvalidProtocolBufferException {
             return PARSER.parseFrom(data, extensionRegistry);
           }
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.Initialize parseFrom(byte[] data)
-              throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+              throws com.google.protobuf.InvalidProtocolBufferException {
             return PARSER.parseFrom(data);
           }
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.Initialize parseFrom(
               byte[] data,
-              com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
-              throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+              throws com.google.protobuf.InvalidProtocolBufferException {
             return PARSER.parseFrom(data, extensionRegistry);
           }
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.Initialize parseFrom(java.io.InputStream input)
@@ -8524,7 +8524,7 @@ public final class RemoteMessageProto {
           }
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.Initialize parseFrom(
               java.io.InputStream input,
-              com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
               throws java.io.IOException {
             return PARSER.parseFrom(input, extensionRegistry);
           }
@@ -8534,18 +8534,18 @@ public final class RemoteMessageProto {
           }
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.Initialize parseDelimitedFrom(
               java.io.InputStream input,
-              com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
               throws java.io.IOException {
             return PARSER.parseDelimitedFrom(input, extensionRegistry);
           }
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.Initialize parseFrom(
-              com.google.gwt.dev.protobuf.CodedInputStream input)
+              com.google.protobuf.CodedInputStream input)
               throws java.io.IOException {
             return PARSER.parseFrom(input);
           }
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.Initialize parseFrom(
-              com.google.gwt.dev.protobuf.CodedInputStream input,
-              com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
+              com.google.protobuf.CodedInputStream input,
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
               throws java.io.IOException {
             return PARSER.parseFrom(input, extensionRegistry);
           }
@@ -8559,7 +8559,7 @@ public final class RemoteMessageProto {
 
           @java.lang.Override
           protected Builder newBuilderForType(
-              com.google.gwt.dev.protobuf.GeneratedMessage.BuilderParent parent) {
+              com.google.protobuf.GeneratedMessage.BuilderParent parent) {
             Builder builder = new Builder(parent);
             return builder;
           }
@@ -8567,14 +8567,14 @@ public final class RemoteMessageProto {
            * Protobuf type {@code com.google.gwt.dev.shell.remoteui.Message.Request.ViewerRequest.Initialize}
            */
           public static final class Builder extends
-              com.google.gwt.dev.protobuf.GeneratedMessage.Builder<Builder>
+              com.google.protobuf.GeneratedMessage.Builder<Builder>
              implements com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.InitializeOrBuilder {
-            public static final com.google.gwt.dev.protobuf.Descriptors.Descriptor
+            public static final com.google.protobuf.Descriptors.Descriptor
                 getDescriptor() {
               return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_Initialize_descriptor;
             }
 
-            protected com.google.gwt.dev.protobuf.GeneratedMessage.FieldAccessorTable
+            protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
                 internalGetFieldAccessorTable() {
               return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_Initialize_fieldAccessorTable
                   .ensureFieldAccessorsInitialized(
@@ -8587,12 +8587,12 @@ public final class RemoteMessageProto {
             }
 
             private Builder(
-                com.google.gwt.dev.protobuf.GeneratedMessage.BuilderParent parent) {
+                com.google.protobuf.GeneratedMessage.BuilderParent parent) {
               super(parent);
               maybeForceBuilderInitialization();
             }
             private void maybeForceBuilderInitialization() {
-              if (com.google.gwt.dev.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
+              if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
               }
             }
             private static Builder create() {
@@ -8603,7 +8603,7 @@ public final class RemoteMessageProto {
               super.clear();
               clientId_ = "";
               bitField0_ = (bitField0_ & ~0x00000001);
-              startupURLs_ = com.google.gwt.dev.protobuf.LazyStringArrayList.EMPTY;
+              startupURLs_ = com.google.protobuf.LazyStringArrayList.EMPTY;
               bitField0_ = (bitField0_ & ~0x00000002);
               return this;
             }
@@ -8612,7 +8612,7 @@ public final class RemoteMessageProto {
               return create().mergeFrom(buildPartial());
             }
 
-            public com.google.gwt.dev.protobuf.Descriptors.Descriptor
+            public com.google.protobuf.Descriptors.Descriptor
                 getDescriptorForType() {
               return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_Initialize_descriptor;
             }
@@ -8638,7 +8638,7 @@ public final class RemoteMessageProto {
               }
               result.clientId_ = clientId_;
               if (((bitField0_ & 0x00000002) == 0x00000002)) {
-                startupURLs_ = new com.google.gwt.dev.protobuf.UnmodifiableLazyStringList(
+                startupURLs_ = new com.google.protobuf.UnmodifiableLazyStringList(
                     startupURLs_);
                 bitField0_ = (bitField0_ & ~0x00000002);
               }
@@ -8648,7 +8648,7 @@ public final class RemoteMessageProto {
               return result;
             }
 
-            public Builder mergeFrom(com.google.gwt.dev.protobuf.Message other) {
+            public Builder mergeFrom(com.google.protobuf.Message other) {
               if (other instanceof com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.Initialize) {
                 return mergeFrom((com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.Initialize)other);
               } else {
@@ -8683,13 +8683,13 @@ public final class RemoteMessageProto {
             }
 
             public Builder mergeFrom(
-                com.google.gwt.dev.protobuf.CodedInputStream input,
-                com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
+                com.google.protobuf.CodedInputStream input,
+                com.google.protobuf.ExtensionRegistryLite extensionRegistry)
                 throws java.io.IOException {
               com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.Initialize parsedMessage = null;
               try {
                 parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
-              } catch (com.google.gwt.dev.protobuf.InvalidProtocolBufferException e) {
+              } catch (com.google.protobuf.InvalidProtocolBufferException e) {
                 parsedMessage = (com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.Initialize) e.getUnfinishedMessage();
                 throw e;
               } finally {
@@ -8715,7 +8715,7 @@ public final class RemoteMessageProto {
             public java.lang.String getClientId() {
               java.lang.Object ref = clientId_;
               if (!(ref instanceof java.lang.String)) {
-                java.lang.String s = ((com.google.gwt.dev.protobuf.ByteString) ref)
+                java.lang.String s = ((com.google.protobuf.ByteString) ref)
                     .toStringUtf8();
                 clientId_ = s;
                 return s;
@@ -8726,17 +8726,17 @@ public final class RemoteMessageProto {
             /**
              * <code>optional string clientId = 1;</code>
              */
-            public com.google.gwt.dev.protobuf.ByteString
+            public com.google.protobuf.ByteString
                 getClientIdBytes() {
               java.lang.Object ref = clientId_;
               if (ref instanceof String) {
-                com.google.gwt.dev.protobuf.ByteString b =
-                    com.google.gwt.dev.protobuf.ByteString.copyFromUtf8(
+                com.google.protobuf.ByteString b =
+                    com.google.protobuf.ByteString.copyFromUtf8(
                         (java.lang.String) ref);
                 clientId_ = b;
                 return b;
               } else {
-                return (com.google.gwt.dev.protobuf.ByteString) ref;
+                return (com.google.protobuf.ByteString) ref;
               }
             }
             /**
@@ -8765,7 +8765,7 @@ public final class RemoteMessageProto {
              * <code>optional string clientId = 1;</code>
              */
             public Builder setClientIdBytes(
-                com.google.gwt.dev.protobuf.ByteString value) {
+                com.google.protobuf.ByteString value) {
               if (value == null) {
     throw new NullPointerException();
   }
@@ -8776,10 +8776,10 @@ public final class RemoteMessageProto {
             }
 
             // repeated string startupURLs = 2;
-            private com.google.gwt.dev.protobuf.LazyStringList startupURLs_ = com.google.gwt.dev.protobuf.LazyStringArrayList.EMPTY;
+            private com.google.protobuf.LazyStringList startupURLs_ = com.google.protobuf.LazyStringArrayList.EMPTY;
             private void ensureStartupURLsIsMutable() {
               if (!((bitField0_ & 0x00000002) == 0x00000002)) {
-                startupURLs_ = new com.google.gwt.dev.protobuf.LazyStringArrayList(startupURLs_);
+                startupURLs_ = new com.google.protobuf.LazyStringArrayList(startupURLs_);
                 bitField0_ |= 0x00000002;
                }
             }
@@ -8805,7 +8805,7 @@ public final class RemoteMessageProto {
             /**
              * <code>repeated string startupURLs = 2;</code>
              */
-            public com.google.gwt.dev.protobuf.ByteString
+            public com.google.protobuf.ByteString
                 getStartupURLsBytes(int index) {
               return startupURLs_.getByteString(index);
             }
@@ -8849,7 +8849,7 @@ public final class RemoteMessageProto {
              * <code>repeated string startupURLs = 2;</code>
              */
             public Builder clearStartupURLs() {
-              startupURLs_ = com.google.gwt.dev.protobuf.LazyStringArrayList.EMPTY;
+              startupURLs_ = com.google.protobuf.LazyStringArrayList.EMPTY;
               bitField0_ = (bitField0_ & ~0x00000002);
               onChanged();
               return this;
@@ -8858,7 +8858,7 @@ public final class RemoteMessageProto {
              * <code>repeated string startupURLs = 2;</code>
              */
             public Builder addStartupURLsBytes(
-                com.google.gwt.dev.protobuf.ByteString value) {
+                com.google.protobuf.ByteString value) {
               if (value == null) {
     throw new NullPointerException();
   }
@@ -9070,7 +9070,7 @@ public final class RemoteMessageProto {
           return true;
         }
 
-        public void writeTo(com.google.gwt.dev.protobuf.CodedOutputStream output)
+        public void writeTo(com.google.protobuf.CodedOutputStream output)
                             throws java.io.IOException {
           getSerializedSize();
           if (((bitField0_ & 0x00000001) == 0x00000001)) {
@@ -9104,31 +9104,31 @@ public final class RemoteMessageProto {
 
           size = 0;
           if (((bitField0_ & 0x00000001) == 0x00000001)) {
-            size += com.google.gwt.dev.protobuf.CodedOutputStream
+            size += com.google.protobuf.CodedOutputStream
               .computeEnumSize(1, requestType_.getNumber());
           }
           if (((bitField0_ & 0x00000002) == 0x00000002)) {
-            size += com.google.gwt.dev.protobuf.CodedOutputStream
+            size += com.google.protobuf.CodedOutputStream
               .computeMessageSize(2, capabilityExchange_);
           }
           if (((bitField0_ & 0x00000004) == 0x00000004)) {
-            size += com.google.gwt.dev.protobuf.CodedOutputStream
+            size += com.google.protobuf.CodedOutputStream
               .computeMessageSize(3, addLog_);
           }
           if (((bitField0_ & 0x00000008) == 0x00000008)) {
-            size += com.google.gwt.dev.protobuf.CodedOutputStream
+            size += com.google.protobuf.CodedOutputStream
               .computeMessageSize(4, addLogBranch_);
           }
           if (((bitField0_ & 0x00000010) == 0x00000010)) {
-            size += com.google.gwt.dev.protobuf.CodedOutputStream
+            size += com.google.protobuf.CodedOutputStream
               .computeMessageSize(5, addLogEntry_);
           }
           if (((bitField0_ & 0x00000020) == 0x00000020)) {
-            size += com.google.gwt.dev.protobuf.CodedOutputStream
+            size += com.google.protobuf.CodedOutputStream
               .computeMessageSize(6, disconnectLog_);
           }
           if (((bitField0_ & 0x00000040) == 0x00000040)) {
-            size += com.google.gwt.dev.protobuf.CodedOutputStream
+            size += com.google.protobuf.CodedOutputStream
               .computeMessageSize(7, initialize_);
           }
           size += getUnknownFields().getSerializedSize();
@@ -9144,24 +9144,24 @@ public final class RemoteMessageProto {
         }
 
         public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest parseFrom(
-            com.google.gwt.dev.protobuf.ByteString data)
-            throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+            com.google.protobuf.ByteString data)
+            throws com.google.protobuf.InvalidProtocolBufferException {
           return PARSER.parseFrom(data);
         }
         public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest parseFrom(
-            com.google.gwt.dev.protobuf.ByteString data,
-            com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
-            throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+            com.google.protobuf.ByteString data,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws com.google.protobuf.InvalidProtocolBufferException {
           return PARSER.parseFrom(data, extensionRegistry);
         }
         public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest parseFrom(byte[] data)
-            throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+            throws com.google.protobuf.InvalidProtocolBufferException {
           return PARSER.parseFrom(data);
         }
         public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest parseFrom(
             byte[] data,
-            com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
-            throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws com.google.protobuf.InvalidProtocolBufferException {
           return PARSER.parseFrom(data, extensionRegistry);
         }
         public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest parseFrom(java.io.InputStream input)
@@ -9170,7 +9170,7 @@ public final class RemoteMessageProto {
         }
         public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest parseFrom(
             java.io.InputStream input,
-            com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
             throws java.io.IOException {
           return PARSER.parseFrom(input, extensionRegistry);
         }
@@ -9180,18 +9180,18 @@ public final class RemoteMessageProto {
         }
         public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest parseDelimitedFrom(
             java.io.InputStream input,
-            com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
             throws java.io.IOException {
           return PARSER.parseDelimitedFrom(input, extensionRegistry);
         }
         public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest parseFrom(
-            com.google.gwt.dev.protobuf.CodedInputStream input)
+            com.google.protobuf.CodedInputStream input)
             throws java.io.IOException {
           return PARSER.parseFrom(input);
         }
         public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest parseFrom(
-            com.google.gwt.dev.protobuf.CodedInputStream input,
-            com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
+            com.google.protobuf.CodedInputStream input,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
             throws java.io.IOException {
           return PARSER.parseFrom(input, extensionRegistry);
         }
@@ -9205,7 +9205,7 @@ public final class RemoteMessageProto {
 
         @java.lang.Override
         protected Builder newBuilderForType(
-            com.google.gwt.dev.protobuf.GeneratedMessage.BuilderParent parent) {
+            com.google.protobuf.GeneratedMessage.BuilderParent parent) {
           Builder builder = new Builder(parent);
           return builder;
         }
@@ -9217,14 +9217,14 @@ public final class RemoteMessageProto {
          * </pre>
          */
         public static final class Builder extends
-            com.google.gwt.dev.protobuf.GeneratedMessage.Builder<Builder>
+            com.google.protobuf.GeneratedMessage.Builder<Builder>
            implements com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequestOrBuilder {
-          public static final com.google.gwt.dev.protobuf.Descriptors.Descriptor
+          public static final com.google.protobuf.Descriptors.Descriptor
               getDescriptor() {
             return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_descriptor;
           }
 
-          protected com.google.gwt.dev.protobuf.GeneratedMessage.FieldAccessorTable
+          protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
               internalGetFieldAccessorTable() {
             return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_fieldAccessorTable
                 .ensureFieldAccessorsInitialized(
@@ -9237,12 +9237,12 @@ public final class RemoteMessageProto {
           }
 
           private Builder(
-              com.google.gwt.dev.protobuf.GeneratedMessage.BuilderParent parent) {
+              com.google.protobuf.GeneratedMessage.BuilderParent parent) {
             super(parent);
             maybeForceBuilderInitialization();
           }
           private void maybeForceBuilderInitialization() {
-            if (com.google.gwt.dev.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
+            if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
               getCapabilityExchangeFieldBuilder();
               getAddLogFieldBuilder();
               getAddLogBranchFieldBuilder();
@@ -9302,7 +9302,7 @@ public final class RemoteMessageProto {
             return create().mergeFrom(buildPartial());
           }
 
-          public com.google.gwt.dev.protobuf.Descriptors.Descriptor
+          public com.google.protobuf.Descriptors.Descriptor
               getDescriptorForType() {
             return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_descriptor;
           }
@@ -9380,7 +9380,7 @@ public final class RemoteMessageProto {
             return result;
           }
 
-          public Builder mergeFrom(com.google.gwt.dev.protobuf.Message other) {
+          public Builder mergeFrom(com.google.protobuf.Message other) {
             if (other instanceof com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest) {
               return mergeFrom((com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest)other);
             } else {
@@ -9445,13 +9445,13 @@ public final class RemoteMessageProto {
           }
 
           public Builder mergeFrom(
-              com.google.gwt.dev.protobuf.CodedInputStream input,
-              com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
+              com.google.protobuf.CodedInputStream input,
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
               throws java.io.IOException {
             com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest parsedMessage = null;
             try {
               parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
-            } catch (com.google.gwt.dev.protobuf.InvalidProtocolBufferException e) {
+            } catch (com.google.protobuf.InvalidProtocolBufferException e) {
               parsedMessage = (com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest) e.getUnfinishedMessage();
               throw e;
             } finally {
@@ -9501,7 +9501,7 @@ public final class RemoteMessageProto {
 
           // optional .com.google.gwt.dev.shell.remoteui.Message.Request.ViewerRequest.CapabilityExchange capabilityExchange = 2;
           private com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.CapabilityExchange capabilityExchange_ = com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.CapabilityExchange.getDefaultInstance();
-          private com.google.gwt.dev.protobuf.SingleFieldBuilder<
+          private com.google.protobuf.SingleFieldBuilder<
               com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.CapabilityExchange, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.CapabilityExchange.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.CapabilityExchangeOrBuilder> capabilityExchangeBuilder_;
           /**
            * <code>optional .com.google.gwt.dev.shell.remoteui.Message.Request.ViewerRequest.CapabilityExchange capabilityExchange = 2;</code>
@@ -9602,11 +9602,11 @@ public final class RemoteMessageProto {
           /**
            * <code>optional .com.google.gwt.dev.shell.remoteui.Message.Request.ViewerRequest.CapabilityExchange capabilityExchange = 2;</code>
            */
-          private com.google.gwt.dev.protobuf.SingleFieldBuilder<
+          private com.google.protobuf.SingleFieldBuilder<
               com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.CapabilityExchange, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.CapabilityExchange.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.CapabilityExchangeOrBuilder>
               getCapabilityExchangeFieldBuilder() {
             if (capabilityExchangeBuilder_ == null) {
-              capabilityExchangeBuilder_ = new com.google.gwt.dev.protobuf.SingleFieldBuilder<
+              capabilityExchangeBuilder_ = new com.google.protobuf.SingleFieldBuilder<
                   com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.CapabilityExchange, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.CapabilityExchange.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.CapabilityExchangeOrBuilder>(
                       capabilityExchange_,
                       getParentForChildren(),
@@ -9618,7 +9618,7 @@ public final class RemoteMessageProto {
 
           // optional .com.google.gwt.dev.shell.remoteui.Message.Request.ViewerRequest.AddLog addLog = 3;
           private com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog addLog_ = com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog.getDefaultInstance();
-          private com.google.gwt.dev.protobuf.SingleFieldBuilder<
+          private com.google.protobuf.SingleFieldBuilder<
               com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLogOrBuilder> addLogBuilder_;
           /**
            * <code>optional .com.google.gwt.dev.shell.remoteui.Message.Request.ViewerRequest.AddLog addLog = 3;</code>
@@ -9719,11 +9719,11 @@ public final class RemoteMessageProto {
           /**
            * <code>optional .com.google.gwt.dev.shell.remoteui.Message.Request.ViewerRequest.AddLog addLog = 3;</code>
            */
-          private com.google.gwt.dev.protobuf.SingleFieldBuilder<
+          private com.google.protobuf.SingleFieldBuilder<
               com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLogOrBuilder>
               getAddLogFieldBuilder() {
             if (addLogBuilder_ == null) {
-              addLogBuilder_ = new com.google.gwt.dev.protobuf.SingleFieldBuilder<
+              addLogBuilder_ = new com.google.protobuf.SingleFieldBuilder<
                   com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLog.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLogOrBuilder>(
                       addLog_,
                       getParentForChildren(),
@@ -9735,7 +9735,7 @@ public final class RemoteMessageProto {
 
           // optional .com.google.gwt.dev.shell.remoteui.Message.Request.ViewerRequest.AddLogBranch addLogBranch = 4;
           private com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLogBranch addLogBranch_ = com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLogBranch.getDefaultInstance();
-          private com.google.gwt.dev.protobuf.SingleFieldBuilder<
+          private com.google.protobuf.SingleFieldBuilder<
               com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLogBranch, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLogBranch.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLogBranchOrBuilder> addLogBranchBuilder_;
           /**
            * <code>optional .com.google.gwt.dev.shell.remoteui.Message.Request.ViewerRequest.AddLogBranch addLogBranch = 4;</code>
@@ -9836,11 +9836,11 @@ public final class RemoteMessageProto {
           /**
            * <code>optional .com.google.gwt.dev.shell.remoteui.Message.Request.ViewerRequest.AddLogBranch addLogBranch = 4;</code>
            */
-          private com.google.gwt.dev.protobuf.SingleFieldBuilder<
+          private com.google.protobuf.SingleFieldBuilder<
               com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLogBranch, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLogBranch.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLogBranchOrBuilder>
               getAddLogBranchFieldBuilder() {
             if (addLogBranchBuilder_ == null) {
-              addLogBranchBuilder_ = new com.google.gwt.dev.protobuf.SingleFieldBuilder<
+              addLogBranchBuilder_ = new com.google.protobuf.SingleFieldBuilder<
                   com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLogBranch, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLogBranch.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLogBranchOrBuilder>(
                       addLogBranch_,
                       getParentForChildren(),
@@ -9852,7 +9852,7 @@ public final class RemoteMessageProto {
 
           // optional .com.google.gwt.dev.shell.remoteui.Message.Request.ViewerRequest.AddLogEntry addLogEntry = 5;
           private com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLogEntry addLogEntry_ = com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLogEntry.getDefaultInstance();
-          private com.google.gwt.dev.protobuf.SingleFieldBuilder<
+          private com.google.protobuf.SingleFieldBuilder<
               com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLogEntry, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLogEntry.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLogEntryOrBuilder> addLogEntryBuilder_;
           /**
            * <code>optional .com.google.gwt.dev.shell.remoteui.Message.Request.ViewerRequest.AddLogEntry addLogEntry = 5;</code>
@@ -9953,11 +9953,11 @@ public final class RemoteMessageProto {
           /**
            * <code>optional .com.google.gwt.dev.shell.remoteui.Message.Request.ViewerRequest.AddLogEntry addLogEntry = 5;</code>
            */
-          private com.google.gwt.dev.protobuf.SingleFieldBuilder<
+          private com.google.protobuf.SingleFieldBuilder<
               com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLogEntry, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLogEntry.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLogEntryOrBuilder>
               getAddLogEntryFieldBuilder() {
             if (addLogEntryBuilder_ == null) {
-              addLogEntryBuilder_ = new com.google.gwt.dev.protobuf.SingleFieldBuilder<
+              addLogEntryBuilder_ = new com.google.protobuf.SingleFieldBuilder<
                   com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLogEntry, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLogEntry.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.AddLogEntryOrBuilder>(
                       addLogEntry_,
                       getParentForChildren(),
@@ -9969,7 +9969,7 @@ public final class RemoteMessageProto {
 
           // optional .com.google.gwt.dev.shell.remoteui.Message.Request.ViewerRequest.DisconnectLog disconnectLog = 6;
           private com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.DisconnectLog disconnectLog_ = com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.DisconnectLog.getDefaultInstance();
-          private com.google.gwt.dev.protobuf.SingleFieldBuilder<
+          private com.google.protobuf.SingleFieldBuilder<
               com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.DisconnectLog, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.DisconnectLog.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.DisconnectLogOrBuilder> disconnectLogBuilder_;
           /**
            * <code>optional .com.google.gwt.dev.shell.remoteui.Message.Request.ViewerRequest.DisconnectLog disconnectLog = 6;</code>
@@ -10070,11 +10070,11 @@ public final class RemoteMessageProto {
           /**
            * <code>optional .com.google.gwt.dev.shell.remoteui.Message.Request.ViewerRequest.DisconnectLog disconnectLog = 6;</code>
            */
-          private com.google.gwt.dev.protobuf.SingleFieldBuilder<
+          private com.google.protobuf.SingleFieldBuilder<
               com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.DisconnectLog, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.DisconnectLog.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.DisconnectLogOrBuilder>
               getDisconnectLogFieldBuilder() {
             if (disconnectLogBuilder_ == null) {
-              disconnectLogBuilder_ = new com.google.gwt.dev.protobuf.SingleFieldBuilder<
+              disconnectLogBuilder_ = new com.google.protobuf.SingleFieldBuilder<
                   com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.DisconnectLog, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.DisconnectLog.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.DisconnectLogOrBuilder>(
                       disconnectLog_,
                       getParentForChildren(),
@@ -10086,7 +10086,7 @@ public final class RemoteMessageProto {
 
           // optional .com.google.gwt.dev.shell.remoteui.Message.Request.ViewerRequest.Initialize initialize = 7;
           private com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.Initialize initialize_ = com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.Initialize.getDefaultInstance();
-          private com.google.gwt.dev.protobuf.SingleFieldBuilder<
+          private com.google.protobuf.SingleFieldBuilder<
               com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.Initialize, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.Initialize.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.InitializeOrBuilder> initializeBuilder_;
           /**
            * <code>optional .com.google.gwt.dev.shell.remoteui.Message.Request.ViewerRequest.Initialize initialize = 7;</code>
@@ -10187,11 +10187,11 @@ public final class RemoteMessageProto {
           /**
            * <code>optional .com.google.gwt.dev.shell.remoteui.Message.Request.ViewerRequest.Initialize initialize = 7;</code>
            */
-          private com.google.gwt.dev.protobuf.SingleFieldBuilder<
+          private com.google.protobuf.SingleFieldBuilder<
               com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.Initialize, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.Initialize.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.InitializeOrBuilder>
               getInitializeFieldBuilder() {
             if (initializeBuilder_ == null) {
-              initializeBuilder_ = new com.google.gwt.dev.protobuf.SingleFieldBuilder<
+              initializeBuilder_ = new com.google.protobuf.SingleFieldBuilder<
                   com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.Initialize, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.Initialize.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.InitializeOrBuilder>(
                       initialize_,
                       getParentForChildren(),
@@ -10213,7 +10213,7 @@ public final class RemoteMessageProto {
       }
 
       public interface DevModeRequestOrBuilder
-          extends com.google.gwt.dev.protobuf.MessageOrBuilder {
+          extends com.google.protobuf.MessageOrBuilder {
 
         // optional .com.google.gwt.dev.shell.remoteui.Message.Request.DevModeRequest.RequestType requestType = 1;
         /**
@@ -10261,14 +10261,14 @@ public final class RemoteMessageProto {
        * </pre>
        */
       public static final class DevModeRequest extends
-          com.google.gwt.dev.protobuf.GeneratedMessage
+          com.google.protobuf.GeneratedMessage
           implements DevModeRequestOrBuilder {
         // Use DevModeRequest.newBuilder() to construct.
-        private DevModeRequest(com.google.gwt.dev.protobuf.GeneratedMessage.Builder<?> builder) {
+        private DevModeRequest(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
           super(builder);
           this.unknownFields = builder.getUnknownFields();
         }
-        private DevModeRequest(boolean noInit) { this.unknownFields = com.google.gwt.dev.protobuf.UnknownFieldSet.getDefaultInstance(); }
+        private DevModeRequest(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
 
         private static final DevModeRequest defaultInstance;
         public static DevModeRequest getDefaultInstance() {
@@ -10279,20 +10279,20 @@ public final class RemoteMessageProto {
           return defaultInstance;
         }
 
-        private final com.google.gwt.dev.protobuf.UnknownFieldSet unknownFields;
+        private final com.google.protobuf.UnknownFieldSet unknownFields;
         @java.lang.Override
-        public final com.google.gwt.dev.protobuf.UnknownFieldSet
+        public final com.google.protobuf.UnknownFieldSet
             getUnknownFields() {
           return this.unknownFields;
         }
         private DevModeRequest(
-            com.google.gwt.dev.protobuf.CodedInputStream input,
-            com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
-            throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+            com.google.protobuf.CodedInputStream input,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws com.google.protobuf.InvalidProtocolBufferException {
           initFields();
           int mutable_bitField0_ = 0;
-          com.google.gwt.dev.protobuf.UnknownFieldSet.Builder unknownFields =
-              com.google.gwt.dev.protobuf.UnknownFieldSet.newBuilder();
+          com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+              com.google.protobuf.UnknownFieldSet.newBuilder();
           try {
             boolean done = false;
             while (!done) {
@@ -10347,40 +10347,40 @@ public final class RemoteMessageProto {
                 }
               }
             }
-          } catch (com.google.gwt.dev.protobuf.InvalidProtocolBufferException e) {
+          } catch (com.google.protobuf.InvalidProtocolBufferException e) {
             throw e.setUnfinishedMessage(this);
           } catch (java.io.IOException e) {
-            throw new com.google.gwt.dev.protobuf.InvalidProtocolBufferException(
+            throw new com.google.protobuf.InvalidProtocolBufferException(
                 e.getMessage()).setUnfinishedMessage(this);
           } finally {
             this.unknownFields = unknownFields.build();
             makeExtensionsImmutable();
           }
         }
-        public static final com.google.gwt.dev.protobuf.Descriptors.Descriptor
+        public static final com.google.protobuf.Descriptors.Descriptor
             getDescriptor() {
           return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_DevModeRequest_descriptor;
         }
 
-        protected com.google.gwt.dev.protobuf.GeneratedMessage.FieldAccessorTable
+        protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
             internalGetFieldAccessorTable() {
           return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_DevModeRequest_fieldAccessorTable
               .ensureFieldAccessorsInitialized(
                   com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.DevModeRequest.class, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.DevModeRequest.Builder.class);
         }
 
-        public static com.google.gwt.dev.protobuf.Parser<DevModeRequest> PARSER =
-            new com.google.gwt.dev.protobuf.AbstractParser<DevModeRequest>() {
+        public static com.google.protobuf.Parser<DevModeRequest> PARSER =
+            new com.google.protobuf.AbstractParser<DevModeRequest>() {
           public DevModeRequest parsePartialFrom(
-              com.google.gwt.dev.protobuf.CodedInputStream input,
-              com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
-              throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+              com.google.protobuf.CodedInputStream input,
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+              throws com.google.protobuf.InvalidProtocolBufferException {
             return new DevModeRequest(input, extensionRegistry);
           }
         };
 
         @java.lang.Override
-        public com.google.gwt.dev.protobuf.Parser<DevModeRequest> getParserForType() {
+        public com.google.protobuf.Parser<DevModeRequest> getParserForType() {
           return PARSER;
         }
 
@@ -10392,7 +10392,7 @@ public final class RemoteMessageProto {
          * </pre>
          */
         public enum RequestType
-            implements com.google.gwt.dev.protobuf.ProtocolMessageEnum {
+            implements com.google.protobuf.ProtocolMessageEnum {
           /**
            * <code>CAPABILITY_EXCHANGE = 0;</code>
            */
@@ -10423,27 +10423,27 @@ public final class RemoteMessageProto {
             }
           }
 
-          public static com.google.gwt.dev.protobuf.Internal.EnumLiteMap<RequestType>
+          public static com.google.protobuf.Internal.EnumLiteMap<RequestType>
               internalGetValueMap() {
             return internalValueMap;
           }
-          private static com.google.gwt.dev.protobuf.Internal.EnumLiteMap<RequestType>
+          private static com.google.protobuf.Internal.EnumLiteMap<RequestType>
               internalValueMap =
-                new com.google.gwt.dev.protobuf.Internal.EnumLiteMap<RequestType>() {
+                new com.google.protobuf.Internal.EnumLiteMap<RequestType>() {
                   public RequestType findValueByNumber(int number) {
                     return RequestType.valueOf(number);
                   }
                 };
 
-          public final com.google.gwt.dev.protobuf.Descriptors.EnumValueDescriptor
+          public final com.google.protobuf.Descriptors.EnumValueDescriptor
               getValueDescriptor() {
             return getDescriptor().getValues().get(index);
           }
-          public final com.google.gwt.dev.protobuf.Descriptors.EnumDescriptor
+          public final com.google.protobuf.Descriptors.EnumDescriptor
               getDescriptorForType() {
             return getDescriptor();
           }
-          public static final com.google.gwt.dev.protobuf.Descriptors.EnumDescriptor
+          public static final com.google.protobuf.Descriptors.EnumDescriptor
               getDescriptor() {
             return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.DevModeRequest.getDescriptor().getEnumTypes().get(0);
           }
@@ -10451,7 +10451,7 @@ public final class RemoteMessageProto {
           private static final RequestType[] VALUES = values();
 
           public static RequestType valueOf(
-              com.google.gwt.dev.protobuf.Descriptors.EnumValueDescriptor desc) {
+              com.google.protobuf.Descriptors.EnumValueDescriptor desc) {
             if (desc.getType() != getDescriptor()) {
               throw new java.lang.IllegalArgumentException(
                 "EnumValueDescriptor is not for this type.");
@@ -10471,7 +10471,7 @@ public final class RemoteMessageProto {
         }
 
         public interface CapabilityExchangeOrBuilder
-            extends com.google.gwt.dev.protobuf.MessageOrBuilder {
+            extends com.google.protobuf.MessageOrBuilder {
         }
         /**
          * Protobuf type {@code com.google.gwt.dev.shell.remoteui.Message.Request.DevModeRequest.CapabilityExchange}
@@ -10482,14 +10482,14 @@ public final class RemoteMessageProto {
          * </pre>
          */
         public static final class CapabilityExchange extends
-            com.google.gwt.dev.protobuf.GeneratedMessage
+            com.google.protobuf.GeneratedMessage
             implements CapabilityExchangeOrBuilder {
           // Use CapabilityExchange.newBuilder() to construct.
-          private CapabilityExchange(com.google.gwt.dev.protobuf.GeneratedMessage.Builder<?> builder) {
+          private CapabilityExchange(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
             super(builder);
             this.unknownFields = builder.getUnknownFields();
           }
-          private CapabilityExchange(boolean noInit) { this.unknownFields = com.google.gwt.dev.protobuf.UnknownFieldSet.getDefaultInstance(); }
+          private CapabilityExchange(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
 
           private static final CapabilityExchange defaultInstance;
           public static CapabilityExchange getDefaultInstance() {
@@ -10500,19 +10500,19 @@ public final class RemoteMessageProto {
             return defaultInstance;
           }
 
-          private final com.google.gwt.dev.protobuf.UnknownFieldSet unknownFields;
+          private final com.google.protobuf.UnknownFieldSet unknownFields;
           @java.lang.Override
-          public final com.google.gwt.dev.protobuf.UnknownFieldSet
+          public final com.google.protobuf.UnknownFieldSet
               getUnknownFields() {
             return this.unknownFields;
           }
           private CapabilityExchange(
-              com.google.gwt.dev.protobuf.CodedInputStream input,
-              com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
-              throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+              com.google.protobuf.CodedInputStream input,
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+              throws com.google.protobuf.InvalidProtocolBufferException {
             initFields();
-            com.google.gwt.dev.protobuf.UnknownFieldSet.Builder unknownFields =
-                com.google.gwt.dev.protobuf.UnknownFieldSet.newBuilder();
+            com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+                com.google.protobuf.UnknownFieldSet.newBuilder();
             try {
               boolean done = false;
               while (!done) {
@@ -10530,40 +10530,40 @@ public final class RemoteMessageProto {
                   }
                 }
               }
-            } catch (com.google.gwt.dev.protobuf.InvalidProtocolBufferException e) {
+            } catch (com.google.protobuf.InvalidProtocolBufferException e) {
               throw e.setUnfinishedMessage(this);
             } catch (java.io.IOException e) {
-              throw new com.google.gwt.dev.protobuf.InvalidProtocolBufferException(
+              throw new com.google.protobuf.InvalidProtocolBufferException(
                   e.getMessage()).setUnfinishedMessage(this);
             } finally {
               this.unknownFields = unknownFields.build();
               makeExtensionsImmutable();
             }
           }
-          public static final com.google.gwt.dev.protobuf.Descriptors.Descriptor
+          public static final com.google.protobuf.Descriptors.Descriptor
               getDescriptor() {
             return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_DevModeRequest_CapabilityExchange_descriptor;
           }
 
-          protected com.google.gwt.dev.protobuf.GeneratedMessage.FieldAccessorTable
+          protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
               internalGetFieldAccessorTable() {
             return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_DevModeRequest_CapabilityExchange_fieldAccessorTable
                 .ensureFieldAccessorsInitialized(
                     com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.DevModeRequest.CapabilityExchange.class, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.DevModeRequest.CapabilityExchange.Builder.class);
           }
 
-          public static com.google.gwt.dev.protobuf.Parser<CapabilityExchange> PARSER =
-              new com.google.gwt.dev.protobuf.AbstractParser<CapabilityExchange>() {
+          public static com.google.protobuf.Parser<CapabilityExchange> PARSER =
+              new com.google.protobuf.AbstractParser<CapabilityExchange>() {
             public CapabilityExchange parsePartialFrom(
-                com.google.gwt.dev.protobuf.CodedInputStream input,
-                com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
-                throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+                com.google.protobuf.CodedInputStream input,
+                com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+                throws com.google.protobuf.InvalidProtocolBufferException {
               return new CapabilityExchange(input, extensionRegistry);
             }
           };
 
           @java.lang.Override
-          public com.google.gwt.dev.protobuf.Parser<CapabilityExchange> getParserForType() {
+          public com.google.protobuf.Parser<CapabilityExchange> getParserForType() {
             return PARSER;
           }
 
@@ -10578,7 +10578,7 @@ public final class RemoteMessageProto {
             return true;
           }
 
-          public void writeTo(com.google.gwt.dev.protobuf.CodedOutputStream output)
+          public void writeTo(com.google.protobuf.CodedOutputStream output)
                               throws java.io.IOException {
             getSerializedSize();
             getUnknownFields().writeTo(output);
@@ -10603,24 +10603,24 @@ public final class RemoteMessageProto {
           }
 
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.DevModeRequest.CapabilityExchange parseFrom(
-              com.google.gwt.dev.protobuf.ByteString data)
-              throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+              com.google.protobuf.ByteString data)
+              throws com.google.protobuf.InvalidProtocolBufferException {
             return PARSER.parseFrom(data);
           }
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.DevModeRequest.CapabilityExchange parseFrom(
-              com.google.gwt.dev.protobuf.ByteString data,
-              com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
-              throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+              com.google.protobuf.ByteString data,
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+              throws com.google.protobuf.InvalidProtocolBufferException {
             return PARSER.parseFrom(data, extensionRegistry);
           }
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.DevModeRequest.CapabilityExchange parseFrom(byte[] data)
-              throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+              throws com.google.protobuf.InvalidProtocolBufferException {
             return PARSER.parseFrom(data);
           }
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.DevModeRequest.CapabilityExchange parseFrom(
               byte[] data,
-              com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
-              throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+              throws com.google.protobuf.InvalidProtocolBufferException {
             return PARSER.parseFrom(data, extensionRegistry);
           }
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.DevModeRequest.CapabilityExchange parseFrom(java.io.InputStream input)
@@ -10629,7 +10629,7 @@ public final class RemoteMessageProto {
           }
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.DevModeRequest.CapabilityExchange parseFrom(
               java.io.InputStream input,
-              com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
               throws java.io.IOException {
             return PARSER.parseFrom(input, extensionRegistry);
           }
@@ -10639,18 +10639,18 @@ public final class RemoteMessageProto {
           }
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.DevModeRequest.CapabilityExchange parseDelimitedFrom(
               java.io.InputStream input,
-              com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
               throws java.io.IOException {
             return PARSER.parseDelimitedFrom(input, extensionRegistry);
           }
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.DevModeRequest.CapabilityExchange parseFrom(
-              com.google.gwt.dev.protobuf.CodedInputStream input)
+              com.google.protobuf.CodedInputStream input)
               throws java.io.IOException {
             return PARSER.parseFrom(input);
           }
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.DevModeRequest.CapabilityExchange parseFrom(
-              com.google.gwt.dev.protobuf.CodedInputStream input,
-              com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
+              com.google.protobuf.CodedInputStream input,
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
               throws java.io.IOException {
             return PARSER.parseFrom(input, extensionRegistry);
           }
@@ -10664,7 +10664,7 @@ public final class RemoteMessageProto {
 
           @java.lang.Override
           protected Builder newBuilderForType(
-              com.google.gwt.dev.protobuf.GeneratedMessage.BuilderParent parent) {
+              com.google.protobuf.GeneratedMessage.BuilderParent parent) {
             Builder builder = new Builder(parent);
             return builder;
           }
@@ -10677,14 +10677,14 @@ public final class RemoteMessageProto {
            * </pre>
            */
           public static final class Builder extends
-              com.google.gwt.dev.protobuf.GeneratedMessage.Builder<Builder>
+              com.google.protobuf.GeneratedMessage.Builder<Builder>
              implements com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.DevModeRequest.CapabilityExchangeOrBuilder {
-            public static final com.google.gwt.dev.protobuf.Descriptors.Descriptor
+            public static final com.google.protobuf.Descriptors.Descriptor
                 getDescriptor() {
               return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_DevModeRequest_CapabilityExchange_descriptor;
             }
 
-            protected com.google.gwt.dev.protobuf.GeneratedMessage.FieldAccessorTable
+            protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
                 internalGetFieldAccessorTable() {
               return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_DevModeRequest_CapabilityExchange_fieldAccessorTable
                   .ensureFieldAccessorsInitialized(
@@ -10697,12 +10697,12 @@ public final class RemoteMessageProto {
             }
 
             private Builder(
-                com.google.gwt.dev.protobuf.GeneratedMessage.BuilderParent parent) {
+                com.google.protobuf.GeneratedMessage.BuilderParent parent) {
               super(parent);
               maybeForceBuilderInitialization();
             }
             private void maybeForceBuilderInitialization() {
-              if (com.google.gwt.dev.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
+              if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
               }
             }
             private static Builder create() {
@@ -10718,7 +10718,7 @@ public final class RemoteMessageProto {
               return create().mergeFrom(buildPartial());
             }
 
-            public com.google.gwt.dev.protobuf.Descriptors.Descriptor
+            public com.google.protobuf.Descriptors.Descriptor
                 getDescriptorForType() {
               return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_DevModeRequest_CapabilityExchange_descriptor;
             }
@@ -10741,7 +10741,7 @@ public final class RemoteMessageProto {
               return result;
             }
 
-            public Builder mergeFrom(com.google.gwt.dev.protobuf.Message other) {
+            public Builder mergeFrom(com.google.protobuf.Message other) {
               if (other instanceof com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.DevModeRequest.CapabilityExchange) {
                 return mergeFrom((com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.DevModeRequest.CapabilityExchange)other);
               } else {
@@ -10761,13 +10761,13 @@ public final class RemoteMessageProto {
             }
 
             public Builder mergeFrom(
-                com.google.gwt.dev.protobuf.CodedInputStream input,
-                com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
+                com.google.protobuf.CodedInputStream input,
+                com.google.protobuf.ExtensionRegistryLite extensionRegistry)
                 throws java.io.IOException {
               com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.DevModeRequest.CapabilityExchange parsedMessage = null;
               try {
                 parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
-              } catch (com.google.gwt.dev.protobuf.InvalidProtocolBufferException e) {
+              } catch (com.google.protobuf.InvalidProtocolBufferException e) {
                 parsedMessage = (com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.DevModeRequest.CapabilityExchange) e.getUnfinishedMessage();
                 throw e;
               } finally {
@@ -10790,7 +10790,7 @@ public final class RemoteMessageProto {
         }
 
         public interface RestartWebServerOrBuilder
-            extends com.google.gwt.dev.protobuf.MessageOrBuilder {
+            extends com.google.protobuf.MessageOrBuilder {
         }
         /**
          * Protobuf type {@code com.google.gwt.dev.shell.remoteui.Message.Request.DevModeRequest.RestartWebServer}
@@ -10800,14 +10800,14 @@ public final class RemoteMessageProto {
          * </pre>
          */
         public static final class RestartWebServer extends
-            com.google.gwt.dev.protobuf.GeneratedMessage
+            com.google.protobuf.GeneratedMessage
             implements RestartWebServerOrBuilder {
           // Use RestartWebServer.newBuilder() to construct.
-          private RestartWebServer(com.google.gwt.dev.protobuf.GeneratedMessage.Builder<?> builder) {
+          private RestartWebServer(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
             super(builder);
             this.unknownFields = builder.getUnknownFields();
           }
-          private RestartWebServer(boolean noInit) { this.unknownFields = com.google.gwt.dev.protobuf.UnknownFieldSet.getDefaultInstance(); }
+          private RestartWebServer(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
 
           private static final RestartWebServer defaultInstance;
           public static RestartWebServer getDefaultInstance() {
@@ -10818,19 +10818,19 @@ public final class RemoteMessageProto {
             return defaultInstance;
           }
 
-          private final com.google.gwt.dev.protobuf.UnknownFieldSet unknownFields;
+          private final com.google.protobuf.UnknownFieldSet unknownFields;
           @java.lang.Override
-          public final com.google.gwt.dev.protobuf.UnknownFieldSet
+          public final com.google.protobuf.UnknownFieldSet
               getUnknownFields() {
             return this.unknownFields;
           }
           private RestartWebServer(
-              com.google.gwt.dev.protobuf.CodedInputStream input,
-              com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
-              throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+              com.google.protobuf.CodedInputStream input,
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+              throws com.google.protobuf.InvalidProtocolBufferException {
             initFields();
-            com.google.gwt.dev.protobuf.UnknownFieldSet.Builder unknownFields =
-                com.google.gwt.dev.protobuf.UnknownFieldSet.newBuilder();
+            com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+                com.google.protobuf.UnknownFieldSet.newBuilder();
             try {
               boolean done = false;
               while (!done) {
@@ -10848,40 +10848,40 @@ public final class RemoteMessageProto {
                   }
                 }
               }
-            } catch (com.google.gwt.dev.protobuf.InvalidProtocolBufferException e) {
+            } catch (com.google.protobuf.InvalidProtocolBufferException e) {
               throw e.setUnfinishedMessage(this);
             } catch (java.io.IOException e) {
-              throw new com.google.gwt.dev.protobuf.InvalidProtocolBufferException(
+              throw new com.google.protobuf.InvalidProtocolBufferException(
                   e.getMessage()).setUnfinishedMessage(this);
             } finally {
               this.unknownFields = unknownFields.build();
               makeExtensionsImmutable();
             }
           }
-          public static final com.google.gwt.dev.protobuf.Descriptors.Descriptor
+          public static final com.google.protobuf.Descriptors.Descriptor
               getDescriptor() {
             return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_DevModeRequest_RestartWebServer_descriptor;
           }
 
-          protected com.google.gwt.dev.protobuf.GeneratedMessage.FieldAccessorTable
+          protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
               internalGetFieldAccessorTable() {
             return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_DevModeRequest_RestartWebServer_fieldAccessorTable
                 .ensureFieldAccessorsInitialized(
                     com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.DevModeRequest.RestartWebServer.class, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.DevModeRequest.RestartWebServer.Builder.class);
           }
 
-          public static com.google.gwt.dev.protobuf.Parser<RestartWebServer> PARSER =
-              new com.google.gwt.dev.protobuf.AbstractParser<RestartWebServer>() {
+          public static com.google.protobuf.Parser<RestartWebServer> PARSER =
+              new com.google.protobuf.AbstractParser<RestartWebServer>() {
             public RestartWebServer parsePartialFrom(
-                com.google.gwt.dev.protobuf.CodedInputStream input,
-                com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
-                throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+                com.google.protobuf.CodedInputStream input,
+                com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+                throws com.google.protobuf.InvalidProtocolBufferException {
               return new RestartWebServer(input, extensionRegistry);
             }
           };
 
           @java.lang.Override
-          public com.google.gwt.dev.protobuf.Parser<RestartWebServer> getParserForType() {
+          public com.google.protobuf.Parser<RestartWebServer> getParserForType() {
             return PARSER;
           }
 
@@ -10896,7 +10896,7 @@ public final class RemoteMessageProto {
             return true;
           }
 
-          public void writeTo(com.google.gwt.dev.protobuf.CodedOutputStream output)
+          public void writeTo(com.google.protobuf.CodedOutputStream output)
                               throws java.io.IOException {
             getSerializedSize();
             getUnknownFields().writeTo(output);
@@ -10921,24 +10921,24 @@ public final class RemoteMessageProto {
           }
 
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.DevModeRequest.RestartWebServer parseFrom(
-              com.google.gwt.dev.protobuf.ByteString data)
-              throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+              com.google.protobuf.ByteString data)
+              throws com.google.protobuf.InvalidProtocolBufferException {
             return PARSER.parseFrom(data);
           }
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.DevModeRequest.RestartWebServer parseFrom(
-              com.google.gwt.dev.protobuf.ByteString data,
-              com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
-              throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+              com.google.protobuf.ByteString data,
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+              throws com.google.protobuf.InvalidProtocolBufferException {
             return PARSER.parseFrom(data, extensionRegistry);
           }
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.DevModeRequest.RestartWebServer parseFrom(byte[] data)
-              throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+              throws com.google.protobuf.InvalidProtocolBufferException {
             return PARSER.parseFrom(data);
           }
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.DevModeRequest.RestartWebServer parseFrom(
               byte[] data,
-              com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
-              throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+              throws com.google.protobuf.InvalidProtocolBufferException {
             return PARSER.parseFrom(data, extensionRegistry);
           }
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.DevModeRequest.RestartWebServer parseFrom(java.io.InputStream input)
@@ -10947,7 +10947,7 @@ public final class RemoteMessageProto {
           }
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.DevModeRequest.RestartWebServer parseFrom(
               java.io.InputStream input,
-              com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
               throws java.io.IOException {
             return PARSER.parseFrom(input, extensionRegistry);
           }
@@ -10957,18 +10957,18 @@ public final class RemoteMessageProto {
           }
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.DevModeRequest.RestartWebServer parseDelimitedFrom(
               java.io.InputStream input,
-              com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
               throws java.io.IOException {
             return PARSER.parseDelimitedFrom(input, extensionRegistry);
           }
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.DevModeRequest.RestartWebServer parseFrom(
-              com.google.gwt.dev.protobuf.CodedInputStream input)
+              com.google.protobuf.CodedInputStream input)
               throws java.io.IOException {
             return PARSER.parseFrom(input);
           }
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.DevModeRequest.RestartWebServer parseFrom(
-              com.google.gwt.dev.protobuf.CodedInputStream input,
-              com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
+              com.google.protobuf.CodedInputStream input,
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
               throws java.io.IOException {
             return PARSER.parseFrom(input, extensionRegistry);
           }
@@ -10982,7 +10982,7 @@ public final class RemoteMessageProto {
 
           @java.lang.Override
           protected Builder newBuilderForType(
-              com.google.gwt.dev.protobuf.GeneratedMessage.BuilderParent parent) {
+              com.google.protobuf.GeneratedMessage.BuilderParent parent) {
             Builder builder = new Builder(parent);
             return builder;
           }
@@ -10994,14 +10994,14 @@ public final class RemoteMessageProto {
            * </pre>
            */
           public static final class Builder extends
-              com.google.gwt.dev.protobuf.GeneratedMessage.Builder<Builder>
+              com.google.protobuf.GeneratedMessage.Builder<Builder>
              implements com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.DevModeRequest.RestartWebServerOrBuilder {
-            public static final com.google.gwt.dev.protobuf.Descriptors.Descriptor
+            public static final com.google.protobuf.Descriptors.Descriptor
                 getDescriptor() {
               return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_DevModeRequest_RestartWebServer_descriptor;
             }
 
-            protected com.google.gwt.dev.protobuf.GeneratedMessage.FieldAccessorTable
+            protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
                 internalGetFieldAccessorTable() {
               return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_DevModeRequest_RestartWebServer_fieldAccessorTable
                   .ensureFieldAccessorsInitialized(
@@ -11014,12 +11014,12 @@ public final class RemoteMessageProto {
             }
 
             private Builder(
-                com.google.gwt.dev.protobuf.GeneratedMessage.BuilderParent parent) {
+                com.google.protobuf.GeneratedMessage.BuilderParent parent) {
               super(parent);
               maybeForceBuilderInitialization();
             }
             private void maybeForceBuilderInitialization() {
-              if (com.google.gwt.dev.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
+              if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
               }
             }
             private static Builder create() {
@@ -11035,7 +11035,7 @@ public final class RemoteMessageProto {
               return create().mergeFrom(buildPartial());
             }
 
-            public com.google.gwt.dev.protobuf.Descriptors.Descriptor
+            public com.google.protobuf.Descriptors.Descriptor
                 getDescriptorForType() {
               return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_DevModeRequest_RestartWebServer_descriptor;
             }
@@ -11058,7 +11058,7 @@ public final class RemoteMessageProto {
               return result;
             }
 
-            public Builder mergeFrom(com.google.gwt.dev.protobuf.Message other) {
+            public Builder mergeFrom(com.google.protobuf.Message other) {
               if (other instanceof com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.DevModeRequest.RestartWebServer) {
                 return mergeFrom((com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.DevModeRequest.RestartWebServer)other);
               } else {
@@ -11078,13 +11078,13 @@ public final class RemoteMessageProto {
             }
 
             public Builder mergeFrom(
-                com.google.gwt.dev.protobuf.CodedInputStream input,
-                com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
+                com.google.protobuf.CodedInputStream input,
+                com.google.protobuf.ExtensionRegistryLite extensionRegistry)
                 throws java.io.IOException {
               com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.DevModeRequest.RestartWebServer parsedMessage = null;
               try {
                 parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
-              } catch (com.google.gwt.dev.protobuf.InvalidProtocolBufferException e) {
+              } catch (com.google.protobuf.InvalidProtocolBufferException e) {
                 parsedMessage = (com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.DevModeRequest.RestartWebServer) e.getUnfinishedMessage();
                 throw e;
               } finally {
@@ -11181,7 +11181,7 @@ public final class RemoteMessageProto {
           return true;
         }
 
-        public void writeTo(com.google.gwt.dev.protobuf.CodedOutputStream output)
+        public void writeTo(com.google.protobuf.CodedOutputStream output)
                             throws java.io.IOException {
           getSerializedSize();
           if (((bitField0_ & 0x00000001) == 0x00000001)) {
@@ -11203,15 +11203,15 @@ public final class RemoteMessageProto {
 
           size = 0;
           if (((bitField0_ & 0x00000001) == 0x00000001)) {
-            size += com.google.gwt.dev.protobuf.CodedOutputStream
+            size += com.google.protobuf.CodedOutputStream
               .computeEnumSize(1, requestType_.getNumber());
           }
           if (((bitField0_ & 0x00000002) == 0x00000002)) {
-            size += com.google.gwt.dev.protobuf.CodedOutputStream
+            size += com.google.protobuf.CodedOutputStream
               .computeMessageSize(2, capabilityExchange_);
           }
           if (((bitField0_ & 0x00000004) == 0x00000004)) {
-            size += com.google.gwt.dev.protobuf.CodedOutputStream
+            size += com.google.protobuf.CodedOutputStream
               .computeMessageSize(3, restartWebServer_);
           }
           size += getUnknownFields().getSerializedSize();
@@ -11227,24 +11227,24 @@ public final class RemoteMessageProto {
         }
 
         public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.DevModeRequest parseFrom(
-            com.google.gwt.dev.protobuf.ByteString data)
-            throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+            com.google.protobuf.ByteString data)
+            throws com.google.protobuf.InvalidProtocolBufferException {
           return PARSER.parseFrom(data);
         }
         public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.DevModeRequest parseFrom(
-            com.google.gwt.dev.protobuf.ByteString data,
-            com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
-            throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+            com.google.protobuf.ByteString data,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws com.google.protobuf.InvalidProtocolBufferException {
           return PARSER.parseFrom(data, extensionRegistry);
         }
         public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.DevModeRequest parseFrom(byte[] data)
-            throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+            throws com.google.protobuf.InvalidProtocolBufferException {
           return PARSER.parseFrom(data);
         }
         public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.DevModeRequest parseFrom(
             byte[] data,
-            com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
-            throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws com.google.protobuf.InvalidProtocolBufferException {
           return PARSER.parseFrom(data, extensionRegistry);
         }
         public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.DevModeRequest parseFrom(java.io.InputStream input)
@@ -11253,7 +11253,7 @@ public final class RemoteMessageProto {
         }
         public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.DevModeRequest parseFrom(
             java.io.InputStream input,
-            com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
             throws java.io.IOException {
           return PARSER.parseFrom(input, extensionRegistry);
         }
@@ -11263,18 +11263,18 @@ public final class RemoteMessageProto {
         }
         public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.DevModeRequest parseDelimitedFrom(
             java.io.InputStream input,
-            com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
             throws java.io.IOException {
           return PARSER.parseDelimitedFrom(input, extensionRegistry);
         }
         public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.DevModeRequest parseFrom(
-            com.google.gwt.dev.protobuf.CodedInputStream input)
+            com.google.protobuf.CodedInputStream input)
             throws java.io.IOException {
           return PARSER.parseFrom(input);
         }
         public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.DevModeRequest parseFrom(
-            com.google.gwt.dev.protobuf.CodedInputStream input,
-            com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
+            com.google.protobuf.CodedInputStream input,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
             throws java.io.IOException {
           return PARSER.parseFrom(input, extensionRegistry);
         }
@@ -11288,7 +11288,7 @@ public final class RemoteMessageProto {
 
         @java.lang.Override
         protected Builder newBuilderForType(
-            com.google.gwt.dev.protobuf.GeneratedMessage.BuilderParent parent) {
+            com.google.protobuf.GeneratedMessage.BuilderParent parent) {
           Builder builder = new Builder(parent);
           return builder;
         }
@@ -11300,14 +11300,14 @@ public final class RemoteMessageProto {
          * </pre>
          */
         public static final class Builder extends
-            com.google.gwt.dev.protobuf.GeneratedMessage.Builder<Builder>
+            com.google.protobuf.GeneratedMessage.Builder<Builder>
            implements com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.DevModeRequestOrBuilder {
-          public static final com.google.gwt.dev.protobuf.Descriptors.Descriptor
+          public static final com.google.protobuf.Descriptors.Descriptor
               getDescriptor() {
             return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_DevModeRequest_descriptor;
           }
 
-          protected com.google.gwt.dev.protobuf.GeneratedMessage.FieldAccessorTable
+          protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
               internalGetFieldAccessorTable() {
             return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_DevModeRequest_fieldAccessorTable
                 .ensureFieldAccessorsInitialized(
@@ -11320,12 +11320,12 @@ public final class RemoteMessageProto {
           }
 
           private Builder(
-              com.google.gwt.dev.protobuf.GeneratedMessage.BuilderParent parent) {
+              com.google.protobuf.GeneratedMessage.BuilderParent parent) {
             super(parent);
             maybeForceBuilderInitialization();
           }
           private void maybeForceBuilderInitialization() {
-            if (com.google.gwt.dev.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
+            if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
               getCapabilityExchangeFieldBuilder();
               getRestartWebServerFieldBuilder();
             }
@@ -11357,7 +11357,7 @@ public final class RemoteMessageProto {
             return create().mergeFrom(buildPartial());
           }
 
-          public com.google.gwt.dev.protobuf.Descriptors.Descriptor
+          public com.google.protobuf.Descriptors.Descriptor
               getDescriptorForType() {
             return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_DevModeRequest_descriptor;
           }
@@ -11403,7 +11403,7 @@ public final class RemoteMessageProto {
             return result;
           }
 
-          public Builder mergeFrom(com.google.gwt.dev.protobuf.Message other) {
+          public Builder mergeFrom(com.google.protobuf.Message other) {
             if (other instanceof com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.DevModeRequest) {
               return mergeFrom((com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.DevModeRequest)other);
             } else {
@@ -11432,13 +11432,13 @@ public final class RemoteMessageProto {
           }
 
           public Builder mergeFrom(
-              com.google.gwt.dev.protobuf.CodedInputStream input,
-              com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
+              com.google.protobuf.CodedInputStream input,
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
               throws java.io.IOException {
             com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.DevModeRequest parsedMessage = null;
             try {
               parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
-            } catch (com.google.gwt.dev.protobuf.InvalidProtocolBufferException e) {
+            } catch (com.google.protobuf.InvalidProtocolBufferException e) {
               parsedMessage = (com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.DevModeRequest) e.getUnfinishedMessage();
               throw e;
             } finally {
@@ -11488,7 +11488,7 @@ public final class RemoteMessageProto {
 
           // optional .com.google.gwt.dev.shell.remoteui.Message.Request.DevModeRequest.CapabilityExchange capabilityExchange = 2;
           private com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.DevModeRequest.CapabilityExchange capabilityExchange_ = com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.DevModeRequest.CapabilityExchange.getDefaultInstance();
-          private com.google.gwt.dev.protobuf.SingleFieldBuilder<
+          private com.google.protobuf.SingleFieldBuilder<
               com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.DevModeRequest.CapabilityExchange, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.DevModeRequest.CapabilityExchange.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.DevModeRequest.CapabilityExchangeOrBuilder> capabilityExchangeBuilder_;
           /**
            * <code>optional .com.google.gwt.dev.shell.remoteui.Message.Request.DevModeRequest.CapabilityExchange capabilityExchange = 2;</code>
@@ -11589,11 +11589,11 @@ public final class RemoteMessageProto {
           /**
            * <code>optional .com.google.gwt.dev.shell.remoteui.Message.Request.DevModeRequest.CapabilityExchange capabilityExchange = 2;</code>
            */
-          private com.google.gwt.dev.protobuf.SingleFieldBuilder<
+          private com.google.protobuf.SingleFieldBuilder<
               com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.DevModeRequest.CapabilityExchange, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.DevModeRequest.CapabilityExchange.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.DevModeRequest.CapabilityExchangeOrBuilder>
               getCapabilityExchangeFieldBuilder() {
             if (capabilityExchangeBuilder_ == null) {
-              capabilityExchangeBuilder_ = new com.google.gwt.dev.protobuf.SingleFieldBuilder<
+              capabilityExchangeBuilder_ = new com.google.protobuf.SingleFieldBuilder<
                   com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.DevModeRequest.CapabilityExchange, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.DevModeRequest.CapabilityExchange.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.DevModeRequest.CapabilityExchangeOrBuilder>(
                       capabilityExchange_,
                       getParentForChildren(),
@@ -11605,7 +11605,7 @@ public final class RemoteMessageProto {
 
           // optional .com.google.gwt.dev.shell.remoteui.Message.Request.DevModeRequest.RestartWebServer restartWebServer = 3;
           private com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.DevModeRequest.RestartWebServer restartWebServer_ = com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.DevModeRequest.RestartWebServer.getDefaultInstance();
-          private com.google.gwt.dev.protobuf.SingleFieldBuilder<
+          private com.google.protobuf.SingleFieldBuilder<
               com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.DevModeRequest.RestartWebServer, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.DevModeRequest.RestartWebServer.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.DevModeRequest.RestartWebServerOrBuilder> restartWebServerBuilder_;
           /**
            * <code>optional .com.google.gwt.dev.shell.remoteui.Message.Request.DevModeRequest.RestartWebServer restartWebServer = 3;</code>
@@ -11706,11 +11706,11 @@ public final class RemoteMessageProto {
           /**
            * <code>optional .com.google.gwt.dev.shell.remoteui.Message.Request.DevModeRequest.RestartWebServer restartWebServer = 3;</code>
            */
-          private com.google.gwt.dev.protobuf.SingleFieldBuilder<
+          private com.google.protobuf.SingleFieldBuilder<
               com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.DevModeRequest.RestartWebServer, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.DevModeRequest.RestartWebServer.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.DevModeRequest.RestartWebServerOrBuilder>
               getRestartWebServerFieldBuilder() {
             if (restartWebServerBuilder_ == null) {
-              restartWebServerBuilder_ = new com.google.gwt.dev.protobuf.SingleFieldBuilder<
+              restartWebServerBuilder_ = new com.google.protobuf.SingleFieldBuilder<
                   com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.DevModeRequest.RestartWebServer, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.DevModeRequest.RestartWebServer.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.DevModeRequest.RestartWebServerOrBuilder>(
                       restartWebServer_,
                       getParentForChildren(),
@@ -11812,7 +11812,7 @@ public final class RemoteMessageProto {
         return true;
       }
 
-      public void writeTo(com.google.gwt.dev.protobuf.CodedOutputStream output)
+      public void writeTo(com.google.protobuf.CodedOutputStream output)
                           throws java.io.IOException {
         getSerializedSize();
         if (((bitField0_ & 0x00000001) == 0x00000001)) {
@@ -11834,15 +11834,15 @@ public final class RemoteMessageProto {
 
         size = 0;
         if (((bitField0_ & 0x00000001) == 0x00000001)) {
-          size += com.google.gwt.dev.protobuf.CodedOutputStream
+          size += com.google.protobuf.CodedOutputStream
             .computeEnumSize(1, serviceType_.getNumber());
         }
         if (((bitField0_ & 0x00000002) == 0x00000002)) {
-          size += com.google.gwt.dev.protobuf.CodedOutputStream
+          size += com.google.protobuf.CodedOutputStream
             .computeMessageSize(2, viewerRequest_);
         }
         if (((bitField0_ & 0x00000004) == 0x00000004)) {
-          size += com.google.gwt.dev.protobuf.CodedOutputStream
+          size += com.google.protobuf.CodedOutputStream
             .computeMessageSize(3, devModeRequest_);
         }
         size += getUnknownFields().getSerializedSize();
@@ -11858,24 +11858,24 @@ public final class RemoteMessageProto {
       }
 
       public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request parseFrom(
-          com.google.gwt.dev.protobuf.ByteString data)
-          throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+          com.google.protobuf.ByteString data)
+          throws com.google.protobuf.InvalidProtocolBufferException {
         return PARSER.parseFrom(data);
       }
       public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request parseFrom(
-          com.google.gwt.dev.protobuf.ByteString data,
-          com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+          com.google.protobuf.ByteString data,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
         return PARSER.parseFrom(data, extensionRegistry);
       }
       public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request parseFrom(byte[] data)
-          throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+          throws com.google.protobuf.InvalidProtocolBufferException {
         return PARSER.parseFrom(data);
       }
       public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request parseFrom(
           byte[] data,
-          com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
         return PARSER.parseFrom(data, extensionRegistry);
       }
       public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request parseFrom(java.io.InputStream input)
@@ -11884,7 +11884,7 @@ public final class RemoteMessageProto {
       }
       public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request parseFrom(
           java.io.InputStream input,
-          com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
           throws java.io.IOException {
         return PARSER.parseFrom(input, extensionRegistry);
       }
@@ -11894,18 +11894,18 @@ public final class RemoteMessageProto {
       }
       public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request parseDelimitedFrom(
           java.io.InputStream input,
-          com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
           throws java.io.IOException {
         return PARSER.parseDelimitedFrom(input, extensionRegistry);
       }
       public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request parseFrom(
-          com.google.gwt.dev.protobuf.CodedInputStream input)
+          com.google.protobuf.CodedInputStream input)
           throws java.io.IOException {
         return PARSER.parseFrom(input);
       }
       public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request parseFrom(
-          com.google.gwt.dev.protobuf.CodedInputStream input,
-          com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
           throws java.io.IOException {
         return PARSER.parseFrom(input, extensionRegistry);
       }
@@ -11919,7 +11919,7 @@ public final class RemoteMessageProto {
 
       @java.lang.Override
       protected Builder newBuilderForType(
-          com.google.gwt.dev.protobuf.GeneratedMessage.BuilderParent parent) {
+          com.google.protobuf.GeneratedMessage.BuilderParent parent) {
         Builder builder = new Builder(parent);
         return builder;
       }
@@ -11931,14 +11931,14 @@ public final class RemoteMessageProto {
        * </pre>
        */
       public static final class Builder extends
-          com.google.gwt.dev.protobuf.GeneratedMessage.Builder<Builder>
+          com.google.protobuf.GeneratedMessage.Builder<Builder>
          implements com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.RequestOrBuilder {
-        public static final com.google.gwt.dev.protobuf.Descriptors.Descriptor
+        public static final com.google.protobuf.Descriptors.Descriptor
             getDescriptor() {
           return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_descriptor;
         }
 
-        protected com.google.gwt.dev.protobuf.GeneratedMessage.FieldAccessorTable
+        protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
             internalGetFieldAccessorTable() {
           return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_fieldAccessorTable
               .ensureFieldAccessorsInitialized(
@@ -11951,12 +11951,12 @@ public final class RemoteMessageProto {
         }
 
         private Builder(
-            com.google.gwt.dev.protobuf.GeneratedMessage.BuilderParent parent) {
+            com.google.protobuf.GeneratedMessage.BuilderParent parent) {
           super(parent);
           maybeForceBuilderInitialization();
         }
         private void maybeForceBuilderInitialization() {
-          if (com.google.gwt.dev.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
+          if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
             getViewerRequestFieldBuilder();
             getDevModeRequestFieldBuilder();
           }
@@ -11988,7 +11988,7 @@ public final class RemoteMessageProto {
           return create().mergeFrom(buildPartial());
         }
 
-        public com.google.gwt.dev.protobuf.Descriptors.Descriptor
+        public com.google.protobuf.Descriptors.Descriptor
             getDescriptorForType() {
           return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_descriptor;
         }
@@ -12034,7 +12034,7 @@ public final class RemoteMessageProto {
           return result;
         }
 
-        public Builder mergeFrom(com.google.gwt.dev.protobuf.Message other) {
+        public Builder mergeFrom(com.google.protobuf.Message other) {
           if (other instanceof com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request) {
             return mergeFrom((com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request)other);
           } else {
@@ -12069,13 +12069,13 @@ public final class RemoteMessageProto {
         }
 
         public Builder mergeFrom(
-            com.google.gwt.dev.protobuf.CodedInputStream input,
-            com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
+            com.google.protobuf.CodedInputStream input,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
             throws java.io.IOException {
           com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request parsedMessage = null;
           try {
             parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
-          } catch (com.google.gwt.dev.protobuf.InvalidProtocolBufferException e) {
+          } catch (com.google.protobuf.InvalidProtocolBufferException e) {
             parsedMessage = (com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request) e.getUnfinishedMessage();
             throw e;
           } finally {
@@ -12125,7 +12125,7 @@ public final class RemoteMessageProto {
 
         // optional .com.google.gwt.dev.shell.remoteui.Message.Request.ViewerRequest viewerRequest = 2;
         private com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest viewerRequest_ = com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.getDefaultInstance();
-        private com.google.gwt.dev.protobuf.SingleFieldBuilder<
+        private com.google.protobuf.SingleFieldBuilder<
             com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequestOrBuilder> viewerRequestBuilder_;
         /**
          * <code>optional .com.google.gwt.dev.shell.remoteui.Message.Request.ViewerRequest viewerRequest = 2;</code>
@@ -12226,11 +12226,11 @@ public final class RemoteMessageProto {
         /**
          * <code>optional .com.google.gwt.dev.shell.remoteui.Message.Request.ViewerRequest viewerRequest = 2;</code>
          */
-        private com.google.gwt.dev.protobuf.SingleFieldBuilder<
+        private com.google.protobuf.SingleFieldBuilder<
             com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequestOrBuilder>
             getViewerRequestFieldBuilder() {
           if (viewerRequestBuilder_ == null) {
-            viewerRequestBuilder_ = new com.google.gwt.dev.protobuf.SingleFieldBuilder<
+            viewerRequestBuilder_ = new com.google.protobuf.SingleFieldBuilder<
                 com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequest.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.ViewerRequestOrBuilder>(
                     viewerRequest_,
                     getParentForChildren(),
@@ -12242,7 +12242,7 @@ public final class RemoteMessageProto {
 
         // optional .com.google.gwt.dev.shell.remoteui.Message.Request.DevModeRequest devModeRequest = 3;
         private com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.DevModeRequest devModeRequest_ = com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.DevModeRequest.getDefaultInstance();
-        private com.google.gwt.dev.protobuf.SingleFieldBuilder<
+        private com.google.protobuf.SingleFieldBuilder<
             com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.DevModeRequest, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.DevModeRequest.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.DevModeRequestOrBuilder> devModeRequestBuilder_;
         /**
          * <code>optional .com.google.gwt.dev.shell.remoteui.Message.Request.DevModeRequest devModeRequest = 3;</code>
@@ -12343,11 +12343,11 @@ public final class RemoteMessageProto {
         /**
          * <code>optional .com.google.gwt.dev.shell.remoteui.Message.Request.DevModeRequest devModeRequest = 3;</code>
          */
-        private com.google.gwt.dev.protobuf.SingleFieldBuilder<
+        private com.google.protobuf.SingleFieldBuilder<
             com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.DevModeRequest, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.DevModeRequest.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.DevModeRequestOrBuilder>
             getDevModeRequestFieldBuilder() {
           if (devModeRequestBuilder_ == null) {
-            devModeRequestBuilder_ = new com.google.gwt.dev.protobuf.SingleFieldBuilder<
+            devModeRequestBuilder_ = new com.google.protobuf.SingleFieldBuilder<
                 com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.DevModeRequest, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.DevModeRequest.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.DevModeRequestOrBuilder>(
                     devModeRequest_,
                     getParentForChildren(),
@@ -12369,7 +12369,7 @@ public final class RemoteMessageProto {
     }
 
     public interface ResponseOrBuilder
-        extends com.google.gwt.dev.protobuf.MessageOrBuilder {
+        extends com.google.protobuf.MessageOrBuilder {
 
       // optional .com.google.gwt.dev.shell.remoteui.Message.Response.ViewerResponse viewerResponse = 1;
       /**
@@ -12408,14 +12408,14 @@ public final class RemoteMessageProto {
      * </pre>
      */
     public static final class Response extends
-        com.google.gwt.dev.protobuf.GeneratedMessage
+        com.google.protobuf.GeneratedMessage
         implements ResponseOrBuilder {
       // Use Response.newBuilder() to construct.
-      private Response(com.google.gwt.dev.protobuf.GeneratedMessage.Builder<?> builder) {
+      private Response(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
         super(builder);
         this.unknownFields = builder.getUnknownFields();
       }
-      private Response(boolean noInit) { this.unknownFields = com.google.gwt.dev.protobuf.UnknownFieldSet.getDefaultInstance(); }
+      private Response(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
 
       private static final Response defaultInstance;
       public static Response getDefaultInstance() {
@@ -12426,20 +12426,20 @@ public final class RemoteMessageProto {
         return defaultInstance;
       }
 
-      private final com.google.gwt.dev.protobuf.UnknownFieldSet unknownFields;
+      private final com.google.protobuf.UnknownFieldSet unknownFields;
       @java.lang.Override
-      public final com.google.gwt.dev.protobuf.UnknownFieldSet
+      public final com.google.protobuf.UnknownFieldSet
           getUnknownFields() {
         return this.unknownFields;
       }
       private Response(
-          com.google.gwt.dev.protobuf.CodedInputStream input,
-          com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
         initFields();
         int mutable_bitField0_ = 0;
-        com.google.gwt.dev.protobuf.UnknownFieldSet.Builder unknownFields =
-            com.google.gwt.dev.protobuf.UnknownFieldSet.newBuilder();
+        com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+            com.google.protobuf.UnknownFieldSet.newBuilder();
         try {
           boolean done = false;
           while (!done) {
@@ -12483,45 +12483,45 @@ public final class RemoteMessageProto {
               }
             }
           }
-        } catch (com.google.gwt.dev.protobuf.InvalidProtocolBufferException e) {
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
           throw e.setUnfinishedMessage(this);
         } catch (java.io.IOException e) {
-          throw new com.google.gwt.dev.protobuf.InvalidProtocolBufferException(
+          throw new com.google.protobuf.InvalidProtocolBufferException(
               e.getMessage()).setUnfinishedMessage(this);
         } finally {
           this.unknownFields = unknownFields.build();
           makeExtensionsImmutable();
         }
       }
-      public static final com.google.gwt.dev.protobuf.Descriptors.Descriptor
+      public static final com.google.protobuf.Descriptors.Descriptor
           getDescriptor() {
         return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Response_descriptor;
       }
 
-      protected com.google.gwt.dev.protobuf.GeneratedMessage.FieldAccessorTable
+      protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
           internalGetFieldAccessorTable() {
         return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Response_fieldAccessorTable
             .ensureFieldAccessorsInitialized(
                 com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.class, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.Builder.class);
       }
 
-      public static com.google.gwt.dev.protobuf.Parser<Response> PARSER =
-          new com.google.gwt.dev.protobuf.AbstractParser<Response>() {
+      public static com.google.protobuf.Parser<Response> PARSER =
+          new com.google.protobuf.AbstractParser<Response>() {
         public Response parsePartialFrom(
-            com.google.gwt.dev.protobuf.CodedInputStream input,
-            com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
-            throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+            com.google.protobuf.CodedInputStream input,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws com.google.protobuf.InvalidProtocolBufferException {
           return new Response(input, extensionRegistry);
         }
       };
 
       @java.lang.Override
-      public com.google.gwt.dev.protobuf.Parser<Response> getParserForType() {
+      public com.google.protobuf.Parser<Response> getParserForType() {
         return PARSER;
       }
 
       public interface ViewerResponseOrBuilder
-          extends com.google.gwt.dev.protobuf.MessageOrBuilder {
+          extends com.google.protobuf.MessageOrBuilder {
 
         // optional .com.google.gwt.dev.shell.remoteui.Message.Response.ViewerResponse.ResponseType responseType = 1;
         /**
@@ -12583,14 +12583,14 @@ public final class RemoteMessageProto {
        * </pre>
        */
       public static final class ViewerResponse extends
-          com.google.gwt.dev.protobuf.GeneratedMessage
+          com.google.protobuf.GeneratedMessage
           implements ViewerResponseOrBuilder {
         // Use ViewerResponse.newBuilder() to construct.
-        private ViewerResponse(com.google.gwt.dev.protobuf.GeneratedMessage.Builder<?> builder) {
+        private ViewerResponse(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
           super(builder);
           this.unknownFields = builder.getUnknownFields();
         }
-        private ViewerResponse(boolean noInit) { this.unknownFields = com.google.gwt.dev.protobuf.UnknownFieldSet.getDefaultInstance(); }
+        private ViewerResponse(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
 
         private static final ViewerResponse defaultInstance;
         public static ViewerResponse getDefaultInstance() {
@@ -12601,20 +12601,20 @@ public final class RemoteMessageProto {
           return defaultInstance;
         }
 
-        private final com.google.gwt.dev.protobuf.UnknownFieldSet unknownFields;
+        private final com.google.protobuf.UnknownFieldSet unknownFields;
         @java.lang.Override
-        public final com.google.gwt.dev.protobuf.UnknownFieldSet
+        public final com.google.protobuf.UnknownFieldSet
             getUnknownFields() {
           return this.unknownFields;
         }
         private ViewerResponse(
-            com.google.gwt.dev.protobuf.CodedInputStream input,
-            com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
-            throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+            com.google.protobuf.CodedInputStream input,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws com.google.protobuf.InvalidProtocolBufferException {
           initFields();
           int mutable_bitField0_ = 0;
-          com.google.gwt.dev.protobuf.UnknownFieldSet.Builder unknownFields =
-              com.google.gwt.dev.protobuf.UnknownFieldSet.newBuilder();
+          com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+              com.google.protobuf.UnknownFieldSet.newBuilder();
           try {
             boolean done = false;
             while (!done) {
@@ -12682,40 +12682,40 @@ public final class RemoteMessageProto {
                 }
               }
             }
-          } catch (com.google.gwt.dev.protobuf.InvalidProtocolBufferException e) {
+          } catch (com.google.protobuf.InvalidProtocolBufferException e) {
             throw e.setUnfinishedMessage(this);
           } catch (java.io.IOException e) {
-            throw new com.google.gwt.dev.protobuf.InvalidProtocolBufferException(
+            throw new com.google.protobuf.InvalidProtocolBufferException(
                 e.getMessage()).setUnfinishedMessage(this);
           } finally {
             this.unknownFields = unknownFields.build();
             makeExtensionsImmutable();
           }
         }
-        public static final com.google.gwt.dev.protobuf.Descriptors.Descriptor
+        public static final com.google.protobuf.Descriptors.Descriptor
             getDescriptor() {
           return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Response_ViewerResponse_descriptor;
         }
 
-        protected com.google.gwt.dev.protobuf.GeneratedMessage.FieldAccessorTable
+        protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
             internalGetFieldAccessorTable() {
           return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Response_ViewerResponse_fieldAccessorTable
               .ensureFieldAccessorsInitialized(
                   com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.class, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.Builder.class);
         }
 
-        public static com.google.gwt.dev.protobuf.Parser<ViewerResponse> PARSER =
-            new com.google.gwt.dev.protobuf.AbstractParser<ViewerResponse>() {
+        public static com.google.protobuf.Parser<ViewerResponse> PARSER =
+            new com.google.protobuf.AbstractParser<ViewerResponse>() {
           public ViewerResponse parsePartialFrom(
-              com.google.gwt.dev.protobuf.CodedInputStream input,
-              com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
-              throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+              com.google.protobuf.CodedInputStream input,
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+              throws com.google.protobuf.InvalidProtocolBufferException {
             return new ViewerResponse(input, extensionRegistry);
           }
         };
 
         @java.lang.Override
-        public com.google.gwt.dev.protobuf.Parser<ViewerResponse> getParserForType() {
+        public com.google.protobuf.Parser<ViewerResponse> getParserForType() {
           return PARSER;
         }
 
@@ -12728,7 +12728,7 @@ public final class RemoteMessageProto {
          * </pre>
          */
         public enum ResponseType
-            implements com.google.gwt.dev.protobuf.ProtocolMessageEnum {
+            implements com.google.protobuf.ProtocolMessageEnum {
           /**
            * <code>CAPABILITY_EXCHANGE = 0;</code>
            */
@@ -12768,27 +12768,27 @@ public final class RemoteMessageProto {
             }
           }
 
-          public static com.google.gwt.dev.protobuf.Internal.EnumLiteMap<ResponseType>
+          public static com.google.protobuf.Internal.EnumLiteMap<ResponseType>
               internalGetValueMap() {
             return internalValueMap;
           }
-          private static com.google.gwt.dev.protobuf.Internal.EnumLiteMap<ResponseType>
+          private static com.google.protobuf.Internal.EnumLiteMap<ResponseType>
               internalValueMap =
-                new com.google.gwt.dev.protobuf.Internal.EnumLiteMap<ResponseType>() {
+                new com.google.protobuf.Internal.EnumLiteMap<ResponseType>() {
                   public ResponseType findValueByNumber(int number) {
                     return ResponseType.valueOf(number);
                   }
                 };
 
-          public final com.google.gwt.dev.protobuf.Descriptors.EnumValueDescriptor
+          public final com.google.protobuf.Descriptors.EnumValueDescriptor
               getValueDescriptor() {
             return getDescriptor().getValues().get(index);
           }
-          public final com.google.gwt.dev.protobuf.Descriptors.EnumDescriptor
+          public final com.google.protobuf.Descriptors.EnumDescriptor
               getDescriptorForType() {
             return getDescriptor();
           }
-          public static final com.google.gwt.dev.protobuf.Descriptors.EnumDescriptor
+          public static final com.google.protobuf.Descriptors.EnumDescriptor
               getDescriptor() {
             return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.getDescriptor().getEnumTypes().get(0);
           }
@@ -12796,7 +12796,7 @@ public final class RemoteMessageProto {
           private static final ResponseType[] VALUES = values();
 
           public static ResponseType valueOf(
-              com.google.gwt.dev.protobuf.Descriptors.EnumValueDescriptor desc) {
+              com.google.protobuf.Descriptors.EnumValueDescriptor desc) {
             if (desc.getType() != getDescriptor()) {
               throw new java.lang.IllegalArgumentException(
                 "EnumValueDescriptor is not for this type.");
@@ -12816,7 +12816,7 @@ public final class RemoteMessageProto {
         }
 
         public interface CapabilityExchangeOrBuilder
-            extends com.google.gwt.dev.protobuf.MessageOrBuilder {
+            extends com.google.protobuf.MessageOrBuilder {
 
           // repeated .com.google.gwt.dev.shell.remoteui.Message.Response.ViewerResponse.CapabilityExchange.Capability capabilities = 2;
           /**
@@ -12851,14 +12851,14 @@ public final class RemoteMessageProto {
          * </pre>
          */
         public static final class CapabilityExchange extends
-            com.google.gwt.dev.protobuf.GeneratedMessage
+            com.google.protobuf.GeneratedMessage
             implements CapabilityExchangeOrBuilder {
           // Use CapabilityExchange.newBuilder() to construct.
-          private CapabilityExchange(com.google.gwt.dev.protobuf.GeneratedMessage.Builder<?> builder) {
+          private CapabilityExchange(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
             super(builder);
             this.unknownFields = builder.getUnknownFields();
           }
-          private CapabilityExchange(boolean noInit) { this.unknownFields = com.google.gwt.dev.protobuf.UnknownFieldSet.getDefaultInstance(); }
+          private CapabilityExchange(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
 
           private static final CapabilityExchange defaultInstance;
           public static CapabilityExchange getDefaultInstance() {
@@ -12869,20 +12869,20 @@ public final class RemoteMessageProto {
             return defaultInstance;
           }
 
-          private final com.google.gwt.dev.protobuf.UnknownFieldSet unknownFields;
+          private final com.google.protobuf.UnknownFieldSet unknownFields;
           @java.lang.Override
-          public final com.google.gwt.dev.protobuf.UnknownFieldSet
+          public final com.google.protobuf.UnknownFieldSet
               getUnknownFields() {
             return this.unknownFields;
           }
           private CapabilityExchange(
-              com.google.gwt.dev.protobuf.CodedInputStream input,
-              com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
-              throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+              com.google.protobuf.CodedInputStream input,
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+              throws com.google.protobuf.InvalidProtocolBufferException {
             initFields();
             int mutable_bitField0_ = 0;
-            com.google.gwt.dev.protobuf.UnknownFieldSet.Builder unknownFields =
-                com.google.gwt.dev.protobuf.UnknownFieldSet.newBuilder();
+            com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+                com.google.protobuf.UnknownFieldSet.newBuilder();
             try {
               boolean done = false;
               while (!done) {
@@ -12908,10 +12908,10 @@ public final class RemoteMessageProto {
                   }
                 }
               }
-            } catch (com.google.gwt.dev.protobuf.InvalidProtocolBufferException e) {
+            } catch (com.google.protobuf.InvalidProtocolBufferException e) {
               throw e.setUnfinishedMessage(this);
             } catch (java.io.IOException e) {
-              throw new com.google.gwt.dev.protobuf.InvalidProtocolBufferException(
+              throw new com.google.protobuf.InvalidProtocolBufferException(
                   e.getMessage()).setUnfinishedMessage(this);
             } finally {
               if (((mutable_bitField0_ & 0x00000001) == 0x00000001)) {
@@ -12921,35 +12921,35 @@ public final class RemoteMessageProto {
               makeExtensionsImmutable();
             }
           }
-          public static final com.google.gwt.dev.protobuf.Descriptors.Descriptor
+          public static final com.google.protobuf.Descriptors.Descriptor
               getDescriptor() {
             return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Response_ViewerResponse_CapabilityExchange_descriptor;
           }
 
-          protected com.google.gwt.dev.protobuf.GeneratedMessage.FieldAccessorTable
+          protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
               internalGetFieldAccessorTable() {
             return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Response_ViewerResponse_CapabilityExchange_fieldAccessorTable
                 .ensureFieldAccessorsInitialized(
                     com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.CapabilityExchange.class, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.CapabilityExchange.Builder.class);
           }
 
-          public static com.google.gwt.dev.protobuf.Parser<CapabilityExchange> PARSER =
-              new com.google.gwt.dev.protobuf.AbstractParser<CapabilityExchange>() {
+          public static com.google.protobuf.Parser<CapabilityExchange> PARSER =
+              new com.google.protobuf.AbstractParser<CapabilityExchange>() {
             public CapabilityExchange parsePartialFrom(
-                com.google.gwt.dev.protobuf.CodedInputStream input,
-                com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
-                throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+                com.google.protobuf.CodedInputStream input,
+                com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+                throws com.google.protobuf.InvalidProtocolBufferException {
               return new CapabilityExchange(input, extensionRegistry);
             }
           };
 
           @java.lang.Override
-          public com.google.gwt.dev.protobuf.Parser<CapabilityExchange> getParserForType() {
+          public com.google.protobuf.Parser<CapabilityExchange> getParserForType() {
             return PARSER;
           }
 
           public interface CapabilityOrBuilder
-              extends com.google.gwt.dev.protobuf.MessageOrBuilder {
+              extends com.google.protobuf.MessageOrBuilder {
 
             // optional .com.google.gwt.dev.shell.remoteui.Message.Request.ViewerRequest.RequestType capability = 1;
             /**
@@ -12965,14 +12965,14 @@ public final class RemoteMessageProto {
            * Protobuf type {@code com.google.gwt.dev.shell.remoteui.Message.Response.ViewerResponse.CapabilityExchange.Capability}
            */
           public static final class Capability extends
-              com.google.gwt.dev.protobuf.GeneratedMessage
+              com.google.protobuf.GeneratedMessage
               implements CapabilityOrBuilder {
             // Use Capability.newBuilder() to construct.
-            private Capability(com.google.gwt.dev.protobuf.GeneratedMessage.Builder<?> builder) {
+            private Capability(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
               super(builder);
               this.unknownFields = builder.getUnknownFields();
             }
-            private Capability(boolean noInit) { this.unknownFields = com.google.gwt.dev.protobuf.UnknownFieldSet.getDefaultInstance(); }
+            private Capability(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
 
             private static final Capability defaultInstance;
             public static Capability getDefaultInstance() {
@@ -12983,20 +12983,20 @@ public final class RemoteMessageProto {
               return defaultInstance;
             }
 
-            private final com.google.gwt.dev.protobuf.UnknownFieldSet unknownFields;
+            private final com.google.protobuf.UnknownFieldSet unknownFields;
             @java.lang.Override
-            public final com.google.gwt.dev.protobuf.UnknownFieldSet
+            public final com.google.protobuf.UnknownFieldSet
                 getUnknownFields() {
               return this.unknownFields;
             }
             private Capability(
-                com.google.gwt.dev.protobuf.CodedInputStream input,
-                com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
-                throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+                com.google.protobuf.CodedInputStream input,
+                com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+                throws com.google.protobuf.InvalidProtocolBufferException {
               initFields();
               int mutable_bitField0_ = 0;
-              com.google.gwt.dev.protobuf.UnknownFieldSet.Builder unknownFields =
-                  com.google.gwt.dev.protobuf.UnknownFieldSet.newBuilder();
+              com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+                  com.google.protobuf.UnknownFieldSet.newBuilder();
               try {
                 boolean done = false;
                 while (!done) {
@@ -13025,40 +13025,40 @@ public final class RemoteMessageProto {
                     }
                   }
                 }
-              } catch (com.google.gwt.dev.protobuf.InvalidProtocolBufferException e) {
+              } catch (com.google.protobuf.InvalidProtocolBufferException e) {
                 throw e.setUnfinishedMessage(this);
               } catch (java.io.IOException e) {
-                throw new com.google.gwt.dev.protobuf.InvalidProtocolBufferException(
+                throw new com.google.protobuf.InvalidProtocolBufferException(
                     e.getMessage()).setUnfinishedMessage(this);
               } finally {
                 this.unknownFields = unknownFields.build();
                 makeExtensionsImmutable();
               }
             }
-            public static final com.google.gwt.dev.protobuf.Descriptors.Descriptor
+            public static final com.google.protobuf.Descriptors.Descriptor
                 getDescriptor() {
               return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Response_ViewerResponse_CapabilityExchange_Capability_descriptor;
             }
 
-            protected com.google.gwt.dev.protobuf.GeneratedMessage.FieldAccessorTable
+            protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
                 internalGetFieldAccessorTable() {
               return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Response_ViewerResponse_CapabilityExchange_Capability_fieldAccessorTable
                   .ensureFieldAccessorsInitialized(
                       com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.CapabilityExchange.Capability.class, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.CapabilityExchange.Capability.Builder.class);
             }
 
-            public static com.google.gwt.dev.protobuf.Parser<Capability> PARSER =
-                new com.google.gwt.dev.protobuf.AbstractParser<Capability>() {
+            public static com.google.protobuf.Parser<Capability> PARSER =
+                new com.google.protobuf.AbstractParser<Capability>() {
               public Capability parsePartialFrom(
-                  com.google.gwt.dev.protobuf.CodedInputStream input,
-                  com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
-                  throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+                  com.google.protobuf.CodedInputStream input,
+                  com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+                  throws com.google.protobuf.InvalidProtocolBufferException {
                 return new Capability(input, extensionRegistry);
               }
             };
 
             @java.lang.Override
-            public com.google.gwt.dev.protobuf.Parser<Capability> getParserForType() {
+            public com.google.protobuf.Parser<Capability> getParserForType() {
               return PARSER;
             }
 
@@ -13091,7 +13091,7 @@ public final class RemoteMessageProto {
               return true;
             }
 
-            public void writeTo(com.google.gwt.dev.protobuf.CodedOutputStream output)
+            public void writeTo(com.google.protobuf.CodedOutputStream output)
                                 throws java.io.IOException {
               getSerializedSize();
               if (((bitField0_ & 0x00000001) == 0x00000001)) {
@@ -13107,7 +13107,7 @@ public final class RemoteMessageProto {
 
               size = 0;
               if (((bitField0_ & 0x00000001) == 0x00000001)) {
-                size += com.google.gwt.dev.protobuf.CodedOutputStream
+                size += com.google.protobuf.CodedOutputStream
                   .computeEnumSize(1, capability_.getNumber());
               }
               size += getUnknownFields().getSerializedSize();
@@ -13123,24 +13123,24 @@ public final class RemoteMessageProto {
             }
 
             public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.CapabilityExchange.Capability parseFrom(
-                com.google.gwt.dev.protobuf.ByteString data)
-                throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+                com.google.protobuf.ByteString data)
+                throws com.google.protobuf.InvalidProtocolBufferException {
               return PARSER.parseFrom(data);
             }
             public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.CapabilityExchange.Capability parseFrom(
-                com.google.gwt.dev.protobuf.ByteString data,
-                com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
-                throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+                com.google.protobuf.ByteString data,
+                com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+                throws com.google.protobuf.InvalidProtocolBufferException {
               return PARSER.parseFrom(data, extensionRegistry);
             }
             public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.CapabilityExchange.Capability parseFrom(byte[] data)
-                throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+                throws com.google.protobuf.InvalidProtocolBufferException {
               return PARSER.parseFrom(data);
             }
             public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.CapabilityExchange.Capability parseFrom(
                 byte[] data,
-                com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
-                throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+                com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+                throws com.google.protobuf.InvalidProtocolBufferException {
               return PARSER.parseFrom(data, extensionRegistry);
             }
             public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.CapabilityExchange.Capability parseFrom(java.io.InputStream input)
@@ -13149,7 +13149,7 @@ public final class RemoteMessageProto {
             }
             public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.CapabilityExchange.Capability parseFrom(
                 java.io.InputStream input,
-                com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
+                com.google.protobuf.ExtensionRegistryLite extensionRegistry)
                 throws java.io.IOException {
               return PARSER.parseFrom(input, extensionRegistry);
             }
@@ -13159,18 +13159,18 @@ public final class RemoteMessageProto {
             }
             public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.CapabilityExchange.Capability parseDelimitedFrom(
                 java.io.InputStream input,
-                com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
+                com.google.protobuf.ExtensionRegistryLite extensionRegistry)
                 throws java.io.IOException {
               return PARSER.parseDelimitedFrom(input, extensionRegistry);
             }
             public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.CapabilityExchange.Capability parseFrom(
-                com.google.gwt.dev.protobuf.CodedInputStream input)
+                com.google.protobuf.CodedInputStream input)
                 throws java.io.IOException {
               return PARSER.parseFrom(input);
             }
             public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.CapabilityExchange.Capability parseFrom(
-                com.google.gwt.dev.protobuf.CodedInputStream input,
-                com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
+                com.google.protobuf.CodedInputStream input,
+                com.google.protobuf.ExtensionRegistryLite extensionRegistry)
                 throws java.io.IOException {
               return PARSER.parseFrom(input, extensionRegistry);
             }
@@ -13184,7 +13184,7 @@ public final class RemoteMessageProto {
 
             @java.lang.Override
             protected Builder newBuilderForType(
-                com.google.gwt.dev.protobuf.GeneratedMessage.BuilderParent parent) {
+                com.google.protobuf.GeneratedMessage.BuilderParent parent) {
               Builder builder = new Builder(parent);
               return builder;
             }
@@ -13192,14 +13192,14 @@ public final class RemoteMessageProto {
              * Protobuf type {@code com.google.gwt.dev.shell.remoteui.Message.Response.ViewerResponse.CapabilityExchange.Capability}
              */
             public static final class Builder extends
-                com.google.gwt.dev.protobuf.GeneratedMessage.Builder<Builder>
+                com.google.protobuf.GeneratedMessage.Builder<Builder>
                implements com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.CapabilityExchange.CapabilityOrBuilder {
-              public static final com.google.gwt.dev.protobuf.Descriptors.Descriptor
+              public static final com.google.protobuf.Descriptors.Descriptor
                   getDescriptor() {
                 return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Response_ViewerResponse_CapabilityExchange_Capability_descriptor;
               }
 
-              protected com.google.gwt.dev.protobuf.GeneratedMessage.FieldAccessorTable
+              protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
                   internalGetFieldAccessorTable() {
                 return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Response_ViewerResponse_CapabilityExchange_Capability_fieldAccessorTable
                     .ensureFieldAccessorsInitialized(
@@ -13212,12 +13212,12 @@ public final class RemoteMessageProto {
               }
 
               private Builder(
-                  com.google.gwt.dev.protobuf.GeneratedMessage.BuilderParent parent) {
+                  com.google.protobuf.GeneratedMessage.BuilderParent parent) {
                 super(parent);
                 maybeForceBuilderInitialization();
               }
               private void maybeForceBuilderInitialization() {
-                if (com.google.gwt.dev.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
+                if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
                 }
               }
               private static Builder create() {
@@ -13235,7 +13235,7 @@ public final class RemoteMessageProto {
                 return create().mergeFrom(buildPartial());
               }
 
-              public com.google.gwt.dev.protobuf.Descriptors.Descriptor
+              public com.google.protobuf.Descriptors.Descriptor
                   getDescriptorForType() {
                 return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Response_ViewerResponse_CapabilityExchange_Capability_descriptor;
               }
@@ -13265,7 +13265,7 @@ public final class RemoteMessageProto {
                 return result;
               }
 
-              public Builder mergeFrom(com.google.gwt.dev.protobuf.Message other) {
+              public Builder mergeFrom(com.google.protobuf.Message other) {
                 if (other instanceof com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.CapabilityExchange.Capability) {
                   return mergeFrom((com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.CapabilityExchange.Capability)other);
                 } else {
@@ -13288,13 +13288,13 @@ public final class RemoteMessageProto {
               }
 
               public Builder mergeFrom(
-                  com.google.gwt.dev.protobuf.CodedInputStream input,
-                  com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
+                  com.google.protobuf.CodedInputStream input,
+                  com.google.protobuf.ExtensionRegistryLite extensionRegistry)
                   throws java.io.IOException {
                 com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.CapabilityExchange.Capability parsedMessage = null;
                 try {
                   parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
-                } catch (com.google.gwt.dev.protobuf.InvalidProtocolBufferException e) {
+                } catch (com.google.protobuf.InvalidProtocolBufferException e) {
                   parsedMessage = (com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.CapabilityExchange.Capability) e.getUnfinishedMessage();
                   throw e;
                 } finally {
@@ -13401,7 +13401,7 @@ public final class RemoteMessageProto {
             return true;
           }
 
-          public void writeTo(com.google.gwt.dev.protobuf.CodedOutputStream output)
+          public void writeTo(com.google.protobuf.CodedOutputStream output)
                               throws java.io.IOException {
             getSerializedSize();
             for (int i = 0; i < capabilities_.size(); i++) {
@@ -13417,7 +13417,7 @@ public final class RemoteMessageProto {
 
             size = 0;
             for (int i = 0; i < capabilities_.size(); i++) {
-              size += com.google.gwt.dev.protobuf.CodedOutputStream
+              size += com.google.protobuf.CodedOutputStream
                 .computeMessageSize(2, capabilities_.get(i));
             }
             size += getUnknownFields().getSerializedSize();
@@ -13433,24 +13433,24 @@ public final class RemoteMessageProto {
           }
 
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.CapabilityExchange parseFrom(
-              com.google.gwt.dev.protobuf.ByteString data)
-              throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+              com.google.protobuf.ByteString data)
+              throws com.google.protobuf.InvalidProtocolBufferException {
             return PARSER.parseFrom(data);
           }
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.CapabilityExchange parseFrom(
-              com.google.gwt.dev.protobuf.ByteString data,
-              com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
-              throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+              com.google.protobuf.ByteString data,
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+              throws com.google.protobuf.InvalidProtocolBufferException {
             return PARSER.parseFrom(data, extensionRegistry);
           }
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.CapabilityExchange parseFrom(byte[] data)
-              throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+              throws com.google.protobuf.InvalidProtocolBufferException {
             return PARSER.parseFrom(data);
           }
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.CapabilityExchange parseFrom(
               byte[] data,
-              com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
-              throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+              throws com.google.protobuf.InvalidProtocolBufferException {
             return PARSER.parseFrom(data, extensionRegistry);
           }
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.CapabilityExchange parseFrom(java.io.InputStream input)
@@ -13459,7 +13459,7 @@ public final class RemoteMessageProto {
           }
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.CapabilityExchange parseFrom(
               java.io.InputStream input,
-              com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
               throws java.io.IOException {
             return PARSER.parseFrom(input, extensionRegistry);
           }
@@ -13469,18 +13469,18 @@ public final class RemoteMessageProto {
           }
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.CapabilityExchange parseDelimitedFrom(
               java.io.InputStream input,
-              com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
               throws java.io.IOException {
             return PARSER.parseDelimitedFrom(input, extensionRegistry);
           }
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.CapabilityExchange parseFrom(
-              com.google.gwt.dev.protobuf.CodedInputStream input)
+              com.google.protobuf.CodedInputStream input)
               throws java.io.IOException {
             return PARSER.parseFrom(input);
           }
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.CapabilityExchange parseFrom(
-              com.google.gwt.dev.protobuf.CodedInputStream input,
-              com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
+              com.google.protobuf.CodedInputStream input,
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
               throws java.io.IOException {
             return PARSER.parseFrom(input, extensionRegistry);
           }
@@ -13494,7 +13494,7 @@ public final class RemoteMessageProto {
 
           @java.lang.Override
           protected Builder newBuilderForType(
-              com.google.gwt.dev.protobuf.GeneratedMessage.BuilderParent parent) {
+              com.google.protobuf.GeneratedMessage.BuilderParent parent) {
             Builder builder = new Builder(parent);
             return builder;
           }
@@ -13506,14 +13506,14 @@ public final class RemoteMessageProto {
            * </pre>
            */
           public static final class Builder extends
-              com.google.gwt.dev.protobuf.GeneratedMessage.Builder<Builder>
+              com.google.protobuf.GeneratedMessage.Builder<Builder>
              implements com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.CapabilityExchangeOrBuilder {
-            public static final com.google.gwt.dev.protobuf.Descriptors.Descriptor
+            public static final com.google.protobuf.Descriptors.Descriptor
                 getDescriptor() {
               return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Response_ViewerResponse_CapabilityExchange_descriptor;
             }
 
-            protected com.google.gwt.dev.protobuf.GeneratedMessage.FieldAccessorTable
+            protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
                 internalGetFieldAccessorTable() {
               return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Response_ViewerResponse_CapabilityExchange_fieldAccessorTable
                   .ensureFieldAccessorsInitialized(
@@ -13526,12 +13526,12 @@ public final class RemoteMessageProto {
             }
 
             private Builder(
-                com.google.gwt.dev.protobuf.GeneratedMessage.BuilderParent parent) {
+                com.google.protobuf.GeneratedMessage.BuilderParent parent) {
               super(parent);
               maybeForceBuilderInitialization();
             }
             private void maybeForceBuilderInitialization() {
-              if (com.google.gwt.dev.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
+              if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
                 getCapabilitiesFieldBuilder();
               }
             }
@@ -13554,7 +13554,7 @@ public final class RemoteMessageProto {
               return create().mergeFrom(buildPartial());
             }
 
-            public com.google.gwt.dev.protobuf.Descriptors.Descriptor
+            public com.google.protobuf.Descriptors.Descriptor
                 getDescriptorForType() {
               return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Response_ViewerResponse_CapabilityExchange_descriptor;
             }
@@ -13587,7 +13587,7 @@ public final class RemoteMessageProto {
               return result;
             }
 
-            public Builder mergeFrom(com.google.gwt.dev.protobuf.Message other) {
+            public Builder mergeFrom(com.google.protobuf.Message other) {
               if (other instanceof com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.CapabilityExchange) {
                 return mergeFrom((com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.CapabilityExchange)other);
               } else {
@@ -13617,7 +13617,7 @@ public final class RemoteMessageProto {
                     capabilities_ = other.capabilities_;
                     bitField0_ = (bitField0_ & ~0x00000001);
                     capabilitiesBuilder_ =
-                      com.google.gwt.dev.protobuf.GeneratedMessage.alwaysUseFieldBuilders ?
+                      com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders ?
                          getCapabilitiesFieldBuilder() : null;
                   } else {
                     capabilitiesBuilder_.addAllMessages(other.capabilities_);
@@ -13633,13 +13633,13 @@ public final class RemoteMessageProto {
             }
 
             public Builder mergeFrom(
-                com.google.gwt.dev.protobuf.CodedInputStream input,
-                com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
+                com.google.protobuf.CodedInputStream input,
+                com.google.protobuf.ExtensionRegistryLite extensionRegistry)
                 throws java.io.IOException {
               com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.CapabilityExchange parsedMessage = null;
               try {
                 parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
-              } catch (com.google.gwt.dev.protobuf.InvalidProtocolBufferException e) {
+              } catch (com.google.protobuf.InvalidProtocolBufferException e) {
                 parsedMessage = (com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.CapabilityExchange) e.getUnfinishedMessage();
                 throw e;
               } finally {
@@ -13661,7 +13661,7 @@ public final class RemoteMessageProto {
                }
             }
 
-            private com.google.gwt.dev.protobuf.RepeatedFieldBuilder<
+            private com.google.protobuf.RepeatedFieldBuilder<
                 com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.CapabilityExchange.Capability, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.CapabilityExchange.Capability.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.CapabilityExchange.CapabilityOrBuilder> capabilitiesBuilder_;
 
             /**
@@ -13876,11 +13876,11 @@ public final class RemoteMessageProto {
                  getCapabilitiesBuilderList() {
               return getCapabilitiesFieldBuilder().getBuilderList();
             }
-            private com.google.gwt.dev.protobuf.RepeatedFieldBuilder<
+            private com.google.protobuf.RepeatedFieldBuilder<
                 com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.CapabilityExchange.Capability, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.CapabilityExchange.Capability.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.CapabilityExchange.CapabilityOrBuilder>
                 getCapabilitiesFieldBuilder() {
               if (capabilitiesBuilder_ == null) {
-                capabilitiesBuilder_ = new com.google.gwt.dev.protobuf.RepeatedFieldBuilder<
+                capabilitiesBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<
                     com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.CapabilityExchange.Capability, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.CapabilityExchange.Capability.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.CapabilityExchange.CapabilityOrBuilder>(
                         capabilities_,
                         ((bitField0_ & 0x00000001) == 0x00000001),
@@ -13903,7 +13903,7 @@ public final class RemoteMessageProto {
         }
 
         public interface AddLogOrBuilder
-            extends com.google.gwt.dev.protobuf.MessageOrBuilder {
+            extends com.google.protobuf.MessageOrBuilder {
 
           // required uint32 logHandle = 1;
           /**
@@ -13923,14 +13923,14 @@ public final class RemoteMessageProto {
          * </pre>
          */
         public static final class AddLog extends
-            com.google.gwt.dev.protobuf.GeneratedMessage
+            com.google.protobuf.GeneratedMessage
             implements AddLogOrBuilder {
           // Use AddLog.newBuilder() to construct.
-          private AddLog(com.google.gwt.dev.protobuf.GeneratedMessage.Builder<?> builder) {
+          private AddLog(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
             super(builder);
             this.unknownFields = builder.getUnknownFields();
           }
-          private AddLog(boolean noInit) { this.unknownFields = com.google.gwt.dev.protobuf.UnknownFieldSet.getDefaultInstance(); }
+          private AddLog(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
 
           private static final AddLog defaultInstance;
           public static AddLog getDefaultInstance() {
@@ -13941,20 +13941,20 @@ public final class RemoteMessageProto {
             return defaultInstance;
           }
 
-          private final com.google.gwt.dev.protobuf.UnknownFieldSet unknownFields;
+          private final com.google.protobuf.UnknownFieldSet unknownFields;
           @java.lang.Override
-          public final com.google.gwt.dev.protobuf.UnknownFieldSet
+          public final com.google.protobuf.UnknownFieldSet
               getUnknownFields() {
             return this.unknownFields;
           }
           private AddLog(
-              com.google.gwt.dev.protobuf.CodedInputStream input,
-              com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
-              throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+              com.google.protobuf.CodedInputStream input,
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+              throws com.google.protobuf.InvalidProtocolBufferException {
             initFields();
             int mutable_bitField0_ = 0;
-            com.google.gwt.dev.protobuf.UnknownFieldSet.Builder unknownFields =
-                com.google.gwt.dev.protobuf.UnknownFieldSet.newBuilder();
+            com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+                com.google.protobuf.UnknownFieldSet.newBuilder();
             try {
               boolean done = false;
               while (!done) {
@@ -13977,40 +13977,40 @@ public final class RemoteMessageProto {
                   }
                 }
               }
-            } catch (com.google.gwt.dev.protobuf.InvalidProtocolBufferException e) {
+            } catch (com.google.protobuf.InvalidProtocolBufferException e) {
               throw e.setUnfinishedMessage(this);
             } catch (java.io.IOException e) {
-              throw new com.google.gwt.dev.protobuf.InvalidProtocolBufferException(
+              throw new com.google.protobuf.InvalidProtocolBufferException(
                   e.getMessage()).setUnfinishedMessage(this);
             } finally {
               this.unknownFields = unknownFields.build();
               makeExtensionsImmutable();
             }
           }
-          public static final com.google.gwt.dev.protobuf.Descriptors.Descriptor
+          public static final com.google.protobuf.Descriptors.Descriptor
               getDescriptor() {
             return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Response_ViewerResponse_AddLog_descriptor;
           }
 
-          protected com.google.gwt.dev.protobuf.GeneratedMessage.FieldAccessorTable
+          protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
               internalGetFieldAccessorTable() {
             return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Response_ViewerResponse_AddLog_fieldAccessorTable
                 .ensureFieldAccessorsInitialized(
                     com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.AddLog.class, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.AddLog.Builder.class);
           }
 
-          public static com.google.gwt.dev.protobuf.Parser<AddLog> PARSER =
-              new com.google.gwt.dev.protobuf.AbstractParser<AddLog>() {
+          public static com.google.protobuf.Parser<AddLog> PARSER =
+              new com.google.protobuf.AbstractParser<AddLog>() {
             public AddLog parsePartialFrom(
-                com.google.gwt.dev.protobuf.CodedInputStream input,
-                com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
-                throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+                com.google.protobuf.CodedInputStream input,
+                com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+                throws com.google.protobuf.InvalidProtocolBufferException {
               return new AddLog(input, extensionRegistry);
             }
           };
 
           @java.lang.Override
-          public com.google.gwt.dev.protobuf.Parser<AddLog> getParserForType() {
+          public com.google.protobuf.Parser<AddLog> getParserForType() {
             return PARSER;
           }
 
@@ -14047,7 +14047,7 @@ public final class RemoteMessageProto {
             return true;
           }
 
-          public void writeTo(com.google.gwt.dev.protobuf.CodedOutputStream output)
+          public void writeTo(com.google.protobuf.CodedOutputStream output)
                               throws java.io.IOException {
             getSerializedSize();
             if (((bitField0_ & 0x00000001) == 0x00000001)) {
@@ -14063,7 +14063,7 @@ public final class RemoteMessageProto {
 
             size = 0;
             if (((bitField0_ & 0x00000001) == 0x00000001)) {
-              size += com.google.gwt.dev.protobuf.CodedOutputStream
+              size += com.google.protobuf.CodedOutputStream
                 .computeUInt32Size(1, logHandle_);
             }
             size += getUnknownFields().getSerializedSize();
@@ -14079,24 +14079,24 @@ public final class RemoteMessageProto {
           }
 
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.AddLog parseFrom(
-              com.google.gwt.dev.protobuf.ByteString data)
-              throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+              com.google.protobuf.ByteString data)
+              throws com.google.protobuf.InvalidProtocolBufferException {
             return PARSER.parseFrom(data);
           }
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.AddLog parseFrom(
-              com.google.gwt.dev.protobuf.ByteString data,
-              com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
-              throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+              com.google.protobuf.ByteString data,
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+              throws com.google.protobuf.InvalidProtocolBufferException {
             return PARSER.parseFrom(data, extensionRegistry);
           }
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.AddLog parseFrom(byte[] data)
-              throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+              throws com.google.protobuf.InvalidProtocolBufferException {
             return PARSER.parseFrom(data);
           }
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.AddLog parseFrom(
               byte[] data,
-              com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
-              throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+              throws com.google.protobuf.InvalidProtocolBufferException {
             return PARSER.parseFrom(data, extensionRegistry);
           }
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.AddLog parseFrom(java.io.InputStream input)
@@ -14105,7 +14105,7 @@ public final class RemoteMessageProto {
           }
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.AddLog parseFrom(
               java.io.InputStream input,
-              com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
               throws java.io.IOException {
             return PARSER.parseFrom(input, extensionRegistry);
           }
@@ -14115,18 +14115,18 @@ public final class RemoteMessageProto {
           }
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.AddLog parseDelimitedFrom(
               java.io.InputStream input,
-              com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
               throws java.io.IOException {
             return PARSER.parseDelimitedFrom(input, extensionRegistry);
           }
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.AddLog parseFrom(
-              com.google.gwt.dev.protobuf.CodedInputStream input)
+              com.google.protobuf.CodedInputStream input)
               throws java.io.IOException {
             return PARSER.parseFrom(input);
           }
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.AddLog parseFrom(
-              com.google.gwt.dev.protobuf.CodedInputStream input,
-              com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
+              com.google.protobuf.CodedInputStream input,
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
               throws java.io.IOException {
             return PARSER.parseFrom(input, extensionRegistry);
           }
@@ -14140,7 +14140,7 @@ public final class RemoteMessageProto {
 
           @java.lang.Override
           protected Builder newBuilderForType(
-              com.google.gwt.dev.protobuf.GeneratedMessage.BuilderParent parent) {
+              com.google.protobuf.GeneratedMessage.BuilderParent parent) {
             Builder builder = new Builder(parent);
             return builder;
           }
@@ -14152,14 +14152,14 @@ public final class RemoteMessageProto {
            * </pre>
            */
           public static final class Builder extends
-              com.google.gwt.dev.protobuf.GeneratedMessage.Builder<Builder>
+              com.google.protobuf.GeneratedMessage.Builder<Builder>
              implements com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.AddLogOrBuilder {
-            public static final com.google.gwt.dev.protobuf.Descriptors.Descriptor
+            public static final com.google.protobuf.Descriptors.Descriptor
                 getDescriptor() {
               return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Response_ViewerResponse_AddLog_descriptor;
             }
 
-            protected com.google.gwt.dev.protobuf.GeneratedMessage.FieldAccessorTable
+            protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
                 internalGetFieldAccessorTable() {
               return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Response_ViewerResponse_AddLog_fieldAccessorTable
                   .ensureFieldAccessorsInitialized(
@@ -14172,12 +14172,12 @@ public final class RemoteMessageProto {
             }
 
             private Builder(
-                com.google.gwt.dev.protobuf.GeneratedMessage.BuilderParent parent) {
+                com.google.protobuf.GeneratedMessage.BuilderParent parent) {
               super(parent);
               maybeForceBuilderInitialization();
             }
             private void maybeForceBuilderInitialization() {
-              if (com.google.gwt.dev.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
+              if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
               }
             }
             private static Builder create() {
@@ -14195,7 +14195,7 @@ public final class RemoteMessageProto {
               return create().mergeFrom(buildPartial());
             }
 
-            public com.google.gwt.dev.protobuf.Descriptors.Descriptor
+            public com.google.protobuf.Descriptors.Descriptor
                 getDescriptorForType() {
               return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Response_ViewerResponse_AddLog_descriptor;
             }
@@ -14225,7 +14225,7 @@ public final class RemoteMessageProto {
               return result;
             }
 
-            public Builder mergeFrom(com.google.gwt.dev.protobuf.Message other) {
+            public Builder mergeFrom(com.google.protobuf.Message other) {
               if (other instanceof com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.AddLog) {
                 return mergeFrom((com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.AddLog)other);
               } else {
@@ -14252,13 +14252,13 @@ public final class RemoteMessageProto {
             }
 
             public Builder mergeFrom(
-                com.google.gwt.dev.protobuf.CodedInputStream input,
-                com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
+                com.google.protobuf.CodedInputStream input,
+                com.google.protobuf.ExtensionRegistryLite extensionRegistry)
                 throws java.io.IOException {
               com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.AddLog parsedMessage = null;
               try {
                 parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
-              } catch (com.google.gwt.dev.protobuf.InvalidProtocolBufferException e) {
+              } catch (com.google.protobuf.InvalidProtocolBufferException e) {
                 parsedMessage = (com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.AddLog) e.getUnfinishedMessage();
                 throw e;
               } finally {
@@ -14315,7 +14315,7 @@ public final class RemoteMessageProto {
         }
 
         public interface AddLogBranchOrBuilder
-            extends com.google.gwt.dev.protobuf.MessageOrBuilder {
+            extends com.google.protobuf.MessageOrBuilder {
 
           // required uint32 logHandle = 1;
           /**
@@ -14335,14 +14335,14 @@ public final class RemoteMessageProto {
          * </pre>
          */
         public static final class AddLogBranch extends
-            com.google.gwt.dev.protobuf.GeneratedMessage
+            com.google.protobuf.GeneratedMessage
             implements AddLogBranchOrBuilder {
           // Use AddLogBranch.newBuilder() to construct.
-          private AddLogBranch(com.google.gwt.dev.protobuf.GeneratedMessage.Builder<?> builder) {
+          private AddLogBranch(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
             super(builder);
             this.unknownFields = builder.getUnknownFields();
           }
-          private AddLogBranch(boolean noInit) { this.unknownFields = com.google.gwt.dev.protobuf.UnknownFieldSet.getDefaultInstance(); }
+          private AddLogBranch(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
 
           private static final AddLogBranch defaultInstance;
           public static AddLogBranch getDefaultInstance() {
@@ -14353,20 +14353,20 @@ public final class RemoteMessageProto {
             return defaultInstance;
           }
 
-          private final com.google.gwt.dev.protobuf.UnknownFieldSet unknownFields;
+          private final com.google.protobuf.UnknownFieldSet unknownFields;
           @java.lang.Override
-          public final com.google.gwt.dev.protobuf.UnknownFieldSet
+          public final com.google.protobuf.UnknownFieldSet
               getUnknownFields() {
             return this.unknownFields;
           }
           private AddLogBranch(
-              com.google.gwt.dev.protobuf.CodedInputStream input,
-              com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
-              throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+              com.google.protobuf.CodedInputStream input,
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+              throws com.google.protobuf.InvalidProtocolBufferException {
             initFields();
             int mutable_bitField0_ = 0;
-            com.google.gwt.dev.protobuf.UnknownFieldSet.Builder unknownFields =
-                com.google.gwt.dev.protobuf.UnknownFieldSet.newBuilder();
+            com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+                com.google.protobuf.UnknownFieldSet.newBuilder();
             try {
               boolean done = false;
               while (!done) {
@@ -14389,40 +14389,40 @@ public final class RemoteMessageProto {
                   }
                 }
               }
-            } catch (com.google.gwt.dev.protobuf.InvalidProtocolBufferException e) {
+            } catch (com.google.protobuf.InvalidProtocolBufferException e) {
               throw e.setUnfinishedMessage(this);
             } catch (java.io.IOException e) {
-              throw new com.google.gwt.dev.protobuf.InvalidProtocolBufferException(
+              throw new com.google.protobuf.InvalidProtocolBufferException(
                   e.getMessage()).setUnfinishedMessage(this);
             } finally {
               this.unknownFields = unknownFields.build();
               makeExtensionsImmutable();
             }
           }
-          public static final com.google.gwt.dev.protobuf.Descriptors.Descriptor
+          public static final com.google.protobuf.Descriptors.Descriptor
               getDescriptor() {
             return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Response_ViewerResponse_AddLogBranch_descriptor;
           }
 
-          protected com.google.gwt.dev.protobuf.GeneratedMessage.FieldAccessorTable
+          protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
               internalGetFieldAccessorTable() {
             return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Response_ViewerResponse_AddLogBranch_fieldAccessorTable
                 .ensureFieldAccessorsInitialized(
                     com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.AddLogBranch.class, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.AddLogBranch.Builder.class);
           }
 
-          public static com.google.gwt.dev.protobuf.Parser<AddLogBranch> PARSER =
-              new com.google.gwt.dev.protobuf.AbstractParser<AddLogBranch>() {
+          public static com.google.protobuf.Parser<AddLogBranch> PARSER =
+              new com.google.protobuf.AbstractParser<AddLogBranch>() {
             public AddLogBranch parsePartialFrom(
-                com.google.gwt.dev.protobuf.CodedInputStream input,
-                com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
-                throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+                com.google.protobuf.CodedInputStream input,
+                com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+                throws com.google.protobuf.InvalidProtocolBufferException {
               return new AddLogBranch(input, extensionRegistry);
             }
           };
 
           @java.lang.Override
-          public com.google.gwt.dev.protobuf.Parser<AddLogBranch> getParserForType() {
+          public com.google.protobuf.Parser<AddLogBranch> getParserForType() {
             return PARSER;
           }
 
@@ -14459,7 +14459,7 @@ public final class RemoteMessageProto {
             return true;
           }
 
-          public void writeTo(com.google.gwt.dev.protobuf.CodedOutputStream output)
+          public void writeTo(com.google.protobuf.CodedOutputStream output)
                               throws java.io.IOException {
             getSerializedSize();
             if (((bitField0_ & 0x00000001) == 0x00000001)) {
@@ -14475,7 +14475,7 @@ public final class RemoteMessageProto {
 
             size = 0;
             if (((bitField0_ & 0x00000001) == 0x00000001)) {
-              size += com.google.gwt.dev.protobuf.CodedOutputStream
+              size += com.google.protobuf.CodedOutputStream
                 .computeUInt32Size(1, logHandle_);
             }
             size += getUnknownFields().getSerializedSize();
@@ -14491,24 +14491,24 @@ public final class RemoteMessageProto {
           }
 
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.AddLogBranch parseFrom(
-              com.google.gwt.dev.protobuf.ByteString data)
-              throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+              com.google.protobuf.ByteString data)
+              throws com.google.protobuf.InvalidProtocolBufferException {
             return PARSER.parseFrom(data);
           }
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.AddLogBranch parseFrom(
-              com.google.gwt.dev.protobuf.ByteString data,
-              com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
-              throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+              com.google.protobuf.ByteString data,
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+              throws com.google.protobuf.InvalidProtocolBufferException {
             return PARSER.parseFrom(data, extensionRegistry);
           }
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.AddLogBranch parseFrom(byte[] data)
-              throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+              throws com.google.protobuf.InvalidProtocolBufferException {
             return PARSER.parseFrom(data);
           }
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.AddLogBranch parseFrom(
               byte[] data,
-              com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
-              throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+              throws com.google.protobuf.InvalidProtocolBufferException {
             return PARSER.parseFrom(data, extensionRegistry);
           }
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.AddLogBranch parseFrom(java.io.InputStream input)
@@ -14517,7 +14517,7 @@ public final class RemoteMessageProto {
           }
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.AddLogBranch parseFrom(
               java.io.InputStream input,
-              com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
               throws java.io.IOException {
             return PARSER.parseFrom(input, extensionRegistry);
           }
@@ -14527,18 +14527,18 @@ public final class RemoteMessageProto {
           }
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.AddLogBranch parseDelimitedFrom(
               java.io.InputStream input,
-              com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
               throws java.io.IOException {
             return PARSER.parseDelimitedFrom(input, extensionRegistry);
           }
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.AddLogBranch parseFrom(
-              com.google.gwt.dev.protobuf.CodedInputStream input)
+              com.google.protobuf.CodedInputStream input)
               throws java.io.IOException {
             return PARSER.parseFrom(input);
           }
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.AddLogBranch parseFrom(
-              com.google.gwt.dev.protobuf.CodedInputStream input,
-              com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
+              com.google.protobuf.CodedInputStream input,
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
               throws java.io.IOException {
             return PARSER.parseFrom(input, extensionRegistry);
           }
@@ -14552,7 +14552,7 @@ public final class RemoteMessageProto {
 
           @java.lang.Override
           protected Builder newBuilderForType(
-              com.google.gwt.dev.protobuf.GeneratedMessage.BuilderParent parent) {
+              com.google.protobuf.GeneratedMessage.BuilderParent parent) {
             Builder builder = new Builder(parent);
             return builder;
           }
@@ -14564,14 +14564,14 @@ public final class RemoteMessageProto {
            * </pre>
            */
           public static final class Builder extends
-              com.google.gwt.dev.protobuf.GeneratedMessage.Builder<Builder>
+              com.google.protobuf.GeneratedMessage.Builder<Builder>
              implements com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.AddLogBranchOrBuilder {
-            public static final com.google.gwt.dev.protobuf.Descriptors.Descriptor
+            public static final com.google.protobuf.Descriptors.Descriptor
                 getDescriptor() {
               return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Response_ViewerResponse_AddLogBranch_descriptor;
             }
 
-            protected com.google.gwt.dev.protobuf.GeneratedMessage.FieldAccessorTable
+            protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
                 internalGetFieldAccessorTable() {
               return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Response_ViewerResponse_AddLogBranch_fieldAccessorTable
                   .ensureFieldAccessorsInitialized(
@@ -14584,12 +14584,12 @@ public final class RemoteMessageProto {
             }
 
             private Builder(
-                com.google.gwt.dev.protobuf.GeneratedMessage.BuilderParent parent) {
+                com.google.protobuf.GeneratedMessage.BuilderParent parent) {
               super(parent);
               maybeForceBuilderInitialization();
             }
             private void maybeForceBuilderInitialization() {
-              if (com.google.gwt.dev.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
+              if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
               }
             }
             private static Builder create() {
@@ -14607,7 +14607,7 @@ public final class RemoteMessageProto {
               return create().mergeFrom(buildPartial());
             }
 
-            public com.google.gwt.dev.protobuf.Descriptors.Descriptor
+            public com.google.protobuf.Descriptors.Descriptor
                 getDescriptorForType() {
               return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Response_ViewerResponse_AddLogBranch_descriptor;
             }
@@ -14637,7 +14637,7 @@ public final class RemoteMessageProto {
               return result;
             }
 
-            public Builder mergeFrom(com.google.gwt.dev.protobuf.Message other) {
+            public Builder mergeFrom(com.google.protobuf.Message other) {
               if (other instanceof com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.AddLogBranch) {
                 return mergeFrom((com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.AddLogBranch)other);
               } else {
@@ -14664,13 +14664,13 @@ public final class RemoteMessageProto {
             }
 
             public Builder mergeFrom(
-                com.google.gwt.dev.protobuf.CodedInputStream input,
-                com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
+                com.google.protobuf.CodedInputStream input,
+                com.google.protobuf.ExtensionRegistryLite extensionRegistry)
                 throws java.io.IOException {
               com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.AddLogBranch parsedMessage = null;
               try {
                 parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
-              } catch (com.google.gwt.dev.protobuf.InvalidProtocolBufferException e) {
+              } catch (com.google.protobuf.InvalidProtocolBufferException e) {
                 parsedMessage = (com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.AddLogBranch) e.getUnfinishedMessage();
                 throw e;
               } finally {
@@ -14836,7 +14836,7 @@ public final class RemoteMessageProto {
           return true;
         }
 
-        public void writeTo(com.google.gwt.dev.protobuf.CodedOutputStream output)
+        public void writeTo(com.google.protobuf.CodedOutputStream output)
                             throws java.io.IOException {
           getSerializedSize();
           if (((bitField0_ & 0x00000001) == 0x00000001)) {
@@ -14861,19 +14861,19 @@ public final class RemoteMessageProto {
 
           size = 0;
           if (((bitField0_ & 0x00000001) == 0x00000001)) {
-            size += com.google.gwt.dev.protobuf.CodedOutputStream
+            size += com.google.protobuf.CodedOutputStream
               .computeEnumSize(1, responseType_.getNumber());
           }
           if (((bitField0_ & 0x00000002) == 0x00000002)) {
-            size += com.google.gwt.dev.protobuf.CodedOutputStream
+            size += com.google.protobuf.CodedOutputStream
               .computeMessageSize(2, capabilityExchange_);
           }
           if (((bitField0_ & 0x00000004) == 0x00000004)) {
-            size += com.google.gwt.dev.protobuf.CodedOutputStream
+            size += com.google.protobuf.CodedOutputStream
               .computeMessageSize(3, addLog_);
           }
           if (((bitField0_ & 0x00000008) == 0x00000008)) {
-            size += com.google.gwt.dev.protobuf.CodedOutputStream
+            size += com.google.protobuf.CodedOutputStream
               .computeMessageSize(4, addLogBranch_);
           }
           size += getUnknownFields().getSerializedSize();
@@ -14889,24 +14889,24 @@ public final class RemoteMessageProto {
         }
 
         public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse parseFrom(
-            com.google.gwt.dev.protobuf.ByteString data)
-            throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+            com.google.protobuf.ByteString data)
+            throws com.google.protobuf.InvalidProtocolBufferException {
           return PARSER.parseFrom(data);
         }
         public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse parseFrom(
-            com.google.gwt.dev.protobuf.ByteString data,
-            com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
-            throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+            com.google.protobuf.ByteString data,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws com.google.protobuf.InvalidProtocolBufferException {
           return PARSER.parseFrom(data, extensionRegistry);
         }
         public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse parseFrom(byte[] data)
-            throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+            throws com.google.protobuf.InvalidProtocolBufferException {
           return PARSER.parseFrom(data);
         }
         public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse parseFrom(
             byte[] data,
-            com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
-            throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws com.google.protobuf.InvalidProtocolBufferException {
           return PARSER.parseFrom(data, extensionRegistry);
         }
         public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse parseFrom(java.io.InputStream input)
@@ -14915,7 +14915,7 @@ public final class RemoteMessageProto {
         }
         public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse parseFrom(
             java.io.InputStream input,
-            com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
             throws java.io.IOException {
           return PARSER.parseFrom(input, extensionRegistry);
         }
@@ -14925,18 +14925,18 @@ public final class RemoteMessageProto {
         }
         public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse parseDelimitedFrom(
             java.io.InputStream input,
-            com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
             throws java.io.IOException {
           return PARSER.parseDelimitedFrom(input, extensionRegistry);
         }
         public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse parseFrom(
-            com.google.gwt.dev.protobuf.CodedInputStream input)
+            com.google.protobuf.CodedInputStream input)
             throws java.io.IOException {
           return PARSER.parseFrom(input);
         }
         public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse parseFrom(
-            com.google.gwt.dev.protobuf.CodedInputStream input,
-            com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
+            com.google.protobuf.CodedInputStream input,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
             throws java.io.IOException {
           return PARSER.parseFrom(input, extensionRegistry);
         }
@@ -14950,7 +14950,7 @@ public final class RemoteMessageProto {
 
         @java.lang.Override
         protected Builder newBuilderForType(
-            com.google.gwt.dev.protobuf.GeneratedMessage.BuilderParent parent) {
+            com.google.protobuf.GeneratedMessage.BuilderParent parent) {
           Builder builder = new Builder(parent);
           return builder;
         }
@@ -14962,14 +14962,14 @@ public final class RemoteMessageProto {
          * </pre>
          */
         public static final class Builder extends
-            com.google.gwt.dev.protobuf.GeneratedMessage.Builder<Builder>
+            com.google.protobuf.GeneratedMessage.Builder<Builder>
            implements com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponseOrBuilder {
-          public static final com.google.gwt.dev.protobuf.Descriptors.Descriptor
+          public static final com.google.protobuf.Descriptors.Descriptor
               getDescriptor() {
             return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Response_ViewerResponse_descriptor;
           }
 
-          protected com.google.gwt.dev.protobuf.GeneratedMessage.FieldAccessorTable
+          protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
               internalGetFieldAccessorTable() {
             return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Response_ViewerResponse_fieldAccessorTable
                 .ensureFieldAccessorsInitialized(
@@ -14982,12 +14982,12 @@ public final class RemoteMessageProto {
           }
 
           private Builder(
-              com.google.gwt.dev.protobuf.GeneratedMessage.BuilderParent parent) {
+              com.google.protobuf.GeneratedMessage.BuilderParent parent) {
             super(parent);
             maybeForceBuilderInitialization();
           }
           private void maybeForceBuilderInitialization() {
-            if (com.google.gwt.dev.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
+            if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
               getCapabilityExchangeFieldBuilder();
               getAddLogFieldBuilder();
               getAddLogBranchFieldBuilder();
@@ -15026,7 +15026,7 @@ public final class RemoteMessageProto {
             return create().mergeFrom(buildPartial());
           }
 
-          public com.google.gwt.dev.protobuf.Descriptors.Descriptor
+          public com.google.protobuf.Descriptors.Descriptor
               getDescriptorForType() {
             return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Response_ViewerResponse_descriptor;
           }
@@ -15080,7 +15080,7 @@ public final class RemoteMessageProto {
             return result;
           }
 
-          public Builder mergeFrom(com.google.gwt.dev.protobuf.Message other) {
+          public Builder mergeFrom(com.google.protobuf.Message other) {
             if (other instanceof com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse) {
               return mergeFrom((com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse)other);
             } else {
@@ -15124,13 +15124,13 @@ public final class RemoteMessageProto {
           }
 
           public Builder mergeFrom(
-              com.google.gwt.dev.protobuf.CodedInputStream input,
-              com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
+              com.google.protobuf.CodedInputStream input,
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
               throws java.io.IOException {
             com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse parsedMessage = null;
             try {
               parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
-            } catch (com.google.gwt.dev.protobuf.InvalidProtocolBufferException e) {
+            } catch (com.google.protobuf.InvalidProtocolBufferException e) {
               parsedMessage = (com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse) e.getUnfinishedMessage();
               throw e;
             } finally {
@@ -15180,7 +15180,7 @@ public final class RemoteMessageProto {
 
           // optional .com.google.gwt.dev.shell.remoteui.Message.Response.ViewerResponse.CapabilityExchange capabilityExchange = 2;
           private com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.CapabilityExchange capabilityExchange_ = com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.CapabilityExchange.getDefaultInstance();
-          private com.google.gwt.dev.protobuf.SingleFieldBuilder<
+          private com.google.protobuf.SingleFieldBuilder<
               com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.CapabilityExchange, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.CapabilityExchange.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.CapabilityExchangeOrBuilder> capabilityExchangeBuilder_;
           /**
            * <code>optional .com.google.gwt.dev.shell.remoteui.Message.Response.ViewerResponse.CapabilityExchange capabilityExchange = 2;</code>
@@ -15281,11 +15281,11 @@ public final class RemoteMessageProto {
           /**
            * <code>optional .com.google.gwt.dev.shell.remoteui.Message.Response.ViewerResponse.CapabilityExchange capabilityExchange = 2;</code>
            */
-          private com.google.gwt.dev.protobuf.SingleFieldBuilder<
+          private com.google.protobuf.SingleFieldBuilder<
               com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.CapabilityExchange, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.CapabilityExchange.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.CapabilityExchangeOrBuilder>
               getCapabilityExchangeFieldBuilder() {
             if (capabilityExchangeBuilder_ == null) {
-              capabilityExchangeBuilder_ = new com.google.gwt.dev.protobuf.SingleFieldBuilder<
+              capabilityExchangeBuilder_ = new com.google.protobuf.SingleFieldBuilder<
                   com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.CapabilityExchange, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.CapabilityExchange.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.CapabilityExchangeOrBuilder>(
                       capabilityExchange_,
                       getParentForChildren(),
@@ -15297,7 +15297,7 @@ public final class RemoteMessageProto {
 
           // optional .com.google.gwt.dev.shell.remoteui.Message.Response.ViewerResponse.AddLog addLog = 3;
           private com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.AddLog addLog_ = com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.AddLog.getDefaultInstance();
-          private com.google.gwt.dev.protobuf.SingleFieldBuilder<
+          private com.google.protobuf.SingleFieldBuilder<
               com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.AddLog, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.AddLog.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.AddLogOrBuilder> addLogBuilder_;
           /**
            * <code>optional .com.google.gwt.dev.shell.remoteui.Message.Response.ViewerResponse.AddLog addLog = 3;</code>
@@ -15398,11 +15398,11 @@ public final class RemoteMessageProto {
           /**
            * <code>optional .com.google.gwt.dev.shell.remoteui.Message.Response.ViewerResponse.AddLog addLog = 3;</code>
            */
-          private com.google.gwt.dev.protobuf.SingleFieldBuilder<
+          private com.google.protobuf.SingleFieldBuilder<
               com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.AddLog, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.AddLog.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.AddLogOrBuilder>
               getAddLogFieldBuilder() {
             if (addLogBuilder_ == null) {
-              addLogBuilder_ = new com.google.gwt.dev.protobuf.SingleFieldBuilder<
+              addLogBuilder_ = new com.google.protobuf.SingleFieldBuilder<
                   com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.AddLog, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.AddLog.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.AddLogOrBuilder>(
                       addLog_,
                       getParentForChildren(),
@@ -15414,7 +15414,7 @@ public final class RemoteMessageProto {
 
           // optional .com.google.gwt.dev.shell.remoteui.Message.Response.ViewerResponse.AddLogBranch addLogBranch = 4;
           private com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.AddLogBranch addLogBranch_ = com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.AddLogBranch.getDefaultInstance();
-          private com.google.gwt.dev.protobuf.SingleFieldBuilder<
+          private com.google.protobuf.SingleFieldBuilder<
               com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.AddLogBranch, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.AddLogBranch.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.AddLogBranchOrBuilder> addLogBranchBuilder_;
           /**
            * <code>optional .com.google.gwt.dev.shell.remoteui.Message.Response.ViewerResponse.AddLogBranch addLogBranch = 4;</code>
@@ -15515,11 +15515,11 @@ public final class RemoteMessageProto {
           /**
            * <code>optional .com.google.gwt.dev.shell.remoteui.Message.Response.ViewerResponse.AddLogBranch addLogBranch = 4;</code>
            */
-          private com.google.gwt.dev.protobuf.SingleFieldBuilder<
+          private com.google.protobuf.SingleFieldBuilder<
               com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.AddLogBranch, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.AddLogBranch.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.AddLogBranchOrBuilder>
               getAddLogBranchFieldBuilder() {
             if (addLogBranchBuilder_ == null) {
-              addLogBranchBuilder_ = new com.google.gwt.dev.protobuf.SingleFieldBuilder<
+              addLogBranchBuilder_ = new com.google.protobuf.SingleFieldBuilder<
                   com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.AddLogBranch, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.AddLogBranch.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.AddLogBranchOrBuilder>(
                       addLogBranch_,
                       getParentForChildren(),
@@ -15541,7 +15541,7 @@ public final class RemoteMessageProto {
       }
 
       public interface DevModeResponseOrBuilder
-          extends com.google.gwt.dev.protobuf.MessageOrBuilder {
+          extends com.google.protobuf.MessageOrBuilder {
 
         // optional .com.google.gwt.dev.shell.remoteui.Message.Response.DevModeResponse.ResponseType responseType = 1;
         /**
@@ -15589,14 +15589,14 @@ public final class RemoteMessageProto {
        * </pre>
        */
       public static final class DevModeResponse extends
-          com.google.gwt.dev.protobuf.GeneratedMessage
+          com.google.protobuf.GeneratedMessage
           implements DevModeResponseOrBuilder {
         // Use DevModeResponse.newBuilder() to construct.
-        private DevModeResponse(com.google.gwt.dev.protobuf.GeneratedMessage.Builder<?> builder) {
+        private DevModeResponse(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
           super(builder);
           this.unknownFields = builder.getUnknownFields();
         }
-        private DevModeResponse(boolean noInit) { this.unknownFields = com.google.gwt.dev.protobuf.UnknownFieldSet.getDefaultInstance(); }
+        private DevModeResponse(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
 
         private static final DevModeResponse defaultInstance;
         public static DevModeResponse getDefaultInstance() {
@@ -15607,20 +15607,20 @@ public final class RemoteMessageProto {
           return defaultInstance;
         }
 
-        private final com.google.gwt.dev.protobuf.UnknownFieldSet unknownFields;
+        private final com.google.protobuf.UnknownFieldSet unknownFields;
         @java.lang.Override
-        public final com.google.gwt.dev.protobuf.UnknownFieldSet
+        public final com.google.protobuf.UnknownFieldSet
             getUnknownFields() {
           return this.unknownFields;
         }
         private DevModeResponse(
-            com.google.gwt.dev.protobuf.CodedInputStream input,
-            com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
-            throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+            com.google.protobuf.CodedInputStream input,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws com.google.protobuf.InvalidProtocolBufferException {
           initFields();
           int mutable_bitField0_ = 0;
-          com.google.gwt.dev.protobuf.UnknownFieldSet.Builder unknownFields =
-              com.google.gwt.dev.protobuf.UnknownFieldSet.newBuilder();
+          com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+              com.google.protobuf.UnknownFieldSet.newBuilder();
           try {
             boolean done = false;
             while (!done) {
@@ -15675,40 +15675,40 @@ public final class RemoteMessageProto {
                 }
               }
             }
-          } catch (com.google.gwt.dev.protobuf.InvalidProtocolBufferException e) {
+          } catch (com.google.protobuf.InvalidProtocolBufferException e) {
             throw e.setUnfinishedMessage(this);
           } catch (java.io.IOException e) {
-            throw new com.google.gwt.dev.protobuf.InvalidProtocolBufferException(
+            throw new com.google.protobuf.InvalidProtocolBufferException(
                 e.getMessage()).setUnfinishedMessage(this);
           } finally {
             this.unknownFields = unknownFields.build();
             makeExtensionsImmutable();
           }
         }
-        public static final com.google.gwt.dev.protobuf.Descriptors.Descriptor
+        public static final com.google.protobuf.Descriptors.Descriptor
             getDescriptor() {
           return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Response_DevModeResponse_descriptor;
         }
 
-        protected com.google.gwt.dev.protobuf.GeneratedMessage.FieldAccessorTable
+        protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
             internalGetFieldAccessorTable() {
           return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Response_DevModeResponse_fieldAccessorTable
               .ensureFieldAccessorsInitialized(
                   com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse.class, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse.Builder.class);
         }
 
-        public static com.google.gwt.dev.protobuf.Parser<DevModeResponse> PARSER =
-            new com.google.gwt.dev.protobuf.AbstractParser<DevModeResponse>() {
+        public static com.google.protobuf.Parser<DevModeResponse> PARSER =
+            new com.google.protobuf.AbstractParser<DevModeResponse>() {
           public DevModeResponse parsePartialFrom(
-              com.google.gwt.dev.protobuf.CodedInputStream input,
-              com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
-              throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+              com.google.protobuf.CodedInputStream input,
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+              throws com.google.protobuf.InvalidProtocolBufferException {
             return new DevModeResponse(input, extensionRegistry);
           }
         };
 
         @java.lang.Override
-        public com.google.gwt.dev.protobuf.Parser<DevModeResponse> getParserForType() {
+        public com.google.protobuf.Parser<DevModeResponse> getParserForType() {
           return PARSER;
         }
 
@@ -15720,7 +15720,7 @@ public final class RemoteMessageProto {
          * </pre>
          */
         public enum ResponseType
-            implements com.google.gwt.dev.protobuf.ProtocolMessageEnum {
+            implements com.google.protobuf.ProtocolMessageEnum {
           /**
            * <code>CAPABILITY_EXCHANGE = 0;</code>
            */
@@ -15751,27 +15751,27 @@ public final class RemoteMessageProto {
             }
           }
 
-          public static com.google.gwt.dev.protobuf.Internal.EnumLiteMap<ResponseType>
+          public static com.google.protobuf.Internal.EnumLiteMap<ResponseType>
               internalGetValueMap() {
             return internalValueMap;
           }
-          private static com.google.gwt.dev.protobuf.Internal.EnumLiteMap<ResponseType>
+          private static com.google.protobuf.Internal.EnumLiteMap<ResponseType>
               internalValueMap =
-                new com.google.gwt.dev.protobuf.Internal.EnumLiteMap<ResponseType>() {
+                new com.google.protobuf.Internal.EnumLiteMap<ResponseType>() {
                   public ResponseType findValueByNumber(int number) {
                     return ResponseType.valueOf(number);
                   }
                 };
 
-          public final com.google.gwt.dev.protobuf.Descriptors.EnumValueDescriptor
+          public final com.google.protobuf.Descriptors.EnumValueDescriptor
               getValueDescriptor() {
             return getDescriptor().getValues().get(index);
           }
-          public final com.google.gwt.dev.protobuf.Descriptors.EnumDescriptor
+          public final com.google.protobuf.Descriptors.EnumDescriptor
               getDescriptorForType() {
             return getDescriptor();
           }
-          public static final com.google.gwt.dev.protobuf.Descriptors.EnumDescriptor
+          public static final com.google.protobuf.Descriptors.EnumDescriptor
               getDescriptor() {
             return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse.getDescriptor().getEnumTypes().get(0);
           }
@@ -15779,7 +15779,7 @@ public final class RemoteMessageProto {
           private static final ResponseType[] VALUES = values();
 
           public static ResponseType valueOf(
-              com.google.gwt.dev.protobuf.Descriptors.EnumValueDescriptor desc) {
+              com.google.protobuf.Descriptors.EnumValueDescriptor desc) {
             if (desc.getType() != getDescriptor()) {
               throw new java.lang.IllegalArgumentException(
                 "EnumValueDescriptor is not for this type.");
@@ -15799,7 +15799,7 @@ public final class RemoteMessageProto {
         }
 
         public interface CapabilityExchangeOrBuilder
-            extends com.google.gwt.dev.protobuf.MessageOrBuilder {
+            extends com.google.protobuf.MessageOrBuilder {
 
           // repeated .com.google.gwt.dev.shell.remoteui.Message.Response.DevModeResponse.CapabilityExchange.Capability capabilities = 2;
           /**
@@ -15834,14 +15834,14 @@ public final class RemoteMessageProto {
          * </pre>
          */
         public static final class CapabilityExchange extends
-            com.google.gwt.dev.protobuf.GeneratedMessage
+            com.google.protobuf.GeneratedMessage
             implements CapabilityExchangeOrBuilder {
           // Use CapabilityExchange.newBuilder() to construct.
-          private CapabilityExchange(com.google.gwt.dev.protobuf.GeneratedMessage.Builder<?> builder) {
+          private CapabilityExchange(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
             super(builder);
             this.unknownFields = builder.getUnknownFields();
           }
-          private CapabilityExchange(boolean noInit) { this.unknownFields = com.google.gwt.dev.protobuf.UnknownFieldSet.getDefaultInstance(); }
+          private CapabilityExchange(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
 
           private static final CapabilityExchange defaultInstance;
           public static CapabilityExchange getDefaultInstance() {
@@ -15852,20 +15852,20 @@ public final class RemoteMessageProto {
             return defaultInstance;
           }
 
-          private final com.google.gwt.dev.protobuf.UnknownFieldSet unknownFields;
+          private final com.google.protobuf.UnknownFieldSet unknownFields;
           @java.lang.Override
-          public final com.google.gwt.dev.protobuf.UnknownFieldSet
+          public final com.google.protobuf.UnknownFieldSet
               getUnknownFields() {
             return this.unknownFields;
           }
           private CapabilityExchange(
-              com.google.gwt.dev.protobuf.CodedInputStream input,
-              com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
-              throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+              com.google.protobuf.CodedInputStream input,
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+              throws com.google.protobuf.InvalidProtocolBufferException {
             initFields();
             int mutable_bitField0_ = 0;
-            com.google.gwt.dev.protobuf.UnknownFieldSet.Builder unknownFields =
-                com.google.gwt.dev.protobuf.UnknownFieldSet.newBuilder();
+            com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+                com.google.protobuf.UnknownFieldSet.newBuilder();
             try {
               boolean done = false;
               while (!done) {
@@ -15891,10 +15891,10 @@ public final class RemoteMessageProto {
                   }
                 }
               }
-            } catch (com.google.gwt.dev.protobuf.InvalidProtocolBufferException e) {
+            } catch (com.google.protobuf.InvalidProtocolBufferException e) {
               throw e.setUnfinishedMessage(this);
             } catch (java.io.IOException e) {
-              throw new com.google.gwt.dev.protobuf.InvalidProtocolBufferException(
+              throw new com.google.protobuf.InvalidProtocolBufferException(
                   e.getMessage()).setUnfinishedMessage(this);
             } finally {
               if (((mutable_bitField0_ & 0x00000001) == 0x00000001)) {
@@ -15904,35 +15904,35 @@ public final class RemoteMessageProto {
               makeExtensionsImmutable();
             }
           }
-          public static final com.google.gwt.dev.protobuf.Descriptors.Descriptor
+          public static final com.google.protobuf.Descriptors.Descriptor
               getDescriptor() {
             return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Response_DevModeResponse_CapabilityExchange_descriptor;
           }
 
-          protected com.google.gwt.dev.protobuf.GeneratedMessage.FieldAccessorTable
+          protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
               internalGetFieldAccessorTable() {
             return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Response_DevModeResponse_CapabilityExchange_fieldAccessorTable
                 .ensureFieldAccessorsInitialized(
                     com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse.CapabilityExchange.class, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse.CapabilityExchange.Builder.class);
           }
 
-          public static com.google.gwt.dev.protobuf.Parser<CapabilityExchange> PARSER =
-              new com.google.gwt.dev.protobuf.AbstractParser<CapabilityExchange>() {
+          public static com.google.protobuf.Parser<CapabilityExchange> PARSER =
+              new com.google.protobuf.AbstractParser<CapabilityExchange>() {
             public CapabilityExchange parsePartialFrom(
-                com.google.gwt.dev.protobuf.CodedInputStream input,
-                com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
-                throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+                com.google.protobuf.CodedInputStream input,
+                com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+                throws com.google.protobuf.InvalidProtocolBufferException {
               return new CapabilityExchange(input, extensionRegistry);
             }
           };
 
           @java.lang.Override
-          public com.google.gwt.dev.protobuf.Parser<CapabilityExchange> getParserForType() {
+          public com.google.protobuf.Parser<CapabilityExchange> getParserForType() {
             return PARSER;
           }
 
           public interface CapabilityOrBuilder
-              extends com.google.gwt.dev.protobuf.MessageOrBuilder {
+              extends com.google.protobuf.MessageOrBuilder {
 
             // optional .com.google.gwt.dev.shell.remoteui.Message.Request.DevModeRequest.RequestType capability = 1;
             /**
@@ -15948,14 +15948,14 @@ public final class RemoteMessageProto {
            * Protobuf type {@code com.google.gwt.dev.shell.remoteui.Message.Response.DevModeResponse.CapabilityExchange.Capability}
            */
           public static final class Capability extends
-              com.google.gwt.dev.protobuf.GeneratedMessage
+              com.google.protobuf.GeneratedMessage
               implements CapabilityOrBuilder {
             // Use Capability.newBuilder() to construct.
-            private Capability(com.google.gwt.dev.protobuf.GeneratedMessage.Builder<?> builder) {
+            private Capability(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
               super(builder);
               this.unknownFields = builder.getUnknownFields();
             }
-            private Capability(boolean noInit) { this.unknownFields = com.google.gwt.dev.protobuf.UnknownFieldSet.getDefaultInstance(); }
+            private Capability(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
 
             private static final Capability defaultInstance;
             public static Capability getDefaultInstance() {
@@ -15966,20 +15966,20 @@ public final class RemoteMessageProto {
               return defaultInstance;
             }
 
-            private final com.google.gwt.dev.protobuf.UnknownFieldSet unknownFields;
+            private final com.google.protobuf.UnknownFieldSet unknownFields;
             @java.lang.Override
-            public final com.google.gwt.dev.protobuf.UnknownFieldSet
+            public final com.google.protobuf.UnknownFieldSet
                 getUnknownFields() {
               return this.unknownFields;
             }
             private Capability(
-                com.google.gwt.dev.protobuf.CodedInputStream input,
-                com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
-                throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+                com.google.protobuf.CodedInputStream input,
+                com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+                throws com.google.protobuf.InvalidProtocolBufferException {
               initFields();
               int mutable_bitField0_ = 0;
-              com.google.gwt.dev.protobuf.UnknownFieldSet.Builder unknownFields =
-                  com.google.gwt.dev.protobuf.UnknownFieldSet.newBuilder();
+              com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+                  com.google.protobuf.UnknownFieldSet.newBuilder();
               try {
                 boolean done = false;
                 while (!done) {
@@ -16008,40 +16008,40 @@ public final class RemoteMessageProto {
                     }
                   }
                 }
-              } catch (com.google.gwt.dev.protobuf.InvalidProtocolBufferException e) {
+              } catch (com.google.protobuf.InvalidProtocolBufferException e) {
                 throw e.setUnfinishedMessage(this);
               } catch (java.io.IOException e) {
-                throw new com.google.gwt.dev.protobuf.InvalidProtocolBufferException(
+                throw new com.google.protobuf.InvalidProtocolBufferException(
                     e.getMessage()).setUnfinishedMessage(this);
               } finally {
                 this.unknownFields = unknownFields.build();
                 makeExtensionsImmutable();
               }
             }
-            public static final com.google.gwt.dev.protobuf.Descriptors.Descriptor
+            public static final com.google.protobuf.Descriptors.Descriptor
                 getDescriptor() {
               return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Response_DevModeResponse_CapabilityExchange_Capability_descriptor;
             }
 
-            protected com.google.gwt.dev.protobuf.GeneratedMessage.FieldAccessorTable
+            protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
                 internalGetFieldAccessorTable() {
               return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Response_DevModeResponse_CapabilityExchange_Capability_fieldAccessorTable
                   .ensureFieldAccessorsInitialized(
                       com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse.CapabilityExchange.Capability.class, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse.CapabilityExchange.Capability.Builder.class);
             }
 
-            public static com.google.gwt.dev.protobuf.Parser<Capability> PARSER =
-                new com.google.gwt.dev.protobuf.AbstractParser<Capability>() {
+            public static com.google.protobuf.Parser<Capability> PARSER =
+                new com.google.protobuf.AbstractParser<Capability>() {
               public Capability parsePartialFrom(
-                  com.google.gwt.dev.protobuf.CodedInputStream input,
-                  com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
-                  throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+                  com.google.protobuf.CodedInputStream input,
+                  com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+                  throws com.google.protobuf.InvalidProtocolBufferException {
                 return new Capability(input, extensionRegistry);
               }
             };
 
             @java.lang.Override
-            public com.google.gwt.dev.protobuf.Parser<Capability> getParserForType() {
+            public com.google.protobuf.Parser<Capability> getParserForType() {
               return PARSER;
             }
 
@@ -16074,7 +16074,7 @@ public final class RemoteMessageProto {
               return true;
             }
 
-            public void writeTo(com.google.gwt.dev.protobuf.CodedOutputStream output)
+            public void writeTo(com.google.protobuf.CodedOutputStream output)
                                 throws java.io.IOException {
               getSerializedSize();
               if (((bitField0_ & 0x00000001) == 0x00000001)) {
@@ -16090,7 +16090,7 @@ public final class RemoteMessageProto {
 
               size = 0;
               if (((bitField0_ & 0x00000001) == 0x00000001)) {
-                size += com.google.gwt.dev.protobuf.CodedOutputStream
+                size += com.google.protobuf.CodedOutputStream
                   .computeEnumSize(1, capability_.getNumber());
               }
               size += getUnknownFields().getSerializedSize();
@@ -16106,24 +16106,24 @@ public final class RemoteMessageProto {
             }
 
             public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse.CapabilityExchange.Capability parseFrom(
-                com.google.gwt.dev.protobuf.ByteString data)
-                throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+                com.google.protobuf.ByteString data)
+                throws com.google.protobuf.InvalidProtocolBufferException {
               return PARSER.parseFrom(data);
             }
             public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse.CapabilityExchange.Capability parseFrom(
-                com.google.gwt.dev.protobuf.ByteString data,
-                com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
-                throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+                com.google.protobuf.ByteString data,
+                com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+                throws com.google.protobuf.InvalidProtocolBufferException {
               return PARSER.parseFrom(data, extensionRegistry);
             }
             public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse.CapabilityExchange.Capability parseFrom(byte[] data)
-                throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+                throws com.google.protobuf.InvalidProtocolBufferException {
               return PARSER.parseFrom(data);
             }
             public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse.CapabilityExchange.Capability parseFrom(
                 byte[] data,
-                com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
-                throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+                com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+                throws com.google.protobuf.InvalidProtocolBufferException {
               return PARSER.parseFrom(data, extensionRegistry);
             }
             public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse.CapabilityExchange.Capability parseFrom(java.io.InputStream input)
@@ -16132,7 +16132,7 @@ public final class RemoteMessageProto {
             }
             public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse.CapabilityExchange.Capability parseFrom(
                 java.io.InputStream input,
-                com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
+                com.google.protobuf.ExtensionRegistryLite extensionRegistry)
                 throws java.io.IOException {
               return PARSER.parseFrom(input, extensionRegistry);
             }
@@ -16142,18 +16142,18 @@ public final class RemoteMessageProto {
             }
             public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse.CapabilityExchange.Capability parseDelimitedFrom(
                 java.io.InputStream input,
-                com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
+                com.google.protobuf.ExtensionRegistryLite extensionRegistry)
                 throws java.io.IOException {
               return PARSER.parseDelimitedFrom(input, extensionRegistry);
             }
             public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse.CapabilityExchange.Capability parseFrom(
-                com.google.gwt.dev.protobuf.CodedInputStream input)
+                com.google.protobuf.CodedInputStream input)
                 throws java.io.IOException {
               return PARSER.parseFrom(input);
             }
             public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse.CapabilityExchange.Capability parseFrom(
-                com.google.gwt.dev.protobuf.CodedInputStream input,
-                com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
+                com.google.protobuf.CodedInputStream input,
+                com.google.protobuf.ExtensionRegistryLite extensionRegistry)
                 throws java.io.IOException {
               return PARSER.parseFrom(input, extensionRegistry);
             }
@@ -16167,7 +16167,7 @@ public final class RemoteMessageProto {
 
             @java.lang.Override
             protected Builder newBuilderForType(
-                com.google.gwt.dev.protobuf.GeneratedMessage.BuilderParent parent) {
+                com.google.protobuf.GeneratedMessage.BuilderParent parent) {
               Builder builder = new Builder(parent);
               return builder;
             }
@@ -16175,14 +16175,14 @@ public final class RemoteMessageProto {
              * Protobuf type {@code com.google.gwt.dev.shell.remoteui.Message.Response.DevModeResponse.CapabilityExchange.Capability}
              */
             public static final class Builder extends
-                com.google.gwt.dev.protobuf.GeneratedMessage.Builder<Builder>
+                com.google.protobuf.GeneratedMessage.Builder<Builder>
                implements com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse.CapabilityExchange.CapabilityOrBuilder {
-              public static final com.google.gwt.dev.protobuf.Descriptors.Descriptor
+              public static final com.google.protobuf.Descriptors.Descriptor
                   getDescriptor() {
                 return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Response_DevModeResponse_CapabilityExchange_Capability_descriptor;
               }
 
-              protected com.google.gwt.dev.protobuf.GeneratedMessage.FieldAccessorTable
+              protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
                   internalGetFieldAccessorTable() {
                 return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Response_DevModeResponse_CapabilityExchange_Capability_fieldAccessorTable
                     .ensureFieldAccessorsInitialized(
@@ -16195,12 +16195,12 @@ public final class RemoteMessageProto {
               }
 
               private Builder(
-                  com.google.gwt.dev.protobuf.GeneratedMessage.BuilderParent parent) {
+                  com.google.protobuf.GeneratedMessage.BuilderParent parent) {
                 super(parent);
                 maybeForceBuilderInitialization();
               }
               private void maybeForceBuilderInitialization() {
-                if (com.google.gwt.dev.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
+                if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
                 }
               }
               private static Builder create() {
@@ -16218,7 +16218,7 @@ public final class RemoteMessageProto {
                 return create().mergeFrom(buildPartial());
               }
 
-              public com.google.gwt.dev.protobuf.Descriptors.Descriptor
+              public com.google.protobuf.Descriptors.Descriptor
                   getDescriptorForType() {
                 return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Response_DevModeResponse_CapabilityExchange_Capability_descriptor;
               }
@@ -16248,7 +16248,7 @@ public final class RemoteMessageProto {
                 return result;
               }
 
-              public Builder mergeFrom(com.google.gwt.dev.protobuf.Message other) {
+              public Builder mergeFrom(com.google.protobuf.Message other) {
                 if (other instanceof com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse.CapabilityExchange.Capability) {
                   return mergeFrom((com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse.CapabilityExchange.Capability)other);
                 } else {
@@ -16271,13 +16271,13 @@ public final class RemoteMessageProto {
               }
 
               public Builder mergeFrom(
-                  com.google.gwt.dev.protobuf.CodedInputStream input,
-                  com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
+                  com.google.protobuf.CodedInputStream input,
+                  com.google.protobuf.ExtensionRegistryLite extensionRegistry)
                   throws java.io.IOException {
                 com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse.CapabilityExchange.Capability parsedMessage = null;
                 try {
                   parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
-                } catch (com.google.gwt.dev.protobuf.InvalidProtocolBufferException e) {
+                } catch (com.google.protobuf.InvalidProtocolBufferException e) {
                   parsedMessage = (com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse.CapabilityExchange.Capability) e.getUnfinishedMessage();
                   throw e;
                 } finally {
@@ -16384,7 +16384,7 @@ public final class RemoteMessageProto {
             return true;
           }
 
-          public void writeTo(com.google.gwt.dev.protobuf.CodedOutputStream output)
+          public void writeTo(com.google.protobuf.CodedOutputStream output)
                               throws java.io.IOException {
             getSerializedSize();
             for (int i = 0; i < capabilities_.size(); i++) {
@@ -16400,7 +16400,7 @@ public final class RemoteMessageProto {
 
             size = 0;
             for (int i = 0; i < capabilities_.size(); i++) {
-              size += com.google.gwt.dev.protobuf.CodedOutputStream
+              size += com.google.protobuf.CodedOutputStream
                 .computeMessageSize(2, capabilities_.get(i));
             }
             size += getUnknownFields().getSerializedSize();
@@ -16416,24 +16416,24 @@ public final class RemoteMessageProto {
           }
 
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse.CapabilityExchange parseFrom(
-              com.google.gwt.dev.protobuf.ByteString data)
-              throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+              com.google.protobuf.ByteString data)
+              throws com.google.protobuf.InvalidProtocolBufferException {
             return PARSER.parseFrom(data);
           }
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse.CapabilityExchange parseFrom(
-              com.google.gwt.dev.protobuf.ByteString data,
-              com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
-              throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+              com.google.protobuf.ByteString data,
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+              throws com.google.protobuf.InvalidProtocolBufferException {
             return PARSER.parseFrom(data, extensionRegistry);
           }
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse.CapabilityExchange parseFrom(byte[] data)
-              throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+              throws com.google.protobuf.InvalidProtocolBufferException {
             return PARSER.parseFrom(data);
           }
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse.CapabilityExchange parseFrom(
               byte[] data,
-              com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
-              throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+              throws com.google.protobuf.InvalidProtocolBufferException {
             return PARSER.parseFrom(data, extensionRegistry);
           }
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse.CapabilityExchange parseFrom(java.io.InputStream input)
@@ -16442,7 +16442,7 @@ public final class RemoteMessageProto {
           }
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse.CapabilityExchange parseFrom(
               java.io.InputStream input,
-              com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
               throws java.io.IOException {
             return PARSER.parseFrom(input, extensionRegistry);
           }
@@ -16452,18 +16452,18 @@ public final class RemoteMessageProto {
           }
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse.CapabilityExchange parseDelimitedFrom(
               java.io.InputStream input,
-              com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
               throws java.io.IOException {
             return PARSER.parseDelimitedFrom(input, extensionRegistry);
           }
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse.CapabilityExchange parseFrom(
-              com.google.gwt.dev.protobuf.CodedInputStream input)
+              com.google.protobuf.CodedInputStream input)
               throws java.io.IOException {
             return PARSER.parseFrom(input);
           }
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse.CapabilityExchange parseFrom(
-              com.google.gwt.dev.protobuf.CodedInputStream input,
-              com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
+              com.google.protobuf.CodedInputStream input,
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
               throws java.io.IOException {
             return PARSER.parseFrom(input, extensionRegistry);
           }
@@ -16477,7 +16477,7 @@ public final class RemoteMessageProto {
 
           @java.lang.Override
           protected Builder newBuilderForType(
-              com.google.gwt.dev.protobuf.GeneratedMessage.BuilderParent parent) {
+              com.google.protobuf.GeneratedMessage.BuilderParent parent) {
             Builder builder = new Builder(parent);
             return builder;
           }
@@ -16489,14 +16489,14 @@ public final class RemoteMessageProto {
            * </pre>
            */
           public static final class Builder extends
-              com.google.gwt.dev.protobuf.GeneratedMessage.Builder<Builder>
+              com.google.protobuf.GeneratedMessage.Builder<Builder>
              implements com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse.CapabilityExchangeOrBuilder {
-            public static final com.google.gwt.dev.protobuf.Descriptors.Descriptor
+            public static final com.google.protobuf.Descriptors.Descriptor
                 getDescriptor() {
               return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Response_DevModeResponse_CapabilityExchange_descriptor;
             }
 
-            protected com.google.gwt.dev.protobuf.GeneratedMessage.FieldAccessorTable
+            protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
                 internalGetFieldAccessorTable() {
               return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Response_DevModeResponse_CapabilityExchange_fieldAccessorTable
                   .ensureFieldAccessorsInitialized(
@@ -16509,12 +16509,12 @@ public final class RemoteMessageProto {
             }
 
             private Builder(
-                com.google.gwt.dev.protobuf.GeneratedMessage.BuilderParent parent) {
+                com.google.protobuf.GeneratedMessage.BuilderParent parent) {
               super(parent);
               maybeForceBuilderInitialization();
             }
             private void maybeForceBuilderInitialization() {
-              if (com.google.gwt.dev.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
+              if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
                 getCapabilitiesFieldBuilder();
               }
             }
@@ -16537,7 +16537,7 @@ public final class RemoteMessageProto {
               return create().mergeFrom(buildPartial());
             }
 
-            public com.google.gwt.dev.protobuf.Descriptors.Descriptor
+            public com.google.protobuf.Descriptors.Descriptor
                 getDescriptorForType() {
               return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Response_DevModeResponse_CapabilityExchange_descriptor;
             }
@@ -16570,7 +16570,7 @@ public final class RemoteMessageProto {
               return result;
             }
 
-            public Builder mergeFrom(com.google.gwt.dev.protobuf.Message other) {
+            public Builder mergeFrom(com.google.protobuf.Message other) {
               if (other instanceof com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse.CapabilityExchange) {
                 return mergeFrom((com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse.CapabilityExchange)other);
               } else {
@@ -16600,7 +16600,7 @@ public final class RemoteMessageProto {
                     capabilities_ = other.capabilities_;
                     bitField0_ = (bitField0_ & ~0x00000001);
                     capabilitiesBuilder_ =
-                      com.google.gwt.dev.protobuf.GeneratedMessage.alwaysUseFieldBuilders ?
+                      com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders ?
                          getCapabilitiesFieldBuilder() : null;
                   } else {
                     capabilitiesBuilder_.addAllMessages(other.capabilities_);
@@ -16616,13 +16616,13 @@ public final class RemoteMessageProto {
             }
 
             public Builder mergeFrom(
-                com.google.gwt.dev.protobuf.CodedInputStream input,
-                com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
+                com.google.protobuf.CodedInputStream input,
+                com.google.protobuf.ExtensionRegistryLite extensionRegistry)
                 throws java.io.IOException {
               com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse.CapabilityExchange parsedMessage = null;
               try {
                 parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
-              } catch (com.google.gwt.dev.protobuf.InvalidProtocolBufferException e) {
+              } catch (com.google.protobuf.InvalidProtocolBufferException e) {
                 parsedMessage = (com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse.CapabilityExchange) e.getUnfinishedMessage();
                 throw e;
               } finally {
@@ -16644,7 +16644,7 @@ public final class RemoteMessageProto {
                }
             }
 
-            private com.google.gwt.dev.protobuf.RepeatedFieldBuilder<
+            private com.google.protobuf.RepeatedFieldBuilder<
                 com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse.CapabilityExchange.Capability, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse.CapabilityExchange.Capability.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse.CapabilityExchange.CapabilityOrBuilder> capabilitiesBuilder_;
 
             /**
@@ -16859,11 +16859,11 @@ public final class RemoteMessageProto {
                  getCapabilitiesBuilderList() {
               return getCapabilitiesFieldBuilder().getBuilderList();
             }
-            private com.google.gwt.dev.protobuf.RepeatedFieldBuilder<
+            private com.google.protobuf.RepeatedFieldBuilder<
                 com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse.CapabilityExchange.Capability, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse.CapabilityExchange.Capability.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse.CapabilityExchange.CapabilityOrBuilder>
                 getCapabilitiesFieldBuilder() {
               if (capabilitiesBuilder_ == null) {
-                capabilitiesBuilder_ = new com.google.gwt.dev.protobuf.RepeatedFieldBuilder<
+                capabilitiesBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<
                     com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse.CapabilityExchange.Capability, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse.CapabilityExchange.Capability.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse.CapabilityExchange.CapabilityOrBuilder>(
                         capabilities_,
                         ((bitField0_ & 0x00000001) == 0x00000001),
@@ -16886,7 +16886,7 @@ public final class RemoteMessageProto {
         }
 
         public interface RestartWebServerOrBuilder
-            extends com.google.gwt.dev.protobuf.MessageOrBuilder {
+            extends com.google.protobuf.MessageOrBuilder {
         }
         /**
          * Protobuf type {@code com.google.gwt.dev.shell.remoteui.Message.Response.DevModeResponse.RestartWebServer}
@@ -16897,14 +16897,14 @@ public final class RemoteMessageProto {
          * </pre>
          */
         public static final class RestartWebServer extends
-            com.google.gwt.dev.protobuf.GeneratedMessage
+            com.google.protobuf.GeneratedMessage
             implements RestartWebServerOrBuilder {
           // Use RestartWebServer.newBuilder() to construct.
-          private RestartWebServer(com.google.gwt.dev.protobuf.GeneratedMessage.Builder<?> builder) {
+          private RestartWebServer(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
             super(builder);
             this.unknownFields = builder.getUnknownFields();
           }
-          private RestartWebServer(boolean noInit) { this.unknownFields = com.google.gwt.dev.protobuf.UnknownFieldSet.getDefaultInstance(); }
+          private RestartWebServer(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
 
           private static final RestartWebServer defaultInstance;
           public static RestartWebServer getDefaultInstance() {
@@ -16915,19 +16915,19 @@ public final class RemoteMessageProto {
             return defaultInstance;
           }
 
-          private final com.google.gwt.dev.protobuf.UnknownFieldSet unknownFields;
+          private final com.google.protobuf.UnknownFieldSet unknownFields;
           @java.lang.Override
-          public final com.google.gwt.dev.protobuf.UnknownFieldSet
+          public final com.google.protobuf.UnknownFieldSet
               getUnknownFields() {
             return this.unknownFields;
           }
           private RestartWebServer(
-              com.google.gwt.dev.protobuf.CodedInputStream input,
-              com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
-              throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+              com.google.protobuf.CodedInputStream input,
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+              throws com.google.protobuf.InvalidProtocolBufferException {
             initFields();
-            com.google.gwt.dev.protobuf.UnknownFieldSet.Builder unknownFields =
-                com.google.gwt.dev.protobuf.UnknownFieldSet.newBuilder();
+            com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+                com.google.protobuf.UnknownFieldSet.newBuilder();
             try {
               boolean done = false;
               while (!done) {
@@ -16945,40 +16945,40 @@ public final class RemoteMessageProto {
                   }
                 }
               }
-            } catch (com.google.gwt.dev.protobuf.InvalidProtocolBufferException e) {
+            } catch (com.google.protobuf.InvalidProtocolBufferException e) {
               throw e.setUnfinishedMessage(this);
             } catch (java.io.IOException e) {
-              throw new com.google.gwt.dev.protobuf.InvalidProtocolBufferException(
+              throw new com.google.protobuf.InvalidProtocolBufferException(
                   e.getMessage()).setUnfinishedMessage(this);
             } finally {
               this.unknownFields = unknownFields.build();
               makeExtensionsImmutable();
             }
           }
-          public static final com.google.gwt.dev.protobuf.Descriptors.Descriptor
+          public static final com.google.protobuf.Descriptors.Descriptor
               getDescriptor() {
             return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Response_DevModeResponse_RestartWebServer_descriptor;
           }
 
-          protected com.google.gwt.dev.protobuf.GeneratedMessage.FieldAccessorTable
+          protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
               internalGetFieldAccessorTable() {
             return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Response_DevModeResponse_RestartWebServer_fieldAccessorTable
                 .ensureFieldAccessorsInitialized(
                     com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse.RestartWebServer.class, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse.RestartWebServer.Builder.class);
           }
 
-          public static com.google.gwt.dev.protobuf.Parser<RestartWebServer> PARSER =
-              new com.google.gwt.dev.protobuf.AbstractParser<RestartWebServer>() {
+          public static com.google.protobuf.Parser<RestartWebServer> PARSER =
+              new com.google.protobuf.AbstractParser<RestartWebServer>() {
             public RestartWebServer parsePartialFrom(
-                com.google.gwt.dev.protobuf.CodedInputStream input,
-                com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
-                throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+                com.google.protobuf.CodedInputStream input,
+                com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+                throws com.google.protobuf.InvalidProtocolBufferException {
               return new RestartWebServer(input, extensionRegistry);
             }
           };
 
           @java.lang.Override
-          public com.google.gwt.dev.protobuf.Parser<RestartWebServer> getParserForType() {
+          public com.google.protobuf.Parser<RestartWebServer> getParserForType() {
             return PARSER;
           }
 
@@ -16993,7 +16993,7 @@ public final class RemoteMessageProto {
             return true;
           }
 
-          public void writeTo(com.google.gwt.dev.protobuf.CodedOutputStream output)
+          public void writeTo(com.google.protobuf.CodedOutputStream output)
                               throws java.io.IOException {
             getSerializedSize();
             getUnknownFields().writeTo(output);
@@ -17018,24 +17018,24 @@ public final class RemoteMessageProto {
           }
 
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse.RestartWebServer parseFrom(
-              com.google.gwt.dev.protobuf.ByteString data)
-              throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+              com.google.protobuf.ByteString data)
+              throws com.google.protobuf.InvalidProtocolBufferException {
             return PARSER.parseFrom(data);
           }
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse.RestartWebServer parseFrom(
-              com.google.gwt.dev.protobuf.ByteString data,
-              com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
-              throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+              com.google.protobuf.ByteString data,
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+              throws com.google.protobuf.InvalidProtocolBufferException {
             return PARSER.parseFrom(data, extensionRegistry);
           }
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse.RestartWebServer parseFrom(byte[] data)
-              throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+              throws com.google.protobuf.InvalidProtocolBufferException {
             return PARSER.parseFrom(data);
           }
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse.RestartWebServer parseFrom(
               byte[] data,
-              com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
-              throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+              throws com.google.protobuf.InvalidProtocolBufferException {
             return PARSER.parseFrom(data, extensionRegistry);
           }
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse.RestartWebServer parseFrom(java.io.InputStream input)
@@ -17044,7 +17044,7 @@ public final class RemoteMessageProto {
           }
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse.RestartWebServer parseFrom(
               java.io.InputStream input,
-              com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
               throws java.io.IOException {
             return PARSER.parseFrom(input, extensionRegistry);
           }
@@ -17054,18 +17054,18 @@ public final class RemoteMessageProto {
           }
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse.RestartWebServer parseDelimitedFrom(
               java.io.InputStream input,
-              com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
               throws java.io.IOException {
             return PARSER.parseDelimitedFrom(input, extensionRegistry);
           }
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse.RestartWebServer parseFrom(
-              com.google.gwt.dev.protobuf.CodedInputStream input)
+              com.google.protobuf.CodedInputStream input)
               throws java.io.IOException {
             return PARSER.parseFrom(input);
           }
           public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse.RestartWebServer parseFrom(
-              com.google.gwt.dev.protobuf.CodedInputStream input,
-              com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
+              com.google.protobuf.CodedInputStream input,
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
               throws java.io.IOException {
             return PARSER.parseFrom(input, extensionRegistry);
           }
@@ -17079,7 +17079,7 @@ public final class RemoteMessageProto {
 
           @java.lang.Override
           protected Builder newBuilderForType(
-              com.google.gwt.dev.protobuf.GeneratedMessage.BuilderParent parent) {
+              com.google.protobuf.GeneratedMessage.BuilderParent parent) {
             Builder builder = new Builder(parent);
             return builder;
           }
@@ -17092,14 +17092,14 @@ public final class RemoteMessageProto {
            * </pre>
            */
           public static final class Builder extends
-              com.google.gwt.dev.protobuf.GeneratedMessage.Builder<Builder>
+              com.google.protobuf.GeneratedMessage.Builder<Builder>
              implements com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse.RestartWebServerOrBuilder {
-            public static final com.google.gwt.dev.protobuf.Descriptors.Descriptor
+            public static final com.google.protobuf.Descriptors.Descriptor
                 getDescriptor() {
               return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Response_DevModeResponse_RestartWebServer_descriptor;
             }
 
-            protected com.google.gwt.dev.protobuf.GeneratedMessage.FieldAccessorTable
+            protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
                 internalGetFieldAccessorTable() {
               return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Response_DevModeResponse_RestartWebServer_fieldAccessorTable
                   .ensureFieldAccessorsInitialized(
@@ -17112,12 +17112,12 @@ public final class RemoteMessageProto {
             }
 
             private Builder(
-                com.google.gwt.dev.protobuf.GeneratedMessage.BuilderParent parent) {
+                com.google.protobuf.GeneratedMessage.BuilderParent parent) {
               super(parent);
               maybeForceBuilderInitialization();
             }
             private void maybeForceBuilderInitialization() {
-              if (com.google.gwt.dev.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
+              if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
               }
             }
             private static Builder create() {
@@ -17133,7 +17133,7 @@ public final class RemoteMessageProto {
               return create().mergeFrom(buildPartial());
             }
 
-            public com.google.gwt.dev.protobuf.Descriptors.Descriptor
+            public com.google.protobuf.Descriptors.Descriptor
                 getDescriptorForType() {
               return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Response_DevModeResponse_RestartWebServer_descriptor;
             }
@@ -17156,7 +17156,7 @@ public final class RemoteMessageProto {
               return result;
             }
 
-            public Builder mergeFrom(com.google.gwt.dev.protobuf.Message other) {
+            public Builder mergeFrom(com.google.protobuf.Message other) {
               if (other instanceof com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse.RestartWebServer) {
                 return mergeFrom((com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse.RestartWebServer)other);
               } else {
@@ -17176,13 +17176,13 @@ public final class RemoteMessageProto {
             }
 
             public Builder mergeFrom(
-                com.google.gwt.dev.protobuf.CodedInputStream input,
-                com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
+                com.google.protobuf.CodedInputStream input,
+                com.google.protobuf.ExtensionRegistryLite extensionRegistry)
                 throws java.io.IOException {
               com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse.RestartWebServer parsedMessage = null;
               try {
                 parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
-              } catch (com.google.gwt.dev.protobuf.InvalidProtocolBufferException e) {
+              } catch (com.google.protobuf.InvalidProtocolBufferException e) {
                 parsedMessage = (com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse.RestartWebServer) e.getUnfinishedMessage();
                 throw e;
               } finally {
@@ -17279,7 +17279,7 @@ public final class RemoteMessageProto {
           return true;
         }
 
-        public void writeTo(com.google.gwt.dev.protobuf.CodedOutputStream output)
+        public void writeTo(com.google.protobuf.CodedOutputStream output)
                             throws java.io.IOException {
           getSerializedSize();
           if (((bitField0_ & 0x00000001) == 0x00000001)) {
@@ -17301,15 +17301,15 @@ public final class RemoteMessageProto {
 
           size = 0;
           if (((bitField0_ & 0x00000001) == 0x00000001)) {
-            size += com.google.gwt.dev.protobuf.CodedOutputStream
+            size += com.google.protobuf.CodedOutputStream
               .computeEnumSize(1, responseType_.getNumber());
           }
           if (((bitField0_ & 0x00000002) == 0x00000002)) {
-            size += com.google.gwt.dev.protobuf.CodedOutputStream
+            size += com.google.protobuf.CodedOutputStream
               .computeMessageSize(2, capabilityExchange_);
           }
           if (((bitField0_ & 0x00000004) == 0x00000004)) {
-            size += com.google.gwt.dev.protobuf.CodedOutputStream
+            size += com.google.protobuf.CodedOutputStream
               .computeMessageSize(3, restartWebServer_);
           }
           size += getUnknownFields().getSerializedSize();
@@ -17325,24 +17325,24 @@ public final class RemoteMessageProto {
         }
 
         public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse parseFrom(
-            com.google.gwt.dev.protobuf.ByteString data)
-            throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+            com.google.protobuf.ByteString data)
+            throws com.google.protobuf.InvalidProtocolBufferException {
           return PARSER.parseFrom(data);
         }
         public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse parseFrom(
-            com.google.gwt.dev.protobuf.ByteString data,
-            com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
-            throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+            com.google.protobuf.ByteString data,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws com.google.protobuf.InvalidProtocolBufferException {
           return PARSER.parseFrom(data, extensionRegistry);
         }
         public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse parseFrom(byte[] data)
-            throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+            throws com.google.protobuf.InvalidProtocolBufferException {
           return PARSER.parseFrom(data);
         }
         public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse parseFrom(
             byte[] data,
-            com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
-            throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws com.google.protobuf.InvalidProtocolBufferException {
           return PARSER.parseFrom(data, extensionRegistry);
         }
         public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse parseFrom(java.io.InputStream input)
@@ -17351,7 +17351,7 @@ public final class RemoteMessageProto {
         }
         public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse parseFrom(
             java.io.InputStream input,
-            com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
             throws java.io.IOException {
           return PARSER.parseFrom(input, extensionRegistry);
         }
@@ -17361,18 +17361,18 @@ public final class RemoteMessageProto {
         }
         public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse parseDelimitedFrom(
             java.io.InputStream input,
-            com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
             throws java.io.IOException {
           return PARSER.parseDelimitedFrom(input, extensionRegistry);
         }
         public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse parseFrom(
-            com.google.gwt.dev.protobuf.CodedInputStream input)
+            com.google.protobuf.CodedInputStream input)
             throws java.io.IOException {
           return PARSER.parseFrom(input);
         }
         public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse parseFrom(
-            com.google.gwt.dev.protobuf.CodedInputStream input,
-            com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
+            com.google.protobuf.CodedInputStream input,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
             throws java.io.IOException {
           return PARSER.parseFrom(input, extensionRegistry);
         }
@@ -17386,7 +17386,7 @@ public final class RemoteMessageProto {
 
         @java.lang.Override
         protected Builder newBuilderForType(
-            com.google.gwt.dev.protobuf.GeneratedMessage.BuilderParent parent) {
+            com.google.protobuf.GeneratedMessage.BuilderParent parent) {
           Builder builder = new Builder(parent);
           return builder;
         }
@@ -17398,14 +17398,14 @@ public final class RemoteMessageProto {
          * </pre>
          */
         public static final class Builder extends
-            com.google.gwt.dev.protobuf.GeneratedMessage.Builder<Builder>
+            com.google.protobuf.GeneratedMessage.Builder<Builder>
            implements com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponseOrBuilder {
-          public static final com.google.gwt.dev.protobuf.Descriptors.Descriptor
+          public static final com.google.protobuf.Descriptors.Descriptor
               getDescriptor() {
             return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Response_DevModeResponse_descriptor;
           }
 
-          protected com.google.gwt.dev.protobuf.GeneratedMessage.FieldAccessorTable
+          protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
               internalGetFieldAccessorTable() {
             return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Response_DevModeResponse_fieldAccessorTable
                 .ensureFieldAccessorsInitialized(
@@ -17418,12 +17418,12 @@ public final class RemoteMessageProto {
           }
 
           private Builder(
-              com.google.gwt.dev.protobuf.GeneratedMessage.BuilderParent parent) {
+              com.google.protobuf.GeneratedMessage.BuilderParent parent) {
             super(parent);
             maybeForceBuilderInitialization();
           }
           private void maybeForceBuilderInitialization() {
-            if (com.google.gwt.dev.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
+            if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
               getCapabilityExchangeFieldBuilder();
               getRestartWebServerFieldBuilder();
             }
@@ -17455,7 +17455,7 @@ public final class RemoteMessageProto {
             return create().mergeFrom(buildPartial());
           }
 
-          public com.google.gwt.dev.protobuf.Descriptors.Descriptor
+          public com.google.protobuf.Descriptors.Descriptor
               getDescriptorForType() {
             return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Response_DevModeResponse_descriptor;
           }
@@ -17501,7 +17501,7 @@ public final class RemoteMessageProto {
             return result;
           }
 
-          public Builder mergeFrom(com.google.gwt.dev.protobuf.Message other) {
+          public Builder mergeFrom(com.google.protobuf.Message other) {
             if (other instanceof com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse) {
               return mergeFrom((com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse)other);
             } else {
@@ -17530,13 +17530,13 @@ public final class RemoteMessageProto {
           }
 
           public Builder mergeFrom(
-              com.google.gwt.dev.protobuf.CodedInputStream input,
-              com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
+              com.google.protobuf.CodedInputStream input,
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
               throws java.io.IOException {
             com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse parsedMessage = null;
             try {
               parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
-            } catch (com.google.gwt.dev.protobuf.InvalidProtocolBufferException e) {
+            } catch (com.google.protobuf.InvalidProtocolBufferException e) {
               parsedMessage = (com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse) e.getUnfinishedMessage();
               throw e;
             } finally {
@@ -17586,7 +17586,7 @@ public final class RemoteMessageProto {
 
           // optional .com.google.gwt.dev.shell.remoteui.Message.Response.DevModeResponse.CapabilityExchange capabilityExchange = 2;
           private com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse.CapabilityExchange capabilityExchange_ = com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse.CapabilityExchange.getDefaultInstance();
-          private com.google.gwt.dev.protobuf.SingleFieldBuilder<
+          private com.google.protobuf.SingleFieldBuilder<
               com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse.CapabilityExchange, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse.CapabilityExchange.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse.CapabilityExchangeOrBuilder> capabilityExchangeBuilder_;
           /**
            * <code>optional .com.google.gwt.dev.shell.remoteui.Message.Response.DevModeResponse.CapabilityExchange capabilityExchange = 2;</code>
@@ -17687,11 +17687,11 @@ public final class RemoteMessageProto {
           /**
            * <code>optional .com.google.gwt.dev.shell.remoteui.Message.Response.DevModeResponse.CapabilityExchange capabilityExchange = 2;</code>
            */
-          private com.google.gwt.dev.protobuf.SingleFieldBuilder<
+          private com.google.protobuf.SingleFieldBuilder<
               com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse.CapabilityExchange, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse.CapabilityExchange.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse.CapabilityExchangeOrBuilder>
               getCapabilityExchangeFieldBuilder() {
             if (capabilityExchangeBuilder_ == null) {
-              capabilityExchangeBuilder_ = new com.google.gwt.dev.protobuf.SingleFieldBuilder<
+              capabilityExchangeBuilder_ = new com.google.protobuf.SingleFieldBuilder<
                   com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse.CapabilityExchange, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse.CapabilityExchange.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse.CapabilityExchangeOrBuilder>(
                       capabilityExchange_,
                       getParentForChildren(),
@@ -17703,7 +17703,7 @@ public final class RemoteMessageProto {
 
           // optional .com.google.gwt.dev.shell.remoteui.Message.Response.DevModeResponse.RestartWebServer restartWebServer = 3;
           private com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse.RestartWebServer restartWebServer_ = com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse.RestartWebServer.getDefaultInstance();
-          private com.google.gwt.dev.protobuf.SingleFieldBuilder<
+          private com.google.protobuf.SingleFieldBuilder<
               com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse.RestartWebServer, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse.RestartWebServer.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse.RestartWebServerOrBuilder> restartWebServerBuilder_;
           /**
            * <code>optional .com.google.gwt.dev.shell.remoteui.Message.Response.DevModeResponse.RestartWebServer restartWebServer = 3;</code>
@@ -17804,11 +17804,11 @@ public final class RemoteMessageProto {
           /**
            * <code>optional .com.google.gwt.dev.shell.remoteui.Message.Response.DevModeResponse.RestartWebServer restartWebServer = 3;</code>
            */
-          private com.google.gwt.dev.protobuf.SingleFieldBuilder<
+          private com.google.protobuf.SingleFieldBuilder<
               com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse.RestartWebServer, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse.RestartWebServer.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse.RestartWebServerOrBuilder>
               getRestartWebServerFieldBuilder() {
             if (restartWebServerBuilder_ == null) {
-              restartWebServerBuilder_ = new com.google.gwt.dev.protobuf.SingleFieldBuilder<
+              restartWebServerBuilder_ = new com.google.protobuf.SingleFieldBuilder<
                   com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse.RestartWebServer, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse.RestartWebServer.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse.RestartWebServerOrBuilder>(
                       restartWebServer_,
                       getParentForChildren(),
@@ -17893,7 +17893,7 @@ public final class RemoteMessageProto {
         return true;
       }
 
-      public void writeTo(com.google.gwt.dev.protobuf.CodedOutputStream output)
+      public void writeTo(com.google.protobuf.CodedOutputStream output)
                           throws java.io.IOException {
         getSerializedSize();
         if (((bitField0_ & 0x00000001) == 0x00000001)) {
@@ -17912,11 +17912,11 @@ public final class RemoteMessageProto {
 
         size = 0;
         if (((bitField0_ & 0x00000001) == 0x00000001)) {
-          size += com.google.gwt.dev.protobuf.CodedOutputStream
+          size += com.google.protobuf.CodedOutputStream
             .computeMessageSize(1, viewerResponse_);
         }
         if (((bitField0_ & 0x00000002) == 0x00000002)) {
-          size += com.google.gwt.dev.protobuf.CodedOutputStream
+          size += com.google.protobuf.CodedOutputStream
             .computeMessageSize(2, devModeResponse_);
         }
         size += getUnknownFields().getSerializedSize();
@@ -17932,24 +17932,24 @@ public final class RemoteMessageProto {
       }
 
       public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response parseFrom(
-          com.google.gwt.dev.protobuf.ByteString data)
-          throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+          com.google.protobuf.ByteString data)
+          throws com.google.protobuf.InvalidProtocolBufferException {
         return PARSER.parseFrom(data);
       }
       public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response parseFrom(
-          com.google.gwt.dev.protobuf.ByteString data,
-          com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+          com.google.protobuf.ByteString data,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
         return PARSER.parseFrom(data, extensionRegistry);
       }
       public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response parseFrom(byte[] data)
-          throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+          throws com.google.protobuf.InvalidProtocolBufferException {
         return PARSER.parseFrom(data);
       }
       public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response parseFrom(
           byte[] data,
-          com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
         return PARSER.parseFrom(data, extensionRegistry);
       }
       public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response parseFrom(java.io.InputStream input)
@@ -17958,7 +17958,7 @@ public final class RemoteMessageProto {
       }
       public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response parseFrom(
           java.io.InputStream input,
-          com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
           throws java.io.IOException {
         return PARSER.parseFrom(input, extensionRegistry);
       }
@@ -17968,18 +17968,18 @@ public final class RemoteMessageProto {
       }
       public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response parseDelimitedFrom(
           java.io.InputStream input,
-          com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
           throws java.io.IOException {
         return PARSER.parseDelimitedFrom(input, extensionRegistry);
       }
       public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response parseFrom(
-          com.google.gwt.dev.protobuf.CodedInputStream input)
+          com.google.protobuf.CodedInputStream input)
           throws java.io.IOException {
         return PARSER.parseFrom(input);
       }
       public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response parseFrom(
-          com.google.gwt.dev.protobuf.CodedInputStream input,
-          com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
           throws java.io.IOException {
         return PARSER.parseFrom(input, extensionRegistry);
       }
@@ -17993,7 +17993,7 @@ public final class RemoteMessageProto {
 
       @java.lang.Override
       protected Builder newBuilderForType(
-          com.google.gwt.dev.protobuf.GeneratedMessage.BuilderParent parent) {
+          com.google.protobuf.GeneratedMessage.BuilderParent parent) {
         Builder builder = new Builder(parent);
         return builder;
       }
@@ -18006,14 +18006,14 @@ public final class RemoteMessageProto {
        * </pre>
        */
       public static final class Builder extends
-          com.google.gwt.dev.protobuf.GeneratedMessage.Builder<Builder>
+          com.google.protobuf.GeneratedMessage.Builder<Builder>
          implements com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.ResponseOrBuilder {
-        public static final com.google.gwt.dev.protobuf.Descriptors.Descriptor
+        public static final com.google.protobuf.Descriptors.Descriptor
             getDescriptor() {
           return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Response_descriptor;
         }
 
-        protected com.google.gwt.dev.protobuf.GeneratedMessage.FieldAccessorTable
+        protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
             internalGetFieldAccessorTable() {
           return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Response_fieldAccessorTable
               .ensureFieldAccessorsInitialized(
@@ -18026,12 +18026,12 @@ public final class RemoteMessageProto {
         }
 
         private Builder(
-            com.google.gwt.dev.protobuf.GeneratedMessage.BuilderParent parent) {
+            com.google.protobuf.GeneratedMessage.BuilderParent parent) {
           super(parent);
           maybeForceBuilderInitialization();
         }
         private void maybeForceBuilderInitialization() {
-          if (com.google.gwt.dev.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
+          if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
             getViewerResponseFieldBuilder();
             getDevModeResponseFieldBuilder();
           }
@@ -18061,7 +18061,7 @@ public final class RemoteMessageProto {
           return create().mergeFrom(buildPartial());
         }
 
-        public com.google.gwt.dev.protobuf.Descriptors.Descriptor
+        public com.google.protobuf.Descriptors.Descriptor
             getDescriptorForType() {
           return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Response_descriptor;
         }
@@ -18103,7 +18103,7 @@ public final class RemoteMessageProto {
           return result;
         }
 
-        public Builder mergeFrom(com.google.gwt.dev.protobuf.Message other) {
+        public Builder mergeFrom(com.google.protobuf.Message other) {
           if (other instanceof com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response) {
             return mergeFrom((com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response)other);
           } else {
@@ -18135,13 +18135,13 @@ public final class RemoteMessageProto {
         }
 
         public Builder mergeFrom(
-            com.google.gwt.dev.protobuf.CodedInputStream input,
-            com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
+            com.google.protobuf.CodedInputStream input,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
             throws java.io.IOException {
           com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response parsedMessage = null;
           try {
             parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
-          } catch (com.google.gwt.dev.protobuf.InvalidProtocolBufferException e) {
+          } catch (com.google.protobuf.InvalidProtocolBufferException e) {
             parsedMessage = (com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response) e.getUnfinishedMessage();
             throw e;
           } finally {
@@ -18155,7 +18155,7 @@ public final class RemoteMessageProto {
 
         // optional .com.google.gwt.dev.shell.remoteui.Message.Response.ViewerResponse viewerResponse = 1;
         private com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse viewerResponse_ = com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.getDefaultInstance();
-        private com.google.gwt.dev.protobuf.SingleFieldBuilder<
+        private com.google.protobuf.SingleFieldBuilder<
             com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponseOrBuilder> viewerResponseBuilder_;
         /**
          * <code>optional .com.google.gwt.dev.shell.remoteui.Message.Response.ViewerResponse viewerResponse = 1;</code>
@@ -18256,11 +18256,11 @@ public final class RemoteMessageProto {
         /**
          * <code>optional .com.google.gwt.dev.shell.remoteui.Message.Response.ViewerResponse viewerResponse = 1;</code>
          */
-        private com.google.gwt.dev.protobuf.SingleFieldBuilder<
+        private com.google.protobuf.SingleFieldBuilder<
             com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponseOrBuilder>
             getViewerResponseFieldBuilder() {
           if (viewerResponseBuilder_ == null) {
-            viewerResponseBuilder_ = new com.google.gwt.dev.protobuf.SingleFieldBuilder<
+            viewerResponseBuilder_ = new com.google.protobuf.SingleFieldBuilder<
                 com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponse.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.ViewerResponseOrBuilder>(
                     viewerResponse_,
                     getParentForChildren(),
@@ -18272,7 +18272,7 @@ public final class RemoteMessageProto {
 
         // optional .com.google.gwt.dev.shell.remoteui.Message.Response.DevModeResponse devModeResponse = 2;
         private com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse devModeResponse_ = com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse.getDefaultInstance();
-        private com.google.gwt.dev.protobuf.SingleFieldBuilder<
+        private com.google.protobuf.SingleFieldBuilder<
             com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponseOrBuilder> devModeResponseBuilder_;
         /**
          * <code>optional .com.google.gwt.dev.shell.remoteui.Message.Response.DevModeResponse devModeResponse = 2;</code>
@@ -18373,11 +18373,11 @@ public final class RemoteMessageProto {
         /**
          * <code>optional .com.google.gwt.dev.shell.remoteui.Message.Response.DevModeResponse devModeResponse = 2;</code>
          */
-        private com.google.gwt.dev.protobuf.SingleFieldBuilder<
+        private com.google.protobuf.SingleFieldBuilder<
             com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponseOrBuilder>
             getDevModeResponseFieldBuilder() {
           if (devModeResponseBuilder_ == null) {
-            devModeResponseBuilder_ = new com.google.gwt.dev.protobuf.SingleFieldBuilder<
+            devModeResponseBuilder_ = new com.google.protobuf.SingleFieldBuilder<
                 com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponse.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.DevModeResponseOrBuilder>(
                     devModeResponse_,
                     getParentForChildren(),
@@ -18399,7 +18399,7 @@ public final class RemoteMessageProto {
     }
 
     public interface FailureOrBuilder
-        extends com.google.gwt.dev.protobuf.MessageOrBuilder {
+        extends com.google.protobuf.MessageOrBuilder {
 
       // optional string message = 1;
       /**
@@ -18413,7 +18413,7 @@ public final class RemoteMessageProto {
       /**
        * <code>optional string message = 1;</code>
        */
-      com.google.gwt.dev.protobuf.ByteString
+      com.google.protobuf.ByteString
           getMessageBytes();
 
       // optional string stackTrace = 2;
@@ -18428,21 +18428,21 @@ public final class RemoteMessageProto {
       /**
        * <code>optional string stackTrace = 2;</code>
        */
-      com.google.gwt.dev.protobuf.ByteString
+      com.google.protobuf.ByteString
           getStackTraceBytes();
     }
     /**
      * Protobuf type {@code com.google.gwt.dev.shell.remoteui.Message.Failure}
      */
     public static final class Failure extends
-        com.google.gwt.dev.protobuf.GeneratedMessage
+        com.google.protobuf.GeneratedMessage
         implements FailureOrBuilder {
       // Use Failure.newBuilder() to construct.
-      private Failure(com.google.gwt.dev.protobuf.GeneratedMessage.Builder<?> builder) {
+      private Failure(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
         super(builder);
         this.unknownFields = builder.getUnknownFields();
       }
-      private Failure(boolean noInit) { this.unknownFields = com.google.gwt.dev.protobuf.UnknownFieldSet.getDefaultInstance(); }
+      private Failure(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
 
       private static final Failure defaultInstance;
       public static Failure getDefaultInstance() {
@@ -18453,20 +18453,20 @@ public final class RemoteMessageProto {
         return defaultInstance;
       }
 
-      private final com.google.gwt.dev.protobuf.UnknownFieldSet unknownFields;
+      private final com.google.protobuf.UnknownFieldSet unknownFields;
       @java.lang.Override
-      public final com.google.gwt.dev.protobuf.UnknownFieldSet
+      public final com.google.protobuf.UnknownFieldSet
           getUnknownFields() {
         return this.unknownFields;
       }
       private Failure(
-          com.google.gwt.dev.protobuf.CodedInputStream input,
-          com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
         initFields();
         int mutable_bitField0_ = 0;
-        com.google.gwt.dev.protobuf.UnknownFieldSet.Builder unknownFields =
-            com.google.gwt.dev.protobuf.UnknownFieldSet.newBuilder();
+        com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+            com.google.protobuf.UnknownFieldSet.newBuilder();
         try {
           boolean done = false;
           while (!done) {
@@ -18494,40 +18494,40 @@ public final class RemoteMessageProto {
               }
             }
           }
-        } catch (com.google.gwt.dev.protobuf.InvalidProtocolBufferException e) {
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
           throw e.setUnfinishedMessage(this);
         } catch (java.io.IOException e) {
-          throw new com.google.gwt.dev.protobuf.InvalidProtocolBufferException(
+          throw new com.google.protobuf.InvalidProtocolBufferException(
               e.getMessage()).setUnfinishedMessage(this);
         } finally {
           this.unknownFields = unknownFields.build();
           makeExtensionsImmutable();
         }
       }
-      public static final com.google.gwt.dev.protobuf.Descriptors.Descriptor
+      public static final com.google.protobuf.Descriptors.Descriptor
           getDescriptor() {
         return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Failure_descriptor;
       }
 
-      protected com.google.gwt.dev.protobuf.GeneratedMessage.FieldAccessorTable
+      protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
           internalGetFieldAccessorTable() {
         return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Failure_fieldAccessorTable
             .ensureFieldAccessorsInitialized(
                 com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Failure.class, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Failure.Builder.class);
       }
 
-      public static com.google.gwt.dev.protobuf.Parser<Failure> PARSER =
-          new com.google.gwt.dev.protobuf.AbstractParser<Failure>() {
+      public static com.google.protobuf.Parser<Failure> PARSER =
+          new com.google.protobuf.AbstractParser<Failure>() {
         public Failure parsePartialFrom(
-            com.google.gwt.dev.protobuf.CodedInputStream input,
-            com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
-            throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+            com.google.protobuf.CodedInputStream input,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws com.google.protobuf.InvalidProtocolBufferException {
           return new Failure(input, extensionRegistry);
         }
       };
 
       @java.lang.Override
-      public com.google.gwt.dev.protobuf.Parser<Failure> getParserForType() {
+      public com.google.protobuf.Parser<Failure> getParserForType() {
         return PARSER;
       }
 
@@ -18549,8 +18549,8 @@ public final class RemoteMessageProto {
         if (ref instanceof java.lang.String) {
           return (java.lang.String) ref;
         } else {
-          com.google.gwt.dev.protobuf.ByteString bs =
-              (com.google.gwt.dev.protobuf.ByteString) ref;
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
           java.lang.String s = bs.toStringUtf8();
           if (bs.isValidUtf8()) {
             message_ = s;
@@ -18561,17 +18561,17 @@ public final class RemoteMessageProto {
       /**
        * <code>optional string message = 1;</code>
        */
-      public com.google.gwt.dev.protobuf.ByteString
+      public com.google.protobuf.ByteString
           getMessageBytes() {
         java.lang.Object ref = message_;
         if (ref instanceof java.lang.String) {
-          com.google.gwt.dev.protobuf.ByteString b =
-              com.google.gwt.dev.protobuf.ByteString.copyFromUtf8(
+          com.google.protobuf.ByteString b =
+              com.google.protobuf.ByteString.copyFromUtf8(
                   (java.lang.String) ref);
           message_ = b;
           return b;
         } else {
-          return (com.google.gwt.dev.protobuf.ByteString) ref;
+          return (com.google.protobuf.ByteString) ref;
         }
       }
 
@@ -18592,8 +18592,8 @@ public final class RemoteMessageProto {
         if (ref instanceof java.lang.String) {
           return (java.lang.String) ref;
         } else {
-          com.google.gwt.dev.protobuf.ByteString bs =
-              (com.google.gwt.dev.protobuf.ByteString) ref;
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
           java.lang.String s = bs.toStringUtf8();
           if (bs.isValidUtf8()) {
             stackTrace_ = s;
@@ -18604,17 +18604,17 @@ public final class RemoteMessageProto {
       /**
        * <code>optional string stackTrace = 2;</code>
        */
-      public com.google.gwt.dev.protobuf.ByteString
+      public com.google.protobuf.ByteString
           getStackTraceBytes() {
         java.lang.Object ref = stackTrace_;
         if (ref instanceof java.lang.String) {
-          com.google.gwt.dev.protobuf.ByteString b =
-              com.google.gwt.dev.protobuf.ByteString.copyFromUtf8(
+          com.google.protobuf.ByteString b =
+              com.google.protobuf.ByteString.copyFromUtf8(
                   (java.lang.String) ref);
           stackTrace_ = b;
           return b;
         } else {
-          return (com.google.gwt.dev.protobuf.ByteString) ref;
+          return (com.google.protobuf.ByteString) ref;
         }
       }
 
@@ -18631,7 +18631,7 @@ public final class RemoteMessageProto {
         return true;
       }
 
-      public void writeTo(com.google.gwt.dev.protobuf.CodedOutputStream output)
+      public void writeTo(com.google.protobuf.CodedOutputStream output)
                           throws java.io.IOException {
         getSerializedSize();
         if (((bitField0_ & 0x00000001) == 0x00000001)) {
@@ -18650,11 +18650,11 @@ public final class RemoteMessageProto {
 
         size = 0;
         if (((bitField0_ & 0x00000001) == 0x00000001)) {
-          size += com.google.gwt.dev.protobuf.CodedOutputStream
+          size += com.google.protobuf.CodedOutputStream
             .computeBytesSize(1, getMessageBytes());
         }
         if (((bitField0_ & 0x00000002) == 0x00000002)) {
-          size += com.google.gwt.dev.protobuf.CodedOutputStream
+          size += com.google.protobuf.CodedOutputStream
             .computeBytesSize(2, getStackTraceBytes());
         }
         size += getUnknownFields().getSerializedSize();
@@ -18670,24 +18670,24 @@ public final class RemoteMessageProto {
       }
 
       public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Failure parseFrom(
-          com.google.gwt.dev.protobuf.ByteString data)
-          throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+          com.google.protobuf.ByteString data)
+          throws com.google.protobuf.InvalidProtocolBufferException {
         return PARSER.parseFrom(data);
       }
       public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Failure parseFrom(
-          com.google.gwt.dev.protobuf.ByteString data,
-          com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+          com.google.protobuf.ByteString data,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
         return PARSER.parseFrom(data, extensionRegistry);
       }
       public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Failure parseFrom(byte[] data)
-          throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+          throws com.google.protobuf.InvalidProtocolBufferException {
         return PARSER.parseFrom(data);
       }
       public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Failure parseFrom(
           byte[] data,
-          com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
         return PARSER.parseFrom(data, extensionRegistry);
       }
       public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Failure parseFrom(java.io.InputStream input)
@@ -18696,7 +18696,7 @@ public final class RemoteMessageProto {
       }
       public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Failure parseFrom(
           java.io.InputStream input,
-          com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
           throws java.io.IOException {
         return PARSER.parseFrom(input, extensionRegistry);
       }
@@ -18706,18 +18706,18 @@ public final class RemoteMessageProto {
       }
       public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Failure parseDelimitedFrom(
           java.io.InputStream input,
-          com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
           throws java.io.IOException {
         return PARSER.parseDelimitedFrom(input, extensionRegistry);
       }
       public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Failure parseFrom(
-          com.google.gwt.dev.protobuf.CodedInputStream input)
+          com.google.protobuf.CodedInputStream input)
           throws java.io.IOException {
         return PARSER.parseFrom(input);
       }
       public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Failure parseFrom(
-          com.google.gwt.dev.protobuf.CodedInputStream input,
-          com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
           throws java.io.IOException {
         return PARSER.parseFrom(input, extensionRegistry);
       }
@@ -18731,7 +18731,7 @@ public final class RemoteMessageProto {
 
       @java.lang.Override
       protected Builder newBuilderForType(
-          com.google.gwt.dev.protobuf.GeneratedMessage.BuilderParent parent) {
+          com.google.protobuf.GeneratedMessage.BuilderParent parent) {
         Builder builder = new Builder(parent);
         return builder;
       }
@@ -18739,14 +18739,14 @@ public final class RemoteMessageProto {
        * Protobuf type {@code com.google.gwt.dev.shell.remoteui.Message.Failure}
        */
       public static final class Builder extends
-          com.google.gwt.dev.protobuf.GeneratedMessage.Builder<Builder>
+          com.google.protobuf.GeneratedMessage.Builder<Builder>
          implements com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.FailureOrBuilder {
-        public static final com.google.gwt.dev.protobuf.Descriptors.Descriptor
+        public static final com.google.protobuf.Descriptors.Descriptor
             getDescriptor() {
           return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Failure_descriptor;
         }
 
-        protected com.google.gwt.dev.protobuf.GeneratedMessage.FieldAccessorTable
+        protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
             internalGetFieldAccessorTable() {
           return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Failure_fieldAccessorTable
               .ensureFieldAccessorsInitialized(
@@ -18759,12 +18759,12 @@ public final class RemoteMessageProto {
         }
 
         private Builder(
-            com.google.gwt.dev.protobuf.GeneratedMessage.BuilderParent parent) {
+            com.google.protobuf.GeneratedMessage.BuilderParent parent) {
           super(parent);
           maybeForceBuilderInitialization();
         }
         private void maybeForceBuilderInitialization() {
-          if (com.google.gwt.dev.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
+          if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
           }
         }
         private static Builder create() {
@@ -18784,7 +18784,7 @@ public final class RemoteMessageProto {
           return create().mergeFrom(buildPartial());
         }
 
-        public com.google.gwt.dev.protobuf.Descriptors.Descriptor
+        public com.google.protobuf.Descriptors.Descriptor
             getDescriptorForType() {
           return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_Failure_descriptor;
         }
@@ -18818,7 +18818,7 @@ public final class RemoteMessageProto {
           return result;
         }
 
-        public Builder mergeFrom(com.google.gwt.dev.protobuf.Message other) {
+        public Builder mergeFrom(com.google.protobuf.Message other) {
           if (other instanceof com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Failure) {
             return mergeFrom((com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Failure)other);
           } else {
@@ -18848,13 +18848,13 @@ public final class RemoteMessageProto {
         }
 
         public Builder mergeFrom(
-            com.google.gwt.dev.protobuf.CodedInputStream input,
-            com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
+            com.google.protobuf.CodedInputStream input,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
             throws java.io.IOException {
           com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Failure parsedMessage = null;
           try {
             parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
-          } catch (com.google.gwt.dev.protobuf.InvalidProtocolBufferException e) {
+          } catch (com.google.protobuf.InvalidProtocolBufferException e) {
             parsedMessage = (com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Failure) e.getUnfinishedMessage();
             throw e;
           } finally {
@@ -18880,7 +18880,7 @@ public final class RemoteMessageProto {
         public java.lang.String getMessage() {
           java.lang.Object ref = message_;
           if (!(ref instanceof java.lang.String)) {
-            java.lang.String s = ((com.google.gwt.dev.protobuf.ByteString) ref)
+            java.lang.String s = ((com.google.protobuf.ByteString) ref)
                 .toStringUtf8();
             message_ = s;
             return s;
@@ -18891,17 +18891,17 @@ public final class RemoteMessageProto {
         /**
          * <code>optional string message = 1;</code>
          */
-        public com.google.gwt.dev.protobuf.ByteString
+        public com.google.protobuf.ByteString
             getMessageBytes() {
           java.lang.Object ref = message_;
           if (ref instanceof String) {
-            com.google.gwt.dev.protobuf.ByteString b =
-                com.google.gwt.dev.protobuf.ByteString.copyFromUtf8(
+            com.google.protobuf.ByteString b =
+                com.google.protobuf.ByteString.copyFromUtf8(
                     (java.lang.String) ref);
             message_ = b;
             return b;
           } else {
-            return (com.google.gwt.dev.protobuf.ByteString) ref;
+            return (com.google.protobuf.ByteString) ref;
           }
         }
         /**
@@ -18930,7 +18930,7 @@ public final class RemoteMessageProto {
          * <code>optional string message = 1;</code>
          */
         public Builder setMessageBytes(
-            com.google.gwt.dev.protobuf.ByteString value) {
+            com.google.protobuf.ByteString value) {
           if (value == null) {
     throw new NullPointerException();
   }
@@ -18954,7 +18954,7 @@ public final class RemoteMessageProto {
         public java.lang.String getStackTrace() {
           java.lang.Object ref = stackTrace_;
           if (!(ref instanceof java.lang.String)) {
-            java.lang.String s = ((com.google.gwt.dev.protobuf.ByteString) ref)
+            java.lang.String s = ((com.google.protobuf.ByteString) ref)
                 .toStringUtf8();
             stackTrace_ = s;
             return s;
@@ -18965,17 +18965,17 @@ public final class RemoteMessageProto {
         /**
          * <code>optional string stackTrace = 2;</code>
          */
-        public com.google.gwt.dev.protobuf.ByteString
+        public com.google.protobuf.ByteString
             getStackTraceBytes() {
           java.lang.Object ref = stackTrace_;
           if (ref instanceof String) {
-            com.google.gwt.dev.protobuf.ByteString b =
-                com.google.gwt.dev.protobuf.ByteString.copyFromUtf8(
+            com.google.protobuf.ByteString b =
+                com.google.protobuf.ByteString.copyFromUtf8(
                     (java.lang.String) ref);
             stackTrace_ = b;
             return b;
           } else {
-            return (com.google.gwt.dev.protobuf.ByteString) ref;
+            return (com.google.protobuf.ByteString) ref;
           }
         }
         /**
@@ -19004,7 +19004,7 @@ public final class RemoteMessageProto {
          * <code>optional string stackTrace = 2;</code>
          */
         public Builder setStackTraceBytes(
-            com.google.gwt.dev.protobuf.ByteString value) {
+            com.google.protobuf.ByteString value) {
           if (value == null) {
     throw new NullPointerException();
   }
@@ -19053,8 +19053,8 @@ public final class RemoteMessageProto {
       if (ref instanceof java.lang.String) {
         return (java.lang.String) ref;
       } else {
-        com.google.gwt.dev.protobuf.ByteString bs =
-            (com.google.gwt.dev.protobuf.ByteString) ref;
+        com.google.protobuf.ByteString bs =
+            (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
         if (bs.isValidUtf8()) {
           protocolVersion_ = s;
@@ -19070,17 +19070,17 @@ public final class RemoteMessageProto {
      * we can make use of it to detect protocol incompatibilities
      * </pre>
      */
-    public com.google.gwt.dev.protobuf.ByteString
+    public com.google.protobuf.ByteString
         getProtocolVersionBytes() {
       java.lang.Object ref = protocolVersion_;
       if (ref instanceof java.lang.String) {
-        com.google.gwt.dev.protobuf.ByteString b =
-            com.google.gwt.dev.protobuf.ByteString.copyFromUtf8(
+        com.google.protobuf.ByteString b =
+            com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
         protocolVersion_ = b;
         return b;
       } else {
-        return (com.google.gwt.dev.protobuf.ByteString) ref;
+        return (com.google.protobuf.ByteString) ref;
       }
     }
 
@@ -19215,7 +19215,7 @@ public final class RemoteMessageProto {
       return true;
     }
 
-    public void writeTo(com.google.gwt.dev.protobuf.CodedOutputStream output)
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
       getSerializedSize();
       if (((bitField0_ & 0x00000001) == 0x00000001)) {
@@ -19246,27 +19246,27 @@ public final class RemoteMessageProto {
 
       size = 0;
       if (((bitField0_ & 0x00000001) == 0x00000001)) {
-        size += com.google.gwt.dev.protobuf.CodedOutputStream
+        size += com.google.protobuf.CodedOutputStream
           .computeBytesSize(1, getProtocolVersionBytes());
       }
       if (((bitField0_ & 0x00000002) == 0x00000002)) {
-        size += com.google.gwt.dev.protobuf.CodedOutputStream
+        size += com.google.protobuf.CodedOutputStream
           .computeEnumSize(2, messageType_.getNumber());
       }
       if (((bitField0_ & 0x00000004) == 0x00000004)) {
-        size += com.google.gwt.dev.protobuf.CodedOutputStream
+        size += com.google.protobuf.CodedOutputStream
           .computeUInt32Size(3, messageId_);
       }
       if (((bitField0_ & 0x00000008) == 0x00000008)) {
-        size += com.google.gwt.dev.protobuf.CodedOutputStream
+        size += com.google.protobuf.CodedOutputStream
           .computeMessageSize(4, request_);
       }
       if (((bitField0_ & 0x00000010) == 0x00000010)) {
-        size += com.google.gwt.dev.protobuf.CodedOutputStream
+        size += com.google.protobuf.CodedOutputStream
           .computeMessageSize(5, response_);
       }
       if (((bitField0_ & 0x00000020) == 0x00000020)) {
-        size += com.google.gwt.dev.protobuf.CodedOutputStream
+        size += com.google.protobuf.CodedOutputStream
           .computeMessageSize(6, failure_);
       }
       size += getUnknownFields().getSerializedSize();
@@ -19282,24 +19282,24 @@ public final class RemoteMessageProto {
     }
 
     public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message parseFrom(
-        com.google.gwt.dev.protobuf.ByteString data)
-        throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data);
     }
     public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message parseFrom(
-        com.google.gwt.dev.protobuf.ByteString data,
-        com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data, extensionRegistry);
     }
     public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message parseFrom(byte[] data)
-        throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+        throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data);
     }
     public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message parseFrom(
         byte[] data,
-        com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.gwt.dev.protobuf.InvalidProtocolBufferException {
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data, extensionRegistry);
     }
     public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message parseFrom(java.io.InputStream input)
@@ -19308,7 +19308,7 @@ public final class RemoteMessageProto {
     }
     public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message parseFrom(
         java.io.InputStream input,
-        com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
       return PARSER.parseFrom(input, extensionRegistry);
     }
@@ -19318,18 +19318,18 @@ public final class RemoteMessageProto {
     }
     public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message parseDelimitedFrom(
         java.io.InputStream input,
-        com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
       return PARSER.parseDelimitedFrom(input, extensionRegistry);
     }
     public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message parseFrom(
-        com.google.gwt.dev.protobuf.CodedInputStream input)
+        com.google.protobuf.CodedInputStream input)
         throws java.io.IOException {
       return PARSER.parseFrom(input);
     }
     public static com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message parseFrom(
-        com.google.gwt.dev.protobuf.CodedInputStream input,
-        com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
       return PARSER.parseFrom(input, extensionRegistry);
     }
@@ -19343,7 +19343,7 @@ public final class RemoteMessageProto {
 
     @java.lang.Override
     protected Builder newBuilderForType(
-        com.google.gwt.dev.protobuf.GeneratedMessage.BuilderParent parent) {
+        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
       Builder builder = new Builder(parent);
       return builder;
     }
@@ -19355,14 +19355,14 @@ public final class RemoteMessageProto {
      * </pre>
      */
     public static final class Builder extends
-        com.google.gwt.dev.protobuf.GeneratedMessage.Builder<Builder>
+        com.google.protobuf.GeneratedMessage.Builder<Builder>
        implements com.google.gwt.dev.shell.remoteui.RemoteMessageProto.MessageOrBuilder {
-      public static final com.google.gwt.dev.protobuf.Descriptors.Descriptor
+      public static final com.google.protobuf.Descriptors.Descriptor
           getDescriptor() {
         return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_descriptor;
       }
 
-      protected com.google.gwt.dev.protobuf.GeneratedMessage.FieldAccessorTable
+      protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
           internalGetFieldAccessorTable() {
         return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_fieldAccessorTable
             .ensureFieldAccessorsInitialized(
@@ -19375,12 +19375,12 @@ public final class RemoteMessageProto {
       }
 
       private Builder(
-          com.google.gwt.dev.protobuf.GeneratedMessage.BuilderParent parent) {
+          com.google.protobuf.GeneratedMessage.BuilderParent parent) {
         super(parent);
         maybeForceBuilderInitialization();
       }
       private void maybeForceBuilderInitialization() {
-        if (com.google.gwt.dev.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
+        if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
           getRequestFieldBuilder();
           getResponseFieldBuilder();
           getFailureFieldBuilder();
@@ -19423,7 +19423,7 @@ public final class RemoteMessageProto {
         return create().mergeFrom(buildPartial());
       }
 
-      public com.google.gwt.dev.protobuf.Descriptors.Descriptor
+      public com.google.protobuf.Descriptors.Descriptor
           getDescriptorForType() {
         return com.google.gwt.dev.shell.remoteui.RemoteMessageProto.internal_static_com_google_gwt_dev_shell_remoteui_Message_descriptor;
       }
@@ -19485,7 +19485,7 @@ public final class RemoteMessageProto {
         return result;
       }
 
-      public Builder mergeFrom(com.google.gwt.dev.protobuf.Message other) {
+      public Builder mergeFrom(com.google.protobuf.Message other) {
         if (other instanceof com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message) {
           return mergeFrom((com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message)other);
         } else {
@@ -19541,13 +19541,13 @@ public final class RemoteMessageProto {
       }
 
       public Builder mergeFrom(
-          com.google.gwt.dev.protobuf.CodedInputStream input,
-          com.google.gwt.dev.protobuf.ExtensionRegistryLite extensionRegistry)
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
           throws java.io.IOException {
         com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message parsedMessage = null;
         try {
           parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
-        } catch (com.google.gwt.dev.protobuf.InvalidProtocolBufferException e) {
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
           parsedMessage = (com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message) e.getUnfinishedMessage();
           throw e;
         } finally {
@@ -19583,7 +19583,7 @@ public final class RemoteMessageProto {
       public java.lang.String getProtocolVersion() {
         java.lang.Object ref = protocolVersion_;
         if (!(ref instanceof java.lang.String)) {
-          java.lang.String s = ((com.google.gwt.dev.protobuf.ByteString) ref)
+          java.lang.String s = ((com.google.protobuf.ByteString) ref)
               .toStringUtf8();
           protocolVersion_ = s;
           return s;
@@ -19599,17 +19599,17 @@ public final class RemoteMessageProto {
        * we can make use of it to detect protocol incompatibilities
        * </pre>
        */
-      public com.google.gwt.dev.protobuf.ByteString
+      public com.google.protobuf.ByteString
           getProtocolVersionBytes() {
         java.lang.Object ref = protocolVersion_;
         if (ref instanceof String) {
-          com.google.gwt.dev.protobuf.ByteString b =
-              com.google.gwt.dev.protobuf.ByteString.copyFromUtf8(
+          com.google.protobuf.ByteString b =
+              com.google.protobuf.ByteString.copyFromUtf8(
                   (java.lang.String) ref);
           protocolVersion_ = b;
           return b;
         } else {
-          return (com.google.gwt.dev.protobuf.ByteString) ref;
+          return (com.google.protobuf.ByteString) ref;
         }
       }
       /**
@@ -19653,7 +19653,7 @@ public final class RemoteMessageProto {
        * </pre>
        */
       public Builder setProtocolVersionBytes(
-          com.google.gwt.dev.protobuf.ByteString value) {
+          com.google.protobuf.ByteString value) {
         if (value == null) {
     throw new NullPointerException();
   }
@@ -19734,7 +19734,7 @@ public final class RemoteMessageProto {
 
       // optional .com.google.gwt.dev.shell.remoteui.Message.Request request = 4;
       private com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request request_ = com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.getDefaultInstance();
-      private com.google.gwt.dev.protobuf.SingleFieldBuilder<
+      private com.google.protobuf.SingleFieldBuilder<
           com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.RequestOrBuilder> requestBuilder_;
       /**
        * <code>optional .com.google.gwt.dev.shell.remoteui.Message.Request request = 4;</code>
@@ -19835,11 +19835,11 @@ public final class RemoteMessageProto {
       /**
        * <code>optional .com.google.gwt.dev.shell.remoteui.Message.Request request = 4;</code>
        */
-      private com.google.gwt.dev.protobuf.SingleFieldBuilder<
+      private com.google.protobuf.SingleFieldBuilder<
           com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.RequestOrBuilder>
           getRequestFieldBuilder() {
         if (requestBuilder_ == null) {
-          requestBuilder_ = new com.google.gwt.dev.protobuf.SingleFieldBuilder<
+          requestBuilder_ = new com.google.protobuf.SingleFieldBuilder<
               com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Request.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.RequestOrBuilder>(
                   request_,
                   getParentForChildren(),
@@ -19851,7 +19851,7 @@ public final class RemoteMessageProto {
 
       // optional .com.google.gwt.dev.shell.remoteui.Message.Response response = 5;
       private com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response response_ = com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.getDefaultInstance();
-      private com.google.gwt.dev.protobuf.SingleFieldBuilder<
+      private com.google.protobuf.SingleFieldBuilder<
           com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.ResponseOrBuilder> responseBuilder_;
       /**
        * <code>optional .com.google.gwt.dev.shell.remoteui.Message.Response response = 5;</code>
@@ -19952,11 +19952,11 @@ public final class RemoteMessageProto {
       /**
        * <code>optional .com.google.gwt.dev.shell.remoteui.Message.Response response = 5;</code>
        */
-      private com.google.gwt.dev.protobuf.SingleFieldBuilder<
+      private com.google.protobuf.SingleFieldBuilder<
           com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.ResponseOrBuilder>
           getResponseFieldBuilder() {
         if (responseBuilder_ == null) {
-          responseBuilder_ = new com.google.gwt.dev.protobuf.SingleFieldBuilder<
+          responseBuilder_ = new com.google.protobuf.SingleFieldBuilder<
               com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Response.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.ResponseOrBuilder>(
                   response_,
                   getParentForChildren(),
@@ -19968,7 +19968,7 @@ public final class RemoteMessageProto {
 
       // optional .com.google.gwt.dev.shell.remoteui.Message.Failure failure = 6;
       private com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Failure failure_ = com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Failure.getDefaultInstance();
-      private com.google.gwt.dev.protobuf.SingleFieldBuilder<
+      private com.google.protobuf.SingleFieldBuilder<
           com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Failure, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Failure.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.FailureOrBuilder> failureBuilder_;
       /**
        * <code>optional .com.google.gwt.dev.shell.remoteui.Message.Failure failure = 6;</code>
@@ -20069,11 +20069,11 @@ public final class RemoteMessageProto {
       /**
        * <code>optional .com.google.gwt.dev.shell.remoteui.Message.Failure failure = 6;</code>
        */
-      private com.google.gwt.dev.protobuf.SingleFieldBuilder<
+      private com.google.protobuf.SingleFieldBuilder<
           com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Failure, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Failure.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.FailureOrBuilder>
           getFailureFieldBuilder() {
         if (failureBuilder_ == null) {
-          failureBuilder_ = new com.google.gwt.dev.protobuf.SingleFieldBuilder<
+          failureBuilder_ = new com.google.protobuf.SingleFieldBuilder<
               com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Failure, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.Failure.Builder, com.google.gwt.dev.shell.remoteui.RemoteMessageProto.Message.FailureOrBuilder>(
                   failure_,
                   getParentForChildren(),
@@ -20094,152 +20094,152 @@ public final class RemoteMessageProto {
     // @@protoc_insertion_point(class_scope:com.google.gwt.dev.shell.remoteui.Message)
   }
 
-  private static com.google.gwt.dev.protobuf.Descriptors.Descriptor
+  private static com.google.protobuf.Descriptors.Descriptor
     internal_static_com_google_gwt_dev_shell_remoteui_Message_descriptor;
   private static
-    com.google.gwt.dev.protobuf.GeneratedMessage.FieldAccessorTable
+    com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_com_google_gwt_dev_shell_remoteui_Message_fieldAccessorTable;
-  private static com.google.gwt.dev.protobuf.Descriptors.Descriptor
+  private static com.google.protobuf.Descriptors.Descriptor
     internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_descriptor;
   private static
-    com.google.gwt.dev.protobuf.GeneratedMessage.FieldAccessorTable
+    com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_fieldAccessorTable;
-  private static com.google.gwt.dev.protobuf.Descriptors.Descriptor
+  private static com.google.protobuf.Descriptors.Descriptor
     internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_descriptor;
   private static
-    com.google.gwt.dev.protobuf.GeneratedMessage.FieldAccessorTable
+    com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_fieldAccessorTable;
-  private static com.google.gwt.dev.protobuf.Descriptors.Descriptor
+  private static com.google.protobuf.Descriptors.Descriptor
     internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_CapabilityExchange_descriptor;
   private static
-    com.google.gwt.dev.protobuf.GeneratedMessage.FieldAccessorTable
+    com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_CapabilityExchange_fieldAccessorTable;
-  private static com.google.gwt.dev.protobuf.Descriptors.Descriptor
+  private static com.google.protobuf.Descriptors.Descriptor
     internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_AddLog_descriptor;
   private static
-    com.google.gwt.dev.protobuf.GeneratedMessage.FieldAccessorTable
+    com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_AddLog_fieldAccessorTable;
-  private static com.google.gwt.dev.protobuf.Descriptors.Descriptor
+  private static com.google.protobuf.Descriptors.Descriptor
     internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_AddLog_ModuleLog_descriptor;
   private static
-    com.google.gwt.dev.protobuf.GeneratedMessage.FieldAccessorTable
+    com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_AddLog_ModuleLog_fieldAccessorTable;
-  private static com.google.gwt.dev.protobuf.Descriptors.Descriptor
+  private static com.google.protobuf.Descriptors.Descriptor
     internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_AddLog_ServerLog_descriptor;
   private static
-    com.google.gwt.dev.protobuf.GeneratedMessage.FieldAccessorTable
+    com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_AddLog_ServerLog_fieldAccessorTable;
-  private static com.google.gwt.dev.protobuf.Descriptors.Descriptor
+  private static com.google.protobuf.Descriptors.Descriptor
     internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_AddLog_MainLog_descriptor;
   private static
-    com.google.gwt.dev.protobuf.GeneratedMessage.FieldAccessorTable
+    com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_AddLog_MainLog_fieldAccessorTable;
-  private static com.google.gwt.dev.protobuf.Descriptors.Descriptor
+  private static com.google.protobuf.Descriptors.Descriptor
     internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_LogData_descriptor;
   private static
-    com.google.gwt.dev.protobuf.GeneratedMessage.FieldAccessorTable
+    com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_LogData_fieldAccessorTable;
-  private static com.google.gwt.dev.protobuf.Descriptors.Descriptor
+  private static com.google.protobuf.Descriptors.Descriptor
     internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_LogData_HelpInfo_descriptor;
   private static
-    com.google.gwt.dev.protobuf.GeneratedMessage.FieldAccessorTable
+    com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_LogData_HelpInfo_fieldAccessorTable;
-  private static com.google.gwt.dev.protobuf.Descriptors.Descriptor
+  private static com.google.protobuf.Descriptors.Descriptor
     internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_AddLogBranch_descriptor;
   private static
-    com.google.gwt.dev.protobuf.GeneratedMessage.FieldAccessorTable
+    com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_AddLogBranch_fieldAccessorTable;
-  private static com.google.gwt.dev.protobuf.Descriptors.Descriptor
+  private static com.google.protobuf.Descriptors.Descriptor
     internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_AddLogEntry_descriptor;
   private static
-    com.google.gwt.dev.protobuf.GeneratedMessage.FieldAccessorTable
+    com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_AddLogEntry_fieldAccessorTable;
-  private static com.google.gwt.dev.protobuf.Descriptors.Descriptor
+  private static com.google.protobuf.Descriptors.Descriptor
     internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_DisconnectLog_descriptor;
   private static
-    com.google.gwt.dev.protobuf.GeneratedMessage.FieldAccessorTable
+    com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_DisconnectLog_fieldAccessorTable;
-  private static com.google.gwt.dev.protobuf.Descriptors.Descriptor
+  private static com.google.protobuf.Descriptors.Descriptor
     internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_Initialize_descriptor;
   private static
-    com.google.gwt.dev.protobuf.GeneratedMessage.FieldAccessorTable
+    com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_Initialize_fieldAccessorTable;
-  private static com.google.gwt.dev.protobuf.Descriptors.Descriptor
+  private static com.google.protobuf.Descriptors.Descriptor
     internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_DevModeRequest_descriptor;
   private static
-    com.google.gwt.dev.protobuf.GeneratedMessage.FieldAccessorTable
+    com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_DevModeRequest_fieldAccessorTable;
-  private static com.google.gwt.dev.protobuf.Descriptors.Descriptor
+  private static com.google.protobuf.Descriptors.Descriptor
     internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_DevModeRequest_CapabilityExchange_descriptor;
   private static
-    com.google.gwt.dev.protobuf.GeneratedMessage.FieldAccessorTable
+    com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_DevModeRequest_CapabilityExchange_fieldAccessorTable;
-  private static com.google.gwt.dev.protobuf.Descriptors.Descriptor
+  private static com.google.protobuf.Descriptors.Descriptor
     internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_DevModeRequest_RestartWebServer_descriptor;
   private static
-    com.google.gwt.dev.protobuf.GeneratedMessage.FieldAccessorTable
+    com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_DevModeRequest_RestartWebServer_fieldAccessorTable;
-  private static com.google.gwt.dev.protobuf.Descriptors.Descriptor
+  private static com.google.protobuf.Descriptors.Descriptor
     internal_static_com_google_gwt_dev_shell_remoteui_Message_Response_descriptor;
   private static
-    com.google.gwt.dev.protobuf.GeneratedMessage.FieldAccessorTable
+    com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_com_google_gwt_dev_shell_remoteui_Message_Response_fieldAccessorTable;
-  private static com.google.gwt.dev.protobuf.Descriptors.Descriptor
+  private static com.google.protobuf.Descriptors.Descriptor
     internal_static_com_google_gwt_dev_shell_remoteui_Message_Response_ViewerResponse_descriptor;
   private static
-    com.google.gwt.dev.protobuf.GeneratedMessage.FieldAccessorTable
+    com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_com_google_gwt_dev_shell_remoteui_Message_Response_ViewerResponse_fieldAccessorTable;
-  private static com.google.gwt.dev.protobuf.Descriptors.Descriptor
+  private static com.google.protobuf.Descriptors.Descriptor
     internal_static_com_google_gwt_dev_shell_remoteui_Message_Response_ViewerResponse_CapabilityExchange_descriptor;
   private static
-    com.google.gwt.dev.protobuf.GeneratedMessage.FieldAccessorTable
+    com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_com_google_gwt_dev_shell_remoteui_Message_Response_ViewerResponse_CapabilityExchange_fieldAccessorTable;
-  private static com.google.gwt.dev.protobuf.Descriptors.Descriptor
+  private static com.google.protobuf.Descriptors.Descriptor
     internal_static_com_google_gwt_dev_shell_remoteui_Message_Response_ViewerResponse_CapabilityExchange_Capability_descriptor;
   private static
-    com.google.gwt.dev.protobuf.GeneratedMessage.FieldAccessorTable
+    com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_com_google_gwt_dev_shell_remoteui_Message_Response_ViewerResponse_CapabilityExchange_Capability_fieldAccessorTable;
-  private static com.google.gwt.dev.protobuf.Descriptors.Descriptor
+  private static com.google.protobuf.Descriptors.Descriptor
     internal_static_com_google_gwt_dev_shell_remoteui_Message_Response_ViewerResponse_AddLog_descriptor;
   private static
-    com.google.gwt.dev.protobuf.GeneratedMessage.FieldAccessorTable
+    com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_com_google_gwt_dev_shell_remoteui_Message_Response_ViewerResponse_AddLog_fieldAccessorTable;
-  private static com.google.gwt.dev.protobuf.Descriptors.Descriptor
+  private static com.google.protobuf.Descriptors.Descriptor
     internal_static_com_google_gwt_dev_shell_remoteui_Message_Response_ViewerResponse_AddLogBranch_descriptor;
   private static
-    com.google.gwt.dev.protobuf.GeneratedMessage.FieldAccessorTable
+    com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_com_google_gwt_dev_shell_remoteui_Message_Response_ViewerResponse_AddLogBranch_fieldAccessorTable;
-  private static com.google.gwt.dev.protobuf.Descriptors.Descriptor
+  private static com.google.protobuf.Descriptors.Descriptor
     internal_static_com_google_gwt_dev_shell_remoteui_Message_Response_DevModeResponse_descriptor;
   private static
-    com.google.gwt.dev.protobuf.GeneratedMessage.FieldAccessorTable
+    com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_com_google_gwt_dev_shell_remoteui_Message_Response_DevModeResponse_fieldAccessorTable;
-  private static com.google.gwt.dev.protobuf.Descriptors.Descriptor
+  private static com.google.protobuf.Descriptors.Descriptor
     internal_static_com_google_gwt_dev_shell_remoteui_Message_Response_DevModeResponse_CapabilityExchange_descriptor;
   private static
-    com.google.gwt.dev.protobuf.GeneratedMessage.FieldAccessorTable
+    com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_com_google_gwt_dev_shell_remoteui_Message_Response_DevModeResponse_CapabilityExchange_fieldAccessorTable;
-  private static com.google.gwt.dev.protobuf.Descriptors.Descriptor
+  private static com.google.protobuf.Descriptors.Descriptor
     internal_static_com_google_gwt_dev_shell_remoteui_Message_Response_DevModeResponse_CapabilityExchange_Capability_descriptor;
   private static
-    com.google.gwt.dev.protobuf.GeneratedMessage.FieldAccessorTable
+    com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_com_google_gwt_dev_shell_remoteui_Message_Response_DevModeResponse_CapabilityExchange_Capability_fieldAccessorTable;
-  private static com.google.gwt.dev.protobuf.Descriptors.Descriptor
+  private static com.google.protobuf.Descriptors.Descriptor
     internal_static_com_google_gwt_dev_shell_remoteui_Message_Response_DevModeResponse_RestartWebServer_descriptor;
   private static
-    com.google.gwt.dev.protobuf.GeneratedMessage.FieldAccessorTable
+    com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_com_google_gwt_dev_shell_remoteui_Message_Response_DevModeResponse_RestartWebServer_fieldAccessorTable;
-  private static com.google.gwt.dev.protobuf.Descriptors.Descriptor
+  private static com.google.protobuf.Descriptors.Descriptor
     internal_static_com_google_gwt_dev_shell_remoteui_Message_Failure_descriptor;
   private static
-    com.google.gwt.dev.protobuf.GeneratedMessage.FieldAccessorTable
+    com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_com_google_gwt_dev_shell_remoteui_Message_Failure_fieldAccessorTable;
 
-  public static com.google.gwt.dev.protobuf.Descriptors.FileDescriptor
+  public static com.google.protobuf.Descriptors.FileDescriptor
       getDescriptor() {
     return descriptor;
   }
-  private static com.google.gwt.dev.protobuf.Descriptors.FileDescriptor
+  private static com.google.protobuf.Descriptors.FileDescriptor
       descriptor;
   static {
     java.lang.String[] descriptorData = {
@@ -20373,185 +20373,185 @@ public final class RemoteMessageProto {
       "\000\022\014\n\010RESPONSE\020\001\022\013\n\007FAILURE\020\002B\024B\022RemoteMe" +
       "ssageProto"
     };
-    com.google.gwt.dev.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
-      new com.google.gwt.dev.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner() {
-        public com.google.gwt.dev.protobuf.ExtensionRegistry assignDescriptors(
-            com.google.gwt.dev.protobuf.Descriptors.FileDescriptor root) {
+    com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
+      new com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner() {
+        public com.google.protobuf.ExtensionRegistry assignDescriptors(
+            com.google.protobuf.Descriptors.FileDescriptor root) {
           descriptor = root;
           internal_static_com_google_gwt_dev_shell_remoteui_Message_descriptor =
             getDescriptor().getMessageTypes().get(0);
           internal_static_com_google_gwt_dev_shell_remoteui_Message_fieldAccessorTable = new
-            com.google.gwt.dev.protobuf.GeneratedMessage.FieldAccessorTable(
+            com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_com_google_gwt_dev_shell_remoteui_Message_descriptor,
               new java.lang.String[] { "ProtocolVersion", "MessageType", "MessageId", "Request", "Response", "Failure", });
           internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_descriptor =
             internal_static_com_google_gwt_dev_shell_remoteui_Message_descriptor.getNestedTypes().get(0);
           internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_fieldAccessorTable = new
-            com.google.gwt.dev.protobuf.GeneratedMessage.FieldAccessorTable(
+            com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_descriptor,
               new java.lang.String[] { "ServiceType", "ViewerRequest", "DevModeRequest", });
           internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_descriptor =
             internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_descriptor.getNestedTypes().get(0);
           internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_fieldAccessorTable = new
-            com.google.gwt.dev.protobuf.GeneratedMessage.FieldAccessorTable(
+            com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_descriptor,
               new java.lang.String[] { "RequestType", "CapabilityExchange", "AddLog", "AddLogBranch", "AddLogEntry", "DisconnectLog", "Initialize", });
           internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_CapabilityExchange_descriptor =
             internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_descriptor.getNestedTypes().get(0);
           internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_CapabilityExchange_fieldAccessorTable = new
-            com.google.gwt.dev.protobuf.GeneratedMessage.FieldAccessorTable(
+            com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_CapabilityExchange_descriptor,
               new java.lang.String[] { });
           internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_AddLog_descriptor =
             internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_descriptor.getNestedTypes().get(1);
           internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_AddLog_fieldAccessorTable = new
-            com.google.gwt.dev.protobuf.GeneratedMessage.FieldAccessorTable(
+            com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_AddLog_descriptor,
               new java.lang.String[] { "Type", "ModuleLog", "ServerLog", "MainLog", });
           internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_AddLog_ModuleLog_descriptor =
             internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_AddLog_descriptor.getNestedTypes().get(0);
           internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_AddLog_ModuleLog_fieldAccessorTable = new
-            com.google.gwt.dev.protobuf.GeneratedMessage.FieldAccessorTable(
+            com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_AddLog_ModuleLog_descriptor,
               new java.lang.String[] { "Name", "Icon", "SessionKey", "UserAgent", "Url", "TabKey", "RemoteHost", });
           internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_AddLog_ServerLog_descriptor =
             internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_AddLog_descriptor.getNestedTypes().get(1);
           internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_AddLog_ServerLog_fieldAccessorTable = new
-            com.google.gwt.dev.protobuf.GeneratedMessage.FieldAccessorTable(
+            com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_AddLog_ServerLog_descriptor,
               new java.lang.String[] { "Name", "Icon", });
           internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_AddLog_MainLog_descriptor =
             internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_AddLog_descriptor.getNestedTypes().get(2);
           internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_AddLog_MainLog_fieldAccessorTable = new
-            com.google.gwt.dev.protobuf.GeneratedMessage.FieldAccessorTable(
+            com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_AddLog_MainLog_descriptor,
               new java.lang.String[] { });
           internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_LogData_descriptor =
             internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_descriptor.getNestedTypes().get(2);
           internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_LogData_fieldAccessorTable = new
-            com.google.gwt.dev.protobuf.GeneratedMessage.FieldAccessorTable(
+            com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_LogData_descriptor,
               new java.lang.String[] { "Summary", "Level", "NeedsAttention", "Details", "HelpInfo", });
           internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_LogData_HelpInfo_descriptor =
             internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_LogData_descriptor.getNestedTypes().get(0);
           internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_LogData_HelpInfo_fieldAccessorTable = new
-            com.google.gwt.dev.protobuf.GeneratedMessage.FieldAccessorTable(
+            com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_LogData_HelpInfo_descriptor,
               new java.lang.String[] { "Url", "Text", });
           internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_AddLogBranch_descriptor =
             internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_descriptor.getNestedTypes().get(3);
           internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_AddLogBranch_fieldAccessorTable = new
-            com.google.gwt.dev.protobuf.GeneratedMessage.FieldAccessorTable(
+            com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_AddLogBranch_descriptor,
               new java.lang.String[] { "ParentLogHandle", "IndexInParent", "LogData", });
           internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_AddLogEntry_descriptor =
             internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_descriptor.getNestedTypes().get(4);
           internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_AddLogEntry_fieldAccessorTable = new
-            com.google.gwt.dev.protobuf.GeneratedMessage.FieldAccessorTable(
+            com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_AddLogEntry_descriptor,
               new java.lang.String[] { "LogHandle", "IndexInLog", "LogData", });
           internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_DisconnectLog_descriptor =
             internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_descriptor.getNestedTypes().get(5);
           internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_DisconnectLog_fieldAccessorTable = new
-            com.google.gwt.dev.protobuf.GeneratedMessage.FieldAccessorTable(
+            com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_DisconnectLog_descriptor,
               new java.lang.String[] { "LogHandle", });
           internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_Initialize_descriptor =
             internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_descriptor.getNestedTypes().get(6);
           internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_Initialize_fieldAccessorTable = new
-            com.google.gwt.dev.protobuf.GeneratedMessage.FieldAccessorTable(
+            com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_ViewerRequest_Initialize_descriptor,
               new java.lang.String[] { "ClientId", "StartupURLs", });
           internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_DevModeRequest_descriptor =
             internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_descriptor.getNestedTypes().get(1);
           internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_DevModeRequest_fieldAccessorTable = new
-            com.google.gwt.dev.protobuf.GeneratedMessage.FieldAccessorTable(
+            com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_DevModeRequest_descriptor,
               new java.lang.String[] { "RequestType", "CapabilityExchange", "RestartWebServer", });
           internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_DevModeRequest_CapabilityExchange_descriptor =
             internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_DevModeRequest_descriptor.getNestedTypes().get(0);
           internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_DevModeRequest_CapabilityExchange_fieldAccessorTable = new
-            com.google.gwt.dev.protobuf.GeneratedMessage.FieldAccessorTable(
+            com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_DevModeRequest_CapabilityExchange_descriptor,
               new java.lang.String[] { });
           internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_DevModeRequest_RestartWebServer_descriptor =
             internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_DevModeRequest_descriptor.getNestedTypes().get(1);
           internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_DevModeRequest_RestartWebServer_fieldAccessorTable = new
-            com.google.gwt.dev.protobuf.GeneratedMessage.FieldAccessorTable(
+            com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_com_google_gwt_dev_shell_remoteui_Message_Request_DevModeRequest_RestartWebServer_descriptor,
               new java.lang.String[] { });
           internal_static_com_google_gwt_dev_shell_remoteui_Message_Response_descriptor =
             internal_static_com_google_gwt_dev_shell_remoteui_Message_descriptor.getNestedTypes().get(1);
           internal_static_com_google_gwt_dev_shell_remoteui_Message_Response_fieldAccessorTable = new
-            com.google.gwt.dev.protobuf.GeneratedMessage.FieldAccessorTable(
+            com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_com_google_gwt_dev_shell_remoteui_Message_Response_descriptor,
               new java.lang.String[] { "ViewerResponse", "DevModeResponse", });
           internal_static_com_google_gwt_dev_shell_remoteui_Message_Response_ViewerResponse_descriptor =
             internal_static_com_google_gwt_dev_shell_remoteui_Message_Response_descriptor.getNestedTypes().get(0);
           internal_static_com_google_gwt_dev_shell_remoteui_Message_Response_ViewerResponse_fieldAccessorTable = new
-            com.google.gwt.dev.protobuf.GeneratedMessage.FieldAccessorTable(
+            com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_com_google_gwt_dev_shell_remoteui_Message_Response_ViewerResponse_descriptor,
               new java.lang.String[] { "ResponseType", "CapabilityExchange", "AddLog", "AddLogBranch", });
           internal_static_com_google_gwt_dev_shell_remoteui_Message_Response_ViewerResponse_CapabilityExchange_descriptor =
             internal_static_com_google_gwt_dev_shell_remoteui_Message_Response_ViewerResponse_descriptor.getNestedTypes().get(0);
           internal_static_com_google_gwt_dev_shell_remoteui_Message_Response_ViewerResponse_CapabilityExchange_fieldAccessorTable = new
-            com.google.gwt.dev.protobuf.GeneratedMessage.FieldAccessorTable(
+            com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_com_google_gwt_dev_shell_remoteui_Message_Response_ViewerResponse_CapabilityExchange_descriptor,
               new java.lang.String[] { "Capabilities", });
           internal_static_com_google_gwt_dev_shell_remoteui_Message_Response_ViewerResponse_CapabilityExchange_Capability_descriptor =
             internal_static_com_google_gwt_dev_shell_remoteui_Message_Response_ViewerResponse_CapabilityExchange_descriptor.getNestedTypes().get(0);
           internal_static_com_google_gwt_dev_shell_remoteui_Message_Response_ViewerResponse_CapabilityExchange_Capability_fieldAccessorTable = new
-            com.google.gwt.dev.protobuf.GeneratedMessage.FieldAccessorTable(
+            com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_com_google_gwt_dev_shell_remoteui_Message_Response_ViewerResponse_CapabilityExchange_Capability_descriptor,
               new java.lang.String[] { "Capability", });
           internal_static_com_google_gwt_dev_shell_remoteui_Message_Response_ViewerResponse_AddLog_descriptor =
             internal_static_com_google_gwt_dev_shell_remoteui_Message_Response_ViewerResponse_descriptor.getNestedTypes().get(1);
           internal_static_com_google_gwt_dev_shell_remoteui_Message_Response_ViewerResponse_AddLog_fieldAccessorTable = new
-            com.google.gwt.dev.protobuf.GeneratedMessage.FieldAccessorTable(
+            com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_com_google_gwt_dev_shell_remoteui_Message_Response_ViewerResponse_AddLog_descriptor,
               new java.lang.String[] { "LogHandle", });
           internal_static_com_google_gwt_dev_shell_remoteui_Message_Response_ViewerResponse_AddLogBranch_descriptor =
             internal_static_com_google_gwt_dev_shell_remoteui_Message_Response_ViewerResponse_descriptor.getNestedTypes().get(2);
           internal_static_com_google_gwt_dev_shell_remoteui_Message_Response_ViewerResponse_AddLogBranch_fieldAccessorTable = new
-            com.google.gwt.dev.protobuf.GeneratedMessage.FieldAccessorTable(
+            com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_com_google_gwt_dev_shell_remoteui_Message_Response_ViewerResponse_AddLogBranch_descriptor,
               new java.lang.String[] { "LogHandle", });
           internal_static_com_google_gwt_dev_shell_remoteui_Message_Response_DevModeResponse_descriptor =
             internal_static_com_google_gwt_dev_shell_remoteui_Message_Response_descriptor.getNestedTypes().get(1);
           internal_static_com_google_gwt_dev_shell_remoteui_Message_Response_DevModeResponse_fieldAccessorTable = new
-            com.google.gwt.dev.protobuf.GeneratedMessage.FieldAccessorTable(
+            com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_com_google_gwt_dev_shell_remoteui_Message_Response_DevModeResponse_descriptor,
               new java.lang.String[] { "ResponseType", "CapabilityExchange", "RestartWebServer", });
           internal_static_com_google_gwt_dev_shell_remoteui_Message_Response_DevModeResponse_CapabilityExchange_descriptor =
             internal_static_com_google_gwt_dev_shell_remoteui_Message_Response_DevModeResponse_descriptor.getNestedTypes().get(0);
           internal_static_com_google_gwt_dev_shell_remoteui_Message_Response_DevModeResponse_CapabilityExchange_fieldAccessorTable = new
-            com.google.gwt.dev.protobuf.GeneratedMessage.FieldAccessorTable(
+            com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_com_google_gwt_dev_shell_remoteui_Message_Response_DevModeResponse_CapabilityExchange_descriptor,
               new java.lang.String[] { "Capabilities", });
           internal_static_com_google_gwt_dev_shell_remoteui_Message_Response_DevModeResponse_CapabilityExchange_Capability_descriptor =
             internal_static_com_google_gwt_dev_shell_remoteui_Message_Response_DevModeResponse_CapabilityExchange_descriptor.getNestedTypes().get(0);
           internal_static_com_google_gwt_dev_shell_remoteui_Message_Response_DevModeResponse_CapabilityExchange_Capability_fieldAccessorTable = new
-            com.google.gwt.dev.protobuf.GeneratedMessage.FieldAccessorTable(
+            com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_com_google_gwt_dev_shell_remoteui_Message_Response_DevModeResponse_CapabilityExchange_Capability_descriptor,
               new java.lang.String[] { "Capability", });
           internal_static_com_google_gwt_dev_shell_remoteui_Message_Response_DevModeResponse_RestartWebServer_descriptor =
             internal_static_com_google_gwt_dev_shell_remoteui_Message_Response_DevModeResponse_descriptor.getNestedTypes().get(1);
           internal_static_com_google_gwt_dev_shell_remoteui_Message_Response_DevModeResponse_RestartWebServer_fieldAccessorTable = new
-            com.google.gwt.dev.protobuf.GeneratedMessage.FieldAccessorTable(
+            com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_com_google_gwt_dev_shell_remoteui_Message_Response_DevModeResponse_RestartWebServer_descriptor,
               new java.lang.String[] { });
           internal_static_com_google_gwt_dev_shell_remoteui_Message_Failure_descriptor =
             internal_static_com_google_gwt_dev_shell_remoteui_Message_descriptor.getNestedTypes().get(2);
           internal_static_com_google_gwt_dev_shell_remoteui_Message_Failure_fieldAccessorTable = new
-            com.google.gwt.dev.protobuf.GeneratedMessage.FieldAccessorTable(
+            com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_com_google_gwt_dev_shell_remoteui_Message_Failure_descriptor,
               new java.lang.String[] { "Message", "StackTrace", });
           return null;
         }
       };
-    com.google.gwt.dev.protobuf.Descriptors.FileDescriptor
+    com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
-        new com.google.gwt.dev.protobuf.Descriptors.FileDescriptor[] {
+        new com.google.protobuf.Descriptors.FileDescriptor[] {
         }, assigner);
   }
 

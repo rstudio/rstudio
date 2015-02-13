@@ -15,13 +15,13 @@
  */
 package com.google.gwt.dev.jjs.impl.gflow.constants;
 
+import com.google.common.base.Preconditions;
 import com.google.gwt.dev.jjs.ast.HasName;
 import com.google.gwt.dev.jjs.ast.JDoubleLiteral;
 import com.google.gwt.dev.jjs.ast.JFloatLiteral;
 import com.google.gwt.dev.jjs.ast.JValueLiteral;
 import com.google.gwt.dev.jjs.ast.JVariable;
 import com.google.gwt.dev.jjs.impl.gflow.Assumption;
-import com.google.gwt.thirdparty.guava.common.base.Preconditions;
 
 import java.util.ArrayList;
 import java.util.HashMap;

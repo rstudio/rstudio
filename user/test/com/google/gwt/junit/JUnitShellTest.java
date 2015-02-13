@@ -15,7 +15,7 @@
  */
 package com.google.gwt.junit;
 
-import com.google.gwt.thirdparty.guava.common.collect.ImmutableSet;
+import com.google.common.collect.ImmutableSet;
 
 import junit.framework.TestCase;
 

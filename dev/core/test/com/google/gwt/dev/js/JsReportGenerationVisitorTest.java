@@ -15,6 +15,7 @@
  */
 package com.google.gwt.dev.js;
 
+import com.google.common.collect.Lists;
 import com.google.gwt.core.ext.soyc.Range;
 import com.google.gwt.dev.jjs.JsSourceMap;
 import com.google.gwt.dev.jjs.SourceInfo;
@@ -23,7 +24,6 @@ import com.google.gwt.dev.jjs.impl.JavaToJavaScriptMap;
 import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.js.ast.JsStatement;
 import com.google.gwt.dev.util.DefaultTextOutput;
-import com.google.gwt.thirdparty.guava.common.collect.Lists;
 
 import junit.framework.TestCase;
 

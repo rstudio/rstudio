@@ -15,19 +15,19 @@
  */
 package com.google.gwt.dev.codeserver;
 
+import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSortedMap;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.SettableFuture;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.TreeLogger.Type;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.codeserver.JobEvent.CompileStrategy;
 import com.google.gwt.dev.codeserver.JobEvent.Status;
 import com.google.gwt.dev.util.log.AbstractTreeLogger;
-import com.google.gwt.thirdparty.guava.common.base.Preconditions;
-import com.google.gwt.thirdparty.guava.common.collect.ImmutableList;
-import com.google.gwt.thirdparty.guava.common.collect.ImmutableMap;
-import com.google.gwt.thirdparty.guava.common.collect.ImmutableSortedMap;
-import com.google.gwt.thirdparty.guava.common.util.concurrent.Futures;
-import com.google.gwt.thirdparty.guava.common.util.concurrent.ListenableFuture;
-import com.google.gwt.thirdparty.guava.common.util.concurrent.SettableFuture;
 
 import java.util.Map;
 import java.util.Set;

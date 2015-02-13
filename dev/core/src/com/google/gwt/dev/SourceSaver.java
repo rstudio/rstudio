@@ -15,6 +15,9 @@
  */
 package com.google.gwt.dev;
 
+import com.google.common.collect.Sets;
+import com.google.common.io.ByteStreams;
+import com.google.common.io.Resources;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.TreeLogger.Type;
 import com.google.gwt.core.ext.UnableToCompleteException;
@@ -28,9 +31,6 @@ import com.google.gwt.dev.json.JsonArray;
 import com.google.gwt.dev.json.JsonException;
 import com.google.gwt.dev.json.JsonObject;
 import com.google.gwt.dev.util.OutputFileSet;
-import com.google.gwt.thirdparty.guava.common.collect.Sets;
-import com.google.gwt.thirdparty.guava.common.io.ByteStreams;
-import com.google.gwt.thirdparty.guava.common.io.Resources;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -210,11 +210,9 @@ class SourceSaver {
       return false;
     }
 
-    OutputStream out = dest.openForWrite(destPrefix + path);
-    try {
-      ByteStreams.copy(Resources.asByteSource(resource), out);
-    } finally {
-      out.close();
+    try (InputStream resourceAsStream = Resources.asByteSource(resource).openStream();
+        OutputStream out = dest.openForWrite(destPrefix + path);) {
+      ByteStreams.copy(Resources.asByteSource(resource).openStream(), out);
     }
 
     return true;

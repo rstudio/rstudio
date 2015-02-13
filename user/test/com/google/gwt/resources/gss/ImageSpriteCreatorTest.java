@@ -23,6 +23,9 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.google.common.css.compiler.ast.CssTree;
+import com.google.common.css.compiler.ast.ErrorManager;
+import com.google.common.css.compiler.ast.GssError;
 import com.google.gwt.core.ext.GeneratorContext;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JMethod;
@@ -33,9 +36,6 @@ import com.google.gwt.resources.client.ImageResource.ImageOptions;
 import com.google.gwt.resources.client.ImageResource.RepeatStyle;
 import com.google.gwt.resources.ext.ResourceContext;
 import com.google.gwt.resources.gss.ImageSpriteCreator.MethodByPathHelper;
-import com.google.gwt.thirdparty.common.css.compiler.ast.CssTree;
-import com.google.gwt.thirdparty.common.css.compiler.ast.ErrorManager;
-import com.google.gwt.thirdparty.common.css.compiler.ast.GssError;
 
 /**
  * Test class for {@link ImageSpriteCreator}.

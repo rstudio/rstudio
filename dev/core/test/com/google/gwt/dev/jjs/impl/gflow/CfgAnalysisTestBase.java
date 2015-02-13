@@ -15,6 +15,7 @@
  */
 package com.google.gwt.dev.jjs.impl.gflow;
 
+import com.google.common.base.Joiner;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.jjs.ast.JMethodBody;
 import com.google.gwt.dev.jjs.ast.JProgram;
@@ -24,7 +25,6 @@ import com.google.gwt.dev.jjs.impl.gflow.cfg.Cfg;
 import com.google.gwt.dev.jjs.impl.gflow.cfg.CfgBuilder;
 import com.google.gwt.dev.jjs.impl.gflow.cfg.CfgEdge;
 import com.google.gwt.dev.jjs.impl.gflow.cfg.CfgNode;
-import com.google.gwt.thirdparty.guava.common.base.Joiner;
 
 import java.util.Map;
 

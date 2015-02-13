@@ -13,7 +13,7 @@
  */
 package com.google.gwt.core.ext;
 
-import com.google.gwt.thirdparty.guava.common.base.Strings;
+import com.google.common.base.Strings;
 
 import java.lang.annotation.Inherited;
 import java.lang.annotation.Retention;

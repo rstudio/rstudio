@@ -15,6 +15,8 @@
  */
 package com.google.gwt.dev.js;
 
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.Lists;
 import com.google.gwt.core.ext.soyc.Range;
 import com.google.gwt.dev.jjs.JsSourceMap;
 import com.google.gwt.dev.jjs.SourceInfo;
@@ -29,8 +31,6 @@ import com.google.gwt.dev.js.ast.JsNode;
 import com.google.gwt.dev.js.ast.JsStatement;
 import com.google.gwt.dev.js.ast.JsVisitable;
 import com.google.gwt.dev.util.TextOutput;
-import com.google.gwt.thirdparty.guava.common.annotations.VisibleForTesting;
-import com.google.gwt.thirdparty.guava.common.collect.Lists;
 
 import java.util.LinkedList;
 import java.util.List;

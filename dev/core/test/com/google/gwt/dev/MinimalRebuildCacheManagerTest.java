@@ -13,12 +13,12 @@
  */
 package com.google.gwt.dev;
 
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Sets;
+import com.google.common.io.Files;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.dev.cfg.PropertyPermutations.PermutationDescription;
 import com.google.gwt.dev.jjs.ast.JTypeOracle;
-import com.google.gwt.thirdparty.guava.common.collect.ImmutableMap;
-import com.google.gwt.thirdparty.guava.common.collect.Sets;
-import com.google.gwt.thirdparty.guava.common.io.Files;
 
 import junit.framework.TestCase;
 

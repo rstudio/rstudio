@@ -16,6 +16,7 @@
 
 package com.google.gwt.core.ext.linker.impl;
 
+import com.google.common.collect.Lists;
 import com.google.gwt.core.ext.LinkerContext;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
@@ -26,7 +27,6 @@ import com.google.gwt.core.ext.linker.EmittedArtifact;
 import com.google.gwt.core.ext.linker.SelectionProperty;
 import com.google.gwt.core.ext.linker.Shardable;
 import com.google.gwt.core.ext.linker.StatementRanges;
-import com.google.gwt.thirdparty.guava.common.collect.Lists;
 
 import junit.framework.TestCase;
 

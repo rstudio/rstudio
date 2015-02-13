@@ -15,6 +15,7 @@
  */
 package com.google.gwt.dev.jjs.impl.gflow.cfg;
 
+import com.google.common.base.Preconditions;
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JArrayRef;
 import com.google.gwt.dev.jjs.ast.JBinaryOperation;
@@ -50,7 +51,6 @@ import com.google.gwt.dev.jjs.ast.JVariableRef;
 import com.google.gwt.dev.jjs.ast.JVisitor;
 import com.google.gwt.dev.jjs.ast.JWhileStatement;
 import com.google.gwt.dev.jjs.ast.js.JDebuggerStatement;
-import com.google.gwt.thirdparty.guava.common.base.Preconditions;
 
 import java.util.ArrayList;
 import java.util.EnumMap;

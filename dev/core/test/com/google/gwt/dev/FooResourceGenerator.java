@@ -13,13 +13,13 @@
  */
 package com.google.gwt.dev;
 
+import com.google.common.base.Charsets;
 import com.google.gwt.core.ext.Generator;
 import com.google.gwt.core.ext.GeneratorContext;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.linker.EmittedArtifact.Visibility;
 import com.google.gwt.dev.util.Util;
-import com.google.gwt.thirdparty.guava.common.base.Charsets;
 
 import java.io.IOException;
 import java.io.OutputStream;

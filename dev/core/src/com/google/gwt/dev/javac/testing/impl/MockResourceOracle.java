@@ -15,11 +15,11 @@
  */
 package com.google.gwt.dev.javac.testing.impl;
 
+import com.google.common.collect.Lists;
+import com.google.common.io.Files;
 import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.resource.impl.ClassPathEntry;
 import com.google.gwt.dev.resource.impl.ResourceOracleImpl;
-import com.google.gwt.thirdparty.guava.common.collect.Lists;
-import com.google.gwt.thirdparty.guava.common.io.Files;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -75,7 +75,7 @@ public class MockResourceOracle extends ResourceOracleImpl {
     pathName = Files.simplifyPath(pathName);
     return exportedMap.get(pathName);
   }
-  
+
   @Override
   public Set<Resource> getResources() {
     return exportedValues;

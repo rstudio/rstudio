@@ -15,11 +15,11 @@
  */
 package com.google.gwt.dev.codeserver;
 
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Maps;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.TreeLogger.Type;
 import com.google.gwt.dev.codeserver.JobEvent.Status;
-import com.google.gwt.thirdparty.guava.common.collect.ImmutableList;
-import com.google.gwt.thirdparty.guava.common.collect.Maps;
 
 import java.util.LinkedHashSet;
 import java.util.Map;

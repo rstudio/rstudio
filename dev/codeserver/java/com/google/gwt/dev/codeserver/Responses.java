@@ -16,14 +16,14 @@
 
 package com.google.gwt.dev.codeserver;
 
+import com.google.common.base.Charsets;
+import com.google.common.base.Preconditions;
+import com.google.common.io.ByteStreams;
+import com.google.common.io.Files;
+import com.google.common.io.Resources;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.dev.codeserver.Pages.ErrorPage;
 import com.google.gwt.dev.json.JsonObject;
-import com.google.gwt.thirdparty.guava.common.base.Charsets;
-import com.google.gwt.thirdparty.guava.common.base.Preconditions;
-import com.google.gwt.thirdparty.guava.common.io.ByteStreams;
-import com.google.gwt.thirdparty.guava.common.io.Files;
-import com.google.gwt.thirdparty.guava.common.io.Resources;
 
 import java.io.BufferedReader;
 import java.io.File;

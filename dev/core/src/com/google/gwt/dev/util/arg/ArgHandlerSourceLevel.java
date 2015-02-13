@@ -15,7 +15,7 @@
  */
 package com.google.gwt.dev.util.arg;
 
-import com.google.gwt.thirdparty.guava.common.base.Joiner;
+import com.google.common.base.Joiner;
 import com.google.gwt.util.tools.ArgHandlerString;
 
 /**

@@ -15,12 +15,12 @@
  */
 package com.google.gwt.resources.gss;
 
+import com.google.common.css.compiler.ast.CssCompilerPass;
+import com.google.common.css.compiler.ast.CssConditionalBlockNode;
+import com.google.common.css.compiler.ast.CssConditionalRuleNode;
+import com.google.common.css.compiler.ast.DefaultTreeVisitor;
+import com.google.common.css.compiler.ast.VisitController;
 import com.google.gwt.resources.gss.ast.CssRuntimeConditionalRuleNode;
-import com.google.gwt.thirdparty.common.css.compiler.ast.CssCompilerPass;
-import com.google.gwt.thirdparty.common.css.compiler.ast.CssConditionalBlockNode;
-import com.google.gwt.thirdparty.common.css.compiler.ast.CssConditionalRuleNode;
-import com.google.gwt.thirdparty.common.css.compiler.ast.DefaultTreeVisitor;
-import com.google.gwt.thirdparty.common.css.compiler.ast.VisitController;
 
 import java.util.HashSet;
 import java.util.Set;

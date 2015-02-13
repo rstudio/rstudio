@@ -15,6 +15,7 @@
  */
 package com.google.gwt.dev;
 
+import com.google.common.collect.Sets;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.linker.Artifact;
@@ -56,7 +57,6 @@ import com.google.gwt.dev.util.arg.OptionWarDir;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
-import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
 import java.io.BufferedInputStream;
 import java.io.File;

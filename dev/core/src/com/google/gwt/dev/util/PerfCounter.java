@@ -15,7 +15,7 @@
  */
 package com.google.gwt.dev.util;
 
-import com.google.gwt.thirdparty.guava.common.base.Preconditions;
+import com.google.common.base.Preconditions;
 
 import java.util.ArrayList;
 import java.util.Collections;

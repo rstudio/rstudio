@@ -15,6 +15,8 @@
  */
 package com.google.gwt.dev.javac.typemodel;
 
+import com.google.common.collect.MapMaker;
+import com.google.common.collect.Sets;
 import com.google.gwt.core.ext.typeinfo.BadTypeArgsException;
 import com.google.gwt.core.ext.typeinfo.JPrimitiveType;
 import com.google.gwt.core.ext.typeinfo.JType;
@@ -27,8 +29,6 @@ import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.util.Name;
 import com.google.gwt.dev.util.collect.HashMap;
 import com.google.gwt.dev.util.collect.IdentityHashMap;
-import com.google.gwt.thirdparty.guava.common.collect.MapMaker;
-import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;

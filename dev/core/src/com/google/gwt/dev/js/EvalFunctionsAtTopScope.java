@@ -15,6 +15,7 @@
  */
 package com.google.gwt.dev.js;
 
+import com.google.common.collect.Queues;
 import com.google.gwt.dev.jjs.impl.JavaToJavaScriptMap;
 import com.google.gwt.dev.js.ast.JsBlock;
 import com.google.gwt.dev.js.ast.JsContext;
@@ -24,7 +25,6 @@ import com.google.gwt.dev.js.ast.JsModVisitor;
 import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.js.ast.JsProgramFragment;
 import com.google.gwt.dev.js.ast.JsStatement;
-import com.google.gwt.thirdparty.guava.common.collect.Queues;
 
 import java.util.Deque;
 import java.util.HashSet;

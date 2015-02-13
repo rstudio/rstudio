@@ -13,9 +13,9 @@
  */
 package com.google.gwt.dev.util;
 
+import com.google.common.hash.Hashing;
+import com.google.common.io.Files;
 import com.google.gwt.dev.jjs.ast.JNode;
-import com.google.gwt.thirdparty.guava.common.hash.Hashing;
-import com.google.gwt.thirdparty.guava.common.io.Files;
 import com.google.gwt.util.tools.shared.Md5Utils;
 import com.google.gwt.util.tools.shared.StringUtils;
 

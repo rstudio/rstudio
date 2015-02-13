@@ -123,6 +123,29 @@ AugmentedJar(
     wrap_javalibrary = 0,
 )
 
+GUAVA_DEPS = [
+  "//java/com/google/common/annotations",
+  "//java/com/google/common/base",
+  "//java/com/google/common/cache",
+  "//java/com/google/common/collect",
+  "//java/com/google/common/hash",
+  "//java/com/google/common/io",
+  "//java/com/google/common/primitives",
+  "//java/com/google/common/util/concurrent",
+]
+
+JS_COMP_DEPS = [
+  "//java/com/google/javascript/jscomp",
+  "//third_party/java/rhino_ast/java/com/google/javascript/rhino",
+  "//third_party/java_src/jscomp/java/com/google/debugging/sourcemap:common",
+  "//third_party/java_src/jscomp/java/com/google/debugging/sourcemap:shared", 
+]
+
+PROTO_DEPS = [
+  "//java/com/google/protobuf",
+  "//java/com/google/protobuf:protobuf_lite",
+]
+
 # The gwt-dev classes for GWT internal use only.
 # They must be jarjar-ed and dependencies stripped before exposing to google3.
 java_library(
@@ -133,9 +156,10 @@ java_library(
     ),
     deps = [
         ":compiler.standalone.super",
+        "//third_party/java_src/gwt/svn/tools:compiler_deps",
         "//third_party/java_src/gwt/svn/tools:dev_deps",
         "//third_party/java_src/gwt/svn/tools:servlet_api_3",
-    ],
+    ] + GUAVA_DEPS + JS_COMP_DEPS + PROTO_DEPS,
 )
 
 # Resource files in core/src.
@@ -204,7 +228,7 @@ java_library(
     deps = [
         ":compiler.standalone.super",
         "//third_party/java_src/gwt/svn/tools:compiler_deps",
-    ],
+    ] + GUAVA_DEPS + JS_COMP_DEPS,
 )
 
 # This is a bootstrap library; it will later be stripped out of the classpath
@@ -298,9 +322,10 @@ java_library(
     deps = [
         ":compiler.standalone.super",
         ":gwt-dev-bare",
+        "//third_party/java/gson",
         "//third_party/java/junit",
         "//third_party/java_src/gwt/svn/tools:dev_deps",
-    ],
+    ] + GUAVA_DEPS + JS_COMP_DEPS,
 )
 
 # The "dev" directory is tested by loose tests.  Some of them fail because of

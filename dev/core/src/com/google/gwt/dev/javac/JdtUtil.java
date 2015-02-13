@@ -15,9 +15,9 @@
  */
 package com.google.gwt.dev.javac;
 
-import com.google.gwt.thirdparty.guava.common.base.Joiner;
-import com.google.gwt.thirdparty.guava.common.base.Strings;
-import com.google.gwt.thirdparty.guava.common.collect.Lists;
+import com.google.common.base.Joiner;
+import com.google.common.base.Strings;
+import com.google.common.collect.Lists;
 
 import org.eclipse.jdt.core.compiler.CharOperation;
 import org.eclipse.jdt.internal.compiler.ast.AbstractMethodDeclaration;

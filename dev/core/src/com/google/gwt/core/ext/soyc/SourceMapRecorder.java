@@ -15,6 +15,9 @@
  */
 package com.google.gwt.core.ext.soyc;
 
+import com.google.common.collect.Lists;
+import com.google.debugging.sourcemap.SourceMapGeneratorV3;
+import com.google.debugging.sourcemap.SourceMapParseException;
 import com.google.gwt.core.ext.linker.SyntheticArtifact;
 import com.google.gwt.core.linker.SymbolMapsLinker;
 import com.google.gwt.dev.jjs.Correlation;
@@ -25,9 +28,6 @@ import com.google.gwt.dev.jjs.SourceInfoCorrelation;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
-import com.google.gwt.thirdparty.debugging.sourcemap.SourceMapGeneratorV3;
-import com.google.gwt.thirdparty.debugging.sourcemap.SourceMapParseException;
-import com.google.gwt.thirdparty.guava.common.collect.Lists;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;

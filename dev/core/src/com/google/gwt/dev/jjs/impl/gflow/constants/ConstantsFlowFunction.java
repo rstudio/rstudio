@@ -15,6 +15,7 @@
  */
 package com.google.gwt.dev.jjs.impl.gflow.constants;
 
+import com.google.common.base.Preconditions;
 import com.google.gwt.dev.jjs.ast.JBooleanLiteral;
 import com.google.gwt.dev.jjs.ast.JExpression;
 import com.google.gwt.dev.jjs.ast.JLocal;
@@ -33,7 +34,6 @@ import com.google.gwt.dev.jjs.impl.gflow.cfg.CfgReadWriteNode;
 import com.google.gwt.dev.jjs.impl.gflow.cfg.CfgVisitor;
 import com.google.gwt.dev.jjs.impl.gflow.cfg.CfgWriteNode;
 import com.google.gwt.dev.jjs.impl.gflow.constants.ConstantsAssumption.Updater;
-import com.google.gwt.thirdparty.guava.common.base.Preconditions;
 
 import java.util.ArrayList;
 

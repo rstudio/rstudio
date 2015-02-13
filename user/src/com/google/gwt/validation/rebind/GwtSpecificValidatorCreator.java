@@ -15,6 +15,17 @@
  */
 package com.google.gwt.validation.rebind;
 
+import com.google.common.base.Function;
+import com.google.common.base.Functions;
+import com.google.common.base.Joiner;
+import com.google.common.base.Predicate;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Ordering;
+import com.google.common.collect.Sets;
+import com.google.common.primitives.Primitives;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.UnsafeNativeLong;
 import com.google.gwt.core.ext.Generator;
@@ -32,17 +43,6 @@ import com.google.gwt.dev.jjs.ast.JDoubleLiteral;
 import com.google.gwt.dev.jjs.ast.JFloatLiteral;
 import com.google.gwt.dev.jjs.ast.JIntLiteral;
 import com.google.gwt.dev.jjs.ast.JLongLiteral;
-import com.google.gwt.thirdparty.guava.common.base.Function;
-import com.google.gwt.thirdparty.guava.common.base.Functions;
-import com.google.gwt.thirdparty.guava.common.base.Joiner;
-import com.google.gwt.thirdparty.guava.common.base.Predicate;
-import com.google.gwt.thirdparty.guava.common.collect.ImmutableList;
-import com.google.gwt.thirdparty.guava.common.collect.ImmutableSet;
-import com.google.gwt.thirdparty.guava.common.collect.Iterables;
-import com.google.gwt.thirdparty.guava.common.collect.Maps;
-import com.google.gwt.thirdparty.guava.common.collect.Ordering;
-import com.google.gwt.thirdparty.guava.common.collect.Sets;
-import com.google.gwt.thirdparty.guava.common.primitives.Primitives;
 import com.google.gwt.user.rebind.ClassSourceFileComposerFactory;
 import com.google.gwt.user.rebind.SourceWriter;
 import com.google.gwt.validation.client.impl.AbstractGwtSpecificValidator;
@@ -231,7 +231,7 @@ public final class GwtSpecificValidatorCreator extends AbstractCreator {
    */
   static <T extends Annotation> Class<?> getTypeOfConstraintValidator(
       Class<? extends ConstraintValidator<T, ?>> constraintClass) {
-    
+
     int candidateCount = 0;
     Class<?> result = null;
     for (Method method :  constraintClass.getMethods()) {
@@ -366,7 +366,7 @@ public final class GwtSpecificValidatorCreator extends AbstractCreator {
   protected void compose(ClassSourceFileComposerFactory composerFactory) {
     addImports(composerFactory, Annotation.class, ConstraintViolation.class,
         GWT.class, ValidationGroupsMetadata.class, Group.class, GroupChain.class, PathImpl.class,
-        Node.class, GroupChainGenerator.class, GwtBeanDescriptor.class, BeanMetadata.class, 
+        Node.class, GroupChainGenerator.class, GwtBeanDescriptor.class, BeanMetadata.class,
         GwtValidationContext.class, ArrayList.class, HashSet.class, IllegalArgumentException.class,
         Set.class, Collection.class, Iterator.class, List.class, ValidationException.class);
     composerFactory.setSuperclass(AbstractGwtSpecificValidator.class.getCanonicalName()
@@ -574,7 +574,7 @@ public final class GwtSpecificValidatorCreator extends AbstractCreator {
     }
     // for non-cascaded properties
     for (ConstraintDescriptor<?> constraint : p.getConstraintDescriptors()) {
-      org.hibernate.validator.metadata.ConstraintDescriptorImpl<?> constraintHibernate = 
+      org.hibernate.validator.metadata.ConstraintDescriptorImpl<?> constraintHibernate =
           (org.hibernate.validator.metadata.ConstraintDescriptorImpl<?>) constraint;
       if (constraintHibernate.getElementType() ==
           (useField ? ElementType.FIELD : ElementType.METHOD)) {
@@ -718,15 +718,15 @@ public final class GwtSpecificValidatorCreator extends AbstractCreator {
           if (!constraint.getConstraintValidatorClasses().isEmpty()) {
             Class<? extends ConstraintValidator<? extends Annotation, ?>> validatorClass =
                 getValidatorForType(constraint, clazz);
-  
+
             // validate(context, violations, null, object,
             sw.print("validate(context, violations, null, object, ");
-  
+
             // new MyValidtor(),
             sw.print("new ");
             sw.print(validatorClass.getCanonicalName());
             sw.print("(), "); // TODO(nchalko) use ConstraintValidatorFactory
-  
+
             // this.aConstraintDescriptor, groups);
             sw.print(constraintDescriptorVar("this", count));
             sw.print(", ");
@@ -1079,7 +1079,7 @@ public final class GwtSpecificValidatorCreator extends AbstractCreator {
          beanHelper.getBeanDescriptor().getConstrainedProperties()) {
       int count = 0;
       for (ConstraintDescriptor<?> constraint : p.getConstraintDescriptors()) {
-        org.hibernate.validator.metadata.ConstraintDescriptorImpl<?> constraintHibernate = 
+        org.hibernate.validator.metadata.ConstraintDescriptorImpl<?> constraintHibernate =
             (org.hibernate.validator.metadata.ConstraintDescriptorImpl<?>) constraint;
         if (areConstraintDescriptorGroupsValid(constraint)) {
           writeConstraintDescriptor(sw, constraint, constraintHibernate.getElementType(),
@@ -1856,15 +1856,15 @@ public final class GwtSpecificValidatorCreator extends AbstractCreator {
 
     // BeanType object,
     sw.println(beanHelper.getTypeCanonicalName() + " object,");
-    
+
     // final <Type> value,
     sw.print("final ");
     sw.print(elementType.getParameterizedQualifiedSourceName());
     sw.println(" value,");
-    
+
     // boolean honorValid,
     sw.println("boolean honorValid,");
-    
+
     // Class<?>... groups) {
     sw.println("Class<?>... groups) {");
     sw.outdent();
@@ -1875,7 +1875,7 @@ public final class GwtSpecificValidatorCreator extends AbstractCreator {
       sw.print("final GwtValidationContext<T> myContext = context.append(\"");
       sw.print(p.getPropertyName());
       sw.println("\");");
-  
+
       // only check this property if the TraversableResolver says we can
 
       // Node leafNode = myContext.getPath().getLeafNode();
@@ -1890,7 +1890,7 @@ public final class GwtSpecificValidatorCreator extends AbstractCreator {
       // isReachable = myContext.getTraversableResolver().isReachable(object, leafNode,
       //       myContext.getRootBeanClass(), path, ElementType);
       sw.println("isReachable = myContext.getTraversableResolver().isReachable(object, " +
-          "leafNode, myContext.getRootBeanClass(), path, " + 
+          "leafNode, myContext.getRootBeanClass(), path, " +
           (useField ? asLiteral(ElementType.FIELD) : asLiteral(ElementType.METHOD)) + ");");
       // } catch (Exception e) {
       sw.outdent();
@@ -1905,10 +1905,10 @@ public final class GwtSpecificValidatorCreator extends AbstractCreator {
       // if (isReachable) {
       sw.println("if (isReachable) {");
       sw.indent();
-  
+
       // TODO(nchalko) move this out of here to the Validate method
       if (p.isCascaded() && hasValid(p, useField)) {
-  
+
         // if (honorValid && value != null) {
         sw.println("if (honorValid && value != null) {");
         sw.indent();
@@ -1920,7 +1920,7 @@ public final class GwtSpecificValidatorCreator extends AbstractCreator {
         // isCascadable = myContext.getTraversableResolver().isCascadable(object, leafNode,
         //       myContext.getRootBeanClass(), path, ElementType)
         sw.println("isCascadable = myContext.getTraversableResolver().isCascadable(object, " +
-            "leafNode, myContext.getRootBeanClass(), path, " + 
+            "leafNode, myContext.getRootBeanClass(), path, " +
           (useField ? asLiteral(ElementType.FIELD) : asLiteral(ElementType.METHOD)) + ");");
         // } catch (Exception e) {
         sw.outdent();
@@ -1935,7 +1935,7 @@ public final class GwtSpecificValidatorCreator extends AbstractCreator {
         // if (isCascadable) {
         sw.println("if (isCascadable) {");
         sw.indent();
-  
+
         if (isIterableOrMap(elementClass)) {
           JClassType associationType = beanHelper.getAssociationType(p,
               useField);
@@ -1947,16 +1947,16 @@ public final class GwtSpecificValidatorCreator extends AbstractCreator {
           }
         } else {
           createBeanHelper(elementClass);
-  
+
           // if (!context.alreadyValidated(value)) {
           sw.println(" if (!context.alreadyValidated(value)) {");
           sw.indent();
-  
+
           // violations.addAll(myContext.getValidator().validate(context, value,
           // groups));
           sw.print("violations.addAll(");
           sw.println("myContext.getValidator().validate(myContext, value, groups));");
-  
+
           // }
           sw.outdent();
           sw.println("}");
@@ -1969,7 +1969,7 @@ public final class GwtSpecificValidatorCreator extends AbstractCreator {
         sw.outdent();
         sw.println("}");
       }
-  
+
       // It is possible for an annotation with the exact same values to be set on
       // both the field and the getter.
       // Keep track of the ones we have used to make sure we don't duplicate.

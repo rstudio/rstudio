@@ -15,8 +15,8 @@
  */
 package com.google.gwt.dev.javac;
 
+import com.google.common.base.Joiner;
 import com.google.gwt.dev.javac.testing.impl.MockJavaResource;
-import com.google.gwt.thirdparty.guava.common.base.Joiner;
 
 import java.util.List;
 

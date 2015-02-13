@@ -20,7 +20,7 @@ import com.google.gwt.dev.javac.testing.impl.MockJavaResource;
 import org.eclipse.jdt.core.compiler.CategorizedProblem;
 
 /**
- * Tests for {@link BytecodeSignatureMaker}
+ * Tests for {@link BytecodeSignatureMaker}.
  */
 public class BytecodeSignatureMakerTest extends CompilationStateTestBase {
   static final String CLASS_DEP_TYPE_NAME = "test.ClassDependency";

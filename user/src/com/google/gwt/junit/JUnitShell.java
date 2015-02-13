@@ -15,6 +15,8 @@
  */
 package com.google.gwt.junit;
 
+import com.google.common.base.Splitter;
+import com.google.common.collect.ImmutableSet;
 import com.google.gwt.core.ext.Linker;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.TreeLogger.Type;
@@ -69,8 +71,6 @@ import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.junit.client.TimeoutException;
 import com.google.gwt.junit.client.impl.JUnitHost.TestInfo;
 import com.google.gwt.junit.client.impl.JUnitResult;
-import com.google.gwt.thirdparty.guava.common.base.Splitter;
-import com.google.gwt.thirdparty.guava.common.collect.ImmutableSet;
 import com.google.gwt.util.tools.ArgHandlerFlag;
 import com.google.gwt.util.tools.ArgHandlerInt;
 import com.google.gwt.util.tools.ArgHandlerString;

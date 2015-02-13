@@ -15,18 +15,18 @@
  */
 package com.google.gwt.resources.gss;
 
+import com.google.common.css.compiler.ast.CssAtRuleNode.Type;
+import com.google.common.css.compiler.ast.CssConditionalBlockNode;
+import com.google.common.css.compiler.ast.CssConditionalRuleNode;
+import com.google.common.css.compiler.ast.CssNode;
+import com.google.common.css.compiler.ast.CssRootNode;
+import com.google.common.css.compiler.ast.CssTree;
+import com.google.common.css.compiler.ast.CssValueNode;
+import com.google.common.css.compiler.passes.CompactPrinter;
 import com.google.gwt.core.ext.Generator;
 import com.google.gwt.resources.gss.ast.CssDotPathNode;
 import com.google.gwt.resources.gss.ast.CssJavaExpressionNode;
 import com.google.gwt.resources.gss.ast.CssRuntimeConditionalRuleNode;
-import com.google.gwt.thirdparty.common.css.compiler.ast.CssAtRuleNode.Type;
-import com.google.gwt.thirdparty.common.css.compiler.ast.CssConditionalBlockNode;
-import com.google.gwt.thirdparty.common.css.compiler.ast.CssConditionalRuleNode;
-import com.google.gwt.thirdparty.common.css.compiler.ast.CssNode;
-import com.google.gwt.thirdparty.common.css.compiler.ast.CssRootNode;
-import com.google.gwt.thirdparty.common.css.compiler.ast.CssTree;
-import com.google.gwt.thirdparty.common.css.compiler.ast.CssValueNode;
-import com.google.gwt.thirdparty.common.css.compiler.passes.CompactPrinter;
 
 import java.util.Stack;
 

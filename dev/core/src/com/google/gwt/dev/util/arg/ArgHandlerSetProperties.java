@@ -13,7 +13,7 @@
  */
 package com.google.gwt.dev.util.arg;
 
-import com.google.gwt.thirdparty.guava.common.base.Splitter;
+import com.google.common.base.Splitter;
 import com.google.gwt.util.tools.ArgHandlerString;
 
 import java.util.List;

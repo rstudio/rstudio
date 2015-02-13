@@ -15,16 +15,16 @@
  */
 package com.google.gwt.resources.gss;
 
+import com.google.common.collect.Lists;
+import com.google.common.css.compiler.ast.CssAtRuleNode.Type;
+import com.google.common.css.compiler.ast.CssBooleanExpressionNode;
+import com.google.common.css.compiler.ast.CssCompilerPass;
+import com.google.common.css.compiler.ast.CssConditionalBlockNode;
+import com.google.common.css.compiler.ast.CssConditionalRuleNode;
+import com.google.common.css.compiler.ast.MutatingVisitController;
+import com.google.common.css.compiler.passes.BooleanExpressionEvaluator;
+import com.google.common.css.compiler.passes.EliminateConditionalNodes;
 import com.google.gwt.resources.gss.ast.CssRuntimeConditionalRuleNode;
-import com.google.gwt.thirdparty.common.css.compiler.ast.CssAtRuleNode.Type;
-import com.google.gwt.thirdparty.common.css.compiler.ast.CssBooleanExpressionNode;
-import com.google.gwt.thirdparty.common.css.compiler.ast.CssCompilerPass;
-import com.google.gwt.thirdparty.common.css.compiler.ast.CssConditionalBlockNode;
-import com.google.gwt.thirdparty.common.css.compiler.ast.CssConditionalRuleNode;
-import com.google.gwt.thirdparty.common.css.compiler.ast.MutatingVisitController;
-import com.google.gwt.thirdparty.common.css.compiler.passes.BooleanExpressionEvaluator;
-import com.google.gwt.thirdparty.common.css.compiler.passes.EliminateConditionalNodes;
-import com.google.gwt.thirdparty.guava.common.collect.Lists;
 
 import java.util.ArrayList;
 import java.util.HashSet;

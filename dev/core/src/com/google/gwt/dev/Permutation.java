@@ -15,9 +15,9 @@
  */
 package com.google.gwt.dev;
 
+import com.google.common.collect.Lists;
 import com.google.gwt.dev.cfg.BindingProps;
 import com.google.gwt.dev.cfg.PermProps;
-import com.google.gwt.thirdparty.guava.common.collect.Lists;
 
 import java.io.Serializable;
 import java.util.List;

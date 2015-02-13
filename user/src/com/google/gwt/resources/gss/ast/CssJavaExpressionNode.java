@@ -15,8 +15,8 @@
  */
 package com.google.gwt.resources.gss.ast;
 
-import com.google.gwt.thirdparty.common.css.SourceCodeLocation;
-import com.google.gwt.thirdparty.common.css.compiler.ast.CssValueNode;
+import com.google.common.css.SourceCodeLocation;
+import com.google.common.css.compiler.ast.CssValueNode;
 
 /**
  * Represents a Java expression.

@@ -15,9 +15,9 @@
  */
 package com.google.gwt.dev.util;
 
+import com.google.common.base.Strings;
+import com.google.common.collect.Lists;
 import com.google.gwt.core.ext.typeinfo.JniConstants;
-import com.google.gwt.thirdparty.guava.common.base.Strings;
-import com.google.gwt.thirdparty.guava.common.collect.Lists;
 
 import java.util.List;
 import java.util.regex.Matcher;

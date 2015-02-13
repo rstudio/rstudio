@@ -15,13 +15,13 @@
  */
 package com.google.gwt.core.ext.soyc;
 
+import com.google.common.base.Joiner;
+import com.google.debugging.sourcemap.FilePosition;
+import com.google.debugging.sourcemap.SourceMapConsumerV3;
+import com.google.debugging.sourcemap.SourceMapConsumerV3.EntryVisitor;
+import com.google.debugging.sourcemap.SourceMapGeneratorV3;
+import com.google.debugging.sourcemap.SourceMapParseException;
 import com.google.gwt.dev.jjs.SourceOrigin;
-import com.google.gwt.thirdparty.debugging.sourcemap.FilePosition;
-import com.google.gwt.thirdparty.debugging.sourcemap.SourceMapConsumerV3;
-import com.google.gwt.thirdparty.debugging.sourcemap.SourceMapConsumerV3.EntryVisitor;
-import com.google.gwt.thirdparty.debugging.sourcemap.SourceMapGeneratorV3;
-import com.google.gwt.thirdparty.debugging.sourcemap.SourceMapParseException;
-import com.google.gwt.thirdparty.guava.common.base.Joiner;
 
 import junit.framework.TestCase;
 

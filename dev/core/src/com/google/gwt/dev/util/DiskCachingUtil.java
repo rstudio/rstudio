@@ -13,8 +13,8 @@
  */
 package com.google.gwt.dev.util;
 
+import com.google.common.base.Joiner;
 import com.google.gwt.core.ext.TreeLogger;
-import com.google.gwt.thirdparty.guava.common.base.Joiner;
 import com.google.gwt.util.tools.shared.Md5Utils;
 import com.google.gwt.util.tools.shared.StringUtils;
 

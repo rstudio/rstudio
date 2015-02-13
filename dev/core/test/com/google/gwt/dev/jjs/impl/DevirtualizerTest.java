@@ -16,10 +16,10 @@
 
 package com.google.gwt.dev.jjs.impl;
 
+import com.google.common.collect.Lists;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JProgram;
-import com.google.gwt.thirdparty.guava.common.collect.Lists;
 
 /**
  * Tests for the {@link Devirtualizer} visitor.

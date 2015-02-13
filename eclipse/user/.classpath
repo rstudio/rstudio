@@ -20,7 +20,7 @@
 	<classpathentry kind="var" path="GWT_TOOLS/lib/apache/commons/commons-logging-1.1.1.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/apache/commons/commons-io-2.4.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/cssparser/cssparser-0.9.11.jar"/>
-	<classpathentry kind="var" path="GWT_TOOLS/lib/gss/2014-09-11/closure-stylesheets-rebased.jar"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/gss/2015-02-13/closure-stylesheets-library-20150213.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/mockito/1.9.5/mockito-all-1.9.5.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/nekohtml/nekohtml-1.9.19.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/selenium/selenium-java-client-driver.jar" sourcepath="/GWT_TOOLS/lib/selenium/selenium-java-client-driver-sources.jar"/>
@@ -46,8 +46,8 @@
 	<classpathentry kind="var" path="GWT_TOOLS/lib/apache/log4j/log4j-1.2.16.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/slf4j/slf4j-api/slf4j-api-1.6.1.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/slf4j/slf4j-log4j12/slf4j-log4j12-1.6.1.jar"/>
-	<classpathentry kind="var" path="GWT_TOOLS/lib/guava/guava-16.0.1/guava-16.0.1-rebased.jar"/>
-	<classpathentry kind="var" path="GWT_TOOLS/lib/streamhtmlparser/streamhtmlparser-jsilver-r10/streamhtmlparser-jsilver-r10-1.5-rebased.jar"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/guava/guava-18.0/guava-18.0.jar"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/streamhtmlparser/streamhtmlparser-jsilver-r10/streamhtmlparser-jsilver-r10-1.5.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/icu4j/50.1.1/icu4j.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/javax/activation/activation-1.1.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/javax/xml/bind/jaxb-api-2.1.jar"/>
@@ -61,8 +61,8 @@
 	<classpathentry kind="var" path="GWT_TOOLS/lib/jboss/test-harness/jboss-test-harness-api-1.0.0.jar" sourcepath="/GWT_TOOLS/lib/jboss/test-harness/jboss-test-harness-api-1.0.0-sources.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/testng/testng-5.14.1-sources.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/testng/testng-5.14.1-nojunit.jar" sourcepath="/GWT_TOOLS/lib/testng/testng-5.14.1-sources.jar"/>
-	<classpathentry kind="var" path="GWT_TOOLS/lib/protobuf/protobuf-2.5.0/protobuf-java-rebased-2.5.0.jar"/>
-	<classpathentry kind="var" path="GWT_TOOLS/lib/jscomp/20131118.json.rebased/sourcemap-rebased.jar"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/protobuf/protobuf-2.5.0/protobuf-java-2.5.0.jar"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/jscomp/20150201/compiler-rebased.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/eclipse/org.eclipse.jdt.core_3.11.0.v20150126-2015.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/eclipse/jdtCompilerAdapter_3.11.0.v20150126-2015.jar"/>
 	<classpathentry kind="output" path="bin"/>
