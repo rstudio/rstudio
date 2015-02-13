@@ -391,14 +391,14 @@ public:
   
   bool isAtEndOfExpression() const
   {
-     return isWhitespace(nextToken()) ||
+     return nextToken().contentContains(L'\n') ||
             nextSignificantToken().isType(RToken::SEMI) ||
             nextSignificantToken().isType(RToken::COMMA);
   }
   
   bool endsExpression() const
   {
-     return isWhitespace(currentToken()) ||
+     return contentContains(L'\n') ||
             isType(RToken::SEMI) ||
             isType(RToken::COMMA);
   }

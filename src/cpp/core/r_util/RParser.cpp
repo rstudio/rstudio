@@ -300,6 +300,9 @@ void lookAheadAndWarnOnUsagesOfSymbol(const TokenCursor& startCursor,
                return;
          }
          
+         if (clone.isAtEndOfExpression())
+            return;
+         
          continue;
       }
       
