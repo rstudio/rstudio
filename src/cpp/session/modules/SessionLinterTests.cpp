@@ -189,6 +189,11 @@ context("Linter")
       EXPECT_NO_LINT("a <- 1\nb <- 2\na()$'b'");
       EXPECT_LINT("a <- 1\na$1");
       EXPECT_LINT("- 1");
+      
+      EXPECT_LINT("foo <- 1 + foo");
+      EXPECT_NO_LINT("foo <- 1 + foo()");
+      EXPECT_LINT("foo <- rnorm(a = foo)");
+      EXPECT_NO_LINT("rnorm <- function(foo) {}; foo <- rnorm(foo = 1)");
    }
    
  // lintRStudioRFiles();

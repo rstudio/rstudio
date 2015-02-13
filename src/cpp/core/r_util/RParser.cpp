@@ -299,10 +299,25 @@ void lookAheadAndWarnOnUsagesOfSymbol(const TokenCursor& startCursor,
       }
       
       braceBalance += isLeftBracket(clone);
-      braceBalance -= isRightBracket(clone);
+      if (isRightBracket(clone))
+      {
+         --braceBalance;
+         if (isBinaryOp(clone.nextSignificantToken()))
+         {
+            if (!clone.moveToNextSignificantToken())
+               return;
+            continue;
+         }
+         
+         if (braceBalance <= 0)
+            return;
+      }
       
-      if (braceBalance <= 0)
+      if (clone.nextToken().contentContains(L'\n') ||
+          clone.isType(RToken::SEMI))
+      {
          return;
+      }
       
    } while (clone.moveToNextSignificantToken());
 }
