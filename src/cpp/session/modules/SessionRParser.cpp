@@ -323,10 +323,15 @@ void lookAheadAndWarnOnUsagesOfSymbol(const RTokenCursor& startCursor,
          continue;
       }
       
+      const RToken& prev = clone.previousSignificantToken();
+      const RToken& next = clone.nextSignificantToken();
+      
       if (clone.contentEquals(symbol) &&
-          !isLeftAssign(clone.nextSignificantToken()) &&
-          !isRightAssign(clone.previousSignificantToken()) &&
-          !isLeftBracket(clone.nextSignificantToken()))
+          !isRightAssign(prev) &&
+          !isLeftAssign(next) &&
+          !isLeftBracket(next) &&
+          !isExtractionOperator(prev) &&
+          !isExtractionOperator(next))
       {
          status.lint().noSymbolNamed(clone);
       }
