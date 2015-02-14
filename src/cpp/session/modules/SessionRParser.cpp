@@ -642,10 +642,10 @@ START:
          case ParseStatus::ParseStateParenArgumentList:
          case ParseStatus::ParseStateSingleBracketArgumentList:
          case ParseStatus::ParseStateDoubleBracketArgumentList:
-            MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
+            MOVE_TO_NEXT_SIGNIFICANT_TOKEN_WARN_IF_NO_WHITESPACE(cursor, status);
             goto ARGUMENT_START;
          case ParseStatus::ParseStateFunctionArgumentList:
-            MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
+            MOVE_TO_NEXT_SIGNIFICANT_TOKEN_WARN_IF_NO_WHITESPACE(cursor, status);
             goto FUNCTION_ARGUMENT_START;
          default:
             GOTO_INVALID_TOKEN(cursor);
@@ -843,16 +843,19 @@ START:
          
          // Move to the next token.
          bool isNumber = cursor.isType(RToken::NUMBER);
-         MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
+         const RToken& next = cursor.nextSignificantToken();
          
-         // Binary operators continue the statement.
-         if (isBinaryOp(cursor))
+         if (isBinaryOp(next))
+         {
+            MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
             goto BINARY_OPERATOR;
+         }
          
          // Identifiers followed by brackets are function calls.
          // Only non-numeric symbols can be function calls.
-         if (!isNumber && canOpenArgumentList(cursor))
+         if (!isNumber && canOpenArgumentList(next))
          {
+            MOVE_TO_NEXT_SIGNIFICANT_TOKEN_WARN_ON_BLANK(cursor, status);
             goto ARGUMENT_LIST;
          }
          
@@ -865,13 +868,14 @@ START:
          // The 'bat' identifier (well, the newline following)
          // closes all statements.
          if (status.isInControlFlowStatement() && (
-             isRightBracket(cursor) ||
-             isComma(cursor)))
+             isRightBracket(next) ||
+             isComma(next)))
          {
             while (status.isInControlFlowStatement())
                status.popState();
          }
          
+         MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
          goto START;
          
       }

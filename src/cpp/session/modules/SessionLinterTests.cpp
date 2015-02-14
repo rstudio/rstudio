@@ -194,11 +194,12 @@ context("Linter")
       
       EXPECT_LINT("foo <- 1 + foo");
       EXPECT_NO_LINT("foo <- 1 + foo()");
-      EXPECT_LINT("foo <- rnorm(a = foo)");
-      EXPECT_NO_LINT("rnorm <- function(foo) {}; foo <- rnorm(foo = 1)");
+      EXPECT_LINT("foo <- rnorm(n = foo)");
+      EXPECT_LINT("rnorm (1)");
+      EXPECT_NO_LINT("n <- 1; rnorm(n = n)");
    }
    
- // lintRStudioRFiles();
+   lintRStudioRFiles();
 }
 
 } // namespace linter
