@@ -185,7 +185,7 @@
    if (identical(tolower(tools::file_ext(target)), "rmd")) 
      .rs.rmdDeployList(target)
    else
-     .rs.maxDirectoryList(dir, ".", 0, max_size, 
+     .rs.maxDirectoryList(target, ".", 0, max_size, 
                           c("rsconnect", "packrat"), "Rproj")
 })
 
