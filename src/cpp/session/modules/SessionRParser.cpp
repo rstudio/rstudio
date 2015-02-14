@@ -76,15 +76,22 @@ flat_set<std::wstring> makeNSEFunctions()
    s.insert(std::wstring(L"filter"));
    s.insert(std::wstring(L"n"));
    s.insert(std::wstring(L"mutate_each"));
+   s.insert(std::wstring(L"group_by"));
+   s.insert(std::wstring(L"ntile"));
    
    return s;
 }
 
 static flat_set<std::wstring> s_nseFunctions = makeNSEFunctions();
 
-bool isNseFunction(const std::wstring& fnName)
+bool isWithinNseFunction(const ParseStatus& status)
 {
-   return s_nseFunctions.find(fnName) != s_nseFunctions.end();
+   BOOST_FOREACH(const std::wstring& fnName, status.functionNames())
+   {
+      if (s_nseFunctions.find(fnName) != s_nseFunctions.end())
+         return true;
+   }
+   return false;
 }
 
 std::map<std::string, std::string> makeComplementMap()
@@ -355,7 +362,7 @@ void handleIdentifier(RTokenCursor& cursor,
    // Note that both string and id are valid for assignments.
    
    // Bail if we're within an NSE function.
-   if (isNseFunction(status.currentFunctionName()))
+   if (isWithinNseFunction(status))
       return;
    
    // Don't cache identifiers if the previous or next tokens

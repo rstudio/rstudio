@@ -631,7 +631,8 @@ private:
    PackageSymbols exportedSymbols_; // <pgk>:::<bar>
 };
 
-class ParseStatus {
+class ParseStatus
+{
    
 public:
    
@@ -901,6 +902,11 @@ public:
    const Position& getCachedPosition() const
    {
       return position_;
+   }
+   
+   const Stack<std::wstring>& functionNames() const
+   {
+      return functionNames_;
    }
    
 private:

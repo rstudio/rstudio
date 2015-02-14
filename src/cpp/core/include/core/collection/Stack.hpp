@@ -64,6 +64,12 @@ public:
       return data_.size();
    }
    
+   typedef typename std::vector<T>::reverse_iterator iterator;
+   typedef typename std::vector<T>::const_reverse_iterator const_iterator;
+   
+   const_iterator begin() const { return data_.rbegin(); }
+   const_iterator end() const { return data_.rend(); }
+   
 private:
    std::vector<T> data_;
 };
