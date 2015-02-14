@@ -21,9 +21,14 @@
 #include "SessionRParser.hpp"
 #include "SessionRTokenCursor.hpp"
 
+#include <r/RExec.hpp>
+#include <r/RSexp.hpp>
+
 #include <boost/container/flat_set.hpp>
 #include <boost/timer/timer.hpp>
 #include <boost/bind.hpp>
+
+
 
 namespace rstudio {
 namespace session {
@@ -505,6 +510,53 @@ void checkBinaryOperatorWhitespace(RTokenCursor& cursor,
    }
 }
 
+void validateFunctionCall(const RTokenCursor& cursor,
+                          ParseStatus& status)
+{
+   if (!cursor.isType(RToken::LPAREN))
+      return;
+   
+   RTokenCursor startCursor = cursor.clone();
+   if (!startCursor.moveToPreviousSignificantToken())
+      return;
+   
+   if (!startCursor.moveToStartOfEvaluation())
+      return;
+   
+   RTokenCursor endCursor = cursor.clone();
+   if (!endCursor.fwdToMatchingToken())
+      return;
+
+   std::string fnNameString = string_utils::wideToUtf8(
+       std::wstring(startCursor.begin(), cursor.begin()));
+   
+   std::string fnCallString = string_utils::wideToUtf8(
+            std::wstring(startCursor.begin(), endCursor.end()));
+   
+   r::exec::RFunction validate(".rs.validateFunctionCall");
+   validate.addParam(fnNameString);
+   validate.addParam(fnCallString);
+   
+   std::string message;
+   Error error = validate.call(&message);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+   
+   if (!message.empty())
+   {
+      status.lint().add(
+               startCursor.row(),
+               startCursor.column(),
+               endCursor.row(),
+               endCursor.column(),
+               LintTypeError,
+               message);
+   }
+}
+
 } // anonymous namespace
 
 #define GOTO_INVALID_TOKEN(__CURSOR__)                                         \
@@ -843,6 +895,7 @@ BINARY_OPERATOR:
 ARGUMENT_LIST:
       
       DEBUG("-- Begin argument list " << cursor);
+      validateFunctionCall(cursor, status);
       
       switch (cursor.type())
       {

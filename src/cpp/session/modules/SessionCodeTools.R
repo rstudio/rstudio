@@ -1004,3 +1004,56 @@
    output
    
 })
+
+.rs.addFunction("validateFunctionCall", function(fnNameString, fnCallString)
+{
+   message <- .rs.scalar("")
+   fnObject <- .rs.getAnywhere(fnNameString)
+   
+   ## TODO: handle primitives
+   if (is.primitive(fnObject))
+      return(message)
+   
+   if (is.null(fnObject))
+      return(message)
+   
+   fnCall <- tryCatch(
+      suppressWarnings(parse(text = fnCallString)[[1]]),
+      error = function(e) NULL
+   )
+   
+   if (is.null(fnCall))
+      return(message)
+   
+   callFormals <- setdiff(names(fnCall), "")
+   formals <- formals(fnObject)
+   names <- names(formals)
+   
+   ## TODO: Validate when we have '...'?
+   if ("..." %in% names)
+      return(message)
+   
+   invalidNames <- callFormals[!(callFormals %in% names)]
+   
+   if (length(invalidNames))
+   {
+      return(.rs.scalar(paste("invalid argument names:",
+                              paste(shQuote(invalidNames), collapse = ", "))))
+   }
+   
+   if (length(callFormals) > length(formals))
+   {
+      return(.rs.scalar("too many arguments to function"))
+   }
+   
+   maybeError <- tryCatch(
+      match.call(fnObject, fnCall),
+      error = function(e) e
+   )
+   
+   if (inherits(maybeError, "error"))
+      return(.rs.scalar(maybeError$message))
+   
+   return(message)
+   
+})
