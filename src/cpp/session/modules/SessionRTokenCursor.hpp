@@ -516,6 +516,8 @@ public:
      }
   }
   
+  std::size_t length() const { return currentToken().length(); }
+  
 private:
    
    const core::r_util::RTokens& rTokens_;

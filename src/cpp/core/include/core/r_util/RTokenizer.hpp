@@ -306,41 +306,42 @@ inline bool isBinaryOp(const RToken& token)
 inline bool isLocalLeftAssign(const RToken& token)
 {
    return token.isType(RToken::OPER) && (
-            token.content() == L"=" ||
-            token.content() == L"<-");
+            token.contentEquals(L"=") ||
+            token.contentEquals(L"<-") ||
+            token.contentEquals(L":="));
 }
 
 inline bool isLocalRightAssign(const RToken& token)
 {
-   return token.isType(RToken::OPER) && (
-            token.content() == L"->");
+   return token.isType(RToken::OPER) && token.contentEquals(L"->");
 }
 
 inline bool isParentLeftAssign(const RToken& token)
 {
    return token.isType(RToken::OPER) &&
-         token.content() == L"<<-";
+          token.contentEquals(L"<<-");
 }
 
 inline bool isParentRightAssign(const RToken& token)
 {
    return token.isType(RToken::OPER) &&
-         token.content() == L"->>";
+          token.contentEquals(L"->>");
 }
 
 inline bool isLeftAssign(const RToken& token)
 {
    return token.isType(RToken::OPER) && (
-            token.content() == L"=" ||
-            token.content() == L"<-" ||
-            token.content() == L"<<-");
+            token.contentEquals(L"=") ||
+            token.contentEquals(L"<-") ||
+            token.contentEquals(L"<<-") ||
+            token.contentEquals(L":="));
 }
 
 inline bool isRightAssign(const RToken& token)
 {
    return token.isType(RToken::OPER) && (
-            token.content() == L"->" ||
-            token.content() == L"->>");
+            token.contentEquals(L"->") ||
+            token.contentEquals(L"->>"));
 }
 
 inline bool isRightBracket(const RToken& rToken)
@@ -362,13 +363,13 @@ inline bool isLeftBracket(const RToken& rToken)
 inline bool isDollar(const RToken& rToken)
 {
    return rToken.isType(RToken::OPER) &&
-          rToken.content() == L"$";
+          rToken.contentEquals(L"$");
 }
 
 inline bool isAt(const RToken& rToken)
 {
    return rToken.isType(RToken::OPER) &&
-          rToken.content() == L"@";
+          rToken.contentEquals(L"@");
 }
 
 inline bool isId(const RToken& rToken)
@@ -379,14 +380,14 @@ inline bool isId(const RToken& rToken)
 inline bool isNamespace(const RToken& rToken)
 {
    return rToken.isType(RToken::OPER) && (
-            rToken.content() == L"::" ||
-            rToken.content() == L":::");
+            rToken.contentEquals(L"::") ||
+            rToken.contentEquals(L":::"));
 }
 
 inline bool isFunction(const RToken& rToken)
 {
    return rToken.isType(RToken::ID) &&
-         rToken.content() == L"function";
+          rToken.contentEquals(L"function");
 }
 
 inline bool isString(const RToken& rToken)
@@ -428,7 +429,8 @@ inline bool isValidAsUnaryOperator(const RToken& rToken)
    return rToken.contentEquals(L"-") ||
           rToken.contentEquals(L"+") ||
           rToken.contentEquals(L"!") ||
-          rToken.contentEquals(L"?");
+          rToken.contentEquals(L"?") ||
+          rToken.contentEquals(L"~");
 }
 
 inline bool canStartExpression(const RToken& rToken)

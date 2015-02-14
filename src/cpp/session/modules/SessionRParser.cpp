@@ -558,7 +558,7 @@ void validateFunctionCall(const RTokenCursor& cursor,
                startCursor.row(),
                startCursor.column(),
                endCursor.row(),
-               endCursor.column(),
+               endCursor.column() + endCursor.length(),
                LintTypeError,
                message);
    }
