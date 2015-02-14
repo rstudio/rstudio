@@ -42,8 +42,6 @@
 #include <r/RRoutines.hpp>
 #include <r/RUtil.hpp>
 
-#include <core/r_util/RTokenizer.hpp>
-#include <core/r_util/RParser.hpp>
 #include <core/r_util/RSourceIndex.hpp>
 #include <core/FileUtils.hpp>
 #include <core/collection/Tree.hpp>
@@ -58,6 +56,7 @@ using namespace core;
 using namespace core::r_util;
 using namespace core::r_util::token_utils;
 using namespace core::collection;
+using namespace rparser;
 
 namespace {
 
@@ -129,7 +128,7 @@ ParseResults parse(const std::wstring& rCode,
    ParseOptions options;
    options.setRecordStyleLint(userSettings().enableStyleDiagnostics());
    
-   results = r_util::parse(rCode, options);
+   results = rparser::parse(rCode, options);
    
    ParseNode* pRoot = results.parseTree();
    if (!pRoot)

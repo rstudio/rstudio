@@ -24,8 +24,8 @@
 #include <set>
 
 #include <core/r_util/RTokenizer.hpp>
-#include <core/r_util/RParser.hpp>
-#include <core/r_util/RTokenCursor.hpp>
+#include "SessionRParser.hpp"
+#include "SessionRTokenCursor.hpp"
 #include <core/collection/Stack.hpp>
 #include <core/collection/Position.hpp>
 #include <core/StringUtils.hpp>

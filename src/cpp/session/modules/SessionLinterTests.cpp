@@ -35,7 +35,9 @@ namespace session {
 namespace modules {
 namespace linter {
 
-static const core::r_util::ParseOptions s_parseOptions(true);
+using namespace rparser;
+
+static const ParseOptions s_parseOptions(true);
 
 using namespace core;
 using namespace core::r_util;

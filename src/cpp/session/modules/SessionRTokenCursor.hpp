@@ -13,10 +13,11 @@
  *
  */
 
-#ifndef CORE_R_UTIL_RTOKENCURSOR_HPP
-#define CORE_R_UTIL_RTOKENCURSOR_HPP
+#ifndef SESSION_MODULES_RTOKENCURSOR_HPP
+#define SESSION_MODULES_RTOKENCURSOR_HPP
 
-#include "RTokenizer.hpp"
+#include <core/r_util/RTokenizer.hpp>
+#include "SessionRParser.hpp"
 
 #include <boost/function.hpp>
 
@@ -25,21 +26,23 @@
 #include <core/Macros.hpp>
 
 namespace rstudio {
-namespace core {
-namespace r_util {
-namespace token_utils {
+namespace session {
+namespace modules {
+namespace token_cursor {
 
-using namespace collection;
-using core::r_util::ParseItem;
+using namespace rparser;
+using namespace core::collection;
+using namespace core::r_util;
+using namespace core::r_util::token_utils;
 
 // NOTE: TokenCursors store a reference to the set of tokens
 // they use, so they are only valid as long as the underlying
 // tokens are valid.
-class TokenCursor
+class RTokenCursor
 {
 private:
    
-   TokenCursor(const RTokens &rTokens,
+   RTokenCursor(const core::r_util::RTokens &rTokens,
                std::size_t offset,
                std::size_t n)
       : rTokens_(rTokens),
@@ -49,19 +52,19 @@ private:
    
 public:
    
-   explicit TokenCursor(const RTokens& rTokens)
+   explicit RTokenCursor(const core::r_util::RTokens& rTokens)
       : rTokens_(rTokens), offset_(0), n_(rTokens.size()) {}
    
-   TokenCursor(const RTokens &rTokens,
+   RTokenCursor(const core::r_util::RTokens &rTokens,
                std::size_t offset)
       : rTokens_(rTokens), offset_(offset), n_(rTokens.size()) {}
    
-   TokenCursor clone() const
+   RTokenCursor clone() const
    {
-      return TokenCursor(rTokens_, offset_, n_);
+      return RTokenCursor(rTokens_, offset_, n_);
    }
    
-   const RTokens& tokens() const
+   const core::r_util::RTokens& tokens() const
    {
       return rTokens_;
    }
@@ -259,7 +262,7 @@ public:
       if (offset_ == n_ - 1)
          return true;
       
-      TokenCursor cursor = clone();
+      RTokenCursor cursor = clone();
       ++cursor.offset_;
       
       if (!isWhitespaceOrComment(cursor))
@@ -286,7 +289,7 @@ public:
    }
    
    friend std::ostream& operator <<(std::ostream& os,
-                                    const TokenCursor& cursor)
+                                    const RTokenCursor& cursor)
    {
       return os << cursor.currentToken().asString();
    }
@@ -302,7 +305,7 @@ private:
       if (!isType(leftTokenType))
          return false;
       
-      TokenCursor cursor = clone();
+      RTokenCursor cursor = clone();
       int stack = 1;
       
       while (cursor.moveToNextToken())
@@ -326,7 +329,7 @@ private:
       if (!isType(rightTokenType))
          return false;
       
-      TokenCursor cursor = clone();
+      RTokenCursor cursor = clone();
       int stack = 1;
       
       while (cursor.moveToPreviousToken())
@@ -460,7 +463,7 @@ public:
   
 private:
    
-   const RTokens& rTokens_;
+   const core::r_util::RTokens& rTokens_;
    std::size_t offset_;
    std::size_t n_;
 };
@@ -470,4 +473,4 @@ private:
 } // namespace core
 } // namespace rstudio
 
-#endif // CORE_R_UTIL_RTOKENCURSOR_HPP
+#endif // SESSION_MODULES_RTOKENCURSOR_HPP

@@ -110,6 +110,7 @@ set (SESSION_SOURCE_FILES
    modules/SessionProfiler.cpp
    modules/SessionRCompletions.cpp
    modules/SessionRHooks.cpp
+   modules/SessionRParser.cpp
    modules/SessionRPubs.cpp
    modules/SessionRSConnect.cpp
    modules/SessionShinyViewer.cpp

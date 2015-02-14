@@ -18,8 +18,8 @@
 // use to efficiently look up and validate that variables within certain scopes
 // are properly declared / defined before usage.
 
-#ifndef CORE__R_UTIL__RPARSER_HPP
-#define CORE__R_UTIL__RPARSER_HPP
+#ifndef SESSION_MODULES_RPARSER_HPP
+#define SESSION_MODULES_RPARSER_HPP
 
 #include <vector>
 #include <map>
@@ -27,7 +27,7 @@
 #include <iostream>
 #include <iomanip>
 
-#include "RTokenizer.hpp"
+#include <core/r_util/RTokenizer.hpp>
 
 #include <core/collection/Position.hpp>
 #include <core/collection/Stack.hpp>
@@ -39,10 +39,11 @@
 #include <core/Macros.hpp>
 
 namespace rstudio {
-namespace core {
-namespace r_util {
+namespace session {
+namespace modules {
+namespace rparser {
 
-using namespace collection;
+using namespace core::collection;
 
 class ParseOptions
 {
@@ -112,6 +113,9 @@ inline std::string lintTypeToString(LintType type)
    
    return std::string();
 }
+
+using namespace core;
+using namespace core::r_util;
 
 struct LintItem
 {
@@ -946,9 +950,10 @@ ParseResults parse(const std::wstring& rCode,
                    const ParseOptions& parseOptions = ParseOptions());
 
 
-} // namespace r_util
-} // namespace core
+} // namespace rparser
+} // namespace modules
+} // namespace session
 } // namespace rstudio
 
 
-#endif // CORE__R_UTIL__RPARSER_HPP
+#endif // SESSION_MODULES_RPARSER_HPP

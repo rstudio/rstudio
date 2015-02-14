@@ -18,24 +18,29 @@
 #define RSTUDIO_DEBUG_LABEL "parser"
 #include <core/Macros.hpp>
 
-#include <core/r_util/RParser.hpp>
-#include <core/r_util/RTokenCursor.hpp>
+#include "SessionRParser.hpp"
+#include "SessionRTokenCursor.hpp"
 
 #include <boost/container/flat_set.hpp>
 #include <boost/timer/timer.hpp>
 #include <boost/bind.hpp>
 
 namespace rstudio {
-namespace core {
-namespace r_util {
+namespace session {
+namespace modules {
+namespace rparser {
 
-using namespace token_utils;
 
 void LintItems::dump()
 {
    for (std::size_t i = 0; i < lintItems_.size(); ++i)
       std::cerr << lintItems_[i].message << std::endl;
 }
+
+using namespace core;
+using namespace core::r_util;
+using namespace core::r_util::token_utils;
+using namespace token_cursor;
 
 namespace {
 
@@ -256,8 +261,8 @@ std::wstring typeToWideString(char type)
       __STATUS__.lint().unexpectedToken(__CURSOR__);                           \
    } while (0)
 
-void lookAheadAndWarnOnUsagesOfSymbol(const TokenCursor& startCursor,
-                                      TokenCursor& clone,
+void lookAheadAndWarnOnUsagesOfSymbol(const RTokenCursor& startCursor,
+                                      RTokenCursor& clone,
                                       ParseStatus& status)
 {
    std::size_t braceBalance = 0;
@@ -338,7 +343,7 @@ void lookAheadAndWarnOnUsagesOfSymbol(const TokenCursor& startCursor,
    } while (clone.moveToNextSignificantToken());
 }
 
-void handleIdentifier(TokenCursor& cursor,
+void handleIdentifier(RTokenCursor& cursor,
                       ParseStatus& status)
 {
    // Check to see if we are defining a symbol at this location.
@@ -376,7 +381,7 @@ void handleIdentifier(TokenCursor& cursor,
       if (isLocalLeftAssign(cursor.nextSignificantToken()) &&
           !status.node()->symbolHasDefinitionInTree(cursor.contentAsUtf8(), cursor.currentPosition()))
       {
-         TokenCursor clone = cursor.clone();
+         RTokenCursor clone = cursor.clone();
          if (clone.moveToNextSignificantToken() &&
              clone.moveToNextSignificantToken())
          {
@@ -399,7 +404,7 @@ void handleIdentifier(TokenCursor& cursor,
 
 } // anonymous namespace
 
-void doParse(TokenCursor&, ParseStatus&);
+void doParse(RTokenCursor&, ParseStatus&);
 
 ParseResults parse(const std::string& rCode,
                    const ParseOptions& parseOptions)
@@ -424,7 +429,7 @@ ParseResults parse(const std::wstring& rCode,
    REPORT(timer, "Tokenization");
    
    ParseStatus status(parseOptions);
-   TokenCursor cursor(rTokens);
+   RTokenCursor cursor(rTokens);
    
    doParse(cursor, status);
    REPORT(timer, "Parse");
@@ -440,7 +445,7 @@ ParseResults parse(const std::wstring& rCode,
 
 namespace {
 
-bool closesArgumentList(const TokenCursor& cursor,
+bool closesArgumentList(const RTokenCursor& cursor,
                         const ParseStatus& status)
 {
    switch (status.currentState())
@@ -456,7 +461,7 @@ bool closesArgumentList(const TokenCursor& cursor,
    }
 }
 
-void checkBinaryOperatorWhitespace(TokenCursor& cursor,
+void checkBinaryOperatorWhitespace(RTokenCursor& cursor,
                                    ParseStatus& status)
 {
    // There should not be whitespace around extraction operators.
@@ -509,7 +514,7 @@ void checkBinaryOperatorWhitespace(TokenCursor& cursor,
       goto INVALID_TOKEN;                                                      \
    } while (0)
 
-void doParse(TokenCursor& cursor,
+void doParse(RTokenCursor& cursor,
              ParseStatus& status)
 {
    DEBUG("Beginning parse...");
@@ -1100,6 +1105,7 @@ INVALID_TOKEN:
    return;
 }
 
-} // namespace r_util
-} // namespace core
+} // namespace rparser
+} // namespace modules
+} // namespace session
 } // namespace rstudio
