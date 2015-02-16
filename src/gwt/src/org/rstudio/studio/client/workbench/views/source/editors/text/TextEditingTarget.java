@@ -2449,7 +2449,7 @@ public class TextEditingTarget implements
    }
 
    @Handler
-   void onReflowComment()
+   public void onReflowComment()
    {
       if (DocumentMode.isSelectionInRMode(docDisplay_))
          doReflowComment("(#)");
@@ -2464,6 +2464,8 @@ public class TextEditingTarget implements
       }
       else if (DocumentMode.isSelectionInTexMode(docDisplay_))
          doReflowComment("(%)");
+      else if (DocumentMode.isSelectionInMarkdownMode(docDisplay_))
+         doReflowComment("()");
    }
    
    @Handler
@@ -2872,11 +2874,6 @@ public class TextEditingTarget implements
             docDisplay_.collapseSelection(false);
          }
       }
-   }
-   
-   public void reflowText()
-   {
-      doReflowComment("()");
    }
    
    @Handler
