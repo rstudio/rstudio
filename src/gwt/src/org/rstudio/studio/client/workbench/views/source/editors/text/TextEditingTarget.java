@@ -2874,6 +2874,11 @@ public class TextEditingTarget implements
       }
    }
    
+   public void reflowText()
+   {
+      doReflowComment("()");
+   }
+   
    @Handler
    void onExecuteCodeWithoutFocus()
    {

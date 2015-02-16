@@ -461,6 +461,7 @@ public class Source implements InsertSourceHandler,
       vimCommands_.saveAndCloseActiveTab(this);
       vimCommands_.readFile(this, uiPrefs_.defaultEncoding().getValue());
       vimCommands_.runRScript(this);
+      vimCommands_.reflowText(this);
    }
    
    private void closeAllTabs(boolean interactive)
@@ -2511,6 +2512,15 @@ public class Source implements InsertSourceHandler,
             Debug.logError(error);
          }
       });
+   }
+   
+   private void reflowText()
+   {
+      if (activeEditor_ != null && activeEditor_ instanceof TextEditingTarget)
+      {
+         TextEditingTarget editor = (TextEditingTarget) activeEditor_;
+         editor.reflowText();
+      }
    }
    
    private void editFile(final String path)

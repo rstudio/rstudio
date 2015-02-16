@@ -124,5 +124,21 @@ public class SourceVimCommands
       $wnd.require("ace/keyboard/vim").CodeMirror.Vim.defineEx("Rscript", "R", callback);
    
    }-*/;
-
+   
+   public native final void reflowText(Source source) /*-{
+   
+     var Vim = $wnd.require("ace/keyboard/vim").CodeMirror.Vim;
+     
+     var callback = $entry(function(cm, args) {
+        source.@org.rstudio.studio.client.workbench.views.source.Source::reflowText()();
+     });
+     
+     Vim.defineAction("reflowText", callback);
+     Vim.mapCommand({
+        keys: "gq",
+        type: "action",
+        action: "reflowText",
+        isEdit: true
+     });
+  }-*/;
 }
