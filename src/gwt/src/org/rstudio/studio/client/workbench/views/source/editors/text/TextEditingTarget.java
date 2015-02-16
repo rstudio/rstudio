@@ -2449,7 +2449,7 @@ public class TextEditingTarget implements
    }
 
    @Handler
-   public void onReflowComment()
+   void onReflowComment()
    {
       if (DocumentMode.isSelectionInRMode(docDisplay_))
          doReflowComment("(#)");
@@ -2466,6 +2466,22 @@ public class TextEditingTarget implements
          doReflowComment("(%)");
       else if (DocumentMode.isSelectionInMarkdownMode(docDisplay_))
          doReflowComment("()");
+   }
+   
+   public void reflowText()
+   {
+      if (docDisplay_.getSelectionValue().isEmpty())
+         docDisplay_.setSelectionRange(
+               Range.fromPoints(
+                     Position.create(docDisplay_.getCursorPosition().getRow(), 0),
+                     Position.create(docDisplay_.getCursorPosition().getRow(),
+                           docDisplay_.getCurrentLine().length())));
+      
+      onReflowComment();
+      docDisplay_.setCursorPosition(
+            Position.create(
+                  docDisplay_.getSelectionEnd().getRow(),
+                  0));
    }
    
    @Handler

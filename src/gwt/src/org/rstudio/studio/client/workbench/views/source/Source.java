@@ -2519,7 +2519,7 @@ public class Source implements InsertSourceHandler,
       if (activeEditor_ != null && activeEditor_ instanceof TextEditingTarget)
       {
          TextEditingTarget editor = (TextEditingTarget) activeEditor_;
-         editor.onReflowComment();
+         editor.reflowText();
       }
    }
    
