@@ -16,7 +16,6 @@
 package com.google.web.bindery.event.shared;
 
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.Set;
 
 /**
@@ -34,12 +33,7 @@ public class UmbrellaException extends RuntimeException {
   static final String ONE = "Exception caught: ";
 
   protected static Throwable makeCause(Set<Throwable> causes) {
-    Iterator<Throwable> iterator = causes.iterator();
-    if (!iterator.hasNext()) {
-      return null;
-    }
-
-    return iterator.next();
+    return causes.isEmpty() ? null : causes.iterator().next();
   }
 
   protected static String makeMessage(Set<Throwable> causes) {
@@ -70,6 +64,14 @@ public class UmbrellaException extends RuntimeException {
   public UmbrellaException(Set<Throwable> causes) {
     super(makeMessage(causes), makeCause(causes));
     this.causes = causes;
+    int i = 0;
+    for (Throwable cause : causes) {
+      if (i++ == 0) {
+        // First one already added as cause.
+        continue;
+      }
+      addSuppressed(cause);
+    }
   }
 
   /**
