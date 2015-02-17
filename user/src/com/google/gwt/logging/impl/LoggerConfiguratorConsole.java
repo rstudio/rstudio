@@ -53,7 +53,7 @@ class LoggerConfiguratorConsole implements LoggerConfigurator {
       }
       Throwable e = record.getThrown();
       if (e != null) {
-        logException(e);
+        logException(e, "");
       }
     }
 
@@ -77,15 +77,33 @@ class LoggerConfiguratorConsole implements LoggerConfigurator {
       console.log(message);
     }-*/;
 
-    private native void logException(Throwable t) /*-{
+    private void logException(Throwable t, String label) {
+      groupStart(label + t.toString());
+      log(t);
+      Throwable cause = t.getCause();
+      if (cause != null) {
+        logException(cause, "Caused by: ");
+      }
+      for (Throwable suppressed : t.getSuppressed()) {
+        logException(suppressed, "Suppressed: ");
+      }
+      groupEnd();
+    };
+
+    private native void groupStart(String msg) /*-{
       // Not all browsers support grouping:
       var groupStart = console.groupCollapsed || console.group || console.log;
-      var groupEnd = console.groupEnd || function(){};
-      var backingError = t.__gwt$backingJsError;
+      groupStart.call(console, msg);
+    }-*/;
 
-      groupStart(t.toString());
+    private native void groupEnd() /*-{
+      var groupEnd = console.groupEnd || function(){};
+      groupEnd.call(console);
+    }-*/;
+
+    private native void log(Throwable t) /*-{
+      var backingError = t.__gwt$backingJsError;
       console.log(backingError && backingError.stack);
-      groupEnd();
     }-*/;
 
     @Override
