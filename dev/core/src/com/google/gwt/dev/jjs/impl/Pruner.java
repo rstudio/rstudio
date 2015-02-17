@@ -170,6 +170,7 @@ public class Pruner {
         }
       };
       Iterables.removeIf(x.getOverriddenMethods(), isPruned);
+      Iterables.removeIf(x.getOverridingMethods(), isPruned);
     }
 
     @Override
@@ -694,7 +695,6 @@ public class Pruner {
     optimizerCtx.incOptimizationStep();
     optimizerCtx.syncDeletedSubCallGraphsSince(optimizerCtx.getLastStepFor(NAME) + 1,
         prunedMethods);
-    program.typeOracle.updateOverridesInfo(prunedMethods);
     JavaAstVerifier.assertProgramIsConsistent(program);
     return stats;
   }

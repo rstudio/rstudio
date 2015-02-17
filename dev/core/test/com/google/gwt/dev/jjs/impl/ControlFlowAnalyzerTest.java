@@ -220,7 +220,7 @@ public class ControlFlowAnalyzerTest extends JJSTestBase {
 
     // and its methods
     analyzeSnippet("VirtualUpRef.create().getFoo();").assertOnlyLiveFieldsAndMethods(
-        "VirtualUpRef.$clinit", "VirtualUpRef.create",
+        "VirtualUpRef.$clinit", "VirtualUpRef.create", "VirtualUpRef.getFoo",
         "NonImplementor.$clinit","NonImplementor.getFoo",
         "UpRefIntf.$clinit",
         "JavaScriptObject.$clinit",

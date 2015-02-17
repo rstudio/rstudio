@@ -39,8 +39,8 @@ import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 import com.google.gwt.thirdparty.guava.common.annotations.VisibleForTesting;
+import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
-import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -91,7 +91,7 @@ public class Finalizer {
 
     @Override
     public void exit(JMethod x, Context ctx) {
-      if (!x.isFinal() && !isOverridden.contains(x)) {
+      if (!x.isFinal() && x.getOverridingMethods().isEmpty()) {
         setFinal(x);
       }
     }
@@ -167,11 +167,6 @@ public class Finalizer {
     }
 
     @Override
-    public void endVisit(JMethod x, Context ctx) {
-      isOverridden.addAll(x.getOverriddenMethods());
-    }
-
-    @Override
     public void endVisit(JPostfixOperation x, Context ctx) {
       if (x.getOp().isModifying()) {
         recordAssignment(x.getArg());
@@ -209,6 +204,10 @@ public class Finalizer {
 
   private static final String NAME = Finalizer.class.getSimpleName();
 
+  private Finalizer(JProgram program) {
+    this.program = program;
+  }
+
   @VisibleForTesting
   static OptimizerStats exec(JProgram program) {
     return exec(program, OptimizerContext.NULL_OPTIMIZATION_CONTEXT);
@@ -216,19 +215,19 @@ public class Finalizer {
 
   public static OptimizerStats exec(JProgram program, OptimizerContext optimizerCtx) {
     Event optimizeEvent = SpeedTracerLogger.start(CompilerEventType.OPTIMIZE, "optimizer", NAME);
-    OptimizerStats stats = new Finalizer().execImpl(program, optimizerCtx);
+    OptimizerStats stats = new Finalizer(program).execImpl(optimizerCtx);
     optimizerCtx.incOptimizationStep();
     optimizeEvent.end("didChange", "" + stats.didChange());
     return stats;
   }
 
-  private final Set<JMethod> isOverridden = new HashSet<JMethod>();
+  private final Set<JVariable> isReassigned = Sets.newHashSet();
 
-  private final Set<JVariable> isReassigned = new HashSet<JVariable>();
+  private final Set<JClassType> isSubclassed = Sets.newHashSet();
 
-  private final Set<JClassType> isSubclassed = new HashSet<JClassType>();
+  private final JProgram program;
 
-  private OptimizerStats execImpl(JProgram program, OptimizerContext optimizerCtx) {
+  private OptimizerStats execImpl(OptimizerContext optimizerCtx) {
     MarkVisitor marker = new MarkVisitor();
     marker.accept(program);
 

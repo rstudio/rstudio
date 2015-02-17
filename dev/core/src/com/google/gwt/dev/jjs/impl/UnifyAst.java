@@ -24,7 +24,6 @@ import com.google.gwt.dev.javac.CompilationProblemReporter;
 import com.google.gwt.dev.javac.CompilationState;
 import com.google.gwt.dev.javac.CompilationUnit;
 import com.google.gwt.dev.javac.CompiledClass;
-import com.google.gwt.dev.javac.Shared;
 import com.google.gwt.dev.jdt.RebindPermutationOracle;
 import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.SourceInfo;
@@ -85,10 +84,8 @@ import com.google.gwt.dev.util.log.MetricName;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
-import com.google.gwt.thirdparty.guava.common.base.Predicate;
 import com.google.gwt.thirdparty.guava.common.base.Predicates;
 import com.google.gwt.thirdparty.guava.common.collect.Iterables;
-import com.google.gwt.thirdparty.guava.common.collect.LinkedHashMultimap;
 import com.google.gwt.thirdparty.guava.common.collect.LinkedListMultimap;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
 import com.google.gwt.thirdparty.guava.common.collect.Maps;
@@ -843,7 +840,16 @@ public class UnifyAst {
 
     // Compute overrides before pruning, otherwise if a parent class method is pruned an overriding
     // child class method might not look like an override.
-    computeOverrides();
+    List<JMethod> newStubMethods = computeOverrides();
+
+    // Make sure the created methods have the right liveness computation and don't get incorrectly
+    // pruned.
+    for (JMethod method : newStubMethods) {
+      if (instantiatedTypes.contains(method.getEnclosingType()) &&
+          virtualMethodsLive.contains(method.getSignature())) {
+        liveFieldsAndMethods.add(method);
+      }
+    }
 
     if (!incrementalCompile) {
       // Post-stitching clean-ups.
@@ -908,6 +914,8 @@ public class UnifyAst {
         // which methods are considered live.
         Iterables.removeIf(method.getOverriddenMethods(),
             Predicates.not(Predicates.in(liveFieldsAndMethods)));
+        Iterables.removeIf(method.getOverridingMethods(),
+            Predicates.not(Predicates.in(liveFieldsAndMethods)));
         if (!liveFieldsAndMethods.contains(method)) {
           type.removeMethod(methodIndex);
           --methodIndex;
@@ -971,19 +979,6 @@ public class UnifyAst {
     }
   }
 
-  private boolean canAccessSuperMethod(JDeclaredType type, JMethod method) {
-    if (method.isPrivate()) {
-      return false;
-    }
-    if (method.isPackagePrivate()) {
-      // Check package access.
-      String typePackage = Shared.getPackageName(type.getName());
-      String methodPackage = Shared.getPackageName(method.getEnclosingType().getName());
-      return typePackage.equals(methodPackage);
-    }
-    return true;
-  }
-
   /**
    * Ensure that if any preamble types have become stale then adequate steps are taken to ensure the
    * recreation of the entire preamble chunk.
@@ -1003,43 +998,12 @@ public class UnifyAst {
     }
   }
 
-  private void collectSelfAndSuperMethods(JDeclaredType type, Predicate<JMethod> shouldCollect,
-      Multimap<String, JMethod> collected) {
-    if (type == null) {
-      return;
-    }
-
-    for (JMethod method : type.getMethods()) {
-      if (shouldCollect.apply(method)) {
-        collected.put(method.getSignature(), method);
-      }
-    }
-
-    collectSelfAndSuperMethods(type.getSuperClass(), shouldCollect, collected);
-    for (JInterfaceType intfType : type.getImplements()) {
-      collectSelfAndSuperMethods(intfType, shouldCollect, collected);
-    }
-  }
-
   /**
-   * Compute all overrides.
-   */
-  private void computeOverrides() {
-    for (JDeclaredType type : program.getDeclaredTypes()) {
-      Multimap<String, JMethod> collected = LinkedHashMultimap.create();
-      collectSelfAndSuperPolymorphicMethods(type, collected);
-      for (JMethod method : type.getMethods()) {
-        if (!method.canBePolymorphic()) {
-          continue;
-        }
-        for (JMethod overridingMethod : collected.get(method.getSignature())) {
-          if (canAccessSuperMethod(type, overridingMethod) && method != overridingMethod) {
-            method.addOverriddenMethod(overridingMethod);
-          }
-        }
-      }
-    }
-  }
+    * Compute all overrides.
+    */
+   private List<JMethod> computeOverrides() {
+     return new ComputeOverridesAndImplementDefaultMethods().exec(program);
+   }
 
   private Set<String> computeRemainingStaleTypeNames() {
     return Sets.newHashSet(Sets.difference(staleTypeNames, processedStaleTypeNames));
@@ -1082,22 +1046,23 @@ public class UnifyAst {
    */
   private void fullFlowIntoType(JDeclaredType type) {
     String typeName = type.getName();
-    if (!fullFlowTypes.contains(typeName) && !typeName.endsWith("package-info")) {
-      // The traversal of this type will accumulate rebinder type to rebound type associations, but
-      // the accumulation should start from scratch, so clear any existing associations that might
-      // have been collected in previous compiles.
-      minimalRebuildCache.clearRebinderTypeAssociations(typeName);
-      fullFlowTypes.add(typeName);
-      // Remove the type from the remaining stale types set so that the fullFlowIntoStaleTypes()
-      // attempt is shorter.
-      processedStaleTypeNames.add(typeName);
-      instantiate(type);
-      for (JField field : type.getFields()) {
-        flowInto(field);
-      }
-      for (JMethod method : type.getMethods()) {
-        flowInto(method);
-      }
+    if (fullFlowTypes.contains(typeName) || typeName.endsWith("package-info")) {
+      return;
+    }
+    // The traversal of this type will accumulate rebinder type to rebound type associations, but
+    // the accumulation should start from scratch, so clear any existing associations that might
+    // have been collected in previous compiles.
+    minimalRebuildCache.clearRebinderTypeAssociations(typeName);
+    fullFlowTypes.add(typeName);
+    // Remove the type from the remaining stale types set so that the fullFlowIntoStaleTypes()
+    // attempt is shorter.
+    processedStaleTypeNames.add(typeName);
+    instantiate(type);
+    for (JField field : type.getFields()) {
+      flowInto(field);
+    }
+    for (JMethod method : type.getMethods()) {
+      flowInto(method);
     }
   }
 
@@ -1109,12 +1074,14 @@ public class UnifyAst {
     if (field == JField.NULL_FIELD) {
       return;
     }
-    if (!liveFieldsAndMethods.contains(field)) {
-      liveFieldsAndMethods.add(field);
-      field.setType(translate(field.getType()));
-      if (field.isStatic()) {
-        staticInitialize(field.getEnclosingType());
-      }
+    if (liveFieldsAndMethods.contains(field)) {
+      // already flown into.
+      return;
+    }
+    liveFieldsAndMethods.add(field);
+    field.setType(translate(field.getType()));
+    if (field.isStatic()) {
+      staticInitialize(field.getEnclosingType());
     }
   }
 
@@ -1289,14 +1256,14 @@ public class UnifyAst {
     if (program.isReferenceOnly(type) && !requiresDevirtualization(type)) {
       return;
     }
-    if (instantiatedTypes.contains(type)) {
-      return;
-    }
     if (type.isExternal()) {
       assert errorsFound;
       return;
     }
 
+    if (instantiatedTypes.contains(type)) {
+      return;
+    }
     instantiatedTypes.add(type);
     if (type.getSuperClass() != null) {
       instantiate(translate(type.getSuperClass()));
@@ -1308,92 +1275,33 @@ public class UnifyAst {
     boolean isJsType = jsInteropEnabled && type.isOrExtendsJsType();
     boolean isJsFunction = jsInteropEnabled && type.isOrExtendsJsFunction();
 
-    if (!type.isAbstract()) {
-      // this is a concrete type, add delegation methods for any unimplemented defender methods
-      maybeImplementDefenderMethods(type);
-    }
-
     // Flow into any reachable virtual methods.
     for (JMethod method : type.getMethods()) {
-      if (method.canBePolymorphic()) {
-        if (isJsType || isJsFunction) {
-          // Fake a call into the method to keep it around
-          flowInto(method);
-          continue;
-        }
-        String signature = method.getSignature();
-        if (virtualMethodsLive.contains(signature)) {
-          assert !virtualMethodsPending.containsKey(signature);
-          flowInto(method);
-        } else {
-            virtualMethodsPending.put(signature, method);
-        }
-      } else if (program.typeOracle.isExportedMethod(method)
-          && (method.isStatic() || method.isConstructor())) {
-        // rescue any @JsExport methods
+      if ((isJsType || isJsFunction) && method.canBePolymorphic() ||
+          program.typeOracle.isExportedMethod(method)) {
+        // Fake a call into the method to keep it around. For JsType, JsFunction and exported
+        // methods.
         flowInto(method);
+        continue;
+      }
+      if (!method.canBePolymorphic()) {
+        continue;
+      }
+
+      String signature = method.getSignature();
+      if (virtualMethodsLive.contains(signature)) {
+        assert !virtualMethodsPending.containsKey(signature);
+        flowInto(method);
+      } else {
+        virtualMethodsPending.put(signature, method);
       }
     }
 
     for (JField field : type.getFields()) {
-      if (field.isStatic() && program.typeOracle.isExportedField(field)) {
+      if (program.typeOracle.isExportedField(field)) {
         flowInto(field);
       }
     }
-  }
-
-  private void maybeImplementDefenderMethods(JDeclaredType type) {
-    if (type.isAbstract()) {
-      return;
-    }
-
-    // find all methods implemented in super type hierarchy
-    Multimap<String, JMethod> overridingMethodsBySignature = LinkedHashMultimap.create();
-    collectSelfAndSuperPolymorphicMethods(type, overridingMethodsBySignature);
-
-    // remove entries for all methods we override
-    for (JMethod method : type.getMethods()) {
-      overridingMethodsBySignature.removeAll(method.getSignature());
-    }
-
-    // what's left are inherited abstract or concrete virtual methods
-    // find methods which have no concrete versions
-    nextRef:
-    for (Collection<JMethod> notOverriden : overridingMethodsBySignature.asMap().values()) {
-      JMethod defenderMethod = null;
-      for (JMethod method : notOverriden) {
-        if (!canAccessSuperMethod(type, method)) {
-          continue;
-        }
-        if (method.isDefaultMethod()) {
-          if (defenderMethod == null ||
-              method.getOverriddenMethods().contains(defenderMethod)) {
-            defenderMethod = method;
-          }
-          continue;
-        }
-        if (!method.isAbstract()) {
-          // concrete implementor found, so no defender needed
-          continue nextRef;
-        }
-      }
-
-      if (defenderMethod != null) {
-        // found unimplemented defender method, create forward method to I.super.defenderMethod()
-        // forwardmethod(args) { return Interface.super.method(args); }
-        JjsUtils.createForwardingMethod(type, defenderMethod);
-      }
-    }
-  }
-
-  private void collectSelfAndSuperPolymorphicMethods(JDeclaredType type,
-      Multimap<String, JMethod> overridingMethodBySignature) {
-    collectSelfAndSuperMethods(type, new Predicate<JMethod>() {
-      @Override
-      public boolean apply(JMethod method) {
-        return method.canBePolymorphic();
-      }
-    }, overridingMethodBySignature);
   }
 
   private boolean requiresDevirtualization(JDeclaredType type) {
@@ -1428,23 +1336,24 @@ public class UnifyAst {
     for (JMethod method : type.getMethods()) {
       String methodSignature = method.getQualifiedName();
       methodMap.put(methodSignature, method);
-      if (MAGIC_METHOD_IMPLS.contains(methodSignature)) {
-        if (methodSignature.startsWith("com.google.gwt.core.client.GWT.")
-            || methodSignature.startsWith("com.google.gwt.core.shared.GWT.")) {
-          // GWT.isClient, GWT.isScript, GWT.isProdMode all true.
-          implementMagicMethod(method, JBooleanLiteral.TRUE);
-        } else {
-          assert methodSignature.startsWith("java.lang.Class.");
-          if (CLASS_DESIRED_ASSERTION_STATUS.equals(methodSignature)) {
-            implementMagicMethod(method,
-                JBooleanLiteral.get(compilerContext.getOptions().isEnableAssertions()));
-          } else if (CLASS_IS_CLASS_METADATA_ENABLED.equals(methodSignature)) {
-            implementMagicMethod(method,
-                JBooleanLiteral.get(!compilerContext.getOptions().isClassMetadataDisabled()));
-          } else {
-            assert false;
-          }
-        }
+      if (!MAGIC_METHOD_IMPLS.contains(methodSignature)) {
+        continue;
+      }
+      if (methodSignature.startsWith("com.google.gwt.core.client.GWT.")
+          || methodSignature.startsWith("com.google.gwt.core.shared.GWT.")) {
+        // GWT.isClient, GWT.isScript, GWT.isProdMode all true.
+        implementMagicMethod(method, JBooleanLiteral.TRUE);
+        continue;
+      }
+      assert methodSignature.startsWith("java.lang.Class.");
+      if (CLASS_DESIRED_ASSERTION_STATUS.equals(methodSignature)) {
+        implementMagicMethod(method,
+            JBooleanLiteral.get(compilerContext.getOptions().isEnableAssertions()));
+      } else if (CLASS_IS_CLASS_METADATA_ENABLED.equals(methodSignature)) {
+        implementMagicMethod(method,
+            JBooleanLiteral.get(!compilerContext.getOptions().isClassMetadataDisabled()));
+      } else {
+        assert false;
       }
     }
   }
@@ -1631,11 +1540,8 @@ public class UnifyAst {
     }
 
     if (type.isExternal()) {
-      if (type instanceof JDeclaredType) {
-        type = translate((JDeclaredType) type);
-      } else {
-        assert false : "Unknown external type";
-      }
+      assert type instanceof JDeclaredType : "Unknown external type" + type.getName();
+      type = translate((JDeclaredType) type);
       assert !type.isExternal();
     }
 

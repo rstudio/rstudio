@@ -16,6 +16,8 @@
 
 package com.google.gwt.dev.jjs.impl;
 
+import com.google.gwt.thirdparty.guava.common.base.Joiner;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -128,6 +130,19 @@ public class OptimizerStats {
   public OptimizerStats recordVisits(int numVisits) {
     this.numVisits += numVisits;
     return this;
+  }
+
+  @Override
+  public String toString() {
+    StringBuilder sb = new StringBuilder();
+    sb.append(String.format("%s (%d/%d)", name, getNumMods(), getNumVisits()));
+    if (children.isEmpty()) {
+      return sb.toString();
+    }
+    sb.append(" [");
+    sb.append(Joiner.on(",").join(children));
+    sb.append("]");
+    return sb.toString();
   }
 
   private void prettyPrint(StringBuilder builder, int level) {

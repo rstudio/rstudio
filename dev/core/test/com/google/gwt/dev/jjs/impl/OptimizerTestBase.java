@@ -158,8 +158,8 @@ public abstract class OptimizerTestBase extends JJSTestBase {
   }
 
   protected static void assertOverrides(
-      Result result, String fullMethodSignature, String... overridenMethodSignatures) {
-    assertEquals(ImmutableSet.copyOf(overridenMethodSignatures),
+      Result result, String fullMethodSignature, String... overriddenMethodSignatures) {
+    assertEquals(ImmutableSet.copyOf(overriddenMethodSignatures),
         findOverrides(result, fullMethodSignature));
   }
 
@@ -214,6 +214,7 @@ public abstract class OptimizerTestBase extends JJSTestBase {
         };
     JMethod method = findMethod(result, fullMethodSignature);
     assertNotNull("Method " + fullMethodSignature + " not found", method);
+    assertEquals(fullMethodSignature, method.toString());
     return FluentIterable
         .from(method.getOverriddenMethods())
         .transform(METHOD_TO_STRING)

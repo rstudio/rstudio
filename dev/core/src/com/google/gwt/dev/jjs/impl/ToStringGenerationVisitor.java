@@ -654,9 +654,14 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
     } else if (x.isStaticDispatchOnly()) {
       // super(), this() or super.m() call.
       JReferenceType thisType = (JReferenceType) x.getInstance().getType().getUnderlyingType();
-      if (thisType == target.getEnclosingType()) {
+      if (thisType == target.getEnclosingType() && !(thisType instanceof JInterfaceType)) {
         print(CHARS_THIS);
       } else {
+        if (thisType instanceof JInterfaceType) {
+          // This is a static default method dispatch.
+          printTypeName(target.getEnclosingType());
+          print('.');
+        }
         print(CHARS_SUPER);
       }
       if (!x.getTarget().isConstructor()) {

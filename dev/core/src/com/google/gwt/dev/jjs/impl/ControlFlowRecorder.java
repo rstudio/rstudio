@@ -130,7 +130,7 @@ public class ControlFlowRecorder extends JVisitor {
 
     stringAnalyzableTypeEnvironment.recordTypeEnclosesMethod(typeName, currentMethodName);
 
-    for (JMethod overriddenMethod : program.typeOracle.getOverriddenMethodsOf(x)) {
+    for (JMethod overriddenMethod : x.getOverriddenMethods()) {
       String overriddenMethodName = computeName(overriddenMethod);
       stringAnalyzableTypeEnvironment.recordMethodOverridesMethod(currentMethodName,
           overriddenMethodName);

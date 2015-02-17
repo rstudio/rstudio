@@ -57,6 +57,7 @@ import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 import com.google.gwt.thirdparty.guava.common.annotations.VisibleForTesting;
 import com.google.gwt.thirdparty.guava.common.base.Predicate;
 import com.google.gwt.thirdparty.guava.common.collect.HashMultimap;
+import com.google.gwt.thirdparty.guava.common.collect.ImmutableMap;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
 import com.google.gwt.thirdparty.guava.common.collect.Multimap;
 import com.google.gwt.thirdparty.guava.common.collect.Sets;
@@ -335,7 +336,7 @@ public class TypeTightener {
          * Add an assignment to each parameter from that same parameter in every
          * method this method overrides.
          */
-        Collection<JMethod> overrides = program.typeOracle.getOverriddenMethodsOf(x);
+        Collection<JMethod> overrides = x.getOverriddenMethods();
         if (overrides.isEmpty()) {
           return true;
         }
@@ -603,9 +604,9 @@ public class TypeTightener {
           typeList.add((JReferenceType) expr.getType());
         }
       }
-      Collection<JMethod> myOverriders = program.typeOracle.getOverridingMethodsOf(x);
-      if (myOverriders != null) {
-        for (JMethod method : myOverriders) {
+      Collection<JMethod> overridingMethods = x.getOverridingMethods();
+      if (overridingMethods != null) {
+        for (JMethod method : overridingMethods) {
           typeList.add((JReferenceType) method.getType());
         }
       }
@@ -627,7 +628,8 @@ public class TypeTightener {
         return;
       }
       JMethod target = x.getTarget();
-      JMethod concreteMethod = getSingleConcreteMethod(target);
+      JMethod concreteMethod = getSingleConcreteMethodOverride(target);
+      assert concreteMethod != target;
       if (concreteMethod != null) {
         JMethodCall newCall = new JMethodCall(x.getSourceInfo(), x.getInstance(), concreteMethod);
         newCall.addArgs(x.getArgs());
@@ -644,7 +646,7 @@ public class TypeTightener {
         JExpression instance = x.getInstance();
         assert (instance != null);
         JReferenceType instanceType = (JReferenceType) instance.getType();
-        Collection<JMethod> myOverriders = program.typeOracle.getOverridingMethodsOf(target);
+        Collection<JMethod> myOverriders = target.getOverridingMethods();
         if (myOverriders != null) {
           for (JMethod override : myOverriders) {
             JReferenceType overrideType = override.getEnclosingType();
@@ -706,12 +708,12 @@ public class TypeTightener {
      * from the leaf concrete type will be returned. If the method is static,
      * return <code>null</code> no matter what.
      */
-    private JMethod getSingleConcreteMethod(JMethod method) {
+    private JMethod getSingleConcreteMethodOverride(JMethod method) {
       if (!method.canBePolymorphic()) {
         return null;
       }
       if (getSingleConcreteType(method.getEnclosingType()) != null) {
-        return getSingleConcrete(method, program.typeOracle.getAllOverridings().asMap());
+        return getSingleConcrete(method, ImmutableMap.of(method, method.getOverridingMethods()));
       } else {
         return null;
       }
@@ -957,11 +959,11 @@ public class TypeTightener {
     }
 
     // If a method's return type or parameters' types are changed, its overriders and overridden
-    // methods should be reanalyzed. The overriden methods and overriders from typeOracle may have
+    // methods should be reanalyzed. The overridden methods and overriders from typeOracle may have
     // been pruned, so we have to check if they are in the AST.
     for (JMethod method : modifiedMethods) {
-      affectedMethods.addAll(program.typeOracle.getOverriddenMethodsOf(method));
-      affectedMethods.addAll(program.typeOracle.getOverridingMethodsOf(method));
+      affectedMethods.addAll(method.getOverriddenMethods());
+      affectedMethods.addAll(method.getOverridingMethods());
     }
 
     // If a field is changed, the methods that reference to it should be reanalyzed.

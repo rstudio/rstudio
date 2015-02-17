@@ -1155,6 +1155,13 @@ public class CompilerTest extends ArgProcessorTestBase {
     checkIncrementalRecompile_typeHierarchyChange(JsOutputOption.DETAILED);
   }
 
+  public void testIncrementalRecompile_defaultMethod() throws UnableToCompleteException,
+      IOException, InterruptedException {
+    // Tests that default method on superclasses are correctly constructed
+    checkIncrementalRecompile_defaultMethod(JsOutputOption.PRETTY);
+    checkIncrementalRecompile_defaultMethod(JsOutputOption.DETAILED);
+  }
+
   public void testIncrementalRecompile_devirtualizeUnchangedJso() throws UnableToCompleteException,
       IOException, InterruptedException {
     // Tests that a JSO calls through interfaces are correctly devirtualized when compiling per file
@@ -1365,6 +1372,63 @@ public class CompilerTest extends ArgProcessorTestBase {
         Lists.<MockResource> newArrayList(), relinkMinimalRebuildCache, emptySet, output);
 
     assertTrue(originalJs.equals(relinkedJs));
+  }
+
+  private void checkIncrementalRecompile_defaultMethod(JsOutputOption output)
+      throws UnableToCompleteException, IOException, InterruptedException {
+    // Tests that when a superclass has a "inherits" a default method,
+    MockJavaResource interfaceWithDefaultMethod =
+        JavaResourceBase.createMockJavaResource(
+            "com.foo.InterfaceWithDefaultMethod",
+            "package com.foo;",
+            "interface InterfaceWithDefaultMethod {",
+            "  default String m() {return null; }",
+            "}");
+
+    MockJavaResource classImplementingInterfaceWithDefaultMethod =
+        JavaResourceBase.createMockJavaResource(
+            "com.foo.classImplementingInterfaceWithDefaultMethod",
+            "package com.foo;",
+            "public class classImplementingInterfaceWithDefaultMethod",
+            "    implements InterfaceWithDefaultMethod {",
+            "}");
+
+    MockJavaResource aSubclass =
+        JavaResourceBase.createMockJavaResource(
+            "com.foo.ASubclass",
+            "package com.foo;",
+            "public class ASubclass extends classImplementingInterfaceWithDefaultMethod {",
+            "  public String someMethod() {return super.m(); }",
+            "}");
+
+    MockResource moduleResource =
+        JavaResourceBase.createMockResource(
+            "com/foo/DefaultMethod.gwt.xml",
+            "<module>",
+            "  <source path=''/>",
+            "  <entry-point class='com.foo.DefaultMethodEntryPoint'/>",
+            "</module>");
+
+    MockJavaResource entryPointResource =
+        JavaResourceBase.createMockJavaResource(
+            "com.foo.DefaultMethodEntryPoint",
+            "package com.foo;",
+            "import com.google.gwt.core.client.EntryPoint;",
+            "public class DefaultMethodEntryPoint implements EntryPoint {",
+            "  public void onModuleLoad() {",
+            "    new ASubclass().someMethod();",
+            "  }",
+            "}");
+
+    CompilerOptions compilerOptions = new CompilerOptionsImpl();
+    compilerOptions.setUseDetailedTypeIds(true);
+    compilerOptions.setSourceLevel(SourceLevel.JAVA8);
+
+    checkRecompiledModifiedApp(compilerOptions, "com.foo.DefaultMethod",
+        Lists.newArrayList(moduleResource, entryPointResource, aSubclass,
+            classImplementingInterfaceWithDefaultMethod, interfaceWithDefaultMethod),
+        aSubclass, aSubclass, stringSet("com.foo.ASubclass", "com.foo.DefaultMethodEntryPoint"),
+        output);
   }
 
   private void checkIncrementalRecompile_dateStampChange(JsOutputOption output)
@@ -1670,8 +1734,11 @@ public class CompilerTest extends ArgProcessorTestBase {
     // If a resource contents were changed between the original compile and the relink compile
     // check that the output JS has also changed. If all resources have the same content (their
     // timestamps might have changed) then outputs should be the same.
-    assertEquals(modifiedResource == originalResource,
-        originalAppFromScratchJs.equals(modifiedAppRelinkedJs));
+    boolean wasNotModified = modifiedResource == originalResource;
+    assertTrue("Resource " + modifiedResource.getPath()  + " was " +
+        (wasNotModified ? "NOT " : "") + "modified but the output was " +
+        (wasNotModified ? "" : "NOT ") + "different.",
+        wasNotModified  == originalAppFromScratchJs.equals(modifiedAppRelinkedJs));
 
     // If per-file compiles properly avoids global-knowledge dependencies and correctly invalidates
     // referencing types when a type changes, then the relinked and from scratch JS will be

@@ -28,7 +28,6 @@ import com.google.gwt.thirdparty.guava.common.collect.HashMultimap;
 import com.google.gwt.thirdparty.guava.common.collect.ImmutableList;
 import com.google.gwt.thirdparty.guava.common.collect.ImmutableSetMultimap;
 import com.google.gwt.thirdparty.guava.common.collect.Iterables;
-import com.google.gwt.thirdparty.guava.common.collect.LinkedHashMultimap;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
 import com.google.gwt.thirdparty.guava.common.collect.Maps;
 import com.google.gwt.thirdparty.guava.common.collect.Multimap;
@@ -234,7 +233,7 @@ public class JTypeOracle implements Serializable {
     }
 
     if (x.needsVtable() && isJsTypeMethod(x)) {
-      for (JMethod override : getOverriddenMethodsOf(x)) {
+      for (JMethod override : x.getOverriddenMethods()) {
         if (!isJsTypeMethod(override)) {
           return true;
         }
@@ -512,18 +511,6 @@ public class JTypeOracle implements Serializable {
    * NOTE: {@code superInterfacesByInterface} is NOT reflexive.
    */
   private Multimap<String, String> superInterfacesByInterface;
-  /**
-   * A map of all methods with virtual overrides, onto the collection of
-   * overridden methods. Each key method's collections is a map of the set of
-   * subclasses who inherit the key method mapped onto the set of interface
-   * methods the key method virtually implements. For a definition of a virtual
-   * override, see {@link #getAllVirtualOverrides(JMethod)}.
-   */
-  private final Map<JMethod, Multimap<JClassType, JMethod>> virtualUpRefMap =
-      Maps.newIdentityHashMap();
-
-  private LinkedHashMultimap<JMethod, JMethod> overriddenMethodsByOverridingMethod;
-  private LinkedHashMultimap<JMethod, JMethod> overridingMethodsByOverriddenMethod;
 
   /**
    * An index of all polymorphic methods for each class.
@@ -770,6 +757,7 @@ public class JTypeOracle implements Serializable {
     computeExtendedTypeRelations();
 
     for (JDeclaredType type : declaredTypes) {
+
       // first time through, record all exported methods
       for (JMethod method : type.getMethods()) {
         if (isExportedMethod(method)) {
@@ -779,31 +767,6 @@ public class JTypeOracle implements Serializable {
       for (JField field : type.getFields()) {
         if (isExportedField(field)) {
           exportedFields.add(field);
-        }
-      }
-    }
-
-    for (JDeclaredType type : declaredTypes) {
-      if (type instanceof JClassType) {
-        computeVirtualUpRefs((JClassType) type);
-      }
-    }
-
-    computeOverrides(declaredTypes);
-  }
-
-  public void computeOverrides(Collection<JDeclaredType> declaredTypes) {
-    if (overriddenMethodsByOverridingMethod == null
-        || overridingMethodsByOverriddenMethod == null) {
-      overriddenMethodsByOverridingMethod = LinkedHashMultimap.create();
-      overridingMethodsByOverriddenMethod = LinkedHashMultimap.create();
-      for (JDeclaredType type : declaredTypes) {
-        for (JMethod method : type.getMethods()) {
-          Set<JMethod> overriddens = computeAllOverriddenMethods(method);
-          overriddenMethodsByOverridingMethod.putAll(method, overriddens);
-          for (JMethod overridden : overriddens) {
-            overridingMethodsByOverriddenMethod.put(overridden, method);
-          }
         }
       }
     }
@@ -821,68 +784,6 @@ public class JTypeOracle implements Serializable {
     referenceTypesByName.clear();
     for (JReferenceType type : types) {
       referenceTypesByName.put(type.getName(), type);
-    }
-  }
-
-  /**
-   * References to any methods which this method implementation might override
-   * or implement in any instantiable class, including strange cases where there
-   * is no direct relationship between the methods except in a subclass that
-   * inherits one and implements the other. Example:
-   *
-   * <pre>
-   * interface IFoo {
-   *   foo();
-   * }
-   * class Unrelated {
-   *   foo() { ... }
-   * }
-   * class Foo extends Unrelated implements IFoo {
-   * }
-   * </pre>
-   *
-   * In this case, <code>Unrelated.foo()</code> virtually implements
-   * <code>IFoo.foo()</code> in subclass <code>Foo</code>.
-   */
-  private Set<JMethod> computeAllOverriddenMethods(JMethod method) {
-    Set<JMethod> results = Sets.newIdentityHashSet();
-    results.addAll(method.getOverriddenMethods());
-    getAllVirtualOverriddenMethods(method, results);
-    return results;
-  }
-
-  public Set<JMethod> getOverriddenMethodsOf(JMethod method) {
-    assert (overriddenMethodsByOverridingMethod != null);
-    return overriddenMethodsByOverridingMethod.get(method);
-  }
-
-  public Set<JMethod> getOverridingMethodsOf(JMethod method) {
-    assert (overridingMethodsByOverriddenMethod != null);
-    return overridingMethodsByOverriddenMethod.get(method);
-  }
-
-  public LinkedHashMultimap<JMethod, JMethod> getAllOverriddens() {
-    assert (overriddenMethodsByOverridingMethod != null);
-    return overriddenMethodsByOverridingMethod;
-  }
-
-  public LinkedHashMultimap<JMethod, JMethod> getAllOverridings() {
-    assert (overridingMethodsByOverriddenMethod != null);
-    return overridingMethodsByOverriddenMethod;
-  }
-
-  public void updateOverridesInfo(Set<JMethod> prunedMethods) {
-    assert (overriddenMethodsByOverridingMethod != null
-        && overridingMethodsByOverriddenMethod != null);
-    for (JMethod prunedMethod : prunedMethods) {
-      Set<JMethod> overriddenMethods = overriddenMethodsByOverridingMethod.removeAll(prunedMethod);
-      for (JMethod overriddenMethod : overriddenMethods) {
-        overridingMethodsByOverriddenMethod.remove(overriddenMethod, prunedMethod);
-      }
-      Set<JMethod> overriderMethods = overridingMethodsByOverriddenMethod.removeAll(prunedMethod);
-      for (JMethod overriderMethod : overriderMethods) {
-        overriddenMethodsByOverridingMethod.remove(overriderMethod, prunedMethod);
-      }
     }
   }
 
@@ -1541,67 +1442,6 @@ public class JTypeOracle implements Serializable {
     return null;
   }
 
-  /**
-   * WEIRD: Suppose class Foo declares void f(){} and unrelated interface I also
-   * declares void f(). Then suppose Bar extends Foo implements I and doesn't
-   * override f(). We need to record a "virtual" upref from Foo.f() to I.f() so
-   * that if I.f() is rescued AND Bar is instantiable, Foo.f() does not get
-   * pruned.
-   */
-  private void computeVirtualUpRefs(JClassType type) {
-    if (type.getSuperClass() == null ||
-        type.getSuperClass().getName().equals(standardTypes.javaLangObject)) {
-      return;
-    }
-
-    /*
-     * For each interface I directly implement, check all methods and make sure
-     * I define implementations for them. If I don't, then check all my super
-     * classes to find virtual overrides.
-     */
-    for (JInterfaceType intf : type.getImplements()) {
-      computeVirtualUpRefs(type, intf);
-      for (JReferenceType superIntf : getTypes(superInterfacesByInterface.get(intf.getName()))) {
-        computeVirtualUpRefs(type, (JInterfaceType) superIntf);
-      }
-    }
-  }
-
-  /**
-   * For each interface I directly implement, check all methods and make sure I
-   * define implementations for them. If I don't, then check all my super
-   * classes to find virtual overrides.
-   */
-  private void computeVirtualUpRefs(JClassType type, JInterfaceType intf) {
-    outer : for (JMethod intfMethod : intf.getMethods()) {
-      for (JMethod classMethod : type.getMethods()) {
-        if (methodsDoMatch(intfMethod, classMethod)) {
-          // this class directly implements the interface method
-          continue outer;
-        }
-      }
-
-      // this class does not directly implement the interface method
-      // if any super classes do, create a virtual up ref
-      for (JClassType superType = type.getSuperClass();
-          !superType.getName().equals(standardTypes.javaLangObject);
-          superType = superType.getSuperClass()) {
-        for (JMethod superMethod : superType.getMethods()) {
-          if (methodsDoMatch(intfMethod, superMethod)) {
-            // this super class directly implements the interface method
-            // create a virtual up ref
-            Multimap<JClassType, JMethod> classToMethodsMultimap =
-                getOrCreateMultimap(virtualUpRefMap, superMethod);
-            classToMethodsMultimap.put(type, intfMethod);
-
-            // do not search additional super types
-            continue outer;
-          }
-        }
-      }
-    }
-  }
-
   private JReferenceType ensureTypeExistsAndAppend(String typeName, List<JReferenceType> types) {
     JReferenceType type = referenceTypesByName.get(typeName);
     assert type != null;
@@ -1615,18 +1455,6 @@ public class JTypeOracle implements Serializable {
    */
   private boolean extendsInterface(JInterfaceType type, JInterfaceType qType) {
     return superInterfacesByInterface.containsEntry(type.getName(), qType.getName());
-  }
-
-  private void getAllVirtualOverriddenMethods(JMethod method, Set<JMethod> results) {
-    Multimap<JClassType, JMethod> overrideMap = virtualUpRefMap.get(method);
-    if (overrideMap == null) {
-      return;
-    }
-    for (JClassType classType : overrideMap.keySet()) {
-      if (isInstantiatedType(classType)) {
-        results.addAll(overrideMap.get(classType));
-      }
-    }
   }
 
   /**

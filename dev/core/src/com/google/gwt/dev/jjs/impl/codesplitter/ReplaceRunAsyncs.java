@@ -113,7 +113,10 @@ public class ReplaceRunAsyncs {
         } else {
           callbackMethod = program.getIndexedMethod("RunAsyncCallback.onSuccess");
         }
-        if (callbackMethod == null) {
+        if (callbackMethod == null ||
+            // The callback method is a synthetic stub inserted for more accurate override
+            // tracking, ignore it.
+            callbackMethod.isAbstract() && callbackMethod.isSynthetic()) {
           error(x.getSourceInfo(), "Only a RunAsyncCallback with a defined onSuccess() can "
               + "be passed to runAsync().");
           return;

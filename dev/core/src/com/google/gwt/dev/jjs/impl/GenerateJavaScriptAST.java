@@ -1913,8 +1913,9 @@ public class GenerateJavaScriptAST {
       if (program.isReferenceOnly(program.getIndexedType("Class"))) {
         return Collections.emptyList();
       }
-      // Include in the preamble all classes that are reachable for Class.createForClass,
-      // Class.createForInterface
+
+      // These are the classes included in the preamble, i.e.
+      // all classes that are reachable for Class.createForClass, Class.createForInterface
       SortedSet<JDeclaredType> reachableClasses =
           computeReachableTypes(METHODS_PROVIDED_BY_PREAMBLE);
 

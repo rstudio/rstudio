@@ -169,4 +169,19 @@ public class Java8Test extends GWTTestCase {
 
   public void testMethodRefWithSameName() {
   }
+
+  public void testMultipleDefaults_fromInterfaces_left() {
+  }
+
+  public void testMultipleDefaults_fromInterfaces_right() {
+  }
+
+  public void testMultipleDefaults_superclass_left() {
+  }
+
+  public void testMultipleDefaults_superclass_right() {
+  }
+
+  public void testInterfaceThis() {
+  }
 }

@@ -301,8 +301,6 @@ public class JMethod extends JNode implements JMember, CanBeAbstract, CanBeNativ
   public static final JMethod NULL_METHOD = new JMethod(SourceOrigin.UNKNOWN, "nullMethod", null,
       JNullType.INSTANCE, false, false, true, AccessModifier.PUBLIC);
 
-  private static final String TRACE_METHOD_WILDCARD = "*";
-
   static {
     NULL_METHOD.setSynthetic();
     NULL_METHOD.freezeParamTypes();
@@ -335,6 +333,7 @@ public class JMethod extends JNode implements JMember, CanBeAbstract, CanBeNativ
    * list will contain both A and B.
    */
   private Set<JMethod> overriddenMethods = Sets.newLinkedHashSet();
+  private Set<JMethod> overridingMethods = Sets.newLinkedHashSet();
 
   private List<JParameter> params = Collections.emptyList();
   private JType returnType;
@@ -383,11 +382,20 @@ public class JMethod extends JNode implements JMember, CanBeAbstract, CanBeNativ
   /**
    * Add a method that this method overrides.
    */
-  public void addOverriddenMethod(JMethod toAdd) {
+  public void addOverriddenMethod(JMethod overriddenMethod) {
     assert canBePolymorphic() : this + " is not polymorphic";
-    overriddenMethods.add(toAdd);
+    assert overriddenMethod != this : this + " cannot override itself";
+    overriddenMethods.add(overriddenMethod);
   }
 
+  /**
+   * Add a method that overrides this method.
+   */
+  public void addOverridingMethod(JMethod overridingMethod) {
+    assert canBePolymorphic() : this + " is not polymorphic";
+    assert overridingMethod != this : this + " cannot override itself";
+    overridingMethods.add(overridingMethod);
+  }
   /**
    * Adds a parameter to this method.
    */
@@ -477,6 +485,14 @@ public class JMethod extends JNode implements JMember, CanBeAbstract, CanBeNativ
    */
   public Set<JMethod> getOverriddenMethods() {
     return overriddenMethods;
+  }
+
+  /**
+   * Returns the transitive closure of all the methods that override this method; caveat this
+   * list is only complete in monolithic compiles and should not be used in incremental compiles..
+   */
+  public Set<JMethod> getOverridingMethods() {
+    return overridingMethods;
   }
 
   /**
@@ -635,7 +651,11 @@ public class JMethod extends JNode implements JMember, CanBeAbstract, CanBeNativ
 
   @Override
   public void setFinal() {
-    isFinal = true;
+    setFinal(true);
+  }
+
+  public void setFinal(boolean isFinal) {
+    this.isFinal = isFinal;
   }
 
   public void setOriginalTypes(JType returnType, List<JType> paramTypes) {
