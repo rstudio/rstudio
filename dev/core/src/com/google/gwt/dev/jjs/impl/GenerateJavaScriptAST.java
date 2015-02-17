@@ -2222,7 +2222,7 @@ public class GenerateJavaScriptAST {
         SourceInfo sourceInfo) {
       if (JjsUtils.closureStyleLiteralsNeeded(incremental, jsInteropMode,
           jsExportClosureStyle)) {
-        return buildCastMapFromArrayLiteral(runtimeTypeIdLiterals, sourceInfo);
+        return buildClosureStyleCastMapFromArrayLiteral(runtimeTypeIdLiterals, sourceInfo);
       } else {
         return buildCastMapAsObjectLiteral(runtimeTypeIdLiterals, sourceInfo);
       }
@@ -2244,17 +2244,24 @@ public class GenerateJavaScriptAST {
       return objLit;
     }
 
-    private JsExpression buildCastMapFromArrayLiteral(
-        List<JsExpression> runtimeTypeIdLiterals, SourceInfo sourceInfo) {
-      JsArrayLiteral castExprs = new JsArrayLiteral(sourceInfo);
+    private JsExpression buildClosureStyleCastMapFromArrayLiteral(
+            List<JsExpression> runtimeTypeIdLiterals, SourceInfo sourceInfo) {
+      /*
+       * goog.object.createSet('foo', 'bar', 'baz') is optimized by closure compiler into
+       * {'foo': !0, 'bar': !0, baz: !0}
+       */
+      JsNameRef createSet = new JsNameRef(sourceInfo, "createSet");
+      JsNameRef googObject = new JsNameRef(sourceInfo, "object");
+      JsNameRef goog = new JsNameRef(sourceInfo, "goog");
+      createSet.setQualifier(googObject);
+      googObject.setQualifier(goog);
+
+      JsInvocation jsInvocation = new JsInvocation(sourceInfo, createSet);
+
       for (JsExpression expr : runtimeTypeIdLiterals) {
-        castExprs.getExpressions().add(expr);
+        jsInvocation.getArguments().add(expr);
       }
-      castExprs.setInternable();
-      JsInvocation jsInvocation = new JsInvocation(sourceInfo,
-          indexedFunctions
-              .get("JavaClassHierarchySetupUtil.makeCastMapFromArray"),
-          castExprs);
+
       return jsInvocation;
     }
 
