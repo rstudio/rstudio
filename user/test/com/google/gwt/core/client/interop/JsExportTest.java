@@ -101,7 +101,9 @@ public class JsExportTest extends GWTTestCase {
 
   private native Object getNotExportedFields() /*-{
     return $wnd.woo.StaticInitializerStaticField.NOT_EXPORTED_1
-        || $wnd.woo.StaticInitializerStaticField.NOT_EXPORTED_2;
+        || $wnd.woo.StaticInitializerStaticField.NOT_EXPORTED_2
+        || $wnd.woo.StaticInitializerStaticField.NOT_EXPORTED_3
+        || $wnd.woo.StaticInitializerStaticField.NOT_EXPORTED_4;
   }-*/;
 
   private native Object getNotExportedMethods() /*-{

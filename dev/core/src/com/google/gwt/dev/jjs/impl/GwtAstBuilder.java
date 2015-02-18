@@ -2501,7 +2501,7 @@ public class GwtAstBuilder {
           if (f.getExportName() != null) {
             continue;
           }
-          if (f.isStatic()) {
+          if (f.isPublic() && f.isStatic()) {
             f.setExportName("");
           }
         }
