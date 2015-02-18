@@ -15,8 +15,8 @@
  */
 package com.google.gwt.dev.jjs.impl.gflow;
 
-import com.google.common.base.Preconditions;
 import com.google.gwt.dev.jjs.impl.gflow.TransformationFunction.Transformation;
+import com.google.gwt.thirdparty.guava.common.base.Preconditions;
 
 import java.util.ArrayList;
 import java.util.Collections;

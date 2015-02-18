@@ -15,11 +15,6 @@
  */
 package com.google.gwt.dev.jjs.impl;
 
-import com.google.common.base.Predicate;
-import com.google.common.base.Predicates;
-import com.google.common.collect.Collections2;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
 import com.google.gwt.dev.PrecompileTaskOptions;
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.SourceOrigin;
@@ -53,6 +48,11 @@ import com.google.gwt.dev.js.ast.JsObjectLiteral;
 import com.google.gwt.dev.js.ast.JsStringLiteral;
 import com.google.gwt.dev.util.arg.OptionJsInteropMode.Mode;
 import com.google.gwt.lang.LongLib;
+import com.google.gwt.thirdparty.guava.common.base.Predicate;
+import com.google.gwt.thirdparty.guava.common.base.Predicates;
+import com.google.gwt.thirdparty.guava.common.collect.Collections2;
+import com.google.gwt.thirdparty.guava.common.collect.ImmutableMap;
+import com.google.gwt.thirdparty.guava.common.collect.Lists;
 
 import java.util.Arrays;
 import java.util.List;

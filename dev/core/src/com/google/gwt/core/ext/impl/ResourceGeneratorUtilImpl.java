@@ -15,7 +15,7 @@
  */
 package com.google.gwt.core.ext.impl;
 
-import com.google.common.collect.Maps;
+import com.google.gwt.thirdparty.guava.common.collect.Maps;
 
 import java.io.File;
 import java.util.Collections;

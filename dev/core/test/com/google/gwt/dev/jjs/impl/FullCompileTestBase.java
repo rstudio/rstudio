@@ -15,7 +15,6 @@
  */
 package com.google.gwt.dev.jjs.impl;
 
-import com.google.common.collect.Lists;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.linker.SymbolData;
 import com.google.gwt.core.ext.linker.impl.StandardSymbolData;
@@ -37,6 +36,7 @@ import com.google.gwt.dev.js.ast.JsName;
 import com.google.gwt.dev.js.ast.JsNode;
 import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.util.Pair;
+import com.google.gwt.thirdparty.guava.common.collect.Lists;
 
 import java.util.Arrays;
 import java.util.Map;

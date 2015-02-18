@@ -15,8 +15,6 @@
  */
 package com.google.gwt.dev.jjs.impl;
 
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.Sets;
 import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.ast.Context;
@@ -48,6 +46,8 @@ import com.google.gwt.dev.js.ast.JsThisRef;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
+import com.google.gwt.thirdparty.guava.common.annotations.VisibleForTesting;
+import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
 import java.util.ArrayList;
 import java.util.HashSet;

@@ -15,9 +15,6 @@
  */
 package com.google.gwt.dev.jjs.impl;
 
-import com.google.common.base.Joiner;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Sets;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.CompilerContext;
 import com.google.gwt.dev.PrecompileTaskOptions;
@@ -30,6 +27,9 @@ import com.google.gwt.dev.js.ast.JsFunction;
 import com.google.gwt.dev.js.ast.JsName;
 import com.google.gwt.dev.js.ast.JsNode;
 import com.google.gwt.dev.js.ast.JsProgram;
+import com.google.gwt.thirdparty.guava.common.base.Joiner;
+import com.google.gwt.thirdparty.guava.common.collect.Iterables;
+import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
 import java.util.Set;
 

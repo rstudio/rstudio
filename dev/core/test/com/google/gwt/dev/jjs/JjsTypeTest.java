@@ -16,8 +16,6 @@
 
 package com.google.gwt.dev.jjs;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 import com.google.gwt.dev.MinimalRebuildCache;
 import com.google.gwt.dev.jjs.ast.JArrayType;
 import com.google.gwt.dev.jjs.ast.JClassType;
@@ -30,6 +28,8 @@ import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JTypeOracle;
 import com.google.gwt.dev.jjs.ast.JTypeOracle.ImmediateTypeRelations;
 import com.google.gwt.dev.jjs.ast.JTypeOracle.StandardTypes;
+import com.google.gwt.thirdparty.guava.common.collect.Lists;
+import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
 import junit.framework.TestCase;
 

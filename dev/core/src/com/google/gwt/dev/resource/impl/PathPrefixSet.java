@@ -15,10 +15,10 @@
  */
 package com.google.gwt.dev.resource.impl;
 
-import com.google.common.collect.Lists;
 import com.google.gwt.dev.resource.impl.PathPrefix.Judgement;
 import com.google.gwt.dev.util.StringInterner;
 import com.google.gwt.dev.util.collect.Maps;
+import com.google.gwt.thirdparty.guava.common.collect.Lists;
 
 import java.util.ArrayList;
 import java.util.Collection;

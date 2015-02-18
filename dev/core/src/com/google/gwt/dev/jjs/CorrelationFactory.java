@@ -15,12 +15,12 @@
  */
 package com.google.gwt.dev.jjs;
 
-import com.google.common.collect.MapMaker;
 import com.google.gwt.dev.jjs.Correlation.Axis;
 import com.google.gwt.dev.jjs.Correlation.Literal;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JMethod;
+import com.google.gwt.thirdparty.guava.common.collect.MapMaker;
 
 import java.io.Serializable;
 import java.util.EnumMap;

@@ -15,7 +15,7 @@
  */
 package com.google.gwt.util.tools;
 
-import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.gwt.thirdparty.guava.common.base.Preconditions.checkArgument;
 
 /**
  * Argument handler for deprecated no-op flags.

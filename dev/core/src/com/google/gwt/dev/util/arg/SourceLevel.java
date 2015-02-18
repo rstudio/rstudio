@@ -15,7 +15,7 @@
  */
 package com.google.gwt.dev.util.arg;
 
-import com.google.common.annotations.VisibleForTesting;
+import com.google.gwt.thirdparty.guava.common.annotations.VisibleForTesting;
 import com.google.gwt.util.tools.Utility;
 
 /**

@@ -15,11 +15,11 @@
  */
 package com.google.gwt.dev.jjs.impl;
 
-import com.google.common.base.Predicate;
-import com.google.common.collect.ImmutableList;
 import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JProgram;
+import com.google.gwt.thirdparty.guava.common.base.Predicate;
+import com.google.gwt.thirdparty.guava.common.collect.ImmutableList;
 
 /**
  * Tests {@link ComputePotentiallyObservableUninitializedValues}.

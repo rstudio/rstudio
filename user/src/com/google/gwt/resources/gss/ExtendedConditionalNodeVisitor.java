@@ -16,10 +16,10 @@
 
 package com.google.gwt.resources.gss;
 
-import com.google.common.css.compiler.ast.CssBooleanExpressionNode;
-import com.google.common.css.compiler.ast.CssConditionalRuleNode;
-import com.google.common.css.compiler.ast.CssValueNode;
-import com.google.common.css.compiler.ast.DefaultTreeVisitor;
+import com.google.gwt.thirdparty.common.css.compiler.ast.CssBooleanExpressionNode;
+import com.google.gwt.thirdparty.common.css.compiler.ast.CssConditionalRuleNode;
+import com.google.gwt.thirdparty.common.css.compiler.ast.CssValueNode;
+import com.google.gwt.thirdparty.common.css.compiler.ast.DefaultTreeVisitor;
 
 import java.util.Stack;
 

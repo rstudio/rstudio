@@ -13,8 +13,8 @@
  */
 package com.google.gwt.dev.cfg;
 
-import com.google.common.collect.Lists;
 import com.google.gwt.core.ext.BadPropertyValueException;
+import com.google.gwt.thirdparty.guava.common.collect.Lists;
 
 import junit.framework.TestCase;
 

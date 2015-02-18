@@ -13,11 +13,11 @@
  */
 package com.google.gwt.dev.js.ast;
 
-import com.google.common.collect.Sets;
 import com.google.gwt.dev.jjs.CorrelationFactory;
 import com.google.gwt.dev.jjs.CorrelationFactory.DummyCorrelationFactory;
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.SourceOrigin;
+import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
 import java.util.HashMap;
 import java.util.HashSet;

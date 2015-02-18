@@ -15,8 +15,8 @@
  */
 package com.google.gwt.core.ext.soyc.coderef;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
+import com.google.gwt.thirdparty.guava.common.collect.Lists;
+import com.google.gwt.thirdparty.guava.common.collect.Maps;
 
 import java.util.ArrayList;
 import java.util.Collection;

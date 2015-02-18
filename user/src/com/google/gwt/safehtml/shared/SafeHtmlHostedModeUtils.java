@@ -15,11 +15,11 @@
  */
 package com.google.gwt.safehtml.shared;
 
-import com.google.common.base.Preconditions;
 import com.google.gwt.core.shared.GWT;
-import com.google.streamhtmlparser.HtmlParser;
-import com.google.streamhtmlparser.HtmlParserFactory;
-import com.google.streamhtmlparser.ParseException;
+import com.google.gwt.thirdparty.guava.common.base.Preconditions;
+import com.google.gwt.thirdparty.streamhtmlparser.HtmlParser;
+import com.google.gwt.thirdparty.streamhtmlparser.HtmlParserFactory;
+import com.google.gwt.thirdparty.streamhtmlparser.ParseException;
 
 /**
  * SafeHtml utilities whose implementation differs between Development and

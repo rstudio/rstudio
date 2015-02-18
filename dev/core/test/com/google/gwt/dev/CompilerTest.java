@@ -15,11 +15,6 @@
  */
 package com.google.gwt.dev;
 
-import com.google.common.base.Charsets;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
-import com.google.common.io.Files;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.UnstableNestedAnonymousGenerator.OutputVersion;
@@ -35,6 +30,11 @@ import com.google.gwt.dev.jjs.JsOutputOption;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.arg.SourceLevel;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
+import com.google.gwt.thirdparty.guava.common.base.Charsets;
+import com.google.gwt.thirdparty.guava.common.collect.ImmutableList;
+import com.google.gwt.thirdparty.guava.common.collect.Lists;
+import com.google.gwt.thirdparty.guava.common.collect.Sets;
+import com.google.gwt.thirdparty.guava.common.io.Files;
 import com.google.gwt.util.tools.Utility;
 
 import java.io.File;

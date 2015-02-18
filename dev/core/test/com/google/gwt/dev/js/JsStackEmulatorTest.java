@@ -15,7 +15,6 @@
  */
 package com.google.gwt.dev.js;
 
-import com.google.common.base.Joiner;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.linker.SymbolData;
 import com.google.gwt.core.ext.linker.impl.StandardSymbolData;
@@ -57,6 +56,7 @@ import com.google.gwt.dev.js.ast.JsVisitable;
 import com.google.gwt.dev.js.ast.JsVisitor;
 import com.google.gwt.dev.util.DefaultTextOutput;
 import com.google.gwt.dev.util.TextOutput;
+import com.google.gwt.thirdparty.guava.common.base.Joiner;
 
 import java.util.Arrays;
 import java.util.Map;

@@ -23,14 +23,6 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.css.SourceCodeLocation;
-import com.google.common.css.compiler.ast.CssFunctionArgumentsNode;
-import com.google.common.css.compiler.ast.CssFunctionNode;
-import com.google.common.css.compiler.ast.CssValueNode;
-import com.google.common.css.compiler.ast.ErrorManager;
-import com.google.common.css.compiler.ast.GssError;
-import com.google.common.css.compiler.ast.GssFunctionException;
 import com.google.gwt.core.ext.GeneratorContext;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.NotFoundException;
@@ -40,6 +32,14 @@ import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.resources.ext.ResourceContext;
 import com.google.gwt.resources.gss.ResourceUrlFunction.MethodByPathHelper;
 import com.google.gwt.resources.gss.ast.CssJavaExpressionNode;
+import com.google.gwt.thirdparty.common.css.SourceCodeLocation;
+import com.google.gwt.thirdparty.common.css.compiler.ast.CssFunctionArgumentsNode;
+import com.google.gwt.thirdparty.common.css.compiler.ast.CssFunctionNode;
+import com.google.gwt.thirdparty.common.css.compiler.ast.CssValueNode;
+import com.google.gwt.thirdparty.common.css.compiler.ast.ErrorManager;
+import com.google.gwt.thirdparty.common.css.compiler.ast.GssError;
+import com.google.gwt.thirdparty.common.css.compiler.ast.GssFunctionException;
+import com.google.gwt.thirdparty.guava.common.collect.ImmutableList;
 
 import junit.framework.TestCase;
 

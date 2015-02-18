@@ -15,12 +15,6 @@
  */
 package com.google.gwt.resources.converter;
 
-import com.google.common.base.Predicate;
-import com.google.common.base.Predicates;
-import com.google.common.base.Splitter;
-import com.google.common.collect.FluentIterable;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.io.Files;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.TreeLogger.Type;
 import com.google.gwt.core.ext.UnableToCompleteException;
@@ -28,6 +22,12 @@ import com.google.gwt.dev.util.DefaultTextOutput;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 import com.google.gwt.resources.css.GenerateCssAst;
 import com.google.gwt.resources.css.ast.CssStylesheet;
+import com.google.gwt.thirdparty.guava.common.base.Predicate;
+import com.google.gwt.thirdparty.guava.common.base.Predicates;
+import com.google.gwt.thirdparty.guava.common.base.Splitter;
+import com.google.gwt.thirdparty.guava.common.collect.FluentIterable;
+import com.google.gwt.thirdparty.guava.common.collect.ImmutableSet;
+import com.google.gwt.thirdparty.guava.common.io.Files;
 
 import org.apache.commons.io.Charsets;
 import org.apache.commons.io.FileUtils;

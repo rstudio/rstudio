@@ -13,14 +13,14 @@
  */
 package com.google.gwt.dev;
 
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.MoreExecutors;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.dev.cfg.PropertyPermutations.PermutationDescription;
 import com.google.gwt.dev.util.CompilerVersion;
+import com.google.gwt.thirdparty.guava.common.annotations.VisibleForTesting;
+import com.google.gwt.thirdparty.guava.common.cache.Cache;
+import com.google.gwt.thirdparty.guava.common.cache.CacheBuilder;
+import com.google.gwt.thirdparty.guava.common.util.concurrent.Futures;
+import com.google.gwt.thirdparty.guava.common.util.concurrent.MoreExecutors;
 import com.google.gwt.util.tools.Utility;
 import com.google.gwt.util.tools.shared.Md5Utils;
 import com.google.gwt.util.tools.shared.StringUtils;

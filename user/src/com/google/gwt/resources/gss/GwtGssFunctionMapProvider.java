@@ -15,10 +15,10 @@
  */
 package com.google.gwt.resources.gss;
 
-import com.google.common.collect.ImmutableMap;
-import com.google.common.css.compiler.ast.GssFunction;
-import com.google.common.css.compiler.gssfunctions.DefaultGssFunctionMapProvider;
 import com.google.gwt.resources.ext.ResourceContext;
+import com.google.gwt.thirdparty.common.css.compiler.ast.GssFunction;
+import com.google.gwt.thirdparty.common.css.compiler.gssfunctions.DefaultGssFunctionMapProvider;
+import com.google.gwt.thirdparty.guava.common.collect.ImmutableMap;
 
 import java.util.Map;
 

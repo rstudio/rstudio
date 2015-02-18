@@ -15,9 +15,9 @@
  */
 package com.google.gwt.dev.js;
 
-import com.google.common.base.Charsets;
-import com.google.common.collect.Sets;
-import com.google.common.io.Resources;
+import com.google.gwt.thirdparty.guava.common.base.Charsets;
+import com.google.gwt.thirdparty.guava.common.collect.Sets;
+import com.google.gwt.thirdparty.guava.common.io.Resources;
 
 import java.io.IOException;
 import java.net.URL;

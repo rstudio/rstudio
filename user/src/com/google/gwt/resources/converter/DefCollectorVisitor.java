@@ -15,9 +15,6 @@
  */
 package com.google.gwt.resources.converter;
 
-import com.google.common.base.Strings;
-import com.google.common.collect.BiMap;
-import com.google.common.collect.HashBiMap;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.TreeLogger.Type;
 import com.google.gwt.resources.css.ast.Context;
@@ -25,6 +22,9 @@ import com.google.gwt.resources.css.ast.CssDef;
 import com.google.gwt.resources.css.ast.CssEval;
 import com.google.gwt.resources.css.ast.CssUrl;
 import com.google.gwt.resources.css.ast.CssVisitor;
+import com.google.gwt.thirdparty.guava.common.base.Strings;
+import com.google.gwt.thirdparty.guava.common.collect.BiMap;
+import com.google.gwt.thirdparty.guava.common.collect.HashBiMap;
 
 import java.util.LinkedList;
 import java.util.List;

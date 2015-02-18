@@ -15,9 +15,6 @@
  */
 package com.google.gwt.dev.shell;
 
-import com.google.common.base.Stopwatch;
-import com.google.common.collect.ListMultimap;
-import com.google.common.collect.Lists;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.TreeLogger.Type;
 import com.google.gwt.core.ext.UnableToCompleteException;
@@ -27,6 +24,9 @@ import com.google.gwt.dev.DevMode.HostedModeOptions;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.util.arg.OptionJsInteropMode;
 import com.google.gwt.dev.util.arg.OptionMethodNameDisplayMode;
+import com.google.gwt.thirdparty.guava.common.base.Stopwatch;
+import com.google.gwt.thirdparty.guava.common.collect.ListMultimap;
+import com.google.gwt.thirdparty.guava.common.collect.Lists;
 
 import java.io.File;
 import java.io.IOException;

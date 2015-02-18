@@ -15,7 +15,6 @@
  */
 package com.google.gwt.dev;
 
-import com.google.common.collect.Lists;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.CompileTaskRunner.CompileTask;
@@ -31,6 +30,7 @@ import com.google.gwt.dev.util.PersistenceBackedObject;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.arg.ArgHandlerLocalWorkers;
 import com.google.gwt.dev.util.arg.OptionLocalWorkers;
+import com.google.gwt.thirdparty.guava.common.collect.Lists;
 import com.google.gwt.util.tools.ArgHandlerString;
 
 import java.io.File;

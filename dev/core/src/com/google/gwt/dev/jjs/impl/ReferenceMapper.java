@@ -15,7 +15,6 @@
  */
 package com.google.gwt.dev.jjs.impl;
 
-import com.google.common.collect.Interner;
 import com.google.gwt.dev.javac.JdtUtil;
 import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.SourceInfo;
@@ -35,6 +34,7 @@ import com.google.gwt.dev.jjs.ast.JPrimitiveType;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.util.StringInterner;
+import com.google.gwt.thirdparty.guava.common.collect.Interner;
 
 
 import org.eclipse.jdt.internal.compiler.lookup.ArrayBinding;

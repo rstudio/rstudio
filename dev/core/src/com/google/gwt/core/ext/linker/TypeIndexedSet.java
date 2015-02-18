@@ -15,12 +15,12 @@
  */
 package com.google.gwt.core.ext.linker;
 
-import com.google.common.base.Supplier;
-import com.google.common.collect.ForwardingIterator;
-import com.google.common.collect.ForwardingSortedSet;
-import com.google.common.collect.ImmutableSortedSet;
-import com.google.common.collect.Multimap;
-import com.google.common.collect.Multimaps;
+import com.google.gwt.thirdparty.guava.common.base.Supplier;
+import com.google.gwt.thirdparty.guava.common.collect.ForwardingIterator;
+import com.google.gwt.thirdparty.guava.common.collect.ForwardingSortedSet;
+import com.google.gwt.thirdparty.guava.common.collect.ImmutableSortedSet;
+import com.google.gwt.thirdparty.guava.common.collect.Multimap;
+import com.google.gwt.thirdparty.guava.common.collect.Multimaps;
 
 import java.io.Serializable;
 import java.util.Collection;

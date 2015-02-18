@@ -13,7 +13,6 @@
  */
 package com.google.gwt.dev.jjs.impl;
 
-import com.google.common.collect.Sets;
 import com.google.gwt.dev.StringAnalyzableTypeEnvironment;
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JClassLiteral;
@@ -28,6 +27,7 @@ import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.ast.JVisitor;
 import com.google.gwt.dev.jjs.ast.js.JsniFieldRef;
 import com.google.gwt.dev.jjs.ast.js.JsniMethodRef;
+import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
 import java.util.Set;
 

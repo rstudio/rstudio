@@ -13,8 +13,8 @@
  */
 package com.google.gwt.dev.resource.impl;
 
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.Maps;
+import com.google.gwt.thirdparty.guava.common.annotations.VisibleForTesting;
+import com.google.gwt.thirdparty.guava.common.collect.Maps;
 
 import java.io.File;
 import java.io.IOException;

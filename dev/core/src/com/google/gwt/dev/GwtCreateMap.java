@@ -15,8 +15,8 @@
  */
 package com.google.gwt.dev;
 
-import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
+import com.google.gwt.thirdparty.guava.common.collect.Maps;
+import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
 import java.io.Serializable;
 import java.util.ArrayList;

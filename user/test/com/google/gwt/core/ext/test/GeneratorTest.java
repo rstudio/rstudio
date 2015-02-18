@@ -13,9 +13,9 @@
  */
 package com.google.gwt.core.ext.test;
 
-import com.google.common.collect.Maps;
 import com.google.gwt.core.ext.Generator;
 import com.google.gwt.dev.util.Name;
+import com.google.gwt.thirdparty.guava.common.collect.Maps;
 
 import junit.framework.TestCase;
 

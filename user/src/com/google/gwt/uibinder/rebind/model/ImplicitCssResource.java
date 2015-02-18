@@ -15,10 +15,6 @@
  */
 package com.google.gwt.uibinder.rebind.model;
 
-import com.google.common.css.SourceCode;
-import com.google.common.css.compiler.ast.CssTree;
-import com.google.common.css.compiler.ast.GssParser;
-import com.google.common.css.compiler.ast.GssParserException;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.impl.ResourceLocatorImpl;
@@ -29,6 +25,10 @@ import com.google.gwt.resources.css.GenerateCssAst;
 import com.google.gwt.resources.css.ast.CssStylesheet;
 import com.google.gwt.resources.ext.ResourceGeneratorUtil;
 import com.google.gwt.resources.gss.ClassNamesCollector;
+import com.google.gwt.thirdparty.common.css.SourceCode;
+import com.google.gwt.thirdparty.common.css.compiler.ast.CssTree;
+import com.google.gwt.thirdparty.common.css.compiler.ast.GssParser;
+import com.google.gwt.thirdparty.common.css.compiler.ast.GssParserException;
 import com.google.gwt.uibinder.attributeparsers.CssNameConverter;
 import com.google.gwt.uibinder.rebind.MortalLogger;
 

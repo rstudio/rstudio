@@ -15,8 +15,6 @@
  */
 package com.google.gwt.resources.converter;
 
-import com.google.common.base.Preconditions;
-import com.google.common.collect.Sets;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.TreeLogger.Type;
 import com.google.gwt.resources.css.ast.Context;
@@ -27,6 +25,8 @@ import com.google.gwt.resources.css.ast.CssProperty.ListValue;
 import com.google.gwt.resources.css.ast.CssProperty.Value;
 import com.google.gwt.resources.css.ast.CssRule;
 import com.google.gwt.resources.css.ast.CssVisitor;
+import com.google.gwt.thirdparty.guava.common.base.Preconditions;
+import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
 import java.util.ArrayList;
 import java.util.List;

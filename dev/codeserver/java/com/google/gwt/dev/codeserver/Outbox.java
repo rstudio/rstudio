@@ -16,12 +16,12 @@
 
 package com.google.gwt.dev.codeserver;
 
-import com.google.common.base.Preconditions;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.codeserver.CompileDir.PolicyFile;
 import com.google.gwt.dev.codeserver.Job.Result;
+import com.google.gwt.thirdparty.guava.common.base.Preconditions;
 
 import java.io.BufferedInputStream;
 import java.io.File;

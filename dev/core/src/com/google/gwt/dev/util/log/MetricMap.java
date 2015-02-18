@@ -15,8 +15,8 @@
  */
 package com.google.gwt.dev.util.log;
 
-import com.google.common.collect.ImmutableSortedMap;
 import com.google.gwt.dev.util.collect.HashMap;
+import com.google.gwt.thirdparty.guava.common.collect.ImmutableSortedMap;
 
 import java.util.Map;
 

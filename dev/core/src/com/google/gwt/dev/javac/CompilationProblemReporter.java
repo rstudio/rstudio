@@ -15,7 +15,6 @@
  */
 package com.google.gwt.dev.javac;
 
-import com.google.common.collect.Lists;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.TreeLogger.HelpInfo;
 import com.google.gwt.core.ext.TreeLogger.Type;
@@ -27,6 +26,7 @@ import com.google.gwt.dev.jjs.InternalCompilerException.NodeInfo;
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.util.Messages;
 import com.google.gwt.dev.util.Util;
+import com.google.gwt.thirdparty.guava.common.collect.Lists;
 
 import org.eclipse.jdt.core.compiler.CategorizedProblem;
 

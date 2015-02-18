@@ -15,14 +15,14 @@
  */
 package com.google.gwt.resources.gss;
 
-import com.google.common.css.compiler.ast.CssCompilerPass;
-import com.google.common.css.compiler.ast.CssConditionalRuleNode;
-import com.google.common.css.compiler.ast.CssDefinitionNode;
-import com.google.common.css.compiler.ast.CssUnknownAtRuleNode;
-import com.google.common.css.compiler.ast.DefaultTreeVisitor;
-import com.google.common.css.compiler.ast.ErrorManager;
-import com.google.common.css.compiler.ast.GssError;
-import com.google.common.css.compiler.ast.VisitController;
+import com.google.gwt.thirdparty.common.css.compiler.ast.CssCompilerPass;
+import com.google.gwt.thirdparty.common.css.compiler.ast.CssConditionalRuleNode;
+import com.google.gwt.thirdparty.common.css.compiler.ast.CssDefinitionNode;
+import com.google.gwt.thirdparty.common.css.compiler.ast.CssUnknownAtRuleNode;
+import com.google.gwt.thirdparty.common.css.compiler.ast.DefaultTreeVisitor;
+import com.google.gwt.thirdparty.common.css.compiler.ast.ErrorManager;
+import com.google.gwt.thirdparty.common.css.compiler.ast.GssError;
+import com.google.gwt.thirdparty.common.css.compiler.ast.VisitController;
 
 /**
  * Visitor that validates runtime conditional node.

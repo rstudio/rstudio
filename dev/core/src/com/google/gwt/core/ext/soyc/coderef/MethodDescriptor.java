@@ -15,8 +15,8 @@
  */
 package com.google.gwt.core.ext.soyc.coderef;
 
-import com.google.common.collect.Sets;
 import com.google.gwt.dev.jjs.ast.JMethod;
+import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
 import java.util.Collections;
 import java.util.Set;

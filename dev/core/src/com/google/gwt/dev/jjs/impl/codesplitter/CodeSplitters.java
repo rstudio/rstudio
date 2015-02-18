@@ -15,12 +15,6 @@
  */
 package com.google.gwt.dev.jjs.impl.codesplitter;
 
-import com.google.common.base.Function;
-import com.google.common.base.Joiner;
-import com.google.common.collect.Collections2;
-import com.google.common.collect.LinkedListMultimap;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Multimap;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.cfg.ConfigProps;
@@ -38,6 +32,12 @@ import com.google.gwt.dev.jjs.impl.JsniRefLookup;
 import com.google.gwt.dev.util.JsniRef;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
+import com.google.gwt.thirdparty.guava.common.base.Function;
+import com.google.gwt.thirdparty.guava.common.base.Joiner;
+import com.google.gwt.thirdparty.guava.common.collect.Collections2;
+import com.google.gwt.thirdparty.guava.common.collect.LinkedListMultimap;
+import com.google.gwt.thirdparty.guava.common.collect.Lists;
+import com.google.gwt.thirdparty.guava.common.collect.Multimap;
 
 import java.util.ArrayList;
 import java.util.Collection;

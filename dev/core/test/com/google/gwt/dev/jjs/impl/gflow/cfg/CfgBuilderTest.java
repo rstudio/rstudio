@@ -15,11 +15,11 @@
  */
 package com.google.gwt.dev.jjs.impl.gflow.cfg;
 
-import com.google.common.base.Joiner;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.jjs.ast.JMethodBody;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.impl.JJSTestBase;
+import com.google.gwt.thirdparty.guava.common.base.Joiner;
 
 import java.util.List;
 

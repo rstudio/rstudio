@@ -34,15 +34,10 @@ java_library(
         "java/**/*.js",
     ]),
     deps = [
-        "//java/com/google/common/base",
-        "//java/com/google/common/collect",
-        "//java/com/google/common/io",
-        "//java/com/google/common/util/concurrent",
         # dependencies for open source code (should match ant)
         "//third_party/java_src/gwt/svn/trunk/dev:gwt-dev-bare",
         "//third_party/java_src/gwt/svn/tools:dev_deps",
         "//third_party/java_src/gwt/svn/tools:servlet_api_3",
-        "//third_party/java_src/jscomp/java/com/google/debugging/sourcemap:common",
     ],
 )
 
@@ -52,10 +47,7 @@ java_library(
     srcs = glob(["javatests/**/*.java"]),
     deps = [
         ":codeserver-bare",
-        "//java/com/google/common/base",
         "//java/com/google/common/collect",
-        "//java/com/google/common/io",
-        "//java/com/google/common/util/concurrent",
         "//third_party/java/junit",
         "//third_party/java_src/gwt",
         "//third_party/java_src/gwt/svn/tools:dev_deps",
@@ -98,11 +90,6 @@ AugmentedJar(
     constraints = [],
     dojarjar = 1,
     export_deps = [
-        "//java/com/google/common/base",
-        "//java/com/google/common/cache",
-        "//java/com/google/common/collect",
-        "//java/com/google/common/io",
-        "//java/com/google/common/util/concurrent",
         # Dependencies for google3 (after jarjar).
         "//third_party/java_src/gwt:gwt-dev",
         "//third_party/java_src/gwt:gwt-dev-private",

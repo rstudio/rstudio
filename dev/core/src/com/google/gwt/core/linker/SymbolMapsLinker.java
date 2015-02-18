@@ -15,8 +15,6 @@
  */
 package com.google.gwt.core.linker;
 
-import com.google.debugging.sourcemap.SourceMapGeneratorV3;
-import com.google.debugging.sourcemap.SourceMapGeneratorV3.ExtensionMergeAction;
 import com.google.gwt.core.ext.LinkerContext;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
@@ -38,6 +36,8 @@ import com.google.gwt.dev.util.collect.HashMap;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
+import com.google.gwt.thirdparty.debugging.sourcemap.SourceMapGeneratorV3;
+import com.google.gwt.thirdparty.debugging.sourcemap.SourceMapGeneratorV3.ExtensionMergeAction;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintWriter;

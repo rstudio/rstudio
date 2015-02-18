@@ -69,8 +69,7 @@ public class CSSResourceWithGSSTest extends CSSResourceTest {
     assertTrue(text.contains("ns:tag::-webkit-scrollbar"));
 
     // Check escaped string values
-    // TODO(dankurka) investigate why latest gss fails here:
-//    assertTrue(text.contains("Hello\\\\\\000022 world"));
+    assertTrue(text.contains("Hello\\\\\\000022 world"));
 
     // Check values
     assertFalse(text.contains("0.0;"));

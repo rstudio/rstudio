@@ -15,7 +15,6 @@
  */
 package com.google.gwt.dev.jjs.impl.gflow.copy;
 
-import com.google.common.base.Preconditions;
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JLocal;
@@ -36,6 +35,7 @@ import com.google.gwt.dev.jjs.impl.gflow.cfg.CfgNode;
 import com.google.gwt.dev.jjs.impl.gflow.cfg.CfgReadNode;
 import com.google.gwt.dev.jjs.impl.gflow.cfg.CfgTransformer;
 import com.google.gwt.dev.jjs.impl.gflow.cfg.CfgUtil;
+import com.google.gwt.thirdparty.guava.common.base.Preconditions;
 
 /**
  * Integrated flow function for CopyAnalysis. Tries to replace copied vars with

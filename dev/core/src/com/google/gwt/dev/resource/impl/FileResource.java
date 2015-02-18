@@ -15,7 +15,7 @@
  */
 package com.google.gwt.dev.resource.impl;
 
-import com.google.common.collect.MapMaker;
+import com.google.gwt.thirdparty.guava.common.collect.MapMaker;
 
 import java.io.File;
 import java.io.FileInputStream;

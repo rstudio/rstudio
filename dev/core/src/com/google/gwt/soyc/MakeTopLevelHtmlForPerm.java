@@ -16,7 +16,6 @@
 
 package com.google.gwt.soyc;
 
-import com.google.common.base.Joiner;
 import com.google.gwt.core.ext.linker.CompilationMetricsArtifact;
 import com.google.gwt.core.ext.linker.ModuleMetricsArtifact;
 import com.google.gwt.core.ext.linker.PrecompilationMetricsArtifact;
@@ -25,6 +24,7 @@ import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.collect.Lists;
 import com.google.gwt.dev.util.collect.Sets;
 import com.google.gwt.soyc.io.OutputDirectory;
+import com.google.gwt.thirdparty.guava.common.base.Joiner;
 
 import java.io.IOException;
 import java.io.OutputStream;

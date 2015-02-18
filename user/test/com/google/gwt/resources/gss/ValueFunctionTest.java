@@ -19,12 +19,12 @@ package com.google.gwt.resources.gss;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableList.Builder;
-import com.google.common.css.SourceCodeLocation;
-import com.google.common.css.compiler.ast.CssValueNode;
-import com.google.common.css.compiler.ast.GssFunctionException;
 import com.google.gwt.resources.gss.ast.CssDotPathNode;
+import com.google.gwt.thirdparty.common.css.SourceCodeLocation;
+import com.google.gwt.thirdparty.common.css.compiler.ast.CssValueNode;
+import com.google.gwt.thirdparty.common.css.compiler.ast.GssFunctionException;
+import com.google.gwt.thirdparty.guava.common.collect.ImmutableList;
+import com.google.gwt.thirdparty.guava.common.collect.ImmutableList.Builder;
 
 import junit.framework.TestCase;
 

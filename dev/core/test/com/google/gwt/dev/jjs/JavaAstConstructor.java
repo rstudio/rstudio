@@ -15,7 +15,6 @@
  */
 package com.google.gwt.dev.jjs;
 
-import com.google.common.base.Joiner;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.PrecompileTaskOptions;
@@ -26,6 +25,7 @@ import com.google.gwt.dev.javac.testing.impl.MockJavaResource;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JProgram;
+import com.google.gwt.thirdparty.guava.common.base.Joiner;
 
 import java.util.ArrayList;
 import java.util.Collections;

@@ -16,8 +16,8 @@
 
 package com.google.gwt.dev.util;
 
-import com.google.common.collect.Interner;
-import com.google.common.collect.Interners;
+import com.google.gwt.thirdparty.guava.common.collect.Interner;
+import com.google.gwt.thirdparty.guava.common.collect.Interners;
 /**
  * The string interner singleton.
  *

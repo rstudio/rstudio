@@ -13,10 +13,6 @@
  */
 package com.google.gwt.dev.jjs.impl.codesplitter;
 
-import com.google.common.collect.LinkedHashMultiset;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Multiset;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JField;
@@ -25,6 +21,10 @@ import com.google.gwt.dev.jjs.ast.JNode;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JRunAsync;
 import com.google.gwt.dev.jjs.impl.ControlFlowAnalyzer;
+import com.google.gwt.thirdparty.guava.common.collect.LinkedHashMultiset;
+import com.google.gwt.thirdparty.guava.common.collect.Lists;
+import com.google.gwt.thirdparty.guava.common.collect.Maps;
+import com.google.gwt.thirdparty.guava.common.collect.Multiset;
 
 import java.util.BitSet;
 import java.util.Collection;

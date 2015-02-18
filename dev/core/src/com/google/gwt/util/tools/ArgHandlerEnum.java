@@ -15,14 +15,14 @@
  */
 package com.google.gwt.util.tools;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.gwt.thirdparty.guava.common.base.Preconditions.checkNotNull;
 
-import com.google.common.base.Ascii;
-import com.google.common.base.Enums;
-import com.google.common.base.Joiner;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Predicate;
-import com.google.common.collect.FluentIterable;
+import com.google.gwt.thirdparty.guava.common.base.Ascii;
+import com.google.gwt.thirdparty.guava.common.base.Enums;
+import com.google.gwt.thirdparty.guava.common.base.Joiner;
+import com.google.gwt.thirdparty.guava.common.base.Preconditions;
+import com.google.gwt.thirdparty.guava.common.base.Predicate;
+import com.google.gwt.thirdparty.guava.common.collect.FluentIterable;
 
 import java.util.Arrays;
 import java.util.List;

@@ -15,11 +15,11 @@
  */
 package com.google.gwt.dev.javac;
 
-import com.google.common.util.concurrent.Futures;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.TreeLogger.Type;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.util.Util;
+import com.google.gwt.thirdparty.guava.common.util.concurrent.Futures;
 
 import junit.framework.TestCase;
 

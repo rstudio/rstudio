@@ -13,13 +13,13 @@
  */
 package com.google.gwt.dev;
 
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Objects;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.google.gwt.dev.jjs.impl.RapidTypeAnalyzer.AnalyzableTypeEnvironment;
 import com.google.gwt.dev.util.collect.IntHashMultimap;
 import com.google.gwt.dev.util.collect.IntMultimap;
+import com.google.gwt.thirdparty.guava.common.annotations.VisibleForTesting;
+import com.google.gwt.thirdparty.guava.common.base.Objects;
+import com.google.gwt.thirdparty.guava.common.collect.Lists;
+import com.google.gwt.thirdparty.guava.common.collect.Maps;
 
 import cern.colt.list.IntArrayList;
 import cern.colt.map.OpenIntIntHashMap;

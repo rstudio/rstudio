@@ -15,10 +15,10 @@
  */
 package com.google.gwt.dev.util;
 
-import com.google.common.collect.ImmutableList;
 import com.google.gwt.dev.Permutation;
 import com.google.gwt.dev.cfg.BindingProperty;
 import com.google.gwt.dev.cfg.BindingProps;
+import com.google.gwt.thirdparty.guava.common.collect.ImmutableList;
 
 import java.util.Arrays;
 import java.util.List;

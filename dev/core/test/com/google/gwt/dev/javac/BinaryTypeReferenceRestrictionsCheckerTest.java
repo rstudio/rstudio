@@ -48,7 +48,7 @@ import java.io.File;
 import java.util.List;
 
 /**
- * Test for {@link BinaryTypeReferenceRestrictionsChecker}.
+ *
  */
 public class BinaryTypeReferenceRestrictionsCheckerTest extends TestCase {
   /**

@@ -15,8 +15,6 @@
  */
 package com.google.gwt.dev.cfg;
 
-import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 import com.google.gwt.core.ext.BadPropertyValueException;
 import com.google.gwt.core.ext.ConfigurationProperty;
 import com.google.gwt.core.ext.DefaultConfigurationProperty;
@@ -24,6 +22,8 @@ import com.google.gwt.core.ext.DefaultSelectionProperty;
 import com.google.gwt.core.ext.PropertyOracle;
 import com.google.gwt.core.ext.SelectionProperty;
 import com.google.gwt.core.ext.TreeLogger;
+import com.google.gwt.thirdparty.guava.common.collect.Maps;
+import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
 import java.util.Arrays;
 import java.util.Map;

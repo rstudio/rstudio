@@ -15,8 +15,6 @@
  */
 package com.google.gwt.dev.javac;
 
-import com.google.common.collect.MapMaker;
-import com.google.common.io.BaseEncoding;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.typeinfo.JArrayType;
 import com.google.gwt.core.ext.typeinfo.JClassType;
@@ -65,6 +63,8 @@ import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.log.AbstractTreeLogger;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
+import com.google.gwt.thirdparty.guava.common.collect.MapMaker;
+import com.google.gwt.thirdparty.guava.common.io.BaseEncoding;
 
 import junit.framework.TestCase;
 

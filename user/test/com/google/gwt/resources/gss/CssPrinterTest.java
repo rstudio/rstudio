@@ -19,16 +19,16 @@ package com.google.gwt.resources.gss;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import com.google.common.css.compiler.ast.CssTree;
-import com.google.common.css.compiler.ast.ErrorManager;
-import com.google.common.css.compiler.ast.GssFunction;
-import com.google.common.css.compiler.ast.MutatingVisitController;
-import com.google.common.css.compiler.passes.CreateConditionalNodes;
-import com.google.common.css.compiler.passes.CreateStandardAtRuleNodes;
-import com.google.common.css.compiler.passes.ResolveCustomFunctionNodes;
 import com.google.gwt.core.ext.GeneratorContext;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.resources.ext.ResourceContext;
+import com.google.gwt.thirdparty.common.css.compiler.ast.CssTree;
+import com.google.gwt.thirdparty.common.css.compiler.ast.ErrorManager;
+import com.google.gwt.thirdparty.common.css.compiler.ast.GssFunction;
+import com.google.gwt.thirdparty.common.css.compiler.ast.MutatingVisitController;
+import com.google.gwt.thirdparty.common.css.compiler.passes.CreateConditionalNodes;
+import com.google.gwt.thirdparty.common.css.compiler.passes.CreateStandardAtRuleNodes;
+import com.google.gwt.thirdparty.common.css.compiler.passes.ResolveCustomFunctionNodes;
 
 import java.util.HashSet;
 import java.util.Map;

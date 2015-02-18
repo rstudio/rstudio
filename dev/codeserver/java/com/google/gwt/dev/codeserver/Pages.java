@@ -16,10 +16,10 @@
 
 package com.google.gwt.dev.codeserver;
 
-import com.google.common.io.Resources;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.TreeLogger.Type;
 import com.google.gwt.dev.json.JsonObject;
+import com.google.gwt.thirdparty.guava.common.io.Resources;
 
 import java.io.IOException;
 import java.io.OutputStreamWriter;

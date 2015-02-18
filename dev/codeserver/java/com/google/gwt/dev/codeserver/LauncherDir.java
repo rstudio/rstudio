@@ -15,16 +15,16 @@
  */
 package com.google.gwt.dev.codeserver;
 
-import com.google.common.base.Charsets;
-import com.google.common.base.Preconditions;
-import com.google.common.io.Files;
-import com.google.common.io.Resources;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.TreeLogger.Type;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.codeserver.CompileDir.PolicyFile;
 import com.google.gwt.dev.resource.impl.ResourceOracleImpl;
+import com.google.gwt.thirdparty.guava.common.base.Charsets;
+import com.google.gwt.thirdparty.guava.common.base.Preconditions;
+import com.google.gwt.thirdparty.guava.common.io.Files;
+import com.google.gwt.thirdparty.guava.common.io.Resources;
 
 import java.io.File;
 import java.io.IOException;

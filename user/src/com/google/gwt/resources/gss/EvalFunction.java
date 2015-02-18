@@ -15,13 +15,13 @@
  */
 package com.google.gwt.resources.gss;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.css.SourceCodeLocation;
-import com.google.common.css.compiler.ast.CssValueNode;
-import com.google.common.css.compiler.ast.ErrorManager;
-import com.google.common.css.compiler.ast.GssFunction;
-import com.google.common.css.compiler.ast.GssFunctionException;
 import com.google.gwt.resources.gss.ast.CssJavaExpressionNode;
+import com.google.gwt.thirdparty.common.css.SourceCodeLocation;
+import com.google.gwt.thirdparty.common.css.compiler.ast.CssValueNode;
+import com.google.gwt.thirdparty.common.css.compiler.ast.ErrorManager;
+import com.google.gwt.thirdparty.common.css.compiler.ast.GssFunction;
+import com.google.gwt.thirdparty.common.css.compiler.ast.GssFunctionException;
+import com.google.gwt.thirdparty.guava.common.collect.ImmutableList;
 
 import java.util.List;
 

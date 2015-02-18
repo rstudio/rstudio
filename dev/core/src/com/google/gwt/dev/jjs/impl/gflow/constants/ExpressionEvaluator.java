@@ -15,7 +15,6 @@
  */
 package com.google.gwt.dev.jjs.impl.gflow.constants;
 
-import com.google.common.base.Preconditions;
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JBinaryOperation;
 import com.google.gwt.dev.jjs.ast.JBinaryOperator;
@@ -28,6 +27,7 @@ import com.google.gwt.dev.jjs.ast.JValueLiteral;
 import com.google.gwt.dev.jjs.ast.JVariableRef;
 import com.google.gwt.dev.jjs.ast.JVisitor;
 import com.google.gwt.dev.jjs.ast.js.JMultiExpression;
+import com.google.gwt.thirdparty.guava.common.base.Preconditions;
 
 /**
  * Evaluate expression based on current assumptions.

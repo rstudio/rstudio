@@ -19,7 +19,7 @@ import junit.framework.Test;
 import junit.framework.TestSuite;
 
 /**
- * Test suite for {@link Util}.
+ * Test suite for {@link Util}
  */
 public class UtilSuite {
   public static Test suite() {

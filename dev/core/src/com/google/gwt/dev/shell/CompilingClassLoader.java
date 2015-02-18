@@ -15,9 +15,6 @@
  */
 package com.google.gwt.dev.shell;
 
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.MapMaker;
-import com.google.common.primitives.Primitives;
 import com.google.gwt.core.client.GWTBridge;
 import com.google.gwt.core.client.GwtScriptOnly;
 import com.google.gwt.core.ext.TreeLogger;
@@ -48,6 +45,9 @@ import com.google.gwt.dev.util.collect.Lists;
 import com.google.gwt.dev.util.log.speedtracer.DevModeEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
+import com.google.gwt.thirdparty.guava.common.collect.ImmutableMap;
+import com.google.gwt.thirdparty.guava.common.collect.MapMaker;
+import com.google.gwt.thirdparty.guava.common.primitives.Primitives;
 import com.google.gwt.util.tools.Utility;
 
 import java.beans.Beans;
@@ -785,7 +785,7 @@ public final class CompilingClassLoader extends ClassLoader implements
     } catch (ClassNotFoundException ignored) {
     }
     emmaStrategy = EmmaStrategy.get(emmaAvailable);
-
+    
     /* Bridging Jacoco's Offline entry point. */
     try {
       Class<?> jacoco = Class.forName(JACOCO_ENTRYPOINT,

@@ -15,7 +15,6 @@
  */
 package com.google.gwt.dev.jjs.impl.codesplitter;
 
-import com.google.common.collect.Sets;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.CompilerContext;
 import com.google.gwt.dev.PrecompileTaskOptions;
@@ -35,6 +34,7 @@ import com.google.gwt.dev.js.ast.JsNode;
 import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.js.ast.JsVisitor;
 import com.google.gwt.dev.util.Pair;
+import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
 import java.util.List;
 import java.util.Set;

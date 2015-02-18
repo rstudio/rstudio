@@ -16,7 +16,7 @@
 
 package com.google.gwt.resources.gss;
 
-import com.google.common.css.compiler.ast.CssTree;
+import com.google.gwt.thirdparty.common.css.compiler.ast.CssTree;
 
 /**
  * Test class for {@link RecordingBidiFlipper}.

@@ -13,11 +13,11 @@
  */
 package com.google.gwt.dev.cfg;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.google.gwt.core.ext.Generator;
 import com.google.gwt.core.ext.GeneratorContext;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.thirdparty.guava.common.annotations.VisibleForTesting;
 
 import java.io.PrintWriter;
 

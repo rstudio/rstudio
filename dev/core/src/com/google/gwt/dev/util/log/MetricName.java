@@ -15,9 +15,9 @@
  */
 package com.google.gwt.dev.util.log;
 
-import com.google.common.base.Preconditions;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.TreeLogger.Type;
+import com.google.gwt.thirdparty.guava.common.base.Preconditions;
 
 import java.util.regex.Pattern;
 

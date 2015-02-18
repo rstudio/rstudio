@@ -13,13 +13,13 @@
  */
 package com.google.gwt.dev.jjs.impl;
 
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Sets;
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JVisitor;
+import com.google.gwt.thirdparty.guava.common.collect.HashMultimap;
+import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
 import java.util.Collection;
 import java.util.Set;

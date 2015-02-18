@@ -15,7 +15,6 @@
  */
 package com.google.gwt.dev.javac;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.CompilerContext;
@@ -24,6 +23,7 @@ import com.google.gwt.dev.javac.typemodel.TypeOracle;
 import com.google.gwt.dev.util.log.speedtracer.DevModeEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
+import com.google.gwt.thirdparty.guava.common.annotations.VisibleForTesting;
 
 import java.util.Collection;
 import java.util.Collections;

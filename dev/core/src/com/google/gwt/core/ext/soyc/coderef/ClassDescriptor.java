@@ -15,11 +15,11 @@
  */
 package com.google.gwt.core.ext.soyc.coderef;
 
-import com.google.common.collect.Maps;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.util.Util;
+import com.google.gwt.thirdparty.guava.common.collect.Maps;
 
 import java.util.Collection;
 import java.util.Collections;

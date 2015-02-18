@@ -13,8 +13,6 @@
  */
 package com.google.gwt.dev.jjs.impl;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.linker.StatementRanges;
 import com.google.gwt.core.ext.linker.impl.JsSourceMapBuilder;
@@ -25,6 +23,8 @@ import com.google.gwt.core.ext.linker.impl.StatementRangesExtractor;
 import com.google.gwt.dev.MinimalRebuildCache;
 import com.google.gwt.dev.jjs.JsSourceMap;
 import com.google.gwt.dev.jjs.ast.JTypeOracle;
+import com.google.gwt.thirdparty.guava.common.collect.Lists;
+import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
 import java.util.Collections;
 import java.util.List;

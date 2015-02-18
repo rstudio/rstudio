@@ -15,7 +15,6 @@
  */
 package com.google.gwt.dev.jjs.impl;
 
-import com.google.common.collect.Maps;
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JArrayType;
@@ -33,6 +32,7 @@ import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JRuntimeTypeReference;
 import com.google.gwt.dev.jjs.ast.JType;
+import com.google.gwt.thirdparty.guava.common.collect.Maps;
 
 import java.util.EnumSet;
 import java.util.Map;

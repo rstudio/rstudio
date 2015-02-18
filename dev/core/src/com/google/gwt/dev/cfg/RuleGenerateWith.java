@@ -15,8 +15,6 @@
  */
 package com.google.gwt.dev.cfg;
 
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.ImmutableSet;
 import com.google.gwt.core.ext.Generator;
 import com.google.gwt.core.ext.Generator.RunsLocal;
 import com.google.gwt.core.ext.RebindResult;
@@ -24,6 +22,8 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.javac.StandardGeneratorContext;
 import com.google.gwt.dev.jjs.InternalCompilerException;
+import com.google.gwt.thirdparty.guava.common.annotations.VisibleForTesting;
+import com.google.gwt.thirdparty.guava.common.collect.ImmutableSet;
 
 import java.util.Set;
 

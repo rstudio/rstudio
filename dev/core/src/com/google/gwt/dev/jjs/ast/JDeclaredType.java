@@ -15,12 +15,12 @@
  */
 package com.google.gwt.dev.jjs.ast;
 
-import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.impl.GwtAstBuilder;
 import com.google.gwt.dev.util.StringInterner;
 import com.google.gwt.dev.util.collect.Lists;
+import com.google.gwt.thirdparty.guava.common.base.Preconditions;
+import com.google.gwt.thirdparty.guava.common.base.Strings;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;

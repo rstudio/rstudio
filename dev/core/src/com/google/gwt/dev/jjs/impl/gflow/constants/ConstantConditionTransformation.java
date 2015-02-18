@@ -15,7 +15,6 @@
  */
 package com.google.gwt.dev.jjs.impl.gflow.constants;
 
-import com.google.common.base.Preconditions;
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JBooleanLiteral;
 import com.google.gwt.dev.jjs.ast.JExpression;
@@ -29,6 +28,7 @@ import com.google.gwt.dev.jjs.impl.gflow.cfg.CfgEdge;
 import com.google.gwt.dev.jjs.impl.gflow.cfg.CfgNode;
 import com.google.gwt.dev.jjs.impl.gflow.cfg.CfgNopNode;
 import com.google.gwt.dev.jjs.impl.gflow.cfg.CfgTransformer;
+import com.google.gwt.thirdparty.guava.common.base.Preconditions;
 
 /**
  * Transformation to be applied when CfgConditionalNode's condition is constant

@@ -15,8 +15,6 @@
  */
 package com.google.gwt.dev.jjs.impl;
 
-import com.google.common.base.Joiner;
-import com.google.common.collect.Sets;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.javac.testing.impl.MockJavaResource;
 import com.google.gwt.dev.jjs.ast.JField;
@@ -25,6 +23,8 @@ import com.google.gwt.dev.jjs.ast.JNode;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.util.Empty;
+import com.google.gwt.thirdparty.guava.common.base.Joiner;
+import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
 import java.util.Collections;
 import java.util.HashSet;

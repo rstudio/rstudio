@@ -15,7 +15,6 @@
  */
 package com.google.gwt.dev.jjs.impl.gflow;
 
-import com.google.common.base.Preconditions;
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JMethod;
@@ -37,6 +36,7 @@ import com.google.gwt.dev.jjs.impl.gflow.unreachable.UnreachableAnalysis;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
+import com.google.gwt.thirdparty.guava.common.base.Preconditions;
 
 /**
  */

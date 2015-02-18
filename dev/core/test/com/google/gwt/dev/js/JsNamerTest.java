@@ -15,7 +15,6 @@
  */
 package com.google.gwt.dev.js;
 
-import com.google.common.collect.Maps;
 import com.google.gwt.dev.cfg.ConfigProps;
 import com.google.gwt.dev.jjs.JsOutputOption;
 import com.google.gwt.dev.jjs.SourceOrigin;
@@ -33,6 +32,7 @@ import com.google.gwt.dev.js.ast.JsStatement;
 import com.google.gwt.dev.js.ast.JsVisitor;
 import com.google.gwt.dev.util.DefaultTextOutput;
 import com.google.gwt.dev.util.TextOutput;
+import com.google.gwt.thirdparty.guava.common.collect.Maps;
 
 import junit.framework.TestCase;
 

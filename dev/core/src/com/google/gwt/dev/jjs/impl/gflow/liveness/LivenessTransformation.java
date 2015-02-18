@@ -15,7 +15,6 @@
  */
 package com.google.gwt.dev.jjs.impl.gflow.liveness;
 
-import com.google.common.base.Preconditions;
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JBinaryOperation;
 import com.google.gwt.dev.jjs.ast.JDeclarationStatement;
@@ -30,6 +29,7 @@ import com.google.gwt.dev.jjs.impl.gflow.cfg.CfgNopNode;
 import com.google.gwt.dev.jjs.impl.gflow.cfg.CfgTransformer;
 import com.google.gwt.dev.jjs.impl.gflow.cfg.CfgUtil;
 import com.google.gwt.dev.jjs.impl.gflow.cfg.CfgWriteNode;
+import com.google.gwt.thirdparty.guava.common.base.Preconditions;
 
 /**
  * Kill assignment. Leave rhs expression evaluation if it has side effects.

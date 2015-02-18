@@ -15,13 +15,13 @@
  */
 package com.google.gwt.validation.rebind;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.ext.GeneratorContext;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
+import com.google.gwt.thirdparty.guava.common.collect.ImmutableList;
+import com.google.gwt.thirdparty.guava.common.collect.Lists;
 import com.google.gwt.user.rebind.ClassSourceFileComposerFactory;
 import com.google.gwt.user.rebind.SourceWriter;
 import com.google.gwt.validation.client.GwtValidation;
@@ -153,7 +153,7 @@ public final class ValidatorCreator extends AbstractCreator {
     // private static ValidationGroupsMetadata createValidationGroupsMetadata() {
     sw.println("private static ValidationGroupsMetadata createValidationGroupsMetadata() {");
     sw.indent();
-
+    
     // return ValidationGroupsMetadata.builder()
     sw.println("return ValidationGroupsMetadata.builder()");
     sw.indent();

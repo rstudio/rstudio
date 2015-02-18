@@ -16,9 +16,6 @@
 
 package com.google.gwt.dev.codeserver;
 
-import com.google.common.collect.LinkedListMultimap;
-import com.google.common.collect.ListMultimap;
-import com.google.common.collect.Lists;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.dev.cfg.Properties;
 import com.google.gwt.dev.jjs.JsOutputOption;
@@ -27,6 +24,9 @@ import com.google.gwt.dev.util.arg.OptionJsInteropMode;
 import com.google.gwt.dev.util.arg.OptionMethodNameDisplayMode;
 import com.google.gwt.dev.util.arg.OptionOptimize;
 import com.google.gwt.dev.util.arg.SourceLevel;
+import com.google.gwt.thirdparty.guava.common.collect.LinkedListMultimap;
+import com.google.gwt.thirdparty.guava.common.collect.ListMultimap;
+import com.google.gwt.thirdparty.guava.common.collect.Lists;
 
 import java.io.File;
 import java.util.List;

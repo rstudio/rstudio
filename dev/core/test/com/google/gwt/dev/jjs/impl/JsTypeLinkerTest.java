@@ -13,7 +13,6 @@
  */
 package com.google.gwt.dev.jjs.impl;
 
-import com.google.common.collect.Lists;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.linker.impl.JsSourceMapBuilder;
 import com.google.gwt.core.ext.linker.impl.NamedRange;
@@ -24,6 +23,7 @@ import com.google.gwt.dev.StringAnalyzableTypeEnvironment;
 import com.google.gwt.dev.jjs.JsSourceMap;
 import com.google.gwt.dev.jjs.SourceOrigin;
 import com.google.gwt.dev.jjs.ast.JTypeOracle;
+import com.google.gwt.thirdparty.guava.common.collect.Lists;
 
 import junit.framework.TestCase;
 

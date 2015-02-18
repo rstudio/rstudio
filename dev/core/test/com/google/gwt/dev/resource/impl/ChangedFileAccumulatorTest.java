@@ -13,7 +13,7 @@
  */
 package com.google.gwt.dev.resource.impl;
 
-import com.google.common.io.Files;
+import com.google.gwt.thirdparty.guava.common.io.Files;
 
 import junit.framework.TestCase;
 

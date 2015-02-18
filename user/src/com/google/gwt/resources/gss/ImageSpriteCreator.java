@@ -15,27 +15,8 @@
  */
 package com.google.gwt.resources.gss;
 
-import static com.google.common.css.compiler.passes.PassUtil.ALTERNATE;
+import static com.google.gwt.thirdparty.common.css.compiler.passes.PassUtil.ALTERNATE;
 
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableList.Builder;
-import com.google.common.collect.Lists;
-import com.google.common.css.SourceCodeLocation;
-import com.google.common.css.compiler.ast.CssCommentNode;
-import com.google.common.css.compiler.ast.CssCompilerPass;
-import com.google.common.css.compiler.ast.CssDeclarationNode;
-import com.google.common.css.compiler.ast.CssFunctionArgumentsNode;
-import com.google.common.css.compiler.ast.CssFunctionNode;
-import com.google.common.css.compiler.ast.CssFunctionNode.Function;
-import com.google.common.css.compiler.ast.CssLiteralNode;
-import com.google.common.css.compiler.ast.CssPropertyNode;
-import com.google.common.css.compiler.ast.CssPropertyValueNode;
-import com.google.common.css.compiler.ast.CssValueNode;
-import com.google.common.css.compiler.ast.DefaultTreeVisitor;
-import com.google.common.css.compiler.ast.ErrorManager;
-import com.google.common.css.compiler.ast.GssError;
-import com.google.common.css.compiler.ast.MutatingVisitController;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JMethod;
 import com.google.gwt.core.ext.typeinfo.JType;
@@ -46,6 +27,25 @@ import com.google.gwt.resources.client.ImageResource.RepeatStyle;
 import com.google.gwt.resources.ext.ResourceContext;
 import com.google.gwt.resources.ext.ResourceGeneratorUtil;
 import com.google.gwt.resources.gss.ast.CssDotPathNode;
+import com.google.gwt.thirdparty.common.css.SourceCodeLocation;
+import com.google.gwt.thirdparty.common.css.compiler.ast.CssCommentNode;
+import com.google.gwt.thirdparty.common.css.compiler.ast.CssCompilerPass;
+import com.google.gwt.thirdparty.common.css.compiler.ast.CssDeclarationNode;
+import com.google.gwt.thirdparty.common.css.compiler.ast.CssFunctionArgumentsNode;
+import com.google.gwt.thirdparty.common.css.compiler.ast.CssFunctionNode;
+import com.google.gwt.thirdparty.common.css.compiler.ast.CssFunctionNode.Function;
+import com.google.gwt.thirdparty.common.css.compiler.ast.CssLiteralNode;
+import com.google.gwt.thirdparty.common.css.compiler.ast.CssPropertyNode;
+import com.google.gwt.thirdparty.common.css.compiler.ast.CssPropertyValueNode;
+import com.google.gwt.thirdparty.common.css.compiler.ast.CssValueNode;
+import com.google.gwt.thirdparty.common.css.compiler.ast.DefaultTreeVisitor;
+import com.google.gwt.thirdparty.common.css.compiler.ast.ErrorManager;
+import com.google.gwt.thirdparty.common.css.compiler.ast.GssError;
+import com.google.gwt.thirdparty.common.css.compiler.ast.MutatingVisitController;
+import com.google.gwt.thirdparty.guava.common.annotations.VisibleForTesting;
+import com.google.gwt.thirdparty.guava.common.collect.ImmutableList;
+import com.google.gwt.thirdparty.guava.common.collect.ImmutableList.Builder;
+import com.google.gwt.thirdparty.guava.common.collect.Lists;
 
 import java.util.List;
 

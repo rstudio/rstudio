@@ -15,9 +15,9 @@
  */
 package com.google.gwt.user.tools;
 
-import com.google.debugging.sourcemap.SourceMapConsumerFactory;
-import com.google.debugging.sourcemap.SourceMapping;
 import com.google.gwt.dev.util.Util;
+import com.google.gwt.thirdparty.debugging.sourcemap.SourceMapConsumerFactory;
+import com.google.gwt.thirdparty.debugging.sourcemap.SourceMapping;
 
 import java.io.File;
 

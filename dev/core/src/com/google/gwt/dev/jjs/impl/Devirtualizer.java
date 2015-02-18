@@ -15,8 +15,6 @@
  */
 package com.google.gwt.dev.jjs.impl;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.ast.AccessModifier;
 import com.google.gwt.dev.jjs.ast.Context;
@@ -40,6 +38,8 @@ import com.google.gwt.dev.jjs.ast.JTypeOracle;
 import com.google.gwt.dev.jjs.ast.JVariableRef;
 import com.google.gwt.dev.jjs.impl.MakeCallsStatic.CreateStaticImplsVisitor;
 import com.google.gwt.dev.jjs.impl.MakeCallsStatic.StaticCallConverter;
+import com.google.gwt.thirdparty.guava.common.collect.Lists;
+import com.google.gwt.thirdparty.guava.common.collect.Maps;
 
 import java.util.List;
 import java.util.Map;

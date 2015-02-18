@@ -15,9 +15,9 @@
  */
 package com.google.gwt.dev.jjs.ast;
 
-import com.google.common.collect.Maps;
 import com.google.gwt.dev.jjs.SourceOrigin;
 import com.google.gwt.dev.util.StringInterner;
+import com.google.gwt.thirdparty.guava.common.collect.Maps;
 
 import java.util.Map;
 

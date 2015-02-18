@@ -15,7 +15,7 @@
  */
 package com.google.gwt.resources.gss;
 
-import com.google.common.collect.ImmutableMap;
+import com.google.gwt.thirdparty.guava.common.collect.ImmutableMap;
 
 import junit.framework.TestCase;
 
