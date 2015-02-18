@@ -20,6 +20,11 @@ import java.util.List;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.OperationWithInput;
+import org.rstudio.core.client.widget.ProgressIndicator;
+import org.rstudio.core.client.widget.ProgressOperationWithInput;
+import org.rstudio.core.client.widget.ThemedButton;
+import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.FilePathUtils;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.rsconnect.model.RSConnectAccount;
@@ -86,6 +91,7 @@ public class RSConnectDeploy extends Composite
       forDocument_ = forDocument;
       accountList = new RSConnectAccountList(server, display, false);
       initWidget(uiBinder.createAndBindUi(this));
+      final FileDialogs fileDialogs = RStudioGinjector.INSTANCE.getFileDialogs();
 
       // Validate the application name on every keystroke
       appName.addKeyUpHandler(new KeyUpHandler()
@@ -116,6 +122,27 @@ public class RSConnectDeploy extends Composite
             
             event.preventDefault();
             event.stopPropagation();
+         }
+      });
+      addFileButton_.setVisible(forDocument);
+      addFileButton_.addClickHandler(new ClickHandler()
+      {
+         @Override
+         public void onClick(ClickEvent arg0)
+         {
+            fileDialogs.openFile(
+                  "Select File", 
+                  RStudioGinjector.INSTANCE.getRemoteFileSystemContext(), 
+                  null, // initial location
+                  new ProgressOperationWithInput<FileSystemItem>() 
+                  {
+                     @Override
+                     public void execute(FileSystemItem input,
+                           ProgressIndicator indicator)
+                     {
+                        // TODO: add file
+                     }
+                  });
          }
       });
    }
@@ -295,6 +322,7 @@ public class RSConnectDeploy extends Composite
    @UiField DeployStyle style;
    @UiField VerticalPanel fileListPanel_;
    @UiField InlineLabel deployLabel_;
+   @UiField ThemedButton addFileButton_;
    
    private ArrayList<CheckBox> fileChecks_;
    

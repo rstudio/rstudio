@@ -1,7 +1,8 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
 	xmlns:g="urn:import:com.google.gwt.user.client.ui"
-	xmlns:rsc="urn:import:org.rstudio.studio.client.rsconnect.ui">
+	xmlns:rsc="urn:import:org.rstudio.studio.client.rsconnect.ui"
+	xmlns:rw="urn:import:org.rstudio.core.client.widget">
 	<ui:with field="res" type="org.rstudio.studio.client.rsconnect.ui.RSConnectDeploy.DeployResources" />
 	<ui:with field="projRes" type="org.rstudio.studio.client.projects.ui.newproject.NewProjectResources" />
 	<ui:style type="org.rstudio.studio.client.rsconnect.ui.RSConnectDeploy.DeployStyle">
@@ -112,13 +113,16 @@
 	<g:Image resource="{res.deployIllustration}"></g:Image>
 	<g:Grid><g:row>
     <g:customCell styleName="{style.rootCell}">
-      <g:FlowPanel>
+      <g:VerticalPanel>
         <g:InlineLabel styleName="{style.deployLabel}" ui:field="deployLabel_"></g:InlineLabel>
         <g:ScrollPanel styleName="{style.fileList}">
           <g:VerticalPanel ui:field="fileListPanel_">
           </g:VerticalPanel>
         </g:ScrollPanel>
-      </g:FlowPanel>
+        <rw:ThemedButton ui:field="addFileButton_" 
+                         text="Add More..."
+                         visible="false"></rw:ThemedButton>
+      </g:VerticalPanel>
      </g:customCell>
      <g:customCell styleName="{style.rootCell}">
       <g:HTMLPanel>
