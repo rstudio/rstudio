@@ -242,14 +242,17 @@ public class CppCompletionRequest
       for (int i = 0; i < diagnostics.length(); i++)
       {
          CppDiagnostic d = diagnostics.get(i);
-         Range range = getRangeForDiagnostic(d);
-            lint.set(i, LintItem.create(
-                  range.getStart().getRow(),
-                  range.getStart().getColumn(),
-                  range.getEnd().getRow(),
-                  range.getEnd().getColumn(),
-                  d.getMessage(),
-                  cppDiagnosticSeverityToLintType(d.getSeverity())));
+         if (d.getPosition() != null)
+         {
+            Range range = getRangeForDiagnostic(d);
+               lint.set(i, LintItem.create(
+                     range.getStart().getRow(),
+                     range.getStart().getColumn(),
+                     range.getEnd().getRow(),
+                     range.getEnd().getColumn(),
+                     d.getMessage(),
+                     cppDiagnosticSeverityToLintType(d.getSeverity())));
+         }
       }
       
       return lint;
