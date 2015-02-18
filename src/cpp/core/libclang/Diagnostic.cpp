@@ -137,9 +137,12 @@ unsigned DiagnosticSet::diagnostics() const
 
 boost::shared_ptr<Diagnostic> DiagnosticSet::getDiagnostic(unsigned i) const
 {
-   return boost::shared_ptr<Diagnostic>(
-     new Diagnostic(clang().getDiagnosticInSet(diagnosticSet_, i))
-   );
+   CXDiagnostic cxDiag = clang().getDiagnosticInSet(diagnosticSet_, i);
+   boost::shared_ptr<Diagnostic> pDiag(new Diagnostic(cxDiag));
+   if (!pDiag->location().empty())
+      return pDiag;
+   else
+      return boost::shared_ptr<Diagnostic>();
 }
 
 

@@ -226,10 +226,10 @@ Error getCppCompletions(const core::json::JsonRpcRequest& request,
          // get diagnostics
          for (unsigned i = 0; i<pResults->getNumDiagnostics(); i++)
          {
-            diagnosticsJson.push_back(
-                          diagnosticToJson(tu, *pResults->getDiagnostic(i)));
+            boost::shared_ptr<Diagnostic> pDiag = pResults->getDiagnostic(i);
+            if (pDiag)
+               diagnosticsJson.push_back(diagnosticToJson(tu, *pDiag));
          }
-
       }
 
       json::Object resultJson;

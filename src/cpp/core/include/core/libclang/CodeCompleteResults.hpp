@@ -73,6 +73,8 @@ public:
    CodeCompleteResult getResult(unsigned index) const;
 
    unsigned getNumDiagnostics() const;
+   // NOTE: can return NULL shared_ptr if the diagnostic doesn't have
+   // a source location associated with it
    boost::shared_ptr<Diagnostic> getDiagnostic(unsigned index) const;
 
    unsigned long long getContexts() const;

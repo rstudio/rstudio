@@ -124,8 +124,9 @@ json::Object diagnosticToJson(const TranslationUnit& tu,
    {
       for (unsigned i = 0; i < pChildren->diagnostics(); i++)
       {
-         childrenJson.push_back(
-            diagnosticToJson(tu, *pChildren->getDiagnostic(i)));
+         boost::shared_ptr<Diagnostic> pDiag = pChildren->getDiagnostic(i);
+         if (pDiag)
+            childrenJson.push_back(diagnosticToJson(tu, *pDiag));
       }
    }
    diagnosticJson["children"] = childrenJson;
@@ -157,7 +158,9 @@ Error getCppDiagnostics(const core::json::JsonRpcRequest& request,
       unsigned numDiagnostics = tu.getNumDiagnostics();
       for (unsigned i = 0; i < numDiagnostics; i++)
       {
-         diagnosticsJson.push_back(diagnosticToJson(tu, *tu.getDiagnostic(i)));
+         boost::shared_ptr<Diagnostic> pDiag = tu.getDiagnostic(i);
+         if (pDiag)
+            diagnosticsJson.push_back(diagnosticToJson(tu, *pDiag));
       }
    }
 

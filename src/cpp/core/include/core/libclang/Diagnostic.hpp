@@ -92,6 +92,8 @@ public:
    virtual ~DiagnosticSet();
 
    unsigned diagnostics() const;
+   // NOTE: can return NULL shared_ptr if the diagnostic doesn't have
+   // a source location associated with it
    boost::shared_ptr<Diagnostic> getDiagnostic(unsigned i) const;
 
 private:

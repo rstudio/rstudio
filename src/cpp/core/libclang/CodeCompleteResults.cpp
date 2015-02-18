@@ -167,7 +167,11 @@ boost::shared_ptr<Diagnostic> CodeCompleteResults::getDiagnostic(
                                                          unsigned index) const
 {
    CXDiagnostic cxDiag = clang().codeCompleteGetDiagnostic(pResults_, index);
-   return boost::shared_ptr<Diagnostic>(new Diagnostic(cxDiag));
+   boost::shared_ptr<Diagnostic> pDiag(new Diagnostic(cxDiag));
+   if (!pDiag->location().empty())
+      return pDiag;
+   else
+      return boost::shared_ptr<Diagnostic>();
 }
 
 unsigned long long CodeCompleteResults::getContexts() const

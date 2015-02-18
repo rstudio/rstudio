@@ -89,8 +89,12 @@ unsigned TranslationUnit::getNumDiagnostics() const
 boost::shared_ptr<Diagnostic>
                TranslationUnit::getDiagnostic(unsigned index) const
 {
-   return boost::shared_ptr<Diagnostic>(
-                     new Diagnostic(clang().getDiagnostic(tu_, index)));
+   CXDiagnostic cxDiag = clang().getDiagnostic(tu_, index);
+   boost::shared_ptr<Diagnostic> pDiag(new Diagnostic(cxDiag));
+   if (!pDiag->location().empty())
+      return pDiag;
+   else
+      return boost::shared_ptr<Diagnostic>();
 }
 
 Cursor TranslationUnit::getCursor() const

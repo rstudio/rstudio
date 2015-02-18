@@ -65,6 +65,8 @@ public:
                                  const std::string& filename = std::string()) const;
 
    unsigned getNumDiagnostics() const;
+   // NOTE: can return NULL shared_ptr if the diagnostic doesn't have
+   // a source location associated with it
    boost::shared_ptr<Diagnostic> getDiagnostic(unsigned index) const;
 
    // get the cursor for the translation unit
