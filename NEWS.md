@@ -123,6 +123,7 @@
 * Added global RStudio.Version function for getting basic version info
 * Diagram previews using the DiagrammeR package (requires recent version from GitHub).
 * Added Markers pane and sourceMarker API for externals tools (e.g. linters)
+* Enable specification of Sweave driver in Rnw magic comment
 
 ### Server
 

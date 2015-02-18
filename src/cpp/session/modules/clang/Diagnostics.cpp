@@ -78,34 +78,38 @@ json::Object diagnosticToJson(const TranslationUnit& tu,
    diagnosticJson["disable_option"] = diagnostic.disableOption();
 
    diagnosticJson["message"] = diagnostic.spelling();
-   FileLocation location = diagnostic.location().getSpellingLocation();
-   diagnosticJson["file"] = module_context::createAliasedPath(location.filePath);
-   diagnosticJson["position"] = locationToPositionJson(location);
 
-   // source ranges (if there are no source ranges then create one based on
-   // the token at the location of the diagnostic)
    json::Array jsonRanges;
-   unsigned numRanges = diagnostic.numRanges();
-   if (numRanges > 0)
+   if (!diagnostic.location().empty())
    {
-      for (unsigned int i=0; i < diagnostic.numRanges(); i++)
-         jsonRanges.push_back(rangeToJson(diagnostic.getSourceRange(i)));
-   }
-   else
-   {
-      Cursor cursor = tu.getCursor(location.filePath.absolutePath(),
-                                   location.line,
-                                   location.column);
+      FileLocation location = diagnostic.location().getSpellingLocation();
+      diagnosticJson["file"] = module_context::createAliasedPath(location.filePath);
+      diagnosticJson["position"] = locationToPositionJson(location);
 
-      Tokens tokens(tu.getCXTranslationUnit(), cursor.getExtent());
-      for (unsigned int i = 0; i<tokens.numTokens(); i++)
+      // source ranges (if there are no source ranges then create one based on
+      // the token at the location of the diagnostic)
+      unsigned numRanges = diagnostic.numRanges();
+      if (numRanges > 0)
       {
-         Token token = tokens.getToken(i);
-         FileRange tokenRange = token.extent().getFileRange();
-         if (tokenRange.start == location)
+         for (unsigned int i=0; i < diagnostic.numRanges(); i++)
+            jsonRanges.push_back(rangeToJson(diagnostic.getSourceRange(i)));
+      }
+      else
+      {
+         Cursor cursor = tu.getCursor(location.filePath.absolutePath(),
+                                      location.line,
+                                      location.column);
+
+         Tokens tokens(tu.getCXTranslationUnit(), cursor.getExtent());
+         for (unsigned int i = 0; i<tokens.numTokens(); i++)
          {
-            jsonRanges.push_back(rangeToJson(tokenRange));
-            break;
+            Token token = tokens.getToken(i);
+            FileRange tokenRange = token.extent().getFileRange();
+            if (tokenRange.start == location)
+            {
+               jsonRanges.push_back(rangeToJson(tokenRange));
+               break;
+            }
          }
       }
    }
