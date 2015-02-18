@@ -207,8 +207,8 @@ public class CssPrinter extends CompactPrinter {
     // space. I believe that you'll be safe because, if there's nothing in the buffer, there is
     // nothing to delete, but you may have some unnecessary characters in the output. you may
     // want to call that out explicitly in the code.
-    String content = DOUBLE_QUOTE + Generator.escape(sb.toString()) + DOUBLE_QUOTE;
-    sb = new StringBuilder();
+    String content = DOUBLE_QUOTE + Generator.escape(getOutputBuffer()) + DOUBLE_QUOTE;
+    resetBuffer();
 
     return content;
   }

@@ -20,7 +20,7 @@
 	<classpathentry kind="var" path="GWT_TOOLS/lib/apache/commons/commons-logging-1.1.1.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/apache/commons/commons-io-2.4.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/cssparser/cssparser-0.9.11.jar"/>
-	<classpathentry kind="var" path="GWT_TOOLS/lib/gss/2014-09-11/closure-stylesheets-rebased.jar"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/gss/2015-02-18/closure-stylesheets-library-20150218-rebased.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/mockito/1.9.5/mockito-all-1.9.5.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/nekohtml/nekohtml-1.9.19.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/selenium/selenium-java-client-driver.jar" sourcepath="/GWT_TOOLS/lib/selenium/selenium-java-client-driver-sources.jar"/>
@@ -67,3 +67,4 @@
 	<classpathentry kind="var" path="GWT_TOOLS/lib/eclipse/jdtCompilerAdapter_3.11.0.v20150126-2015.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
+

@@ -69,7 +69,9 @@ public class CSSResourceWithGSSTest extends CSSResourceTest {
     assertTrue(text.contains("ns:tag::-webkit-scrollbar"));
 
     // Check escaped string values
-    assertTrue(text.contains("Hello\\\\\\000022 world"));
+    // GSS outputs an extra whitespace which is okay, see:
+    // http://www.w3.org/TR/css3-syntax/#consume-an-escaped-code-point 
+    assertTrue(text.contains("Hello\\\\\\000022  world"));
 
     // Check values
     assertFalse(text.contains("0.0;"));
