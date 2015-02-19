@@ -538,6 +538,24 @@ public class TextEditingTargetRMarkdownHelper
          });
    }
    
+   public void addAdditionalResourceFiles(String yaml, 
+         final ArrayList<String> files, 
+         final CommandWithArg<String> onCompleted)
+   {
+      convertFromYaml(yaml, new CommandWithArg<RmdYamlData>() 
+      {
+         @Override
+         public void execute(RmdYamlData arg)
+         {
+            if (!arg.parseSucceeded())
+               onCompleted.execute(null);
+            else
+               addAdditionalResourceFiles(arg.getFrontMatter(), files, 
+                     onCompleted);
+         }
+      });
+   }
+
    // Private methods ---------------------------------------------------------
    
    private void cleanAndCreateTemplate(final RmdChosenTemplate template, 
@@ -669,6 +687,18 @@ public class TextEditingTargetRMarkdownHelper
       display.showWarningBar(feature + " requires the " +
                              "knitr package (version " + requiredVersion + 
                              " or higher)");
+   }
+   
+   private void addAdditionalResourceFiles(RmdFrontMatter frontMatter,
+         ArrayList<String> additionalFiles, 
+         CommandWithArg<String> onCompleted)
+   {
+      for (String file: additionalFiles)
+      {
+         frontMatter.addResourceFile(file);
+      }
+
+      frontMatterToYAML(frontMatter, null, onCompleted);
    }
    
    private Session session_;

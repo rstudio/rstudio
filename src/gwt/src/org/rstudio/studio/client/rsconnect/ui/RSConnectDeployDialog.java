@@ -382,7 +382,7 @@ public class RSConnectDeployDialog
       ArrayList<String> additionalFiles = new ArrayList<String>();
       for (String filePath: filesAddedManually_)
       {
-         if (deployFiles.contains(filePath))
+         if (!deployFiles.contains(filePath))
          {
             additionalFiles.add(filePath);
          }

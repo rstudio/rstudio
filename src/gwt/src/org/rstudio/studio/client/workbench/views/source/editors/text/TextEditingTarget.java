@@ -87,6 +87,7 @@ import org.rstudio.studio.client.rmarkdown.model.RmdYamlData;
 import org.rstudio.studio.client.rmarkdown.model.YamlFrontMatter;
 import org.rstudio.studio.client.rmarkdown.ui.RmdTemplateOptionsDialog;
 import org.rstudio.studio.client.rsconnect.events.RSConnectActionEvent;
+import org.rstudio.studio.client.rsconnect.events.RSConnectDeployInitiatedEvent;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
@@ -619,6 +620,41 @@ public class TextEditingTarget implements
             }
          }
       });
+      
+      events_.addHandler(RSConnectDeployInitiatedEvent.TYPE, 
+            new RSConnectDeployInitiatedEvent.Handler()
+            {
+               @Override
+               public void onRSConnectDeployInitiated(
+                     RSConnectDeployInitiatedEvent event)
+               {
+                  // this event is interesting only if it is targeted at the
+                  // file loaded in the editor, and if additional files are
+                  // involved
+                  if (getPath() != null &&
+                      getPath().equals(event.getSourceFile()) &&
+                      event.getAdditionalFiles() != null &&
+                      event.getAdditionalFiles().size() > 0)
+                   {
+                     String yaml = getRmdFrontMatter();
+                     if (yaml == null)
+                        return;
+                     rmarkdownHelper_.addAdditionalResourceFiles(yaml,
+                           event.getAdditionalFiles(), 
+                           new CommandWithArg<String>()
+                           {
+                              @Override
+                              public void execute(String yamlOut)
+                              {
+                                 if (yamlOut != null)
+                                 {
+                                    applyRmdFrontMatter(yamlOut);
+                                 }
+                              }
+                           });
+                   }
+               }
+            });
    }
    
    @Override
