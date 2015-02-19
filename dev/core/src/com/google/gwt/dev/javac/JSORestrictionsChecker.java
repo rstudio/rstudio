@@ -294,45 +294,10 @@ public class JSORestrictionsChecker {
           return;
         }
         String methodName = String.valueOf(mb.selector);
-        if (!isGetter(methodName, mb) && !isSetter(methodName, mb) && !isHas(methodName, mb)) {
+        if (!isGetter(methodName, mb) && !isSetter(methodName, mb)) {
           errorOn(mb, ERR_JSPROPERTY_ONLY_BEAN_OR_FLUENT_STYLE_NAMING);
         }
       }
-    }
-
-    private boolean isGetter(String name, MethodBinding mb) {
-      // zero arg non-void getX()
-      if (name.length() > 3 && name.startsWith("get") && Character.isUpperCase(name.charAt(3)) &&
-         mb.returnType == TypeBinding.VOID && mb.parameters.length == 0) {
-        return true;
-      } else  if (name.length() > 3 && name.startsWith("is")
-          && Character.isUpperCase(name.charAt(2)) &&  mb.returnType == TypeBinding.BOOLEAN
-          && mb.parameters.length == 0) {
-        return true;
-      } else if (mb.parameters.length == 0 && mb.returnType != TypeBinding.VOID) {
-        return true;
-      }
-      return false;
-    }
-
-    private boolean isSetter(String name, MethodBinding mb) {
-      if (mb.returnType == TypeBinding.VOID || mb.returnType == mb.declaringClass) {
-        if (name.length() > 3 && name.startsWith("set") && Character.isUpperCase(name.charAt(3))
-            && mb.parameters.length == 1) {
-          return true;
-        } else if (mb.parameters.length == 1) {
-          return true;
-        }
-      }
-      return false;
-    }
-
-    private boolean isHas(String name, MethodBinding mb) {
-      if (name.length() > 3 && name.startsWith("has") && Character.isUpperCase(name.charAt(3))
-          && mb.parameters.length == 0 && mb.returnType == TypeBinding.BOOLEAN) {
-        return true;
-      }
-      return false;
     }
 
     private void checkJsTypeMethodsForOverloads(Map<String, MethodBinding> methodNamesAndSigs,
@@ -348,8 +313,8 @@ public class JSORestrictionsChecker {
             continue;
           }
           if (JdtUtil.getAnnotation(mb, JsInteropUtil.JSPROPERTY_CLASS) != null) {
-            if (isGetter(methodName, mb) || isSetter(methodName, mb) || isHas(methodName, mb)) {
-              // js properties are allowed to be overloaded (setter/getter)
+            if (isGetter(methodName, mb) || isSetter(methodName, mb)) {
+              // JS properties are allowed to be overloaded (setter/getter)
               continue;
             }
           }
@@ -452,6 +417,44 @@ public class JSORestrictionsChecker {
           errorOn(type, ERR_CLASS_EXTENDS_MAGIC_PROTOTYPE_BUT_NO_PROTOTYPE_ATTRIBUTE);
         }
       }
+    }
+
+    private boolean isGetter(String methodName, MethodBinding methodBinding) {
+      // Anything that takes parameters or doesn't return a value can't be a getter.
+      if (methodBinding.parameters.length > 0 || methodBinding.returnType == TypeBinding.VOID) {
+        return false;
+      }
+      // If it sounds like a setter then it can't be a getter.
+      if (startsWithCamelCase(methodName, "set")) {
+        return false;
+      }
+      // If it sounds like an "is" or "has" getter but doesn't return a boolean it can't be a
+      // getter.
+      if ((startsWithCamelCase(methodName, "is") || startsWithCamelCase(methodName, "has"))
+          && methodBinding.returnType != TypeBinding.BOOLEAN) {
+        return false;
+      }
+      // Everything else is a getter.
+      return true;
+    }
+
+    private boolean isSetter(String methodName, MethodBinding methodBinding) {
+      // Anything that doesn't take exactly 1 parameter can't be a setter.
+      if (methodBinding.parameters.length != 1) {
+        return false;
+      }
+      // If it sounds like a getter then it can't be a setter.
+      if (startsWithCamelCase(methodName, "get") || startsWithCamelCase(methodName, "is")
+          || startsWithCamelCase(methodName, "has")) {
+        return false;
+      }
+      // If it doesn't return void and isn't fluent then it isn't a setter.
+      if (methodBinding.returnType != TypeBinding.VOID
+          && methodBinding.returnType != methodBinding.declaringClass) {
+        return false;
+      }
+      // Everything else is a setter.
+      return true;
     }
 
     // Roughly parallels JProgram.isJsTypePrototype()
@@ -598,8 +601,12 @@ public class JSORestrictionsChecker {
         "jsoRestrictions.html"));
   }
 
-  private final CompilationUnitDeclaration cud;
+  private static boolean startsWithCamelCase(String string, String prefix) {
+    return string.length() > prefix.length() && string.startsWith(prefix)
+        && Character.isUpperCase(string.charAt(prefix.length()));
+  }
 
+  private final CompilationUnitDeclaration cud;
   private final CheckerState state;
 
   private JSORestrictionsChecker(CheckerState state,

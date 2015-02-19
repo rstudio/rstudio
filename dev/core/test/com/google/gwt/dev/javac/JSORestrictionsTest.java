@@ -445,7 +445,7 @@ public class JSORestrictionsTest extends TestCase {
     StringBuilder buggyCode = new StringBuilder();
     buggyCode.append("import com.google.gwt.core.client.js.JsExport;\n");
     buggyCode.append("public class Buggy {\n");
-    buggyCode.append("@JsExport Object foo() {return null;}\n");
+    buggyCode.append("@JsExport static Object foo() {return null;}\n");
     buggyCode.append("}\n");
 
     shouldGenerateError(buggyCode, "Line 3: "
@@ -595,19 +595,136 @@ public class JSORestrictionsTest extends TestCase {
         + JSORestrictionsChecker.ERR_MUST_EXTEND_MAGIC_PROTOTYPE_CLASS);
   }
 
-  public void testJsPropertyBadStyle() {
+  public void testJsPropertyNoErrors() {
     StringBuilder buggyCode = new StringBuilder();
     buggyCode.append("import com.google.gwt.core.client.js.JsType;\n");
     buggyCode.append("import com.google.gwt.core.client.js.JsProperty;\n");
     buggyCode.append("@JsType public interface Buggy {\n");
-    buggyCode.append("@JsProperty void foo();\n");
+
+    buggyCode.append("@JsProperty int foo();\n");
+    buggyCode.append("@JsProperty void foo(int x);\n");
+
+    buggyCode.append("@JsProperty int getFoo();\n");
+    buggyCode.append("@JsProperty void setFoo(int x);\n");
+
+    buggyCode.append("@JsProperty boolean hasFoo();\n");
+    buggyCode.append("@JsProperty boolean isFoo();\n");
+    buggyCode.append("@JsProperty Buggy setFoo(String x);\n");
+
+    buggyCode.append("}\n");
+
+    shouldGenerateNoError(buggyCode);
+  }
+
+  public void testJsPropertyGetterCantTakeParameters() {
+    StringBuilder buggyCode = new StringBuilder();
+    buggyCode.append("import com.google.gwt.core.client.js.JsType;\n");
+    buggyCode.append("import com.google.gwt.core.client.js.JsProperty;\n");
+    buggyCode.append("@JsType public interface Buggy {\n");
+    buggyCode.append("@JsProperty int getFoo(int a, int b);\n");
     buggyCode.append("}\n");
 
     shouldGenerateError(buggyCode,
         "Line 4: " + JSORestrictionsChecker.ERR_JSPROPERTY_ONLY_BEAN_OR_FLUENT_STYLE_NAMING);
   }
 
-  public void testJsPropertyBadStyle2() {
+  public void testJsPropertyGetterCantReturnVoid() {
+    StringBuilder buggyCode = new StringBuilder();
+    buggyCode.append("import com.google.gwt.core.client.js.JsType;\n");
+    buggyCode.append("import com.google.gwt.core.client.js.JsProperty;\n");
+    buggyCode.append("@JsType public interface Buggy {\n");
+    buggyCode.append("@JsProperty void getFoo();\n");
+    buggyCode.append("}\n");
+
+    shouldGenerateError(buggyCode,
+        "Line 4: " + JSORestrictionsChecker.ERR_JSPROPERTY_ONLY_BEAN_OR_FLUENT_STYLE_NAMING);
+  }
+
+  public void testJsPropertyGetterCantSoundLikeSetter() {
+    StringBuilder buggyCode = new StringBuilder();
+    buggyCode.append("import com.google.gwt.core.client.js.JsType;\n");
+    buggyCode.append("import com.google.gwt.core.client.js.JsProperty;\n");
+    buggyCode.append("@JsType public interface Buggy {\n");
+    buggyCode.append("@JsProperty int setFoo();\n");
+    buggyCode.append("}\n");
+
+    shouldGenerateError(buggyCode,
+        "Line 4: " + JSORestrictionsChecker.ERR_JSPROPERTY_ONLY_BEAN_OR_FLUENT_STYLE_NAMING);
+  }
+
+  public void testJsPropertyHasGetterMustReturnBoolean() {
+    StringBuilder buggyCode = new StringBuilder();
+    buggyCode.append("import com.google.gwt.core.client.js.JsType;\n");
+    buggyCode.append("import com.google.gwt.core.client.js.JsProperty;\n");
+    buggyCode.append("@JsType public interface Buggy {\n");
+    buggyCode.append("@JsProperty int hasFoo();\n");
+    buggyCode.append("}\n");
+
+    shouldGenerateError(buggyCode,
+        "Line 4: " + JSORestrictionsChecker.ERR_JSPROPERTY_ONLY_BEAN_OR_FLUENT_STYLE_NAMING);
+  }
+
+  public void testJsPropertyIsGetterMustReturnBoolean() {
+    StringBuilder buggyCode = new StringBuilder();
+    buggyCode.append("import com.google.gwt.core.client.js.JsType;\n");
+    buggyCode.append("import com.google.gwt.core.client.js.JsProperty;\n");
+    buggyCode.append("@JsType public interface Buggy {\n");
+    buggyCode.append("@JsProperty int isFoo();\n");
+    buggyCode.append("}\n");
+
+    shouldGenerateError(buggyCode,
+        "Line 4: " + JSORestrictionsChecker.ERR_JSPROPERTY_ONLY_BEAN_OR_FLUENT_STYLE_NAMING);
+  }
+
+  public void testJsPropertySetterCantTakeTwoParameters() {
+    StringBuilder buggyCode = new StringBuilder();
+    buggyCode.append("import com.google.gwt.core.client.js.JsType;\n");
+    buggyCode.append("import com.google.gwt.core.client.js.JsProperty;\n");
+    buggyCode.append("@JsType public interface Buggy {\n");
+    buggyCode.append("@JsProperty void setFoo(int a, int b);\n");
+    buggyCode.append("}\n");
+
+    shouldGenerateError(buggyCode,
+        "Line 4: " + JSORestrictionsChecker.ERR_JSPROPERTY_ONLY_BEAN_OR_FLUENT_STYLE_NAMING);
+  }
+
+  public void testJsPropertySetterCantSoundLikeIsGetter() {
+    StringBuilder buggyCode = new StringBuilder();
+    buggyCode.append("import com.google.gwt.core.client.js.JsType;\n");
+    buggyCode.append("import com.google.gwt.core.client.js.JsProperty;\n");
+    buggyCode.append("@JsType public interface Buggy {\n");
+    buggyCode.append("@JsProperty void isFoo(int x);\n");
+    buggyCode.append("}\n");
+
+    shouldGenerateError(buggyCode,
+        "Line 4: " + JSORestrictionsChecker.ERR_JSPROPERTY_ONLY_BEAN_OR_FLUENT_STYLE_NAMING);
+  }
+
+  public void testJsPropertySetterCantSoundLikeGetGetter() {
+    StringBuilder buggyCode = new StringBuilder();
+    buggyCode.append("import com.google.gwt.core.client.js.JsType;\n");
+    buggyCode.append("import com.google.gwt.core.client.js.JsProperty;\n");
+    buggyCode.append("@JsType public interface Buggy {\n");
+    buggyCode.append("@JsProperty void getFoo(int x);\n");
+    buggyCode.append("}\n");
+
+    shouldGenerateError(buggyCode,
+        "Line 4: " + JSORestrictionsChecker.ERR_JSPROPERTY_ONLY_BEAN_OR_FLUENT_STYLE_NAMING);
+  }
+
+  public void testJsPropertySetterCantSoundLikeHasGetter() {
+    StringBuilder buggyCode = new StringBuilder();
+    buggyCode.append("import com.google.gwt.core.client.js.JsType;\n");
+    buggyCode.append("import com.google.gwt.core.client.js.JsProperty;\n");
+    buggyCode.append("@JsType public interface Buggy {\n");
+    buggyCode.append("@JsProperty void hasFoo(int x);\n");
+    buggyCode.append("}\n");
+
+    shouldGenerateError(buggyCode,
+        "Line 4: " + JSORestrictionsChecker.ERR_JSPROPERTY_ONLY_BEAN_OR_FLUENT_STYLE_NAMING);
+  }
+
+  public void testJsPropertySetterCantReturnInt() {
     StringBuilder buggyCode = new StringBuilder();
     buggyCode.append("import com.google.gwt.core.client.js.JsType;\n");
     buggyCode.append("import com.google.gwt.core.client.js.JsProperty;\n");
@@ -617,22 +734,6 @@ public class JSORestrictionsTest extends TestCase {
 
     shouldGenerateError(buggyCode,
         "Line 4: " + JSORestrictionsChecker.ERR_JSPROPERTY_ONLY_BEAN_OR_FLUENT_STYLE_NAMING);
-  }
-
-  public void testJsPropertyNoErrors() {
-    StringBuilder buggyCode = new StringBuilder();
-    buggyCode.append("import com.google.gwt.core.client.js.JsType;\n");
-    buggyCode.append("import com.google.gwt.core.client.js.JsProperty;\n");
-    buggyCode.append("@JsType public interface Buggy {\n");
-    buggyCode.append("@JsProperty int foo();\n");
-    buggyCode.append("@JsProperty void foo(int x);\n");
-    buggyCode.append("@JsProperty void setFoo(int x);\n");
-    buggyCode.append("@JsProperty void getFoo(int x);\n");
-    buggyCode.append("@JsProperty Buggy setFoo(String x);\n");
-    buggyCode.append("@JsProperty boolean isFoo();\n");
-    buggyCode.append("}\n");
-
-    shouldGenerateNoError(buggyCode);
   }
 
   /**
