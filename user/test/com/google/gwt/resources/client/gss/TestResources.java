@@ -166,9 +166,11 @@ public interface TestResources extends ClientBundle {
    * Used to test constants that use other constants.
    */
   interface Constants extends CssResource {
-    String COLOR1();
-    String MYCOLOR();
-    String MYCOLOR1();
+    String color1();
+    String mycolor();
+    String mycolor1();
+
+    String padding2();
   }
 
   @Source("constants.gss")

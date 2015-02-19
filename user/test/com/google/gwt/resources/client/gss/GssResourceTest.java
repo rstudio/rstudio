@@ -180,9 +180,10 @@ public class GssResourceTest extends RenamingClassNameTest {
   }
 
   public void testConstantAccess() {
-    assertEquals("#012345", res().constants().COLOR1());
-    assertEquals("#012345", res().constants().MYCOLOR());
-    assertEquals("#012345", res().constants().MYCOLOR1());
+    assertEquals("10px", res().constants().padding2());
+    assertEquals("#012345", res().constants().color1());
+    assertEquals("#012345", res().constants().mycolor());
+    assertEquals("#012345", res().constants().mycolor1());
   }
 
   private String runtimeExpectedCss(String color, String padding, String foo) {

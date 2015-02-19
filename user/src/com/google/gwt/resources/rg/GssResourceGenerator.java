@@ -45,7 +45,7 @@ import com.google.gwt.resources.ext.ResourceContext;
 import com.google.gwt.resources.ext.ResourceGeneratorUtil;
 import com.google.gwt.resources.ext.SupportsGeneratorResultCaching;
 import com.google.gwt.resources.gss.BooleanConditionCollector;
-import com.google.gwt.resources.gss.ConstantResolver;
+import com.google.gwt.resources.gss.CollectAndRemoveConstantDefinitions;
 import com.google.gwt.resources.gss.CreateRuntimeConditionalNodes;
 import com.google.gwt.resources.gss.CssPrinter;
 import com.google.gwt.resources.gss.ExtendedEliminateConditionalNodes;
@@ -719,7 +719,6 @@ public class GssResourceGenerator extends AbstractCssResourceGenerator implement
     new ProcessKeyframes(cssTree.getMutatingVisitController(), errorManager, true, true).runPass();
     new ProcessRefiners(cssTree.getMutatingVisitController(), errorManager, true).runPass();
     new MarkNonFlippableNodes(cssTree.getMutatingVisitController(), errorManager).runPass();
-    new ConstantResolver(cssTree, cssTree.getMutatingVisitController()).runPass();
   }
 
   private ConstantDefinitions optimizeTree(CssParsingResult cssParsingResult, ResourceContext context,
@@ -756,19 +755,22 @@ public class GssResourceGenerator extends AbstractCssResourceGenerator implement
     // Don't continue if errors exist
     checkErrors();
 
-    CollectConstantDefinitions collectConstantDefinitionsPass = new CollectConstantDefinitions(
-        cssTree);
-    collectConstantDefinitionsPass.runPass();
-
-    ReplaceConstantReferences replaceConstantReferences = new ReplaceConstantReferences(cssTree,
-        collectConstantDefinitionsPass.getConstantDefinitions(), true, errorManager, false);
-    replaceConstantReferences.runPass();
-
     new ImageSpriteCreator(cssTree.getMutatingVisitController(), context, errorManager).runPass();
 
     Map<String, GssFunction> gssFunctionMap = new GwtGssFunctionMapProvider(context).get();
     new ResolveCustomFunctionNodes(cssTree.getMutatingVisitController(), errorManager,
         gssFunctionMap, true, allowedNonStandardFunctions).runPass();
+
+    CollectConstantDefinitions collectConstantDefinitionsPass = new CollectConstantDefinitions(
+        cssTree);
+    collectConstantDefinitionsPass.runPass();
+
+    ReplaceConstantReferences replaceConstantReferences = new ReplaceConstantReferences(cssTree,
+        collectConstantDefinitionsPass.getConstantDefinitions(), false, errorManager, false);
+    replaceConstantReferences.runPass();
+
+    collectConstantDefinitionsPass = new CollectAndRemoveConstantDefinitions(cssTree);
+    collectConstantDefinitionsPass.runPass();
 
     if (simplifyCss) {
       // Eliminate empty rules.
