@@ -41,9 +41,9 @@ public class RSConnectDeployInitiatedEvent extends GwtEvent<RSConnectDeployIniti
       path_ = path;
       deployFiles_ = deployFiles;
       additionalFiles_ = additionalFiles;
-      record_ = record;
       sourceFile_ = sourceFile;
       launchBrowser_ = launchBrowser;
+      record_ = record;
    }
    
    public RSConnectDeploymentRecord getRecord()

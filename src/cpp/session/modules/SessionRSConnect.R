@@ -34,13 +34,6 @@
    return(ret)
 })
 
-.rs.addFunction("scalarListFromList", function(l) {
-   if (is.null(l))
-     NULL
-   else
-     lapply(l, function(x) { if (is.null(x)) x else .rs.scalar(x) })
-})
-
 .rs.addJsonRpcHandler("get_rsconnect_account_list", function() {
    accounts <- list()
    # safely return an empty list--we want to consider there to be 0 connected

@@ -628,32 +628,39 @@ public class TextEditingTarget implements
                public void onRSConnectDeployInitiated(
                      RSConnectDeployInitiatedEvent event)
                {
-                  // this event is interesting only if it is targeted at the
-                  // file loaded in the editor, and if additional files are
-                  // involved
-                  if (getPath() != null &&
-                      getPath().equals(event.getSourceFile()) &&
-                      event.getAdditionalFiles() != null &&
-                      event.getAdditionalFiles().size() > 0)
-                   {
-                     String yaml = getRmdFrontMatter();
-                     if (yaml == null)
-                        return;
-                     rmarkdownHelper_.addAdditionalResourceFiles(yaml,
-                           event.getAdditionalFiles(), 
-                           new CommandWithArg<String>()
+
+                  // no need to process this event if this target doesn't have a
+                  // path, or if the event's contents don't include additional
+                  // files.
+                  if (getPath() == null ||
+                      event.getAdditionalFiles() == null ||
+                      event.getAdditionalFiles().size() == 0)
+                     return;
+                  
+                  // see if the event corresponds to a deployment of this file
+                  FileSystemItem evtDir = FileSystemItem.createDir(event.getPath());
+                  if (!getPath().equals(evtDir.completePath(event.getSourceFile())))
+                     return;
+
+                  // it does--get the YAML front matter and modify it to include
+                  // the additional files named in the deployment
+                  String yaml = getRmdFrontMatter();
+                  if (yaml == null)
+                     return;
+                  rmarkdownHelper_.addAdditionalResourceFiles(yaml,
+                        event.getAdditionalFiles(), 
+                        new CommandWithArg<String>()
+                        {
+                           @Override
+                           public void execute(String yamlOut)
                            {
-                              @Override
-                              public void execute(String yamlOut)
+                              if (yamlOut != null)
                               {
-                                 if (yamlOut != null)
-                                 {
-                                    applyRmdFrontMatter(yamlOut);
-                                 }
+                                 applyRmdFrontMatter(yamlOut);
                               }
-                           });
+                           }
+                        });
                    }
-               }
             });
    }
    
