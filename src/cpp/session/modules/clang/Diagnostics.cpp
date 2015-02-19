@@ -137,19 +137,8 @@ json::Object diagnosticToJson(const TranslationUnit& tu,
    return diagnosticJson;
 }
 
-Error getCppDiagnostics(const core::json::JsonRpcRequest& request,
-                        core::json::JsonRpcResponse* pResponse)
+json::Array getCppDiagnosticsJson(const FilePath& filePath)
 {
-   // get params
-   std::string docPath;
-   Error error = json::readParams(request.params, &docPath);
-   if (error)
-      return error;
-
-   // resolve the docPath if it's aliased
-   FilePath filePath = module_context::resolveAliasedPath(docPath);
-
-   // diagnostics to return
    json::Array diagnosticsJson;
 
    // get diagnostics from translation unit
@@ -165,8 +154,22 @@ Error getCppDiagnostics(const core::json::JsonRpcRequest& request,
       }
    }
 
-   // return success
-   pResponse->setResult(diagnosticsJson);
+   return diagnosticsJson;
+}
+
+Error getCppDiagnostics(const core::json::JsonRpcRequest& request,
+                        core::json::JsonRpcResponse* pResponse)
+{
+   // get params
+   std::string docPath;
+   Error error = json::readParams(request.params, &docPath);
+   if (error)
+      return error;
+
+   // resolve the docPath if it's aliased
+   FilePath filePath = module_context::resolveAliasedPath(docPath);
+
+   pResponse->setResult(getCppDiagnosticsJson(filePath));
    return Success();
 }
 
