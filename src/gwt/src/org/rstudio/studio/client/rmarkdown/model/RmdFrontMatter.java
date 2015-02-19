@@ -48,12 +48,16 @@ public class RmdFrontMatter extends JavaScriptObject
    public final native void addResourceFile(String file) /*-{
       if (typeof this.resource_files === "undefined")
          this.resource_files = [];
+      else if (typeof this.resource_files === "string")
+         this.resource_files = [ this.resource_files ];
       this.resource_files.push(file);
    }-*/;
    
    public final native JsArrayString getResourceFiles() /*-{
       if (typeof this.resource_files === "undefined")
          return [];
+      else if (typeof this.resource_files === "string")
+         return [ this.resource_files ];
       return this.resource_files;
    }-*/;
    

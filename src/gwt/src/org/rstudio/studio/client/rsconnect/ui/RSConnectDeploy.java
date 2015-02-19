@@ -31,6 +31,7 @@ import org.rstudio.studio.client.workbench.model.Session;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -120,6 +121,7 @@ public class RSConnectDeploy extends Composite
          }
       });
       addFileButton_.setVisible(forDocument);
+      addFileButton_.getElement().getStyle().setMarginLeft(0, Unit.PX);
       addFileButton_.addClickHandler(new ClickHandler()
       {
          @Override
@@ -201,6 +203,20 @@ public class RSConnectDeploy extends Composite
    public void addFileToList(String path)
    {
       addFile(path);
+   }
+   
+   public void setFileCheckEnabled(String path, boolean enabled)
+   {
+      if (fileChecks_ == null)
+         return;
+
+      for (int i = 0; i < fileChecks_.size(); i++)
+      {
+         if (fileChecks_.get(i).getText().equals(path))
+         {
+            fileChecks_.get(i).setEnabled(enabled);
+         }
+      }
    }
    
    public ArrayList<String> getFileList()

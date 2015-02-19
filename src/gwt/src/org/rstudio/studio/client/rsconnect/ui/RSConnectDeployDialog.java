@@ -133,6 +133,7 @@ public class RSConnectDeployDialog
                   else
                   {
                      contents_.setFileList(files.getDirList());
+                     contents_.setFileCheckEnabled(sourceFile_, false);
                      deployButton_.setEnabled(true);
                   }
                }
