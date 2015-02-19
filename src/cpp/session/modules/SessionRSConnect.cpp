@@ -67,10 +67,23 @@ public:
             files += ", ";
       }
 
+      // if a R Markdown document is being deployed, mark it as the primary
+      // file 
+      std::string primaryRmd;
+      if (!file.empty())
+      {
+         FilePath sourceFile = module_context::resolveAliasedPath(file);
+         if (sourceFile.extensionLowerCase() == ".rmd") 
+         {
+            primaryRmd = file;
+         }
+      }
+
       // form the deploy command to hand off to the async deploy process
       cmd += "rsconnect::deployApp("
              "appDir = '" + dir + "'," +
              (files.empty() ? "" : "appFiles = c(" + files + "), ") +
+             (primaryRmd.empty() ? "" : "appPrimaryRmd = '" + primaryRmd + "', ") + 
              "account = '" + account + "',"
              "server = '" + server + "', "
              "appName = '" + app + "', "
