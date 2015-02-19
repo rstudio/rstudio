@@ -20,11 +20,16 @@ import java.util.Map;
 
 import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
+import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.core.client.widget.ThemedButton;
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.rsconnect.RSConnect;
 import org.rstudio.studio.client.rsconnect.events.RSConnectDeployInitiatedEvent;
@@ -89,6 +94,15 @@ public class RSConnectDeployDialog
          public void onClick(ClickEvent event)
          {
             onDeploy();
+         }
+      });
+      
+      contents_.setOnFileAddClick(new Command() 
+      {
+         @Override
+         public void execute()
+         {
+            onAddFileClick();
          }
       });
       
@@ -362,6 +376,19 @@ public class RSConnectDeployDialog
       
       RSConnectAccount account = contents_.getSelectedAccount();
       
+      // compose the list of files that have been manually added; we want to
+      // include all the ones the user added but didn't later uncheck, so
+      // cross-reference the list we kept with the one returned by the dialog
+      ArrayList<String> deployFiles = contents_.getFileList();
+      ArrayList<String> additionalFiles = new ArrayList<String>();
+      for (String filePath: filesAddedManually_)
+      {
+         if (deployFiles.contains(filePath))
+         {
+            additionalFiles.add(filePath);
+         }
+      }
+      
       if (isSatellite_)
       {
          // in a satellite window, call back to the main window to do a 
@@ -369,6 +396,7 @@ public class RSConnectDeployDialog
          RSConnect.deployFromSatellite(
                sourceDir_, 
                JsArrayUtil.toJsArrayString(contents_.getFileList()),
+               JsArrayUtil.toJsArrayString(additionalFiles),
                sourceFile_, 
                launchCheck_.getValue(), 
                RSConnectDeploymentRecord.create(appName, account, ""));
@@ -389,6 +417,7 @@ public class RSConnectDeployDialog
          events_.fireEvent(new RSConnectDeployInitiatedEvent(
                sourceDir_,
                contents_.getFileList(),
+               additionalFiles,
                sourceFile_,
                launchCheck_.getValue(),
                RSConnectDeploymentRecord.create(appName, account, "")));
@@ -409,6 +438,28 @@ public class RSConnectDeployDialog
       }
    }
    
+   private void onAddFileClick()
+   {
+      FileDialogs dialogs = RStudioGinjector.INSTANCE.getFileDialogs();
+      dialogs.openFile("Select File", 
+            RStudioGinjector.INSTANCE.getRemoteFileSystemContext(), 
+            FileSystemItem.createDir(sourceDir_), 
+            new ProgressOperationWithInput<FileSystemItem>()
+            {
+               @Override
+               public void execute(FileSystemItem input, 
+                                   ProgressIndicator indicator)
+               {
+                  if (input != null)
+                  {
+                     contents_.addFileToList(input.getPath());
+                     filesAddedManually_.add(input.getPath());
+                  }
+                  indicator.onCompleted();
+               }
+            });
+   }
+   
    private final EventBus events_;
    private final boolean isSatellite_;
    private final RSAccountConnector connector_;
@@ -420,6 +471,8 @@ public class RSConnectDeployDialog
    private ProgressIndicator indicator_;
    private CheckBox launchCheck_;
    private RSConnectAccount defaultAccount_;
+   private ArrayList<String> filesAddedManually_ =
+         new ArrayList<String>();
    
    // Map of account to a list of applications owned by that account
    private Map<RSConnectAccount, JsArray<RSConnectApplicationInfo>> apps_ = 

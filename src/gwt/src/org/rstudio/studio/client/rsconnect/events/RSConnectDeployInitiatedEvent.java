@@ -33,12 +33,14 @@ public class RSConnectDeployInitiatedEvent extends GwtEvent<RSConnectDeployIniti
    
    public RSConnectDeployInitiatedEvent(String path, 
                                         ArrayList<String> deployFiles,
+                                        ArrayList<String> additionalFiles,
                                         String sourceFile,
                                         boolean launchBrowser, 
                                         RSConnectDeploymentRecord record)
    {
       path_ = path;
       deployFiles_ = deployFiles;
+      additionalFiles_ = additionalFiles;
       record_ = record;
       sourceFile_ = sourceFile;
       launchBrowser_ = launchBrowser;
@@ -64,6 +66,11 @@ public class RSConnectDeployInitiatedEvent extends GwtEvent<RSConnectDeployIniti
       return deployFiles_;
    }
    
+   public ArrayList<String> getAdditionalFiles()
+   {
+      return additionalFiles_;
+   }
+   
    public boolean getLaunchBrowser()
    {
       return launchBrowser_; 
@@ -86,4 +93,5 @@ public class RSConnectDeployInitiatedEvent extends GwtEvent<RSConnectDeployIniti
    private final String sourceFile_;
    private final boolean launchBrowser_;
    private final ArrayList<String> deployFiles_;
+   private final ArrayList<String> additionalFiles_;
 }

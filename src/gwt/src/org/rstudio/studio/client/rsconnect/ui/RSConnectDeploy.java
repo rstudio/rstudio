@@ -20,8 +20,6 @@ import java.util.List;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.OperationWithInput;
-import org.rstudio.core.client.widget.ProgressIndicator;
-import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.FileDialogs;
@@ -91,7 +89,6 @@ public class RSConnectDeploy extends Composite
       forDocument_ = forDocument;
       accountList = new RSConnectAccountList(server, display, false);
       initWidget(uiBinder.createAndBindUi(this));
-      final FileDialogs fileDialogs = RStudioGinjector.INSTANCE.getFileDialogs();
 
       // Validate the application name on every keystroke
       appName.addKeyUpHandler(new KeyUpHandler()
@@ -130,19 +127,10 @@ public class RSConnectDeploy extends Composite
          @Override
          public void onClick(ClickEvent arg0)
          {
-            fileDialogs.openFile(
-                  "Select File", 
-                  RStudioGinjector.INSTANCE.getRemoteFileSystemContext(), 
-                  null, // initial location
-                  new ProgressOperationWithInput<FileSystemItem>() 
-                  {
-                     @Override
-                     public void execute(FileSystemItem input,
-                           ProgressIndicator indicator)
-                     {
-                        // TODO: add file
-                     }
-                  });
+            if (onFileAddClick_ != null) 
+            {
+               onFileAddClick_.execute();
+            }
          }
       });
    }
@@ -208,18 +196,13 @@ public class RSConnectDeploy extends Composite
       
       for (int i = 0; i < files.length(); i++)
       {
-         if (forDocument_)
-         {
-            CheckBox fileCheck = new CheckBox(files.get(i));
-            fileCheck.setValue(true);
-            fileListPanel_.add(fileCheck);
-            fileChecks_.add(fileCheck);
-         }
-         else
-         {
-            fileListPanel_.add(new Label(files.get(i)));
-         }
+         addFile(files.get(i));
       }
+   }
+   
+   public void addFileToList(String path)
+   {
+      addFile(path);
    }
    
    public ArrayList<String> getFileList()
@@ -289,6 +272,11 @@ public class RSConnectDeploy extends Composite
       onDeployDisabled_ = cmd;
    }
    
+   public void setOnFileAddClick(Command cmd)
+   {
+      onFileAddClick_ = cmd;
+   }
+   
    public DeployStyle getStyle()
    {
       return style;
@@ -309,6 +297,21 @@ public class RSConnectDeploy extends Composite
       else if (!isValid && onDeployDisabled_ != null)
          onDeployDisabled_.execute();
    }
+
+   private void addFile(String path)
+   {
+      if (forDocument_)
+      {
+         CheckBox fileCheck = new CheckBox(path);
+         fileCheck.setValue(true);
+         fileListPanel_.add(fileCheck);
+         fileChecks_.add(fileCheck);
+      }
+      else
+      {
+         fileListPanel_.add(new Label(path));
+      }
+   }
    
    @UiField Anchor urlAnchor;
    @UiField Anchor addAccountAnchor;
@@ -328,5 +331,6 @@ public class RSConnectDeploy extends Composite
    
    private Command onDeployEnabled_;
    private Command onDeployDisabled_;
+   private Command onFileAddClick_;
    private final boolean forDocument_;
 }
