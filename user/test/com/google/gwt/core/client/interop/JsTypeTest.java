@@ -80,17 +80,9 @@ public class JsTypeTest extends GWTTestCase {
   public void testConcreteJsTypeAccess() {
     ConcreteJsType concreteJsType = new ConcreteJsType();
 
-    assertTrue(hasField(concreteJsType, "publicMethod"));
-    assertTrue(hasField(concreteJsType, "publicField"));
-
-    assertFalse(hasField(concreteJsType, "publicStaticMethod"));
-    assertFalse(hasField(concreteJsType, "privateMethod"));
-    assertFalse(hasField(concreteJsType, "protectedMethod"));
-    assertFalse(hasField(concreteJsType, "packageMethod"));
-    assertFalse(hasField(concreteJsType, "publicStaticField"));
-    assertFalse(hasField(concreteJsType, "privateField"));
-    assertFalse(hasField(concreteJsType, "protectedField"));
-    assertFalse(hasField(concreteJsType, "packageField"));
+    testJsTypeHasFields(concreteJsType, "publicMethod", "publicField");
+    testJsTypeHasNoFields(concreteJsType, "publicStaticMethod", "privateMethod", "protectedMethod",
+        "packageMethod", "publicStaticField", "privateField", "protectedField", "packageField");
   }
 
   public void testConcreteJsTypeSubclassAccess() {
@@ -98,20 +90,14 @@ public class JsTypeTest extends GWTTestCase {
     ConcreteJsTypeSubclass concreteJsTypeSubclass = new ConcreteJsTypeSubclass();
 
     // A subclass of a JsType is not itself a JsType.
-    assertFalse(hasField(concreteJsTypeSubclass, "publicSubclassMethod"));
-    assertFalse(hasField(concreteJsTypeSubclass, "publicSubclassField"));
-    assertFalse(hasField(concreteJsTypeSubclass, "publicStaticSubclassMethod"));
-    assertFalse(hasField(concreteJsTypeSubclass, "privateSubclassMethod"));
-    assertFalse(hasField(concreteJsTypeSubclass, "protectedSubclassMethod"));
-    assertFalse(hasField(concreteJsTypeSubclass, "packageSubclassMethod"));
-    assertFalse(hasField(concreteJsTypeSubclass, "publicStaticSubclassField"));
-    assertFalse(hasField(concreteJsTypeSubclass, "privateSubclassField"));
-    assertFalse(hasField(concreteJsTypeSubclass, "protectedSubclassField"));
-    assertFalse(hasField(concreteJsTypeSubclass, "packageSubclassField"));
+    testJsTypeHasNoFields(concreteJsTypeSubclass, "publicSubclassMethod", "publicSubclassField",
+        "publicStaticSubclassMethod", "privateSubclassMethod", "protectedSubclassMethod",
+        "packageSubclassMethod", "publicStaticSubclassField", "privateSubclassField",
+        "protectedSubclassField", "packageSubclassField");
 
     // But if it overrides an exported method then the overriding method will be exported.
-    assertTrue(hasField(concreteJsType, "publicMethod"));
-    assertTrue(hasField(concreteJsTypeSubclass, "publicMethod"));
+    testJsTypeHasFields(concreteJsType, "publicMethod");
+    testJsTypeHasFields(concreteJsTypeSubclass, "publicMethod");
     assertFalse(
         areSameFunction(concreteJsType, "publicMethod", concreteJsTypeSubclass, "publicMethod"));
     assertFalse(callIntFunction(concreteJsType, "publicMethod")
@@ -208,6 +194,24 @@ public class JsTypeTest extends GWTTestCase {
     assertFalse(obj2 instanceof MyNamespacedJsInterface);
   }
 
+  public void testEnumeration() {
+    assertEquals(2, callPublicMethodFromEnumeration(MyEnumWithJsType.TEST1));
+    assertEquals(3, callPublicMethodFromEnumeration(MyEnumWithJsType.TEST2));
+  }
+
+  public void testEnumJsTypeAccess() {
+    testJsTypeHasFields(MyEnumWithJsType.TEST2, "publicMethod", "publicField");
+    testJsTypeHasNoFields(MyEnumWithJsType.TEST2, "publicStaticMethod", "privateMethod",
+        "protectedMethod", "packageMethod", "publicStaticField", "privateField", "protectedField",
+        "packageField");
+  }
+
+  public void testEnumSubclassEnumeration() {
+    assertEquals(100, callPublicMethodFromEnumerationSubclass(MyEnumWithSubclassGen.A));
+    assertEquals(200, callPublicMethodFromEnumerationSubclass(MyEnumWithSubclassGen.B));
+    assertEquals(1, callPublicMethodFromEnumerationSubclass(MyEnumWithSubclassGen.C));
+  }
+
   private static native boolean alwaysTrue() /*-{
     return !!$wnd;
   }-*/;
@@ -252,4 +256,25 @@ public class JsTypeTest extends GWTTestCase {
   private static native boolean isFirefox40OrEarlier() /*-{
     return @com.google.gwt.dom.client.DOMImplMozilla::isGecko2OrBefore()();
   }-*/;
+
+  private static native int callPublicMethodFromEnumeration(MyEnumWithJsType enumeration) /*-{
+    return enumeration.idxAddOne();
+  }-*/;
+
+  private static native int callPublicMethodFromEnumerationSubclass(
+      MyEnumWithSubclassGen enumeration) /*-{
+    return enumeration.foo();
+  }-*/;
+
+  private static void testJsTypeHasFields(Object obj, String... fields) {
+    for (String field : fields) {
+      assertTrue("Field '" + field + "' should be exported", hasField(obj, field));
+    }
+  }
+
+  private static void testJsTypeHasNoFields(Object obj, String... fields) {
+    for (String field : fields) {
+      assertFalse("Field '" + field + "' should not be exported", hasField(obj, field));
+    }
+  }
 }

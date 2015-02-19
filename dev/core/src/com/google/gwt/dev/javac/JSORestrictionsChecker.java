@@ -69,6 +69,8 @@ public class JSORestrictionsChecker {
       "@JsExport and @JsNoExport is not allowed at the same time.";
   public static final String ERR_JSPROPERTY_ONLY_BEAN_OR_FLUENT_STYLE_NAMING =
       "@JsProperty is only allowed on JavaBean-style or fluent-style named methods";
+  public static final String ERR_JSEXPORT_ON_ENUMERATION =
+      "@JsExport is not allowed on individual enumerations";
   public static final String ERR_MUST_EXTEND_MAGIC_PROTOTYPE_CLASS =
       "Classes implementing @JsType with a prototype must extend that interface's Prototype class";
   public static final String ERR_CLASS_EXTENDS_MAGIC_PROTOTYPE_BUT_NO_PROTOTYPE_ATTRIBUTE =
@@ -178,7 +180,7 @@ public class JSORestrictionsChecker {
 
     @Override
     public void endVisit(FieldDeclaration field, MethodScope scope) {
-      checkJsExport(field.binding);
+      checkJsExport(field);
 
       if (!isJso()) {
         return;
@@ -275,8 +277,12 @@ public class JSORestrictionsChecker {
       }
     }
 
-    private void checkJsExport(FieldBinding fb) {
+    private void checkJsExport(FieldDeclaration fd) {
+      FieldBinding fb = fd.binding;
       if (JdtUtil.getAnnotation(fb, JsInteropUtil.JSEXPORT_CLASS) != null) {
+        if (isEnumConstant(fd)) {
+          errorOn(fb, ERR_JSEXPORT_ON_ENUMERATION);
+        }
         if (!areAllEnclosingClassesPublic() || !fb.isStatic() || !fb.isFinal() || !fb.isPublic()) {
           errorOn(fb, ERR_JSEXPORT_ONLY_CTORS_STATIC_METHODS_AND_STATIC_FINAL_FIELDS);
         }
@@ -284,6 +290,11 @@ public class JSORestrictionsChecker {
           errorOn(fb, ERR_EITHER_JSEXPORT_JSNOEXPORT);
         }
       }
+    }
+
+    private boolean isEnumConstant(FieldDeclaration fd) {
+      return (fd.initialization != null && fd.initialization instanceof AllocationExpression
+          && ((AllocationExpression) fd.initialization).enumConstant != null);
     }
 
     private void checkJsProperty(MethodBinding mb, boolean allowed) {

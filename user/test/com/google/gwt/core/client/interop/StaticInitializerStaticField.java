@@ -40,6 +40,9 @@ public class StaticInitializerStaticField {
   // Not public
   private static final Object NOT_EXPORTED_4 = new Object();
 
+  // Not public
+  protected static final Object NOT_EXPORTED_5 = new Object();
+
   /**
    * Test interface that export a static field.
    */

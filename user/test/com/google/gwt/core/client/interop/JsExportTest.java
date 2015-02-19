@@ -103,7 +103,8 @@ public class JsExportTest extends GWTTestCase {
     return $wnd.woo.StaticInitializerStaticField.NOT_EXPORTED_1
         || $wnd.woo.StaticInitializerStaticField.NOT_EXPORTED_2
         || $wnd.woo.StaticInitializerStaticField.NOT_EXPORTED_3
-        || $wnd.woo.StaticInitializerStaticField.NOT_EXPORTED_4;
+        || $wnd.woo.StaticInitializerStaticField.NOT_EXPORTED_4
+        || $wnd.woo.StaticInitializerStaticField.NOT_EXPORTED_5;
   }-*/;
 
   private native Object getNotExportedMethods() /*-{
@@ -134,5 +135,97 @@ public class JsExportTest extends GWTTestCase {
 
   private static native String getEnumNameViaJs(MyClassWithNestedEnum.NestedEnum ref) /*-{
     return ref.name2();
+  }-*/;
+
+  public void testEnum_enumerations() {
+    assertNotNull(getEnumerationTEST1());
+    assertNotNull(getEnumerationTEST2());
+  }
+
+  private static native Object getEnumerationTEST1() /*-{
+    return $wnd.woo.MyEnumWithJsExport.TEST1;
+  }-*/;
+
+  private static native Object getEnumerationTEST2() /*-{
+    return $wnd.woo.MyEnumWithJsExport.TEST2;
+  }-*/;
+
+  public void testEnum_exportedMethods() {
+    assertNotNull(getPublicStaticMethodInEnum());
+  }
+
+  private static native Object getPublicStaticMethodInEnum() /*-{
+    return $wnd.woo.MyEnumWithJsExport.publicStaticMethod();
+  }-*/;
+
+  public void testEnum_exportedFields() {
+    assertEquals(1, getPublicStaticFinalFieldInEnum());
+
+    // explicitly marked @JsExport fields must be final
+    // but ones that are in a @JsExported class don't need to be final
+    assertEquals(2, getPublicStaticFieldInEnum());
+  }
+
+  private static native int getPublicStaticFinalFieldInEnum() /*-{
+    return $wnd.woo.MyEnumWithJsExport.publicStaticFinalField;
+  }-*/;
+
+  private static native int getPublicStaticFieldInEnum() /*-{
+    return $wnd.woo.MyEnumWithJsExport.publicStaticField;
+  }-*/;
+
+  public void testEnum_notExported() {
+    assertNull(getNotExportedFieldsInEnum());
+    assertNull(getNotExportedMethodsInEnum());
+  }
+
+  private native Object getNotExportedFieldsInEnum() /*-{
+    return $wnd.woo.MyEnumWithJsExport.publicFinalField
+        || $wnd.woo.MyEnumWithJsExport.privateStaticFinalField
+        || $wnd.woo.MyEnumWithJsExport.protectedStaticFinalField
+        || $wnd.woo.MyEnumWithJsExport.defaultStaticFinalField;
+  }-*/;
+
+  private native Object getNotExportedMethodsInEnum() /*-{
+    return $wnd.woo.MyEnumWithJsExport.publicMethod
+        || $wnd.woo.MyEnumWithJsExport.protectedStaticMethod
+        || $wnd.woo.MyEnumWithJsExport.privateStaticMethod
+        || $wnd.woo.MyEnumWithJsExport.defaultStaticMethod;
+  }-*/;
+
+  public void testEnum_subclassEnumerations() {
+    assertNotNull(getEnumerationA());
+    assertNotNull(getEnumerationB());
+    assertNotNull(getEnumerationC());
+  }
+
+  private static native Object getEnumerationA() /*-{
+    return $wnd.woo.MyEnumWithSubclassGen.A;
+  }-*/;
+
+  private static native Object getEnumerationB() /*-{
+    return $wnd.woo.MyEnumWithSubclassGen.B;
+  }-*/;
+
+  private static native Object getEnumerationC() /*-{
+    return $wnd.woo.MyEnumWithSubclassGen.C;
+  }-*/;
+
+  public void testEnum_subclassMethodCallFromExportedEnumerations() {
+    assertEquals(100, callPublicMethodFromEnumerationA());
+    assertEquals(200, callPublicMethodFromEnumerationB());
+    assertEquals(1, callPublicMethodFromEnumerationC());
+  }
+
+  private static native int callPublicMethodFromEnumerationA() /*-{
+    return $wnd.woo.MyEnumWithSubclassGen.A.foo();
+  }-*/;
+
+  private static native int callPublicMethodFromEnumerationB() /*-{
+    return $wnd.woo.MyEnumWithSubclassGen.B.foo();
+  }-*/;
+
+  private static native int callPublicMethodFromEnumerationC() /*-{
+    return $wnd.woo.MyEnumWithSubclassGen.C.foo();
   }-*/;
 }
