@@ -59,9 +59,11 @@ public class CompositeCell<C> extends AbstractCell<C> {
   /**
    * The cells that compose this {@link Cell}.
    * 
+   * <p>
    * NOTE: Do not add add/insert/remove hasCells methods to the API. This cell
    * assumes that the index of the cellParent corresponds to the index in the
    * hasCells array.
+   * </p>
    */
   private final List<HasCell<C, ?>> hasCells;
 
@@ -71,8 +73,8 @@ public class CompositeCell<C> extends AbstractCell<C> {
    * @param hasCells the cells that makeup the composite
    */
   public CompositeCell(List<HasCell<C, ?>> hasCells) {
-    // Create a new array so cells cannot be added or removed.
-    this.hasCells = new ArrayList<HasCell<C, ?>>(hasCells);
+    // Create a new, readonly copy so cells cannot be added or removed.
+    this.hasCells = Collections.unmodifiableList(new ArrayList<HasCell<C, ?>>(hasCells));
 
     // Get the consumed events and depends on selection.
     Set<String> theConsumedEvents = null;
@@ -173,6 +175,13 @@ public class CompositeCell<C> extends AbstractCell<C> {
       setValueImpl(context, curChild, object, hasCell);
       curChild = curChild.getNextSiblingElement();
     }
+  }
+
+  /**
+   * Returns the readonly list of {@link HasCell}'s that make up this composite.
+   */
+  public List<HasCell<C, ?>> getHasCells() {
+    return hasCells;
   }
 
   /**
