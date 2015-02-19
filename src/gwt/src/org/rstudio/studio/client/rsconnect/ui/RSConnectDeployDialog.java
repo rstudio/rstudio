@@ -21,7 +21,6 @@ import java.util.Map;
 import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemItem;
-import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
@@ -441,9 +440,10 @@ public class RSConnectDeployDialog
    private void onAddFileClick()
    {
       FileDialogs dialogs = RStudioGinjector.INSTANCE.getFileDialogs();
+      final FileSystemItem sourceDir = FileSystemItem.createDir(sourceDir_);
       dialogs.openFile("Select File", 
             RStudioGinjector.INSTANCE.getRemoteFileSystemContext(), 
-            FileSystemItem.createDir(sourceDir_), 
+            sourceDir, 
             new ProgressOperationWithInput<FileSystemItem>()
             {
                @Override
@@ -452,8 +452,32 @@ public class RSConnectDeployDialog
                {
                   if (input != null)
                   {
-                     contents_.addFileToList(input.getPath());
-                     filesAddedManually_.add(input.getPath());
+                     String path = input.getPathRelativeTo(sourceDir);
+                     if (path == null)
+                     {
+                        display_.showMessage(GlobalDisplay.MSG_INFO, 
+                              "Cannot Add File", 
+                              "Only files in the same folder as the " +
+                              "document (" + sourceDir_ + ") or one of its " +
+                              "sub-folders may be added.");
+                        return;
+                     }
+                     else
+                     {
+                        // see if the file is already in the list (we don't 
+                        // want to duplicate an existing entry)
+                        ArrayList<String> files = contents_.getFileList();
+                        for (String file: files)
+                        {
+                           if (file.equals(path))
+                           {
+                              indicator.onCompleted();
+                              return;
+                           }
+                        }
+                        contents_.addFileToList(path);
+                        filesAddedManually_.add(path);
+                     }
                   }
                   indicator.onCompleted();
                }

@@ -21,8 +21,6 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ThemedButton;
-import org.rstudio.studio.client.RStudioGinjector;
-import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.FilePathUtils;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.rsconnect.model.RSConnectAccount;
