@@ -17,6 +17,7 @@ package com.google.gwt.core.client.interop;
 
 import static com.google.gwt.core.client.ScriptInjector.TOP_WINDOW;
 
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.ScriptInjector;
 import com.google.gwt.junit.client.GWTTestCase;
 
@@ -127,6 +128,46 @@ public class JsTypeTest extends GWTTestCase {
     // Tests both fluent and non-fluent accessors.
     mc.x(-mc.x()).setY(0);
     assertEquals(58, mc.sum(0));
+  }
+
+  public void testJsPropertyIsX() {
+    JsPoint point = (JsPoint) JavaScriptObject.createObject();
+
+    assertFalse(point.isX());
+    point.setX(10);
+    assertTrue(point.isX());
+    point.y(999).x(0);
+    assertFalse(point.isX());
+  }
+
+  public void testJsPropertyHasX() {
+    JsPoint point = (JsPoint) JavaScriptObject.createObject();
+
+    assertFalse(point.hasX());
+    point.setX(10);
+    assertTrue(point.hasX());
+    point.y(999).x(0);
+    assertTrue(point.hasX());
+  }
+
+  public void testJsPropertyGetX() {
+    JsPoint point = (JsPoint) JavaScriptObject.createObject();
+
+    assertTrue(isUndefined(point.getX()));
+    point.setX(10);
+    assertEquals(10, point.getX());
+    point.y(999).x(0);
+    assertEquals(0, point.getX());
+  }
+
+  public void testJsPropertyX() {
+    JsPoint point = (JsPoint) JavaScriptObject.createObject();
+
+    assertTrue(isUndefined(point.x()));
+    point.setX(10);
+    assertEquals(10, point.x());
+    point.y(999).x(0);
+    assertEquals(0, point.x());
   }
 
   public void testCasts() {
@@ -243,6 +284,10 @@ public class JsTypeTest extends GWTTestCase {
   private static native Object createMyWrongNamespacedJsInterface() /*-{
     $wnd["testfoo.bar.MyJsInterface"] = function(){};
     return new $wnd['testfoo.bar.MyJsInterface']();
+  }-*/;
+
+  private static native boolean isUndefined(int value) /*-{
+    return value === undefined;
   }-*/;
 
   private static native boolean hasField(Object object, String fieldName) /*-{

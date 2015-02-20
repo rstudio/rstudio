@@ -22,17 +22,22 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * JsProperty marks a method in a {@link JsType} as a property accessor and recognizes
- * JavaBean style naming convention. Instead of translating method calls to JsProperty methods
- * as method calls in JS, they will be replaced with dotted property lookups.
- *<p> Examples:
+ * JsProperty marks a method in a {@link JsType} as a property accessor and recognizes JavaBean
+ * style naming convention. Instead of translating method calls to JsProperty methods as method
+ * calls in JS, they will be replaced with dotted property lookups.
+ * <p>
+ * In case of JsType with JsProperties implemented by Java classes, the property access still
+ * triggers the execution of the matching getter or setter methods as they will be translated into
+ * custom property setter and getter in JavaScript.
+ * <p>
+ * Examples:
  * <ul>
  * <li> {@code @JsProperty getX()} translates as <tt>this.x</tt>
  * <li> {@code @JsProperty x()} translates as <tt>this.x</tt>
  * <li> {@code @JsProperty setX(int y)} translates as <tt>this.x=y</tt>
  * <li> {@code @JsProperty x(int x)} translates as <tt>this.x=y</tt>
  * <li> {@code @JsProperty hasX(int x)} translates as <tt>x in this</tt>
- *</ul>
+ * </ul>
  * <p>
  * In addition, fluent style <tt>return this</tt> syntax is supported for setters, so
  * {@code @JsProperty T setX(int x)} translates as <tt>this.x=x, return this</tt>.
