@@ -109,6 +109,11 @@
 	  cursor: pointer;
 	}
 	
+	.firstControlLabel
+	{
+	  margin-bottom: 5px;
+	}
+	
 	</ui:style>
 	<g:HTMLPanel>
 	<g:Image resource="{res.deployIllustration}"></g:Image>
@@ -131,7 +136,7 @@
      <g:customCell styleName="{style.rootCell}">
       <g:HTMLPanel>
          <g:HorizontalPanel width="100%">
-         <g:Label styleName="{style.controlLabel}" text="Destination Account:"></g:Label>
+         <g:Label styleName="{style.firstControlLabel}" text="Destination Account:"></g:Label>
          <g:Anchor styleName="rstudio-HyperlinkLabel {style.accountAnchor}" ui:field="addAccountAnchor" text="Add New Account"></g:Anchor>
          </g:HorizontalPanel>
          <rsc:RSConnectAccountList styleName="{style.accountList}" ui:field="accountList"></rsc:RSConnectAccountList>
