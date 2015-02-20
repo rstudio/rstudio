@@ -97,7 +97,8 @@ public:
 
    virtual std::vector<std::string> commandArgs(
                                        const std::string& file,
-                                       const std::string& encoding) const
+                                       const std::string& encoding,
+                                       const std::string& driver) const
    {
       std::vector<std::string> args;
       args.push_back("--slave");
@@ -105,13 +106,14 @@ public:
       args.push_back("--no-restore");
       args.push_back("-e");
       std::string cmd = "grDevices::pdf.options(useDingbats = FALSE); "
-                        + weaveCommand(file, encoding);
+                        + weaveCommand(file, encoding, driver);
       args.push_back(cmd);
       return args;
    }
 
    virtual std::string weaveCommand(const std::string& file,
-                                    const std::string& encoding) const = 0;
+                                    const std::string& encoding,
+                                    const std::string& driver) const = 0;
 
    virtual core::Error parseOutputForErrors(
                                     const std::string& output,
@@ -217,9 +219,13 @@ public:
    }
 
    virtual std::string weaveCommand(const std::string& file,
-                                    const std::string& encoding) const
+                                    const std::string& encoding,
+                                    const std::string& driver) const
    {
       std::string cmd = "utils::Sweave('" + file + "'";
+
+      if (!driver.empty())
+         cmd += ", driver = " + driver + "";
 
       if (!encoding.empty())
          cmd += (", encoding='" + encoding + "'");
@@ -251,7 +257,8 @@ public:
    }
 
    virtual std::string weaveCommand(const std::string& file,
-                                    const std::string& encoding) const
+                                    const std::string& encoding,
+                                    const std::string& driver) const
    {
       std::string format = "require(knitr); ";
       if (userSettings().alwaysEnableRnwCorcordance())
@@ -416,6 +423,20 @@ std::string weaveTypeForFile(const core::tex::TexMagicComments& magicComments)
       return userSettings().defaultSweaveEngine();
 }
 
+std::string driverForFile(const core::tex::TexMagicComments& magicComments)
+{
+   BOOST_FOREACH(const core::tex::TexMagicComment& mc, magicComments)
+   {
+      if (boost::algorithm::iequals(mc.scope(), "rnw") &&
+          boost::algorithm::iequals(mc.variable(), "driver"))
+      {
+         return mc.value();
+      }
+   }
+
+   return std::string();
+}
+
 
 void onWeaveProcessExit(boost::shared_ptr<RnwWeave> pRnwWeave,
                         int exitCode,
@@ -505,12 +526,16 @@ void runWeave(const core::FilePath& rnwPath,
    boost::shared_ptr<RnwWeave> pRnwWeave = weaveRegistry()
                                              .findTypeIgnoreCase(weaveType);
 
+   // determine the driver (if any)
+   std::string driver = driverForFile(magicComments);
+
    // run the weave
    if (pRnwWeave)
    {
       std::vector<std::string> args = pRnwWeave->commandArgs(
                                                          rnwPath.filename(),
-                                                         encoding);
+                                                         encoding,
+                                                         driver);
 
       // call back-end
       Error error = compile_pdf_supervisor::runProgram(

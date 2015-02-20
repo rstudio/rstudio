@@ -107,7 +107,7 @@ var CStyleBehaviour = function(codeModel) {
 
          var cursor = editor.getCursorPosition();
          var line = new String(session.doc.getLine(cursor.row));
-         var match = line.match(/^(\s*)\/\*{3,}\s/);
+         var match = line.match(/^(\s*)\/\*{3,}\s*/);
          if (match) {
             return {
                text: "R\n" + match[1] + "\n" + match[1] + "*/",

@@ -294,13 +294,28 @@ public class TextEditingTargetCompilePdfHelper
       if (docDisplay_.getFileType().canKnitToHTML())
          return rnwWeaveRegistry_.findTypeIgnoreCase("knitr");
 
+      RnwWeave weave = null;
+      ArrayList<TexMagicComment> magicComments = 
+            TexMagicComment.parseComments(docDisplay_.getCode());
       RnwWeaveDirective rnwWeaveDirective = detectRnwWeaveDirective(
-                         TexMagicComment.parseComments(docDisplay_.getCode()));
+                                                             magicComments);
       if (rnwWeaveDirective != null)
-         return rnwWeaveDirective.getRnwWeave();
+      {
+         weave = rnwWeaveDirective.getRnwWeave();
+      }
       else
-         return rnwWeaveRegistry_.findTypeIgnoreCase(
+      {
+         weave = rnwWeaveRegistry_.findTypeIgnoreCase(
                                     prefs_.defaultSweaveEngine().getValue());
+      }
+      
+      // look for the 'driver' directive and don't inject 
+      // concocordance if there is a custom driver
+      String driver = detectRnwDriverDirective(magicComments);
+      if (driver != null)
+         return RnwWeave.withNoConcordance(weave);
+      else
+         return weave;
    }
 
    @Override
@@ -376,6 +391,21 @@ public class TextEditingTargetCompilePdfHelper
                            RnwWeaveDirective.fromTexMagicComment(comment);
          if (rnwWeaveDirective != null)
             return rnwWeaveDirective;
+      }
+      
+      return null;
+   }
+   
+   private String detectRnwDriverDirective(
+                                    ArrayList<TexMagicComment> magicComments)
+   {
+      for (TexMagicComment comment : magicComments)
+      {
+         if (comment.getScope().equalsIgnoreCase("rnw") &&
+             comment.getVariable().equalsIgnoreCase("driver"))
+         {
+            return comment.getValue();
+         }
       }
       
       return null;

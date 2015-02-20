@@ -27,9 +27,4 @@ public class CppCompletionResult extends JavaScriptObject
    public native final JsArray<CppCompletion> getCompletions() /*-{
       return this.completions;
    }-*/;
-   
-   public native final JsArray<CppDiagnostic> getDiagnostics() /*-{
-      return this.diagnostics;
-   }-*/;
-   
 }
