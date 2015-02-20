@@ -1,0 +1,172 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder">
+	<ui:style>
+	
+	</ui:style>
+	<div>
+	<table>
+	<tr>
+	<td><h2>Motions</h2>
+		<table>
+			<tr>
+			<td><strong>h, j, k, l</strong></td>
+			<td>Left, down, up, right</td>
+			</tr>
+			<tr>
+			<td><strong>gj, gk</strong></td>
+			<td>Down, up (by screen lines)</td>
+			</tr>
+			<tr>
+			<td><strong>w, W, e, E</strong></td>
+			<td>Forward to beginning, end of next word</td>
+			</tr>
+			<tr>
+			<td><strong>b, B, ge, gE</strong></td>
+			<td>Back to beginning, end of previous word</td>
+			</tr>
+			<tr>
+			<td><strong>fx, Fx, tx, Tx</strong></td>
+			<td>To, to before character x</td>
+			</tr>
+			<tr>
+			<td><strong>^, $</strong></td>
+			<td>To first, last character on line</td>
+			</tr>
+			<tr>
+			<td><strong>0, _</strong></td>
+			<td>To first column</td>
+			</tr>
+			<tr>
+			<td><strong>-, +</strong></td>
+			<td>To first character on previous, next line</td>
+			</tr>
+			<tr>
+			<td><strong>gg, G</strong></td>
+			<td>To first, last line</td>
+			</tr>
+			<tr>
+			<td><strong>%</strong></td>
+			<td>To matching brace/bracket</td>
+			</tr>
+			<tr>
+			<td><strong>'x, `x</strong></td>
+			<td>To mark x</td>
+			</tr>
+		</table>
+
+        <h2>Operators</h2>
+        <table>
+			<tr>
+			<td><strong>d{motion}</strong></td>
+			<td>Delete (cut) text</td>
+			</tr>
+			<tr>
+			<td><strong>y{motion}</strong></td>
+			<td>Yank (copy) text</td>
+			</tr>
+			<tr>
+			<td><strong>c{motion}</strong></td>
+			<td>Change (cut, insert) text</td>
+			</tr>
+			<tr>
+			<td><strong>g~{motion}</strong></td>
+			<td>Invert text case</td>
+			</tr>
+			<tr>
+			<td><strong>g~g~</strong></td>
+			<td>Invert current line case</td>
+			</tr>
+			<tr>
+			<td><strong>&gt;{motion}</strong></td>
+			<td>Indent text</td>
+			</tr>
+			<tr>
+			<td><strong>&lt;{motion}</strong></td>
+			<td>Unindent text</td>
+			</tr>
+			<tr>
+			<td><strong>&gt;&gt;, &lt;&lt;</strong></td>
+			<td>Indent, unindent lines</td>
+			</tr>
+        </table>
+        
+        
+        <h2>Operator Motions</h2>
+        <table>
+			<tr>
+			<td><strong>x, X</strong></td>
+			<td>Delete current, previous character</td>
+			</tr>
+			<tr>
+			<td><strong>D</strong></td>
+			<td>Delete to end of line</td>
+			</tr>
+			<tr>
+			<td><strong>Y</strong></td>
+			<td>Yank to end of line</td>
+			</tr>
+			<tr>
+			<td><strong>C</strong></td>
+			<td>Change to end of line</td>
+			</tr>
+			<tr>
+			<td><strong>~</strong></td>
+			<td>Switch case</td>
+			</tr>
+        </table>
+
+        <h2>Actions</h2>
+        <table>
+        	<tr>
+        	<td><strong>a, A</strong></td>
+        	<td>Insert text after cursor, line</td>
+        	</tr>
+        	<tr>
+        	<td><strong>i, I</strong></td>
+        	<td>Insert text before cursor, line</td>
+        	</tr>
+        	<tr>
+        	<td><strong>s, S</strong></td>
+        	<td>Change character, line</td>
+        	</tr>
+        	<tr>
+        	<td><strong>o, O</strong></td>
+        	<td>Insert line after, before current</td>
+        	</tr>
+        </table>
+
+        <h2>Other</h2>
+        <table>
+			<tr>
+			<td><strong>v, V, Ctrl+V</strong></td>
+			<td>Select characters, lines, blocks</td>
+			</tr>
+			<tr>
+			<td><strong>p</strong></td>
+			<td>Paste</td>
+			</tr>
+			<tr>
+			<td><strong>R</strong></td>
+			<td>Replace (overwrite) mode</td>
+			</tr>
+			<tr>
+			<td><strong>r</strong></td>
+			<td>Replace character</td>
+			</tr>
+        </table>
+	</td>
+ </tr>
+ *   Action:
+ *   a, i, s, A, I, S, o, O
+ *   zz, z., z<CR>, zt, zb, z-
+ *   J
+ *   u, Ctrl-r
+ *   m<character>
+ *   r<character>
+ *
+ *   Modes:
+ *   ESC - leave insert mode, visual mode, and clear input state.
+ *   Ctrl-[, Ctrl-c - same as ESC.
+</table>
+	</div>
+</ui:UiBinder>
