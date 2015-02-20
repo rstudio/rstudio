@@ -634,6 +634,24 @@ Error modifyDocumentProperties(const json::JsonRpcRequest& request,
    return source_database::put(pDoc);
 }
 
+Error getDocumentProperties(const json::JsonRpcRequest& request,
+                            json::JsonRpcResponse* pResponse)
+{
+   std::string path; 
+   json::Object properties;
+   Error error = json::readParams(request.params, &path);
+   if (error)
+      return error;
+
+   error = source_database::getDurableProperties(path, &properties);
+   if (error)
+      return error;
+
+   pResponse->setResult(properties);
+
+   return Success();
+}
+
 Error closeDocument(const json::JsonRpcRequest& request,
                     json::JsonRpcResponse* pResponse)
 {
@@ -1098,6 +1116,7 @@ Error initialize()
       (bind(registerRpcMethod, "ignore_external_edit", ignoreExternalEdit))
       (bind(registerRpcMethod, "set_source_document_on_save", setSourceDocumentOnSave))
       (bind(registerRpcMethod, "modify_document_properties", modifyDocumentProperties))
+      (bind(registerRpcMethod, "get_document_properties", getDocumentProperties))
       (bind(registerRpcMethod, "revert_document", revertDocument))
       (bind(registerRpcMethod, "reopen_with_encoding", reopenWithEncoding))
       (bind(registerRpcMethod, "close_document", closeDocument))

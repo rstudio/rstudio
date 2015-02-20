@@ -86,6 +86,7 @@ import org.rstudio.studio.client.rmarkdown.model.RmdTemplateFormat;
 import org.rstudio.studio.client.rmarkdown.model.RmdYamlData;
 import org.rstudio.studio.client.rmarkdown.model.YamlFrontMatter;
 import org.rstudio.studio.client.rmarkdown.ui.RmdTemplateOptionsDialog;
+import org.rstudio.studio.client.rsconnect.RSConnect;
 import org.rstudio.studio.client.rsconnect.events.RSConnectActionEvent;
 import org.rstudio.studio.client.rsconnect.events.RSConnectDeployInitiatedEvent;
 import org.rstudio.studio.client.server.ServerError;
@@ -154,7 +155,6 @@ public class TextEditingTarget implements
    private static final String NOTEBOOK_TITLE = "notebook_title";
    private static final String NOTEBOOK_AUTHOR = "notebook_author";
    private static final String NOTEBOOK_TYPE = "notebook_type";
-   private static final String IGNORED_RESOURCES = "ignored_resources";
 
    private static final MyCommandBinder commandBinder =
          GWT.create(MyCommandBinder.class);
@@ -2513,20 +2513,6 @@ public class TextEditingTarget implements
       RSConnectActionEvent evt = new RSConnectActionEvent(
             RSConnectActionEvent.ACTION_TYPE_DEPLOY, 
             docUpdateSentinel_.getPath());
-
-      // see if there are any resources that we want to ignore--these are files
-      // that we would ordinarily deploy with this document, but that the user
-      // has asked us in the past to ignore
-      String ignored = docUpdateSentinel_.getProperty(IGNORED_RESOURCES);
-      if (ignored != null && !ignored.isEmpty())
-      {
-         evt.setIgnoredResources(ignored.split("\\|"));
-      }
-      else
-      {
-         evt.setIgnoredResources(new String[]{});
-      }
-
       events_.fireEvent(evt);
    }
 
@@ -4603,7 +4589,8 @@ public class TextEditingTarget implements
    private void setIgnoredFiles(ArrayList<String> ignoredFiles)
    {
       String ignoredFileList =  StringUtil.joinStrings(ignoredFiles, "|");
-      docUpdateSentinel_.setProperty(IGNORED_RESOURCES, ignoredFileList, null);
+      docUpdateSentinel_.setProperty(RSConnect.IGNORED_RESOURCES, 
+            ignoredFileList, null);
    }
    
    private void addAdditionalResourceFiles(ArrayList<String> additionalFiles)
