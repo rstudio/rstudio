@@ -69,7 +69,7 @@ git merge \
     origin/bugfix/vim-join-lines \
     origin/bugfix/highlight-tags-error \
     origin/bugfix/xml-tag-highlight \
-    origin/feature/vim-commands \
+    origin/feature/vim-commands \ # NOTE: API merged upstream; should be unneeded with next Ace update
     -m "merge branches"
 
 ## git merge \
