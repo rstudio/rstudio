@@ -5,6 +5,12 @@
 	</ui:style>
 <g:HTMLPanel>
 <g:HTML>
+<!-- 
+RStudio's Vim support comes from the ACE editor. Documentation on which keys
+it supports can be found here:
+
+https://github.com/ajaxorg/ace/blob/master/lib/ace/keyboard/vim.js
+-->
 <table width="100%">
 	<tr>
 	<td width="33%">
@@ -27,8 +33,12 @@
 			<td>Back to beginning, end of previous word</td>
 			</tr>
 			<tr>
-			<td><strong>fx, Fx, tx, Tx</strong></td>
-			<td>To, to before character x</td>
+			<td><strong>f<i>x</i>, F<i>x</i></strong></td>
+			<td>Forward, backward to character <i>x</i></td>
+			</tr>
+			<tr>
+			<td><strong>t<i>x</i>, T<i>x</i></strong></td>
+			<td>Forward, backward to before character <i>x</i></td>
 			</tr>
 			<tr>
 			<td><strong>^, $</strong></td>
@@ -45,6 +55,10 @@
 			<tr>
 			<td><strong>gg, G</strong></td>
 			<td>To first, last line</td>
+			</tr>
+			<tr>
+			<td><strong><i>{number}</i>G</strong></td>
+			<td>To line <i>number</i></td>
 			</tr>
 			<tr>
 			<td><strong>%</strong></td>
@@ -67,19 +81,19 @@
         <h2>Operators</h2>
         <table>
 			<tr>
-			<td><strong>d{motion}</strong></td>
+			<td><strong>d<i>{motion}</i></strong></td>
 			<td>Delete (cut) text</td>
 			</tr>
 			<tr>
-			<td><strong>y{motion}</strong></td>
+			<td><strong>y<i>{motion}</i></strong></td>
 			<td>Yank (copy) text</td>
 			</tr>
 			<tr>
-			<td><strong>c{motion}</strong></td>
+			<td><strong>c<i>{motion}</i></strong></td>
 			<td>Change (cut, insert) text</td>
 			</tr>
 			<tr>
-			<td><strong>g~{motion}</strong></td>
+			<td><strong>g~<i>{motion}</i></strong></td>
 			<td>Invert text case</td>
 			</tr>
 			<tr>
@@ -87,11 +101,11 @@
 			<td>Invert current line case</td>
 			</tr>
 			<tr>
-			<td><strong>&gt;{motion}</strong></td>
+			<td><strong>&gt;<i>{motion}</i></strong></td>
 			<td>Indent text</td>
 			</tr>
 			<tr>
-			<td><strong>&lt;{motion}</strong></td>
+			<td><strong>&lt;<i>{motion}</i></strong></td>
 			<td>Unindent text</td>
 			</tr>
 			<tr>
@@ -147,7 +161,14 @@
         	<td><strong>zz, zt, zb</strong></td>
         	<td>Scroll current line to center, top, bottom</td>
         	</tr>
-
+        	<tr>
+        	<td><strong>dd</strong></td>
+        	<td>Delete current line</td>
+        	</tr>
+        	<tr>
+        	<td><strong>cc</strong></td>
+        	<td>Change current line</td>
+        	</tr>
         </table>
 
         <h2>Other</h2>
@@ -157,8 +178,8 @@
 			<td>Select characters, lines, blocks</td>
 			</tr>
 			<tr>
-			<td><strong>p</strong></td>
-			<td>Paste</td>
+			<td><strong>p, P</strong></td>
+			<td>Paste after, before cursor</td>
 			</tr>
 			<tr>
 			<td><strong>R</strong></td>
@@ -189,8 +210,12 @@
 			<td>Repeat last operation</td>
 			</tr>
 			<tr>
-			<td><strong>N{operation}</strong></td>
+			<td><strong>N<i>{operation}</i></strong></td>
 			<td>Perform <i>operation</i> N times</td>
+			</tr>
+			<tr>
+			<td><strong>"<i>{register}</i></strong></td>
+			<td>Copy/paste to/from <i>register</i></td>
 			</tr>
 			<tr>
 			<td><strong>Esc, Ctrl+[</strong></td>
@@ -215,6 +240,18 @@
 			</tr>
         </table>
 
+        <h2>Macros</h2>
+        <table>
+			<tr>
+			<td><strong>q<i>{register}</i>, q</strong></td>
+			<td>Begin, end recording macro to <i>register</i></td>
+			</tr>
+			<tr>
+			<td><strong>@<i>{register}</i></strong></td>
+			<td>Replay macro in <i>register</i></td>
+			</tr>
+        </table>
+
         <h2>Ex Commands</h2>
         <table>
 			<tr>
@@ -230,22 +267,32 @@
 			<td>Go to line N</td>
 			</tr>
 			<tr>
-			<td><strong>:R expr</strong></td>
+			<td><strong>:R <i>expr</i></strong></td>
 			<td>Evaluate R expression</td>
 			</tr>
 			<tr>
-			<td><strong>:r file</strong></td>
-			<td>Insert contents of file</td>
+			<td><strong>:r <i>file</i></strong></td>
+			<td>Insert contents of <i>file</i></td>
 			</tr>
 			<tr>
-			<td><strong>:%s/text/rep/g</strong></td>
-			<td>Search and replace text with rep</td>
+			<td><strong>:%s/<i>text</i>/<i>rep</i>/g</strong></td>
+			<td>Replace <i>text</i> with <i>rep</i> in file</td>
+			</tr>
+			<tr>
+			<td><strong>:'&lt;,'&gt;s/<i>text</i>/<i>rep</i>/g</strong></td>
+			<td>Replace in selection</td>
 			</tr>
 			<tr>
 			<td><strong>:help</strong></td>
 			<td>Show this screen</td>
 			</tr>
         </table>
+        
+        <h2>Registers</h2>
+        <p>
+        The registers <strong>-</strong>, <strong>a-z</strong>, <strong>A-Z</strong>, 
+        and <strong>0-9</strong> are available.
+        </p>
 	</td>
  </tr>
 </table>
