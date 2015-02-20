@@ -28,6 +28,7 @@ import com.google.gwt.dev.javac.testing.impl.MockJavaResource;
 import com.google.gwt.dev.javac.testing.impl.MockResource;
 import com.google.gwt.dev.jjs.JsOutputOption;
 import com.google.gwt.dev.util.Util;
+import com.google.gwt.dev.util.arg.OptionJsInteropMode;
 import com.google.gwt.dev.util.arg.SourceLevel;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 import com.google.gwt.thirdparty.guava.common.base.Charsets;
@@ -50,8 +51,6 @@ public class CompilerTest extends ArgProcessorTestBase {
   public static final String HELLO_MODULE = "com.google.gwt.sample.hello.Hello";
   public static final String HELLO_MODULE_STACKMODE_STRIP =
       "com.google.gwt.sample.hello.Hello_stackMode_strip";
-  private final Compiler.ArgProcessor argProcessor;
-  private final CompilerOptionsImpl options = new CompilerOptionsImpl();
 
   private MockJavaResource packagePrivateParentResource =
       JavaResourceBase.createMockJavaResource("com.foo.PackagePrivateParent",
@@ -445,6 +444,39 @@ public class CompilerTest extends ArgProcessorTestBase {
           "  public void onModuleLoad() {}",
           "}");
 
+  private MockJavaResource gwtCreateEntryPointResource =
+      JavaResourceBase.createMockJavaResource("com.foo.TestEntryPoint",
+          "package com.foo;",
+          "import com.google.gwt.core.client.EntryPoint;",
+          "import com.google.gwt.core.client.GWT;",
+          "import com.google.gwt.core.client.js.JsType;",
+          "public class TestEntryPoint implements EntryPoint {",
+          "  @JsType public static class MyJsType {}",
+          "  @JsType public interface MyJsTypeInterface {}",
+          "  public static class MyTypeImplementsJsType implements MyJsTypeInterface {}",
+          "  @Override",
+          "  public void onModuleLoad() {",
+          "    GWT.create(MyJsType.class);",
+          "    GWT.create(MyTypeImplementsJsType.class);",
+          "  }",
+          "}");
+
+  private MockJavaResource brokenGwtCreateEntryPointResource =
+      JavaResourceBase.createMockJavaResource("com.foo.TestEntryPoint",
+          "package com.foo;",
+          "import com.google.gwt.core.client.EntryPoint;",
+          "import com.google.gwt.core.client.GWT;",
+          "import com.google.gwt.core.client.JavaScriptObject;",
+          "public class TestEntryPoint implements EntryPoint {",
+          "  public static class MyJso extends JavaScriptObject {",
+          "    protected MyJso() {}",
+          "  }",
+          "  @Override",
+          "  public void onModuleLoad() {",
+          "    GWT.create(MyJso.class);",
+          "  }",
+          "}");
+
   private MockJavaResource topResource =
       JavaResourceBase.createMockJavaResource("com.foo.top",
           "package com.foo;",
@@ -760,10 +792,6 @@ public class CompilerTest extends ArgProcessorTestBase {
 
   private Set<String> emptySet = stringSet();
 
-  public CompilerTest() {
-    argProcessor = new Compiler.ArgProcessor(options);
-  }
-
   @Override
   protected void setUp() throws Exception {
     super.setUp();
@@ -774,6 +802,9 @@ public class CompilerTest extends ArgProcessorTestBase {
   }
 
   public void testAllValidArgs() {
+    CompilerOptionsImpl options = new CompilerOptionsImpl();
+    Compiler.ArgProcessor argProcessor = new Compiler.ArgProcessor(options);
+
     assertProcessSuccess(argProcessor, new String[] {"-logLevel", "DEBUG", "-style",
         "PRETTY", "-ea", "-gen", "myGen",
         "-war", "myWar", "-workDir", "myWork", "-extra", "myExtra", "-incremental",
@@ -805,6 +836,9 @@ public class CompilerTest extends ArgProcessorTestBase {
   }
 
   public void testDefaultArgs() {
+    CompilerOptionsImpl options = new CompilerOptionsImpl();
+    Compiler.ArgProcessor argProcessor = new Compiler.ArgProcessor(options);
+
     assertProcessSuccess(argProcessor, new String[] {"c.g.g.h.H"});
 
     assertEquals(null, options.getGenDir());
@@ -830,6 +864,9 @@ public class CompilerTest extends ArgProcessorTestBase {
   }
 
   public void testForbiddenArgs() {
+    CompilerOptionsImpl options = new CompilerOptionsImpl();
+    Compiler.ArgProcessor argProcessor = new Compiler.ArgProcessor(options);
+
     assertProcessFailure(argProcessor, "Unknown argument", new String[]{"-out", "www"});
     assertProcessFailure(argProcessor, "Source level must be one of",
         new String[]{"-sourceLevel", "ssss"});
@@ -864,6 +901,25 @@ public class CompilerTest extends ArgProcessorTestBase {
     assertEquals(SourceLevel.JAVA7, SourceLevel.getBestMatchingVersion("1.6u3"));
     assertEquals(SourceLevel.JAVA7, SourceLevel.getBestMatchingVersion("1.6b3"));
     assertEquals(SourceLevel.JAVA7, SourceLevel.getBestMatchingVersion("1.7b3"));
+  }
+
+  public void testGwtCreateJsTypeRebindResult() throws Exception {
+    CompilerOptions compilerOptions = new CompilerOptionsImpl();
+    compilerOptions.setJsInteropMode(OptionJsInteropMode.Mode.JS);
+    compileToJs(compilerOptions, Files.createTempDir(), "com.foo.SimpleModule",
+        Lists.newArrayList(simpleModuleResource, gwtCreateEntryPointResource),
+        new MinimalRebuildCache(), emptySet, JsOutputOption.PRETTY);
+  }
+
+  public void testGwtCreateJsoRebindResult() throws Exception {
+    try {
+      compileToJs(Files.createTempDir(), "com.foo.SimpleModule",
+          Lists.newArrayList(simpleModuleResource, brokenGwtCreateEntryPointResource),
+          new MinimalRebuildCache(), emptySet, JsOutputOption.PRETTY);
+      fail("Compile should have failed");
+    } catch (UnableToCompleteException e) {
+      // success
+    }
   }
 
   public void testDeterministicBuild_Draft_StackModeStrip() throws
@@ -1625,7 +1681,10 @@ public class CompilerTest extends ArgProcessorTestBase {
       }
     }
 
-    assertNotNull(outputJsFile);
+    if (outputJsFile == null) {
+      throw new UnableToCompleteException();
+    }
+
     if (expectedProcessedStaleTypeNames != null) {
       assertEquals(expectedProcessedStaleTypeNames,
           minimalRebuildCache.getProcessedStaleTypeNames());

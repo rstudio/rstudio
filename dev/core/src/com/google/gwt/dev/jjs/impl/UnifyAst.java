@@ -960,11 +960,10 @@ public class UnifyAst {
      * subtypes. That way we don't have to copy the exact semantics of ControlFlowAnalyzer.
      */
     for (JDeclaredType t : types) {
-      if (t instanceof JClassType && requiresDevirtualization(t)
-          || hasAnyExports(t)) {
+      if (t instanceof JClassType && requiresDevirtualization(t)) {
         instantiate(t);
       }
-      if (isJsType(t)) {
+      if (hasAnyExports(t) || isJsType(t)) {
         instantiate(t);
       }
     }
@@ -1432,19 +1431,7 @@ public class UnifyAst {
     if (type == null) {
       return false;
     }
-    boolean isJso = type == program.getJavaScriptObject() || isJso(type.getSuperClass());
-    if (isJso) {
-      return true;
-    }
-
-    // if any of the superinterfaces as JsInterfaces, we consider this effectively a JSO
-    // for instantiability purposes
-    for (JInterfaceType intf : type.getImplements()) {
-      if (isJsType(intf)) {
-        return true;
-      }
-    }
-    return false;
+    return type == program.getJavaScriptObject() || isJso(type.getSuperClass());
   }
 
   private boolean isJsType(JDeclaredType intf) {
