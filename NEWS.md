@@ -41,6 +41,7 @@
     - Marks (m)
     - Quick find (/)
     - Support a subset of commands in :
+    - Use :help for documentation on available commands
 * Editor tabs in the source pane can now be rearranged
 * Support for multiple cursors via Ctrl+Alt+Up/Down
 * Alt+Enter to run code while retaining cursor position
