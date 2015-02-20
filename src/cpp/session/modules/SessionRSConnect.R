@@ -53,8 +53,8 @@
    .rs.scalarListFromFrame(rsconnect::applications(account, server))
 })
 
-.rs.addJsonRpcHandler("get_rsconnect_deployments", function(dir) {
-   .rs.scalarListFromFrame(rsconnect::deployments(dir))
+.rs.addJsonRpcHandler("get_rsconnect_deployments", function(path) {
+   .rs.scalarListFromFrame(rsconnect::deployments(path))
 })
 
 .rs.addJsonRpcHandler("validate_server_url", function(url) {

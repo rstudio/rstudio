@@ -80,6 +80,13 @@ public class RSConnectDeployDialog
       defaultAccount_ = lastAccount;
       connector_ = connector;
 
+      String deployTarget = sourceDir;
+      if (StringUtil.getExtension(sourceFile).toLowerCase().equals("rmd")) 
+      {
+         FileSystemItem sourceFSI = FileSystemItem.createDir(sourceDir);
+         deployTarget = sourceFSI.completePath(sourceFile);
+      }
+
       launchCheck_ = new CheckBox("Launch browser");
       launchCheck_.setValue(true);
       launchCheck_.setStyleName(contents_.getStyle().launchCheck());
@@ -112,9 +119,7 @@ public class RSConnectDeployDialog
 
       // Get the files to be deployed
       server_.getDeploymentFiles(
-            StringUtil.getExtension(sourceFile).toLowerCase() == "rmd" ?
-                  sourceDir + "/" + sourceFile : 
-                  sourceDir,
+            deployTarget,
             new ServerRequestCallback<RSConnectDeploymentFiles>()
             {
                @Override 
@@ -146,7 +151,7 @@ public class RSConnectDeployDialog
 
       // Get the deployments of this directory from any account (should be fast,
       // since this information is stored locally in the directory). 
-      server_.getRSConnectDeployments(sourceDir, 
+      server_.getRSConnectDeployments(deployTarget, 
             new ServerRequestCallback<JsArray<RSConnectDeploymentRecord>>()
       {
          @Override
