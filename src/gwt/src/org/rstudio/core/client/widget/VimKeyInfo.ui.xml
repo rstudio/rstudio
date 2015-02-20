@@ -1,12 +1,14 @@
-<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
-<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder">
+<ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder'
+             xmlns:g='urn:import:com.google.gwt.user.client.ui'>
 	<ui:style>
 	
 	</ui:style>
-	<div>
-	<table>
+<g:HTMLPanel>
+<g:HTML>
+<table width="100%">
 	<tr>
-	<td><h2>Motions</h2>
+	<td width="33%">
+	<h2>Motions</h2>
 		<table>
 			<tr>
 			<td><strong>h, j, k, l</strong></td>
@@ -52,6 +54,14 @@
 			<td><strong>'x, `x</strong></td>
 			<td>To mark x</td>
 			</tr>
+			<tr>
+			<td><strong>H, M, L</strong></td>
+			<td>To top, middle, bottom of screen</td>
+			</tr>
+			<tr>
+			<td><strong>Ctrl+U, Ctrl+D</strong></td>
+			<td>Up, down by 1/2 screen</td>
+			</tr>
 		</table>
 
         <h2>Operators</h2>
@@ -89,8 +99,8 @@
 			<td>Indent, unindent lines</td>
 			</tr>
         </table>
-        
-        
+   </td>
+   <td width="33%">
         <h2>Operator Motions</h2>
         <table>
 			<tr>
@@ -133,6 +143,11 @@
         	<td><strong>o, O</strong></td>
         	<td>Insert line after, before current</td>
         	</tr>
+        	<tr>
+        	<td><strong>zz, zt, zb</strong></td>
+        	<td>Scroll current line to center, top, bottom</td>
+        	</tr>
+
         </table>
 
         <h2>Other</h2>
@@ -153,20 +168,87 @@
 			<td><strong>r</strong></td>
 			<td>Replace character</td>
 			</tr>
+			<tr>
+			<td><strong>J</strong></td>
+			<td>Join line with next</td>
+			</tr>
+			<tr>
+			<td><strong>u, Ctrl+R</strong></td>
+			<td>Undo, redo</td>
+			</tr>
+			<tr>
+			<td><strong>mx</strong></td>
+			<td>Create mark x at cursor</td>
+			</tr>
+			<tr>
+			<td><strong>K</strong></td>
+			<td>Show help for topic under cursor</td>
+			</tr>
+			<tr>
+			<td><strong>.</strong></td>
+			<td>Repeat last operation</td>
+			</tr>
+			<tr>
+			<td><strong>N{operation}</strong></td>
+			<td>Perform <i>operation</i> N times</td>
+			</tr>
+			<tr>
+			<td><strong>Esc, Ctrl+[</strong></td>
+			<td>Leave insert mode</td>
+			</tr>
+        </table>
+   </td>
+   <td width="33%">
+        <h2>Searching</h2>
+        <table>
+			<tr>
+			<td><strong>/text, ?text</strong></td>
+			<td>Search forward, back for <i>text</i></td>
+			</tr>
+			<tr>
+			<td><strong>*</strong></td>
+			<td>Search for text under cursor</td>
+			</tr>
+			<tr>
+			<td><strong>n</strong></td>
+			<td>Go to next search match</td>
+			</tr>
+        </table>
+
+        <h2>Ex Commands</h2>
+        <table>
+			<tr>
+			<td><strong>:w, :wq, wq!</strong></td>
+			<td>Save, save and quit, without prompt</td>
+			</tr>
+			<tr>
+			<td><strong>:bn, :bp</strong></td>
+			<td>Go to previous, next tab</td>
+			</tr>
+			<tr>
+			<td><strong>:N</strong></td>
+			<td>Go to line N</td>
+			</tr>
+			<tr>
+			<td><strong>:R expr</strong></td>
+			<td>Evaluate R expression</td>
+			</tr>
+			<tr>
+			<td><strong>:r file</strong></td>
+			<td>Insert contents of file</td>
+			</tr>
+			<tr>
+			<td><strong>:%s/text/rep/g</strong></td>
+			<td>Search and replace text with rep</td>
+			</tr>
+			<tr>
+			<td><strong>:help</strong></td>
+			<td>Show this screen</td>
+			</tr>
         </table>
 	</td>
  </tr>
- *   Action:
- *   a, i, s, A, I, S, o, O
- *   zz, z., z<CR>, zt, zb, z-
- *   J
- *   u, Ctrl-r
- *   m<character>
- *   r<character>
- *
- *   Modes:
- *   ESC - leave insert mode, visual mode, and clear input state.
- *   Ctrl-[, Ctrl-c - same as ESC.
 </table>
-	</div>
+</g:HTML>
+</g:HTMLPanel>
 </ui:UiBinder>

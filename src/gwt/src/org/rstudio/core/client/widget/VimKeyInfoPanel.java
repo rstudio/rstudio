@@ -1,5 +1,5 @@
 /*
- * VimKeyInfo.java
+ * VimKeyInfoPanel.java
  *
  * Copyright (C) 2009-15 by RStudio, Inc.
  *
@@ -14,22 +14,24 @@
  */
 package org.rstudio.core.client.widget;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.uibinder.client.UiBinder;
-import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Widget;
 
-public class VimKeyInfo extends Composite
+public class VimKeyInfoPanel extends ShortcutInfoPanel
 {
-   private static VimKeyInfoUiBinder uiBinder = GWT
-         .create(VimKeyInfoUiBinder.class);
-
-   interface VimKeyInfoUiBinder extends UiBinder<Widget, VimKeyInfo>
+   public VimKeyInfoPanel()
    {
+      super(null);
    }
-
-   public VimKeyInfo()
+   
+   @Override
+   protected String getHeaderText()
    {
-      initWidget(uiBinder.createAndBindUi(this));
+      return "Vim Keyboard Shortcuts";
+   }
+   
+   @Override
+   protected Widget getShortcutContent()
+   {
+     return new VimKeyInfo();
    }
 }
