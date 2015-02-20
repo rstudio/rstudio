@@ -45,6 +45,7 @@ import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.FileDialogs;
@@ -461,6 +462,8 @@ public class Source implements InsertSourceHandler,
       vimCommands_.saveAndCloseActiveTab(this);
       vimCommands_.readFile(this, uiPrefs_.defaultEncoding().getValue());
       vimCommands_.runRScript(this);
+      vimCommands_.showVimHelp(
+            RStudioGinjector.INSTANCE.getShortcutViewer());
    }
    
    private void closeAllTabs(boolean interactive)

@@ -17,6 +17,7 @@ package org.rstudio.core.client.command;
 
 
 import org.rstudio.core.client.widget.ShortcutInfoPanel;
+import org.rstudio.core.client.widget.VimKeyInfoPanel;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -58,7 +59,7 @@ public class ShortcutViewer implements NativePreviewHandler
       {
          return;
       }
-      shortcutInfo_ = new ShortcutInfoPanel(new Command()
+      showShortcutInfoPanel(new ShortcutInfoPanel(new Command()
       {
          @Override
          public void execute()
@@ -68,7 +69,22 @@ public class ShortcutViewer implements NativePreviewHandler
             else 
                openApplicationURL("docs/keyboard.htm");
          }
-      });
+      }));
+   }
+   
+   public void showVimKeyboardShortcuts()
+   {
+      // prevent reentry
+      if (shortcutInfo_ != null)
+      {
+         return;
+      }
+      showShortcutInfoPanel(new VimKeyInfoPanel());
+   }
+   
+   private void showShortcutInfoPanel(ShortcutInfoPanel panel)
+   {
+      shortcutInfo_ = panel;
       RootLayoutPanel.get().add(shortcutInfo_);
       preview_ = Event.addNativePreviewHandler(this);
    }
