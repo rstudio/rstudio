@@ -20,6 +20,7 @@ src/gwt/.ant-targets-build.xml
 /src/gwt/bin.test/
 /src/gwt/gwt-unitCache/
 NEWS.html
+CONTRIBUTING.html
 CMakeLists.txt.user
 .idea/
 **/\.tern-port
