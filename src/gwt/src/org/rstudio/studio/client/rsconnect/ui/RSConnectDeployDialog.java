@@ -60,6 +60,7 @@ public class RSConnectDeployDialog
                                 EventBus events,
                                 final String sourceDir, 
                                 String sourceFile,
+                                String[] ignoredFiles,
                                 final RSConnectAccount lastAccount, 
                                 String lastAppName, 
                                 boolean isSatellite)
@@ -79,6 +80,7 @@ public class RSConnectDeployDialog
       isSatellite_ = isSatellite;
       defaultAccount_ = lastAccount;
       connector_ = connector;
+      ignoredFiles_ = ignoredFiles;
 
       String deployTarget = sourceDir;
       if (StringUtil.getExtension(sourceFile).toLowerCase().equals("rmd")) 
@@ -137,7 +139,7 @@ public class RSConnectDeployDialog
                   }
                   else
                   {
-                     contents_.setFileList(files.getDirList());
+                     contents_.setFileList(files.getDirList(), ignoredFiles_);
                      contents_.setFileCheckEnabled(sourceFile_, false);
                      deployButton_.setEnabled(true);
                   }
@@ -402,6 +404,7 @@ public class RSConnectDeployDialog
                sourceDir_, 
                JsArrayUtil.toJsArrayString(contents_.getFileList()),
                JsArrayUtil.toJsArrayString(additionalFiles),
+               JsArrayUtil.toJsArrayString(contents_.getIgnoredFileList()),
                sourceFile_, 
                launchCheck_.getValue(), 
                RSConnectDeploymentRecord.create(appName, account, ""));
@@ -423,6 +426,7 @@ public class RSConnectDeployDialog
                sourceDir_,
                contents_.getFileList(),
                additionalFiles,
+               contents_.getIgnoredFileList(),
                sourceFile_,
                launchCheck_.getValue(),
                RSConnectDeploymentRecord.create(appName, account, "")));
@@ -503,6 +507,8 @@ public class RSConnectDeployDialog
    private RSConnectAccount defaultAccount_;
    private ArrayList<String> filesAddedManually_ =
          new ArrayList<String>();
+   
+   private String[] ignoredFiles_;
    
    // Map of account to a list of applications owned by that account
    private Map<RSConnectAccount, JsArray<RSConnectApplicationInfo>> apps_ = 

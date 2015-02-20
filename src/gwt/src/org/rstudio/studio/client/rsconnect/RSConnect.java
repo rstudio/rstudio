@@ -147,7 +147,8 @@ public class RSConnect implements SessionInitHandler,
          RSConnectDeployDialog dialog = 
                new RSConnectDeployDialog(
                          server_, connector_, display_, session_, events_, 
-                         dir, file, lastAccount, lastAppName,
+                         dir, file, event.getIgnoredResources(), 
+                         lastAccount, lastAppName,
                          satellite_.isCurrentWindowSatellite());
          dialog.showModal();
       }
@@ -303,10 +304,11 @@ public class RSConnect implements SessionInitHandler,
          String path,
          JsArrayString deployFiles,
          JsArrayString additionalFiles,
+         JsArrayString ignoredFiles,
          String file, 
          boolean launch, 
          JavaScriptObject record) /*-{
-      $wnd.opener.deployToRSConnect(path, deployFiles, additionalFiles, file, launch, record);
+      $wnd.opener.deployToRSConnect(path, deployFiles, additionalFiles, ignoredFiles, file, launch, record);
    }-*/;
    
    // Private methods ---------------------------------------------------------
@@ -453,14 +455,15 @@ public class RSConnect implements SessionInitHandler,
    private final native void exportNativeCallbacks() /*-{
       var thiz = this;     
       $wnd.deployToRSConnect = $entry(
-         function(path, deployFiles, additionalFiles, file, launch, record) {
-            thiz.@org.rstudio.studio.client.rsconnect.RSConnect::deployToRSConnect(Ljava/lang/String;Lcom/google/gwt/core/client/JsArrayString;Lcom/google/gwt/core/client/JsArrayString;Ljava/lang/String;ZLcom/google/gwt/core/client/JavaScriptObject;)(path, deployFiles, additionalFiles, file, launch, record);
+         function(path, deployFiles, additionalFiles, ignoredFiles, file, launch, record) {
+            thiz.@org.rstudio.studio.client.rsconnect.RSConnect::deployToRSConnect(Ljava/lang/String;Lcom/google/gwt/core/client/JsArrayString;Lcom/google/gwt/core/client/JsArrayString;Lcom/google/gwt/core/client/JsArrayString;Ljava/lang/String;ZLcom/google/gwt/core/client/JavaScriptObject;)(path, deployFiles, additionalFiles, ignoredFiles, file, launch, record);
          }
       ); 
    }-*/;
    
    private void deployToRSConnect(String path, JsArrayString deployFiles, 
                                   JsArrayString additionalFiles, 
+                                  JsArrayString ignoredFiles, 
                                   String file, boolean launch, 
                                   JavaScriptObject jsoRecord)
    {
@@ -475,10 +478,13 @@ public class RSConnect implements SessionInitHandler,
             JsArrayUtil.fromJsArrayString(deployFiles);
       ArrayList<String> additionalFilesList = 
             JsArrayUtil.fromJsArrayString(additionalFiles);
+      ArrayList<String> ignoredFilesList = 
+            JsArrayUtil.fromJsArrayString(ignoredFiles);
       
       RSConnectDeploymentRecord record = jsoRecord.cast();
       events_.fireEvent(new RSConnectDeployInitiatedEvent(
-            path, deployFilesList, additionalFilesList, file, launch, record));
+            path, deployFilesList, additionalFilesList, ignoredFilesList, 
+            file, launch, record));
    }
    
    private final Commands commands_;

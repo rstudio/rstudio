@@ -154,6 +154,7 @@ public class TextEditingTarget implements
    private static final String NOTEBOOK_TITLE = "notebook_title";
    private static final String NOTEBOOK_AUTHOR = "notebook_author";
    private static final String NOTEBOOK_TYPE = "notebook_type";
+   private static final String IGNORED_RESOURCES = "ignored_resources";
 
    private static final MyCommandBinder commandBinder =
          GWT.create(MyCommandBinder.class);
@@ -632,35 +633,26 @@ public class TextEditingTarget implements
                   // no need to process this event if this target doesn't have a
                   // path, or if the event's contents don't include additional
                   // files.
-                  if (getPath() == null ||
-                      event.getAdditionalFiles() == null ||
-                      event.getAdditionalFiles().size() == 0)
+                  if (getPath() == null)
                      return;
                   
                   // see if the event corresponds to a deployment of this file
                   FileSystemItem evtDir = FileSystemItem.createDir(event.getPath());
                   if (!getPath().equals(evtDir.completePath(event.getSourceFile())))
                      return;
-
-                  // it does--get the YAML front matter and modify it to include
-                  // the additional files named in the deployment
-                  String yaml = getRmdFrontMatter();
-                  if (yaml == null)
-                     return;
-                  rmarkdownHelper_.addAdditionalResourceFiles(yaml,
-                        event.getAdditionalFiles(), 
-                        new CommandWithArg<String>()
-                        {
-                           @Override
-                           public void execute(String yamlOut)
-                           {
-                              if (yamlOut != null)
-                              {
-                                 applyRmdFrontMatter(yamlOut);
-                              }
-                           }
-                        });
-                   }
+                  
+                  if (event.getAdditionalFiles() != null &&
+                      event.getAdditionalFiles().size() > 0)
+                  {
+                     addAdditionalResourceFiles(event.getAdditionalFiles());
+                  }
+                  
+                  if (event.getIgnoredFiles() != null &&
+                      event.getIgnoredFiles().size() > 0)
+                  {
+                     setIgnoredFiles(event.getIgnoredFiles());
+                  }
+               }
             });
    }
    
@@ -2518,9 +2510,24 @@ public class TextEditingTarget implements
    @Handler 
    void onRsconnectDeploy()
    {
-      events_.fireEvent(new RSConnectActionEvent(
+      RSConnectActionEvent evt = new RSConnectActionEvent(
             RSConnectActionEvent.ACTION_TYPE_DEPLOY, 
-            docUpdateSentinel_.getPath()));
+            docUpdateSentinel_.getPath());
+
+      // see if there are any resources that we want to ignore--these are files
+      // that we would ordinarily deploy with this document, but that the user
+      // has asked us in the past to ignore
+      String ignored = docUpdateSentinel_.getProperty(IGNORED_RESOURCES);
+      if (ignored != null && !ignored.isEmpty())
+      {
+         evt.setIgnoredResources(ignored.split("\\|"));
+      }
+      else
+      {
+         evt.setIgnoredResources(new String[]{});
+      }
+
+      events_.fireEvent(evt);
    }
 
    @Handler 
@@ -4591,6 +4598,34 @@ public class TextEditingTarget implements
                                                    pos))); 
               }           
            }));
+   }
+   
+   private void setIgnoredFiles(ArrayList<String> ignoredFiles)
+   {
+      String ignoredFileList =  StringUtil.joinStrings(ignoredFiles, "|");
+      docUpdateSentinel_.setProperty(IGNORED_RESOURCES, ignoredFileList, null);
+   }
+   
+   private void addAdditionalResourceFiles(ArrayList<String> additionalFiles)
+   {
+      // it does--get the YAML front matter and modify it to include
+      // the additional files named in the deployment
+      String yaml = getRmdFrontMatter();
+      if (yaml == null)
+         return;
+      rmarkdownHelper_.addAdditionalResourceFiles(yaml,
+            additionalFiles, 
+            new CommandWithArg<String>()
+            {
+               @Override
+               public void execute(String yamlOut)
+               {
+                  if (yamlOut != null)
+                  {
+                     applyRmdFrontMatter(yamlOut);
+                  }
+               }
+            });
    }
    
    private StatusBar statusBar_;

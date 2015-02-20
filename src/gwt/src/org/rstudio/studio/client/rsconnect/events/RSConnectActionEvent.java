@@ -43,6 +43,16 @@ public class RSConnectActionEvent extends GwtEvent<RSConnectActionEvent.Handler>
       return action_;
    }
    
+   public void setIgnoredResources(String[] ignoredResources)
+   {
+      ignoredResources_ = ignoredResources;
+   }
+   
+   public String[] getIgnoredResources()
+   {
+      return ignoredResources_;
+   }
+   
    @Override
    protected void dispatch(RSConnectActionEvent.Handler handler)
    {
@@ -60,4 +70,5 @@ public class RSConnectActionEvent extends GwtEvent<RSConnectActionEvent.Handler>
    
    private String path_;
    private int action_;
+   private String[] ignoredResources_;
 }
