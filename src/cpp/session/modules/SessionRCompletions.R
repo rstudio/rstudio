@@ -1148,7 +1148,8 @@ assign(x = ".rs.acCompletionTypes",
 
 .rs.addFunction("getCompletionsPackages", function(token,
                                                    appendColons = FALSE,
-                                                   excludeOtherCompletions = FALSE)
+                                                   excludeOtherCompletions = FALSE,
+                                                   quote = !appendColons)
 {
    allPackages <- Reduce(union, lapply(.libPaths(), list.files))
    
@@ -1162,7 +1163,7 @@ assign(x = ".rs.acCompletionTypes",
                        else
                           completions,
                        packages = completions,
-                       quote = !appendColons,
+                       quote = quote,
                        type = .rs.acCompletionTypes$PACKAGE,
                        excludeOtherCompletions = excludeOtherCompletions)
 })
@@ -1572,7 +1573,10 @@ assign(x = ".rs.acCompletionTypes",
    if (string[[1]] %in% c("library", "require", "requireNamespace") &&
        numCommas[[1]] == 0)
    {
-      return(.rs.getCompletionsPackages(token, excludeOtherCompletions = TRUE))
+      quote <- ! (string[[1]] %in% c("library", "require"))
+      return(.rs.getCompletionsPackages(token, 
+                                        excludeOtherCompletions = TRUE,
+                                        quote = quote))
    }
    
    ## File-based completions
