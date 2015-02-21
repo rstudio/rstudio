@@ -18,6 +18,7 @@ package com.google.gwt.core.client.interop;
 import static com.google.gwt.core.client.ScriptInjector.TOP_WINDOW;
 
 import com.google.gwt.core.client.ScriptInjector;
+import com.google.gwt.core.client.interop.subpackage.MyNestedExportedClassSansPackageNamespace;
 import com.google.gwt.junit.client.GWTTestCase;
 
 /**
@@ -181,6 +182,14 @@ public class JsExportTest extends GWTTestCase {
 
   private static native int getWOO() /*-{
     return $wnd.woo.MyExportedClassWithPackageNamespace.WOO || 0;
+  }-*/;
+
+  public void testNotInheritNestedPackageNamespace() {
+    assertFalse(MyNestedExportedClassSansPackageNamespace.WOO == getNestedWOO());
+  }
+
+  private static native int getNestedWOO() /*-{
+    return $wnd['woo.subpackage.MyNestedExportedClassSansPackageNamespace.WOO'] || 0;
   }-*/;
 
   public void testNestedEnum() {
