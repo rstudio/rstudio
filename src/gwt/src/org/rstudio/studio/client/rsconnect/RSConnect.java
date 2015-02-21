@@ -18,8 +18,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.rstudio.core.client.JsArrayUtil;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.dom.WindowEx;
+import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.widget.ModalDialogTracker;
 import org.rstudio.core.client.widget.OperationWithInput;
@@ -206,7 +208,15 @@ public class RSConnect implements SessionInitHandler,
    public void onRSConnectDeployInitiated(
          final RSConnectDeployInitiatedEvent event)
    {
-      server_.getLintResults(event.getPath(), 
+      // get lint results for the file or directory being deployed, as appropriate
+      String deployTarget = event.getPath();
+      if (StringUtil.getExtension(event.getSourceFile()).toLowerCase().equals("rmd")) 
+      {
+         FileSystemItem sourceFSI = FileSystemItem.createDir(deployTarget);
+         deployTarget = sourceFSI.completePath(event.getSourceFile());
+      }
+
+      server_.getLintResults(deployTarget, 
             new ServerRequestCallback<RSConnectLintResults>()
       {
          @Override
