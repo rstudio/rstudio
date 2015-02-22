@@ -1,5 +1,5 @@
 /*
- * CppCompletionContext.java
+ * CppCompletionOperation.java
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -15,11 +15,7 @@
 
 package org.rstudio.studio.client.workbench.views.source.editors.text.cpp;
 
-import org.rstudio.core.client.CommandWithArg;
-
-public interface CppCompletionContext
+public interface CppCompletionOperation
 {
-   boolean isCompletionEnabled();
-   void withUpdatedDoc(CommandWithArg<String> onUpdated);
-   void cppCompletionOperation(CppCompletionOperation operation);
+   void execute(String docPath, int line, int column);
 }
