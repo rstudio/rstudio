@@ -254,7 +254,7 @@ std::vector<std::string> includesForLinkingTo(const std::string& linkingTo)
 
 
 RCompilationDatabase::RCompilationDatabase()
-   : usePrecompiledHeaders_(false), restoredCompilationConfig_(false)
+   : usePrecompiledHeaders_(true), restoredCompilationConfig_(false)
 {
 }
 
