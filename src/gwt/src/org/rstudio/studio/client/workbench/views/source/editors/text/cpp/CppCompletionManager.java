@@ -20,6 +20,7 @@ import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Invalidation;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.filetypes.DocumentMode;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
@@ -28,6 +29,7 @@ import org.rstudio.studio.client.workbench.views.console.shell.assist.Completion
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionUtils;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorSelection;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.PasteEvent;
 import org.rstudio.studio.client.workbench.views.source.model.CppServerOperations;
 import org.rstudio.studio.client.workbench.views.source.model.CppSourceLocation;
@@ -140,30 +142,33 @@ public class CppCompletionManager implements CompletionManager
       }
       else
       {
-         completionContext_.cppCompletionOperation(new CppCompletionOperation(){
-
-            @Override
-            public void execute(String docPath, int line, int column)
-            {
-               server_.goToCppDefinition(
-                     docPath, 
-                     line, 
-                     column, 
-                     new CppCompletionServerRequestCallback<CppSourceLocation>(
-                                                     "Finding definition...") {
-                        @Override
-                        public void onSuccess(CppSourceLocation loc)
-                        {
-                           if (loc != null)
-                           {
-                              fileTypeRegistry_.editFile(loc.getFile(), 
-                                                         loc.getPosition());  
-                           }
-                        }
-                     });
-            }
-            
-         });
+         if (completionContext_.isCompletionEnabled())
+         {
+            completionContext_.withUpdatedDoc(new CommandWithArg<String>() {
+               @Override
+               public void execute(final String docPath)
+               {
+                  Position pos = docDisplay_.getCursorPosition();
+                  
+                  server_.goToCppDefinition(
+                      docPath, 
+                      pos.getRow() + 1, 
+                      pos.getColumn() + 1, 
+                      new SimpleRequestCallback<CppSourceLocation>() {
+                         @Override
+                         public void onResponseReceived(CppSourceLocation loc)
+                         {
+                            if (loc != null)
+                            {
+                               fileTypeRegistry_.editFile(loc.getFile(), 
+                                                          loc.getPosition());  
+                            }
+                         }
+                      });
+                  
+               }
+            });
+         }
       }
    }
    

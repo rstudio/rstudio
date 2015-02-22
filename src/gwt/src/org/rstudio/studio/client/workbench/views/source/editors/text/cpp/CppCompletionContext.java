@@ -21,5 +21,4 @@ public interface CppCompletionContext
 {
    boolean isCompletionEnabled();
    void withUpdatedDoc(CommandWithArg<String> onUpdated);
-   void cppCompletionOperation(CppCompletionOperation operation);
 }

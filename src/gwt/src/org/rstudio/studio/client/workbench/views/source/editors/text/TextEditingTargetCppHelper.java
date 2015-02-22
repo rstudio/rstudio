@@ -14,16 +14,18 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
+import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.GlobalProgressDelayer;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionContext;
-import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionOperation;
-import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionServerRequestCallback;
 import org.rstudio.studio.client.workbench.views.source.model.CppCapabilities;
 import org.rstudio.studio.client.workbench.views.source.model.CppServerOperations;
 
@@ -35,12 +37,14 @@ public class TextEditingTargetCppHelper
                                      DocDisplay docDisplay)
    {
       completionContext_ = completionContext;
+      docDisplay_ = docDisplay;
       RStudioGinjector.INSTANCE.injectMembers(this);
    }
    
    @Inject
-   void initialize(CppServerOperations server)
+   void initialize(GlobalDisplay globalDisplay, CppServerOperations server)
    {
+      globalDisplay_ = globalDisplay;
       server_ = server;
    }
    
@@ -107,7 +111,7 @@ public class TextEditingTargetCppHelper
   
    public void findUsages()
    {
-      completionContext_.cppCompletionOperation(new CppCompletionOperation() {
+      cppCompletionOperation(new CppCompletionOperation() {
          @Override
          public void execute(String docPath, int line, int column)
          {
@@ -115,15 +119,67 @@ public class TextEditingTargetCppHelper
                   docPath, 
                   line, 
                   column, 
-                  new CppCompletionServerRequestCallback<Void>(
+                  new CppCompletionServerRequestCallback(
                                           "Finding usages..."));
          }
          
       });
    }
- 
+   
+   private interface CppCompletionOperation
+   {
+      void execute(String docPath, int line, int column);
+   }
+   
+   private void cppCompletionOperation(final CppCompletionOperation operation)
+   {
+      if (completionContext_.isCompletionEnabled())
+      {
+         completionContext_.withUpdatedDoc(new CommandWithArg<String>() {
+            @Override
+            public void execute(String docPath)
+            {
+               Position pos = docDisplay_.getSelectionStart();
+               
+               operation.execute(docPath, 
+                                 pos.getRow() + 1, 
+                                 pos.getColumn() + 1);
+            }
+         });
+      }
+   }
+   
+   private class CppCompletionServerRequestCallback 
+                        extends VoidServerRequestCallback
+   {
+      public CppCompletionServerRequestCallback(String message)
+      {
+         super();
+         progressDelayer_ =  new GlobalProgressDelayer(
+               globalDisplay_, 1000, "Finding usages..");
+      }
+
+      @Override
+      public void onSuccess()
+      {
+         progressDelayer_.dismiss();
+      }
+
+      @Override
+      public void onFailure()
+      {
+         progressDelayer_.dismiss();
+      }
+
+      private final GlobalProgressDelayer progressDelayer_;
+   }
+
+   
+  
+   private GlobalDisplay globalDisplay_;
    private CppServerOperations server_;
    private final CppCompletionContext completionContext_;
+   private final DocDisplay docDisplay_;
    
    // cache the value statically -- once we get an affirmative response
    // we never check again

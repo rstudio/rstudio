@@ -120,7 +120,6 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Mode.In
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionContext;
-import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionOperation;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.*;
 import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBar;
 import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBarPopupMenu;
@@ -4371,26 +4370,6 @@ public class TextEditingTarget implements
             }
          });
 
-      }
-
-      @Override
-      public void cppCompletionOperation(final CppCompletionOperation operation)
-      {
-         if (isCompletionEnabled())
-         {
-            withUpdatedDoc(new CommandWithArg<String>() {
-               @Override
-               public void execute(String docPath)
-               {
-                  Position pos = docDisplay_.getSelectionStart();
-                  
-                  operation.execute(docPath, 
-                                    pos.getRow() + 1, 
-                                    pos.getColumn() + 1);
-               }
-            });
-         }
-         
       }   
    };
    
