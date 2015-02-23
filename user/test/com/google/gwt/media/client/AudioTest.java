@@ -32,8 +32,6 @@ import com.google.gwt.user.client.ui.RootPanel;
 public class AudioTest extends MediaTest {
   protected Audio audio;
 
-  final static String audioUrlWebm = "smallwebm.webm";
-  final static String audioFormatWebm = "audio/webm";
   final static String audioUrlMp3 = "smallmp3.mp3";
   final static String audioFormatMp3 = "audio/mpeg";
   final static String audioUrlOgg = "smallogg.ogg";
@@ -57,17 +55,12 @@ public class AudioTest extends MediaTest {
       return; // don't continue if not supported
     }
 
-    String canPlayWebm = audio.canPlayType(audioFormatWebm);
     String canPlayMp3 = audio.canPlayType(audioFormatMp3);
     String canPlayOgg = audio.canPlayType(audioFormatOgg);
-    if (canPlayWebm.equals(MediaElement.CAN_PLAY_PROBABLY)) {
-      audio.setSrc(audioUrlWebm);
-    } else if (canPlayMp3.equals(MediaElement.CAN_PLAY_PROBABLY)) {
+    if (canPlayMp3.equals(MediaElement.CAN_PLAY_PROBABLY)) {
       audio.setSrc(audioUrlMp3);
     } else if (canPlayOgg.equals(MediaElement.CAN_PLAY_PROBABLY)) {
       audio.setSrc(audioUrlOgg);
-    } else if (canPlayWebm.equals(MediaElement.CAN_PLAY_MAYBE)) {
-      audio.setSrc(audioUrlWebm);
     } else if (canPlayMp3.equals(MediaElement.CAN_PLAY_MAYBE)) {
       audio.setSrc(audioUrlMp3);
     } else if (canPlayOgg.equals(MediaElement.CAN_PLAY_MAYBE)) {
