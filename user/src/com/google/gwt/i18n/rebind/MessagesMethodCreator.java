@@ -1128,6 +1128,16 @@ class MessagesMethodCreator extends AbstractMethodCreator {
     boolean isSafeHtml = m.getReturnType().getQualifiedSourceName().equals(
         SAFE_HTML_FQCN);
 
+    if (!isSafeHtml) {
+      // Check that no argument is SafeHtml
+      for (JParameter param : params) {
+        if (param.getType().getQualifiedSourceName().equals(SAFE_HTML_FQCN)) {
+          throw error(logger,
+              "Message methods with SafeHtml arguments can only have SafeHtml return type");
+        }
+      }
+    }
+
     String template = resourceEntry.getForm(null);
     if (template == null) {
       logger.log(TreeLogger.ERROR,"No default form for method " + m.getName()

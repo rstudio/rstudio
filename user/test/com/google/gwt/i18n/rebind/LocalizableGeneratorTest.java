@@ -18,13 +18,25 @@ package com.google.gwt.i18n.rebind;
 import com.google.gwt.codegen.server.AbortablePrintWriter;
 import com.google.gwt.codegen.server.CodeGenContext;
 import com.google.gwt.codegen.server.JavaSourceWriterBuilder;
+import com.google.gwt.core.ext.BadPropertyValueException;
+import com.google.gwt.core.ext.ConfigurationProperty;
+import com.google.gwt.core.ext.DefaultConfigurationProperty;
+import com.google.gwt.core.ext.DefaultSelectionProperty;
+import com.google.gwt.core.ext.GeneratorContext;
+import com.google.gwt.core.ext.PropertyOracle;
+import com.google.gwt.core.ext.SelectionProperty;
+import com.google.gwt.core.ext.StubGeneratorContext;
 import com.google.gwt.core.ext.TreeLogger;
+import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.javac.TypeOracleTestingUtils;
 import com.google.gwt.dev.javac.testing.impl.MockJavaResource;
+import com.google.gwt.dev.javac.testing.impl.MockResourceOracle;
+import com.google.gwt.dev.resource.ResourceOracle;
 import com.google.gwt.dev.shell.FailErrorLogger;
+import com.google.gwt.dev.util.UnitTestTreeLogger;
 import com.google.gwt.i18n.server.GwtLocaleFactoryImpl;
 import com.google.gwt.i18n.shared.GwtLocale;
 import com.google.gwt.i18n.shared.GwtLocaleFactory;
@@ -37,11 +49,13 @@ import java.io.PrintWriter;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.regex.Pattern;
 
 /**
  * Test {@link LocaleInfoGenerator}.
@@ -55,6 +69,66 @@ public class LocalizableGeneratorTest extends TestCase {
       StringBuffer code = new StringBuffer();
       code.append("package com.google.gwt.i18n.shared;\n");
       code.append("public interface Localizable { }\n");
+      return code;
+    }
+  };
+
+  private static final MockJavaResource LOCALIZABLE_RESOURCE = new MockJavaResource(
+      "com.google.gwt.i18n.client.LocalizableResource") {
+    @Override
+    public CharSequence getContent() {
+      StringBuffer code = new StringBuffer();
+      code.append("package com.google.gwt.i18n.client;\n");
+      code.append("import com.google.gwt.i18n.shared.Localizable;\n");
+      code.append("public interface LocalizableResource extends Localizable { }\n");
+      return code;
+    }
+  };
+
+  private static final MockJavaResource MESSAGES = new MockJavaResource(
+      "com.google.gwt.i18n.client.Messages") {
+    @Override
+    public CharSequence getContent() {
+      StringBuffer code = new StringBuffer();
+      code.append("package com.google.gwt.i18n.client;\n");
+      code.append("public interface Messages extends LocalizableResource {\n");
+      code.append("  public @interface DefaultMessage {\n");
+      code.append("    String value();\n");
+      code.append("  }\n");
+      code.append("}\n");
+      return code;
+    }
+  };
+
+  private static final MockJavaResource CONSTANTS = new MockJavaResource(
+      "com.google.gwt.i18n.client.Constants") {
+    @Override
+    public CharSequence getContent() {
+      StringBuffer code = new StringBuffer();
+      code.append("package com.google.gwt.i18n.client;\n");
+      code.append("public interface Constants extends LocalizableResource { }\n");
+      return code;
+    }
+  };
+
+  private static final MockJavaResource CONSTANTS_WITH_LOOKUP = new MockJavaResource(
+      "com.google.gwt.i18n.client.ConstantsWithLookup") {
+    @Override
+    public CharSequence getContent() {
+      StringBuffer code = new StringBuffer();
+      code.append("package com.google.gwt.i18n.client;\n");
+      code.append("public interface ConstantsWithLookup extends LocalizableResource { }\n");
+      return code;
+    }
+  };
+
+  private static final MockJavaResource SAFE_HTML = new MockJavaResource(
+      "com.google.gwt.safehtml.shared.SafeHtml") {
+    @Override
+    public CharSequence getContent() {
+      StringBuffer code = new StringBuffer();
+      code.append("package com.google.gwt.safehtml.shared;\n");
+      code.append("public interface SafeHtml { }\n");
       return code;
     }
   };
@@ -136,18 +210,65 @@ public class LocalizableGeneratorTest extends TestCase {
     }
   };
 
+  private static final MockJavaResource TEST_MESSAGES = new MockJavaResource(
+      "foo.TestMessages") {
+    @Override
+    public CharSequence getContent() {
+      StringBuffer code = new StringBuffer();
+      code.append("package foo;\n");
+      code.append("import com.google.gwt.i18n.client.Messages;\n");
+      code.append("import com.google.gwt.i18n.client.Messages.DefaultMessage;\n");
+      code.append("public interface TestMessages extends Messages {\n");
+      code.append("  @DefaultMessage(\"Abc\")\n");
+      code.append("  String message();\n");
+      code.append("}\n");
+      return code;
+    }
+  };
+
+  private static final MockJavaResource TEST_MESSAGES_WRONG_RETURN_TYPE = new MockJavaResource(
+      "foo.TestMessagesWrongReturnType") {
+    @Override
+    public CharSequence getContent() {
+      StringBuffer code = new StringBuffer();
+      code.append("package foo;\n");
+      code.append("import com.google.gwt.i18n.client.Messages;\n");
+      code.append("import com.google.gwt.i18n.client.Messages.DefaultMessage;\n");
+      code.append("public interface TestMessagesWrongReturnType extends Messages {\n");
+      code.append("  @DefaultMessage(\"Abc\")\n");
+      code.append("  Object message();\n");
+      code.append("}\n");
+      return code;
+    }
+  };
+
+  private static final MockJavaResource TEST_MESSAGES_SAFE_HTML_AS_STRING = new MockJavaResource(
+      "foo.TestMessagesSafeHtmlAsString") {
+    @Override
+    public CharSequence getContent() {
+      StringBuffer code = new StringBuffer();
+      code.append("package foo;\n");
+      code.append("import com.google.gwt.i18n.client.Messages;\n");
+      code.append("import com.google.gwt.i18n.client.Messages.DefaultMessage;\n");
+      code.append("import com.google.gwt.safehtml.shared.SafeHtml;\n");
+      code.append("public interface TestMessagesSafeHtmlAsString extends Messages {\n");
+      code.append("  @DefaultMessage(\"Abc {0}\")\n");
+      code.append("  String message(SafeHtml param);\n");
+      code.append("}\n");
+      return code;
+    }
+  };
+
   private Map<String, StringWriter> bufs;
 
   private CodeGenContext ctx;
 
   private GwtLocaleFactory factory;
-  private JClassType test;
-  
-  private JClassType testClass;
 
   private TypeOracle typeOracle;
 
-  public void testNotOverridable() {
+  public void testNotOverridable() throws NotFoundException {
+    JClassType testClass = typeOracle.getType("foo.TestClass");
     LocalizableGenerator gen = new LocalizableGenerator();
     GwtLocale en = factory.fromString("en");
     Map<String, Set<GwtLocale>> localeMap = new TreeMap<String, Set<GwtLocale>>();
@@ -163,7 +284,8 @@ public class LocalizableGeneratorTest extends TestCase {
     assertTrue("Should have delegated biff", genText.contains("biff("));
   }
 
-  public void testRuntimeSelection() throws IOException {
+  public void testRuntimeSelection() throws IOException, NotFoundException {
+    JClassType test = typeOracle.getType("foo.Test");
     LocalizableGenerator gen = new LocalizableGenerator();
     GwtLocale en = factory.fromString("en");
     GwtLocale en_US = factory.fromString("en_US");
@@ -206,14 +328,61 @@ public class LocalizableGeneratorTest extends TestCase {
     assertNull(reader.readLine());
   }
 
+  public void testMessages() throws UnableToCompleteException {
+    GeneratorContext context = new MockGeneratorContext(typeOracle, bufs);
+    TreeLogger logger = new FailErrorLogger();
+
+    LocalizableGenerator gen = new LocalizableGenerator();
+    String generatedClassName = gen.generate(logger, context, TEST_MESSAGES.getTypeName());
+
+    StringWriter writer = bufs.get(generatedClassName);
+    assertNotNull("Class " + generatedClassName + " not generated", writer);
+  }
+
+  public void testMessagesWrongReturnType() {
+    GeneratorContext context = new MockGeneratorContext(typeOracle, bufs);
+    UnitTestTreeLogger.Builder loggerBuilder = new UnitTestTreeLogger.Builder();
+    loggerBuilder.expectError(Pattern.compile(
+        "All methods in interfaces extending Messages must have a return type .*"),
+        null /* no exception */);
+    UnitTestTreeLogger logger =  loggerBuilder.createLogger();
+
+    LocalizableGenerator gen = new LocalizableGenerator();
+    try {
+      gen.generate(logger, context, TEST_MESSAGES_WRONG_RETURN_TYPE.getTypeName());
+      fail("generate() should have failed");
+    } catch (UnableToCompleteException e) {
+      // ok
+    }
+    logger.assertLogEntriesContainExpected();
+  }
+
+  public void testMessagesWithStringReturnTypeAndSafeHtmlArgument() {
+    GeneratorContext context = new MockGeneratorContext(typeOracle, bufs);
+    UnitTestTreeLogger.Builder loggerBuilder = new UnitTestTreeLogger.Builder();
+    loggerBuilder.expectError(
+        "Message methods with SafeHtml arguments can only have SafeHtml return type",
+        null /* no exception */);
+    UnitTestTreeLogger logger =  loggerBuilder.createLogger();
+
+    LocalizableGenerator gen = new LocalizableGenerator();
+    try {
+      gen.generate(logger, context, TEST_MESSAGES_SAFE_HTML_AS_STRING.getTypeName());
+      fail("generate() should have failed");
+    } catch (UnableToCompleteException e) {
+      // ok
+    }
+    logger.assertLogEntriesContainExpected();
+  }
+
   @Override
   protected void setUp() throws NotFoundException {
     factory = new GwtLocaleFactoryImpl();
     TreeLogger logger = new FailErrorLogger();
     typeOracle = TypeOracleTestingUtils.buildStandardTypeOracleWith(
-        logger, LOCALIZABLE, TEST, TEST_EN, TEST_EN_US, TEST_EN_GB, TEST_CLASS);
-    test = typeOracle.getType("foo.Test");
-    testClass = typeOracle.getType("foo.TestClass");
+        logger, LOCALIZABLE, LOCALIZABLE_RESOURCE, MESSAGES, CONSTANTS, CONSTANTS_WITH_LOOKUP,
+        SAFE_HTML, TEST, TEST_EN, TEST_EN_US, TEST_EN_GB, TEST_CLASS, TEST_MESSAGES,
+        TEST_MESSAGES_WRONG_RETURN_TYPE, TEST_MESSAGES_SAFE_HTML_AS_STRING);
     bufs = new HashMap<String, StringWriter>();
     ctx = new CodeGenContext() {
       @Override
@@ -259,5 +428,73 @@ public class LocalizableGeneratorTest extends TestCase {
         System.out.println(cause.getMessage());
       }
     };
+  }
+
+  private static final class MockGeneratorContext extends StubGeneratorContext {
+    private final PropertyOracle propertyOracle = new MockI18nPropertyOracle();
+    private final ResourceOracle resourceOracle = new MockResourceOracle();
+    private final TypeOracle typeOracle;
+    private final Map<String, StringWriter> bufs;
+
+    private MockGeneratorContext(TypeOracle typeOracle, Map<String, StringWriter> bufs) {
+      this.typeOracle = typeOracle;
+      this.bufs = bufs;
+    }
+
+    @Override
+    public PropertyOracle getPropertyOracle() {
+      return propertyOracle;
+    }
+
+    @Override
+    public ResourceOracle getResourcesOracle() {
+      return resourceOracle;
+    }
+
+    @Override
+    public TypeOracle getTypeOracle() {
+      return typeOracle;
+    }
+
+    @Override
+    public PrintWriter tryCreate(TreeLogger logger, String packageName, String simpleName) {
+      StringWriter writer = new StringWriter();
+      bufs.put(packageName + "." + simpleName, writer);
+      return new PrintWriter(writer);
+    }
+
+    @Override
+    public void commit(TreeLogger logger, PrintWriter pw) {
+      pw.flush();
+    }
+  }
+
+  private static final class MockI18nPropertyOracle implements PropertyOracle {
+    @Override
+    public SelectionProperty getSelectionProperty(TreeLogger logger, String propertyName)
+        throws BadPropertyValueException {
+      if (LocaleUtils.PROP_LOCALE.equals(propertyName)) {
+        TreeSet<String> allowedLocales = new TreeSet<String>();
+        allowedLocales.add("en");
+        return new DefaultSelectionProperty("en", "en", propertyName, allowedLocales);
+      }
+      throw new BadPropertyValueException(propertyName);
+    }
+
+    @Override
+    public ConfigurationProperty getConfigurationProperty(String propertyName)
+        throws BadPropertyValueException {
+      String value;
+      if (LocaleUtils.PROP_LOCALE_COOKIE.equals(propertyName)) {
+        value = "";
+      } else if (LocaleUtils.PROP_LOCALE_QUERY_PARAM.equals(propertyName)) {
+        value = "locale";
+      } else if (LocaleUtils.PROP_RUNTIME_LOCALES.equals(propertyName)) {
+        value = "en";
+      } else {
+        throw new BadPropertyValueException(propertyName);
+      }
+      return new DefaultConfigurationProperty(propertyName, Collections.singletonList(value));
+    }
   }
 }
