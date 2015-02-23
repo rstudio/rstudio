@@ -121,6 +121,10 @@ public class PdfJsWindow extends WindowEx
          win.addEventListener(unloadEvt, function() {
             @org.rstudio.studio.client.pdfviewer.model.PdfJsWindow::fireWindowClosedEvent()();
          });
+         
+         win.addEventListener("click", function(evt) {
+            @org.rstudio.studio.client.pdfviewer.model.PdfJsWindow::firePageClickEvent(Lorg/rstudio/studio/client/pdfviewer/model/PdfJsWindow;Lcom/google/gwt/dom/client/NativeEvent;Lcom/google/gwt/dom/client/Element;)(win, evt, evt.target);
+         });
       };
 
       // starts a timer that initializes the UI when the PDFView object appears
@@ -154,10 +158,6 @@ public class PdfJsWindow extends WindowEx
          startInitUiTimer();
       else
          this.addEventListener("load", initUi);
-      
-      this.addEventListener("click", function(evt) {
-         @org.rstudio.studio.client.pdfviewer.model.PdfJsWindow::firePageClickEvent(Lorg/rstudio/studio/client/pdfviewer/model/PdfJsWindow;Lcom/google/gwt/dom/client/NativeEvent;Lcom/google/gwt/dom/client/Element;)(win, evt, evt.target);
-      });
    }-*/;
    
    public final native void openPdf(String path, float scale, 
