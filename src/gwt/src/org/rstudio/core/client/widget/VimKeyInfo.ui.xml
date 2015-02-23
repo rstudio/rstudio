@@ -41,6 +41,10 @@ https://github.com/ajaxorg/ace/blob/master/lib/ace/keyboard/vim.js
 			<td>Forward, backward to before character <i>x</i></td>
 			</tr>
 			<tr>
+			<td><strong>;, ,</strong></td>
+			<td>Repeat last f/t command forward, backward</td>
+			</tr>
+			<tr>
 			<td><strong>^, $</strong></td>
 			<td>To first, last character on line</td>
 			</tr>
@@ -75,6 +79,10 @@ https://github.com/ajaxorg/ace/blob/master/lib/ace/keyboard/vim.js
 			<tr>
 			<td><strong>Ctrl+U, Ctrl+D</strong></td>
 			<td>Up, down by 1/2 screen</td>
+			</tr>
+			<tr>
+			<td><strong>{, }</strong></td>
+			<td>Back, forward by paragraph</td>
 			</tr>
 		</table>
 
@@ -158,10 +166,6 @@ https://github.com/ajaxorg/ace/blob/master/lib/ace/keyboard/vim.js
         	<td>Insert line after, before current</td>
         	</tr>
         	<tr>
-        	<td><strong>zz, zt, zb</strong></td>
-        	<td>Scroll current line to center, top, bottom</td>
-        	</tr>
-        	<tr>
         	<td><strong>dd</strong></td>
         	<td>Delete current line</td>
         	</tr>
@@ -176,6 +180,10 @@ https://github.com/ajaxorg/ace/blob/master/lib/ace/keyboard/vim.js
 			<tr>
 			<td><strong>v, V, Ctrl+V</strong></td>
 			<td>Select characters, lines, blocks</td>
+			</tr>
+			<tr>
+			<td><strong>gv</strong></td>
+			<td>Reselect last selection</td>
 			</tr>
 			<tr>
 			<td><strong>p, P</strong></td>
@@ -218,6 +226,10 @@ https://github.com/ajaxorg/ace/blob/master/lib/ace/keyboard/vim.js
 			<td>Copy/paste to/from <i>register</i></td>
 			</tr>
 			<tr>
+			<td><strong>Ctrl+A, Ctrl+X</strong></td>
+			<td>Increment, decrement next number</td>
+			</tr>
+			<tr>
 			<td><strong>Esc, Ctrl+[</strong></td>
 			<td>Leave insert mode</td>
 			</tr>
@@ -231,12 +243,16 @@ https://github.com/ajaxorg/ace/blob/master/lib/ace/keyboard/vim.js
 			<td>Search forward, back for <i>text</i></td>
 			</tr>
 			<tr>
-			<td><strong>*</strong></td>
-			<td>Search for text under cursor</td>
+			<td><strong>*, #</strong></td>
+			<td>Search forward, back for word under cursor</td>
 			</tr>
 			<tr>
-			<td><strong>n</strong></td>
-			<td>Go to next search match</td>
+			<td><strong>g*, g#</strong></td>
+			<td>Search forward, back for text under cursor</td>
+			</tr>
+			<tr>
+			<td><strong>n, N</strong></td>
+			<td>Go to next, previous search match</td>
 			</tr>
         </table>
 
@@ -252,6 +268,18 @@ https://github.com/ajaxorg/ace/blob/master/lib/ace/keyboard/vim.js
 			</tr>
         </table>
 
+        <h2>Scrolling</h2>
+        <table>
+			<tr>
+			<td><strong>Ctrl+E, Ctrl+Y</strong></td>
+			<td>Scroll down, up</td>
+			</tr>
+        	<tr>
+        	<td><strong>zz, zt, zb</strong></td>
+        	<td>Scroll current line to center, top, bottom</td>
+        	</tr>
+        </table>
+
         <h2>Ex Commands</h2>
         <table>
 			<tr>
@@ -259,8 +287,20 @@ https://github.com/ajaxorg/ace/blob/master/lib/ace/keyboard/vim.js
 			<td>Save, save and quit, without prompt</td>
 			</tr>
 			<tr>
+			<td><strong>:q, :bd</strong></td>
+			<td>Close tab</td>
+			</tr>
+			<tr>
+			<td><strong>:qall</strong></td>
+			<td>Close all tabs</td>
+			</tr>
+			<tr>
 			<td><strong>:bn, :bp</strong></td>
 			<td>Go to previous, next tab</td>
+			</tr>
+			<tr>
+			<td><strong>:badd, :e <i>file</i></strong></td>
+			<td>Add new tab, for <i>file</i></td>
 			</tr>
 			<tr>
 			<td><strong>:N</strong></td>
