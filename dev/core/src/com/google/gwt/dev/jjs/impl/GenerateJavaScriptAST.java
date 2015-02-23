@@ -2846,7 +2846,7 @@ public class GenerateJavaScriptAST {
     private String exportProvidedNamespace(JDeclaredType x, List<JsStatement> globalStmts,
         String lastProvidedNamespace, Pair<String, String> exportNamespacePair) {
       if (!exportNamespacePair.getLeft().equals(lastProvidedNamespace)) {
-        if (jsInteropMode == OptionJsInteropMode.Mode.JS) {
+        if (!jsExportClosureStyle) {
           JsName provideFunc = indexedFunctions.get("JavaClassHierarchySetupUtil.provide").getName();
           JsNameRef provideFuncRef = provideFunc.makeRef(x.getSourceInfo());
           JsInvocation provideCall = new JsInvocation(x.getSourceInfo());
@@ -2859,7 +2859,7 @@ public class GenerateJavaScriptAST {
           JsExprStmt provideStat = createAssignment(globalTemp.makeRef(x.getSourceInfo()),
               provideCall).makeStmt();
           globalStmts.add(provideStat);
-        } else if (jsInteropMode == OptionJsInteropMode.Mode.JS && jsExportClosureStyle) {
+        } else {
           // goog.provide statements prepended by linker, so namespace already exists
           // but enclosing constructor exports may have overwritten them
           // so write foo.bar.Baz = foo.bar.Baz || {}
