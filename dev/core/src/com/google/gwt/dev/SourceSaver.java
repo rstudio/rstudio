@@ -210,11 +210,9 @@ class SourceSaver {
       return false;
     }
 
-    OutputStream out = dest.openForWrite(destPrefix + path);
-    try {
-      ByteStreams.copy(Resources.asByteSource(resource), out);
-    } finally {
-      out.close();
+    try (InputStream resourceAsStream = Resources.asByteSource(resource).openStream();
+        OutputStream out = dest.openForWrite(destPrefix + path);) {
+      ByteStreams.copy(resourceAsStream, out);
     }
 
     return true;
