@@ -44,7 +44,6 @@ public class CompiledClass implements Serializable {
     if (in == null) {
       return null;
     }
-    CompiledClass[] orig = new CompiledClass[in.size()];
     List<CompiledClass> copy = new ArrayList<CompiledClass>();
 
     Map<CompiledClass, CompiledClass> enclosingClassMap = new HashMap<CompiledClass, CompiledClass>();

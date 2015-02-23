@@ -309,6 +309,34 @@ public abstract class JDeclaredType extends JReferenceType {
     return jsInteropType != JsInteropType.NONE;
   }
 
+  public boolean isOrExtendsJsType() {
+    if (isJsType()) {
+      return true;
+    }
+    for (JInterfaceType subIntf : getImplements()) {
+      if (subIntf.isJsType()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  public boolean hasAnyExports() {
+    for (JMethod method : getMethods()) {
+      if (method.isExported()) {
+        return true;
+      }
+    }
+
+    for (JField field : getFields()) {
+      if (field.isExported()) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
   public JsInteropType getJsInteropType() {
     return jsInteropType;
   }

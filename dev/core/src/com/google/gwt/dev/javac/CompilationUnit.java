@@ -445,6 +445,12 @@ public abstract class CompilationUnit implements Serializable {
 
   abstract CategorizedProblem[] getProblems();
 
+  /**
+   * Returns true if this compilation unit has any JsInterop root types (i.e. type with an export or
+   * a JsType).
+   */
+  abstract boolean hasJsInteropRootType();
+
   private List<String> getJdtClassNames(String topLevelClass) {
     List<String> classNames = new ArrayList<String>();
     for (CompiledClass cc : getCompiledClasses()) {

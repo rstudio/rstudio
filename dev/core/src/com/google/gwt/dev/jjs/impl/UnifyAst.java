@@ -767,7 +767,7 @@ public class UnifyAst {
       }
 
       rootTypeBinaryNames.add(rootType.getName());
-      if (jsInteropEnabled && (isJsType(rootType) || hasAnyExports(rootType))) {
+      if (jsInteropEnabled && (rootType.hasAnyExports() || rootType.isOrExtendsJsType())) {
         fullFlowIntoType(rootType);
       }
     }
@@ -963,29 +963,10 @@ public class UnifyAst {
       if (t instanceof JClassType && requiresDevirtualization(t)) {
         instantiate(t);
       }
-      if (hasAnyExports(t) || isJsType(t)) {
+      if (jsInteropEnabled && (t.hasAnyExports() || t.isOrExtendsJsType())) {
         instantiate(t);
       }
     }
-  }
-
-  private boolean hasAnyExports(JDeclaredType t) {
-    if (!jsInteropEnabled) {
-      return false;
-    }
-
-    for (JMethod method : t.getMethods()) {
-      if (program.typeOracle.isExportedMethod(method)) {
-        return true;
-      }
-    }
-
-    for (JField field : t.getFields()) {
-      if (program.typeOracle.isExportedField(field)) {
-        return true;
-      }
-    }
-    return false;
   }
 
   private boolean canAccessSuperMethod(JDeclaredType type, JMethod method) {
@@ -1311,59 +1292,60 @@ public class UnifyAst {
     if (program.isReferenceOnly(type) && !requiresDevirtualization(type)) {
       return;
     }
+    if (instantiatedTypes.contains(type)) {
+      return;
+    }
     if (type.isExternal()) {
       assert errorsFound;
       return;
     }
 
-    if (!instantiatedTypes.contains(type)) {
-      instantiatedTypes.add(type);
-      if (type.getSuperClass() != null) {
-        instantiate(translate(type.getSuperClass()));
-      }
-      for (JInterfaceType intf : type.getImplements()) {
-        instantiate(translate(intf));
-      }
-      staticInitialize(type);
-      boolean isJsType = isJsType(type);
+    instantiatedTypes.add(type);
+    if (type.getSuperClass() != null) {
+      instantiate(translate(type.getSuperClass()));
+    }
+    for (JInterfaceType intf : type.getImplements()) {
+      instantiate(translate(intf));
+    }
+    staticInitialize(type);
+    boolean isJsType = jsInteropEnabled && type.isOrExtendsJsType();
 
-      if (!type.isAbstract()) {
-        // this is a concrete type, add delegation methods for any unimplemented defender methods
-        maybeImplementDefenderMethods(type);
-      }
+    if (!type.isAbstract()) {
+      // this is a concrete type, add delegation methods for any unimplemented defender methods
+      maybeImplementDefenderMethods(type);
+    }
 
-      // Flow into any reachable virtual methods.
-      for (JMethod method : type.getMethods()) {
-        if (method.canBePolymorphic()) {
-          if (isJsType) {
-            // Fake a call into the method to keep it around
-            flowInto(method);
-            continue;
-          }
-          String signature = method.getSignature();
-          if (virtualMethodsLive.contains(signature)) {
-            assert !virtualMethodsPending.containsKey(signature);
-            flowInto(method);
-          } else {
-            List<JMethod> pending = virtualMethodsPending.get(signature);
-            if (pending == null) {
-              pending = Lists.create(method);
-            } else {
-              pending = Lists.add(pending, method);
-            }
-            virtualMethodsPending.put(signature, pending);
-          }
-        } else if (program.typeOracle.isExportedMethod(method) &&
-            (method.isStatic() || method.isConstructor())) {
-          // rescue any @JsExport methods
+    // Flow into any reachable virtual methods.
+    for (JMethod method : type.getMethods()) {
+      if (method.canBePolymorphic()) {
+        if (isJsType) {
+          // Fake a call into the method to keep it around
           flowInto(method);
+          continue;
         }
+        String signature = method.getSignature();
+        if (virtualMethodsLive.contains(signature)) {
+          assert !virtualMethodsPending.containsKey(signature);
+          flowInto(method);
+        } else {
+          List<JMethod> pending = virtualMethodsPending.get(signature);
+          if (pending == null) {
+            pending = Lists.create(method);
+          } else {
+            pending = Lists.add(pending, method);
+          }
+          virtualMethodsPending.put(signature, pending);
+        }
+      } else if (program.typeOracle.isExportedMethod(method)
+          && (method.isStatic() || method.isConstructor())) {
+        // rescue any @JsExport methods
+        flowInto(method);
       }
+    }
 
-      for (JField field : type.getFields()) {
-        if (field.isStatic() && program.typeOracle.isExportedField(field)) {
-          flowInto(field);
-        }
+    for (JField field : type.getFields()) {
+      if (field.isStatic() && program.typeOracle.isExportedField(field)) {
+        flowInto(field);
       }
     }
   }
@@ -1432,22 +1414,6 @@ public class UnifyAst {
       return false;
     }
     return type == program.getJavaScriptObject() || isJso(type.getSuperClass());
-  }
-
-  private boolean isJsType(JDeclaredType intf) {
-    if (!jsInteropEnabled) {
-      return false;
-    }
-
-    if (intf.isJsType()) {
-      return true;
-    }
-    for (JInterfaceType subIntf : intf.getImplements()) {
-      if (isJsType(subIntf)) {
-        return true;
-      }
-    }
-    return false;
   }
 
   /**

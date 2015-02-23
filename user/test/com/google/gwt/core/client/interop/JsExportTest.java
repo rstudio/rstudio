@@ -55,6 +55,16 @@ public class JsExportTest extends GWTTestCase {
     assertTrue(MyClassExportsMethod.calledFromFoo);
   }
 
+  public void testMethodExport_notReferencedFromJava() {
+    // Exported by MyClassExportsMethodWithoutReference which is not referenced by Java. This
+    // ensures that we correctly collect root types.
+    assertEquals(42, onlyCalledFromJs());
+  }
+
+  private native int onlyCalledFromJs() /*-{
+    return $wnd.onlyCalledFromJs();
+  }-*/;
+
   public void testClinit() {
     ScriptInjector.fromString("new $wnd.MyClassExportsMethodWithClinit();").inject();
     assertEquals(23, MyClassExportsMethodWithClinit.magicNumber);

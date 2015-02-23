@@ -256,11 +256,11 @@ public class JTypeOracle implements Serializable {
   }
 
   public boolean isExportedField(JField field) {
-    return isJsInteropEnabled() && field.getExportName() != null && !field.isNoExport();
+    return isJsInteropEnabled() && field.isExported();
   }
 
   public boolean isExportedMethod(JMethod method) {
-    return isJsInteropEnabled() && method.getExportName() != null && !method.isNoExport();
+    return isJsInteropEnabled() && method.isExported();
   }
 
   public boolean isJsInteropEnabled() {
@@ -475,11 +475,6 @@ public class JTypeOracle implements Serializable {
    * overlay type that initially implements it.
    */
   private final Map<String, String> jsoByInterface = Maps.newHashMap();
-
-  /**
-   * A set of all JsTypes.
-   */
-  private final Set<JInterfaceType> jsInterfaces = Sets.newIdentityHashSet();
 
   /**
    * A mapping from the type name to the actual type instance.
@@ -781,15 +776,7 @@ public class JTypeOracle implements Serializable {
     recordImmediateTypeRelations(moduleDeclaredTypes);
     computeExtendedTypeRelations();
 
-    jsInterfaces.clear();
-
     for (JDeclaredType type : declaredTypes) {
-
-      if (type instanceof JInterfaceType) {
-        if (((JInterfaceType) type).isJsType()) {
-          jsInterfaces.add((JInterfaceType) type);
-        }
-      }
       // first time through, record all exported methods
       for (JMethod method : type.getMethods()) {
         if (isExportedMethod(method)) {

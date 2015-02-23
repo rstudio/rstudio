@@ -52,10 +52,6 @@ public class JField extends JVariable implements CanBeStatic, HasEnclosingType {
   private String exportName;
   private boolean noExport = false;
 
-  public boolean isNoExport() {
-    return noExport;
-  }
-
   public void setNoExport(boolean noExport) {
     this.noExport = noExport;
   }
@@ -66,6 +62,10 @@ public class JField extends JVariable implements CanBeStatic, HasEnclosingType {
 
   public String getExportName() {
     return exportName;
+  }
+
+  public boolean isExported() {
+    return exportName != null && !noExport;
   }
 
   private static class ExternalSerializedForm implements Serializable {

@@ -24,6 +24,9 @@ import com.google.gwt.dev.util.log.speedtracer.DevModeEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 import com.google.gwt.thirdparty.guava.common.annotations.VisibleForTesting;
+import com.google.gwt.thirdparty.guava.common.base.Function;
+import com.google.gwt.thirdparty.guava.common.base.Predicates;
+import com.google.gwt.thirdparty.guava.common.collect.FluentIterable;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -164,6 +167,18 @@ public class CompilationState {
    */
   public Collection<CompilationUnit> getCompilationUnits() {
     return exposedUnits;
+  }
+
+  public Iterable<String> getQualifiedJsInteropRootTypesNames() {
+    Function<CompilationUnit, String> toRootTypeName = new Function<CompilationUnit, String>() {
+      @Override
+      public String apply(CompilationUnit compilationUnit) {
+        return compilationUnit.hasJsInteropRootType() ? compilationUnit.getTypeName() : null;
+      }
+    };
+    return FluentIterable.from(unitMap.values())
+        .transform(toRootTypeName)
+        .filter(Predicates.notNull());
   }
 
   public CompilerContext getCompilerContext() {

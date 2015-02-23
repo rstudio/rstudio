@@ -18,6 +18,8 @@ package com.google.gwt.dev.javac;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.util.collect.Lists;
+import com.google.gwt.thirdparty.guava.common.base.Predicate;
+import com.google.gwt.thirdparty.guava.common.collect.Iterables;
 
 import org.eclipse.jdt.core.compiler.CategorizedProblem;
 
@@ -37,6 +39,7 @@ abstract class CompilationUnitImpl extends CompilationUnit {
   private final Dependencies dependencies;
   private final List<CompiledClass> exposedCompiledClasses;
   private final boolean hasErrors;
+  private final boolean hasJsInteropRootType;
   private final List<JsniMethod> jsniMethods;
   private final MethodArgNamesLookup methodArgs;
   private final CategorizedProblem[] problems;
@@ -59,6 +62,11 @@ abstract class CompilationUnitImpl extends CompilationUnit {
       }
     }
     this.hasErrors = hasAnyErrors;
+    this.hasJsInteropRootType = Iterables.any(types, new Predicate<JDeclaredType>() {
+      @Override public boolean apply(JDeclaredType type) {
+        return type.hasAnyExports() || type.isOrExtendsJsType();
+      }
+    });
     for (CompiledClass cc : compiledClasses) {
       cc.initUnit(this);
     }
@@ -97,6 +105,11 @@ abstract class CompilationUnitImpl extends CompilationUnit {
   @Override
   public boolean isError() {
     return hasErrors;
+  }
+
+  @Override
+  boolean hasJsInteropRootType() {
+    return hasJsInteropRootType;
   }
 
   @Override

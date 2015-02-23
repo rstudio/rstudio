@@ -122,6 +122,11 @@ public class MockCompilationUnit extends CompilationUnit {
   }
 
   @Override
+  boolean hasJsInteropRootType() {
+    return false;
+  }
+
+  @Override
   ContentId getContentId() {
     return contentId;
   }

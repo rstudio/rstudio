@@ -68,6 +68,10 @@ public class JMethod extends JNode implements HasEnclosingType, HasName, HasType
     return exportName;
   }
 
+  public boolean isExported() {
+    return exportName != null && !noExport;
+  }
+
   public void setJsProperty(boolean jsProperty) {
     this.jsProperty = jsProperty;
   }
