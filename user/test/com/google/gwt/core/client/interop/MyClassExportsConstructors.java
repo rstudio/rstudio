@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Google Inc.
+ * Copyright 2015 Google Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,16 +19,22 @@ import com.google.gwt.core.client.js.JsExport;
 import com.google.gwt.core.client.js.JsType;
 
 /**
- * Test access to static field from JS through exported virtual method.
+ * A test class that exhibits a variety of @JsExports on constructors.
  */
-@JsExport
 @JsType
-public class StaticInitializerVirtualMethod {
-  private static StaticInitializerVirtualMethod STATIC = new StaticInitializerVirtualMethod();
-  public StaticInitializerVirtualMethod getInstance() {
-    return STATIC;
+public class MyClassExportsConstructors {
+  private int a;
+
+  @JsExport("MyClassExportsConstructors1")
+  public MyClassExportsConstructors(int a) {
+    this.a = a;
   }
 
-  public StaticInitializerVirtualMethod() {
+  public MyClassExportsConstructors() {
+    a = 1;
+  }
+
+  public int foo() {
+    return a * 2;
   }
 }

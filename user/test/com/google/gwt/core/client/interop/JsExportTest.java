@@ -95,6 +95,58 @@ public class JsExportTest extends GWTTestCase {
     return obj.getInstance();
   }-*/;
 
+  public void testExportClass_implicitConstructor() {
+    assertNotNull(createMyExportedClassWithImplicitConstructor());
+  }
+
+  private native Object createMyExportedClassWithImplicitConstructor() /*-{
+    return new $wnd.woo.MyExportedClassWithImplicitConstructor();
+  }-*/;
+
+  public void testExportClass_multipleConstructors() {
+    assertEquals(3, getSumByDefaultConstructor());
+    assertEquals(30, getSumByConstructor());
+  }
+
+  private native int getSumByDefaultConstructor() /*-{
+    var obj = new $wnd.MyClassConstructor1();
+    return obj.sum();
+  }-*/;
+
+  private native int getSumByConstructor() /*-{
+    var obj = new $wnd.MyClassConstructor2(10, 20);
+    return obj.sum();
+  }-*/;
+
+  public void testExportClass_instanceOf() {
+    assertTrue(createMyExportedClassWithMultipleConstructors1()
+        instanceof MyExportedClassWithMultipleConstructors);
+    assertTrue(createMyExportedClassWithMultipleConstructors2()
+        instanceof MyExportedClassWithMultipleConstructors);
+  }
+
+  private native Object createMyExportedClassWithMultipleConstructors1() /*-{
+    return new $wnd.MyClassConstructor1();
+  }-*/;
+
+  private native Object createMyExportedClassWithMultipleConstructors2() /*-{
+    return new $wnd.MyClassConstructor2(10, 20);
+  }-*/;
+
+  public void testExportConstructors() {
+    assertEquals(4, getFooByConstructorWithExportSymbol());
+    assertNull(getNotExportedConstructor());
+  }
+
+  private native int getFooByConstructorWithExportSymbol() /*-{
+    var obj = new $wnd.MyClassExportsConstructors1(2);
+    return obj.foo();
+  }-*/;
+
+  private native Object getNotExportedConstructor() /*-{
+    return $wnd.woo.MyClassExportsConstructors;
+  }-*/;
+
   public void testExportedField() {
     assertEquals(100, MyExportedClass.EXPORTED_1);
     assertEquals(100, getExportedField());

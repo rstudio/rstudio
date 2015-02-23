@@ -433,6 +433,77 @@ public class JSORestrictionsTest extends TestCase {
     shouldGenerateError(buggyCode, "Line 3: " + JSORestrictionsChecker.ERR_JSEXPORT_ON_ENUMERATION);
   }
 
+  public void testJsExportOnConstructors() {
+    StringBuilder goodCode = new StringBuilder();
+    goodCode.append("import com.google.gwt.core.client.js.JsExport;\n");
+    goodCode.append("public class Buggy {\n");
+    // A constructor JsExported without explicit symbol is fine here.
+    // Leave it to NameConflictionChecker.
+    goodCode.append("  @JsExport public Buggy() { }\n");
+    goodCode.append("  @JsExport(\"buggy1\") public Buggy(int a) { }\n");
+    goodCode.append("  public Buggy(int a, int b) { }\n");
+    goodCode.append("}");
+
+    shouldGenerateNoError(goodCode);
+  }
+
+  public void testJsExportOnClassWithDefaultConstructor() {
+    StringBuilder goodCode = new StringBuilder();
+    goodCode.append("import com.google.gwt.core.client.js.JsExport;\n");
+    goodCode.append("@JsExport public class Buggy {}");
+
+    shouldGenerateNoError(goodCode);
+  }
+
+  public void testJsExportOnClassWithExplicitConstructor() {
+    StringBuilder goodCode = new StringBuilder();
+    goodCode.append("import com.google.gwt.core.client.js.JsExport;\n");
+    goodCode.append("@JsExport public class Buggy {\n");
+    goodCode.append("  public Buggy() { }");
+    goodCode.append("}");
+
+    shouldGenerateNoError(goodCode);
+  }
+
+  public void testJsExportOnClassWithOnePublicConstructor() {
+    StringBuilder goodCode = new StringBuilder();
+    goodCode.append("import com.google.gwt.core.client.js.JsExport;\n");
+    goodCode.append("@JsExport public class Buggy {\n");
+    goodCode.append("  public Buggy() { }\n");
+    goodCode.append("  private Buggy(int a) { }\n");
+    goodCode.append("  protected Buggy(int a, int b) { }\n");
+    goodCode.append("  Buggy(int a, int b, int c) { }\n");
+    goodCode.append("}");
+
+    shouldGenerateNoError(goodCode);
+  }
+
+  public void testJsExportOnClassWithMultipleConstructors() {
+    StringBuilder goodCode = new StringBuilder();
+    goodCode.append("import com.google.gwt.core.client.js.JsExport;\n");
+    goodCode.append("import com.google.gwt.core.client.js.JsNoExport;\n");
+    goodCode.append("@JsExport public class Buggy {\n");
+    goodCode.append("  @JsExport(\"Buggy1\") public Buggy() { }\n");
+    goodCode.append("  @JsExport(\"Buggy2\") public Buggy(int a) { }\n");
+    goodCode.append("  @JsExport public Buggy(int a, int b) { }\n");
+    goodCode.append("  @JsNoExport public Buggy(int a, int b, int c) { }\n");
+    goodCode.append("}");
+
+    shouldGenerateNoError(goodCode);
+  }
+
+  public void testJsExportNotOnClassWithMultipleConstructors() {
+    StringBuilder buggyCode = new StringBuilder();
+    buggyCode.append("import com.google.gwt.core.client.js.JsExport;\n");
+    buggyCode.append("@JsExport public class Buggy {\n");
+    buggyCode.append("  public Buggy() { }\n");
+    buggyCode.append("  @JsExport(\"foo\") public Buggy(int a) { }\n");
+    buggyCode.append("}");
+
+    shouldGenerateError(buggyCode, "Line 3: "
+        + JSORestrictionsChecker.ERR_EXPLICIT_JSEXPORT_OR_JSNOEXPORT_ON_CONSTRUCTORS);
+  }
+
   public void testJsExportNotOnNonPublicClass() {
     StringBuilder buggyCode = new StringBuilder();
     buggyCode.append("import com.google.gwt.core.client.js.JsExport;\n");

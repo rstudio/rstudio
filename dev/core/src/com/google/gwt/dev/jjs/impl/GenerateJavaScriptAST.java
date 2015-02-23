@@ -2739,31 +2739,16 @@ public class GenerateJavaScriptAST {
       String lastProvidedNamespace = null;
       boolean createdClinit = false;
 
-      // export 1 constructor
-      JConstructor ctor = null;
       for (JMethod m : x.getMethods()) {
-        if (m instanceof JConstructor) {
-          if (!((JConstructor) m).isDefaultConstructor()
-              && typeOracle.isExportedMethod(m)) {
-            ctor = (JConstructor) m;
-            break;
-          }
-        }
-      }
-
-      for (JMethod m : x.getMethods()) {
-        if (m instanceof JConstructor && m != ctor) {
-          continue;
-        }
         // static functions or constructors may be exported
-        if (m == ctor && !m.isPrivate() ||
-            (m.isStatic()) && typeOracle.isExportedMethod(m)) {
+        if (typeOracle.isExportedMethod(m)) {
 
           createdClinit = maybeHoistClinit(exportStmts, createdClinit, maybeCreateClinitCall(m));
-          JsExpression exportRhs = createJsInteropBridgeMethod(m,
-              names.get(m).makeRef(m.getSourceInfo()));
+          JsExpression exportRhs =
+              createJsInteropBridgeMethod(m, names.get(m).makeRef(m.getSourceInfo()));
           String exportName = m.getQualifiedExportName();
-          lastProvidedNamespace = exportMember(x, globalStmts, lastProvidedNamespace, exportRhs, exportName);
+          lastProvidedNamespace =
+              exportMember(x, globalStmts, lastProvidedNamespace, exportRhs, exportName);
         }
       }
 
@@ -2774,11 +2759,12 @@ public class GenerateJavaScriptAST {
                 + " is discouraged. Due to the way exporting works, the value of the exported field"
                 + " will not be reflected across Java&JavaScript border.");
           }
-          createdClinit = maybeHoistClinit(exportStmts, createdClinit,
-              maybeCreateClinitCall(f, true));
+          createdClinit =
+              maybeHoistClinit(exportStmts, createdClinit, maybeCreateClinitCall(f, true));
           JsNameRef exportRhs = names.get(f).makeRef(f.getSourceInfo());
           String exportName = f.getQualifiedExportName();
-          lastProvidedNamespace = exportMember(x, globalStmts, lastProvidedNamespace, exportRhs, exportName);
+          lastProvidedNamespace =
+              exportMember(x, globalStmts, lastProvidedNamespace, exportRhs, exportName);
         }
       }
     }
