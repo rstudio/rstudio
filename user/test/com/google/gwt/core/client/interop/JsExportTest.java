@@ -94,6 +94,61 @@ public class JsExportTest extends GWTTestCase {
     return obj.getInstance();
   }-*/;
 
+  public void testExportedField() {
+    assertEquals(100, MyExportedClass.EXPORTED_1);
+    assertEquals(100, getExportedField());
+    setExportedField(1000);
+    assertEquals(100, MyExportedClass.EXPORTED_1);
+    assertEquals(1000, getExportedField());
+  }
+
+  private native int getExportedField() /*-{
+    return $wnd.woo.MyExportedClass.EXPORTED_1;
+  }-*/;
+
+  private native void setExportedField(int a) /*-{
+    $wnd.woo.MyExportedClass.EXPORTED_1 = a;
+  }-*/;
+
+  public void testExportedMethod() {
+    assertEquals(200, MyExportedClass.foo());
+    assertEquals(200, callExportedMethod());
+    setExportedMethod();
+    assertEquals(200, MyExportedClass.foo());
+    assertEquals(1000, callExportedMethod());
+  }
+
+  private native int callExportedMethod() /*-{
+    return $wnd.woo.MyExportedClass.foo();
+  }-*/;
+
+  private native int setExportedMethod() /*-{
+    $wnd.woo.MyExportedClass.foo = function () {
+      return 1000;
+    };
+  }-*/;
+
+  public void testExportedFieldRefInExportedMethod() {
+    assertEquals(5, MyExportedClass.bar(0, 0));
+    assertEquals(5, callExportedFieldByExportedMethod(0, 0));
+    setExportedField2(10);
+    assertEquals(10, getExportedField2());
+    assertEquals(7, MyExportedClass.bar(1, 1));
+    assertEquals(7, callExportedFieldByExportedMethod(1, 1));
+  }
+
+  private native int callExportedFieldByExportedMethod(int a, int b) /*-{
+    return $wnd.woo.MyExportedClass.bar(a, b);
+  }-*/;
+
+  private native void setExportedField2(int a) /*-{
+    $wnd.woo.MyExportedClass.EXPORTED_2 = $wnd.newInnerClass(a);
+  }-*/;
+
+  private native int getExportedField2() /*-{
+    return $wnd.woo.MyExportedClass.EXPORTED_2.field;
+  }-*/;
+
   public void testNoExport() {
     assertNull(getNotExportedMethods());
     assertNull(getNotExportedFields());
