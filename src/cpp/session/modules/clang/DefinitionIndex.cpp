@@ -75,13 +75,19 @@ CXChildVisitResult cursorVisitor(CXCursor cxCursor,
    if (!location.isFromMainFile())
       return CXChildVisit_Continue;
 
-   // ensure it's a definition with linkage
-   if (!cursor.isDefinition() || !cursor.hasLinkage())
+   // get kind
+   CXCursorKind cursorKind = cursor.getKind();
+
+   // ensure it's a definition with linkage or a typedef
+   if ((!cursor.isDefinition() || !cursor.hasLinkage()) &&
+       cursorKind != CXCursor_TypedefDecl)
+   {
       return CXChildVisit_Continue;
+   }
 
    // determine kind
    CppDefinitionKind kind = CppInvalidDefinition;
-   switch (cursor.getKind())
+   switch (cursorKind)
    {
       case CXCursor_Namespace:
          kind = CppNamespaceDefinition;
@@ -105,6 +111,9 @@ CXChildVisitResult cursorVisitor(CXCursor cxCursor,
          break;
       case CXCursor_CXXMethod:
          kind = CppMemberFunctionDefinition;
+         break;
+      case CXCursor_TypedefDecl:
+         kind = CppTypedefDefinition;
          break;
       default:
          kind = CppInvalidDefinition;
@@ -266,6 +275,9 @@ std::ostream& operator<<(std::ostream& os, const CppDefinition& definition)
          break;
       case CppMemberFunctionDefinition:
          kindStr = "M";
+         break;
+      case CppTypedefDefinition:
+         kindStr = "T";
          break;
       default:
          kindStr = " ";
@@ -445,7 +457,7 @@ CppDefinition cppDefinitionFromJson(const json::Object& object)
 
 FilePath definitionIndexFilePath()
 {
-   return module_context::scopedScratchPath().childPath("cpp-definitions-index");
+   return module_context::scopedScratchPath().childPath("cpp-definition-cache");
 }
 
 void loadDefinitionIndex()
