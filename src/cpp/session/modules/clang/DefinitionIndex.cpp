@@ -75,14 +75,17 @@ CXChildVisitResult cursorVisitor(CXCursor cxCursor,
    if (!location.isFromMainFile())
       return CXChildVisit_Continue;
 
-   // ensure it's a definition with external linkage
-   if (!cursor.isDefinition() || !cursor.hasExternalLinkage())
+   // ensure it's a definition with linkage
+   if (!cursor.isDefinition() || !cursor.hasLinkage())
       return CXChildVisit_Continue;
 
    // determine kind
    CppDefinitionKind kind = CppInvalidDefinition;
    switch (cursor.getKind())
    {
+      case CXCursor_Namespace:
+         kind = CppNamespaceDefinition;
+         break;
       case CXCursor_ClassDecl:
       case CXCursor_ClassTemplate:
          kind = CppClassDefinition;
@@ -137,10 +140,13 @@ CXChildVisitResult cursorVisitor(CXCursor cxCursor,
                             name,
                             cursor.getSourceLocation().getSpellingLocation());
 
-   // yield the definition (break if requested)
-   DefinitionVisitor& visitor = *((DefinitionVisitor*)clientData);
-   if (!visitor(definition))
-      return CXChildVisit_Break;
+   // yield the definition if it's not a namespace (break if requested)
+   if (kind != CppNamespaceDefinition)
+   {
+      DefinitionVisitor& visitor = *((DefinitionVisitor*)clientData);
+      if (!visitor(definition))
+         return CXChildVisit_Break;
+   }
 
    // recurse if necessary
    if (kind == CppNamespaceDefinition ||
@@ -439,7 +445,7 @@ CppDefinition cppDefinitionFromJson(const json::Object& object)
 
 FilePath definitionIndexFilePath()
 {
-   return module_context::scopedScratchPath().childPath("cpp-definition-index");
+   return module_context::scopedScratchPath().childPath("cpp-definitions-index");
 }
 
 void loadDefinitionIndex()
