@@ -972,7 +972,8 @@ public class CompilerTest extends ArgProcessorTestBase {
     // Reverting to just a single dialog.alert() starts succeeding again.
     compileToJs(compilerOptions, applicationDir, "com.foo.SimpleModule",
         Lists.<MockResource> newArrayList(complexDialogResourceSansExport), minimalRebuildCache,
-        stringSet("com.foo.ComplexDialog", "com.foo.TestEntryPoint"), JsOutputOption.PRETTY);
+        stringSet("com.foo.SimpleDialog", "com.foo.ComplexDialog", "com.foo.TestEntryPoint"),
+        JsOutputOption.PRETTY);
   }
 
   public void testGwtCreateJsoRebindResult() throws Exception {
