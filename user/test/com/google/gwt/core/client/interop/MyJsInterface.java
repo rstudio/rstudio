@@ -25,7 +25,8 @@ interface MyJsInterface {
   @JsProperty
   int x();
 
-  @JsProperty MyJsInterface x(int a);
+  @JsProperty
+  MyJsInterface x(int a);
 
   @JsProperty
   int getY();

@@ -75,6 +75,7 @@ import com.google.gwt.dev.jjs.impl.JavaAstVerifier;
 import com.google.gwt.dev.jjs.impl.JavaToJavaScriptMap;
 import com.google.gwt.dev.jjs.impl.JsAbstractTextTransformer;
 import com.google.gwt.dev.jjs.impl.JsFunctionClusterer;
+import com.google.gwt.dev.jjs.impl.JsInteropRestrictionChecker;
 import com.google.gwt.dev.jjs.impl.JsNoopTransformer;
 import com.google.gwt.dev.jjs.impl.JsTypeLinker;
 import com.google.gwt.dev.jjs.impl.JsniRestrictionChecker;
@@ -957,6 +958,7 @@ public abstract class JavaToJavaScriptCompiler {
 
         // TODO(stalcup): hide metrics gathering in a callback or subclass
         JsniRestrictionChecker.exec(logger, jprogram);
+        JsInteropRestrictionChecker.exec(logger, jprogram, getMinimalRebuildCache());
         logTypeOracleMetrics(precompilationMetrics, compilationState);
         Memory.maybeDumpMemory("AstOnly");
         AstDumper.maybeDumpAST(jprogram);

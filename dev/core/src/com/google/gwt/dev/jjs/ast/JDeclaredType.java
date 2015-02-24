@@ -528,7 +528,6 @@ public abstract class JDeclaredType extends JReferenceType {
   }
 
   public String getQualifiedExportName() {
-
     if (enclosingType == null) {
       return jsNamespace == null || jsNamespace.isEmpty() ? getName() :
           jsNamespace + "." + getLeafName();

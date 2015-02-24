@@ -141,6 +141,31 @@ public class CompilerTest extends ArgProcessorTestBase {
           "  }",
           "}");
 
+  private MockJavaResource simpleDialogResourceWithExport =
+      JavaResourceBase.createMockJavaResource("com.foo.SimpleDialog",
+          "package com.foo;",
+          "import com.google.gwt.core.client.js.JsExport;",
+          "public class SimpleDialog {",
+          "  @JsExport(\"show\")",
+          "  public static void show() {}",
+          "}");
+
+  private MockJavaResource complexDialogResourceWithExport =
+      JavaResourceBase.createMockJavaResource("com.foo.ComplexDialog",
+          "package com.foo;",
+          "import com.google.gwt.core.client.js.JsExport;",
+          "public class ComplexDialog {",
+          "  @JsExport(\"show\")",
+          "  public static void show() {}",
+          "}");
+
+  private MockJavaResource complexDialogResourceSansExport =
+      JavaResourceBase.createMockJavaResource("com.foo.ComplexDialog",
+          "package com.foo;",
+          "public class ComplexDialog {",
+          "  public static void show() {}",
+          "}");
+
   private MockJavaResource simpleModelEntryPointResource =
       JavaResourceBase.createMockJavaResource("com.foo.TestEntryPoint",
           "package com.foo;",
@@ -458,6 +483,18 @@ public class CompilerTest extends ArgProcessorTestBase {
           "  public void onModuleLoad() {",
           "    GWT.create(MyJsType.class);",
           "    GWT.create(MyTypeImplementsJsType.class);",
+          "  }",
+          "}");
+
+  private MockJavaResource dialogEntryPointResource =
+      JavaResourceBase.createMockJavaResource("com.foo.TestEntryPoint",
+          "package com.foo;",
+          "import com.google.gwt.core.client.EntryPoint;",
+          "public class TestEntryPoint implements EntryPoint {",
+          "  @Override",
+          "  public void onModuleLoad() {",
+          "    SimpleDialog simpleDialog = new SimpleDialog();",
+          "    ComplexDialog complexDialog = new ComplexDialog();",
           "  }",
           "}");
 
@@ -909,6 +946,33 @@ public class CompilerTest extends ArgProcessorTestBase {
     compileToJs(compilerOptions, Files.createTempDir(), "com.foo.SimpleModule",
         Lists.newArrayList(simpleModuleResource, gwtCreateEntryPointResource),
         new MinimalRebuildCache(), emptySet, JsOutputOption.PRETTY);
+  }
+
+  public void testJsInteropNameCollision() throws Exception {
+    MinimalRebuildCache minimalRebuildCache = new MinimalRebuildCache();
+    File applicationDir = Files.createTempDir();
+    CompilerOptions compilerOptions = new CompilerOptionsImpl();
+    compilerOptions.setJsInteropMode(OptionJsInteropMode.Mode.JS);
+
+    // Simple compile with one dialog.alert() export succeeds.
+    compileToJs(compilerOptions, applicationDir, "com.foo.SimpleModule", Lists.newArrayList(
+        simpleModuleResource, dialogEntryPointResource, simpleDialogResourceWithExport,
+        complexDialogResourceSansExport), minimalRebuildCache, emptySet, JsOutputOption.PRETTY);
+
+    try {
+      // Exporting a second dialog.alert() fails with an exported name collision.
+      compileToJs(compilerOptions, applicationDir, "com.foo.SimpleModule",
+          Lists.<MockResource> newArrayList(complexDialogResourceWithExport), minimalRebuildCache,
+          emptySet, JsOutputOption.PRETTY);
+      fail("Compile should have failed");
+    } catch (UnableToCompleteException e) {
+      // success
+    }
+
+    // Reverting to just a single dialog.alert() starts succeeding again.
+    compileToJs(compilerOptions, applicationDir, "com.foo.SimpleModule",
+        Lists.<MockResource> newArrayList(complexDialogResourceSansExport), minimalRebuildCache,
+        stringSet("com.foo.ComplexDialog", "com.foo.TestEntryPoint"), JsOutputOption.PRETTY);
   }
 
   public void testGwtCreateJsoRebindResult() throws Exception {

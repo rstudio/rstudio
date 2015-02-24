@@ -567,14 +567,20 @@ public class GenerateJavaScriptAST {
             // so that it can be referred when generating the vtable of a subclass that
             // increases the visibility of this method.
             polymorphicNames.put(typeOracle.getTopMostDefinition(x), polyName);
-
           } else if (specialObfuscatedMethodSigs.containsKey(x.getSignature())) {
             polyName = interfaceScope.declareName(mangleNameSpecialObfuscate(x));
             polyName.setObfuscatable(false);
             // if a JsType and we can set set the interface method to non-obfuscatable
           } else if (typeOracle.isJsTypeMethod(x) && !typeOracle.needsJsInteropBridgeMethod(x)) {
-            polyName = interfaceScope.declareName(name, name);
-            polyName.setObfuscatable(false);
+            if (x.isJsProperty()) {
+              // Prevent JsProperty functions like x() from colliding with intended JS native
+              // properties like .x;
+              polyName = interfaceScope.declareName(mangleNameForJsProperty(x), name);
+            } else {
+              // Leave simple JsType dispatches clean and unobfuscated.
+              polyName = interfaceScope.declareName(name, name);
+              polyName.setObfuscatable(false);
+            }
           } else {
             polyName = interfaceScope.declareName(mangleNameForPoly(x), name);
           }
@@ -3524,6 +3530,15 @@ public class GenerateJavaScriptAST {
     sb.append("private$");
     sb.append(getNameString(x.getEnclosingType()));
     sb.append("$");
+    sb.append(getNameString(x));
+    constructManglingSignature(x, sb);
+    return StringInterner.get().intern(sb.toString());
+  }
+
+  String mangleNameForJsProperty(JMethod x) {
+    assert x.isJsProperty();
+    StringBuilder sb = new StringBuilder();
+    sb.append("jsproperty$");
     sb.append(getNameString(x));
     constructManglingSignature(x, sb);
     return StringInterner.get().intern(sb.toString());
