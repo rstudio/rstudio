@@ -3628,35 +3628,22 @@ public class TextEditingTarget implements
    
    void renderRmd()
    { 
-      boolean renderSourceOnly = (docUpdateSentinel_.getPath() == null) &&
-                                  !isShinyDoc();
-          
-      if (renderSourceOnly)
-      {
-         rmarkdownHelper_.renderRMarkdownSource(docDisplay_.getCode(),
-                                                isShinyDoc());
-      }
-      
-      else
-      {
-         saveThenExecute(null, new Command() {
-            @Override
-            public void execute()
-            {
-               boolean asTempfile = isPackageDocumentationFile();
-               
-               rmarkdownHelper_.renderRMarkdown(
-                  docUpdateSentinel_.getPath(),
-                  docDisplay_.getCursorPosition().getRow() + 1,
-                  null,
-                  docUpdateSentinel_.getEncoding(),
-                  asTempfile,
-                  isShinyDoc(),
-                  false);
-            }
-         });
-      }
-      
+      saveThenExecute(null, new Command() {
+         @Override
+         public void execute()
+         {
+            boolean asTempfile = isPackageDocumentationFile();
+            
+            rmarkdownHelper_.renderRMarkdown(
+               docUpdateSentinel_.getPath(),
+               docDisplay_.getCursorPosition().getRow() + 1,
+               null,
+               docUpdateSentinel_.getEncoding(),
+               asTempfile,
+               isShinyDoc(),
+               false);
+         }
+      });  
    }
    
    private boolean isShinyDoc()

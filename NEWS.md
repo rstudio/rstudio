@@ -96,6 +96,7 @@
 * Updated to pandoc 1.13.1
 * Improved handling of lists in editor
 * Make publishing UI easier to discover
+* Require save before previewing Rmd file
 * Support for deploying single interactive documents (not just directories)
 * Updated internal PDF viewer (PDF.js) to version 1.0.1040 
 
