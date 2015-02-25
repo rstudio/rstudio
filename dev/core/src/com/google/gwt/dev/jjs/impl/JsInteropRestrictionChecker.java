@@ -23,6 +23,9 @@ import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JVisitor;
+import com.google.gwt.thirdparty.guava.common.collect.Sets;
+
+import java.util.Set;
 
 /**
  * Checks and throws errors for invalid JsInterop constructs.
@@ -45,6 +48,7 @@ public class JsInteropRestrictionChecker extends JVisitor {
     }
   }
 
+  private final Set<String> currentJsTypeMemberNames = Sets.newHashSet();
   private JDeclaredType currentType;
   private final JProgram jprogram;
   private final TreeLogger logger;
@@ -61,11 +65,13 @@ public class JsInteropRestrictionChecker extends JVisitor {
   public void endVisit(JDeclaredType x, Context ctx) {
     assert currentType == x;
     currentType = null;
+    currentJsTypeMemberNames.clear();
   }
 
   @Override
   public boolean visit(JDeclaredType x, Context ctx) {
     assert currentType == null;
+    assert currentJsTypeMemberNames.isEmpty();
     minimalRebuildCache.removeJsInteropNames(x.getName());
     currentType = x;
 
@@ -84,7 +90,7 @@ public class JsInteropRestrictionChecker extends JVisitor {
         throw new UnsupportedOperationException();
       }
     } else if (jprogram.typeOracle.isJsTypeField(x)) {
-      boolean success = minimalRebuildCache.addJsTypeMemberName(x.getName(), currentType.getName());
+      boolean success = addJsTypeMemberName(x.getName());
       if (!success) {
         logger.log(TreeLogger.ERROR, String.format(
             "Instance field '%s' can't be exported because the member name '%s' is already taken.",
@@ -107,11 +113,20 @@ public class JsInteropRestrictionChecker extends JVisitor {
             computeReadableSignature(x), x.getQualifiedExportName()));
         throw new UnsupportedOperationException();
       }
-    } else if (jprogram.typeOracle.isJsTypeMethod(x) && isDirectOrTransitiveJsProperty(x)) {
-      // JsProperty methods are mangled and obfuscated and so do not consume an unobfuscated
-      // collidable name slot.
     } else if (jprogram.typeOracle.isJsTypeMethod(x)) {
-      boolean success = minimalRebuildCache.addJsTypeMemberName(x.getName(), currentType.getName());
+      if (isDirectOrTransitiveJsProperty(x)) {
+        // JsProperty methods are mangled and obfuscated and so do not consume an unobfuscated
+        // collidable name slot.
+        return true;
+      } else if (x.isSynthetic()) {
+        // A name slot taken up by a synthetic method, such as a bridge method for a generic method,
+        // is not the fault of the user and so should not be reported as an error. JS generation
+        // should take responsibility for ensuring that only the correct method version (in this
+        // particular set of colliding method names) is exported.
+        return true;
+      }
+
+      boolean success = addJsTypeMemberName(x.getName());
       if (!success) {
         logger.log(TreeLogger.ERROR, String.format(
             "Instance method '%s' can't be exported because the member name '%s' is already taken.",
@@ -121,6 +136,10 @@ public class JsInteropRestrictionChecker extends JVisitor {
     }
 
     return true;
+  }
+
+  private boolean addJsTypeMemberName(String exportedMemberName) {
+    return currentJsTypeMemberNames.add(exportedMemberName);
   }
 
   private String computeReadableSignature(JField field) {

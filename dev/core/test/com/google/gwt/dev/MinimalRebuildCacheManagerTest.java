@@ -87,7 +87,6 @@ public class MinimalRebuildCacheManagerTest extends TestCase {
     startingCache.computeAndClearStaleTypesCache(TreeLogger.NULL,
         new JTypeOracle(null, startingCache, true));
     startingCache.addExportedGlobalName("alert", "Window");
-    startingCache.addJsTypeMemberName("length", "String");
 
     // Save and reload the cache.
     minimalRebuildCacheManager.putCache(moduleName, permutationDescription, startingCache);

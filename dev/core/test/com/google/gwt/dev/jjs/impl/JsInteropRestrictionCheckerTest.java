@@ -96,6 +96,22 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
     assertCompileFails();
   }
 
+  public void testCollidingSyntheticBridgeMethodSucceeds() throws Exception {
+    addSnippetImport("com.google.gwt.core.client.js.JsType");
+    addSnippetImport("com.google.gwt.core.client.js.JsProperty");
+    addSnippetClassDecl(
+        "public static interface Comparable<T> {",
+        "  int compareTo(T other);",
+        "}",
+        "@JsType",
+        "public static class Enum<E extends Enum<E>> implements Comparable<E> {",
+        "  public int compareTo(E other) {return 0;}",
+        "}",
+        "public static class Buggy {}");
+
+    assertCompileSucceeds();
+  }
+
   public void testSingleExportSucceeds() throws Exception {
     addSnippetImport("com.google.gwt.core.client.js.JsExport");
     addSnippetClassDecl(

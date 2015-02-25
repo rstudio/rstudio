@@ -172,7 +172,6 @@ public class MinimalRebuildCache implements Serializable {
   private final JsIncrementalNamerState jsIncrementalNamerState = new JsIncrementalNamerState();
   private final Set<String> jsoStatusChangedTypeNames = Sets.newHashSet();
   private final Set<String> jsoTypeNames = Sets.newHashSet();
-  private final Multimap<String, String> jsTypeMemberNamesByTypeName = HashMultimap.create();
   private Integer lastLinkedJsBytes;
   private final Map<String, Long> lastModifiedByDiskSourcePath = Maps.newHashMap();
   private final Map<String, Long> lastModifiedByResourcePath = Maps.newHashMap();
@@ -209,10 +208,6 @@ public class MinimalRebuildCache implements Serializable {
    */
   public void addGeneratedArtifacts(ArtifactSet generatedArtifacts) {
     this.generatedArtifacts.addAll(generatedArtifacts);
-  }
-
-  public boolean addJsTypeMemberName(String exportedMemberName, String inTypeName) {
-    return jsTypeMemberNamesByTypeName.put(inTypeName, exportedMemberName);
   }
 
   public void addModifiedCompilationUnitNames(TreeLogger logger,
@@ -479,7 +474,6 @@ public class MinimalRebuildCache implements Serializable {
     copyMap(that.statementRangesByTypeName, this.statementRangesByTypeName);
 
     copyMultimap(that.exportedGlobalNamesByTypeName, this.exportedGlobalNamesByTypeName);
-    copyMultimap(that.jsTypeMemberNamesByTypeName, this.jsTypeMemberNamesByTypeName);
     copyMultimap(that.generatedCompilationUnitNamesByReboundTypeNames,
         this.generatedCompilationUnitNamesByReboundTypeNames);
     copyMultimap(that.nestedTypeNamesByUnitTypeName, this.nestedTypeNamesByUnitTypeName);
@@ -688,7 +682,6 @@ public class MinimalRebuildCache implements Serializable {
   }
 
   public void removeJsInteropNames(String inTypeName) {
-    jsTypeMemberNamesByTypeName.removeAll(inTypeName);
     Collection<String> exportedGlobalNamesForType =
         exportedGlobalNamesByTypeName.removeAll(inTypeName);
     exportedGlobalNames.removeAll(exportedGlobalNamesForType);
@@ -779,7 +772,6 @@ public class MinimalRebuildCache implements Serializable {
         && Objects.equal(this.generatedArtifacts, that.generatedArtifacts)
         && Objects.equal(this.exportedGlobalNames, that.exportedGlobalNames)
         && Objects.equal(this.exportedGlobalNamesByTypeName, that.exportedGlobalNamesByTypeName)
-        && Objects.equal(this.jsTypeMemberNamesByTypeName, that.jsTypeMemberNamesByTypeName)
         && Objects.equal(this.generatedCompilationUnitNamesByReboundTypeNames,
             that.generatedCompilationUnitNamesByReboundTypeNames)
         && this.intTypeMapper.hasSameContent(that.intTypeMapper)
