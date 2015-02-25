@@ -1,7 +1,8 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
 	xmlns:g="urn:import:com.google.gwt.user.client.ui"
-	xmlns:rsc="urn:import:org.rstudio.studio.client.rsconnect.ui">
+	xmlns:rsc="urn:import:org.rstudio.studio.client.rsconnect.ui"
+	xmlns:rw="urn:import:org.rstudio.core.client.widget">
 	<ui:with field="res" type="org.rstudio.studio.client.rsconnect.ui.RSConnectDeploy.DeployResources" />
 	<ui:with field="projRes" type="org.rstudio.studio.client.projects.ui.newproject.NewProjectResources" />
 	<ui:style type="org.rstudio.studio.client.rsconnect.ui.RSConnectDeploy.DeployStyle">
@@ -86,6 +87,7 @@
 	.controlLabel
 	{
 	  margin-top: 5px;
+	  margin-bottom: 3px;
 	}
 	
 	.urlAnchor
@@ -107,23 +109,34 @@
 	  cursor: pointer;
 	}
 	
+	.firstControlLabel
+	{
+	  margin-bottom: 5px;
+	}
+	
 	</ui:style>
 	<g:HTMLPanel>
 	<g:Image resource="{res.deployIllustration}"></g:Image>
 	<g:Grid><g:row>
     <g:customCell styleName="{style.rootCell}">
-      <g:FlowPanel>
-        <g:InlineLabel styleName="{style.deployLabel}" ui:field="deployLabel_"></g:InlineLabel>
+      <g:VerticalPanel>
+        <g:HTMLPanel>
+          <g:InlineLabel text="Deploy Files From:"></g:InlineLabel>
+          <g:InlineLabel styleName="{style.deployLabel}" ui:field="deployLabel_"></g:InlineLabel>
+        </g:HTMLPanel>
         <g:ScrollPanel styleName="{style.fileList}">
-          <g:FlowPanel ui:field="fileListPanel_">
-          </g:FlowPanel>
+          <g:VerticalPanel ui:field="fileListPanel_">
+          </g:VerticalPanel>
         </g:ScrollPanel>
-      </g:FlowPanel>
+        <rw:ThemedButton ui:field="addFileButton_" 
+                         text="Add More..."
+                         visible="false"></rw:ThemedButton>
+      </g:VerticalPanel>
      </g:customCell>
      <g:customCell styleName="{style.rootCell}">
       <g:HTMLPanel>
          <g:HorizontalPanel width="100%">
-         <g:Label styleName="{style.controlLabel}" text="Destination Account:"></g:Label>
+         <g:Label styleName="{style.firstControlLabel}" text="Destination Account:"></g:Label>
          <g:Anchor styleName="rstudio-HyperlinkLabel {style.accountAnchor}" ui:field="addAccountAnchor" text="Add New Account"></g:Anchor>
          </g:HorizontalPanel>
          <rsc:RSConnectAccountList styleName="{style.accountList}" ui:field="accountList"></rsc:RSConnectAccountList>

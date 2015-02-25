@@ -47,6 +47,7 @@ class ShinyAppDeploy : public async_r::AsyncRProcess
 public:
    static boost::shared_ptr<ShinyAppDeploy> create(
          const std::string& dir,
+         const json::Array& fileList, 
          const std::string& file, 
          const std::string& account,
          const std::string& server,
@@ -57,8 +58,32 @@ public:
       std::string cmd("{ options(repos = c(CRAN='" +
                        module_context::CRANReposURL() + "')); ");
 
+      // join and quote incoming filenames to deploy
+      std::string files;
+      for (size_t i = 0; i < fileList.size(); i++) 
+      {
+         files += "'" + fileList[i].get_str() + "'";
+         if (i < fileList.size() - 1) 
+            files += ", ";
+      }
+
+      // if a R Markdown document is being deployed, mark it as the primary
+      // file 
+      std::string primaryRmd;
+      if (!file.empty())
+      {
+         FilePath sourceFile = module_context::resolveAliasedPath(file);
+         if (sourceFile.extensionLowerCase() == ".rmd") 
+         {
+            primaryRmd = file;
+         }
+      }
+
+      // form the deploy command to hand off to the async deploy process
       cmd += "rsconnect::deployApp("
-             "appDir = '" + dir + "',"
+             "appDir = '" + dir + "'," +
+             (files.empty() ? "" : "appFiles = c(" + files + "), ") +
+             (primaryRmd.empty() ? "" : "appPrimaryRmd = '" + primaryRmd + "', ") + 
              "account = '" + account + "',"
              "server = '" + server + "', "
              "appName = '" + app + "', "
@@ -142,9 +167,10 @@ boost::shared_ptr<ShinyAppDeploy> s_pShinyAppDeploy_;
 Error deployShinyApp(const json::JsonRpcRequest& request,
                      json::JsonRpcResponse* pResponse)
 {
+   json::Array sourceFiles;
    std::string sourceDir, sourceFile, account, server, appName;
-   Error error = json::readParams(request.params, &sourceDir, &sourceFile, 
-                                  &account, &server, &appName);
+   Error error = json::readParams(request.params, &sourceDir, &sourceFiles,
+                                   &sourceFile, &account, &server, &appName);
    if (error)
       return error;
 
@@ -155,8 +181,9 @@ Error deployShinyApp(const json::JsonRpcRequest& request,
    }
    else
    {
-      s_pShinyAppDeploy_ = ShinyAppDeploy::create(sourceDir, sourceFile, 
-                                                  account, server, appName);
+      s_pShinyAppDeploy_ = ShinyAppDeploy::create(sourceDir, sourceFiles, 
+                                                  sourceFile, account, server, 
+                                                  appName);
       pResponse->setResult(true);
    }
 

@@ -14,11 +14,13 @@
  */
 package org.rstudio.studio.client.rsconnect.ui;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.OperationWithInput;
+import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.common.FilePathUtils;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.rsconnect.model.RSConnectAccount;
@@ -29,6 +31,7 @@ import org.rstudio.studio.client.workbench.model.Session;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -43,13 +46,14 @@ import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.Anchor;
+import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.InlineLabel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.TextBox;
+import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 public class RSConnectDeploy extends Composite
@@ -78,8 +82,10 @@ public class RSConnectDeploy extends Composite
    public RSConnectDeploy(final RSConnectServerOperations server, 
                           final RSAccountConnector connector,    
                           final GlobalDisplay display,
-                          final Session session)
+                          final Session session, 
+                          boolean forDocument)
    {
+      forDocument_ = forDocument;
       accountList = new RSConnectAccountList(server, display, false);
       initWidget(uiBinder.createAndBindUi(this));
 
@@ -112,6 +118,19 @@ public class RSConnectDeploy extends Composite
             
             event.preventDefault();
             event.stopPropagation();
+         }
+      });
+      addFileButton_.setVisible(forDocument);
+      addFileButton_.getElement().getStyle().setMarginLeft(0, Unit.PX);
+      addFileButton_.addClickHandler(new ClickHandler()
+      {
+         @Override
+         public void onClick(ClickEvent arg0)
+         {
+            if (onFileAddClick_ != null) 
+            {
+               onFileAddClick_.execute();
+            }
          }
       });
    }
@@ -168,13 +187,58 @@ public class RSConnectDeploy extends Composite
       appList.setSelectedIndex(selectedIdx);
    }
    
-   public void setFileList(JsArrayString files)
+   public void setFileList(JsArrayString files, String[] unchecked)
    {
+      if (forDocument_)
+      {
+         fileChecks_ = new ArrayList<CheckBox>();
+      }
+      
       for (int i = 0; i < files.length(); i++)
       {
-         Label fileLabel = new Label(files.get(i));
-         fileListPanel_.add(fileLabel);
+         boolean checked = true;
+         if (unchecked != null)
+         {
+            for (int j = 0; j < unchecked.length; j++)
+            {
+               if (unchecked[j].equals(files.get(i)))
+               {
+                  checked = false; 
+                  break;
+               }
+            }
+         }
+         addFile(files.get(i), checked);
       }
+   }
+   
+   public void addFileToList(String path)
+   {
+      addFile(path, true);
+   }
+   
+   public void setFileCheckEnabled(String path, boolean enabled)
+   {
+      if (fileChecks_ == null)
+         return;
+
+      for (int i = 0; i < fileChecks_.size(); i++)
+      {
+         if (fileChecks_.get(i).getText().equals(path))
+         {
+            fileChecks_.get(i).setEnabled(enabled);
+         }
+      }
+   }
+   
+   public ArrayList<String> getFileList()
+   {
+      return getCheckedFileList(true);
+   }
+   
+   public ArrayList<String> getIgnoredFileList()
+   {
+      return getCheckedFileList(false);
    }
    
    public String getNewAppName()
@@ -229,6 +293,11 @@ public class RSConnectDeploy extends Composite
       onDeployDisabled_ = cmd;
    }
    
+   public void setOnFileAddClick(Command cmd)
+   {
+      onFileAddClick_ = cmd;
+   }
+   
    public DeployStyle getStyle()
    {
       return style;
@@ -249,6 +318,36 @@ public class RSConnectDeploy extends Composite
       else if (!isValid && onDeployDisabled_ != null)
          onDeployDisabled_.execute();
    }
+
+   private void addFile(String path, boolean checked)
+   {
+      if (forDocument_)
+      {
+         CheckBox fileCheck = new CheckBox(path);
+         fileCheck.setValue(checked);
+         fileListPanel_.add(fileCheck);
+         fileChecks_.add(fileCheck);
+      }
+      else
+      {
+         fileListPanel_.add(new Label(path));
+      }
+   }
+   
+   private ArrayList<String> getCheckedFileList(boolean checked)
+   {
+      ArrayList<String> files = new ArrayList<String>();
+      if (fileChecks_ == null)
+         return files;
+      for (int i = 0; i < fileChecks_.size(); i++)
+      {
+         if (fileChecks_.get(i).getValue() == checked)
+         {
+            files.add(fileChecks_.get(i).getText());
+         }
+      }
+      return files;
+   }
    
    @UiField Anchor urlAnchor;
    @UiField Anchor addAccountAnchor;
@@ -260,9 +359,14 @@ public class RSConnectDeploy extends Composite
    @UiField HTMLPanel appInfoPanel;
    @UiField HTMLPanel nameValidatePanel;
    @UiField DeployStyle style;
-   @UiField FlowPanel fileListPanel_;
+   @UiField VerticalPanel fileListPanel_;
    @UiField InlineLabel deployLabel_;
+   @UiField ThemedButton addFileButton_;
+   
+   private ArrayList<CheckBox> fileChecks_;
    
    private Command onDeployEnabled_;
    private Command onDeployDisabled_;
+   private Command onFileAddClick_;
+   private final boolean forDocument_;
 }
