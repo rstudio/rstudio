@@ -193,36 +193,59 @@ public class JsTypeTest extends GWTTestCase {
     assertNotNull(button);
   }
 
-  public void testInstanceOf() {
-    assertTrue(createMyJsInterface() instanceof MyJsInterface);
+  public void testInstanceOf_jsoWithSyntheticProto() {
+    Object object = createMyJsInterface();
 
-    // JsTypes without prototypes can cross-cast like JSOs
-    assertTrue(createMyJsInterface() instanceof ElementLikeJsInterface);
+    assertTrue(object instanceof Object);
+    assertFalse(object instanceof HTMLAnotherElement);
+    assertFalse(object instanceof HTMLButtonElement);
+    assertFalse(object instanceof HTMLElement);
+    assertFalse(object instanceof Iterator);
+    assertTrue(object instanceof MyJsInterface);
+    assertTrue(object instanceof ElementLikeJsInterface);
   }
 
-  public void testInstanceOfNative() {
-    Object obj = createNativeButton();
-    assertTrue(obj instanceof Object);
-    assertTrue(obj instanceof HTMLButtonElement);
-    assertTrue(obj instanceof HTMLElement);
-    assertFalse(obj instanceof Iterator);
-    assertTrue(obj instanceof HTMLAnotherElement);
-    assertFalse(obj instanceof MyJsInterface);
+  public void testInstanceOf_jsoSansProto() {
+    Object object = JavaScriptObject.createObject();
 
-    // to foil type tightening
-    obj = alwaysTrue() ? new MyCustomHtmlButtonWithIterator() : null;
-    assertTrue(obj instanceof Object);
-    assertTrue(obj instanceof HTMLButtonElement);
-    assertTrue(obj instanceof HTMLElement);
-    assertTrue(obj instanceof Iterable);
+    assertTrue(object instanceof Object);
+    assertFalse(object instanceof HTMLAnotherElement);
+    assertFalse(object instanceof HTMLButtonElement);
+    assertFalse(object instanceof HTMLElement);
+    assertFalse(object instanceof Iterator);
+    assertFalse(object instanceof MyJsInterface);
+    assertTrue(object instanceof ElementLikeJsInterface);
+  }
+
+  public void testInstanceOf_jsoWithNativeButtonProto() {
+    Object object = createNativeButton();
+
+    assertTrue(object instanceof Object);
+    assertTrue(object instanceof HTMLAnotherElement);
+    assertTrue(object instanceof HTMLButtonElement);
+    assertTrue(object instanceof HTMLElement);
+    assertFalse(object instanceof Iterator);
+    assertFalse(object instanceof MyJsInterface);
+    assertTrue(object instanceof ElementLikeJsInterface);
+  }
+
+  public void testInstanceOf_javaImplementorOfInterfaceWithProto() {
+    // Foils type tightening.
+    Object object = alwaysTrue() ? new MyCustomHtmlButtonWithIterator() : new Object();
+
+    assertTrue(object instanceof Object);
+    assertTrue(object instanceof HTMLAnotherElement);
+    assertTrue(object instanceof HTMLButtonElement);
+    assertTrue(object instanceof HTMLElement);
+    assertTrue(object instanceof Iterable);
     /*
      * TODO: this works, but only because Object can't be type-tightened to HTMLElement. But it will
-     * evaluate statically to false for HTMLElement instanceof HTMLAnotherElement. Depending on
-     * what the spec decides, fix JTypeOracle so that canTheoreticallyCast returns the appropriate
+     * evaluate statically to false for HTMLElement instanceof HTMLAnotherElement. Depending on what
+     * the spec decides, fix JTypeOracle so that canTheoreticallyCast returns the appropriate
      * result, as well as add a test here that can be type-tightened.
      */
-    assertTrue(obj instanceof HTMLAnotherElement);
-    assertFalse(obj instanceof MyJsInterface);
+    assertFalse(object instanceof MyJsInterface);
+    assertTrue(object instanceof ElementLikeJsInterface);
   }
 
   public void testInstanceOfWithNameSpace() {
