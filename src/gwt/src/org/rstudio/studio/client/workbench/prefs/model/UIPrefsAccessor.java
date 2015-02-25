@@ -128,7 +128,7 @@ public class UIPrefsAccessor extends Prefs
    
    public PrefValue<Integer> alwaysCompleteDelayMs()
    {
-      return integer("always_complete_delay", 200);
+      return integer("always_complete_delay", 250);
    }
    
    public PrefValue<Integer> alwaysCompleteCharacters()
