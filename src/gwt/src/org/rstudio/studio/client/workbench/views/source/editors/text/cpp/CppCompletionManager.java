@@ -328,10 +328,12 @@ public class CppCompletionManager implements CompletionManager
       // see if we even have a completion position
       boolean alwaysComplete = uiPrefs_.codeComplete().getValue().equals(
                                             UIPrefsAccessor.COMPLETION_ALWAYS);
+      int autoChars = uiPrefs_.alwaysCompleteCharacters().getValue();
       final CompletionPosition completionPosition = 
             CppCompletionUtils.getCompletionPosition(docDisplay_,
                                                      positionExplicit,
-                                                     alwaysComplete);
+                                                     alwaysComplete,
+                                                     autoChars);
       if (completionPosition == null)
       {
          terminateCompletionRequest();
