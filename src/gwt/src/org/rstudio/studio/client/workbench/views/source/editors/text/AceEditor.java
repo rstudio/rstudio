@@ -1747,6 +1747,8 @@ public class AceEditor implements DocDisplay,
          scrollToY(srcPosition.getScrollPosition());
       else if (position.getRow() != previousCursorPos.getRow())
          moveCursorNearTop();
+      else
+         ensureCursorVisible();
       
       // set focus
       focus();

@@ -130,6 +130,7 @@
 * Eliminate race condition that could cause crash when polling child processes
 * Correct handling for breakpoints in files with non-ascii filenames on Windows
 * Next/previous word behavior in Rmd is now consistent with behavior in R scripts
+* Ensure cursor is always visible after source navigation
 
 
 
