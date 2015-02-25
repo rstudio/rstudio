@@ -96,6 +96,7 @@
 * Updated to pandoc 1.13.1
 * Improved handling of lists in editor
 * Make publishing UI easier to discover
+* Support for deploying single interactive documents (not just directories)
 * Updated internal PDF viewer (PDF.js) to version 1.0.1040 
 
 ### Miscellaneous
@@ -125,5 +126,8 @@
 * Correctly reflow comments in Rmd C++ code chunks
 * Ensure that rmarkdown documents render within input directory
 * Eliminate race condition that could cause crash when polling child processes
+* Correct handling for breakpoints in files with non-ascii filenames on Windows
+* Next/previous word behavior in Rmd is now consistent with behavior in R scripts
+
 
 
