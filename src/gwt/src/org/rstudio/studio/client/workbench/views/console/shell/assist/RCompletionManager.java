@@ -706,7 +706,7 @@ public class RCompletionManager implements CompletionManager
          }
          
          // Check for a valid number of R identifier characters for autopopup
-         boolean canAutoPopup = checkCanAutoPopup(c, 2);
+         boolean canAutoPopup = checkCanAutoPopup(c, uiPrefs_.alwaysCompleteCharacters().getValue() - 1);
          
          // Automatically popup completions after certain function calls
          if (c == '(' && !isLineInComment(docDisplay_.getCurrentLine()))
@@ -2018,7 +2018,7 @@ public class RCompletionManager implements CompletionManager
          flushCache_ = flushCache;
          implicit_ = implicit;
          canAutoInsert_ = canAutoInsert;
-         timer_.schedule(400);
+         timer_.schedule(uiPrefs_.alwaysCompleteDelayMs().getValue());
       }
       
       public void cancel()
