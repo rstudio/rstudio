@@ -212,7 +212,7 @@ void enumProgramFiles(QList<RVersion>* pResults)
       enumProgramFiles(progFiles.at(i), pResults);
 }
 
-void enumRegistry(Architecture architecture, QList<RVersion>* pResults)
+void enumRegistry(Architecture architecture, HKEY key, QList<RVersion>* pResults)
 {
    using namespace rstudio::core::system;
 
@@ -230,7 +230,7 @@ void enumRegistry(Architecture architecture, QList<RVersion>* pResults)
    }
 
    RegistryKey regKey;
-   Error error = regKey.open(HKEY_LOCAL_MACHINE,
+   Error error = regKey.open(key,
                              "Software\\R-core\\R",
                              KEY_READ | flags);
    if (error)
@@ -261,9 +261,13 @@ void enumRegistry(Architecture architecture, QList<RVersion>* pResults)
 
 void enumRegistry(QList<RVersion>* pResults)
 {
-   enumRegistry(ArchX86, pResults);
+   enumRegistry(ArchX86, HKEY_CURRENT_USER, pResults);
+   enumRegistry(ArchX86, HKEY_LOCAL_MACHINE, pResults);
    if (core::system::isWin64())
-      enumRegistry(ArchX64, pResults);
+   {
+       enumRegistry(ArchX64, HKEY_CURRENT_USER, pResults);
+       enumRegistry(ArchX64, HKEY_LOCAL_MACHINE, pResults);
+   }
 }
 
 // Return all valid versions of R we can find, nicely sorted and de-duped.
@@ -294,7 +298,7 @@ QList<RVersion> allRVersions(QList<RVersion> versions)
    return versions;
 }
 
-RVersion detectPreferredFromRegistry(Architecture architecture)
+RVersion detectPreferredFromRegistry(HKEY key, Architecture architecture)
 {
    using namespace rstudio::core::system;
 
@@ -312,7 +316,7 @@ RVersion detectPreferredFromRegistry(Architecture architecture)
    }
 
    RegistryKey regKey;
-   Error error = regKey.open(HKEY_LOCAL_MACHINE,
+   Error error = regKey.open(key,
                              "Software\\R-core\\R",
                              KEY_READ | flags);
    if (error)
@@ -340,7 +344,9 @@ RVersion detectPreferredFromRegistry(Architecture architecture)
 
 RVersion autoDetect(Architecture architecture, bool preferredOnly)
 {
-   RVersion preferred = detectPreferredFromRegistry(architecture);
+   RVersion preferred = detectPreferredFromRegistry(HKEY_CURRENT_USER, architecture);
+   if (!preferred.isValid())
+       preferred = detectPreferredFromRegistry(HKEY_LOCAL_MACHINE, architecture);
    if (preferred.isValid())
       return preferred;
    if (preferredOnly)
