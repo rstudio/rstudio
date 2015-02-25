@@ -103,6 +103,7 @@
 
 * Updated rendering engine to Qt 5.4 for improved performance
 * Windows: updated to MSYS SSH 1000.18
+* Windows: check HKCU in addition to HKLM when scanning for R versions
 * Bind Cmd+Shift+K shortcut to Compile PDF and Preview HTML
 * When evaluating R strings ensure 'try' is called from base package
 * Add Clear Recent Projects menu item to toolbar project menu
