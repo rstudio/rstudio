@@ -49,6 +49,7 @@ import com.google.gwt.user.client.ui.Anchor;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HTMLPanel;
+import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.InlineLabel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ListBox;
@@ -74,10 +75,14 @@ public class RSConnectDeploy extends Composite
    }
    
    public interface DeployResources extends ClientBundle
-   {
-      @Source("DeployDialogIllustration.png")
-      ImageResource deployIllustration();
+   {  
+      ImageResource publishShinyIllustration();
+      ImageResource publishRmdIllustration();
+      ImageResource publishPlotIllustration();
    }
+   
+   static DeployResources RESOURCES = GWT.create(DeployResources.class);
+   
 
    public RSConnectDeploy(final RSConnectServerOperations server, 
                           final RSAccountConnector connector,    
@@ -88,6 +93,11 @@ public class RSConnectDeploy extends Composite
       forDocument_ = forDocument;
       accountList = new RSConnectAccountList(server, display, false);
       initWidget(uiBinder.createAndBindUi(this));
+      
+      
+      deployIllustration_.setResource(forDocument ?
+                           RESOURCES.publishRmdIllustration() :
+                           RESOURCES.publishShinyIllustration());
 
       // Validate the application name on every keystroke
       appName.addKeyUpHandler(new KeyUpHandler()
@@ -349,6 +359,7 @@ public class RSConnectDeploy extends Composite
       return files;
    }
    
+   @UiField Image deployIllustration_;
    @UiField Anchor urlAnchor;
    @UiField Anchor addAccountAnchor;
    @UiField Label nameLabel;

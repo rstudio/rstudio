@@ -116,7 +116,7 @@
 	
 	</ui:style>
 	<g:HTMLPanel>
-	<g:Image resource="{res.deployIllustration}"></g:Image>
+	<g:Image ui:field="deployIllustration_"></g:Image>
 	<g:Grid><g:row>
     <g:customCell styleName="{style.rootCell}">
       <g:VerticalPanel>
