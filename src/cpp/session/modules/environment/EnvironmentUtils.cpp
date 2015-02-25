@@ -152,7 +152,10 @@ bool functionDiffersFromSource(
    std::string fileName;
    Error error = sourceFileFromRef(srcRef, &fileName);
    if (error)
+   {
+      LOG_ERROR(error);
       return true;
+   }
 
    // check for ~/.active-rstudio-document -- we never want to match sources
    // in this file, as it's used to source unsaved changes from RStudio

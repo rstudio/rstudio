@@ -486,8 +486,7 @@
    # This would likely involve injecting print statements into the generated
    # source-equivalent function.
 
-   # filenames are all UTF-8 in C-land and aren't transformed automatically,
-   # so convert to UTF-8 here
+   # convert filename to UTF-8 before proceeding 
    invisible(.Call("rs_debugSourceFile", enc2utf8(fileName), encoding, local))
 })
 
