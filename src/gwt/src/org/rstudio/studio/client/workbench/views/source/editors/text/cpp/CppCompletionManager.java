@@ -451,6 +451,7 @@ public class CppCompletionManager implements CompletionManager
    
    private void terminateCompletionRequest()
    {
+      suggestionTimer_.cancel();
       completionRequestInvalidation_.invalidate();
       if (request_ != null)
       {
