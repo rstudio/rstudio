@@ -89,10 +89,10 @@ public class EditingPreferencesPane extends PreferencesPane
       final VerticalPanel alwaysCompletePanel = new VerticalPanel();
       alwaysCompletePanel.addStyleName(res.styles().alwaysCompletePanel());
       alwaysCompletePanel.add(indent(alwaysCompleteChars_ = 
-          numericPref("Automatically complete after characters entered:",
+          numericPref("Show completions after characters entered:",
                       prefs.alwaysCompleteCharacters())));
       alwaysCompletePanel.add(indent(alwaysCompleteDelayMs_ = 
-          numericPref("Automatically complete after keyboard idle (ms):",
+          numericPref("Show completions after keyboard idle (ms):",
                       prefs.alwaysCompleteDelayMs())));
       CheckBox alwaysCompleteInConsole = checkboxPref(
             "Allow automatic completions in console",
