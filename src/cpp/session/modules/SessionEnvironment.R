@@ -130,7 +130,7 @@
    if (!is.null(srcref))
    {
       fileattr <- attr(srcref, "srcfile")
-      fileattr$filename
+      enc2utf8(fileattr$filename)
    }
    else
       ""
