@@ -665,6 +665,10 @@ public class RCompletionManager implements CompletionManager
          if (docDisplay_.isCursorInSingleLineString())
             return false;
          
+         // if there's a selection, let the encloser handle it
+         if (input_.hasSelection()) 
+            return CompletionUtils.handleEncloseSelection(input_, c);
+         
          // Bail if there is an alpha-numeric character
          // following the cursor
          if (isValidForRIdentifier(docDisplay_.getCharacterAtCursor()))
@@ -735,10 +739,6 @@ public class RCompletionManager implements CompletionManager
          {
             // Delay suggestion to avoid auto-popup while the user is typing
             suggestTimer_.schedule(true, true, false);
-         }
-         else if (CompletionUtils.handleEncloseSelection(input_, c))
-         {
-            return true;
          }
       }
       return false ;
