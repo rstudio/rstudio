@@ -90,6 +90,9 @@ public class EditorLanguage
    public static final EditorLanguage LANG_RUST = new EditorLanguage("ace/mode/rust", true);
    public static final EditorLanguage LANG_SCALA = new EditorLanguage("ace/mode/scala", true);
  
+   
+   public static final EditorLanguage LANG_STAN = new EditorLanguage("mode/stan", false);
+   
    /**
     *
     * @param parserName The name of the parser--it's found at the top of the

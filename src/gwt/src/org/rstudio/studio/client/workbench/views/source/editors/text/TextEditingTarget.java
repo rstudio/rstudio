@@ -2366,7 +2366,7 @@ public class TextEditingTarget implements
          doCommentUncomment("%");
       else if (isCursorInRMode())
          doCommentUncomment("#");
-      else if (fileType_.isCpp())
+      else if (fileType_.isCpp() || fileType_.isStan())
          doCommentUncomment("//"); 
    }
    
