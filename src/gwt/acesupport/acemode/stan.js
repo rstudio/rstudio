@@ -18,17 +18,50 @@ define("mode/stan", function(require, exports, module) {
 var oop = require("ace/lib/oop");
 var TextMode = require("ace/mode/text").Mode;
 var Tokenizer = require("ace/tokenizer").Tokenizer;
+var MatchingBraceOutdent = require("ace/mode/matching_brace_outdent").MatchingBraceOutdent;
 var StanHighlightRules = require("mode/stan_highlight_rules").StanHighlightRules;
 
 var Mode = function() {   
    this.$tokenizer = new Tokenizer(new StanHighlightRules().getRules());
+   this.$outdent = new MatchingBraceOutdent();
 };
 oop.inherits(Mode, TextMode);
 
 (function() {
+    
+    this.lineCommentStart = ["//"];
+    this.blockComment = {start: "/*", end: "*/"};
+
     this.getNextLineIndent = function(state, line, tab) {
-        return this.$getIndent(line);
+        var indent = this.$getIndent(line);
+
+        var tokenizedLine = this.getTokenizer().getLineTokens(line, state);
+        var tokens = tokenizedLine.tokens;
+        var endState = tokenizedLine.state;
+
+        if (tokens.length && tokens[tokens.length-1].type == "comment") {
+            return indent;
+        }
+
+        if (state == "start") {
+            var match = line.match(/^.*(?:[\{\(\[])\s*$/);
+            if (match) {
+                indent += tab;
+            }
+        }
+
+        return indent;
     };
+
+    
+    this.checkOutdent = function(state, line, input) {
+        return this.$outdent.checkOutdent(line, input);
+    };
+
+    this.autoOutdent = function(state, doc, row) {
+        this.$outdent.autoOutdent(doc, row);
+    };
+    
 }).call(Mode.prototype);
 
 exports.Mode = Mode;
