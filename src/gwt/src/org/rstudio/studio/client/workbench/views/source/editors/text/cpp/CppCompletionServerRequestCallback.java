@@ -27,7 +27,7 @@ public class CppCompletionServerRequestCallback<T>
    {
       super();
       progressDelayer_ =  new GlobalProgressDelayer(
-            RStudioGinjector.INSTANCE.getGlobalDisplay(), 1000, message);
+            RStudioGinjector.INSTANCE.getGlobalDisplay(), 500, message);
    }
    
    @Override
