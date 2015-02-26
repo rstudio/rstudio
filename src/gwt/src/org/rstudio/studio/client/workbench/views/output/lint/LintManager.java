@@ -150,31 +150,7 @@ public class LintManager
                   final JsArray<LintItem> cppLint =
                         CppCompletionRequest.asLintArray(diag);
                   
-                  server_.lintRSourceDocument(
-                        target_.getId(),
-                        context.showMarkers,
-                        new ServerRequestCallback<JsArray<LintItem>>()
-                        {
-                           @Override
-                           public void onResponseReceived(JsArray<LintItem> rLint)
-                           {
-                              if (context.token.isInvalid())
-                                 return;
-                              
-                              JsArray<LintItem> lint = cppLint;
-                              for (int i = 0; i < rLint.length(); i++)
-                                 lint.push(rLint.get(i));
-                              
-                              showLint(context, lint);
-                           }
-
-                           @Override
-                           public void onError(ServerError error)
-                           {
-                              Debug.logError(error);
-                              
-                           }
-                        });
+                  showLint(context, cppLint);
                }
                
                @Override
