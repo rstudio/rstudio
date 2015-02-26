@@ -622,7 +622,7 @@ json::Value getData(SEXP dataSEXP, const http::Fields& fields)
              nameSEXP != NA_STRING &&
              r::sexp::length(nameSEXP) > 0)
          {
-            rowData.push_back(Rf_translateChar(nameSEXP));
+            rowData.push_back(Rf_translateCharUTF8(nameSEXP));
          }
          else
          {
@@ -646,7 +646,7 @@ json::Value getData(SEXP dataSEXP, const http::Fields& fields)
                 stringSEXP != NA_STRING &&
                 r::sexp::length(stringSEXP) > 0)
             {
-               rowData.push_back(Rf_translateChar(stringSEXP));
+               rowData.push_back(Rf_translateCharUTF8(stringSEXP));
             }
             else
             {
