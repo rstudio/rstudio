@@ -38,6 +38,8 @@ import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.Timer;
 import com.google.inject.Inject;
 
 public class CppCompletionManager implements CompletionManager
@@ -171,6 +173,8 @@ public class CppCompletionManager implements CompletionManager
    @Override
    public boolean previewKeyDown(NativeEvent event)
    {
+      suggestionTimer_.cancel();
+      
       // delegate to R mode if appropriate
       if (DocumentMode.isCursorInRMode(docDisplay_) ||
             DocumentMode.isCursorInMarkdownMode(docDisplay_))
@@ -240,7 +244,7 @@ public class CppCompletionManager implements CompletionManager
          // backspace triggers completion if the popup is visible
          if (keyCode == KeyCodes.KEY_BACKSPACE)
          {
-            delayedSuggestCompletions(false);
+            deferredSuggestCompletions(false, false);
             return false;
          }
          
@@ -270,6 +274,8 @@ public class CppCompletionManager implements CompletionManager
    @Override
    public boolean previewKeyPress(char c)
    {
+      suggestionTimer_.cancel();
+      
       // delegate to R mode if necessary
       if (DocumentMode.isCursorInRMode(docDisplay_) || 
             DocumentMode.isCursorInMarkdownMode(docDisplay_))
@@ -287,26 +293,34 @@ public class CppCompletionManager implements CompletionManager
          if (!uiPrefs_.codeComplete().getValue().equals(UIPrefsAccessor.COMPLETION_MANUAL) ||
              isCompletionPopupVisible())
          {
-            delayedSuggestCompletions(false);
+            deferredSuggestCompletions(false, true);
          }
          
          return false;
       }
    }
    
-   private void delayedSuggestCompletions(final boolean explicit)
+   private void deferredSuggestCompletions(final boolean explicit, 
+                                           final boolean canDelay)
    {
       Scheduler.get().scheduleDeferred(new ScheduledCommand() {
          @Override
          public void execute()
          {
-            suggestCompletions(explicit);  
+            suggestCompletions(explicit, canDelay);  
          }
       });
    }
    
    private boolean suggestCompletions(final boolean explicit)
    {
+      return suggestCompletions(explicit, false);
+   }
+   
+   private boolean suggestCompletions(final boolean explicit, boolean canDelay)
+   {
+      suggestionTimer_.cancel();
+      
       // check for completions disabled
       if (!completionContext_.isCompletionEnabled())
          return false;
@@ -328,50 +342,99 @@ public class CppCompletionManager implements CompletionManager
       // see if we even have a completion position
       boolean alwaysComplete = uiPrefs_.codeComplete().getValue().equals(
                                             UIPrefsAccessor.COMPLETION_ALWAYS);
+      int autoChars = uiPrefs_.alwaysCompleteCharacters().getValue();
       final CompletionPosition completionPosition = 
             CppCompletionUtils.getCompletionPosition(docDisplay_,
                                                      positionExplicit,
-                                                     alwaysComplete);
+                                                     alwaysComplete,
+                                                     autoChars);
       if (completionPosition == null)
       {
          terminateCompletionRequest();
          return false;
       }
-      
-      if ((request_ != null) &&
-          !request_.isTerminated() &&
-          request_.getCompletionPosition().isSupersetOf(completionPosition))
+      else if ((request_ != null) &&
+               !request_.isTerminated() &&
+               request_.getCompletionPosition().isSupersetOf(completionPosition))
       {
          request_.updateUI(false);
       }
+      else if (canDelay && 
+               completionPosition.getScope() == CompletionPosition.Scope.Global)
+      {
+         suggestionTimer_.schedule(completionPosition);
+      }
       else
       {
-         terminateCompletionRequest();
-         
-         final Invalidation.Token invalidationToken = 
-               completionRequestInvalidation_.getInvalidationToken();
-         
-         completionContext_.withUpdatedDoc(new CommandWithArg<String>() {
-
-            @Override
-            public void execute(String docPath)
-            {
-               if (invalidationToken.isInvalid())
-                  return;
-               
-               request_ = new CppCompletionRequest(
-                  docPath,
-                  completionPosition,
-                  docDisplay_,
-                  invalidationToken,
-                  explicit);
-            }
-         });
-         
+         performCompletionRequest(completionPosition, explicit);
       }
       
       return true;
    }
+
+   private void performCompletionRequest(
+         final CompletionPosition completionPosition, final boolean explicit)
+   {  
+      terminateCompletionRequest();
+      
+      final Invalidation.Token invalidationToken = 
+            completionRequestInvalidation_.getInvalidationToken();
+      
+      completionContext_.withUpdatedDoc(new CommandWithArg<String>() {
+
+         @Override
+         public void execute(String docPath)
+         {
+            if (invalidationToken.isInvalid())
+               return;
+            
+            request_ = new CppCompletionRequest(
+               docPath,
+               completionPosition,
+               docDisplay_,
+               invalidationToken,
+               explicit,
+               new Command() {
+                  @Override
+                  public void execute()
+                  {
+                     suggestionTimer_.cancel();
+                  }
+               });
+         }
+      });
+   }
+   
+   private class SuggestionTimer
+   {
+      SuggestionTimer()
+      {
+         timer_ = new Timer()
+         {
+            @Override
+            public void run()
+            {
+               performCompletionRequest(completionPosition_, false);
+            }
+         };
+      }
+      
+      public void schedule(CompletionPosition completionPosition)
+      {
+         completionPosition_ = completionPosition;
+         timer_.schedule(uiPrefs_.alwaysCompleteDelayMs().getValue());
+      }
+      
+      public void cancel()
+      {
+         timer_.cancel();
+      }
+      
+      private final Timer timer_;
+      private CompletionPosition completionPosition_;
+   }
+   private SuggestionTimer suggestionTimer_ = new SuggestionTimer();
+   
      
    private CppCompletionPopupMenu getCompletionPopup()
    {
@@ -388,6 +451,7 @@ public class CppCompletionManager implements CompletionManager
    
    private void terminateCompletionRequest()
    {
+      suggestionTimer_.cancel();
       completionRequestInvalidation_.invalidate();
       if (request_ != null)
       {

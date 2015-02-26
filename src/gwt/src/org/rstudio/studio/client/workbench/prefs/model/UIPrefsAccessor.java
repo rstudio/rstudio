@@ -126,6 +126,16 @@ public class UIPrefsAccessor extends Prefs
       return bool("always_complete_console", true);
    }
    
+   public PrefValue<Integer> alwaysCompleteDelayMs()
+   {
+      return integer("always_complete_delay", 250);
+   }
+   
+   public PrefValue<Integer> alwaysCompleteCharacters()
+   {
+      return integer("always_complete_characters", 3);
+   }
+   
    public PrefValue<Boolean> insertParensAfterFunctionCompletion()
    {
       return bool("insert_parens_after_function_completion", true);
