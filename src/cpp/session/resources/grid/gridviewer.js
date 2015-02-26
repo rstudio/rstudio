@@ -579,6 +579,11 @@ var initDataTable = function(result) {
 
   table = $("#rsGridData").DataTable();
 
+  // datatables has a bug wherein it sometimes thinks an LTR browser is RTL if
+  // the LTR browser is at >100% zoom; this causes layout problems, so force
+  // into LTR mode as we don't support RTL here.
+  $.fn.dataTableSettings[0].oBrowser.bScrollbarLeft = false;
+
   // listen for size changes
   debouncedDataTableSize();
   window.addEventListener("resize", function() { 
