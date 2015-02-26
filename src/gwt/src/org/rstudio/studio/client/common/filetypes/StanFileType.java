@@ -21,14 +21,17 @@ import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.studio.client.common.reditor.EditorLanguage;
 import org.rstudio.studio.client.workbench.commands.Commands;
 
-public class StanFileType extends TextFileType
+public class StanFileType extends PreviewableFromRFileType
 {
    public StanFileType()
    {
       super("stan", "Stan", EditorLanguage.LANG_STAN, ".stan",
-            FileIconResources.INSTANCE.iconStan(), 
-            false, false, false, false, false,
-            false, false, false, false, false, false, false, false);
+            FileIconResources.INSTANCE.iconStan(), "rstan::stanc");
+   }
+   
+   public String getPreviewButtonText()
+   {
+      return "Check";
    }
    
    @Override
