@@ -20,94 +20,125 @@
 define("mode/stan_highlight_rules", function(require, exports, module) {
  
 var oop = require("ace/lib/oop");
+var lang = require("ace/lib/lang");
 var TextHighlightRules = require("ace/mode/text_highlight_rules").TextHighlightRules;
 
 var StanHighlightRules = function() {
- 
-    var keywords = (
-        "for|in|while|repeat|until|if|then|else|true|false|return|void"
+
+    var variableName = "[a-zA-Z$][a-zA-Z0-9_$]*\\b"
+
+    var keywords = lang.arrayToMap(
+	("for|in|while|if|then|else|return"
+	 + "|" + "lower|upper" // include range bounds as keywords
+	).split("|")
     );
-    
-    var storageType = (
-        "int|real|vector|simplex|unit_vector|ordered|positive_ordered|row_vector|" +
-        "matrix|cholesky_factor_cov|corr_matrix|cov_matrix"
+
+    // technically keywords, differentiate from regular functions
+    var keywordFunctions = lang.arrayToMap(
+	("print|increment_log_prob|integrate_ode|reject").split("|")
     );
- 
-    var builtinConstants = (
-        "lp__"
+
+    var storageType = lang.arrayToMap(
+	("int|real|vector|simplex|unit_vector|ordered"
+	 + "|" + "positive_ordered|row_vector"
+	 + "|" + "matrix|cholesky_factor_cov|cholesky_factor_corr"
+	 + "|" + "corr_matrix|cov_matrix"
+	 + "|" + "void"
+	).split("|")
     );
- 
-    var keywordMapper = this.$keywords = this.createKeywordMapper({
-        "keyword" : keywords,
-        "keyword.storagetype" : storageType,
-        "variable.language": builtinConstants
-    }, "identifier");
- 
-    // regexp must not have capturing parentheses. Use (?:) instead.
-    // regexps are ordered -> the first match is used
+
+    var variableLanguage = lang.arrayToMap(
+	("lp__").split("|")
+    );
+
     this.$rules = {
-        "start" : [
-            {
-                token : "comment",
-                regex : "(:?\\/\\/|#).*$"
-            }, {
-                token : "comment", // multi line comment
-                regex : "\\/\\*",
-                next : "comment"
-            }, {
-                token : "keyword.blockid",
-                regex : "(?:(?:transformed\\s+)?(?:data|parameters)|functions|model|generated\\s+quantities)(?=\\s*{)"
-            }, {
-                token : "string", // single line
-                regex : '["][^"]*["]'
-            }, {
-                token : "string", // multi line string start
-                regex : '["].*\\\\$',
-                next : "qqstring"
-            }, {
-                token : "constant.numeric",
-                regex : "[+-]?\\d+(?:(?:\\.\\d*)?(?:[eE][+-]?\\d+)?)?\\b"
-            }, {
-                token : "keyword.operator", // truncation
-                regex : "\\bT(?=\\s*\\[)"
-            }, {
-                token : keywordMapper,
-                regex : "[a-zA-Z][a-zA-Z0-9_]*\\b"
-            }, {
-                token : "keyword.operator",
-                regex : "<-|~"
-            }, {
-                token : "keyword.operator",
-                regex : "\\|\\||&&|==|!=|<=?|>=?|\\+|-|\\.?\\*|\\.?/|\\\\|!|'"
-            }, {
-              token : "punctuation.operator",
-              regex : "\\:|\\,|\\;|="
-            }, {
-                token : "paren.lparen",
-                regex : "[[({]"
-            }, {
-                token : "paren.rparen",
-                regex : "[\\])}]"
-            }, {
-                token : "text",
-                regex : "\\s+"
-            }
-        ],
-        "comment" : [
-            {
-                token : "comment", // closing comment
-                regex : ".*?\\*\\/",
-                next : "start"
-            }, {
-                token : "comment", // comment spanning whole line
-                regex : ".+"
-            }
-        ]
+	"start" : [
+	    {
+		token : "comment",
+		regex : "\\/\\/.*$"
+	    }, {
+		token : "comment",
+		regex : "#.*$"
+	    }, {
+		token : "comment", // multi line comment
+		merge : true,
+		regex : "\\/\\*",
+		next : "comment"
+	    }, {
+		token : "keyword.blockid",
+		regex : "functions|data|transformed\\s+data|parameters|" +
+			 "transformed\\s+parameters|model|generated\\s+quantities"
+	    }, {
+		token : "string", // single line
+		regex : '["][^"]*["]'
+	    }, {
+		token : "constant.numeric",
+		regex : "[+-]?\\d+(?:(?:\\.\\d*)?(?:[eE][+-]?\\d+)?)?\\b"
+	    }, {
+		token : "keyword.operator", // truncation
+		regex : "\\bT(?=\\s*\\[)"
+	    }, {
+		// highlights everything that looks like a function
+		token : function(value) {
+		    if (keywordFunctions.hasOwnProperty(value)) {
+			return "keyword"
+		    } else {
+			return "support.function"
+		    }
+		},
+		regex : variableName + "(?=\\s*\\()"
+	    }, {
+		token : function(value) {
+		    if (keywords.hasOwnProperty(value)) {
+			return "keyword"
+		    }
+		    else if (storageType.hasOwnProperty(value)) {
+			return "storage.type"
+		    }
+		    else if (variableLanguage.hasOwnProperty(value)) {
+			return "variable.language"
+		    }
+		    else {
+			return "text"
+		    }
+		},
+		// token : "keyword",
+		regex : variableName + "\\b"
+	    }, {
+		token : "keyword.operator",
+		regex : "<-|~"
+	    }, {
+		token : "keyword.operator",
+		regex : "\\|\\||&&|==|!=|<=?|>=?|\\+|-|\\.?\\*|\\.?/|\\\\|\\^|!|'|%"
+	    }, {
+		token : "punctuation.operator",
+		regex : ":|,|;|="
+	    }, {
+		token : "paren.lparen",
+		regex : "[\\[\\(\\{]"
+	    }, {
+		token : "paren.rparen",
+		regex : "[\\]\\)\\}]"
+	    }, {
+		token : "text",
+		regex : "\\s+"
+	    }
+	],
+	"comment" : [
+	    {
+		token : "comment", // closing comment
+		regex : ".*?\\*\\/",
+		next : "start"
+	    }, {
+		token : "comment", // comment spanning whole line
+		merge : true,
+		regex : ".+"
+	    }
+	]
     };
- 
 };
- 
+
 oop.inherits(StanHighlightRules, TextHighlightRules);
- 
+
 exports.StanHighlightRules = StanHighlightRules;
 });
