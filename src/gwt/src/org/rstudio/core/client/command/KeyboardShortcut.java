@@ -1,7 +1,7 @@
 /*
  * KeyboardShortcut.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-15 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,6 +16,7 @@ package org.rstudio.core.client.command;
 
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
+
 import org.rstudio.core.client.BrowseCap;
 
 public class KeyboardShortcut
@@ -27,22 +28,33 @@ public class KeyboardShortcut
 
    public KeyboardShortcut(int keycode, String groupName)
    {
-      this(KeyboardShortcut.NONE, keycode, groupName, "");
+      this(KeyboardShortcut.NONE, keycode, groupName, "", "");
    }
    
    public KeyboardShortcut(int modifiers, int keycode)
    {
-      this(modifiers, keycode, "", "");
+      this(modifiers, keycode, "", "", "");
    }
 
    public KeyboardShortcut(int modifiers, int keycode, 
-                           String groupName, String title)
+                           String groupName, String title, String disableModes)
    {
       modifiers_ = modifiers;
       keycode_ = keycode;
       groupName_ = groupName;
       order_ = ORDER++;
       title_ = title;
+      if (disableModes.length() > 0)
+      {
+         String[] disableModeList = disableModes.split(",");
+         for (String disableMode: disableModeList)
+         {
+            if (disableMode.equals("vim"))
+            {
+               disableModes_ = disableModes_ | MODE_VIM;
+            }
+         }
+      }
    }
 
    @Override
@@ -145,6 +157,16 @@ public class KeyboardShortcut
 
       return Character.toUpperCase((char)keycode_) + "";
    }
+   
+   public boolean isModeDisabled(int mode)
+   {
+      return (mode & disableModes_) > 0;
+   }
+   
+   public boolean isModalShortcut()
+   {
+      return disableModes_ != MODE_NONE;
+   }
 
    public static int getModifierValue(NativeEvent e)
    {
@@ -165,6 +187,7 @@ public class KeyboardShortcut
    private String groupName_;
    private int order_ = 0;
    private String title_ = "";
+   private int disableModes_ = MODE_NONE;
 
    private static int ORDER = 0;
    
@@ -173,4 +196,8 @@ public class KeyboardShortcut
    public static final int CTRL = 2;
    public static final int META = 4;
    public static final int SHIFT = 8;
+   
+   public static final int MODE_NONE = 0;
+   public static final int MODE_VIM = 1;
+   public static final int MODE_EMACS = 2;
 }
