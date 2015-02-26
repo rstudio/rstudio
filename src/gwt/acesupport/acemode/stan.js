@@ -20,10 +20,12 @@ var TextMode = require("ace/mode/text").Mode;
 var Tokenizer = require("ace/tokenizer").Tokenizer;
 var MatchingBraceOutdent = require("ace/mode/matching_brace_outdent").MatchingBraceOutdent;
 var StanHighlightRules = require("mode/stan_highlight_rules").StanHighlightRules;
+var StanFoldMode = require("ace/mode/folding/cstyle").FoldMode;
 
 var Mode = function() {   
    this.$tokenizer = new Tokenizer(new StanHighlightRules().getRules());
    this.$outdent = new MatchingBraceOutdent();
+   this.foldingRules = new StanFoldMode();
 };
 oop.inherits(Mode, TextMode);
 
