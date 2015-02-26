@@ -89,6 +89,8 @@
             <file name="xml_fold_mode.js"/>
             <file name="xml_highlight_rules.js"/>
             <file name="xml_util.js"/>
+            <file name="stan_highlight_rules.js"/>
+            <file name="stan.js"/>
          </sources>
          <sources dir="acesupport/acetheme">
             <file name="default.js"/>

@@ -67,6 +67,11 @@ public class FileTypeRegistry
                           ICONS.iconText(), false, false, false, false, false,
                           false, false, false, false, false, false, false, false);
    
+   public static final TextFileType STAN =
+         new TextFileType("stan", "Stan", EditorLanguage.LANG_STAN, ".stan",
+                          ICONS.iconStan(), false, false, false, false, false,
+                          false, false, false, false, false, false, false, false);
+   
    public static final TextFileType MERMAID = new MermaidFileType();
    
    public static final TextFileType GRAPHVIZ = new GraphvizFileType();
@@ -350,6 +355,7 @@ public class FileTypeRegistry
       register("*.yml", YAML, icons.iconYaml());
       register("*.yaml", YAML, icons.iconYaml());
       register("*.xml", XML, icons.iconXml());
+      register("*.stan", STAN, icons.iconStan());
       
       register("*.clojure", CLOJURE, icons.iconClojure());
       register("*.coffee", COFFEE, icons.iconCoffee());
