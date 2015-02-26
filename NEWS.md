@@ -51,7 +51,7 @@
 * Find All option added in Find/Replace
 * New option to control comment continuation on insertion of new lines
 * Updated to Ace (source editor component) v1.1.8
-* Syntax highlighting modes for many new languages including Clojure, CoffeeScript, C#, Graphviz, Go, Groovy, Haskell, Java, Julia, Lisp, Lua, Matlab, Perl, Ruby, Rust, and Scala.
+* Syntax highlighting modes for many new languages including Clojure, CoffeeScript, C#, Graphviz, Go, Groovy, Haskell, Java, Julia, Lisp, Lua, Matlab, Perl, Ruby, Rust, Scala, and Stan.
 * A wide variety of new editor themes (color schemes) are now available.
 * Increase file size limit to 5MB (was previously 2MB)
 
