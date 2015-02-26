@@ -38,6 +38,7 @@ import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
+import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.inject.Inject;
 
@@ -48,7 +49,8 @@ public class CppCompletionRequest
                                CompletionPosition completionPosition,
                                DocDisplay docDisplay, 
                                Invalidation.Token token,
-                               boolean explicit)
+                               boolean explicit,
+                               Command onTerminated)
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
       
@@ -56,6 +58,7 @@ public class CppCompletionRequest
       completionPosition_ = completionPosition;
       invalidationToken_ = token;
       explicit_ = explicit;
+      onTerminated_ = onTerminated;
       
       Position pos = completionPosition_.getPosition();
       
@@ -153,6 +156,8 @@ public class CppCompletionRequest
    {
       closeCompletionPopup();
       terminated_ = true;
+      if (onTerminated_ != null)
+         onTerminated_.execute();
    }
    
    public boolean isTerminated()
@@ -404,4 +409,5 @@ public class CppCompletionRequest
    private JsArray<CppCompletion> completions_;
    
    private boolean terminated_ = false;
+   private Command onTerminated_ = null;
 }

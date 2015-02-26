@@ -153,6 +153,9 @@ public interface SourceServerOperations extends FilesServerOperations,
     */
    void modifyDocumentProperties(String id, HashMap<String, String> properties,
                                  ServerRequestCallback<Void> requestCallback);
+   
+   void getDocumentProperties(String path, 
+                              ServerRequestCallback<JsObject> requestCallback);
 
    void revertDocument(String id,
                        String fileType,

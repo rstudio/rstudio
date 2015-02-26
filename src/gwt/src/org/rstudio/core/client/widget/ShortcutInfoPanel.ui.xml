@@ -68,7 +68,7 @@
 			             text="See All Shortcuts..."
 			             ui:field="shortcutDocLink"></g:Anchor>
 			   <g:Label styleName="{style.shortcutHeader}" 
-			            text="Keyboard Shortcut Quick Reference"></g:Label>
+			            ui:field="headerLabel"></g:Label>
 				<g:HTMLPanel ui:field="shortcutPanel">
 				</g:HTMLPanel>
 			</g:HTMLPanel>

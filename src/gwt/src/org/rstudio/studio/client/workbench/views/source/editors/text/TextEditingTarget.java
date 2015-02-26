@@ -86,7 +86,9 @@ import org.rstudio.studio.client.rmarkdown.model.RmdTemplateFormat;
 import org.rstudio.studio.client.rmarkdown.model.RmdYamlData;
 import org.rstudio.studio.client.rmarkdown.model.YamlFrontMatter;
 import org.rstudio.studio.client.rmarkdown.ui.RmdTemplateOptionsDialog;
+import org.rstudio.studio.client.rsconnect.RSConnect;
 import org.rstudio.studio.client.rsconnect.events.RSConnectActionEvent;
+import org.rstudio.studio.client.rsconnect.events.RSConnectDeployInitiatedEvent;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
@@ -121,6 +123,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Mode.In
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionContext;
+import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionOperation;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.*;
 import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBar;
 import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBarPopupMenu;
@@ -621,6 +624,39 @@ public class TextEditingTarget implements
             }
          }
       });
+      
+      events_.addHandler(RSConnectDeployInitiatedEvent.TYPE, 
+            new RSConnectDeployInitiatedEvent.Handler()
+            {
+               @Override
+               public void onRSConnectDeployInitiated(
+                     RSConnectDeployInitiatedEvent event)
+               {
+
+                  // no need to process this event if this target doesn't have a
+                  // path, or if the event's contents don't include additional
+                  // files.
+                  if (getPath() == null)
+                     return;
+                  
+                  // see if the event corresponds to a deployment of this file
+                  FileSystemItem evtDir = FileSystemItem.createDir(event.getPath());
+                  if (!getPath().equals(evtDir.completePath(event.getSourceFile())))
+                     return;
+                  
+                  if (event.getAdditionalFiles() != null &&
+                      event.getAdditionalFiles().size() > 0)
+                  {
+                     addAdditionalResourceFiles(event.getAdditionalFiles());
+                  }
+                  
+                  if (event.getIgnoredFiles() != null &&
+                      event.getIgnoredFiles().size() > 0)
+                  {
+                     setIgnoredFiles(event.getIgnoredFiles());
+                  }
+               }
+            });
    }
    
    @Override
@@ -2488,9 +2524,10 @@ public class TextEditingTarget implements
    @Handler 
    void onRsconnectDeploy()
    {
-      events_.fireEvent(new RSConnectActionEvent(
+      RSConnectActionEvent evt = new RSConnectActionEvent(
             RSConnectActionEvent.ACTION_TYPE_DEPLOY, 
-            docUpdateSentinel_.getPath()));
+            docUpdateSentinel_.getPath());
+      events_.fireEvent(evt);
    }
 
    @Handler 
@@ -3604,35 +3641,22 @@ public class TextEditingTarget implements
    
    void renderRmd()
    { 
-      boolean renderSourceOnly = (docUpdateSentinel_.getPath() == null) &&
-                                  !isShinyDoc();
-          
-      if (renderSourceOnly)
-      {
-         rmarkdownHelper_.renderRMarkdownSource(docDisplay_.getCode(),
-                                                isShinyDoc());
-      }
-      
-      else
-      {
-         saveThenExecute(null, new Command() {
-            @Override
-            public void execute()
-            {
-               boolean asTempfile = isPackageDocumentationFile();
-               
-               rmarkdownHelper_.renderRMarkdown(
-                  docUpdateSentinel_.getPath(),
-                  docDisplay_.getCursorPosition().getRow() + 1,
-                  null,
-                  docUpdateSentinel_.getEncoding(),
-                  asTempfile,
-                  isShinyDoc(),
-                  false);
-            }
-         });
-      }
-      
+      saveThenExecute(null, new Command() {
+         @Override
+         public void execute()
+         {
+            boolean asTempfile = isPackageDocumentationFile();
+            
+            rmarkdownHelper_.renderRMarkdown(
+               docUpdateSentinel_.getPath(),
+               docDisplay_.getCursorPosition().getRow() + 1,
+               null,
+               docUpdateSentinel_.getEncoding(),
+               asTempfile,
+               isShinyDoc(),
+               false);
+         }
+      });  
    }
    
    private boolean isShinyDoc()
@@ -4383,6 +4407,26 @@ public class TextEditingTarget implements
             }
          });
 
+      }
+
+      @Override
+      public void cppCompletionOperation(final CppCompletionOperation operation)
+      {
+         if (isCompletionEnabled())
+         {
+            withUpdatedDoc(new CommandWithArg<String>() {
+               @Override
+               public void execute(String docPath)
+               {
+                  Position pos = docDisplay_.getSelectionStart();
+                  
+                  operation.execute(docPath, 
+                                    pos.getRow() + 1, 
+                                    pos.getColumn() + 1);
+               }
+            });
+         }
+         
       }   
    };
    
@@ -4566,6 +4610,35 @@ public class TextEditingTarget implements
    public DocDisplay getDocDisplay()
    {
       return docDisplay_;
+   }
+   
+   private void setIgnoredFiles(ArrayList<String> ignoredFiles)
+   {
+      String ignoredFileList =  StringUtil.joinStrings(ignoredFiles, "|");
+      docUpdateSentinel_.setProperty(RSConnect.IGNORED_RESOURCES, 
+            ignoredFileList, null);
+   }
+   
+   private void addAdditionalResourceFiles(ArrayList<String> additionalFiles)
+   {
+      // it does--get the YAML front matter and modify it to include
+      // the additional files named in the deployment
+      String yaml = getRmdFrontMatter();
+      if (yaml == null)
+         return;
+      rmarkdownHelper_.addAdditionalResourceFiles(yaml,
+            additionalFiles, 
+            new CommandWithArg<String>()
+            {
+               @Override
+               public void execute(String yamlOut)
+               {
+                  if (yamlOut != null)
+                  {
+                     applyRmdFrontMatter(yamlOut);
+                  }
+               }
+            });
    }
    
    private StatusBar statusBar_;

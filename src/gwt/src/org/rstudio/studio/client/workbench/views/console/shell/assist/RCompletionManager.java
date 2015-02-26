@@ -665,6 +665,10 @@ public class RCompletionManager implements CompletionManager
          if (docDisplay_.isCursorInSingleLineString())
             return false;
          
+         // if there's a selection, let the encloser handle it
+         if (input_.hasSelection()) 
+            return CompletionUtils.handleEncloseSelection(input_, c);
+         
          // Bail if there is an alpha-numeric character
          // following the cursor
          if (isValidForRIdentifier(docDisplay_.getCharacterAtCursor()))
@@ -706,7 +710,7 @@ public class RCompletionManager implements CompletionManager
          }
          
          // Check for a valid number of R identifier characters for autopopup
-         boolean canAutoPopup = checkCanAutoPopup(c, 2);
+         boolean canAutoPopup = checkCanAutoPopup(c, uiPrefs_.alwaysCompleteCharacters().getValue() - 1);
          
          // Automatically popup completions after certain function calls
          if (c == '(' && !isLineInComment(docDisplay_.getCurrentLine()))
@@ -735,10 +739,6 @@ public class RCompletionManager implements CompletionManager
          {
             // Delay suggestion to avoid auto-popup while the user is typing
             suggestTimer_.schedule(true, true, false);
-         }
-         else if (CompletionUtils.handleEncloseSelection(input_, c))
-         {
-            return true;
          }
       }
       return false ;
@@ -2018,7 +2018,7 @@ public class RCompletionManager implements CompletionManager
          flushCache_ = flushCache;
          implicit_ = implicit;
          canAutoInsert_ = canAutoInsert;
-         timer_.schedule(400);
+         timer_.schedule(uiPrefs_.alwaysCompleteDelayMs().getValue());
       }
       
       public void cancel()

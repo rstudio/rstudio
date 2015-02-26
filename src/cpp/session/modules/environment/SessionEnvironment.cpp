@@ -136,8 +136,7 @@ Error getFileNameFromContext(const RCNTXT* pContext,
    SEXP srcref = pContext->srcref;
    if (isValidSrcref(srcref))
    {
-      return r::exec::RFunction(".rs.sourceFileFromRef", srcref)
-                    .call(pFileName);
+      return sourceFileFromRef(srcref, pFileName);
    }
    else
    {

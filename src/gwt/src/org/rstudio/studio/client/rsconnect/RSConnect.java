@@ -17,10 +17,14 @@ package org.rstudio.studio.client.rsconnect;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.rstudio.core.client.JsArrayUtil;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.dom.WindowEx;
+import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.widget.ModalDialogTracker;
+import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperation;
 import org.rstudio.studio.client.application.Desktop;
@@ -51,9 +55,11 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionUtils;
 import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -77,6 +83,7 @@ public class RSConnect implements SessionInitHandler,
                     DependencyManager dependencyManager,
                     Binder binder, 
                     RSConnectServerOperations server,
+                    SourceServerOperations sourceServer,
                     RSAccountConnector connector,
                     Provider<UIPrefs> pUiPrefs)
                     
@@ -86,6 +93,7 @@ public class RSConnect implements SessionInitHandler,
       dependencyManager_ = dependencyManager;
       session_ = session;
       server_ = server;
+      sourceServer_ = sourceServer;
       events_ = events;
       satellite_ = satellite;
       connector_ = connector;
@@ -136,18 +144,59 @@ public class RSConnect implements SessionInitHandler,
          
          // don't consider this to be a deployment of a specific file unless
          // we're deploying R Markdown content
-         String file = "";
-         if (event.getPath().toLowerCase().endsWith(".rmd"))
+         final String file = event.getPath().toLowerCase().endsWith(".rmd") ? 
+            FilePathUtils.friendlyFileName(event.getPath()) : "";
+            
+         final OperationWithInput<String[]> showDeployDialog = 
+               new OperationWithInput<String[]>()
          {
-            file = FilePathUtils.friendlyFileName(event.getPath());
+            @Override
+            public void execute(String[] ignoredFiles)
+            {
+               RSConnectDeployDialog dialog = 
+                     new RSConnectDeployDialog(
+                               server_, connector_, display_, session_, events_, 
+                               dir, file, ignoredFiles, 
+                               lastAccount, lastAppName,
+                               satellite_.isCurrentWindowSatellite());
+               dialog.showModal();
+            }
+         };
+         
+         if (file.isEmpty())
+         {
+            // if we're deploying a directory, show the dialog right away
+            showDeployDialog.execute(null);
+         }
+         else
+         {
+            sourceServer_.getDocumentProperties(event.getPath(), 
+                  new ServerRequestCallback<JsObject>()
+            {
+               @Override
+               public void onResponseReceived(JsObject properties)
+               {
+                  String files = properties.getString(IGNORED_RESOURCES);
+                  if (files != null && !files.isEmpty())
+                  {
+                     showDeployDialog.execute(files.split("\\|"));
+                  }
+                  else
+                  {
+                     showDeployDialog.execute(null);
+                  }
+               }
+
+               @Override
+               public void onError(ServerError error)
+               {
+                  // recover gracefully--the worst case here is that we won't
+                  // remember which files were unchecked
+                  showDeployDialog.execute(null);
+               }
+            });
          }
 
-         RSConnectDeployDialog dialog = 
-               new RSConnectDeployDialog(
-                         server_, connector_, display_, session_, events_, 
-                         dir, file, lastAccount, lastAppName,
-                         satellite_.isCurrentWindowSatellite());
-         dialog.showModal();
       }
       else if (event.getAction() == RSConnectActionEvent.ACTION_TYPE_CONFIGURE)
       {
@@ -159,7 +208,15 @@ public class RSConnect implements SessionInitHandler,
    public void onRSConnectDeployInitiated(
          final RSConnectDeployInitiatedEvent event)
    {
-      server_.getLintResults(event.getPath(), 
+      // get lint results for the file or directory being deployed, as appropriate
+      String deployTarget = event.getPath();
+      if (StringUtil.getExtension(event.getSourceFile()).toLowerCase().equals("rmd")) 
+      {
+         FileSystemItem sourceFSI = FileSystemItem.createDir(deployTarget);
+         deployTarget = sourceFSI.completePath(event.getSourceFile());
+      }
+
+      server_.getLintResults(deployTarget, 
             new ServerRequestCallback<RSConnectLintResults>()
       {
          @Override
@@ -299,10 +356,13 @@ public class RSConnect implements SessionInitHandler,
    
    public static native void deployFromSatellite(
          String path,
+         JsArrayString deployFiles,
+         JsArrayString additionalFiles,
+         JsArrayString ignoredFiles,
          String file, 
          boolean launch, 
          JavaScriptObject record) /*-{
-      $wnd.opener.deployToRSConnect(path, file, launch, record);
+      $wnd.opener.deployToRSConnect(path, deployFiles, additionalFiles, ignoredFiles, file, launch, record);
    }-*/;
    
    // Private methods ---------------------------------------------------------
@@ -310,6 +370,7 @@ public class RSConnect implements SessionInitHandler,
    private void doDeployment(final RSConnectDeployInitiatedEvent event)
    {
       server_.deployShinyApp(event.getPath(), 
+                             event.getDeployFiles(),
                              event.getSourceFile(),
                              event.getRecord().getAccountName(), 
                              event.getRecord().getServer(),
@@ -448,13 +509,16 @@ public class RSConnect implements SessionInitHandler,
    private final native void exportNativeCallbacks() /*-{
       var thiz = this;     
       $wnd.deployToRSConnect = $entry(
-         function(path, file, launch, record) {
-            thiz.@org.rstudio.studio.client.rsconnect.RSConnect::deployToRSConnect(Ljava/lang/String;Ljava/lang/String;ZLcom/google/gwt/core/client/JavaScriptObject;)(path, file, launch, record);
+         function(path, deployFiles, additionalFiles, ignoredFiles, file, launch, record) {
+            thiz.@org.rstudio.studio.client.rsconnect.RSConnect::deployToRSConnect(Ljava/lang/String;Lcom/google/gwt/core/client/JsArrayString;Lcom/google/gwt/core/client/JsArrayString;Lcom/google/gwt/core/client/JsArrayString;Ljava/lang/String;ZLcom/google/gwt/core/client/JavaScriptObject;)(path, deployFiles, additionalFiles, ignoredFiles, file, launch, record);
          }
       ); 
    }-*/;
    
-   private void deployToRSConnect(String path, String file, boolean launch, 
+   private void deployToRSConnect(String path, JsArrayString deployFiles, 
+                                  JsArrayString additionalFiles, 
+                                  JsArrayString ignoredFiles, 
+                                  String file, boolean launch, 
                                   JavaScriptObject jsoRecord)
    {
       // this can be invoked by a satellite, so bring the main frame to the
@@ -464,15 +528,24 @@ public class RSConnect implements SessionInitHandler,
       else
          WindowEx.get().focus();
       
+      ArrayList<String> deployFilesList = 
+            JsArrayUtil.fromJsArrayString(deployFiles);
+      ArrayList<String> additionalFilesList = 
+            JsArrayUtil.fromJsArrayString(additionalFiles);
+      ArrayList<String> ignoredFilesList = 
+            JsArrayUtil.fromJsArrayString(ignoredFiles);
+      
       RSConnectDeploymentRecord record = jsoRecord.cast();
       events_.fireEvent(new RSConnectDeployInitiatedEvent(
-            path, file, launch, record));
+            path, deployFilesList, additionalFilesList, ignoredFilesList, 
+            file, launch, record));
    }
    
    private final Commands commands_;
    private final GlobalDisplay display_;
    private final Session session_;
    private final RSConnectServerOperations server_;
+   private final SourceServerOperations sourceServer_;
    private final DependencyManager dependencyManager_;
    private final EventBus events_;
    private final Satellite satellite_;
@@ -486,4 +559,5 @@ public class RSConnect implements SessionInitHandler,
    private boolean dirStateDirty_ = false;
    
    public final static String CLOUD_SERVICE_NAME = "ShinyApps.io";
+   public static final String IGNORED_RESOURCES = "ignored_resources";
 }

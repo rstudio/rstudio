@@ -109,7 +109,7 @@ core::Error extract(SEXP valueSEXP, int* pInt);
 core::Error extract(SEXP valueSEXP, bool* pBool);
 core::Error extract(SEXP valueSEXP, double* pDouble);
 core::Error extract(SEXP valueSEXP, std::vector<int>* pVector);   
-core::Error extract(SEXP valueSEXP, std::string* pString);
+core::Error extract(SEXP valueSEXP, std::string* pString, bool asUtf8 = false);
 core::Error extract(SEXP valueSEXP, std::vector<std::string>* pVector);
 core::Error extract(SEXP valueSEXP, std::set<std::string>* pSet);
 core::Error extract(SEXP valueSEXP, std::map< std::string, std::set<std::string> >* pMap);

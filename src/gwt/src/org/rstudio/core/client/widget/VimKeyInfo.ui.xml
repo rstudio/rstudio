@@ -1,0 +1,341 @@
+<ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder'
+             xmlns:g='urn:import:com.google.gwt.user.client.ui'>
+	<ui:style>
+	
+	</ui:style>
+<g:HTMLPanel>
+<g:HTML>
+<!-- 
+RStudio's Vim support comes from the ACE editor. Documentation on which keys
+it supports can be found here:
+
+https://github.com/ajaxorg/ace/blob/master/lib/ace/keyboard/vim.js
+-->
+<table width="100%">
+	<tr>
+	<td width="33%">
+	<h2>Motions</h2>
+		<table>
+			<tr>
+			<td><strong>h, j, k, l</strong></td>
+			<td>Left, down, up, right</td>
+			</tr>
+			<tr>
+			<td><strong>gj, gk</strong></td>
+			<td>Down, up (by screen lines)</td>
+			</tr>
+			<tr>
+			<td><strong>w, W, e, E</strong></td>
+			<td>Forward to beginning, end of next word</td>
+			</tr>
+			<tr>
+			<td><strong>b, B, ge, gE</strong></td>
+			<td>Back to beginning, end of previous word</td>
+			</tr>
+			<tr>
+			<td><strong>f<i>x</i>, F<i>x</i></strong></td>
+			<td>Forward, backward to character <i>x</i></td>
+			</tr>
+			<tr>
+			<td><strong>t<i>x</i>, T<i>x</i></strong></td>
+			<td>Forward, backward to before character <i>x</i></td>
+			</tr>
+			<tr>
+			<td><strong>;, ,</strong></td>
+			<td>Repeat last f/t command forward, backward</td>
+			</tr>
+			<tr>
+			<td><strong>^, $</strong></td>
+			<td>To first, last character on line</td>
+			</tr>
+			<tr>
+			<td><strong>0, _</strong></td>
+			<td>To first column</td>
+			</tr>
+			<tr>
+			<td><strong>-, +</strong></td>
+			<td>To first character on previous, next line</td>
+			</tr>
+			<tr>
+			<td><strong>gg, G</strong></td>
+			<td>To first, last line</td>
+			</tr>
+			<tr>
+			<td><strong><i>{number}</i>G</strong></td>
+			<td>To line <i>number</i></td>
+			</tr>
+			<tr>
+			<td><strong>%</strong></td>
+			<td>To matching brace/bracket</td>
+			</tr>
+			<tr>
+			<td><strong>'x, `x</strong></td>
+			<td>To mark x</td>
+			</tr>
+			<tr>
+			<td><strong>H, M, L</strong></td>
+			<td>To top, middle, bottom of screen</td>
+			</tr>
+			<tr>
+			<td><strong>Ctrl+U, Ctrl+D</strong></td>
+			<td>Up, down by 1/2 screen</td>
+			</tr>
+			<tr>
+			<td><strong>{, }</strong></td>
+			<td>Back, forward by paragraph</td>
+			</tr>
+		</table>
+
+        <h2>Operators</h2>
+        <table>
+			<tr>
+			<td><strong>d<i>{motion}</i></strong></td>
+			<td>Delete (cut) text</td>
+			</tr>
+			<tr>
+			<td><strong>y<i>{motion}</i></strong></td>
+			<td>Yank (copy) text</td>
+			</tr>
+			<tr>
+			<td><strong>c<i>{motion}</i></strong></td>
+			<td>Change (cut, insert) text</td>
+			</tr>
+			<tr>
+			<td><strong>g~<i>{motion}</i></strong></td>
+			<td>Invert text case</td>
+			</tr>
+			<tr>
+			<td><strong>g~g~</strong></td>
+			<td>Invert current line case</td>
+			</tr>
+			<tr>
+			<td><strong>&gt;<i>{motion}</i></strong></td>
+			<td>Indent text</td>
+			</tr>
+			<tr>
+			<td><strong>&lt;<i>{motion}</i></strong></td>
+			<td>Unindent text</td>
+			</tr>
+			<tr>
+			<td><strong>&gt;&gt;, &lt;&lt;</strong></td>
+			<td>Indent, unindent lines</td>
+			</tr>
+        </table>
+   </td>
+   <td width="33%">
+        <h2>Operator Motions</h2>
+        <table>
+			<tr>
+			<td><strong>x, X</strong></td>
+			<td>Delete current, previous character</td>
+			</tr>
+			<tr>
+			<td><strong>D</strong></td>
+			<td>Delete to end of line</td>
+			</tr>
+			<tr>
+			<td><strong>Y</strong></td>
+			<td>Yank to end of line</td>
+			</tr>
+			<tr>
+			<td><strong>C</strong></td>
+			<td>Change to end of line</td>
+			</tr>
+			<tr>
+			<td><strong>~</strong></td>
+			<td>Switch case</td>
+			</tr>
+        </table>
+
+        <h2>Actions</h2>
+        <table>
+        	<tr>
+        	<td><strong>a, A</strong></td>
+        	<td>Insert text after cursor, line</td>
+        	</tr>
+        	<tr>
+        	<td><strong>i, I</strong></td>
+        	<td>Insert text before cursor, line</td>
+        	</tr>
+        	<tr>
+        	<td><strong>s, S</strong></td>
+        	<td>Change character, line</td>
+        	</tr>
+        	<tr>
+        	<td><strong>o, O</strong></td>
+        	<td>Insert line after, before current</td>
+        	</tr>
+        	<tr>
+        	<td><strong>dd</strong></td>
+        	<td>Delete current line</td>
+        	</tr>
+        	<tr>
+        	<td><strong>cc</strong></td>
+        	<td>Change current line</td>
+        	</tr>
+        </table>
+
+        <h2>Other</h2>
+        <table>
+			<tr>
+			<td><strong>v, V, Ctrl+V</strong></td>
+			<td>Select characters, lines, blocks</td>
+			</tr>
+			<tr>
+			<td><strong>gv</strong></td>
+			<td>Reselect last selection</td>
+			</tr>
+			<tr>
+			<td><strong>p, P</strong></td>
+			<td>Paste after, before cursor</td>
+			</tr>
+			<tr>
+			<td><strong>R</strong></td>
+			<td>Replace (overwrite) mode</td>
+			</tr>
+			<tr>
+			<td><strong>r</strong></td>
+			<td>Replace character</td>
+			</tr>
+			<tr>
+			<td><strong>J</strong></td>
+			<td>Join line with next</td>
+			</tr>
+			<tr>
+			<td><strong>u, Ctrl+R</strong></td>
+			<td>Undo, redo</td>
+			</tr>
+			<tr>
+			<td><strong>mx</strong></td>
+			<td>Create mark x at cursor</td>
+			</tr>
+			<tr>
+			<td><strong>K</strong></td>
+			<td>Show help for topic under cursor</td>
+			</tr>
+			<tr>
+			<td><strong>.</strong></td>
+			<td>Repeat last operation</td>
+			</tr>
+			<tr>
+			<td><strong>N<i>{operation}</i></strong></td>
+			<td>Perform <i>operation</i> N times</td>
+			</tr>
+			<tr>
+			<td><strong>"<i>{register}</i></strong></td>
+			<td>Copy/paste to/from <i>register</i></td>
+			</tr>
+			<tr>
+			<td><strong>Ctrl+A, Ctrl+X</strong></td>
+			<td>Increment, decrement next number</td>
+			</tr>
+			<tr>
+			<td><strong>Esc, Ctrl+[</strong></td>
+			<td>Leave insert mode</td>
+			</tr>
+        </table>
+   </td>
+   <td width="33%">
+        <h2>Searching</h2>
+        <table>
+			<tr>
+			<td><strong>/text, ?text</strong></td>
+			<td>Search forward, back for <i>text</i></td>
+			</tr>
+			<tr>
+			<td><strong>*, #</strong></td>
+			<td>Search forward, back for word under cursor</td>
+			</tr>
+			<tr>
+			<td><strong>g*, g#</strong></td>
+			<td>Search forward, back for text under cursor</td>
+			</tr>
+			<tr>
+			<td><strong>n, N</strong></td>
+			<td>Go to next, previous search match</td>
+			</tr>
+        </table>
+
+        <h2>Macros</h2>
+        <table>
+			<tr>
+			<td><strong>q<i>{register}</i>, q</strong></td>
+			<td>Begin, end recording macro to <i>register</i></td>
+			</tr>
+			<tr>
+			<td><strong>@<i>{register}</i></strong></td>
+			<td>Replay macro in <i>register</i></td>
+			</tr>
+        </table>
+
+        <h2>Scrolling</h2>
+        <table>
+			<tr>
+			<td><strong>Ctrl+E, Ctrl+Y</strong></td>
+			<td>Scroll down, up</td>
+			</tr>
+        	<tr>
+        	<td><strong>zz, zt, zb</strong></td>
+        	<td>Scroll current line to center, top, bottom</td>
+        	</tr>
+        </table>
+
+        <h2>Ex Commands</h2>
+        <table>
+			<tr>
+			<td><strong>:w, :wq, wq!</strong></td>
+			<td>Save, save and quit, without prompt</td>
+			</tr>
+			<tr>
+			<td><strong>:q, :bd</strong></td>
+			<td>Close tab</td>
+			</tr>
+			<tr>
+			<td><strong>:qall</strong></td>
+			<td>Close all tabs</td>
+			</tr>
+			<tr>
+			<td><strong>:bn, :bp</strong></td>
+			<td>Go to previous, next tab</td>
+			</tr>
+			<tr>
+			<td><strong>:badd, :e <i>file</i></strong></td>
+			<td>Add new tab, for <i>file</i></td>
+			</tr>
+			<tr>
+			<td><strong>:N</strong></td>
+			<td>Go to line N</td>
+			</tr>
+			<tr>
+			<td><strong>:R <i>expr</i></strong></td>
+			<td>Evaluate R expression</td>
+			</tr>
+			<tr>
+			<td><strong>:r <i>file</i></strong></td>
+			<td>Insert contents of <i>file</i></td>
+			</tr>
+			<tr>
+			<td><strong>:%s/<i>text</i>/<i>rep</i>/g</strong></td>
+			<td>Replace <i>text</i> with <i>rep</i> in file</td>
+			</tr>
+			<tr>
+			<td><strong>:'&lt;,'&gt;s/<i>text</i>/<i>rep</i>/g</strong></td>
+			<td>Replace in selection</td>
+			</tr>
+			<tr>
+			<td><strong>:help</strong></td>
+			<td>Show this screen</td>
+			</tr>
+        </table>
+        
+        <h2>Registers</h2>
+        <p>
+        The registers <strong>-</strong>, <strong>a-z</strong>, <strong>A-Z</strong>, 
+        and <strong>0-9</strong> are available.
+        </p>
+	</td>
+ </tr>
+</table>
+</g:HTML>
+</g:HTMLPanel>
+</ui:UiBinder>

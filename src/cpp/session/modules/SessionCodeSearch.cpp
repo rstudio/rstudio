@@ -1398,6 +1398,7 @@ SourceItem fromCppDefinition(const clang::CppDefinition& cppDefinition)
       break;
    case CppClassDefinition:
    case CppStructDefinition:
+   case CppTypedefDefinition:
       type = SourceItem::Class;
       break;
    case CppEnumDefinition:
@@ -1414,6 +1415,7 @@ SourceItem fromCppDefinition(const clang::CppDefinition& cppDefinition)
       break;
    default:
       type = SourceItem::None;
+      break;
    }
 
    // return source item

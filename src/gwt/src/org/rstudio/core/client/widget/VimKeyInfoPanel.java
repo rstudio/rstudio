@@ -1,7 +1,7 @@
 /*
- * CppCompletionContext.java
+ * VimKeyInfoPanel.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-15 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -12,14 +12,26 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
+package org.rstudio.core.client.widget;
 
-package org.rstudio.studio.client.workbench.views.source.editors.text.cpp;
+import com.google.gwt.user.client.ui.Widget;
 
-import org.rstudio.core.client.CommandWithArg;
-
-public interface CppCompletionContext
+public class VimKeyInfoPanel extends ShortcutInfoPanel
 {
-   boolean isCompletionEnabled();
-   void withUpdatedDoc(CommandWithArg<String> onUpdated);
-   void cppCompletionOperation(CppCompletionOperation operation);
+   public VimKeyInfoPanel()
+   {
+      super(null);
+   }
+   
+   @Override
+   protected String getHeaderText()
+   {
+      return "Vim Keyboard Shortcuts";
+   }
+   
+   @Override
+   protected Widget getShortcutContent()
+   {
+     return new VimKeyInfo();
+   }
 }

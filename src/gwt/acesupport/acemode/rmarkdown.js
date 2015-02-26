@@ -30,6 +30,7 @@ var SweaveBackgroundHighlighter = require("mode/sweave_background_highlighter").
 var RCodeModel = require("mode/r_code_model").RCodeModel;
 var MarkdownFoldMode = require("ace/mode/folding/markdown").FoldMode;
 var Utils = require("mode/utils");
+var unicode = require("ace/unicode");
 
 var Mode = function(suppressHighlighting, session) {
    var that = this;
@@ -179,6 +180,21 @@ oop.inherits(Mode, MarkdownMode);
         }
         return false;
     };
+
+    this.tokenRe = new RegExp("^["
+        + unicode.packages.L
+        + unicode.packages.Mn + unicode.packages.Mc
+        + unicode.packages.Nd
+        + unicode.packages.Pc + "._]+", "g"
+    );
+
+    this.nonTokenRe = new RegExp("^(?:[^"
+        + unicode.packages.L
+        + unicode.packages.Mn + unicode.packages.Mc
+        + unicode.packages.Nd
+        + unicode.packages.Pc + "._]|\s])+", "g"
+    );
+   
 
 }).call(Mode.prototype);
 

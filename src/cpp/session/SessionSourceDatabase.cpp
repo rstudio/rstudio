@@ -48,7 +48,7 @@
 // deleted. this has two implications:
 //
 //   - storage is not reclaimed
-//   - the properties can be "resurreced" and re-attached to another
+//   - the properties can be "resurrected" and re-attached to another
 //     file with the same path
 //
 // One way to overcome this might be to use filesystem metadata to store

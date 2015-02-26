@@ -18,12 +18,17 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
+import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.core.client.widget.ThemedButton;
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.rsconnect.RSConnect;
 import org.rstudio.studio.client.rsconnect.events.RSConnectDeployInitiatedEvent;
@@ -55,12 +60,14 @@ public class RSConnectDeployDialog
                                 EventBus events,
                                 final String sourceDir, 
                                 String sourceFile,
+                                String[] ignoredFiles,
                                 final RSConnectAccount lastAccount, 
                                 String lastAppName, 
                                 boolean isSatellite)
                                 
    {
-      super(server, display, new RSConnectDeploy(server, connector, display, session));
+      super(server, display, new RSConnectDeploy(server, connector, display, session,
+            StringUtil.getExtension(sourceFile).toLowerCase().equals("rmd")));
       setText("Publish to Server");
       setWidth("350px");
       deployButton_ = new ThemedButton("Publish");
@@ -73,6 +80,14 @@ public class RSConnectDeployDialog
       isSatellite_ = isSatellite;
       defaultAccount_ = lastAccount;
       connector_ = connector;
+      ignoredFiles_ = ignoredFiles;
+
+      String deployTarget = sourceDir;
+      if (StringUtil.getExtension(sourceFile).toLowerCase().equals("rmd")) 
+      {
+         FileSystemItem sourceFSI = FileSystemItem.createDir(sourceDir);
+         deployTarget = sourceFSI.completePath(sourceFile);
+      }
 
       launchCheck_ = new CheckBox("Launch browser");
       launchCheck_.setValue(true);
@@ -90,13 +105,23 @@ public class RSConnectDeployDialog
          }
       });
       
+      contents_.setOnFileAddClick(new Command() 
+      {
+         @Override
+         public void execute()
+         {
+            onAddFileClick();
+         }
+      });
+      
       // don't enable the deploy button until we're done getting the file list
       deployButton_.setEnabled(false);
       
       indicator_ = addProgressIndicator(false);
 
       // Get the files to be deployed
-      server_.getDeploymentFiles(sourceDir,
+      server_.getDeploymentFiles(
+            deployTarget,
             new ServerRequestCallback<RSConnectDeploymentFiles>()
             {
                @Override 
@@ -114,7 +139,8 @@ public class RSConnectDeployDialog
                   }
                   else
                   {
-                     contents_.setFileList(files.getDirList());
+                     contents_.setFileList(files.getDirList(), ignoredFiles_);
+                     contents_.setFileCheckEnabled(sourceFile_, false);
                      deployButton_.setEnabled(true);
                   }
                }
@@ -127,7 +153,7 @@ public class RSConnectDeployDialog
 
       // Get the deployments of this directory from any account (should be fast,
       // since this information is stored locally in the directory). 
-      server_.getRSConnectDeployments(sourceDir, 
+      server_.getRSConnectDeployments(deployTarget, 
             new ServerRequestCallback<JsArray<RSConnectDeploymentRecord>>()
       {
          @Override
@@ -357,12 +383,28 @@ public class RSConnectDeployDialog
       
       RSConnectAccount account = contents_.getSelectedAccount();
       
+      // compose the list of files that have been manually added; we want to
+      // include all the ones the user added but didn't later uncheck, so
+      // cross-reference the list we kept with the one returned by the dialog
+      ArrayList<String> deployFiles = contents_.getFileList();
+      ArrayList<String> additionalFiles = new ArrayList<String>();
+      for (String filePath: filesAddedManually_)
+      {
+         if (deployFiles.contains(filePath))
+         {
+            additionalFiles.add(filePath);
+         }
+      }
+      
       if (isSatellite_)
       {
          // in a satellite window, call back to the main window to do a 
          // deployment
          RSConnect.deployFromSatellite(
                sourceDir_, 
+               JsArrayUtil.toJsArrayString(contents_.getFileList()),
+               JsArrayUtil.toJsArrayString(additionalFiles),
+               JsArrayUtil.toJsArrayString(contents_.getIgnoredFileList()),
                sourceFile_, 
                launchCheck_.getValue(), 
                RSConnectDeploymentRecord.create(appName, account, ""));
@@ -382,6 +424,9 @@ public class RSConnectDeployDialog
          // in the main window, initiate the deployment directly
          events_.fireEvent(new RSConnectDeployInitiatedEvent(
                sourceDir_,
+               contents_.getFileList(),
+               additionalFiles,
+               contents_.getIgnoredFileList(),
                sourceFile_,
                launchCheck_.getValue(),
                RSConnectDeploymentRecord.create(appName, account, "")));
@@ -402,6 +447,53 @@ public class RSConnectDeployDialog
       }
    }
    
+   private void onAddFileClick()
+   {
+      FileDialogs dialogs = RStudioGinjector.INSTANCE.getFileDialogs();
+      final FileSystemItem sourceDir = FileSystemItem.createDir(sourceDir_);
+      dialogs.openFile("Select File", 
+            RStudioGinjector.INSTANCE.getRemoteFileSystemContext(), 
+            sourceDir, 
+            new ProgressOperationWithInput<FileSystemItem>()
+            {
+               @Override
+               public void execute(FileSystemItem input, 
+                                   ProgressIndicator indicator)
+               {
+                  if (input != null)
+                  {
+                     String path = input.getPathRelativeTo(sourceDir);
+                     if (path == null)
+                     {
+                        display_.showMessage(GlobalDisplay.MSG_INFO, 
+                              "Cannot Add File", 
+                              "Only files in the same folder as the " +
+                              "document (" + sourceDir_ + ") or one of its " +
+                              "sub-folders may be added.");
+                        return;
+                     }
+                     else
+                     {
+                        // see if the file is already in the list (we don't 
+                        // want to duplicate an existing entry)
+                        ArrayList<String> files = contents_.getFileList();
+                        for (String file: files)
+                        {
+                           if (file.equals(path))
+                           {
+                              indicator.onCompleted();
+                              return;
+                           }
+                        }
+                        contents_.addFileToList(path);
+                        filesAddedManually_.add(path);
+                     }
+                  }
+                  indicator.onCompleted();
+               }
+            });
+   }
+   
    private final EventBus events_;
    private final boolean isSatellite_;
    private final RSAccountConnector connector_;
@@ -413,6 +505,10 @@ public class RSConnectDeployDialog
    private ProgressIndicator indicator_;
    private CheckBox launchCheck_;
    private RSConnectAccount defaultAccount_;
+   private ArrayList<String> filesAddedManually_ =
+         new ArrayList<String>();
+   
+   private String[] ignoredFiles_;
    
    // Map of account to a list of applications owned by that account
    private Map<RSConnectAccount, JsArray<RSConnectApplicationInfo>> apps_ = 
