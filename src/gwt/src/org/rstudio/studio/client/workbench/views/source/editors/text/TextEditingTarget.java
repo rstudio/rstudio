@@ -2368,6 +2368,8 @@ public class TextEditingTarget implements
          doCommentUncomment("#");
       else if (fileType_.isCpp())
          doCommentUncomment("//"); 
+      else
+         docDisplay_.toggleCommentLines();
    }
    
    private void doCommentUncomment(String c)

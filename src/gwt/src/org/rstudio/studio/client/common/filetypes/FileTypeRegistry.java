@@ -67,10 +67,7 @@ public class FileTypeRegistry
                           ICONS.iconText(), false, false, false, false, false,
                           false, false, false, false, false, false, false, false);
    
-   public static final TextFileType STAN =
-         new TextFileType("stan", "Stan", EditorLanguage.LANG_STAN, ".stan",
-                          ICONS.iconStan(), false, false, false, false, false,
-                          false, false, false, false, false, false, false, false);
+   public static final TextFileType STAN = new StanFileType();
    
    public static final TextFileType MERMAID = new MermaidFileType();
    

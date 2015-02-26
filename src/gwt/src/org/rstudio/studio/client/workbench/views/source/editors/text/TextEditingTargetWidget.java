@@ -335,7 +335,7 @@ public class TextEditingTargetWidget
          srcOnSaveLabel_.setText("Source on Save");
       codeTransform_.setVisible(
             (canExecuteCode && !fileType.canAuthorContent()) ||
-            fileType.isC());   
+            fileType.isC() || fileType.isStan());   
      
       sourceButton_.setVisible(canSource && !isPlainMarkdown);
       sourceMenuButton_.setVisible(canSourceWithEcho && 
