@@ -24,7 +24,7 @@
 .rs.addFunction("formatDataColumn", function(x, start, len, ...)
 {
    # extract the visible part of the column
-   col <- x[start:min(length(x), start+len)]
+   col <- x[start:min(NROW(x), start+len)]
 
    if (is.numeric(col)) {
      # show numbers as doubles
@@ -150,7 +150,7 @@
 {
   rows <- 0
   tryCatch({
-    rows <- nrow(x)
+    rows <- NROW(x)
   }, error = function(e) {
     stop("Failed to determine rows for object of class '", class(x), "': ", 
          e$message)
@@ -165,7 +165,7 @@
 {
   cols <- 0
   tryCatch({
-    cols <- ncol(x)
+    cols <- NCOL(x)
   }, error = function(e) {
     stop("Failed to determine columns for object of class '", class(x), "': ", 
          e$message)
