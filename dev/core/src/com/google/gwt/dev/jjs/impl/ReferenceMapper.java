@@ -200,7 +200,8 @@ public class ReferenceMapper {
 
   JMethod createConstructor(SourceInfo info, MethodBinding b) {
     JDeclaredType enclosingType = (JDeclaredType) get(b.declaringClass);
-    JMethod method = new JConstructor(info, (JClassType) enclosingType);
+    JMethod method =
+        new JConstructor(info, (JClassType) enclosingType, AccessModifier.fromMethodBinding(b));
     enclosingType.addMethod(method);
 
     /*

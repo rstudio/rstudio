@@ -1229,7 +1229,7 @@ public class GwtAstBuilder {
       // class lambda$0$Type implements T {}
       JClassType innerLambdaClass = createInnerClass(JdtUtil.asDottedString(x.binding.declaringClass.compoundName) +
           "$" + new String(x.binding.selector), x, info, funcType);
-      JConstructor ctor = new JConstructor(info, innerLambdaClass);
+      JConstructor ctor = new JConstructor(info, innerLambdaClass, AccessModifier.PRIVATE);
 
       // locals captured by the lambda and saved as fields on the anonymous inner class
       List<JField> locals = new ArrayList<JField>();
@@ -1742,7 +1742,7 @@ public class GwtAstBuilder {
         lambdaNameToInnerLambdaType.put(lambdaName, innerLambdaClass);
         newTypes.add(innerLambdaClass);
 
-        JConstructor ctor = new JConstructor(info, innerLambdaClass);
+        JConstructor ctor = new JConstructor(info, innerLambdaClass, AccessModifier.PRIVATE);
 
         JMethodBody ctorBody = new JMethodBody(info);
         JThisRef thisRef = new JThisRef(info, innerLambdaClass);
@@ -3972,7 +3972,8 @@ public class GwtAstBuilder {
     JMethod method;
     boolean isNested = JdtUtil.isInnerClass(declaringClass);
     if (x.isConstructor()) {
-      method = new JConstructor(info, (JClassType) enclosingType);
+      method =
+          new JConstructor(info, (JClassType) enclosingType, AccessModifier.fromMethodBinding(b));
       if (x.isDefaultConstructor()) {
         ((JConstructor) method).setDefaultConstructor();
       }

@@ -112,6 +112,30 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
     assertCompileSucceeds();
   }
 
+  public void testMultiplePrivateConstructorsExportSucceeds() throws Exception {
+    addSnippetImport("com.google.gwt.core.client.js.JsExport");
+    addSnippetClassDecl(
+        "@JsExport",
+        "public static class Buggy {",
+        "  private Buggy() {}",
+        "  private Buggy(int a) {}",
+        "}");
+
+    assertCompileSucceeds();
+  }
+
+  public void testMultiplePublicConstructorsExportFails() throws Exception {
+    addSnippetImport("com.google.gwt.core.client.js.JsExport");
+    addSnippetClassDecl(
+        "@JsExport",
+        "public static class Buggy {",
+        "  public Buggy() {}",
+        "  public Buggy(int a) {}",
+        "}");
+
+    assertCompileFails();
+  }
+
   public void testSingleExportSucceeds() throws Exception {
     addSnippetImport("com.google.gwt.core.client.js.JsExport");
     addSnippetClassDecl(
@@ -149,7 +173,8 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
       optimize("void", "new Buggy();");
       fail("JsInteropRestrictionCheckerTest should have prevented the name collision.");
     } catch (Exception e) {
-      assertTrue(e.getCause() instanceof UnableToCompleteException);
+      assertTrue(e.getCause() instanceof UnableToCompleteException
+          || e instanceof UnableToCompleteException);
     }
   }
 

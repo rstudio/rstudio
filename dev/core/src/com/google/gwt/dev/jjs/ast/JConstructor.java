@@ -37,7 +37,8 @@ public class JConstructor extends JMethod {
     }
 
     private Object readResolve() {
-      JConstructor result = new JConstructor(SourceOrigin.UNKNOWN, enclosingType);
+      JConstructor result =
+          new JConstructor(SourceOrigin.UNKNOWN, enclosingType, AccessModifier.PUBLIC);
       result.signature = signature;
       return result;
     }
@@ -62,10 +63,10 @@ public class JConstructor extends JMethod {
     return defaultConstructor;
   }
 
-  public JConstructor(SourceInfo info, JClassType enclosingType) {
+  public JConstructor(SourceInfo info, JClassType enclosingType, AccessModifier access) {
     // Access only matters for virtual methods, just use public.
     super(info, enclosingType.getShortName(), enclosingType, JPrimitiveType.VOID, false, false,
-        true, AccessModifier.PUBLIC);
+        true, access);
   }
 
   @Override
