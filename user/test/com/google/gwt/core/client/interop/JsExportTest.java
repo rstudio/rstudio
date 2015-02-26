@@ -18,7 +18,6 @@ package com.google.gwt.core.client.interop;
 import static com.google.gwt.core.client.ScriptInjector.TOP_WINDOW;
 
 import com.google.gwt.core.client.ScriptInjector;
-import com.google.gwt.core.client.interop.subpackage.MyNestedExportedClassSansPackageNamespace;
 import com.google.gwt.junit.client.GWTTestCase;
 
 /**
@@ -231,36 +230,54 @@ public class JsExportTest extends GWTTestCase {
   }-*/;
 
   public static void testInheritClassNamespace() {
-    assertEquals(MyExportedClassWithNamespace.BAR, getFooBAR());
+    assertEquals(42, getBAR());
   }
 
-  private static native int getFooBAR() /*-{
-    return $wnd.foo.MyExportedClassWithNamespace.BAR || 0;
+  private static native int getBAR() /*-{
+    return $wnd.foo.MyExportedClassWithNamespace.BAR;
+  }-*/;
+
+  public static void testInheritClassNamespace_noExport() {
+    assertEquals(99, getBAZ());
+  }
+
+  private static native int getBAZ() /*-{
+    return $wnd.foobaz.MyClassWithNamespace.BAZ;
   }-*/;
 
   public void testInheritPackageNamespace() {
-    assertEquals(MyExportedClassWithPackageNamespace.WOO, getWOO());
+    assertEquals(1001, getWOO());
   }
 
   private static native int getWOO() /*-{
-    return $wnd.woo.MyExportedClassWithPackageNamespace.WOO || 0;
+    return $wnd.woo.MyExportedClassWithPackageNamespace.WOO;
   }-*/;
 
-  public void testNotInheritNestedPackageNamespace() {
-    assertFalse(MyNestedExportedClassSansPackageNamespace.WOO == getNestedWOO());
+  public void testInheritPackageNamespace_nestedClass() {
+    assertEquals(99, getNestedWOO());
+    assertNotNull(createNestedExportedClass());
   }
 
   private static native int getNestedWOO() /*-{
-    return $wnd['woo.subpackage.MyNestedExportedClassSansPackageNamespace.WOO'] || 0;
+    return $wnd.woo.MyClassWithNestedExportedClass.Inner.WOO;
   }-*/;
 
-  public void testNestedEnum() {
-    assertEquals(MyClassWithNestedEnum.NestedEnum.FOO.name(),
-        getEnumNameViaJs(MyClassWithNestedEnum.NestedEnum.FOO));
+  private static native Object createNestedExportedClass() /*-{
+    return new $wnd.woo.MyClassWithNestedExportedClass.Inner();
+  }-*/;
+
+  public void testInheritPackageNamespace_subpackage() {
+    assertNull(getNestedSubpackage());
+    assertNotNull(getNestedSubpackageCorrect());
   }
 
-  private static native String getEnumNameViaJs(MyClassWithNestedEnum.NestedEnum ref) /*-{
-    return ref.name2();
+  private static native Object getNestedSubpackage() /*-{
+    return $wnd.woo.subpackage;
+  }-*/;
+
+  private static native Object getNestedSubpackageCorrect() /*-{
+    return $wnd.com.google.gwt.core.client.interop.subpackage.
+        MyNestedExportedClassSansPackageNamespace;
   }-*/;
 
   public void testEnum_enumerations() {
@@ -269,11 +286,11 @@ public class JsExportTest extends GWTTestCase {
   }
 
   private static native Object getEnumerationTEST1() /*-{
-    return $wnd.woo.MyEnumWithJsExport.TEST1;
+    return $wnd.woo.MyExportedEnum.TEST1;
   }-*/;
 
   private static native Object getEnumerationTEST2() /*-{
-    return $wnd.woo.MyEnumWithJsExport.TEST2;
+    return $wnd.woo.MyExportedEnum.TEST2;
   }-*/;
 
   public void testEnum_exportedMethods() {
@@ -281,7 +298,7 @@ public class JsExportTest extends GWTTestCase {
   }
 
   private static native Object getPublicStaticMethodInEnum() /*-{
-    return $wnd.woo.MyEnumWithJsExport.publicStaticMethod();
+    return $wnd.woo.MyExportedEnum.publicStaticMethod();
   }-*/;
 
   public void testEnum_exportedFields() {
@@ -293,11 +310,11 @@ public class JsExportTest extends GWTTestCase {
   }
 
   private static native int getPublicStaticFinalFieldInEnum() /*-{
-    return $wnd.woo.MyEnumWithJsExport.publicStaticFinalField;
+    return $wnd.woo.MyExportedEnum.publicStaticFinalField;
   }-*/;
 
   private static native int getPublicStaticFieldInEnum() /*-{
-    return $wnd.woo.MyEnumWithJsExport.publicStaticField;
+    return $wnd.woo.MyExportedEnum.publicStaticField;
   }-*/;
 
   public void testEnum_notExported() {
@@ -306,17 +323,17 @@ public class JsExportTest extends GWTTestCase {
   }
 
   private native Object getNotExportedFieldsInEnum() /*-{
-    return $wnd.woo.MyEnumWithJsExport.publicFinalField
-        || $wnd.woo.MyEnumWithJsExport.privateStaticFinalField
-        || $wnd.woo.MyEnumWithJsExport.protectedStaticFinalField
-        || $wnd.woo.MyEnumWithJsExport.defaultStaticFinalField;
+    return $wnd.woo.MyExportedEnum.publicFinalField
+        || $wnd.woo.MyExportedEnum.privateStaticFinalField
+        || $wnd.woo.MyExportedEnum.protectedStaticFinalField
+        || $wnd.woo.MyExportedEnum.defaultStaticFinalField;
   }-*/;
 
   private native Object getNotExportedMethodsInEnum() /*-{
-    return $wnd.woo.MyEnumWithJsExport.publicMethod
-        || $wnd.woo.MyEnumWithJsExport.protectedStaticMethod
-        || $wnd.woo.MyEnumWithJsExport.privateStaticMethod
-        || $wnd.woo.MyEnumWithJsExport.defaultStaticMethod;
+    return $wnd.woo.MyExportedEnum.publicMethod
+        || $wnd.woo.MyExportedEnum.protectedStaticMethod
+        || $wnd.woo.MyExportedEnum.privateStaticMethod
+        || $wnd.woo.MyExportedEnum.defaultStaticMethod;
   }-*/;
 
   public void testEnum_subclassEnumerations() {

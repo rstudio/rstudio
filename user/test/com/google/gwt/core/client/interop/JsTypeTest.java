@@ -68,11 +68,6 @@ public class JsTypeTest extends GWTTestCase {
     listNoExport.add("Tight");
     assertEquals("TightCollectionBaseFooImpl", listNoExport.x);
 
-    // TODO: fix me
-    if (isIE8()) {
-      return;
-    }
-
     // Calls through a bridge method.
     listWithExport.add("Tight");
     assertEquals("TightListImpl", listWithExport.x);
@@ -81,9 +76,10 @@ public class JsTypeTest extends GWTTestCase {
   public void testConcreteJsTypeAccess() {
     ConcreteJsType concreteJsType = new ConcreteJsType();
 
-    testJsTypeHasFields(concreteJsType, "publicMethod", "publicField");
-    testJsTypeHasNoFields(concreteJsType, "publicStaticMethod", "privateMethod", "protectedMethod",
-        "packageMethod", "publicStaticField", "privateField", "protectedField", "packageField");
+    assertJsTypeHasFields(concreteJsType, "publicMethod", "publicField");
+    assertJsTypeDoesntHaveFields(concreteJsType, "publicStaticMethod", "privateMethod",
+        "protectedMethod", "packageMethod", "publicStaticField", "privateField", "protectedField",
+        "packageField");
   }
 
   public void testConcreteJsTypeSubclassAccess() {
@@ -91,14 +87,14 @@ public class JsTypeTest extends GWTTestCase {
     ConcreteJsTypeSubclass concreteJsTypeSubclass = new ConcreteJsTypeSubclass();
 
     // A subclass of a JsType is not itself a JsType.
-    testJsTypeHasNoFields(concreteJsTypeSubclass, "publicSubclassMethod", "publicSubclassField",
-        "publicStaticSubclassMethod", "privateSubclassMethod", "protectedSubclassMethod",
-        "packageSubclassMethod", "publicStaticSubclassField", "privateSubclassField",
-        "protectedSubclassField", "packageSubclassField");
+    assertJsTypeDoesntHaveFields(concreteJsTypeSubclass, "publicSubclassMethod",
+        "publicSubclassField", "publicStaticSubclassMethod", "privateSubclassMethod",
+        "protectedSubclassMethod", "packageSubclassMethod", "publicStaticSubclassField",
+        "privateSubclassField", "protectedSubclassField", "packageSubclassField");
 
     // But if it overrides an exported method then the overriding method will be exported.
-    testJsTypeHasFields(concreteJsType, "publicMethod");
-    testJsTypeHasFields(concreteJsTypeSubclass, "publicMethod");
+    assertJsTypeHasFields(concreteJsType, "publicMethod");
+    assertJsTypeHasFields(concreteJsTypeSubclass, "publicMethod");
     assertFalse(
         areSameFunction(concreteJsType, "publicMethod", concreteJsTypeSubclass, "publicMethod"));
     assertFalse(callIntFunction(concreteJsType, "publicMethod")
@@ -264,8 +260,8 @@ public class JsTypeTest extends GWTTestCase {
   }
 
   public void testEnumJsTypeAccess() {
-    testJsTypeHasFields(MyEnumWithJsType.TEST2, "publicMethod", "publicField");
-    testJsTypeHasNoFields(MyEnumWithJsType.TEST2, "publicStaticMethod", "privateMethod",
+    assertJsTypeHasFields(MyEnumWithJsType.TEST2, "publicMethod", "publicField");
+    assertJsTypeDoesntHaveFields(MyEnumWithJsType.TEST2, "publicStaticMethod", "privateMethod",
         "protectedMethod", "packageMethod", "publicStaticField", "privateField", "protectedField",
         "packageField");
   }
@@ -317,14 +313,6 @@ public class JsTypeTest extends GWTTestCase {
     return object[fieldName] != undefined;
   }-*/;
 
-  private static native boolean isIE8() /*-{
-    return $wnd.navigator.userAgent.toLowerCase().indexOf('msie') != -1 && $doc.documentMode == 8;
-  }-*/;
-
-  private static native boolean isFirefox40OrEarlier() /*-{
-    return @com.google.gwt.dom.client.DOMImplMozilla::isGecko2OrBefore()();
-  }-*/;
-
   private static native int callPublicMethodFromEnumeration(MyEnumWithJsType enumeration) /*-{
     return enumeration.idxAddOne();
   }-*/;
@@ -334,13 +322,13 @@ public class JsTypeTest extends GWTTestCase {
     return enumeration.foo();
   }-*/;
 
-  private static void testJsTypeHasFields(Object obj, String... fields) {
+  private static void assertJsTypeHasFields(Object obj, String... fields) {
     for (String field : fields) {
       assertTrue("Field '" + field + "' should be exported", hasField(obj, field));
     }
   }
 
-  private static void testJsTypeHasNoFields(Object obj, String... fields) {
+  private static void assertJsTypeDoesntHaveFields(Object obj, String... fields) {
     for (String field : fields) {
       assertFalse("Field '" + field + "' should not be exported", hasField(obj, field));
     }

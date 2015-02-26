@@ -21,7 +21,7 @@ import com.google.gwt.core.client.js.JsExport;
  * This enum is annotated as @JsExport.
  */
 @JsExport
-public enum MyEnumWithJsExport {
+public enum MyExportedEnum {
   TEST1, TEST2;
 
   public static int publicStaticMethod() {

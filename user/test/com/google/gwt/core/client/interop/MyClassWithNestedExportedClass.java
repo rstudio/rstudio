@@ -16,16 +16,16 @@
 package com.google.gwt.core.client.interop;
 
 import com.google.gwt.core.client.js.JsExport;
-import com.google.gwt.core.client.js.JsType;
 
-class MyClassWithNestedEnum {
-  @JsType
+/**
+ * Class with a nested exported class.
+ */
+public class MyClassWithNestedExportedClass {
+  /**
+   * Exported nested class.
+   */
   @JsExport
-  public enum NestedEnum {
-    FOO, BAR;
-
-    public String name2() {
-      return name();
-    }
+  public static class Inner {
+    public static final int WOO = 99;
   }
 }
