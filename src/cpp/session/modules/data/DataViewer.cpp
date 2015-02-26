@@ -677,17 +677,9 @@ Error getGridData(const http::Request& request,
 
    try
    {
-      // extract the query string; if we don't find it, it's a no-op
-      std::string::size_type pos = request.uri().find('?');
-      if (pos == std::string::npos)
-      {
-         return Success();
-      }
-
       // find the data frame we're going to be pulling data from
-      std::string queryString = request.uri().substr(pos+1);
       http::Fields fields;
-      http::util::parseQueryString(queryString, &fields);
+      http::util::parseForm(request.body(), &fields);
       std::string envName = http::util::urlDecode(
             http::util::fieldValue<std::string>(fields, "env", ""), true);
       std::string objName = http::util::urlDecode(

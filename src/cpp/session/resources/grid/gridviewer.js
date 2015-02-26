@@ -554,6 +554,7 @@ var initDataTable = function(result) {
       }],
     "ajax": {
       "url": "../grid_data", 
+      "type": "POST",
       "data": function(d) {
         d.env = env;
         d.obj = obj;
@@ -636,7 +637,9 @@ var bootstrap = function() {
 
   // call the server to get data shape
   $.ajax({
-        url: "../grid_data?show=cols&" + window.location.search.substring(1)})
+        url: "../grid_data",
+        data: "show=cols&" + window.location.search.substring(1),
+        type: "POST"})
     .done(function(result) {
       $(document).ready(function() {
         document.body.appendChild(newEle);
