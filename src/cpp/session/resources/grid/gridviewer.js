@@ -222,8 +222,8 @@ var createNumericFilterUI = function(idx, col, onDismiss) {
     var min = col.col_min.toString();
     var max = col.col_max.toString();
     var val = parseSearchVal(idx);
-    if (val.indexOf("-") > 0) {
-      var range = val.split("-");
+    if (val.indexOf("_") > 0) {
+      var range = val.split("_");
       min = range[0];
       max = range[1];
     } else if (!isNaN(parseFloat(val))) {
@@ -245,7 +245,7 @@ var createNumericFilterUI = function(idx, col, onDismiss) {
       var searchText = 
         minVal.textContent === min && maxVal.textContent === max ? 
           "" :
-          minVal.textContent + "-" + maxVal.textContent;
+          minVal.textContent + "_" + maxVal.textContent;
       if (searchText.length > 0) {
         searchText = "numeric|" + searchText;
       }

@@ -153,9 +153,9 @@ bool isFilterSubset(const std::string& outer, const std::string& inner)
 
    if (outerType == "numeric")
    {
-      // matches a numeric filter (i.e. "2.71-3.14") -- in this case we need to
+      // matches a numeric filter (i.e. "2.71_3.14") -- in this case we need to
       // check the components for range inclusion
-      boost::regex numFilter("(\\d+\\.?\\d*)-(\\d+\\.?\\d*)");
+      boost::regex numFilter("(-?\\d+\\.?\\d*)_(-?\\d+\\.?\\d*)");
       boost::smatch innerMatch, outerMatch;
       if (boost::regex_search(innerValue, innerMatch, numFilter) &&
           boost::regex_search(outerValue, outerMatch, numFilter))
