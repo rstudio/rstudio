@@ -127,6 +127,7 @@
 * Fix for console text unselectable in Firefox
 * Find in Files now always activates result pane
 * Correctly reflow comments in Rmd C++ code chunks
+* Don't warn when saving C/C++ file with .hpp extension on OS X
 * Ensure that rmarkdown documents render within input directory
 * Eliminate race condition that could cause crash when polling child processes
 * Correct handling for breakpoints in files with non-ascii filenames on Windows
