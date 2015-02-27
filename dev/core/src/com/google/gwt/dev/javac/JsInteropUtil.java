@@ -123,10 +123,6 @@ public final class JsInteropUtil {
       AnnotationBinding jsNamespace = JdtUtil.getAnnotation(x.binding, JSNAMESPACE_CLASS);
       if (jsNamespace != null) {
         type.setJsNamespace(JdtUtil.getAnnotationParameterString(jsNamespace, "value"));
-      } else {
-        if (type.getSuperClass() != null && x.enclosingType != null) {
-          maybeSetJsNamespace(type.getSuperClass(), x.enclosingType);
-        }
       }
     }
   }
