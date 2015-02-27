@@ -4536,10 +4536,15 @@ public class TextEditingTarget implements
                public void execute(Boolean arg) {
                   docDisplay.setUseVimMode(arg);
                }}));
+      releaseOnDismiss.add(prefs.codeCompleteWeb().bind(
+            new CommandWithArg<String>() {
+               public void execute(String arg) {
+                  docDisplay.syncCompletionPrefs();
+               }}));
       releaseOnDismiss.add(prefs.showDiagnosticsWeb().bind(
             new CommandWithArg<Boolean>() {
                public void execute(Boolean arg) {
-                  docDisplay.syncUseWorker();
+                  docDisplay.syncDiagnosticsPrefs();
                }}));
    }
    

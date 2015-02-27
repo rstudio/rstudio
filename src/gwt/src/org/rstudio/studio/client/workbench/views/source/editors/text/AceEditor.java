@@ -454,9 +454,6 @@ public class AceEditor implements DocDisplay,
    {
       if (fileType_ == null)
          return;
-
-      // turn off any ace completion that's already installed
-      widget_.getEditor().setCompletionOptions(false, false, false);
       
       CompletionManager completionManager;
       if (!suppressCompletion)
@@ -485,16 +482,6 @@ public class AceEditor implements DocDisplay,
                                                      completionManager);
             }
          }
-         else if (fileType_.getEditorLanguage().useAceLanguageTools())
-         {
-            // no RStudio completion manager
-            completionManager = new NullCompletionManager();
-            
-            // enable ace native completion
-            boolean live = uiPrefs_.codeCompleteWeb().getValue().equals(
-                                          UIPrefsAccessor.COMPLETION_ALWAYS);
-            widget_.getEditor().setCompletionOptions(true, false, live);
-         }
          else
             completionManager = new NullCompletionManager();
       }
@@ -513,7 +500,9 @@ public class AceEditor implements DocDisplay,
       
       updateKeyboardHandlers();
       
-      syncUseWorker();
+      syncCompletionPrefs();
+      
+      syncDiagnosticsPrefs();
       
       getSession().setEditorMode(
             fileType_.getEditorLanguage().getParserName(),
@@ -523,7 +512,19 @@ public class AceEditor implements DocDisplay,
    } 
    
    @Override
-   public void syncUseWorker()
+   public void syncCompletionPrefs()
+   {
+      if (fileType_ == null)
+         return;
+      
+      boolean enabled = fileType_.getEditorLanguage().useAceLanguageTools();
+      boolean live = uiPrefs_.codeCompleteWeb().getValue().equals(
+                                       UIPrefsAccessor.COMPLETION_ALWAYS);
+      widget_.getEditor().setCompletionOptions(enabled, false, live);
+   }
+   
+   @Override
+   public void syncDiagnosticsPrefs()
    {
       if (fileType_ == null)
          return;
