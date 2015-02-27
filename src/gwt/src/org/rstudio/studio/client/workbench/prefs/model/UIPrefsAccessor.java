@@ -161,6 +161,11 @@ public class UIPrefsAccessor extends Prefs
       return bool("show_diagnostics", true);
    }
    
+   public PrefValue<Boolean> showDiagnosticsWeb()
+   {
+      return bool("show_diagnostics_web", true);
+   }
+   
    public PrefValue<Boolean> autoAppendNewline()
    {
       return bool("auto_append_newline", false);

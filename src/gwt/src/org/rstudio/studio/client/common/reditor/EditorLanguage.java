@@ -112,11 +112,11 @@ public class EditorLanguage
    public EditorLanguage(
          String parserName,
          boolean useRCompletion,
-         boolean useAceCompletion)
+         boolean useAceLanguageTools)
    {
       parserName_ = parserName;
       useRCompletion_ = useRCompletion;
-      useAceCompletion_ = useAceCompletion;
+      useAceLanguageTools_ = useAceLanguageTools;
    }
 
    public String getParserName()
@@ -129,12 +129,12 @@ public class EditorLanguage
       return useRCompletion_;
    }
    
-   public boolean useAceCompletion()
+   public boolean useAceLanguageTools()
    {
-      return useAceCompletion_;
+      return useAceLanguageTools_;
    }
 
    private final String parserName_;
    private final boolean useRCompletion_;
-   private final boolean useAceCompletion_;
+   private final boolean useAceLanguageTools_;
 }

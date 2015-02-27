@@ -485,7 +485,7 @@ public class AceEditor implements DocDisplay,
                                                      completionManager);
             }
          }
-         else if (fileType_.getEditorLanguage().useAceCompletion())
+         else if (fileType_.getEditorLanguage().useAceLanguageTools())
          {
             // no RStudio completion manager
             completionManager = new NullCompletionManager();
@@ -512,13 +512,27 @@ public class AceEditor implements DocDisplay,
       completionManager_ = completionManager;
       
       updateKeyboardHandlers();
-     
+      
+      syncUseWorker();
+      
       getSession().setEditorMode(
             fileType_.getEditorLanguage().getParserName(),
             false);
       getSession().setUseWrapMode(fileType_.getWordWrap());
       syncWrapLimit();
-   }   
+   } 
+   
+   @Override
+   public void syncUseWorker()
+   {
+      if (fileType_ == null)
+         return;
+      
+      boolean useWorker = uiPrefs_.showDiagnosticsWeb().getValue() &&
+            fileType_.getEditorLanguage().useAceLanguageTools();
+
+      getSession().setUseWorker(useWorker);
+   }
    
    private void syncWrapLimit()
    {

@@ -91,6 +91,11 @@ cp build/src-min/keybinding-* ../../src/org/rstudio/studio/client/workbench/view
 # Copy the ext-language-tools
 cp build/src-min/ext-language_tools.js ../../src/org/rstudio/studio/client/workbench/views/source/editors/text/ace/
 
+# Copy in workers
+cp build/src-min/worker-html.js ../../www/js/workers
+cp build/src-min/worker-css.js ../../www/js/workers
+cp build/src-min/worker-javascript.js ../../www/js/workers
+
 stripUseStrict() {
     sed 's/"use strict";//g' "$1" > "$1.stripped"
     mv "$1.stripped" "$1"

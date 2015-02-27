@@ -4536,6 +4536,11 @@ public class TextEditingTarget implements
                public void execute(Boolean arg) {
                   docDisplay.setUseVimMode(arg);
                }}));
+      releaseOnDismiss.add(prefs.showDiagnosticsWeb().bind(
+            new CommandWithArg<Boolean>() {
+               public void execute(Boolean arg) {
+                  docDisplay.syncUseWorker();
+               }}));
    }
    
    public static void syncFontSize(

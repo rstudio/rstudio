@@ -157,7 +157,8 @@ public class EditingPreferencesPane extends PreferencesPane
       completionPanel.add(showCompletionsWeb_);
       
       VerticalPanel diagnosticsPanel = new VerticalPanel();
-      diagnosticsPanel.add(checkboxPref("Show inline diagnostics for R and C/C++ code", prefs.showDiagnostics()));
+      diagnosticsPanel.add(checkboxPref("Show diagnostics for R and C/C++ code", prefs.showDiagnostics()));
+      diagnosticsPanel.add(checkboxPref("Show diagnostics for HTML, CSS, and JavaScript code", prefs.showDiagnosticsWeb()));
       
       
       DialogTabLayoutPanel tabPanel = new DialogTabLayoutPanel();

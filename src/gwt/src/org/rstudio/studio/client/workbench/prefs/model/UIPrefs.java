@@ -153,6 +153,10 @@ public class UIPrefs extends UIPrefsAccessor implements UiPrefsChangedHandler
          showDiagnostics().setGlobalValue(
                                  newUiPrefs.showDiagnostics().getGlobalValue());
          
+         showDiagnosticsWeb().setGlobalValue(
+               newUiPrefs.showDiagnosticsWeb().getGlobalValue());
+         
+         
          autoAppendNewline().setGlobalValue(
                                  newUiPrefs.autoAppendNewline().getGlobalValue());
          
