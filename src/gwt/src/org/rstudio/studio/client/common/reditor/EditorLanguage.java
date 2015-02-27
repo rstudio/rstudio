@@ -57,38 +57,38 @@ public class EditorLanguage
    public static final EditorLanguage LANG_HTML = new EditorLanguage(
          "ace/mode/html", false);
    public static final EditorLanguage LANG_CSS = new EditorLanguage(
-         "ace/mode/css", true);
+         "ace/mode/css", false);
    public static final EditorLanguage LANG_JAVASCRIPT = new EditorLanguage(
-         "ace/mode/javascript", true);
+         "ace/mode/javascript", false);
    public static final EditorLanguage LANG_PYTHON = new EditorLanguage(
-         "ace/mode/python", true);
+         "ace/mode/python", false);
    public static final EditorLanguage LANG_SQL = new EditorLanguage(
-         "ace/mode/sql", true);
+         "ace/mode/sql", false);
    public static final EditorLanguage LANG_SH = new EditorLanguage(
-         "ace/mode/sh", true);
+         "ace/mode/sh", false);
    public static final EditorLanguage LANG_YAML = new EditorLanguage(
-         "ace/mode/yaml", true);
+         "ace/mode/yaml", false);
    public static final EditorLanguage LANG_XML = new EditorLanguage(
-         "ace/mode/xml", true);
-   public static final EditorLanguage LANG_GRAPHVIZ = new EditorLanguage("ace/mode/dot", true);
+         "ace/mode/xml", false);
+   public static final EditorLanguage LANG_GRAPHVIZ = new EditorLanguage("ace/mode/dot", false);
    
-   public static final EditorLanguage LANG_CLOJURE = new EditorLanguage("ace/mode/clojure", true);
-   public static final EditorLanguage LANG_COFFEE = new EditorLanguage("ace/mode/coffee", true);
-   public static final EditorLanguage LANG_CSHARP = new EditorLanguage("ace/mode/csharp", true);
-   public static final EditorLanguage LANG_GITIGNORE = new EditorLanguage("ace/mode/gitignore", true);
-   public static final EditorLanguage LANG_GO = new EditorLanguage("ace/mode/golang", true);
-   public static final EditorLanguage LANG_GROOVY = new EditorLanguage("ace/mode/groovy", true);
-   public static final EditorLanguage LANG_HASKELL = new EditorLanguage("ace/mode/haskell", true);
-   public static final EditorLanguage LANG_HAXE = new EditorLanguage("ace/mode/haxe", true);
-   public static final EditorLanguage LANG_JAVA = new EditorLanguage("ace/mode/java", true);
-   public static final EditorLanguage LANG_JULIA = new EditorLanguage("ace/mode/julia", true);
-   public static final EditorLanguage LANG_LISP = new EditorLanguage("ace/mode/lisp", true);
-   public static final EditorLanguage LANG_LUA = new EditorLanguage("ace/mode/lua", true);
-   public static final EditorLanguage LANG_MATLAB = new EditorLanguage("ace/mode/matlab", true);
-   public static final EditorLanguage LANG_PERL = new EditorLanguage("ace/mode/perl", true);
-   public static final EditorLanguage LANG_RUBY = new EditorLanguage("ace/mode/ruby", true);
-   public static final EditorLanguage LANG_RUST = new EditorLanguage("ace/mode/rust", true);
-   public static final EditorLanguage LANG_SCALA = new EditorLanguage("ace/mode/scala", true);
+   public static final EditorLanguage LANG_CLOJURE = new EditorLanguage("ace/mode/clojure", false);
+   public static final EditorLanguage LANG_COFFEE = new EditorLanguage("ace/mode/coffee", false);
+   public static final EditorLanguage LANG_CSHARP = new EditorLanguage("ace/mode/csharp", false);
+   public static final EditorLanguage LANG_GITIGNORE = new EditorLanguage("ace/mode/gitignore", false);
+   public static final EditorLanguage LANG_GO = new EditorLanguage("ace/mode/golang", false);
+   public static final EditorLanguage LANG_GROOVY = new EditorLanguage("ace/mode/groovy", false);
+   public static final EditorLanguage LANG_HASKELL = new EditorLanguage("ace/mode/haskell", false);
+   public static final EditorLanguage LANG_HAXE = new EditorLanguage("ace/mode/haxe", false);
+   public static final EditorLanguage LANG_JAVA = new EditorLanguage("ace/mode/java", false);
+   public static final EditorLanguage LANG_JULIA = new EditorLanguage("ace/mode/julia", false);
+   public static final EditorLanguage LANG_LISP = new EditorLanguage("ace/mode/lisp", false);
+   public static final EditorLanguage LANG_LUA = new EditorLanguage("ace/mode/lua", false);
+   public static final EditorLanguage LANG_MATLAB = new EditorLanguage("ace/mode/matlab", false);
+   public static final EditorLanguage LANG_PERL = new EditorLanguage("ace/mode/perl", false);
+   public static final EditorLanguage LANG_RUBY = new EditorLanguage("ace/mode/ruby", false);
+   public static final EditorLanguage LANG_RUST = new EditorLanguage("ace/mode/rust", false);
+   public static final EditorLanguage LANG_SCALA = new EditorLanguage("ace/mode/scala", false);
  
    
    public static final EditorLanguage LANG_STAN = new EditorLanguage("mode/stan", false);
