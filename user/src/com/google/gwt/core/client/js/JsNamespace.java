@@ -31,5 +31,5 @@ import java.lang.annotation.Target;
 @Target({ElementType.TYPE, ElementType.PACKAGE})
 @Documented
 public @interface JsNamespace {
-  String value() default "";
+  String value();
 }

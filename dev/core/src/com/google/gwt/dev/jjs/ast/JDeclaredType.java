@@ -20,7 +20,6 @@ import com.google.gwt.dev.jjs.impl.GwtAstBuilder;
 import com.google.gwt.dev.util.StringInterner;
 import com.google.gwt.dev.util.collect.Lists;
 import com.google.gwt.thirdparty.guava.common.base.Preconditions;
-import com.google.gwt.thirdparty.guava.common.base.Strings;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -58,7 +57,7 @@ public abstract class JDeclaredType extends JReferenceType {
 
   private final String jsPrototype;
   private final JsInteropType jsInteropType;
-  private String jsNamespace = "";
+  private String jsNamespace;
 
   /**
    * This type's fields. Special serialization treatment.
@@ -248,6 +247,15 @@ public abstract class JDeclaredType extends JReferenceType {
   }
 
   /**
+   * Returns the simple source name for the class.
+   * <p>e.g. if the class is a.b.Foo.Bar it returns Bar as opposed to the short name Foo$Bar.
+   */
+  public String getSimpleName() {
+    String[] compoundName = getCompoundName();
+    return compoundName[compoundName.length - 1];
+  }
+
+  /**
    * Returns the type which encloses this type.
    *
    * @return The enclosing type. May be {@code null}.
@@ -401,7 +409,7 @@ public abstract class JDeclaredType extends JReferenceType {
   public void resolve(List<JInterfaceType> resolvedInterfaces, String jsNamespace) {
     assert JType.replaces(resolvedInterfaces, superInterfaces);
     superInterfaces = Lists.normalize(resolvedInterfaces);
-    if (Strings.isNullOrEmpty(this.jsNamespace)) {
+    if (this.jsNamespace == null && enclosingType == null) {
       this.jsNamespace = jsNamespace;
     }
   }
@@ -528,12 +536,11 @@ public abstract class JDeclaredType extends JReferenceType {
   }
 
   public String getQualifiedExportName() {
-    if (enclosingType == null) {
-      return jsNamespace == null || jsNamespace.isEmpty() ? getName() :
-          jsNamespace + "." + getLeafName();
-    } else {
-      return enclosingType.getQualifiedExportName() + "." + getLeafName();
+    if (enclosingType == null && jsNamespace == null) {
+      return getName();
     }
+    String namespace = jsNamespace == null ? enclosingType.getQualifiedExportName() : jsNamespace;
+    return namespace.isEmpty() ? getSimpleName() : namespace + "." + getSimpleName();
   }
 
   public String getJsNamespace() {
@@ -542,11 +549,5 @@ public abstract class JDeclaredType extends JReferenceType {
 
   public void setJsNamespace(String jsNamespace) {
     this.jsNamespace = jsNamespace;
-  }
-
-  private String getLeafName() {
-    String fqName = getName();
-    return getEnclosingType() == null ? fqName.substring(fqName.lastIndexOf('.') + 1) :
-        fqName.substring(getEnclosingType().getName().length() + 1);
   }
 }

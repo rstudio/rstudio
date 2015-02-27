@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Google Inc.
+ * Copyright 2015 Google Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,23 +19,13 @@ import com.google.gwt.core.client.js.JsExport;
 import com.google.gwt.core.client.js.JsNamespace;
 
 /**
- * Class with a nested exported class.
+ * Class with empty namespace.
  */
-public class MyClassWithNestedExportedClass {
-  /**
-   * Exported nested class.
-   */
+@JsNamespace("")
+public class MyClassWithEmptyNamespace {
   @JsExport
-  public static class Inner {
-    public static final int WOO = 99;
-  }
+  public static final int DAN = 82;
 
-  /**
-   * Exported nested class with namespace.
-   */
-  @JsNamespace("zoo")
   @JsExport
-  public static class InnerWithNamespace {
-    public static final int WOOZ = 999;
-  }
+  public MyClassWithEmptyNamespace() { }
 }

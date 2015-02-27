@@ -237,12 +237,38 @@ public class JsExportTest extends GWTTestCase {
     return $wnd.foo.MyExportedClassWithNamespace.BAR;
   }-*/;
 
+  public static void testInheritClassNamespace_empty() {
+    assertEquals(82, getDAN());
+    assertNotNull(createNestedExportedClassWithEmptyNamespace());
+  }
+
+  private static native int getDAN() /*-{
+    return $wnd.MyClassWithEmptyNamespace.DAN;
+  }-*/;
+
+  private static native Object createNestedExportedClassWithEmptyNamespace() /*-{
+    return new $wnd.MyClassWithEmptyNamespace();
+  }-*/;
+
   public static void testInheritClassNamespace_noExport() {
     assertEquals(99, getBAZ());
   }
 
   private static native int getBAZ() /*-{
     return $wnd.foobaz.MyClassWithNamespace.BAZ;
+  }-*/;
+
+  public static void testInheritClassNamespace_nested() {
+    assertEquals(999, getWOOZ());
+    assertNotNull(createNestedExportedClassWithNamespace());
+  }
+
+  private static native int getWOOZ() /*-{
+    return $wnd.zoo.InnerWithNamespace.WOOZ;
+  }-*/;
+
+  private static native Object createNestedExportedClassWithNamespace() /*-{
+    return new $wnd.zoo.InnerWithNamespace();
   }-*/;
 
   public void testInheritPackageNamespace() {
