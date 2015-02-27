@@ -430,6 +430,39 @@ public class OwnerFieldClassTest extends TestCase {
   }
 
   /**
+   * Interface with a setter for testing.
+   */
+  @SuppressWarnings("unused")
+  // We know this method is unused.
+  private interface SetterTestInterface {
+    void setMeow(int x);
+  }
+
+  /**
+   * Class with overridden setters for testing.
+   */
+  @SuppressWarnings("unused")
+  // We know these methods are unused
+  private interface OverriddenSetterTestInterface extends SetterTestInterface {
+    void setMoo(int x);
+  }
+
+  public void testOwnerFieldClass_overriddenInterface() throws Exception {
+    JClassType setterType = gwtTypeAdapter.adaptJavaClass(OverriddenSetterTestInterface.class);
+    OwnerFieldClass settersClass = OwnerFieldClass.getFieldClass(setterType,
+        MortalLogger.NULL, uiBinderCtx);
+    assertEquals(setterType, settersClass.getRawType());
+
+    // setMeow is in the base interface.
+    JMethod meowSetter = settersClass.getSetter("meow");
+    assertMethod(meowSetter, "setMeow", JPrimitiveType.INT);
+
+    // setMeow is in the base interface.
+    JMethod mooSetter = settersClass.getSetter("moo");
+    assertMethod(mooSetter, "setMoo", JPrimitiveType.INT);
+  }
+
+  /**
    * Class with a {@link UiChild}-annotated methods.
    */
   @SuppressWarnings("unused")

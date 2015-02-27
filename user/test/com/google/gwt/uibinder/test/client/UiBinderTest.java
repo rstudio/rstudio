@@ -76,7 +76,7 @@ public class UiBinderTest extends GWTTestCase {
    * The fields are {@code final} and we test that they've correctly been
    * modified by the template.
    *
-   * @see http://code.google.com/p/google-web-toolkit/issues/detail?id=7740
+   * @see "http://code.google.com/p/google-web-toolkit/issues/detail?id=7740"
    */
   public void testProvidedWidgetWithCustomInitializer() {
     // Custom parser: should use the provided header, as the one from the
@@ -679,6 +679,12 @@ public class UiBinderTest extends GWTTestCase {
     String url = widgetUi.linkedSvgData.getSafeUri().asString();
     assertFalse(url.startsWith("data:"));
     assertTrue(url, url.endsWith(".svg"));
+  }
+
+  public void testIsWidget() {
+    FooIsWidget isWidget = widgetUi.fooIsWidget;
+    assertEquals("gwt-Label " + widgetUi.myStyle.menuBar(), isWidget.asWidget().getStyleName());
+    assertEquals(false, isWidget.isVisible());
   }
 
   /**

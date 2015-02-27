@@ -219,6 +219,7 @@ public class WidgetBasedUi extends Composite {
   @UiField Element myElementWithTagName;
   @UiField DataResource embeddedSvgData;
   @UiField DataResource linkedSvgData;
+  @UiField(provided = true) FooIsWidget fooIsWidget = new FooIsWidgetImpl();
 
   ValueChangeEvent<Double> doubleValueChangeEvent;
 

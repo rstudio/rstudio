@@ -15,6 +15,9 @@
  */
 package com.google.gwt.uibinder.rebind;
 
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.when;
+
 import com.google.gwt.core.ext.typeinfo.HasAnnotations;
 import com.google.gwt.core.ext.typeinfo.HasTypeParameters;
 import com.google.gwt.core.ext.typeinfo.JAbstractMethod;
@@ -25,9 +28,6 @@ import com.google.gwt.core.ext.typeinfo.JMethod;
 import com.google.gwt.core.ext.typeinfo.JParameter;
 import com.google.gwt.core.ext.typeinfo.JPrimitiveType;
 import com.google.gwt.core.ext.typeinfo.JType;
-
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.when;
 
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
@@ -43,8 +43,12 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
 
 /**
  * Creates stub adapters for GWT reflection using EasyMock.
@@ -193,6 +197,134 @@ public class JClassTypeAdapter {
         }
 
         return adaptJavaClass(superclass);
+      }
+    });
+    when(type.getImplementedInterfaces()).thenAnswer(new Answer<JClassType[]>() {
+      @Override
+      public JClassType[] answer(InvocationOnMock invocation) throws Throwable {
+        Class<?>[] interfaces = clazz.getInterfaces();
+        if ((interfaces == null) || (interfaces.length == 0)) {
+          return null;
+        }
+
+        JClassType[] adaptedInterfaces = new JClassType[interfaces.length];
+        for (int i = 0; i < interfaces.length; i++) {
+          adaptedInterfaces[i] = adaptJavaClass(interfaces[i]);
+        }
+        return adaptedInterfaces;
+      }
+    });
+    when(type.getFlattenedSupertypeHierarchy()).thenAnswer(new Answer<Set<JClassType>>() {
+      @Override
+      public Set<JClassType> answer(InvocationOnMock invocation) throws Throwable {
+        return flatten(clazz);
+      }
+
+      private Set<JClassType> flatten(Class<?> clazz) {
+        Set<JClassType> flattened = new LinkedHashSet<JClassType>();
+        flattened.add(adaptJavaClass(clazz));
+
+        for (Class<?> intf : clazz.getInterfaces()) {
+          flattened.addAll(flatten(intf));
+        }
+
+        Class<?> superClass = clazz.getSuperclass();
+        if (superClass != null) {
+          flattened.addAll(flatten(superClass));
+        }
+
+        return flattened;
+      }
+    });
+    when(type.getInheritableMethods()).thenAnswer(new Answer<JMethod[]>() {
+      @Override
+      public JMethod[] answer(InvocationOnMock invocation) throws Throwable {
+        Map<String, Method> methodsBySignature = new TreeMap<String, Method>();
+        getInheritableMethodsOnSuperinterfacesAndMaybeThisInterface(clazz, methodsBySignature);
+        if (!clazz.isInterface()) {
+          getInheritableMethodsOnSuperclassesAndThisClass(clazz, methodsBySignature);
+        }
+        int size = methodsBySignature.size();
+        if (size == 0) {
+          return new JMethod[0];
+        } else {
+          Iterator<Method> leafMethods = methodsBySignature.values().iterator();
+          JMethod[] jMethods = new JMethod[size];
+          for (int i = 0; i < size; i++) {
+            Method method = leafMethods.next();
+            jMethods[i] = adaptMethod(method, adaptJavaClass(method.getDeclaringClass()));
+          }
+          return jMethods;
+        }
+      }
+
+      protected void getInheritableMethodsOnSuperinterfacesAndMaybeThisInterface(
+          Class<?> clazz,
+          Map<String, Method> methodsBySignature) {
+
+        // Recurse first so that more derived methods will clobber less derived
+        // methods.
+        Class<?>[] superIntfs = clazz.getInterfaces();
+        for (Class<?> superIntf : superIntfs) {
+          getInheritableMethodsOnSuperinterfacesAndMaybeThisInterface(
+              superIntf,
+              methodsBySignature);
+        }
+
+        Method[] declaredMethods = clazz.getMethods();
+        for (Method method : declaredMethods) {
+          String sig = computeInternalSignature(method);
+          Method existing = methodsBySignature.get(sig);
+          if (existing != null) {
+            Class<?> existingType = existing.getDeclaringClass();
+            Class<?> thisType = method.getDeclaringClass();
+            if (thisType.isAssignableFrom(existingType)) {
+              // The existing method is in a more-derived type, so don't replace it.
+              continue;
+            }
+          }
+          methodsBySignature.put(sig, method);
+        }
+      }
+
+      protected void getInheritableMethodsOnSuperclassesAndThisClass(
+          Class<?> clazz,
+          Map<String, Method> methodsBySignature) {
+
+        // Recurse first so that more derived methods will clobber less derived
+        // methods.
+        Class<?> superClass = clazz.getSuperclass();
+        if (superClass != null) {
+          getInheritableMethodsOnSuperclassesAndThisClass(
+              superClass,
+              methodsBySignature);
+        }
+
+        Method[] declaredMethods = clazz.getMethods();
+        for (Method method : declaredMethods) {
+          // Ensure that this method is inheritable.
+          if (Modifier.isPrivate(method.getModifiers())
+              || Modifier.isStatic(method.getModifiers())) {
+            // We cannot inherit this method, so skip it.
+            continue;
+          }
+
+          // We can override this method, so record it.
+          String sig = computeInternalSignature(method);
+          methodsBySignature.put(sig, method);
+        }
+      }
+
+      private String computeInternalSignature(Method method) {
+        StringBuilder sb = new StringBuilder();
+        sb.setLength(0);
+        sb.append(method.getName());
+        Class<?>[] params = method.getParameterTypes();
+        for (Class<?> param : params) {
+          sb.append("/");
+          sb.append(param.getName());
+        }
+        return sb.toString();
       }
     });
 

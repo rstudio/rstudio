@@ -23,13 +23,14 @@ import com.google.gwt.core.ext.typeinfo.JParameter;
 import com.google.gwt.core.ext.typeinfo.JPrimitiveType;
 import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.dev.util.Pair;
+import com.google.gwt.thirdparty.guava.common.collect.LinkedHashMultimap;
+import com.google.gwt.thirdparty.guava.common.collect.Multimap;
 import com.google.gwt.uibinder.client.UiChild;
 import com.google.gwt.uibinder.client.UiConstructor;
 import com.google.gwt.uibinder.rebind.MortalLogger;
 import com.google.gwt.uibinder.rebind.UiBinderContext;
 
 import java.beans.Introspector;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -69,7 +70,7 @@ public class OwnerFieldClass {
     tmpTypeRank.put("java.lang.Short", 3);
     TYPE_RANK = Collections.unmodifiableMap(tmpTypeRank);
   }
-  
+
   /**
    * Gets or creates the descriptor for the given field class.
    *
@@ -160,24 +161,6 @@ public class OwnerFieldClass {
   }
 
   /**
-   * Adds a setter for a given property to the given map of setters.
-   *
-   * @param allSetters the map of setters (keyed by property name)
-   * @param propertyName the property name to use
-   * @param method the setter to use
-   */
-  private void addSetter(Map<String, Collection<JMethod>> allSetters,
-      String propertyName, JMethod method) {
-    Collection<JMethod> propertyMethods = allSetters.get(propertyName);
-    if (propertyMethods == null) {
-      propertyMethods = new ArrayList<JMethod>();
-      allSetters.put(propertyName, propertyMethods);
-    }
-
-    propertyMethods.add(method);
-  }
-
-  /**
    * Given a collection of setters for the same property, picks which one to
    * use. Not having a proper setter is not an error unless of course the user
    * tries to use it.
@@ -203,13 +186,8 @@ public class OwnerFieldClass {
         minRank = rank;
         preferredMethod = method;
         ambiguousSetters.remove(propertyName);
-      } else if (rank == minRank && 
-          !sameParameterTypes(preferredMethod, method)) {
-        // sameParameterTypes test is necessary because a setter can be 
-        // overridden by a subclass and that is not considered ambiguous. 
-        if (!ambiguousSetters.contains(propertyName)) {
-          ambiguousSetters.add(propertyName);
-        }
+      } else if (rank == minRank && !ambiguousSetters.contains(propertyName)) {
+        ambiguousSetters.add(propertyName);
       }
     }
     
@@ -228,20 +206,9 @@ public class OwnerFieldClass {
    * @param fieldType the leaf type to look at
    * @return a multimap of property name to the setter methods
    */
-  private Map<String, Collection<JMethod>> findAllSetters(JClassType fieldType) {
-    Map<String, Collection<JMethod>> allSetters;
-
-    // First, get all setters from the parent class, recursively.
-    JClassType superClass = fieldType.getSuperclass();
-    if (superClass != null) {
-      allSetters = findAllSetters(superClass);
-    } else {
-      // Stop recursion - deepest level creates return value
-      allSetters = new HashMap<String, Collection<JMethod>>();
-    }
-
-    JMethod[] methods = fieldType.getMethods();
-    for (JMethod method : methods) {
+  private Multimap<String, JMethod> findAllSetters(JClassType fieldType) {
+    Multimap<String, JMethod> allSetters = LinkedHashMultimap.create();
+    for (JMethod method : fieldType.getInheritableMethods()) {
       if (!isSetterMethod(method)) {
         continue;
       }
@@ -251,13 +218,13 @@ public class OwnerFieldClass {
 
       // turn "PropertyName" into "propertyName"
       String beanPropertyName = Introspector.decapitalize(propertyName);
-      addSetter(allSetters, beanPropertyName, method);
+      allSetters.put(beanPropertyName, method);
 
       // keep backwards compatibility (i.e. hTML instead of HTML for setHTML)
       String legacyPropertyName = propertyName.substring(0, 1).toLowerCase(Locale.ROOT)
           + propertyName.substring(1);
       if (!legacyPropertyName.equals(beanPropertyName)) {
-        addSetter(allSetters, legacyPropertyName, method);
+        allSetters.put(legacyPropertyName, method);
       }
     }
 
@@ -272,7 +239,7 @@ public class OwnerFieldClass {
    */
   private void findSetters(JClassType fieldType) {
     // Pass one - get all setter methods
-    Map<String, Collection<JMethod>> allSetters = findAllSetters(fieldType);
+    Multimap<String, JMethod> allSetters = findAllSetters(fieldType);
 
     // Pass two - disambiguate
     ambiguousSetters = new HashSet<String>();
@@ -395,32 +362,5 @@ public class OwnerFieldClass {
     }
     assert (rank >= 0);
     return rank;
-  }
-  
-  /**
-   * Checks whether two methods have the same parameter types.
-   *
-   * @param m1 the first method to compare
-   * @param m2 the second method to compare
-   * @return whether the methods have the same parameter types
-   */
-  private boolean sameParameterTypes(JMethod m1, JMethod m2) {
-    JParameter[] p1 = m1.getParameters();
-    JParameter[] p2 = m2.getParameters();
-
-    if (p1.length != p2.length) {
-      return false;
-    }
-
-    for (int i = 0; i < p1.length; i++) {
-      JType type1 = p1[i].getType();
-      JType type2 = p2[i].getType();
-
-      if (!type1.equals(type2)) {
-        return false;
-      }
-    }
-
-    return true;
   }
 }
