@@ -124,6 +124,7 @@
 
 * Prevent error dialog when getOption("repos") is an unnamed vector
 * Fix for regex Find/Replace lockup with empty strings 
+* Fix for console text unselectable in Firefox
 * Find in Files now always activates result pane
 * Correctly reflow comments in Rmd C++ code chunks
 * Ensure that rmarkdown documents render within input directory
