@@ -121,6 +121,11 @@ public class UIPrefsAccessor extends Prefs
       return string("code_complete", COMPLETION_ALWAYS);
    }
    
+   public PrefValue<String> codeCompleteWeb()
+   {
+      return string("code_complete_web", COMPLETION_ALWAYS);
+   }
+   
    public PrefValue<Boolean> alwaysCompleteInConsole()
    {
       return bool("always_complete_console", true);

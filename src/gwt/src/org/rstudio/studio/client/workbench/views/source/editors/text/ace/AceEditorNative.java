@@ -72,6 +72,17 @@ public class AceEditorNative extends JavaScriptObject {
       this.setReadOnly(readOnly);
    }-*/;
    
+   public native final void setCompletionOptions(boolean enabled,
+                                                 boolean snippets,
+                                                 boolean live) /*-{
+      this.setOptions({
+        enableBasicAutocompletion: enabled,
+        enableSnippets: enabled && snippets,
+        enableLiveAutocompletion: enabled && live
+      });
+   }-*/;
+   
+   
    public native final void toggleCommentLines() /*-{
       this.toggleCommentLines();
    }-*/;

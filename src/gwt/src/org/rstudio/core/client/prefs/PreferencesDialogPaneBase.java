@@ -127,6 +127,11 @@ implements HasEnsureVisibleHandlers
       dialog_.forceClosed(onClosed);
    }
    
+   protected PreferencesDialogBaseResources res() 
+   {
+      return res_;
+   }
+   
    void setDialog(PreferencesDialogBase<T> dialog)
    {
       dialog_ = dialog;

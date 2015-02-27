@@ -55,11 +55,11 @@ public class EditorLanguage
    public static final EditorLanguage LANG_PLAIN = new EditorLanguage(
          "ace/mode/text", false);
    public static final EditorLanguage LANG_HTML = new EditorLanguage(
-         "ace/mode/html", false);
+         "ace/mode/html", false, true);
    public static final EditorLanguage LANG_CSS = new EditorLanguage(
-         "ace/mode/css", false);
+         "ace/mode/css", false, true);
    public static final EditorLanguage LANG_JAVASCRIPT = new EditorLanguage(
-         "ace/mode/javascript", false);
+         "ace/mode/javascript", false, true);
    public static final EditorLanguage LANG_PYTHON = new EditorLanguage(
          "ace/mode/python", false);
    public static final EditorLanguage LANG_SQL = new EditorLanguage(
@@ -106,8 +106,17 @@ public class EditorLanguage
          String parserName,
          boolean useRCompletion)
    {
+      this(parserName, useRCompletion, false);
+   }
+   
+   public EditorLanguage(
+         String parserName,
+         boolean useRCompletion,
+         boolean useAceCompletion)
+   {
       parserName_ = parserName;
       useRCompletion_ = useRCompletion;
+      useAceCompletion_ = useAceCompletion;
    }
 
    public String getParserName()
@@ -119,7 +128,13 @@ public class EditorLanguage
    {
       return useRCompletion_;
    }
+   
+   public boolean useAceCompletion()
+   {
+      return useAceCompletion_;
+   }
 
    private final String parserName_;
    private final boolean useRCompletion_;
+   private final boolean useAceCompletion_;
 }

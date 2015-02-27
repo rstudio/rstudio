@@ -61,12 +61,9 @@ public class PublishingPreferencesPane extends PreferencesPane
       deps_ = deps;
       
       VerticalPanel accountPanel = new VerticalPanel();
-      Label accountLabel = new Label("Publishing Accounts");
+      Label accountLabel = headerLabel("Publishing Accounts");
       HorizontalPanel hpanel = new HorizontalPanel();
       
-      accountLabel.setStyleName(
-            PreferencesDialogBaseResources.INSTANCE.styles().headerLabel());
-      nudgeRight(accountLabel);
       accountPanel.add(accountLabel);
       
       accountList_ = new RSConnectAccountList(server, globalDisplay, true);
@@ -118,11 +115,7 @@ public class PublishingPreferencesPane extends PreferencesPane
       accountPanel.add(hpanel);
       add(accountPanel);
       
-      Label settingsLabel = new Label("Settings");
-      settingsLabel.setStyleName(
-            PreferencesDialogBaseResources.INSTANCE.styles().headerLabel());
-      nudgeRight(settingsLabel);
-      add(settingsLabel);
+      add(headerLabel("Settings"));
       CheckBox chkEnablePublishing = checkboxPref("Enable publishing apps and documents", 
             uiPrefs_.showPublishUi());
       chkEnablePublishing.addValueChangeHandler(new ValueChangeHandler<Boolean>(){

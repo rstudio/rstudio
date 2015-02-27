@@ -54,6 +54,7 @@ import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.model.ChangeTracker;
 import org.rstudio.studio.client.workbench.model.EventBasedChangeTracker;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefsAccessor;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionManager;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionManager.InitCompletionFilter;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionPopupPanel;
@@ -203,19 +204,25 @@ public class AceEditor implements DocDisplay,
             {
                public void onLoaded()
                {
-                  vimLoader_.addCallback(new Callback()
+                  extLanguageToolsLoader_.addCallback(new Callback() 
                   {
                      public void onLoaded()
                      {
-                        emacsLoader_.addCallback(new Callback()
+                        vimLoader_.addCallback(new Callback()
                         {
                            public void onLoaded()
                            {
-                              if (command != null)
-                                 command.execute();
+                              emacsLoader_.addCallback(new Callback()
+                              {
+                                 public void onLoaded()
+                                 {
+                                    if (command != null)
+                                       command.execute();
+                                 }
+                              });
                            }
                         });
-                     }
+                     }  
                   });
                }
             });
@@ -448,6 +455,9 @@ public class AceEditor implements DocDisplay,
       if (fileType_ == null)
          return;
 
+      // turn off any ace completion that's already installed
+      widget_.getEditor().setCompletionOptions(false, false, false);
+      
       CompletionManager completionManager;
       if (!suppressCompletion)
       {
@@ -474,6 +484,16 @@ public class AceEditor implements DocDisplay,
                                                      cppContext_,
                                                      completionManager);
             }
+         }
+         else if (fileType_.getEditorLanguage().useAceCompletion())
+         {
+            // no RStudio completion manager
+            completionManager = new NullCompletionManager();
+            
+            // enable ace native completion
+            boolean live = uiPrefs_.codeCompleteWeb().getValue().equals(
+                                          UIPrefsAccessor.COMPLETION_ALWAYS);
+            widget_.getEditor().setCompletionOptions(true, false, live);
          }
          else
             completionManager = new NullCompletionManager();
@@ -2069,6 +2089,9 @@ public class AceEditor implements DocDisplay,
          new ExternalJavaScriptLoader(AceResources.INSTANCE.keybindingVimJs().getSafeUri().asString());
    private static final ExternalJavaScriptLoader emacsLoader_ =
          new ExternalJavaScriptLoader(AceResources.INSTANCE.keybindingEmacsJs().getSafeUri().asString());
+   private static final ExternalJavaScriptLoader extLanguageToolsLoader_ =
+         new ExternalJavaScriptLoader(AceResources.INSTANCE.extLanguageTools().getSafeUri().asString());
+   
    
    private boolean popupVisible_;
 }

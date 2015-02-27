@@ -14,12 +14,14 @@
  */
 package org.rstudio.studio.client.workbench.prefs.views;
 
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.CheckBox;
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.inject.Inject;
 
@@ -67,6 +69,9 @@ public class EditingPreferencesPane extends PreferencesPane
       displayPanel.add(checkboxPref("Show syntax highlighting in console input", prefs_.syntaxColorConsole()));
       
       VerticalPanel completionPanel = new VerticalPanel();
+      
+      completionPanel.add(headerLabel("R and C/C++"));
+     
       showCompletions_ = new SelectWidget(
             "Show code completions:",
             new String[] {
@@ -131,6 +136,26 @@ public class EditingPreferencesPane extends PreferencesPane
       completionPanel.add(checkboxPref("Insert spaces around equals for argument completions", prefs.insertSpacesAroundEquals()));
       completionPanel.add(checkboxPref("Use tab for multiline autocompletions", prefs.allowTabMultilineCompletion()));
       
+      
+      Label otherLabel = headerLabel("HTML, CSS, and JavaScript");
+      otherLabel.getElement().getStyle().setMarginTop(8, Unit.PX);
+      completionPanel.add(otherLabel);
+      
+      showCompletionsWeb_ = new SelectWidget(
+            "Show code completions:",
+            new String[] {
+                  "Automatically",
+                  "Manually (Ctrl+Space) "
+            },
+            new String[] {
+                  UIPrefsAccessor.COMPLETION_ALWAYS,
+                  UIPrefsAccessor.COMPLETION_MANUAL
+            },
+            false, 
+            true, 
+            false);
+      completionPanel.add(showCompletionsWeb_);
+      
       VerticalPanel diagnosticsPanel = new VerticalPanel();
       diagnosticsPanel.add(checkboxPref("Show inline diagnostics for R and C/C++ code", prefs.showDiagnostics()));
       
@@ -183,6 +208,7 @@ public class EditingPreferencesPane extends PreferencesPane
    protected void initialize(RPrefs prefs)
    {
       showCompletions_.setValue(prefs_.codeComplete().getValue());
+      showCompletionsWeb_.setValue(prefs_.codeCompleteWeb().getValue());
    }
    
    @Override
@@ -191,6 +217,7 @@ public class EditingPreferencesPane extends PreferencesPane
       boolean reload = super.onApply(prefs);
       
       prefs_.codeComplete().setGlobalValue(showCompletions_.getValue());
+      prefs_.codeCompleteWeb().setGlobalValue(showCompletionsWeb_.getValue());
       
       return reload;
    }
@@ -226,6 +253,7 @@ public class EditingPreferencesPane extends PreferencesPane
    private final CheckBox spacesForTab_;
    private final CheckBox showMargin_;
    private final SelectWidget showCompletions_;
+   private final SelectWidget showCompletionsWeb_;
    
    
    
