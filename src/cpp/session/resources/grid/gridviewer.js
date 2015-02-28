@@ -675,6 +675,13 @@ var bootstrap = function() {
 // called from RStudio to toggle the filter UI 
 window.setFilterUIVisible = function(visible) {
   var thead = document.getElementById("data_cols");
+
+  // it's possible the dable is getting redrawn right now; if it is, ignore
+  // this request.
+  if (thead === null || table === null || cols === null) {
+    return false;
+  }
+
   if (!visible) {
     // clear all the filter data
     table.columns().search("");
@@ -697,6 +704,7 @@ window.setFilterUIVisible = function(visible) {
     }
   }
   sizeDataTable(true);
+  return true;
 };
 
 // called from RStudio when the underlying object changes

@@ -50,8 +50,16 @@ public class DataTable
               new ClickHandler() {
                  public void onClick(ClickEvent event)
                  {
-                    filtered_ = !filtered_;
-                    setFilterUIVisible(filtered_);
+                    boolean newFilterState = !filtered_;
+
+                    // attempt to apply the new filter state, and update state
+                    // if we succeed (might fail if the filter UI is not
+                    // ready/table is not initialized)
+                    if (setFilterUIVisible(newFilterState))
+                    {
+                       filtered_ = newFilterState;
+                       filterButton_.setLatched(filtered_);
+                    }
                  }
               });
       toolbar.addLeftWidget(filterButton_);
@@ -83,9 +91,9 @@ public class DataTable
       return frameEl.getContentWindow();
    }
 
-   public void setFilterUIVisible(boolean visible)
+   public boolean setFilterUIVisible(boolean visible)
    {
-      setFilterUIVisible(getWindow(), visible);
+      return setFilterUIVisible(getWindow(), visible);
    }
    
    public void refreshData(boolean structureChanged, boolean sizeChanged)
@@ -109,9 +117,10 @@ public class DataTable
       applySizeChange(getWindow());
    }
    
-   private static final native void setFilterUIVisible (WindowEx frame, boolean visible) /*-{
+   private static final native boolean setFilterUIVisible (WindowEx frame, boolean visible) /*-{
       if (frame && frame.setFilterUIVisible)
-         frame.setFilterUIVisible(visible);
+         return frame.setFilterUIVisible(visible);
+      return false;
    }-*/;
    
    private static final native void refreshData(WindowEx frame, 
