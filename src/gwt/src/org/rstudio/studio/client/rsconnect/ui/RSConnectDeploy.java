@@ -149,7 +149,11 @@ public class RSConnectDeploy extends Composite
    {
       dir = StringUtil.shortPathName(FileSystemItem.createDir(dir), 250);
       deployLabel_.setText(dir);
-      appName.setText(FilePathUtils.friendlyFileName(dir));
+   }
+   
+   public void setNewAppName(String name)
+   {
+      appName.setText(name);
    }
 
    public void setDefaultAccount(RSConnectAccount account)
