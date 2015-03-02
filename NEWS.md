@@ -114,6 +114,7 @@
 * Diagram previews using the DiagrammeR package (requires recent version from GitHub).
 * Added Markers pane and sourceMarker API for externals tools (e.g. linters)
 * Enable specification of Sweave driver in Rnw magic comment
+* Re-map prev/next tab shortcuts to eliminate conflicts with window managers
 
 ### Server
 
