@@ -119,9 +119,6 @@ public class RSConnect implements SessionInitHandler,
    @Override
    public void onRSConnectAction(final RSConnectActionEvent event)
    {
-      // ensure the publishing CSS is injected
-      RSConnectDeploy.RESOURCES.style().ensureInjected();
-      
       // see if we have the requisite R packages
       dependencyManager_.withRSConnect(
          "Publishing Shiny applications", null, new Command() {
