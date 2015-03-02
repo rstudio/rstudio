@@ -445,12 +445,11 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="activateVcs" value="Ctrl+9"/>
          <shortcut refid="activateBuild" value="Ctrl+0"/>
          <shortcut refid="switchToTab" value="Ctrl+Shift+."/>
-         <shortcut refid="previousTab" value="Ctrl+Alt+Left" if="!org.rstudio.core.client.BrowseCap.isLinux()"/>
-         <shortcut refid="nextTab" value="Ctrl+Alt+Right" if="!org.rstudio.core.client.BrowseCap.isLinux()"/>
-         <shortcut refid="previousTab" value="Ctrl+PageUp" if="org.rstudio.core.client.BrowseCap.isLinux()"/>
-         <shortcut refid="nextTab" value="Ctrl+PageDown" if="org.rstudio.core.client.BrowseCap.isLinux()"/>
-         <shortcut refid="firstTab" value="Ctrl+Alt+Shift+Left"/>
-         <shortcut refid="lastTab" value="Ctrl+Alt+Shift+Right"/>
+         <shortcut refid="previousTab" value="Ctrl+F11"/>
+         <shortcut refid="nextTab" value="Ctrl+F12"/>
+         <shortcut refid="firstTab" value="Ctrl+Shift+F11"/>
+         <shortcut refid="lastTab" value="Ctrl+Shift+F12"/>
+         
       </shortcutgroup>
       <shortcutgroup name="Files">
          <shortcut refid="saveSourceDoc" value="Cmd+S"/>
@@ -507,15 +506,15 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="quitSession" value="Cmd+Q" if="org.rstudio.studio.client.application.Desktop.isDesktop()"/>
          <shortcut refid="restartR" value="Cmd+Shift+0" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="restartR" value="Cmd+Shift+F10"/>
-         <shortcut refid="previousPlot" value="Cmd+Shift+PageUp" />
-         <shortcut refid="nextPlot" value="Cmd+Shift+PageDown" />
+         <shortcut refid="previousPlot" value="Cmd+Alt+F11" />
+         <shortcut refid="nextPlot" value="Cmd+Alt+F12" />
          <shortcut refid="showRequestLog" value="Ctrl+`" />
          <shortcut refid="logFocusedElement" value="Ctrl+Shift+`" />
          <shortcut refid="setWorkingDir" value="Ctrl+Shift+H" />
          <shortcut refid="synctexSearch" value="Cmd+F8" />
          <shortcut refid="checkSpelling" value="F7" />
-         <shortcut refid="refreshSuperDevMode" value="Cmd+Shift+F5"/>
-         <shortcut refid="viewerSaveAllAndRefresh" value="Cmd+Shift+F12"/>
+         <shortcut refid="refreshSuperDevMode" value="Cmd+Shift+F9"/>
+         <shortcut refid="viewerSaveAllAndRefresh" value="Cmd+Shift+F5"/>
          <shortcut refid="helpKeyboardShortcuts" value="Alt+Shift+K"/>
          <shortcut refid="toggleFullScreen" value="Ctrl+Meta+F" if="org.rstudio.core.client.BrowseCap.isMacintoshDesktop()"/>
       </shortcutgroup>
