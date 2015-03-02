@@ -1616,10 +1616,13 @@ public class RCompletionManager implements CompletionManager
          }
          
          // If there is only one result and the name is identical to the
-         // current token, then don't display anything
+         // current token, then implicitly accept that completion. we hide
+         // the popup to ensure that backspace can re-load completions from
+         // the cache
          if (results.length == 1 &&
              completions.token.equals(results[0].name.replaceAll(":*", "")))
          {
+            popup_.placeOffscreen();
             return;
          }
 
