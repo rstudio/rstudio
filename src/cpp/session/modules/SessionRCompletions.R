@@ -1534,8 +1534,6 @@ assign(x = ".rs.acCompletionTypes",
                                           envir)
       ))
       
-      completions <- .rs.sortCompletions(completions, token)
-      
       # remove all queries that start with a '.' unless the
       # token itself starts with a dot
       if (!.rs.startsWith(token, "."))
