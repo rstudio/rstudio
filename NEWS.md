@@ -133,6 +133,8 @@
 * Correct handling for breakpoints in files with non-ascii filenames on Windows
 * Next/previous word behavior in Rmd is now consistent with behavior in R scripts
 * Ensure cursor is always visible after source navigation
+* Server: Ensure that LANG is populated from system default when not inherited
+* Server: Provide required domain socket permissions during startup
 
 
 
