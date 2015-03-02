@@ -445,6 +445,10 @@ public class RCompletionManager implements CompletionManager
                   return popup_.selectPrevPage() ;
                else if (keycode == KeyCodes.KEY_PAGEDOWN)
                   return popup_.selectNextPage() ;
+               else if (keycode == KeyCodes.KEY_HOME)
+                  return popup_.selectFirst();
+               else if (keycode == KeyCodes.KEY_END)
+                  return popup_.selectLast();
                
                if (keycode == 112) // F1
                {
