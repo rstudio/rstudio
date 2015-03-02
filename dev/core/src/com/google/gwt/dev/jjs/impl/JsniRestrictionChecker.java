@@ -15,7 +15,6 @@ package com.google.gwt.dev.jjs.impl;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
-import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JMethod;
@@ -31,10 +30,8 @@ public class JsniRestrictionChecker extends JVisitor {
 
   public static void exec(TreeLogger logger, JProgram jprogram) throws UnableToCompleteException {
     JsniRestrictionChecker jsniRestrictionChecker = new JsniRestrictionChecker(logger, jprogram);
-    try {
-      jsniRestrictionChecker.accept(jprogram);
-    } catch (InternalCompilerException e) {
-      // Already logged.
+    jsniRestrictionChecker.accept(jprogram);
+    if (jsniRestrictionChecker.hasErrors) {
       throw new UnableToCompleteException();
     }
   }
@@ -42,6 +39,7 @@ public class JsniRestrictionChecker extends JVisitor {
   private JMethod currentJsniMethod;
   private final JProgram jprogram;
   private final TreeLogger logger;
+  private boolean hasErrors;
 
   public JsniRestrictionChecker(TreeLogger logger, JProgram jprogram) {
     this.logger = logger;
@@ -60,19 +58,21 @@ public class JsniRestrictionChecker extends JVisitor {
     JDeclaredType enclosingTypeOfCalledMethod = calledMethod.getEnclosingType();
 
     if (isNonStaticJsoClassDispatch(calledMethod, enclosingTypeOfCalledMethod)) {
-      logger.log(TreeLogger.ERROR, "JSNI method " + currentJsniMethod.getQualifiedName()
-          + " attempts to call non-static method " + calledMethod.getQualifiedName()
-          + " on an instance which is a subclass of JavaScriptObject. "
-          + "Only static method calls on JavaScriptObject subclasses are allowed in JSNI.");
-      throw new UnsupportedOperationException();
+      logError("JSNI method %s  attempts to call non-static method %s on an instance which is a "
+          + "subclass of JavaScriptObject. Only static method calls on JavaScriptObject subclasses "
+          + "are allowed in JSNI.", currentJsniMethod.getQualifiedName(),
+          calledMethod.getQualifiedName());
     } else if (isJsoInterface(enclosingTypeOfCalledMethod)) {
-      logger.log(TreeLogger.ERROR, "JSNI method " + currentJsniMethod.getQualifiedName()
-          + " attempts to call method " + calledMethod.getQualifiedName()
-          + " on an instance which might be a JavaScriptObject. "
-          + "Such a method call is only allowed in pure Java (non-JSNI) functions.");
-      throw new UnsupportedOperationException();
+      logError("JSNI method %s attempts to call method %s on an instance which might be a "
+          + "JavaScriptObject. Such a method call is only allowed in pure Java (non-JSNI) "
+          + "functions.", currentJsniMethod.getQualifiedName(), calledMethod.getQualifiedName());
     }
     return super.visit(x, ctx);
+  }
+
+  private void logError(String format, Object... args) {
+    logger.log(TreeLogger.ERROR, String.format(format, args));
+    hasErrors = true;
   }
 
   private boolean isJsoInterface(JDeclaredType type) {

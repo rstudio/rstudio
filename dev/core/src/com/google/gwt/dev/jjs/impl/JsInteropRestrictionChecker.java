@@ -16,7 +16,6 @@ package com.google.gwt.dev.jjs.impl;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.MinimalRebuildCache;
-import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JField;
@@ -40,10 +39,8 @@ public class JsInteropRestrictionChecker extends JVisitor {
       MinimalRebuildCache minimalRebuildCache) throws UnableToCompleteException {
     JsInteropRestrictionChecker jsInteropRestrictionChecker =
         new JsInteropRestrictionChecker(logger, jprogram, minimalRebuildCache);
-    try {
-      jsInteropRestrictionChecker.accept(jprogram);
-    } catch (InternalCompilerException e) {
-      // Already logged.
+    jsInteropRestrictionChecker.accept(jprogram);
+    if (jsInteropRestrictionChecker.hasErrors) {
       throw new UnableToCompleteException();
     }
   }
@@ -53,6 +50,7 @@ public class JsInteropRestrictionChecker extends JVisitor {
   private final JProgram jprogram;
   private final TreeLogger logger;
   private final MinimalRebuildCache minimalRebuildCache;
+  private boolean hasErrors;
 
   public JsInteropRestrictionChecker(TreeLogger logger, JProgram jprogram,
       MinimalRebuildCache minimalRebuildCache) {
@@ -84,22 +82,18 @@ public class JsInteropRestrictionChecker extends JVisitor {
       boolean success = minimalRebuildCache.addExportedGlobalName(x.getQualifiedExportName(),
           currentType.getName());
       if (!success) {
-        logger.log(TreeLogger.ERROR, String.format(
-            "Static field '%s' can't be exported because the global name '%s' is already taken.",
-            x.getQualifiedName(), x.getQualifiedExportName()));
-        throw new UnsupportedOperationException();
+        logError("Static field '%s' can't be exported because the global name '%s' is already "
+            + "taken.", x.getQualifiedName(), x.getQualifiedExportName());
       }
     } else if (jprogram.typeOracle.isJsTypeField(x)) {
       boolean success = addJsTypeMemberName(x.getName());
       if (!success) {
-        logger.log(TreeLogger.ERROR, String.format(
-            "Instance field '%s' can't be exported because the member name '%s' is already taken.",
-            x.getQualifiedName(), x.getName()));
-        throw new UnsupportedOperationException();
+        logError("Instance field '%s' can't be exported because the member name '%s' is already "
+            + "taken.", x.getQualifiedName(), x.getName());
       }
     }
 
-    return true;
+    return false;
   }
 
   @Override
@@ -108,34 +102,33 @@ public class JsInteropRestrictionChecker extends JVisitor {
       boolean success = minimalRebuildCache.addExportedGlobalName(x.getQualifiedExportName(),
           currentType.getName());
       if (!success) {
-        logger.log(TreeLogger.ERROR, String.format(
-            "Static method '%s' can't be exported because the global name '%s' is already taken.",
-            x.getQualifiedName(), x.getQualifiedExportName()));
-        throw new UnsupportedOperationException();
+        logError("Static method '%s' can't be exported because the global name '%s' is already "
+            + "taken.", x.getQualifiedName(), x.getQualifiedExportName());
       }
     } else if (jprogram.typeOracle.isJsTypeMethod(x)) {
       if (isDirectOrTransitiveJsProperty(x)) {
         // JsProperty methods are mangled and obfuscated and so do not consume an unobfuscated
         // collidable name slot.
-        return true;
       } else if (x.isSynthetic()) {
         // A name slot taken up by a synthetic method, such as a bridge method for a generic method,
         // is not the fault of the user and so should not be reported as an error. JS generation
         // should take responsibility for ensuring that only the correct method version (in this
         // particular set of colliding method names) is exported.
-        return true;
-      }
-
-      boolean success = addJsTypeMemberName(x.getName());
-      if (!success) {
-        logger.log(TreeLogger.ERROR, String.format(
-            "Instance method '%s' can't be exported because the member name '%s' is already taken.",
-            x.getQualifiedName(), x.getName()));
-        throw new UnsupportedOperationException();
+      } else {
+        boolean success = addJsTypeMemberName(x.getName());
+        if (!success) {
+          logError("Instance method '%s' can't be exported because the member name '%s' is already "
+              + "taken.", x.getQualifiedName(), x.getName());
+        }
       }
     }
 
-    return true;
+    return false;
+  }
+
+  private void logError(String format, Object... args) {
+    logger.log(TreeLogger.ERROR, String.format(format, args));
+    hasErrors = true;
   }
 
   private boolean addJsTypeMemberName(String exportedMemberName) {
