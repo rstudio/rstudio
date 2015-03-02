@@ -60,23 +60,19 @@ public class JsniRestrictionChecker extends JVisitor {
     JDeclaredType enclosingTypeOfCalledMethod = calledMethod.getEnclosingType();
 
     if (isNonStaticJsoClassDispatch(calledMethod, enclosingTypeOfCalledMethod)) {
-      logger.log(TreeLogger.ERROR, "JSNI method " + getSignature(currentJsniMethod)
-          + " attempts to call non-static method " + getSignature(calledMethod)
+      logger.log(TreeLogger.ERROR, "JSNI method " + currentJsniMethod.getQualifiedName()
+          + " attempts to call non-static method " + calledMethod.getQualifiedName()
           + " on an instance which is a subclass of JavaScriptObject. "
           + "Only static method calls on JavaScriptObject subclasses are allowed in JSNI.");
       throw new UnsupportedOperationException();
     } else if (isJsoInterface(enclosingTypeOfCalledMethod)) {
-      logger.log(TreeLogger.ERROR, "JSNI method " + getSignature(currentJsniMethod)
-          + " attempts to call method " + getSignature(calledMethod)
+      logger.log(TreeLogger.ERROR, "JSNI method " + currentJsniMethod.getQualifiedName()
+          + " attempts to call method " + calledMethod.getQualifiedName()
           + " on an instance which might be a JavaScriptObject. "
           + "Such a method call is only allowed in pure Java (non-JSNI) functions.");
       throw new UnsupportedOperationException();
     }
     return super.visit(x, ctx);
-  }
-
-  private String getSignature(JMethod method) {
-    return method.getEnclosingType().getShortName() + "." + method.getSignature();
   }
 
   private boolean isJsoInterface(JDeclaredType type) {

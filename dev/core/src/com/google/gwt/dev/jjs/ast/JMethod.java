@@ -375,6 +375,10 @@ public class JMethod extends JNode implements HasEnclosingType, HasName, HasType
     return name;
   }
 
+  public String getQualifiedName() {
+    return enclosingType.getName() + "." + getSignature();
+  }
+
   public List<JType> getOriginalParamTypes() {
     return originalParamTypes;
   }

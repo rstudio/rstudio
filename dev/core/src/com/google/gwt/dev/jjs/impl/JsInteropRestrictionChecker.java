@@ -86,7 +86,7 @@ public class JsInteropRestrictionChecker extends JVisitor {
       if (!success) {
         logger.log(TreeLogger.ERROR, String.format(
             "Static field '%s' can't be exported because the global name '%s' is already taken.",
-            computeReadableSignature(x), x.getQualifiedExportName()));
+            x.getQualifiedName(), x.getQualifiedExportName()));
         throw new UnsupportedOperationException();
       }
     } else if (jprogram.typeOracle.isJsTypeField(x)) {
@@ -94,7 +94,7 @@ public class JsInteropRestrictionChecker extends JVisitor {
       if (!success) {
         logger.log(TreeLogger.ERROR, String.format(
             "Instance field '%s' can't be exported because the member name '%s' is already taken.",
-            computeReadableSignature(x), x.getName()));
+            x.getQualifiedName(), x.getName()));
         throw new UnsupportedOperationException();
       }
     }
@@ -110,7 +110,7 @@ public class JsInteropRestrictionChecker extends JVisitor {
       if (!success) {
         logger.log(TreeLogger.ERROR, String.format(
             "Static method '%s' can't be exported because the global name '%s' is already taken.",
-            computeReadableSignature(x), x.getQualifiedExportName()));
+            x.getQualifiedName(), x.getQualifiedExportName()));
         throw new UnsupportedOperationException();
       }
     } else if (jprogram.typeOracle.isJsTypeMethod(x)) {
@@ -130,7 +130,7 @@ public class JsInteropRestrictionChecker extends JVisitor {
       if (!success) {
         logger.log(TreeLogger.ERROR, String.format(
             "Instance method '%s' can't be exported because the member name '%s' is already taken.",
-            computeReadableSignature(x), x.getName()));
+            x.getQualifiedName(), x.getName()));
         throw new UnsupportedOperationException();
       }
     }
@@ -140,14 +140,6 @@ public class JsInteropRestrictionChecker extends JVisitor {
 
   private boolean addJsTypeMemberName(String exportedMemberName) {
     return currentJsTypeMemberNames.add(exportedMemberName);
-  }
-
-  private String computeReadableSignature(JField field) {
-    return field.getEnclosingType().getName() + "." + field.getName();
-  }
-
-  private String computeReadableSignature(JMethod method) {
-    return method.getEnclosingType().getName() + "." + method.getName();
   }
 
   private boolean isDirectOrTransitiveJsProperty(JMethod method) {

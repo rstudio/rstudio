@@ -61,7 +61,7 @@ class EchoStatementLogger implements FragmentExtractor.StatementLogger {
       for (JsVars.JsVar var : vars) {
         JField field = map.nameToField(var.getName());
         if (field != null) {
-          System.out.println(field.getFullName());
+          System.out.println(field.getQualifiedName());
         }
       }
     }

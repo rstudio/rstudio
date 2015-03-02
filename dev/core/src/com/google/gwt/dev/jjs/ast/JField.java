@@ -128,7 +128,7 @@ public class JField extends JVariable implements CanBeStatic, HasEnclosingType {
     this(info, name, enclosingType, type, isStatic, disposition, AccessModifier.DEFAULT);
   }
 
-  public String getFullName() {
+  public String getQualifiedName() {
     return getEnclosingType().getName() + "." + getName();
   }
 

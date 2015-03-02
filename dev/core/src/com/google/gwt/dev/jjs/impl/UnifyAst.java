@@ -250,7 +250,7 @@ public class UnifyAst {
       if (x.getExpr() instanceof JMethodCall) {
         JMethodCall call = (JMethodCall) x.getExpr();
         JMethod target = call.getTarget();
-        if (GWT_DEBUGGER_METHOD_CALLS.contains(getMethodTypeSignature(target))) {
+        if (GWT_DEBUGGER_METHOD_CALLS.contains(target.getQualifiedName())) {
           // We should see all calls here because GWT.debugger() returns void.
           ctx.replaceMe(new JDebuggerStatement(x.getSourceInfo()));
         }
@@ -295,7 +295,7 @@ public class UnifyAst {
         assert errorsFound;
         return;
       }
-      String targetSignature = getMethodTypeSignature(target);
+      String targetSignature = target.getQualifiedName();
       if (MAGIC_METHOD_CALLS.contains(targetSignature)) {
         if (GWT_DEBUGGER_METHOD_CALLS.contains(targetSignature)) {
           return; // handled in endVisit for JExpressionStatement
@@ -417,7 +417,7 @@ public class UnifyAst {
       JMethod target = translate(x.getTarget());
       x.resolve(target);
       // Special handling.
-      return !MAGIC_METHOD_CALLS.contains(getMethodTypeSignature(target));
+      return !MAGIC_METHOD_CALLS.contains(target.getQualifiedName());
     }
 
     private JExpression createRebindExpression(JMethodCall gwtCreateCall) {
@@ -1171,7 +1171,7 @@ public class UnifyAst {
     List<JType> resolvedParams = new ArrayList<JType>();
     if (specialization.getParams() == null) {
       logger.log(Type.ERROR, "Missing 'params' attribute at @SpecializeMethod for method "
-          + method.getSignature());
+          + method.getQualifiedName());
       errorsFound = true;
       return;
     }
@@ -1188,16 +1188,12 @@ public class UnifyAst {
     if (targetMethod == null) {
       errorsFound = true;
       logger.log(Type.ERROR, "Unable to locate @SpecializeMethod target "
-          + specialization.getTargetSignature(method) + " for method " + method.getSignature());
+          + specialization.getTargetSignature(method) + " for method " + method.getQualifiedName());
       return;
     }
 
     flowInto(targetMethod);
     specialization.resolve(resolvedParams, resolvedReturn, targetMethod);
-  }
-
-  private String getMethodTypeSignature(JMethod method) {
-    return method.getEnclosingType().getName() + '.' + method.getSignature();
   }
 
   public NameBasedTypeLocator getSourceNameBasedTypeLocator() {
@@ -1434,7 +1430,7 @@ public class UnifyAst {
       fieldMap.put(sig, field);
     }
     for (JMethod method : type.getMethods()) {
-      String methodSignature = getMethodTypeSignature(method);
+      String methodSignature = method.getQualifiedName();
       methodMap.put(methodSignature, method);
       if (MAGIC_METHOD_IMPLS.contains(methodSignature)) {
         if (methodSignature.startsWith("com.google.gwt.core.client.GWT.")
@@ -1604,14 +1600,13 @@ public class UnifyAst {
       return method;
     }
 
-    JDeclaredType enclosingType = method.getEnclosingType();
-    String sig = enclosingType.getName() + '.' + method.getSignature();
+    String sig = method.getQualifiedName();
     JMethod newMethod = methodMap.get(sig);
     if (newMethod != null) {
       return newMethod;
     }
 
-    enclosingType = translate(enclosingType);
+    JDeclaredType enclosingType = translate(method.getEnclosingType());
     if (enclosingType.isExternal()) {
       assert errorsFound;
       return method;
