@@ -75,7 +75,7 @@ alphabetically.
 
 ------------ Compiler settings ------------
 Window->Preferences->Java->Compiler
-Set the compiler compliance level to 1.6.
+Set the compiler compliance level to 1.7.
 
 ------- Compiler errors & warnings --------
 Window->Preferences->Java->Compiler->Errors/Warnings
