@@ -43,6 +43,7 @@ import org.rstudio.studio.client.rsconnect.model.RSConnectDirectoryState;
 import org.rstudio.studio.client.rsconnect.model.RSConnectLintResults;
 import org.rstudio.studio.client.rsconnect.model.RSConnectServerOperations;
 import org.rstudio.studio.client.rsconnect.ui.RSAccountConnector;
+import org.rstudio.studio.client.rsconnect.ui.RSConnectDeploy;
 import org.rstudio.studio.client.rsconnect.ui.RSConnectDeployDialog;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -118,6 +119,7 @@ public class RSConnect implements SessionInitHandler,
    @Override
    public void onRSConnectAction(final RSConnectActionEvent event)
    {
+      // see if we have the requisite R packages
       dependencyManager_.withRSConnect(
          "Publishing Shiny applications", null, new Command() {
 

@@ -25,7 +25,10 @@
    white-space: pre-wrap !important;
    word-break: break-all;
    margin: 0;
+   -ms-user-select: text;
+   -moz-user-select: text;
    -webkit-user-select: text;
+   user-select: text
 }
 .output .command, .input {
 }
@@ -42,7 +45,10 @@
 
 .console .prompt {
    white-space: pre;
+   -ms-user-select: text;
+   -moz-user-select: text;
    -webkit-user-select: text;
+   user-select: text;
 }
 
 .completionPopup {

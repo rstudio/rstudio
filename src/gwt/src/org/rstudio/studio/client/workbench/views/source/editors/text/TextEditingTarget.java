@@ -3943,6 +3943,7 @@ public class TextEditingTarget implements
    void onFindFromSelection()
    {
       view_.findFromSelection();
+      docDisplay_.focus();
    }
    
    @Handler

@@ -232,13 +232,13 @@
       else if (identical(filtertype, "numeric"))
       {
         # apply numeric filter, range ("2-32") or equality ("15")
-        filterval <- as.numeric(strsplit(filterval, "-")[[1]])
+        filterval <- as.numeric(strsplit(filterval, "_")[[1]])
         if (length(filterval) > 1)
           # range filter
-          x <- x[x[[i]] >= filterval[1] & x[[i]] <= filterval[2], , drop = FALSE]
+          x <- x[is.finite(x[[i]]) & x[[i]] >= filterval[1] & x[[i]] <= filterval[2], , drop = FALSE]
         else
           # equality filter
-          x <- x[x[[i]] == filterval, , drop = FALSE]
+          x <- x[is.finite(x[[i]]) & x[[i]] == filterval, , drop = FALSE]
       }
     }
   }

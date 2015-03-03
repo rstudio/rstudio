@@ -233,7 +233,7 @@ public class AceEditorNative extends JavaScriptObject {
    }-*/;
    
    public final native void jumpToMatching()  /*-{
-      this.jumpToMatching();
+      this.execCommand('jumptomatching');
    }-*/;
    
    public native final void revealRange(Range range, boolean animate) /*-{

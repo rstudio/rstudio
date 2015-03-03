@@ -26,7 +26,7 @@ public class StanFileType extends PreviewableFromRFileType
    public StanFileType()
    {
       super("stan", "Stan", EditorLanguage.LANG_STAN, ".stan",
-            FileIconResources.INSTANCE.iconStan(), "rstan::stanc");
+            FileIconResources.INSTANCE.iconStan(), "rstan:::rstudio_stanc");
    }
    
    public String getPreviewButtonText()

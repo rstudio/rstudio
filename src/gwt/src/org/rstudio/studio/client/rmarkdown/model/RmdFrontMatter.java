@@ -42,7 +42,14 @@ public class RmdFrontMatter extends JavaScriptObject
    }-*/;
 
    public final native void addDate() /*-{
-      this.date = (new Date()).toLocaleDateString();
+      // We use JavaScript to create a date string so the document picks up the
+      // system locale's mechanism for formatting dates.
+      //
+      // IE 11 adds unprintable Unicode characters to the date string that we
+      // need to remove for R Markdown. See case 4300 for details, including a
+      // link to the issue reported against IE in early 2014 (unresolved as of
+      // 3/2015)
+      this.date = (new Date()).toLocaleDateString().replace(/\u200e/g, "");
    }-*/;
    
    public final native void addResourceFile(String file) /*-{
