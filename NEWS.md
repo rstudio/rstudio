@@ -49,6 +49,7 @@
 * New Reformat Code command for R scripts
 * Shift+Enter now searches backwards in Find/Replace
 * Find All option added in Find/Replace
+* Ctrl+E now focuses the editor after finding from selection
 * New option to control comment continuation on insertion of new lines
 * Updated to Ace (source editor component) v1.1.8
 * Syntax highlighting modes for many new languages including Clojure, CoffeeScript, C#, Graphviz, Go, Groovy, Haskell, Java, Julia, Lisp, Lua, Matlab, Perl, Ruby, Rust, Scala, and Stan.
@@ -136,6 +137,7 @@
 * Ensure cursor is always visible after source navigation
 * Server: Ensure that LANG is populated from system default when not inherited
 * Server: Provide required domain socket permissions during startup
+* IE 11: Strip unprintable unicode characters in Rmd front matter dates
 
 
 
