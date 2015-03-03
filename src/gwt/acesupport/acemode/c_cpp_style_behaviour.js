@@ -283,109 +283,89 @@ var CStyleBehaviour = function(codeModel) {
          var selected = session.doc.getTextRange(selection);
          if (selected === "") {
 
-            var row = editor.selection.getCursor().row;
-            var col = editor.selection.getCursor().column;
-            var doc = session.getDocument();
-            var line = this.codeModel.getLineSansComments(doc, row, true);
-            var prevLine = "";
-            if (row > 0) {
-               prevLine = this.codeModel.getLineSansComments(doc, row - 1, true);
-               for (var i = row - 1; i >= 0; i--) {
-                  if (!/^\s*$/.test(prevLine)) break;
-                  prevLine = this.codeModel.getLineSansComments(doc, i, true);
+            // Get a token cursor, and place it at the cursor position.
+            var cursor = this.codeModel.getTokenCursor();
+
+            if (!cursor.moveToPosition(editor.getCursorPosition()))
+               return autoPairInsertion("{", text, editor, session);
+
+            do
+            {
+               // In case we're walking over a template class, e.g. for something like:
+               //
+               //    class Foo : public A<T>, public B<T>
+               //
+               // then we want to move over those matching arrows,
+               // as their contents is non-informative for semi-colon insertion inference.
+               if (cursor.bwdToMatchingArrow())
+                  continue;
+
+               var value = cursor.currentValue();
+               if (!value || !value.length) break;
+
+               // If we encounter a 'namespace' token, just insert a
+               // single opening bracket. This is because we might be
+               // enclosing some other namespaces following (and so the
+               // automatic closing brace may be undesired)
+               if (value === "namespace")
+               {
+                  return {
+                     text: "{",
+                     selection: [1, 1]
+                  };
                }
-            }
-            
-            var lineTrimmed = line.substring(0, col);
-            var cursor = editor.getCursorPosition();
 
-            // TODO: getLineSansComments
-            var commentMatch = line.match(/\/\//);
-            if (commentMatch) {
-               line = line.substr(0, commentMatch.index - 1);
-            }
+               // If we encounter a 'class' or 'struct' token, this implies
+               // we're defining a class -- add a semi-colon.
+               //
+               // We also do this for '=' operators, for C++11-style
+               // braced initialization:
+               //
+               //    int foo = {1, 2, 3};
+               //
+               // TODO: Figure out if we can infer the same for braced initialization with
+               // no equals; e.g.
+               //
+               //    MyClass object{1, 2, 3};
+               //
+               if (value === "class" ||
+                   value === "struct" ||
+                   value === "=")
+               {
+                  return {
+                     text: "{};",
+                     selection: [1, 1]
+                  };
+               }
 
-            // if we're inserting a namespace, don't auto-insert closing '}'
-            if (/^\s*namespace/.test(lineTrimmed))
-            {
-               return {
-                  text: '{',
-                  selection: [1, 1]
-               };
-            }
+               // Fill in the '{} while ()' bits for a do-while loop.
+               if ($fillinDoWhile && value === "do")
+               {
+                  return {
+                     text: "{} while ();",
+                     selection: [1, 1]
+                  };
+               }
 
-            // if we're assigning, e.g. through an initializor list, then
-            // we should include a semi-colon
-            if (line.match(/\=\s*$/) &&
-                line.indexOf(";") === -1) {
-               return {
-                  text: '{};',
-                  selection: [1, 1]
-               };
-            }
-
-            // If we're defining a function, don't include a semi-colon.
-            // We can only use the tokenizer if the open brace was inserted
-            // on a new line (it has not yet been tokenized)
-            if (/\)\s*$/.test(line) ||
-                (/\)\s*$/.test(prevLine) && /^\s*$/.test(line)))
-            {
-               return {
-                  text: '{}',
-                  selection: [1, 1]
-               };
-            }
-
-            // if we're making a block define, don't add a semi-colon
-            if (line.match(/#define\s+\w+/)) {
-               return {
-                  text: '{}',
-                  selection: [1, 1]
-               };
-            }
-
-            // if we're constructing a 'do-while' loop, fill in the pieces
-            if ($fillinDoWhile &&
-                (/^\s*do\s*$/.test(line) ||
-                (/^\s*do\s*$/.test(prevLine) && /^\s*$/.test(line)))) {
-               return {
-                  text: "{} while ();",
-                  selection: [1, 1]
-               };
-            }
-
-            // Short-circuit for some special cases
-            if (/^\s*if\s*$/.test(line) ||
-                /else\s*$/.test(line)) {
-               return {
-                  text: '{}',
-                  selection: [1, 1]
-               };
-            }
-
-            // If class-style indentation can produce an appropriate indentation for
-            // the brace, then insert a closing brace with a semi-colon.
-            var heuristicRow = codeModel.getRowForOpenBraceIndent(
-               session, row, true
-            );
-
-            if (heuristicRow >= 0 && line.indexOf(";") === -1) {
-               return {
-                  text: '{};',
-                  selection: [1, 1]
-               };
-            }
-
-            // if it looks like we're using a initializor eg 'obj {', then
-            // include a closing ;
-            if (/\S+\s*$/.test(line) && line.indexOf(";") === -1) {
-               return {
-                  text: '{};',
-                  selection: [1, 1]
-               };
-            }
-
-            
+               // If, while walking backwards, we encounter certain tokens that
+               // tell us we do not want semi-colon insertion, then stop there and return.
+               if (value === ";" ||
+                   value === "[" ||
+                   value === "]" ||
+                   value === "(" ||
+                   value === ")" ||
+                   value === "{" ||
+                   value === "}" ||
+                   value === "if" ||
+                   value === "else" ||
+                   value[0] === '#')
+               {
+                  return {
+                     text: "{}",
+                     selection: [1, 1]
+                  };
+               }
+            } while (cursor.moveToPreviousToken());
          }
 
       }
