@@ -88,6 +88,7 @@ public class EditingTargetCodeExecution
       {
          if (!docDisplay_.moveSelectionToNextLine(true))
             docDisplay_.moveSelectionToBlankLine();
+         docDisplay_.ensureCursorVisible();
       }
    }
    
