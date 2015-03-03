@@ -558,21 +558,32 @@ public class RCompletionManager implements CompletionManager
       if (isValidForRIdentifier(docDisplay_.getCharacterAtCursor()))
          return false;
       
-      // Grab the current token on the line
-      String currentToken = StringUtil.getToken(
-            currentLine, cursorColumn, "^[a-zA-Z0-9._'\"`]$", false, false);
-      
-      // Don't auto-popup for common keywords + symbols
-      String[] keywords = {
-            "for", "if", "in", "function", "while", "repeat",
-            "break", "switch", "return", "library", "require",
-            "TRUE", "FALSE"
-      };
-      
-      for (String keyword : keywords)
-         if (currentToken.length() <= keyword.length() &&
-             keyword.substring(0, currentToken.length()).equals(currentToken))
-            return false;
+      // Check to see if the token forms the start of common keywords -- we
+      // want to limit popups in those cases.
+      //
+      // If the complete character theshold is low, however, we go ahead and
+      // provide completions anyway (since the user has somewhat implicitly
+      // opted into 'noisier' completions)
+      int completeChars = uiPrefs_.alwaysCompleteCharacters().getValue();
+      if (completeChars >= 2)
+      {
+         // Grab the current token on the line
+         String currentToken = StringUtil.getToken(
+               currentLine, cursorColumn, "^[a-zA-Z0-9._'\"`]$", false, false);
+
+         // Don't auto-popup for common keywords + symbols
+         String[] keywords = {
+               "for", "if", "in", "function", "while", "repeat",
+               "break", "switch", "return", "library", "require",
+               "TRUE", "FALSE"
+         };
+
+         for (String keyword : keywords)
+            if (currentToken.length() <= keyword.length() &&
+            keyword.substring(0, currentToken.length()).equals(currentToken))
+               return false;
+
+      }
       
       boolean canAutoPopup =
             (currentLine.length() > lookbackLimit - 1 && isValidForRIdentifier(c));
