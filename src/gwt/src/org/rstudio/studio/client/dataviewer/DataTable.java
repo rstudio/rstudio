@@ -112,11 +112,16 @@ public class DataTable
       refreshData(getWindow(), structureChanged, sizeChanged);
    }
    
-   public void applySizeChange()
+   public void onActivate()
    {
-      applySizeChange(getWindow());
+      onActivate(getWindow());
    }
    
+   public void onDeactivate()
+   {
+      onDeactivate(getWindow());
+   }
+
    private static final native boolean setFilterUIVisible (WindowEx frame, boolean visible) /*-{
       if (frame && frame.setFilterUIVisible)
          return frame.setFilterUIVisible(visible);
@@ -135,9 +140,14 @@ public class DataTable
          frame.applySearch(text);
    }-*/;
    
-   private static final native void applySizeChange(WindowEx frame) /*-{
-      if (frame && frame.applySizeChange)
-         frame.applySizeChange();
+   private static final native void onActivate(WindowEx frame) /*-{
+      if (frame && frame.onActivate)
+         frame.onActivate();
+   }-*/;
+
+   private static final native void onDeactivate(WindowEx frame) /*-{
+      if (frame && frame.onDeactivate)
+         frame.onDeactivate();
    }-*/;
 
    private Host host_;

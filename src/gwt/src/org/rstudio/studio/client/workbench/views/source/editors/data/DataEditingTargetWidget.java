@@ -148,10 +148,16 @@ public class DataEditingTargetWidget extends Composite
          table_.refreshData(structureChanged, sizeChanged);
    }
    
-   public void applySizeChange()
+   public void onActivate()
    {
       if (table_ != null)
-         table_.applySizeChange();
+         table_.onActivate();
+   }
+   
+   public void onDeactivate()
+   {
+      if (table_ != null)
+         table_.onDeactivate();
    }
    
    @Override
