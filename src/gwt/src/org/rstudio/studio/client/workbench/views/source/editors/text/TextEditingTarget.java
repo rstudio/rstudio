@@ -2500,6 +2500,27 @@ public class TextEditingTarget implements
       }
       else if (DocumentMode.isSelectionInTexMode(docDisplay_))
          doReflowComment("(%)");
+      else if (DocumentMode.isSelectionInMarkdownMode(docDisplay_))
+         doReflowComment("()");
+      else if (docDisplay_.getFileType().isText())
+         doReflowComment("()");
+         
+   }
+   
+   public void reflowText()
+   {
+      if (docDisplay_.getSelectionValue().isEmpty())
+         docDisplay_.setSelectionRange(
+               Range.fromPoints(
+                     Position.create(docDisplay_.getCursorPosition().getRow(), 0),
+                     Position.create(docDisplay_.getCursorPosition().getRow(),
+                           docDisplay_.getCurrentLine().length())));
+      
+      onReflowComment();
+      docDisplay_.setCursorPosition(
+            Position.create(
+                  docDisplay_.getSelectionEnd().getRow(),
+                  0));
    }
    
    @Handler

@@ -178,6 +178,11 @@ public class TextFileType extends EditableFileType
    {
       return canPreviewFromR_;
    }
+   
+   public boolean isText()
+   {
+      return FileTypeRegistry.TEXT.getTypeId().equals(getTypeId());
+   }
 
    public boolean isR()
    {
