@@ -110,6 +110,39 @@
   .rs.isPackageInstalled(name) && (.rs.getPackageVersion(name) >= version)
 })
 
+.rs.addFunction("packageCRANVersionAvailable", function(name, version) {
+  # get the specified CRAN repo
+  repo <- NA
+  repos <- getOption("repos")
+  if (is.character(repos)) {
+    if (is.null(names(repos))) {
+      # no indication of which repo is which, presume the first entry to be
+      # CRAN
+      if (length(repos) > 0)
+        repo <- repos[[1]]
+    } else {
+      # use repo named CRAN
+      repo <- as.character(repos["CRAN"])
+    }
+  }
+
+  # if no default repo and no repo marked CRAN, give up
+  if (is.na(repo)) {
+    return(list(version = "", satisfied = FALSE))
+  }
+
+  # get the available packages and extract the version information
+  pkgs <- available.packages(
+            contriburl = contrib.url(repo, getOption("pkgType")))
+  if (!(name %in% row.names(pkgs))) {
+    return(list(version = "", satisfied = FALSE))
+  }
+  pkgVersion <- pkgs[name, "Version"]
+  return(list(
+    version = pkgVersion, 
+    satisfied = package_version(pkgVersion) >= package_version(version)))
+})
+
 .rs.addFunction("packageVersionString", function(pkg) {
    as.character(packageVersion(pkg))
 })

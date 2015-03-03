@@ -55,4 +55,12 @@ public class Dependency extends JavaScriptObject
    public final native String getVersion() /*-{
       return this.version;
    }-*/;
+
+   public final native String getAvailableVersion() /*-{
+      return this.available_version;
+   }-*/;
+
+   public final native boolean getVersionSatisfied() /*-{
+      return this.version_satisfied;
+   }-*/;
 }
