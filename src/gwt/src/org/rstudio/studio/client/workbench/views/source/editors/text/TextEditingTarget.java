@@ -2502,6 +2502,9 @@ public class TextEditingTarget implements
          doReflowComment("(%)");
       else if (DocumentMode.isSelectionInMarkdownMode(docDisplay_))
          doReflowComment("()");
+      else if (docDisplay_.getFileType().isText())
+         doReflowComment("()");
+         
    }
    
    public void reflowText()
