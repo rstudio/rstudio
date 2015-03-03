@@ -16,6 +16,7 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text.cpp;
 
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.model.CppCompletionText;
 
@@ -108,7 +109,13 @@ public class CppCompletionToolTip extends PopupPanel
       {
          if (docDisplay.getLine(lineNumberAbove).length() > 
              docDisplay.getLength(docDisplay.getCurrentLineNum()))
-           topPad = 18;
+         {
+            Double fontPad = RStudioGinjector.INSTANCE.getUIPrefs()
+                  .fontSize().getValue();
+            if (fontPad >= 13)
+               fontPad *= 1.3;
+            topPad = topPad + fontPad.intValue();
+         }
       }
       return topPad;
    }
