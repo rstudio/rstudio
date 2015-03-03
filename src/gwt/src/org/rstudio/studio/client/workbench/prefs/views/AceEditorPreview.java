@@ -81,9 +81,21 @@ public class AceEditorPreview extends DynamicIFrame
                      public void onLoaded()
                      {
                         body.appendChild(doc.createScriptElement(
-                              "var editor = ace.edit('editor');\n" +
+                              "var event = require('ace/lib/event');\n" +
+                              "var Editor = require('ace/editor').Editor;\n" +
+                              "var Renderer = require('ace/virtual_renderer').VirtualRenderer;\n" +
+                              "var dom = require('ace/lib/dom');\n" +
+                              "var container = document.getElementById('editor');\n" +
+                              "var value = dom.getInnerText(container);\n" +
+                              "container.innerHTML = '';\n" +
+                              "var session = ace.createEditSession(value);\n" +
+                              "var editor = new Editor(new Renderer(container, {}));\n" +
+                              "editor.setSession(session);\n" +
+                              "var env = {document: session, editor: editor, onResize: editor.resize.bind(editor, null)};\n" +
+                              "event.addListener(window, 'resize', env.onResize);\n" +
+                              "editor.on('destory', function() { event.removeListener(window, 'resize', env.onResize); });\n" +
+                              "editor.container.env = editor.env = env;\n" +
                               "editor.renderer.setHScrollBarAlwaysVisible(false);\n" +
-                              "editor.renderer.setTheme({});\n" +
                               "editor.setHighlightActiveLine(false);\n" +
                               "editor.setReadOnly(true);\n" +
                               "editor.renderer.setShowGutter(false);\n" +
