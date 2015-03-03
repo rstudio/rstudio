@@ -32,7 +32,7 @@ public abstract class DynamicIFrame extends Frame
          @Override
          public boolean execute()
          {
-            if (getIFrame() == null || getWindow() == null)
+            if (getIFrame() == null || getWindow() == null || getDocument() == null)
                return true;
             onFrameLoaded();
             return false;
