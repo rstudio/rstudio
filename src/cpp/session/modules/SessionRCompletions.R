@@ -1534,8 +1534,6 @@ assign(x = ".rs.acCompletionTypes",
                                           envir)
       ))
       
-      completions <- .rs.sortCompletions(completions, token)
-      
       # remove all queries that start with a '.' unless the
       # token itself starts with a dot
       if (!.rs.startsWith(token, "."))
@@ -1597,11 +1595,14 @@ assign(x = ".rs.acCompletionTypes",
             directoriesOnly <- TRUE
          }
       }
+      
       # NOTE: For Markdown link completions, we overload the meaning of the
       # function call string here, and use it as a signal to generate paths
       # relative to the R markdown path.
-      path <- if (length(functionCallString) &&
-                     functionCallString == "useFile")
+      isMarkdownLink <- identical(functionCallString, "useFile")
+      isRmd <- .rs.endsWith(tolower(filePath), ".rmd")
+      
+      path <- if (isMarkdownLink || isRmd)
          suppressWarnings(.rs.normalizePath(dirname(filePath)))
       else
          getwd()
