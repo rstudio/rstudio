@@ -75,14 +75,23 @@ CXChildVisitResult cursorVisitor(CXCursor cxCursor,
    if (!location.isFromMainFile())
       return CXChildVisit_Continue;
 
-   // ensure it's a definition with external linkage
-   if (!cursor.isDefinition() || !cursor.hasExternalLinkage())
+   // get kind
+   CXCursorKind cursorKind = cursor.getKind();
+
+   // ensure it's a definition with linkage or a typedef
+   if ((!cursor.isDefinition() || !cursor.hasLinkage()) &&
+       cursorKind != CXCursor_TypedefDecl)
+   {
       return CXChildVisit_Continue;
+   }
 
    // determine kind
    CppDefinitionKind kind = CppInvalidDefinition;
-   switch (cursor.getKind())
+   switch (cursorKind)
    {
+      case CXCursor_Namespace:
+         kind = CppNamespaceDefinition;
+         break;
       case CXCursor_ClassDecl:
       case CXCursor_ClassTemplate:
          kind = CppClassDefinition;
@@ -102,6 +111,9 @@ CXChildVisitResult cursorVisitor(CXCursor cxCursor,
          break;
       case CXCursor_CXXMethod:
          kind = CppMemberFunctionDefinition;
+         break;
+      case CXCursor_TypedefDecl:
+         kind = CppTypedefDefinition;
          break;
       default:
          kind = CppInvalidDefinition;
@@ -137,10 +149,13 @@ CXChildVisitResult cursorVisitor(CXCursor cxCursor,
                             name,
                             cursor.getSourceLocation().getSpellingLocation());
 
-   // yield the definition (break if requested)
-   DefinitionVisitor& visitor = *((DefinitionVisitor*)clientData);
-   if (!visitor(definition))
-      return CXChildVisit_Break;
+   // yield the definition if it's not a namespace (break if requested)
+   if (kind != CppNamespaceDefinition)
+   {
+      DefinitionVisitor& visitor = *((DefinitionVisitor*)clientData);
+      if (!visitor(definition))
+         return CXChildVisit_Break;
+   }
 
    // recurse if necessary
    if (kind == CppNamespaceDefinition ||
@@ -260,6 +275,9 @@ std::ostream& operator<<(std::ostream& os, const CppDefinition& definition)
          break;
       case CppMemberFunctionDefinition:
          kindStr = "M";
+         break;
+      case CppTypedefDefinition:
+         kindStr = "T";
          break;
       default:
          kindStr = " ";
@@ -439,7 +457,7 @@ CppDefinition cppDefinitionFromJson(const json::Object& object)
 
 FilePath definitionIndexFilePath()
 {
-   return module_context::scopedScratchPath().childPath("cpp-definition-index");
+   return module_context::scopedScratchPath().childPath("cpp-definition-cache");
 }
 
 void loadDefinitionIndex()

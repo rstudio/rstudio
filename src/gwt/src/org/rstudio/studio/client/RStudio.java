@@ -66,6 +66,7 @@ import org.rstudio.studio.client.packrat.ui.PackratResolveConflictDialog;
 import org.rstudio.studio.client.projects.ui.newproject.NewProjectResources;
 import org.rstudio.studio.client.projects.ui.prefs.ProjectPreferencesDialogResources;
 import org.rstudio.studio.client.rmarkdown.RmdOutputSatellite;
+import org.rstudio.studio.client.rsconnect.ui.RSConnectDeploy;
 import org.rstudio.studio.client.shiny.ShinyApplicationSatellite;
 import org.rstudio.studio.client.workbench.codesearch.ui.CodeSearchResources;
 import org.rstudio.studio.client.workbench.exportplot.ExportPlotResources;
@@ -261,6 +262,7 @@ public class RStudio implements EntryPoint
       PackratActionDialog.ensureStylesInjected();
       LocalRepositoriesWidget.ensureStylesInjected();
       CppCompletionResources.INSTANCE.styles().ensureInjected();
+      RSConnectDeploy.RESOURCES.style().ensureInjected();
       
       StyleInjector.inject(
             "button::-moz-focus-inner {border:0}");

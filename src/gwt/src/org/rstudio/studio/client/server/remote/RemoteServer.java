@@ -1516,6 +1516,16 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, MODIFY_DOCUMENT_PROPERTIES, params, requestCallback);
    }
 
+   public void getDocumentProperties(
+         String path,
+         ServerRequestCallback<JsObject> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(path));
+
+      sendRequest(RPC_SCOPE, GET_DOCUMENT_PROPERTIES, params, requestCallback);
+   }
+
    public void revertDocument(String id,
                               String fileType,
                               ServerRequestCallback<SourceDocument> requestCallback)
@@ -3626,15 +3636,17 @@ public class RemoteServer implements Server
    }
    
    @Override
-   public void deployShinyApp(String dir, String file, String account, 
+   public void deployShinyApp(String dir, ArrayList<String> deployFiles, 
+         String file, String account, 
          String server, String appName, ServerRequestCallback<Boolean> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(dir));
-      params.set(1, new JSONString(file));
-      params.set(2, new JSONString(account));
-      params.set(3, new JSONString(server));
-      params.set(4, new JSONString(appName));
+      params.set(1, JSONUtils.toJSONStringArray(deployFiles));
+      params.set(2, new JSONString(file));
+      params.set(3, new JSONString(account));
+      params.set(4, new JSONString(server));
+      params.set(5, new JSONString(appName));
       sendRequest(RPC_SCOPE,
             DEPLOY_SHINY_APP,
             params,
@@ -4085,6 +4097,7 @@ public class RemoteServer implements Server
    private static final String SET_SOURCE_DOCUMENT_ON_SAVE = "set_source_document_on_save";
    private static final String SAVE_ACTIVE_DOCUMENT = "save_active_document";
    private static final String MODIFY_DOCUMENT_PROPERTIES = "modify_document_properties";
+   private static final String GET_DOCUMENT_PROPERTIES = "get_document_properties";
    private static final String REVERT_DOCUMENT = "revert_document";
    private static final String REOPEN_WITH_ENCODING = "reopen_with_encoding";
    private static final String REMOVE_CONTENT_URL = "remove_content_url";

@@ -129,6 +129,12 @@ public class UIPrefs extends UIPrefsAccessor implements UiPrefsChangedHandler
          alwaysCompleteInConsole().setGlobalValue(
                                  newUiPrefs.alwaysCompleteInConsole().getGlobalValue());
          
+         alwaysCompleteDelayMs().setGlobalValue(
+                                 newUiPrefs.alwaysCompleteDelayMs().getGlobalValue());
+         
+         alwaysCompleteCharacters().setGlobalValue(
+                                 newUiPrefs.alwaysCompleteCharacters().getGlobalValue());
+         
          insertParensAfterFunctionCompletion().setGlobalValue(
                                  newUiPrefs.insertParensAfterFunctionCompletion().getGlobalValue());
          

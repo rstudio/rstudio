@@ -32,6 +32,8 @@ core::json::Object diagnosticToJson(
                         const core::libclang::TranslationUnit& tu,
                         const core::libclang::Diagnostic& diagnostic);
 
+core::json::Array getCppDiagnosticsJson(const core::FilePath& filePath);
+
 core::Error getCppDiagnostics(const core::json::JsonRpcRequest& request,
                               core::json::JsonRpcResponse* pResponse);
    

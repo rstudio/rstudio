@@ -163,14 +163,17 @@ public class HelpPane extends WorkbenchPane
             thiz.@org.rstudio.studio.client.workbench.views.help.HelpPane::unload()();
          });
       } ;
-      $wnd.helpNavigate = function(url) {
+      $wnd.helpNavigate = function(url, encode) {
          // on some platforms url may arrive unencoded; on others it will already be encoded. to
          // ascertain the difference, check to see if the url contains any characters that require
          // encoding. 
-         var re = new RegExp("^([!#$&-;=?-[]_a-z~]|%[0-9a-fA-F]{2})+$");
-         if (!re.test(url)) 
+         if (encode)
          {
-            url = encodeURI(url);
+            var re = new RegExp("^([!#$&-;=?-[]_a-z~]|%[0-9a-fA-F]{2})+$");
+            if (!re.test(url)) 
+            {
+               url = encodeURI(url);
+            }
          }
          thiz.@org.rstudio.studio.client.workbench.views.help.HelpPane::showHelp(Ljava/lang/String;)(url);
       } ;
@@ -239,8 +242,12 @@ public class HelpPane extends WorkbenchPane
             // they can participate in virtual session history. This
             // won't have any effect for right-click > Show in New Window
             // but that's a good thing.
+            
             a.setAttribute("onclick",
-                           "window.parent.helpNavigate(this.href);return false") ;
+                           "window.parent.helpNavigate(this.href, " + 
+                           (BrowseCap.isLinuxDesktop() || BrowseCap.isWindowsDesktop() ?
+                                 "true" : "false") +
+                           "); return false");
          }
       }
       

@@ -153,9 +153,9 @@ bool isFilterSubset(const std::string& outer, const std::string& inner)
 
    if (outerType == "numeric")
    {
-      // matches a numeric filter (i.e. "2.71-3.14") -- in this case we need to
+      // matches a numeric filter (i.e. "2.71_3.14") -- in this case we need to
       // check the components for range inclusion
-      boost::regex numFilter("(\\d+\\.?\\d*)-(\\d+\\.?\\d*)");
+      boost::regex numFilter("(-?\\d+\\.?\\d*)_(-?\\d+\\.?\\d*)");
       boost::smatch innerMatch, outerMatch;
       if (boost::regex_search(innerValue, innerMatch, numFilter) &&
           boost::regex_search(outerValue, outerMatch, numFilter))
@@ -622,7 +622,7 @@ json::Value getData(SEXP dataSEXP, const http::Fields& fields)
              nameSEXP != NA_STRING &&
              r::sexp::length(nameSEXP) > 0)
          {
-            rowData.push_back(Rf_translateChar(nameSEXP));
+            rowData.push_back(Rf_translateCharUTF8(nameSEXP));
          }
          else
          {
@@ -646,7 +646,7 @@ json::Value getData(SEXP dataSEXP, const http::Fields& fields)
                 stringSEXP != NA_STRING &&
                 r::sexp::length(stringSEXP) > 0)
             {
-               rowData.push_back(Rf_translateChar(stringSEXP));
+               rowData.push_back(Rf_translateCharUTF8(stringSEXP));
             }
             else
             {
@@ -677,17 +677,9 @@ Error getGridData(const http::Request& request,
 
    try
    {
-      // extract the query string; if we don't find it, it's a no-op
-      std::string::size_type pos = request.uri().find('?');
-      if (pos == std::string::npos)
-      {
-         return Success();
-      }
-
       // find the data frame we're going to be pulling data from
-      std::string queryString = request.uri().substr(pos+1);
       http::Fields fields;
-      http::util::parseQueryString(queryString, &fields);
+      http::util::parseForm(request.body(), &fields);
       std::string envName = http::util::urlDecode(
             http::util::fieldValue<std::string>(fields, "env", ""), true);
       std::string objName = http::util::urlDecode(

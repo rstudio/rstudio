@@ -77,11 +77,6 @@ SourceCppFileInfo sourceCppFileInfo(const core::FilePath& srcPath)
       return SourceCppFileInfo();
    }
 
-   // ensure that have at least one Rcpp include
-   boost::regex reRcpp("#include\\s+<Rcpp");
-   if (!boost::regex_search(contents, reRcpp))
-      return SourceCppFileInfo();
-
    // info to return
    SourceCppFileInfo info;
 

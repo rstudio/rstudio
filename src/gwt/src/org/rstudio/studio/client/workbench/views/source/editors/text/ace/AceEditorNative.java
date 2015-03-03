@@ -170,6 +170,11 @@ public class AceEditorNative extends JavaScriptObject {
       var loader = require("rstudio/loader");
       return loader.loadEditor(container);
    }-*/;
+   
+   public final native void manageDefaultKeybindings() /*-{
+      // We bind 'Ctrl + Shift + M' to insert a magrittr shortcut on Windows
+      delete this.commands.commandKeyBinding["ctrl-shift-m"];
+   }-*/;
 
    public static <T> HandlerRegistration addEventListener(
          JavaScriptObject target,

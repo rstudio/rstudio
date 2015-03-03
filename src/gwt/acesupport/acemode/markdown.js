@@ -76,17 +76,7 @@ oop.inherits(Mode, TextMode);
     this.blockComment = {start: "<!--", end: "-->"};
 
     this.getNextLineIndent = function(state, line, tab) {
-        if (state == "listblock") {
-            var match = /^(\s*)(?:([-+*])|(\d+)\.)(\s+)/.exec(line);
-            if (!match)
-                return "";
-            var marker = match[2];
-            if (!marker)
-                marker = parseInt(match[3], 10) + 1 + ".";
-            return match[1] + marker + match[4];
-        } else {
-            return this.$getIndent(line);
-        }
+        return this.$getIndent(line);
     };
     this.$id = "mode/markdown";
 }).call(Mode.prototype);

@@ -89,7 +89,7 @@ public:
 
    void printExpansionLocation(std::ostream& ostr);
 
-   void getSpellingLocation(std::string* pFile,
+   bool getSpellingLocation(std::string* pFile,
                             unsigned* pLine,
                             unsigned* pColumn,
                             unsigned* pOffset = NULL) const;

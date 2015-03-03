@@ -58,10 +58,12 @@ public class CppDiagnostic extends JavaScriptObject
       return this.message;
    }-*/;
 
+   // (can be null)
    public native final String getFile() /*-{
       return this.file;
    }-*/;
    
+   // (can be null)
    public native final FilePosition getPosition() /*-{
       return this.position;
    }-*/;

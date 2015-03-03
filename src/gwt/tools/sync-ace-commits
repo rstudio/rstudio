@@ -69,6 +69,7 @@ git merge \
     origin/bugfix/vim-join-lines \
     origin/bugfix/highlight-tags-error \
     origin/bugfix/xml-tag-highlight \
+    origin/bugfix/vim-fold-navigation \
     -m "merge branches"
 
 ## git merge \

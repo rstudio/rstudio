@@ -242,6 +242,16 @@ public class TextFileType extends EditableFileType
       return false;
    }
    
+   public boolean isStan()
+   {
+      return EditorLanguage.LANG_STAN.equals(getEditorLanguage());
+   }
+   
+   public String getPreviewButtonText()
+   {
+      return "Preview";
+   }
+   
    public String createPreviewCommand(String file)
    {
       return null;

@@ -72,9 +72,6 @@ public:
    unsigned getNumResults() const { return pResults_->NumResults; }
    CodeCompleteResult getResult(unsigned index) const;
 
-   unsigned getNumDiagnostics() const;
-   boost::shared_ptr<Diagnostic> getDiagnostic(unsigned index) const;
-
    unsigned long long getContexts() const;
 
 private:
