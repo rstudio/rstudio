@@ -38,6 +38,8 @@ public final class Array {
   private static final int TYPE_PRIMITIVE_NUMBER = 7;
   private static final int TYPE_PRIMITIVE_BOOLEAN = 8;
 
+  private static final int ARRAY_PROCESS_BATCH_SIZE = 10000;
+
   /**
    * Creates a copy of the specified array.
    */
@@ -192,7 +194,8 @@ public final class Array {
    */
   private static native void nativeArraySplice(
       Object src, int srcOfs, Object dest, int destOfs, int len, boolean overwrite) /*-{
-    // Work around function.prototype.apply call stack size limits.
+    // Work around function.prototype.apply call stack size limits:
+    // https://code.google.com/p/v8/issues/detail?id=2896
     // Performance: http://jsperf.com/java-system-arraycopy/2
     if (src === dest) {
       // copying to the same array, make a copy first
@@ -200,7 +203,7 @@ public final class Array {
       srcOfs = 0;
     }
     for (var batchStart = srcOfs, end = srcOfs + len; batchStart < end;) { // increment in block
-      var batchEnd = Math.min(batchStart + 10000, end);
+      var batchEnd = Math.min(batchStart + @Array::ARRAY_PROCESS_BATCH_SIZE, end);
       len = batchEnd - batchStart;
       Array.prototype.splice.apply(dest, [destOfs, overwrite ? len : 0]
           .concat(src.slice(batchStart, batchEnd)));
