@@ -67,6 +67,7 @@ public:
    Cursor getSemanticParent() const;
 
    CXLinkageKind getLinkageKind() const;
+   bool hasLinkage() const;
    bool hasExternalLinkage() const;
 
    std::string getUSR() const;

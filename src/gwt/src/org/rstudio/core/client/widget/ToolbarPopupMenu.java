@@ -176,6 +176,22 @@ public class ToolbarPopupMenu extends ThemedPopupPanel
                         e.cancel();
                         moveSelectionUp();
                         break;
+                     case KeyCodes.KEY_PAGEDOWN:
+                        e.cancel();
+                        moveSelectionFwd(5);
+                        break;
+                     case KeyCodes.KEY_PAGEUP:
+                        e.cancel();
+                        moveSelectionBwd(5);
+                        break;
+                     case KeyCodes.KEY_HOME:
+                        e.cancel();
+                        selectFirst();
+                        break;
+                     case KeyCodes.KEY_END:
+                        e.cancel();
+                        selectLast();
+                        break;
                      case KeyCodes.KEY_ENTER:
                         e.cancel();
                         final MenuItem menuItem = getSelectedItem();
@@ -215,6 +231,42 @@ public class ToolbarPopupMenu extends ThemedPopupPanel
                return i;
          }
          return -1;
+      }
+      
+      private void moveSelectionFwd(int numElements)
+      {
+         selectItem(getSelectedIndex() + numElements);
+      }
+      
+      private void moveSelectionBwd(int numElements)
+      {
+         selectItem(getSelectedIndex() - numElements);
+      }
+      
+      private void selectFirst()
+      {
+         selectItem(0);
+      }
+      
+      private void selectLast()
+      {
+         selectItem(getItemCount());
+      }
+      
+      private void selectItem(int index)
+      {
+         int count = getItemCount();
+         
+         if (count == 0) return;
+         
+         if (index < 0)
+            index = 0;
+         
+         if (index >= count - 1)
+            index = count - 1;
+         
+         List<MenuItem> items = getItems();
+         selectItem(items.get(index));
       }
 
       private HandlerRegistration nativePreviewReg_;

@@ -150,8 +150,7 @@ bool functionDiffersFromSource(
       const std::string& functionCode)
 {
    std::string fileName;
-   Error error = r::exec::RFunction(".rs.sourceFileFromRef", srcRef)
-                 .call(&fileName);
+   Error error = sourceFileFromRef(srcRef, &fileName);
    if (error)
    {
       LOG_ERROR(error);
@@ -217,6 +216,18 @@ void sourceRefToJson(const SEXP srcref, json::Object* pObject)
       (*pObject)["character_number"] = INTEGER(srcref)[4];
       (*pObject)["end_character_number"] = INTEGER(srcref)[5];
    }
+}
+
+Error sourceFileFromRef(const SEXP srcref, std::string* pFileName)
+{
+   r::sexp::Protect protect;
+   SEXP fileName;
+   Error error = r::exec::RFunction(".rs.sourceFileFromRef", srcref)
+                 .call(&fileName, &protect);
+   if (error)
+       return error;
+
+   return r::sexp::extract(fileName, pFileName, true);
 }
 
 } // namespace environment

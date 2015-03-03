@@ -375,21 +375,21 @@ Error extract(SEXP valueSEXP, std::vector<int>* pVector)
    return Success(); 
 }
    
-   
-Error extract(SEXP valueSEXP, std::string* pString)
+Error extract(SEXP valueSEXP, std::string* pString, bool asUtf8)
 {
    if (TYPEOF(valueSEXP) != STRSXP)
       return Error(errc::UnexpectedDataTypeError, ERROR_LOCATION);
-   
+
    if (Rf_length(valueSEXP) < 1)
       return Error(errc::NoDataAvailableError, ERROR_LOCATION);
-      
-   *pString = std::string(Rf_translateChar(STRING_ELT(valueSEXP, 0)));
-   
+
+   *pString = std::string(asUtf8 ?
+                  Rf_translateCharUTF8(STRING_ELT(valueSEXP, 0)) :
+                  Rf_translateChar(STRING_ELT(valueSEXP, 0)));
+
    return Success();
 }
-   
-   
+
 Error extract(SEXP valueSEXP, std::vector<std::string>* pVector)
 {
    if (TYPEOF(valueSEXP) != STRSXP)

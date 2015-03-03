@@ -209,6 +209,7 @@ public class FindReplace
       if (searchString.length() != 0)
       {
          editor_.selectAll(searchString);
+         editor_.focus();
       }
    }
    

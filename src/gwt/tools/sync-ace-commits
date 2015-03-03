@@ -70,6 +70,7 @@ git merge \
     origin/bugfix/highlight-tags-error \
     origin/bugfix/xml-tag-highlight \
     origin/feature/vim-commands \ # NOTE: API merged upstream; should be unneeded with next Ace update
+    origin/bugfix/vim-fold-navigation \
     -m "merge branches"
 
 ## git merge \

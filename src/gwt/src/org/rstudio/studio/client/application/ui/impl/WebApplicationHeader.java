@@ -116,7 +116,7 @@ public class WebApplicationHeader extends Composite implements ApplicationHeader
          AppCommand closeSourceDoc = commands.closeSourceDoc();
          closeSourceDoc.setShortcut(new KeyboardShortcut(modifiers, 'W'));
          ShortcutManager.INSTANCE.register(
-               modifiers, 'W', closeSourceDoc, "", "");
+               modifiers, 'W', closeSourceDoc, "", "", "");
       }
       
       // main menu

@@ -449,7 +449,7 @@ SEXP rs_debugSourceFile(SEXP filename, SEXP encoding, SEXP local)
 {
    // Get the file that was sourced
    std::string path;
-   Error error = r::sexp::extract(filename, &path);
+   Error error = r::sexp::extract(filename, &path, true);
    if (error)
    {
       LOG_ERROR(error);

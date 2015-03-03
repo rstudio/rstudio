@@ -77,11 +77,6 @@ SourceCppFileInfo sourceCppFileInfo(const core::FilePath& srcPath)
       return SourceCppFileInfo();
    }
 
-   // ensure that have at least one Rcpp include
-   boost::regex reRcpp("#include\\s+<Rcpp");
-   if (!boost::regex_search(contents, reRcpp))
-      return SourceCppFileInfo();
-
    // info to return
    SourceCppFileInfo info;
 
@@ -254,7 +249,7 @@ std::vector<std::string> includesForLinkingTo(const std::string& linkingTo)
 
 
 RCompilationDatabase::RCompilationDatabase()
-   : usePrecompiledHeaders_(false), restoredCompilationConfig_(false)
+   : usePrecompiledHeaders_(true), restoredCompilationConfig_(false)
 {
 }
 

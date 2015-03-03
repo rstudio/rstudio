@@ -222,8 +222,8 @@ var createNumericFilterUI = function(idx, col, onDismiss) {
     var min = col.col_min.toString();
     var max = col.col_max.toString();
     var val = parseSearchVal(idx);
-    if (val.indexOf("-") > 0) {
-      var range = val.split("-");
+    if (val.indexOf("_") > 0) {
+      var range = val.split("_");
       min = range[0];
       max = range[1];
     } else if (!isNaN(parseFloat(val))) {
@@ -245,7 +245,7 @@ var createNumericFilterUI = function(idx, col, onDismiss) {
       var searchText = 
         minVal.textContent === min && maxVal.textContent === max ? 
           "" :
-          minVal.textContent + "-" + maxVal.textContent;
+          minVal.textContent + "_" + maxVal.textContent;
       if (searchText.length > 0) {
         searchText = "numeric|" + searchText;
       }
@@ -554,6 +554,7 @@ var initDataTable = function(result) {
       }],
     "ajax": {
       "url": "../grid_data", 
+      "type": "POST",
       "data": function(d) {
         d.env = env;
         d.obj = obj;
@@ -577,6 +578,11 @@ var initDataTable = function(result) {
   });
 
   table = $("#rsGridData").DataTable();
+
+  // datatables has a bug wherein it sometimes thinks an LTR browser is RTL if
+  // the LTR browser is at >100% zoom; this causes layout problems, so force
+  // into LTR mode as we don't support RTL here.
+  $.fn.dataTableSettings[0].oBrowser.bScrollbarLeft = false;
 
   // listen for size changes
   debouncedDataTableSize();
@@ -636,7 +642,9 @@ var bootstrap = function() {
 
   // call the server to get data shape
   $.ajax({
-        url: "../grid_data?show=cols&" + window.location.search.substring(1)})
+        url: "../grid_data",
+        data: "show=cols&" + window.location.search.substring(1),
+        type: "POST"})
     .done(function(result) {
       $(document).ready(function() {
         document.body.appendChild(newEle);
@@ -667,6 +675,13 @@ var bootstrap = function() {
 // called from RStudio to toggle the filter UI 
 window.setFilterUIVisible = function(visible) {
   var thead = document.getElementById("data_cols");
+
+  // it's possible the dable is getting redrawn right now; if it is, ignore
+  // this request.
+  if (thead === null || table === null || cols === null) {
+    return false;
+  }
+
   if (!visible) {
     // clear all the filter data
     table.columns().search("");
@@ -689,6 +704,7 @@ window.setFilterUIVisible = function(visible) {
     }
   }
   sizeDataTable(true);
+  return true;
 };
 
 // called from RStudio when the underlying object changes

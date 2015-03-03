@@ -79,5 +79,7 @@ public interface FileIconResources extends ClientBundle
    ImageResource iconRust();
    ImageResource iconScala();
    
+   ImageResource iconStan();
+   
    
 }

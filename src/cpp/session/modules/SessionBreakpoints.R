@@ -18,6 +18,12 @@
 .rs.addFunction("getEnvironmentOfFunction", function(
    objName, fileName, packageName)
 {
+   # assume fileName is UTF-8 encoded unless it's already got a labelled
+   # encoding
+   if (Encoding(fileName) == "unknown") {
+      Encoding(fileName) <- "UTF-8"
+   }
+
    isPackage <- nchar(packageName) > 0
 
    # when searching specifically for a function in a package, search from the
@@ -479,7 +485,9 @@
    # NYI: Consider whether we need to implement source with echo for debugging.
    # This would likely involve injecting print statements into the generated
    # source-equivalent function.
-   invisible(.Call("rs_debugSourceFile", fileName, encoding, local))
+
+   # convert filename to UTF-8 before proceeding 
+   invisible(.Call("rs_debugSourceFile", enc2utf8(fileName), encoding, local))
 })
 
 # Parameters expected to be in environment:

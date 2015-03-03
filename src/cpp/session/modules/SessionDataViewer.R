@@ -24,7 +24,7 @@
 .rs.addFunction("formatDataColumn", function(x, start, len, ...)
 {
    # extract the visible part of the column
-   col <- x[start:min(length(x), start+len)]
+   col <- x[start:min(NROW(x), start+len)]
 
    if (is.numeric(col)) {
      # show numbers as doubles
@@ -150,7 +150,7 @@
 {
   rows <- 0
   tryCatch({
-    rows <- nrow(x)
+    rows <- NROW(x)
   }, error = function(e) {
     stop("Failed to determine rows for object of class '", class(x), "': ", 
          e$message)
@@ -165,7 +165,7 @@
 {
   cols <- 0
   tryCatch({
-    cols <- ncol(x)
+    cols <- NCOL(x)
   }, error = function(e) {
     stop("Failed to determine columns for object of class '", class(x), "': ", 
          e$message)
@@ -232,13 +232,13 @@
       else if (identical(filtertype, "numeric"))
       {
         # apply numeric filter, range ("2-32") or equality ("15")
-        filterval <- as.numeric(strsplit(filterval, "-")[[1]])
+        filterval <- as.numeric(strsplit(filterval, "_")[[1]])
         if (length(filterval) > 1)
           # range filter
-          x <- x[x[[i]] >= filterval[1] & x[[i]] <= filterval[2], , drop = FALSE]
+          x <- x[is.finite(x[[i]]) & x[[i]] >= filterval[1] & x[[i]] <= filterval[2], , drop = FALSE]
         else
           # equality filter
-          x <- x[x[[i]] == filterval, , drop = FALSE]
+          x <- x[is.finite(x[[i]]) & x[[i]] == filterval, , drop = FALSE]
       }
     }
   }

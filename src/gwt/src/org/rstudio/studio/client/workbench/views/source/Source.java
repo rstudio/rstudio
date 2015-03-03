@@ -1,7 +1,7 @@
 /*
  * Source.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-15 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -45,6 +45,7 @@ import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.FileDialogs;
@@ -301,7 +302,8 @@ public class Source implements InsertSourceHandler,
                192,
                commands.executeNextChunk(), 
                "Execute",
-               commands.executeNextChunk().getMenuLabel(false));
+               commands.executeNextChunk().getMenuLabel(false), 
+               "");
       }
 
       events.addHandler(ShowContentEvent.TYPE, this);
@@ -435,8 +437,21 @@ public class Source implements InsertSourceHandler,
             AceEditorNative.setVerticallyAlignFunctionArgs(arg);
          }
       });
-       
+      
+      // adjust shortcuts when vim mode changes
+      uiPrefs_.useVimMode().bind(new CommandWithArg<Boolean>()
+      {
+         @Override
+         public void execute(Boolean arg)
+         {
+            ShortcutManager.INSTANCE.setEditorMode(arg ? 
+                  KeyboardShortcut.MODE_VIM :
+                  KeyboardShortcut.MODE_NONE);
+         }
+      });
+
       initialized_ = true;
+
       // As tabs were added before, manageCommands() was suppressed due to
       // initialized_ being false, so we need to run it explicitly
       manageCommands();
@@ -462,6 +477,8 @@ public class Source implements InsertSourceHandler,
       vimCommands_.readFile(this, uiPrefs_.defaultEncoding().getValue());
       vimCommands_.runRScript(this);
       vimCommands_.reflowText(this);
+      vimCommands_.showVimHelp(
+            RStudioGinjector.INSTANCE.getShortcutViewer());
    }
    
    private void closeAllTabs(boolean interactive)

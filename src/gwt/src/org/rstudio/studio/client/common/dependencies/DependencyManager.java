@@ -103,26 +103,14 @@ public class DependencyManager implements InstallShinyEvent.Handler
         userAction,
         userPrompt,
         new Dependency[] {
-          
-          // rmarkdown + dependencies
-          Dependency.cranPackage("knitr", "1.6"),
-          Dependency.cranPackage("yaml", "2.1.5"),
-          Dependency.cranPackage("htmltools", "0.2.4"),
-          Dependency.cranPackage("caTools", "1.14"),
-          Dependency.cranPackage("bitops", "1.0-6"),
-          Dependency.cranPackage("XML", "3.98-1.1"),
-          Dependency.embeddedPackage("rmarkdown"),
-          
-          // rsconnect + dependencies
           Dependency.cranPackage("digest", "0.6"),
           Dependency.cranPackage("RCurl", "1.95"),
           Dependency.cranPackage("RJSONIO", "1.0"),
           Dependency.cranPackage("PKI", "0.1"),
           Dependency.cranPackage("packrat", "0.4.3"),
           Dependency.cranPackage("rstudioapi", "0.2"),
-          // Dependency.cranPackage("yaml", "2.1.5"), // covered above
+          Dependency.cranPackage("yaml", "2.1.5"),
           Dependency.embeddedPackage("rsconnect")
-          
         },
         true, // we want the embedded rsconnect package to be updated if needed
         command
@@ -140,7 +128,6 @@ public class DependencyManager implements InstallShinyEvent.Handler
           Dependency.cranPackage("htmltools", "0.2.4"),
           Dependency.cranPackage("caTools", "1.14"),
           Dependency.cranPackage("bitops", "1.0-6"),
-          Dependency.cranPackage("XML", "3.98-1.1"),
           Dependency.embeddedPackage("rmarkdown")
         }, 
         false,

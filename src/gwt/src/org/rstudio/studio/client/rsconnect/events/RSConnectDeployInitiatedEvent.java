@@ -14,6 +14,8 @@
  */
 package org.rstudio.studio.client.rsconnect.events;
 
+import java.util.ArrayList;
+
 import org.rstudio.studio.client.rsconnect.model.RSConnectDeploymentRecord;
 
 import com.google.gwt.event.shared.EventHandler;
@@ -30,14 +32,20 @@ public class RSConnectDeployInitiatedEvent extends GwtEvent<RSConnectDeployIniti
       new GwtEvent.Type<RSConnectDeployInitiatedEvent.Handler>();
    
    public RSConnectDeployInitiatedEvent(String path, 
+                                        ArrayList<String> deployFiles,
+                                        ArrayList<String> additionalFiles,
+                                        ArrayList<String> ignoredFiles,
                                         String sourceFile,
                                         boolean launchBrowser, 
                                         RSConnectDeploymentRecord record)
    {
       path_ = path;
-      record_ = record;
+      deployFiles_ = deployFiles;
+      additionalFiles_ = additionalFiles;
+      ignoredFiles_ = ignoredFiles;
       sourceFile_ = sourceFile;
       launchBrowser_ = launchBrowser;
+      record_ = record;
    }
    
    public RSConnectDeploymentRecord getRecord()
@@ -53,6 +61,21 @@ public class RSConnectDeployInitiatedEvent extends GwtEvent<RSConnectDeployIniti
    public String getSourceFile()
    {
       return sourceFile_;
+   }
+   
+   public ArrayList<String> getDeployFiles()
+   {
+      return deployFiles_;
+   }
+   
+   public ArrayList<String> getAdditionalFiles()
+   {
+      return additionalFiles_;
+   }
+   
+   public ArrayList<String> getIgnoredFiles()
+   {
+      return ignoredFiles_;
    }
    
    public boolean getLaunchBrowser()
@@ -72,8 +95,11 @@ public class RSConnectDeployInitiatedEvent extends GwtEvent<RSConnectDeployIniti
       return TYPE;
    }
    
-   private RSConnectDeploymentRecord record_;
-   private String path_;
-   private String sourceFile_;
-   private boolean launchBrowser_;
+   private final RSConnectDeploymentRecord record_;
+   private final String path_;
+   private final String sourceFile_;
+   private final boolean launchBrowser_;
+   private final ArrayList<String> deployFiles_;
+   private final ArrayList<String> additionalFiles_;
+   private final ArrayList<String> ignoredFiles_;
 }

@@ -34,13 +34,6 @@
    return(ret)
 })
 
-.rs.addFunction("scalarListFromList", function(l) {
-   if (is.null(l))
-     NULL
-   else
-     lapply(l, function(x) { if (is.null(x)) x else .rs.scalar(x) })
-})
-
 .rs.addJsonRpcHandler("get_rsconnect_account_list", function() {
    accounts <- list()
    # safely return an empty list--we want to consider there to be 0 connected
@@ -60,8 +53,8 @@
    .rs.scalarListFromFrame(rsconnect::applications(account, server))
 })
 
-.rs.addJsonRpcHandler("get_rsconnect_deployments", function(dir) {
-   .rs.scalarListFromFrame(rsconnect::deployments(dir))
+.rs.addJsonRpcHandler("get_rsconnect_deployments", function(path) {
+   .rs.scalarListFromFrame(rsconnect::deployments(path))
 })
 
 .rs.addJsonRpcHandler("validate_server_url", function(url) {
@@ -172,10 +165,26 @@
                       subdir_contents))
 })
 
-.rs.addFunction("rsconnectDeployList", function(dir) {
+.rs.addFunction("rmdDeployList", function(target) {
+  deploy_frame <- rmarkdown::find_external_resources(target) 
+  file_list <- c(deploy_frame$path, basename(target))
+  list (
+    contents = paste("./", file_list, sep = ""),
+    cur_size = sum(
+       file.info(file.path(dirname(target), file_list))$size))
+})
+
+.rs.addFunction("makeDeploymentList", function(target, max_size) {
+   if (identical(tolower(tools::file_ext(target)), "rmd")) 
+     .rs.rmdDeployList(target)
+   else
+     .rs.maxDirectoryList(target, ".", 0, max_size, 
+                          c("rsconnect", "packrat"), "Rproj")
+})
+
+.rs.addFunction("rsconnectDeployList", function(target) {
   max_size <- 104857600   # 100MB
-  dirlist <- .rs.maxDirectoryList(dir, ".", 0, max_size, 
-                                  c("rsconnect", "packrat"), "Rproj")
+  dirlist <- .rs.makeDeploymentList(target, max_size)
   list (
     # if the directory is too large, no need to bother sending a potentially
     # large blob of data to the client
@@ -193,8 +202,8 @@
   invisible(enable)
 })
 
-.rs.addJsonRpcHandler("get_deployment_files", function(dir) {
-   .rs.rsconnectDeployList(dir)
+.rs.addJsonRpcHandler("get_deployment_files", function(target) {
+  .rs.rsconnectDeployList(target)
 })
 
 # The parameter to this function is a string containing the R command from

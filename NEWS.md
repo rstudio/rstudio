@@ -41,6 +41,7 @@
     - Marks (m)
     - Quick find (/)
     - Support a subset of commands in :
+    - Use :help for documentation on available commands
 * Editor tabs in the source pane can now be rearranged
 * Support for multiple cursors via Ctrl+Alt+Up/Down
 * Alt+Enter to run code while retaining cursor position
@@ -48,9 +49,10 @@
 * New Reformat Code command for R scripts
 * Shift+Enter now searches backwards in Find/Replace
 * Find All option added in Find/Replace
+* Ctrl+E now focuses the editor after finding from selection
 * New option to control comment continuation on insertion of new lines
 * Updated to Ace (source editor component) v1.1.8
-* Syntax highlighting modes for many new languages including Clojure, CoffeeScript, C#, Graphviz, Go, Groovy, Haskell, Java, Julia, Lisp, Lua, Matlab, Perl, Ruby, Rust, and Scala.
+* Syntax highlighting modes for many new languages including Clojure, CoffeeScript, C#, Graphviz, Go, Groovy, Haskell, Java, Julia, Lisp, Lua, Matlab, Perl, Ruby, Rust, Scala, and Stan.
 * A wide variety of new editor themes (color schemes) are now available.
 * Increase file size limit to 5MB (was previously 2MB)
 
@@ -95,12 +97,15 @@
 * Updated to pandoc 1.13.1
 * Improved handling of lists in editor
 * Make publishing UI easier to discover
+* Require save before previewing Rmd file
+* Support for deploying single interactive documents (not just directories)
 * Updated internal PDF viewer (PDF.js) to version 1.0.1040 
 
 ### Miscellaneous
 
 * Updated rendering engine to Qt 5.4 for improved performance
 * Windows: updated to MSYS SSH 1000.18
+* Windows: check HKCU in addition to HKLM when scanning for R versions
 * Bind Cmd+Shift+K shortcut to Compile PDF and Preview HTML
 * When evaluating R strings ensure 'try' is called from base package
 * Add Clear Recent Projects menu item to toolbar project menu
@@ -110,6 +115,7 @@
 * Diagram previews using the DiagrammeR package (requires recent version from GitHub).
 * Added Markers pane and sourceMarker API for externals tools (e.g. linters)
 * Enable specification of Sweave driver in Rnw magic comment
+* Re-map prev/next tab shortcuts to eliminate conflicts with window managers
 
 ### Server
 
@@ -120,9 +126,18 @@
 
 * Prevent error dialog when getOption("repos") is an unnamed vector
 * Fix for regex Find/Replace lockup with empty strings 
+* Fix for console text unselectable in Firefox
 * Find in Files now always activates result pane
 * Correctly reflow comments in Rmd C++ code chunks
+* Don't warn when saving C/C++ file with .hpp extension on OS X
 * Ensure that rmarkdown documents render within input directory
 * Eliminate race condition that could cause crash when polling child processes
+* Correct handling for breakpoints in files with non-ascii filenames on Windows
+* Next/previous word behavior in Rmd is now consistent with behavior in R scripts
+* Ensure cursor is always visible after source navigation
+* Server: Ensure that LANG is populated from system default when not inherited
+* Server: Provide required domain socket permissions during startup
+* IE 11: Strip unprintable unicode characters in Rmd front matter dates
+
 
 

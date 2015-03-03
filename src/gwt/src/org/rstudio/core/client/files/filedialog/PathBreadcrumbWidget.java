@@ -112,6 +112,7 @@ public class PathBreadcrumbWidget
             browse();
          }
       });
+      browse.setTitle("Go to directory");
       eastFrame_.add(browse);
       frame_.addEast(eastFrame_, browse.getWidth());
       
@@ -151,6 +152,8 @@ public class PathBreadcrumbWidget
             }
          });
          projIcon.addStyleName(RES.styles().project());
+         projIcon.setTitle(
+               "Go to project directory");
          
          eastFrame_.insert(projIcon, 0);
          

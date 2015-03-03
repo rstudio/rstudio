@@ -14,6 +14,8 @@
  */
 package org.rstudio.studio.client.workbench.views.source;
 
+import org.rstudio.core.client.command.ShortcutViewer;
+
 public class SourceVimCommands
 {
    public final native void save(Source source) /*-{
@@ -152,4 +154,13 @@ public class SourceVimCommands
      });
      
   }-*/;
+   
+   public native final void showVimHelp(ShortcutViewer viewer) /*-{
+
+      var callback = $entry(function(cm, params) {
+         viewer.@org.rstudio.core.client.command.ShortcutViewer::showVimKeyboardShortcuts()();
+      });
+      
+      $wnd.require("ace/keyboard/vim").CodeMirror.Vim.defineEx("help", "help", callback);
+   }-*/;
 }
