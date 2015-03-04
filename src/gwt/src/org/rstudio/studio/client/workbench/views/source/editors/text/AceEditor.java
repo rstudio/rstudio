@@ -501,7 +501,6 @@ public class AceEditor implements DocDisplay,
       updateKeyboardHandlers();
       
       syncCompletionPrefs();
-      
       syncDiagnosticsPrefs();
       
       getSession().setEditorMode(
@@ -520,7 +519,10 @@ public class AceEditor implements DocDisplay,
       boolean enabled = fileType_.getEditorLanguage().useAceLanguageTools();
       boolean live = uiPrefs_.codeCompleteWeb().getValue().equals(
                                        UIPrefsAccessor.COMPLETION_ALWAYS);
-      widget_.getEditor().setCompletionOptions(enabled, false, live);
+      int characterThreshold = uiPrefs_.alwaysCompleteCharacters().getValue();
+      int delay = uiPrefs_.alwaysCompleteDelayMs().getValue();
+      widget_.getEditor().setCompletionOptions(
+            enabled, false, live, characterThreshold, delay);
    }
    
    @Override

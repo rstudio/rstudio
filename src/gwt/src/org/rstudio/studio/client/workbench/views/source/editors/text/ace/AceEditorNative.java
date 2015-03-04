@@ -74,14 +74,17 @@ public class AceEditorNative extends JavaScriptObject {
    
    public native final void setCompletionOptions(boolean enabled,
                                                  boolean snippets,
-                                                 boolean live) /*-{
+                                                 boolean live,
+                                                 int characterThreshold,
+                                                 int delayMilliseconds) /*-{
       this.setOptions({
         enableBasicAutocompletion: enabled,
         enableSnippets: enabled && snippets,
-        enableLiveAutocompletion: enabled && live
+        enableLiveAutocompletion: enabled && live,
+        completionCharacterThreshold: characterThreshold,
+        completionDelay: delayMilliseconds
       });
    }-*/;
-   
    
    public native final void toggleCommentLines() /*-{
       this.toggleCommentLines();
