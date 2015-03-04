@@ -428,6 +428,8 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="jumpTo" value="Shift+Alt+J" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="jumpTo" value="Cmd+Shift+Alt+J" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="jumpToMatching" value="Ctrl+P"/>
+         <shortcut refid="selectToMatching" value="Ctrl+Shift+P"/>
+         <shortcut refid="expandToMatching" value="Cmd+Shift+Alt+P"/>
          <shortcut value="Ctrl+Alt+Up" title="Add cursor above current cursor"/>
          <shortcut value="Ctrl+Alt+Down" title="Add cursor below current cursor"/>
          <shortcut value="Ctrl+Alt+Shift+Up" title="Move active cursor up"/>
@@ -800,6 +802,9 @@ well as menu structures (for main menu and popup menus).
    <cmd id="jumpToMatching"
         menuLabel="Jump To _Matching"
         desc="Jump to matching brace or paren"/>
+   <cmd id="selectToMatching"
+        menuLabel="Select To _Matching"
+        desc="Select to matching brace or paren"/>
    <cmd id="executeAllCode"
         buttonLabel=""
         menuLabel="Run _All"

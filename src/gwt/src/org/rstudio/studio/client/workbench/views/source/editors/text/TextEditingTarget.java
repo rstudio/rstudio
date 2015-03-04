@@ -2357,6 +2357,21 @@ public class TextEditingTarget implements
    void onJumpToMatching()
    {
       docDisplay_.jumpToMatching();
+      docDisplay_.ensureCursorVisible();
+   }
+   
+   @Handler
+   void onSelectToMatching()
+   {
+      docDisplay_.selectToMatching();
+      docDisplay_.ensureCursorVisible();
+   }
+   
+   @Handler
+   void onExpandToMatching()
+   {
+      docDisplay_.expandToMatching();
+      docDisplay_.ensureCursorVisible();
    }
 
    @Handler

@@ -45,6 +45,8 @@
 * Editor tabs in the source pane can now be rearranged
 * Support for multiple cursors via Ctrl+Alt+Up/Down
 * Alt+Enter to run code while retaining cursor position
+* Ctrl+Shift+P to expand selection to matching paren / brace
+* Ctrl+Alt+Shift+P to select within matching parens / braces
 * Comment/uncomment respects indent level when appropriate
 * New Reformat Code command for R scripts
 * Shift+Enter now searches backwards in Find/Replace

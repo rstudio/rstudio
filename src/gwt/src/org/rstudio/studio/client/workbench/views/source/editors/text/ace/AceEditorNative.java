@@ -221,8 +221,8 @@ public class AceEditorNative extends JavaScriptObject {
       this.scrollToLine(line, center);
    }-*/;
    
-   public final native void jumpToMatching()  /*-{
-      this.execCommand('jumptomatching');
+   public final native void jumpToMatching(boolean select, boolean expand) /*-{
+      this.jumpToMatching(select, expand);
    }-*/;
    
    public native final void revealRange(Range range, boolean animate) /*-{
