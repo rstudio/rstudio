@@ -1243,7 +1243,12 @@ int scoreMatch(std::string const& suggestion,
       // Less penalty for perfect match (ie, reward case-sensitive match)
       penalty -= suggestion[matchPos] == query[j];
       
-      // More penalty for 'uninteresting' files (e.g. .Rd)
+      // More penalty for 'uninteresting' files
+      if (suggestion == "RcppExports.R" ||
+          suggestion == "RcppExports.cpp")
+         penalty += 3;
+      
+      // More penalty for 'uninteresting' extensions (e.g. .Rd)
       std::string extension = string_utils::getExtension(suggestion);
       if (boost::algorithm::to_lower_copy(extension) == ".rd")
          penalty += 3;
@@ -1426,6 +1431,7 @@ SourceItem fromCppDefinition(const clang::CppDefinition& cppDefinition)
       break;
    case CppClassDefinition:
    case CppStructDefinition:
+   case CppTypedefDefinition:
       type = SourceItem::Class;
       break;
    case CppEnumDefinition:
@@ -1442,6 +1448,7 @@ SourceItem fromCppDefinition(const clang::CppDefinition& cppDefinition)
       break;
    default:
       type = SourceItem::None;
+      break;
    }
 
    // return source item

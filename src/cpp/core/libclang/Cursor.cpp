@@ -122,6 +122,14 @@ CXLinkageKind Cursor::getLinkageKind() const
    return clang().getCursorLinkage(cursor_);
 }
 
+bool Cursor::hasLinkage() const
+{
+   CXLinkageKind kind = getLinkageKind();
+   return kind == CXLinkage_Internal ||
+          kind == CXLinkage_External ||
+          kind == CXLinkage_UniqueExternal;
+}
+
 bool Cursor::hasExternalLinkage() const
 {
    CXLinkageKind kind = getLinkageKind();

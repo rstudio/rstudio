@@ -153,9 +153,9 @@ bool isFilterSubset(const std::string& outer, const std::string& inner)
 
    if (outerType == "numeric")
    {
-      // matches a numeric filter (i.e. "2.71-3.14") -- in this case we need to
+      // matches a numeric filter (i.e. "2.71_3.14") -- in this case we need to
       // check the components for range inclusion
-      boost::regex numFilter("(\\d+\\.?\\d*)-(\\d+\\.?\\d*)");
+      boost::regex numFilter("(-?\\d+\\.?\\d*)_(-?\\d+\\.?\\d*)");
       boost::smatch innerMatch, outerMatch;
       if (boost::regex_search(innerValue, innerMatch, numFilter) &&
           boost::regex_search(outerValue, outerMatch, numFilter))
@@ -189,6 +189,35 @@ bool isFilterSubset(const std::string& outer, const std::string& inner)
    return false;
 }
 
+typedef enum 
+{
+  DIM_ROWS,
+  DIM_COLS
+} DimType;
+
+// returns dimensions of an object safely--assumes dimension to be 0 unless we
+// can succesfully obtain dimensions
+int safeDim(SEXP data, DimType dimType)
+{
+   r::sexp::Protect protect;
+   SEXP result = R_NilValue;
+   Error err = r::exec::RFunction(dimType == DIM_ROWS ? 
+         ".rs.nrow" : ".rs.ncol", data).call(&result, &protect);
+   // bail if we encountered an error
+   if (err)
+   {
+      LOG_ERROR(err);
+      return 0;
+   }
+
+   if (TYPEOF(result) == INTSXP && Rf_length(result) > 0)
+   {
+      return INTEGER(result)[0];
+   }
+
+   return 0;
+}
+
 // CachedFrame represents an object that's currently active in a data viewer
 // window.
 struct CachedFrame
@@ -212,9 +241,7 @@ struct CachedFrame
       }
 
       // cache number of columns
-      Error error = r::exec::RFunction(".rs.ncol", sexp).call(&ncol);
-      if (error)
-         LOG_ERROR(error);
+      ncol = safeDim(sexp, DIM_COLS);
    };
 
    CachedFrame() {};
@@ -299,13 +326,8 @@ json::Value makeDataItem(SEXP dataSEXP, const std::string& caption,
                          const std::string& objName, const std::string& envName, 
                          const std::string& cacheKey)
 {
-   int nrow = 0, ncol = 0;
-   Error error = r::exec::RFunction(".rs.nrow", dataSEXP).call(&nrow);
-   if (error) 
-      LOG_ERROR(error);
-   error = r::exec::RFunction(".rs.ncol", dataSEXP).call(&ncol);
-   if (error) 
-      LOG_ERROR(error);
+   int nrow = safeDim(dataSEXP, DIM_ROWS);
+   int ncol = safeDim(dataSEXP, DIM_COLS); 
 
    // fire show data event
    json::Object dataItem;
@@ -454,14 +476,9 @@ json::Value getData(SEXP dataSEXP, const http::Fields& fields)
          http::util::fieldValue<std::string>(fields, "cache_key", ""), 
          true);
 
-   int nrow = 1, ncol = 0;
+   int nrow = safeDim(dataSEXP, DIM_ROWS);
+   int ncol = safeDim(dataSEXP, DIM_COLS);
    int filteredNRow = 0;
-   error = r::exec::RFunction(".rs.nrow", dataSEXP).call(&nrow);
-   if (error) 
-      LOG_ERROR(error);
-   error = r::exec::RFunction(".rs.ncol", dataSEXP).call(&ncol);
-   if (error) 
-      LOG_ERROR(error);
    ncol = std::min(ncol, MAX_COLS);
 
    // extract filters
@@ -552,15 +569,10 @@ json::Value getData(SEXP dataSEXP, const http::Fields& fields)
       }
    }
 
-   // apply new row count
-   if (needsTransform || hasTransform) 
-   {
-      error = r::exec::RFunction(".rs.nrow", dataSEXP).call(&filteredNRow);
-      if (error)
-         LOG_ERROR(error);
-   }
-   else
-      filteredNRow = nrow;
+   // apply new row count if we've tansformed the data (or need to)
+   filteredNRow = needsTransform || hasTransform ?
+      safeDim(dataSEXP, DIM_ROWS) : 
+      nrow;
 
    // return the lesser of the rows available and rows requested
    length = std::min(length, filteredNRow - start);
@@ -610,7 +622,7 @@ json::Value getData(SEXP dataSEXP, const http::Fields& fields)
              nameSEXP != NA_STRING &&
              r::sexp::length(nameSEXP) > 0)
          {
-            rowData.push_back(Rf_translateChar(nameSEXP));
+            rowData.push_back(Rf_translateCharUTF8(nameSEXP));
          }
          else
          {
@@ -634,7 +646,7 @@ json::Value getData(SEXP dataSEXP, const http::Fields& fields)
                 stringSEXP != NA_STRING &&
                 r::sexp::length(stringSEXP) > 0)
             {
-               rowData.push_back(Rf_translateChar(stringSEXP));
+               rowData.push_back(Rf_translateCharUTF8(stringSEXP));
             }
             else
             {
@@ -665,17 +677,9 @@ Error getGridData(const http::Request& request,
 
    try
    {
-      // extract the query string; if we don't find it, it's a no-op
-      std::string::size_type pos = request.uri().find('?');
-      if (pos == std::string::npos)
-      {
-         return Success();
-      }
-
       // find the data frame we're going to be pulling data from
-      std::string queryString = request.uri().substr(pos+1);
       http::Fields fields;
-      http::util::parseQueryString(queryString, &fields);
+      http::util::parseForm(request.body(), &fields);
       std::string envName = http::util::urlDecode(
             http::util::fieldValue<std::string>(fields, "env", ""), true);
       std::string objName = http::util::urlDecode(

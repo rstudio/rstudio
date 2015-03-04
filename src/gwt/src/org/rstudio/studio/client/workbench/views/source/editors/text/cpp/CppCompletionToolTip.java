@@ -15,32 +15,77 @@
 
 package org.rstudio.studio.client.workbench.views.source.editors.text.cpp;
 
+import org.rstudio.core.client.StringUtil;
+import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
+import org.rstudio.studio.client.workbench.views.source.model.CppCompletionText;
+
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.PopupPanel;
+import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 public class CppCompletionToolTip extends PopupPanel
 {
    public CppCompletionToolTip()
    {
-      this("");
+      this("", "");
    }
    
    public CppCompletionToolTip(String text)
    {
+      this(text, null);
+   }
+   
+   public CppCompletionToolTip(CppCompletionText text)
+   {
+      this(text.getText(), text.getComment());
+   }
+   
+   public CppCompletionToolTip(String text, String comment)
+   {
       super(true);
       panel_ = new HorizontalPanel();
       panel_.addStyleName(CppCompletionResources.INSTANCE.styles().toolTip());
-      panel_.add(label_ = new Label()); 
+      
+      VerticalPanel textPanel = new VerticalPanel();
+      textPanel.add(label_ = new Label()); 
+      commentLabel_ = new Label();
+      commentLabel_.addStyleName(CppCompletionResources.INSTANCE.styles().commentText());
+      commentLabel_.setVisible(false);
+      textPanel.add(commentLabel_);
+      
+      panel_.add(textPanel);
       setWidget(panel_);
-      setText(text);
+      setText(text, comment);
    }
 
    public void setText(String text)
    {
+      setText(text, null);
+   }
+   
+   public void setText(CppCompletionText text)
+   {
+      setText(text.getText(), text.getComment());
+   }
+   
+   public void setText(String text, String comment)
+   {
       if (!text.equals(label_.getText()))
          label_.setText(text);
+      
+      if (!StringUtil.isNullOrEmpty(comment))
+      {
+         commentLabel_.setText(comment);
+         commentLabel_.setVisible(true);
+      }
+      else
+      {
+         commentLabel_.setText("");
+         commentLabel_.setVisible(false);
+      }
    }
    
    public void addLeftWidget(Widget widget)
@@ -53,6 +98,29 @@ public class CppCompletionToolTip extends PopupPanel
       getElement().getStyle().setPropertyPx("maxWidth", maxWidth);
    }
    
+   // show the tooltip immediately above (however, if there is code
+   // on the line above that would be obstructed by the tooltip
+   // then bump it up some more)
+   public static int tooltipTopPadding(DocDisplay docDisplay)
+   {
+      int topPad = 9;
+      int lineNumberAbove = docDisplay.getCurrentLineNum() - 1;
+      if (lineNumberAbove > 0)
+      {
+         if (docDisplay.getLine(lineNumberAbove).length() > 
+             docDisplay.getLength(docDisplay.getCurrentLineNum()))
+         {
+            Double fontPad = RStudioGinjector.INSTANCE.getUIPrefs()
+                  .fontSize().getValue();
+            if (fontPad >= 13)
+               fontPad *= 1.3;
+            topPad = topPad + fontPad.intValue();
+         }
+      }
+      return topPad;
+   }
+   
    private Label label_;
+   private Label commentLabel_;
    private HorizontalPanel panel_;
 }

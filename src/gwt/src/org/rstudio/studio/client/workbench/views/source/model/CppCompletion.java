@@ -17,7 +17,7 @@ package org.rstudio.studio.client.workbench.views.source.model;
 import org.rstudio.studio.client.common.icons.code.CodeIcons;
 
 import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.core.client.JsArray;
 import com.google.gwt.resources.client.ImageResource;
 
 public class CppCompletion extends JavaScriptObject
@@ -87,10 +87,10 @@ public class CppCompletion extends JavaScriptObject
    {
       if (getType() == FUNCTION)
       {
-         JsArrayString textEntries = getText();
+         JsArray<CppCompletionText> textEntries = getText();
          for (int i = 0; i < textEntries.length(); i++)
          {
-            String text = textEntries.get(i);
+            String text = textEntries.get(i).getText();
             if (!text.endsWith("()") && !text.endsWith("() const"))
                return true;
          }
@@ -103,7 +103,7 @@ public class CppCompletion extends JavaScriptObject
       return this.typed_text;
    }-*/;
    
-   public native final JsArrayString getText() /*-{
+   public native final JsArray<CppCompletionText> getText() /*-{
       return this.text;
    }-*/;
 }

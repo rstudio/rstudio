@@ -12,6 +12,11 @@
    -webkit-box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
 }
 
+.commentText {
+   margin-top: 6px;
+   font-size: 0.95em;
+}
+
 .pagingWidget {
    white-space: nowrap;
    margin-right: 4px;

@@ -95,7 +95,12 @@ public class CodeSearchOracle extends SuggestOracle
          if (suggestion.charAt(matchPos) == query.charAt(j))
             penalty--;
          
-         // More penalty for 'uninteresting' files (e.g. .Rd)
+         // More penalty for 'uninteresting' files
+         if (suggestion.equals("RcppExports.R") ||
+             suggestion.equals("RcppExports.cpp"))
+            penalty += 3;
+         
+         // More penalty for 'uninteresting' extensions (e.g. .Rd)
          String extension = StringUtil.getExtension(suggestionLower);
          if (extension.toLowerCase() == "rd")
             penalty += 3;

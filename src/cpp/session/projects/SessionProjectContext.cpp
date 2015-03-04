@@ -677,7 +677,7 @@ Error ProjectContext::readBuildOptions(RProjectBuildOptions* pOptions)
                                        true);
    pOptions->autoRoxygenizeForBuildAndReload = optionsFile.getBool(
                                        "auto_roxygenize_for_build_and_reload",
-                                       true);
+                                       false);
 
    // opportunistically sync in-memory representation to what we read from disk
    buildOptions_ = *pOptions;

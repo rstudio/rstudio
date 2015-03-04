@@ -412,6 +412,7 @@ MimeType s_mimeTypes[] =
    { "py",       "text/x-python" },
    { "sh",       "text/x-shell" },
    { "sql",      "text/x-sql" },
+   { "stan",     "text/x-stan" },
 
    // other types we are likely to serve
    { "xml",   "text/xml" },

@@ -447,6 +447,7 @@ public class DocTabLayoutPanel
                if (Element.as(node) == dragElement_)
                {
                   candidatePos_ = i;
+                  destPos_ = i;
                }
                // the relative position of the last node determines how far we
                // can drag--add 10px so it stretches a little
@@ -496,10 +497,12 @@ public class DocTabLayoutPanel
          // unsink mousedown/mouseup and simulate a click to activate the tab
          simulateClick(evt);
          
-         // let observer know we moved
-         if (startPos_ != candidatePos_)
+         // let observer know we moved; adjust the destination position one to
+         // the left if we're right of the start position to account for the
+         // position of the tab prior to movement
+         if (startPos_ != destPos_)
          {
-            moveHandler_.onTabMove(this, startPos_, candidatePos_);
+            moveHandler_.onTabMove(this, startPos_, destPos_);
          }
       }
       
@@ -636,10 +639,11 @@ public class DocTabLayoutPanel
             // skip the element we're dragging and elements that are not tabs
             Element ele = (Element)node;
             if (ele == dragElement_ || 
-                ele.getClassName().indexOf("gwt-TabLayoutPanelTab") < 0 )
+                ele.getClassName().indexOf("gwt-TabLayoutPanelTab") < 0)
             {
                continue;
             }
+
             int left = DomUtils.leftRelativeTo(dragTabsHost_, ele);
             int right = left + ele.getClientWidth();
             int minOverlap = Math.min(dragElement_.getClientWidth() / 2, 
@@ -661,6 +665,11 @@ public class DocTabLayoutPanel
                   dragTabsHost_.insertAfter(dragPlaceholder_, ele);
                }
                candidatePos_ = i;
+
+               // account for the extra element when moving to the right of the
+               // original location
+               destPos_ = startPos_ <= candidatePos_ ? 
+                     candidatePos_ - 1 : candidatePos_;
             }
          }
          
@@ -674,6 +683,7 @@ public class DocTabLayoutPanel
       private int lastElementX_ = 0;
       private int startPos_ = 0;
       private int candidatePos_ = 0;
+      private int destPos_ = 0;
       private int dragMax_ = 0;
       private int outOfBounds_ = 0;
       private Element dragElement_;

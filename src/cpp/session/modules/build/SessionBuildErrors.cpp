@@ -186,7 +186,12 @@ std::vector<module_context::SourceMarker> parseGccErrors(
       if (FilePath::isRootPath(file))
          filePath = FilePath(file);
       else
-         filePath = basePath.complete(file);
+         filePath = basePath.childPath(file);
+
+      // skip if the file doesn't exist
+      if (!filePath.exists())
+         continue;
+
       FilePath realPath;
       Error error = core::system::realPath(filePath, &realPath);
       if (error)

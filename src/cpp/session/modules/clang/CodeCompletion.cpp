@@ -36,14 +36,21 @@ namespace clang {
 namespace {
 
 
-std::string friendlyCompletionText(std::string text)
+json::Object friendlyCompletionText(const CodeCompleteResult& result)
 {
+   // transform text
+   std::string text = result.getText();
    boost::algorithm::replace_all(
      text,
      "std::basic_string<char, std::char_traits<char>, std::allocator<char> >",
      "std::string");
 
-   return text;
+   // creat text object
+   json::Object textJson;
+   textJson["text"] = text;
+   textJson["comment"] = result.getComment();
+
+   return textJson;
 }
 
 const int kCompletionUnknown = 0;
@@ -142,7 +149,7 @@ core::json::Object toJson(const CodeCompleteResult& result)
    resultJson["type"] = completionType(result.getKind());
    resultJson["typed_text"] = result.getTypedText();
    json::Array textJson;
-   textJson.push_back(friendlyCompletionText(result.getText()));
+   textJson.push_back(friendlyCompletionText(result));
    resultJson["text"] = textJson;
    return resultJson;
 }
@@ -176,7 +183,6 @@ Error getCppCompletions(const core::json::JsonRpcRequest& request,
    {
       std::string lastTypedText;
       json::Array completionsJson;
-      json::Array diagnosticsJson;
       boost::shared_ptr<CodeCompleteResults> pResults =
                               tu.codeCompleteAt(filename, line, column);
       if (!pResults->empty())
@@ -206,7 +212,7 @@ Error getCppCompletions(const core::json::JsonRpcRequest& request,
             {
                json::Object& res = completionsJson.back().get_obj();
                json::Array& text = res["text"].get_array();
-               text.push_back(friendlyCompletionText(result.getText()));
+               text.push_back(friendlyCompletionText(result));
             }
             else
             {
@@ -215,19 +221,10 @@ Error getCppCompletions(const core::json::JsonRpcRequest& request,
 
             lastTypedText = typedText;
          }
-
-         // get diagnostics
-         for (unsigned i = 0; i<pResults->getNumDiagnostics(); i++)
-         {
-            diagnosticsJson.push_back(
-                          diagnosticToJson(*pResults->getDiagnostic(i)));
-         }
-
       }
 
       json::Object resultJson;
       resultJson["completions"] = completionsJson;
-      resultJson["diagnostics"] = diagnosticsJson;
       pResponse->setResult(resultJson);
    }
    else

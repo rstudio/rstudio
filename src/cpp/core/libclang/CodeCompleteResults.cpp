@@ -132,6 +132,7 @@ CodeCompleteResult::CodeCompleteResult(CXCompletionResult result)
 
    availability_ = clang().getCompletionAvailability(cs);
    priority_ = clang().getCompletionPriority(cs);
+   comment_ = toStdString(clang().getCompletionBriefComment(cs));
 }
 
 CodeCompleteResults:: ~CodeCompleteResults()
@@ -155,18 +156,6 @@ void CodeCompleteResults::sort()
 CodeCompleteResult CodeCompleteResults::getResult(unsigned index) const
 {
    return CodeCompleteResult(pResults_->Results[index]);
-}
-
-unsigned CodeCompleteResults::getNumDiagnostics() const
-{
-   return clang().codeCompleteGetNumDiagnostics(pResults_);
-}
-
-boost::shared_ptr<Diagnostic> CodeCompleteResults::getDiagnostic(
-                                                         unsigned index) const
-{
-   CXDiagnostic cxDiag = clang().codeCompleteGetDiagnostic(pResults_, index);
-   return boost::shared_ptr<Diagnostic>(new Diagnostic(cxDiag));
 }
 
 unsigned long long CodeCompleteResults::getContexts() const

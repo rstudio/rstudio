@@ -40,11 +40,11 @@ namespace clang {
 class RCompilationDatabase : boost::noncopyable
 {
 public:
-   RCompilationDatabase() : usePrecompiledHeaders_(true) {}
+   RCompilationDatabase();
    virtual ~RCompilationDatabase() {}
 
    std::vector<std::string> compileArgsForTranslationUnit(
-                                             const std::string& filename);
+           const std::string& filename, bool usePrecompiledHeaders);
 
    bool isProjectTranslationUnit(const std::string& filename) const;
 
@@ -63,6 +63,10 @@ private:
 
    void updateForCurrentPackage();
    void updateForSourceCpp(const core::FilePath& cppPath);
+
+
+   void savePackageCompilationConfig();
+   void restorePackageCompilationConfig();
 
    // struct used to represent compilation settings
    struct CompilationConfig
@@ -103,6 +107,7 @@ private:
    std::string packageBuildFileHash_;
    CompilationConfig packageCompilationConfig_;
    bool usePrecompiledHeaders_;
+   bool restoredCompilationConfig_;
 };
 
 core::libclang::CompilationDatabase rCompilationDatabase();

@@ -29,6 +29,15 @@ namespace rstudio {
 namespace core {
 namespace libclang {
 
+namespace {
+
+inline unsigned applyTranslationUnitOptions(unsigned defaultOptions)
+{
+   // for now just reflect back the defaults
+   return defaultOptions;
+}
+
+} // anonymous namespace
 
 bool SourceIndex::isSourceFile(const FilePath& filePath)
 {
@@ -146,7 +155,7 @@ TranslationUnit SourceIndex::getTranslationUnit(const std::string& filename,
    std::vector<std::string> args;
    if (compilationDB_.compileArgsForTranslationUnit)
    {
-      args = compilationDB_.compileArgsForTranslationUnit(filename);
+      args = compilationDB_.compileArgsForTranslationUnit(filename, true);
       if (args.empty())
          return TranslationUnit();
    }
@@ -183,11 +192,13 @@ TranslationUnit SourceIndex::getTranslationUnit(const std::string& filename,
             std::cerr << "  " << reason << std::endl;
          }
 
+         unsigned options = applyTranslationUnitOptions(
+                                    clang().defaultReparseOptions(stored.tu));
          int ret = clang().reparseTranslationUnit(
                                 stored.tu,
                                 unsavedFiles().numUnsavedFiles(),
                                 unsavedFiles().unsavedFilesArray(),
-                                clang().defaultReparseOptions(stored.tu));
+                                options);
 
          if (ret == 0)
          {
@@ -220,6 +231,8 @@ TranslationUnit SourceIndex::getTranslationUnit(const std::string& filename,
       std::cerr << "  (Creating new index)" << std::endl;
 
    // create a new translation unit from the file
+   unsigned options = applyTranslationUnitOptions(
+                           clang().defaultEditingTranslationUnitOptions());
    CXTranslationUnit tu = clang().parseTranslationUnit(
                          index_,
                          filename.c_str(),
@@ -227,7 +240,7 @@ TranslationUnit SourceIndex::getTranslationUnit(const std::string& filename,
                          argsArray.argCount(),
                          unsavedFiles().unsavedFilesArray(),
                          unsavedFiles().numUnsavedFiles(),
-                         clang().defaultEditingTranslationUnitOptions());
+                         options);
 
 
    // save and return it if we succeeded

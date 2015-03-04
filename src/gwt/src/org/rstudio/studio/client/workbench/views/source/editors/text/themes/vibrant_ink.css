@@ -114,22 +114,22 @@
 .ace_bracket {
   margin: 0 !important;
   border: 0 !important;
-  background-color: #404040;
+  background-color: rgba(128, 128, 128, 0.5);
 }
 .ace_marker-layer .ace_foreign_line {
   position: absolute;
   z-index: -1;
   background-color: #262626;
 }
-.ace_marker-layer .ace_find_line {
-  position: absolute;
-  z-index: -1;
-  background-color: #3E3E3E;
-}
 .ace_marker-layer .ace_active_debug_line {
   position: absolute;
   z-index: -1;
   background-color: #877623;
+}
+.ace_marker-layer .ace_find_line {
+  position: absolute;
+  z-index: -1;
+  background-color: #3E3E3E;
 }
 .ace_console_error {
   background-color: #3E3E3E;

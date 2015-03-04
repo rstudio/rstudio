@@ -22,6 +22,16 @@ public class RnwWeave extends JavaScriptObject
    {
    }
    
+   public final native static RnwWeave withNoConcordance(RnwWeave weave) /*-{
+      return {
+         name: this.name,
+         package_name: this.package_name,
+         inject_concordance: false,
+         uses_code_for_options: this.uses_code_for_options,
+         force_echo_on_exec: this.force_echo_on_exec
+      };
+   }-*/;
+   
    public final native String getName() /*-{
       return this.name;
    }-*/;

@@ -118,7 +118,7 @@ public class DataEditingTarget extends UrlContentEditingTarget
          }
          else
          {
-            view_.applySizeChange();
+            view_.onActivate();
          }
       }
    }
@@ -127,6 +127,7 @@ public class DataEditingTarget extends UrlContentEditingTarget
    public void onDeactivate()
    {
       super.onDeactivate();
+      view_.onDeactivate();
       isActive_ = false;
    }
    

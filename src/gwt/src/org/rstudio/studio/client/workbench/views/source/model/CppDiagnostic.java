@@ -15,7 +15,11 @@
 package org.rstudio.studio.client.workbench.views.source.model;
 
 
+import org.rstudio.core.client.FilePosition;
+import org.rstudio.core.client.FileRange;
+
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.JsArray;
 
 public class CppDiagnostic extends JavaScriptObject
 {
@@ -30,23 +34,49 @@ public class CppDiagnostic extends JavaScriptObject
    public static final int ERROR = 3;
    public static final int FATAL = 4; 
    
-   public native final String getFormat() /*-{
-      return this.format;
-   }-*/;
-   
    public native final int getSeverity() /*-{
       return this.severity;
-   }-*/;   
+   }-*/; 
    
+   public native final int getCategory() /*-{
+      return this.category;
+   }-*/; 
+   
+   public native final String getCategoryText() /*-{
+      return this.category_text;
+   }-*/;
+   
+   public native final String getEnableOption() /*-{
+      return this.enable_option;
+   }-*/;
+   
+   public native final String getDisableOption() /*-{
+      return this.disable_option;
+   }-*/;
+
+   public native final String getMessage() /*-{
+      return this.message;
+   }-*/;
+
+   // (can be null)
    public native final String getFile() /*-{
       return this.file;
    }-*/;
    
-   public native final int getLine() /*-{
-      return this.line;
-   }-*/;   
+   // (can be null)
+   public native final FilePosition getPosition() /*-{
+      return this.position;
+   }-*/;
    
-   public native final int getColumn() /*-{
-      return this.column;
-   }-*/;   
+   public native final JsArray<FileRange> getRanges() /*-{
+      return this.ranges;
+   }-*/;
+   
+   public native final JsArray<CppDiagnosticFixIt> getFixIts() /*-{
+      return this.fixits;
+   }-*/;
+   
+   public native final JsArray<CppDiagnostic> getChildren() /*-{
+      return this.children;
+   }-*/;
 }

@@ -108,6 +108,8 @@ public class DependencyManager implements InstallShinyEvent.Handler
           Dependency.cranPackage("RJSONIO", "1.0"),
           Dependency.cranPackage("PKI", "0.1"),
           Dependency.cranPackage("packrat", "0.4.3"),
+          Dependency.cranPackage("rstudioapi", "0.2"),
+          Dependency.cranPackage("yaml", "2.1.5"),
           Dependency.embeddedPackage("rsconnect")
         },
         true, // we want the embedded rsconnect package to be updated if needed
@@ -126,7 +128,7 @@ public class DependencyManager implements InstallShinyEvent.Handler
           Dependency.cranPackage("htmltools", "0.2.4"),
           Dependency.cranPackage("caTools", "1.14"),
           Dependency.cranPackage("bitops", "1.0-6"),
-          Dependency.cranPackage("rmarkdown", "0.4.2")
+          Dependency.embeddedPackage("rmarkdown")
         }, 
         false,
         command
@@ -217,12 +219,40 @@ public class DependencyManager implements InstallShinyEvent.Handler
             if (unsatisfiedDeps.length() == 0)
             {
                command.execute();
+               return;
             }
             
-            // otherwise ask the user if they want to install the 
-            // unsatisifed dependencies
+            // check to see if we can satisfy the version requirement for all
+            // dependencies
+            String unsatisfiedVersions = "";
+            for (int i = 0; i < unsatisfiedDeps.length(); i++)
+            {
+               if (!unsatisfiedDeps.get(i).getVersionSatisfied())
+               {
+                  unsatisfiedVersions += unsatisfiedDeps.get(i).getName() + 
+                       " " + unsatisfiedDeps.get(i).getVersion();
+                  String version = unsatisfiedDeps.get(i).getAvailableVersion();
+                  if (version.isEmpty())
+                     unsatisfiedVersions += " is not available\n";
+                  else
+                     unsatisfiedVersions += " is required but " + version + 
+                        " is available\n";
+               }
+            }
+            
+            if (!unsatisfiedVersions.isEmpty())
+            {
+               // error if we can't satisfy requirements
+               globalDisplay_.showErrorMessage(userAction, 
+                     "Required package versions could not be found:\n\n" +
+                     unsatisfiedVersions + "\n" +
+                     "Check that getOption(\"repos\") refers to a CRAN " + 
+                     "repository that contains the needed package versions.");
+            }
             else
             {
+               // otherwise ask the user if they want to install the 
+               // unsatisifed dependencies
                Command installCommand = new Command() {
                   @Override
                   public void execute()

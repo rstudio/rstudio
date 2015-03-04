@@ -34,7 +34,8 @@ import org.rstudio.studio.client.workbench.prefs.model.UIPrefsAccessor;
 public class EditingPreferencesPane extends PreferencesPane
 {
    @Inject
-   public EditingPreferencesPane(UIPrefs prefs)
+   public EditingPreferencesPane(UIPrefs prefs,
+                                 PreferencesDialogResources res)
    {
       prefs_ = prefs;
       
@@ -69,8 +70,8 @@ public class EditingPreferencesPane extends PreferencesPane
       showCompletions_ = new SelectWidget(
             "Show code completions:",
             new String[] {
-                  "Always",
-                  "When Triggered",
+                  "Automatically",
+                  "When Triggered ($, ::)",
                   "Manually (Tab)"
             },
             new String[] {
@@ -84,17 +85,28 @@ public class EditingPreferencesPane extends PreferencesPane
       
       spaced(showCompletions_);
       completionPanel.add(showCompletions_);
-      
-      final CheckBox alwaysCompleteInConsole = checkboxPref(
-                       "Allow automatic completions in console",
-                       prefs.alwaysCompleteInConsole());
-      completionPanel.add(alwaysCompleteInConsole);
-      showCompletions_.addChangeHandler(new ChangeHandler() {
 
+      final VerticalPanel alwaysCompletePanel = new VerticalPanel();
+      alwaysCompletePanel.addStyleName(res.styles().alwaysCompletePanel());
+      alwaysCompletePanel.add(indent(alwaysCompleteChars_ = 
+          numericPref("Show completions after characters entered:",
+                      prefs.alwaysCompleteCharacters())));
+      alwaysCompletePanel.add(indent(alwaysCompleteDelayMs_ = 
+          numericPref("Show completions after keyboard idle (ms):",
+                      prefs.alwaysCompleteDelayMs())));
+      CheckBox alwaysCompleteInConsole = checkboxPref(
+            "Allow automatic completions in console",
+            prefs.alwaysCompleteInConsole());
+      indent(alwaysCompleteInConsole);
+      alwaysCompletePanel.add(alwaysCompleteInConsole);
+      
+      completionPanel.add(alwaysCompletePanel);
+      showCompletions_.addChangeHandler(new ChangeHandler()
+      {
          @Override
          public void onChange(ChangeEvent event)
          {
-            alwaysCompleteInConsole.setVisible(
+            alwaysCompletePanel.setVisible(
                    showCompletions_.getValue().equals(
                                         UIPrefsAccessor.COMPLETION_ALWAYS));
             
@@ -119,11 +131,16 @@ public class EditingPreferencesPane extends PreferencesPane
       completionPanel.add(checkboxPref("Insert spaces around equals for argument completions", prefs.insertSpacesAroundEquals()));
       completionPanel.add(checkboxPref("Use tab for multiline autocompletions", prefs.allowTabMultilineCompletion()));
       
+      VerticalPanel diagnosticsPanel = new VerticalPanel();
+      diagnosticsPanel.add(checkboxPref("Show inline diagnostics for R and C/C++ code", prefs.showDiagnostics()));
+      
+      
       DialogTabLayoutPanel tabPanel = new DialogTabLayoutPanel();
       tabPanel.setSize("435px", "498px");     
       tabPanel.add(editingPanel, "Editing");
       tabPanel.add(displayPanel, "Display");
       tabPanel.add(completionPanel, "Completion");
+      tabPanel.add(diagnosticsPanel, "Diagnostics");
       tabPanel.selectTab(0);
       add(tabPanel);
    }
@@ -189,8 +206,10 @@ public class EditingPreferencesPane extends PreferencesPane
    @Override
    public boolean validate()
    {
-      return (!spacesForTab_.getValue() || tabWidth_.validatePositive("Tab width")) &&
-             (!showMargin_.getValue() || marginCol_.validate("Margin column"));
+      return (!spacesForTab_.getValue() || tabWidth_.validatePositive("Tab width")) && 
+             (!showMargin_.getValue() || marginCol_.validate("Margin column")) &&
+             alwaysCompleteChars_.validateRange("Characters entered", 1, 100) &&
+             alwaysCompleteDelayMs_.validateRange("Keyboard idle (ms)", 0, 10000);
    }
 
    @Override
@@ -202,6 +221,8 @@ public class EditingPreferencesPane extends PreferencesPane
    private final UIPrefs prefs_;
    private final NumericValueWidget tabWidth_;
    private final NumericValueWidget marginCol_;
+   private final NumericValueWidget alwaysCompleteChars_;
+   private final NumericValueWidget alwaysCompleteDelayMs_;
    private final CheckBox spacesForTab_;
    private final CheckBox showMargin_;
    private final SelectWidget showCompletions_;

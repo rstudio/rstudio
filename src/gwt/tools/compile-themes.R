@@ -20,6 +20,7 @@ operator_theme_map <- list(
    "twilight" = "#7587A6",
    "idle_fingers" = "#6892B2",
    "clouds" = light_theme_operator,
+   "clouds_midnight" = "#A53553",
    "cobalt" = "#BED6FF",
    "dawn" = light_theme_operator,
    "eclipse" = light_theme_operator,
@@ -106,7 +107,10 @@ mix_colors <- function(x, y, p) {
 }
 
 add_content <- function(content, ..., replace)
-   c(content, sprintf(paste(..., sep = "\n"), replace))
+   c(
+      content,
+      do.call(sprintf, list(paste(..., sep = "\n"), replace))
+   )
 
 create_line_marker_rule <- function(markerName, markerColor) {
    sprintf(paste(sep = "\n",
@@ -145,6 +149,7 @@ themeFiles <- list.files(
 for (file in themeFiles) {
    
    content <- suppressWarnings(readLines(file))
+   fileName <- gsub("\\.css$", "", basename(file))
    
    ## Guess the theme name -- all rules should start with it.
    stripped <- sub(" .*", "", content)
@@ -251,13 +256,14 @@ for (file in themeFiles) {
       warning("No field for layer '", layerName, "' in file '", basename(file), "'")
       next
    }
-      
-   ## This might be a hex name or an RGB field.
-   value <- if (grepl("rgb", borderField)) {
-      gsub(".*rgb", "rgb", borderField)
-   } else {
-      gsub(".*#", "#", borderField)
-   }
+   
+   jsContents <- readLines(sub("css$", "js", file))
+   isDark <- any(grepl("exports.isDark = true;", jsContents))
+   
+   operatorBgColor <- if (isDark)
+      "rgba(128, 128, 128, 0.5)"
+   else
+      "rgba(192, 192, 192, 0.5)"
    
    content <- add_content(
       content,
@@ -266,12 +272,8 @@ for (file in themeFiles) {
       "  border: 0 !important;",
       "  background-color: %s;",
       "}",
-      replace = value
+      replace = operatorBgColor
    )
-   
-   ## Marker line stuff.
-   jsContents <- readLines(sub("css$", "js", file))
-   isDark <- any(grepl("exports.isDark = true;", jsContents))
    
    ## Get the default background, foreground color for the theme.
    background <- parsed$ace_editor$`background-color`
@@ -300,8 +302,6 @@ for (file in themeFiles) {
    backgroundRgb <- parse_css_color(background)
    foregroundRgb <- parse_css_color(foreground)
    
-   fileName <- gsub("\\.css$", "", basename(file))
-   
    ## Determine an appropriate mixing proportion, and override for certain
    ## themes.
    mix <- get_chunk_bg_color(fileName, isDark)
@@ -317,15 +317,6 @@ for (file in themeFiles) {
       create_line_marker_rule(".ace_foreign_line", color_as_hex(mergedColor))
    )
    
-   ## Generate a background used for 'find_line'; most
-   ## promently used for highlighting lines after a failed
-   ## compile
-   findBackground <- color_as_hex(mix_colors(backgroundRgb, foregroundRgb, 0.8))
-   content <- c(
-      content,
-      create_line_marker_rule(".ace_find_line", findBackground)
-   )
-   
    ## Generate a color used for 'debugging' backgrounds.
    debugPrimary <- parse_css_color("#FFDE38")
    debugBg <- color_as_hex(mix_colors(backgroundRgb, debugPrimary, 0.5))
@@ -335,14 +326,26 @@ for (file in themeFiles) {
       create_line_marker_rule(".ace_active_debug_line", debugBg)
    )
    
-   ## Generate a background for console errors.
-   errorBg <- color_as_hex(mix_colors(backgroundRgb, foregroundRgb, 0.8))
+   ## Generate a background color used for console errors, as well as
+   ## 'find_line' (used for highlighting e.g. 'sourceCpp' errors).
+   
+   ## Dark backgrounds need a bit more contrast than light ones for
+   ## a nice visual display.
+   mixingProportion <- if (isDark) 0.8 else 0.9
+   errorBgColor <-
+      color_as_hex(mix_colors(backgroundRgb, foregroundRgb, mixingProportion))
+   
+   content <- c(
+      content,
+      create_line_marker_rule(".ace_find_line", errorBgColor)
+   )
+   
    content <- add_content(
       content,
       ".ace_console_error {",
       "  background-color: %s;",
       "}",
-      replace = errorBg
+      replace = errorBgColor
    )
    
    ## Add operator colors if necessary.

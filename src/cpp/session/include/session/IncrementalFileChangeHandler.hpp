@@ -45,13 +45,12 @@ public:
    IncrementalFileChangeHandler(
          Filter filter,
          Handler handler,
-         boost::posix_time::time_duration initialWorkPeriod,
+         boost::posix_time::time_duration initialDelayPeriod,
          boost::posix_time::time_duration incrementalWorkPeriod,
          bool idleOnly)
-      : processing_(false),
-        filter_(filter),
+      : filter_(filter),
         handler_(handler),
-        initialWorkPeriod_(initialWorkPeriod),
+        initialDelayPeriod_(initialDelayPeriod),
         incrementalWorkPeriod_(incrementalWorkPeriod),
         idleOnly_(idleOnly)
    {
@@ -90,19 +89,9 @@ public:
          }
       }
 
-      // schedule processing if necessary. perform an initial chunk of
-      // work then continue in smaller chunks until we are completed
-      if (!queue_.empty() && !processing_)
-      {
-         processing_ = true;
-
-         module_context::scheduleIncrementalWork(
-                  initialWorkPeriod_,
-                  incrementalWorkPeriod_,
-                  boost::bind(
-                  &IncrementalFileChangeHandler::dequeAndProcess, this),
-                  idleOnly_);
-      }
+      // schedule processing if necessary.
+      if (!queue_.empty())
+         scheduleProcessing(initialDelayPeriod_);
    }
 
    void enqueFileChange(const core::system::FileChangeEvent& event)
@@ -114,32 +103,30 @@ public:
       // add to the queue
       queue_.push(event);
 
-      // schedule processing if necessary. don't process anything immediately
-      // (this is to defend against large numbers of files being enqued
-      // at once and typing up the main thread). rather, schedule processing
-      // to occur in incrementalWorkPeriod_ chunks
-      if (!processing_)
-      {
-         processing_ = true;
-
-         module_context::scheduleIncrementalWork(
-             incrementalWorkPeriod_,
-             boost::bind(&IncrementalFileChangeHandler::dequeAndProcess, this),
-             idleOnly_);
-      }
+      // schedule processing
+      scheduleProcessing(incrementalWorkPeriod_);
    }
 
    void clear()
    {
-      processing_ = false;
       queue_ = std::queue<core::system::FileChangeEvent>();
    }
 
 private:
 
-   bool dequeAndProcess()
+   void scheduleProcessing(boost::posix_time::time_duration delayPeriod)
    {
-      if (!queue_.empty())
+      module_context::scheduleDelayedWork(
+          delayPeriod,
+          boost::bind(&IncrementalFileChangeHandler::dequeAndProcess, this),
+          idleOnly_);
+   }
+
+   void dequeAndProcess()
+   {
+      boost::posix_time::ptime workStart = now();
+      boost::posix_time::ptime workUntil = workStart + incrementalWorkPeriod_;
+      while (!queue_.empty() && (now() < workUntil))
       {
          // remove the event from the queue
          core::system::FileChangeEvent event = queue_.front();
@@ -149,9 +136,27 @@ private:
          handler_(event);
       }
 
-      // return status
-      processing_ = !queue_.empty();
-      return processing_;
+      // schedule more processing if necessary
+      if (!queue_.empty())
+      {
+         // default the delay to our incremental work period
+         boost::posix_time::time_duration delay = incrementalWorkPeriod_;
+
+         // if our total work time was > incrementalWorkPeriod_ then
+         // set the delay to this (so that we never perform work for
+         // more than 50% of available time)
+         boost::posix_time::time_duration workDuration = now() - workStart;
+         if (workDuration > incrementalWorkPeriod_)
+            delay = workDuration;
+
+         // performing scheduling
+         scheduleProcessing(delay);
+      }
+   }
+
+   static boost::posix_time::ptime now()
+   {
+      return boost::posix_time::microsec_clock::universal_time();
    }
 
    // hooks for file monitor subscription
@@ -170,11 +175,10 @@ private:
    }
 
 private:
-   bool processing_;
    std::queue<core::system::FileChangeEvent> queue_;
    Filter filter_;
    Handler handler_;
-   boost::posix_time::time_duration initialWorkPeriod_;
+   boost::posix_time::time_duration initialDelayPeriod_;
    boost::posix_time::time_duration incrementalWorkPeriod_;
    bool idleOnly_;
 };

@@ -63,6 +63,7 @@ mv $PACKAGE_ARCHIVE $PACKAGE_ARCHIVE_SHA1
 
 }
 
+install rmarkdown master
 install rsconnect master
 
 # back to install-dir

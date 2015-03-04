@@ -1,0 +1,107 @@
+.sourceDestLabels
+{
+   color: #808080;
+}
+
+.dropListControl
+{
+   width: 250px;
+}
+
+.gridControl
+{
+   display: block;
+   width: 244px;
+   padding: 3px;
+}
+
+.source
+{
+   font-weight: bold;
+   padding-top: 10px;
+}
+
+.statusLabel
+{
+   font-weight: bold;
+}
+
+.transferArrow
+{
+   margin-top: 10px;
+   margin-left: 50px;
+}
+
+.normalStatus
+{
+   color: green;
+}
+
+.otherStatus
+{
+   color: red;
+}
+
+.validateError
+{
+   margin-left: 25px;
+   color: red;
+}
+
+.launchCheck
+{
+   display: block;
+   margin-top: 7px;
+}
+
+.fileList
+{
+   background-color: #ffffff;
+   border: 1px solid gray;
+   height: 165px;
+   width: 250px;
+   padding: 7px;
+   margin-top: 5px;
+   margin-bottom: 10px;
+   margin-right: 30px;
+}
+
+.deployLabel
+{
+   font-weight: bold;
+}
+
+.rootCell
+{
+   vertical-align: top;
+}
+
+.controlLabel
+{
+   margin-top: 5px;
+   margin-bottom: 3px;
+}
+
+.urlAnchor
+{
+   display: block;
+}
+
+.accountList
+{
+   height: 100px;
+}
+
+.accountAnchor
+{
+   text-align: right;
+   font-size: x-small;
+   display: block;
+   margin-top: 5px;
+   cursor: pointer;
+}
+
+.firstControlLabel
+{
+   margin-bottom: 5px;
+}

@@ -68,32 +68,42 @@ void SourceLocation::printExpansionLocation(std::ostream& ostr)
 }
 
 
-void SourceLocation::getSpellingLocation(std::string* pFile,
+bool SourceLocation::getSpellingLocation(std::string* pFile,
                                          unsigned* pLine,
                                          unsigned* pColumn,
                                          unsigned* pOffset) const
 {
-   CXFile file;
-   clang().getSpellingLocation(location_, &file, pLine, pColumn, pOffset);
+   if (!empty())
+   {
+      CXFile file;
+      clang().getSpellingLocation(location_, &file, pLine, pColumn, pOffset);
 
-   CXString filename = clang().getFileName(file);
-   *pFile = toStdString(filename);
+      CXString filename = clang().getFileName(file);
+      *pFile = toStdString(filename);
+      return true;
+   }
+   else
+   {
+      return false;
+   }
 }
 
 FileLocation SourceLocation::getSpellingLocation() const
 {
    std::string file;
    unsigned line, column;
-   getSpellingLocation(&file, &line, &column);
-   return FileLocation(FilePath(file), line, column);
+   if (getSpellingLocation(&file, &line, &column))
+      return FileLocation(FilePath(file), line, column);
+   else
+      return FileLocation();
 }
 
 void SourceLocation::printSpellingLocation(std::ostream& ostr)
 {
    std::string file;
    unsigned line, offset;
-   getSpellingLocation(&file, &line, &offset, NULL);
-   ostr << file << " [line: " << line << ", col: " << offset << "]";
+   if (getSpellingLocation(&file, &line, &offset, NULL))
+      ostr << file << " [line: " << line << ", col: " << offset << "]";
 }
 
 bool SourceLocation::operator==(const SourceLocation& other) const

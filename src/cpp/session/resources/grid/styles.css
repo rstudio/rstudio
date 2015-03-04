@@ -204,6 +204,16 @@ th:focus {
     outline: none;
 }
 
+.colLabel {
+    font-size: 10px;
+    font-weight: normal;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+    margin-top: 2px;
+    max-width: 300px;
+}
+
 .numSlider {
     font-size: 9px;
     width: 150px;
@@ -277,3 +287,4 @@ div.DTS div.DTS_Loading.showLoading {
 {
     height: 23px;
 }
+

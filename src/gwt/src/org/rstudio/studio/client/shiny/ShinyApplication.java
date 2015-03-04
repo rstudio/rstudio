@@ -25,6 +25,7 @@ import org.rstudio.studio.client.application.ApplicationInterrupt.InterruptHandl
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.RestartStatusEvent;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.dependencies.DependencyManager;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
 import org.rstudio.studio.client.common.satellite.events.WindowClosedEvent;
 import org.rstudio.studio.client.common.shiny.model.ShinyServerOperations;
@@ -42,6 +43,7 @@ import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEve
 import org.rstudio.studio.client.workbench.views.environment.events.DebugModeChangedEvent;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
@@ -64,6 +66,7 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
                            final SatelliteManager satelliteManager, 
                            ShinyServerOperations server,
                            GlobalDisplay display,
+                           DependencyManager dependencyManager,
                            ApplicationInterrupt interrupt)
    {
       eventBus_ = eventBus;
@@ -74,6 +77,7 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
       display_ = display;
       isBusy_ = false;
       currentViewType_ = ShinyViewerType.SHINY_VIEWER_NONE;
+      dependencyManager_ = dependencyManager;
       interrupt_ = interrupt;
       
       eventBus_.addHandler(ShinyApplicationStatusEvent.TYPE, this);
@@ -213,7 +217,14 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
       else
       {
          // Nothing else running, start this app.
-         launchShinyAppDir(dir);
+         dependencyManager_.withShiny("Running Shiny applications",
+               new Command() {
+                  @Override
+                  public void execute()
+                  {
+                     launchShinyAppDir(dir);
+                  }
+         });
       }
    }
 
@@ -314,6 +325,7 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
    
    private final EventBus eventBus_;
    private final SatelliteManager satelliteManager_;
+   private final DependencyManager dependencyManager_;
    private final Commands commands_;
    private final Provider<UIPrefs> pPrefs_;
    private final ShinyServerOperations server_;

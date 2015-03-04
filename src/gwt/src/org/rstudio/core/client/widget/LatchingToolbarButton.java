@@ -16,7 +16,6 @@ package org.rstudio.core.client.widget;
 
 import org.rstudio.core.client.theme.res.ThemeStyles;
 
-import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.resources.client.ImageResource;
 
@@ -28,15 +27,6 @@ public class LatchingToolbarButton extends ToolbarButton
                                 ClickHandler clickHandler)
    {
       super(text, leftImage, clickHandler);
-      onClicked_ = new ClickHandler()
-      {
-         @Override
-         public void onClick(ClickEvent arg0)
-         {
-            setLatched(!latched_);
-         }
-      };
-      addClickHandler(onClicked_);
       getElement().addClassName(ThemeStyles.INSTANCE.toolbarButtonLatchable());
    }
    
@@ -53,6 +43,5 @@ public class LatchingToolbarButton extends ToolbarButton
          getElement().removeClassName(ThemeStyles.INSTANCE.toolbarButtonLatched());
    }
    
-   private ClickHandler onClicked_;
    private boolean latched_ = false;
 }

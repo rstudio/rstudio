@@ -198,7 +198,6 @@ public class CppCompletionPopupMenu extends ScrollableToolbarPopupMenu
                toolTip_.setVisible(false);
                return;
             }
-            String text = completion.getText().get(0);
             
             // only do tooltips for functions and variables
             if (completion.getType() != CppCompletion.FUNCTION && 
@@ -209,7 +208,7 @@ public class CppCompletionPopupMenu extends ScrollableToolbarPopupMenu
             }
             
             // set the tooltip text
-            toolTip_.setText(text);
+            toolTip_.setText(completion.getText().get(0));
            
             // position it in the next event loop
             Scheduler.get().scheduleDeferred(new ScheduledCommand() {

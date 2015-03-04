@@ -35,7 +35,6 @@ var CppCodeModel = require("mode/cpp_code_model").CppCodeModel;
 var CppTokenCursor = require("mode/token_cursor").CppTokenCursor;
 var TextMode = require("ace/mode/text").Mode;
 
-var $addNamespaceComment = true;
 var $fillinDoWhile = true;
 
 var CStyleBehaviour = function(codeModel) {
@@ -108,7 +107,7 @@ var CStyleBehaviour = function(codeModel) {
 
          var cursor = editor.getCursorPosition();
          var line = new String(session.doc.getLine(cursor.row));
-         var match = line.match(/^(\s*)\/\*{3,}\s/);
+         var match = line.match(/^(\s*)\/\*{3,}\s*/);
          if (match) {
             return {
                text: "R\n" + match[1] + "\n" + match[1] + "*/",
@@ -193,7 +192,7 @@ var CStyleBehaviour = function(codeModel) {
          if (match) {
             var indent = this.$getIndent(line);
             return {
-               text: '\n' + indent + '\n' + indent,
+               text: '\n' + indent,
                selection: [1, indent.length, 1, indent.length]
             };
          }
@@ -284,122 +283,89 @@ var CStyleBehaviour = function(codeModel) {
          var selected = session.doc.getTextRange(selection);
          if (selected === "") {
 
-            var row = editor.selection.getCursor().row;
-            var col = editor.selection.getCursor().column;
-            var doc = session.getDocument();
-            var line = this.codeModel.getLineSansComments(doc, row, true);
-            var prevLine = "";
-            if (row > 0) {
-               prevLine = this.codeModel.getLineSansComments(doc, row - 1, true);
-               for (var i = row - 1; i >= 0; i--) {
-                  if (!/^\s*$/.test(prevLine)) break;
-                  prevLine = this.codeModel.getLineSansComments(doc, i, true);
-               }
-            }
-            
-            var lineTrimmed = line.substring(0, col);
-            var cursor = editor.getCursorPosition();
+            // Get a token cursor, and place it at the cursor position.
+            var cursor = this.codeModel.getTokenCursor();
 
-            // TODO: getLineSansComments
-            var commentMatch = line.match(/\/\//);
-            if (commentMatch) {
-               line = line.substr(0, commentMatch.index - 1);
-            }
+            if (!cursor.moveToPosition(editor.getCursorPosition()))
+               return autoPairInsertion("{", text, editor, session);
 
-            // namespace specific indenting -- note that 'lineTrimmed'
-            // does not contain the now-inserted '{'
-            if ($addNamespaceComment) {
-               
-               var anonNamespace = /\s*namespace\s*$/.test(lineTrimmed);
-               var namedNamespace = lineTrimmed.match(/\s*namespace\s+(\S+)\s*/);
-
-               if (namedNamespace) {
-                  return {
-                     text: '{} // namespace ' + namedNamespace[1],
-                     selection: [1, 1]
-                  };
-               }
-
-               if (anonNamespace) {
-                  return {
-                     text: '{} // anonymous namespace',
-                     selection: [1, 1]
-                  };
-               }
-            }
-
-            // if we're assigning, e.g. through an initializor list, then
-            // we should include a semi-colon
-            if (line.match(/\=\s*$/) &&
-                line.indexOf(";") === -1) {
-               return {
-                  text: '{};',
-                  selection: [1, 1]
-               };
-            }
-
-            // If we're defining a function, don't include a semi-colon.
-            // We can only use the tokenizer if the open brace was inserted
-            // on a new line (it has not yet been tokenized)
-            if (/\)\s*$/.test(line) ||
-                (/\)\s*$/.test(prevLine) && /^\s*$/.test(line)))
+            do
             {
-               return {
-                  text: '{}',
-                  selection: [1, 1]
-               };
-            }
+               // In case we're walking over a template class, e.g. for something like:
+               //
+               //    class Foo : public A<T>, public B<T>
+               //
+               // then we want to move over those matching arrows,
+               // as their contents is non-informative for semi-colon insertion inference.
+               if (cursor.bwdToMatchingArrow())
+                  continue;
 
-            // if we're making a block define, don't add a semi-colon
-            if (line.match(/#define\s+\w+/)) {
-               return {
-                  text: '{}',
-                  selection: [1, 1]
-               };
-            }
+               var value = cursor.currentValue();
+               if (!value || !value.length) break;
 
-            // if we're constructing a 'do-while' loop, fill in the pieces
-            if ($fillinDoWhile &&
-                (/^\s*do\s*$/.test(line) ||
-                (/^\s*do\s*$/.test(prevLine) && /^\s*$/.test(line)))) {
-               return {
-                  text: "{} while ();",
-                  selection: [1, 1]
-               };
-            }
+               // If we encounter a 'namespace' token, just insert a
+               // single opening bracket. This is because we might be
+               // enclosing some other namespaces following (and so the
+               // automatic closing brace may be undesired)
+               if (value === "namespace")
+               {
+                  return {
+                     text: "{",
+                     selection: [1, 1]
+                  };
+               }
 
-            // Short-circuit for some special cases
-            if (/^\s*if\s*$/.test(line) ||
-                /else\s*$/.test(line)) {
-               return {
-                  text: '{}',
-                  selection: [1, 1]
-               };
-            }
+               // If we encounter a 'class' or 'struct' token, this implies
+               // we're defining a class -- add a semi-colon.
+               //
+               // We also do this for '=' operators, for C++11-style
+               // braced initialization:
+               //
+               //    int foo = {1, 2, 3};
+               //
+               // TODO: Figure out if we can infer the same for braced initialization with
+               // no equals; e.g.
+               //
+               //    MyClass object{1, 2, 3};
+               //
+               if (value === "class" ||
+                   value === "struct" ||
+                   value === "=")
+               {
+                  return {
+                     text: "{};",
+                     selection: [1, 1]
+                  };
+               }
 
-            // If class-style indentation can produce an appropriate indentation for
-            // the brace, then insert a closing brace with a semi-colon.
-            var heuristicRow = codeModel.getRowForOpenBraceIndent(
-               session, row, true
-            );
+               // Fill in the '{} while ()' bits for a do-while loop.
+               if ($fillinDoWhile && value === "do")
+               {
+                  return {
+                     text: "{} while ();",
+                     selection: [1, 1]
+                  };
+               }
 
-            if (heuristicRow >= 0 && line.indexOf(";") === -1) {
-               return {
-                  text: '{};',
-                  selection: [1, 1]
-               };
-            }
-
-            // if it looks like we're using a initializor eg 'obj {', then
-            // include a closing ;
-            if (/\S+\s*$/.test(line) && line.indexOf(";") === -1) {
-               return {
-                  text: '{};',
-                  selection: [1, 1]
-               };
-            }
-
-            
+               // If, while walking backwards, we encounter certain tokens that
+               // tell us we do not want semi-colon insertion, then stop there and return.
+               if (value === ";" ||
+                   value === "[" ||
+                   value === "]" ||
+                   value === "(" ||
+                   value === ")" ||
+                   value === "{" ||
+                   value === "}" ||
+                   value === "if" ||
+                   value === "else" ||
+                   value[0] === '#')
+               {
+                  return {
+                     text: "{}",
+                     selection: [1, 1]
+                  };
+               }
+            } while (cursor.moveToPreviousToken());
          }
 
       }
@@ -423,13 +389,6 @@ var CStyleBehaviour = function(codeModel) {
             return range;
          }
 
-         // Undo an auto-inserted namespace closer
-         if (/^\s*namespace\s*\{\} \/\/ end anonymous namespace\s*$/.test(line) ||
-             /^\s*namespace\s+.+\{\} \/\/ end namespace .+\s*$/.test(line)) {
-            range.end.column = line.length;
-            return range;
-         }
-         
          var rightChar = line.substring(range.end.column, range.end.column + 1);
          var rightRightChar =
                 line.substring(range.end.column + 1, range.end.column + 2);
@@ -688,14 +647,6 @@ var CStyleBehaviour = function(codeModel) {
 oop.inherits(CStyleBehaviour, Behaviour);
 
 exports.CStyleBehaviour = CStyleBehaviour;
-
-exports.setAddNamespaceComment = function(x) {
-   $addNamespaceComment = x;
-};
-
-exports.getAddNamespaceComment = function() {
-   return $addNamespaceComment;
-}
 
 exports.setFillinDoWhile = function(x) {
    $fillinDoWhile = x;

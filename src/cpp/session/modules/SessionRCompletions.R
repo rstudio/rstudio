@@ -900,41 +900,39 @@ assign(x = ".rs.acCompletionTypes",
    .rs.subsetCompletions(completions, order)
 })
 
-.rs.addFunction("blackListEvaluationDataTable", function(token, string, envir)
+.rs.addFunction("blackListEvaluationDataTable", function(token, string, functionCall, envir)
 {
    tryCatch({
-      parsed <- suppressWarnings(parse(text = string))
-      if (is.expression(parsed))
-      {
-         call <- parsed[[1]][[1]]
-         if (as.character(call[[1]]) == "[")
-         {
-            objectName <- parsed[[1]][[2]]
-            object <- .rs.getAnywhere(objectName, envir = envir)
-            if (inherits(object, "data.table"))
-            {
-               .rs.makeCompletions(
-                  token = token,
-                  results = names(object),
-                  packages = string,
-                  quote = FALSE,
-                  type = vapply(object, FUN.VALUE = numeric(1), USE.NAMES = FALSE, .rs.getCompletionType)
-               )
-            }
-         }
-      }
+      # NOTE: We don't retrieve the name from the function call as this could
+      # be a complex parse tree (e.g. dt[, y := 1][, y]$x); it is substantially
+      # easier to strip the object name from the 'string' constituting the parsed object
+      bracketIdx <- c(regexpr("[", string, fixed = TRUE))
+      objectName <- if (bracketIdx == -1)
+         string
       else
+         substring(string, 1L, bracketIdx - 1L)
+      
+      object <- .rs.getAnywhere(objectName, envir = envir)
+      if (inherits(object, "data.table"))
       {
-         NULL
+         names <- names(object)
+         results <- .rs.selectFuzzyMatches(names, token)
+         .rs.makeCompletions(
+            token = token,
+            results = results,
+            packages = string,
+            quote = FALSE,
+            type = vapply(object, FUN.VALUE = numeric(1), USE.NAMES = FALSE, .rs.getCompletionType)
+         )
       }
    }, error = function(e) NULL
    )
    
 })
 
-.rs.addFunction("blackListEvaluation", function(token, string, envir)
+.rs.addFunction("blackListEvaluation", function(token, string, functionCall, envir)
 {
-   if (!is.null(result <- .rs.blackListEvaluationDataTable(token, string, envir)))
+   if (!is.null(result <- .rs.blackListEvaluationDataTable(token, string, functionCall, envir)))
       return(result)
    
    NULL
@@ -942,12 +940,12 @@ assign(x = ".rs.acCompletionTypes",
 })
 
 ## NOTE: for '@' as well (set in the 'isAt' parameter)
-.rs.addFunction("getCompletionsDollar", function(token, string, envir, isAt)
+.rs.addFunction("getCompletionsDollar", function(token, string, functionCall, envir, isAt)
 {
    result <- .rs.emptyCompletions(excludeOtherCompletions = TRUE)
    
    ## Blacklist certain evaluations
-   if (!is.null(blacklist <- .rs.blackListEvaluation(token, string, envir)))
+   if (!is.null(blacklist <- .rs.blackListEvaluation(token, string, functionCall, envir)))
       return(blacklist)
    
    object <- .rs.getAnywhere(string, envir)
@@ -1053,13 +1051,14 @@ assign(x = ".rs.acCompletionTypes",
 
 .rs.addFunction("getCompletionsSingleBracket", function(token,
                                                         string,
+                                                        functionCall,
                                                         numCommas,
                                                         envir)
 {
    result <- .rs.emptyCompletions()
    
    ## Blacklist certain evaluations
-   if (!is.null(result <- .rs.blackListEvaluation(token, string, envir)))
+   if (!is.null(result <- .rs.blackListEvaluation(token, string, functionCall, envir)))
       return(result)
    
    object <- .rs.getAnywhere(string, envir)
@@ -1115,12 +1114,13 @@ assign(x = ".rs.acCompletionTypes",
 
 .rs.addFunction("getCompletionsDoubleBracket", function(token,
                                                         string,
+                                                        functionCall,
                                                         envir = parent.frame())
 {
    result <- .rs.emptyCompletions()
    
    ## Blacklist certain evaluations
-   if (!is.null(result <- .rs.blackListEvaluation(token, string, envir)))
+   if (!is.null(result <- .rs.blackListEvaluation(token, string, functionCall, envir)))
       return(result)
    
    object <- .rs.getAnywhere(string, envir)
@@ -1148,7 +1148,8 @@ assign(x = ".rs.acCompletionTypes",
 
 .rs.addFunction("getCompletionsPackages", function(token,
                                                    appendColons = FALSE,
-                                                   excludeOtherCompletions = FALSE)
+                                                   excludeOtherCompletions = FALSE,
+                                                   quote = !appendColons)
 {
    allPackages <- Reduce(union, lapply(.libPaths(), list.files))
    
@@ -1162,7 +1163,7 @@ assign(x = ".rs.acCompletionTypes",
                        else
                           completions,
                        packages = completions,
-                       quote = !appendColons,
+                       quote = quote,
                        type = .rs.acCompletionTypes$PACKAGE,
                        excludeOtherCompletions = excludeOtherCompletions)
 })
@@ -1533,8 +1534,6 @@ assign(x = ".rs.acCompletionTypes",
                                           envir)
       ))
       
-      completions <- .rs.sortCompletions(completions, token)
-      
       # remove all queries that start with a '.' unless the
       # token itself starts with a dot
       if (!.rs.startsWith(token, "."))
@@ -1572,7 +1571,10 @@ assign(x = ".rs.acCompletionTypes",
    if (string[[1]] %in% c("library", "require", "requireNamespace") &&
        numCommas[[1]] == 0)
    {
-      return(.rs.getCompletionsPackages(token, excludeOtherCompletions = TRUE))
+      quote <- ! (string[[1]] %in% c("library", "require"))
+      return(.rs.getCompletionsPackages(token, 
+                                        excludeOtherCompletions = TRUE,
+                                        quote = quote))
    }
    
    ## File-based completions
@@ -1593,11 +1595,14 @@ assign(x = ".rs.acCompletionTypes",
             directoriesOnly <- TRUE
          }
       }
+      
       # NOTE: For Markdown link completions, we overload the meaning of the
       # function call string here, and use it as a signal to generate paths
       # relative to the R markdown path.
-      path <- if (length(functionCallString) &&
-                     functionCallString == "useFile")
+      isMarkdownLink <- identical(functionCallString, "useFile")
+      isRmd <- .rs.endsWith(tolower(filePath), ".rmd")
+      
+      path <- if (isMarkdownLink || isRmd)
          suppressWarnings(.rs.normalizePath(dirname(filePath)))
       else
          getwd()
@@ -1686,6 +1691,7 @@ assign(x = ".rs.acCompletionTypes",
          completions <- .rs.getCompletionsDollar(
             token,
             string[[1]],
+            functionCall,
             envir,
             type[[1]] == .rs.acContextTypes$AT
          )
@@ -1975,9 +1981,9 @@ assign(x = ".rs.acCompletionTypes",
       else if (type == .rs.acContextTypes$ARGUMENT)
          .rs.getCompletionsArgument(token, string, functionCall, envir)
       else if (type == .rs.acContextTypes$SINGLE_BRACKET)
-         .rs.getCompletionsSingleBracket(token, string, numCommas, envir)
+         .rs.getCompletionsSingleBracket(token, string, functionCall, numCommas, envir)
       else if (type == .rs.acContextTypes$DOUBLE_BRACKET)
-         .rs.getCompletionsDoubleBracket(token, string, envir)
+         .rs.getCompletionsDoubleBracket(token, string, functionCall, envir)
       else
          .rs.emptyCompletions()
    )

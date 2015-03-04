@@ -254,10 +254,26 @@ public class AceEditor implements DocDisplay,
          @Override
          public void onKeyDown(KeyDownEvent event)
          {
-            if (useVimMode_)
-               return;
-            
             int mod = KeyboardShortcut.getModifierValue(event.getNativeEvent());
+
+            if (useVimMode_)
+            {
+               if (!isVimInInsertMode())
+               {
+                  switch(event.getNativeKeyCode())
+                  {
+                     case 'K':
+                        if (mod == KeyboardShortcut.SHIFT) 
+                        {
+                           event.preventDefault();
+                           goToHelp();
+                        }
+                        break;
+                  }
+               }
+               return;
+            }
+            
             if (mod == KeyboardShortcut.CTRL)
             {
                switch (event.getNativeKeyCode())
@@ -1562,7 +1578,19 @@ public class AceEditor implements DocDisplay,
    @Override
    public void jumpToMatching()
    {
-      widget_.getEditor().jumpToMatching();
+      widget_.getEditor().jumpToMatching(false, false);
+   }
+   
+   @Override
+   public void selectToMatching()
+   {
+      widget_.getEditor().jumpToMatching(true, false);
+   }
+   
+   @Override
+   public void expandToMatching()
+   {
+      widget_.getEditor().jumpToMatching(true, true);
    }
    
    @Override
@@ -1731,6 +1759,8 @@ public class AceEditor implements DocDisplay,
          scrollToY(srcPosition.getScrollPosition());
       else if (position.getRow() != previousCursorPos.getRow())
          moveCursorNearTop();
+      else
+         ensureCursorVisible();
       
       // set focus
       focus();

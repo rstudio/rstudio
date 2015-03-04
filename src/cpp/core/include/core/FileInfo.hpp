@@ -105,9 +105,7 @@ private:
    
 inline int fileInfoPathCompare(const FileInfo& a, const FileInfo& b)
 {
-   // use stcoll because that is what alphasort (comp function passed to
-   // scandir) uses for its sorting)
-   int result = ::strcoll(a.absolutePath().c_str(), b.absolutePath().c_str());
+   int result = ::strcmp(a.absolutePath().c_str(), b.absolutePath().c_str());
 
    if (result != 0)
       return result;

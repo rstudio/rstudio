@@ -82,6 +82,10 @@ Error SessionLauncher::launchFirstSession(const QString& filename,
    QUrl url;
    buildLaunchContext(&host, &port, &argList, &url);
 
+   // show help home on first run
+   argList.push_back(QString::fromUtf8("--show-help-home"));
+   argList.push_back(QString::fromUtf8("1"));
+
    RUN_DIAGNOSTICS_LOG("\nAttempting to launch R session...");
    logEnvVar("RSTUDIO_WHICH_R");
    logEnvVar("R_HOME");

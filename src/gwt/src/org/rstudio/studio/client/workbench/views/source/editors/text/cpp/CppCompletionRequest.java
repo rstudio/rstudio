@@ -16,7 +16,6 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text.cpp;
 
 import org.rstudio.core.client.CommandWithArg;
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.Invalidation;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.server.ServerError;
@@ -28,7 +27,6 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Positio
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.model.CppCompletion;
 import org.rstudio.studio.client.workbench.views.source.model.CppCompletionResult;
-import org.rstudio.studio.client.workbench.views.source.model.CppDiagnostic;
 import org.rstudio.studio.client.workbench.views.source.model.CppServerOperations;
 
 import com.google.gwt.core.client.JsArray;
@@ -36,6 +34,7 @@ import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
+import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.inject.Inject;
 
@@ -46,7 +45,8 @@ public class CppCompletionRequest
                                CompletionPosition completionPosition,
                                DocDisplay docDisplay, 
                                Invalidation.Token token,
-                               boolean explicit)
+                               boolean explicit,
+                               Command onTerminated)
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
       
@@ -54,6 +54,7 @@ public class CppCompletionRequest
       completionPosition_ = completionPosition;
       invalidationToken_ = token;
       explicit_ = explicit;
+      onTerminated_ = onTerminated;
       
       Position pos = completionPosition_.getPosition();
       
@@ -144,12 +145,6 @@ public class CppCompletionRequest
          {
             showCompletionPopup(filtered);
          }
-         
-         // log diagnostics to console
-         /*
-         for (int i = 0; i < diagnostics_.length(); i++)
-            Debug.logToConsole(diagnostics_.get(i).getFormat());
-         */
       }
    }
    
@@ -157,6 +152,8 @@ public class CppCompletionRequest
    {
       closeCompletionPopup();
       terminated_ = true;
+      if (onTerminated_ != null)
+         onTerminated_.execute();
    }
    
    public boolean isTerminated()
@@ -176,7 +173,6 @@ public class CppCompletionRequest
        
       // get the completions
       completions_ = result.getCompletions();
-      diagnostics_ = result.getDiagnostics();
       
       // check for none found condition on explicit completion
       if ((completions_.length() == 0) && explicit_)
@@ -188,6 +184,13 @@ public class CppCompletionRequest
       {
          updateUI(true);
       }
+      
+      // show diagnostics
+      /*
+      JsArray<CppDiagnostic> diagnostics = result.getDiagnostics();
+      for (int i = 0; i < diagnostics.length(); i++)
+         Debug.prettyPrint(diagnostics.get(i));
+      */
    }
    
    private void showCompletionPopup(String message)
@@ -321,7 +324,7 @@ public class CppCompletionRequest
    
    private CppCompletionPopupMenu popup_;
    private JsArray<CppCompletion> completions_;
-   private JsArray<CppDiagnostic> diagnostics_;
    
    private boolean terminated_ = false;
+   private Command onTerminated_ = null;
 }

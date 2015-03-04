@@ -77,11 +77,6 @@ SourceCppFileInfo sourceCppFileInfo(const core::FilePath& srcPath)
       return SourceCppFileInfo();
    }
 
-   // ensure that have at least one Rcpp include
-   boost::regex reRcpp("#include\\s+<Rcpp");
-   if (!boost::regex_search(contents, reRcpp))
-      return SourceCppFileInfo();
-
    // info to return
    SourceCppFileInfo info;
 
@@ -253,8 +248,20 @@ std::vector<std::string> includesForLinkingTo(const std::string& linkingTo)
 } // anonymous namespace
 
 
+RCompilationDatabase::RCompilationDatabase()
+   : usePrecompiledHeaders_(true), restoredCompilationConfig_(false)
+{
+}
+
 void RCompilationDatabase::updateForCurrentPackage()
 {
+   // one time restore of compilation config
+   if (!restoredCompilationConfig_)
+   {
+      restorePackageCompilationConfig();
+      restoredCompilationConfig_ = true;
+   }
+
    // check hash to see if we can avoid this computation
    std::string buildFileHash = packageBuildFileHash();
    if (buildFileHash == packageBuildFileHash_)
@@ -323,8 +330,80 @@ void RCompilationDatabase::updateForCurrentPackage()
       packageCompilationConfig_.isCpp = packageIsCpp(pkgInfo.linkingTo(),
                                                      srcDir);
       packageBuildFileHash_ = buildFileHash;
+
+      // save them to disk
+      savePackageCompilationConfig();
    }
 
+}
+
+
+namespace {
+
+FilePath compilationConfigFilePath()
+{
+   return module_context::scopedScratchPath().complete("cpp-complilation-config");
+}
+
+
+} // anonymous namespace
+
+void RCompilationDatabase::savePackageCompilationConfig()
+{
+   json::Object configJson;
+   configJson["args"] = json::toJsonArray(packageCompilationConfig_.args);
+   configJson["pch"] = packageCompilationConfig_.PCH;
+   configJson["is_cpp"] = packageCompilationConfig_.isCpp;
+   configJson["hash"] = packageBuildFileHash_;
+
+   std::ostringstream ostr;
+   json::writeFormatted(configJson, ostr);
+   Error error = writeStringToFile(compilationConfigFilePath(), ostr.str());
+   if (error)
+      LOG_ERROR(error);
+}
+
+void RCompilationDatabase::restorePackageCompilationConfig()
+{
+   FilePath configFilePath = compilationConfigFilePath();
+   if (!configFilePath.exists())
+      return;
+
+   std::string contents;
+   Error error = readStringFromFile(compilationConfigFilePath(), &contents);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+
+   json::Value configJson;
+   if (!json::parse(contents, &configJson) ||
+       !json::isType<json::Object>(configJson))
+   {
+      LOG_ERROR_MESSAGE("Error parsing compilation config: " + contents);
+      return;
+   }
+
+   json::Array argsJson;
+   error = json::readObject(configJson.get_obj(),
+                            "args", &argsJson,
+                            "pch", &packageCompilationConfig_.PCH,
+                            "is_cpp", &packageCompilationConfig_.isCpp,
+                            "hash", &packageBuildFileHash_);
+   if (error)
+   {
+      error.addProperty("json", contents);
+      LOG_ERROR(error);
+      return;
+   }
+
+   packageCompilationConfig_.args.clear();
+   BOOST_FOREACH(const json::Value& argJson, argsJson)
+   {
+      if (json::isType<std::string>(argJson))
+         packageCompilationConfig_.args.push_back(argJson.get_str());
+   }
 }
 
 void RCompilationDatabase::updateForSourceCpp(const core::FilePath& srcFile)
@@ -530,7 +609,7 @@ std::vector<std::string> RCompilationDatabase::projectTranslationUnits() const
 
 
 std::vector<std::string> RCompilationDatabase::compileArgsForTranslationUnit(
-                                            const std::string& filename)
+       const std::string& filename, bool usePrecompiledHeaders)
 {
    // args to return
    std::vector<std::string> args;
@@ -569,7 +648,8 @@ std::vector<std::string> RCompilationDatabase::compileArgsForTranslationUnit(
    std::copy(config.args.begin(), config.args.end(), std::back_inserter(args));
 
    // add precompiled headers if necessary
-   if (usePrecompiledHeaders_ && !config.PCH.empty() && config.isCpp &&
+   if (usePrecompiledHeaders && usePrecompiledHeaders_ &&
+       !config.PCH.empty() && config.isCpp &&
        (filePath.extensionLowerCase() != ".c") &&
        (filePath.extensionLowerCase() != ".m"))
    {
@@ -908,7 +988,7 @@ core::libclang::CompilationDatabase rCompilationDatabase()
                   &instance);
    compilationDatabase.compileArgsForTranslationUnit =
       boost::bind(&RCompilationDatabase::compileArgsForTranslationUnit,
-                  &instance, _1);
+                  &instance, _1, _2);
    return compilationDatabase;
 }
 

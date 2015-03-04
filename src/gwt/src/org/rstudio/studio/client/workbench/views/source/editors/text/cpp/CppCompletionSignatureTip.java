@@ -113,7 +113,9 @@ public class CppCompletionSignatureTip extends CppCompletionToolTip
             {
                // determine left and top
                final int H_PAD = 3;
-               final int V_PAD = 5;
+               final int TOP_V_PAD = CppCompletionToolTip.tooltipTopPadding(
+                                                                  docDisplay_);
+               final int BOTTOM_V_PAD = 10;
                final int MARGIN = 50;
                
                // we only calculate left one time
@@ -135,13 +137,13 @@ public class CppCompletionSignatureTip extends CppCompletionToolTip
                }
                
                // do we have enough vertical space? if not then show at bottom
-               int top = cursorBounds_.getTop() - offsetHeight - V_PAD;
+               int top = cursorBounds_.getTop() - offsetHeight - (TOP_V_PAD);
                int spaceTop = top - offsetHeight - MARGIN;
                if (spaceTop < 0)
                {
                   top = cursorBounds_.getTop() + 
                         cursorBounds_.getHeight() 
-                        + (V_PAD * 2);
+                        + (BOTTOM_V_PAD);
                }
                
                

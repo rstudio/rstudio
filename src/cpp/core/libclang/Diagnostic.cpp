@@ -46,17 +46,17 @@ std::string Diagnostic::format(unsigned options) const
    return toStdString(clang().formatDiagnostic(diagnostic_, options));
 }
 
-CXDiagnosticSeverity Diagnostic::getSeverity() const
+CXDiagnosticSeverity Diagnostic::severity() const
 {
    return clang().getDiagnosticSeverity(diagnostic_);
 }
 
-SourceLocation Diagnostic::getLocation() const
+SourceLocation Diagnostic::location() const
 {
    return SourceLocation(clang().getDiagnosticLocation(diagnostic_));
 }
 
-std::string Diagnostic::getSpelling() const
+std::string Diagnostic::spelling() const
 {
    return toStdString(clang().getDiagnosticSpelling(diagnostic_));
 }

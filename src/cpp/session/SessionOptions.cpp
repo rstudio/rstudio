@@ -169,7 +169,10 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
           "default user setting for running Rprofile on resume")
       ("session-save-action-default",
        value<std::string>(&saveActionDefault)->default_value(""),
-          "default save action (yes, no, or ask)");
+         "default save action (yes, no, or ask)")
+      ("show-help-home",
+       value<bool>(&showHelpHome_)->default_value(false),
+         "show help home page at startup");
 
    // allow options
    options_description allow("allow");

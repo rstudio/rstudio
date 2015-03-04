@@ -75,6 +75,20 @@
 {
    tryCatch(
    {
+      # for Oracle R frames, show the query if it exists
+      if (is(val, "ore.frame")) 
+      {
+        query <- attr(val, "dataQry", exact = TRUE) 
+
+        # no query, show empty
+        if (is.null(query))
+          return("NO_VALUE") 
+
+        # query, display it
+        attributes(query) <- NULL
+        return(paste("   Query:", query))
+      }
+
       # only return the first 100 lines of detail (generally columns)--any more
       # won't be very presentable in the environment pane. the first line
       # generally contains descriptive text, so don't return that.
@@ -130,7 +144,7 @@
    if (!is.null(srcref))
    {
       fileattr <- attr(srcref, "srcfile")
-      fileattr$filename
+      enc2utf8(fileattr$filename)
    }
    else
       ""
@@ -289,7 +303,11 @@
       }
       else if (is(obj, "ore.frame"))
       {
-         return(paste(ncol(obj),"columns"))
+        sqlTable <- attr(obj, "sqlTable", exact = TRUE)
+        if (is.null(sqlTable))
+          return("Oracle R frame") 
+        else
+          return(paste("Oracle R frame:", sqlTable))
       }
       else if (is(obj, "externalptr"))
       {
@@ -450,6 +468,7 @@
 
          # expandable object--supply contents 
          if (class == "data.table" ||
+             class == "ore.frame" ||
              class == "cast_df" ||
              class == "xts" ||
              is.list(obj) || 

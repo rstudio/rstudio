@@ -18,6 +18,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.inject.client.GinModules;
 import com.google.gwt.inject.client.Ginjector;
 
+import org.rstudio.core.client.command.ShortcutViewer;
 import org.rstudio.core.client.files.filedialog.PathBreadcrumbWidget;
 import org.rstudio.core.client.widget.CaptionWithHelp;
 import org.rstudio.core.client.widget.LocalRepositoriesWidget;
@@ -131,4 +132,5 @@ public interface RStudioGinjector extends Ginjector
    UIPrefs getUIPrefs();
    Session getSession();
    HelpStrategy getHelpStrategy();
+   ShortcutViewer getShortcutViewer();
 }

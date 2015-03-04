@@ -58,6 +58,7 @@ public class ShortcutsEmitter
          String command = childEl.getAttribute("refid");
          String shortcutValue = childEl.getAttribute("value");
          String title = childEl.getAttribute("title");
+         String disableModes = childEl.getAttribute("disableModes");
 
          // Use null when we don't have a command associated with the shortcut,
          // otherwise refer to the function that returns the command 
@@ -70,7 +71,7 @@ public class ShortcutsEmitter
          }
 
          printShortcut(writer, condition, shortcutValue, 
-                       command, groupName_, title);
+                       command, groupName_, title, disableModes);
       }
    }
 
@@ -79,7 +80,8 @@ public class ShortcutsEmitter
                               String shortcutValue,
                               String command,
                               String shortcutGroup,
-                              String title) throws UnableToCompleteException
+                              String title,
+                              String disableModes) throws UnableToCompleteException
    {
       String[] chunks = shortcutValue.split("\\+");
       int modifiers = KeyboardShortcut.NONE;
@@ -127,13 +129,15 @@ public class ShortcutsEmitter
                         key + ", " +
                         command + ", " +
                         "\"" + shortcutGroup + "\", " +
-                        "\"" + title + "\");");
+                        "\"" + title + "\", " +
+                        "\"" + disableModes + "\");");
          writer.println("ShortcutManager.INSTANCE.register(" +
                         (modifiers| KeyboardShortcut.META) + ", " +
                         key + ", " +
                         command + ", " +
                         "\"" + shortcutGroup + "\", " +
-                        "\"" + title + "\");");
+                        "\"" + title + "\", " + 
+                        "\"" + disableModes + "\");");
       }
       else
       {
@@ -142,7 +146,8 @@ public class ShortcutsEmitter
                         key + ", " +
                         command + ", " +
                         "\"" + shortcutGroup + "\", " +
-                        "\"" + title + "\");");
+                        "\"" + title + "\", " + 
+                        "\"" + disableModes + "\");");
       }
 
       if (!condition.isEmpty())

@@ -448,7 +448,7 @@ public class SavePlotAsPdfDialog extends ModalDialogBase
       
       private void setCustomPaperSize(double width, double height)
       {
-         paperSizes_.remove(paperSizes_.size() - 2);
+         paperSizes_.remove(paperSizes_.size() - 1);
          paperSizes_.add(new PaperSize("(Custom)", width, height));
       }
        

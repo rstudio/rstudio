@@ -19,21 +19,20 @@
 #include <core/Error.hpp>
 
 #include <core/json/JsonRpc.hpp>
+
+#include <core/libclang/TranslationUnit.hpp>
  
 namespace rstudio {
-
-namespace core {
-namespace libclang {
-   class Diagnostic;
-}
-}
 
 namespace session {
 namespace modules {      
 namespace clang {
 
 core::json::Object diagnosticToJson(
+                        const core::libclang::TranslationUnit& tu,
                         const core::libclang::Diagnostic& diagnostic);
+
+core::json::Array getCppDiagnosticsJson(const core::FilePath& filePath);
 
 core::Error getCppDiagnostics(const core::json::JsonRpcRequest& request,
                               core::json::JsonRpcResponse* pResponse);
