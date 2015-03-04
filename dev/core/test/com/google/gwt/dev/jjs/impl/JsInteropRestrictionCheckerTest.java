@@ -96,6 +96,28 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
     assertCompileFails();
   }
 
+  public void testCollidingMethodToMethodJsTypeFails() throws Exception {
+    addSnippetImport("com.google.gwt.core.client.js.JsType");
+    addSnippetClassDecl(
+        "@JsType",
+        "public interface IBuggy1 {",
+        "  void show();",
+        "}",
+        "@JsType",
+        "public interface IBuggy2 {",
+        "  void show(boolean b);",
+        "}",
+        "public static class Buggy implements IBuggy1 {",
+        "  public void show() {}",
+        "}",
+        "public static class Buggy2 extends Buggy implements IBuggy2 {",
+        "  public void show(boolean b) {}",
+        "}",
+        "public static class Buggy {}");
+
+    assertCompileFails();
+  }
+
   public void testCollidingSyntheticBridgeMethodSucceeds() throws Exception {
     addSnippetImport("com.google.gwt.core.client.js.JsType");
     addSnippetImport("com.google.gwt.core.client.js.JsProperty");

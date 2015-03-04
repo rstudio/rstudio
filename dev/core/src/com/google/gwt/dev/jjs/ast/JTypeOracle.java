@@ -255,14 +255,6 @@ public class JTypeOracle implements Serializable {
     return false;
   }
 
-  public boolean isExportedField(JField field) {
-    return isJsInteropEnabled() && field.isExported();
-  }
-
-  public boolean isExportedMethod(JMethod method) {
-    return isJsInteropEnabled() && method.isExported();
-  }
-
   public boolean isJsInteropEnabled() {
     return jsInteropMode != OptionJsInteropMode.Mode.NONE;
   }
@@ -1123,19 +1115,15 @@ public class JTypeOracle implements Serializable {
   }
 
   private boolean hasAnyExports(JReferenceType type) {
-    if (type instanceof JDeclaredType) {
-      for (JMethod meth : ((JDeclaredType) type).getMethods()) {
-        if (isExportedMethod(meth)) {
-          return true;
-        }
-      }
-      for (JField field : ((JDeclaredType) type).getFields()) {
-        if (isExportedField(field)) {
-          return true;
-        }
-      }
-    }
-    return false;
+    return type instanceof JDeclaredType ? ((JDeclaredType) type).hasAnyExports() : false;
+  }
+
+  public boolean isExportedField(JField field) {
+    return isJsInteropEnabled() && field.isExported();
+  }
+
+  public boolean isExportedMethod(JMethod method) {
+    return isJsInteropEnabled() && method.isExported();
   }
 
   /**
@@ -1146,28 +1134,7 @@ public class JTypeOracle implements Serializable {
    * method.
    */
   public boolean isJsTypeMethod(JMethod x) {
-    if (isImmediateJsTypeMethod(x)) {
-      return true;
-    }
-    for (JMethod overriddenMethod : getOverriddenMethodsOf(x)) {
-      if (isImmediateJsTypeMethod(overriddenMethod)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  /**
-   * Returns whether the given method is exported by an @JsType annotation.
-   * <p>
-   * A method is a JsType method if it is a public instance method that has not been marked NoExport
-   * and is in a concrete class that has been annotated @JsType .
-   */
-  private boolean isImmediateJsTypeMethod(JMethod x) {
-    if (!isJsInteropEnabled() || !x.isPublic() || x.isNoExport() || !x.needsVtable()) {
-      return false;
-    }
-    return isJsType(x.getEnclosingType());
+    return isJsInteropEnabled() && x.isOrOverridesJsTypeMethod();
   }
 
   /**
@@ -1177,10 +1144,7 @@ public class JTypeOracle implements Serializable {
    * annotated @JsType.
    */
   public boolean isJsTypeField(JField x) {
-    if (!isJsInteropEnabled() || !x.isPublic() || x.isStatic()) {
-      return false;
-    }
-    return isJsType(x.getEnclosingType());
+    return isJsInteropEnabled() && x.isJsTypeMember();
   }
 
   public boolean isSingleJsoImpl(JType type) {

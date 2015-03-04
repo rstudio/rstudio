@@ -292,6 +292,14 @@ public class JsExportTest extends GWTTestCase {
     return new $wnd.woo.MyClassWithNestedExportedClass.Inner();
   }-*/;
 
+  public void testInheritPackageNamespace_nestedEnum() {
+    assertNotNull(getNestedEnum());
+  }
+
+  private static native Object getNestedEnum() /*-{
+    return $wnd.woo.MyClassWithNestedExportedClass.InnerEnum.AA;
+  }-*/;
+
   public void testInheritPackageNamespace_subpackage() {
     assertNull(getNestedSubpackage());
     assertNotNull(getNestedSubpackageCorrect());

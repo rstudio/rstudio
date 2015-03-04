@@ -38,4 +38,12 @@ public class MyClassWithNestedExportedClass {
   public static class InnerWithNamespace {
     public static final int WOOZ = 999;
   }
+
+  /**
+   * Exported nested enum.
+   */
+  @JsExport
+  public enum InnerEnum {
+    AA, BB;
+  }
 }

@@ -186,7 +186,7 @@ public final class JdtUtil {
     return null;
   }
 
-  static AnnotationBinding getAnnotation(Annotation[] annotations, String nameToFind) {
+  public static AnnotationBinding getAnnotation(Annotation[] annotations, String nameToFind) {
     if (annotations != null) {
       for (Annotation a : annotations) {
         AnnotationBinding annBinding = a.getCompilerAnnotation();

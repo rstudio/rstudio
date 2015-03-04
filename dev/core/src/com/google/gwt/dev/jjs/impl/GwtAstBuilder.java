@@ -48,7 +48,6 @@ import com.google.gwt.dev.jjs.ast.JConstructor;
 import com.google.gwt.dev.jjs.ast.JContinueStatement;
 import com.google.gwt.dev.jjs.ast.JDeclarationStatement;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
-import com.google.gwt.dev.jjs.ast.JDeclaredType.JsInteropType;
 import com.google.gwt.dev.jjs.ast.JDoStatement;
 import com.google.gwt.dev.jjs.ast.JDoubleLiteral;
 import com.google.gwt.dev.jjs.ast.JEnumField;
@@ -1129,8 +1128,7 @@ public class GwtAstBuilder {
       SourceInfo info = makeSourceInfo(x);
       // JDT synthesizes a method lambda$n(capture1, capture2, ..., lambda_arg1, lambda_arg2, ...)
       // Here we create a JMethod from this
-      JMethod lambdaMethod = createSyntheticMethodFromBinding(info, x.binding,
-          paramNames);
+      JMethod lambdaMethod = createMethodFromBinding(info, x.binding, paramNames);
       JMethodBody methodBody = new JMethodBody(info);
       lambdaMethod.setBody(methodBody);
       // We need to push this method  on the stack as it introduces a scope, and
@@ -2488,25 +2486,6 @@ public class GwtAstBuilder {
         addBridgeMethods(x.binding);
       }
 
-      if (JsInteropUtil.isClassWideJsExport(x)) {
-        for (JMethod m : type.getMethods()) {
-          if (m.getExportName() != null) {
-            continue;
-          }
-          if (m.isPublic() && (m.isStatic() || (m instanceof JConstructor))) {
-            m.setExportName("");
-          }
-        }
-        for (JField f : type.getFields()) {
-          if (f.getExportName() != null) {
-            continue;
-          }
-          if (f.isPublic() && f.isStatic()) {
-            f.setExportName("");
-          }
-        }
-      }
-      JsInteropUtil.maybeSetJsNamespace(type, x);
       curClass = classStack.pop();
     }
 
@@ -3877,7 +3856,7 @@ public class GwtAstBuilder {
               getFieldDisposition(binding), AccessModifier.fromFieldBinding(binding));
     }
     enclosingType.addField(field);
-    JsInteropUtil.maybeSetExportedField(x, field);
+    JsInteropUtil.maybeSetJsInteropProperties(field, x.annotations);
     typeMap.setField(binding, field);
   }
 
@@ -3916,13 +3895,13 @@ public class GwtAstBuilder {
               binding.getExactMethod(VALUE_OF, new TypeBinding[]{x.scope.getJavaLangString()},
                   curCud.scope);
           assert valueOfBinding != null;
-          createSyntheticMethodFromBinding(info, valueOfBinding, new String[]{"name"});
+          createMethodFromBinding(info, valueOfBinding, new String[] {"name"});
         }
         {
           assert type.getMethods().size() == 4;
           MethodBinding valuesBinding = binding.getExactMethod(VALUES, NO_TYPES, curCud.scope);
           assert valuesBinding != null;
-          createSyntheticMethodFromBinding(info, valuesBinding, null);
+          createMethodFromBinding(info, valuesBinding, null);
         }
       }
 
@@ -4038,7 +4017,6 @@ public class GwtAstBuilder {
     }
 
     enclosingType.addMethod(method);
-    JsInteropUtil.maybeSetJsinteropMethodProperties(x, method);
     processAnnotations(x, method);
     typeMap.setMethod(b, method);
   }
@@ -4048,6 +4026,7 @@ public class GwtAstBuilder {
     maybeAddMethodSpecialization(x, method);
     maybeSetDoNotInline(x, method);
     maybeSetHasNoSideEffects(x, method);
+    JsInteropUtil.maybeSetJsInteropProperties(method, x.annotations);
   }
 
   private void maybeSetDoNotInline(AbstractMethodDeclaration x,
@@ -4130,11 +4109,12 @@ public class GwtAstBuilder {
     return method;
   }
 
-  private JMethod createSyntheticMethodFromBinding(SourceInfo info, MethodBinding binding,
+  private JMethod createMethodFromBinding(SourceInfo info, MethodBinding binding,
       String[] paramNames) {
     JMethod method = typeMap.createMethod(info, binding, paramNames);
     assert !method.isExternal();
     method.setBody(new JMethodBody(info));
+    JsInteropUtil.maybeSetJsInteropProperties(method);
     typeMap.setMethod(binding, method);
     return method;
   }
@@ -4151,25 +4131,27 @@ public class GwtAstBuilder {
         name = JdtUtil.asDottedString(binding.compoundName);
       }
       name = intern(name);
-      JDeclaredType type;
-      String jsPrototype = JsInteropUtil.maybeGetJsTypePrototype(x);
-      JsInteropType interopType = JsInteropUtil.maybeGetJsInteropType(x, jsPrototype);
 
+      JDeclaredType type;
       if (binding.isClass()) {
-        type = new JClassType(info, name, binding.isAbstract(), binding.isFinal(), interopType);
-        JsInteropUtil.maybeSetJsPrototypeFlag(x, (JClassType) type);
+        type = new JClassType(info, name, binding.isAbstract(), binding.isFinal());
+        ((JClassType) type).setJsPrototypeStub(JsInteropUtil.isJsPrototypeFlag(x));
       } else if (binding.isInterface() || binding.isAnnotationType()) {
-        type = new JInterfaceType(info, name, interopType, jsPrototype);
+        type = new JInterfaceType(info, name);
       } else if (binding.isEnum()) {
         if (binding.isAnonymousType()) {
           // Don't model an enum subclass as a JEnumType.
-          type = new JClassType(info, name, false, true, interopType);
+          type = new JClassType(info, name, false, true);
         } else {
-          type = new JEnumType(info, name, binding.isAbstract(), interopType);
+          type = new JEnumType(info, name, binding.isAbstract());
         }
       } else {
         throw new InternalCompilerException("ReferenceBinding is not a class, interface, or enum.");
       }
+      type.setJsTypeInfo(JsInteropUtil.isJsType(x), JsInteropUtil.maybeGetJsTypePrototype(x),
+          JsInteropUtil.maybeGetJsNamespace(x));
+      type.setJsExportInfo(JsInteropUtil.isClassWideJsExport(x));
+
       typeMap.setSourceType(binding, type);
       newTypes.add(type);
       if (x.memberTypes != null) {

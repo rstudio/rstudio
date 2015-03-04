@@ -24,7 +24,7 @@ import java.io.Serializable;
 /**
  * Java field definition.
  */
-public class JField extends JVariable implements CanBeStatic, HasEnclosingType {
+public class JField extends JVariable implements JMember {
 
   /**
    * Determines whether the variable is final, volatile, or neither.
@@ -47,25 +47,6 @@ public class JField extends JVariable implements CanBeStatic, HasEnclosingType {
     private boolean isVolatile() {
       return this == VOLATILE;
     }
-  }
-
-  private String exportName;
-  private boolean noExport = false;
-
-  public void setNoExport(boolean noExport) {
-    this.noExport = noExport;
-  }
-
-  public void setExportName(String exportName) {
-    this.exportName = exportName;
-  }
-
-  public String getExportName() {
-    return exportName;
-  }
-
-  public boolean isExported() {
-    return exportName != null && !noExport;
   }
 
   private static class ExternalSerializedForm implements Serializable {
@@ -99,6 +80,9 @@ public class JField extends JVariable implements CanBeStatic, HasEnclosingType {
   public static final JField NULL_FIELD = new JField(SourceOrigin.UNKNOWN, "nullField", null,
       JNullType.INSTANCE, false, Disposition.FINAL);
 
+  private String jsTypeName;
+  private String exportName;
+  private String exportNamespace;
   private final JDeclaredType enclosingType;
   private final boolean isCompileTimeConstant;
   private final boolean isStatic;
@@ -145,12 +129,47 @@ public class JField extends JVariable implements CanBeStatic, HasEnclosingType {
     return null;
   }
 
+  @Override
+  public void setExportInfo(String namespace, String name) {
+    this.exportName = name;
+    this.exportNamespace = namespace;
+  }
+
+  @Override
+  public boolean isExported() {
+    return exportName != null;
+  }
+
+  @Override
+  public String getExportName() {
+    assert exportName != null;
+    return exportName;
+  }
+
+  @Override
+  public String getExportNamespace() {
+    return exportNamespace == null ? enclosingType.getQualifiedExportName() : exportNamespace;
+  }
+
+  @Override
   public String getQualifiedExportName() {
-    if ("".equals(exportName)) {
-        return getEnclosingType().getQualifiedExportName() + "." + getName();
-    } else {
-      return exportName;
-    }
+    String namespace = getExportNamespace();
+    return namespace.isEmpty() ? exportName : namespace + "." + exportName;
+  }
+
+  @Override
+  public void setJsMemberName(String jsTypeName) {
+    this.jsTypeName = jsTypeName;
+  }
+
+  @Override
+  public boolean isJsTypeMember() {
+    return jsTypeName != null;
+  }
+
+  @Override
+  public String getJsMemberName() {
+    return jsTypeName;
   }
 
   public String getSignature() {
@@ -172,8 +191,14 @@ public class JField extends JVariable implements CanBeStatic, HasEnclosingType {
     return getEnclosingType() != null && getEnclosingType().isExternal();
   }
 
+  @Override
   public boolean isPublic() {
     return access == AccessModifier.PUBLIC.ordinal();
+  }
+
+  @Override
+  public boolean needsVtable() {
+    return !isStatic;
   }
 
   @Override

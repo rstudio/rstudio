@@ -19,6 +19,7 @@ import com.google.gwt.dev.MinimalRebuildCache;
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JField;
+import com.google.gwt.dev.jjs.ast.JMember;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JVisitor;
@@ -79,18 +80,9 @@ public class JsInteropRestrictionChecker extends JVisitor {
   @Override
   public boolean visit(JField x, Context ctx) {
     if (jprogram.typeOracle.isExportedField(x)) {
-      boolean success = minimalRebuildCache.addExportedGlobalName(x.getQualifiedExportName(),
-          currentType.getName());
-      if (!success) {
-        logError("Static field '%s' can't be exported because the global name '%s' is already "
-            + "taken.", x.getQualifiedName(), x.getQualifiedExportName());
-      }
+      checkExportName(x);
     } else if (jprogram.typeOracle.isJsTypeField(x)) {
-      boolean success = addJsTypeMemberName(x.getName());
-      if (!success) {
-        logError("Instance field '%s' can't be exported because the member name '%s' is already "
-            + "taken.", x.getQualifiedName(), x.getName());
-      }
+      checkJsTypeMemberName(x, x.getJsMemberName());
     }
 
     return false;
@@ -99,14 +91,9 @@ public class JsInteropRestrictionChecker extends JVisitor {
   @Override
   public boolean visit(JMethod x, Context ctx) {
     if (jprogram.typeOracle.isExportedMethod(x)) {
-      boolean success = minimalRebuildCache.addExportedGlobalName(x.getQualifiedExportName(),
-          currentType.getName());
-      if (!success) {
-        logError("Static method '%s' can't be exported because the global name '%s' is already "
-            + "taken.", x.getQualifiedName(), x.getQualifiedExportName());
-      }
+      checkExportName(x);
     } else if (jprogram.typeOracle.isJsTypeMethod(x)) {
-      if (isDirectOrTransitiveJsProperty(x)) {
+      if (x.isOrOverridesJsProperty()) {
         // JsProperty methods are mangled and obfuscated and so do not consume an unobfuscated
         // collidable name slot.
       } else if (x.isSynthetic()) {
@@ -115,35 +102,49 @@ public class JsInteropRestrictionChecker extends JVisitor {
         // should take responsibility for ensuring that only the correct method version (in this
         // particular set of colliding method names) is exported.
       } else {
-        boolean success = addJsTypeMemberName(x.getName());
-        if (!success) {
-          logError("Instance method '%s' can't be exported because the member name '%s' is already "
-              + "taken.", x.getQualifiedName(), x.getName());
-        }
+        checkJsTypeMethod(x);
       }
     }
 
     return false;
+  }
+
+  private void checkExportName(JMember x) {
+    boolean success = minimalRebuildCache.addExportedGlobalName(x.getQualifiedExportName(),
+        currentType.getName());
+    if (!success) {
+      logError("'%s' can't be exported because the global name '%s' is already taken.",
+          x.getQualifiedName(), x.getQualifiedExportName());
+    }
+  }
+
+  private void checkJsTypeMethod(JMethod x) {
+    String name = x.getJsMemberName();
+    for (JMethod override : x.getOverriddenMethods()) {
+      String overrideName = override.getJsMemberName();
+      if (overrideName == null) {
+        continue;
+      }
+      if (name != null && !name.equals(overrideName)) {
+        logError("'%s' can't be exported because the method overloads multiple methods with "
+            + "different names: %s and %s.", x.getQualifiedName(), name, overrideName);
+      }
+      name = overrideName;
+    }
+    assert name != null;
+    checkJsTypeMemberName(x, name);
+  }
+
+  private void checkJsTypeMemberName(JMember x, String memberName) {
+    boolean success = currentJsTypeMemberNames.add(memberName);
+    if (!success) {
+      logError("'%s' can't be exported because the member name '%s' is already taken.",
+          x.getQualifiedName(), memberName);
+    }
   }
 
   private void logError(String format, Object... args) {
     logger.log(TreeLogger.ERROR, String.format(format, args));
     hasErrors = true;
-  }
-
-  private boolean addJsTypeMemberName(String exportedMemberName) {
-    return currentJsTypeMemberNames.add(exportedMemberName);
-  }
-
-  private boolean isDirectOrTransitiveJsProperty(JMethod method) {
-    if (method.isJsProperty()) {
-      return true;
-    }
-    for (JMethod overrideMethod : method.getOverriddenMethods()) {
-      if (overrideMethod.isJsProperty()) {
-        return true;
-      }
-    }
-    return false;
   }
 }

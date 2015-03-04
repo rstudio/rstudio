@@ -26,7 +26,7 @@ import java.io.Serializable;
 /**
  * Base class for all visitable AST nodes.
  */
-public abstract class JNode implements JVisitable, HasSourceInfo, Serializable {
+public abstract class JNode implements HasSourceInfo, Serializable {
 
   private SourceInfo info;
 
@@ -44,6 +44,14 @@ public abstract class JNode implements JVisitable, HasSourceInfo, Serializable {
     assert this.info.getOrigin() == info.getOrigin();
     this.info = info;
   }
+
+  /**
+   * Causes this object to have the visitor visit itself and its children.
+   *
+   * @param visitor the visitor that should traverse this node
+   * @param ctx the context of an existing traversal
+   */
+  public abstract void traverse(JVisitor visitor, Context ctx);
 
   // Causes source generation to delegate to the one visitor
   public final String toSource() {

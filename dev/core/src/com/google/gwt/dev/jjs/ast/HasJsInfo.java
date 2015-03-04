@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2015 Google Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,15 +16,23 @@
 package com.google.gwt.dev.jjs.ast;
 
 /**
- * Abstracts the idea that a class can be traversed.
+ * Abstracts JsInterop information for the AST nodes.
  */
-public interface JVisitable {
+public interface HasJsInfo {
 
-  /**
-   * Causes this object to have the visitor visit itself and its children.
-   *
-   * @param visitor the visitor that should traverse this node
-   * @param ctx the context of an existing traversal
-   */
-  void traverse(JVisitor visitor, Context ctx);
+  void setJsMemberName(String memberName);
+
+  String getJsMemberName();
+
+  boolean isJsTypeMember();
+
+  void setExportInfo(String namespace, String name);
+
+  boolean isExported();
+
+  String getExportName();
+
+  String getExportNamespace();
+
+  String getQualifiedExportName();
 }

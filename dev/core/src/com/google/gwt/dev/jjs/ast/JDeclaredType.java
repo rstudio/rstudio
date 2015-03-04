@@ -48,16 +48,10 @@ import java.util.List;
  */
 public abstract class JDeclaredType extends JReferenceType {
 
-  /**
-   * The type of the class for JsInterop purposes.
-   */
-  public enum JsInteropType {
-    NONE, NO_PROTOTYPE, JS_PROTOTYPE,
-  }
-
-  private final String jsPrototype;
-  private final JsInteropType jsInteropType;
-  private String jsNamespace;
+  private String jsPrototype;
+  private boolean isClassWideExport;
+  private boolean isJsType;
+  private String jsNamespace = null;
 
   /**
    * This type's fields. Special serialization treatment.
@@ -96,15 +90,8 @@ public abstract class JDeclaredType extends JReferenceType {
    */
   private List<JInterfaceType> superInterfaces = Lists.create();
 
-  public JDeclaredType(SourceInfo info, String name, JsInteropType interopType,
-      String jsPrototype) {
+  public JDeclaredType(SourceInfo info, String name) {
     super(info, name);
-    this.jsInteropType = interopType;
-    this.jsPrototype = jsPrototype;
-  }
-
-  public JDeclaredType(SourceInfo info, String name, JsInteropType interopType) {
-    this(info, name, interopType, null);
   }
 
   /**
@@ -314,7 +301,7 @@ public abstract class JDeclaredType extends JReferenceType {
   }
 
   public boolean isJsType() {
-    return jsInteropType != JsInteropType.NONE;
+    return isJsType;
   }
 
   public boolean isOrExtendsJsType() {
@@ -327,6 +314,10 @@ public abstract class JDeclaredType extends JReferenceType {
       }
     }
     return false;
+  }
+
+  public boolean isClassWideExport() {
+    return isClassWideExport;
   }
 
   public boolean hasAnyExports() {
@@ -343,10 +334,6 @@ public abstract class JDeclaredType extends JReferenceType {
     }
 
     return false;
-  }
-
-  public JsInteropType getJsInteropType() {
-    return jsInteropType;
   }
 
   public String getJsPrototype() {
@@ -406,12 +393,19 @@ public abstract class JDeclaredType extends JReferenceType {
   /**
    * Resolves external references during AST stitching.
    */
-  public void resolve(List<JInterfaceType> resolvedInterfaces, String jsNamespace) {
+  public void resolve(List<JInterfaceType> resolvedInterfaces, JDeclaredType pkgInfo) {
     assert JType.replaces(resolvedInterfaces, superInterfaces);
     superInterfaces = Lists.normalize(resolvedInterfaces);
-    if (this.jsNamespace == null && enclosingType == null) {
-      this.jsNamespace = jsNamespace;
+    if (jsNamespace == null) {
+      jsNamespace = computeExportNamespace(pkgInfo);
     }
+  }
+
+  private String computeExportNamespace(JDeclaredType pkgInfo) {
+    if (enclosingType != null) {
+      return enclosingType.getQualifiedExportName();
+    }
+    return pkgInfo != null && pkgInfo.jsNamespace != null ? pkgInfo.jsNamespace : getPackageName();
   }
 
   /**
@@ -425,6 +419,16 @@ public abstract class JDeclaredType extends JReferenceType {
 
   public void setExternal(boolean isExternal) {
     this.isExternal = isExternal;
+  }
+
+  public void setJsTypeInfo(boolean isJsType, String jsPrototype, String jsNamespace) {
+    this.isJsType = isJsType;
+    this.jsPrototype = jsPrototype;
+    this.jsNamespace = jsNamespace;
+  }
+
+  public void setJsExportInfo(boolean isClassWideJsExport) {
+    this.isClassWideExport = isClassWideJsExport;
   }
 
   /**
@@ -535,19 +539,12 @@ public abstract class JDeclaredType extends JReferenceType {
     return null;
   }
 
-  public String getQualifiedExportName() {
-    if (enclosingType == null && jsNamespace == null) {
-      return getName();
-    }
-    String namespace = jsNamespace == null ? enclosingType.getQualifiedExportName() : jsNamespace;
-    return namespace.isEmpty() ? getSimpleName() : namespace + "." + getSimpleName();
-  }
-
-  public String getJsNamespace() {
+  public String getExportNamespace() {
     return jsNamespace;
   }
 
-  public void setJsNamespace(String jsNamespace) {
-    this.jsNamespace = jsNamespace;
+  public String getQualifiedExportName() {
+    String namespace = getExportNamespace();
+    return namespace.isEmpty() ? getSimpleName() : namespace + "." + getSimpleName();
   }
 }

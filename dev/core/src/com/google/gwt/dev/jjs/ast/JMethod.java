@@ -35,8 +35,7 @@ import java.util.Set;
 /**
  * A Java method implementation.
  */
-public class JMethod extends JNode implements HasEnclosingType, HasName, HasType, CanBeAbstract,
-    CanBeSetFinal, CanBeNative, CanBeStatic {
+public class JMethod extends JNode implements JMember, CanBeAbstract, CanBeNative {
 
   public static final Comparator<JMethod> BY_SIGNATURE_COMPARATOR = new Comparator<JMethod>() {
     @Override
@@ -44,32 +43,75 @@ public class JMethod extends JNode implements HasEnclosingType, HasName, HasType
       return m1.getSignature().compareTo(m2.getSignature());
     }
   };
+  private String jsTypeName;
   private String exportName;
+  private String exportNamespace;
   private boolean jsProperty;
   private Specialization specialization;
-  private boolean noExport = false;
   private boolean inliningAllowed = true;
   private boolean hasSideEffects = true;
   private boolean defaultMethod = false;
 
-  public boolean isNoExport() {
-    return noExport;
+  @Override
+  public void setExportInfo(String namespace, String name) {
+    this.exportName = name;
+    this.exportNamespace = namespace;
   }
 
-  public void setNoExport(boolean noExport) {
-    this.noExport = noExport;
+  @Override
+  public boolean isExported() {
+    return exportName != null;
   }
 
-  public void setExportName(String exportName) {
-    this.exportName = exportName;
-  }
-
+  @Override
   public String getExportName() {
+    assert exportName != null;
     return exportName;
   }
 
-  public boolean isExported() {
-    return exportName != null && !noExport;
+  @Override
+  public String getExportNamespace() {
+    if (exportNamespace == null) {
+      exportNamespace = computeExportNamespace();
+    }
+    return exportNamespace;
+  }
+
+  protected String computeExportNamespace() {
+    return enclosingType.getQualifiedExportName();
+  }
+
+  @Override
+  public String getQualifiedExportName() {
+    String namespace = getExportNamespace();
+    return namespace.isEmpty() ? exportName : namespace + "." + exportName;
+  }
+
+  @Override
+  public void setJsMemberName(String jsTypeName) {
+    this.jsTypeName = jsTypeName;
+  }
+
+  @Override
+  public String getJsMemberName() {
+    return jsTypeName;
+  }
+
+  @Override
+  public boolean isJsTypeMember() {
+    return jsTypeName != null;
+  }
+
+  public boolean isOrOverridesJsTypeMethod() {
+    if (isJsTypeMember()) {
+      return true;
+    }
+    for (JMethod overriddenMethod : getOverriddenMethods()) {
+      if (overriddenMethod.isJsTypeMember()) {
+        return true;
+      }
+    }
+    return false;
   }
 
   public void setJsProperty(boolean jsProperty) {
@@ -78,6 +120,18 @@ public class JMethod extends JNode implements HasEnclosingType, HasName, HasType
 
   public boolean isJsProperty() {
     return jsProperty;
+  }
+
+  public boolean isOrOverridesJsProperty() {
+    if (isJsProperty()) {
+      return true;
+    }
+    for (JMethod overriddenMethod : getOverriddenMethods()) {
+      if (overriddenMethod.isOrOverridesJsProperty()) {
+        return true;
+      }
+    }
+    return false;
   }
 
   public void setSpecialization(List<JType> paramTypes, JType returnsType, String targetMethod) {
@@ -90,21 +144,6 @@ public class JMethod extends JNode implements HasEnclosingType, HasName, HasType
 
   public void removeSpecialization() {
     specialization = null;
-  }
-
-  public String getQualifiedExportName() {
-    if (exportName.isEmpty()) {
-      String qualifiedExportName = getEnclosingType().getQualifiedExportName();
-      return this instanceof JConstructor ? qualifiedExportName :
-          qualifiedExportName + "." + getLeafName();
-    } else {
-      return exportName;
-    }
-  }
-
-  private String getLeafName() {
-    String shortName = getName();
-    return shortName.substring(shortName.lastIndexOf('$') + 1);
   }
 
   public boolean isInliningAllowed() {
@@ -404,7 +443,7 @@ public class JMethod extends JNode implements HasEnclosingType, HasName, HasType
   public String getSignature() {
     if (signature == null) {
       StringBuilder sb = new StringBuilder();
-      sb.append(getName());
+      sb.append(name);
       getParamSignature(sb, getOriginalParamTypes(), getOriginalReturnType(), isConstructor());
       signature = sb.toString();
     }
@@ -417,7 +456,7 @@ public class JMethod extends JNode implements HasEnclosingType, HasName, HasType
       sb.append(getEnclosingType().getName());
       sb.append("::");
     }
-    sb.append(getName());
+    sb.append(name);
     sb.append('(');
     for (JType type : getOriginalParamTypes()) {
       sb.append(type.getJsniSignatureName());
@@ -487,6 +526,7 @@ public class JMethod extends JNode implements HasEnclosingType, HasName, HasType
     return access == AccessModifier.PRIVATE.ordinal();
   }
 
+  @Override
   public boolean isPublic() {
     return access == AccessModifier.PUBLIC.ordinal();
   }
@@ -508,6 +548,7 @@ public class JMethod extends JNode implements HasEnclosingType, HasName, HasType
    * Returns <code>true</code> if this method can participate in instance
    * dispatch.
    */
+  @Override
   public boolean needsVtable() {
     return !isStatic();
   }

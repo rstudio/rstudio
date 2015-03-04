@@ -1475,8 +1475,7 @@ public class UnifyAst {
     for (JInterfaceType intf : type.getImplements()) {
       resolvedInterfaces.add((JInterfaceType) translate(intf));
     }
-    JDeclaredType pkgInfo = findPackageInfo(type);
-    type.resolve(resolvedInterfaces, pkgInfo != null ? pkgInfo.getJsNamespace() : null);
+    type.resolve(resolvedInterfaces, findPackageInfo(type));
   }
 
   private JDeclaredType findPackageInfo(JDeclaredType type) {
