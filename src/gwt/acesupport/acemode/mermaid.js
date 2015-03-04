@@ -20,8 +20,9 @@ var TextMode = require("ace/mode/text").Mode;
 var Tokenizer = require("ace/tokenizer").Tokenizer;
 var MermaidHighlightRules = require("mode/mermaid_highlight_rules").MermaidHighlightRules;
 
-var Mode = function() {   
-   this.$tokenizer = new Tokenizer(new MermaidHighlightRules().getRules());
+var Mode = function() {
+   this.$highlightRules = new MermaidHighlightRules();
+   this.$tokenizer = new Tokenizer(this.$highlightRules.getRules());
 };
 oop.inherits(Mode, TextMode);
 

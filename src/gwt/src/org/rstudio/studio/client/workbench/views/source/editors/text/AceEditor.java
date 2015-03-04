@@ -55,6 +55,7 @@ import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.model.ChangeTracker;
 import org.rstudio.studio.client.workbench.model.EventBasedChangeTracker;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefsAccessor;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionManager;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionManager.InitCompletionFilter;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionPopupPanel;
@@ -206,19 +207,25 @@ public class AceEditor implements DocDisplay,
             {
                public void onLoaded()
                {
-                  vimLoader_.addCallback(new Callback()
+                  extLanguageToolsLoader_.addCallback(new Callback() 
                   {
                      public void onLoaded()
                      {
-                        emacsLoader_.addCallback(new Callback()
+                        vimLoader_.addCallback(new Callback()
                         {
                            public void onLoaded()
                            {
-                              if (command != null)
-                                 command.execute();
+                              emacsLoader_.addCallback(new Callback()
+                              {
+                                 public void onLoaded()
+                                 {
+                                    if (command != null)
+                                       command.execute();
+                                 }
+                              });
                            }
                         });
-                     }
+                     }  
                   });
                }
             });
@@ -451,7 +458,7 @@ public class AceEditor implements DocDisplay,
    {
       if (fileType_ == null)
          return;
-
+      
       CompletionManager completionManager;
       if (!suppressCompletion)
       {
@@ -496,13 +503,43 @@ public class AceEditor implements DocDisplay,
       completionManager_ = completionManager;
       
       updateKeyboardHandlers();
-     
+      
+      syncCompletionPrefs();
+      syncDiagnosticsPrefs();
+      
       getSession().setEditorMode(
             fileType_.getEditorLanguage().getParserName(),
             false);
       getSession().setUseWrapMode(fileType_.getWordWrap());
       syncWrapLimit();
-   }   
+   } 
+   
+   @Override
+   public void syncCompletionPrefs()
+   {
+      if (fileType_ == null)
+         return;
+      
+      boolean enabled = fileType_.getEditorLanguage().useAceLanguageTools();
+      boolean live = uiPrefs_.codeCompleteOther().getValue().equals(
+                                       UIPrefsAccessor.COMPLETION_ALWAYS);
+      int characterThreshold = uiPrefs_.alwaysCompleteCharacters().getValue();
+      int delay = uiPrefs_.alwaysCompleteDelayMs().getValue();
+      widget_.getEditor().setCompletionOptions(
+            enabled, false, live, characterThreshold, delay);
+   }
+   
+   @Override
+   public void syncDiagnosticsPrefs()
+   {
+      if (fileType_ == null)
+         return;
+      
+      boolean useWorker = uiPrefs_.showDiagnosticsOther().getValue() &&
+            fileType_.getEditorLanguage().useAceLanguageTools();
+
+      getSession().setUseWorker(useWorker);
+   }
    
    private void syncWrapLimit()
    {
@@ -1581,7 +1618,19 @@ public class AceEditor implements DocDisplay,
    @Override
    public void jumpToMatching()
    {
-      widget_.getEditor().jumpToMatching();
+      widget_.getEditor().jumpToMatching(false, false);
+   }
+   
+   @Override
+   public void selectToMatching()
+   {
+      widget_.getEditor().jumpToMatching(true, false);
+   }
+   
+   @Override
+   public void expandToMatching()
+   {
+      widget_.getEditor().jumpToMatching(true, true);
    }
    
    @Override
@@ -2136,6 +2185,9 @@ public class AceEditor implements DocDisplay,
          new ExternalJavaScriptLoader(AceResources.INSTANCE.keybindingVimJs().getSafeUri().asString());
    private static final ExternalJavaScriptLoader emacsLoader_ =
          new ExternalJavaScriptLoader(AceResources.INSTANCE.keybindingEmacsJs().getSafeUri().asString());
+   private static final ExternalJavaScriptLoader extLanguageToolsLoader_ =
+         new ExternalJavaScriptLoader(AceResources.INSTANCE.extLanguageTools().getSafeUri().asString());
+   
    
    private boolean popupVisible_;
    

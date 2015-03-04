@@ -1,11 +1,11 @@
 <ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder'
              xmlns:g='urn:import:com.google.gwt.user.client.ui'>
 	<ui:style>
-	
+
 	</ui:style>
 <g:HTMLPanel>
 <g:HTML>
-<!-- 
+<!--
 RStudio's Vim support comes from the ACE editor. Documentation on which keys
 it supports can be found here:
 
@@ -233,6 +233,10 @@ https://github.com/ajaxorg/ace/blob/master/lib/ace/keyboard/vim.js
 			<td><strong>Esc, Ctrl+[</strong></td>
 			<td>Leave insert mode</td>
 			</tr>
+			<tr>
+			<td><strong>gq</strong></td>
+			<td>Reflow text</td>
+			</tr>
         </table>
    </td>
    <td width="33%">
@@ -323,15 +327,20 @@ https://github.com/ajaxorg/ace/blob/master/lib/ace/keyboard/vim.js
 			<td>Replace in selection</td>
 			</tr>
 			<tr>
+			<td><strong>:'&lt;,'&gt;sort</strong></td>
+			<td>Sort selected lines</td>
+			</tr>
+			<tr>
 			<td><strong>:help</strong></td>
 			<td>Show this screen</td>
 			</tr>
         </table>
-        
+
         <h2>Registers</h2>
         <p>
-        The registers <strong>-</strong>, <strong>a-z</strong>, <strong>A-Z</strong>, 
-        and <strong>0-9</strong> are available.
+        The registers <strong>-</strong>, <strong>a-z</strong>, <strong>A-Z</strong>,
+        and <strong>0-9</strong> are available. Use <strong>:registers</strong>
+        to see current register contents.
         </p>
 	</td>
  </tr>

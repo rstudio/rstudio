@@ -65,6 +65,11 @@ void AsyncRProcess::start(const char* rCommand,
    args.push_back("--slave");
    if (rOptions & R_PROCESS_VANILLA)
       args.push_back("--vanilla");
+   if (rOptions & R_PROCESS_NO_RDATA)
+   {
+      args.push_back("--no-save");
+      args.push_back("--no-restore");
+   }
    args.push_back("-e");
    
    bool needsQuote = false;

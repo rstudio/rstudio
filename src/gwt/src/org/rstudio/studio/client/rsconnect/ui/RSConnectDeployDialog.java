@@ -29,6 +29,7 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.FileDialogs;
+import org.rstudio.studio.client.common.FilePathUtils;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.rsconnect.RSConnect;
 import org.rstudio.studio.client.rsconnect.events.RSConnectDeployInitiatedEvent;
@@ -87,6 +88,12 @@ public class RSConnectDeployDialog
       {
          FileSystemItem sourceFSI = FileSystemItem.createDir(sourceDir);
          deployTarget = sourceFSI.completePath(sourceFile);
+         FileSystemItem fileFSI = FileSystemItem.createFile(deployTarget);
+         contents_.setNewAppName(fileFSI.getStem());
+      }
+      else
+      {
+         contents_.setNewAppName(FilePathUtils.friendlyFileName(sourceDir));
       }
 
       launchCheck_ = new CheckBox("Launch browser");

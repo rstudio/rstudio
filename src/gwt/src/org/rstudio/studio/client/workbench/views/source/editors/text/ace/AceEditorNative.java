@@ -71,6 +71,20 @@ public class AceEditorNative extends JavaScriptObject {
       this.setReadOnly(readOnly);
    }-*/;
    
+   public native final void setCompletionOptions(boolean enabled,
+                                                 boolean snippets,
+                                                 boolean live,
+                                                 int characterThreshold,
+                                                 int delayMilliseconds) /*-{
+      this.setOptions({
+        enableBasicAutocompletion: enabled,
+        enableSnippets: enabled && snippets,
+        enableLiveAutocompletion: enabled && live,
+        completionCharacterThreshold: characterThreshold,
+        completionDelay: delayMilliseconds
+      });
+   }-*/;
+   
    public native final void toggleCommentLines() /*-{
       this.toggleCommentLines();
    }-*/;
@@ -220,8 +234,8 @@ public class AceEditorNative extends JavaScriptObject {
       this.scrollToLine(line, center);
    }-*/;
    
-   public final native void jumpToMatching()  /*-{
-      this.jumpToMatching();
+   public final native void jumpToMatching(boolean select, boolean expand) /*-{
+      this.jumpToMatching(select, expand);
    }-*/;
    
    public native final void revealRange(Range range, boolean animate) /*-{

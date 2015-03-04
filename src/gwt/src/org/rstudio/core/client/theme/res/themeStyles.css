@@ -9,7 +9,7 @@
 @external search;
 @external highlight, disabled;
 @external gwt-Button, gwt-Button-DialogAction, gwt-Button-DefaultDialogAction;
-@external gwt-CheckBox;
+@external gwt-CheckBox, gwt-RadioButton;
 @external gwt-DialogBox, gwt-DialogBox-ModalDialog;
 @external gwt-PopupPanelGlass;
 @external gwt-Label;
@@ -111,6 +111,7 @@
 @url HANDCURSOR handCursor;
 
 @url MACCHECK macCheck;
+@url RADIOBUTTONON radioButtonOn;
 
 body.windows, body.macintosh, body.linux {}
 
@@ -121,7 +122,10 @@ body {
 body {
    font-family: proportionalFont;
    font-size: 12px;
+   -ms-user-select: none;
+   -moz-user-select: none;
    -webkit-user-select: none;
+   user-select: none;
 }
 
 select {
@@ -153,7 +157,10 @@ button, input[type="reset"], input[type="button"], input[type="submit"] {
 }
 
 .selectableText {
+  -ms-user-select: text;
+  -moz-user-select: text;
   -webkit-user-select: text;
+  user-select: text;
   cursor: text;
 }
 
@@ -1185,28 +1192,63 @@ body.ubuntu_mono .searchBox {
   resize: none;
 }
 
-.macintosh .gwt-CheckBox input[type="checkbox"] {
+.linux .gwt-CheckBox {
+  margin-bottom: 4px;
+}
+
+/* checkboxes on the Cocoa (Mac) desktop client and checks/radio buttons on the
+ * Linux desktop client have some rendering and positioning inconsistencies, so
+ * we redraw them with CSS. */
+
+.macintosh .gwt-CheckBox input[type="checkbox"],
+.linux .gwt-CheckBox input[type="checkbox"],
+.linux .gwt-RadioButton input[type="radio"] {
   -webkit-appearance: none;
-  -webkit-border-radius: 3px;
   outline: none;
   width: 13px;
   height: 13px;
   border: 1px solid #b0b0b0;
   background: #ffffff;
   vertical-align: middle;
-  margin: 3px;
+  margin: 3px 3px 5px 3px;
+}
+
+.linux .gwt-CheckBox input[type="checkbox"],
+.macintosh .gwt-CheckBox input[type="checkbox"] {
+  -webkit-border-radius: 3px;
+}
+
+.linux .gwt-RadioButton input[type="radio"] {
+  -webkit-border-radius: 7px;
 }
 
 .macintosh .gwt-CheckBox input[type="checkbox"]:focus,
-.macintosh .gwt-CheckBox input[type="checkbox"]:active {
+.macintosh .gwt-CheckBox input[type="checkbox"]:active,
+.linux .gwt-CheckBox input[type="checkbox"]:focus,
+.linux .gwt-CheckBox input[type="checkbox"]:active,
+.linux .gwt-RadioButton input[type="radio"]:focus,
+.linux .gwt-RadioButton input[type="radio"]:active {
   border-color: #707070;
 }
 
-.macintosh .gwt-CheckBox input[type="checkbox"]:checked {
+.macintosh .gwt-CheckBox input[type="checkbox"]:checked,
+.linux .gwt-CheckBox input[type="checkbox"]:checked,
+.linux .gwt-RadioButton input[type="radio"]:checked {
   position: relative;
 }
 
-.macintosh .gwt-CheckBox input[type="checkbox"]:checked:before {
+.macintosh .gwt-CheckBox input[type="checkbox"]:checked:before,
+.linux .gwt-CheckBox input[type="checkbox"]:checked:before {
+  background: MACCHECK;
+}
+
+.linux .gwt-RadioButton input[type="radio"]:checked:before {
+  background: RADIOBUTTONON;
+}
+
+.macintosh .gwt-CheckBox input[type="checkbox"]:checked:before,
+.linux .gwt-CheckBox input[type="checkbox"]:checked:before,
+.linux .gwt-RadioButton input[type="radio"]:checked:before {
   content: '';
   display: block;
   position: absolute;
@@ -1214,12 +1256,10 @@ body.ubuntu_mono .searchBox {
   left: 0px;
   width: 13px;
   height: 13px;
-  background: MACCHECK;
   background-repeat: no-repeat;
   background-position-x: 1px;
   background-position-y: 1px;
 }
-
 
 .dialogTabPanel .gwt-TabLayoutPanelTab
 {

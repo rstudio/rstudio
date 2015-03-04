@@ -136,8 +136,8 @@ void handleFileRequest(const std::string& wwwLocalPath,
             return ;
       }
 
-      // set as chrome frame compatible
-      pResponse->setChromeFrameCompatible(request);
+      // apply browser compatibility headers
+      pResponse->setBrowserCompatible(request);
    }
    
    // get the requested file 

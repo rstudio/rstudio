@@ -2370,6 +2370,21 @@ public class TextEditingTarget implements
    void onJumpToMatching()
    {
       docDisplay_.jumpToMatching();
+      docDisplay_.ensureCursorVisible();
+   }
+   
+   @Handler
+   void onSelectToMatching()
+   {
+      docDisplay_.selectToMatching();
+      docDisplay_.ensureCursorVisible();
+   }
+   
+   @Handler
+   void onExpandToMatching()
+   {
+      docDisplay_.expandToMatching();
+      docDisplay_.ensureCursorVisible();
    }
 
    @Handler
@@ -2379,7 +2394,7 @@ public class TextEditingTarget implements
          doCommentUncomment("%");
       else if (isCursorInRMode())
          doCommentUncomment("#");
-      else if (fileType_.isCpp())
+      else if (fileType_.isCpp() || fileType_.isStan())
          doCommentUncomment("//"); 
    }
    
@@ -2513,6 +2528,27 @@ public class TextEditingTarget implements
       }
       else if (DocumentMode.isSelectionInTexMode(docDisplay_))
          doReflowComment("(%)");
+      else if (DocumentMode.isSelectionInMarkdownMode(docDisplay_))
+         doReflowComment("()");
+      else if (docDisplay_.getFileType().isText())
+         doReflowComment("()");
+         
+   }
+   
+   public void reflowText()
+   {
+      if (docDisplay_.getSelectionValue().isEmpty())
+         docDisplay_.setSelectionRange(
+               Range.fromPoints(
+                     Position.create(docDisplay_.getCursorPosition().getRow(), 0),
+                     Position.create(docDisplay_.getCursorPosition().getRow(),
+                           docDisplay_.getCurrentLine().length())));
+      
+      onReflowComment();
+      docDisplay_.setCursorPosition(
+            Position.create(
+                  docDisplay_.getSelectionEnd().getRow(),
+                  0));
    }
    
    @Handler
@@ -3956,6 +3992,7 @@ public class TextEditingTarget implements
    void onFindFromSelection()
    {
       view_.findFromSelection();
+      docDisplay_.focus();
    }
    
    @Handler
@@ -4548,6 +4585,26 @@ public class TextEditingTarget implements
             new CommandWithArg<Boolean>() {
                public void execute(Boolean arg) {
                   docDisplay.setUseVimMode(arg);
+               }}));
+      releaseOnDismiss.add(prefs.codeCompleteOther().bind(
+            new CommandWithArg<String>() {
+               public void execute(String arg) {
+                  docDisplay.syncCompletionPrefs();
+               }}));
+      releaseOnDismiss.add(prefs.alwaysCompleteCharacters().bind(
+            new CommandWithArg<Integer>() {
+               public void execute(Integer arg) {
+                  docDisplay.syncCompletionPrefs();
+               }}));
+      releaseOnDismiss.add(prefs.alwaysCompleteDelayMs().bind(
+            new CommandWithArg<Integer>() {
+               public void execute(Integer arg) {
+                  docDisplay.syncCompletionPrefs();
+               }}));
+      releaseOnDismiss.add(prefs.showDiagnosticsOther().bind(
+            new CommandWithArg<Boolean>() {
+               public void execute(Boolean arg) {
+                  docDisplay.syncDiagnosticsPrefs();
                }}));
    }
    

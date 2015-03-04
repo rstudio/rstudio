@@ -331,12 +331,12 @@ public class TextEditingTargetWidget
       sourceOnSave_.setVisible(canSourceOnSave);
       srcOnSaveLabel_.setVisible(canSourceOnSave);
       if (fileType.isRd() || canPreviewFromR)
-         srcOnSaveLabel_.setText("Preview on Save");
+         srcOnSaveLabel_.setText(fileType.getPreviewButtonText() + " on Save");
       else
          srcOnSaveLabel_.setText("Source on Save");
       codeTransform_.setVisible(
             (canExecuteCode && !fileType.canAuthorContent()) ||
-            fileType.isC());   
+            fileType.isC() || fileType.isStan());   
      
       sourceButton_.setVisible(canSource && !isPlainMarkdown);
       sourceMenuButton_.setVisible(canSourceWithEcho && 
@@ -373,7 +373,9 @@ public class TextEditingTargetWidget
       }
       else
       {
-         setSourceButtonFromScriptState(isScript, canPreviewFromR);
+         setSourceButtonFromScriptState(isScript, 
+                                        canPreviewFromR,
+                                        fileType.getPreviewButtonText());
       }
       
       toolbar_.invalidateSeparators();
@@ -417,7 +419,10 @@ public class TextEditingTargetWidget
       knitDocumentButton_.setText(width < 450 ? "" : knitCommandText_);
       
       if (editor_.getFileType().isRd() || editor_.getFileType().canPreviewFromR())
-         srcOnSaveLabel_.setText(width < 450 ? "Preview" : "Preview on Save");
+      {
+         String preview = editor_.getFileType().getPreviewButtonText();
+         srcOnSaveLabel_.setText(width < 450 ? preview : preview + " on Save");
+      }
       else
          srcOnSaveLabel_.setText(width < 450 ? "Source" : "Source on Save");
       sourceButton_.setText(width < 400 ? "" : sourceCommandText_);
@@ -655,7 +660,9 @@ public class TextEditingTargetWidget
       previewHTMLButton_.setText(previewCommandText_);
    }
    
-   private void setSourceButtonFromScriptState(boolean isScript, boolean isMermaid)
+   private void setSourceButtonFromScriptState(boolean isScript, 
+                                               boolean canPreviewFromR,
+                                               String previewButtonText)
    {
       sourceCommandText_ = commands_.sourceActiveDocument().getButtonLabel();
       String sourceCommandDesc = commands_.sourceActiveDocument().getDesc();
@@ -666,10 +673,10 @@ public class TextEditingTargetWidget
          sourceButton_.setLeftImage(
                            commands_.debugContinue().getImageResource());
       }
-      else if (isMermaid)
+      else if (canPreviewFromR)
       {
-         sourceCommandText_ = "Preview";
-         sourceCommandDesc = "Save changes and preview the diagram";
+         sourceCommandText_ = previewButtonText;
+         sourceCommandDesc = "Save changes and preview";
          sourceButton_.setLeftImage(
                            commands_.debugContinue().getImageResource());
       }

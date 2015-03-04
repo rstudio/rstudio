@@ -16,6 +16,8 @@ package org.rstudio.studio.client.workbench.prefs.views;
 
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.CheckBox;
+import com.google.gwt.user.client.ui.Label;
+
 import org.rstudio.core.client.prefs.PreferencesDialogPaneBase;
 import org.rstudio.core.client.widget.NumericValueWidget;
 import org.rstudio.studio.client.workbench.prefs.model.Prefs.PrefValue;
@@ -82,6 +84,14 @@ public abstract class PreferencesPane extends PreferencesDialogPaneBase<RPrefs>
          }
       });
       return widget;
+   }
+   
+   protected Label headerLabel(String caption) 
+   {
+      Label headerLabel = new Label(caption);
+      headerLabel.addStyleName(res().styles().headerLabel());
+      nudgeRight(headerLabel);
+      return headerLabel;
    }
 
    protected final ArrayList<Command> onApplyCommands_ = new ArrayList<Command>();

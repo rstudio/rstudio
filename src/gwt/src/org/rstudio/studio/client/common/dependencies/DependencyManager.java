@@ -219,12 +219,40 @@ public class DependencyManager implements InstallShinyEvent.Handler
             if (unsatisfiedDeps.length() == 0)
             {
                command.execute();
+               return;
             }
             
-            // otherwise ask the user if they want to install the 
-            // unsatisifed dependencies
+            // check to see if we can satisfy the version requirement for all
+            // dependencies
+            String unsatisfiedVersions = "";
+            for (int i = 0; i < unsatisfiedDeps.length(); i++)
+            {
+               if (!unsatisfiedDeps.get(i).getVersionSatisfied())
+               {
+                  unsatisfiedVersions += unsatisfiedDeps.get(i).getName() + 
+                       " " + unsatisfiedDeps.get(i).getVersion();
+                  String version = unsatisfiedDeps.get(i).getAvailableVersion();
+                  if (version.isEmpty())
+                     unsatisfiedVersions += " is not available\n";
+                  else
+                     unsatisfiedVersions += " is required but " + version + 
+                        " is available\n";
+               }
+            }
+            
+            if (!unsatisfiedVersions.isEmpty())
+            {
+               // error if we can't satisfy requirements
+               globalDisplay_.showErrorMessage(userAction, 
+                     "Required package versions could not be found:\n\n" +
+                     unsatisfiedVersions + "\n" +
+                     "Check that getOption(\"repos\") refers to a CRAN " + 
+                     "repository that contains the needed package versions.");
+            }
             else
             {
+               // otherwise ask the user if they want to install the 
+               // unsatisifed dependencies
                Command installCommand = new Command() {
                   @Override
                   public void execute()

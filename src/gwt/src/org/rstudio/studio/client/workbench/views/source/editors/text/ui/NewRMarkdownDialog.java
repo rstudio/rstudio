@@ -398,7 +398,7 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
       sb.appendHtmlConstant("</span>");
       RadioButton button = new RadioButton("DefaultOutputFormat", 
                                            sb.toSafeHtml().asString(), true);
-      button.setStyleName(style.outputFormatChoice());
+      button.addStyleName(style.outputFormatChoice());
       formatOptions_.add(button);
       formatWrapper.add(button);
       Label label = new Label(description);

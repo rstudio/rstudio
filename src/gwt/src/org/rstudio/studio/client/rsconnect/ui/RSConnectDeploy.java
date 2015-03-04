@@ -21,7 +21,6 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ThemedButton;
-import org.rstudio.studio.client.common.FilePathUtils;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.rsconnect.model.RSConnectAccount;
 import org.rstudio.studio.client.rsconnect.model.RSConnectApplicationInfo;
@@ -68,10 +67,24 @@ public class RSConnectDeploy extends Composite
    
    public interface DeployStyle extends CssResource
    {
-      String statusLabel();
+      String accountAnchor();
+      String accountList();
+      String controlLabel();
+      String deployLabel();
+      String dropListControl();
+      String fileList();
+      String firstControlLabel();
+      String gridControl();
+      String launchCheck();
       String normalStatus();
       String otherStatus();
-      String launchCheck();
+      String rootCell();
+      String source();
+      String sourceDestLabels();
+      String statusLabel();
+      String transferArrow();
+      String urlAnchor();
+      String validateError();
    }
    
    public interface DeployResources extends ClientBundle
@@ -79,11 +92,13 @@ public class RSConnectDeploy extends Composite
       ImageResource publishShinyIllustration();
       ImageResource publishRmdIllustration();
       ImageResource publishPlotIllustration();
+
+      @Source("RSConnectDeploy.css")
+      DeployStyle style();
    }
    
-   static DeployResources RESOURCES = GWT.create(DeployResources.class);
+   public static DeployResources RESOURCES = GWT.create(DeployResources.class);
    
-
    public RSConnectDeploy(final RSConnectServerOperations server, 
                           final RSAccountConnector connector,    
                           final GlobalDisplay display,
@@ -93,7 +108,7 @@ public class RSConnectDeploy extends Composite
       forDocument_ = forDocument;
       accountList = new RSConnectAccountList(server, display, false);
       initWidget(uiBinder.createAndBindUi(this));
-      
+      style_ = RESOURCES.style();
       
       deployIllustration_.setResource(forDocument ?
                            RESOURCES.publishRmdIllustration() :
@@ -149,7 +164,11 @@ public class RSConnectDeploy extends Composite
    {
       dir = StringUtil.shortPathName(FileSystemItem.createDir(dir), 250);
       deployLabel_.setText(dir);
-      appName.setText(FilePathUtils.friendlyFileName(dir));
+   }
+   
+   public void setNewAppName(String name)
+   {
+      appName.setText(name);
    }
 
    public void setDefaultAccount(RSConnectAccount account)
@@ -272,10 +291,10 @@ public class RSConnectDeploy extends Composite
       urlAnchor.setHref(info.getUrl());
       String status = info.getStatus();
       statusLabel.setText(status);
-      statusLabel.setStyleName(style.statusLabel() + " " + 
+      statusLabel.setStyleName(style_.statusLabel() + " " + 
               (status.equals("running") ?
-                    style.normalStatus() :
-                    style.otherStatus()));
+                    style_.normalStatus() :
+                    style_.otherStatus()));
 
       appInfoPanel.setVisible(true);
       nameLabel.setVisible(false);
@@ -310,7 +329,7 @@ public class RSConnectDeploy extends Composite
    
    public DeployStyle getStyle()
    {
-      return style;
+      return style_;
    }
    
    private void validateAppName()
@@ -369,7 +388,6 @@ public class RSConnectDeploy extends Composite
    @UiField TextBox appName;
    @UiField HTMLPanel appInfoPanel;
    @UiField HTMLPanel nameValidatePanel;
-   @UiField DeployStyle style;
    @UiField VerticalPanel fileListPanel_;
    @UiField InlineLabel deployLabel_;
    @UiField ThemedButton addFileButton_;
@@ -379,5 +397,7 @@ public class RSConnectDeploy extends Composite
    private Command onDeployEnabled_;
    private Command onDeployDisabled_;
    private Command onFileAddClick_;
+
+   private final DeployStyle style_;
    private final boolean forDocument_;
 }

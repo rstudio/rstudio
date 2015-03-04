@@ -646,10 +646,11 @@ var TokenCursor = function(tokens, row, offset) {
 }).call(TokenCursor.prototype);
 
 
-var CppTokenCursor = function(tokens, row, offset) {
+var CppTokenCursor = function(tokens, row, offset, codeModel) {
    this.$tokens = tokens;
    this.$row = row || 0;
    this.$offset = offset || 0;
+   this.$codeModel = codeModel;
 };
 oop.mixin(CppTokenCursor.prototype, TokenCursor.prototype);
 

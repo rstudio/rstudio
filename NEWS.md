@@ -45,12 +45,16 @@
 * Editor tabs in the source pane can now be rearranged
 * Support for multiple cursors via Ctrl+Alt+Up/Down
 * Alt+Enter to run code while retaining cursor position
+* Ctrl+Shift+P to expand selection to matching paren / brace
+* Ctrl+Alt+Shift+P to select within matching parens / braces
 * Comment/uncomment respects indent level when appropriate
 * New Reformat Code command for R scripts
 * New integrated linter for R scripts
 * Shift+Enter now searches backwards in Find/Replace
 * Find All option added in Find/Replace
+* Ctrl+E now focuses the editor after finding from selection
 * New option to control comment continuation on insertion of new lines
+* Reflow text (comment) for markdown and plain text modes
 * Updated to Ace (source editor component) v1.1.8
 * Improved Vim mode:
     - Various bug fixes
@@ -65,7 +69,8 @@
   Ruby, Rust, and Scala.
 * Syntax highlighting for GraphViz and mermaid.js diagrams. 
 * Diagram previews using the `DiagrammeR` package (requires recent version from GitHub).
-* Syntax highlighting modes for many new languages including Clojure, CoffeeScript, C#, Graphviz, Go, Groovy, Haskell, Java, Julia, Lisp, Lua, Matlab, Perl, Ruby, Rust, and Scala.
+* Syntax highlighting modes for many new languages including Clojure, CoffeeScript, C#, Graphviz, Go, Groovy, Haskell, Java, Julia, Lisp, Lua, Matlab, Perl, Ruby, Rust, Scala, and Stan.
+* Keyword and text based code completion for many languages including JavaScript, HTML, CSS, Python, and SQL.
 * A wide variety of new editor themes (color schemes) are now available.
 * Increase file size limit to 5MB (was previously 2MB)
 
@@ -77,6 +82,11 @@
  - Find usages for C++ symbols
  - Intelligent auto-indentation
  - Scope tree for quick intra-file navigation
+ 
+### Web Development (HTML/CSS/JavaScript)
+
+ - Code completion
+ - Inline diagnostics (JSHint) on syntax and other issues
 
 ### Workspace
 
@@ -99,7 +109,8 @@
 * Default to roxygenize for Build and Reload
 * Improved checking for supported protocol with packrat package
 * Escape backslashes in library names when loading packages
-* Call to library after Build and Reload respects --library argument.
+* Call to library after Build and Reload respects --library argument
+* Validate that required versions are available for prompted installs
 
 ### Plots
 
@@ -108,6 +119,7 @@
 ### R Markdown
 
 * Updated to pandoc 1.13.1
+* Ensure that .RData from Rmd directory isn't loaded during Knit
 * Improved handling of lists in editor
 * Make publishing UI easier to discover
 * Require save before previewing Rmd file
@@ -128,6 +140,8 @@
 * Diagram previews using the DiagrammeR package (requires recent version from GitHub).
 * Added Markers pane and sourceMarker API for externals tools (e.g. linters)
 * Enable specification of Sweave driver in Rnw magic comment
+* Re-map prev/next tab shortcuts to eliminate conflicts with window managers
+* Run App command for single file Shiny applications
 
 ### Server
 
@@ -138,13 +152,18 @@
 
 * Prevent error dialog when getOption("repos") is an unnamed vector
 * Fix for regex Find/Replace lockup with empty strings 
+* Fix for console text unselectable in Firefox
 * Find in Files now always activates result pane
 * Correctly reflow comments in Rmd C++ code chunks
+* Don't warn when saving C/C++ file with .hpp extension on OS X
 * Ensure that rmarkdown documents render within input directory
 * Eliminate race condition that could cause crash when polling child processes
 * Correct handling for breakpoints in files with non-ascii filenames on Windows
 * Next/previous word behavior in Rmd is now consistent with behavior in R scripts
 * Ensure cursor is always visible after source navigation
+* Server: Ensure that LANG is populated from system default when not inherited
+* Server: Provide required domain socket permissions during startup
+* IE 11: Strip unprintable unicode characters in Rmd front matter dates
 
 
 

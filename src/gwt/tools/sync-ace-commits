@@ -58,6 +58,8 @@ npm install
 git submodule update --init --recursive
 
 # Merge all the bugfix branches
+# NOTE: 'vim-commands' API merged upstream; should be unneeded with next Ace update
+
 git merge \
     origin/bugfix/token-column \
     origin/bugfix/vim-vertical-block-eol \
@@ -69,6 +71,9 @@ git merge \
     origin/bugfix/vim-join-lines \
     origin/bugfix/highlight-tags-error \
     origin/bugfix/xml-tag-highlight \
+    origin/feature/vim-commands \
+    origin/bugfix/vim-fold-navigation \
+    origin/patch/completion-throttling \
     -m "merge branches"
 
 ## git merge \
@@ -87,6 +92,14 @@ cp build/src-min/ace.js ../../src/org/rstudio/studio/client/workbench/views/sour
 
 # Copy in the 'emacs', 'vim' keybindings
 cp build/src-min/keybinding-* ../../src/org/rstudio/studio/client/workbench/views/source/editors/text/ace/
+
+# Copy the ext-language-tools
+cp build/src-min/ext-language_tools.js ../../src/org/rstudio/studio/client/workbench/views/source/editors/text/ace/
+
+# Copy in workers
+cp build/src-min/worker-html.js ../../www/js/workers
+cp build/src-min/worker-css.js ../../www/js/workers
+cp build/src-min/worker-javascript.js ../../www/js/workers
 
 stripUseStrict() {
     sed 's/"use strict";//g' "$1" > "$1.stripped"

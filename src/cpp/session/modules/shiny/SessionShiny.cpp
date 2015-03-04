@@ -93,7 +93,12 @@ std::string onDetectShinySourceType(
       {
          return kShinyType;
       }
-      else if (filePath.extensionLowerCase() == ".r" &&
+      else if (boost::algorithm::iequals(filename, "app.r") && 
+               boost::algorithm::icontains(pDoc->contents(), "shinyApp"))
+      {
+         return kShinyType;
+      }
+      else if (boost::algorithm::iequals(filename, "global.r") && 
                isShinyAppDir(filePath.parent()))
       {
          return kShinyType;

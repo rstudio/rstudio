@@ -34,4 +34,7 @@ public interface AceResources extends ClientBundle
    
    @Source("keybinding-vim.js")
    StaticDataResource keybindingVimJs();
+   
+   @Source("ext-language_tools.js")
+   StaticDataResource extLanguageTools();
 }

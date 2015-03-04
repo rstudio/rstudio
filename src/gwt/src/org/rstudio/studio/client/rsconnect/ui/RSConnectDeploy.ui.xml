@@ -5,126 +5,16 @@
 	xmlns:rw="urn:import:org.rstudio.core.client.widget">
 	<ui:with field="res" type="org.rstudio.studio.client.rsconnect.ui.RSConnectDeploy.DeployResources" />
 	<ui:with field="projRes" type="org.rstudio.studio.client.projects.ui.newproject.NewProjectResources" />
-	<ui:style type="org.rstudio.studio.client.rsconnect.ui.RSConnectDeploy.DeployStyle">
-	.sourceDestLabels
-	{
-	  color: #808080;
-	}
-	
-	.dropListControl
-	{
-	   width: 250px;
-	}
-
-	.gridControl
-	{
-	   display: block;
-	   width: 244px;
-	   padding: 3px;
-	}
-
-	.source
-	{
-	  font-weight: bold;
-	  padding-top: 10px;
-	}
-	
-	.statusLabel
-	{
-     font-weight: bold;
-	}
-	
-	.transferArrow
-	{
-	  margin-top: 10px;
-	  margin-left: 50px;
-	}
-	
-	.normalStatus
-	{
-	  color: green;
-	}
-	
-	.otherStatus
-	{
-	  color: red;
-	}
-	
-	.validateError
-	{
-	   margin-left: 25px;
-	   color: red;
-	}
-	
-	.launchCheck
-	{
-	   display: block;
-      margin-top: 7px;
-	}
-	
-	.fileList
-	{
-	  background-color: #ffffff;
-     border: 1px solid gray;
-     height: 165px;
-     width: 250px;
-     padding: 7px;
-     margin-top: 5px;
-     margin-bottom: 10px;
-     margin-right: 30px;
-	}
-	
-	.deployLabel
-	{
-	  font-weight: bold;
-	}
-	
-	.rootCell
-	{
-	  vertical-align: top;
-	}
-	
-	.controlLabel
-	{
-	  margin-top: 5px;
-	  margin-bottom: 3px;
-	}
-	
-	.urlAnchor
-	{
-	  display: block;
-	}
-	
-	.accountList
-	{
-	  height: 100px;
-	}
-	
-	.accountAnchor
-	{
-	  text-align: right;
-	  font-size: x-small;
-	  display: block;
-	  margin-top: 5px;
-	  cursor: pointer;
-	}
-	
-	.firstControlLabel
-	{
-	  margin-bottom: 5px;
-	}
-	
-	</ui:style>
 	<g:HTMLPanel>
 	<g:Image ui:field="deployIllustration_"></g:Image>
 	<g:Grid><g:row>
-    <g:customCell styleName="{style.rootCell}">
+    <g:customCell styleName="{res.style.rootCell}">
       <g:VerticalPanel>
         <g:HTMLPanel>
           <g:InlineLabel text="Deploy Files From:"></g:InlineLabel>
-          <g:InlineLabel styleName="{style.deployLabel}" ui:field="deployLabel_"></g:InlineLabel>
+          <g:InlineLabel styleName="{res.style.deployLabel}" ui:field="deployLabel_"></g:InlineLabel>
         </g:HTMLPanel>
-        <g:ScrollPanel styleName="{style.fileList}">
+        <g:ScrollPanel styleName="{res.style.fileList}">
           <g:VerticalPanel ui:field="fileListPanel_">
           </g:VerticalPanel>
         </g:ScrollPanel>
@@ -133,27 +23,27 @@
                          visible="false"></rw:ThemedButton>
       </g:VerticalPanel>
      </g:customCell>
-     <g:customCell styleName="{style.rootCell}">
+     <g:customCell styleName="{res.style.rootCell}">
       <g:HTMLPanel>
          <g:HorizontalPanel width="100%">
-         <g:Label styleName="{style.firstControlLabel}" text="Destination Account:"></g:Label>
-         <g:Anchor styleName="rstudio-HyperlinkLabel {style.accountAnchor}" ui:field="addAccountAnchor" text="Add New Account"></g:Anchor>
+         <g:Label styleName="{res.style.firstControlLabel}" text="Destination Account:"></g:Label>
+         <g:Anchor styleName="rstudio-HyperlinkLabel {res.style.accountAnchor}" ui:field="addAccountAnchor" text="Add New Account"></g:Anchor>
          </g:HorizontalPanel>
-         <rsc:RSConnectAccountList styleName="{style.accountList}" ui:field="accountList"></rsc:RSConnectAccountList>
-         <g:Label styleName="{style.controlLabel}" text="Application:"></g:Label>
-         <g:ListBox styleName="{style.dropListControl}" ui:field="appList"></g:ListBox>
-         <g:Label styleName="{style.controlLabel}" ui:field="nameLabel" text="Name:"></g:Label>
-         <g:TextBox styleName="{style.gridControl}" ui:field="appName" maxLength="63"></g:TextBox>
-         <g:HTMLPanel styleName="{style.controlLabel}" visible="false" ui:field="appInfoPanel">
+         <rsc:RSConnectAccountList styleName="{res.style.accountList}" ui:field="accountList"></rsc:RSConnectAccountList>
+         <g:Label styleName="{res.style.controlLabel}" text="Application:"></g:Label>
+         <g:ListBox styleName="{res.style.dropListControl}" ui:field="appList"></g:ListBox>
+         <g:Label styleName="{res.style.controlLabel}" ui:field="nameLabel" text="Name:"></g:Label>
+         <g:TextBox styleName="{res.style.gridControl}" ui:field="appName" maxLength="63"></g:TextBox>
+         <g:HTMLPanel styleName="{res.style.controlLabel}" visible="false" ui:field="appInfoPanel">
             <g:InlineLabel text="URL:"></g:InlineLabel>
-            <g:InlineLabel styleName="{style.statusLabel}" ui:field="statusLabel"></g:InlineLabel>
-            <g:Anchor styleName="{style.urlAnchor}" ui:field="urlAnchor" target="_blank"></g:Anchor>
+            <g:InlineLabel styleName="{res.style.statusLabel}" ui:field="statusLabel"></g:InlineLabel>
+            <g:Anchor styleName="{res.style.urlAnchor}" ui:field="urlAnchor" target="_blank"></g:Anchor>
          </g:HTMLPanel>
       </g:HTMLPanel>
      </g:customCell>
 	</g:row></g:Grid>
 	<g:HTMLPanel visible="false" ui:field="nameValidatePanel">
-	  <g:Label styleName="{style.validateError}" text="Application names must be between 4 and 63 characters, and can contain only alphanumeric characters, dashes, and underscores."></g:Label>
+	  <g:Label styleName="{res.style.validateError}" text="Application names must be between 4 and 63 characters, and can contain only alphanumeric characters, dashes, and underscores."></g:Label>
 	</g:HTMLPanel>
 	</g:HTMLPanel>
 </ui:UiBinder> 

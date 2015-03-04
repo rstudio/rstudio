@@ -14,12 +14,14 @@
  */
 package org.rstudio.studio.client.workbench.prefs.views;
 
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.CheckBox;
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.inject.Inject;
 
@@ -38,6 +40,7 @@ public class EditingPreferencesPane extends PreferencesPane
                                  PreferencesDialogResources res)
    {
       prefs_ = prefs;
+      PreferencesDialogBaseResources baseRes = PreferencesDialogBaseResources.INSTANCE;
       
       VerticalPanel editingPanel = new VerticalPanel();
       editingPanel.add(tight(spacesForTab_ = checkboxPref("Insert spaces for tab", prefs.useSpacesForTab())));
@@ -67,6 +70,9 @@ public class EditingPreferencesPane extends PreferencesPane
       displayPanel.add(checkboxPref("Show syntax highlighting in console input", prefs_.syntaxColorConsole()));
       
       VerticalPanel completionPanel = new VerticalPanel();
+      
+      completionPanel.add(headerLabel("R and C/C++"));
+     
       showCompletions_ = new SelectWidget(
             "Show code completions:",
             new String[] {
@@ -84,35 +90,25 @@ public class EditingPreferencesPane extends PreferencesPane
             false);
       
       spaced(showCompletions_);
-      completionPanel.add(showCompletions_);
-
-      final VerticalPanel alwaysCompletePanel = new VerticalPanel();
-      alwaysCompletePanel.addStyleName(res.styles().alwaysCompletePanel());
-      alwaysCompletePanel.add(indent(alwaysCompleteChars_ = 
-          numericPref("Show completions after characters entered:",
-                      prefs.alwaysCompleteCharacters())));
-      alwaysCompletePanel.add(indent(alwaysCompleteDelayMs_ = 
-          numericPref("Show completions after keyboard idle (ms):",
-                      prefs.alwaysCompleteDelayMs())));
-      CheckBox alwaysCompleteInConsole = checkboxPref(
+      completionPanel.add(showCompletions_);    
+      
+      final CheckBox alwaysCompleteInConsole = checkboxPref(
             "Allow automatic completions in console",
             prefs.alwaysCompleteInConsole());
-      indent(alwaysCompleteInConsole);
-      alwaysCompletePanel.add(alwaysCompleteInConsole);
+      completionPanel.add(alwaysCompleteInConsole);
       
-      completionPanel.add(alwaysCompletePanel);
       showCompletions_.addChangeHandler(new ChangeHandler()
       {
          @Override
          public void onChange(ChangeEvent event)
          {
-            alwaysCompletePanel.setVisible(
+            alwaysCompleteInConsole.setVisible(
                    showCompletions_.getValue().equals(
                                         UIPrefsAccessor.COMPLETION_ALWAYS));
             
          }
       });
-      
+    
       final CheckBox insertParensAfterFunctionCompletionsCheckbox =
            checkboxPref("Insert parentheses after function completions",
                  prefs.insertParensAfterFunctionCompletion());
@@ -131,20 +127,49 @@ public class EditingPreferencesPane extends PreferencesPane
       completionPanel.add(checkboxPref("Insert spaces around equals for argument completions", prefs.insertSpacesAroundEquals()));
       completionPanel.add(checkboxPref("Use tab for multiline autocompletions", prefs.allowTabMultilineCompletion()));
       
+      
+      Label otherLabel = headerLabel("Other Languages");
+      otherLabel.getElement().getStyle().setMarginTop(8, Unit.PX);
+      completionPanel.add(otherLabel);
+      
+      showCompletionsOther_ = new SelectWidget(
+            "Show code completions:",
+            new String[] {
+                  "Automatically",
+                  "Manually (Ctrl+Space) "
+            },
+            new String[] {
+                  UIPrefsAccessor.COMPLETION_ALWAYS,
+                  UIPrefsAccessor.COMPLETION_MANUAL
+            },
+            false, 
+            true, 
+            false);
+      completionPanel.add(showCompletionsOther_);
+      
+      Label otherTip = new Label(
+        "Keyword and text-based completions are supported for several other " +
+        "languages including JavaScript, HTML, CSS, Python, and SQL.");
+      otherTip.addStyleName(baseRes.styles().infoLabel());
+      completionPanel.add(nudgeRightPlus(otherTip));
+      
+      
+      Label delayLabel = headerLabel("Completion Delay");
+      delayLabel.getElement().getStyle().setMarginTop(14, Unit.PX);
+      completionPanel.add(delayLabel);
+      
+      completionPanel.add(nudgeRightPlus(alwaysCompleteChars_ =
+          numericPref("Show completions after characters entered:",
+                      prefs.alwaysCompleteCharacters())));
+      completionPanel.add(nudgeRightPlus(alwaysCompleteDelayMs_ = 
+          numericPref("Show completions after keyboard idle (ms):",
+                      prefs.alwaysCompleteDelayMs())));
+        
+      
       VerticalPanel diagnosticsPanel = new VerticalPanel();
+      diagnosticsPanel.add(checkboxPref("Show diagnostics for R and C/C++", prefs.showDiagnostics()));
+      diagnosticsPanel.add(checkboxPref("Show diagnostics for other languages", prefs.showDiagnosticsOther()));
       
-      final CheckBox showDiagnostics =
-            checkboxPref("Show inline diagnostics for R and C/C++ code", prefs.showDiagnostics());
-      
-      final CheckBox enableStyleDiagnostics =
-            checkboxPref("Enable style-related diagnostics for R", prefs.enableStyleDiagnostics());
-      
-      addEnabledDependency(
-            showDiagnostics,
-            enableStyleDiagnostics);
-      
-      diagnosticsPanel.add(showDiagnostics);
-      diagnosticsPanel.add(enableStyleDiagnostics);
       
       DialogTabLayoutPanel tabPanel = new DialogTabLayoutPanel();
       tabPanel.setSize("435px", "498px");
@@ -194,6 +219,7 @@ public class EditingPreferencesPane extends PreferencesPane
    protected void initialize(RPrefs prefs)
    {
       showCompletions_.setValue(prefs_.codeComplete().getValue());
+      showCompletionsOther_.setValue(prefs_.codeCompleteOther().getValue());
    }
    
    @Override
@@ -202,6 +228,7 @@ public class EditingPreferencesPane extends PreferencesPane
       boolean reload = super.onApply(prefs);
       
       prefs_.codeComplete().setGlobalValue(showCompletions_.getValue());
+      prefs_.codeCompleteOther().setGlobalValue(showCompletionsOther_.getValue());
       
       return reload;
    }
@@ -219,7 +246,7 @@ public class EditingPreferencesPane extends PreferencesPane
    {
       return (!spacesForTab_.getValue() || tabWidth_.validatePositive("Tab width")) && 
              (!showMargin_.getValue() || marginCol_.validate("Margin column")) &&
-             alwaysCompleteChars_.validateRange("Characters entered", 3, 100) &&
+             alwaysCompleteChars_.validateRange("Characters entered", 1, 100) &&
              alwaysCompleteDelayMs_.validateRange("Keyboard idle (ms)", 0, 10000);
    }
 
@@ -237,6 +264,7 @@ public class EditingPreferencesPane extends PreferencesPane
    private final CheckBox spacesForTab_;
    private final CheckBox showMargin_;
    private final SelectWidget showCompletions_;
+   private final SelectWidget showCompletionsOther_;
    
    
 }

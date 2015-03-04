@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.prefs.views;
 import com.google.gwt.dom.client.*;
 import com.google.gwt.dom.client.Style.BorderStyle;
 import com.google.gwt.dom.client.Style.Unit;
+
 import org.rstudio.core.client.ExternalJavaScriptLoader;
 import org.rstudio.core.client.ExternalJavaScriptLoader.Callback;
 import org.rstudio.core.client.theme.ThemeFonts;
@@ -39,51 +40,87 @@ public class AceEditorPreview extends DynamicIFrame
    protected void onFrameLoaded()
    {
       isFrameLoaded_ = true;
-      if (themeUrl_ != null)
-         setTheme(themeUrl_);
-      if (fontSize_ != null)
-         setFontSize(fontSize_);
-      if (zoomLevel_ != null)
-         setZoomLevel(zoomLevel_);
-
       final Document doc = getDocument();
-      final BodyElement body = doc.getBody();
-      body.getStyle().setMargin(0, Unit.PX);
-      body.getStyle().setBackgroundColor("white");
-
-      StyleElement style = doc.createStyleElement();
-      style.setType("text/css");
-      style.setInnerText(
-            ".ace_editor {\n" +
-            "border: none !important;\n" +
-            "}");
-      setFont(ThemeFonts.getFixedWidthFont());
-      body.appendChild(style);
-
-      DivElement div = doc.createDivElement();
-      div.setId("editor");
-      div.getStyle().setWidth(100, Unit.PCT);
-      div.getStyle().setHeight(100, Unit.PCT);
-      div.setInnerText(code_);
-      body.appendChild(div);
-
-      FontSizer.injectStylesIntoDocument(doc);
-      FontSizer.applyNormalFontSize(div);
-
-      new ExternalJavaScriptLoader(doc, AceResources.INSTANCE.acejs().getSafeUri().asString())
+      
+      // NOTE: There is an interesting 'feature' in Firefox whereby an
+      // initialized IFrame will report that it has successfully initialized the
+      // window / underlying document (readyState is 'complete') but, in fact,
+      // there is still some initialization left to occur and any changes made
+      // before complete initialization will cause it to be swept out from under
+      // our feet. To work around this, we double-check that the document we are
+      // working with is the _same document_ after each JavaScript load
+      // iteration.
+      new ExternalJavaScriptLoader(getDocument(), AceResources.INSTANCE.acejs().getSafeUri().asString())
             .addCallback(new Callback()
       {
          public void onLoaded()
          {
-            new ExternalJavaScriptLoader(doc, AceResources.INSTANCE.acesupportjs().getSafeUri().asString())
+            if (getDocument() != doc) 
+            {
+               onFrameLoaded();
+               return;
+            }
+            
+            new ExternalJavaScriptLoader(getDocument(), AceResources.INSTANCE.acesupportjs().getSafeUri().asString())
                   .addCallback(new Callback()
                   {
                      public void onLoaded()
                      {
+                        
+                        if (getDocument() != doc)
+                        {
+                           onFrameLoaded();
+                           return;
+                        }
+                        
+                        final Document doc = getDocument();
+                        final BodyElement body = doc.getBody();
+                        
+                        if (themeUrl_ != null)
+                           setTheme(themeUrl_);
+                        if (fontSize_ != null)
+                           setFontSize(fontSize_);
+                        if (zoomLevel_ != null)
+                           setZoomLevel(zoomLevel_);
+
+                        body.getStyle().setMargin(0, Unit.PX);
+                        body.getStyle().setBackgroundColor("white");
+
+                        StyleElement style = doc.createStyleElement();
+                        style.setType("text/css");
+                        style.setInnerText(
+                              ".ace_editor {\n" +
+                                    "border: none !important;\n" +
+                              "}");
+                        setFont(ThemeFonts.getFixedWidthFont());
+                        body.appendChild(style);
+
+                        DivElement div = doc.createDivElement();
+                        div.setId("editor");
+                        div.getStyle().setWidth(100, Unit.PCT);
+                        div.getStyle().setHeight(100, Unit.PCT);
+                        div.setInnerText(code_);
+                        body.appendChild(div);
+
+                        FontSizer.injectStylesIntoDocument(doc);
+                        FontSizer.applyNormalFontSize(div);
+                        
                         body.appendChild(doc.createScriptElement(
-                              "var editor = ace.edit('editor');\n" +
+                              "var event = require('ace/lib/event');\n" +
+                              "var Editor = require('ace/editor').Editor;\n" +
+                              "var Renderer = require('ace/virtual_renderer').VirtualRenderer;\n" +
+                              "var dom = require('ace/lib/dom');\n" +
+                              "var container = document.getElementById('editor');\n" +
+                              "var value = dom.getInnerText(container);\n" +
+                              "container.innerHTML = '';\n" +
+                              "var session = ace.createEditSession(value);\n" +
+                              "var editor = new Editor(new Renderer(container, {}));\n" +
+                              "editor.setSession(session);\n" +
+                              "var env = {document: session, editor: editor, onResize: editor.resize.bind(editor, null)};\n" +
+                              "event.addListener(window, 'resize', env.onResize);\n" +
+                              "editor.on('destory', function() { event.removeListener(window, 'resize', env.onResize); });\n" +
+                              "editor.container.env = editor.env = env;\n" +
                               "editor.renderer.setHScrollBarAlwaysVisible(false);\n" +
-                              "editor.renderer.setTheme({});\n" +
                               "editor.setHighlightActiveLine(false);\n" +
                               "editor.setReadOnly(true);\n" +
                               "editor.renderer.setShowGutter(false);\n" +

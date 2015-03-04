@@ -126,6 +126,9 @@ public class UIPrefs extends UIPrefsAccessor implements UiPrefsChangedHandler
          codeComplete().setGlobalValue(
                                  newUiPrefs.codeComplete().getGlobalValue());
          
+         codeCompleteOther().setGlobalValue(
+               newUiPrefs.codeCompleteOther().getGlobalValue());
+         
          alwaysCompleteInConsole().setGlobalValue(
                                  newUiPrefs.alwaysCompleteInConsole().getGlobalValue());
          
@@ -149,6 +152,10 @@ public class UIPrefs extends UIPrefsAccessor implements UiPrefsChangedHandler
          
          showDiagnostics().setGlobalValue(
                                  newUiPrefs.showDiagnostics().getGlobalValue());
+         
+         showDiagnosticsOther().setGlobalValue(
+               newUiPrefs.showDiagnosticsOther().getGlobalValue());
+         
          
          autoAppendNewline().setGlobalValue(
                                  newUiPrefs.autoAppendNewline().getGlobalValue());

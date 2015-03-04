@@ -173,11 +173,19 @@ private:
                               [defaultExtension length] > 0;
    if (hasDefaultExtension)
    {
-      // The method is invoked with an extension like ".R", but NSSavePanel
-      // expects extensions to look like "R" (i.e. no leading period).
-      NSArray *extensions = [NSArray arrayWithObject:
-                                [defaultExtension substringFromIndex: 1]];
-  
+      NSArray* extensions;
+      if ([defaultExtension isEqualToString: @".cpp"])
+      {
+         extensions = @[@"cpp", @"c", @"hpp", @"h"];
+      }
+      else
+      {
+         // The method is invoked with an extension like ".R", but NSSavePanel
+         // expects extensions to look like "R" (i.e. no leading period).
+         extensions = [NSArray arrayWithObject:
+                       [defaultExtension substringFromIndex: 1]];
+      }
+      
       [save setAllowedFileTypes: extensions];
       [save setAllowsOtherFileTypes: !forceDefaultExtension];
    }

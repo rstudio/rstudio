@@ -33,7 +33,7 @@ public class EditorLanguage
    public static final EditorLanguage LANG_R = new EditorLanguage(
          "mode/r", true);
    public static final EditorLanguage LANG_RDOC = new EditorLanguage(
-         "mode/rdoc", false);
+         "mode/rdoc", false, false);
    public static final EditorLanguage LANG_TEX = new EditorLanguage(
          "mode/tex", false);
    public static final EditorLanguage LANG_SWEAVE = new EditorLanguage(
@@ -43,53 +43,55 @@ public class EditorLanguage
    public static final EditorLanguage LANG_RMARKDOWN = new EditorLanguage(
          "mode/rmarkdown", true);
    public static final EditorLanguage LANG_DCF = new EditorLanguage(
-         "mode/dcf", false);
+         "mode/dcf", false, false);
    public static final EditorLanguage LANG_MERMAID = new EditorLanguage(
-         "mode/mermaid", false);
+         "mode/mermaid", false, true);
    public static final EditorLanguage LANG_RHTML = new EditorLanguage(
          "mode/rhtml", true);
    public static final EditorLanguage LANG_CPP = new EditorLanguage(
          "mode/c_cpp", true);
+   public static final EditorLanguage LANG_STAN = new EditorLanguage(
+         "mode/stan", false, true);
    
    // Modes borrowed from Ace
    public static final EditorLanguage LANG_PLAIN = new EditorLanguage(
          "ace/mode/text", false);
    public static final EditorLanguage LANG_HTML = new EditorLanguage(
-         "ace/mode/html", false);
+         "ace/mode/html", false, true);
    public static final EditorLanguage LANG_CSS = new EditorLanguage(
-         "ace/mode/css", true);
+         "ace/mode/css", false, true);
    public static final EditorLanguage LANG_JAVASCRIPT = new EditorLanguage(
-         "ace/mode/javascript", true);
+         "ace/mode/javascript", false, true);
    public static final EditorLanguage LANG_PYTHON = new EditorLanguage(
-         "ace/mode/python", true);
+         "ace/mode/python", false, true);
    public static final EditorLanguage LANG_SQL = new EditorLanguage(
-         "ace/mode/sql", true);
+         "ace/mode/sql", false, true);
    public static final EditorLanguage LANG_SH = new EditorLanguage(
-         "ace/mode/sh", true);
+         "ace/mode/sh", false, true);
    public static final EditorLanguage LANG_YAML = new EditorLanguage(
-         "ace/mode/yaml", true);
+         "ace/mode/yaml", false, true);
    public static final EditorLanguage LANG_XML = new EditorLanguage(
-         "ace/mode/xml", true);
-   public static final EditorLanguage LANG_GRAPHVIZ = new EditorLanguage("ace/mode/dot", true);
+         "ace/mode/xml", false, true);
+   public static final EditorLanguage LANG_GRAPHVIZ = new EditorLanguage("ace/mode/dot", false, true);
    
-   public static final EditorLanguage LANG_CLOJURE = new EditorLanguage("ace/mode/clojure", true);
-   public static final EditorLanguage LANG_COFFEE = new EditorLanguage("ace/mode/coffee", true);
-   public static final EditorLanguage LANG_CSHARP = new EditorLanguage("ace/mode/csharp", true);
-   public static final EditorLanguage LANG_GITIGNORE = new EditorLanguage("ace/mode/gitignore", true);
-   public static final EditorLanguage LANG_GO = new EditorLanguage("ace/mode/golang", true);
-   public static final EditorLanguage LANG_GROOVY = new EditorLanguage("ace/mode/groovy", true);
-   public static final EditorLanguage LANG_HASKELL = new EditorLanguage("ace/mode/haskell", true);
-   public static final EditorLanguage LANG_HAXE = new EditorLanguage("ace/mode/haxe", true);
-   public static final EditorLanguage LANG_JAVA = new EditorLanguage("ace/mode/java", true);
-   public static final EditorLanguage LANG_JULIA = new EditorLanguage("ace/mode/julia", true);
-   public static final EditorLanguage LANG_LISP = new EditorLanguage("ace/mode/lisp", true);
-   public static final EditorLanguage LANG_LUA = new EditorLanguage("ace/mode/lua", true);
-   public static final EditorLanguage LANG_MATLAB = new EditorLanguage("ace/mode/matlab", true);
-   public static final EditorLanguage LANG_PERL = new EditorLanguage("ace/mode/perl", true);
-   public static final EditorLanguage LANG_RUBY = new EditorLanguage("ace/mode/ruby", true);
-   public static final EditorLanguage LANG_RUST = new EditorLanguage("ace/mode/rust", true);
-   public static final EditorLanguage LANG_SCALA = new EditorLanguage("ace/mode/scala", true);
- 
+   public static final EditorLanguage LANG_CLOJURE = new EditorLanguage("ace/mode/clojure", false, true);
+   public static final EditorLanguage LANG_COFFEE = new EditorLanguage("ace/mode/coffee", false, true);
+   public static final EditorLanguage LANG_CSHARP = new EditorLanguage("ace/mode/csharp", false, true);
+   public static final EditorLanguage LANG_GITIGNORE = new EditorLanguage("ace/mode/gitignore", false, false);
+   public static final EditorLanguage LANG_GO = new EditorLanguage("ace/mode/golang", false, true);
+   public static final EditorLanguage LANG_GROOVY = new EditorLanguage("ace/mode/groovy", false, true);
+   public static final EditorLanguage LANG_HASKELL = new EditorLanguage("ace/mode/haskell", false, true);
+   public static final EditorLanguage LANG_HAXE = new EditorLanguage("ace/mode/haxe", false, true);
+   public static final EditorLanguage LANG_JAVA = new EditorLanguage("ace/mode/java", false, true);
+   public static final EditorLanguage LANG_JULIA = new EditorLanguage("ace/mode/julia", false, true);
+   public static final EditorLanguage LANG_LISP = new EditorLanguage("ace/mode/lisp", false, true);
+   public static final EditorLanguage LANG_LUA = new EditorLanguage("ace/mode/lua", false, true);
+   public static final EditorLanguage LANG_MATLAB = new EditorLanguage("ace/mode/matlab", false, true);
+   public static final EditorLanguage LANG_PERL = new EditorLanguage("ace/mode/perl", false, true);
+   public static final EditorLanguage LANG_RUBY = new EditorLanguage("ace/mode/ruby", false, true);
+   public static final EditorLanguage LANG_RUST = new EditorLanguage("ace/mode/rust", false, true);
+   public static final EditorLanguage LANG_SCALA = new EditorLanguage("ace/mode/scala", false, true);
+   
    /**
     *
     * @param parserName The name of the parser--it's found at the top of the
@@ -103,8 +105,17 @@ public class EditorLanguage
          String parserName,
          boolean useRCompletion)
    {
+      this(parserName, useRCompletion, false);
+   }
+   
+   public EditorLanguage(
+         String parserName,
+         boolean useRCompletion,
+         boolean useAceLanguageTools)
+   {
       parserName_ = parserName;
       useRCompletion_ = useRCompletion;
+      useAceLanguageTools_ = useAceLanguageTools;
    }
 
    public String getParserName()
@@ -116,7 +127,13 @@ public class EditorLanguage
    {
       return useRCompletion_;
    }
+   
+   public boolean useAceLanguageTools()
+   {
+      return useAceLanguageTools_;
+   }
 
    private final String parserName_;
    private final boolean useRCompletion_;
+   private final boolean useAceLanguageTools_;
 }

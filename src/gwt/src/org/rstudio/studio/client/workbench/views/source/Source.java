@@ -1,7 +1,7 @@
 /*
  * Source.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-15 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -303,7 +303,8 @@ public class Source implements InsertSourceHandler,
                192,
                commands.executeNextChunk(), 
                "Execute",
-               commands.executeNextChunk().getMenuLabel(false));
+               commands.executeNextChunk().getMenuLabel(false), 
+               "");
       }
 
       events.addHandler(ShowContentEvent.TYPE, this);
@@ -437,8 +438,21 @@ public class Source implements InsertSourceHandler,
             AceEditorNative.setVerticallyAlignFunctionArgs(arg);
          }
       });
-       
+      
+      // adjust shortcuts when vim mode changes
+      uiPrefs_.useVimMode().bind(new CommandWithArg<Boolean>()
+      {
+         @Override
+         public void execute(Boolean arg)
+         {
+            ShortcutManager.INSTANCE.setEditorMode(arg ? 
+                  KeyboardShortcut.MODE_VIM :
+                  KeyboardShortcut.MODE_NONE);
+         }
+      });
+
       initialized_ = true;
+
       // As tabs were added before, manageCommands() was suppressed due to
       // initialized_ being false, so we need to run it explicitly
       manageCommands();
@@ -463,6 +477,7 @@ public class Source implements InsertSourceHandler,
       vimCommands_.saveAndCloseActiveTab(this);
       vimCommands_.readFile(this, uiPrefs_.defaultEncoding().getValue());
       vimCommands_.runRScript(this);
+      vimCommands_.reflowText(this);
       vimCommands_.showVimHelp(
             RStudioGinjector.INSTANCE.getShortcutViewer());
    }
@@ -2515,6 +2530,15 @@ public class Source implements InsertSourceHandler,
             Debug.logError(error);
          }
       });
+   }
+   
+   private void reflowText()
+   {
+      if (activeEditor_ != null && activeEditor_ instanceof TextEditingTarget)
+      {
+         TextEditingTarget editor = (TextEditingTarget) activeEditor_;
+         editor.reflowText();
+      }
    }
    
    private void editFile(final String path)

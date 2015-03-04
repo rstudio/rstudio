@@ -178,6 +178,11 @@ function loadEditor(container) {
 	session.setMode(new TextMode());
 	session.setUndoManager(new RStudioUndoManager());
 
+   // Setup syntax checking
+   var config = require("ace/config");
+   config.set("workerPath", "js/workers");
+   config.setDefaultValue("session", "useWorker", false);
+
 	// We handle these commands ourselves.
 	function squelch(cmd) {
       env.editor.commands.removeCommand(cmd);
