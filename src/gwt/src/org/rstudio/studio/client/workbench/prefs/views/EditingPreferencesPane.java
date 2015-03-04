@@ -40,6 +40,7 @@ public class EditingPreferencesPane extends PreferencesPane
                                  PreferencesDialogResources res)
    {
       prefs_ = prefs;
+      PreferencesDialogBaseResources baseRes = PreferencesDialogBaseResources.INSTANCE;
       
       VerticalPanel editingPanel = new VerticalPanel();
       editingPanel.add(tight(spacesForTab_ = checkboxPref("Insert spaces for tab", prefs.useSpacesForTab())));
@@ -89,35 +90,25 @@ public class EditingPreferencesPane extends PreferencesPane
             false);
       
       spaced(showCompletions_);
-      completionPanel.add(showCompletions_);
-
-      final VerticalPanel alwaysCompletePanel = new VerticalPanel();
-      alwaysCompletePanel.addStyleName(res.styles().alwaysCompletePanel());
-      alwaysCompletePanel.add(indent(alwaysCompleteChars_ = 
-          numericPref("Show completions after characters entered:",
-                      prefs.alwaysCompleteCharacters())));
-      alwaysCompletePanel.add(indent(alwaysCompleteDelayMs_ = 
-          numericPref("Show completions after keyboard idle (ms):",
-                      prefs.alwaysCompleteDelayMs())));
-      CheckBox alwaysCompleteInConsole = checkboxPref(
+      completionPanel.add(showCompletions_);    
+      
+      final CheckBox alwaysCompleteInConsole = checkboxPref(
             "Allow automatic completions in console",
             prefs.alwaysCompleteInConsole());
-      indent(alwaysCompleteInConsole);
-      alwaysCompletePanel.add(alwaysCompleteInConsole);
+      completionPanel.add(alwaysCompleteInConsole);
       
-      completionPanel.add(alwaysCompletePanel);
       showCompletions_.addChangeHandler(new ChangeHandler()
       {
          @Override
          public void onChange(ChangeEvent event)
          {
-            alwaysCompletePanel.setVisible(
+            alwaysCompleteInConsole.setVisible(
                    showCompletions_.getValue().equals(
                                         UIPrefsAccessor.COMPLETION_ALWAYS));
             
          }
       });
-      
+    
       final CheckBox insertParensAfterFunctionCompletionsCheckbox =
            checkboxPref("Insert parentheses after function completions",
                  prefs.insertParensAfterFunctionCompletion());
@@ -137,11 +128,11 @@ public class EditingPreferencesPane extends PreferencesPane
       completionPanel.add(checkboxPref("Use tab for multiline autocompletions", prefs.allowTabMultilineCompletion()));
       
       
-      Label otherLabel = headerLabel("HTML, CSS, and JavaScript");
+      Label otherLabel = headerLabel("Other Languages");
       otherLabel.getElement().getStyle().setMarginTop(8, Unit.PX);
       completionPanel.add(otherLabel);
       
-      showCompletionsWeb_ = new SelectWidget(
+      showCompletionsOther_ = new SelectWidget(
             "Show code completions:",
             new String[] {
                   "Automatically",
@@ -154,11 +145,30 @@ public class EditingPreferencesPane extends PreferencesPane
             false, 
             true, 
             false);
-      completionPanel.add(showCompletionsWeb_);
+      completionPanel.add(showCompletionsOther_);
+      
+      Label otherTip = new Label(
+        "Keyword and text-based completions are supported for several other " +
+        "languages including JavaScript, HTML, CSS, Python, and SQL.");
+      otherTip.addStyleName(baseRes.styles().infoLabel());
+      completionPanel.add(nudgeRightPlus(otherTip));
+      
+      
+      Label delayLabel = headerLabel("Completion Delay");
+      delayLabel.getElement().getStyle().setMarginTop(14, Unit.PX);
+      completionPanel.add(delayLabel);
+      
+      completionPanel.add(nudgeRightPlus(alwaysCompleteChars_ =
+          numericPref("Show completions after characters entered:",
+                      prefs.alwaysCompleteCharacters())));
+      completionPanel.add(nudgeRightPlus(alwaysCompleteDelayMs_ = 
+          numericPref("Show completions after keyboard idle (ms):",
+                      prefs.alwaysCompleteDelayMs())));
+        
       
       VerticalPanel diagnosticsPanel = new VerticalPanel();
-      diagnosticsPanel.add(checkboxPref("Show diagnostics for R and C/C++ code", prefs.showDiagnostics()));
-      diagnosticsPanel.add(checkboxPref("Show diagnostics for HTML, CSS, and JavaScript code", prefs.showDiagnosticsWeb()));
+      diagnosticsPanel.add(checkboxPref("Show diagnostics for R and C/C++", prefs.showDiagnostics()));
+      diagnosticsPanel.add(checkboxPref("Show diagnostics for other languages", prefs.showDiagnosticsOther()));
       
       
       DialogTabLayoutPanel tabPanel = new DialogTabLayoutPanel();
@@ -166,7 +176,9 @@ public class EditingPreferencesPane extends PreferencesPane
       tabPanel.add(editingPanel, "Editing");
       tabPanel.add(displayPanel, "Display");
       tabPanel.add(completionPanel, "Completion");
+      /* Don't show this panel for now (diagnostics not yet merged)
       tabPanel.add(diagnosticsPanel, "Diagnostics");
+      */
       tabPanel.selectTab(0);
       add(tabPanel);
    }
@@ -209,7 +221,7 @@ public class EditingPreferencesPane extends PreferencesPane
    protected void initialize(RPrefs prefs)
    {
       showCompletions_.setValue(prefs_.codeComplete().getValue());
-      showCompletionsWeb_.setValue(prefs_.codeCompleteWeb().getValue());
+      showCompletionsOther_.setValue(prefs_.codeCompleteOther().getValue());
    }
    
    @Override
@@ -218,7 +230,7 @@ public class EditingPreferencesPane extends PreferencesPane
       boolean reload = super.onApply(prefs);
       
       prefs_.codeComplete().setGlobalValue(showCompletions_.getValue());
-      prefs_.codeCompleteWeb().setGlobalValue(showCompletionsWeb_.getValue());
+      prefs_.codeCompleteOther().setGlobalValue(showCompletionsOther_.getValue());
       
       return reload;
    }
@@ -254,7 +266,7 @@ public class EditingPreferencesPane extends PreferencesPane
    private final CheckBox spacesForTab_;
    private final CheckBox showMargin_;
    private final SelectWidget showCompletions_;
-   private final SelectWidget showCompletionsWeb_;
+   private final SelectWidget showCompletionsOther_;
    
    
    

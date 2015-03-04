@@ -115,6 +115,12 @@ implements HasEnsureVisibleHandlers
       widget.addStyleName(res_.styles().nudgeRight());
       return widget;
    }
+   
+   protected Widget nudgeRightPlus(Widget widget)
+   {
+      widget.addStyleName(res_.styles().nudgeRightPlus());
+      return widget;
+   }
 
    protected Widget textBoxWithChooser(Widget widget)
    {

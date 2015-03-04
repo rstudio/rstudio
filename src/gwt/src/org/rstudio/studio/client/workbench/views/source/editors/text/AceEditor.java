@@ -517,7 +517,7 @@ public class AceEditor implements DocDisplay,
          return;
       
       boolean enabled = fileType_.getEditorLanguage().useAceLanguageTools();
-      boolean live = uiPrefs_.codeCompleteWeb().getValue().equals(
+      boolean live = uiPrefs_.codeCompleteOther().getValue().equals(
                                        UIPrefsAccessor.COMPLETION_ALWAYS);
       int characterThreshold = uiPrefs_.alwaysCompleteCharacters().getValue();
       int delay = uiPrefs_.alwaysCompleteDelayMs().getValue();
@@ -531,7 +531,7 @@ public class AceEditor implements DocDisplay,
       if (fileType_ == null)
          return;
       
-      boolean useWorker = uiPrefs_.showDiagnosticsWeb().getValue() &&
+      boolean useWorker = uiPrefs_.showDiagnosticsOther().getValue() &&
             fileType_.getEditorLanguage().useAceLanguageTools();
 
       getSession().setUseWorker(useWorker);

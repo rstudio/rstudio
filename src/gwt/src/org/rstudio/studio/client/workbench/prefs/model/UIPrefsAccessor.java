@@ -121,9 +121,9 @@ public class UIPrefsAccessor extends Prefs
       return string("code_complete", COMPLETION_ALWAYS);
    }
    
-   public PrefValue<String> codeCompleteWeb()
+   public PrefValue<String> codeCompleteOther()
    {
-      return string("code_complete_web", COMPLETION_ALWAYS);
+      return string("code_complete_other", COMPLETION_ALWAYS);
    }
    
    public PrefValue<Boolean> alwaysCompleteInConsole()
@@ -158,12 +158,12 @@ public class UIPrefsAccessor extends Prefs
    
    public PrefValue<Boolean> showDiagnostics()
    {
-      return bool("show_diagnostics", true);
+      return bool("show_diagnostics_core_lang", false);
    }
    
-   public PrefValue<Boolean> showDiagnosticsWeb()
+   public PrefValue<Boolean> showDiagnosticsOther()
    {
-      return bool("show_diagnostics_web", true);
+      return bool("show_diagnostics_other_lang", false);
    }
    
    public PrefValue<Boolean> autoAppendNewline()
