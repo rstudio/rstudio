@@ -21,10 +21,17 @@ var MermaidHighlightRules = function() {
 
    // regexp must not have capturing parentheses
    // regexps are ordered -> the first match is used
+   var keywords =
+      "sequenceDiagram|participant|graph|subgraph|" +
+      "loop|alt|is|opt|else|end|style|linkStyle|classDef|class";
+
+   var keywordMapper = this.createKeywordMapper({
+      "keyword": keywords
+   }, "identifier", false);
 
    this.$rules = {
-        
-      "start" : [     
+
+      "start" : [
       {
          token: "keyword",
          merge: false,
@@ -35,11 +42,11 @@ var MermaidHighlightRules = function() {
          merge: false,
          regex: "^\\s*(?:sequenceDiagram|participant|subgraph|loop|alt(?:\\s+is)?|opt|else(?:\\s+is)?|end|style|linkStyle|classDef|class)"
       },
-      {    
+      {
          token : "keyword.operator",
          merge: false,
          regex : ">|\\->|\\-\\->|\\-\\-\\-|\\-\\-|\\-\\.\\->|\\-\\.|\\.\\->|==>|==|\\->>|\\-\\->>|\\-x|\\-\\-x"
-      }, 
+      },
       {
          token : "paren.keyword.operator",
          merge : false,

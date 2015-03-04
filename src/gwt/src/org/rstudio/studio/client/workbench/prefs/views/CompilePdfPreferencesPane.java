@@ -40,13 +40,9 @@ public class CompilePdfPreferencesPane extends PreferencesPane
       prefs_ = prefs;
       res_ = res;
       PreferencesDialogBaseResources baseRes = PreferencesDialogBaseResources.INSTANCE;
-
-      Label programDefaultsLabel = new Label(
-                           "Program defaults (when not in a project)");
-      programDefaultsLabel.addStyleName(baseRes.styles().headerLabel());
-      nudgeRight(programDefaultsLabel);
-      add(programDefaultsLabel);
-            
+   
+      add(headerLabel("Program defaults (when not in a project)"));
+     
       defaultSweaveEngine_ = new RnwWeaveSelectWidget();
       defaultSweaveEngine_.setValue(
                               prefs.defaultSweaveEngine().getGlobalValue());
@@ -67,10 +63,7 @@ public class CompilePdfPreferencesPane extends PreferencesPane
       spaced(perProjectLabel);
       add(perProjectLabel);
        
-      Label compilationOptionsLabel = new Label("LaTeX editing and compilation");
-      compilationOptionsLabel.addStyleName(baseRes.styles().headerLabel());
-      nudgeRight(compilationOptionsLabel);
-      add(compilationOptionsLabel);
+      add(headerLabel("LaTeX editing and compilation"));
       chkCleanTexi2DviOutput_ = new CheckBox(
                                      "Clean auxiliary output after compile");
       spaced(chkCleanTexi2DviOutput_);
@@ -86,11 +79,9 @@ public class CompilePdfPreferencesPane extends PreferencesPane
       spaced(chkNumberedSections);
       add(chkNumberedSections);
             
-      Label previwingOptionsLabel = new Label("PDF preview");
-      previwingOptionsLabel.addStyleName(baseRes.styles().headerLabel());
-      previwingOptionsLabel.getElement().getStyle().setMarginTop(8, Unit.PX);
-      nudgeRight(previwingOptionsLabel);
-      add(previwingOptionsLabel);
+      Label previewingOptionsLabel = headerLabel("PDF preview");
+      previewingOptionsLabel.getElement().getStyle().setMarginTop(8, Unit.PX);
+      add(previewingOptionsLabel);
      
       pdfPreview_ = new PdfPreviewSelectWidget();
       add(pdfPreview_);

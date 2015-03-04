@@ -22,15 +22,16 @@ var MatchingBraceOutdent = require("ace/mode/matching_brace_outdent").MatchingBr
 var StanHighlightRules = require("mode/stan_highlight_rules").StanHighlightRules;
 var StanFoldMode = require("ace/mode/folding/cstyle").FoldMode;
 
-var Mode = function() {   
-   this.$tokenizer = new Tokenizer(new StanHighlightRules().getRules());
+var Mode = function() {
+   this.$highlightRules = new StanHighlightRules();
+   this.$tokenizer = new Tokenizer(this.$highlightRules.getRules());
    this.$outdent = new MatchingBraceOutdent();
    this.foldingRules = new StanFoldMode();
 };
 oop.inherits(Mode, TextMode);
 
 (function() {
-    
+
     this.lineCommentStart = ["//", "#"];
     this.blockComment = {start: "/*", end: "*/"};
 
@@ -60,12 +61,12 @@ oop.inherits(Mode, TextMode);
          else {
              doc.indentRows(startRow, endRow, "//");
          }
-    };    
-    
+    };
+
     this.getLanguageMode = function(position) {
         return "Stan";
     };
-   
+
     this.getNextLineIndent = function(state, line, tab) {
         var indent = this.$getIndent(line);
 
@@ -87,7 +88,7 @@ oop.inherits(Mode, TextMode);
         return indent;
     };
 
-    
+
     this.checkOutdent = function(state, line, input) {
         return this.$outdent.checkOutdent(line, input);
     };
@@ -95,7 +96,9 @@ oop.inherits(Mode, TextMode);
     this.autoOutdent = function(state, doc, row) {
         this.$outdent.autoOutdent(doc, row);
     };
-    
+
+    this.$id = "mode/stan";
+
 }).call(Mode.prototype);
 
 exports.Mode = Mode;

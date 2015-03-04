@@ -18,38 +18,34 @@
  */
 
 define("mode/stan_highlight_rules", function(require, exports, module) {
- 
+
 var oop = require("ace/lib/oop");
 var lang = require("ace/lib/lang");
 var TextHighlightRules = require("ace/mode/text_highlight_rules").TextHighlightRules;
 
 var StanHighlightRules = function() {
 
-    var variableName = "[a-zA-Z$][a-zA-Z0-9_$]*\\b"
+    var variableName = "[a-zA-Z$][a-zA-Z0-9_$]*\\b";
 
-    var keywords = lang.arrayToMap(
-	("for|in|while|if|then|else|return"
-	 + "|" + "lower|upper" // include range bounds as keywords
-	).split("|")
-    );
+    var keywords = "for|in|while|if|then|else|return|lower|upper";
 
     // technically keywords, differentiate from regular functions
-    var keywordFunctions = lang.arrayToMap(
-	("print|increment_log_prob|integrate_ode|reject").split("|")
-    );
+    var keywordFunctions = "print|increment_log_prob|integrate_ode|reject";
+    var keywordFunctionsMap = lang.arrayToMap(keywordFunctions.split("|"));
 
-    var storageType = lang.arrayToMap(
-	("int|real|vector|simplex|unit_vector|ordered"
-	 + "|" + "positive_ordered|row_vector"
-	 + "|" + "matrix|cholesky_factor_cov|cholesky_factor_corr"
-	 + "|" + "corr_matrix|cov_matrix"
-	 + "|" + "void"
-	).split("|")
-    );
+    var storageType = "int|real|vector|simplex|unit_vector|ordered|" +
+	"positive_ordered|row_vector|" +
+	"matrix|cholesky_factor_cov|cholesky_factor_corr|" +
+	"corr_matrix|cov_matrix|" +
+	"void";
 
-    var variableLanguage = lang.arrayToMap(
-	("lp__").split("|")
-    );
+    var variableLanguage = "lp__";
+
+    var keywordMapper = this.createKeywordMapper({
+	"keyword": keywords + "|" + keywordFunctions,
+	"storage.type": storageType,
+	"variable.language": variableLanguage
+    }, "identifier", false);
 
     this.$rules = {
 	"start" : [
@@ -80,7 +76,7 @@ var StanHighlightRules = function() {
 	    }, {
 		// highlights everything that looks like a function
 		token : function(value) {
-		    if (keywordFunctions.hasOwnProperty(value)) {
+		    if (keywordFunctionsMap.hasOwnProperty(value)) {
 			return "keyword"
 		    } else {
 			return "support.function"
@@ -88,21 +84,7 @@ var StanHighlightRules = function() {
 		},
 		regex : variableName + "(?=\\s*\\()"
 	    }, {
-		token : function(value) {
-		    if (keywords.hasOwnProperty(value)) {
-			return "keyword"
-		    }
-		    else if (storageType.hasOwnProperty(value)) {
-			return "storage.type"
-		    }
-		    else if (variableLanguage.hasOwnProperty(value)) {
-			return "variable.language"
-		    }
-		    else {
-			return "text"
-		    }
-		},
-		// token : "keyword",
+		token : keywordMapper,
 		regex : variableName + "\\b"
 	    }, {
 		token : "keyword.operator",
@@ -114,10 +96,10 @@ var StanHighlightRules = function() {
 		token : "punctuation.operator",
 		regex : ":|,|;|="
 	    }, {
-		token : "paren.lparen",
+		token : "paren.lparen.keyword.operator",
 		regex : "[\\[\\(\\{]"
 	    }, {
-		token : "paren.rparen",
+		token : "paren.rparen.keyword.operator",
 		regex : "[\\]\\)\\}]"
 	    }, {
 		token : "text",

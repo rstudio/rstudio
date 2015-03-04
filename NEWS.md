@@ -67,6 +67,11 @@
  - Find usages for C++ symbols
  - Intelligent auto-indentation
  - Scope tree for quick intra-file navigation
+ 
+### Web Development (HTML/CSS/JavaScript)
+
+ - Code completion
+ - Inline diagnostics (JSHint) on syntax and other issues
 
 ### Workspace
 

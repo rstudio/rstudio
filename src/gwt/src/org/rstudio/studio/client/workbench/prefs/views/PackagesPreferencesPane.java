@@ -23,11 +23,9 @@ import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.CheckBox;
-import com.google.gwt.user.client.ui.Label;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.BrowseCap;
-import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.TextBoxWithButton;
@@ -52,12 +50,8 @@ public class PackagesPreferencesPane extends PreferencesPane
    {
       res_ = res;
       globalDisplay_ = globalDisplay;
-      PreferencesDialogBaseResources baseRes = PreferencesDialogBaseResources.INSTANCE;
-
-      Label installationLabel = new Label("Package management");
-      installationLabel.addStyleName(baseRes.styles().headerLabel());
-      nudgeRight(installationLabel);
-      add(installationLabel);
+    
+      add(headerLabel("Package management"));
       
       cranMirrorTextBox_ = new TextBoxWithButton(
             "CRAN mirror:",
@@ -114,10 +108,7 @@ public class PackagesPreferencesPane extends PreferencesPane
          chkEnablePackages.getElement().getStyle().setMarginBottom(12, Unit.PX);
       }
       
-      Label developmentLabel = new Label("Package development");
-      developmentLabel.addStyleName(baseRes.styles().headerLabel());
-      nudgeRight(developmentLabel);
-      add(developmentLabel);
+      add(headerLabel("Package development"));
       
       useDevtools_ = new CheckBox("Use devtools package functions if available");
       lessSpaced(useDevtools_);

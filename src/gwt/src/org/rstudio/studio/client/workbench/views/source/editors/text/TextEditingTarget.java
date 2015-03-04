@@ -4573,6 +4573,26 @@ public class TextEditingTarget implements
                public void execute(Boolean arg) {
                   docDisplay.setUseVimMode(arg);
                }}));
+      releaseOnDismiss.add(prefs.codeCompleteOther().bind(
+            new CommandWithArg<String>() {
+               public void execute(String arg) {
+                  docDisplay.syncCompletionPrefs();
+               }}));
+      releaseOnDismiss.add(prefs.alwaysCompleteCharacters().bind(
+            new CommandWithArg<Integer>() {
+               public void execute(Integer arg) {
+                  docDisplay.syncCompletionPrefs();
+               }}));
+      releaseOnDismiss.add(prefs.alwaysCompleteDelayMs().bind(
+            new CommandWithArg<Integer>() {
+               public void execute(Integer arg) {
+                  docDisplay.syncCompletionPrefs();
+               }}));
+      releaseOnDismiss.add(prefs.showDiagnosticsOther().bind(
+            new CommandWithArg<Boolean>() {
+               public void execute(Boolean arg) {
+                  docDisplay.syncDiagnosticsPrefs();
+               }}));
    }
    
    public static void syncFontSize(

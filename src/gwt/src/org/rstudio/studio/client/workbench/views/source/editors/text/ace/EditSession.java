@@ -40,6 +40,10 @@ public class EditSession extends JavaScriptObject
    public native final void setValue(String code) /*-{
       this.setValue(code);
    }-*/;
+   
+   public native final void setUseWorker(boolean useWorker) /*-{
+      this.setUseWorker(useWorker);
+   }-*/;
 
    public native final void insert(Position position, String text) /*-{
       this.insert(position, text);
