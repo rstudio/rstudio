@@ -70,6 +70,7 @@ git merge \
     origin/bugfix/highlight-tags-error \
     origin/bugfix/xml-tag-highlight \
     origin/bugfix/vim-fold-navigation \
+    origin/patch/completion-throttling \
     -m "merge branches"
 
 ## git merge \
