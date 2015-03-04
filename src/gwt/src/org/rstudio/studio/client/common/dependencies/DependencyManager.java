@@ -246,7 +246,7 @@ public class DependencyManager implements InstallShinyEvent.Handler
                globalDisplay_.showErrorMessage(userAction, 
                      "Required package versions could not be found:\n\n" +
                      unsatisfiedVersions + "\n" +
-                     "Check that getOptions(\"repos\") refers to a CRAN " + 
+                     "Check that getOption(\"repos\") refers to a CRAN " + 
                      "repository that contains the needed package versions.");
             }
             else
