@@ -198,8 +198,11 @@
 .rs.addFunction("applyTransform", function(x, filtered, search, col, dir) 
 {
   # mark encoding on character inputs if not already marked
-  if (Encoding(filtered) == "unknown")
-    Encoding(filtered) <- "UTF-8"
+  filtered <- vapply(filtered, function(colfilter) {
+    if (Encoding(colfilter) == "unknown") 
+      Encoding(colfilter) <- "UTF-8"
+    colfilter
+  }, "")
   if (Encoding(search) == "unknown")
     Encoding(search) <- "UTF-8"
   
