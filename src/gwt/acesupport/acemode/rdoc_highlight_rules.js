@@ -30,7 +30,6 @@ var RDocHighlightRules = function() {
         "figure|if|ifelse|Sexpr|RdOpts|inputencoding|usepackage";
 
     keywords = "\\" + keywords.replace(/\|/g, "|\\");
-    console.log(keywords);
 
     var keywordMapper = this.createKeywordMapper({
         "keyword": keywords
