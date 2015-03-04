@@ -226,8 +226,14 @@
         x[[framecol]] <- .rs.flattenFrame(x[[framecol]], nestedFrameCols)
       }
 
+      # apply column names
+      cols <- x[[framecol]]
+      if (length(names(framecols)) > 0) {
+        names(cols) <- paste(names(framecol)[[1]], names(cols), sep = ".")
+      }
+
       # replace other columns in place
-      x <- cbind(x[0:(framecol-1)], x[[framecol]], x[(framecol+1):ncol(x)])
+      x <- cbind(x[0:(framecol-1)], cols, x[(framecol+1):ncol(x)])
     }
 
     # pop this frame off the list and adjust the other indices to account for
