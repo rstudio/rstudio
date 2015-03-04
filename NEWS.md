@@ -53,6 +53,7 @@
 * Find All option added in Find/Replace
 * Ctrl+E now focuses the editor after finding from selection
 * New option to control comment continuation on insertion of new lines
+* Reflow text (comment) for markdown and plain text modes
 * Updated to Ace (source editor component) v1.1.8
 * Syntax highlighting modes for many new languages including Clojure, CoffeeScript, C#, Graphviz, Go, Groovy, Haskell, Java, Julia, Lisp, Lua, Matlab, Perl, Ruby, Rust, Scala, and Stan.
 * A wide variety of new editor themes (color schemes) are now available.
@@ -88,7 +89,8 @@
 * Default to roxygenize for Build and Reload
 * Improved checking for supported protocol with packrat package
 * Escape backslashes in library names when loading packages
-* Call to library after Build and Reload respects --library argument.
+* Call to library after Build and Reload respects --library argument
+* Validate that required versions are available for prompted installs
 
 ### Plots
 
@@ -118,6 +120,7 @@
 * Added Markers pane and sourceMarker API for externals tools (e.g. linters)
 * Enable specification of Sweave driver in Rnw magic comment
 * Re-map prev/next tab shortcuts to eliminate conflicts with window managers
+* Run App command for single file Shiny applications
 
 ### Server
 
