@@ -321,10 +321,20 @@ public class JsExportTest extends GWTTestCase {
 
   public void testEnum_exportedMethods() {
     assertNotNull(getPublicStaticMethodInEnum());
+    assertNotNull(getValuesMethodInEnum());
+    assertNotNull(getValueOfMethodInEnum());
   }
 
   private static native Object getPublicStaticMethodInEnum() /*-{
-    return $wnd.woo.MyExportedEnum.publicStaticMethod();
+    return $wnd.woo.MyExportedEnum.publicStaticMethod;
+  }-*/;
+
+  private static native Object getValuesMethodInEnum() /*-{
+    return $wnd.woo.MyExportedEnum.values;
+  }-*/;
+
+  private static native Object getValueOfMethodInEnum() /*-{
+    return $wnd.woo.MyExportedEnum.valueOf;
   }-*/;
 
   public void testEnum_exportedFields() {
