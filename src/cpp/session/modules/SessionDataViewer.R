@@ -197,6 +197,12 @@
 
 .rs.addFunction("applyTransform", function(x, filtered, search, col, dir) 
 {
+  # mark encoding on character inputs if not already marked
+  if (Encoding(filtered) == "unknown")
+    Encoding(filtered) <- "UTF-8"
+  if (Encoding(search) == "unknown")
+    Encoding(search) <- "UTF-8"
+  
   # coerce argument to data frame--data.table objects (for example) report that
   # they're data frames, but don't actually support the subsetting operations
   # needed for search/sort/filter without an explicit cast
