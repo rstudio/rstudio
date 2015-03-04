@@ -15,11 +15,7 @@
  */
 package com.google.gwt.logging.impl;
 
-import java.util.logging.Handler;
-import java.util.logging.Level;
-import java.util.logging.LogRecord;
 import java.util.logging.Logger;
-
 /**
  * A simple {@link LoggerConfigurator} that configures the root logger to log to the console.
  * <p>
@@ -31,89 +27,6 @@ class LoggerConfiguratorConsole implements LoggerConfigurator {
   public void configure(Logger logger) {
     if (logger.getName().isEmpty()) {
       logger.addHandler(new SimpleConsoleLogHandler());
-    }
-  }
-
-  private static class SimpleConsoleLogHandler extends Handler {
-    @Override
-    public void publish(LogRecord record) {
-      if (!isSupported()) {
-        return;
-      }
-
-      int val = record.getLevel().intValue();
-      if (val >= Level.SEVERE.intValue()) {
-        error(record.getMessage());
-      } else if (val >= Level.WARNING.intValue()) {
-        warn(record.getMessage());
-      } else if (val >= Level.INFO.intValue()) {
-        info(record.getMessage());
-      } else {
-        log(record.getMessage());
-      }
-      Throwable e = record.getThrown();
-      if (e != null) {
-        logException(e, "");
-      }
-    }
-
-    private native boolean isSupported() /*-{
-      return console != null;
-    }-*/;
-
-    private native void error(String message) /*-{
-      console.error(message);
-    }-*/;
-
-    private native void warn(String message) /*-{
-      console.warn(message);
-    }-*/;
-
-    private native void info(String message) /*-{
-      console.info(message);
-    }-*/;
-
-    private native void log(String message) /*-{
-      console.log(message);
-    }-*/;
-
-    private void logException(Throwable t, String label) {
-      groupStart(label + t.toString());
-      log(t);
-      Throwable cause = t.getCause();
-      if (cause != null) {
-        logException(cause, "Caused by: ");
-      }
-      for (Throwable suppressed : t.getSuppressed()) {
-        logException(suppressed, "Suppressed: ");
-      }
-      groupEnd();
-    };
-
-    private native void groupStart(String msg) /*-{
-      // Not all browsers support grouping:
-      var groupStart = console.groupCollapsed || console.group || console.log;
-      groupStart.call(console, msg);
-    }-*/;
-
-    private native void groupEnd() /*-{
-      var groupEnd = console.groupEnd || function(){};
-      groupEnd.call(console);
-    }-*/;
-
-    private native void log(Throwable t) /*-{
-      var backingError = t.__gwt$backingJsError;
-      console.log(backingError && backingError.stack);
-    }-*/;
-
-    @Override
-    public void close() {
-      // No action needed
-    }
-
-    @Override
-    public void flush() {
-      // No action needed
     }
   }
 }

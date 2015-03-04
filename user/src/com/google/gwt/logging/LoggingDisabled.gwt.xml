@@ -74,6 +74,15 @@
     <when-type-is class="com.google.gwt.logging.client.HasWidgetsLogHandler" />
   </replace-with>
 
+  <!-- Replace default consoleHandler for better SuperDevMode logging -->
+  <replace-with class="com.google.gwt.logging.impl.SimpleConsoleLogHandler">
+    <when-type-is class="com.google.gwt.logging.client.ConsoleLogHandler" />
+    <all>
+      <when-property-is name="superdevmode" value="on"/>
+      <when-property-is name="compiler.stackMode" value="native"/>
+    </all>
+  </replace-with>
+
   <!-- Set up and handle the gwt.logging.xxxHandler properties -->
   <define-property name="gwt.logging.consoleHandler" values="ENABLED, DISABLED" />
   <replace-with class="com.google.gwt.logging.client.NullLogHandler">
