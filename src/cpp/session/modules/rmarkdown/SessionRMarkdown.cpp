@@ -260,7 +260,7 @@ private:
       // start the async R process with the render command
       allOutput_.clear();
       async_r::AsyncRProcess::start(cmd.c_str(), targetFile_.parent(),
-                                    async_r::R_PROCESS_NORMAL);
+                                    async_r::R_PROCESS_NO_RDATA);
    }
 
    void onStdout(const std::string& output)

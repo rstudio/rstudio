@@ -105,6 +105,7 @@
 ### R Markdown
 
 * Updated to pandoc 1.13.1
+* Ensure that .RData from Rmd directory isn't loaded during Knit
 * Improved handling of lists in editor
 * Make publishing UI easier to discover
 * Require save before previewing Rmd file
