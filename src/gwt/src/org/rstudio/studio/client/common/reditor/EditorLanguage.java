@@ -43,7 +43,7 @@ public class EditorLanguage
    public static final EditorLanguage LANG_RMARKDOWN = new EditorLanguage(
          "mode/rmarkdown", true);
    public static final EditorLanguage LANG_DCF = new EditorLanguage(
-         "mode/dcf", false, true);
+         "mode/dcf", false, false);
    public static final EditorLanguage LANG_MERMAID = new EditorLanguage(
          "mode/mermaid", false, true);
    public static final EditorLanguage LANG_RHTML = new EditorLanguage(
@@ -77,7 +77,7 @@ public class EditorLanguage
    public static final EditorLanguage LANG_CLOJURE = new EditorLanguage("ace/mode/clojure", false, true);
    public static final EditorLanguage LANG_COFFEE = new EditorLanguage("ace/mode/coffee", false, true);
    public static final EditorLanguage LANG_CSHARP = new EditorLanguage("ace/mode/csharp", false, true);
-   public static final EditorLanguage LANG_GITIGNORE = new EditorLanguage("ace/mode/gitignore", false, true);
+   public static final EditorLanguage LANG_GITIGNORE = new EditorLanguage("ace/mode/gitignore", false, false);
    public static final EditorLanguage LANG_GO = new EditorLanguage("ace/mode/golang", false, true);
    public static final EditorLanguage LANG_GROOVY = new EditorLanguage("ace/mode/groovy", false, true);
    public static final EditorLanguage LANG_HASKELL = new EditorLanguage("ace/mode/haskell", false, true);
