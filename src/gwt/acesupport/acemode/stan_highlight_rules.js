@@ -31,6 +31,7 @@ var StanHighlightRules = function() {
 
     // technically keywords, differentiate from regular functions
     var keywordFunctions = "print|increment_log_prob|integrate_ode|reject";
+    var keywordFunctionsMap = lang.arrayToMap(keywordFunctions.split("|"));
 
     var storageType = "int|real|vector|simplex|unit_vector|ordered|" +
 	"positive_ordered|row_vector|" +
@@ -38,14 +39,13 @@ var StanHighlightRules = function() {
 	"corr_matrix|cov_matrix|" +
 	"void";
 
-    var variableLanguage = lang.arrayToMap(
-	("lp__").split("|")
-    );
+    var variableLanguage = "lp__";
 
     var keywordMapper = this.createKeywordMapper({
 	"keyword": keywords + "|" + keywordFunctions,
-	"storage.type": storageType
-    }, "identifier", true);
+	"storage.type": storageType,
+	"variable.language": variableLanguage
+    }, "identifier", false);
 
     this.$rules = {
 	"start" : [
@@ -76,7 +76,7 @@ var StanHighlightRules = function() {
 	    }, {
 		// highlights everything that looks like a function
 		token : function(value) {
-		    if (keywordFunctions.hasOwnProperty(value)) {
+		    if (keywordFunctionsMap.hasOwnProperty(value)) {
 			return "keyword"
 		    } else {
 			return "support.function"
@@ -84,21 +84,7 @@ var StanHighlightRules = function() {
 		},
 		regex : variableName + "(?=\\s*\\()"
 	    }, {
-		token : function(value) {
-		    if (keywords.hasOwnProperty(value)) {
-			return "keyword"
-		    }
-		    else if (storageType.hasOwnProperty(value)) {
-			return "storage.type"
-		    }
-		    else if (variableLanguage.hasOwnProperty(value)) {
-			return "variable.language"
-		    }
-		    else {
-			return "text"
-		    }
-		},
-		// token : "keyword",
+		token : keywordMapper,
 		regex : variableName + "\\b"
 	    }, {
 		token : "keyword.operator",
