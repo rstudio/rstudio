@@ -56,6 +56,7 @@
 * Reflow text (comment) for markdown and plain text modes
 * Updated to Ace (source editor component) v1.1.8
 * Syntax highlighting modes for many new languages including Clojure, CoffeeScript, C#, Graphviz, Go, Groovy, Haskell, Java, Julia, Lisp, Lua, Matlab, Perl, Ruby, Rust, Scala, and Stan.
+* Keyword and text based code completion for many languages including JavaScript, HTML, CSS, Python, and SQL.
 * A wide variety of new editor themes (color schemes) are now available.
 * Increase file size limit to 5MB (was previously 2MB)
 
