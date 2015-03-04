@@ -22,6 +22,19 @@ var RDocHighlightRules = function() {
 
     // regexp must not have capturing parentheses. Use (?:) instead.
     // regexps are ordered -> the first match is used
+    var keywords =
+        "name|alias|method|S3method|S4method|item|code|" +
+        "preformatted|kbd|pkg|var|env|option|command|author|" +
+        "email|url|source|cite|acronym|href|code|preformatted|" +
+        "link|eqn|deqn|keyword|usage|examples|dontrun|dontshow|" +
+        "figure|if|ifelse|Sexpr|RdOpts|inputencoding|usepackage";
+
+    keywords = "\\" + keywords.replace(/\|/g, "|\\");
+    console.log(keywords);
+
+    var keywordMapper = this.createKeywordMapper({
+        "keyword": keywords
+    }, "identifer");
 
     this.$rules = {
         "start" : [
@@ -56,7 +69,7 @@ var RDocHighlightRules = function() {
 	        }
         ],
         // This mode is necessary to prevent spell checking, but to keep the
-        // same syntax highlighting behavior. 
+        // same syntax highlighting behavior.
         "nospell" : [
            {
                token : "comment",

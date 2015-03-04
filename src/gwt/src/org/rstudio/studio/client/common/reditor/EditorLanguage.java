@@ -33,7 +33,7 @@ public class EditorLanguage
    public static final EditorLanguage LANG_R = new EditorLanguage(
          "mode/r", true);
    public static final EditorLanguage LANG_RDOC = new EditorLanguage(
-         "mode/rdoc", false);
+         "mode/rdoc", false, false);
    public static final EditorLanguage LANG_TEX = new EditorLanguage(
          "mode/tex", false);
    public static final EditorLanguage LANG_SWEAVE = new EditorLanguage(
