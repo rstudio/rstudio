@@ -28,6 +28,7 @@ import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
+import org.rstudio.core.client.command.KeyboardHelper;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.jsonrpc.RpcObjectList;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -516,13 +517,11 @@ public class Shell implements ConsoleInputHandler,
             }
             else if (mod == KeyboardShortcut.ALT)
             {
-               switch (keyCode)
+               if (KeyboardHelper.isHyphenKeycode(keyCode))
                {
-                  case 189: // hyphen
-                     event.preventDefault();
-                     event.stopPropagation();
-                     input_.replaceSelection(" <- ", true);
-                     break;
+                  event.preventDefault();
+                  event.stopPropagation();
+                  input_.replaceSelection(" <- ", true);
                }
             }
             else if (
