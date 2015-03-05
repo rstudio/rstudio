@@ -184,9 +184,15 @@ var sizeDataTable = function(force) {
       window.innerHeight - ($("thead").height() + 25));
   }
 
+  // shrink container to width of first row
+  var rsGridData = document.getElementById("rsGridData");
+  if (rsGridData) {
+    rsGridData.style.width = rsGridData.firstChild.clientWidth + "px";
+  }
+
   // apply new size
   table.settings().scroller().measure(false);
-  table.columns.adjust().draw();
+  table.draw();
 };
 
 var debouncedDataTableSize = debounce(sizeDataTable, 75);
@@ -559,6 +565,7 @@ var initDataTable = function(result) {
   $("#rsGridData").dataTable({
     "processing": true,
     "serverSide": true,
+    "autoWidth": false,
     "pagingType": "full_numbers",
     "pageLength": 25,
     "scrollY": scrollHeight + "px",
@@ -577,6 +584,9 @@ var initDataTable = function(result) {
       }, {
       "targets": textCols,
       "render": renderTextCell
+      }, {
+      "targets": "_all",
+      "width": "4em"
       }],
     "ajax": {
       "url": "../grid_data", 

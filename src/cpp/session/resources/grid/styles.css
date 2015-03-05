@@ -56,6 +56,9 @@ table.dataTable th div:first-child {
     border: none;
 }
 
+table.dataTable {
+    display: block;
+}
 
 #errorWrapper {
     margin-left: auto;
@@ -283,8 +286,11 @@ div.DTS div.DTS_Loading.showLoading {
 }
 
 #rsGridData tbody tr.even, 
-#rsGridData tbody tr.odd 
-{
+#rsGridData tbody tr.odd {
     height: 23px;
+}
+
+#rsGridData {
+    display: block;
 }
 
