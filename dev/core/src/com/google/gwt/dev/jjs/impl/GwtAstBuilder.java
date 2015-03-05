@@ -113,6 +113,8 @@ import com.google.gwt.dev.util.StringInterner;
 import com.google.gwt.dev.util.collect.Stack;
 import com.google.gwt.thirdparty.guava.common.base.Function;
 import com.google.gwt.thirdparty.guava.common.base.Preconditions;
+import com.google.gwt.thirdparty.guava.common.base.Predicate;
+import com.google.gwt.thirdparty.guava.common.collect.FluentIterable;
 import com.google.gwt.thirdparty.guava.common.collect.Interner;
 import com.google.gwt.thirdparty.guava.common.collect.Iterables;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
@@ -1371,8 +1373,24 @@ public class GwtAstBuilder {
       if (x.shouldCaptureInstance) {
         allocLambda.addArg(new JThisRef(info, innerLambdaClass.getEnclosingType()));
       }
-      for (SyntheticArgumentBinding sa : synthArgs) {
-        allocLambda.addArg(makeLocalRef(info, sa.actualOuterLocalVariable, methodStack.peek()));
+      for (final SyntheticArgumentBinding sa : synthArgs) {
+        MethodInfo method = methodStack.peek();
+        // Find the local variable in the current method context that is referred by the inner
+        // lambda.
+        LocalVariableBinding argument = FluentIterable.from(method.locals.keySet()).firstMatch(
+            new Predicate<LocalVariableBinding>() {
+              @Override
+              public boolean apply(LocalVariableBinding enclosingLocal) {
+                // Either the inner lambda refers direcly to the enclosing scope variable, or
+                // it is a capture from an enclosing scope, in which case both synthetic arguments
+                // point to the same outer local variable.
+                return enclosingLocal == sa.actualOuterLocalVariable ||
+                    (enclosingLocal instanceof SyntheticArgumentBinding) &&
+                        ((SyntheticArgumentBinding) enclosingLocal)
+                            .actualOuterLocalVariable == sa.actualOuterLocalVariable;
+              }
+            }).get();
+        allocLambda.addArg(makeLocalRef(info, argument, method));
       }
       // put the result on the stack, and pop out synthetic method from the scope
       push(allocLambda);
@@ -3291,7 +3309,9 @@ public class GwtAstBuilder {
       JExpression result = null;
       if (binding instanceof LocalVariableBinding) {
         LocalVariableBinding b = (LocalVariableBinding) binding;
-        if ((x.bits & ASTNode.DepthMASK) != 0 || scope.isLambdaScope()) {
+        MethodScope nearestMethodScope =
+            scope instanceof MethodScope ? (MethodScope) scope : scope.enclosingMethodScope();
+        if ((x.bits & ASTNode.DepthMASK) != 0 || nearestMethodScope.isLambdaScope()) {
           VariableBinding[] path = scope.getEmulationPath(b);
           if (path == null) {
             /*

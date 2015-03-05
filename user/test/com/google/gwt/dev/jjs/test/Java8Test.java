@@ -153,4 +153,19 @@ public class Java8Test extends GWTTestCase {
 
   public void testIntersectionCastPolymorphism() {
   }
+
+  public void testLambdaCaptureParameter() {
+  }
+
+  public void testLambdaNestingCaptureLocal() {
+  }
+
+  public void testLambdaNestingCaptureField() {
+  }
+
+  public void testLambdaMultipleNestingCaptureFieldAndLocal() {
+  }
+
+  public void testLambdaMultipleNestingCaptureFieldAndLocalInnerClass() {
+  }
 }

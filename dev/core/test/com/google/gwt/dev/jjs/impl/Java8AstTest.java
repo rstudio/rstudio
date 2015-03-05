@@ -172,6 +172,45 @@ public class Java8AstTest extends JJSTestBase {
         formatSource(samMethod.toSource()));
   }
 
+  public void testCompileLambdaCaptureLocalWithBlockInLambda() throws Exception {
+    String lambda =
+        "int x = 42; "
+        + "new AcceptsLambda<Integer>().accept((a,b) -> { int temp = x; return temp + a + b; });";
+    assertEqualBlock(
+        "int x=42;(new AcceptsLambda()).accept(new EntryPoint$lambda$0$Type(x));",
+        lambda
+    );
+    JProgram program = compileSnippet("void", lambda, false);
+    // created by JDT, should exist
+    assertNotNull(getMethod(program, "lambda$0"));
+
+    // created by GwtAstBuilder
+    JClassType lambdaInnerClass = (JClassType) getType(program, "test.EntryPoint$lambda$0$Type");
+    assertNotNull(lambdaInnerClass);
+
+    // should have constructor taking x
+    JMethod ctor = findMethod(lambdaInnerClass, "EntryPoint$lambda$0$Type");
+    assertTrue(ctor instanceof JConstructor);
+    assertEquals(1, ctor.getParams().size());
+    assertEquals(JPrimitiveType.INT, ctor.getOriginalParamTypes().get(0));
+
+    // should have 1 field to store the local
+    assertEquals(1, lambdaInnerClass.getFields().size());
+    assertEquals(JPrimitiveType.INT, lambdaInnerClass.getFields().get(0).getType());
+
+    // should contain assignment statement of ctor param to field
+    assertEquals("{this.x_0=x_0;}", formatSource(ctor.getBody().toSource()));
+    // should extends test.Lambda
+    assertTrue(lambdaInnerClass.getImplements().contains(program.getFromTypeMap("test.Lambda")));
+
+    // should implement run method and invoke lambda as static function
+    JMethod samMethod = findMethod(lambdaInnerClass, "run");
+    assertEquals(
+        "public final Object run(int arg0,int arg1){" +
+            "return EntryPoint.lambda$0(this.x_0,arg0,arg1);}",
+        formatSource(samMethod.toSource()));
+  }
+
   // test whether local capture and outer scope capture work together
   public void testCompileLambdaCaptureLocalAndField() throws Exception {
     addSnippetClassDecl("private int y = 22;");
@@ -259,6 +298,203 @@ public class Java8AstTest extends JJSTestBase {
     assertEquals(
         "public final Object run(int arg0,int arg1){return this.$$outer_0.lambda$0(arg0,arg1);}",
         formatSource(samMethod.toSource()));
+  }
+
+  public void testLambdaCaptureParameter() throws Exception {
+    addSnippetClassDecl("interface ClickHandler {\n" +
+        "    int onClick(int a);\n" +
+        "  }\n" +
+        "  private int addClickHandler(ClickHandler clickHandler) {\n" +
+        "    return clickHandler.onClick(1);\n" +
+        "  }\n" +
+        "  private int addClickHandler(int a) {\n" +
+        "    return addClickHandler(x->{int temp = a; return temp;});\n" +
+        "  }\n");
+    JProgram program = compileSnippet("int", "return addClickHandler(2);", false);
+    JClassType lambdaInnerClass = (JClassType) getType(program, "test.EntryPoint$lambda$0$Type");
+    assertNotNull(lambdaInnerClass);
+
+    // should have constructor taking the outer variable from parameter
+    JMethod ctor = findMethod(lambdaInnerClass, "EntryPoint$lambda$0$Type");
+    assertTrue(ctor instanceof JConstructor);
+    assertEquals(1, ctor.getParams().size());
+    assertEquals(JPrimitiveType.INT, ctor.getOriginalParamTypes().get(0));
+
+    // should have 1 field to store the outer
+    assertEquals(1, lambdaInnerClass.getFields().size());
+    assertEquals(JPrimitiveType.INT,
+        lambdaInnerClass.getFields().get(0).getType());
+
+    // should contain assignment statement of ctor params to field
+    assertEquals("{this.a_0=a_0;}", formatSource(ctor.getBody().toSource()));
+    // should extends test.Lambda
+    assertTrue(lambdaInnerClass.getImplements().contains(
+        program.getFromTypeMap("test.EntryPoint$ClickHandler")));
+
+    JMethod samMethod = findMethod(lambdaInnerClass, "onClick");
+    assertEquals("public final int onClick(int a){return EntryPoint.lambda$0(this.a_0,a);}",
+        formatSource(samMethod.toSource()));
+  }
+
+  public void testLambdaNestingCaptureLocal() throws Exception {
+    addSnippetClassDecl("interface Inner {\n" +
+        "    void f();\n" +
+        "  }\n");
+    addSnippetClassDecl(
+        "  interface Outer {\n" +
+        "     void accept(Inner t);\n" +
+        "   }\n");
+    addSnippetClassDecl(
+        "  public static void call(Outer a) {\n" +
+        "    a.accept(() -> {});\n" +
+        "  }\n");
+    String nestedLambda = "boolean[] success = new boolean[] {false};\n"
+        + "call( sam1 -> { call(sam2 -> {success[0] = true;}); });";
+    assertEqualBlock("boolean[]success=new boolean[]{false};"
+        + "EntryPoint.call(new EntryPoint$lambda$1$Type(success));", nestedLambda);
+    JProgram program = compileSnippet("void", nestedLambda, false);
+    JClassType lambdaInnerClass1 = (JClassType) getType(program, "test.EntryPoint$lambda$0$Type");
+    JClassType lambdaInnerClass2 = (JClassType) getType(program, "test.EntryPoint$lambda$1$Type");
+    JClassType lambdaInnerClass3 = (JClassType) getType(program, "test.EntryPoint$lambda$2$Type");
+    assertNotNull(lambdaInnerClass1);
+    assertNotNull(lambdaInnerClass2);
+    assertNotNull(lambdaInnerClass3);
+
+    // check constructors
+    JMethod ctor1 = findMethod(lambdaInnerClass1, "EntryPoint$lambda$0$Type");
+    assertTrue(ctor1 instanceof JConstructor);
+    assertEquals(0, ctor1.getParams().size());
+
+    JMethod ctor2 = findMethod(lambdaInnerClass2, "EntryPoint$lambda$1$Type");
+    assertTrue(ctor2 instanceof JConstructor);
+    assertEquals(1, ctor2.getParams().size());
+    assertEquals("boolean[]", ctor2.getOriginalParamTypes().get(0).getName());
+
+    JMethod ctor3 = findMethod(lambdaInnerClass3, "EntryPoint$lambda$2$Type");
+    assertTrue(ctor3 instanceof JConstructor);
+    assertEquals(1, ctor3.getParams().size());
+    assertEquals("boolean[]", ctor3.getOriginalParamTypes().get(0).getName());
+
+    // check fields
+    assertEquals(0, lambdaInnerClass1.getFields().size());
+
+    assertEquals(1, lambdaInnerClass2.getFields().size());
+    assertEquals("boolean[]",
+        lambdaInnerClass2.getFields().get(0).getType().getName());
+
+    assertEquals(1, lambdaInnerClass3.getFields().size());
+    assertEquals("boolean[]",
+        lambdaInnerClass3.getFields().get(0).getType().getName());
+
+    // check constructor body
+    assertEquals("{this.success_0=success_0;}", formatSource(ctor2.getBody().toSource()));
+    assertEquals("{this.success_0=success_0;}", formatSource(ctor3.getBody().toSource()));
+
+    // check super interface
+    assertTrue(lambdaInnerClass1.getImplements().contains(
+        program.getFromTypeMap("test.EntryPoint$Inner")));
+    assertTrue(lambdaInnerClass2.getImplements().contains(
+        program.getFromTypeMap("test.EntryPoint$Outer")));
+    assertTrue(lambdaInnerClass3.getImplements().contains(
+        program.getFromTypeMap("test.EntryPoint$Outer")));
+
+    // check samMethod
+    JMethod samMethod1 = findMethod(lambdaInnerClass2, "accept");
+    JMethod samMethod2 = findMethod(lambdaInnerClass3, "accept");
+    assertEquals(
+        "public final void accept(EntryPoint$Inner t){EntryPoint.lambda$1(this.success_0,t);}",
+        formatSource(samMethod1.toSource()));
+    assertEquals(
+        "public final void accept(EntryPoint$Inner t){EntryPoint.lambda$2(this.success_0,t);}",
+        formatSource(samMethod2.toSource()));
+
+    // check lambda method
+    JMethod lambdaMethod1 = findMethod(program, "lambda$1");
+    JMethod lambdaMethod2 = findMethod(program, "lambda$2");
+    assertEquals(
+        "private static void lambda$1(boolean[]success_0,EntryPoint$Inner sam1_1)"
+        + "{{EntryPoint.call(new EntryPoint$lambda$2$Type(success_0));}}",
+        formatSource(lambdaMethod1.toSource()));
+    assertEquals(
+        "private static void lambda$2(boolean[]success_0,EntryPoint$Inner sam2_1)"
+        + "{{success_0[0]=true;}}",
+        formatSource(lambdaMethod2.toSource()));
+  }
+
+  public void testLambdaNestingCaptureField() throws Exception {
+    addSnippetClassDecl("interface Inner {\n" +
+        "    void f();\n" +
+        "  }\n");
+    addSnippetClassDecl(
+        "  interface Outer {\n" +
+        "     void accept(Inner t);\n" +
+        "   }\n");
+    addSnippetClassDecl(
+        "  static class A {\n" +
+        "    public boolean[] success = new boolean[] {false};\n" +
+        "    public void call(Outer a) {\n" +
+        "      a.accept(() -> {});\n" +
+        "    }\n" +
+        "  }\n");
+    String nestedLambda = "A a = new A();\n"
+        + "a.call( sam1 -> { a.call(sam2 -> {a.success[0] = true;}); });";
+    assertEqualBlock("EntryPoint$A a=new EntryPoint$A();a.call(new EntryPoint$lambda$0$Type(a));",
+        nestedLambda);
+    JProgram program = compileSnippet("void", nestedLambda, false);
+    JClassType lambdaInnerClass1 = (JClassType) getType(program, "test.EntryPoint$lambda$0$Type");
+    JClassType lambdaInnerClass2 = (JClassType) getType(program, "test.EntryPoint$lambda$1$Type");
+    assertNotNull(lambdaInnerClass1);
+    assertNotNull(lambdaInnerClass2);
+
+    // check constructors
+    JMethod ctor1 = findMethod(lambdaInnerClass1, "EntryPoint$lambda$0$Type");
+    assertTrue(ctor1 instanceof JConstructor);
+    assertEquals(1, ctor1.getParams().size());
+    assertEquals("test.EntryPoint$A", ctor1.getOriginalParamTypes().get(0).getName());
+
+    JMethod ctor2 = findMethod(lambdaInnerClass2, "EntryPoint$lambda$1$Type");
+    assertTrue(ctor2 instanceof JConstructor);
+    assertEquals(1, ctor2.getParams().size());
+    assertEquals("test.EntryPoint$A", ctor2.getOriginalParamTypes().get(0).getName());
+
+    // check fields
+    assertEquals(1, lambdaInnerClass1.getFields().size());
+    assertEquals("test.EntryPoint$A", lambdaInnerClass2.getFields().get(0).getType().getName());
+
+    assertEquals(1, lambdaInnerClass2.getFields().size());
+    assertEquals("test.EntryPoint$A", lambdaInnerClass2.getFields().get(0).getType().getName());
+
+    // check constructor body
+    assertEquals("{this.a_0=a_0;}", formatSource(ctor2.getBody().toSource()));
+    assertEquals("{this.a_0=a_0;}", formatSource(ctor2.getBody().toSource()));
+
+    // check super interface
+    assertTrue(lambdaInnerClass1.getImplements().contains(
+        program.getFromTypeMap("test.EntryPoint$Outer")));
+    assertTrue(lambdaInnerClass2.getImplements().contains(
+        program.getFromTypeMap("test.EntryPoint$Outer")));
+
+    // check samMethod
+    JMethod samMethod1 = findMethod(lambdaInnerClass1, "accept");
+    JMethod samMethod2 = findMethod(lambdaInnerClass2, "accept");
+    assertEquals(
+        "public final void accept(EntryPoint$Inner t){EntryPoint.lambda$0(this.a_0,t);}",
+        formatSource(samMethod1.toSource()));
+    assertEquals(
+        "public final void accept(EntryPoint$Inner t){EntryPoint.lambda$1(this.a_0,t);}",
+        formatSource(samMethod2.toSource()));
+
+    // check lambda method
+    JMethod lambdaMethod1 = findMethod(program, "lambda$0");
+    JMethod lambdaMethod2 = findMethod(program, "lambda$1");
+    assertEquals(
+        "private static void lambda$0(EntryPoint$A a_0,EntryPoint$Inner sam1_1)"
+        + "{{a_0.call(new EntryPoint$lambda$1$Type(a_0));}}",
+        formatSource(lambdaMethod1.toSource()));
+    assertEquals(
+        "private static void lambda$1(EntryPoint$A a_0,EntryPoint$Inner sam2_1)"
+        + "{{a_0.success[0]=true;}}",
+        formatSource(lambdaMethod2.toSource()));
   }
 
   public void testCompileStaticReferenceBinding() throws Exception {

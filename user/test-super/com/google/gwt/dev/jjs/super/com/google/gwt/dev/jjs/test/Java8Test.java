@@ -774,4 +774,81 @@ public class Java8Test extends GWTTestCase {
     SimpleI ii = (SimpleC & SimpleI) cc;
     assertEquals(33, ii.fun());
   }
+
+  interface ClickHandler {
+    int onClick(int a);
+  }
+  private int addClickHandler(ClickHandler clickHandler) {
+    return clickHandler.onClick(1);
+  }
+  private int addClickHandler(int a) {
+    return addClickHandler(x -> { int temp = a; return temp; });
+  }
+  public void testLambdaCaptureParameter() {
+    assertEquals(2, addClickHandler(2));
+  }
+
+  interface TestLambda_Inner {
+    void f();
+  }
+  interface TestLambda_Outer {
+    void accept(TestLambda_Inner t);
+  }
+  public void testLambda_call(TestLambda_Outer a) {
+    a.accept(() -> { });
+  }
+  public void testLambdaNestingCaptureLocal() {
+    int[] success = new int[] {0};
+    testLambda_call(sam1 -> { testLambda_call(sam2 -> { success[0] = 10; }); });
+    assertEquals(10, success[0]);
+  }
+
+  static class TestLambda_Class {
+    public int[] s = new int[] {0};
+    public void call(TestLambda_Outer a) {
+      a.accept(() -> { });
+    }
+    class TestLambda_InnerClass {
+      public int[] s = new int[] {0};
+      public int test() {
+        int[] s = new int[] {0};
+        TestLambda_Class.this.call(
+            sam0 -> TestLambda_Class.this.call(
+                sam1 -> {
+                  TestLambda_Class.this.call(
+                    sam2 -> {
+                      TestLambda_Class.this.s[0] = 10;
+                      this.s[0] = 20;
+                      s[0] = 30;
+                    });
+                  }));
+        return s[0];
+      }
+    }
+  }
+
+  public void testLambdaNestingCaptureField() {
+    TestLambda_Class a = new TestLambda_Class();
+    a.call(sam1 -> { a.call(sam2 -> { a.s[0] = 20; }); });
+    assertEquals(20, a.s[0]);
+  }
+
+  public void testLambdaMultipleNestingCaptureFieldAndLocal() {
+    TestLambda_Class a = new TestLambda_Class();
+    TestLambda_Class b = new TestLambda_Class();
+    int [] s = new int [] {0};
+    b.call(sam0 -> a.call(sam1 -> { a.call(sam2 -> { a.s[0] = 20; b.s[0] = 30; s[0] = 40; }); }));
+    assertEquals(20, a.s[0]);
+    assertEquals(30, b.s[0]);
+    assertEquals(40, s[0]);
+  }
+
+  public void testLambdaMultipleNestingCaptureFieldAndLocalInnerClass() {
+    TestLambda_Class a = new TestLambda_Class();
+    TestLambda_Class.TestLambda_InnerClass b = a.new TestLambda_InnerClass();
+    int result = b.test();
+    assertEquals(10, a.s[0]);
+    assertEquals(20, b.s[0]);
+    assertEquals(30, result);
+  }
 }
