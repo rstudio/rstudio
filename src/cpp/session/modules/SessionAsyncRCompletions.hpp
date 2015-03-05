@@ -40,7 +40,8 @@ protected:
 
    void onStderr(const std::string& output)
    {
-      LOG_ERROR_MESSAGE(output);
+      // since package load can fail for a myriad of reasons, and these reasons
+      // are almost never actionable, we don't log errors
    }
 
    void onCompleted(int exitStatus);
