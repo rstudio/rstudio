@@ -19,7 +19,6 @@ import com.google.gwt.core.ext.TreeLogger.Type;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.user.rebind.SourceWriter;
 
-import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -215,7 +214,7 @@ public class ShortcutsEmitter
       if (val.equals("<"))
          return "188";
       if (val.equals("-"))
-         return BrowseCap.isFirefox() ? "173" : "189";
+         return "189";
       if (val.equals("Backspace"))
          return "8";
       return null;
