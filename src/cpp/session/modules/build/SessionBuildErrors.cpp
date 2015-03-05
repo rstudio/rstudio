@@ -28,6 +28,7 @@
 #include <core/FileSerializer.hpp>
 
 #include <session/SessionModuleContext.hpp>
+#include <session/projects/SessionProjects.hpp>
 
 using namespace rstudio::core ;
 
@@ -147,6 +148,15 @@ std::vector<module_context::SourceMarker> parseGccErrors(
                                            const FilePath& basePath,
                                            const std::string& output)
 {
+   // check to see if we are in a package
+   std::string pkgInclude;
+   using namespace projects;
+   if (projectContext().hasProject() &&
+       (projectContext().config().buildType == r_util::kBuildTypePackage))
+   {
+      pkgInclude = "/" + projectContext().packageInfo().name() + "/include/";
+   }
+
    using namespace module_context;
    std::vector<SourceMarker> errors;
 
@@ -198,6 +208,28 @@ std::vector<module_context::SourceMarker> parseGccErrors(
          LOG_ERROR(error);
       else
          filePath = realPath;
+
+      // if we are in a package and the file where the error occurred
+      // has /<package-name>/include/ in it then it might be a template
+      // instantiation error. in that case re-map it to the appropriate
+      // source file within the package
+      if (!pkgInclude.empty())
+      {
+         std::string path = filePath.absolutePath();
+         size_t pos = path.find(pkgInclude);
+         if (pos != std::string::npos)
+         {
+            // advance to end and calculate relative path
+            pos += pkgInclude.length();
+            std::string relativePath = path.substr(pos);
+
+            // does this file exist? if so substitute it
+            FilePath includePath = projectContext().buildTargetPath()
+                             .childPath("inst/include/" + relativePath);
+            if (includePath.exists())
+               filePath = includePath;
+         }
+      }
 
       // don't show warnings from Makeconf
       if (filePath.filename() == "Makeconf")

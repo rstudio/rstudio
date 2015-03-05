@@ -151,6 +151,7 @@
 * Server: Provide required domain socket permissions during startup
 * IE 11: Strip unprintable unicode characters in Rmd front matter dates
 * Only filter object file listings in 'src' directory
+* Correctly navigate to package inst/include directory for template errors 
 
 
 
