@@ -653,22 +653,23 @@ public class RCompletionManager implements CompletionManager
             }
          }
          
-         if (isValidForRIdentifier(c))
-         {
-            Scheduler.get().scheduleDeferred(new ScheduledCommand()
-            {
-               @Override
-               public void execute()
-               {
-                  beginSuggest(false, true, false);
-               }
-            });
-         }
-         
+         // 
          if (c == ':')
          {
             suggestTimer_.schedule(false, true, false);
+            return false;
          }
+         
+         Scheduler.get().scheduleDeferred(new ScheduledCommand()
+         {
+            @Override
+            public void execute()
+            {
+               beginSuggest(false, true, false);
+            }
+         });
+         return false;
+         
       }
       else
       {
