@@ -57,8 +57,12 @@
       }
       else if (.rs.isFunction(val))
          return (.rs.getSignature(val))
-      else if (is(val, "Date"))
-         return (format(val))
+      else if (is(val, "Date") || is(val, "POSIXct") || is(val, "POSIXlt")) {
+         if (length(val) == 1)
+           return (format(val))
+         else
+           return (.rs.valueFromStr(val))
+      }
       else
          return ("NO_VALUE")
    },
@@ -336,7 +340,8 @@
       else if (is.matrix(obj)
               || is.numeric(obj)
               || is.factor(obj)
-              || is.raw(obj))
+              || is.raw(obj) 
+              || is.character(obj))
       {
          return(.rs.valueFromStr(obj))
       }
