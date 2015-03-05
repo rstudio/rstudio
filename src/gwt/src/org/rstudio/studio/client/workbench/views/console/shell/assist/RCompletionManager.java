@@ -33,6 +33,7 @@ import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.Invalidation;
 import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.command.KeyboardHelper;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.events.SelectionCommitHandler;
@@ -802,16 +803,17 @@ public class RCompletionManager implements CompletionManager
       }
       
       int keyCode = event.getKeyCode() ;
+      
       if (keyCode >= 'a' && keyCode <= 'z')
          return true ;
-      if (keyCode >= 'A' && keyCode <= 'Z')
+      else if (keyCode >= 'A' && keyCode <= 'Z')
          return true ;
-      if (keyCode == ' ')
+      else if (keyCode == ' ')
          return true ;
-      if (keyCode == 189) // dash
+      else if (KeyboardHelper.isHyphen(event))
          return true ;
-      if (keyCode == 189 && event.getShiftKey()) // underscore
-         return true ;
+      else if (KeyboardHelper.isUnderscore(event))
+         return true;
       
       if (event.getShiftKey())
          return false ;

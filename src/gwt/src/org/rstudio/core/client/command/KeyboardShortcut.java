@@ -147,13 +147,12 @@ public class KeyboardShortcut
          return "=";
       else if (keycode_ == 188)
          return "<";
-      else if (keycode_ == 189)
+      else if (KeyboardHelper.isHyphenKeycode(keycode_))
          return "-";
       else if (keycode_ >= 112 && keycode_ <= 123)
          return "F" + (keycode_ - 111);
       else if (keycode_ == 8)
          return macStyle ? "&#9003;" : "Backspace";
-
 
       return Character.toUpperCase((char)keycode_) + "";
    }

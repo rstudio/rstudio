@@ -15,6 +15,7 @@
 
 package org.rstudio.studio.client.workbench.views.source.editors.text.cpp;
 
+import org.rstudio.core.client.command.KeyboardHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 
@@ -32,7 +33,7 @@ public class CppCompletionUtils
          return true ;
       if (keyCode >= 'A' && keyCode <= 'Z')
          return true ;
-      if (keyCode == 189 && event.getShiftKey()) // underscore
+      if (KeyboardHelper.isUnderscore(event))
          return true ;
      
       if (event.getShiftKey())
