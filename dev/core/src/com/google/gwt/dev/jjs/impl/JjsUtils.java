@@ -18,6 +18,7 @@ package com.google.gwt.dev.jjs.impl;
 import com.google.gwt.dev.PrecompileTaskOptions;
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.SourceOrigin;
+import com.google.gwt.dev.jjs.ast.HasName;
 import com.google.gwt.dev.jjs.ast.JBooleanLiteral;
 import com.google.gwt.dev.jjs.ast.JCharLiteral;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
@@ -37,6 +38,7 @@ import com.google.gwt.dev.jjs.ast.JPrimitiveType;
 import com.google.gwt.dev.jjs.ast.JReturnStatement;
 import com.google.gwt.dev.jjs.ast.JStringLiteral;
 import com.google.gwt.dev.jjs.ast.JThisRef;
+import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.ast.js.JMultiExpression;
 import com.google.gwt.dev.js.ast.JsBooleanLiteral;
 import com.google.gwt.dev.js.ast.JsExpression;
@@ -172,6 +174,20 @@ public class JjsUtils {
     delegate.freezeParamTypes();
     classToBeModified.addMethod(delegate);
     delegate.addOverriddenMethod(methodToDelegate);
+  }
+
+  public static void constructManglingSignature(JMethod x, StringBuilder partialSignature) {
+    partialSignature.append("__");
+    for (int i = 0; i < x.getOriginalParamTypes().size(); ++i) {
+      JType type = x.getOriginalParamTypes().get(i);
+      partialSignature.append(type.getJavahSignatureName());
+    }
+    partialSignature.append(x.getOriginalReturnType().getJavahSignatureName());
+  }
+
+  public static String getNameString(HasName hasName) {
+    String s = hasName.getName().replaceAll("_", "_1").replace('.', '_');
+    return s;
   }
 
   private enum LiteralTranslators {

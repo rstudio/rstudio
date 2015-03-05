@@ -168,4 +168,7 @@ public class Java8Test extends GWTTestCase {
 
   public void testLambdaMultipleNestingCaptureFieldAndLocalInnerClass() {
   }
+
+  public void testMethodRefWithSameName() {
+  }
 }

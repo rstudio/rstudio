@@ -501,7 +501,7 @@ public class Java8AstTest extends JJSTestBase {
     addSnippetClassDecl("public static Integer foo(int x, int y) { return x + y; }");
     String lambda = "new AcceptsLambda<Integer>().accept(EntryPoint::foo);";
     assertEqualBlock(
-        "(new AcceptsLambda()).accept(new Lambda$$foo__IILjava_lang_Integer_2$Type());",
+        "(new AcceptsLambda()).accept(new Lambda$$test$EntryPoint$foo__IILjava_lang_Integer_2$Type());",
         lambda
     );
     JProgram program = compileSnippet("void", lambda, false);
@@ -510,11 +510,11 @@ public class Java8AstTest extends JJSTestBase {
 
     // created by GwtAstBuilder
     JClassType lambdaInnerClass = (JClassType) getType(program,
-        "test.Lambda$$foo__IILjava_lang_Integer_2$Type");
+        "test.Lambda$$test$EntryPoint$foo__IILjava_lang_Integer_2$Type");
     assertNotNull(lambdaInnerClass);
 
     // should have constructor taking this and x
-    JMethod ctor = findMethod(lambdaInnerClass, "Lambda$$foo__IILjava_lang_Integer_2$Type");
+    JMethod ctor = findMethod(lambdaInnerClass, "Lambda$$test$EntryPoint$foo__IILjava_lang_Integer_2$Type");
     assertTrue(ctor instanceof JConstructor);
     // no ctor args
     assertEquals(0, ctor.getParams().size());
@@ -536,7 +536,7 @@ public class Java8AstTest extends JJSTestBase {
     addSnippetClassDecl("public Integer foo(int x, int y) { return x + y; }");
     String lambda = "new AcceptsLambda<Integer>().accept(this::foo);";
     assertEqualBlock(
-        "(new AcceptsLambda()).accept(new Lambda$foo__IILjava_lang_Integer_2$Type(this));",
+        "(new AcceptsLambda()).accept(new Lambda$test$EntryPoint$foo__IILjava_lang_Integer_2$Type(this));",
         lambda
     );
     JProgram program = compileSnippet("void", lambda, false);
@@ -545,11 +545,11 @@ public class Java8AstTest extends JJSTestBase {
 
     // created by GwtAstBuilder
     JClassType lambdaInnerClass = (JClassType) getType(program,
-        "test.Lambda$foo__IILjava_lang_Integer_2$Type");
+        "test.Lambda$test$EntryPoint$foo__IILjava_lang_Integer_2$Type");
     assertNotNull(lambdaInnerClass);
 
     // should have constructor taking this and x
-    JMethod ctor = findMethod(lambdaInnerClass, "Lambda$foo__IILjava_lang_Integer_2$Type");
+    JMethod ctor = findMethod(lambdaInnerClass, "Lambda$test$EntryPoint$foo__IILjava_lang_Integer_2$Type");
     assertTrue(ctor instanceof JConstructor);
     // instance capture
     assertEquals(1, ctor.getParams().size());
@@ -577,19 +577,21 @@ public class Java8AstTest extends JJSTestBase {
         "new AcceptsLambda<Integer>().accept(instance1::fooInstance);\n" +
         "new AcceptsLambda<Integer>().accept(instance2::fooInstance);";
     assertEqualBlock(
-        "(new AcceptsLambda()).accept(new Lambda$fooInstance__IILjava_lang_Integer_2$Type(this.instance1));\n"
-        + "(new AcceptsLambda()).accept(new Lambda$fooInstance__IILjava_lang_Integer_2$Type(this.instance2));",
+        "(new AcceptsLambda()).accept(new "
+        + "Lambda$test$Pojo$fooInstance__IILjava_lang_Integer_2$Type(this.instance1));\n"
+        + "(new AcceptsLambda()).accept(new "
+        + "Lambda$test$Pojo$fooInstance__IILjava_lang_Integer_2$Type(this.instance2));",
         reference);
     JProgram program = compileSnippet("void", reference, false);
 
     // created by GwtAstBuilder
     JClassType lambdaInnerClass = (JClassType) getType(program,
-        "test.Lambda$fooInstance__IILjava_lang_Integer_2$Type");
+        "test.Lambda$test$Pojo$fooInstance__IILjava_lang_Integer_2$Type");
     assertNotNull(lambdaInnerClass);
     assertEquals(1, Collections.frequency(program.getDeclaredTypes(), lambdaInnerClass));
 
     // should have constructor taking the instance
-    JMethod ctor = findMethod(lambdaInnerClass, "Lambda$fooInstance__IILjava_lang_Integer_2$Type");
+    JMethod ctor = findMethod(lambdaInnerClass, "Lambda$test$Pojo$fooInstance__IILjava_lang_Integer_2$Type");
     assertTrue(ctor instanceof JConstructor);
     // instance capture
     assertEquals(1, ctor.getParams().size());
@@ -610,23 +612,152 @@ public class Java8AstTest extends JJSTestBase {
         formatSource(samMethod.toSource()));
   }
 
+  public void testCompileInstanceReferenceBindingMultipleWithSameMethodSignature() throws Exception {
+    addSnippetClassDecl("static class TestMF_A {\n" +
+        "    public String getId() {\n" +
+        "      return \"A\";\n" +
+        "    }\n" +
+        "  }");
+    addSnippetClassDecl("  static class TestMF_B {\n" +
+        "    public String getId() {\n" +
+        "      return \"B\";\n" +
+        "    }\n" +
+        "  }");
+    addSnippetClassDecl("interface Function<T> {\n" +
+        "    T apply();\n" +
+        "  }");
+    addSnippetClassDecl("  private String f(Function<String> arg) {\n" +
+        "    return arg.apply();\n" +
+        "  }");
+    String reference = "TestMF_A a = new TestMF_A();\n"
+        + "TestMF_B b = new TestMF_B();\n"
+        + "f(a::getId);\n"
+        + "f(b::getId);";
+    assertEqualBlock(
+        "EntryPoint$TestMF_A a=new EntryPoint$TestMF_A();"
+            + "EntryPoint$TestMF_B b=new EntryPoint$TestMF_B();"
+            + "this.f(new "
+            + "EntryPoint$Function$test$EntryPoint$TestMF_A$getId__Ljava_lang_String_2$Type(a));"
+            + "this.f(new "
+            + "EntryPoint$Function$test$EntryPoint$TestMF_B$getId__Ljava_lang_String_2$Type(b));",
+        reference);
+    JProgram program = compileSnippet("void", reference, false);
+
+    // created by GwtAstBuilder
+    JClassType innerClassA = (JClassType) getType(program,
+        "test.EntryPoint$Function$test$EntryPoint$TestMF_A$getId__Ljava_lang_String_2$Type");
+    JClassType innerClassB = (JClassType) getType(program,
+        "test.EntryPoint$Function$test$EntryPoint$TestMF_B$getId__Ljava_lang_String_2$Type");
+    assertNotNull(innerClassA);
+    assertNotNull(innerClassB);
+
+    // should have constructor taking this and x
+    JMethod ctorA = findMethod(innerClassA,
+        "EntryPoint$Function$test$EntryPoint$TestMF_A$getId__Ljava_lang_String_2$Type");
+    assertTrue(ctorA instanceof JConstructor);
+    // instance capture
+    assertEquals(1, ctorA.getParams().size());
+    assertEquals("test.EntryPoint$TestMF_A", ctorA.getOriginalParamTypes().get(0).getName());
+    JMethod ctorB = findMethod(innerClassB,
+        "EntryPoint$Function$test$EntryPoint$TestMF_B$getId__Ljava_lang_String_2$Type");
+    assertTrue(ctorB instanceof JConstructor);
+    // instance capture
+    assertEquals(1, ctorB.getParams().size());
+    assertEquals("test.EntryPoint$TestMF_B", ctorB.getOriginalParamTypes().get(0).getName());
+
+    // should have 1 field to store the captured instance
+    assertEquals(1, innerClassA.getFields().size());
+    assertEquals("test.EntryPoint$TestMF_A",
+        innerClassA.getFields().get(0).getType().getName());
+    assertEquals(1, innerClassB.getFields().size());
+    assertEquals("test.EntryPoint$TestMF_B",
+        innerClassB.getFields().get(0).getType().getName());
+
+    // should extends EntryPoint$Function
+    assertTrue(
+        innerClassA.getImplements().contains(program.getFromTypeMap("test.EntryPoint$Function")));
+    assertTrue(
+        innerClassB.getImplements().contains(program.getFromTypeMap("test.EntryPoint$Function")));
+
+    // should implement apply method
+    JMethod samMethodA = findMethod(innerClassA, "apply");
+    assertEquals(
+        "public final Object apply(){return this.$$outer_0.getId();}",
+        formatSource(samMethodA.toSource()));
+    JMethod samMethodB = findMethod(innerClassB, "apply");
+    assertEquals(
+        "public final Object apply(){return this.$$outer_0.getId();}",
+        formatSource(samMethodB.toSource()));
+  }
+
+  public void testCompileStaticReferenceBindingMultiple() throws Exception {
+    addSnippetClassDecl("static class TestMF_A {\n" +
+        "    public static String getId() {\n" +
+        "      return \"A\";\n" +
+        "    }\n" +
+        "  }");
+    addSnippetClassDecl("  static class TestMF_B {\n" +
+        "    public static String getId() {\n" +
+        "      return \"B\";\n" +
+        "    }\n" +
+        "  }");
+    addSnippetClassDecl("interface Function<T> {\n" +
+        "    T apply();\n" +
+        "  }");
+    addSnippetClassDecl("  private String f(Function<String> arg) {\n" +
+        "    return arg.apply();\n" +
+        "  }");
+    String reference = "f(TestMF_A::getId);\n" + "f(TestMF_B::getId);";
+    assertEqualBlock(
+        "this.f(new "
+        + "EntryPoint$Function$$test$EntryPoint$TestMF_A$getId__Ljava_lang_String_2$Type());"
+        + "this.f(new "
+        + "EntryPoint$Function$$test$EntryPoint$TestMF_B$getId__Ljava_lang_String_2$Type());",
+        reference);
+    JProgram program = compileSnippet("void", reference, false);
+
+    // created by GwtAstBuilder
+    JClassType innerClassA = (JClassType) getType(program,
+        "test.EntryPoint$Function$$test$EntryPoint$TestMF_A$getId__Ljava_lang_String_2$Type");
+    JClassType innerClassB = (JClassType) getType(program,
+        "test.EntryPoint$Function$$test$EntryPoint$TestMF_B$getId__Ljava_lang_String_2$Type");
+    assertNotNull(innerClassA);
+    assertNotNull(innerClassB);
+
+    // should extends EntryPoint$Function
+    assertTrue(
+        innerClassA.getImplements().contains(program.getFromTypeMap("test.EntryPoint$Function")));
+    assertTrue(
+        innerClassB.getImplements().contains(program.getFromTypeMap("test.EntryPoint$Function")));
+
+    // should implement apply method
+    JMethod samMethodA = findMethod(innerClassA, "apply");
+    assertEquals(
+        "public final Object apply(){return EntryPoint$TestMF_A.getId();}",
+        formatSource(samMethodA.toSource()));
+    JMethod samMethodB = findMethod(innerClassB, "apply");
+    assertEquals(
+        "public final Object apply(){return EntryPoint$TestMF_B.getId();}",
+        formatSource(samMethodB.toSource()));
+  }
+
   public void testCompileImplicitQualifierReferenceBinding() throws Exception {
     String lambda = "new AcceptsLambda<String>().accept2(String::equalsIgnoreCase);";
     assertEqualBlock(
         "(new AcceptsLambda()).accept2("
-            + "new Lambda2$$equalsIgnoreCase__Ljava_lang_String_2Z$Type());",
+            + "new Lambda2$$java$lang$String$equalsIgnoreCase__Ljava_lang_String_2Z$Type());",
         lambda
     );
     JProgram program = compileSnippet("void", lambda, false);
 
     // created by GwtAstBuilder
     JClassType lambdaInnerClass = (JClassType) getType(program,
-        "test.Lambda2$$equalsIgnoreCase__Ljava_lang_String_2Z$Type");
+        "test.Lambda2$$java$lang$String$equalsIgnoreCase__Ljava_lang_String_2Z$Type");
     assertNotNull(lambdaInnerClass);
 
     // should have constructor taking this and x
     JMethod ctor = findMethod(lambdaInnerClass,
-        "Lambda2$$equalsIgnoreCase__Ljava_lang_String_2Z$Type");
+        "Lambda2$$java$lang$String$equalsIgnoreCase__Ljava_lang_String_2Z$Type");
     assertTrue(ctor instanceof JConstructor);
     // no instance capture
     assertEquals(0, ctor.getParams().size());
@@ -647,17 +778,18 @@ public class Java8AstTest extends JJSTestBase {
   public void testCompileConstructorReferenceBinding() throws Exception {
     String lambda = "new AcceptsLambda<Pojo>().accept(Pojo::new);";
     assertEqualBlock(
-        "(new AcceptsLambda()).accept(new Lambda$$Pojo__IIV$Type());",
+        "(new AcceptsLambda()).accept(new Lambda$$test$Pojo$Pojo__IIV$Type());",
         lambda
     );
     JProgram program = compileSnippet("void", lambda, false);
 
     // created by GwtAstBuilder
-    JClassType lambdaInnerClass = (JClassType) getType(program, "test.Lambda$$Pojo__IIV$Type");
+    JClassType lambdaInnerClass = (JClassType) getType(program,
+        "test.Lambda$$test$Pojo$Pojo__IIV$Type");
     assertNotNull(lambdaInnerClass);
 
     // should have constructor taking this and x
-    JMethod ctor = findMethod(lambdaInnerClass, "Lambda$$Pojo__IIV$Type");
+    JMethod ctor = findMethod(lambdaInnerClass, "Lambda$$test$Pojo$Pojo__IIV$Type");
     assertTrue(ctor instanceof JConstructor);
     // no instance capture
     assertEquals(0, ctor.getParams().size());
@@ -691,19 +823,19 @@ public class Java8AstTest extends JJSTestBase {
     String lambda = "new AcceptsLambda<Pojo2>().accept(Pojo2::new);";
     assertEqualBlock(
         "(new AcceptsLambda()).accept("
-            + "new Lambda$$EntryPoint$Pojo2__Ltest_EntryPoint_2IIV$Type(this));",
+            + "new Lambda$$test$EntryPoint$Pojo2$EntryPoint$Pojo2__Ltest_EntryPoint_2IIV$Type(this));",
         lambda
     );
     JProgram program = compileSnippet("void", lambda, false);
 
     // created by GwtAstBuilder
     JClassType lambdaInnerClass = (JClassType) getType(program,
-        "test.Lambda$$EntryPoint$Pojo2__Ltest_EntryPoint_2IIV$Type");
+        "test.Lambda$$test$EntryPoint$Pojo2$EntryPoint$Pojo2__Ltest_EntryPoint_2IIV$Type");
     assertNotNull(lambdaInnerClass);
 
     // should have constructor taking this and x
     JMethod ctor = findMethod(lambdaInnerClass,
-        "Lambda$$EntryPoint$Pojo2__Ltest_EntryPoint_2IIV$Type");
+        "Lambda$$test$EntryPoint$Pojo2$EntryPoint$Pojo2__Ltest_EntryPoint_2IIV$Type");
     assertTrue(ctor instanceof JConstructor);
     // one instance capture
     assertEquals(1, ctor.getParams().size());

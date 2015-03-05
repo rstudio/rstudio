@@ -515,7 +515,7 @@ public class GenerateJavaScriptAST {
       }
 
       // My seed function name
-      JsName jsName = topScope.declareName(getNameString(x), x.getShortName());
+      JsName jsName = topScope.declareName(JjsUtils.getNameString(x), x.getShortName());
       names.put(x, jsName);
       recordSymbol(x, jsName);
 
@@ -3405,11 +3405,6 @@ public class GenerateJavaScriptAST {
     }
   }
 
-  static String getNameString(HasName hasName) {
-    String s = hasName.getName().replaceAll("_", "_1").replace('.', '_');
-    return s;
-  }
-
   /**
    * Retrieves the runtime typeId for {@code type}.
    */
@@ -3425,12 +3420,13 @@ public class GenerateJavaScriptAST {
   }
 
   String mangleName(JField x) {
-    String s = getNameString(x.getEnclosingType()) + '_' + getNameString(x);
+    String s = JjsUtils.getNameString(x.getEnclosingType()) + '_' + JjsUtils.getNameString(x);
     return s;
   }
 
   String mangleNameForGlobal(JMethod x) {
-    String s = getNameString(x.getEnclosingType()) + '_' + getNameString(x) + "__";
+    String s =
+        JjsUtils.getNameString(x.getEnclosingType()) + '_' + JjsUtils.getNameString(x) + "__";
     for (int i = 0; i < x.getOriginalParamTypes().size(); ++i) {
       JType type = x.getOriginalParamTypes().get(i);
       s += type.getJavahSignatureName();
@@ -3449,38 +3445,18 @@ public class GenerateJavaScriptAST {
      */
     sb.append("package_private$");
     JMethod topDefinition = typeOracle.getTopMostDefinition(x);
-    sb.append(getNameString(topDefinition.getEnclosingType()));
+    sb.append(JjsUtils.getNameString(topDefinition.getEnclosingType()));
     sb.append("$");
-    sb.append(getNameString(x));
-    constructManglingSignature(x, sb);
-    return StringInterner.get().intern(sb.toString());
-  }
-
-  /**
-   * Java8 Method References such as String::equalsIgnoreCase should produce inner class names
-   * that are a function of the samInterface (e.g. Runnable), the method being referred to,
-   * and the qualifying disposition (this::foo vs Class::foo if foo is an instance method)
-   */
-  static String classNameForMethodReference(JInterfaceType samInterface, JMethod referredMethod,
-      boolean haveReceiver) {
-    StringBuilder sb = new StringBuilder();
-    sb.append(samInterface.getPackageName());
-    sb.append('.');
-    sb.append(samInterface.getShortName());
-    sb.append("$");
-    if (!haveReceiver) {
-      sb.append("$");
-    }
-    sb.append(getNameString(referredMethod));
-    constructManglingSignature(referredMethod, sb);
+    sb.append(JjsUtils.getNameString(x));
+    JjsUtils.constructManglingSignature(x, sb);
     return StringInterner.get().intern(sb.toString());
   }
 
   String mangleNameForPoly(JMethod x) {
     assert !x.isPrivate() && !x.isStatic();
     StringBuilder sb = new StringBuilder();
-    sb.append(getNameString(x));
-    constructManglingSignature(x, sb);
+    sb.append(JjsUtils.getNameString(x));
+    JjsUtils.constructManglingSignature(x, sb);
     return StringInterner.get().intern(sb.toString());
   }
 
@@ -3493,10 +3469,10 @@ public class GenerateJavaScriptAST {
      * class name to the mangled name.
      */
     sb.append("private$");
-    sb.append(getNameString(x.getEnclosingType()));
+    sb.append(JjsUtils.getNameString(x.getEnclosingType()));
     sb.append("$");
-    sb.append(getNameString(x));
-    constructManglingSignature(x, sb);
+    sb.append(JjsUtils.getNameString(x));
+    JjsUtils.constructManglingSignature(x, sb);
     return StringInterner.get().intern(sb.toString());
   }
 
@@ -3504,18 +3480,9 @@ public class GenerateJavaScriptAST {
     assert x.isJsProperty();
     StringBuilder sb = new StringBuilder();
     sb.append("jsproperty$");
-    sb.append(getNameString(x));
-    constructManglingSignature(x, sb);
+    sb.append(JjsUtils.getNameString(x));
+    JjsUtils.constructManglingSignature(x, sb);
     return StringInterner.get().intern(sb.toString());
-  }
-
-  private static void constructManglingSignature(JMethod x, StringBuilder partialSignature) {
-    partialSignature.append("__");
-    for (int i = 0; i < x.getOriginalParamTypes().size(); ++i) {
-      JType type = x.getOriginalParamTypes().get(i);
-      partialSignature.append(type.getJavahSignatureName());
-    }
-    partialSignature.append(x.getOriginalReturnType().getJavahSignatureName());
   }
 
   String mangleNameSpecialObfuscate(JField x) {
