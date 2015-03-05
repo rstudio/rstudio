@@ -654,22 +654,26 @@ public class RCompletionManager implements CompletionManager
             }
          }
          
-         if (isValidForRIdentifier(c))
-         {
-            Scheduler.get().scheduleDeferred(new ScheduledCommand()
-            {
-               @Override
-               public void execute()
-               {
-                  beginSuggest(false, true, false);
-               }
-            });
-         }
-         
+         // 
          if (c == ':')
          {
             suggestTimer_.schedule(false, true, false);
+            return false;
          }
+         
+         // Always update the current set of completions following
+         // a key insertion. Defer execution so the key insertion can
+         // enter the document.
+         Scheduler.get().scheduleDeferred(new ScheduledCommand()
+         {
+            @Override
+            public void execute()
+            {
+               beginSuggest(false, true, false);
+            }
+         });
+         return false;
+         
       }
       else
       {
