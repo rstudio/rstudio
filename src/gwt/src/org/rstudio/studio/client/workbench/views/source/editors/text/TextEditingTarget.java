@@ -494,6 +494,7 @@ public class TextEditingTarget implements
                      event.preventDefault();
                      event.stopPropagation();
                      docDisplay_.insertCode("\n" + match.getGroup(1));
+                     docDisplay_.ensureCursorVisible();
                   }
                }
             }
