@@ -660,6 +660,9 @@ public class RCompletionManager implements CompletionManager
             return false;
          }
          
+         // Always update the current set of completions following
+         // a key insertion. Defer execution so the key insertion can
+         // enter the document.
          Scheduler.get().scheduleDeferred(new ScheduledCommand()
          {
             @Override
