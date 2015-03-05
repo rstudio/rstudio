@@ -150,6 +150,8 @@
 * Server: Ensure that LANG is populated from system default when not inherited
 * Server: Provide required domain socket permissions during startup
 * IE 11: Strip unprintable unicode characters in Rmd front matter dates
+* Only filter object file listings in 'src' directory
+
 
 
 

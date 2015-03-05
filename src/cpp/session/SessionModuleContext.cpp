@@ -1231,7 +1231,8 @@ bool fileListingFilter(const core::FileInfo& fileInfo)
       return true;
    }
    else if (userSettings().hideObjectFiles() &&
-            (ext == ".o" || ext == ".so" || ext == ".dll"))
+            (ext == ".o" || ext == ".so" || ext == ".dll") &&
+            filePath.parent().filename() == "src")
    {
       return false;
    }
