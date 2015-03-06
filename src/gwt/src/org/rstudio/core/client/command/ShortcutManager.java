@@ -152,13 +152,28 @@ public class ShortcutManager implements NativePreviewHandler,
       
       HashMap<Command, ShortcutInfo> infoMap = 
             new HashMap<Command, ShortcutInfo>();
-      Set<KeyboardShortcut> shortcuts = commands_.keySet();
+      ArrayList<KeyboardShortcut> shortcuts = 
+            new ArrayList<KeyboardShortcut>();
       
       // Create a ShortcutInfo for each unbound shortcut
       for (KeyboardShortcut shortcut: unboundShortcuts_)
       {
          info.add(new ShortcutInfo(shortcut, null));
       }
+
+      // Sort the shortcuts as they were presented in Commands.cmd.xml
+      for (KeyboardShortcut ks: commands_.keySet())
+      {
+         shortcuts.add(ks);
+      }
+      Collections.sort(shortcuts, new Comparator<KeyboardShortcut>()
+      {
+         @Override
+         public int compare(KeyboardShortcut o1, KeyboardShortcut o2)
+         {
+            return o1.getOrder() - o2.getOrder();
+         }
+      });
 
       // Create a ShortcutInfo for each command (a command may have multiple
       // shortcut bindings)
