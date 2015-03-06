@@ -46,12 +46,13 @@ public class JsInteropRestrictionChecker extends JVisitor {
     }
   }
 
+  private final Set<JMethod> currentJsTypeProcessedMethods = Sets.newHashSet();
   private final Set<String> currentJsTypeMemberNames = Sets.newHashSet();
   private JDeclaredType currentType;
+  private boolean hasErrors;
   private final JProgram jprogram;
   private final TreeLogger logger;
   private final MinimalRebuildCache minimalRebuildCache;
-  private boolean hasErrors;
 
   public JsInteropRestrictionChecker(TreeLogger logger, JProgram jprogram,
       MinimalRebuildCache minimalRebuildCache) {
@@ -65,21 +66,32 @@ public class JsInteropRestrictionChecker extends JVisitor {
     assert currentType == x;
     currentType = null;
     currentJsTypeMemberNames.clear();
+    currentJsTypeProcessedMethods.clear();
   }
 
   @Override
   public boolean visit(JDeclaredType x, Context ctx) {
     assert currentType == null;
     assert currentJsTypeMemberNames.isEmpty();
+    assert currentJsTypeProcessedMethods.isEmpty();
     minimalRebuildCache.removeJsInteropNames(x.getName());
     currentType = x;
 
-    return true;
+    // Perform custom class traversal to examine fields and methods of this class and all
+    // superclasses so that name collisions between local and inherited members can be found.
+    do {
+      acceptWithInsertRemoveImmutable(x.getFields());
+      acceptWithInsertRemoveImmutable(x.getMethods());
+      x = x.getSuperClass();
+    } while (x != null);
+
+    // Skip the default class traversal.
+    return false;
   }
 
   @Override
   public boolean visit(JField x, Context ctx) {
-    if (jprogram.typeOracle.isExportedField(x)) {
+    if (currentType == x.getEnclosingType() && jprogram.typeOracle.isExportedField(x)) {
       checkExportName(x);
     } else if (jprogram.typeOracle.isJsTypeField(x)) {
       checkJsTypeMemberName(x, x.getJsMemberName());
@@ -90,7 +102,12 @@ public class JsInteropRestrictionChecker extends JVisitor {
 
   @Override
   public boolean visit(JMethod x, Context ctx) {
-    if (jprogram.typeOracle.isExportedMethod(x)) {
+    if (!currentJsTypeProcessedMethods.add(x)) {
+      return false;
+    }
+    currentJsTypeProcessedMethods.addAll(x.getOverriddenMethods());
+
+    if (currentType == x.getEnclosingType() && jprogram.typeOracle.isExportedMethod(x)) {
       checkExportName(x);
     } else if (jprogram.typeOracle.isJsTypeMethod(x)) {
       if (x.isOrOverridesJsProperty()) {
@@ -118,6 +135,14 @@ public class JsInteropRestrictionChecker extends JVisitor {
     }
   }
 
+  private void checkJsTypeMemberName(JMember x, String memberName) {
+    boolean success = currentJsTypeMemberNames.add(memberName);
+    if (!success) {
+      logError("'%s' can't be exported because the member name '%s' is already taken.",
+          x.getQualifiedName(), memberName);
+    }
+  }
+
   private void checkJsTypeMethod(JMethod x) {
     String name = x.getJsMemberName();
     for (JMethod override : x.getOverriddenMethods()) {
@@ -133,14 +158,6 @@ public class JsInteropRestrictionChecker extends JVisitor {
     }
     assert name != null;
     checkJsTypeMemberName(x, name);
-  }
-
-  private void checkJsTypeMemberName(JMember x, String memberName) {
-    boolean success = currentJsTypeMemberNames.add(memberName);
-    if (!success) {
-      logError("'%s' can't be exported because the member name '%s' is already taken.",
-          x.getQualifiedName(), memberName);
-    }
   }
 
   private void logError(String format, Object... args) {
