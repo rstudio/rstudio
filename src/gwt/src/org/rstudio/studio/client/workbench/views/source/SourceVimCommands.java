@@ -152,9 +152,26 @@ public class SourceVimCommands
         isEdit: true,
         context: "normal"
      });
-     
-  }-*/;
+   }-*/;
    
+   
+   public native final void showHelpAtCursor(Source source) /*-{
+     var Vim = $wnd.require("ace/keyboard/vim").CodeMirror.Vim;
+     
+     var callback = $entry(function(cm, args, vim) {
+        source.@org.rstudio.studio.client.workbench.views.source.Source::showHelpAtCursor()();
+     });
+     
+     Vim.defineAction("showHelpAtCursor", callback);
+     Vim.mapCommand({
+        keys: "K",
+        type: "action",
+        action: "showHelpAtCursor",
+        isEdit: false,
+        context: "normal"
+     });
+   }-*/;
+
    public native final void showVimHelp(ShortcutViewer viewer) /*-{
 
       var callback = $entry(function(cm, params) {

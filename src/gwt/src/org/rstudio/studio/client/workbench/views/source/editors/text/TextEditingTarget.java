@@ -2540,6 +2540,11 @@ public class TextEditingTarget implements
                   0));
    }
    
+   public void showHelpAtCursor()
+   {
+      docDisplay_.goToHelp();
+   }
+   
    @Handler
    void onDebugBreakpoint()
    {

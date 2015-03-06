@@ -479,6 +479,7 @@ public class Source implements InsertSourceHandler,
       vimCommands_.reflowText(this);
       vimCommands_.showVimHelp(
             RStudioGinjector.INSTANCE.getShortcutViewer());
+      vimCommands_.showHelpAtCursor(this);
    }
    
    private void closeAllTabs(boolean interactive)
@@ -2562,6 +2563,15 @@ public class Source implements InsertSourceHandler,
                   Debug.logError(error);
                }
             });
+   }
+   
+   private void showHelpAtCursor()
+   {
+      if (activeEditor_ != null && activeEditor_ instanceof TextEditingTarget)
+      {
+         TextEditingTarget editor = (TextEditingTarget) activeEditor_;
+         editor.showHelpAtCursor();
+      }
    }
 
    public void onFileEdit(FileEditEvent event)
