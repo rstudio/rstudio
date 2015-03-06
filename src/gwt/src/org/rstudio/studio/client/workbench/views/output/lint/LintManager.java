@@ -112,7 +112,7 @@ public class LintManager
    
    private void lintActiveDocument(final LintContext context)
    {
-      target_.withSavedDoc(new Command()
+      target_.save(new Command()
       {
          @Override
          public void execute()
