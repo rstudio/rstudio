@@ -112,14 +112,28 @@ public class LintManager
    
    private void lintActiveDocument(final LintContext context)
    {
-      target_.save(new Command()
+      if (context.showMarkers)
       {
-         @Override
-         public void execute()
+         target_.save(new Command()
          {
-            performLintServerRequest(context);
-         }
-      });
+            @Override
+            public void execute()
+            {
+               performLintServerRequest(context);
+            }
+         });
+      }
+      else
+      {
+         target_.withSavedDoc(new Command()
+         {
+            @Override
+            public void execute()
+            {
+               performLintServerRequest(context);
+            }
+         });
+      }
    }
 
    private void performLintServerRequest(final LintContext context)
