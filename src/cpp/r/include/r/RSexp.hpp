@@ -327,6 +327,7 @@ private:
 };
 
 void printValue(SEXP object);
+bool inherits(SEXP object, const char* S3Class);
 
 } // namespace sexp
 } // namespace r

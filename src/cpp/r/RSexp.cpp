@@ -830,6 +830,11 @@ void printValue(SEXP object)
       LOG_ERROR(error);
 }
 
+bool inherits(SEXP object, const char* S3Class)
+{
+   return Rf_inherits(object, S3Class);
+}
+
 } // namespace sexp   
 } // namespace r
 } // namespace rstudio

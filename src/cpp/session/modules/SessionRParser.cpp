@@ -78,6 +78,7 @@ flat_set<std::wstring> makeNSEFunctions()
    s.insert(std::wstring(L"mutate_each"));
    s.insert(std::wstring(L"group_by"));
    s.insert(std::wstring(L"ntile"));
+   s.insert(std::wstring(L"rename"));
    
    return s;
 }
@@ -110,6 +111,39 @@ std::map<std::string, std::string> makeComplementMap()
 
 static std::map<std::string, std::string> s_complements =
       makeComplementMap();
+
+bool isDataTableSingleBracketCall(RTokenCursor& cursor)
+{
+   if (!cursor.contentEquals(L"["))
+      return false;
+   
+   RTokenCursor startCursor = cursor.clone();
+   
+   // Move off of '['
+   if (!startCursor.moveToPreviousSignificantToken())
+      return false;
+   
+   // Find start of evaluation (e.g. moving over '$' and friends)
+   if (!startCursor.moveToStartOfEvaluation())
+      return false;
+   
+   // Get the string encompassing the call
+   std::string objectString = string_utils::wideToUtf8(std::wstring(
+            startCursor.currentToken().begin(),
+            cursor.currentToken().begin()));
+   
+   // Get the object and check if it inherits from data.table
+   r::exec::RFunction getAnywhere(".rs.getAnywhere");
+   getAnywhere.addParam(objectString);
+   
+   SEXP resultSEXP;
+   r::sexp::Protect protect;
+   Error error = getAnywhere.call(&resultSEXP, &protect);
+   if (error)
+      return false;
+   
+   return r::sexp::inherits(resultSEXP, "data.table");
+}
 
 } // end anonymous namespace
 
@@ -943,6 +977,20 @@ ARGUMENT_LIST:
       
       DEBUG("-- Begin argument list " << cursor);
       validateFunctionCall(cursor, status);
+      
+      // Skip over data.table `[` calls.
+      if (isDataTableSingleBracketCall(cursor))
+      {
+         cursor.fwdToMatchingToken();
+         
+         if (cursor.isAtEndOfDocument())
+            return;
+         
+         if (!cursor.moveToNextSignificantToken())
+            return;
+         
+         goto START;
+      }
       
       switch (cursor.type())
       {
