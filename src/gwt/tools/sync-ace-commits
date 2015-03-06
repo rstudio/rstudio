@@ -58,7 +58,9 @@ npm install
 git submodule update --init --recursive
 
 # Merge all the bugfix branches
+
 # NOTE: 'vim-commands' API merged upstream; should be unneeded with next Ace update
+# NOTE: 'no-core-commands' should be unnecessary with next Ace update
 
 git merge \
     origin/bugfix/token-column \
@@ -74,6 +76,7 @@ git merge \
     origin/feature/vim-commands \
     origin/bugfix/vim-fold-navigation \
     origin/patch/completion-throttling \
+    origin/patch/no-core-commands \
     -m "merge branches"
 
 ## git merge \
