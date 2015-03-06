@@ -70,9 +70,9 @@ then
         CXX_STDLIB_FLAGS=""
      fi
 
-     sudo ./bjam --prefix=$BOOST_DIR toolset=clang $CXX_STDLIB_FLAGS variant=release threading=multi link=static install
+     sudo ./bjam ${BOOST_BJAM_FLAGS} --prefix=$BOOST_DIR toolset=clang $CXX_STDLIB_FLAGS variant=release threading=multi link=static install
    else
-     sudo ./bjam --prefix=$BOOST_DIR variant=release install
+     sudo ./bjam ${BOOST_BJAM_FLAGS} --prefix=$BOOST_DIR variant=release install
    fi
 
    # go back to the original install dir and remove build dir
