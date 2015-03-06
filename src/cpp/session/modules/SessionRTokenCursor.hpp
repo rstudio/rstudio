@@ -468,6 +468,15 @@ public:
      return true;
   }
   
+  // Move to the end of an R statement, e.g.
+  //
+  //    x <- x + I(a, b, c)
+  //         ^~~~~~~>~~~~~^
+  //
+  // 'inParens' is necessary because we need to know whether
+  // newlines are significant or not (they are not significant within
+  // a parenthetical scope). Returns 'true' if we reached the end of
+  // a statement.
   bool moveToEndOfStatement(bool inParens)
   {
      while (true)
@@ -487,6 +496,57 @@ public:
         if (!inParens && nextToken().contentContains(L'\n'))
            return true;
         
+        // Bail on semi-colons.
+        if (isType(RToken::SEMI))
+           return true;
+        
+        // Move over unary operators
+        while (isValidAsUnaryOperator(*this))
+           if (!moveToNextSignificantToken())
+              return false;
+        
+        // Walk over binary operator pairs.
+        //
+        // This branch takes us as follows:
+        //
+        //    a + b
+        //    ^->-^
+        //
+        while (isBinaryOp(nextSignificantToken()))
+        {
+           if (!moveToNextSignificantToken())
+              return false;
+           
+           if (!moveToNextSignificantToken())
+              return false;
+           
+           continue;
+        }
+        
+        // Check for a parenthetical statement and move over it.
+        //
+        //    a + (...)
+        //        ^~~~^
+        //
+        if (isLeftBracket(*this))
+        {
+           if (!fwdToMatchingToken())
+              return false;
+           
+           if (!inParens && nextToken().contentContains(L'\n'))
+              return true;
+           
+           // Bail on semi-colons.
+           if (isType(RToken::SEMI))
+              return true;
+           
+           continue;
+        }
+        
+        // Check for a function call and move over it.
+        //
+        //    foo::bar(...)
+        //         ^~~~>~~^
         if (isLeftBracket(nextSignificantToken()))
         {
            if (!moveToNextSignificantToken())
@@ -497,17 +557,6 @@ public:
            
            if (!inParens && nextToken().contentContains(L'\n'))
               return true;
-           
-           continue;
-        }
-        
-        if (isBinaryOp(nextSignificantToken()))
-        {
-           if (!moveToNextSignificantToken())
-              return false;
-           
-           if (!moveToNextSignificantToken())
-              return false;
            
            continue;
         }

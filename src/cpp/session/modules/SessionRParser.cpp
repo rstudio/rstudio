@@ -368,15 +368,20 @@ void handleIdentifier(RTokenCursor& cursor,
    
    // Bail if we're within an NSE function.
    if (isWithinNseFunction(status))
+   {
+      DEBUG("--- Within NSE function; not adding symbol");
       return;
+   }
    
    // Don't cache identifiers if the previous or next tokens
    // are 'extraction' operators (e.g. '$').
    //
    // TODO: Handle namespaced symbols explicitly.
-   if (isExtractionOperator(cursor.previousSignificantToken()) ||
-       isExtractionOperator(cursor.nextSignificantToken()))
+   if (isExtractionOperator(cursor.previousSignificantToken()))
+   {
+      DEBUG("--- Cursor preceded by extraction op; not adding");
       return;
+   }
    
    if (cursor.isType(RToken::ID) ||
        cursor.isType(RToken::STRING))
@@ -416,7 +421,10 @@ void handleIdentifier(RTokenCursor& cursor,
    
    // If this is truly an identifier, add a reference.
    if (cursor.isType(RToken::ID))
+   {
+      DEBUG("--- Adding reference to symbol");
       status.node()->addReferencedSymbol(cursor);
+   }
 }
 
 } // anonymous namespace
@@ -569,6 +577,22 @@ void validateFunctionCall(const RTokenCursor& cursor,
    }
 }
 
+bool skipFormulas(RTokenCursor& cursor,
+                  ParseStatus& status)
+{
+   if (cursor.nextSignificantToken().contentEquals(L"~"))
+      cursor.moveToNextSignificantToken();
+   
+   if (cursor.contentEquals(L"~"))
+   {
+      if (cursor.moveToEndOfStatement(status.isInParentheticalScope()))
+         return cursor.moveToNextSignificantToken();
+      
+   }
+   
+   return false;
+}
+
 } // anonymous namespace
 
 #define GOTO_INVALID_TOKEN(__CURSOR__)                                         \
@@ -595,6 +619,13 @@ void doParse(RTokenCursor& cursor,
    {
       
 START:
+      
+      // We want to skip over formulas if necessary.
+      if (skipFormulas(cursor, status))
+      {
+         if (cursor.isAtEndOfDocument())
+            return;
+      }
       
       DEBUG("Start: " << cursor);
       // Move over unary operators -- any sequence is valid,
