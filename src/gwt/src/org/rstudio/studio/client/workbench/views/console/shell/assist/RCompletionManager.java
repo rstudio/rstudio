@@ -1845,18 +1845,20 @@ public class RCompletionManager implements CompletionManager
                !overrideInsertParens_ &&
                !textFollowingCursorIsOpenParen;
          
+         boolean insertMatching = uiPrefs_.insertMatching().getValue();
+         boolean needToMoveCursorInsideParens = false;
          if (shouldInsertParens)
          {
             // Munge the value -- determine whether we want to append '()' 
             // for e.g. function completions, and so on.
-            if (textFollowingCursorIsClosingParen ||
-                  !uiPrefs_.insertMatching().getValue())
+            if (textFollowingCursorIsClosingParen || !insertMatching)
             {
                value = value + "(";
             }
             else
             {
                value = value + "()";
+               needToMoveCursorInsideParens = true;
             }
          }
          else
@@ -1895,10 +1897,8 @@ public class RCompletionManager implements CompletionManager
          selection_ = input_.getSelection();
          
          // Move the cursor(s) back inside parens if necessary.
-         if (shouldInsertParens)
-         {
+         if (needToMoveCursorInsideParens)
             editor.moveCursorLeft();
-         }
          
          // Show a signature popup if we just completed a function
          if (RCompletionType.isFunctionType(qualifiedName.type))

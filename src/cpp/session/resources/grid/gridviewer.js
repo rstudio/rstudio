@@ -170,6 +170,17 @@ var sizeDataTable = function(force) {
     return;
   }
 
+  // shrink container to width of first row; reschedule size if first row
+  // hasn't been drawn yet
+  var rsGridData = document.getElementById("rsGridData");
+  if (!rsGridData || !rsGridData.firstChild ||
+      rsGridData.firstChild.clientWidth === 0) {
+    debouncedDataTableSize(force);
+    return;
+  }
+  rsGridData.style.width = rsGridData.firstChild.clientWidth + "px";
+
+  // ignore if height hasn't changed
   if (lastHeight === window.innerHeight && !force) {
     return;
   }
@@ -182,12 +193,6 @@ var sizeDataTable = function(force) {
     // apply the new height 
     scrollBody.css("height", 
       window.innerHeight - ($("thead").height() + 25));
-  }
-
-  // shrink container to width of first row
-  var rsGridData = document.getElementById("rsGridData");
-  if (rsGridData) {
-    rsGridData.style.width = rsGridData.firstChild.clientWidth + "px";
   }
 
   // apply new size
