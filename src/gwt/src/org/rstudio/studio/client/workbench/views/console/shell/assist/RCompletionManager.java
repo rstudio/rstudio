@@ -1443,9 +1443,11 @@ public class RCompletionManager implements CompletionManager
       
       // Try to get the function call string -- either there's
       // an associated closing paren we can use, or we should just go up
-      // to the current cursor position
+      // to the current cursor position.
       
-      // default case: use start cursor
+      // First, attempt to determine where the closing paren is located. If
+      // this fails, we'll just use the start cursor's position (and later
+      // attempt to finish the expression to make it parsable)
       Position endPos = startCursor.currentPosition();
       endPos.setColumn(endPos.getColumn() + startCursor.currentValue().length());
       
@@ -1460,21 +1462,50 @@ public class RCompletionManager implements CompletionManager
          }
       }
       
-      // We can now set the function call string
-      // We strip the current token so that the matched.call work later on
-      // can properly resolve the current argument
-      Position startPosition = startCursor.currentPosition();
+      // We can now set the function call string.
+      //
+      // We strip out the current statement under the cursor, so that
+      // match.call() can later properly resolve the current argument.
+      //
+      // Attempt to find the start of the current statement.
+      TokenCursor clone = startCursor.cloneCursor();
+      do
+      {
+         String value = clone.currentValue();
+         if (value.indexOf(",") != -1 || value.equals("("))
+            break;
+         
+         if (clone.bwdToMatchingToken())
+            continue;
+         
+      } while (clone.moveToPreviousToken());
+      Position startPosition = clone.currentPosition();
+      
+      // Include the opening paren if that's what we found
+      if (clone.currentValue().equals("("))
+         startPosition.setColumn(startPosition.getColumn() + 1);
+      
       String beforeText = editor.getTextForRange(Range.fromPoints(
             tokenCursor.currentPosition(),
             startPosition));
       
-      Position afterTokenPos = startCursor.currentPosition();
-      if (startCursor.currentType() == "identifier")
-         afterTokenPos.setColumn(afterTokenPos.getColumn() +
-               startCursor.currentValue().length());
+      // Now, attempt to find the end of the current statement.
+      // Look for the ',' or ')' that ends the statement for the 
+      // currently active argument.
+      // the ',' or ')' that ends the statement for this argument.
+      while (clone.moveToNextToken())
+      {
+         String value = clone.currentValue();
+         if (value.indexOf(",") != -1 || value.equals(")"))
+            break;
+         
+         if (clone.fwdToMatchingToken())
+            continue;
+      }
       
       String afterText = editor.getTextForRange(Range.fromPoints(
-            afterTokenPos, endPos));
+            clone.currentPosition(),
+            endPos));
       
       context.setFunctionCallString(
             (beforeText + afterText).trim());
