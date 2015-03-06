@@ -248,28 +248,28 @@ pre {
 .ace_inactive-breakpoint,
 .ace_executing-line
 {
-   background-position: 10% center;
-   background-repeat: no-repeat;
+   background-position: 12% center !important;
+   background-repeat: no-repeat !important;
 }
 
 .ace_breakpoint
 {
-   background-image: ACTIVEBREAKPOINT;
+   background-image: ACTIVEBREAKPOINT !important;
 }
 
 .ace_pending-breakpoint
 {
-	background-image: PENDINGBREAKPOINT;
+	background-image: PENDINGBREAKPOINT !important;
 }
 
 .ace_inactive-breakpoint
 {
-	background-image: INACTIVEBREAKPOINT;
+	background-image: INACTIVEBREAKPOINT !important;
 }
 
 .ace_executing-line
 {
-	background-image: EXECUTINGLINE;
+	background-image: EXECUTINGLINE !important;
 }
 
 .ace_sb
