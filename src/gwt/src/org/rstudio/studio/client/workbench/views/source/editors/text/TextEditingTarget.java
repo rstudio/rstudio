@@ -41,6 +41,7 @@ import org.rstudio.core.client.*;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
+import org.rstudio.core.client.command.KeyboardHelper;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.events.EnsureHeightHandler;
 import org.rstudio.core.client.events.EnsureVisibleHandler;
@@ -414,8 +415,8 @@ public class TextEditingTarget implements
                event.stopPropagation();
                commands_.findFromSelection().execute();
             }
-            else if (mod == KeyboardShortcut.ALT
-                     && ne.getKeyCode() == 189) // hyphen
+            else if (mod == KeyboardShortcut.ALT &&
+                     KeyboardHelper.isHyphenKeycode(ne.getKeyCode()))
             {
                event.preventDefault();
                event.stopPropagation();
@@ -495,6 +496,7 @@ public class TextEditingTarget implements
                      event.preventDefault();
                      event.stopPropagation();
                      docDisplay_.insertCode("\n" + match.getGroup(1));
+                     docDisplay_.ensureCursorVisible();
                   }
                }
             }

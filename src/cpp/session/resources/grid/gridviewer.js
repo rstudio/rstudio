@@ -170,6 +170,17 @@ var sizeDataTable = function(force) {
     return;
   }
 
+  // shrink container to width of first row; reschedule size if first row
+  // hasn't been drawn yet
+  var rsGridData = document.getElementById("rsGridData");
+  if (!rsGridData || !rsGridData.firstChild ||
+      rsGridData.firstChild.clientWidth === 0) {
+    debouncedDataTableSize(force);
+    return;
+  }
+  rsGridData.style.width = rsGridData.firstChild.clientWidth + "px";
+
+  // ignore if height hasn't changed
   if (lastHeight === window.innerHeight && !force) {
     return;
   }
@@ -186,7 +197,7 @@ var sizeDataTable = function(force) {
 
   // apply new size
   table.settings().scroller().measure(false);
-  table.columns.adjust().draw();
+  table.draw();
 };
 
 var debouncedDataTableSize = debounce(sizeDataTable, 75);
@@ -559,6 +570,7 @@ var initDataTable = function(result) {
   $("#rsGridData").dataTable({
     "processing": true,
     "serverSide": true,
+    "autoWidth": false,
     "pagingType": "full_numbers",
     "pageLength": 25,
     "scrollY": scrollHeight + "px",
@@ -577,6 +589,9 @@ var initDataTable = function(result) {
       }, {
       "targets": textCols,
       "render": renderTextCell
+      }, {
+      "targets": "_all",
+      "width": "4em"
       }],
     "ajax": {
       "url": "../grid_data", 

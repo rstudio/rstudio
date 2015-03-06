@@ -18,6 +18,7 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.TreeLogger.Type;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.user.rebind.SourceWriter;
+
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -26,6 +27,7 @@ import org.w3c.dom.NodeList;
 import javax.xml.transform.Result;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
+
 import java.io.StringWriter;
 
 public class ShortcutsEmitter

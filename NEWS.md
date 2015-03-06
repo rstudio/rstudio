@@ -121,6 +121,7 @@
 * Updated to pandoc 1.13.1
 * Ensure that .RData from Rmd directory isn't loaded during Knit
 * Improved handling of lists in editor
+* Syntax highlighting for comments in markdown documents
 * Make publishing UI easier to discover
 * Require save before previewing Rmd file
 * Support for deploying single interactive documents (not just directories)
@@ -164,6 +165,9 @@
 * Server: Ensure that LANG is populated from system default when not inherited
 * Server: Provide required domain socket permissions during startup
 * IE 11: Strip unprintable unicode characters in Rmd front matter dates
+* Only filter object file listings in 'src' directory
+* Correctly navigate to package inst/include directory for template errors 
+
 
 
 

@@ -25,6 +25,13 @@ public class YamlFrontMatter
       MatchResult beginMatch = frontMatterReg.exec(code);
       if (beginMatch == null)
          return null;
+
+      // ensure that only whitespace exists before the beginning --- 
+      // (this matches front matter extraction behavior in the R Markdown
+      // package)
+      if (!code.substring(0, beginMatch.getIndex()).matches("\\s*")) 
+         return null;
+      
       MatchResult endMatch = frontMatterReg.exec(code);
       if (endMatch == null)
          return null;

@@ -178,7 +178,15 @@
 
 .rs.addFunction("toDataFrame", function(x, name) {
   if (is.data.frame(x))
-    return(x)
+  {
+    # check for nested frames and flatten them if needed
+    frameCols <- .rs.frameCols(x)
+    if (length(frameCols) > 0) {
+      return(.rs.flattenFrame(x, frameCols))
+    } else {
+      return(x)
+    }
+  }
   frame <- NULL
   # attempt to coerce to a data frame--this can throw errors in the case where
   # we're watching a named object in an environment and the user replaces an
@@ -190,19 +198,67 @@
   error = function(e)
   {
   })
+  # as.data.frame uses the name of its argument to label unlabeled columns, so
+  # label these back to the original name
   if (!is.null(frame))
     names(frame)[names(frame) == "x"] <- name
   frame
 })
 
+.rs.addFunction("frameCols", function(x) {
+  which(vapply(x, is.data.frame, TRUE))
+})
+
+.rs.addFunction("flattenFrame", function(x, framecols) {
+  while (length(framecols) > 0) {
+    framecol <- framecols[1]
+    newcols <- ncol(x[[framecol]])
+    if (identical(newcols, 0)) 
+    {
+      # remove columns consisting of empty frames
+      x[[framecol]] <- NULL
+    }
+    else
+    {
+      # recursive--are any columns in the nested frame themselves frames?
+      nestedFrameCols <- .rs.frameCols(x[[framecol]]) 
+      if (length(nestedFrameCols) > 0) {
+        x[[framecol]] <- .rs.flattenFrame(x[[framecol]], nestedFrameCols)
+      }
+
+      # apply column names
+      cols <- x[[framecol]]
+      if (length(names(framecols)) > 0) {
+        names(cols) <- paste(names(framecol)[[1]], names(cols), sep = ".")
+      }
+
+      # replace other columns in place
+      x <- cbind(x[0:(framecol-1)], cols, x[(framecol+1):ncol(x)])
+    }
+
+    # pop this frame off the list and adjust the other indices to account for
+    # the columns we just added, if any
+    framecols <- framecols[-1] + (max(newcols, 1) - 1) 
+  }
+  x
+})
+
 .rs.addFunction("applyTransform", function(x, filtered, search, col, dir) 
 {
   # mark encoding on character inputs if not already marked
-  if (Encoding(filtered) == "unknown")
-    Encoding(filtered) <- "UTF-8"
+  filtered <- vapply(filtered, function(colfilter) {
+    if (Encoding(colfilter) == "unknown") 
+      Encoding(colfilter) <- "UTF-8"
+    colfilter
+  }, "")
   if (Encoding(search) == "unknown")
     Encoding(search) <- "UTF-8"
   
+  # flatten the data frame if needed 
+  frameCols <- .rs.frameCols(x)
+  if (length(frameCols) > 0) 
+    x <- .rs.flattenFrame(x, frameCols)
+
   # coerce argument to data frame--data.table objects (for example) report that
   # they're data frames, but don't actually support the subsetting operations
   # needed for search/sort/filter without an explicit cast

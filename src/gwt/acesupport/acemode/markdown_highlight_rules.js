@@ -240,8 +240,20 @@ var MarkdownHighlightRules = function() {
             token : "text",
             regex : "^\\s{0,3}(?:[*+-]|\\d+\\.)\\s+",
             next  : "listblock-start"
+        }, { // html comment
+            token : "comment",
+            regex : "<\\!--",
+            next  : "html-comment"
         }, {
             include : "basic"
+        }],
+
+        "html-comment" : [{
+           token: "comment",
+           regex: "-->",
+           next: "start"
+        }, {
+           defaultToken: "comment"
         }],
        
         // code block

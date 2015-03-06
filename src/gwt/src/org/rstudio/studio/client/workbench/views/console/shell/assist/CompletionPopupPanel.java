@@ -187,6 +187,15 @@ public class CompletionPopupPanel extends ThemedPopupPanel
       else
          show() ;
       
+      
+      // Fudge the completion width when the scrollbar is visible. This has
+      // to be done before help is shown since the help display is offset
+      // from the completion list. This also (implicitly) adds padding between
+      // the completion item and the package name (if it exists)
+      if (list_ != null && list_.getOffsetWidth() > list_.getElement().getClientWidth())
+         list_.setWidth(list_.getOffsetWidth() + 30 + "px");
+      
+      // Show help.
       if (help_ != null)
       {
          if (completionListIsOnScreen())
