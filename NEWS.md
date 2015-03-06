@@ -107,6 +107,7 @@
 * Updated to pandoc 1.13.1
 * Ensure that .RData from Rmd directory isn't loaded during Knit
 * Improved handling of lists in editor
+* Syntax highlighting for comments in markdown documents
 * Make publishing UI easier to discover
 * Require save before previewing Rmd file
 * Support for deploying single interactive documents (not just directories)
