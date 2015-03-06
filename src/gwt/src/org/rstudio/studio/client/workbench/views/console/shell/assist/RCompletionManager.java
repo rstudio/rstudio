@@ -1492,20 +1492,34 @@ public class RCompletionManager implements CompletionManager
       // Now, attempt to find the end of the current statement.
       // Look for the ',' or ')' that ends the statement for the 
       // currently active argument.
-      // the ',' or ')' that ends the statement for this argument.
+      boolean lookupSucceeded = false;
       while (clone.moveToNextToken())
       {
          String value = clone.currentValue();
          if (value.indexOf(",") != -1 || value.equals(")"))
+         {
+            lookupSucceeded = true;
             break;
+         }
+         
+         // Bail if we find a closing paren (we should walk over matched
+         // pairs properly, so finding one implies that we have a parse error).
+         if (value.equals("]") || value.equals("]]") || value.equals("}"))
+         {
+            break;
+         }
          
          if (clone.fwdToMatchingToken())
             continue;
       }
       
-      String afterText = editor.getTextForRange(Range.fromPoints(
-            clone.currentPosition(),
-            endPos));
+      String afterText = "";
+      if (lookupSucceeded)
+      {
+         afterText = editor.getTextForRange(Range.fromPoints(
+               clone.currentPosition(),
+               endPos));
+      }
       
       context.setFunctionCallString(
             (beforeText + afterText).trim());
