@@ -145,9 +145,13 @@ define("mode/r_highlight_rules", function(require, exports, module)
                regex : "[\\])}]"
             },
             {
+               token : "punctuation",
+               regex : "[;,]",
+               merge : false
+            },
+            {
                token : "text",
-               regex : "\\s+",
-               merge : false // needs to be false so e.g. ',' not merged with spaces
+               regex : "\\s+"
             }
          ],
          "qqstring" : [
