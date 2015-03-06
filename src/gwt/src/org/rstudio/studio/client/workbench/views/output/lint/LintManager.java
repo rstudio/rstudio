@@ -98,8 +98,7 @@ public class LintManager
             if (docDisplay_.isPopupVisible())
                return;
             
-            docDisplay_.removeAnnotationsOnLine(
-                  docDisplay_.getCurrentLineNum());
+            docDisplay_.removeMarkersAtCursorPosition();
             timer_.schedule(1000);
          }
       });

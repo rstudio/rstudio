@@ -297,4 +297,8 @@ public class AceEditorNative extends JavaScriptObject {
       });
    }-*/;
    
+   public final native Position getCursorPosition() /*-{
+      return this.getCursorPosition();
+   }-*/;
+   
 }

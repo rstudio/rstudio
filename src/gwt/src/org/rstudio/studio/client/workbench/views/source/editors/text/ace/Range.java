@@ -61,4 +61,12 @@ public class Range extends JavaScriptObject
    public final native Range toScreenRange(EditSession session) /*-{
       return this.toScreenRange(session);
    }-*/;
+   
+   public final native boolean contains(int row, int column) /*-{
+      return this.contains(row, column);
+   }-*/;
+   
+   public final native boolean contains(Position position) /*-{
+      return this.contains(position.row, position.column);
+   }-*/;
 }

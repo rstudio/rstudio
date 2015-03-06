@@ -753,17 +753,16 @@ public class AceEditorWidget extends Composite
    private void updateAnnotations(AceDocumentChangeEventNative event)
    {
       Range range = event.getRange();
-      int startRow = range.getStart().getRow();
-      int endRow = range.getEnd().getRow();
+      
       ArrayList<AnchoredAceAnnotation> annotations =
             new ArrayList<AnchoredAceAnnotation>();
 
       for (int i = 0; i < annotations_.size(); i++)
       {
-         AnchoredAceAnnotation annotation =
-               annotations_.get(i);
-         int row = annotation.anchor_.getRow();
-         if (row < startRow || row >= endRow)
+         AnchoredAceAnnotation annotation = annotations_.get(i);
+         Position pos = annotation.anchor_.getPosition();
+         
+         if (!range.contains(pos))
             annotations.add(annotation);
          else
             editor_.getSession().removeMarker(annotation.getMarkerId());
@@ -778,18 +777,18 @@ public class AceEditorWidget extends Composite
       annotations_.clear();
    }
    
-   public void removeAnnotationsOnLine(final int line)
+   public void removeMarkersAtCursorPosition()
    {
       // Defer this so other event handling can update anchors etc.
       Scheduler.get().scheduleDeferred(new ScheduledCommand()
       {
+         
          @Override
          public void execute()
          {
+            Position cursor = editor_.getCursorPosition();
             JsArray<AceAnnotation> newAnnotations = JsArray.createArray().cast();
             
-            // We need to remove any annotations for which its associated marker
-            // spans the line set.
             for (int i = 0; i < annotations_.size(); i++)
             {
                AnchoredAceAnnotation annotation = annotations_.get(i);
@@ -801,10 +800,8 @@ public class AceEditorWidget extends Composite
                if (marker == null)
                   continue;
                
-               int startRow = marker.getRange().getStart().getRow();
-               int endRow = marker.getRange().getEnd().getRow();
-               
-               if (line < startRow || line > endRow)
+               Range range = marker.getRange();
+               if (!range.contains(cursor))
                {
                   newAnnotations.push(annotation.asAceAnnotation());
                }
@@ -816,6 +813,7 @@ public class AceEditorWidget extends Composite
             
             editor_.getSession().setAnnotations(newAnnotations);
             editor_.getRenderer().renderMarkers();
+            
          }
       });
    }

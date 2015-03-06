@@ -2145,11 +2145,13 @@ public class AceEditor implements DocDisplay,
       widget_.setAnnotations(annotations);
    }
    
-   public void removeAnnotationsOnLine(final int line)
+   @Override
+   public void removeMarkersAtCursorPosition()
    {
-      widget_.removeAnnotationsOnLine(line);
+      widget_.removeMarkersAtCursorPosition();
    }
    
+   @Override
    public void showLint(JsArray<LintItem> lint)
    {
       widget_.showLint(lint);
