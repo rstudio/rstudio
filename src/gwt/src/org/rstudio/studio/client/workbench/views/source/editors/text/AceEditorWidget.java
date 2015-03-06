@@ -49,6 +49,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceDocu
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceMouseEventNative;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Anchor;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Marker;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.*;
@@ -786,20 +787,35 @@ public class AceEditorWidget extends Composite
          public void execute()
          {
             JsArray<AceAnnotation> newAnnotations = JsArray.createArray().cast();
-
+            
+            // We need to remove any annotations for which its associated marker
+            // spans the line set.
             for (int i = 0; i < annotations_.size(); i++)
             {
-               if (annotations_.get(i).row() != line)
+               AnchoredAceAnnotation annotation = annotations_.get(i);
+               int markerId = annotation.getMarkerId();
+               Marker marker = editor_.getSession().getMarker(markerId);
+               
+               // The marker may have already been removed in response to
+               // a previous action.
+               if (marker == null)
+                  continue;
+               
+               int startRow = marker.getRange().getStart().getRow();
+               int endRow = marker.getRange().getEnd().getRow();
+               
+               if (line < startRow || line > endRow)
                {
-                  newAnnotations.push(annotations_.get(i).asAceAnnotation());
+                  newAnnotations.push(annotation.asAceAnnotation());
                }
                else
                {
-                  editor_.getSession().removeMarker(annotations_.get(i).getMarkerId());
+                  editor_.getSession().removeMarker(markerId);
                }
             }
             
             editor_.getSession().setAnnotations(newAnnotations);
+            editor_.getRenderer().renderMarkers();
          }
       });
    }

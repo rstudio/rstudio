@@ -205,6 +205,10 @@ public class EditSession extends JavaScriptObject
       return this.getMarkers(inFront);
    }-*/;
    
+   public native final Marker getMarker(int id) /*-{
+      return this.getMarkers(true)[id];
+   }-*/;
+   
    public final native Range createAnchoredRange(Position start,
                                                  Position end) /*-{
       var Range = $wnd.require("ace/range").Range;
