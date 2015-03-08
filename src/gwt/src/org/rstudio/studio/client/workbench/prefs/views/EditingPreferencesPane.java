@@ -52,7 +52,15 @@ public class EditingPreferencesPane extends PreferencesPane
       editingPanel.add(checkboxPref("Ensure that source files end with newline", prefs_.autoAppendNewline()));
       editingPanel.add(checkboxPref("Strip trailing horizontal whitespace when saving", prefs_.stripTrailingWhitespace()));
       editingPanel.add(checkboxPref("Focus console after executing from source", prefs_.focusConsoleAfterExec()));
-      editingPanel.add(checkboxPref("Enable vim editing mode", prefs_.useVimMode()));
+      
+      vim_ = checkboxPref("Enable vim editing mode", prefs_.useVimMode());
+      emacs_ = checkboxPref("Enable Emacs keybindings", prefs_.enableEmacsKeybindings());
+      
+      canOnlyEnableOnePref(vim_, emacs_);
+      
+      editingPanel.add(vim_);
+      editingPanel.add(emacs_);
+      
       editingPanel.add(checkboxPref(
             "Continue comment when inserting new line",
             prefs_.continueCommentsOnNewline(),
@@ -197,6 +205,31 @@ public class EditingPreferencesPane extends PreferencesPane
       checkBox.setVisible(true);
    }
    
+   private void canOnlyEnableOnePref(final CheckBox cb1,
+                                     final CheckBox cb2)
+   {
+      cb1.addValueChangeHandler(new ValueChangeHandler<Boolean>()
+      {
+         @Override
+         public void onValueChange(ValueChangeEvent<Boolean> event)
+         {
+            if (event.getValue())
+               cb2.setValue(false);
+         }
+      });
+      
+      cb2.addValueChangeHandler(new ValueChangeHandler<Boolean>()
+      {
+         @Override
+         public void onValueChange(ValueChangeEvent<Boolean> event)
+         {
+            if (event.getValue())
+               cb1.setValue(false);
+         }
+      });
+      
+   }
+   
    private void addEnabledDependency(final CheckBox speaker,
                                      final CheckBox listener)
    {
@@ -265,6 +298,8 @@ public class EditingPreferencesPane extends PreferencesPane
    private final NumericValueWidget alwaysCompleteDelayMs_;
    private final CheckBox spacesForTab_;
    private final CheckBox showMargin_;
+   private CheckBox vim_;
+   private CheckBox emacs_;
    private final SelectWidget showCompletions_;
    private final SelectWidget showCompletionsOther_;
    

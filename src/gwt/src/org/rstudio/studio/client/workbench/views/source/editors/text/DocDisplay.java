@@ -128,6 +128,8 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void setUseVimMode(boolean use);
    boolean isVimModeOn();
    boolean isVimInInsertMode();
+   
+   void setUseEmacsKeybindings(boolean use);
 
    JsArray<AceFold> getFolds();
    void addFold(Range range);
