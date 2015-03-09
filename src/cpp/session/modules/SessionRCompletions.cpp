@@ -360,7 +360,7 @@ SEXP rs_getNAMESPACEImportedSymbols(SEXP documentIdSEXP)
       
       // If the inferred package is listed _only_ in the NAMESPACE 'importFrom',
       // then we want to selectively return symbols.
-      if (index->getInferredPackages().count(pkg) == 0 &&
+      if ((index && index->getInferredPackages().count(pkg) == 0) &&
           RSourceIndex::getImportedPackages().count(pkg) == 0 &&
           RSourceIndex::getImportFromDirectives().count(pkg) != 0)
       {
