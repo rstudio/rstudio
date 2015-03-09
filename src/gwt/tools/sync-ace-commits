@@ -61,6 +61,8 @@ git submodule update --init --recursive
 
 # NOTE: 'vim-commands' API merged upstream; should be unneeded with next Ace update
 # NOTE: 'no-core-commands' should be unnecessary with next Ace update
+# NOTE: 'dont-warn-on-scroll' likely needs to be re-thought as
+#   Ace will (may?) be gaining new defaults in next release re: scroll behaviour
 
 git merge \
     origin/bugfix/token-column \
@@ -78,6 +80,7 @@ git merge \
     origin/patch/completion-throttling \
     origin/patch/no-core-commands \
     origin/feature/vim-page-movement \
+    origin/patch/dont-warn-on-scroll \
     -m "merge branches"
 
 ## git merge \
