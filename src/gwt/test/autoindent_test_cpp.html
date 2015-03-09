@@ -35,8 +35,6 @@
 <div id="editor" style="width: 600px; height: 200px; border: 1px solid #999" onkeypress="doIndent()"></div>
 <div id="testEditor" style="display: none;"></div>
 
-<div style="height: 200px;"></div>
-
 <h2>Configure Editor</h2>
 <button id="setBehavioursEnabled" onclick="editor.setBehavioursEnabled(!editor.getBehavioursEnabled())">Toggle Behaviour</button>
 <button onclick="require('mode/r_code_model').setVerticallyAlignFunctionArgs(!require('mode/r_code_model').getVerticallyAlignFunctionArgs())">Toggle Vertical Alignment</button>
@@ -712,8 +710,7 @@ var session = editor.getSession();
         var newIndent = mode.getNextLineIndent(state,
                                                line,
                                                this.getTabString(),
-                                               this.getTabSize(),
-                                               i-1,
+                                               i - 1,
                                                true);
 
         this.applyIndent(i, newIndent);
