@@ -78,7 +78,8 @@ public:
       None = 0,
       Function = 1,
       Method = 2,
-      Class = 3
+      Class = 3,
+      Variable = 4
    };
 
 public:
@@ -129,6 +130,7 @@ public:
    bool isFunction() const { return type_ == Function; }
    bool isMethod() const { return type_ == Method; }
    bool isClass() const { return type_ == Class; }
+   bool isVariable() const { return type_ == Variable; }
    const std::string& context() const { return context_; }
    const std::string& name() const { return name_; }
    const std::vector<RS4MethodParam>& signature() const { return signature_; }

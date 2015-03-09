@@ -26,6 +26,8 @@ namespace rstudio {
 namespace core {
 namespace r_util {
 
+using namespace token_utils;
+
 // static members
 std::set<std::string> RSourceIndex::s_allInferredPkgNames_;
 std::set<std::string> RSourceIndex::s_importedPackages_;
@@ -243,7 +245,8 @@ RSourceIndex::RSourceIndex(const std::string& context,
    std::wstring library(L"library");
    std::wstring require(L"require");
    
-   for (std::size_t i=0; i<rTokens.size(); i++)
+   std::size_t n = rTokens.size();
+   for (std::size_t i = 0; i < n; ++i)
    {
       // initial name, qualifer, and type are nil
       RSourceItem::Type type = RSourceItem::None;
@@ -267,14 +270,9 @@ RSourceIndex::RSourceIndex(const std::string& context,
          braceLevel--;
          continue;
       }
-      // bail for non-identifiers
-      else if (token.type() != RToken::ID)
-      {
-         continue;
-      }
 
       // is this a potential method or class definition?
-      if (token.contentStartsWith(set))
+      else if (token.contentStartsWith(set))
       {
          RSourceItem::Type setType = RSourceItem::None;
 
@@ -465,6 +463,35 @@ RSourceIndex::RSourceIndex(const std::string& context,
          addInferredPackage(string_utils::wideToUtf8(packageName));
 
          continue;
+      }
+      
+      // is this some other kind of assignment?
+      // we want to add e.g.
+      //
+      //    foo <- 1
+      //
+      // to the source index here
+      else if (i > 1 && isLeftAssign(rTokens.at(i - 1)))
+      {
+         // ensure the token previous to the left assign is
+         // an identifier or string
+         const RToken& idToken = rTokens.at(i - 2);
+         if (!(isId(idToken) || isString(idToken)))
+            continue;
+         
+         // ensure the token previous to the assignment token
+         // is not a binary operator
+         if (i > 2)
+         {
+            const RToken& beforeId = rTokens.at(i - 3);
+            if (isBinaryOp(beforeId))
+               continue;
+         }
+            
+         // if we get this far then it's a variable def'n
+         type = RSourceItem::Variable;
+         name = idToken.content();
+         tokenOffset = idToken.offset();
       }
       
       else
