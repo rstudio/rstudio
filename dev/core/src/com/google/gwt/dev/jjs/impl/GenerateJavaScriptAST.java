@@ -573,7 +573,7 @@ public class GenerateJavaScriptAST {
             polyName.setObfuscatable(false);
             // if a JsType and we can set set the interface method to non-obfuscatable
           } else if (typeOracle.isJsTypeMethod(x) && !typeOracle.needsJsInteropBridgeMethod(x)) {
-            if (x.isJsProperty()) {
+            if (x.isOrOverridesJsProperty()) {
               // Prevent JsProperty functions like x() from colliding with intended JS native
               // properties like .x;
               polyName = interfaceScope.declareName(mangleNameForJsProperty(x), name);
@@ -1422,17 +1422,18 @@ public class GenerateJavaScriptAST {
 
         if (isJsProperty) {
           JsExpression qualExpr = pop();
-          String methodName = method.getName();
-          if (method.getParams().size() == 0) {
-            if (startsWithCamelCase(methodName, "has")) {
-              result = createHasDispatch(x, methodName, qualExpr);
-            } else {
-              result = createGetterDispatch(x, unnecessaryQualifier, methodName, qualExpr);
-            }
-          } else if (method.getParams().size() == 1) {
-            result = createSetterDispatch(x, jsInvocation, method, qualExpr);
-          } else {
-            throw new InternalCompilerException("JsProperty not a setter, getter, or has.");
+          switch (method.getImmediateOrTransitiveJsPropertyType()) {
+            case HAS:
+              result = createHasDispatch(x, method, qualExpr);
+              break;
+            case GET:
+              result = createGetterDispatch(x, unnecessaryQualifier, method, qualExpr);
+              break;
+            case SET:
+              result = createSetterDispatch(x, jsInvocation, method, qualExpr);
+              break;
+            default:
+              throw new InternalCompilerException("JsProperty not a setter, getter, or has.");
           }
         } else {
           // insert trampoline (_ = instance, trampoline(_, _.jsBridgeMethRef,
@@ -1514,9 +1515,9 @@ public class GenerateJavaScriptAST {
       return tmpName;
     }
 
-    private JsExpression createHasDispatch(JMethodCall x, String methodName,
+    private JsExpression createHasDispatch(JMethodCall x, JMethod targetMethod,
         JsExpression qualExpr) {
-      String propertyName = toCamelCase(methodName.substring(3));
+      String propertyName = targetMethod.getImmediateOrTransitiveJsMemberName();
       JsStringLiteral propertyNameLiteral = new JsStringLiteral(x.getSourceInfo(), propertyName);
       return new JsBinaryOperation(x.getSourceInfo(), JsBinaryOperator.INOP, propertyNameLiteral,
           qualExpr);
@@ -1524,13 +1525,11 @@ public class GenerateJavaScriptAST {
 
     private JsExpression createSetterDispatch(JMethodCall x, JsInvocation jsInvocation,
         JMethod targetMethod, JsExpression qualExpr) {
-      String methodName = targetMethod.getName();
       JType returnType = targetMethod.getType();
       boolean fluent = returnType instanceof JReferenceType
           && returnType != program.getTypeJavaLangObject() && typeOracle.canTriviallyCast(
               x.getTarget().getEnclosingType(), returnType.getUnderlyingType());
-      String propertyName = startsWithCamelCase(methodName, "set") ? toCamelCase(
-          methodName.substring(3)) : methodName;
+      String propertyName = targetMethod.getImmediateOrTransitiveJsMemberName();
 
       JsExpression result;
       JsNameRef propertyReference = new JsNameRef(x.getSourceInfo(), propertyName);
@@ -1548,10 +1547,8 @@ public class GenerateJavaScriptAST {
     }
 
     private JsExpression createGetterDispatch(JMethodCall x, JsExpression unnecessaryQualifier,
-        String methodName, JsExpression qualExpr) {
-      String propertyName = startsWithCamelCase(methodName, "is") ? toCamelCase(
-          methodName.substring(2)) : startsWithCamelCase(methodName, "get") ? toCamelCase(
-          methodName.substring(3)) : methodName;
+        JMethod targetMethod, JsExpression qualExpr) {
+      String propertyName = targetMethod.getImmediateOrTransitiveJsMemberName();
       JsNameRef propertyReference = new JsNameRef(x.getSourceInfo(), propertyName);
       propertyReference.setQualifier(qualExpr);
       return createCommaExpression(unnecessaryQualifier, propertyReference);
@@ -3477,7 +3474,7 @@ public class GenerateJavaScriptAST {
   }
 
   String mangleNameForJsProperty(JMethod x) {
-    assert x.isJsProperty();
+    assert x.isOrOverridesJsProperty();
     StringBuilder sb = new StringBuilder();
     sb.append("jsproperty$");
     sb.append(JjsUtils.getNameString(x));
@@ -3533,20 +3530,6 @@ public class GenerateJavaScriptAST {
       assert !classLiteralDeclarationsByType.containsKey(type);
       classLiteralDeclarationsByType.put(type, classLiteralDeclaration);
     }
-  }
-
-  private static boolean startsWithCamelCase(String string, String prefix) {
-    return string.length() > prefix.length() && string.startsWith(prefix)
-        && Character.isUpperCase(string.charAt(prefix.length()));
-  }
-
-  private static String toCamelCase(String string) {
-    if (string.length() == 0) {
-      return string;
-    } else if (string.length() == 1) {
-      return String.valueOf(Character.toLowerCase(string.charAt(0)));
-    }
-    return Character.toLowerCase(string.charAt(0)) + string.substring(1);
   }
 
   private Pair<JavaToJavaScriptMap, Set<JsNode>> execImpl() {

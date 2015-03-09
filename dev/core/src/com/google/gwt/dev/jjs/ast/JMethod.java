@@ -37,16 +37,25 @@ import java.util.Set;
  */
 public class JMethod extends JNode implements JMember, CanBeAbstract, CanBeNative {
 
+  /**
+   * Indicates whether a JsProperty method is a getter or setter. Getters come with names like x(),
+   * isX(), hasX() and getX() while setters have signatures like x(int a) and setX(int a).
+   */
+  public static enum JsPropertyType {
+    HAS, GET, SET
+  }
+
   public static final Comparator<JMethod> BY_SIGNATURE_COMPARATOR = new Comparator<JMethod>() {
     @Override
     public int compare(JMethod m1, JMethod m2) {
       return m1.getSignature().compareTo(m2.getSignature());
     }
   };
+
   private String jsTypeName;
   private String exportName;
   private String exportNamespace;
-  private boolean jsProperty;
+  private JsPropertyType jsPropertyType;
   private Specialization specialization;
   private boolean inliningAllowed = true;
   private boolean hasSideEffects = true;
@@ -97,6 +106,21 @@ public class JMethod extends JNode implements JMember, CanBeAbstract, CanBeNativ
     return jsTypeName;
   }
 
+  public String getImmediateOrTransitiveJsMemberName() {
+    String jsMemberName = getJsMemberName();
+    for (JMethod override : getOverriddenMethods()) {
+      String jsMemberOverrideName = override.getJsMemberName();
+      if (jsMemberOverrideName == null) {
+        continue;
+      }
+      if (jsMemberName != null && !jsMemberName.equals(jsMemberOverrideName)) {
+        return null;
+      }
+      jsMemberName = jsMemberOverrideName;
+    }
+    return jsMemberName;
+  }
+
   @Override
   public boolean isJsTypeMember() {
     return jsTypeName != null;
@@ -114,12 +138,28 @@ public class JMethod extends JNode implements JMember, CanBeAbstract, CanBeNativ
     return false;
   }
 
-  public void setJsProperty(boolean jsProperty) {
-    this.jsProperty = jsProperty;
+  public void setJsPropertyType(JsPropertyType jsPropertyType) {
+    this.jsPropertyType = jsPropertyType;
+  }
+
+  public JsPropertyType getJsPropertyType() {
+    return jsPropertyType;
+  }
+
+  public JsPropertyType getImmediateOrTransitiveJsPropertyType() {
+    if (isJsProperty()) {
+      return getJsPropertyType();
+    }
+    for (JMethod overriddenMethod : getOverriddenMethods()) {
+      if (overriddenMethod.isJsProperty()) {
+        return overriddenMethod.getJsPropertyType();
+      }
+    }
+    return null;
   }
 
   public boolean isJsProperty() {
-    return jsProperty;
+    return jsPropertyType != null;
   }
 
   public boolean isOrOverridesJsProperty() {

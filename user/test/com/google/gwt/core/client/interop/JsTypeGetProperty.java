@@ -19,44 +19,14 @@ import com.google.gwt.core.client.js.JsProperty;
 import com.google.gwt.core.client.js.JsType;
 
 /**
- * An interface to model a raw JS Point type.
+ * An interface to test 'get' JsProperty getters.
  */
 @JsType
-public interface JsPoint {
-
-  @JsProperty
-  boolean hasX();
-
-  @JsProperty
-  boolean isX();
+public interface JsTypeGetProperty {
 
   @JsProperty
   int getX();
 
   @JsProperty
-  int x();
-
-  @JsProperty
   void setX(int x);
-
-  @JsProperty
-  JsPoint x(int x);
-
-  @JsProperty
-  boolean hasY();
-
-  @JsProperty
-  boolean isY();
-
-  @JsProperty
-  int getY();
-
-  @JsProperty
-  int y();
-
-  @JsProperty
-  void setY(int y);
-
-  @JsProperty
-  JsPoint y(int y);
 }

@@ -127,43 +127,65 @@ public class JsTypeTest extends GWTTestCase {
   }
 
   public void testJsPropertyIsX() {
-    JsPoint point = (JsPoint) JavaScriptObject.createObject();
+    JsTypeIsProperty object = (JsTypeIsProperty) JavaScriptObject.createObject();
 
-    assertFalse(point.isX());
-    point.setX(10);
-    assertTrue(point.isX());
-    point.y(999).x(0);
-    assertFalse(point.isX());
+    assertFalse(object.isX());
+    object.setX(10);
+    assertTrue(object.isX());
+    object.setX(0);
+    assertFalse(object.isX());
   }
 
   public void testJsPropertyHasX() {
-    JsPoint point = (JsPoint) JavaScriptObject.createObject();
+    JsTypeHasProperty object = (JsTypeHasProperty) JavaScriptObject.createObject();
 
-    assertFalse(point.hasX());
-    point.setX(10);
-    assertTrue(point.hasX());
-    point.y(999).x(0);
-    assertTrue(point.hasX());
+    assertFalse(object.hasX());
+    object.setX(10);
+    assertTrue(object.hasX());
+    object.setX(0);
+    assertTrue(object.hasX());
   }
 
   public void testJsPropertyGetX() {
-    JsPoint point = (JsPoint) JavaScriptObject.createObject();
+    JsTypeGetProperty object = (JsTypeGetProperty) JavaScriptObject.createObject();
 
-    assertTrue(isUndefined(point.getX()));
-    point.setX(10);
-    assertEquals(10, point.getX());
-    point.y(999).x(0);
-    assertEquals(0, point.getX());
+    assertTrue(isUndefined(object.getX()));
+    object.setX(10);
+    assertEquals(10, object.getX());
+    object.setX(0);
+    assertEquals(0, object.getX());
   }
 
   public void testJsPropertyX() {
-    JsPoint point = (JsPoint) JavaScriptObject.createObject();
+    JsTypeRawGetProperty object = (JsTypeRawGetProperty) JavaScriptObject.createObject();
 
-    assertTrue(isUndefined(point.x()));
-    point.setX(10);
-    assertEquals(10, point.x());
-    point.y(999).x(0);
-    assertEquals(0, point.x());
+    assertTrue(isUndefined(object.x()));
+    object.setX(10);
+    assertEquals(10, object.x());
+    object.setX(0);
+    assertEquals(0, object.x());
+  }
+
+  public void testJsPropertyFluentLongSetter() {
+    JsTypeFluentLongSetterProperty object =
+        (JsTypeFluentLongSetterProperty) JavaScriptObject.createObject();
+
+    assertTrue(isUndefined(object.getX()));
+    object.setX(6).setX(7).setX(8).setX(9).setX(10);
+    assertEquals(10, object.getX());
+    object.setX(4).setX(3).setX(2).setX(1).setX(0);
+    assertEquals(0, object.getX());
+  }
+
+  public void testJsPropertyFluentShortSetter() {
+    JsTypeFluentShortSetterProperty object =
+        (JsTypeFluentShortSetterProperty) JavaScriptObject.createObject();
+
+    assertTrue(isUndefined(object.x()));
+    object.x(6).x(7).x(8).x(9).x(10);
+    assertEquals(10, object.x());
+    object.x(4).x(3).x(2).x(1).x(0);
+    assertEquals(0, object.x());
   }
 
   public void testCasts() {

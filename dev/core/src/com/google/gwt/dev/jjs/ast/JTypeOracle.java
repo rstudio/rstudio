@@ -1138,6 +1138,13 @@ public class JTypeOracle implements Serializable {
   }
 
   /**
+   * Returns whether the given method is directly marked with an @JsProperty annotation.
+   */
+  public boolean isJsPropertyMethod(JMethod x) {
+    return isJsInteropEnabled() && x.isJsProperty();
+  }
+
+  /**
    * Returns whether the given field is exported by an @JsType annotation.
    * <p>
    * A field is a JsType field if it is a public instance field on a concrete class that has been
