@@ -407,11 +407,15 @@ void handleIdentifier(RTokenCursor& cursor,
       return;
    }
    
-   // Don't cache identifiers if the previous or next tokens
-   // are 'extraction' operators (e.g. '$').
+   // Don't cache identifiers if:
    //
-   // TODO: Handle namespaced symbols explicitly.
-   if (isExtractionOperator(cursor.previousSignificantToken()))
+   // 1. The previous token is an extraction operator, e.g. `$`, `@`, `::`, `:::`,
+   // 2. The following token is a namespace operator `::`, `:::`
+   //
+   // TODO: Handle namespaced symbols (e.g. for package lookup) and
+   // provide lint appropriately.
+   if (isExtractionOperator(cursor.previousSignificantToken()) ||
+       isNamespace(cursor.nextSignificantToken()))
    {
       DEBUG("--- Cursor preceded by extraction op; not adding");
       return;
