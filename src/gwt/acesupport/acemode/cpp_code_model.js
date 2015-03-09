@@ -1255,9 +1255,17 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
                var tokenCursor = this.getTokenCursor();
                
                // If 'dontSubset' is false, then we want to plonk the token cursor
-               // on the first token before the cursor.
+               // on the first token before the cursor. Otherwise, we place it at
+               // the end of the current line
                if (!dontSubset)
+               {
                   tokenCursor.moveToPosition(cursor);
+               }
+               else
+               {
+                  tokenCursor.$row = row;
+                  tokenCursor.$offset = this.$tokens[row].length - 1;
+               }
 
                // If there is no token on this current line (this can occur when this code
                // is accessed by e.g. the matching brace offset code) then move back
