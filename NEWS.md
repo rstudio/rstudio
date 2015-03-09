@@ -22,6 +22,7 @@
    inferred and supplied even when not loaded
  - Completions for knitr options, e.g. in opts_chunk$get(), are now supplied
  - Completions for dynamic symbols within .C, .Call, .Fortran, .External
+ - Completions for object names for 'formula' arguments, e.g. lm(|, data = mtcars)
 
 ### Source Editor
 

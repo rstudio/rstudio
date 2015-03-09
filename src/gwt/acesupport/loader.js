@@ -34,7 +34,6 @@ var Utils = require("mode/utils");
 var RStudioEditor = function(renderer, session) {
    Editor.call(this, renderer, session);
    this.setBehavioursEnabled(true);
-   this.$blockScrolling = Infinity;
 };
 oop.inherits(RStudioEditor, Editor);
 

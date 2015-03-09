@@ -504,7 +504,7 @@ var createHeader = function(idx, col) {
   var title = document.createElement("div");
   title.textContent = col.col_name;
   th.appendChild(title);
-  th.title = col.col_type;
+  th.title = "column " + idx + ": " + col.col_type;
   if (col.col_type === "numeric") {
     th.title += " with range " + col.col_min + " - " + col.col_max;
   } else if (col.col_type === "factor") {

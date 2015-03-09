@@ -681,9 +681,33 @@ assign(x = ".rs.acCompletionTypes",
          }
       }
       
+      # Get completions from a data object name if the active argument is 'formula'.
+      # Useful for formula incantations in e.g.
+      #
+      #    lm(|, data = mtcars)
+      #
+      # In this special case, we _override_ argument completions (since they
+      # are often less interesting in this special case)
+      if (.rs.startsWith(activeArg, "form") &&
+          !is.null(matchedCall[["data"]]))
+      {
+         dataObject <- .rs.getAnywhere(matchedCall[["data"]])
+         if (!is.null(dataObject))
+         {
+            dataNames <- .rs.getNames(dataObject)
+            return(.rs.makeCompletions(
+               token = token,
+               results = .rs.selectFuzzyMatches(dataNames, token),
+               quote = FALSE
+            ))
+         }
+      }
+      
       # Get completions for the current active argument
-      argCompletions <- .rs.getCompletionsArgument(token,
-                                                   activeArg)
+      argCompletions <- .rs.getCompletionsArgument(
+         token = token,
+         activeArg = activeArg,
+      )
       
       fguess <- if (length(formals$methods))
          formals$methods[[1]]

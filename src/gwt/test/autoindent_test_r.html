@@ -379,6 +379,7 @@ var Range = require('ace/range').Range;
 require('mode/auto_brace_insert').setInsertMatching(true);
 
 var editor = ace.edit('editor');
+editor.$blockScrolling = Infinity;
 editor.renderer.setHScrollBarAlwaysVisible(false);
 editor.setHighlightActiveLine(false);
 editor.getSession().setTabSize(2);
@@ -444,6 +445,7 @@ editor.getSession().setMode(
 
 // A test editor that is used for the indent tests
 testEditor = ace.edit('testEditor');
+testEditor.$blockScrolling = Infinity;
 testEditor.getSession().setMode(
   new RMode(false, testEditor.getSession())
 );
