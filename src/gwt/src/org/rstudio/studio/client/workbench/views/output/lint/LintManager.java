@@ -227,14 +227,14 @@ public class LintManager
                   filteredLint.push(lint.get(i));
                }
             }
-
             docDisplay_.showLint(filteredLint);
+            return;
          }
       }
-      else
-      {
-         docDisplay_.showLint(lint);
-      }
+      
+      docDisplay_.showLint(lint);
+      return;
+      
    }
    
    public void schedule(int milliseconds)
