@@ -1536,7 +1536,11 @@ public class RCompletionManager implements CompletionManager
          // of the current expression -- this implies we're not really
          // within a named argument, although this isn't perfect.
          if (argsValue.equals(",") ||
-             argsValue.equals("("))
+             argsValue.equals("(") ||
+             argsValue.equals("$") ||
+             argsValue.equals("@") ||
+             argsValue.equals("::") ||
+             argsValue.equals(":::"))
          {
             break;
          }
