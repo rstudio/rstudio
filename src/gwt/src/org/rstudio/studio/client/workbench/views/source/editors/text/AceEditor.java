@@ -1146,6 +1146,7 @@ public class AceEditor implements DocDisplay,
          int col =  (match != null) ? match.getIndex() : 0;
          getSession().getSelection().moveCursorTo(curRow, col, false);
          getSession().unfold(curRow, true);
+         ensureCursorVisible();
          return true;
       }
       return false;
