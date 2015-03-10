@@ -3,6 +3,7 @@
 
 @external fixedWidthFont;
 @external ace_editor, ace_text-layer, ace_gutter, ace_gutter-layer, ace_gutter-cell, ace_info;
+@external ace_info, ace_warning, ace_error;
 @external ace_breakpoint, ace_inactive-breakpoint, ace_pending-breakpoint, ace_executing-line;
 @external ace_sb;
 @external cueText;
@@ -106,7 +107,10 @@
 @url INACTIVEBREAKPOINT inactiveBreakpoint;
 @url PENDINGBREAKPOINT pendingBreakpoint;
 @url EXECUTINGLINE executingLine;
+
 @url INFO infoSmall;
+@url WARNING warningSmall;
+@url ERROR errorSmall;
 
 @url HANDCURSOR handCursor;
 
@@ -1326,9 +1330,15 @@ body.ubuntu_mono .searchBox {
   border-bottom-right-radius: 4px;
 }
 
-/* Use an alternate info icon for the gutter,
-   that looks nice with both light and dark themes */
 .ace_gutter-cell.ace_info {
    background-image: INFO;
+}
+
+.ace_gutter-cell.ace_warning {
+   background-image: WARNING;
+}
+
+.ace_gutter-cell.ace_error {
+   background-image: ERROR;
 }
 
