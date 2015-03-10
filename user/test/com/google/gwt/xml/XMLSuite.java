@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Google Inc.
+ * Copyright 2015 Google Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,22 +13,22 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.place;
+package com.google.gwt.xml;
 
 import com.google.gwt.junit.tools.GWTTestSuite;
-import com.google.gwt.place.impl.PlaceHistoryMapperGeneratorTest;
+import com.google.gwt.xml.client.XMLTest;
 
 import junit.framework.Test;
 import junit.framework.TestSuite;
 
 /**
- * Tests of the place package that requires browser.
+ * Tests of the xml package.
  */
-public class PlaceSuite {
+public class XMLSuite {
   public static Test suite() {
-    TestSuite suite = new GWTTestSuite("Tests of the place package");
+    TestSuite suite = new GWTTestSuite("Tests of the xml package");
 
-    suite.addTestSuite(PlaceHistoryMapperGeneratorTest.class);
+    suite.addTestSuite(XMLTest.class);
 
     return suite;
   }
