@@ -92,7 +92,9 @@ var showError = function(msg) {
   document.getElementById("errorWrapper").style.display = "block";
   document.getElementById("errorMask").style.display = "block";
   document.getElementById("error").textContent = msg;
-  document.getElementById("rsGridData").style.display = "none";
+  var rsGridData = document.getElementById("rsGridData");
+  if (rsGridData)
+    rsGridData.style.display = "none";
 };
 
 // simple HTML escaping (avoid XSS in data)
@@ -826,7 +828,7 @@ window.onDeactivate = function() {
   
   // save current scroll position
   var scrollBody = $(".dataTables_scrollBody");
-  if (scrollBody === null) {
+  if (scrollBody === null || scrollBody.length === 0) {
     return;
   }
   lastScrollPos = scrollBody.scrollTop();

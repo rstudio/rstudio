@@ -200,7 +200,8 @@ public class UrlContentEditingTarget implements EditingTarget
 
    public void onDeactivate()
    {
-      commandReg_.removeHandler();
+      if (commandReg_ != null)
+         commandReg_.removeHandler();
       commandReg_ = null;
       
       recordCurrentNavigationPosition();
