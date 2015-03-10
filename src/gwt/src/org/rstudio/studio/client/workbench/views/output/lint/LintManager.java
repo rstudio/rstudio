@@ -17,15 +17,19 @@ package org.rstudio.studio.client.workbench.views.output.lint;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.Invalidation;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.output.lint.model.LintItem;
 import org.rstudio.studio.client.workbench.views.output.lint.model.LintServerOperations;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionRequest;
+import org.rstudio.studio.client.workbench.views.source.events.SourceFileSavedEvent;
+import org.rstudio.studio.client.workbench.views.source.events.SourceFileSavedHandler;
 import org.rstudio.studio.client.workbench.views.source.model.CppDiagnostic;
 
 import com.google.gwt.core.client.JsArray;
@@ -92,6 +96,9 @@ public class LintManager
          @Override
          public void onValueChange(ValueChangeEvent<Void> event)
          {
+            if (!uiPrefs_.enableBackgroundLinting().getValue())
+               return;
+            
             if (!docDisplay_.isFocused())
                return;
             
@@ -99,17 +106,32 @@ public class LintManager
                return;
             
             docDisplay_.removeMarkersAtCursorPosition();
-            timer_.schedule(1000);
+            timer_.schedule(uiPrefs_.backgroundLintDelayMs().getValue());
          }
       });
       
-      
+      eventBus_.addHandler(
+            SourceFileSavedEvent.TYPE,
+            new SourceFileSavedHandler()
+      {
+         
+         @Override
+         public void onSourceFileSaved(SourceFileSavedEvent event)
+         {
+            if (uiPrefs_.lintOnSave().getValue())
+               lint(true, false);
+         }
+      });
    }
    
    @Inject
-   void initialize(LintServerOperations server)
+   void initialize(LintServerOperations server,
+                   UIPrefs uiPrefs,
+                   EventBus eventBus)
    {
       server_ = server;
+      uiPrefs_ = uiPrefs;
+      eventBus_ = eventBus;
    }
    
    private void lintActiveDocument(final LintContext context)
@@ -261,6 +283,8 @@ public class LintManager
    private boolean excludeCurrentStatement_;
    
    private LintServerOperations server_;
+   private UIPrefs uiPrefs_;
+   private EventBus eventBus_;
    
    static {
       LintResources.INSTANCE.styles().ensureInjected();

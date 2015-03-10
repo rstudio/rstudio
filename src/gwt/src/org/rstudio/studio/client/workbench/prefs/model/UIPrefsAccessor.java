@@ -183,7 +183,7 @@ public class UIPrefsAccessor extends Prefs
    
    public PrefValue<Integer> backgroundLintDelayMs()
    {
-      return integer("background_lint_delay_ms", 250);
+      return integer("background_lint_delay_ms", 2000);
    }
    
    public PrefValue<Boolean> lintRFunctionCalls()
