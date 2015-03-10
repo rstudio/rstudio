@@ -344,13 +344,13 @@ public class JsTypeTest extends GWTTestCase {
     return enumeration.foo();
   }-*/;
 
-  private static void assertJsTypeHasFields(Object obj, String... fields) {
+  public static void assertJsTypeHasFields(Object obj, String... fields) {
     for (String field : fields) {
       assertTrue("Field '" + field + "' should be exported", hasField(obj, field));
     }
   }
 
-  private static void assertJsTypeDoesntHaveFields(Object obj, String... fields) {
+  public static void assertJsTypeDoesntHaveFields(Object obj, String... fields) {
     for (String field : fields) {
       assertFalse("Field '" + field + "' should not be exported", hasField(obj, field));
     }

@@ -19,6 +19,7 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.dev.javac.testing.impl.StaticJavaResource;
 import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.util.UnitTestTreeLogger;
+import com.google.gwt.dev.util.arg.SourceLevel;
 
 import junit.framework.TestCase;
 
@@ -825,12 +826,91 @@ public class JSORestrictionsTest extends TestCase {
         "Line 4: " + JSORestrictionsChecker.ERR_JSPROPERTY_ONLY_BEAN_OR_FLUENT_STYLE_NAMING);
   }
 
+  public void testJsFunctionOnFunctionalInterface() {
+    StringBuilder goodCode = new StringBuilder();
+    goodCode.append("import com.google.gwt.core.client.js.JsFunction;\n");
+    goodCode.append("@JsFunction public interface Buggy {\n");
+    goodCode.append("int foo(int x);\n");
+    goodCode.append("}\n");
+
+    shouldGenerateNoError(goodCode);
+  }
+
+  // it is OK on JSORestrictionChecker but will be disallowed by JsInteropRestrictionChecker.
+  public void testJsFunctionAndJsTypeOnInterface() {
+    StringBuilder goodCode = new StringBuilder();
+    goodCode.append("import com.google.gwt.core.client.js.JsFunction;\n");
+    goodCode.append("import com.google.gwt.core.client.js.JsType;\n");
+    goodCode.append("@JsFunction @JsType public interface Buggy {\n");
+    goodCode.append("int foo(int x);\n");
+    goodCode.append("}\n");
+
+    shouldGenerateNoError(goodCode);
+  }
+
+  public void testJsFunctionNotOnClass() {
+    StringBuilder buggyCode = new StringBuilder();
+    buggyCode.append("import com.google.gwt.core.client.js.JsFunction;\n");
+    buggyCode.append("@JsFunction public class Buggy {\n");
+    buggyCode.append("int foo(int x) {return 0;} \n");
+    buggyCode.append("}\n");
+
+    shouldGenerateError(buggyCode,
+        "Line 2: " + JSORestrictionsChecker.ERR_JS_FUNCTION_ONLY_ALLOWED_ON_FUNCTIONAL_INTERFACE);
+  }
+
+  public void testJsFunctionNotOnNonFunctionalInterface1() {
+    StringBuilder buggyCode = new StringBuilder();
+    buggyCode.append("import com.google.gwt.core.client.js.JsFunction;\n");
+    buggyCode.append("@JsFunction public interface Buggy {\n");
+    buggyCode.append("int foo(int x);\n");
+    buggyCode.append("int bar(int x);\n");
+    buggyCode.append("}\n");
+
+    shouldGenerateError(buggyCode,
+        "Line 2: " + JSORestrictionsChecker.ERR_JS_FUNCTION_ONLY_ALLOWED_ON_FUNCTIONAL_INTERFACE);
+  }
+
+  public void testJsFunctionNotOnNonFunctionalInterface2() {
+    StringBuilder buggyCode = new StringBuilder();
+    buggyCode.append("import com.google.gwt.core.client.js.JsFunction;\n");
+    buggyCode.append("@JsFunction public interface Buggy {\n");
+    buggyCode.append("}\n");
+
+    shouldGenerateError(buggyCode,
+        "Line 2: " + JSORestrictionsChecker.ERR_JS_FUNCTION_ONLY_ALLOWED_ON_FUNCTIONAL_INTERFACE);
+  }
+
+  public void testJsFunctionNotOnInterfaceWithSuperInterfaces() {
+    StringBuilder buggyCode = new StringBuilder();
+    buggyCode.append("import com.google.gwt.core.client.js.JsFunction;\n");
+    buggyCode.append("import java.io.Serializable;\n");
+    buggyCode.append("@JsFunction public interface Buggy extends Serializable {\n");
+    buggyCode.append("int foo(int x);\n");
+    buggyCode.append("}\n");
+
+    shouldGenerateError(buggyCode,
+        "Line 3: " + JSORestrictionsChecker.ERR_JS_FUNCTION_INTERFACE_CANNOT_EXTEND_ANY_INTERFACE);
+  }
+
+  public void testJsFunctionNotOnInterfaceWithDefaultMethod() {
+    StringBuilder buggyCode = new StringBuilder();
+    buggyCode.append("import com.google.gwt.core.client.js.JsFunction;\n");
+    buggyCode.append("@JsFunction public interface Buggy {\n");
+    buggyCode.append("int foo(int x);\n");
+    buggyCode.append("default void bar() { }\n");
+    buggyCode.append("}\n");
+
+    shouldGenerateError(SourceLevel.JAVA8, buggyCode,
+        "Line 2: " + JSORestrictionsChecker.ERR_JS_FUNCTION_CANNOT_HAVE_DEFAULT_METHODS);
+  }
+
   /**
    * Test that when compiling buggyCode, the TypeOracleUpdater emits
    * expectedError somewhere in its output. The code should define a class named
    * Buggy.
    */
-  private void shouldGenerateError(CharSequence buggyCode,
+  private void shouldGenerateError(SourceLevel sourceLevel, CharSequence buggyCode,
       String... expectedErrors) {
     UnitTestTreeLogger.Builder builder = new UnitTestTreeLogger.Builder();
     builder.setLowestLogLevel(TreeLogger.ERROR);
@@ -845,8 +925,17 @@ public class JSORestrictionsTest extends TestCase {
         buggyCode);
     TypeOracleTestingUtils.buildStandardTypeOracleWith(logger,
         Collections.<Resource> emptySet(),
-        CompilationStateTestBase.getGeneratedUnits(buggyResource));
+        CompilationStateTestBase.getGeneratedUnits(buggyResource),
+        sourceLevel);
     logger.assertCorrectLogEntries();
+  }
+
+  private void shouldGenerateNoError(SourceLevel sourceLevel, StringBuilder buggyCode) {
+    shouldGenerateError(sourceLevel, buggyCode, (String[]) null);
+  }
+
+  private void shouldGenerateError(CharSequence buggyCode, String... expectedErrors) {
+    shouldGenerateError(SourceLevel.DEFAULT_SOURCE_LEVEL, buggyCode, expectedErrors);
   }
 
   private void shouldGenerateNoError(StringBuilder buggyCode) {

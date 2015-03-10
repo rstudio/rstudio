@@ -174,6 +174,22 @@ public class JMethod extends JNode implements JMember, CanBeAbstract, CanBeNativ
     return false;
   }
 
+  public boolean isJsFunctionMethod() {
+    return enclosingType != null && enclosingType.isJsFunction();
+  }
+
+  public boolean isOrOverridesJsFunctionMethod() {
+    if (isJsFunctionMethod()) {
+      return true;
+    }
+    for (JMethod overriddenMethod : getOverriddenMethods()) {
+      if (overriddenMethod.isJsFunctionMethod()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   public void setSpecialization(List<JType> paramTypes, JType returnsType, String targetMethod) {
     this.specialization = new Specialization(paramTypes, returnsType, targetMethod);
   }

@@ -388,6 +388,11 @@ public class JavaResourceBase {
           "public @interface JsProperty {\n",
           "  String value() default \"\";\n",
           "}");
+  public static final MockJavaResource JSFUNCTION =
+      createMockJavaResource("com.google.gwt.core.client.js.JsFunction",
+          "package com.google.gwt.core.client.js;",
+          "public @interface JsFunction {\n",
+          "}");
 
   public static MockJavaResource[] getStandardResources() {
     return new MockJavaResource[] {
@@ -396,7 +401,7 @@ public class JavaResourceBase {
         ERROR, FUNCTIONALINTERFACE, FLOAT, INTEGER, IS_SERIALIZABLE, JAVASCRIPTEXCEPTION,
         JAVASCRIPTOBJECT, LIST, LONG, MAP, NO_CLASS_DEF_FOUND_ERROR, NUMBER, OBJECT,
         RUNTIME_EXCEPTION, SERIALIZABLE, SHORT, STRING, STRING_BUILDER, SUPPRESS_WARNINGS,
-        THROWABLE, SPECIALIZE_METHOD, JSTYPE, JSTYPEPROTOTYPE, JSEXPORT, JSPROPERTY};
+        THROWABLE, SPECIALIZE_METHOD, JSTYPE, JSTYPEPROTOTYPE, JSEXPORT, JSPROPERTY, JSFUNCTION};
   }
 
   /**

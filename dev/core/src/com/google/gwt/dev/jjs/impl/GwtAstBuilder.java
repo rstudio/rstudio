@@ -4193,6 +4193,7 @@ public class GwtAstBuilder {
       type.setJsTypeInfo(JsInteropUtil.isJsType(x), JsInteropUtil.maybeGetJsTypePrototype(x),
           JsInteropUtil.maybeGetJsNamespace(x));
       type.setJsExportInfo(JsInteropUtil.isClassWideJsExport(x));
+      type.setJsFunctionInfo(JsInteropUtil.isJsFunction(x));
 
       typeMap.setSourceType(binding, type);
       newTypes.add(type);

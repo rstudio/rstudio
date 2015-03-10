@@ -295,6 +295,42 @@ public class PrunerTest extends OptimizerTestBase {
         "}", fun.toSource());
   }
 
+  public void testJsFunction() throws Exception {
+    addSnippetImport("com.google.gwt.core.client.js.JsFunction");
+    addSnippetClassDecl(
+        "@JsFunction interface MyJsFunctionInterface {",
+        "int foo (int a);",
+        "}");
+    addSnippetClassDecl(
+        "interface MyPlainInterface {",
+        "int foo (int a);",
+        "}");
+    addSnippetClassDecl(
+        "@JsFunction interface MyJsFunctionInterfaceUnused {",
+        "int foo (int a);",
+        "}");
+    Result result;
+    (result = optimize("void",
+        "MyJsFunctionInterface a = new MyJsFunctionInterface() {"
+            + "@Override public int foo (int a) { return 1; }"
+            + "};"
+            + "MyPlainInterface b = new MyPlainInterface() {"
+            + "@Override public int foo (int a) { return 1; }"
+            + "};"
+        )).intoString(
+            "new EntryPoint$1();\n" +
+            "new EntryPoint$2();"
+            );
+
+    assertNotNull(result.findClass("EntryPoint$MyJsFunctionInterface"));
+    assertNotNull(result.findClass("EntryPoint$MyPlainInterface"));
+    assertNull(result.findClass("EntryPoint$MyJsFunctionInterfaceUnused"));
+
+    // Function in JsFunction interface may be implicitly called in JS, should not be pruned.
+    assertNotNull(OptimizerTestBase.findMethod(result.findClass("EntryPoint$1"), "foo"));
+    assertNull(OptimizerTestBase.findMethod(result.findClass("EntryPoint$2"), "foo"));
+  }
+
   @Override
   protected boolean optimizeMethod(JProgram program, JMethod method) {
     program.addEntryMethod(findMainMethod(program));

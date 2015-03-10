@@ -621,7 +621,8 @@ public class ControlFlowAnalyzer {
         if (dependencyRecorder != null) {
           curMethodStack.remove(curMethodStack.size() - 1);
         }
-        if (method.isNative() || program.typeOracle.isJsTypeMethod(method)) {
+        if (method.isNative() || program.typeOracle.isJsTypeMethod(method)
+            || program.typeOracle.isJsFunctionMethod(method)) {
             /*
              * SPECIAL: returning from this method passes a value from
              * JavaScript into Java.
@@ -629,7 +630,8 @@ public class ControlFlowAnalyzer {
           maybeRescueJavaScriptObjectPassingIntoJava(method.getType());
         }
         if (program.typeOracle.isExportedMethod(method)
-            || program.typeOracle.isJsTypeMethod(method)) {
+            || program.typeOracle.isJsTypeMethod(method)
+            || program.typeOracle.isJsFunctionMethod(method)) {
           for (JParameter param : method.getParams()) {
             /**
              * TODO (cromwellian): JS visible methods (virtual or static) may be supplied
@@ -701,6 +703,11 @@ public class ControlFlowAnalyzer {
            * That is, the Java implementor may be called because the interface
            * was passed into JS, or it may be called via exported functions.
            *
+           * For @JsFunction, we rescue its sam function because we don't know
+           * if they'll be called from JS or not. That is, when a instance of
+           * a @JsFunction is passed to JS, its sam function may be implicitly
+           * called by the instance.
+           *
            * We may be able to tighten this to check for @JsExport as well,
            * since if there is no @JsExport, the only way for JS code to get a
            * reference to the interface is by it being constructed in Java
@@ -713,9 +720,10 @@ public class ControlFlowAnalyzer {
         // on a subclass of a @JsType annotated type. But actually since such an exported method is
         // an override and since it overrides something that has been rescued, such methods are
         // already safely rescued by other ControlFlow logic.
-        if (dtype.isJsType()) {
+        if (dtype.isJsType() || dtype.isJsFunction()) {
           for (JMethod method : dtype.getMethods()) {
-            if (program.typeOracle.isJsTypeMethod(method)) {
+            if (program.typeOracle.isJsTypeMethod(method)
+                || program.typeOracle.isJsFunctionMethod(method)) {
               rescue(method);
             }
           }
@@ -807,6 +815,7 @@ public class ControlFlowAnalyzer {
         if (arg.hasSideEffects() || liveFieldsAndMethods.contains(param)
             // rescue any args of JsInterface Prototype methods or JsInterface
             || program.typeOracle.isJsTypeMethod(method)
+            || program.typeOracle.isJsFunctionMethod(method)
             || program.isJsTypePrototype(method.getEnclosingType())) {
           this.accept(arg);
           continue;
@@ -869,7 +878,8 @@ public class ControlFlowAnalyzer {
       for (JMethod method : type.getMethods()) {
         if (!method.isStatic() && (membersToRescueIfTypeIsInstantiated.contains(method)
             // method may be called from JS as well
-           || program.typeOracle.isJsTypeMethod(method))) {
+           || program.typeOracle.isJsTypeMethod(method)
+           || program.typeOracle.isJsFunctionMethod(method))) {
           rescue(method);
         }
       }

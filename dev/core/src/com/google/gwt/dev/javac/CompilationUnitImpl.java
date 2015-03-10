@@ -64,7 +64,7 @@ abstract class CompilationUnitImpl extends CompilationUnit {
     this.hasErrors = hasAnyErrors;
     this.hasJsInteropRootType = Iterables.any(types, new Predicate<JDeclaredType>() {
       @Override public boolean apply(JDeclaredType type) {
-        return type.hasAnyExports() || type.isOrExtendsJsType();
+        return type.hasAnyExports() || type.isOrExtendsJsType() || type.isOrExtendsJsFunction();
       }
     });
     for (CompiledClass cc : compiledClasses) {

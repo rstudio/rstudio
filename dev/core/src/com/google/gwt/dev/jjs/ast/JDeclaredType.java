@@ -52,6 +52,7 @@ public abstract class JDeclaredType extends JReferenceType {
   private boolean isClassWideExport;
   private boolean isJsType;
   private String jsNamespace = null;
+  private boolean isJsFunction;
 
   /**
    * This type's fields. Special serialization treatment.
@@ -316,6 +317,25 @@ public abstract class JDeclaredType extends JReferenceType {
     return false;
   }
 
+  public boolean isJsFunction() {
+    return isJsFunction;
+  }
+
+  public boolean isOrExtendsJsFunction() {
+    if (isJsFunction()) {
+      return true;
+    }
+    if (getSuperClass() != null && getSuperClass().isOrExtendsJsFunction()) {
+      return true;
+    }
+    for (JInterfaceType subInterface : getImplements()) {
+      if (subInterface.isOrExtendsJsFunction()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   public boolean isClassWideExport() {
     return isClassWideExport;
   }
@@ -431,6 +451,9 @@ public abstract class JDeclaredType extends JReferenceType {
     this.isClassWideExport = isClassWideJsExport;
   }
 
+  public void setJsFunctionInfo(boolean isJsFunction) {
+    this.isJsFunction = isJsFunction;
+  }
   /**
    * Sorts this type's fields according to the specified sort.
    */

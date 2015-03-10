@@ -192,6 +192,17 @@ public class JavaClassHierarchySetupUtil {
   }-*/;
 
   /**
+   * Create a function that applies the specified samMethod on itself, and whose __proto__ points to
+   * <code>instance</code>.
+   */
+  public static native JavaScriptObject makeLambdaFunction(JavaScriptObject samMethod,
+      JavaScriptObject instance) /*-{
+    var lambda = function() { return samMethod.apply(lambda, arguments); }
+    lambda.__proto__ = instance;
+    return lambda;
+  }-*/;
+
+  /**
    * If the parameter o is a Javascript object, return the bridge method reference,
    * otherwise return the nonbridge reference.
    * @param o an instance object we want to invoke a method on

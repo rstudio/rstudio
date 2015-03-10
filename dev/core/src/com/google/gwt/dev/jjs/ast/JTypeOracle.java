@@ -23,6 +23,7 @@ import com.google.gwt.thirdparty.guava.common.base.Function;
 import com.google.gwt.thirdparty.guava.common.base.Objects;
 import com.google.gwt.thirdparty.guava.common.base.Predicate;
 import com.google.gwt.thirdparty.guava.common.base.Strings;
+import com.google.gwt.thirdparty.guava.common.collect.Collections2;
 import com.google.gwt.thirdparty.guava.common.collect.HashMultimap;
 import com.google.gwt.thirdparty.guava.common.collect.ImmutableList;
 import com.google.gwt.thirdparty.guava.common.collect.ImmutableSetMultimap;
@@ -914,6 +915,51 @@ public class JTypeOracle implements Serializable {
     return null;
   }
 
+  /**
+   * Get the JsFunction method of {@code type}.
+   */
+  public JMethod getJsFunctionMethod(JClassType type) {
+    for (JMethod method : type.getMethods()) {
+      if (isJsFunctionMethod(method)) {
+        return method;
+      }
+    }
+    return (type.getSuperClass() != null) ? getJsFunctionMethod(type.getSuperClass()) : null;
+  }
+
+  /**
+   * Get all implemented interfaces of {@code type}.
+   */
+  public Collection<JInterfaceType> getImplementedInterfaces(JDeclaredType type) {
+    Multimap<String, String> implementedInterfaces =
+        (type instanceof JClassType) ? implementedInterfacesByClass : superInterfacesByInterface;
+    return Collections2.transform(implementedInterfaces.get((type.getName())),
+        new Function<String, JInterfaceType>() {
+          @Override
+          public JInterfaceType apply(String typeName) {
+            JReferenceType referenceType = referenceTypesByName.get(typeName);
+            assert (referenceType instanceof JInterfaceType);
+            return (JInterfaceType) referenceType;
+          }
+        }
+    );
+  }
+
+  /**
+   * Get all implemented JsFunction interfaces of {@code type}.
+   * After JsInteropRestrictionChecker, jsFunctions.size() <= 1 would always be true.
+   */
+  public Collection<JInterfaceType> getImplementedJsFunctions(JDeclaredType type) {
+    Collection<JInterfaceType> jsFunctions =
+        Collections2.filter(getImplementedInterfaces(type), new Predicate<JInterfaceType>() {
+          @Override
+          public boolean apply(JInterfaceType implementedInterface) {
+            return implementedInterface.isJsFunction();
+          }
+        });
+    return jsFunctions;
+  }
+
   public JMethod getInstanceMethodBySignature(JClassType type, String signature) {
     return getOrCreateInstanceMethodsBySignatureForType(type).get(signature);
   }
@@ -1084,7 +1130,7 @@ public class JTypeOracle implements Serializable {
   public boolean isInstantiatedType(JReferenceType type) {
     type = type.getUnderlyingType();
     // any type that can be JS or exported to JS is considered instantiated
-    if (isJsType(type) || hasAnyExports(type)) {
+    if (isJsType(type) || hasAnyExports(type) || isJsFunction(type)) {
       return true;
     }
     if (instantiatedTypes == null || instantiatedTypes.contains(type)) {
@@ -1159,6 +1205,17 @@ public class JTypeOracle implements Serializable {
   }
 
   /**
+   * Returns whether the given method may be implicitly called by a instance of a class that
+   * is exported by an @JsFunction annotation.
+   * <p>
+   * A method is a JsFunction method if it is or overrides a SAM function of a @JsFunction annotated
+   * functional interface.
+   */
+  public boolean isJsFunctionMethod(JMethod x) {
+    return isJsInteropEnabled() && x.isOrOverridesJsFunctionMethod();
+  }
+
+  /**
    * Whether the type is a JS interface (does not check supertypes).
    */
   public boolean isJsType(JType type) {
@@ -1177,6 +1234,21 @@ public class JTypeOracle implements Serializable {
     } else {
       return false;
     }
+  }
+
+  /**
+   * Whether the type is a JsFunction interface.
+   */
+  public boolean isJsFunction(JType type) {
+    return isJsInteropEnabled()
+        && (type instanceof JInterfaceType && ((JInterfaceType) type).isJsFunction());
+  }
+
+  /**
+   * Whether the type or any supertypes is a JsFunction type.
+   */
+  public boolean isOrExtendsJsFunction(JDeclaredType type) {
+    return isJsInteropEnabled() && !getImplementedJsFunctions(type).isEmpty();
   }
 
   /**

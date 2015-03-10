@@ -19,6 +19,7 @@ import com.google.gwt.dev.MinimalRebuildCache;
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JField;
+import com.google.gwt.dev.jjs.ast.JInterfaceType;
 import com.google.gwt.dev.jjs.ast.JMember;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethod.JsPropertyType;
@@ -27,6 +28,7 @@ import com.google.gwt.dev.jjs.ast.JVisitor;
 import com.google.gwt.thirdparty.guava.common.collect.Maps;
 import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
+import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 
@@ -82,7 +84,8 @@ public class JsInteropRestrictionChecker extends JVisitor {
     currentJsTypeMethodNameBySetterNames = Maps.newHashMap();
     minimalRebuildCache.removeJsInteropNames(x.getName());
     currentType = x;
-
+    checkJsFunctionInheritance(x);
+    checkJsFunctionJsTypeCollision(x);
     // Perform custom class traversal to examine fields and methods of this class and all
     // superclasses so that name collisions between local and inherited members can be found.
     do {
@@ -210,6 +213,24 @@ public class JsInteropRestrictionChecker extends JVisitor {
       logError("The JsType member '%s' and JsProperty property '%s' name can't both be named "
           + "'%s' in type '%s'.", currentJsTypeMethodNameByMemberNames.get(setterName),
           currentJsTypeMethodNameBySetterNames.get(setterName), setterName, typeName);
+    }
+  }
+
+  private void checkJsFunctionInheritance(JDeclaredType type) {
+    Collection<JInterfaceType> implementedJsFunctions =
+        jprogram.typeOracle.getImplementedJsFunctions(type);
+    if (implementedJsFunctions.size() > 1) {
+      logError("'%s' implements more than one JsFunction interfaces: %s", type.getName(),
+          implementedJsFunctions);
+    }
+  }
+
+  // To prevent potential name collisions, we disallow JsFunction implementations to be also a
+  // JsType.
+  private void checkJsFunctionJsTypeCollision(JDeclaredType type) {
+    if (type.isOrExtendsJsType() && type.isOrExtendsJsFunction()) {
+      logError("'%s' cannot be annotated as (or extend) both a @JsFunction and a @JsType at the "
+          + "same time.", type.getName());
     }
   }
 

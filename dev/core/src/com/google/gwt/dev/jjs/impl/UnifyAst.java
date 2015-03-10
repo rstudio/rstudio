@@ -767,7 +767,8 @@ public class UnifyAst {
       }
 
       rootTypeBinaryNames.add(rootType.getName());
-      if (jsInteropEnabled && (rootType.hasAnyExports() || rootType.isOrExtendsJsType())) {
+      if (jsInteropEnabled && (rootType.hasAnyExports() || rootType.isOrExtendsJsType()
+          || rootType.isOrExtendsJsFunction())) {
         fullFlowIntoType(rootType);
       }
     }
@@ -963,7 +964,8 @@ public class UnifyAst {
       if (t instanceof JClassType && requiresDevirtualization(t)) {
         instantiate(t);
       }
-      if (jsInteropEnabled && (t.hasAnyExports() || t.isOrExtendsJsType())) {
+      if (jsInteropEnabled
+          && (t.hasAnyExports() || t.isOrExtendsJsType() || t.isOrExtendsJsFunction())) {
         instantiate(t);
       }
     }
@@ -1305,6 +1307,7 @@ public class UnifyAst {
     }
     staticInitialize(type);
     boolean isJsType = jsInteropEnabled && type.isOrExtendsJsType();
+    boolean isJsFunction = jsInteropEnabled && type.isOrExtendsJsFunction();
 
     if (!type.isAbstract()) {
       // this is a concrete type, add delegation methods for any unimplemented defender methods
@@ -1314,7 +1317,7 @@ public class UnifyAst {
     // Flow into any reachable virtual methods.
     for (JMethod method : type.getMethods()) {
       if (method.canBePolymorphic()) {
-        if (isJsType) {
+        if (isJsType || isJsFunction) {
           // Fake a call into the method to keep it around
           flowInto(method);
           continue;

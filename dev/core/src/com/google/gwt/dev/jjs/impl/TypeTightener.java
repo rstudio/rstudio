@@ -589,7 +589,8 @@ public class TypeTightener {
        * The only information that we can infer about native methods is if they
        * are declared to return a leaf type.
        */
-      if (x.isNative() || program.typeOracle.isJsTypeMethod(x)) {
+      if (x.isNative() || program.typeOracle.isJsTypeMethod(x)
+          || program.typeOracle.isJsFunctionMethod(x)) {
         return;
       }
 
@@ -665,6 +666,7 @@ public class TypeTightener {
       JMethod currentMethod = getCurrentMethod();
       if (program.codeGenTypes.contains(currentMethod.getEnclosingType())
           || program.typeOracle.isExportedMethod(currentMethod)
+          || program.typeOracle.isJsFunctionMethod(currentMethod)
           || program.typeOracle.isJsTypeMethod(currentMethod)) {
         // We cannot tighten this parameter as we don't know all callers.
         return;
