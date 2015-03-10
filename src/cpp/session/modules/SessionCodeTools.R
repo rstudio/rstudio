@@ -1005,11 +1005,13 @@
    
 })
 
-.rs.addFunction("validateFunctionCall", function(fnNameString, fnCallString)
+.rs.addFunction("validateFunctionCall", function(fnNameString,
+                                                 fnCallString,
+                                                 envir = parent.frame(1))
 {
    message <- .rs.scalar("")
    fnObject <- tryCatch(
-      .rs.getAnywhere(fnNameString),
+      .rs.getAnywhere(fnNameString, envir = envir),
       error = function(e) NULL
    )
    
@@ -1018,6 +1020,10 @@
    
    ## TODO: handle primitives
    if (is.primitive(fnObject))
+      return(message)
+   
+   ## TODO: think about why this might occur
+   if (!is.function(fnObject))
       return(message)
    
    fnCall <- tryCatch(
