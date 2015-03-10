@@ -1482,10 +1482,12 @@ public class UnifyAst {
   }
 
   private JDeclaredType findPackageInfo(JDeclaredType type) {
-    String pkg = type.getName();
-    pkg = pkg.substring(0, pkg.lastIndexOf('.'));
-    JDeclaredType pkgInfo = internalFindType(StringInterner.get().intern(pkg + ".package-info"),
-        binaryNameBasedTypeLocator, false);
+    String packagePrefix = type.getName();
+
+    // Package prefix with trailing dot. Empty string if default package.
+    packagePrefix = packagePrefix.substring(0,  packagePrefix.lastIndexOf('.') + 1);
+    String pkgInfoClassName = StringInterner.get().intern(packagePrefix + "package-info");
+    JDeclaredType pkgInfo = internalFindType(pkgInfoClassName, binaryNameBasedTypeLocator, false);
     // package-info classes are loaded only for their package level annotations' possible effect on
     // JsInterop configuration. They are not intended to be included in output.
     if (pkgInfo != null) {
