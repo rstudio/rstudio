@@ -60,7 +60,7 @@ git submodule update --init --recursive
 # Merge all the bugfix branches
 
 # NOTE: 'vim-commands' API merged upstream; should be unneeded with next Ace update
-# NOTE: 'no-core-commands' should be unnecessary with next Ace update
+# NOTE: 'no-core-commands' and 'vim-page-commands' should be unnecessary with next Ace update
 # NOTE: 'dont-warn-on-scroll' likely needs to be re-thought as
 #   Ace will (may?) be gaining new defaults in next release re: scroll behaviour
 
@@ -81,6 +81,7 @@ git merge \
     origin/patch/no-core-commands \
     origin/feature/vim-page-movement \
     origin/patch/dont-warn-on-scroll \
+    origin/bugfix/vim-search-scrolling \
     -m "merge branches"
 
 ## git merge \
@@ -89,29 +90,8 @@ git merge \
 ## git merge \
 ##     origin/bugfix/ie10-clipboard \              # test copy+paste in IE10 (probably okay)
 
+# Rebuild ace with new sources
 
-# Build and copy ace, ace-uncompressed to RStudio
-node ./Makefile.dryice.js normal
-node ./Makefile.dryice.js -m normal
+cd ..
+./build-ace
 
-cp build/src/ace.js ../../src/org/rstudio/studio/client/workbench/views/source/editors/text/ace/ace-uncompressed.js
-cp build/src-min/ace.js ../../src/org/rstudio/studio/client/workbench/views/source/editors/text/ace/ace.js
-
-# Copy in the 'emacs', 'vim' keybindings
-cp build/src-min/keybinding-* ../../src/org/rstudio/studio/client/workbench/views/source/editors/text/ace/
-
-# Copy the ext-language-tools
-cp build/src-min/ext-language_tools.js ../../src/org/rstudio/studio/client/workbench/views/source/editors/text/ace/
-
-# Copy in workers
-cp build/src-min/worker-html.js ../../www/js/workers
-cp build/src-min/worker-css.js ../../www/js/workers
-cp build/src-min/worker-javascript.js ../../www/js/workers
-
-stripUseStrict() {
-    sed 's/"use strict";//g' "$1" > "$1.stripped"
-    mv "$1.stripped" "$1"
-}
-
-stripUseStrict ../../src/org/rstudio/studio/client/workbench/views/source/editors/text/ace/ace.js
-stripUseStrict ../../src/org/rstudio/studio/client/workbench/views/source/editors/text/ace/ace-uncompressed.js
