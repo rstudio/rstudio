@@ -418,7 +418,7 @@ Error extract(SEXP valueSEXP, std::set<std::string>* pSet)
 {
    if (TYPEOF(valueSEXP) != STRSXP)
       return Error(errc::UnexpectedDataTypeError, ERROR_LOCATION);
-
+   
    pSet->clear();
    for (int i=0; i<Rf_length(valueSEXP); i++)
       pSet->insert(Rf_translateChar(STRING_ELT(valueSEXP, i)));
@@ -430,6 +430,9 @@ Error extract(SEXP valueSEXP, std::map< std::string, std::set<std::string> >* pM
 {
    if (TYPEOF(valueSEXP) != VECSXP)
       return Error(errc::UnexpectedDataTypeError, ERROR_LOCATION);
+   
+   if (Rf_length(valueSEXP) == 0)
+      return Success();
    
    SEXP namesSEXP = r::sexp::getNames(valueSEXP);
    if (Rf_isNull(namesSEXP))
