@@ -681,33 +681,23 @@ assign(x = ".rs.acCompletionTypes",
          }
       }
       
-      # Get completions from a data object name if the active argument is 'formula'.
-      # Useful for formula incantations in e.g.
-      #
-      #    lm(|, data = mtcars)
-      #
-      # In this special case, we _override_ argument completions (since they
-      # are often less interesting in this special case)
-      if (.rs.startsWith(activeArg, "form") &&
-          !is.null(matchedCall[["data"]]))
-      {
-         dataObject <- .rs.getAnywhere(matchedCall[["data"]])
-         if (!is.null(dataObject))
-         {
-            dataNames <- .rs.getNames(dataObject)
-            return(.rs.makeCompletions(
-               token = token,
-               results = .rs.selectFuzzyMatches(dataNames, token),
-               quote = FALSE
-            ))
-         }
-      }
-      
       # Get completions for the current active argument
       argCompletions <- .rs.getCompletionsArgument(
          token = token,
          activeArg = activeArg,
+         functionCall = functionCall
       )
+      
+      # If the active argument was 'formula' and we were able
+      # to retrieve completions, it is unlikely that we also
+      # want search path completions or otherwise -- just return
+      # those completions.
+      if (identical(activeArg, "formula") &&
+          !is.null(argCompletions) &&
+          !.rs.isEmptyCompletion(argCompletions))
+      {
+         return(argCompletions)
+      }
       
       fguess <- if (length(formals$methods))
          formals$methods[[1]]
@@ -2454,6 +2444,31 @@ assign(x = ".rs.acCompletionTypes",
    object <- if (!is.null(functionCall))
       .rs.resolveObjectFromFunctionCall(functionCall, envir)
    
+   matchedCall <- if (!is.null(object))
+      .rs.matchCall(object, functionCall)
+   
+   # Get completions from a data object name if the active argument is 'formula'.
+   # Useful for formula incantations in e.g.
+   #
+   #    lm(|, data = mtcars)
+   #
+   # In this special case, we _override_ argument completions (since they
+   # are often less interesting in this special case)
+   if (.rs.startsWith(activeArg, "form") &&
+       !is.null(matchedCall[["data"]]))
+   {
+      dataObject <- .rs.getAnywhere(matchedCall[["data"]])
+      if (!is.null(dataObject))
+      {
+         dataNames <- .rs.getNames(dataObject)
+         return(.rs.makeCompletions(
+            token = token,
+            results = .rs.selectFuzzyMatches(dataNames, token),
+            quote = FALSE
+         ))
+      }
+   }
+      
    # Check for knitr chunk completions, if possible
    if ("knitr" %in% loadedNamespaces())
    {
