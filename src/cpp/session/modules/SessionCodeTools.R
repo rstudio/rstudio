@@ -1008,13 +1008,16 @@
 .rs.addFunction("validateFunctionCall", function(fnNameString, fnCallString)
 {
    message <- .rs.scalar("")
-   fnObject <- .rs.getAnywhere(fnNameString)
+   fnObject <- tryCatch(
+      .rs.getAnywhere(fnNameString),
+      error = function(e) NULL
+   )
+   
+   if (is.null(fnObject))
+      return(message)
    
    ## TODO: handle primitives
    if (is.primitive(fnObject))
-      return(message)
-   
-   if (is.null(fnObject))
       return(message)
    
    fnCall <- tryCatch(
