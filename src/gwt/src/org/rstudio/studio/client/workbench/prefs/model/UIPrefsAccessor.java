@@ -171,6 +171,26 @@ public class UIPrefsAccessor extends Prefs
       return bool("enable_style_diagnostics", false);
    }
    
+   public PrefValue<Boolean> lintOnSave()
+   {
+      return bool("lint_on_save", true);
+   }
+   
+   public PrefValue<Boolean> enableBackgroundLinting()
+   {
+      return bool("enable_background_linting", false);
+   }
+   
+   public PrefValue<Integer> backgroundLintDelayMs()
+   {
+      return integer("background_lint_delay_ms", 250);
+   }
+   
+   public PrefValue<Boolean> lintRFunctionCalls()
+   {
+      return bool("lint_r_function_calls", false);
+   }
+   
    public PrefValue<Boolean> autoAppendNewline()
    {
       return bool("auto_append_newline", false);

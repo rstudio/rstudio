@@ -407,6 +407,14 @@ void handleIdentifier(RTokenCursor& cursor,
       return;
    }
    
+   // Bail if we're in a function call and the user has not opted into function
+   // lint.
+   if (status.isInArgumentList() &&
+       !status.parseOptions().lintRFunctions())
+   {
+      return;
+   }
+   
    // Don't cache identifiers if:
    //
    // 1. The previous token is an extraction operator, e.g. `$`, `@`, `::`, `:::`,

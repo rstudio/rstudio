@@ -127,6 +127,7 @@ ParseResults parse(const std::wstring& rCode,
    
    ParseOptions options;
    options.setRecordStyleLint(userSettings().enableStyleDiagnostics());
+   options.setLintRFunctions(userSettings().lintRFunctionCalls());
    
    results = rparser::parse(rCode, options);
    

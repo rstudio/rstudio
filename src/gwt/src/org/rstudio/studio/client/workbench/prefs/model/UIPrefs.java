@@ -150,11 +150,37 @@ public class UIPrefs extends UIPrefsAccessor implements UiPrefsChangedHandler
          showSignatureTooltips().setGlobalValue(
                                  newUiPrefs.showSignatureTooltips().getGlobalValue());
          
+         
+         /* Diagnostics */
+         
+         // Enable Diagnostics
+         
          showDiagnostics().setGlobalValue(
-                                 newUiPrefs.showDiagnostics().getGlobalValue());
+               newUiPrefs.showDiagnostics().getGlobalValue());
          
          showDiagnosticsOther().setGlobalValue(
                newUiPrefs.showDiagnosticsOther().getGlobalValue());
+         
+         // Background Linting
+         
+         lintOnSave().setGlobalValue(
+               newUiPrefs.lintOnSave().getGlobalValue());
+         
+         enableBackgroundLinting().setGlobalValue(
+               newUiPrefs.enableBackgroundLinting().getGlobalValue());
+         
+         backgroundLintDelayMs().setGlobalValue(
+               newUiPrefs.backgroundLintDelayMs().getGlobalValue());
+         
+         // Configure R Linter
+         
+         enableStyleDiagnostics().setGlobalValue(
+               newUiPrefs.enableBackgroundLinting().getGlobalValue());
+         
+         lintRFunctionCalls().setGlobalValue(
+               newUiPrefs.lintRFunctionCalls().getGlobalValue());
+         
+         
          
          
          autoAppendNewline().setGlobalValue(

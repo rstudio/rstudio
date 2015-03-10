@@ -102,6 +102,8 @@ public class LintManager
             timer_.schedule(1000);
          }
       });
+      
+      
    }
    
    @Inject

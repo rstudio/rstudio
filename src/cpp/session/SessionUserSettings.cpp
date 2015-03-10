@@ -278,6 +278,10 @@ void UserSettings::updatePrefsCache(const json::Object& prefs) const
    
    bool enableStyleDiagnostics = readPref<bool>(prefs, "enable_style_diagnostics", false);
    pEnableStyleDiagnostics_.reset(new bool(enableStyleDiagnostics));
+   
+   bool lintRFunctionCalls = readPref<bool>(prefs, "lint_r_function_calls", false);
+   pLintRFunctionCalls_.reset(new bool(lintRFunctionCalls));
+   
 }
 
 
@@ -342,6 +346,12 @@ bool UserSettings::enableStyleDiagnostics() const
 {
    return readUiPref<bool>(pEnableStyleDiagnostics_);
 }
+
+bool UserSettings::lintRFunctionCalls() const
+{
+   return readUiPref<bool>(pLintRFunctionCalls_);
+}
+
 
 std::vector<std::string> UserSettings::spellingCustomDictionaries() const
 {
@@ -661,6 +671,16 @@ int UserSettings::clangVerbose() const
 void UserSettings::setClangVerbose(int level)
 {
    settings_.set("clangVerbose", level);
+}
+
+void UserSettings::setEnableStyleDiagnostics(bool enable)
+{
+   settings_.set("enableStyleDiagnostics", enable);
+}
+
+void UserSettings::setLintRFunctionCalls(bool enable)
+{
+   settings_.set("lintRFunctionCalls", enable);
 }
 
 } // namespace session

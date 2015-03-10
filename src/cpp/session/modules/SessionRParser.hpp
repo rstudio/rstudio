@@ -49,8 +49,10 @@ class ParseOptions
 {
 public:
    
-   explicit ParseOptions(bool recordStyleLint = false)
-      : recordStyleLint_(recordStyleLint)
+   explicit ParseOptions(bool recordStyleLint = false,
+                         bool lintRFunctions = false)
+      : recordStyleLint_(recordStyleLint),
+        lintRFunctions_(lintRFunctions)
    {}
    
    void setRecordStyleLint(bool record)
@@ -58,13 +60,24 @@ public:
       recordStyleLint_ = record;
    }
    
-   bool getRecordStyleLint()
+   bool recordStyleLint() const
    {
       return recordStyleLint_;
+   }
+   
+   void setLintRFunctions(bool lint)
+   {
+      lintRFunctions_ = lint;
+   }
+   
+   bool lintRFunctions() const
+   {
+      return lintRFunctions_;
    }
 
 private:
    bool recordStyleLint_;
+   bool lintRFunctions_;
 };
 
 struct ParseItem;
@@ -266,7 +279,7 @@ public:
    
    void expectedWhitespace(const RToken& token)
    {
-      if (!parseOptions_.getRecordStyleLint())
+      if (!parseOptions_.recordStyleLint())
          return;
       
       LintItem lint(token.row(),
@@ -280,7 +293,7 @@ public:
    
    void unnecessaryWhitespace(const RToken& token)
    {
-      if (!parseOptions_.getRecordStyleLint())
+      if (!parseOptions_.recordStyleLint())
          return;
       
       LintItem lint(token.row(),
@@ -294,7 +307,7 @@ public:
    
    void unexpectedWhitespaceAroundOperator(const RToken& token)
    {
-      if (!parseOptions_.getRecordStyleLint())
+      if (!parseOptions_.recordStyleLint())
          return;
       
       LintItem lint(token.row(),
@@ -308,7 +321,7 @@ public:
    
    void expectedWhitespaceAroundOperator(const RToken& token)
    {
-      if (!parseOptions_.getRecordStyleLint())
+      if (!parseOptions_.recordStyleLint())
          return;
       
       LintItem lint(token.row(),
@@ -907,6 +920,11 @@ public:
    const Stack<std::wstring>& functionNames() const
    {
       return functionNames_;
+   }
+   
+   const ParseOptions& parseOptions() const
+   {
+      return parseOptions_;
    }
    
 private:
