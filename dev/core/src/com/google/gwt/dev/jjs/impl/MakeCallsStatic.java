@@ -458,6 +458,7 @@ public class MakeCallsStatic {
       OptimizerContext optimizerCtx) {
     Event optimizeEvent = SpeedTracerLogger.start(CompilerEventType.OPTIMIZE, "optimizer", NAME);
     OptimizerStats stats = new MakeCallsStatic(program, addRuntimeChecks).execImpl(optimizerCtx);
+    optimizerCtx.setLastStepFor(NAME, optimizerCtx.getOptimizationStep());
     optimizerCtx.incOptimizationStep();
     optimizeEvent.end("didChange", "" + stats.didChange());
     return stats;
