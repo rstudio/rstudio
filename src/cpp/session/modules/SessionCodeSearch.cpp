@@ -1246,12 +1246,12 @@ int scoreMatch(std::string const& suggestion,
       // More penalty for 'uninteresting' files
       if (suggestion == "RcppExports.R" ||
           suggestion == "RcppExports.cpp")
-         penalty += 3;
+         penalty += 6;
       
       // More penalty for 'uninteresting' extensions (e.g. .Rd)
       std::string extension = string_utils::getExtension(suggestion);
       if (boost::algorithm::to_lower_copy(extension) == ".rd")
-         penalty += 3;
+         penalty += 6;
 
       totalPenalty += penalty;
    }
