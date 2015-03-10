@@ -108,9 +108,9 @@
 @url PENDINGBREAKPOINT pendingBreakpoint;
 @url EXECUTINGLINE executingLine;
 
-@url INFO infoSmall;
-@url WARNING warningSmall;
-@url ERROR errorSmall;
+@url INFO syntaxInfo;
+@url WARNING syntaxWarning;
+@url ERROR syntaxError;
 
 @url HANDCURSOR handCursor;
 

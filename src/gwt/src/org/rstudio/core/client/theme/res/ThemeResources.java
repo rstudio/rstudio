@@ -175,6 +175,10 @@ public interface ThemeResources extends ClientBundle
    ImageResource warningSmall();
    ImageResource errorSmall();
    
+   ImageResource syntaxInfo();
+   ImageResource syntaxWarning();
+   ImageResource syntaxError();
+   
    ImageResource codeTransform();
 
    ImageResource closeChevron();
