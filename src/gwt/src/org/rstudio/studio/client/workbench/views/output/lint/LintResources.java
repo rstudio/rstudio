@@ -37,14 +37,13 @@ public interface LintResources extends ClientBundle
    @Source("Lint.css")
    Styles styles();
    
-   @Source("error.png")
+   ImageResource note();
+   ImageResource warning();
    ImageResource error();
    
-   @Source("warning.png")
-   ImageResource warning();
-   
-   @Source("note.png")
-   ImageResource note();
+   ImageResource note2x();
+   ImageResource warning2x();
+   ImageResource error2x();
    
    public static final LintResources INSTANCE =
          GWT.create(LintResources.class);

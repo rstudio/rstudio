@@ -1,8 +1,12 @@
 /* TODO: Confirm that they look correct in all environments we support. */
 
-@url ERROR error;
-@url WARNING warning;
 @url NOTE note;
+@url WARNING warning;
+@url ERROR error;
+
+@url NOTE2X note2x;
+@url WARNING2X warning2x;
+@url ERROR2X error2x;
 
 .error, .fatal, .warning, .info, .ignored, .note, .style {
    position: absolute;
@@ -22,4 +26,24 @@
 
 .info, .ignored, .note, .style {
    background-image: NOTE;
+}
+
+@media
+(-webkit-min-device-pixel-ratio: 1.5),
+(-moz-min-device-pixel-ratio: 1.5),
+(-o-min-device-pixel-ratio: 3/2),
+(min-device-pixel-ratio: 1.5) {
+
+   .error, .fatal {
+       background-image: ERROR2X;
+    }
+    
+    .warning {
+       background-image: WARNING2X;
+    }
+    
+    .info, .ignored, .note, .style {
+       background-image: NOTE2X;
+    }
+    
 }
