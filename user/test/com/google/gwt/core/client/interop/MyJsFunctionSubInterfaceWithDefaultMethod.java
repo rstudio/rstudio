@@ -16,19 +16,13 @@
 package com.google.gwt.core.client.interop;
 
 /**
- * A concrete class that implements a JsFunction interface.
+ * An interface that extends JsFunction interface {@code MyJsFunctionInterface} with default method.
  */
-public class MyJsFunctionInterfaceImpl implements MyJsFunctionInterface {
+public interface MyJsFunctionSubInterfaceWithDefaultMethod extends MyJsFunctionInterface {
 
-  public int publicField = 10;
-
-  public int callFoo(int a) {
-    // to prevent optimizations from inlining function foo.
-    return 5 + foo(Math.random() > -1 ? a : -a);
-  }
-
-  @Override
-  public int foo(int a) {
-    return a + 1;
-  }
+  // uncomment when Java8 is supported.
+//  @Override
+//  default int foo(int a) {
+//    return a;
+//  }
 }

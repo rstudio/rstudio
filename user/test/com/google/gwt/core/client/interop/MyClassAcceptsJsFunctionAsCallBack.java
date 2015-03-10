@@ -16,19 +16,17 @@
 package com.google.gwt.core.client.interop;
 
 /**
- * A concrete class that implements a JsFunction interface.
+ * A class that has a field of JsFunction type, and a method that accepts JsFunction type parameter.
  */
-public class MyJsFunctionInterfaceImpl implements MyJsFunctionInterface {
+public class MyClassAcceptsJsFunctionAsCallBack {
 
-  public int publicField = 10;
+  private MyJsFunctionInterface callBack;
 
-  public int callFoo(int a) {
-    // to prevent optimizations from inlining function foo.
-    return 5 + foo(Math.random() > -1 ? a : -a);
+  public void setCallBack(MyJsFunctionInterface callBack) {
+    this.callBack = callBack;
   }
 
-  @Override
-  public int foo(int a) {
-    return a + 1;
+  public int triggerCallBack(int a) {
+    return callBack.foo(a);
   }
 }

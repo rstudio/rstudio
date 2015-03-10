@@ -1361,6 +1361,7 @@ public class GenerateJavaScriptAST {
       JsExpression unnecessaryQualifier = null;
       JsExpression result = null;
       boolean isJsProperty = false;
+      boolean isSam = false;
       result = jsInvocation;
 
       if (method.isStatic()) {
@@ -1419,6 +1420,7 @@ public class GenerateJavaScriptAST {
         JsName polyName = polymorphicNames.get(method);
         // potentially replace method call with property access
         isJsProperty = method.isOrOverridesJsProperty();
+        isSam = method.isOrOverridesJsFunctionMethod();
 
         if (isJsProperty) {
           JsExpression qualExpr = pop();
@@ -1435,6 +1437,9 @@ public class GenerateJavaScriptAST {
             default:
               throw new InternalCompilerException("JsProperty not a setter, getter, or has.");
           }
+        } else if (isSam) {
+          JsExpression qualExpr = pop();
+          result = createSAMcallDispatch(x, jsInvocation, qualExpr);
         } else {
           // insert trampoline (_ = instance, trampoline(_, _.jsBridgeMethRef,
           // _.javaMethRef)).bind(_)(args)
@@ -1450,7 +1455,7 @@ public class GenerateJavaScriptAST {
           }
         }
       }
-      if (!isJsProperty) {
+      if (!isJsProperty && !isSam) {
         jsInvocation.setQualifier(qualifier);
       }
       push(createCommaExpression(unnecessaryQualifier, result));
@@ -1513,6 +1518,14 @@ public class GenerateJavaScriptAST {
       JsVar var = new JsVar(sourceInfo, tmpName);
       pendingLocals.add(var);
       return tmpName;
+    }
+
+    private JsExpression createSAMcallDispatch(JMethodCall x, JsInvocation jsInvocation,
+        JsExpression qualExpr) {
+      JsInvocation result = new JsInvocation(x.getSourceInfo());
+      result.setQualifier(qualExpr);
+      result.getArguments().addAll(jsInvocation.getArguments());
+      return result;
     }
 
     private JsExpression createHasDispatch(JMethodCall x, JMethod targetMethod,
