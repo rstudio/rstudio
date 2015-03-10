@@ -23,6 +23,8 @@
 
 #include <core/r_util/RToolsInfo.hpp>
 
+#include <r/RExec.hpp>
+
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionConsoleProcess.hpp>
 #include <session/SessionUserSettings.hpp>
@@ -62,6 +64,7 @@ Error installRtools()
    std::string version, url;
    FilePath installPath("C:\\Rtools");
    std::vector<r_util::RToolsInfo> availableRtools;
+   availableRtools.push_back(r_util::RToolsInfo("3.3", installPath));
    availableRtools.push_back(r_util::RToolsInfo("3.2", installPath));
    availableRtools.push_back(r_util::RToolsInfo("3.1", installPath));
    availableRtools.push_back(r_util::RToolsInfo("3.0", installPath));
@@ -109,24 +112,22 @@ Error installRtools()
    boost::format fmt("utils::download.file('%1%', '%2%', mode = 'wb')");
    std::string cmd = boost::str(fmt % url % dest);
 
-   // build args
-   std::vector<std::string> args;
-   args.push_back("--slave");
-   args.push_back("--no-save");
-   args.push_back("--no-restore");
-   args.push_back("-e");
-   args.push_back(cmd);
+   // execute it
+   error = r::exec::executeString(cmd);
+   if (error)
+   {
+      std::string errMsg;
+      if (r::isCodeExecutionError(error, &errMsg))
+         module_context::consoleWriteError(errMsg + "\n");
+      return error;
+   }
 
-   // create and execute the process
-   core::system::ProcessOptions options;
-   options.redirectStdErrToStdOut = true;
-   options.terminateChildren = true;
-   module_context::processSupervisor().runProgram(
-            string_utils::utf8ToSystem(rProgramPath.absolutePath()),
-            args,
-            "",
-            options,
-            boost::bind(onDownloadCompleted, _1, version, installerPath));
+   // fire the event
+   json::Object data;
+   data["version"] = version;
+   data["installer_path"] = installerPath.absolutePath();
+   ClientEvent event(client_events::kInstallRtools, data);
+   module_context::enqueClientEvent(event);
 
    return Success();
 }
