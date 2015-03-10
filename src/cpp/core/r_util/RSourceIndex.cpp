@@ -224,8 +224,13 @@ RSourceIndex::RSourceIndex(const std::string& context,
    // tokenize
    RTokens rTokens(wCode, RTokens::StripWhitespace | RTokens::StripComments);
 
-   // scan for function, method, and class definitions (track indent level)
+   // track nest level
    int braceLevel = 0;
+   int parenLevel = 0;
+   int bracketLevel = 0;
+   int doubleBracketLevel = 0;
+   
+   // scan for function, method, and class definitions
    std::wstring function(L"function");
    std::wstring set(L"set");
    std::wstring setGeneric(L"setGeneric");
@@ -257,22 +262,22 @@ RSourceIndex::RSourceIndex(const std::string& context,
 
       // alias the token
       const RToken& token = rTokens.at(i);
-
-      // see if this is a begin or end brace and update the level
-      if (token.type() == RToken::LBRACE)
-      {
-         braceLevel++;
-         continue;
-      }
-
-      else if (token.type() == RToken::RBRACE)
-      {
-         braceLevel--;
-         continue;
-      }
+      
+      // update brace nesting levels
+      braceLevel += token.isType(RToken::LBRACE);
+      braceLevel -= token.isType(RToken::RBRACE);
+      
+      parenLevel += token.isType(RToken::LPAREN);
+      parenLevel -= token.isType(RToken::RPAREN);
+      
+      bracketLevel += token.isType(RToken::LBRACKET);
+      bracketLevel -= token.isType(RToken::RBRACKET);
+      
+      doubleBracketLevel += token.isType(RToken::LDBRACKET);
+      doubleBracketLevel -= token.isType(RToken::RDBRACKET);
 
       // is this a potential method or class definition?
-      else if (token.contentStartsWith(set))
+      if (token.contentStartsWith(set))
       {
          RSourceItem::Type setType = RSourceItem::None;
 
@@ -473,6 +478,10 @@ RSourceIndex::RSourceIndex(const std::string& context,
       // to the source index here
       else if (i > 1 && isLeftAssign(rTokens.at(i - 1)))
       {
+         // bail if we're not at the top level
+         if (braceLevel || parenLevel || bracketLevel || doubleBracketLevel)
+            continue;
+         
          // ensure the token previous to the left assign is
          // an identifier or string
          const RToken& idToken = rTokens.at(i - 2);
