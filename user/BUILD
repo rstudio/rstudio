@@ -517,7 +517,7 @@ AugmentedJar(
     dojarjar = 1,
     export_deps = [
         "//third_party/java_src/gwt:gwt-dev",  # for the post-jarjar names
-        "//third_party/java_src/gwt:gwt",
+        "//third_party/java_src/gwt:gwt-testing",
         "//third_party/java_src/gwt/svn/trunk/dev:dev-test-code",
     ],
     deps = [
@@ -559,6 +559,7 @@ filegroup(
     srcs = glob(
         ["test/**/*Suite.java"],
         exclude = [
+            "test/**/ConstraintDefinitionsGwtSuite.java",
             "test/**/*JreSuite.java",
             "test/**/*JsInteropSuite.java",
         ],
@@ -580,6 +581,7 @@ filegroup(
     srcs = glob(
         ["test/**/*Suite.java"],
         exclude = [
+            "test/**/ConstraintDefinitionsGwtSuite.java",
             "test/**/*CompilerSuite.java",
             "test/**/RunAsyncSuite.java",
             "test/**/*JreSuite.java",
