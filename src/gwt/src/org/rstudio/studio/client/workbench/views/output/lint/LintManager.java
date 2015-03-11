@@ -119,6 +119,9 @@ public class LintManager
          @Override
          public void onSourceFileSaved(SourceFileSavedEvent event)
          {
+            if (!docDisplay_.isFocused())
+               return;
+            
             if (uiPrefs_.lintOnSave().getValue())
                lint(true, false);
          }
