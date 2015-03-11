@@ -329,6 +329,7 @@ test_suite(
 GwtTestSuites(
     name = "tests",
     jvm_flags = ["-ea"],
+    sharding = {"dev.CompilerTest": 12},
     srcjars = [":dev-test-code"],
     tests = GWT_DEV_TESTS,
 )

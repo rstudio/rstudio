@@ -27,7 +27,6 @@ import com.google.web.bindery.requestfactory.gwt.client.RequestFactoryGenericsTe
 import com.google.web.bindery.requestfactory.gwt.client.RequestFactoryPolymorphicTest;
 import com.google.web.bindery.requestfactory.gwt.client.RequestFactoryTest;
 import com.google.web.bindery.requestfactory.gwt.client.RequestFactoryUnicodeEscapingTest;
-import com.google.web.bindery.requestfactory.gwt.client.ui.EditorTest;
 import com.google.web.bindery.requestfactory.shared.BoxesAndPrimitivesTest;
 import com.google.web.bindery.requestfactory.shared.ComplexKeysTest;
 import com.google.web.bindery.requestfactory.shared.FanoutReceiverTest;
@@ -49,7 +48,6 @@ public class RequestFactorySuite {
     suite.addTestSuite(RequestBatcherTest.class);
     suite.addTestSuite(BoxesAndPrimitivesTest.class);
     suite.addTestSuite(ComplexKeysTest.class);
-    suite.addTestSuite(EditorTest.class);
     suite.addTestSuite(FanoutReceiverTest.class);
     suite.addTestSuite(FindServiceTest.class);
     suite.addTestSuite(JsonRpcRequestFactoryTest.class);
