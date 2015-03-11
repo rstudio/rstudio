@@ -18,6 +18,7 @@ import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.Invalidation;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.RetinaStyleInjector;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
@@ -288,5 +289,7 @@ public class LintManager
    
    static {
       LintResources.INSTANCE.styles().ensureInjected();
+      RetinaStyleInjector.injectAtEnd(
+            LintResources.INSTANCE.retinaStyles().getText());
    }
 }

@@ -62,6 +62,7 @@ public class AceEditorWidget extends Composite
                  HasKeyDownHandlers,
                  HasKeyPressHandlers
 {
+   
    public AceEditorWidget()
    {
       initWidget(new HTML());
@@ -257,6 +258,7 @@ public class AceEditorWidget extends Composite
 
       editor_.getRenderer().updateFontSize();
       onResize();
+      
       fireEvent(new EditorLoadedEvent());
 
       int delayMs = initToEmptyString_ ? 100 : 500;

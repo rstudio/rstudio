@@ -37,6 +37,9 @@ public interface LintResources extends ClientBundle
    @Source("Lint.css")
    Styles styles();
    
+   @Source("LintRetina.css")
+   Styles retinaStyles();
+   
    ImageResource note();
    ImageResource warning();
    ImageResource error();
