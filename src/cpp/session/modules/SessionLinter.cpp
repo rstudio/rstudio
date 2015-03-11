@@ -427,16 +427,26 @@ void onNAMESPACEchanged()
    r_completions::AsyncRCompletions::update();
 }
 
+void onLintBlacklistChanged()
+{
+   NseFunctionBlacklist::instance().sync();
+}
+
 void onFilesChanged(const std::vector<core::system::FileChangeEvent>& events)
 {
+   std::string namespacePath =
+         projects::projectContext().directory().complete("NAMESPACE").absolutePath();
+   
+   std::string lintFilePath =
+         projects::projectContext().directory().complete(".rstudio_lint_blacklist").absolutePath();
+   
    BOOST_FOREACH(const core::system::FileChangeEvent& event, events)
    {
-      if (event.fileInfo().absolutePath() ==
-          projects::projectContext().directory().complete("NAMESPACE").absolutePath())
-      {
+      std::string eventPath = event.fileInfo().absolutePath();
+      if (eventPath == namespacePath)
          onNAMESPACEchanged();
-         return;
-      }
+      else if (eventPath == lintFilePath)
+         onLintBlacklistChanged();
    }
 }
 
@@ -470,6 +480,9 @@ core::Error initialize()
    initBlock.addFunctions()
          (bind(sourceModuleRFile, "SessionLinter.R"))
          (bind(registerRpcMethod, "lint_r_source_document", lintRSourceDocument));
+   
+   // call once on initialization to ensure lint up to date
+   onLintBlacklistChanged();
 
    return initBlock.execute();
 

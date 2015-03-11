@@ -17,9 +17,13 @@
 // #define RSTUDIO_ENABLE_DEBUG_MACROS
 #define RSTUDIO_DEBUG_LABEL "parser"
 #include <core/Macros.hpp>
+#include <core/FileSerializer.hpp>
 
 #include "SessionRParser.hpp"
 #include "SessionRTokenCursor.hpp"
+
+#include <session/SessionModuleContext.hpp>
+#include <session/projects/SessionProjects.hpp>
 
 #include <r/RExec.hpp>
 #include <r/RSexp.hpp>
@@ -27,8 +31,6 @@
 #include <boost/container/flat_set.hpp>
 #include <boost/timer/timer.hpp>
 #include <boost/bind.hpp>
-
-
 
 namespace rstudio {
 namespace session {
@@ -47,49 +49,63 @@ using namespace core::r_util;
 using namespace core::r_util::token_utils;
 using namespace token_cursor;
 
-namespace {
-
-using boost::container::flat_set;
-
-flat_set<std::wstring> makeNSEFunctions()
+void NseFunctionBlacklist::sync()
 {
-   flat_set<std::wstring> s;
-   s.reserve(16);
-   
-   // base R non-standard eval
-   s.insert(std::wstring(L"library"));
-   s.insert(std::wstring(L"require"));
-   s.insert(std::wstring(L"quote"));
-   s.insert(std::wstring(L"substitute"));
-   s.insert(std::wstring(L"enquote"));
-   s.insert(std::wstring(L"expression"));
-   s.insert(std::wstring(L"evalq"));
-   s.insert(std::wstring(L"subset"));
-   
-   // other functions (std::wstring(e.g. dplyr))
-   // TODO: Should probably provide some kind of hook that packages can set to
-   // help the linter properly understand which functions perform NSE
-   s.insert(std::wstring(L"summarise"));
-   s.insert(std::wstring(L"mutate"));
-   s.insert(std::wstring(L"select"));
-   s.insert(std::wstring(L"arrange"));
-   s.insert(std::wstring(L"filter"));
-   s.insert(std::wstring(L"n"));
-   s.insert(std::wstring(L"mutate_each"));
-   s.insert(std::wstring(L"group_by"));
-   s.insert(std::wstring(L"ntile"));
-   s.insert(std::wstring(L"rename"));
-   
-   return s;
+   clear();
+   populateDefaults();
+   addProjectBlacklistedSymbols();
+   addGlobalBlacklistedSymbols();
 }
 
-static flat_set<std::wstring> s_nseFunctions = makeNSEFunctions();
+void NseFunctionBlacklist::addLintFromFile(const FilePath& filePath)
+{
+   if (!filePath.exists())
+      return;
+   
+   std::vector<std::string> symbols;
+   core::readStringVectorFromFile(
+            filePath,
+            &symbols);
+
+   BOOST_FOREACH(const std::string& symbol, symbols)
+   {
+      add(string_utils::utf8ToWide(symbol));
+   }
+}
+
+void NseFunctionBlacklist::addProjectBlacklistedSymbols()
+{
+   // Read lint items from a project lint file (if it exists)
+   FilePath projectLintFile =
+         projects::projectContext().directory().complete(".rstudio_lint_blacklist");
+   
+   addLintFromFile(projectLintFile);
+}
+   
+void NseFunctionBlacklist::addGlobalBlacklistedSymbols()
+{
+   FilePath homePath(core::system::getenv("HOME"));
+   
+   if (!homePath.exists())
+      return;
+   
+   FilePath globalLintFile =
+         homePath.complete(".R").complete(".rstudio_lint_blacklist");
+   
+   if (!globalLintFile.exists())
+      return;
+   
+   addLintFromFile(globalLintFile);
+}
+
+namespace {
 
 bool isWithinNseFunction(const ParseStatus& status)
 {
+   NseFunctionBlacklist& blacklist = NseFunctionBlacklist::instance();
    BOOST_FOREACH(const std::wstring& fnName, status.functionNames())
    {
-      if (s_nseFunctions.find(fnName) != s_nseFunctions.end())
+      if (blacklist.contains(fnName))
          return true;
    }
    return false;
