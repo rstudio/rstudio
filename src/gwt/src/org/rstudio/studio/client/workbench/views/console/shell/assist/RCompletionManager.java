@@ -1524,14 +1524,30 @@ public class RCompletionManager implements CompletionManager
       context.setFunctionCallString(
             (beforeText + afterText).trim());
       
-      // If this is an argument, return auto-completions tuned to that argument
+      // Try to identify whether we're producing autocompletions for
+      // a _named_ function argument; if so, produce completions tuned to
+      // that argument.
       TokenCursor argsCursor = startCursor.cloneCursor();
-      if (argsCursor.currentType() == "identifier")
-         argsCursor.moveToPreviousToken();
-      
-      if (argsCursor.currentValue() == "=")
+      do
       {
-         if (argsCursor.moveToPreviousToken())
+         String argsValue = argsCursor.currentValue();
+         
+         // Bail if we encounter tokens that we don't expect as part
+         // of the current expression -- this implies we're not really
+         // within a named argument, although this isn't perfect.
+         if (argsValue.equals(",") ||
+             argsValue.equals("(") ||
+             argsValue.equals("$") ||
+             argsValue.equals("@") ||
+             argsValue.equals("::") ||
+             argsValue.equals(":::"))
+         {
+            break;
+         }
+         
+         // If we encounter an '=', we assume that this is
+         // a function argument.
+         if (argsValue.equals("=") && argsCursor.moveToPreviousToken())
          {
             context.setToken(token);
             
@@ -1549,7 +1565,8 @@ public class RCompletionManager implements CompletionManager
             
             return context;
          }
-      }
+         
+      } while (argsCursor.moveToPreviousToken());
       
       String initialData =
             docDisplay_.getTextForRange(Range.fromPoints(

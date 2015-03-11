@@ -36,6 +36,19 @@ var lastHeight = 0;
 var detachedHandlers = [];
 var lastScrollPos = 0;
 
+var isHeaderWidthMismatched = function() {
+  // find the elements to measure (they may not exist)
+  var rs = document.getElementById("rsGridData");
+  if (!rs || !rs.firstChild.clientWidth || !rs.firstChild.clientWidth > 0)
+    return false;
+  var sh = document.getElementsByClassName("dataTables_scrollHeadInner");
+  if (sh.length === 0 || !sh[0].firstChild  || !sh[0].firstChild.firstChild)
+    return false;
+
+  // match the widths
+  return rs.firstChild.clientWidth !== sh[0].firstChild.firstChild.clientWidth;
+};
+
 // update search/filter value cache
 var updateCachedSearchFilter = function() {
   if (table) {
@@ -79,7 +92,9 @@ var showError = function(msg) {
   document.getElementById("errorWrapper").style.display = "block";
   document.getElementById("errorMask").style.display = "block";
   document.getElementById("error").textContent = msg;
-  document.getElementById("rsGridData").style.display = "none";
+  var rsGridData = document.getElementById("rsGridData");
+  if (rsGridData)
+    rsGridData.style.display = "none";
 };
 
 // simple HTML escaping (avoid XSS in data)
@@ -159,6 +174,18 @@ var restoreScrollHandlers = function() {
   lastScrollPos = 0;
 };
 
+var syncWidth = function() {
+  // shrink container to width of first row; reschedule size if first row
+  // hasn't been drawn yet
+  var rsGridData = document.getElementById("rsGridData");
+  if (!rsGridData || !rsGridData.firstChild ||
+      rsGridData.firstChild.clientWidth === 0) {
+    return false;
+  }
+  rsGridData.style.width = rsGridData.firstChild.clientWidth + "px";
+  return true;
+};
+
 // applies a new size to the table--called on init, on tab activate (from
 // RStudio), and when the window size changes
 var sizeDataTable = function(force) {
@@ -169,16 +196,6 @@ var sizeDataTable = function(force) {
   if (window.innerHeight < 1) {
     return;
   }
-
-  // shrink container to width of first row; reschedule size if first row
-  // hasn't been drawn yet
-  var rsGridData = document.getElementById("rsGridData");
-  if (!rsGridData || !rsGridData.firstChild ||
-      rsGridData.firstChild.clientWidth === 0) {
-    debouncedDataTableSize(force);
-    return;
-  }
-  rsGridData.style.width = rsGridData.firstChild.clientWidth + "px";
 
   // ignore if height hasn't changed
   if (lastHeight === window.innerHeight && !force) {
@@ -227,6 +244,9 @@ var preDrawCallback = function() {
     }
   }, 100);
 
+  // synchronize table with content
+  syncWidth();
+
   // prior to drawing, update cached search/filter values
   updateCachedSearchFilter();
 };
@@ -235,6 +255,18 @@ var postDrawCallback = function() {
   var indicator = $(".DTS_Loading");
   if (indicator)  {
       indicator.removeClass("showLoading");
+  }
+
+  // Check to see whether the header widths are out of sync after drawing --
+  // unfortunately this is a possibility since DataTables doesn't know the
+  // width of the table until after the draw is complete. If the widths don't
+  // match, we resize the main table body to match its content, then do an
+  // in-place redraw of the scrolling-related elements (header, etc.), using an
+  // internal API (without which a redraw would also page in data from the
+  // server, etc).
+  if (isHeaderWidthMismatched()) {
+    syncWidth();
+    $.fn.dataTableExt.internal._fnScrollDraw(table.settings()[0]);
   }
   window.clearTimeout(loadingTimer);
 };
@@ -796,7 +828,7 @@ window.onDeactivate = function() {
   
   // save current scroll position
   var scrollBody = $(".dataTables_scrollBody");
-  if (scrollBody === null) {
+  if (scrollBody === null || scrollBody.length === 0) {
     return;
   }
   lastScrollPos = scrollBody.scrollTop();
