@@ -47,12 +47,17 @@ public:
    const std::string& versionPredicate() const { return versionPredicate_; }
    const FilePath& installPath() const { return installPath_; }
    const std::vector<FilePath>& pathEntries() const { return pathEntries_; }
+   const std::vector<core::system::Option> environmentVars() const
+   {
+      return environmentVars_;
+   }
 
 private:
    std::string name_;
    FilePath installPath_;
    std::string versionPredicate_;
    std::vector<FilePath> pathEntries_;
+   std::vector<core::system::Option> environmentVars_;
 };
 
 std::ostream& operator<<(std::ostream& os, const RToolsInfo& info);

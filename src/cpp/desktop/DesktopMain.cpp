@@ -40,6 +40,7 @@
 #include "DesktopOptions.hpp"
 #include "DesktopUtils.hpp"
 #include "DesktopSessionLauncher.hpp"
+#include "DesktopProgressActivator.hpp"
 
 QProcess* pRSessionProcess;
 QString sharedSecret;
@@ -342,6 +343,8 @@ int main(int argc, char* argv[])
       error = sessionLauncher.launchFirstSession(filename, pAppLaunch.get());
       if (!error)
       {
+         ProgressActivator progressActivator;
+
          int result = pApp->exec();
 
          sessionLauncher.cleanupAtExit();

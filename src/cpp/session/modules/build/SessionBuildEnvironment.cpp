@@ -18,12 +18,14 @@
 
 #include <boost/regex.hpp>
 #include <boost/format.hpp>
+#include <boost/foreach.hpp>
 
 #include <core/Error.hpp>
 #include <core/FilePath.hpp>
 
 #include <core/FileSerializer.hpp>
 #include <core/system/System.hpp>
+#include <core/system/Environment.hpp>
 #include <core/r_util/RToolsInfo.hpp>
 
 #include <r/RExec.hpp>
@@ -94,7 +96,9 @@ std::string formatPath(const FilePath& filePath)
 }
 
 template <typename T>
-bool doAddRtoolsToPathIfNecessary(T* pTarget, std::string* pWarningMessage)
+bool doAddRtoolsToPathIfNecessary(T* pTarget,
+                                  std::vector<core::system::Option>* pEnvironmentVars,
+                                  std::string* pWarningMessage)
 {
     // can we find ls.exe and gcc.exe on the path? if so then
     // we assume Rtools are already there (this is the same test
@@ -146,6 +150,7 @@ bool doAddRtoolsToPathIfNecessary(T* pTarget, std::string* pWarningMessage)
        if (module_context::isRtoolsCompatible(*it))
        {
           r_util::prependToSystemPath(*it, pTarget);
+          *pEnvironmentVars = it->environmentVars();
           return true;
        }
     }
@@ -202,13 +207,41 @@ bool isRtoolsCompatible(const r_util::RToolsInfo& rTools)
 bool addRtoolsToPathIfNecessary(std::string* pPath,
                                 std::string* pWarningMessage)
 {
-   return doAddRtoolsToPathIfNecessary(pPath, pWarningMessage);
+   std::vector<core::system::Option> environmentVars;
+   if (doAddRtoolsToPathIfNecessary(pPath,
+                                    &environmentVars,
+                                    pWarningMessage))
+   {
+      BOOST_FOREACH(const core::system::Option& var, environmentVars)
+      {
+         core::system::setenv(var.first, var.second);
+      }
+      return true;
+   }
+   else
+   {
+      return false;
+   }
 }
 
 bool addRtoolsToPathIfNecessary(core::system::Options* pEnvironment,
                                 std::string* pWarningMessage)
 {
-   return doAddRtoolsToPathIfNecessary(pEnvironment, pWarningMessage);
+   std::vector<core::system::Option> environmentVars;
+   if (doAddRtoolsToPathIfNecessary(pEnvironment,
+                                    &environmentVars,
+                                    pWarningMessage))
+   {
+      BOOST_FOREACH(const core::system::Option& var, environmentVars)
+      {
+         core::system::setenv(pEnvironment, var.first, var.second);
+      }
+      return true;
+   }
+   else
+   {
+      return false;
+   }
 }
 
 
