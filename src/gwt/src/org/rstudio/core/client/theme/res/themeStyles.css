@@ -1336,25 +1336,37 @@ body.ubuntu_mono .searchBox {
 }
 
 .ace_gutter-cell.ace_info {
+   background-repeat: no-repeat;
+   background-position: 2px center;
    background-image: INFO;
 }
 
 .ace_gutter-cell.ace_warning {
+   background-repeat: no-repeat;
+   background-position: 2px center;
    background-image: WARNING;
 }
 
 .ace_gutter-cell.ace_error {
+   background-repeat: no-repeat;
+   background-position: 2px center;
    background-image: ERROR;
 }
 
 .editor_dark .ace_gutter-cell.ace_info {
+   background-repeat: no-repeat;
+   background-position: 2px center;
    background-image: INFODARK;
 }
 
 .editor_dark .ace_gutter-cell.ace_warning {
+   background-repeat: no-repeat;
+   background-position: 2px center;
    background-image: WARNINGDARK;
 }
 
 .editor_dark .ace_gutter-cell.ace_error {
+   background-repeat: no-repeat;
+   background-position: 2px center;
    background-image: ERRORDARK;
 }
