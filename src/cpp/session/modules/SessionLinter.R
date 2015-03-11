@@ -57,7 +57,10 @@
 
 .rs.addFunction("availableRSymbols", function()
 {
-   unlist(c(.rs.objectsOnSearchPath(), .rs.getVar("r.keywords")))
+   unlist(c(
+      .rs.objectsOnSearchPath(excludeGlobalEnv = TRUE),
+      .rs.getVar("r.keywords")
+   ))
 })
 
 .rs.addFunction("internalLintEngine", function(filePath)

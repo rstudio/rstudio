@@ -571,9 +571,19 @@
 })
 
 .rs.addFunction("objectsOnSearchPath", function(token = "",
-                                                caseInsensitive = FALSE)
+                                                caseInsensitive = FALSE,
+                                                excludeGlobalEnv = FALSE)
 {
    search <- search()
+   startIdx <- 1
+   range <- 1:length(search)
+   
+   if (excludeGlobalEnv)
+   {
+      startIdx <- 2
+      search <- search[-1]
+      range <- range[-1]
+   }
    
    if (nzchar(token))
    {
@@ -582,13 +592,13 @@
          token <- .rs.asCaseInsensitiveRegex(token)
       pattern <- paste("^", token, sep = "")
       
-      objects <- lapply(1:length(search), function(i) {
+      objects <- lapply(range, function(i) {
          ls(pos = i, all.names = TRUE, pattern = pattern)
       })
    }
    else
    {
-      objects <- lapply(1:length(search), function(i) {
+      objects <- lapply(range, function(i) {
          ls(pos = i, all.names = TRUE)
       })
    }
