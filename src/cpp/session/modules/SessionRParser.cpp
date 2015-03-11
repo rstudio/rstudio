@@ -77,7 +77,7 @@ void NseFunctionBlacklist::addProjectBlacklistedSymbols()
 {
    // Read lint items from a project lint file (if it exists)
    FilePath projectLintFile =
-         projects::projectContext().directory().complete(".rstudio_lint_blacklist");
+         projects::projectContext().directory().complete("RStudioLintBlacklist");
    
    addLintFromFile(projectLintFile);
 }
@@ -90,7 +90,7 @@ void NseFunctionBlacklist::addGlobalBlacklistedSymbols()
       return;
    
    FilePath globalLintFile =
-         homePath.complete(".R").complete(".rstudio_lint_blacklist");
+         homePath.complete(".R").complete("RStudioLintBlacklist");
    
    if (!globalLintFile.exists())
       return;
