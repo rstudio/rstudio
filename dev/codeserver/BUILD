@@ -49,7 +49,7 @@ java_library(
         ":codeserver-bare",
         "//java/com/google/common/collect",
         "//third_party/java/junit",
-        "//third_party/java_src/gwt",
+        "//third_party/java_src/gwt:gwt-testing",
         "//third_party/java_src/gwt/svn/tools:dev_deps",
         "//third_party/java_src/gwt/svn/trunk/dev:gwt-dev-only",
         "//third_party/java_src/gwt/svn/trunk/user:user-test-code",
