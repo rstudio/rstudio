@@ -64,12 +64,7 @@ public class JPrimitiveType extends JType {
     primitiveTypeByName.put(this.name, this);
   }
 
-  /**
-   * Returns <code>true</code> if it's possible for this type to be
-   * <code>null</code>.
-   *
-   * @see JNonNullType
-   */
+  @Override
   public boolean canBeNull() {
     return false;
   }

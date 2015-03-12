@@ -58,8 +58,8 @@ public class JConditional extends JExpression {
     return ifTest.hasSideEffects() || thenExpr.hasSideEffects() || elseExpr.hasSideEffects();
   }
 
-  public void setType(JType newType) {
-    type = newType;
+  public void setType(JType type) {
+    this.type = type;
   }
 
   @Override

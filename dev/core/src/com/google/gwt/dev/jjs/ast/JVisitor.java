@@ -379,10 +379,6 @@ public class JVisitor {
     endVisit((JValueLiteral) x, ctx);
   }
 
-  public void endVisit(JNullType x, Context ctx) {
-    endVisit((JReferenceType) x, ctx);
-  }
-
   public void endVisit(JNumericEntry x, Context ctx) {
     endVisit((JExpression) x, ctx);
   }
@@ -701,10 +697,6 @@ public class JVisitor {
 
   public boolean visit(JNullLiteral x, Context ctx) {
     return visit((JValueLiteral) x, ctx);
-  }
-
-  public boolean visit(JNullType x, Context ctx) {
-    return visit((JReferenceType) x, ctx);
   }
 
   public boolean visit(JNumericEntry x, Context ctx) {

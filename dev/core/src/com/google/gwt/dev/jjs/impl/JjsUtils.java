@@ -19,6 +19,9 @@ import com.google.gwt.dev.PrecompileTaskOptions;
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.SourceOrigin;
 import com.google.gwt.dev.jjs.ast.HasName;
+import com.google.gwt.dev.jjs.ast.HasType;
+import com.google.gwt.dev.jjs.ast.JBinaryOperation;
+import com.google.gwt.dev.jjs.ast.JBinaryOperator;
 import com.google.gwt.dev.jjs.ast.JBooleanLiteral;
 import com.google.gwt.dev.jjs.ast.JCharLiteral;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
@@ -35,6 +38,8 @@ import com.google.gwt.dev.jjs.ast.JNullLiteral;
 import com.google.gwt.dev.jjs.ast.JParameter;
 import com.google.gwt.dev.jjs.ast.JParameterRef;
 import com.google.gwt.dev.jjs.ast.JPrimitiveType;
+import com.google.gwt.dev.jjs.ast.JProgram;
+import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JReturnStatement;
 import com.google.gwt.dev.jjs.ast.JStringLiteral;
 import com.google.gwt.dev.jjs.ast.JThisRef;
@@ -50,13 +55,16 @@ import com.google.gwt.dev.js.ast.JsObjectLiteral;
 import com.google.gwt.dev.js.ast.JsStringLiteral;
 import com.google.gwt.dev.util.arg.OptionJsInteropMode.Mode;
 import com.google.gwt.lang.LongLib;
+import com.google.gwt.thirdparty.guava.common.base.Function;
 import com.google.gwt.thirdparty.guava.common.base.Predicate;
 import com.google.gwt.thirdparty.guava.common.base.Predicates;
 import com.google.gwt.thirdparty.guava.common.collect.Collections2;
+import com.google.gwt.thirdparty.guava.common.collect.FluentIterable;
 import com.google.gwt.thirdparty.guava.common.collect.ImmutableMap;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -188,15 +196,13 @@ public class JjsUtils {
   private static JMethod createEmptyMethodFromExample(
       JDeclaredType inType, JMethod exampleMethod, boolean isAbstract) {
     JMethod emptyMethod = new JMethod(exampleMethod.getSourceInfo(), exampleMethod.getName(),
-        inType, exampleMethod.getType(), isAbstract, false, false,
-        exampleMethod.getAccess());
+        inType, exampleMethod.getType(), isAbstract, false, false, exampleMethod.getAccess());
     emptyMethod.addThrownExceptions(exampleMethod.getThrownExceptions());
     emptyMethod.setSynthetic();
     // Copy parameters.
     for (JParameter param : exampleMethod.getParams()) {
-      emptyMethod.addParam(
-          new JParameter(param.getSourceInfo(), param.getName(), param.getType(),
-              param.isFinal(), param.isThis(), emptyMethod));
+      emptyMethod.addParam(new JParameter(param.getSourceInfo(), param.getName(), param.getType(),
+          param.isFinal(), param.isThis(), emptyMethod));
     }
     JMethodBody body = new JMethodBody(exampleMethod.getSourceInfo());
     emptyMethod.setBody(body);
@@ -233,6 +239,40 @@ public class JjsUtils {
       sb.append(" <init>");
     }
     return sb.toString();
+  }
+
+  /**
+   * Returns types from typed nodes.
+   */
+  public static Iterable<JReferenceType> getExpressionTypes(Iterable<? extends HasType> nodes) {
+    if (nodes == null) {
+      return Collections.emptyList();
+    }
+    return FluentIterable.from(nodes).transform(
+        new Function<HasType, JReferenceType>() {
+          @Override
+          public JReferenceType apply(HasType typedNode) {
+            return (JReferenceType) typedNode.getType();
+          }
+        });
+  }
+
+  /**
+   * Returns an ast node representing the expression {@code expression != null}.
+   */
+  public static JExpression createOptimizedNotNullComparison(
+      JProgram program, SourceInfo info, JExpression expression) {
+    JReferenceType type = (JReferenceType) expression.getType();
+    if (type.isNullType()) {
+      return program.getLiteralBoolean(false);
+    }
+
+    if (!type.canBeNull()) {
+      return createOptimizedMultiExpression(expression, program.getLiteralBoolean(true));
+    }
+
+    return new JBinaryOperation(info, program.getTypePrimitiveBoolean(),
+        JBinaryOperator.NEQ, expression, program.getLiteralNull());
   }
 
   private enum LiteralTranslators {

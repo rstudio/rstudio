@@ -38,7 +38,6 @@ import com.google.gwt.thirdparty.guava.common.collect.Sets;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -60,17 +59,6 @@ public class JProgram extends JNode implements ArrayTypeCreator {
   public boolean isJsTypePrototype(JDeclaredType classType) {
     return typeOracle.isJsInteropEnabled() && classType instanceof JClassType
         && ((JClassType) classType).isJsPrototypeStub();
-  }
-
-  private static final class ArrayTypeComparator implements Comparator<JArrayType>, Serializable {
-    @Override
-    public int compare(JArrayType o1, JArrayType o2) {
-      int comp = o1.getDims() - o2.getDims();
-      if (comp != 0) {
-        return comp;
-      }
-      return o1.getName().compareTo(o2.getName());
-    }
   }
 
   private static final class TreeStatistics extends JVisitor {
@@ -119,15 +107,17 @@ public class JProgram extends JNode implements ArrayTypeCreator {
    */
   public static final Set<String> SYNTHETIC_TYPE_NAMES = Sets.newHashSet(CLASS_LITERAL_HOLDER);
 
-  private static final Comparator<JArrayType> ARRAYTYPE_COMPARATOR = new ArrayTypeComparator();
-
-  private static final int IS_ARRAY = 2;
-
-  private static final int IS_CLASS = 3;
-
-  private static final int IS_INTERFACE = 1;
-
-  private static final int IS_NULL = 0;
+  private static final Comparator<JArrayType> ARRAYTYPE_COMPARATOR =
+      new Comparator<JArrayType>() {
+        @Override
+        public int compare(JArrayType o1, JArrayType o2) {
+          int comp = o1.getDims() - o2.getDims();
+          if (comp != 0) {
+            return comp;
+          }
+          return o1.getName().compareTo(o2.getName());
+        }
+      };
 
   private static final Map<String, JPrimitiveType> primitiveTypes = Maps.newHashMap();
 
@@ -193,7 +183,6 @@ public class JProgram extends JNode implements ArrayTypeCreator {
     assert (enclosingMethod != null);
 
     JParameter x = new JParameter(info, name, type, isFinal, isThis, enclosingMethod);
-
     enclosingMethod.addParam(x);
     return x;
   }
@@ -215,14 +204,12 @@ public class JProgram extends JNode implements ArrayTypeCreator {
     return method.getEnclosingType().getName() + "." + method.getJsniSignature(false, true);
   }
 
-    public static boolean isClinit(JMethod method) {
+  public static boolean isClinit(JMethod method) {
     JDeclaredType enclosingType = method.getEnclosingType();
-    if ((enclosingType != null) && (method == enclosingType.getClinitMethod())) {
-      assert (method.getName().equals(GwtAstBuilder.CLINIT_NAME));
-      return true;
-    } else {
-      return false;
-    }
+
+    boolean isClinit = enclosingType != null && method == enclosingType.getClinitMethod();
+    assert !isClinit || method.getName().equals(GwtAstBuilder.CLINIT_NAME);
+    return isClinit;
   }
 
   public static void serializeTypes(List<JDeclaredType> types, ObjectOutputStream stream)
@@ -274,8 +261,6 @@ public class JProgram extends JNode implements ArrayTypeCreator {
 
   private final Map<JMethod, JMethod> instanceToStaticMap = Maps.newIdentityHashMap();
 
-  private String propertyProviderRegistratorTypeSourceName;
-
   // wrap up .add here, and filter out forced source
   private Set<String> referenceOnlyTypeNames = Sets.newHashSet();
 
@@ -291,12 +276,6 @@ public class JProgram extends JNode implements ArrayTypeCreator {
   private final Map<JMethod, JMethod> staticToInstanceMap = Maps.newIdentityHashMap();
 
   private JClassType typeClass;
-
-  private JInterfaceType typeJavaIoSerializable;
-
-  private JInterfaceType typeJavaLangCloneable;
-
-  private JClassType typeJavaLangEnum;
 
   private JClassType typeJavaLangObject;
 
@@ -379,76 +358,97 @@ public class JProgram extends JNode implements ArrayTypeCreator {
       immortalCodeGenTypes.add((JClassType) type);
     }
 
-    if (typeNamesToIndex.contains(name)) {
-      indexedTypes.put(type.getShortName(), type);
-      for (JMethod method : type.getMethods()) {
-        if (!method.isPrivate()) {
-          indexedMethods.put(type.getShortName() + '.' + method.getName(), method);
-        }
+    if (!typeNamesToIndex.contains(name)) {
+      return;
+    }
+
+    indexedTypes.put(type.getShortName(), type);
+    for (JMethod method : type.getMethods()) {
+      if (!method.isPrivate()) {
+        indexedMethods.put(type.getShortName() + '.' + method.getName(), method);
       }
-      for (JField field : type.getFields()) {
-        indexedFields.put(type.getShortName() + '.' + field.getName(), field);
-      }
-      if (name.equals("java.lang.Object")) {
-        typeJavaLangObject = (JClassType) type;
-      } else if (name.equals("java.lang.String")) {
-        typeString = (JClassType) type;
-      } else if (name.equals("java.lang.Enum")) {
-        typeJavaLangEnum = (JClassType) type;
-      } else if (name.equals("java.lang.Class")) {
-        typeClass = (JClassType) type;
-      } else if (name.equals(JAVASCRIPTOBJECT)) {
-        typeSpecialJavaScriptObject = (JClassType) type;
-      } else if (name.equals(CLASS_LITERAL_HOLDER)) {
-        typeSpecialClassLiteralHolder = (JClassType) type;
-      } else if (name.equals("java.lang.Cloneable")) {
-        typeJavaLangCloneable = (JInterfaceType) type;
-      } else if (name.equals("java.io.Serializable")) {
-        typeJavaIoSerializable = (JInterfaceType) type;
-      }
+    }
+    for (JField field : type.getFields()) {
+      indexedFields.put(type.getShortName() + '.' + field.getName(), field);
+    }
+    if (name.equals("java.lang.Object")) {
+      typeJavaLangObject = (JClassType) type;
+    } else if (name.equals("java.lang.String")) {
+      typeString = (JClassType) type;
+    } else if (name.equals("java.lang.Class")) {
+      typeClass = (JClassType) type;
+    } else if (name.equals(JAVASCRIPTOBJECT)) {
+      typeSpecialJavaScriptObject = (JClassType) type;
+    } else if (name.equals(CLASS_LITERAL_HOLDER)) {
+      typeSpecialClassLiteralHolder = (JClassType) type;
     }
   }
 
   /**
-   * Tries the strengthen the reference type based on the assigned types in the program.
+   * Return the greatest lower bound of two types. That is, return the largest
+   * type that is a subtype of both inputs. If none exists return {@code thisType}.
    */
-  public JReferenceType strengthenType(JReferenceType refType, List<JReferenceType> assignedTypes) {
-    if (assignedTypes.isEmpty()) {
-      // Not assigned, it can only be null.
-      return getTypeNull();
-    } else {
-      return strongerType(refType, generalizeTypes(assignedTypes));
+  public JReferenceType strengthenType(JReferenceType thisType, JReferenceType thatType) {
+    if (thisType == thatType) {
+      return thisType;
     }
+
+    if (thisType.isNullType() || thatType.isNullType()) {
+      return JReferenceType.NULL_TYPE;
+    }
+
+    if (thisType.canBeNull()  != thatType.canBeNull()) {
+      // If either is non-nullable, the result should be non-nullable.
+      return strengthenType(thisType.strengthenToNonNull(), thatType.strengthenToNonNull());
+    }
+
+    if (typeOracle.castSucceedsTrivially(thisType, thatType)) {
+      return thisType;
+    }
+
+    if (typeOracle.castSucceedsTrivially(thatType, thisType)) {
+      return thatType;
+    }
+
+    // This types are incompatible; ideally this code should not be reached, but there are two
+    // situations where this happens:
+    //   1 - unrelated interfaces;
+    //   2 - unsafe code.
+    // The original type is preserved in this case.
+    return thisType;
   }
 
   /**
    * Return a minimal upper bound of a set of types. That is, a type
    * that is a supertype of all the input types and is as close as possible to the
    * input types.
-   *
+   * <p>
    * NOTE: Ideally we would like to return the least upper bound but it does not exit as
    * the Java type hierarchy is not really a lattice.
-   *
+   * <p>
    * Hence, this function depends on the collection order. E.g.
-   *
+   * <p>
+   * {@code
    *                I    O
    *                |\ / \
    *                | A  B
    *                \   /
    *                 \ /
    *                  C
-   *
+   * }
+   * <p>
    * where I is an interface an {O,A,B,C} are classes.
-   *
+   * <p>
    * generalizeTypes({A,C}) could either be I or O.
-   *
+   * <p>
    * In particular generalizeTypes({I,A,C}) = I and generalizeTypes({A,C,I}) = O.
    *
    */
-  private JReferenceType generalizeTypes(Collection<? extends JReferenceType> types) {
-    assert (types != null);
-    assert (!types.isEmpty());
-    Iterator<? extends JReferenceType> it = types.iterator();
+  public JReferenceType generalizeTypes(Iterable<JReferenceType> types) {
+    Iterator<JReferenceType> it = types.iterator();
+    if (!it.hasNext()) {
+      return JReferenceType.NULL_TYPE;
+    }
     JReferenceType curType = it.next();
     while (it.hasNext()) {
       curType = generalizeTypes(curType, it.next());
@@ -460,175 +460,184 @@ public class JProgram extends JNode implements ArrayTypeCreator {
   }
 
   /**
-   * Return the least upper bound of two types. That is, the smallest type that
-   * is a supertype of both types.
+   * Return the least upper bound of two types. That is, the "smallest" type that
+   * is a supertype of both types. In this lattice there the smallest element might no exist, there
+   * might be multiple minimal elements neither of which is smaller than the others. E.g.
+   * <p>
+   * {@code
+   *                 I      J
+   *                | \    /|
+   *                |  \  / |
+   *                |   x   |
+   *                |  / \  |
+   *                | /   \ |
+   *                 A     B
+   * }
+   * <p>
+   * where I and J are interfaces, A and B are classes and both A and B implement I and J. In this
+   * case both I and J are generalizing the types A and B.
    */
-  private JReferenceType generalizeTypes(JReferenceType type1, JReferenceType type2) {
-    if (type1 == type2) {
-      return type1;
+  private JReferenceType generalizeTypes(JReferenceType thisType, JReferenceType thatType) {
+
+    if (!thisType.canBeNull() && !thatType.canBeNull()) {
+      // Nullability is an orthogonal property, so remove non_nullability and perform the
+      // generalization on the nullable types, and if both were NOT nullable then strengthen the
+      // result to NOT nullable.
+      //
+      // not_nullable(A) v not_nullable(B) = not_nullable(A v B)
+      JReferenceType nulllableGeneralizer =
+          generalizeTypes(thisType.weakenToNullable(), thatType.weakenToNullable());
+      return nulllableGeneralizer.strengthenToNonNull();
+    }
+    thisType = thisType.weakenToNullable();
+    thatType = thatType.weakenToNullable();
+
+    // From here on nullability does not need to be considered.
+
+    // A v null = A
+    if (thatType.isNullType()) {
+      return thisType;
     }
 
-    if (type1 instanceof JNonNullType && type2 instanceof JNonNullType) {
-      // Neither can be null.
-      type1 = type1.getUnderlyingType();
-      type2 = type2.getUnderlyingType();
-      return generalizeTypes(type1, type2).getNonNull();
-    } else if (type1 instanceof JNonNullType) {
-      // type2 can be null, so the result can be null
-      type1 = type1.getUnderlyingType();
-    } else if (type2 instanceof JNonNullType) {
-      // type1 can be null, so the result can be null
-      type2 = type2.getUnderlyingType();
-    }
-    assert !(type1 instanceof JNonNullType);
-    assert !(type2 instanceof JNonNullType);
-
-    int classify1 = classifyType(type1);
-    int classify2 = classifyType(type2);
-
-    if (classify1 == IS_NULL) {
-      return type2;
+    // null v A = A
+    if (thisType.isNullType()) {
+      return thatType;
     }
 
-    if (classify2 == IS_NULL) {
-      return type1;
+    // A v A  = A
+    if (thisType == thatType) {
+      return thisType;
     }
 
-    if (classify1 == classify2) {
+    // A v B = A v B
+    return generalizeUnderlyingTypes(thisType.getUnderlyingType(), thatType.getUnderlyingType());
+  }
 
-      // same basic kind of type
-      if (classify1 == IS_INTERFACE) {
+  private JReferenceType generalizeUnderlyingTypes(
+      JReferenceType thisType, JReferenceType thatType) {
 
-        if (typeOracle.canTriviallyCast(type1, type2)) {
-          return type2;
-        }
+    // We should not have any analysis properties from this point forward.
+    assert thisType == thisType.getUnderlyingType() && thatType == thatType.getUnderlyingType();
 
-        if (typeOracle.canTriviallyCast(type2, type1)) {
-          return type1;
-        }
+    if (thisType == thatType) {
+      return thisType;
+    }
 
-        // unrelated
-        return typeJavaLangObject;
+    if (thisType instanceof JInterfaceType && thatType instanceof JInterfaceType) {
+      return generalizeInterfaces((JInterfaceType) thisType, (JInterfaceType) thatType);
+    }
 
-      } else if (classify1 == IS_ARRAY) {
+    if (thisType instanceof JArrayType && thatType instanceof JArrayType) {
+      return generalizeArrayTypes((JArrayType) thisType, (JArrayType) thatType);
+    }
 
-        JArrayType aType1 = (JArrayType) type1;
-        JArrayType aType2 = (JArrayType) type2;
-        int dims1 = aType1.getDims();
-        int dims2 = aType2.getDims();
+    if (thisType instanceof JClassType && thatType instanceof JClassType) {
+      return generalizeClasses((JClassType) thisType, (JClassType) thatType);
+    }
 
-        int minDims = Math.min(dims1, dims2);
-        /*
-         * At a bare minimum, any two arrays generalize to an Object array with
-         * one less dim than the lesser of the two; that is, int[][][][] and
-         * String[][][] generalize to Object[][]. If minDims is 1, then they
-         * just generalize to Object.
-         */
-        JReferenceType minimalGeneralType;
-        if (minDims > 1) {
-          minimalGeneralType = getOrCreateArrayType(typeJavaLangObject, minDims - 1);
-        } else {
-          minimalGeneralType = typeJavaLangObject;
-        }
+    JInterfaceType interfaceType = thisType instanceof JInterfaceType ? (JInterfaceType) thisType :
+        (thatType instanceof JInterfaceType ? (JInterfaceType) thatType : null);
 
-        if (dims1 == dims2) {
+    JReferenceType nonInterfaceType = interfaceType == thisType ? thatType : thisType;
 
-          // Try to generalize by leaf types
-          JType leafType1 = aType1.getLeafType();
-          JType leafType2 = aType2.getLeafType();
+    // See if the class or the array is castable to the interface type.
+    if (interfaceType != null &&
+        typeOracle.castSucceedsTrivially(nonInterfaceType, interfaceType)) {
+      return interfaceType;
+    }
 
-          if (!(leafType1 instanceof JReferenceType) || !(leafType2 instanceof JReferenceType)) {
-            return minimalGeneralType;
-          }
+    // unrelated: the best commonality is Object
+    return typeJavaLangObject;
+  }
 
-          /*
-           * Both are reference types; the result is the generalization of the
-           * leaf types combined with the number of dims; that is, Foo[] and
-           * Bar[] generalize to X[] where X is the generalization of Foo and
-           * Bar.
-           */
-          JReferenceType leafRefType1 = (JReferenceType) leafType1;
-          JReferenceType leafRefType2 = (JReferenceType) leafType2;
+  private JReferenceType generalizeArrayTypes(JArrayType thisArrayType, JArrayType thatArrayType) {
+    assert thisArrayType != thatArrayType;
 
-          /**
-           * Never generalize arrays to arrays of {@link JNonNullType} as null array initialization
-           * is not accounted for in {@link TypeTightener}.
-           */
-          JReferenceType leafGeneralization =
-              generalizeTypes(leafRefType1, leafRefType2).getUnderlyingType();
-          return getOrCreateArrayType(leafGeneralization, dims1);
+    int thisDims = thisArrayType.getDims();
+    int thatDims = thatArrayType.getDims();
 
-        } else {
+    int minDims = Math.min(thisDims, thatDims);
+      /*
+       * At a bare minimum, any two arrays generalize to an Object array with
+       * one less dim than the lesser of the two; that is, int[][][][] and
+       * String[][][] generalize to Object[][]. If minDims is 1, then they
+       * just generalize to Object.
+       */
+    JReferenceType minimalGeneralType = (minDims == 1) ? typeJavaLangObject :
+        getOrCreateArrayType(typeJavaLangObject, minDims - 1);
 
-          // Conflicting number of dims
+    if (thisDims == thatDims) {
 
-          // int[][] and Object[] generalize to Object[]
-          JArrayType lesser = dims1 < dims2 ? aType1 : aType2;
-          if (lesser.getLeafType() == typeJavaLangObject) {
-            return lesser;
-          }
+      // Try to generalize by leaf types
+      JType thisLeafType = thisArrayType.getLeafType();
+      JType thatLeafType = thatArrayType.getLeafType();
 
-          // Totally unrelated
-          return minimalGeneralType;
-        }
-
-      } else {
-
-        assert (classify1 == IS_CLASS);
-        JClassType class1 = (JClassType) type1;
-        JClassType class2 = (JClassType) type2;
-
-        /*
-         * see how far each type is from object; walk the one who's farther up
-         * until they're even; then walk them up together until they meet (worst
-         * case at Object)
-         */
-        int distance1 = countSuperTypes(class1);
-        int distance2 = countSuperTypes(class2);
-        for (; distance1 > distance2; --distance1) {
-          class1 = class1.getSuperClass();
-        }
-
-        for (; distance1 < distance2; --distance2) {
-          class2 = class2.getSuperClass();
-        }
-
-        while (class1 != class2) {
-          class1 = class1.getSuperClass();
-          class2 = class2.getSuperClass();
-        }
-
-        return class1;
+      if (!(thisLeafType instanceof JReferenceType) || !(thatLeafType instanceof JReferenceType)) {
+        return minimalGeneralType;
       }
-    } else {
 
-      // different kinds of types
-      int lesser = Math.min(classify1, classify2);
-      int greater = Math.max(classify1, classify2);
-
-      JReferenceType tLesser = classify1 < classify2 ? type1 : type2;
-      JReferenceType tGreater = classify1 > classify2 ? type1 : type2;
-
-      if (lesser == IS_INTERFACE && greater == IS_CLASS) {
-
-        // just see if the class implements the interface
-        if (typeOracle.canTriviallyCast(tGreater, tLesser)) {
-          return tLesser;
-        }
-
-        // unrelated
-        return typeJavaLangObject;
-
-      } else if (greater == IS_ARRAY
-          && ((tLesser == typeJavaLangCloneable) || (tLesser == typeJavaIoSerializable))) {
-        return tLesser;
-      } else {
-
-        // unrelated: the best commonality between an interface and array, or
-        // between an array and a class is Object
-        return typeJavaLangObject;
-      }
+      /*
+       * Both are reference types; the result is the generalization of the leaf types combined with
+       * the number of dims; that is, Foo[] and Bar[] generalize to X[] where X is the
+       * generalization of Foo and Bar.
+       *
+       * Never generalize arrays to arrays of {@link JAnalysisDecoratedType}. One of the reasons is
+       * that array initialization is not accounted for in {@link TypeTightener}.
+       */
+      JReferenceType leafGeneralization = generalizeTypes(
+          (JReferenceType) thisLeafType, (JReferenceType) thatLeafType).getUnderlyingType();
+      return getOrCreateArrayType(leafGeneralization, thisDims);
     }
+
+    // Different number of dims
+    if (typeOracle.castSucceedsTrivially(thatArrayType, thisArrayType)) {
+      return thisArrayType;
+    }
+
+    if (typeOracle.castSucceedsTrivially(thisArrayType, thatArrayType)) {
+      return thatArrayType;
+    }
+
+    // Totally unrelated
+    return minimalGeneralType;
+  }
+
+  private JReferenceType generalizeInterfaces(JInterfaceType thisInterface,
+      JInterfaceType thatInterface) {
+    if (typeOracle.castSucceedsTrivially(thisInterface, thatInterface)) {
+      return thatInterface;
+    }
+
+    if (typeOracle.castSucceedsTrivially(thatInterface, thisInterface)) {
+      return thisInterface;
+    }
+
+    // unrelated
+    return typeJavaLangObject;
+  }
+
+  private JReferenceType generalizeClasses(JClassType thisClass, JClassType thatClass) {
+  /*
+   * see how far each type is from object; walk the one who's farther up
+   * until they're even; then walk them up together until they meet (worst
+   * case at Object)
+   */
+    int distance1 = countSuperTypes(thisClass);
+    int distance2 = countSuperTypes(thatClass);
+    for (; distance1 > distance2; --distance1) {
+      thisClass = thisClass.getSuperClass();
+    }
+
+    for (; distance1 < distance2; --distance2) {
+      thatClass = thatClass.getSuperClass();
+    }
+
+    while (thisClass != thatClass) {
+      thisClass = thisClass.getSuperClass();
+      thatClass = thatClass.getSuperClass();
+    }
+
+    return thisClass;
   }
 
   /**
@@ -825,10 +834,6 @@ public class JProgram extends JNode implements ArrayTypeCreator {
     return JMethod.NULL_METHOD;
   }
 
-  public String getPropertyProviderRegistratorTypeSourceName() {
-    return propertyProviderRegistratorTypeSourceName;
-  }
-
   public List<JRunAsync> getRunAsyncs() {
     return runAsyncs;
   }
@@ -840,6 +845,7 @@ public class JProgram extends JNode implements ArrayTypeCreator {
   public Collection<JType> getSubclasses(JType type) {
     return Collections2.transform(typeOracle.getSubTypeNames(type.getName()),
         new Function<String, JType>() {
+          @Override
           public JType apply(String typeName) {
             return getFromTypeMap(typeName);
           }
@@ -913,10 +919,6 @@ public class JProgram extends JNode implements ArrayTypeCreator {
     return typeClass;
   }
 
-  public JClassType getTypeJavaLangEnum() {
-    return typeJavaLangEnum;
-  }
-
   public JClassType getTypeJavaLangObject() {
     return typeJavaLangObject;
   }
@@ -927,10 +929,6 @@ public class JProgram extends JNode implements ArrayTypeCreator {
 
   public Set<String> getTypeNamesToIndex() {
     return typeNamesToIndex;
-  }
-
-  public JNullType getTypeNull() {
-    return JNullType.INSTANCE;
   }
 
   public JPrimitiveType getTypePrimitiveBoolean() {
@@ -977,7 +975,8 @@ public class JProgram extends JNode implements ArrayTypeCreator {
   }
 
   public boolean isJavaLangString(JType type) {
-    return type == typeString || type == typeString.getNonNull();
+    assert type != null;
+    return type.getUnderlyingType() == typeString;
   }
 
   public boolean isReferenceOnly(JDeclaredType type) {
@@ -1077,48 +1076,12 @@ public class JProgram extends JNode implements ArrayTypeCreator {
     this.initialAsyncSequence = initialAsyncSequence;
   }
 
-  public void setPropertyProviderRegistratorTypeSourceName(
-      String propertyProviderRegistratorTypeSourceName) {
-    this.propertyProviderRegistratorTypeSourceName = propertyProviderRegistratorTypeSourceName;
-  }
-
   /**
    * If {@code method} is a static impl method, returns the instance method
    * that {@code method} is the implementation of. Otherwise, returns{@code null}.
    */
   public JMethod instanceMethodForStaticImpl(JMethod method) {
     return staticToInstanceMap.get(method);
-  }
-
-  /**
-   * Return the greatest lower bound of two types. That is, return the largest
-   * type that is a subtype of both inputs.
-   */
-  private JReferenceType strongerType(JReferenceType type1, JReferenceType type2) {
-    if (type1 == type2) {
-      return type1;
-    }
-
-    if (type1 instanceof JNullType || type2 instanceof JNullType) {
-      return JNullType.INSTANCE;
-    }
-
-    if (type1 instanceof JNonNullType != type2 instanceof JNonNullType) {
-      // If either is non-nullable, the result should be non-nullable.
-      return strongerType(type1.getNonNull(), type2.getNonNull());
-    }
-
-    if (typeOracle.canTriviallyCast(type1, type2)) {
-      return type1;
-    }
-
-    if (typeOracle.canTriviallyCast(type2, type1)) {
-      return type2;
-    }
-
-    // cannot determine a strong type, just return the first one (this makes two
-    // "unrelated" interfaces work correctly in TypeTightener
-    return type1;
   }
 
   @Override
@@ -1161,20 +1124,6 @@ public class JProgram extends JNode implements ArrayTypeCreator {
       }
       visitor.accept(type);
     }
-  }
-
-  private int classifyType(JReferenceType type) {
-    assert !(type instanceof JNonNullType);
-    if (type instanceof JNullType) {
-      return IS_NULL;
-    } else if (type instanceof JInterfaceType) {
-      return IS_INTERFACE;
-    } else if (type instanceof JArrayType) {
-      return IS_ARRAY;
-    } else if (type instanceof JClassType) {
-      return IS_CLASS;
-    }
-    throw new InternalCompilerException("Unknown reference type " + type);
   }
 
   private int countSuperTypes(JClassType type) {

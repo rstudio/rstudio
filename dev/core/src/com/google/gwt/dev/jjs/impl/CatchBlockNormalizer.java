@@ -158,7 +158,7 @@ public class CatchBlockNormalizer {
       }
 
       // Optimization: unwrap not needed if expression can never be JavaScriptException
-      if (!program.typeOracle.canTheoreticallyCast((JReferenceType) expr.getType(), jseType)) {
+      if (program.typeOracle.castFailsTrivially((JReferenceType) expr.getType(), jseType)) {
         return;
       }
 

@@ -31,7 +31,7 @@ public class JNullLiteral extends JValueLiteral {
 
   @Override
   public JType getType() {
-    return JNullType.INSTANCE;
+    return JReferenceType.NULL_TYPE;
   }
 
   @Override

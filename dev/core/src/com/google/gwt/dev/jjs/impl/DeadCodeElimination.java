@@ -436,6 +436,28 @@ public class DeadCodeElimination {
       if (ignoringExpressionOutput.contains(x)) {
         ctx.replaceMe(x.getExpr());
         ignoringExpressionOutput.remove(x);
+        return;
+      }
+
+      if (!(x.getExpr().getType() instanceof JReferenceType)) {
+        return;
+      }
+
+      AnalysisResult analysisResult =
+          staticallyEvaluateInstanceOf((JReferenceType) x.getExpr().getType(), x.getTestType());
+      switch (analysisResult) {
+        case TRUE:
+          // replace with a simple null test:  (expr != null).
+          ctx.replaceMe(
+              JjsUtils.createOptimizedNotNullComparison(program, x.getSourceInfo(), x.getExpr()));
+          break;
+        case FALSE:
+          // replace with a false literal
+          ctx.replaceMe(JjsUtils.createOptimizedMultiExpression(x.getExpr(),
+              program.getLiteralBoolean(false)));
+          break;
+        case UNKNOWN:
+        default:
       }
     }
 
@@ -668,7 +690,7 @@ public class DeadCodeElimination {
         Iterator<JType> itTypes = clause.getTypes().iterator();
         while (itTypes.hasNext()) {
           JReferenceType type = (JReferenceType) itTypes.next();
-          if (!program.typeOracle.isInstantiatedType(type) || type == program.getTypeNull()) {
+          if (!program.typeOracle.isInstantiatedType(type) || type.isNullType()) {
             itTypes.remove();
             madeChanges();
           }
@@ -1351,7 +1373,7 @@ public class DeadCodeElimination {
     }
 
     private boolean isTypeNull(JType type) {
-      return type == program.getTypeNull();
+      return type.isNullType();
     }
 
     private boolean isTypeString(JExpression exp) {
@@ -1559,11 +1581,33 @@ public class DeadCodeElimination {
     }
 
     private AnalysisResult staticallyEvaluateEq(JExpression lhs, JExpression rhs) {
-      if (lhs.getType() == program.getTypeNull() && rhs.getType() == program.getTypeNull()) {
+      JType lhsType = lhs.getType();
+      JType rhsType = rhs.getType();
+      if (lhsType.isNullType() && rhsType.isNullType()) {
         return AnalysisResult.TRUE;
       }
-      if (lhs.getType() == program.getTypeNull() && !rhs.getType().canBeNull() ||
-          rhs.getType() == program.getTypeNull() && !lhs.getType().canBeNull()) {
+      if (lhsType.isNullType() && !rhsType.canBeNull() ||
+          rhsType.isNullType() && !lhsType.canBeNull()) {
+        return AnalysisResult.FALSE;
+      }
+      return AnalysisResult.UNKNOWN;
+    }
+
+    /**
+     * Tries to statically evaluate the instanceof operation. Returning TRUE if it can be determined
+     * statically that it is true when not null, FALSE if it can be determined that is false and
+     * UNKNOWN if the* result can not be determined statically.
+     */
+    private AnalysisResult staticallyEvaluateInstanceOf(JReferenceType fromType,
+        JReferenceType toType) {
+      if (fromType.isNullType()) {
+        // null is never instanceof anything
+        return AnalysisResult.FALSE;
+      } else if (program.typeOracle.castSucceedsTrivially(fromType, toType)) {
+        return AnalysisResult.TRUE;
+      } else if (!program.typeOracle.isInstantiatedType(toType)) {
+        return AnalysisResult.FALSE;
+      } else if (program.typeOracle.castFailsTrivially(fromType, toType)) {
         return AnalysisResult.FALSE;
       }
       return AnalysisResult.UNKNOWN;

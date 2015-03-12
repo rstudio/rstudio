@@ -1545,8 +1545,8 @@ public class GenerateJavaScriptAST {
         JMethod targetMethod, JsExpression qualExpr) {
       JType returnType = targetMethod.getType();
       boolean fluent = returnType instanceof JReferenceType
-          && returnType != program.getTypeJavaLangObject() && typeOracle.canTriviallyCast(
-              x.getTarget().getEnclosingType(), returnType.getUnderlyingType());
+          && returnType != program.getTypeJavaLangObject() && typeOracle.castSucceedsTrivially(
+          x.getTarget().getEnclosingType(), returnType.getUnderlyingType());
       String propertyName = targetMethod.getImmediateOrTransitiveJsMemberName();
 
       JsExpression result;

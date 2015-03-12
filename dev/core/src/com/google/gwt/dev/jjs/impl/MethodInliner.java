@@ -605,7 +605,7 @@ public class MethodInliner {
       assert exp.getType() instanceof JReferenceType;
       targetType = merge((JReferenceType) exp.getType(), (JReferenceType) targetType);
     }
-    if (!program.typeOracle.canTriviallyCast(exp.getType(), targetType)) {
+    if (!program.typeOracle.castSucceedsTrivially(exp.getType(), targetType)) {
       exp = new JCastOperation(exp.getSourceInfo(), targetType, exp);
     }
     return exp;
@@ -613,7 +613,7 @@ public class MethodInliner {
 
   private JReferenceType merge(JReferenceType source, JReferenceType target) {
     JReferenceType result;
-    if (program.typeOracle.canTriviallyCast(
+    if (program.typeOracle.castSucceedsTrivially(
         source.getUnderlyingType(), target.getUnderlyingType())) {
       result = source;
     } else {

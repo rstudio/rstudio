@@ -33,7 +33,6 @@ import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JNewArray;
 import com.google.gwt.dev.jjs.ast.JNode;
-import com.google.gwt.dev.jjs.ast.JNonNullType;
 import com.google.gwt.dev.jjs.ast.JParameter;
 import com.google.gwt.dev.jjs.ast.JPrimitiveType;
 import com.google.gwt.dev.jjs.ast.JProgram;
@@ -505,7 +504,7 @@ public class EnumOrdinalizer {
      */
     @Override
     protected void processImplicitUpcast(JType fromType, JType destType, SourceInfo info) {
-      if (fromType == nullType) {
+      if (fromType.isNullType()) {
         // handle case where a nullType is cast to an enum
         blackListIfEnum(destType, info);
       } else if (fromType == javaScriptObjectType) {
@@ -669,7 +668,6 @@ public class EnumOrdinalizer {
         return JPrimitiveType.INT;
       }
 
-      boolean nonNull = type instanceof JNonNullType;
       JType uType = type.getUnderlyingType();
       if (!(uType instanceof JArrayType)) {
         return null;
@@ -679,7 +677,7 @@ public class EnumOrdinalizer {
       JType leafType = aType.getLeafType();
       if (canBeOrdinal(leafType)) {
         JArrayType newAType = program.getOrCreateArrayType(JPrimitiveType.INT, aType.getDims());
-        return nonNull ? newAType.getNonNull() : newAType;
+        return !type.canBeNull() ? newAType.strengthenToNonNull() : newAType;
       }
 
       return null;
@@ -744,14 +742,12 @@ public class EnumOrdinalizer {
   private final JMethod enumSuperConstructor;
   private final Set<JEnumType> enumsVisited = Sets.newHashSet();
   private final JType javaScriptObjectType;
-  private final JType nullType;
   private final Set<JEnumType> ordinalizationBlackList = Sets.newHashSet();
   private final JProgram program;
 
   public EnumOrdinalizer(JProgram program) {
     this.program = program;
     this.classLiteralHolderType = program.getTypeClassLiteralHolder();
-    this.nullType = program.getTypeNull();
     this.javaScriptObjectType = program.getJavaScriptObject();
     this.enumOrdinalField = program.getIndexedField("Enum.ordinal");
     this.enumCreateValueOfMapMethod = program.getIndexedMethod("Enum.createValueOfMap");

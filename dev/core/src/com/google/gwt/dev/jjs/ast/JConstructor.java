@@ -90,8 +90,8 @@ public class JConstructor extends JMethod {
     return (JClassType) super.getEnclosingType();
   }
 
-  public JNonNullType getNewType() {
-    return getEnclosingType().getNonNull();
+  public JReferenceType getNewType() {
+    return getEnclosingType().strengthenToNonNull();
   }
 
   @Override

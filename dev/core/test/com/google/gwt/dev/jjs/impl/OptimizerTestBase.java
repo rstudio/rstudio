@@ -31,7 +31,6 @@ import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodBody;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JModVisitor;
-import com.google.gwt.dev.jjs.ast.JNullType;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JReturnStatement;
@@ -246,7 +245,7 @@ public abstract class OptimizerTestBase extends JJSTestBase {
   private static JReferenceType findType(Result result, String parameterTypeName) {
     JReferenceType parameterType;
     if (parameterTypeName.equals("null")) {
-      parameterType = JNullType.INSTANCE;
+      parameterType = JReferenceType.NULL_TYPE;
     } else {
       parameterType = result.findClass(parameterTypeName);
     }

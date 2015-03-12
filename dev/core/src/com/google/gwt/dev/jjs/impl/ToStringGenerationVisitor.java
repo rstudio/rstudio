@@ -35,11 +35,11 @@ import com.google.gwt.dev.jjs.ast.JCaseStatement;
 import com.google.gwt.dev.jjs.ast.JCastOperation;
 import com.google.gwt.dev.jjs.ast.JCharLiteral;
 import com.google.gwt.dev.jjs.ast.JClassLiteral;
-import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JConditional;
 import com.google.gwt.dev.jjs.ast.JConstructor;
 import com.google.gwt.dev.jjs.ast.JContinueStatement;
 import com.google.gwt.dev.jjs.ast.JDeclarationStatement;
+import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JDoStatement;
 import com.google.gwt.dev.jjs.ast.JDoubleLiteral;
 import com.google.gwt.dev.jjs.ast.JExpression;
@@ -66,7 +66,6 @@ import com.google.gwt.dev.jjs.ast.JNewArray;
 import com.google.gwt.dev.jjs.ast.JNewInstance;
 import com.google.gwt.dev.jjs.ast.JNode;
 import com.google.gwt.dev.jjs.ast.JNullLiteral;
-import com.google.gwt.dev.jjs.ast.JNullType;
 import com.google.gwt.dev.jjs.ast.JParameter;
 import com.google.gwt.dev.jjs.ast.JParameterRef;
 import com.google.gwt.dev.jjs.ast.JPostfixOperation;
@@ -295,19 +294,24 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
   }
 
   @Override
-  public boolean visit(JClassType x, Context ctx) {
+  public boolean visit(JType x, Context ctx) {
+    print(x.getDescription());
+    return false;
+  }
+
+  @Override
+  public boolean visit(JDeclaredType x, Context ctx) {
+    visit((JType) x, ctx);
+    print(" (");
     printAbstractFlag(x);
     printFinalFlag(x);
-    print(CHARS_CLASS);
-    printTypeName(x);
-    space();
     if (x.getSuperClass() != null) {
       print(CHARS_EXTENDS);
       printTypeName(x.getSuperClass());
-      space();
     }
 
     if (x.getImplements().size() > 0) {
+      space();
       print(CHARS_IMPLEMENTS);
       for (int i = 0, c = x.getImplements().size(); i < c; ++i) {
         if (i > 0) {
@@ -315,9 +319,8 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
         }
         printTypeName(x.getImplements().get(i));
       }
-      space();
     }
-
+    print(")");
     return false;
   }
 
@@ -562,26 +565,6 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
   }
 
   @Override
-  public boolean visit(JInterfaceType x, Context ctx) {
-    print(CHARS_INTERFACE);
-    printTypeName(x);
-    space();
-
-    if (x.getImplements().size() > 0) {
-      print(CHARS_EXTENDS);
-      for (int i = 0, c = x.getImplements().size(); i < c; ++i) {
-        if (i > 0) {
-          print(CHARS_COMMA);
-        }
-        printTypeName(x.getImplements().get(i));
-      }
-      space();
-    }
-
-    return false;
-  }
-
-  @Override
   public boolean visit(JIntLiteral x, Context ctx) {
     print(Integer.toString(x.getValue()));
     return false;
@@ -624,15 +607,17 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
 
   @Override
   public boolean visit(JMethod x, Context ctx) {
+    if (!shouldPrintMethodBody()) {
+      print(x.getEnclosingType().getName() + "." + x.getSignature());
+      return false;
+    }
     printMethodHeader(x);
-
-    if (x.isAbstract() || !shouldPrintMethodBody()) {
+    if (x.isAbstract()) {
       semi();
       newlineOpt();
     } else {
       accept(x.getBody());
     }
-
     return false;
   }
 
@@ -741,12 +726,6 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
   @Override
   public boolean visit(JNullLiteral x, Context ctx) {
     print(CHARS_NULL);
-    return false;
-  }
-
-  @Override
-  public boolean visit(JNullType x, Context ctx) {
-    printTypeName(x);
     return false;
   }
 
@@ -1121,7 +1100,7 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
 
   protected void printTypeName(JType type) {
     if (type instanceof JReferenceType) {
-      print(((JReferenceType) type).getShortName());
+      print(type.getShortName());
     } else {
       print(type.getName());
     }

@@ -808,7 +808,7 @@ public class CfgBuilder {
               boolean fullCatch = false;
 
               // It's not that simple in static analysis though.
-              if (typeOracle.canTriviallyCast(exceptionType, catchType)) {
+              if (typeOracle.castSucceedsTrivially(exceptionType, catchType)) {
                 // Catch clause fully covers exception type. We'll land
                 // here for sure.
                 canCatch = true;
@@ -818,7 +818,7 @@ public class CfgBuilder {
                 // is exact hence and this is a full catch.
                 fullCatch = x.getCatchClauses().get(i).getTypes().size() == 1 &&
                     x.getCatchClauses().get(i).getTypes().get(0) == catchType;
-              } else if (typeOracle.canTriviallyCast(catchType, exceptionType)) {
+              } else if (typeOracle.castSucceedsTrivially(catchType, exceptionType)) {
                 // We can land here if we throw some subclass of
                 // exceptionType
                 canCatch = true;
@@ -891,7 +891,7 @@ public class CfgBuilder {
               boolean fullCatch = false;
 
               // It's not that simple in static analysis though.
-              if (typeOracle.canTriviallyCast(exceptionType, catchType)) {
+              if (typeOracle.castSucceedsTrivially(exceptionType, catchType)) {
                 // Catch clause fully covers exception type. We'll land
                 // here for sure.
                 canCatch = true;
@@ -901,7 +901,7 @@ public class CfgBuilder {
                 // is exact hence and this is a full catch.
                 fullCatch = x.getCatchClauses().get(i).getTypes().size() == 1 &&
                     x.getCatchClauses().get(i).getTypes().get(0) == catchType;
-              } else if (typeOracle.canTriviallyCast(catchType, exceptionType)) {
+              } else if (typeOracle.castSucceedsTrivially(catchType, exceptionType)) {
                 // We can land here if we throw some subclass of
                 // exceptionType
                 canCatch = true;

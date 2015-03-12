@@ -21,7 +21,6 @@ import com.google.gwt.dev.jjs.ast.CanBeStatic;
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JArrayRef;
 import com.google.gwt.dev.jjs.ast.JBinaryOperation;
-import com.google.gwt.dev.jjs.ast.JBinaryOperator;
 import com.google.gwt.dev.jjs.ast.JCastOperation;
 import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JConditional;
@@ -45,7 +44,6 @@ import com.google.gwt.dev.jjs.ast.JReturnStatement;
 import com.google.gwt.dev.jjs.ast.JRunAsync;
 import com.google.gwt.dev.jjs.ast.JTryStatement;
 import com.google.gwt.dev.jjs.ast.JType;
-import com.google.gwt.dev.jjs.ast.JTypeOracle;
 import com.google.gwt.dev.jjs.ast.JVariable;
 import com.google.gwt.dev.jjs.ast.JVariableRef;
 import com.google.gwt.dev.jjs.ast.JVisitor;
@@ -56,18 +54,19 @@ import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 import com.google.gwt.thirdparty.guava.common.annotations.VisibleForTesting;
 import com.google.gwt.thirdparty.guava.common.base.Predicate;
+import com.google.gwt.thirdparty.guava.common.collect.FluentIterable;
 import com.google.gwt.thirdparty.guava.common.collect.HashMultimap;
-import com.google.gwt.thirdparty.guava.common.collect.ImmutableMap;
+import com.google.gwt.thirdparty.guava.common.collect.Iterables;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
+import com.google.gwt.thirdparty.guava.common.collect.Maps;
 import com.google.gwt.thirdparty.guava.common.collect.Multimap;
 import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.IdentityHashMap;
+import java.util.Collections;
 import java.util.Iterator;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -173,7 +172,7 @@ public class TypeTightener {
         ctx.replaceMe(Pruner.transformToNullMethodCall(x, program));
       } else if (isStaticImpl && method.getParams().size() > 0
           && method.getParams().get(0).isThis() && x.getArgs().size() > 0
-          && x.getArgs().get(0).getType() == program.getTypeNull()) {
+          && x.getArgs().get(0).getType().isNullType()) {
         // bind null instance calls to the null method for static impls
         ctx.replaceMe(Pruner.transformToNullMethodCall(x, program));
       }
@@ -342,14 +341,9 @@ public class TypeTightener {
         }
         for (int j = 0, c = x.getParams().size(); j < c; ++j) {
           JParameter param = x.getParams().get(j);
-          Collection<JParameter> set = paramUpRefs.get(param);
-          if (set == null) {
-            set = new LinkedHashSet<JParameter>();
-            paramUpRefs.put(param, set);
-          }
           for (JMethod baseMethod : overriddenMethods) {
             JParameter baseParam = baseMethod.getParams().get(j);
-            set.add(baseParam);
+            add(param, baseParam, paramUpRefs);
           }
         }
       }
@@ -413,8 +407,8 @@ public class TypeTightener {
      */
     @Override
     public void endVisit(JCastOperation x, Context ctx) {
-      JType argType = x.getExpr().getType();
-      if (!(x.getCastType() instanceof JReferenceType) || !(argType instanceof JReferenceType)) {
+      JType argumentType = x.getExpr().getType();
+      if (!(x.getCastType() instanceof JReferenceType) || !(argumentType instanceof JReferenceType)) {
         return;
       }
 
@@ -422,53 +416,43 @@ public class TypeTightener {
       if (toType == null) {
         toType = (JReferenceType) x.getCastType();
       }
-      JReferenceType fromType = getSingleConcreteType(argType);
+      JReferenceType fromType = getSingleConcreteType(argumentType);
       if (fromType == null) {
-        fromType = (JReferenceType) argType;
+        fromType = (JReferenceType) argumentType;
       }
 
-      boolean triviallyTrue = false;
-      boolean triviallyFalse = false;
-
-      JTypeOracle typeOracle = program.typeOracle;
-      if (typeOracle.canTriviallyCast(fromType, toType)) {
-        triviallyTrue = true;
-      } else if (!typeOracle.isInstantiatedType(toType)) {
-        triviallyFalse = true;
-      } else if (!typeOracle.canTheoreticallyCast(fromType, toType)) {
-        triviallyFalse = true;
-      }
-
-      if (triviallyTrue) {
+      if (program.typeOracle.castSucceedsTrivially(fromType, toType)) {
         // remove the cast operation
         ctx.replaceMe(x.getExpr());
-      } else if (triviallyFalse && toType != program.getTypeNull()) {
+        return;
+      }
+      if ((!program.typeOracle.isInstantiatedType(toType) ||
+          program.typeOracle.castFailsTrivially(fromType, toType))
+          && toType != JReferenceType.NULL_TYPE) {
         // replace with a placeholder cast to NULL, unless it's already a cast to NULL
-        JCastOperation newOp =
-            new JCastOperation(x.getSourceInfo(), program.getTypeNull(), x.getExpr());
-        ctx.replaceMe(newOp);
-      } else {
-        // If possible, try to use a narrower cast
-        JReferenceType tighterType = getSingleConcreteType(toType);
+        ctx.replaceMe(new JCastOperation(x.getSourceInfo(), JReferenceType.NULL_TYPE, x.getExpr()));
+        return;
+      }
 
-        if (tighterType != null && tighterType != toType) {
-          JCastOperation newOp = new JCastOperation(x.getSourceInfo(), tighterType, x.getExpr());
+      //  If possible, try to use a narrower cast
+      JReferenceType tighterType = getSingleConcreteType(toType);
+      if (tighterType != null && tighterType != toType) {
+        JCastOperation newOp = new JCastOperation(x.getSourceInfo(), tighterType, x.getExpr());
           ctx.replaceMe(newOp);
-        }
       }
     }
 
     @Override
     public void endVisit(JConditional x, Context ctx) {
-      if (x.getType() instanceof JReferenceType) {
-        JReferenceType refType = (JReferenceType) x.getType();
-        JReferenceType resultType = program.strengthenType(refType, Arrays.asList(
-            (JReferenceType) x.getThenExpr().getType(),
-            (JReferenceType) x.getElseExpr().getType()));
-        if (refType != resultType) {
-          x.setType(resultType);
-          madeChanges();
-        }
+      if (!(x.getType() instanceof JReferenceType)) {
+        return;
+      }
+      JReferenceType type = (JReferenceType) x.getType();
+      JReferenceType resultType = strongerType(type, (JReferenceType) x.getThenExpr().getType(),
+          (JReferenceType) x.getElseExpr().getType());
+      if (type != resultType) {
+        x.setType(resultType);
+        madeChanges();
       }
     }
 
@@ -494,7 +478,7 @@ public class TypeTightener {
       }
 
       JReferenceType refType = (JReferenceType) x.getType();
-      JReferenceType resultType = program.strengthenType(refType, typeList);
+      JReferenceType resultType = strongerType(refType, typeList);
       if (refType != resultType) {
         x.setType(resultType);
         madeChanges();
@@ -509,45 +493,11 @@ public class TypeTightener {
         return;
       }
 
-      JReferenceType toType = getSingleConcreteType(x.getTestType());
-      if (toType == null) {
-        toType = x.getTestType();
-      }
-      JReferenceType fromType = getSingleConcreteType(argType);
-      if (fromType == null) {
-        fromType = (JReferenceType) argType;
-      }
-
-      AnalysisResult analysisResult = staticallyEvaluateInstanceOf(fromType, toType);
-
-      switch (analysisResult) {
-        case TRUE:
-          if (x.getExpr().getType().canBeNull()) {
-          // replace with a simple null test
-            JBinaryOperation neq =
-                new JBinaryOperation(x.getSourceInfo(), program.getTypePrimitiveBoolean(),
-                    JBinaryOperator.NEQ, x.getExpr(), program.getLiteralNull());
-            ctx.replaceMe(neq);
-          } else {
-            ctx.replaceMe(
-                JjsUtils.createOptimizedMultiExpression(x.getExpr(),
-                    program.getLiteralBoolean(true)));
-          }
-          break;
-        case FALSE:
-        // replace with a false literal
-          ctx.replaceMe(
-              JjsUtils.createOptimizedMultiExpression(x.getExpr(), program.getLiteralBoolean(false)));
-          break;
-        case UNKNOWN:
-        default:
-          // If possible, try to use a narrower cast
-          JReferenceType concreteType = getSingleConcreteType(toType);
-          if (concreteType != null) {
-            JInstanceOf newOp = new JInstanceOf(x.getSourceInfo(), concreteType, x.getExpr());
-            ctx.replaceMe(newOp);
-          }
-          break;
+      JReferenceType concreteType = getSingleConcreteType(x.getTestType());
+      // If possible, try to use a narrower cast
+      if (concreteType != null) {
+        ctx.replaceMe(
+            new JInstanceOf(x.getSourceInfo(), concreteType.getUnderlyingType(), x.getExpr()));
       }
     }
 
@@ -567,20 +517,20 @@ public class TypeTightener {
       if (!(x.getType() instanceof JReferenceType)) {
         return;
       }
-      JReferenceType refType = (JReferenceType) x.getType();
+      JReferenceType returnType = (JReferenceType) x.getType();
 
-      if (refType == program.getTypeNull()) {
+      if (returnType.isNullType()) {
         return;
       }
 
       // tighten based on non-instantiability
-      if (!program.typeOracle.isInstantiatedType(refType)) {
-        x.setType(program.getTypeNull());
+      if (!program.typeOracle.isInstantiatedType(returnType)) {
+        x.setType(JReferenceType.NULL_TYPE);
         madeChanges();
         return;
       }
 
-      JReferenceType concreteType = getSingleConcreteType(x.getType());
+      JReferenceType concreteType = getSingleConcreteType(returnType);
       if (concreteType != null) {
         x.setType(concreteType);
         madeChanges();
@@ -595,24 +545,14 @@ public class TypeTightener {
         return;
       }
 
-      // tighten based on both returned types and possible overrides
-      List<JReferenceType> typeList = new ArrayList<JReferenceType>();
+     Iterable<JReferenceType> returnTypes = Iterables.concat(
+         JjsUtils.getExpressionTypes(returns.get(x)),
+         JjsUtils.getExpressionTypes(x.getOverridingMethods()));
 
-      Collection<JExpression> myReturns = returns.get(x);
-      if (myReturns != null) {
-        for (JExpression expr : myReturns) {
-          typeList.add((JReferenceType) expr.getType());
-        }
-      }
-
-      for (JMethod method : x.getOverridingMethods()) {
-        typeList.add((JReferenceType) method.getType());
-      }
-
-      JReferenceType resultType = program.strengthenType(refType, typeList);
-      if (refType != resultType) {
-        x.setType(resultType);
-        madeChanges();
+      JReferenceType strengthenedType = strongerType(returnType, returnTypes);
+      if (returnType != strengthenedType) {
+          x.setType(strengthenedType);
+          madeChanges();
       }
     }
 
@@ -626,6 +566,7 @@ public class TypeTightener {
         return;
       }
       JMethod target = x.getTarget();
+
       JMethod concreteMethod = getSingleConcreteMethodOverride(target);
       assert concreteMethod != target;
       if (concreteMethod != null) {
@@ -633,34 +574,7 @@ public class TypeTightener {
         JMethodCall newCall = new JMethodCall(x.getSourceInfo(), x.getInstance(), concreteMethod);
         newCall.addArgs(x.getArgs());
         ctx.replaceMe(newCall);
-        target = concreteMethod;
-        x = newCall;
       }
-
-      /*
-       * Mark a call as non-polymorphic if the targeted method is the only
-       * possible dispatch, given the qualifying instance type.
-       */
-      if (target.isAbstract()) {
-        return;
-      }
-
-      JExpression instance = x.getInstance();
-      assert (instance != null);
-      JReferenceType instanceType = (JReferenceType) instance.getType();
-      for (JMethod overridingMethod : target.getOverridingMethods()) {
-        // Look for overriding methods from a type compatible with the instance type, if none is
-        // found, this call can be marked as static dispatch.
-        JReferenceType overridingMethodEnclosingType = overridingMethod.getEnclosingType();
-        if (program.typeOracle.canTheoreticallyCast(
-            instanceType, overridingMethodEnclosingType)) {
-          // This call is truly polymorphic.
-          return;
-        }
-      }
-      assert !x.isStaticDispatchOnly();
-      x.setCannotBePolymorphic();
-      madeChanges();
     }
 
     @Override
@@ -683,6 +597,23 @@ public class TypeTightener {
       return true;
     }
 
+    /**
+     * Find a replacement method. If the original method is abstract, this will
+     * return the leaf, final implementation of the method. If the method is
+     * already concrete, but enclosed by an abstract type, the overriding method
+     * from the leaf concrete type will be returned. If the method is static,
+     * return <code>null</code> no matter what.
+     */
+    private JMethod getSingleConcreteMethodOverride(JMethod method) {
+      assert method.canBePolymorphic();
+
+      if (getSingleConcreteType(method.getEnclosingType()) != null) {
+        return getSingleConcrete(method.getOverridingMethods());
+      }
+
+      return null;
+    }
+
     @Override
     public boolean visit(JClassType x, Context ctx) {
       // don't mess with classes used in code gen
@@ -702,38 +633,23 @@ public class TypeTightener {
     }
 
     /**
-     * Find a replacement method. If the original method is abstract, this will
-     * return the leaf, final implementation of the method. If the method is
-     * already concrete, but enclosed by an abstract type, the overriding method
-     * from the leaf concrete type will be returned. If the method is static,
-     * return <code>null</code> no matter what.
-     */
-    private JMethod getSingleConcreteMethodOverride(JMethod method) {
-      if (!method.canBePolymorphic()) {
-        return null;
-      }
-      if (getSingleConcreteType(method.getEnclosingType()) != null) {
-        return getSingleConcrete(method, ImmutableMap.of(method, method.getOverridingMethods()));
-      } else {
-        return null;
-      }
-    }
-
-    /**
      * Given an abstract type, return the single concrete implementation of that
      * type.
      */
     private JReferenceType getSingleConcreteType(JType type) {
-      if (type instanceof JReferenceType) {
-        JReferenceType refType = (JReferenceType) type;
-        if (refType.isAbstract()) {
-          JClassType singleConcrete = getSingleConcrete(refType.getUnderlyingType(), implementors);
-          assert (singleConcrete == null || program.typeOracle.isInstantiatedType(singleConcrete));
-          if (singleConcrete == null) {
-            return null;
-          }
-          return refType.canBeNull() ? singleConcrete : singleConcrete.getNonNull();
+      if (!(type instanceof JReferenceType)) {
+        return null;
+      }
+
+      JReferenceType refType = (JReferenceType) type;
+      if (refType.isAbstract()) {
+        JReferenceType singleConcrete =
+            getSingleConcrete(implementors.get(refType.getUnderlyingType()));
+        assert (singleConcrete == null || program.typeOracle.isInstantiatedType(singleConcrete));
+        if (singleConcrete == null) {
+          return null;
         }
+        return refType.canBeNull() ? singleConcrete : singleConcrete.strengthenToNonNull();
       }
       return null;
     }
@@ -745,21 +661,21 @@ public class TypeTightener {
       if (!(x.getType() instanceof JReferenceType)) {
         return;
       }
-      JReferenceType refType = (JReferenceType) x.getType();
+      JReferenceType varType = (JReferenceType) x.getType();
 
-      if (refType == program.getTypeNull()) {
+      if (varType.isNullType()) {
         return;
       }
 
       // tighten based on non-instantiability
-      if (!program.typeOracle.isInstantiatedType(refType)) {
-        x.setType(program.getTypeNull());
+      if (!program.typeOracle.isInstantiatedType(varType)) {
+        x.setType(JReferenceType.NULL_TYPE);
         madeChanges();
         return;
       }
 
       // tighten based on leaf types
-      JReferenceType leafType = getSingleConcreteType(refType);
+      JReferenceType leafType = getSingleConcreteType(varType);
       if (leafType != null) {
         x.setType(leafType);
         madeChanges();
@@ -767,32 +683,37 @@ public class TypeTightener {
       }
 
       // tighten based on assignment
-      List<JReferenceType> typeList = Lists.newArrayList();
-      Collection<JExpression> myAssignments = assignments.get(x);
-      if (myAssignments != null) {
-        for (JExpression expr : myAssignments) {
-          JType type = expr.getType();
-          if (!(type instanceof JReferenceType)) {
-            return; // something fishy is going on, just abort
-          }
-          typeList.add((JReferenceType) type);
-        }
+      Collection<JReferenceType> assignmentTypes = getAssignmentsIfValid(x);
+      if (assignmentTypes == null) {
+        return;
       }
 
-      if (x instanceof JParameter) {
-        Collection<JParameter> myParams = paramUpRefs.get(x);
-        if (myParams != null) {
-          for (JParameter param : myParams) {
-            typeList.add((JReferenceType) param.getType());
-          }
-        }
-      }
-
-      JReferenceType resultType = program.strengthenType(refType, typeList);
-      if (refType != resultType) {
-        x.setType(resultType);
+      JReferenceType strengthenedType = strongerType(varType,
+          Iterables.concat(assignmentTypes, JjsUtils.getExpressionTypes(paramUpRefs.get(x))));
+      if (varType != strengthenedType) {
+        x.setType(strengthenedType);
         madeChanges();
       }
+    }
+
+    private Collection<JReferenceType> getAssignmentsIfValid(JVariable variable) {
+      Collection<JExpression> assignedExpressions = assignments.get(variable);
+      if (assignedExpressions == null) {
+        return Collections.emptyList();
+      }
+
+      Collection<JReferenceType> assignedTypes = Lists.newArrayList();
+      for (JExpression expression : assignedExpressions) {
+        JType expressionType = expression.getType();
+        if (!(expressionType instanceof JReferenceType)) {
+          // In some case there will be types that are not JReferenceType; and it is not safe in
+          // such a case to replace the type of the lhs. Those cases only arise by AST manipulation,
+          // see {@link ImplementCastsAndTypeChecks} and {@link Class#createForClass}.
+          return null;
+        }
+        assignedTypes.add((JReferenceType) expressionType);
+      }
+      return assignedTypes;
     }
   }
 
@@ -811,43 +732,45 @@ public class TypeTightener {
     return exec(program, new FullOptimizerContext(program));
   }
 
-  private static <T, V> void add(T target, V value, Map<T, Collection<V>> map) {
-    Collection<V> list = map.get(target);
+  private static <T, V> void add(T key, V value, Map<T, Collection<V>> map) {
+    Collection<V> list = map.get(key);
     if (list == null) {
-      list = new LinkedHashSet<V>();
-      map.put(target, list);
+      list = Sets.newLinkedHashSet();
+      map.put(key, list);
     }
     list.add(value);
   }
 
   /**
-   * Find exactly one concrete element for a key in a Map of Sets. If there are
+   * Find exactly one concrete element in a collection. If there are
    * none or more than one concrete element, return <code>null</code>.
    */
-  private static <B, T extends CanBeAbstract> T getSingleConcrete(B x,
-      Map<? super B, ? extends Collection<T>> map) {
+  private static <T extends CanBeAbstract> T getSingleConcrete(Collection<T> collection) {
 
-    Collection<T> collection = map.get(x);
     // No collection, then no concrete version
     if (collection == null) {
       return null;
     }
 
-    T toReturn = null;
-    for (T elt : collection) {
-      if (elt.isAbstract()) {
-        continue;
-      }
+    Iterator<T> concreteIterator = FluentIterable.from(collection).filter(
+        new Predicate<T>() {
+          @Override
+          public boolean apply(T element) {
+            return !element.isAbstract();
+          }
+        }).iterator();
 
-      // If we already have previously seen a concrete element, fail
-      if (toReturn != null) {
-        return null;
-      } else {
-        toReturn = elt;
-      }
+    if (!concreteIterator.hasNext()) {
+      return null;
     }
 
-    return toReturn;
+    T firstConcrete = concreteIterator.next();
+    if (concreteIterator.hasNext()) {
+      // multiple concrete elements.
+      return null;
+    }
+
+    return firstConcrete;
   }
 
   /**
@@ -855,25 +778,21 @@ public class TypeTightener {
    * of expressions that are assigned to them. Assignments include parameter instantiations.
    *
    */
-  private final Map<JVariable, Collection<JExpression>> assignments =
-      new IdentityHashMap<JVariable, Collection<JExpression>>();
+  private final Map<JVariable, Collection<JExpression>> assignments = Maps.newIdentityHashMap();
   /**
    * For each type tracks all classes the extend or implement it.
    */
   private final Map<JReferenceType, Collection<JClassType>> implementors =
-      new IdentityHashMap<JReferenceType, Collection<JClassType>>();
-
+      Maps.newIdentityHashMap();
   /**
    * For each parameter P (in method M) tracks the set of parameters that share its position in all
    * the methods that are overridden by M.
    */
-  private final Map<JParameter, Collection<JParameter>> paramUpRefs =
-      new IdentityHashMap<JParameter, Collection<JParameter>>();
+  private final Map<JParameter, Collection<JParameter>> paramUpRefs = Maps.newIdentityHashMap();
   /**
    * For each method tracks the set of all expressions that are returned.
    */
-  private final Map<JMethod, Collection<JExpression>> returns =
-      new IdentityHashMap<JMethod, Collection<JExpression>>();
+  private final Map<JMethod, Collection<JExpression>> returns = Maps.newIdentityHashMap();
 
   /**
    * For each method call, record the method calls and field references in its arguments.
@@ -914,10 +833,8 @@ public class TypeTightener {
     while (true) {
       TightenTypesVisitor tightener = new TightenTypesVisitor(optimizerCtx);
 
-      Set<JMethod> affectedMethods =
-          computeAffectedMethods(optimizerCtx, lastStep);
-      Set<JField> affectedFields =
-          computeAffectedFields(optimizerCtx, lastStep);
+      Set<JMethod> affectedMethods = computeAffectedMethods(optimizerCtx, lastStep);
+      Set<JField> affectedFields = computeAffectedFields(optimizerCtx, lastStep);
       optimizerCtx.traverse(tightener, affectedFields);
       optimizerCtx.traverse(tightener, affectedMethods);
       stats.recordModified(tightener.getNumMods());
@@ -990,29 +907,21 @@ public class TypeTightener {
   }
 
   private boolean isNullReference(CanBeStatic member, JExpression instance) {
-    return !member.isStatic() && instance.getType() == program.getTypeNull();
+    return !member.isStatic() && instance.getType().isNullType();
   }
-
-  private enum AnalysisResult { TRUE, FALSE, UNKNOWN }
 
   /**
-   * Tries to statically evaluate the instanceof operation. Returning TRUE if it can be determined
-   * statically that it is true, FALSE if it can be determined that is FALSE and UNKNOWN if the
-   * result can not be determined statically.
+   * Computes type ^ (V assignedTypes).
    */
-  private AnalysisResult staticallyEvaluateInstanceOf(JReferenceType fromType,
-      JReferenceType toType) {
-    if (fromType == program.getTypeNull()) {
-      // null is never instanceof anything
-      return AnalysisResult.FALSE;
-    } else if (program.typeOracle.canTriviallyCast(fromType, toType)) {
-      return AnalysisResult.TRUE;
-    } else if (!program.typeOracle.isInstantiatedType(toType)) {
-      return AnalysisResult.FALSE;
-    } else if (!program.typeOracle.canTheoreticallyCast(fromType, toType)) {
-      return AnalysisResult.FALSE;
-    }
-    return AnalysisResult.UNKNOWN;
+  private JReferenceType strongerType(JReferenceType type, JReferenceType... assignedTypes) {
+    return strongerType(type, Arrays.asList(assignedTypes));
   }
 
+  /**
+   * Computes type ^ (V assignedTypes).
+   */
+  private JReferenceType strongerType(JReferenceType type,
+      Iterable<JReferenceType> assignedTypes) {
+    return program.strengthenType(type, program.generalizeTypes(assignedTypes));
+  }
 }

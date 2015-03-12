@@ -62,7 +62,7 @@ public class JField extends JVariable implements JMember {
     private Object readResolve() {
       String name = StringInterner.get().intern(signature.substring(0, signature.indexOf(':')));
       JField result =
-          new JField(SourceOrigin.UNKNOWN, name, enclosingType, JNullType.INSTANCE, false,
+          new JField(SourceOrigin.UNKNOWN, name, enclosingType, JReferenceType.NULL_TYPE, false,
               Disposition.NONE);
       result.signature = signature;
       return result;
@@ -78,7 +78,7 @@ public class JField extends JVariable implements JMember {
   }
 
   public static final JField NULL_FIELD = new JField(SourceOrigin.UNKNOWN, "nullField", null,
-      JNullType.INSTANCE, false, Disposition.FINAL);
+      JReferenceType.NULL_TYPE, false, Disposition.FINAL);
 
   private String jsTypeName;
   private String exportName;

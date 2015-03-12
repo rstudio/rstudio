@@ -57,7 +57,6 @@ import com.google.gwt.dev.jjs.ast.JNameOf;
 import com.google.gwt.dev.jjs.ast.JNewArray;
 import com.google.gwt.dev.jjs.ast.JNewInstance;
 import com.google.gwt.dev.jjs.ast.JNode;
-import com.google.gwt.dev.jjs.ast.JNonNullType;
 import com.google.gwt.dev.jjs.ast.JNullLiteral;
 import com.google.gwt.dev.jjs.ast.JPrimitiveType;
 import com.google.gwt.dev.jjs.ast.JProgram;
@@ -1455,10 +1454,18 @@ public class UnifyAst {
     }
   }
 
+  /**
+   * Replaces an external (stub) reference node to a particular class by the actual AST node if
+   * necessary.
+   */
   private JClassType translate(JClassType type) {
     return (JClassType) translate((JDeclaredType) type);
   }
 
+  /**
+   * Replaces an external (stub) reference node to a particular type by the actual AST node if
+   * necessary.
+   */
   private JDeclaredType translate(JDeclaredType type) {
     if (!type.isExternal()) {
       return type;
@@ -1473,6 +1480,10 @@ public class UnifyAst {
     return newType;
   }
 
+  /**
+   * Replaces an external (stub) reference node to a particular field by the actual AST node if
+   * necessary.
+   */
   private JField translate(JField field) {
     if (!field.isExternal()) {
       return field;
@@ -1503,6 +1514,10 @@ public class UnifyAst {
     return field;
   }
 
+  /**
+   * Replaces an external (stub) reference node to a particular method by the actual AST node if
+   * necessary.
+   */
   private JMethod translate(JMethod method) {
     if (!method.isExternal()) {
       return method;
@@ -1531,23 +1546,27 @@ public class UnifyAst {
     return method;
   }
 
+  /**
+   * Replaces an external (stub) reference node to a particular type by the actual AST node if
+   * necessary.
+   */
   private JReferenceType translate(JReferenceType type) {
-    if (type instanceof JNonNullType) {
-      return translate(type.getUnderlyingType()).getNonNull();
-    }
+    JReferenceType result = type.getUnderlyingType();
 
     if (type instanceof JArrayType) {
       JArrayType arrayType = (JArrayType) type;
-      return program.getTypeArray(translate(arrayType.getElementType()));
-    }
-
-    if (type.isExternal()) {
+      result = program.getTypeArray(translate(arrayType.getElementType()));
+    } else  if (type.isExternal()) {
       assert type instanceof JDeclaredType : "Unknown external type" + type.getName();
-      type = translate((JDeclaredType) type);
-      assert !type.isExternal();
+      result = translate((JDeclaredType) type);
+    }
+    assert !result.isExternal();
+
+    if (!type.canBeNull()) {
+      result = result.strengthenToNonNull();
     }
 
-    return type;
+    return result;
   }
 
   private JType translate(JType type) {

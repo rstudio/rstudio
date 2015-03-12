@@ -107,17 +107,6 @@ public class TypeTightenerTest extends OptimizerTestBase {
     assertParameterTypes(result, "EntryPoint$Test2.fun(Ltest/EntryPoint$A;)V", "EntryPoint$B");
   }
 
-  public void testInstanceOf() throws Exception {
-    addSnippetClassDecl("static class A {};");
-    addSnippetClassDecl("static class B extends A {};");
-    Result result = optimize("void", "A a = new A();", "B b = new B();", "boolean test;",
-        "test = a instanceof A;", "test = b instanceof B;", "test = a instanceof B;",
-        "test = b instanceof A;");
-    result.intoString("EntryPoint$A a = new EntryPoint$A();\n"
-        + "EntryPoint$B b = new EntryPoint$B();\n" + "boolean test;\n" + "test = true;\n"
-        + "test = true;\n" + "test = a instanceof EntryPoint$B;\n" + "test = true;");
-  }
-
   public void testMethodBasedOnLeafType() throws Exception {
     addSnippetClassDecl("abstract static class A { void makeSureFunIsCalled() {fun(this);} }");
     addSnippetClassDecl("static class B extends A {}");

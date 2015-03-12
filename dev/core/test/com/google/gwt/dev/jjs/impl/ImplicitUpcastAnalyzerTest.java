@@ -109,7 +109,7 @@ public class ImplicitUpcastAnalyzerTest extends OptimizerTestBase {
 
   private void assertMapsToAll(Multimap<JType, JType> upcastTypesByType,
       JType fromType, JType... toTypes) {
-    assertEquals(upcastTypesByType.get(fromType), ImmutableSet.copyOf(toTypes));
+    assertEquals(ImmutableSet.copyOf(toTypes), upcastTypesByType.get(fromType));
   }
 
   private  Multimap<JType, JType> computeImplicitUpcasts(JProgram program) {

@@ -142,7 +142,7 @@ public class ResolveRebinds {
     // c_g_g_d_c_i_DOMImpl
     toReturn =
         new JMethod(info, requestType.replace("_", "_1").replace('.', '_'), holderType, program
-            .getTypeJavaLangObject().getNonNull(), false, true, true, AccessModifier.PUBLIC);
+            .getTypeJavaLangObject().strengthenToNonNull(), false, true, true, AccessModifier.PUBLIC);
     toReturn.setBody(new JMethodBody(info));
     holderType.addMethod(toReturn);
     toReturn.freezeParamTypes();

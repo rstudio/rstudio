@@ -49,8 +49,26 @@ public class SourceGenerationVisitor extends ToStringGenerationVisitor {
 
   @Override
   public boolean visit(JClassType x, Context ctx) {
-    super.visit(x, ctx);
+    printAbstractFlag(x);
+    printFinalFlag(x);
+    print(CHARS_CLASS);
+    space();
+    if (x.getSuperClass() != null) {
+      print(CHARS_EXTENDS);
+      printTypeName(x.getSuperClass());
+      space();
+    }
 
+    if (x.getImplements().size() > 0) {
+      print(CHARS_IMPLEMENTS);
+      for (int i = 0, c = x.getImplements().size(); i < c; ++i) {
+        if (i > 0) {
+          print(CHARS_COMMA);
+        }
+        printTypeName(x.getImplements().get(i));
+      }
+      space();
+    }
     openBlock();
 
     for (JField field : x.getFields()) {
@@ -77,7 +95,20 @@ public class SourceGenerationVisitor extends ToStringGenerationVisitor {
 
   @Override
   public boolean visit(JInterfaceType x, Context ctx) {
-    super.visit(x, ctx);
+    print(CHARS_INTERFACE);
+    printTypeName(x);
+    space();
+
+    if (x.getImplements().size() > 0) {
+      print(CHARS_EXTENDS);
+      for (int i = 0, c = x.getImplements().size(); i < c; ++i) {
+        if (i > 0) {
+          print(CHARS_COMMA);
+        }
+        printTypeName(x.getImplements().get(i));
+      }
+      space();
+    }
 
     openBlock();
 

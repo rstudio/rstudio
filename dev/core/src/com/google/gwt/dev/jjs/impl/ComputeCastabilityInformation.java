@@ -26,7 +26,6 @@ import com.google.gwt.dev.jjs.ast.JCastOperation;
 import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JExpression;
 import com.google.gwt.dev.jjs.ast.JInstanceOf;
-import com.google.gwt.dev.jjs.ast.JNullType;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JType;
@@ -108,42 +107,43 @@ public class ComputeCastabilityInformation {
      */
     @Override
     public void endVisit(JBinaryOperation x, Context ctx) {
-      if (x.getOp().isAssignment() && x.getLhs() instanceof JArrayRef) {
+      if (!x.getOp().isAssignment() || !(x.getLhs() instanceof JArrayRef)) {
+        return;
+      }
 
-        // first, calculate the transitive closure of all possible runtime types
-        // the lhs could be
-        JArrayRef lhsArrayRef = (JArrayRef) x.getLhs();
-        JType elementType = lhsArrayRef.getType();
-        if (elementType instanceof JNullType) {
-          // will generate a null pointer exception instead
-          return;
-        }
+      // first, calculate the transitive closure of all possible runtime types
+      // the lhs could be
+      JArrayRef lhsArrayRef = (JArrayRef) x.getLhs();
+      JType elementType = lhsArrayRef.getType();
+      if (elementType.isNullType()) {
+        // will generate a null pointer exception instead
+        return;
+      }
 
-        // primitives are statically correct
-        if (!(elementType instanceof JReferenceType)) {
-          return;
-        }
+      // primitives are statically correct
+      if (!(elementType instanceof JReferenceType)) {
+        return;
+      }
 
-        // element type being final means the assignment is statically correct
-        if (elementType.isFinal()) {
-          return;
-        }
+      // element type being final means the assignment is statically correct
+      if (elementType.isFinal()) {
+        return;
+      }
 
-        /*
-         * For every instantiated array type that could -in theory- be the
-         * runtime type of the lhs, we must record a cast from the rhs to the
-         * prospective element type of the lhs.
-         */
-        JType rhsType = x.getRhs().getType();
-        assert (rhsType instanceof JReferenceType);
+      /*
+       * For every instantiated array type that could -in theory- be the
+       * runtime type of the lhs, we must record a cast from the rhs to the
+       * prospective element type of the lhs.
+       */
+      JType rhsType = x.getRhs().getType();
+      assert (rhsType instanceof JReferenceType);
 
-        JArrayType lhsArrayType = lhsArrayRef.getArrayType();
-        for (JArrayType arrayType : instantiatedArrayTypes) {
-          if (typeOracle.canTheoreticallyCast(arrayType, lhsArrayType)) {
-            JType itElementType = arrayType.getElementType();
-            if (itElementType instanceof JReferenceType) {
-              recordCast(itElementType, x.getRhs());
-            }
+      JArrayType lhsArrayType = lhsArrayRef.getArrayType();
+      for (JArrayType arrayType : instantiatedArrayTypes) {
+        if (!typeOracle.castFailsTrivially(arrayType, lhsArrayType)) {
+          JType itElementType = arrayType.getElementType();
+          if (itElementType instanceof JReferenceType) {
+            recordCast(itElementType, x.getRhs());
           }
         }
       }
@@ -151,7 +151,7 @@ public class ComputeCastabilityInformation {
 
     @Override
     public void endVisit(JCastOperation x, Context ctx) {
-      if (disableCastChecking || x.getCastType() == program.getTypeNull()) {
+      if (disableCastChecking || x.getCastType().isNullType()) {
         return;
       }
       recordCast(x.getCastType(), x.getExpr());
@@ -159,7 +159,7 @@ public class ComputeCastabilityInformation {
 
     @Override
     public void endVisit(JInstanceOf x, Context ctx) {
-      assert (x.getTestType() != program.getTypeNull());
+      assert (!x.getTestType().isNullType());
       recordCast(x.getTestType(), x.getExpr());
     }
 
@@ -167,7 +167,7 @@ public class ComputeCastabilityInformation {
       type = type.getUnderlyingType();
       qType = qType.getUnderlyingType();
 
-      if (typeOracle.canTriviallyCast(type, qType)) {
+      if (typeOracle.castSucceedsTrivially(type, qType)) {
         return true;
       }
 
@@ -253,12 +253,11 @@ public class ComputeCastabilityInformation {
         return;
       }
       targetType = targetType.getUnderlyingType();
-
       assert rhs.getType() instanceof JReferenceType;
 
       JReferenceType rhsType = (JReferenceType) rhs.getType().getUnderlyingType();
       if (!recordTrivialCasts
-          && typeOracle.canTriviallyCast(rhsType, (JReferenceType) targetType)) {
+          && typeOracle.castSucceedsTrivially(rhsType, (JReferenceType) targetType)) {
         // don't record a type for trivial casts that won't generate code
         return;
       }

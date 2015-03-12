@@ -223,6 +223,7 @@ public class JMethodCall extends JExpression {
    */
   public void setCannotBePolymorphic() {
     assert polymorphism == Polymorphism.NORMAL;
+    assert !method.isAbstract() : "Cannot set static dispacth to an abstract method: " + method;
     polymorphism = Polymorphism.CANNOT_BE_POLYMORPHIC;
   }
 

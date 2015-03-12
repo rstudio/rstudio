@@ -30,7 +30,6 @@ import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JModVisitor;
 import com.google.gwt.dev.jjs.ast.JNewArray;
-import com.google.gwt.dev.jjs.ast.JNullType;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JRuntimeTypeReference;
@@ -56,22 +55,23 @@ public class ArrayNormalizer {
       }
       JArrayRef arrayRef = (JArrayRef) x.getLhs();
       JType elementType = arrayRef.getType();
-      if (elementType instanceof JNullType) {
+      JExpression arrayInstance = arrayRef.getInstance();
+      if (elementType.isNullType()) {
         // JNullType will generate a null pointer exception instead,
         return;
       } else if (!(elementType instanceof JReferenceType)) {
         // Primitive array types are statically correct, no need to set check.
         return;
       } else if (elementType.isFinal() &&
-          program.typeOracle.canTriviallyCast((JReferenceType) x.getRhs().getType(),
+          program.typeOracle.castSucceedsTrivially((JReferenceType) x.getRhs().getType(),
               (JReferenceType) elementType)) {
-        // Effectively final element types are statically correct.
+        // There is no need to check as the static check already proved the cast is correct.
         return;
       }
 
       // replace this assignment with a call to setCheck()
       JMethodCall call = new JMethodCall(x.getSourceInfo(), null, setCheckMethod);
-      call.addArgs(arrayRef.getInstance(), arrayRef.getIndexExpr(), x.getRhs());
+      call.addArgs(arrayInstance, arrayRef.getIndexExpr(), x.getRhs());
       ctx.replaceMe(call);
     }
 
@@ -103,7 +103,7 @@ public class ArrayNormalizer {
       JType elementType = arrayType.getElementType();
       if (!(elementType instanceof JReferenceType)) {
         // elementType is a primitive type, store check will be performed statically.
-        elementType = JNullType.INSTANCE;
+        elementType = JReferenceType.NULL_TYPE;
       }
 
       if (program.typeOracle.willCrossCastLikeJso(elementType)) {

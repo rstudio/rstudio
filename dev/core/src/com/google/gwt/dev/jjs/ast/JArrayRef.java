@@ -33,7 +33,7 @@ public class JArrayRef extends JExpression {
 
   public JArrayType getArrayType() {
     JType type = instance.getType();
-    if (type instanceof JNullType) {
+    if (type.isNullType()) {
       return null;
     }
     return (JArrayType) type.getUnderlyingType();
@@ -50,14 +50,14 @@ public class JArrayRef extends JExpression {
   @Override
   public JType getType() {
     JArrayType arrayType = getArrayType();
-    return (arrayType == null) ? JNullType.INSTANCE : arrayType.getElementType();
+    return (arrayType == null) ? JReferenceType.NULL_TYPE : arrayType.getElementType();
   }
 
   @Override
   public boolean hasSideEffects() {
     // TODO: make the last test better when we have null tracking.
     return instance.hasSideEffects() || indexExpr.hasSideEffects()
-        || instance.getType() == JNullType.INSTANCE;
+        || instance.getType().isNullType();
   }
 
   @Override

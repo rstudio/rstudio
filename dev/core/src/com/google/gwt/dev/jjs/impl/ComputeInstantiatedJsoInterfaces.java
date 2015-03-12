@@ -20,7 +20,6 @@ import com.google.gwt.dev.jjs.ast.JCastOperation;
 import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JInterfaceType;
-import com.google.gwt.dev.jjs.ast.JNullType;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JType;
@@ -39,7 +38,7 @@ public class ComputeInstantiatedJsoInterfaces {
     public void endVisit(JCastOperation x, Context ctx) {
       JType toType = x.getCastType();
 
-      if (toType instanceof JReferenceType && !(toType instanceof JNullType)) {
+      if (toType instanceof JReferenceType && !toType.isNullType()) {
         toType = toType.getUnderlyingType();
         if (program.typeOracle.willCrossCastLikeJso(toType) ||
             program.typeOracle.isOrExtendsJsType(toType, true) ||

@@ -28,14 +28,12 @@ import com.google.gwt.dev.jjs.ast.JEnumType;
 import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JInterfaceType;
 import com.google.gwt.dev.jjs.ast.JMethod;
-import com.google.gwt.dev.jjs.ast.JNullType;
 import com.google.gwt.dev.jjs.ast.JParameter;
 import com.google.gwt.dev.jjs.ast.JPrimitiveType;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.util.StringInterner;
 import com.google.gwt.thirdparty.guava.common.collect.Interner;
-
 
 import org.eclipse.jdt.internal.compiler.lookup.ArrayBinding;
 import org.eclipse.jdt.internal.compiler.lookup.BaseTypeBinding;
@@ -70,7 +68,7 @@ public class ReferenceMapper {
   {
     put(JPrimitiveType.BOOLEAN, JPrimitiveType.BYTE, JPrimitiveType.CHAR, JPrimitiveType.DOUBLE,
         JPrimitiveType.FLOAT, JPrimitiveType.INT, JPrimitiveType.LONG, JPrimitiveType.SHORT,
-        JPrimitiveType.VOID, JNullType.INSTANCE);
+        JPrimitiveType.VOID, JReferenceType.NULL_TYPE);
   }
 
   public void clearSource() {
@@ -129,7 +127,7 @@ public class ReferenceMapper {
 
     JType type = types.get(key);
     if (type != null) {
-      assert type instanceof JPrimitiveType || type == JNullType.INSTANCE || type.isExternal();
+      assert type instanceof JPrimitiveType || type.isNullType() || type.isExternal();
       return type;
     }
     assert !(binding instanceof BaseTypeBinding);

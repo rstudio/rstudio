@@ -161,7 +161,7 @@ public class Pruner {
       JType type = x.getType();
       if (type instanceof JReferenceType &&
           !program.typeOracle.isInstantiatedType((JReferenceType) type)) {
-        x.setType(program.getTypeNull());
+        x.setType(JReferenceType.NULL_TYPE);
       }
       Predicate<JMethod> isPruned = new Predicate<JMethod>() {
         @Override
@@ -250,7 +250,7 @@ public class Pruner {
       JType type = x.getType();
       if (type instanceof JReferenceType &&
           !program.typeOracle.isInstantiatedType((JReferenceType) type)) {
-        x.setType(program.getTypeNull());
+        x.setType(JReferenceType.NULL_TYPE);
         madeChanges();
       }
     }
@@ -639,7 +639,7 @@ public class Pruner {
     if (type instanceof JPrimitiveType) {
       return type;
     }
-    return program.getTypeNull();
+    return JReferenceType.NULL_TYPE;
   }
 
   private final JProgram program;

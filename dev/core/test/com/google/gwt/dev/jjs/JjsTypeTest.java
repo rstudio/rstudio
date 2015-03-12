@@ -21,13 +21,12 @@ import com.google.gwt.dev.jjs.ast.JArrayType;
 import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JInterfaceType;
-import com.google.gwt.dev.jjs.ast.JNonNullType;
-import com.google.gwt.dev.jjs.ast.JNullType;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JTypeOracle;
 import com.google.gwt.dev.jjs.ast.JTypeOracle.ImmediateTypeRelations;
 import com.google.gwt.dev.jjs.ast.JTypeOracle.StandardTypes;
+import com.google.gwt.thirdparty.guava.common.base.Function;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
 import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
@@ -68,8 +67,8 @@ public class JjsTypeTest extends TestCase {
   private JClassType classArrayList;
   private JClassType classB;
   private JClassType classBase;
-  private JNonNullType classBaseNn;
-  private JNonNullType classBnn;
+  private JReferenceType classBaseNn;
+  private JReferenceType classBnn;
   private JClassType classBSub;
   private JClassType classC;
   private JClassType classJso;
@@ -97,94 +96,96 @@ public class JjsTypeTest extends TestCase {
 
   private static final Collection<String> EMPTY_LIST = Collections.<String>emptySet();
 
-  public void testCanTheoreticallyCast() {
-    assertFalse(typeOracle.canTheoreticallyCast(classBnn, typeNull));
+  public void testCastFailsTrivially() {
+    assertTrue(typeOracle.castFailsTrivially(classBnn, typeNull));
 
-    assertTrue(typeOracle.canTheoreticallyCast(classBSub, classB));
-    assertTrue(typeOracle.canTheoreticallyCast(classB, classBSub));
+    assertFalse(typeOracle.castFailsTrivially(classBSub, classB));
+    assertFalse(typeOracle.castFailsTrivially(classB, classBSub));
 
-    assertTrue(typeOracle.canTheoreticallyCast(classB, classBnn));
-    assertTrue(typeOracle.canTheoreticallyCast(classBnn, classB));
+    assertFalse(typeOracle.castFailsTrivially(classB, classBnn));
+    assertFalse(typeOracle.castFailsTrivially(classBnn, classB));
 
-    assertTrue(typeOracle.canTheoreticallyCast(classB, classB));
+    assertFalse(typeOracle.castFailsTrivially(classB, classB));
 
-    assertTrue(typeOracle.canTheoreticallyCast(classObject, arrayOfB));
-    assertFalse(typeOracle.canTheoreticallyCast(arrayOfA, arrayOfArrayOfB));
+    assertFalse(typeOracle.castFailsTrivially(classObject, arrayOfB));
+    assertTrue(typeOracle.castFailsTrivially(arrayOfA, arrayOfArrayOfB));
 
-    assertTrue(typeOracle.canTheoreticallyCast(arrayOfObject, arrayOfArrayOfB));
+    assertFalse(typeOracle.castFailsTrivially(arrayOfObject, arrayOfArrayOfB));
 
-    assertTrue(typeOracle.canTheoreticallyCast(arrayOfB, arrayOfBSub));
+    assertFalse(typeOracle.castFailsTrivially(arrayOfB, arrayOfBSub));
 
-    assertTrue(typeOracle.canTheoreticallyCast(classBase, intfI));
-    assertFalse(typeOracle.canTheoreticallyCast(classA, intfJ));
+    assertFalse(typeOracle.castFailsTrivially(classBase, intfI));
+    assertTrue(typeOracle.castFailsTrivially(classA, intfJ));
 
-    assertTrue(typeOracle.canTheoreticallyCast(intfIBase, intfI));
+    assertFalse(typeOracle.castFailsTrivially(intfIBase, intfI));
 
-    assertTrue(typeOracle.canTheoreticallyCast(intfIBase, classBase));
-    assertFalse(typeOracle.canTheoreticallyCast(intfJ, classA));
+    assertFalse(typeOracle.castFailsTrivially(intfIBase, classBase));
+    assertTrue(typeOracle.castFailsTrivially(intfJ, classA));
 
-    assertTrue(typeOracle.canTheoreticallyCast(arrayOfA, intfSerializable));
-    assertTrue(typeOracle.canTheoreticallyCast(intfSerializable, arrayOfA));
+    assertFalse(typeOracle.castFailsTrivially(arrayOfA, intfSerializable));
+    assertFalse(typeOracle.castFailsTrivially(intfSerializable, arrayOfA));
 
-    assertTrue(typeOracle.canTheoreticallyCast(arrayOfA, intfCloneable));
-    assertTrue(typeOracle.canTheoreticallyCast(intfCloneable, arrayOfA));
+    assertFalse(typeOracle.castFailsTrivially(arrayOfA, intfCloneable));
+    assertFalse(typeOracle.castFailsTrivially(intfCloneable, arrayOfA));
 
-    assertTrue(typeOracle.canTheoreticallyCast(intfList, intfIterable));
-    assertTrue(typeOracle.canTheoreticallyCast(classArrayList, intfIterable));
+    assertFalse(typeOracle.castFailsTrivially(intfList, intfIterable));
+    assertFalse(typeOracle.castFailsTrivially(classArrayList, intfIterable));
+
+    assertFalse(typeOracle.castFailsTrivially(classJso1, classJso2));
+    assertFalse(typeOracle.castFailsTrivially(classJso2, classJso1));
+
+    assertFalse(typeOracle.castFailsTrivially(classJso1, intfK));
+    assertFalse(typeOracle.castFailsTrivially(intfK, classJso1));
+
+    assertFalse(typeOracle.castFailsTrivially(intfJ, intfK));
+    assertFalse(typeOracle.castFailsTrivially(intfK, intfJ));
   }
 
-  public void testCanTriviallyCast() {
-    assertTrue(typeOracle.canTriviallyCast(classB, classB));
+  public void testCastSucceedsTrivially() {
+    assertTrue(typeOracle.castSucceedsTrivially(classB, classB));
 
-    assertTrue(typeOracle.canTriviallyCast(classBSub, classB));
-    assertFalse(typeOracle.canTriviallyCast(classB, classBSub));
+    assertTrue(typeOracle.castSucceedsTrivially(classBSub, classB));
+    assertFalse(typeOracle.castSucceedsTrivially(classB, classBSub));
 
-    assertFalse(typeOracle.canTriviallyCast(classC, classA));
-    assertFalse(typeOracle.canTriviallyCast(classA, classC));
+    assertFalse(typeOracle.castSucceedsTrivially(classC, classA));
+    assertFalse(typeOracle.castSucceedsTrivially(classA, classC));
 
-    assertTrue(typeOracle.canTriviallyCast(classB, intfI));
-    assertFalse(typeOracle.canTriviallyCast(intfI, classB));
+    assertTrue(typeOracle.castSucceedsTrivially(classB, intfI));
+    assertFalse(typeOracle.castSucceedsTrivially(intfI, classB));
 
-    assertTrue(typeOracle.canTriviallyCast(classB, classObject));
-    assertFalse(typeOracle.canTriviallyCast(classObject, classB));
+    assertTrue(typeOracle.castSucceedsTrivially(classB, classObject));
+    assertFalse(typeOracle.castSucceedsTrivially(classObject, classB));
 
-    assertTrue(typeOracle.canTriviallyCast(classB, intfI));
-    assertFalse(typeOracle.canTriviallyCast(intfI, classB));
+    assertTrue(typeOracle.castSucceedsTrivially(classB, intfI));
+    assertFalse(typeOracle.castSucceedsTrivially(intfI, classB));
 
-    assertTrue(typeOracle.canTriviallyCast(classBnn, classB));
-    assertFalse(typeOracle.canTriviallyCast(classB, classBnn));
+    assertTrue(typeOracle.castSucceedsTrivially(classBnn, classB));
+    assertFalse(typeOracle.castSucceedsTrivially(classB, classBnn));
 
-    assertTrue(typeOracle.canTriviallyCast(typeNull, classB));
-    assertFalse(typeOracle.canTriviallyCast(classB, typeNull));
+    assertTrue(typeOracle.castSucceedsTrivially(typeNull, classB));
+    assertFalse(typeOracle.castSucceedsTrivially(classB, typeNull));
 
-    assertTrue(typeOracle.canTriviallyCast(arrayOfBSub, arrayOfB));
-    assertFalse(typeOracle.canTriviallyCast(arrayOfB, arrayOfBSub));
+    assertTrue(typeOracle.castSucceedsTrivially(arrayOfA, classObject));
 
-    assertFalse(typeOracle.canTriviallyCast(arrayOfA, arrayOfB));
-    assertFalse(typeOracle.canTriviallyCast(arrayOfB, arrayOfA));
+    assertTrue(typeOracle.castSucceedsTrivially(arrayOfBSub, arrayOfB));
+    assertFalse(typeOracle.castSucceedsTrivially(arrayOfB, arrayOfBSub));
 
-    assertFalse(typeOracle.canTriviallyCast(arrayOfArrayOfB, arrayOfB));
-    assertFalse(typeOracle.canTriviallyCast(arrayOfB, arrayOfArrayOfB));
+    assertFalse(typeOracle.castSucceedsTrivially(arrayOfA, arrayOfB));
+    assertFalse(typeOracle.castSucceedsTrivially(arrayOfB, arrayOfA));
 
-    assertTrue(typeOracle.canTriviallyCast(arrayOfArrayOfB, arrayOfObject));
-    assertFalse(typeOracle.canTriviallyCast(arrayOfObject, arrayOfArrayOfB));
+    assertFalse(typeOracle.castSucceedsTrivially(arrayOfArrayOfB, arrayOfB));
+    assertFalse(typeOracle.castSucceedsTrivially(arrayOfB, arrayOfArrayOfB));
 
-    assertTrue(typeOracle.canTheoreticallyCast(classJso1, classJso2));
-    assertTrue(typeOracle.canTheoreticallyCast(classJso2, classJso1));
+    assertTrue(typeOracle.castSucceedsTrivially(arrayOfArrayOfB, arrayOfObject));
+    assertFalse(typeOracle.castSucceedsTrivially(arrayOfObject, arrayOfArrayOfB));
 
-    assertTrue(typeOracle.canTheoreticallyCast(classJso1, intfK));
-    assertTrue(typeOracle.canTheoreticallyCast(intfK, classJso1));
+    assertTrue(typeOracle.castSucceedsTrivially(classJso1, classJso));
 
-    assertTrue(typeOracle.canTheoreticallyCast(intfJ, intfK));
-    assertTrue(typeOracle.canTheoreticallyCast(intfK, intfJ));
+    assertTrue(typeOracle.castSucceedsTrivially(arrayOfA, intfSerializable));
+    assertFalse(typeOracle.castSucceedsTrivially(intfSerializable, arrayOfA));
 
-    assertTrue(typeOracle.canTriviallyCast(classJso1, classJso));
-
-    assertTrue(typeOracle.canTriviallyCast(arrayOfA, intfSerializable));
-    assertFalse(typeOracle.canTriviallyCast(intfSerializable, arrayOfA));
-
-    assertTrue(typeOracle.canTriviallyCast(arrayOfA, intfCloneable));
-    assertFalse(typeOracle.canTriviallyCast(intfCloneable, arrayOfA));
+    assertTrue(typeOracle.castSucceedsTrivially(arrayOfA, intfCloneable));
+    assertFalse(typeOracle.castSucceedsTrivially(intfCloneable, arrayOfA));
 
     /*
      * Test that two types cannot both be trivially castable to each other,
@@ -193,8 +194,8 @@ public class JjsTypeTest extends TestCase {
     for (JReferenceType type1 : severalTypes()) {
       for (JReferenceType type2 : severalTypes()) {
         if (type1 != type2) {
-          assertFalse(typeOracle.canTriviallyCast(type1, type2)
-              && typeOracle.canTriviallyCast(type2, type1));
+          assertFalse(typeOracle.castSucceedsTrivially(type1, type2)
+              && typeOracle.castSucceedsTrivially(type2, type1));
         }
       }
     }
@@ -228,8 +229,8 @@ public class JjsTypeTest extends TestCase {
     for (JReferenceType type1 : severalTypes()) {
       for (JReferenceType type2 : severalTypes()) {
         JReferenceType generalized = generalizeTypes(type1, type2);
-        assertTrue(typeOracle.canTriviallyCast(type1, generalized));
-        assertTrue(typeOracle.canTriviallyCast(type2, generalized));
+        assertTrue(typeOracle.castSucceedsTrivially(type1, generalized));
+        assertTrue(typeOracle.castSucceedsTrivially(type2, generalized));
       }
     }
   }
@@ -302,17 +303,25 @@ public class JjsTypeTest extends TestCase {
 
   public void testJavahSignatures() {
     for (JReferenceType type : severalTypes()) {
-      if (!(type instanceof JNullType)) {
-        assertEquals(type.getJavahSignatureName(), type.getNonNull().getJavahSignatureName());
-      }
+      assertSignaturesMatch(type,
+          new Function<JReferenceType, String>() {
+            @Override
+            public String apply(JReferenceType type) {
+              return type.getJavahSignatureName();
+            }
+          });
     }
   }
 
   public void testJsniSignatures() {
     for (JReferenceType type : severalTypes()) {
-      if (!(type instanceof JNullType)) {
-        assertEquals(type.getJsniSignatureName(), type.getNonNull().getJsniSignatureName());
-      }
+      assertSignaturesMatch(type,
+          new Function<JReferenceType, String>() {
+            @Override
+            public String apply(JReferenceType type) {
+              return type.getJsniSignatureName();
+            }
+          });
     }
   }
 
@@ -525,8 +534,8 @@ public class JjsTypeTest extends TestCase {
     classArrayList = createClass("java.util.ArrayList", classObject, false, false);
     classArrayList.addImplements(intfList);
 
-    classBnn = classB.getNonNull();
-    classBaseNn = classBase.getNonNull();
+    classBnn = classB.strengthenToNonNull();
+    classBaseNn = classBase.strengthenToNonNull();
 
     // 1 dimensional
     arrayOfObject = program.getTypeArray(classObject);
@@ -558,17 +567,26 @@ public class JjsTypeTest extends TestCase {
         program.getDeclaredTypes(), program.getModuleDeclaredTypes(), EMPTY_LIST);
 
     // Save off some miscellaneous types to test against
-    typeNull = program.getTypeNull();
+    typeNull = JReferenceType.NULL_TYPE;
   }
 
   private JReferenceType strongerType(JReferenceType type1, JReferenceType type2) {
-    return program.strengthenType(type1, Arrays.asList(type2));
+    return program.strengthenType(type1, program.generalizeTypes(Arrays.asList(type2)));
   }
 
   private JReferenceType generalizeTypes(JReferenceType type1, JReferenceType type2) {
-    return program.strengthenType(program.getTypeJavaLangObject(), Arrays.asList(type1, type2));
+    return program.strengthenType(program.getTypeJavaLangObject(),
+        program.generalizeTypes(Arrays.asList(type1, type2)));
   }
 
+  private void assertSignaturesMatch(
+      JReferenceType type, Function<JReferenceType, String> signatureForType) {
+    if (type.isNullType()) {
+      return;
+    }
+    assertEquals(signatureForType.apply(type), signatureForType.apply(type.strengthenToNonNull()));
+    assertEquals(signatureForType.apply(type), signatureForType.apply(type.weakenToNullable()));
+  }
   /**
    * Return several types, for exhaustively testing basic properties.
    */

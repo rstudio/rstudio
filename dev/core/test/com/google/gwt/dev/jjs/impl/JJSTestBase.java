@@ -337,7 +337,7 @@ public abstract class JJSTestBase extends TestCase {
     List<String> missing = FluentIterable.from(expectedMethodSnippets)
         .filter(Predicates.not(Predicates.in(actualMethodSnippets)))
         .toList();
-    assertTrue(missing + "not contained in " + actualMethodSnippets, missing.size() == 0);
+    assertTrue(missing + " not contained in " + actualMethodSnippets, missing.size() == 0);
   }
 
   protected void assertEqualBlock(String expected, String input)

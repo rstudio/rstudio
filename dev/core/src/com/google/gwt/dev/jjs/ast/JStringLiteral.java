@@ -33,8 +33,8 @@ public class JStringLiteral extends JValueLiteral {
   }
 
   @Override
-  public JNonNullType getType() {
-    return stringType.getNonNull();
+  public JReferenceType getType() {
+    return stringType.strengthenToNonNull();
   }
 
   public String getValue() {

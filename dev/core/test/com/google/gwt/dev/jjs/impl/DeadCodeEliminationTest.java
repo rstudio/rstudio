@@ -52,6 +52,22 @@ public class DeadCodeEliminationTest extends OptimizerTestBase {
     optimize("boolean", "return b ? b1 : false;").into("return b && b1;");
   }
 
+  public void testInstanceOf_nullability() throws Exception {
+    addSnippetClassDecl("static class A {};");
+    addSnippetClassDecl("static class B extends A {};");
+    addSnippetClassDecl("static class C {};");
+    Result result = optimize("void",
+        "A a = new A();",
+        "boolean test;",
+        "test = null instanceof B;",
+        "test = a instanceof A;");
+    result.intoString(
+        "EntryPoint$A a = new EntryPoint$A();",
+        "boolean test;",
+        "test = false;",
+        "test = a != null;");
+  }
+
   public void testSwitchOverConstant_noMatchingCase() throws Exception {
     optimize("int", "switch (0) { case 1: return 1; } return 0;")
         .into("return 0;");

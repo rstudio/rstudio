@@ -47,6 +47,7 @@ import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 import com.google.gwt.thirdparty.guava.common.annotations.VisibleForTesting;
+import com.google.gwt.thirdparty.guava.common.collect.Lists;
 import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
 import java.util.ArrayList;
@@ -173,9 +174,10 @@ public class MakeCallsStatic {
       newMethod.setSynthetic();
       newMethod.addThrownExceptions(x.getThrownExceptions());
 
+      JType thisParameterType = enclosingType.strengthenToNonNull();
       // Setup parameters; map from the old params to the new params
       JParameter thisParam =
-          JParameter.create(sourceInfo, "this$static", enclosingType.getNonNull(), true, true,
+          JParameter.create(sourceInfo, "this$static", thisParameterType, true, true,
               newMethod);
       Map<JParameter, JParameter> varMap = new IdentityHashMap<JParameter, JParameter>();
       for (int i = 0; i < x.getParams().size(); ++i) {
@@ -187,8 +189,8 @@ public class MakeCallsStatic {
       }
 
       // Set the new original param types based on the old original param types
-      List<JType> originalParamTypes = new ArrayList<JType>();
-      originalParamTypes.add(enclosingType.getNonNull());
+      List<JType> originalParamTypes = Lists.newArrayList();
+      originalParamTypes.add(thisParameterType);
       originalParamTypes.addAll(x.getOriginalParamTypes());
       newMethod.setOriginalTypes(x.getOriginalReturnType(), originalParamTypes);
 

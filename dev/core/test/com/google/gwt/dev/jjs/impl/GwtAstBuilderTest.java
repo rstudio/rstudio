@@ -30,7 +30,6 @@ import com.google.gwt.dev.jjs.ast.JClassLiteral;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JExpression;
 import com.google.gwt.dev.jjs.ast.JMethod;
-import com.google.gwt.dev.jjs.ast.JNullType;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JType;
@@ -116,7 +115,7 @@ public class GwtAstBuilderTest extends JJSTestBase {
         typeToCheck = (((JArrayType) type).getLeafType());
       }
       if (typeToCheck == null || !(typeToCheck instanceof JReferenceType)
-          || typeToCheck.equals(JNullType.INSTANCE)) {
+          || typeToCheck.equals(JReferenceType.NULL_TYPE)) {
         return;
       }
       if (!typeNames.contains(typeToCheck.getName())) {

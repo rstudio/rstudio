@@ -29,6 +29,7 @@ import com.google.gwt.dev.jjs.ast.JNewArray;
 import com.google.gwt.dev.jjs.ast.JParameter;
 import com.google.gwt.dev.jjs.ast.JPrimitiveType;
 import com.google.gwt.dev.jjs.ast.JProgram;
+import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JReturnStatement;
 import com.google.gwt.dev.jjs.ast.JThrowStatement;
 import com.google.gwt.dev.jjs.ast.JType;
@@ -49,23 +50,21 @@ public class ImplicitUpcastAnalyzer extends JVisitor {
 
   protected JMethod currentMethod;
   private final JType javaScriptObjectType;
-  private final JType nullType;
   private final JType throwableType;
 
   public ImplicitUpcastAnalyzer(JProgram program) {
     this.throwableType = program.getIndexedType("Throwable");
     this.javaScriptObjectType = program.getJavaScriptObject();
-    this.nullType = program.getTypeNull();
   }
 
   @Override
   public void endVisit(JBinaryOperation x, Context ctx) {
     if (x.isAssignment()) {
       processIfTypesNotEqual(x.getRhs().getType(), x.getLhs().getType(), x.getSourceInfo());
-    } else if (x.getRhs().getType() == nullType) {
-      processIfTypesNotEqual(nullType, x.getLhs().getType(), x.getSourceInfo());
-    } else if (x.getLhs().getType() == nullType) {
-      processIfTypesNotEqual(nullType, x.getRhs().getType(), x.getSourceInfo());
+    } else if (x.getRhs().getType().isNullType()) {
+      processIfTypesNotEqual(JReferenceType.NULL_TYPE, x.getLhs().getType(), x.getSourceInfo());
+    } else if (x.getLhs().getType().isNullType()) {
+      processIfTypesNotEqual(JReferenceType.NULL_TYPE, x.getRhs().getType(), x.getSourceInfo());
     } else if (x.getOp() == JBinaryOperator.CONCAT || x.getOp() == JBinaryOperator.EQ
         || x.getOp() == JBinaryOperator.NEQ) {
       /*
@@ -97,7 +96,7 @@ public class ImplicitUpcastAnalyzer extends JVisitor {
     if (x.getInitializer() == null && !x.isFinal()) {
       if (!(x.getType() instanceof JPrimitiveType)) {
         // if it is declared without an initial value, it defaults to null
-        processIfTypesNotEqual(nullType, x.getType(), x.getSourceInfo());
+        processIfTypesNotEqual(JReferenceType.NULL_TYPE, x.getType(), x.getSourceInfo());
       }
     }
   }

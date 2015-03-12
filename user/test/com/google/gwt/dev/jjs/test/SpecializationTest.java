@@ -51,7 +51,7 @@ public class SpecializationTest extends GWTTestCase {
   }
 
   public void testSpecialization() {
-    TestImpl<String, Object> succ = new TestImpl<String, Object>();
+    TestImpl<String, Object> succ = new TestImpl<>();
     try {
       succ.put("key", VALUE);
     } catch (Exception e) {
@@ -60,7 +60,7 @@ public class SpecializationTest extends GWTTestCase {
   }
 
   public void testSpecializationFallback() {
-    TestImpl<Integer, Object> succ = new TestImpl<Integer, Object>();
+    TestImpl<Integer, Object> succ = new TestImpl<>();
     try {
       succ.put(42, VALUE);
       fail();

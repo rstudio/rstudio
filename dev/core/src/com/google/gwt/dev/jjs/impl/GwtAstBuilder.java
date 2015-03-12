@@ -76,7 +76,6 @@ import com.google.gwt.dev.jjs.ast.JNewArray;
 import com.google.gwt.dev.jjs.ast.JNewInstance;
 import com.google.gwt.dev.jjs.ast.JNode;
 import com.google.gwt.dev.jjs.ast.JNullLiteral;
-import com.google.gwt.dev.jjs.ast.JNullType;
 import com.google.gwt.dev.jjs.ast.JParameter;
 import com.google.gwt.dev.jjs.ast.JParameterRef;
 import com.google.gwt.dev.jjs.ast.JPostfixOperation;
@@ -2806,7 +2805,7 @@ public class GwtAstBuilder {
         localType = typeMap.get(resolvedType);
       } else {
         // Special case, a statically unreachable local type.
-        localType = JNullType.INSTANCE;
+        localType = JReferenceType.NULL_TYPE;
       }
       SourceInfo info = makeSourceInfo(x);
       JLocal newLocal =

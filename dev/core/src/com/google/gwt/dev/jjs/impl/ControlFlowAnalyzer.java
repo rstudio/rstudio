@@ -835,8 +835,8 @@ public class ControlFlowAnalyzer {
       JPrimitiveType charType = program.getTypePrimitiveChar();
       JClassType stringType = program.getTypeJavaLangString();
       if (type instanceof JReferenceType
-          && !program.typeOracle.canTriviallyCast((JReferenceType) type, stringType)
-          && type != program.getTypeNull()) {
+          && !program.typeOracle.castSucceedsTrivially((JReferenceType) type, stringType)
+          && !type.isNullType()) {
         /*
          * Any reference types (except String, which works by default) that take
          * part in a concat must rescue java.lang.Object.toString().

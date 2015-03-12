@@ -26,7 +26,6 @@ import com.google.gwt.dev.jjs.ast.JInstanceOf;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JModVisitor;
-import com.google.gwt.dev.jjs.ast.JNullType;
 import com.google.gwt.dev.jjs.ast.JPrimitiveType;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
@@ -62,7 +61,7 @@ public class ImplementCastsAndTypeChecks {
         return;
       }
       SourceInfo info = x.getSourceInfo();
-      if (pruneTrivialCasts && toType instanceof JNullType) {
+      if (pruneTrivialCasts && toType.isNullType()) {
         /**
          * A null type cast is used as a placeholder value to indicate that the
          * user tried a cast that couldn't possibly work. Typically this means
@@ -93,7 +92,7 @@ public class ImplementCastsAndTypeChecks {
           refType =  (JReferenceType) program.normalizeJsoType(refType);
         }
 
-        if (pruneTrivialCasts && program.typeOracle.canTriviallyCast(argType, refType)) {
+        if (pruneTrivialCasts && program.typeOracle.castSucceedsTrivially(argType, refType)) {
           // just remove the cast
           ctx.replaceMe(curExpr);
           return;
@@ -199,7 +198,7 @@ public class ImplementCastsAndTypeChecks {
         toType =  (JReferenceType) program.normalizeJsoType(toType);
       }
 
-      boolean isTrivialCast = program.typeOracle.canTriviallyCast(argType, toType)
+      boolean isTrivialCast = program.typeOracle.castSucceedsTrivially(argType, toType)
           // don't depend on type-tightener having run
           || (program.typeOracle.willCrossCastLikeJso(argType)
               && program.typeOracle.willCrossCastLikeJso(toType));

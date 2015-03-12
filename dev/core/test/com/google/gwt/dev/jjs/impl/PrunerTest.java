@@ -16,7 +16,6 @@
 package com.google.gwt.dev.jjs.impl;
 
 import com.google.gwt.dev.jjs.ast.JMethod;
-import com.google.gwt.dev.jjs.ast.JNullType;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.js.JsniMethodBody;
 import com.google.gwt.dev.util.arg.SourceLevel;
@@ -208,7 +207,7 @@ public class PrunerTest extends OptimizerTestBase {
     Result result = optimize("void", "fun(null);");
     assertNull(result.findClass("EntryPoint$A"));
     assertEquals("test.EntryPoint.fun(Ltest/EntryPoint$A;)Z", result.findMethod("fun").toString());
-    assertTrue(result.findMethod("fun").getParams().get(0).getType() instanceof JNullType);
+    assertTrue(result.findMethod("fun").getParams().get(0).getType().isNullType());
   }
 
   /**

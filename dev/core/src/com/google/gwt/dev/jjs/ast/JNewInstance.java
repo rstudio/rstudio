@@ -51,7 +51,7 @@ public class JNewInstance extends JMethodCall {
   }
 
   @Override
-  public JNonNullType getType() {
+  public JReferenceType getType() {
     return getTarget().getNewType();
   }
 
