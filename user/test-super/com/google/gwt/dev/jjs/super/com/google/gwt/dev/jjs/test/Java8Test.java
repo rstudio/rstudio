@@ -19,7 +19,7 @@ import com.google.gwt.core.client.GwtScriptOnly;
 import com.google.gwt.junit.client.GWTTestCase;
 
 /**
- * Tests Java 8 features. It is super sourced so that gwt can be compiles under Java 6.
+ * Tests Java 8 features. It is super sourced so that gwt can be compiles under Java 7.
  *
  * IMPORTANT: For each test here there must exist the corresponding method in the non super sourced
  * version.

@@ -31,7 +31,6 @@ import com.google.gwt.thirdparty.guava.common.collect.ImmutableMap;
 import com.google.gwt.thirdparty.guava.common.collect.ListMultimap;
 import com.google.gwt.thirdparty.guava.common.collect.Maps;
 import com.google.gwt.thirdparty.guava.common.io.BaseEncoding;
-import com.google.gwt.util.tools.Utility;
 
 import org.eclipse.jdt.core.compiler.CharOperation;
 import org.eclipse.jdt.internal.compiler.ClassFile;
@@ -536,26 +535,19 @@ public class JdtCompiler {
 
     private NameEnvironmentAnswer doFindTypeInClassPath(String internalName) {
       URL resource = getClassLoader().getResource(internalName + ".class");
-      if (resource == null) {
-        return null;
-      }
+      if (resource != null) {
+        try (InputStream openStream = resource.openStream()) {
 
-      InputStream openStream = null;
-      try {
-        openStream = resource.openStream();
-        ClassFileReader classFileReader =
-            ClassFileReader.read(openStream, resource.toExternalForm(), true);
-        // In case insensitive file systems we might have found a resource  whose name is different
-        // in case and should not be returned as an answer.
-        if (internalName.equals(CharOperation.charToString(classFileReader.getName()))) {
-          return new NameEnvironmentAnswer(classFileReader, null);
+          ClassFileReader classFileReader =
+              ClassFileReader.read(openStream, resource.toExternalForm(), true);
+          // In case insensitive file systems we might have found a resource  whose name is different
+          // in case and should not be returned as an answer.
+          if (internalName.equals(CharOperation.charToString(classFileReader.getName()))) {
+            return new NameEnvironmentAnswer(classFileReader, null);
+          }
+        } catch (IOException | ClassFormatException e) {
+          // returns null indicating a failure.
         }
-      } catch (IOException e) {
-        // returns null indicating a failure.
-      } catch (ClassFormatException e) {
-        // returns null indicating a failure.
-      } finally {
-        Utility.close(openStream);
       }
       // LambdaMetafactory is byte-code side artifact of JDT compile and actually not referenced by
       // our AST. However, this class is only available in JDK8+ so JdtCompiler fails to validate

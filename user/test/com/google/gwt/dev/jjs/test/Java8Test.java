@@ -37,8 +37,7 @@ public class Java8Test extends GWTTestCase {
   @Override
   public void runTest() throws Throwable {
     // Only run these tests if -sourceLevel 8 (or greater) is enabled.
-    if (JUnitShell.getCompilerOptions().getSourceLevel()
-        .compareTo(SourceLevel.JAVA8) >= 0 && System.getProperty("java.version").startsWith("1.8")) {
+    if (JUnitShell.getCompilerOptions().getSourceLevel().compareTo(SourceLevel.JAVA8) >= 0) {
       super.runTest();
     }
   }
@@ -46,8 +45,7 @@ public class Java8Test extends GWTTestCase {
   public void testLambdaNoCapture() {
     // Make sure we are using the right Java8Test if the source compatibility level is set to Java 8
     // or above.
-    assertFalse((JUnitShell.getCompilerOptions().getSourceLevel()
-        .compareTo(SourceLevel.JAVA8) >= 0));
+    assertFalse(JUnitShell.getCompilerOptions().getSourceLevel().compareTo(SourceLevel.JAVA8) >= 0);
   }
 
   public void testLambdaCaptureLocal() {

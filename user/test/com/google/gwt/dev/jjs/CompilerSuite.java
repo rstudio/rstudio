@@ -88,9 +88,9 @@ public class CompilerSuite {
     suite.addTestSuite(InitialLoadSequenceTest.class);
     suite.addTestSuite(InnerClassTest.class);
     suite.addTestSuite(InnerOuterSuperTest.class);
-    // Java7Test cannot be the first one in a suite. It uses a hack
-    // to avoid executing if not in a Java 7+ environment.
     suite.addTestSuite(Java7Test.class);
+    // Java8Test cannot be the first one in a suite. It uses a hack
+    // to avoid executing if not in a Java 8+ environment.
     suite.addTestSuite(Java8Test.class);
     suite.addTestSuite(JavaAccessFromJavaScriptTest.class);
     suite.addTestSuite(JsniConstructorTest.class);
