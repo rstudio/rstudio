@@ -49,7 +49,7 @@ public class BeanParser implements ElementParser {
   private static final Map<String, String> ADD_PROPERTY_TO_SETTER_MAP =
       new HashMap<String, String>() { {
         put("addStyleNames", "addStyleName");
-        put("addStyleDependentNames", "addStyleDepndentName");
+        put("addStyleDependentNames", "addStyleDependentName");
       }};
 
   private final UiBinderContext context;
