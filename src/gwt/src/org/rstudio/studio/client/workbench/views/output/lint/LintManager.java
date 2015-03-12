@@ -19,6 +19,7 @@ import org.rstudio.core.client.Invalidation;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.RetinaStyleInjector;
+import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
@@ -67,6 +68,19 @@ public class LintManager
       excludeCurrentStatement_ = true;
    }
    
+   // NOTE: by 'lintable' we mean 'uses RStudio-internal' linter
+   // rather than Ace worker
+   private boolean isLintableDocument()
+   {
+      TextFileType type = docDisplay_.getFileType();
+      return type.isR() ||
+             type.isC() ||
+             type.isCpp() ||
+             type.isRmd() ||
+             type.isRnw() ||
+             type.isRpres();
+   }
+   
    public LintManager(TextEditingTarget target)
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
@@ -80,6 +94,9 @@ public class LintManager
          @Override
          public void run()
          {
+            if (!isLintableDocument())
+               return;
+            
             invalidation_.invalidate();
             LintContext context = new LintContext(
                   invalidation_.getInvalidationToken(),
