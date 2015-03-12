@@ -119,6 +119,7 @@
 * Updated rendering engine to Qt 5.4 for improved performance
 * Windows: updated to MSYS SSH 1000.18
 * Windows: check HKCU in addition to HKLM when scanning for R versions
+* Windows: Use Rtools 3.3 when running under R 3.2
 * Bind Cmd+Shift+K shortcut to Compile PDF and Preview HTML
 * When evaluating R strings ensure 'try' is called from base package
 * Add Clear Recent Projects menu item to toolbar project menu
@@ -148,13 +149,15 @@
 * Eliminate race condition that could cause crash when polling child processes
 * Correct handling for breakpoints in files with non-ascii filenames on Windows
 * Next/previous word behavior in Rmd is now consistent with behavior in R scripts
+* Don't parse YAML front matter if not preceded by whitespace
+* Only hide object files (e.g. *.o) in Files pane when in package src directory
 * Ensure cursor is always visible after source navigation
 * Server: Ensure that LANG is populated from system default when not inherited
 * Server: Provide required domain socket permissions during startup
 * IE 11: Strip unprintable unicode characters in Rmd front matter dates
 * Only filter object file listings in 'src' directory
+* Fix crash in R tokenizer when source files have binary 0xFFF
 * Correctly navigate to package inst/include directory for template errors 
-
 
 
 
