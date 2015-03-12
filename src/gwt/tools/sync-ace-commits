@@ -82,6 +82,7 @@ git merge \
     origin/feature/vim-page-movement \
     origin/patch/dont-warn-on-scroll \
     origin/bugfix/vim-search-scrolling \
+    origin/patch/worker-timeout \
     -m "merge branches"
 
 ## git merge \

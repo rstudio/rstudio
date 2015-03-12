@@ -4613,6 +4613,12 @@ public class TextEditingTarget implements
                public void execute(Boolean arg) {
                   docDisplay.syncDiagnosticsPrefs();
                }}));
+      releaseOnDismiss.add(prefs.backgroundLintDelayMs().bind(
+            new CommandWithArg<Integer>() {
+               public void execute(Integer arg) {
+                  docDisplay.syncDiagnosticsPrefs();
+               }}));
+      
    }
    
    public static void syncFontSize(

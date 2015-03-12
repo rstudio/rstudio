@@ -520,6 +520,8 @@ public class AceEditor implements DocDisplay,
             fileType_.getEditorLanguage().useAceLanguageTools();
 
       getSession().setUseWorker(useWorker);
+      getSession().setWorkerTimeout(
+            uiPrefs_.backgroundLintDelayMs().getValue());
    }
    
    private void syncWrapLimit()

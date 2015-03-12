@@ -218,5 +218,11 @@ public class EditSession extends JavaScriptObject
       result.end.$insertRight = true;
       return result;
    }-*/;
+   
+   public native final void setWorkerTimeout(int delayMs) /*-{
+      var worker = this.$worker;
+      if (worker && worker.setTimeout)
+         worker.setTimeout(delayMs);
+   }-*/;
 
 }
