@@ -349,7 +349,7 @@ var RCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) {
             continue;
          }
 
-         if (lookingAtComma(cursor))
+         if (cursor.currentValue() === ",")
          {
             if (!cursor.moveToNextToken())
                return false;
@@ -629,10 +629,6 @@ var RCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) {
       
    };
 
-   function lookingAtComma(cursor) {
-      return /,\s*$/.test(cursor.currentValue()) && cursor.currentType() === "text";
-   }
-
    // Get function arguments, starting at the start of a function definition, e.g.
    //
    // x <- function(a = 1, b = 2, c = list(a = 1, b = 2), ...)
@@ -667,9 +663,9 @@ var RCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) {
          // type 'text' and ends with a comma.
          // Once we encounter such a token, we look ahead to find an
          // identifier (it signifies an argument name)
-         if (lookingAtComma(tokenCursor))
+         if (tokenCursor.currentValue() === ",")
          {
-            while (lookingAtComma(tokenCursor))
+            while (tokenCursor.currentValue() === ",")
                if (!tokenCursor.moveToNextToken())
                   break;
             
