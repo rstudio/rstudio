@@ -17,6 +17,7 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.MinimalRebuildCache;
 import com.google.gwt.dev.jjs.ast.Context;
+import com.google.gwt.dev.jjs.ast.HasName;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JInterfaceType;
@@ -27,10 +28,12 @@ import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.ast.JVisitor;
 import com.google.gwt.thirdparty.guava.common.collect.Iterables;
+import com.google.gwt.thirdparty.guava.common.collect.Lists;
 import com.google.gwt.thirdparty.guava.common.collect.Maps;
 import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
-import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -252,8 +255,9 @@ public class JsInteropRestrictionChecker extends JVisitor {
   }
 
   private void checkJsFunctionHierarchy(JDeclaredType type) {
-    Collection<JInterfaceType> implementedJsFunctions =
-        jprogram.typeOracle.getImplementedJsFunctions(type);
+    List<JInterfaceType> implementedJsFunctions =
+        Lists.newArrayList(jprogram.typeOracle.getImplementedJsFunctions(type));
+    Collections.sort(implementedJsFunctions, HasName.BY_NAME_COMPARATOR);
     if (implementedJsFunctions.size() > 1) {
       logError("'%s' implements more than one JsFunction interfaces: %s", type.getName(),
           implementedJsFunctions);
