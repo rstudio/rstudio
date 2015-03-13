@@ -44,11 +44,11 @@ else()
 endif()
 set(LIBCLANG_DIR "${RSTUDIO_DEPENDENCIES_DIR}/common/libclang/${LIBCLANG_VERSION}")
 if(NOT EXISTS "${LIBCLANG_DIR}")
-  message(FATAL_ERROR "liblang ${LIBCLANG_VERSION} not found  (re-run install-dependencies script to install)")
+  message(FATAL_ERROR "libclang ${LIBCLANG_VERSION} not found  (re-run install-dependencies script to install)")
 endif()
 set(LIBCLANG_HEADERS_DIR "${RSTUDIO_DEPENDENCIES_DIR}/common/libclang/builtin-headers")
 if(NOT EXISTS "${LIBCLANG_HEADERS_DIR}")
-  message(FATAL_ERROR "liblang builtin-headers not found  (re-run install-dependencies script to install)")
+  message(FATAL_ERROR "libclang builtin-headers not found  (re-run install-dependencies script to install)")
 endif()
 
 
