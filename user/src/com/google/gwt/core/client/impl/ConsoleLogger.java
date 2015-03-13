@@ -61,7 +61,14 @@ public class ConsoleLogger {
   }-*/;
 
   private native String getBackingError(Throwable t) /*-{
+    // Converts CollectorLegacy (IE8/IE9/Safari5) function stack to something readable.
+    function stringify(fnStack) {
+      if (!fnStack || fnStack.length == 0) {
+        return "";
+      }
+      return "\t" + fnStack.join("\n\t");
+    }
     var backingError = t.__gwt$backingJsError;
-    return backingError && backingError.stack;
+    return backingError && (backingError.stack || stringify(backingError.fnStack));
   }-*/;
 }

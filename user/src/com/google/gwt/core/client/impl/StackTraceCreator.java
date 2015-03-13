@@ -68,13 +68,14 @@ public class StackTraceCreator {
     @Override
     public native void collect(Object t, Object thrownIgnored) /*-{
       var seen = {};
-      t.fnStack = [];
+      var fnStack = [];
+      t.__gwt$backingJsError = { fnStack: fnStack };
 
       // Ignore the collect() call
       var callee = arguments.callee.caller;
       while (callee) {
         var name = @StackTraceCreator::getFunctionName(*)(callee);
-        t.fnStack.push(name);
+        fnStack.push(name);
 
         // Avoid infinite loop by associating names to function objects.  We
         // record each caller in the withThisName variable to handle functions
@@ -115,14 +116,15 @@ public class StackTraceCreator {
 
     @Override
     public native void collect(Object t, Object jsThrownIgnored) /*-{
-      t.fnStack = [];
+      var fnStack = [];
+      t.__gwt$backingJsError = { fnStack: fnStack };
       for (var i = 0; i < $stackDepth; i++) {
         var location = $location[i];
         var fn = $stack[i];
         var name = fn ? @StackTraceCreator::getFunctionName(*)(fn) : @StackTraceCreator::ANONYMOUS;
 
         // Reverse the order
-        t.fnStack[$stackDepth - i - 1] = [name, location];
+        fnStack[$stackDepth - i - 1] = [name, location];
       }
     }-*/;
 
@@ -370,8 +372,9 @@ public class StackTraceCreator {
     return !!Error.stackTraceLimit || "stack" in new Error();
   }-*/;
 
-  private static native JsArrayString getFnStack(Object e) /*-{
-    return (e && e.fnStack && e.fnStack instanceof Array) ? e.fnStack : [];
+  private static native JsArrayString getFnStack(Object t) /*-{
+    var e = t.__gwt$backingJsError;
+    return (e && e.fnStack) ? e.fnStack : [];
   }-*/;
 
   private static native String getFunctionName(JavaScriptObject fn) /*-{
