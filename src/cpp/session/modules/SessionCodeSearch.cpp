@@ -1339,12 +1339,14 @@ public:
 
    SourceItem(Type type,
               const std::string& name,
+              const std::string& parentName,
               const std::string& extraInfo,
               const std::string& context,
               int line,
               int column)
       : type_(type),
         name_(name),
+        parentName_(parentName),
         extraInfo_(extraInfo),
         context_(context),
         line_(line),
@@ -1356,6 +1358,7 @@ public:
 
    Type type() const { return type_; }
    const std::string& name() const { return name_; }
+   const std::string& parentName() const { return parentName_; }
    const std::string& extraInfo() const { return extraInfo_; }
    const std::string& context() const { return context_; }
    int line() const { return line_; }
@@ -1364,6 +1367,7 @@ public:
 private:
    Type type_;
    std::string name_;
+   std::string parentName_;
    std::string extraInfo_;
    std::string context_;
    int line_;
@@ -1410,6 +1414,7 @@ SourceItem fromRSourceItem(const r_util::RSourceItem& rSourceItem)
    // return source item
    return SourceItem(type,
                      rSourceItem.name(),
+                     "",
                      extraInfo,
                      rSourceItem.context(),
                      rSourceItem.line(),
@@ -1455,6 +1460,7 @@ SourceItem fromCppDefinition(const clang::CppDefinition& cppDefinition)
    return SourceItem(
       type,
       cppDefinition.name,
+      cppDefinition.parentName,
       "",
       module_context::createAliasedPath(cppDefinition.location.filePath),
       safe_convert::numberTo<int>(cppDefinition.location.line, 1),
@@ -1575,6 +1581,7 @@ Error searchCode(const json::JsonRpcRequest& request,
    json::Object src;
    src["type"] = toJsonArray<int>(srcItemsFiltered, &SourceItem::type);
    src["name"] = toJsonArray<std::string>(srcItemsFiltered, &SourceItem::name);
+   src["parent_name"] = toJsonArray<std::string>(srcItemsFiltered, &SourceItem::parentName);
    src["extra_info"] = toJsonArray<std::string>(srcItemsFiltered, &SourceItem::extraInfo);
    src["context"] = toJsonArray<std::string>(srcItemsFiltered, &SourceItem::context);
    src["line"] = toJsonArray<int>(srcItemsFiltered, &SourceItem::line);

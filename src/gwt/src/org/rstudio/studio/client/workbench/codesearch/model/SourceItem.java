@@ -40,6 +40,10 @@ public class SourceItem extends JavaScriptObject
    public final native String getName() /*-{
       return this.name;
    }-*/;
+   
+   public final native String getParentName() /*-{
+      return this.parent_name;
+   }-*/;
 
    public final native String getExtraInfo() /*-{
       return this.extra_info;
