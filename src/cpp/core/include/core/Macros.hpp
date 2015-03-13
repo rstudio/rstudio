@@ -87,8 +87,8 @@ bool return_true(const T& object) { return true; }
 
 #define REPORT(timer, message)                                                 \
    std::cout << "(profile) " << message << std::endl;                          \
-   std::cout << ::boost::timer::format(timer.elapsed(), 3);                    \
-   timer.stop(); \
+   std::cout << ::boost::timer::format(timer.elapsed(), 3) << std::endl;       \
+   timer.stop();                                                               \
    timer = ::boost::timer::cpu_timer();
 
 // Some insanity to ensure the __LINE__ macro is expanded
