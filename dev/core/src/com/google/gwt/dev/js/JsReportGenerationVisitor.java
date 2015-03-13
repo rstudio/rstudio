@@ -32,7 +32,6 @@ import com.google.gwt.dev.util.TextOutput;
 import com.google.gwt.thirdparty.guava.common.annotations.VisibleForTesting;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
 
-import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -41,7 +40,7 @@ import java.util.List;
  */
 public class JsReportGenerationVisitor extends
     JsSourceGenerationVisitorWithSizeBreakdown {
-  private final LinkedList<Range> ranges = Lists.newLinkedList();
+  private final List<Range> ranges = Lists.newArrayList();
   private final TextOutput out;
   private final boolean needSourcemapNames;
 
@@ -164,9 +163,9 @@ public class JsReportGenerationVisitor extends
       // Expand overlapping range.
       Range expandedRange =
           previousRange.withNewEnd(out.getPosition(), out.getLine(), out.getColumn());
-      Range removedRange = ranges.removeLast();
+      int lastIndex = ranges.size() - 1;
+      Range removedRange = ranges.set(lastIndex, expandedRange);
       assert removedRange == previousRange;
-      ranges.add(expandedRange);
       previousRange = expandedRange;
     }
   }

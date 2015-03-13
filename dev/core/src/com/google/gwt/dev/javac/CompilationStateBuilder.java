@@ -510,12 +510,9 @@ public class CompilationStateBuilder {
 
       CompilationUnit cachedUnit = unitCache.find(resource.getPathPrefix() + resource.getPath());
 
-      ContentId resourceContentId = getResourceContentId(resource);
-      if (cachedUnit != null && cachedUnit.getLastModified() == resource.getLastModified()
-          && !cachedUnit.getContentId().equals(resourceContentId)) {
-        logger.log(TreeLogger.WARN,
-            "Modification date hasn't changed but contentId has changed for "
-            + resource.getLocation());
+      if (cachedUnit != null && cachedUnit.getLastModified() == resource.getLastModified()) {
+        // As verification is costly, this only runs the check when assertions are enabled.
+        assert verifyContentId(logger, resource, cachedUnit);
       }
 
       // Try to rescue cached units from previous sessions where a jar has been
@@ -561,6 +558,14 @@ public class CompilationStateBuilder {
     compilationState.incrementStaticSourceCount(sourceCount);
     compilationState.incrementCachedStaticSourceCount(cachedSourceCount);
     return compilationState;
+  }
+
+  private boolean verifyContentId(TreeLogger logger, Resource resource, CompilationUnit cachedUnit) {
+    if (!cachedUnit.getContentId().equals(getResourceContentId(resource))) {
+      logger.log(TreeLogger.WARN, "Modification date hasn't changed but contentId has changed for "
+          + resource.getLocation());
+    }
+    return true;
   }
 
   private ContentId getResourceContentId(Resource resource) {

@@ -438,7 +438,8 @@ public class JdtCompiler {
       char[] internalNameChars = CharOperation.concatWith(compoundTypeName, '/');
       String internalName = String.valueOf(internalNameChars);
 
-      if (isPackage(internalName)) {
+      // If we already know this is a package, take the shortcut.
+      if (JreIndex.contains(internalName) || packages.contains(internalName)) {
         return null;
       }
 
