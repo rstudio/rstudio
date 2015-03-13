@@ -110,6 +110,7 @@ set (SESSION_SOURCE_FILES
    modules/SessionProfiler.cpp
    modules/SessionRCompletions.cpp
    modules/SessionRHooks.cpp
+   modules/SessionRParser.cpp
    modules/SessionRPubs.cpp
    modules/SessionRSConnect.cpp
    modules/SessionShinyViewer.cpp
@@ -321,6 +322,7 @@ if(APPLE)
         ${SESSION_SYSTEM_LIBRARIES}
         ${MAC_APPKIT_LIBRARY})
 endif()
+
 target_link_libraries(rsession
    rstudio-core
    rstudio-core-hunspell

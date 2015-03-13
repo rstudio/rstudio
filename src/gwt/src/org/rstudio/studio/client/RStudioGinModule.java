@@ -134,6 +134,7 @@ import org.rstudio.studio.client.workbench.views.output.find.FindOutputPane;
 import org.rstudio.studio.client.workbench.views.output.find.FindOutputPresenter;
 import org.rstudio.studio.client.workbench.views.output.find.FindOutputTab;
 import org.rstudio.studio.client.workbench.views.output.find.model.FindInFilesServerOperations;
+import org.rstudio.studio.client.workbench.views.output.lint.model.LintServerOperations;
 import org.rstudio.studio.client.workbench.views.output.markers.MarkersOutputPane;
 import org.rstudio.studio.client.workbench.views.output.markers.MarkersOutputPresenter;
 import org.rstudio.studio.client.workbench.views.output.markers.MarkersOutputTab;
@@ -354,6 +355,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(PackratServerOperations.class).to(RemoteServer.class);
       bind(CppServerOperations.class).to(RemoteServer.class);
       bind(MarkersServerOperations.class).to(RemoteServer.class);
+      bind(LintServerOperations.class).to(RemoteServer.class);
 
       bind(WorkbenchMainView.class).to(WorkbenchScreen.class) ;
 

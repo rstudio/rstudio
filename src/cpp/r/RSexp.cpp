@@ -84,7 +84,19 @@ bool fillVectorString(SEXP object, std::vector<std::string>* pVector)
    
    return true;
 }
+
+bool fillSetString(SEXP object, std::set<std::string>* pSet)
+{
+   if (TYPEOF(object) != STRSXP)
+      return false;
    
+   int n = Rf_length(object);
+   for (int i = 0; i < n; i++)
+      pSet->insert(std::string(CHAR(STRING_ELT(object, i))));
+   
+   return true;
+}
+
 SEXP findNamespace(const std::string& name)
 {
    if (name.empty())
@@ -401,7 +413,44 @@ Error extract(SEXP valueSEXP, std::vector<std::string>* pVector)
    
    return Success();
 }
+
+Error extract(SEXP valueSEXP, std::set<std::string>* pSet)
+{
+   if (TYPEOF(valueSEXP) != STRSXP)
+      return Error(errc::UnexpectedDataTypeError, ERROR_LOCATION);
    
+   pSet->clear();
+   for (int i=0; i<Rf_length(valueSEXP); i++)
+      pSet->insert(Rf_translateChar(STRING_ELT(valueSEXP, i)));
+   
+   return Success();
+}
+
+Error extract(SEXP valueSEXP, std::map< std::string, std::set<std::string> >* pMap)
+{
+   if (TYPEOF(valueSEXP) != VECSXP)
+      return Error(errc::UnexpectedDataTypeError, ERROR_LOCATION);
+   
+   if (Rf_length(valueSEXP) == 0)
+      return Success();
+   
+   SEXP namesSEXP = r::sexp::getNames(valueSEXP);
+   if (Rf_isNull(namesSEXP))
+      return Error(errc::UnexpectedDataTypeError, ERROR_LOCATION);
+   
+   for (int i = 0; i < Rf_length(valueSEXP); ++i)
+   {
+      SEXP el = VECTOR_ELT(valueSEXP, i);
+      std::set<std::string> contents;
+      for (int j = 0; j < Rf_length(el); ++j)
+         contents.insert(std::string(Rf_translateChar(STRING_ELT(el, j))));
+      
+      std::string name = std::string(Rf_translateChar(STRING_ELT(namesSEXP, i)));
+      pMap->operator [](name) = contents;
+   }
+   
+   return Success();
+}
    
 SEXP create(const json::Value& value, Protect* pProtect)
 {
@@ -574,7 +623,6 @@ SEXP create(const std::vector<bool>& value, Protect *pProtect)
    
    return valueSEXP;
 }
-
    
 namespace {  
 int secondsSinceEpoch(boost::posix_time::ptime date)
@@ -672,7 +720,30 @@ SEXP create(const std::set<std::string> &value, Protect *pProtect)
    return charSEXP;
 }
 
-SEXP createList(std::vector<std::string> names, Protect* pProtect)
+SEXP create(const ListBuilder& builder, Protect *pProtect)
+{
+   int n = builder.names().size();
+
+   SEXP resultSEXP;
+   pProtect->add(resultSEXP = Rf_allocVector(VECSXP, n));
+
+   SEXP namesSEXP;
+   pProtect->add(namesSEXP = Rf_allocVector(STRSXP, n));
+
+   for (int i = 0; i < n; i++)
+   {
+      SET_VECTOR_ELT(resultSEXP, i, builder.objects()[i]);
+      SET_STRING_ELT(namesSEXP, i, Rf_mkChar(builder.names()[i].c_str()));
+   }
+
+   // NOTE: empty lists are unnamed
+   if (n > 0)
+      Rf_setAttrib(resultSEXP, R_NamesSymbol, namesSEXP);
+   
+   return resultSEXP;
+}
+
+SEXP createList(const std::vector<std::string>& names, Protect* pProtect)
 {
    std::size_t n = names.size();
    SEXP listSEXP;
@@ -760,6 +831,11 @@ void printValue(SEXP object)
    
    if (error)
       LOG_ERROR(error);
+}
+
+bool inherits(SEXP object, const char* S3Class)
+{
+   return Rf_inherits(object, S3Class);
 }
 
 } // namespace sexp   

@@ -14,6 +14,8 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text.ace;
 
+import org.rstudio.studio.client.workbench.views.output.lint.model.AceAnnotation;
+
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 
@@ -190,4 +192,37 @@ public class EditSession extends JavaScriptObject
    public native final void clearBreakpoints(int[] lines) /*-{
       this.clearBreakpoints(lines);
    }-*/;
+   
+   public native final void setAnnotations(JsArray<AceAnnotation> annotations) /*-{
+      this.setAnnotations(annotations);
+   }-*/;
+   
+   public native final JsArray<AceAnnotation> getAnnotations() /*-{
+      return this.getAnnotations();
+   }-*/;
+   
+   public native final Markers getMarkers(boolean inFront) /*-{
+      return this.getMarkers(inFront);
+   }-*/;
+   
+   public native final Marker getMarker(int id) /*-{
+      return this.getMarkers(true)[id];
+   }-*/;
+   
+   public final native Range createAnchoredRange(Position start,
+                                                 Position end) /*-{
+      var Range = $wnd.require("ace/range").Range;
+      var result = new Range();
+      result.start = this.doc.createAnchor(start.row, start.column);
+      result.end = this.doc.createAnchor(end.row, end.column);
+      result.end.$insertRight = true;
+      return result;
+   }-*/;
+   
+   public native final void setWorkerTimeout(int delayMs) /*-{
+      var worker = this.$worker;
+      if (worker && worker.setTimeout)
+         worker.setTimeout(delayMs);
+   }-*/;
+
 }

@@ -571,9 +571,19 @@
 })
 
 .rs.addFunction("objectsOnSearchPath", function(token = "",
-                                                caseInsensitive = FALSE)
+                                                caseInsensitive = FALSE,
+                                                excludeGlobalEnv = FALSE)
 {
    search <- search()
+   startIdx <- 1
+   range <- 1:length(search)
+   
+   if (excludeGlobalEnv)
+   {
+      startIdx <- 2
+      search <- search[-1]
+      range <- range[-1]
+   }
    
    if (nzchar(token))
    {
@@ -582,13 +592,13 @@
          token <- .rs.asCaseInsensitiveRegex(token)
       pattern <- paste("^", token, sep = "")
       
-      objects <- lapply(1:length(search), function(i) {
+      objects <- lapply(range, function(i) {
          ls(pos = i, all.names = TRUE, pattern = pattern)
       })
    }
    else
    {
-      objects <- lapply(1:length(search), function(i) {
+      objects <- lapply(range, function(i) {
          ls(pos = i, all.names = TRUE)
       })
    }
@@ -956,4 +966,113 @@
    common <- min(indents)
    result <- paste(substring(splat, common, nchar(string)), collapse = "\n")
    .rs.trimWhitespace(sprintf(result, ...))
+})
+
+.rs.addFunction("parseNamespaceImports", function(path)
+{
+   output <- list(
+      import = character(),
+      importFrom = list()
+   )
+   
+   if (!file.exists(path))
+      return(output)
+   
+   parsed = tryCatch(
+      suppressWarnings(parse(path)),
+      error = function(e) NULL
+   )
+   
+   if (is.null(parsed))
+      return(output)
+   
+   # Loop over parsed entries and fill 'output'
+   for (i in seq_along(parsed))
+   {
+      directive <- parsed[[i]]
+      if (length(directive) < 2) next
+      
+      directiveName <- as.character(directive[[1]])
+      pkgName <- as.character(directive[[2]])
+      
+      if (directiveName == "import")
+      {
+         output$import <- sort(unique(c(output$import, pkgName)))
+         next
+      }
+      
+      if (directiveName == "importFrom")
+      {
+         exports <- character(length(directive) - 2)
+         for (i in 3:length(directive))
+            exports[[i - 2]] <- as.character(directive[[i]])
+         output$importFrom[[pkgName]] <- sort(unique(c(output$importFrom[[pkgName]], exports)))
+         next
+      }
+   }
+   
+   output
+   
+})
+
+.rs.addFunction("validateFunctionCall", function(fnNameString,
+                                                 fnCallString,
+                                                 envir = parent.frame(1))
+{
+   message <- .rs.scalar("")
+   fnObject <- tryCatch(
+      .rs.getAnywhere(fnNameString, envir = envir),
+      error = function(e) NULL
+   )
+   
+   if (is.null(fnObject))
+      return(message)
+   
+   ## TODO: handle primitives
+   if (is.primitive(fnObject))
+      return(message)
+   
+   ## TODO: think about why this might occur
+   if (!is.function(fnObject))
+      return(message)
+   
+   fnCall <- tryCatch(
+      suppressWarnings(parse(text = fnCallString)[[1]]),
+      error = function(e) NULL
+   )
+   
+   if (is.null(fnCall))
+      return(message)
+   
+   callFormals <- setdiff(names(fnCall), "")
+   formals <- formals(fnObject)
+   names <- names(formals)
+   
+   ## TODO: Validate when we have '...'?
+   if ("..." %in% names)
+      return(message)
+   
+   invalidNames <- callFormals[!(callFormals %in% names)]
+   
+   if (length(invalidNames))
+   {
+      return(.rs.scalar(paste("invalid argument names:",
+                              paste(shQuote(invalidNames), collapse = ", "))))
+   }
+   
+   if (length(callFormals) > length(formals))
+   {
+      return(.rs.scalar("too many arguments to function"))
+   }
+   
+   maybeError <- tryCatch(
+      match.call(fnObject, fnCall),
+      error = function(e) e
+   )
+   
+   if (inherits(maybeError, "error"))
+      return(.rs.scalar(maybeError$message))
+   
+   return(message)
+   
 })

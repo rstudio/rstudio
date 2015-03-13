@@ -23,7 +23,8 @@
 #include <boost/function.hpp>
 #include <boost/utility.hpp>
 #include <boost/regex.hpp>
-
+#include <boost/foreach.hpp>
+#include <boost/range/adaptors.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 
 #include <core/Algorithm.hpp>
@@ -77,7 +78,8 @@ public:
       None = 0,
       Function = 1,
       Method = 2,
-      Class = 3
+      Class = 3,
+      Variable = 4
    };
 
 public:
@@ -128,6 +130,7 @@ public:
    bool isFunction() const { return type_ == Function; }
    bool isMethod() const { return type_ == Method; }
    bool isClass() const { return type_ == Class; }
+   bool isVariable() const { return type_ == Variable; }
    const std::string& context() const { return context_; }
    const std::string& name() const { return name_; }
    const std::vector<RS4MethodParam>& signature() const { return signature_; }
@@ -296,6 +299,11 @@ public:
       return s_completions_.find(package) != s_completions_.end();
    }
    
+   static const std::map<std::string, AsyncLibraryCompletions>& getAllCompletions()
+   {
+      return s_completions_;
+   }
+   
    static const AsyncLibraryCompletions& getCompletions(const std::string& package)
    {
       return s_completions_[package];
@@ -320,6 +328,39 @@ public:
       inferredPkgNames_.insert(packageName);
       s_allInferredPkgNames_.insert(packageName);
    }
+   
+   static void setImportedPackages(const std::set<std::string>& pkgNames)
+   {
+      s_importedPackages_.clear();
+      s_importedPackages_.insert(pkgNames.begin(), pkgNames.end());
+      s_allInferredPkgNames_.insert(pkgNames.begin(), pkgNames.end());
+   }
+   
+   static const std::set<std::string>& getImportedPackages()
+   {
+      return s_importedPackages_;
+   }
+   
+   typedef std::map< std::string, std::set<std::string> > ImportFromMap;
+   
+   static void setImportFromDirectives(const ImportFromMap& map)
+   {
+      s_importFromDirectives_ = map;
+      BOOST_FOREACH(const std::string& pkg, map | boost::adaptors::map_keys)
+      {
+         s_allInferredPkgNames_.insert(pkg);
+      }
+   }
+   
+   static ImportFromMap& getImportFromDirectives()
+   {
+      return s_importFromDirectives_;
+   }
+   
+   const std::vector<RSourceItem>& items() const
+   {
+      return items_;
+   }
 
 private:
    std::string context_;
@@ -330,13 +371,14 @@ private:
    // but we share that state in a static variable (so that we can
    // cache and share across all indexes)
    std::set<std::string> inferredPkgNames_;
+   static std::set<std::string> s_importedPackages_;
+   static ImportFromMap s_importFromDirectives_;
    static std::set<std::string> s_allInferredPkgNames_;
    
    // NOTE: All source indexes share a set of completions
    static std::map<std::string, AsyncLibraryCompletions> s_completions_;
    
 };
-
 
 } // namespace r_util
 } // namespace core 

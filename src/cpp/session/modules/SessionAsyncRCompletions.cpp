@@ -29,20 +29,7 @@
 
 #include <session/SessionModuleContext.hpp>
 
-#define SESSION_ASYNC_R_DEBUG_LEVEL 0
-
-#if SESSION_ASYNC_R_DEBUG_LEVEL > 0
-
-# define DEBUG(x) \
-   std::cerr << x << std::endl;
-# define GENERIC_DEBUG(x) x
-
-#else
-
-# define DEBUG(x)
-# define GENERIC_DEBUG(x)
-
-#endif
+#include <core/Macros.hpp>
 
 namespace rstudio {
 namespace session {
@@ -182,7 +169,8 @@ void AsyncRCompletions::update()
    // alias for readability
    const std::vector<std::string>& pkgs = s_pkgsToUpdate_;
    
-   GENERIC_DEBUG(
+   DEBUG_BLOCK
+   {
       if (!pkgs.empty())
       {
          std::cerr << "Updating packages: [";
@@ -197,7 +185,7 @@ void AsyncRCompletions::update()
       {
          std::cerr << "No packages to update; bailing out" << std::endl;
       }
-   );
+   }
    
    if (pkgs.empty())
    {
@@ -227,26 +215,14 @@ void AsyncRCompletions::update()
    boost::shared_ptr<AsyncRCompletions> pProcess(
          new AsyncRCompletions());
    
-   // R files we wish to source to provide functionality to async process
-   const core::FilePath modulesPath =
-         session::options().modulesRSourcePath();
-   
-   const core::FilePath sessionCodeTools = modulesPath.childPath("SessionCodeTools.R");
-   const core::FilePath sessionRCompletions = modulesPath.childPath("SessionRCompletions.R");
-   
-   std::vector<core::FilePath> rSourceFiles;
-   rSourceFiles.push_back(sessionCodeTools);
-   rSourceFiles.push_back(sessionRCompletions);
-   
    pProcess->start(
             finalCmd.c_str(),
             core::FilePath(),
-            async_r::R_PROCESS_VANILLA,
-            rSourceFiles);
+            async_r::R_PROCESS_VANILLA | async_r::R_PROCESS_AUGMENTED);
    
 }
 
 } // end namespace r_completions
 } // end namespace modules
 } // end namespace session
-}
+} // end namespace rstudio

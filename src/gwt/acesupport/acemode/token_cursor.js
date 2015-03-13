@@ -642,8 +642,7 @@ var TokenCursor = function(tokens, row, offset) {
       
       return -1;
    };
-   
-   
+
 }).call(TokenCursor.prototype);
 
 
@@ -988,9 +987,105 @@ oop.mixin(RTokenCursor.prototype, TokenCursor.prototype);
       return true;
       
    };
-   
-   
-   
+
+   this.isLookingAtBinaryOp = function()
+   {
+      return this.currentType() === "keyword.operator" ||
+             this.currentType() === "keyword.operator.infix";
+   };
+
+   this.moveToStartOfCurrentStatement = function()
+   {
+      var clone = this.cloneCursor();
+      while (clone.isLookingAtBinaryOp())
+         if (!clone.moveToPreviousToken())
+            return false;
+
+      do
+      {
+         if (clone.bwdToMatchingToken())
+            continue;
+         
+         // If we land on an identifier, we keep going if the token previous is
+         // 'infix-y', and bail otherwise.
+         if (clone.isValidAsIdentifier())
+         {
+            if (!clone.moveToPreviousToken())
+               break;
+
+            if (clone.isLookingAtBinaryOp())
+            {
+               while (clone.isLookingAtBinaryOp())
+                  if (!clone.moveToPreviousToken())
+                     return false;
+
+               // Move back up one because the loop condition will take us back again
+               if (!clone.moveToNextToken())
+                  return false;
+
+               continue;
+            }
+            
+            if (!clone.moveToNextToken())
+               return false;
+            
+            break;
+            
+         }
+
+         // Fail if we get here as it implies we hit something not permissible
+         // for the evaluation context
+         return false;
+         
+      } while (clone.moveToPreviousToken());
+
+      this.$row = clone.$row;
+      this.$offset = clone.$offset;
+      return true;
+   };
+
+   this.moveToEndOfCurrentStatement = function()
+   {
+      var clone = this.cloneCursor();
+      while (clone.isLookingAtBinaryOp())
+         if (!clone.moveToNextToken())
+            return false;
+
+      do
+      {
+         if (clone.fwdToMatchingToken())
+            continue;
+
+         if (clone.isValidAsIdentifier())
+         {
+            if (!clone.moveToNextToken())
+               break;
+
+            if (clone.isLookingAtBinaryOp())
+            {
+               while (clone.isLookingAtBinaryOp())
+                  if (!clone.moveToNextToken())
+                     return false;
+
+               if (!clone.moveToPreviousToken())
+                  return false;
+
+               continue;
+            }
+
+            if (!clone.moveToPreviousToken())
+               return false;
+
+            break;
+         }
+
+         return false;
+      } while (clone.moveToNextToken());
+
+      this.$row = clone.$row;
+      this.$offset = clone.$offset;
+      return true;
+   };
    
 }).call(RTokenCursor.prototype);
 

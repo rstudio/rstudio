@@ -16,8 +16,10 @@ package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import java.util.ArrayList;
 
+import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.*;
@@ -39,10 +41,15 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.studio.client.common.debugging.model.Breakpoint;
 import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.workbench.views.output.lint.LintResources;
+import org.rstudio.studio.client.workbench.views.output.lint.model.AceAnnotation;
+import org.rstudio.studio.client.workbench.views.output.lint.model.LintItem;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceClickEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceDocumentChangeEventNative;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceMouseEventNative;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Anchor;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Marker;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.*;
@@ -55,6 +62,7 @@ public class AceEditorWidget extends Composite
                  HasKeyDownHandlers,
                  HasKeyPressHandlers
 {
+   
    public AceEditorWidget()
    {
       initWidget(new HTML());
@@ -92,8 +100,23 @@ public class AceEditorWidget extends Composite
             inOnChangeHandler_ = true;
             try
             {
-               ValueChangeEvent.fire(AceEditorWidget.this, null);            
+               ValueChangeEvent.fire(AceEditorWidget.this, null);
                updateBreakpoints(changeEvent);
+               updateAnnotations(changeEvent);
+               
+               // Immediately re-render on change if we have markers, to
+               // ensure they're re-drawn in the correct locations.
+               if (editor_.getSession().getMarkers(true).size() > 0)
+               {
+                  Scheduler.get().scheduleDeferred(new ScheduledCommand()
+                  {
+                     @Override
+                     public void execute()
+                     {
+                        editor_.getRenderer().renderMarkers();
+                     }
+                  });
+               }
             }
             catch (Exception ex)
             {
@@ -235,6 +258,7 @@ public class AceEditorWidget extends Composite
 
       editor_.getRenderer().updateFontSize();
       onResize();
+      
       fireEvent(new EditorLoadedEvent());
 
       int delayMs = initToEmptyString_ ? 100 : 500;
@@ -635,10 +659,182 @@ public class AceEditorWidget extends Composite
    {
       return line - 1;
    }
-  
+   
+   // ---- Annotation related methods
+   
+   private Range createAnchoredRange(Position start,
+                                     Position end)
+   {
+      return getEditor().getSession().createAnchoredRange(start, end);
+   }
+   
+   // This class binds an ace annotation (used for the gutter) with an
+   // inline marker (the underlining for associated lint)
+   class AnchoredAceAnnotation
+   {
+      public AnchoredAceAnnotation(AceAnnotation annotation,
+                                   int markerId)
+      {
+         annotation_ = annotation;
+         anchor_ = Anchor.createAnchor(
+               editor_.getSession().getDocument(),
+               annotation.row(),
+               annotation.column());
+         markerId_ = markerId;
+      }
+      
+      public int getMarkerId() { return markerId_; }
+      public int row() { return anchor_.getRow(); }
+      public int column() { return anchor_.getColumn(); }
+      
+      public AceAnnotation asAceAnnotation()
+      {
+         return AceAnnotation.create(
+               anchor_.getRow(),
+               anchor_.getColumn(),
+               annotation_.text(),
+               annotation_.type());
+      }
+      
+      private final AceAnnotation annotation_;
+      private final Anchor anchor_;
+      private final int markerId_;
+   }
+
+   public JsArray<AceAnnotation> getAnnotations()
+   {
+      JsArray<AceAnnotation> annotations =
+            JsArray.createArray().cast();
+      annotations.setLength(annotations_.size());
+      
+      for (int i = 0; i < annotations_.size(); i++)
+         annotations.set(i, annotations_.get(i).asAceAnnotation());
+      
+      return annotations;
+   }
+   
+   public void setAnnotations(JsArray<AceAnnotation> annotations)
+   {
+      clearAnnotations();
+      editor_.getSession().setAnnotations(annotations);
+   }
+   
+   public void showLint(JsArray<LintItem> lint)
+   {
+      clearAnnotations();
+      JsArray<AceAnnotation> annotations = LintItem.asAceAnnotations(lint);
+      editor_.getSession().setAnnotations(annotations);
+      
+      // Now, set (and cache) inline markers.
+      for (int i = 0; i < lint.length(); i++)
+      {
+         LintItem item = lint.get(i);
+         Range range = createAnchoredRange(
+               Position.create(item.getStartRow(), item.getStartColumn()),
+               Position.create(item.getEndRow(), item.getEndColumn()));
+         
+         String clazz = "unknown";
+         if (item.getType() == "error")
+            clazz = lintStyles_.error();
+         else if (item.getType() == "warning")
+            clazz = lintStyles_.warning();
+         else if (item.getType() == "info")
+            clazz = lintStyles_.info();
+         else if (item.getType() == "style")
+            clazz = lintStyles_.style();
+         
+         int id = editor_.getSession().addMarker(
+               range, clazz, "text", true);
+         
+         annotations_.add(new AnchoredAceAnnotation(
+               annotations.get(i),
+               id));
+      }
+   }
+   
+   public void clearLint()
+   {
+      clearAnnotations();
+      editor_.getSession().setAnnotations(null);
+   }
+   
+   private void updateAnnotations(AceDocumentChangeEventNative event)
+   {
+      Range range = event.getRange();
+      
+      ArrayList<AnchoredAceAnnotation> annotations =
+            new ArrayList<AnchoredAceAnnotation>();
+
+      for (int i = 0; i < annotations_.size(); i++)
+      {
+         AnchoredAceAnnotation annotation = annotations_.get(i);
+         Position pos = annotation.anchor_.getPosition();
+         
+         if (!range.contains(pos))
+            annotations.add(annotation);
+         else
+            editor_.getSession().removeMarker(annotation.getMarkerId());
+      }
+      annotations_ = annotations;
+   }
+   
+   public void clearAnnotations()
+   {
+      for (int i = 0; i < annotations_.size(); i++)
+         editor_.getSession().removeMarker(annotations_.get(i).getMarkerId());
+      annotations_.clear();
+   }
+   
+   public void removeMarkersAtCursorPosition()
+   {
+      // Defer this so other event handling can update anchors etc.
+      Scheduler.get().scheduleDeferred(new ScheduledCommand()
+      {
+         
+         @Override
+         public void execute()
+         {
+            Position cursor = editor_.getCursorPosition();
+            JsArray<AceAnnotation> newAnnotations = JsArray.createArray().cast();
+            
+            for (int i = 0; i < annotations_.size(); i++)
+            {
+               AnchoredAceAnnotation annotation = annotations_.get(i);
+               int markerId = annotation.getMarkerId();
+               Marker marker = editor_.getSession().getMarker(markerId);
+               
+               // The marker may have already been removed in response to
+               // a previous action.
+               if (marker == null)
+                  continue;
+               
+               Range range = marker.getRange();
+               if (!range.contains(cursor))
+               {
+                  newAnnotations.push(annotation.asAceAnnotation());
+               }
+               else
+               {
+                  editor_.getSession().removeMarker(markerId);
+               }
+            }
+            
+            editor_.getSession().setAnnotations(newAnnotations);
+            editor_.getRenderer().renderMarkers();
+            
+         }
+      });
+   }
+   
    private final AceEditorNative editor_;
    private final HandlerManager capturingHandlers_;
    private boolean initToEmptyString_ = true;
    private boolean inOnChangeHandler_ = false;
    private ArrayList<Breakpoint> breakpoints_ = new ArrayList<Breakpoint>();
+   
+   private ArrayList<AnchoredAceAnnotation> annotations_ =
+         new ArrayList<AnchoredAceAnnotation>();
+   private LintResources.Styles lintStyles_ = LintResources.INSTANCE.styles();
+   
+   
 }

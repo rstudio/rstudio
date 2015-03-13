@@ -60,6 +60,13 @@ namespace rstudio {
 namespace session {
 namespace source_database {
 
+// static members
+const char * const SourceDocument::SourceDocumentTypeSweave    = "sweave";
+const char * const SourceDocument::SourceDocumentTypeRSource   = "r_source";
+const char * const SourceDocument::SourceDocumentTypeRMarkdown = "r_markdown";
+const char * const SourceDocument::SourceDocumentTypeRHTML     = "r_html";
+const char * const SourceDocument::SourceDocumentTypeCpp       = "cpp";
+
 namespace {
 
 struct PropertiesDatabase

@@ -115,14 +115,15 @@ public:
    }
    
    // is this an R, or potentially R-containing, source file?
+   // TODO: Export these types as an 'enum' and provide converters.
    bool canContainRCode()
    {
       return type_.size() > 0 && (
-               type_ == "sweave" ||
-               type_ == "r_source" ||
-               type_ == "r_markdown" ||
-               type_ == "r_html" ||
-               type_ == "cpp");
+               type_ == SourceDocumentTypeSweave ||
+               type_ == SourceDocumentTypeRSource ||
+               type_ == SourceDocumentTypeRMarkdown ||
+               type_ == SourceDocumentTypeRHTML ||
+               type_ == SourceDocumentTypeCpp);
    }
 
    core::Error readFromJson(core::json::Object* pDocJson);
@@ -147,6 +148,15 @@ private:
    bool sourceOnSave_;
    int relativeOrder_;
    core::json::Object properties_;
+   
+public:
+   
+   static const char * const SourceDocumentTypeSweave;
+   static const char * const SourceDocumentTypeRSource;
+   static const char * const SourceDocumentTypeRMarkdown;
+   static const char * const SourceDocumentTypeRHTML;
+   static const char * const SourceDocumentTypeCpp;
+   
 };
 
 bool sortByCreated(const boost::shared_ptr<SourceDocument>& pDoc1,

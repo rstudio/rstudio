@@ -170,6 +170,13 @@ public:
 
    int clangVerbose() const;
    void setClangVerbose(int level);
+   
+   bool enableStyleDiagnostics() const;
+   void setEnableStyleDiagnostics(bool enable);
+   
+   bool lintRFunctionCalls() const;
+   void setLintRFunctionCalls(bool enable);
+   
 
 private:
 
@@ -208,6 +215,10 @@ private:
    mutable boost::scoped_ptr<core::json::Array> pSpellingCustomDicts_;
    mutable boost::scoped_ptr<bool> pHandleErrorsInUserCodeOnly_;
    mutable boost::scoped_ptr<int> pShinyViewerType_;
+   
+   // diagnostic-related prefs
+   mutable boost::scoped_ptr<bool> pLintRFunctionCalls_;
+   mutable boost::scoped_ptr<bool> pEnableStyleDiagnostics_;
 };
    
 } // namespace session

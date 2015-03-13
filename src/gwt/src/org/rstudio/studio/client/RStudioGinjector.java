@@ -60,6 +60,7 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.HelpStrategy;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.RCompletionManager;
+import org.rstudio.studio.client.workbench.views.output.lint.LintManager;
 import org.rstudio.studio.client.workbench.views.source.DocsMenu;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetCodeExecution;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
@@ -107,6 +108,7 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(CppCompletionManager completionManager);
    void injectMembers(RCompletionToolTip toolTip);
    void injectMembers(PathBreadcrumbWidget pathBreadcrumbWidget);
+   void injectMembers(LintManager manager);
    
    public static final RStudioGinjector INSTANCE = GWT.create(RStudioGinjector.class);
 

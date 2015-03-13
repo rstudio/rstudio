@@ -14,11 +14,13 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text.themes;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.resources.client.ClientBundle;
 import org.rstudio.core.client.resources.StaticDataResource;
 
 public interface AceThemeResources extends ClientBundle
 {
+   AceThemeResources INSTANCE = GWT.create(AceThemeResources.class);
    
    @Source("ambiance.css")
    StaticDataResource ambiance();

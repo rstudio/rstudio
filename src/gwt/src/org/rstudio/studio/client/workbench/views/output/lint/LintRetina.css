@@ -1,0 +1,15 @@
+@url NOTE note2x;
+@url WARNING warning2x;
+@url ERROR error2x;
+
+.error, .fatal {
+    background-image: ERROR;
+}
+
+.warning {
+   background-image: WARNING;
+}
+
+.info, .ignored, .note, .style {
+   background-image: NOTE;
+}

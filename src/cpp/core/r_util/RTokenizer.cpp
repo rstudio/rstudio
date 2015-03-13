@@ -32,6 +32,7 @@
 #include <boost/regex.hpp>
 
 #include <iostream>
+#include <sstream>
 
 #include <core/Error.hpp>
 #include <core/Log.hpp>
@@ -75,28 +76,30 @@ TokenPatterns& tokenPatterns()
    return instance;
 }
 
+void updatePosition(std::wstring::const_iterator pos,
+                    std::size_t length,
+                    std::size_t* pRow,
+                    std::size_t* pColumn)
+{
+   std::size_t newlineCount;
+   std::wstring::const_iterator it =
+         string_utils::countNewlines(pos, pos + length, &newlineCount);
+   
+   if (newlineCount == 0)
+   {
+      *pColumn += length;
+   }
+   else
+   {
+      *pRow += newlineCount;
+      
+      // The column is now the token length, minus the
+      // index of the last newline.
+      *pColumn = length - (it - pos) - 1;
+   }
+}
+
 } // anonymous namespace
-
-
-const wchar_t RToken::LPAREN         = L'(';
-const wchar_t RToken::RPAREN         = L')';
-const wchar_t RToken::LBRACKET       = L'[';
-const wchar_t RToken::RBRACKET       = L']';
-const wchar_t RToken::LBRACE         = L'{';
-const wchar_t RToken::RBRACE         = L'}';
-const wchar_t RToken::COMMA          = L',';
-const wchar_t RToken::SEMI           = L';';
-const wchar_t RToken::WHITESPACE     = 0x1001;
-const wchar_t RToken::STRING         = 0x1002;
-const wchar_t RToken::NUMBER         = 0x1003;
-const wchar_t RToken::ID             = 0x1004;
-const wchar_t RToken::OPER           = 0x1005;
-const wchar_t RToken::UOPER          = 0x1006;
-const wchar_t RToken::ERR            = 0x1007;
-const wchar_t RToken::LDBRACKET      = 0x1008;
-const wchar_t RToken::RDBRACKET      = 0x1009;
-const wchar_t RToken::COMMENT        = 0x100A;
-
 
 RToken RTokenizer::nextToken()
 {
@@ -107,20 +110,62 @@ RToken RTokenizer::nextToken()
 
   switch (c)
   {
-  case L'(': case L')':
-  case L'{': case L'}':
-  case L';': case L',':
-     return consumeToken(c, 1) ;
+  case L'(':
+     return consumeToken(RToken::LPAREN, 1);
+  case L')':
+     return consumeToken(RToken::RPAREN, 1);
+  case L'{':
+     return consumeToken(RToken::LBRACE, 1);
+  case L'}':
+     return consumeToken(RToken::RBRACE, 1);
+  case L';':
+     return consumeToken(RToken::SEMI, 1);
+  case L',':
+     return consumeToken(RToken::COMMA, 1);
+     
   case L'[':
+  {
+     RToken token;
      if (peek(1) == L'[')
-        return consumeToken(RToken::LDBRACKET, 2) ;
+     {
+        braceStack_.push_back(RToken::LDBRACKET);
+        token = consumeToken(RToken::LDBRACKET, 2);
+     }
      else
-        return consumeToken(c, 1) ;
+     {
+        braceStack_.push_back(RToken::LBRACKET);
+        token = consumeToken(RToken::LBRACKET, 1);
+     }
+     return token;
+  }
+     
   case L']':
-     if (peek(1) == L']')
-        return consumeToken(RToken::RDBRACKET, 2) ;
+  {
+     if (braceStack_.empty()) // TODO: warn?
+     {
+        if (peek(1) == L']')
+           return consumeToken(RToken::RDBRACKET, 2) ;
+        else
+           return consumeToken(RToken::RBRACKET, 1);
+     }
      else
-        return consumeToken(c, 1) ;
+     {
+        RToken token;
+        if (peek(1) == L']')
+        {
+           wchar_t top = braceStack_[braceStack_.size() - 1];
+           if (top == RToken::LDBRACKET)
+              token = consumeToken(RToken::RDBRACKET, 2);
+           else
+              token = consumeToken(RToken::RBRACKET, 1);
+        }
+        else
+           token = consumeToken(RToken::RBRACKET, 1);
+        
+        braceStack_.pop_back();
+        return token;
+     }
+  }
   case L'"':
   case L'\'':
      return matchStringLiteral() ;
@@ -204,6 +249,10 @@ RToken RTokenizer::matchStringLiteral()
          // out of the string
       }
    }
+   
+   std::size_t row = row_;
+   std::size_t column = column_;
+   updatePosition(start, pos_ - start, &row_, &column_); 
 
    // NOTE: the Java version of the tokenizer returns a special RStringToken
    // subclass which includes the wellFormed flag as an attribute. Our
@@ -213,7 +262,9 @@ RToken RTokenizer::matchStringLiteral()
    return RToken(RToken::STRING,
                  start,
                  pos_,
-                 start - data_.begin());
+                 start - data_.begin(),
+                 row,
+                 column);
 }
 
 RToken RTokenizer::matchNumber()
@@ -231,10 +282,17 @@ RToken RTokenizer::matchIdentifier()
    eat();
    while (string_utils::isalnum(peek()) || peek() == L'.' || peek() == L'_')
       eat();
+   
+   std::size_t row = row_;
+   std::size_t column = column_;
+   updatePosition(start, pos_ - start, &row_, &column_);
+   
    return RToken(RToken::ID,
                  start,
                  pos_,
-                 start - data_.begin()) ;
+                 start - data_.begin(),
+                 row,
+                 column);
 }
 
 RToken RTokenizer::matchQuotedIdentifier()
@@ -269,8 +327,13 @@ RToken RTokenizer::matchOperator()
 
    switch (peek())
    {
-   case L':':
-      return consumeToken(RToken::OPER, (cNext == L':') + (cNextNext == L':') + 1);
+   case L':': // :::, ::, :=
+   {
+      if (cNext == L'=')
+         return consumeToken(RToken::OPER, 2);
+      else
+         return consumeToken(RToken::OPER, 1 + (cNext == L':') + (cNextNext == L':'));
+   }
       
    case L'|':
       return consumeToken(RToken::OPER, cNext == L'|' ? 2 : 1);
@@ -278,13 +341,13 @@ RToken RTokenizer::matchOperator()
    case L'&':
       return consumeToken(RToken::OPER, cNext == L'&' ? 2 : 1);
       
-   case L'<': // <=, <-, <<-, but not <<
+   case L'<': // <=, <-, <<-
       
       if (cNext == L'=' || cNext == L'-') // <=, <-
          return consumeToken(RToken::OPER, 2);
       else if (cNext == L'<')
       {
-         if (cNextNext == L'=') // <<=
+         if (cNextNext == L'-') // <<-
             return consumeToken(RToken::OPER, 3); 
       }
       else // plain old <
@@ -296,8 +359,8 @@ RToken RTokenizer::matchOperator()
       else
          return consumeToken(RToken::OPER, 1);
       
-   case L'+': case L'*': case L'/':
-   case L'^': case L'~': case L'$':
+   case L'+': case L'*': case L'/': case L'?':
+   case L'^': case L'~': case L'$': case L'@':
       // single-character operators
       return consumeToken(RToken::OPER, 1) ;
       
@@ -369,7 +432,8 @@ void RTokenizer::eatUntil(const boost::wregex& regex)
 }
 
 
-RToken RTokenizer::consumeToken(wchar_t tokenType, std::size_t length)
+RToken RTokenizer::consumeToken(RToken::TokenType tokenType,
+                                std::size_t length)
 {
    if (length == 0)
    {
@@ -381,18 +445,34 @@ RToken RTokenizer::consumeToken(wchar_t tokenType, std::size_t length)
       LOG_WARNING_MESSAGE("Premature EOF");
       return RToken();
    }
-
+   
+   // Get the row, column for this token
+   std::size_t row = row_;
+   std::size_t column = column_;
+   
+   // Update the row, column for the next token.
+   updatePosition(pos_, length, &row_, &column_);
+   
    std::wstring::const_iterator start = pos_ ;
    pos_ += length ;
    return RToken(tokenType,
                  start,
                  pos_,
-                 start - data_.begin()) ;
+                 start - data_.begin(),
+                 row,
+                 column);
 }
 
 std::string RToken::contentAsUtf8() const
 {
    return string_utils::wideToUtf8(content());
+}
+
+std::string RToken::asString() const
+{
+   std::stringstream ss;
+   ss << "('" << contentAsUtf8() << "', " << row_ << ", " << column_ << ")";
+   return ss.str();
 }
 
 } // namespace r_util

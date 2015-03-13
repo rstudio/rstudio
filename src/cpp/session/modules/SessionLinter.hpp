@@ -16,6 +16,27 @@
 #ifndef SESSION_LINTER_HPP
 #define SESSION_LINTER_HPP
 
+#include <vector>
+#include <string>
+#include <iostream>
+#include <sstream>
+#include <map>
+#include <set>
+
+#include <core/r_util/RTokenizer.hpp>
+#include "SessionRParser.hpp"
+#include "SessionRTokenCursor.hpp"
+#include <core/collection/Stack.hpp>
+#include <core/collection/Position.hpp>
+#include <core/StringUtils.hpp>
+
+#include <boost/shared_ptr.hpp>
+#include <boost/foreach.hpp>
+#include <boost/algorithm/string.hpp>
+#include <boost/range/adaptor/map.hpp>
+
+#include <core/Macros.hpp>
+
 namespace rstudio {
 namespace core {
    class Error;
@@ -34,4 +55,4 @@ core::Error initialize();
 } // namespace session
 } // namespace rstudio
 
-#endif // SESSION_LNTER_HPP
+#endif // SESSION_LINTER_HPP

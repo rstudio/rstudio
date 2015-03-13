@@ -27,4 +27,8 @@ public class AceDocumentChangeEventNative extends JavaScriptObject
    public final native Range getRange() /*-{
       return this.data.range;
    }-*/;
+   
+   public final native String getText() /*-{
+      return this.data.text;
+   }-*/;
 }
