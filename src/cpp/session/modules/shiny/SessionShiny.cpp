@@ -98,7 +98,9 @@ std::string onDetectShinySourceType(
       {
          return kShinyType;
       }
-      else if (boost::algorithm::iequals(filename, "global.r") && 
+      else if ((boost::algorithm::iequals(filename, "global.r") ||
+                boost::algorithm::iequals(filename, "ui.r") ||
+                boost::algorithm::iequals(filename, "server.r")) &&
                isShinyAppDir(filePath.parent()))
       {
          return kShinyType;
