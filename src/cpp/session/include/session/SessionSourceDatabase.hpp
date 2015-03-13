@@ -151,11 +151,11 @@ private:
    
 public:
    
-   static const std::string SourceDocumentTypeSweave;
-   static const std::string SourceDocumentTypeRSource;
-   static const std::string SourceDocumentTypeRMarkdown;
-   static const std::string SourceDocumentTypeRHTML;
-   static const std::string SourceDocumentTypeCpp;
+   static const char * const SourceDocumentTypeSweave;
+   static const char * const SourceDocumentTypeRSource;
+   static const char * const SourceDocumentTypeRMarkdown;
+   static const char * const SourceDocumentTypeRHTML;
+   static const char * const SourceDocumentTypeCpp;
    
 };
 

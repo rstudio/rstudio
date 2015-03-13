@@ -61,11 +61,11 @@ namespace session {
 namespace source_database {
 
 // static members
-const std::string SourceDocument::SourceDocumentTypeSweave    = "sweave";
-const std::string SourceDocument::SourceDocumentTypeRSource   = "r_source";
-const std::string SourceDocument::SourceDocumentTypeRMarkdown = "r_markdown";
-const std::string SourceDocument::SourceDocumentTypeRHTML     = "r_html";
-const std::string SourceDocument::SourceDocumentTypeCpp       = "cpp";
+const char * const SourceDocument::SourceDocumentTypeSweave    = "sweave";
+const char * const SourceDocument::SourceDocumentTypeRSource   = "r_source";
+const char * const SourceDocument::SourceDocumentTypeRMarkdown = "r_markdown";
+const char * const SourceDocument::SourceDocumentTypeRHTML     = "r_html";
+const char * const SourceDocument::SourceDocumentTypeCpp       = "cpp";
 
 namespace {
 
