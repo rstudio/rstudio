@@ -478,13 +478,13 @@ public class AceEditor implements DocDisplay,
    
    private void updateLanguage(CompletionManager completionManager)
    {
+      clearLint();
       if (fileType_ == null)
          return;
       
       completionManager_ = completionManager;
       
       updateKeyboardHandlers();
-      
       syncCompletionPrefs();
       syncDiagnosticsPrefs();
       
@@ -2139,6 +2139,12 @@ public class AceEditor implements DocDisplay,
    public void showLint(JsArray<LintItem> lint)
    {
       widget_.showLint(lint);
+   }
+   
+   @Override
+   public void clearLint()
+   {
+      widget_.clearLint();
    }
    
    public Range createAnchoredRange(Position start,

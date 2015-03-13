@@ -752,6 +752,12 @@ public class AceEditorWidget extends Composite
       }
    }
    
+   public void clearLint()
+   {
+      clearAnnotations();
+      editor_.getSession().setAnnotations(null);
+   }
+   
    private void updateAnnotations(AceDocumentChangeEventNative event)
    {
       Range range = event.getRange();

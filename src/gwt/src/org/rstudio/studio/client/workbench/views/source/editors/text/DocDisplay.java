@@ -248,6 +248,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    
    void setAnnotations(JsArray<AceAnnotation> annotations);
    void showLint(JsArray<LintItem> lint);
+   void clearLint();
    void removeMarkersAtCursorPosition();
    
    void setPopupVisible(boolean visible);
