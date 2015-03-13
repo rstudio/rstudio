@@ -493,18 +493,6 @@ public class JSORestrictionsTest extends TestCase {
     shouldGenerateNoError(goodCode);
   }
 
-  public void testJsExportNotOnClassWithMultipleConstructors() {
-    StringBuilder buggyCode = new StringBuilder();
-    buggyCode.append("import com.google.gwt.core.client.js.JsExport;\n");
-    buggyCode.append("@JsExport public class Buggy {\n");
-    buggyCode.append("  public Buggy() { }\n");
-    buggyCode.append("  @JsExport(\"foo\") public Buggy(int a) { }\n");
-    buggyCode.append("}");
-
-    shouldGenerateError(buggyCode, "Line 3: "
-        + JSORestrictionsChecker.ERR_EXPLICIT_JSEXPORT_OR_JSNOEXPORT_ON_CONSTRUCTORS);
-  }
-
   public void testJsExportNotOnNonPublicClass() {
     StringBuilder buggyCode = new StringBuilder();
     buggyCode.append("import com.google.gwt.core.client.js.JsExport;\n");
@@ -609,21 +597,6 @@ public class JSORestrictionsTest extends TestCase {
 
     shouldGenerateError(buggyCode, "Line 3: "
       + JSORestrictionsChecker.ERR_JS_TYPE_WITH_PROTOTYPE_SET_NOT_ALLOWED_ON_CLASS_TYPES);
-  }
-
-  public void testJsPropertyNotAllowed() {
-    StringBuilder buggyCode = new StringBuilder();
-    buggyCode.append("import com.google.gwt.core.client.js.JsType;\n");
-    buggyCode.append("import com.google.gwt.core.client.js.JsProperty;\n");
-    buggyCode.append("public class Buggy {\n");
-    buggyCode.append("@JsType interface Foo {}\n");
-    buggyCode.append("static class BuggyFoo implements Foo {\n");
-    buggyCode.append("@JsProperty void foo() {}\n");
-    buggyCode.append("}\n");
-    buggyCode.append("}\n");
-
-    shouldGenerateError(buggyCode, "Line 6: "
-        + JSORestrictionsChecker.ERR_JSPROPERTY_ONLY_ON_INTERFACES);
   }
 
   public void testJsTypePrototypeExtensionNotAllowed() {

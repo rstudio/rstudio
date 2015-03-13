@@ -130,9 +130,9 @@ public class JsTypeTest extends GWTTestCase {
     JsTypeIsProperty object = (JsTypeIsProperty) JavaScriptObject.createObject();
 
     assertFalse(object.isX());
-    object.setX(10);
+    object.setX(true);
     assertTrue(object.isX());
-    object.setX(0);
+    object.setX(false);
     assertFalse(object.isX());
   }
 

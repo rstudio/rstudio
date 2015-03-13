@@ -19,7 +19,6 @@ import com.google.gwt.dev.jdt.SafeASTVisitor;
 import com.google.gwt.dev.util.InstalledHelpInfo;
 import com.google.gwt.dev.util.collect.Stack;
 import com.google.gwt.thirdparty.guava.common.base.Strings;
-import com.google.gwt.thirdparty.guava.common.collect.Lists;
 
 import org.eclipse.jdt.core.compiler.CharOperation;
 import org.eclipse.jdt.internal.compiler.ast.ASTNode;
@@ -42,7 +41,6 @@ import org.eclipse.jdt.internal.compiler.lookup.SourceTypeBinding;
 import org.eclipse.jdt.internal.compiler.lookup.TypeBinding;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -69,8 +67,6 @@ public class JSORestrictionsChecker {
       + "static final fields in public classes.";
   public static final String ERR_EITHER_JSEXPORT_JSNOEXPORT =
       "@JsExport and @JsNoExport is not allowed at the same time.";
-  public static final String ERR_EXPLICIT_JSEXPORT_OR_JSNOEXPORT_ON_CONSTRUCTORS =
-      "@JsExport or @JsNoExport should be set on constructors if a class is @JsExported and has more than one non private constructors";
   public static final String ERR_JSPROPERTY_ONLY_BEAN_OR_FLUENT_STYLE_NAMING =
       "@JsProperty is only allowed on JavaBean-style or fluent-style named methods";
   public static final String ERR_JSEXPORT_ON_ENUMERATION =
@@ -79,8 +75,6 @@ public class JSORestrictionsChecker {
       "Classes implementing @JsType with a prototype must extend that interface's Prototype class";
   public static final String ERR_CLASS_EXTENDS_MAGIC_PROTOTYPE_BUT_NO_PROTOTYPE_ATTRIBUTE =
       "Classes implementing a @JsType without a prototype should not extend the Prototype class";
-  public static final String ERR_JSPROPERTY_ONLY_ON_INTERFACES =
-      "@JsProperty not allowed on concrete class methods";
   public static final String ERR_CONSTRUCTOR_WITH_PARAMETERS =
       "Constructors must not have parameters in subclasses of JavaScriptObject";
   public static final String ERR_INSTANCE_FIELD = "Instance fields cannot be used in subclasses of JavaScriptObject";
@@ -289,37 +283,8 @@ public class JSORestrictionsChecker {
 
       checkJsTypeMethodsForOverloads(methodSignatures, noExports, binding);
       for (MethodBinding mb : binding.methods()) {
-        checkJsProperty(mb, true);
+        checkJsProperty(mb);
       }
-    }
-
-    private void checkJsExport(ReferenceBinding rb) {
-      if (JdtUtil.getAnnotation(rb, JsInteropUtil.JSEXPORT_CLASS) == null) {
-        return;
-      }
-      List<MethodBinding> publicConstructors = getPublicConstructors(rb);
-      if (publicConstructors.size() <= 1) {
-        return;
-      }
-      for (MethodBinding mb : publicConstructors) {
-        AnnotationBinding jsexportAnnotation =
-            JdtUtil.getAnnotation(mb, JsInteropUtil.JSEXPORT_CLASS);
-        AnnotationBinding jsnoexportAnnotation =
-            JdtUtil.getAnnotation(mb, JsInteropUtil.JSNOEXPORT_CLASS);
-        if (jsexportAnnotation == null && jsnoexportAnnotation == null) {
-          errorOn(mb, ERR_EXPLICIT_JSEXPORT_OR_JSNOEXPORT_ON_CONSTRUCTORS);
-        }
-      }
-    }
-
-    private List<MethodBinding> getPublicConstructors(ReferenceBinding rb) {
-      List<MethodBinding> publicConstructors = Lists.newArrayList();
-      for (MethodBinding mb : rb.methods()) {
-        if (mb.isConstructor() && mb.isPublic()) {
-          publicConstructors.add(mb);
-        }
-      }
-      return publicConstructors;
     }
 
     private void checkJsExport(MethodBinding mb) {
@@ -354,13 +319,9 @@ public class JSORestrictionsChecker {
           && ((AllocationExpression) fd.initialization).enumConstant != null);
     }
 
-    private void checkJsProperty(MethodBinding mb, boolean allowed) {
+    private void checkJsProperty(MethodBinding mb) {
       AnnotationBinding jsProperty = JdtUtil.getAnnotation(mb, JsInteropUtil.JSPROPERTY_CLASS);
       if (jsProperty != null) {
-        if (!allowed) {
-          errorOn(mb, ERR_JSPROPERTY_ONLY_ON_INTERFACES);
-          return;
-        }
         String methodName = String.valueOf(mb.selector);
         if (!isGetter(methodName, mb) && !isSetter(methodName, mb)) {
           errorOn(mb, ERR_JSPROPERTY_ONLY_BEAN_OR_FLUENT_STYLE_NAMING);
@@ -407,7 +368,6 @@ public class JSORestrictionsChecker {
     private ClassState checkType(TypeDeclaration type) {
       SourceTypeBinding binding = type.binding;
       checkJsFunction(type, binding);
-      checkJsExport(binding);
       if (isJsType(type.binding)) {
         checkJsType(type, type.binding);
         return ClassState.JSTYPE;
@@ -453,7 +413,7 @@ public class JSORestrictionsChecker {
       }
 
       for (MethodBinding mb : type.binding.methods()) {
-        checkJsProperty(mb, false);
+        checkJsProperty(mb);
       }
 
       AnnotationBinding jsinterfaceAnn = JdtUtil.getAnnotation(jsInterface,

@@ -28,5 +28,5 @@ public interface JsTypeIsProperty {
   boolean isX();
 
   @JsProperty
-  void setX(int x);
+  void setX(boolean x);
 }
