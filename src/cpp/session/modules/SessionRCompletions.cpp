@@ -17,6 +17,8 @@
 
 #include <core/Exec.hpp>
 
+#include <boost/range/adaptors.hpp>
+
 #include <r/RSexp.hpp>
 #include <r/RInternal.hpp>
 #include <r/RExec.hpp>
@@ -288,7 +290,7 @@ SEXP rs_scanFiles(SEXP pathSEXP,
    builder.add("paths", paths);
    builder.add("more_available", moreAvailable);
 
-   return builder;
+   return r::sexp::create(builder, &protect);
 }
 
 SEXP rs_isSubsequence(SEXP stringsSEXP, SEXP querySEXP)
@@ -327,34 +329,135 @@ SEXP rs_getActiveFrame(SEXP depthSEXP)
    return context->cloenv;
 }
 
+SEXP rs_getNAMESPACEImportedSymbols(SEXP documentIdSEXP)
+{
+   std::string documentId = r::sexp::asString(documentIdSEXP);
+   boost::shared_ptr<core::r_util::RSourceIndex> index =
+         code_search::rSourceIndex().get(documentId);
+   
+   using namespace core::r_util;
+   std::vector<std::string> pkgs;
+   
+   BOOST_FOREACH(const std::string& pkg, RSourceIndex::getImportedPackages())
+   {
+      pkgs.push_back(pkg);
+   }
+   
+   BOOST_FOREACH(const std::string& pkg,
+                 RSourceIndex::getImportFromDirectives() | boost::adaptors::map_keys)
+   {
+      pkgs.push_back(pkg);
+   }
+   
+   using namespace r::sexp;
+   Protect protect;
+   r::sexp::ListBuilder builder(&protect);
+   
+   BOOST_FOREACH(const std::string& pkg, pkgs)
+   {
+      const AsyncLibraryCompletions& completions = RSourceIndex::getCompletions(pkg);
+      r::sexp::ListBuilder child(&protect);
+      
+      // If the inferred package is listed _only_ in the NAMESPACE 'importFrom',
+      // then we want to selectively return symbols.
+      if ((index && index->getInferredPackages().count(pkg) == 0) &&
+          RSourceIndex::getImportedPackages().count(pkg) == 0 &&
+          RSourceIndex::getImportFromDirectives().count(pkg) != 0)
+      {
+         std::vector<std::string> exports;
+         std::vector<int> types;
+         
+         std::set<std::string>& directives =
+               RSourceIndex::getImportFromDirectives()[pkg];
+         
+         BOOST_FOREACH(const std::string& item, directives)
+         {
+            std::vector<std::string>::const_iterator it =
+                  std::find(completions.exports.begin(),
+                            completions.exports.end(),
+                            item);
+            
+            std::size_t index = it - completions.exports.begin();
+            
+            exports.push_back(completions.exports[index]);
+            types.push_back(completions.types[index]);
+         }
+         
+         child.add("exports", exports);
+         child.add("types", types);
+         
+      }
+      else
+      {
+         child.add("exports", completions.exports);
+         child.add("types", completions.types);
+      }
+      
+      builder.add(pkg, child);
+   }
+   
+   return r::sexp::create(builder, &protect);
+}
+
+SEXP rs_getInferredCompletions(SEXP packagesSEXP)
+{
+   using namespace rstudio::core::r_util;
+
+   std::vector<std::string> packages;
+   if (!r::sexp::fillVectorString(packagesSEXP, &packages))
+      return R_NilValue;
+
+   r::sexp::Protect protect;
+   r::sexp::ListBuilder parent(&protect);
+   
+   for (std::vector<std::string>::const_iterator it = packages.begin();
+        it != packages.end();
+        ++it)
+   {
+      DEBUG("Adding entry for '" << *it << "'");
+      AsyncLibraryCompletions completions = RSourceIndex::getCompletions(*it);
+      
+      r::sexp::ListBuilder builder(&protect);
+      builder.add("exports", completions.exports);
+      builder.add("types", completions.types);
+      builder.add("functions", completions.functions);
+      parent.add(*it, builder);
+   }
+   
+   return r::sexp::create(parent, &protect);
+}
+
+SEXP rs_listInferredPackages(SEXP documentIdSEXP)
+{
+   std::string documentId = r::sexp::asString(documentIdSEXP);
+   boost::shared_ptr<core::r_util::RSourceIndex> index =
+         code_search::rSourceIndex().get(documentId);
+
+   // NOTE: can occur when user edits file not in source index
+   if (index == NULL)
+      return R_NilValue;
+   
+   std::set<std::string> pkgs = index->getInferredPackages();
+   pkgs.insert(index->getImportedPackages().begin(),
+               index->getImportedPackages().end());
+   
+   r::sexp::Protect protect;
+   return r::sexp::create(pkgs, &protect);
+   
+}
+
 } // end anonymous namespace
 
 Error initialize() {
 
-   r::routines::registerCallMethod(
-            "rs_finishExpression",
-            (DL_FUNC) r_completions::rs_finishExpression,
-            1);
-
-   r::routines::registerCallMethod(
-            "rs_getSourceIndexCompletions",
-            (DL_FUNC) r_completions::rs_getSourceIndexCompletions,
-            1);
-
-   r::routines::registerCallMethod(
-            "rs_scanFiles",
-            (DL_FUNC) rs_scanFiles,
-            4);
-
-   r::routines::registerCallMethod(
-            "rs_isSubsequence",
-            (DL_FUNC) rs_isSubsequence,
-            2);
-
-   r::routines::registerCallMethod(
-            "rs_getActiveFrame",
-            (DL_FUNC) rs_getActiveFrame,
-            1);
+   RS_REGISTER_CALL_METHOD(rs_finishExpression, 1);
+   RS_REGISTER_CALL_METHOD(rs_getSourceIndexCompletions, 1);
+   RS_REGISTER_CALL_METHOD(rs_scanFiles, 4);
+   RS_REGISTER_CALL_METHOD(rs_isSubsequence, 2);
+   RS_REGISTER_CALL_METHOD(rs_getActiveFrame, 1);
+   RS_REGISTER_CALL_METHOD(rs_listInferredPackages, 1);
+   RS_REGISTER_CALL_METHOD(rs_getInferredCompletions, 1);
+   RS_REGISTER_CALL_METHOD(rs_getNAMESPACEImportedSymbols, 1);
    
    using boost::bind;
    using namespace module_context;

@@ -6,4 +6,5 @@ BreakBeforeBraces: Allman
 AllowShortIfStatementsOnASingleLine: false
 IndentCaseLabels: false
 SpaceAfterCStyleCast: true
+PointerAlignment: Left
 ---

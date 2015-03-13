@@ -13,146 +13,124 @@
 #
 #
 
-.rs.addFunction("makeLintObject", function(rowStart,
-                                           rowEnd = rowStart,
-                                           columnStart,
-                                           columnEnd = columnStart,
-                                           text,
-                                           type)
-{
-   validTypes <- c("info", "warning", "error")
-   if (length(type) != 1 ||
-       !(type %in% validTypes))
-      stop("Invalid lint type '", type, "'; must be one of ",
-           paste(shQuote(validTypes), collapse = ", "))
-   
-   text <- paste(text, collapse = "\n")
-   
-   list(
-      rowStart = rowStart,
-      rowEnd = rowEnd,
-      columnStart = columnStart,
-      columnEnd = columnEnd,
-      text = text,
-      type = type
+.rs.setVar(
+   "r.keywords",
+   c(
+      "TRUE",
+      "FALSE",
+      "NA",
+      "NA_real_",
+      "NA_complex_",
+      "NA_integer_",
+      "NA_character_",
+      "NULL",
+      "Inf",
+      "else",
+      "in"
    )
-   
-})
+)
 
 .rs.addFunction("setLintEngine", function(engine)
 {
    if (identical(engine, "internal"))
-      .rs.setVar("r.lint.engine", .rs.internalLinter)
+      .rs.setVar("r.lint.engine", .rs.internalLintEngine)
+   else if (!is.function(engine))
+      stop("'engine' must be a function taking a single argument (file path)")
+   else
+      .rs.setVar("r.lint.engine", engine)
 })
 
 .rs.addFunction("getLintEngine", function()
 {
-   .rs.getVar("r.lint.engine")
+   engine <- .rs.getVar("r.lint.engine")
+   if (is.null(engine))
+      .rs.internalLintEngine
+   else
+      engine
 })
 
-.rs.addFunction("getLint", function(filePath)
+.rs.addFunction("lint", function(filePath)
 {
    engine <- .rs.getLintEngine()
-   engine(filePath)
+   invisible(engine(filePath))
 })
 
-.rs.addFunction("internalLinter", function(filePath)
+.rs.addFunction("availableRSymbols", function()
 {
-   
+   unlist(c(
+      .rs.objectsOnSearchPath(excludeGlobalEnv = TRUE),
+      .rs.getVar("r.keywords")
+   ))
+})
+
+.rs.addFunction("internalLintEngine", function(filePath)
+{
    if (!file.exists(filePath))
       return(list())
-   
-   parsed <- tryCatch(
-      parse(file = filePath),
-      error = function(e) return(e)
-   )
-   
-   if (inherits(parsed, "simpleError"))
-   {
-      splat <- strsplit(parsed$message, "\n", perl = TRUE)[[1]]
-      row <- as.integer(gsub(":.*", "", splat[[2]]))
-      column <- c(regexpr("^", splat[[3]], fixed = TRUE))
-      text <- gsub(".*:\\s*", "", splat[[1]])
-      return(list(.rs.makeLintObject(
-         rowStart = row,
-         columnStart = column,
-         text = text,
-         type = "error"
-      )))
-   }
-   
-   # Construct a scope tree from the parse tree -- ie, closure scopes
-   parsed <- parse(text = "a <- 1; c(function(d) a + .__nothing__. + d + 1, b, c)")
-   root <- new.env(parent = emptyenv())
-   availableSymbols <- unlist(.rs.objectsOnSearchPath())
-   .rs.populateLintTree(parsed, root, availableSymbols)
-   
+      
+   filePath <- .rs.normalizePath(filePath, mustWork = TRUE)
+   lint <- .rs.lintRFile(filePath)
+   invisible(.rs.showLintMarkers(lint, filePath))
 })
 
-.rs.addFunction("getVariablesInScope", function(node) {
-   
-   vars <- character()
-   empty <- emptyenv()
-   
-   parent <- node
-   while (!identical(parent, empty))
-   {
-      vars <- c(vars, parent$local.variables)
-      if (length(parent$arguments))
-         vars <- c(vars, names(parent$arguments))
-      parent <- parent.env(parent)
-   }
-   
-   vars
-})
-
-.rs.addFunction("populateLintTree", function(object, node, availableSymbols)
+.rs.addFunction("lintRFile", function(filePath)
 {
-   if (is.expression(object))
-      lapply(object, function(x) .rs.populateLintTree(x, node, availableSymbols))
+   .Call("rs_lintRFile", filePath)
+})
+
+.rs.addFunction("showLintMarkers", function(lint, filePath)
+{
+   markers <- .rs.createMarkersFromLint(lint, filePath)
+   .rs.api.sourceMarkers(
+      name = "Linter",
+      markers = markers,
+      basePath = .rs.getProjectDirectory()
+   )
+})
+
+.rs.addFunction("createMarkersFromLint", function(lint, file) {
+   lapply(lint, function(x) {
+      list(
+         type = x$type,
+         file = file,
+         line = x$start.row,
+         column = x$start.column,
+         message = x$message,
+         messageHTML = FALSE
+      )
+   })
+})
+
+.rs.addFunction("extractRCode", function(content,
+                                         reStart,
+                                         reEnd)
+{
+   splat <- strsplit(content, "\n", fixed = TRUE)[[1]]
+   starts <- grep(reStart, splat, perl = TRUE)
+   ends <- grep(reEnd, splat, perl = TRUE)
    
-   if (is.symbol(object))
+   # Get start/end pairs
+   pairs <- lapply(starts, function(i) {
+      following <- ends[ends > i]
+      if (!length(following)) return(NULL)
+      c(i, following[[1]])
+   })
+   
+   # Drop NULL
+   pairs[unlist(lapply(pairs, is.null))] <- NULL
+   
+   new <- character(length(splat))
+   for (pair in pairs)
    {
-      symbolName <- as.character(object)
-      if (!(symbolName %in% availableSymbols) &&
-          !(symbolName %in% .rs.getVariablesInScope(node)))
-      {
-         node$missing.references <- c(node$missing.references, symbolName)
-      }
+      start <- pair[[1]]
+      end <- pair[[2]]
+      
+      # Ignore pairs that include 'engine=', assuming they're non-R chunks
+      if (grepl(",\\s*engine\\s*=", splat[[start]], perl = TRUE))
+         next
+      
+      new[(start + 1):(end - 1)] <- splat[(start + 1):(end - 1)]
    }
    
-   if (is.call(object)) {
-      
-      srcref <- attr(object, "srcref")
-      
-      callName <- as.character(object[[1]])[[1]]
-      if (callName %in% c("<-", "=", "<<-"))
-         node$local.variables <- c(node$local.variables, as.character(object[[2]]))
-      
-      if (callName %in% c("::", ":::"))
-      {
-         pkgName <- as.character(object[[2]])
-         symbolName <- as.character(object[[3]])
-         
-         if (pkgName %in% loadedNamespaces())
-         {
-            pkgSymbols <- ls(asNamespace(pkgName), all.names = TRUE)
-            if (!(symbolName %in% pkgSymbols))
-               node$missing.references <- c(node$missing.references, symbolName)
-         }
-      }
-      
-      if (callName == "function")
-      {
-         newChild <- new.env(parent = node)
-         newChild$arguments <- object[[2]]
-         node$children <- c(node$children, newChild)
-         return(.rs.populateLintTree(object[[3]], newChild, availableSymbols))
-      }
-      
-      lapply(object, function(x) .rs.populateLintTree(x, node, availableSymbols))
-      
-   }
-   
-   
+   .rs.scalar(paste(new, collapse = "\n"))
 })

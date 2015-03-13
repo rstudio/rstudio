@@ -1,5 +1,5 @@
 /*
- * SessionAsyncCompletions.hpp
+ * SessionAsyncRCompletions.hpp
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -57,6 +57,6 @@ private:
 } // end namespace r_completions
 } // end namesapce modules
 } // end namespace session
-}
+} // end namespace rstudio
 
 #endif

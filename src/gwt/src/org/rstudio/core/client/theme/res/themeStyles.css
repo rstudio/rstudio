@@ -2,7 +2,8 @@
 @eval fixedWidthFont org.rstudio.core.client.theme.ThemeFonts.getFixedWidthFont();
 
 @external fixedWidthFont;
-@external ace_editor, ace_text-layer, ace_gutter, ace_gutter-layer, ace_gutter-cell;
+@external ace_editor, ace_text-layer, ace_gutter, ace_gutter-layer, ace_gutter-cell, ace_info;
+@external ace_info, ace_warning, ace_error;
 @external ace_breakpoint, ace_inactive-breakpoint, ace_pending-breakpoint, ace_executing-line;
 @external ace_sb;
 @external cueText;
@@ -24,6 +25,7 @@
 @external gwt-TabLayoutPanel-Workbench;
 @external gwt-TabLayoutPanelTabs;
 @external gwt-DecoratedPopupPanel;
+@external editor_dark;
 
 @external windowframe, windowframe-maximized, windowframe-exclusive;
 
@@ -106,6 +108,14 @@
 @url INACTIVEBREAKPOINT inactiveBreakpoint;
 @url PENDINGBREAKPOINT pendingBreakpoint;
 @url EXECUTINGLINE executingLine;
+
+@url INFO syntaxInfo;
+@url WARNING syntaxWarning;
+@url ERROR syntaxError;
+
+@url INFODARK syntaxInfoDark;
+@url WARNINGDARK syntaxWarningDark;
+@url ERRORDARK syntaxErrorDark;
 
 @url HANDCURSOR handCursor;
 
@@ -247,28 +257,28 @@ pre {
 .ace_inactive-breakpoint,
 .ace_executing-line
 {
-   background-position: 10% center;
-   background-repeat: no-repeat;
+   background-position: 12% center !important;
+   background-repeat: no-repeat !important;
 }
 
 .ace_breakpoint
 {
-   background-image: ACTIVEBREAKPOINT;	
+   background-image: ACTIVEBREAKPOINT !important;
 }
 
 .ace_pending-breakpoint
 {
-	background-image: PENDINGBREAKPOINT;
+	background-image: PENDINGBREAKPOINT !important;
 }
 
 .ace_inactive-breakpoint
 {
-	background-image: INACTIVEBREAKPOINT;
+	background-image: INACTIVEBREAKPOINT !important;
 }
 
 .ace_executing-line
 {
-	background-image: EXECUTINGLINE;
+	background-image: EXECUTINGLINE !important;
 }
 
 .ace_sb
@@ -1325,4 +1335,38 @@ body.ubuntu_mono .searchBox {
   border-bottom-right-radius: 4px;
 }
 
+.ace_gutter-cell.ace_info {
+   background-repeat: no-repeat;
+   background-position: 2px center;
+   background-image: INFO;
+}
 
+.ace_gutter-cell.ace_warning {
+   background-repeat: no-repeat;
+   background-position: 2px center;
+   background-image: WARNING;
+}
+
+.ace_gutter-cell.ace_error {
+   background-repeat: no-repeat;
+   background-position: 2px center;
+   background-image: ERROR;
+}
+
+.editor_dark .ace_gutter-cell.ace_info {
+   background-repeat: no-repeat;
+   background-position: 2px center;
+   background-image: INFODARK;
+}
+
+.editor_dark .ace_gutter-cell.ace_warning {
+   background-repeat: no-repeat;
+   background-position: 2px center;
+   background-image: WARNINGDARK;
+}
+
+.editor_dark .ace_gutter-cell.ace_error {
+   background-repeat: no-repeat;
+   background-position: 2px center;
+   background-image: ERRORDARK;
+}

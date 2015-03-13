@@ -17,6 +17,8 @@
 #define SESSION_CODE_SEARCH_HPP
 
 #include <core/r_util/RSourceIndex.hpp>
+#include <session/SessionSourceDatabase.hpp>
+#include <boost/foreach.hpp>
 
 namespace rstudio {
 namespace core {
@@ -29,11 +31,65 @@ namespace session {
 namespace modules {
 namespace code_search {
 
+// maintain an in-memory list of R source document indexes (for fast
+// code searching)
+class RSourceIndexes : boost::noncopyable
+{
+private:
+   
+   typedef session::source_database::SourceDocument SourceDocument;
+   typedef core::r_util::RSourceIndex RSourceIndex;
+   
+public:
+   
+  typedef std::map< std::string, boost::shared_ptr<RSourceIndex> > IndexMap;
+   
+   RSourceIndexes() {}
+   virtual ~RSourceIndexes() {}
+
+   // COPYING: boost::noncopyable
+
+   void initialize();
+   void update(boost::shared_ptr<SourceDocument> pDoc);
+   boost::shared_ptr<RSourceIndex> get(const std::string& id)
+   {
+      if (indexes_.find(id) != indexes_.end())
+         return indexes_[id];
+      return boost::shared_ptr<RSourceIndex>();
+   }
+
+   void remove(const std::string& id) { indexes_.erase(id); }
+
+   void removeAll() { indexes_.clear(); }
+
+   std::vector< boost::shared_ptr<RSourceIndex> > indexes()
+   {
+      std::vector< boost::shared_ptr<RSourceIndex> > indexes;
+      BOOST_FOREACH(const IndexMap::value_type& index, indexes_)
+      {
+         indexes.push_back(index.second);
+      }
+      return indexes;
+   }
+   
+   const IndexMap& indexMap() const
+   {
+      return indexes_;
+   }
+
+private:
+  IndexMap indexes_;
+};
+
+RSourceIndexes& rSourceIndex();
+
 void searchSource(const std::string& term,
                   std::size_t maxResults,
                   bool prefixOnly,
                   std::vector<core::r_util::RSourceItem>* pItems,
                   bool* pMoreAvailable);
+
+void addAllProjectSymbols(std::set<std::string>* pSymbols);
 
 core::Error initialize();
    

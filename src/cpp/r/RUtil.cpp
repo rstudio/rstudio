@@ -22,6 +22,7 @@
 #include <core/FilePath.hpp>
 #include <core/StringUtils.hpp>
 #include <core/Error.hpp>
+#include <core/RegexUtils.hpp>
 
 #include <r/RExec.hpp>
 
@@ -157,6 +158,44 @@ core::Error iconvstr(const std::string& value,
 
    *pResult = std::string(output.begin(), output.end());
    return Success();
+}
+
+std::set<std::string> makeRKeywords()
+{
+   std::set<std::string> keywords;
+   
+   keywords.insert("TRUE");
+   keywords.insert("FALSE");
+   keywords.insert("NA");
+   keywords.insert("NaN");
+   keywords.insert("NULL");
+   keywords.insert("NA_real_");
+   keywords.insert("NA_complex_");
+   keywords.insert("NA_integer_");
+   keywords.insert("NA_character_");
+   keywords.insert("Inf");
+   
+   keywords.insert("if");
+   keywords.insert("else");
+   keywords.insert("while");
+   keywords.insert("for");
+   keywords.insert("in");
+   keywords.insert("function");
+   keywords.insert("next");
+   keywords.insert("break");
+   keywords.insert("repeat");
+   keywords.insert("...");
+   
+   return keywords;
+}
+
+
+bool isRKeyword(const std::string &name)
+{
+   static const std::set<std::string> s_rKeywords = makeRKeywords();
+   static const boost::regex s_reDotDotNumbers("\\.\\.[0-9]+");
+   return s_rKeywords.count(name) != 0 ||
+          regex_utils::textMatches(name, s_reDotDotNumbers, false, false);
 }
 
 } // namespace util

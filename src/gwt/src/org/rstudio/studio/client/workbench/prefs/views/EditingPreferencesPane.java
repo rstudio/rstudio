@@ -167,18 +167,27 @@ public class EditingPreferencesPane extends PreferencesPane
         
       
       VerticalPanel diagnosticsPanel = new VerticalPanel();
+      
+      diagnosticsPanel.add(headerLabel("Enable Diagnostics"));
       diagnosticsPanel.add(checkboxPref("Show diagnostics for R and C/C++", prefs.showDiagnostics()));
       diagnosticsPanel.add(checkboxPref("Show diagnostics for other languages", prefs.showDiagnosticsOther()));
       
+      diagnosticsPanel.add(headerLabel("Background Linting"));
+      diagnosticsPanel.add(checkboxPref("Lint source documents on save", prefs.lintOnSave()));
+      diagnosticsPanel.add(checkboxPref("Enable background linting of source documents", prefs.enableBackgroundLinting()));
+      diagnosticsPanel.add(nudgeRightPlus(backgroundLintDelayMs_ =
+            numericPref("Show lint after keyboard idle (ms):", prefs.backgroundLintDelayMs())));
+      
+      diagnosticsPanel.add(headerLabel("R Linter"));
+      diagnosticsPanel.add(checkboxPref("Provide style lint for R source code", prefs.enableStyleDiagnostics()));
+      diagnosticsPanel.add(checkboxPref("Enable lint within R function calls", prefs.lintRFunctionCalls()));
       
       DialogTabLayoutPanel tabPanel = new DialogTabLayoutPanel();
-      tabPanel.setSize("435px", "498px");     
+      tabPanel.setSize("435px", "498px");
       tabPanel.add(editingPanel, "Editing");
       tabPanel.add(displayPanel, "Display");
       tabPanel.add(completionPanel, "Completion");
-      /* Don't show this panel for now (diagnostics not yet merged)
       tabPanel.add(diagnosticsPanel, "Diagnostics");
-      */
       tabPanel.selectTab(0);
       add(tabPanel);
    }
@@ -249,7 +258,8 @@ public class EditingPreferencesPane extends PreferencesPane
       return (!spacesForTab_.getValue() || tabWidth_.validatePositive("Tab width")) && 
              (!showMargin_.getValue() || marginCol_.validate("Margin column")) &&
              alwaysCompleteChars_.validateRange("Characters entered", 1, 100) &&
-             alwaysCompleteDelayMs_.validateRange("Keyboard idle (ms)", 0, 10000);
+             alwaysCompleteDelayMs_.validateRange("Completion keyboard idle (ms)", 0, 10000) &&
+             backgroundLintDelayMs_.validateRange("Lint keyboard idle (ms)", 0, 10000);
    }
 
    @Override
@@ -263,11 +273,11 @@ public class EditingPreferencesPane extends PreferencesPane
    private final NumericValueWidget marginCol_;
    private final NumericValueWidget alwaysCompleteChars_;
    private final NumericValueWidget alwaysCompleteDelayMs_;
+   private final NumericValueWidget backgroundLintDelayMs_;
    private final CheckBox spacesForTab_;
    private final CheckBox showMargin_;
    private final SelectWidget showCompletions_;
    private final SelectWidget showCompletionsOther_;
-   
    
    
 }

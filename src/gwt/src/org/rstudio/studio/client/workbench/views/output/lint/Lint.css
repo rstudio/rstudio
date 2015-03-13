@@ -1,0 +1,23 @@
+@url NOTE note;
+@url WARNING warning;
+@url ERROR error;
+
+.error, .fatal, .warning, .info, .ignored, .note, .style {
+   position: absolute;
+   background-repeat: repeat-x;
+   background-position: left bottom;
+   background-size: 6px 2px;
+   margin-top: -1px; /* hug text a tiny bit more */
+}
+
+.error, .fatal {
+   background-image: ERROR;
+}
+
+.warning {
+   background-image: WARNING;
+}
+
+.info, .ignored, .note, .style {
+   background-image: NOTE;
+}

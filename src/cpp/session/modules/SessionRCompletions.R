@@ -911,9 +911,15 @@ assign(x = ".rs.acCompletionTypes",
    idx <- completions$type == .rs.acCompletionTypes$PACKAGE
    scores[idx] <- scores[idx] + 10
    
-   order <- order(scores, nchar(completions$results))
+   # Protect against NULL / otherwise invalid scores.
+   # TODO: figure out what, upstream, might cause this
+   if (length(scores))
+   {
+      order <- order(scores, nchar(completions$results))
+      completions <- .rs.subsetCompletions(completions, order)
+   }
    
-   .rs.subsetCompletions(completions, order)
+   completions
 })
 
 .rs.addFunction("blackListEvaluationDataTable", function(token, string, functionCall, envir)
@@ -965,6 +971,7 @@ assign(x = ".rs.acCompletionTypes",
       return(blacklist)
    
    object <- .rs.getAnywhere(string, envir)
+   
    if (!is.null(object))
    {
       allNames <- character()
@@ -1027,6 +1034,10 @@ assign(x = ".rs.acCompletionTypes",
          # Other objects
          else
          {
+            # '$' operator is invalid for atomic vectors
+            if (is.atomic(object))
+               return(.rs.emptyCompletions(excludeOtherCompletions = TRUE))
+            
             # Don't allow S4 objects for dollar name resolution
             # They will need to have defined a .DollarNames method, which
             # should have been resolved previously
@@ -1276,6 +1287,36 @@ assign(x = ".rs.acCompletionTypes",
    .rs.makeCompletions(token = token,
                        results = completions[keep],
                        type = types[keep])
+})
+
+.rs.addFunction("getNAMESPACEImportedSymbols", function(documentId)
+{
+   .Call("rs_getNAMESPACEImportedSymbols", documentId)
+})
+
+.rs.addFunction("getCompletionsNAMESPACE", function(token, documentId)
+{
+   symbols <- .rs.getNAMESPACEImportedSymbols(documentId)
+   
+   if (!length(symbols))
+      return(.rs.emptyCompletions())
+   
+   n <- vapply(symbols, function(x) length(x[[1]]), USE.NAMES = FALSE, FUN.VALUE = numeric(1))
+   total <- sum(n)
+   
+   output <- list(
+      exports = unlist(lapply(symbols, `[[`, "exports"), use.names = FALSE),
+      types = unlist(lapply(symbols, `[[`, "types"), use.names = FALSE),
+      packages = rep.int(names(symbols), times = n)
+   )
+   
+   keep <- .rs.fuzzyMatches(output$exports, token)
+   
+   .rs.makeCompletions(token = token,
+                       results = output$exports[keep],
+                       packages = output$packages[keep],
+                       type = output$types[keep],
+                       quote = FALSE)
 })
 
 .rs.addFunction("getCompletionsSearchPath", function(token,
@@ -1542,6 +1583,7 @@ assign(x = ".rs.acCompletionTypes",
       # Otherwise, complete from the seach path + available packages
       completions <- Reduce(.rs.appendCompletions, list(
          .rs.getCompletionsSearchPath(token),
+         .rs.getCompletionsNAMESPACE(token, documentId),
          .rs.getCompletionsPackages(token, TRUE),
          .rs.getCompletionsActiveFrame(token, envir),
          .rs.getCompletionsLibraryContext(token,
@@ -1764,6 +1806,7 @@ assign(x = ".rs.acCompletionTypes",
       completions <- Reduce(.rs.appendCompletions, list(
          completions,
          .rs.getCompletionsSearchPath(token),
+         .rs.getCompletionsNAMESPACE(token, documentId),
          .rs.getCompletionsActiveFrame(token, envir)
       ))
       
@@ -2536,14 +2579,9 @@ assign(x = ".rs.acCompletionTypes",
    .Call("rs_listInferredPackages", documentId)
 })
 
-.rs.addFunction("getSourceFileLibraryCompletions", function(packages = character())
+.rs.addFunction("getInferredCompletions", function(packages = character())
 {
-   .Call("rs_getSourceFileLibraryCompletions", as.character(packages))
-})
-
-.rs.addFunction("updateSourceFileLibraryCompletions", function(documentId)
-{
-   .Call("rs_updateSourceFileLibraryCompletions", documentId)
+   .Call("rs_getInferredCompletions", as.character(packages))
 })
 
 .rs.addFunction("getCompletionsLibraryContext", function(token,
@@ -2565,6 +2603,8 @@ assign(x = ".rs.acCompletionTypes",
    ## completions just so the user has a small hint that, even though we provide the
    ## completions, the package isn't actually loaded.
    packages <- .rs.listInferredPackages(documentId)
+   if (!length(packages))
+      return(.rs.emptyCompletions())
    
    # Remove any packages that are on the search path
    searchNames <- paste("package", packages, sep = ":")
@@ -2573,7 +2613,7 @@ assign(x = ".rs.acCompletionTypes",
    if (!length(packages))
       return(.rs.emptyCompletions())
    
-   completions <- .rs.getSourceFileLibraryCompletions(packages)
+   completions <- .rs.getInferredCompletions(packages)
    
    # If we're getting completions for a particular function's arguments,
    # use those

@@ -123,6 +123,7 @@ import org.rstudio.studio.client.workbench.views.environment.model.RObject;
 import org.rstudio.studio.client.workbench.views.files.model.FileUploadToken;
 import org.rstudio.studio.client.workbench.views.help.model.HelpInfo;
 import org.rstudio.studio.client.workbench.views.history.model.HistoryEntry;
+import org.rstudio.studio.client.workbench.views.output.lint.model.LintItem;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageInstallContext;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageState;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageUpdate;
@@ -3959,6 +3960,17 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, "clear_active_marker_set", requestCallback);
    }
    
+   @Override
+   public void lintRSourceDocument(String documentId,
+                                   boolean showMarkersPane,
+                                   ServerRequestCallback<JsArray<LintItem>> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(documentId));
+      params.set(1, JSONBoolean.getInstance(showMarkersPane));
+      sendRequest(RPC_SCOPE, LINT_R_SOURCE_DOCUMENT, params, requestCallback);
+   }
+   
    private String clientId_;
    private double clientVersion_ = 0;
    private boolean listeningForEvents_;
@@ -4280,5 +4292,7 @@ public class RemoteServer implements Server
    private static final String GET_PACKRAT_STATUS = "get_packrat_status";
    private static final String PACKRAT_BOOTSTRAP = "packrat_bootstrap";
    private static final String GET_PENDING_ACTIONS = "get_pending_actions";
+   
+   private static final String LINT_R_SOURCE_DOCUMENT = "lint_r_source_document";
   
 }

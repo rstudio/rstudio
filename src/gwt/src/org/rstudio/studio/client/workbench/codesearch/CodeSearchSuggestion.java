@@ -98,10 +98,15 @@ class CodeSearchSuggestion implements Suggestion
          }
       }
       
+      // resolve name (include parent if there is one)
+      String name = sourceItem.getName();
+      if (!StringUtil.isNullOrEmpty(sourceItem.getParentName()))
+         name = sourceItem.getParentName() + "::" + name;
+      
       // create display string
       displayString_ = createDisplayString(image, 
                                            RES.styles().itemImage(),
-                                           sourceItem.getName(),
+                                           name,
                                            sourceItem.getExtraInfo(),
                                            context);
    }

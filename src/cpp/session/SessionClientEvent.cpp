@@ -125,6 +125,7 @@ const int kDataViewChanged = 100;
 const int kViewFunction = 101;
 const int kMarkersChanged = 102;
 const int kEnableRStudioConnect = 103;
+const int kUpdateGutterMarkers = 104;
 }
 
 void ClientEvent::init(int type, const json::Value& data)
@@ -334,6 +335,8 @@ std::string ClientEvent::typeName() const
          return "markers_changed";
       case client_events::kEnableRStudioConnect:
          return "enable_rstudio_connect";
+      case client_events::kUpdateGutterMarkers:
+         return "update_gutter_markers";
       default:
          LOG_WARNING_MESSAGE("unexpected event type: " + 
                              safe_convert::numberToString(type_));

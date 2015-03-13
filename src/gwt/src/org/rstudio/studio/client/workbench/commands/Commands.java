@@ -365,6 +365,7 @@ public abstract class
    public abstract AppCommand errorsMessage();
    public abstract AppCommand errorsTraceback();
    public abstract AppCommand errorsBreak();
+   public abstract AppCommand lintActiveDocument();
    
    // Shiny IDE features
    public abstract AppCommand reloadShinyApp();

@@ -460,6 +460,21 @@ void trimLeadingLines(int maxLines, std::string* pLines)
    }
 }
 
+std::string strippedOfBackQuotes(const std::string& string)
+{
+   if (string.length() < 2)
+      return string;
+   
+   std::size_t startIndex = 0;
+   std::size_t n = string.length();
+   std::size_t endIndex = n;
+   
+   startIndex += string[0] == '`';
+   endIndex   -= string[n - 1] == '`';
+   
+   return string.substr(startIndex, endIndex - startIndex);
+}
+
 void stripQuotes(std::string* pStr)
 {
    if (pStr->length() > 0 && (pStr->at(0) == '\'' || pStr->at(0) == '"'))
@@ -471,25 +486,25 @@ void stripQuotes(std::string* pStr)
       *pStr = pStr->substr(0, len -1);
 }
 
-template <typename T, typename U>
-inline std::size_t countNewLinesImpl(const T& string,
-                                     const U& CR,
-                                     const U& LF)
+std::string strippedOfQuotes(const std::string &str)
 {
-   return countNewLinesImpl(string.begin(),
-                            string.end(),
-                            CR,
-                            LF);
+   std::string copy = str;
+   stripQuotes(&copy);
+   return copy;
 }
 
 template <typename Iter, typename U>
-inline std::size_t countNewLinesImpl(Iter begin,
-                                     Iter end,
-                                     const U& CR,
-                                     const U& LF)
+Iter countNewlinesImpl(Iter begin,
+                       Iter end,
+                       const U& CR,
+                       const U& LF,
+                       std::size_t* pNewlineCount)
 {
-   std::size_t numNewLines = 0;
+   std::size_t newlineCount = 0;
    Iter it = begin;
+   
+   Iter lastNewline = end;
+   
    for (; it != end; ++it)
    {
       // Detect '\r\n'
@@ -498,40 +513,61 @@ inline std::size_t countNewLinesImpl(Iter begin,
          if (it + 1 != end &&
              *(it + 1) == LF)
          {
+            lastNewline = it;
             ++it;
-            ++numNewLines;
+            ++newlineCount;
          }
       }
       
       // Detect '\n'
       if (*it == LF)
-         ++numNewLines;
+      {
+         lastNewline = it;
+         ++newlineCount;
+      }
    }
    
-   return numNewLines;
+   *pNewlineCount = newlineCount;
+   return lastNewline;
 }
 
-std::size_t countNewLines(const std::wstring& string)
+std::size_t countNewlines(const std::wstring& string)
 {
-   return countNewLinesImpl(string.begin(), string.end(), L'\r', L'\n');
+   std::size_t count = 0;
+   countNewlinesImpl(string.begin(), string.end(), L'\r', L'\n', &count);
+   return count;
 }
 
-std::size_t countNewLines(const std::string& string)
+std::size_t countNewlines(const std::string& string)
 {
-   return countNewLinesImpl(string.begin(), string.end(), '\r', '\n');
+   std::size_t count = 0;
+   countNewlinesImpl(string.begin(), string.end(), '\r', '\n', &count);
+   return count;
 }
 
-std::size_t countNewLines(std::string::iterator begin,
+std::size_t countNewlines(std::string::iterator begin,
                           std::string::iterator end)
 {
-   return countNewLinesImpl(begin, end, '\r', '\n');
+   std::size_t count = 0;
+   countNewlinesImpl(begin, end, '\r', '\n', &count);
+   return count;
 }
 
-std::size_t countNewLines(std::wstring::iterator begin,
+std::size_t countNewlines(std::wstring::iterator begin,
                           std::wstring::iterator end)
 {
-   return countNewLinesImpl(begin, end, '\r', '\n');
+   std::size_t count = 0;
+   countNewlinesImpl(begin, end, '\r', '\n', &count);
+   return count;
 }
+
+std::wstring::const_iterator countNewlines(std::wstring::const_iterator begin,
+                                           std::wstring::const_iterator end,
+                                           std::size_t* pCount)
+{
+   return countNewlinesImpl(begin, end, '\r', '\n', pCount);
+}
+
 
 } // namespace string_utils
 } // namespace core 

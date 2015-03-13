@@ -25,7 +25,7 @@ namespace core
 }
 
 namespace rstudio {
-namespace session {   
+namespace session {
 namespace async_r {
 
 enum AsyncRProcessOptions
@@ -33,7 +33,8 @@ enum AsyncRProcessOptions
    R_PROCESS_NORMAL         = 1 << 0,
    R_PROCESS_REDIRECTSTDERR = 1 << 1,
    R_PROCESS_VANILLA        = 1 << 2,
-   R_PROCESS_NO_RDATA       = 1 << 4,
+   R_PROCESS_AUGMENTED      = 1 << 3,
+   R_PROCESS_NO_RDATA       = 1 << 4
 };
 
 inline AsyncRProcessOptions operator | (AsyncRProcessOptions lhs,
@@ -42,7 +43,7 @@ inline AsyncRProcessOptions operator | (AsyncRProcessOptions lhs,
    return static_cast<AsyncRProcessOptions>(
             static_cast<int>(lhs) | static_cast<int>(rhs));
 }
-    
+
 class AsyncRProcess :
       boost::noncopyable,
       public boost::enable_shared_from_this<AsyncRProcess>
@@ -54,7 +55,7 @@ public:
    void start(const char* rCommand,
               const core::FilePath& workingDir,
               AsyncRProcessOptions rOptions,
-              const std::vector<core::FilePath>& rSourceFiles = std::vector<core::FilePath>());
+              std::vector<core::FilePath> rSourceFiles = std::vector<core::FilePath>());
 
    bool isRunning();
    void terminate();

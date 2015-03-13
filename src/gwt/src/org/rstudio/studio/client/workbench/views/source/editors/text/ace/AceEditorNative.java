@@ -21,7 +21,6 @@ import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.user.client.Command;
 
 import org.rstudio.core.client.CommandWithArg;
-
 import java.util.LinkedList;
 
 public class AceEditorNative extends JavaScriptObject {
@@ -296,6 +295,10 @@ public class AceEditorNative extends JavaScriptObject {
       this.forEachSelection(function() {
          that.navigateLeft(1);
       });
+   }-*/;
+   
+   public final native Position getCursorPosition() /*-{
+      return this.getCursorPosition();
    }-*/;
    
 }

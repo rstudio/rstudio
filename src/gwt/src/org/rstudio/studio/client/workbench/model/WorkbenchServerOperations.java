@@ -41,6 +41,7 @@ import org.rstudio.studio.client.workbench.views.data.model.DataServerOperations
 import org.rstudio.studio.client.workbench.views.edit.model.EditServerOperations;
 import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperations;
 import org.rstudio.studio.client.workbench.views.output.find.model.FindInFilesServerOperations;
+import org.rstudio.studio.client.workbench.views.output.lint.model.LintServerOperations;
 import org.rstudio.studio.client.workbench.views.output.markers.model.MarkersServerOperations;
 import org.rstudio.studio.client.workbench.views.help.model.HelpServerOperations;
 import org.rstudio.studio.client.workbench.views.history.model.HistoryServerOperations;
@@ -84,7 +85,8 @@ public interface WorkbenchServerOperations extends ConsoleServerOperations,
                                                    RMarkdownServerOperations,
                                                    DependencyServerOperations,
                                                    PackratServerOperations,
-                                                   MarkersServerOperations
+                                                   MarkersServerOperations,
+                                                   LintServerOperations
 {   
    void initializeForMainWorkbench();
    void disconnect();

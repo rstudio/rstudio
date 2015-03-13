@@ -49,6 +49,7 @@ import org.rstudio.core.client.widget.DynamicIFrame;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
 import org.rstudio.studio.client.common.debugging.model.Breakpoint;
+import org.rstudio.studio.client.common.filetypes.DocumentMode;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.model.ChangeTracker;
@@ -64,6 +65,8 @@ import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEdito
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorPosition;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorSelection;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorUtil;
+import org.rstudio.studio.client.workbench.views.output.lint.model.AceAnnotation;
+import org.rstudio.studio.client.workbench.views.output.lint.model.LintItem;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.*;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceClickEvent.Handler;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Mode.InsertChunkInfo;
@@ -247,6 +250,7 @@ public class AceEditor implements DocDisplay,
             ValueChangeEvent.fire(AceEditor.this, null);
          }
       });
+      
       widget_.addFoldChangeHandler(new FoldChangeEvent.Handler()
       {
          @Override
@@ -474,13 +478,13 @@ public class AceEditor implements DocDisplay,
    
    private void updateLanguage(CompletionManager completionManager)
    {
+      clearLint();
       if (fileType_ == null)
          return;
       
       completionManager_ = completionManager;
       
       updateKeyboardHandlers();
-      
       syncCompletionPrefs();
       syncDiagnosticsPrefs();
       
@@ -516,6 +520,8 @@ public class AceEditor implements DocDisplay,
             fileType_.getEditorLanguage().useAceLanguageTools();
 
       getSession().setUseWorker(useWorker);
+      getSession().setWorkerTimeout(
+            uiPrefs_.backgroundLintDelayMs().getValue());
    }
    
    private void syncWrapLimit()
@@ -1287,7 +1293,6 @@ public class AceEditor implements DocDisplay,
          {
             widget_.onResize();
             widget_.onActivate();
-
             return false;
          }
       });
@@ -2075,7 +2080,79 @@ public class AceEditor implements DocDisplay,
    {
       return widget_.getEditor().getSession().getTabSize();
    }
-
+   
+   // TODO: Enable similar logic for C++ mode?
+   public int getStartOfCurrentStatement()
+   {
+      if (!DocumentMode.isSelectionInRMode(this))
+         return -1;
+      
+      TokenCursor cursor =
+            getSession().getMode().getCodeModel().getTokenCursor();
+      
+      if (!cursor.moveToPosition(getCursorPosition()))
+         return -1;
+      
+      if (!cursor.moveToStartOfCurrentStatement())
+         return -1;
+      
+      return cursor.getRow();
+   }
+   
+   // TODO: Enable similar logic for C++ mode?
+   public int getEndOfCurrentStatement()
+   {
+      if (!DocumentMode.isSelectionInRMode(this))
+         return -1;
+      
+      TokenCursor cursor =
+            getSession().getMode().getCodeModel().getTokenCursor();
+      
+      if (!cursor.moveToPosition(getCursorPosition()))
+         return -1;
+      
+      if (!cursor.moveToEndOfCurrentStatement())
+         return -1;
+      
+      return cursor.getRow();
+   }
+   
+   // ---- Annotation related operations
+   
+   public JsArray<AceAnnotation> getAnnotations()
+   {
+      return widget_.getAnnotations();
+   }
+   
+   public void setAnnotations(JsArray<AceAnnotation> annotations)
+   {
+      widget_.setAnnotations(annotations);
+   }
+   
+   @Override
+   public void removeMarkersAtCursorPosition()
+   {
+      widget_.removeMarkersAtCursorPosition();
+   }
+   
+   @Override
+   public void showLint(JsArray<LintItem> lint)
+   {
+      widget_.showLint(lint);
+   }
+   
+   @Override
+   public void clearLint()
+   {
+      widget_.clearLint();
+   }
+   
+   public Range createAnchoredRange(Position start,
+                                    Position end)
+   {
+      return widget_.getEditor().getSession().createAnchoredRange(start, end);
+   }
+   
    private static final int DEBUG_CONTEXT_LINES = 2;
    private final HandlerManager handlers_ = new HandlerManager(this);
    private final AceEditorWidget widget_;
@@ -2105,4 +2182,5 @@ public class AceEditor implements DocDisplay,
    
    
    private boolean popupVisible_;
+   
 }

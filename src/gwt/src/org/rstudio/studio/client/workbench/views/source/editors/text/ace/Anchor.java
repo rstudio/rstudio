@@ -20,6 +20,9 @@ public class Anchor extends JavaScriptObject
 {
    protected Anchor()
    {}
+   
+   public native final int getRow() /*-{ return this.row; }-*/;
+   public native final int getColumn() /*-{ return this.column; }-*/;
 
    public native final Position getPosition() /*-{
       return this.getPosition();
@@ -27,6 +30,10 @@ public class Anchor extends JavaScriptObject
 
    public native final void detach() /*-{
       this.detach();
+   }-*/;
+   
+   public native final void setInsertRight(boolean insertRight) /*-{
+      this.$insertRight = insertRight;
    }-*/;
 
    public native static Anchor createAnchor(Document document, int row, int column) /*-{

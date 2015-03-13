@@ -19,11 +19,11 @@ import com.google.gwt.dom.client.LinkElement;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
+
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.resources.StaticDataResource;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -67,36 +67,37 @@ public class AceThemes
    {
       themes_ = new ArrayList<String>();
       themesByName_ = new HashMap<String, String>();
+      darkThemes_ = new HashMap<String, Boolean>();
       
-      addTheme(AMBIANCE, res.ambiance());
-      addTheme(CHAOS, res.chaos());
-      addTheme(CHROME, res.chrome());
-      addTheme(CLOUDS_MIDNIGHT, res.clouds_midnight());
-      addTheme(CLOUDS, res.clouds());
-      addTheme(COBALT, res.cobalt());
-      addTheme(CRIMSON_EDITOR, res.crimson_editor());
-      addTheme(DAWN, res.dawn());
-      addTheme(DREAMWEAVER, res.dreamweaver());
-      addTheme(ECLIPSE, res.eclipse());
-      addTheme(IDLE_FINGERS, res.idle_fingers());
-      addTheme(KATZENMILCH, res.katzenmilch());
-      addTheme(KR_THEME, res.kr_theme());
-      addTheme(MERBIVORE_SOFT, res.merbivore_soft());
-      addTheme(MERBIVORE, res.merbivore());
-      addTheme(MONO_INDUSTRIAL, res.mono_industrial());
-      addTheme(MONOKAI, res.monokai());
-      addTheme(PASTEL_ON_DARK, res.pastel_on_dark());
-      addTheme(SOLARIZED_DARK, res.solarized_dark());
-      addTheme(SOLARIZED_LIGHT, res.solarized_light());
-      addTheme(TEXTMATE, res.textmate());
-      addTheme(TOMORROW_NIGHT_BLUE, res.tomorrow_night_blue());
-      addTheme(TOMORROW_NIGHT_BRIGHT, res.tomorrow_night_bright());
-      addTheme(TOMORROW_NIGHT_EIGHTIES, res.tomorrow_night_eighties());
-      addTheme(TOMORROW_NIGHT, res.tomorrow_night());
-      addTheme(TOMORROW, res.tomorrow());
-      addTheme(TWILIGHT, res.twilight());
-      addTheme(VIBRANT_INK, res.vibrant_ink());
-      addTheme(XCODE, res.xcode());
+      addTheme(AMBIANCE, res.ambiance(), true);
+      addTheme(CHAOS, res.chaos(), true);
+      addTheme(CHROME, res.chrome(), false);
+      addTheme(CLOUDS_MIDNIGHT, res.clouds_midnight(), true);
+      addTheme(CLOUDS, res.clouds(), false);
+      addTheme(COBALT, res.cobalt(), true);
+      addTheme(CRIMSON_EDITOR, res.crimson_editor(), false);
+      addTheme(DAWN, res.dawn(), false);
+      addTheme(DREAMWEAVER, res.dreamweaver(), false);
+      addTheme(ECLIPSE, res.eclipse(), false);
+      addTheme(IDLE_FINGERS, res.idle_fingers(), true);
+      addTheme(KATZENMILCH, res.katzenmilch(), false);
+      addTheme(KR_THEME, res.kr_theme(), true);
+      addTheme(MERBIVORE_SOFT, res.merbivore_soft(), true);
+      addTheme(MERBIVORE, res.merbivore(), true);
+      addTheme(MONO_INDUSTRIAL, res.mono_industrial(), true);
+      addTheme(MONOKAI, res.monokai(), true);
+      addTheme(PASTEL_ON_DARK, res.pastel_on_dark(), true);
+      addTheme(SOLARIZED_DARK, res.solarized_dark(), true);
+      addTheme(SOLARIZED_LIGHT, res.solarized_light(), false);
+      addTheme(TEXTMATE, res.textmate(), false);
+      addTheme(TOMORROW_NIGHT_BLUE, res.tomorrow_night_blue(), true);
+      addTheme(TOMORROW_NIGHT_BRIGHT, res.tomorrow_night_bright(), true);
+      addTheme(TOMORROW_NIGHT_EIGHTIES, res.tomorrow_night_eighties(), true);
+      addTheme(TOMORROW_NIGHT, res.tomorrow_night(), true);
+      addTheme(TOMORROW, res.tomorrow(), false);
+      addTheme(TWILIGHT, res.twilight(), true);
+      addTheme(VIBRANT_INK, res.vibrant_ink(), true);
+      addTheme(XCODE, res.xcode(), false);
 
       prefs.get().theme().bind(new CommandWithArg<String>()
       {
@@ -118,23 +119,42 @@ public class AceThemes
       return url != null ? url : themesByName_.get(defaultThemeName_);
    }
 
-   private void addTheme(String name, StaticDataResource resource)
+   private void addTheme(String name,
+                         StaticDataResource resource,
+                         boolean isDark)
    {
       themes_.add(name);
       themesByName_.put(name, resource.getSafeUri().asString());
+      if (isDark)
+         darkThemes_.put(name, true);
    }
-
+   
+   private boolean isDark(String themeName)
+   {
+      return darkThemes_.containsKey(themeName);
+   }
+   
    private void applyTheme(String themeName)
    {
+      // add theme styles
       if (currentStyleEl_ != null)
          currentStyleEl_.removeFromParent();
-
+      
       currentStyleEl_ = Document.get().createLinkElement();
       currentStyleEl_.setType("text/css");
       currentStyleEl_.setRel("stylesheet");
       currentStyleEl_.setHref(getThemeUrl(themeName));
-      Document.get().getBody().appendChild(
-            currentStyleEl_);
+      Document.get().getBody().appendChild(currentStyleEl_);
+      
+      addDarkClassIfNecessary(themeName);
+   }
+   
+   public void addDarkClassIfNecessary(String themeName)
+   {
+      if (isDark(themeName))
+         Document.get().getBody().addClassName("editor_dark");
+      else
+         Document.get().getBody().removeClassName("editor_dark");
    }
 
    public String getEffectiveThemeName(String themeName)
@@ -146,7 +166,8 @@ public class AceThemes
 
    private final ArrayList<String> themes_;
    private final HashMap<String, String> themesByName_;
+   private final HashMap<String, Boolean> darkThemes_;
    private final String defaultThemeName_ = TEXTMATE;
-
+   
    private LinkElement currentStyleEl_;
 }

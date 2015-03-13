@@ -214,7 +214,7 @@ public class Source implements InsertSourceHandler,
       rnwWeaveRegistry_ = rnwWeaveRegistry;
       
       vimCommands_ = new SourceVimCommands();
-
+      
       view_.addTabClosingHandler(this);
       view_.addTabCloseHandler(this);
       view_.addTabClosedHandler(this);
@@ -282,6 +282,7 @@ public class Source implements InsertSourceHandler,
       dynamicCommands_.add(commands.vcsBlameOnGitHub());
       dynamicCommands_.add(commands.editRmdFormatOptions());
       dynamicCommands_.add(commands.reformatCode());
+      dynamicCommands_.add(commands.lintActiveDocument());
       for (AppCommand command : dynamicCommands_)
       {
          command.setVisible(false);
@@ -399,7 +400,7 @@ public class Source implements InsertSourceHandler,
             manageSynctexCommands();
          }
       });
-
+      
       restoreDocuments(session);
 
       new IntStateValue(MODULE_SOURCE, KEY_ACTIVETAB, ClientState.PROJECT_PERSISTENT,
@@ -2921,11 +2922,11 @@ public class Source implements InsertSourceHandler,
       view_.selectTab(idx);
    }
    
-   private EditingTarget getActiveEditor()
+   public EditingTarget getActiveEditor()
    {
       return activeEditor_;
    }
-
+   
    ArrayList<EditingTarget> editors_ = new ArrayList<EditingTarget>();
    ArrayList<Integer> tabOrder_ = new ArrayList<Integer>();
    private EditingTarget activeEditor_;
