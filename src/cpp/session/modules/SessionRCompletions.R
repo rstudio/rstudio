@@ -103,6 +103,8 @@ assign(x = ".rs.acCompletionTypes",
       .rs.acCompletionTypes$ENVIRONMENT
    else if (is.vector(object))
       .rs.acCompletionTypes$VECTOR
+   else if (is.factor(object))
+      .rs.acCompletionTypes$VECTOR
    else
       .rs.acCompletionTypes$UNKNOWN
 })
@@ -992,10 +994,12 @@ assign(x = ".rs.acCompletionTypes",
                {
                   type <- numeric(length(names))
                   for (i in seq_along(names))
+                  {
                      type[[i]] <- tryCatch(
-                        .rs.getCompletionType(eval(call("@", object, names[[i]]), envir = envir)),
+                        .rs.getCompletionType(eval(call("@", quote(object), names[[i]]))),
                         error = function(e) .rs.acCompletionTypes$UNKNOWN
                      )
+                  }
                }
             }, error = function(e) NULL
             )
@@ -1053,10 +1057,12 @@ assign(x = ".rs.acCompletionTypes",
          {
             type <- numeric(length(names))
             for (i in seq_along(names))
+            {
                type[[i]] <- tryCatch(
-                  .rs.getCompletionType(eval(call("$", object, names[[i]]), envir = envir)),
+                  .rs.getCompletionType(eval(call("$", quote(object), names[[i]]))),
                   error = function(e) .rs.acCompletionTypes$UNKNOWN
                )
+            }
          }
       }
       
