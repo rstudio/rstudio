@@ -1,7 +1,7 @@
 /*
  * RSConnectActionEvent.java
  *
- * Copyright (C) 2009-14 by RStudio, Inc.
+ * Copyright (C) 2009-15 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -13,6 +13,8 @@
  *
  */
 package org.rstudio.studio.client.rsconnect.events;
+
+import org.rstudio.studio.client.rsconnect.model.RSConnectDeploymentRecord;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
@@ -29,8 +31,15 @@ public class RSConnectActionEvent extends GwtEvent<RSConnectActionEvent.Handler>
    
    public RSConnectActionEvent(int action, String path)
    {
+      this(action, path, null);
+   }
+
+   public RSConnectActionEvent(int action, String path, 
+                               RSConnectDeploymentRecord fromPrevious)
+   {
       action_ = action;
       path_ = path;
+      fromPrevious_ = fromPrevious;
    }
    
    public String getPath()
@@ -41,6 +50,11 @@ public class RSConnectActionEvent extends GwtEvent<RSConnectActionEvent.Handler>
    public int getAction()
    {
       return action_;
+   }
+   
+   public RSConnectDeploymentRecord getFromPrevious()
+   {
+      return fromPrevious_;
    }
    
    @Override
@@ -58,6 +72,7 @@ public class RSConnectActionEvent extends GwtEvent<RSConnectActionEvent.Handler>
    public static int ACTION_TYPE_DEPLOY = 0;
    public static int ACTION_TYPE_CONFIGURE = 1;
    
-   private String path_;
-   private int action_;
+   private final String path_;
+   private final int action_;
+   private final RSConnectDeploymentRecord fromPrevious_;
 }

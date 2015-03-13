@@ -17,6 +17,8 @@ package org.rstudio.studio.client.rsconnect.ui;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.rsconnect.events.RSConnectActionEvent;
 import org.rstudio.studio.client.rsconnect.model.RSConnectDeploymentRecord;
 import org.rstudio.studio.client.rsconnect.model.RSConnectServerOperations;
 import org.rstudio.studio.client.server.ServerError;
@@ -38,6 +40,8 @@ public class RSConnectPublishButton extends Composite
    {
       HorizontalPanel panel = new HorizontalPanel();
       server_ = server;
+      events_ = RStudioGinjector.INSTANCE.getEventBus();
+      contentPath_ = contentPath;
       
       // create publish button itself
       publishButton_ = new ToolbarButton(
@@ -48,7 +52,7 @@ public class RSConnectPublishButton extends Composite
                @Override
                public void onClick(ClickEvent arg0)
                {
-                  onPublishClick();
+                  onPublishClick(null);
                   
                }
             });
@@ -87,18 +91,18 @@ public class RSConnectPublishButton extends Composite
    
    // Private methods --------------------------------------------------------
    
-   private void onPublishClick()
+   private void onPublishClick(RSConnectDeploymentRecord previous)
    {
-      
-   }
-   
-   private void onRepublishClick(RSConnectDeploymentRecord previous)
-   {
-      
+      events_.fireEvent(new RSConnectActionEvent(
+            RSConnectActionEvent.ACTION_TYPE_DEPLOY, 
+            contentPath_,
+            previous));
    }
    
    private void setPreviousDeployments(JsArray<RSConnectDeploymentRecord> recs)
    {
+      // if there are existing deployments, make the UI reflect that this is a
+      // republish
       if (recs.length() > 0)
       {
          publishButton_.setText("Republish");
@@ -112,7 +116,7 @@ public class RSConnectPublishButton extends Composite
                @Override
                public void execute()
                {
-                  onRepublishClick(rec);
+                  onPublishClick(rec);
                }
             }));
          }
@@ -124,7 +128,7 @@ public class RSConnectPublishButton extends Composite
             @Override
             public void execute()
             {
-               onPublishClick();
+               onPublishClick(null);
             }
          }));
          publishMenu_.setVisible(true);
@@ -134,5 +138,9 @@ public class RSConnectPublishButton extends Composite
  
    private final ToolbarButton publishButton_;
    private final ToolbarPopupMenu publishMenu_;
+
    private final RSConnectServerOperations server_;
+   private final EventBus events_;
+
+   private final String contentPath_;
 }
