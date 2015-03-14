@@ -79,9 +79,4 @@
 # define DEBUG_BLOCK RSTUDIO_DEBUG_BLOCK
 #endif
 
-#ifndef PROFILE
-# define PROFILE RSTUDIO_PROFILE
-#endif
-
-
 #endif
