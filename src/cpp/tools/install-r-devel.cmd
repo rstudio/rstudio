@@ -169,8 +169,12 @@ cacls %TMDIR% /T /E /G BUILTIN\Users:R > NUL
 REM Make it!
 REM For this part, we ensure only Rtools is on the PATH. This
 REM is important as if the wrong command line utilites are picked
-REM up things can fail for strange reason.
-SET "PATH=C:\Windows\system32;C:\Windows;C:\Rtools\bin"
+REM up things can fail for strange reason. In particular, we
+REM _must_ use the Rtools 'sort', _not_ the Windows 'sort', or
+REM else we will get strange errors from 'comm' when attempting
+REM to compare sorted files. Probably just placing Rtools first
+REM on the PATH is sufficient, but this is fine too.
+SET "PATH=C:\Rtools\bin"
 make clean
 
 REM We need to build all of the R library DLLs first, and then
