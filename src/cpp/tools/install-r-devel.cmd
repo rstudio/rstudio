@@ -50,13 +50,6 @@ REM Install Rtools.
 SET "RTOOLS_INSTALLER=.\Rtools%RTOOLS_VERSION%.exe"
 "%RTOOLS_INSTALLER%" /VERYSILENT
 
-REM Unix-style newline. The newline hack!
-REM Creating a Newline variable (the two blank lines are required!)
-SET NLM=^
-
-
-SET NL=^^^%NLM%%NLM%^%NLM%%NLM%
-
 REM Download the R sources. Get the latest R-devel sources using SVN.
 REM
 REM If you need a Windows SVN client, you can download SlikSVN here:
