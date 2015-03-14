@@ -120,6 +120,7 @@ cd trunk
 REM Copy in the 'extras' for a 64bit build. This includes tcltk
 REM plus some other libraries. Note that the R64 directory should
 REM have been populated by the RTools installation.
+xcopy /E /Y C:\R %R_HOME%\trunk\
 xcopy /E /Y C:\R64 %R_HOME%\trunk\
 
 REM Ensure the temporary directory exists.
