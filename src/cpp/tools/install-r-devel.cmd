@@ -161,6 +161,11 @@ REM point to 'extsoft'.
 sed -i 's/^# LOCAL_SOFT/LOCAL_SOFT/g' MkRules.local
 sed -i 's/^# EXT_LIBS/EXT_LIBS/g' MkRules.local
 
+REM Attempt to fix up permissions before the build.
+cacls %RTOOLS_DIR% /T /E /G BUILTIN\Users:R > NUL
+cacls %R_HOME% /T /E /G BUILTIN\Users:R > NUL
+cacls %TMDIR% /T /E /G BUILTIN\Users:R > NUL
+
 REM Make it!
 REM For this part, we ensure only Rtools is on the PATH. This
 REM is important as if the wrong command line utilites are picked
