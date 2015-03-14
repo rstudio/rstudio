@@ -22,16 +22,48 @@ REM ---------------------------------
 REM - BEGIN CONFIGURATION VARIABLES -
 REM ---------------------------------
 
-SET "CRAN=http://cran.r-project.org"
-SET "RTOOLS_VERSION=33"
-SET "ROOT_DIR=C:\R-src"
-SET "R_HOME=C:\R-src\trunk"
-SET "RTOOLS_BIN_DIR=C:\Rtools\bin"
-SET "TMPDIR=C:\tmp"
+IF NOT DEFINED WGET (
+	SET "WGET=wget"
+)
+
+IF NOT DEFINED SVN (
+	SET "SVN=svn"
+)
+
+IF NOT DEFINED ROOT_DIR (
+	SET "ROOT_DIR=C:\R-src"
+)
+
+if NOT DEFINED RTOOLS_DIR (
+	SET "RTOOLS_DIR=C:\Rtools"
+)
+
+IF NOT DEFINED RTOOLS_BIN_DIR (
+	SET "RTOOLS_BIN_DIR=C:\Rtools\bin"
+)
+
+IF NOT DEFINED TMPDIR (
+	SET "TMPDIR=C:\tmp"
+)
 
 REM -------------------------------
 REM - END CONFIGURATION VARIABLES -
 REM -------------------------------
+
+SET "CRAN=http://cran.r-project.org"
+SET "RTOOLS_VERSION=33"
+
+REM Ensure that some essential tools are on the PATH.
+WHERE /Q %WGET% || (
+	ECHO 'wget' not found on PATH; exiting
+	exit /b
+)
+
+where /Q %SVN% || (
+	ECHO 'svn' not found on PATH; exiting
+	exit /b
+)
+
 
 REM Set the current directory.
 if not exist "%ROOT_DIR%" (
@@ -43,12 +75,36 @@ SET OLDPATH=%PATH%
 REM URI to RTools.exe
 SET "RTOOLS_URL=%CRAN%/bin/windows/Rtools/Rtools%RTOOLS_VERSION%.exe"
 
-REM Download Rtools.
+REM URI to updated toolchains.
+REM TODO Remove this once Rtools stabilized.
+SET "TOOLCHAIN_BASE=http://www.stats.uwo.ca/faculty/murdoch/temp"
+SET "TOOLCHAIN_32BIT=%TOOLCHAIN_BASE%/mingw32mingw32_gcc-4.9.2.toolchain.tar.gz"
+SET "TOOLCHAIN_64BIT=%TOOLCHAIN_BASE%/mingw32mingw64_gcc-4.9.2.toolchain.tar.gz"
+
+REM Download Rtools, and the updated toolchains.
+REM TODO: Downloading the upgraded toolchains will not be necessary
+REM once RTOOLS has been fully stabilized.
 wget -c %RTOOLS_URL%
+wget -c %TOOLCHAIN_32BIT%
+wget -c %TOOLCHAIN_64BIT%
 
 REM Install Rtools.
 SET "RTOOLS_INSTALLER=.\Rtools%RTOOLS_VERSION%.exe"
 "%RTOOLS_INSTALLER%" /VERYSILENT
+
+REM Put Rtools on the path.
+SET "PATH=%RTOOLS_BIN_DIR%;%PATH%"
+
+REM Overwrite the toolchain paths with our own.
+rmdir /S /Q %RTOOLS_DIR%\gcc492_32
+rmdir /S /Q %RTOOLS_DIR%\gcc492_64
+
+REM Untar the downloaded toolchains and move them.
+tar -zxvf mingw32mingw32_gcc-4.9.2.toolchain.tar.gz
+move mingw32 %RTOOLS_DIR%\gcc492_32
+
+tar -zxvf mingw32mingw64_gcc-4.9.2.toolchain.tar.gz
+move mingw64 %RTOOLS_DIR%\gcc492_64
 
 REM Download the R sources. Get the latest R-devel sources using SVN.
 REM
@@ -59,9 +115,6 @@ REM
 REM Be sure to place the installed binary directory on your PATH.
 svn checkout https://svn.r-project.org/R/trunk/
 cd trunk
-
-REM Put Rtools on the path.
-SET "PATH=C:\Rtools\bin;%PATH%"
 
 REM Copy in the 'extras' for a 64bit build. This includes tcltk
 REM plus some other libraries. Note that the R64 directory should
