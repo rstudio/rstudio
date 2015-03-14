@@ -510,16 +510,12 @@ ParseResults parse(const std::wstring& rCode,
       return ParseResults();
    }
    
-   TIMER(timer);
-   
    RTokens rTokens(rCode);
-   REPORT(timer, "Tokenization");
    
    ParseStatus status(parseOptions);
    RTokenCursor cursor(rTokens);
    
    doParse(cursor, status);
-   REPORT(timer, "Parse");
    
    if (status.node()->getParent() != NULL)
    {
