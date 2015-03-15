@@ -1,29 +1,38 @@
-REM This script installs R-devel from source on Windows.
-REM Update the variables up here as new versions of R are released;
-REM we attempt to build from tarballs.
+REM This script installs R-devel from SVN trunk on Windows.
 REM
 REM This script assumes you have 'wget' on your path, as it
 REM is used to download. You can find a binary here:
 REM
 REM     https://eternallybored.org/misc/wget/wget64.exe 
 REM
-REM Ensure that this is run from a command prompt with administrator
-REM privileges! Otherwise, files can be created _without_ read permissions
-REM and all manner of weird failures can and will happen.
+REM We use SVN to checkout R trunk from SVN.
+REM If you need a Windows SVN client, you can download SlikSVN here:
 REM
-REM If you find that the build is failing for strange reason, ensure that
-REM everyone has access to the source tree with
+REM     https://sliksvn.com/download/
 REM
-REM     icacls "." /grant Everyone:(F) /T
+REM Be sure to place the installed binary directory on your PATH.
 REM
-REM to just indiscriminately give everyone full access to the folder.
+REM If you modify the configuration below, be sure to use
+REM a directory _within the %USERPROFILE%; ie, your user
+REM directory; otherwise you will almost certainly run into
+REM very bizarre permission issues on build.
 
 REM ---------------------------------
 REM - BEGIN CONFIGURATION VARIABLES -
 REM ---------------------------------
 
+REM Set to 32 for a 32bit build.
+REM TODO Build both in one go.
+SET "WIN=64"
+
 IF NOT DEFINED WGET (
-	SET "WGET=wget"
+	where /q wget && (
+		SET "WGET=wget"
+	) || (
+		where /q wget && (
+			SET "WGET=wget64"
+		)
+	)
 )
 
 IF NOT DEFINED SVN (
@@ -31,7 +40,7 @@ IF NOT DEFINED SVN (
 )
 
 IF NOT DEFINED ROOT_DIR (
-	SET "ROOT_DIR=C:\R-src"
+	SET "ROOT_DIR=%USERPROFILE%\R-src"
 )
 
 if NOT DEFINED RTOOLS_DIR (
@@ -43,35 +52,37 @@ IF NOT DEFINED RTOOLS_BIN_DIR (
 )
 
 IF NOT DEFINED TMPDIR (
-	SET "TMPDIR=C:\tmp"
+	SET "TMPDIR=%USERPROFILE%\tmp"
 )
 
 REM -------------------------------
 REM - END CONFIGURATION VARIABLES -
 REM -------------------------------
 
+REM Set some variables both for cleanup + download of
+REM required tools.
+SET "OLDDIR=%CD%"
 SET "CRAN=http://cran.r-project.org"
 SET "RTOOLS_VERSION=33"
 SET "R_HOME=%ROOT_DIR%\trunk"
 
 REM Ensure that some essential tools are on the PATH.
-WHERE /Q %WGET% || (
-	ECHO 'wget' not found on PATH; exiting
+where /Q %WGET% || (
+	ECHO wget [%WGET%] not found on PATH; exiting
 	exit /b
 )
 
 where /Q %SVN% || (
-	ECHO 'svn' not found on PATH; exiting
+	ECHO svn [%SVN%] not found on PATH; exiting
 	exit /b
 )
-
 
 REM Set the current directory.
 if not exist "%ROOT_DIR%" (
 	mkdir "%ROOT_DIR%"
 )
 cd "%ROOT_DIR%"
-SET OLDPATH=%PATH%
+SET "OLDPATH=%PATH%"
 
 REM URI to RTools.exe
 SET "RTOOLS_URL=%CRAN%/bin/windows/Rtools/Rtools%RTOOLS_VERSION%.exe"
@@ -108,20 +119,15 @@ tar -zxvf mingw32mingw64_gcc-4.9.2.toolchain.tar.gz
 move mingw64 %RTOOLS_DIR%\gcc492_64
 
 REM Download the R sources. Get the latest R-devel sources using SVN.
-REM
-REM If you need a Windows SVN client, you can download SlikSVN here:
-REM
-REM     https://sliksvn.com/download/
-REM
-REM Be sure to place the installed binary directory on your PATH.
 svn checkout https://svn.r-project.org/R/trunk/
 cd trunk
 
 REM Copy in the 'extras' for a 64bit build. This includes tcltk
 REM plus some other libraries. Note that the R64 directory should
 REM have been populated by the RTools installation.
-xcopy /E /Y C:\R %R_HOME%\trunk\
-REM xcopy /E /Y C:\R64 %R_HOME%\trunk\
+REM xcopy /E /Y C:\R %R_HOME%\trunk\
+rmdir /S /Q %R_HOME%\Tcl
+xcopy /E /Y C:\R64 %R_HOME%\
 
 REM Ensure the temporary directory exists.
 if not exist "%TMPDIR%" (
@@ -163,9 +169,8 @@ sed -i 's/^# LOCAL_SOFT/LOCAL_SOFT/g' MkRules.local
 sed -i 's/^# EXT_LIBS/EXT_LIBS/g' MkRules.local
 
 REM Attempt to fix up permissions before the build.
-cacls %RTOOLS_DIR% /T /E /G BUILTIN\Users:R > NUL
 cacls %R_HOME% /T /E /G BUILTIN\Users:R > NUL
-cacls %TMDIR% /T /E /G BUILTIN\Users:R > NUL
+cacls %TMPDIR% /T /E /G BUILTIN\Users:R > NUL
 
 REM Make it!
 REM For this part, we ensure only Rtools is on the PATH. This
@@ -176,17 +181,11 @@ REM else we will get strange errors from 'comm' when attempting
 REM to compare sorted files. Probably just placing Rtools first
 REM on the PATH is sufficient, but this is fine too.
 SET "PATH=C:\Rtools\bin"
-make clean
-
-REM We need to build all of the R library DLLs first, and then
-REM copy them to locations where R will find them. Not sure why
-REM this step is necessary.
-make rlibs
-cp ..\extra\graphapp\Rgraphapp.dll Rgraphapp.dll
-cp ..\extra\win_iconv\Riconv.dll Riconv.dll
+make distclean
 
 REM Now we should be able to build R + recommended packages.
-make all recommended
+make WIN=%WIN% all recommended
 
 REM Clean up.
 SET "PATH=%OLDPATH%"
+cd %OLDDIR%
