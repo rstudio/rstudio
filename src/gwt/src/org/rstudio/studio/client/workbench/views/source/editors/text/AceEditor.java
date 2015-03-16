@@ -2136,6 +2136,12 @@ public class AceEditor implements DocDisplay,
    }
    
    @Override
+   public void removeMarkersOnCursorLine()
+   {
+      widget_.removeMarkersOnCursorLine();
+   }
+   
+   @Override
    public void showLint(JsArray<LintItem> lint)
    {
       widget_.showLint(lint);

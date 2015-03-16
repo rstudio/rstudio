@@ -31,8 +31,6 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionRequest;
-import org.rstudio.studio.client.workbench.views.source.events.SourceFileSavedEvent;
-import org.rstudio.studio.client.workbench.views.source.events.SourceFileSavedHandler;
 import org.rstudio.studio.client.workbench.views.source.model.CppDiagnostic;
 
 import com.google.gwt.core.client.JsArray;
@@ -124,7 +122,7 @@ public class LintManager
             if (docDisplay_.isPopupVisible())
                return;
             
-            docDisplay_.removeMarkersAtCursorPosition();
+            docDisplay_.removeMarkersOnCursorLine();
             timer_.schedule(uiPrefs_.backgroundLintDelayMs().getValue());
          }
       });
@@ -248,11 +246,8 @@ public class LintManager
    private void showLint(LintContext context,
                          JsArray<LintItem> lint)
    {
-      if (docDisplay_.isPopupVisible() ||
-          !docDisplay_.isFocused())
-      {
+      if (docDisplay_.isPopupVisible() || !docDisplay_.isFocused())
          return;
-      }
       
       // Filter out items at the last cursor position, if the cursor
       // hasn't moved.
