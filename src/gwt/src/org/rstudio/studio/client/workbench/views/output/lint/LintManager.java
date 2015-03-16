@@ -26,6 +26,7 @@ import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.output.lint.model.LintItem;
 import org.rstudio.studio.client.workbench.views.output.lint.model.LintServerOperations;
+import org.rstudio.studio.client.workbench.views.presentation.events.SourceFileSaveCompletedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
@@ -129,12 +130,12 @@ public class LintManager
       });
       
       eventBus_.addHandler(
-            SourceFileSavedEvent.TYPE,
-            new SourceFileSavedHandler()
+            SourceFileSaveCompletedEvent.TYPE,
+            new SourceFileSaveCompletedEvent.Handler()
       {
-         
          @Override
-         public void onSourceFileSaved(SourceFileSavedEvent event)
+         public void onSourceFileSaveCompleted(
+               SourceFileSaveCompletedEvent event)
          {
             if (!docDisplay_.isFocused())
                return;
