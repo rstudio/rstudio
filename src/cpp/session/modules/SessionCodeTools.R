@@ -1015,6 +1015,11 @@
    
 })
 
+.rs.addFunction("isSymbolCalled", function(maybeSymbol, name)
+{
+   is.symbol(maybeSymbol) && identical(as.character(maybeSymbol), name)
+})
+
 .rs.addFunction("validateFunctionCall", function(fnNameString,
                                                  fnCallString,
                                                  envir = parent.frame(1))
@@ -1048,9 +1053,11 @@
    formals <- formals(fnObject)
    names <- names(formals)
    
-   ## TODO: Validate when we have '...'?
-   if ("..." %in% names)
-      return(message)
+   ## TODO: '...' is only valid for use when called within a function
+   ## that also accepts '...' arguments.
+   for (i in seq_along(fnCall))
+      if (.rs.isSymbolCalled(fnCall[[i]], "..."))
+         return(message)
    
    invalidNames <- callFormals[!(callFormals %in% names)]
    
