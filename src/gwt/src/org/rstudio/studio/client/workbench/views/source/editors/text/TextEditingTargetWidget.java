@@ -250,7 +250,7 @@ public class TextEditingTargetWidget
       if (SessionUtils.showPublishUi(session_, uiPrefs_))
       {
          toolbar.addRightSeparator();
-         publishButton_ = new RSConnectPublishButton("Application", false);
+         publishButton_ = new RSConnectPublishButton("Application", false, true);
          toolbar.addRightWidget(publishButton_);
       }
       

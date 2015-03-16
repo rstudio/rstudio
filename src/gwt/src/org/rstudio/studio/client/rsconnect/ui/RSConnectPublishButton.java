@@ -39,10 +39,12 @@ import com.google.inject.Inject;
 
 public class RSConnectPublishButton extends Composite
 {
-   public RSConnectPublishButton(String contentType, boolean showCaption)
+   public RSConnectPublishButton(String contentType, boolean showCaption,
+         boolean manageVisiblity)
    {
       contentType_ = contentType;
       showCaption_ = showCaption;
+      manageVisiblity_ = manageVisiblity;
       
       // create root widget
       HorizontalPanel panel = new HorizontalPanel();
@@ -85,17 +87,20 @@ public class RSConnectPublishButton extends Composite
       events_ = events;
       commands_ = commands;
       
-      // initialize visibility
-      setVisible(commands_.rsconnectDeploy().isVisible());
-      commands_.rsconnectDeploy().addVisibleChangedHandler(
-            new VisibleChangedHandler()
+      // initialize visibility if requested
+      if (manageVisiblity_) 
       {
-         @Override
-         public void onVisibleChanged(AppCommand command)
+         setVisible(commands_.rsconnectDeploy().isVisible());
+         commands_.rsconnectDeploy().addVisibleChangedHandler(
+               new VisibleChangedHandler()
          {
-            setVisible(commands_.rsconnectDeploy().isVisible());
-         }
-      });
+            @Override
+            public void onVisibleChanged(AppCommand command)
+            {
+               setVisible(commands_.rsconnectDeploy().isVisible());
+            }
+         });
+      }
    }
    
    @Override
@@ -114,6 +119,11 @@ public class RSConnectPublishButton extends Composite
       contentPath_ = contentPath;
       if (isVisible())
          populateDeployments();
+   }
+   
+   public void setResultPath(String resultPath)
+   {
+      resultPath_ = resultPath;
    }
 
    public void setText(String text)
@@ -248,7 +258,11 @@ public class RSConnectPublishButton extends Composite
 
    private String contentPath_;
    private String lastContentPath_;
+   private String resultPath_;
    private boolean populating_ = false;
-   private boolean showCaption_ = true;
+
+   private final boolean showCaption_;
+   private final boolean manageVisiblity_;
+
    private RSConnectDeploymentRecord defaultRec_;
 }
