@@ -384,7 +384,8 @@ int main(int argc, char * const argv[])
             return core::system::exitFailure(error, ERROR_LOCATION);
 
          // set file creation mask to 022 (might have inherted 0 from init)
-         setUMask(core::system::OthersNoWriteMask);
+         if (options.serverSetUmask())
+            setUMask(core::system::OthersNoWriteMask);
       }
 
       // wait until now to output options warnings (we need to wait for our
