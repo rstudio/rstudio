@@ -16,6 +16,7 @@
 package com.google.gwt.dev.jjs.test;
 
 import com.google.gwt.core.client.impl.DoNotInline;
+import com.google.gwt.core.client.js.JsType;
 import com.google.gwt.dev.jjs.test.overrides.package1.Caller;
 import com.google.gwt.dev.jjs.test.overrides.package1.ClassExposingM;
 import com.google.gwt.dev.jjs.test.overrides.package1.SomeParent;
@@ -306,6 +307,32 @@ public class CompilerMiscRegressionTest extends GWTTestCase {
     var a = @com.google.gwt.dev.jjs.test.CompilerMiscRegressionTest::class;
     var b = @com.google.gwt.dev.jjs.test.CompilerMiscRegressionTest::class;
   }-*/;
+
+  /**
+   * Test for issue 9153.
+   * <p>
+   * Typetightener used to incorrectly tighten method calls marked with STATIC_DISPATCH_ONLY.
+   */
+  public void testIncorrectDispatch() {
+    final int[] state = new int[1];
+
+    @JsType
+    abstract class A {
+      public void m() {
+        state[0] = 1;
+      }
+    }
+
+    @JsType
+    class B extends A {
+      public void m() {
+        super.m();
+      }
+    }
+
+    new B().m();
+    assertEquals(1, state[0]);
+  }
 
   private static void assertEqualContents(float[] expected, float[] actual) {
 

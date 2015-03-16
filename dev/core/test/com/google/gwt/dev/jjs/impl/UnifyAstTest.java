@@ -16,16 +16,9 @@ package com.google.gwt.dev.jjs.impl;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.javac.testing.impl.JavaResourceBase;
 import com.google.gwt.dev.javac.testing.impl.MockJavaResource;
-import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JMethod;
-import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JProgram;
-import com.google.gwt.dev.jjs.ast.JVisitor;
 import com.google.gwt.dev.util.arg.SourceLevel;
-import com.google.gwt.thirdparty.guava.common.collect.ImmutableSet;
-import com.google.gwt.thirdparty.guava.common.collect.Sets;
-
-import java.util.Set;
 
 /**
  * Test for {@link UnifyAst}.
@@ -272,7 +265,7 @@ public class UnifyAstTest extends OptimizerTestBase {
 
     JMethod C_m = findMethod(result, "C.m()V");
     assertFalse(C_m.isAbstract());
-    assertIsForwardingMethod(C_m, findMethod(result, "A.m()V"));
+    assertForwardsTo(C_m, findMethod(result, "A.m()V"));
     assertOverrides(result, "C.m()V", "A.m()V", "I1.m()V");
   }
 
@@ -311,7 +304,7 @@ public class UnifyAstTest extends OptimizerTestBase {
 
     JMethod C_m = findMethod(result, "C.m()V");
     assertFalse(C_m.isAbstract());
-    assertIsForwardingMethod(C_m, findMethod(result, "A.m()V"));
+    assertForwardsTo(C_m, findMethod(result, "A.m()V"));
     assertOverrides(result, "C.m()V", "A.m()V", "I1.m()V");
   }
 
@@ -339,7 +332,7 @@ public class UnifyAstTest extends OptimizerTestBase {
 
     JMethod A_m = findMethod(result, "A.m()V");
     assertFalse(A_m.isAbstract());
-    assertIsForwardingMethod(A_m, findMethod(result, "I1.m()V"));
+    assertForwardsTo(A_m, findMethod(result, "I1.m()V"));
     assertOverrides(result, "A.m()V", "I1.m()V");
   }
 
@@ -378,12 +371,12 @@ public class UnifyAstTest extends OptimizerTestBase {
 
     JMethod A1_m = findMethod(result, "A1.m()V");
     assertFalse(A1_m.isAbstract());
-    assertIsForwardingMethod(A1_m, findMethod(result, "I12.m()V"));
+    assertForwardsTo(A1_m, findMethod(result, "I12.m()V"));
     assertOverrides(result, "A1.m()V", "I1.m()V", "I12.m()V");
 
     JMethod A2_m = findMethod(result, "A2.m()V");
     assertFalse(A2_m.isAbstract());
-    assertIsForwardingMethod(A2_m, findMethod(result, "I12.m()V"));
+    assertForwardsTo(A2_m, findMethod(result, "I12.m()V"));
     assertOverrides(result, "A2.m()V", "I1.m()V", "I12.m()V");
   }
 
@@ -427,17 +420,17 @@ public class UnifyAstTest extends OptimizerTestBase {
 
     JMethod A_m = findMethod(result, "A.m()V");
     assertFalse(A_m.isAbstract());
-    assertIsForwardingMethod(A_m, findMethod(result, "I1.m()V"));
+    assertForwardsTo(A_m, findMethod(result, "I1.m()V"));
     assertOverrides(result, "A.m()V", "I1.m()V");
 
     JMethod A1_m = findMethod(result, "A1.m()V");
     assertFalse(A1_m.isAbstract());
-    assertIsForwardingMethod(A1_m, findMethod(result, "I12.m()V"));
+    assertForwardsTo(A1_m, findMethod(result, "I12.m()V"));
     assertOverrides(result, "A1.m()V", "A.m()V", "I1.m()V", "I12.m()V");
 
     JMethod A2_m = findMethod(result, "A2.m()V");
     assertFalse(A2_m.isAbstract());
-    assertIsForwardingMethod(A2_m, findMethod(result, "I12.m()V"));
+    assertForwardsTo(A2_m, findMethod(result, "I12.m()V"));
     assertOverrides(result, "A2.m()V", "A.m()V", "I1.m()V", "I12.m()V");
   }
 
@@ -447,20 +440,6 @@ public class UnifyAstTest extends OptimizerTestBase {
     return false;
   }
 
-  private void assertIsForwardingMethod(JMethod method, JMethod forwardsToMethod) {
-    assertAllCallTargets(method, forwardsToMethod);
-  }
-
-  private static void assertAllCallTargets(JMethod method, JMethod... expectedTargets) {
-    final Set<JMethod> actualTargets = Sets.newHashSet();
-    new JVisitor() {
-      @Override
-      public void endVisit(JMethodCall x, Context ctx) {
-        actualTargets.add(x.getTarget());
-      }
-    }.accept(method);
-    assertEquals(ImmutableSet.copyOf(expectedTargets), actualTargets);
-  }
   private static final MockJavaResource A_A =
       JavaResourceBase.createMockJavaResource("a.A",
           "package a;",

@@ -624,13 +624,14 @@ public class TypeTightener {
      */
     @Override
     public void endVisit(JMethodCall x, Context ctx) {
-      if (x.isVolatile()) {
+      if (!x.canBePolymorphic() || x.isVolatile()) {
         return;
       }
       JMethod target = x.getTarget();
       JMethod concreteMethod = getSingleConcreteMethodOverride(target);
       assert concreteMethod != target;
       if (concreteMethod != null) {
+        assert !x.isStaticDispatchOnly();
         JMethodCall newCall = new JMethodCall(x.getSourceInfo(), x.getInstance(), concreteMethod);
         newCall.addArgs(x.getArgs());
         ctx.replaceMe(newCall);
@@ -642,7 +643,7 @@ public class TypeTightener {
        * Mark a call as non-polymorphic if the targeted method is the only
        * possible dispatch, given the qualifying instance type.
        */
-      if (x.canBePolymorphic() && !target.isAbstract()) {
+      if (!target.isAbstract()) {
         JExpression instance = x.getInstance();
         assert (instance != null);
         JReferenceType instanceType = (JReferenceType) instance.getType();
@@ -658,6 +659,7 @@ public class TypeTightener {
           }
           // The instance type is incompatible with all overrides.
         }
+        assert !x.isStaticDispatchOnly();
         x.setCannotBePolymorphic();
         madeChanges();
       }

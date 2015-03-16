@@ -37,6 +37,7 @@ import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JReturnStatement;
 import com.google.gwt.dev.jjs.ast.JStatement;
 import com.google.gwt.dev.jjs.ast.JType;
+import com.google.gwt.dev.jjs.ast.JVisitor;
 import com.google.gwt.dev.jjs.ast.js.JMultiExpression;
 import com.google.gwt.thirdparty.guava.common.base.Function;
 import com.google.gwt.thirdparty.guava.common.base.Joiner;
@@ -155,6 +156,27 @@ public abstract class OptimizerTestBase extends JJSTestBase {
     public JProgram getOptimizedProgram() {
       return optimizedProgram;
     }
+  }
+
+  /**
+   * Asserts that there {@code method} calls all and only {@code expectedTargets}.
+   */
+  protected static void assertCallsAndOnlyCalls(JMethod method, JMethod... expectedTargets) {
+    final Set<JMethod> actualTargets = Sets.newHashSet();
+    new JVisitor() {
+      @Override
+      public void endVisit(JMethodCall x, Context ctx) {
+        actualTargets.add(x.getTarget());
+      }
+    }.accept(method);
+    assertEquals(ImmutableSet.copyOf(expectedTargets), actualTargets);
+  }
+
+  /**
+   * Asserts that there {@code method} only calls {@code forwardsToMethod}.
+   */
+  protected static void assertForwardsTo(JMethod method, JMethod forwardsToMethod) {
+    assertCallsAndOnlyCalls(method, forwardsToMethod);
   }
 
   protected static void assertOverrides(

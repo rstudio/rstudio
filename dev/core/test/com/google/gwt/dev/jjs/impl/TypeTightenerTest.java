@@ -170,6 +170,17 @@ public class TypeTightenerTest extends OptimizerTestBase {
         OptimizerTestBase.findField(result.findClass("EntryPoint$C"), "a").toString());
   }
 
+  public void testDoNotTighten_staticDispatch() throws Exception {
+    addSnippetClassDecl("abstract static class A { public void m() {} }");
+    addSnippetClassDecl("static class B extends A { public void m() { super.m(); }}");
+
+    Result result = optimize("void",
+        "new B().m();");
+
+    assertForwardsTo(result.findMethod("test.EntryPoint$B.m()V"),
+        result.findMethod("test.EntryPoint$A.m()V"));
+  }
+
   @Override
   protected boolean optimizeMethod(JProgram program, JMethod method) {
     program.addEntryMethod(findMainMethod(program));
