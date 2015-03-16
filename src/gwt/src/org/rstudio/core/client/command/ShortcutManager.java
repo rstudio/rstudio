@@ -19,7 +19,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Set;
 
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.events.NativeKeyDownEvent;
