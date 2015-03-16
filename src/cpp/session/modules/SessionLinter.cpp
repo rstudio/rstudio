@@ -242,18 +242,46 @@ Error extractRCode(const std::string& contents,
    return error;
 }
 
+bool belongsToUnmonitoredRPackage(FilePath self)
+{
+   // Check to see if this file is the descendent of a path
+   // containing a 'DESCRIPTION' file.
+   if (!self.isDirectory())
+      self = self.parent();
+   
+   while (!self.empty())
+   {
+      FilePath descPath = self.complete("DESCRIPTION");
+      if (descPath.exists())
+      {
+         if (!projects::projectContext().hasProject())
+            return true;
+         
+         if (!self.isEquivalentTo(projects::projectContext().directory()))
+            return true;
+      }
+      
+      self = self.parent();
+   }
+   
+   return false;
+}
+
 Error lintRSourceDocument(const json::JsonRpcRequest& request,
                           json::JsonRpcResponse* pResponse)
 {
    using namespace source_database;
    
+   // Ensure response is always at least an array, even on 'failure'
+   pResponse->setResult(json::Array());
+   
    std::string documentId;
+   std::string documentPath;
    bool showMarkersTab = false;
    Error error = json::readParams(request.params,
                                   &documentId,
+                                  &documentPath,
                                   &showMarkersTab);
-   
-   pResponse->setResult(json::Array());
    
    if (error)
    {
@@ -270,6 +298,13 @@ Error lintRSourceDocument(const json::JsonRpcRequest& request,
       return error;
    }
    
+   FilePath origin = module_context::resolveAliasedPath(documentPath);
+   
+   // Don't lint files that belong to unmonitored projects
+   if (belongsToUnmonitoredRPackage(origin))
+      return Success();
+   
+   // Extract R code from various R-code-containing filetypes.
    std::string content;
    if (pDoc->type() == SourceDocument::SourceDocumentTypeRSource)
       content = pDoc->contents();
@@ -297,7 +332,6 @@ Error lintRSourceDocument(const json::JsonRpcRequest& request,
       return error;
    }
    
-   FilePath origin = module_context::resolveAliasedPath(pDoc->path());
    ParseResults results = parse(content, origin);
    
    pResponse->setResult(lintAsJson(results.lint()));

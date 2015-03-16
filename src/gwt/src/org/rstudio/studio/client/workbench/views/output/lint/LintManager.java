@@ -42,7 +42,7 @@ import com.google.inject.Inject;
 
 public class LintManager
 {
-   class LintContext
+   static class LintContext
    {
       public LintContext(Invalidation.Token token,
                          Position cursorPosition,
@@ -223,6 +223,7 @@ public class LintManager
 
       server_.lintRSourceDocument(
             target_.getId(),
+            target_.getPath(),
             context.showMarkers,
             new ServerRequestCallback<JsArray<LintItem>>()
             {
