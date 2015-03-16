@@ -26,6 +26,7 @@ import org.rstudio.studio.client.common.AutoGlassPanel;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.rmarkdown.model.RmdPreviewParams;
+import org.rstudio.studio.client.rsconnect.ui.RSConnectPublishButton;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.viewer.events.ViewerNavigatedEvent;
@@ -60,8 +61,6 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
       exportMenu.addItem(commands_.viewerCopyToClipboard().createMenuItem(false));
       exportMenu.addSeparator();
       exportMenu.addItem(commands_.viewerSaveAsWebPage().createMenuItem(false));
-      exportMenu.addSeparator();
-      exportMenu.addItem(commands_.viewerPublishToRPubs().createMenuItem(false));
       
       exportButton_ = new ToolbarButton(
             "Export", StandardIcons.INSTANCE.export_menu(),
@@ -86,14 +85,9 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
       toolbar_.addLeftWidget(commands_.viewerStop().createToolbarButton());
      
       // add html document publish button 
-      publishButton_ = commands_.publishHTML().createToolbarButton(false);
+      publishButton_ = new RSConnectPublishButton("Document", true, false);
       toolbar_.addRightWidget(publishButton_);
       publishButton_.setVisible(false);
-      
-      // add rpubs publish button
-      rpubsPublishButton_ = toolbar_.addRightWidget(
-                commands_.viewerPublishToRPubs().createToolbarButton(false));
-      rpubsPublishButton_.setVisible(false);
       
       return toolbar_;
    }
@@ -111,8 +105,8 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
    public void navigate(String url)
    {
       navigate(url, false);
+      // TODO: use isExportEnabled to toggle publish UI
       publishButton_.setVisible(false);
-      rpubsPublishButton_.setVisible(commands_.viewerPublishToRPubs().isVisible());
       rmdPreviewParams_ = null;
    }
 
@@ -120,11 +114,8 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
    public void previewRmd(RmdPreviewParams params)
    {
       navigate(params.getOutputUrl(), true);
-      rpubsPublishButton_.setVisible(false);
-      publishButton_.setVisible(!params.isShinyDocument());
-      if (!params.isShinyDocument())
-         publishButton_.setText(params.getResult().getRpubsPublished() ? 
-               "Republish" : "Publish");
+      publishButton_.setVisible(true);
+      publishButton_.setRmdPreview(params);
       rmdPreviewParams_ = params;
       toolbar_.invalidateSeparators();
    }
@@ -132,6 +123,7 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
    @Override
    public void setExportEnabled(boolean exportEnabled)
    {
+      isExportEnabled_ = exportEnabled;
       exportButton_.setVisible(exportEnabled);
       exportButtonSeparator_.setVisible(exportEnabled);
       toolbar_.invalidateSeparators();
@@ -209,11 +201,11 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
    
    private Toolbar toolbar_;
    
-   private ToolbarButton publishButton_;
-   private ToolbarButton rpubsPublishButton_;
+   private RSConnectPublishButton publishButton_;
    
    private ToolbarButton exportButton_;
    private Widget exportButtonSeparator_;
+   private boolean isExportEnabled_;
 
    public static final String ABOUT_BLANK = "about:blank";
 }

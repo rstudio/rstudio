@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.rsconnect.events;
 
+import org.rstudio.studio.client.rmarkdown.model.RmdPreviewParams;
 import org.rstudio.studio.client.rsconnect.model.RSConnectDeploymentRecord;
 
 import com.google.gwt.event.shared.EventHandler;
@@ -31,15 +32,17 @@ public class RSConnectActionEvent extends GwtEvent<RSConnectActionEvent.Handler>
    
    public RSConnectActionEvent(int action, String path)
    {
-      this(action, path, null);
+      this(action, path, null, null);
    }
 
    public RSConnectActionEvent(int action, String path, 
+                               RmdPreviewParams fromRmdPreview,
                                RSConnectDeploymentRecord fromPrevious)
    {
       action_ = action;
       path_ = path;
       fromPrevious_ = fromPrevious;
+      rmdPreview_ = fromRmdPreview;
    }
    
    public String getPath()
@@ -50,6 +53,11 @@ public class RSConnectActionEvent extends GwtEvent<RSConnectActionEvent.Handler>
    public int getAction()
    {
       return action_;
+   }
+   
+   public RmdPreviewParams getFromRmdPreview()
+   {
+      return rmdPreview_;
    }
    
    public RSConnectDeploymentRecord getFromPrevious()
@@ -73,6 +81,7 @@ public class RSConnectActionEvent extends GwtEvent<RSConnectActionEvent.Handler>
    public static int ACTION_TYPE_CONFIGURE = 1;
    
    private final String path_;
+   private final RmdPreviewParams rmdPreview_;
    private final int action_;
    private final RSConnectDeploymentRecord fromPrevious_;
 }

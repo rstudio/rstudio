@@ -113,19 +113,8 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
          isShiny_ = false;
       }
       
-      boolean publishableResult = enablePublish && 
-         params.getResult().isHtml() &&
-         params.getResult().getFormat() != null &&
-         params.getResult().getFormat().isSelfContained();
 
-      if (publishableResult) {
-        publishButton_.setResultPath(params.getResult().getOutputFile());
-      }
-
-      boolean showDeploy = enablePublish && params.isShinyDocument();
-      if (publishableResult || showDeploy) {
-         publishButton_.setContentPath(params.getResult().getTargetFile());
-      }
+      publishButton_.setRmdPreview(params);
       
       // find text box
       boolean showFind = params.getResult().isHtml() && 

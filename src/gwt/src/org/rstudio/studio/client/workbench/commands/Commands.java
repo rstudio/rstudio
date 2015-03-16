@@ -308,7 +308,6 @@ public abstract class
    public abstract AppCommand viewerSaveAsImage();
    public abstract AppCommand viewerSaveAsWebPage();
    public abstract AppCommand viewerCopyToClipboard();
-   public abstract AppCommand viewerPublishToRPubs();
 
    // Application
    public abstract AppCommand quitSession();

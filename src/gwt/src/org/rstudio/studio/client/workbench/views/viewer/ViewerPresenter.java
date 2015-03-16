@@ -337,7 +337,6 @@ public class ViewerPresenter extends BasePresenter
       ).showModal();;    
    }
    
-   @Handler
    public void onViewerPublishToRPubs()
    {
       dependencyManager_.withRMarkdown("Publishing to RPubs", 
@@ -556,15 +555,13 @@ public class ViewerPresenter extends BasePresenter
       commands_.viewerZoom().setEnabled(enable);
       commands_.viewerZoom().setVisible(isHTMLWidget);
       
-      boolean canSnapshot = Desktop.isDesktop();     
+      boolean canSnapshot = Desktop.isDesktop();
       commands_.viewerSaveAsImage().setEnabled(enable && canSnapshot);
       commands_.viewerSaveAsImage().setVisible(isHTMLWidget && canSnapshot);
       commands_.viewerCopyToClipboard().setEnabled(enable && canSnapshot);
       commands_.viewerCopyToClipboard().setVisible(isHTMLWidget && canSnapshot);
       commands_.viewerSaveAsWebPage().setEnabled(enable);
       commands_.viewerSaveAsWebPage().setVisible(isHTMLWidget);
-      commands_.viewerPublishToRPubs().setEnabled(enable);
-      commands_.viewerPublishToRPubs().setVisible(isHTMLWidget);
       
       display_.setExportEnabled(isHTMLWidget);
    }

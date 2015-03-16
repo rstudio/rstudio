@@ -21,6 +21,7 @@ import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.rmarkdown.model.RmdPreviewParams;
 import org.rstudio.studio.client.rsconnect.events.RSConnectActionEvent;
 import org.rstudio.studio.client.rsconnect.model.RSConnectDeploymentRecord;
 import org.rstudio.studio.client.rsconnect.model.RSConnectServerOperations;
@@ -121,9 +122,22 @@ public class RSConnectPublishButton extends Composite
          populateDeployments();
    }
    
-   public void setResultPath(String resultPath)
+   public void setRmdPreview(RmdPreviewParams params)
    {
-      resultPath_ = resultPath;
+      if (params.isShinyDocument() || 
+            (params.getResult().isHtml() &&
+             params.getResult().getFormat() != null &&
+             params.getResult().getFormat().isSelfContained()))
+      {
+         setVisible(true);
+         rmdPreview_ = params;
+         setContentPath(params.getResult().getTargetFile());
+      }
+      else
+      {
+         setVisible(false);
+         rmdPreview_ = null;
+      }
    }
 
    public void setText(String text)
@@ -177,6 +191,7 @@ public class RSConnectPublishButton extends Composite
       events_.fireEvent(new RSConnectActionEvent(
             RSConnectActionEvent.ACTION_TYPE_DEPLOY, 
             contentPath_,
+            rmdPreview_,
             previous));
    }
    
@@ -258,8 +273,8 @@ public class RSConnectPublishButton extends Composite
 
    private String contentPath_;
    private String lastContentPath_;
-   private String resultPath_;
    private boolean populating_ = false;
+   private RmdPreviewParams rmdPreview_;
 
    private final boolean showCaption_;
    private final boolean manageVisiblity_;
