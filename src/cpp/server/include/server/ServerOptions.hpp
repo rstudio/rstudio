@@ -76,6 +76,8 @@ public:
 
    bool serverAppArmorEnabled() const { return serverAppArmorEnabled_; }
 
+   bool serverSetUmask() const { return serverSetUmask_; }
+
    // www 
    std::string wwwAddress() const
    { 
@@ -227,6 +229,7 @@ private:
    std::string serverUser_;
    bool serverDaemonize_;
    bool serverAppArmorEnabled_;
+   bool serverSetUmask_;
    bool serverOffline_;
    std::string wwwAddress_ ;
    std::string wwwPort_ ;
