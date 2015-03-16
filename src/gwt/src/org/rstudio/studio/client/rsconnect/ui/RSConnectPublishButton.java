@@ -16,6 +16,7 @@ package org.rstudio.studio.client.rsconnect.ui;
 
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.VisibleChangedHandler;
+import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -38,9 +39,10 @@ import com.google.inject.Inject;
 
 public class RSConnectPublishButton extends Composite
 {
-   public RSConnectPublishButton(String contentType)
+   public RSConnectPublishButton(String contentType, boolean showCaption)
    {
       contentType_ = contentType;
+      showCaption_ = showCaption;
       
       // create root widget
       HorizontalPanel panel = new HorizontalPanel();
@@ -58,7 +60,8 @@ public class RSConnectPublishButton extends Composite
                }
             });
       
-      publishButton_.setText("Publish");
+      if (showCaption_)
+         publishButton_.setText("Publish");
       panel.add(publishButton_);
       
       // create drop menu of previous deployments/other commands
@@ -115,7 +118,8 @@ public class RSConnectPublishButton extends Composite
 
    public void setText(String text)
    {
-      publishButton_.setText(text);
+      if (showCaption_)
+         publishButton_.setText(text);
    }
    
    // Private methods --------------------------------------------------------
@@ -130,8 +134,15 @@ public class RSConnectPublishButton extends Composite
       if (lastContentPath_ != null && lastContentPath_.equals(contentPath_))
          return;
       
+      // if this is a .R file, check for deployments of its parent path
+      String contentPath = contentPath_;
+      FileSystemItem fsiContent = FileSystemItem.createFile(contentPath_);
+      if (fsiContent.getExtension().toLowerCase().equals(".r")) {
+         contentPath = fsiContent.getParentPathString();
+      }
+      
       populating_ = true;
-      server_.getRSConnectDeployments(contentPath_, 
+      server_.getRSConnectDeployments(contentPath, 
             new ServerRequestCallback<JsArray<RSConnectDeploymentRecord>>()
       {
          @Override
@@ -163,22 +174,13 @@ public class RSConnectPublishButton extends Composite
    {
       // clear existing deployment menu, if any
       publishMenu_.clearItems();
-      publishMenu_.addItem(new MenuItem("Publish " + contentType_ + "...",
-            new Scheduler.ScheduledCommand()
-            {
-               
-               @Override
-               public void execute()
-               {
-                  onPublishClick(defaultRec_);
-               }
-            }));
-      
+
       // if there are existing deployments, make the UI reflect that this is a
       // republish
       if (recs.length() > 0)
       {
-         publishButton_.setText("Republish");
+         if (showCaption_)
+            publishButton_.setText("Republish");
          for (int i  = 0; i < recs.length(); i++)
          {
             final RSConnectDeploymentRecord rec = recs.get(i);
@@ -189,7 +191,8 @@ public class RSConnectPublishButton extends Composite
                defaultRec_ = rec;
             }
 
-            publishMenu_.addItem(new MenuItem(rec.getServer(), 
+            publishMenu_.addItem(new MenuItem(
+                  rec.getName() + " (" + rec.getServer() + ")", 
                   new Scheduler.ScheduledCommand()
             {
                @Override
@@ -201,18 +204,36 @@ public class RSConnectPublishButton extends Composite
          }
 
          publishMenu_.addSeparator();
-         publishMenu_.addItem(new MenuItem("Other Destination", 
+         publishMenu_.addItem(new MenuItem("Other Destination...", 
                new Scheduler.ScheduledCommand()
          {
-            
             @Override
             public void execute()
             {
                onPublishClick(null);
             }
          }));
-         publishMenu_.addSeparator();
       }
+      else
+      {
+         // no existing deployments to redeploy to, so just offer to make a new
+         // one
+         publishMenu_.addItem(new MenuItem(
+               AppCommand.formatMenuLabel(
+                     commands_.rsconnectDeploy().getImageResource(), 
+                     "Publish " + contentType_ + "...", null),
+               true,
+               new Scheduler.ScheduledCommand()
+               {
+                  @Override
+                  public void execute()
+                  {
+                     onPublishClick(defaultRec_);
+                  }
+               }));
+      }
+
+      publishMenu_.addSeparator();
       publishMenu_.addItem(
             commands_.rsconnectManageAccounts().createMenuItem(false));
    }
@@ -228,5 +249,6 @@ public class RSConnectPublishButton extends Composite
    private String contentPath_;
    private String lastContentPath_;
    private boolean populating_ = false;
+   private boolean showCaption_ = true;
    private RSConnectDeploymentRecord defaultRec_;
 }
