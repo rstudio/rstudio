@@ -195,6 +195,8 @@ public class TextEditingTarget implements
       void setFormatOptionsVisible(boolean visible);
       HandlerRegistration addRmdFormatChangedHandler(
             RmdOutputFormatChangedEvent.Handler handler);
+      
+      void setPublishPath(String publishPath);
    }
 
    private class SaveProgressIndicator implements ProgressIndicator
@@ -1044,6 +1046,9 @@ public class TextEditingTarget implements
             setRmdFormat(event.getFormat());
          }
       });
+      
+      if (extendedType_.equals("shiny"))
+         view_.setPublishPath(document.getPath());
 
       initStatusBar();
    }

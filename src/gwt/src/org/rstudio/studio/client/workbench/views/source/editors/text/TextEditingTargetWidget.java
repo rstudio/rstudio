@@ -46,7 +46,7 @@ import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.rmarkdown.RmdOutput;
 import org.rstudio.studio.client.rmarkdown.events.RmdOutputFormatChangedEvent;
-import org.rstudio.studio.client.rsconnect.ui.RSConnectUtils;
+import org.rstudio.studio.client.rsconnect.ui.RSConnectPublishButton;
 import org.rstudio.studio.client.shiny.model.ShinyApplicationParams;
 import org.rstudio.studio.client.shiny.ui.ShinyViewerTypePopupMenu;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -247,13 +247,12 @@ public class TextEditingTargetWidget
                        true);
       shinyLaunchButton_.setVisible(false);
       toolbar.addRightWidget(shinyLaunchButton_);
-      
       if (SessionUtils.showPublishUi(session_, uiPrefs_))
       {
          toolbar.addRightSeparator();
-         RSConnectUtils.addPublishCommands(toolbar, null, false);
+         publishButton_ = new RSConnectPublishButton("Application");
+         toolbar.addRightWidget(publishButton_);
       }
-      
       
       return toolbar;
    }
@@ -646,6 +645,13 @@ public class TextEditingTargetWidget
       knitDocumentButton_.setText(knitCommandText_);
       knitDocumentButton_.setLeftImage(StandardIcons.INSTANCE.run());
    }
+   
+   @Override
+   public void setPublishPath(String publishPath)
+   {
+      if (publishButton_ != null)
+         publishButton_.setContentPath(publishPath);
+   }
 
    private void setFormatText(String text)
    {
@@ -777,6 +783,7 @@ public class TextEditingTargetWidget
    private ToolbarButton shinyLaunchButton_;
    private ToolbarButton editRmdFormatButton_;
    private ToolbarPopupMenuButton rmdFormatButton_;
+   private RSConnectPublishButton publishButton_;
    private MenuItem rmdViewerPaneMenuItem_;
    private MenuItem rmdViewerWindowMenuItem_;
    private HandlerManager handlerManager_;

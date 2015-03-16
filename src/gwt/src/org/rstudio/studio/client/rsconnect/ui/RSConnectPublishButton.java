@@ -14,6 +14,8 @@
  */
 package org.rstudio.studio.client.rsconnect.ui;
 
+import org.rstudio.core.client.command.AppCommand;
+import org.rstudio.core.client.command.VisibleChangedHandler;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -23,6 +25,7 @@ import org.rstudio.studio.client.rsconnect.model.RSConnectDeploymentRecord;
 import org.rstudio.studio.client.rsconnect.model.RSConnectServerOperations;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.workbench.commands.Commands;
 
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.Scheduler;
@@ -31,17 +34,16 @@ import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.MenuItem;
+import com.google.inject.Inject;
 
 public class RSConnectPublishButton extends Composite
 {
-   public RSConnectPublishButton(
-         RSConnectServerOperations server, 
-         String contentPath)
+   public RSConnectPublishButton(String contentType)
    {
+      contentType_ = contentType;
+      
+      // create root widget
       HorizontalPanel panel = new HorizontalPanel();
-      server_ = server;
-      events_ = RStudioGinjector.INSTANCE.getEventBus();
-      contentPath_ = contentPath;
       
       // create publish button itself
       publishButton_ = new ToolbarButton(
@@ -52,44 +54,102 @@ public class RSConnectPublishButton extends Composite
                @Override
                public void onClick(ClickEvent arg0)
                {
-                  onPublishClick(null);
-                  
+                  onPublishClick(defaultRec_);
                }
             });
       
       publishButton_.setText("Publish");
-      
-      // hide the button until we know how it should be titled
-      publishButton_.setVisible(false);
       panel.add(publishButton_);
       
-      // create drop menu of previous deployments (we'll populate this if we
-      // find any)
+      // create drop menu of previous deployments/other commands
       publishMenu_ = new ToolbarPopupMenu();
-      publishMenu_.setVisible(false);
-      panel.add(publishMenu_);
+      ToolbarButton publishMenuButton = new ToolbarButton(publishMenu_, false);
+      panel.add(publishMenuButton);
       
-      server_.getRSConnectDeployments(contentPath, 
+      // initialize composite widget
+      initWidget(panel);
+
+      // initialize injected members
+      RStudioGinjector.INSTANCE.injectMembers(this);
+   }
+   
+   @Inject
+   public void initialize(RSConnectServerOperations server,
+         EventBus events, 
+         Commands commands)
+   {
+      server_ = server;
+      events_ = events;
+      commands_ = commands;
+      
+      // initialize visibility
+      setVisible(commands_.rsconnectDeploy().isVisible());
+      commands_.rsconnectDeploy().addVisibleChangedHandler(
+            new VisibleChangedHandler()
+      {
+         @Override
+         public void onVisibleChanged(AppCommand command)
+         {
+            setVisible(commands_.rsconnectDeploy().isVisible());
+         }
+      });
+   }
+   
+   @Override
+   public void setVisible(boolean visible)
+   {
+      super.setVisible(visible);
+      
+      // if becoming visible, repopulate the list of deployments if we haven't
+      // already
+      if (visible)
+         populateDeployments();
+   }
+   
+   public void setContentPath(String contentPath)
+   {
+      contentPath_ = contentPath;
+      if (isVisible())
+         populateDeployments();
+   }
+
+   public void setText(String text)
+   {
+      publishButton_.setText(text);
+   }
+   
+   // Private methods --------------------------------------------------------
+   
+   private void populateDeployments()
+   {
+      // prevent reentrancy
+      if (contentPath_ == null || populating_)
+         return;
+      
+      // avoid populating if we've already set the deployments for this path
+      if (lastContentPath_ != null && lastContentPath_.equals(contentPath_))
+         return;
+      
+      populating_ = true;
+      server_.getRSConnectDeployments(contentPath_, 
             new ServerRequestCallback<JsArray<RSConnectDeploymentRecord>>()
       {
          @Override
          public void onResponseReceived(JsArray<RSConnectDeploymentRecord> recs)
          {
+            populating_ = false;
+            lastContentPath_ = contentPath_;
             setPreviousDeployments(recs);
          }
          
          @Override
          public void onError(ServerError error)
          {
-            // we failed to find existing deployments; show the publish button 
-            publishButton_.setVisible(true);
+            // mark population finished, but allow a retry 
+            populating_ = false;
          }
       });
-
-      initWidget(panel);
    }
-   
-   // Private methods --------------------------------------------------------
    
    private void onPublishClick(RSConnectDeploymentRecord previous)
    {
@@ -101,6 +161,19 @@ public class RSConnectPublishButton extends Composite
    
    private void setPreviousDeployments(JsArray<RSConnectDeploymentRecord> recs)
    {
+      // clear existing deployment menu, if any
+      publishMenu_.clearItems();
+      publishMenu_.addItem(new MenuItem("Publish " + contentType_ + "...",
+            new Scheduler.ScheduledCommand()
+            {
+               
+               @Override
+               public void execute()
+               {
+                  onPublishClick(defaultRec_);
+               }
+            }));
+      
       // if there are existing deployments, make the UI reflect that this is a
       // republish
       if (recs.length() > 0)
@@ -109,10 +182,16 @@ public class RSConnectPublishButton extends Composite
          for (int i  = 0; i < recs.length(); i++)
          {
             final RSConnectDeploymentRecord rec = recs.get(i);
+
+            // default to last deployed 
+            if (defaultRec_ == null || defaultRec_.getWhen() < rec.getWhen())
+            {
+               defaultRec_ = rec;
+            }
+
             publishMenu_.addItem(new MenuItem(rec.getServer(), 
                   new Scheduler.ScheduledCommand()
             {
-               
                @Override
                public void execute()
                {
@@ -120,6 +199,7 @@ public class RSConnectPublishButton extends Composite
                }
             }));
          }
+
          publishMenu_.addSeparator();
          publishMenu_.addItem(new MenuItem("Other Destination", 
                new Scheduler.ScheduledCommand()
@@ -131,16 +211,22 @@ public class RSConnectPublishButton extends Composite
                onPublishClick(null);
             }
          }));
-         publishMenu_.setVisible(true);
+         publishMenu_.addSeparator();
       }
-      publishButton_.setVisible(true);
+      publishMenu_.addItem(
+            commands_.rsconnectManageAccounts().createMenuItem(false));
    }
  
    private final ToolbarButton publishButton_;
    private final ToolbarPopupMenu publishMenu_;
+   private final String contentType_;
 
-   private final RSConnectServerOperations server_;
-   private final EventBus events_;
+   private RSConnectServerOperations server_;
+   private EventBus events_;
+   private Commands commands_;
 
-   private final String contentPath_;
+   private String contentPath_;
+   private String lastContentPath_;
+   private boolean populating_ = false;
+   private RSConnectDeploymentRecord defaultRec_;
 }
