@@ -139,7 +139,7 @@ public class LintManager
                return;
             
             if (uiPrefs_.lintOnSave().getValue())
-               lint(true, false);
+               lint(false, false);
          }
       });
    }
