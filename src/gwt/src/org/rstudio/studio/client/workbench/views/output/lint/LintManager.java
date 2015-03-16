@@ -203,11 +203,36 @@ public class LintManager
                {
                   if (context.token.isInvalid())
                      return;
-
+                  
                   final JsArray<LintItem> cppLint =
                         CppCompletionRequest.asLintArray(diag);
                   
-                  showLint(context, cppLint);
+                  server_.lintRSourceDocument(
+                        target_.getId(),
+                        target_.getPath(),
+                        context.showMarkers,
+                        new ServerRequestCallback<JsArray<LintItem>>()
+                        {
+                           @Override
+                           public void onResponseReceived(JsArray<LintItem> rLint)
+                           {
+                              if (context.token.isInvalid())
+                                 return;
+                              
+                              JsArray<LintItem> allLint = JsArray.createArray().cast();
+                              for (int i = 0; i < cppLint.length(); i++)
+                                 allLint.push(cppLint.get(i));
+                              for (int i = 0; i < rLint.length(); i++)
+                                 allLint.push(rLint.get(i));
+                              showLint(context, allLint);
+                           }
+
+                           @Override
+                           public void onError(ServerError error)
+                           {
+                              Debug.logError(error);
+                           }
+                        });;
                }
                
                @Override
