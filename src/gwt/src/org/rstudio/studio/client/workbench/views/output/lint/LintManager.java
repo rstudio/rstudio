@@ -156,6 +156,10 @@ public class LintManager
    
    private void lintActiveDocument(final LintContext context)
    {
+      // don't lint if this is an unsaved document
+      if (target_.getPath() == null)
+         return;
+      
       if (context.showMarkers)
       {
          target_.save(new Command()
