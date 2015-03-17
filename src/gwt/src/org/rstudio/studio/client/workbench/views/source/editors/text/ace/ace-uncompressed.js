@@ -964,240 +964,6 @@ require("./es5-shim");
 
 });
 
-define("ace/lib/dom",["require","exports","module"], function(require, exports, module) {
-
-
-var XHTML_NS = "http://www.w3.org/1999/xhtml";
-
-exports.getDocumentHead = function(doc) {
-    if (!doc)
-        doc = document;
-    return doc.head || doc.getElementsByTagName("head")[0] || doc.documentElement;
-}
-
-exports.createElement = function(tag, ns) {
-    return document.createElementNS ?
-           document.createElementNS(ns || XHTML_NS, tag) :
-           document.createElement(tag);
-};
-
-exports.hasCssClass = function(el, name) {
-    var classes = (el.className || "").split(/\s+/g);
-    return classes.indexOf(name) !== -1;
-};
-exports.addCssClass = function(el, name) {
-    if (!exports.hasCssClass(el, name)) {
-        el.className += " " + name;
-    }
-};
-exports.removeCssClass = function(el, name) {
-    var classes = el.className.split(/\s+/g);
-    while (true) {
-        var index = classes.indexOf(name);
-        if (index == -1) {
-            break;
-        }
-        classes.splice(index, 1);
-    }
-    el.className = classes.join(" ");
-};
-
-exports.toggleCssClass = function(el, name) {
-    var classes = el.className.split(/\s+/g), add = true;
-    while (true) {
-        var index = classes.indexOf(name);
-        if (index == -1) {
-            break;
-        }
-        add = false;
-        classes.splice(index, 1);
-    }
-    if(add)
-        classes.push(name);
-
-    el.className = classes.join(" ");
-    return add;
-};
-exports.setCssClass = function(node, className, include) {
-    if (include) {
-        exports.addCssClass(node, className);
-    } else {
-        exports.removeCssClass(node, className);
-    }
-};
-
-exports.hasCssString = function(id, doc) {
-    var index = 0, sheets;
-    doc = doc || document;
-
-    if (doc.createStyleSheet && (sheets = doc.styleSheets)) {
-        while (index < sheets.length)
-            if (sheets[index++].owningElement.id === id) return true;
-    } else if ((sheets = doc.getElementsByTagName("style"))) {
-        while (index < sheets.length)
-            if (sheets[index++].id === id) return true;
-    }
-
-    return false;
-};
-
-exports.importCssString = function importCssString(cssText, id, doc) {
-    doc = doc || document;
-    if (id && exports.hasCssString(id, doc))
-        return null;
-    
-    var style;
-    
-    if (doc.createStyleSheet) {
-        style = doc.createStyleSheet();
-        style.cssText = cssText;
-        if (id)
-            style.owningElement.id = id;
-    } else {
-        style = doc.createElementNS
-            ? doc.createElementNS(XHTML_NS, "style")
-            : doc.createElement("style");
-
-        style.appendChild(doc.createTextNode(cssText));
-        if (id)
-            style.id = id;
-
-        exports.getDocumentHead(doc).appendChild(style);
-    }
-};
-
-exports.importCssStylsheet = function(uri, doc) {
-    if (doc.createStyleSheet) {
-        doc.createStyleSheet(uri);
-    } else {
-        var link = exports.createElement('link');
-        link.rel = 'stylesheet';
-        link.href = uri;
-
-        exports.getDocumentHead(doc).appendChild(link);
-    }
-};
-
-exports.getInnerWidth = function(element) {
-    return (
-        parseInt(exports.computedStyle(element, "paddingLeft"), 10) +
-        parseInt(exports.computedStyle(element, "paddingRight"), 10) + 
-        element.clientWidth
-    );
-};
-
-exports.getInnerHeight = function(element) {
-    return (
-        parseInt(exports.computedStyle(element, "paddingTop"), 10) +
-        parseInt(exports.computedStyle(element, "paddingBottom"), 10) +
-        element.clientHeight
-    );
-};
-
-
-if (typeof document == "undefined")
-    return;
-
-if (window.pageYOffset !== undefined) {
-    exports.getPageScrollTop = function() {
-        return window.pageYOffset;
-    };
-
-    exports.getPageScrollLeft = function() {
-        return window.pageXOffset;
-    };
-}
-else {
-    exports.getPageScrollTop = function() {
-        return document.body.scrollTop;
-    };
-
-    exports.getPageScrollLeft = function() {
-        return document.body.scrollLeft;
-    };
-}
-
-if (window.getComputedStyle)
-    exports.computedStyle = function(element, style) {
-        if (style)
-            return (window.getComputedStyle(element, "") || {})[style] || "";
-        return window.getComputedStyle(element, "") || {};
-    };
-else
-    exports.computedStyle = function(element, style) {
-        if (style)
-            return element.currentStyle[style];
-        return element.currentStyle;
-    };
-
-exports.scrollbarWidth = function(document) {
-    var inner = exports.createElement("ace_inner");
-    inner.style.width = "100%";
-    inner.style.minWidth = "0px";
-    inner.style.height = "200px";
-    inner.style.display = "block";
-
-    var outer = exports.createElement("ace_outer");
-    var style = outer.style;
-
-    style.position = "absolute";
-    style.left = "-10000px";
-    style.overflow = "hidden";
-    style.width = "200px";
-    style.minWidth = "0px";
-    style.height = "150px";
-    style.display = "block";
-
-    outer.appendChild(inner);
-
-    var body = document.documentElement;
-    body.appendChild(outer);
-
-    var noScrollbar = inner.offsetWidth;
-
-    style.overflow = "scroll";
-    var withScrollbar = inner.offsetWidth;
-
-    if (noScrollbar == withScrollbar) {
-        withScrollbar = outer.clientWidth;
-    }
-
-    body.removeChild(outer);
-
-    return noScrollbar-withScrollbar;
-};
-exports.setInnerHtml = function(el, innerHtml) {
-    var element = el.cloneNode(false);//document.createElement("div");
-    element.innerHTML = innerHtml;
-    el.parentNode.replaceChild(element, el);
-    return element;
-};
-
-if ("textContent" in document.documentElement) {
-    exports.setInnerText = function(el, innerText) {
-        el.textContent = innerText;
-    };
-
-    exports.getInnerText = function(el) {
-        return el.textContent;
-    };
-}
-else {
-    exports.setInnerText = function(el, innerText) {
-        el.innerText = innerText;
-    };
-
-    exports.getInnerText = function(el) {
-        return el.innerText;
-    };
-}
-
-exports.getParentWindow = function(document) {
-    return document.defaultView || document.parentWindow;
-};
-
-});
-
 define("ace/lib/oop",["require","exports","module"], function(require, exports, module) {
 
 
@@ -1226,497 +992,130 @@ exports.implement = function(proto, mixin) {
 
 });
 
-define("ace/lib/keys",["require","exports","module","ace/lib/fixoldbrowsers","ace/lib/oop"], function(require, exports, module) {
+define("ace/lib/event_emitter",["require","exports","module"], function(require, exports, module) {
 
 
-require("./fixoldbrowsers");
+var EventEmitter = {};
+var stopPropagation = function() { this.propagationStopped = true; };
+var preventDefault = function() { this.defaultPrevented = true; };
 
-var oop = require("./oop");
-var Keys = (function() {
-    var ret = {
-        MODIFIER_KEYS: {
-            16: 'Shift', 17: 'Ctrl', 18: 'Alt', 224: 'Meta'
-        },
+EventEmitter._emit =
+EventEmitter._dispatchEvent = function(eventName, e) {
+    this._eventRegistry || (this._eventRegistry = {});
+    this._defaultHandlers || (this._defaultHandlers = {});
 
-        KEY_MODS: {
-            "ctrl": 1, "alt": 2, "option" : 2, "shift": 4,
-            "super": 8, "meta": 8, "command": 8, "cmd": 8
-        },
+    var listeners = this._eventRegistry[eventName] || [];
+    var defaultHandler = this._defaultHandlers[eventName];
+    if (!listeners.length && !defaultHandler)
+        return;
 
-        FUNCTION_KEYS : {
-            8  : "Backspace",
-            9  : "Tab",
-            13 : "Return",
-            19 : "Pause",
-            27 : "Esc",
-            32 : "Space",
-            33 : "PageUp",
-            34 : "PageDown",
-            35 : "End",
-            36 : "Home",
-            37 : "Left",
-            38 : "Up",
-            39 : "Right",
-            40 : "Down",
-            44 : "Print",
-            45 : "Insert",
-            46 : "Delete",
-            96 : "Numpad0",
-            97 : "Numpad1",
-            98 : "Numpad2",
-            99 : "Numpad3",
-            100: "Numpad4",
-            101: "Numpad5",
-            102: "Numpad6",
-            103: "Numpad7",
-            104: "Numpad8",
-            105: "Numpad9",
-            '-13': "NumpadEnter",
-            112: "F1",
-            113: "F2",
-            114: "F3",
-            115: "F4",
-            116: "F5",
-            117: "F6",
-            118: "F7",
-            119: "F8",
-            120: "F9",
-            121: "F10",
-            122: "F11",
-            123: "F12",
-            144: "Numlock",
-            145: "Scrolllock"
-        },
+    if (typeof e != "object" || !e)
+        e = {};
 
-        PRINTABLE_KEYS: {
-           32: ' ',  48: '0',  49: '1',  50: '2',  51: '3',  52: '4', 53:  '5',
-           54: '6',  55: '7',  56: '8',  57: '9',  59: ';',  61: '=', 65:  'a',
-           66: 'b',  67: 'c',  68: 'd',  69: 'e',  70: 'f',  71: 'g', 72:  'h',
-           73: 'i',  74: 'j',  75: 'k',  76: 'l',  77: 'm',  78: 'n', 79:  'o',
-           80: 'p',  81: 'q',  82: 'r',  83: 's',  84: 't',  85: 'u', 86:  'v',
-           87: 'w',  88: 'x',  89: 'y',  90: 'z', 107: '+', 109: '-', 110: '.',
-          187: '=', 188: ',', 189: '-', 190: '.', 191: '/', 192: '`', 219: '[',
-          220: '\\',221: ']', 222: '\''
-        }
-    };
-    var name, i;
-    for (i in ret.FUNCTION_KEYS) {
-        name = ret.FUNCTION_KEYS[i].toLowerCase();
-        ret[name] = parseInt(i, 10);
+    if (!e.type)
+        e.type = eventName;
+    if (!e.stopPropagation)
+        e.stopPropagation = stopPropagation;
+    if (!e.preventDefault)
+        e.preventDefault = preventDefault;
+
+    listeners = listeners.slice();
+    for (var i=0; i<listeners.length; i++) {
+        listeners[i](e, this);
+        if (e.propagationStopped)
+            break;
     }
-    for (i in ret.PRINTABLE_KEYS) {
-        name = ret.PRINTABLE_KEYS[i].toLowerCase();
-        ret[name] = parseInt(i, 10);
-    }
-    oop.mixin(ret, ret.MODIFIER_KEYS);
-    oop.mixin(ret, ret.PRINTABLE_KEYS);
-    oop.mixin(ret, ret.FUNCTION_KEYS);
-    ret.enter = ret["return"];
-    ret.escape = ret.esc;
-    ret.del = ret["delete"];
-    ret[173] = '-';
     
-    (function() {
-        var mods = ["cmd", "ctrl", "alt", "shift"];
-        for (var i = Math.pow(2, mods.length); i--;) {            
-            ret.KEY_MODS[i] = mods.filter(function(x) {
-                return i & ret.KEY_MODS[x];
-            }).join("-") + "-";
-        }
-    })();
-
-    ret.KEY_MODS[0] = "";
-    ret.KEY_MODS[-1] = "input";
-
-    return ret;
-})();
-oop.mixin(exports, Keys);
-
-exports.keyCodeToString = function(keyCode) {
-    var keyString = Keys[keyCode];
-    if (typeof keyString != "string")
-        keyString = String.fromCharCode(keyCode);
-    return keyString.toLowerCase();
+    if (defaultHandler && !e.defaultPrevented)
+        return defaultHandler(e, this);
 };
 
-});
 
-define("ace/lib/useragent",["require","exports","module"], function(require, exports, module) {
-
-exports.OS = {
-    LINUX: "LINUX",
-    MAC: "MAC",
-    WINDOWS: "WINDOWS"
-};
-exports.getOS = function() {
-    if (exports.isMac) {
-        return exports.OS.MAC;
-    } else if (exports.isLinux) {
-        return exports.OS.LINUX;
-    } else {
-        return exports.OS.WINDOWS;
-    }
-};
-if (typeof navigator != "object")
-    return;
-
-var os = (navigator.platform.match(/mac|win|linux/i) || ["other"])[0].toLowerCase();
-var ua = navigator.userAgent;
-exports.isWin = (os == "win");
-exports.isMac = (os == "mac");
-exports.isLinux = (os == "linux");
-exports.isIE = 
-    (navigator.appName == "Microsoft Internet Explorer" || navigator.appName.indexOf("MSAppHost") >= 0)
-    ? parseFloat((ua.match(/(?:MSIE |Trident\/[0-9]+[\.0-9]+;.*rv:)([0-9]+[\.0-9]+)/)||[])[1])
-    : parseFloat((ua.match(/(?:Trident\/[0-9]+[\.0-9]+;.*rv:)([0-9]+[\.0-9]+)/)||[])[1]); // for ie
-    
-exports.isOldIE = exports.isIE && exports.isIE < 9;
-exports.isGecko = exports.isMozilla = (window.Controllers || window.controllers) && window.navigator.product === "Gecko";
-exports.isOldGecko = exports.isGecko && parseInt((ua.match(/rv\:(\d+)/)||[])[1], 10) < 4;
-exports.isOpera = window.opera && Object.prototype.toString.call(window.opera) == "[object Opera]";
-exports.isWebKit = parseFloat(ua.split("WebKit/")[1]) || undefined;
-
-exports.isChrome = parseFloat(ua.split(" Chrome/")[1]) || undefined;
-
-exports.isAIR = ua.indexOf("AdobeAIR") >= 0;
-
-exports.isIPad = ua.indexOf("iPad") >= 0;
-
-exports.isTouchPad = ua.indexOf("TouchPad") >= 0;
-
-exports.isChromeOS = ua.indexOf(" CrOS ") >= 0;
-
-});
-
-define("ace/lib/event",["require","exports","module","ace/lib/keys","ace/lib/useragent"], function(require, exports, module) {
-
-
-var keys = require("./keys");
-var useragent = require("./useragent");
-
-exports.addListener = function(elem, type, callback) {
-    if (elem.addEventListener) {
-        return elem.addEventListener(type, callback, false);
-    }
-    if (elem.attachEvent) {
-        var wrapper = function() {
-            callback.call(elem, window.event);
-        };
-        callback._wrapper = wrapper;
-        elem.attachEvent("on" + type, wrapper);
-    }
+EventEmitter._signal = function(eventName, e) {
+    var listeners = (this._eventRegistry || {})[eventName];
+    if (!listeners)
+        return;
+    listeners = listeners.slice();
+    for (var i=0; i<listeners.length; i++)
+        listeners[i](e, this);
 };
 
-exports.removeListener = function(elem, type, callback) {
-    if (elem.removeEventListener) {
-        return elem.removeEventListener(type, callback, false);
-    }
-    if (elem.detachEvent) {
-        elem.detachEvent("on" + type, callback._wrapper || callback);
-    }
-};
-exports.stopEvent = function(e) {
-    exports.stopPropagation(e);
-    exports.preventDefault(e);
-    return false;
-};
-
-exports.stopPropagation = function(e) {
-    if (e.stopPropagation)
-        e.stopPropagation();
-    else
-        e.cancelBubble = true;
-};
-
-exports.preventDefault = function(e) {
-    if (e.preventDefault)
-        e.preventDefault();
-    else
-        e.returnValue = false;
-};
-exports.getButton = function(e) {
-    if (e.type == "dblclick")
-        return 0;
-    if (e.type == "contextmenu" || (useragent.isMac && (e.ctrlKey && !e.altKey && !e.shiftKey)))
-        return 2;
-    if (e.preventDefault) {
-        return e.button;
-    }
-    else {
-        return {1:0, 2:2, 4:1}[e.button];
-    }
-};
-
-exports.capture = function(el, eventHandler, releaseCaptureHandler) {
-    function onMouseUp(e) {
-        eventHandler && eventHandler(e);
-        releaseCaptureHandler && releaseCaptureHandler(e);
-
-        exports.removeListener(document, "mousemove", eventHandler, true);
-        exports.removeListener(document, "mouseup", onMouseUp, true);
-        exports.removeListener(document, "dragstart", onMouseUp, true);
-    }
-
-    exports.addListener(document, "mousemove", eventHandler, true);
-    exports.addListener(document, "mouseup", onMouseUp, true);
-    exports.addListener(document, "dragstart", onMouseUp, true);
-    
-    return onMouseUp;
-};
-
-exports.addMouseWheelListener = function(el, callback) {
-    if ("onmousewheel" in el) {
-        exports.addListener(el, "mousewheel", function(e) {
-            var factor = 8;
-            if (e.wheelDeltaX !== undefined) {
-                e.wheelX = -e.wheelDeltaX / factor;
-                e.wheelY = -e.wheelDeltaY / factor;
-            } else {
-                e.wheelX = 0;
-                e.wheelY = -e.wheelDelta / factor;
-            }
-            callback(e);
-        });
-    } else if ("onwheel" in el) {
-        exports.addListener(el, "wheel",  function(e) {
-            var factor = 0.35;
-            switch (e.deltaMode) {
-                case e.DOM_DELTA_PIXEL:
-                    e.wheelX = e.deltaX * factor || 0;
-                    e.wheelY = e.deltaY * factor || 0;
-                    break;
-                case e.DOM_DELTA_LINE:
-                case e.DOM_DELTA_PAGE:
-                    e.wheelX = (e.deltaX || 0) * 5;
-                    e.wheelY = (e.deltaY || 0) * 5;
-                    break;
-            }
-            
-            callback(e);
-        });
-    } else {
-        exports.addListener(el, "DOMMouseScroll", function(e) {
-            if (e.axis && e.axis == e.HORIZONTAL_AXIS) {
-                e.wheelX = (e.detail || 0) * 5;
-                e.wheelY = 0;
-            } else {
-                e.wheelX = 0;
-                e.wheelY = (e.detail || 0) * 5;
-            }
-            callback(e);
-        });
-    }
-};
-
-exports.addMultiMouseDownListener = function(el, timeouts, eventHandler, callbackName) {
-    var clicks = 0;
-    var startX, startY, timer; 
-    var eventNames = {
-        2: "dblclick",
-        3: "tripleclick",
-        4: "quadclick"
-    };
-
-    exports.addListener(el, "mousedown", function(e) {
-        if (exports.getButton(e) !== 0) {
-            clicks = 0;
-        } else if (e.detail > 1) {
-            clicks++;
-            if (clicks > 4)
-                clicks = 1;
-        } else {
-            clicks = 1;
-        }
-        if (useragent.isIE) {
-            var isNewClick = Math.abs(e.clientX - startX) > 5 || Math.abs(e.clientY - startY) > 5;
-            if (!timer || isNewClick)
-                clicks = 1;
-            if (timer)
-                clearTimeout(timer);
-            timer = setTimeout(function() {timer = null}, timeouts[clicks - 1] || 600);
-
-            if (clicks == 1) {
-                startX = e.clientX;
-                startY = e.clientY;
-            }
-        }
-        
-        e._clicks = clicks;
-
-        eventHandler[callbackName]("mousedown", e);
-
-        if (clicks > 4)
-            clicks = 0;
-        else if (clicks > 1)
-            return eventHandler[callbackName](eventNames[clicks], e);
+EventEmitter.once = function(eventName, callback) {
+    var _self = this;
+    callback && this.addEventListener(eventName, function newCallback() {
+        _self.removeEventListener(eventName, newCallback);
+        callback.apply(null, arguments);
     });
+};
 
-    if (useragent.isOldIE) {
-        exports.addListener(el, "dblclick", function(e) {
-            clicks = 2;
-            if (timer)
-                clearTimeout(timer);
-            timer = setTimeout(function() {timer = null}, timeouts[clicks - 1] || 600);
-            eventHandler[callbackName]("mousedown", e);
-            eventHandler[callbackName](eventNames[clicks], e);
-        });
+
+EventEmitter.setDefaultHandler = function(eventName, callback) {
+    var handlers = this._defaultHandlers
+    if (!handlers)
+        handlers = this._defaultHandlers = {_disabled_: {}};
+    
+    if (handlers[eventName]) {
+        var old = handlers[eventName];
+        var disabled = handlers._disabled_[eventName];
+        if (!disabled)
+            handlers._disabled_[eventName] = disabled = [];
+        disabled.push(old);
+        var i = disabled.indexOf(callback);
+        if (i != -1) 
+            disabled.splice(i, 1);
+    }
+    handlers[eventName] = callback;
+};
+EventEmitter.removeDefaultHandler = function(eventName, callback) {
+    var handlers = this._defaultHandlers
+    if (!handlers)
+        return;
+    var disabled = handlers._disabled_[eventName];
+    
+    if (handlers[eventName] == callback) {
+        var old = handlers[eventName];
+        if (disabled)
+            this.setDefaultHandler(eventName, disabled.pop());
+    } else if (disabled) {
+        var i = disabled.indexOf(callback);
+        if (i != -1)
+            disabled.splice(i, 1);
     }
 };
 
-var getModifierHash = useragent.isMac && useragent.isOpera && !("KeyboardEvent" in window)
-    ? function(e) {
-        return 0 | (e.metaKey ? 1 : 0) | (e.altKey ? 2 : 0) | (e.shiftKey ? 4 : 0) | (e.ctrlKey ? 8 : 0);
-    }
-    : function(e) {
-        return 0 | (e.ctrlKey ? 1 : 0) | (e.altKey ? 2 : 0) | (e.shiftKey ? 4 : 0) | (e.metaKey ? 8 : 0);
-    };
+EventEmitter.on =
+EventEmitter.addEventListener = function(eventName, callback, capturing) {
+    this._eventRegistry = this._eventRegistry || {};
 
-exports.getModifierString = function(e) {
-    return keys.KEY_MODS[getModifierHash(e)];
+    var listeners = this._eventRegistry[eventName];
+    if (!listeners)
+        listeners = this._eventRegistry[eventName] = [];
+
+    if (listeners.indexOf(callback) == -1)
+        listeners[capturing ? "unshift" : "push"](callback);
+    return callback;
 };
 
-function normalizeCommandKeys(callback, e, keyCode) {
-    var hashId = getModifierHash(e);
+EventEmitter.off =
+EventEmitter.removeListener =
+EventEmitter.removeEventListener = function(eventName, callback) {
+    this._eventRegistry = this._eventRegistry || {};
 
-    if (!useragent.isMac && pressedKeys) {
-        if (pressedKeys[91] || pressedKeys[92])
-            hashId |= 8;
-        if (pressedKeys.altGr) {
-            if ((3 & hashId) != 3)
-                pressedKeys.altGr = 0;
-            else
-                return;
-        }
-        if (keyCode === 18 || keyCode === 17) {
-            var location = "location" in e ? e.location : e.keyLocation;
-            if (keyCode === 17 && location === 1) {
-                ts = e.timeStamp;
-            } else if (keyCode === 18 && hashId === 3 && location === 2) {
-                var dt = -ts;
-                ts = e.timeStamp;
-                dt += ts;
-                if (dt < 3)
-                    pressedKeys.altGr = true;
-            }
-        }
-    }
-    
-    if (keyCode in keys.MODIFIER_KEYS) {
-        switch (keys.MODIFIER_KEYS[keyCode]) {
-            case "Alt":
-                hashId = 2;
-                break;
-            case "Shift":
-                hashId = 4;
-                break;
-            case "Ctrl":
-                hashId = 1;
-                break;
-            default:
-                hashId = 8;
-                break;
-        }
-        keyCode = -1;
-    }
+    var listeners = this._eventRegistry[eventName];
+    if (!listeners)
+        return;
 
-    if (hashId & 8 && (keyCode === 91 || keyCode === 93)) {
-        keyCode = -1;
-    }
-    
-    if (!hashId && keyCode === 13) {
-        var location = "location" in e ? e.location : e.keyLocation;
-        if (location === 3) {
-            callback(e, hashId, -keyCode);
-            if (e.defaultPrevented)
-                return;
-        }
-    }
-    
-    if (useragent.isChromeOS && hashId & 8) {
-        callback(e, hashId, keyCode);
-        if (e.defaultPrevented)
-            return;
-        else
-            hashId &= ~8;
-    }
-    if (!hashId && !(keyCode in keys.FUNCTION_KEYS) && !(keyCode in keys.PRINTABLE_KEYS)) {
-        return false;
-    }
-    
-    return callback(e, hashId, keyCode);
-}
-
-var pressedKeys = null;
-var ts = 0;
-exports.addCommandKeyListener = function(el, callback) {
-    var addListener = exports.addListener;
-    if (useragent.isOldGecko || (useragent.isOpera && !("KeyboardEvent" in window))) {
-        var lastKeyDownKeyCode = null;
-        addListener(el, "keydown", function(e) {
-            lastKeyDownKeyCode = e.keyCode;
-        });
-        addListener(el, "keypress", function(e) {
-            return normalizeCommandKeys(callback, e, lastKeyDownKeyCode);
-        });
-    } else {
-        var lastDefaultPrevented = null;
-
-        addListener(el, "keydown", function(e) {
-            pressedKeys[e.keyCode] = true;
-            var result = normalizeCommandKeys(callback, e, e.keyCode);
-            lastDefaultPrevented = e.defaultPrevented;
-            return result;
-        });
-
-        addListener(el, "keypress", function(e) {
-            if (lastDefaultPrevented && (e.ctrlKey || e.altKey || e.shiftKey || e.metaKey)) {
-                exports.stopEvent(e);
-                lastDefaultPrevented = null;
-            }
-        });
-
-        addListener(el, "keyup", function(e) {
-            pressedKeys[e.keyCode] = null;
-        });
-
-        if (!pressedKeys) {
-            pressedKeys = Object.create(null);
-            addListener(window, "focus", function(e) {
-                pressedKeys = Object.create(null);
-            });
-        }
-    }
+    var index = listeners.indexOf(callback);
+    if (index !== -1)
+        listeners.splice(index, 1);
 };
 
-if (window.postMessage && !useragent.isOldIE) {
-    var postMessageId = 1;
-    exports.nextTick = function(callback, win) {
-        win = win || window;
-        var messageName = "zero-timeout-message-" + postMessageId;
-        exports.addListener(win, "message", function listener(e) {
-            if (e.data == messageName) {
-                exports.stopPropagation(e);
-                exports.removeListener(win, "message", listener);
-                callback();
-            }
-        });
-        win.postMessage(messageName, "*");
-    };
-}
+EventEmitter.removeAllListeners = function(eventName) {
+    if (this._eventRegistry) this._eventRegistry[eventName] = [];
+};
 
+exports.EventEmitter = EventEmitter;
 
-exports.nextFrame = window.requestAnimationFrame ||
-    window.mozRequestAnimationFrame ||
-    window.webkitRequestAnimationFrame ||
-    window.msRequestAnimationFrame ||
-    window.oRequestAnimationFrame;
-
-if (exports.nextFrame)
-    exports.nextFrame = exports.nextFrame.bind(window);
-else
-    exports.nextFrame = function(callback) {
-        setTimeout(callback, 17);
-    };
 });
 
 define("ace/lib/lang",["require","exports","module"], function(require, exports, module) {
@@ -1903,299 +1302,6 @@ exports.delayedCall = function(fcn, defaultTimeout) {
 
     return _self;
 };
-});
-
-define("ace/mode/text_highlight_rules",["require","exports","module","ace/lib/lang"], function(require, exports, module) {
-
-
-var lang = require("../lib/lang");
-
-var TextHighlightRules = function() {
-
-    this.$rules = {
-        "start" : [{
-            token : "empty_line",
-            regex : '^$'
-        }, {
-            defaultToken : "text"
-        }]
-    };
-};
-
-(function() {
-
-    this.addRules = function(rules, prefix) {
-        if (!prefix) {
-            for (var key in rules)
-                this.$rules[key] = rules[key];
-            return;
-        }
-        for (var key in rules) {
-            var state = rules[key];
-            for (var i = 0; i < state.length; i++) {
-                var rule = state[i];
-                if (rule.next || rule.onMatch) {
-                    if (typeof rule.next != "string") {
-                        if (rule.nextState && rule.nextState.indexOf(prefix) !== 0)
-                            rule.nextState = prefix + rule.nextState;
-                    } else {
-                        if (rule.next.indexOf(prefix) !== 0)
-                            rule.next = prefix + rule.next;
-                    }
-                }
-            }
-            this.$rules[prefix + key] = state;
-        }
-    };
-
-    this.getRules = function() {
-        return this.$rules;
-    };
-
-    this.embedRules = function (HighlightRules, prefix, escapeRules, states, append) {
-        var embedRules = typeof HighlightRules == "function"
-            ? new HighlightRules().getRules()
-            : HighlightRules;
-        if (states) {
-            for (var i = 0; i < states.length; i++)
-                states[i] = prefix + states[i];
-        } else {
-            states = [];
-            for (var key in embedRules)
-                states.push(prefix + key);
-        }
-
-        this.addRules(embedRules, prefix);
-
-        if (escapeRules) {
-            var addRules = Array.prototype[append ? "push" : "unshift"];
-            for (var i = 0; i < states.length; i++)
-                addRules.apply(this.$rules[states[i]], lang.deepCopy(escapeRules));
-        }
-
-        if (!this.$embeds)
-            this.$embeds = [];
-        this.$embeds.push(prefix);
-    };
-
-    this.getEmbeds = function() {
-        return this.$embeds;
-    };
-
-    var pushState = function(currentState, stack) {
-        if (currentState != "start" || stack.length)
-            stack.unshift(this.nextState, currentState);
-        return this.nextState;
-    };
-    var popState = function(currentState, stack) {
-        stack.shift();
-        return stack.shift() || "start";
-    };
-
-    this.normalizeRules = function() {
-        var id = 0;
-        var rules = this.$rules;
-        function processState(key) {
-            var state = rules[key];
-            state.processed = true;
-            for (var i = 0; i < state.length; i++) {
-                var rule = state[i];
-                if (!rule.regex && rule.start) {
-                    rule.regex = rule.start;
-                    if (!rule.next)
-                        rule.next = [];
-                    rule.next.push({
-                        defaultToken: rule.token
-                    }, {
-                        token: rule.token + ".end",
-                        regex: rule.end || rule.start,
-                        next: "pop"
-                    });
-                    rule.token = rule.token + ".start";
-                    rule.push = true;
-                }
-                var next = rule.next || rule.push;
-                if (next && Array.isArray(next)) {
-                    var stateName = rule.stateName;
-                    if (!stateName)  {
-                        stateName = rule.token;
-                        if (typeof stateName != "string")
-                            stateName = stateName[0] || "";
-                        if (rules[stateName])
-                            stateName += id++;
-                    }
-                    rules[stateName] = next;
-                    rule.next = stateName;
-                    processState(stateName);
-                } else if (next == "pop") {
-                    rule.next = popState;
-                }
-
-                if (rule.push) {
-                    rule.nextState = rule.next || rule.push;
-                    rule.next = pushState;
-                    delete rule.push;
-                }
-
-                if (rule.rules) {
-                    for (var r in rule.rules) {
-                        if (rules[r]) {
-                            if (rules[r].push)
-                                rules[r].push.apply(rules[r], rule.rules[r]);
-                        } else {
-                            rules[r] = rule.rules[r];
-                        }
-                    }
-                }
-                if (rule.include || typeof rule == "string") {
-                    var includeName = rule.include || rule;
-                    var toInsert = rules[includeName];
-                } else if (Array.isArray(rule))
-                    toInsert = rule;
-
-                if (toInsert) {
-                    var args = [i, 1].concat(toInsert);
-                    if (rule.noEscape)
-                        args = args.filter(function(x) {return !x.next;});
-                    state.splice.apply(state, args);
-                    i--;
-                    toInsert = null;
-                }
-                
-                if (rule.keywordMap) {
-                    rule.token = this.createKeywordMapper(
-                        rule.keywordMap, rule.defaultToken || "text", rule.caseInsensitive
-                    );
-                    delete rule.defaultToken;
-                }
-            }
-        }
-        Object.keys(rules).forEach(processState, this);
-    };
-
-    this.createKeywordMapper = function(map, defaultToken, ignoreCase, splitChar) {
-        var keywords = Object.create(null);
-        Object.keys(map).forEach(function(className) {
-            var a = map[className];
-            if (ignoreCase)
-                a = a.toLowerCase();
-            var list = a.split(splitChar || "|");
-            for (var i = list.length; i--; )
-                keywords[list[i]] = className;
-        });
-        if (Object.getPrototypeOf(keywords)) {
-            keywords.__proto__ = null;
-        }
-        this.$keywordList = Object.keys(keywords);
-        map = null;
-        return ignoreCase
-            ? function(value) {return keywords[value.toLowerCase()] || defaultToken }
-            : function(value) {return keywords[value] || defaultToken };
-    };
-
-    this.getKeywords = function() {
-        return this.$keywords;
-    };
-
-}).call(TextHighlightRules.prototype);
-
-exports.TextHighlightRules = TextHighlightRules;
-});
-
-define("ace/mode/abap_highlight_rules",["require","exports","module","ace/lib/oop","ace/mode/text_highlight_rules"], function(require, exports, module) {
-
-
-var oop = require("../lib/oop");
-var TextHighlightRules = require("./text_highlight_rules").TextHighlightRules;
-
-var AbapHighlightRules = function() {
-
-    var keywordMapper = this.createKeywordMapper({
-        "variable.language": "this",
-        "keyword": 
-            "ADD ALIAS ALIASES ASSERT ASSIGN ASSIGNING AT BACK" +
-            " CALL CASE CATCH CHECK CLASS CLEAR CLOSE CNT COLLECT COMMIT COMMUNICATION COMPUTE CONCATENATE CONDENSE CONSTANTS CONTINUE CONTROLS CONVERT CREATE CURRENCY" +
-            " DATA DEFINE DEFINITION DEFERRED DELETE DESCRIBE DETAIL DIVIDE DO" +
-            " ELSE ELSEIF ENDAT ENDCASE ENDCLASS ENDDO ENDEXEC ENDFORM ENDFUNCTION ENDIF ENDIFEND ENDINTERFACE ENDLOOP ENDMETHOD ENDMODULE ENDON ENDPROVIDE ENDSELECT ENDTRY ENDWHILE EVENT EVENTS EXEC EXIT EXPORT EXPORTING EXTRACT" +
-            " FETCH FIELDS FORM FORMAT FREE FROM FUNCTION" +
-            " GENERATE GET" +
-            " HIDE" +
-            " IF IMPORT IMPORTING INDEX INFOTYPES INITIALIZATION INTERFACE INTERFACES INPUT INSERT IMPLEMENTATION" +
-            " LEAVE LIKE LINE LOAD LOCAL LOOP" +
-            " MESSAGE METHOD METHODS MODIFY MODULE MOVE MULTIPLY" +
-            " ON OVERLAY OPTIONAL OTHERS" +
-            " PACK PARAMETERS PERFORM POSITION PROGRAM PROVIDE PUT" +
-            " RAISE RANGES READ RECEIVE RECEIVING REDEFINITION REFERENCE REFRESH REJECT REPLACE REPORT RESERVE RESTORE RETURNING ROLLBACK" +
-            " SCAN SCROLL SEARCH SELECT SET SHIFT SKIP SORT SORTED SPLIT STANDARD STATICS STEP STOP SUBMIT SUBTRACT SUM SUMMARY SUPPRESS" +
-            " TABLES TIMES TRANSFER TRANSLATE TRY TYPE TYPES" +
-            " UNASSIGN ULINE UNPACK UPDATE" +
-            " WHEN WHILE WINDOW WRITE" +
-            " OCCURS STRUCTURE OBJECT PROPERTY" +
-            " CASTING APPEND RAISING VALUE COLOR" +
-            " CHANGING EXCEPTION EXCEPTIONS DEFAULT CHECKBOX COMMENT" +
-            " ID NUMBER FOR TITLE OUTPUT" +
-            " WITH EXIT USING" +
-            " INTO WHERE GROUP BY HAVING ORDER BY SINGLE" +
-            " APPENDING CORRESPONDING FIELDS OF TABLE" +
-            " LEFT RIGHT OUTER INNER JOIN AS CLIENT SPECIFIED BYPASSING BUFFER UP TO ROWS CONNECTING" +
-            " EQ NE LT LE GT GE NOT AND OR XOR IN LIKE BETWEEN",
-        "constant.language": 
-            "TRUE FALSE NULL SPACE",
-        "support.type": 
-            "c n i p f d t x string xstring decfloat16 decfloat34",
-        "keyword.operator":
-            "abs sign ceil floor trunc frac acos asin atan cos sin tan" +
-            " abapOperator cosh sinh tanh exp log log10 sqrt" +
-            " strlen xstrlen charlen numofchar dbmaxlen lines" 
-    }, "text", true, " ");
-
-    var compoundKeywords = "WITH\\W+(?:HEADER\\W+LINE|FRAME|KEY)|NO\\W+STANDARD\\W+PAGE\\W+HEADING|"+
-        "EXIT\\W+FROM\\W+STEP\\W+LOOP|BEGIN\\W+OF\\W+(?:BLOCK|LINE)|BEGIN\\W+OF|"+
-        "END\\W+OF\\W+(?:BLOCK|LINE)|END\\W+OF|NO\\W+INTERVALS|"+
-        "RESPECTING\\W+BLANKS|SEPARATED\\W+BY|USING\\W+(?:EDIT\\W+MASK)|"+
-        "WHERE\\W+(?:LINE)|RADIOBUTTON\\W+GROUP|REF\\W+TO|"+
-        "(?:PUBLIC|PRIVATE|PROTECTED)(?:\\W+SECTION)?|DELETING\\W+(?:TRAILING|LEADING)"+
-        "(?:ALL\\W+OCCURRENCES)|(?:FIRST|LAST)\\W+OCCURRENCE|INHERITING\\W+FROM|"+
-        "LINE-COUNT|ADD-CORRESPONDING|AUTHORITY-CHECK|BREAK-POINT|CLASS-DATA|CLASS-METHODS|"+
-        "CLASS-METHOD|DIVIDE-CORRESPONDING|EDITOR-CALL|END-OF-DEFINITION|END-OF-PAGE|END-OF-SELECTION|"+
-        "FIELD-GROUPS|FIELD-SYMBOLS|FUNCTION-POOL|MOVE-CORRESPONDING|MULTIPLY-CORRESPONDING|NEW-LINE|"+
-        "NEW-PAGE|NEW-SECTION|PRINT-CONTROL|RP-PROVIDE-FROM-LAST|SELECT-OPTIONS|SELECTION-SCREEN|"+
-        "START-OF-SELECTION|SUBTRACT-CORRESPONDING|SYNTAX-CHECK|SYNTAX-TRACE|TOP-OF-PAGE|TYPE-POOL|"+
-        "TYPE-POOLS|LINE-SIZE|LINE-COUNT|MESSAGE-ID|DISPLAY-MODE|READ(?:-ONLY)?|"+
-        "IS\\W+(?:NOT\\W+)?(?:ASSIGNED|BOUND|INITIAL|SUPPLIED)";
-     
-    this.$rules = {
-        "start" : [
-            {token : "string", regex : "`", next  : "string"},
-            {token : "string", regex : "'", next  : "qstring"},
-            {token : "doc.comment", regex : /^\*.+/},
-            {token : "comment",  regex : /".+$/},
-            {token : "invalid", regex: "\\.{2,}"},
-            {token : "keyword.operator", regex: /\W[\-+\%=<>*]\W|\*\*|[~:,\.&$]|->*?|=>/},
-            {token : "paren.lparen", regex : "[\\[({]"},
-            {token : "paren.rparen", regex : "[\\])}]"},
-            {token : "constant.numeric", regex: "[+-]?\\d+\\b"},
-            {token : "variable.parameter", regex : /sy|pa?\d\d\d\d\|t\d\d\d\.|innnn/}, 
-            {token : "keyword", regex : compoundKeywords}, 
-            {token : "variable.parameter", regex : /\w+-\w+(?:-\w+)*/}, 
-            {token : keywordMapper, regex : "\\b\\w+\\b"},
-            {caseInsensitive: true}
-        ],
-        "qstring" : [
-            {token : "constant.language.escape",   regex : "''"},
-            {token : "string", regex : "'",     next  : "start"},
-            {defaultToken : "string"}
-        ],
-        "string" : [
-            {token : "constant.language.escape",   regex : "``"},
-            {token : "string", regex : "`",     next  : "start"},
-            {defaultToken : "string"}
-        ]
-    }
-};
-oop.inherits(AbapHighlightRules, TextHighlightRules);
-
-exports.AbapHighlightRules = AbapHighlightRules;
 });
 
 define("ace/range",["require","exports","module"], function(require, exports, module) {
@@ -2437,179 +1543,744 @@ Range.comparePoints = function(p1, p2) {
 exports.Range = Range;
 });
 
-define("ace/mode/folding/fold_mode",["require","exports","module","ace/range"], function(require, exports, module) {
+define("ace/anchor",["require","exports","module","ace/lib/oop","ace/lib/event_emitter"], function(require, exports, module) {
 
 
-var Range = require("../../range").Range;
+var oop = require("./lib/oop");
+var EventEmitter = require("./lib/event_emitter").EventEmitter;
 
-var FoldMode = exports.FoldMode = function() {};
+var Anchor = exports.Anchor = function(doc, row, column) {
+    this.$onChange = this.onChange.bind(this);
+    this.attach(doc);
+    
+    if (typeof column == "undefined")
+        this.setPosition(row.row, row.column);
+    else
+        this.setPosition(row, column);
+};
 
 (function() {
 
-    this.foldingStartMarker = null;
-    this.foldingStopMarker = null;
-    this.getFoldWidget = function(session, foldStyle, row) {
-        var line = session.getLine(row);
-        if (this.foldingStartMarker.test(line))
-            return "start";
-        if (foldStyle == "markbeginend"
-                && this.foldingStopMarker
-                && this.foldingStopMarker.test(line))
-            return "end";
-        return "";
+    oop.implement(this, EventEmitter);
+    this.getPosition = function() {
+        return this.$clipPositionToDocument(this.row, this.column);
     };
-
-    this.getFoldWidgetRange = function(session, foldStyle, row) {
-        return null;
+    this.getDocument = function() {
+        return this.document;
     };
+    this.$insertRight = false;
+    this.onChange = function(e) {
+        var delta = e.data;
+        var range = delta.range;
 
-    this.indentationBlock = function(session, row, column) {
-        var re = /\S/;
-        var line = session.getLine(row);
-        var startLevel = line.search(re);
-        if (startLevel == -1)
+        if (range.start.row == range.end.row && range.start.row != this.row)
             return;
 
-        var startColumn = column || line.length;
-        var maxRow = session.getLength();
-        var startRow = row;
-        var endRow = row;
-
-        while (++row < maxRow) {
-            var level = session.getLine(row).search(re);
-
-            if (level == -1)
-                continue;
-
-            if (level <= startLevel)
-                break;
-
-            endRow = row;
-        }
-
-        if (endRow > startRow) {
-            var endColumn = session.getLine(endRow).length;
-            return new Range(startRow, startColumn, endRow, endColumn);
-        }
-    };
-
-    this.openingBracketBlock = function(session, bracket, row, column, typeRe) {
-        var start = {row: row, column: column + 1};
-        var end = session.$findClosingBracket(bracket, start, typeRe);
-        if (!end)
+        if (range.start.row > this.row)
             return;
 
-        var fw = session.foldWidgets[end.row];
-        if (fw == null)
-            fw = session.getFoldWidget(end.row);
-
-        if (fw == "start" && end.row > start.row) {
-            end.row --;
-            end.column = session.getLine(end.row).length;
-        }
-        return Range.fromPoints(start, end);
-    };
-
-    this.closingBracketBlock = function(session, bracket, row, column, typeRe) {
-        var end = {row: row, column: column};
-        var start = session.$findOpeningBracket(bracket, end);
-
-        if (!start)
+        if (range.start.row == this.row && range.start.column > this.column)
             return;
 
-        start.column++;
-        end.column--;
+        var row = this.row;
+        var column = this.column;
+        var start = range.start;
+        var end = range.end;
 
-        return  Range.fromPoints(start, end);
+        if (delta.action === "insertText") {
+            if (start.row === row && start.column <= column) {
+                if (start.column === column && this.$insertRight) {
+                } else if (start.row === end.row) {
+                    column += end.column - start.column;
+                } else {
+                    column -= start.column;
+                    row += end.row - start.row;
+                }
+            } else if (start.row !== end.row && start.row < row) {
+                row += end.row - start.row;
+            }
+        } else if (delta.action === "insertLines") {
+            if (start.row === row && column === 0 && this.$insertRight) {
+            }
+            else if (start.row <= row) {
+                row += end.row - start.row;
+            }
+        } else if (delta.action === "removeText") {
+            if (start.row === row && start.column < column) {
+                if (end.column >= column)
+                    column = start.column;
+                else
+                    column = Math.max(0, column - (end.column - start.column));
+
+            } else if (start.row !== end.row && start.row < row) {
+                if (end.row === row)
+                    column = Math.max(0, column - end.column) + start.column;
+                row -= (end.row - start.row);
+            } else if (end.row === row) {
+                row -= end.row - start.row;
+                column = Math.max(0, column - end.column) + start.column;
+            }
+        } else if (delta.action == "removeLines") {
+            if (start.row <= row) {
+                if (end.row <= row)
+                    row -= end.row - start.row;
+                else {
+                    row = start.row;
+                    column = 0;
+                }
+            }
+        }
+
+        this.setPosition(row, column, true);
     };
-}).call(FoldMode.prototype);
+    this.setPosition = function(row, column, noClip) {
+        var pos;
+        if (noClip) {
+            pos = {
+                row: row,
+                column: column
+            };
+        } else {
+            pos = this.$clipPositionToDocument(row, column);
+        }
+
+        if (this.row == pos.row && this.column == pos.column)
+            return;
+
+        var old = {
+            row: this.row,
+            column: this.column
+        };
+
+        this.row = pos.row;
+        this.column = pos.column;
+        this._signal("change", {
+            old: old,
+            value: pos
+        });
+    };
+    this.detach = function() {
+        this.document.removeEventListener("change", this.$onChange);
+    };
+    this.attach = function(doc) {
+        this.document = doc || this.document;
+        this.document.on("change", this.$onChange);
+    };
+    this.$clipPositionToDocument = function(row, column) {
+        var pos = {};
+
+        if (row >= this.document.getLength()) {
+            pos.row = Math.max(0, this.document.getLength() - 1);
+            pos.column = this.document.getLine(pos.row).length;
+        }
+        else if (row < 0) {
+            pos.row = 0;
+            pos.column = 0;
+        }
+        else {
+            pos.row = row;
+            pos.column = Math.min(this.document.getLine(pos.row).length, Math.max(0, column));
+        }
+
+        if (column < 0)
+            pos.column = 0;
+
+        return pos;
+    };
+
+}).call(Anchor.prototype);
 
 });
 
-define("ace/mode/folding/coffee",["require","exports","module","ace/lib/oop","ace/mode/folding/fold_mode","ace/range"], function(require, exports, module) {
+define("ace/lib/keys",["require","exports","module","ace/lib/fixoldbrowsers","ace/lib/oop"], function(require, exports, module) {
 
 
-var oop = require("../../lib/oop");
-var BaseFoldMode = require("./fold_mode").FoldMode;
-var Range = require("../../range").Range;
+require("./fixoldbrowsers");
 
-var FoldMode = exports.FoldMode = function() {};
-oop.inherits(FoldMode, BaseFoldMode);
+var oop = require("./oop");
+var Keys = (function() {
+    var ret = {
+        MODIFIER_KEYS: {
+            16: 'Shift', 17: 'Ctrl', 18: 'Alt', 224: 'Meta'
+        },
+
+        KEY_MODS: {
+            "ctrl": 1, "alt": 2, "option" : 2, "shift": 4,
+            "super": 8, "meta": 8, "command": 8, "cmd": 8
+        },
+
+        FUNCTION_KEYS : {
+            8  : "Backspace",
+            9  : "Tab",
+            13 : "Return",
+            19 : "Pause",
+            27 : "Esc",
+            32 : "Space",
+            33 : "PageUp",
+            34 : "PageDown",
+            35 : "End",
+            36 : "Home",
+            37 : "Left",
+            38 : "Up",
+            39 : "Right",
+            40 : "Down",
+            44 : "Print",
+            45 : "Insert",
+            46 : "Delete",
+            96 : "Numpad0",
+            97 : "Numpad1",
+            98 : "Numpad2",
+            99 : "Numpad3",
+            100: "Numpad4",
+            101: "Numpad5",
+            102: "Numpad6",
+            103: "Numpad7",
+            104: "Numpad8",
+            105: "Numpad9",
+            '-13': "NumpadEnter",
+            112: "F1",
+            113: "F2",
+            114: "F3",
+            115: "F4",
+            116: "F5",
+            117: "F6",
+            118: "F7",
+            119: "F8",
+            120: "F9",
+            121: "F10",
+            122: "F11",
+            123: "F12",
+            144: "Numlock",
+            145: "Scrolllock"
+        },
+
+        PRINTABLE_KEYS: {
+           32: ' ',  48: '0',  49: '1',  50: '2',  51: '3',  52: '4', 53:  '5',
+           54: '6',  55: '7',  56: '8',  57: '9',  59: ';',  61: '=', 65:  'a',
+           66: 'b',  67: 'c',  68: 'd',  69: 'e',  70: 'f',  71: 'g', 72:  'h',
+           73: 'i',  74: 'j',  75: 'k',  76: 'l',  77: 'm',  78: 'n', 79:  'o',
+           80: 'p',  81: 'q',  82: 'r',  83: 's',  84: 't',  85: 'u', 86:  'v',
+           87: 'w',  88: 'x',  89: 'y',  90: 'z', 107: '+', 109: '-', 110: '.',
+          187: '=', 188: ',', 189: '-', 190: '.', 191: '/', 192: '`', 219: '[',
+          220: '\\',221: ']', 222: '\''
+        }
+    };
+    var name, i;
+    for (i in ret.FUNCTION_KEYS) {
+        name = ret.FUNCTION_KEYS[i].toLowerCase();
+        ret[name] = parseInt(i, 10);
+    }
+    for (i in ret.PRINTABLE_KEYS) {
+        name = ret.PRINTABLE_KEYS[i].toLowerCase();
+        ret[name] = parseInt(i, 10);
+    }
+    oop.mixin(ret, ret.MODIFIER_KEYS);
+    oop.mixin(ret, ret.PRINTABLE_KEYS);
+    oop.mixin(ret, ret.FUNCTION_KEYS);
+    ret.enter = ret["return"];
+    ret.escape = ret.esc;
+    ret.del = ret["delete"];
+    ret[173] = '-';
+    
+    (function() {
+        var mods = ["cmd", "ctrl", "alt", "shift"];
+        for (var i = Math.pow(2, mods.length); i--;) {            
+            ret.KEY_MODS[i] = mods.filter(function(x) {
+                return i & ret.KEY_MODS[x];
+            }).join("-") + "-";
+        }
+    })();
+
+    ret.KEY_MODS[0] = "";
+    ret.KEY_MODS[-1] = "input";
+
+    return ret;
+})();
+oop.mixin(exports, Keys);
+
+exports.keyCodeToString = function(keyCode) {
+    var keyString = Keys[keyCode];
+    if (typeof keyString != "string")
+        keyString = String.fromCharCode(keyCode);
+    return keyString.toLowerCase();
+};
+
+});
+
+define("ace/lib/useragent",["require","exports","module"], function(require, exports, module) {
+
+exports.OS = {
+    LINUX: "LINUX",
+    MAC: "MAC",
+    WINDOWS: "WINDOWS"
+};
+exports.getOS = function() {
+    if (exports.isMac) {
+        return exports.OS.MAC;
+    } else if (exports.isLinux) {
+        return exports.OS.LINUX;
+    } else {
+        return exports.OS.WINDOWS;
+    }
+};
+if (typeof navigator != "object")
+    return;
+
+var os = (navigator.platform.match(/mac|win|linux/i) || ["other"])[0].toLowerCase();
+var ua = navigator.userAgent;
+exports.isWin = (os == "win");
+exports.isMac = (os == "mac");
+exports.isLinux = (os == "linux");
+exports.isIE = 
+    (navigator.appName == "Microsoft Internet Explorer" || navigator.appName.indexOf("MSAppHost") >= 0)
+    ? parseFloat((ua.match(/(?:MSIE |Trident\/[0-9]+[\.0-9]+;.*rv:)([0-9]+[\.0-9]+)/)||[])[1])
+    : parseFloat((ua.match(/(?:Trident\/[0-9]+[\.0-9]+;.*rv:)([0-9]+[\.0-9]+)/)||[])[1]); // for ie
+    
+exports.isOldIE = exports.isIE && exports.isIE < 9;
+exports.isGecko = exports.isMozilla = (window.Controllers || window.controllers) && window.navigator.product === "Gecko";
+exports.isOldGecko = exports.isGecko && parseInt((ua.match(/rv\:(\d+)/)||[])[1], 10) < 4;
+exports.isOpera = window.opera && Object.prototype.toString.call(window.opera) == "[object Opera]";
+exports.isWebKit = parseFloat(ua.split("WebKit/")[1]) || undefined;
+
+exports.isChrome = parseFloat(ua.split(" Chrome/")[1]) || undefined;
+
+exports.isAIR = ua.indexOf("AdobeAIR") >= 0;
+
+exports.isIPad = ua.indexOf("iPad") >= 0;
+
+exports.isTouchPad = ua.indexOf("TouchPad") >= 0;
+
+exports.isChromeOS = ua.indexOf(" CrOS ") >= 0;
+
+});
+
+define("ace/keyboard/hash_handler",["require","exports","module","ace/lib/keys","ace/lib/useragent"], function(require, exports, module) {
+
+
+var keyUtil = require("../lib/keys");
+var useragent = require("../lib/useragent");
+var KEY_MODS = keyUtil.KEY_MODS;
+
+function HashHandler(config, platform) {
+    this.platform = platform || (useragent.isMac ? "mac" : "win");
+    this.commands = {};
+    this.commandKeyBinding = {};
+    this.addCommands(config);
+    this.$singleCommand = true;
+}
+
+function MultiHashHandler(config, platform) {
+    HashHandler.call(this, config, platform);
+    this.$singleCommand = false;
+}
+
+MultiHashHandler.prototype = HashHandler.prototype;
 
 (function() {
+    
 
-    this.getFoldWidgetRange = function(session, foldStyle, row) {
-        var range = this.indentationBlock(session, row);
-        if (range)
-            return range;
+    this.addCommand = function(command) {
+        if (this.commands[command.name])
+            this.removeCommand(command);
 
-        var re = /\S/;
-        var line = session.getLine(row);
-        var startLevel = line.search(re);
-        if (startLevel == -1 || line[startLevel] != "#")
+        this.commands[command.name] = command;
+
+        if (command.bindKey)
+            this._buildKeyHash(command);
+    };
+
+    this.removeCommand = function(command, keepCommand) {
+        var name = command && (typeof command === 'string' ? command : command.name);
+        command = this.commands[name];
+        if (!keepCommand)
+            delete this.commands[name];
+        var ckb = this.commandKeyBinding;
+        for (var keyId in ckb) {
+            var cmdGroup = ckb[keyId];
+            if (cmdGroup == command) {
+                delete ckb[keyId];
+            } else if (Array.isArray(cmdGroup)) {
+                var i = cmdGroup.indexOf(command);
+                if (i != -1) {
+                    cmdGroup.splice(i, 1);
+                    if (cmdGroup.length == 1)
+                        ckb[keyId] = cmdGroup[0];
+                }
+            }
+        }
+    };
+
+    this.bindKey = function(key, command, asDefault) {
+        if (typeof key == "object")
+            key = key[this.platform];
+        if (!key)
             return;
-
-        var startColumn = line.length;
-        var maxRow = session.getLength();
-        var startRow = row;
-        var endRow = row;
-
-        while (++row < maxRow) {
-            line = session.getLine(row);
-            var level = line.search(re);
-
-            if (level == -1)
-                continue;
-
-            if (line[level] != "#")
-                break;
-
-            endRow = row;
-        }
-
-        if (endRow > startRow) {
-            var endColumn = session.getLine(endRow).length;
-            return new Range(startRow, startColumn, endRow, endColumn);
+        if (typeof command == "function")
+            return this.addCommand({exec: command, bindKey: key, name: command.name || key});
+        
+        key.split("|").forEach(function(keyPart) {
+            var chain = "";
+            if (keyPart.indexOf(" ") != -1) {
+                var parts = keyPart.split(/\s+/);
+                keyPart = parts.pop();
+                parts.forEach(function(keyPart) {
+                    var binding = this.parseKeys(keyPart);
+                    var id = KEY_MODS[binding.hashId] + binding.key;
+                    chain += (chain ? " " : "") + id;
+                    this._addCommandToBinding(chain, "chainKeys");
+                }, this);
+                chain += " ";
+            }
+            var binding = this.parseKeys(keyPart);
+            var id = KEY_MODS[binding.hashId] + binding.key;
+            this._addCommandToBinding(chain + id, command, asDefault);
+        }, this);
+    };
+    
+    this._addCommandToBinding = function(keyId, command, asDefault) {
+        var ckb = this.commandKeyBinding, i;
+        if (!command) {
+            delete ckb[keyId];
+        } else if (!ckb[keyId] || this.$singleCommand) {
+            ckb[keyId] = command;
+        } else {
+            if (!Array.isArray(ckb[keyId])) {
+                ckb[keyId] = [ckb[keyId]];
+            } else if ((i = ckb[keyId].indexOf(command)) != -1) {
+                ckb[keyId].splice(i, 1);
+            }
+            
+            if (asDefault || command.isDefault)
+                ckb[keyId].unshift(command);
+            else
+                ckb[keyId].push(command);
         }
     };
-    this.getFoldWidget = function(session, foldStyle, row) {
-        var line = session.getLine(row);
-        var indent = line.search(/\S/);
-        var next = session.getLine(row + 1);
-        var prev = session.getLine(row - 1);
-        var prevIndent = prev.search(/\S/);
-        var nextIndent = next.search(/\S/);
 
-        if (indent == -1) {
-            session.foldWidgets[row - 1] = prevIndent!= -1 && prevIndent < nextIndent ? "start" : "";
-            return "";
-        }
-        if (prevIndent == -1) {
-            if (indent == nextIndent && line[indent] == "#" && next[indent] == "#") {
-                session.foldWidgets[row - 1] = "";
-                session.foldWidgets[row + 1] = "";
-                return "start";
-            }
-        } else if (prevIndent == indent && line[indent] == "#" && prev[indent] == "#") {
-            if (session.getLine(row - 2).search(/\S/) == -1) {
-                session.foldWidgets[row - 1] = "start";
-                session.foldWidgets[row + 1] = "";
-                return "";
-            }
-        }
+    this.addCommands = function(commands) {
+        commands && Object.keys(commands).forEach(function(name) {
+            var command = commands[name];
+            if (!command)
+                return;
+            
+            if (typeof command === "string")
+                return this.bindKey(command, name);
 
-        if (prevIndent!= -1 && prevIndent < indent)
-            session.foldWidgets[row - 1] = "start";
-        else
-            session.foldWidgets[row - 1] = "";
+            if (typeof command === "function")
+                command = { exec: command };
 
-        if (indent < nextIndent)
-            return "start";
-        else
-            return "";
+            if (typeof command !== "object")
+                return;
+
+            if (!command.name)
+                command.name = name;
+
+            this.addCommand(command);
+        }, this);
     };
 
-}).call(FoldMode.prototype);
+    this.removeCommands = function(commands) {
+        Object.keys(commands).forEach(function(name) {
+            this.removeCommand(commands[name]);
+        }, this);
+    };
+
+    this.bindKeys = function(keyList) {
+        Object.keys(keyList).forEach(function(key) {
+            this.bindKey(key, keyList[key]);
+        }, this);
+    };
+
+    this._buildKeyHash = function(command) {
+        this.bindKey(command.bindKey, command);
+    };
+    this.parseKeys = function(keys) {
+        var parts = keys.toLowerCase().split(/[\-\+]([\-\+])?/).filter(function(x){return x});
+        var key = parts.pop();
+
+        var keyCode = keyUtil[key];
+        if (keyUtil.FUNCTION_KEYS[keyCode])
+            key = keyUtil.FUNCTION_KEYS[keyCode].toLowerCase();
+        else if (!parts.length)
+            return {key: key, hashId: -1};
+        else if (parts.length == 1 && parts[0] == "shift")
+            return {key: key.toUpperCase(), hashId: -1};
+
+        var hashId = 0;
+        for (var i = parts.length; i--;) {
+            var modifier = keyUtil.KEY_MODS[parts[i]];
+            if (modifier == null) {
+                if (typeof console != "undefined")
+                    console.error("invalid modifier " + parts[i] + " in " + keys);
+                return false;
+            }
+            hashId |= modifier;
+        }
+        return {key: key, hashId: hashId};
+    };
+
+    this.findKeyCommand = function findKeyCommand(hashId, keyString) {
+        var key = KEY_MODS[hashId] + keyString;
+        return this.commandKeyBinding[key];
+    };
+
+    this.handleKeyboard = function(data, hashId, keyString, keyCode) {
+        var key = KEY_MODS[hashId] + keyString;
+        var command = this.commandKeyBinding[key];
+        if (data.$keyChain) {
+            data.$keyChain += " " + key;
+            command = this.commandKeyBinding[data.$keyChain] || command;
+        }
+        
+        if (command) {
+            if (command == "chainKeys" || command[command.length - 1] == "chainKeys") {
+                data.$keyChain = data.$keyChain || key;
+                return {command: "null"};
+            }
+        }
+        
+        if (data.$keyChain && keyCode > 0)
+            data.$keyChain = "";
+        return {command: command};
+    };
+
+}).call(HashHandler.prototype);
+
+exports.HashHandler = HashHandler;
+exports.MultiHashHandler = MultiHashHandler;
+});
+
+define("ace/lib/dom",["require","exports","module"], function(require, exports, module) {
+
+
+var XHTML_NS = "http://www.w3.org/1999/xhtml";
+
+exports.getDocumentHead = function(doc) {
+    if (!doc)
+        doc = document;
+    return doc.head || doc.getElementsByTagName("head")[0] || doc.documentElement;
+}
+
+exports.createElement = function(tag, ns) {
+    return document.createElementNS ?
+           document.createElementNS(ns || XHTML_NS, tag) :
+           document.createElement(tag);
+};
+
+exports.hasCssClass = function(el, name) {
+    var classes = (el.className || "").split(/\s+/g);
+    return classes.indexOf(name) !== -1;
+};
+exports.addCssClass = function(el, name) {
+    if (!exports.hasCssClass(el, name)) {
+        el.className += " " + name;
+    }
+};
+exports.removeCssClass = function(el, name) {
+    var classes = el.className.split(/\s+/g);
+    while (true) {
+        var index = classes.indexOf(name);
+        if (index == -1) {
+            break;
+        }
+        classes.splice(index, 1);
+    }
+    el.className = classes.join(" ");
+};
+
+exports.toggleCssClass = function(el, name) {
+    var classes = el.className.split(/\s+/g), add = true;
+    while (true) {
+        var index = classes.indexOf(name);
+        if (index == -1) {
+            break;
+        }
+        add = false;
+        classes.splice(index, 1);
+    }
+    if(add)
+        classes.push(name);
+
+    el.className = classes.join(" ");
+    return add;
+};
+exports.setCssClass = function(node, className, include) {
+    if (include) {
+        exports.addCssClass(node, className);
+    } else {
+        exports.removeCssClass(node, className);
+    }
+};
+
+exports.hasCssString = function(id, doc) {
+    var index = 0, sheets;
+    doc = doc || document;
+
+    if (doc.createStyleSheet && (sheets = doc.styleSheets)) {
+        while (index < sheets.length)
+            if (sheets[index++].owningElement.id === id) return true;
+    } else if ((sheets = doc.getElementsByTagName("style"))) {
+        while (index < sheets.length)
+            if (sheets[index++].id === id) return true;
+    }
+
+    return false;
+};
+
+exports.importCssString = function importCssString(cssText, id, doc) {
+    doc = doc || document;
+    if (id && exports.hasCssString(id, doc))
+        return null;
+    
+    var style;
+    
+    if (doc.createStyleSheet) {
+        style = doc.createStyleSheet();
+        style.cssText = cssText;
+        if (id)
+            style.owningElement.id = id;
+    } else {
+        style = doc.createElementNS
+            ? doc.createElementNS(XHTML_NS, "style")
+            : doc.createElement("style");
+
+        style.appendChild(doc.createTextNode(cssText));
+        if (id)
+            style.id = id;
+
+        exports.getDocumentHead(doc).appendChild(style);
+    }
+};
+
+exports.importCssStylsheet = function(uri, doc) {
+    if (doc.createStyleSheet) {
+        doc.createStyleSheet(uri);
+    } else {
+        var link = exports.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = uri;
+
+        exports.getDocumentHead(doc).appendChild(link);
+    }
+};
+
+exports.getInnerWidth = function(element) {
+    return (
+        parseInt(exports.computedStyle(element, "paddingLeft"), 10) +
+        parseInt(exports.computedStyle(element, "paddingRight"), 10) + 
+        element.clientWidth
+    );
+};
+
+exports.getInnerHeight = function(element) {
+    return (
+        parseInt(exports.computedStyle(element, "paddingTop"), 10) +
+        parseInt(exports.computedStyle(element, "paddingBottom"), 10) +
+        element.clientHeight
+    );
+};
+
+
+if (typeof document == "undefined")
+    return;
+
+if (window.pageYOffset !== undefined) {
+    exports.getPageScrollTop = function() {
+        return window.pageYOffset;
+    };
+
+    exports.getPageScrollLeft = function() {
+        return window.pageXOffset;
+    };
+}
+else {
+    exports.getPageScrollTop = function() {
+        return document.body.scrollTop;
+    };
+
+    exports.getPageScrollLeft = function() {
+        return document.body.scrollLeft;
+    };
+}
+
+if (window.getComputedStyle)
+    exports.computedStyle = function(element, style) {
+        if (style)
+            return (window.getComputedStyle(element, "") || {})[style] || "";
+        return window.getComputedStyle(element, "") || {};
+    };
+else
+    exports.computedStyle = function(element, style) {
+        if (style)
+            return element.currentStyle[style];
+        return element.currentStyle;
+    };
+
+exports.scrollbarWidth = function(document) {
+    var inner = exports.createElement("ace_inner");
+    inner.style.width = "100%";
+    inner.style.minWidth = "0px";
+    inner.style.height = "200px";
+    inner.style.display = "block";
+
+    var outer = exports.createElement("ace_outer");
+    var style = outer.style;
+
+    style.position = "absolute";
+    style.left = "-10000px";
+    style.overflow = "hidden";
+    style.width = "200px";
+    style.minWidth = "0px";
+    style.height = "150px";
+    style.display = "block";
+
+    outer.appendChild(inner);
+
+    var body = document.documentElement;
+    body.appendChild(outer);
+
+    var noScrollbar = inner.offsetWidth;
+
+    style.overflow = "scroll";
+    var withScrollbar = inner.offsetWidth;
+
+    if (noScrollbar == withScrollbar) {
+        withScrollbar = outer.clientWidth;
+    }
+
+    body.removeChild(outer);
+
+    return noScrollbar-withScrollbar;
+};
+exports.setInnerHtml = function(el, innerHtml) {
+    var element = el.cloneNode(false);//document.createElement("div");
+    element.innerHTML = innerHtml;
+    el.parentNode.replaceChild(element, el);
+    return element;
+};
+
+if ("textContent" in document.documentElement) {
+    exports.setInnerText = function(el, innerText) {
+        el.textContent = innerText;
+    };
+
+    exports.getInnerText = function(el) {
+        return el.textContent;
+    };
+}
+else {
+    exports.setInnerText = function(el, innerText) {
+        el.innerText = innerText;
+    };
+
+    exports.getInnerText = function(el) {
+        return el.innerText;
+    };
+}
+
+exports.getParentWindow = function(document) {
+    return document.defaultView || document.parentWindow;
+};
 
 });
 
@@ -2648,132 +2319,6 @@ exports.qualifyURL = function(url) {
     a.href = url;
     return a.href;
 }
-
-});
-
-define("ace/lib/event_emitter",["require","exports","module"], function(require, exports, module) {
-
-
-var EventEmitter = {};
-var stopPropagation = function() { this.propagationStopped = true; };
-var preventDefault = function() { this.defaultPrevented = true; };
-
-EventEmitter._emit =
-EventEmitter._dispatchEvent = function(eventName, e) {
-    this._eventRegistry || (this._eventRegistry = {});
-    this._defaultHandlers || (this._defaultHandlers = {});
-
-    var listeners = this._eventRegistry[eventName] || [];
-    var defaultHandler = this._defaultHandlers[eventName];
-    if (!listeners.length && !defaultHandler)
-        return;
-
-    if (typeof e != "object" || !e)
-        e = {};
-
-    if (!e.type)
-        e.type = eventName;
-    if (!e.stopPropagation)
-        e.stopPropagation = stopPropagation;
-    if (!e.preventDefault)
-        e.preventDefault = preventDefault;
-
-    listeners = listeners.slice();
-    for (var i=0; i<listeners.length; i++) {
-        listeners[i](e, this);
-        if (e.propagationStopped)
-            break;
-    }
-    
-    if (defaultHandler && !e.defaultPrevented)
-        return defaultHandler(e, this);
-};
-
-
-EventEmitter._signal = function(eventName, e) {
-    var listeners = (this._eventRegistry || {})[eventName];
-    if (!listeners)
-        return;
-    listeners = listeners.slice();
-    for (var i=0; i<listeners.length; i++)
-        listeners[i](e, this);
-};
-
-EventEmitter.once = function(eventName, callback) {
-    var _self = this;
-    callback && this.addEventListener(eventName, function newCallback() {
-        _self.removeEventListener(eventName, newCallback);
-        callback.apply(null, arguments);
-    });
-};
-
-
-EventEmitter.setDefaultHandler = function(eventName, callback) {
-    var handlers = this._defaultHandlers
-    if (!handlers)
-        handlers = this._defaultHandlers = {_disabled_: {}};
-    
-    if (handlers[eventName]) {
-        var old = handlers[eventName];
-        var disabled = handlers._disabled_[eventName];
-        if (!disabled)
-            handlers._disabled_[eventName] = disabled = [];
-        disabled.push(old);
-        var i = disabled.indexOf(callback);
-        if (i != -1) 
-            disabled.splice(i, 1);
-    }
-    handlers[eventName] = callback;
-};
-EventEmitter.removeDefaultHandler = function(eventName, callback) {
-    var handlers = this._defaultHandlers
-    if (!handlers)
-        return;
-    var disabled = handlers._disabled_[eventName];
-    
-    if (handlers[eventName] == callback) {
-        var old = handlers[eventName];
-        if (disabled)
-            this.setDefaultHandler(eventName, disabled.pop());
-    } else if (disabled) {
-        var i = disabled.indexOf(callback);
-        if (i != -1)
-            disabled.splice(i, 1);
-    }
-};
-
-EventEmitter.on =
-EventEmitter.addEventListener = function(eventName, callback, capturing) {
-    this._eventRegistry = this._eventRegistry || {};
-
-    var listeners = this._eventRegistry[eventName];
-    if (!listeners)
-        listeners = this._eventRegistry[eventName] = [];
-
-    if (listeners.indexOf(callback) == -1)
-        listeners[capturing ? "unshift" : "push"](callback);
-    return callback;
-};
-
-EventEmitter.off =
-EventEmitter.removeListener =
-EventEmitter.removeEventListener = function(eventName, callback) {
-    this._eventRegistry = this._eventRegistry || {};
-
-    var listeners = this._eventRegistry[eventName];
-    if (!listeners)
-        return;
-
-    var index = listeners.indexOf(callback);
-    if (index !== -1)
-        listeners.splice(index, 1);
-};
-
-EventEmitter.removeAllListeners = function(eventName) {
-    if (this._eventRegistry) this._eventRegistry[eventName] = [];
-};
-
-exports.EventEmitter = EventEmitter;
 
 });
 
@@ -3370,6 +2915,475 @@ var Tokenizer = function(rules) {
 }).call(Tokenizer.prototype);
 
 exports.Tokenizer = Tokenizer;
+});
+
+define("ace/mode/text_highlight_rules",["require","exports","module","ace/lib/lang"], function(require, exports, module) {
+
+
+var lang = require("../lib/lang");
+
+var TextHighlightRules = function() {
+
+    this.$rules = {
+        "start" : [{
+            token : "empty_line",
+            regex : '^$'
+        }, {
+            defaultToken : "text"
+        }]
+    };
+};
+
+(function() {
+
+    this.addRules = function(rules, prefix) {
+        if (!prefix) {
+            for (var key in rules)
+                this.$rules[key] = rules[key];
+            return;
+        }
+        for (var key in rules) {
+            var state = rules[key];
+            for (var i = 0; i < state.length; i++) {
+                var rule = state[i];
+                if (rule.next || rule.onMatch) {
+                    if (typeof rule.next != "string") {
+                        if (rule.nextState && rule.nextState.indexOf(prefix) !== 0)
+                            rule.nextState = prefix + rule.nextState;
+                    } else {
+                        if (rule.next.indexOf(prefix) !== 0)
+                            rule.next = prefix + rule.next;
+                    }
+                }
+            }
+            this.$rules[prefix + key] = state;
+        }
+    };
+
+    this.getRules = function() {
+        return this.$rules;
+    };
+
+    this.embedRules = function (HighlightRules, prefix, escapeRules, states, append) {
+        var embedRules = typeof HighlightRules == "function"
+            ? new HighlightRules().getRules()
+            : HighlightRules;
+        if (states) {
+            for (var i = 0; i < states.length; i++)
+                states[i] = prefix + states[i];
+        } else {
+            states = [];
+            for (var key in embedRules)
+                states.push(prefix + key);
+        }
+
+        this.addRules(embedRules, prefix);
+
+        if (escapeRules) {
+            var addRules = Array.prototype[append ? "push" : "unshift"];
+            for (var i = 0; i < states.length; i++)
+                addRules.apply(this.$rules[states[i]], lang.deepCopy(escapeRules));
+        }
+
+        if (!this.$embeds)
+            this.$embeds = [];
+        this.$embeds.push(prefix);
+    };
+
+    this.getEmbeds = function() {
+        return this.$embeds;
+    };
+
+    var pushState = function(currentState, stack) {
+        if (currentState != "start" || stack.length)
+            stack.unshift(this.nextState, currentState);
+        return this.nextState;
+    };
+    var popState = function(currentState, stack) {
+        stack.shift();
+        return stack.shift() || "start";
+    };
+
+    this.normalizeRules = function() {
+        var id = 0;
+        var rules = this.$rules;
+        function processState(key) {
+            var state = rules[key];
+            state.processed = true;
+            for (var i = 0; i < state.length; i++) {
+                var rule = state[i];
+                if (!rule.regex && rule.start) {
+                    rule.regex = rule.start;
+                    if (!rule.next)
+                        rule.next = [];
+                    rule.next.push({
+                        defaultToken: rule.token
+                    }, {
+                        token: rule.token + ".end",
+                        regex: rule.end || rule.start,
+                        next: "pop"
+                    });
+                    rule.token = rule.token + ".start";
+                    rule.push = true;
+                }
+                var next = rule.next || rule.push;
+                if (next && Array.isArray(next)) {
+                    var stateName = rule.stateName;
+                    if (!stateName)  {
+                        stateName = rule.token;
+                        if (typeof stateName != "string")
+                            stateName = stateName[0] || "";
+                        if (rules[stateName])
+                            stateName += id++;
+                    }
+                    rules[stateName] = next;
+                    rule.next = stateName;
+                    processState(stateName);
+                } else if (next == "pop") {
+                    rule.next = popState;
+                }
+
+                if (rule.push) {
+                    rule.nextState = rule.next || rule.push;
+                    rule.next = pushState;
+                    delete rule.push;
+                }
+
+                if (rule.rules) {
+                    for (var r in rule.rules) {
+                        if (rules[r]) {
+                            if (rules[r].push)
+                                rules[r].push.apply(rules[r], rule.rules[r]);
+                        } else {
+                            rules[r] = rule.rules[r];
+                        }
+                    }
+                }
+                if (rule.include || typeof rule == "string") {
+                    var includeName = rule.include || rule;
+                    var toInsert = rules[includeName];
+                } else if (Array.isArray(rule))
+                    toInsert = rule;
+
+                if (toInsert) {
+                    var args = [i, 1].concat(toInsert);
+                    if (rule.noEscape)
+                        args = args.filter(function(x) {return !x.next;});
+                    state.splice.apply(state, args);
+                    i--;
+                    toInsert = null;
+                }
+                
+                if (rule.keywordMap) {
+                    rule.token = this.createKeywordMapper(
+                        rule.keywordMap, rule.defaultToken || "text", rule.caseInsensitive
+                    );
+                    delete rule.defaultToken;
+                }
+            }
+        }
+        Object.keys(rules).forEach(processState, this);
+    };
+
+    this.createKeywordMapper = function(map, defaultToken, ignoreCase, splitChar) {
+        var keywords = Object.create(null);
+        Object.keys(map).forEach(function(className) {
+            var a = map[className];
+            if (ignoreCase)
+                a = a.toLowerCase();
+            var list = a.split(splitChar || "|");
+            for (var i = list.length; i--; )
+                keywords[list[i]] = className;
+        });
+        if (Object.getPrototypeOf(keywords)) {
+            keywords.__proto__ = null;
+        }
+        this.$keywordList = Object.keys(keywords);
+        map = null;
+        return ignoreCase
+            ? function(value) {return keywords[value.toLowerCase()] || defaultToken }
+            : function(value) {return keywords[value] || defaultToken };
+    };
+
+    this.getKeywords = function() {
+        return this.$keywords;
+    };
+
+}).call(TextHighlightRules.prototype);
+
+exports.TextHighlightRules = TextHighlightRules;
+});
+
+define("ace/mode/abap_highlight_rules",["require","exports","module","ace/lib/oop","ace/mode/text_highlight_rules"], function(require, exports, module) {
+
+
+var oop = require("../lib/oop");
+var TextHighlightRules = require("./text_highlight_rules").TextHighlightRules;
+
+var AbapHighlightRules = function() {
+
+    var keywordMapper = this.createKeywordMapper({
+        "variable.language": "this",
+        "keyword": 
+            "ADD ALIAS ALIASES ASSERT ASSIGN ASSIGNING AT BACK" +
+            " CALL CASE CATCH CHECK CLASS CLEAR CLOSE CNT COLLECT COMMIT COMMUNICATION COMPUTE CONCATENATE CONDENSE CONSTANTS CONTINUE CONTROLS CONVERT CREATE CURRENCY" +
+            " DATA DEFINE DEFINITION DEFERRED DELETE DESCRIBE DETAIL DIVIDE DO" +
+            " ELSE ELSEIF ENDAT ENDCASE ENDCLASS ENDDO ENDEXEC ENDFORM ENDFUNCTION ENDIF ENDIFEND ENDINTERFACE ENDLOOP ENDMETHOD ENDMODULE ENDON ENDPROVIDE ENDSELECT ENDTRY ENDWHILE EVENT EVENTS EXEC EXIT EXPORT EXPORTING EXTRACT" +
+            " FETCH FIELDS FORM FORMAT FREE FROM FUNCTION" +
+            " GENERATE GET" +
+            " HIDE" +
+            " IF IMPORT IMPORTING INDEX INFOTYPES INITIALIZATION INTERFACE INTERFACES INPUT INSERT IMPLEMENTATION" +
+            " LEAVE LIKE LINE LOAD LOCAL LOOP" +
+            " MESSAGE METHOD METHODS MODIFY MODULE MOVE MULTIPLY" +
+            " ON OVERLAY OPTIONAL OTHERS" +
+            " PACK PARAMETERS PERFORM POSITION PROGRAM PROVIDE PUT" +
+            " RAISE RANGES READ RECEIVE RECEIVING REDEFINITION REFERENCE REFRESH REJECT REPLACE REPORT RESERVE RESTORE RETURNING ROLLBACK" +
+            " SCAN SCROLL SEARCH SELECT SET SHIFT SKIP SORT SORTED SPLIT STANDARD STATICS STEP STOP SUBMIT SUBTRACT SUM SUMMARY SUPPRESS" +
+            " TABLES TIMES TRANSFER TRANSLATE TRY TYPE TYPES" +
+            " UNASSIGN ULINE UNPACK UPDATE" +
+            " WHEN WHILE WINDOW WRITE" +
+            " OCCURS STRUCTURE OBJECT PROPERTY" +
+            " CASTING APPEND RAISING VALUE COLOR" +
+            " CHANGING EXCEPTION EXCEPTIONS DEFAULT CHECKBOX COMMENT" +
+            " ID NUMBER FOR TITLE OUTPUT" +
+            " WITH EXIT USING" +
+            " INTO WHERE GROUP BY HAVING ORDER BY SINGLE" +
+            " APPENDING CORRESPONDING FIELDS OF TABLE" +
+            " LEFT RIGHT OUTER INNER JOIN AS CLIENT SPECIFIED BYPASSING BUFFER UP TO ROWS CONNECTING" +
+            " EQ NE LT LE GT GE NOT AND OR XOR IN LIKE BETWEEN",
+        "constant.language": 
+            "TRUE FALSE NULL SPACE",
+        "support.type": 
+            "c n i p f d t x string xstring decfloat16 decfloat34",
+        "keyword.operator":
+            "abs sign ceil floor trunc frac acos asin atan cos sin tan" +
+            " abapOperator cosh sinh tanh exp log log10 sqrt" +
+            " strlen xstrlen charlen numofchar dbmaxlen lines" 
+    }, "text", true, " ");
+
+    var compoundKeywords = "WITH\\W+(?:HEADER\\W+LINE|FRAME|KEY)|NO\\W+STANDARD\\W+PAGE\\W+HEADING|"+
+        "EXIT\\W+FROM\\W+STEP\\W+LOOP|BEGIN\\W+OF\\W+(?:BLOCK|LINE)|BEGIN\\W+OF|"+
+        "END\\W+OF\\W+(?:BLOCK|LINE)|END\\W+OF|NO\\W+INTERVALS|"+
+        "RESPECTING\\W+BLANKS|SEPARATED\\W+BY|USING\\W+(?:EDIT\\W+MASK)|"+
+        "WHERE\\W+(?:LINE)|RADIOBUTTON\\W+GROUP|REF\\W+TO|"+
+        "(?:PUBLIC|PRIVATE|PROTECTED)(?:\\W+SECTION)?|DELETING\\W+(?:TRAILING|LEADING)"+
+        "(?:ALL\\W+OCCURRENCES)|(?:FIRST|LAST)\\W+OCCURRENCE|INHERITING\\W+FROM|"+
+        "LINE-COUNT|ADD-CORRESPONDING|AUTHORITY-CHECK|BREAK-POINT|CLASS-DATA|CLASS-METHODS|"+
+        "CLASS-METHOD|DIVIDE-CORRESPONDING|EDITOR-CALL|END-OF-DEFINITION|END-OF-PAGE|END-OF-SELECTION|"+
+        "FIELD-GROUPS|FIELD-SYMBOLS|FUNCTION-POOL|MOVE-CORRESPONDING|MULTIPLY-CORRESPONDING|NEW-LINE|"+
+        "NEW-PAGE|NEW-SECTION|PRINT-CONTROL|RP-PROVIDE-FROM-LAST|SELECT-OPTIONS|SELECTION-SCREEN|"+
+        "START-OF-SELECTION|SUBTRACT-CORRESPONDING|SYNTAX-CHECK|SYNTAX-TRACE|TOP-OF-PAGE|TYPE-POOL|"+
+        "TYPE-POOLS|LINE-SIZE|LINE-COUNT|MESSAGE-ID|DISPLAY-MODE|READ(?:-ONLY)?|"+
+        "IS\\W+(?:NOT\\W+)?(?:ASSIGNED|BOUND|INITIAL|SUPPLIED)";
+     
+    this.$rules = {
+        "start" : [
+            {token : "string", regex : "`", next  : "string"},
+            {token : "string", regex : "'", next  : "qstring"},
+            {token : "doc.comment", regex : /^\*.+/},
+            {token : "comment",  regex : /".+$/},
+            {token : "invalid", regex: "\\.{2,}"},
+            {token : "keyword.operator", regex: /\W[\-+\%=<>*]\W|\*\*|[~:,\.&$]|->*?|=>/},
+            {token : "paren.lparen", regex : "[\\[({]"},
+            {token : "paren.rparen", regex : "[\\])}]"},
+            {token : "constant.numeric", regex: "[+-]?\\d+\\b"},
+            {token : "variable.parameter", regex : /sy|pa?\d\d\d\d\|t\d\d\d\.|innnn/}, 
+            {token : "keyword", regex : compoundKeywords}, 
+            {token : "variable.parameter", regex : /\w+-\w+(?:-\w+)*/}, 
+            {token : keywordMapper, regex : "\\b\\w+\\b"},
+            {caseInsensitive: true}
+        ],
+        "qstring" : [
+            {token : "constant.language.escape",   regex : "''"},
+            {token : "string", regex : "'",     next  : "start"},
+            {defaultToken : "string"}
+        ],
+        "string" : [
+            {token : "constant.language.escape",   regex : "``"},
+            {token : "string", regex : "`",     next  : "start"},
+            {defaultToken : "string"}
+        ]
+    }
+};
+oop.inherits(AbapHighlightRules, TextHighlightRules);
+
+exports.AbapHighlightRules = AbapHighlightRules;
+});
+
+define("ace/mode/folding/fold_mode",["require","exports","module","ace/range"], function(require, exports, module) {
+
+
+var Range = require("../../range").Range;
+
+var FoldMode = exports.FoldMode = function() {};
+
+(function() {
+
+    this.foldingStartMarker = null;
+    this.foldingStopMarker = null;
+    this.getFoldWidget = function(session, foldStyle, row) {
+        var line = session.getLine(row);
+        if (this.foldingStartMarker.test(line))
+            return "start";
+        if (foldStyle == "markbeginend"
+                && this.foldingStopMarker
+                && this.foldingStopMarker.test(line))
+            return "end";
+        return "";
+    };
+
+    this.getFoldWidgetRange = function(session, foldStyle, row) {
+        return null;
+    };
+
+    this.indentationBlock = function(session, row, column) {
+        var re = /\S/;
+        var line = session.getLine(row);
+        var startLevel = line.search(re);
+        if (startLevel == -1)
+            return;
+
+        var startColumn = column || line.length;
+        var maxRow = session.getLength();
+        var startRow = row;
+        var endRow = row;
+
+        while (++row < maxRow) {
+            var level = session.getLine(row).search(re);
+
+            if (level == -1)
+                continue;
+
+            if (level <= startLevel)
+                break;
+
+            endRow = row;
+        }
+
+        if (endRow > startRow) {
+            var endColumn = session.getLine(endRow).length;
+            return new Range(startRow, startColumn, endRow, endColumn);
+        }
+    };
+
+    this.openingBracketBlock = function(session, bracket, row, column, typeRe) {
+        var start = {row: row, column: column + 1};
+        var end = session.$findClosingBracket(bracket, start, typeRe);
+        if (!end)
+            return;
+
+        var fw = session.foldWidgets[end.row];
+        if (fw == null)
+            fw = session.getFoldWidget(end.row);
+
+        if (fw == "start" && end.row > start.row) {
+            end.row --;
+            end.column = session.getLine(end.row).length;
+        }
+        return Range.fromPoints(start, end);
+    };
+
+    this.closingBracketBlock = function(session, bracket, row, column, typeRe) {
+        var end = {row: row, column: column};
+        var start = session.$findOpeningBracket(bracket, end);
+
+        if (!start)
+            return;
+
+        start.column++;
+        end.column--;
+
+        return  Range.fromPoints(start, end);
+    };
+}).call(FoldMode.prototype);
+
+});
+
+define("ace/mode/folding/coffee",["require","exports","module","ace/lib/oop","ace/mode/folding/fold_mode","ace/range"], function(require, exports, module) {
+
+
+var oop = require("../../lib/oop");
+var BaseFoldMode = require("./fold_mode").FoldMode;
+var Range = require("../../range").Range;
+
+var FoldMode = exports.FoldMode = function() {};
+oop.inherits(FoldMode, BaseFoldMode);
+
+(function() {
+
+    this.getFoldWidgetRange = function(session, foldStyle, row) {
+        var range = this.indentationBlock(session, row);
+        if (range)
+            return range;
+
+        var re = /\S/;
+        var line = session.getLine(row);
+        var startLevel = line.search(re);
+        if (startLevel == -1 || line[startLevel] != "#")
+            return;
+
+        var startColumn = line.length;
+        var maxRow = session.getLength();
+        var startRow = row;
+        var endRow = row;
+
+        while (++row < maxRow) {
+            line = session.getLine(row);
+            var level = line.search(re);
+
+            if (level == -1)
+                continue;
+
+            if (line[level] != "#")
+                break;
+
+            endRow = row;
+        }
+
+        if (endRow > startRow) {
+            var endColumn = session.getLine(endRow).length;
+            return new Range(startRow, startColumn, endRow, endColumn);
+        }
+    };
+    this.getFoldWidget = function(session, foldStyle, row) {
+        var line = session.getLine(row);
+        var indent = line.search(/\S/);
+        var next = session.getLine(row + 1);
+        var prev = session.getLine(row - 1);
+        var prevIndent = prev.search(/\S/);
+        var nextIndent = next.search(/\S/);
+
+        if (indent == -1) {
+            session.foldWidgets[row - 1] = prevIndent!= -1 && prevIndent < nextIndent ? "start" : "";
+            return "";
+        }
+        if (prevIndent == -1) {
+            if (indent == nextIndent && line[indent] == "#" && next[indent] == "#") {
+                session.foldWidgets[row - 1] = "";
+                session.foldWidgets[row + 1] = "";
+                return "start";
+            }
+        } else if (prevIndent == indent && line[indent] == "#" && prev[indent] == "#") {
+            if (session.getLine(row - 2).search(/\S/) == -1) {
+                session.foldWidgets[row - 1] = "start";
+                session.foldWidgets[row + 1] = "";
+                return "";
+            }
+        }
+
+        if (prevIndent!= -1 && prevIndent < indent)
+            session.foldWidgets[row - 1] = "start";
+        else
+            session.foldWidgets[row - 1] = "";
+
+        if (indent < nextIndent)
+            return "start";
+        else
+            return "";
+    };
+
+}).call(FoldMode.prototype);
+
 });
 
 define("ace/mode/behaviour",["require","exports","module"], function(require, exports, module) {
@@ -28934,155 +28948,6 @@ function hasType(token, type) {
   exports.XQueryBehaviour = XQueryBehaviour;
 });
 
-define("ace/anchor",["require","exports","module","ace/lib/oop","ace/lib/event_emitter"], function(require, exports, module) {
-
-
-var oop = require("./lib/oop");
-var EventEmitter = require("./lib/event_emitter").EventEmitter;
-
-var Anchor = exports.Anchor = function(doc, row, column) {
-    this.$onChange = this.onChange.bind(this);
-    this.attach(doc);
-    
-    if (typeof column == "undefined")
-        this.setPosition(row.row, row.column);
-    else
-        this.setPosition(row, column);
-};
-
-(function() {
-
-    oop.implement(this, EventEmitter);
-    this.getPosition = function() {
-        return this.$clipPositionToDocument(this.row, this.column);
-    };
-    this.getDocument = function() {
-        return this.document;
-    };
-    this.$insertRight = false;
-    this.onChange = function(e) {
-        var delta = e.data;
-        var range = delta.range;
-
-        if (range.start.row == range.end.row && range.start.row != this.row)
-            return;
-
-        if (range.start.row > this.row)
-            return;
-
-        if (range.start.row == this.row && range.start.column > this.column)
-            return;
-
-        var row = this.row;
-        var column = this.column;
-        var start = range.start;
-        var end = range.end;
-
-        if (delta.action === "insertText") {
-            if (start.row === row && start.column <= column) {
-                if (start.column === column && this.$insertRight) {
-                } else if (start.row === end.row) {
-                    column += end.column - start.column;
-                } else {
-                    column -= start.column;
-                    row += end.row - start.row;
-                }
-            } else if (start.row !== end.row && start.row < row) {
-                row += end.row - start.row;
-            }
-        } else if (delta.action === "insertLines") {
-            if (start.row === row && column === 0 && this.$insertRight) {
-            }
-            else if (start.row <= row) {
-                row += end.row - start.row;
-            }
-        } else if (delta.action === "removeText") {
-            if (start.row === row && start.column < column) {
-                if (end.column >= column)
-                    column = start.column;
-                else
-                    column = Math.max(0, column - (end.column - start.column));
-
-            } else if (start.row !== end.row && start.row < row) {
-                if (end.row === row)
-                    column = Math.max(0, column - end.column) + start.column;
-                row -= (end.row - start.row);
-            } else if (end.row === row) {
-                row -= end.row - start.row;
-                column = Math.max(0, column - end.column) + start.column;
-            }
-        } else if (delta.action == "removeLines") {
-            if (start.row <= row) {
-                if (end.row <= row)
-                    row -= end.row - start.row;
-                else {
-                    row = start.row;
-                    column = 0;
-                }
-            }
-        }
-
-        this.setPosition(row, column, true);
-    };
-    this.setPosition = function(row, column, noClip) {
-        var pos;
-        if (noClip) {
-            pos = {
-                row: row,
-                column: column
-            };
-        } else {
-            pos = this.$clipPositionToDocument(row, column);
-        }
-
-        if (this.row == pos.row && this.column == pos.column)
-            return;
-
-        var old = {
-            row: this.row,
-            column: this.column
-        };
-
-        this.row = pos.row;
-        this.column = pos.column;
-        this._signal("change", {
-            old: old,
-            value: pos
-        });
-    };
-    this.detach = function() {
-        this.document.removeEventListener("change", this.$onChange);
-    };
-    this.attach = function(doc) {
-        this.document = doc || this.document;
-        this.document.on("change", this.$onChange);
-    };
-    this.$clipPositionToDocument = function(row, column) {
-        var pos = {};
-
-        if (row >= this.document.getLength()) {
-            pos.row = Math.max(0, this.document.getLength() - 1);
-            pos.column = this.document.getLine(pos.row).length;
-        }
-        else if (row < 0) {
-            pos.row = 0;
-            pos.column = 0;
-        }
-        else {
-            pos.row = row;
-            pos.column = Math.min(this.document.getLine(pos.row).length, Math.max(0, column));
-        }
-
-        if (column < 0)
-            pos.column = 0;
-
-        return pos;
-    };
-
-}).call(Anchor.prototype);
-
-});
-
 define("ace/mode/xquery",["require","exports","module","ace/worker/worker_client","ace/lib/oop","ace/mode/text","ace/mode/text_highlight_rules","ace/mode/xquery/xquery_lexer","ace/range","ace/mode/behaviour/xquery","ace/mode/folding/cstyle","ace/anchor"], function(require, exports, module) {
 
 
@@ -29386,6 +29251,337 @@ oop.inherits(Mode, TextMode);
 
 exports.Mode = Mode;
 
+});
+
+define("ace/lib/event",["require","exports","module","ace/lib/keys","ace/lib/useragent"], function(require, exports, module) {
+
+
+var keys = require("./keys");
+var useragent = require("./useragent");
+
+exports.addListener = function(elem, type, callback) {
+    if (elem.addEventListener) {
+        return elem.addEventListener(type, callback, false);
+    }
+    if (elem.attachEvent) {
+        var wrapper = function() {
+            callback.call(elem, window.event);
+        };
+        callback._wrapper = wrapper;
+        elem.attachEvent("on" + type, wrapper);
+    }
+};
+
+exports.removeListener = function(elem, type, callback) {
+    if (elem.removeEventListener) {
+        return elem.removeEventListener(type, callback, false);
+    }
+    if (elem.detachEvent) {
+        elem.detachEvent("on" + type, callback._wrapper || callback);
+    }
+};
+exports.stopEvent = function(e) {
+    exports.stopPropagation(e);
+    exports.preventDefault(e);
+    return false;
+};
+
+exports.stopPropagation = function(e) {
+    if (e.stopPropagation)
+        e.stopPropagation();
+    else
+        e.cancelBubble = true;
+};
+
+exports.preventDefault = function(e) {
+    if (e.preventDefault)
+        e.preventDefault();
+    else
+        e.returnValue = false;
+};
+exports.getButton = function(e) {
+    if (e.type == "dblclick")
+        return 0;
+    if (e.type == "contextmenu" || (useragent.isMac && (e.ctrlKey && !e.altKey && !e.shiftKey)))
+        return 2;
+    if (e.preventDefault) {
+        return e.button;
+    }
+    else {
+        return {1:0, 2:2, 4:1}[e.button];
+    }
+};
+
+exports.capture = function(el, eventHandler, releaseCaptureHandler) {
+    function onMouseUp(e) {
+        eventHandler && eventHandler(e);
+        releaseCaptureHandler && releaseCaptureHandler(e);
+
+        exports.removeListener(document, "mousemove", eventHandler, true);
+        exports.removeListener(document, "mouseup", onMouseUp, true);
+        exports.removeListener(document, "dragstart", onMouseUp, true);
+    }
+
+    exports.addListener(document, "mousemove", eventHandler, true);
+    exports.addListener(document, "mouseup", onMouseUp, true);
+    exports.addListener(document, "dragstart", onMouseUp, true);
+    
+    return onMouseUp;
+};
+
+exports.addMouseWheelListener = function(el, callback) {
+    if ("onmousewheel" in el) {
+        exports.addListener(el, "mousewheel", function(e) {
+            var factor = 8;
+            if (e.wheelDeltaX !== undefined) {
+                e.wheelX = -e.wheelDeltaX / factor;
+                e.wheelY = -e.wheelDeltaY / factor;
+            } else {
+                e.wheelX = 0;
+                e.wheelY = -e.wheelDelta / factor;
+            }
+            callback(e);
+        });
+    } else if ("onwheel" in el) {
+        exports.addListener(el, "wheel",  function(e) {
+            var factor = 0.35;
+            switch (e.deltaMode) {
+                case e.DOM_DELTA_PIXEL:
+                    e.wheelX = e.deltaX * factor || 0;
+                    e.wheelY = e.deltaY * factor || 0;
+                    break;
+                case e.DOM_DELTA_LINE:
+                case e.DOM_DELTA_PAGE:
+                    e.wheelX = (e.deltaX || 0) * 5;
+                    e.wheelY = (e.deltaY || 0) * 5;
+                    break;
+            }
+            
+            callback(e);
+        });
+    } else {
+        exports.addListener(el, "DOMMouseScroll", function(e) {
+            if (e.axis && e.axis == e.HORIZONTAL_AXIS) {
+                e.wheelX = (e.detail || 0) * 5;
+                e.wheelY = 0;
+            } else {
+                e.wheelX = 0;
+                e.wheelY = (e.detail || 0) * 5;
+            }
+            callback(e);
+        });
+    }
+};
+
+exports.addMultiMouseDownListener = function(el, timeouts, eventHandler, callbackName) {
+    var clicks = 0;
+    var startX, startY, timer; 
+    var eventNames = {
+        2: "dblclick",
+        3: "tripleclick",
+        4: "quadclick"
+    };
+
+    exports.addListener(el, "mousedown", function(e) {
+        if (exports.getButton(e) !== 0) {
+            clicks = 0;
+        } else if (e.detail > 1) {
+            clicks++;
+            if (clicks > 4)
+                clicks = 1;
+        } else {
+            clicks = 1;
+        }
+        if (useragent.isIE) {
+            var isNewClick = Math.abs(e.clientX - startX) > 5 || Math.abs(e.clientY - startY) > 5;
+            if (!timer || isNewClick)
+                clicks = 1;
+            if (timer)
+                clearTimeout(timer);
+            timer = setTimeout(function() {timer = null}, timeouts[clicks - 1] || 600);
+
+            if (clicks == 1) {
+                startX = e.clientX;
+                startY = e.clientY;
+            }
+        }
+        
+        e._clicks = clicks;
+
+        eventHandler[callbackName]("mousedown", e);
+
+        if (clicks > 4)
+            clicks = 0;
+        else if (clicks > 1)
+            return eventHandler[callbackName](eventNames[clicks], e);
+    });
+
+    if (useragent.isOldIE) {
+        exports.addListener(el, "dblclick", function(e) {
+            clicks = 2;
+            if (timer)
+                clearTimeout(timer);
+            timer = setTimeout(function() {timer = null}, timeouts[clicks - 1] || 600);
+            eventHandler[callbackName]("mousedown", e);
+            eventHandler[callbackName](eventNames[clicks], e);
+        });
+    }
+};
+
+var getModifierHash = useragent.isMac && useragent.isOpera && !("KeyboardEvent" in window)
+    ? function(e) {
+        return 0 | (e.metaKey ? 1 : 0) | (e.altKey ? 2 : 0) | (e.shiftKey ? 4 : 0) | (e.ctrlKey ? 8 : 0);
+    }
+    : function(e) {
+        return 0 | (e.ctrlKey ? 1 : 0) | (e.altKey ? 2 : 0) | (e.shiftKey ? 4 : 0) | (e.metaKey ? 8 : 0);
+    };
+
+exports.getModifierString = function(e) {
+    return keys.KEY_MODS[getModifierHash(e)];
+};
+
+function normalizeCommandKeys(callback, e, keyCode) {
+    var hashId = getModifierHash(e);
+
+    if (!useragent.isMac && pressedKeys) {
+        if (pressedKeys[91] || pressedKeys[92])
+            hashId |= 8;
+        if (pressedKeys.altGr) {
+            if ((3 & hashId) != 3)
+                pressedKeys.altGr = 0;
+            else
+                return;
+        }
+        if (keyCode === 18 || keyCode === 17) {
+            var location = "location" in e ? e.location : e.keyLocation;
+            if (keyCode === 17 && location === 1) {
+                ts = e.timeStamp;
+            } else if (keyCode === 18 && hashId === 3 && location === 2) {
+                var dt = -ts;
+                ts = e.timeStamp;
+                dt += ts;
+                if (dt < 3)
+                    pressedKeys.altGr = true;
+            }
+        }
+    }
+    
+    if (keyCode in keys.MODIFIER_KEYS) {
+        switch (keys.MODIFIER_KEYS[keyCode]) {
+            case "Alt":
+                hashId = 2;
+                break;
+            case "Shift":
+                hashId = 4;
+                break;
+            case "Ctrl":
+                hashId = 1;
+                break;
+            default:
+                hashId = 8;
+                break;
+        }
+        keyCode = -1;
+    }
+
+    if (hashId & 8 && (keyCode === 91 || keyCode === 93)) {
+        keyCode = -1;
+    }
+    
+    if (!hashId && keyCode === 13) {
+        var location = "location" in e ? e.location : e.keyLocation;
+        if (location === 3) {
+            callback(e, hashId, -keyCode);
+            if (e.defaultPrevented)
+                return;
+        }
+    }
+    
+    if (useragent.isChromeOS && hashId & 8) {
+        callback(e, hashId, keyCode);
+        if (e.defaultPrevented)
+            return;
+        else
+            hashId &= ~8;
+    }
+    if (!hashId && !(keyCode in keys.FUNCTION_KEYS) && !(keyCode in keys.PRINTABLE_KEYS)) {
+        return false;
+    }
+    
+    return callback(e, hashId, keyCode);
+}
+
+var pressedKeys = null;
+var ts = 0;
+exports.addCommandKeyListener = function(el, callback) {
+    var addListener = exports.addListener;
+    if (useragent.isOldGecko || (useragent.isOpera && !("KeyboardEvent" in window))) {
+        var lastKeyDownKeyCode = null;
+        addListener(el, "keydown", function(e) {
+            lastKeyDownKeyCode = e.keyCode;
+        });
+        addListener(el, "keypress", function(e) {
+            return normalizeCommandKeys(callback, e, lastKeyDownKeyCode);
+        });
+    } else {
+        var lastDefaultPrevented = null;
+
+        addListener(el, "keydown", function(e) {
+            pressedKeys[e.keyCode] = true;
+            var result = normalizeCommandKeys(callback, e, e.keyCode);
+            lastDefaultPrevented = e.defaultPrevented;
+            return result;
+        });
+
+        addListener(el, "keypress", function(e) {
+            if (lastDefaultPrevented && (e.ctrlKey || e.altKey || e.shiftKey || e.metaKey)) {
+                exports.stopEvent(e);
+                lastDefaultPrevented = null;
+            }
+        });
+
+        addListener(el, "keyup", function(e) {
+            pressedKeys[e.keyCode] = null;
+        });
+
+        if (!pressedKeys) {
+            pressedKeys = Object.create(null);
+            addListener(window, "focus", function(e) {
+                pressedKeys = Object.create(null);
+            });
+        }
+    }
+};
+
+if (window.postMessage && !useragent.isOldIE) {
+    var postMessageId = 1;
+    exports.nextTick = function(callback, win) {
+        win = win || window;
+        var messageName = "zero-timeout-message-" + postMessageId;
+        exports.addListener(win, "message", function listener(e) {
+            if (e.data == messageName) {
+                exports.stopPropagation(e);
+                exports.removeListener(win, "message", listener);
+                callback();
+            }
+        });
+        win.postMessage(messageName, "*");
+    };
+}
+
+
+exports.nextFrame = window.requestAnimationFrame ||
+    window.mozRequestAnimationFrame ||
+    window.webkitRequestAnimationFrame ||
+    window.msRequestAnimationFrame ||
+    window.oRequestAnimationFrame;
+
+if (exports.nextFrame)
+    exports.nextFrame = exports.nextFrame.bind(window);
+else
+    exports.nextFrame = function(callback) {
+        setTimeout(callback, 17);
+    };
 });
 
 define("ace/keyboard/textinput",["require","exports","module","ace/lib/event","ace/lib/useragent","ace/lib/dom","ace/lib/lang"], function(require, exports, module) {
@@ -35698,202 +35894,6 @@ var Search = function() {
 exports.Search = Search;
 });
 
-define("ace/keyboard/hash_handler",["require","exports","module","ace/lib/keys","ace/lib/useragent"], function(require, exports, module) {
-
-
-var keyUtil = require("../lib/keys");
-var useragent = require("../lib/useragent");
-var KEY_MODS = keyUtil.KEY_MODS;
-
-function HashHandler(config, platform) {
-    this.platform = platform || (useragent.isMac ? "mac" : "win");
-    this.commands = {};
-    this.commandKeyBinding = {};
-    this.addCommands(config);
-    this.$singleCommand = true;
-}
-
-function MultiHashHandler(config, platform) {
-    HashHandler.call(this, config, platform);
-    this.$singleCommand = false;
-}
-
-MultiHashHandler.prototype = HashHandler.prototype;
-
-(function() {
-    
-
-    this.addCommand = function(command) {
-        if (this.commands[command.name])
-            this.removeCommand(command);
-
-        this.commands[command.name] = command;
-
-        if (command.bindKey)
-            this._buildKeyHash(command);
-    };
-
-    this.removeCommand = function(command, keepCommand) {
-        var name = command && (typeof command === 'string' ? command : command.name);
-        command = this.commands[name];
-        if (!keepCommand)
-            delete this.commands[name];
-        var ckb = this.commandKeyBinding;
-        for (var keyId in ckb) {
-            var cmdGroup = ckb[keyId];
-            if (cmdGroup == command) {
-                delete ckb[keyId];
-            } else if (Array.isArray(cmdGroup)) {
-                var i = cmdGroup.indexOf(command);
-                if (i != -1) {
-                    cmdGroup.splice(i, 1);
-                    if (cmdGroup.length == 1)
-                        ckb[keyId] = cmdGroup[0];
-                }
-            }
-        }
-    };
-
-    this.bindKey = function(key, command, asDefault) {
-        if (typeof key == "object")
-            key = key[this.platform];
-        if (!key)
-            return;
-        if (typeof command == "function")
-            return this.addCommand({exec: command, bindKey: key, name: command.name || key});
-        
-        key.split("|").forEach(function(keyPart) {
-            var chain = "";
-            if (keyPart.indexOf(" ") != -1) {
-                var parts = keyPart.split(/\s+/);
-                keyPart = parts.pop();
-                parts.forEach(function(keyPart) {
-                    var binding = this.parseKeys(keyPart);
-                    var id = KEY_MODS[binding.hashId] + binding.key;
-                    chain += (chain ? " " : "") + id;
-                    this._addCommandToBinding(chain, "chainKeys");
-                }, this);
-                chain += " ";
-            }
-            var binding = this.parseKeys(keyPart);
-            var id = KEY_MODS[binding.hashId] + binding.key;
-            this._addCommandToBinding(chain + id, command, asDefault);
-        }, this);
-    };
-    
-    this._addCommandToBinding = function(keyId, command, asDefault) {
-        var ckb = this.commandKeyBinding, i;
-        if (!command) {
-            delete ckb[keyId];
-        } else if (!ckb[keyId] || this.$singleCommand) {
-            ckb[keyId] = command;
-        } else {
-            if (!Array.isArray(ckb[keyId])) {
-                ckb[keyId] = [ckb[keyId]];
-            } else if ((i = ckb[keyId].indexOf(command)) != -1) {
-                ckb[keyId].splice(i, 1);
-            }
-            
-            if (asDefault || command.isDefault)
-                ckb[keyId].unshift(command);
-            else
-                ckb[keyId].push(command);
-        }
-    };
-
-    this.addCommands = function(commands) {
-        commands && Object.keys(commands).forEach(function(name) {
-            var command = commands[name];
-            if (!command)
-                return;
-            
-            if (typeof command === "string")
-                return this.bindKey(command, name);
-
-            if (typeof command === "function")
-                command = { exec: command };
-
-            if (typeof command !== "object")
-                return;
-
-            if (!command.name)
-                command.name = name;
-
-            this.addCommand(command);
-        }, this);
-    };
-
-    this.removeCommands = function(commands) {
-        Object.keys(commands).forEach(function(name) {
-            this.removeCommand(commands[name]);
-        }, this);
-    };
-
-    this.bindKeys = function(keyList) {
-        Object.keys(keyList).forEach(function(key) {
-            this.bindKey(key, keyList[key]);
-        }, this);
-    };
-
-    this._buildKeyHash = function(command) {
-        this.bindKey(command.bindKey, command);
-    };
-    this.parseKeys = function(keys) {
-        var parts = keys.toLowerCase().split(/[\-\+]([\-\+])?/).filter(function(x){return x});
-        var key = parts.pop();
-
-        var keyCode = keyUtil[key];
-        if (keyUtil.FUNCTION_KEYS[keyCode])
-            key = keyUtil.FUNCTION_KEYS[keyCode].toLowerCase();
-        else if (!parts.length)
-            return {key: key, hashId: -1};
-        else if (parts.length == 1 && parts[0] == "shift")
-            return {key: key.toUpperCase(), hashId: -1};
-
-        var hashId = 0;
-        for (var i = parts.length; i--;) {
-            var modifier = keyUtil.KEY_MODS[parts[i]];
-            if (modifier == null) {
-                if (typeof console != "undefined")
-                    console.error("invalid modifier " + parts[i] + " in " + keys);
-                return false;
-            }
-            hashId |= modifier;
-        }
-        return {key: key, hashId: hashId};
-    };
-
-    this.findKeyCommand = function findKeyCommand(hashId, keyString) {
-        var key = KEY_MODS[hashId] + keyString;
-        return this.commandKeyBinding[key];
-    };
-
-    this.handleKeyboard = function(data, hashId, keyString, keyCode) {
-        var key = KEY_MODS[hashId] + keyString;
-        var command = this.commandKeyBinding[key];
-        if (data.$keyChain) {
-            data.$keyChain += " " + key;
-            command = this.commandKeyBinding[data.$keyChain] || command;
-        }
-        
-        if (command) {
-            if (command == "chainKeys" || command[command.length - 1] == "chainKeys") {
-                data.$keyChain = data.$keyChain || key;
-                return {command: "null"};
-            }
-        }
-        
-        if (data.$keyChain && keyCode > 0)
-            data.$keyChain = "";
-        return {command: command};
-    };
-
-}).call(HashHandler.prototype);
-
-exports.HashHandler = HashHandler;
-exports.MultiHashHandler = MultiHashHandler;
-});
-
 define("ace/commands/command_manager",["require","exports","module","ace/lib/oop","ace/keyboard/hash_handler","ace/lib/event_emitter"], function(require, exports, module) {
 
 
@@ -38630,6 +38630,8989 @@ config.defineOptions(Editor.prototype, "editor", {
 });
 
 exports.Editor = Editor;
+});
+
+define("ace/snippets",["require","exports","module","ace/lib/oop","ace/lib/event_emitter","ace/lib/lang","ace/range","ace/anchor","ace/keyboard/hash_handler","ace/tokenizer","ace/lib/dom","ace/editor"], function(require, exports, module) {
+
+var oop = require("./lib/oop");
+var EventEmitter = require("./lib/event_emitter").EventEmitter;
+var lang = require("./lib/lang");
+var Range = require("./range").Range;
+var Anchor = require("./anchor").Anchor;
+var HashHandler = require("./keyboard/hash_handler").HashHandler;
+var Tokenizer = require("./tokenizer").Tokenizer;
+var comparePoints = Range.comparePoints;
+
+var SnippetManager = function() {
+    this.snippetMap = {};
+    this.snippetNameMap = {};
+};
+
+(function() {
+    oop.implement(this, EventEmitter);
+    
+    this.getTokenizer = function() {
+        function TabstopToken(str, _, stack) {
+            str = str.substr(1);
+            if (/^\d+$/.test(str) && !stack.inFormatString)
+                return [{tabstopId: parseInt(str, 10)}];
+            return [{text: str}];
+        }
+        function escape(ch) {
+            return "(?:[^\\\\" + ch + "]|\\\\.)";
+        }
+        SnippetManager.$tokenizer = new Tokenizer({
+            start: [
+                {regex: /:/, onMatch: function(val, state, stack) {
+                    if (stack.length && stack[0].expectIf) {
+                        stack[0].expectIf = false;
+                        stack[0].elseBranch = stack[0];
+                        return [stack[0]];
+                    }
+                    return ":";
+                }},
+                {regex: /\\./, onMatch: function(val, state, stack) {
+                    var ch = val[1];
+                    if (ch == "}" && stack.length) {
+                        val = ch;
+                    }else if ("`$\\".indexOf(ch) != -1) {
+                        val = ch;
+                    } else if (stack.inFormatString) {
+                        if (ch == "n")
+                            val = "\n";
+                        else if (ch == "t")
+                            val = "\n";
+                        else if ("ulULE".indexOf(ch) != -1) {
+                            val = {changeCase: ch, local: ch > "a"};
+                        }
+                    }
+
+                    return [val];
+                }},
+                {regex: /}/, onMatch: function(val, state, stack) {
+                    return [stack.length ? stack.shift() : val];
+                }},
+                {regex: /\$(?:\d+|\w+)/, onMatch: TabstopToken},
+                {regex: /\$\{[\dA-Z_a-z]+/, onMatch: function(str, state, stack) {
+                    var t = TabstopToken(str.substr(1), state, stack);
+                    stack.unshift(t[0]);
+                    return t;
+                }, next: "snippetVar"},
+                {regex: /\n/, token: "newline", merge: false}
+            ],
+            snippetVar: [
+                {regex: "\\|" + escape("\\|") + "*\\|", onMatch: function(val, state, stack) {
+                    stack[0].choices = val.slice(1, -1).split(",");
+                }, next: "start"},
+                {regex: "/(" + escape("/") + "+)/(?:(" + escape("/") + "*)/)(\\w*):?",
+                 onMatch: function(val, state, stack) {
+                    var ts = stack[0];
+                    ts.fmtString = val;
+
+                    val = this.splitRegex.exec(val);
+                    ts.guard = val[1];
+                    ts.fmt = val[2];
+                    ts.flag = val[3];
+                    return "";
+                }, next: "start"},
+                {regex: "`" + escape("`") + "*`", onMatch: function(val, state, stack) {
+                    stack[0].code = val.splice(1, -1);
+                    return "";
+                }, next: "start"},
+                {regex: "\\?", onMatch: function(val, state, stack) {
+                    if (stack[0])
+                        stack[0].expectIf = true;
+                }, next: "start"},
+                {regex: "([^:}\\\\]|\\\\.)*:?", token: "", next: "start"}
+            ],
+            formatString: [
+                {regex: "/(" + escape("/") + "+)/", token: "regex"},
+                {regex: "", onMatch: function(val, state, stack) {
+                    stack.inFormatString = true;
+                }, next: "start"}
+            ]
+        });
+        SnippetManager.prototype.getTokenizer = function() {
+            return SnippetManager.$tokenizer;
+        };
+        return SnippetManager.$tokenizer;
+    };
+
+    this.tokenizeTmSnippet = function(str, startState) {
+        return this.getTokenizer().getLineTokens(str, startState).tokens.map(function(x) {
+            return x.value || x;
+        });
+    };
+
+    this.$getDefaultValue = function(editor, name) {
+        if (/^[A-Z]\d+$/.test(name)) {
+            var i = name.substr(1);
+            return (this.variables[name[0] + "__"] || {})[i];
+        }
+        if (/^\d+$/.test(name)) {
+            return (this.variables.__ || {})[name];
+        }
+        name = name.replace(/^TM_/, "");
+
+        if (!editor)
+            return;
+        var s = editor.session;
+        switch(name) {
+            case "CURRENT_WORD":
+                var r = s.getWordRange();
+            case "SELECTION":
+            case "SELECTED_TEXT":
+                return s.getTextRange(r);
+            case "CURRENT_LINE":
+                return s.getLine(editor.getCursorPosition().row);
+            case "PREV_LINE": // not possible in textmate
+                return s.getLine(editor.getCursorPosition().row - 1);
+            case "LINE_INDEX":
+                return editor.getCursorPosition().column;
+            case "LINE_NUMBER":
+                return editor.getCursorPosition().row + 1;
+            case "SOFT_TABS":
+                return s.getUseSoftTabs() ? "YES" : "NO";
+            case "TAB_SIZE":
+                return s.getTabSize();
+            case "FILENAME":
+            case "FILEPATH":
+                return "";
+            case "FULLNAME":
+                return "Ace";
+        }
+    };
+    this.variables = {};
+    this.getVariableValue = function(editor, varName) {
+        if (this.variables.hasOwnProperty(varName))
+            return this.variables[varName](editor, varName) || "";
+        return this.$getDefaultValue(editor, varName) || "";
+    };
+    this.tmStrFormat = function(str, ch, editor) {
+        var flag = ch.flag || "";
+        var re = ch.guard;
+        re = new RegExp(re, flag.replace(/[^gi]/, ""));
+        var fmtTokens = this.tokenizeTmSnippet(ch.fmt, "formatString");
+        var _self = this;
+        var formatted = str.replace(re, function() {
+            _self.variables.__ = arguments;
+            var fmtParts = _self.resolveVariables(fmtTokens, editor);
+            var gChangeCase = "E";
+            for (var i  = 0; i < fmtParts.length; i++) {
+                var ch = fmtParts[i];
+                if (typeof ch == "object") {
+                    fmtParts[i] = "";
+                    if (ch.changeCase && ch.local) {
+                        var next = fmtParts[i + 1];
+                        if (next && typeof next == "string") {
+                            if (ch.changeCase == "u")
+                                fmtParts[i] = next[0].toUpperCase();
+                            else
+                                fmtParts[i] = next[0].toLowerCase();
+                            fmtParts[i + 1] = next.substr(1);
+                        }
+                    } else if (ch.changeCase) {
+                        gChangeCase = ch.changeCase;
+                    }
+                } else if (gChangeCase == "U") {
+                    fmtParts[i] = ch.toUpperCase();
+                } else if (gChangeCase == "L") {
+                    fmtParts[i] = ch.toLowerCase();
+                }
+            }
+            return fmtParts.join("");
+        });
+        this.variables.__ = null;
+        return formatted;
+    };
+
+    this.resolveVariables = function(snippet, editor) {
+        var result = [];
+        for (var i = 0; i < snippet.length; i++) {
+            var ch = snippet[i];
+            if (typeof ch == "string") {
+                result.push(ch);
+            } else if (typeof ch != "object") {
+                continue;
+            } else if (ch.skip) {
+                gotoNext(ch);
+            } else if (ch.processed < i) {
+                continue;
+            } else if (ch.text) {
+                var value = this.getVariableValue(editor, ch.text);
+                if (value && ch.fmtString)
+                    value = this.tmStrFormat(value, ch);
+                ch.processed = i;
+                if (ch.expectIf == null) {
+                    if (value) {
+                        result.push(value);
+                        gotoNext(ch);
+                    }
+                } else {
+                    if (value) {
+                        ch.skip = ch.elseBranch;
+                    } else
+                        gotoNext(ch);
+                }
+            } else if (ch.tabstopId != null) {
+                result.push(ch);
+            } else if (ch.changeCase != null) {
+                result.push(ch);
+            }
+        }
+        function gotoNext(ch) {
+            var i1 = snippet.indexOf(ch, i + 1);
+            if (i1 != -1)
+                i = i1;
+        }
+        return result;
+    };
+
+    this.insertSnippetForSelection = function(editor, snippetText) {
+        var cursor = editor.getCursorPosition();
+        var line = editor.session.getLine(cursor.row);
+        var tabString = editor.session.getTabString();
+        var indentString = line.match(/^\s*/)[0];
+        
+        if (cursor.column < indentString.length)
+            indentString = indentString.slice(0, cursor.column);
+
+        var tokens = this.tokenizeTmSnippet(snippetText);
+        tokens = this.resolveVariables(tokens, editor);
+        tokens = tokens.map(function(x) {
+            if (x == "\n")
+                return x + indentString;
+            if (typeof x == "string")
+                return x.replace(/\t/g, tabString);
+            return x;
+        });
+        var tabstops = [];
+        tokens.forEach(function(p, i) {
+            if (typeof p != "object")
+                return;
+            var id = p.tabstopId;
+            var ts = tabstops[id];
+            if (!ts) {
+                ts = tabstops[id] = [];
+                ts.index = id;
+                ts.value = "";
+            }
+            if (ts.indexOf(p) !== -1)
+                return;
+            ts.push(p);
+            var i1 = tokens.indexOf(p, i + 1);
+            if (i1 === -1)
+                return;
+
+            var value = tokens.slice(i + 1, i1);
+            var isNested = value.some(function(t) {return typeof t === "object"});          
+            if (isNested && !ts.value) {
+                ts.value = value;
+            } else if (value.length && (!ts.value || typeof ts.value !== "string")) {
+                ts.value = value.join("");
+            }
+        });
+        tabstops.forEach(function(ts) {ts.length = 0});
+        var expanding = {};
+        function copyValue(val) {
+            var copy = [];
+            for (var i = 0; i < val.length; i++) {
+                var p = val[i];
+                if (typeof p == "object") {
+                    if (expanding[p.tabstopId])
+                        continue;
+                    var j = val.lastIndexOf(p, i - 1);
+                    p = copy[j] || {tabstopId: p.tabstopId};
+                }
+                copy[i] = p;
+            }
+            return copy;
+        }
+        for (var i = 0; i < tokens.length; i++) {
+            var p = tokens[i];
+            if (typeof p != "object")
+                continue;
+            var id = p.tabstopId;
+            var i1 = tokens.indexOf(p, i + 1);
+            if (expanding[id]) {
+                if (expanding[id] === p)
+                    expanding[id] = null;
+                continue;
+            }
+            
+            var ts = tabstops[id];
+            var arg = typeof ts.value == "string" ? [ts.value] : copyValue(ts.value);
+            arg.unshift(i + 1, Math.max(0, i1 - i));
+            arg.push(p);
+            expanding[id] = p;
+            tokens.splice.apply(tokens, arg);
+
+            if (ts.indexOf(p) === -1)
+                ts.push(p);
+        }
+        var row = 0, column = 0;
+        var text = "";
+        tokens.forEach(function(t) {
+            if (typeof t === "string") {
+                if (t[0] === "\n"){
+                    column = t.length - 1;
+                    row ++;
+                } else
+                    column += t.length;
+                text += t;
+            } else {
+                if (!t.start)
+                    t.start = {row: row, column: column};
+                else
+                    t.end = {row: row, column: column};
+            }
+        });
+        var range = editor.getSelectionRange();
+        var end = editor.session.replace(range, text);
+
+        var tabstopManager = new TabstopManager(editor);
+        var selectionId = editor.inVirtualSelectionMode && editor.selection.index;
+        tabstopManager.addTabstops(tabstops, range.start, end, selectionId);
+    };
+    
+    this.insertSnippet = function(editor, snippetText) {
+        var self = this;
+        if (editor.inVirtualSelectionMode)
+            return self.insertSnippetForSelection(editor, snippetText);
+        
+        editor.forEachSelection(function() {
+            self.insertSnippetForSelection(editor, snippetText);
+        }, null, {keepOrder: true});
+        
+        if (editor.tabstopManager)
+            editor.tabstopManager.tabNext();
+    };
+
+    this.$getScope = function(editor) {
+        var scope = editor.session.$mode.$id || "";
+        scope = scope.split("/").pop();
+        if (scope === "html" || scope === "php") {
+            if (scope === "php" && !editor.session.$mode.inlinePhp) 
+                scope = "html";
+            var c = editor.getCursorPosition();
+            var state = editor.session.getState(c.row);
+            if (typeof state === "object") {
+                state = state[0];
+            }
+            if (state.substring) {
+                if (state.substring(0, 3) == "js-")
+                    scope = "javascript";
+                else if (state.substring(0, 4) == "css-")
+                    scope = "css";
+                else if (state.substring(0, 4) == "php-")
+                    scope = "php";
+            }
+        }
+        
+        return scope;
+    };
+
+    this.getActiveScopes = function(editor) {
+        var scope = this.$getScope(editor);
+        var scopes = [scope];
+        var snippetMap = this.snippetMap;
+        if (snippetMap[scope] && snippetMap[scope].includeScopes) {
+            scopes.push.apply(scopes, snippetMap[scope].includeScopes);
+        }
+        scopes.push("_");
+        return scopes;
+    };
+
+    this.expandWithTab = function(editor, options) {
+        var self = this;
+        var result = editor.forEachSelection(function() {
+            return self.expandSnippetForSelection(editor, options);
+        }, null, {keepOrder: true});
+        if (result && editor.tabstopManager)
+            editor.tabstopManager.tabNext();
+        return result;
+    };
+    
+    this.expandSnippetForSelection = function(editor, options) {
+        var cursor = editor.getCursorPosition();
+        var line = editor.session.getLine(cursor.row);
+        var before = line.substring(0, cursor.column);
+        var after = line.substr(cursor.column);
+
+        var snippetMap = this.snippetMap;
+        var snippet;
+        this.getActiveScopes(editor).some(function(scope) {
+            var snippets = snippetMap[scope];
+            if (snippets)
+                snippet = this.findMatchingSnippet(snippets, before, after);
+            return !!snippet;
+        }, this);
+        if (!snippet)
+            return false;
+        if (options && options.dryRun)
+            return true;
+        editor.session.doc.removeInLine(cursor.row,
+            cursor.column - snippet.replaceBefore.length,
+            cursor.column + snippet.replaceAfter.length
+        );
+
+        this.variables.M__ = snippet.matchBefore;
+        this.variables.T__ = snippet.matchAfter;
+        this.insertSnippetForSelection(editor, snippet.content);
+
+        this.variables.M__ = this.variables.T__ = null;
+        return true;
+    };
+
+    this.findMatchingSnippet = function(snippetList, before, after) {
+        for (var i = snippetList.length; i--;) {
+            var s = snippetList[i];
+            if (s.startRe && !s.startRe.test(before))
+                continue;
+            if (s.endRe && !s.endRe.test(after))
+                continue;
+            if (!s.startRe && !s.endRe)
+                continue;
+
+            s.matchBefore = s.startRe ? s.startRe.exec(before) : [""];
+            s.matchAfter = s.endRe ? s.endRe.exec(after) : [""];
+            s.replaceBefore = s.triggerRe ? s.triggerRe.exec(before)[0] : "";
+            s.replaceAfter = s.endTriggerRe ? s.endTriggerRe.exec(after)[0] : "";
+            return s;
+        }
+    };
+
+    this.snippetMap = {};
+    this.snippetNameMap = {};
+    this.register = function(snippets, scope) {
+        var snippetMap = this.snippetMap;
+        var snippetNameMap = this.snippetNameMap;
+        var self = this;
+        
+        if (!snippets) 
+            snippets = [];
+        
+        function wrapRegexp(src) {
+            if (src && !/^\^?\(.*\)\$?$|^\\b$/.test(src))
+                src = "(?:" + src + ")";
+
+            return src || "";
+        }
+        function guardedRegexp(re, guard, opening) {
+            re = wrapRegexp(re);
+            guard = wrapRegexp(guard);
+            if (opening) {
+                re = guard + re;
+                if (re && re[re.length - 1] != "$")
+                    re = re + "$";
+            } else {
+                re = re + guard;
+                if (re && re[0] != "^")
+                    re = "^" + re;
+            }
+            return new RegExp(re);
+        }
+
+        function addSnippet(s) {
+            if (!s.scope)
+                s.scope = scope || "_";
+            scope = s.scope;
+            if (!snippetMap[scope]) {
+                snippetMap[scope] = [];
+                snippetNameMap[scope] = {};
+            }
+
+            var map = snippetNameMap[scope];
+            if (s.name) {
+                var old = map[s.name];
+                if (old)
+                    self.unregister(old);
+                map[s.name] = s;
+            }
+            snippetMap[scope].push(s);
+
+            if (s.tabTrigger && !s.trigger) {
+                if (!s.guard && /^\w/.test(s.tabTrigger))
+                    s.guard = "\\b";
+                s.trigger = lang.escapeRegExp(s.tabTrigger);
+            }
+
+            s.startRe = guardedRegexp(s.trigger, s.guard, true);
+            s.triggerRe = new RegExp(s.trigger, "", true);
+
+            s.endRe = guardedRegexp(s.endTrigger, s.endGuard, true);
+            s.endTriggerRe = new RegExp(s.endTrigger, "", true);
+        }
+
+        if (snippets && snippets.content)
+            addSnippet(snippets);
+        else if (Array.isArray(snippets))
+            snippets.forEach(addSnippet);
+        
+        this._signal("registerSnippets", {scope: scope});
+    };
+    this.unregister = function(snippets, scope) {
+        var snippetMap = this.snippetMap;
+        var snippetNameMap = this.snippetNameMap;
+
+        function removeSnippet(s) {
+            var nameMap = snippetNameMap[s.scope||scope];
+            if (nameMap && nameMap[s.name]) {
+                delete nameMap[s.name];
+                var map = snippetMap[s.scope||scope];
+                var i = map && map.indexOf(s);
+                if (i >= 0)
+                    map.splice(i, 1);
+            }
+        }
+        if (snippets.content)
+            removeSnippet(snippets);
+        else if (Array.isArray(snippets))
+            snippets.forEach(removeSnippet);
+    };
+    this.parseSnippetFile = function(str) {
+        str = str.replace(/\r/g, "");
+        var list = [], snippet = {};
+        var re = /^#.*|^({[\s\S]*})\s*$|^(\S+) (.*)$|^((?:\n*\t.*)+)/gm;
+        var m;
+        while (m = re.exec(str)) {
+            if (m[1]) {
+                try {
+                    snippet = JSON.parse(m[1]);
+                    list.push(snippet);
+                } catch (e) {}
+            } if (m[4]) {
+                snippet.content = m[4].replace(/^\t/gm, "");
+                list.push(snippet);
+                snippet = {};
+            } else {
+                var key = m[2], val = m[3];
+                if (key == "regex") {
+                    var guardRe = /\/((?:[^\/\\]|\\.)*)|$/g;
+                    snippet.guard = guardRe.exec(val)[1];
+                    snippet.trigger = guardRe.exec(val)[1];
+                    snippet.endTrigger = guardRe.exec(val)[1];
+                    snippet.endGuard = guardRe.exec(val)[1];
+                } else if (key == "snippet") {
+                    snippet.tabTrigger = val.match(/^\S*/)[0];
+                    if (!snippet.name)
+                        snippet.name = val;
+                } else {
+                    snippet[key] = val;
+                }
+            }
+        }
+        return list;
+    };
+    this.getSnippetByName = function(name, editor) {
+        var snippetMap = this.snippetNameMap;
+        var snippet;
+        this.getActiveScopes(editor).some(function(scope) {
+            var snippets = snippetMap[scope];
+            if (snippets)
+                snippet = snippets[name];
+            return !!snippet;
+        }, this);
+        return snippet;
+    };
+
+}).call(SnippetManager.prototype);
+
+
+var TabstopManager = function(editor) {
+    if (editor.tabstopManager)
+        return editor.tabstopManager;
+    editor.tabstopManager = this;
+    this.$onChange = this.onChange.bind(this);
+    this.$onChangeSelection = lang.delayedCall(this.onChangeSelection.bind(this)).schedule;
+    this.$onChangeSession = this.onChangeSession.bind(this);
+    this.$onAfterExec = this.onAfterExec.bind(this);
+    this.attach(editor);
+};
+(function() {
+    this.attach = function(editor) {
+        this.index = 0;
+        this.ranges = [];
+        this.tabstops = [];
+        this.$openTabstops = null;
+        this.selectedTabstop = null;
+
+        this.editor = editor;
+        this.editor.on("change", this.$onChange);
+        this.editor.on("changeSelection", this.$onChangeSelection);
+        this.editor.on("changeSession", this.$onChangeSession);
+        this.editor.commands.on("afterExec", this.$onAfterExec);
+        this.editor.keyBinding.addKeyboardHandler(this.keyboardHandler);
+    };
+    this.detach = function() {
+        this.tabstops.forEach(this.removeTabstopMarkers, this);
+        this.ranges = null;
+        this.tabstops = null;
+        this.selectedTabstop = null;
+        this.editor.removeListener("change", this.$onChange);
+        this.editor.removeListener("changeSelection", this.$onChangeSelection);
+        this.editor.removeListener("changeSession", this.$onChangeSession);
+        this.editor.commands.removeListener("afterExec", this.$onAfterExec);
+        this.editor.keyBinding.removeKeyboardHandler(this.keyboardHandler);
+        this.editor.tabstopManager = null;
+        this.editor = null;
+    };
+
+    this.onChange = function(e) {
+        var changeRange = e.data.range;
+        var isRemove = e.data.action[0] == "r";
+        var start = changeRange.start;
+        var end = changeRange.end;
+        var startRow = start.row;
+        var endRow = end.row;
+        var lineDif = endRow - startRow;
+        var colDiff = end.column - start.column;
+
+        if (isRemove) {
+            lineDif = -lineDif;
+            colDiff = -colDiff;
+        }
+        if (!this.$inChange && isRemove) {
+            var ts = this.selectedTabstop;
+            var changedOutside = ts && !ts.some(function(r) {
+                return comparePoints(r.start, start) <= 0 && comparePoints(r.end, end) >= 0;
+            });
+            if (changedOutside)
+                return this.detach();
+        }
+        var ranges = this.ranges;
+        for (var i = 0; i < ranges.length; i++) {
+            var r = ranges[i];
+            if (r.end.row < start.row)
+                continue;
+
+            if (isRemove && comparePoints(start, r.start) < 0 && comparePoints(end, r.end) > 0) {
+                this.removeRange(r);
+                i--;
+                continue;
+            }
+
+            if (r.start.row == startRow && r.start.column > start.column)
+                r.start.column += colDiff;
+            if (r.end.row == startRow && r.end.column >= start.column)
+                r.end.column += colDiff;
+            if (r.start.row >= startRow)
+                r.start.row += lineDif;
+            if (r.end.row >= startRow)
+                r.end.row += lineDif;
+
+            if (comparePoints(r.start, r.end) > 0)
+                this.removeRange(r);
+        }
+        if (!ranges.length)
+            this.detach();
+    };
+    this.updateLinkedFields = function() {
+        var ts = this.selectedTabstop;
+        if (!ts || !ts.hasLinkedRanges)
+            return;
+        this.$inChange = true;
+        var session = this.editor.session;
+        var text = session.getTextRange(ts.firstNonLinked);
+        for (var i = ts.length; i--;) {
+            var range = ts[i];
+            if (!range.linked)
+                continue;
+            var fmt = exports.snippetManager.tmStrFormat(text, range.original);
+            session.replace(range, fmt);
+        }
+        this.$inChange = false;
+    };
+    this.onAfterExec = function(e) {
+        if (e.command && !e.command.readOnly)
+            this.updateLinkedFields();
+    };
+    this.onChangeSelection = function() {
+        if (!this.editor)
+            return;
+        var lead = this.editor.selection.lead;
+        var anchor = this.editor.selection.anchor;
+        var isEmpty = this.editor.selection.isEmpty();
+        for (var i = this.ranges.length; i--;) {
+            if (this.ranges[i].linked)
+                continue;
+            var containsLead = this.ranges[i].contains(lead.row, lead.column);
+            var containsAnchor = isEmpty || this.ranges[i].contains(anchor.row, anchor.column);
+            if (containsLead && containsAnchor)
+                return;
+        }
+        this.detach();
+    };
+    this.onChangeSession = function() {
+        this.detach();
+    };
+    this.tabNext = function(dir) {
+        var max = this.tabstops.length;
+        var index = this.index + (dir || 1);
+        index = Math.min(Math.max(index, 1), max);
+        if (index == max)
+            index = 0;
+        this.selectTabstop(index);
+        if (index === 0)
+            this.detach();
+    };
+    this.selectTabstop = function(index) {
+        this.$openTabstops = null;
+        var ts = this.tabstops[this.index];
+        if (ts)
+            this.addTabstopMarkers(ts);
+        this.index = index;
+        ts = this.tabstops[this.index];
+        if (!ts || !ts.length)
+            return;
+        
+        this.selectedTabstop = ts;
+        if (!this.editor.inVirtualSelectionMode) {        
+            var sel = this.editor.multiSelect;
+            sel.toSingleRange(ts.firstNonLinked.clone());
+            for (var i = ts.length; i--;) {
+                if (ts.hasLinkedRanges && ts[i].linked)
+                    continue;
+                sel.addRange(ts[i].clone(), true);
+            }
+            if (sel.ranges[0])
+                sel.addRange(sel.ranges[0].clone());
+        } else {
+            this.editor.selection.setRange(ts.firstNonLinked);
+        }
+        
+        this.editor.keyBinding.addKeyboardHandler(this.keyboardHandler);
+    };
+    this.addTabstops = function(tabstops, start, end) {
+        if (!this.$openTabstops)
+            this.$openTabstops = [];
+        if (!tabstops[0]) {
+            var p = Range.fromPoints(end, end);
+            moveRelative(p.start, start);
+            moveRelative(p.end, start);
+            tabstops[0] = [p];
+            tabstops[0].index = 0;
+        }
+
+        var i = this.index;
+        var arg = [i + 1, 0];
+        var ranges = this.ranges;
+        tabstops.forEach(function(ts, index) {
+            var dest = this.$openTabstops[index] || ts;
+                
+            for (var i = ts.length; i--;) {
+                var p = ts[i];
+                var range = Range.fromPoints(p.start, p.end || p.start);
+                movePoint(range.start, start);
+                movePoint(range.end, start);
+                range.original = p;
+                range.tabstop = dest;
+                ranges.push(range);
+                if (dest != ts)
+                    dest.unshift(range);
+                else
+                    dest[i] = range;
+                if (p.fmtString) {
+                    range.linked = true;
+                    dest.hasLinkedRanges = true;
+                } else if (!dest.firstNonLinked)
+                    dest.firstNonLinked = range;
+            }
+            if (!dest.firstNonLinked)
+                dest.hasLinkedRanges = false;
+            if (dest === ts) {
+                arg.push(dest);
+                this.$openTabstops[index] = dest;
+            }
+            this.addTabstopMarkers(dest);
+        }, this);
+        
+        if (arg.length > 2) {
+            if (this.tabstops.length)
+                arg.push(arg.splice(2, 1)[0]);
+            this.tabstops.splice.apply(this.tabstops, arg);
+        }
+    };
+
+    this.addTabstopMarkers = function(ts) {
+        var session = this.editor.session;
+        ts.forEach(function(range) {
+            if  (!range.markerId)
+                range.markerId = session.addMarker(range, "ace_snippet-marker", "text");
+        });
+    };
+    this.removeTabstopMarkers = function(ts) {
+        var session = this.editor.session;
+        ts.forEach(function(range) {
+            session.removeMarker(range.markerId);
+            range.markerId = null;
+        });
+    };
+    this.removeRange = function(range) {
+        var i = range.tabstop.indexOf(range);
+        range.tabstop.splice(i, 1);
+        i = this.ranges.indexOf(range);
+        this.ranges.splice(i, 1);
+        this.editor.session.removeMarker(range.markerId);
+        if (!range.tabstop.length) {
+            i = this.tabstops.indexOf(range.tabstop);
+            if (i != -1)
+                this.tabstops.splice(i, 1);
+            if (!this.tabstops.length)
+                this.detach();
+        }
+    };
+
+    this.keyboardHandler = new HashHandler();
+    this.keyboardHandler.bindKeys({
+        "Tab": function(ed) {
+            if (exports.snippetManager && exports.snippetManager.expandWithTab(ed)) {
+                return;
+            }
+
+            ed.tabstopManager.tabNext(1);
+        },
+        "Shift-Tab": function(ed) {
+            ed.tabstopManager.tabNext(-1);
+        },
+        "Esc": function(ed) {
+            ed.tabstopManager.detach();
+        },
+        "Return": function(ed) {
+            return false;
+        }
+    });
+}).call(TabstopManager.prototype);
+
+
+
+var changeTracker = {};
+changeTracker.onChange = Anchor.prototype.onChange;
+changeTracker.setPosition = function(row, column) {
+    this.pos.row = row;
+    this.pos.column = column;
+};
+changeTracker.update = function(pos, delta, $insertRight) {
+    this.$insertRight = $insertRight;
+    this.pos = pos; 
+    this.onChange(delta);
+};
+
+var movePoint = function(point, diff) {
+    if (point.row == 0)
+        point.column += diff.column;
+    point.row += diff.row;
+};
+
+var moveRelative = function(point, start) {
+    if (point.row == start.row)
+        point.column -= start.column;
+    point.row -= start.row;
+};
+
+
+require("./lib/dom").importCssString("\
+.ace_snippet-marker {\
+    -moz-box-sizing: border-box;\
+    box-sizing: border-box;\
+    background: rgba(194, 193, 208, 0.09);\
+    border: 1px dotted rgba(211, 208, 235, 0.62);\
+    position: absolute;\
+}");
+
+exports.snippetManager = new SnippetManager();
+
+
+var Editor = require("./editor").Editor;
+(function() {
+    this.insertSnippet = function(content, options) {
+        return exports.snippetManager.insertSnippet(this, content, options);
+    };
+    this.expandSnippet = function(options) {
+        return exports.snippetManager.expandWithTab(this, options);
+    };
+}).call(Editor.prototype);
+
+});
+
+define("ace/snippets/_all_modes",["require","exports","module"], function(require, exports, module) {
+
+
+exports.snippetText =undefined;
+exports.scope = "_all_modes";
+
+});
+
+define("ace/snippets/abap",["require","exports","module"], function(require, exports, module) {
+
+
+exports.snippetText =undefined;
+exports.scope = "abap";
+
+});
+
+define("ace/snippets/actionscript",["require","exports","module"], function(require, exports, module) {
+
+
+exports.snippetText = "snippet main\n\
+	package {\n\
+		import flash.display.*;\n\
+		import flash.Events.*;\n\
+	\n\
+		public class Main extends Sprite {\n\
+			public function Main (	) {\n\
+				trace(\"start\");\n\
+				stage.scaleMode = StageScaleMode.NO_SCALE;\n\
+				stage.addEventListener(Event.RESIZE, resizeListener);\n\
+			}\n\
+	\n\
+			private function resizeListener (e:Event):void {\n\
+				trace(\"The application window changed size!\");\n\
+				trace(\"New width:  \" + stage.stageWidth);\n\
+				trace(\"New height: \" + stage.stageHeight);\n\
+			}\n\
+	\n\
+		}\n\
+	\n\
+	}\n\
+snippet class\n\
+	${1:public|internal} class ${2:name} ${3:extends } {\n\
+		public function $2 (	) {\n\
+			(\"start\");\n\
+		}\n\
+	}\n\
+snippet all\n\
+	package name {\n\
+\n\
+		${1:public|internal|final} class ${2:name} ${3:extends } {\n\
+			private|public| static const FOO = \"abc\";\n\
+			private|public| static var BAR = \"abc\";\n\
+			if Cababilities.os == \"Linux|MacOS\" {\n\
+				FOO = \"other\";\n\
+			}\n\
+			public function $2 (	){\n\
+				super2();\n\
+				trace(\"start\");\n\
+			}\n\
+			public function name (a, b...){\n\
+				super.name(..);\n\
+				lable:break\n\
+			}\n\
+		}\n\
+	}\n\
+\n\
+	function A(){\n\
+	}\n\
+snippet switch\n\
+	switch(${1}){\n\
+		case ${2}:\n\
+			${3}\n\
+		break;\n\
+		default:\n\
+	}\n\
+snippet case\n\
+		case ${1}:\n\
+			${2}\n\
+		break;\n\
+snippet package\n\
+	package ${1:package}{\n\
+		${2}\n\
+	}\n\
+snippet wh\n\
+	while ${1:cond}{\n\
+		${2}\n\
+	}\n\
+snippet do\n\
+	do {\n\
+		${2}\n\
+	} while (${1:cond})\n\
+snippet while\n\
+	while ${1:cond}{\n\
+		${2}\n\
+	}\n\
+snippet for enumerate names\n\
+	for (${1:var} in ${2:object}){\n\
+		${3}\n\
+	}\n\
+snippet for enumerate values\n\
+	for each (${1:var} in ${2:object}){\n\
+		${3}\n\
+	}\n\
+snippet get_set\n\
+	function get ${1:name} {\n\
+		return ${2}\n\
+	}\n\
+	function set $1 (newValue) {\n\
+		${3}\n\
+	}\n\
+snippet interface\n\
+	interface name {\n\
+		function method(${1}):${2:returntype};\n\
+	}\n\
+snippet try\n\
+	try {\n\
+		${1}\n\
+	} catch (error:ErrorType) {\n\
+		${2}\n\
+	} finally {\n\
+		${3}\n\
+	}\n\
+# For Loop (same as c.snippet)\n\
+snippet for for (..) {..}\n\
+	for (${2:i} = 0; $2 < ${1:count}; $2${3:++}) {\n\
+		${4:/* code */}\n\
+	}\n\
+# Custom For Loop\n\
+snippet forr\n\
+	for (${1:i} = ${2:0}; ${3:$1 < 10}; $1${4:++}) {\n\
+		${5:/* code */}\n\
+	}\n\
+# If Condition\n\
+snippet if\n\
+	if (${1:/* condition */}) {\n\
+		${2:/* code */}\n\
+	}\n\
+snippet el\n\
+	else {\n\
+		${1}\n\
+	}\n\
+# Ternary conditional\n\
+snippet t\n\
+	${1:/* condition */} ? ${2:a} : ${3:b}\n\
+snippet fun\n\
+	function ${1:function_name}(${2})${3}\n\
+	{\n\
+		${4:/* code */}\n\
+	}\n\
+# FlxSprite (usefull when using the flixel library)\n\
+snippet FlxSprite\n\
+	package\n\
+	{\n\
+		import org.flixel.*\n\
+\n\
+		public class ${1:ClassName} extends ${2:FlxSprite}\n\
+		{\n\
+			public function $1(${3: X:Number, Y:Number}):void\n\
+			{\n\
+				super(X,Y);\n\
+				${4: //code...}\n\
+			}\n\
+\n\
+			override public function update():void\n\
+			{\n\
+				super.update();\n\
+				${5: //code...}\n\
+			}\n\
+		}\n\
+	}\n\
+\n\
+";
+exports.scope = "actionscript";
+
+});
+
+define("ace/snippets/ada",["require","exports","module"], function(require, exports, module) {
+
+
+exports.snippetText =undefined;
+exports.scope = "ada";
+
+});
+
+define("ace/snippets/all_modes",["require","exports","module"], function(require, exports, module) {
+
+
+exports.snippetText =undefined;
+exports.scope = "all_modes";
+
+});
+
+define("ace/snippets/apache_conf",["require","exports","module"], function(require, exports, module) {
+
+
+exports.snippetText =undefined;
+exports.scope = "apache_conf";
+
+});
+
+define("ace/snippets/applescript",["require","exports","module"], function(require, exports, module) {
+
+
+exports.snippetText =undefined;
+exports.scope = "applescript";
+
+});
+
+define("ace/snippets/asciidoc",["require","exports","module"], function(require, exports, module) {
+
+
+exports.snippetText =undefined;
+exports.scope = "asciidoc";
+
+});
+
+define("ace/snippets/assembly_x86",["require","exports","module"], function(require, exports, module) {
+
+
+exports.snippetText =undefined;
+exports.scope = "assembly_x86";
+
+});
+
+define("ace/snippets/autohotkey",["require","exports","module"], function(require, exports, module) {
+
+
+exports.snippetText =undefined;
+exports.scope = "autohotkey";
+
+});
+
+define("ace/snippets/batchfile",["require","exports","module"], function(require, exports, module) {
+
+
+exports.snippetText =undefined;
+exports.scope = "batchfile";
+
+});
+
+define("ace/snippets/c9search",["require","exports","module"], function(require, exports, module) {
+
+
+exports.snippetText =undefined;
+exports.scope = "c9search";
+
+});
+
+define("ace/snippets/c_cpp",["require","exports","module"], function(require, exports, module) {
+
+
+exports.snippetText = "## STL Collections\n\
+# std::array\n\
+snippet array\n\
+	std::array<${1:T}, ${2:N}> ${3};${4}\n\
+# std::vector\n\
+snippet vector\n\
+	std::vector<${1:T}> ${2};${3}\n\
+# std::deque\n\
+snippet deque\n\
+	std::deque<${1:T}> ${2};${3}\n\
+# std::forward_list\n\
+snippet flist\n\
+	std::forward_list<${1:T}> ${2};${3}\n\
+# std::list\n\
+snippet list\n\
+	std::list<${1:T}> ${2};${3}\n\
+# std::set\n\
+snippet set\n\
+	std::set<${1:T}> ${2};${3}\n\
+# std::map\n\
+snippet map\n\
+	std::map<${1:Key}, ${2:T}> ${3};${4}\n\
+# std::multiset\n\
+snippet mset\n\
+	std::multiset<${1:T}> ${2};${3}\n\
+# std::multimap\n\
+snippet mmap\n\
+	std::multimap<${1:Key}, ${2:T}> ${3};${4}\n\
+# std::unordered_set\n\
+snippet uset\n\
+	std::unordered_set<${1:T}> ${2};${3}\n\
+# std::unordered_map\n\
+snippet umap\n\
+	std::unordered_map<${1:Key}, ${2:T}> ${3};${4}\n\
+# std::unordered_multiset\n\
+snippet umset\n\
+	std::unordered_multiset<${1:T}> ${2};${3}\n\
+# std::unordered_multimap\n\
+snippet ummap\n\
+	std::unordered_multimap<${1:Key}, ${2:T}> ${3};${4}\n\
+# std::stack\n\
+snippet stack\n\
+	std::stack<${1:T}> ${2};${3}\n\
+# std::queue\n\
+snippet queue\n\
+	std::queue<${1:T}> ${2};${3}\n\
+# std::priority_queue\n\
+snippet pqueue\n\
+	std::priority_queue<${1:T}> ${2};${3}\n\
+##\n\
+## Access Modifiers\n\
+# private\n\
+snippet pri\n\
+	private\n\
+# protected\n\
+snippet pro\n\
+	protected\n\
+# public\n\
+snippet pub\n\
+	public\n\
+# friend\n\
+snippet fr\n\
+	friend\n\
+# mutable\n\
+snippet mu\n\
+	mutable\n\
+## \n\
+## Class\n\
+# class\n\
+snippet cl\n\
+	class ${1:`Filename('$1', 'name')`} \n\
+	{\n\
+	public:\n\
+		$1(${2});\n\
+		~$1();\n\
+\n\
+	private:\n\
+		${3:/* data */}\n\
+	};\n\
+# member function implementation\n\
+snippet mfun\n\
+	${4:void} ${1:`Filename('$1', 'ClassName')`}::${2:memberFunction}(${3}) {\n\
+		${5:/* code */}\n\
+	}\n\
+# namespace\n\
+snippet ns\n\
+	namespace ${1:`Filename('', 'my')`} {\n\
+		${2}\n\
+	} /* namespace $1 */\n\
+##\n\
+## Input/Output\n\
+# std::cout\n\
+snippet cout\n\
+	std::cout << ${1} << std::endl;${2}\n\
+# std::cin\n\
+snippet cin\n\
+	std::cin >> ${1};${2}\n\
+##\n\
+## Iteration\n\
+# for i \n\
+snippet fori\n\
+	for (int ${2:i} = 0; $2 < ${1:count}; $2${3:++}) {\n\
+		${4:/* code */}\n\
+	}${5}\n\
+\n\
+# foreach\n\
+snippet fore\n\
+	for (${1:auto} ${2:i} : ${3:container}) {\n\
+		${4:/* code */}\n\
+	}${5}\n\
+# iterator\n\
+snippet iter\n\
+	for (${1:std::vector}<${2:type}>::${3:const_iterator} ${4:i} = ${5:container}.begin(); $4 != $5.end(); ++$4) {\n\
+		${6}\n\
+	}${7}\n\
+\n\
+# auto iterator\n\
+snippet itera\n\
+	for (auto ${1:i} = $1.begin(); $1 != $1.end(); ++$1) {\n\
+		${2:std::cout << *$1 << std::endl;}\n\
+	}${3}\n\
+##\n\
+## Lambdas\n\
+# lamda (one line)\n\
+snippet ld\n\
+	[${1}](${2}){${3:/* code */}}${4}\n\
+# lambda (multi-line)\n\
+snippet lld\n\
+	[${1}](${2}){\n\
+		${3:/* code */}\n\
+	}${4}\n\
+";
+exports.scope = "c_cpp";
+
+});
+
+define("ace/snippets/cirru",["require","exports","module"], function(require, exports, module) {
+
+
+exports.snippetText =undefined;
+exports.scope = "cirru";
+
+});
+
+define("ace/snippets/clojure",["require","exports","module"], function(require, exports, module) {
+
+
+exports.snippetText = "snippet comm\n\
+	(comment\n\
+	  ${1}\n\
+	  )\n\
+snippet condp\n\
+	(condp ${1:pred} ${2:expr}\n\
+	  ${3})\n\
+snippet def\n\
+	(def ${1})\n\
+snippet defm\n\
+	(defmethod ${1:multifn} \"${2:doc-string}\" ${3:dispatch-val} [${4:args}]\n\
+	  ${5})\n\
+snippet defmm\n\
+	(defmulti ${1:name} \"${2:doc-string}\" ${3:dispatch-fn})\n\
+snippet defma\n\
+	(defmacro ${1:name} \"${2:doc-string}\" ${3:dispatch-fn})\n\
+snippet defn\n\
+	(defn ${1:name} \"${2:doc-string}\" [${3:arg-list}]\n\
+	  ${4})\n\
+snippet defp\n\
+	(defprotocol ${1:name}\n\
+	  ${2})\n\
+snippet defr\n\
+	(defrecord ${1:name} [${2:fields}]\n\
+	  ${3:protocol}\n\
+	  ${4})\n\
+snippet deft\n\
+	(deftest ${1:name}\n\
+	    (is (= ${2:assertion})))\n\
+	  ${3})\n\
+snippet is\n\
+	(is (= ${1} ${2}))\n\
+snippet defty\n\
+	(deftype ${1:Name} [${2:fields}]\n\
+	  ${3:Protocol}\n\
+	  ${4})\n\
+snippet doseq\n\
+	(doseq [${1:elem} ${2:coll}]\n\
+	  ${3})\n\
+snippet fn\n\
+	(fn [${1:arg-list}] ${2})\n\
+snippet if\n\
+	(if ${1:test-expr}\n\
+	  ${2:then-expr}\n\
+	  ${3:else-expr})\n\
+snippet if-let \n\
+	(if-let [${1:result} ${2:test-expr}]\n\
+		(${3:then-expr} $1)\n\
+		(${4:else-expr}))\n\
+snippet imp\n\
+	(:import [${1:package}])\n\
+	& {:keys [${1:keys}] :or {${2:defaults}}}\n\
+snippet let\n\
+	(let [${1:name} ${2:expr}]\n\
+		${3})\n\
+snippet letfn\n\
+	(letfn [(${1:name) [${2:args}]\n\
+	          ${3})])\n\
+snippet map\n\
+	(map ${1:func} ${2:coll})\n\
+snippet mapl\n\
+	(map #(${1:lambda}) ${2:coll})\n\
+snippet met\n\
+	(${1:name} [${2:this} ${3:args}]\n\
+	  ${4})\n\
+snippet ns\n\
+	(ns ${1:name}\n\
+	  ${2})\n\
+snippet dotimes\n\
+	(dotimes [_ 10]\n\
+	  (time\n\
+	    (dotimes [_ ${1:times}]\n\
+	      ${2})))\n\
+snippet pmethod\n\
+	(${1:name} [${2:this} ${3:args}])\n\
+snippet refer\n\
+	(:refer-clojure :exclude [${1}])\n\
+snippet require\n\
+	(:require [${1:namespace} :as [${2}]])\n\
+snippet use\n\
+	(:use [${1:namespace} :only [${2}]])\n\
+snippet print\n\
+	(println ${1})\n\
+snippet reduce\n\
+	(reduce ${1:(fn [p n] ${3})} ${2})\n\
+snippet when\n\
+	(when ${1:test} ${2:body})\n\
+snippet when-let\n\
+	(when-let [${1:result} ${2:test}]\n\
+		${3:body})\n\
+";
+exports.scope = "clojure";
+
+});
+
+define("ace/snippets/cobol",["require","exports","module"], function(require, exports, module) {
+
+
+exports.snippetText =undefined;
+exports.scope = "cobol";
+
+});
+
+define("ace/snippets/coffee",["require","exports","module"], function(require, exports, module) {
+
+
+exports.snippetText = "# Closure loop\n\
+snippet forindo\n\
+	for ${1:name} in ${2:array}\n\
+		do ($1) ->\n\
+			${3:// body}\n\
+# Array comprehension\n\
+snippet fora\n\
+	for ${1:name} in ${2:array}\n\
+		${3:// body...}\n\
+# Object comprehension\n\
+snippet foro\n\
+	for ${1:key}, ${2:value} of ${3:object}\n\
+		${4:// body...}\n\
+# Range comprehension (inclusive)\n\
+snippet forr\n\
+	for ${1:name} in [${2:start}..${3:finish}]\n\
+		${4:// body...}\n\
+snippet forrb\n\
+	for ${1:name} in [${2:start}..${3:finish}] by ${4:step}\n\
+		${5:// body...}\n\
+# Range comprehension (exclusive)\n\
+snippet forrex\n\
+	for ${1:name} in [${2:start}...${3:finish}]\n\
+		${4:// body...}\n\
+snippet forrexb\n\
+	for ${1:name} in [${2:start}...${3:finish}] by ${4:step}\n\
+		${5:// body...}\n\
+# Function\n\
+snippet fun\n\
+	(${1:args}) ->\n\
+		${2:// body...}\n\
+# Function (bound)\n\
+snippet bfun\n\
+	(${1:args}) =>\n\
+		${2:// body...}\n\
+# Class\n\
+snippet cla class ..\n\
+	class ${1:`substitute(Filename(), '\\(_\\|^\\)\\(.\\)', '\\u\\2', 'g')`}\n\
+		${2}\n\
+snippet cla class .. constructor: ..\n\
+	class ${1:`substitute(Filename(), '\\(_\\|^\\)\\(.\\)', '\\u\\2', 'g')`}\n\
+		constructor: (${2:args}) ->\n\
+			${3}\n\
+\n\
+		${4}\n\
+snippet cla class .. extends ..\n\
+	class ${1:`substitute(Filename(), '\\(_\\|^\\)\\(.\\)', '\\u\\2', 'g')`} extends ${2:ParentClass}\n\
+		${3}\n\
+snippet cla class .. extends .. constructor: ..\n\
+	class ${1:`substitute(Filename(), '\\(_\\|^\\)\\(.\\)', '\\u\\2', 'g')`} extends ${2:ParentClass}\n\
+		constructor: (${3:args}) ->\n\
+			${4}\n\
+\n\
+		${5}\n\
+# If\n\
+snippet if\n\
+	if ${1:condition}\n\
+		${2:// body...}\n\
+# If __ Else\n\
+snippet ife\n\
+	if ${1:condition}\n\
+		${2:// body...}\n\
+	else\n\
+		${3:// body...}\n\
+# Else if\n\
+snippet elif\n\
+	else if ${1:condition}\n\
+		${2:// body...}\n\
+# Ternary If\n\
+snippet ifte\n\
+	if ${1:condition} then ${2:value} else ${3:other}\n\
+# Unless\n\
+snippet unl\n\
+	${1:action} unless ${2:condition}\n\
+# Switch\n\
+snippet swi\n\
+	switch ${1:object}\n\
+		when ${2:value}\n\
+			${3:// body...}\n\
+\n\
+# Log\n\
+snippet log\n\
+	console.log ${1}\n\
+# Try __ Catch\n\
+snippet try\n\
+	try\n\
+		${1}\n\
+	catch ${2:error}\n\
+		${3}\n\
+# Require\n\
+snippet req\n\
+	${2:$1} = require '${1:sys}'${3}\n\
+# Export\n\
+snippet exp\n\
+	${1:root} = exports ? this\n\
+";
+exports.scope = "coffee";
+
+});
+
+define("ace/snippets/coldfusion",["require","exports","module"], function(require, exports, module) {
+
+
+exports.snippetText =undefined;
+exports.scope = "coldfusion";
+
+});
+
+define("ace/snippets/csharp",["require","exports","module"], function(require, exports, module) {
+
+
+exports.snippetText =undefined;
+exports.scope = "csharp";
+
+});
+
+define("ace/snippets/css",["require","exports","module"], function(require, exports, module) {
+
+
+exports.snippetText = "snippet .\n\
+	${1} {\n\
+		${2}\n\
+	}\n\
+snippet !\n\
+	 !important\n\
+snippet bdi:m+\n\
+	-moz-border-image: url(${1}) ${2:0} ${3:0} ${4:0} ${5:0} ${6:stretch} ${7:stretch};\n\
+snippet bdi:m\n\
+	-moz-border-image: ${1};\n\
+snippet bdrz:m\n\
+	-moz-border-radius: ${1};\n\
+snippet bxsh:m+\n\
+	-moz-box-shadow: ${1:0} ${2:0} ${3:0} #${4:000};\n\
+snippet bxsh:m\n\
+	-moz-box-shadow: ${1};\n\
+snippet bdi:w+\n\
+	-webkit-border-image: url(${1}) ${2:0} ${3:0} ${4:0} ${5:0} ${6:stretch} ${7:stretch};\n\
+snippet bdi:w\n\
+	-webkit-border-image: ${1};\n\
+snippet bdrz:w\n\
+	-webkit-border-radius: ${1};\n\
+snippet bxsh:w+\n\
+	-webkit-box-shadow: ${1:0} ${2:0} ${3:0} #${4:000};\n\
+snippet bxsh:w\n\
+	-webkit-box-shadow: ${1};\n\
+snippet @f\n\
+	@font-face {\n\
+		font-family: ${1};\n\
+		src: url(${2});\n\
+	}\n\
+snippet @i\n\
+	@import url(${1});\n\
+snippet @m\n\
+	@media ${1:print} {\n\
+		${2}\n\
+	}\n\
+snippet bg+\n\
+	background: #${1:FFF} url(${2}) ${3:0} ${4:0} ${5:no-repeat};\n\
+snippet bga\n\
+	background-attachment: ${1};\n\
+snippet bga:f\n\
+	background-attachment: fixed;\n\
+snippet bga:s\n\
+	background-attachment: scroll;\n\
+snippet bgbk\n\
+	background-break: ${1};\n\
+snippet bgbk:bb\n\
+	background-break: bounding-box;\n\
+snippet bgbk:c\n\
+	background-break: continuous;\n\
+snippet bgbk:eb\n\
+	background-break: each-box;\n\
+snippet bgcp\n\
+	background-clip: ${1};\n\
+snippet bgcp:bb\n\
+	background-clip: border-box;\n\
+snippet bgcp:cb\n\
+	background-clip: content-box;\n\
+snippet bgcp:nc\n\
+	background-clip: no-clip;\n\
+snippet bgcp:pb\n\
+	background-clip: padding-box;\n\
+snippet bgc\n\
+	background-color: #${1:FFF};\n\
+snippet bgc:t\n\
+	background-color: transparent;\n\
+snippet bgi\n\
+	background-image: url(${1});\n\
+snippet bgi:n\n\
+	background-image: none;\n\
+snippet bgo\n\
+	background-origin: ${1};\n\
+snippet bgo:bb\n\
+	background-origin: border-box;\n\
+snippet bgo:cb\n\
+	background-origin: content-box;\n\
+snippet bgo:pb\n\
+	background-origin: padding-box;\n\
+snippet bgpx\n\
+	background-position-x: ${1};\n\
+snippet bgpy\n\
+	background-position-y: ${1};\n\
+snippet bgp\n\
+	background-position: ${1:0} ${2:0};\n\
+snippet bgr\n\
+	background-repeat: ${1};\n\
+snippet bgr:n\n\
+	background-repeat: no-repeat;\n\
+snippet bgr:x\n\
+	background-repeat: repeat-x;\n\
+snippet bgr:y\n\
+	background-repeat: repeat-y;\n\
+snippet bgr:r\n\
+	background-repeat: repeat;\n\
+snippet bgz\n\
+	background-size: ${1};\n\
+snippet bgz:a\n\
+	background-size: auto;\n\
+snippet bgz:ct\n\
+	background-size: contain;\n\
+snippet bgz:cv\n\
+	background-size: cover;\n\
+snippet bg\n\
+	background: ${1};\n\
+snippet bg:ie\n\
+	filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='${1}',sizingMethod='${2:crop}');\n\
+snippet bg:n\n\
+	background: none;\n\
+snippet bd+\n\
+	border: ${1:1px} ${2:solid} #${3:000};\n\
+snippet bdb+\n\
+	border-bottom: ${1:1px} ${2:solid} #${3:000};\n\
+snippet bdbc\n\
+	border-bottom-color: #${1:000};\n\
+snippet bdbi\n\
+	border-bottom-image: url(${1});\n\
+snippet bdbi:n\n\
+	border-bottom-image: none;\n\
+snippet bdbli\n\
+	border-bottom-left-image: url(${1});\n\
+snippet bdbli:c\n\
+	border-bottom-left-image: continue;\n\
+snippet bdbli:n\n\
+	border-bottom-left-image: none;\n\
+snippet bdblrz\n\
+	border-bottom-left-radius: ${1};\n\
+snippet bdbri\n\
+	border-bottom-right-image: url(${1});\n\
+snippet bdbri:c\n\
+	border-bottom-right-image: continue;\n\
+snippet bdbri:n\n\
+	border-bottom-right-image: none;\n\
+snippet bdbrrz\n\
+	border-bottom-right-radius: ${1};\n\
+snippet bdbs\n\
+	border-bottom-style: ${1};\n\
+snippet bdbs:n\n\
+	border-bottom-style: none;\n\
+snippet bdbw\n\
+	border-bottom-width: ${1};\n\
+snippet bdb\n\
+	border-bottom: ${1};\n\
+snippet bdb:n\n\
+	border-bottom: none;\n\
+snippet bdbk\n\
+	border-break: ${1};\n\
+snippet bdbk:c\n\
+	border-break: close;\n\
+snippet bdcl\n\
+	border-collapse: ${1};\n\
+snippet bdcl:c\n\
+	border-collapse: collapse;\n\
+snippet bdcl:s\n\
+	border-collapse: separate;\n\
+snippet bdc\n\
+	border-color: #${1:000};\n\
+snippet bdci\n\
+	border-corner-image: url(${1});\n\
+snippet bdci:c\n\
+	border-corner-image: continue;\n\
+snippet bdci:n\n\
+	border-corner-image: none;\n\
+snippet bdf\n\
+	border-fit: ${1};\n\
+snippet bdf:c\n\
+	border-fit: clip;\n\
+snippet bdf:of\n\
+	border-fit: overwrite;\n\
+snippet bdf:ow\n\
+	border-fit: overwrite;\n\
+snippet bdf:r\n\
+	border-fit: repeat;\n\
+snippet bdf:sc\n\
+	border-fit: scale;\n\
+snippet bdf:sp\n\
+	border-fit: space;\n\
+snippet bdf:st\n\
+	border-fit: stretch;\n\
+snippet bdi\n\
+	border-image: url(${1}) ${2:0} ${3:0} ${4:0} ${5:0} ${6:stretch} ${7:stretch};\n\
+snippet bdi:n\n\
+	border-image: none;\n\
+snippet bdl+\n\
+	border-left: ${1:1px} ${2:solid} #${3:000};\n\
+snippet bdlc\n\
+	border-left-color: #${1:000};\n\
+snippet bdli\n\
+	border-left-image: url(${1});\n\
+snippet bdli:n\n\
+	border-left-image: none;\n\
+snippet bdls\n\
+	border-left-style: ${1};\n\
+snippet bdls:n\n\
+	border-left-style: none;\n\
+snippet bdlw\n\
+	border-left-width: ${1};\n\
+snippet bdl\n\
+	border-left: ${1};\n\
+snippet bdl:n\n\
+	border-left: none;\n\
+snippet bdlt\n\
+	border-length: ${1};\n\
+snippet bdlt:a\n\
+	border-length: auto;\n\
+snippet bdrz\n\
+	border-radius: ${1};\n\
+snippet bdr+\n\
+	border-right: ${1:1px} ${2:solid} #${3:000};\n\
+snippet bdrc\n\
+	border-right-color: #${1:000};\n\
+snippet bdri\n\
+	border-right-image: url(${1});\n\
+snippet bdri:n\n\
+	border-right-image: none;\n\
+snippet bdrs\n\
+	border-right-style: ${1};\n\
+snippet bdrs:n\n\
+	border-right-style: none;\n\
+snippet bdrw\n\
+	border-right-width: ${1};\n\
+snippet bdr\n\
+	border-right: ${1};\n\
+snippet bdr:n\n\
+	border-right: none;\n\
+snippet bdsp\n\
+	border-spacing: ${1};\n\
+snippet bds\n\
+	border-style: ${1};\n\
+snippet bds:ds\n\
+	border-style: dashed;\n\
+snippet bds:dtds\n\
+	border-style: dot-dash;\n\
+snippet bds:dtdtds\n\
+	border-style: dot-dot-dash;\n\
+snippet bds:dt\n\
+	border-style: dotted;\n\
+snippet bds:db\n\
+	border-style: double;\n\
+snippet bds:g\n\
+	border-style: groove;\n\
+snippet bds:h\n\
+	border-style: hidden;\n\
+snippet bds:i\n\
+	border-style: inset;\n\
+snippet bds:n\n\
+	border-style: none;\n\
+snippet bds:o\n\
+	border-style: outset;\n\
+snippet bds:r\n\
+	border-style: ridge;\n\
+snippet bds:s\n\
+	border-style: solid;\n\
+snippet bds:w\n\
+	border-style: wave;\n\
+snippet bdt+\n\
+	border-top: ${1:1px} ${2:solid} #${3:000};\n\
+snippet bdtc\n\
+	border-top-color: #${1:000};\n\
+snippet bdti\n\
+	border-top-image: url(${1});\n\
+snippet bdti:n\n\
+	border-top-image: none;\n\
+snippet bdtli\n\
+	border-top-left-image: url(${1});\n\
+snippet bdtli:c\n\
+	border-corner-image: continue;\n\
+snippet bdtli:n\n\
+	border-corner-image: none;\n\
+snippet bdtlrz\n\
+	border-top-left-radius: ${1};\n\
+snippet bdtri\n\
+	border-top-right-image: url(${1});\n\
+snippet bdtri:c\n\
+	border-top-right-image: continue;\n\
+snippet bdtri:n\n\
+	border-top-right-image: none;\n\
+snippet bdtrrz\n\
+	border-top-right-radius: ${1};\n\
+snippet bdts\n\
+	border-top-style: ${1};\n\
+snippet bdts:n\n\
+	border-top-style: none;\n\
+snippet bdtw\n\
+	border-top-width: ${1};\n\
+snippet bdt\n\
+	border-top: ${1};\n\
+snippet bdt:n\n\
+	border-top: none;\n\
+snippet bdw\n\
+	border-width: ${1};\n\
+snippet bd\n\
+	border: ${1};\n\
+snippet bd:n\n\
+	border: none;\n\
+snippet b\n\
+	bottom: ${1};\n\
+snippet b:a\n\
+	bottom: auto;\n\
+snippet bxsh+\n\
+	box-shadow: ${1:0} ${2:0} ${3:0} #${4:000};\n\
+snippet bxsh\n\
+	box-shadow: ${1};\n\
+snippet bxsh:n\n\
+	box-shadow: none;\n\
+snippet bxz\n\
+	box-sizing: ${1};\n\
+snippet bxz:bb\n\
+	box-sizing: border-box;\n\
+snippet bxz:cb\n\
+	box-sizing: content-box;\n\
+snippet cps\n\
+	caption-side: ${1};\n\
+snippet cps:b\n\
+	caption-side: bottom;\n\
+snippet cps:t\n\
+	caption-side: top;\n\
+snippet cl\n\
+	clear: ${1};\n\
+snippet cl:b\n\
+	clear: both;\n\
+snippet cl:l\n\
+	clear: left;\n\
+snippet cl:n\n\
+	clear: none;\n\
+snippet cl:r\n\
+	clear: right;\n\
+snippet cp\n\
+	clip: ${1};\n\
+snippet cp:a\n\
+	clip: auto;\n\
+snippet cp:r\n\
+	clip: rect(${1:0} ${2:0} ${3:0} ${4:0});\n\
+snippet c\n\
+	color: #${1:000};\n\
+snippet ct\n\
+	content: ${1};\n\
+snippet ct:a\n\
+	content: attr(${1});\n\
+snippet ct:cq\n\
+	content: close-quote;\n\
+snippet ct:c\n\
+	content: counter(${1});\n\
+snippet ct:cs\n\
+	content: counters(${1});\n\
+snippet ct:ncq\n\
+	content: no-close-quote;\n\
+snippet ct:noq\n\
+	content: no-open-quote;\n\
+snippet ct:n\n\
+	content: normal;\n\
+snippet ct:oq\n\
+	content: open-quote;\n\
+snippet coi\n\
+	counter-increment: ${1};\n\
+snippet cor\n\
+	counter-reset: ${1};\n\
+snippet cur\n\
+	cursor: ${1};\n\
+snippet cur:a\n\
+	cursor: auto;\n\
+snippet cur:c\n\
+	cursor: crosshair;\n\
+snippet cur:d\n\
+	cursor: default;\n\
+snippet cur:ha\n\
+	cursor: hand;\n\
+snippet cur:he\n\
+	cursor: help;\n\
+snippet cur:m\n\
+	cursor: move;\n\
+snippet cur:p\n\
+	cursor: pointer;\n\
+snippet cur:t\n\
+	cursor: text;\n\
+snippet d\n\
+	display: ${1};\n\
+snippet d:mib\n\
+	display: -moz-inline-box;\n\
+snippet d:mis\n\
+	display: -moz-inline-stack;\n\
+snippet d:b\n\
+	display: block;\n\
+snippet d:cp\n\
+	display: compact;\n\
+snippet d:ib\n\
+	display: inline-block;\n\
+snippet d:itb\n\
+	display: inline-table;\n\
+snippet d:i\n\
+	display: inline;\n\
+snippet d:li\n\
+	display: list-item;\n\
+snippet d:n\n\
+	display: none;\n\
+snippet d:ri\n\
+	display: run-in;\n\
+snippet d:tbcp\n\
+	display: table-caption;\n\
+snippet d:tbc\n\
+	display: table-cell;\n\
+snippet d:tbclg\n\
+	display: table-column-group;\n\
+snippet d:tbcl\n\
+	display: table-column;\n\
+snippet d:tbfg\n\
+	display: table-footer-group;\n\
+snippet d:tbhg\n\
+	display: table-header-group;\n\
+snippet d:tbrg\n\
+	display: table-row-group;\n\
+snippet d:tbr\n\
+	display: table-row;\n\
+snippet d:tb\n\
+	display: table;\n\
+snippet ec\n\
+	empty-cells: ${1};\n\
+snippet ec:h\n\
+	empty-cells: hide;\n\
+snippet ec:s\n\
+	empty-cells: show;\n\
+snippet exp\n\
+	expression()\n\
+snippet fl\n\
+	float: ${1};\n\
+snippet fl:l\n\
+	float: left;\n\
+snippet fl:n\n\
+	float: none;\n\
+snippet fl:r\n\
+	float: right;\n\
+snippet f+\n\
+	font: ${1:1em} ${2:Arial},${3:sans-serif};\n\
+snippet fef\n\
+	font-effect: ${1};\n\
+snippet fef:eb\n\
+	font-effect: emboss;\n\
+snippet fef:eg\n\
+	font-effect: engrave;\n\
+snippet fef:n\n\
+	font-effect: none;\n\
+snippet fef:o\n\
+	font-effect: outline;\n\
+snippet femp\n\
+	font-emphasize-position: ${1};\n\
+snippet femp:a\n\
+	font-emphasize-position: after;\n\
+snippet femp:b\n\
+	font-emphasize-position: before;\n\
+snippet fems\n\
+	font-emphasize-style: ${1};\n\
+snippet fems:ac\n\
+	font-emphasize-style: accent;\n\
+snippet fems:c\n\
+	font-emphasize-style: circle;\n\
+snippet fems:ds\n\
+	font-emphasize-style: disc;\n\
+snippet fems:dt\n\
+	font-emphasize-style: dot;\n\
+snippet fems:n\n\
+	font-emphasize-style: none;\n\
+snippet fem\n\
+	font-emphasize: ${1};\n\
+snippet ff\n\
+	font-family: ${1};\n\
+snippet ff:c\n\
+	font-family: ${1:'Monotype Corsiva','Comic Sans MS'},cursive;\n\
+snippet ff:f\n\
+	font-family: ${1:Capitals,Impact},fantasy;\n\
+snippet ff:m\n\
+	font-family: ${1:Monaco,'Courier New'},monospace;\n\
+snippet ff:ss\n\
+	font-family: ${1:Helvetica,Arial},sans-serif;\n\
+snippet ff:s\n\
+	font-family: ${1:Georgia,'Times New Roman'},serif;\n\
+snippet fza\n\
+	font-size-adjust: ${1};\n\
+snippet fza:n\n\
+	font-size-adjust: none;\n\
+snippet fz\n\
+	font-size: ${1};\n\
+snippet fsm\n\
+	font-smooth: ${1};\n\
+snippet fsm:aw\n\
+	font-smooth: always;\n\
+snippet fsm:a\n\
+	font-smooth: auto;\n\
+snippet fsm:n\n\
+	font-smooth: never;\n\
+snippet fst\n\
+	font-stretch: ${1};\n\
+snippet fst:c\n\
+	font-stretch: condensed;\n\
+snippet fst:e\n\
+	font-stretch: expanded;\n\
+snippet fst:ec\n\
+	font-stretch: extra-condensed;\n\
+snippet fst:ee\n\
+	font-stretch: extra-expanded;\n\
+snippet fst:n\n\
+	font-stretch: normal;\n\
+snippet fst:sc\n\
+	font-stretch: semi-condensed;\n\
+snippet fst:se\n\
+	font-stretch: semi-expanded;\n\
+snippet fst:uc\n\
+	font-stretch: ultra-condensed;\n\
+snippet fst:ue\n\
+	font-stretch: ultra-expanded;\n\
+snippet fs\n\
+	font-style: ${1};\n\
+snippet fs:i\n\
+	font-style: italic;\n\
+snippet fs:n\n\
+	font-style: normal;\n\
+snippet fs:o\n\
+	font-style: oblique;\n\
+snippet fv\n\
+	font-variant: ${1};\n\
+snippet fv:n\n\
+	font-variant: normal;\n\
+snippet fv:sc\n\
+	font-variant: small-caps;\n\
+snippet fw\n\
+	font-weight: ${1};\n\
+snippet fw:b\n\
+	font-weight: bold;\n\
+snippet fw:br\n\
+	font-weight: bolder;\n\
+snippet fw:lr\n\
+	font-weight: lighter;\n\
+snippet fw:n\n\
+	font-weight: normal;\n\
+snippet f\n\
+	font: ${1};\n\
+snippet h\n\
+	height: ${1};\n\
+snippet h:a\n\
+	height: auto;\n\
+snippet l\n\
+	left: ${1};\n\
+snippet l:a\n\
+	left: auto;\n\
+snippet lts\n\
+	letter-spacing: ${1};\n\
+snippet lh\n\
+	line-height: ${1};\n\
+snippet lisi\n\
+	list-style-image: url(${1});\n\
+snippet lisi:n\n\
+	list-style-image: none;\n\
+snippet lisp\n\
+	list-style-position: ${1};\n\
+snippet lisp:i\n\
+	list-style-position: inside;\n\
+snippet lisp:o\n\
+	list-style-position: outside;\n\
+snippet list\n\
+	list-style-type: ${1};\n\
+snippet list:c\n\
+	list-style-type: circle;\n\
+snippet list:dclz\n\
+	list-style-type: decimal-leading-zero;\n\
+snippet list:dc\n\
+	list-style-type: decimal;\n\
+snippet list:d\n\
+	list-style-type: disc;\n\
+snippet list:lr\n\
+	list-style-type: lower-roman;\n\
+snippet list:n\n\
+	list-style-type: none;\n\
+snippet list:s\n\
+	list-style-type: square;\n\
+snippet list:ur\n\
+	list-style-type: upper-roman;\n\
+snippet lis\n\
+	list-style: ${1};\n\
+snippet lis:n\n\
+	list-style: none;\n\
+snippet mb\n\
+	margin-bottom: ${1};\n\
+snippet mb:a\n\
+	margin-bottom: auto;\n\
+snippet ml\n\
+	margin-left: ${1};\n\
+snippet ml:a\n\
+	margin-left: auto;\n\
+snippet mr\n\
+	margin-right: ${1};\n\
+snippet mr:a\n\
+	margin-right: auto;\n\
+snippet mt\n\
+	margin-top: ${1};\n\
+snippet mt:a\n\
+	margin-top: auto;\n\
+snippet m\n\
+	margin: ${1};\n\
+snippet m:4\n\
+	margin: ${1:0} ${2:0} ${3:0} ${4:0};\n\
+snippet m:3\n\
+	margin: ${1:0} ${2:0} ${3:0};\n\
+snippet m:2\n\
+	margin: ${1:0} ${2:0};\n\
+snippet m:0\n\
+	margin: 0;\n\
+snippet m:a\n\
+	margin: auto;\n\
+snippet mah\n\
+	max-height: ${1};\n\
+snippet mah:n\n\
+	max-height: none;\n\
+snippet maw\n\
+	max-width: ${1};\n\
+snippet maw:n\n\
+	max-width: none;\n\
+snippet mih\n\
+	min-height: ${1};\n\
+snippet miw\n\
+	min-width: ${1};\n\
+snippet op\n\
+	opacity: ${1};\n\
+snippet op:ie\n\
+	filter: progid:DXImageTransform.Microsoft.Alpha(Opacity=${1:100});\n\
+snippet op:ms\n\
+	-ms-filter: 'progid:DXImageTransform.Microsoft.Alpha(Opacity=${1:100})';\n\
+snippet orp\n\
+	orphans: ${1};\n\
+snippet o+\n\
+	outline: ${1:1px} ${2:solid} #${3:000};\n\
+snippet oc\n\
+	outline-color: ${1:#000};\n\
+snippet oc:i\n\
+	outline-color: invert;\n\
+snippet oo\n\
+	outline-offset: ${1};\n\
+snippet os\n\
+	outline-style: ${1};\n\
+snippet ow\n\
+	outline-width: ${1};\n\
+snippet o\n\
+	outline: ${1};\n\
+snippet o:n\n\
+	outline: none;\n\
+snippet ovs\n\
+	overflow-style: ${1};\n\
+snippet ovs:a\n\
+	overflow-style: auto;\n\
+snippet ovs:mq\n\
+	overflow-style: marquee;\n\
+snippet ovs:mv\n\
+	overflow-style: move;\n\
+snippet ovs:p\n\
+	overflow-style: panner;\n\
+snippet ovs:s\n\
+	overflow-style: scrollbar;\n\
+snippet ovx\n\
+	overflow-x: ${1};\n\
+snippet ovx:a\n\
+	overflow-x: auto;\n\
+snippet ovx:h\n\
+	overflow-x: hidden;\n\
+snippet ovx:s\n\
+	overflow-x: scroll;\n\
+snippet ovx:v\n\
+	overflow-x: visible;\n\
+snippet ovy\n\
+	overflow-y: ${1};\n\
+snippet ovy:a\n\
+	overflow-y: auto;\n\
+snippet ovy:h\n\
+	overflow-y: hidden;\n\
+snippet ovy:s\n\
+	overflow-y: scroll;\n\
+snippet ovy:v\n\
+	overflow-y: visible;\n\
+snippet ov\n\
+	overflow: ${1};\n\
+snippet ov:a\n\
+	overflow: auto;\n\
+snippet ov:h\n\
+	overflow: hidden;\n\
+snippet ov:s\n\
+	overflow: scroll;\n\
+snippet ov:v\n\
+	overflow: visible;\n\
+snippet pb\n\
+	padding-bottom: ${1};\n\
+snippet pl\n\
+	padding-left: ${1};\n\
+snippet pr\n\
+	padding-right: ${1};\n\
+snippet pt\n\
+	padding-top: ${1};\n\
+snippet p\n\
+	padding: ${1};\n\
+snippet p:4\n\
+	padding: ${1:0} ${2:0} ${3:0} ${4:0};\n\
+snippet p:3\n\
+	padding: ${1:0} ${2:0} ${3:0};\n\
+snippet p:2\n\
+	padding: ${1:0} ${2:0};\n\
+snippet p:0\n\
+	padding: 0;\n\
+snippet pgba\n\
+	page-break-after: ${1};\n\
+snippet pgba:aw\n\
+	page-break-after: always;\n\
+snippet pgba:a\n\
+	page-break-after: auto;\n\
+snippet pgba:l\n\
+	page-break-after: left;\n\
+snippet pgba:r\n\
+	page-break-after: right;\n\
+snippet pgbb\n\
+	page-break-before: ${1};\n\
+snippet pgbb:aw\n\
+	page-break-before: always;\n\
+snippet pgbb:a\n\
+	page-break-before: auto;\n\
+snippet pgbb:l\n\
+	page-break-before: left;\n\
+snippet pgbb:r\n\
+	page-break-before: right;\n\
+snippet pgbi\n\
+	page-break-inside: ${1};\n\
+snippet pgbi:a\n\
+	page-break-inside: auto;\n\
+snippet pgbi:av\n\
+	page-break-inside: avoid;\n\
+snippet pos\n\
+	position: ${1};\n\
+snippet pos:a\n\
+	position: absolute;\n\
+snippet pos:f\n\
+	position: fixed;\n\
+snippet pos:r\n\
+	position: relative;\n\
+snippet pos:s\n\
+	position: static;\n\
+snippet q\n\
+	quotes: ${1};\n\
+snippet q:en\n\
+	quotes: '\\201C' '\\201D' '\\2018' '\\2019';\n\
+snippet q:n\n\
+	quotes: none;\n\
+snippet q:ru\n\
+	quotes: '\\00AB' '\\00BB' '\\201E' '\\201C';\n\
+snippet rz\n\
+	resize: ${1};\n\
+snippet rz:b\n\
+	resize: both;\n\
+snippet rz:h\n\
+	resize: horizontal;\n\
+snippet rz:n\n\
+	resize: none;\n\
+snippet rz:v\n\
+	resize: vertical;\n\
+snippet r\n\
+	right: ${1};\n\
+snippet r:a\n\
+	right: auto;\n\
+snippet tbl\n\
+	table-layout: ${1};\n\
+snippet tbl:a\n\
+	table-layout: auto;\n\
+snippet tbl:f\n\
+	table-layout: fixed;\n\
+snippet tal\n\
+	text-align-last: ${1};\n\
+snippet tal:a\n\
+	text-align-last: auto;\n\
+snippet tal:c\n\
+	text-align-last: center;\n\
+snippet tal:l\n\
+	text-align-last: left;\n\
+snippet tal:r\n\
+	text-align-last: right;\n\
+snippet ta\n\
+	text-align: ${1};\n\
+snippet ta:c\n\
+	text-align: center;\n\
+snippet ta:l\n\
+	text-align: left;\n\
+snippet ta:r\n\
+	text-align: right;\n\
+snippet td\n\
+	text-decoration: ${1};\n\
+snippet td:l\n\
+	text-decoration: line-through;\n\
+snippet td:n\n\
+	text-decoration: none;\n\
+snippet td:o\n\
+	text-decoration: overline;\n\
+snippet td:u\n\
+	text-decoration: underline;\n\
+snippet te\n\
+	text-emphasis: ${1};\n\
+snippet te:ac\n\
+	text-emphasis: accent;\n\
+snippet te:a\n\
+	text-emphasis: after;\n\
+snippet te:b\n\
+	text-emphasis: before;\n\
+snippet te:c\n\
+	text-emphasis: circle;\n\
+snippet te:ds\n\
+	text-emphasis: disc;\n\
+snippet te:dt\n\
+	text-emphasis: dot;\n\
+snippet te:n\n\
+	text-emphasis: none;\n\
+snippet th\n\
+	text-height: ${1};\n\
+snippet th:a\n\
+	text-height: auto;\n\
+snippet th:f\n\
+	text-height: font-size;\n\
+snippet th:m\n\
+	text-height: max-size;\n\
+snippet th:t\n\
+	text-height: text-size;\n\
+snippet ti\n\
+	text-indent: ${1};\n\
+snippet ti:-\n\
+	text-indent: -9999px;\n\
+snippet tj\n\
+	text-justify: ${1};\n\
+snippet tj:a\n\
+	text-justify: auto;\n\
+snippet tj:d\n\
+	text-justify: distribute;\n\
+snippet tj:ic\n\
+	text-justify: inter-cluster;\n\
+snippet tj:ii\n\
+	text-justify: inter-ideograph;\n\
+snippet tj:iw\n\
+	text-justify: inter-word;\n\
+snippet tj:k\n\
+	text-justify: kashida;\n\
+snippet tj:t\n\
+	text-justify: tibetan;\n\
+snippet to+\n\
+	text-outline: ${1:0} ${2:0} #${3:000};\n\
+snippet to\n\
+	text-outline: ${1};\n\
+snippet to:n\n\
+	text-outline: none;\n\
+snippet tr\n\
+	text-replace: ${1};\n\
+snippet tr:n\n\
+	text-replace: none;\n\
+snippet tsh+\n\
+	text-shadow: ${1:0} ${2:0} ${3:0} #${4:000};\n\
+snippet tsh\n\
+	text-shadow: ${1};\n\
+snippet tsh:n\n\
+	text-shadow: none;\n\
+snippet tt\n\
+	text-transform: ${1};\n\
+snippet tt:c\n\
+	text-transform: capitalize;\n\
+snippet tt:l\n\
+	text-transform: lowercase;\n\
+snippet tt:n\n\
+	text-transform: none;\n\
+snippet tt:u\n\
+	text-transform: uppercase;\n\
+snippet tw\n\
+	text-wrap: ${1};\n\
+snippet tw:no\n\
+	text-wrap: none;\n\
+snippet tw:n\n\
+	text-wrap: normal;\n\
+snippet tw:s\n\
+	text-wrap: suppress;\n\
+snippet tw:u\n\
+	text-wrap: unrestricted;\n\
+snippet t\n\
+	top: ${1};\n\
+snippet t:a\n\
+	top: auto;\n\
+snippet va\n\
+	vertical-align: ${1};\n\
+snippet va:bl\n\
+	vertical-align: baseline;\n\
+snippet va:b\n\
+	vertical-align: bottom;\n\
+snippet va:m\n\
+	vertical-align: middle;\n\
+snippet va:sub\n\
+	vertical-align: sub;\n\
+snippet va:sup\n\
+	vertical-align: super;\n\
+snippet va:tb\n\
+	vertical-align: text-bottom;\n\
+snippet va:tt\n\
+	vertical-align: text-top;\n\
+snippet va:t\n\
+	vertical-align: top;\n\
+snippet v\n\
+	visibility: ${1};\n\
+snippet v:c\n\
+	visibility: collapse;\n\
+snippet v:h\n\
+	visibility: hidden;\n\
+snippet v:v\n\
+	visibility: visible;\n\
+snippet whsc\n\
+	white-space-collapse: ${1};\n\
+snippet whsc:ba\n\
+	white-space-collapse: break-all;\n\
+snippet whsc:bs\n\
+	white-space-collapse: break-strict;\n\
+snippet whsc:k\n\
+	white-space-collapse: keep-all;\n\
+snippet whsc:l\n\
+	white-space-collapse: loose;\n\
+snippet whsc:n\n\
+	white-space-collapse: normal;\n\
+snippet whs\n\
+	white-space: ${1};\n\
+snippet whs:n\n\
+	white-space: normal;\n\
+snippet whs:nw\n\
+	white-space: nowrap;\n\
+snippet whs:pl\n\
+	white-space: pre-line;\n\
+snippet whs:pw\n\
+	white-space: pre-wrap;\n\
+snippet whs:p\n\
+	white-space: pre;\n\
+snippet wid\n\
+	widows: ${1};\n\
+snippet w\n\
+	width: ${1};\n\
+snippet w:a\n\
+	width: auto;\n\
+snippet wob\n\
+	word-break: ${1};\n\
+snippet wob:ba\n\
+	word-break: break-all;\n\
+snippet wob:bs\n\
+	word-break: break-strict;\n\
+snippet wob:k\n\
+	word-break: keep-all;\n\
+snippet wob:l\n\
+	word-break: loose;\n\
+snippet wob:n\n\
+	word-break: normal;\n\
+snippet wos\n\
+	word-spacing: ${1};\n\
+snippet wow\n\
+	word-wrap: ${1};\n\
+snippet wow:no\n\
+	word-wrap: none;\n\
+snippet wow:n\n\
+	word-wrap: normal;\n\
+snippet wow:s\n\
+	word-wrap: suppress;\n\
+snippet wow:u\n\
+	word-wrap: unrestricted;\n\
+snippet z\n\
+	z-index: ${1};\n\
+snippet z:a\n\
+	z-index: auto;\n\
+snippet zoo\n\
+	zoom: 1;\n\
+";
+exports.scope = "css";
+
+});
+
+define("ace/snippets/curly",["require","exports","module"], function(require, exports, module) {
+
+
+exports.snippetText =undefined;
+exports.scope = "curly";
+
+});
+
+define("ace/snippets/d",["require","exports","module"], function(require, exports, module) {
+
+
+exports.snippetText =undefined;
+exports.scope = "d";
+
+});
+
+define("ace/snippets/dart",["require","exports","module"], function(require, exports, module) {
+
+
+exports.snippetText = "snippet lib\n\
+	library ${1};\n\
+	${2}\n\
+snippet im\n\
+	import '${1}';\n\
+	${2}\n\
+snippet pa\n\
+	part '${1}';\n\
+	${2}\n\
+snippet pao\n\
+	part of ${1};\n\
+	${2}\n\
+snippet main\n\
+	void main() {\n\
+	  ${1:/* code */}\n\
+	}\n\
+snippet st\n\
+	static ${1}\n\
+snippet fi\n\
+	final ${1}\n\
+snippet re\n\
+	return ${1}\n\
+snippet br\n\
+	break;\n\
+snippet th\n\
+	throw ${1}\n\
+snippet cl\n\
+	class ${1:`Filename(\"\", \"untitled\")`} ${2}\n\
+snippet imp\n\
+	implements ${1}\n\
+snippet ext\n\
+	extends ${1}\n\
+snippet if\n\
+	if (${1:true}) {\n\
+	  ${2}\n\
+	}\n\
+snippet ife\n\
+	if (${1:true}) {\n\
+	  ${2}\n\
+	} else {\n\
+	  ${3}\n\
+	}\n\
+snippet el\n\
+	else\n\
+snippet sw\n\
+	switch (${1}) {\n\
+	  ${2}\n\
+	}\n\
+snippet cs\n\
+	case ${1}:\n\
+	  ${2}\n\
+snippet de\n\
+	default:\n\
+	  ${1}\n\
+snippet for\n\
+	for (var ${2:i} = 0, len = ${1:things}.length; $2 < len; ${3:++}$2) {\n\
+	  ${4:$1[$2]}\n\
+	}\n\
+snippet fore\n\
+	for (final ${2:item} in ${1:itemList}) {\n\
+	  ${3:/* code */}\n\
+	}\n\
+snippet wh\n\
+	while (${1:/* condition */}) {\n\
+	  ${2:/* code */}\n\
+	}\n\
+snippet dowh\n\
+	do {\n\
+	  ${2:/* code */}\n\
+	} while (${1:/* condition */});\n\
+snippet as\n\
+	assert(${1:/* condition */});\n\
+snippet try\n\
+	try {\n\
+	  ${2}\n\
+	} catch (${1:Exception e}) {\n\
+	}\n\
+snippet tryf\n\
+	try {\n\
+	  ${2}\n\
+	} catch (${1:Exception e}) {\n\
+	} finally {\n\
+	}\n\
+";
+exports.scope = "dart";
+
+});
+
+define("ace/snippets/diff",["require","exports","module"], function(require, exports, module) {
+
+
+exports.snippetText = "# DEP-3 (http://dep.debian.net/deps/dep3/) style patch header\n\
+snippet header DEP-3 style header\n\
+	Description: ${1}\n\
+	Origin: ${2:vendor|upstream|other}, ${3:url of the original patch}\n\
+	Bug: ${4:url in upstream bugtracker}\n\
+	Forwarded: ${5:no|not-needed|url}\n\
+	Author: ${6:`g:snips_author`}\n\
+	Reviewed-by: ${7:name and email}\n\
+	Last-Update: ${8:`strftime(\"%Y-%m-%d\")`}\n\
+	Applied-Upstream: ${9:upstream version|url|commit}\n\
+\n\
+";
+exports.scope = "diff";
+
+});
+
+define("ace/snippets/django",["require","exports","module"], function(require, exports, module) {
+
+
+exports.snippetText = "# Model Fields\n\
+\n\
+# Note: Optional arguments are using defaults that match what Django will use\n\
+# as a default, e.g. with max_length fields.  Doing this as a form of self\n\
+# documentation and to make it easy to know whether you should override the\n\
+# default or not.\n\
+\n\
+# Note: Optional arguments that are booleans will use the opposite since you\n\
+# can either not specify them, or override them, e.g. auto_now_add=False.\n\
+\n\
+snippet auto\n\
+	${1:FIELDNAME} = models.AutoField(${2})\n\
+snippet bool\n\
+	${1:FIELDNAME} = models.BooleanField(${2:default=True})\n\
+snippet char\n\
+	${1:FIELDNAME} = models.CharField(max_length=${2}${3:, blank=True})\n\
+snippet comma\n\
+	${1:FIELDNAME} = models.CommaSeparatedIntegerField(max_length=${2}${3:, blank=True})\n\
+snippet date\n\
+	${1:FIELDNAME} = models.DateField(${2:auto_now_add=True, auto_now=True}${3:, blank=True, null=True})\n\
+snippet datetime\n\
+	${1:FIELDNAME} = models.DateTimeField(${2:auto_now_add=True, auto_now=True}${3:, blank=True, null=True})\n\
+snippet decimal\n\
+	${1:FIELDNAME} = models.DecimalField(max_digits=${2}, decimal_places=${3})\n\
+snippet email\n\
+	${1:FIELDNAME} = models.EmailField(max_length=${2:75}${3:, blank=True})\n\
+snippet file\n\
+	${1:FIELDNAME} = models.FileField(upload_to=${2:path/for/upload}${3:, max_length=100})\n\
+snippet filepath\n\
+	${1:FIELDNAME} = models.FilePathField(path=${2:\"/abs/path/to/dir\"}${3:, max_length=100}${4:, match=\"*.ext\"}${5:, recursive=True}${6:, blank=True, })\n\
+snippet float\n\
+	${1:FIELDNAME} = models.FloatField(${2})\n\
+snippet image\n\
+	${1:FIELDNAME} = models.ImageField(upload_to=${2:path/for/upload}${3:, height_field=height, width_field=width}${4:, max_length=100})\n\
+snippet int\n\
+	${1:FIELDNAME} = models.IntegerField(${2})\n\
+snippet ip\n\
+	${1:FIELDNAME} = models.IPAddressField(${2})\n\
+snippet nullbool\n\
+	${1:FIELDNAME} = models.NullBooleanField(${2})\n\
+snippet posint\n\
+	${1:FIELDNAME} = models.PositiveIntegerField(${2})\n\
+snippet possmallint\n\
+	${1:FIELDNAME} = models.PositiveSmallIntegerField(${2})\n\
+snippet slug\n\
+	${1:FIELDNAME} = models.SlugField(max_length=${2:50}${3:, blank=True})\n\
+snippet smallint\n\
+	${1:FIELDNAME} = models.SmallIntegerField(${2})\n\
+snippet text\n\
+	${1:FIELDNAME} = models.TextField(${2:blank=True})\n\
+snippet time\n\
+	${1:FIELDNAME} = models.TimeField(${2:auto_now_add=True, auto_now=True}${3:, blank=True, null=True})\n\
+snippet url\n\
+	${1:FIELDNAME} = models.URLField(${2:verify_exists=False}${3:, max_length=200}${4:, blank=True})\n\
+snippet xml\n\
+	${1:FIELDNAME} = models.XMLField(schema_path=${2:None}${3:, blank=True})\n\
+# Relational Fields\n\
+snippet fk\n\
+	${1:FIELDNAME} = models.ForeignKey(${2:OtherModel}${3:, related_name=''}${4:, limit_choices_to=}${5:, to_field=''})\n\
+snippet m2m\n\
+	${1:FIELDNAME} = models.ManyToManyField(${2:OtherModel}${3:, related_name=''}${4:, limit_choices_to=}${5:, symmetrical=False}${6:, through=''}${7:, db_table=''})\n\
+snippet o2o\n\
+	${1:FIELDNAME} = models.OneToOneField(${2:OtherModel}${3:, parent_link=True}${4:, related_name=''}${5:, limit_choices_to=}${6:, to_field=''})\n\
+\n\
+# Code Skeletons\n\
+\n\
+snippet form\n\
+	class ${1:FormName}(forms.Form):\n\
+		\"\"\"${2:docstring}\"\"\"\n\
+		${3}\n\
+\n\
+snippet model\n\
+	class ${1:ModelName}(models.Model):\n\
+		\"\"\"${2:docstring}\"\"\"\n\
+		${3}\n\
+		\n\
+		class Meta:\n\
+			${4}\n\
+		\n\
+		def __unicode__(self):\n\
+			${5}\n\
+		\n\
+		def save(self, force_insert=False, force_update=False):\n\
+			${6}\n\
+		\n\
+		@models.permalink\n\
+		def get_absolute_url(self):\n\
+			return ('${7:view_or_url_name}' ${8})\n\
+\n\
+snippet modeladmin\n\
+	class ${1:ModelName}Admin(admin.ModelAdmin):\n\
+		${2}\n\
+	\n\
+	admin.site.register($1, $1Admin)\n\
+	\n\
+snippet tabularinline\n\
+	class ${1:ModelName}Inline(admin.TabularInline):\n\
+		model = $1\n\
+\n\
+snippet stackedinline\n\
+	class ${1:ModelName}Inline(admin.StackedInline):\n\
+		model = $1\n\
+\n\
+snippet r2r\n\
+	return render_to_response('${1:template.html}', {\n\
+			${2}\n\
+		}${3:, context_instance=RequestContext(request)}\n\
+	)\n\
+";
+exports.scope = "django";
+
+});
+
+define("ace/snippets/dockerfile",["require","exports","module"], function(require, exports, module) {
+
+
+exports.snippetText =undefined;
+exports.scope = "dockerfile";
+
+});
+
+define("ace/snippets/dot",["require","exports","module"], function(require, exports, module) {
+
+
+exports.snippetText =undefined;
+exports.scope = "dot";
+
+});
+
+define("ace/snippets/dummy",["require","exports","module"], function(require, exports, module) {
+
+
+exports.snippetText =undefined;
+exports.scope = "";
+
+});
+
+define("ace/snippets/dummy_syntax",["require","exports","module"], function(require, exports, module) {
+
+
+exports.snippetText =undefined;
+exports.scope = "";
+
+});
+
+define("ace/snippets/eiffel",["require","exports","module"], function(require, exports, module) {
+
+
+exports.snippetText =undefined;
+exports.scope = "eiffel";
+
+});
+
+define("ace/snippets/ejs",["require","exports","module"], function(require, exports, module) {
+
+
+exports.snippetText =undefined;
+exports.scope = "ejs";
+
+});
+
+define("ace/snippets/elixir",["require","exports","module"], function(require, exports, module) {
+
+
+exports.snippetText =undefined;
+exports.scope = "";
+
+});
+
+define("ace/snippets/elm",["require","exports","module"], function(require, exports, module) {
+
+
+exports.snippetText =undefined;
+exports.scope = "elm";
+
+});
+
+define("ace/snippets/erlang",["require","exports","module"], function(require, exports, module) {
+
+
+exports.snippetText = "# module and export all\n\
+snippet mod\n\
+	-module(${1:`Filename('', 'my')`}).\n\
+	\n\
+	-compile([export_all]).\n\
+	\n\
+	start() ->\n\
+	    ${2}\n\
+	\n\
+	stop() ->\n\
+	    ok.\n\
+# define directive\n\
+snippet def\n\
+	-define(${1:macro}, ${2:body}).${3}\n\
+# export directive\n\
+snippet exp\n\
+	-export([${1:function}/${2:arity}]).\n\
+# include directive\n\
+snippet inc\n\
+	-include(\"${1:file}\").${2}\n\
+# behavior directive\n\
+snippet beh\n\
+	-behaviour(${1:behaviour}).${2}\n\
+# if expression\n\
+snippet if\n\
+	if\n\
+	    ${1:guard} ->\n\
+	        ${2:body}\n\
+	end\n\
+# case expression\n\
+snippet case\n\
+	case ${1:expression} of\n\
+	    ${2:pattern} ->\n\
+	        ${3:body};\n\
+	end\n\
+# anonymous function\n\
+snippet fun\n\
+	fun (${1:Parameters}) -> ${2:body} end${3}\n\
+# try...catch\n\
+snippet try\n\
+	try\n\
+	    ${1}\n\
+	catch\n\
+	    ${2:_:_} -> ${3:got_some_exception}\n\
+	end\n\
+# record directive\n\
+snippet rec\n\
+	-record(${1:record}, {\n\
+	    ${2:field}=${3:value}}).${4}\n\
+# todo comment\n\
+snippet todo\n\
+	%% TODO: ${1}\n\
+## Snippets below (starting with '%') are in EDoc format.\n\
+## See http://www.erlang.org/doc/apps/edoc/chapter.html#id56887 for more details\n\
+# doc comment\n\
+snippet %d\n\
+	%% @doc ${1}\n\
+# end of doc comment\n\
+snippet %e\n\
+	%% @end\n\
+# specification comment\n\
+snippet %s\n\
+	%% @spec ${1}\n\
+# private function marker\n\
+snippet %p\n\
+	%% @private\n\
+# OTP application\n\
+snippet application\n\
+	-module(${1:`Filename('', 'my')`}).\n\
+\n\
+	-behaviour(application).\n\
+\n\
+	-export([start/2, stop/1]).\n\
+\n\
+	start(_Type, _StartArgs) ->\n\
+	    case ${2:root_supervisor}:start_link() of\n\
+	        {ok, Pid} ->\n\
+	            {ok, Pid};\n\
+	        Other ->\n\
+		          {error, Other}\n\
+	    end.\n\
+\n\
+	stop(_State) ->\n\
+	    ok.	\n\
+# OTP supervisor\n\
+snippet supervisor\n\
+	-module(${1:`Filename('', 'my')`}).\n\
+\n\
+	-behaviour(supervisor).\n\
+\n\
+	%% API\n\
+	-export([start_link/0]).\n\
+\n\
+	%% Supervisor callbacks\n\
+	-export([init/1]).\n\
+\n\
+	-define(SERVER, ?MODULE).\n\
+\n\
+	start_link() ->\n\
+	    supervisor:start_link({local, ?SERVER}, ?MODULE, []).\n\
+\n\
+	init([]) ->\n\
+	    Server = {${2:my_server}, {$2, start_link, []},\n\
+	      permanent, 2000, worker, [$2]},\n\
+	    Children = [Server],\n\
+	    RestartStrategy = {one_for_one, 0, 1},\n\
+	    {ok, {RestartStrategy, Children}}.\n\
+# OTP gen_server\n\
+snippet gen_server\n\
+	-module(${1:`Filename('', 'my')`}).\n\
+\n\
+	-behaviour(gen_server).\n\
+\n\
+	%% API\n\
+	-export([\n\
+	         start_link/0\n\
+	        ]).\n\
+\n\
+	%% gen_server callbacks\n\
+	-export([init/1, handle_call/3, handle_cast/2, handle_info/2,\n\
+	         terminate/2, code_change/3]).\n\
+\n\
+	-define(SERVER, ?MODULE).\n\
+\n\
+	-record(state, {}).\n\
+\n\
+	%%%===================================================================\n\
+	%%% API\n\
+	%%%===================================================================\n\
+\n\
+	start_link() ->\n\
+	    gen_server:start_link({local, ?SERVER}, ?MODULE, [], []).\n\
+\n\
+	%%%===================================================================\n\
+	%%% gen_server callbacks\n\
+	%%%===================================================================\n\
+\n\
+	init([]) ->\n\
+	    {ok, #state{}}.\n\
+\n\
+	handle_call(_Request, _From, State) ->\n\
+	    Reply = ok,\n\
+	    {reply, Reply, State}.\n\
+\n\
+	handle_cast(_Msg, State) ->\n\
+	    {noreply, State}.\n\
+\n\
+	handle_info(_Info, State) ->\n\
+	    {noreply, State}.\n\
+\n\
+	terminate(_Reason, _State) ->\n\
+	    ok.\n\
+\n\
+	code_change(_OldVsn, State, _Extra) ->\n\
+	    {ok, State}.\n\
+\n\
+	%%%===================================================================\n\
+	%%% Internal functions\n\
+	%%%===================================================================\n\
+\n\
+";
+exports.scope = "erlang";
+
+});
+
+define("ace/snippets/forth",["require","exports","module"], function(require, exports, module) {
+
+
+exports.snippetText =undefined;
+exports.scope = "forth";
+
+});
+
+define("ace/snippets/ftl",["require","exports","module"], function(require, exports, module) {
+
+
+exports.snippetText =undefined;
+exports.scope = "ftl";
+
+});
+
+define("ace/snippets/gcode",["require","exports","module"], function(require, exports, module) {
+
+
+exports.snippetText =undefined;
+exports.scope = "gcode";
+
+});
+
+define("ace/snippets/gherkin",["require","exports","module"], function(require, exports, module) {
+
+
+exports.snippetText =undefined;
+exports.scope = "gherkin";
+
+});
+
+define("ace/snippets/gitignore",["require","exports","module"], function(require, exports, module) {
+
+
+exports.snippetText =undefined;
+exports.scope = "gitignore";
+
+});
+
+define("ace/snippets/glsl",["require","exports","module"], function(require, exports, module) {
+
+
+exports.snippetText =undefined;
+exports.scope = "glsl";
+
+});
+
+define("ace/snippets/golang",["require","exports","module"], function(require, exports, module) {
+
+
+exports.snippetText =undefined;
+exports.scope = "golang";
+
+});
+
+define("ace/snippets/groovy",["require","exports","module"], function(require, exports, module) {
+
+
+exports.snippetText =undefined;
+exports.scope = "groovy";
+
+});
+
+define("ace/snippets/haml",["require","exports","module"], function(require, exports, module) {
+
+
+exports.snippetText = "snippet t\n\
+	%table\n\
+		%tr\n\
+			%th\n\
+				${1:headers}\n\
+		%tr\n\
+			%td\n\
+				${2:headers}\n\
+snippet ul\n\
+	%ul\n\
+		%li\n\
+			${1:item}\n\
+		%li\n\
+snippet =rp\n\
+	= render :partial => '${1:partial}'\n\
+snippet =rpl\n\
+	= render :partial => '${1:partial}', :locals => {}\n\
+snippet =rpc\n\
+	= render :partial => '${1:partial}', :collection => @$1\n\
+\n\
+";
+exports.scope = "haml";
+
+});
+
+define("ace/snippets/handlebars",["require","exports","module"], function(require, exports, module) {
+
+
+exports.snippetText =undefined;
+exports.scope = "handlebars";
+
+});
+
+define("ace/snippets/haskell",["require","exports","module"], function(require, exports, module) {
+
+
+exports.snippetText = "snippet lang\n\
+	{-# LANGUAGE ${1:OverloadedStrings} #-}\n\
+snippet info\n\
+	-- |\n\
+	-- Module      :  ${1:Module.Namespace}\n\
+	-- Copyright   :  ${2:Author} ${3:2011-2012}\n\
+	-- License     :  ${4:BSD3}\n\
+	--\n\
+	-- Maintainer  :  ${5:email@something.com}\n\
+	-- Stability   :  ${6:experimental}\n\
+	-- Portability :  ${7:unknown}\n\
+	--\n\
+	-- ${8:Description}\n\
+	--\n\
+snippet import\n\
+	import           ${1:Data.Text}\n\
+snippet import2\n\
+	import           ${1:Data.Text} (${2:head})\n\
+snippet importq\n\
+	import qualified ${1:Data.Text} as ${2:T}\n\
+snippet inst\n\
+	instance ${1:Monoid} ${2:Type} where\n\
+		${3}\n\
+snippet type\n\
+	type ${1:Type} = ${2:Type}\n\
+snippet data\n\
+	data ${1:Type} = ${2:$1} ${3:Int}\n\
+snippet newtype\n\
+	newtype ${1:Type} = ${2:$1} ${3:Int}\n\
+snippet class\n\
+	class ${1:Class} a where\n\
+		${2}\n\
+snippet module\n\
+	module `substitute(substitute(expand('%:r'), '[/\\\\]','.','g'),'^\\%(\\l*\\.\\)\\?','','')` (\n\
+	)	where\n\
+	`expand('%') =~ 'Main' ? \"\\n\\nmain = do\\n  print \\\"hello world\\\"\" : \"\"`\n\
+\n\
+snippet const\n\
+	${1:name} :: ${2:a}\n\
+	$1 = ${3:undefined}\n\
+snippet fn\n\
+	${1:fn} :: ${2:a} -> ${3:a}\n\
+	$1 ${4} = ${5:undefined}\n\
+snippet fn2\n\
+	${1:fn} :: ${2:a} -> ${3:a} -> ${4:a}\n\
+	$1 ${5} = ${6:undefined}\n\
+snippet ap\n\
+	${1:map} ${2:fn} ${3:list}\n\
+snippet do\n\
+	do\n\
+		\n\
+snippet λ\n\
+	\\${1:x} -> ${2}\n\
+snippet \\\n\
+	\\${1:x} -> ${2}\n\
+snippet <-\n\
+	${1:a} <- ${2:m a}\n\
+snippet ←\n\
+	${1:a} <- ${2:m a}\n\
+snippet ->\n\
+	${1:m a} -> ${2:a}\n\
+snippet →\n\
+	${1:m a} -> ${2:a}\n\
+snippet tup\n\
+	(${1:a}, ${2:b})\n\
+snippet tup2\n\
+	(${1:a}, ${2:b}, ${3:c})\n\
+snippet tup3\n\
+	(${1:a}, ${2:b}, ${3:c}, ${4:d})\n\
+snippet rec\n\
+	${1:Record} { ${2:recFieldA} = ${3:undefined}\n\
+				, ${4:recFieldB} = ${5:undefined}\n\
+				}\n\
+snippet case\n\
+	case ${1:something} of\n\
+		${2} -> ${3}\n\
+snippet let\n\
+	let ${1} = ${2}\n\
+	in ${3}\n\
+snippet where\n\
+	where\n\
+		${1:fn} = ${2:undefined}\n\
+";
+exports.scope = "haskell";
+
+});
+
+define("ace/snippets/haxe",["require","exports","module"], function(require, exports, module) {
+
+
+exports.snippetText =undefined;
+exports.scope = "haxe";
+
+});
+
+define("ace/snippets/html",["require","exports","module"], function(require, exports, module) {
+
+
+exports.snippetText = "# Some useful Unicode entities\n\
+# Non-Breaking Space\n\
+snippet nbs\n\
+	&nbsp;\n\
+# ←\n\
+snippet left\n\
+	&#x2190;\n\
+# →\n\
+snippet right\n\
+	&#x2192;\n\
+# ↑\n\
+snippet up\n\
+	&#x2191;\n\
+# ↓\n\
+snippet down\n\
+	&#x2193;\n\
+# ↩\n\
+snippet return\n\
+	&#x21A9;\n\
+# ⇤\n\
+snippet backtab\n\
+	&#x21E4;\n\
+# ⇥\n\
+snippet tab\n\
+	&#x21E5;\n\
+# ⇧\n\
+snippet shift\n\
+	&#x21E7;\n\
+# ⌃\n\
+snippet ctrl\n\
+	&#x2303;\n\
+# ⌅\n\
+snippet enter\n\
+	&#x2305;\n\
+# ⌘\n\
+snippet cmd\n\
+	&#x2318;\n\
+# ⌥\n\
+snippet option\n\
+	&#x2325;\n\
+# ⌦\n\
+snippet delete\n\
+	&#x2326;\n\
+# ⌫\n\
+snippet backspace\n\
+	&#x232B;\n\
+# ⎋\n\
+snippet esc\n\
+	&#x238B;\n\
+# Generic Doctype\n\
+snippet doctype HTML 4.01 Strict\n\
+	<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\"\n\
+	\"http://www.w3.org/TR/html4/strict.dtd\">\n\
+snippet doctype HTML 4.01 Transitional\n\
+	<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\"\n\
+	\"http://www.w3.org/TR/html4/loose.dtd\">\n\
+snippet doctype HTML 5\n\
+	<!DOCTYPE HTML>\n\
+snippet doctype XHTML 1.0 Frameset\n\
+	<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\"\n\
+	\"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">\n\
+snippet doctype XHTML 1.0 Strict\n\
+	<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\"\n\
+	\"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">\n\
+snippet doctype XHTML 1.0 Transitional\n\
+	<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\"\n\
+	\"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">\n\
+snippet doctype XHTML 1.1\n\
+	<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.1//EN\"\n\
+	\"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd\">\n\
+# HTML Doctype 4.01 Strict\n\
+snippet docts\n\
+	<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\"\n\
+	\"http://www.w3.org/TR/html4/strict.dtd\">\n\
+# HTML Doctype 4.01 Transitional\n\
+snippet doct\n\
+	<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\"\n\
+	\"http://www.w3.org/TR/html4/loose.dtd\">\n\
+# HTML Doctype 5\n\
+snippet doct5\n\
+	<!DOCTYPE HTML>\n\
+# XHTML Doctype 1.0 Frameset\n\
+snippet docxf\n\
+	<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Frameset//EN\"\n\
+	\"http://www.w3.org/TR/xhtml1/DTD/xhtml1-frameset.dtd\">\n\
+# XHTML Doctype 1.0 Strict\n\
+snippet docxs\n\
+	<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\"\n\
+	\"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">\n\
+# XHTML Doctype 1.0 Transitional\n\
+snippet docxt\n\
+	<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\"\n\
+	\"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">\n\
+# XHTML Doctype 1.1\n\
+snippet docx\n\
+	<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.1//EN\"\n\
+	\"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd\">\n\
+# Attributes\n\
+snippet attr\n\
+	${1:attribute}=\"${2:property}\"\n\
+snippet attr+\n\
+	${1:attribute}=\"${2:property}\" attr+${3}\n\
+snippet .\n\
+	class=\"${1}\"${2}\n\
+snippet #\n\
+	id=\"${1}\"${2}\n\
+snippet alt\n\
+	alt=\"${1}\"${2}\n\
+snippet charset\n\
+	charset=\"${1:utf-8}\"${2}\n\
+snippet data\n\
+	data-${1}=\"${2:$1}\"${3}\n\
+snippet for\n\
+	for=\"${1}\"${2}\n\
+snippet height\n\
+	height=\"${1}\"${2}\n\
+snippet href\n\
+	href=\"${1:#}\"${2}\n\
+snippet lang\n\
+	lang=\"${1:en}\"${2}\n\
+snippet media\n\
+	media=\"${1}\"${2}\n\
+snippet name\n\
+	name=\"${1}\"${2}\n\
+snippet rel\n\
+	rel=\"${1}\"${2}\n\
+snippet scope\n\
+	scope=\"${1:row}\"${2}\n\
+snippet src\n\
+	src=\"${1}\"${2}\n\
+snippet title=\n\
+	title=\"${1}\"${2}\n\
+snippet type\n\
+	type=\"${1}\"${2}\n\
+snippet value\n\
+	value=\"${1}\"${2}\n\
+snippet width\n\
+	width=\"${1}\"${2}\n\
+# Elements\n\
+snippet a\n\
+	<a href=\"${1:#}\">${2:$1}</a>\n\
+snippet a.\n\
+	<a class=\"${1}\" href=\"${2:#}\">${3:$1}</a>\n\
+snippet a#\n\
+	<a id=\"${1}\" href=\"${2:#}\">${3:$1}</a>\n\
+snippet a:ext\n\
+	<a href=\"http://${1:example.com}\">${2:$1}</a>\n\
+snippet a:mail\n\
+	<a href=\"mailto:${1:joe@example.com}?subject=${2:feedback}\">${3:email me}</a>\n\
+snippet abbr\n\
+	<abbr title=\"${1}\">${2}</abbr>\n\
+snippet address\n\
+	<address>\n\
+		${1}\n\
+	</address>\n\
+snippet area\n\
+	<area shape=\"${1:rect}\" coords=\"${2}\" href=\"${3}\" alt=\"${4}\" />\n\
+snippet area+\n\
+	<area shape=\"${1:rect}\" coords=\"${2}\" href=\"${3}\" alt=\"${4}\" />\n\
+	area+${5}\n\
+snippet area:c\n\
+	<area shape=\"circle\" coords=\"${1}\" href=\"${2}\" alt=\"${3}\" />\n\
+snippet area:d\n\
+	<area shape=\"default\" coords=\"${1}\" href=\"${2}\" alt=\"${3}\" />\n\
+snippet area:p\n\
+	<area shape=\"poly\" coords=\"${1}\" href=\"${2}\" alt=\"${3}\" />\n\
+snippet area:r\n\
+	<area shape=\"rect\" coords=\"${1}\" href=\"${2}\" alt=\"${3}\" />\n\
+snippet article\n\
+	<article>\n\
+		${1}\n\
+	</article>\n\
+snippet article.\n\
+	<article class=\"${1}\">\n\
+		${2}\n\
+	</article>\n\
+snippet article#\n\
+	<article id=\"${1}\">\n\
+		${2}\n\
+	</article>\n\
+snippet aside\n\
+	<aside>\n\
+		${1}\n\
+	</aside>\n\
+snippet aside.\n\
+	<aside class=\"${1}\">\n\
+		${2}\n\
+	</aside>\n\
+snippet aside#\n\
+	<aside id=\"${1}\">\n\
+		${2}\n\
+	</aside>\n\
+snippet audio\n\
+	<audio src=\"${1}>${2}</audio>\n\
+snippet b\n\
+	<b>${1}</b>\n\
+snippet base\n\
+	<base href=\"${1}\" target=\"${2}\" />\n\
+snippet bdi\n\
+	<bdi>${1}</bdo>\n\
+snippet bdo\n\
+	<bdo dir=\"${1}\">${2}</bdo>\n\
+snippet bdo:l\n\
+	<bdo dir=\"ltr\">${1}</bdo>\n\
+snippet bdo:r\n\
+	<bdo dir=\"rtl\">${1}</bdo>\n\
+snippet blockquote\n\
+	<blockquote>\n\
+		${1}\n\
+	</blockquote>\n\
+snippet body\n\
+	<body>\n\
+		${1}\n\
+	</body>\n\
+snippet br\n\
+	<br />${1}\n\
+snippet button\n\
+	<button type=\"${1:submit}\">${2}</button>\n\
+snippet button.\n\
+	<button class=\"${1:button}\" type=\"${2:submit}\">${3}</button>\n\
+snippet button#\n\
+	<button id=\"${1}\" type=\"${2:submit}\">${3}</button>\n\
+snippet button:s\n\
+	<button type=\"submit\">${1}</button>\n\
+snippet button:r\n\
+	<button type=\"reset\">${1}</button>\n\
+snippet canvas\n\
+	<canvas>\n\
+		${1}\n\
+	</canvas>\n\
+snippet caption\n\
+	<caption>${1}</caption>\n\
+snippet cite\n\
+	<cite>${1}</cite>\n\
+snippet code\n\
+	<code>${1}</code>\n\
+snippet col\n\
+	<col />${1}\n\
+snippet col+\n\
+	<col />\n\
+	col+${1}\n\
+snippet colgroup\n\
+	<colgroup>\n\
+		${1}\n\
+	</colgroup>\n\
+snippet colgroup+\n\
+	<colgroup>\n\
+		<col />\n\
+		col+${1}\n\
+	</colgroup>\n\
+snippet command\n\
+	<command type=\"command\" label=\"${1}\" icon=\"${2}\" />\n\
+snippet command:c\n\
+	<command type=\"checkbox\" label=\"${1}\" icon=\"${2}\" />\n\
+snippet command:r\n\
+	<command type=\"radio\" radiogroup=\"${1}\" label=\"${2}\" icon=\"${3}\" />\n\
+snippet datagrid\n\
+	<datagrid>\n\
+		${1}\n\
+	</datagrid>\n\
+snippet datalist\n\
+	<datalist>\n\
+		${1}\n\
+	</datalist>\n\
+snippet datatemplate\n\
+	<datatemplate>\n\
+		${1}\n\
+	</datatemplate>\n\
+snippet dd\n\
+	<dd>${1}</dd>\n\
+snippet dd.\n\
+	<dd class=\"${1}\">${2}</dd>\n\
+snippet dd#\n\
+	<dd id=\"${1}\">${2}</dd>\n\
+snippet del\n\
+	<del>${1}</del>\n\
+snippet details\n\
+	<details>${1}</details>\n\
+snippet dfn\n\
+	<dfn>${1}</dfn>\n\
+snippet dialog\n\
+	<dialog>\n\
+		${1}\n\
+	</dialog>\n\
+snippet div\n\
+	<div>\n\
+		${1}\n\
+	</div>\n\
+snippet div.\n\
+	<div class=\"${1}\">\n\
+		${2}\n\
+	</div>\n\
+snippet div#\n\
+	<div id=\"${1}\">\n\
+		${2}\n\
+	</div>\n\
+snippet dl\n\
+	<dl>\n\
+		${1}\n\
+	</dl>\n\
+snippet dl.\n\
+	<dl class=\"${1}\">\n\
+		${2}\n\
+	</dl>\n\
+snippet dl#\n\
+	<dl id=\"${1}\">\n\
+		${2}\n\
+	</dl>\n\
+snippet dl+\n\
+	<dl>\n\
+		<dt>${1}</dt>\n\
+		<dd>${2}</dd>\n\
+		dt+${3}\n\
+	</dl>\n\
+snippet dt\n\
+	<dt>${1}</dt>\n\
+snippet dt.\n\
+	<dt class=\"${1}\">${2}</dt>\n\
+snippet dt#\n\
+	<dt id=\"${1}\">${2}</dt>\n\
+snippet dt+\n\
+	<dt>${1}</dt>\n\
+	<dd>${2}</dd>\n\
+	dt+${3}\n\
+snippet em\n\
+	<em>${1}</em>\n\
+snippet embed\n\
+	<embed src=${1} type=\"${2} />\n\
+snippet fieldset\n\
+	<fieldset>\n\
+		${1}\n\
+	</fieldset>\n\
+snippet fieldset.\n\
+	<fieldset class=\"${1}\">\n\
+		${2}\n\
+	</fieldset>\n\
+snippet fieldset#\n\
+	<fieldset id=\"${1}\">\n\
+		${2}\n\
+	</fieldset>\n\
+snippet fieldset+\n\
+	<fieldset>\n\
+		<legend><span>${1}</span></legend>\n\
+		${2}\n\
+	</fieldset>\n\
+	fieldset+${3}\n\
+snippet figcaption\n\
+	<figcaption>${1}</figcaption>\n\
+snippet figure\n\
+	<figure>${1}</figure>\n\
+snippet footer\n\
+	<footer>\n\
+		${1}\n\
+	</footer>\n\
+snippet footer.\n\
+	<footer class=\"${1}\">\n\
+		${2}\n\
+	</footer>\n\
+snippet footer#\n\
+	<footer id=\"${1}\">\n\
+		${2}\n\
+	</footer>\n\
+snippet form\n\
+	<form action=\"${1}\" method=\"${2:get}\" accept-charset=\"utf-8\">\n\
+		${3}\n\
+	</form>\n\
+snippet form.\n\
+	<form class=\"${1}\" action=\"${2}\" method=\"${3:get}\" accept-charset=\"utf-8\">\n\
+		${4}\n\
+	</form>\n\
+snippet form#\n\
+	<form id=\"${1}\" action=\"${2}\" method=\"${3:get}\" accept-charset=\"utf-8\">\n\
+		${4}\n\
+	</form>\n\
+snippet h1\n\
+	<h1>${1}</h1>\n\
+snippet h1.\n\
+	<h1 class=\"${1}\">${2}</h1>\n\
+snippet h1#\n\
+	<h1 id=\"${1}\">${2}</h1>\n\
+snippet h2\n\
+	<h2>${1}</h2>\n\
+snippet h2.\n\
+	<h2 class=\"${1}\">${2}</h2>\n\
+snippet h2#\n\
+	<h2 id=\"${1}\">${2}</h2>\n\
+snippet h3\n\
+	<h3>${1}</h3>\n\
+snippet h3.\n\
+	<h3 class=\"${1}\">${2}</h3>\n\
+snippet h3#\n\
+	<h3 id=\"${1}\">${2}</h3>\n\
+snippet h4\n\
+	<h4>${1}</h4>\n\
+snippet h4.\n\
+	<h4 class=\"${1}\">${2}</h4>\n\
+snippet h4#\n\
+	<h4 id=\"${1}\">${2}</h4>\n\
+snippet h5\n\
+	<h5>${1}</h5>\n\
+snippet h5.\n\
+	<h5 class=\"${1}\">${2}</h5>\n\
+snippet h5#\n\
+	<h5 id=\"${1}\">${2}</h5>\n\
+snippet h6\n\
+	<h6>${1}</h6>\n\
+snippet h6.\n\
+	<h6 class=\"${1}\">${2}</h6>\n\
+snippet h6#\n\
+	<h6 id=\"${1}\">${2}</h6>\n\
+snippet head\n\
+	<head>\n\
+		<meta http-equiv=\"content-type\" content=\"text/html; charset=utf-8\" />\n\
+\n\
+		<title>${1:`substitute(Filename('', 'Page Title'), '^.', '\\u&', '')`}</title>\n\
+		${2}\n\
+	</head>\n\
+snippet header\n\
+	<header>\n\
+		${1}\n\
+	</header>\n\
+snippet header.\n\
+	<header class=\"${1}\">\n\
+		${2}\n\
+	</header>\n\
+snippet header#\n\
+	<header id=\"${1}\">\n\
+		${2}\n\
+	</header>\n\
+snippet hgroup\n\
+	<hgroup>\n\
+		${1}\n\
+	</hgroup>\n\
+snippet hgroup.\n\
+	<hgroup class=\"${1}>\n\
+		${2}\n\
+	</hgroup>\n\
+snippet hr\n\
+	<hr />${1}\n\
+snippet html\n\
+	<html>\n\
+	${1}\n\
+	</html>\n\
+snippet xhtml\n\
+	<html xmlns=\"http://www.w3.org/1999/xhtml\">\n\
+	${1}\n\
+	</html>\n\
+snippet html5\n\
+	<!DOCTYPE html>\n\
+	<html>\n\
+		<head>\n\
+			<meta http-equiv=\"content-type\" content=\"text/html; charset=utf-8\" />\n\
+			<title>${1:`substitute(Filename('', 'Page Title'), '^.', '\\u&', '')`}</title>\n\
+			${2:meta}\n\
+		</head>\n\
+		<body>\n\
+			${3:body}\n\
+		</body>\n\
+	</html>\n\
+snippet i\n\
+	<i>${1}</i>\n\
+snippet iframe\n\
+	<iframe src=\"${1}\" frameborder=\"0\"></iframe>${2}\n\
+snippet iframe.\n\
+	<iframe class=\"${1}\" src=\"${2}\" frameborder=\"0\"></iframe>${3}\n\
+snippet iframe#\n\
+	<iframe id=\"${1}\" src=\"${2}\" frameborder=\"0\"></iframe>${3}\n\
+snippet img\n\
+	<img src=\"${1}\" alt=\"${2}\" />${3}\n\
+snippet img.\n\
+	<img class=\"${1}\" src=\"${2}\" alt=\"${3}\" />${4}\n\
+snippet img#\n\
+	<img id=\"${1}\" src=\"${2}\" alt=\"${3}\" />${4}\n\
+snippet input\n\
+	<input type=\"${1:text/submit/hidden/button/image}\" name=\"${2}\" id=\"${3:$2}\" value=\"${4}\" />${5}\n\
+snippet input.\n\
+	<input class=\"${1}\" type=\"${2:text/submit/hidden/button/image}\" name=\"${3}\" id=\"${4:$3}\" value=\"${5}\" />${6}\n\
+snippet input:text\n\
+	<input type=\"text\" name=\"${1}\" id=\"${2:$1}\" value=\"${3}\" />${4}\n\
+snippet input:submit\n\
+	<input type=\"submit\" name=\"${1}\" id=\"${2:$1}\" value=\"${3}\" />${4}\n\
+snippet input:hidden\n\
+	<input type=\"hidden\" name=\"${1}\" id=\"${2:$1}\" value=\"${3}\" />${4}\n\
+snippet input:button\n\
+	<input type=\"button\" name=\"${1}\" id=\"${2:$1}\" value=\"${3}\" />${4}\n\
+snippet input:image\n\
+	<input type=\"image\" name=\"${1}\" id=\"${2:$1}\" src=\"${3}\" alt=\"${4}\" />${5}\n\
+snippet input:checkbox\n\
+	<input type=\"checkbox\" name=\"${1}\" id=\"${2:$1}\" />${3}\n\
+snippet input:radio\n\
+	<input type=\"radio\" name=\"${1}\" id=\"${2:$1}\" />${3}\n\
+snippet input:color\n\
+	<input type=\"color\" name=\"${1}\" id=\"${2:$1}\" value=\"${3}\" />${4}\n\
+snippet input:date\n\
+	<input type=\"date\" name=\"${1}\" id=\"${2:$1}\" value=\"${3}\" />${4}\n\
+snippet input:datetime\n\
+	<input type=\"datetime\" name=\"${1}\" id=\"${2:$1}\" value=\"${3}\" />${4}\n\
+snippet input:datetime-local\n\
+	<input type=\"datetime-local\" name=\"${1}\" id=\"${2:$1}\" value=\"${3}\" />${4}\n\
+snippet input:email\n\
+	<input type=\"email\" name=\"${1}\" id=\"${2:$1}\" value=\"${3}\" />${4}\n\
+snippet input:file\n\
+	<input type=\"file\" name=\"${1}\" id=\"${2:$1}\" value=\"${3}\" />${4}\n\
+snippet input:month\n\
+	<input type=\"month\" name=\"${1}\" id=\"${2:$1}\" value=\"${3}\" />${4}\n\
+snippet input:number\n\
+	<input type=\"number\" name=\"${1}\" id=\"${2:$1}\" value=\"${3}\" />${4}\n\
+snippet input:password\n\
+	<input type=\"password\" name=\"${1}\" id=\"${2:$1}\" value=\"${3}\" />${4}\n\
+snippet input:range\n\
+	<input type=\"range\" name=\"${1}\" id=\"${2:$1}\" value=\"${3}\" />${4}\n\
+snippet input:reset\n\
+	<input type=\"reset\" name=\"${1}\" id=\"${2:$1}\" value=\"${3}\" />${4}\n\
+snippet input:search\n\
+	<input type=\"search\" name=\"${1}\" id=\"${2:$1}\" value=\"${3}\" />${4}\n\
+snippet input:time\n\
+	<input type=\"time\" name=\"${1}\" id=\"${2:$1}\" value=\"${3}\" />${4}\n\
+snippet input:url\n\
+	<input type=\"url\" name=\"${1}\" id=\"${2:$1}\" value=\"${3}\" />${4}\n\
+snippet input:week\n\
+	<input type=\"week\" name=\"${1}\" id=\"${2:$1}\" value=\"${3}\" />${4}\n\
+snippet ins\n\
+	<ins>${1}</ins>\n\
+snippet kbd\n\
+	<kbd>${1}</kbd>\n\
+snippet keygen\n\
+	<keygen>${1}</keygen>\n\
+snippet label\n\
+	<label for=\"${2:$1}\">${1}</label>\n\
+snippet label:i\n\
+	<label for=\"${2:$1}\">${1}</label>\n\
+	<input type=\"${3:text/submit/hidden/button}\" name=\"${4:$2}\" id=\"${5:$2}\" value=\"${6}\" />${7}\n\
+snippet label:s\n\
+	<label for=\"${2:$1}\">${1}</label>\n\
+	<select name=\"${3:$2}\" id=\"${4:$2}\">\n\
+		<option value=\"${5}\">${6:$5}</option>\n\
+	</select>\n\
+snippet legend\n\
+	<legend>${1}</legend>\n\
+snippet legend+\n\
+	<legend><span>${1}</span></legend>\n\
+snippet li\n\
+	<li>${1}</li>\n\
+snippet li.\n\
+	<li class=\"${1}\">${2}</li>\n\
+snippet li+\n\
+	<li>${1}</li>\n\
+	li+${2}\n\
+snippet lia\n\
+	<li><a href=\"${2:#}\">${1}</a></li>\n\
+snippet lia+\n\
+	<li><a href=\"${2:#}\">${1}</a></li>\n\
+	lia+${3}\n\
+snippet link\n\
+	<link rel=\"${1}\" href=\"${2}\" title=\"${3}\" type=\"${4}\" />${5}\n\
+snippet link:atom\n\
+	<link rel=\"alternate\" href=\"${1:atom.xml}\" title=\"Atom\" type=\"application/atom+xml\" />${2}\n\
+snippet link:css\n\
+	<link rel=\"stylesheet\" href=\"${2:style.css}\" type=\"text/css\" media=\"${3:all}\" />${4}\n\
+snippet link:favicon\n\
+	<link rel=\"shortcut icon\" href=\"${1:favicon.ico}\" type=\"image/x-icon\" />${2}\n\
+snippet link:rss\n\
+	<link rel=\"alternate\" href=\"${1:rss.xml}\" title=\"RSS\" type=\"application/atom+xml\" />${2}\n\
+snippet link:touch\n\
+	<link rel=\"apple-touch-icon\" href=\"${1:favicon.png}\" />${2}\n\
+snippet map\n\
+	<map name=\"${1}\">\n\
+		${2}\n\
+	</map>\n\
+snippet map.\n\
+	<map class=\"${1}\" name=\"${2}\">\n\
+		${3}\n\
+	</map>\n\
+snippet map#\n\
+	<map name=\"${1}\" id=\"${2:$1}>\n\
+		${3}\n\
+	</map>\n\
+snippet map+\n\
+	<map name=\"${1}\">\n\
+		<area shape=\"${2}\" coords=\"${3}\" href=\"${4}\" alt=\"${5}\" />${6}\n\
+	</map>${7}\n\
+snippet mark\n\
+	<mark>${1}</mark>\n\
+snippet menu\n\
+	<menu>\n\
+		${1}\n\
+	</menu>\n\
+snippet menu:c\n\
+	<menu type=\"context\">\n\
+		${1}\n\
+	</menu>\n\
+snippet menu:t\n\
+	<menu type=\"toolbar\">\n\
+		${1}\n\
+	</menu>\n\
+snippet meta\n\
+	<meta http-equiv=\"${1}\" content=\"${2}\" />${3}\n\
+snippet meta:compat\n\
+	<meta http-equiv=\"X-UA-Compatible\" content=\"IE=${1:7,8,edge}\" />${3}\n\
+snippet meta:refresh\n\
+	<meta http-equiv=\"refresh\" content=\"text/html;charset=UTF-8\" />${3}\n\
+snippet meta:utf\n\
+	<meta http-equiv=\"content-type\" content=\"text/html;charset=UTF-8\" />${3}\n\
+snippet meter\n\
+	<meter>${1}</meter>\n\
+snippet nav\n\
+	<nav>\n\
+		${1}\n\
+	</nav>\n\
+snippet nav.\n\
+	<nav class=\"${1}\">\n\
+		${2}\n\
+	</nav>\n\
+snippet nav#\n\
+	<nav id=\"${1}\">\n\
+		${2}\n\
+	</nav>\n\
+snippet noscript\n\
+	<noscript>\n\
+		${1}\n\
+	</noscript>\n\
+snippet object\n\
+	<object data=\"${1}\" type=\"${2}\">\n\
+		${3}\n\
+	</object>${4}\n\
+# Embed QT Movie\n\
+snippet movie\n\
+	<object width=\"$2\" height=\"$3\" classid=\"clsid:02BF25D5-8C17-4B23-BC80-D3488ABDDC6B\"\n\
+	 codebase=\"http://www.apple.com/qtactivex/qtplugin.cab\">\n\
+		<param name=\"src\" value=\"$1\" />\n\
+		<param name=\"controller\" value=\"$4\" />\n\
+		<param name=\"autoplay\" value=\"$5\" />\n\
+		<embed src=\"${1:movie.mov}\"\n\
+			width=\"${2:320}\" height=\"${3:240}\"\n\
+			controller=\"${4:true}\" autoplay=\"${5:true}\"\n\
+			scale=\"tofit\" cache=\"true\"\n\
+			pluginspage=\"http://www.apple.com/quicktime/download/\" />\n\
+	</object>${6}\n\
+snippet ol\n\
+	<ol>\n\
+		${1}\n\
+	</ol>\n\
+snippet ol.\n\
+	<ol class=\"${1}>\n\
+		${2}\n\
+	</ol>\n\
+snippet ol#\n\
+	<ol id=\"${1}>\n\
+		${2}\n\
+	</ol>\n\
+snippet ol+\n\
+	<ol>\n\
+		<li>${1}</li>\n\
+		li+${2}\n\
+	</ol>\n\
+snippet opt\n\
+	<option value=\"${1}\">${2:$1}</option>\n\
+snippet opt+\n\
+	<option value=\"${1}\">${2:$1}</option>\n\
+	opt+${3}\n\
+snippet optt\n\
+	<option>${1}</option>\n\
+snippet optgroup\n\
+	<optgroup>\n\
+		<option value=\"${1}\">${2:$1}</option>\n\
+		opt+${3}\n\
+	</optgroup>\n\
+snippet output\n\
+	<output>${1}</output>\n\
+snippet p\n\
+	<p>${1}</p>\n\
+snippet param\n\
+	<param name=\"${1}\" value=\"${2}\" />${3}\n\
+snippet pre\n\
+	<pre>\n\
+		${1}\n\
+	</pre>\n\
+snippet progress\n\
+	<progress>${1}</progress>\n\
+snippet q\n\
+	<q>${1}</q>\n\
+snippet rp\n\
+	<rp>${1}</rp>\n\
+snippet rt\n\
+	<rt>${1}</rt>\n\
+snippet ruby\n\
+	<ruby>\n\
+		<rp><rt>${1}</rt></rp>\n\
+	</ruby>\n\
+snippet s\n\
+	<s>${1}</s>\n\
+snippet samp\n\
+	<samp>\n\
+		${1}\n\
+	</samp>\n\
+snippet script\n\
+	<script type=\"text/javascript\" charset=\"utf-8\">\n\
+		${1}\n\
+	</script>\n\
+snippet scriptsrc\n\
+	<script src=\"${1}.js\" type=\"text/javascript\" charset=\"utf-8\"></script>\n\
+snippet section\n\
+	<section>\n\
+		${1}\n\
+	</section>\n\
+snippet section.\n\
+	<section class=\"${1}\">\n\
+		${2}\n\
+	</section>\n\
+snippet section#\n\
+	<section id=\"${1}\">\n\
+		${2}\n\
+	</section>\n\
+snippet select\n\
+	<select name=\"${1}\" id=\"${2:$1}\">\n\
+		${3}\n\
+	</select>\n\
+snippet select.\n\
+	<select name=\"${1}\" id=\"${2:$1}\" class=\"${3}>\n\
+		${4}\n\
+	</select>\n\
+snippet select+\n\
+	<select name=\"${1}\" id=\"${2:$1}\">\n\
+		<option value=\"${3}\">${4:$3}</option>\n\
+		opt+${5}\n\
+	</select>\n\
+snippet small\n\
+	<small>${1}</small>\n\
+snippet source\n\
+	<source src=\"${1}\" type=\"${2}\" media=\"${3}\" />\n\
+snippet span\n\
+	<span>${1}</span>\n\
+snippet strong\n\
+	<strong>${1}</strong>\n\
+snippet style\n\
+	<style type=\"text/css\" media=\"${1:all}\">\n\
+		${2}\n\
+	</style>\n\
+snippet sub\n\
+	<sub>${1}</sub>\n\
+snippet summary\n\
+	<summary>\n\
+		${1}\n\
+	</summary>\n\
+snippet sup\n\
+	<sup>${1}</sup>\n\
+snippet table\n\
+	<table border=\"${1:0}\">\n\
+		${2}\n\
+	</table>\n\
+snippet table.\n\
+	<table class=\"${1}\" border=\"${2:0}\">\n\
+		${3}\n\
+	</table>\n\
+snippet table#\n\
+	<table id=\"${1}\" border=\"${2:0}\">\n\
+		${3}\n\
+	</table>\n\
+snippet tbody\n\
+	<tbody>\n\
+		${1}\n\
+	</tbody>\n\
+snippet td\n\
+	<td>${1}</td>\n\
+snippet td.\n\
+	<td class=\"${1}\">${2}</td>\n\
+snippet td#\n\
+	<td id=\"${1}\">${2}</td>\n\
+snippet td+\n\
+	<td>${1}</td>\n\
+	td+${2}\n\
+snippet textarea\n\
+	<textarea name=\"${1}\" id=${2:$1} rows=\"${3:8}\" cols=\"${4:40}\">${5}</textarea>${6}\n\
+snippet tfoot\n\
+	<tfoot>\n\
+		${1}\n\
+	</tfoot>\n\
+snippet th\n\
+	<th>${1}</th>\n\
+snippet th.\n\
+	<th class=\"${1}\">${2}</th>\n\
+snippet th#\n\
+	<th id=\"${1}\">${2}</th>\n\
+snippet th+\n\
+	<th>${1}</th>\n\
+	th+${2}\n\
+snippet thead\n\
+	<thead>\n\
+		${1}\n\
+	</thead>\n\
+snippet time\n\
+	<time datetime=\"${1}\" pubdate=\"${2:$1}>${3:$1}</time>\n\
+snippet title\n\
+	<title>${1:`substitute(Filename('', 'Page Title'), '^.', '\\u&', '')`}</title>\n\
+snippet tr\n\
+	<tr>\n\
+		${1}\n\
+	</tr>\n\
+snippet tr+\n\
+	<tr>\n\
+		<td>${1}</td>\n\
+		td+${2}\n\
+	</tr>\n\
+snippet track\n\
+	<track src=\"${1}\" srclang=\"${2}\" label=\"${3}\" default=\"${4:default}>${5}</track>${6}\n\
+snippet ul\n\
+	<ul>\n\
+		${1}\n\
+	</ul>\n\
+snippet ul.\n\
+	<ul class=\"${1}\">\n\
+		${2}\n\
+	</ul>\n\
+snippet ul#\n\
+	<ul id=\"${1}\">\n\
+		${2}\n\
+	</ul>\n\
+snippet ul+\n\
+	<ul>\n\
+		<li>${1}</li>\n\
+		li+${2}\n\
+	</ul>\n\
+snippet var\n\
+	<var>${1}</var>\n\
+snippet video\n\
+	<video src=\"${1} height=\"${2}\" width=\"${3}\" preload=\"${5:none}\" autoplay=\"${6:autoplay}>${7}</video>${8}\n\
+snippet wbr\n\
+	<wbr />${1}\n\
+";
+exports.scope = "html";
+
+});
+
+define("ace/snippets/html_ruby",["require","exports","module"], function(require, exports, module) {
+
+
+exports.snippetText =undefined;
+exports.scope = "html_ruby";
+
+});
+
+define("ace/snippets/ini",["require","exports","module"], function(require, exports, module) {
+
+
+exports.snippetText =undefined;
+exports.scope = "ini";
+
+});
+
+define("ace/snippets/io",["require","exports","module"], function(require, exports, module) {
+
+
+exports.snippets = [
+    {
+        "content": "assertEquals(${1:expected}, ${2:expr})",
+        "name": "assertEquals",
+        "scope": "io",
+        "tabTrigger": "ae"
+    },
+    {
+        "content": "${1:${2:newValue} := ${3:Object} }clone do(\n\t$0\n)",
+        "name": "clone do",
+        "scope": "io",
+        "tabTrigger": "cdo"
+    },
+    {
+        "content": "docSlot(\"${1:slotName}\", \"${2:documentation}\")",
+        "name": "docSlot",
+        "scope": "io",
+        "tabTrigger": "ds"
+    },
+    {
+        "content": "(${1:header,}\n\t${2:body}\n)$0",
+        "keyEquivalent": "@(",
+        "name": "Indented Bracketed Line",
+        "scope": "io",
+        "tabTrigger": "("
+    },
+    {
+        "content": "\n\t$0\n",
+        "keyEquivalent": "\r",
+        "name": "Special: Return Inside Empty Parenthesis",
+        "scope": "io meta.empty-parenthesis.io, io meta.comma-parenthesis.io"
+    },
+    {
+        "content": "${1:methodName} := method(${2:args,}\n\t$0\n)",
+        "name": "method",
+        "scope": "io",
+        "tabTrigger": "m"
+    },
+    {
+        "content": "newSlot(\"${1:slotName}\", ${2:defaultValue}, \"${3:docString}\")$0",
+        "name": "newSlot",
+        "scope": "io",
+        "tabTrigger": "ns"
+    },
+    {
+        "content": "${1:name} := Object clone do(\n\t$0\n)",
+        "name": "Object clone do",
+        "scope": "io",
+        "tabTrigger": "ocdo"
+    },
+    {
+        "content": "test${1:SomeFeature} := method(\n\t$0\n)",
+        "name": "testMethod",
+        "scope": "io",
+        "tabTrigger": "ts"
+    },
+    {
+        "content": "${1:Something}Test := ${2:UnitTest} clone do(\n\t$0\n)",
+        "name": "UnitTest",
+        "scope": "io",
+        "tabTrigger": "ut"
+    }
+];
+exports.scope = "io";
+
+});
+
+define("ace/snippets/jack",["require","exports","module"], function(require, exports, module) {
+
+
+exports.snippetText =undefined;
+exports.scope = "jack";
+
+});
+
+define("ace/snippets/jade",["require","exports","module"], function(require, exports, module) {
+
+
+exports.snippetText =undefined;
+exports.scope = "jade";
+
+});
+
+define("ace/snippets/java",["require","exports","module"], function(require, exports, module) {
+
+
+exports.snippetText = "## Access Modifiers\n\
+snippet po\n\
+	protected\n\
+snippet pu\n\
+	public\n\
+snippet pr\n\
+	private\n\
+##\n\
+## Annotations\n\
+snippet before\n\
+	@Before\n\
+	static void ${1:intercept}(${2:args}) { ${3} }\n\
+snippet mm\n\
+	@ManyToMany\n\
+	${1}\n\
+snippet mo\n\
+	@ManyToOne\n\
+	${1}\n\
+snippet om\n\
+	@OneToMany${1:(cascade=CascadeType.ALL)}\n\
+	${2}\n\
+snippet oo\n\
+	@OneToOne\n\
+	${1}\n\
+##\n\
+## Basic Java packages and import\n\
+snippet im\n\
+	import\n\
+snippet j.b\n\
+	java.beans.\n\
+snippet j.i\n\
+	java.io.\n\
+snippet j.m\n\
+	java.math.\n\
+snippet j.n\n\
+	java.net.\n\
+snippet j.u\n\
+	java.util.\n\
+##\n\
+## Class\n\
+snippet cl\n\
+	class ${1:`Filename(\"\", \"untitled\")`} ${2}\n\
+snippet in\n\
+	interface ${1:`Filename(\"\", \"untitled\")`} ${2:extends Parent}${3}\n\
+snippet tc\n\
+	public class ${1:`Filename()`} extends ${2:TestCase}\n\
+##\n\
+## Class Enhancements\n\
+snippet ext\n\
+	extends \n\
+snippet imp\n\
+	implements\n\
+##\n\
+## Comments\n\
+snippet /*\n\
+##\n\
+## Constants\n\
+snippet co\n\
+	static public final ${1:String} ${2:var} = ${3};${4}\n\
+snippet cos\n\
+	static public final String ${1:var} = \"${2}\";${3}\n\
+##\n\
+## Control Statements\n\
+snippet case\n\
+	case ${1}:\n\
+		${2}\n\
+snippet def\n\
+	default:\n\
+		${2}\n\
+snippet el\n\
+	else\n\
+snippet elif\n\
+	else if (${1}) ${2}\n\
+snippet if\n\
+	if (${1}) ${2}\n\
+snippet sw\n\
+	switch (${1}) {\n\
+		${2}\n\
+	}\n\
+##\n\
+## Create a Method\n\
+snippet m\n\
+	${1:void} ${2:method}(${3}) ${4:throws }${5}\n\
+##\n\
+## Create a Variable\n\
+snippet v\n\
+	${1:String} ${2:var}${3: = null}${4};${5}\n\
+##\n\
+## Enhancements to Methods, variables, classes, etc.\n\
+snippet ab\n\
+	abstract\n\
+snippet fi\n\
+	final\n\
+snippet st\n\
+	static\n\
+snippet sy\n\
+	synchronized\n\
+##\n\
+## Error Methods\n\
+snippet err\n\
+	System.err.print(\"${1:Message}\");\n\
+snippet errf\n\
+	System.err.printf(\"${1:Message}\", ${2:exception});\n\
+snippet errln\n\
+	System.err.println(\"${1:Message}\");\n\
+##\n\
+## Exception Handling\n\
+snippet as\n\
+	assert ${1:test} : \"${2:Failure message}\";${3}\n\
+snippet ca\n\
+	catch(${1:Exception} ${2:e}) ${3}\n\
+snippet thr\n\
+	throw\n\
+snippet ths\n\
+	throws\n\
+snippet try\n\
+	try {\n\
+		${3}\n\
+	} catch(${1:Exception} ${2:e}) {\n\
+	}\n\
+snippet tryf\n\
+	try {\n\
+		${3}\n\
+	} catch(${1:Exception} ${2:e}) {\n\
+	} finally {\n\
+	}\n\
+##\n\
+## Find Methods\n\
+snippet findall\n\
+	List<${1:listName}> ${2:items} = ${1}.findAll();${3}\n\
+snippet findbyid\n\
+	${1:var} ${2:item} = ${1}.findById(${3});${4}\n\
+##\n\
+## Javadocs\n\
+snippet /**\n\
+snippet @au\n\
+	@author `system(\"grep \\`id -un\\` /etc/passwd | cut -d \\\":\\\" -f5 | cut -d \\\",\\\" -f1\")`\n\
+snippet @br\n\
+	@brief ${1:Description}\n\
+snippet @fi\n\
+	@file ${1:`Filename()`}.java\n\
+snippet @pa\n\
+	@param ${1:param}\n\
+snippet @re\n\
+	@return ${1:param}\n\
+##\n\
+## Logger Methods\n\
+snippet debug\n\
+	Logger.debug(${1:param});${2}\n\
+snippet error\n\
+	Logger.error(${1:param});${2}\n\
+snippet info\n\
+	Logger.info(${1:param});${2}\n\
+snippet warn\n\
+	Logger.warn(${1:param});${2}\n\
+##\n\
+## Loops\n\
+snippet enfor\n\
+	for (${1} : ${2}) ${3}\n\
+snippet for\n\
+	for (${1}; ${2}; ${3}) ${4}\n\
+snippet wh\n\
+	while (${1}) ${2}\n\
+##\n\
+## Main method\n\
+snippet main\n\
+	public static void main (String[] args) {\n\
+		${1:/* code */}\n\
+	}\n\
+##\n\
+## Print Methods\n\
+snippet print\n\
+	System.out.print(\"${1:Message}\");\n\
+snippet printf\n\
+	System.out.printf(\"${1:Message}\", ${2:args});\n\
+snippet println\n\
+	System.out.println(${1});\n\
+##\n\
+## Render Methods\n\
+snippet ren\n\
+	render(${1:param});${2}\n\
+snippet rena\n\
+	renderArgs.put(\"${1}\", ${2});${3}\n\
+snippet renb\n\
+	renderBinary(${1:param});${2}\n\
+snippet renj\n\
+	renderJSON(${1:param});${2}\n\
+snippet renx\n\
+	renderXml(${1:param});${2}\n\
+##\n\
+## Setter and Getter Methods\n\
+snippet set\n\
+	${1:public} void set${3:}(${2:String} ${4:}){\n\
+		this.$4 = $4;\n\
+	}\n\
+snippet get\n\
+	${1:public} ${2:String} get${3:}(){\n\
+		return this.${4:};\n\
+	}\n\
+##\n\
+## Terminate Methods or Loops\n\
+snippet re\n\
+	return\n\
+snippet br\n\
+	break;\n\
+##\n\
+## Test Methods\n\
+snippet t\n\
+	public void test${1:Name}() throws Exception {\n\
+		${2}\n\
+	}\n\
+snippet test\n\
+	@Test\n\
+	public void test${1:Name}() throws Exception {\n\
+		${2}\n\
+	}\n\
+##\n\
+## Utils\n\
+snippet Sc\n\
+	Scanner\n\
+##\n\
+## Miscellaneous\n\
+snippet action\n\
+	public static void ${1:index}(${2:args}) { ${3} }\n\
+snippet rnf\n\
+	notFound(${1:param});${2}\n\
+snippet rnfin\n\
+	notFoundIfNull(${1:param});${2}\n\
+snippet rr\n\
+	redirect(${1:param});${2}\n\
+snippet ru\n\
+	unauthorized(${1:param});${2}\n\
+snippet unless\n\
+	(unless=${1:param});${2}\n\
+";
+exports.scope = "java";
+
+});
+
+define("ace/snippets/javascript",["require","exports","module"], function(require, exports, module) {
+
+
+exports.snippetText = "# Prototype\n\
+snippet proto\n\
+	${1:class_name}.prototype.${2:method_name} = function(${3:first_argument}) {\n\
+		${4:// body...}\n\
+	};\n\
+# Function\n\
+snippet fun\n\
+	function ${1?:function_name}(${2:argument}) {\n\
+		${3:// body...}\n\
+	}\n\
+# Anonymous Function\n\
+regex /((=)\\s*|(:)\\s*|(\\()|\\b)/f/(\\))?/\n\
+snippet f\n\
+	function${M1?: ${1:functionName}}($2) {\n\
+		${0:$TM_SELECTED_TEXT}\n\
+	}${M2?;}${M3?,}${M4?)}\n\
+# Immediate function\n\
+trigger \\(?f\\(\n\
+endTrigger \\)?\n\
+snippet f(\n\
+	(function(${1}) {\n\
+		${0:${TM_SELECTED_TEXT:/* code */}}\n\
+	}(${1}));\n\
+# if\n\
+snippet if\n\
+	if (${1:true}) {\n\
+		${0}\n\
+	}\n\
+# if ... else\n\
+snippet ife\n\
+	if (${1:true}) {\n\
+		${2}\n\
+	} else {\n\
+		${0}\n\
+	}\n\
+# tertiary conditional\n\
+snippet ter\n\
+	${1:/* condition */} ? ${2:a} : ${3:b}\n\
+# switch\n\
+snippet switch\n\
+	switch (${1:expression}) {\n\
+		case '${3:case}':\n\
+			${4:// code}\n\
+			break;\n\
+		${5}\n\
+		default:\n\
+			${2:// code}\n\
+	}\n\
+# case\n\
+snippet case\n\
+	case '${1:case}':\n\
+		${2:// code}\n\
+		break;\n\
+	${3}\n\
+\n\
+# while (...) {...}\n\
+snippet wh\n\
+	while (${1:/* condition */}) {\n\
+		${0:/* code */}\n\
+	}\n\
+# try\n\
+snippet try\n\
+	try {\n\
+		${0:/* code */}\n\
+	} catch (e) {}\n\
+# do...while\n\
+snippet do\n\
+	do {\n\
+		${2:/* code */}\n\
+	} while (${1:/* condition */});\n\
+# Object Method\n\
+snippet :f\n\
+regex /([,{[])|^\\s*/:f/\n\
+	${1:method_name}: function(${2:attribute}) {\n\
+		${0}\n\
+	}${3:,}\n\
+# setTimeout function\n\
+snippet setTimeout\n\
+regex /\\b/st|timeout|setTimeo?u?t?/\n\
+	setTimeout(function() {${3:$TM_SELECTED_TEXT}}, ${1:10});\n\
+# Get Elements\n\
+snippet gett\n\
+	getElementsBy${1:TagName}('${2}')${3}\n\
+# Get Element\n\
+snippet get\n\
+	getElementBy${1:Id}('${2}')${3}\n\
+# console.log (Firebug)\n\
+snippet cl\n\
+	console.log(${1});\n\
+# return\n\
+snippet ret\n\
+	return ${1:result}\n\
+# for (property in object ) { ... }\n\
+snippet fori\n\
+	for (var ${1:prop} in ${2:Things}) {\n\
+		${0:$2[$1]}\n\
+	}\n\
+# hasOwnProperty\n\
+snippet has\n\
+	hasOwnProperty(${1})\n\
+# docstring\n\
+snippet /**\n\
+snippet @par\n\
+regex /^\\s*\\*\\s*/@(para?m?)?/\n\
+	@param {${1:type}} ${2:name} ${3:description}\n\
+snippet @ret\n\
+	@return {${1:type}} ${2:description}\n\
+# JSON.parse\n\
+snippet jsonp\n\
+	JSON.parse(${1:jstr});\n\
+# JSON.stringify\n\
+snippet jsons\n\
+	JSON.stringify(${1:object});\n\
+# self-defining function\n\
+snippet sdf\n\
+	var ${1:function_name} = function(${2:argument}) {\n\
+		${3:// initial code ...}\n\
+\n\
+		$1 = function($2) {\n\
+			${4:// main code}\n\
+		};\n\
+	}\n\
+# singleton\n\
+snippet sing\n\
+	function ${1:Singleton} (${2:argument}) {\n\
+		var instance;\n\
+		$1 = function $1($2) {\n\
+			return instance;\n\
+		};\n\
+		$1.prototype = this;\n\
+		instance = new $1();\n\
+		instance.constructor = $1;\n\
+\n\
+		${3:// code ...}\n\
+\n\
+		return instance;\n\
+	}\n\
+# class\n\
+snippet class\n\
+regex /^\\s*/clas{0,2}/\n\
+	var ${1:class} = function(${20}) {\n\
+		$40$0\n\
+	};\n\
+	\n\
+	(function() {\n\
+		${60:this.prop = \"\"}\n\
+	}).call(${1:class}.prototype);\n\
+	\n\
+	exports.${1:class} = ${1:class};\n\
+# \n\
+snippet for-\n\
+	for (var ${1:i} = ${2:Things}.length; ${1:i}--; ) {\n\
+		${0:${2:Things}[${1:i}];}\n\
+	}\n\
+# for (...) {...}\n\
+snippet for\n\
+	for (var ${1:i} = 0; $1 < ${2:Things}.length; $1++) {\n\
+		${3:$2[$1]}$0\n\
+	}\n\
+# for (...) {...} (Improved Native For-Loop)\n\
+snippet forr\n\
+	for (var ${1:i} = ${2:Things}.length - 1; $1 >= 0; $1--) {\n\
+		${3:$2[$1]}$0\n\
+	}\n\
+\n\
+\n\
+#modules\n\
+snippet def\n\
+	define(function(require, exports, module) {\n\
+	\"use strict\";\n\
+	var ${1/.*\\///} = require(\"${1}\");\n\
+	\n\
+	$TM_SELECTED_TEXT\n\
+	});\n\
+snippet req\n\
+guard ^\\s*\n\
+	var ${1/.*\\///} = require(\"${1}\");\n\
+	$0\n\
+snippet requ\n\
+guard ^\\s*\n\
+	var ${1/.*\\/(.)/\\u$1/} = require(\"${1}\").${1/.*\\/(.)/\\u$1/};\n\
+	$0\n\
+";
+exports.scope = "javascript";
+
+});
+
+define("ace/snippets/json",["require","exports","module"], function(require, exports, module) {
+
+
+exports.snippetText =undefined;
+exports.scope = "json";
+
+});
+
+define("ace/snippets/jsoniq",["require","exports","module"], function(require, exports, module) {
+
+
+exports.snippetText = "snippet for\n\
+	for $${1:item} in ${2:expr}\n\
+snippet return\n\
+	return ${1:expr}\n\
+snippet import\n\
+	import module namespace ${1:ns} = \"${2:http://www.example.com/}\";\n\
+snippet some\n\
+	some $${1:varname} in ${2:expr} satisfies ${3:expr}\n\
+snippet every\n\
+	every $${1:varname} in ${2:expr} satisfies ${3:expr}\n\
+snippet if\n\
+	if(${1:true}) then ${2:expr} else ${3:true}\n\
+snippet switch\n\
+	switch(${1:\"foo\"})\n\
+	case ${2:\"foo\"}\n\
+	return ${3:true}\n\
+	default return ${4:false}\n\
+snippet try\n\
+	try { ${1:expr} } catch ${2:*} { ${3:expr} }\n\
+snippet tumbling\n\
+	for tumbling window $${1:varname} in ${2:expr}\n\
+	start at $${3:start} when ${4:expr}\n\
+	end at $${5:end} when ${6:expr}\n\
+	return ${7:expr}\n\
+snippet sliding\n\
+	for sliding window $${1:varname} in ${2:expr}\n\
+	start at $${3:start} when ${4:expr}\n\
+	end at $${5:end} when ${6:expr}\n\
+	return ${7:expr}\n\
+snippet let\n\
+	let $${1:varname} := ${2:expr}\n\
+snippet group\n\
+	group by $${1:varname} := ${2:expr}\n\
+snippet order\n\
+	order by ${1:expr} ${2:descending}\n\
+snippet stable\n\
+	stable order by ${1:expr}\n\
+snippet count\n\
+	count $${1:varname}\n\
+snippet ordered\n\
+	ordered { ${1:expr} }\n\
+snippet unordered\n\
+	unordered { ${1:expr} }\n\
+snippet treat \n\
+	treat as ${1:expr}\n\
+snippet castable\n\
+	castable as ${1:atomicType}\n\
+snippet cast\n\
+	cast as ${1:atomicType}\n\
+snippet typeswitch\n\
+	typeswitch(${1:expr})\n\
+	case ${2:type}  return ${3:expr}\n\
+	default return ${4:expr}\n\
+snippet var\n\
+	declare variable $${1:varname} := ${2:expr};\n\
+snippet fn\n\
+	declare function ${1:ns}:${2:name}(){\n\
+	${3:expr}\n\
+	};\n\
+snippet module\n\
+	module namespace ${1:ns} = \"${2:http://www.example.com}\";\n\
+";
+exports.scope = "jsoniq";
+
+});
+
+define("ace/snippets/jsp",["require","exports","module"], function(require, exports, module) {
+
+
+exports.snippetText = "snippet @page\n\
+	<%@page contentType=\"text/html\" pageEncoding=\"UTF-8\"%>\n\
+snippet jstl\n\
+	<%@ taglib uri=\"http://java.sun.com/jsp/jstl/core\" prefix=\"c\" %>\n\
+	<%@ taglib uri=\"http://java.sun.com/jsp/jstl/functions\" prefix=\"fn\" %>\n\
+snippet jstl:c\n\
+	<%@ taglib uri=\"http://java.sun.com/jsp/jstl/core\" prefix=\"c\" %>\n\
+snippet jstl:fn\n\
+	<%@ taglib uri=\"http://java.sun.com/jsp/jstl/functions\" prefix=\"fn\" %>\n\
+snippet cpath\n\
+	${pageContext.request.contextPath}\n\
+snippet cout\n\
+	<c:out value=\"${1}\" default=\"${2}\" />\n\
+snippet cset\n\
+	<c:set var=\"${1}\" value=\"${2}\" />\n\
+snippet cremove\n\
+	<c:remove var=\"${1}\" scope=\"${2:page}\" />\n\
+snippet ccatch\n\
+	<c:catch var=\"${1}\" />\n\
+snippet cif\n\
+	<c:if test=\"${${1}}\">\n\
+		${2}\n\
+	</c:if>\n\
+snippet cchoose\n\
+	<c:choose>\n\
+		${1}\n\
+	</c:choose>\n\
+snippet cwhen\n\
+	<c:when test=\"${${1}}\">\n\
+		${2}\n\
+	</c:when>\n\
+snippet cother\n\
+	<c:otherwise>\n\
+		${1}\n\
+	</c:otherwise>\n\
+snippet cfore\n\
+	<c:forEach items=\"${${1}}\" var=\"${2}\" varStatus=\"${3}\">\n\
+		${4:<c:out value=\"$2\" />}\n\
+	</c:forEach>\n\
+snippet cfort\n\
+	<c:set var=\"${1}\">${2:item1,item2,item3}</c:set>\n\
+	<c:forTokens var=\"${3}\" items=\"${$1}\" delims=\"${4:,}\">\n\
+		${5:<c:out value=\"$3\" />}\n\
+	</c:forTokens>\n\
+snippet cparam\n\
+	<c:param name=\"${1}\" value=\"${2}\" />\n\
+snippet cparam+\n\
+	<c:param name=\"${1}\" value=\"${2}\" />\n\
+	cparam+${3}\n\
+snippet cimport\n\
+	<c:import url=\"${1}\" />\n\
+snippet cimport+\n\
+	<c:import url=\"${1}\">\n\
+		<c:param name=\"${2}\" value=\"${3}\" />\n\
+		cparam+${4}\n\
+	</c:import>\n\
+snippet curl\n\
+	<c:url value=\"${1}\" var=\"${2}\" />\n\
+	<a href=\"${$2}\">${3}</a>\n\
+snippet curl+\n\
+	<c:url value=\"${1}\" var=\"${2}\">\n\
+		<c:param name=\"${4}\" value=\"${5}\" />\n\
+		cparam+${6}\n\
+	</c:url>\n\
+	<a href=\"${$2}\">${3}</a>\n\
+snippet credirect\n\
+	<c:redirect url=\"${1}\" />\n\
+snippet contains\n\
+	${fn:contains(${1:string}, ${2:substr})}\n\
+snippet contains:i\n\
+	${fn:containsIgnoreCase(${1:string}, ${2:substr})}\n\
+snippet endswith\n\
+	${fn:endsWith(${1:string}, ${2:suffix})}\n\
+snippet escape\n\
+	${fn:escapeXml(${1:string})}\n\
+snippet indexof\n\
+	${fn:indexOf(${1:string}, ${2:substr})}\n\
+snippet join\n\
+	${fn:join(${1:collection}, ${2:delims})}\n\
+snippet length\n\
+	${fn:length(${1:collection_or_string})}\n\
+snippet replace\n\
+	${fn:replace(${1:string}, ${2:substr}, ${3:replace})}\n\
+snippet split\n\
+	${fn:split(${1:string}, ${2:delims})}\n\
+snippet startswith\n\
+	${fn:startsWith(${1:string}, ${2:prefix})}\n\
+snippet substr\n\
+	${fn:substring(${1:string}, ${2:begin}, ${3:end})}\n\
+snippet substr:a\n\
+	${fn:substringAfter(${1:string}, ${2:substr})}\n\
+snippet substr:b\n\
+	${fn:substringBefore(${1:string}, ${2:substr})}\n\
+snippet lc\n\
+	${fn:toLowerCase(${1:string})}\n\
+snippet uc\n\
+	${fn:toUpperCase(${1:string})}\n\
+snippet trim\n\
+	${fn:trim(${1:string})}\n\
+";
+exports.scope = "jsp";
+
+});
+
+define("ace/snippets/jsx",["require","exports","module"], function(require, exports, module) {
+
+
+exports.snippetText =undefined;
+exports.scope = "jsx";
+
+});
+
+define("ace/snippets/julia",["require","exports","module"], function(require, exports, module) {
+
+
+exports.snippetText =undefined;
+exports.scope = "julia";
+
+});
+
+define("ace/snippets/latex",["require","exports","module"], function(require, exports, module) {
+
+
+exports.snippetText =undefined;
+exports.scope = "latex";
+
+});
+
+define("ace/snippets/less",["require","exports","module"], function(require, exports, module) {
+
+
+exports.snippetText =undefined;
+exports.scope = "less";
+
+});
+
+define("ace/snippets/liquid",["require","exports","module"], function(require, exports, module) {
+
+
+exports.snippetText =undefined;
+exports.scope = "liquid";
+
+});
+
+define("ace/snippets/lisp",["require","exports","module"], function(require, exports, module) {
+
+
+exports.snippetText =undefined;
+exports.scope = "lisp";
+
+});
+
+define("ace/snippets/livescript",["require","exports","module"], function(require, exports, module) {
+
+
+exports.snippetText =undefined;
+exports.scope = "livescript";
+
+});
+
+define("ace/snippets/logiql",["require","exports","module"], function(require, exports, module) {
+
+
+exports.snippetText =undefined;
+exports.scope = "logiql";
+
+});
+
+define("ace/snippets/lsl",["require","exports","module"], function(require, exports, module) {
+
+
+exports.snippetText = "snippet @\n\
+	@${1:label};\n\
+snippet CAMERA_ACTIVE\n\
+	CAMERA_ACTIVE, ${1:integer isActive}, $0\n\
+snippet CAMERA_BEHINDNESS_ANGLE\n\
+	CAMERA_BEHINDNESS_ANGLE, ${1:float degrees}, $0\n\
+snippet CAMERA_BEHINDNESS_LAG\n\
+	CAMERA_BEHINDNESS_LAG, ${1:float seconds}, $0\n\
+snippet CAMERA_DISTANCE\n\
+	CAMERA_DISTANCE, ${1:float meters}, $0\n\
+snippet CAMERA_FOCUS\n\
+	CAMERA_FOCUS, ${1:vector position}, $0\n\
+snippet CAMERA_FOCUS_LAG\n\
+	CAMERA_FOCUS_LAG, ${1:float seconds}, $0\n\
+snippet CAMERA_FOCUS_LOCKED\n\
+	CAMERA_FOCUS_LOCKED, ${1:integer isLocked}, $0\n\
+snippet CAMERA_FOCUS_OFFSET\n\
+	CAMERA_FOCUS_OFFSET, ${1:vector meters}, $0\n\
+snippet CAMERA_FOCUS_THRESHOLD\n\
+	CAMERA_FOCUS_THRESHOLD, ${1:float meters}, $0\n\
+snippet CAMERA_PITCH\n\
+	CAMERA_PITCH, ${1:float degrees}, $0\n\
+snippet CAMERA_POSITION\n\
+	CAMERA_POSITION, ${1:vector position}, $0\n\
+snippet CAMERA_POSITION_LAG\n\
+	CAMERA_POSITION_LAG, ${1:float seconds}, $0\n\
+snippet CAMERA_POSITION_LOCKED\n\
+	CAMERA_POSITION_LOCKED, ${1:integer isLocked}, $0\n\
+snippet CAMERA_POSITION_THRESHOLD\n\
+	CAMERA_POSITION_THRESHOLD, ${1:float meters}, $0\n\
+snippet CHARACTER_AVOIDANCE_MODE\n\
+	CHARACTER_AVOIDANCE_MODE, ${1:integer flags}, $0\n\
+snippet CHARACTER_DESIRED_SPEED\n\
+	CHARACTER_DESIRED_SPEED, ${1:float speed}, $0\n\
+snippet CHARACTER_DESIRED_TURN_SPEED\n\
+	CHARACTER_DESIRED_TURN_SPEED, ${1:float speed}, $0\n\
+snippet CHARACTER_LENGTH\n\
+	CHARACTER_LENGTH, ${1:float length}, $0\n\
+snippet CHARACTER_MAX_TURN_RADIUS\n\
+	CHARACTER_MAX_TURN_RADIUS, ${1:float radius}, $0\n\
+snippet CHARACTER_ORIENTATION\n\
+	CHARACTER_ORIENTATION, ${1:integer orientation}, $0\n\
+snippet CHARACTER_RADIUS\n\
+	CHARACTER_RADIUS, ${1:float radius}, $0\n\
+snippet CHARACTER_STAY_WITHIN_PARCEL\n\
+	CHARACTER_STAY_WITHIN_PARCEL, ${1:boolean stay}, $0\n\
+snippet CHARACTER_TYPE\n\
+	CHARACTER_TYPE, ${1:integer type}, $0\n\
+snippet HTTP_BODY_MAXLENGTH\n\
+	HTTP_BODY_MAXLENGTH, ${1:integer length}, $0\n\
+snippet HTTP_CUSTOM_HEADER\n\
+	HTTP_CUSTOM_HEADER, ${1:string name}, ${2:string value}, $0\n\
+snippet HTTP_METHOD\n\
+	HTTP_METHOD, ${1:string method}, $0\n\
+snippet HTTP_MIMETYPE\n\
+	HTTP_MIMETYPE, ${1:string mimeType}, $0\n\
+snippet HTTP_PRAGMA_NO_CACHE\n\
+	HTTP_PRAGMA_NO_CACHE, ${1:integer send_header}, $0\n\
+snippet HTTP_VERBOSE_THROTTLE\n\
+	HTTP_VERBOSE_THROTTLE, ${1:integer noisy}, $0\n\
+snippet HTTP_VERIFY_CERT\n\
+	HTTP_VERIFY_CERT, ${1:integer verify}, $0\n\
+snippet RC_DATA_FLAGS\n\
+	RC_DATA_FLAGS, ${1:integer flags}, $0\n\
+snippet RC_DETECT_PHANTOM\n\
+	RC_DETECT_PHANTOM, ${1:integer dectedPhantom}, $0\n\
+snippet RC_MAX_HITS\n\
+	RC_MAX_HITS, ${1:integer maxHits}, $0\n\
+snippet RC_REJECT_TYPES\n\
+	RC_REJECT_TYPES, ${1:integer filterMask}, $0\n\
+snippet at_rot_target\n\
+	at_rot_target(${1:integer handle}, ${2:rotation targetrot}, ${3:rotation ourrot})\n\
+	{\n\
+		$0\n\
+	}\n\
+snippet at_target\n\
+	at_target(${1:integer tnum}, ${2:vector targetpos}, ${3:vector ourpos})\n\
+	{\n\
+		$0\n\
+	}\n\
+snippet attach\n\
+	attach(${1:key id})\n\
+	{\n\
+		$0\n\
+	}\n\
+snippet changed\n\
+	changed(${1:integer change})\n\
+	{\n\
+		$0\n\
+	}\n\
+snippet collision\n\
+	collision(${1:integer index})\n\
+	{\n\
+		$0\n\
+	}\n\
+snippet collision_end\n\
+	collision_end(${1:integer index})\n\
+	{\n\
+		$0\n\
+	}\n\
+snippet collision_start\n\
+	collision_start(${1:integer index})\n\
+	{\n\
+		$0\n\
+	}\n\
+snippet control\n\
+	control(${1:key id}, ${2:integer level}, ${3:integer edge})\n\
+	{\n\
+		$0\n\
+	}\n\
+snippet dataserver\n\
+	dataserver(${1:key query_id}, ${2:string data})\n\
+	{\n\
+		$0\n\
+	}\n\
+snippet do\n\
+	do\n\
+	{\n\
+		$0\n\
+	}\n\
+	while (${1:condition});\n\
+snippet else\n\
+	else\n\
+	{\n\
+		$0\n\
+	}\n\
+snippet email\n\
+	email(${1:string time}, ${2:string address}, ${3:string subject}, ${4:string message}, ${5:integer num_left})\n\
+	{\n\
+		$0\n\
+	}\n\
+snippet experience_permissions\n\
+	experience_permissions(${1:key agent_id})\n\
+	{\n\
+		$0\n\
+	}\n\
+snippet experience_permissions_denied\n\
+	experience_permissions_denied(${1:key agent_id}, ${2:integer reason})\n\
+	{\n\
+		$0\n\
+	}\n\
+snippet for\n\
+	for (${1:start}; ${3:condition}; ${3:step})\n\
+	{\n\
+		$0\n\
+	}\n\
+snippet http_request\n\
+	http_request(${1:key request_id}, ${2:string method}, ${3:string body})\n\
+	{\n\
+		$0\n\
+	}\n\
+snippet http_response\n\
+	http_response(${1:key request_id}, ${2:integer status}, ${3:list metadata}, ${4:string body})\n\
+	{\n\
+		$0\n\
+	}\n\
+snippet if\n\
+	if (${1:condition})\n\
+	{\n\
+		$0\n\
+	}\n\
+snippet jump\n\
+	jump ${1:label};\n\
+snippet land_collision\n\
+	land_collision(${1:vector pos})\n\
+	{\n\
+		$0\n\
+	}\n\
+snippet land_collision_end\n\
+	land_collision_end(${1:vector pos})\n\
+	{\n\
+		$0\n\
+	}\n\
+snippet land_collision_start\n\
+	land_collision_start(${1:vector pos})\n\
+	{\n\
+		$0\n\
+	}\n\
+snippet link_message\n\
+	link_message(${1:integer sender_num}, ${2:integer num}, ${3:string str}, ${4:key id})\n\
+	{\n\
+		$0\n\
+	}\n\
+snippet listen\n\
+	listen(${1:integer channel}, ${2:string name}, ${3:key id}, ${4:string message})\n\
+	{\n\
+		$0\n\
+	}\n\
+snippet llAbs\n\
+	llAbs(${1:integer val})\n\
+snippet llAcos\n\
+	llAcos(${1:float val})\n\
+snippet llAddToLandBanList\n\
+	llAddToLandBanList(${1:key agent}, ${2:float hours});\n\
+snippet llAddToLandPassList\n\
+	llAddToLandPassList(${1:key agent}, ${2:float hours});\n\
+snippet llAdjustSoundVolume\n\
+	llAdjustSoundVolume(${1:float volume});\n\
+snippet llAgentInExperience\n\
+	llAgentInExperience(${1:key agent})\n\
+snippet llAllowInventoryDrop\n\
+	llAllowInventoryDrop(${1:integer add});\n\
+snippet llAngleBetween\n\
+	llAngleBetween(${1:rotation a}, ${2:rotation b})\n\
+snippet llApplyImpulse\n\
+	llApplyImpulse(${1:vector force}, ${2:integer local});\n\
+snippet llApplyRotationalImpulse\n\
+	llApplyRotationalImpulse(${1:vector force}, ${2:integer local});\n\
+snippet llAsin\n\
+	llAsin(${1:float val})\n\
+snippet llAtan2\n\
+	llAtan2(${1:float y}, ${2:float x})\n\
+snippet llAttachToAvatar\n\
+	llAttachToAvatar(${1:integer attach_point});\n\
+snippet llAttachToAvatarTemp\n\
+	llAttachToAvatarTemp(${1:integer attach_point});\n\
+snippet llAvatarOnLinkSitTarget\n\
+	llAvatarOnLinkSitTarget(${1:integer link})\n\
+snippet llAvatarOnSitTarget\n\
+	llAvatarOnSitTarget()\n\
+snippet llAxes2Rot\n\
+	llAxes2Rot(${1:vector fwd}, ${2:vector left}, ${3:vector up})\n\
+snippet llAxisAngle2Rot\n\
+	llAxisAngle2Rot(${1:vector axis}, ${2:float angle})\n\
+snippet llBase64ToInteger\n\
+	llBase64ToInteger(${1:string str})\n\
+snippet llBase64ToString\n\
+	llBase64ToString(${1:string str})\n\
+snippet llBreakAllLinks\n\
+	llBreakAllLinks();\n\
+snippet llBreakLink\n\
+	llBreakLink(${1:integer link});\n\
+snippet llCastRay\n\
+	llCastRay(${1:vector start}, ${2:vector end}, ${3:list options});\n\
+snippet llCeil\n\
+	llCeil(${1:float val})\n\
+snippet llClearCameraParams\n\
+	llClearCameraParams();\n\
+snippet llClearLinkMedia\n\
+	llClearLinkMedia(${1:integer link}, ${2:integer face});\n\
+snippet llClearPrimMedia\n\
+	llClearPrimMedia(${1:integer face});\n\
+snippet llCloseRemoteDataChannel\n\
+	llCloseRemoteDataChannel(${1:key channel});\n\
+snippet llCollisionFilter\n\
+	llCollisionFilter(${1:string name}, ${2:key id}, ${3:integer accept});\n\
+snippet llCollisionSound\n\
+	llCollisionSound(${1:string impact_sound}, ${2:float impact_volume});\n\
+snippet llCos\n\
+	llCos(${1:float theta})\n\
+snippet llCreateCharacter\n\
+	llCreateCharacter(${1:list options});\n\
+snippet llCreateKeyValue\n\
+	llCreateKeyValue(${1:string k})\n\
+snippet llCreateLink\n\
+	llCreateLink(${1:key target}, ${2:integer parent});\n\
+snippet llCSV2List\n\
+	llCSV2List(${1:string src})\n\
+snippet llDataSizeKeyValue\n\
+	llDataSizeKeyValue()\n\
+snippet llDeleteCharacter\n\
+	llDeleteCharacter();\n\
+snippet llDeleteKeyValue\n\
+	llDeleteKeyValue(${1:string k})\n\
+snippet llDeleteSubList\n\
+	llDeleteSubList(${1:list src}, ${2:integer start}, ${3:integer end})\n\
+snippet llDeleteSubString\n\
+	llDeleteSubString(${1:string src}, ${2:integer start}, ${3:integer end})\n\
+snippet llDetachFromAvatar\n\
+	llDetachFromAvatar();\n\
+snippet llDetectedGrab\n\
+	llDetectedGrab(${1:integer number})\n\
+snippet llDetectedGroup\n\
+	llDetectedGroup(${1:integer number})\n\
+snippet llDetectedKey\n\
+	llDetectedKey(${1:integer number})\n\
+snippet llDetectedLinkNumber\n\
+	llDetectedLinkNumber(${1:integer number})\n\
+snippet llDetectedName\n\
+	llDetectedName(${1:integer number})\n\
+snippet llDetectedOwner\n\
+	llDetectedOwner(${1:integer number})\n\
+snippet llDetectedPos\n\
+	llDetectedPosl(${1:integer number})\n\
+snippet llDetectedRot\n\
+	llDetectedRot(${1:integer number})\n\
+snippet llDetectedTouchBinormal\n\
+	llDetectedTouchBinormal(${1:integer number})\n\
+snippet llDetectedTouchFace\n\
+	llDetectedTouchFace(${1:integer number})\n\
+snippet llDetectedTouchNormal\n\
+	llDetectedTouchNormal(${1:integer number})\n\
+snippet llDetectedTouchPos\n\
+	llDetectedTouchPos(${1:integer number})\n\
+snippet llDetectedTouchST\n\
+	llDetectedTouchST(${1:integer number})\n\
+snippet llDetectedTouchUV\n\
+	llDetectedTouchUV(${1:integer number})\n\
+snippet llDetectedType\n\
+	llDetectedType(${1:integer number})\n\
+snippet llDetectedVel\n\
+	llDetectedVel(${1:integer number})\n\
+snippet llDialog\n\
+	llDialog(${1:key agent}, ${2:string message}, ${3:list buttons}, ${4:integer channel});\n\
+snippet llDie\n\
+	llDie();\n\
+snippet llDumpList2String\n\
+	llDumpList2String(${1:list src}, ${2:string separator})\n\
+snippet llEdgeOfWorld\n\
+	llEdgeOfWorld(${1:vector pos}, ${2:vector dir})\n\
+snippet llEjectFromLand\n\
+	llEjectFromLand(${1:key agent});\n\
+snippet llEmail\n\
+	llEmail(${1:string address}, ${2:string subject}, ${3:string message});\n\
+snippet llEscapeURL\n\
+	llEscapeURL(${1:string url})\n\
+snippet llEuler2Rot\n\
+	llEuler2Rot(${1:vector v})\n\
+snippet llExecCharacterCmd\n\
+	llExecCharacterCmd(${1:integer command}, ${2:list options});\n\
+snippet llEvade\n\
+	llEvade(${1:key target}, ${2:list options});\n\
+snippet llFabs\n\
+	llFabs(${1:float val})\n\
+snippet llFleeFrom\n\
+	llFleeFrom(${1:vector position}, ${2:float distance}, ${3:list options});\n\
+snippet llFloor\n\
+	llFloor(${1:float val})\n\
+snippet llForceMouselook\n\
+	llForceMouselook(${1:integer mouselook});\n\
+snippet llFrand\n\
+	llFrand(${1:float mag})\n\
+snippet llGenerateKey\n\
+	llGenerateKey()\n\
+snippet llGetAccel\n\
+	llGetAccel()\n\
+snippet llGetAgentInfo\n\
+	llGetAgentInfo(${1:key id})\n\
+snippet llGetAgentLanguage\n\
+	llGetAgentLanguage(${1:key agent})\n\
+snippet llGetAgentList\n\
+	llGetAgentList(${1:integer scope}, ${2:list options})\n\
+snippet llGetAgentSize\n\
+	llGetAgentSize(${1:key agent})\n\
+snippet llGetAlpha\n\
+	llGetAlpha(${1:integer face})\n\
+snippet llGetAndResetTime\n\
+	llGetAndResetTime()\n\
+snippet llGetAnimation\n\
+	llGetAnimation(${1:key id})\n\
+snippet llGetAnimationList\n\
+	llGetAnimationList(${1:key agent})\n\
+snippet llGetAnimationOverride\n\
+	llGetAnimationOverride(${1:string anim_state})\n\
+snippet llGetAttached\n\
+	llGetAttached()\n\
+snippet llGetBoundingBox\n\
+	llGetBoundingBox(${1:key object})\n\
+snippet llGetCameraPos\n\
+	llGetCameraPos()\n\
+snippet llGetCameraRot\n\
+	llGetCameraRot()\n\
+snippet llGetCenterOfMass\n\
+	llGetCenterOfMass()\n\
+snippet llGetClosestNavPoint\n\
+	llGetClosestNavPoint(${1:vector point}, ${2:list options})\n\
+snippet llGetColor\n\
+	llGetColor(${1:integer face})\n\
+snippet llGetCreator\n\
+	llGetCreator()\n\
+snippet llGetDate\n\
+	llGetDate()\n\
+snippet llGetDisplayName\n\
+	llGetDisplayName(${1:key id})\n\
+snippet llGetEnergy\n\
+	llGetEnergy()\n\
+snippet llGetEnv\n\
+	llGetEnv(${1:string name})\n\
+snippet llGetExperienceDetails\n\
+	llGetExperienceDetails(${1:key experience_id})\n\
+snippet llGetExperienceErrorMessage\n\
+	llGetExperienceErrorMessage(${1:integer error})\n\
+snippet llGetForce\n\
+	llGetForce()\n\
+snippet llGetFreeMemory\n\
+	llGetFreeMemory()\n\
+snippet llGetFreeURLs\n\
+	llGetFreeURLs()\n\
+snippet llGetGeometricCenter\n\
+	llGetGeometricCenter()\n\
+snippet llGetGMTclock\n\
+	llGetGMTclock()\n\
+snippet llGetHTTPHeader\n\
+	llGetHTTPHeader(${1:key request_id}, ${2:string header})\n\
+snippet llGetInventoryCreator\n\
+	llGetInventoryCreator(${1:string item})\n\
+snippet llGetInventoryKey\n\
+	llGetInventoryKey(${1:string name})\n\
+snippet llGetInventoryName\n\
+	llGetInventoryName(${1:integer type}, ${2:integer number})\n\
+snippet llGetInventoryNumber\n\
+	llGetInventoryNumber(${1:integer type})\n\
+snippet llGetInventoryPermMask\n\
+	llGetInventoryPermMask(${1:string item}, ${2:integer mask})\n\
+snippet llGetInventoryType\n\
+	llGetInventoryType(${1:string name})\n\
+snippet llGetKey\n\
+	llGetKey()\n\
+snippet llGetLandOwnerAt\n\
+	llGetLandOwnerAt(${1:vector pos})\n\
+snippet llGetLinkKey\n\
+	llGetLinkKey(${1:integer link})\n\
+snippet llGetLinkMedia\n\
+	llGetLinkMedia(${1:integer link}, ${2:integer face}, ${3:list params})\n\
+snippet llGetLinkName\n\
+	llGetLinkName(${1:integer link})\n\
+snippet llGetLinkNumber\n\
+	llGetLinkNumber()\n\
+snippet llGetLinkNumberOfSides\n\
+	llGetLinkNumberOfSides(${1:integer link})\n\
+snippet llGetLinkPrimitiveParams\n\
+	llGetLinkPrimitiveParams(${1:integer link}, ${2:list params})\n\
+snippet llGetListEntryType\n\
+	llGetListEntryType(${1:list src}, ${2:integer index})\n\
+snippet llGetListLength\n\
+	llGetListLength(${1:list src})\n\
+snippet llGetLocalPos\n\
+	llGetLocalPos()\n\
+snippet llGetLocalRot\n\
+	llGetLocalRot()\n\
+snippet llGetMass\n\
+	llGetMass()\n\
+snippet llGetMassMKS\n\
+	llGetMassMKS()\n\
+snippet llGetMaxScaleFactor\n\
+	llGetMaxScaleFactor()\n\
+snippet llGetMemoryLimit\n\
+	llGetMemoryLimit()\n\
+snippet llGetMinScaleFactor\n\
+	llGetMinScaleFactor()\n\
+snippet llGetNextEmail\n\
+	llGetNextEmail(${1:string address}, ${2:string subject});\n\
+snippet llGetNotecardLine\n\
+	llGetNotecardLine(${1:string name}, ${2:integer line})\n\
+snippet llGetNumberOfNotecardLines\n\
+	llGetNumberOfNotecardLines(${1:string name})\n\
+snippet llGetNumberOfPrims\n\
+	llGetNumberOfPrims()\n\
+snippet llGetNumberOfSides\n\
+	llGetNumberOfSides()\n\
+snippet llGetObjectDesc\n\
+	llGetObjectDesc()\n\
+snippet llGetObjectDetails\n\
+	llGetObjectDetails(${1:key id}, ${2:list params})\n\
+snippet llGetObjectMass\n\
+	llGetObjectMass(${1:key id})\n\
+snippet llGetObjectName\n\
+	llGetObjectName()\n\
+snippet llGetObjectPermMask\n\
+	llGetObjectPermMask(${1:integer mask})\n\
+snippet llGetObjectPrimCount\n\
+	llGetObjectPrimCount(${1:key prim})\n\
+snippet llGetOmega\n\
+	llGetOmega()\n\
+snippet llGetOwner\n\
+	llGetOwner()\n\
+snippet llGetOwnerKey\n\
+	llGetOwnerKey(${1:key id})\n\
+snippet llGetParcelDetails\n\
+	llGetParcelDetails(${1:vector pos}, ${2:list params})\n\
+snippet llGetParcelFlags\n\
+	llGetParcelFlags(${1:vector pos})\n\
+snippet llGetParcelMaxPrims\n\
+	llGetParcelMaxPrims(${1:vector pos}, ${2:integer sim_wide})\n\
+snippet llGetParcelMusicURL\n\
+	llGetParcelMusicURL()\n\
+snippet llGetParcelPrimCount\n\
+	llGetParcelPrimCount(${1:vector pos}, ${2:integer category}, ${3:integer sim_wide})\n\
+snippet llGetParcelPrimOwners\n\
+	llGetParcelPrimOwners(${1:vector pos})\n\
+snippet llGetPermissions\n\
+	llGetPermissions()\n\
+snippet llGetPermissionsKey\n\
+	llGetPermissionsKey()\n\
+snippet llGetPhysicsMaterial\n\
+	llGetPhysicsMaterial()\n\
+snippet llGetPos\n\
+	llGetPos()\n\
+snippet llGetPrimitiveParams\n\
+	llGetPrimitiveParams(${1:list params})\n\
+snippet llGetPrimMediaParams\n\
+	llGetPrimMediaParams(${1:integer face}, ${2:list params})\n\
+snippet llGetRegionAgentCount\n\
+	llGetRegionAgentCount()\n\
+snippet llGetRegionCorner\n\
+	llGetRegionCorner()\n\
+snippet llGetRegionFlags\n\
+	llGetRegionFlags()\n\
+snippet llGetRegionFPS\n\
+	llGetRegionFPS()\n\
+snippet llGetRegionName\n\
+	llGetRegionName()\n\
+snippet llGetRegionTimeDilation\n\
+	llGetRegionTimeDilation()\n\
+snippet llGetRootPosition\n\
+	llGetRootPosition()\n\
+snippet llGetRootRotation\n\
+	llGetRootRotation()\n\
+snippet llGetRot\n\
+	llGetRot()\n\
+snippet llGetScale\n\
+	llGetScale()\n\
+snippet llGetScriptName\n\
+	llGetScriptName()\n\
+snippet llGetScriptState\n\
+	llGetScriptState(${1:string script})\n\
+snippet llGetSimStats\n\
+	llGetSimStats(${1:integer stat_type})\n\
+snippet llGetSimulatorHostname\n\
+	llGetSimulatorHostname()\n\
+snippet llGetSPMaxMemory\n\
+	llGetSPMaxMemory()\n\
+snippet llGetStartParameter\n\
+	llGetStartParameter()\n\
+snippet llGetStaticPath\n\
+	llGetStaticPath(${1:vector start}, ${2:vector end}, ${3:float radius}, ${4:list params})\n\
+snippet llGetStatus\n\
+	llGetStatus(${1:integer status})\n\
+snippet llGetSubString\n\
+	llGetSubString(${1:string src}, ${2:integer start}, ${3:integer end})\n\
+snippet llGetSunDirection\n\
+	llGetSunDirection()\n\
+snippet llGetTexture\n\
+	llGetTexture(${1:integer face})\n\
+snippet llGetTextureOffset\n\
+	llGetTextureOffset(${1:integer face})\n\
+snippet llGetTextureRot\n\
+	llGetTextureRot(${1:integer face})\n\
+snippet llGetTextureScale\n\
+	llGetTextureScale(${1:integer face})\n\
+snippet llGetTime\n\
+	llGetTime()\n\
+snippet llGetTimeOfDay\n\
+	llGetTimeOfDay()\n\
+snippet llGetTimestamp\n\
+	llGetTimestamp()\n\
+snippet llGetTorque\n\
+	llGetTorque()\n\
+snippet llGetUnixTime\n\
+	llGetUnixTime()\n\
+snippet llGetUsedMemory\n\
+	llGetUsedMemory()\n\
+snippet llGetUsername\n\
+	llGetUsername(${1:key id})\n\
+snippet llGetVel\n\
+	llGetVel()\n\
+snippet llGetWallclock\n\
+	llGetWallclock()\n\
+snippet llGiveInventory\n\
+	llGiveInventory(${1:key destination}, ${2:string inventory});\n\
+snippet llGiveInventoryList\n\
+	llGiveInventoryList(${1:key target}, ${2:string folder}, ${3:list inventory});\n\
+snippet llGiveMoney\n\
+	llGiveMoney(${1:key destination}, ${2:integer amount})\n\
+snippet llGround\n\
+	llGround(${1:vector offset})\n\
+snippet llGroundContour\n\
+	llGroundContour(${1:vector offset})\n\
+snippet llGroundNormal\n\
+	llGroundNormal(${1:vector offset})\n\
+snippet llGroundRepel\n\
+	llGroundRepel(${1:float height}, ${2:integer water}, ${3:float tau});\n\
+snippet llGroundSlope\n\
+	llGroundSlope(${1:vector offset})\n\
+snippet llHTTPRequest\n\
+	llHTTPRequest(${1:string url}, ${2:list parameters}, ${3:string body})\n\
+snippet llHTTPResponse\n\
+	llHTTPResponse(${1:key request_id}, ${2:integer status}, ${3:string body});\n\
+snippet llInsertString\n\
+	llInsertString(${1:string dst}, ${2:integer pos}, ${3:string src})\n\
+snippet llInstantMessage\n\
+	llInstantMessage(${1:key user}, ${2:string message});\n\
+snippet llIntegerToBase64\n\
+	llIntegerToBase64(${1:integer number})\n\
+snippet llJson2List\n\
+	llJson2List(${1:string json})\n\
+snippet llJsonGetValue\n\
+	llJsonGetValue(${1:string json}, ${2:list specifiers})\n\
+snippet llJsonSetValue\n\
+	llJsonSetValue(${1:string json}, ${2:list specifiers}, ${3:string newValue})\n\
+snippet llJsonValueType\n\
+	llJsonValueType(${1:string json}, ${2:list specifiers})\n\
+snippet llKey2Name\n\
+	llKey2Name(${1:key id})\n\
+snippet llKeyCountKeyValue\n\
+	llKeyCountKeyValue()\n\
+snippet llKeysKeyValue\n\
+	llKeysKeyValue(${1:integer first}, ${2:integer count})\n\
+snippet llLinkParticleSystem\n\
+	llLinkParticleSystem(${1:integer link}, ${2:list rules});\n\
+snippet llLinkSitTarget\n\
+	llLinkSitTarget(${1:integer link}, ${2:vector offset}, ${3:rotation rot});\n\
+snippet llList2CSV\n\
+	llList2CSV(${1:list src})\n\
+snippet llList2Float\n\
+	llList2Float(${1:list src}, ${2:integer index})\n\
+snippet llList2Integer\n\
+	llList2Integer(${1:list src}, ${2:integer index})\n\
+snippet llList2Json\n\
+	llList2Json(${1:string type}, ${2:list values})\n\
+snippet llList2Key\n\
+	llList2Key(${1:list src}, ${2:integer index})\n\
+snippet llList2List\n\
+	llList2List(${1:list src}, ${2:integer start}, ${3:integer end})\n\
+snippet llList2ListStrided\n\
+	llList2ListStrided(${1:list src}, ${2:integer start}, ${3:integer end}, ${4:integer stride})\n\
+snippet llList2Rot\n\
+	llList2Rot(${1:list src}, ${2:integer index})\n\
+snippet llList2String\n\
+	llList2String(${1:list src}, ${2:integer index})\n\
+snippet llList2Vector\n\
+	llList2Vector(${1:list src}, ${2:integer index})\n\
+snippet llListen\n\
+	llListen(${1:integer channel}, ${2:string name}, ${3:key id}, ${4:string msg})\n\
+snippet llListenControl\n\
+	llListenControl(${1:integer handle}, ${2:integer active});\n\
+snippet llListenRemove\n\
+	llListenRemove(${1:integer handle});\n\
+snippet llListFindList\n\
+	llListFindList(${1:list src}, ${2:list test})\n\
+snippet llListInsertList\n\
+	llListInsertList(${1:list dest}, ${2:list src}, ${3:integer start})\n\
+snippet llListRandomize\n\
+	llListRandomize(${1:list src}, ${2:integer stride})\n\
+snippet llListReplaceList\n\
+	llListReplaceList(${1:list dest}, ${2:list src}, ${3:integer start}, ${4:integer end})\n\
+snippet llListSort\n\
+	llListSort(${1:list src}, ${2:integer stride}, ${3:integer ascending})\n\
+snippet llListStatistics\n\
+	llListStatistics(${1:integer operation}, ${2:list src})\n\
+snippet llLoadURL\n\
+	llLoadURL(${1:key agent}, ${2:string message}, ${3:string url});\n\
+snippet llLog\n\
+	llLog(${1:float val})\n\
+snippet llLog10\n\
+	llLog10(${1:float val})\n\
+snippet llLookAt\n\
+	llLookAt(${1:vector target}, ${2:float strength}, ${3:float damping});\n\
+snippet llLoopSound\n\
+	llLoopSound(${1:string sound}, ${2:float volume});\n\
+snippet llLoopSoundMaster\n\
+	llLoopSoundMaster(${1:string sound}, ${2:float volume});\n\
+snippet llLoopSoundSlave\n\
+	llLoopSoundSlave(${1:string sound}, ${2:float volume});\n\
+snippet llManageEstateAccess\n\
+	llManageEstateAccess(${1:integer action}, ${2:key agent})\n\
+snippet llMapDestination\n\
+	llMapDestination(${1:string simname}, ${2:vector pos}, ${3:vector look_at});\n\
+snippet llMD5String\n\
+	llMD5String(${1:string src}, ${2:integer nonce})\n\
+snippet llMessageLinked\n\
+	llMessageLinked(${1:integer link}, ${2:integer num}, ${3:string str}, ${4:key id});\n\
+snippet llMinEventDelay\n\
+	llMinEventDelay(${1:float delay});\n\
+snippet llModifyLand\n\
+	llModifyLand(${1:integer action}, ${2:integer brush});\n\
+snippet llModPow\n\
+	llModPow(${1:integer a}, ${2:integer b}, ${3:integer c})\n\
+snippet llMoveToTarget\n\
+	llMoveToTarget(${1:vector target}, ${2:float tau});\n\
+snippet llNavigateTo\n\
+	llNavigateTo(${1:vector pos}, ${2:list options});\n\
+snippet llOffsetTexture\n\
+	llOffsetTexture(${1:float u}, ${2:float v}, ${3:integer face});\n\
+snippet llOpenRemoteDataChannel\n\
+	llOpenRemoteDataChannel();\n\
+snippet llOverMyLand\n\
+	llOverMyLand(${1:key id})\n\
+snippet llOwnerSay\n\
+	llOwnerSay(${1:string msg});\n\
+snippet llParcelMediaCommandList\n\
+	llParcelMediaCommandList(${1:list commandList});\n\
+snippet llParcelMediaQuery\n\
+	llParcelMediaQuery(${1:list query})\n\
+snippet llParseString2List\n\
+	llParseString2List(${1:string src}, ${2:list separators}, ${3:list spacers})\n\
+snippet llParseStringKeepNulls\n\
+	llParseStringKeepNulls(${1:string src}, ${2:list separators}, ${3:list spacers})\n\
+snippet llParticleSystem\n\
+	llParticleSystem(${1:list rules});\n\
+snippet llPassCollisions\n\
+	llPassCollisions(${1:integer pass});\n\
+snippet llPassTouches\n\
+	llPassTouches(${1:integer pass});\n\
+snippet llPatrolPoints\n\
+	llPatrolPoints(${1:list patrolPoints}, ${2:list options});\n\
+snippet llPlaySound\n\
+	llPlaySound(${1:string sound}, ${2:float volume});\n\
+snippet llPlaySoundSlave\n\
+	llPlaySoundSlave(${1:string sound}, ${2:float volume});\n\
+snippet llPow\n\
+	llPow(${1:float base}, ${2:float exponent})\n\
+snippet llPreloadSound\n\
+	llPreloadSound(${1:string sound});\n\
+snippet llPursue\n\
+	llPursue(${1:key target}, ${2:list options});\n\
+snippet llPushObject\n\
+	llPushObject(${1:key target}, ${2:vector impulse}, ${3:vector ang_impulse}, ${4:integer local});\n\
+snippet llReadKeyValue\n\
+	llReadKeyValue(${1:string k})\n\
+snippet llRegionSay\n\
+	llRegionSay(${1:integer channel}, ${2:string msg});\n\
+snippet llRegionSayTo\n\
+	llRegionSayTo(${1:key target}, ${2:integer channel}, ${3:string msg});\n\
+snippet llReleaseControls\n\
+	llReleaseControls();\n\
+snippet llReleaseURL\n\
+	llReleaseURL(${1:string url});\n\
+snippet llRemoteDataReply\n\
+	llRemoteDataReply(${1:key channel}, ${2:key message_id}, ${3:string sdata}, ${4:integer idata});\n\
+snippet llRemoteLoadScriptPin\n\
+	llRemoteLoadScriptPin(${1:key target}, ${2:string name}, ${3:integer pin}, ${4:integer running}, ${5:integer start_param});\n\
+snippet llRemoveFromLandBanList\n\
+	llRemoveFromLandBanList(${1:key agent});\n\
+snippet llRemoveFromLandPassList\n\
+	llRemoveFromLandPassList(${1:key agent});\n\
+snippet llRemoveInventory\n\
+	llRemoveInventory(${1:string item});\n\
+snippet llRemoveVehicleFlags\n\
+	llRemoveVehicleFlags(${1:integer flags});\n\
+snippet llRequestAgentData\n\
+	llRequestAgentData(${1:key id}, ${2:integer data})\n\
+snippet llRequestDisplayName\n\
+	llRequestDisplayName(${1:key id})\n\
+snippet llRequestExperiencePermissions\n\
+	llRequestExperiencePermissions(${1:key agent}, ${2:string name})\n\
+snippet llRequestInventoryData\n\
+	llRequestInventoryData(${1:string name})\n\
+snippet llRequestPermissions\n\
+	llRequestPermissions(${1:key agent}, ${2:integer permissions})\n\
+snippet llRequestSecureURL\n\
+	llRequestSecureURL()\n\
+snippet llRequestSimulatorData\n\
+	llRequestSimulatorData(${1:string region}, ${2:integer data})\n\
+snippet llRequestURL\n\
+	llRequestURL()\n\
+snippet llRequestUsername\n\
+	llRequestUsername(${1:key id})\n\
+snippet llResetAnimationOverride\n\
+	llResetAnimationOverride(${1:string anim_state});\n\
+snippet llResetLandBanList\n\
+	llResetLandBanList();\n\
+snippet llResetLandPassList\n\
+	llResetLandPassList();\n\
+snippet llResetOtherScript\n\
+	llResetOtherScript(${1:string name});\n\
+snippet llResetScript\n\
+	llResetScript();\n\
+snippet llResetTime\n\
+	llResetTime();\n\
+snippet llReturnObjectsByID\n\
+	llReturnObjectsByID(${1:list objects})\n\
+snippet llReturnObjectsByOwner\n\
+	llReturnObjectsByOwner(${1:key owner}, ${2:integer scope})\n\
+snippet llRezAtRoot\n\
+	llRezAtRoot(${1:string inventory}, ${2:vector position}, ${3:vector velocity}, ${4:rotation rot}, ${5:integer param});\n\
+snippet llRezObject\n\
+	llRezObject(${1:string inventory}, ${2:vector pos}, ${3:vector vel}, ${4:rotation rot}, ${5:integer param});\n\
+snippet llRot2Angle\n\
+	llRot2Angle(${1:rotation rot})\n\
+snippet llRot2Axis\n\
+	llRot2Axis(${1:rotation rot})\n\
+snippet llRot2Euler\n\
+	llRot2Euler(${1:rotation quat})\n\
+snippet llRot2Fwd\n\
+	llRot2Fwd(${1:rotation q})\n\
+snippet llRot2Left\n\
+	llRot2Left(${1:rotation q})\n\
+snippet llRot2Up\n\
+	llRot2Up(${1:rotation q})\n\
+snippet llRotateTexture\n\
+	llRotateTexture(${1:float angle}, ${2:integer face});\n\
+snippet llRotBetween\n\
+	llRotBetween(${1:vector start}, ${2:vector end})\n\
+snippet llRotLookAt\n\
+	llRotLookAt(${1:rotation target_direction}, ${2:float strength}, ${3:float damping});\n\
+snippet llRotTarget\n\
+	llRotTarget(${1:rotation rot}, ${2:float error})\n\
+snippet llRotTargetRemove\n\
+	llRotTargetRemove(${1:integer handle});\n\
+snippet llRound\n\
+	llRound(${1:float val})\n\
+snippet llSameGroup\n\
+	llSameGroup(${1:key group})\n\
+snippet llSay\n\
+	llSay(${1:integer channel}, ${2:string msg});\n\
+snippet llScaleByFactor\n\
+	llScaleByFactor(${1:float scaling_factor})\n\
+snippet llScaleTexture\n\
+	llScaleTexture(${1:float u}, ${2:float v}, ${3:integer face});\n\
+snippet llScriptDanger\n\
+	llScriptDanger(${1:vector pos})\n\
+snippet llScriptProfiler\n\
+	llScriptProfiler(${1:integer flags});\n\
+snippet llSendRemoteData\n\
+	llSendRemoteData(${1:key channel}, ${2:string dest}, ${3:integer idata}, ${4:string sdata})\n\
+snippet llSensor\n\
+	llSensor(${1:string name}, ${2:key id}, ${3:integer type}, ${4:float range}, ${5:float arc});\n\
+snippet llSensorRepeat\n\
+	llSensorRepeat(${1:string name}, ${2:key id}, ${3:integer type}, ${4:float range}, ${5:float arc}, ${6:float rate});\n\
+snippet llSetAlpha\n\
+	llSetAlpha(${1:float alpha}, ${2:integer face});\n\
+snippet llSetAngularVelocity\n\
+	llSetAngularVelocity(${1:vector force}, ${2:integer local});\n\
+snippet llSetAnimationOverride\n\
+	llSetAnimationOverride(${1:string anim_state}, ${2:string anim})\n\
+snippet llSetBuoyancy\n\
+	llSetBuoyancy(${1:float buoyancy});\n\
+snippet llSetCameraAtOffset\n\
+	llSetCameraAtOffset(${1:vector offset});\n\
+snippet llSetCameraEyeOffset\n\
+	llSetCameraEyeOffset(${1:vector offset});\n\
+snippet llSetCameraParams\n\
+	llSetCameraParams(${1:list rules});\n\
+snippet llSetClickAction\n\
+	llSetClickAction(${1:integer action});\n\
+snippet llSetColor\n\
+	llSetColor(${1:vector color}, ${2:integer face});\n\
+snippet llSetContentType\n\
+	llSetContentType(${1:key request_id}, ${2:integer content_type});\n\
+snippet llSetDamage\n\
+	llSetDamage(${1:float damage});\n\
+snippet llSetForce\n\
+	llSetForce(${1:vector force}, ${2:integer local});\n\
+snippet llSetForceAndTorque\n\
+	llSetForceAndTorque(${1:vector force}, ${2:vector torque}, ${3:integer local});\n\
+snippet llSetHoverHeight\n\
+	llSetHoverHeight(${1:float height}, ${2:integer water}, ${3:float tau});\n\
+snippet llSetKeyframedMotion\n\
+	llSetKeyframedMotion(${1:list keyframes}, ${2:list options});\n\
+snippet llSetLinkAlpha\n\
+	llSetLinkAlpha(${1:integer link}, ${2:float alpha}, ${3:integer face});\n\
+snippet llSetLinkCamera\n\
+	llSetLinkCamera(${1:integer link}, ${2:vector eye}, ${3:vector at});\n\
+snippet llSetLinkColor\n\
+	llSetLinkColor(${1:integer link}, ${2:vector color}, ${3:integer face});\n\
+snippet llSetLinkMedia\n\
+	llSetLinkMedia(${1:integer link}, ${2:integer face}, ${3:list params});\n\
+snippet llSetLinkPrimitiveParams\n\
+	llSetLinkPrimitiveParams(${1:integer link}, ${2:list rules});\n\
+snippet llSetLinkPrimitiveParamsFast\n\
+	llSetLinkPrimitiveParamsFast(${1:integer link}, ${2:list rules});\n\
+snippet llSetLinkTexture\n\
+	llSetLinkTexture(${1:integer link}, ${2:string texture}, ${3:integer face});\n\
+snippet llSetLinkTextureAnim\n\
+	llSetLinkTextureAnim(${1:integer link}, ${2:integer mode}, ${3:integer face}, ${4:integer sizex}, ${5:integer sizey}, ${6:float start}, ${7:float length}, ${8:float rate});\n\
+snippet llSetLocalRot\n\
+	llSetLocalRot(${1:rotation rot});\n\
+snippet llSetMemoryLimit\n\
+	llSetMemoryLimit(${1:integer limit})\n\
+snippet llSetObjectDesc\n\
+	llSetObjectDesc(${1:string description});\n\
+snippet llSetObjectName\n\
+	llSetObjectName(${1:string name});\n\
+snippet llSetParcelMusicURL\n\
+	llSetParcelMusicURL(${1:string url});\n\
+snippet llSetPayPrice\n\
+	llSetPayPrice(${1:integer price}, [${2:integer price_button_a}, ${3:integer price_button_b}, ${4:integer price_button_c}, ${5:integer price_button_d}]);\n\
+snippet llSetPhysicsMaterial\n\
+	llSetPhysicsMaterial(${1:integer mask}, ${2:float gravity_multiplier}, ${3:float restitution}, ${4:float friction}, ${5:float density});\n\
+snippet llSetPos\n\
+	llSetPos(${1:vector pos});\n\
+snippet llSetPrimitiveParams\n\
+	llSetPrimitiveParams(${1:list rules});\n\
+snippet llSetPrimMediaParams\n\
+	llSetPrimMediaParams(${1:integer face}, ${2:list params});\n\
+snippet llSetRegionPos\n\
+	llSetRegionPos(${1:vector position})\n\
+snippet llSetRemoteScriptAccessPin\n\
+	llSetRemoteScriptAccessPin(${1:integer pin});\n\
+snippet llSetRot\n\
+	llSetRot(${1:rotation rot});\n\
+snippet llSetScale\n\
+	llSetScale(${1:vector size});\n\
+snippet llSetScriptState\n\
+	llSetScriptState(${1:string name}, ${2:integer run});\n\
+snippet llSetSitText\n\
+	llSetSitText(${1:string text});\n\
+snippet llSetSoundQueueing\n\
+	llSetSoundQueueing(${1:integer queue});\n\
+snippet llSetSoundRadius\n\
+	llSetSoundRadius(${1:float radius});\n\
+snippet llSetStatus\n\
+	llSetStatus(${1:integer status}, ${2:integer value});\n\
+snippet llSetText\n\
+	llSetText(${1:string text}, ${2:vector color}, ${3:float alpha});\n\
+snippet llSetTexture\n\
+	llSetTexture(${1:string texture}, ${2:integer face});\n\
+snippet llSetTextureAnim\n\
+	llSetTextureAnim(${1:integer mode}, ${2:integer face}, ${3:integer sizex}, ${4:integer sizey}, ${5:float start}, ${6:float length}, ${7:float rate});\n\
+snippet llSetTimerEvent\n\
+	llSetTimerEvent(${1:float sec});\n\
+snippet llSetTorque\n\
+	llSetTorque(${1:vector torque}, ${2:integer local});\n\
+snippet llSetTouchText\n\
+	llSetTouchText(${1:string text});\n\
+snippet llSetVehicleFlags\n\
+	llSetVehicleFlags(${1:integer flags});\n\
+snippet llSetVehicleFloatParam\n\
+	llSetVehicleFloatParam(${1:integer param}, ${2:float value});\n\
+snippet llSetVehicleRotationParam\n\
+	llSetVehicleRotationParam(${1:integer param}, ${2:rotation rot});\n\
+snippet llSetVehicleType\n\
+	llSetVehicleType(${1:integer type});\n\
+snippet llSetVehicleVectorParam\n\
+	llSetVehicleVectorParam(${1:integer param}, ${2:vector vec});\n\
+snippet llSetVelocity\n\
+	llSetVelocity(${1:vector force}, ${2:integer local});\n\
+snippet llSHA1String\n\
+	llSHA1String(${1:string src})\n\
+snippet llShout\n\
+	llShout(${1:integer channel}, ${2:string msg});\n\
+snippet llSin\n\
+	llSin(${1:float theta})\n\
+snippet llSitTarget\n\
+	llSitTarget(${1:vector offset}, ${2:rotation rot});\n\
+snippet llSleep\n\
+	llSleep(${1:float sec});\n\
+snippet llSqrt\n\
+	llSqrt(${1:float val})\n\
+snippet llStartAnimation\n\
+	llStartAnimation(${1:string anim});\n\
+snippet llStopAnimation\n\
+	llStopAnimation(${1:string anim});\n\
+snippet llStopHover\n\
+	llStopHover();\n\
+snippet llStopLookAt\n\
+	llStopLookAt();\n\
+snippet llStopMoveToTarget\n\
+	llStopMoveToTarget();\n\
+snippet llStopSound\n\
+	llStopSound();\n\
+snippet llStringLength\n\
+	llStringLength(${1:string str})\n\
+snippet llStringToBase64\n\
+	llStringToBase64(${1:string str})\n\
+snippet llStringTrim\n\
+	llStringTrim(${1:string src}, ${2:integer type})\n\
+snippet llSubStringIndex\n\
+	llSubStringIndex(${1:string source}, ${2:string pattern})\n\
+snippet llTakeControls\n\
+	llTakeControls(${1:integer controls}, ${2:integer accept}, ${3:integer pass_on});\n\
+snippet llTan\n\
+	llTan(${1:float theta})\n\
+snippet llTarget\n\
+	llTarget(${1:vector position}, ${2:float range})\n\
+snippet llTargetOmega\n\
+	llTargetOmega(${1:vector axis}, ${2:float spinrate}, ${3:float gain});\n\
+snippet llTargetRemove\n\
+	llTargetRemove(${1:integer handle});\n\
+snippet llTeleportAgent\n\
+	llTeleportAgent(${1:key agent}, ${2:string landmark}, ${3:vector position}, ${4:vector look_at});\n\
+snippet llTeleportAgentGlobalCoords\n\
+	llTeleportAgentGlobalCoords(${1:key agent}, ${2:vector global_coordinates}, ${3:vector region_coordinates}, ${4:vector look_at});\n\
+snippet llTeleportAgentHome\n\
+	llTeleportAgentHome(${1:key agent});\n\
+snippet llTextBox\n\
+	llTextBox(${1:key agent}, ${2:string message}, ${3:integer channel});\n\
+snippet llToLower\n\
+	llToLower(${1:string src})\n\
+snippet llToUpper\n\
+	llToUpper(${1:string src})\n\
+snippet llTransferLindenDollars\n\
+	llTransferLindenDollars(${1:key destination}, ${2:integer amount})\n\
+snippet llTriggerSound\n\
+	llTriggerSound(${1:string sound}, ${2:float volume});\n\
+snippet llTriggerSoundLimited\n\
+	llTriggerSoundLimited(${1:string sound}, ${2:float volume}, ${3:vector top_north_east}, ${4:vector bottom_south_west});\n\
+snippet llUnescapeURL\n\
+	llUnescapeURL(${1:string url})\n\
+snippet llUnSit\n\
+	llUnSit(${1:key id});\n\
+snippet llUpdateCharacter\n\
+	llUpdateCharacter(${1:list options})\n\
+snippet llUpdateKeyValue\n\
+	llUpdateKeyValue(${1:string k}, ${2:string v}, ${3:integer checked}, ${4:string ov})\n\
+snippet llVecDist\n\
+	llVecDist(${1:vector vec_a}, ${2:vector vec_b})\n\
+snippet llVecMag\n\
+	llVecMag(${1:vector vec})\n\
+snippet llVecNorm\n\
+	llVecNorm(${1:vector vec})\n\
+snippet llVolumeDetect\n\
+	llVolumeDetect(${1:integer detect});\n\
+snippet llWanderWithin\n\
+	llWanderWithin(${1:vector origin}, ${2:vector dist}, ${3:list options});\n\
+snippet llWater\n\
+	llWater(${1:vector offset});\n\
+snippet llWhisper\n\
+	llWhisper(${1:integer channel}, ${2:string msg});\n\
+snippet llWind\n\
+	llWind(${1:vector offset});\n\
+snippet llXorBase64\n\
+	llXorBase64(${1:string str1}, ${2:string str2})\n\
+snippet money\n\
+	money(${1:key id}, ${2:integer amount})\n\
+	{\n\
+		$0\n\
+	}\n\
+snippet object_rez\n\
+	object_rez(${1:key id})\n\
+	{\n\
+		$0\n\
+	}\n\
+snippet on_rez\n\
+	on_rez(${1:integer start_param})\n\
+	{\n\
+		$0\n\
+	}\n\
+snippet path_update\n\
+	path_update(${1:integer type}, ${2:list reserved})\n\
+	{\n\
+		$0\n\
+	}\n\
+snippet remote_data\n\
+	remote_data(${1:integer event_type}, ${2:key channel}, ${3:key message_id}, ${4:string sender}, ${5:integer idata}, ${6:string sdata})\n\
+	{\n\
+		$0\n\
+	}\n\
+snippet run_time_permissions\n\
+	run_time_permissions(${1:integer perm})\n\
+	{\n\
+		$0\n\
+	}\n\
+snippet sensor\n\
+	sensor(${1:integer index})\n\
+	{\n\
+		$0\n\
+	}\n\
+snippet state\n\
+	state ${1:name}\n\
+snippet touch\n\
+	touch(${1:integer index})\n\
+	{\n\
+		$0\n\
+	}\n\
+snippet touch_end\n\
+	touch_end(${1:integer index})\n\
+	{\n\
+		$0\n\
+	}\n\
+snippet touch_start\n\
+	touch_start(${1:integer index})\n\
+	{\n\
+		$0\n\
+	}\n\
+snippet transaction_result\n\
+	transaction_result(${1:key id}, ${2:integer success}, ${3:string data})\n\
+	{\n\
+		$0\n\
+	}\n\
+snippet while\n\
+	while (${1:condition})\n\
+	{\n\
+		$0\n\
+	}\n\
+";
+exports.scope = "lsl";
+
+});
+
+define("ace/snippets/lua",["require","exports","module"], function(require, exports, module) {
+
+
+exports.snippetText = "snippet #!\n\
+	#!/usr/bin/env lua\n\
+	$1\n\
+snippet local\n\
+	local ${1:x} = ${2:1}\n\
+snippet fun\n\
+	function ${1:fname}(${2:...})\n\
+		${3:-- body}\n\
+	end\n\
+snippet for\n\
+	for ${1:i}=${2:1},${3:10} do\n\
+		${4:print(i)}\n\
+	end\n\
+snippet forp\n\
+	for ${1:i},${2:v} in pairs(${3:table_name}) do\n\
+	   ${4:-- body}\n\
+	end\n\
+snippet fori\n\
+	for ${1:i},${2:v} in ipairs(${3:table_name}) do\n\
+	   ${4:-- body}\n\
+	end\n\
+";
+exports.scope = "lua";
+
+});
+
+define("ace/snippets/luapage",["require","exports","module"], function(require, exports, module) {
+
+
+exports.snippetText =undefined;
+exports.scope = "luapage";
+
+});
+
+define("ace/snippets/lucene",["require","exports","module"], function(require, exports, module) {
+
+
+exports.snippetText =undefined;
+exports.scope = "lucene";
+
+});
+
+define("ace/snippets/makefile",["require","exports","module"], function(require, exports, module) {
+
+
+exports.snippetText = "snippet ifeq\n\
+	ifeq (${1:cond0},${2:cond1})\n\
+		${3:code}\n\
+	endif\n\
+";
+exports.scope = "makefile";
+
+});
+
+define("ace/snippets/markdown",["require","exports","module"], function(require, exports, module) {
+
+
+exports.snippetText = "# Markdown\n\
+\n\
+# Includes octopress (http://octopress.org/) snippets\n\
+\n\
+snippet [\n\
+	[${1:text}](http://${2:address} \"${3:title}\")\n\
+snippet [*\n\
+	[${1:link}](${2:`@*`} \"${3:title}\")${4}\n\
+\n\
+snippet [:\n\
+	[${1:id}]: http://${2:url} \"${3:title}\"\n\
+snippet [:*\n\
+	[${1:id}]: ${2:`@*`} \"${3:title}\"\n\
+\n\
+snippet ![\n\
+	![${1:alttext}](${2:/images/image.jpg} \"${3:title}\")\n\
+snippet ![*\n\
+	![${1:alt}](${2:`@*`} \"${3:title}\")${4}\n\
+\n\
+snippet ![:\n\
+	![${1:id}]: ${2:url} \"${3:title}\"\n\
+snippet ![:*\n\
+	![${1:id}]: ${2:`@*`} \"${3:title}\"\n\
+\n\
+snippet ===\n\
+regex /^/=+/=*//\n\
+	${PREV_LINE/./=/g}\n\
+	\n\
+	${0}\n\
+snippet ---\n\
+regex /^/-+/-*//\n\
+	${PREV_LINE/./-/g}\n\
+	\n\
+	${0}\n\
+snippet blockquote\n\
+	{% blockquote %}\n\
+	${1:quote}\n\
+	{% endblockquote %}\n\
+\n\
+snippet blockquote-author\n\
+	{% blockquote ${1:author}, ${2:title} %}\n\
+	${3:quote}\n\
+	{% endblockquote %}\n\
+\n\
+snippet blockquote-link\n\
+	{% blockquote ${1:author} ${2:URL} ${3:link_text} %}\n\
+	${4:quote}\n\
+	{% endblockquote %}\n\
+\n\
+snippet bt-codeblock-short\n\
+	```\n\
+	${1:code_snippet}\n\
+	```\n\
+\n\
+snippet bt-codeblock-full\n\
+	``` ${1:language} ${2:title} ${3:URL} ${4:link_text}\n\
+	${5:code_snippet}\n\
+	```\n\
+\n\
+snippet codeblock-short\n\
+	{% codeblock %}\n\
+	${1:code_snippet}\n\
+	{% endcodeblock %}\n\
+\n\
+snippet codeblock-full\n\
+	{% codeblock ${1:title} lang:${2:language} ${3:URL} ${4:link_text} %}\n\
+	${5:code_snippet}\n\
+	{% endcodeblock %}\n\
+\n\
+snippet gist-full\n\
+	{% gist ${1:gist_id} ${2:filename} %}\n\
+\n\
+snippet gist-short\n\
+	{% gist ${1:gist_id} %}\n\
+\n\
+snippet img\n\
+	{% img ${1:class} ${2:URL} ${3:width} ${4:height} ${5:title_text} ${6:alt_text} %}\n\
+\n\
+snippet youtube\n\
+	{% youtube ${1:video_id} %}\n\
+\n\
+# The quote should appear only once in the text. It is inherently part of it.\n\
+# See http://octopress.org/docs/plugins/pullquote/ for more info.\n\
+\n\
+snippet pullquote\n\
+	{% pullquote %}\n\
+	${1:text} {\" ${2:quote} \"} ${3:text}\n\
+	{% endpullquote %}\n\
+";
+exports.scope = "markdown";
+
+});
+
+define("ace/snippets/mask",["require","exports","module"], function(require, exports, module) {
+
+
+exports.snippetText =undefined;
+exports.scope = "mask";
+
+});
+
+define("ace/snippets/matlab",["require","exports","module"], function(require, exports, module) {
+
+
+exports.snippetText =undefined;
+exports.scope = "matlab";
+
+});
+
+define("ace/snippets/mel",["require","exports","module"], function(require, exports, module) {
+
+
+exports.snippetText =undefined;
+exports.scope = "mel";
+
+});
+
+define("ace/snippets/mushcode",["require","exports","module"], function(require, exports, module) {
+
+
+exports.snippetText =undefined;
+exports.scope = "mushcode";
+
+});
+
+define("ace/snippets/mushcode_high_rules",["require","exports","module"], function(require, exports, module) {
+
+
+exports.snippetText =undefined;
+exports.scope = "mushcode_high_rules";
+
+});
+
+define("ace/snippets/mysql",["require","exports","module"], function(require, exports, module) {
+
+
+exports.snippetText =undefined;
+exports.scope = "mysql";
+
+});
+
+define("ace/snippets/nix",["require","exports","module"], function(require, exports, module) {
+
+
+exports.snippetText =undefined;
+exports.scope = "nix";
+
+});
+
+define("ace/snippets/objectivec",["require","exports","module"], function(require, exports, module) {
+
+
+exports.snippetText =undefined;
+exports.scope = "objectivec";
+
+});
+
+define("ace/snippets/ocaml",["require","exports","module"], function(require, exports, module) {
+
+
+exports.snippetText =undefined;
+exports.scope = "ocaml";
+
+});
+
+define("ace/snippets/pascal",["require","exports","module"], function(require, exports, module) {
+
+
+exports.snippetText =undefined;
+exports.scope = "pascal";
+
+});
+
+define("ace/snippets/perl",["require","exports","module"], function(require, exports, module) {
+
+
+exports.snippetText = "# #!/usr/bin/perl\n\
+snippet #!\n\
+	#!/usr/bin/env perl\n\
+\n\
+# Hash Pointer\n\
+snippet .\n\
+	 =>\n\
+# Function\n\
+snippet sub\n\
+	sub ${1:function_name} {\n\
+		${2:#body ...}\n\
+	}\n\
+# Conditional\n\
+snippet if\n\
+	if (${1}) {\n\
+		${2:# body...}\n\
+	}\n\
+# Conditional if..else\n\
+snippet ife\n\
+	if (${1}) {\n\
+		${2:# body...}\n\
+	}\n\
+	else {\n\
+		${3:# else...}\n\
+	}\n\
+# Conditional if..elsif..else\n\
+snippet ifee\n\
+	if (${1}) {\n\
+		${2:# body...}\n\
+	}\n\
+	elsif (${3}) {\n\
+		${4:# elsif...}\n\
+	}\n\
+	else {\n\
+		${5:# else...}\n\
+	}\n\
+# Conditional One-line\n\
+snippet xif\n\
+	${1:expression} if ${2:condition};${3}\n\
+# Unless conditional\n\
+snippet unless\n\
+	unless (${1}) {\n\
+		${2:# body...}\n\
+	}\n\
+# Unless conditional One-line\n\
+snippet xunless\n\
+	${1:expression} unless ${2:condition};${3}\n\
+# Try/Except\n\
+snippet eval\n\
+	local $@;\n\
+	eval {\n\
+		${1:# do something risky...}\n\
+	};\n\
+	if (my $e = $@) {\n\
+		${2:# handle failure...}\n\
+	}\n\
+# While Loop\n\
+snippet wh\n\
+	while (${1}) {\n\
+		${2:# body...}\n\
+	}\n\
+# While Loop One-line\n\
+snippet xwh\n\
+	${1:expression} while ${2:condition};${3}\n\
+# C-style For Loop\n\
+snippet cfor\n\
+	for (my $${2:var} = 0; $$2 < ${1:count}; $$2${3:++}) {\n\
+		${4:# body...}\n\
+	}\n\
+# For loop one-line\n\
+snippet xfor\n\
+	${1:expression} for @${2:array};${3}\n\
+# Foreach Loop\n\
+snippet for\n\
+	foreach my $${1:x} (@${2:array}) {\n\
+		${3:# body...}\n\
+	}\n\
+# Foreach Loop One-line\n\
+snippet fore\n\
+	${1:expression} foreach @${2:array};${3}\n\
+# Package\n\
+snippet package\n\
+	package ${1:`substitute(Filename('', 'Page Title'), '^.', '\\u&', '')`};\n\
+\n\
+	${2}\n\
+\n\
+	1;\n\
+\n\
+	__END__\n\
+# Package syntax perl >= 5.14\n\
+snippet packagev514\n\
+	package ${1:`substitute(Filename('', 'Page Title'), '^.', '\\u&', '')`} ${2:0.99};\n\
+\n\
+	${3}\n\
+\n\
+	1;\n\
+\n\
+	__END__\n\
+#moose\n\
+snippet moose\n\
+	use Moose;\n\
+	use namespace::autoclean;\n\
+	${1:#}BEGIN {extends '${2:ParentClass}'};\n\
+\n\
+	${3}\n\
+# parent\n\
+snippet parent\n\
+	use parent qw(${1:Parent Class});\n\
+# Read File\n\
+snippet slurp\n\
+	my $${1:var} = do { local $/; open my $file, '<', \"${2:file}\"; <$file> };\n\
+	${3}\n\
+# strict warnings\n\
+snippet strwar\n\
+	use strict;\n\
+	use warnings;\n\
+# older versioning with perlcritic bypass\n\
+snippet vers\n\
+	## no critic\n\
+	our $VERSION = '${1:version}';\n\
+	eval $VERSION;\n\
+	## use critic\n\
+# new 'switch' like feature\n\
+snippet switch\n\
+	use feature 'switch';\n\
+\n\
+# Anonymous subroutine\n\
+snippet asub\n\
+	sub {\n\
+	 	${1:# body }\n\
+	}\n\
+\n\
+\n\
+\n\
+# Begin block\n\
+snippet begin\n\
+	BEGIN {\n\
+		${1:# begin body}\n\
+	}\n\
+\n\
+# call package function with some parameter\n\
+snippet pkgmv\n\
+	__PACKAGE__->${1:package_method}(${2:var})\n\
+\n\
+# call package function without a parameter\n\
+snippet pkgm\n\
+	__PACKAGE__->${1:package_method}()\n\
+\n\
+# call package \"get_\" function without a parameter\n\
+snippet pkget\n\
+	__PACKAGE__->get_${1:package_method}()\n\
+\n\
+# call package function with a parameter\n\
+snippet pkgetv\n\
+	__PACKAGE__->get_${1:package_method}(${2:var})\n\
+\n\
+# complex regex\n\
+snippet qrx\n\
+	qr/\n\
+	     ${1:regex}\n\
+	/xms\n\
+\n\
+#simpler regex\n\
+snippet qr/\n\
+	qr/${1:regex}/x\n\
+\n\
+#given\n\
+snippet given\n\
+	given ($${1:var}) {\n\
+		${2:# cases}\n\
+		${3:# default}\n\
+	}\n\
+\n\
+# switch-like case\n\
+snippet when\n\
+	when (${1:case}) {\n\
+		${2:# body}\n\
+	}\n\
+\n\
+# hash slice\n\
+snippet hslice\n\
+	@{ ${1:hash}  }{ ${2:array} }\n\
+\n\
+\n\
+# map\n\
+snippet map\n\
+	map {  ${2: body }    }  ${1: @array } ;\n\
+\n\
+\n\
+\n\
+# Pod stub\n\
+snippet ppod\n\
+	=head1 NAME\n\
+\n\
+	${1:ClassName} - ${2:ShortDesc}\n\
+\n\
+	=head1 SYNOPSIS\n\
+\n\
+	  use $1;\n\
+\n\
+	  ${3:# synopsis...}\n\
+\n\
+	=head1 DESCRIPTION\n\
+\n\
+	${4:# longer description...}\n\
+\n\
+\n\
+	=head1 INTERFACE\n\
+\n\
+\n\
+	=head1 DEPENDENCIES\n\
+\n\
+\n\
+	=head1 SEE ALSO\n\
+\n\
+\n\
+# Heading for a subroutine stub\n\
+snippet psub\n\
+	=head2 ${1:MethodName}\n\
+\n\
+	${2:Summary....}\n\
+\n\
+# Heading for inline subroutine pod\n\
+snippet psubi\n\
+	=head2 ${1:MethodName}\n\
+\n\
+	${2:Summary...}\n\
+\n\
+\n\
+	=cut\n\
+# inline documented subroutine\n\
+snippet subpod\n\
+	=head2 $1\n\
+\n\
+	Summary of $1\n\
+\n\
+	=cut\n\
+\n\
+	sub ${1:subroutine_name} {\n\
+		${2:# body...}\n\
+	}\n\
+# Subroutine signature\n\
+snippet parg\n\
+	=over 2\n\
+\n\
+	=item\n\
+	Arguments\n\
+\n\
+\n\
+	=over 3\n\
+\n\
+	=item\n\
+	C<${1:DataStructure}>\n\
+\n\
+	  ${2:Sample}\n\
+\n\
+\n\
+	=back\n\
+\n\
+\n\
+	=item\n\
+	Return\n\
+\n\
+	=over 3\n\
+\n\
+\n\
+	=item\n\
+	C<${3:...return data}>\n\
+\n\
+\n\
+	=back\n\
+\n\
+\n\
+	=back\n\
+\n\
+\n\
+\n\
+# Moose has\n\
+snippet has\n\
+	has ${1:attribute} => (\n\
+		is	    => '${2:ro|rw}',\n\
+		isa 	=> '${3:Str|Int|HashRef|ArrayRef|etc}',\n\
+		default => sub {\n\
+			${4:defaultvalue}\n\
+		},\n\
+		${5:# other attributes}\n\
+	);\n\
+\n\
+\n\
+# override\n\
+snippet override\n\
+	override ${1:attribute} => sub {\n\
+		${2:# my $self = shift;};\n\
+		${3:# my ($self, $args) = @_;};\n\
+	};\n\
+\n\
+\n\
+# use test classes\n\
+snippet tuse\n\
+	use Test::More;\n\
+	use Test::Deep; # (); # uncomment to stop prototype errors\n\
+	use Test::Exception;\n\
+\n\
+# local test lib\n\
+snippet tlib\n\
+	use lib qw{ ./t/lib };\n\
+\n\
+#test methods\n\
+snippet tmeths\n\
+	$ENV{TEST_METHOD} = '${1:regex}';\n\
+\n\
+# runtestclass\n\
+snippet trunner\n\
+	use ${1:test_class};\n\
+	$1->runtests();\n\
+\n\
+# Test::Class-style test\n\
+snippet tsub\n\
+	sub t${1:number}_${2:test_case} :Test(${3:num_of_tests}) {\n\
+		my $self = shift;\n\
+		${4:#  body}\n\
+\n\
+	}\n\
+\n\
+# Test::Routine-style test\n\
+snippet trsub\n\
+	test ${1:test_name} => { description => '${2:Description of test.}'} => sub {\n\
+		my ($self) = @_;\n\
+		${3:# test code}\n\
+	};\n\
+\n\
+#prep test method\n\
+snippet tprep\n\
+	sub prep${1:number}_${2:test_case} :Test(startup) {\n\
+		my $self = shift;\n\
+		${4:#  body}\n\
+	}\n\
+\n\
+# cause failures to print stack trace\n\
+snippet debug_trace\n\
+	use Carp; # 'verbose';\n\
+	# cloak \"die\"\n\
+	# warn \"warning\"\n\
+	$SIG{'__DIE__'} = sub {\n\
+		require Carp; Carp::confess\n\
+	};\n\
+\n\
+";
+exports.scope = "perl";
+
+});
+
+define("ace/snippets/pgsql",["require","exports","module"], function(require, exports, module) {
+
+
+exports.snippetText =undefined;
+exports.scope = "pgsql";
+
+});
+
+define("ace/snippets/php",["require","exports","module"], function(require, exports, module) {
+
+
+exports.snippetText = "snippet <?\n\
+	<?php\n\
+\n\
+	${1}\n\
+snippet ec\n\
+	echo ${1};\n\
+snippet <?e\n\
+	<?php echo ${1} ?>\n\
+# this one is for php5.4\n\
+snippet <?=\n\
+	<?=${1}?>\n\
+snippet ns\n\
+	namespace ${1:Foo\\Bar\\Baz};\n\
+	${2}\n\
+snippet use\n\
+	use ${1:Foo\\Bar\\Baz};\n\
+	${2}\n\
+snippet c\n\
+	${1:abstract }class ${2:$FILENAME}\n\
+	{\n\
+		${3}\n\
+	}\n\
+snippet i\n\
+	interface ${1:$FILENAME}\n\
+	{\n\
+		${2}\n\
+	}\n\
+snippet t.\n\
+	$this->${1}\n\
+snippet f\n\
+	function ${1:foo}(${2:array }${3:$bar})\n\
+	{\n\
+		${4}\n\
+	}\n\
+# method\n\
+snippet m\n\
+	${1:abstract }${2:protected}${3: static} function ${4:foo}(${5:array }${6:$bar})\n\
+	{\n\
+		${7}\n\
+	}\n\
+# setter method\n\
+snippet sm \n\
+	${5:public} function set${6:$2}(${7:$2 }$$1)\n\
+	{\n\
+		$this->${8:$1} = $$1;\n\
+		return $this;\n\
+	}${9}\n\
+# getter method\n\
+snippet gm\n\
+	${3:public} function get${4:$2}()\n\
+	{\n\
+		return $this->${5:$1};\n\
+	}${6}\n\
+#setter\n\
+snippet $s\n\
+	${1:$foo}->set${2:Bar}(${3});\n\
+#getter\n\
+snippet $g\n\
+	${1:$foo}->get${2:Bar}();\n\
+\n\
+# Tertiary conditional\n\
+snippet =?:\n\
+	$${1:foo} = ${2:true} ? ${3:a} : ${4};\n\
+snippet ?:\n\
+	${1:true} ? ${2:a} : ${3}\n\
+\n\
+snippet C\n\
+	$_COOKIE['${1:variable}']${2}\n\
+snippet E\n\
+	$_ENV['${1:variable}']${2}\n\
+snippet F\n\
+	$_FILES['${1:variable}']${2}\n\
+snippet G\n\
+	$_GET['${1:variable}']${2}\n\
+snippet P\n\
+	$_POST['${1:variable}']${2}\n\
+snippet R\n\
+	$_REQUEST['${1:variable}']${2}\n\
+snippet S\n\
+	$_SERVER['${1:variable}']${2}\n\
+snippet SS\n\
+	$_SESSION['${1:variable}']${2}\n\
+	\n\
+# the following are old ones\n\
+snippet inc\n\
+	include '${1:file}';${2}\n\
+snippet inc1\n\
+	include_once '${1:file}';${2}\n\
+snippet req\n\
+	require '${1:file}';${2}\n\
+snippet req1\n\
+	require_once '${1:file}';${2}\n\
+# Start Docblock\n\
+snippet /*\n\
+# Class - post doc\n\
+snippet doc_cp${5}\n\
+# Class Variable - post doc\n\
+snippet doc_vp${3}\n\
+# Class Variable\n\
+snippet doc_v\n\
+	${1:var} $${2};${5}\n\
+# Class\n\
+snippet doc_c\n\
+	${1:}class ${2:}\n\
+	{\n\
+		${7}\n\
+	} // END $1class $2\n\
+# Constant Definition - post doc\n\
+snippet doc_dp${2}\n\
+# Constant Definition\n\
+snippet doc_d\n\
+	define(${1}, ${2});${4}\n\
+# Function - post doc\n\
+snippet doc_fp${4}\n\
+# Function signature\n\
+snippet doc_s\n\
+	${1}function ${2}(${3});${7}\n\
+# Function\n\
+snippet doc_f\n\
+	${1}function ${2}(${3})\n\
+	{${7}\n\
+	}\n\
+# Header\n\
+snippet doc_h\n\
+	\n\
+# Interface\n\
+snippet interface\n\
+	interface ${1:$FILENAME}\n\
+	{\n\
+		${5}\n\
+	}\n\
+# class ...\n\
+snippet class\n\
+	class ${2:$FILENAME}\n\
+	{\n\
+		${3}\n\
+		${5:public} function ${6:__construct}(${7:argument})\n\
+		{\n\
+			${8:// code...}\n\
+		}\n\
+	}\n\
+# define(...)\n\
+snippet def\n\
+	define('${1}'${2});${3}\n\
+# defined(...)\n\
+snippet def?\n\
+	${1}defined('${2}')${3}\n\
+snippet wh\n\
+	while (${1:/* condition */}) {\n\
+		${2:// code...}\n\
+	}\n\
+# do ... while\n\
+snippet do\n\
+	do {\n\
+		${2:// code... }\n\
+	} while (${1:/* condition */});\n\
+snippet if\n\
+	if (${1:/* condition */}) {\n\
+		${2:// code...}\n\
+	}\n\
+snippet ifil\n\
+	<?php if (${1:/* condition */}): ?>\n\
+		${2:<!-- code... -->}\n\
+	<?php endif; ?>\n\
+snippet ife\n\
+	if (${1:/* condition */}) {\n\
+		${2:// code...}\n\
+	} else {\n\
+		${3:// code...}\n\
+	}\n\
+	${4}\n\
+snippet ifeil\n\
+	<?php if (${1:/* condition */}): ?>\n\
+		${2:<!-- html... -->}\n\
+	<?php else: ?>\n\
+		${3:<!-- html... -->}\n\
+	<?php endif; ?>\n\
+	${4}\n\
+snippet else\n\
+	else {\n\
+		${1:// code...}\n\
+	}\n\
+snippet elseif\n\
+	elseif (${1:/* condition */}) {\n\
+		${2:// code...}\n\
+	}\n\
+snippet switch\n\
+	switch ($${1:variable}) {\n\
+		case '${2:value}':\n\
+			${3:// code...}\n\
+			break;\n\
+		${5}\n\
+		default:\n\
+			${4:// code...}\n\
+			break;\n\
+	}\n\
+snippet case\n\
+	case '${1:value}':\n\
+		${2:// code...}\n\
+		break;${3}\n\
+snippet for\n\
+	for ($${2:i} = 0; $$2 < ${1:count}; $$2${3:++}) {\n\
+		${4: // code...}\n\
+	}\n\
+snippet foreach\n\
+	foreach ($${1:variable} as $${2:value}) {\n\
+		${3:// code...}\n\
+	}\n\
+snippet foreachil\n\
+	<?php foreach ($${1:variable} as $${2:value}): ?>\n\
+		${3:<!-- html... -->}\n\
+	<?php endforeach; ?>\n\
+snippet foreachk\n\
+	foreach ($${1:variable} as $${2:key} => $${3:value}) {\n\
+		${4:// code...}\n\
+	}\n\
+snippet foreachkil\n\
+	<?php foreach ($${1:variable} as $${2:key} => $${3:value}): ?>\n\
+		${4:<!-- html... -->}\n\
+	<?php endforeach; ?>\n\
+# $... = array (...)\n\
+snippet array\n\
+	$${1:arrayName} = array('${2}' => ${3});${4}\n\
+snippet try\n\
+	try {\n\
+		${2}\n\
+	} catch (${1:Exception} $e) {\n\
+	}\n\
+# lambda with closure\n\
+snippet lambda\n\
+	${1:static }function (${2:args}) use (${3:&$x, $y /*put vars in scope (closure) */}) {\n\
+		${4}\n\
+	};\n\
+# pre_dump();\n\
+snippet pd\n\
+	echo '<pre>'; var_dump(${1}); echo '</pre>';\n\
+# pre_dump(); die();\n\
+snippet pdd\n\
+	echo '<pre>'; var_dump(${1}); echo '</pre>'; die(${2:});\n\
+snippet vd\n\
+	var_dump(${1});\n\
+snippet vdd\n\
+	var_dump(${1}); die(${2:});\n\
+snippet http_redirect\n\
+	header (\"HTTP/1.1 301 Moved Permanently\"); \n\
+	header (\"Location: \".URL); \n\
+	exit();\n\
+# Getters & Setters\n\
+snippet gs\n\
+	public function get${3:$2}()\n\
+	{\n\
+		return $this->${4:$1};\n\
+	}\n\
+	public function set$3(${7:$2 }$$1)\n\
+	{\n\
+		$this->$4 = $$1;\n\
+		return $this;\n\
+	}${8}\n\
+# anotation, get, and set, useful for doctrine\n\
+snippet ags\n\
+	${2:protected} $${3:foo};\n\
+\n\
+	public function get${4:$3}()\n\
+	{\n\
+		return $this->$3;\n\
+	}\n\
+\n\
+	public function set$4(${5:$4 }$${6:$3})\n\
+	{\n\
+		$this->$3 = $$6;\n\
+		return $this;\n\
+	}\n\
+snippet rett\n\
+	return true;\n\
+snippet retf\n\
+	return false;\n\
+";
+exports.scope = "php";
+
+});
+
+define("ace/snippets/plain_text",["require","exports","module"], function(require, exports, module) {
+
+
+exports.snippetText =undefined;
+exports.scope = "plain_text";
+
+});
+
+define("ace/snippets/powershell",["require","exports","module"], function(require, exports, module) {
+
+
+exports.snippetText =undefined;
+exports.scope = "powershell";
+
+});
+
+define("ace/snippets/praat",["require","exports","module"], function(require, exports, module) {
+
+
+exports.snippetText =undefined;
+exports.scope = "praat";
+
+});
+
+define("ace/snippets/prolog",["require","exports","module"], function(require, exports, module) {
+
+
+exports.snippetText =undefined;
+exports.scope = "prolog";
+
+});
+
+define("ace/snippets/properties",["require","exports","module"], function(require, exports, module) {
+
+
+exports.snippetText =undefined;
+exports.scope = "properties";
+
+});
+
+define("ace/snippets/protobuf",["require","exports","module"], function(require, exports, module) {
+
+
+exports.snippetText = "";
+exports.scope = "protobuf";
+
+});
+
+define("ace/snippets/python",["require","exports","module"], function(require, exports, module) {
+
+
+exports.snippetText = "snippet #!\n\
+	#!/usr/bin/env python\n\
+snippet imp\n\
+	import ${1:module}\n\
+snippet from\n\
+	from ${1:package} import ${2:module}\n\
+# Module Docstring\n\
+snippet docs\n\
+	'''\n\
+	File: ${1:FILENAME:file_name}\n\
+	Author: ${2:author}\n\
+	Description: ${3}\n\
+	'''\n\
+snippet wh\n\
+	while ${1:condition}:\n\
+		${2:# TODO: write code...}\n\
+# dowh - does the same as do...while in other languages\n\
+snippet dowh\n\
+	while True:\n\
+		${1:# TODO: write code...}\n\
+		if ${2:condition}:\n\
+			break\n\
+snippet with\n\
+	with ${1:expr} as ${2:var}:\n\
+		${3:# TODO: write code...}\n\
+# New Class\n\
+snippet cl\n\
+	class ${1:ClassName}(${2:object}):\n\
+		\"\"\"${3:docstring for $1}\"\"\"\n\
+		def __init__(self, ${4:arg}):\n\
+			${5:super($1, self).__init__()}\n\
+			self.$4 = $4\n\
+			${6}\n\
+# New Function\n\
+snippet def\n\
+	def ${1:fname}(${2:`indent('.') ? 'self' : ''`}):\n\
+		\"\"\"${3:docstring for $1}\"\"\"\n\
+		${4:# TODO: write code...}\n\
+snippet deff\n\
+	def ${1:fname}(${2:`indent('.') ? 'self' : ''`}):\n\
+		${3:# TODO: write code...}\n\
+# New Method\n\
+snippet defs\n\
+	def ${1:mname}(self, ${2:arg}):\n\
+		${3:# TODO: write code...}\n\
+# New Property\n\
+snippet property\n\
+	def ${1:foo}():\n\
+		doc = \"${2:The $1 property.}\"\n\
+		def fget(self):\n\
+			${3:return self._$1}\n\
+		def fset(self, value):\n\
+			${4:self._$1 = value}\n\
+# Ifs\n\
+snippet if\n\
+	if ${1:condition}:\n\
+		${2:# TODO: write code...}\n\
+snippet el\n\
+	else:\n\
+		${1:# TODO: write code...}\n\
+snippet ei\n\
+	elif ${1:condition}:\n\
+		${2:# TODO: write code...}\n\
+# For\n\
+snippet for\n\
+	for ${1:item} in ${2:items}:\n\
+		${3:# TODO: write code...}\n\
+# Encodes\n\
+snippet cutf8\n\
+	# -*- coding: utf-8 -*-\n\
+snippet clatin1\n\
+	# -*- coding: latin-1 -*-\n\
+snippet cascii\n\
+	# -*- coding: ascii -*-\n\
+# Lambda\n\
+snippet ld\n\
+	${1:var} = lambda ${2:vars} : ${3:action}\n\
+snippet .\n\
+	self.\n\
+snippet try Try/Except\n\
+	try:\n\
+		${1:# TODO: write code...}\n\
+	except ${2:Exception}, ${3:e}:\n\
+		${4:raise $3}\n\
+snippet try Try/Except/Else\n\
+	try:\n\
+		${1:# TODO: write code...}\n\
+	except ${2:Exception}, ${3:e}:\n\
+		${4:raise $3}\n\
+	else:\n\
+		${5:# TODO: write code...}\n\
+snippet try Try/Except/Finally\n\
+	try:\n\
+		${1:# TODO: write code...}\n\
+	except ${2:Exception}, ${3:e}:\n\
+		${4:raise $3}\n\
+	finally:\n\
+		${5:# TODO: write code...}\n\
+snippet try Try/Except/Else/Finally\n\
+	try:\n\
+		${1:# TODO: write code...}\n\
+	except ${2:Exception}, ${3:e}:\n\
+		${4:raise $3}\n\
+	else:\n\
+		${5:# TODO: write code...}\n\
+	finally:\n\
+		${6:# TODO: write code...}\n\
+# if __name__ == '__main__':\n\
+snippet ifmain\n\
+	if __name__ == '__main__':\n\
+		${1:main()}\n\
+# __magic__\n\
+snippet _\n\
+	__${1:init}__${2}\n\
+# python debugger (pdb)\n\
+snippet pdb\n\
+	import pdb; pdb.set_trace()\n\
+# ipython debugger (ipdb)\n\
+snippet ipdb\n\
+	import ipdb; ipdb.set_trace()\n\
+# ipython debugger (pdbbb)\n\
+snippet pdbbb\n\
+	import pdbpp; pdbpp.set_trace()\n\
+snippet pprint\n\
+	import pprint; pprint.pprint(${1})${2}\n\
+snippet \"\n\
+	\"\"\"\n\
+	${1:doc}\n\
+	\"\"\"\n\
+# test function/method\n\
+snippet test\n\
+	def test_${1:description}(${2:self}):\n\
+		${3:# TODO: write code...}\n\
+# test case\n\
+snippet testcase\n\
+	class ${1:ExampleCase}(unittest.TestCase):\n\
+		\n\
+		def test_${2:description}(self):\n\
+			${3:# TODO: write code...}\n\
+snippet fut\n\
+	from __future__ import ${1}\n\
+#getopt\n\
+snippet getopt\n\
+	try:\n\
+		# Short option syntax: \"hv:\"\n\
+		# Long option syntax: \"help\" or \"verbose=\"\n\
+		opts, args = getopt.getopt(sys.argv[1:], \"${1:short_options}\", [${2:long_options}])\n\
+	\n\
+	except getopt.GetoptError, err:\n\
+		# Print debug info\n\
+		print str(err)\n\
+		${3:error_action}\n\
+\n\
+	for option, argument in opts:\n\
+		if option in (\"-h\", \"--help\"):\n\
+			${4}\n\
+		elif option in (\"-v\", \"--verbose\"):\n\
+			verbose = argument\n\
+";
+exports.scope = "python";
+
+});
+
+define("ace/snippets/r",["require","exports","module"], function(require, exports, module) {
+
+
+exports.snippetText = "snippet #!\n\
+	#!/usr/bin/env Rscript\n\
+\n\
+# includes\n\
+snippet lib\n\
+	library(${1:package})\n\
+snippet req\n\
+	require(${1:package})\n\
+snippet source\n\
+	source('${1:file}')\n\
+\n\
+# conditionals\n\
+snippet if\n\
+	if (${1:condition}) {\n\
+		${2:code}\n\
+	}\n\
+snippet el\n\
+	else {\n\
+		${1:code}\n\
+	}\n\
+snippet ei\n\
+	else if (${1:condition}) {\n\
+		${2:code}\n\
+	}\n\
+\n\
+# functions\n\
+snippet fun\n\
+	${1:name} = function (${2:variables}) {\n\
+		${3:code}\n\
+	}\n\
+snippet ret\n\
+	return(${1:code})\n\
+\n\
+# dataframes, lists, etc\n\
+snippet df\n\
+	${1:name}[${2:rows}, ${3:cols}]\n\
+snippet c\n\
+	c(${1:items})\n\
+snippet li\n\
+	list(${1:items})\n\
+snippet mat\n\
+	matrix(${1:data}, nrow=${2:rows}, ncol=${3:cols})\n\
+\n\
+# apply functions\n\
+snippet apply\n\
+	apply(${1:array}, ${2:margin}, ${3:function})\n\
+snippet lapply\n\
+	lapply(${1:list}, ${2:function})\n\
+snippet sapply\n\
+	lapply(${1:list}, ${2:function})\n\
+snippet vapply\n\
+	vapply(${1:list}, ${2:function}, ${3:type})\n\
+snippet mapply\n\
+	mapply(${1:function}, ${2:...})\n\
+snippet tapply\n\
+	tapply(${1:vector}, ${2:index}, ${3:function})\n\
+snippet rapply\n\
+	rapply(${1:list}, ${2:function})\n\
+\n\
+# plyr functions\n\
+snippet dd\n\
+	ddply(${1:frame}, ${2:variables}, ${3:function})\n\
+snippet dl\n\
+	dlply(${1:frame}, ${2:variables}, ${3:function})\n\
+snippet da\n\
+	daply(${1:frame}, ${2:variables}, ${3:function})\n\
+snippet d_\n\
+	d_ply(${1:frame}, ${2:variables}, ${3:function})\n\
+\n\
+snippet ad\n\
+	adply(${1:array}, ${2:margin}, ${3:function})\n\
+snippet al\n\
+	alply(${1:array}, ${2:margin}, ${3:function})\n\
+snippet aa\n\
+	aaply(${1:array}, ${2:margin}, ${3:function})\n\
+snippet a_\n\
+	a_ply(${1:array}, ${2:margin}, ${3:function})\n\
+\n\
+snippet ld\n\
+	ldply(${1:list}, ${2:function})\n\
+snippet ll\n\
+	llply(${1:list}, ${2:function})\n\
+snippet la\n\
+	laply(${1:list}, ${2:function})\n\
+snippet l_\n\
+	l_ply(${1:list}, ${2:function})\n\
+\n\
+snippet md\n\
+	mdply(${1:matrix}, ${2:function})\n\
+snippet ml\n\
+	mlply(${1:matrix}, ${2:function})\n\
+snippet ma\n\
+	maply(${1:matrix}, ${2:function})\n\
+snippet m_\n\
+	m_ply(${1:matrix}, ${2:function})\n\
+\n\
+# plot functions\n\
+snippet pl\n\
+	plot(${1:x}, ${2:y})\n\
+snippet ggp\n\
+	ggplot(${1:data}, aes(${2:aesthetics}))\n\
+snippet img\n\
+	${1:(jpeg,bmp,png,tiff)}(filename=\"${2:filename}\", width=${3}, height=${4}, unit=\"${5}\")\n\
+	${6:plot}\n\
+	dev.off()\n\
+\n\
+# statistical test functions\n\
+snippet fis\n\
+	fisher.test(${1:x}, ${2:y})\n\
+snippet chi\n\
+	chisq.test(${1:x}, ${2:y})\n\
+snippet tt\n\
+	t.test(${1:x}, ${2:y})\n\
+snippet wil\n\
+	wilcox.test(${1:x}, ${2:y})\n\
+snippet cor\n\
+	cor.test(${1:x}, ${2:y})\n\
+snippet fte\n\
+	var.test(${1:x}, ${2:y})\n\
+snippet kvt \n\
+	kv.test(${1:x}, ${2:y})\n\
+";
+exports.scope = "r";
+
+});
+
+define("ace/snippets/rdoc",["require","exports","module"], function(require, exports, module) {
+
+
+exports.snippetText =undefined;
+exports.scope = "rdoc";
+
+});
+
+define("ace/snippets/rhtml",["require","exports","module"], function(require, exports, module) {
+
+
+exports.snippetText =undefined;
+exports.scope = "rhtml";
+
+});
+
+define("ace/snippets/ruby",["require","exports","module"], function(require, exports, module) {
+
+
+exports.snippetText = "########################################\n\
+# Ruby snippets - for Rails, see below #\n\
+########################################\n\
+\n\
+# encoding for Ruby 1.9\n\
+snippet enc\n\
+	# encoding: utf-8\n\
+\n\
+# #!/usr/bin/env ruby\n\
+snippet #!\n\
+	#!/usr/bin/env ruby\n\
+	# encoding: utf-8\n\
+\n\
+# New Block\n\
+snippet =b\n\
+	=begin rdoc\n\
+		${1}\n\
+	=end\n\
+snippet y\n\
+	:yields: ${1:arguments}\n\
+snippet rb\n\
+	#!/usr/bin/env ruby -wKU\n\
+snippet beg\n\
+	begin\n\
+		${3}\n\
+	rescue ${1:Exception} => ${2:e}\n\
+	end\n\
+\n\
+snippet req require\n\
+	require \"${1}\"${2}\n\
+snippet #\n\
+	# =>\n\
+snippet end\n\
+	__END__\n\
+snippet case\n\
+	case ${1:object}\n\
+	when ${2:condition}\n\
+		${3}\n\
+	end\n\
+snippet when\n\
+	when ${1:condition}\n\
+		${2}\n\
+snippet def\n\
+	def ${1:method_name}\n\
+		${2}\n\
+	end\n\
+snippet deft\n\
+	def test_${1:case_name}\n\
+		${2}\n\
+	end\n\
+snippet if\n\
+	if ${1:condition}\n\
+		${2}\n\
+	end\n\
+snippet ife\n\
+	if ${1:condition}\n\
+		${2}\n\
+	else\n\
+		${3}\n\
+	end\n\
+snippet elsif\n\
+	elsif ${1:condition}\n\
+		${2}\n\
+snippet unless\n\
+	unless ${1:condition}\n\
+		${2}\n\
+	end\n\
+snippet while\n\
+	while ${1:condition}\n\
+		${2}\n\
+	end\n\
+snippet for\n\
+	for ${1:e} in ${2:c}\n\
+		${3}\n\
+	end\n\
+snippet until\n\
+	until ${1:condition}\n\
+		${2}\n\
+	end\n\
+snippet cla class .. end\n\
+	class ${1:`substitute(Filename(), '\\(_\\|^\\)\\(.\\)', '\\u\\2', 'g')`}\n\
+		${2}\n\
+	end\n\
+snippet cla class .. initialize .. end\n\
+	class ${1:`substitute(Filename(), '\\(_\\|^\\)\\(.\\)', '\\u\\2', 'g')`}\n\
+		def initialize(${2:args})\n\
+			${3}\n\
+		end\n\
+	end\n\
+snippet cla class .. < ParentClass .. initialize .. end\n\
+	class ${1:`substitute(Filename(), '\\(_\\|^\\)\\(.\\)', '\\u\\2', 'g')`} < ${2:ParentClass}\n\
+		def initialize(${3:args})\n\
+			${4}\n\
+		end\n\
+	end\n\
+snippet cla ClassName = Struct .. do .. end\n\
+	${1:`substitute(Filename(), '\\(_\\|^\\)\\(.\\)', '\\u\\2', 'g')`} = Struct.new(:${2:attr_names}) do\n\
+		def ${3:method_name}\n\
+			${4}\n\
+		end\n\
+	end\n\
+snippet cla class BlankSlate .. initialize .. end\n\
+	class ${1:BlankSlate}\n\
+		instance_methods.each { |meth| undef_method(meth) unless meth =~ /\\A__/ }\n\
+	end\n\
+snippet cla class << self .. end\n\
+	class << ${1:self}\n\
+		${2}\n\
+	end\n\
+# class .. < DelegateClass .. initialize .. end\n\
+snippet cla-\n\
+	class ${1:`substitute(Filename(), '\\(_\\|^\\)\\(.\\)', '\\u\\2', 'g')`} < DelegateClass(${2:ParentClass})\n\
+		def initialize(${3:args})\n\
+			super(${4:del_obj})\n\
+\n\
+			${5}\n\
+		end\n\
+	end\n\
+snippet mod module .. end\n\
+	module ${1:`substitute(Filename(), '\\(_\\|^\\)\\(.\\)', '\\u\\2', 'g')`}\n\
+		${2}\n\
+	end\n\
+snippet mod module .. module_function .. end\n\
+	module ${1:`substitute(Filename(), '\\(_\\|^\\)\\(.\\)', '\\u\\2', 'g')`}\n\
+		module_function\n\
+\n\
+		${2}\n\
+	end\n\
+snippet mod module .. ClassMethods .. end\n\
+	module ${1:`substitute(Filename(), '\\(_\\|^\\)\\(.\\)', '\\u\\2', 'g')`}\n\
+		module ClassMethods\n\
+			${2}\n\
+		end\n\
+\n\
+		module InstanceMethods\n\
+\n\
+		end\n\
+\n\
+		def self.included(receiver)\n\
+			receiver.extend         ClassMethods\n\
+			receiver.send :include, InstanceMethods\n\
+		end\n\
+	end\n\
+# attr_reader\n\
+snippet r\n\
+	attr_reader :${1:attr_names}\n\
+# attr_writer\n\
+snippet w\n\
+	attr_writer :${1:attr_names}\n\
+# attr_accessor\n\
+snippet rw\n\
+	attr_accessor :${1:attr_names}\n\
+snippet atp\n\
+	attr_protected :${1:attr_names}\n\
+snippet ata\n\
+	attr_accessible :${1:attr_names}\n\
+# include Enumerable\n\
+snippet Enum\n\
+	include Enumerable\n\
+\n\
+	def each(&block)\n\
+		${1}\n\
+	end\n\
+# include Comparable\n\
+snippet Comp\n\
+	include Comparable\n\
+\n\
+	def <=>(other)\n\
+		${1}\n\
+	end\n\
+# extend Forwardable\n\
+snippet Forw-\n\
+	extend Forwardable\n\
+# def self\n\
+snippet defs\n\
+	def self.${1:class_method_name}\n\
+		${2}\n\
+	end\n\
+# def method_missing\n\
+snippet defmm\n\
+	def method_missing(meth, *args, &blk)\n\
+		${1}\n\
+	end\n\
+snippet defd\n\
+	def_delegator :${1:@del_obj}, :${2:del_meth}, :${3:new_name}\n\
+snippet defds\n\
+	def_delegators :${1:@del_obj}, :${2:del_methods}\n\
+snippet am\n\
+	alias_method :${1:new_name}, :${2:old_name}\n\
+snippet app\n\
+	if __FILE__ == $PROGRAM_NAME\n\
+		${1}\n\
+	end\n\
+# usage_if()\n\
+snippet usai\n\
+	if ARGV.${1}\n\
+		abort \"Usage: #{$PROGRAM_NAME} ${2:ARGS_GO_HERE}\"${3}\n\
+	end\n\
+# usage_unless()\n\
+snippet usau\n\
+	unless ARGV.${1}\n\
+		abort \"Usage: #{$PROGRAM_NAME} ${2:ARGS_GO_HERE}\"${3}\n\
+	end\n\
+snippet array\n\
+	Array.new(${1:10}) { |${2:i}| ${3} }\n\
+snippet hash\n\
+	Hash.new { |${1:hash}, ${2:key}| $1[$2] = ${3} }\n\
+snippet file File.foreach() { |line| .. }\n\
+	File.foreach(${1:\"path/to/file\"}) { |${2:line}| ${3} }\n\
+snippet file File.read()\n\
+	File.read(${1:\"path/to/file\"})${2}\n\
+snippet Dir Dir.global() { |file| .. }\n\
+	Dir.glob(${1:\"dir/glob/*\"}) { |${2:file}| ${3} }\n\
+snippet Dir Dir[\"..\"]\n\
+	Dir[${1:\"glob/**/*.rb\"}]${2}\n\
+snippet dir\n\
+	Filename.dirname(__FILE__)\n\
+snippet deli\n\
+	delete_if { |${1:e}| ${2} }\n\
+snippet fil\n\
+	fill(${1:range}) { |${2:i}| ${3} }\n\
+# flatten_once()\n\
+snippet flao\n\
+	inject(Array.new) { |${1:arr}, ${2:a}| $1.push(*$2)}${3}\n\
+snippet zip\n\
+	zip(${1:enums}) { |${2:row}| ${3} }\n\
+# downto(0) { |n| .. }\n\
+snippet dow\n\
+	downto(${1:0}) { |${2:n}| ${3} }\n\
+snippet ste\n\
+	step(${1:2}) { |${2:n}| ${3} }\n\
+snippet tim\n\
+	times { |${1:n}| ${2} }\n\
+snippet upt\n\
+	upto(${1:1.0/0.0}) { |${2:n}| ${3} }\n\
+snippet loo\n\
+	loop { ${1} }\n\
+snippet ea\n\
+	each { |${1:e}| ${2} }\n\
+snippet ead\n\
+	each do |${1:e}|\n\
+		${2}\n\
+	end\n\
+snippet eab\n\
+	each_byte { |${1:byte}| ${2} }\n\
+snippet eac- each_char { |chr| .. }\n\
+	each_char { |${1:chr}| ${2} }\n\
+snippet eac- each_cons(..) { |group| .. }\n\
+	each_cons(${1:2}) { |${2:group}| ${3} }\n\
+snippet eai\n\
+	each_index { |${1:i}| ${2} }\n\
+snippet eaid\n\
+	each_index do |${1:i}|\n\
+		${2}\n\
+	end\n\
+snippet eak\n\
+	each_key { |${1:key}| ${2} }\n\
+snippet eakd\n\
+	each_key do |${1:key}|\n\
+		${2}\n\
+	end\n\
+snippet eal\n\
+	each_line { |${1:line}| ${2} }\n\
+snippet eald\n\
+	each_line do |${1:line}|\n\
+		${2}\n\
+	end\n\
+snippet eap\n\
+	each_pair { |${1:name}, ${2:val}| ${3} }\n\
+snippet eapd\n\
+	each_pair do |${1:name}, ${2:val}|\n\
+		${3}\n\
+	end\n\
+snippet eas-\n\
+	each_slice(${1:2}) { |${2:group}| ${3} }\n\
+snippet easd-\n\
+	each_slice(${1:2}) do |${2:group}|\n\
+		${3}\n\
+	end\n\
+snippet eav\n\
+	each_value { |${1:val}| ${2} }\n\
+snippet eavd\n\
+	each_value do |${1:val}|\n\
+		${2}\n\
+	end\n\
+snippet eawi\n\
+	each_with_index { |${1:e}, ${2:i}| ${3} }\n\
+snippet eawid\n\
+	each_with_index do |${1:e},${2:i}|\n\
+		${3}\n\
+	end\n\
+snippet reve\n\
+	reverse_each { |${1:e}| ${2} }\n\
+snippet reved\n\
+	reverse_each do |${1:e}|\n\
+		${2}\n\
+	end\n\
+snippet inj\n\
+	inject(${1:init}) { |${2:mem}, ${3:var}| ${4} }\n\
+snippet injd\n\
+	inject(${1:init}) do |${2:mem}, ${3:var}|\n\
+		${4}\n\
+	end\n\
+snippet map\n\
+	map { |${1:e}| ${2} }\n\
+snippet mapd\n\
+	map do |${1:e}|\n\
+		${2}\n\
+	end\n\
+snippet mapwi-\n\
+	enum_with_index.map { |${1:e}, ${2:i}| ${3} }\n\
+snippet sor\n\
+	sort { |a, b| ${1} }\n\
+snippet sorb\n\
+	sort_by { |${1:e}| ${2} }\n\
+snippet ran\n\
+	sort_by { rand }\n\
+snippet all\n\
+	all? { |${1:e}| ${2} }\n\
+snippet any\n\
+	any? { |${1:e}| ${2} }\n\
+snippet cl\n\
+	classify { |${1:e}| ${2} }\n\
+snippet col\n\
+	collect { |${1:e}| ${2} }\n\
+snippet cold\n\
+	collect do |${1:e}|\n\
+		${2}\n\
+	end\n\
+snippet det\n\
+	detect { |${1:e}| ${2} }\n\
+snippet detd\n\
+	detect do |${1:e}|\n\
+		${2}\n\
+	end\n\
+snippet fet\n\
+	fetch(${1:name}) { |${2:key}| ${3} }\n\
+snippet fin\n\
+	find { |${1:e}| ${2} }\n\
+snippet find\n\
+	find do |${1:e}|\n\
+		${2}\n\
+	end\n\
+snippet fina\n\
+	find_all { |${1:e}| ${2} }\n\
+snippet finad\n\
+	find_all do |${1:e}|\n\
+		${2}\n\
+	end\n\
+snippet gre\n\
+	grep(${1:/pattern/}) { |${2:match}| ${3} }\n\
+snippet sub\n\
+	${1:g}sub(${2:/pattern/}) { |${3:match}| ${4} }\n\
+snippet sca\n\
+	scan(${1:/pattern/}) { |${2:match}| ${3} }\n\
+snippet scad\n\
+	scan(${1:/pattern/}) do |${2:match}|\n\
+		${3}\n\
+	end\n\
+snippet max\n\
+	max { |a, b| ${1} }\n\
+snippet min\n\
+	min { |a, b| ${1} }\n\
+snippet par\n\
+	partition { |${1:e}| ${2} }\n\
+snippet pard\n\
+	partition do |${1:e}|\n\
+		${2}\n\
+	end\n\
+snippet rej\n\
+	reject { |${1:e}| ${2} }\n\
+snippet rejd\n\
+	reject do |${1:e}|\n\
+		${2}\n\
+	end\n\
+snippet sel\n\
+	select { |${1:e}| ${2} }\n\
+snippet seld\n\
+	select do |${1:e}|\n\
+		${2}\n\
+	end\n\
+snippet lam\n\
+	lambda { |${1:args}| ${2} }\n\
+snippet doo\n\
+	do\n\
+		${1}\n\
+	end\n\
+snippet dov\n\
+	do |${1:variable}|\n\
+		${2}\n\
+	end\n\
+snippet :\n\
+	:${1:key} => ${2:\"value\"}${3}\n\
+snippet ope\n\
+	open(${1:\"path/or/url/or/pipe\"}, \"${2:w}\") { |${3:io}| ${4} }\n\
+# path_from_here()\n\
+snippet fpath\n\
+	File.join(File.dirname(__FILE__), *%2[${1:rel path here}])${2}\n\
+# unix_filter {}\n\
+snippet unif\n\
+	ARGF.each_line${1} do |${2:line}|\n\
+		${3}\n\
+	end\n\
+# option_parse {}\n\
+snippet optp\n\
+	require \"optparse\"\n\
+\n\
+	options = {${1:default => \"args\"}}\n\
+\n\
+	ARGV.options do |opts|\n\
+		opts.banner = \"Usage: #{File.basename($PROGRAM_NAME)}\n\
+snippet opt\n\
+	opts.on( \"-${1:o}\", \"--${2:long-option-name}\", ${3:String},\n\
+	         \"${4:Option description.}\") do |${5:opt}|\n\
+		${6}\n\
+	end\n\
+snippet tc\n\
+	require \"test/unit\"\n\
+\n\
+	require \"${1:library_file_name}\"\n\
+\n\
+	class Test${2:$1} < Test::Unit::TestCase\n\
+		def test_${3:case_name}\n\
+			${4}\n\
+		end\n\
+	end\n\
+snippet ts\n\
+	require \"test/unit\"\n\
+\n\
+	require \"tc_${1:test_case_file}\"\n\
+	require \"tc_${2:test_case_file}\"${3}\n\
+snippet as\n\
+	assert ${1:test}, \"${2:Failure message.}\"${3}\n\
+snippet ase\n\
+	assert_equal ${1:expected}, ${2:actual}${3}\n\
+snippet asne\n\
+	assert_not_equal ${1:unexpected}, ${2:actual}${3}\n\
+snippet asid\n\
+	assert_in_delta ${1:expected_float}, ${2:actual_float}, ${3:2 ** -20}${4}\n\
+snippet asio\n\
+	assert_instance_of ${1:ExpectedClass}, ${2:actual_instance}${3}\n\
+snippet asko\n\
+	assert_kind_of ${1:ExpectedKind}, ${2:actual_instance}${3}\n\
+snippet asn\n\
+	assert_nil ${1:instance}${2}\n\
+snippet asnn\n\
+	assert_not_nil ${1:instance}${2}\n\
+snippet asm\n\
+	assert_match /${1:expected_pattern}/, ${2:actual_string}${3}\n\
+snippet asnm\n\
+	assert_no_match /${1:unexpected_pattern}/, ${2:actual_string}${3}\n\
+snippet aso\n\
+	assert_operator ${1:left}, :${2:operator}, ${3:right}${4}\n\
+snippet asr\n\
+	assert_raise ${1:Exception} { ${2} }\n\
+snippet asrd\n\
+	assert_raise ${1:Exception} do\n\
+		${2}\n\
+	end\n\
+snippet asnr\n\
+	assert_nothing_raised ${1:Exception} { ${2} }\n\
+snippet asnrd\n\
+	assert_nothing_raised ${1:Exception} do\n\
+		${2}\n\
+	end\n\
+snippet asrt\n\
+	assert_respond_to ${1:object}, :${2:method}${3}\n\
+snippet ass assert_same(..)\n\
+	assert_same ${1:expected}, ${2:actual}${3}\n\
+snippet ass assert_send(..)\n\
+	assert_send [${1:object}, :${2:message}, ${3:args}]${4}\n\
+snippet asns\n\
+	assert_not_same ${1:unexpected}, ${2:actual}${3}\n\
+snippet ast\n\
+	assert_throws :${1:expected} { ${2} }\n\
+snippet astd\n\
+	assert_throws :${1:expected} do\n\
+		${2}\n\
+	end\n\
+snippet asnt\n\
+	assert_nothing_thrown { ${1} }\n\
+snippet asntd\n\
+	assert_nothing_thrown do\n\
+		${1}\n\
+	end\n\
+snippet fl\n\
+	flunk \"${1:Failure message.}\"${2}\n\
+# Benchmark.bmbm do .. end\n\
+snippet bm-\n\
+	TESTS = ${1:10_000}\n\
+	Benchmark.bmbm do |results|\n\
+		${2}\n\
+	end\n\
+snippet rep\n\
+	results.report(\"${1:name}:\") { TESTS.times { ${2} }}\n\
+# Marshal.dump(.., file)\n\
+snippet Md\n\
+	File.open(${1:\"path/to/file.dump\"}, \"wb\") { |${2:file}| Marshal.dump(${3:obj}, $2) }${4}\n\
+# Mashal.load(obj)\n\
+snippet Ml\n\
+	File.open(${1:\"path/to/file.dump\"}, \"rb\") { |${2:file}| Marshal.load($2) }${3}\n\
+# deep_copy(..)\n\
+snippet deec\n\
+	Marshal.load(Marshal.dump(${1:obj_to_copy}))${2}\n\
+snippet Pn-\n\
+	PStore.new(${1:\"file_name.pstore\"})${2}\n\
+snippet tra\n\
+	transaction(${1:true}) { ${2} }\n\
+# xmlread(..)\n\
+snippet xml-\n\
+	REXML::Document.new(File.read(${1:\"path/to/file\"}))${2}\n\
+# xpath(..) { .. }\n\
+snippet xpa\n\
+	elements.each(${1:\"//Xpath\"}) do |${2:node}|\n\
+		${3}\n\
+	end\n\
+# class_from_name()\n\
+snippet clafn\n\
+	split(\"::\").inject(Object) { |par, const| par.const_get(const) }\n\
+# singleton_class()\n\
+snippet sinc\n\
+	class << self; self end\n\
+snippet nam\n\
+	namespace :${1:`Filename()`} do\n\
+		${2}\n\
+	end\n\
+snippet tas\n\
+	desc \"${1:Task description}\"\n\
+	task :${2:task_name => [:dependent, :tasks]} do\n\
+		${3}\n\
+	end\n\
+# block\n\
+snippet b\n\
+	{ |${1:var}| ${2} }\n\
+snippet begin\n\
+	begin\n\
+		raise 'A test exception.'\n\
+	rescue Exception => e\n\
+		puts e.message\n\
+		puts e.backtrace.inspect\n\
+	else\n\
+		# other exception\n\
+	ensure\n\
+		# always executed\n\
+	end\n\
+\n\
+#debugging\n\
+snippet debug\n\
+	require 'ruby-debug'; debugger; true;\n\
+snippet pry\n\
+	require 'pry'; binding.pry\n\
+\n\
+#############################################\n\
+# Rails snippets - for pure Ruby, see above #\n\
+#############################################\n\
+snippet art\n\
+	assert_redirected_to ${1::action => \"${2:index}\"}\n\
+snippet artnp\n\
+	assert_redirected_to ${1:parent}_${2:child}_path(${3:@$1}, ${4:@$2})\n\
+snippet artnpp\n\
+	assert_redirected_to ${1:parent}_${2:child}_path(${3:@$1})\n\
+snippet artp\n\
+	assert_redirected_to ${1:model}_path(${2:@$1})\n\
+snippet artpp\n\
+	assert_redirected_to ${1:model}s_path\n\
+snippet asd\n\
+	assert_difference \"${1:Model}.${2:count}\", $1 do\n\
+		${3}\n\
+	end\n\
+snippet asnd\n\
+	assert_no_difference \"${1:Model}.${2:count}\" do\n\
+		${3}\n\
+	end\n\
+snippet asre\n\
+	assert_response :${1:success}, @response.body${2}\n\
+snippet asrj\n\
+	assert_rjs :${1:replace}, \"${2:dom id}\"\n\
+snippet ass assert_select(..)\n\
+	assert_select '${1:path}', :${2:text} => '${3:inner_html' ${4:do}\n\
+snippet bf\n\
+	before_filter :${1:method}\n\
+snippet bt\n\
+	belongs_to :${1:association}\n\
+snippet crw\n\
+	cattr_accessor :${1:attr_names}\n\
+snippet defcreate\n\
+	def create\n\
+		@${1:model_class_name} = ${2:ModelClassName}.new(params[:$1])\n\
+\n\
+		respond_to do |wants|\n\
+			if @$1.save\n\
+				flash[:notice] = '$2 was successfully created.'\n\
+				wants.html { redirect_to(@$1) }\n\
+				wants.xml  { render :xml => @$1, :status => :created, :location => @$1 }\n\
+			else\n\
+				wants.html { render :action => \"new\" }\n\
+				wants.xml  { render :xml => @$1.errors, :status => :unprocessable_entity }\n\
+			end\n\
+		end\n\
+	end${3}\n\
+snippet defdestroy\n\
+	def destroy\n\
+		@${1:model_class_name} = ${2:ModelClassName}.find(params[:id])\n\
+		@$1.destroy\n\
+\n\
+		respond_to do |wants|\n\
+			wants.html { redirect_to($1s_url) }\n\
+			wants.xml  { head :ok }\n\
+		end\n\
+	end${3}\n\
+snippet defedit\n\
+	def edit\n\
+		@${1:model_class_name} = ${2:ModelClassName}.find(params[:id])\n\
+	end\n\
+snippet defindex\n\
+	def index\n\
+		@${1:model_class_name} = ${2:ModelClassName}.all\n\
+\n\
+		respond_to do |wants|\n\
+			wants.html # index.html.erb\n\
+			wants.xml  { render :xml => @$1s }\n\
+		end\n\
+	end${3}\n\
+snippet defnew\n\
+	def new\n\
+		@${1:model_class_name} = ${2:ModelClassName}.new\n\
+\n\
+		respond_to do |wants|\n\
+			wants.html # new.html.erb\n\
+			wants.xml  { render :xml => @$1 }\n\
+		end\n\
+	end${3}\n\
+snippet defshow\n\
+	def show\n\
+		@${1:model_class_name} = ${2:ModelClassName}.find(params[:id])\n\
+\n\
+		respond_to do |wants|\n\
+			wants.html # show.html.erb\n\
+			wants.xml  { render :xml => @$1 }\n\
+		end\n\
+	end${3}\n\
+snippet defupdate\n\
+	def update\n\
+		@${1:model_class_name} = ${2:ModelClassName}.find(params[:id])\n\
+\n\
+		respond_to do |wants|\n\
+			if @$1.update_attributes(params[:$1])\n\
+				flash[:notice] = '$2 was successfully updated.'\n\
+				wants.html { redirect_to(@$1) }\n\
+				wants.xml  { head :ok }\n\
+			else\n\
+				wants.html { render :action => \"edit\" }\n\
+				wants.xml  { render :xml => @$1.errors, :status => :unprocessable_entity }\n\
+			end\n\
+		end\n\
+	end${3}\n\
+snippet flash\n\
+	flash[:${1:notice}] = \"${2}\"\n\
+snippet habtm\n\
+	has_and_belongs_to_many :${1:object}, :join_table => \"${2:table_name}\", :foreign_key => \"${3}_id\"${4}\n\
+snippet hm\n\
+	has_many :${1:object}\n\
+snippet hmd\n\
+	has_many :${1:other}s, :class_name => \"${2:$1}\", :foreign_key => \"${3:$1}_id\", :dependent => :destroy${4}\n\
+snippet hmt\n\
+	has_many :${1:object}, :through => :${2:object}\n\
+snippet ho\n\
+	has_one :${1:object}\n\
+snippet i18\n\
+	I18n.t('${1:type.key}')${2}\n\
+snippet ist\n\
+	<%= image_submit_tag(\"${1:agree.png}\", :id => \"${2:id}\"${3} %>\n\
+snippet log\n\
+	Rails.logger.${1:debug} ${2}\n\
+snippet log2\n\
+	RAILS_DEFAULT_LOGGER.${1:debug} ${2}\n\
+snippet logd\n\
+	logger.debug { \"${1:message}\" }${2}\n\
+snippet loge\n\
+	logger.error { \"${1:message}\" }${2}\n\
+snippet logf\n\
+	logger.fatal { \"${1:message}\" }${2}\n\
+snippet logi\n\
+	logger.info { \"${1:message}\" }${2}\n\
+snippet logw\n\
+	logger.warn { \"${1:message}\" }${2}\n\
+snippet mapc\n\
+	${1:map}.${2:connect} '${3:controller/:action/:id}'\n\
+snippet mapca\n\
+	${1:map}.catch_all \"*${2:anything}\", :controller => \"${3:default}\", :action => \"${4:error}\"${5}\n\
+snippet mapr\n\
+	${1:map}.resource :${2:resource}\n\
+snippet maprs\n\
+	${1:map}.resources :${2:resource}\n\
+snippet mapwo\n\
+	${1:map}.with_options :${2:controller} => '${3:thing}' do |$3|\n\
+		${4}\n\
+	end\n\
+snippet mbs\n\
+	before_save :${1:method}\n\
+snippet mcht\n\
+	change_table :${1:table_name} do |t|\n\
+		${2}\n\
+	end\n\
+snippet mp\n\
+	map(&:${1:id})\n\
+snippet mrw\n\
+	mattr_accessor :${1:attr_names}\n\
+snippet oa\n\
+	order(\"${1:field}\")\n\
+snippet od\n\
+	order(\"${1:field} DESC\")\n\
+snippet pa\n\
+	params[:${1:id}]${2}\n\
+snippet ra\n\
+	render :action => \"${1:action}\"\n\
+snippet ral\n\
+	render :action => \"${1:action}\", :layout => \"${2:layoutname}\"\n\
+snippet rest\n\
+	respond_to do |wants|\n\
+		wants.${1:html} { ${2} }\n\
+	end\n\
+snippet rf\n\
+	render :file => \"${1:filepath}\"\n\
+snippet rfu\n\
+	render :file => \"${1:filepath}\", :use_full_path => ${2:false}\n\
+snippet ri\n\
+	render :inline => \"${1:<%= 'hello' %>}\"\n\
+snippet ril\n\
+	render :inline => \"${1:<%= 'hello' %>}\", :locals => { ${2::name} => \"${3:value}\"${4} }\n\
+snippet rit\n\
+	render :inline => \"${1:<%= 'hello' %>}\", :type => ${2::rxml}\n\
+snippet rjson\n\
+	render :json => ${1:text to render}\n\
+snippet rl\n\
+	render :layout => \"${1:layoutname}\"\n\
+snippet rn\n\
+	render :nothing => ${1:true}\n\
+snippet rns\n\
+	render :nothing => ${1:true}, :status => ${2:401}\n\
+snippet rp\n\
+	render :partial => \"${1:item}\"\n\
+snippet rpc\n\
+	render :partial => \"${1:item}\", :collection => ${2:@$1s}\n\
+snippet rpl\n\
+	render :partial => \"${1:item}\", :locals => { :${2:$1} => ${3:@$1}\n\
+snippet rpo\n\
+	render :partial => \"${1:item}\", :object => ${2:@$1}\n\
+snippet rps\n\
+	render :partial => \"${1:item}\", :status => ${2:500}\n\
+snippet rt\n\
+	render :text => \"${1:text to render}\"\n\
+snippet rtl\n\
+	render :text => \"${1:text to render}\", :layout => \"${2:layoutname}\"\n\
+snippet rtlt\n\
+	render :text => \"${1:text to render}\", :layout => ${2:true}\n\
+snippet rts\n\
+	render :text => \"${1:text to render}\", :status => ${2:401}\n\
+snippet ru\n\
+	render :update do |${1:page}|\n\
+		$1.${2}\n\
+	end\n\
+snippet rxml\n\
+	render :xml => ${1:text to render}\n\
+snippet sc\n\
+	scope :${1:name}, :where(:@${2:field} => ${3:value})\n\
+snippet sl\n\
+	scope :${1:name}, lambda do |${2:value}|\n\
+		where(\"${3:field = ?}\", ${4:bind var})\n\
+	end\n\
+snippet sha1\n\
+	Digest::SHA1.hexdigest(${1:string})\n\
+snippet sweeper\n\
+	class ${1:ModelClassName}Sweeper < ActionController::Caching::Sweeper\n\
+		observe $1\n\
+\n\
+		def after_save(${2:model_class_name})\n\
+			expire_cache($2)\n\
+		end\n\
+\n\
+		def after_destroy($2)\n\
+			expire_cache($2)\n\
+		end\n\
+\n\
+		def expire_cache($2)\n\
+			expire_page\n\
+		end\n\
+	end\n\
+snippet tcb\n\
+	t.boolean :${1:title}\n\
+	${2}\n\
+snippet tcbi\n\
+	t.binary :${1:title}, :limit => ${2:2}.megabytes\n\
+	${3}\n\
+snippet tcd\n\
+	t.decimal :${1:title}, :precision => ${2:10}, :scale => ${3:2}\n\
+	${4}\n\
+snippet tcda\n\
+	t.date :${1:title}\n\
+	${2}\n\
+snippet tcdt\n\
+	t.datetime :${1:title}\n\
+	${2}\n\
+snippet tcf\n\
+	t.float :${1:title}\n\
+	${2}\n\
+snippet tch\n\
+	t.change :${1:name}, :${2:string}, :${3:limit} => ${4:80}\n\
+	${5}\n\
+snippet tci\n\
+	t.integer :${1:title}\n\
+	${2}\n\
+snippet tcl\n\
+	t.integer :lock_version, :null => false, :default => 0\n\
+	${1}\n\
+snippet tcr\n\
+	t.references :${1:taggable}, :polymorphic => { :default => '${2:Photo}' }\n\
+	${3}\n\
+snippet tcs\n\
+	t.string :${1:title}\n\
+	${2}\n\
+snippet tct\n\
+	t.text :${1:title}\n\
+	${2}\n\
+snippet tcti\n\
+	t.time :${1:title}\n\
+	${2}\n\
+snippet tcts\n\
+	t.timestamp :${1:title}\n\
+	${2}\n\
+snippet tctss\n\
+	t.timestamps\n\
+	${1}\n\
+snippet va\n\
+	validates_associated :${1:attribute}\n\
+snippet vao\n\
+	validates_acceptance_of :${1:terms}\n\
+snippet vc\n\
+	validates_confirmation_of :${1:attribute}\n\
+snippet ve\n\
+	validates_exclusion_of :${1:attribute}, :in => ${2:%w( mov avi )}\n\
+snippet vf\n\
+	validates_format_of :${1:attribute}, :with => /${2:regex}/\n\
+snippet vi\n\
+	validates_inclusion_of :${1:attribute}, :in => %w(${2: mov avi })\n\
+snippet vl\n\
+	validates_length_of :${1:attribute}, :within => ${2:3}..${3:20}\n\
+snippet vn\n\
+	validates_numericality_of :${1:attribute}\n\
+snippet vpo\n\
+	validates_presence_of :${1:attribute}\n\
+snippet vu\n\
+	validates_uniqueness_of :${1:attribute}\n\
+snippet wants\n\
+	wants.${1:js|xml|html} { ${2} }\n\
+snippet wc\n\
+	where(${1:\"conditions\"}${2:, bind_var})\n\
+snippet wh\n\
+	where(${1:field} => ${2:value})\n\
+snippet xdelete\n\
+	xhr :delete, :${1:destroy}, :id => ${2:1}${3}\n\
+snippet xget\n\
+	xhr :get, :${1:show}, :id => ${2:1}${3}\n\
+snippet xpost\n\
+	xhr :post, :${1:create}, :${2:object} => { ${3} }\n\
+snippet xput\n\
+	xhr :put, :${1:update}, :id => ${2:1}, :${3:object} => { ${4} }${5}\n\
+snippet test\n\
+	test \"should ${1:do something}\" do\n\
+		${2}\n\
+	end\n\
+#migrations\n\
+snippet mac\n\
+	add_column :${1:table_name}, :${2:column_name}, :${3:data_type}\n\
+snippet mrc\n\
+	remove_column :${1:table_name}, :${2:column_name}\n\
+snippet mrnc\n\
+	rename_column :${1:table_name}, :${2:old_column_name}, :${3:new_column_name}\n\
+snippet mcc\n\
+	change_column :${1:table}, :${2:column}, :${3:type}\n\
+snippet mccc\n\
+	t.column :${1:title}, :${2:string}\n\
+snippet mct\n\
+	create_table :${1:table_name} do |t|\n\
+		t.column :${2:name}, :${3:type}\n\
+	end\n\
+snippet migration\n\
+	class ${1:class_name} < ActiveRecord::Migration\n\
+		def self.up\n\
+			${2}\n\
+		end\n\
+\n\
+		def self.down\n\
+		end\n\
+	end\n\
+\n\
+snippet trc\n\
+	t.remove :${1:column}\n\
+snippet tre\n\
+	t.rename :${1:old_column_name}, :${2:new_column_name}\n\
+	${3}\n\
+snippet tref\n\
+	t.references :${1:model}\n\
+\n\
+#rspec\n\
+snippet it\n\
+	it \"${1:spec_name}\" do\n\
+		${2}\n\
+	end\n\
+snippet itp\n\
+	it \"${1:spec_name}\"\n\
+	${2}\n\
+snippet desc\n\
+	describe ${1:class_name} do\n\
+		${2}\n\
+	end\n\
+snippet cont\n\
+	context \"${1:message}\" do\n\
+		${2}\n\
+	end\n\
+snippet bef\n\
+	before :${1:each} do\n\
+		${2}\n\
+	end\n\
+snippet aft\n\
+	after :${1:each} do\n\
+		${2}\n\
+	end\n\
+";
+exports.scope = "ruby";
+
+});
+
+define("ace/snippets/rust",["require","exports","module"], function(require, exports, module) {
+
+
+exports.snippetText =undefined;
+exports.scope = "rust";
+
+});
+
+define("ace/snippets/sass",["require","exports","module"], function(require, exports, module) {
+
+
+exports.snippetText =undefined;
+exports.scope = "sass";
+
+});
+
+define("ace/snippets/scad",["require","exports","module"], function(require, exports, module) {
+
+
+exports.snippetText =undefined;
+exports.scope = "scad";
+
+});
+
+define("ace/snippets/scala",["require","exports","module"], function(require, exports, module) {
+
+
+exports.snippetText =undefined;
+exports.scope = "scala";
+
+});
+
+define("ace/snippets/scheme",["require","exports","module"], function(require, exports, module) {
+
+
+exports.snippetText =undefined;
+exports.scope = "scheme";
+
+});
+
+define("ace/snippets/scss",["require","exports","module"], function(require, exports, module) {
+
+
+exports.snippetText =undefined;
+exports.scope = "scss";
+
+});
+
+define("ace/snippets/sh",["require","exports","module"], function(require, exports, module) {
+
+
+exports.snippetText = "# Shebang. Executing bash via /usr/bin/env makes scripts more portable.\n\
+snippet #!\n\
+	#!/usr/bin/env bash\n\
+	\n\
+snippet if\n\
+	if [[ ${1:condition} ]]; then\n\
+		${2:#statements}\n\
+	fi\n\
+snippet elif\n\
+	elif [[ ${1:condition} ]]; then\n\
+		${2:#statements}\n\
+snippet for\n\
+	for (( ${2:i} = 0; $2 < ${1:count}; $2++ )); do\n\
+		${3:#statements}\n\
+	done\n\
+snippet fori\n\
+	for ${1:needle} in ${2:haystack} ; do\n\
+		${3:#statements}\n\
+	done\n\
+snippet wh\n\
+	while [[ ${1:condition} ]]; do\n\
+		${2:#statements}\n\
+	done\n\
+snippet until\n\
+	until [[ ${1:condition} ]]; do\n\
+		${2:#statements}\n\
+	done\n\
+snippet case\n\
+	case ${1:word} in\n\
+		${2:pattern})\n\
+			${3};;\n\
+	esac\n\
+snippet go \n\
+	while getopts '${1:o}' ${2:opts} \n\
+	do \n\
+		case $$2 in\n\
+		${3:o0})\n\
+			${4:#staments};;\n\
+		esac\n\
+	done\n\
+# Set SCRIPT_DIR variable to directory script is located.\n\
+snippet sdir\n\
+	SCRIPT_DIR=\"$( cd \"$( dirname \"${BASH_SOURCE[0]}\" )\" && pwd )\"\n\
+# getopt\n\
+snippet getopt\n\
+	__ScriptVersion=\"${1:version}\"\n\
+\n\
+	#===  FUNCTION  ================================================================\n\
+	#         NAME:  usage\n\
+	#  DESCRIPTION:  Display usage information.\n\
+	#===============================================================================\n\
+	function usage ()\n\
+	{\n\
+			cat <<- EOT\n\
+\n\
+	  Usage :  $${0:0} [options] [--] \n\
+\n\
+	  Options: \n\
+	  -h|help       Display this message\n\
+	  -v|version    Display script version\n\
+\n\
+			EOT\n\
+	}    # ----------  end of function usage  ----------\n\
+\n\
+	#-----------------------------------------------------------------------\n\
+	#  Handle command line arguments\n\
+	#-----------------------------------------------------------------------\n\
+\n\
+	while getopts \":hv\" opt\n\
+	do\n\
+	  case $opt in\n\
+\n\
+		h|help     )  usage; exit 0   ;;\n\
+\n\
+		v|version  )  echo \"$${0:0} -- Version $__ScriptVersion\"; exit 0   ;;\n\
+\n\
+		\\? )  echo -e \"\\n  Option does not exist : $OPTARG\\n\"\n\
+			  usage; exit 1   ;;\n\
+\n\
+	  esac    # --- end of case ---\n\
+	done\n\
+	shift $(($OPTIND-1))\n\
+\n\
+";
+exports.scope = "sh";
+
+});
+
+define("ace/snippets/sjs",["require","exports","module"], function(require, exports, module) {
+
+
+exports.snippetText =undefined;
+exports.scope = "sjs";
+
+});
+
+define("ace/snippets/smarty",["require","exports","module"], function(require, exports, module) {
+
+
+exports.snippetText =undefined;
+exports.scope = "smarty";
+
+});
+
+define("ace/snippets/snippets",["require","exports","module"], function(require, exports, module) {
+
+
+exports.snippetText = "# snippets for making snippets :)\n\
+snippet snip\n\
+	snippet ${1:trigger}\n\
+		${2}\n\
+snippet msnip\n\
+	snippet ${1:trigger} ${2:description}\n\
+		${3}\n\
+snippet v\n\
+	{VISUAL}\n\
+";
+exports.scope = "snippets";
+
+});
+
+define("ace/snippets/soy_template",["require","exports","module"], function(require, exports, module) {
+
+
+exports.snippetText =undefined;
+exports.scope = "soy_template";
+
+});
+
+define("ace/snippets/space",["require","exports","module"], function(require, exports, module) {
+
+
+exports.snippetText =undefined;
+exports.scope = "space";
+
+});
+
+define("ace/snippets/sql",["require","exports","module"], function(require, exports, module) {
+
+
+exports.snippetText = "snippet tbl\n\
+	create table ${1:table} (\n\
+		${2:columns}\n\
+	);\n\
+snippet col\n\
+	${1:name}	${2:type}	${3:default ''}	${4:not null}\n\
+snippet ccol\n\
+	${1:name}	varchar2(${2:size})	${3:default ''}	${4:not null}\n\
+snippet ncol\n\
+	${1:name}	number	${3:default 0}	${4:not null}\n\
+snippet dcol\n\
+	${1:name}	date	${3:default sysdate}	${4:not null}\n\
+snippet ind\n\
+	create index ${3:$1_$2} on ${1:table}(${2:column});\n\
+snippet uind\n\
+	create unique index ${1:name} on ${2:table}(${3:column});\n\
+snippet tblcom\n\
+	comment on table ${1:table} is '${2:comment}';\n\
+snippet colcom\n\
+	comment on column ${1:table}.${2:column} is '${3:comment}';\n\
+snippet addcol\n\
+	alter table ${1:table} add (${2:column} ${3:type});\n\
+snippet seq\n\
+	create sequence ${1:name} start with ${2:1} increment by ${3:1} minvalue ${4:1};\n\
+snippet s*\n\
+	select * from ${1:table}\n\
+";
+exports.scope = "sql";
+
+});
+
+define("ace/snippets/stylus",["require","exports","module"], function(require, exports, module) {
+
+
+exports.snippetText =undefined;
+exports.scope = "stylus";
+
+});
+
+define("ace/snippets/svg",["require","exports","module"], function(require, exports, module) {
+
+
+exports.snippetText =undefined;
+exports.scope = "svg";
+
+});
+
+define("ace/snippets/tcl",["require","exports","module"], function(require, exports, module) {
+
+
+exports.snippetText = "# #!/usr/bin/env tclsh\n\
+snippet #!\n\
+	#!/usr/bin/env tclsh\n\
+	\n\
+# Process\n\
+snippet pro\n\
+	proc ${1:function_name} {${2:args}} {\n\
+		${3:#body ...}\n\
+	}\n\
+#xif\n\
+snippet xif\n\
+	${1:expr}? ${2:true} : ${3:false}\n\
+# Conditional\n\
+snippet if\n\
+	if {${1}} {\n\
+		${2:# body...}\n\
+	}\n\
+# Conditional if..else\n\
+snippet ife\n\
+	if {${1}} {\n\
+		${2:# body...}\n\
+	} else {\n\
+		${3:# else...}\n\
+	}\n\
+# Conditional if..elsif..else\n\
+snippet ifee\n\
+	if {${1}} {\n\
+		${2:# body...}\n\
+	} elseif {${3}} {\n\
+		${4:# elsif...}\n\
+	} else {\n\
+		${5:# else...}\n\
+	}\n\
+# If catch then\n\
+snippet ifc\n\
+	if { [catch {${1:#do something...}} ${2:err}] } {\n\
+		${3:# handle failure...}\n\
+	}\n\
+# Catch\n\
+snippet catch\n\
+	catch {${1}} ${2:err} ${3:options}\n\
+# While Loop\n\
+snippet wh\n\
+	while {${1}} {\n\
+		${2:# body...}\n\
+	}\n\
+# For Loop\n\
+snippet for\n\
+	for {set ${2:var} 0} {$$2 < ${1:count}} {${3:incr} $2} {\n\
+		${4:# body...}\n\
+	}\n\
+# Foreach Loop\n\
+snippet fore\n\
+	foreach ${1:x} {${2:#list}} {\n\
+		${3:# body...}\n\
+	}\n\
+# after ms script...\n\
+snippet af\n\
+	after ${1:ms} ${2:#do something}\n\
+# after cancel id\n\
+snippet afc\n\
+	after cancel ${1:id or script}\n\
+# after idle\n\
+snippet afi\n\
+	after idle ${1:script}\n\
+# after info id\n\
+snippet afin\n\
+	after info ${1:id}\n\
+# Expr\n\
+snippet exp\n\
+	expr {${1:#expression here}}\n\
+# Switch\n\
+snippet sw\n\
+	switch ${1:var} {\n\
+		${3:pattern 1} {\n\
+			${4:#do something}\n\
+		}\n\
+		default {\n\
+			${2:#do something}\n\
+		}\n\
+	}\n\
+# Case\n\
+snippet ca\n\
+	${1:pattern} {\n\
+		${2:#do something}\n\
+	}${3}\n\
+# Namespace eval\n\
+snippet ns\n\
+	namespace eval ${1:path} {${2:#script...}}\n\
+# Namespace current\n\
+snippet nsc\n\
+	namespace current\n\
+";
+exports.scope = "tcl";
+
+});
+
+define("ace/snippets/tex",["require","exports","module"], function(require, exports, module) {
+
+
+exports.snippetText = "#PREAMBLE\n\
+#newcommand\n\
+snippet nc\n\
+	\\newcommand{\\${1:cmd}}[${2:opt}]{${3:realcmd}}${4}\n\
+#usepackage\n\
+snippet up\n\
+	\\usepackage[${1:[options}]{${2:package}}\n\
+#newunicodechar\n\
+snippet nuc\n\
+	\\newunicodechar{${1}}{${2:\\ensuremath}${3:tex-substitute}}}\n\
+#DeclareMathOperator\n\
+snippet dmo\n\
+	\\DeclareMathOperator{${1}}{${2}}\n\
+\n\
+#DOCUMENT\n\
+# \\begin{}...\\end{}\n\
+snippet begin\n\
+	\\begin{${1:env}}\n\
+		${2}\n\
+	\\end{$1}\n\
+# Tabular\n\
+snippet tab\n\
+	\\begin{${1:tabular}}{${2:c}}\n\
+	${3}\n\
+	\\end{$1}\n\
+snippet thm\n\
+	\\begin[${1:author}]{${2:thm}}\n\
+	${3}\n\
+	\\end{$1}\n\
+snippet center\n\
+	\\begin{center}\n\
+		${1}\n\
+	\\end{center}\n\
+# Align(ed)\n\
+snippet ali\n\
+	\\begin{align${1:ed}}\n\
+		${2}\n\
+	\\end{align$1}\n\
+# Gather(ed)\n\
+snippet gat\n\
+	\\begin{gather${1:ed}}\n\
+		${2}\n\
+	\\end{gather$1}\n\
+# Equation\n\
+snippet eq\n\
+	\\begin{equation}\n\
+		${1}\n\
+	\\end{equation}\n\
+# Equation\n\
+snippet eq*\n\
+	\\begin{equation*}\n\
+		${1}\n\
+	\\end{equation*}\n\
+# Unnumbered Equation\n\
+snippet \\\n\
+	\\[\n\
+		${1}\n\
+	\\]\n\
+# Enumerate\n\
+snippet enum\n\
+	\\begin{enumerate}\n\
+		\\item ${1}\n\
+	\\end{enumerate}\n\
+# Itemize\n\
+snippet itemize\n\
+	\\begin{itemize}\n\
+		\\item ${1}\n\
+	\\end{itemize}\n\
+# Description\n\
+snippet desc\n\
+	\\begin{description}\n\
+		\\item[${1}] ${2}\n\
+	\\end{description}\n\
+# Matrix\n\
+snippet mat\n\
+	\\begin{${1:p/b/v/V/B/small}matrix}\n\
+		${2}\n\
+	\\end{$1matrix}\n\
+# Cases\n\
+snippet cas\n\
+	\\begin{cases}\n\
+		${1:equation}, &\\text{ if }${2:case}\\\\\n\
+		${3}\n\
+	\\end{cases}\n\
+# Split\n\
+snippet spl\n\
+	\\begin{split}\n\
+		${1}\n\
+	\\end{split}\n\
+# Part\n\
+snippet part\n\
+	\\part{${1:part name}} % (fold)\n\
+	\\label{prt:${2:$1}}\n\
+	${3}\n\
+	% part $2 (end)\n\
+# Chapter\n\
+snippet cha\n\
+	\\chapter{${1:chapter name}}\n\
+	\\label{cha:${2:$1}}\n\
+	${3}\n\
+# Section\n\
+snippet sec\n\
+	\\section{${1:section name}}\n\
+	\\label{sec:${2:$1}}\n\
+	${3}\n\
+# Sub Section\n\
+snippet sub\n\
+	\\subsection{${1:subsection name}}\n\
+	\\label{sub:${2:$1}}\n\
+	${3}\n\
+# Sub Sub Section\n\
+snippet subs\n\
+	\\subsubsection{${1:subsubsection name}}\n\
+	\\label{ssub:${2:$1}}\n\
+	${3}\n\
+# Paragraph\n\
+snippet par\n\
+	\\paragraph{${1:paragraph name}}\n\
+	\\label{par:${2:$1}}\n\
+	${3}\n\
+# Sub Paragraph\n\
+snippet subp\n\
+	\\subparagraph{${1:subparagraph name}}\n\
+	\\label{subp:${2:$1}}\n\
+	${3}\n\
+#References\n\
+snippet itd\n\
+	\\item[${1:description}] ${2:item}\n\
+snippet figure\n\
+	${1:Figure}~\\ref{${2:fig:}}${3}\n\
+snippet table\n\
+	${1:Table}~\\ref{${2:tab:}}${3}\n\
+snippet listing\n\
+	${1:Listing}~\\ref{${2:list}}${3}\n\
+snippet section\n\
+	${1:Section}~\\ref{${2:sec:}}${3}\n\
+snippet page\n\
+	${1:page}~\\pageref{${2}}${3}\n\
+snippet index\n\
+	\\index{${1:index}}${2}\n\
+#Citations\n\
+snippet cite\n\
+	\\cite[${1}]{${2}}${3}\n\
+snippet fcite\n\
+	\\footcite[${1}]{${2}}${3}\n\
+#Formating text: italic, bold, underline, small capital, emphase ..\n\
+snippet it\n\
+	\\textit{${1:text}}\n\
+snippet bf\n\
+	\\textbf{${1:text}}\n\
+snippet under\n\
+	\\underline{${1:text}}\n\
+snippet emp\n\
+	\\emph{${1:text}}\n\
+snippet sc\n\
+	\\textsc{${1:text}}\n\
+#Choosing font\n\
+snippet sf\n\
+	\\textsf{${1:text}}\n\
+snippet rm\n\
+	\\textrm{${1:text}}\n\
+snippet tt\n\
+	\\texttt{${1:text}}\n\
+#misc\n\
+snippet ft\n\
+	\\footnote{${1:text}}\n\
+snippet fig\n\
+	\\begin{figure}\n\
+	\\begin{center}\n\
+	    \\includegraphics[scale=${1}]{Figures/${2}}\n\
+	\\end{center}\n\
+	\\caption{${3}}\n\
+	\\label{fig:${4}}\n\
+	\\end{figure}\n\
+snippet tikz\n\
+	\\begin{figure}\n\
+	\\begin{center}\n\
+	\\begin{tikzpicture}[scale=${1:1}]\n\
+		${2}\n\
+	\\end{tikzpicture}\n\
+	\\end{center}\n\
+	\\caption{${3}}\n\
+	\\label{fig:${4}}\n\
+	\\end{figure}\n\
+#math\n\
+snippet stackrel\n\
+	\\stackrel{${1:above}}{${2:below}} ${3}\n\
+snippet frac\n\
+	\\frac{${1:num}}{${2:denom}}\n\
+snippet sum\n\
+	\\sum^{${1:n}}_{${2:i=1}}{${3}}";
+exports.scope = "tex";
+
+});
+
+define("ace/snippets/text",["require","exports","module"], function(require, exports, module) {
+
+
+exports.snippetText =undefined;
+exports.scope = "text";
+
+});
+
+define("ace/snippets/textile",["require","exports","module"], function(require, exports, module) {
+
+
+exports.snippetText = "# Jekyll post header\n\
+snippet header\n\
+	---\n\
+	title: ${1:title}\n\
+	layout: post\n\
+	date: ${2:date} ${3:hour:minute:second} -05:00\n\
+	---\n\
+\n\
+# Image\n\
+snippet img\n\
+	!${1:url}(${2:title}):${3:link}!\n\
+\n\
+# Table\n\
+snippet |\n\
+	|${1}|${2}\n\
+\n\
+# Link\n\
+snippet link\n\
+	\"${1:link text}\":${2:url}\n\
+\n\
+# Acronym\n\
+snippet (\n\
+	(${1:Expand acronym})${2}\n\
+\n\
+# Footnote\n\
+snippet fn\n\
+	[${1:ref number}] ${3}\n\
+\n\
+	fn$1. ${2:footnote}\n\
+	\n\
+";
+exports.scope = "textile";
+
+});
+
+define("ace/snippets/toml",["require","exports","module"], function(require, exports, module) {
+
+
+exports.snippetText =undefined;
+exports.scope = "toml";
+
+});
+
+define("ace/snippets/twig",["require","exports","module"], function(require, exports, module) {
+
+
+exports.snippetText =undefined;
+exports.scope = "twig";
+
+});
+
+define("ace/snippets/typescript",["require","exports","module"], function(require, exports, module) {
+
+
+exports.snippetText =undefined;
+exports.scope = "typescript";
+
+});
+
+define("ace/snippets/vala",["require","exports","module"], function(require, exports, module) {
+
+exports.snippets = [
+    {
+        "content": "case ${1:condition}:\n\t$0\n\tbreak;\n",
+        "name": "case",
+        "scope": "vala",
+        "tabTrigger": "case"
+    },
+    {
+        "content": "/**\n * ${6}\n */\n${1:public} class ${2:MethodName}${3: : GLib.Object} {\n\n\t/**\n\t * ${7}\n\t */\n\tpublic ${2}(${4}) {\n\t\t${5}\n\t}\n\n\t$0\n}",
+        "name": "class",
+        "scope": "vala",
+        "tabTrigger": "class"
+    },
+    {
+        "content": "(${1}) => {\n\t${0}\n}\n",
+        "name": "closure",
+        "scope": "vala",
+        "tabTrigger": "=>"
+    },
+    {
+        "content": "/*\n * $0\n */",
+        "name": "Comment (multiline)",
+        "scope": "vala",
+        "tabTrigger": "/*"
+    },
+    {
+        "content": "Console.WriteLine($1);\n$0",
+        "name": "Console.WriteLine (writeline)",
+        "scope": "vala",
+        "tabTrigger": "writeline"
+    },
+    {
+        "content": "[DBus(name = \"$0\")]",
+        "name": "DBus annotation",
+        "scope": "vala",
+        "tabTrigger": "[DBus"
+    },
+    {
+        "content": "delegate ${1:void} ${2:DelegateName}($0);",
+        "name": "delegate",
+        "scope": "vala",
+        "tabTrigger": "delegate"
+    },
+    {
+        "content": "do {\n\t$0\n} while ($1);\n",
+        "name": "do while",
+        "scope": "vala",
+        "tabTrigger": "dowhile"
+    },
+    {
+        "content": "/**\n * $0\n */",
+        "name": "DocBlock",
+        "scope": "vala",
+        "tabTrigger": "/**"
+    },
+    {
+        "content": "else if ($1) {\n\t$0\n}\n",
+        "name": "else if (elseif)",
+        "scope": "vala",
+        "tabTrigger": "elseif"
+    },
+    {
+        "content": "else {\n\t$0\n}",
+        "name": "else",
+        "scope": "vala",
+        "tabTrigger": "else"
+    },
+    {
+        "content": "enum {$1:EnumName} {\n\t$0\n}",
+        "name": "enum",
+        "scope": "vala",
+        "tabTrigger": "enum"
+    },
+    {
+        "content": "public errordomain ${1:Error} {\n\t$0\n}",
+        "name": "error domain",
+        "scope": "vala",
+        "tabTrigger": "errordomain"
+    },
+    {
+        "content": "for ($1;$2;$3) {\n\t$0\n}",
+        "name": "for",
+        "scope": "vala",
+        "tabTrigger": "for"
+    },
+    {
+        "content": "foreach ($1 in $2) {\n\t$0\n}",
+        "name": "foreach",
+        "scope": "vala",
+        "tabTrigger": "foreach"
+    },
+    {
+        "content": "Gee.ArrayList<${1:G}>($0);",
+        "name": "Gee.ArrayList",
+        "scope": "vala",
+        "tabTrigger": "ArrayList"
+    },
+    {
+        "content": "Gee.HashMap<${1:K},${2:V}>($0);",
+        "name": "Gee.HashMap",
+        "scope": "vala",
+        "tabTrigger": "HashMap"
+    },
+    {
+        "content": "Gee.HashSet<${1:G}>($0);",
+        "name": "Gee.HashSet",
+        "scope": "vala",
+        "tabTrigger": "HashSet"
+    },
+    {
+        "content": "if ($1) {\n\t$0\n}",
+        "name": "if",
+        "scope": "vala",
+        "tabTrigger": "if"
+    },
+    {
+        "content": "interface ${1:InterfaceName}{$2: : SuperInterface} {\n\t$0\n}",
+        "name": "interface",
+        "scope": "vala",
+        "tabTrigger": "interface"
+    },
+    {
+        "content": "public static int main(string [] argv) {\n\t${0}\n\treturn 0;\n}",
+        "name": "Main function",
+        "scope": "vala",
+        "tabTrigger": "main"
+    },
+    {
+        "content": "namespace $1 {\n\t$0\n}\n",
+        "name": "namespace (ns)",
+        "scope": "vala",
+        "tabTrigger": "ns"
+    },
+    {
+        "content": "stdout.printf($0);",
+        "name": "printf",
+        "scope": "vala",
+        "tabTrigger": "printf"
+    },
+    {
+        "content": "${1:public} ${2:Type} ${3:Name} {\n\tset {\n\t\t$0\n\t}\n\tget {\n\n\t}\n}",
+        "name": "property (prop)",
+        "scope": "vala",
+        "tabTrigger": "prop"
+    },
+    {
+        "content": "${1:public} ${2:Type} ${3:Name} {\n\tget {\n\t\t$0\n\t}\n}",
+        "name": "read-only property (roprop)",
+        "scope": "vala",
+        "tabTrigger": "roprop"
+    },
+    {
+        "content": "@\"${1:\\$var}\"",
+        "name": "String template (@)",
+        "scope": "vala",
+        "tabTrigger": "@"
+    },
+    {
+        "content": "struct ${1:StructName} {\n\t$0\n}",
+        "name": "struct",
+        "scope": "vala",
+        "tabTrigger": "struct"
+    },
+    {
+        "content": "switch ($1) {\n\t$0\n}",
+        "name": "switch",
+        "scope": "vala",
+        "tabTrigger": "switch"
+    },
+    {
+        "content": "try {\n\t$2\n} catch (${1:Error} e) {\n\t$0\n}",
+        "name": "try/catch",
+        "scope": "vala",
+        "tabTrigger": "try"
+    },
+    {
+        "content": "\"\"\"$0\"\"\";",
+        "name": "Verbatim string (\"\"\")",
+        "scope": "vala",
+        "tabTrigger": "verbatim"
+    },
+    {
+        "content": "while ($1) {\n\t$0\n}",
+        "name": "while",
+        "scope": "vala",
+        "tabTrigger": "while"
+    }
+];
+exports.scope = "";
+
+});
+
+define("ace/snippets/vbscript",["require","exports","module"], function(require, exports, module) {
+
+
+exports.snippetText =undefined;
+exports.scope = "vbscript";
+
+});
+
+define("ace/snippets/velocity",["require","exports","module"], function(require, exports, module) {
+
+
+exports.snippetText = "# macro\n\
+snippet #macro\n\
+	#macro ( ${1:macroName} ${2:\\$var1, [\\$var2, ...]} )\n\
+		${3:## macro code}\n\
+	#end\n\
+# foreach\n\
+snippet #foreach\n\
+	#foreach ( ${1:\\$item} in ${2:\\$collection} )\n\
+		${3:## foreach code}\n\
+	#end\n\
+# if\n\
+snippet #if\n\
+	#if ( ${1:true} )\n\
+		${0}\n\
+	#end\n\
+# if ... else\n\
+snippet #ife\n\
+	#if ( ${1:true} )\n\
+		${2}\n\
+	#else\n\
+		${0}\n\
+	#end\n\
+#import\n\
+snippet #import\n\
+	#import ( \"${1:path/to/velocity/format}\" )\n\
+# set\n\
+snippet #set\n\
+	#set ( $${1:var} = ${0} )\n\
+";
+exports.scope = "velocity";
+exports.includeScopes = ["html", "javascript", "css"];
+
+});
+
+define("ace/snippets/verilog",["require","exports","module"], function(require, exports, module) {
+
+
+exports.snippetText =undefined;
+exports.scope = "verilog";
+
+});
+
+define("ace/snippets/vhdl",["require","exports","module"], function(require, exports, module) {
+
+
+exports.snippetText =undefined;
+exports.scope = "vhdl";
+
+});
+
+define("ace/snippets/xml",["require","exports","module"], function(require, exports, module) {
+
+
+exports.snippetText =undefined;
+exports.scope = "xml";
+
+});
+
+define("ace/snippets/xquery",["require","exports","module"], function(require, exports, module) {
+
+
+exports.snippetText = "snippet for\n\
+	for $${1:item} in ${2:expr}\n\
+snippet return\n\
+	return ${1:expr}\n\
+snippet import\n\
+	import module namespace ${1:ns} = \"${2:http://www.example.com/}\";\n\
+snippet some\n\
+	some $${1:varname} in ${2:expr} satisfies ${3:expr}\n\
+snippet every\n\
+	every $${1:varname} in ${2:expr} satisfies ${3:expr}\n\
+snippet if\n\
+	if(${1:true}) then ${2:expr} else ${3:true}\n\
+snippet switch\n\
+	switch(${1:\"foo\"})\n\
+	case ${2:\"foo\"}\n\
+	return ${3:true}\n\
+	default return ${4:false}\n\
+snippet try\n\
+	try { ${1:expr} } catch ${2:*} { ${3:expr} }\n\
+snippet tumbling\n\
+	for tumbling window $${1:varname} in ${2:expr}\n\
+	start at $${3:start} when ${4:expr}\n\
+	end at $${5:end} when ${6:expr}\n\
+	return ${7:expr}\n\
+snippet sliding\n\
+	for sliding window $${1:varname} in ${2:expr}\n\
+	start at $${3:start} when ${4:expr}\n\
+	end at $${5:end} when ${6:expr}\n\
+	return ${7:expr}\n\
+snippet let\n\
+	let $${1:varname} := ${2:expr}\n\
+snippet group\n\
+	group by $${1:varname} := ${2:expr}\n\
+snippet order\n\
+	order by ${1:expr} ${2:descending}\n\
+snippet stable\n\
+	stable order by ${1:expr}\n\
+snippet count\n\
+	count $${1:varname}\n\
+snippet ordered\n\
+	ordered { ${1:expr} }\n\
+snippet unordered\n\
+	unordered { ${1:expr} }\n\
+snippet treat \n\
+	treat as ${1:expr}\n\
+snippet castable\n\
+	castable as ${1:atomicType}\n\
+snippet cast\n\
+	cast as ${1:atomicType}\n\
+snippet typeswitch\n\
+	typeswitch(${1:expr})\n\
+	case ${2:type}  return ${3:expr}\n\
+	default return ${4:expr}\n\
+snippet var\n\
+	declare variable $${1:varname} := ${2:expr};\n\
+snippet fn\n\
+	declare function ${1:ns}:${2:name}(){\n\
+	${3:expr}\n\
+	};\n\
+snippet module\n\
+	module namespace ${1:ns} = \"${2:http://www.example.com}\";\n\
+";
+exports.scope = "xquery";
+
+});
+
+define("ace/snippets/yaml",["require","exports","module"], function(require, exports, module) {
+
+
+exports.snippetText =undefined;
+exports.scope = "yaml";
+
 });
 
 define("ace/undomanager",["require","exports","module"], function(require, exports, module) {
@@ -43482,10 +52465,136 @@ dom.importCssString("\
 
 });
 
-define("ace/ace",["require","exports","module","ace/lib/fixoldbrowsers","ace/lib/dom","ace/lib/event","ace/editor","ace/edit_session","ace/undomanager","ace/virtual_renderer","ace/worker/worker_client","ace/keyboard/hash_handler","ace/placeholder","ace/multi_select","ace/mode/folding/fold_mode","ace/ext/error_marker","ace/config"], function(require, exports, module) {
+define("ace/ace",["require","exports","module","ace/lib/fixoldbrowsers","ace/snippets","ace/snippets/_all_modes","ace/snippets/abap","ace/snippets/actionscript","ace/snippets/ada","ace/snippets/all_modes","ace/snippets/apache_conf","ace/snippets/applescript","ace/snippets/asciidoc","ace/snippets/assembly_x86","ace/snippets/autohotkey","ace/snippets/batchfile","ace/snippets/c9search","ace/snippets/c_cpp","ace/snippets/cirru","ace/snippets/clojure","ace/snippets/cobol","ace/snippets/coffee","ace/snippets/coldfusion","ace/snippets/csharp","ace/snippets/css","ace/snippets/curly","ace/snippets/d","ace/snippets/dart","ace/snippets/diff","ace/snippets/django","ace/snippets/dockerfile","ace/snippets/dot","ace/snippets/dummy","ace/snippets/dummy_syntax","ace/snippets/eiffel","ace/snippets/ejs","ace/snippets/elixir","ace/snippets/elm","ace/snippets/erlang","ace/snippets/forth","ace/snippets/ftl","ace/snippets/gcode","ace/snippets/gherkin","ace/snippets/gitignore","ace/snippets/glsl","ace/snippets/golang","ace/snippets/groovy","ace/snippets/haml","ace/snippets/handlebars","ace/snippets/haskell","ace/snippets/haxe","ace/snippets/html","ace/snippets/html_ruby","ace/snippets/ini","ace/snippets/io","ace/snippets/jack","ace/snippets/jade","ace/snippets/java","ace/snippets/javascript","ace/snippets/json","ace/snippets/jsoniq","ace/snippets/jsp","ace/snippets/jsx","ace/snippets/julia","ace/snippets/latex","ace/snippets/less","ace/snippets/liquid","ace/snippets/lisp","ace/snippets/livescript","ace/snippets/logiql","ace/snippets/lsl","ace/snippets/lua","ace/snippets/luapage","ace/snippets/lucene","ace/snippets/makefile","ace/snippets/markdown","ace/snippets/mask","ace/snippets/matlab","ace/snippets/mel","ace/snippets/mushcode","ace/snippets/mushcode_high_rules","ace/snippets/mysql","ace/snippets/nix","ace/snippets/objectivec","ace/snippets/ocaml","ace/snippets/pascal","ace/snippets/perl","ace/snippets/pgsql","ace/snippets/php","ace/snippets/plain_text","ace/snippets/powershell","ace/snippets/praat","ace/snippets/prolog","ace/snippets/properties","ace/snippets/protobuf","ace/snippets/python","ace/snippets/r","ace/snippets/rdoc","ace/snippets/rhtml","ace/snippets/ruby","ace/snippets/rust","ace/snippets/sass","ace/snippets/scad","ace/snippets/scala","ace/snippets/scheme","ace/snippets/scss","ace/snippets/sh","ace/snippets/sjs","ace/snippets/smarty","ace/snippets/snippets","ace/snippets/soy_template","ace/snippets/space","ace/snippets/sql","ace/snippets/stylus","ace/snippets/svg","ace/snippets/tcl","ace/snippets/tex","ace/snippets/text","ace/snippets/textile","ace/snippets/toml","ace/snippets/twig","ace/snippets/typescript","ace/snippets/vala","ace/snippets/vbscript","ace/snippets/velocity","ace/snippets/verilog","ace/snippets/vhdl","ace/snippets/xml","ace/snippets/xquery","ace/snippets/yaml","ace/lib/dom","ace/lib/event","ace/editor","ace/edit_session","ace/undomanager","ace/virtual_renderer","ace/worker/worker_client","ace/keyboard/hash_handler","ace/placeholder","ace/multi_select","ace/mode/folding/fold_mode","ace/ext/error_marker","ace/config"], function(require, exports, module) {
 
 
 require("./lib/fixoldbrowsers");
+require("./snippets");
+require("./snippets/_all_modes");
+require("./snippets/abap");
+require("./snippets/actionscript");
+require("./snippets/ada");
+require("./snippets/all_modes");
+require("./snippets/apache_conf");
+require("./snippets/applescript");
+require("./snippets/asciidoc");
+require("./snippets/assembly_x86");
+require("./snippets/autohotkey");
+require("./snippets/batchfile");
+require("./snippets/c9search");
+require("./snippets/c_cpp");
+require("./snippets/cirru");
+require("./snippets/clojure");
+require("./snippets/cobol");
+require("./snippets/coffee");
+require("./snippets/coldfusion");
+require("./snippets/csharp");
+require("./snippets/css");
+require("./snippets/curly");
+require("./snippets/d");
+require("./snippets/dart");
+require("./snippets/diff");
+require("./snippets/django");
+require("./snippets/dockerfile");
+require("./snippets/dot");
+require("./snippets/dummy");
+require("./snippets/dummy_syntax");
+require("./snippets/eiffel");
+require("./snippets/ejs");
+require("./snippets/elixir");
+require("./snippets/elm");
+require("./snippets/erlang");
+require("./snippets/forth");
+require("./snippets/ftl");
+require("./snippets/gcode");
+require("./snippets/gherkin");
+require("./snippets/gitignore");
+require("./snippets/glsl");
+require("./snippets/golang");
+require("./snippets/groovy");
+require("./snippets/haml");
+require("./snippets/handlebars");
+require("./snippets/haskell");
+require("./snippets/haxe");
+require("./snippets/html");
+require("./snippets/html_ruby");
+require("./snippets/ini");
+require("./snippets/io");
+require("./snippets/jack");
+require("./snippets/jade");
+require("./snippets/java");
+require("./snippets/javascript");
+require("./snippets/json");
+require("./snippets/jsoniq");
+require("./snippets/jsp");
+require("./snippets/jsx");
+require("./snippets/julia");
+require("./snippets/latex");
+require("./snippets/less");
+require("./snippets/liquid");
+require("./snippets/lisp");
+require("./snippets/livescript");
+require("./snippets/logiql");
+require("./snippets/lsl");
+require("./snippets/lua");
+require("./snippets/luapage");
+require("./snippets/lucene");
+require("./snippets/makefile");
+require("./snippets/markdown");
+require("./snippets/mask");
+require("./snippets/matlab");
+require("./snippets/mel");
+require("./snippets/mushcode");
+require("./snippets/mushcode_high_rules");
+require("./snippets/mysql");
+require("./snippets/nix");
+require("./snippets/objectivec");
+require("./snippets/ocaml");
+require("./snippets/pascal");
+require("./snippets/perl");
+require("./snippets/pgsql");
+require("./snippets/php");
+require("./snippets/plain_text");
+require("./snippets/powershell");
+require("./snippets/praat");
+require("./snippets/prolog");
+require("./snippets/properties");
+require("./snippets/protobuf");
+require("./snippets/python");
+require("./snippets/r");
+require("./snippets/rdoc");
+require("./snippets/rhtml");
+require("./snippets/ruby");
+require("./snippets/rust");
+require("./snippets/sass");
+require("./snippets/scad");
+require("./snippets/scala");
+require("./snippets/scheme");
+require("./snippets/scss");
+require("./snippets/sh");
+require("./snippets/sjs");
+require("./snippets/smarty");
+require("./snippets/snippets");
+require("./snippets/soy_template");
+require("./snippets/space");
+require("./snippets/sql");
+require("./snippets/stylus");
+require("./snippets/svg");
+require("./snippets/tcl");
+require("./snippets/tex");
+require("./snippets/text");
+require("./snippets/textile");
+require("./snippets/toml");
+require("./snippets/twig");
+require("./snippets/typescript");
+require("./snippets/vala");
+require("./snippets/vbscript");
+require("./snippets/velocity");
+require("./snippets/verilog");
+require("./snippets/vhdl");
+require("./snippets/xml");
+require("./snippets/xquery");
+require("./snippets/yaml");
 
 var dom = require("./lib/dom");
 var event = require("./lib/event");
