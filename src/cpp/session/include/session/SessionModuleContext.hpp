@@ -143,6 +143,9 @@ core::Error installEmbeddedPackage(const std::string& name);
 // find the package name for a source file
 std::string packageNameForSourceFile(const core::FilePath& sourceFilePath);
 
+// is this R or C++ source file part of another (unmonitored) package?
+bool isUnmonitoredPackageSourceFile(const core::FilePath& filePath);
+
 // register a handler for rBrowseUrl
 typedef boost::function<bool(const std::string&)> RBrowseUrlHandler;
 core::Error registerRBrowseUrlHandler(const RBrowseUrlHandler& handler);

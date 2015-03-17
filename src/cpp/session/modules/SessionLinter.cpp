@@ -242,31 +242,6 @@ Error extractRCode(const std::string& contents,
    return error;
 }
 
-bool belongsToUnmonitoredRPackage(FilePath self)
-{
-   // Check to see if this file is the descendent of a path
-   // containing a 'DESCRIPTION' file.
-   if (!self.isDirectory())
-      self = self.parent();
-   
-   while (!self.empty())
-   {
-      FilePath descPath = self.complete("DESCRIPTION");
-      if (descPath.exists())
-      {
-         if (!projects::projectContext().hasProject())
-            return true;
-         
-         if (!self.isEquivalentTo(projects::projectContext().directory()))
-            return true;
-      }
-      
-      self = self.parent();
-   }
-   
-   return false;
-}
-
 Error lintRSourceDocument(const json::JsonRpcRequest& request,
                           json::JsonRpcResponse* pResponse)
 {
@@ -301,7 +276,7 @@ Error lintRSourceDocument(const json::JsonRpcRequest& request,
    FilePath origin = module_context::resolveAliasedPath(documentPath);
    
    // Don't lint files that belong to unmonitored projects
-   if (belongsToUnmonitoredRPackage(origin))
+   if (module_context::isUnmonitoredPackageSourceFile(origin))
       return Success();
    
    // Extract R code from various R-code-containing filetypes.
