@@ -169,6 +169,13 @@ Error getCppDiagnostics(const core::json::JsonRpcRequest& request,
    // resolve the docPath if it's aliased
    FilePath filePath = module_context::resolveAliasedPath(docPath);
 
+   // don't lint files that belong to unmonitored projects
+   if (module_context::isUnmonitoredPackageSourceFile(filePath))
+   {
+      pResponse->setResult(json::Array());
+      return Success();
+   }
+
    pResponse->setResult(getCppDiagnosticsJson(filePath));
    return Success();
 }
