@@ -206,10 +206,8 @@ public final class DefaultCalendarView extends CalendarView {
 
   private static void addDays(Date date, int days) {
     CalendarUtil.addDaysToDate(date, days);
-    if (date.getHours() != 0) {
-      // We hit DST transition, try reseting back so follow up days continue showing midnight:
-      date.setHours(0);
-    }
+    // We might hit DST transition. Try reseting back so follow up days continue showing midnight.
+    CalendarUtil.resetTime(date);
   }
 
   @Override

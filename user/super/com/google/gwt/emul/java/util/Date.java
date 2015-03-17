@@ -271,8 +271,8 @@ public class Date implements Cloneable, Comparable<Date>, Serializable {
    * accordingly.
    */
   private void fixDaylightSavings(int requestedHours) {
-    int hours = jsdate.getHours();
-    if ((hours % 24) != (requestedHours % 24)) {
+    requestedHours %= 24;
+    if (jsdate.getHours() != requestedHours) {
       // Hours passed to the constructor don't match the hours in the created JavaScript Date; this
       // might be due either because they are outside 0-24 range, there was overflow from
       // minutes:secs:millis or because we are in the situation GAP and has to be fixed.
@@ -298,16 +298,16 @@ public class Date implements Cloneable, Comparable<Date>, Serializable {
             jsdate.getSeconds(), jsdate.getMilliseconds());
         jsdate.setTime(newTime.getTime());
       }
-      return;
     }
 
     // Check for situation OVERLAP by advancing the clock by 1 hour and see if getHours() returns
-    // the same.
+    // the same. This solves issues like Safari returning '3/21/2015 23:00' when time is set to
+    // '2/22/2015'.
     double originalTimeInMillis = jsdate.getTime();
     jsdate.setTime(originalTimeInMillis + ONE_HOUR_IN_MILLISECONDS);
-    if (hours != jsdate.getHours()) {
+    if (jsdate.getHours() != requestedHours) {
       // We are not in the duplicated hour, so revert the change.
-     jsdate.setTime(originalTimeInMillis);
+      jsdate.setTime(originalTimeInMillis);
     }
   }
 }
