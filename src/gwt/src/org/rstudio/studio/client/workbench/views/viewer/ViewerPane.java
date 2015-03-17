@@ -105,8 +105,6 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
    public void navigate(String url)
    {
       navigate(url, false);
-      // TODO: use isExportEnabled to toggle publish UI
-      publishButton_.setVisible(false);
       rmdPreviewParams_ = null;
    }
 
@@ -126,6 +124,7 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
       isExportEnabled_ = exportEnabled;
       exportButton_.setVisible(exportEnabled);
       exportButtonSeparator_.setVisible(exportEnabled);
+      publishButton_.setVisible(exportEnabled);
       toolbar_.invalidateSeparators();
    }
    

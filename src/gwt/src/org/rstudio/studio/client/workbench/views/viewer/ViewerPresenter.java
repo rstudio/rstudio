@@ -372,7 +372,6 @@ public class ViewerPresenter extends BasePresenter
       });
    }
    
-   
    @Handler
    public void onViewerSaveAllAndRefresh()
    {
