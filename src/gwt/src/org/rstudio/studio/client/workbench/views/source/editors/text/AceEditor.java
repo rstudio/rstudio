@@ -521,7 +521,7 @@ public class AceEditor implements DocDisplay,
 
       getSession().setUseWorker(useWorker);
       getSession().setWorkerTimeout(
-            uiPrefs_.backgroundLintDelayMs().getValue());
+            uiPrefs_.backgroundDiagnosticsDelayMs().getValue());
    }
    
    private void syncWrapLimit()

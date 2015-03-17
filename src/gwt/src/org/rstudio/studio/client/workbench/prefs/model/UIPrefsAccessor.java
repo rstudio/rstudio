@@ -156,14 +156,19 @@ public class UIPrefsAccessor extends Prefs
       return bool("show_signature_tooltips", true);
    }
    
-   public PrefValue<Boolean> showDiagnostics()
+   public PrefValue<Boolean> showDiagnosticsR()
    {
-      return bool("show_diagnostics_core_lang", false);
+      return bool("show_diagnostics_r", true);
+   }
+   
+   public PrefValue<Boolean> showDiagnosticsCpp()
+   {
+      return bool("show_diagnostics_cpp", true);
    }
    
    public PrefValue<Boolean> showDiagnosticsOther()
    {
-      return bool("show_diagnostics_other_lang", false);
+      return bool("show_diagnostics_other", true);
    }
    
    public PrefValue<Boolean> enableStyleDiagnostics()
@@ -171,24 +176,24 @@ public class UIPrefsAccessor extends Prefs
       return bool("enable_style_diagnostics", false);
    }
    
-   public PrefValue<Boolean> lintOnSave()
+   public PrefValue<Boolean> diagnosticsOnSave()
    {
-      return bool("lint_on_save", true);
+      return bool("diagnostics_on_save", true);
    }
    
-   public PrefValue<Boolean> enableBackgroundLinting()
+   public PrefValue<Boolean> enableBackgroundDiagnostics()
    {
-      return bool("enable_background_linting", false);
+      return bool("enable_background_diagnostics", true);
    }
    
-   public PrefValue<Integer> backgroundLintDelayMs()
+   public PrefValue<Integer> backgroundDiagnosticsDelayMs()
    {
-      return integer("background_lint_delay_ms", 2000);
+      return integer("background_diagnostics_delay_ms", 2000);
    }
    
-   public PrefValue<Boolean> lintRFunctionCalls()
+   public PrefValue<Boolean> diagnosticsInRFunctionCalls()
    {
-      return bool("lint_r_function_calls", false);
+      return bool("diagnostics_in_r_function_calls", false);
    }
    
    public PrefValue<Boolean> autoAppendNewline()

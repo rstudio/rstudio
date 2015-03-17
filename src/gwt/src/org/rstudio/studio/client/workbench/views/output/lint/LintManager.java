@@ -72,12 +72,8 @@ public class LintManager
    private boolean isLintableDocument()
    {
       TextFileType type = docDisplay_.getFileType();
-      return type.isR() ||
-             type.isC() ||
-             type.isCpp() ||
-             type.isRmd() ||
-             type.isRnw() ||
-             type.isRpres();
+      return (((type.isC() || type.isCpp()) && uiPrefs_.showDiagnosticsCpp().getValue()) ||
+              ((type.isR() || type.isRmd() || type.isRnw() || type.isRpres()) && uiPrefs_.showDiagnosticsR().getValue()));
    }
    
    public LintManager(TextEditingTarget target)
@@ -113,7 +109,7 @@ public class LintManager
          @Override
          public void onValueChange(ValueChangeEvent<Void> event)
          {
-            if (!uiPrefs_.enableBackgroundLinting().getValue())
+            if (!uiPrefs_.enableBackgroundDiagnostics().getValue())
                return;
             
             if (!docDisplay_.isFocused())
@@ -123,7 +119,7 @@ public class LintManager
                return;
             
             docDisplay_.removeMarkersOnCursorLine();
-            timer_.schedule(uiPrefs_.backgroundLintDelayMs().getValue());
+            timer_.schedule(uiPrefs_.backgroundDiagnosticsDelayMs().getValue());
          }
       });
       
@@ -138,7 +134,7 @@ public class LintManager
             if (!docDisplay_.isFocused())
                return;
             
-            if (uiPrefs_.lintOnSave().getValue())
+            if (uiPrefs_.diagnosticsOnSave().getValue())
                lint(false, false);
          }
       });
@@ -189,7 +185,8 @@ public class LintManager
       if (context.token.isInvalid())
          return;
       
-      if (target_.getTextFileType().isCpp())
+      if (target_.getTextFileType().isCpp() ||
+          target_.getTextFileType().isC())
          performCppLintServerRequest(context);
       else
          performRLintServerRequest(context);
