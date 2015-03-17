@@ -320,7 +320,7 @@ Error lintRSourceDocument(const json::JsonRpcRequest& request,
                            &content);
    else if (pDoc->type() == SourceDocument::SourceDocumentTypeCpp)
       error = extractRCode(pDoc->contents(),
-                           "^\\s*/[*]{3,}\\s+[rR]\\s*$",
+                           "^\\s*/[*]{3,}\\s*[rR]\\s*$",
                            "^\\s*[*]+/",
                            &content);
    else
