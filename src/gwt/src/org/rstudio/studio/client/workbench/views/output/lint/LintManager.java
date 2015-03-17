@@ -27,13 +27,17 @@ import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.output.lint.model.LintItem;
 import org.rstudio.studio.client.workbench.views.output.lint.model.LintServerOperations;
 import org.rstudio.studio.client.workbench.views.presentation.events.SourceFileSaveCompletedEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionRequest;
 import org.rstudio.studio.client.workbench.views.source.model.CppDiagnostic;
 
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.user.client.Command;
@@ -90,7 +94,10 @@ public class LintManager
          public void run()
          {
             if (!isLintableDocument())
+            {
+               getAceWorkerDiagnostics(docDisplay_);
                return;
+            }
             
             invalidation_.invalidate();
             LintContext context = new LintContext(
@@ -317,6 +324,29 @@ public class LintManager
       excludeCurrentStatement_ = excludeCurrentStatement;
       timer_.schedule(0);
    }
+   
+   private void getAceWorkerDiagnostics(final DocDisplay docDisplay)
+   {
+      Scheduler.get().scheduleDeferred(new ScheduledCommand()
+      {
+         @Override
+         public void execute()
+         {
+            AceEditor editor = (AceEditor) docDisplay;
+            if (editor != null)
+               doGetAceWorkerDiagnostics(editor.getWidget().getEditor());
+         }
+      });
+   }
+   private final native void doGetAceWorkerDiagnostics(AceEditorNative editor) /*-{
+      // The 'timeout' here is a bit of a hack to ensure
+      // lint is not immediately cleared from other events.
+      setTimeout(function() {
+         var worker = editor.getSession().$worker;
+         if (worker)
+            worker.update();
+      }, 50);
+   }-*/;
    
    private final Timer timer_;
    private final TextEditingTarget target_;
