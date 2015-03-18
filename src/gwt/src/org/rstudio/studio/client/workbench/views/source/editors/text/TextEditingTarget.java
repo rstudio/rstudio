@@ -2052,7 +2052,7 @@ public class TextEditingTarget implements
    @Handler
    void onLintActiveDocument()
    {
-      lintManager_.lint(true, false);
+      lintManager_.lint();
    }
    
    public void withSavedDoc(Command onsaved)

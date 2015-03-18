@@ -351,14 +351,21 @@ public class AceEditor implements DocDisplay,
          }
       });
       
+      lastModifiedTime_ = System.currentTimeMillis();
       addValueChangeHandler(new ValueChangeHandler<Void>()
       {
          @Override
          public void onValueChange(ValueChangeEvent<Void> event)
          {
+            lastModifiedTime_ = System.currentTimeMillis();
             clearDebugLineHighlight();
          }
       });
+   }
+   
+   public long getLastModifiedTime()
+   {
+      return lastModifiedTime_;
    }
    
    private void indentPastedRange(Range range)
@@ -2188,5 +2195,6 @@ public class AceEditor implements DocDisplay,
    
    
    private boolean popupVisible_;
+   private long lastModifiedTime_;
    
 }
