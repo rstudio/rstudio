@@ -125,7 +125,8 @@ public class RCompletionManager implements CompletionManager
       navigableSourceEditor_ = navigableSourceEditor;
       popup_ = popup ;
       server_ = server ;
-      requester_ = new CompletionRequester(server_, rnwContext, navigableSourceEditor);
+      snippets_ = new SnippetHelper((AceEditor) docDisplay);
+      requester_ = new CompletionRequester(server_, rnwContext, navigableSourceEditor, snippets_);
       initFilter_ = initFilter ;
       rContext_ = rContext;
       rnwContext_ = rnwContext;
@@ -1822,9 +1823,15 @@ public class RCompletionManager implements CompletionManager
 
       private void applyValue(final QualifiedName qualifiedName)
       {
-         if (qualifiedName.source == "`chunk-option`")
+         if (qualifiedName.source.equals("`chunk-option`"))
          {
             applyValueRmdOption(qualifiedName.name);
+            return;
+         }
+         
+         if (qualifiedName.source.equals("<snippet>"))
+         {
+            snippets_.applySnippet(token_, qualifiedName.name);
             return;
          }
          
@@ -2058,6 +2065,7 @@ public class RCompletionManager implements CompletionManager
    private String token_ ;
    
    private final DocDisplay docDisplay_;
+   private final SnippetHelper snippets_;
    private final boolean isConsole_;
 
    private final Invalidation invalidation_ = new Invalidation();

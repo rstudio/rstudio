@@ -507,7 +507,7 @@ public class AceEditor implements DocDisplay,
       int characterThreshold = uiPrefs_.alwaysCompleteCharacters().getValue();
       int delay = uiPrefs_.alwaysCompleteDelayMs().getValue();
       widget_.getEditor().setCompletionOptions(
-            enabled, false, live, characterThreshold, delay);
+            enabled, true, live, characterThreshold, delay);
    }
    
    @Override
@@ -2073,7 +2073,17 @@ public class AceEditor implements DocDisplay,
    
    public void moveCursorLeft()
    {
-      widget_.getEditor().moveCursorLeft();
+      moveCursorLeft(1);
+   }
+   
+   public void moveCursorLeft(int times)
+   {
+      widget_.getEditor().moveCursorLeft(times);
+   }
+   
+   public void expandSelectionLeft(int times)
+   {
+      widget_.getEditor().expandSelectionLeft(times);
    }
    
    public int getTabSize()

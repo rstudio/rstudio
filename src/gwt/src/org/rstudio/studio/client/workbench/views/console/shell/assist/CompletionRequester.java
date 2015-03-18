@@ -59,6 +59,7 @@ public class CompletionRequester
 {
    private final CodeToolsServerOperations server_ ;
    private final NavigableSourceEditor editor_ ;
+   private final SnippetHelper snippets_ ;
 
    private String cachedLinePrefix_ ;
    private HashMap<String, CompletionResult> cachedCompletions_ =
@@ -67,11 +68,13 @@ public class CompletionRequester
    
    public CompletionRequester(CodeToolsServerOperations server,
                               RnwCompletionContext rnwContext,
-                              NavigableSourceEditor editor)
+                              NavigableSourceEditor editor,
+                              SnippetHelper snippets)
    {
       server_ = server ;
       rnwContext_ = rnwContext;
       editor_ = editor;
+      snippets_ = snippets;
    }
    
    private boolean usingCache(
@@ -382,6 +385,9 @@ public class CompletionRequester
                if (!comp.get(i).endsWith(" = "))
                   newComp.add(new QualifiedName(comp.get(i), pkgs.get(i), quote.get(i), type.get(i)));
             
+            // Get snippet completions
+            addSnippetCompletions(token, newComp);
+            
             // Remove duplicates
             newComp = resolveDuplicates(newComp);
             
@@ -551,6 +557,17 @@ public class CompletionRequester
             }
          }
       }
+   }
+   
+   private void addSnippetCompletions(
+         String token,
+         ArrayList<QualifiedName> completions)
+   {
+      ArrayList<String> snippets = snippets_.getAvailableSnippets();
+      String tokenLower = token.toLowerCase();
+      for (String snippet : snippets)
+         if (snippet.toLowerCase().startsWith(tokenLower))
+            completions.add(new QualifiedName(snippet, "<snippet>"));
    }
 
    private void doGetCompletions(
