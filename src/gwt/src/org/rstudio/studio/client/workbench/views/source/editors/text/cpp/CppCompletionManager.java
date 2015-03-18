@@ -175,7 +175,7 @@ public class CppCompletionManager implements CompletionManager
       }
    }
    
-   private boolean attemptAutomaticSnippetInsertion()
+   private boolean attemptImmediateSnippetInsertion()
    {
       String token = StringUtil.getToken(
             docDisplay_.getCurrentLine(),
@@ -220,7 +220,7 @@ public class CppCompletionManager implements CompletionManager
          else if (event.getKeyCode() == KeyCodes.KEY_TAB &&
                   modifier == KeyboardShortcut.SHIFT)
          {
-            return attemptAutomaticSnippetInsertion();
+            return attemptImmediateSnippetInsertion();
          }
          else if (event.getKeyCode() == 112 // F1
                   && modifier == KeyboardShortcut.NONE)
