@@ -134,11 +134,11 @@ public class SameParameterValueOptimizer {
 
     @Override
     public boolean visit(JMethod x, Context ctx) {
-      Set<JMethod> overrides = x.getOverriddenMethods();
-      if (!overrides.isEmpty() || program.typeOracle.isJsTypeMethod(x)
+      Set<JMethod> overriddenMethods = x.getOverriddenMethods();
+      if (!overriddenMethods.isEmpty() || program.typeOracle.isJsTypeMethod(x)
           || program.typeOracle.isJsFunctionMethod(x)
           || program.typeOracle.isExportedMethod(x)) {
-        for (JMethod m : overrides) {
+        for (JMethod m : overriddenMethods) {
           rescuedMethods.add(m);
         }
         rescuedMethods.add(x);

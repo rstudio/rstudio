@@ -336,8 +336,8 @@ public class TypeTightener {
          * Add an assignment to each parameter from that same parameter in every
          * method this method overrides.
          */
-        Collection<JMethod> overrides = x.getOverriddenMethods();
-        if (overrides.isEmpty()) {
+        Collection<JMethod> overriddenMethods = x.getOverriddenMethods();
+        if (overriddenMethods.isEmpty()) {
           return true;
         }
         for (int j = 0, c = x.getParams().size(); j < c; ++j) {
@@ -347,7 +347,7 @@ public class TypeTightener {
             set = new LinkedHashSet<JParameter>();
             paramUpRefs.put(param, set);
           }
-          for (JMethod baseMethod : overrides) {
+          for (JMethod baseMethod : overriddenMethods) {
             JParameter baseParam = baseMethod.getParams().get(j);
             set.add(baseParam);
           }
@@ -604,11 +604,9 @@ public class TypeTightener {
           typeList.add((JReferenceType) expr.getType());
         }
       }
-      Collection<JMethod> overridingMethods = x.getOverridingMethods();
-      if (overridingMethods != null) {
-        for (JMethod method : overridingMethods) {
-          typeList.add((JReferenceType) method.getType());
-        }
+
+      for (JMethod method : x.getOverridingMethods()) {
+        typeList.add((JReferenceType) method.getType());
       }
 
       JReferenceType resultType = program.strengthenType(refType, typeList);
@@ -643,26 +641,26 @@ public class TypeTightener {
        * Mark a call as non-polymorphic if the targeted method is the only
        * possible dispatch, given the qualifying instance type.
        */
-      if (!target.isAbstract()) {
-        JExpression instance = x.getInstance();
-        assert (instance != null);
-        JReferenceType instanceType = (JReferenceType) instance.getType();
-        Collection<JMethod> myOverriders = target.getOverridingMethods();
-        if (myOverriders != null) {
-          for (JMethod override : myOverriders) {
-            JReferenceType overrideType = override.getEnclosingType();
-            if (program.typeOracle.canTheoreticallyCast(instanceType, overrideType)) {
-              // This call is truly polymorphic.
-              // TODO: composite types! :)
-              return;
-            }
-          }
-          // The instance type is incompatible with all overrides.
-        }
-        assert !x.isStaticDispatchOnly();
-        x.setCannotBePolymorphic();
-        madeChanges();
+      if (target.isAbstract()) {
+        return;
       }
+
+      JExpression instance = x.getInstance();
+      assert (instance != null);
+      JReferenceType instanceType = (JReferenceType) instance.getType();
+      for (JMethod overridingMethod : target.getOverridingMethods()) {
+        // Look for overriding methods from a type compatible with the instance type, if none is
+        // found, this call can be marked as static dispatch.
+        JReferenceType overridingMethodEnclosingType = overridingMethod.getEnclosingType();
+        if (program.typeOracle.canTheoreticallyCast(
+            instanceType, overridingMethodEnclosingType)) {
+          // This call is truly polymorphic.
+          return;
+        }
+      }
+      assert !x.isStaticDispatchOnly();
+      x.setCannotBePolymorphic();
+      madeChanges();
     }
 
     @Override
