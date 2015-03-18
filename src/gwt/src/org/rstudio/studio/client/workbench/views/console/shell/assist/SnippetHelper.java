@@ -29,6 +29,13 @@ public class SnippetHelper
       return $wnd.require("ace/snippets").snippetManager;
    }-*/;
    
+   public ArrayList<String> getCppSnippets()
+   {
+      ensureSnippetsLoaded();
+      return JsArrayUtil.fromJsArrayString(
+            getAvailableSnippetsImpl(manager_, "c_cpp"));
+   }
+   
    public ArrayList<String> getAvailableSnippets()
    {
       ensureSnippetsLoaded();

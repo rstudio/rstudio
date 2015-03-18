@@ -23,8 +23,10 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.views.console.shell.assist.SnippetHelper;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorSelection;
 import org.rstudio.studio.client.workbench.views.output.lint.model.LintItem;
+import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
@@ -32,6 +34,8 @@ import org.rstudio.studio.client.workbench.views.source.model.CppCompletion;
 import org.rstudio.studio.client.workbench.views.source.model.CppCompletionResult;
 import org.rstudio.studio.client.workbench.views.source.model.CppDiagnostic;
 import org.rstudio.studio.client.workbench.views.source.model.CppServerOperations;
+
+import java.util.ArrayList;
 
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.Scheduler;
@@ -59,6 +63,7 @@ public class CppCompletionRequest
       invalidationToken_ = token;
       explicit_ = explicit;
       onTerminated_ = onTerminated;
+      snippets_ = new SnippetHelper((AceEditor) docDisplay);
       
       Position pos = completionPosition_.getPosition();
       
@@ -95,60 +100,66 @@ public class CppCompletionRequest
    {
       if (invalidationToken_.isInvalid())
          return;
-      
+
       // if we don't have the completion list back from the server yet
       // then just ignore this (this function will get called again when
       // the request completes)
-      if (completions_ != null)
-      {  
-         // discover text already entered
-         String userTypedText = getUserTypedText();
-         
-         // build list of entries (filter on text already entered)
-         JsArray<CppCompletion> filtered = JsArray.createArray().cast();
-         for (int i = 0; i < completions_.length(); i++)
+      if (completions_ == null)
+         return;
+
+      // discover text already entered
+      String userTypedText = getUserTypedText();
+
+      // build list of entries (filter on text already entered)
+      JsArray<CppCompletion> filtered = JsArray.createArray().cast();
+      for (int i = 0; i < completions_.length(); i++)
+      {
+         CppCompletion completion = completions_.get(i);
+         String typedText = completion.getTypedText();
+         if ((userTypedText.length() == 0) || 
+               typedText.startsWith(userTypedText))
          {
-            CppCompletion completion = completions_.get(i);
-            String typedText = completion.getTypedText();
-            if ((userTypedText.length() == 0) || 
-                 typedText.startsWith(userTypedText))
+            // be more picky for member scope completions because clang
+            // returns a bunch of noise like constructors, destructors, 
+            // compiler generated assignments, etc.
+            if (completionPosition_.getScope() == 
+                  CompletionPosition.Scope.Member)
             {
-               // be more picky for member scope completions because clang
-               // returns a bunch of noise like constructors, destructors, 
-               // compiler generated assignments, etc.
-               if (completionPosition_.getScope() == 
-                                 CompletionPosition.Scope.Member)
-               {
-                  if (completion.getType() == CppCompletion.VARIABLE ||
-                      (completion.getType() == CppCompletion.FUNCTION &&
-                       !typedText.startsWith("operator=")))
-                  {
-                     filtered.push(completion);
-                  }
-                 
-               }
-               else
+               if (completion.getType() == CppCompletion.VARIABLE ||
+                     (completion.getType() == CppCompletion.FUNCTION &&
+                     !typedText.startsWith("operator=")))
                {
                   filtered.push(completion);
                }
+
+            }
+            else
+            {
+               filtered.push(completion);
             }
          }
-         
-         // check for auto-accept
-         if ((filtered.length() == 1) && autoAccept && explicit_)
-         {
-            applyValue(filtered.get(0));
-         }
-         // check for one completion that's already present
-         else if (filtered.length() == 1 && 
-                  filtered.get(0).getTypedText() == getUserTypedText())
-         {
-            terminate();
-         }
-         else
-         {
-            showCompletionPopup(filtered);
-         }
+      }
+      
+      // add in snippets
+      ArrayList<String> snippets = snippets_.getCppSnippets();
+      for (String snippet : snippets)
+         if (snippet.startsWith(userTypedText))
+            filtered.push(CppCompletion.createSnippetCompletion(snippet));
+
+      // check for auto-accept
+      if ((filtered.length() == 1) && autoAccept && explicit_)
+      {
+         applyValue(filtered.get(0));
+      }
+      // check for one completion that's already present
+      else if (filtered.length() == 1 && 
+            filtered.get(0).getTypedText() == getUserTypedText())
+      {
+         terminate();
+      }
+      else
+      {
+         showCompletionPopup(filtered);
       }
    }
    
@@ -353,6 +364,12 @@ public class CppCompletionRequest
          return;
       
       terminate();
+      
+      if (completion.getType() == CppCompletion.SNIPPET)
+      {
+         snippets_.applySnippet(getUserTypedText(), completion.getTypedText());
+         return;
+      }
      
       String insertText = completion.getTypedText();
       if (completion.getType() == CppCompletion.FUNCTION &&
@@ -402,6 +419,8 @@ public class CppCompletionRequest
    private final DocDisplay docDisplay_; 
    private final boolean explicit_;
    private final Invalidation.Token invalidationToken_;
+   
+   private final SnippetHelper snippets_;
    
    private final CompletionPosition completionPosition_;
    
