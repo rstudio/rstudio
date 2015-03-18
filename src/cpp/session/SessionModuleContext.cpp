@@ -1083,7 +1083,7 @@ bool isUnmonitoredPackageSourceFile(const FilePath& filePath)
       dir = filePath.parent();
 
    // see if one the file's parent directories has a DESCRIPTION
-   while (dir != dir.parent())
+   while (!dir.empty())
    {
       FilePath descPath = dir.childPath("DESCRIPTION");
       if (descPath.exists())
