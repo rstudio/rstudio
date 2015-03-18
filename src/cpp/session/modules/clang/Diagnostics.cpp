@@ -150,7 +150,9 @@ json::Array getCppDiagnosticsJson(const FilePath& filePath)
       unsigned numDiagnostics = tu.getNumDiagnostics();
       for (unsigned i = 0; i < numDiagnostics; i++)
       {
-         diagnosticsJson.push_back(diagnosticToJson(tu, *tu.getDiagnostic(i)));
+         boost::shared_ptr<Diagnostic> pDiag = tu.getDiagnostic(i);
+         if (pDiag->location().getSpellingLocation().filePath == filePath)
+            diagnosticsJson.push_back(diagnosticToJson(tu, *pDiag));
       }
    }
 
@@ -168,6 +170,13 @@ Error getCppDiagnostics(const core::json::JsonRpcRequest& request,
 
    // resolve the docPath if it's aliased
    FilePath filePath = module_context::resolveAliasedPath(docPath);
+
+   // don't lint files that belong to unmonitored projects
+   if (module_context::isUnmonitoredPackageSourceFile(filePath))
+   {
+      pResponse->setResult(json::Array());
+      return Success();
+   }
 
    pResponse->setResult(getCppDiagnosticsJson(filePath));
    return Success();

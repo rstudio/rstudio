@@ -131,7 +131,6 @@ list(APPEND BOOST_LIBS
    system
    thread
    chrono
-   timer
 )
 
 # UNIX BOOST

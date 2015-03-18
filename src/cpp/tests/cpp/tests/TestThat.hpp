@@ -28,7 +28,7 @@
 #else
 
 # define context(__X__, ...) void RSTUDIO_UNIT_TESTS_DISABLED_##__LINE__()
-# define test_that(__X__) void RSTUDIO_UNIT_TESTS_DISABLED_##__LINE__()
+# define test_that(__X__) if (false)
 # define expect_true(__X__)
 # define expect_false(__X__)
 

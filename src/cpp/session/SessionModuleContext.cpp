@@ -1066,6 +1066,49 @@ std::string packageNameForSourceFile(const core::FilePath& sourceFilePath)
    }
 }
 
+bool isUnmonitoredPackageSourceFile(const FilePath& filePath)
+{
+   // if it's in the current package then it's fine
+   using namespace projects;
+   if (projectContext().hasProject() &&
+      (projectContext().config().buildType == r_util::kBuildTypePackage) &&
+       filePath.isWithin(projectContext().buildTargetPath()))
+   {
+      return false;
+   }
+
+   // ensure we are dealing with a directory
+   FilePath dir = filePath;
+   if (!dir.isDirectory())
+      dir = filePath.parent();
+
+   // see if one the file's parent directories has a DESCRIPTION
+   while (!dir.empty())
+   {
+      FilePath descPath = dir.childPath("DESCRIPTION");
+      if (descPath.exists())
+      {
+         // get path relative to package dir
+         std::string relative = filePath.relativePath(dir);
+         if (boost::algorithm::starts_with(relative, "R/") ||
+             boost::algorithm::starts_with(relative, "src/") ||
+             boost::algorithm::starts_with(relative, "inst/include/"))
+         {
+            return true;
+         }
+         else
+         {
+            return false;
+         }
+      }
+
+      dir = dir.parent();
+   }
+
+   return false;
+}
+
+
 SEXP rs_packageNameForSourceFile(SEXP sourceFilePathSEXP)
 {
    r::sexp::Protect protect;

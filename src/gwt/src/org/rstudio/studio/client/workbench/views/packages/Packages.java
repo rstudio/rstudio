@@ -946,8 +946,11 @@ public class Packages
       public void onError(ServerError error)
       {
          // don't show errors during restart
-         if (!workbenchContext_.isRestartInProgress())
+         if (!workbenchContext_.isRestartInProgress() &&
+            (error.getCode() != ServerError.TRANSMISSION))
+         {
             super.onError(error);
+         }
          
          view_.setProgress(false);
       }

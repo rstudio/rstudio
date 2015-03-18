@@ -4618,7 +4618,14 @@ public class TextEditingTarget implements
                public void execute(Boolean arg) {
                   docDisplay.syncDiagnosticsPrefs();
                }}));
-      releaseOnDismiss.add(prefs.backgroundLintDelayMs().bind(
+      releaseOnDismiss.add(prefs.diagnosticsOnSave().bind(
+            new CommandWithArg<Boolean>() {
+               @Override
+               public void execute(Boolean arg)
+               {
+                  docDisplay.syncDiagnosticsPrefs();
+               }}));
+      releaseOnDismiss.add(prefs.backgroundDiagnosticsDelayMs().bind(
             new CommandWithArg<Integer>() {
                public void execute(Integer arg) {
                   docDisplay.syncDiagnosticsPrefs();

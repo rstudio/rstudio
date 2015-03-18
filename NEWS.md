@@ -148,6 +148,7 @@
 
 ### Server
 
+* Add server-set-umask option to control whether the server sets its umask to 022 at startup
 * Improved installation by reducing dependencies and providing additional platform-specific builds (e.g. SUSE, RHEL5 vs. RHEL6/7)
 * Server Pro: Support for SPDY protocol
 

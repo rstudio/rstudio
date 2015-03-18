@@ -715,7 +715,10 @@ public class GitReviewPresenter implements ReviewPresenter
                   if (size != null)
                      view_.showSizeWarning((long) size.doubleValue());
                   else
-                     super.onError(error);
+                  {
+                     if (error.getCode() != ServerError.TRANSMISSION)
+                        super.onError(error);
+                  }
                }
             });
    }

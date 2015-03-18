@@ -521,7 +521,7 @@ public class AceEditor implements DocDisplay,
 
       getSession().setUseWorker(useWorker);
       getSession().setWorkerTimeout(
-            uiPrefs_.backgroundLintDelayMs().getValue());
+            uiPrefs_.backgroundDiagnosticsDelayMs().getValue());
    }
    
    private void syncWrapLimit()
@@ -2133,6 +2133,12 @@ public class AceEditor implements DocDisplay,
    public void removeMarkersAtCursorPosition()
    {
       widget_.removeMarkersAtCursorPosition();
+   }
+   
+   @Override
+   public void removeMarkersOnCursorLine()
+   {
+      widget_.removeMarkersOnCursorLine();
    }
    
    @Override

@@ -788,42 +788,18 @@ std::vector<std::string> RCompilationDatabase::rToolsArgs() const
          {
             FilePath rtoolsPath = it->installPath();
 
-            if (it->name() == "3.3")
-            {
+            rToolsArgs_.push_back("-I" + rtoolsPath.childPath(
+               "gcc-4.6.3/i686-w64-mingw32/include").absolutePath());
 
-               std::string gcc = "gcc492_";
+            rToolsArgs_.push_back("-I" + rtoolsPath.childPath(
+               "gcc-4.6.3/include/c++/4.6.3").absolutePath());
+
+            std::string bits = "-I" + rtoolsPath.childPath(
+               "gcc-4.6.3/include/c++/4.6.3/i686-w64-mingw32").absolutePath();
 #ifdef _WIN64
-               gcc += "64";
-               std::string arch = "x86_64-w64-mingw32";
-#else
-               gcc += "32";
-               std::string arch = "i686-w64-mingw32";
+            bits += "/64";
 #endif
-               rToolsArgs_.push_back("-I" + rtoolsPath.childPath(
-                  gcc + "/" + arch + "/include").absolutePath());
-
-               rToolsArgs_.push_back("-I" + rtoolsPath.childPath(
-                  gcc + "/include/c++/4.9.2").absolutePath());
-
-               rToolsArgs_.push_back("-I" + rtoolsPath.childPath(
-                  gcc + "/include/c++/4.9.2/" + arch).absolutePath());
-            }
-            else
-            {
-               rToolsArgs_.push_back("-I" + rtoolsPath.childPath(
-                  "gcc-4.6.3/i686-w64-mingw32/include").absolutePath());
-
-               rToolsArgs_.push_back("-I" + rtoolsPath.childPath(
-                  "gcc-4.6.3/include/c++/4.6.3").absolutePath());
-
-               std::string bits = "-I" + rtoolsPath.childPath(
-                  "gcc-4.6.3/include/c++/4.6.3/i686-w64-mingw32").absolutePath();
-
-   #ifdef _WIN64
-               bits += "/64";
-   #endif
-               rToolsArgs_.push_back(bits);
-            }
+            rToolsArgs_.push_back(bits);
 
             break;
          }

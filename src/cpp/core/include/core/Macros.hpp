@@ -67,42 +67,6 @@
 
 #endif /* Debug logging macros */
 
-/* Profiling macros */
-#ifndef RSTUDIO_ENABLE_PROFILING
-
-# define RSTUDIO_PROFILE(x) if (false)
-# define TIMER(x) do {} while (0)
-# define REPORT(timer, message) do {} while (0)
-
-#else
-
-#include <boost/timer/timer.hpp>
-
-template <typename T>
-bool return_true(const T& object) { return true; }
-
-#define TIMER(x)                                                               \
-   ::boost::timer::cpu_timer x;                                                \
-   x.start();
-
-#define REPORT(timer, message)                                                 \
-   std::cout << "(profile) " << message << std::endl;                          \
-   std::cout << ::boost::timer::format(timer.elapsed(), 3);                    \
-   timer.stop(); \
-   timer = ::boost::timer::cpu_timer();
-
-// Some insanity to ensure the __LINE__ macro is expanded
-
-# define RSTUDIO_PROFILE(x) RSTUDIO_PROFILE_1(x, __LINE__)
-# define RSTUDIO_PROFILE_1(x, l) RSTUDIO_PROFILE_2(x, l)
-# define RSTUDIO_PROFILE_2(x, l)                                               \
-   std::cout << "(profiling) " << x << std::endl;                              \
-   ::boost::timer::auto_cpu_timer RS_TIMER__ ## l;                             \
-   if (true ||                                                                 \
-       return_true(RS_TIMER__ ## l = boost::timer::auto_cpu_timer(3)))
-
-#endif /* Profiling macros */
-
 #ifndef DEBUG
 # define DEBUG RSTUDIO_DEBUG
 #endif
@@ -114,10 +78,5 @@ bool return_true(const T& object) { return true; }
 #ifndef DEBUG_BLOCK
 # define DEBUG_BLOCK RSTUDIO_DEBUG_BLOCK
 #endif
-
-#ifndef PROFILE
-# define PROFILE RSTUDIO_PROFILE
-#endif
-
 
 #endif

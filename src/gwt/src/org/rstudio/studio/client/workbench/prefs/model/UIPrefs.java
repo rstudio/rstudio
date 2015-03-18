@@ -155,30 +155,33 @@ public class UIPrefs extends UIPrefsAccessor implements UiPrefsChangedHandler
          
          // Enable Diagnostics
          
-         showDiagnostics().setGlobalValue(
-               newUiPrefs.showDiagnostics().getGlobalValue());
+         showDiagnosticsR().setGlobalValue(
+               newUiPrefs.showDiagnosticsR().getGlobalValue());
+         
+         showDiagnosticsCpp().setGlobalValue(
+               newUiPrefs.showDiagnosticsCpp().getGlobalValue());
          
          showDiagnosticsOther().setGlobalValue(
                newUiPrefs.showDiagnosticsOther().getGlobalValue());
          
          // Background Linting
          
-         lintOnSave().setGlobalValue(
-               newUiPrefs.lintOnSave().getGlobalValue());
+         diagnosticsOnSave().setGlobalValue(
+               newUiPrefs.diagnosticsOnSave().getGlobalValue());
          
-         enableBackgroundLinting().setGlobalValue(
-               newUiPrefs.enableBackgroundLinting().getGlobalValue());
+         enableBackgroundDiagnostics().setGlobalValue(
+               newUiPrefs.enableBackgroundDiagnostics().getGlobalValue());
          
-         backgroundLintDelayMs().setGlobalValue(
-               newUiPrefs.backgroundLintDelayMs().getGlobalValue());
+         backgroundDiagnosticsDelayMs().setGlobalValue(
+               newUiPrefs.backgroundDiagnosticsDelayMs().getGlobalValue());
          
          // Configure R Linter
          
          enableStyleDiagnostics().setGlobalValue(
-               newUiPrefs.enableBackgroundLinting().getGlobalValue());
+               newUiPrefs.enableBackgroundDiagnostics().getGlobalValue());
          
-         lintRFunctionCalls().setGlobalValue(
-               newUiPrefs.lintRFunctionCalls().getGlobalValue());
+         diagnosticsInRFunctionCalls().setGlobalValue(
+               newUiPrefs.diagnosticsInRFunctionCalls().getGlobalValue());
          
          
          

@@ -77,12 +77,13 @@ git merge \
     origin/bugfix/xml-tag-highlight \
     origin/feature/vim-commands \
     origin/bugfix/vim-fold-navigation \
-    origin/patch/completion-throttling \
     origin/patch/no-core-commands \
-    origin/feature/vim-page-movement \
+    origin/patch/vim-page-movement \
     origin/patch/dont-warn-on-scroll \
     origin/bugfix/vim-search-scrolling \
     origin/patch/worker-timeout \
+    origin/patch/vim-colon-selection \
+    origin/patch/completion-throttling \
     -m "merge branches"
 
 ## git merge \

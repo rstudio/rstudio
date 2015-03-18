@@ -785,6 +785,46 @@ public class AceEditorWidget extends Composite
       annotations_.clear();
    }
    
+   public void removeMarkersOnCursorLine()
+   {
+      // Defer this so other event handling can update anchors etc.
+      Scheduler.get().scheduleDeferred(new ScheduledCommand()
+      {
+         
+         @Override
+         public void execute()
+         {
+            int cursorRow = editor_.getCursorPosition().getRow();
+            JsArray<AceAnnotation> newAnnotations = JsArray.createArray().cast();
+            
+            for (int i = 0; i < annotations_.size(); i++)
+            {
+               AnchoredAceAnnotation annotation = annotations_.get(i);
+               int markerId = annotation.getMarkerId();
+               Marker marker = editor_.getSession().getMarker(markerId);
+               
+               // The marker may have already been removed in response to
+               // a previous action.
+               if (marker == null)
+                  continue;
+               
+               Range range = marker.getRange();
+               int rowStart = range.getStart().getRow();
+               int rowEnd = range.getEnd().getRow();
+               
+               if (cursorRow >= rowStart && cursorRow <= rowEnd)
+                  editor_.getSession().removeMarker(markerId);
+               else
+                  newAnnotations.push(annotation.asAceAnnotation());
+            }
+            
+            editor_.getSession().setAnnotations(newAnnotations);
+            editor_.getRenderer().renderMarkers();
+            
+         }
+      });
+   }
+   
    public void removeMarkersAtCursorPosition()
    {
       // Defer this so other event handling can update anchors etc.

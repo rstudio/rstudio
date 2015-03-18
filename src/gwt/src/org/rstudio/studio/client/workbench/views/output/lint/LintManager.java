@@ -26,15 +26,18 @@ import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.output.lint.model.LintItem;
 import org.rstudio.studio.client.workbench.views.output.lint.model.LintServerOperations;
+import org.rstudio.studio.client.workbench.views.presentation.events.SourceFileSaveCompletedEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionRequest;
-import org.rstudio.studio.client.workbench.views.source.events.SourceFileSavedEvent;
-import org.rstudio.studio.client.workbench.views.source.events.SourceFileSavedHandler;
 import org.rstudio.studio.client.workbench.views.source.model.CppDiagnostic;
 
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.user.client.Command;
@@ -43,7 +46,7 @@ import com.google.inject.Inject;
 
 public class LintManager
 {
-   class LintContext
+   static class LintContext
    {
       public LintContext(Invalidation.Token token,
                          Position cursorPosition,
@@ -73,12 +76,8 @@ public class LintManager
    private boolean isLintableDocument()
    {
       TextFileType type = docDisplay_.getFileType();
-      return type.isR() ||
-             type.isC() ||
-             type.isCpp() ||
-             type.isRmd() ||
-             type.isRnw() ||
-             type.isRpres();
+      return (((type.isC() || type.isCpp()) && uiPrefs_.showDiagnosticsCpp().getValue()) ||
+              ((type.isR() || type.isRmd() || type.isRnw() || type.isRpres()) && uiPrefs_.showDiagnosticsR().getValue()));
    }
    
    public LintManager(TextEditingTarget target)
@@ -95,7 +94,10 @@ public class LintManager
          public void run()
          {
             if (!isLintableDocument())
+            {
+               getAceWorkerDiagnostics(docDisplay_);
                return;
+            }
             
             invalidation_.invalidate();
             LintContext context = new LintContext(
@@ -114,7 +116,7 @@ public class LintManager
          @Override
          public void onValueChange(ValueChangeEvent<Void> event)
          {
-            if (!uiPrefs_.enableBackgroundLinting().getValue())
+            if (!uiPrefs_.enableBackgroundDiagnostics().getValue())
                return;
             
             if (!docDisplay_.isFocused())
@@ -123,24 +125,24 @@ public class LintManager
             if (docDisplay_.isPopupVisible())
                return;
             
-            docDisplay_.removeMarkersAtCursorPosition();
-            timer_.schedule(uiPrefs_.backgroundLintDelayMs().getValue());
+            docDisplay_.removeMarkersOnCursorLine();
+            timer_.schedule(uiPrefs_.backgroundDiagnosticsDelayMs().getValue());
          }
       });
       
       eventBus_.addHandler(
-            SourceFileSavedEvent.TYPE,
-            new SourceFileSavedHandler()
+            SourceFileSaveCompletedEvent.TYPE,
+            new SourceFileSaveCompletedEvent.Handler()
       {
-         
          @Override
-         public void onSourceFileSaved(SourceFileSavedEvent event)
+         public void onSourceFileSaveCompleted(
+               SourceFileSaveCompletedEvent event)
          {
             if (!docDisplay_.isFocused())
                return;
             
-            if (uiPrefs_.lintOnSave().getValue())
-               lint(true, false);
+            if (uiPrefs_.diagnosticsOnSave().getValue())
+               lint(false, false);
          }
       });
    }
@@ -157,6 +159,10 @@ public class LintManager
    
    private void lintActiveDocument(final LintContext context)
    {
+      // don't lint if this is an unsaved document
+      if (target_.getPath() == null)
+         return;
+      
       if (context.showMarkers)
       {
          target_.save(new Command()
@@ -186,7 +192,8 @@ public class LintManager
       if (context.token.isInvalid())
          return;
       
-      if (target_.getTextFileType().isCpp())
+      if (target_.getTextFileType().isCpp() ||
+          target_.getTextFileType().isC())
          performCppLintServerRequest(context);
       else
          performRLintServerRequest(context);
@@ -204,11 +211,36 @@ public class LintManager
                {
                   if (context.token.isInvalid())
                      return;
-
+                  
                   final JsArray<LintItem> cppLint =
                         CppCompletionRequest.asLintArray(diag);
                   
-                  showLint(context, cppLint);
+                  server_.lintRSourceDocument(
+                        target_.getId(),
+                        target_.getPath(),
+                        context.showMarkers,
+                        new ServerRequestCallback<JsArray<LintItem>>()
+                        {
+                           @Override
+                           public void onResponseReceived(JsArray<LintItem> rLint)
+                           {
+                              if (context.token.isInvalid())
+                                 return;
+                              
+                              JsArray<LintItem> allLint = JsArray.createArray().cast();
+                              for (int i = 0; i < cppLint.length(); i++)
+                                 allLint.push(cppLint.get(i));
+                              for (int i = 0; i < rLint.length(); i++)
+                                 allLint.push(rLint.get(i));
+                              showLint(context, allLint);
+                           }
+
+                           @Override
+                           public void onError(ServerError error)
+                           {
+                              Debug.logError(error);
+                           }
+                        });;
                }
                
                @Override
@@ -224,6 +256,7 @@ public class LintManager
 
       server_.lintRSourceDocument(
             target_.getId(),
+            target_.getPath(),
             context.showMarkers,
             new ServerRequestCallback<JsArray<LintItem>>()
             {
@@ -247,11 +280,8 @@ public class LintManager
    private void showLint(LintContext context,
                          JsArray<LintItem> lint)
    {
-      if (docDisplay_.isPopupVisible() ||
-          !docDisplay_.isFocused())
-      {
+      if (docDisplay_.isPopupVisible() || !docDisplay_.isFocused())
          return;
-      }
       
       // Filter out items at the last cursor position, if the cursor
       // hasn't moved.
@@ -294,6 +324,29 @@ public class LintManager
       excludeCurrentStatement_ = excludeCurrentStatement;
       timer_.schedule(0);
    }
+   
+   private void getAceWorkerDiagnostics(final DocDisplay docDisplay)
+   {
+      Scheduler.get().scheduleDeferred(new ScheduledCommand()
+      {
+         @Override
+         public void execute()
+         {
+            AceEditor editor = (AceEditor) docDisplay;
+            if (editor != null)
+               doGetAceWorkerDiagnostics(editor.getWidget().getEditor());
+         }
+      });
+   }
+   private final native void doGetAceWorkerDiagnostics(AceEditorNative editor) /*-{
+      // The 'timeout' here is a bit of a hack to ensure
+      // lint is not immediately cleared from other events.
+      setTimeout(function() {
+         var worker = editor.getSession().$worker;
+         if (worker)
+            worker.update();
+      }, 50);
+   }-*/;
    
    private final Timer timer_;
    private final TextEditingTarget target_;

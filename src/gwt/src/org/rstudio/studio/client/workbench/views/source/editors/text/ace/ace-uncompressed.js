@@ -6088,6 +6088,10 @@ var WorkerClient = function(topLevelNamespaces, mod, classname, workerUrl) {
         this.emit("setTimeout", {data: delayMs});
     };
 
+    this.update = function() {
+        this.emit("update", {data: null});
+    };
+
     this.attachToDocument = function(doc) {
         if(this.$doc)
             this.terminate();

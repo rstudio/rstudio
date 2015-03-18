@@ -2586,7 +2586,6 @@ FilePath detectedGitExePath()
       }
       else
       {
-         LOG_ERROR(error);
          return FilePath();
       }
    }
@@ -2621,9 +2620,7 @@ void onUserSettingsChanged()
       // if we are relying on an auto-detected value then scan on windows
       // and reset to empty on posix
 #ifdef _WIN32
-      Error error = detectAndSaveGitExePath();
-      if (error)
-         LOG_ERROR(error);
+      detectAndSaveGitExePath();
 #else
       s_gitExePath = "";
 #endif

@@ -140,7 +140,10 @@ ProgramStatus Options::read(int argc,
          "run program as daemon")
       ("server-app-armor-enabled",
          value<bool>(&serverAppArmorEnabled_)->default_value(1),
-         "is app armor enabled for this session");
+         "is app armor enabled for this session")
+      ("server-set-umask",
+         value<bool>(&serverSetUmask_)->default_value(1),
+         "set the umask to 022 on startup");
 
    // www - web server options
    options_description www("www") ;

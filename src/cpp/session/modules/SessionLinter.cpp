@@ -225,7 +225,7 @@ module_context::SourceMarkerSet asSourceMarkerSet(const LintItems& items,
                            core::html_utils::HTML(item.message),
                            true));
    }
-   return SourceMarkerSet("Linter", markers);
+   return SourceMarkerSet("Diagnostics", markers);
 }
 
 Error extractRCode(const std::string& contents,
@@ -247,13 +247,16 @@ Error lintRSourceDocument(const json::JsonRpcRequest& request,
 {
    using namespace source_database;
    
+   // Ensure response is always at least an array, even on 'failure'
+   pResponse->setResult(json::Array());
+   
    std::string documentId;
+   std::string documentPath;
    bool showMarkersTab = false;
    Error error = json::readParams(request.params,
                                   &documentId,
+                                  &documentPath,
                                   &showMarkersTab);
-   
-   pResponse->setResult(json::Array());
    
    if (error)
    {
@@ -270,6 +273,13 @@ Error lintRSourceDocument(const json::JsonRpcRequest& request,
       return error;
    }
    
+   FilePath origin = module_context::resolveAliasedPath(documentPath);
+   
+   // Don't lint files that belong to unmonitored projects
+   if (module_context::isUnmonitoredPackageSourceFile(origin))
+      return Success();
+   
+   // Extract R code from various R-code-containing filetypes.
    std::string content;
    if (pDoc->type() == SourceDocument::SourceDocumentTypeRSource)
       content = pDoc->contents();
@@ -285,7 +295,7 @@ Error lintRSourceDocument(const json::JsonRpcRequest& request,
                            &content);
    else if (pDoc->type() == SourceDocument::SourceDocumentTypeCpp)
       error = extractRCode(pDoc->contents(),
-                           "^\\s*/[*]{3,}\\s+[rR]\\s*$",
+                           "^\\s*/[*]{3,}\\s*[rR]\\s*$",
                            "^\\s*[*]+/",
                            &content);
    else
@@ -297,7 +307,6 @@ Error lintRSourceDocument(const json::JsonRpcRequest& request,
       return error;
    }
    
-   FilePath origin = module_context::resolveAliasedPath(pDoc->path());
    ParseResults results = parse(content, origin);
    
    pResponse->setResult(lintAsJson(results.lint()));
@@ -470,7 +479,7 @@ core::Error initialize()
    events().afterSessionInitHook.connect(afterSessionInitHook);
    session::projects::FileMonitorCallbacks cb;
    cb.onFilesChanged = onFilesChanged;
-   projects::projectContext().subscribeToFileMonitor("Linter", cb);
+   projects::projectContext().subscribeToFileMonitor("Diagnostics", cb);
    
    RS_REGISTER_CALL_METHOD(rs_lintRFile, 1);
    RS_REGISTER_CALL_METHOD(rs_loadString, 1);

@@ -26,7 +26,9 @@ import org.rstudio.core.client.TimeBufferedCommand;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
-import org.rstudio.studio.client.common.SimpleRequestCallback;
+import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.codesearch.model.CodeSearchResults;
 import org.rstudio.studio.client.workbench.codesearch.model.FileItem;
@@ -300,7 +302,7 @@ public class CodeSearchOracle extends SuggestOracle
          server_.searchCode(
                request_.getQuery(),
                request_.getLimit(),
-               new SimpleRequestCallback<CodeSearchResults>() {
+               new ServerRequestCallback<CodeSearchResults>() {
             
             @Override
             public void onResponseReceived(CodeSearchResults response)
@@ -341,6 +343,17 @@ public class CodeSearchOracle extends SuggestOracle
                }
                
                executing_ = false;
+            }
+
+            @Override
+            public void onError(ServerError error)
+            {
+               if (error.getCode() != ServerError.TRANSMISSION)
+               {
+                  RStudioGinjector.INSTANCE.getGlobalDisplay().showErrorMessage(
+                        "Code Search Error", error.getUserMessage());
+               }
+               
             }
          });
          
