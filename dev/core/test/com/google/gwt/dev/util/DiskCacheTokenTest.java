@@ -23,7 +23,7 @@ import java.util.Arrays;
  * Tests {@link DiskCacheToken}.
  */
 public class DiskCacheTokenTest extends TestCase {
-  private final DiskCache diskCache = new DiskCache();
+  private final DiskCache diskCache = DiskCache.INSTANCE;
 
   public void testSerialization() {
     byte[] buf = new byte[]{1, 5, 9, 7, 3, 4, 2};

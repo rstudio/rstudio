@@ -23,7 +23,7 @@ import java.util.Arrays;
  * Tests {@link DiskCache}.
  */
 public class DiskCacheTest extends TestCase {
-  private final DiskCache diskCache = new DiskCache();
+  private final DiskCache diskCache = DiskCache.INSTANCE;
 
   public void testBytes() {
     byte[] a = new byte[0];

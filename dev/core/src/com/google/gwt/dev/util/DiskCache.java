@@ -22,9 +22,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.RandomAccessFile;
-import java.lang.ref.WeakReference;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * A nifty class that lets you squirrel away data on the file system. Write
@@ -46,42 +43,20 @@ public class DiskCache {
    * be so fast relative to what I'm using it for, I didn't pursue this further.
    */
 
-  private static class Shutdown implements Runnable {
-    @Override
-    public void run() {
-      for (WeakReference<DiskCache> ref : shutdownList) {
-        try {
-          DiskCache diskCache = ref.get();
-          if (diskCache != null) {
-            diskCache.close();
-          }
-        } catch (Throwable e) {
-        }
-      }
-    }
-  }
-
   /**
    * A global shared Disk cache.
    */
   public static DiskCache INSTANCE = new DiskCache();
 
-  private static List<WeakReference<DiskCache>> shutdownList;
-
   private boolean atEnd = true;
   private RandomAccessFile file;
 
-  DiskCache() {
+  private DiskCache() {
     try {
       File temp = File.createTempFile("gwt", "byte-cache");
       temp.deleteOnExit();
       file = new RandomAccessFile(temp, "rw");
       file.setLength(0);
-      if (shutdownList == null) {
-        shutdownList = new ArrayList<WeakReference<DiskCache>>();
-        Runtime.getRuntime().addShutdownHook(new Thread(new Shutdown()));
-      }
-      shutdownList.add(new WeakReference<DiskCache>(this));
     } catch (IOException e) {
       throw new RuntimeException("Unable to initialize byte cache", e);
     }
@@ -238,19 +213,6 @@ public class DiskCache {
    */
   public long writeString(String str) {
     return writeByteArray(Util.getBytes(str));
-  }
-
-  @Override
-  protected synchronized void finalize() throws Throwable {
-    close();
-  }
-
-  private void close() throws Throwable {
-    if (file != null) {
-      file.setLength(0);
-      file.close();
-      file = null;
-    }
   }
 
   /**
