@@ -18,6 +18,7 @@ package org.rstudio.studio.client.workbench.views.source.editors.text.cpp;
 
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Invalidation;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.filetypes.DocumentMode;
@@ -26,11 +27,15 @@ import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefsAccessor;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionManager;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionUtils;
+import org.rstudio.studio.client.workbench.views.console.shell.assist.SnippetHelper;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorSelection;
+import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.PasteEvent;
 import org.rstudio.studio.client.workbench.views.source.model.CppServerOperations;
 import org.rstudio.studio.client.workbench.views.source.model.CppSourceLocation;
+
+import java.util.ArrayList;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
@@ -60,7 +65,8 @@ public class CppCompletionManager implements CompletionManager
       docDisplay_ = docDisplay;
       initFilter_ = initFilter;
       completionContext_ = completionContext;
-      rCompletionManager_ = rCompletionManager; 
+      rCompletionManager_ = rCompletionManager;
+      snippets_ = new SnippetHelper((AceEditor) docDisplay);
       docDisplay_.addClickHandler(new ClickHandler()
       {
          public void onClick(ClickEvent event)
@@ -169,6 +175,25 @@ public class CppCompletionManager implements CompletionManager
       }
    }
    
+   private boolean attemptAutomaticSnippetInsertion()
+   {
+      String token = StringUtil.getToken(
+            docDisplay_.getCurrentLine(),
+            docDisplay_.getCursorPosition().getColumn(),
+            "[^ \\s\\n\\t\\r\\v]",
+            false,
+            false);
+      
+      ArrayList<String> snippets = snippets_.getCppSnippets();
+      if (snippets.contains(token))
+      {
+         snippets_.applySnippet(token, token);
+         return true;
+      }
+      
+      return false;
+   }
+   
    // return false to indicate key not handled
    @Override
    public boolean previewKeyDown(NativeEvent event)
@@ -191,6 +216,11 @@ public class CppCompletionManager implements CompletionManager
              shouldComplete(event)) 
          {
             return suggestCompletions(true);
+         }
+         else if (event.getKeyCode() == KeyCodes.KEY_TAB &&
+                  modifier == KeyboardShortcut.SHIFT)
+         {
+            return attemptAutomaticSnippetInsertion();
          }
          else if (event.getKeyCode() == 112 // F1
                   && modifier == KeyboardShortcut.NONE)
@@ -470,6 +500,7 @@ public class CppCompletionManager implements CompletionManager
    private FileTypeRegistry fileTypeRegistry_;
    private final DocDisplay docDisplay_;
    private final CppCompletionContext completionContext_;
+   private final SnippetHelper snippets_;
    private CppCompletionRequest request_;
    private final InitCompletionFilter initFilter_ ;
    private final CompletionManager rCompletionManager_;

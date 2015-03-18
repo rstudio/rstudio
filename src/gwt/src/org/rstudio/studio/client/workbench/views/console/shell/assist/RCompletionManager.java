@@ -313,6 +313,24 @@ public class RCompletionManager implements CompletionManager
          });
    }
    
+   private boolean attemptImmediateSnippetInsertion()
+   {
+      String token = StringUtil.getToken(
+            docDisplay_.getCurrentLineUpToCursor(),
+            docDisplay_.getCursorPosition().getColumn(),
+            "[^ \\s\\n\\r\\t\\v]",
+            false,
+            false);
+      
+      ArrayList<String> snippets = snippets_.getAvailableSnippets();
+      if (snippets.contains(token))
+      {
+         snippets_.applySnippet(token, token);
+         return true;
+      }
+      
+      return false;
+   }
    
    public boolean previewKeyDown(NativeEvent event)
    {
@@ -368,6 +386,11 @@ public class RCompletionManager implements CompletionManager
                }
                return beginSuggest(true, false, true);
             }
+         }
+         else if (keycode == KeyCodes.KEY_TAB &&
+                  modifier == KeyboardShortcut.SHIFT)
+         {
+            return attemptImmediateSnippetInsertion();
          }
          else if (keycode == 112 // F1
                   && modifier == KeyboardShortcut.NONE)
