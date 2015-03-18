@@ -136,7 +136,7 @@ public class RSConnect implements SessionInitHandler,
       {
          // ignore this request if there's already a modal up 
          if (ModalDialogTracker.numModalsShowing() > 0)
-            return;    
+            return;
 
          final String dir = FilePathUtils.dirFromFile(event.getPath());
          RSConnectDeploymentRecord record = dirState_.getLastDeployment(dir);
@@ -561,4 +561,9 @@ public class RSConnect implements SessionInitHandler,
    
    public final static String CLOUD_SERVICE_NAME = "ShinyApps.io";
    public static final String IGNORED_RESOURCES = "ignored_resources";
+   
+   public final static int CONTENT_TYPE_NONE = 0;
+   public final static int CONTENT_TYPE_PLOT = 1;
+   public final static int CONTENT_TYPE_RMD  = 2;
+   public final static int CONTENT_TYPE_APP  = 3;
 }
