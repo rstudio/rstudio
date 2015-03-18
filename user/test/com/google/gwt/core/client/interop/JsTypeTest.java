@@ -101,18 +101,17 @@ public class JsTypeTest extends GWTTestCase {
         == callIntFunction(concreteJsTypeSubclass, "publicMethod"));
   }
 
-//  // TODO: uncomment when bridge methods are being generated for revealed overrides.
-//  public void testRevealedOverrideJsType() {
-//    PlainParentType plainParentType = new PlainParentType();
-//    RevealedOverrideSubType revealedOverrideSubType = new RevealedOverrideSubType();
-//
-//    // PlainParentType is neither @JsExport or @JsType and so exports no functions.
-//    assertFalse(hasField(plainParentType, "run"));
-//
-//    // RevealedOverrideSubType defines no functions itself, it only inherits them, but it still
-//    // exports run() because it implements the @JsType interface JsTypeRunnable.
-//    assertTrue(hasField(revealedOverrideSubType, "run"));
-//  }
+  public void testRevealedOverrideJsType() {
+    PlainParentType plainParentType = new PlainParentType();
+    RevealedOverrideSubType revealedOverrideSubType = new RevealedOverrideSubType();
+
+    // PlainParentType is neither @JsExport or @JsType and so exports no functions.
+    assertFalse(hasField(plainParentType, "run"));
+
+    // RevealedOverrideSubType defines no functions itself, it only inherits them, but it still
+    // exports run() because it implements the @JsType interface JsTypeRunnable.
+    assertTrue(hasField(revealedOverrideSubType, "run"));
+  }
 
   public void testSubClassWithSuperCalls() {
     MyClassExtendsJsPrototype mc = new MyClassExtendsJsPrototype();
