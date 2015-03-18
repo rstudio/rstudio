@@ -23,6 +23,7 @@ public class SnippetHelper
       editor_ = editor;
       native_ = editor.getWidget().getEditor();
       manager_ = getSnippetManager();
+      customCppSnippetsAdded_ = false;
    }
    
    private static final native SnippetManager getSnippetManager() /*-{
@@ -32,9 +33,48 @@ public class SnippetHelper
    public ArrayList<String> getCppSnippets()
    {
       ensureSnippetsLoaded();
+      ensureCppCustomSnippetsAdded();
       return JsArrayUtil.fromJsArrayString(
             getAvailableSnippetsImpl(manager_, "c_cpp"));
    }
+   
+   private void ensureCppCustomSnippetsAdded()
+   {
+      if (!customCppSnippetsAdded_)
+      {
+         addCustomCppSnippets(manager_);
+         customCppSnippetsAdded_ = true;
+      }
+   }
+   
+   private final native void addCustomCppSnippets(SnippetManager manager)
+   /*-{
+      var snippetText = [
+         "## Header guard",
+         "snippet once",
+         "\t#ifndef ${1}",
+         "\t#define ${1}",
+         "",
+         "\t${0}",
+         "",
+         "\t#endif // ${1}",
+         "##",
+         "## Anonymous namespace",
+         "snippet ans",
+         "\tnamespace {",
+         "\t${0}",
+         "\t} // anonymous namespace",
+         "##",
+         "## Named namespace",
+         "snippet ns",
+         "\tnamespace ${1} {",
+         "\t${0}",
+         "\t} // namespace ${1}"
+      ].join("\n");
+      
+      var parsed = manager.parseSnippetFile(snippetText);
+      manager.register(parsed, "c_cpp");
+   }-*/;
    
    public ArrayList<String> getAvailableSnippets()
    {
@@ -106,4 +146,5 @@ public class SnippetHelper
    private final AceEditor editor_;
    private final AceEditorNative native_;
    private final SnippetManager manager_;
+   private boolean customCppSnippetsAdded_;
 }
