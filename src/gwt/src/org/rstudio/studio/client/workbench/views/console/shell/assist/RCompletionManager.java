@@ -1549,20 +1549,13 @@ public class RCompletionManager implements CompletionManager
          // a function argument.
          if (argsValue.equals("=") && argsCursor.moveToPreviousToken())
          {
-            context.setToken(token);
+            if (!isFileCompletion)
+               context.setToken(token);
             
-            ArrayList<String> argData = new ArrayList<String>();
-            argData.add(argsCursor.currentValue());
-            context.setAssocData(argData);
-            
-            ArrayList<Integer> dataType = new ArrayList<Integer>();
-            dataType.add(AutocompletionContext.TYPE_ARGUMENT);
-            context.setDataType(dataType);
-            
-            ArrayList<Integer> numCommas = new ArrayList<Integer>();
-            numCommas.add(0);
-            context.setNumCommas(numCommas);
-            
+            context.add(
+                  argsCursor.currentValue(),
+                  AutocompletionContext.TYPE_ARGUMENT,
+                  0);
             return context;
          }
          
