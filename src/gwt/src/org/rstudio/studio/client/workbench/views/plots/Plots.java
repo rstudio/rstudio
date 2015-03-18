@@ -506,8 +506,7 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
    @Override
    public void onDeferredInitCompleted(DeferredInitCompletedEvent event)
    {
-      boolean showErrors = !workbenchContext_.isRestartInProgress();
-      server_.refreshPlot(new PlotRequestCallback(showErrors));
+      server_.refreshPlot(new PlotRequestCallback(false));
    }
    
    void onShowManipulator()
