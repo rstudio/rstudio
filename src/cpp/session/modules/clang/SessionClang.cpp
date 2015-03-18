@@ -257,6 +257,9 @@ Error initialize()
    if (!libclang::clang().load(embeddedLibClang(), LibraryVersion(3,4,0)))
       return Success();
 
+   // enable crash recovery
+   libclang::clang().toggleCrashRecovery(1);
+
    // initialize definition index
    error = initializeDefinitionIndex();
    if (error)
