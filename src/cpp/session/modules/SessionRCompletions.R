@@ -1993,12 +1993,16 @@ assign(x = ".rs.acCompletionTypes",
          if (length(objectNames))
          {
             completions <- .rs.selectFuzzyMatches(objectNames, token)
+            type <- vapply(completions, FUN.VALUE = numeric(1), USE.NAMES = FALSE, function(i) {
+               .rs.getCompletionType(object[[i]])
+            })
+            
             result <- .rs.makeCompletions(
                token = token,
                results = completions,
                packages = paste("[", chainObjectName, "]", sep = ""),
                quote = FALSE,
-               type = vapply(object[completions], FUN.VALUE = numeric(1), USE.NAMES = FALSE, .rs.getCompletionType)
+               type = type
             )
          }
       }
