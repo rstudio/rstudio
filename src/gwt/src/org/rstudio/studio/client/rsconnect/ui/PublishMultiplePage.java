@@ -42,12 +42,19 @@ public class PublishMultiplePage
       String singleSubtitle = "Only the document " + 
                               input.getSourceRmd().getStem() + 
                               " will be published.";
+      String multipleTitle = "Publish all documents in the directory";
+      String multipleSubtitle = "All of the documents in the directory " + 
+                                input.getSourceRmd().getParentPathString() + 
+                                " will be published.";
       if (input.isShiny())
       {
+         pages.add(new PublishCodePage(singleTitle, singleSubtitle));
+         pages.add(new PublishCodePage(multipleTitle, multipleSubtitle));
       }
       else
       {
          pages.add(new PublishReportSourcePage(singleTitle, singleSubtitle, input));
+         pages.add(new PublishReportSourcePage(multipleTitle, multipleSubtitle, input));
       }
       return pages;
    }

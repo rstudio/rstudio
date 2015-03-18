@@ -19,10 +19,13 @@ import org.rstudio.core.client.files.FileSystemItem;
 
 public class RSConnectPublishInput
 {
-   public RSConnectPublishInput(boolean isShiny, FileSystemItem sourceRmd)
+   public RSConnectPublishInput(boolean isShiny, FileSystemItem sourceRmd,
+         boolean isConnectUIEnabled, boolean isExternalUIEnabled)
    {
       isShiny_ = isShiny;
       sourceRmd_ = sourceRmd;
+      isConnectUIEnabled_ = isConnectUIEnabled;
+      isExternalUIEnabled_ = isExternalUIEnabled;
    }
    
    public boolean isShiny() 
@@ -35,6 +38,18 @@ public class RSConnectPublishInput
       return sourceRmd_;
    }
    
+   public boolean isConnectUIEnabled() 
+   {
+      return isConnectUIEnabled_;
+   }
+   
+   public boolean isExternalUIEnabled()
+   {
+      return isExternalUIEnabled_;
+   }
+   
    private final boolean isShiny_;
+   private final boolean isConnectUIEnabled_;
+   private final boolean isExternalUIEnabled_;
    private final FileSystemItem sourceRmd_;
 }
