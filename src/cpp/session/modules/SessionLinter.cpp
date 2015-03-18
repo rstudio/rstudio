@@ -225,7 +225,7 @@ module_context::SourceMarkerSet asSourceMarkerSet(const LintItems& items,
                            core::html_utils::HTML(item.message),
                            true));
    }
-   return SourceMarkerSet("Linter", markers);
+   return SourceMarkerSet("Diagnostics", markers);
 }
 
 Error extractRCode(const std::string& contents,
@@ -479,7 +479,7 @@ core::Error initialize()
    events().afterSessionInitHook.connect(afterSessionInitHook);
    session::projects::FileMonitorCallbacks cb;
    cb.onFilesChanged = onFilesChanged;
-   projects::projectContext().subscribeToFileMonitor("Linter", cb);
+   projects::projectContext().subscribeToFileMonitor("Diagnostics", cb);
    
    RS_REGISTER_CALL_METHOD(rs_lintRFile, 1);
    RS_REGISTER_CALL_METHOD(rs_loadString, 1);

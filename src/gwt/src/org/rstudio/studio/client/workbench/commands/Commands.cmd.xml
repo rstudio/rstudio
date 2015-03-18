@@ -891,11 +891,11 @@ well as menu structures (for main menu and popup menus).
         menuLabel="_Comment/Uncomment Lines"
         desc="Comment or uncomment the current line/selection"/>
    <cmd id="reformatCode"
-        menuLabel="Reformat Code"
+        menuLabel="Re_format Code"
         desc="Reformat the current line/selection"/>
    <cmd id="lintActiveDocument"
-        menuLabel="Lint"
-        desc="Lint the active document"/>
+        menuLabel="Show _Diagnostics"
+        desc="Show diagnostics for the active document"/>
    <cmd id="reindent"
         menuLabel="_Reindent Lines"
         desc="Reindent the current line/selection"/>

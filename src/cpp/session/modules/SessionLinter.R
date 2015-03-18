@@ -82,7 +82,7 @@
 {
    markers <- .rs.createMarkersFromLint(lint, filePath)
    .rs.api.sourceMarkers(
-      name = "Linter",
+      name = "Diagnostics",
       markers = markers,
       basePath = .rs.getProjectDirectory()
    )
