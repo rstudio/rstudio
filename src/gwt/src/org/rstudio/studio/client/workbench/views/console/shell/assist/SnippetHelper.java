@@ -129,15 +129,15 @@ public class SnippetHelper
          "snippet dig",
          "\tdevtools::install_github(\"${0}\")",
          "## S4",
-         "snippet sg",
+         "snippet setG",
          "\tsetGeneric(\"${1:generic}\", function(${2:x, ...}) {",
          "\t\tstandardGeneric(\"${1:generic}\")",
          "\t})",
-         "snippet sm",
-         "\tsetMethod(\"${1:generic}\", signature(${2:name} = \"${3:type}\"), function(${2:name}, ...) {",
+         "snippet setM",
+         "\tsetMethod(\"${1:generic}\", ${2:\"class\"}, function(${3:object}, ...) {",
          "\t\t${0}",
          "\t})",
-         "snippet sc",
+         "snippet setC",
          "\tsetClass(\"${1:Class}\", slots = c(${2:name = \"type\"}))"
       ].join("\n");
       
