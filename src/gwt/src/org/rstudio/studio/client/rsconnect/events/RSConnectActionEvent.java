@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.rsconnect.events;
 
+import org.rstudio.studio.client.common.rpubs.RPubsHtmlGenerator;
 import org.rstudio.studio.client.rmarkdown.model.RmdPreviewParams;
 import org.rstudio.studio.client.rsconnect.RSConnect;
 import org.rstudio.studio.client.rsconnect.model.RSConnectDeploymentRecord;
@@ -31,13 +32,38 @@ public class RSConnectActionEvent extends GwtEvent<RSConnectActionEvent.Handler>
    public static final GwtEvent.Type<RSConnectActionEvent.Handler> TYPE =
       new GwtEvent.Type<RSConnectActionEvent.Handler>();
    
-   public RSConnectActionEvent(int action, String path)
+   public static RSConnectActionEvent ConfigureAppEvent(String path)
    {
-      this(action, RSConnect.CONTENT_TYPE_APP, path, null, null);
+      return new RSConnectActionEvent(ACTION_TYPE_CONFIGURE, 
+            RSConnect.CONTENT_TYPE_APP, path, null, null, null);
    }
 
-   public RSConnectActionEvent(int action, int contentType, String path, 
-                               RmdPreviewParams fromRmdPreview,
+   public static RSConnectActionEvent DeployAppEvent(String path, 
+         RSConnectDeploymentRecord fromPrevious)
+   {
+      return new RSConnectActionEvent(ACTION_TYPE_DEPLOY, 
+            RSConnect.CONTENT_TYPE_APP, path, null, null, fromPrevious);
+   }
+   
+   public static RSConnectActionEvent DeployRmdEvent(RmdPreviewParams params,
+         RSConnectDeploymentRecord fromPrevious)
+   {
+      return new RSConnectActionEvent(ACTION_TYPE_DEPLOY,
+            RSConnect.CONTENT_TYPE_RMD, 
+            params.getTargetFile(),
+            params.getOutputFile(), 
+            params,
+            fromPrevious);
+   }
+   
+   public static RSConnectActionEvent DeployPlotEvent(String htmlFile)
+   {
+      return new RSConnectActionEvent(ACTION_TYPE_DEPLOY, 
+            RSConnect.CONTENT_TYPE_PLOT, null, htmlFile, null, null);
+   }
+
+   private RSConnectActionEvent(int action, int contentType, String path, 
+                               String htmlFile, RmdPreviewParams fromRmdPreview,
                                RSConnectDeploymentRecord fromPrevious)
    {
       action_ = action;
@@ -45,6 +71,14 @@ public class RSConnectActionEvent extends GwtEvent<RSConnectActionEvent.Handler>
       path_ = path;
       fromPrevious_ = fromPrevious;
       rmdPreview_ = fromRmdPreview;
+      
+      // determine location of static content, if any
+      if (htmlFile != null)
+         htmlFile_ = htmlFile;
+      else if (fromRmdPreview != null)
+         htmlFile_ = fromRmdPreview.getOutputFile();
+      else
+         htmlFile_ = null;
    }
    
    public String getPath()
@@ -72,6 +106,11 @@ public class RSConnectActionEvent extends GwtEvent<RSConnectActionEvent.Handler>
       return contentType_;
    }
    
+   public String getHtmlFile()
+   {
+      return htmlFile_;
+   }
+   
    @Override
    protected void dispatch(RSConnectActionEvent.Handler handler)
    {
@@ -92,4 +131,5 @@ public class RSConnectActionEvent extends GwtEvent<RSConnectActionEvent.Handler>
    private final int action_;
    private final RSConnectDeploymentRecord fromPrevious_;
    private final int contentType_;
+   private final String htmlFile_;
 }

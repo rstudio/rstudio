@@ -2570,19 +2570,9 @@ public class TextEditingTarget implements
    }
 
    @Handler 
-   void onRsconnectDeploy()
-   {
-      RSConnectActionEvent evt = new RSConnectActionEvent(
-            RSConnectActionEvent.ACTION_TYPE_DEPLOY, 
-            docUpdateSentinel_.getPath());
-      events_.fireEvent(evt);
-   }
-
-   @Handler 
    void onRsconnectConfigure()
    {
-      events_.fireEvent(new RSConnectActionEvent(
-            RSConnectActionEvent.ACTION_TYPE_CONFIGURE, 
+      events_.fireEvent(RSConnectActionEvent.ConfigureAppEvent(
             docUpdateSentinel_.getPath()));
    }
 

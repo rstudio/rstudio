@@ -16,7 +16,6 @@ import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 
-import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Size;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.CommandBinder;
@@ -35,9 +34,7 @@ import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.GlobalDisplay.NewWindowOptions;
 import org.rstudio.studio.client.common.dependencies.DependencyManager;
-import org.rstudio.studio.client.common.rpubs.RPubsHtmlGenerator;
 import org.rstudio.studio.client.common.rpubs.RPubsPresenter;
-import org.rstudio.studio.client.common.rpubs.ui.RPubsUploadDialog;
 import org.rstudio.studio.client.common.zoom.ZoomUtils;
 import org.rstudio.studio.client.rmarkdown.model.RmdPreviewParams;
 import org.rstudio.studio.client.server.ServerError;
@@ -335,41 +332,6 @@ public class ViewerPresenter extends BasePresenter
                display_.getViewerFrameSize()),
          saveExportOptionsOperation_
       ).showModal();;    
-   }
-   
-   public void onViewerPublishToRPubs()
-   {
-      dependencyManager_.withRMarkdown("Publishing to RPubs", 
-        new Command() {
-         @Override
-         public void execute()
-         {
-            RPubsUploadDialog dlg = new RPubsUploadDialog(
-               "Viewer",
-               "Plot",
-               new RPubsHtmlGenerator() {
-
-                  @Override
-                  public void generateRPubsHtml(
-                        String title, 
-                        String comment,
-                        final CommandWithArg<String> onCompleted)
-                  {
-                     server_.viewerCreateRPubsHtml(
-                           title, comment, new SimpleRequestCallback<String>(){
-
-                        @Override
-                        public void onResponseReceived(String rpubsHtmlFile)
-                        {
-                           onCompleted.execute(rpubsHtmlFile);
-                        }
-                     });
-                  }
-               },
-               false);
-            dlg.showModal();  
-         }
-      });
    }
    
    @Handler

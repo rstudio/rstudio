@@ -32,6 +32,7 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.FilePathUtils;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.dependencies.DependencyManager;
+import org.rstudio.studio.client.common.rpubs.ui.RPubsUploadDialog;
 import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.rsconnect.events.RSConnectActionEvent;
 import org.rstudio.studio.client.rsconnect.events.RSConnectDeployInitiatedEvent;
@@ -130,6 +131,14 @@ public class RSConnect implements SessionInitHandler,
                handleRSConnectAction(event); 
             }
          });  
+   }
+   
+   private void publishAsRPubs(RSConnectActionEvent event)
+   {
+      String ctx = "Publish " + contentTypeDesc(event.getContentType());
+      RPubsUploadDialog dlg = new RPubsUploadDialog(
+            ctx, ctx, event.getHtmlFile(), event.getFromPrevious() != null);
+      dlg.showModal();
    }
    
    private void showPublishUI(final RSConnectActionEvent event)
@@ -482,6 +491,20 @@ public class RSConnect implements SessionInitHandler,
       $wnd.opener.deployToRSConnect(path, deployFiles, additionalFiles, ignoredFiles, file, launch, record);
    }-*/;
    
+   public static String contentTypeDesc(int contentType)
+   {
+      switch(contentType)
+      {
+      case RSConnect.CONTENT_TYPE_APP:
+         return "Application";
+      case RSConnect.CONTENT_TYPE_PLOT:
+         return "Plot";
+      case RSConnect.CONTENT_TYPE_RMD:
+         return "Document";
+      }
+      return "Content";
+   }
+ 
    // Private methods ---------------------------------------------------------
    
    private void doDeployment(final RSConnectDeployInitiatedEvent event)

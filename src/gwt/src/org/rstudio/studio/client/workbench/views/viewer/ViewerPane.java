@@ -15,6 +15,7 @@ package org.rstudio.studio.client.workbench.views.viewer;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
+import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Size;
 import org.rstudio.core.client.URIUtils;
 import org.rstudio.core.client.widget.RStudioFrame;
@@ -24,23 +25,29 @@ import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.AutoGlassPanel;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.icons.StandardIcons;
+import org.rstudio.studio.client.common.rpubs.RPubsHtmlGenerator;
+import org.rstudio.studio.client.common.rpubs.model.RPubsServerOperations;
 import org.rstudio.studio.client.rmarkdown.model.RmdPreviewParams;
 import org.rstudio.studio.client.rsconnect.RSConnect;
 import org.rstudio.studio.client.rsconnect.ui.RSConnectPublishButton;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.viewer.events.ViewerNavigatedEvent;
+import org.rstudio.studio.client.workbench.views.viewer.model.ViewerServerOperations;
 
 public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
 {
    @Inject
-   public ViewerPane(Commands commands, GlobalDisplay globalDisplay, EventBus events)
+   public ViewerPane(Commands commands, GlobalDisplay globalDisplay, EventBus events,
+         ViewerServerOperations server)
    {
       super("Viewer");
       commands_ = commands;
       globalDisplay_ = globalDisplay;
       events_ = events;
+      server_ = server;
       ensureWidget();
    }
    
@@ -81,14 +88,31 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
       toolbar_.addLeftSeparator();
       toolbar_.addLeftWidget(commands_.viewerPopout().createToolbarButton());
      
-      
       toolbar_.addLeftSeparator();
       toolbar_.addLeftWidget(commands_.viewerStop().createToolbarButton());
      
-      // add html document publish button 
+      // add publish button 
       publishButton_ = new RSConnectPublishButton(RSConnect.CONTENT_TYPE_PLOT, 
             true, false);
       toolbar_.addRightWidget(publishButton_);
+
+      // create an HTML generator (for plots)
+      publishButton_.setHtmlGenerator(new RPubsHtmlGenerator()
+      {
+         @Override
+         public void generateRPubsHtml(String title, String comment,
+               final CommandWithArg<String> onCompleted)
+         {
+            server_.viewerCreateRPubsHtml(
+                  title, comment, new SimpleRequestCallback<String>(){
+               @Override
+               public void onResponseReceived(String rpubsHtmlFile)
+               {
+                  onCompleted.execute(rpubsHtmlFile);
+               }
+            });
+         }
+      });
       publishButton_.setVisible(false);
       
       return toolbar_;
@@ -108,6 +132,7 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
    {
       navigate(url, false);
       rmdPreviewParams_ = null;
+      publishButton_.setContentType(RSConnect.CONTENT_TYPE_PLOT);
    }
 
    @Override
@@ -116,6 +141,7 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
       navigate(params.getOutputUrl(), true);
       publishButton_.setVisible(true);
       publishButton_.setRmdPreview(params);
+      publishButton_.setContentType(RSConnect.CONTENT_TYPE_RMD);
       rmdPreviewParams_ = params;
       toolbar_.invalidateSeparators();
    }
@@ -199,6 +225,7 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
    private final Commands commands_;
    private final GlobalDisplay globalDisplay_;
    private final EventBus events_;
+   private final ViewerServerOperations server_;
    
    private Toolbar toolbar_;
    

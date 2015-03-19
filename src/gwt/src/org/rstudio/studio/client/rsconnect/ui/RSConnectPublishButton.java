@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.rsconnect.ui;
 
+import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.VisibleChangedHandler;
 import org.rstudio.core.client.files.FileSystemItem;
@@ -21,6 +22,8 @@ import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.rpubs.RPubsHtmlGenerator;
 import org.rstudio.studio.client.rmarkdown.model.RmdPreviewParams;
 import org.rstudio.studio.client.rsconnect.RSConnect;
 import org.rstudio.studio.client.rsconnect.events.RSConnectActionEvent;
@@ -83,11 +86,13 @@ public class RSConnectPublishButton extends Composite
    @Inject
    public void initialize(RSConnectServerOperations server,
          EventBus events, 
-         Commands commands)
+         Commands commands,
+         GlobalDisplay display)
    {
       server_ = server;
       events_ = events;
       commands_ = commands;
+      display_ = display;
       
       // initialize visibility if requested
       if (manageVisiblity_) 
@@ -147,6 +152,16 @@ public class RSConnectPublishButton extends Composite
          publishButton_.setText(text);
    }
    
+   public void setContentType(int contentType)
+   {
+      contentType_ = contentType;
+   }
+   
+   public void setHtmlGenerator(RPubsHtmlGenerator generator)
+   {
+      htmlGenerator_ = generator;
+   }
+
    // Private methods --------------------------------------------------------
    
    private void populateDeployments()
@@ -189,12 +204,42 @@ public class RSConnectPublishButton extends Composite
    
    private void onPublishClick(RSConnectDeploymentRecord previous)
    {
-      events_.fireEvent(new RSConnectActionEvent(
-            RSConnectActionEvent.ACTION_TYPE_DEPLOY, 
-            contentType_,
-            contentPath_,
-            rmdPreview_,
-            previous));
+      switch (contentType_)
+      {
+      case RSConnect.CONTENT_TYPE_PLOT:
+         // for plots, we need to generate the hosting HTML prior to publishing
+         if (htmlGenerator_ != null)
+         {
+            htmlGenerator_.generateRPubsHtml("Plot", "", 
+                  new CommandWithArg<String>()
+                  {
+                     @Override
+                     public void execute(String htmlFile)
+                     {
+                        events_.fireEvent(
+                              RSConnectActionEvent.DeployPlotEvent(htmlFile));
+                     }
+                  });
+         }
+         break;
+      case RSConnect.CONTENT_TYPE_APP:
+         // Shiny application
+         events_.fireEvent(RSConnectActionEvent.DeployAppEvent(
+               contentPath_, previous));
+         break;
+      case RSConnect.CONTENT_TYPE_RMD:
+         // All R Markdown variants (single/multiple and static/Shiny)
+         events_.fireEvent(RSConnectActionEvent.DeployRmdEvent(
+               rmdPreview_, previous));
+         break;
+      default: 
+         // should never happen 
+         display_.showErrorMessage("Can't Publish " + 
+            RSConnect.contentTypeDesc(contentType_), 
+            "The content type '" + 
+            RSConnect.contentTypeDesc(contentType_) + 
+            "' is not currently supported for publishing.");
+      }
    }
    
    private void setPreviousDeployments(JsArray<RSConnectDeploymentRecord> recs)
@@ -248,7 +293,8 @@ public class RSConnectPublishButton extends Composite
          publishMenu_.addItem(new MenuItem(
                AppCommand.formatMenuLabel(
                      commands_.rsconnectDeploy().getImageResource(), 
-                     "Publish " + contentTypeDesc(contentType_) + "...", null),
+                     "Publish " + RSConnect.contentTypeDesc(contentType_) + 
+                     "...", null),
                true,
                new Scheduler.ScheduledCommand()
                {
@@ -265,32 +311,20 @@ public class RSConnectPublishButton extends Composite
             commands_.rsconnectManageAccounts().createMenuItem(false));
    }
    
-   private static String contentTypeDesc(int contentType)
-   {
-      switch(contentType)
-      {
-      case RSConnect.CONTENT_TYPE_APP:
-         return "Application";
-      case RSConnect.CONTENT_TYPE_PLOT:
-         return "Plot";
-      case RSConnect.CONTENT_TYPE_RMD:
-         return "Document";
-      }
-      return "Content";
-   }
- 
    private final ToolbarButton publishButton_;
    private final ToolbarPopupMenu publishMenu_;
-   private final int contentType_;
 
    private RSConnectServerOperations server_;
    private EventBus events_;
    private Commands commands_;
+   private GlobalDisplay display_;
 
    private String contentPath_;
+   private int contentType_;
    private String lastContentPath_;
    private boolean populating_ = false;
    private RmdPreviewParams rmdPreview_;
+   private RPubsHtmlGenerator htmlGenerator_;
 
    private final boolean showCaption_;
    private final boolean manageVisiblity_;
