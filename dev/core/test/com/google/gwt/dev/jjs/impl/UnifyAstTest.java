@@ -16,6 +16,7 @@ package com.google.gwt.dev.jjs.impl;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.javac.testing.impl.JavaResourceBase;
 import com.google.gwt.dev.javac.testing.impl.MockJavaResource;
+import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.util.arg.SourceLevel;
@@ -432,6 +433,50 @@ public class UnifyAstTest extends OptimizerTestBase {
     assertFalse(A2_m.isAbstract());
     assertForwardsTo(A2_m, findMethod(result, "I12.m()V"));
     assertOverrides(result, "A2.m()V", "A.m()V", "I1.m()V", "I12.m()V");
+  }
+
+  /**
+   * Regression test for specialization resolution.
+   */
+  public void testOverrides_specializations()
+      throws UnableToCompleteException {
+
+    final MockJavaResource SpecializedImpl =
+        JavaResourceBase.createMockJavaResource("test.SpecializedImpl",
+            "package test;",
+            "import com.google.gwt.core.client.impl.SpecializeMethod;",
+            "public class SpecializedImpl<K> extends Impl<K> implements I {",
+            "  @SpecializeMethod(params = {String.class}, target = \"putString\")",
+            "  public void put(K k) { }",
+            "  public void putString(String k) { }",
+            "}");
+
+    final MockJavaResource Impl =
+        JavaResourceBase.createMockJavaResource("test.Impl",
+            "package test;",
+            "public class Impl<K> {",
+            "  public void put(K k) { }",
+            "  public void m() { }",
+            "}");
+
+    final MockJavaResource I =
+        JavaResourceBase.createMockJavaResource("test.I",
+            "package test;",
+            "public interface I {",
+            "  public void m();",
+            "}");
+
+    addAll(I, SpecializedImpl, Impl);
+    Result result =
+        optimize("void", "new SpecializedImpl<String>().put(\"2\");");
+
+    JClassType testImplClass = (JClassType) result.findClass("test.SpecializedImpl");
+
+    String mSignature = "m()V";
+    JMethod testImplChild_putString = findMethod(result, "test.SpecializedImpl." + mSignature);
+    assertSame(testImplChild_putString,
+        result.getOptimizedProgram()
+            .typeOracle.getInstanceMethodBySignature(testImplClass, mSignature));
   }
 
   @Override

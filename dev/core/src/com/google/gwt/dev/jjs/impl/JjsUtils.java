@@ -219,6 +219,22 @@ public class JjsUtils {
     return s;
   }
 
+  public static String computeSignature(
+      String name, List<JType> params, JType returnType, boolean isCtor) {
+    StringBuilder sb = new StringBuilder(name);
+    sb.append('(');
+    for (JType type : params) {
+      sb.append(type.getJsniSignatureName());
+    }
+    sb.append(')');
+    if (!isCtor) {
+      sb.append(returnType.getJsniSignatureName());
+    } else {
+      sb.append(" <init>");
+    }
+    return sb.toString();
+  }
+
   private enum LiteralTranslators {
     BOOLEAN_LITERAL_TRANSLATOR() {
       @Override

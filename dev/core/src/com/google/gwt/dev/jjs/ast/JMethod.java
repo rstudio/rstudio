@@ -19,6 +19,7 @@ import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.SourceOrigin;
 import com.google.gwt.dev.jjs.ast.js.JsniMethodBody;
+import com.google.gwt.dev.jjs.impl.JjsUtils;
 import com.google.gwt.dev.util.StringInterner;
 import com.google.gwt.dev.util.collect.Lists;
 import com.google.gwt.thirdparty.guava.common.collect.Sets;
@@ -192,7 +193,8 @@ public class JMethod extends JNode implements JMember, CanBeAbstract, CanBeNativ
   }
 
   public void setSpecialization(List<JType> paramTypes, JType returnsType, String targetMethod) {
-    this.specialization = new Specialization(paramTypes, returnsType, targetMethod);
+    this.specialization = new Specialization(paramTypes,
+        returnsType == null ? this.getOriginalReturnType() : returnsType, targetMethod);
   }
 
   public Specialization getSpecialization() {
@@ -262,16 +264,6 @@ public class JMethod extends JNode implements JMember, CanBeAbstract, CanBeNativ
       this.params = resolvedParams;
       this.returns = resolvedReturn;
       this.targetMethod = targetMethod;
-    }
-
-    public String getTargetSignature(JMethod instanceMethod) {
-      return getTarget() + getParameterSignature(instanceMethod.getOriginalReturnType());
-    }
-
-    private String getParameterSignature(JType origReturnValue) {
-      StringBuilder sb = new StringBuilder();
-      getParamSignature(sb, params, returns != null ? returns : origReturnValue, false);
-      return sb.toString();
     }
   }
 
@@ -505,10 +497,8 @@ public class JMethod extends JNode implements JMember, CanBeAbstract, CanBeNativ
 
   public String getSignature() {
     if (signature == null) {
-      StringBuilder sb = new StringBuilder();
-      sb.append(name);
-      getParamSignature(sb, getOriginalParamTypes(), getOriginalReturnType(), isConstructor());
-      signature = sb.toString();
+      signature = StringInterner.get().intern(JjsUtils.computeSignature(
+          name, getOriginalParamTypes(), getOriginalReturnType(), isConstructor()));
     }
     return signature;
   }
@@ -529,20 +519,6 @@ public class JMethod extends JNode implements JMember, CanBeAbstract, CanBeNativ
       sb.append(originalReturnType.getJsniSignatureName());
     }
     return sb.toString();
-  }
-
-  private static void getParamSignature(StringBuilder sb,
-      List<JType> params, JType returnType, boolean isCtor) {
-    sb.append('(');
-    for (JType type : params) {
-      sb.append(type.getJsniSignatureName());
-    }
-    sb.append(')');
-    if (!isCtor) {
-      sb.append(returnType.getJsniSignatureName());
-    } else {
-      sb.append(" <init>");
-    }
   }
 
   public List<JClassType> getThrownExceptions() {

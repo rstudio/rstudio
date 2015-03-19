@@ -1147,16 +1147,18 @@ public class UnifyAst {
     for (JType param : specialization.getParams()) {
       resolvedParams.add(translate(param));
     }
-    JType resolvedReturn =
-        specialization.getReturns() == null ? null : translate(specialization.getReturns());
+    JType resolvedReturn = translate(specialization.getReturns());
 
-    JMethod targetMethod = program.typeOracle.getInstanceMethodBySignature(
-        (JClassType) method.getEnclosingType(), specialization.getTargetSignature(method));
+    String targetMethodSignature = JjsUtils.computeSignature(
+        specialization.getTarget(), resolvedParams, resolvedReturn, false);
+
+    JMethod targetMethod = translate(JMethod.getExternalizedMethod(
+        method.getEnclosingType().getName(), targetMethodSignature, false));
 
     if (targetMethod == null) {
       errorsFound = true;
       logger.log(Type.ERROR, "Unable to locate @SpecializeMethod target "
-          + specialization.getTargetSignature(method) + " for method " + method.getQualifiedName());
+          + targetMethodSignature + " for method " + method.getQualifiedName());
       return;
     }
 
