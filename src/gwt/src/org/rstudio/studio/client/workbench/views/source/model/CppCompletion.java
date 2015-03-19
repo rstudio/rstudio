@@ -34,6 +34,18 @@ public class CppCompletion extends JavaScriptObject
       };
    }-*/;
    
+   public static native final CppCompletion createSnippetCompletion(
+         String snippetName, String snippetContent) /*-{
+      return {
+         type: 99,
+         typed_text: snippetName,
+         text: [{
+            text: snippetContent,
+            comment: null
+         }] 
+      };
+   }-*/;
+         
    // completion types
    public static final int UNKNOWN = 0;
    public static final int VARIABLE = 1;
@@ -47,6 +59,8 @@ public class CppCompletion extends JavaScriptObject
    public static final int ENUM_VALUE = 9;
    public static final int KEYWORD = 10;
    public static final int MACRO = 11;
+   
+   public static final int SNIPPET = 99;
    
    public native final int getType() /*-{
        return this.type;
@@ -78,6 +92,8 @@ public class CppCompletion extends JavaScriptObject
          return icons.keyword();
       case MACRO:
          return icons.macro();
+      case SNIPPET:
+         return icons.snippet();
       default:
          return icons.keyword();
       }

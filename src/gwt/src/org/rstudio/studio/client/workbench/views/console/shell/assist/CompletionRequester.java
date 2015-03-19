@@ -24,6 +24,7 @@ import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import org.rstudio.core.client.SafeHtmlUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.js.JsUtil;
+import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
 import org.rstudio.studio.client.common.codetools.Completions;
@@ -59,6 +60,7 @@ public class CompletionRequester
 {
    private final CodeToolsServerOperations server_ ;
    private final NavigableSourceEditor editor_ ;
+   private final SnippetHelper snippets_ ;
 
    private String cachedLinePrefix_ ;
    private HashMap<String, CompletionResult> cachedCompletions_ =
@@ -67,11 +69,13 @@ public class CompletionRequester
    
    public CompletionRequester(CodeToolsServerOperations server,
                               RnwCompletionContext rnwContext,
-                              NavigableSourceEditor editor)
+                              NavigableSourceEditor editor,
+                              SnippetHelper snippets)
    {
       server_ = server ;
       rnwContext_ = rnwContext;
       editor_ = editor;
+      snippets_ = snippets;
    }
    
    private boolean usingCache(
@@ -305,6 +309,17 @@ public class CompletionRequester
 
    }
    
+   private static final Pattern RE_EXTRACTION = Pattern.create("[$@:]", "");
+   private boolean isTopLevelCompletionRequest()
+   {
+      AceEditor editor = (AceEditor) editor_;
+      if (editor == null)
+         return false;
+      
+      String line = editor.getCurrentLineUpToCursor();
+      return !RE_EXTRACTION.test(line);
+   }
+   
    public void getCompletions(
          final String token,
          final List<String> assocData,
@@ -381,6 +396,12 @@ public class CompletionRequester
             for (int i = 0; i < comp.length(); i++)
                if (!comp.get(i).endsWith(" = "))
                   newComp.add(new QualifiedName(comp.get(i), pkgs.get(i), quote.get(i), type.get(i)));
+            
+            // Get snippet completions. Bail if this isn't a top-level
+            // completion -- TODO is to add some more context that allows us
+            // to properly ascertain this.
+            if (isTopLevelCompletionRequest())
+               addSnippetCompletions(token, newComp);
             
             // Remove duplicates
             newComp = resolveDuplicates(newComp);
@@ -552,6 +573,20 @@ public class CompletionRequester
          }
       }
    }
+   
+   private void addSnippetCompletions(
+         String token,
+         ArrayList<QualifiedName> completions)
+   {
+      if (StringUtil.isNullOrEmpty(token))
+         return;
+      
+      ArrayList<String> snippets = snippets_.getAvailableSnippets();
+      String tokenLower = token.toLowerCase();
+      for (String snippet : snippets)
+         if (snippet.toLowerCase().startsWith(tokenLower))
+            completions.add(0, QualifiedName.createSnippet(snippet));
+   }
 
    private void doGetCompletions(
          final String token,
@@ -691,6 +726,15 @@ public class CompletionRequester
          this.type = RCompletionType.UNKNOWN;
       }
       
+      public static QualifiedName createSnippet(String name)
+      {
+         return new QualifiedName(
+               name,
+               "snippet",
+               false,
+               RCompletionType.SNIPPET);
+      }
+      
       @Override
       public String toString()
       {
@@ -773,8 +817,9 @@ public class CompletionRequester
                RES.styles().completion(),
                name);
 
-         // Get the associated package for functions
-         if (RCompletionType.isFunctionType(type))
+         // Display the source for functions and snippets
+         if (RCompletionType.isFunctionType(type) ||
+             type == RCompletionType.SNIPPET)
          {
             SafeHtmlUtil.appendSpan(
                   sb,
@@ -825,6 +870,8 @@ public class CompletionRequester
             return ICONS.keyword();
          case RCompletionType.CONTEXT:
             return ICONS.context();
+         case RCompletionType.SNIPPET:
+            return ICONS.snippet();
          default:
             return ICONS.variable();
          }

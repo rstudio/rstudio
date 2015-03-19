@@ -125,7 +125,8 @@ public class RCompletionManager implements CompletionManager
       navigableSourceEditor_ = navigableSourceEditor;
       popup_ = popup ;
       server_ = server ;
-      requester_ = new CompletionRequester(server_, rnwContext, navigableSourceEditor);
+      snippets_ = new SnippetHelper((AceEditor) docDisplay);
+      requester_ = new CompletionRequester(server_, rnwContext, navigableSourceEditor, snippets_);
       initFilter_ = initFilter ;
       rContext_ = rContext;
       rnwContext_ = rnwContext;
@@ -311,7 +312,6 @@ public class RCompletionManager implements CompletionManager
             }
          });
    }
-   
    
    public boolean previewKeyDown(NativeEvent event)
    {
@@ -1698,6 +1698,13 @@ public class RCompletionManager implements CompletionManager
          if (results.length == 1 &&
              completions.token.equals(results[0].name.replaceAll(":*", "")))
          {
+            // For snippets we need to apply the completion
+            if (results[0].type == RCompletionType.SNIPPET)
+            {
+               snippets_.applySnippet(completions.token, results[0].name);
+               return;
+            }
+            
             popup_.placeOffscreen();
             return;
          }
@@ -1822,9 +1829,15 @@ public class RCompletionManager implements CompletionManager
 
       private void applyValue(final QualifiedName qualifiedName)
       {
-         if (qualifiedName.source == "`chunk-option`")
+         if (qualifiedName.source.equals("`chunk-option`"))
          {
             applyValueRmdOption(qualifiedName.name);
+            return;
+         }
+         
+         if (qualifiedName.type == RCompletionType.SNIPPET)
+         {
+            snippets_.applySnippet(token_, qualifiedName.name);
             return;
          }
          
@@ -2058,6 +2071,7 @@ public class RCompletionManager implements CompletionManager
    private String token_ ;
    
    private final DocDisplay docDisplay_;
+   private final SnippetHelper snippets_;
    private final boolean isConsole_;
 
    private final Invalidation invalidation_ = new Invalidation();

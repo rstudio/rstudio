@@ -30,6 +30,7 @@ public interface CppCompletionResources extends ClientBundle
       String itemMenu();
       String itemImage();
       String itemName();
+      String toolTipText();
       String commentText();
    }
 
