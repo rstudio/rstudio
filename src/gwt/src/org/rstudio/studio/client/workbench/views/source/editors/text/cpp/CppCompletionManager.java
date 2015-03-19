@@ -18,7 +18,6 @@ package org.rstudio.studio.client.workbench.views.source.editors.text.cpp;
 
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Invalidation;
-import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.filetypes.DocumentMode;
@@ -27,15 +26,11 @@ import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefsAccessor;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionManager;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionUtils;
-import org.rstudio.studio.client.workbench.views.console.shell.assist.SnippetHelper;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorSelection;
-import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.PasteEvent;
 import org.rstudio.studio.client.workbench.views.source.model.CppServerOperations;
 import org.rstudio.studio.client.workbench.views.source.model.CppSourceLocation;
-
-import java.util.ArrayList;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
@@ -66,7 +61,6 @@ public class CppCompletionManager implements CompletionManager
       initFilter_ = initFilter;
       completionContext_ = completionContext;
       rCompletionManager_ = rCompletionManager;
-      snippets_ = new SnippetHelper((AceEditor) docDisplay);
       docDisplay_.addClickHandler(new ClickHandler()
       {
          public void onClick(ClickEvent event)
@@ -473,7 +467,6 @@ public class CppCompletionManager implements CompletionManager
    private FileTypeRegistry fileTypeRegistry_;
    private final DocDisplay docDisplay_;
    private final CppCompletionContext completionContext_;
-   private final SnippetHelper snippets_;
    private CppCompletionRequest request_;
    private final InitCompletionFilter initFilter_ ;
    private final CompletionManager rCompletionManager_;
