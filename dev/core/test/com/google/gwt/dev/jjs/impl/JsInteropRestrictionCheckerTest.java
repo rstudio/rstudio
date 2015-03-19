@@ -30,6 +30,76 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
 
   private UnitTestTreeLogger errorLogger;
 
+  // TODO: eventually test this for default methods in Java 8.
+  public void testCollidingAccidentalOverrideConcreteMethodFails() throws Exception {
+    addSnippetImport("com.google.gwt.core.client.js.JsType");
+    addSnippetClassDecl(
+        "@JsType",
+        "public static interface Foo {",
+        "  void doIt(Foo foo);",
+        "}",
+        "@JsType",
+        "public static interface Bar {",
+        "  void doIt(Bar bar);",
+        "}",
+        "public static class ParentBuggy {",
+        "  public void doIt(Foo foo) {}",
+        "  public void doIt(Bar bar) {}",
+        "}",
+        "public static class Buggy extends ParentBuggy implements Foo, Bar {",
+        "}");
+
+    assertCompileFails(
+        "Method 'test.EntryPoint$Buggy.doIt(Ltest/EntryPoint$Bar;)V' can't be exported in type "
+        + "'test.EntryPoint$Buggy' because the member name 'doIt' is already taken.");
+  }
+
+  public void testCollidingAccidentalOverrideAbstractMethodFails() throws Exception {
+    addSnippetImport("com.google.gwt.core.client.js.JsType");
+    addSnippetClassDecl(
+        "@JsType",
+        "public static interface Foo {",
+        "  void doIt(Foo foo);",
+        "}",
+        "@JsType",
+        "public static interface Bar {",
+        "  void doIt(Bar bar);",
+        "}",
+        "public static abstract class Baz implements Foo, Bar {",
+        "  public abstract void doIt(Foo foo);",
+        "  public abstract void doIt(Bar bar);",
+        "}",
+        "public static class Buggy {}  // Unrelated class");
+
+    assertCompileFails(
+        "Method 'test.EntryPoint$Baz.doIt(Ltest/EntryPoint$Bar;)V' can't be exported in type "
+        + "'test.EntryPoint$Baz' because the member name 'doIt' is already taken.");
+  }
+
+  public void testCollidingAccidentalOverrideHalfAndHalfFails() throws Exception {
+    addSnippetImport("com.google.gwt.core.client.js.JsType");
+    addSnippetClassDecl(
+        "public static interface Foo {",
+        "  void doIt(Foo foo);",
+        "}",
+        "@JsType",
+        "public static interface Bar {",
+        "   void doIt(Bar bar);",
+        "}",
+        "public static class ParentParent {",
+        "  public void doIt(Bar x) {}",
+        "}",
+        "@JsType",
+        "public static class Parent extends ParentParent {",
+        "  public void doIt(Foo x) {}",
+        "}",
+        "public static class Buggy extends Parent implements Bar {}");
+
+    assertCompileFails(
+        "Method 'test.EntryPoint$Parent.doIt(Ltest/EntryPoint$Foo;)V' can't be exported in type "
+        + "'test.EntryPoint$Buggy' because the member name 'doIt' is already taken.");
+  }
+
   public void testCollidingFieldExportsFails() throws Exception {
     addSnippetImport("com.google.gwt.core.client.js.JsExport");
     addSnippetClassDecl(
@@ -577,6 +647,28 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
 
     assertCompileFails("Member 'test.EntryPoint$Buggy.EntryPoint$Buggy(I) <init>' can't be "
         + "exported because the global name 'test.EntryPoint.Buggy' is already taken.");
+  }
+
+  public void testNonCollidingAccidentalOverrideSucceeds() throws Exception {
+    addSnippetImport("com.google.gwt.core.client.js.JsType");
+    addSnippetClassDecl(
+        "public static interface Foo {",
+        "  void doIt(Foo foo);",
+        "}",
+        "@JsType",
+        "public static interface Bar {",
+        "   void doIt(Bar bar);",
+        "}",
+        "public static class ParentParent {",
+        "  public void doIt(Bar x) {}",
+        "}",
+        "@JsType",
+        "public static class Parent extends ParentParent {",
+        "  public void doIt(Foo x) {}",
+        "}",
+        "public static class Buggy extends Parent implements Foo {}");
+
+    assertCompileSucceeds();
   }
 
   public void testSingleExportSucceeds() throws Exception {

@@ -42,7 +42,6 @@ import java.util.Set;
  */
 // TODO: handle custom JsType field/method names when that feature exists.
 // TODO: move JsInterop checks from JSORestrictionsChecker to here.
-// TODO: check for name collisions between regular members and accidental-override methods.
 public class JsInteropRestrictionChecker extends JVisitor {
 
   public static void exec(TreeLogger logger, JProgram jprogram,
@@ -187,11 +186,14 @@ public class JsInteropRestrictionChecker extends JVisitor {
   }
 
   private void checkJsTypeMethod(JMethod method) {
-    if (method.isSynthetic()) {
+    if (method.isSynthetic() && !method.isForwarding()) {
       // A name slot taken up by a synthetic method, such as a bridge method for a generic method,
       // is not the fault of the user and so should not be reported as an error. JS generation
       // should take responsibility for ensuring that only the correct method version (in this
-      // particular set of colliding method names) is exported.
+      // particular set of colliding method names) is exported. Forwarding synthetic methods
+      // (such as an accidental override forwarding method that occurs when a JsType interface
+      // starts exposing a method in class B that is only ever implemented in its parent class A)
+      // though should be checked since they are exported and do take up an name slot.
       return;
     }
 

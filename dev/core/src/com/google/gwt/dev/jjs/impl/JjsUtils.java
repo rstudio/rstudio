@@ -149,6 +149,7 @@ public class JjsUtils {
   public static JMethod createForwardingMethod(JDeclaredType type,
       JMethod methodToDelegateTo) {
     JMethod forwardingMethod = createEmptyMethodFromExample(type, methodToDelegateTo, false);
+    forwardingMethod.setForwarding();
 
     // This is a synthetic forwading method due to a default.
     if (methodToDelegateTo.isDefaultMethod()) {

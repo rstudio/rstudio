@@ -322,6 +322,7 @@ public class JMethod extends JNode implements JMember, CanBeAbstract, CanBeNativ
   private boolean isFinal;
   private final boolean isStatic;
   private boolean isSynthetic = false;
+  private boolean isForwarding = false;
   private final String name;
 
   private List<JType> originalParamTypes;
@@ -575,6 +576,10 @@ public class JMethod extends JNode implements JMember, CanBeAbstract, CanBeNativ
     return isFinal;
   }
 
+  public boolean isForwarding() {
+    return isForwarding;
+  }
+
   @Override
   public boolean isNative() {
     if (body == null) {
@@ -656,6 +661,10 @@ public class JMethod extends JNode implements JMember, CanBeAbstract, CanBeNativ
 
   public void setFinal(boolean isFinal) {
     this.isFinal = isFinal;
+  }
+
+  public void setForwarding() {
+    isForwarding = true;
   }
 
   public void setOriginalTypes(JType returnType, List<JType> paramTypes) {
