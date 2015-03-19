@@ -61,12 +61,12 @@ public class SnippetHelper
       var snippetText = [
          "## Header guard",
          "snippet once",
-         "\t#ifndef ${1}",
-         "\t#define ${1}",
+         "\t#ifndef ${1:`HeaderGuardFileName`}",
+         "\t#define ${1:`HeaderGuardFileName`}",
          "",
          "\t${0}",
          "",
-         "\t#endif // ${1}",
+         "\t#endif // ${1:`HeaderGuardFileName`}",
          "##",
          "## Anonymous namespace",
          "snippet ans",
@@ -216,11 +216,33 @@ public class SnippetHelper
       return snippet.replaceAll("`Filename.*`", fileName);
    }
    
+   private String replaceHeaderGuard(String snippet)
+   {
+      // Munge the path a bit
+      String path = path_;
+      if (path.startsWith("~/"))
+         path = path.substring(2);
+         
+      int instIncludeIdx = path.indexOf("/inst/include/");
+      if (instIncludeIdx != -1)
+         path = path.substring(instIncludeIdx + 15);
+      
+      int srcIdx = path.indexOf("/src/");
+      if (srcIdx != -1)
+         path = path.substring(srcIdx + 6);
+      
+      path = path.replaceAll("[./]", "_");
+      path = path.toUpperCase();
+      
+      return snippet.replaceAll("`HeaderGuardFileName`", path);
+   }
+   
    private String transformMacros(String snippet)
    {
       if (path_ != null)
       {
          snippet = replaceFilename(snippet);
+         snippet = replaceHeaderGuard(snippet);
       }
       return snippet;
    }
