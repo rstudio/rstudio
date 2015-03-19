@@ -24,6 +24,7 @@ import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import org.rstudio.core.client.SafeHtmlUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.js.JsUtil;
+import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
 import org.rstudio.studio.client.common.codetools.Completions;
@@ -308,6 +309,17 @@ public class CompletionRequester
 
    }
    
+   private static final Pattern RE_EXTRACTION = Pattern.create("[$@:]", "");
+   private boolean isTopLevelCompletionRequest()
+   {
+      AceEditor editor = (AceEditor) editor_;
+      if (editor == null)
+         return false;
+      
+      String line = editor.getCurrentLineUpToCursor();
+      return !RE_EXTRACTION.test(line);
+   }
+   
    public void getCompletions(
          final String token,
          final List<String> assocData,
@@ -385,8 +397,11 @@ public class CompletionRequester
                if (!comp.get(i).endsWith(" = "))
                   newComp.add(new QualifiedName(comp.get(i), pkgs.get(i), quote.get(i), type.get(i)));
             
-            // Get snippet completions
-            addSnippetCompletions(token, newComp);
+            // Get snippet completions. Bail if this isn't a top-level
+            // completion -- TODO is to add some more context that allows us
+            // to properly ascertain this.
+            if (isTopLevelCompletionRequest())
+               addSnippetCompletions(token, newComp);
             
             // Remove duplicates
             newComp = resolveDuplicates(newComp);

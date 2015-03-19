@@ -96,7 +96,6 @@ public class SnippetHelper
          "\tint main(int argc, char* argv[]) {",
          "\t\t${0}",
          "\t}",
-         
       ].join("\n");
       
       var parsed = manager.parseSnippetFile(snippetText);
@@ -128,7 +127,7 @@ public class SnippetHelper
          "\t\tstandardGeneric(\"${1:generic}\")",
          "\t})",
          "snippet sm",
-         "\tsetMethod(${1:f}, signature(${2:name} = \"${3:type}\"}), function(${2:name}, ...) {",
+         "\tsetMethod(${1:f}, signature(${2:name} = \"${3:type}\"), function(${2:name}, ...) {",
          "\t\t${0}",
          "\t})",
          "snippet sc",
