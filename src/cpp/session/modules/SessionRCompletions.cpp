@@ -377,6 +377,9 @@ SEXP rs_getNAMESPACEImportedSymbols(SEXP documentIdSEXP)
                             completions.exports.end(),
                             item);
             
+            if (it == completions.exports.end())
+               continue;
+            
             std::size_t index = it - completions.exports.begin();
             
             exports.push_back(completions.exports[index]);
