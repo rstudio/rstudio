@@ -220,11 +220,6 @@ public class CppCompletionManager implements CompletionManager
          {
             return suggestCompletions(true);
          }
-         else if (event.getKeyCode() == KeyCodes.KEY_TAB &&
-                  modifier == KeyboardShortcut.SHIFT)
-         {
-            return attemptImmediateSnippetInsertion();
-         }
          else if (event.getKeyCode() == 112 // F1
                   && modifier == KeyboardShortcut.NONE)
          {
