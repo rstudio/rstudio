@@ -221,7 +221,6 @@ public class SnippetHelper
       if (path_ != null)
       {
          snippet = replaceFilename(snippet);
-         snippet = snippet.replaceAll("`Filename.*`", path_);
       }
       return snippet;
    }
