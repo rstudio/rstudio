@@ -27,6 +27,7 @@ import org.rstudio.core.client.widget.ModalDialogTracker;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperation;
+import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.FilePathUtils;
@@ -43,10 +44,12 @@ import org.rstudio.studio.client.rsconnect.model.RSConnectDeploymentRecord;
 import org.rstudio.studio.client.rsconnect.model.RSConnectDirectoryState;
 import org.rstudio.studio.client.rsconnect.model.RSConnectLintResults;
 import org.rstudio.studio.client.rsconnect.model.RSConnectPublishInput;
+import org.rstudio.studio.client.rsconnect.model.RSConnectPublishResult;
 import org.rstudio.studio.client.rsconnect.model.RSConnectServerOperations;
 import org.rstudio.studio.client.rsconnect.model.RmdPublishDetails;
 import org.rstudio.studio.client.rsconnect.ui.RSAccountConnector;
 import org.rstudio.studio.client.rsconnect.ui.RSConnectDeployDialog;
+import org.rstudio.studio.client.rsconnect.ui.RSConnectPublishWizard;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.shiny.events.RSConnectDeploymentCompletedEvent;
@@ -200,7 +203,7 @@ public class RSConnect implements SessionInitHandler,
       {
          if (!input.isConnectUIEnabled() && input.isExternalUIEnabled())
          {
-            // TODO: show RPubs
+            publishAsRPubs(event);
          }
          else if (input.isConnectUIEnabled() && input.isExternalUIEnabled())
          {
@@ -218,17 +221,18 @@ public class RSConnect implements SessionInitHandler,
             if (input.isShiny())
             {
                // multiple Shiny doc
-               // TODO: show publish wizard
+               publishWithWizard(event, input);
             }
             else
             {
                if (input.isConnectUIEnabled())
                {
-                  // TODO: show publish wizard
+                  publishWithWizard(event, input);
                }
                else
                {
-                  // TODO: show RPubs
+                  // RStudio Connect is disabled, go straight to RPubs
+                  publishAsRPubs(event);
                }
             }
          }
@@ -237,22 +241,60 @@ public class RSConnect implements SessionInitHandler,
             if (input.isShiny())
             {
                // single Shiny doc
-               // TODO: show dynamic content publish
+               publishAsCode(event);
             }
             else 
             {
                // single static doc
-               if (!input.isConnectUIEnabled())
+               if (input.isConnectUIEnabled())
                {
-                  // TODO: show RPubs
+                  publishWithWizard(event, input);
                }
                else
                {
-                  // TODO: show publish wizard
+                  // RStudio Connect is disabled, go straight to RPubs
+                  publishAsRPubs(event);
                }
             }
          }
       }
+      else if (input.getContentType() == CONTENT_TYPE_APP)
+      {
+         publishAsCode(event);
+      }
+   }
+   
+   private void publishAsCode(RSConnectActionEvent event)
+   {
+      RSConnectDeployDialog dialog = 
+            new RSConnectDeployDialog(
+                      server_, connector_, display_, session_, events_, 
+                      FilePathUtils.dirFromFile(event.getPath()), 
+                      event.getPath().toLowerCase().endsWith(".rmd") ? 
+                        FilePathUtils.friendlyFileName(event.getPath()) : "",
+                      new String[]{},
+                      null, null,
+                      satellite_.isCurrentWindowSatellite());
+      dialog.showModal();
+   }
+   
+   private void publishWithWizard(RSConnectActionEvent event,
+                                  RSConnectPublishInput input)
+   {
+      RSConnectPublishWizard wizard = 
+            new RSConnectPublishWizard(input, 
+                  new ProgressOperationWithInput<RSConnectPublishResult>()
+            {
+               @Override
+               public void execute(RSConnectPublishResult input, 
+                     ProgressIndicator indicator)
+               {
+                  // TODO: Actually publish.
+                  display_.showErrorMessage("NYI", "NYI");
+                  indicator.onCompleted();
+               }
+            });
+      wizard.showModal();
    }
    
    private void handleRSConnectAction(RSConnectActionEvent event)
@@ -263,65 +305,24 @@ public class RSConnect implements SessionInitHandler,
          if (ModalDialogTracker.numModalsShowing() > 0)
             return;
          
-         final String dir = FilePathUtils.dirFromFile(event.getPath());
-         RSConnectDeploymentRecord record = dirState_.getLastDeployment(dir);
-         final RSConnectAccount lastAccount = record == null ? null : record.getAccount();
-         final String lastAppName = record == null ? null : record.getName();
-         
-         // don't consider this to be a deployment of a specific file unless
-         // we're deploying R Markdown content
-         final String file = event.getPath().toLowerCase().endsWith(".rmd") ? 
-            FilePathUtils.friendlyFileName(event.getPath()) : "";
-            
-         final OperationWithInput<String[]> showDeployDialog = 
-               new OperationWithInput<String[]>()
+         // show publish UI appropriate to the type of content being deployed
+         showPublishUI(event);
+
+         /*
+         sourceServer_.getDocumentProperties(event.getPath(), 
+               new ServerRequestCallback<JsObject>()
          {
             @Override
-            public void execute(String[] ignoredFiles)
+            public void onResponseReceived(JsObject properties)
             {
-               RSConnectDeployDialog dialog = 
-                     new RSConnectDeployDialog(
-                               server_, connector_, display_, session_, events_, 
-                               dir, file, ignoredFiles, 
-                               lastAccount, lastAppName,
-                               satellite_.isCurrentWindowSatellite());
-               dialog.showModal();
+               String files = properties.getString(IGNORED_RESOURCES);
+               if (files != null && !files.isEmpty())
+               {
+                  files.split("\\|");
+               }
             }
-         };
-         
-         if (file.isEmpty())
-         {
-            // if we're deploying a directory, show the dialog right away
-            showDeployDialog.execute(null);
-         }
-         else
-         {
-            sourceServer_.getDocumentProperties(event.getPath(), 
-                  new ServerRequestCallback<JsObject>()
-            {
-               @Override
-               public void onResponseReceived(JsObject properties)
-               {
-                  String files = properties.getString(IGNORED_RESOURCES);
-                  if (files != null && !files.isEmpty())
-                  {
-                     showDeployDialog.execute(files.split("\\|"));
-                  }
-                  else
-                  {
-                     showDeployDialog.execute(null);
-                  }
-               }
-
-               @Override
-               public void onError(ServerError error)
-               {
-                  // recover gracefully--the worst case here is that we won't
-                  // remember which files were unchecked
-                  showDeployDialog.execute(null);
-               }
-            });
-         }
+         });
+         */;
 
       }
       else if (event.getAction() == RSConnectActionEvent.ACTION_TYPE_CONFIGURE)

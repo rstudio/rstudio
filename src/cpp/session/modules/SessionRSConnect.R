@@ -227,5 +227,5 @@
   renderFunction <- .rs.getCustomRenderFunction(target)
   list(
     is_multi_rmd = .rs.scalar(length(rmds) > 1), 
-    is_shiny_rmd = .rs.scalar(renderFunction == "rmarkdown::run")
+    is_shiny_rmd = .rs.scalar(renderFunction == "rmarkdown::run"))
 })
