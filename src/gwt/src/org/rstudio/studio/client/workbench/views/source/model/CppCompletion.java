@@ -89,6 +89,8 @@ public class CppCompletion extends JavaScriptObject
          return icons.keyword();
       case MACRO:
          return icons.macro();
+      case SNIPPET:
+         return icons.snippet();
       default:
          return icons.keyword();
       }

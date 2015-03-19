@@ -855,6 +855,8 @@ public class CompletionRequester
             return ICONS.keyword();
          case RCompletionType.CONTEXT:
             return ICONS.context();
+         case RCompletionType.SNIPPET:
+            return ICONS.snippet();
          default:
             return ICONS.variable();
          }

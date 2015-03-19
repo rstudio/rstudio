@@ -37,4 +37,5 @@ public interface CodeIcons extends ClientBundle
    ImageResource macro();
    ImageResource environment();
    ImageResource context();
+   ImageResource snippet();
 }
