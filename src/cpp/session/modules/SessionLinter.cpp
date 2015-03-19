@@ -96,6 +96,15 @@ void addInferredSymbols(std::set<std::string>* pSymbols)
    }
 }
 
+void addNamespaceSymbols(std::set<std::string>* pSymbols)
+{
+   BOOST_FOREACH(const std::set<std::string>& symbolNames,
+                 RSourceIndex::getImportFromDirectives() | boost::adaptors::map_values)
+   {
+      pSymbols->insert(symbolNames.begin(), symbolNames.end());
+   }
+}
+
 Error getAllAvailableRSymbols(const FilePath& filePath,
                               std::set<std::string>* pSymbols)
 {
@@ -105,10 +114,12 @@ Error getAllAvailableRSymbols(const FilePath& filePath,
    if (error)
       return error;
    
-   // Get all of the symbols made available either by `library()`
-   // calls, or from a NAMESPACE file
+   // Get all of the symbols made available by `library()` calls
+   addInferredSymbols(pSymbols);
+   
+   // Add symbols made available from a package NAMESPACE
    if (projects::projectContext().directory().complete("NAMESPACE").exists())
-      addInferredSymbols(pSymbols);
+      addNamespaceSymbols(pSymbols);
 
    // If this is an R package project, get the symbols for all functions
    // etc. in the project.
