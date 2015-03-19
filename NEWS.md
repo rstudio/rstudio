@@ -107,6 +107,7 @@
     - Generate cleaner packages with no warnings
     - Respect various devtools options
 * Support for roxygen2 'vignette' roclet
+* Insert Roxygen Skeleton command (Ctrl+Alt+Shift+R)
 * Default to roxygenize for Build and Reload
 * Improved checking for supported protocol with packrat package
 * Escape backslashes in library names when loading packages
