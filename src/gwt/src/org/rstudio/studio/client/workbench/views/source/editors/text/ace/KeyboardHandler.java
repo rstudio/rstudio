@@ -24,4 +24,9 @@ public class KeyboardHandler extends JavaScriptObject
       var vim = $wnd.require('ace/keyboard/vim').handler;
       return vim;
    }-*/;
+   
+   public static native KeyboardHandler emacs() /*-{
+      var emacs = $wnd.require('ace/keyboard/emacs').handler;
+      return emacs;
+   }-*/;
 }

@@ -577,11 +577,10 @@ public class AceEditor implements DocDisplay,
       // reset keyboard handlers
       widget_.getEditor().setKeyboardHandler(null);
       
-      // if required add vim handlers to main editor
       if (useVimMode_)
-      {
          widget_.getEditor().addKeyboardHandler(KeyboardHandler.vim());
-      }
+      else if (useEmacsKeybindings_)
+         widget_.getEditor().addKeyboardHandler(KeyboardHandler.emacs());
       
       // add the previewer's handler
       widget_.getEditor().addKeyboardHandler(previewer.getKeyboardHandler());
@@ -1366,6 +1365,16 @@ public class AceEditor implements DocDisplay,
          return;
       
       useVimMode_ = use;
+      updateKeyboardHandlers();
+   }
+   
+   @Override
+   public void setUseEmacsKeybindings(boolean use)
+   {
+      if (widget_.getEditor().getReadOnly())
+         return;
+      
+      useEmacsKeybindings_ = use;
       updateKeyboardHandlers();
    }
    
@@ -2168,6 +2177,7 @@ public class AceEditor implements DocDisplay,
    private TextFileType fileType_;
    private boolean passwordMode_;
    private boolean useVimMode_ = false;
+   private boolean useEmacsKeybindings_ = false;
    private RnwCompletionContext rnwContext_;
    private CppCompletionContext cppContext_;
    private RCompletionContext rContext_;
