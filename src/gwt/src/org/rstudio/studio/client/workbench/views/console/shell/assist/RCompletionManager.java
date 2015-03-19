@@ -390,11 +390,6 @@ public class RCompletionManager implements CompletionManager
                return beginSuggest(true, false, true);
             }
          }
-         else if (keycode == KeyCodes.KEY_TAB &&
-                  modifier == KeyboardShortcut.SHIFT)
-         {
-            return attemptImmediateSnippetInsertion();
-         }
          else if (keycode == 112 // F1
                   && modifier == KeyboardShortcut.NONE)
          {
