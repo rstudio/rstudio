@@ -292,6 +292,8 @@ public class CppCompletionRequest
       if (popup_ == null)
          popup_ = createCompletionPopup();
       popup_.setText(message);
+      
+      docDisplay_.setPopupVisible(true);
      
    }
    
@@ -310,6 +312,9 @@ public class CppCompletionRequest
             applyValue(completion);
          } 
       });
+      
+      // notify document of popup status
+      docDisplay_.setPopupVisible(completions.length() > 0);
    }
       
    
