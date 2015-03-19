@@ -126,7 +126,7 @@ public class JsFunctionTest extends GWTTestCase {
   }
 
   public void testJsFunctionJs2Java() {
-    MyJsFunctionInterface intf = createMyFunction();
+    MyJsFunctionInterface intf = createMyJsFunction();
     assertEquals(10, intf.foo(10));
   }
 
@@ -137,18 +137,112 @@ public class JsFunctionTest extends GWTTestCase {
         return a + 2;
       }
     }.foo(10));
-    assertEquals(10, createMyFunction().foo(10));
+    assertEquals(10, createMyJsFunction().foo(10));
   }
 
   public void testJsFunctionCallbackPattern() {
     MyClassAcceptsJsFunctionAsCallBack c = new MyClassAcceptsJsFunctionAsCallBack();
-    c.setCallBack(createMyFunction());
+    c.setCallBack(createMyJsFunction());
     assertEquals(10, c.triggerCallBack(10));
   }
 
   public void testJsFunctionReferentialIntegrity() {
     MyJsFunctionIdentityInterface intf = createReferentialFunction();
     assertEquals(intf, intf.identity());
+  }
+
+  public void testCast_fromJsFunction() {
+    MyJsFunctionInterface c1 = (MyJsFunctionInterface) createFunction();
+    assertNotNull(c1);
+    MyJsFunctionIdentityInterface c2 = (MyJsFunctionIdentityInterface) createFunction();
+    assertNotNull(c2);
+    ElementLikeJsInterface i = (ElementLikeJsInterface) createFunction();
+    assertNotNull(i);
+    try {
+      MyJsFunctionInterfaceImpl c3 = (MyJsFunctionInterfaceImpl) createFunction();
+      assertNotNull(c3);
+      fail("ClassCastException should be caught.");
+    } catch (ClassCastException cce) {
+      // Expected.
+    }
+  }
+
+  public void testCast_fromJsObject() {
+    ElementLikeJsInterface obj = (ElementLikeJsInterface) createObject();
+    assertNotNull(obj);
+    try {
+      MyJsFunctionInterface c = (MyJsFunctionInterface) createObject();
+      assertNotNull(c);
+      fail("ClassCastException should be caught.");
+    } catch (ClassCastException cce) {
+      // Expected.
+    }
+    try {
+      MyJsFunctionInterfaceImpl c = (MyJsFunctionInterfaceImpl) createObject();
+      assertNotNull(c);
+      fail("ClassCastException should be caught.");
+    } catch (ClassCastException cce) {
+      // Expected.
+    }
+    try {
+      MyJsFunctionIdentityInterface c = (MyJsFunctionIdentityInterface) createObject();
+      assertNotNull(c);
+      fail("ClassCastException should be caught.");
+    } catch (ClassCastException cce) {
+      // Expected.
+    }
+  }
+
+  public void testCast_inJava() {
+    Object object = alwaysTrue() ? new MyJsFunctionInterfaceImpl() : new Object();
+    MyJsFunctionInterface c1 = (MyJsFunctionInterface) object;
+    assertNotNull(c1);
+    MyJsFunctionInterfaceImpl c2 = (MyJsFunctionInterfaceImpl) c1;
+    assertEquals(10, c2.publicField);
+    MyJsFunctionInterfaceImpl c3 = (MyJsFunctionInterfaceImpl) object;
+    assertNotNull(c3);
+    MyJsFunctionIdentityInterface c4 = (MyJsFunctionIdentityInterface) object;
+    assertNotNull(c4);
+
+    // TODO: unexpected behavior. Anything can be cast to a JsType(without prototype).
+    try {
+      ElementLikeJsInterface c5 = (ElementLikeJsInterface) object;
+      assertNotNull(c5);
+      fail("ClassCastException should be caught.");
+    } catch (ClassCastException cce) {
+      // Expected.
+    }
+  }
+
+  public void testCast_crossCastJavaInstance() {
+    Object o = alwaysTrue() ? new MyJsFunctionInterfaceImpl() : new Object();
+    assertEquals(11, ((MyOtherJsFunctionInterface) o).bar(10));
+    assertSame((MyJsFunctionInterface) o, (MyOtherJsFunctionInterface) o);
+  }
+
+  public void testInstanceOf_jsFunction() {
+    Object object = createFunction();
+    assertTrue(object instanceof MyJsFunctionInterface);
+    assertTrue(object instanceof MyJsFunctionIdentityInterface);
+    assertFalse(object instanceof MyJsFunctionInterfaceImpl);
+    assertTrue(object instanceof ElementLikeJsInterface);
+  }
+
+  public void testInstanceOf_jsObject() {
+    Object object = createObject();
+    assertFalse(object instanceof MyJsFunctionInterface);
+    assertFalse(object instanceof MyJsFunctionIdentityInterface);
+    assertFalse(object instanceof MyJsFunctionInterfaceImpl);
+    assertTrue(object instanceof ElementLikeJsInterface);
+  }
+
+  public void testInstanceOf_javaInstance() {
+    Object object = alwaysTrue() ? new MyJsFunctionInterfaceImpl() : new Object();
+    assertTrue(object instanceof MyJsFunctionInterface);
+    assertTrue(object instanceof MyJsFunctionInterfaceImpl);
+    assertTrue(object instanceof MyJsFunctionIdentityInterface);
+    // TODO: unexpected behavior. Anything can be instanceof a JsType(without prototype).
+    assertFalse(object instanceof ElementLikeJsInterface);
   }
 
   // uncomment when Java8 is supported.
@@ -171,15 +265,13 @@ public class JsFunctionTest extends GWTTestCase {
 //    assertEquals(10, callAsFunction(impl, 10));
 //  }
 
-  // uncomment when accidental overrides are correctly computed.
-//  public void testJsFunctionAccidentalOverrides() {
-//    MyJsFunctionAccidentalOverridesParent p = new MyJsFunctionAccidentalOverridesParent();
-//    assertEquals(10, p.foo(10));
-//    assertEquals(10, callAsFunction(p, 10));
-//    MyJsFunctionAccidentalOverridesChild c = new MyJsFunctionAccidentalOverridesChild();
-//    assertEquals(10, c.foo(10));
-//    assertEquals(10, callAsFunction(c, 10));
-//  }
+  public void testJsFunctionAccidentalOverrides() {
+    MyJsFunctionAccidentalOverrideParent p = new MyJsFunctionAccidentalOverrideParent();
+    assertEquals(10, p.foo(10));
+    MyJsFunctionAccidentalOverrideChild c = new MyJsFunctionAccidentalOverrideChild();
+    assertEquals(10, c.foo(10));
+    assertEquals(10, callAsFunction(c, 10));
+  }
 
   private static native Object callAsFunction(Object obj) /*-{
     return obj();
@@ -201,7 +293,7 @@ public class JsFunctionTest extends GWTTestCase {
     return object[functionName]();
   }-*/;
 
-  private static native MyJsFunctionInterface createMyFunction() /*-{
+  private static native MyJsFunctionInterface createMyJsFunction() /*-{
     var myFunction = function(a) { return a; };
     return myFunction;
   }-*/;
@@ -209,5 +301,19 @@ public class JsFunctionTest extends GWTTestCase {
   private static native MyJsFunctionIdentityInterface createReferentialFunction() /*-{
     function myFunction() { return myFunction; }
     return myFunction;
+  }-*/;
+
+  private static native Object createFunction() /*-{
+    var fun = function(a) { return a; };
+    return fun;
+  }-*/;
+
+  private static native Object createObject() /*-{
+    var a = {};
+    return a;
+  }-*/;
+
+  private static native boolean alwaysTrue() /*-{
+    return !!$wnd;
   }-*/;
 }

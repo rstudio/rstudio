@@ -297,7 +297,7 @@ public class PrunerTest extends OptimizerTestBase {
         "}", fun.toSource());
   }
 
-  public void testJsFunction() throws Exception {
+  public void testJsFunction_pruneUnusedJsFunction() throws Exception {
     addSnippetImport("com.google.gwt.core.client.js.JsFunction");
     addSnippetClassDecl(
         "@JsFunction interface MyJsFunctionInterface {",
@@ -332,6 +332,40 @@ public class PrunerTest extends OptimizerTestBase {
     assertNotNull(OptimizerTestBase.findMethod(result.findClass("EntryPoint$1"), "foo"));
     assertNull(OptimizerTestBase.findMethod(result.findClass("EntryPoint$2"), "foo"));
   }
+
+  public void testJsFunction_unrelatedjsFunctionCast() throws Exception {
+    addSnippetImport("com.google.gwt.core.client.js.JsFunction");
+    addSnippetClassDecl(
+        "@JsFunction interface MyJsFunctionInterface {",
+        "int foo (int a);",
+        "}");
+    addSnippetClassDecl(
+        "@JsFunction interface MyOtherJsFunctionInterface {",
+        "int bar (int a);",
+        "}");
+    addSnippetClassDecl(
+        "interface MyPlainInterface {",
+        "int goo (int a);",
+        "}");
+    Result result;
+    (result = optimize("int",
+        "MyJsFunctionInterface a = new MyJsFunctionInterface() {"
+            + "@Override public int foo (int a) { return 1; }"
+            + "};"
+            + "return ((MyOtherJsFunctionInterface) a).bar(0) + ((MyPlainInterface) a).goo(0);"
+        )).intoString(
+            "EntryPoint$MyJsFunctionInterface a = new EntryPoint$1();\n" +
+            "return ((EntryPoint$MyOtherJsFunctionInterface) a).bar(0) +" // SAM is not pruned.
+            + " ((EntryPoint$MyPlainInterface) a).nullMethod();"
+            );
+
+    // JsFunction can be cross casted, or casted from JavaScript function
+    // so the JsFunction interface and its SAM function should not be pruned.
+    assertNotNull(result.findClass("EntryPoint$MyOtherJsFunctionInterface"));
+    assertNotNull(OptimizerTestBase.findMethod(
+        result.findClass("EntryPoint$MyOtherJsFunctionInterface"), "bar"));
+    assertNull(result.findClass("EntryPoint$MyPlainInterface"));
+ }
 
   @Override
   protected boolean optimizeMethod(JProgram program, JMethod method) {

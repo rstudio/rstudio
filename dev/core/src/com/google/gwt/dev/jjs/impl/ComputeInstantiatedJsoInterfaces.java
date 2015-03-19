@@ -35,13 +35,15 @@ import java.util.Set;
  */
 public class ComputeInstantiatedJsoInterfaces {
   class InstantiatedJsoInterfacesCollector extends JVisitor {
+    @Override
     public void endVisit(JCastOperation x, Context ctx) {
       JType toType = x.getCastType();
 
       if (toType instanceof JReferenceType && !(toType instanceof JNullType)) {
         toType = toType.getUnderlyingType();
         if (program.typeOracle.willCrossCastLikeJso(toType) ||
-            program.typeOracle.isOrExtendsJsType(toType, true)) {
+            program.typeOracle.isOrExtendsJsType(toType, true) ||
+            program.typeOracle.isJsFunction(toType)) {
           instantiateJsoInterface((JReferenceType) toType);
         }
       }

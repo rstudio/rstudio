@@ -226,7 +226,8 @@ public class ImplementCastsAndTypeChecks {
 
     assert EnumSet.of(TypeCategory.TYPE_JSO, TypeCategory.TYPE_JAVA_OBJECT_OR_JSO,
         TypeCategory.TYPE_JAVA_LANG_OBJECT, TypeCategory.TYPE_JAVA_LANG_STRING,
-        TypeCategory.TYPE_JAVA_OBJECT, TypeCategory.TYPE_JS_INTERFACE).contains(typeCategory);
+        TypeCategory.TYPE_JAVA_OBJECT, TypeCategory.TYPE_JS_INTERFACE,
+        TypeCategory.TYPE_JS_FUNCTION).contains(typeCategory);
 
     return typeCategory;
   }
@@ -301,6 +302,8 @@ public class ImplementCastsAndTypeChecks {
         TypeCategory.TYPE_JAVA_LANG_STRING, program.getIndexedMethod("Cast.isJavaString"));
     this.instanceOfMethodsByTargetTypeCategory.put(
         TypeCategory.TYPE_JS_INTERFACE, program.getIndexedMethod("Cast.instanceOfJsType"));
+    this.instanceOfMethodsByTargetTypeCategory.put(
+        TypeCategory.TYPE_JS_FUNCTION, program.getIndexedMethod("Cast.instanceOfJsFunction"));
 
     // Populate the necessary dynamicCast methods.
     this.dynamicCastMethodsByTargetTypeCategory.put(
@@ -315,6 +318,8 @@ public class ImplementCastsAndTypeChecks {
         TypeCategory.TYPE_JAVA_LANG_STRING, program.getIndexedMethod("Cast.dynamicCastToString"));
     this.dynamicCastMethodsByTargetTypeCategory.put(
         TypeCategory.TYPE_JS_INTERFACE, program.getIndexedMethod("Cast.dynamicCastWithPrototype"));
+    this.dynamicCastMethodsByTargetTypeCategory.put(
+        TypeCategory.TYPE_JS_FUNCTION, program.getIndexedMethod("Cast.dynamicCastToJsFunction"));
   }
 
   private void execImpl() {

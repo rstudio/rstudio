@@ -86,6 +86,14 @@ final class Cast {
   }
 
   /**
+   * Allow a dynamic cast to a JsFunction interface only if it is a function.
+   */
+  static Object dynamicCastToJsFunction(Object src) {
+    checkType(src == null || isFunction(src));
+    return src;
+  }
+
+  /**
    * A dynamic cast that optionally checks for JsType prototypes.
    */
   static Object dynamicCastWithPrototype(Object src, JavaScriptObject dstId, String jsType) {
@@ -113,6 +121,21 @@ final class Cast {
     return (src != null) &&
         (isJavaScriptObject(src) || canCast(src, dstId));
   }
+
+  /**
+   * Returns true if the object is a function.
+   */
+  static boolean instanceOfJsFunction(Object src) {
+    return (src != null) && isFunction(src);
+  }
+
+  /**
+   * Returns whether the Object is a function.
+   */
+  @HasNoSideEffects
+  static native boolean isFunction(Object src) /*-{
+    return typeof(src) === "function";
+  }-*/;
 
   @HasNoSideEffects
   static boolean isJavaScriptObject(Object src) {

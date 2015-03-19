@@ -28,7 +28,7 @@ import com.google.gwt.dev.jjs.ast.JType;
 public  enum TypeCategory {
     TYPE_JAVA_OBJECT, TYPE_JAVA_OBJECT_OR_JSO, TYPE_JSO, TYPE_JAVA_LANG_OBJECT,
     TYPE_JAVA_LANG_STRING, TYPE_JS_INTERFACE, TYPE_PRIMITIVE_LONG, TYPE_PRIMITIVE_NUMBER,
-    TYPE_PRIMITIVE_BOOLEAN;
+    TYPE_PRIMITIVE_BOOLEAN, TYPE_JS_FUNCTION;
 
   /**
    * Determines the type category for a specific type.
@@ -59,6 +59,8 @@ public  enum TypeCategory {
       return TypeCategory.TYPE_JAVA_OBJECT_OR_JSO;
     } else if (program.typeOracle.isOrExtendsJsType(type, true)) {
       return TypeCategory.TYPE_JS_INTERFACE;
+    } else if (program.typeOracle.isJsFunction(type)) {
+      return TypeCategory.TYPE_JS_FUNCTION;
     }
     return TypeCategory.TYPE_JAVA_OBJECT;
   }
