@@ -267,11 +267,12 @@ Error lintRSourceDocument(const json::JsonRpcRequest& request,
    // Try to get the contents from the database
    boost::shared_ptr<SourceDocument> pDoc(new SourceDocument());
    error = get(documentId, pDoc);
+   
+   // don't log on error here (it's possible that we might attempt to lint a
+   // document immediately after a suspend-resume, and so we fail to get the
+   // contents of that document)
    if (error)
-   {
-      LOG_ERROR(error);
       return error;
-   }
    
    FilePath origin = module_context::resolveAliasedPath(documentPath);
    
