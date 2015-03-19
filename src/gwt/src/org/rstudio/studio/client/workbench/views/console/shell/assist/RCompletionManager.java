@@ -315,6 +315,9 @@ public class RCompletionManager implements CompletionManager
    
    private boolean attemptImmediateSnippetInsertion()
    {
+      if (!docDisplay_.getSelection().isEmpty())
+         return false;
+      
       String token = StringUtil.getToken(
             docDisplay_.getCurrentLineUpToCursor(),
             docDisplay_.getCursorPosition().getColumn(),
@@ -1852,7 +1855,7 @@ public class RCompletionManager implements CompletionManager
             return;
          }
          
-         if (qualifiedName.source.equals("<snippet>"))
+         if (qualifiedName.type == RCompletionType.SNIPPET)
          {
             snippets_.applySnippet(token_, qualifiedName.name);
             return;

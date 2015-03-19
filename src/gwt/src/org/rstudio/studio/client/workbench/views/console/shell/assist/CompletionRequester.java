@@ -570,7 +570,7 @@ public class CompletionRequester
       String tokenLower = token.toLowerCase();
       for (String snippet : snippets)
          if (snippet.toLowerCase().startsWith(tokenLower))
-            completions.add(new QualifiedName(snippet, "<snippet>"));
+            completions.add(QualifiedName.createSnippet(snippet));
    }
 
    private void doGetCompletions(
@@ -711,6 +711,15 @@ public class CompletionRequester
          this.type = RCompletionType.UNKNOWN;
       }
       
+      public static QualifiedName createSnippet(String name)
+      {
+         return new QualifiedName(
+               name,
+               "<snippet>",
+               false,
+               RCompletionType.SNIPPET);
+      }
+      
       @Override
       public String toString()
       {
@@ -793,8 +802,9 @@ public class CompletionRequester
                RES.styles().completion(),
                name);
 
-         // Get the associated package for functions
-         if (RCompletionType.isFunctionType(type))
+         // Display the source for functions and snippets
+         if (RCompletionType.isFunctionType(type) ||
+             type == RCompletionType.SNIPPET)
          {
             SafeHtmlUtil.appendSpan(
                   sb,

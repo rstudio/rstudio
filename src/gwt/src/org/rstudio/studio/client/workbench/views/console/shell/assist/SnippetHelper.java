@@ -66,7 +66,31 @@ public class SnippetHelper
          "snippet ns",
          "\tnamespace ${1} {",
          "\t${0}",
-         "\t} // namespace ${1}"
+         "\t} // namespace ${1}",
+         "##",
+         "## class",
+         "snippet cls",
+         "\tclass ${1} {",
+         "\tpublic:",
+         "\t\t${2}",
+         "\tprivate:",
+         "\t\t${3}",
+         "\t};",
+         "##",
+         "## struct",
+         "snippet str",
+         "\tstruct ${1} {",
+         "\t\t${0}",
+         "\t};",
+         "##",
+         "## cerr",
+         "snippet cerr",
+         "\tstd::cerr << ${1} << std::endl;${0}",
+         "##",
+         "snippet main",
+         "\tint main(int argc, char* argv[]) {",
+         "\t\t${0}",
+         "\t}"
       ].join("\n");
       
       var parsed = manager.parseSnippetFile(snippetText);

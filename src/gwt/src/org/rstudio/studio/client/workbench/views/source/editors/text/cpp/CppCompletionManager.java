@@ -177,6 +177,9 @@ public class CppCompletionManager implements CompletionManager
    
    private boolean attemptImmediateSnippetInsertion()
    {
+      if (!docDisplay_.getSelection().isEmpty())
+         return false;
+      
       String token = StringUtil.getToken(
             docDisplay_.getCurrentLine(),
             docDisplay_.getCursorPosition().getColumn(),
