@@ -127,6 +127,18 @@ public class HelpInfoPopupPanel extends PopupPanel
 
       doDisplay();
    }
+   
+   public void displaySnippetHelp(String contents)
+   {
+      timer_.cancel();
+      vpanel_.clear();
+      
+      HTML contentsHtml = new HTML(contents);
+      contentsHtml.setStylePrimaryName(RES.styles().helpBodyText());
+      vpanel_.add(contentsHtml);
+      
+      doDisplay();
+   }
 
    public void clearHelp(boolean downloadOperationPending)
    {

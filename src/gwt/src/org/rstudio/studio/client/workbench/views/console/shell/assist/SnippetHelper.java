@@ -229,6 +229,18 @@ public class SnippetHelper
          return null;
    }-*/;
    
+   public String getSnippetContents(String snippetName)
+   {
+      return getSnippetContentsImpl(snippetName, manager_, native_);
+   }
+   
+   public static final native String getSnippetContentsImpl(String snippetName,
+                                                            SnippetManager manager,
+                                                            AceEditorNative editor)
+   /*-{
+      return manager.getSnippetByName(snippetName, editor).content || "";
+   }-*/;
+   
    private final AceEditor editor_;
    private final AceEditorNative native_;
    private final SnippetManager manager_;

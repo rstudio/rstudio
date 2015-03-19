@@ -1613,6 +1613,13 @@ public class RCompletionManager implements CompletionManager
       
    }
    
+   private void showSnippetHelp(QualifiedName item,
+                                CompletionPopupDisplay popup)
+   {
+      popup.displaySnippetHelp(
+            snippets_.getSnippetContents(item.name));
+   }
+   
    /**
     * It's important that we create a new instance of this each time.
     * It maintains state that is associated with a completion request.
@@ -1631,12 +1638,19 @@ public class RCompletionManager implements CompletionManager
       
       public void showHelp(QualifiedName selectedItem)
       {
-         helpStrategy_.showHelp(selectedItem, popup_);
+         if (selectedItem.type == RCompletionType.SNIPPET)
+            showSnippetHelp(selectedItem, popup_);
+         else
+            helpStrategy_.showHelp(selectedItem, popup_);
       }
       
       public void showHelpTopic()
       {
-         helpStrategy_.showHelpTopic(popup_.getSelectedValue());
+         QualifiedName selectedItem = popup_.getSelectedValue();
+         // TODO: Show help should navigate to snippet file?
+         if (selectedItem.type != RCompletionType.SNIPPET)
+            helpStrategy_.showHelpTopic(selectedItem);
+            
       }
 
       @Override
