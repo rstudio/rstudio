@@ -715,7 +715,7 @@ public class CompletionRequester
       {
          return new QualifiedName(
                name,
-               "<snippet>",
+               "snippet",
                false,
                RCompletionType.SNIPPET);
       }
