@@ -174,29 +174,7 @@ public class CppCompletionManager implements CompletionManager
          });
       }
    }
-   
-   private boolean attemptImmediateSnippetInsertion()
-   {
-      if (!docDisplay_.getSelection().isEmpty())
-         return false;
-      
-      String token = StringUtil.getToken(
-            docDisplay_.getCurrentLine(),
-            docDisplay_.getCursorPosition().getColumn(),
-            "[^ \\s\\n\\t\\r\\v]",
-            false,
-            false);
-      
-      ArrayList<String> snippets = snippets_.getCppSnippets();
-      if (snippets.contains(token))
-      {
-         snippets_.applySnippet(token, token);
-         return true;
-      }
-      
-      return false;
-   }
-   
+  
    // return false to indicate key not handled
    @Override
    public boolean previewKeyDown(NativeEvent event)

@@ -313,28 +313,6 @@ public class RCompletionManager implements CompletionManager
          });
    }
    
-   private boolean attemptImmediateSnippetInsertion()
-   {
-      if (!docDisplay_.getSelection().isEmpty())
-         return false;
-      
-      String token = StringUtil.getToken(
-            docDisplay_.getCurrentLineUpToCursor(),
-            docDisplay_.getCursorPosition().getColumn(),
-            "[^ \\s\\n\\r\\t\\v]",
-            false,
-            false);
-      
-      ArrayList<String> snippets = snippets_.getAvailableSnippets();
-      if (snippets.contains(token))
-      {
-         snippets_.applySnippet(token, token);
-         return true;
-      }
-      
-      return false;
-   }
-   
    public boolean previewKeyDown(NativeEvent event)
    {
       suggestTimer_.cancel();
