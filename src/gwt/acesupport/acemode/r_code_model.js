@@ -1912,6 +1912,72 @@ var RCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) {
       return tokens;
    };
 
+   this.insertRoxygenSkeleton = function()
+   {
+      var cursorPos = this.$session.getSelection().getCursor();
+      var scope = this.getCurrentScope(cursorPos);
+      if (!scope || !scope.isFunction())
+         return;
+
+      var fnName = scope.attributes.name;
+      var fnArgs = scope.attributes.args;
+
+      // Attempt to find the old roxygen block (if it exists)
+      // and replace it
+      var fnStartPos = scope.preamble;
+      var oldBlockStart, oldBlockEnd;
+
+      var row = fnStartPos.row - 1;
+      var line = this.$session.getLine(row);
+      while (/^\s*$/.test(line) && row >= 0)
+      {
+         row--;
+         line = this.$session.getLine(row);
+      }
+
+      var reRoxygen = /^\s*#+[']/;
+      var foundBlock = reRoxygen.test(line);
+      if (foundBlock)
+         oldBlockEnd = row;
+      
+      while (reRoxygen.test(line) && row >= 0)
+      {
+         row--;
+         line = this.$session.getLine(row);
+      }
+      oldBlockStart = row + 1;
+
+      var replaceRange;
+      if (foundBlock)
+      {
+         replaceRange = new Range(
+            oldBlockStart, 0, oldBlockEnd + 1, 0
+         );
+      }
+      else
+      {
+         replaceRange = Range.fromPoints(fnStartPos, fnStartPos);
+      }
+
+      var replaceTextArray = [
+         "#' Function '" + fnName + "'",
+         "#'"
+      ];
+
+      for (var i = 0; i < fnArgs.length; i++)
+         replaceTextArray.push("#' @param " + fnArgs[i]);
+
+      if (fnArgs.length > 0)
+         replaceTextArray.push("#'");
+      
+      replaceTextArray.push("#' @export");
+      replaceTextArray.push("");
+
+      var replaceText = replaceTextArray.join("\n");
+      this.$session.replace(replaceRange, replaceText);
+         
+   };
+
 }).call(RCodeModel.prototype);
 
 exports.RCodeModel = RCodeModel;

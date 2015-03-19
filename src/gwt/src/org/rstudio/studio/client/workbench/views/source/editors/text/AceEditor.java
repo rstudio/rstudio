@@ -2159,6 +2159,11 @@ public class AceEditor implements DocDisplay,
       return widget_.getEditor().getSession().createAnchoredRange(start, end);
    }
    
+   public void insertRoxygenSkeleton()
+   {
+      getSession().getMode().getCodeModel().insertRoxygenSkeleton();
+   }
+   
    private static final int DEBUG_CONTEXT_LINES = 2;
    private final HandlerManager handlers_ = new HandlerManager(this);
    private final AceEditorWidget widget_;

@@ -2050,6 +2050,17 @@ public class TextEditingTarget implements
    }
    
    @Handler
+   void onInsertRoxygenSkeleton()
+   {
+      if (!DocumentMode.isSelectionInRMode(docDisplay_))
+      {
+         showRModeWarning("Roxygen Skeleton");
+         return;
+      }
+      docDisplay_.insertRoxygenSkeleton();
+   }
+   
+   @Handler
    void onLintActiveDocument()
    {
       lintManager_.lint(true, false);
