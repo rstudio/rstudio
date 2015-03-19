@@ -134,7 +134,7 @@ public class SnippetHelper
          "\t\tstandardGeneric(\"${1:generic}\")",
          "\t})",
          "snippet sm",
-         "\tsetMethod(${1:f}, signature(${2:name} = \"${3:type}\"), function(${2:name}, ...) {",
+         "\tsetMethod(\"${1:generic}\", signature(${2:name} = \"${3:type}\"), function(${2:name}, ...) {",
          "\t\t${0}",
          "\t})",
          "snippet sc",
