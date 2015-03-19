@@ -91,7 +91,6 @@ public class SnippetHelper
          "\tint main(int argc, char* argv[]) {",
          "\t\t${0}",
          "\t}",
-         
       ].join("\n");
       
       var parsed = manager.parseSnippetFile(snippetText);
