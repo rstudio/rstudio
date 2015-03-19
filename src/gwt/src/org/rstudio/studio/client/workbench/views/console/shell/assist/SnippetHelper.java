@@ -4,9 +4,7 @@ import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArrayString;
 
 import org.rstudio.core.client.JsArrayUtil;
-import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
-import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative;
 
 import java.util.ArrayList;
@@ -23,7 +21,6 @@ public class SnippetHelper
       editor_ = editor;
       native_ = editor.getWidget().getEditor();
       manager_ = getSnippetManager();
-      customCppSnippetsAdded_ = false;
    }
    
    private static final native SnippetManager getSnippetManager() /*-{
@@ -33,17 +30,17 @@ public class SnippetHelper
    public ArrayList<String> getCppSnippets()
    {
       ensureSnippetsLoaded();
-      ensureCppCustomSnippetsAdded();
+      ensureCustomCppSnippetsLoaded();
       return JsArrayUtil.fromJsArrayString(
             getAvailableSnippetsImpl(manager_, "c_cpp"));
    }
    
-   private void ensureCppCustomSnippetsAdded()
+   private void ensureCustomCppSnippetsLoaded()
    {
-      if (!customCppSnippetsAdded_)
+      if (!customCppSnippetsLoaded_)
       {
          addCustomCppSnippets(manager_);
-         customCppSnippetsAdded_ = true;
+         customCppSnippetsLoaded_ = true;
       }
    }
    
@@ -76,6 +73,32 @@ public class SnippetHelper
       manager.register(parsed, "c_cpp");
    }-*/;
    
+   private void ensureCustomRSnippetsLoaded()
+   {
+      if (!customRSnippetsLoaded_)
+      {
+         loadCustomRSnippets(manager_);
+         customRSnippetsLoaded_ = true;
+      }
+   }
+   
+   private final native void loadCustomRSnippets(SnippetManager manager)
+   /*-{
+      
+      var snippetText = [
+         "snippet sserver",
+         "\tshinyServer(function(input, output, session) {",
+         "\t\t${0}",
+         "\t})",
+         "snippet dig",
+         "\tdevtools::install_github(\"${0}\")"
+      ].join("\n");
+      
+      var parsed = manager.parseSnippetFile(snippetText);
+      manager.register(parsed, "r");
+      
+   }-*/;
+   
    public ArrayList<String> getAvailableSnippets()
    {
       ensureSnippetsLoaded();
@@ -92,8 +115,20 @@ public class SnippetHelper
    
    private final void ensureSnippetsLoaded()
    {
+      ensureRSnippetsLoaded();
+      ensureCppSnippetsLoaded();
+   }
+   
+   private void ensureRSnippetsLoaded()
+   {
       ensureAceSnippetsLoaded("r", manager_);
+      ensureCustomRSnippetsLoaded();
+   }
+   
+   private void ensureCppSnippetsLoaded()
+   {
       ensureAceSnippetsLoaded("c_cpp", manager_);
+      ensureCustomCppSnippetsLoaded();
    }
    
    private static final native void ensureAceSnippetsLoaded(
@@ -146,5 +181,7 @@ public class SnippetHelper
    private final AceEditor editor_;
    private final AceEditorNative native_;
    private final SnippetManager manager_;
-   private boolean customCppSnippetsAdded_;
+   
+   private static boolean customCppSnippetsLoaded_;
+   private static boolean customRSnippetsLoaded_;
 }

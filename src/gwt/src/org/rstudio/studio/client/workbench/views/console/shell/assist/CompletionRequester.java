@@ -563,6 +563,9 @@ public class CompletionRequester
          String token,
          ArrayList<QualifiedName> completions)
    {
+      if (StringUtil.isNullOrEmpty(token))
+         return;
+      
       ArrayList<String> snippets = snippets_.getAvailableSnippets();
       String tokenLower = token.toLowerCase();
       for (String snippet : snippets)
