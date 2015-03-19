@@ -35,6 +35,11 @@ public class SnippetHelper
             getAvailableSnippetsImpl(manager_, "c_cpp"));
    }
    
+   public Snippet getCppSnippet(String name)
+   {    
+      return getSnippet(manager_, "c_cpp", name);
+   }
+   
    private void ensureCustomCppSnippetsLoaded()
    {
       if (!customCppSnippetsLoaded_)
@@ -214,6 +219,17 @@ public class SnippetHelper
       return [];
    }-*/;
 
+   private static final native Snippet getSnippet(
+         SnippetManager manager,
+         String mode,
+         String name) /*-{
+      var snippetsForMode = manager.snippetNameMap[mode];
+      if (snippetsForMode)
+         return snippetsForMode[name];
+      else
+         return null;
+   }-*/;
+   
    private final AceEditor editor_;
    private final AceEditorNative native_;
    private final SnippetManager manager_;

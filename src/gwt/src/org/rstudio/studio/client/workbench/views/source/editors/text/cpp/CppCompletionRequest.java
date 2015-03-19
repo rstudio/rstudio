@@ -146,7 +146,12 @@ public class CppCompletionRequest
          ArrayList<String> snippets = snippets_.getCppSnippets();
          for (String snippet : snippets)
             if (snippet.startsWith(userTypedText))
-               filtered.unshift(CppCompletion.createSnippetCompletion(snippet));
+            {
+               String content = snippets_.getCppSnippet(snippet).getContent();
+               content = content.replace("\t", "  ");
+               filtered.unshift(CppCompletion.createSnippetCompletion(snippet,
+                                                                      content));
+            }
       }
 
       // check for no hits on explicit request

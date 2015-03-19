@@ -46,13 +46,18 @@ public class CppCompletionToolTip extends PopupPanel
    public CppCompletionToolTip(String text, String comment)
    {
       super(true);
+      
+      CppCompletionResources.Styles styles = 
+                              CppCompletionResources.INSTANCE.styles();
+      
       panel_ = new HorizontalPanel();
-      panel_.addStyleName(CppCompletionResources.INSTANCE.styles().toolTip());
+      panel_.addStyleName(styles.toolTip());
       
       VerticalPanel textPanel = new VerticalPanel();
       textPanel.add(label_ = new Label()); 
+      label_.addStyleName(styles.toolTipText());
       commentLabel_ = new Label();
-      commentLabel_.addStyleName(CppCompletionResources.INSTANCE.styles().commentText());
+      commentLabel_.addStyleName(styles.commentText());
       commentLabel_.setVisible(false);
       textPanel.add(commentLabel_);
       

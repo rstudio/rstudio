@@ -35,11 +35,14 @@ public class CppCompletion extends JavaScriptObject
    }-*/;
    
    public static native final CppCompletion createSnippetCompletion(
-         String snippetName) /*-{
+         String snippetName, String snippetContent) /*-{
       return {
          type: 99,
          typed_text: snippetName,
-         text: null
+         text: [{
+            text: snippetContent,
+            comment: null
+         }] 
       };
    }-*/;
          
