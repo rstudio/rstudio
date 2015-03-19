@@ -140,11 +140,14 @@ public class CppCompletionRequest
          }
       }
       
-      // add in snippets
-      ArrayList<String> snippets = snippets_.getCppSnippets();
-      for (String snippet : snippets)
-         if (snippet.startsWith(userTypedText))
-            filtered.unshift(CppCompletion.createSnippetCompletion(snippet));
+      // add in snippets if this is a global scope
+      if (completionPosition_.getScope() == CompletionPosition.Scope.Global)
+      {
+         ArrayList<String> snippets = snippets_.getCppSnippets();
+         for (String snippet : snippets)
+            if (snippet.startsWith(userTypedText))
+               filtered.unshift(CppCompletion.createSnippetCompletion(snippet));
+      }
 
       // check for no hits on explicit request
       if ((filtered.length() == 0) && explicit_)
