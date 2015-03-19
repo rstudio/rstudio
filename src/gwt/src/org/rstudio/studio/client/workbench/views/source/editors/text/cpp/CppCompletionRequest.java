@@ -144,7 +144,7 @@ public class CppCompletionRequest
       ArrayList<String> snippets = snippets_.getCppSnippets();
       for (String snippet : snippets)
          if (snippet.startsWith(userTypedText))
-            filtered.push(CppCompletion.createSnippetCompletion(snippet));
+            filtered.unshift(CppCompletion.createSnippetCompletion(snippet));
 
       // check for auto-accept
       if ((filtered.length() == 1) && autoAccept && explicit_)

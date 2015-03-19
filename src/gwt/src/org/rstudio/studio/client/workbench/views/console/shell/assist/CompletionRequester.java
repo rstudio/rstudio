@@ -570,7 +570,7 @@ public class CompletionRequester
       String tokenLower = token.toLowerCase();
       for (String snippet : snippets)
          if (snippet.toLowerCase().startsWith(tokenLower))
-            completions.add(QualifiedName.createSnippet(snippet));
+            completions.add(0, QualifiedName.createSnippet(snippet));
    }
 
    private void doGetCompletions(
