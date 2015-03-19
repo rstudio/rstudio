@@ -146,14 +146,20 @@ public class CppCompletionRequest
          if (snippet.startsWith(userTypedText))
             filtered.unshift(CppCompletion.createSnippetCompletion(snippet));
 
+      // check for no hits on explicit request
+      if ((filtered.length() == 0) && explicit_)
+      {
+         showCompletionPopup("(No matches)");
+      }
       // check for auto-accept
-      if ((filtered.length() == 1) && autoAccept && explicit_)
+      else if ((filtered.length() == 1) && autoAccept && explicit_)
       {
          applyValue(filtered.get(0));
       }
       // check for one completion that's already present
       else if (filtered.length() == 1 && 
-            filtered.get(0).getTypedText() == getUserTypedText())
+            filtered.get(0).getTypedText() == getUserTypedText() &&
+            filtered.get(0).getType() != CppCompletion.SNIPPET)
       {
          terminate();
       }
@@ -189,16 +195,8 @@ public class CppCompletionRequest
       // get the completions
       completions_ = result.getCompletions();
       
-      // check for none found condition on explicit completion
-      if ((completions_.length() == 0) && explicit_)
-      {
-         showCompletionPopup("(No matches)");
-      }
-      // otherwise just update the ui (apply filter, etc.)
-      else
-      {
-         updateUI(true);
-      }
+      // update the UI
+      updateUI(true);
    }
    
    static Pattern RE_NO_MEMBER_NAMED =
