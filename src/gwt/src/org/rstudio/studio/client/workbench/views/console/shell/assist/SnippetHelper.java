@@ -90,7 +90,8 @@ public class SnippetHelper
          "snippet main",
          "\tint main(int argc, char* argv[]) {",
          "\t\t${0}",
-         "\t}"
+         "\t}",
+         
       ].join("\n");
       
       var parsed = manager.parseSnippetFile(snippetText);
@@ -115,7 +116,18 @@ public class SnippetHelper
          "\t\t${0}",
          "\t})",
          "snippet dig",
-         "\tdevtools::install_github(\"${0}\")"
+         "\tdevtools::install_github(\"${0}\")",
+         "## S4",
+         "snippet sg",
+         "\tsetGeneric(\"${1:generic}\", function(${2:x, ...}) {",
+         "\t\tstandardGeneric(\"${1:generic}\")",
+         "\t})",
+         "snippet sm",
+         "\tsetMethod(${1:f}, signature(${2:name} = \"${3:type}\"}), function(${2:name}, ...) {",
+         "\t\t${0}",
+         "\t})",
+         "snippet sc",
+         "\tsetClass(\"${1:Class}\", slots = c(${2:name = \"type\"}))"
       ].join("\n");
       
       var parsed = manager.parseSnippetFile(snippetText);
