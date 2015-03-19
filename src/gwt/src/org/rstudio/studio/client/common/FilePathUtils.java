@@ -71,4 +71,29 @@ public class FilePathUtils
       
       return prefix + relative;
    }
+   
+   public static String stripExtension(String path)
+   {
+      int tarGzIndex = path.indexOf(".tar.gz");
+      if (tarGzIndex != -1)
+         return path.substring(0, tarGzIndex);
+      
+      return path.substring(0, path.lastIndexOf('.'));
+   }
+   
+   public static String fileNameSansExtension(String path)
+   {
+      int lastSlashIndex = path.lastIndexOf('/');
+      int extensionIndex = getExtensionIndex(path);
+      return path.substring(lastSlashIndex + 1, extensionIndex);
+   }
+   
+   private static int getExtensionIndex(String path)
+   {
+      int tarGzIndex = path.indexOf(".tar.gz");
+      if (tarGzIndex != -1)
+         return tarGzIndex;
+      
+      return path.lastIndexOf('.');
+   }
 }

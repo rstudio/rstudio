@@ -4,6 +4,7 @@ import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArrayString;
 
 import org.rstudio.core.client.JsArrayUtil;
+import org.rstudio.studio.client.common.FilePathUtils;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative;
 
@@ -18,9 +19,15 @@ public class SnippetHelper
    
    public SnippetHelper(AceEditor editor)
    {
+      this(editor, null);
+   }
+   
+   public SnippetHelper(AceEditor editor, String path)
+   {
       editor_ = editor;
       native_ = editor.getWidget().getEditor();
       manager_ = getSnippetManager();
+      path_ = path;
    }
    
    private static final native SnippetManager getSnippetManager() /*-{
@@ -198,15 +205,32 @@ public class SnippetHelper
    public void applySnippet(String token, String snippetName)
    {
       editor_.expandSelectionLeft(token.length());
-      applySnippetImpl(snippetName, manager_, editor_.getWidget().getEditor());
+      String snippetContent = transformMacros(
+            getSnippetContents(snippetName));
+      applySnippetImpl(snippetContent, manager_, editor_.getWidget().getEditor());
+   }
+   
+   private String replaceFilename(String snippet)
+   {
+      String fileName = FilePathUtils.fileNameSansExtension(path_);
+      return snippet.replaceAll("`Filename.*`", fileName);
+   }
+   
+   private String transformMacros(String snippet)
+   {
+      if (path_ != null)
+      {
+         snippet = replaceFilename(snippet);
+         snippet = snippet.replaceAll("`Filename.*`", path_);
+      }
+      return snippet;
    }
    
    public final native void applySnippetImpl(
-         String snippetName,
+         String snippetContent,
          SnippetManager manager,
          AceEditorNative editor) /*-{
-      var content = manager.getSnippetByName(snippetName, editor).content;
-      manager.insertSnippet(editor, content);
+      manager.insertSnippet(editor, snippetContent);
    }-*/;
    
    private static final native JsArrayString getAvailableSnippetsImpl(
@@ -244,6 +268,7 @@ public class SnippetHelper
    private final AceEditor editor_;
    private final AceEditorNative native_;
    private final SnippetManager manager_;
+   private final String path_;
    
    private static boolean customCppSnippetsLoaded_;
    private static boolean customRSnippetsLoaded_;

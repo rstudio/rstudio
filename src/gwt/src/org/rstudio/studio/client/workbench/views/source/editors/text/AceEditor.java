@@ -2180,7 +2180,7 @@ public class AceEditor implements DocDisplay,
    private boolean useVimMode_ = false;
    private RnwCompletionContext rnwContext_;
    private CppCompletionContext cppContext_;
-   private RCompletionContext rContext_;
+   private RCompletionContext rContext_ = null;
    private Integer lineHighlightMarkerId_ = null;
    private Integer lineDebugMarkerId_ = null;
    private Integer executionLine_ = null;

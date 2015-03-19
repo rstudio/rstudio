@@ -4479,13 +4479,19 @@ public class TextEditingTarget implements
       @Override
       public String getPath()
       {
-         return docUpdateSentinel_.getPath();
+         if (docUpdateSentinel_ == null)
+            return null;
+         else
+            return docUpdateSentinel_.getPath();
       }
       
       @Override
       public String getId()
       {
-         return docUpdateSentinel_.getId();
+         if (docUpdateSentinel_ == null)
+            return null;
+         else
+            return docUpdateSentinel_.getId();
       }
    };
    

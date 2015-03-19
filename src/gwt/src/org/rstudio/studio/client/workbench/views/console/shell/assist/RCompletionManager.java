@@ -125,15 +125,15 @@ public class RCompletionManager implements CompletionManager
       navigableSourceEditor_ = navigableSourceEditor;
       popup_ = popup ;
       server_ = server ;
-      snippets_ = new SnippetHelper((AceEditor) docDisplay);
-      requester_ = new CompletionRequester(server_, rnwContext, navigableSourceEditor, snippets_);
-      initFilter_ = initFilter ;
       rContext_ = rContext;
+      initFilter_ = initFilter ;
       rnwContext_ = rnwContext;
       docDisplay_ = docDisplay;
       isConsole_ = isConsole;
       sigTip_ = new RCompletionToolTip(docDisplay_);
       suggestTimer_ = new SuggestionTimer();
+      snippets_ = new SnippetHelper((AceEditor) docDisplay, getSourceDocumentPath());
+      requester_ = new CompletionRequester(server_, rnwContext, navigableSourceEditor, snippets_);
       
       input_.addBlurHandler(new BlurHandler() {
          public void onBlur(BlurEvent event)
@@ -2035,10 +2035,10 @@ public class RCompletionManager implements CompletionManager
    
    private String getSourceDocumentPath()
    {
-      if (rContext_ != null)
-         return StringUtil.notNull(rContext_.getPath());
-      else
+      if (rContext_ == null)
          return "";
+      else
+         return StringUtil.notNull(rContext_.getPath());
    }
    
    private String getSourceDocumentId()

@@ -63,7 +63,7 @@ public class CppCompletionRequest
       invalidationToken_ = token;
       explicit_ = explicit;
       onTerminated_ = onTerminated;
-      snippets_ = new SnippetHelper((AceEditor) docDisplay);
+      snippets_ = new SnippetHelper((AceEditor) docDisplay, docPath);
       
       Position pos = completionPosition_.getPosition();
       
