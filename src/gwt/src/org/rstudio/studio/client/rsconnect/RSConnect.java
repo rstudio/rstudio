@@ -41,7 +41,9 @@ import org.rstudio.studio.client.rsconnect.model.RSConnectApplicationInfo;
 import org.rstudio.studio.client.rsconnect.model.RSConnectDeploymentRecord;
 import org.rstudio.studio.client.rsconnect.model.RSConnectDirectoryState;
 import org.rstudio.studio.client.rsconnect.model.RSConnectLintResults;
+import org.rstudio.studio.client.rsconnect.model.RSConnectPublishInput;
 import org.rstudio.studio.client.rsconnect.model.RSConnectServerOperations;
+import org.rstudio.studio.client.rsconnect.model.RmdPublishDetails;
 import org.rstudio.studio.client.rsconnect.ui.RSAccountConnector;
 import org.rstudio.studio.client.rsconnect.ui.RSConnectDeployDialog;
 import org.rstudio.studio.client.server.ServerError;
@@ -130,6 +132,120 @@ public class RSConnect implements SessionInitHandler,
          });  
    }
    
+   private void showPublishUI(final RSConnectActionEvent event)
+   {
+      if (event.getFromPrevious() != null)
+      {
+         // TODO: prepopulate publish UI with previous input
+      }
+      else 
+      {
+         final RSConnectPublishInput input = new RSConnectPublishInput();
+         input.setContentType(event.getContentType());
+
+         // set these inside the wizard input so we don't need to pass around
+         // session/prefs
+         input.setConnectUIEnabled(
+               pUiPrefs_.get().enableRStudioConnect().getGlobalValue());
+         input.setExternalUIEnabled(
+               session_.getSessionInfo().getAllowExternalPublish());
+         
+         // if R Markdown, get info on what we're publishing from the server
+         if (event.getFromRmdPreview() != null)
+         {
+            input.setSourceRmd(FileSystemItem.createFile(
+                  event.getFromRmdPreview().getTargetFile()));
+            server_.getRmdPublishDetails(
+                  event.getFromRmdPreview().getTargetFile(), 
+                  new ServerRequestCallback<RmdPublishDetails>()
+                  {
+                     @Override
+                     public void onResponseReceived(RmdPublishDetails details)
+                     {
+                        input.setIsMultiRmd(details.isMultiRmd());
+                        input.setIsShiny(details.isShinyRmd());
+                        showPublishUI(event, input);
+                     }
+                     @Override
+                     public void onError(ServerError error)
+                     {
+                        // this is unlikely since the RPC does little work, but
+                        // we can't offer the right choices in the wizard if we
+                        // don't know what we're working with.
+                        display_.showErrorMessage("Could Not Publish", 
+                              error.getMessage());
+                     }
+                  });
+         }
+         else
+         {
+            showPublishUI(event, input);
+         }
+      }
+   }
+   
+   private void showPublishUI(RSConnectActionEvent event, 
+                              RSConnectPublishInput input)
+   {
+      if (input.getContentType() == CONTENT_TYPE_PLOT)
+      {
+         if (!input.isConnectUIEnabled() && input.isExternalUIEnabled())
+         {
+            // TODO: show RPubs
+         }
+         else if (input.isConnectUIEnabled() && input.isExternalUIEnabled())
+         {
+            // TODO: show publish wizard
+         }
+         else if (input.isConnectUIEnabled() && !input.isExternalUIEnabled())
+         {
+            // TODO: show static content publish
+         }
+      }
+      else if (input.getContentType() == CONTENT_TYPE_RMD)
+      {
+         if (input.isMultiRmd())
+         {
+            if (input.isShiny())
+            {
+               // multiple Shiny doc
+               // TODO: show publish wizard
+            }
+            else
+            {
+               if (input.isConnectUIEnabled())
+               {
+                  // TODO: show publish wizard
+               }
+               else
+               {
+                  // TODO: show RPubs
+               }
+            }
+         }
+         else
+         {
+            if (input.isShiny())
+            {
+               // single Shiny doc
+               // TODO: show dynamic content publish
+            }
+            else 
+            {
+               // single static doc
+               if (!input.isConnectUIEnabled())
+               {
+                  // TODO: show RPubs
+               }
+               else
+               {
+                  // TODO: show publish wizard
+               }
+            }
+         }
+      }
+   }
+   
    private void handleRSConnectAction(RSConnectActionEvent event)
    {
       if (event.getAction() == RSConnectActionEvent.ACTION_TYPE_DEPLOY)
@@ -137,7 +253,7 @@ public class RSConnect implements SessionInitHandler,
          // ignore this request if there's already a modal up 
          if (ModalDialogTracker.numModalsShowing() > 0)
             return;
-
+         
          final String dir = FilePathUtils.dirFromFile(event.getPath());
          RSConnectDeploymentRecord record = dirState_.getLastDeployment(dir);
          final RSConnectAccount lastAccount = record == null ? null : record.getAccount();

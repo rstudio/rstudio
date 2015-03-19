@@ -22,6 +22,7 @@ import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.rmarkdown.model.RmdPreviewParams;
+import org.rstudio.studio.client.rsconnect.RSConnect;
 import org.rstudio.studio.client.rsconnect.events.RSConnectActionEvent;
 import org.rstudio.studio.client.rsconnect.model.RSConnectDeploymentRecord;
 import org.rstudio.studio.client.rsconnect.model.RSConnectServerOperations;
@@ -40,7 +41,7 @@ import com.google.inject.Inject;
 
 public class RSConnectPublishButton extends Composite
 {
-   public RSConnectPublishButton(String contentType, boolean showCaption,
+   public RSConnectPublishButton(int contentType, boolean showCaption,
          boolean manageVisiblity)
    {
       contentType_ = contentType;
@@ -190,6 +191,7 @@ public class RSConnectPublishButton extends Composite
    {
       events_.fireEvent(new RSConnectActionEvent(
             RSConnectActionEvent.ACTION_TYPE_DEPLOY, 
+            contentType_,
             contentPath_,
             rmdPreview_,
             previous));
@@ -246,7 +248,7 @@ public class RSConnectPublishButton extends Composite
          publishMenu_.addItem(new MenuItem(
                AppCommand.formatMenuLabel(
                      commands_.rsconnectDeploy().getImageResource(), 
-                     "Publish " + contentType_ + "...", null),
+                     "Publish " + contentTypeDesc(contentType_) + "...", null),
                true,
                new Scheduler.ScheduledCommand()
                {
@@ -262,10 +264,24 @@ public class RSConnectPublishButton extends Composite
       publishMenu_.addItem(
             commands_.rsconnectManageAccounts().createMenuItem(false));
    }
+   
+   private static String contentTypeDesc(int contentType)
+   {
+      switch(contentType)
+      {
+      case RSConnect.CONTENT_TYPE_APP:
+         return "Application";
+      case RSConnect.CONTENT_TYPE_PLOT:
+         return "Plot";
+      case RSConnect.CONTENT_TYPE_RMD:
+         return "Document";
+      }
+      return "Content";
+   }
  
    private final ToolbarButton publishButton_;
    private final ToolbarPopupMenu publishMenu_;
-   private final String contentType_;
+   private final int contentType_;
 
    private RSConnectServerOperations server_;
    private EventBus events_;

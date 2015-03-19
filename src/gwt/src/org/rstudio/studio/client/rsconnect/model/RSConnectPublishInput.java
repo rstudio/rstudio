@@ -31,9 +31,18 @@ public class RSConnectPublishInput
       isExternalUIEnabled_ = isExternalUIEnabled;
    }
    
+   public RSConnectPublishInput()
+   {
+   }
+   
    public boolean isShiny() 
    {
       return isShiny_;
+   }
+   
+   public void setIsShiny(boolean isShiny) 
+   {
+      isShiny_ = isShiny;
    }
    
    public FileSystemItem getSourceRmd()
@@ -41,9 +50,19 @@ public class RSConnectPublishInput
       return sourceRmd_;
    }
    
+   public void setSourceRmd(FileSystemItem sourceRmd)
+   {
+      sourceRmd_ = sourceRmd;
+   }
+   
    public boolean isConnectUIEnabled() 
    {
       return isConnectUIEnabled_;
+   }
+   
+   public void setConnectUIEnabled(boolean enabled)
+   {
+      isConnectUIEnabled_ = enabled;
    }
    
    public boolean isExternalUIEnabled()
@@ -51,9 +70,19 @@ public class RSConnectPublishInput
       return isExternalUIEnabled_;
    }
    
+   public void setExternalUIEnabled(boolean enabled)
+   {
+      isExternalUIEnabled_ = enabled;
+   }
+   
    public boolean isMultiRmd()
    {
       return isMultiRmd_;
+   }
+   
+   public void setIsMultiRmd(boolean isMulti)
+   {
+      isMultiRmd_ = isMulti;
    }
    
    public int getContentType()
@@ -61,10 +90,15 @@ public class RSConnectPublishInput
       return contentType_;
    }
    
-   private final boolean isShiny_;
-   private final boolean isConnectUIEnabled_;
-   private final boolean isExternalUIEnabled_;
-   private final boolean isMultiRmd_;
-   private final FileSystemItem sourceRmd_;
-   private final int contentType_;
+   public void setContentType(int contentType)
+   {
+      contentType_ = contentType;
+   }
+   
+   private boolean isShiny_;
+   private boolean isConnectUIEnabled_;
+   private boolean isExternalUIEnabled_;
+   private boolean isMultiRmd_;
+   private FileSystemItem sourceRmd_;
+   private int contentType_;
 }

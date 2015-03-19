@@ -60,4 +60,7 @@ public interface RSConnectServerOperations
    
    void getLintResults(String target,
                 ServerRequestCallback<RSConnectLintResults> resultCallback);
+   
+   void getRmdPublishDetails(String target,
+                ServerRequestCallback<RmdPublishDetails> resultCallback);
 }

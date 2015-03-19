@@ -26,6 +26,7 @@ import org.rstudio.studio.client.common.AutoGlassPanel;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.rmarkdown.model.RmdPreviewParams;
+import org.rstudio.studio.client.rsconnect.RSConnect;
 import org.rstudio.studio.client.rsconnect.ui.RSConnectPublishButton;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
@@ -85,7 +86,8 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
       toolbar_.addLeftWidget(commands_.viewerStop().createToolbarButton());
      
       // add html document publish button 
-      publishButton_ = new RSConnectPublishButton("Document", true, false);
+      publishButton_ = new RSConnectPublishButton(RSConnect.CONTENT_TYPE_PLOT, 
+            true, false);
       toolbar_.addRightWidget(publishButton_);
       publishButton_.setVisible(false);
       

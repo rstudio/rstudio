@@ -46,6 +46,7 @@ import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.rmarkdown.RmdOutput;
 import org.rstudio.studio.client.rmarkdown.events.RmdOutputFormatChangedEvent;
+import org.rstudio.studio.client.rsconnect.RSConnect;
 import org.rstudio.studio.client.rsconnect.ui.RSConnectPublishButton;
 import org.rstudio.studio.client.shiny.model.ShinyApplicationParams;
 import org.rstudio.studio.client.shiny.ui.ShinyViewerTypePopupMenu;
@@ -250,7 +251,8 @@ public class TextEditingTargetWidget
       if (SessionUtils.showPublishUi(session_, uiPrefs_))
       {
          toolbar.addRightSeparator();
-         publishButton_ = new RSConnectPublishButton("Application", false, true);
+         publishButton_ = new RSConnectPublishButton(
+               RSConnect.CONTENT_TYPE_APP, false, true);
          toolbar.addRightWidget(publishButton_);
       }
       

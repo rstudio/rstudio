@@ -93,6 +93,7 @@ import org.rstudio.studio.client.rsconnect.model.RSConnectDeploymentRecord;
 import org.rstudio.studio.client.rsconnect.model.RSConnectLintResults;
 import org.rstudio.studio.client.rsconnect.model.RSConnectPreAuthToken;
 import org.rstudio.studio.client.rsconnect.model.RSConnectServerInfo;
+import org.rstudio.studio.client.rsconnect.model.RmdPublishDetails;
 import org.rstudio.studio.client.server.Bool;
 import org.rstudio.studio.client.server.ClientException;
 import org.rstudio.studio.client.server.Server;
@@ -3735,6 +3736,18 @@ public class RemoteServer implements Server
    }
   
    @Override
+   public void getRmdPublishDetails(String target,
+         ServerRequestCallback<RmdPublishDetails> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(target));
+      sendRequest(RPC_SCOPE,
+            GET_RMD_PUBLISH_DETAILS,
+            params,
+            requestCallback);
+   }
+  
+   @Override
    public void getRMarkdownContext(
                   ServerRequestCallback<RMarkdownContext> requestCallback)
    {
@@ -4278,6 +4291,7 @@ public class RemoteServer implements Server
    private static final String GET_USER_FROM_TOKEN = "get_user_from_token";
    private static final String REGISTER_USER_TOKEN = "register_user_token";
    private static final String GET_RSCONNECT_LINT_RESULTS = "get_rsconnect_lint_results";
+   private static final String GET_RMD_PUBLISH_DETAILS = "get_rmd_publish_details";
 
    private static final String RENDER_RMD = "render_rmd";
    private static final String RENDER_RMD_SOURCE = "render_rmd_source";
@@ -4296,5 +4310,4 @@ public class RemoteServer implements Server
    private static final String GET_PENDING_ACTIONS = "get_pending_actions";
    
    private static final String LINT_R_SOURCE_DOCUMENT = "lint_r_source_document";
-  
 }

@@ -215,3 +215,17 @@
    eval(cmd, envir = globalenv())
 })
 
+
+.rs.addJsonRpcHandler("get_rmd_publish_details", function(target) {
+  # check for multiple R Markdown documents in the directory 
+  rmds <- list.files(path = dirname(target), pattern = glob2rx("*.Rmd"),
+                     all.files = FALSE, recursive = FALSE, ignore.case = TRUE,
+                     include.dirs = FALSE)
+
+  # check to see if this is an interactive doc (i.e. needs to be run rather
+  # rather than rendered)
+  renderFunction <- .rs.getCustomRenderFunction(target)
+  list(
+    is_multi_rmd = .rs.scalar(length(rmds) > 1), 
+    is_shiny_rmd = .rs.scalar(renderFunction == "rmarkdown::run")
+})
