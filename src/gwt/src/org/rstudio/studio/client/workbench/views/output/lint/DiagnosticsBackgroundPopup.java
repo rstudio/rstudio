@@ -15,15 +15,21 @@
 package org.rstudio.studio.client.workbench.views.output.lint;
 
 import org.rstudio.core.client.Rectangle;
+import org.rstudio.core.client.widget.ThemedPopupPanel;
 import org.rstudio.studio.client.workbench.views.output.lint.model.AceAnnotation;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Marker;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Markers;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedHandler;
 
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
+import com.google.gwt.event.dom.client.BlurEvent;
+import com.google.gwt.event.dom.client.BlurHandler;
 import com.google.gwt.event.dom.client.FocusEvent;
 import com.google.gwt.event.dom.client.FocusHandler;
 import com.google.gwt.user.client.ui.Label;
@@ -36,7 +42,6 @@ public class DiagnosticsBackgroundPopup
    {
       docDisplay_ = docDisplay;
       editor_ = (AceEditor) docDisplay_;
-      
       docDisplay_.addFocusHandler(new FocusHandler()
       {
          @Override
@@ -47,6 +52,17 @@ public class DiagnosticsBackgroundPopup
          }
       });
       
+      docDisplay_.addBlurHandler(new BlurHandler()
+      {
+         @Override
+         public void onBlur(BlurEvent event)
+         {
+            if (popup_ != null)
+               popup_.hide();
+         }
+      });
+      
+      popup_  = null;
       start();
    }
    
@@ -66,15 +82,21 @@ public class DiagnosticsBackgroundPopup
             
             long currentTime = System.currentTimeMillis();
             long lastModifiedTime = docDisplay_.getLastModifiedTime();
+            long lastCursorChangedTime = docDisplay_.getLastCursorChangedTime();
             
-            // If the document was modified recently, bail
-            if ((currentTime - lastModifiedTime) < 2000)
+            // If the document was modified recently, or the
+            // cursor was moved recently, then bail
+            if ((currentTime - lastModifiedTime) < 500)
+               return completeExecution();
+            
+            if ((currentTime - lastCursorChangedTime) < 500)
                return completeExecution();
             
             Markers markers = editor_.getSession().getMarkers(true);
-            for (int i = 0; i < markers.size(); i++)
+            int[] keys = markers.getIds();
+            for (int i = 0; i < keys.length; i++)
             {
-               Marker marker = markers.get(i);
+               Marker marker = markers.get(keys[i]);
                if (marker.getRange().contains(docDisplay_.getCursorPosition()))
                {
                   displayMarkerDiagnostics(marker);
@@ -84,7 +106,7 @@ public class DiagnosticsBackgroundPopup
             
             return completeExecution();
          }
-      }, 2000);
+      }, 500);
    }
    
    private void displayMarkerDiagnostics(Marker marker)
@@ -97,32 +119,59 @@ public class DiagnosticsBackgroundPopup
          if (marker.getRange().getStart().getRow() <= row &&
              marker.getRange().getEnd().getRow() >= row)
          {
-            showPopupWithText(annotation.text());
+            Rectangle coords = editor_.toScreenCoordinates(
+                  marker.getRange());
+            
+            showPopup(annotation.text(), marker.getRange());
             return;
          }
       }
    }
    
-   static class DiagnosticsPopupPanel extends PopupPanel
+   class DiagnosticsPopupPanel extends ThemedPopupPanel
    {
-      public DiagnosticsPopupPanel(String text)
+      public DiagnosticsPopupPanel(
+            String text,
+            Range range)
       {
          super(true, false);
+         range_ = range;
+         editor_.addCursorChangedHandler(new CursorChangedHandler()
+         {
+            @Override
+            public void onCursorChanged(CursorChangedEvent event)
+            {
+               if (!range_.contains(event.getPosition()))
+                  hide();
+            }
+         });
          setWidget(new Label(text));
       }
+      
+      public void hide()
+      {
+         super.hide();
+      }
+      
+      private final Range range_;
    }
    
-   private void showPopupWithText(String text)
+   private void showPopup(String text, Range range)
    {
-      final PopupPanel popup = new DiagnosticsPopupPanel(text);
-      popup.setTitle("Diagnostics");
-      popup.setPopupPositionAndShow(new PositionCallback()
+      if (popup_ != null)
+         popup_.hide();
+      
+      popup_ = new DiagnosticsPopupPanel(text, range);
+      final Rectangle coords = editor_.toScreenCoordinates(range);
+      popup_.setTitle("Diagnostics");
+      popup_.setPopupPositionAndShow(new PositionCallback()
       {
          @Override
          public void setPosition(int offsetWidth, int offsetHeight)
          {
-            Rectangle pos = docDisplay_.getCursorBounds();
-            popup.setPopupPosition(pos.getLeft(), pos.getTop());
+            popup_.setPopupPosition(
+                  coords.getRight() + 20,
+                  coords.getTop());
          }
       });
    }
@@ -140,5 +189,6 @@ public class DiagnosticsBackgroundPopup
    
    private final DocDisplay docDisplay_;
    private final AceEditor editor_;
+   private DiagnosticsPopupPanel popup_;
    private boolean isRunning_;
 }
