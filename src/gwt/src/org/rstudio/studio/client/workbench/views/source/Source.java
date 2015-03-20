@@ -82,6 +82,8 @@ import org.rstudio.studio.client.workbench.model.SessionUtils;
 import org.rstudio.studio.client.workbench.model.UnsavedChangesTarget;
 import org.rstudio.studio.client.workbench.model.helper.IntStateValue;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.snippets.SnippetHelper;
+import org.rstudio.studio.client.workbench.snippets.model.SnippetsChangedEvent;
 import org.rstudio.studio.client.workbench.ui.unsaved.UnsavedChangesDialog;
 import org.rstudio.studio.client.workbench.views.data.events.ViewDataEvent;
 import org.rstudio.studio.client.workbench.views.data.events.ViewDataHandler;
@@ -131,7 +133,8 @@ public class Source implements InsertSourceHandler,
                              CodeBrowserFinishedHandler,
                              CodeBrowserHighlightEvent.Handler,
                              SourceExtendedTypeDetectedEvent.Handler,
-                             BeforeShowHandler
+                             BeforeShowHandler,
+                             SnippetsChangedEvent.Handler
 {
    public interface Display extends IsWidget,
                                     HasTabClosingHandlers,
@@ -2898,6 +2901,12 @@ public class Source implements InsertSourceHandler,
             break;
          }
       }
+   }
+   
+   @Override
+   public void onSnippetsChanged(SnippetsChangedEvent event)
+   {
+      SnippetHelper.onSnippetsChanged(event);
    }
    
    // when tabs have been reordered in the session, the physical layout of the

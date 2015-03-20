@@ -477,27 +477,20 @@ bool isSnippetFilePath(const FilePath& filePath,
    if (filePath.isDirectory())
       return false;
    
-   std::string filename = filePath.filename();
-   std::size_t lastDotIndex = filename.rfind('.');
-   if (lastDotIndex == std::string::npos)
+   if (filePath.extensionLowerCase() != ".snippets")
       return false;
    
-   if (filename.substr(lastDotIndex) != ".snippets")
-      return false;
-   
-   *pMode = filename.substr(0, lastDotIndex - 1);
+   *pMode = filePath.stem();
    return true;
 }
 
 void checkAndNotifyClientIfSnippetsAvailable()
 {
    // Check to see if we have a snippets folder locally
-   FilePath homeDir(core::system::getenv("HOME"));
-   if (!homeDir.exists())
-      return;
+   FilePath homeDir = module_context::userHomePath();
    
-   FilePath snippetsDir = homeDir.complete(".R").complete("snippets");
-   if (!snippetsDir.exists())
+   FilePath snippetsDir = homeDir.childPath(".R/snippets");
+   if (!snippetsDir.exists() || !snippetsDir.isDirectory())
       return;
    
    // Get the contents of each file here, and pass that info back up

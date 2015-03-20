@@ -75,8 +75,7 @@ public class Workbench implements BusyHandler,
                                   QuotaStatusHandler,
                                   WorkbenchLoadedHandler,
                                   WorkbenchMetricsChangedHandler,
-                                  InstallRtoolsEvent.Handler,
-                                  SnippetsChangedEvent.Handler
+                                  InstallRtoolsEvent.Handler
 {
    interface Binder extends CommandBinder<Commands, Workbench> {}
    
@@ -468,12 +467,6 @@ public class Workbench implements BusyHandler,
          Desktop.getFrame().installRtools(event.getVersion(),
                                           event.getInstallerPath());  
       }
-   }
-   
-   @Override
-   public void onSnippetsChanged(SnippetsChangedEvent event)
-   {
-      SnippetHelper.onSnippetsChanged(event);
    }
    
    private final Server server_;
