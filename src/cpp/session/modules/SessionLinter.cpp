@@ -480,7 +480,7 @@ bool isSnippetFilePath(const FilePath& filePath,
    if (filePath.extensionLowerCase() != ".snippets")
       return false;
    
-   *pMode = filePath.stem();
+   *pMode = boost::algorithm::to_lower_copy(filePath.stem());
    return true;
 }
 
