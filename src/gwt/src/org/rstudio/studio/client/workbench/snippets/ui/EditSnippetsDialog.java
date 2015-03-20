@@ -33,6 +33,7 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
+import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.ui.FontSizeManager;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
@@ -45,6 +46,8 @@ import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
@@ -92,27 +95,35 @@ public class EditSnippetsDialog extends ModalDialogBase implements TextDisplay
       panel_.setHeight(size.height + "px");
       
       // snippet types
-      snippetTypes_ = new WidgetListBox<SnippetType>();
+      snippetTypes_ = new WidgetListBox<EditableSnippets>();
       snippetTypes_.addChangeHandler(new ChangeHandler() {
          @Override
          public void onChange(ChangeEvent event)
          {
-            updateEditor(snippetTypes_.getSelectedItem().getFileType());
+            updateEditor(snippetTypes_.getSelectedItem());
          }
       });
-      snippetTypes_.addItem(new SnippetType("R", FileTypeRegistry.R));
-      snippetTypes_.addItem(new SnippetType(FileTypeRegistry.CPP));
-      snippetTypes_.addItem(new SnippetType(FileTypeRegistry.JAVA));
-      snippetTypes_.addItem(new SnippetType(FileTypeRegistry.PYTHON));
-      snippetTypes_.addItem(new SnippetType(FileTypeRegistry.SQL));
-      snippetTypes_.addItem(new SnippetType(FileTypeRegistry.JS));
-      snippetTypes_.addItem(new SnippetType(FileTypeRegistry.HTML));
-      snippetTypes_.addItem(new SnippetType(FileTypeRegistry.CSS));
+      snippetTypes_.addItem(new EditableSnippets("R", FileTypeRegistry.R));
+      snippetTypes_.addItem(new EditableSnippets(FileTypeRegistry.CPP));
+      snippetTypes_.addItem(new EditableSnippets(FileTypeRegistry.JAVA));
+      snippetTypes_.addItem(new EditableSnippets(FileTypeRegistry.PYTHON));
+      snippetTypes_.addItem(new EditableSnippets(FileTypeRegistry.SQL));
+      snippetTypes_.addItem(new EditableSnippets(FileTypeRegistry.JS));
+      snippetTypes_.addItem(new EditableSnippets(FileTypeRegistry.HTML));
+      snippetTypes_.addItem(new EditableSnippets(FileTypeRegistry.CSS));
      
       panel_.addWest(snippetTypes_, 150);
      
       // editor
       docDisplay_ = new AceEditor();
+      docDisplay_.addValueChangeHandler(new ValueChangeHandler<Void>() {
+         @Override
+         public void onValueChange(ValueChangeEvent<Void> event)
+         {
+            editorDirty_ = true;
+         }
+         
+      });
       docDisplay_.setFileType(FileTypeRegistry.SNIPPETS);
       SimplePanel panel = new SimplePanel();
       panel.addStyleName("EditDialog");
@@ -120,15 +131,13 @@ public class EditSnippetsDialog extends ModalDialogBase implements TextDisplay
       panel.setWidget(docDisplay_.asWidget());
       panel_.add(panel);
       
-      
       TextEditingTarget.syncFontSize(releaseOnDismiss_, 
             events_, 
             this, 
             fontSizeManager_); 
       
-      // default to R
-      updateEditor(FileTypeRegistry.R);
-      
+      snippetTypes_.setSelectedIndex(0, true);
+       
       return panel_;
    }
    
@@ -140,6 +149,9 @@ public class EditSnippetsDialog extends ModalDialogBase implements TextDisplay
    
    private void attemptSaveAndClose()
    {
+      // record pending edits
+      recordEditorState();
+      
       closeDialog();
    }
    
@@ -202,21 +214,35 @@ public class EditSnippetsDialog extends ModalDialogBase implements TextDisplay
          releaseOnDismiss_.remove(0).removeHandler();
    }
    
-   private void updateEditor(TextFileType fileType)
+   private void updateEditor(EditableSnippets snippets)
    { 
-      String snippetText = getSnippetText(
-                              fileType.getEditorLanguage().getModeName());
-      docDisplay_.setCode(snippetText, false);
+      // record editor state
+      recordEditorState();
+        
+      // set new snippets
+      docDisplay_.setCode(snippets.getSnippetText(), false);
+      activeSnippets_ = snippets;
+      editorDirty_ = false;
+      docDisplay_.scrollToY(activeSnippets_.getScrollPosition());
    }
    
-   private static native String getSnippetText(String mode) /*-{
-      var snippetId = "ace/snippets/" + mode;
-      return $wnd.require(snippetId).snippetText;
-   }-*/;
+   private void recordEditorState()
+   {
+      if (activeSnippets_ != null)
+      {
+         if (editorDirty_)
+            activeSnippets_.recordPendingEdits(docDisplay_.getCode());
+         
+         activeSnippets_.setScrollPosition(docDisplay_.getScrollTop());
+      }
+   }
+  
    
    private DockLayoutPanel panel_;
-   private WidgetListBox<SnippetType> snippetTypes_;
+   private WidgetListBox<EditableSnippets> snippetTypes_;
    private DocDisplay docDisplay_;
+   private boolean editorDirty_ = false;
+   private EditableSnippets activeSnippets_ = null;
    
    private final ArrayList<HandlerRegistration> releaseOnDismiss_ =
          new ArrayList<HandlerRegistration>();

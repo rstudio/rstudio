@@ -22,14 +22,14 @@ import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 
-public class SnippetType extends Composite
+public class EditableSnippets extends Composite
 {
-   public SnippetType(TextFileType fileType)
+   public EditableSnippets(TextFileType fileType)
    {
       this(fileType.getLabel(), fileType);
    }
    
-   public SnippetType(String name, TextFileType fileType)
+   public EditableSnippets(String name, TextFileType fileType)
    {
       fileType_ = fileType;
       HorizontalPanel panel = new HorizontalPanel();
@@ -42,11 +42,46 @@ public class SnippetType extends Composite
       initWidget(panel);
    }
    
-   public TextFileType getFileType()
+   public String getSnippetText()
    {
-      return fileType_;
+      // if we haven't yet been edited then get the default snippet text
+      if (pendingEdits_ != null)
+      {
+         return pendingEdits_;
+      }
+      else
+      {
+         return getSnippetText(fileType_.getEditorLanguage().getModeName());
+      } 
+   }
+    
+   public void recordPendingEdits(String pendingEdits)
+   {
+      pendingEdits_ = pendingEdits;
    }
    
+   public void setScrollPosition(int scrollPosition)
+   {
+      scrollPosition_ = scrollPosition;
+   }
+   
+   public int getScrollPosition()
+   {
+      return scrollPosition_;
+   }
+   
+   public String getPendingEdits()
+   {
+      return pendingEdits_;
+   }
+   
+   private static native String getSnippetText(String mode) /*-{
+      var snippetId = "ace/snippets/" + mode;
+      return $wnd.require(snippetId).snippetText;
+   }-*/;
+   
    private final TextFileType fileType_;
+   private String pendingEdits_ = null;
+   private int scrollPosition_ = 0;
 }
 
