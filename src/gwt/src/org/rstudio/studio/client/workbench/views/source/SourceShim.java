@@ -42,6 +42,7 @@ import org.rstudio.studio.client.common.filetypes.events.OpenSourceFileEvent;
 import org.rstudio.studio.client.common.filetypes.events.OpenSourceFileHandler;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.UnsavedChangesTarget;
+import org.rstudio.studio.client.workbench.snippets.model.SnippetsChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.events.*;
 
@@ -57,7 +58,8 @@ public class SourceShim extends Composite
                  OpenPresentationSourceFileHandler,
                  EditPresentationSourceEvent.Handler,
                  InsertSourceHandler, 
-                 FileEditHandler
+                 FileEditHandler,
+                 SnippetsChangedEvent.Handler
    {
       public abstract void onOpenSourceFile(OpenSourceFileEvent event);
       public abstract void onOpenPresentationSourceFile(OpenPresentationSourceFileEvent event);
@@ -173,6 +175,7 @@ public class SourceShim extends Composite
       events.addHandler(OpenPresentationSourceFileEvent.TYPE, asyncSource);
       events.addHandler(EditPresentationSourceEvent.TYPE, asyncSource);
       events.addHandler(InsertSourceEvent.TYPE, asyncSource);
+      events.addHandler(SnippetsChangedEvent.TYPE, asyncSource);
       asyncSource_ = asyncSource;
 
       events.fireEvent(new DocTabsChangedEvent(new String[0],
