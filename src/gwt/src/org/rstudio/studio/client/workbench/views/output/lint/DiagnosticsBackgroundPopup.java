@@ -66,9 +66,8 @@ public class DiagnosticsBackgroundPopup
          @Override
          public void onBlur(BlurEvent event)
          {
-            if (popup_ != null)
-               popup_.hide();
-            
+            hidePopup();
+            stopMonitoring();
             if (handler_ != null)
             {
                handler_.removeHandler();
@@ -77,7 +76,8 @@ public class DiagnosticsBackgroundPopup
          }
       });
       
-      popup_  = null;
+      stopRequested_ = false;
+      popup_ = null;
       start();
    }
    
@@ -111,6 +111,9 @@ public class DiagnosticsBackgroundPopup
          @Override
          public boolean execute()
          {
+            if (stopRequested_)
+               return stopExecution();
+            
             // If the document is not focused, stop execution (can be
             // restarted later)
             if (!docDisplay_.isFocused())
@@ -232,14 +235,21 @@ public class DiagnosticsBackgroundPopup
    private boolean stopExecution()
    {
       isRunning_ = false;
+      stopRequested_ = false;
       activeMarker_ = null;
       return false;
+   }
+   
+   private void stopMonitoring()
+   {
+      stopRequested_ = true;
    }
    
    private final DocDisplay docDisplay_;
    private final AceEditor editor_;
    private DiagnosticsPopupPanel popup_;
    private boolean isRunning_;
+   private boolean stopRequested_;
    private Marker activeMarker_;
    
    private ScreenCoordinates lastMouseCoords_;
