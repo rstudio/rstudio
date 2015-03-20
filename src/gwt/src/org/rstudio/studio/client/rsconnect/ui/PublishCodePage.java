@@ -48,7 +48,7 @@ public class PublishCodePage
    @Override
    protected Widget createWidget()
    {
-      contents_ = new RSConnectDeploy(true);
+      contents_ = new RSConnectDeploy(true, true);
       return contents_;
    }
 

@@ -74,7 +74,8 @@ public abstract class WizardPage<I,T> extends Composite
      
          layoutPanel.add(pageWidget);
          layoutPanel.setWidgetLeftRight(pageWidget,
-                                        133, Unit.PX, 
+                                        largeImage_ != null ? 133 : 15, 
+                                        Unit.PX, 
                                         15, Unit.PX);
          layoutPanel.setWidgetTopBottom(pageWidget, 
                                         10, Unit.PX, 

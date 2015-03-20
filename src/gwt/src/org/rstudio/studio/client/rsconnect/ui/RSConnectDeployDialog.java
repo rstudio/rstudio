@@ -62,7 +62,7 @@ public class RSConnectDeployDialog
                                 String lastAppName, 
                                 boolean isSatellite)
    {
-      super(server, display, new RSConnectDeploy(
+      super(server, display, new RSConnectDeploy(false,
             StringUtil.getExtension(sourceFile).toLowerCase().equals("rmd")));
       setText("Publish to Server");
       setWidth("350px");

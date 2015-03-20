@@ -1,3 +1,18 @@
+/*
+ * RSConnectDeploy.css
+ *
+ * Copyright (C) 2009-15 by RStudio, Inc.
+ *
+ * Unless you have received this program directly from RStudio pursuant
+ * to the terms of a commercial license agreement with RStudio, then
+ * this program is licensed to you under the terms of version 3 of the
+ * GNU Affero General Public License. This program is distributed WITHOUT
+ * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+ * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+ *
+ */
+
 .sourceDestLabels
 {
    color: #808080;
@@ -8,11 +23,21 @@
    width: 250px;
 }
 
+.wizard .dropListControl
+{
+   width: 225px;
+}
+
 .gridControl
 {
    display: block;
    width: 244px;
    padding: 3px;
+}
+
+.wizard .gridControl
+{
+   width: 210px;
 }
 
 .source
@@ -64,6 +89,11 @@
    margin-top: 5px;
    margin-bottom: 10px;
    margin-right: 30px;
+}
+
+.wizard .fileList
+{
+   width: 225px;
 }
 
 .deployLabel

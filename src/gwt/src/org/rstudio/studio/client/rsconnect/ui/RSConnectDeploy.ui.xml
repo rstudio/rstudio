@@ -5,7 +5,7 @@
 	xmlns:rw="urn:import:org.rstudio.core.client.widget">
 	<ui:with field="res" type="org.rstudio.studio.client.rsconnect.ui.RSConnectDeploy.DeployResources" />
 	<ui:with field="projRes" type="org.rstudio.studio.client.projects.ui.newproject.NewProjectResources" />
-	<g:HTMLPanel>
+	<g:HTMLPanel ui:field="rootPanel_">
 	<g:Image ui:field="deployIllustration_"></g:Image>
 	<g:Grid><g:row>
     <g:customCell styleName="{res.style.rootCell}">

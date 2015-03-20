@@ -1,7 +1,7 @@
 /*
  * RSConnectDeploy.java
  *
- * Copyright (C) 2009-14 by RStudio, Inc.
+ * Copyright (C) 2009-15 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -88,6 +88,7 @@ public class RSConnectDeploy extends Composite
       String transferArrow();
       String urlAnchor();
       String validateError();
+      String wizard();
    }
    
    public interface DeployResources extends ClientBundle
@@ -102,16 +103,24 @@ public class RSConnectDeploy extends Composite
    
    public static DeployResources RESOURCES = GWT.create(DeployResources.class);
    
-   public RSConnectDeploy(boolean forDocument)
+   public RSConnectDeploy(boolean asWizard, boolean forDocument)
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
       forDocument_ = forDocument;
       initWidget(uiBinder.createAndBindUi(this));
       style_ = RESOURCES.style();
       
-      deployIllustration_.setResource(forDocument ?
-                           RESOURCES.publishRmdIllustration() :
-                           RESOURCES.publishShinyIllustration());
+      if (asWizard)
+      {
+         deployIllustration_.setVisible(false);
+         rootPanel_.addStyleName(style_.wizard());
+      }
+      else
+      {
+         deployIllustration_.setResource(forDocument ?
+                              RESOURCES.publishRmdIllustration() :
+                              RESOURCES.publishShinyIllustration());
+      }
 
       // Validate the application name on every keystroke
       appName.addKeyUpHandler(new KeyUpHandler()
@@ -446,6 +455,7 @@ public class RSConnectDeploy extends Composite
    @UiField VerticalPanel fileListPanel_;
    @UiField InlineLabel deployLabel_;
    @UiField ThemedButton addFileButton_;
+   @UiField HTMLPanel rootPanel_;
    
    private ArrayList<CheckBox> fileChecks_;
    
