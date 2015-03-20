@@ -14,26 +14,34 @@
  */
 package org.rstudio.studio.client.workbench.views.output.lint;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.Rectangle;
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.widget.ThemedPopupPanel;
 import org.rstudio.studio.client.workbench.views.output.lint.model.AceAnnotation;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Marker;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Markers;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Renderer.ScreenCoordinates;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedHandler;
 
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
+import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.BlurEvent;
 import com.google.gwt.event.dom.client.BlurHandler;
 import com.google.gwt.event.dom.client.FocusEvent;
 import com.google.gwt.event.dom.client.FocusHandler;
+import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.user.client.Event;
+import com.google.gwt.user.client.Event.NativePreviewEvent;
+import com.google.gwt.user.client.Event.NativePreviewHandler;
 import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.PopupPanel.PositionCallback;
 
 public class DiagnosticsBackgroundPopup
@@ -42,6 +50,7 @@ public class DiagnosticsBackgroundPopup
    {
       docDisplay_ = docDisplay;
       editor_ = (AceEditor) docDisplay_;
+      
       docDisplay_.addFocusHandler(new FocusHandler()
       {
          @Override
@@ -59,6 +68,12 @@ public class DiagnosticsBackgroundPopup
          {
             if (popup_ != null)
                popup_.hide();
+            
+            if (handler_ != null)
+            {
+               handler_.removeHandler();
+               handler_ = null;
+            }
          }
       });
       
@@ -69,6 +84,27 @@ public class DiagnosticsBackgroundPopup
    public void start()
    {
       isRunning_ = true;
+      handler_ = Event.addNativePreviewHandler(new NativePreviewHandler()
+      {
+         @Override
+         public void onPreviewNativeEvent(NativePreviewEvent event)
+         {
+            if (event.getTypeInt() == Event.ONMOUSEMOVE)
+            {
+               lastMouseCoords_ = ScreenCoordinates.create(
+                     event.getNativeEvent().getClientX(),
+                     event.getNativeEvent().getClientY());
+               
+               if (!activeMarker_.getRange().contains(
+                     editor_.toDocumentPosition(lastMouseCoords_)))
+               {
+                  hidePopup();
+               }
+               
+            }
+         }
+      });
+      
       Scheduler.get().scheduleFixedDelay(new RepeatingCommand()
       {
          
@@ -97,7 +133,8 @@ public class DiagnosticsBackgroundPopup
             for (int i = 0; i < keys.length; i++)
             {
                Marker marker = markers.get(keys[i]);
-               if (marker.getRange().contains(docDisplay_.getCursorPosition()))
+               if (marker.getRange().contains(docDisplay_.getCursorPosition()) ||
+                   marker.getRange().contains(editor_.toDocumentPosition(lastMouseCoords_)))
                {
                   displayMarkerDiagnostics(marker);
                   return completeExecution();
@@ -119,6 +156,7 @@ public class DiagnosticsBackgroundPopup
          if (marker.getRange().getStart().getRow() <= row &&
              marker.getRange().getEnd().getRow() >= row)
          {
+            activeMarker_ = marker;
             Rectangle coords = editor_.toScreenCoordinates(
                   marker.getRange());
             
@@ -170,10 +208,20 @@ public class DiagnosticsBackgroundPopup
          public void setPosition(int offsetWidth, int offsetHeight)
          {
             popup_.setPopupPosition(
-                  coords.getRight() + 20,
-                  coords.getTop());
+                  coords.getRight() + 10,
+                  coords.getBottom());
          }
       });
+   }
+   
+   private void hidePopup()
+   {
+      activeMarker_ = null;
+      if (popup_ != null)
+      {
+         popup_.hide();
+         popup_ = null;
+      }
    }
    
    private boolean completeExecution()
@@ -184,6 +232,7 @@ public class DiagnosticsBackgroundPopup
    private boolean stopExecution()
    {
       isRunning_ = false;
+      activeMarker_ = null;
       return false;
    }
    
@@ -191,4 +240,8 @@ public class DiagnosticsBackgroundPopup
    private final AceEditor editor_;
    private DiagnosticsPopupPanel popup_;
    private boolean isRunning_;
+   private Marker activeMarker_;
+   
+   private ScreenCoordinates lastMouseCoords_;
+   private HandlerRegistration handler_;
 }

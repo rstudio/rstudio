@@ -981,6 +981,21 @@ public class AceEditor implements DocDisplay,
                            renderer.getLineHeight());
    }
    
+   public Position toDocumentPosition(ScreenCoordinates coordinates)
+   {
+      return widget_.getEditor().getRenderer().screenToTextCoordinates(
+            coordinates.getPageX(),
+            coordinates.getPageY());
+   }
+   
+   public Range toDocumentRange(Rectangle rectangle)
+   {
+      Renderer renderer = widget_.getEditor().getRenderer();
+      return Range.fromPoints(
+            renderer.screenToTextCoordinates(rectangle.getLeft(), rectangle.getTop()),
+            renderer.screenToTextCoordinates(rectangle.getRight(), rectangle.getBottom()));
+   }
+   
    public Rectangle getPositionBounds(InputEditorPosition position)
    {
       Renderer renderer = widget_.getEditor().getRenderer();
