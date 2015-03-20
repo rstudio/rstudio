@@ -546,7 +546,10 @@ void afterSessionInitHook(bool newSession)
    {
       onNAMESPACEchanged();
    }
-   
+}
+
+void onClientInit()
+{
    checkAndNotifyClientIfSnippetsAvailable();
 }
 
@@ -592,6 +595,8 @@ core::Error initialize()
    using namespace module_context;
    
    events().afterSessionInitHook.connect(afterSessionInitHook);
+   events().onClientInit.connect(onClientInit);
+   
    session::projects::FileMonitorCallbacks cb;
    cb.onFilesChanged = onFilesChanged;
    projects::projectContext().subscribeToFileMonitor("Diagnostics", cb);
