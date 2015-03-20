@@ -165,14 +165,8 @@ public class SnippetHelper
    {
       ensureSnippetsLoaded();
       
-      String mode = editor_.getLanguageMode(
-            editor_.getCursorPosition());
-      
-      if (mode == null)
-         mode = "r";
-      
       return JsArrayUtil.fromJsArrayString(
-            getAvailableSnippetsImpl(manager_, mode));
+            getAvailableSnippetsImpl(manager_, getEditorMode()));
    }
    
    private final void ensureSnippetsLoaded()
@@ -289,17 +283,24 @@ public class SnippetHelper
          return null;
    }-*/;
    
+   // NOTE: this function assumes you've already called ensureSnippetsLoaded
+   // (this is a safe assumption because in order to enumerate snippet names
+   // you need to call the ensure* functions)
    public String getSnippetContents(String snippetName)
    {
-      return getSnippetContentsImpl(snippetName, manager_, native_);
+      return getSnippet(manager_, getEditorMode(), snippetName).getContent();
    }
    
-   public static final native String getSnippetContentsImpl(String snippetName,
-                                                            SnippetManager manager,
-                                                            AceEditorNative editor)
-   /*-{
-      return manager.getSnippetByName(snippetName, editor).content || "";
-   }-*/;
+   private String getEditorMode()
+   {
+      String mode = editor_.getLanguageMode(
+            editor_.getCursorPosition());
+      
+      if (mode == null)
+         mode = "r";
+      
+      return mode.toLowerCase();
+   }
    
    private final AceEditor editor_;
    private final AceEditorNative native_;
