@@ -184,6 +184,14 @@ public class RSConnectDeploy extends Composite
             }
          }
       });
+      
+      // If we're loading a previous deployment, hide new app name fields
+      if (fromPrevious_ != null)
+      {
+         nameLabel_.setVisible(false);
+         appName_.setVisible(false);
+         nameValidatePanel_.setVisible(false);
+      }
    }
    
    @Inject
@@ -306,7 +314,7 @@ public class RSConnectDeploy extends Composite
       appInfoPanel_.setVisible(true);
       nameLabel_.setVisible(false);
       appName_.setVisible(false);
-      nameValidatePanel.setVisible(false);
+      nameValidatePanel_.setVisible(false);
    }
    
    public HandlerRegistration addAccountChangeHandler(ChangeHandler handler)
@@ -478,7 +486,7 @@ public class RSConnectDeploy extends Composite
    
    private void setAppNameValid(boolean isValid)
    {
-      nameValidatePanel.setVisible(!isValid);
+      nameValidatePanel_.setVisible(!isValid);
       if (isValid && onDeployEnabled_ != null)
          onDeployEnabled_.execute();
       else if (!isValid && onDeployDisabled_ != null)
@@ -523,7 +531,7 @@ public class RSConnectDeploy extends Composite
    @UiField(provided=true) RSConnectAccountList accountList_;
    @UiField TextBox appName_;
    @UiField HTMLPanel appInfoPanel_;
-   @UiField HTMLPanel nameValidatePanel;
+   @UiField HTMLPanel nameValidatePanel_;
    @UiField VerticalPanel fileListPanel_;
    @UiField InlineLabel deployLabel_;
    @UiField ThemedButton addFileButton_;

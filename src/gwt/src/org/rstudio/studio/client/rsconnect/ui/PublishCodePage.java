@@ -27,7 +27,6 @@ public class PublishCodePage
          RSConnectPublishInput input)
    {
       super(title, subTitle, "Publish", null, null);
-      initialInput_ = input;
       
       // createWidget is called by super() above
       if (contents_ != null)
@@ -73,5 +72,4 @@ public class PublishCodePage
    }
    
    private RSConnectDeploy contents_;
-   private final RSConnectPublishInput initialInput_;
 }

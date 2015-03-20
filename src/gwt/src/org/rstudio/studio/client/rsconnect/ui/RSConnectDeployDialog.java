@@ -53,11 +53,11 @@ public class RSConnectDeployDialog
                                 final String sourceDir, 
                                 String sourceFile,
                                 String[] ignoredFiles,
-                                final RSConnectAccount lastAccount, 
-                                String lastAppName, 
+                                RSConnectDeploymentRecord fromPrevious,
                                 boolean isSatellite)
    {
-      super(server, display, new RSConnectDeploy(sourceFile, null, false));
+      super(server, display, new RSConnectDeploy(sourceFile, fromPrevious, 
+            false));
       setText("Publish to Server");
       setWidth("350px");
       deployButton_ = new ThemedButton("Publish");
@@ -67,7 +67,6 @@ public class RSConnectDeployDialog
       sourceFile_ = sourceFile;
       events_ = events;
       isSatellite_ = isSatellite;
-      defaultAccount_ = lastAccount;
 
       String deployTarget = sourceDir;
       if (StringUtil.getExtension(sourceFile).toLowerCase().equals("rmd")) 
@@ -120,7 +119,7 @@ public class RSConnectDeployDialog
                JsArray<RSConnectDeploymentRecord> records)
          {
             processDeploymentRecords(records);
-            if (records.length() == 1 && defaultAccount_ == null)
+            if (records.length() == 1)
             {
                defaultAccount_ = records.get(0).getAccount();
                contents_.setDefaultAccount(defaultAccount_);
@@ -153,6 +152,8 @@ public class RSConnectDeployDialog
             deployButton_.setEnabled(true);
          }
       });
+      
+      contents_.onActivate();
    }
    
    private void onDeploy()

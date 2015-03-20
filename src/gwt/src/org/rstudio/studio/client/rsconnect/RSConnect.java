@@ -148,7 +148,10 @@ public class RSConnect implements SessionInitHandler,
    {
       if (event.getFromPrevious() != null)
       {
-         // TODO: prepopulate publish UI with previous input
+         if (event.getContentType() == CONTENT_TYPE_APP)
+         {
+            publishAsCode(event);
+         }
       }
       else 
       {
@@ -270,10 +273,9 @@ public class RSConnect implements SessionInitHandler,
             new RSConnectDeployDialog(
                       server_, display_, events_, 
                       FilePathUtils.dirFromFile(event.getPath()), 
-                      event.getPath().toLowerCase().endsWith(".rmd") ? 
-                        FilePathUtils.friendlyFileName(event.getPath()) : "",
+                      event.getPath(),
                       new String[]{},
-                      null, null,
+                      event.getFromPrevious(),
                       satellite_.isCurrentWindowSatellite());
       dialog.showModal();
    }
