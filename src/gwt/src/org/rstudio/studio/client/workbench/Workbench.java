@@ -15,10 +15,12 @@
 package org.rstudio.studio.client.workbench;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JsArray;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 
 import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.TimeBufferedCommand;
 import org.rstudio.core.client.command.CommandBinder;
@@ -54,6 +56,9 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.*;
 import org.rstudio.studio.client.workbench.model.*;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.snippets.SnippetHelper;
+import org.rstudio.studio.client.workbench.snippets.model.SnippetsChangedEvent;
+import org.rstudio.studio.client.workbench.snippets.model.SnippetsChangedEvent.SnippetData;
 import org.rstudio.studio.client.workbench.views.choosefile.ChooseFile;
 import org.rstudio.studio.client.workbench.views.files.events.DirectoryNavigateEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.profiler.ProfilerPresenter;
@@ -70,7 +75,8 @@ public class Workbench implements BusyHandler,
                                   QuotaStatusHandler,
                                   WorkbenchLoadedHandler,
                                   WorkbenchMetricsChangedHandler,
-                                  InstallRtoolsEvent.Handler
+                                  InstallRtoolsEvent.Handler,
+                                  SnippetsChangedEvent.Handler
 {
    interface Binder extends CommandBinder<Commands, Workbench> {}
    
@@ -463,7 +469,13 @@ public class Workbench implements BusyHandler,
                                           event.getInstallerPath());  
       }
    }
-  
+   
+   @Override
+   public void onSnippetsChanged(SnippetsChangedEvent event)
+   {
+      SnippetHelper.onSnippetsChanged(event);
+   }
+   
    private final Server server_;
    private final EventBus eventBus_;
    private final Session session_;
@@ -479,5 +491,5 @@ public class Workbench implements BusyHandler,
    private final Provider<GitState> pGitState_;
    private final TimeBufferedCommand metricsChangedCommand_;
    private WorkbenchMetrics lastWorkbenchMetrics_;
-   private boolean nearQuotaWarningShown_ = false; 
+   private boolean nearQuotaWarningShown_ = false;
 }

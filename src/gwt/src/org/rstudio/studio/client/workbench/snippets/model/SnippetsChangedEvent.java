@@ -19,6 +19,8 @@ import com.google.gwt.core.client.JsArray;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
+import org.rstudio.core.client.Debug;
+
 public class SnippetsChangedEvent extends GwtEvent<SnippetsChangedEvent.Handler>
 {
    public static class SnippetData extends JavaScriptObject

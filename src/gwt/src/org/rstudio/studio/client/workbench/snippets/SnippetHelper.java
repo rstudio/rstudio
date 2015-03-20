@@ -20,7 +20,6 @@ import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
 
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.studio.client.common.FilePathUtils;
 import org.rstudio.studio.client.workbench.snippets.model.Snippet;
@@ -31,7 +30,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEdit
 
 import java.util.ArrayList;
 
-public class SnippetHelper implements SnippetsChangedEvent.Handler
+public class SnippetHelper
 {
    static class SnippetManager extends JavaScriptObject
    {
@@ -335,9 +334,9 @@ public class SnippetHelper implements SnippetsChangedEvent.Handler
       return mode.toLowerCase();
    }
    
-   @Override
-   public void onSnippetsChanged(SnippetsChangedEvent event)
+   public static void onSnippetsChanged(SnippetsChangedEvent event)
    {
+      SnippetManager manager = getSnippetManager();
       JsArray<SnippetData> data = event.getData();
       for (int i = 0; i < data.length(); i++)
       {
@@ -345,9 +344,8 @@ public class SnippetHelper implements SnippetsChangedEvent.Handler
          loadSnippetsForMode(
                snippetData.getMode(),
                snippetData.getContents(),
-               manager_);
+               manager);
       }
-      
    }
    
    private final AceEditor editor_;
