@@ -507,7 +507,11 @@ public class AceEditor implements DocDisplay,
       int characterThreshold = uiPrefs_.alwaysCompleteCharacters().getValue();
       int delay = uiPrefs_.alwaysCompleteDelayMs().getValue();
       widget_.getEditor().setCompletionOptions(
-            enabled, true, live, characterThreshold, delay);
+            enabled, 
+            uiPrefs_.enableSnippets().getValue(), 
+            live, 
+            characterThreshold, 
+            delay);
    }
    
    @Override

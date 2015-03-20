@@ -140,8 +140,9 @@ public class CppCompletionRequest
          }
       }
       
-      // add in snippets if this is a global scope
-      if (completionPosition_.getScope() == CompletionPosition.Scope.Global)
+      // add in snippets if they are enabled and this is a global scope
+      if (uiPrefs_.enableSnippets().getValue() &&
+          (completionPosition_.getScope() == CompletionPosition.Scope.Global))
       {
          ArrayList<String> snippets = snippets_.getCppSnippets();
          for (String snippet : snippets)

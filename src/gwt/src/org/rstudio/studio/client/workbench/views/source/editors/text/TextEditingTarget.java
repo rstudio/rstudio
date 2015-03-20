@@ -4614,6 +4614,11 @@ public class TextEditingTarget implements
                public void execute(Integer arg) {
                   docDisplay.syncCompletionPrefs();
                }}));
+      releaseOnDismiss.add(prefs.enableSnippets().bind(
+            new CommandWithArg<Boolean>() {
+               public void execute(Boolean arg) {
+                  docDisplay.syncCompletionPrefs();
+               }}));
       releaseOnDismiss.add(prefs.showDiagnosticsOther().bind(
             new CommandWithArg<Boolean>() {
                public void execute(Boolean arg) {

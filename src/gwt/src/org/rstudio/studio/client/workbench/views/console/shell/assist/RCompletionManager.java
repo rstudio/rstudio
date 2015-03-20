@@ -134,7 +134,7 @@ public class RCompletionManager implements CompletionManager
       sigTip_ = new RCompletionToolTip(docDisplay_);
       suggestTimer_ = new SuggestionTimer();
       snippets_ = new SnippetHelper((AceEditor) docDisplay, getSourceDocumentPath());
-      requester_ = new CompletionRequester(server_, rnwContext, navigableSourceEditor, snippets_);
+      requester_ = new CompletionRequester(rnwContext, navigableSourceEditor, snippets_);
       
       input_.addBlurHandler(new BlurHandler() {
          public void onBlur(BlurEvent event)

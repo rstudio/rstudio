@@ -62,6 +62,7 @@ public class EditingPreferencesPane extends PreferencesPane
       Label snippetsLabel = headerLabel("Snippets");
       snippetsLabel.getElement().getStyle().setMarginTop(8, Unit.PX);
       editingPanel.add(snippetsLabel);
+      editingPanel.add(checkboxPref("Enable code snippets", prefs_.enableSnippets()));
       
       
       VerticalPanel displayPanel = new VerticalPanel();
