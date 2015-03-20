@@ -42,6 +42,16 @@ public class EditableSnippets extends Composite
       initWidget(panel);
    }
    
+   public String getEditorMode()
+   {
+      return fileType_.getEditorLanguage().getModeName();
+   }
+   
+   public String getFileTypeLabel()
+   {
+      return fileType_.getLabel();
+   }
+   
    public String getSnippetText()
    {
       // if we haven't yet been edited then get the default snippet text
@@ -51,7 +61,7 @@ public class EditableSnippets extends Composite
       }
       else
       {
-         return getSnippetText(fileType_.getEditorLanguage().getModeName());
+         return getSnippetText(getEditorMode());
       } 
    }
     

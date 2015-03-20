@@ -30,16 +30,19 @@ import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.core.client.widget.WidgetListBox;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.workbench.snippets.SnippetHelper;
 import org.rstudio.studio.client.workbench.ui.FontSizeManager;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
 
+import com.google.gwt.core.client.JavaScriptException;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ChangeEvent;
@@ -74,7 +77,9 @@ public class EditSnippetsDialog extends ModalDialogBase implements TextDisplay
    }
    
    @Inject
-   void initialize(EventBus events, FontSizeManager fontSizeManager)
+   void initialize(EventBus events, 
+                   GlobalDisplay globalDisplay,
+                   FontSizeManager fontSizeManager)
    {
       events_ = events;
       fontSizeManager_ = fontSizeManager;
@@ -152,6 +157,27 @@ public class EditSnippetsDialog extends ModalDialogBase implements TextDisplay
       // record pending edits
       recordEditorState();
       
+      // check for edits we need to save
+      for (int i = 0; i<snippetTypes_.getItemCount(); i++)
+      {
+         EditableSnippets snippets = snippetTypes_.getItemAtIdx(i);
+         String edits = snippets.getPendingEdits();
+         if (edits != null)
+         {
+            JavaScriptException ex = SnippetHelper.loadSnippetsForMode(
+                                 snippets.getEditorMode(), edits);
+            if (ex != null)
+            {
+               snippetTypes_.setSelectedIndex(i);
+               globalDisplay_.showErrorMessage(
+                "Error Applying Snippets (" + snippets.getFileTypeLabel() + ")",
+                 ex.getDescription());
+               return; // early return (don't close dialog)
+            }      
+         }
+      }
+      
+      // close the dialog
       closeDialog();
    }
    
@@ -248,6 +274,7 @@ public class EditSnippetsDialog extends ModalDialogBase implements TextDisplay
          new ArrayList<HandlerRegistration>();
    
    private EventBus events_;
+   private GlobalDisplay globalDisplay_;
    private FontSizeManager fontSizeManager_;
   
 

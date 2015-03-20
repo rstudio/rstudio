@@ -219,6 +219,13 @@ public class SnippetHelper
       
    }-*/;
    
+   public static final JavaScriptException loadSnippetsForMode(
+         String mode,
+         String snippetText)
+   {
+      return loadSnippetsForMode(mode, snippetText, getSnippetManager());
+   }
+   
    private static final native void ensureAceSnippetsLoaded(
          String mode,
          SnippetManager manager) /*-{
