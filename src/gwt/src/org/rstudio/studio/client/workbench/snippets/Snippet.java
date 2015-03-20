@@ -13,10 +13,7 @@
  *
  */
 
-
-
-package org.rstudio.studio.client.workbench.views.console.shell.assist;
-
+package org.rstudio.studio.client.workbench.snippets;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
