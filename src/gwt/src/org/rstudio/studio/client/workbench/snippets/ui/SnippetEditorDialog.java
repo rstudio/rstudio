@@ -1,5 +1,5 @@
 /*
- * Snippet.java
+ * SnippetEditorDialog.java
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -13,23 +13,9 @@
  *
  */
 
-package org.rstudio.studio.client.workbench.snippets;
+package org.rstudio.studio.client.workbench.snippets.ui;
 
-import com.google.gwt.core.client.JavaScriptObject;
-
-
-public class Snippet extends JavaScriptObject
+public class SnippetEditorDialog
 {
-   protected Snippet()
-   {
-   }
-   
-   public final native String getName() /*-{
-      return this.name;
-   }-*/;
 
-   public final native String getContent() /*-{
-      return this.content;
-   }-*/;
-  
 }

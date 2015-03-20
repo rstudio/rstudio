@@ -43,6 +43,7 @@ public class EditingPreferencesPane extends PreferencesPane
       PreferencesDialogBaseResources baseRes = PreferencesDialogBaseResources.INSTANCE;
       
       VerticalPanel editingPanel = new VerticalPanel();
+      editingPanel.add(headerLabel("General"));
       editingPanel.add(tight(spacesForTab_ = checkboxPref("Insert spaces for tab", prefs.useSpacesForTab())));
       editingPanel.add(indent(tabWidth_ = numericPref("Tab width", prefs.numSpacesForTab())));   
       editingPanel.add(checkboxPref("Insert matching parens/quotes", prefs_.insertMatching()));
@@ -52,11 +53,16 @@ public class EditingPreferencesPane extends PreferencesPane
       editingPanel.add(checkboxPref("Ensure that source files end with newline", prefs_.autoAppendNewline()));
       editingPanel.add(checkboxPref("Strip trailing horizontal whitespace when saving", prefs_.stripTrailingWhitespace()));
       editingPanel.add(checkboxPref("Focus console after executing from source", prefs_.focusConsoleAfterExec()));
-      editingPanel.add(checkboxPref("Enable vim editing mode", prefs_.useVimMode()));
       editingPanel.add(checkboxPref(
             "Continue comment when inserting new line",
             prefs_.continueCommentsOnNewline(),
             "When enabled, pressing enter will continue comments on new lines. Press Shift + Enter to exit a comment."));
+      editingPanel.add(spaced(checkboxPref("Enable vim editing mode", prefs_.useVimMode())));
+      
+      Label snippetsLabel = headerLabel("Snippets");
+      snippetsLabel.getElement().getStyle().setMarginTop(8, Unit.PX);
+      editingPanel.add(snippetsLabel);
+      
       
       VerticalPanel displayPanel = new VerticalPanel();
       displayPanel.add(checkboxPref("Highlight selected word", prefs.highlightSelectedWord()));
