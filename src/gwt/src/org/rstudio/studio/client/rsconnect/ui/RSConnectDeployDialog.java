@@ -21,7 +21,6 @@ import java.util.Map;
 import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemItem;
-import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.core.client.widget.ThemedButton;
@@ -40,7 +39,6 @@ import org.rstudio.studio.client.rsconnect.model.RSConnectDeploymentRecord;
 import org.rstudio.studio.client.rsconnect.model.RSConnectServerOperations;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.workbench.model.Session;
 
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.event.dom.client.ChangeEvent;
@@ -55,9 +53,7 @@ public class RSConnectDeployDialog
              extends RSConnectDialog<RSConnectDeploy>
 {
    public RSConnectDeployDialog(RSConnectServerOperations server, 
-                                RSAccountConnector connector,
                                 final GlobalDisplay display, 
-                                Session session,
                                 EventBus events,
                                 final String sourceDir, 
                                 String sourceFile,
@@ -65,9 +61,8 @@ public class RSConnectDeployDialog
                                 final RSConnectAccount lastAccount, 
                                 String lastAppName, 
                                 boolean isSatellite)
-                                
    {
-      super(server, display, new RSConnectDeploy(server, connector, display, session,
+      super(server, display, new RSConnectDeploy(
             StringUtil.getExtension(sourceFile).toLowerCase().equals("rmd")));
       setText("Publish to Server");
       setWidth("350px");
@@ -80,7 +75,6 @@ public class RSConnectDeployDialog
       lastAppName_ = lastAppName;
       isSatellite_ = isSatellite;
       defaultAccount_ = lastAccount;
-      connector_ = connector;
       ignoredFiles_ = ignoredFiles;
 
       String deployTarget = sourceDir;
@@ -183,42 +177,6 @@ public class RSConnectDeployDialog
          }
       });
       
-      server_.getRSConnectAccountList(new ServerRequestCallback<JsArray<RSConnectAccount>>()
-      {
-         @Override
-         public void onResponseReceived(JsArray<RSConnectAccount> accounts)
-         {
-            if (accounts.length() == 0)
-            {
-               // The user has no accounts connected--hide ourselves and 
-               // ask the user to connect an account before we continue.
-               hide();
-               connector_.showAccountWizard(true, new OperationWithInput<Boolean>() 
-               {
-                  @Override
-                  public void execute(Boolean input)
-                  {
-                     onConnectAccountFinished();
-                  }
-               });
-            }
-            else
-            {
-               contents_.setAccountList(accounts);
-               if (defaultAccount_ != null)
-                  contents_.setDefaultAccount(defaultAccount_);
-               updateApplicationList();
-            }
-         }
-         
-         @Override
-         public void onError(ServerError error)
-         {
-            display_.showErrorMessage("Error retrieving accounts", 
-                                     error.getMessage());
-            closeDialog();
-         }
-      });
       
       // Update the list of applications when the account is changed
       contents_.addAccountChangeHandler(new ChangeHandler()
@@ -503,7 +461,6 @@ public class RSConnectDeployDialog
    
    private final EventBus events_;
    private final boolean isSatellite_;
-   private final RSAccountConnector connector_;
    
    private String sourceDir_;
    private String sourceFile_;

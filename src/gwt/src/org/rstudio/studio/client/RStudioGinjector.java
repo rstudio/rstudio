@@ -50,6 +50,7 @@ import org.rstudio.studio.client.rmarkdown.RmdOutputSatellite;
 import org.rstudio.studio.client.rmarkdown.RmdTemplateDiscovery;
 import org.rstudio.studio.client.rmarkdown.ui.RmdOutputFramePane;
 import org.rstudio.studio.client.rmarkdown.ui.RmdOutputFrameSatellite;
+import org.rstudio.studio.client.rsconnect.ui.RSConnectDeploy;
 import org.rstudio.studio.client.rsconnect.ui.RSConnectPublishButton;
 import org.rstudio.studio.client.shiny.ShinyApplication;
 import org.rstudio.studio.client.shiny.ShinyApplicationSatellite;
@@ -111,6 +112,7 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(PathBreadcrumbWidget pathBreadcrumbWidget);
    void injectMembers(LintManager manager);
    void injectMembers(RSConnectPublishButton publishButton);
+   void injectMembers(RSConnectDeploy deploy);
    
    public static final RStudioGinjector INSTANCE = GWT.create(RStudioGinjector.class);
 

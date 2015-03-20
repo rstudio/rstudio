@@ -45,7 +45,7 @@ public class PublishReportSourcePage
       
       pages.add(new PublishCodePage("Publish document with source code",
             "Choose this option if you want to create a scheduled report or " +
-            "execute your document on the server."));
+            "execute your document on the server.", input));
       String staticTitle = "Publish finished document only";
       String staticSubtitle = "Choose this option to publish the report as " +
              "it appears in RStudio.";

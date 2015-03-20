@@ -21,11 +21,13 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ThemedButton;
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.rsconnect.model.RSConnectAccount;
 import org.rstudio.studio.client.rsconnect.model.RSConnectApplicationInfo;
 import org.rstudio.studio.client.rsconnect.model.RSConnectServerOperations;
-import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerRequestCallback;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
@@ -55,6 +57,7 @@ import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
+import com.google.inject.Inject;
 
 public class RSConnectDeploy extends Composite
 {
@@ -99,14 +102,10 @@ public class RSConnectDeploy extends Composite
    
    public static DeployResources RESOURCES = GWT.create(DeployResources.class);
    
-   public RSConnectDeploy(final RSConnectServerOperations server, 
-                          final RSAccountConnector connector,    
-                          final GlobalDisplay display,
-                          final Session session, 
-                          boolean forDocument)
+   public RSConnectDeploy(boolean forDocument)
    {
+      RStudioGinjector.INSTANCE.injectMembers(this);
       forDocument_ = forDocument;
-      accountList = new RSConnectAccountList(server, display, false);
       initWidget(uiBinder.createAndBindUi(this));
       style_ = RESOURCES.style();
       
@@ -123,13 +122,14 @@ public class RSConnectDeploy extends Composite
             validateAppName();
          }
       });
+
       // Invoke the "add account" wizard
       addAccountAnchor.addClickHandler(new ClickHandler()
       {
          @Override
          public void onClick(ClickEvent event)
          {
-            connector.showAccountWizard(false, new OperationWithInput<Boolean>() 
+            connector_.showAccountWizard(false, new OperationWithInput<Boolean>() 
             {
                @Override
                public void execute(Boolean successful)
@@ -160,6 +160,17 @@ public class RSConnectDeploy extends Composite
       });
    }
    
+   @Inject
+   public void initialize(RSConnectServerOperations server, 
+                          RSAccountConnector connector,    
+                          GlobalDisplay display)
+   {
+      server_ = server;
+      connector_ = connector;
+      display_ = display;
+      accountList = new RSConnectAccountList(server_, display_, false);
+   }
+    
    public void setSourceDir(String dir)
    {
       dir = StringUtil.shortPathName(FileSystemItem.createDir(dir), 250);
@@ -332,6 +343,50 @@ public class RSConnectDeploy extends Composite
       return style_;
    }
    
+   public void populateAccountList()
+   {
+      populateAccountList(false);
+   }
+   
+   // Private methods --------------------------------------------------------
+   
+   private void populateAccountList(final boolean isRetry)
+   {
+       server_.getRSConnectAccountList(
+            new ServerRequestCallback<JsArray<RSConnectAccount>>()
+      {
+         @Override
+         public void onResponseReceived(JsArray<RSConnectAccount> accounts)
+         {
+            // if this is our first try, ask the user to connect an account
+            // since none are currently connected
+            if (accounts.length() == 0 && !isRetry)
+            {
+               connector_.showAccountWizard(true, 
+                     new OperationWithInput<Boolean>() 
+               {
+                  @Override
+                  public void execute(Boolean input)
+                  {
+                     populateAccountList(true);
+                  }
+               });
+            }
+            else
+            {
+               setAccountList(accounts);
+            }
+         }
+         
+         @Override
+         public void onError(ServerError error)
+         {
+            display_.showErrorMessage("Error retrieving accounts", 
+                                      error.getMessage());
+         }
+      });
+   }
+
    private void validateAppName()
    {
       String app = appName.getText();
@@ -397,6 +452,10 @@ public class RSConnectDeploy extends Composite
    private Command onDeployEnabled_;
    private Command onDeployDisabled_;
    private Command onFileAddClick_;
+
+   private RSConnectServerOperations server_;
+   private GlobalDisplay display_;
+   private RSAccountConnector connector_;
 
    private final DeployStyle style_;
    private final boolean forDocument_;

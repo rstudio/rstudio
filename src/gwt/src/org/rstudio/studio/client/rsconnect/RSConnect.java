@@ -268,7 +268,7 @@ public class RSConnect implements SessionInitHandler,
    {
       RSConnectDeployDialog dialog = 
             new RSConnectDeployDialog(
-                      server_, connector_, display_, session_, events_, 
+                      server_, display_, events_, 
                       FilePathUtils.dirFromFile(event.getPath()), 
                       event.getPath().toLowerCase().endsWith(".rmd") ? 
                         FilePathUtils.friendlyFileName(event.getPath()) : "",
