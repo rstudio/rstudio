@@ -471,6 +471,71 @@ void onFilesChanged(const std::vector<core::system::FileChangeEvent>& events)
    }
 }
 
+bool isSnippetFilePath(const FilePath& filePath,
+                       std::string* pMode)
+{
+   if (filePath.isDirectory())
+      return false;
+   
+   std::string filename = filePath.filename();
+   std::size_t lastDotIndex = filename.rfind('.');
+   if (lastDotIndex == std::string::npos)
+      return false;
+   
+   if (filename.substr(lastDotIndex) != ".snippets")
+      return false;
+   
+   *pMode = filename.substr(0, lastDotIndex - 1);
+   return true;
+}
+
+void checkAndNotifyClientIfSnippetsAvailable()
+{
+   // Check to see if we have a snippets folder locally
+   FilePath homeDir(core::system::getenv("HOME"));
+   if (!homeDir.exists())
+      return;
+   
+   FilePath snippetsDir = homeDir.complete(".R").complete("snippets");
+   if (!snippetsDir.exists())
+      return;
+   
+   // Get the contents of each file here, and pass that info back up
+   // to the client
+   std::vector<FilePath> snippetPaths;
+   Error error = snippetsDir.children(&snippetPaths);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+   
+   json::Array jsonData;
+   BOOST_FOREACH(const FilePath& filePath, snippetPaths)
+   {
+      // bail if this doesn't appear to be a snippets file
+      std::string mode;
+      if (!isSnippetFilePath(filePath, &mode))
+         continue;
+      
+      std::string contents;
+      error = readStringFromFile(filePath, &contents);
+      if (error)
+      {
+         LOG_ERROR(error);
+         return;
+      }
+      
+      json::Object snippetJson;
+      snippetJson["mode"] = mode;
+      snippetJson["contents"] = contents;
+      jsonData.push_back(snippetJson);
+   }
+
+   ClientEvent event(client_events::kSnippetsChanged, jsonData);
+   module_context::enqueClientEvent(event);
+}
+
 void afterSessionInitHook(bool newSession)
 {
    if (projects::projectContext().hasProject() &&
@@ -478,6 +543,8 @@ void afterSessionInitHook(bool newSession)
    {
       onNAMESPACEchanged();
    }
+   
+   checkAndNotifyClientIfSnippetsAvailable();
 }
 
 } // anonymous namespace

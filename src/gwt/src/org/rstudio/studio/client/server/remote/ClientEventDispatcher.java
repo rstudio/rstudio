@@ -21,6 +21,7 @@ import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.jsonrpc.RpcObjectList;
@@ -73,6 +74,7 @@ import org.rstudio.studio.client.workbench.codesearch.model.SearchPathFunctionDe
 import org.rstudio.studio.client.workbench.events.*;
 import org.rstudio.studio.client.workbench.model.*;
 import org.rstudio.studio.client.workbench.prefs.events.UiPrefsChangedEvent;
+import org.rstudio.studio.client.workbench.snippets.model.SnippetsChangedEvent;
 import org.rstudio.studio.client.workbench.views.buildtools.events.BuildCompletedEvent;
 import org.rstudio.studio.client.workbench.views.buildtools.events.BuildErrorsEvent;
 import org.rstudio.studio.client.workbench.views.buildtools.events.BuildOutputEvent;
@@ -638,6 +640,11 @@ public class ClientEventDispatcher
          {
             LintEvent.Data data = event.getData();
             eventBus_.fireEvent(new LintEvent(data));
+         }
+         else if (type.equals(ClientEvent.SnippetsChanged))
+         {
+            SnippetsChangedEvent.Data data = event.getData();
+            eventBus_.fireEvent(new SnippetsChangedEvent(data));
          }
          else
          {

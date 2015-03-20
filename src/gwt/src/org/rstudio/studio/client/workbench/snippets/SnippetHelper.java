@@ -17,17 +17,21 @@ package org.rstudio.studio.client.workbench.snippets;
 
 import com.google.gwt.core.client.JavaScriptException;
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.studio.client.common.FilePathUtils;
 import org.rstudio.studio.client.workbench.snippets.model.Snippet;
+import org.rstudio.studio.client.workbench.snippets.model.SnippetsChangedEvent;
+import org.rstudio.studio.client.workbench.snippets.model.SnippetsChangedEvent.SnippetData;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative;
 
 import java.util.ArrayList;
 
-public class SnippetHelper
+public class SnippetHelper implements SnippetsChangedEvent.Handler
 {
    static class SnippetManager extends JavaScriptObject
    {
@@ -329,6 +333,21 @@ public class SnippetHelper
          mode = "r";
       
       return mode.toLowerCase();
+   }
+   
+   @Override
+   public void onSnippetsChanged(SnippetsChangedEvent event)
+   {
+      JsArray<SnippetData> data = event.getData();
+      for (int i = 0; i < data.length(); i++)
+      {
+         SnippetData snippetData = data.get(i);
+         loadSnippetsForMode(
+               snippetData.getMode(),
+               snippetData.getContents(),
+               manager_);
+      }
+      
    }
    
    private final AceEditor editor_;
