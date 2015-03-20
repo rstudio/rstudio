@@ -23,8 +23,8 @@ import com.google.gwt.core.client.JsArrayString;
 import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.studio.client.common.FilePathUtils;
 import org.rstudio.studio.client.workbench.snippets.model.Snippet;
+import org.rstudio.studio.client.workbench.snippets.model.SnippetData;
 import org.rstudio.studio.client.workbench.snippets.model.SnippetsChangedEvent;
-import org.rstudio.studio.client.workbench.snippets.model.SnippetsChangedEvent.SnippetData;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative;
 

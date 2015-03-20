@@ -540,6 +540,14 @@ void afterSessionInitHook(bool newSession)
    checkAndNotifyClientIfSnippetsAvailable();
 }
 
+Error saveSnippets(const json::JsonRpcRequest& request,
+                   json::JsonRpcResponse* pResponse)
+{
+   // TODO: actually save the snippets
+
+   return Success();
+}
+
 } // anonymous namespace
 
 core::Error initialize()
@@ -560,7 +568,8 @@ core::Error initialize()
    ExecBlock initBlock;
    initBlock.addFunctions()
          (bind(sourceModuleRFile, "SessionLinter.R"))
-         (bind(registerRpcMethod, "lint_r_source_document", lintRSourceDocument));
+         (bind(registerRpcMethod, "lint_r_source_document", lintRSourceDocument))
+         (bind(registerRpcMethod, "save_snippets", saveSnippets));
    
    // call once on initialization to ensure lint up to date
    onLintBlacklistChanged();

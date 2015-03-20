@@ -35,14 +35,18 @@ import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.snippets.SnippetHelper;
+import org.rstudio.studio.client.workbench.snippets.model.SnippetData;
 import org.rstudio.studio.client.workbench.ui.FontSizeManager;
+import org.rstudio.studio.client.workbench.views.output.lint.model.LintServerOperations;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
 
 import com.google.gwt.core.client.JavaScriptException;
+import com.google.gwt.core.client.JsArray;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ChangeEvent;
@@ -79,10 +83,13 @@ public class EditSnippetsDialog extends ModalDialogBase implements TextDisplay
    @Inject
    void initialize(EventBus events, 
                    GlobalDisplay globalDisplay,
-                   FontSizeManager fontSizeManager)
+                   FontSizeManager fontSizeManager,
+                   LintServerOperations server)
    {
       events_ = events;
       fontSizeManager_ = fontSizeManager;
+      globalDisplay_ = globalDisplay;
+      server_ = server;
    }
    
    @Override
@@ -158,14 +165,16 @@ public class EditSnippetsDialog extends ModalDialogBase implements TextDisplay
       recordEditorState();
       
       // check for edits we need to save
+      JsArray<SnippetData> changedSnippets = JsArray.createArray().cast();
       for (int i = 0; i<snippetTypes_.getItemCount(); i++)
       {
          EditableSnippets snippets = snippetTypes_.getItemAtIdx(i);
          String edits = snippets.getPendingEdits();
          if (edits != null)
          {
-            JavaScriptException ex = SnippetHelper.loadSnippetsForMode(
-                                 snippets.getEditorMode(), edits);
+            String mode = snippets.getEditorMode();
+            JavaScriptException ex = SnippetHelper.loadSnippetsForMode(mode, 
+                                                                       edits);
             if (ex != null)
             {
                snippetTypes_.setSelectedIndex(i);
@@ -173,12 +182,20 @@ public class EditSnippetsDialog extends ModalDialogBase implements TextDisplay
                 "Error Applying Snippets (" + snippets.getFileTypeLabel() + ")",
                  ex.getDescription());
                return; // early return (don't close dialog)
-            }      
+            }  
+            
+            changedSnippets.push(SnippetData.create(mode, edits));
          }
       }
       
-      // close the dialog
-      closeDialog();
+      // perform the save then close the dialog
+      server_.saveSnippets(changedSnippets, new VoidServerRequestCallback() {
+         @Override
+         protected void onSuccess()
+         {
+            closeDialog();
+         }
+      });
    }
    
    @Override
@@ -276,6 +293,7 @@ public class EditSnippetsDialog extends ModalDialogBase implements TextDisplay
    private EventBus events_;
    private GlobalDisplay globalDisplay_;
    private FontSizeManager fontSizeManager_;
+   private LintServerOperations server_;
   
 
 }

@@ -2240,6 +2240,7 @@ public class AceEditor implements DocDisplay,
    
    private boolean popupVisible_;
    
+   @SuppressWarnings("unused")
    private final DiagnosticsBackgroundPopup diagnosticsBgPopup_;
    
    private long lastCursorChangedTime_;

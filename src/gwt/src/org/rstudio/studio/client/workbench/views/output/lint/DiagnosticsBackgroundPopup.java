@@ -14,7 +14,6 @@
  */
 package org.rstudio.studio.client.workbench.views.output.lint;
 
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.Rectangle;
 import org.rstudio.studio.client.workbench.views.output.lint.model.AceAnnotation;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
