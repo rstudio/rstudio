@@ -26,7 +26,9 @@ public class PublishStaticPage
 {
    public PublishStaticPage(String title, String subTitle)
    {
-      super(title, subTitle, "Publish", null, null);
+      super(title, subTitle, "Publish", 
+            RSConnectAccountResources.INSTANCE.localAccountIcon(), 
+            RSConnectAccountResources.INSTANCE.localAccountIconLarge());
    }
 
    @Override

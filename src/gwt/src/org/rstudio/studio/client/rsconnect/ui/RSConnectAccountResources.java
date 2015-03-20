@@ -46,4 +46,10 @@ public interface RSConnectAccountResources extends ClientBundle
 
    @Source("publishIconLarge.png")
    ImageResource publishIconLarge();
+
+   @Source("rpubsPublish.png")
+   ImageResource rpubsPublish();
+
+   @Source("rpubsPublishLarge.png")
+   ImageResource rpubsPublishLarge();
 }

@@ -26,7 +26,9 @@ public class PublishRPubsPage
 {
    public PublishRPubsPage(String title, String subTitle)
    {
-      super(title, subTitle, "Publish to RPubs", null, null);
+      super(title, subTitle, "Publish to RPubs", 
+            RSConnectAccountResources.INSTANCE.rpubsPublish(), 
+            RSConnectAccountResources.INSTANCE.rpubsPublishLarge());
    }
 
    @Override

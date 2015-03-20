@@ -58,17 +58,18 @@ public abstract class WizardPage<I,T> extends Composite
          
          LayoutPanel layoutPanel = new LayoutPanel();
          
-         Image pageImage = new Image(largeImage_);
-         layoutPanel.add(pageImage);
-         layoutPanel.setWidgetLeftWidth(pageImage,
-                                        8, Unit.PX, 
-                                        pageImage.getWidth(), Unit.PX);
-         layoutPanel.setWidgetTopHeight(pageImage,
-                                        10, Unit.PX, 
-                                        pageImage.getHeight(), Unit.PX);
-         
-         
-         
+         if (largeImage_ != null)
+         {
+            Image pageImage = new Image(largeImage_);
+            layoutPanel.add(pageImage);
+            layoutPanel.setWidgetLeftWidth(pageImage,
+                                           8, Unit.PX, 
+                                           pageImage.getWidth(), Unit.PX);
+            layoutPanel.setWidgetTopHeight(pageImage,
+                                           10, Unit.PX, 
+                                           pageImage.getHeight(), Unit.PX);
+         }
+            
          Widget pageWidget = createWidget();
      
          layoutPanel.add(pageWidget);
