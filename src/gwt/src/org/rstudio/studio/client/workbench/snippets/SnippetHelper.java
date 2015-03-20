@@ -215,8 +215,10 @@ public class SnippetHelper
       
       // Overwrite the old snippets stored
       var old = $wnd.require("ace/snippets/" + mode);
-      if (old != null)
+      if (old != null) {
+         old.$snippetText = old.snippetText;
          old.snippetText = snippetText;
+      }
       
       // Apply new snippets
       manager.register(snippets, mode);
