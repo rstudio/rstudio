@@ -189,13 +189,20 @@ public class EditSnippetsDialog extends ModalDialogBase implements TextDisplay
       }
       
       // perform the save then close the dialog
-      server_.saveSnippets(changedSnippets, new VoidServerRequestCallback() {
-         @Override
-         protected void onSuccess()
-         {
-            closeDialog();
-         }
-      });
+      if (changedSnippets.length() > 0)
+      {
+         server_.saveSnippets(changedSnippets, new VoidServerRequestCallback() {
+            @Override
+            protected void onSuccess()
+            {
+               closeDialog();
+            }
+         });
+      }
+      else
+      {
+         closeDialog();
+      }
    }
    
    @Override

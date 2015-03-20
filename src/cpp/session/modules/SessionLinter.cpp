@@ -484,12 +484,22 @@ bool isSnippetFilePath(const FilePath& filePath,
    return true;
 }
 
+FilePath getSnippetsDir(bool autoCreate = false)
+{
+   FilePath homeDir = module_context::userHomePath();
+   FilePath snippetsDir = homeDir.childPath(".R/snippets");
+   if (autoCreate)
+   {
+      Error error = snippetsDir.ensureDirectory();
+      if (error)
+         LOG_ERROR(error);
+   }
+   return snippetsDir;
+}
+
 void checkAndNotifyClientIfSnippetsAvailable()
 {
-   // Check to see if we have a snippets folder locally
-   FilePath homeDir = module_context::userHomePath();
-   
-   FilePath snippetsDir = homeDir.childPath(".R/snippets");
+   FilePath snippetsDir = getSnippetsDir();
    if (!snippetsDir.exists() || !snippetsDir.isDirectory())
       return;
    
@@ -543,7 +553,32 @@ void afterSessionInitHook(bool newSession)
 Error saveSnippets(const json::JsonRpcRequest& request,
                    json::JsonRpcResponse* pResponse)
 {
-   // TODO: actually save the snippets
+   json::Array snippetsJson;
+   Error error = json::readParams(request.params, &snippetsJson);
+   if (error)
+      return error;
+
+   FilePath snippetsDir = getSnippetsDir(true);
+   BOOST_FOREACH(const json::Value& valueJson, snippetsJson)
+   {
+      if (json::isType<json::Object>(valueJson))
+      {
+         json::Object snippetJson = valueJson.get_obj();
+         std::string mode, contents;
+         Error error = json::readObject(snippetJson, "mode", &mode,
+                                                     "contents", &contents);
+         if (error)
+         {
+            LOG_ERROR(error);
+            continue;
+         }
+
+         error = writeStringToFile(snippetsDir.childPath(mode + ".snippets"),
+                                   contents);
+         if (error)
+            LOG_ERROR(error);
+      }
+   }
 
    return Success();
 }
