@@ -33,7 +33,8 @@
                     ui:field="addAccountAnchor_" text="Add New Account">
          </g:Anchor>
          </g:HorizontalPanel>
-         <rsc:RSConnectAccountList styleName="{res.style.accountList}" ui:field="accountList_">
+         <rsc:RSConnectAccountList styleName="{res.style.accountList}" 
+                                   ui:field="accountList_">
          </rsc:RSConnectAccountList>
          <g:Label styleName="{res.style.controlLabel}" ui:field="nameLabel_" 
                   text="Name:"></g:Label>

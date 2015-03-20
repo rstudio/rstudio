@@ -121,6 +121,12 @@
 .accountList
 {
    height: 100px;
+   width: 250px;
+}
+
+.wizard .accountList
+{
+   width: 225px;
 }
 
 .accountAnchor

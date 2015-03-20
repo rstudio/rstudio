@@ -18,7 +18,6 @@ import org.rstudio.core.client.widget.WizardPage;
 import org.rstudio.studio.client.rsconnect.model.RSConnectPublishInput;
 import org.rstudio.studio.client.rsconnect.model.RSConnectPublishResult;
 
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 
 public class PublishRPubsPage 
@@ -40,7 +39,7 @@ public class PublishRPubsPage
    @Override
    protected Widget createWidget()
    {
-      return new Label("RPubs");
+      return new PublishRPubs();
    }
 
    @Override
