@@ -14,11 +14,16 @@
  */
 package org.rstudio.studio.client.workbench.prefs.views;
 
+import com.google.gwt.dom.client.Style;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.CheckBox;
+import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.Widget;
 
 import org.rstudio.core.client.prefs.PreferencesDialogPaneBase;
+import org.rstudio.core.client.widget.HelpButton;
 import org.rstudio.core.client.widget.NumericValueWidget;
 import org.rstudio.studio.client.workbench.prefs.model.Prefs.PrefValue;
 import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
@@ -36,11 +41,20 @@ public abstract class PreferencesPane extends PreferencesDialogPaneBase<RPrefs>
    }
    
    protected CheckBox checkboxPref(String label,
-                                   final PrefValue<Boolean> prefValue)
+         final PrefValue<Boolean> prefValue)
+   {
+      return checkboxPref(label, prefValue, null);
+   }
+   
+   protected CheckBox checkboxPref(String label,
+                                   final PrefValue<Boolean> prefValue,
+                                   String title)
    {
       final CheckBox checkBox = new CheckBox(label, false);
       lessSpaced(checkBox);
       checkBox.setValue(prefValue.getGlobalValue());
+      if (title != null)
+         checkBox.setTitle(title);
       onApplyCommands_.add(new Command()
       {
          public void execute()
@@ -50,16 +64,26 @@ public abstract class PreferencesPane extends PreferencesDialogPaneBase<RPrefs>
       });
       return checkBox;
    }
-   
-   protected CheckBox checkboxPref(String label,
-                                   final PrefValue<Boolean> prefValue,
-                                   String title)
+  
+   protected Widget checkboxPref(String label,
+                                 PrefValue<Boolean> prefValue,
+                                 String title,
+                                 String rstudioLinkName)
    {
-      CheckBox result = checkboxPref(label, prefValue);
-      result.setTitle(title);
-      return result;
-   }
+      CheckBox checkBox = checkboxPref(label, prefValue, title);
+    
+      HorizontalPanel panel = new HorizontalPanel();
+      panel.add(checkBox);
+      
+      HelpButton helpButton = new HelpButton(rstudioLinkName);
+      Style style = helpButton.getElement().getStyle();
+      style.setMarginTop(2, Unit.PX);
+      style.setMarginLeft(4, Unit.PX);
+      panel.add(helpButton);
 
+      
+      return panel;
+   }
   
    protected NumericValueWidget numericPref(String label,
                                             final PrefValue<Integer> prefValue)
