@@ -123,6 +123,12 @@ public class EditorLanguage
    {
       return parserName_;
    }
+   
+   public String getModeName()
+   {
+      int lastSlash = parserName_.lastIndexOf('/');
+      return parserName_.substring(lastSlash + 1);
+   }
 
    public boolean useRCompletion()
    {

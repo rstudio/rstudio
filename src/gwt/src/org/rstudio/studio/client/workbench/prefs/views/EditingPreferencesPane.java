@@ -37,7 +37,7 @@ import org.rstudio.core.client.widget.SmallButton;
 import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefsAccessor;
-import org.rstudio.studio.client.workbench.snippets.ui.EditSnippetsPanel;
+import org.rstudio.studio.client.workbench.snippets.ui.EditSnippetsDialog;
 
 public class EditingPreferencesPane extends PreferencesPane
 {
@@ -83,7 +83,7 @@ public class EditingPreferencesPane extends PreferencesPane
          @Override
          public void onClick(ClickEvent event)
          {
-            new EditSnippetsPanel().center();
+            new EditSnippetsDialog().showModal();
          }
       });
       panel.add(editSnippets);
