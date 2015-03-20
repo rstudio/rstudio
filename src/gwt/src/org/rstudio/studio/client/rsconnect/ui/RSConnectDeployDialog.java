@@ -33,7 +33,6 @@ import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.rsconnect.RSConnect;
 import org.rstudio.studio.client.rsconnect.events.RSConnectDeployInitiatedEvent;
 import org.rstudio.studio.client.rsconnect.model.RSConnectAccount;
-import org.rstudio.studio.client.rsconnect.model.RSConnectDeploymentFiles;
 import org.rstudio.studio.client.rsconnect.model.RSConnectDeploymentRecord;
 import org.rstudio.studio.client.rsconnect.model.RSConnectServerOperations;
 import org.rstudio.studio.client.server.ServerError;
@@ -58,9 +57,7 @@ public class RSConnectDeployDialog
                                 String lastAppName, 
                                 boolean isSatellite)
    {
-      super(server, display, new RSConnectDeploy(false,
-            StringUtil.getExtension(sourceFile).toLowerCase().equals("rmd"),
-            null));
+      super(server, display, new RSConnectDeploy(sourceFile, null, false));
       setText("Publish to Server");
       setWidth("350px");
       deployButton_ = new ThemedButton("Publish");
@@ -71,7 +68,6 @@ public class RSConnectDeployDialog
       events_ = events;
       isSatellite_ = isSatellite;
       defaultAccount_ = lastAccount;
-      ignoredFiles_ = ignoredFiles;
 
       String deployTarget = sourceDir;
       if (StringUtil.getExtension(sourceFile).toLowerCase().equals("rmd")) 
@@ -114,38 +110,6 @@ public class RSConnectDeployDialog
       // don't enable the deploy button until we're done getting the file list
       deployButton_.setEnabled(false);
       
-      // Get the files to be deployed
-      server_.getDeploymentFiles(
-            deployTarget,
-            new ServerRequestCallback<RSConnectDeploymentFiles>()
-            {
-               @Override 
-               public void onResponseReceived(RSConnectDeploymentFiles files)
-               {
-                  if (files.getDirSize() > files.getMaxSize())
-                  {
-                     hide();
-                     display_.showErrorMessage("Directory Too Large", 
-                           "The directory to be deployed (" + sourceDir + ") " +
-                           "exceeds the maximum deployment size, which is " +
-                           StringUtil.formatFileSize(files.getMaxSize()) + "." +
-                           " Consider creating a new directory containing " + 
-                           "only the content you wish to deploy.");
-                  }
-                  else
-                  {
-                     contents_.setFileList(files.getDirList(), ignoredFiles_);
-                     contents_.setFileCheckEnabled(sourceFile_, false);
-                     deployButton_.setEnabled(true);
-                  }
-               }
-               @Override
-               public void onError(ServerError error)
-               {
-                  // we'll just show an empty list in the failure case
-               }
-            });
-
       // Get the deployments of this directory from any account (should be fast,
       // since this information is stored locally in the directory). 
       server_.getRSConnectDeployments(deployTarget, 
@@ -318,8 +282,6 @@ public class RSConnectDeployDialog
    private RSConnectAccount defaultAccount_;
    private ArrayList<String> filesAddedManually_ =
          new ArrayList<String>();
-   
-   private String[] ignoredFiles_;
    
    // Map of app URL to the deployment made to that URL
    private Map<String, RSConnectDeploymentRecord> deployments_ = 

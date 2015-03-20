@@ -27,6 +27,13 @@ public class PublishCodePage
          RSConnectPublishInput input)
    {
       super(title, subTitle, "Publish", null, null);
+      initialInput_ = input;
+      
+      // createWidget is called by super() above
+      if (contents_ != null)
+      {
+         contents_.setContentPath(input.getSourceRmd().getPath());
+      }
    }
 
    @Override
@@ -38,13 +45,13 @@ public class PublishCodePage
    @Override
    public void onActivate()
    {
-      contents_.populateAccountList();
+      contents_.onActivate();
    }
    
    @Override
    protected Widget createWidget()
    {
-      contents_ = new RSConnectDeploy(true, true, null);
+      contents_ = new RSConnectDeploy(null, null, true);
       return contents_;
    }
 
@@ -66,4 +73,5 @@ public class PublishCodePage
    }
    
    private RSConnectDeploy contents_;
+   private final RSConnectPublishInput initialInput_;
 }

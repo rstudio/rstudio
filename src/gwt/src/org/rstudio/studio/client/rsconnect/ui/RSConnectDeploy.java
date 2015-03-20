@@ -24,6 +24,7 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.rsconnect.model.RSConnectAccount;
 import org.rstudio.studio.client.rsconnect.model.RSConnectApplicationInfo;
+import org.rstudio.studio.client.rsconnect.model.RSConnectDeploymentFiles;
 import org.rstudio.studio.client.rsconnect.model.RSConnectDeploymentRecord;
 import org.rstudio.studio.client.rsconnect.model.RSConnectServerOperations;
 import org.rstudio.studio.client.server.ServerError;
@@ -102,10 +103,21 @@ public class RSConnectDeploy extends Composite
    
    public static DeployResources RESOURCES = GWT.create(DeployResources.class);
    
-   public RSConnectDeploy(boolean asWizard, boolean forDocument, 
-                          RSConnectDeploymentRecord fromPrevious)
+   public RSConnectDeploy(String contentPath, 
+                          RSConnectDeploymentRecord fromPrevious,
+                          boolean asWizard)
    {
-      forDocument_ = forDocument;
+      if (contentPath_ != null)
+      {
+         forDocument_ = FileSystemItem.getExtensionFromPath(contentPath)
+               .toLowerCase().equals(".rmd");
+      }
+      else
+      {
+         forDocument_ = asWizard;
+      }
+
+      contentPath_ = contentPath;
       fromPrevious_ = fromPrevious;
       
       // inject dependencies 
@@ -122,7 +134,7 @@ public class RSConnectDeploy extends Composite
       }
       else
       {
-         deployIllustration_.setResource(forDocument ?
+         deployIllustration_.setResource(forDocument_ ?
                               RESOURCES.publishRmdIllustration() :
                               RESOURCES.publishShinyIllustration());
       }
@@ -159,7 +171,7 @@ public class RSConnectDeploy extends Composite
             event.stopPropagation();
          }
       });
-      addFileButton_.setVisible(forDocument);
+      addFileButton_.setVisible(forDocument_);
       addFileButton_.getElement().getStyle().setMarginLeft(0, Unit.PX);
       addFileButton_.addClickHandler(new ClickHandler()
       {
@@ -322,9 +334,15 @@ public class RSConnectDeploy extends Composite
       return style_;
    }
    
-   public void populateAccountList()
+   public void onActivate()
    {
       populateAccountList(false);
+      populateDeploymentFiles();
+   }
+   
+   public void setContentPath(String contentPath)
+   {
+      contentPath_ = contentPath;
    }
    
    // Private methods --------------------------------------------------------
@@ -404,6 +422,52 @@ public class RSConnectDeploy extends Composite
          }
       });
    }
+   
+   private void populateDeploymentFiles()
+   {
+      if (contentPath_ == null)
+         return;
+      
+      // read the parent directory if we're "deploying" a .R file
+      // TODO: this needs to be modified to take multiple R Markdown files into
+      // account
+      final String deployTarget =  
+            FileSystemItem.getExtensionFromPath(contentPath_)
+            .toLowerCase().equals(".r") ?
+         FileSystemItem.createFile(contentPath_).getParentPathString() :
+         contentPath_;
+       
+      server_.getDeploymentFiles(
+            deployTarget,
+            new ServerRequestCallback<RSConnectDeploymentFiles>()
+            {
+               @Override 
+               public void onResponseReceived(RSConnectDeploymentFiles files)
+               {
+                  if (files.getDirSize() > files.getMaxSize())
+                  {
+                     display_.showErrorMessage("Directory Too Large", 
+                           "The directory to be deployed (" + deployTarget + ") " +
+                           "exceeds the maximum deployment size, which is " +
+                           StringUtil.formatFileSize(files.getMaxSize()) + "." +
+                           " Consider creating a new directory containing " + 
+                           "only the content you wish to deploy.");
+                  }
+                  else
+                  {
+                     // TODO: ignored file persistence
+                     setFileList(files.getDirList(), new String[]{});
+                     setFileCheckEnabled(contentPath_, false);
+                  }
+               }
+               @Override
+               public void onError(ServerError error)
+               {
+                  // we'll just show an empty list in the failure case
+               }
+            });
+      
+   }
 
    private void validateAppName()
    {
@@ -474,6 +538,7 @@ public class RSConnectDeploy extends Composite
    private RSConnectServerOperations server_;
    private GlobalDisplay display_;
    private RSAccountConnector connector_;
+   private String contentPath_;
 
    private final DeployStyle style_;
    private final boolean forDocument_;
