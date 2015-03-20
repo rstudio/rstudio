@@ -69,4 +69,33 @@ public class Range extends JavaScriptObject
    public final native boolean contains(Position position) /*-{
       return this.contains(position.row, position.column);
    }-*/;
+   
+   public final native boolean containsRightExclusive(Position position)
+   /*-{
+      
+      var row = position.row;
+      var column = position.column;
+      
+      var startRow = this.start.row;
+      var endRow = this.end.row;
+      
+      var startColumn = this.start.column;
+      var endColumn = this.end.column;
+      
+      if (endRow < row) return false;
+      if (startRow > row) return false;
+      
+      if (startRow === row && endRow === row)
+      {
+         return column >= startColumn && 
+                column <  endColumn;
+      }
+      
+      if (startRow === row) return column >= startColumn;
+      if (endRow === row)   return column <  endColumn;
+      
+      // shouldn't get here
+      return false;
+   }-*/;
+   
 }

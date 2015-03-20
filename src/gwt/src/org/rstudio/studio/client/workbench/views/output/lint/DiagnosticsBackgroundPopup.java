@@ -16,8 +16,6 @@ package org.rstudio.studio.client.workbench.views.output.lint;
 
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.Rectangle;
-import org.rstudio.core.client.dom.DomUtils;
-import org.rstudio.core.client.widget.ThemedPopupPanel;
 import org.rstudio.studio.client.workbench.views.output.lint.model.AceAnnotation;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
@@ -32,16 +30,20 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.events.Curs
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
-import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.core.shared.GWT;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.BlurEvent;
 import com.google.gwt.event.dom.client.BlurHandler;
 import com.google.gwt.event.dom.client.FocusEvent;
 import com.google.gwt.event.dom.client.FocusHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.resources.client.ClientBundle;
+import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Event.NativePreviewEvent;
 import com.google.gwt.user.client.Event.NativePreviewHandler;
 import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.PopupPanel.PositionCallback;
 
 public class DiagnosticsBackgroundPopup
@@ -57,7 +59,7 @@ public class DiagnosticsBackgroundPopup
          public void onFocus(FocusEvent event)
          {
             if (editor_ != null && !isRunning_)
-               DiagnosticsBackgroundPopup.this.start();
+               start();
          }
       });
       
@@ -84,6 +86,8 @@ public class DiagnosticsBackgroundPopup
    public void start()
    {
       isRunning_ = true;
+      stopRequested_ = false;
+      
       handler_ = Event.addNativePreviewHandler(new NativePreviewHandler()
       {
          @Override
@@ -91,23 +95,36 @@ public class DiagnosticsBackgroundPopup
          {
             if (event.getTypeInt() == Event.ONMOUSEMOVE)
             {
+               movedMouseMostRecently_ = true;
+               
+               Element target = Element.as(event.getNativeEvent().getEventTarget());
+               if (target.hasClassName("ace_gutter-cell"))
+               {
+                  lastMouseCoords_ = null;
+                  hidePopup();
+                  return;
+               }
+               
                lastMouseCoords_ = ScreenCoordinates.create(
                      event.getNativeEvent().getClientX(),
                      event.getNativeEvent().getClientY());
                
-               if (!activeMarker_.getRange().contains(
-                     editor_.toDocumentPosition(lastMouseCoords_)))
+               if (activeMarker_ != null && 
+                     !activeMarker_.getRange().containsRightExclusive(
+                           editor_.toDocumentPosition(lastMouseCoords_)))
                {
                   hidePopup();
                }
-               
+            }
+            else
+            {
+               movedMouseMostRecently_ = false;
             }
          }
       });
       
       Scheduler.get().scheduleFixedDelay(new RepeatingCommand()
       {
-         
          @Override
          public boolean execute()
          {
@@ -132,12 +149,24 @@ public class DiagnosticsBackgroundPopup
                return completeExecution();
             
             Markers markers = editor_.getSession().getMarkers(true);
-            int[] keys = markers.getIds();
+            Position currentPos;
+            if (movedMouseMostRecently_)
+            {
+               if (lastMouseCoords_ == null)
+                  return completeExecution();
+               
+               currentPos = editor_.toDocumentPosition(lastMouseCoords_);
+            }
+            else
+            {
+               currentPos = docDisplay_.getCursorPosition();
+            }
+                  
+            int keys[] = markers.getIds();
             for (int i = 0; i < keys.length; i++)
             {
                Marker marker = markers.get(keys[i]);
-               if (marker.getRange().contains(docDisplay_.getCursorPosition()) ||
-                   marker.getRange().contains(editor_.toDocumentPosition(lastMouseCoords_)))
+               if (marker.getRange().containsRightExclusive(currentPos))
                {
                   displayMarkerDiagnostics(marker);
                   return completeExecution();
@@ -160,16 +189,13 @@ public class DiagnosticsBackgroundPopup
              marker.getRange().getEnd().getRow() >= row)
          {
             activeMarker_ = marker;
-            Rectangle coords = editor_.toScreenCoordinates(
-                  marker.getRange());
-            
             showPopup(annotation.text(), marker.getRange());
             return;
          }
       }
    }
    
-   class DiagnosticsPopupPanel extends ThemedPopupPanel
+   class DiagnosticsPopupPanel extends PopupPanel
    {
       public DiagnosticsPopupPanel(
             String text,
@@ -182,10 +208,11 @@ public class DiagnosticsBackgroundPopup
             @Override
             public void onCursorChanged(CursorChangedEvent event)
             {
-               if (!range_.contains(event.getPosition()))
+               if (!range_.containsRightExclusive(event.getPosition()))
                   hide();
             }
          });
+         addStyleName(RES.styles().popup());
          setWidget(new Label(text));
       }
       
@@ -245,6 +272,20 @@ public class DiagnosticsBackgroundPopup
       stopRequested_ = true;
    }
    
+   public interface Resources extends ClientBundle
+   {
+      public static interface Styles extends CssResource
+      {
+         String popup();
+      }
+      
+      @Source("DiagnosticsBackgroundPopup.css")
+      Styles styles();
+      
+      public static Resources INSTANCE =
+            (Resources) GWT.create(Resources.class);
+   }
+   
    private final DocDisplay docDisplay_;
    private final AceEditor editor_;
    private DiagnosticsPopupPanel popup_;
@@ -254,4 +295,13 @@ public class DiagnosticsBackgroundPopup
    
    private ScreenCoordinates lastMouseCoords_;
    private HandlerRegistration handler_;
+   private static final Resources RES =
+         Resources.INSTANCE;
+   
+   private boolean movedMouseMostRecently_;
+   
+   static {
+      RES.styles().ensureInjected();
+   }
+   
 }

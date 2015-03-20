@@ -1,0 +1,9 @@
+@CHARSET "UTF-8";
+
+.popup {
+	background: linear-gradient(#EEE, #CCC);
+	border: 1px solid #888;
+	padding: 3px;
+	border-radius: 3px;
+	opacity: 0.9;
+}
