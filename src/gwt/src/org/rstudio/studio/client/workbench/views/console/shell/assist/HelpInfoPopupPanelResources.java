@@ -25,6 +25,7 @@ public interface HelpInfoPopupPanelResources extends ClientBundle
    {
       String helpPopup();
       String helpBodyText();
+      String snippetText();
    }
 
   
