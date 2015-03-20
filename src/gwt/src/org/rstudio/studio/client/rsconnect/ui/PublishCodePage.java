@@ -15,14 +15,10 @@
 package org.rstudio.studio.client.rsconnect.ui;
 
 import org.rstudio.core.client.widget.WizardPage;
-import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.rsconnect.model.RSConnectPublishInput;
 import org.rstudio.studio.client.rsconnect.model.RSConnectPublishResult;
-import org.rstudio.studio.client.rsconnect.model.RSConnectServerOperations;
-import org.rstudio.studio.client.workbench.model.Session;
 
 import com.google.gwt.user.client.ui.Widget;
-import com.google.inject.Inject;
 
 public class PublishCodePage 
    extends WizardPage<RSConnectPublishInput, RSConnectPublishResult>
@@ -48,7 +44,7 @@ public class PublishCodePage
    @Override
    protected Widget createWidget()
    {
-      contents_ = new RSConnectDeploy(true, true);
+      contents_ = new RSConnectDeploy(true, true, null);
       return contents_;
    }
 

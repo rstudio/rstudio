@@ -94,6 +94,7 @@
 .wizard .fileList
 {
    width: 225px;
+   height: 140px;
 }
 
 .deployLabel

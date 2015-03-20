@@ -33,7 +33,6 @@ import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.rsconnect.RSConnect;
 import org.rstudio.studio.client.rsconnect.events.RSConnectDeployInitiatedEvent;
 import org.rstudio.studio.client.rsconnect.model.RSConnectAccount;
-import org.rstudio.studio.client.rsconnect.model.RSConnectApplicationInfo;
 import org.rstudio.studio.client.rsconnect.model.RSConnectDeploymentFiles;
 import org.rstudio.studio.client.rsconnect.model.RSConnectDeploymentRecord;
 import org.rstudio.studio.client.rsconnect.model.RSConnectServerOperations;
@@ -41,12 +40,9 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 
 import com.google.gwt.core.client.JsArray;
-import com.google.gwt.event.dom.client.ChangeEvent;
-import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.CheckBox;
 
 public class RSConnectDeployDialog 
@@ -63,7 +59,8 @@ public class RSConnectDeployDialog
                                 boolean isSatellite)
    {
       super(server, display, new RSConnectDeploy(false,
-            StringUtil.getExtension(sourceFile).toLowerCase().equals("rmd")));
+            StringUtil.getExtension(sourceFile).toLowerCase().equals("rmd"),
+            null));
       setText("Publish to Server");
       setWidth("350px");
       deployButton_ = new ThemedButton("Publish");
@@ -72,7 +69,6 @@ public class RSConnectDeployDialog
       sourceDir_ = sourceDir;
       sourceFile_ = sourceFile;
       events_ = events;
-      lastAppName_ = lastAppName;
       isSatellite_ = isSatellite;
       defaultAccount_ = lastAccount;
       ignoredFiles_ = ignoredFiles;
@@ -118,8 +114,6 @@ public class RSConnectDeployDialog
       // don't enable the deploy button until we're done getting the file list
       deployButton_.setEnabled(false);
       
-      indicator_ = addProgressIndicator(false);
-
       // Get the files to be deployed
       server_.getDeploymentFiles(
             deployTarget,
@@ -178,26 +172,6 @@ public class RSConnectDeployDialog
       });
       
       
-      // Update the list of applications when the account is changed
-      contents_.addAccountChangeHandler(new ChangeHandler()
-      {
-         @Override
-         public void onChange(ChangeEvent event)
-         {
-            updateApplicationList();
-         }
-      });
-      
-      // Update app info when the application is changed
-      contents_.addAppChangeHandler(new ChangeHandler()
-      {
-         @Override
-         public void onChange(ChangeEvent event)
-         {
-            updateApplicationInfo();
-         }
-      });
-      
       contents_.setOnDeployDisabled(new Command()
       {
          @Override
@@ -217,135 +191,10 @@ public class RSConnectDeployDialog
       });
    }
    
-   // Runs when the selected application changes; shows the cached information
-   // (URL and status) for the selected application
-   private void updateApplicationInfo()
-   {
-      String appName = contents_.getSelectedApp();
-      if (appName == "Create New")
-      {
-         contents_.showAppInfo(null);
-      }
-      else if (apps_.containsKey(contents_.getSelectedAccount()))
-      {
-         JsArray<RSConnectApplicationInfo> apps =
-               apps_.get(contents_.getSelectedAccount());
-         for (int i = 0; i < apps.length(); i++)
-         {
-            if (apps.get(i).getName().equals(appName))
-            {
-               contents_.showAppInfo(apps.get(i));
-            }
-         }
-      }
-   }
-   
-   private void updateApplicationList()
-   {
-      final RSConnectAccount account = contents_.getSelectedAccount();
-      if (account == null)
-         return;
-
-      // Check to see if the app list is already in our cache
-      if (apps_.containsKey(account))
-      {
-         setAppList(apps_.get(account));
-         return;
-      }
-      
-      // This operation hits the back-end service, so show some progress if 
-      // it takes more than a few ms
-      final Timer t = new Timer() {
-         @Override
-         public void run()
-         {
-            indicator_.onProgress("Contacting Server...");
-         }
-      };
-      t.schedule(500);
-
-      // Not already in our cache, fetch it and populate the cache
-      server_.getRSConnectAppList(account.getName(), account.getServer(),
-            new ServerRequestCallback<JsArray<RSConnectApplicationInfo>>()
-      {
-         @Override
-         public void onResponseReceived(
-               JsArray<RSConnectApplicationInfo> apps)
-         {
-
-            t.cancel();
-            indicator_.onCompleted();
-            apps_.put(account, apps);
-            setAppList(apps);
-         }
-
-         @Override
-         public void onError(ServerError error)
-         {
-            t.cancel();
-            indicator_.onCompleted();
-            // we can always create a new app
-            contents_.setAppList(null, null);
-         }
-      });
-   }
-   
-   private void setAppList(JsArray<RSConnectApplicationInfo> apps)
-   {
-      ArrayList<String> appNames = new ArrayList<String>();
-      for (int i = 0; i < apps.length(); i++)
-      {
-         RSConnectApplicationInfo appInfo = apps.get(i);
-         // Filter the app list by URLs deployed from this directory 
-         // specifically
-         if (deployments_.containsKey(appInfo.getUrl()))
-         {
-            appNames.add(apps.get(i).getName());
-         }
-      }
-      contents_.setAppList(appNames, lastAppName_);
-      updateApplicationInfo();
-   }
-   
-   // Runs when we've finished doing a just-in-time account connection
-   private void onConnectAccountFinished()
-   {
-      server_.getRSConnectAccountList(new ServerRequestCallback<JsArray<RSConnectAccount>>()
-      {
-         @Override
-         public void onResponseReceived(JsArray<RSConnectAccount> accounts)
-         {
-            if (accounts.length() == 0)
-            {
-               // The user didn't successfully connect an account--just close 
-               // ourselves
-               closeDialog();
-            }
-            else
-            {
-               // We have an account, show it and re-display ourselves
-               contents_.setAccountList(accounts);
-               updateApplicationList();
-               showModal();
-            }
-         }
-
-         @Override
-         public void onError(ServerError error)
-         {
-            display_.showErrorMessage("Error retrieving accounts", 
-                                     error.getMessage());
-            closeDialog();
-         }
-      });
-   }
-   
    private void onDeploy()
    {
-      String appName = contents_.getSelectedApp();
-      if (appName == null || appName == "Create New")
-         appName = contents_.getNewAppName();
-      
+      String appName = contents_.getNewAppName();
+
       RSConnectAccount account = contents_.getSelectedAccount();
       
       // compose the list of files that have been manually added; we want to
@@ -464,19 +313,13 @@ public class RSConnectDeployDialog
    
    private String sourceDir_;
    private String sourceFile_;
-   private String lastAppName_;
    private ThemedButton deployButton_;
-   private ProgressIndicator indicator_;
    private CheckBox launchCheck_;
    private RSConnectAccount defaultAccount_;
    private ArrayList<String> filesAddedManually_ =
          new ArrayList<String>();
    
    private String[] ignoredFiles_;
-   
-   // Map of account to a list of applications owned by that account
-   private Map<RSConnectAccount, JsArray<RSConnectApplicationInfo>> apps_ = 
-         new HashMap<RSConnectAccount, JsArray<RSConnectApplicationInfo>>();
    
    // Map of app URL to the deployment made to that URL
    private Map<String, RSConnectDeploymentRecord> deployments_ = 

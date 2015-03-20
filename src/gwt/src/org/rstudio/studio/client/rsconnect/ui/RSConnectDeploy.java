@@ -15,7 +15,6 @@
 package org.rstudio.studio.client.rsconnect.ui;
 
 import java.util.ArrayList;
-import java.util.List;
 
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemItem;
@@ -25,6 +24,7 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.rsconnect.model.RSConnectAccount;
 import org.rstudio.studio.client.rsconnect.model.RSConnectApplicationInfo;
+import org.rstudio.studio.client.rsconnect.model.RSConnectDeploymentRecord;
 import org.rstudio.studio.client.rsconnect.model.RSConnectServerOperations;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -53,7 +53,6 @@ import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.InlineLabel;
 import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -103,10 +102,16 @@ public class RSConnectDeploy extends Composite
    
    public static DeployResources RESOURCES = GWT.create(DeployResources.class);
    
-   public RSConnectDeploy(boolean asWizard, boolean forDocument)
+   public RSConnectDeploy(boolean asWizard, boolean forDocument, 
+                          RSConnectDeploymentRecord fromPrevious)
    {
-      RStudioGinjector.INSTANCE.injectMembers(this);
       forDocument_ = forDocument;
+      fromPrevious_ = fromPrevious;
+      
+      // inject dependencies 
+      RStudioGinjector.INSTANCE.injectMembers(this);
+      
+      // create UI
       initWidget(uiBinder.createAndBindUi(this));
       style_ = RESOURCES.style();
       
@@ -123,7 +128,7 @@ public class RSConnectDeploy extends Composite
       }
 
       // Validate the application name on every keystroke
-      appName.addKeyUpHandler(new KeyUpHandler()
+      appName_.addKeyUpHandler(new KeyUpHandler()
       {
          @Override
          public void onKeyUp(KeyUpEvent event)
@@ -133,7 +138,7 @@ public class RSConnectDeploy extends Composite
       });
 
       // Invoke the "add account" wizard
-      addAccountAnchor.addClickHandler(new ClickHandler()
+      addAccountAnchor_.addClickHandler(new ClickHandler()
       {
          @Override
          public void onClick(ClickEvent event)
@@ -145,7 +150,7 @@ public class RSConnectDeploy extends Composite
                {
                   if (successful)
                   {
-                     accountList.refreshAccountList();
+                     accountList_.refreshAccountList();
                   }
                }
             });
@@ -177,7 +182,7 @@ public class RSConnectDeploy extends Composite
       server_ = server;
       connector_ = connector;
       display_ = display;
-      accountList = new RSConnectAccountList(server_, display_, false);
+      accountList_ = new RSConnectAccountList(server_, display_, false);
    }
     
    public void setSourceDir(String dir)
@@ -188,52 +193,22 @@ public class RSConnectDeploy extends Composite
    
    public void setNewAppName(String name)
    {
-      appName.setText(name);
+      appName_.setText(name);
    }
 
    public void setDefaultAccount(RSConnectAccount account)
    {
-      accountList.selectAccount(account);
+      accountList_.selectAccount(account);
    }
    
    public void setAccountList(JsArray<RSConnectAccount> accounts)
    {
-      accountList.setAccountList(accounts);
+      accountList_.setAccountList(accounts);
    }
    
    public RSConnectAccount getSelectedAccount()
    {
-      return accountList.getSelectedAccount();
-   }
-   
-   public String getSelectedApp()
-   {
-      int idx = appList.getSelectedIndex();
-      return idx >= 0 ? 
-            appList.getItemText(idx) :
-            null;
-   }
-   
-   public void setAppList(List<String> apps, String selected)
-   {
-      appList.clear();
-      int selectedIdx = 0;
-      if (apps != null)
-      {
-         selectedIdx = Math.max(0, apps.size() - 1);
-         
-         for (int i = 0; i < apps.size(); i++)
-         {
-            String app = apps.get(i);
-            appList.addItem(app);
-            if (app.equals(selected))
-            {
-               selectedIdx = i;
-            }
-         }
-      }
-      appList.addItem("Create New");
-      appList.setSelectedIndex(selectedIdx);
+      return accountList_.getSelectedAccount();
    }
    
    public void setFileList(JsArrayString files, String[] unchecked)
@@ -292,46 +267,41 @@ public class RSConnectDeploy extends Composite
    
    public String getNewAppName()
    {
-      return appName.getText();
+      return appName_.getText();
    }
    
    public void showAppInfo(RSConnectApplicationInfo info)
    {
       if (info == null)
       {
-         appInfoPanel.setVisible(false);
-         nameLabel.setVisible(true);
-         appName.setVisible(true);
+         appInfoPanel_.setVisible(false);
+         nameLabel_.setVisible(true);
+         appName_.setVisible(true);
          validateAppName();
          return;
       }
 
       setAppNameValid(true);
-      urlAnchor.setText(info.getUrl());
-      urlAnchor.setHref(info.getUrl());
+      urlAnchor_.setText(info.getUrl());
+      urlAnchor_.setHref(info.getUrl());
       String status = info.getStatus();
-      statusLabel.setText(status);
-      statusLabel.setStyleName(style_.statusLabel() + " " + 
+      statusLabel_.setText(status);
+      statusLabel_.setStyleName(style_.statusLabel() + " " + 
               (status.equals("running") ?
                     style_.normalStatus() :
                     style_.otherStatus()));
 
-      appInfoPanel.setVisible(true);
-      nameLabel.setVisible(false);
-      appName.setVisible(false);
+      appInfoPanel_.setVisible(true);
+      nameLabel_.setVisible(false);
+      appName_.setVisible(false);
       nameValidatePanel.setVisible(false);
    }
    
    public HandlerRegistration addAccountChangeHandler(ChangeHandler handler)
    {
-      return accountList.addChangeHandler(handler);
+      return accountList_.addChangeHandler(handler);
    }
 
-   public HandlerRegistration addAppChangeHandler(ChangeHandler handler)
-   {
-      return appList.addChangeHandler(handler);
-   }
-   
    public void setOnDeployEnabled(Command cmd)
    {
       onDeployEnabled_ = cmd;
@@ -359,6 +329,44 @@ public class RSConnectDeploy extends Composite
    
    // Private methods --------------------------------------------------------
    
+   private void setPreviousInfo()
+   {
+      // when the dialog is servicing a redeploy, find information on the
+      // content as currently deployed
+      if (fromPrevious_ != null)
+      {
+         // get all of the apps deployed from the account to the server
+         server_.getRSConnectAppList(
+               fromPrevious_.getAccountName(), 
+               fromPrevious_.getServer(), 
+               new ServerRequestCallback<JsArray<RSConnectApplicationInfo>>()
+               {
+                  @Override
+                  public void onResponseReceived(
+                        JsArray<RSConnectApplicationInfo> infos)
+                  {
+                     // find an app with the same account, server, and name;
+                     // when found, populate the UI with app details
+                     for (int i = 0; i < infos.length(); i++)
+                     {
+                        RSConnectApplicationInfo info = infos.get(i);
+                        if (info.getName() == fromPrevious_.getName())
+                        {
+                           showAppInfo(info);
+                           break;
+                        }
+                     }
+                  }
+                  @Override
+                  public void onError(ServerError error)
+                  {
+                     // it's okay if we fail here, since the application info
+                     // display is purely informative
+                  }
+               });
+      }
+   }
+   
    private void populateAccountList(final boolean isRetry)
    {
        server_.getRSConnectAccountList(
@@ -384,6 +392,7 @@ public class RSConnectDeploy extends Composite
             else
             {
                setAccountList(accounts);
+               setPreviousInfo();
             }
          }
          
@@ -398,7 +407,7 @@ public class RSConnectDeploy extends Composite
 
    private void validateAppName()
    {
-      String app = appName.getText();
+      String app = appName_.getText();
       RegExp validReg = RegExp.compile("^[A-Za-z0-9_-]{4,63}$");
       setAppNameValid(validReg.test(app));
    }
@@ -443,14 +452,13 @@ public class RSConnectDeploy extends Composite
    }
    
    @UiField Image deployIllustration_;
-   @UiField Anchor urlAnchor;
-   @UiField Anchor addAccountAnchor;
-   @UiField Label nameLabel;
-   @UiField InlineLabel statusLabel;
-   @UiField(provided=true) RSConnectAccountList accountList;
-   @UiField ListBox appList;
-   @UiField TextBox appName;
-   @UiField HTMLPanel appInfoPanel;
+   @UiField Anchor urlAnchor_;
+   @UiField Anchor addAccountAnchor_;
+   @UiField Label nameLabel_;
+   @UiField InlineLabel statusLabel_;
+   @UiField(provided=true) RSConnectAccountList accountList_;
+   @UiField TextBox appName_;
+   @UiField HTMLPanel appInfoPanel_;
    @UiField HTMLPanel nameValidatePanel;
    @UiField VerticalPanel fileListPanel_;
    @UiField InlineLabel deployLabel_;
@@ -469,4 +477,5 @@ public class RSConnectDeploy extends Composite
 
    private final DeployStyle style_;
    private final boolean forDocument_;
+   private final RSConnectDeploymentRecord fromPrevious_;
 }
