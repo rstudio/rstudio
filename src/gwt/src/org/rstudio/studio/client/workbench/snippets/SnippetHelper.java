@@ -15,6 +15,7 @@
 
 package org.rstudio.studio.client.workbench.snippets;
 
+import com.google.gwt.core.client.JavaScriptException;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArrayString;
 
@@ -187,6 +188,33 @@ public class SnippetHelper
       ensureAceSnippetsLoaded("c_cpp", manager_);
       ensureCustomCppSnippetsLoaded();
    }
+   
+   // Parse a snippet file and apply the parsed snippets for
+   // mode 'mode'. Returns an associated exception on failure,
+   // or 'null' on success.
+   public static final native JavaScriptException loadSnippetsForMode(
+         String mode,
+         String snippetText,
+         SnippetManager manager)
+   /*-{
+      
+      // Parse snippets passed through
+      var snippets = null;
+      try {
+         snippets = manager.parseSnippetFile(snippetText)
+      } catch (e) {
+         return e;
+      }
+      
+      // Clear old snippets associated with this mode
+      delete manager.snippetMap[mode];
+      delete manager.snippetNameMap[mode];
+      
+      // Apply new snippets
+      manager.register(snippets, mode);
+      return null;
+      
+   }-*/;
    
    private static final native void ensureAceSnippetsLoaded(
          String mode,
