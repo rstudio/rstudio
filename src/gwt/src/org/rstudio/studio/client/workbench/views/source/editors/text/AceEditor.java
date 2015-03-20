@@ -65,6 +65,7 @@ import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEdito
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorPosition;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorSelection;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorUtil;
+import org.rstudio.studio.client.workbench.views.output.lint.DiagnosticsBackgroundPopup;
 import org.rstudio.studio.client.workbench.views.output.lint.model.AceAnnotation;
 import org.rstudio.studio.client.workbench.views.output.lint.model.LintItem;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.*;
@@ -241,6 +242,8 @@ public class AceEditor implements DocDisplay,
                                  ElementIds.SOURCE_TEXT_EDITOR);
 
       completionManager_ = new NullCompletionManager();
+      diagnosticsBgPopup_ = new DiagnosticsBackgroundPopup(this);
+      
       RStudioGinjector.INSTANCE.injectMembers(this);
 
       widget_.addValueChangeHandler(new ValueChangeHandler<Void>()
@@ -341,6 +344,7 @@ public class AceEditor implements DocDisplay,
          }
       });
 
+      lastCursorChangedTime_ = 0;
       addCursorChangedHandler(new CursorChangedHandler()
       {
          @Override
@@ -348,14 +352,17 @@ public class AceEditor implements DocDisplay,
          {
             fixVerticalOffsetBug();
             clearLineHighlight();
+            lastCursorChangedTime_ = System.currentTimeMillis();
          }
       });
       
+      lastModifiedTime_ = 0;
       addValueChangeHandler(new ValueChangeHandler<Void>()
       {
          @Override
          public void onValueChange(ValueChangeEvent<Void> event)
          {
+            lastModifiedTime_ = System.currentTimeMillis();
             clearDebugLineHighlight();
          }
       });
@@ -960,6 +967,11 @@ public class AceEditor implements DocDisplay,
    public Rectangle getCursorBounds()
    {
       Range range = getSession().getSelection().getRange();
+      return toScreenCoordinates(range);
+   }
+   
+   public Rectangle toScreenCoordinates(Range range)
+   {
       Renderer renderer = widget_.getEditor().getRenderer();
       ScreenCoordinates start = renderer.textToScreenCoordinates(
                   range.getStart().getRow(),
@@ -972,7 +984,22 @@ public class AceEditor implements DocDisplay,
                            end.getPageX() - start.getPageX(),
                            renderer.getLineHeight());
    }
-
+   
+   public Position toDocumentPosition(ScreenCoordinates coordinates)
+   {
+      return widget_.getEditor().getRenderer().screenToTextCoordinates(
+            coordinates.getPageX(),
+            coordinates.getPageY());
+   }
+   
+   public Range toDocumentRange(Rectangle rectangle)
+   {
+      Renderer renderer = widget_.getEditor().getRenderer();
+      return Range.fromPoints(
+            renderer.screenToTextCoordinates(rectangle.getLeft(), rectangle.getTop()),
+            renderer.screenToTextCoordinates(rectangle.getRight(), rectangle.getBottom()));
+   }
+   
    public Rectangle getPositionBounds(InputEditorPosition position)
    {
       Renderer renderer = widget_.getEditor().getRenderer();
@@ -2173,6 +2200,17 @@ public class AceEditor implements DocDisplay,
       return widget_.getEditor().getSession().createAnchoredRange(start, end);
    }
    
+   public long getLastModifiedTime()
+   {
+      return lastModifiedTime_;
+   }
+   
+   public long getLastCursorChangedTime()
+   {
+      return lastCursorChangedTime_;
+   }
+   
+   
    private static final int DEBUG_CONTEXT_LINES = 2;
    private final HandlerManager handlers_ = new HandlerManager(this);
    private final AceEditorWidget widget_;
@@ -2200,7 +2238,11 @@ public class AceEditor implements DocDisplay,
    private static final ExternalJavaScriptLoader extLanguageToolsLoader_ =
          new ExternalJavaScriptLoader(AceResources.INSTANCE.extLanguageTools().getSafeUri().asString());
    
-   
    private boolean popupVisible_;
+   
+   private final DiagnosticsBackgroundPopup diagnosticsBgPopup_;
+   
+   private long lastCursorChangedTime_;
+   private long lastModifiedTime_;
    
 }
