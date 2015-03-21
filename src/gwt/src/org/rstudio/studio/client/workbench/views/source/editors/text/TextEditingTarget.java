@@ -68,7 +68,7 @@ import org.rstudio.studio.client.common.filetypes.FileTypeCommands;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.SweaveFileType;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
-import org.rstudio.studio.client.common.r.RoxygenHelper;
+import org.rstudio.studio.client.common.r.roxygen.RoxygenHelper;
 import org.rstudio.studio.client.common.rnw.RnwWeave;
 import org.rstudio.studio.client.common.synctex.Synctex;
 import org.rstudio.studio.client.common.synctex.SynctexUtils;

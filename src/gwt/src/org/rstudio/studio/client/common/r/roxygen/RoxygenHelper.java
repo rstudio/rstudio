@@ -12,26 +12,39 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.common.r;
+package org.rstudio.studio.client.common.r.roxygen;
 
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
+import com.google.inject.Inject;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
+import org.rstudio.studio.client.common.filetypes.DocumentMode;
+import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.Scope;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.TokenCursor;
 
 public class RoxygenHelper
 {
    public RoxygenHelper(DocDisplay docDisplay)
    {
       editor_ = (AceEditor) docDisplay;
+   }
+   
+   @Inject
+   void initialize(RoxygenServerOperations server)
+   {
+      server_ = server;
    }
    
    private static native final String getFunctionName(Scope scope)
@@ -46,22 +59,170 @@ public class RoxygenHelper
    
    public void insertRoxygenSkeleton()
    {
-      Scope scope = editor_.getCurrentScope();
-      if (scope == null || !scope.isFunction())
+      if (!DocumentMode.isCursorInRMode(editor_))
          return;
       
+      Scope scope = editor_.getCurrentScope();
+      if (scope != null && scope.isFunction())
+      {
+         insertRoxygenSkeletonFunction(scope);
+         return;
+      }
+      
+      TokenCursor cursor = getTokenCursor();
+      if (cursorLiesWithinSetClass(cursor))
+      {
+         insertRoxygenSkeletonS4Class(cursor);
+         return;
+      }
+   }
+   
+   private TokenCursor getTokenCursor()
+   {
+      return editor_.getSession().getMode().getCodeModel().getTokenCursor();
+   }
+   
+   private void insertRoxygenSkeletonS4Class(TokenCursor cursor)
+   {
+      final Position startPos = cursor.currentPosition();
+      if (!cursor.moveToNextToken())
+         return;
+      
+      if (!cursor.currentValue().equals("("))
+         return;
+      
+      if (!cursor.fwdToMatchingToken())
+         return;
+      
+      Position endPos = cursor.currentPosition();
+      endPos.setColumn(endPos.getColumn() + 1);
+      
+      String setClassCall = editor_.getSession().getTextRange(
+            Range.fromPoints(startPos, endPos));
+      
+      server_.getSetClassSlots(
+            setClassCall,
+            new ServerRequestCallback<S4Slots>()
+            {
+               @Override
+               public void onResponseReceived(S4Slots response)
+               {
+                  if (hasRoxygenBlock(startPos))
+                  {
+                     amendExistingRoxygenBlock(
+                           startPos.getRow(),
+                           response.getClassName(),
+                           response.getSlots(),
+                           RE_ROXYGEN_SLOT);
+                  }
+                  else
+                  {
+                     insertRoxygenTemplateForS4Class(
+                           startPos,
+                           response);
+                  }
+               }
+               
+               @Override
+               public void onError(ServerError error)
+               {
+                  Debug.logError(error);
+               }
+            });
+   }
+   
+   private String slotsToExampleRoxygen(S4Slots slots)
+   {
+      if (slots.getNumSlots() == 0)
+         return "";
+      
+      String output = slotAsRoxygen(slots, 0) + "\n";
+      for (int i = 1; i < slots.getNumSlots(); i++)
+         output += slotAsRoxygen(slots, i) + "\n";
+      return output;
+   }
+   
+   private String slotAsRoxygen(S4Slots slots, int index)
+   {
+      return 
+            "#' @slot " + 
+            slots.getSlots().get(index) + 
+            " " +
+            slots.getTypes() + ". " +
+            "Description of slot '" + slots.getSlots().get(index);
+   }
+   
+   private void insertRoxygenTemplateForS4Class(
+         Position startPos,
+         S4Slots slots)
+   {
+      String className = slots.getClassName();
+      String slotDescriptions = slotsToExampleRoxygen(slots);
+      
+      // Add some spacing between params and the next tags,
+      // if there were one or more arguments.
+      if (slots.getSlots().length() != 0)
+         slotDescriptions += "\n#'\n";
+      
+      String block = 
+                  "#' Class '" + className + "'\n" +
+                  "#'\n" +
+                  "#' This is an Roxygen description.\n" +
+                  "#' It can span multiple lines.\n" +
+                  "#'\n" +
+                  slotDescriptions +
+                  "#' @export\n" +
+                  "#' @examples\n" +
+                  "#' ## How is '" + className + "' used?\n"
+       ;
+      
+      editor_.insertCode(startPos, block);
+   }
+   
+   
+   // NOTE: Sets 'setClassPos' on success
+   private boolean cursorLiesWithinSetClass(TokenCursor cursor)
+   {
+      if (!cursor.moveToPosition(editor_.getCursorPosition()))
+         return false;
+      
+      while (cursor.findOpeningBracket("(", false))
+      {
+         if (!cursor.moveToPreviousToken())
+            return false;
+         
+         if (cursor.currentValue().equals("setClass") ||
+             cursor.currentValue().equals("\"setClass\""))
+         {
+            return true;
+         }
+      }
+      
+      return false;
+   }
+   
+   public void insertRoxygenSkeletonFunction(Scope scope)
+   {
       // Attempt to find the bounds for the roxygen block
       // associated with this function, if it exists
-      if (hasRoxygenBlock(scope))
-         amendExistingRoxygenBlock(scope);
+      if (hasRoxygenBlock(scope.getPreamble()))
+         amendExistingRoxygenBlock(
+               scope.getPreamble().getRow() - 1,
+               getFunctionName(scope),
+               getFunctionArgs(scope),
+               RE_ROXYGEN_PARAM);
       else
          insertRoxygenTemplateForScope(scope);
    }
    
-   private void amendExistingRoxygenBlock(Scope scope)
+   private void amendExistingRoxygenBlock(
+         int row,
+         String objectName,
+         JsArrayString objectArgs,
+         Pattern pattern)
    {
       // Get the range encompassing this Roxygen block.
-      Range range = getRoxygenBlockRange(scope);
+      Range range = getRoxygenBlockRange(row);
       
       // Extract that block (as an array of strings)
       JsArrayString block = extractRoxygenBlock(
@@ -76,20 +237,21 @@ public class RoxygenHelper
       
       // Scan through the block to get the names of
       // pre-existing parameters.
-      JsArrayString params = listParametersInRoxygenBlock(block);
+      JsArrayString params = listParametersInRoxygenBlock(
+            block,
+            pattern);
       
       // Figure out what parameters need to be removed, and remove them.
       // Any parameter not mentioned in the current function's argument list
       // should be stripped out.
-      JsArrayString fnArgs = getFunctionArgs(scope);
-      JsArrayString paramsToRemove = setdiff(params, fnArgs);
+      JsArrayString paramsToRemove = setdiff(params, objectArgs);
       
       int blockLength = block.length();
       for (int i = 0; i < blockLength; i++)
       {
          // If we encounter a param we don't want to extract, then
          // move over it.
-         Match match = RE_ROXYGEN_PARAM.match(block.get(i), 0);
+         Match match = pattern.match(block.get(i), 0);
          if (match != null && contains(paramsToRemove, match.getGroup(1)))
          {
             i++;
@@ -107,14 +269,14 @@ public class RoxygenHelper
       // present in the function prototype, but not present
       // within the roxygen block.
       int insertionPosition = findParamsInsertionPosition(replacement);
-      JsArrayString paramsToAdd = setdiff(fnArgs, params);
+      JsArrayString paramsToAdd = setdiff(objectArgs, params);
       
       // NOTE: modifies replacement
       spliceIntoArray(replacement, paramsToAdd, roxygenDelim, insertionPosition);
       
       // Ensure space between final param and next tag
-      ensureSpaceBetweenFirstParamAndPreviousEntry(replacement, roxygenDelim);
-      ensureSpaceBetweenFinalParamAndNextTag(replacement, roxygenDelim);
+      ensureSpaceBetweenFirstParamAndPreviousEntry(replacement, roxygenDelim, pattern);
+      ensureSpaceBetweenFinalParamAndNextTag(replacement, roxygenDelim, pattern);
       
       // Apply the replacement.
       editor_.getSession().replace(range, replacement.join("\n") + "\n");
@@ -122,12 +284,13 @@ public class RoxygenHelper
    
    private void ensureSpaceBetweenFirstParamAndPreviousEntry(
          JsArrayString replacement,
-         String roxygenDelim)
+         String roxygenDelim,
+         Pattern pattern)
    {
       int n = replacement.length();
       for (int i = 1; i < n; i++)
       {
-         if (RE_ROXYGEN_PARAM.test(replacement.get(i)))
+         if (pattern.test(replacement.get(i)))
          {
             if (!RE_ROXYGEN_EMPTY.test(replacement.get(i - 1)))
                spliceIntoArray(replacement, roxygenDelim, i);
@@ -138,12 +301,13 @@ public class RoxygenHelper
    
    private void ensureSpaceBetweenFinalParamAndNextTag(
          JsArrayString replacement,
-         String roxygenDelim)
+         String roxygenDelim,
+         Pattern pattern)
    {
       int n = replacement.length();
       for (int i = n - 1; i >= 0; i--)
       {
-         if (RE_ROXYGEN_PARAM.test(replacement.get(i)))
+         if (pattern.test(replacement.get(i)))
          {
             i++;
             if (i < n && RE_ROXYGEN_WITH_TAG.test(replacement.get(i)))
@@ -240,13 +404,15 @@ public class RoxygenHelper
       return lines.slice(range.start.row, range.end.row);
    }-*/;
    
-   private JsArrayString listParametersInRoxygenBlock(JsArrayString block)
+   private JsArrayString listParametersInRoxygenBlock(
+         JsArrayString block,
+         Pattern pattern)
    {
       JsArrayString roxygenParams = JsArrayString.createArray().cast();
       for (int i = 0; i < block.length(); i++)
       {
          String line = block.get(i);
-         Match match = RE_ROXYGEN_PARAM.match(line, 0);
+         Match match = pattern.match(line, 0);
          if (match != null)
             roxygenParams.push(match.getGroup(1));
       }
@@ -254,9 +420,8 @@ public class RoxygenHelper
       return roxygenParams;
    }
    
-   private Range getRoxygenBlockRange(Scope scope)
+   private Range getRoxygenBlockRange(int row)
    {
-      int row = scope.getPreamble().getRow() - 1;
       while (row >= 0 && StringUtil.isWhitespace(editor_.getLine(row)))
          row--;
       
@@ -275,10 +440,9 @@ public class RoxygenHelper
             Position.create(blockEnd, 0));
    }
    
-   private boolean hasRoxygenBlock(Scope scope)
+   private boolean hasRoxygenBlock(Position position)
    {
-      Position fnStartPos = scope.getPreamble();
-      int row = fnStartPos.getRow() - 1;
+      int row = position.getRow() - 1;
       if (row < 0) return false;
       
       // Skip whitespace.
@@ -331,7 +495,18 @@ public class RoxygenHelper
       return "#' @param " + arg + " Description of '" + arg + "'";
    }
    
+   public static class S4Slots extends JavaScriptObject
+   {
+      protected S4Slots() {}
+      
+      public final native String getClassName() /*-{ return this["className"]; }-*/;
+      public final native JsArrayString getSlots() /*-{ return this["slots"]; }-*/;
+      public final native JsArrayString getTypes() /*-{ return this["types"]; }-*/;
+      public final native int getNumSlots() /*-{ return this["slots"].length; }-*/;
+   }
+   
    private final AceEditor editor_;
+   private RoxygenServerOperations server_;
    
    private static final Pattern RE_ROXYGEN =
          Pattern.create("^(\\s*#+')", "");
@@ -341,6 +516,9 @@ public class RoxygenHelper
    
    private static final Pattern RE_ROXYGEN_PARAM =
          Pattern.create("^\\s*#+'\\s*@param\\s+([^\\s]+)", "");
+   
+   private static final Pattern RE_ROXYGEN_SLOT =
+         Pattern.create("^\\s*#+'\\s*@slot\\s+([^\\s]+)", "");
    
    private static final Pattern RE_ROXYGEN_WITH_TAG =
          Pattern.create("^\\s*#+'\\s*@[^@]", "");

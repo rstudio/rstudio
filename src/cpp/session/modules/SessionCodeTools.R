@@ -1088,3 +1088,54 @@
    return(message)
    
 })
+
+setClass("Foo", representation(x = "bar"))
+
+.rs.addJsonRpcHandler("get_set_class_slots", function(setClassCallString)
+{
+   onFail <- list()
+   parsed <- tryCatch(
+      suppressWarnings(parse(text = setClassCallString))[[1]],
+      error = function(e) NULL
+   )
+   
+   if (is.null(parsed))
+      return(onFail)
+   
+   matched <- tryCatch(
+      match.call(methods::setClass, parsed),
+      error = function(e) NULL
+   )
+   
+   if (is.null(parsed))
+      return(onFail)
+   
+   # NOTE: Previously, R has used 'representation' to 
+   # store the information about slots; it is now 
+   # deprecated (from 3.0.0) and the use of 'slots' is
+   # encouraged. We'll check for 'slots' first, then
+   # fall back to representation if necessary.
+   field <- if ("slots" %in% names(matched))
+      matched[["slots"]]
+   else if ("representation" %in% names(matched))
+      matched[["representation"]]
+   else
+      NULL
+   
+   if (!length(field))
+      return(onFail)
+   
+   className <- if ("Class" %in% names(matched))
+      matched[["Class"]]
+   else
+      ""
+   
+   result <- list(
+      className = className,
+      slots = names(field)[-1],
+      types = unlist(lapply(2:length(field), function(i) {
+         tryCatch(as.character(field[[i]]), error = function(e) "")
+      }))
+   )
+   return(result)
+})

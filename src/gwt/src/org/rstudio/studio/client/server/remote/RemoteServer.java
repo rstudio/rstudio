@@ -54,6 +54,7 @@ import org.rstudio.studio.client.common.debugging.model.TopLevelLineData;
 import org.rstudio.studio.client.common.dependencies.model.Dependency;
 import org.rstudio.studio.client.common.mirrors.model.CRANMirror;
 import org.rstudio.studio.client.common.presentation.model.SlideNavigation;
+import org.rstudio.studio.client.common.r.roxygen.RoxygenHelper.S4Slots;
 import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
 import org.rstudio.studio.client.common.shell.ShellInput;
@@ -3980,6 +3981,15 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, LINT_R_SOURCE_DOCUMENT, params, requestCallback);
    }
    
+   @Override
+   public void getSetClassSlots(String setClassCall,
+                                ServerRequestCallback<S4Slots> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(setClassCall));
+      sendRequest(RPC_SCOPE, GET_SET_CLASS_SLOTS, params, requestCallback);
+   }
+   
    private String clientId_;
    private double clientVersion_ = 0;
    private boolean listeningForEvents_;
@@ -4303,5 +4313,7 @@ public class RemoteServer implements Server
    private static final String GET_PENDING_ACTIONS = "get_pending_actions";
    
    private static final String LINT_R_SOURCE_DOCUMENT = "lint_r_source_document";
+   
+   private static final String GET_SET_CLASS_SLOTS = "get_set_class_slots";
   
 }
