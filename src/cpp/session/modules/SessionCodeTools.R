@@ -1089,8 +1089,6 @@
    
 })
 
-setClass("Foo", representation(x = "bar"))
-
 .rs.addJsonRpcHandler("get_set_class_slots", function(setClassCallString)
 {
    onFail <- list()
@@ -1115,27 +1113,36 @@ setClass("Foo", representation(x = "bar"))
    # deprecated (from 3.0.0) and the use of 'slots' is
    # encouraged. We'll check for 'slots' first, then
    # fall back to representation if necessary.
+   # 
+   # NOTE: Okay to define a class with no slots / fields.
    field <- if ("slots" %in% names(matched))
       matched[["slots"]]
    else if ("representation" %in% names(matched))
       matched[["representation"]]
    else
-      NULL
+      list()
    
-   if (!length(field))
+   if (!("Class" %in% names(matched)))
       return(onFail)
    
-   className <- if ("Class" %in% names(matched))
-      matched[["Class"]]
+   className <- matched[["Class"]]
+   
+   slots <- if (length(field))
+      names(field)[-1]
    else
-      ""
+      character()
+   
+   types <- if (length(field))
+      unlist(lapply(2:length(field), function(i) {
+         tryCatch(as.character(field[[i]]), error = function(e) "")
+      }))
+   else
+      character()
    
    result <- list(
       className = className,
-      slots = names(field)[-1],
-      types = unlist(lapply(2:length(field), function(i) {
-         tryCatch(as.character(field[[i]]), error = function(e) "")
-      }))
+      slots = slots,
+      types = types
    )
    return(result)
 })

@@ -35,6 +35,8 @@ import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.NewFileMenu;
 import org.rstudio.studio.client.common.impl.DesktopFileDialogs;
 import org.rstudio.studio.client.common.latex.LatexProgramRegistry;
+import org.rstudio.studio.client.common.r.roxygen.RoxygenHelper;
+import org.rstudio.studio.client.common.r.roxygen.RoxygenServerOperations;
 import org.rstudio.studio.client.common.rnw.RnwWeaveRegistry;
 import org.rstudio.studio.client.common.rnw.RnwWeaveSelectWidget;
 import org.rstudio.studio.client.common.rpubs.ui.RPubsUploadDialog;
@@ -113,6 +115,7 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(LintManager manager);
    void injectMembers(CompletionRequester requester);
    void injectMembers(EditSnippetsDialog dialog);
+   void injectMembers(RoxygenHelper helper);
    
    public static final RStudioGinjector INSTANCE = GWT.create(RStudioGinjector.class);
 

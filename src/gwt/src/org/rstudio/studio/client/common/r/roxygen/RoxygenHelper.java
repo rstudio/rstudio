@@ -23,6 +23,7 @@ import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.filetypes.DocumentMode;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -39,6 +40,7 @@ public class RoxygenHelper
    public RoxygenHelper(DocDisplay docDisplay)
    {
       editor_ = (AceEditor) docDisplay;
+      RStudioGinjector.INSTANCE.injectMembers(this);
    }
    
    @Inject
@@ -110,9 +112,10 @@ public class RoxygenHelper
                   if (hasRoxygenBlock(startPos))
                   {
                      amendExistingRoxygenBlock(
-                           startPos.getRow(),
+                           startPos.getRow() - 1,
                            response.getClassName(),
                            response.getSlots(),
+                           "slot",
                            RE_ROXYGEN_SLOT);
                   }
                   else
@@ -144,12 +147,15 @@ public class RoxygenHelper
    
    private String slotAsRoxygen(S4Slots slots, int index)
    {
+      String slot = slots.getSlots().get(index);
+      String type = slots.getTypes().get(index);
+      
       return 
             "#' @slot " + 
-            slots.getSlots().get(index) + 
+            slot + 
             " " +
-            slots.getTypes() + ". " +
-            "Description of slot '" + slots.getSlots().get(index);
+            type + ". " +
+            "Description of slot '" + type + "'.";
    }
    
    private void insertRoxygenTemplateForS4Class(
@@ -162,13 +168,16 @@ public class RoxygenHelper
       // Add some spacing between params and the next tags,
       // if there were one or more arguments.
       if (slots.getSlots().length() != 0)
-         slotDescriptions += "\n#'\n";
+         slotDescriptions += "#'\n";
       
       String block = 
                   "#' Class '" + className + "'\n" +
                   "#'\n" +
-                  "#' This is an Roxygen description.\n" +
-                  "#' It can span multiple lines.\n" +
+                  "#' Provide a description of your S4 class in the\n" +
+                  "#' first paragraph. It can span multiple lines.\n" +
+                  "#'\n" +
+                  "#' Provide extra details (if necessary) about the usage\n" +
+                  "#' of your class in the second paragraph.\n" +
                   "#'\n" +
                   slotDescriptions +
                   "#' @export\n" +
@@ -186,16 +195,16 @@ public class RoxygenHelper
       if (!cursor.moveToPosition(editor_.getCursorPosition()))
          return false;
       
+      if (cursor.currentValue().equals("setClass"))
+         return true;
+      
       while (cursor.findOpeningBracket("(", false))
       {
          if (!cursor.moveToPreviousToken())
             return false;
          
-         if (cursor.currentValue().equals("setClass") ||
-             cursor.currentValue().equals("\"setClass\""))
-         {
+         if (cursor.currentValue().equals("setClass"))
             return true;
-         }
       }
       
       return false;
@@ -210,6 +219,7 @@ public class RoxygenHelper
                scope.getPreamble().getRow() - 1,
                getFunctionName(scope),
                getFunctionArgs(scope),
+               "param",
                RE_ROXYGEN_PARAM);
       else
          insertRoxygenTemplateForScope(scope);
@@ -219,6 +229,7 @@ public class RoxygenHelper
          int row,
          String objectName,
          JsArrayString objectArgs,
+         String tagName,
          Pattern pattern)
    {
       // Get the range encompassing this Roxygen block.
@@ -268,11 +279,16 @@ public class RoxygenHelper
       // Now, add example roxygen for any parameters that are
       // present in the function prototype, but not present
       // within the roxygen block.
-      int insertionPosition = findParamsInsertionPosition(replacement);
+      int insertionPosition = findParamsInsertionPosition(replacement, pattern);
       JsArrayString paramsToAdd = setdiff(objectArgs, params);
       
       // NOTE: modifies replacement
-      spliceIntoArray(replacement, paramsToAdd, roxygenDelim, insertionPosition);
+      insertNewTags(
+            replacement,
+            paramsToAdd,
+            roxygenDelim,
+            tagName,
+            insertionPosition);
       
       // Ensure space between final param and next tag
       ensureSpaceBetweenFirstParamAndPreviousEntry(replacement, roxygenDelim, pattern);
@@ -327,18 +343,19 @@ public class RoxygenHelper
       array.splice(pos, 0, string);
    }-*/;
    
-   private static final native void spliceIntoArray(
+   private static final native void insertNewTags(
          JsArrayString array,
          JsArrayString toInsert,
          String roxygenDelim,
+         String tagName,
          int position)
    /*-{
       
       for (var i = 0; i < toInsert.length; i++)
          toInsert[i] = 
             roxygenDelim +
-            " @param " + toInsert[i] + 
-            " Description of '" + toInsert[i] + "'";
+            " @" + tagName + " " + toInsert[i] + 
+            " Description of '" + toInsert[i] + "'.";
          
       Array.prototype.splice.apply(
          array,
@@ -347,13 +364,15 @@ public class RoxygenHelper
       
    }-*/;
    
-   private int findParamsInsertionPosition(JsArrayString block)
+   private int findParamsInsertionPosition(
+         JsArrayString block,
+         Pattern pattern)
    {
       // Try to find the last '@param' block, and insert after that.
       int n = block.length();
       for (int i = n - 1; i >= 0; i--)
       {
-         if (RE_ROXYGEN_PARAM.test(block.get(i)))
+         if (pattern.test(block.get(i)))
          {
             i++;
             
@@ -468,8 +487,11 @@ public class RoxygenHelper
       String block = 
                   "#' Function '" + fnName + "'\n" +
                   "#'\n" +
-                  "#' This is an Roxygen description.\n" +
-                  "#' It can span multiple lines.\n" +
+                  "#' Provide a description of your function in the\n" +
+                  "#' first paragraph. It can span multiple lines.\n" +
+                  "#'\n" +
+                  "#' Provide extra details (if necessary) about the usage\n" +
+                  "#' of your function in the second paragraph.\n" +
                   "#'\n" +
                   roxygenParams +
                   "#' @return What does the function return?\n" +
