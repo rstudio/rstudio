@@ -30,6 +30,7 @@
 
 #include <session/SessionUserSettings.hpp>
 #include <session/SessionModuleContext.hpp>
+#include <session/SessionSourceDatabase.hpp>
 #include <session/projects/SessionProjects.hpp>
 
 #include <boost/shared_ptr.hpp>
@@ -539,6 +540,39 @@ void checkAndNotifyClientIfSnippetsAvailable()
    module_context::enqueClientEvent(event);
 }
 
+FilePath s_snippetsMonitoredDir;
+
+void notifySnippetsChanged()
+{
+   Error error = core::writeStringToFile(
+          s_snippetsMonitoredDir.childPath("changed"),
+          core::system::generateUuid());
+   if (error)
+      LOG_ERROR(error);
+}
+
+void onDocUpdated(boost::shared_ptr<source_database::SourceDocument> pDoc)
+{
+   if (s_snippetsMonitoredDir.empty())
+      return;
+
+   if (pDoc->path().empty() || pDoc->dirty())
+      return;
+
+   FilePath snippetsDir = getSnippetsDir();
+   if (!snippetsDir.exists())
+      return;
+
+   // if this was within the snippets dir then
+   if (module_context::resolveAliasedPath(pDoc->path()).isWithin(snippetsDir))
+      notifySnippetsChanged();
+}
+
+void onSnippetsChanged()
+{
+   checkAndNotifyClientIfSnippetsAvailable();
+}
+
 void afterSessionInitHook(bool newSession)
 {
    if (projects::projectContext().hasProject() &&
@@ -546,6 +580,15 @@ void afterSessionInitHook(bool newSession)
    {
       onNAMESPACEchanged();
    }
+
+   // register to be notified when snippets are changed
+   s_snippetsMonitoredDir = module_context::registerMonitoredUserScratchDir(
+                                            "snippets",
+                                            boost::bind(onSnippetsChanged));
+
+   // fire snippet changed when a user edits a snippet directly in the
+   // source editor
+   source_database::events().onDocUpdated.connect(onDocUpdated);
 }
 
 void onClientInit()
@@ -582,6 +625,8 @@ Error saveSnippets(const json::JsonRpcRequest& request,
             LOG_ERROR(error);
       }
    }
+
+   notifySnippetsChanged();
 
    return Success();
 }
