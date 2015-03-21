@@ -181,6 +181,7 @@ public class RoxygenHelper
                   "#'\n" +
                   slotDescriptions +
                   "#' @export\n" +
+                  "#'\n" +
                   "#' @examples\n" +
                   "#' ## How is '" + className + "' used?\n"
        ;
@@ -192,11 +193,15 @@ public class RoxygenHelper
    // NOTE: Sets 'setClassPos' on success
    private boolean cursorLiesWithinSetClass(TokenCursor cursor)
    {
-      if (!cursor.moveToPosition(editor_.getCursorPosition()))
+      if (!cursor.moveToPositionRightInclusive(editor_.getCursorPosition()))
          return false;
       
       if (cursor.currentValue().equals("setClass"))
          return true;
+      
+      if (cursor.currentValue().equals(")"))
+         if (!cursor.bwdToMatchingToken())
+            return false;
       
       while (cursor.findOpeningBracket("(", false))
       {
@@ -496,6 +501,7 @@ public class RoxygenHelper
                   roxygenParams +
                   "#' @return What does the function return?\n" +
                   "#' @export\n" +
+                  "#'\n" +
                   "#' @examples\n" +
                   "#' ## How is '" + fnName + "' used?\n"
        ;
