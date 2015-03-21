@@ -888,7 +888,15 @@ public class StringUtil
          matchIndex = string.indexOf(ch, matchIndex + 1);
       }
       return indices;
-      
+   }
+   
+   @SuppressWarnings("deprecation") // GWT emulation only provides isSpace
+   public static boolean isWhitespace(String string)
+   {
+      for (int i = 0; i < string.length(); i++)
+         if (!Character.isSpace(string.charAt(i)))
+            return false;
+      return true;
    }
    
    private static final String[] LABELS = {
