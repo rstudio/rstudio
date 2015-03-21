@@ -48,7 +48,10 @@ public class DirectoryClassPathEntry extends ClassPathEntry {
     try {
       return ResourceAccumulatorManager.get(this, pathPrefixSet).getResources();
     } catch (IOException e) {
-      logger.log(TreeLogger.WARN, "The attempt to retrieve files in " + dir + " failed.", e);
+      // Not using logger because there are plenty of places in the compiler that uses
+      // TreeLogger.NULL that causes this problem to be silently ignored.
+      System.err.println("The attempt to retrieve files in " + dir + " failed.");
+      e.printStackTrace();
       return Maps.newLinkedHashMap();
     }
   }

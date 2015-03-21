@@ -37,7 +37,7 @@ import java.util.Map;
  */
 class ResourceAccumulator {
 
-  private static final boolean WATCH_FILE_CHANGES = Boolean.parseBoolean(
+  private static final boolean WATCH_FILE_CHANGES_DEFAULT = Boolean.parseBoolean(
       System.getProperty("gwt.watchFileChanges", "true"));
 
   private Map<AbstractResource, ResourceResolution> resolutionsByResource;
@@ -45,6 +45,7 @@ class ResourceAccumulator {
   private Path rootDirectory;
   private WeakReference<PathPrefixSet> pathPrefixSetRef;
   private WatchService watchService;
+  private boolean watchFileChanges = WATCH_FILE_CHANGES_DEFAULT;
 
   public ResourceAccumulator(Path rootDirectory, PathPrefixSet pathPrefixSet) {
     this.rootDirectory = rootDirectory;
@@ -75,12 +76,20 @@ class ResourceAccumulator {
     resolutionsByResource = Maps.newIdentityHashMap();
     childPathsByParentPath = ArrayListMultimap.create();
 
-    stopWatchService();
-    if (WATCH_FILE_CHANGES) {
-      watchService = FileSystems.getDefault().newWatchService();
-    }
+    maybeInitializeWatchService();
 
     onNewDirectory(rootDirectory);
+  }
+
+  private void maybeInitializeWatchService() throws IOException {
+    if (watchFileChanges) {
+      stopWatchService();
+      try {
+        watchService = FileSystems.getDefault().newWatchService();
+      } catch (IOException e) {
+        watchFileChanges = false;
+      }
+    }
   }
 
   private void stopWatchService() throws IOException {
@@ -135,7 +144,7 @@ class ResourceAccumulator {
       return;
     }
 
-    if (WATCH_FILE_CHANGES) {
+    if (watchService != null) {
       // Start watching the directory.
       directory.register(watchService, ENTRY_CREATE, ENTRY_DELETE);
     }
