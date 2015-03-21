@@ -36,6 +36,7 @@ import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.snippets.SnippetHelper;
 import org.rstudio.studio.client.workbench.snippets.model.SnippetData;
 import org.rstudio.studio.client.workbench.ui.FontSizeManager;
@@ -84,11 +85,13 @@ public class EditSnippetsDialog extends ModalDialogBase implements TextDisplay
    void initialize(EventBus events, 
                    GlobalDisplay globalDisplay,
                    FontSizeManager fontSizeManager,
+                   UIPrefs uiPrefs,
                    LintServerOperations server)
    {
       events_ = events;
       fontSizeManager_ = fontSizeManager;
       globalDisplay_ = globalDisplay;
+      uiPrefs_ = uiPrefs;
       server_ = server;
    }
    
@@ -128,6 +131,8 @@ public class EditSnippetsDialog extends ModalDialogBase implements TextDisplay
      
       // editor
       docDisplay_ = new AceEditor();
+      docDisplay_.setUseSoftTabs(false);
+      docDisplay_.setTabSize(uiPrefs_.numSpacesForTab().getValue());
       docDisplay_.addValueChangeHandler(new ValueChangeHandler<Void>() {
          @Override
          public void onValueChange(ValueChangeEvent<Void> event)
@@ -300,6 +305,7 @@ public class EditSnippetsDialog extends ModalDialogBase implements TextDisplay
    private EventBus events_;
    private GlobalDisplay globalDisplay_;
    private FontSizeManager fontSizeManager_;
+   private UIPrefs uiPrefs_;
    private LintServerOperations server_;
   
 
