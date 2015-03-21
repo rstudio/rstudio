@@ -22,6 +22,13 @@ public class Renderer extends JavaScriptObject
    public static class ScreenCoordinates extends JavaScriptObject
    {
       protected ScreenCoordinates() {}
+      
+      public native final static ScreenCoordinates create(int pageX, int pageY) /*-{
+         return {
+            pageX: pageX,
+            pageY: pageY
+         };
+      }-*/;
 
       public native final int getPageX() /*-{
          return Math.round(this.pageX);
@@ -37,6 +44,10 @@ public class Renderer extends JavaScriptObject
    public native final ScreenCoordinates textToScreenCoordinates(int row,
                                                                  int col) /*-{
       return this.textToScreenCoordinates(row, col);
+   }-*/;
+   
+   public native final Position screenToTextCoordinates(int pageX, int pageY) /*-{
+      return this.screenToTextCoordinates(pageX, pageY);
    }-*/;
 
    public native final void forceScrollbarUpdate() /*-{

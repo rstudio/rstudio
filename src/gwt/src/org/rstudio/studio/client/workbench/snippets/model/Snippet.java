@@ -1,5 +1,5 @@
 /*
- * Markers.java
+ * Snippet.java
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -11,17 +11,25 @@
  * MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
- */package org.rstudio.studio.client.workbench.views.source.editors.text.ace;
+ */
+
+package org.rstudio.studio.client.workbench.snippets.model;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
-public class Markers extends JavaScriptObject
+
+public class Snippet extends JavaScriptObject
 {
-   protected Markers() {}
+   protected Snippet()
+   {
+   }
    
-   // NOTE: no constructor as these are generated internally by Ace
-   public final native int[] getIds() /*-{ return Object.keys(this); }-*/;
-   public final native Marker get(int id) /*-{ return this[id]; }-*/;
-   public final native int size() /*-{ return Object.keys(this).length || 0; }-*/;
-   
+   public final native String getName() /*-{
+      return this.name;
+   }-*/;
+
+   public final native String getContent() /*-{
+      return this.content;
+   }-*/;
+  
 }

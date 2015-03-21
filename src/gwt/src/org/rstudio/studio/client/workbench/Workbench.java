@@ -463,7 +463,7 @@ public class Workbench implements BusyHandler,
                                           event.getInstallerPath());  
       }
    }
-  
+   
    private final Server server_;
    private final EventBus eventBus_;
    private final Session session_;
@@ -479,5 +479,5 @@ public class Workbench implements BusyHandler,
    private final Provider<GitState> pGitState_;
    private final TimeBufferedCommand metricsChangedCommand_;
    private WorkbenchMetrics lastWorkbenchMetrics_;
-   private boolean nearQuotaWarningShown_ = false; 
+   private boolean nearQuotaWarningShown_ = false;
 }

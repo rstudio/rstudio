@@ -96,6 +96,15 @@ void addInferredSymbols(std::set<std::string>* pSymbols)
    }
 }
 
+void addNamespaceSymbols(std::set<std::string>* pSymbols)
+{
+   BOOST_FOREACH(const std::set<std::string>& symbolNames,
+                 RSourceIndex::getImportFromDirectives() | boost::adaptors::map_values)
+   {
+      pSymbols->insert(symbolNames.begin(), symbolNames.end());
+   }
+}
+
 Error getAllAvailableRSymbols(const FilePath& filePath,
                               std::set<std::string>* pSymbols)
 {
@@ -105,10 +114,12 @@ Error getAllAvailableRSymbols(const FilePath& filePath,
    if (error)
       return error;
    
-   // Get all of the symbols made available either by `library()`
-   // calls, or from a NAMESPACE file
+   // Get all of the symbols made available by `library()` calls
+   addInferredSymbols(pSymbols);
+   
+   // Add symbols made available from a package NAMESPACE
    if (projects::projectContext().directory().complete("NAMESPACE").exists())
-      addInferredSymbols(pSymbols);
+      addNamespaceSymbols(pSymbols);
 
    // If this is an R package project, get the symbols for all functions
    // etc. in the project.
@@ -267,11 +278,12 @@ Error lintRSourceDocument(const json::JsonRpcRequest& request,
    // Try to get the contents from the database
    boost::shared_ptr<SourceDocument> pDoc(new SourceDocument());
    error = get(documentId, pDoc);
+   
+   // don't log on error here (it's possible that we might attempt to lint a
+   // document immediately after a suspend-resume, and so we fail to get the
+   // contents of that document)
    if (error)
-   {
-      LOG_ERROR(error);
       return error;
-   }
    
    FilePath origin = module_context::resolveAliasedPath(documentPath);
    
@@ -459,6 +471,74 @@ void onFilesChanged(const std::vector<core::system::FileChangeEvent>& events)
    }
 }
 
+bool isSnippetFilePath(const FilePath& filePath,
+                       std::string* pMode)
+{
+   if (filePath.isDirectory())
+      return false;
+   
+   if (filePath.extensionLowerCase() != ".snippets")
+      return false;
+   
+   *pMode = boost::algorithm::to_lower_copy(filePath.stem());
+   return true;
+}
+
+FilePath getSnippetsDir(bool autoCreate = false)
+{
+   FilePath homeDir = module_context::userHomePath();
+   FilePath snippetsDir = homeDir.childPath(".R/snippets");
+   if (autoCreate)
+   {
+      Error error = snippetsDir.ensureDirectory();
+      if (error)
+         LOG_ERROR(error);
+   }
+   return snippetsDir;
+}
+
+void checkAndNotifyClientIfSnippetsAvailable()
+{
+   FilePath snippetsDir = getSnippetsDir();
+   if (!snippetsDir.exists() || !snippetsDir.isDirectory())
+      return;
+   
+   // Get the contents of each file here, and pass that info back up
+   // to the client
+   std::vector<FilePath> snippetPaths;
+   Error error = snippetsDir.children(&snippetPaths);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+   
+   json::Array jsonData;
+   BOOST_FOREACH(const FilePath& filePath, snippetPaths)
+   {
+      // bail if this doesn't appear to be a snippets file
+      std::string mode;
+      if (!isSnippetFilePath(filePath, &mode))
+         continue;
+      
+      std::string contents;
+      error = readStringFromFile(filePath, &contents);
+      if (error)
+      {
+         LOG_ERROR(error);
+         return;
+      }
+      
+      json::Object snippetJson;
+      snippetJson["mode"] = mode;
+      snippetJson["contents"] = contents;
+      jsonData.push_back(snippetJson);
+   }
+
+   ClientEvent event(client_events::kSnippetsChanged, jsonData);
+   module_context::enqueClientEvent(event);
+}
+
 void afterSessionInitHook(bool newSession)
 {
    if (projects::projectContext().hasProject() &&
@@ -466,6 +546,44 @@ void afterSessionInitHook(bool newSession)
    {
       onNAMESPACEchanged();
    }
+}
+
+void onClientInit()
+{
+   checkAndNotifyClientIfSnippetsAvailable();
+}
+
+Error saveSnippets(const json::JsonRpcRequest& request,
+                   json::JsonRpcResponse* pResponse)
+{
+   json::Array snippetsJson;
+   Error error = json::readParams(request.params, &snippetsJson);
+   if (error)
+      return error;
+
+   FilePath snippetsDir = getSnippetsDir(true);
+   BOOST_FOREACH(const json::Value& valueJson, snippetsJson)
+   {
+      if (json::isType<json::Object>(valueJson))
+      {
+         json::Object snippetJson = valueJson.get_obj();
+         std::string mode, contents;
+         Error error = json::readObject(snippetJson, "mode", &mode,
+                                                     "contents", &contents);
+         if (error)
+         {
+            LOG_ERROR(error);
+            continue;
+         }
+
+         error = writeStringToFile(snippetsDir.childPath(mode + ".snippets"),
+                                   contents);
+         if (error)
+            LOG_ERROR(error);
+      }
+   }
+
+   return Success();
 }
 
 } // anonymous namespace
@@ -477,6 +595,8 @@ core::Error initialize()
    using namespace module_context;
    
    events().afterSessionInitHook.connect(afterSessionInitHook);
+   events().onClientInit.connect(onClientInit);
+   
    session::projects::FileMonitorCallbacks cb;
    cb.onFilesChanged = onFilesChanged;
    projects::projectContext().subscribeToFileMonitor("Diagnostics", cb);
@@ -488,7 +608,8 @@ core::Error initialize()
    ExecBlock initBlock;
    initBlock.addFunctions()
          (bind(sourceModuleRFile, "SessionLinter.R"))
-         (bind(registerRpcMethod, "lint_r_source_document", lintRSourceDocument));
+         (bind(registerRpcMethod, "lint_r_source_document", lintRSourceDocument))
+         (bind(registerRpcMethod, "save_snippets", saveSnippets));
    
    // call once on initialization to ensure lint up to date
    onLintBlacklistChanged();

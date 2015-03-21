@@ -43,6 +43,7 @@
     - Quick find (/)
     - Support a subset of commands in :
     - Use :help for documentation on available commands
+* Configurable snippets for fast insertion of common blocks of code
 * Editor tabs in the source pane can now be rearranged
 * Support for multiple cursors via Ctrl+Alt+Up/Down
 * Alt+Enter to run code while retaining cursor position
@@ -57,14 +58,6 @@
 * New option to control comment continuation on insertion of new lines
 * Reflow text (comment) for markdown and plain text modes
 * Updated to Ace (source editor component) v1.1.8
-* Improved Vim mode:
-    - Various bug fixes
-    - Visual block selection (CTRL + v)
-    - Multiple-cursor aware
-    - Macros (`q`)
-    - Marks (`m`)
-    - Quick find (`/`)
-    - Support a subset of commands in `:`
 * Syntax highlighting modes for many new languages including Clojure,
   CoffeeScript, C#, Go, Groovy, Haskell, Java, Julia, Lisp, Lua, Matlab, Perl,
   Ruby, Rust, and Scala.

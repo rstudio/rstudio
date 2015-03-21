@@ -114,6 +114,7 @@ import org.rstudio.studio.client.workbench.model.TexCapabilities;
 import org.rstudio.studio.client.workbench.model.WorkbenchMetrics;
 import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.SpellingPrefsContext;
+import org.rstudio.studio.client.workbench.snippets.model.SnippetData;
 import org.rstudio.studio.client.workbench.views.environment.model.DataPreviewResult;
 import org.rstudio.studio.client.workbench.views.environment.model.DownloadInfo;
 import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentContextData;
@@ -677,6 +678,12 @@ public class RemoteServer implements Server
             GET_ARGS,
             params,
             requestCallback);
+   }
+   
+   public void saveSnippets(JsArray<SnippetData> snippets,
+                            ServerRequestCallback<Void> callback)
+   {
+      sendRequest(RPC_SCOPE, "save_snippets", snippets, callback);
    }
    
    public void getCompletions(

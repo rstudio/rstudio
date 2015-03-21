@@ -34,6 +34,7 @@ import com.google.gwt.user.client.ui.VerticalPanel;
 
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.Rectangle;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.events.SelectionCommitHandler;
@@ -332,6 +333,17 @@ public class CompletionPopupPanel extends ThemedPopupPanel
    public void displayDataHelp(ParsedInfo help)
    {
       displayPackageHelp(help);
+   }
+   
+   @Override
+   public void displaySnippetHelp(String contents)
+   {
+      if (!completionListIsOnScreen())
+         return;
+      
+      help_.displaySnippetHelp(contents);
+      resolveHelpPosition(!StringUtil.isNullOrEmpty(contents));
+      
    }
 
    public void clearHelp(boolean downloadOperationPending)

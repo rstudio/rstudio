@@ -17,3 +17,8 @@
    margin-top: 4px;
    margin-bottom: 4px;
 }
+
+.snippetText {
+   font-family: fixedWidthFont;
+   white-space: pre-wrap;
+}

@@ -197,6 +197,8 @@ oop.inherits(Mode, TextMode);
       }
    };
 
+   this.$id = "mode/c_cpp";
+
 }).call(Mode.prototype);
 
 exports.Mode = Mode;

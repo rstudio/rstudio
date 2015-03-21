@@ -60,7 +60,7 @@ public class CppCompletionManager implements CompletionManager
       docDisplay_ = docDisplay;
       initFilter_ = initFilter;
       completionContext_ = completionContext;
-      rCompletionManager_ = rCompletionManager; 
+      rCompletionManager_ = rCompletionManager;
       docDisplay_.addClickHandler(new ClickHandler()
       {
          public void onClick(ClickEvent event)
@@ -168,7 +168,7 @@ public class CppCompletionManager implements CompletionManager
          });
       }
    }
-   
+  
    // return false to indicate key not handled
    @Override
    public boolean previewKeyDown(NativeEvent event)
@@ -237,10 +237,7 @@ public class CppCompletionManager implements CompletionManager
          CppCompletionPopupMenu popup = getCompletionPopup();
          if ((popup == null) || !popup.isVisible())
             return false;
-         
-         // let the document know that a popup is showing
-         docDisplay_.setPopupVisible(true);
-         
+             
          // backspace triggers completion if the popup is visible
          if (keyCode == KeyCodes.KEY_BACKSPACE)
          {

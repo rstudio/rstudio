@@ -115,6 +115,8 @@ define("mode/r", function(require, exports, module)
          }
          return false;
       };
+
+      this.$id = "mode/r";
    }).call(Mode.prototype);
    exports.Mode = Mode;
 });

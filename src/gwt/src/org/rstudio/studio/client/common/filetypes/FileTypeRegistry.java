@@ -244,6 +244,10 @@ public class FileTypeRegistry
                false, false, false, false, false,
                false, false, false, false, false, false, false, false);
    
+   public static final TextFileType SNIPPETS =
+         new TextFileType("snippets", "Snippets", EditorLanguage.LANG_SNIPPETS, ".snippets", ICONS.iconSnippets(),
+               false, false, false, false, false,
+               false, false, false, false, false, false, false, false);
    
    public static final RDataType RDATA = new RDataType();
    public static final RProjectType RPROJECT = new RProjectType();
@@ -373,6 +377,7 @@ public class FileTypeRegistry
       register("*.rb", RUBY, icons.iconRuby());
       register("*.rs", RUST, icons.iconRust());
       register("*.scala", SCALA, icons.iconScala());
+      register("*.snippets", SNIPPETS, icons.iconSnippets());
 
       registerIcon(".jpg", icons.iconPng());
       registerIcon(".jpeg", icons.iconPng());

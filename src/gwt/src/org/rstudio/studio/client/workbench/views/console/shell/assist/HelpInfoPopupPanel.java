@@ -127,6 +127,18 @@ public class HelpInfoPopupPanel extends PopupPanel
 
       doDisplay();
    }
+   
+   public void displaySnippetHelp(String contents)
+   {
+      timer_.cancel();
+      vpanel_.clear();
+      
+      Label contentsLabel = new Label(contents.replace("\t", "  "));
+      contentsLabel.addStyleName(RES.styles().snippetText());
+      vpanel_.add(contentsLabel);
+      
+      doDisplay(false);
+   }
 
    public void clearHelp(boolean downloadOperationPending)
    {
@@ -140,8 +152,13 @@ public class HelpInfoPopupPanel extends PopupPanel
    
    private void doDisplay()
    {
+      doDisplay(true);
+   }
+   
+   private void doDisplay(boolean showF1Prompt)
+   {
       vpanel_.setVisible(true);
-      f1prompt_.setVisible(true);
+      f1prompt_.setVisible(showF1Prompt);
       scrollPanel_.setVisible(true);
       
       String newHeight = Math.min(135, vpanel_.getOffsetHeight()) + "px";
