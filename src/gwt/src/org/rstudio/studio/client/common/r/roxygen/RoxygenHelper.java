@@ -387,6 +387,13 @@ public class RoxygenHelper
             editor_.getWidget().getEditor(),
             range);
       
+      // If the block contains roxygen parameters that require
+      // non-local information (e.g. @inheritParams), then
+      // bail. TODO: show small warning?
+      for (int i = 0; i < block.length(); i++)
+         if (RE_ROXYGEN_NONLOCAL.test(block.get(i)))
+            return;
+      
       String roxygenDelim = RE_ROXYGEN.match(block.get(0), 0).getGroup(1);
       
       // The replacement block (we build by munging parts of
@@ -788,4 +795,7 @@ public class RoxygenHelper
             "setMethod",
             "setGeneric"
       }));
+   
+   private static final Pattern RE_ROXYGEN_NONLOCAL =
+         Pattern.create("^\\s*#+'\\s*@(?:inheritParams|template)", "");
 }
