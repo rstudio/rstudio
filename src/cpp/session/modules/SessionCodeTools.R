@@ -1125,7 +1125,7 @@
    if (!("Class" %in% names(matched)))
       return(onFail)
    
-   className <- matched[["Class"]]
+   Class <- matched[["Class"]]
    
    slots <- if (length(field))
       names(field)[-1]
@@ -1140,9 +1140,140 @@
       character()
    
    result <- list(
-      className = className,
+      Class = Class,
       slots = slots,
       types = types
    )
    return(result)
+})
+
+.rs.addFunction("tryParseCall", function(text)
+{
+   tryCatch(
+      suppressWarnings(parse(text = text))[[1]],
+      error = function(e) NULL
+   )
+})
+
+.rs.addFunction("tryMatchCall", function(method, call)
+{
+   tryCatch(
+      suppressWarnings(match.call(method, call)),
+      error = function(e) NULL
+   )
+})
+
+.rs.addFunction("extractElement", function(object,
+                                           name,
+                                           default = NULL)
+{
+   if (name %in% names(object))
+      object[[name]]
+   else
+      default
+})
+
+.rs.addJsonRpcHandler("get_set_generic_call", function(call)
+{
+   parsed <- .rs.tryParseCall(call)
+   if (is.null(parsed))
+      return(list())
+   
+   matched <- .rs.tryMatchCall(methods::setGeneric, parsed)
+   if (is.null(matched))
+      return(list())
+   
+   generic <- .rs.extractElement(matched, "name", "")
+   parameters <- character()
+   if ("def" %in% names(matched))
+   {
+      def <- matched[["def"]]
+      if (as.character(def[[1]]) == "function" &&
+          length(def) > 1)
+      {
+         parameters <- names(def[[2]])
+      }
+   }
+   
+   list(
+      generic = generic,
+      parameters = parameters
+   )
+})
+
+.rs.addJsonRpcHandler("get_set_method_call", function(call)
+{
+   parsed <- .rs.tryParseCall(call)
+   if (is.null(parsed))
+      return(list())
+   
+   matched <- .rs.tryMatchCall(methods::setMethod, parsed)
+   if (is.null(matched))
+      return(list())
+   
+   generic <- .rs.extractElement(matched, "f", "")
+   parameter.names <- character()
+   parameter.types <- character()
+   
+   signature <- .rs.extractElement(matched, "signature")
+   if (!is.null(signature))
+   {
+      if (is.call(signature) &&
+          length(signature) > 1)
+      {
+         parameter.names <- names(signature)[-1]
+         parameter.types <- unlist(lapply(2:length(signature), function(i) {
+            if (is.character(signature[[i]]))
+               signature[[i]]
+            else
+               ""
+         }))
+      }
+      else if (is.character(signature))
+      {
+         parameter.names <- signature
+      }
+   }
+   
+   list(
+      generic = generic,
+      parameter.names = parameter.names,
+      parameter.types = parameter.types
+   )
+   
+})
+
+.rs.addJsonRpcHandler("get_set_ref_class_call", function(call)
+{
+   parsed <- .rs.tryParseCall(call)
+   if (is.null(parsed))
+      return(list())
+   
+   matched <- .rs.tryMatchCall(methods::setRefClass, parsed)
+   if (is.null(matched))
+      return(list())
+   
+   Class <- .rs.extractElement(matched, "Class", "")
+   
+   field.names <- character()
+   field.types <- character()
+   fields <- .rs.extractElement(matched, "fields")
+   
+   if (length(fields) > 1)
+   {
+      field.names <- names(fields)[-1]
+      field.types <- unlist(lapply(2:length(fields), function(i) {
+         if (is.character(fields[[i]]))
+            fields[[i]]
+         else
+            ""
+      }))
+   }
+
+   list(
+      Class = Class,
+      field.names = field.names,
+      field.types = field.types
+   )
+   
 })

@@ -14,13 +14,28 @@
  */
 package org.rstudio.studio.client.common.r.roxygen;
 
-import org.rstudio.studio.client.common.r.roxygen.RoxygenHelper.S4Slots;
+import org.rstudio.studio.client.common.r.roxygen.RoxygenHelper.SetClassCall;
+import org.rstudio.studio.client.common.r.roxygen.RoxygenHelper.SetGenericCall;
+import org.rstudio.studio.client.common.r.roxygen.RoxygenHelper.SetMethodCall;
+import org.rstudio.studio.client.common.r.roxygen.RoxygenHelper.SetRefClassCall;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 
 public interface RoxygenServerOperations
 {
-   void getSetClassSlots(
-         String setClassCall,
-         ServerRequestCallback<S4Slots> requestCallback);
+   void getSetClassCall(
+         String call,
+         ServerRequestCallback<SetClassCall> requestCallback);
+   
+   void getSetGenericCall(
+         String call,
+         ServerRequestCallback<SetGenericCall> requestCallback);
+   
+   void getSetMethodCall(
+         String call,
+         ServerRequestCallback<SetMethodCall> requestCallback);
+   
+   void getSetRefClassCall(
+         String call,
+         ServerRequestCallback<SetRefClassCall> requestCallback);
 
 }

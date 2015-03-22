@@ -40,6 +40,21 @@ public class TokenCursor extends JavaScriptObject
       return this.currentValue();
    }-*/;
    
+   public final String nextValue(int offset)
+   {
+      TokenCursor clone = cloneCursor();
+      for (int i = 0; i < offset; i++)
+         if (!clone.moveToNextToken())
+            return "";
+      
+      return clone.currentValue();
+   }
+   
+   public final String nextValue()
+   {
+      return nextValue(1);
+   }
+   
    public native final String currentType() /*-{
       return this.currentType();
    }-*/;
@@ -135,6 +150,10 @@ public class TokenCursor extends JavaScriptObject
              this.moveToEndOfCurrentStatement();
    }-*/;
    
+   public native final boolean isLeftAssign() /*-{
+      var value = this.currentValue();
+      return value === "<-" || value === "=";
+   }-*/;
    
 }
 

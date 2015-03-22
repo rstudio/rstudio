@@ -508,6 +508,14 @@ public class StringUtil
       return input.substring(0, 1).toUpperCase() + input.substring(1); 
    }
    
+   public static final native String capitalizeAllWords(String input)
+   /*-{
+      return input.replace(
+         /(?:^|\s)\S/g,
+         function(x) { return x.toUpperCase(); }
+      );
+   }-*/;
+   
    public static int countMatches(String line, char chr)
    {
       return line.length() - line.replace(String.valueOf(chr), "").length();
