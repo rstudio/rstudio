@@ -38,6 +38,7 @@ exports.normalizeSnippets = function(snippets)
       var snippet = snippets[i];
       if (snippet.tabTrigger == null)
          snippet.tabTrigger = snippet.name;
+      snippet.content = snippet.content.replace("\n    ", "\n\t");
    }
 };
 
