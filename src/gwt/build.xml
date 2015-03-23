@@ -93,7 +93,8 @@
             <file name="stan.js"/>
          </sources>
          <sources dir="acesupport/snippets">
-            <file name="r.js"/>
+            <file name="snippets.js"/>
+            <file name="snippets/r.js"/>
          </sources>
          <sources dir="acesupport/acetheme">
             <file name="default.js"/>
