@@ -18,36 +18,46 @@ import org.rstudio.core.client.widget.WizardPage;
 import org.rstudio.studio.client.rsconnect.model.RSConnectPublishInput;
 import org.rstudio.studio.client.rsconnect.model.RSConnectPublishResult;
 
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 
 public class PublishStaticPage 
    extends WizardPage<RSConnectPublishInput, RSConnectPublishResult>
 {
+   // Public methods ---------------------------------------------------------
+
    public PublishStaticPage(String title, String subTitle)
    {
       super(title, subTitle, "Publish", 
             RSConnectAccountResources.INSTANCE.localAccountIcon(), 
             RSConnectAccountResources.INSTANCE.localAccountIconLarge());
    }
-
+   
    @Override
    public void focus()
    {
       
    }
 
+   @Override 
+   public void onActivate()
+   {
+      publishWidget_.onActivate();
+   }
+
+   // Protected methods ------------------------------------------------------
+
    @Override
    protected Widget createWidget()
    {
-      return new Label("Static content publishing");
+      publishWidget_ = new PublishStatic(null);
+      return publishWidget_;
    }
 
    @Override
    protected void initialize(RSConnectPublishInput initData)
    {
    }
-
+   
    @Override
    protected RSConnectPublishResult collectInput()
    {
@@ -59,4 +69,6 @@ public class PublishStaticPage
    {
       return false;
    }
+   
+   private PublishStatic publishWidget_;
 }

@@ -1,13 +1,13 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
-	xmlns:g="urn:import:com.google.gwt.user.client.ui"
-	xmlns:rsc="urn:import:org.rstudio.studio.client.rsconnect.ui"
-	xmlns:rw="urn:import:org.rstudio.core.client.widget">
-	<ui:with field="res" type="org.rstudio.studio.client.rsconnect.ui.RSConnectDeploy.DeployResources" />
-	<ui:with field="projRes" type="org.rstudio.studio.client.projects.ui.newproject.NewProjectResources" />
-	<g:HTMLPanel ui:field="rootPanel_">
-	<g:Image ui:field="deployIllustration_"></g:Image>
-	<g:Grid><g:row>
+    xmlns:g="urn:import:com.google.gwt.user.client.ui"
+    xmlns:rsc="urn:import:org.rstudio.studio.client.rsconnect.ui"
+    xmlns:rw="urn:import:org.rstudio.core.client.widget">
+    <ui:with field="res" type="org.rstudio.studio.client.rsconnect.ui.RSConnectDeploy.DeployResources" />
+    <ui:with field="projRes" type="org.rstudio.studio.client.projects.ui.newproject.NewProjectResources" />
+    <g:HTMLPanel ui:field="rootPanel_">
+    <g:Image ui:field="deployIllustration_"></g:Image>
+    <g:Grid><g:row>
     <g:customCell styleName="{res.style.rootCell}">
       <g:VerticalPanel>
         <g:HTMLPanel>
@@ -52,9 +52,9 @@
          </g:HTMLPanel>
       </g:HTMLPanel>
      </g:customCell>
-	</g:row></g:Grid>
-	<g:HTMLPanel visible="false" ui:field="nameValidatePanel_">
-	  <g:Label styleName="{res.style.validateError}" text="Application names must be between 4 and 63 characters, and can contain only alphanumeric characters, dashes, and underscores."></g:Label>
-	</g:HTMLPanel>
-	</g:HTMLPanel>
+   </g:row></g:Grid>
+   <g:HTMLPanel visible="false" ui:field="nameValidatePanel_">
+     <g:Label styleName="{res.style.validateError}" text="Application names must be between 4 and 63 characters, and can contain only alphanumeric characters, dashes, and underscores."></g:Label>
+   </g:HTMLPanel>
+   </g:HTMLPanel>
 </ui:UiBinder> 
