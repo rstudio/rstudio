@@ -1,0 +1,103 @@
+snippet #!
+	#!/usr/bin/env Rscript
+
+# imports
+snippet lib
+	library(${1:package})
+snippet req
+	require(${1:package})
+snippet source
+	source("${1:file}")
+
+# conditionals
+snippet if
+	if (${1:condition}) {
+		${2:code}
+	}
+snippet el
+	else {
+		${1:code}
+	}
+snippet ei
+	else if (${1:condition}) {
+		${2:code}
+	}
+
+# control flow
+snippet for
+	for (${1:var} in ${2:values}) {
+		${3:code}
+	}
+snippet while
+	while (${1:condition}) {
+		${2:code}
+	}
+
+# functions
+snippet fun
+	${1:name} <- function (${2:variables}) {
+		${3:code}
+	}
+snippet ret
+	return(${1:code})
+
+# dataframes, matrixes
+snippet df
+	${1:name}[${2:rows}, ${3:cols}]
+snippet mat
+	matrix(${1:data}, nrow=${2:rows}, ncol=${3:cols})
+
+# apply functions
+snippet apply
+	apply(${1:array}, ${2:margin}, ${3:function})
+snippet lapply
+	lapply(${1:list}, ${2:function})
+snippet sapply
+	lapply(${1:list}, ${2:function})
+snippet vapply
+	vapply(${1:list}, ${2:function}, FUN.VALUE = ${3:type})
+snippet mapply
+	mapply(${1:function}, ${2:...})
+snippet tapply
+	tapply(${1:vector}, ${2:index}, ${3:function})
+snippet rapply
+	rapply(${1:list}, ${2:function})
+
+# plot functions
+snippet pl
+	plot(${1:x}, ${2:y})
+snippet ggp
+	ggplot(${1:data}, aes(${2:aesthetics}))
+snippet img
+	${1:(jpeg,bmp,png,tiff)}(filename="${2:filename}", width=${3}, height=${4}, unit="${5}")
+	${6:plot}
+	dev.off()
+
+# statistical test functions
+snippet fis
+	fisher.test(${1:x}, ${2:y})
+snippet chi
+	chisq.test(${1:x}, ${2:y})
+snippet tt
+	t.test(${1:x}, ${2:y})
+snippet wil
+	wilcox.test(${1:x}, ${2:y})
+snippet cor
+	cor.test(${1:x}, ${2:y})
+snippet fte
+	var.test(${1:x}, ${2:y})
+snippet kvt 
+	kv.test(${1:x}, ${2:y})
+	
+# S4
+snippet sg
+	setGeneric("${1:generic}", function(${2:x, ...}) {
+		standardGeneric("${1:generic}")
+	})
+	snippet sm
+		setMethod("${1:generic}", ${2:"class"}, function(${3:object}, ...) {
+		${0}
+	})
+	snippet sc
+		setClass("${1:Class}", slots = c(${2:name = "type"}))
+
