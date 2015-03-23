@@ -68,6 +68,7 @@ import org.rstudio.studio.client.common.filetypes.FileTypeCommands;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.SweaveFileType;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
+import org.rstudio.studio.client.common.r.roxygen.RoxygenHelper;
 import org.rstudio.studio.client.common.rnw.RnwWeave;
 import org.rstudio.studio.client.common.synctex.Synctex;
 import org.rstudio.studio.client.common.synctex.SynctexUtils;
@@ -382,6 +383,7 @@ public class TextEditingTarget implements
       presentationHelper_ = new TextEditingTargetPresentationHelper(
                                                                   docDisplay_);
       reformatHelper_ = new TextEditingTargetReformatHelper(docDisplay_);
+      
       docDisplay_.setRnwCompletionContext(compilePdfHelper_);
       docDisplay_.setCppCompletionContext(cppCompletionContext_);
       docDisplay_.setRCompletionContext(rContext_);
@@ -807,7 +809,9 @@ public class TextEditingTarget implements
             dirtyState_,
             events_);
 
-      // ensure that Makefile and Makebars always uses tabs
+      roxygenHelper_ = new RoxygenHelper(docDisplay_, view_);
+      
+      // ensure that Makefile and Makevars always use tabs
       name_.addValueChangeHandler(new ValueChangeHandler<String>() {
          @Override
          public void onValueChange(ValueChangeEvent<String> event)
@@ -2047,6 +2051,12 @@ public class TextEditingTarget implements
       }
       
       reformatHelper_.insertPrettyNewlines();
+   }
+   
+   @Handler
+   void onInsertRoxygenSkeleton()
+   {
+      roxygenHelper_.insertRoxygenSkeleton();
    }
    
    @Handler
@@ -4761,6 +4771,7 @@ public class TextEditingTarget implements
    private final TextEditingTargetCppHelper cppHelper_;
    private final TextEditingTargetPresentationHelper presentationHelper_;
    private final TextEditingTargetReformatHelper reformatHelper_;
+   private RoxygenHelper roxygenHelper_;
    private boolean ignoreDeletes_;
    private boolean forceSaveCommandActive_ = false;
    private final TextEditingTargetScopeHelper scopeHelper_;

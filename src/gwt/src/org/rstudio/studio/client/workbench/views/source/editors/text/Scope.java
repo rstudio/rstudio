@@ -109,5 +109,8 @@ public class Scope extends JavaScriptObject
       return typeof this.isAnon !== "undefined" && this.isAnon();
    }-*/;
    
+   public native final JavaScriptObject getAttribute(String name) /*-{
+      return this.attributes[name];
+   }-*/;
 
 }

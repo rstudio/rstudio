@@ -728,7 +728,12 @@ public class AceEditor implements DocDisplay,
    @Override
    public void insertCode(InputEditorPosition position, String content)
    {
-     getSession().insert(selectionToPosition(position), content);
+      insertCode(selectionToPosition(position), content);
+   }
+   
+   public void insertCode(Position position, String content)
+   {
+      getSession().insert(position, content);
    }
 
    @Override
@@ -2198,6 +2203,11 @@ public class AceEditor implements DocDisplay,
                                     Position end)
    {
       return widget_.getEditor().getSession().createAnchoredRange(start, end);
+   }
+   
+   public void insertRoxygenSkeleton()
+   {
+      getSession().getMode().getCodeModel().insertRoxygenSkeleton();
    }
    
    public long getLastModifiedTime()
