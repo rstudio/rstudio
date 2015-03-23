@@ -836,8 +836,6 @@ public class CompilerTest extends ArgProcessorTestBase {
     BarReferencesFooGenerator.runCount = 0;
     CauseStringRebindGenerator.runCount = 0;
     CauseShortRebindGenerator.runCount = 0;
-    // Run GC to help dropping of ResourceAccumulator instances that are no longer needed.
-    System.gc();
   }
 
   public void testAllValidArgs() {
@@ -1671,8 +1669,7 @@ public class CompilerTest extends ArgProcessorTestBase {
       options.addModuleName(topLevelModule);
       options.setWarDir(new File(firstCompileWorkDir, "war"));
       options.setExtraDir(new File(firstCompileWorkDir, "extra"));
-      PrintWriterTreeLogger logger = new PrintWriterTreeLogger();
-      logger.setMaxDetail(TreeLogger.WARN);
+      TreeLogger logger = TreeLogger.NULL;
 
       // Run the compiler once here.
       new Compiler(options).run(logger);
@@ -1766,7 +1763,7 @@ public class CompilerTest extends ArgProcessorTestBase {
     // Wait 1 second so that any new file modification times are actually different.
     Thread.sleep(1001);
     PrintWriterTreeLogger logger = new PrintWriterTreeLogger();
-    logger.setMaxDetail(TreeLogger.WARN);
+    logger.setMaxDetail(TreeLogger.ERROR);
     // We might be reusing the same application dir but we want to make sure that the output dir is
     // clean to avoid confusion when returning the output JS.
     File outputDir = new File(applicationDir.getPath() + File.separator + moduleName);

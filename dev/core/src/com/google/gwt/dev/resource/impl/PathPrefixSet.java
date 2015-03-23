@@ -324,7 +324,9 @@ public class PathPrefixSet {
 
   private void assertValidAbstractDirectoryPathName(String name) {
     assert (name != null);
-    assert (!name.startsWith("/"));
+    // assert ("".equals(name) || (!name.startsWith("/") &&
+    // name.endsWith("/")));
+    assert (!name.startsWith("/") && name.endsWith("/"));
   }
 
   private void assertValidAbstractResourcePathName(String name) {

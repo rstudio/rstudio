@@ -17,6 +17,7 @@ package com.google.gwt.dev.resource.impl;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
+import com.google.gwt.thirdparty.guava.common.collect.Maps;
 import com.google.gwt.thirdparty.guava.common.io.Files;
 
 import java.io.File;
@@ -24,6 +25,7 @@ import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.net.URISyntaxException;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -45,14 +47,19 @@ public class ClassPathEntryTest extends AbstractResourceOrientedTestBase {
     File javaFile = new File(nestedHiddenDir, "ShouldNotBeFound.java");
     javaFile.createNewFile();
 
+    // Prepare a place to record findings.
+    List<Map<AbstractResource, ResourceResolution>> foundFiles =
+        Lists.<Map<AbstractResource, ResourceResolution>> newArrayList();
+    foundFiles.add(Maps.<AbstractResource, ResourceResolution> newHashMap());
+
     // Perform a class path directory inspection.
     DirectoryClassPathEntry cpe = new DirectoryClassPathEntry(tempDir);
-    Map<AbstractResource, ResourceResolution> resources =
-        cpe.findApplicableResources(TreeLogger.NULL, createInclusivePathPrefixSet());
+    cpe.descendToFindResources(TreeLogger.NULL, Lists.newArrayList(createInclusivePathPrefixSet()),
+        foundFiles, tempDir, "");
 
     // Verify that even though we're using an ALL filter, we still didn't find any files inside the
     // .svn dir, because we never even enumerate its contents.
-    assertTrue(resources.isEmpty());
+    assertTrue(foundFiles.get(0).isEmpty());
   }
 
   public void testResourceCreated() throws IOException, InterruptedException {
@@ -63,60 +70,30 @@ public class ClassPathEntryTest extends AbstractResourceOrientedTestBase {
         createInclusivePathPrefixSet(), createInclusivePathPrefixSet()));
   }
 
-  public void testForResourceListenerLeaks_pathPrefixSetIsCollected() throws Exception {
+  public void testForResourceListenerLeaks() throws IOException, InterruptedException {
     // Create a folder an initially empty folder.
     PathPrefixSet pathPrefixSet = createInclusivePathPrefixSet();
     DirectoryClassPathEntry classPathEntry = new DirectoryClassPathEntry(Files.createTempDir());
 
-    // Show that we are not listening.
+    // Show that the WeakDirectoryNotifier is not listening for any updates.
     awaitFullGc();
-    assertEquals(0, ResourceAccumulatorManager.getActiveListenerCount());
+    assertEquals(0, DirectoryPathPrefixChangeManager.getActiveListenerCount());
 
     // Start listening for updates.
-    ResourceAccumulatorManager.get(classPathEntry, pathPrefixSet).getResources();
+    DirectoryPathPrefixChangeManager.ensureListening(classPathEntry, pathPrefixSet);
 
-    // Show that we are now listening for updates.
+    // Show that the WeakDirectoryNotifier is now listening for updates.
     awaitFullGc();
-    assertEquals(1, ResourceAccumulatorManager.getActiveListenerCount());
+    assertEquals(1, DirectoryPathPrefixChangeManager.getActiveListenerCount());
 
-    // Dereference the pathPrefixSet to give garbage collector an opportunity to clear any weak
-    // references.
+    // Dereference the classpath entry and pathprefixset and give the garbage collector an
+    // opportunity to clear any weak references.
     pathPrefixSet = null;
-
-    // Show that we are no longer listening for updates.
-    awaitFullGc();
-    assertEquals(0, ResourceAccumulatorManager.getActiveListenerCount());
-
-    // Make sure classPathEntry is not GC'd until this point.
-    assertNotNull(classPathEntry);
-  }
-
-  public void testForResourceListenerLeaks_classPathEntryIsCollected() throws Exception {
-    // Create a folder an initially empty folder.
-    PathPrefixSet pathPrefixSet = createInclusivePathPrefixSet();
-    DirectoryClassPathEntry classPathEntry = new DirectoryClassPathEntry(Files.createTempDir());
-
-    // Show that we are not listening.
-    awaitFullGc();
-    assertEquals(0, ResourceAccumulatorManager.getActiveListenerCount());
-
-    // Start listening for updates.
-    ResourceAccumulatorManager.get(classPathEntry, pathPrefixSet).getResources();
-
-    // Show that we are now listening for updates.
-    awaitFullGc();
-    assertEquals(1, ResourceAccumulatorManager.getActiveListenerCount());
-
-    // Dereference the classPathEntry to give the garbage collector an opportunity to clear any weak
-    // references.
     classPathEntry = null;
 
-    // Show that we are no longer listening for updates.
+    // Show that the WeakDirectoryNotifier is no longer listening for updates.
     awaitFullGc();
-    assertEquals(0, ResourceAccumulatorManager.getActiveListenerCount());
-
-    // Make sure pathPrefixSet is not GC'd until this point.
-    assertNotNull(pathPrefixSet);
+    assertEquals(0, DirectoryPathPrefixChangeManager.getActiveListenerCount());
   }
 
   public void testResourceCreated(Collection<PathPrefixSet> pathPrefixSets) throws IOException,
