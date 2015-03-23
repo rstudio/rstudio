@@ -19,13 +19,17 @@ import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.common.icons.StandardIcons;
+import org.rstudio.studio.client.common.rpubs.RPubsHtmlGenerator;
+import org.rstudio.studio.client.rsconnect.RSConnect;
+import org.rstudio.studio.client.rsconnect.ui.RSConnectPublishButton;
 import org.rstudio.studio.client.workbench.commands.Commands;
 
 public class PlotsToolbar extends Toolbar implements HasCustomizableToolbar
 {    
-   public PlotsToolbar(Commands commands)
+   public PlotsToolbar(Commands commands, RPubsHtmlGenerator plotHtmlGenerator)
    {   
       commands_ = commands ;
+      plotHtmlGenerator_ = plotHtmlGenerator;
       installStandardUI();
    }
    
@@ -58,8 +62,6 @@ public class PlotsToolbar extends Toolbar implements HasCustomizableToolbar
       exportMenu.addItem(commands_.savePlotAsPdf().createMenuItem(false));
       exportMenu.addSeparator();
       exportMenu.addItem(commands_.copyPlotToClipboard().createMenuItem(false));
-      exportMenu.addSeparator();
-      exportMenu.addItem(commands_.publishPlotToRPubs().createMenuItem(false));
       ToolbarButton exportButton = new ToolbarButton(
             "Export", StandardIcons.INSTANCE.export_menu(),
             exportMenu);
@@ -77,8 +79,13 @@ public class PlotsToolbar extends Toolbar implements HasCustomizableToolbar
       addLeftWidget(commands_.refreshPlot().createToolbarButton());
       
       // publish
-      addRightWidget( commands_.publishPlotToRPubs().createToolbarButton());
+      RSConnectPublishButton publishButton = new RSConnectPublishButton(
+            RSConnect.CONTENT_TYPE_PLOT, false, false);
+      publishButton.setHtmlGenerator(plotHtmlGenerator_);
+      addRightWidget(publishButton);
+
    }
    
-   private Commands commands_;   
+   private final Commands commands_;   
+   private final RPubsHtmlGenerator plotHtmlGenerator_;
 }

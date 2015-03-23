@@ -26,12 +26,17 @@ import com.google.gwt.user.client.ui.Panel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
+import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.Size;
 import org.rstudio.core.client.widget.ImageFrame;
 import org.rstudio.core.client.widget.Toolbar;
+import org.rstudio.studio.client.common.SimpleRequestCallback;
+import org.rstudio.studio.client.common.rpubs.RPubsHtmlGenerator;
+import org.rstudio.studio.client.common.zoom.ZoomUtils;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
+import org.rstudio.studio.client.workbench.views.plots.model.PlotsServerOperations;
 import org.rstudio.studio.client.workbench.views.plots.ui.PlotsToolbar;
 
 import java.util.Iterator;
@@ -40,17 +45,43 @@ public class PlotsPane extends WorkbenchPane implements Plots.Display,
       HasResizeHandlers
 {
    @Inject
-   public PlotsPane(Commands commands)
+   public PlotsPane(Commands commands, PlotsServerOperations server)
    {
       super("Plots");
       commands_ = commands;
+      server_ = server;
       ensureWidget();
    }
 
    @Override
    protected Toolbar createMainToolbar()
    {
-      plotsToolbar_ = new PlotsToolbar(commands_);
+      plotsToolbar_ = new PlotsToolbar(commands_, 
+             new RPubsHtmlGenerator() {
+                   @Override
+                   public void generateRPubsHtml(
+                         String title, 
+                         String comment,
+                         final CommandWithArg<String> onCompleted)
+                   {
+                     final Size size = ZoomUtils.getZoomedSize(
+                           getPlotFrameSize(), 
+                           new Size(400, 350), 
+                           new Size(750, 600));
+                      server_.plotsCreateRPubsHtml(
+                         title, 
+                         comment, 
+                         size.width,
+                         size.height,
+                         new SimpleRequestCallback<String>() {
+                            @Override
+                            public void onResponseReceived(String rpubsHtmlFile)
+                            {
+                               onCompleted.execute(rpubsHtmlFile);
+                            }
+                      });
+                   }
+                });
       return plotsToolbar_;
    }
 
@@ -155,6 +186,7 @@ public class PlotsPane extends WorkbenchPane implements Plots.Display,
    private ImageFrame frame_;
    private String plotUrl_;
    private final Commands commands_;
+   private final PlotsServerOperations server_;
    private PlotsToolbar plotsToolbar_ = null;
    private FlowPanel plotsSurface_ = null;
    private Plots.Parent plotsParent_ = new Plots.Parent() { 

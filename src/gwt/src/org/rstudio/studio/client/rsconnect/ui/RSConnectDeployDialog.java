@@ -21,13 +21,9 @@ import java.util.Map;
 import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemItem;
-import org.rstudio.core.client.widget.ProgressIndicator;
-import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.core.client.widget.ThemedButton;
-import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
-import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.FilePathUtils;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.rsconnect.RSConnect;
@@ -94,15 +90,6 @@ public class RSConnectDeployDialog
          public void onClick(ClickEvent event)
          {
             onDeploy();
-         }
-      });
-      
-      contents_.setOnFileAddClick(new Command() 
-      {
-         @Override
-         public void execute()
-         {
-            onAddFileClick();
          }
       });
       
@@ -224,53 +211,6 @@ public class RSConnectDeployDialog
          RSConnectDeploymentRecord record = records.get(i);
          deployments_.put(record.getUrl(), record);
       }
-   }
-   
-   private void onAddFileClick()
-   {
-      FileDialogs dialogs = RStudioGinjector.INSTANCE.getFileDialogs();
-      final FileSystemItem sourceDir = FileSystemItem.createDir(sourceDir_);
-      dialogs.openFile("Select File", 
-            RStudioGinjector.INSTANCE.getRemoteFileSystemContext(), 
-            sourceDir, 
-            new ProgressOperationWithInput<FileSystemItem>()
-            {
-               @Override
-               public void execute(FileSystemItem input, 
-                                   ProgressIndicator indicator)
-               {
-                  if (input != null)
-                  {
-                     String path = input.getPathRelativeTo(sourceDir);
-                     if (path == null)
-                     {
-                        display_.showMessage(GlobalDisplay.MSG_INFO, 
-                              "Cannot Add File", 
-                              "Only files in the same folder as the " +
-                              "document (" + sourceDir_ + ") or one of its " +
-                              "sub-folders may be added.");
-                        return;
-                     }
-                     else
-                     {
-                        // see if the file is already in the list (we don't 
-                        // want to duplicate an existing entry)
-                        ArrayList<String> files = contents_.getFileList();
-                        for (String file: files)
-                        {
-                           if (file.equals(path))
-                           {
-                              indicator.onCompleted();
-                              return;
-                           }
-                        }
-                        contents_.addFileToList(path);
-                        filesAddedManually_.add(path);
-                     }
-                  }
-                  indicator.onCompleted();
-               }
-            });
    }
    
    private final EventBus events_;

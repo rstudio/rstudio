@@ -19,8 +19,11 @@ import java.util.ArrayList;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.OperationWithInput;
+import org.rstudio.core.client.widget.ProgressIndicator;
+import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.rsconnect.model.RSConnectAccount;
 import org.rstudio.studio.client.rsconnect.model.RSConnectApplicationInfo;
@@ -178,10 +181,7 @@ public class RSConnectDeploy extends Composite
          @Override
          public void onClick(ClickEvent arg0)
          {
-            if (onFileAddClick_ != null) 
-            {
-               onFileAddClick_.execute();
-            }
+            onAddFileClick();
          }
       });
       
@@ -332,11 +332,6 @@ public class RSConnectDeploy extends Composite
       onDeployDisabled_ = cmd;
    }
    
-   public void setOnFileAddClick(Command cmd)
-   {
-      onFileAddClick_ = cmd;
-   }
-   
    public DeployStyle getStyle()
    {
       return style_;
@@ -465,7 +460,9 @@ public class RSConnectDeploy extends Composite
                   {
                      // TODO: ignored file persistence
                      setFileList(files.getDirList(), new String[]{});
-                     setFileCheckEnabled(contentPath_, false);
+                     setFileCheckEnabled(
+                           FileSystemItem.createFile(contentPath_).getName(),
+                           false);
                   }
                }
                @Override
@@ -523,6 +520,55 @@ public class RSConnectDeploy extends Composite
       return files;
    }
    
+   private void onAddFileClick()
+   {
+      FileDialogs dialogs = RStudioGinjector.INSTANCE.getFileDialogs();
+      final FileSystemItem sourceDir = 
+            FileSystemItem.createFile(contentPath_).getParentPath();
+      dialogs.openFile("Select File", 
+            RStudioGinjector.INSTANCE.getRemoteFileSystemContext(), 
+            sourceDir, 
+            new ProgressOperationWithInput<FileSystemItem>()
+            {
+               @Override
+               public void execute(FileSystemItem input, 
+                                   ProgressIndicator indicator)
+               {
+                  if (input != null)
+                  {
+                     String path = input.getPathRelativeTo(sourceDir);
+                     if (path == null)
+                     {
+                        display_.showMessage(GlobalDisplay.MSG_INFO, 
+                              "Cannot Add File", 
+                              "Only files in the same folder as the " +
+                              "document (" + sourceDir + ") or one of its " +
+                              "sub-folders may be added.");
+                        return;
+                     }
+                     else
+                     {
+                        // see if the file is already in the list (we don't 
+                        // want to duplicate an existing entry)
+                        ArrayList<String> files = getFileList();
+                        for (String file: files)
+                        {
+                           if (file.equals(path))
+                           {
+                              indicator.onCompleted();
+                              return;
+                           }
+                        }
+                        addFileToList(path);
+                        // TODO: keep track of which files were added manually
+                        // filesAddedManually_.add(path);
+                     }
+                  }
+                  indicator.onCompleted();
+               }
+            });
+   }
+
    @UiField Image deployIllustration_;
    @UiField Anchor urlAnchor_;
    @UiField Anchor addAccountAnchor_;
@@ -541,7 +587,6 @@ public class RSConnectDeploy extends Composite
    
    private Command onDeployEnabled_;
    private Command onDeployDisabled_;
-   private Command onFileAddClick_;
 
    private RSConnectServerOperations server_;
    private GlobalDisplay display_;

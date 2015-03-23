@@ -160,6 +160,8 @@ public class RSConnectPublishButton extends Composite
    public void setHtmlGenerator(RPubsHtmlGenerator generator)
    {
       htmlGenerator_ = generator;
+      if (isVisible())
+         populateDeployments();
    }
 
    // Private methods --------------------------------------------------------

@@ -126,7 +126,7 @@ public class RSConnect implements SessionInitHandler,
    {
       // see if we have the requisite R packages
       dependencyManager_.withRSConnect(
-         "Publishing Shiny applications", null, new Command() {
+         "Publishing content", null, new Command() {
 
             @Override
             public void execute()
@@ -152,6 +152,7 @@ public class RSConnect implements SessionInitHandler,
          {
             publishAsCode(event);
          }
+         // TODO: handle redeployments of R Markdown files
       }
       else 
       {
@@ -210,7 +211,7 @@ public class RSConnect implements SessionInitHandler,
          }
          else if (input.isConnectUIEnabled() && input.isExternalUIEnabled())
          {
-            // TODO: show publish wizard
+            publishWithWizard(event, input);
          }
          else if (input.isConnectUIEnabled() && !input.isExternalUIEnabled())
          {

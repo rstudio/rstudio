@@ -40,7 +40,7 @@ public class PublishMultiplePage
                                                     RSConnectPublishResult>>();
       String singleTitle = "Publish just this document";
       String singleSubtitle = "Only the document " + 
-                              input.getSourceRmd().getStem() + 
+                              input.getSourceRmd().getName() + 
                               " will be published.";
       String multipleTitle = "Publish all documents in the directory";
       String multipleSubtitle = "All of the documents in the directory " + 

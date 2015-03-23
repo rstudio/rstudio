@@ -14,7 +14,6 @@
  */
 package org.rstudio.studio.client.rsconnect.events;
 
-import org.rstudio.studio.client.common.rpubs.RPubsHtmlGenerator;
 import org.rstudio.studio.client.rmarkdown.model.RmdPreviewParams;
 import org.rstudio.studio.client.rsconnect.RSConnect;
 import org.rstudio.studio.client.rsconnect.model.RSConnectDeploymentRecord;

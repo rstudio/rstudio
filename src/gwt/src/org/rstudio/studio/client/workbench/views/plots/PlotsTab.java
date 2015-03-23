@@ -65,8 +65,6 @@ public class PlotsTab extends DelayLoadWorkbenchTab<Plots>
       @Handler
       public abstract void onCopyPlotToClipboard();
       @Handler
-      public abstract void onPublishPlotToRPubs();
-      @Handler
       public abstract void onRefreshPlot();
       @Handler
       public abstract void onShowManipulator();
