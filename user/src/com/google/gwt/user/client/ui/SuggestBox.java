@@ -194,13 +194,11 @@ public class SuggestBox extends Composite implements HasText, HasFocus,
     }
 
     /**
-     * This is here for legacy reasons. It is intentionally not visible.
+     * Check whether or not the list of suggestions is being shown.
      *
-     * @deprecated implemented in DefaultSuggestionDisplay
+     * @return true if the suggestions are visible, false if not
      */
-    @Deprecated
-    boolean isSuggestionListShowingImpl() {
-      // Implemented in DefaultSuggestionDisplay.
+    public boolean isSuggestionListShowing() {
       return false;
     }
 
@@ -337,11 +335,7 @@ public class SuggestBox extends Composite implements HasText, HasFocus,
       return hideWhenEmpty;
     }
 
-    /**
-     * Check whether or not the list of suggestions is being shown.
-     *
-     * @return true if the suggestions are visible, false if not
-     */
+    @Override
     public boolean isSuggestionListShowing() {
       return suggestionPopup.isShowing();
     }
@@ -533,11 +527,6 @@ public class SuggestBox extends Composite implements HasText, HasFocus,
     @Override
     boolean isAnimationEnabledImpl() {
       return isAnimationEnabled();
-    }
-
-    @Override
-    boolean isSuggestionListShowingImpl() {
-      return isSuggestionListShowing();
     }
 
     @Override
@@ -945,16 +934,12 @@ public class SuggestBox extends Composite implements HasText, HasFocus,
   }
 
   /**
-   * Check if the {@link DefaultSuggestionDisplay} is showing. Note that this
-   * method only has a meaningful return value when the
-   * {@link DefaultSuggestionDisplay} is used.
+   * Check if the {@link SuggestionDisplay} is showing.
    *
    * @return true if the list of suggestions is currently showing, false if not
-   * @deprecated use {@link DefaultSuggestionDisplay#isSuggestionListShowing()}
    */
-  @Deprecated
   public boolean isSuggestionListShowing() {
-    return display.isSuggestionListShowingImpl();
+    return display.isSuggestionListShowing();
   }
 
   /**
