@@ -40,7 +40,7 @@ define("mode/r", function(require, exports, module)
       else
          this.$tokenizer = new Tokenizer(new RHighlightRules().getRules());
 
-      this.codeModel = new RCodeModel(session, this.$tokenizer, null);
+      this.codeModel = new RCodeModel(session, this.$tokenizer);
       this.foldingRules = this.codeModel;
       this.$outdent = {};
       oop.implement(this.$outdent, RMatchingBraceOutdent);

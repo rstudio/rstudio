@@ -47,7 +47,7 @@ var RMarkdownHighlightRules = function() {
 
     this.$rules["start"].unshift({
         token: "support.function.codebegin",
-        regex: "^(?:[ ]{4})?`{3,}\\s*\\{r(?:.*)engine\\='Rcpp'(?:.*)\\}\\s*$",
+        regex: "^(?:[ ]{4})?`{3,}\\s*\\{r(?:.*)engine\\s*\\=\\s*['\"]Rcpp['\"](?:.*)\\}\\s*$",
         next: "r-cpp-start"
     });
 

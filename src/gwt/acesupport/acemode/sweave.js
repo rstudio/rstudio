@@ -36,7 +36,14 @@ var Mode = function(suppressHighlighting, session) {
    else
       this.$tokenizer = new Tokenizer(new SweaveHighlightRules().getRules());
 
-   this.codeModel = new RCodeModel(session, this.$tokenizer, /^r-/, /<<(.*?)>>/);
+   this.codeModel = new RCodeModel(
+      session,
+      this.$tokenizer,
+      /^r-/,
+      /<<(.*?)>>/,
+      /^\s*@\s*$/
+   );
+   
    this.foldingRules = this.codeModel;
    this.$sweaveBackgroundHighlighter = new SweaveBackgroundHighlighter(
          session,

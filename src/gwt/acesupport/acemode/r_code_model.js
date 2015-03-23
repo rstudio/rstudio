@@ -39,7 +39,8 @@ function isOneOf(object, array)
 var ScopeManager = require("mode/r_scope_tree").ScopeManager;
 var ScopeNode = require("mode/r_scope_tree").ScopeNode;
 
-var RCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) {
+var RCodeModel = function(session, tokenizer,
+                          statePattern, codeBeginPattern, codeEndPattern) {
 
    this.$session = session;
    this.$doc = session.getDocument();
@@ -48,6 +49,7 @@ var RCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) {
    this.$endStates = new Array(this.$doc.getLength());
    this.$statePattern = statePattern;
    this.$codeBeginPattern = codeBeginPattern;
+   this.$codeEndPattern = codeEndPattern;
    this.$scopes = new ScopeManager(ScopeNode);
 
    var that = this;
@@ -1061,6 +1063,7 @@ var RCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) {
    // set it with the current cursor position.
    this.getNextLineIndent = function(state, line, tab, row)
    {
+      console.log(this.$tokens);
       if (state == "qstring" || state == "qqstring")
          return "";
 
@@ -1583,6 +1586,23 @@ var RCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) {
       return null;
    };
 
+   function isChunkHeaderOrFooter(line)
+   {
+      if (this.$codeBeginPattern &&
+          this.$codeBeginPattern.test(line))
+      {
+         return true;
+      }
+
+      if (this.$codeEndPattern &&
+          this.$codeEndPattern.test(line))
+      {
+         return true;
+      }
+
+      return false;
+   }
+
    this.$tokenizeUpToRow = function(lastRow)
    {
 
@@ -1600,8 +1620,19 @@ var RCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) {
          
          assumeGood = false;
 
-         var state = (row === 0) ? 'start' : this.$endStates[row-1];
-         var lineTokens = this.$tokenizer.getLineTokens(this.$getLine(row), state);
+         var state = (row === 0) ? 'start' : this.$endStates[row - 1];
+         var line = this.$getLine(row);
+         var lineTokens = this.$tokenizer.getLineTokens(line, state);
+
+         // Don't tokenize the beginning, or end, of chunks. This is necessary
+         // for when R is embedded as part of a multi-mode document.
+         if (isChunkHeaderOrFooter.call(this, line))
+         {
+            this.$tokens[row] = [];
+            this.$endStates[row] = lineTokens.state;
+            continue;
+         }
+         
          if (!this.$statePattern ||
              this.$statePattern.test(lineTokens.state) ||
              this.$statePattern.test(state))
