@@ -1,7 +1,7 @@
 /*
  * RSConnect.java
  *
- * Copyright (C) 2009-14 by RStudio, Inc.
+ * Copyright (C) 2009-15 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -45,6 +45,7 @@ import org.rstudio.studio.client.rsconnect.model.RSConnectPublishInput;
 import org.rstudio.studio.client.rsconnect.model.RSConnectPublishResult;
 import org.rstudio.studio.client.rsconnect.model.RSConnectServerOperations;
 import org.rstudio.studio.client.rsconnect.model.RmdPublishDetails;
+import org.rstudio.studio.client.rsconnect.ui.PublishStaticDialog;
 import org.rstudio.studio.client.rsconnect.ui.RSAccountConnector;
 import org.rstudio.studio.client.rsconnect.ui.RSConnectDeployDialog;
 import org.rstudio.studio.client.rsconnect.ui.RSConnectPublishWizard;
@@ -142,6 +143,14 @@ public class RSConnect implements SessionInitHandler,
       dlg.showModal();
    }
    
+   private void publishAsStatic(RSConnectActionEvent event,
+                                RSConnectPublishInput input)
+   {
+      PublishStaticDialog dialog = new PublishStaticDialog(server_, 
+            display_, event.getFromPrevious());
+      dialog.showModal();
+   }
+   
    private void showPublishUI(final RSConnectActionEvent event)
    {
       if (event.getFromPrevious() != null)
@@ -213,50 +222,34 @@ public class RSConnect implements SessionInitHandler,
          }
          else if (input.isConnectUIEnabled() && !input.isExternalUIEnabled())
          {
-            // TODO: show static content publish
+            publishAsStatic(event, input);
          }
       }
       else if (input.getContentType() == CONTENT_TYPE_RMD)
       {
-         if (input.isMultiRmd())
+         if (input.isShiny())
          {
-            if (input.isShiny())
+            if (input.isMultiRmd())
             {
                // multiple Shiny doc
                publishWithWizard(event, input);
             }
             else
             {
-               if (input.isConnectUIEnabled())
-               {
-                  publishWithWizard(event, input);
-               }
-               else
-               {
-                  // RStudio Connect is disabled, go straight to RPubs
-                  publishAsRPubs(event);
-               }
+               // single Shiny doc
+               publishAsCode(event);
             }
          }
          else
          {
-            if (input.isShiny())
+            if (input.isConnectUIEnabled())
             {
-               // single Shiny doc
-               publishAsCode(event);
+               publishWithWizard(event, input);
             }
-            else 
+            else
             {
-               // single static doc
-               if (input.isConnectUIEnabled())
-               {
-                  publishWithWizard(event, input);
-               }
-               else
-               {
-                  // RStudio Connect is disabled, go straight to RPubs
-                  publishAsRPubs(event);
-               }
+               // RStudio Connect is disabled, go straight to RPubs
+               publishAsRPubs(event);
             }
          }
       }
