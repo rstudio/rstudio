@@ -363,6 +363,10 @@
 {
   env <- NULL
 
+  # mark encoding on cache directory 
+  if (Encoding(cacheDir) == "unknown")
+    Encoding(cacheDir) <- "UTF-8"
+
   # do we have an object name? if so, check in a named environment
   if (!is.null(objName) && nchar(objName) > 0) 
   {
@@ -534,6 +538,10 @@
 
 .rs.addFunction("removeCachedData", function(cacheKey, cacheDir)
 {
+  # mark encoding on cache directory 
+  if (Encoding(cacheDir) == "unknown")
+    Encoding(cacheDir) <- "UTF-8"
+
   # remove data from the cache environment
   if (exists(".rs.CachedDataEnv") &&
       exists(cacheKey, where = .rs.CachedDataEnv, inherits = FALSE))
@@ -552,6 +560,10 @@
 
 .rs.addFunction("saveCachedData", function(cacheDir)
 {
+  # mark encoding on cache directory 
+  if (Encoding(cacheDir) == "unknown")
+    Encoding(cacheDir) <- "UTF-8"
+
   # no work to do if we have no cache
   if (!exists(".rs.CachedDataEnv")) 
     return(invisible(NULL))
