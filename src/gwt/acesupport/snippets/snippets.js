@@ -39,6 +39,6 @@ exports.normalizeSnippets = function(snippets)
       if (snippet.tabTrigger == null)
          snippet.tabTrigger = snippet.name;
    }
-}
+};
 
 });

@@ -54,7 +54,7 @@ var snippets = [
    {
       name: "sm",
       content: [
-         'setGeneric("{$1:generic}", function(${2:x, ...}) {',
+         'setMethod("${1:generic}", ${2:class}, function(${2:x, ...}) {',
          '    ${0}',
          '})'
       ].join("\n")
