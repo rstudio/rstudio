@@ -31,6 +31,7 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.Scope;
+import org.rstudio.studio.client.workbench.views.source.editors.text.WarningBarDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
@@ -41,9 +42,11 @@ import java.util.Arrays;
 
 public class RoxygenHelper
 {
-   public RoxygenHelper(DocDisplay docDisplay)
+   public RoxygenHelper(DocDisplay docDisplay,
+                        WarningBarDisplay view)
    {
       editor_ = (AceEditor) docDisplay;
+      view_ = view;
       RStudioGinjector.INSTANCE.injectMembers(this);
    }
    
@@ -389,10 +392,17 @@ public class RoxygenHelper
       
       // If the block contains roxygen parameters that require
       // non-local information (e.g. @inheritParams), then
-      // bail. TODO: show small warning?
+      // bail.
       for (int i = 0; i < block.length(); i++)
+      {
          if (RE_ROXYGEN_NONLOCAL.test(block.get(i)))
+         {
+            view_.showWarningBar(
+                  "Cannot automatically update roxygen blocks " +
+                  "that are not self-contained.");
             return;
+         }
+      }
       
       String roxygenDelim = RE_ROXYGEN.match(block.get(0), 0).getGroup(1);
       
@@ -767,6 +777,8 @@ public class RoxygenHelper
    }
    
    private final AceEditor editor_;
+   private final WarningBarDisplay view_;
+   
    private RoxygenServerOperations server_;
    
    private static final Pattern RE_ROXYGEN =
