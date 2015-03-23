@@ -30,4 +30,15 @@ exports.toSnippetText = function(snippets)
    return snippetText;
 };
 
+exports.normalizeSnippets = function(snippets)
+{
+   var n = snippets.length;
+   for (var i = 0; i < n; i++)
+   {
+      var snippet = snippets[i];
+      if (snippet.tabTrigger == null)
+         snippet.tabTrigger = snippet.name;
+   }
+}
+
 });

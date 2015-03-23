@@ -185,6 +185,7 @@ var snippets = [
    }
 ];
 
+utils.normalizeSnippets(snippets);
 exports.snippetText = utils.toSnippetText(snippets);
 
 SnippetManager.register(snippets, "r");
