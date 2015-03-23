@@ -18,18 +18,15 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.ThemedButton;
-import org.rstudio.studio.client.application.Desktop;
-import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.FilePathUtils;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.rsconnect.RSConnect;
-import org.rstudio.studio.client.rsconnect.events.RSConnectDeployInitiatedEvent;
 import org.rstudio.studio.client.rsconnect.model.RSConnectAccount;
 import org.rstudio.studio.client.rsconnect.model.RSConnectDeploymentRecord;
+import org.rstudio.studio.client.rsconnect.model.RSConnectPublishResult;
 import org.rstudio.studio.client.rsconnect.model.RSConnectServerOperations;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -44,13 +41,12 @@ public class RSConnectDeployDialog
              extends RSConnectDialog<RSConnectDeploy>
 {
    public RSConnectDeployDialog(RSConnectServerOperations server, 
+                                RSConnect connect,
                                 final GlobalDisplay display, 
-                                EventBus events,
                                 final String sourceDir, 
                                 String sourceFile,
                                 String[] ignoredFiles,
-                                RSConnectDeploymentRecord fromPrevious,
-                                boolean isSatellite)
+                                RSConnectDeploymentRecord fromPrevious)
    {
       super(server, display, new RSConnectDeploy(sourceFile, fromPrevious, 
             false));
@@ -61,8 +57,7 @@ public class RSConnectDeployDialog
       addOkButton(deployButton_);
       sourceDir_ = sourceDir;
       sourceFile_ = sourceFile;
-      events_ = events;
-      isSatellite_ = isSatellite;
+      connect_ = connect;
 
       String deployTarget = sourceDir;
       if (StringUtil.getExtension(sourceFile).toLowerCase().equals("rmd")) 
@@ -145,10 +140,6 @@ public class RSConnectDeployDialog
    
    private void onDeploy()
    {
-      String appName = contents_.getNewAppName();
-
-      RSConnectAccount account = contents_.getSelectedAccount();
-      
       // compose the list of files that have been manually added; we want to
       // include all the ones the user added but didn't later uncheck, so
       // cross-reference the list we kept with the one returned by the dialog
@@ -162,42 +153,15 @@ public class RSConnectDeployDialog
          }
       }
       
-      if (isSatellite_)
-      {
-         // in a satellite window, call back to the main window to do a 
-         // deployment
-         RSConnect.deployFromSatellite(
-               sourceDir_, 
-               JsArrayUtil.toJsArrayString(contents_.getFileList()),
-               JsArrayUtil.toJsArrayString(additionalFiles),
-               JsArrayUtil.toJsArrayString(contents_.getIgnoredFileList()),
-               sourceFile_, 
-               launchCheck_.getValue(), 
-               RSConnectDeploymentRecord.create(appName, account, ""));
-
-         // we can't raise the main window if we aren't in desktop mode, so show
-         // a dialog to guide the user there
-         if (!Desktop.isDesktop())
-         {
-            display_.showMessage(GlobalDisplay.MSG_INFO, "Deployment Started",
-                  "RStudio is deploying " + appName + ". " + 
-                  "Check the Deploy console tab in the main window for " + 
-                  "status updates. ");
-         }
-      }
-      else
-      {
-         // in the main window, initiate the deployment directly
-         events_.fireEvent(new RSConnectDeployInitiatedEvent(
-               sourceDir_,
-               contents_.getFileList(),
-               additionalFiles,
-               contents_.getIgnoredFileList(),
-               sourceFile_,
-               launchCheck_.getValue(),
-               RSConnectDeploymentRecord.create(appName, account, "")));
-      }
-
+      connect_.fireRSConnectPublishEvent(new RSConnectPublishResult(
+            contents_.getNewAppName(), 
+            contents_.getSelectedAccount(), 
+            sourceDir_, 
+            sourceFile_,
+            deployFiles, 
+            additionalFiles, 
+            contents_.getIgnoredFileList()), 
+            launchCheck_.getValue());
       closeDialog();
    }
    
@@ -213,8 +177,7 @@ public class RSConnectDeployDialog
       }
    }
    
-   private final EventBus events_;
-   private final boolean isSatellite_;
+   private final RSConnect connect_;
    
    private String sourceDir_;
    private String sourceFile_;

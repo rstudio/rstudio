@@ -261,14 +261,14 @@ public class RSConnect implements SessionInitHandler,
    
    private void publishAsCode(RSConnectActionEvent event)
    {
+      // TODO: thread ignored files through properly
       RSConnectDeployDialog dialog = 
             new RSConnectDeployDialog(
-                      server_, display_, events_, 
+                      server_, this, display_, 
                       FilePathUtils.dirFromFile(event.getPath()), 
                       event.getPath(),
                       new String[]{},
-                      event.getFromPrevious(),
-                      satellite_.isCurrentWindowSatellite());
+                      event.getFromPrevious());
       dialog.showModal();
    }
    
@@ -280,11 +280,10 @@ public class RSConnect implements SessionInitHandler,
                   new ProgressOperationWithInput<RSConnectPublishResult>()
             {
                @Override
-               public void execute(RSConnectPublishResult input, 
+               public void execute(RSConnectPublishResult result, 
                      ProgressIndicator indicator)
                {
-                  // TODO: Actually publish.
-                  display_.showErrorMessage("NYI", "NYI");
+                  fireRSConnectPublishEvent(result, true);
                   indicator.onCompleted();
                }
             });
@@ -500,6 +499,48 @@ public class RSConnect implements SessionInitHandler,
       return "Content";
    }
  
+   public void fireRSConnectPublishEvent(RSConnectPublishResult result,
+         boolean launchBrowser)
+   {
+      if (satellite_.isCurrentWindowSatellite())
+      {
+         // in a satellite window, call back to the main window to do a 
+         // deployment
+         RSConnect.deployFromSatellite(
+               result.getSourceDir(), 
+               JsArrayUtil.toJsArrayString(result.getDeployFiles()),
+               JsArrayUtil.toJsArrayString(result.getAdditionalFiles()),
+               JsArrayUtil.toJsArrayString(result.getIgnoredFiles()),
+               result.getSourceFile(), 
+               launchBrowser, 
+               RSConnectDeploymentRecord.create(result.getAppName(), 
+                     result.getAccount(), ""));
+
+         // we can't raise the main window if we aren't in desktop mode, so show
+         // a dialog to guide the user there
+         if (!Desktop.isDesktop())
+         {
+            display_.showMessage(GlobalDisplay.MSG_INFO, "Deployment Started",
+                  "RStudio is deploying " + result.getAppName() + ". " + 
+                  "Check the Deploy console tab in the main window for " + 
+                  "status updates. ");
+         }
+      }
+      else
+      {
+         // in the main window, initiate the deployment directly
+         events_.fireEvent(new RSConnectDeployInitiatedEvent(
+               result.getSourceDir(),
+               result.getDeployFiles(),
+               result.getAdditionalFiles(),
+               result.getIgnoredFiles(),
+               result.getSourceFile(),
+               launchBrowser,
+               RSConnectDeploymentRecord.create(result.getAppName(), 
+                     result.getAccount(), "")));
+      }
+   }
+
    // Private methods ---------------------------------------------------------
    
    private void doDeployment(final RSConnectDeployInitiatedEvent event)

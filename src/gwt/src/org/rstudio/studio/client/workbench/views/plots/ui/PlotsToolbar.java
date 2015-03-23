@@ -83,7 +83,6 @@ public class PlotsToolbar extends Toolbar implements HasCustomizableToolbar
             RSConnect.CONTENT_TYPE_PLOT, false, false);
       publishButton.setHtmlGenerator(plotHtmlGenerator_);
       addRightWidget(publishButton);
-
    }
    
    private final Commands commands_;   

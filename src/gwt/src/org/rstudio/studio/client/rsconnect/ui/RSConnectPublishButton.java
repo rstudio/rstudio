@@ -47,6 +47,9 @@ public class RSConnectPublishButton extends Composite
    public RSConnectPublishButton(int contentType, boolean showCaption,
          boolean manageVisiblity)
    {
+      // TODO: are we responsible for hiding ourselves if e.g. internal and 
+      // external publishing is disabled?
+      
       contentType_ = contentType;
       showCaption_ = showCaption;
       manageVisiblity_ = manageVisiblity;
@@ -160,8 +163,7 @@ public class RSConnectPublishButton extends Composite
    public void setHtmlGenerator(RPubsHtmlGenerator generator)
    {
       htmlGenerator_ = generator;
-      if (isVisible())
-         populateDeployments();
+      setPreviousDeployments(null);
    }
 
    // Private methods --------------------------------------------------------
@@ -251,7 +253,7 @@ public class RSConnectPublishButton extends Composite
 
       // if there are existing deployments, make the UI reflect that this is a
       // republish
-      if (recs.length() > 0)
+      if (recs != null && recs.length() > 0)
       {
          if (showCaption_)
             publishButton_.setText("Republish");
