@@ -57,7 +57,6 @@ public class SnippetHelper
    public ArrayList<String> getCppSnippets()
    {
       ensureSnippetsLoaded();
-      ensureCustomCppSnippetsLoaded();
       return JsArrayUtil.fromJsArrayString(
             getAvailableSnippetsImpl(manager_, "c_cpp"));
    }
@@ -66,105 +65,6 @@ public class SnippetHelper
    {    
       return getSnippet(manager_, "c_cpp", name);
    }
-   
-   private void ensureCustomCppSnippetsLoaded()
-   {
-      if (!customCppSnippetsLoaded_)
-      {
-         addCustomCppSnippets(manager_);
-         customCppSnippetsLoaded_ = true;
-      }
-   }
-   
-   private final native void addCustomCppSnippets(SnippetManager manager)
-   /*-{
-      var snippetText = [
-         "## Header guard",
-         "snippet once",
-         "\t#ifndef ${1:`HeaderGuardFileName`}",
-         "\t#define ${1:`HeaderGuardFileName`}",
-         "",
-         "\t${0}",
-         "",
-         "\t#endif // ${1:`HeaderGuardFileName`}",
-         "##",
-         "## Anonymous namespace",
-         "snippet ans",
-         "\tnamespace {",
-         "\t${0}",
-         "\t} // anonymous namespace",
-         "##",
-         "## Named namespace",
-         "snippet ns",
-         "\tnamespace ${1} {",
-         "\t${0}",
-         "\t} // namespace ${1}",
-         "##",
-         "## class",
-         "snippet cls",
-         "\tclass ${1} {",
-         "\tpublic:",
-         "\t\t${2}",
-         "\tprivate:",
-         "\t\t${3}",
-         "\t};",
-         "##",
-         "## struct",
-         "snippet str",
-         "\tstruct ${1} {",
-         "\t\t${0}",
-         "\t};",
-         "##",
-         "## cerr",
-         "snippet cerr",
-         "\tstd::cerr << ${1} << std::endl;${0}",
-         "##",
-         "snippet main",
-         "\tint main(int argc, char* argv[]) {",
-         "\t\t${0}",
-         "\t}",
-      ].join("\n");
-      
-      var parsed = manager.parseSnippetFile(snippetText);
-      manager.register(parsed, "c_cpp");
-   }-*/;
-   
-   private void ensureCustomRSnippetsLoaded()
-   {
-      if (!customRSnippetsLoaded_)
-      {
-         loadCustomRSnippets(manager_);
-         customRSnippetsLoaded_ = true;
-      }
-   }
-   
-   private final native void loadCustomRSnippets(SnippetManager manager)
-   /*-{
-      
-      var snippetText = [
-         "snippet sserver",
-         "\tshinyServer(function(input, output, session) {",
-         "\t\t${0}",
-         "\t})",
-         "snippet dig",
-         "\tdevtools::install_github(\"${0}\")",
-         "## S4",
-         "snippet setG",
-         "\tsetGeneric(\"${1:generic}\", function(${2:x, ...}) {",
-         "\t\tstandardGeneric(\"${1:generic}\")",
-         "\t})",
-         "snippet setM",
-         "\tsetMethod(\"${1:generic}\", ${2:\"class\"}, function(${3:object}, ...) {",
-         "\t\t${0}",
-         "\t})",
-         "snippet setC",
-         "\tsetClass(\"${1:Class}\", slots = c(${2:name = \"type\"}))"
-      ].join("\n");
-      
-      var parsed = manager.parseSnippetFile(snippetText);
-      manager.register(parsed, "r");
-      
-   }-*/;
    
    public ArrayList<String> getAvailableSnippets()
    {
@@ -182,14 +82,12 @@ public class SnippetHelper
    
    private void ensureRSnippetsLoaded()
    {
-      ensureAceSnippetsLoaded("r", manager_);
-      ensureCustomRSnippetsLoaded();
+      ensureSnippetsLoaded("r", manager_);
    }
    
    private void ensureCppSnippetsLoaded()
    {
-      ensureAceSnippetsLoaded("c_cpp", manager_);
-      ensureCustomCppSnippetsLoaded();
+      ensureSnippetsLoaded("c_cpp", manager_);
    }
    
    // Parse a snippet file and apply the parsed snippets for
@@ -236,12 +134,23 @@ public class SnippetHelper
             getSnippetManager());
    }
    
-   private static final native void ensureAceSnippetsLoaded(
+   private static final native void ensureSnippetsLoaded(
          String mode,
          SnippetManager manager) /*-{
 
       var snippetsForMode = manager.snippetNameMap[mode];
       if (!snippetsForMode) {
+         
+         // Try loading our own, local snippets. Loading those snippets will
+         // automatically register the snippets as necessary.
+         var m = null;
+         m = $wnd.require("rstudio/snippets/" + mode);
+         if (m !== null)
+            return;
+            
+         // Try loading internal Ace snippets. We need to pull the snippet
+         // content out of the appropriate require, then parse and load those
+         // snippets.
          var id = "ace/snippets/" + mode;
          var m = $wnd.require(id);
          if (!m) {

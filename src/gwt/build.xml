@@ -92,6 +92,9 @@
             <file name="stan_highlight_rules.js"/>
             <file name="stan.js"/>
          </sources>
+         <sources dir="acesupport/snippets">
+            <file name="r.js"/>
+         </sources>
          <sources dir="acesupport/acetheme">
             <file name="default.js"/>
          </sources>
