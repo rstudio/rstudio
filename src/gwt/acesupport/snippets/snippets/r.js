@@ -40,7 +40,7 @@ var snippets = [
    {
       name: "mat",
       content: 'matrix(${1:data}, nrow = ${2:rows}, ncol = ${3:cols})'
-   }
+   },
    
    /* S4 snippets */
    {
@@ -182,7 +182,7 @@ var snippets = [
    {
       name : "regexec",
       content: 'regexec("${1:pattern}", "${2:text}", perl = TRUE)'
-   },
+   }
 ];
 
 exports.snippetText = utils.toSnippetText(snippets);
