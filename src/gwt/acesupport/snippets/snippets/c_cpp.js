@@ -27,7 +27,7 @@ var snippets = [
          "",
          "${0}",
          "",
-         "#endif /* ${1:`HeaderGuardFileName`}"
+         "#endif /* ${1:`HeaderGuardFileName`} */"
       ].join("\n")
    },
    {
