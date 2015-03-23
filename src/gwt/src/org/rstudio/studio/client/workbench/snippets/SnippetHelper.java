@@ -111,11 +111,17 @@ public class SnippetHelper
       delete manager.snippetMap[mode];
       delete manager.snippetNameMap[mode];
       
-      // Overwrite the old snippets stored
-      var old = $wnd.require("ace/snippets/" + mode);
+      // Overwrite the old snippets stored.
+      var old = $wnd.require("rstudio/snippets/" + mode);
       if (old != null) {
          old.$snippetText = old.snippetText;
          old.snippetText = snippetText;
+      } else {
+         old = $wnd.require("ace/snippets/" + mode);
+         if (old != null) {
+            old.$snippetText = old.snippetText;
+            old.snippetText = snippetText;
+         }
       }
       
       // Apply new snippets
