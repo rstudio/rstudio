@@ -369,6 +369,11 @@ public class RCompletionManager implements CompletionManager
                return beginSuggest(true, false, true);
             }
          }
+         else if (event.getKeyCode() == KeyCodes.KEY_TAB &&
+                  modifier == KeyboardShortcut.SHIFT)
+         {
+            return attemptImmediateSnippetInsertion();
+         }
          else if (keycode == 112 // F1
                   && modifier == KeyboardShortcut.NONE)
          {
@@ -2068,6 +2073,28 @@ public class RCompletionManager implements CompletionManager
       helpRequest_.schedule(milliseconds);
    }
    
+   private boolean attemptImmediateSnippetInsertion()
+   {
+      if (!docDisplay_.getSelection().isEmpty())
+         return false;
+      
+      String token = StringUtil.getToken(
+            docDisplay_.getCurrentLine(),
+            docDisplay_.getCursorPosition().getColumn(),
+            "[^ \\s\\n\\t\\r\\v]",
+            false,
+            false);
+      
+      ArrayList<String> snippets = snippets_.getAvailableSnippets();
+      if (snippets.contains(token))
+      {
+         snippets_.applySnippet(token, token);
+         return true;
+      }
+      
+      return false;
+   }
+   
    private GlobalDisplay globalDisplay_;
    private FileTypeRegistry fileTypeRegistry_;
    private EventBus eventBus_;
@@ -2139,6 +2166,8 @@ public class RCompletionManager implements CompletionManager
       {
          return timer_.isRunning();
       }
+      
+      
       
       private boolean flushCache_;
       private boolean implicit_;

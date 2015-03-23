@@ -4481,7 +4481,16 @@ public class TextEditingTarget implements
             });
          }
          
-      }   
+      }
+      
+      @Override
+      public String getDocPath()
+      {
+         if (docUpdateSentinel_ == null)
+            return "";
+            
+         return docUpdateSentinel_.getPath();
+      }
    };
    
    private RCompletionContext rContext_ = new RCompletionContext() {
