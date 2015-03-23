@@ -68,6 +68,45 @@ public class ImplicitUpcastAnalyzerTest extends OptimizerTestBase {
     assertMapsToAll(upcastTypesByType, classB, classA);
   }
 
+  public void testTightening() throws Exception {
+    final MockJavaResource A =
+        JavaResourceBase.createMockJavaResource("test.A",
+            "package test;",
+            "public class A {",
+            "   public A m() { return new B(); } ",
+            "}");
+
+    final MockJavaResource I =
+        JavaResourceBase.createMockJavaResource("test.I",
+            "package test;",
+            "public interface I {",
+            "   public A m(); ",
+            "}");
+
+    final MockJavaResource B =
+        JavaResourceBase.createMockJavaResource("test.B",
+            "package test;",
+            "public class B extends A implements I {",
+            "   public A m() { return new B(); } ",
+            "}");
+
+    final MockJavaResource C =
+        JavaResourceBase.createMockJavaResource("test.C",
+            "package test;",
+            "public class C implements I {",
+            "   public A m() { return new A(); } ",
+            "}");
+
+    addAll(A, I, B, C);
+    // Variable a will be typed by a non null analysis type.
+    Result result = optimize("void", "A a = new A(); a = new B(); a.m();");
+    Multimap<JType, JType> upcastTypesByType = computeImplicitUpcasts(result.getOptimizedProgram());
+    JType classA = result.findClass("A");
+    JType classB = result.findClass("B");
+
+    assertMapsToAll(upcastTypesByType, classB, classA);
+  }
+
   private void assertMapsToAll(Multimap<JType, JType> upcastTypesByType,
       JType fromType, JType... toTypes) {
     assertEquals(upcastTypesByType.get(fromType), ImmutableSet.copyOf(toTypes));
