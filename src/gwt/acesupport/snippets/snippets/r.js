@@ -20,9 +20,31 @@ var SnippetManager = require("ace/snippets").snippetManager;
 
 var snippets = [
 
+   /* Import */
+   {
+      name: "lib",
+      content: "library(${1:package})"
+   },
+   {
+      name: "req",
+      content: 'require(${1:package})'
+   },
+   {
+      name: "src",
+      content: 'source("${1:file.R}}")'
+   },
+   {
+      name: "ret",
+      content: 'return(${1:code})'
+   },
+   {
+      name: "mat",
+      content: 'matrix(${1:data}, nrow = ${2:rows}, ncol = ${3:cols})'
+   }
+   
    /* S4 snippets */
    {
-      name: "setGeneric",
+      name: "sg",
       content: [
          'setGeneric("${1:generic}", function(${2:x, ...}) {',
          '    standardGeneric("${1:generic}")',
@@ -30,7 +52,7 @@ var snippets = [
       ].join("\n")
    },
    {
-      name: "setMethod",
+      name: "sm",
       content: [
          'setGeneric("{$1:generic}", function(${2:x, ...}) {',
          '    ${0}',
@@ -38,7 +60,7 @@ var snippets = [
       ].join("\n")
    },
    {
-      name: "setClass",
+      name: "sc",
       content: [
          'setClass("${1:Class}", slots = c(${2:name = "type"}))'
       ].join("\n")
@@ -101,26 +123,6 @@ var snippets = [
          ')'
       ].join("\n")
    },
-   {
-      name: "tryCatch",
-      content: [
-         'tryCatch({',
-         '    ${1:code}',
-         '}, error = function(e) {',
-         '    ${2:error}',
-         '})'
-      ].join("\n")
-   },
-
-   /* Avoid stringsAsFactors */
-   {
-      name: "df",
-      content: 'data.frame(${1:...}, stringsAsFactors = FALSE)'
-   },
-   {
-      name: "read.csv",
-      content: 'read.csv(${1:...}, stringsAsFactors = FALSE)'
-   },
 
    /* Apply */
    {
@@ -181,20 +183,6 @@ var snippets = [
       name : "regexec",
       content: 'regexec("${1:pattern}", "${2:text}", perl = TRUE)'
    },
-
-   /* Miscellaneous */
-   {
-      name: "requireNamespace",
-      content: 'requireNamespace("${1}", quietly = TRUE)'
-   },
-   {
-      name: "now",
-      content: "Sys.time()"
-   },
-   {
-      name: "today",
-      content: "Sys.Date()"
-   }
 ];
 
 exports.snippetText = utils.toSnippetText(snippets);
