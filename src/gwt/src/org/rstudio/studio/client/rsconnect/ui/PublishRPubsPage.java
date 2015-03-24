@@ -51,6 +51,7 @@ public class PublishRPubsPage
    @Override
    protected RSConnectPublishResult collectInput()
    {
+      // TODO: source dir / file
       return new RSConnectPublishResult(
             initialData_.getOriginatingEvent().getPath(),
             initialData_.getOriginatingEvent().getPath(), 

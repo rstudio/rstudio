@@ -332,9 +332,11 @@ public class Presentation extends BasePresenter
             @Override
             public void onResponseReceived(PresentationRPubsSource source)
             {
+               // TODO: Presentation publish should go through new publish flow
                RPubsUploadDialog dlg = new RPubsUploadDialog(
                      "Presentation",
                      view_.getPresentationTitle(),
+                     "",
                      source.getSourceFilePath(),
                      source.isPublished());
                dlg.showModal();

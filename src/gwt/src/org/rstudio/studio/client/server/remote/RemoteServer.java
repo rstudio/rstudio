@@ -2992,6 +2992,7 @@ public class RemoteServer implements Server
    
    public void rpubsUpload(String contextId,
                            String title, 
+                           String rmdFile,
                            String htmlFile,
                            boolean isUpdate,
                            ServerRequestCallback<Boolean> requestCallback)
@@ -2999,8 +3000,9 @@ public class RemoteServer implements Server
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(contextId));
       params.set(1, new JSONString(title));
-      params.set(2, new JSONString(htmlFile));
-      params.set(3, JSONBoolean.getInstance(isUpdate));
+      params.set(2, new JSONString(rmdFile));
+      params.set(3, new JSONString(htmlFile));
+      params.set(4, JSONBoolean.getInstance(isUpdate));
       sendRequest(RPC_SCOPE, RPUBS_UPLOAD, params, requestCallback);
    }
 

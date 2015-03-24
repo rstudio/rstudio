@@ -55,8 +55,11 @@ public class RPubsPresenter
    @Handler
    public void onPublishHTML()
    {
+      // TODO: remove this context (we shouldn't need it) or pass correct
+      // original Rmd
       RPubsUploadDialog dlg = new RPubsUploadDialog(context_.getContextId(),
                                                     context_.getTitle(),
+                                                    "",
                                                     context_.getHtmlFile(),
                                                     context_.isPublished());
       dlg.showModal();

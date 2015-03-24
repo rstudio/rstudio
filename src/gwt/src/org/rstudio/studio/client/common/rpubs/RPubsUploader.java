@@ -43,8 +43,8 @@ public class RPubsUploader
       contextId_ = contextId;
    }
 
-   public void performUpload(final String title, final String htmlFile, 
-         final boolean modify)
+   public void performUpload(final String title, final String rmdFile, 
+         final String htmlFile, final boolean modify)
    {
       // set state
       uploadInProgress_ = true;
@@ -52,7 +52,7 @@ public class RPubsUploader
       // do upload
       if (Desktop.isDesktop())
       {
-         performUpload(title, htmlFile, null, modify);
+         performUpload(title, rmdFile, htmlFile, null, modify);
       }
       else
       {
@@ -66,7 +66,7 @@ public class RPubsUploader
                   @Override
                   public void execute(WindowEx window)
                   {
-                     performUpload(title, htmlFile, window, modify);
+                     performUpload(title, rmdFile, htmlFile, window, modify);
                   }
                });
       }
@@ -95,6 +95,7 @@ public class RPubsUploader
    // Private methods --------------------------------------------------------
    
    private void performUpload(final String title,
+                              final String rmdFile,
                               final String htmlFile,
                               final WindowEx progressWindow,
                               final boolean modify)
@@ -146,6 +147,7 @@ public class RPubsUploader
       server_.rpubsUpload(
          contextId_,
          title, 
+         rmdFile == null ? "" : rmdFile,
          htmlFile,
          modify,
          new ServerRequestCallback<Boolean>() {

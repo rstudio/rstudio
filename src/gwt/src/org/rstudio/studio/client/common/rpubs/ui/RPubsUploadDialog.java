@@ -51,10 +51,11 @@ public class RPubsUploadDialog extends ModalDialogBase
 {
    public RPubsUploadDialog(String contextId,
                             String title, 
+                            String rmdFile,
                             String htmlFile, 
                             boolean isPublished)
    {
-      this(contextId, title, htmlFile, null, isPublished);
+      this(contextId, title, htmlFile, rmdFile, null, isPublished);
    }
    
    public RPubsUploadDialog(String contextId,
@@ -62,11 +63,12 @@ public class RPubsUploadDialog extends ModalDialogBase
                             RPubsHtmlGenerator htmlGenerator, 
                             boolean isPublished)
    {
-      this(contextId, title, null, htmlGenerator, isPublished);
+      this(contextId, title, null, null, htmlGenerator, isPublished);
    }
    
    private RPubsUploadDialog(String contextId,
                              String title, 
+                             String rmdFile,
                              String htmlFile, 
                              RPubsHtmlGenerator htmlGenerator,
                              boolean isPublished)
@@ -75,6 +77,7 @@ public class RPubsUploadDialog extends ModalDialogBase
       setText("Publish to RPubs");
       title_ = title;
       htmlFile_ = htmlFile;
+      rmdFile_ = rmdFile;
       htmlGenerator_ = htmlGenerator;
       isPublished_ = isPublished;
       contextId_ = contextId;
@@ -314,7 +317,7 @@ public class RPubsUploadDialog extends ModalDialogBase
          @Override
          public void execute(String htmlFile)
          {
-            uploader_.performUpload(title, htmlFile, modify);
+            uploader_.performUpload(title, rmdFile_, htmlFile, modify);
          }
       });
    }
@@ -379,6 +382,7 @@ public class RPubsUploadDialog extends ModalDialogBase
 
    private final String title_;
    private final String htmlFile_;
+   private final String rmdFile_;
    private final String contextId_;
    private final RPubsHtmlGenerator htmlGenerator_;
    

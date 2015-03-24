@@ -17,6 +17,7 @@ package org.rstudio.studio.client.rsconnect;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.CommandBinder;
@@ -32,6 +33,8 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.FilePathUtils;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.dependencies.DependencyManager;
+import org.rstudio.studio.client.common.rpubs.RPubsUploader;
+import org.rstudio.studio.client.common.rpubs.model.RPubsServerOperations;
 import org.rstudio.studio.client.common.rpubs.ui.RPubsUploadDialog;
 import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.rsconnect.events.RSConnectActionEvent;
@@ -89,6 +92,7 @@ public class RSConnect implements SessionInitHandler,
                     Binder binder, 
                     RSConnectServerOperations server,
                     SourceServerOperations sourceServer,
+                    RPubsServerOperations rpubsServer,
                     RSAccountConnector connector,
                     Provider<UIPrefs> pUiPrefs)
                     
@@ -99,6 +103,7 @@ public class RSConnect implements SessionInitHandler,
       session_ = session;
       server_ = server;
       sourceServer_ = sourceServer;
+      rpubsServer_ = rpubsServer;
       events_ = events;
       satellite_ = satellite;
       connector_ = connector;
@@ -139,7 +144,9 @@ public class RSConnect implements SessionInitHandler,
    {
       String ctx = "Publish " + contentTypeDesc(event.getContentType());
       RPubsUploadDialog dlg = new RPubsUploadDialog(
-            ctx, ctx, event.getHtmlFile(), event.getFromPrevious() != null);
+            "Publish Wizard", ctx, event.getFromRmdPreview() != null ? 
+                  event.getFromRmdPreview().getTargetFile() : null,
+            event.getHtmlFile(), event.getFromPrevious() != null);
       dlg.showModal();
    }
    
@@ -270,7 +277,7 @@ public class RSConnect implements SessionInitHandler,
       dialog.showModal();
    }
    
-   private void publishWithWizard(RSConnectPublishInput input)
+   private void publishWithWizard(final RSConnectPublishInput input)
    {
       RSConnectPublishWizard wizard = 
             new RSConnectPublishWizard(input, 
@@ -280,45 +287,19 @@ public class RSConnect implements SessionInitHandler,
                public void execute(RSConnectPublishResult result, 
                      ProgressIndicator indicator)
                {
-                  fireRSConnectPublishEvent(result, true);
-                  indicator.onCompleted();
+                  switch (result.getPublishType())
+                  {
+                  case RSConnectPublishResult.PUBLISH_CODE:
+                     fireRSConnectPublishEvent(result, true);
+                     indicator.onCompleted();
+                     break;
+                  case RSConnectPublishResult.PUBLISH_RPUBS:
+                     uploadToRPubs(input, result, indicator);
+                     break;
+                  }
                }
             });
       wizard.showModal();
-   }
-   
-   private void handleRSConnectAction(RSConnectActionEvent event)
-   {
-      if (event.getAction() == RSConnectActionEvent.ACTION_TYPE_DEPLOY)
-      {
-         // ignore this request if there's already a modal up 
-         if (ModalDialogTracker.numModalsShowing() > 0)
-            return;
-         
-         // show publish UI appropriate to the type of content being deployed
-         showPublishUI(event);
-
-         /*
-         sourceServer_.getDocumentProperties(event.getPath(), 
-               new ServerRequestCallback<JsObject>()
-         {
-            @Override
-            public void onResponseReceived(JsObject properties)
-            {
-               String files = properties.getString(IGNORED_RESOURCES);
-               if (files != null && !files.isEmpty())
-               {
-                  files.split("\\|");
-               }
-            }
-         });
-         */;
-
-      }
-      else if (event.getAction() == RSConnectActionEvent.ACTION_TYPE_CONFIGURE)
-      {
-         configureShinyApp(FilePathUtils.dirFromFile(event.getPath()));
-      }
    }
    
    @Override
@@ -540,6 +521,64 @@ public class RSConnect implements SessionInitHandler,
 
    // Private methods ---------------------------------------------------------
    
+   private void uploadToRPubs(RSConnectPublishInput input, 
+         RSConnectPublishResult result,
+         final ProgressIndicator indicator)
+   {
+      RPubsUploader uploader = new RPubsUploader(rpubsServer_, display_, 
+            events_, "Publish Wizard");
+      String contentType = contentTypeDesc(input.getContentType());
+      indicator.onProgress("Uploading " + contentType);
+      uploader.setOnUploadComplete(new CommandWithArg<Boolean>()
+      {
+         
+         @Override
+         public void execute(Boolean arg)
+         {
+            indicator.onCompleted();
+         }
+      });
+      uploader.performUpload(contentType, 
+            input.getSourceRmd() == null ? null : 
+               input.getSourceRmd().getPath(),
+            input.getOriginatingEvent().getHtmlFile(), 
+            false);
+   }
+   
+   private void handleRSConnectAction(RSConnectActionEvent event)
+   {
+      if (event.getAction() == RSConnectActionEvent.ACTION_TYPE_DEPLOY)
+      {
+         // ignore this request if there's already a modal up 
+         if (ModalDialogTracker.numModalsShowing() > 0)
+            return;
+         
+         // show publish UI appropriate to the type of content being deployed
+         showPublishUI(event);
+
+         /*
+         sourceServer_.getDocumentProperties(event.getPath(), 
+               new ServerRequestCallback<JsObject>()
+         {
+            @Override
+            public void onResponseReceived(JsObject properties)
+            {
+               String files = properties.getString(IGNORED_RESOURCES);
+               if (files != null && !files.isEmpty())
+               {
+                  files.split("\\|");
+               }
+            }
+         });
+         */;
+
+      }
+      else if (event.getAction() == RSConnectActionEvent.ACTION_TYPE_CONFIGURE)
+      {
+         configureShinyApp(FilePathUtils.dirFromFile(event.getPath()));
+      }
+   }
+   
    private void doDeployment(final RSConnectDeployInitiatedEvent event)
    {
       server_.deployShinyApp(event.getPath(), 
@@ -718,6 +757,7 @@ public class RSConnect implements SessionInitHandler,
    private final GlobalDisplay display_;
    private final Session session_;
    private final RSConnectServerOperations server_;
+   private final RPubsServerOperations rpubsServer_;
    private final SourceServerOperations sourceServer_;
    private final DependencyManager dependencyManager_;
    private final EventBus events_;

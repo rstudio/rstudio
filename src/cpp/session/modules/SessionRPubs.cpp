@@ -99,11 +99,12 @@ class RPubsUpload : boost::noncopyable,
 public:
    static boost::shared_ptr<RPubsUpload> create(const std::string& contextId,
                                                 const std::string& title,
+                                                const FilePath& originalRmd,
                                                 const FilePath& htmlFile,
                                                 bool allowUpdate)
    {
       boost::shared_ptr<RPubsUpload> pUpload(new RPubsUpload(contextId));
-      pUpload->start(title, htmlFile, allowUpdate);
+      pUpload->start(title, originalRmd, htmlFile, allowUpdate);
       return pUpload;
    }
 
@@ -124,7 +125,8 @@ private:
    {
    }
 
-   void start(const std::string& title, const FilePath& htmlFile, bool allowUpdate)
+   void start(const std::string& title, const FilePath& originalRmd, 
+              const FilePath& htmlFile, bool allowUpdate)
    {
       using namespace rstudio::core::string_utils;
       using namespace module_context;
@@ -153,26 +155,27 @@ private:
       args.push_back("-e");
 
       boost::format fmt(
-               "source('%1%'); "
-               "result <- rpubsUpload('%2%', '%3%', %4%); "
+               "result <- rsconnect::rpubsUpload('%1%', '%2%', '%3%', %4%); "
                "utils::write.csv(as.data.frame(result), "
                                " file='%5%', "
                                " row.names=FALSE);");
 
-      FilePath modulesPath = session::options().modulesRSourcePath();;
-      std::string scriptPath = utf8ToSystem(
-                        modulesPath.complete("SessionRPubs.R").absolutePath());
       std::string htmlPath = utf8ToSystem(htmlFile.absolutePath());
       std::string outputPath = utf8ToSystem(csvOutputFile_.absolutePath());
 
-      std::string escapedScriptPath = string_utils::jsLiteralEscape(scriptPath);
+      // we may not have an original R Markdown document for this publish
+      // event (and that's fine)
+      std::string rmdPath = originalRmd == FilePath() ? "" :
+         utf8ToSystem(originalRmd.absolutePath());
+
       std::string escapedTitle = string_utils::jsLiteralEscape(title);
       std::string escapedHtmlPath = string_utils::jsLiteralEscape(htmlPath);
+      std::string escapedRmdPath = string_utils::jsLiteralEscape(rmdPath);
       std::string escapedId = string_utils::jsLiteralEscape(id);
       std::string escapedOutputPath = string_utils::jsLiteralEscape(outputPath);
 
       std::string cmd = boost::str(fmt %
-                    escapedScriptPath % escapedTitle % escapedHtmlPath %
+                    escapedTitle % escapedHtmlPath % escapedRmdPath %
                     (!escapedId.empty() ? "'" + escapedId + "'" : "NULL") %
                     escapedOutputPath);
       args.push_back(cmd);
@@ -370,11 +373,12 @@ Error rpubsIsPublished(const json::JsonRpcRequest& request,
 Error rpubsUpload(const json::JsonRpcRequest& request,
                   json::JsonRpcResponse* pResponse)
 {
-   std::string contextId, title, htmlFile;
+   std::string contextId, title, originalRmd, htmlFile;
    bool isUpdate;
    Error error = json::readParams(request.params,
                                   &contextId,
                                   &title,
+                                  &originalRmd, 
                                   &htmlFile,
                                   &isUpdate);
    if (error)
@@ -391,8 +395,11 @@ Error rpubsUpload(const json::JsonRpcRequest& request,
          title = "Untitled";
 
       FilePath filePath = module_context::resolveAliasedPath(htmlFile);
+      FilePath rmdPath = originalRmd.empty() ? FilePath() :
+         module_context::resolveAliasedPath(originalRmd);
       s_pCurrentUploads[contextId] = RPubsUpload::create(contextId,
                                                          title,
+                                                         rmdPath,
                                                          filePath,
                                                          isUpdate);
       pResponse->setResult(true);
