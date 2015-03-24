@@ -15,9 +15,13 @@
   <inherits name="com.google.gwt.useragent.UserAgent" />
   <source path="test" />
 
-  <define-property name="collapsedProperty" values="one"/>
+  <!-- The purpose of this test is to ensure that collapsed properties behave correctly
+       under codesplitting. Do not remove values, nor the collapsing of this property,
+       as there should be no observable difference from the test perspective if this property
+       was not collapsed.-->
+  <define-property name="collapsedProperty" values="one,two"/>
   <property-provider name="collapsedProperty"><![CDATA[
-    return 'one';
+    return 'two';
   ]]></property-provider>
   <replace-with class="com.google.gwt.dev.jjs.test.CodeSplitterCollapsedPropertiesTest.Bar">
     <when-type-is class="com.google.gwt.dev.jjs.test.CodeSplitterCollapsedPropertiesTest.Foo" />

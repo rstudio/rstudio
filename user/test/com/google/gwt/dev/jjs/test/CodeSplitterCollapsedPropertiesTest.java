@@ -61,7 +61,7 @@ public class CodeSplitterCollapsedPropertiesTest extends GWTTestCase {
       @Override
       public void onSuccess() {
         Foo object = GWT.create(Foo.class);
-        assertEquals("red", object.getColor());
+        assertEquals("blue", object.getColor());
         finishTest();
       }
     });
