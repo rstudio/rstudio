@@ -152,36 +152,6 @@ var snippets = [
    {
       name: "rapply",
       content: "rapply(${1:list}, ${2:function})"
-   },
-
-   /* Regular Expression */
-   {
-      name: "grep",
-      content: 'grep("${1:pattern}", "${2:text}", perl = TRUE)'
-   },
-   {
-      name : "grepl",
-      content: 'grepl("${1:pattern}", "${2:text}", perl = TRUE)'
-   },
-   {
-      name : "sub",
-      content: 'sub("${1:pattern}", "${2:replacement}", "${3:text}", perl = TRUE)'
-   },
-   {
-      name : "gsub",
-      content: 'gsub("${1:pattern}", "${2:replacement}", "${3:text}", perl = TRUE)'
-   },
-   {
-      name : "regexpr",
-      content: 'regexpr("${1:pattern}", "${2:text}", perl = TRUE)'
-   },
-   {
-      name : "gregexpr",
-      content: 'gregexpr("${1:pattern}", "${2:text}", perl = TRUE)'
-   },
-   {
-      name : "regexec",
-      content: 'regexec("${1:pattern}", "${2:text}", perl = TRUE)'
    }
 ];
 
