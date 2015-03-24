@@ -89,13 +89,17 @@ public class EditableSnippets extends Composite
       // Try to get RStudio custom snippets first; if that fails,
       // then get Ace snippets.
       var rsSnippetId = "rstudio/snippets/" + mode;
-      var snippetText = $wnd.require(rsSnippetId).snippetText;
-      if (snippetText != null)
-         return snippetText;
+      var snippets = $wnd.require(rsSnippetId);
+      if (snippets && snippets.snippetText)
+         return snippets.snippetText;
          
       // Fall back to Ace snippets
       var snippetId = "ace/snippets/" + mode;
-      return $wnd.require(snippetId).snippetText;
+      var snippets = $wnd.require(snippetId);
+      if (snippets && snippets.snippetText)
+         return snippets.snippetText;
+         
+      return "";
    }-*/;
    
    private final TextFileType fileType_;
