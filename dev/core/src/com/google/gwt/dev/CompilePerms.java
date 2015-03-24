@@ -21,6 +21,7 @@ import com.google.gwt.dev.CompileTaskRunner.CompileTask;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.cfg.ModuleDefLoader;
 import com.google.gwt.dev.cfg.PropertyPermutations;
+import com.google.gwt.dev.jjs.JavaToJavaScriptCompiler;
 import com.google.gwt.dev.jjs.PermutationResult;
 import com.google.gwt.dev.jjs.UnifiedAst;
 import com.google.gwt.dev.util.FileBackedObject;
@@ -194,7 +195,8 @@ public class CompilePerms {
    */
   public static PermutationResult compile(TreeLogger logger, CompilerContext compilerContext,
       Permutation permutation, UnifiedAst unifiedAst) throws UnableToCompleteException {
-    return unifiedAst.compilePermutation(logger, compilerContext, permutation);
+    return JavaToJavaScriptCompiler.compilePermutation(unifiedAst, logger, compilerContext,
+        permutation);
   }
 
   /**

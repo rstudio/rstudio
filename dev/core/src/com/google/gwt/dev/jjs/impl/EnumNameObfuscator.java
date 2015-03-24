@@ -13,9 +13,10 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.dev.jjs;
+package com.google.gwt.dev.jjs.impl;
 
 import com.google.gwt.core.ext.TreeLogger;
+import com.google.gwt.dev.cfg.ConfigProps;
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JConstructor;
@@ -29,14 +30,19 @@ import com.google.gwt.dev.jjs.ast.JNullLiteral;
 import com.google.gwt.dev.jjs.ast.JParameter;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JVisitor;
+import com.google.gwt.thirdparty.guava.common.collect.Lists;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
  * Performs optimizations on Enums.
  */
 public class EnumNameObfuscator {
+
+  private static final String ENUM_NAME_OBFUSCATION_PROPERTY =
+      "compiler.enum.obfuscate.names";
+  private static final String ENUM_NAME_OBFUSCATION_BLACKLIST_PROPERTY =
+      "compiler.enum.obfuscate.names.blacklist";
 
   private static class EnumNameCallChecker extends JVisitor {
 
@@ -49,7 +55,7 @@ public class EnumNameObfuscator {
     private final List<String> blacklistedEnums;
     private final JDeclaredType stringType;
 
-    public EnumNameCallChecker(JProgram jprogram, TreeLogger logger,
+    private EnumNameCallChecker(JProgram jprogram, TreeLogger logger,
         List<String> blacklistedEnums) {
       this.logger = logger;
       this.blacklistedEnums = blacklistedEnums;
@@ -73,13 +79,12 @@ public class EnumNameObfuscator {
       JMethod foundMethod = null;
       List<JMethod> enumMethods = enumType.getMethods();
       for (JMethod enumMethod : enumMethods) {
-        if ("valueOf".equals(enumMethod.getName())) {
-          List<JParameter> jParameters = enumMethod.getParams();
-          if (jParameters.size() == 2 && jParameters.get(0).getType() == classType
-              && jParameters.get(1).getType() == stringType) {
-            foundMethod = enumMethod;
-            break;
-          }
+        List<JParameter> params = enumMethod.getParams();
+        if (enumMethod.getName().equals("valueOf") &&
+            params.size() == 2 && params.get(0).getType() == classType
+            && params.get(1).getType() == stringType) {
+          foundMethod = enumMethod;
+          break;
         }
       }
       this.enumValueOfMethod = foundMethod;
@@ -90,27 +95,30 @@ public class EnumNameObfuscator {
       JMethod target = x.getTarget();
       JDeclaredType type = target.getEnclosingType();
 
-      if (type instanceof JClassType) {
-        JClassType cType = (JClassType) type;
-        if (typeInBlacklist(blacklistedEnums, cType)) {
-          return;
-        }
-        if (target == enumNameMethod || target == enumToStringMethod || target == enumValueOfMethod) {
-          warn(x);
-        } else if (cType.isEnumOrSubclass() != null) {
-          if ("valueOf".equals(target.getName())) {
-            /*
-             * Check for calls to the auto-generated
-             * EnumSubType.valueOf(String). Note, the check of the signature for
-             * the single String arg version is to avoid flagging user-defined
-             * overloaded versions of the method, which are presumably ok.
-             */
-            List<JParameter> jParameters = target.getParams();
-            if (jParameters.size() == 1 && jParameters.get(0).getType() == stringType) {
-              warn(x);
-            }
-          }
-        }
+      if (!(type instanceof JClassType)) {
+        return;
+      }
+      JClassType cType = (JClassType) type;
+      if (typeInBlacklist(blacklistedEnums, cType)) {
+        return;
+      }
+      if (target == enumNameMethod || target == enumToStringMethod || target == enumValueOfMethod) {
+        warn(x);
+        return;
+      }
+      if (cType.isEnumOrSubclass() != null) {
+        return;
+      }
+      /*
+       * Check for calls to the auto-generated
+       * EnumSubType.valueOf(String). Note, the check of the signature for
+       * the single String arg version is to avoid flagging user-defined
+       * overloaded versions of the method, which are presumably ok.
+       */
+      List<JParameter> params = target.getParams();
+      if (target.getName().equals("valueOf") &&
+          params.size() == 1 && params.get(0).getType() == stringType) {
+        warn(x);
       }
     }
 
@@ -143,7 +151,7 @@ public class EnumNameObfuscator {
     private boolean closureMode;
     private final TreeLogger logger;
 
-    public EnumNameReplacer(JProgram jprogram, TreeLogger logger,
+    private EnumNameReplacer(JProgram jprogram, TreeLogger logger,
         List<String> blacklistedEnums, boolean closureMode) {
       this.logger = logger;
       this.jprogram = jprogram;
@@ -152,11 +160,12 @@ public class EnumNameObfuscator {
       this.makeEnumName = jprogram.getIndexedMethod("Util.makeEnumName");
     }
 
-    public void exec() {
+    private void exec() {
       accept(jprogram);
     }
 
-    @Override public boolean visit(JClassType x, Context ctx) {
+    @Override
+    public boolean visit(JClassType x, Context ctx) {
       if (x.isEnumOrSubclass() == null || typeInBlacklist(blacklistedEnums, x)) {
         return false;
       }
@@ -164,31 +173,31 @@ public class EnumNameObfuscator {
       return true;
     }
 
-    @Override public void endVisit(JNewInstance x, Context ctx) {
+    @Override
+    public void endVisit(JNewInstance x, Context ctx) {
       JConstructor target = x.getTarget();
       JClassType enclosingType = target.getEnclosingType();
-      if (enclosingType.isEnumOrSubclass() != null) {
-        if (!typeInBlacklist(blacklistedEnums, enclosingType)) {
-          JNewInstance newEnum = new JNewInstance(x);
-          // replace first argument with null
-          List<JExpression> args = new ArrayList<JExpression>(x.getArgs());
-          if (closureMode) {
-            JMethodCall makeEnum = new JMethodCall(x.getSourceInfo(), null, makeEnumName, args.get(0));
-            args.set(0, makeEnum);
-          } else {
-            args.set(0, JNullLiteral.INSTANCE);
-          }
-          newEnum.addArgs(args);
-          ctx.replaceMe(newEnum);
-        }
+      if (enclosingType.isEnumOrSubclass() == null) {
+        return;
       }
+
+      if (typeInBlacklist(blacklistedEnums, enclosingType)) {
+        return;
+      }
+
+      JNewInstance newEnum = new JNewInstance(x);
+      List<JExpression> args = Lists.newArrayList(x.getArgs());
+      // replace first argument with null or the closure obfuscation function.
+      args.set(0, closureMode ?
+            new JMethodCall(x.getSourceInfo(), null, makeEnumName, args.get(0)) :
+            JNullLiteral.INSTANCE);
+      newEnum.addArgs(args);
+      ctx.replaceMe(newEnum);
     }
 
     private void trace(JClassType x) {
       if (logger.isLoggable(TreeLogger.TRACE)) {
-        logger.log(TreeLogger.TRACE,
-            "Obfuscating enum " + x
-            + x.getSourceInfo().getFileName() + ":"
+        logger.log(TreeLogger.TRACE, "Obfuscating enum " + x + x.getSourceInfo().getFileName() + ":"
             + x.getSourceInfo().getStartLine());
       }
     }
@@ -198,8 +207,16 @@ public class EnumNameObfuscator {
     return blacklistedEnums.contains(cType.getName().replace('$', '.'));
   }
 
-  public static void exec(JProgram jprogram, TreeLogger logger,
-      List<String> blacklistedEnums, boolean closureMode) {
+  public static void exec(JProgram jprogram, TreeLogger logger, ConfigProps configProps) {
+    String enumObfucationProperty = configProps.getString(
+        EnumNameObfuscator.ENUM_NAME_OBFUSCATION_PROPERTY, "false");
+    // TODO(rluble): Replace configuration property by the command line option.
+    boolean closureMode = enumObfucationProperty.equals("closure");
+    if (enumObfucationProperty.equals("false")) {
+      return;
+    }
+    List<String> blacklistedEnums = configProps.getCommaSeparatedStrings(
+        EnumNameObfuscator.ENUM_NAME_OBFUSCATION_BLACKLIST_PROPERTY);
     new EnumNameCallChecker(jprogram, logger, blacklistedEnums).accept(jprogram);
     new EnumNameReplacer(jprogram, logger, blacklistedEnums, closureMode).exec();
   }

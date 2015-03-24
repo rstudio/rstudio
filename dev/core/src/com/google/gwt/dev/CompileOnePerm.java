@@ -20,6 +20,7 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.CompileTaskRunner.CompileTask;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.cfg.ModuleDefLoader;
+import com.google.gwt.dev.jjs.JavaToJavaScriptCompiler;
 import com.google.gwt.dev.jjs.PermutationResult;
 import com.google.gwt.dev.util.PerfCounter;
 import com.google.gwt.dev.util.arg.ArgHandlerPerm;
@@ -149,7 +150,8 @@ public class CompileOnePerm {
     assert subPerms.length == 1;
 
     PermutationResult permResult =
-        precompilation.getUnifiedAst().compilePermutation(logger, compilerContext, subPerms[0]);
+        JavaToJavaScriptCompiler.compilePermutation(precompilation.getUnifiedAst(), logger,
+            compilerContext, subPerms[0]);
     Link.linkOnePermutationToJar(logger, module, compilerContext.getPublicResourceOracle(),
         precompilation.getGeneratedArtifacts(), permResult, makePermFilename(
             compilerWorkDir, permId), precompilationOptions);

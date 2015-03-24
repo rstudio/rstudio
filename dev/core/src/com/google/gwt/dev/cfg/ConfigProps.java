@@ -116,6 +116,18 @@ public class ConfigProps implements Serializable {
   }
 
   /**
+   * Returns a single-valued property as a string if possible.
+   * If not set or not single-valued, returns the default value.
+   */
+  public String getString(String key, String defaultValue) {
+    List<String> values = getStrings(key);
+    if (values.size() != 1 || values.get(0) == null) {
+      return defaultValue;
+    }
+    return values.get(0);
+  }
+
+  /**
    * Returns all the values of a multi-valued configuration property, or an empty list
    * if not found.
    *

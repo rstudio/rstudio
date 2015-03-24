@@ -15,12 +15,8 @@
  */
 package com.google.gwt.dev.jjs;
 
-import com.google.gwt.core.ext.TreeLogger;
-import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.linker.ModuleMetricsArtifact;
 import com.google.gwt.core.ext.linker.PrecompilationMetricsArtifact;
-import com.google.gwt.dev.CompilerContext;
-import com.google.gwt.dev.Permutation;
 import com.google.gwt.dev.PrecompileTaskOptions;
 import com.google.gwt.dev.PrecompileTaskOptionsImpl;
 import com.google.gwt.dev.jjs.ast.JProgram;
@@ -110,24 +106,6 @@ public class UnifiedAst implements Serializable {
     this.initialAst = initialAst;
     this.rebindRequests = Collections.unmodifiableSortedSet(new TreeSet<String>(rebindRequests));
     this.serializedAstToken = singlePermutation ? -1 : diskCache.writeObject(initialAst);
-  }
-
-  /**
-   * Compiles a particular permutation.
-   *
-   * @param logger the logger to use
-   * @param compilerContext shared read only compiler state
-   * @param permutation the permutation to compile
-   * @return the permutation result
-   * @throws UnableToCompleteException if an error other than
-   *           {@link OutOfMemoryError} occurs
-   */
-  public PermutationResult compilePermutation(
-      TreeLogger logger, CompilerContext compilerContext, Permutation permutation)
-      throws UnableToCompleteException {
-    JavaToJavaScriptCompiler javaToJavaScriptCompiler =
-        new MonolithicJavaToJavaScriptCompiler(logger, compilerContext);
-    return javaToJavaScriptCompiler.compilePermutation(this, permutation);
   }
 
   /**

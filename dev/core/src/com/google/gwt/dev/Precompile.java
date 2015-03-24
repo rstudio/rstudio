@@ -24,14 +24,12 @@ import com.google.gwt.core.ext.linker.PrecompilationMetricsArtifact;
 import com.google.gwt.core.ext.linker.impl.StandardLinkerContext;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.dev.CompileTaskRunner.CompileTask;
-import com.google.gwt.dev.cfg.ConfigurationProperty;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.cfg.ModuleDefLoader;
 import com.google.gwt.dev.cfg.PropertyPermutations;
 import com.google.gwt.dev.javac.CompilationState;
 import com.google.gwt.dev.javac.CompilationUnit;
-import com.google.gwt.dev.jjs.AbstractCompiler;
-import com.google.gwt.dev.jjs.JavaScriptCompiler;
+import com.google.gwt.dev.jjs.JavaToJavaScriptCompiler;
 import com.google.gwt.dev.jjs.UnifiedAst;
 import com.google.gwt.dev.shell.CheckForUpdates;
 import com.google.gwt.dev.shell.CheckForUpdates.UpdateResult;
@@ -180,7 +178,7 @@ public class Precompile {
       compilationState = null;
       // Never optimize on a validation run.
       jjsOptions.setOptimizePrecompile(false);
-      getCompiler(module).precompile(
+      JavaToJavaScriptCompiler.precompile(
           logger, compilerContext, rpo, declEntryPts, additionalRootTypes, true, null);
       return true;
     } catch (UnableToCompleteException e) {
@@ -200,28 +198,6 @@ public class Precompile {
         new PropertyPermutations(module.getProperties(), module.getActiveLinkerNames());
     List<PropertyPermutations> collapsedPermutations = allPermutations.collapseProperties();
     return collapsedPermutations;
-  }
-
-  static AbstractCompiler getCompiler(ModuleDef module) {
-    ConfigurationProperty compilerClassProp =
-        module.getProperties().findConfigProp("x.compiler.class");
-    String compilerClassName = compilerClassProp != null ? compilerClassProp.getValue() : null;
-    if (compilerClassName == null || compilerClassName.length() == 0) {
-      return new JavaScriptCompiler();
-    }
-    Throwable caught;
-    try {
-      Class<?> compilerClass = Class.forName(compilerClassName);
-      return (AbstractCompiler) compilerClass.newInstance();
-    } catch (ClassNotFoundException e) {
-      caught = e;
-    } catch (InstantiationException e) {
-      caught = e;
-    } catch (IllegalAccessException e) {
-      caught = e;
-    }
-    throw new RuntimeException("Unable to instantiate compiler class '" + compilerClassName + "'",
-        caught);
   }
 
   static Precompilation precompile(TreeLogger logger, CompilerContext compilerContext,
@@ -277,7 +253,7 @@ public class Precompile {
           jjsOptions.isCompilerMetricsEnabled()
               ? new PrecompilationMetricsArtifact(permutationBase) : null;
       UnifiedAst unifiedAst =
-          getCompiler(module).precompile(logger, compilerContext, rpo, declEntryPts, null,
+          JavaToJavaScriptCompiler.precompile(logger, compilerContext, rpo, declEntryPts, null,
               rpo.getPermutationCount() == 1, precompilationMetrics);
 
       if (jjsOptions.isCompilerMetricsEnabled()) {
