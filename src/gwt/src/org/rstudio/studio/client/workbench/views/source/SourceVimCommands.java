@@ -154,6 +154,34 @@ public class SourceVimCommands
      });
    }-*/;
    
+   public native final void reindent(Source source) /*-{
+      
+      var Vim = $wnd.require("ace/keyboard/vim").CodeMirror.Vim;
+      var callback = $entry(function(cm, args, vim) {
+         source.@org.rstudio.studio.client.workbench.views.source.Source::reindent()();
+         if (vim.visualMode)
+            Vim.exitVisualMode(cm, false);
+      });
+      
+      Vim.defineAction("reindent", callback);
+      
+      Vim.mapCommand({
+         keys: "==",
+         type: "action",
+         action: "reindent",
+         isEdit: true,
+         context: "normal"
+      });
+      
+      Vim.mapCommand({
+         keys: "=",
+         type: "action",
+         action: "reindent",
+         isEdit: true,
+         context: "visual"
+      });
+      
+   }-*/;
    
    public native final void showHelpAtCursor(Source source) /*-{
      var Vim = $wnd.require("ace/keyboard/vim").CodeMirror.Vim;

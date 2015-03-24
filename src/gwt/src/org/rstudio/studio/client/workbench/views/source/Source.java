@@ -485,6 +485,7 @@ public class Source implements InsertSourceHandler,
       vimCommands_.showVimHelp(
             RStudioGinjector.INSTANCE.getShortcutViewer());
       vimCommands_.showHelpAtCursor(this);
+      vimCommands_.reindent(this);
    }
    
    private void closeAllTabs(boolean interactive)
@@ -2543,6 +2544,15 @@ public class Source implements InsertSourceHandler,
       {
          TextEditingTarget editor = (TextEditingTarget) activeEditor_;
          editor.reflowText();
+      }
+   }
+   
+   private void reindent()
+   {
+      if (activeEditor_ != null && activeEditor_ instanceof TextEditingTarget)
+      {
+         TextEditingTarget editor = (TextEditingTarget) activeEditor_;
+         editor.getDocDisplay().reindent();
       }
    }
    
