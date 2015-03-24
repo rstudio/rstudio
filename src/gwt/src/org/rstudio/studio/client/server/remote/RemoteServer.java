@@ -2994,6 +2994,7 @@ public class RemoteServer implements Server
                            String title, 
                            String rmdFile,
                            String htmlFile,
+                           String uploadId,
                            boolean isUpdate,
                            ServerRequestCallback<Boolean> requestCallback)
    {
@@ -3002,7 +3003,8 @@ public class RemoteServer implements Server
       params.set(1, new JSONString(title));
       params.set(2, new JSONString(rmdFile));
       params.set(3, new JSONString(htmlFile));
-      params.set(4, JSONBoolean.getInstance(isUpdate));
+      params.set(4, new JSONString(uploadId));
+      params.set(5, JSONBoolean.getInstance(isUpdate));
       sendRequest(RPC_SCOPE, RPUBS_UPLOAD, params, requestCallback);
    }
 

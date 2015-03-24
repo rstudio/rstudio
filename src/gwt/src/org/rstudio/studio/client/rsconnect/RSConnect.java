@@ -144,9 +144,13 @@ public class RSConnect implements SessionInitHandler,
    {
       String ctx = "Publish " + contentTypeDesc(event.getContentType());
       RPubsUploadDialog dlg = new RPubsUploadDialog(
-            "Publish Wizard", ctx, event.getFromRmdPreview() != null ? 
+            "Publish Wizard", 
+            ctx, event.getFromRmdPreview() != null ? 
                   event.getFromRmdPreview().getTargetFile() : null,
-            event.getHtmlFile(), event.getFromPrevious() != null);
+            event.getHtmlFile(), 
+            event.getFromPrevious() == null ? 
+                  "" : event.getFromPrevious().getBundleId(),
+            false);
       dlg.showModal();
    }
    
@@ -161,11 +165,22 @@ public class RSConnect implements SessionInitHandler,
    {
       if (event.getFromPrevious() != null)
       {
-         if (event.getContentType() == CONTENT_TYPE_APP)
+         switch (event.getContentType())
          {
+         case CONTENT_TYPE_APP:
             publishAsCode(event);
+            break;
+         case CONTENT_TYPE_RMD:
+            if (event.getFromPrevious().getServer().equals("rpubs.com"))
+            {
+               publishAsRPubs(event);
+            }
+            else
+            {
+               // TODO: handle R Markdown republish to RStudio connect
+            }
+            break;
          }
-         // TODO: handle redeployments of R Markdown files
       }
       else 
       {
@@ -542,8 +557,11 @@ public class RSConnect implements SessionInitHandler,
             input.getSourceRmd() == null ? null : 
                input.getSourceRmd().getPath(),
             input.getOriginatingEvent().getHtmlFile(), 
+            input.getOriginatingEvent().getFromPrevious() == null ? "" :
+               input.getOriginatingEvent().getFromPrevious().getBundleId(),
             false);
    }
+   
    
    private void handleRSConnectAction(RSConnectActionEvent event)
    {

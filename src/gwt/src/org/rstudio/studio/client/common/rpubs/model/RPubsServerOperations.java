@@ -26,6 +26,7 @@ public interface RPubsServerOperations
                     String title, 
                     String rmdFile,
                     String htmlFile,
+                    String uploadId,
                     boolean isUpdate,
                     ServerRequestCallback<Boolean> requestCallback);
    

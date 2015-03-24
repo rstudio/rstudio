@@ -53,9 +53,10 @@ public class RPubsUploadDialog extends ModalDialogBase
                             String title, 
                             String rmdFile,
                             String htmlFile, 
+                            String uploadId,
                             boolean isPublished)
    {
-      this(contextId, title, htmlFile, rmdFile, null, isPublished);
+      this(contextId, title, htmlFile, rmdFile, uploadId, null, isPublished);
    }
    
    public RPubsUploadDialog(String contextId,
@@ -63,13 +64,14 @@ public class RPubsUploadDialog extends ModalDialogBase
                             RPubsHtmlGenerator htmlGenerator, 
                             boolean isPublished)
    {
-      this(contextId, title, null, null, htmlGenerator, isPublished);
+      this(contextId, title, null, null, null, htmlGenerator, isPublished);
    }
    
    private RPubsUploadDialog(String contextId,
                              String title, 
                              String rmdFile,
                              String htmlFile, 
+                             String uploadId,
                              RPubsHtmlGenerator htmlGenerator,
                              boolean isPublished)
    {
@@ -81,6 +83,7 @@ public class RPubsUploadDialog extends ModalDialogBase
       htmlGenerator_ = htmlGenerator;
       isPublished_ = isPublished;
       contextId_ = contextId;
+      uploadId_ = uploadId;
       uploader_ = new RPubsUploader(server_, globalDisplay_,
             eventBus_, contextId_);
       uploader_.setOnUploadComplete(new CommandWithArg<Boolean>()
@@ -317,7 +320,7 @@ public class RPubsUploadDialog extends ModalDialogBase
          @Override
          public void execute(String htmlFile)
          {
-            uploader_.performUpload(title, rmdFile_, htmlFile, modify);
+            uploader_.performUpload(title, rmdFile_, htmlFile, "", modify);
          }
       });
    }
@@ -384,6 +387,7 @@ public class RPubsUploadDialog extends ModalDialogBase
    private final String htmlFile_;
    private final String rmdFile_;
    private final String contextId_;
+   private final String uploadId_;
    private final RPubsHtmlGenerator htmlGenerator_;
    
    private GlobalDisplay globalDisplay_;

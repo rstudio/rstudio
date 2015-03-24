@@ -101,10 +101,11 @@ public:
                                                 const std::string& title,
                                                 const FilePath& originalRmd,
                                                 const FilePath& htmlFile,
+                                                const std::string& uploadId,
                                                 bool allowUpdate)
    {
       boost::shared_ptr<RPubsUpload> pUpload(new RPubsUpload(contextId));
-      pUpload->start(title, originalRmd, htmlFile, allowUpdate);
+      pUpload->start(title, originalRmd, htmlFile, uploadId, allowUpdate);
       return pUpload;
    }
 
@@ -126,7 +127,8 @@ private:
    }
 
    void start(const std::string& title, const FilePath& originalRmd, 
-              const FilePath& htmlFile, bool allowUpdate)
+              const FilePath& htmlFile, const std::string& uploadId, 
+              bool allowUpdate)
    {
       using namespace rstudio::core::string_utils;
       using namespace module_context;
@@ -135,8 +137,10 @@ private:
       csvOutputFile_ = module_context::tempFile("rpubsupload", "csv");
       isRunning_ = true;
 
-      // see if we already know of an upload id for this file
-      std::string id = allowUpdate ? previousRpubsUploadId(htmlFile_) : std::string();
+      // if we don't already have an ID for this file, and updates are allowed,
+      // check for a previous upload ID
+      std::string id = allowUpdate && uploadId.empty() ? 
+         previousRpubsUploadId(htmlFile_) : uploadId;
 
       // R binary
       FilePath rProgramPath;
@@ -373,13 +377,14 @@ Error rpubsIsPublished(const json::JsonRpcRequest& request,
 Error rpubsUpload(const json::JsonRpcRequest& request,
                   json::JsonRpcResponse* pResponse)
 {
-   std::string contextId, title, originalRmd, htmlFile;
+   std::string contextId, title, originalRmd, htmlFile, uploadId;
    bool isUpdate;
    Error error = json::readParams(request.params,
                                   &contextId,
                                   &title,
                                   &originalRmd, 
                                   &htmlFile,
+                                  &uploadId,
                                   &isUpdate);
    if (error)
       return error;
@@ -401,6 +406,7 @@ Error rpubsUpload(const json::JsonRpcRequest& request,
                                                          title,
                                                          rmdPath,
                                                          filePath,
+                                                         uploadId,
                                                          isUpdate);
       pResponse->setResult(true);
    }

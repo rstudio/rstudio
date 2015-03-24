@@ -61,6 +61,7 @@ public class RPubsPresenter
                                                     context_.getTitle(),
                                                     "",
                                                     context_.getHtmlFile(),
+                                                    "",
                                                     context_.isPublished());
       dlg.showModal();
    }

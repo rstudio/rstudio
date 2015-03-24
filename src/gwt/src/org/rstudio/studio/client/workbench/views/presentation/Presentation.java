@@ -338,6 +338,7 @@ public class Presentation extends BasePresenter
                      view_.getPresentationTitle(),
                      "",
                      source.getSourceFilePath(),
+                     "",
                      source.isPublished());
                dlg.showModal();
             }
