@@ -1071,7 +1071,7 @@
    # Execute 'match.call()' with warnings for partial
    # matching turned on, so that we can capture and report
    # those
-   old <- getOption("warnPartialMatchArgs")
+   old <- getOption("warnPartialMatchArgs", default = FALSE)
    options(warnPartialMatchArgs = TRUE)
    result <- tryCatch(
       match.call(fnObject, fnCall),
