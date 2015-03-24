@@ -398,29 +398,6 @@ public class ValueBoxBase<T> extends FocusWidget implements
     }
   }
 
-  /**
-   * Returns the HTML5 placeholder value.
-   *
-   * @return the placeholder value or an empty string if none has been defined.
-   */
-  public String getPlaceholder() {
-    return getElement().getPropertyString("placeholder");
-  }
-
-  /**
-   * Sets the HTML5 placeholder value.
-   *
-   * <p>The placeholder will be displayed if this value box is empty
-   * and should describe the expected input for this value box.</p>
-   *
-   * <p>The exact behavior of the placeholder might differ between browsers.</p>
-   *
-   * @param placeholder the text to display or {@code null}.
-   */
-  public void setPlaceholder(final String placeholder) {
-    getElement().setPropertyString("placeholder", placeholder == null ? "" : placeholder);
-  }
-
   protected TextBoxImpl getImpl() {
     return impl;
   }
