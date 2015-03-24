@@ -29,6 +29,7 @@ import org.rstudio.studio.client.rsconnect.model.RSConnectAccount;
 import org.rstudio.studio.client.rsconnect.model.RSConnectApplicationInfo;
 import org.rstudio.studio.client.rsconnect.model.RSConnectDeploymentFiles;
 import org.rstudio.studio.client.rsconnect.model.RSConnectDeploymentRecord;
+import org.rstudio.studio.client.rsconnect.model.RSConnectPublishResult;
 import org.rstudio.studio.client.rsconnect.model.RSConnectServerOperations;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -348,6 +349,36 @@ public class RSConnectDeploy extends Composite
       contentPath_ = contentPath;
    }
    
+   public RSConnectPublishResult getResult() 
+   {
+      // compose the list of files that have been manually added; we want to
+      // include all the ones the user added but didn't later uncheck, so
+      // cross-reference the list we kept with the one returned by the dialog
+      ArrayList<String> deployFiles = getFileList();
+      ArrayList<String> additionalFiles = new ArrayList<String>();
+      for (String filePath: filesAddedManually_)
+      {
+         if (deployFiles.contains(filePath))
+         {
+            additionalFiles.add(filePath);
+         }
+      }
+      
+      return new RSConnectPublishResult(
+            getNewAppName(), 
+            getSelectedAccount(), 
+            FileSystemItem.createFile(contentPath_).getParentPathString(), 
+            contentPath_,
+            deployFiles, 
+            additionalFiles, 
+            getIgnoredFileList());
+   }
+   
+   public boolean isResultValid()
+   {
+      return validateAppName();
+   }
+   
    // Private methods --------------------------------------------------------
    
    private void setPreviousInfo()
@@ -474,11 +505,13 @@ public class RSConnectDeploy extends Composite
       
    }
 
-   private void validateAppName()
+   private boolean validateAppName()
    {
       String app = appName_.getText();
       RegExp validReg = RegExp.compile("^[A-Za-z0-9_-]{4,63}$");
-      setAppNameValid(validReg.test(app));
+      boolean isValid = validReg.test(app);
+      setAppNameValid(isValid);
+      return isValid;
    }
    
    private void setAppNameValid(boolean isValid)
@@ -560,8 +593,7 @@ public class RSConnectDeploy extends Composite
                            }
                         }
                         addFileToList(path);
-                        // TODO: keep track of which files were added manually
-                        // filesAddedManually_.add(path);
+                        filesAddedManually_.add(path);
                      }
                   }
                   indicator.onCompleted();
@@ -584,6 +616,8 @@ public class RSConnectDeploy extends Composite
    @UiField HTMLPanel rootPanel_;
    
    private ArrayList<CheckBox> fileChecks_;
+   private ArrayList<String> filesAddedManually_ = 
+         new ArrayList<String>();
    
    private Command onDeployEnabled_;
    private Command onDeployDisabled_;

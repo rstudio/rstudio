@@ -14,7 +14,6 @@
  */
 package org.rstudio.studio.client.rsconnect.ui;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -26,7 +25,6 @@ import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.rsconnect.RSConnect;
 import org.rstudio.studio.client.rsconnect.model.RSConnectAccount;
 import org.rstudio.studio.client.rsconnect.model.RSConnectDeploymentRecord;
-import org.rstudio.studio.client.rsconnect.model.RSConnectPublishResult;
 import org.rstudio.studio.client.rsconnect.model.RSConnectServerOperations;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -55,8 +53,6 @@ public class RSConnectDeployDialog
       deployButton_ = new ThemedButton("Publish");
       addCancelButton();
       addOkButton(deployButton_);
-      sourceDir_ = sourceDir;
-      sourceFile_ = sourceFile;
       connect_ = connect;
 
       String deployTarget = sourceDir;
@@ -140,28 +136,8 @@ public class RSConnectDeployDialog
    
    private void onDeploy()
    {
-      // compose the list of files that have been manually added; we want to
-      // include all the ones the user added but didn't later uncheck, so
-      // cross-reference the list we kept with the one returned by the dialog
-      ArrayList<String> deployFiles = contents_.getFileList();
-      ArrayList<String> additionalFiles = new ArrayList<String>();
-      for (String filePath: filesAddedManually_)
-      {
-         if (deployFiles.contains(filePath))
-         {
-            additionalFiles.add(filePath);
-         }
-      }
-      
-      connect_.fireRSConnectPublishEvent(new RSConnectPublishResult(
-            contents_.getNewAppName(), 
-            contents_.getSelectedAccount(), 
-            sourceDir_, 
-            sourceFile_,
-            deployFiles, 
-            additionalFiles, 
-            contents_.getIgnoredFileList()), 
-            launchCheck_.getValue());
+      connect_.fireRSConnectPublishEvent(
+            contents_.getResult(), launchCheck_.getValue());
       closeDialog();
    }
    
@@ -179,13 +155,9 @@ public class RSConnectDeployDialog
    
    private final RSConnect connect_;
    
-   private String sourceDir_;
-   private String sourceFile_;
    private ThemedButton deployButton_;
    private CheckBox launchCheck_;
    private RSConnectAccount defaultAccount_;
-   private ArrayList<String> filesAddedManually_ =
-         new ArrayList<String>();
    
    // Map of app URL to the deployment made to that URL
    private Map<String, RSConnectDeploymentRecord> deployments_ = 

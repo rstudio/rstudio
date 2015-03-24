@@ -62,13 +62,13 @@ public class PublishCodePage
    @Override
    protected RSConnectPublishResult collectInput()
    {
-      return new RSConnectPublishResult();
+      return contents_.getResult();
    }
 
    @Override
    protected boolean validate(RSConnectPublishResult input)
    {
-      return false;
+      return contents_.isResultValid();
    }
    
    private RSConnectDeploy contents_;

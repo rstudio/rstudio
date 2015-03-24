@@ -26,7 +26,7 @@ public class PublishMultiplePage
 {
    public PublishMultiplePage(RSConnectPublishInput input)
    {
-      super("Multiple R Markdown Files", "", "Multiple R Markdown Files", 
+      super("Multiple R Markdown Files", "", "What do you want to publish?", 
             null, null, createPages(input));
    }
    
