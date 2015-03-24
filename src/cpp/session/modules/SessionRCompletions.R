@@ -1551,6 +1551,15 @@ assign(x = ".rs.acCompletionTypes",
    if (length(string) && string[[1]] == "install.packages" && numCommas[[1]] == 0)
       return(.rs.getCompletionsInstallPackages(token))
    
+   # example / help
+   if (nzchar(token) &&
+       length(string) &&
+       string[[1]] %in% c("help", "example") &&
+       numCommas[[1]] == 0)
+   {
+      return(.rs.getCompletionsHelp(token, quote = TRUE))
+   }
+   
    # vignettes
    if (length(string) && string[[1]] == "vignette" && numCommas[[1]] == 0)
       return(.rs.getCompletionsVignettes(token))
@@ -2058,7 +2067,8 @@ assign(x = ".rs.acCompletionTypes",
 
 ## NOTE: This is a modified version of 'matchAvailableTopics'
 ## in 'completions.R' of the R sources.
-.rs.addFunction("getCompletionsHelp", function(token)
+.rs.addFunction("getCompletionsHelp", function(token,
+                                               quote = FALSE)
 {
    ## Attempt to find the help topic item in the local
    ## cache, as reading files from disk multiple times
@@ -2115,7 +2125,7 @@ assign(x = ".rs.acCompletionTypes",
    completions <- .rs.makeCompletions(
       token = token,
       results = completions,
-      quote = grepl("[^a-zA-Z0-9._]", completions, perl = TRUE),
+      quote = quote || grepl("[^a-zA-Z0-9._]", completions, perl = TRUE),
       type = .rs.acCompletionTypes$HELP,
       overrideInsertParens = TRUE
    )
@@ -2565,6 +2575,18 @@ assign(x = ".rs.acCompletionTypes",
       }
    }
    
+   # Get 'help', 'example' completions
+   if (activeArg %in% "topic" &&
+       (identical(object, utils::example) ||
+        identical(object, utils::help)))
+   {
+      completions <- .rs.appendCompletions(
+         completions,
+         .rs.getCompletionsHelp(token, quote = TRUE)
+      )
+   }
+   
+   # Get package names for completions
    if (activeArg %in% c("pkg", "package"))
       completions <- .rs.appendCompletions(
          completions,
