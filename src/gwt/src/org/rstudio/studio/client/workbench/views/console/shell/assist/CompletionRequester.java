@@ -342,6 +342,7 @@ public class CompletionRequester
          final boolean chainExcludeArgsFromObject,
          final String filePath,
          final String documentId,
+         final String line,
          final boolean implicit,
          final ServerRequestCallback<CompletionResult> callback)
    {
@@ -363,6 +364,7 @@ public class CompletionRequester
             chainExcludeArgsFromObject,
             filePath,
             documentId,
+            line,
             new ServerRequestCallback<Completions>()
       {
          @Override
@@ -613,6 +615,7 @@ public class CompletionRequester
          final boolean chainExcludeArgsFromObject,
          final String filePath,
          final String documentId,
+         final String line,
          final ServerRequestCallback<Completions> requestCallback)
    {
       int optionsStartOffset;
@@ -635,6 +638,7 @@ public class CompletionRequester
                chainExcludeArgsFromObject,
                filePath,
                documentId,
+               line,
                requestCallback);
       }
    }
