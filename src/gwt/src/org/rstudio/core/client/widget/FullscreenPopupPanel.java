@@ -35,6 +35,14 @@ public class FullscreenPopupPanel extends ModalPopupPanel
                                Widget mainWidget,
                                boolean closeOnEscape)
    {
+      this(titleWidget, mainWidget, 0, closeOnEscape);
+   }
+   
+   public FullscreenPopupPanel(Widget titleWidget, 
+                               Widget mainWidget,
+                               int margin,
+                               boolean closeOnEscape)
+   {
       super(false, false, closeOnEscape);
       
       NineUpBorder border = new NineUpBorder(RES, 32, 20, 17, 20);
@@ -50,10 +58,10 @@ public class FullscreenPopupPanel extends ModalPopupPanel
       Style popupStyle = getElement().getStyle();
       popupStyle.setZIndex(1001);
       popupStyle.setPosition(Style.Position.ABSOLUTE);
-      popupStyle.setTop(0, Unit.PX);
-      popupStyle.setBottom(0, Unit.PX);
-      popupStyle.setLeft(0, Unit.PX);
-      popupStyle.setRight(0, Unit.PX);
+      popupStyle.setTop(margin, Unit.PX);
+      popupStyle.setBottom(margin, Unit.PX);
+      popupStyle.setLeft(margin, Unit.PX);
+      popupStyle.setRight(margin, Unit.PX);
 
       Style contentStyle =
             ((Element) getElement().getFirstChild()).getStyle();

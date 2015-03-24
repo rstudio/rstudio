@@ -54,6 +54,10 @@ import org.rstudio.studio.client.common.debugging.model.TopLevelLineData;
 import org.rstudio.studio.client.common.dependencies.model.Dependency;
 import org.rstudio.studio.client.common.mirrors.model.CRANMirror;
 import org.rstudio.studio.client.common.presentation.model.SlideNavigation;
+import org.rstudio.studio.client.common.r.roxygen.RoxygenHelper.SetClassCall;
+import org.rstudio.studio.client.common.r.roxygen.RoxygenHelper.SetGenericCall;
+import org.rstudio.studio.client.common.r.roxygen.RoxygenHelper.SetMethodCall;
+import org.rstudio.studio.client.common.r.roxygen.RoxygenHelper.SetRefClassCall;
 import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
 import org.rstudio.studio.client.common.shell.ShellInput;
@@ -115,6 +119,7 @@ import org.rstudio.studio.client.workbench.model.TexCapabilities;
 import org.rstudio.studio.client.workbench.model.WorkbenchMetrics;
 import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.SpellingPrefsContext;
+import org.rstudio.studio.client.workbench.snippets.model.SnippetData;
 import org.rstudio.studio.client.workbench.views.environment.model.DataPreviewResult;
 import org.rstudio.studio.client.workbench.views.environment.model.DownloadInfo;
 import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentContextData;
@@ -678,6 +683,12 @@ public class RemoteServer implements Server
             GET_ARGS,
             params,
             requestCallback);
+   }
+   
+   public void saveSnippets(JsArray<SnippetData> snippets,
+                            ServerRequestCallback<Void> callback)
+   {
+      sendRequest(RPC_SCOPE, "save_snippets", snippets, callback);
    }
    
    public void getCompletions(
@@ -3986,6 +3997,42 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, LINT_R_SOURCE_DOCUMENT, params, requestCallback);
    }
    
+   @Override
+   public void getSetClassCall(String call,
+                               ServerRequestCallback<SetClassCall> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(call));
+      sendRequest(RPC_SCOPE, GET_SET_CLASS_CALL, params, requestCallback);
+   }
+   
+   @Override
+   public void getSetGenericCall(String call,
+                                 ServerRequestCallback<SetGenericCall> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(call));
+      sendRequest(RPC_SCOPE, GET_SET_GENERIC_CALL, params, requestCallback);
+   }
+   
+   @Override
+   public void getSetMethodCall(String call,
+                                ServerRequestCallback<SetMethodCall> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(call));
+      sendRequest(RPC_SCOPE, GET_SET_METHOD_CALL, params, requestCallback);
+   }
+   
+   @Override
+   public void getSetRefClassCall(String call,
+                                  ServerRequestCallback<SetRefClassCall> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(call));
+      sendRequest(RPC_SCOPE, GET_SET_REF_CLASS_CALL, params, requestCallback);
+   }
+   
    private String clientId_;
    private double clientVersion_ = 0;
    private boolean listeningForEvents_;
@@ -4310,4 +4357,9 @@ public class RemoteServer implements Server
    private static final String GET_PENDING_ACTIONS = "get_pending_actions";
    
    private static final String LINT_R_SOURCE_DOCUMENT = "lint_r_source_document";
+   
+   private static final String GET_SET_CLASS_CALL = "get_set_class_slots";
+   private static final String GET_SET_GENERIC_CALL = "get_set_generic_call";
+   private static final String GET_SET_METHOD_CALL = "get_set_method_call";
+   private static final String GET_SET_REF_CLASS_CALL = "get_set_ref_class_call";
 }

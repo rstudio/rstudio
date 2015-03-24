@@ -17,21 +17,27 @@ package org.rstudio.studio.client.workbench.prefs.views;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.CheckBox;
+import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
 import org.rstudio.core.client.theme.DialogTabLayoutPanel;
+import org.rstudio.core.client.widget.HelpButton;
 import org.rstudio.core.client.widget.NumericValueWidget;
 import org.rstudio.core.client.widget.SelectWidget;
+import org.rstudio.core.client.widget.SmallButton;
 import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefsAccessor;
+import org.rstudio.studio.client.workbench.snippets.ui.EditSnippetsDialog;
 
 public class EditingPreferencesPane extends PreferencesPane
 {
@@ -43,6 +49,7 @@ public class EditingPreferencesPane extends PreferencesPane
       PreferencesDialogBaseResources baseRes = PreferencesDialogBaseResources.INSTANCE;
       
       VerticalPanel editingPanel = new VerticalPanel();
+      editingPanel.add(headerLabel("General"));
       editingPanel.add(tight(spacesForTab_ = checkboxPref("Insert spaces for tab", prefs.useSpacesForTab())));
       editingPanel.add(indent(tabWidth_ = numericPref("Tab width", prefs.numSpacesForTab())));   
       editingPanel.add(checkboxPref("Insert matching parens/quotes", prefs_.insertMatching()));
@@ -52,11 +59,43 @@ public class EditingPreferencesPane extends PreferencesPane
       editingPanel.add(checkboxPref("Ensure that source files end with newline", prefs_.autoAppendNewline()));
       editingPanel.add(checkboxPref("Strip trailing horizontal whitespace when saving", prefs_.stripTrailingWhitespace()));
       editingPanel.add(checkboxPref("Focus console after executing from source", prefs_.focusConsoleAfterExec()));
-      editingPanel.add(checkboxPref("Enable vim editing mode", prefs_.useVimMode()));
       editingPanel.add(checkboxPref(
             "Continue comment when inserting new line",
             prefs_.continueCommentsOnNewline(),
             "When enabled, pressing enter will continue comments on new lines. Press Shift + Enter to exit a comment."));
+      editingPanel.add(checkboxPref("Enable vim editing mode", prefs_.useVimMode()));
+     
+      
+    
+      
+      Label snippetsLabel = headerLabel("Snippets");
+      snippetsLabel.getElement().getStyle().setMarginTop(8, Unit.PX);
+      editingPanel.add(snippetsLabel);
+      
+      HorizontalPanel panel = new HorizontalPanel();
+      CheckBox enableSnippets = checkboxPref("Enable code snippets", prefs_.enableSnippets());
+      panel.add(enableSnippets);
+     
+      SmallButton editSnippets = new SmallButton("Edit Snippets...");
+      editSnippets.getElement().getStyle().setMarginTop(1, Unit.PX);
+      editSnippets.getElement().getStyle().setMarginLeft(5, Unit.PX);
+      editSnippets.addClickHandler(new ClickHandler() {
+         @Override
+         public void onClick(ClickEvent event)
+         {
+            new EditSnippetsDialog().showModal();
+         }
+      });
+      panel.add(editSnippets);
+      
+      HelpButton snippetHelp = new HelpButton("code_snippets");
+      snippetHelp.getElement().getStyle().setMarginTop(2, Unit.PX);
+      snippetHelp.getElement().getStyle().setMarginLeft(6, Unit.PX);
+      panel.add(snippetHelp);
+      
+      editingPanel.add(panel);
+      
+      
       
       VerticalPanel displayPanel = new VerticalPanel();
       displayPanel.add(checkboxPref("Highlight selected word", prefs.highlightSelectedWord()));

@@ -115,6 +115,11 @@ public class UIPrefsAccessor extends Prefs
    {
       return bool("tab_multiline_completion", false);
    }
+   
+   public PrefValue<Boolean> enableSnippets()
+   {
+      return bool("enable_snippets", true);
+   }
  
    public PrefValue<String> codeComplete()
    {

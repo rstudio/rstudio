@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench.views.output.lint.model;
 
 import org.rstudio.studio.client.server.*;
+import org.rstudio.studio.client.workbench.snippets.model.SnippetData;
 import org.rstudio.studio.client.workbench.views.source.model.CppDiagnostic;
 
 import com.google.gwt.core.client.JsArray;
@@ -29,5 +30,9 @@ public interface LintServerOperations
    void getCppDiagnostics(
                 String docPath,
                 ServerRequestCallback<JsArray<CppDiagnostic>> requestCallback);
+   
+   void saveSnippets(
+         JsArray<SnippetData> snippets,
+         ServerRequestCallback<org.rstudio.studio.client.server.Void> callback);
    
 }

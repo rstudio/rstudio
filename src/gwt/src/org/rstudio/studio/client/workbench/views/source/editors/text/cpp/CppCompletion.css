@@ -10,6 +10,12 @@
    border: 1px solid #ccc;
    box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
    -webkit-box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+   min-width: 150px;
+}
+
+.toolTipText {
+   font-family: fixedWidthFont;
+   white-space: pre-wrap;
 }
 
 .commentText {

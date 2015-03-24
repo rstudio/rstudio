@@ -67,13 +67,13 @@ public class EditorLanguage
    public static final EditorLanguage LANG_SQL = new EditorLanguage(
          "ace/mode/sql", false, true);
    public static final EditorLanguage LANG_SH = new EditorLanguage(
-         "ace/mode/sh", false, true);
+         "ace/mode/sh", false, false);
    public static final EditorLanguage LANG_YAML = new EditorLanguage(
-         "ace/mode/yaml", false, true);
+         "ace/mode/yaml", false, false);
    public static final EditorLanguage LANG_XML = new EditorLanguage(
-         "ace/mode/xml", false, true);
-   public static final EditorLanguage LANG_GRAPHVIZ = new EditorLanguage("ace/mode/dot", false, true);
+         "ace/mode/xml", false, false);
    
+   public static final EditorLanguage LANG_GRAPHVIZ = new EditorLanguage("ace/mode/dot", false, true);
    public static final EditorLanguage LANG_CLOJURE = new EditorLanguage("ace/mode/clojure", false, true);
    public static final EditorLanguage LANG_COFFEE = new EditorLanguage("ace/mode/coffee", false, true);
    public static final EditorLanguage LANG_CSHARP = new EditorLanguage("ace/mode/csharp", false, true);
@@ -91,6 +91,7 @@ public class EditorLanguage
    public static final EditorLanguage LANG_RUBY = new EditorLanguage("ace/mode/ruby", false, true);
    public static final EditorLanguage LANG_RUST = new EditorLanguage("ace/mode/rust", false, true);
    public static final EditorLanguage LANG_SCALA = new EditorLanguage("ace/mode/scala", false, true);
+   public static final EditorLanguage LANG_SNIPPETS = new EditorLanguage("ace/mode/snippets", false, false);
    
    /**
     *
@@ -121,6 +122,12 @@ public class EditorLanguage
    public String getParserName()
    {
       return parserName_;
+   }
+   
+   public String getModeName()
+   {
+      int lastSlash = parserName_.lastIndexOf('/');
+      return parserName_.substring(lastSlash + 1);
    }
 
    public boolean useRCompletion()

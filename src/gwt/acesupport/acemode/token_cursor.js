@@ -31,11 +31,6 @@ var TokenCursor = function(tokens, row, offset) {
       return Object.prototype.toString.call(o) === '[object Array]';
    }
 
-   function lookingAtComma(cursor)
-   {
-      return /,\s*$/.test(cursor.currentValue()) && cursor.currentType() === "text";
-   }
-
    // Simulate 'new Foo([args])'; ie, construction of an
    // object from an array of arguments
    function construct(constructor, args)
@@ -614,8 +609,8 @@ var TokenCursor = function(tokens, row, offset) {
       do
       {
          var currentValue = clone.currentValue();
-         if (lookingAtComma(clone))
-            commaCount += currentValue.length - currentValue.replace(/,/g, "").length;
+         if (currentValue === ",")
+            commaCount += 1;
 
          if (failOnOpenBrace)
          {

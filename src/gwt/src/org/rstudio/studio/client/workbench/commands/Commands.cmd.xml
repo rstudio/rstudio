@@ -152,9 +152,11 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="extractFunction"/>
          <cmd refid="extractLocalVariable"/>
          <separator/>
-         <cmd refid="reindent"/>
          <cmd refid="reflowComment"/>
          <cmd refid="commentUncomment"/>
+         <cmd refid="insertRoxygenSkeleton"/>
+         <separator/>
+         <cmd refid="reindent"/>
          <cmd refid="reformatCode"/>
          <cmd refid="lintActiveDocument"/>
          <separator/>
@@ -408,6 +410,7 @@ well as menu structures (for main menu and popup menus).
          <shortcut value="Ctrl+T" title="Transpose Letters" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut value="Alt+-" title="Insert Assignment Operator"/>
          <shortcut value="Cmd+Shift+M" title="Insert Pipe Operator" />
+         <shortcut refid="insertRoxygenSkeleton" value="Cmd+Shift+Alt+R" title="Insert Roxygen Skeleton" />
       </shortcutgroup>
       <shortcutgroup name="Source Navigation">
          <shortcut refid="sourceNavigateBack" value="Cmd+F9"/>
@@ -900,7 +903,9 @@ well as menu structures (for main menu and popup menus).
    <cmd id="reflowComment"
         menuLabel="Reflow Co_mment"
         desc="Reflow selected comment lines so they wrap evenly"/>
-  
+   <cmd id="insertRoxygenSkeleton"
+        menuLabel="Insert Ro_xygen Skeleton"
+        desc="Insert a roxygen comment for the current function"/>
    <cmd id="markdownHelp"
         menuLabel="_Markdown Quick Reference"
         desc="Markdown quick reference"/>

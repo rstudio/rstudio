@@ -129,6 +129,10 @@
       if (grepl(",\\s*engine\\s*=", splat[[start]], perl = TRUE))
          next
       
+      # If the chunk end lies immediately after the chunk start, bail
+      if (start + 1 == end)
+         next
+      
       new[(start + 1):(end - 1)] <- splat[(start + 1):(end - 1)]
    }
    

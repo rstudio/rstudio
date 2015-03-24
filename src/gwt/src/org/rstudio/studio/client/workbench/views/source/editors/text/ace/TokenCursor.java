@@ -40,6 +40,21 @@ public class TokenCursor extends JavaScriptObject
       return this.currentValue();
    }-*/;
    
+   public final String nextValue(int offset)
+   {
+      TokenCursor clone = cloneCursor();
+      for (int i = 0; i < offset; i++)
+         if (!clone.moveToNextToken())
+            return "";
+      
+      return clone.currentValue();
+   }
+   
+   public final String nextValue()
+   {
+      return nextValue(1);
+   }
+   
    public native final String currentType() /*-{
       return this.currentType();
    }-*/;
@@ -70,6 +85,10 @@ public class TokenCursor extends JavaScriptObject
    
    public native final boolean moveToPosition(Position position) /*-{
       return this.moveToPosition(position);
+   }-*/;
+   
+   public native final boolean moveToPositionRightInclusive(Position position) /*-{
+      return this.moveToPosition({row: position.row, column: position.column + 1});
    }-*/;
    
    public native final boolean findOpeningBracket(String token, boolean failOnOpenBrace) /*-{
@@ -131,6 +150,10 @@ public class TokenCursor extends JavaScriptObject
              this.moveToEndOfCurrentStatement();
    }-*/;
    
+   public native final boolean isLeftAssign() /*-{
+      var value = this.currentValue();
+      return value === "<-" || value === "=";
+   }-*/;
    
 }
 

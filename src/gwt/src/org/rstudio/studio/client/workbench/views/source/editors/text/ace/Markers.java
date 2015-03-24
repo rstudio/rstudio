@@ -23,4 +23,5 @@ public class Markers extends JavaScriptObject
    public final native int[] getIds() /*-{ return Object.keys(this); }-*/;
    public final native Marker get(int id) /*-{ return this[id]; }-*/;
    public final native int size() /*-{ return Object.keys(this).length || 0; }-*/;
+   
 }

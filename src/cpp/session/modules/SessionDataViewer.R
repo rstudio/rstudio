@@ -177,9 +177,29 @@
 })
 
 .rs.addFunction("toDataFrame", function(x, name) {
-  if (is.data.frame(x))
-  {
-    # check for nested frames and flatten them if needed
+  # if it's not already a frame, coerce it to a frame
+  if (!is.data.frame(x)) {
+    frame <- NULL
+    # attempt to coerce to a data frame--this can throw errors in the case where
+    # we're watching a named object in an environment and the user replaces an
+    # object that can be coerced to a data frame with one that cannot
+    tryCatch(
+    {
+      frame <- as.data.frame(x)
+    },
+    error = function(e)
+    {
+    })
+    # as.data.frame uses the name of its argument to label unlabeled columns, so
+    # label these back to the original name
+    if (!is.null(frame))
+      names(frame)[names(frame) == "x"] <- name
+    x <- frame 
+  }
+
+  # if coercion was successful (or we started with a frame), flatten the frame
+  # if necessary
+  if (is.data.frame(x)) {
     frameCols <- .rs.frameCols(x)
     if (length(frameCols) > 0) {
       return(.rs.flattenFrame(x, frameCols))
@@ -187,22 +207,6 @@
       return(x)
     }
   }
-  frame <- NULL
-  # attempt to coerce to a data frame--this can throw errors in the case where
-  # we're watching a named object in an environment and the user replaces an
-  # object that can be coerced to a data frame with one that cannot
-  tryCatch(
-  {
-    frame <- as.data.frame(x)
-  },
-  error = function(e)
-  {
-  })
-  # as.data.frame uses the name of its argument to label unlabeled columns, so
-  # label these back to the original name
-  if (!is.null(frame))
-    names(frame)[names(frame) == "x"] <- name
-  frame
 })
 
 .rs.addFunction("frameCols", function(x) {
@@ -224,6 +228,9 @@
       nestedFrameCols <- .rs.frameCols(x[[framecol]]) 
       if (length(nestedFrameCols) > 0) {
         x[[framecol]] <- .rs.flattenFrame(x[[framecol]], nestedFrameCols)
+
+        # readjust indices
+        newcols <- ncol(x[[framecol]])
       }
 
       # apply column names
@@ -233,7 +240,11 @@
       }
 
       # replace other columns in place
-      x <- cbind(x[0:(framecol-1)], cols, x[(framecol+1):ncol(x)])
+      if (framecol >= ncol(x))  {
+        x <- cbind(x[0:(framecol-1)], cols)
+      } else {
+        x <- cbind(x[0:(framecol-1)], cols, x[(framecol+1):ncol(x)])
+      }
     }
 
     # pop this frame off the list and adjust the other indices to account for
@@ -351,6 +362,10 @@
 .rs.addFunction("findDataFrame", function(envName, objName, cacheKey, cacheDir) 
 {
   env <- NULL
+
+  # mark encoding on cache directory 
+  if (Encoding(cacheDir) == "unknown")
+    Encoding(cacheDir) <- "UTF-8"
 
   # do we have an object name? if so, check in a named environment
   if (!is.null(objName) && nchar(objName) > 0) 
@@ -523,6 +538,10 @@
 
 .rs.addFunction("removeCachedData", function(cacheKey, cacheDir)
 {
+  # mark encoding on cache directory 
+  if (Encoding(cacheDir) == "unknown")
+    Encoding(cacheDir) <- "UTF-8"
+
   # remove data from the cache environment
   if (exists(".rs.CachedDataEnv") &&
       exists(cacheKey, where = .rs.CachedDataEnv, inherits = FALSE))
@@ -541,6 +560,10 @@
 
 .rs.addFunction("saveCachedData", function(cacheDir)
 {
+  # mark encoding on cache directory 
+  if (Encoding(cacheDir) == "unknown")
+    Encoding(cacheDir) <- "UTF-8"
+
   # no work to do if we have no cache
   if (!exists(".rs.CachedDataEnv")) 
     return(invisible(NULL))

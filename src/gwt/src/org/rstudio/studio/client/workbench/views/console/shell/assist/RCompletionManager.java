@@ -53,6 +53,7 @@ import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.codesearch.model.FunctionDefinition;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefsAccessor;
+import org.rstudio.studio.client.workbench.snippets.SnippetHelper;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionRequester.CompletionResult;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionRequester.QualifiedName;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorDisplay;
@@ -125,14 +126,15 @@ public class RCompletionManager implements CompletionManager
       navigableSourceEditor_ = navigableSourceEditor;
       popup_ = popup ;
       server_ = server ;
-      requester_ = new CompletionRequester(server_, rnwContext, navigableSourceEditor);
-      initFilter_ = initFilter ;
       rContext_ = rContext;
+      initFilter_ = initFilter ;
       rnwContext_ = rnwContext;
       docDisplay_ = docDisplay;
       isConsole_ = isConsole;
       sigTip_ = new RCompletionToolTip(docDisplay_);
       suggestTimer_ = new SuggestionTimer();
+      snippets_ = new SnippetHelper((AceEditor) docDisplay, getSourceDocumentPath());
+      requester_ = new CompletionRequester(rnwContext, navigableSourceEditor, snippets_);
       
       input_.addBlurHandler(new BlurHandler() {
          public void onBlur(BlurEvent event)
@@ -312,7 +314,6 @@ public class RCompletionManager implements CompletionManager
          });
    }
    
-   
    public boolean previewKeyDown(NativeEvent event)
    {
       suggestTimer_.cancel();
@@ -367,6 +368,11 @@ public class RCompletionManager implements CompletionManager
                }
                return beginSuggest(true, false, true);
             }
+         }
+         else if (event.getKeyCode() == KeyCodes.KEY_TAB &&
+                  modifier == KeyboardShortcut.SHIFT)
+         {
+            return attemptImmediateSnippetInsertion();
          }
          else if (keycode == 112 // F1
                   && modifier == KeyboardShortcut.NONE)
@@ -1613,6 +1619,13 @@ public class RCompletionManager implements CompletionManager
       
    }
    
+   private void showSnippetHelp(QualifiedName item,
+                                CompletionPopupDisplay popup)
+   {
+      popup.displaySnippetHelp(
+            snippets_.getSnippetContents(item.name));
+   }
+   
    /**
     * It's important that we create a new instance of this each time.
     * It maintains state that is associated with a completion request.
@@ -1631,12 +1644,19 @@ public class RCompletionManager implements CompletionManager
       
       public void showHelp(QualifiedName selectedItem)
       {
-         helpStrategy_.showHelp(selectedItem, popup_);
+         if (selectedItem.type == RCompletionType.SNIPPET)
+            showSnippetHelp(selectedItem, popup_);
+         else
+            helpStrategy_.showHelp(selectedItem, popup_);
       }
       
       public void showHelpTopic()
       {
-         helpStrategy_.showHelpTopic(popup_.getSelectedValue());
+         QualifiedName selectedItem = popup_.getSelectedValue();
+         // TODO: Show help should navigate to snippet file?
+         if (selectedItem.type != RCompletionType.SNIPPET)
+            helpStrategy_.showHelpTopic(selectedItem);
+            
       }
 
       @Override
@@ -1698,6 +1718,13 @@ public class RCompletionManager implements CompletionManager
          if (results.length == 1 &&
              completions.token.equals(results[0].name.replaceAll(":*", "")))
          {
+            // For snippets we need to apply the completion
+            if (results[0].type == RCompletionType.SNIPPET)
+            {
+               snippets_.applySnippet(completions.token, results[0].name);
+               return;
+            }
+            
             popup_.placeOffscreen();
             return;
          }
@@ -1822,9 +1849,15 @@ public class RCompletionManager implements CompletionManager
 
       private void applyValue(final QualifiedName qualifiedName)
       {
-         if (qualifiedName.source == "`chunk-option`")
+         if (qualifiedName.source.equals("`chunk-option`"))
          {
             applyValueRmdOption(qualifiedName.name);
+            return;
+         }
+         
+         if (qualifiedName.type == RCompletionType.SNIPPET)
+         {
+            snippets_.applySnippet(token_, qualifiedName.name);
             return;
          }
          
@@ -2008,10 +2041,10 @@ public class RCompletionManager implements CompletionManager
    
    private String getSourceDocumentPath()
    {
-      if (rContext_ != null)
-         return StringUtil.notNull(rContext_.getPath());
-      else
+      if (rContext_ == null)
          return "";
+      else
+         return StringUtil.notNull(rContext_.getPath());
    }
    
    private String getSourceDocumentId()
@@ -2040,6 +2073,28 @@ public class RCompletionManager implements CompletionManager
       helpRequest_.schedule(milliseconds);
    }
    
+   private boolean attemptImmediateSnippetInsertion()
+   {
+      if (!docDisplay_.getSelection().isEmpty())
+         return false;
+      
+      String token = StringUtil.getToken(
+            docDisplay_.getCurrentLine(),
+            docDisplay_.getCursorPosition().getColumn(),
+            "[^ \\s\\n\\t\\r\\v]",
+            false,
+            false);
+      
+      ArrayList<String> snippets = snippets_.getAvailableSnippets();
+      if (snippets.contains(token))
+      {
+         snippets_.applySnippet(token, token);
+         return true;
+      }
+      
+      return false;
+   }
+   
    private GlobalDisplay globalDisplay_;
    private FileTypeRegistry fileTypeRegistry_;
    private EventBus eventBus_;
@@ -2058,6 +2113,7 @@ public class RCompletionManager implements CompletionManager
    private String token_ ;
    
    private final DocDisplay docDisplay_;
+   private final SnippetHelper snippets_;
    private final boolean isConsole_;
 
    private final Invalidation invalidation_ = new Invalidation();
@@ -2110,6 +2166,8 @@ public class RCompletionManager implements CompletionManager
       {
          return timer_.isRunning();
       }
+      
+      
       
       private boolean flushCache_;
       private boolean implicit_;

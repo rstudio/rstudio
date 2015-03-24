@@ -77,5 +77,9 @@ public class Position extends JavaScriptObject
       this.column = column;
    }-*/;
    
+   public native final void setPosition(Position position) /*-{
+      this.row = position.row;
+      this.column = position.column;
+   }-*/;
       
 }

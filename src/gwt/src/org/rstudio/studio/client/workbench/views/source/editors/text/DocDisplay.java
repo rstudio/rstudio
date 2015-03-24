@@ -257,4 +257,8 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void selectAll(String needle);
    
    int getTabSize();
+   void insertRoxygenSkeleton();
+   
+   long getLastModifiedTime();
+   long getLastCursorChangedTime();
 }

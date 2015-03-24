@@ -84,6 +84,7 @@ git merge \
     origin/patch/worker-timeout \
     origin/patch/vim-colon-selection \
     origin/patch/completion-throttling \
+    origin/patch/bundle-snippets \
     -m "merge branches"
 
 ## git merge \

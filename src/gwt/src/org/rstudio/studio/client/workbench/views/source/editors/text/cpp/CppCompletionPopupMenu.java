@@ -201,7 +201,8 @@ public class CppCompletionPopupMenu extends ScrollableToolbarPopupMenu
             
             // only do tooltips for functions and variables
             if (completion.getType() != CppCompletion.FUNCTION && 
-                completion.getType() != CppCompletion.VARIABLE)
+                completion.getType() != CppCompletion.VARIABLE &&
+                completion.getType() != CppCompletion.SNIPPET)
             {
                toolTip_.setVisible(false);
                return;

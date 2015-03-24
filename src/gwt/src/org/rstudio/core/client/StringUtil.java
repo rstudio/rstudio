@@ -508,6 +508,14 @@ public class StringUtil
       return input.substring(0, 1).toUpperCase() + input.substring(1); 
    }
    
+   public static final native String capitalizeAllWords(String input)
+   /*-{
+      return input.replace(
+         /(?:^|\s)\S/g,
+         function(x) { return x.toUpperCase(); }
+      );
+   }-*/;
+   
    public static int countMatches(String line, char chr)
    {
       return line.length() - line.replace(String.valueOf(chr), "").length();
@@ -888,7 +896,15 @@ public class StringUtil
          matchIndex = string.indexOf(ch, matchIndex + 1);
       }
       return indices;
-      
+   }
+   
+   @SuppressWarnings("deprecation") // GWT emulation only provides isSpace
+   public static boolean isWhitespace(String string)
+   {
+      for (int i = 0; i < string.length(); i++)
+         if (!Character.isSpace(string.charAt(i)))
+            return false;
+      return true;
    }
    
    private static final String[] LABELS = {

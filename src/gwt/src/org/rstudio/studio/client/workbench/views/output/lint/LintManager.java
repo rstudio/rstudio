@@ -125,8 +125,15 @@ public class LintManager
             if (docDisplay_.isPopupVisible())
                return;
             
-            docDisplay_.removeMarkersOnCursorLine();
-            timer_.schedule(uiPrefs_.backgroundDiagnosticsDelayMs().getValue());
+            Scheduler.get().scheduleDeferred(new ScheduledCommand()
+            {
+               @Override
+               public void execute()
+               {
+                  docDisplay_.removeMarkersOnCursorLine();
+                  timer_.schedule(uiPrefs_.backgroundDiagnosticsDelayMs().getValue());
+               }
+            });
          }
       });
       
@@ -240,7 +247,7 @@ public class LintManager
                            {
                               Debug.logError(error);
                            }
-                        });;
+                        });
                }
                
                @Override
@@ -339,13 +346,13 @@ public class LintManager
       });
    }
    private final native void doGetAceWorkerDiagnostics(AceEditorNative editor) /*-{
-      // The 'timeout' here is a bit of a hack to ensure
-      // lint is not immediately cleared from other events.
-      setTimeout(function() {
+      // The 'timeout' here is a bit of a hack to ensure lint is not immediately
+      // cleared from other events.
+      var callback = $entry(function() {
          var worker = editor.getSession().$worker;
-         if (worker)
-            worker.update();
-      }, 50);
+         if (worker) worker.update();
+      });
+      $wnd.setTimeout(callback, 100);
    }-*/;
    
    private final Timer timer_;

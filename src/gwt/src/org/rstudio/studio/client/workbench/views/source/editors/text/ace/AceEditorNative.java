@@ -187,6 +187,9 @@ public class AceEditorNative extends JavaScriptObject {
    public final native void manageDefaultKeybindings() /*-{
       // We bind 'Ctrl + Shift + M' to insert a magrittr shortcut on Windows
       delete this.commands.commandKeyBinding["ctrl-shift-m"];
+      
+      // We bind 'Ctrl + Shift + P' to run previous code on Windows
+      delete this.commands.commandKeyBinding["ctrl-shift-p"];
    }-*/;
 
    public static <T> HandlerRegistration addEventListener(
@@ -290,10 +293,19 @@ public class AceEditorNative extends JavaScriptObject {
       });
    }-*/;
    
-   public final native void moveCursorLeft() /*-{
+   public final native void moveCursorLeft(int times) /*-{
       var that = this;
       this.forEachSelection(function() {
-         that.navigateLeft(1);
+         that.navigateLeft(times);
+      });
+   }-*/;
+   
+   public final native void expandSelectionLeft(int times) /*-{
+      var that = this;
+      this.forEachSelection(function() {
+         var selection = that.getSelection();
+         for (var i = 0; i < times; i++)
+            selection.selectLeft();
       });
    }-*/;
    

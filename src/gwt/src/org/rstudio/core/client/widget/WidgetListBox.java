@@ -176,7 +176,7 @@ public class WidgetListBox<T extends Widget>
       setSelectedIndex(itemIdx, false);
    }
 
-   private void setSelectedIndex(int itemIdx, boolean fireEvent)
+   public void setSelectedIndex(int itemIdx, boolean fireEvent)
    {
       String selectedStyle = resources_.listStyle().selectedItem();
       panel_.getWidget(selectedIdx_).removeStyleName(selectedStyle);

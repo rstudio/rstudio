@@ -16,17 +16,22 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text.cpp;
 
 
+import java.util.ArrayList;
+
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Invalidation;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.filetypes.DocumentMode;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefsAccessor;
+import org.rstudio.studio.client.workbench.snippets.SnippetHelper;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionManager;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionUtils;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorSelection;
+import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.PasteEvent;
 import org.rstudio.studio.client.workbench.views.source.model.CppServerOperations;
@@ -60,7 +65,8 @@ public class CppCompletionManager implements CompletionManager
       docDisplay_ = docDisplay;
       initFilter_ = initFilter;
       completionContext_ = completionContext;
-      rCompletionManager_ = rCompletionManager; 
+      rCompletionManager_ = rCompletionManager;
+      snippets_ = new SnippetHelper((AceEditor) docDisplay_, completionContext.getDocPath());
       docDisplay_.addClickHandler(new ClickHandler()
       {
          public void onClick(ClickEvent event)
@@ -68,6 +74,8 @@ public class CppCompletionManager implements CompletionManager
             terminateCompletionRequest();
          }
       });
+      
+      
    }
  
    @Inject
@@ -168,7 +176,7 @@ public class CppCompletionManager implements CompletionManager
          });
       }
    }
-   
+  
    // return false to indicate key not handled
    @Override
    public boolean previewKeyDown(NativeEvent event)
@@ -191,6 +199,11 @@ public class CppCompletionManager implements CompletionManager
              shouldComplete(event)) 
          {
             return suggestCompletions(true);
+         }
+         else if (event.getKeyCode() == KeyCodes.KEY_TAB &&
+                  modifier == KeyboardShortcut.SHIFT)
+         {
+            return attemptImmediateSnippetInsertion();
          }
          else if (event.getKeyCode() == 112 // F1
                   && modifier == KeyboardShortcut.NONE)
@@ -237,10 +250,7 @@ public class CppCompletionManager implements CompletionManager
          CppCompletionPopupMenu popup = getCompletionPopup();
          if ((popup == null) || !popup.isVisible())
             return false;
-         
-         // let the document know that a popup is showing
-         docDisplay_.setPopupVisible(true);
-         
+             
          // backspace triggers completion if the popup is visible
          if (keyCode == KeyCodes.KEY_BACKSPACE)
          {
@@ -465,6 +475,28 @@ public class CppCompletionManager implements CompletionManager
       return initFilter_ == null || initFilter_.shouldComplete(event);
    }
    
+   private boolean attemptImmediateSnippetInsertion()
+   {
+      if (!docDisplay_.getSelection().isEmpty())
+         return false;
+      
+      String token = StringUtil.getToken(
+            docDisplay_.getCurrentLine(),
+            docDisplay_.getCursorPosition().getColumn(),
+            "[^ \\s\\n\\t\\r\\v]",
+            false,
+            false);
+      
+      ArrayList<String> snippets = snippets_.getCppSnippets();
+      if (snippets.contains(token))
+      {
+         snippets_.applySnippet(token, token);
+         return true;
+      }
+      
+      return false;
+   }
+   
    private CppServerOperations server_;
    private UIPrefs uiPrefs_;
    private FileTypeRegistry fileTypeRegistry_;
@@ -474,6 +506,7 @@ public class CppCompletionManager implements CompletionManager
    private final InitCompletionFilter initFilter_ ;
    private final CompletionManager rCompletionManager_;
    private final Invalidation completionRequestInvalidation_ = new Invalidation();
+   private final SnippetHelper snippets_;
    
   
 
