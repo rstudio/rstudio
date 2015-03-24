@@ -980,10 +980,10 @@ assign(x = ".rs.acCompletionTypes",
       
       if (isAt)
       {
-         if (isS4(object) && !inherits(object, "classRepresentation"))
+         if (isS4(object))
          {
             tryCatch({
-               allNames <- slotNames(object)
+               allNames <- .slotNames(object)
                names <- .rs.selectFuzzyMatches(allNames, token)
                
                # NOTE: Getting the types forces evaluation; we avoid that if
@@ -1028,7 +1028,23 @@ assign(x = ".rs.acCompletionTypes",
          # Reference class objects
          else if (inherits(object, "refClass"))
          {
-            allNames <- ls(object, all.names = TRUE)
+            tryCatch({
+               refClassDef <- object$.refClassDef
+               allNames <- c(
+                  ls(refClassDef@fieldPrototypes, all.names = TRUE),
+                  ls(refClassDef@refMethods, all.names = TRUE)
+               )
+               
+               # Place the 'less interesting' methods lower
+               baseMethods <- c("callSuper", "copy", "export", "field",
+                                "getClass", "getRefClass", "import", "initFields",
+                                "show", "trace", "untrace", "usingMethods")
+               
+               allNames <- c(
+                  setdiff(allNames, baseMethods),
+                  baseMethods
+               )
+            }, error = function(e) NULL)
          }
          
          # Other objects
