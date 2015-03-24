@@ -29,6 +29,13 @@
 # define UNLIKELY(x) __builtin_expect(!!(x), 0)
 #endif
 
+#define IF_ERROR(error, expr) do { \
+   if (error) { \
+      LOG_ERROR(error); \
+      expr; \
+   } \
+} while (0);
+
 /* Logging Macros */
 
 // re-define this in implementation files for labelled debugging

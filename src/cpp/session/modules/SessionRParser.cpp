@@ -591,6 +591,9 @@ void checkBinaryOperatorWhitespace(RTokenCursor& cursor,
 void validateFunctionCall(const RTokenCursor& cursor,
                           ParseStatus& status)
 {
+   using namespace r::sexp;
+   using namespace r::exec;
+   
    if (!cursor.isType(RToken::LPAREN))
       return;
    
@@ -611,26 +614,42 @@ void validateFunctionCall(const RTokenCursor& cursor,
    std::string fnCallString = string_utils::wideToUtf8(
             std::wstring(startCursor.begin(), endCursor.end()));
    
-   r::exec::RFunction validate(".rs.validateFunctionCall");
+   RFunction validate(".rs.validateFunctionCall");
    validate.addParam(fnNameString);
    validate.addParam(fnCallString);
    
-   std::string message;
-   Error error = validate.call(&message);
-   if (error)
-   {
-      LOG_ERROR(error);
-      return;
-   }
+   Protect protect;
+   SEXP resultSEXP;
+   
+   Error error = validate.call(&resultSEXP, &protect);
+   IF_ERROR(error, return);
+   
+   std::string message, type;
+   
+   error = getNamedListElement(resultSEXP, "message", &message);
+   IF_ERROR(error, return);
+   
+   error = getNamedListElement(resultSEXP, "type", &type);
+   IF_ERROR(error, return);
    
    if (!message.empty())
    {
+      LintType lintType = LintTypeInfo;
+      if (type == "error")
+         lintType = LintTypeError;
+      else if (type == "warning")
+         lintType = LintTypeWarning;
+      else if (type == "note" || type == "info")
+         lintType = LintTypeInfo;
+      else if (type == "style")
+         lintType = LintTypeStyle;
+      
       status.lint().add(
                startCursor.row(),
                startCursor.column(),
                endCursor.row(),
                endCursor.column() + endCursor.length(),
-               LintTypeError,
+               lintType,
                message);
    }
 }
