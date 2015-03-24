@@ -16,23 +16,13 @@
 package org.rstudio.studio.client.rsconnect.model;
 
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.studio.client.rsconnect.events.RSConnectActionEvent;
 
 public class RSConnectPublishInput
 {
-   public RSConnectPublishInput(int contentType, boolean isShiny, 
-         FileSystemItem sourceRmd, boolean isMultiRmd, 
-         boolean isConnectUIEnabled, boolean isExternalUIEnabled)
+   public RSConnectPublishInput(RSConnectActionEvent originatingEvent)
    {
-      contentType_ = contentType;
-      isShiny_ = isShiny;
-      sourceRmd_ = sourceRmd;
-      isMultiRmd_ = isMultiRmd;
-      isConnectUIEnabled_ = isConnectUIEnabled;
-      isExternalUIEnabled_ = isExternalUIEnabled;
-   }
-   
-   public RSConnectPublishInput()
-   {
+      originatingEvent_ = originatingEvent;
    }
    
    public boolean isShiny() 
@@ -87,12 +77,12 @@ public class RSConnectPublishInput
    
    public int getContentType()
    {
-      return contentType_;
+      return getOriginatingEvent().getContentType();
    }
    
-   public void setContentType(int contentType)
+   public RSConnectActionEvent getOriginatingEvent()
    {
-      contentType_ = contentType;
+      return originatingEvent_;
    }
    
    private boolean isShiny_;
@@ -100,5 +90,5 @@ public class RSConnectPublishInput
    private boolean isExternalUIEnabled_;
    private boolean isMultiRmd_;
    private FileSystemItem sourceRmd_;
-   private int contentType_;
+   private RSConnectActionEvent originatingEvent_;
 }

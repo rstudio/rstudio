@@ -35,13 +35,15 @@ public class PublishStaticPage
    @Override
    public void focus()
    {
-      
+      if (publishWidget_ != null)
+         publishWidget_.focus();
    }
 
    @Override 
    public void onActivate()
    {
-      publishWidget_.onActivate();
+      if (publishWidget_ != null)
+         publishWidget_.onActivate();
    }
 
    // Protected methods ------------------------------------------------------

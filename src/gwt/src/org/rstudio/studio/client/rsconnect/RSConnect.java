@@ -143,11 +143,10 @@ public class RSConnect implements SessionInitHandler,
       dlg.showModal();
    }
    
-   private void publishAsStatic(RSConnectActionEvent event,
-                                RSConnectPublishInput input)
+   private void publishAsStatic(RSConnectPublishInput input)
    {
       PublishStaticDialog dialog = new PublishStaticDialog(server_, 
-            display_, event.getFromPrevious());
+            display_, input.getOriginatingEvent().getFromPrevious());
       dialog.showModal();
    }
    
@@ -163,8 +162,7 @@ public class RSConnect implements SessionInitHandler,
       }
       else 
       {
-         final RSConnectPublishInput input = new RSConnectPublishInput();
-         input.setContentType(event.getContentType());
+         final RSConnectPublishInput input = new RSConnectPublishInput(event);
 
          // set these inside the wizard input so we don't need to pass around
          // session/prefs
@@ -187,7 +185,7 @@ public class RSConnect implements SessionInitHandler,
                      {
                         input.setIsMultiRmd(details.isMultiRmd());
                         input.setIsShiny(details.isShinyRmd());
-                        showPublishUI(event, input);
+                        showPublishUI(input);
                      }
                      @Override
                      public void onError(ServerError error)
@@ -202,14 +200,14 @@ public class RSConnect implements SessionInitHandler,
          }
          else
          {
-            showPublishUI(event, input);
+            showPublishUI(input);
          }
       }
    }
    
-   private void showPublishUI(RSConnectActionEvent event, 
-                              RSConnectPublishInput input)
+   private void showPublishUI(RSConnectPublishInput input)
    {
+      final RSConnectActionEvent event = input.getOriginatingEvent();
       if (input.getContentType() == CONTENT_TYPE_PLOT)
       {
          if (!input.isConnectUIEnabled() && input.isExternalUIEnabled())
@@ -218,11 +216,11 @@ public class RSConnect implements SessionInitHandler,
          }
          else if (input.isConnectUIEnabled() && input.isExternalUIEnabled())
          {
-            publishWithWizard(event, input);
+            publishWithWizard(input);
          }
          else if (input.isConnectUIEnabled() && !input.isExternalUIEnabled())
          {
-            publishAsStatic(event, input);
+            publishAsStatic(input);
          }
       }
       else if (input.getContentType() == CONTENT_TYPE_RMD)
@@ -232,7 +230,7 @@ public class RSConnect implements SessionInitHandler,
             if (input.isMultiRmd())
             {
                // multiple Shiny doc
-               publishWithWizard(event, input);
+               publishWithWizard(input);
             }
             else
             {
@@ -244,7 +242,7 @@ public class RSConnect implements SessionInitHandler,
          {
             if (input.isConnectUIEnabled())
             {
-               publishWithWizard(event, input);
+               publishWithWizard(input);
             }
             else
             {
@@ -272,8 +270,7 @@ public class RSConnect implements SessionInitHandler,
       dialog.showModal();
    }
    
-   private void publishWithWizard(RSConnectActionEvent event,
-                                  RSConnectPublishInput input)
+   private void publishWithWizard(RSConnectPublishInput input)
    {
       RSConnectPublishWizard wizard = 
             new RSConnectPublishWizard(input, 

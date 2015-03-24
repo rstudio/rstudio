@@ -20,12 +20,23 @@ public class RSConnectPublishResult
 {
    public RSConnectPublishResult()
    {
-      // TODO: delete this.
+      // TODO: remove this
+      this(null, null, null);
+   }
+
+   public RSConnectPublishResult(String sourceDir,
+         String sourceFile, 
+         String rpubsHtmlFile)
+   {
+      ArrayList<String> deployFiles = new ArrayList<String>();
+      deployFiles.add(rpubsHtmlFile);
+
+      publishType_     = PUBLISH_RPUBS;
       appName_         = ""; 
       account_         = null; 
-      sourceDir_       = "";
-      sourceFile_      = "";
-      deployFiles_     = null; 
+      sourceDir_       = sourceDir;
+      sourceFile_      = sourceFile;
+      deployFiles_     = deployFiles; 
       additionalFiles_ = null; 
       ignoredFiles_    = null;
    }
@@ -38,7 +49,7 @@ public class RSConnectPublishResult
          ArrayList<String> additionalFiles, 
          ArrayList<String> ignoredFiles)
    {     
-      
+      publishType_     = PUBLISH_CODE;
       appName_         = appName; 
       account_         = account; 
       sourceDir_       = sourceDir;
@@ -82,6 +93,11 @@ public class RSConnectPublishResult
    {
       return ignoredFiles_;
    }
+   
+   public int getPublishType()
+   {
+      return publishType_;
+   }
 
    private final String appName_; 
    private final RSConnectAccount account_; 
@@ -90,4 +106,9 @@ public class RSConnectPublishResult
    private final ArrayList<String> deployFiles_; 
    private final ArrayList<String> additionalFiles_; 
    private final ArrayList<String> ignoredFiles_;
+   private final int publishType_;
+   
+   public final static int PUBLISH_RPUBS = 0;
+   public final static int PUBLISH_STATIC = 1;
+   public final static int PUBLISH_CODE = 2;
 }

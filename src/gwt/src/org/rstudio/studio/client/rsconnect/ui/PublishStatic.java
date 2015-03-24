@@ -71,6 +71,11 @@ public class PublishStatic extends Composite
       accountList_.refreshAccountList();
    }
    
+   public void focus()
+   {
+      contentNameTextbox_.setFocus(true);
+   }
+   
    @UiField TextBox contentNameTextbox_;
    @UiField Label contentNameLabel_;
    @UiField(provided=true) RSConnectAccountList accountList_;

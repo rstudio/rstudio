@@ -45,19 +45,23 @@ public class PublishRPubsPage
    @Override
    protected void initialize(RSConnectPublishInput initData)
    {
-      
+      initialData_ = initData;
    }
 
    @Override
    protected RSConnectPublishResult collectInput()
    {
-      return new RSConnectPublishResult();
+      return new RSConnectPublishResult(
+            initialData_.getOriginatingEvent().getPath(),
+            initialData_.getOriginatingEvent().getPath(), 
+            initialData_.getOriginatingEvent().getHtmlFile());
    }
 
    @Override
    protected boolean validate(RSConnectPublishResult input)
    {
-      return false;
+      return true;
    }
 
+   private RSConnectPublishInput initialData_;
 }

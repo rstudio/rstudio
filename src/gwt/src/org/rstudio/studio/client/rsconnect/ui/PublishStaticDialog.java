@@ -22,7 +22,6 @@ import org.rstudio.studio.client.rsconnect.model.RSConnectServerOperations;
 public class PublishStaticDialog
              extends RSConnectDialog<PublishStatic>
 {
-
    public PublishStaticDialog(RSConnectServerOperations server,
          GlobalDisplay display, RSConnectDeploymentRecord fromPrevious)
    {
@@ -39,6 +38,7 @@ public class PublishStaticDialog
       // wizard page, when it doesn't become active until the wizard page is
       // reached)
       contents_.onActivate();
+      contents_.focus();
    }
    
    private final ThemedButton publishButton_;
