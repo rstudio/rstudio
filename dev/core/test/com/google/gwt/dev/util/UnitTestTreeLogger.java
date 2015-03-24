@@ -16,12 +16,18 @@
 package com.google.gwt.dev.util;
 
 import com.google.gwt.core.ext.TreeLogger;
+import com.google.gwt.thirdparty.guava.common.collect.HashMultimap;
+import com.google.gwt.thirdparty.guava.common.collect.Multimap;
+import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
 import junit.framework.Assert;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Map.Entry;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 /**
@@ -164,6 +170,10 @@ public class UnitTestTreeLogger extends TreeLogger {
       return sb.toString();
     }
 
+    // Test whether this log entry matches {@code other} (not symmetrical, i.e. a matches b does not
+    // imply b matches a)
+    //
+    // NOTE: DO NOT IMPLEMENT EQUAL. The test harness relies on equal() being reference equality.
     private boolean matches(LogEntry other) {
       if (!type.equals(other.type)) {
         return false;
@@ -233,9 +243,32 @@ public class UnitTestTreeLogger extends TreeLogger {
     if (expectedEntries.size() != actualEntries.size()) {
       Assert.fail("Wrong log count: expected=" + expectedEntries + ", actual=" + actualEntries);
     }
-    for (int i = 0, c = expectedEntries.size(); i < c; ++i) {
-      assertCorrectLogEntry(expectedEntries.get(i), actualEntries.get(i));
+
+    assertMatches(expectedEntries, actualEntries);
+  }
+
+  private void assertMatches(Iterable<LogEntry> expectedEntries, Iterable<LogEntry> actualEntries) {
+    Multimap<LogEntry, LogEntry> matches = HashMultimap.create();
+    for (LogEntry expectedEntry : expectedEntries) {
+      for (LogEntry actualEntry : actualEntries) {
+        if (expectedEntry.matches(actualEntry)) {
+          matches.put(expectedEntry, actualEntry);
+        }
+      }
     }
+
+    // Assure only one match per expected entry.
+    for (Entry<LogEntry, Collection<LogEntry>> entry : matches.asMap().entrySet()) {
+      Assert.assertTrue(entry.getKey() + " matches multiple actual entries " + entry.getValue(),
+          entry.getValue().size() == 1);
+    }
+
+    Set<LogEntry> unmatchedActualEntries =
+        Sets.difference(Sets.newHashSet(actualEntries), Sets.newHashSet(matches.values()));
+    Set<LogEntry> unmatchedExpectedEntries =
+        Sets.difference(Sets.newHashSet(expectedEntries), Sets.newHashSet(matches.keySet()));
+    // This is a HACK to get a nice printout, entries are only equals when they are empty.
+    Assert.assertEquals(unmatchedExpectedEntries, unmatchedActualEntries);
   }
 
   /**
