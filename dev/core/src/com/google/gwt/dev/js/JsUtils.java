@@ -15,12 +15,17 @@
  */
 package com.google.gwt.dev.js;
 
+import com.google.gwt.dev.jjs.SourceInfo;
+import com.google.gwt.dev.js.ast.JsBinaryOperation;
+import com.google.gwt.dev.js.ast.JsBinaryOperator;
+import com.google.gwt.dev.js.ast.JsBlock;
 import com.google.gwt.dev.js.ast.JsExpression;
 import com.google.gwt.dev.js.ast.JsFunction;
 import com.google.gwt.dev.js.ast.JsInvocation;
 import com.google.gwt.dev.js.ast.JsName;
 import com.google.gwt.dev.js.ast.JsNameRef;
 import com.google.gwt.dev.js.ast.JsNode;
+import com.google.gwt.dev.js.ast.JsScope;
 import com.google.gwt.dev.util.StringInterner;
 
 /**
@@ -79,7 +84,35 @@ public class JsUtils {
     return null;
   }
 
+  public static JsExpression createAssignment(JsExpression lhs, JsExpression rhs) {
+    return new JsBinaryOperation(lhs.getSourceInfo(), JsBinaryOperator.ASG, lhs, rhs);
+  }
+
+  public static JsFunction createEmptyFunctionLiteral(SourceInfo info, JsScope scope) {
+    JsFunction func = new JsFunction(info, scope);
+    func.setBody(new JsBlock(info));
+    return func;
+  }
+
+  /**
+   * Given a string qualifier such as 'foo.bar.Baz', returns a chain of JsNameRef's representing
+   * this qualifier.
+   */
+  public static JsNameRef createQualifier(String namespace, SourceInfo sourceInfo) {
+    assert !namespace.isEmpty();
+    JsNameRef ref = null;
+    for (String part : namespace.split("\\.")) {
+      JsNameRef newRef = new JsNameRef(sourceInfo, part);
+      if (ref != null) {
+        newRef.setQualifier(ref);
+      }
+      ref = newRef;
+    }
+    return ref;
+  }
+
   private static final String CALL_STRING = StringInterner.get().intern("call");
+
   private JsUtils() {
   }
 }

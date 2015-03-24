@@ -278,6 +278,7 @@ public class DevMode extends DevModeBase implements RestartServerCallback {
     private File moduleBaseDir;
     private String modulePathPrefix = "";
     private File warDir;
+    private boolean closureCompilerFormatEnabled;
 
     @Override
     public File getDeployDir() {
@@ -384,11 +385,12 @@ public class DevMode extends DevModeBase implements RestartServerCallback {
 
     @Override
     public boolean isClosureCompilerFormatEnabled() {
-      return false;
+      return closureCompilerFormatEnabled;
     }
 
     @Override
     public void setClosureCompilerFormatEnabled(boolean enabled) {
+      this.closureCompilerFormatEnabled = enabled;
     }
   }
 

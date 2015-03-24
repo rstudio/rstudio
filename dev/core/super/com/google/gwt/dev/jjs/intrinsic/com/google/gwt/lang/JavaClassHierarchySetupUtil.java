@@ -28,6 +28,17 @@ public class JavaClassHierarchySetupUtil {
   private static JavaScriptObject prototypesByTypeId = JavaScriptObject.createObject();
 
   /**
+   * Defines a hidden constructor for closure using the prototype set to globalTemp (i.e. '_'). The
+   * constructor is intentionally hidden as Closure -for some unknown reason right now- having
+   * trouble dealing with an explicit one and increases code size.
+   */
+  public static native void defineHiddenClosureConstructor()/*-{
+    function F() {};
+    F.prototype = _;
+    return F;
+  }-*/;
+
+  /**
    * If not already created it creates the prototype for the class and stores it in
    * {@code prototypesByTypeId}. If superTypeId is null, it means that the class being defined
    * is the topmost class (i.e. java.lang.Object) and creates an empty prototype for it.
@@ -37,12 +48,15 @@ public class JavaClassHierarchySetupUtil {
    * Finally adds the class literal if it was created before the call to {@code defineClass}.
    * Class literals might be created before the call to {@code defineClass} if they are in separate
    * code-split fragments. In that case Class.createFor* methods will have created a placeholder and
-   * stored in {@code prototypesByTypeId} the class literal.<p></p>
-   *
-   * As a prerequisite if superSeed is not null, it is assumed that defineClass for the supertype
+   * stored in {@code prototypesByTypeId} the class literal.
+   * <p>
+   * As a prerequisite if superTypeId is not null, it is assumed that defineClass for the supertype
    * has already been called.
+   * <p>
+   * This method has the effect of assigning the newly created prototype to the global temp variable
+   * '_'.
    */
-  public static native JavaScriptObject defineClass(JavaScriptObject typeId,
+  public static native void defineClass(JavaScriptObject typeId,
       JavaScriptObject superTypeId, JavaScriptObject castableTypeMap) /*-{
     // Setup aliases for (horribly long) JSNI references.
     var prototypesByTypeId = @com.google.gwt.lang.JavaClassHierarchySetupUtil::prototypesByTypeId;
@@ -80,7 +94,7 @@ public class JavaClassHierarchySetupUtil {
   /**
    * Like defineClass() but second parameter is a native JS prototype reference.
    */
-  public static native JavaScriptObject defineClassWithPrototype(int typeId,
+  public static native void defineClassWithPrototype(int typeId,
       JavaScriptObject jsSuperClass, JavaScriptObject castableTypeMap) /*-{
       // Setup aliases for (horribly long) JSNI references.
       var prototypesByTypeId = @com.google.gwt.lang.JavaClassHierarchySetupUtil::prototypesByTypeId;

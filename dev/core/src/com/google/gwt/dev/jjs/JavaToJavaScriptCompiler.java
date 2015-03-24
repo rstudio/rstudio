@@ -558,7 +558,8 @@ public abstract class JavaToJavaScriptCompiler {
          */
         Event functionClusterEvent = SpeedTracerLogger.start(CompilerEventType.FUNCTION_CLUSTER);
         // TODO(cromwellian) move to the Js AST optimization, re-enable sourcemaps + clustering
-        if (!sourceMapsEnabled && options.shouldClusterSimilarFunctions()
+        if (!sourceMapsEnabled && !options.isClosureCompilerFormatEnabled()
+            && options.shouldClusterSimilarFunctions()
             && options.getNamespace() == JsNamespaceOption.NONE
             && options.getOutput() == JsOutputOption.OBFUSCATED) {
           transformer = new JsFunctionClusterer(transformer);

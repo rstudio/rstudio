@@ -16,12 +16,10 @@
 package com.google.gwt.core.client.interop;
 
 import com.google.gwt.core.client.js.JsExport;
-import com.google.gwt.core.client.js.JsType;
 
 /**
  * A test class that exhibits a variety of @JsExports on constructors.
  */
-@JsType
 public class MyClassExportsConstructors {
   private int a;
 
@@ -31,7 +29,7 @@ public class MyClassExportsConstructors {
   }
 
   public MyClassExportsConstructors() {
-    a = 1;
+    this.a = 1;
   }
 
   public int foo() {

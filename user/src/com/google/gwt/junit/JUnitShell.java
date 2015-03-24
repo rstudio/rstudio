@@ -38,6 +38,7 @@ import com.google.gwt.dev.javac.CompilationUnit;
 import com.google.gwt.dev.jjs.JsOutputOption;
 import com.google.gwt.dev.shell.CheckForUpdates;
 import com.google.gwt.dev.shell.jetty.JettyLauncher;
+import com.google.gwt.dev.util.arg.ArgHandlerClosureFormattedOutput;
 import com.google.gwt.dev.util.arg.ArgHandlerDeployDir;
 import com.google.gwt.dev.util.arg.ArgHandlerDisableCastChecking;
 import com.google.gwt.dev.util.arg.ArgHandlerDisableClassMetadata;
@@ -290,6 +291,7 @@ public class JUnitShell extends DevMode {
       registerHandler(new ArgHandlerIncrementalCompile(options));
       registerHandler(new ArgHandlerJsInteropMode(options));
       registerHandler(new ArgHandlerSetProperties(options));
+      registerHandler(new ArgHandlerClosureFormattedOutput(options));
 
       /*
        * ----- Options specific to JUnitShell -----
@@ -1083,6 +1085,10 @@ public class JUnitShell extends DevMode {
 
     if (!Compiler.maybeRestrictProperties(getTopLogger(), module, options.getProperties())) {
       throw new UnableToCompleteException();
+    }
+
+    if (options.isClosureCompilerFormatEnabled()) {
+      module.addLinker("closureHelpers");
     }
 
     boolean success = false;

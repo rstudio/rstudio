@@ -30,27 +30,39 @@ public class JsExportTest extends GWTTestCase {
     return "com.google.gwt.core.Core";
   }
 
+  @Override
+  public void gwtSetUp() throws Exception {
+    setupGlobal();
+  }
+
+  // $global always points to scope of exports
+  private native void setupGlobal() /*-{
+    $global = window.goog && window.goog.global || $wnd;
+    $wnd.$global = $global;
+  }-*/;
+
   public void testMethodExport() {
     // Test exported method can be called from JS in host page
-    ScriptInjector.fromString("exportedFromJava();").setWindow(TOP_WINDOW).inject();
+    ScriptInjector.fromString("$global.exportedFromJava();").setWindow(TOP_WINDOW).inject();
     assertTrue(MyClassExportsMethod.calledFromJs);
 
     MyClassExportsMethod.calledFromJs = false;
     // Test exported constructor called from JS in module window
-    ScriptInjector.fromString("$wnd.exportedFromJava();").inject();
+    ScriptInjector.fromString("$global.exportedFromJava();").inject();
     assertTrue(MyClassExportsMethod.calledFromJs);
   }
 
   public void testMethodExport_noTypeTightenParams() {
+
     // If we type-tighten, java side will see no calls and think that parameter could only be null.
     // As a result, it will be optimized to null.nullMethod().
-    ScriptInjector.fromString("$wnd.callBar($wnd.newA());").inject();
+    ScriptInjector.fromString("$global.callBar($global.newA());").inject();
     assertTrue(MyClassExportsMethod.calledFromBar);
 
     // If we type-tighten, java side will only see a call to subclass and think that parameter could
     // be optimized to that one. As a result, the method call will be inlined.
     MyClassExportsMethod.callFoo(new MyClassExportsMethod.SubclassOfA());
-    ScriptInjector.fromString("$wnd.callFoo($wnd.newA());").inject();
+    ScriptInjector.fromString("$global.callFoo($global.newA());").inject();
     assertTrue(MyClassExportsMethod.calledFromFoo);
   }
 
@@ -61,11 +73,11 @@ public class JsExportTest extends GWTTestCase {
   }
 
   private native int onlyCalledFromJs() /*-{
-    return $wnd.onlyCalledFromJs();
+    return $global.onlyCalledFromJs();
   }-*/;
 
   public void testClinit() {
-    ScriptInjector.fromString("new $wnd.MyClassExportsMethodWithClinit();").inject();
+    ScriptInjector.fromString("new $global.MyClassExportsMethodWithClinit();").inject();
     assertEquals(23, MyClassExportsMethodWithClinit.magicNumber);
   }
 
@@ -76,15 +88,15 @@ public class JsExportTest extends GWTTestCase {
   }
 
   private native Object getStaticInitializerStaticField1() /*-{
-    return $wnd.woo.StaticInitializerStaticField.EXPORTED_1;
+    return $global.woo.StaticInitializerStaticField.EXPORTED_1;
   }-*/;
 
   private native Object getStaticInitializerStaticField2() /*-{
-    return $wnd.woo.StaticInitializerStaticField.EXPORTED_2;
+    return $global.woo.StaticInitializerStaticField.EXPORTED_2;
   }-*/;
 
   private native Object getExportedFieldOnInterface() /*-{
-    return $wnd.woo.StaticInitializerStaticField.InterfaceWithField.STATIC;
+    return $global.woo.StaticInitializerStaticField.InterfaceWithField.STATIC;
   }-*/;
 
   public void testClinit_staticMethod() {
@@ -92,7 +104,7 @@ public class JsExportTest extends GWTTestCase {
   }
 
   private native Object getStaticInitializerStaticMethod() /*-{
-    return $wnd.woo.StaticInitializerStaticMethod.getInstance();
+    return $global.woo.StaticInitializerStaticMethod.getInstance();
   }-*/;
 
   public void testClinit_virtualMethod() {
@@ -100,7 +112,7 @@ public class JsExportTest extends GWTTestCase {
   }
 
   private native Object getStaticInitializerVirtualMethod() /*-{
-    var obj = new $wnd.woo.StaticInitializerVirtualMethod();
+    var obj = new $global.woo.StaticInitializerVirtualMethod();
     return obj.getInstance();
   }-*/;
 
@@ -109,7 +121,7 @@ public class JsExportTest extends GWTTestCase {
   }
 
   private native Object createMyExportedClassWithImplicitConstructor() /*-{
-    return new $wnd.woo.MyExportedClassWithImplicitConstructor();
+    return new $global.woo.MyExportedClassWithImplicitConstructor();
   }-*/;
 
   public void testExportClass_multipleConstructors() {
@@ -118,12 +130,12 @@ public class JsExportTest extends GWTTestCase {
   }
 
   private native int getSumByDefaultConstructor() /*-{
-    var obj = new $wnd.MyClassConstructor1();
+    var obj = new $global.MyClassConstructor1();
     return obj.sum();
   }-*/;
 
   private native int getSumByConstructor() /*-{
-    var obj = new $wnd.MyClassConstructor2(10, 20);
+    var obj = new $global.MyClassConstructor2(10, 20);
     return obj.sum();
   }-*/;
 
@@ -135,25 +147,24 @@ public class JsExportTest extends GWTTestCase {
   }
 
   private native Object createMyExportedClassWithMultipleConstructors1() /*-{
-    return new $wnd.MyClassConstructor1();
+    return new $global.MyClassConstructor1();
   }-*/;
 
   private native Object createMyExportedClassWithMultipleConstructors2() /*-{
-    return new $wnd.MyClassConstructor2(10, 20);
+    return new $global.MyClassConstructor2(10, 20);
   }-*/;
 
   public void testExportConstructors() {
-    assertEquals(4, getFooByConstructorWithExportSymbol());
+    assertEquals(4, createMyClassExportsConstructors().foo());
     assertNull(getNotExportedConstructor());
   }
 
-  private native int getFooByConstructorWithExportSymbol() /*-{
-    var obj = new $wnd.MyClassExportsConstructors1(2);
-    return obj.foo();
+  private native MyClassExportsConstructors createMyClassExportsConstructors() /*-{
+    return new $global.MyClassExportsConstructors1(2);
   }-*/;
 
   private native Object getNotExportedConstructor() /*-{
-    return $wnd.woo.MyClassExportsConstructors;
+    return $global.woo.MyClassExportsConstructors;
   }-*/;
 
   public void testExportedField() {
@@ -165,11 +176,11 @@ public class JsExportTest extends GWTTestCase {
   }
 
   private native int getExportedField() /*-{
-    return $wnd.woo.MyExportedClass.EXPORTED_1;
+    return $global.woo.MyExportedClass.EXPORTED_1;
   }-*/;
 
   private native void setExportedField(int a) /*-{
-    $wnd.woo.MyExportedClass.EXPORTED_1 = a;
+    $global.woo.MyExportedClass.EXPORTED_1 = a;
   }-*/;
 
   public void testExportedMethod() {
@@ -181,11 +192,11 @@ public class JsExportTest extends GWTTestCase {
   }
 
   private native int callExportedMethod() /*-{
-    return $wnd.woo.MyExportedClass.foo();
+    return $global.woo.MyExportedClass.foo();
   }-*/;
 
   private native int setExportedMethod() /*-{
-    $wnd.woo.MyExportedClass.foo = function () {
+    $global.woo.MyExportedClass.foo = function () {
       return 1000;
     };
   }-*/;
@@ -194,21 +205,22 @@ public class JsExportTest extends GWTTestCase {
     assertEquals(5, MyExportedClass.bar(0, 0));
     assertEquals(5, callExportedFieldByExportedMethod(0, 0));
     setExportedField2(10);
+
     assertEquals(10, getExportedField2());
     assertEquals(7, MyExportedClass.bar(1, 1));
     assertEquals(7, callExportedFieldByExportedMethod(1, 1));
   }
 
   private native int callExportedFieldByExportedMethod(int a, int b) /*-{
-    return $wnd.woo.MyExportedClass.bar(a, b);
+    return $global.woo.MyExportedClass.bar(a, b);
   }-*/;
 
   private native void setExportedField2(int a) /*-{
-    $wnd.woo.MyExportedClass.EXPORTED_2 = $wnd.newInnerClass(a);
+    $global.woo.MyExportedClass.EXPORTED_2 = $global.newInnerClass(a);
   }-*/;
 
   private native int getExportedField2() /*-{
-    return $wnd.woo.MyExportedClass.EXPORTED_2.field;
+    return $global.woo.MyExportedClass.EXPORTED_2.field;
   }-*/;
 
   public void testNoExport() {
@@ -217,16 +229,16 @@ public class JsExportTest extends GWTTestCase {
   }
 
   private native Object getNotExportedFields() /*-{
-    return $wnd.woo.StaticInitializerStaticField.NOT_EXPORTED_1
-        || $wnd.woo.StaticInitializerStaticField.NOT_EXPORTED_2
-        || $wnd.woo.StaticInitializerStaticField.NOT_EXPORTED_3
-        || $wnd.woo.StaticInitializerStaticField.NOT_EXPORTED_4
-        || $wnd.woo.StaticInitializerStaticField.NOT_EXPORTED_5;
+    return $global.woo.StaticInitializerStaticField.NOT_EXPORTED_1
+        || $global.woo.StaticInitializerStaticField.NOT_EXPORTED_2
+        || $global.woo.StaticInitializerStaticField.NOT_EXPORTED_3
+        || $global.woo.StaticInitializerStaticField.NOT_EXPORTED_4
+        || $global.woo.StaticInitializerStaticField.NOT_EXPORTED_5;
   }-*/;
 
   private native Object getNotExportedMethods() /*-{
-    return $wnd.woo.StaticInitializerStaticMethod.notExported_1
-        || $wnd.woo.StaticInitializerStaticMethod.notExported_2;
+    return $global.woo.StaticInitializerStaticMethod.notExported_1
+        || $global.woo.StaticInitializerStaticMethod.notExported_2;
   }-*/;
 
   public static void testInheritClassNamespace() {
@@ -234,7 +246,7 @@ public class JsExportTest extends GWTTestCase {
   }
 
   private static native int getBAR() /*-{
-    return $wnd.foo.MyExportedClassWithNamespace.BAR;
+    return $global.foo.MyExportedClassWithNamespace.BAR;
   }-*/;
 
   public static void testInheritClassNamespace_empty() {
@@ -243,11 +255,11 @@ public class JsExportTest extends GWTTestCase {
   }
 
   private static native int getDAN() /*-{
-    return $wnd.MyClassWithEmptyNamespace.DAN;
+    return $global.MyClassWithEmptyNamespace.DAN;
   }-*/;
 
   private static native Object createNestedExportedClassWithEmptyNamespace() /*-{
-    return new $wnd.MyClassWithEmptyNamespace();
+    return new $global.MyClassWithEmptyNamespace();
   }-*/;
 
   public static void testInheritClassNamespace_noExport() {
@@ -255,7 +267,7 @@ public class JsExportTest extends GWTTestCase {
   }
 
   private static native int getBAZ() /*-{
-    return $wnd.foobaz.MyClassWithNamespace.BAZ;
+    return $global.foobaz.MyClassWithNamespace.BAZ;
   }-*/;
 
   public static void testInheritClassNamespace_nested() {
@@ -264,11 +276,11 @@ public class JsExportTest extends GWTTestCase {
   }
 
   private static native int getWOOZ() /*-{
-    return $wnd.zoo.InnerWithNamespace.WOOZ;
+    return $global.zoo.InnerWithNamespace.WOOZ;
   }-*/;
 
   private static native Object createNestedExportedClassWithNamespace() /*-{
-    return new $wnd.zoo.InnerWithNamespace();
+    return new $global.zoo.InnerWithNamespace();
   }-*/;
 
   public void testInheritPackageNamespace() {
@@ -276,7 +288,7 @@ public class JsExportTest extends GWTTestCase {
   }
 
   private static native int getWOO() /*-{
-    return $wnd.woo.MyExportedClassWithPackageNamespace.WOO;
+    return $global.woo.MyExportedClassWithPackageNamespace.WOO;
   }-*/;
 
   public void testInheritPackageNamespace_nestedClass() {
@@ -285,11 +297,11 @@ public class JsExportTest extends GWTTestCase {
   }
 
   private static native int getNestedWOO() /*-{
-    return $wnd.woo.MyClassWithNestedExportedClass.Inner.WOO;
+    return $global.woo.MyClassWithNestedExportedClass.Inner.WOO;
   }-*/;
 
   private static native Object createNestedExportedClass() /*-{
-    return new $wnd.woo.MyClassWithNestedExportedClass.Inner();
+    return new $global.woo.MyClassWithNestedExportedClass.Inner();
   }-*/;
 
   public void testInheritPackageNamespace_nestedEnum() {
@@ -297,7 +309,7 @@ public class JsExportTest extends GWTTestCase {
   }
 
   private static native Object getNestedEnum() /*-{
-    return $wnd.woo.MyClassWithNestedExportedClass.InnerEnum.AA;
+    return $global.woo.MyClassWithNestedExportedClass.InnerEnum.AA;
   }-*/;
 
   public void testInheritPackageNamespace_subpackage() {
@@ -306,11 +318,11 @@ public class JsExportTest extends GWTTestCase {
   }
 
   private static native Object getNestedSubpackage() /*-{
-    return $wnd.woo.subpackage;
+    return $global.woo.subpackage;
   }-*/;
 
   private static native Object getNestedSubpackageCorrect() /*-{
-    return $wnd.com.google.gwt.core.client.interop.subpackage.
+    return $global.com.google.gwt.core.client.interop.subpackage.
         MyNestedExportedClassSansPackageNamespace;
   }-*/;
 
@@ -320,11 +332,11 @@ public class JsExportTest extends GWTTestCase {
   }
 
   private static native Object getEnumerationTEST1() /*-{
-    return $wnd.woo.MyExportedEnum.TEST1;
+    return $global.woo.MyExportedEnum.TEST1;
   }-*/;
 
   private static native Object getEnumerationTEST2() /*-{
-    return $wnd.woo.MyExportedEnum.TEST2;
+    return $global.woo.MyExportedEnum.TEST2;
   }-*/;
 
   public void testEnum_exportedMethods() {
@@ -334,15 +346,15 @@ public class JsExportTest extends GWTTestCase {
   }
 
   private static native Object getPublicStaticMethodInEnum() /*-{
-    return $wnd.woo.MyExportedEnum.publicStaticMethod;
+    return $global.woo.MyExportedEnum.publicStaticMethod;
   }-*/;
 
   private static native Object getValuesMethodInEnum() /*-{
-    return $wnd.woo.MyExportedEnum.values;
+    return $global.woo.MyExportedEnum.values;
   }-*/;
 
   private static native Object getValueOfMethodInEnum() /*-{
-    return $wnd.woo.MyExportedEnum.valueOf;
+    return $global.woo.MyExportedEnum.valueOf;
   }-*/;
 
   public void testEnum_exportedFields() {
@@ -354,11 +366,11 @@ public class JsExportTest extends GWTTestCase {
   }
 
   private static native int getPublicStaticFinalFieldInEnum() /*-{
-    return $wnd.woo.MyExportedEnum.publicStaticFinalField;
+    return $global.woo.MyExportedEnum.publicStaticFinalField;
   }-*/;
 
   private static native int getPublicStaticFieldInEnum() /*-{
-    return $wnd.woo.MyExportedEnum.publicStaticField;
+    return $global.woo.MyExportedEnum.publicStaticField;
   }-*/;
 
   public void testEnum_notExported() {
@@ -367,17 +379,17 @@ public class JsExportTest extends GWTTestCase {
   }
 
   private native Object getNotExportedFieldsInEnum() /*-{
-    return $wnd.woo.MyExportedEnum.publicFinalField
-        || $wnd.woo.MyExportedEnum.privateStaticFinalField
-        || $wnd.woo.MyExportedEnum.protectedStaticFinalField
-        || $wnd.woo.MyExportedEnum.defaultStaticFinalField;
+    return $global.woo.MyExportedEnum.publicFinalField
+        || $global.woo.MyExportedEnum.privateStaticFinalField
+        || $global.woo.MyExportedEnum.protectedStaticFinalField
+        || $global.woo.MyExportedEnum.defaultStaticFinalField;
   }-*/;
 
   private native Object getNotExportedMethodsInEnum() /*-{
-    return $wnd.woo.MyExportedEnum.publicMethod
-        || $wnd.woo.MyExportedEnum.protectedStaticMethod
-        || $wnd.woo.MyExportedEnum.privateStaticMethod
-        || $wnd.woo.MyExportedEnum.defaultStaticMethod;
+    return $global.woo.MyExportedEnum.publicMethod
+        || $global.woo.MyExportedEnum.protectedStaticMethod
+        || $global.woo.MyExportedEnum.privateStaticMethod
+        || $global.woo.MyExportedEnum.defaultStaticMethod;
   }-*/;
 
   public void testEnum_subclassEnumerations() {
@@ -387,15 +399,15 @@ public class JsExportTest extends GWTTestCase {
   }
 
   private static native Object getEnumerationA() /*-{
-    return $wnd.woo.MyEnumWithSubclassGen.A;
+    return $global.woo.MyEnumWithSubclassGen.A;
   }-*/;
 
   private static native Object getEnumerationB() /*-{
-    return $wnd.woo.MyEnumWithSubclassGen.B;
+    return $global.woo.MyEnumWithSubclassGen.B;
   }-*/;
 
   private static native Object getEnumerationC() /*-{
-    return $wnd.woo.MyEnumWithSubclassGen.C;
+    return $global.woo.MyEnumWithSubclassGen.C;
   }-*/;
 
   public void testEnum_subclassMethodCallFromExportedEnumerations() {
@@ -405,14 +417,14 @@ public class JsExportTest extends GWTTestCase {
   }
 
   private static native int callPublicMethodFromEnumerationA() /*-{
-    return $wnd.woo.MyEnumWithSubclassGen.A.foo();
+    return $global.woo.MyEnumWithSubclassGen.A.foo();
   }-*/;
 
   private static native int callPublicMethodFromEnumerationB() /*-{
-    return $wnd.woo.MyEnumWithSubclassGen.B.foo();
+    return $global.woo.MyEnumWithSubclassGen.B.foo();
   }-*/;
 
   private static native int callPublicMethodFromEnumerationC() /*-{
-    return $wnd.woo.MyEnumWithSubclassGen.C.foo();
+    return $global.woo.MyEnumWithSubclassGen.C.foo();
   }-*/;
 }
