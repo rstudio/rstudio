@@ -28,23 +28,6 @@ var TokenUtils = function(doc, tokenizer, tokens,
 
 (function() {
 
-   function isChunkHeaderOrFooter(line)
-   {
-      if (this.$codeBeginPattern &&
-          this.$codeBeginPattern.test(line))
-      {
-         return true;
-      }
-
-      if (this.$codeEndPattern &&
-          this.$codeEndPattern.test(line))
-      {
-         return true;
-      }
-
-      return false;
-   }
-
    function isWhitespaceOrComment(token)
    {
       // virtual-comment is for roxygen content that needs to be highlighted
@@ -117,14 +100,6 @@ var TokenUtils = function(doc, tokenizer, tokens,
          var line = this.$doc.getLine(row);
          var lineTokens = this.$tokenizer.getLineTokens(line, state);
 
-         // Don't tokenize chunk header / footers.
-         if (isChunkHeaderOrFooter.call(this, line))
-         {
-            this.$tokens[row] = [];
-            this.$endStates[row] = lineTokens.state;
-            continue;
-         }
-         
          if (!this.$statePattern ||
              this.$statePattern.test(lineTokens.state) ||
              this.$statePattern.test(state))

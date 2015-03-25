@@ -1586,23 +1586,6 @@ var RCodeModel = function(session, tokenizer,
       return null;
    };
 
-   function isChunkHeaderOrFooter(line)
-   {
-      if (this.$codeBeginPattern &&
-          this.$codeBeginPattern.test(line))
-      {
-         return true;
-      }
-
-      if (this.$codeEndPattern &&
-          this.$codeEndPattern.test(line))
-      {
-         return true;
-      }
-
-      return false;
-   }
-
    this.$tokenizeUpToRow = function(lastRow)
    {
 
@@ -1624,15 +1607,6 @@ var RCodeModel = function(session, tokenizer,
          var line = this.$getLine(row);
          var lineTokens = this.$tokenizer.getLineTokens(line, state);
 
-         // Don't tokenize the beginning, or end, of chunks. This is necessary
-         // for when R is embedded as part of a multi-mode document.
-         if (isChunkHeaderOrFooter.call(this, line))
-         {
-            this.$tokens[row] = [];
-            this.$endStates[row] = lineTokens.state;
-            continue;
-         }
-         
          if (!this.$statePattern ||
              this.$statePattern.test(lineTokens.state) ||
              this.$statePattern.test(state))
