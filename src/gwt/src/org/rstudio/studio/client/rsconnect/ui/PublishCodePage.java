@@ -24,14 +24,14 @@ public class PublishCodePage
    extends WizardPage<RSConnectPublishInput, RSConnectPublishResult>
 {
    public PublishCodePage(String title, String subTitle, 
-         RSConnectPublishInput input)
+         RSConnectPublishInput input, boolean asMultiple)
    {
       super(title, subTitle, "Publish", null, null);
       
       // createWidget is called by super() above
       if (contents_ != null)
       {
-         contents_.setContentPath(input.getSourceRmd().getPath());
+         contents_.setContentPath(input.getSourceRmd().getPath(), asMultiple);
       }
    }
 

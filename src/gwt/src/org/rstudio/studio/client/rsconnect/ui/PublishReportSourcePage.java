@@ -28,15 +28,16 @@ public class PublishReportSourcePage
    public PublishReportSourcePage(
          String title,
          String subTitle,
-         RSConnectPublishInput input)
+         RSConnectPublishInput input,
+         boolean asMultiple)
    {
       super(title, subTitle, "Publish Source Code", null, null, 
-            createPages(input));
+            createPages(input, asMultiple));
    }
 
    private static ArrayList<WizardPage<RSConnectPublishInput, 
                                        RSConnectPublishResult>> 
-           createPages(RSConnectPublishInput input)
+           createPages(RSConnectPublishInput input, boolean asMultiple)
    {
       ArrayList<WizardPage<RSConnectPublishInput, 
                            RSConnectPublishResult>> pages =
@@ -45,7 +46,7 @@ public class PublishReportSourcePage
       
       pages.add(new PublishCodePage("Publish document with source code",
             "Choose this option if you want to create a scheduled report or " +
-            "execute your document on the server.", input));
+            "execute your document on the server.", input, asMultiple));
       String staticTitle = "Publish finished document only";
       String staticSubtitle = "Choose this option to publish the report as " +
              "it appears in RStudio.";

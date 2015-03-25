@@ -3728,10 +3728,12 @@ public class RemoteServer implements Server
 
    @Override
    public void getDeploymentFiles(String dir,
+         boolean asMultipleRmd,
          ServerRequestCallback<RSConnectDeploymentFiles> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(dir));
+      params.set(1, JSONBoolean.getInstance(asMultipleRmd));
       sendRequest(RPC_SCOPE,
             GET_DEPLOYMENT_FILES,
             params,

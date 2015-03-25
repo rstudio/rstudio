@@ -165,26 +165,46 @@
                       subdir_contents))
 })
 
-.rs.addFunction("rmdDeployList", function(target) {
-  deploy_frame <- rmarkdown::find_external_resources(target) 
-  file_list <- c(deploy_frame$path, basename(target))
+.rs.addFunction("rmdDeployList", function(target, asMultipleRmd) {
+  file_list <- c()
+
+  # if deploying multiple Rmds, find all the R Markdown files in the directory;
+  # otherwise, just use the single Rmd we were given
+  if (asMultipleRmd) {
+    targets <- list.files(path = dirname(target), pattern = glob2rx("*.Rmd"), 
+                          ignore.case = TRUE, full.names = TRUE)
+  } else {
+    targets <- target
+  }
+
+  # find the resources used by each R Markdown file 
+  for (t in targets) {
+    deploy_frame <- rmarkdown::find_external_resources(t) 
+    file_list <- c(file_list, deploy_frame$path, basename(t))
+  }
+
+  # discard any duplicates (the same resource may be depended upon by multiple
+  # R Markdown documents)
+  file_list <- unique(file_list)
+
+  # compose the result
   list (
     contents = paste("./", file_list, sep = ""),
     cur_size = sum(
        file.info(file.path(dirname(target), file_list))$size))
 })
 
-.rs.addFunction("makeDeploymentList", function(target, max_size) {
+.rs.addFunction("makeDeploymentList", function(target, asMultipleRmd, max_size) {
    if (identical(tolower(tools::file_ext(target)), "rmd")) 
-     .rs.rmdDeployList(target)
+     .rs.rmdDeployList(target, asMultipleRmd)
    else
      .rs.maxDirectoryList(target, ".", 0, max_size, 
                           c("rsconnect", "packrat"), "Rproj")
 })
 
-.rs.addFunction("rsconnectDeployList", function(target) {
+.rs.addFunction("rsconnectDeployList", function(target, asMultipleRmd) {
   max_size <- 104857600   # 100MB
-  dirlist <- .rs.makeDeploymentList(target, max_size)
+  dirlist <- .rs.makeDeploymentList(target, asMultipleRmd, max_size)
   list (
     # if the directory is too large, no need to bother sending a potentially
     # large blob of data to the client
@@ -202,8 +222,8 @@
   invisible(enable)
 })
 
-.rs.addJsonRpcHandler("get_deployment_files", function(target) {
-  .rs.rsconnectDeployList(target)
+.rs.addJsonRpcHandler("get_deployment_files", function(target, asMultipleRmd) {
+  .rs.rsconnectDeployList(target, asMultipleRmd)
 })
 
 # The parameter to this function is a string containing the R command from

@@ -39,6 +39,7 @@ public interface RSConnectServerOperations
                ServerRequestCallback<JsArray<RSConnectDeploymentRecord>> requestCallback); 
    
    void getDeploymentFiles (String target, 
+               boolean asMultipleRmd,
                ServerRequestCallback<RSConnectDeploymentFiles> requestCallback);
    
    void deployShinyApp(String dir, ArrayList<String> deployFiles, String file, 

@@ -48,15 +48,17 @@ public class PublishMultiplePage
                                 " will be published.";
       if (input.isShiny())
       {
-         pages.add(new PublishCodePage(singleTitle, singleSubtitle, input));
-         pages.add(new PublishCodePage(multipleTitle, multipleSubtitle, input));
+         pages.add(new PublishCodePage(singleTitle, singleSubtitle, input, 
+               false));
+         pages.add(new PublishCodePage(multipleTitle, multipleSubtitle, input,
+               true));
       }
       else
       {
          pages.add(new PublishReportSourcePage(singleTitle, singleSubtitle,
-               input));
+               input, false));
          pages.add(new PublishReportSourcePage(multipleTitle, multipleSubtitle,
-               input));
+               input, true));
       }
       return pages;
    }

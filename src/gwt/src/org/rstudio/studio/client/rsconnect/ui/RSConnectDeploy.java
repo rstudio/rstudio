@@ -347,9 +347,11 @@ public class RSConnectDeploy extends Composite
       populateDeploymentFiles();
    }
    
-   public void setContentPath(String contentPath)
+   public void setContentPath(String contentPath, boolean asMultipleRmd)
    {
+      // TODO: asMultipleRmd should be in the constructor too
       contentPath_ = contentPath;
+      asMultipleRmd_ = asMultipleRmd;
    }
    
    public void focus()
@@ -471,8 +473,6 @@ public class RSConnectDeploy extends Composite
          return;
       
       // read the parent directory if we're "deploying" a .R file
-      // TODO: this needs to be modified to take multiple R Markdown files into
-      // account
       final String deployTarget =  
             FileSystemItem.getExtensionFromPath(contentPath_)
             .toLowerCase().equals(".r") ?
@@ -481,6 +481,7 @@ public class RSConnectDeploy extends Composite
        
       server_.getDeploymentFiles(
             deployTarget,
+            asMultipleRmd_,
             new ServerRequestCallback<RSConnectDeploymentFiles>()
             {
                @Override 
@@ -634,6 +635,7 @@ public class RSConnectDeploy extends Composite
    private GlobalDisplay display_;
    private RSAccountConnector connector_;
    private String contentPath_;
+   private boolean asMultipleRmd_;
 
    private final DeployStyle style_;
    private final boolean forDocument_;

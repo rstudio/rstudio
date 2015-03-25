@@ -53,7 +53,7 @@ public class RSConnectPublishWizard
       else
       {
          // shouldn't happen but this is a safe default
-         return new PublishCodePage("Publish", "Publish", input);
+         return new PublishCodePage("Publish", "Publish", input, false);
       }
    }
 }
