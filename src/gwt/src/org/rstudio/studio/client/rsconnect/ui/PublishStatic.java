@@ -76,7 +76,7 @@ public class PublishStatic extends Composite
       contentNameTextbox_.setFocus(true);
    }
    
-   @UiField TextBox contentNameTextbox_;
+   @UiField AppNameTextbox contentNameTextbox_;
    @UiField Label contentNameLabel_;
    @UiField(provided=true) RSConnectAccountList accountList_;
    @UiField VerticalPanel newContentPanel_;

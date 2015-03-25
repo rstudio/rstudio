@@ -40,13 +40,9 @@
          </rsc:RSConnectAccountList>
          <g:Label styleName="{res.style.controlLabel}" ui:field="nameLabel_" 
                   text="Name:"></g:Label>
-         <g:TextBox styleName="{res.style.gridControl}" ui:field="appName_" 
-                    maxLength="63"></g:TextBox>
-         <g:HTMLPanel visible="false" ui:field="nameValidatePanel_">
-           <g:Label styleName="{res.style.validateError}" 
-                    text="Valid names contain 4 to 64 alphanumeric characters, dashes, and underscores.">
-           </g:Label>
-         </g:HTMLPanel>
+         <rsc:AppNameTextbox styleName="{res.style.gridControl}" 
+                             ui:field="appName_">
+         </rsc:AppNameTextbox>
          <g:HTMLPanel styleName="{res.style.controlLabel}" visible="false" 
                       ui:field="appInfoPanel_">
             <g:Label text="Destination URL:" 

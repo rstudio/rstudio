@@ -41,10 +41,7 @@ import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.event.dom.client.KeyUpEvent;
-import com.google.gwt.event.dom.client.KeyUpHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.regexp.shared.RegExp;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.resources.client.ImageResource;
@@ -58,7 +55,6 @@ import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.InlineLabel;
 import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -91,7 +87,6 @@ public class RSConnectDeploy extends Composite
       String statusLabel();
       String transferArrow();
       String urlAnchor();
-      String validateError();
       String wizard();
    }
    
@@ -143,16 +138,6 @@ public class RSConnectDeploy extends Composite
                               RESOURCES.publishShinyIllustration());
       }
 
-      // Validate the application name on every keystroke
-      appName_.addKeyUpHandler(new KeyUpHandler()
-      {
-         @Override
-         public void onKeyUp(KeyUpEvent event)
-         {
-            validateAppName();
-         }
-      });
-
       // Invoke the "add account" wizard
       addAccountAnchor_.addClickHandler(new ClickHandler()
       {
@@ -191,7 +176,6 @@ public class RSConnectDeploy extends Composite
       {
          nameLabel_.setVisible(false);
          appName_.setVisible(false);
-         nameValidatePanel_.setVisible(false);
       }
    }
    
@@ -301,11 +285,9 @@ public class RSConnectDeploy extends Composite
          appInfoPanel_.setVisible(false);
          nameLabel_.setVisible(true);
          appName_.setVisible(true);
-         validateAppName();
          return;
       }
 
-      setAppNameValid(true);
       urlAnchor_.setText(info.getUrl());
       urlAnchor_.setHref(info.getUrl());
       String status = info.getStatus();
@@ -318,7 +300,6 @@ public class RSConnectDeploy extends Composite
       appInfoPanel_.setVisible(true);
       nameLabel_.setVisible(false);
       appName_.setVisible(false);
-      nameValidatePanel_.setVisible(false);
    }
    
    public HandlerRegistration addAccountChangeHandler(ChangeHandler handler)
@@ -328,12 +309,12 @@ public class RSConnectDeploy extends Composite
 
    public void setOnDeployEnabled(Command cmd)
    {
-      onDeployEnabled_ = cmd;
+      appName_.setOnNameIsValid(cmd);
    }
    
    public void setOnDeployDisabled(Command cmd)
    {
-      onDeployDisabled_ = cmd;
+      appName_.setOnNameIsInvalid(cmd);
    }
    
    public DeployStyle getStyle()
@@ -386,7 +367,7 @@ public class RSConnectDeploy extends Composite
    
    public boolean isResultValid()
    {
-      return validateAppName();
+      return appName_.validateAppName();
    }
    
    // Private methods --------------------------------------------------------
@@ -514,24 +495,6 @@ public class RSConnectDeploy extends Composite
       
    }
 
-   private boolean validateAppName()
-   {
-      String app = appName_.getText();
-      RegExp validReg = RegExp.compile("^[A-Za-z0-9_-]{4,63}$");
-      boolean isValid = validReg.test(app);
-      setAppNameValid(isValid);
-      return isValid;
-   }
-   
-   private void setAppNameValid(boolean isValid)
-   {
-      nameValidatePanel_.setVisible(!isValid);
-      if (isValid && onDeployEnabled_ != null)
-         onDeployEnabled_.execute();
-      else if (!isValid && onDeployDisabled_ != null)
-         onDeployDisabled_.execute();
-   }
-
    private void addFile(String path, boolean checked)
    {
       if (forDocument_)
@@ -616,21 +579,17 @@ public class RSConnectDeploy extends Composite
    @UiField Label nameLabel_;
    @UiField InlineLabel statusLabel_;
    @UiField(provided=true) RSConnectAccountList accountList_;
-   @UiField TextBox appName_;
    @UiField HTMLPanel appInfoPanel_;
-   @UiField HTMLPanel nameValidatePanel_;
    @UiField VerticalPanel fileListPanel_;
    @UiField InlineLabel deployLabel_;
    @UiField ThemedButton addFileButton_;
    @UiField HTMLPanel rootPanel_;
+   @UiField AppNameTextbox appName_;
    
    private ArrayList<CheckBox> fileChecks_;
    private ArrayList<String> filesAddedManually_ = 
          new ArrayList<String>();
    
-   private Command onDeployEnabled_;
-   private Command onDeployDisabled_;
-
    private RSConnectServerOperations server_;
    private GlobalDisplay display_;
    private RSAccountConnector connector_;

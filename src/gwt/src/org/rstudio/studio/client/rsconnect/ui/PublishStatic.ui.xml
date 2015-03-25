@@ -23,9 +23,9 @@
       </rsc:RSConnectAccountList>
       <g:VerticalPanel ui:field="newContentPanel_">
          <g:Label text="Give this item a name:"></g:Label>
-         <g:TextBox styleName="{style.inputField}" 
+         <rsc:AppNameTextbox styleName="{style.inputField}" 
                     ui:field="contentNameTextbox_">
-         </g:TextBox>
+         </rsc:AppNameTextbox>
       </g:VerticalPanel>
       <g:VerticalPanel ui:field="existingContentPanel_">
          <g:Label text="Name:"></g:Label>
