@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.rsconnect.ui;
 
+import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.rsconnect.model.RSConnectDeploymentRecord;
@@ -24,7 +25,6 @@ import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -39,7 +39,7 @@ public class PublishStatic extends Composite
    {
    }
 
-   public PublishStatic(RSConnectDeploymentRecord fromPrevious)
+   public PublishStatic(final RSConnectDeploymentRecord fromPrevious)
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
       initWidget(uiBinder.createAndBindUi(this));
@@ -52,10 +52,16 @@ public class PublishStatic extends Composite
       }
       else
       {
-         newContentPanel_.setVisible(true);
+         newContentPanel_.setVisible(false);
          contentNameLabel_.setText(fromPrevious.getName());
-         
-         // TODO: preselect account correctly too
+         accountList_.setOnRefreshCompleted(new Operation()
+         {
+            @Override
+            public void execute()
+            {
+               accountList_.selectAccount(fromPrevious.getAccount());
+            }
+         });
       }
    }
    

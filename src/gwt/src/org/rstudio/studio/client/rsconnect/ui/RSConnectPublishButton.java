@@ -37,6 +37,7 @@ import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.MenuItem;
@@ -257,28 +258,35 @@ public class RSConnectPublishButton extends Composite
       {
          if (showCaption_)
             publishButton_.setText("Republish");
+
+         // find the default (last deployed record)--this needs to be done as
+         // a first pass so we can identify the associated menu item in one
+         // pass 
          for (int i  = 0; i < recs.length(); i++)
          {
             final RSConnectDeploymentRecord rec = recs.get(i);
-
-            // default to last deployed 
             if (defaultRec_ == null || defaultRec_.getWhen() < rec.getWhen())
             {
                defaultRec_ = rec;
             }
-
-            publishMenu_.addItem(new MenuItem(
-                  rec.getName() + " (" + rec.getServer() + ")", 
-                  new Scheduler.ScheduledCommand()
-            {
-               @Override
-               public void execute()
-               {
-                  onPublishClick(rec);
-               }
-            }));
          }
 
+         // build the deployment menu
+         for (int i  = 0; i < recs.length(); i++)
+         {
+            final RSConnectDeploymentRecord rec = recs.get(i);
+            final DeploymentMenuItem menuItem = new DeploymentMenuItem(rec, 
+                  rec.getWhen() == defaultRec_.getWhen(), new Command()
+               {
+                  @Override
+                  public void execute()
+                  {
+                     onPublishClick(rec);
+                  }
+               });
+            publishMenu_.addItem(menuItem);
+         }
+         
          publishMenu_.addSeparator();
          publishMenu_.addItem(new MenuItem("Other Destination...", 
                new Scheduler.ScheduledCommand()

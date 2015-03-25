@@ -178,7 +178,7 @@ public class RSConnect implements SessionInitHandler,
             }
             else
             {
-               // TODO: handle R Markdown republish to RStudio connect
+               publishAsStatic(new RSConnectPublishInput(event));
             }
             break;
          }
@@ -326,9 +326,10 @@ public class RSConnect implements SessionInitHandler,
       String deployTarget = event.getPath();
       if (StringUtil.getExtension(event.getSourceFile()).toLowerCase().equals("rmd")) 
       {
-         FileSystemItem sourceFSI = FileSystemItem.createDir(deployTarget);
-         deployTarget = sourceFSI.completePath(event.getSourceFile());
+         deployTarget = event.getSourceFile();
       }
+      
+      // TODO: support for linting multiple files
 
       server_.getLintResults(deployTarget, 
             new ServerRequestCallback<RSConnectLintResults>()
@@ -600,9 +601,11 @@ public class RSConnect implements SessionInitHandler,
    
    private void doDeployment(final RSConnectDeployInitiatedEvent event)
    {
+      FileSystemItem sourceFile = FileSystemItem.createFile(
+            event.getSourceFile());
       server_.deployShinyApp(event.getPath(), 
                              event.getDeployFiles(),
-                             event.getSourceFile(),
+                             sourceFile.getName(),
                              event.getRecord().getAccountName(), 
                              event.getRecord().getServer(),
                              event.getRecord().getName(), 

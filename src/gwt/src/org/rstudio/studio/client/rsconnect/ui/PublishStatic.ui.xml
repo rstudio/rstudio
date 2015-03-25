@@ -14,22 +14,29 @@
    {
       width: 250px;
    }
+   
+   .existingName
+   {
+      font-size: 10pt;
+      text-weight: bold;
+   }
    </ui:style>
    <g:HTMLPanel>
    <g:VerticalPanel>
-      <g:Label text="Where would you like to publish this item?"></g:Label> 
+      <g:Label text="Publish to:"></g:Label> 
       <rsc:RSConnectAccountList styleName="{style.accountList} {style.inputField}"
                                 ui:field="accountList_">
       </rsc:RSConnectAccountList>
       <g:VerticalPanel ui:field="newContentPanel_">
-         <g:Label text="Give this item a name:"></g:Label>
+         <g:Label text="Create a new item named:"></g:Label>
          <rsc:AppNameTextbox styleName="{style.inputField}" 
                     ui:field="contentNameTextbox_">
          </rsc:AppNameTextbox>
       </g:VerticalPanel>
       <g:VerticalPanel ui:field="existingContentPanel_">
-         <g:Label text="Name:"></g:Label>
-         <g:Label ui:field="contentNameLabel_"></g:Label>
+         <g:Label text="Updating existing item:"></g:Label>
+         <g:Label styleName="{style.existingName}" 
+                  ui:field="contentNameLabel_"></g:Label>
       </g:VerticalPanel>
    </g:VerticalPanel>
    </g:HTMLPanel>

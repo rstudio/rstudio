@@ -85,6 +85,12 @@ public class AppNameTextbox extends Composite
       return isValid;
    }
    
+   @Override
+   public void setStyleName(String styleName)
+   {
+      appName_.setStyleName(styleName);
+   }
+   
    // Private methods ---------------------------------------------------------
    
    private void setAppNameValid(boolean isValid)
