@@ -43,10 +43,7 @@
   <!--
     Whether or not the compiler should alter Enum.name() to return
     ordinal() as a way of obfuscating Enum field identifiers. 
-    A value of 'true' returns the ordinal. A value of 'closure'
-    passes the enum's name through Util.makeEnumName() deferring 
-    the obfuscation until a later Closure Compiler pass can replace
-    it.
+    A value of 'true' returns the ordinal.
   -->
    <define-configuration-property name="compiler.enum.obfuscate.names"
       is-multi-valued='false' />

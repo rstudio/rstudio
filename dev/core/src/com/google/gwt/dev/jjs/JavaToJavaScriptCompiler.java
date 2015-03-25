@@ -1148,7 +1148,7 @@ public final class JavaToJavaScriptCompiler {
 
       // TODO(stalcup): is in wrong place, move to optimization stage
       ConfigProps configProps = new ConfigProps(module);
-      EnumNameObfuscator.exec(jprogram, logger,configProps);
+      EnumNameObfuscator.exec(jprogram, logger, configProps, options);
 
       // (4) Normalize the unresolved Java AST
       // Replace defender method references
