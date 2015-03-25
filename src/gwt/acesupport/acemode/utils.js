@@ -33,14 +33,9 @@ define("mode/utils", function(require, exports, module) {
       return Object.prototype.toString.call(object) === '[object Array]';
    };
 
-   this.getPrimaryState = function(session, row, state)
+   this.getPrimaryState = function(session, row)
    {
-      var result = session.getState(row);
-      if (that.isArray(result))
-      {
-         return result[0];
-      }
-      return result;
+      return that.primaryState(session.getState(row));
    };
 
    this.primaryState = function(states)
@@ -48,6 +43,25 @@ define("mode/utils", function(require, exports, module) {
       if (that.isArray(states))
          return states[0];
       return states;
+   };
+
+   this.getLanguageMode = function(state, major)
+   {
+      var primary = that.primaryState(state);
+      var modeIdx = primary.lastIndexOf("-");
+      if (modeIdx === -1)
+         return major;
+      return state.substring(0, modeIdx).toLowerCase();
+   };
+
+   this.endsWith = function(string, suffix)
+   {
+      return string.indexOf(suffix, string.length - suffix.length) !== -1;
+   };
+
+   this.escapeRegExp = function(string)
+   {
+      return string.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, "\\$&");
    };
    
 }).call(exports);

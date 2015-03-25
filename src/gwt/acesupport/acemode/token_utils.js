@@ -15,16 +15,35 @@
 
 define("mode/token_utils", function(require, exports, module) {
 
-var TokenUtils = function(doc, tokenizer, tokens, statePattern, codeBeginPattern) {
+var TokenUtils = function(doc, tokenizer, tokens,
+                          statePattern, codeBeginPattern, codeEndPattern) {
    this.$doc = doc;
    this.$tokenizer = tokenizer;
    this.$tokens = tokens;
    this.$endStates = new Array(doc.getLength());
    this.$statePattern = statePattern;
    this.$codeBeginPattern = codeBeginPattern;
+   this.$codeEndPattern = codeEndPattern;
 };
 
 (function() {
+
+   function isChunkHeaderOrFooter(line)
+   {
+      if (this.$codeBeginPattern &&
+          this.$codeBeginPattern.test(line))
+      {
+         return true;
+      }
+
+      if (this.$codeEndPattern &&
+          this.$codeEndPattern.test(line))
+      {
+         return true;
+      }
+
+      return false;
+   }
 
    function isWhitespaceOrComment(token)
    {
@@ -95,8 +114,20 @@ var TokenUtils = function(doc, tokenizer, tokens, statePattern, codeBeginPattern
          assumeGood = false;
 
          var state = (row === 0) ? 'start' : this.$endStates[row-1];
-         var lineTokens = this.$tokenizer.getLineTokens(this.$doc.getLine(row), state);
-         if (!this.$statePattern || this.$statePattern.test(lineTokens.state) || this.$statePattern.test(state))
+         var line = this.$doc.getLine(row);
+         var lineTokens = this.$tokenizer.getLineTokens(line, state);
+
+         // Don't tokenize chunk header / footers.
+         if (isChunkHeaderOrFooter.call(this, line))
+         {
+            this.$tokens[row] = [];
+            this.$endStates[row] = lineTokens.state;
+            continue;
+         }
+         
+         if (!this.$statePattern ||
+             this.$statePattern.test(lineTokens.state) ||
+             this.$statePattern.test(state))
             this.$tokens[row] = this.$filterWhitespaceAndComments(lineTokens.tokens);
          else
             this.$tokens[row] = [];

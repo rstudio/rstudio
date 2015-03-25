@@ -50,6 +50,7 @@ var Mode = function(suppressHighlighting, session) {
 oop.inherits(Mode, HtmlMode);
 
 (function() {
+
    this.insertChunkInfo = {
       value: "<!--begin.rcode\n\nend.rcode-->\n",
       position: {row: 0, column: 15}
@@ -61,9 +62,14 @@ oop.inherits(Mode, HtmlMode);
       return state.match(/^r-/) ? 'R' : 'HTML';
    };
 
-   this.getNextLineIndent = function(state, line, tab)
+   this.$getNextLineIndent = this.getNextLineIndent;
+   this.getNextLineIndent = function(state, line, tab, row)
    {
-      return this.codeModel.getNextLineIndent(state, line, tab);
+      var mode = Utils.getLanguageMode(state, "html");
+      if (mode === "r")
+         return this.codeModel.getNextLineIndent(state, line, tab, row);
+      else
+         return this.$getNextLineIndent(state, line, tab);
    };
 
 }).call(Mode.prototype);

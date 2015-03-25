@@ -3,9 +3,10 @@ define("mode/c_cpp_matching_brace_outdent", function(require, exports, module) {
 var Range = require("ace/range").Range;
 
 var CppTokenCursor = require("mode/token_cursor").CppTokenCursor;
-var MatchingBraceOutdent = function(codeModel) {
+var CppMatchingBraceOutdent = function(codeModel) {
    this.codeModel = codeModel;
 };
+var Utils = require("mode/utils");
 
 // Allow the user to control various levels of outdenting if desired
 var $outdentColon              = true; // : (initializer list)
@@ -54,8 +55,7 @@ var $alignCase                 = true; // case 'a':
    };
 
    this.checkOutdent = function(state, line, input) {
-
-      if (state == "start") {
+      if (Utils.endsWith(state, "start")) {
 
          // private: / public: / protected
          // also class initializer lists
@@ -75,7 +75,7 @@ var $alignCase                 = true; // case 'a':
       }
 
       // check for nudging of '/' to the left (?)
-      if (state == "comment") {
+      if (Utils.endsWith(state, "comment")) {
 
          if (input == "/") {
             return true;
@@ -493,9 +493,9 @@ var $alignCase                 = true; // case 'a':
       return "";
    };
 
-}).call(MatchingBraceOutdent.prototype);
+}).call(CppMatchingBraceOutdent.prototype);
 
-exports.MatchingBraceOutdent = MatchingBraceOutdent;
+exports.CppMatchingBraceOutdent = CppMatchingBraceOutdent;
 
 exports.getOutdentColon = function() { return $outdentColon; };
 exports.setOutdentColon = function(x) { $outdentColon = x; };

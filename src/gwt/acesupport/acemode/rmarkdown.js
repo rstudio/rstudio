@@ -26,8 +26,10 @@ var Tokenizer = require("ace/tokenizer").Tokenizer;
 var RMarkdownHighlightRules = require("mode/rmarkdown_highlight_rules").RMarkdownHighlightRules;
 var MatchingBraceOutdent = require("ace/mode/matching_brace_outdent").MatchingBraceOutdent;
 var RMatchingBraceOutdent = require("mode/r_matching_brace_outdent").RMatchingBraceOutdent;
+var CppMatchingBraceOutdent = require("mode/c_cpp_matching_brace_outdent").CppMatchingBraceOutdent;
 var SweaveBackgroundHighlighter = require("mode/sweave_background_highlighter").SweaveBackgroundHighlighter;
 var RCodeModel = require("mode/r_code_model").RCodeModel;
+var CppCodeModel = require("mode/cpp_code_model").CppCodeModel;
 var MarkdownFoldMode = require("ace/mode/folding/markdown").FoldMode;
 var Utils = require("mode/utils");
 var unicode = require("ace/unicode");
@@ -37,10 +39,7 @@ var Mode = function(suppressHighlighting, session) {
 
    this.$session = session;
    this.$tokenizer = new Tokenizer(new RMarkdownHighlightRules().getRules());
-
    this.$outdent = new MatchingBraceOutdent();
-   this.$r_outdent = {};
-   oop.implement(this.$r_outdent, RMatchingBraceOutdent);
 
    this.codeModel = new RCodeModel(
       session,
@@ -49,6 +48,16 @@ var Mode = function(suppressHighlighting, session) {
       /^(?:[ ]{4})?`{3,}\s*\{r(.*)\}\s*$/,
       /^\s*```\s*$/
    );
+   this.$r_outdent = new RMatchingBraceOutdent(this.codeModel);
+
+   this.cpp_codeModel = new CppCodeModel(
+      session,
+      this.$tokenizer,
+      /^r-cpp-/,
+      /^(?:[ ]{4})?`{3,}\s*\{r(?:.*)engine\s*\=\s*['"]Rcpp['"](?:.*)\}\s*$/,
+      /^\s*```\s*$/
+   );
+   this.$cpp_outdent = new CppMatchingBraceOutdent(this.cpp_codeModel);
 
    var markdownFoldingRules = new MarkdownFoldMode();
 
@@ -105,60 +114,39 @@ oop.inherits(Mode, MarkdownMode);
       return !state.match(/^r-/);
    };
 
-   this.getNextLineIndent = function(state, line, tab)
+   this.$getNextLineIndent = this.getNextLineIndent;
+   this.getNextLineIndent = function(state, line, tab, row)
    {
-      state = Utils.primaryState(state);
-      if (!this.inCppLanguageMode(state))
-         return this.codeModel.getNextLineIndent(state, line, tab);
-      else {
-         // from c_cpp getNextLineIndent
-         var indent = this.$getIndent(line);
-
-         var tokenizedLine = this.$tokenizer.getLineTokens(line, state);
-         var tokens = tokenizedLine.tokens;
-         var endState = tokenizedLine.state;
-
-         if (tokens.length && tokens[tokens.length-1].type == "comment") {
-            return indent;
-         }
-
-         if (state == "r-cpp-start") {
-            var match = line.match(/^.*[\{\(\[]\s*$/);
-            if (match) {
-                indent += tab;
-            }
-         } else if (state == "r-cpp-doc-start") {
-            if (endState == "start") {
-                return "";
-            }
-            var match = line.match(/^\s*(\/?)\*/);
-            if (match) {
-                if (match[1]) {
-                    indent += " ";
-                }
-                indent += "* ";
-            }
-        }
-
-        return indent;
-      }
+      var mode = Utils.getLanguageMode(state, "markdown");
+      if (mode === "r")
+         return this.codeModel.getNextLineIndent(state, line, tab, row);
+      else if (mode === "r-cpp")
+         return this.cpp_codeModel.getNextLineIndent(state, line, tab, row);
+      else
+         return this.$getNextLineIndent(state, line, tab);
    };
 
-    this.checkOutdent = function(state, line, input) {
-        state = Utils.primaryState(state);
-        if (this.inCppLanguageMode(state))
-            return this.$outdent.checkOutdent(line, input);
-        else
-            return this.$r_outdent.checkOutdent(state, line, input);
-    };
+   this.checkOutdent = function(state, line, input)
+   {
+      var mode = Utils.getLanguageMode(state, "markdown");
+      if (mode === "r")
+         return this.$r_outdent.checkOutdent(state, line, input);
+      else if (mode === "r-cpp")
+         return this.$cpp_outdent.checkOutdent(state, line, input);
+      else
+         return this.$outdent.checkOutdent(line, input);
+   };
 
-    this.autoOutdent = function(state, doc, row) {
-        state = Utils.primaryState(state);
-        if (this.inCppLanguageMode(state))
-            return this.$outdent.autoOutdent(doc, row);
-        else
-            return this.$r_outdent.autoOutdent(state, doc, row, this.codeModel);
-    };
+   this.autoOutdent = function(state, session, row)
+   {
+      var mode = Utils.getLanguageMode(state, "markdown");
+      if (mode === "r")
+         return this.$r_outdent.autoOutdent(state, session, row);
+      else if (mode == "r-cpp")
+         return this.$cpp_outdent.autoOutdent(state, session, row);
+      else
+         return this.$outdent.autoOutdent(session, row);
+   };
 
     this.transformAction = function(state, action, editor, session, text) {
         state = Utils.primaryState(state);
@@ -197,7 +185,7 @@ oop.inherits(Mode, MarkdownMode);
         + unicode.packages.L
         + unicode.packages.Mn + unicode.packages.Mc
         + unicode.packages.Nd
-        + unicode.packages.Pc + "._]|\s])+", "g"
+        + unicode.packages.Pc + "._]|\\s])+", "g"
     );
    
 

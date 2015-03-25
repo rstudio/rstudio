@@ -1055,20 +1055,24 @@ var RCodeModel = function(session, tokenizer,
       return this.getNextLineIndent(
          "start",
          this.$getLine(row),
-         this.$session.getTabString()
+         this.$session.getTabString(),
+         row
       );
    };
 
-   // NOTE: 'row' is used purely for testing. If it's non-numeric then we need to
-   // set it with the current cursor position.
+   // NOTE: 'row' is an optional parameter, and is not used by default
+   // on enter keypresses. When unset, we attempt to indent based on
+   // the cursor position (which is what we want for 'enter'
+   // keypresses).  However, for reindentation of particular lines (or
+   // blocks), we need the row parameter in order to choose which row
+   // we wish to reindent.
    this.getNextLineIndent = function(state, line, tab, row)
    {
-      console.log(this.$tokens);
-      if (state == "qstring" || state == "qqstring")
+      if (/qstring$/.test(state))
          return "";
 
-      // NOTE: Pressing enter will already have moved the cursor to the next row,
-      // so we need to push that back a single row.
+      // NOTE: Pressing enter will already have moved the cursor to
+      // the next row, so we need to push that back a single row.
       if (typeof row !== "number")
          row = this.$session.getSelection().getCursor().row - 1;
 
@@ -1099,11 +1103,6 @@ var RCodeModel = function(session, tokenizer,
          // jcheng 12/7/2013: It doesn't look to me like $tokenizeUpToRow can return
          // anything but true, at least not today.
          if (!this.$tokenizeUpToRow(row))
-            return defaultIndent;
-
-         // If we're in an Sweave/Rmd/etc. document and this line isn't R, then
-         // don't auto-indent
-         if (this.$statePattern && !this.$statePattern.test(state))
             return defaultIndent;
 
          // The significant token (no whitespace, comments) that most immediately
