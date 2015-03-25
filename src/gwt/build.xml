@@ -101,7 +101,15 @@
             <file name="default.js"/>
          </sources>
       </jscomp>
+   </target>
 
+   <target name="acesupport" description="Compile (debugging) Ace support">
+      <exec executable="R">
+         <arg value="--vanilla" />
+         <arg value="--slave" />
+         <arg value="-f" />
+         <arg value="tools/compile-ext.R" />
+      </exec>
    </target>
 
    <target name="javac" description="Compile java source">
@@ -190,6 +198,25 @@
          <arg value="org.rstudio.studio.RStudioSuperDevMode"/>
       </java>
    </target>
+
+   <target name="debugmode" depends="acesupport,javac" description="Run debug-development mode">
+      <java failonerror="true" fork="true" classname="com.google.gwt.dev.DevMode">
+         <classpath>
+            <pathelement location="src"/>
+            <path refid="project.class.path"/>
+         </classpath>
+         <jvmarg value="-Xmx2048M"/>
+         <arg value="-war"/>
+         <arg value="www"/>
+         <arg value="-noserver"/>
+         <arg value="-startupUrl"/>
+         <arg value="http://localhost:8787"/>
+         <arg line="-bindAddress 127.0.0.1"/>
+         <!-- Additional arguments like -logLevel DEBUG -->
+         <arg value="org.rstudio.studio.RStudioSuperDevMode"/>
+      </java>
+   </target>
+
    
    <target name="superdevmode" description="Run super dev mode">
    	<antcall target="gwtc">

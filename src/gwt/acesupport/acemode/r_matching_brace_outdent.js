@@ -21,9 +21,9 @@ define("mode/r_matching_brace_outdent", function(require, exports, module)
 {
    var Range = require("ace/range").Range;
 
-   // This is a mixin that enables proper brace outdent behavior for R code.
-
-   var RMatchingBraceOutdent = {};
+   var RMatchingBraceOutdent = function(codeModel) {
+      this.codeModel = codeModel;
+   };
 
    (function()
    {
@@ -51,7 +51,7 @@ define("mode/r_matching_brace_outdent", function(require, exports, module)
          return false;
       };
 
-      this.autoOutdent = function(state, session, row, codeModel) {
+      this.autoOutdent = function(state, session, row) {
          if (row === 0)
             return 0;
 
@@ -65,7 +65,7 @@ define("mode/r_matching_brace_outdent", function(require, exports, module)
 
             if (!openBracePos || openBracePos.row == row) return 0;
 
-            var indent = codeModel.getIndentForOpenBrace(openBracePos);
+            var indent = this.codeModel.getIndentForOpenBrace(openBracePos);
             session.replace(new Range(row, 0, row, column-1), indent);
          }
 
@@ -73,10 +73,10 @@ define("mode/r_matching_brace_outdent", function(require, exports, module)
          if (match)
          {
             var column = match[1].length;
-            var indent = codeModel.getBraceIndent(row - 1);
+            var indent = this.codeModel.getBraceIndent(row - 1);
             session.replace(new Range(row, 0, row, column - 1), indent);
          }
       };
-   }).call(RMatchingBraceOutdent);
+   }).call(RMatchingBraceOutdent.prototype);
    exports.RMatchingBraceOutdent = RMatchingBraceOutdent;
 });

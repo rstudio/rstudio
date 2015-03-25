@@ -28,7 +28,8 @@ var CppScopeManager = require("mode/cpp_scope_tree").CppScopeManager;
 var getVerticallyAlignFunctionArgs = require("mode/r_code_model").getVerticallyAlignFunctionArgs;
 var Utils = require("mode/utils");
 
-var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) {
+var CppCodeModel = function(session, tokenizer,
+                            statePattern, codeBeginPattern, codeEndPattern) {
 
    this.$session = session;
    this.$doc = session.getDocument();
@@ -37,6 +38,7 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
    this.$tokens = new Array(this.$doc.getLength());
    this.$statePattern = statePattern;
    this.$codeBeginPattern = codeBeginPattern;
+   this.$codeEndPattern = codeEndPattern;
 
    this.$tokenUtils = new TokenUtils(
       this.$doc,
@@ -894,7 +896,9 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
       }
 
       // Indentation rules for comments
-      if (state == "comment" || state == "doc-start") {
+      if (Utils.endsWith(state, "comment") ||
+          Utils.endsWith(state, "doc-start"))
+      {
 
          // Choose indentation for the current line based on the position
          // of the cursor -- but make sure we only apply this if the
@@ -921,7 +925,7 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
       }
 
       // Rules for the 'general' state
-      if (state == "start") {
+      if (Utils.endsWith(state, "start")) {
 
          var match = null;
 
@@ -1236,11 +1240,12 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
          // Try token walking
          if (this.$tokenUtils.$tokenizeUpToRow(row + 2)) {
 
+            var tokens = new Array(this.$tokens.length);
+
             try {
                
                // Remove any trailing '\' tokens, then reapply them. This way, indentation
                // will work even in 'macro mode'.
-               var tokens = new Array(this.$tokens.length);
 
                for (var i = 0; i < this.$tokens.length; i++) {
                   if (this.$tokens[i] != null &&

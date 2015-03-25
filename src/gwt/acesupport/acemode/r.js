@@ -40,10 +40,9 @@ define("mode/r", function(require, exports, module)
       else
          this.$tokenizer = new Tokenizer(new RHighlightRules().getRules());
 
-      this.codeModel = new RCodeModel(session, this.$tokenizer, null);
+      this.codeModel = new RCodeModel(session, this.$tokenizer);
       this.foldingRules = this.codeModel;
-      this.$outdent = {};
-      oop.implement(this.$outdent, RMatchingBraceOutdent);
+      this.$outdent = new RMatchingBraceOutdent(this.codeModel);
    };
    oop.inherits(Mode, TextMode);
 
@@ -54,8 +53,8 @@ define("mode/r", function(require, exports, module)
          return this.$outdent.checkOutdent(state, line, input);
       };
 
-      this.autoOutdent = function(state, doc, row) {
-         return this.$outdent.autoOutdent(state, doc, row, this.codeModel);
+      this.autoOutdent = function(state, session, row) {
+         return this.$outdent.autoOutdent(state, session, row);
       };
       
       this.tokenRe = new RegExp("^["
@@ -69,7 +68,7 @@ define("mode/r", function(require, exports, module)
           + unicode.packages.L
           + unicode.packages.Mn + unicode.packages.Mc
           + unicode.packages.Nd
-          + unicode.packages.Pc + "._]|\s])+", "g"
+          + unicode.packages.Pc + "._]|\\s])+", "g"
       );
 
       this.$complements = {

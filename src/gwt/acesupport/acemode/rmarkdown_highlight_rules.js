@@ -24,42 +24,46 @@ var RHighlightRules = require("mode/r_highlight_rules").RHighlightRules;
 var c_cppHighlightRules = require("mode/c_cpp_highlight_rules").c_cppHighlightRules;
 var MarkdownHighlightRules = require("mode/markdown_highlight_rules").MarkdownHighlightRules;
 var TextHighlightRules = require("ace/mode/text_highlight_rules").TextHighlightRules;
+var Utils = require("mode/utils");
 
 var RMarkdownHighlightRules = function() {
 
-    // regexp must not have capturing parentheses
-    // regexps are ordered -> the first match is used
+   // Base rule set (markdown)
+   this.$rules = new MarkdownHighlightRules().getRules();
 
-    this.$rules = new MarkdownHighlightRules().getRules();
-    this.$rules["start"].unshift({
-        token: "support.function.codebegin",
-        regex: "^(?:[ ]{4})?`{3,}\\s*\\{r(?:.*)\\}\\s*$",
-        next: "r-start"
-    });
+   // Embed R highlight rules
+   Utils.embedRules(
+      this,
+      RHighlightRules,
+      "r",
+      this.$reRChunkStartString,
+      this.$reChunkEndString
+   );
 
-    var rRules = new RHighlightRules().getRules();
-    this.addRules(rRules, "r-");
-    this.$rules["r-start"].unshift({
-        token: "support.function.codeend",
-        regex: "^(?:[ ]{4})?`{3,}\\s*$",
-        next: "start"
-    });
-
-    this.$rules["start"].unshift({
-        token: "support.function.codebegin",
-        regex: "^(?:[ ]{4})?`{3,}\\s*\\{r(?:.*)engine\\='Rcpp'(?:.*)\\}\\s*$",
-        next: "r-cpp-start"
-    });
-
-    var cppRules = new c_cppHighlightRules().getRules();
-    this.addRules(cppRules, "r-cpp-");
-    this.$rules["r-cpp-start"].unshift({
-        token: "support.function.codeend",
-        regex: "^(?:[ ]{4})?`{3,}\\s*$",
-        next: "start"
-    });
+   // Embed C++ highlight rules
+   Utils.embedRules(
+      this,
+      c_cppHighlightRules,
+      "r-cpp",
+      this.$reCppChunkStartString,
+      this.$reChunkEndString
+   );
 };
 oop.inherits(RMarkdownHighlightRules, TextHighlightRules);
+
+(function() {
+   
+   this.$reRChunkStartString =
+      "^(?:[ ]{4})?`{3,}\\s*\\{[Rr](.*)\\}\\s*$";
+
+   this.$reCppChunkStartString =
+      "^(?:[ ]{4})?`{3,}\\s*\\{[Rr](?:.*)engine\\s*\\=\\s*['\"]Rcpp['\"](?:.*)\\}\\s*$|" +
+      "^(?:[ ]{4})?`{3,}\\s*\\{[Rr]cpp(?:.*)\\}\\s*$";
+
+   this.$reChunkEndString =
+      "^(?:[ ]{4})?`{3,}\\s*$";
+   
+}).call(RMarkdownHighlightRules.prototype);
 
 exports.RMarkdownHighlightRules = RMarkdownHighlightRules;
 });

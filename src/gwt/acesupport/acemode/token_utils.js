@@ -15,13 +15,15 @@
 
 define("mode/token_utils", function(require, exports, module) {
 
-var TokenUtils = function(doc, tokenizer, tokens, statePattern, codeBeginPattern) {
+var TokenUtils = function(doc, tokenizer, tokens,
+                          statePattern, codeBeginPattern, codeEndPattern) {
    this.$doc = doc;
    this.$tokenizer = tokenizer;
    this.$tokens = tokens;
    this.$endStates = new Array(doc.getLength());
    this.$statePattern = statePattern;
    this.$codeBeginPattern = codeBeginPattern;
+   this.$codeEndPattern = codeEndPattern;
 };
 
 (function() {
@@ -95,8 +97,12 @@ var TokenUtils = function(doc, tokenizer, tokens, statePattern, codeBeginPattern
          assumeGood = false;
 
          var state = (row === 0) ? 'start' : this.$endStates[row-1];
-         var lineTokens = this.$tokenizer.getLineTokens(this.$doc.getLine(row), state);
-         if (!this.$statePattern || this.$statePattern.test(lineTokens.state) || this.$statePattern.test(state))
+         var line = this.$doc.getLine(row);
+         var lineTokens = this.$tokenizer.getLineTokens(line, state);
+
+         if (!this.$statePattern ||
+             this.$statePattern.test(lineTokens.state) ||
+             this.$statePattern.test(state))
             this.$tokens[row] = this.$filterWhitespaceAndComments(lineTokens.tokens);
          else
             this.$tokens[row] = [];
