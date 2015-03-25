@@ -32,3 +32,4 @@ outputPath <- "src/org/rstudio/studio/client/workbench/views/source/editors/text
 
 contents <- unlist(lapply(sources, readLines))
 cat(contents, file = outputPath, sep = "\n")
+cat("- Successfully compiled 'acesupport.js'")
