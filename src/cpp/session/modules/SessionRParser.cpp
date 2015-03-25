@@ -166,18 +166,21 @@ bool isDataTableSingleBracketCall(RTokenCursor& cursor)
    return r::sexp::inherits(resultSEXP, "data.table");
 }
 
+bool maybePerformsNSE(const std::string& callingString)
+{
+   r::sexp::Protect protect;
+   SEXP objectSEXP;
+   r::exec::RFunction getAnywhere(".rs.getAnywhere");
+   getAnywhere.addParam(callingString);
+   Error error = getAnywhere.call(&objectSEXP, &protect);
+   IF_ERROR(error, return false);
+   
+   return r::sexp::maybePerformsNSE(objectSEXP);
+}
+
 bool mightPerformNonstandardEvaluation(const std::wstring& callingString)
 {
-   using namespace r::exec;
-   RFunction maybePerformsNSE(".rs.maybePerformsNSE");
-   maybePerformsNSE.addParam(string_utils::wideToUtf8(callingString));
-   
-   bool performsNSE = false;
-   Error error = maybePerformsNSE.call(&performsNSE);
-   if (error)
-      LOG_ERROR(error);
-   
-   return performsNSE;
+   return maybePerformsNSE(string_utils::wideToUtf8(callingString));
 }
 
 } // end anonymous namespace
