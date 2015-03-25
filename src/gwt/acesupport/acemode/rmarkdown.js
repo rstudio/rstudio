@@ -112,13 +112,13 @@ oop.inherits(Mode, MarkdownMode);
    };
 
    this.$getNextLineIndent = this.getNextLineIndent;
-   this.getNextLineIndent = function(state, line, tab, row)
+   this.getNextLineIndent = function(state, line, tab, row, dontSubset)
    {
       var mode = activeMode(state);
       if (mode === "r")
          return this.codeModel.getNextLineIndent(state, line, tab, row);
       else if (mode === "cpp")
-         return this.cpp_codeModel.getNextLineIndent(state, line, tab, row);
+         return this.cpp_codeModel.getNextLineIndent(state, line, tab, row, dontSubset);
       else
          return this.$getNextLineIndent(state, line, tab);
    };
