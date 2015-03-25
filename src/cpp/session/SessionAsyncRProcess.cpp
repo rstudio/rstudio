@@ -53,9 +53,14 @@ void AsyncRProcess::start(const char* rCommand,
       const core::FilePath modulesPath =
             session::options().modulesRSourcePath();
       
+      const core::FilePath rPath =
+            session::options().coreRSourcePath();
+      
+      const core::FilePath rTools =  rPath.childPath("Tools.R");
       const core::FilePath sessionCodeTools = modulesPath.childPath("SessionCodeTools.R");
       const core::FilePath sessionRCompletions = modulesPath.childPath("SessionRCompletions.R");
       
+      rSourceFiles.push_back(rTools);
       rSourceFiles.push_back(sessionCodeTools);
       rSourceFiles.push_back(sessionRCompletions);
    }
@@ -90,29 +95,13 @@ void AsyncRProcess::start(const char* rCommand,
 
    if (rSourceFiles.size())
    {
-      // Use shims for the main RStudio functions
-      command << "options(error = traceback); ";
-
-      command << ".rs.Env <- attach(NULL, name = 'tools:rstudio'); ";
-
-      command << ".rs.addFunction <- function(name, FN, attrs = list()) {"
-              << "   fullName = paste('.rs.', name, sep=''); "
-              << "   for (attrib in names(attrs)) "
-              << "     attr(FN, attrib) <- attrs[[attrib]];"
-              << "   assign(fullName, FN, .rs.Env); "
-              << "   environment(.rs.Env[[fullName]]) <- .rs.Env; "
-              << "};";
-
-      // similarly for .rs.addJsonRpcHandler
-      command << ".rs.addJsonRpcHandler <- function(name, FN) {"
-              << "   .rs.addFunction(paste('rpc.', name, sep = ''), FN, TRUE);"
-              << "};";
-
       // add in the r source files requested
       for (std::vector<core::FilePath>::const_iterator it = rSourceFiles.begin();
            it != rSourceFiles.end();
            ++it)
+      {
          command << "source('" << it->absolutePath() << "');";
+      }
       
       command << rCommand;
    }
