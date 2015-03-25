@@ -92,7 +92,7 @@ oop.inherits(RStudioEditSession, EditSession);
       for (var i = start; i <= end; i++)
       {
          var state = Utils.getPrimaryState(this, i - 1);
-         if (/qstring$/.test(state))
+         if (Utils.endsWith(state, "qstring"))
             continue;
 
          var newIndent = mode.getNextLineIndent(state,
