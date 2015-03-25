@@ -468,6 +468,27 @@ public:
      return true;
   }
   
+  // Get the 'evaluation' associated with a function call, e.g.
+  //
+  //    foo + bar::baz$bam()
+  //          ^^^^^^^^^^^^
+  //
+  std::wstring getCallingString()
+  {
+     RTokenCursor cursor = clone();
+     
+     if (isLeftBracket(cursor))
+        if (!cursor.moveToPreviousSignificantToken())
+           return std::wstring();
+     
+     std::wstring::const_iterator end = cursor.end();
+     if (!cursor.moveToStartOfEvaluation())
+        return std::wstring();
+     
+     std::wstring::const_iterator begin = cursor.begin();
+     return std::wstring(begin, end);
+  }
+  
   // Move to the end of an R statement, e.g.
   //
   //    x <- x + I(a, b, c)

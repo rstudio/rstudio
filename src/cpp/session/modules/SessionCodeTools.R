@@ -1284,3 +1284,73 @@
    )
    
 })
+
+.rs.addFunction("asLookupEnv", function(vector)
+{
+   env <- new.env(parent = emptyenv())
+   for (object in vector)
+      assign(object, TRUE, envir = env)
+   env
+})
+
+.rs.setVar("nse.functions", .rs.asLookupEnv(c(
+   "subset", "with", "quote", "substitute",
+   "match.call", "evalq", "enquote", "bquote"
+)))
+
+.rs.setVar("nse.cache", new.env(parent = emptyenv()))
+
+.rs.addFunction("maybePerformsNSE", function(objectString)
+{
+   # TODO: why can we get zero-length function calls?
+   if (!nzchar(objectString))
+      return(FALSE)
+   
+   # First, check the cache to see if we tried to lint this already.
+   # TODO: Should store some hash / representation of the function itself?
+   cache <- .rs.getVar("nse.cache")
+   cached <- cache[[objectString]]
+   if (is.logical(cached))
+      return(cached)
+   
+   # Try to resolve the object from the associated string.
+   object <- .rs.getAnywhere(objectString, envir = parent.frame())
+   if (!is.function(object))
+   {
+      cache[[objectString]] <- FALSE
+      return(FALSE)
+   }
+   
+   # Get the function body, and iterate through looking for 'NSE-performing' calls
+   body <- body(object)
+   nseFunctions <- .rs.getVar("nse.functions")
+   result <- .rs.checkForNSE(body, nseFunctions)
+   
+   # Update cache and return
+   cache[[objectString]] <- result
+   result
+   
+})
+
+.rs.addFunction("checkForNSE", function(body,
+                                        nseFunctions = .rs.getVar("nse.functions"))
+{
+   if (is.expression(body))
+      return(any(vapply(body, FUN.VALUE = logical(1), function(x) {
+         .rs.checkForNSE(x, nseFunctions)
+      })))
+   
+   if (is.call(body))
+   {
+      callName <- as.character(body[[1]])
+      if (length(callName) == 1 && !is.null(nseFunctions[[callName]]))
+         return(TRUE)
+      
+      if (length(body) > 1)
+         return(any(vapply(2:length(body), FUN.VALUE = logical(1), function(i) {
+            .rs.checkForNSE(body[[i]], nseFunctions)
+         })))
+   }
+   
+   return(FALSE)
+})
