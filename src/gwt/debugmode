@@ -1,0 +1,5 @@
+#!/usr/bin/env sh
+
+ant clean
+R --vanilla --slave -f tools/compile-ext.R
+ant debugmode
