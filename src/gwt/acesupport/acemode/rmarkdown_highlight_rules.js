@@ -44,7 +44,7 @@ var RMarkdownHighlightRules = function() {
    Utils.embedRules(
       this,
       c_cppHighlightRules,
-      "cpp",
+      "r-cpp",
       this.$reCppChunkStartString,
       this.$reChunkEndString
    );

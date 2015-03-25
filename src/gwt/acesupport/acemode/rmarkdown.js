@@ -53,7 +53,7 @@ var Mode = function(suppressHighlighting, session) {
    this.cpp_codeModel = new CppCodeModel(
       session,
       this.$tokenizer,
-      /^cpp-/,
+      /^r-cpp-/,
       new RegExp(RMarkdownHighlightRules.prototype.$reCppChunkStartString),
       new RegExp(RMarkdownHighlightRules.prototype.$reChunkEndString)
    );
@@ -105,7 +105,7 @@ oop.inherits(Mode, MarkdownMode);
       var mode = activeMode(state);
       if (mode === "r")
          return "R";
-      else if (mode === "cpp")
+      else if (mode === "r-cpp")
          return "C_CPP";
       else
          return "Markdown";
@@ -117,7 +117,7 @@ oop.inherits(Mode, MarkdownMode);
       var mode = activeMode(state);
       if (mode === "r")
          return this.codeModel.getNextLineIndent(state, line, tab, row);
-      else if (mode === "cpp")
+      else if (mode === "r-cpp")
          return this.cpp_codeModel.getNextLineIndent(state, line, tab, row, dontSubset);
       else
          return this.$getNextLineIndent(state, line, tab);
@@ -128,7 +128,7 @@ oop.inherits(Mode, MarkdownMode);
       var mode = activeMode(state);
       if (mode === "r")
          return this.$r_outdent.checkOutdent(state, line, input);
-      else if (mode === "cpp")
+      else if (mode === "r-cpp")
          return this.$cpp_outdent.checkOutdent(state, line, input);
       else
          return this.$outdent.checkOutdent(line, input);
@@ -139,7 +139,7 @@ oop.inherits(Mode, MarkdownMode);
       var mode = activeMode(state);
       if (mode === "r")
          return this.$r_outdent.autoOutdent(state, session, row);
-      else if (mode === "cpp")
+      else if (mode === "r-cpp")
          return this.$cpp_outdent.autoOutdent(state, session, row);
       else
          return this.$outdent.autoOutdent(session, row);
@@ -149,7 +149,7 @@ oop.inherits(Mode, MarkdownMode);
       var mode = activeMode(state);
       // from c_cpp.js
       if (action === 'insertion') {
-         if ((text === "\n") && (mode === "cpp")) {
+         if ((text === "\n") && (mode === "r-cpp")) {
             // If newline in a doxygen comment, continue the comment
             var pos = editor.getSelectionRange().start;
             var match = /^((\s*\/\/+')\s*)/.exec(session.doc.getLine(pos.row));
@@ -158,7 +158,7 @@ oop.inherits(Mode, MarkdownMode);
             }
          }
 
-         else if ((text === "R") && (mode === "cpp")) {
+         else if ((text === "R") && (mode === "r-cpp")) {
             // If newline to start and embedded R chunk complete the chunk
             var pos = editor.getSelectionRange().start;
             var match = /^(\s*\/\*{3,}\s*)/.exec(session.doc.getLine(pos.row));
