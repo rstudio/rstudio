@@ -12,7 +12,9 @@
       <g:VerticalPanel>
         <g:HTMLPanel>
           <g:InlineLabel text="Deploy Files From:"></g:InlineLabel>
-          <g:InlineLabel styleName="{res.style.deployLabel}" ui:field="deployLabel_"></g:InlineLabel>
+          <g:InlineLabel styleName="{res.style.deployLabel}" 
+                         ui:field="deployLabel_">
+          </g:InlineLabel>
         </g:HTMLPanel>
         <g:ScrollPanel styleName="{res.style.fileList}">
           <g:VerticalPanel ui:field="fileListPanel_">
@@ -40,6 +42,11 @@
                   text="Name:"></g:Label>
          <g:TextBox styleName="{res.style.gridControl}" ui:field="appName_" 
                     maxLength="63"></g:TextBox>
+         <g:HTMLPanel visible="false" ui:field="nameValidatePanel_">
+           <g:Label styleName="{res.style.validateError}" 
+                    text="Valid names contain 4 to 64 alphanumeric characters, dashes, and underscores.">
+           </g:Label>
+         </g:HTMLPanel>
          <g:HTMLPanel styleName="{res.style.controlLabel}" visible="false" 
                       ui:field="appInfoPanel_">
             <g:Label text="Destination URL:" 
@@ -53,8 +60,5 @@
       </g:HTMLPanel>
      </g:customCell>
    </g:row></g:Grid>
-   <g:HTMLPanel visible="false" ui:field="nameValidatePanel_">
-     <g:Label styleName="{res.style.validateError}" text="Application names must be between 4 and 63 characters, and can contain only alphanumeric characters, dashes, and underscores."></g:Label>
-   </g:HTMLPanel>
    </g:HTMLPanel>
 </ui:UiBinder> 

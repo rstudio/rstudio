@@ -49,12 +49,17 @@ public class PublishReportSourcePage
       String staticTitle = "Publish finished document only";
       String staticSubtitle = "Choose this option to publish the report as " +
              "it appears in RStudio.";
-      if (input.isConnectUIEnabled())
+      if (input.isConnectUIEnabled() && input.isExternalUIEnabled())
       {
-         // if RStudio Connect is enabled, static content could go to either
-         // RPubs or Connect
+         // if RStudio Connect and external accounts are both enabled, static 
+         // content could go to either RPubs or Connect
          pages.add(new PublishStaticDestPage(staticTitle, staticSubtitle, 
                input));
+      }
+      else if (input.isConnectUIEnabled())
+      {
+         // only RStudio Connect is available for static content
+         pages.add(new PublishStaticPage(staticTitle, staticSubtitle, false));
       }
       else
       {

@@ -38,7 +38,7 @@ public class PublishCodePage
    @Override
    public void focus()
    {
-      
+      contents_.focus();
    }
    
    @Override

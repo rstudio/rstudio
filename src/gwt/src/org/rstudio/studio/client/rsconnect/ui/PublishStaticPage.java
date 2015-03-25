@@ -25,10 +25,11 @@ public class PublishStaticPage
 {
    // Public methods ---------------------------------------------------------
 
-   public PublishStaticPage(String title, String subTitle)
+   public PublishStaticPage(String title, String subTitle, boolean showIcon)
    {
       super(title, subTitle, "Publish", 
-            RSConnectAccountResources.INSTANCE.localAccountIcon(), 
+            showIcon ? RSConnectAccountResources.INSTANCE.localAccountIcon() :
+               null, 
             RSConnectAccountResources.INSTANCE.localAccountIconLarge());
    }
    

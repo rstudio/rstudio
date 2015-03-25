@@ -239,6 +239,9 @@ public class RSConnectDeploy extends Composite
          fileChecks_ = new ArrayList<CheckBox>();
       }
       
+      // clear existing file list
+      fileListPanel_.clear();
+      
       for (int i = 0; i < files.length(); i++)
       {
          boolean checked = true;
@@ -347,6 +350,11 @@ public class RSConnectDeploy extends Composite
    public void setContentPath(String contentPath)
    {
       contentPath_ = contentPath;
+   }
+   
+   public void focus()
+   {
+      appName_.setFocus(true);
    }
    
    public RSConnectPublishResult getResult() 
