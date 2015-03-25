@@ -45,7 +45,7 @@ define("mode/utils", function(require, exports, module) {
       return states;
    };
 
-   this.getLanguageMode = function(state, major)
+   this.activeMode = function(state, major)
    {
       var primary = that.primaryState(state);
       var modeIdx = primary.lastIndexOf("-");
@@ -62,6 +62,26 @@ define("mode/utils", function(require, exports, module) {
    this.escapeRegExp = function(string)
    {
       return string.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, "\\$&");
+   };
+
+   this.embedRules = function(HighlightRules, EmbedRules,
+                              prefix, reStart, reEnd)
+   {
+      var rules = HighlightRules.$rules;
+      rules["start"].unshift({
+         token: "support.function.codebegin",
+         regex: reStart,
+         next : prefix + "-start"
+      });
+
+      var embed = new EmbedRules().getRules();
+      HighlightRules.addRules(embed, prefix + "-");
+      
+      rules[prefix + "-start"].unshift({
+         token: "support.function.codeend",
+         regex: reEnd,
+         next : "start"
+      });
    };
    
 }).call(exports);

@@ -18,6 +18,7 @@ define("mode/r_code_model", function(require, exports, module) {
 var Range = require("ace/range").Range;
 var TokenIterator = require("ace/token_iterator").TokenIterator;
 var RTokenCursor = require("mode/token_cursor").RTokenCursor;
+var Utils = require("mode/utils");
 
 var $verticallyAlignFunctionArgs = false;
 
@@ -1068,7 +1069,7 @@ var RCodeModel = function(session, tokenizer,
    // we wish to reindent.
    this.getNextLineIndent = function(state, line, tab, row)
    {
-      if (/qstring$/.test(state))
+      if (Utils.endsWith(state, "qstring"))
          return "";
 
       // NOTE: Pressing enter will already have moved the cursor to
