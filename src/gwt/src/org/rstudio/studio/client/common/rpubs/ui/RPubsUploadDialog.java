@@ -56,7 +56,7 @@ public class RPubsUploadDialog extends ModalDialogBase
                             String uploadId,
                             boolean isPublished)
    {
-      this(contextId, title, htmlFile, rmdFile, uploadId, null, isPublished);
+      this(contextId, title, rmdFile, htmlFile, uploadId, null, isPublished);
    }
    
    public RPubsUploadDialog(String contextId,
@@ -83,7 +83,7 @@ public class RPubsUploadDialog extends ModalDialogBase
       htmlGenerator_ = htmlGenerator;
       isPublished_ = isPublished;
       contextId_ = contextId;
-      uploadId_ = uploadId;
+      uploadId_ = uploadId == null ? "" : uploadId;
       uploader_ = new RPubsUploader(server_, globalDisplay_,
             eventBus_, contextId_);
       uploader_.setOnUploadComplete(new CommandWithArg<Boolean>()
@@ -131,7 +131,7 @@ public class RPubsUploadDialog extends ModalDialogBase
       verticalPanel.add(headerPanel);
 
       String msg;
-      if (!isPublished_)
+      if (!isPublished_ && uploadId_.isEmpty())
       {
          msg = "RPubs is a free service from RStudio for sharing " +
                        "documents on the web. Click Publish to get " +
@@ -237,7 +237,7 @@ public class RPubsUploadDialog extends ModalDialogBase
          }
       });
 
-      if (!isPublished_)
+      if (!isPublished_ && uploadId_.isEmpty())
       {
          addOkButton(continueButton_);
          addCancelButton(cancelButton);
@@ -320,7 +320,11 @@ public class RPubsUploadDialog extends ModalDialogBase
          @Override
          public void execute(String htmlFile)
          {
-            uploader_.performUpload(title, rmdFile_, htmlFile, "", modify);
+            if (modify)
+               uploader_.performUpload(title, rmdFile_, htmlFile, 
+                     uploadId_, modify);
+            else
+               uploader_.performUpload(title, rmdFile_, htmlFile, "", false);
          }
       });
    }

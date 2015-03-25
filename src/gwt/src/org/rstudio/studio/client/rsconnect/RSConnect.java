@@ -145,7 +145,8 @@ public class RSConnect implements SessionInitHandler,
       String ctx = "Publish " + contentTypeDesc(event.getContentType());
       RPubsUploadDialog dlg = new RPubsUploadDialog(
             "Publish Wizard", 
-            ctx, event.getFromRmdPreview() != null ? 
+            ctx, 
+            event.getFromRmdPreview() != null ? 
                   event.getFromRmdPreview().getTargetFile() : null,
             event.getHtmlFile(), 
             event.getFromPrevious() == null ? 

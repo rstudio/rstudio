@@ -141,6 +141,7 @@ private:
       // check for a previous upload ID
       std::string id = allowUpdate && uploadId.empty() ? 
          previousRpubsUploadId(htmlFile_) : uploadId;
+      boost::algorithm::trim(id);
 
       // R binary
       FilePath rProgramPath;
