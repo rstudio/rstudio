@@ -26,7 +26,9 @@ public class PublishCodePage
    public PublishCodePage(String title, String subTitle, 
          RSConnectPublishInput input, boolean asMultiple)
    {
-      super(title, subTitle, "Publish", null, null);
+      super(title, subTitle, "Publish", asMultiple ? 
+            RSConnectAccountResources.INSTANCE.publishMultipleRmd() :
+            RSConnectAccountResources.INSTANCE.publishSingleRmd(), null);
       
       // createWidget is called by super() above
       if (contents_ != null)

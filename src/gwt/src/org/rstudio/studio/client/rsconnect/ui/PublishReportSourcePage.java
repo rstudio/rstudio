@@ -31,7 +31,10 @@ public class PublishReportSourcePage
          RSConnectPublishInput input,
          boolean asMultiple)
    {
-      super(title, subTitle, "Publish Source Code", null, null, 
+      super(title, subTitle, "Publish Source Code", asMultiple ? 
+            RSConnectAccountResources.INSTANCE.publishMultipleRmd() :
+            RSConnectAccountResources.INSTANCE.publishSingleRmd(),
+            null, 
             createPages(input, asMultiple));
    }
 

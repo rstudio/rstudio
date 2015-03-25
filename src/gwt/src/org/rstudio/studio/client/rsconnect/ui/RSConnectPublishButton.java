@@ -288,15 +288,19 @@ public class RSConnectPublishButton extends Composite
          }
          
          publishMenu_.addSeparator();
-         publishMenu_.addItem(new MenuItem("Other Destination...", 
+         publishMenu_.addItem(new MenuItem(
+               AppCommand.formatMenuLabel(
+                     commands_.rsconnectDeploy().getImageResource(), 
+                     "Other Destination...", null),
+               true,
                new Scheduler.ScheduledCommand()
-         {
-            @Override
-            public void execute()
-            {
-               onPublishClick(null);
-            }
-         }));
+               {
+                  @Override
+                  public void execute()
+                  {
+                     onPublishClick(null);
+                  }
+               }));
       }
       else
       {
