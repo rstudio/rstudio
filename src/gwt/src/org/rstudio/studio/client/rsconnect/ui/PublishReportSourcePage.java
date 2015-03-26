@@ -49,7 +49,7 @@ public class PublishReportSourcePage
       
       pages.add(new PublishCodePage("Publish document with source code",
             "Choose this option if you want to create a scheduled report or " +
-            "execute your document on the server.", input, asMultiple));
+            "execute your document on the server.", input, false, asMultiple));
       String staticTitle = "Publish finished document only";
       String staticSubtitle = "Choose this option to publish the report as " +
              "it appears in RStudio.";
@@ -58,12 +58,13 @@ public class PublishReportSourcePage
          // if RStudio Connect and external accounts are both enabled, static 
          // content could go to either RPubs or Connect
          pages.add(new PublishStaticDestPage(staticTitle, staticSubtitle, 
-               input));
+               input, asMultiple));
       }
       else if (input.isConnectUIEnabled())
       {
          // only RStudio Connect is available for static content
-         pages.add(new PublishStaticPage(staticTitle, staticSubtitle, false));
+         pages.add(new PublishStaticPage(staticTitle, staticSubtitle, input, 
+               false, asMultiple));
       }
       else
       {

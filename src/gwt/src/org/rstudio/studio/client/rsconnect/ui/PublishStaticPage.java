@@ -25,12 +25,19 @@ public class PublishStaticPage
 {
    // Public methods ---------------------------------------------------------
 
-   public PublishStaticPage(String title, String subTitle, boolean showIcon)
+   public PublishStaticPage(String title, String subTitle, 
+         RSConnectPublishInput input, boolean showIcon, boolean asMultiple)
    {
       super(title, subTitle, "Publish", 
             showIcon ? RSConnectAccountResources.INSTANCE.localAccountIcon() :
                null, 
             RSConnectAccountResources.INSTANCE.localAccountIconLarge());
+
+      if (publishWidget_ != null)
+      {
+         publishWidget_.setContentPath(
+               input.getOriginatingEvent().getHtmlFile(), asMultiple);
+      }
    }
    
    @Override
@@ -64,13 +71,13 @@ public class PublishStaticPage
    @Override
    protected RSConnectPublishResult collectInput()
    {
-      return new RSConnectPublishResult();
+      return publishWidget_.getResult();
    }
 
    @Override
    protected boolean validate(RSConnectPublishResult input)
    {
-      return false;
+      return publishWidget_.isResultValid();
    }
    
    private PublishStatic publishWidget_;

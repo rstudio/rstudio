@@ -37,7 +37,7 @@ public class RSConnectPublishWizard
       // wizard to resolve)
       if (input.getContentType() == RSConnect.CONTENT_TYPE_PLOT)
       {
-         return new PublishStaticDestPage("Publish", "Publish", input);
+         return new PublishStaticDestPage("Publish", "Publish", input, false);
       }
       else if (input.getContentType() == RSConnect.CONTENT_TYPE_RMD &&
                input.isMultiRmd())
@@ -48,12 +48,12 @@ public class RSConnectPublishWizard
                !input.isMultiRmd() &&
                input.isConnectUIEnabled())
       {
-         return new PublishStaticDestPage("Publish", "Publish", input);
+         return new PublishStaticDestPage("Publish", "Publish", input, false);
       }
       else
       {
          // shouldn't happen but this is a safe default
-         return new PublishCodePage("Publish", "Publish", input, false);
+         return new PublishCodePage("Publish", "Publish", input, false, false);
       }
    }
 }

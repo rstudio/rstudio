@@ -49,9 +49,9 @@ public class PublishMultiplePage
       if (input.isShiny())
       {
          pages.add(new PublishCodePage(singleTitle, singleSubtitle, input, 
-               false));
+               true, false));
          pages.add(new PublishCodePage(multipleTitle, multipleSubtitle, input,
-               true));
+               true, true));
       }
       else
       {

@@ -24,14 +24,15 @@ public class PublishStaticDestPage
    extends WizardNavigationPage<RSConnectPublishInput, RSConnectPublishResult>
 {
    public PublishStaticDestPage(String title, String subTitle, 
-                                RSConnectPublishInput input)
+                                RSConnectPublishInput input, boolean asMultiple)
    {
-      super(title, subTitle, "Publish To", null, null, createPages(input));
+      super(title, subTitle, "Publish To", null, null, createPages(input,
+            asMultiple));
    }
    
    private static ArrayList<WizardPage<RSConnectPublishInput, 
                                        RSConnectPublishResult>> 
-           createPages(RSConnectPublishInput input)
+           createPages(RSConnectPublishInput input, boolean asMultiple)
    {
       ArrayList<WizardPage<RSConnectPublishInput, 
                            RSConnectPublishResult>> pages =
@@ -41,7 +42,7 @@ public class PublishStaticDestPage
          "RStudio for sharing documents on the web."));
       pages.add(new PublishStaticPage("A server in your organization", 
          "RStudio Connect enables members of your organization to share and " + 
-         "collaborate privately and securely.", true));
+         "collaborate privately and securely.", input, true, asMultiple));
       return pages;
    }
 }

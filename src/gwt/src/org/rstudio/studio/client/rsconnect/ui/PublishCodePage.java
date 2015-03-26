@@ -24,11 +24,12 @@ public class PublishCodePage
    extends WizardPage<RSConnectPublishInput, RSConnectPublishResult>
 {
    public PublishCodePage(String title, String subTitle, 
-         RSConnectPublishInput input, boolean asMultiple)
+         RSConnectPublishInput input, boolean showImage, boolean asMultiple)
    {
-      super(title, subTitle, "Publish", asMultiple ? 
+      super(title, subTitle, "Publish", showImage ? (asMultiple ? 
             RSConnectAccountResources.INSTANCE.publishMultipleRmd() :
-            RSConnectAccountResources.INSTANCE.publishSingleRmd(), null);
+            RSConnectAccountResources.INSTANCE.publishSingleRmd()) : null, 
+            null);
       
       // createWidget is called by super() above
       if (contents_ != null)

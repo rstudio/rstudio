@@ -67,15 +67,16 @@ public:
             files += ", ";
       }
 
-      // if a R Markdown document is being deployed, mark it as the primary
-      // file 
-      std::string primaryRmd;
+      // if an R Markdown document or HTML document is being deployed, mark it
+      // as the primary file 
+      std::string primaryDoc;
       if (!file.empty())
       {
          FilePath sourceFile = module_context::resolveAliasedPath(file);
-         if (sourceFile.extensionLowerCase() == ".rmd") 
+         std::string extension = sourceFile.extensionLowerCase();
+         if (extension == ".rmd" || extension == ".html") 
          {
-            primaryRmd = file;
+            primaryDoc = file;
          }
       }
 
@@ -83,7 +84,7 @@ public:
       cmd += "rsconnect::deployApp("
              "appDir = '" + dir + "'," +
              (files.empty() ? "" : "appFiles = c(" + files + "), ") +
-             (primaryRmd.empty() ? "" : "appPrimaryRmd = '" + primaryRmd + "', ") + 
+             (primaryDoc.empty() ? "" : "appPrimaryDoc = '" + primaryDoc + "', ") + 
              "account = '" + account + "',"
              "server = '" + server + "', "
              "appName = '" + app + "', "
@@ -92,6 +93,7 @@ public:
              "}, "
              "lint = FALSE)}";
 
+      std::cerr << cmd << std::endl;
       pDeploy->start(cmd.c_str(), FilePath(), async_r::R_PROCESS_VANILLA);
       return pDeploy;
    }
