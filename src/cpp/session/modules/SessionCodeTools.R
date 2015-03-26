@@ -1354,3 +1354,79 @@
    
    return(FALSE)
 })
+
+.rs.addFunction("buildObjectLookupTable", function()
+{
+   # Create the lookup environment
+   if (is.null(.rs.getVar("function.lookup.table")))
+      .rs.setVar("function.lookup.table", new.env(parent = emptyenv()))
+   lookupTable <- .rs.getVar("function.lookup.table")
+   
+   # Iterate through the set of currently loaded
+   # namespaces, and update the lookup table.
+   loaded <- loadedNamespaces()
+   lapply(loaded, function(nsName) {
+      
+      # Create a new lookup table for this namespace.
+      lookupTable[[nsName]] <- new.env(parent = emptyenv())
+      nsLookupTable <- lookupTable[[nsName]]
+      
+      # Get all of the objects within this namespace.
+      ns <- asNamespace(nsName)
+      
+      objectNames <- objects(envir = ns, all.names = TRUE)
+      resolvedObjects <-
+         mget(objectNames, envir = ns, inherits = TRUE)
+      
+      locations <- .rs.memoryLocations(resolvedObjects)
+      list2env(
+         setNames(as.list(objectNames), locations),
+         envir = nsLookupTable
+      )
+   })
+   
+   # Return the environment itself (in case someone
+   # want to use it directly)
+   return(lookupTable)
+})
+
+.rs.addFunction("getClosureNames", function(objects)
+{
+   if (is.function(objects) || is.environment(objects))
+      objects <- list(objects)
+   else
+      objects <- as.list(objects)
+   
+   .Call("rs_getClosureNames", objects)
+})
+
+.rs.addFunction("memoryLocations", function(objects)
+{
+   .Call("rs_memoryLocations", objects)
+})
+
+.rs.addFunction("findOriginalBinding", function(objects,
+                                                simplify = TRUE)
+{
+   if (is.function(objects) || is.environment(objects))
+      objects <- list(objects)
+   else if (!is.list(objects))
+      objects <- as.list(objects)
+   
+   lookupTable <- .rs.getVar("function.lookup.table")
+   
+   namespaces <- .rs.getClosureNames(objects)
+   locations  <- .rs.memoryLocations(objects)
+   
+   result <- lapply(seq_along(namespaces), function(i) {
+      list(
+         namespace = namespaces[[i]],
+         binding   = lookupTable[[namespaces[[i]]]][[locations[[i]]]]
+      )
+   })
+   
+   if (simplify && length(result) == 1)
+      return(result[[1]])
+   
+   result
+})
