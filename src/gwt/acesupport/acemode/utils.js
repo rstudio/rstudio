@@ -51,7 +51,7 @@ define("mode/utils", function(require, exports, module) {
       var modeIdx = primary.lastIndexOf("-");
       if (modeIdx === -1)
          return major;
-      return state.substring(0, modeIdx).toLowerCase();
+      return primary.substring(0, modeIdx).toLowerCase();
    };
 
    this.endsWith = function(string, suffix)
