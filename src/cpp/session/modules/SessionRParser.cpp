@@ -27,6 +27,7 @@
 
 #include <r/RExec.hpp>
 #include <r/RSexp.hpp>
+#include <r/RRoutines.hpp>
 
 #include <boost/container/flat_set.hpp>
 #include <boost/timer/timer.hpp>
@@ -36,7 +37,6 @@ namespace rstudio {
 namespace session {
 namespace modules {
 namespace rparser {
-
 
 void LintItems::dump()
 {
@@ -181,6 +181,228 @@ bool maybePerformsNSE(const std::string& callingString)
 bool mightPerformNonstandardEvaluation(const std::wstring& callingString)
 {
    return maybePerformsNSE(string_utils::wideToUtf8(callingString));
+}
+
+class RBinding
+{
+public:
+   
+   // Default constructor provided to allow for default
+   // constructor in std::map<>
+   RBinding()
+      : exists_(false)
+   {}
+   
+   RBinding(const std::string& binding,
+            const std::string& closure,
+            bool performsNse)
+      : binding_(binding),
+        closure_(closure),
+        performsNse_(performsNse),
+        exists_(true)
+   {}
+   
+   bool exists() const
+   {
+      return exists_;
+   }
+   
+   void setPerformsNse(bool value)
+   {
+      performsNse_ = value;
+   }
+   
+   bool performsNse() const
+   {
+      return performsNse_;
+   }
+   
+   const std::string& getBinding() const
+   {
+      return binding_;
+   }
+   
+   const std::string& getClosure() const
+   {
+      return closure_;
+   }
+   
+   SEXP asSEXP() const
+   {
+      if (!exists_)
+         return R_NilValue;
+      
+      r::sexp::Protect protect;
+      SEXP resultSEXP;
+      protect.add(resultSEXP = Rf_allocVector(VECSXP, 3));
+      SET_VECTOR_ELT(resultSEXP, 0, r::sexp::create(binding_, &protect));
+      SET_VECTOR_ELT(resultSEXP, 1, r::sexp::create(closure_, &protect));
+      SET_VECTOR_ELT(resultSEXP, 2, r::sexp::create(performsNse_, &protect));
+      
+      std::vector<std::string> names;
+      names.push_back("binding");
+      names.push_back("closure");
+      names.push_back("performs.nse");
+      r::sexp::setNames(resultSEXP, names);
+      
+      return resultSEXP;
+   }
+   
+private:
+   std::string binding_;
+   std::string closure_;
+   bool performsNse_;
+   bool exists_;
+};
+
+typedef std::map<
+   std::string,
+   std::map<uintptr_t, RBinding>
+> RBindingLookupTable;
+
+RBindingLookupTable& getLookupTable()
+{
+   static RBindingLookupTable instance;
+   return instance;
+}
+
+void buildObjectLookupTable(bool forceRebuild)
+{
+   RBindingLookupTable& lookupTable = getLookupTable();
+   std::vector<std::string> loadedNamespaces = r::sexp::getLoadedNamespaces();
+   r::sexp::Protect protect;
+   
+   BOOST_FOREACH(const std::string& nsName, loadedNamespaces)
+   {
+      // Bail if we've already populated the table (unless we explicitly asked
+      // for a rebuild)
+      if (!forceRebuild && lookupTable.count(nsName) != 0)
+         continue;
+      
+      // The map we will populate (note: this default-constructs an
+      // empty map for us, if necessary)
+      std::map<uintptr_t, RBinding>& bindings = lookupTable[nsName];
+      
+      // Get the namespace with this name
+      SEXP ns = r::sexp::findNamespace(nsName);
+      
+      // Discover all the objects within this namespace.
+      SEXP objectNames = r::sexp::objects(ns, &protect);
+      SEXP objects = r::sexp::mget(objectNames, ns, true, &protect);
+      
+      int n = r::sexp::length(objectNames);
+      if (n != r::sexp::length(objects))
+      {
+         LOG_ERROR_MESSAGE("length of 'objectNames' does not match length of 'objects'");
+         continue;
+      }
+      
+      for (int i = 0; i < n; ++i)
+      {
+         const char* name = CHAR(STRING_ELT(objectNames, i));
+         SEXP elt = VECTOR_ELT(objects, i);
+         uintptr_t location = module_context::address(elt);
+         bindings[location] = RBinding(name, nsName, false);
+      }
+   }
+}
+
+SEXP rs_buildObjectLookupTable(SEXP forceRebuildSEXP)
+{
+   bool forceRebuild = r::sexp::asLogical(forceRebuildSEXP);
+   buildObjectLookupTable(forceRebuild);
+   return R_NilValue;
+}
+
+std::vector<std::string> getClosureNames(SEXP listSEXP)
+{
+   r::sexp::Protect protect;
+   
+   std::vector<std::string> result;
+   std::size_t n = r::sexp::length(listSEXP);
+   result.reserve(n);
+   
+   if (TYPEOF(listSEXP) != VECSXP)
+   {
+      LOG_ERROR_MESSAGE("'getClosureNames' expects an R 'list'");
+      return result;
+   }
+   
+   for (std::size_t i = 0; i < n; ++i)
+   {
+      SEXP eltSEXP = VECTOR_ELT(listSEXP, i);
+      
+      // Primitives don't have an explicit closure (it's implicitly base)
+      if (Rf_isPrimitive(eltSEXP))
+      {
+         result.push_back("base");
+         continue;
+      }
+      
+      // Get closures for functions
+      SEXP envSEXP;
+      if (Rf_isFunction(eltSEXP))
+         envSEXP = CLOENV(eltSEXP);
+      else
+         envSEXP = eltSEXP;
+      
+      // TODO: Warn if the caller didn't pass in a function or environment?
+      if (!Rf_isEnvironment(envSEXP))
+         continue;
+      
+      if (envSEXP == R_GlobalEnv)
+         result.push_back("<R_GlobalEnv>");
+      else if (envSEXP == R_BaseEnv)
+         result.push_back("base");
+      else if (envSEXP == R_EmptyEnv)
+         result.push_back("<emptyenv>");
+      else if (R_IsPackageEnv(envSEXP))
+         result.push_back(CHAR(STRING_ELT(R_PackageEnvName(envSEXP), 0)));
+      else if (R_IsNamespaceEnv(envSEXP))
+         result.push_back(CHAR(STRING_ELT(R_NamespaceEnvSpec(envSEXP), 0)));
+      else
+      {
+         char address[33]; // overly conservative but whatever
+         snprintf(address, 32, "<%p>", (void*) address);
+         result.push_back(address);
+      }
+   }
+   
+   return result;
+}
+
+SEXP rs_findOriginalBinding(SEXP objectsSEXP)
+{
+   if (TYPEOF(objectsSEXP) != VECSXP)
+   {
+      LOG_ERROR_MESSAGE("'rs_findOriginalBinding' expects an R 'list'");
+      return R_NilValue;
+   }
+   
+   std::vector<std::string> closureNames = getClosureNames(objectsSEXP);
+   std::vector<uintptr_t> addresses;
+   int n = r::sexp::length(objectsSEXP);
+   addresses.reserve(n);
+   for (int i = 0; i < n; ++i)
+      addresses.push_back(
+               module_context::address(VECTOR_ELT(objectsSEXP, i)));
+   
+   RBindingLookupTable lookupTable = getLookupTable();
+   SEXP resultSEXP;
+   r::sexp::Protect protect;
+   protect.add(resultSEXP = Rf_allocVector(VECSXP, n));
+   
+   for (int i = 0; i < n; i++)
+   {
+      const std::string& closure = closureNames[i];
+      uintptr_t address = addresses[i];
+      
+      RBinding binding = lookupTable[closure][address];
+      SET_VECTOR_ELT(resultSEXP, i, binding.asSEXP());
+   }
+   
+   return resultSEXP;
+      
 }
 
 } // end anonymous namespace
@@ -1308,6 +1530,13 @@ INVALID_TOKEN:
       MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
    }
    return;
+}
+
+core::Error initialize()
+{
+   RS_REGISTER_CALL_METHOD(rs_buildObjectLookupTable, 0);
+   RS_REGISTER_CALL_METHOD(rs_findOriginalBinding, 1);
+   return Success();
 }
 
 } // namespace rparser

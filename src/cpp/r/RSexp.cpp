@@ -24,6 +24,7 @@
 #include <boost/foreach.hpp>
 #include <boost/numeric/conversion/cast.hpp>
 
+#include <core/Macros.hpp>
 #include <core/Log.hpp>
 #include <core/DateTime.hpp>
 
@@ -95,6 +96,21 @@ bool fillSetString(SEXP object, std::set<std::string>* pSet)
       pSet->insert(std::string(CHAR(STRING_ELT(object, i))));
    
    return true;
+}
+
+std::vector<std::string> getLoadedNamespaces()
+{
+   std::vector<std::string> result;
+   
+   r::exec::RFunction loadedNamespaces("loadedNamespaces");
+   Protect protect;
+   SEXP resultSEXP;
+   
+   Error error = loadedNamespaces.call(&resultSEXP, &protect);
+   IF_ERROR(error, return result);
+   
+   fillVectorString(resultSEXP, &result);
+   return result;
 }
 
 SEXP findNamespace(const std::string& name)
@@ -900,6 +916,55 @@ bool maybePerformsNSE(SEXP function)
    return maybePerformsNSEImpl(
             BODY_EXPR(function),
             nsePrimitives());
+}
+
+// NOTE: Uses `R_lsInternal` which throws error if a non-environment is
+// passed; we therefore perform this validation ourselves before calling
+// `R_lsInternal`.
+SEXP objects(SEXP environment, Protect* pProtect)
+{
+   if (TYPEOF(environment) != ENVSXP)
+   {
+      LOG_ERROR_MESSAGE("'objects' called on non-environment");
+      return R_NilValue;
+   }
+   
+   SEXP resultSEXP;
+   pProtect->add(resultSEXP = R_lsInternal(environment, TRUE));
+   return resultSEXP;
+}
+
+Error objects(SEXP environment,
+              std::vector<std::string>* pNames)
+{
+   Protect protect;
+   SEXP objectsSEXP = objects(environment, &protect);
+   
+   if (Rf_isNull(objectsSEXP))
+      return Error(errc::CodeExecutionError, ERROR_LOCATION);
+   
+   std::vector<std::string> result;
+   if (!fillVectorString(objectsSEXP, &result))
+      return Error(errc::CodeExecutionError, ERROR_LOCATION);
+   
+   return Success();
+}
+
+SEXP mget(SEXP objectNames,
+          SEXP environment,
+          bool inherits,
+          Protect* pProtect)
+{
+   SEXP resultSEXP;
+   
+   r::exec::RFunction mget("mget");
+   mget.addParam("x", objectNames);
+   mget.addParam("envir", environment);
+   mget.addParam("inherits", inherits);
+   
+   Error error = mget.call(&resultSEXP, pProtect);
+   IF_ERROR(error, return R_NilValue);
+   return resultSEXP;
 }
 
 } // namespace sexp   

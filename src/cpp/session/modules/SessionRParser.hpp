@@ -1058,6 +1058,8 @@ ParseResults parse(const std::string& rCode,
 ParseResults parse(const std::wstring& rCode,
                    const ParseOptions& parseOptions = ParseOptions());
 
+core::Error initialize();
+
 } // namespace rparser
 } // namespace modules
 } // namespace session
