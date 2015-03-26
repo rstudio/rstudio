@@ -449,6 +449,94 @@ SEXP rs_listInferredPackages(SEXP documentIdSEXP)
    
 }
 
+inline uintptr_t memoryLocation(SEXP objectSEXP)
+{
+   return reinterpret_cast<uintptr_t>(objectSEXP);
+}
+
+SEXP rs_memoryLocationsVECSXP(SEXP vectorSEXP)
+{
+   R_xlen_t n = r::sexp::length(vectorSEXP);
+   r::sexp::Protect protect;
+   SEXP resultSEXP;
+   protect.add(resultSEXP = Rf_allocVector(STRSXP, n));
+   
+   char hexValue[17];
+   for (R_xlen_t i = 0; i < n; ++i)
+   {
+      uintptr_t location = memoryLocation(VECTOR_ELT(vectorSEXP, i));
+      sprintf(hexValue, "%02lx", location);
+      SET_STRING_ELT(resultSEXP, i, Rf_mkChar(hexValue));
+   }
+   
+   return resultSEXP;
+}
+
+SEXP rs_getClosureNames(SEXP objectsSEXP)
+{
+   r::sexp::Protect protect;
+   SEXP resultSEXP;
+   
+   int n = r::sexp::length(objectsSEXP);
+   protect.add(resultSEXP = Rf_allocVector(STRSXP, n));
+   
+   for (int i = 0; i < n; ++i)
+   {
+      SEXP eltSEXP = VECTOR_ELT(objectsSEXP, i);
+      
+      // Primitives don't have an explicit closure (it's implicitly base)
+      if (Rf_isPrimitive(eltSEXP))
+      {
+         SET_STRING_ELT(resultSEXP, i, Rf_mkChar("base"));
+         continue;
+      }
+      
+      // Get closures for functions
+      SEXP envSEXP;
+      if (Rf_isFunction(eltSEXP))
+         envSEXP = CLOENV(eltSEXP);
+      else
+         envSEXP = eltSEXP;
+      
+      // TODO: Warn if the caller didn't pass in a function or environment?
+      if (!Rf_isEnvironment(envSEXP))
+         continue;
+      
+      if (envSEXP == R_GlobalEnv)
+         SET_STRING_ELT(resultSEXP, i, Rf_mkChar("<R_GlobalEnv>"));
+      else if (envSEXP == R_BaseEnv)
+         SET_STRING_ELT(resultSEXP, i, Rf_mkChar("base"));
+      else if (envSEXP == R_EmptyEnv)
+         SET_STRING_ELT(resultSEXP, i, Rf_mkChar("<emptyenv>"));
+      else if (R_IsPackageEnv(envSEXP))
+         SET_STRING_ELT(resultSEXP, i, STRING_ELT(R_PackageEnvName(envSEXP), 0));
+      else if (R_IsNamespaceEnv(envSEXP))
+         SET_STRING_ELT(resultSEXP, i, STRING_ELT(R_NamespaceEnvSpec(envSEXP), 0));
+      else
+      {
+         char address[33]; // overly conservative but whatever
+         snprintf(address, 32, "<%p>", (void*) address);
+         SET_STRING_ELT(resultSEXP, i, Rf_mkChar(address));
+      }
+   }
+   
+   return resultSEXP;
+}
+
+SEXP rs_memoryLocations(SEXP objectSEXP)
+{
+   if (TYPEOF(objectSEXP) == VECSXP)
+      return rs_memoryLocationsVECSXP(objectSEXP);
+   
+   r::sexp::Protect protect;
+   uintptr_t location = memoryLocation(objectSEXP);
+   char hexValue[17];
+   sprintf(hexValue, "%02lX", location);
+   return r::sexp::create(hexValue, &protect);
+}
+
+
+
 } // end anonymous namespace
 
 Error initialize() {
@@ -461,6 +549,8 @@ Error initialize() {
    RS_REGISTER_CALL_METHOD(rs_listInferredPackages, 1);
    RS_REGISTER_CALL_METHOD(rs_getInferredCompletions, 1);
    RS_REGISTER_CALL_METHOD(rs_getNAMESPACEImportedSymbols, 1);
+   RS_REGISTER_CALL_METHOD(rs_memoryLocations, 1);
+   RS_REGISTER_CALL_METHOD(rs_getClosureNames, 1);
    
    using boost::bind;
    using namespace module_context;

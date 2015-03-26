@@ -1285,3 +1285,148 @@
    
 })
 
+.rs.addFunction("asLookupEnv", function(vector)
+{
+   env <- new.env(parent = emptyenv())
+   for (object in vector)
+      assign(object, TRUE, envir = env)
+   env
+})
+
+.rs.setVar("nse.functions", .rs.asLookupEnv(c(
+   "subset", "with", "quote", "substitute",
+   "match.call", "evalq", "enquote", "bquote"
+)))
+
+.rs.setVar("nse.cache", new.env(parent = emptyenv()))
+
+.rs.addFunction("maybePerformsNSE", function(objectString)
+{
+   # TODO: why can we get zero-length function calls?
+   if (!nzchar(objectString))
+      return(FALSE)
+   
+   # First, check the cache to see if we tried to lint this already.
+   # TODO: Should store some hash / representation of the function itself?
+   cache <- .rs.getVar("nse.cache")
+   cached <- cache[[objectString]]
+   if (is.logical(cached))
+      return(cached)
+   
+   # Try to resolve the object from the associated string.
+   object <- .rs.getAnywhere(objectString, envir = parent.frame())
+   if (!is.function(object))
+   {
+      cache[[objectString]] <- FALSE
+      return(FALSE)
+   }
+   
+   # Get the function body, and iterate through looking for 'NSE-performing' calls
+   body <- body(object)
+   nseFunctions <- .rs.getVar("nse.functions")
+   result <- .rs.checkForNSE(body, nseFunctions)
+   
+   # Update cache and return
+   cache[[objectString]] <- result
+   result
+   
+})
+
+.rs.addFunction("checkForNSE", function(body,
+                                        nseFunctions = .rs.getVar("nse.functions"))
+{
+   if (is.expression(body))
+      return(any(vapply(body, FUN.VALUE = logical(1), function(x) {
+         .rs.checkForNSE(x, nseFunctions)
+      })))
+   
+   if (is.call(body))
+   {
+      callName <- as.character(body[[1]])
+      if (length(callName) == 1 && !is.null(nseFunctions[[callName]]))
+         return(TRUE)
+      
+      if (length(body) > 1)
+         return(any(vapply(2:length(body), FUN.VALUE = logical(1), function(i) {
+            .rs.checkForNSE(body[[i]], nseFunctions)
+         })))
+   }
+   
+   return(FALSE)
+})
+
+.rs.addFunction("buildObjectLookupTable", function()
+{
+   # Create the lookup environment
+   if (is.null(.rs.getVar("function.lookup.table")))
+      .rs.setVar("function.lookup.table", new.env(parent = emptyenv()))
+   lookupTable <- .rs.getVar("function.lookup.table")
+   
+   # Iterate through the set of currently loaded
+   # namespaces, and update the lookup table.
+   loaded <- loadedNamespaces()
+   lapply(loaded, function(nsName) {
+      
+      # Create a new lookup table for this namespace.
+      lookupTable[[nsName]] <- new.env(parent = emptyenv())
+      nsLookupTable <- lookupTable[[nsName]]
+      
+      # Get all of the objects within this namespace.
+      ns <- asNamespace(nsName)
+      
+      objectNames <- objects(envir = ns, all.names = TRUE)
+      resolvedObjects <-
+         mget(objectNames, envir = ns, inherits = TRUE)
+      
+      locations <- .rs.memoryLocations(resolvedObjects)
+      list2env(
+         setNames(as.list(objectNames), locations),
+         envir = nsLookupTable
+      )
+   })
+   
+   # Return the environment itself (in case someone
+   # want to use it directly)
+   return(lookupTable)
+})
+
+.rs.addFunction("getClosureNames", function(objects)
+{
+   if (is.function(objects) || is.environment(objects))
+      objects <- list(objects)
+   else
+      objects <- as.list(objects)
+   
+   .Call("rs_getClosureNames", objects)
+})
+
+.rs.addFunction("memoryLocations", function(objects)
+{
+   .Call("rs_memoryLocations", objects)
+})
+
+.rs.addFunction("findOriginalBinding", function(objects,
+                                                simplify = TRUE)
+{
+   if (is.function(objects) || is.environment(objects))
+      objects <- list(objects)
+   else if (!is.list(objects))
+      objects <- as.list(objects)
+   
+   lookupTable <- .rs.getVar("function.lookup.table")
+   
+   namespaces <- .rs.getClosureNames(objects)
+   locations  <- .rs.memoryLocations(objects)
+   
+   result <- lapply(seq_along(namespaces), function(i) {
+      list(
+         namespace = namespaces[[i]],
+         binding   = lookupTable[[namespaces[[i]]]][[locations[[i]]]]
+      )
+   })
+   
+   if (simplify && length(result) == 1)
+      return(result[[1]])
+   
+   result
+})
