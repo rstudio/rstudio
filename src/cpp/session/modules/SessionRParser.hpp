@@ -28,9 +28,11 @@
 #include <iomanip>
 
 #include <core/r_util/RTokenizer.hpp>
-
 #include <core/collection/Position.hpp>
 #include <core/collection/Stack.hpp>
+
+#include <r/RSexp.hpp>
+#include <r/RExec.hpp>
 
 #include <boost/container/flat_set.hpp>
 #include <boost/shared_ptr.hpp>
@@ -1057,6 +1059,153 @@ ParseResults parse(const std::string& rCode,
 
 ParseResults parse(const std::wstring& rCode,
                    const ParseOptions& parseOptions = ParseOptions());
+
+class RBinding
+{
+public:
+   
+   enum PerformsNse {
+      PerformsNSEUnknown,
+      PerformsNSETrue,
+      PerformsNSEFalse
+   };
+   
+   // Default constructor provided to allow for default
+   // constructor in std::map<>
+   RBinding()
+      : performsNse_(PerformsNSEUnknown),
+        exists_(false)
+   {}
+   
+   RBinding(const std::string& binding,
+            const std::string& closure)
+      : binding_(binding),
+        closure_(closure),
+        performsNse_(PerformsNSEUnknown),
+        exists_(true)
+   {
+   }
+   
+   PerformsNse performsNse()
+   {
+      return performsNse_;
+   }
+   
+   void setPerformsNSE(bool value)
+   {
+      if (value)
+         performsNse_ = PerformsNSETrue;
+      else
+         performsNse_ = PerformsNSEFalse;
+   }
+   
+   bool exists() const
+   {
+      return exists_;
+   }
+   
+   const std::string& getBinding() const
+   {
+      return binding_;
+   }
+   
+   const std::string& getClosure() const
+   {
+      return closure_;
+   }
+   
+   SEXP asSEXP() const
+   {
+      if (!exists_)
+         return R_NilValue;
+      
+      r::sexp::Protect protect;
+      SEXP resultSEXP;
+      protect.add(resultSEXP = Rf_allocVector(VECSXP, 3));
+      SET_VECTOR_ELT(resultSEXP, 0, r::sexp::create(binding_, &protect));
+      SET_VECTOR_ELT(resultSEXP, 1, r::sexp::create(closure_, &protect));
+      
+      SEXP performsNseSEXP;
+      protect.add(performsNseSEXP = Rf_allocVector(LGLSXP, 1));
+      switch (performsNse_)
+      {
+      case PerformsNSEUnknown:
+         LOGICAL(performsNseSEXP)[0] = NA_LOGICAL;
+         break;
+      case PerformsNSEFalse:
+         LOGICAL(performsNseSEXP)[0] = 0;
+         break;
+      case PerformsNSETrue:
+         LOGICAL(performsNseSEXP)[0] = 1;
+         break;
+      }
+      SET_VECTOR_ELT(resultSEXP, 2, performsNseSEXP);
+      
+      std::vector<std::string> names;
+      names.push_back("binding");
+      names.push_back("closure");
+      names.push_back("performs.nse");
+      r::sexp::setNames(resultSEXP, names);
+      
+      return resultSEXP;
+   }
+   
+private:
+   
+   std::string binding_;
+   std::string closure_;
+   PerformsNse performsNse_;
+   bool exists_;
+};
+
+class RBindingLookupTable : boost::noncopyable
+{
+public:
+   
+   typedef std::map<uintptr_t, RBinding> RBindingMap;
+   
+   static RBinding& unboundSymbol()
+   {
+      static RBinding instance;
+      return instance;
+   }
+   
+   static RBindingLookupTable& instance()
+   {
+      static RBindingLookupTable instance;
+      return instance;
+   }
+   
+   bool hasIndexFor(const std::string& namespaceName)
+   {
+      return table_.count(namespaceName);
+   }
+   
+   bool contains(SEXP object);
+   
+   RBindingMap& operator[](const std::string& namespaceName)
+   {
+      return table_[namespaceName];
+   }
+   
+   RBinding& getBinding(SEXP object);
+   
+   void setPerformsNSE(SEXP object, bool value)
+   {
+      if (!contains(object))
+         return;
+      
+      RBinding& binding = getBinding(object);
+      binding.setPerformsNSE(value);
+   }
+   
+   void add(SEXP object, const std::string& name);
+   void add(SEXP object, const std::string& name, bool performsNSE);
+   
+private:
+   std::map<std::string, RBindingMap> table_;
+};
+
 
 core::Error initialize();
 

@@ -1285,9 +1285,9 @@
    
 })
 
-.rs.addFunction("buildObjectLookupTable", function(forceRebuild = FALSE)
+.rs.addFunction("buildObjectLookupTable", function()
 {
-   .Call("rs_buildObjectLookupTable", as.logical(forceRebuild))
+   .Call("rs_buildObjectLookupTable")
 })
 
 .rs.addFunction("findOriginalBinding", function(objects,

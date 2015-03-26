@@ -177,14 +177,33 @@ bool maybePerformsNSE(const std::string& callingString)
    IF_ERROR(error, return false);
    
    // Check our lookup table to see if we've already encountered this
-   // symbol.
-   RBindingLookupTable lookupTable = getLookupTable();
+   // symbol. If we have, then we can ask our lookup table if we know whether
+   // the function performs NSE or not.
+   RBindingLookupTable& lookupTable = RBindingLookupTable::instance();
    if (lookupTable.contains(objectSEXP))
-      return true;
+   {
+      RBinding& binding = lookupTable.getBinding(objectSEXP);
+      RBinding::PerformsNse value = binding.performsNse();
+      
+      switch (value)
+      {
+      case RBinding::PerformsNSETrue:
+         return true;
+      case RBinding::PerformsNSEFalse:
+         return false;
+      case RBinding::PerformsNSEUnknown:
+         ; // fall-through
+      }
+   }
    
    bool result = r::sexp::maybePerformsNSE(objectSEXP);
-   if (result)
-      lookupTable.setPerformsNse(objectSEXP, true);
+   if (!lookupTable.contains(objectSEXP))
+      lookupTable.add(objectSEXP, callingString, result);
+   
+   RBinding& binding = lookupTable.getBinding(objectSEXP);
+   binding.setPerformsNSE(result);
+   
+   return result;
 }
 
 bool mightPerformNonstandardEvaluation(const std::wstring& callingString)
@@ -192,119 +211,14 @@ bool mightPerformNonstandardEvaluation(const std::wstring& callingString)
    return maybePerformsNSE(string_utils::wideToUtf8(callingString));
 }
 
-class RBinding
+void buildObjectLookupTable()
 {
-public:
-   
-   // Default constructor provided to allow for default
-   // constructor in std::map<>
-   RBinding()
-      : exists_(false)
-   {}
-   
-   RBinding(const std::string& binding,
-            const std::string& closure,
-            bool performsNse)
-      : binding_(binding),
-        closure_(closure),
-        performsNse_(performsNse),
-        exists_(true)
-   {}
-   
-   bool exists() const
-   {
-      return exists_;
-   }
-   
-   void setPerformsNse(bool value)
-   {
-      performsNse_ = value;
-   }
-   
-   bool performsNse() const
-   {
-      return performsNse_;
-   }
-   
-   const std::string& getBinding() const
-   {
-      return binding_;
-   }
-   
-   const std::string& getClosure() const
-   {
-      return closure_;
-   }
-   
-   SEXP asSEXP() const
-   {
-      if (!exists_)
-         return R_NilValue;
-      
-      r::sexp::Protect protect;
-      SEXP resultSEXP;
-      protect.add(resultSEXP = Rf_allocVector(VECSXP, 3));
-      SET_VECTOR_ELT(resultSEXP, 0, r::sexp::create(binding_, &protect));
-      SET_VECTOR_ELT(resultSEXP, 1, r::sexp::create(closure_, &protect));
-      SET_VECTOR_ELT(resultSEXP, 2, r::sexp::create(performsNse_, &protect));
-      
-      std::vector<std::string> names;
-      names.push_back("binding");
-      names.push_back("closure");
-      names.push_back("performs.nse");
-      r::sexp::setNames(resultSEXP, names);
-      
-      return resultSEXP;
-   }
-   
-private:
-   std::string binding_;
-   std::string closure_;
-   bool performsNse_;
-   bool exists_;
-};
-
-class RBindingLookupTable : boost::noncopyable
-{
-public:
-   
-   static RBindingLookupTable& instance()
-   {
-      static RBindingLookupTable instance;
-      return instance;
-   }
-   
-   bool contains(const std::string& namespaceName)
-   {
-      return table_.count(namespaceName);
-   }
-   
-   bool contains(SEXP object)
-   {
-      uintptr_t location = module_context::address(object);
-      std::string closure = getClosureName(object);
-   }
-   
-private:
-   std::map<
-      std::string,
-      std::map<uintptr_t, RBinding>
-   > table_;
-};
-
-void buildObjectLookupTable(bool forceRebuild)
-{
-   RBindingLookupTable& lookupTable = getLookupTable();
+   RBindingLookupTable& lookupTable = RBindingLookupTable::instance();
    std::vector<std::string> loadedNamespaces = r::sexp::getLoadedNamespaces();
    r::sexp::Protect protect;
    
    BOOST_FOREACH(const std::string& nsName, loadedNamespaces)
    {
-      // Bail if we've already populated the table (unless we explicitly asked
-      // for a rebuild)
-      if (!forceRebuild && lookupTable.count(nsName) != 0)
-         continue;
-      
       // The map we will populate (note: this default-constructs an
       // empty map for us, if necessary)
       std::map<uintptr_t, RBinding>& bindings = lookupTable[nsName];
@@ -328,15 +242,14 @@ void buildObjectLookupTable(bool forceRebuild)
          const char* name = CHAR(STRING_ELT(objectNames, i));
          SEXP elt = VECTOR_ELT(objects, i);
          uintptr_t location = module_context::address(elt);
-         bindings[location] = RBinding(name, nsName, false);
+         bindings[location] = RBinding(name, nsName);
       }
    }
 }
 
-SEXP rs_buildObjectLookupTable(SEXP forceRebuildSEXP)
+SEXP rs_buildObjectLookupTable()
 {
-   bool forceRebuild = r::sexp::asLogical(forceRebuildSEXP);
-   buildObjectLookupTable(forceRebuild);
+   buildObjectLookupTable();
    return R_NilValue;
 }
 
@@ -344,10 +257,7 @@ std::string getClosureName(SEXP eltSEXP)
 {
    // Primitive functions don't have an explicit closure (it's implicitly base)
    if (Rf_isPrimitive(eltSEXP))
-   {
-      result.push_back("base");
-      continue;
-   }
+      return "base";
 
    // Get closures for functions
    SEXP envSEXP;
@@ -358,20 +268,20 @@ std::string getClosureName(SEXP eltSEXP)
 
    // TODO: Warn if the caller didn't pass in a function or environment?
    if (envSEXP == R_GlobalEnv)
-      result.push_back("<R_GlobalEnv>");
+      return "<R_GlobalEnv>";
    else if (envSEXP == R_BaseEnv)
-      result.push_back("base");
+      return "base";
    else if (envSEXP == R_EmptyEnv)
-      result.push_back("<emptyenv>");
+      return "<emptyenv>";
    else if (R_IsPackageEnv(envSEXP))
-      result.push_back(CHAR(STRING_ELT(R_PackageEnvName(envSEXP), 0)));
+      return CHAR(STRING_ELT(R_PackageEnvName(envSEXP), 0));
    else if (R_IsNamespaceEnv(envSEXP))
-      result.push_back(CHAR(STRING_ELT(R_NamespaceEnvSpec(envSEXP), 0)));
+      return CHAR(STRING_ELT(R_NamespaceEnvSpec(envSEXP), 0));
    else
    {
       char address[33]; // overly conservative but whatever
-      snprintf(address, 32, "<%p>", (void*) address);
-      result.push_back(address);
+      snprintf(address, 32, "<%p>", (void*) envSEXP);
+      return address;
    }
 }
    
@@ -411,7 +321,7 @@ SEXP rs_findOriginalBinding(SEXP objectsSEXP)
       addresses.push_back(
                module_context::address(VECTOR_ELT(objectsSEXP, i)));
    
-   RBindingLookupTable lookupTable = getLookupTable();
+   RBindingLookupTable& lookupTable = RBindingLookupTable::instance();
    SEXP resultSEXP;
    r::sexp::Protect protect;
    protect.add(resultSEXP = Rf_allocVector(VECSXP, n));
@@ -1558,9 +1468,56 @@ INVALID_TOKEN:
 
 core::Error initialize()
 {
-   RS_REGISTER_CALL_METHOD(rs_buildObjectLookupTable, 1);
+   RS_REGISTER_CALL_METHOD(rs_buildObjectLookupTable, 0);
    RS_REGISTER_CALL_METHOD(rs_findOriginalBinding, 1);
    return Success();
+}
+
+// RBinding, RBindingLookupTable related methods --------------
+
+bool RBindingLookupTable::contains(SEXP object)
+{
+   uintptr_t location = module_context::address(object);
+   std::string closure = getClosureName(object);
+   
+   if (!table_.count(closure))
+      return false;
+
+   RBindingMap& map = table_[closure];
+   return map.count(location);
+}
+
+RBinding& RBindingLookupTable::getBinding(SEXP object)
+{
+   std::string closure = getClosureName(object);
+   if (!table_.count(closure))
+      return unboundSymbol();
+
+   RBindingMap& map = table_[closure];
+   uintptr_t address = module_context::address(object);
+   if (!map.count(address))
+      return unboundSymbol();
+   
+   return map[address];
+}
+
+void RBindingLookupTable::add(SEXP object,
+                              const std::string& name)
+{
+   std::string closure = getClosureName(object);
+   uintptr_t address = module_context::address(object);
+   table_[closure][address] = RBinding(name, closure);
+}
+
+void RBindingLookupTable::add(SEXP object,
+                              const std::string& name,
+                              bool performsNSE)
+{
+   std::string closure = getClosureName(object);
+   uintptr_t address = module_context::address(object);
+   RBinding binding(name, closure);
+   binding.setPerformsNSE(performsNSE);
+   table_[closure][address] = binding;
 }
 
 } // namespace rparser
