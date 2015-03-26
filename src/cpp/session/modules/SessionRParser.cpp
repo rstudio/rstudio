@@ -168,6 +168,7 @@ bool isDataTableSingleBracketCall(RTokenCursor& cursor)
 
 bool maybePerformsNSE(const std::string& callingString)
 {
+   // Resolve the object.
    r::sexp::Protect protect;
    SEXP objectSEXP;
    r::exec::RFunction getAnywhere(".rs.getAnywhere");
@@ -175,7 +176,15 @@ bool maybePerformsNSE(const std::string& callingString)
    Error error = getAnywhere.call(&objectSEXP, &protect);
    IF_ERROR(error, return false);
    
-   return r::sexp::maybePerformsNSE(objectSEXP);
+   // Check our lookup table to see if we've already encountered this
+   // symbol.
+   RBindingLookupTable lookupTable = getLookupTable();
+   if (lookupTable.contains(objectSEXP))
+      return true;
+   
+   bool result = r::sexp::maybePerformsNSE(objectSEXP);
+   if (result)
+      lookupTable.setPerformsNse(objectSEXP, true);
 }
 
 bool mightPerformNonstandardEvaluation(const std::wstring& callingString)
@@ -255,16 +264,33 @@ private:
    bool exists_;
 };
 
-typedef std::map<
-   std::string,
-   std::map<uintptr_t, RBinding>
-> RBindingLookupTable;
-
-RBindingLookupTable& getLookupTable()
+class RBindingLookupTable : boost::noncopyable
 {
-   static RBindingLookupTable instance;
-   return instance;
-}
+public:
+   
+   static RBindingLookupTable& instance()
+   {
+      static RBindingLookupTable instance;
+      return instance;
+   }
+   
+   bool contains(const std::string& namespaceName)
+   {
+      return table_.count(namespaceName);
+   }
+   
+   bool contains(SEXP object)
+   {
+      uintptr_t location = module_context::address(object);
+      std::string closure = getClosureName(object);
+   }
+   
+private:
+   std::map<
+      std::string,
+      std::map<uintptr_t, RBinding>
+   > table_;
+};
 
 void buildObjectLookupTable(bool forceRebuild)
 {
@@ -314,6 +340,41 @@ SEXP rs_buildObjectLookupTable(SEXP forceRebuildSEXP)
    return R_NilValue;
 }
 
+std::string getClosureName(SEXP eltSEXP)
+{
+   // Primitive functions don't have an explicit closure (it's implicitly base)
+   if (Rf_isPrimitive(eltSEXP))
+   {
+      result.push_back("base");
+      continue;
+   }
+
+   // Get closures for functions
+   SEXP envSEXP;
+   if (Rf_isFunction(eltSEXP))
+      envSEXP = CLOENV(eltSEXP);
+   else
+      envSEXP = eltSEXP;
+
+   // TODO: Warn if the caller didn't pass in a function or environment?
+   if (envSEXP == R_GlobalEnv)
+      result.push_back("<R_GlobalEnv>");
+   else if (envSEXP == R_BaseEnv)
+      result.push_back("base");
+   else if (envSEXP == R_EmptyEnv)
+      result.push_back("<emptyenv>");
+   else if (R_IsPackageEnv(envSEXP))
+      result.push_back(CHAR(STRING_ELT(R_PackageEnvName(envSEXP), 0)));
+   else if (R_IsNamespaceEnv(envSEXP))
+      result.push_back(CHAR(STRING_ELT(R_NamespaceEnvSpec(envSEXP), 0)));
+   else
+   {
+      char address[33]; // overly conservative but whatever
+      snprintf(address, 32, "<%p>", (void*) address);
+      result.push_back(address);
+   }
+}
+   
 std::vector<std::string> getClosureNames(SEXP listSEXP)
 {
    r::sexp::Protect protect;
@@ -329,44 +390,7 @@ std::vector<std::string> getClosureNames(SEXP listSEXP)
    }
    
    for (std::size_t i = 0; i < n; ++i)
-   {
-      SEXP eltSEXP = VECTOR_ELT(listSEXP, i);
-      
-      // Primitives don't have an explicit closure (it's implicitly base)
-      if (Rf_isPrimitive(eltSEXP))
-      {
-         result.push_back("base");
-         continue;
-      }
-      
-      // Get closures for functions
-      SEXP envSEXP;
-      if (Rf_isFunction(eltSEXP))
-         envSEXP = CLOENV(eltSEXP);
-      else
-         envSEXP = eltSEXP;
-      
-      // TODO: Warn if the caller didn't pass in a function or environment?
-      if (!Rf_isEnvironment(envSEXP))
-         continue;
-      
-      if (envSEXP == R_GlobalEnv)
-         result.push_back("<R_GlobalEnv>");
-      else if (envSEXP == R_BaseEnv)
-         result.push_back("base");
-      else if (envSEXP == R_EmptyEnv)
-         result.push_back("<emptyenv>");
-      else if (R_IsPackageEnv(envSEXP))
-         result.push_back(CHAR(STRING_ELT(R_PackageEnvName(envSEXP), 0)));
-      else if (R_IsNamespaceEnv(envSEXP))
-         result.push_back(CHAR(STRING_ELT(R_NamespaceEnvSpec(envSEXP), 0)));
-      else
-      {
-         char address[33]; // overly conservative but whatever
-         snprintf(address, 32, "<%p>", (void*) address);
-         result.push_back(address);
-      }
-   }
+      result.push_back(getClosureName(VECTOR_ELT(listSEXP, i)));
    
    return result;
 }
@@ -1534,7 +1558,7 @@ INVALID_TOKEN:
 
 core::Error initialize()
 {
-   RS_REGISTER_CALL_METHOD(rs_buildObjectLookupTable, 0);
+   RS_REGISTER_CALL_METHOD(rs_buildObjectLookupTable, 1);
    RS_REGISTER_CALL_METHOD(rs_findOriginalBinding, 1);
    return Success();
 }
