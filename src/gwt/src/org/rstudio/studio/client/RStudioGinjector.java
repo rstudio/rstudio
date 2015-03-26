@@ -36,7 +36,6 @@ import org.rstudio.studio.client.common.filetypes.NewFileMenu;
 import org.rstudio.studio.client.common.impl.DesktopFileDialogs;
 import org.rstudio.studio.client.common.latex.LatexProgramRegistry;
 import org.rstudio.studio.client.common.r.roxygen.RoxygenHelper;
-import org.rstudio.studio.client.common.r.roxygen.RoxygenServerOperations;
 import org.rstudio.studio.client.common.rnw.RnwWeaveRegistry;
 import org.rstudio.studio.client.common.rnw.RnwWeaveSelectWidget;
 import org.rstudio.studio.client.common.rpubs.ui.RPubsUploadDialog;
