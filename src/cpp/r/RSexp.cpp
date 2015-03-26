@@ -838,61 +838,52 @@ bool inherits(SEXP object, const char* S3Class)
    return Rf_inherits(object, S3Class);
 }
 
-std::set<std::string> makeNseFunctions()
+std::set<std::string> makeNsePrimitives()
 {
-   std::set<std::string> nseFunctions;
-   nseFunctions.insert("quote");
-   nseFunctions.insert("substitute");
-   nseFunctions.insert("match.call");
-   nseFunctions.insert("library");
-   nseFunctions.insert("require");
-   nseFunctions.insert("enquote");
-   nseFunctions.insert("expression");
-   nseFunctions.insert("evalq");
-   nseFunctions.insert("subset");
-   return nseFunctions;
+   std::set<std::string> nsePrimitives;
+   nsePrimitives.insert("quote");
+   nsePrimitives.insert("substitute");
+   nsePrimitives.insert("match.call");
+   nsePrimitives.insert("library");
+   nsePrimitives.insert("require");
+   nsePrimitives.insert("enquote");
+   nsePrimitives.insert("bquote");
+   nsePrimitives.insert("expression");
+   nsePrimitives.insert("evalq");
+   nsePrimitives.insert("subset");
+   return nsePrimitives;
 }
 
-std::set<std::string> nseFunctions()
+const std::set<std::string>& nsePrimitives()
 {
-   static const std::set<std::string> set = makeNseFunctions();
+   static const std::set<std::string> set = makeNsePrimitives();
    return set;
 }
 
-bool maybePerformsNSEImpl(SEXP node)
+// Attempts to find calls to functions which perform NSE.
+bool maybePerformsNSEImpl(SEXP node,
+                          const std::set<std::string>& nsePrimitives)
 {
-   if (Rf_isExpression(node))
+   if (TYPEOF(node) == LANGSXP)
    {
-      int n = Rf_length(node);
-      for (int i = 0; i < n; i++)
-         if (maybePerformsNSEImpl(VECTOR_ELT(node, i)))
-            return true;
-   }
-   
-   else if (Rf_isLanguage(node))
-   {
-      SEXP symbol = CAR(node);
-      if (Rf_isSymbol(symbol))
+      // Check to see if this is a call to a function typically
+      // used with non-standard evaluation
+      SEXP head = CAR(node);
+      if (TYPEOF(head) == SYMSXP && nsePrimitives.count(CHAR(PRINTNAME(head))))
+         return true;
+      
+      // Iterate over all other elements in the pairlist and check to see if
+      // they make calls to NSE primitives.
+      SEXP tail = CDR(node);
+      head = CAR(tail);
+      while (tail != R_NilValue)
       {
-         std::string symbolName = CHAR(PRINTNAME(symbol));
-         if (nseFunctions().count(symbolName) != 0)
+         if (TYPEOF(head) == LANGSXP && maybePerformsNSEImpl(head, nsePrimitives))
             return true;
+         
+         tail = CDR(tail);
+         head = CAR(tail);
       }
-      
-      else if (Rf_isLanguage(symbol) || Rf_isExpression(symbol))
-         if (maybePerformsNSEImpl(symbol))
-            return true;
-      
-       SEXP tail = CDR(node);
-       SEXP head = CAR(tail);
-       while (!Rf_isNull(head))
-       {
-          if (maybePerformsNSEImpl(head))
-             return true;
-
-          tail = CDR(tail);
-          head = CAR(tail);
-       }
    }
    
    return false;
@@ -906,7 +897,9 @@ bool maybePerformsNSE(SEXP function)
    if (Rf_isPrimitive(function))
       return false;
    
-   return maybePerformsNSEImpl(BODY_EXPR(function));
+   return maybePerformsNSEImpl(
+            BODY_EXPR(function),
+            nsePrimitives());
 }
 
 } // namespace sexp   
