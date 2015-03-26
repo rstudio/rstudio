@@ -183,7 +183,7 @@ bool maybePerformsNSE(const std::string& callingString)
    if (lookupTable.contains(objectSEXP))
    {
       RBinding& binding = lookupTable.getBinding(objectSEXP);
-      RBinding::PerformsNse value = binding.performsNse();
+      RBinding::PerformsNSE value = binding.performsNSE();
       
       switch (value)
       {
@@ -280,26 +280,6 @@ std::string getClosureName(SEXP eltSEXP)
    }
 }
    
-std::vector<std::string> getClosureNames(SEXP listSEXP)
-{
-   r::sexp::Protect protect;
-   
-   std::vector<std::string> result;
-   std::size_t n = r::sexp::length(listSEXP);
-   result.reserve(n);
-   
-   if (TYPEOF(listSEXP) != VECSXP)
-   {
-      LOG_ERROR_MESSAGE("'getClosureNames' expects an R 'list'");
-      return result;
-   }
-   
-   for (std::size_t i = 0; i < n; ++i)
-      result.push_back(getClosureName(VECTOR_ELT(listSEXP, i)));
-   
-   return result;
-}
-
 SEXP rs_findOriginalBinding(SEXP objectsSEXP)
 {
    if (TYPEOF(objectsSEXP) != VECSXP)
@@ -320,7 +300,7 @@ SEXP rs_findOriginalBinding(SEXP objectsSEXP)
    r::sexp::Protect protect;
    protect.add(resultSEXP = Rf_allocVector(VECSXP, n));
    
-   for (int i = 0; i < n; i++)
+   for (int i = 0; i < n; ++i)
    {
       uintptr_t address = addresses[i];
       RBinding& binding = lookupTable.getBinding(address);

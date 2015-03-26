@@ -1064,7 +1064,7 @@ class RBinding
 {
 public:
    
-   enum PerformsNse {
+   enum PerformsNSE {
       PerformsNSEUnknown,
       PerformsNSETrue,
       PerformsNSEFalse
@@ -1073,7 +1073,7 @@ public:
    // Default constructor provided to allow for default
    // constructor in std::map<>
    RBinding()
-      : performsNse_(PerformsNSEUnknown),
+      : performsNSE_(PerformsNSEUnknown),
         exists_(false)
    {}
    
@@ -1081,22 +1081,22 @@ public:
             const std::string& closure)
       : binding_(binding),
         closure_(closure),
-        performsNse_(PerformsNSEUnknown),
+        performsNSE_(PerformsNSEUnknown),
         exists_(true)
    {
    }
    
-   PerformsNse performsNse()
+   PerformsNSE performsNSE()
    {
-      return performsNse_;
+      return performsNSE_;
    }
    
    void setPerformsNSE(bool value)
    {
       if (value)
-         performsNse_ = PerformsNSETrue;
+         performsNSE_ = PerformsNSETrue;
       else
-         performsNse_ = PerformsNSEFalse;
+         performsNSE_ = PerformsNSEFalse;
    }
    
    bool exists() const
@@ -1127,7 +1127,7 @@ public:
       
       SEXP performsNseSEXP;
       protect.add(performsNseSEXP = Rf_allocVector(LGLSXP, 1));
-      switch (performsNse_)
+      switch (performsNSE_)
       {
       case PerformsNSEUnknown:
          LOGICAL(performsNseSEXP)[0] = NA_LOGICAL;
@@ -1154,7 +1154,7 @@ private:
    
    std::string binding_;
    std::string closure_;
-   PerformsNse performsNse_;
+   PerformsNSE performsNSE_;
    bool exists_;
 };
 
