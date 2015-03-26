@@ -779,12 +779,6 @@ enum MarkerAutoSelect
 void showSourceMarkers(const SourceMarkerSet& markerSet,
                        MarkerAutoSelect autoSelect);
 
-template <typename T>
-uintptr_t address(T* object)
-{
-   return reinterpret_cast<uintptr_t>(object);
-}
-
 } // namespace module_context
 } // namespace session
 } // namespace rstudio

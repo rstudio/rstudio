@@ -1158,6 +1158,16 @@ private:
    bool exists_;
 };
 
+namespace internal {
+
+template <typename T>
+inline uintptr_t address(T* object)
+{
+   return reinterpret_cast<uintptr_t>(object);
+}
+
+} // namespace internal
+
 class RBindingLookupTable : boost::noncopyable
 {
 public:
@@ -1176,25 +1186,23 @@ public:
       return instance;
    }
    
-   bool hasIndexFor(const std::string& namespaceName)
+   bool contains(SEXP object)
    {
-      return table_.count(namespaceName);
+      return table_.count(internal::address(object));
    }
    
-   bool contains(SEXP object);
-   
-   RBindingMap& operator[](const std::string& namespaceName)
+   RBinding& getBinding(uintptr_t address)
    {
-      return table_[namespaceName];
+      return table_[address];
    }
-   
-   RBinding& getBinding(SEXP object);
+
+   RBinding& getBinding(SEXP object)
+   {
+      return table_[internal::address(object)];
+   }
    
    void setPerformsNSE(SEXP object, bool value)
    {
-      if (!contains(object))
-         return;
-      
       RBinding& binding = getBinding(object);
       binding.setPerformsNSE(value);
    }
@@ -1203,9 +1211,8 @@ public:
    void add(SEXP object, const std::string& name, bool performsNSE);
    
 private:
-   std::map<std::string, RBindingMap> table_;
+   RBindingMap table_;
 };
-
 
 core::Error initialize();
 
