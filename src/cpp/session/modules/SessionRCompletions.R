@@ -2751,3 +2751,58 @@ assign(x = ".rs.acCompletionTypes",
    
    return(FALSE)
 })
+
+.rs.addJsonRpcHandler("transform_snippet", function(snippet)
+{
+   # Extract any R code from the snippet
+   reRCode <- "`[Rr]\\s+[^`]+`"
+   matches <- gregexpr(reRCode, snippet, perl = TRUE)[[1]]
+   if (matches == -1)
+      return(snippet)
+   
+   match.length <- attr(matches, "match.length")
+   if (is.null(match.length))
+      return(snippet)
+   
+   ranges <- lapply(seq_along(matches), function(i) {
+      c(matches[[i]], matches[[i]] + match.length[[i]])
+   })
+   
+   extracted <- lapply(ranges, function(range) {
+      substring(
+         snippet,
+         range[[1]] + 2, # skip "`r "
+         range[[2]] - 2 # leave out trailing "`"
+      )
+   })
+   
+   frame <- parent.frame()
+   evaluated <- lapply(extracted, function(code) {
+      tryCatch({
+         captured <- capture.output(
+            result <- paste(collapse = " ", as.character(suppressWarnings(
+               eval(parse(text = code), envir = frame)
+            )))
+         )
+         
+         if (!length(result) && length(captured))
+            paste(captured, collapse = " ")
+         else
+            result
+         
+      }, error = function(e) ""
+      )
+   })
+   
+   newSnippet <- snippet
+   for (i in seq_along(evaluated))
+   {
+      range <- ranges[[i]]
+      text <- substring(snippet, range[[1]], range[[2]] - 1)
+      replacement <- evaluated[[i]]
+      newSnippet <- gsub(text, replacement, newSnippet, fixed = TRUE)
+   }
+   
+   .rs.scalar(newSnippet)
+})
+

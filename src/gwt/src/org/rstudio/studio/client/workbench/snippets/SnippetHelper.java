@@ -19,9 +19,15 @@ import com.google.gwt.core.client.JavaScriptException;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
+import com.google.inject.Inject;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.JsArrayUtil;
+import org.rstudio.core.client.regex.Pattern;
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.FilePathUtils;
+import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.snippets.model.Snippet;
 import org.rstudio.studio.client.workbench.snippets.model.SnippetData;
 import org.rstudio.studio.client.workbench.snippets.model.SnippetsChangedEvent;
@@ -48,6 +54,14 @@ public class SnippetHelper
       native_ = editor.getWidget().getEditor();
       manager_ = getSnippetManager();
       path_ = path;
+      
+      RStudioGinjector.INSTANCE.injectMembers(this);
+   }
+   
+   @Inject
+   public void initialize(SnippetServerOperations server)
+   {
+      server_ = server;
    }
    
    private static final native SnippetManager getSnippetManager() /*-{
@@ -180,7 +194,35 @@ public class SnippetHelper
       editor_.expandSelectionLeft(token.length());
       String snippetContent = transformMacros(
             getSnippetContents(snippetName));
-      applySnippetImpl(snippetContent, manager_, editor_.getWidget().getEditor());
+      
+      // For snippets that contain code we want to execute in R, we pass the
+      // snippet down to the server and then apply the response.
+      if (containsExecutableRCode(snippetContent))
+      {
+         server_.transformSnippet(snippetContent, new ServerRequestCallback<String>()
+         {
+            @Override
+            public void onError(ServerError error)
+            {
+               Debug.logError(error);
+            }
+            
+            @Override
+            public void onResponseReceived(String transformed)
+            {
+               applySnippetImpl(transformed, manager_, editor_.getWidget().getEditor());
+            }
+         });
+      }
+      else
+      {
+         applySnippetImpl(snippetContent, manager_, editor_.getWidget().getEditor());
+      }
+   }
+   
+   private boolean containsExecutableRCode(String snippetContent)
+   {
+      return RE_R_CODE.test(snippetContent);
    }
    
    private String replaceFilename(String snippet)
@@ -285,6 +327,11 @@ public class SnippetHelper
    private final SnippetManager manager_;
    private final String path_;
    
+   private SnippetServerOperations server_;
+   
    private static boolean customCppSnippetsLoaded_;
    private static boolean customRSnippetsLoaded_;
+   
+   private static final Pattern RE_R_CODE =
+         Pattern.create("`[Rr]\\s+[^`]+`", "");
 }

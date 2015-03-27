@@ -59,6 +59,7 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.snippets.SnippetHelper;
 import org.rstudio.studio.client.workbench.snippets.ui.EditSnippetsDialog;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionRequester;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.HelpStrategy;
@@ -115,6 +116,7 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(CompletionRequester requester);
    void injectMembers(EditSnippetsDialog dialog);
    void injectMembers(RoxygenHelper helper);
+   void injectMembers(SnippetHelper helper);
    
    public static final RStudioGinjector INSTANCE = GWT.create(RStudioGinjector.class);
 

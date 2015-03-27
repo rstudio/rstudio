@@ -152,6 +152,25 @@ var snippets = [
    {
       name: "rapply",
       content: "rapply(${1:list}, ${2:function})"
+   },
+
+   /* Utilities */
+
+   {
+      name: "today",
+      content: "Sys.Date()"
+   },
+   {
+      name: "today!",
+      content: "`r Sys.Date()`"
+   },
+   {
+      name: "now",
+      content: "Sys.time()"
+   },
+   {
+      name: "now!",
+      content: "`r Sys.time()`"
    }
 ];
 
