@@ -51,6 +51,7 @@ import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.Anchor;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.InlineLabel;
@@ -108,8 +109,9 @@ public class RSConnectDeploy extends Composite
    {
       if (contentPath_ != null)
       {
-         forDocument_ = FileSystemItem.getExtensionFromPath(contentPath)
-               .toLowerCase().equals(".rmd");
+         String ext = FileSystemItem.getExtensionFromPath(contentPath)
+               .toLowerCase();
+         forDocument_ = ext.equals(".rmd") || ext.equals("html");
       }
       else
       {
@@ -137,7 +139,7 @@ public class RSConnectDeploy extends Composite
                               RESOURCES.publishRmdIllustration() :
                               RESOURCES.publishShinyIllustration());
       }
-
+      
       // Invoke the "add account" wizard
       addAccountAnchor_.addClickHandler(new ClickHandler()
       {
@@ -160,6 +162,7 @@ public class RSConnectDeploy extends Composite
             event.stopPropagation();
          }
       });
+
       addFileButton_.setVisible(forDocument_);
       addFileButton_.getElement().getStyle().setMarginLeft(0, Unit.PX);
       addFileButton_.addClickHandler(new ClickHandler()
@@ -177,6 +180,7 @@ public class RSConnectDeploy extends Composite
          nameLabel_.setVisible(false);
          appName_.setVisible(false);
       }
+      
    }
    
    @Inject
@@ -328,7 +332,8 @@ public class RSConnectDeploy extends Composite
       populateDeploymentFiles();
    }
    
-   public void setContentPath(String contentPath, boolean asMultipleRmd)
+   public void setContentPath(String contentPath, boolean asMultipleRmd, 
+         boolean asStatic)
    {
       // TODO: asMultipleRmd should be in the constructor too
       contentPath_ = contentPath;
@@ -585,6 +590,7 @@ public class RSConnectDeploy extends Composite
    @UiField ThemedButton addFileButton_;
    @UiField HTMLPanel rootPanel_;
    @UiField AppNameTextbox appName_;
+   @UiField Grid mainGrid_;
    
    private ArrayList<CheckBox> fileChecks_;
    private ArrayList<String> filesAddedManually_ = 

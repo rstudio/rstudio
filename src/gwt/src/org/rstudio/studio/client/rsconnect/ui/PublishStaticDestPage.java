@@ -40,9 +40,9 @@ public class PublishStaticDestPage
                                                     RSConnectPublishResult>>();
       pages.add(new PublishRPubsPage("RPubs", "RPubs is a free service from " + 
          "RStudio for sharing documents on the web."));
-      pages.add(new PublishStaticPage("A server in your organization", 
+      pages.add(new PublishFilesPage("A server in your organization", 
          "RStudio Connect enables members of your organization to share and " + 
-         "collaborate privately and securely.", input, true, asMultiple));
+         "collaborate privately and securely.", input, true, asMultiple, true));
       return pages;
    }
 }

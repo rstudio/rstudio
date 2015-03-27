@@ -7,7 +7,7 @@
     <ui:with field="projRes" type="org.rstudio.studio.client.projects.ui.newproject.NewProjectResources" />
     <g:HTMLPanel ui:field="rootPanel_">
     <g:Image ui:field="deployIllustration_"></g:Image>
-    <g:Grid><g:row>
+    <g:Grid ui:field="mainGrid_"><g:row>
     <g:customCell styleName="{res.style.rootCell}">
       <g:VerticalPanel>
         <g:HTMLPanel>

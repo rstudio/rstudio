@@ -47,9 +47,10 @@ public class PublishReportSourcePage
                            new ArrayList<WizardPage<RSConnectPublishInput, 
                                                     RSConnectPublishResult>>();
       
-      pages.add(new PublishCodePage("Publish document with source code",
+      pages.add(new PublishFilesPage("Publish document with source code",
             "Choose this option if you want to create a scheduled report or " +
-            "execute your document on the server.", input, false, asMultiple));
+            "execute your document on the server.", input, false, asMultiple, 
+            false));
       String staticTitle = "Publish finished document only";
       String staticSubtitle = "Choose this option to publish the report as " +
              "it appears in RStudio.";
@@ -63,8 +64,8 @@ public class PublishReportSourcePage
       else if (input.isConnectUIEnabled())
       {
          // only RStudio Connect is available for static content
-         pages.add(new PublishStaticPage(staticTitle, staticSubtitle, input, 
-               false, asMultiple));
+         pages.add(new PublishFilesPage(staticTitle, staticSubtitle, input, 
+               false, asMultiple, true));
       }
       else
       {

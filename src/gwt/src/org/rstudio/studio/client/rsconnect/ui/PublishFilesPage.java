@@ -1,5 +1,5 @@
 /*
- * PublishStaticPage.java
+ * PublishCodePage.java
  *
  * Copyright (C) 2009-15 by RStudio, Inc.
  *
@@ -20,65 +20,66 @@ import org.rstudio.studio.client.rsconnect.model.RSConnectPublishResult;
 
 import com.google.gwt.user.client.ui.Widget;
 
-public class PublishStaticPage 
+public class PublishFilesPage 
    extends WizardPage<RSConnectPublishInput, RSConnectPublishResult>
 {
-   // Public methods ---------------------------------------------------------
-
-   public PublishStaticPage(String title, String subTitle, 
-         RSConnectPublishInput input, boolean showIcon, boolean asMultiple)
+   public PublishFilesPage(String title, String subTitle, 
+         RSConnectPublishInput input, boolean showImage, boolean asMultiple, 
+         boolean asStatic)
    {
-      super(title, subTitle, "Publish", 
-            showIcon ? RSConnectAccountResources.INSTANCE.localAccountIcon() :
-               null, 
-            RSConnectAccountResources.INSTANCE.localAccountIconLarge());
-
-      if (publishWidget_ != null)
+      super(title, subTitle, "Publish", showImage ? (asMultiple ? 
+            RSConnectAccountResources.INSTANCE.publishMultipleRmd() :
+            RSConnectAccountResources.INSTANCE.publishSingleRmd()) : null, 
+            null);
+      
+      // createWidget is called by super() above
+      if (contents_ != null)
       {
-         publishWidget_.setContentPath(
-               input.getOriginatingEvent().getHtmlFile(), asMultiple);
+         // publish the HTML file or the original R Markdown doc, as requested
+         if (asStatic)
+            contents_.setContentPath(input.getOriginatingEvent().getHtmlFile(), 
+                  asMultiple, true);
+         else
+            contents_.setContentPath(input.getSourceRmd().getPath(), 
+                  asMultiple, false);
       }
    }
-   
+
    @Override
    public void focus()
    {
-      if (publishWidget_ != null)
-         publishWidget_.focus();
+      contents_.focus();
    }
-
-   @Override 
+   
+   @Override
    public void onActivate()
    {
-      if (publishWidget_ != null)
-         publishWidget_.onActivate();
+      contents_.onActivate();
    }
-
-   // Protected methods ------------------------------------------------------
-
+   
    @Override
    protected Widget createWidget()
    {
-      publishWidget_ = new PublishStatic(null);
-      return publishWidget_;
+      contents_ = new RSConnectDeploy(null, null, true);
+      return contents_;
    }
 
    @Override
    protected void initialize(RSConnectPublishInput initData)
    {
    }
-   
+
    @Override
    protected RSConnectPublishResult collectInput()
    {
-      return publishWidget_.getResult();
+      return contents_.getResult();
    }
 
    @Override
    protected boolean validate(RSConnectPublishResult input)
    {
-      return publishWidget_.isResultValid();
+      return contents_.isResultValid();
    }
    
-   private PublishStatic publishWidget_;
+   private RSConnectDeploy contents_;
 }

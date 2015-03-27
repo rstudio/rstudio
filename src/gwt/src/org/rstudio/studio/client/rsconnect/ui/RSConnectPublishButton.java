@@ -136,8 +136,7 @@ public class RSConnectPublishButton extends Composite
    {
       if (params.isShinyDocument() || 
             (params.getResult().isHtml() &&
-             params.getResult().getFormat() != null &&
-             params.getResult().getFormat().isSelfContained()))
+             params.getResult().getFormat() != null))
       {
          setVisible(true);
          rmdPreview_ = params;

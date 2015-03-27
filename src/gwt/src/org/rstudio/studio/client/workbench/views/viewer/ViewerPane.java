@@ -28,7 +28,6 @@ import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.common.rpubs.RPubsHtmlGenerator;
-import org.rstudio.studio.client.common.rpubs.model.RPubsServerOperations;
 import org.rstudio.studio.client.rmarkdown.model.RmdPreviewParams;
 import org.rstudio.studio.client.rsconnect.RSConnect;
 import org.rstudio.studio.client.rsconnect.ui.RSConnectPublishButton;
@@ -92,7 +91,7 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
       toolbar_.addLeftWidget(commands_.viewerStop().createToolbarButton());
      
       // add publish button 
-      publishButton_ = new RSConnectPublishButton(RSConnect.CONTENT_TYPE_PLOT, 
+      publishButton_ = new RSConnectPublishButton(RSConnect.CONTENT_TYPE_RMD, 
             true, false);
       toolbar_.addRightWidget(publishButton_);
 
@@ -132,7 +131,6 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
    {
       navigate(url, false);
       rmdPreviewParams_ = null;
-      publishButton_.setContentType(RSConnect.CONTENT_TYPE_PLOT);
    }
 
    @Override
@@ -141,7 +139,6 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
       navigate(params.getOutputUrl(), true);
       publishButton_.setVisible(true);
       publishButton_.setRmdPreview(params);
-      publishButton_.setContentType(RSConnect.CONTENT_TYPE_RMD);
       rmdPreviewParams_ = params;
       toolbar_.invalidateSeparators();
    }
@@ -149,7 +146,6 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
    @Override
    public void setExportEnabled(boolean exportEnabled)
    {
-      isExportEnabled_ = exportEnabled;
       exportButton_.setVisible(exportEnabled);
       exportButtonSeparator_.setVisible(exportEnabled);
       publishButton_.setVisible(exportEnabled);
@@ -233,7 +229,6 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
    
    private ToolbarButton exportButton_;
    private Widget exportButtonSeparator_;
-   private boolean isExportEnabled_;
 
    public static final String ABOUT_BLANK = "about:blank";
 }

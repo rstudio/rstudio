@@ -48,10 +48,10 @@ public class PublishMultiplePage
                                 " will be published.";
       if (input.isShiny())
       {
-         pages.add(new PublishCodePage(singleTitle, singleSubtitle, input, 
-               true, false));
-         pages.add(new PublishCodePage(multipleTitle, multipleSubtitle, input,
-               true, true));
+         pages.add(new PublishFilesPage(singleTitle, singleSubtitle, input, 
+               true, false, false));
+         pages.add(new PublishFilesPage(multipleTitle, multipleSubtitle, input,
+               true, true, false));
       }
       else
       {
