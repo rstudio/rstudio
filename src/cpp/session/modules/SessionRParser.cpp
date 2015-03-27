@@ -166,15 +166,70 @@ bool isDataTableSingleBracketCall(RTokenCursor& cursor)
    return r::sexp::inherits(resultSEXP, "data.table");
 }
 
+class NSEDatabase : boost::noncopyable
+{
+public:
+   
+   NSEDatabase()
+   {
+      
+   }
+   
+   bool contains(const std::string& package,
+                 const std::string& symbol)
+   {
+      return packageDatabase_[package].contains(symbol) ||
+             globalDatabase_.contains(symbol);
+   }
+   
+   void add(const std::string& package,
+            const std::string& symbol)
+   {
+      database_[package].insert(symbol);
+      globalDatabase_.insert(symbol);
+   }
+   
+   void remove(const std::string& package,
+               const std::string& symbol)
+   {
+      database_[package].erase(symbol);
+      globalDatabase_.erase(symbol);
+   }
+   
+private:
+   std::map<
+      std::string,
+      boost::container::flat_set<std::string>
+   > packageDatabase_;
+   
+   boost::container::flat_set<std::string> globalDatabase_;
+};
+
+NSEDatabase& nseDatabase()
+{
+   static NSEDatabase instance;
+   return instance;
+}
+
 bool maybePerformsNSE(const std::string& callingString)
 {
-   // Resolve the object.
-   r::sexp::Protect protect;
-   SEXP objectSEXP;
-   r::exec::RFunction getAnywhere(".rs.getAnywhere");
-   getAnywhere.addParam(callingString);
-   Error error = getAnywhere.call(&objectSEXP, &protect);
-   IF_ERROR(error, return false);
+   
+   static const boost::regex reNamespace("^\\s*([\\w_.]+):{2,3}([\\w_.])\\s*$");
+   
+   // Check to see if this is a call of the form 'foo::bar', and if so,
+   // extract the namespace and the function name.
+   boost::cmatch match;
+   if (boost::regex_match(callingString, match, reNamespace))
+   {
+      std::string package = std::string(match[1].first, match[1].second);
+      std::string symbol = std::string(match[2].first, match[2].second);
+      
+      // If we're making a call to a known NSE function, then exclude that.
+      NSEDatabase& database = nseDatabase();
+      if (database.contains(package, symbol))
+         return false;
+      
+   }
    
    // Check our lookup table to see if we've already encountered this
    // symbol. If we have, then we can ask our lookup table if we know whether
