@@ -154,23 +154,39 @@ void addNamespaceSymbols(std::set<std::string>* pSymbols)
    }
 }
 
-void addBaseNamespaceSymbols(std::set<std::string>* pSymbols)
+void fillNamespace(const std::string& nsName,
+                   std::vector<std::string>* pSymbols)
 {
-   // We can assume that the base namespace won't be modified,
-   // so just cache all of the object names once.
-   static std::vector<std::string> baseNamespaceSymbols;
-   if (baseNamespaceSymbols.empty())
-   {
-      r::sexp::Protect protect;
-      SEXP baseNamespace = r::sexp::findNamespace("base");
-      Error error = r::sexp::objects(baseNamespace, false, &baseNamespaceSymbols);
-      if (error)
-         LOG_ERROR(error);
-   }
+   r::sexp::Protect protect;
+   SEXP ns = r::sexp::findNamespace(nsName);
+   Error error = r::sexp::getNamespaceExports(ns, pSymbols);
+   if (error)
+      LOG_ERROR(error);
+}
+
+void addBaseSymbols(std::set<std::string>* pSymbols)
+{
+
+#define RS_GET_EXPORTED_SYMBOLS(__NAMESPACE__)                                 \
+   do                                                                          \
+   {                                                                           \
+      static std::vector<std::string> __NAMESPACE__##NamespaceSymbols;         \
+      if (__NAMESPACE__##NamespaceSymbols.empty())                             \
+         fillNamespace(#__NAMESPACE__, &__NAMESPACE__##NamespaceSymbols);      \
+      pSymbols->insert(__NAMESPACE__##NamespaceSymbols.begin(),                \
+                       __NAMESPACE__##NamespaceSymbols.end());                 \
+   } while (0);
    
-   pSymbols->insert(
-            baseNamespaceSymbols.begin(),
-            baseNamespaceSymbols.end());
+   RS_GET_EXPORTED_SYMBOLS(base);
+   RS_GET_EXPORTED_SYMBOLS(graphics);
+   RS_GET_EXPORTED_SYMBOLS(grDevices);
+   RS_GET_EXPORTED_SYMBOLS(methods);
+   RS_GET_EXPORTED_SYMBOLS(stats);
+   RS_GET_EXPORTED_SYMBOLS(stats4);
+   RS_GET_EXPORTED_SYMBOLS(utils);
+   
+#undef RS_GET_EXPORTED_SYMBOLS
+   
 }
 
 // For an R package, symbols are looked up in this order:
@@ -196,8 +212,15 @@ Error getAvailableSymbolsForPackage(const FilePath& filePath,
    // within this document.
    addInferredSymbols(filePath, documentId, pSymbols);
    
-   // Symbols from the 'base' namespace
-   addBaseNamespaceSymbols(pSymbols);
+   // Symbols that are 'automatically' made available to packages. In other
+   // words, symbols that packages can use without explicitly importing them.
+   // In other words, symbols that `R CMD check` will silently resolve to one
+   // of the base packages. Note that not all `base` packages are allowed here.
+   // These packages appear to be (as of R 3.1.0):
+   //
+   //     base, graphics, grDevices, methods, stats, stats4, utils
+   //
+   addBaseSymbols(pSymbols);
    
    return Success();
 }
@@ -558,11 +581,6 @@ void onNAMESPACEchanged()
    r_completions::AsyncRCompletions::update();
 }
 
-void onLintBlacklistChanged()
-{
-   NseFunctionBlacklist::instance().sync();
-}
-
 void onFilesChanged(const std::vector<core::system::FileChangeEvent>& events)
 {
    std::string namespacePath =
@@ -576,8 +594,6 @@ void onFilesChanged(const std::vector<core::system::FileChangeEvent>& events)
       std::string eventPath = event.fileInfo().absolutePath();
       if (eventPath == namespacePath)
          onNAMESPACEchanged();
-      else if (eventPath == lintFilePath)
-         onLintBlacklistChanged();
    }
 }
 
@@ -765,9 +781,6 @@ core::Error initialize()
          (bind(registerRpcMethod, "lint_r_source_document", lintRSourceDocument))
          (bind(registerRpcMethod, "save_snippets", saveSnippets));
    
-   // call once on initialization to ensure lint up to date
-   onLintBlacklistChanged();
-
    return initBlock.execute();
 
 }

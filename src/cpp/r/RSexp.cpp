@@ -969,6 +969,22 @@ SEXP mget(SEXP objectNames,
    return resultSEXP;
 }
 
+core::Error getNamespaceExports(SEXP ns,
+                                std::vector<std::string>* pNames)
+{
+   r::exec::RFunction f("getNamespaceExports");
+   f.addParam(ns);
+   
+   Protect protect;
+   SEXP exportsSEXP;
+   Error error = f.call(&exportsSEXP, &protect);
+   if (error)
+      return error;
+   
+   fillVectorString(exportsSEXP, pNames);
+   return Success();
+}
+
 } // namespace sexp   
 } // namespace r
 } // namespace rstudio

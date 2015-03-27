@@ -343,6 +343,9 @@ core::Error objects(SEXP environment,
                     bool allNames,
                     std::vector<std::string>* pNames);
 
+core::Error getNamespaceExports(SEXP ns,
+                                std::vector<std::string>* pNames);
+
 } // namespace sexp
 } // namespace r
 } // namespace rstudio

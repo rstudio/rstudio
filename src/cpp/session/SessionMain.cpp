@@ -1661,7 +1661,6 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       (modules::r_completions::initialize)
       (modules::linter::initialize)
       (modules::markers::initialize)
-      (modules::rparser::initialize)
 
       // workers
       (workers::web_request::initialize)

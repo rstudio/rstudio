@@ -49,55 +49,6 @@ using namespace core::r_util;
 using namespace core::r_util::token_utils;
 using namespace token_cursor;
 
-void NseFunctionBlacklist::sync()
-{
-   clear();
-   populateDefaults();
-   addProjectBlacklistedSymbols();
-   addGlobalBlacklistedSymbols();
-}
-
-void NseFunctionBlacklist::addLintFromFile(const FilePath& filePath)
-{
-   if (!filePath.exists())
-      return;
-   
-   std::vector<std::string> symbols;
-   core::readStringVectorFromFile(
-            filePath,
-            &symbols);
-
-   BOOST_FOREACH(const std::string& symbol, symbols)
-   {
-      add(string_utils::utf8ToWide(symbol));
-   }
-}
-
-void NseFunctionBlacklist::addProjectBlacklistedSymbols()
-{
-   // Read lint items from a project lint file (if it exists)
-   FilePath projectLintFile =
-         projects::projectContext().directory().childPath("RStudioLintBlacklist");
-   
-   addLintFromFile(projectLintFile);
-}
-   
-void NseFunctionBlacklist::addGlobalBlacklistedSymbols()
-{
-   FilePath homePath = module_context::userHomePath();
-   
-   if (!homePath.exists())
-      return;
-   
-   FilePath globalLintFile =
-         homePath.childPath(".R").childPath("RStudioLintBlacklist");
-   
-   if (!globalLintFile.exists())
-      return;
-   
-   addLintFromFile(globalLintFile);
-}
-
 namespace {
 
 bool isWithinNseFunction(const ParseStatus& status)
@@ -106,13 +57,6 @@ bool isWithinNseFunction(const ParseStatus& status)
    if (status.withinNseCall())
       return true;
    
-   // Check the blacklist of symbol names
-   NseFunctionBlacklist& blacklist = NseFunctionBlacklist::instance();
-   BOOST_FOREACH(const std::wstring& fnName, status.functionNames())
-   {
-      if (blacklist.contains(fnName))
-         return true;
-   }
    return false;
 }
 
@@ -170,39 +114,52 @@ class NSEDatabase : boost::noncopyable
 {
 public:
    
+   enum PerformsNSE
+   {
+      PerformsNSEUnknown,
+      PerformsNSEFalse,
+      PerformsNSETrue
+   };
+   
    NSEDatabase()
    {
       
    }
    
-   bool contains(const std::string& package,
-                 const std::string& symbol)
+   PerformsNSE get(const std::string& package,
+                   const std::string& symbol)
    {
-      return packageDatabase_[package].contains(symbol) ||
-             globalDatabase_.contains(symbol);
+      return packageDatabase_[package][symbol];
    }
    
-   void add(const std::string& package,
-            const std::string& symbol)
+   PerformsNSE get(const std::string& symbol)
    {
-      database_[package].insert(symbol);
-      globalDatabase_.insert(symbol);
+      return globalDatabase_[symbol];
    }
    
-   void remove(const std::string& package,
-               const std::string& symbol)
+   void set(const std::string& package,
+            const std::string& symbol,
+            bool performsNse)
    {
-      database_[package].erase(symbol);
-      globalDatabase_.erase(symbol);
+      packageDatabase_[package][symbol] =
+            performsNse ? PerformsNSETrue : PerformsNSEFalse;
    }
+   
+   void set(const std::string& symbol,
+            bool performsNse)
+   {
+      globalDatabase_[symbol] =
+            performsNse ? PerformsNSETrue : PerformsNSEFalse;
+   }
+   
    
 private:
-   std::map<
-      std::string,
-      boost::container::flat_set<std::string>
-   > packageDatabase_;
    
-   boost::container::flat_set<std::string> globalDatabase_;
+   typedef std::map<std::string, PerformsNSE> NSESymbolMap;
+   typedef std::map<std::string, NSESymbolMap> PackageNSESymbolMap;
+   
+   PackageNSESymbolMap packageDatabase_;
+   NSESymbolMap globalDatabase_;
 };
 
 NSEDatabase& nseDatabase()
@@ -214,51 +171,79 @@ NSEDatabase& nseDatabase()
 bool maybePerformsNSE(const std::string& callingString)
 {
    
-   static const boost::regex reNamespace("^\\s*([\\w_.]+):{2,3}([\\w_.])\\s*$");
+   static const boost::regex reNamespace("^\\s*([\\w.]+):{2,3}([\\w.])\\s*$");
+   static const boost::regex reSymbol("^\\s*([\\w.]+)\\s*$");
+   NSEDatabase& database = nseDatabase();
    
    // Check to see if this is a call of the form 'foo::bar', and if so,
    // extract the namespace and the function name.
-   boost::cmatch match;
+   boost::smatch match;
    if (boost::regex_match(callingString, match, reNamespace))
    {
       std::string package = std::string(match[1].first, match[1].second);
       std::string symbol = std::string(match[2].first, match[2].second);
       
       // If we're making a call to a known NSE function, then exclude that.
-      NSEDatabase& database = nseDatabase();
-      if (database.contains(package, symbol))
-         return false;
-      
-   }
-   
-   // Check our lookup table to see if we've already encountered this
-   // symbol. If we have, then we can ask our lookup table if we know whether
-   // the function performs NSE or not.
-   RBindingLookupTable& lookupTable = RBindingLookupTable::instance();
-   if (lookupTable.contains(objectSEXP))
-   {
-      RBinding& binding = lookupTable.getBinding(objectSEXP);
-      RBinding::PerformsNSE value = binding.performsNSE();
-      
-      switch (value)
+      switch (database.get(package, symbol))
       {
-      case RBinding::PerformsNSETrue:
+      case NSEDatabase::PerformsNSETrue:
          return true;
-      case RBinding::PerformsNSEFalse:
+      case NSEDatabase::PerformsNSEFalse:
          return false;
-      case RBinding::PerformsNSEUnknown:
-         ; // fall-through
+      case NSEDatabase::PerformsNSEUnknown:
+         ; // fall through
       }
+
+      // Try to see if we can find this symbol within the package declared.
+      SEXP resolvedSEXP = r::sexp::findVar(symbol, package);
+      
+      // Bail if it's not a function.
+      if (TYPEOF(resolvedSEXP) != FUNSXP)
+      {
+         database.set(package, symbol, false);
+         return false;
+      }
+      
+      // Check to see if there are any NSE smells in the function's body.
+      bool result = r::sexp::maybePerformsNSE(resolvedSEXP);
+      database.set(package, symbol, result);
+      return result;
    }
    
-   bool result = r::sexp::maybePerformsNSE(objectSEXP);
-   if (!lookupTable.contains(objectSEXP))
-      lookupTable.add(objectSEXP, callingString, result);
+   // Check to see if this is just a plain call to some symbol.
+   // TODO: Will probably need to refine where the symbol is actually looked
+   // up, but this will be 'good enough' for most cases.
+   if (boost::regex_match(callingString, match, reSymbol))
+   {
+      std::string symbol = std::string(match[1].first, match[1].second);
+      
+      switch (database.get(symbol))
+      {
+      case NSEDatabase::PerformsNSETrue:
+         return true;
+      case NSEDatabase::PerformsNSEFalse:
+         return false;
+      case NSEDatabase::PerformsNSEUnknown:
+         ; // fall through
+      }
+      
+      // Try to find the symbol in the global environment.
+      SEXP resolvedSEXP = r::sexp::findVar(symbol, R_GlobalEnv);
+      
+      // Bail if it's not a function.
+      if (TYPEOF(resolvedSEXP) != FUNSXP)
+      {
+         database.set(symbol, false);
+         return false;
+      }
+      
+      bool result = r::sexp::maybePerformsNSE(resolvedSEXP);
+      database.set(symbol, result);
+      return result;
+   }
    
-   RBinding& binding = lookupTable.getBinding(objectSEXP);
-   binding.setPerformsNSE(result);
-   
-   return result;
+   // Return false (this is not a 'plain' or 'namespace-qualified' symbol)
+   return false;
 }
 
 bool mightPerformNonstandardEvaluation(RTokenCursor& cursor,
@@ -267,106 +252,6 @@ bool mightPerformNonstandardEvaluation(RTokenCursor& cursor,
    // Get the string denoting what is about to be evaluated.
    return maybePerformsNSE(
             string_utils::wideToUtf8(cursor.getCallingString()));
-}
-
-void buildObjectLookupTable()
-{
-   RBindingLookupTable& lookupTable = RBindingLookupTable::instance();
-   std::vector<std::string> loadedNamespaces = r::sexp::getLoadedNamespaces();
-   r::sexp::Protect protect;
-   
-   BOOST_FOREACH(const std::string& nsName, loadedNamespaces)
-   {
-      // Get the namespace with this name
-      SEXP ns = r::sexp::findNamespace(nsName);
-      
-      // Discover all the objects within this namespace.
-      SEXP objectNames = r::sexp::objects(ns, true, &protect);
-      SEXP objects = r::sexp::mget(objectNames, ns, true, &protect);
-      
-      int n = r::sexp::length(objectNames);
-      if (n != r::sexp::length(objects))
-      {
-         LOG_ERROR_MESSAGE("length of 'objectNames' does not match length of 'objects'");
-         continue;
-      }
-      
-      for (int i = 0; i < n; ++i)
-      {
-         const char* name = CHAR(STRING_ELT(objectNames, i));
-         SEXP elt = VECTOR_ELT(objects, i);
-         lookupTable.add(elt, name);
-      }
-   }
-}
-
-SEXP rs_buildObjectLookupTable()
-{
-   buildObjectLookupTable();
-   return R_NilValue;
-}
-
-std::string getClosureName(SEXP eltSEXP)
-{
-   // Primitive functions don't have an explicit closure (it's implicitly base)
-   if (Rf_isPrimitive(eltSEXP))
-      return "base";
-
-   // Get closures for functions
-   SEXP envSEXP;
-   if (Rf_isFunction(eltSEXP))
-      envSEXP = CLOENV(eltSEXP);
-   else
-      envSEXP = eltSEXP;
-
-   // TODO: Warn if the caller didn't pass in a function or environment?
-   if (envSEXP == R_GlobalEnv)
-      return "<R_GlobalEnv>";
-   else if (envSEXP == R_BaseEnv)
-      return "base";
-   else if (envSEXP == R_EmptyEnv)
-      return "<emptyenv>";
-   else if (R_IsPackageEnv(envSEXP))
-      return CHAR(STRING_ELT(R_PackageEnvName(envSEXP), 0));
-   else if (R_IsNamespaceEnv(envSEXP))
-      return CHAR(STRING_ELT(R_NamespaceEnvSpec(envSEXP), 0));
-   else
-   {
-      char address[33]; // overly conservative but whatever
-      snprintf(address, 32, "<%p>", (void*) envSEXP);
-      return address;
-   }
-}
-   
-SEXP rs_findOriginalBinding(SEXP objectsSEXP)
-{
-   if (TYPEOF(objectsSEXP) != VECSXP)
-   {
-      LOG_ERROR_MESSAGE("'rs_findOriginalBinding' expects an R 'list'");
-      return R_NilValue;
-   }
-   
-   std::vector<uintptr_t> addresses;
-   int n = r::sexp::length(objectsSEXP);
-   addresses.reserve(n);
-   for (int i = 0; i < n; ++i)
-      addresses.push_back(
-               internal::address(VECTOR_ELT(objectsSEXP, i)));
-   
-   RBindingLookupTable& lookupTable = RBindingLookupTable::instance();
-   SEXP resultSEXP;
-   r::sexp::Protect protect;
-   protect.add(resultSEXP = Rf_allocVector(VECSXP, n));
-   
-   for (int i = 0; i < n; ++i)
-   {
-      uintptr_t address = addresses[i];
-      RBinding& binding = lookupTable.getBinding(address);
-      SET_VECTOR_ELT(resultSEXP, i, binding.asSEXP());
-   }
-   
-   return resultSEXP;
-      
 }
 
 } // end anonymous namespace
@@ -1494,34 +1379,6 @@ INVALID_TOKEN:
       MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
    }
    return;
-}
-
-core::Error initialize()
-{
-   RS_REGISTER_CALL_METHOD(rs_buildObjectLookupTable, 0);
-   RS_REGISTER_CALL_METHOD(rs_findOriginalBinding, 1);
-   return Success();
-}
-
-// RBinding, RBindingLookupTable related methods --------------
-
-void RBindingLookupTable::add(SEXP object,
-                              const std::string& name)
-{
-   std::string closure = getClosureName(object);
-   uintptr_t address = internal::address(object);
-   table_[address] = RBinding(name, closure);
-}
-
-void RBindingLookupTable::add(SEXP object,
-                              const std::string& name,
-                              bool performsNSE)
-{
-   std::string closure = getClosureName(object);
-   uintptr_t address = internal::address(object);
-   RBinding binding(name, closure);
-   binding.setPerformsNSE(performsNSE);
-   table_[address] = binding;
 }
 
 } // namespace rparser
