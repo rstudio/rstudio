@@ -41,7 +41,7 @@ var snippets = [
       name: "mat",
       content: 'matrix(${1:data}, nrow = ${2:rows}, ncol = ${3:cols})'
    },
-   
+
    /* S4 snippets */
    {
       name: "sg",
@@ -157,20 +157,8 @@ var snippets = [
    /* Utilities */
 
    {
-      name: "today",
-      content: "Sys.Date()"
-   },
-   {
-      name: "today!",
-      content: "`r Sys.Date()`"
-   },
-   {
-      name: "now",
-      content: "Sys.time()"
-   },
-   {
-      name: "now!",
-      content: "`r Sys.time()`"
+      name: "ts",
+      content: '`r paste("#", date(), "------------------------------\n")`'
    }
 ];
 
