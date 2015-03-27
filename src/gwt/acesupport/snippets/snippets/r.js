@@ -95,7 +95,7 @@ var snippets = [
       name: "fun",
       content: [
          "${1:name} <- function(${2:variables}) {",
-         "    {0}",
+         "    ${0}",
          "}"
       ].join("\n")
    },
