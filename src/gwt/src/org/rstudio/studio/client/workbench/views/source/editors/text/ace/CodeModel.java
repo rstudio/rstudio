@@ -45,11 +45,13 @@ public class CodeModel extends JavaScriptObject
       });
    }-*/;
 
-   public native final ScopeFunction getCurrentFunction(Position position) /*-{
+   public native final ScopeFunction getCurrentFunction(Position position,
+                                                        boolean allowAnonymous) /*-{
       if (!this.getCurrentScope)
          return null;
       return this.getCurrentScope(position, function(scope) {
-         return scope.isBrace() && scope.label;
+         return scope.isBrace() && scope.label &&
+                (allowAnonymous || scope.label.indexOf("<function>") === -1);
       });
    }-*/;
 

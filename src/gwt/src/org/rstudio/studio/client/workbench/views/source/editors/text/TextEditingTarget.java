@@ -912,8 +912,8 @@ public class TextEditingTarget implements
                         Position.create(event.getLineNumber() - 1, 1);
                   
                   // if we're not in function scope, set a top-level breakpoint
-                  ScopeFunction innerFunction = 
-                        docDisplay_.getFunctionAtPosition(breakpointPosition);
+                  ScopeFunction innerFunction =
+                        docDisplay_.getFunctionAtPosition(breakpointPosition, false);
                   if (innerFunction == null || !innerFunction.isFunction() ||
                       StringUtil.isNullOrEmpty(innerFunction.getFunctionName()))
                   {
@@ -3055,13 +3055,13 @@ public class TextEditingTarget implements
       // It's the easiest way to make sure getCurrentScope() returns
       // a Scope with an end.
       docDisplay_.getScopeTree();
-      Scope currentFunction = docDisplay_.getCurrentFunction();
+      Scope currentFunction = docDisplay_.getCurrentFunction(false);
 
       // Check if we're at the top level (i.e. not in a function), or in
       // an unclosed function
       if (currentFunction == null || currentFunction.getEnd() == null)
          return;
-
+      
       Position start = currentFunction.getPreamble();
       Position end = currentFunction.getEnd();
 
