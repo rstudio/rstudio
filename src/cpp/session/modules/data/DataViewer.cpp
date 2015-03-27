@@ -470,8 +470,9 @@ json::Value getData(SEXP dataSEXP, const http::Fields& fields)
          -1);
    std::string orderdir = http::util::fieldValue<std::string>(fields, 
          "order[0][dir]", "asc");
-   std::string search = http::util::fieldValue<std::string>(fields, 
-         "search[value]", "");
+   std::string search = http::util::urlDecode(
+         http::util::fieldValue<std::string>(fields, "search[value]", ""), 
+         true);
    std::string cacheKey = http::util::urlDecode(
          http::util::fieldValue<std::string>(fields, "cache_key", ""), 
          true);
@@ -486,9 +487,10 @@ json::Value getData(SEXP dataSEXP, const http::Fields& fields)
    bool hasFilter = false;
    for (int i = 1; i <= ncol; i++) 
    {
-      std::string filterVal = http::util::fieldValue<std::string>(fields,
+      std::string filterVal = http::util::urlDecode( 
+            http::util::fieldValue<std::string>(fields,
                   "columns[" + boost::lexical_cast<std::string>(i) + "]" 
-                  "[search][value]", "");
+                  "[search][value]", ""), true);
       if (!filterVal.empty()) 
       {
          hasFilter = true;
