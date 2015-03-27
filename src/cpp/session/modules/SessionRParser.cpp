@@ -232,7 +232,7 @@ bool mightPerformNonstandardEvaluation(RTokenCursor& cursor,
    // then the parent environment of a function is (implicitly) the global
    // environment, and so we should feel more comfortable just attempting to
    // locate a function within the global environment.
-   
+   return false;
 }
 
 void buildObjectLookupTable()
@@ -247,7 +247,7 @@ void buildObjectLookupTable()
       SEXP ns = r::sexp::findNamespace(nsName);
       
       // Discover all the objects within this namespace.
-      SEXP objectNames = r::sexp::objects(ns, &protect);
+      SEXP objectNames = r::sexp::objects(ns, true, &protect);
       SEXP objects = r::sexp::mget(objectNames, ns, true, &protect);
       
       int n = r::sexp::length(objectNames);

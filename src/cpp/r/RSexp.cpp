@@ -921,7 +921,9 @@ bool maybePerformsNSE(SEXP function)
 // NOTE: Uses `R_lsInternal` which throws error if a non-environment is
 // passed; we therefore perform this validation ourselves before calling
 // `R_lsInternal`.
-SEXP objects(SEXP environment, Protect* pProtect)
+SEXP objects(SEXP environment,
+             bool allNames,
+             Protect* pProtect)
 {
    if (TYPEOF(environment) != ENVSXP)
    {
@@ -930,21 +932,21 @@ SEXP objects(SEXP environment, Protect* pProtect)
    }
    
    SEXP resultSEXP;
-   pProtect->add(resultSEXP = R_lsInternal(environment, TRUE));
+   pProtect->add(resultSEXP = R_lsInternal(environment, allNames ? TRUE : FALSE));
    return resultSEXP;
 }
 
 Error objects(SEXP environment,
+              bool allNames,
               std::vector<std::string>* pNames)
 {
    Protect protect;
-   SEXP objectsSEXP = objects(environment, &protect);
+   SEXP objectsSEXP = objects(environment, allNames, &protect);
    
    if (Rf_isNull(objectsSEXP))
       return Error(errc::CodeExecutionError, ERROR_LOCATION);
    
-   std::vector<std::string> result;
-   if (!fillVectorString(objectsSEXP, &result))
+   if (!fillVectorString(objectsSEXP, pNames))
       return Error(errc::CodeExecutionError, ERROR_LOCATION);
    
    return Success();

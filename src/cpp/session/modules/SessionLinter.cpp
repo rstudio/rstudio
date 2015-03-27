@@ -87,11 +87,34 @@ void addUnreferencedSymbol(const ParseItem& item,
    }
 }
 
-void addInferredSymbols(std::set<std::string>* pSymbols)
+void addInferredSymbols(const FilePath& filePath,
+                        std::set<std::string>* pSymbols)
 {
-   BOOST_FOREACH(const AsyncLibraryCompletions& completions,
-                 RSourceIndex::getAllCompletions() | boost::adaptors::map_values)
+   using namespace code_search;
+   using namespace source_database;
+   
+   // Get the source index associated with this filepath.
+   // We have to round trip to map this filePath to a source
+   // document, grab that ID, and then get the index.
+   boost::shared_ptr<SourceDocument> pDoc(new SourceDocument());
+   Error error = source_database::get(filePath.filename(), pDoc);
+   IF_ERROR(error, return);
+   
+   const std::string& id = pDoc->id();
+   boost::shared_ptr<RSourceIndex> index = 
+         rSourceIndex().get(id);
+   
+   if (!index)
+      return;
+   
+   // We have the index -- now list the packages discovered in
+   // 'library' calls, and add those here.
+   BOOST_FOREACH(const std::string& package,
+                index->getInferredPackages())
    {
+      const AsyncLibraryCompletions& completions =
+            index->getCompletions(package);
+      
       pSymbols->insert(completions.exports.begin(),
                        completions.exports.end());
    }
@@ -99,35 +122,105 @@ void addInferredSymbols(std::set<std::string>* pSymbols)
 
 void addNamespaceSymbols(std::set<std::string>* pSymbols)
 {
+   // Add symbols specifically mentioned as 'importFrom'
+   // directives in the NAMESPACE.
    BOOST_FOREACH(const std::set<std::string>& symbolNames,
                  RSourceIndex::getImportFromDirectives() | boost::adaptors::map_values)
    {
       pSymbols->insert(symbolNames.begin(), symbolNames.end());
    }
+   
+   // Make all (exported) symbols published by packages
+   // that are 'import'ed in the NAMESPACE.
+   BOOST_FOREACH(const std::string& package,
+                 RSourceIndex::getImportedPackages())
+   {
+      const AsyncLibraryCompletions& completions =
+            RSourceIndex::getCompletions(package);
+      pSymbols->insert(
+               completions.exports.begin(),
+               completions.exports.end());
+   }
 }
 
-Error getAllAvailableRSymbols(const FilePath& filePath,
-                              std::set<std::string>* pSymbols)
+void addBaseNamespaceSymbols(std::set<std::string>* pSymbols)
 {
-   using namespace r::exec;
+   // We can assume that the base namespace won't be modified,
+   // so just cache all of the object names once.
+   static std::vector<std::string> baseNamespaceSymbols;
+   if (baseNamespaceSymbols.empty())
+   {
+      r::sexp::Protect protect;
+      SEXP baseNamespace = r::sexp::findNamespace("base");
+      Error error = r::sexp::objects(baseNamespace, false, &baseNamespaceSymbols);
+      if (error)
+         LOG_ERROR(error);
+   }
    
-   Error error = RFunction(".rs.availableRSymbols").call(pSymbols);
+   pSymbols->insert(
+            baseNamespaceSymbols.begin(),
+            baseNamespaceSymbols.end());
+}
+
+// For an R package, symbols are looked up in this order:
+//
+// 1) The package's own objects (exported or not),
+// 2) In a special environment for 'importFrom' objects,
+// 3) In the set of namespaces gathered through 'import',
+// 4) The base namespace.
+//
+// We don't want to search for symbols on the search path here,
+// since they would not get properly resolved at runtime.
+Error getAvailableSymbolsForPackage(const FilePath& filePath,
+                                    std::set<std::string>* pSymbols)
+{
+   // Add project symbols (ie, top-level symbols within an R package)
+   code_search::addAllProjectSymbols(pSymbols);
+   
+   // Symbols inferred from the NAMESPACE (importFrom, import)
+   addNamespaceSymbols(pSymbols);
+   
+   // Add symbols made available by explicit `library()` calls
+   // within this document.
+   addInferredSymbols(filePath, pSymbols);
+   
+   // Symbols from the 'base' namespace
+   addBaseNamespaceSymbols(pSymbols);
+   
+   return Success();
+}
+
+// For a generic R project, we are less strict on where we attempt
+// to discover objects -- we simply consider all symbols available on
+// the current search path.
+Error getAvailableSymbolsForProject(const FilePath& filePath,
+                                    std::set<std::string>* pSymbols)
+{
+   // Get all available symbols on the search path.
+   Error error = r::exec::RFunction(".rs.availableRSymbols").call(pSymbols);
    if (error)
       return error;
    
    // Get all of the symbols made available by `library()` calls
-   addInferredSymbols(pSymbols);
-   
-   // Add symbols made available from a package NAMESPACE
-   if (projects::projectContext().directory().complete("NAMESPACE").exists())
-      addNamespaceSymbols(pSymbols);
-
-   // If this is an R package project, get the symbols for all functions
-   // etc. in the project.
-   if (filePath.isWithin(projects::projectContext().directory()))
-      code_search::addAllProjectSymbols(pSymbols);
+   // within this document.
+   addInferredSymbols(filePath, pSymbols);
    
    return Success();
+}
+
+
+
+Error getAllAvailableRSymbols(const FilePath& filePath,
+                              std::set<std::string>* pSymbols)
+{
+   // If this file lies within the current project, then
+   // we want to pull symbols from specific places -- specifically,
+   // _not_ the current search path. We want to infer whether the
+   // functions in the package would work at runtime.
+   if (module_context::isRScriptInPackageBuildTarget(filePath))
+      return getAvailableSymbolsForPackage(filePath, pSymbols);
+   else
+      return getAvailableSymbolsForProject(filePath, pSymbols);
 }
 
 } // end anonymous namespace
@@ -167,7 +260,7 @@ ParseResults parse(const std::wstring& rCode,
    
    // Now, find all available R symbols -- that is, objects on the search path,
    // or symbols that would otherwise be made available at runtime (e.g.
-   // pacakge imports)
+   // package imports)
    std::set<std::string> objects;
    Error error = getAllAvailableRSymbols(origin, &objects);
    if (error)
