@@ -208,9 +208,9 @@ public class SnippetHelper
             }
             
             @Override
-            public void onResponseReceived(String snippetContent)
+            public void onResponseReceived(String transformed)
             {
-               applySnippetImpl(snippetContent, manager_, editor_.getWidget().getEditor());
+               applySnippetImpl(transformed, manager_, editor_.getWidget().getEditor());
             }
          });
       }
