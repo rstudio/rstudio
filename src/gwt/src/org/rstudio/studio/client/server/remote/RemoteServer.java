@@ -3653,9 +3653,10 @@ public class RemoteServer implements Server
    }
    
    @Override
-   public void deployShinyApp(String dir, ArrayList<String> deployFiles, 
+   public void publishContent(String dir, ArrayList<String> deployFiles, 
          String file, String account, 
-         String server, String appName, ServerRequestCallback<Boolean> requestCallback)
+         String server, String appName, 
+         ServerRequestCallback<Boolean> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(dir));
@@ -3665,7 +3666,7 @@ public class RemoteServer implements Server
       params.set(4, new JSONString(server));
       params.set(5, new JSONString(appName));
       sendRequest(RPC_SCOPE,
-            DEPLOY_SHINY_APP,
+            RSCONNECT_PUBLISH,
             params,
             requestCallback);
    }
@@ -4337,7 +4338,7 @@ public class RemoteServer implements Server
    private static final String CONNECT_RSCONNECT_ACCOUNT = "connect_rsconnect_account";
    private static final String GET_RSCONNECT_APP_LIST = "get_rsconnect_app_list";
    private static final String GET_RSCONNECT_DEPLOYMENTS = "get_rsconnect_deployments";
-   private static final String DEPLOY_SHINY_APP = "deploy_shiny_app";
+   private static final String RSCONNECT_PUBLISH = "rsconnect_publish";
    private static final String GET_DEPLOYMENT_FILES = "get_deployment_files";
    private static final String VALIDATE_SERVER_URL = "validate_server_url";
    private static final String GET_AUTH_TOKEN = "get_auth_token";

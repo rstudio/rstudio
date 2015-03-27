@@ -42,10 +42,10 @@ namespace rsconnect {
 
 namespace {
 
-class ShinyAppDeploy : public async_r::AsyncRProcess
+class RSConnectPublish : public async_r::AsyncRProcess
 {
 public:
-   static boost::shared_ptr<ShinyAppDeploy> create(
+   static boost::shared_ptr<RSConnectPublish> create(
          const std::string& dir,
          const json::Array& fileList, 
          const std::string& file, 
@@ -53,7 +53,7 @@ public:
          const std::string& server,
          const std::string& app)
    {
-      boost::shared_ptr<ShinyAppDeploy> pDeploy(new ShinyAppDeploy(file));
+      boost::shared_ptr<RSConnectPublish> pDeploy(new RSConnectPublish(file));
 
       std::string cmd("{ options(repos = c(CRAN='" +
                        module_context::CRANReposURL() + "')); ");
@@ -99,7 +99,7 @@ public:
    }
 
 private:
-   ShinyAppDeploy(const std::string& file)
+   RSConnectPublish(const std::string& file)
    {
       sourceFile_ = file;
    }
@@ -164,10 +164,10 @@ private:
    std::string sourceFile_;
 };
 
-boost::shared_ptr<ShinyAppDeploy> s_pShinyAppDeploy_;
+boost::shared_ptr<RSConnectPublish> s_pRSConnectPublish_;
 
-Error deployShinyApp(const json::JsonRpcRequest& request,
-                     json::JsonRpcResponse* pResponse)
+Error rsconnectPublish(const json::JsonRpcRequest& request,
+                       json::JsonRpcResponse* pResponse)
 {
    json::Array sourceFiles;
    std::string sourceDir, sourceFile, account, server, appName;
@@ -176,14 +176,14 @@ Error deployShinyApp(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-   if (s_pShinyAppDeploy_ &&
-       s_pShinyAppDeploy_->isRunning())
+   if (s_pRSConnectPublish_ &&
+       s_pRSConnectPublish_->isRunning())
    {
       pResponse->setResult(false);
    }
    else
    {
-      s_pShinyAppDeploy_ = ShinyAppDeploy::create(sourceDir, sourceFiles, 
+      s_pRSConnectPublish_ = RSConnectPublish::create(sourceDir, sourceFiles, 
                                                   sourceFile, account, server, 
                                                   appName);
       pResponse->setResult(true);
@@ -202,7 +202,7 @@ Error initialize()
 
    ExecBlock initBlock;
    initBlock.addFunctions()
-      (bind(registerRpcMethod, "deploy_shiny_app", deployShinyApp))
+      (bind(registerRpcMethod, "rsconnect_publish", rsconnectPublish))
       (bind(sourceModuleRFile, "SessionRSConnect.R"));
 
    return initBlock.execute();

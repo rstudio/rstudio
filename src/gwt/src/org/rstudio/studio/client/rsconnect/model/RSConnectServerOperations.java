@@ -42,7 +42,7 @@ public interface RSConnectServerOperations
                boolean asMultipleRmd,
                ServerRequestCallback<RSConnectDeploymentFiles> requestCallback);
    
-   void deployShinyApp(String dir, ArrayList<String> deployFiles, String file, 
+   void publishContent(String dir, ArrayList<String> deployFiles, String file, 
                String account, String server, String appName, 
                ServerRequestCallback<Boolean> requestCallback);
 

@@ -48,7 +48,6 @@ import org.rstudio.studio.client.rsconnect.model.RSConnectPublishInput;
 import org.rstudio.studio.client.rsconnect.model.RSConnectPublishResult;
 import org.rstudio.studio.client.rsconnect.model.RSConnectServerOperations;
 import org.rstudio.studio.client.rsconnect.model.RmdPublishDetails;
-import org.rstudio.studio.client.rsconnect.ui.PublishStaticDialog;
 import org.rstudio.studio.client.rsconnect.ui.RSAccountConnector;
 import org.rstudio.studio.client.rsconnect.ui.RSConnectDeployDialog;
 import org.rstudio.studio.client.rsconnect.ui.RSConnectPublishWizard;
@@ -607,12 +606,12 @@ public class RSConnect implements SessionInitHandler,
    {
       FileSystemItem sourceFile = FileSystemItem.createFile(
             event.getSourceFile());
-      server_.deployShinyApp(event.getPath(), 
-                             event.getDeployFiles(),
-                             sourceFile.getName(),
-                             event.getRecord().getAccountName(), 
-                             event.getRecord().getServer(),
-                             event.getRecord().getName(), 
+      server_.publishContent(event.getPath(), 
+                            event.getDeployFiles(),
+                            sourceFile.getName(),
+                            event.getRecord().getAccountName(), 
+                            event.getRecord().getServer(),
+                            event.getRecord().getName(), 
       new ServerRequestCallback<Boolean>()
       {
          @Override
