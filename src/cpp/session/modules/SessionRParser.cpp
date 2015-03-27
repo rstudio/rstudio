@@ -210,29 +210,8 @@ bool mightPerformNonstandardEvaluation(RTokenCursor& cursor,
                                        ParseStatus& status)
 {
    // Get the string denoting what is about to be evaluated.
-   std::wstring fnCallString = cursor.getCallingString();
-   
-   // Try to figure out what environment we want to look for this
-   // function in. We want to mimic what R actually will do at runtime, so:
-   //
-   //    1. If we're within a package project, and we're defining a function,
-   //       we want to search:
-   //
-   //    (a) The package namespace (for all objects),
-   //    (b) The local imports (e.g. `importFrom` directives),
-   //    (c) The imported namespaces (e.g. `import` directives),
-   //    (d) The base namespace,
-   //    (e) The global environment (and any parents).
-   //
-   // Technically, this lookup means that unqualified symbols could be
-   // resolved from the global environment (and hence any attached packages,
-   // namespaces), but R CMD check should warn if this happens.
-   //
-   // When we're not within a package (ie, just in a vanilla project),
-   // then the parent environment of a function is (implicitly) the global
-   // environment, and so we should feel more comfortable just attempting to
-   // locate a function within the global environment.
-   return false;
+   return maybePerformsNSE(
+            string_utils::wideToUtf8(cursor.getCallingString()));
 }
 
 void buildObjectLookupTable()
