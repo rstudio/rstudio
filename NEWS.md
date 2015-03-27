@@ -146,6 +146,7 @@
 * Improved installation by reducing dependencies and providing additional platform-specific builds (e.g. SUSE, RHEL5 vs. RHEL6/7)
 * Server Pro: Support for SPDY protocol
 * Server Pro: Custom header name for proxied authentication
+* Server Pro: Option to eliminate "stay signed in" option for PAM authentication.
 
 ### Bug Fixes
 
