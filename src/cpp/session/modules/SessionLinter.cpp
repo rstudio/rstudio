@@ -88,22 +88,33 @@ void addUnreferencedSymbol(const ParseItem& item,
 }
 
 void addInferredSymbols(const FilePath& filePath,
+                        const std::string& documentId,
                         std::set<std::string>* pSymbols)
 {
    using namespace code_search;
    using namespace source_database;
    
-   // Get the source index associated with this filepath.
-   // We have to round trip to map this filePath to a source
-   // document, grab that ID, and then get the index.
-   boost::shared_ptr<SourceDocument> pDoc(new SourceDocument());
-   Error error = source_database::get(filePath.filename(), pDoc);
-   IF_ERROR(error, return);
+   // First, try to get the R source index directly from the id.
+   boost::shared_ptr<RSourceIndex> index =
+         rSourceIndex().get(documentId);
    
-   const std::string& id = pDoc->id();
-   boost::shared_ptr<RSourceIndex> index = 
-         rSourceIndex().get(id);
+   // If that failed for some reason, just re-read and re-parse
+   // the document from that file path
+   if (!index)
+   {
+      LOG_WARNING_MESSAGE("Failed to locate document with id '" + documentId + "'");
+      // Get the source index associated with this filepath.
+      // We have to round trip to map this filePath to a source
+      // document, grab that ID, and then get the index.
+      boost::shared_ptr<SourceDocument> pDoc(new SourceDocument());
+      Error error = source_database::get(filePath.filename(), pDoc);
+      IF_ERROR(error, return);
+
+      const std::string& id = pDoc->id();
+      index = rSourceIndex().get(id);
+   }
    
+   // If we still don't have an index, bail
    if (!index)
       return;
    
@@ -172,6 +183,7 @@ void addBaseNamespaceSymbols(std::set<std::string>* pSymbols)
 // We don't want to search for symbols on the search path here,
 // since they would not get properly resolved at runtime.
 Error getAvailableSymbolsForPackage(const FilePath& filePath,
+                                    const std::string& documentId,
                                     std::set<std::string>* pSymbols)
 {
    // Add project symbols (ie, top-level symbols within an R package)
@@ -182,7 +194,7 @@ Error getAvailableSymbolsForPackage(const FilePath& filePath,
    
    // Add symbols made available by explicit `library()` calls
    // within this document.
-   addInferredSymbols(filePath, pSymbols);
+   addInferredSymbols(filePath, documentId, pSymbols);
    
    // Symbols from the 'base' namespace
    addBaseNamespaceSymbols(pSymbols);
@@ -194,6 +206,7 @@ Error getAvailableSymbolsForPackage(const FilePath& filePath,
 // to discover objects -- we simply consider all symbols available on
 // the current search path.
 Error getAvailableSymbolsForProject(const FilePath& filePath,
+                                    const std::string& documentId,
                                     std::set<std::string>* pSymbols)
 {
    // Get all available symbols on the search path.
@@ -203,7 +216,7 @@ Error getAvailableSymbolsForProject(const FilePath& filePath,
    
    // Get all of the symbols made available by `library()` calls
    // within this document.
-   addInferredSymbols(filePath, pSymbols);
+   addInferredSymbols(filePath, documentId, pSymbols);
    
    return Success();
 }
@@ -211,6 +224,7 @@ Error getAvailableSymbolsForProject(const FilePath& filePath,
 
 
 Error getAllAvailableRSymbols(const FilePath& filePath,
+                              const std::string& documentId,
                               std::set<std::string>* pSymbols)
 {
    // If this file lies within the current project, then
@@ -218,15 +232,16 @@ Error getAllAvailableRSymbols(const FilePath& filePath,
    // _not_ the current search path. We want to infer whether the
    // functions in the package would work at runtime.
    if (module_context::isRScriptInPackageBuildTarget(filePath))
-      return getAvailableSymbolsForPackage(filePath, pSymbols);
+      return getAvailableSymbolsForPackage(filePath, documentId, pSymbols);
    else
-      return getAvailableSymbolsForProject(filePath, pSymbols);
+      return getAvailableSymbolsForProject(filePath, documentId, pSymbols);
 }
 
 } // end anonymous namespace
 
 ParseResults parse(const std::wstring& rCode,
-                   const FilePath& origin)
+                   const FilePath& origin,
+                   const std::string& documentId = std::string())
 {
    ParseResults results;
    
@@ -262,7 +277,7 @@ ParseResults parse(const std::wstring& rCode,
    // or symbols that would otherwise be made available at runtime (e.g.
    // package imports)
    std::set<std::string> objects;
-   Error error = getAllAvailableRSymbols(origin, &objects);
+   Error error = getAllAvailableRSymbols(origin, documentId, &objects);
    if (error)
    {
       LOG_ERROR(error);
@@ -284,9 +299,10 @@ ParseResults parse(const std::wstring& rCode,
 }
 
 ParseResults parse(const std::string& rCode,
-                   const FilePath& origin)
+                   const FilePath& origin,
+                   const std::string& documentId)
 {
-   return parse(string_utils::utf8ToWide(rCode), origin);
+   return parse(string_utils::utf8ToWide(rCode), origin, documentId);
 }
 
 namespace {
@@ -413,7 +429,7 @@ Error lintRSourceDocument(const json::JsonRpcRequest& request,
       return error;
    }
    
-   ParseResults results = parse(content, origin);
+   ParseResults results = parse(content, origin, documentId);
    
    pResponse->setResult(lintAsJson(results.lint()));
    
@@ -455,7 +471,7 @@ SEXP rs_lintRFile(SEXP filePathSEXP)
    }
    
    std::string rCode = file_utils::readFile(filePath);
-   ParseResults results = parse(rCode, filePath);
+   ParseResults results = parse(rCode, filePath, std::string());
    const std::vector<LintItem>& lint = results.lint().get();
    
    std::size_t n = lint.size();
@@ -490,7 +506,7 @@ SEXP rs_loadString(SEXP rCodeSEXP)
 SEXP rs_parse(SEXP rCodeSEXP)
 {
    std::string code = r::sexp::safeAsString(rCodeSEXP);
-   ParseResults results = parse(code, FilePath());
+   ParseResults results = parse(code, FilePath(), std::string());
    r::sexp::Protect protect;
    return r::sexp::create((int) results.lint().size(), &protect);
 }
