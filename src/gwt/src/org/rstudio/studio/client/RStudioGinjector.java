@@ -52,7 +52,6 @@ import org.rstudio.studio.client.rmarkdown.RmdOutputSatellite;
 import org.rstudio.studio.client.rmarkdown.RmdTemplateDiscovery;
 import org.rstudio.studio.client.rmarkdown.ui.RmdOutputFramePane;
 import org.rstudio.studio.client.rmarkdown.ui.RmdOutputFrameSatellite;
-import org.rstudio.studio.client.rsconnect.ui.PublishStatic;
 import org.rstudio.studio.client.rsconnect.ui.RSConnectDeploy;
 import org.rstudio.studio.client.rsconnect.ui.RSConnectPublishButton;
 import org.rstudio.studio.client.shiny.ShinyApplication;
@@ -121,7 +120,6 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(RoxygenHelper helper);
    void injectMembers(RSConnectPublishButton publishButton);
    void injectMembers(RSConnectDeploy deploy);
-   void injectMembers(PublishStatic staticWidget);
    
    public static final RStudioGinjector INSTANCE = GWT.create(RStudioGinjector.class);
 

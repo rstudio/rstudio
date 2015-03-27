@@ -131,7 +131,7 @@ public class RSConnectDeployDialog
          }
       });
       
-      contents_.onActivate();
+      contents_.onActivate(addProgressIndicator());
    }
    
    private void onDeploy()

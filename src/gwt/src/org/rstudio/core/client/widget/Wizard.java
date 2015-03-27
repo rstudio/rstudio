@@ -339,7 +339,7 @@ public class Wizard<I,T> extends ModalDialog<T>
             
             // let wizard and page know that the new page is active
             onPageActivated(page, okButtonVisible);
-            page.onActivate();
+            page.onActivate(getProgressIndicator());
             
             // set focus
             FocusHelper.setFocusDeferred(page);

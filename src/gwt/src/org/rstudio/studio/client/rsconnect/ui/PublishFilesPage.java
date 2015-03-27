@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.rsconnect.ui;
 
+import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.WizardPage;
 import org.rstudio.studio.client.rsconnect.model.RSConnectPublishInput;
 import org.rstudio.studio.client.rsconnect.model.RSConnectPublishResult;
@@ -52,9 +53,9 @@ public class PublishFilesPage
    }
    
    @Override
-   public void onActivate()
+   public void onActivate(ProgressIndicator indicator)
    {
-      contents_.onActivate();
+      contents_.onActivate(indicator);
    }
    
    @Override

@@ -155,13 +155,6 @@ public class RSConnect implements SessionInitHandler,
       dlg.showModal();
    }
    
-   private void publishAsStatic(RSConnectPublishInput input)
-   {
-      PublishStaticDialog dialog = new PublishStaticDialog(server_, 
-            display_, input.getOriginatingEvent().getFromPrevious());
-      dialog.showModal();
-   }
-   
    private void showPublishUI(final RSConnectActionEvent event)
    {
       if (event.getFromPrevious() != null)
@@ -282,12 +275,23 @@ public class RSConnect implements SessionInitHandler,
    
    private void publishAsCode(RSConnectActionEvent event)
    {
+      publishAsFiles(event, event.getPath());
+   }
+   
+   private void publishAsStatic(RSConnectPublishInput input)
+   {
+      publishAsFiles(input.getOriginatingEvent(), 
+            input.getOriginatingEvent().getHtmlFile());
+   }
+
+   private void publishAsFiles(RSConnectActionEvent event, String path)
+   {
       // TODO: thread ignored files through properly
       RSConnectDeployDialog dialog = 
             new RSConnectDeployDialog(
                       server_, this, display_, 
-                      FilePathUtils.dirFromFile(event.getPath()), 
-                      event.getPath(),
+                      FilePathUtils.dirFromFile(path), 
+                      path,
                       new String[]{},
                       event.getFromPrevious());
       dialog.showModal();

@@ -121,7 +121,7 @@ public abstract class WizardPage<I,T> extends Composite
    {
    }
    
-   public void onActivate()
+   public void onActivate(ProgressIndicator indicator)
    {
    }
    

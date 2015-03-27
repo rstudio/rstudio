@@ -326,10 +326,10 @@ public class RSConnectDeploy extends Composite
       return style_;
    }
    
-   public void onActivate()
+   public void onActivate(ProgressIndicator indicator)
    {
       populateAccountList(false);
-      populateDeploymentFiles();
+      populateDeploymentFiles(indicator);
    }
    
    public void setContentPath(String contentPath, boolean asMultipleRmd, 
@@ -453,7 +453,7 @@ public class RSConnectDeploy extends Composite
       });
    }
    
-   private void populateDeploymentFiles()
+   private void populateDeploymentFiles(final ProgressIndicator indicator)
    {
       if (contentPath_ == null)
          return;
@@ -464,7 +464,7 @@ public class RSConnectDeploy extends Composite
             .toLowerCase().equals(".r") ?
          FileSystemItem.createFile(contentPath_).getParentPathString() :
          contentPath_;
-       
+      indicator.onProgress("Collecting files...");
       server_.getDeploymentFiles(
             deployTarget,
             asMultipleRmd_,
@@ -490,11 +490,13 @@ public class RSConnectDeploy extends Composite
                            FileSystemItem.createFile(contentPath_).getName(),
                            false);
                   }
+                  indicator.clearProgress();
                }
                @Override
                public void onError(ServerError error)
                {
                   // we'll just show an empty list in the failure case
+                  indicator.clearProgress();
                }
             });
       

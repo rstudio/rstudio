@@ -1,5 +1,6 @@
 package org.rstudio.studio.client.rsconnect.ui;
 
+import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.WizardPage;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
@@ -50,7 +51,7 @@ public class NewRSConnectAuthPage
    }
    
    @Override
-   public void onActivate() 
+   public void onActivate(ProgressIndicator indicator) 
    {
       if (waitingForAuth_ || result_ == null)
          return;
@@ -101,7 +102,7 @@ public class NewRSConnectAuthPage
          @Override
          public void execute()
          {
-            onActivate();
+            onActivate(null);
          }
       });
       return contents_;
