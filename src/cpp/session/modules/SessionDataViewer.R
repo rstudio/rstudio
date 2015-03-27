@@ -1,7 +1,7 @@
 #
-# SessionData.R
+# SessionDataViewer.R
 #
-# Copyright (C) 2009-12 by RStudio, Inc.
+# Copyright (C) 2009-15 by RStudio, Inc.
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -176,30 +176,44 @@
     cols
 })
 
-.rs.addFunction("toDataFrame", function(x, name) {
+.rs.addFunction("toDataFrame", function(x, name, flatten) {
   # if it's not already a frame, coerce it to a frame
   if (!is.data.frame(x)) {
     frame <- NULL
-    # attempt to coerce to a data frame--this can throw errors in the case where
-    # we're watching a named object in an environment and the user replaces an
-    # object that can be coerced to a data frame with one that cannot
+    # attempt to coerce to a data frame--this can throw errors in the case
+    # where we're watching a named object in an environment and the user
+    # replaces an object that can be coerced to a data frame with one that
+    # cannot
     tryCatch(
     {
-      frame <- as.data.frame(x)
+      # create a temporary frame to hold the value; this is necessary because
+      # "x" is a function argument and therefore a promise whose value won't
+      # be bound via substitute() below
+      coerced <- x
+
+      # perform the actual coercion in the global environment; this is 
+      # necessary because we want to honor as.data.frame overrides of packages
+      # which are loaded after tools:rstudio in the search path
+      frame <- eval(substitute(as.data.frame(coerced)), 
+                    envir = globalenv())
     },
     error = function(e)
     {
     })
-    # as.data.frame uses the name of its argument to label unlabeled columns, so
-    # label these back to the original name
+    
+    # as.data.frame uses the name of its argument to label unlabeled columns,
+    # so label these back to the original name
     if (!is.null(frame))
       names(frame)[names(frame) == "x"] <- name
     x <- frame 
   }
 
   # if coercion was successful (or we started with a frame), flatten the frame
-  # if necessary
+  # if necessary and requested
   if (is.data.frame(x)) {
+    if (!flatten) {
+      return(x)
+    }
     frameCols <- .rs.frameCols(x)
     if (length(frameCols) > 0) {
       return(.rs.flattenFrame(x, frameCols))
@@ -265,15 +279,10 @@
   if (Encoding(search) == "unknown")
     Encoding(search) <- "UTF-8"
   
-  # flatten the data frame if needed 
-  frameCols <- .rs.frameCols(x)
-  if (length(frameCols) > 0) 
-    x <- .rs.flattenFrame(x, frameCols)
-
   # coerce argument to data frame--data.table objects (for example) report that
   # they're data frames, but don't actually support the subsetting operations
   # needed for search/sort/filter without an explicit cast
-  x <- as.data.frame(x)
+  x <- .rs.toDataFrame(x, "transformed", TRUE)
 
   # apply columnwise filters
   for (i in seq_along(filtered)) {
@@ -391,7 +400,8 @@
       # value here may indicate that the object exists in the environment but
       # is no longer a data frame (we want to fall back on the cache in this
       # case)
-      dataFrame <- .rs.toDataFrame(get(objName, envir = env, inherits = FALSE), objName)
+      dataFrame <- .rs.toDataFrame(get(objName, envir = env, inherits = FALSE), 
+                                   objName, TRUE)
       if (!is.null(dataFrame)) 
         return(dataFrame)
     }
@@ -500,8 +510,10 @@
      return(invisible(NULL))
    }
 
-   # test for coercion to data frame 
-   as.data.frame(x)
+   # test for coercion to data frame--the goal of this expression is just to
+   # raise an error early if the object can't be made into a frame
+   coerced <- x
+   eval(substitute(as.data.frame(coerced)), envir = globalenv())
 
    # save a copy into the cached environment
    cacheKey <- .rs.addCachedData(force(x), name)
@@ -531,7 +543,7 @@
 .rs.addFunction("assignCachedData", function(cacheKey, obj, objName) 
 {
    # coerce to data frame before assigning, and don't assign if we can't coerce
-   frame <- .rs.toDataFrame(obj, objName)
+   frame <- .rs.toDataFrame(obj, objName, TRUE)
    if (!is.null(frame))
       assign(cacheKey, frame, .rs.CachedDataEnv)
 })
