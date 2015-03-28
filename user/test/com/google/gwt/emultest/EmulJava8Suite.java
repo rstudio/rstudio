@@ -15,6 +15,9 @@
  */
 package com.google.gwt.emultest;
 
+import com.google.gwt.emultest.java8.util.OptionalDoubleTest;
+import com.google.gwt.emultest.java8.util.OptionalIntTest;
+import com.google.gwt.emultest.java8.util.OptionalLongTest;
 import com.google.gwt.emultest.java8.util.OptionalTest;
 import com.google.gwt.junit.tools.GWTTestSuite;
 
@@ -30,6 +33,9 @@ public class EmulJava8Suite {
 
     //-- java.util
     suite.addTestSuite(OptionalTest.class);
+    suite.addTestSuite(OptionalIntTest.class);
+    suite.addTestSuite(OptionalLongTest.class);
+    suite.addTestSuite(OptionalDoubleTest.class);
 
     return suite;
   }
