@@ -60,8 +60,6 @@ import java.util.Map;
  */
 public class JSORestrictionsChecker {
 
-  public static final String ERR_JSTYPE_OVERLOADS_NOT_ALLOWED =
-      "JsType methods cannot overload another method.";
   public static final String ERR_JSEXPORT_ONLY_CTORS_STATIC_METHODS_AND_STATIC_FINAL_FIELDS =
       "@JsExport may only be applied to public constructors and static methods and public "
       + "static final fields in public classes.";
@@ -101,7 +99,7 @@ public class JSORestrictionsChecker {
   static boolean LINT_MODE = false;
 
   private enum ClassState {
-    NORMAL, JSO, JSTYPE, JSTYPE_IMPL
+    NORMAL, JSO
   }
 
   /**
@@ -119,12 +117,6 @@ public class JSORestrictionsChecker {
       String alreadyImplementor = interfacesToJsoImpls.get(intfName);
       String myName = CharOperation.toString(jsoType.binding.compoundName);
 
-      if (!areInSameModule(jsoType, interf)) {
-        String msg = errMustBeDefinedInTheSameModule(intfName,myName);
-        errorOn(jsoType, cud, msg);
-        return;
-      }
-
       if (alreadyImplementor != null) {
         String msg = errAlreadyImplemented(intfName, alreadyImplementor, myName);
         errorOn(jsoType, cud, msg);
@@ -132,12 +124,6 @@ public class JSORestrictionsChecker {
       }
 
       interfacesToJsoImpls.put(intfName, myName);
-    }
-
-    // TODO(rluble): (Separate compilation) Implement a real check that a JSO must is defined in
-    // the same module as the interface(s) it implements. Depends on upcoming JProgram changes.
-    private boolean areInSameModule(TypeDeclaration jsoType, ReferenceBinding interf) {
-      return true;
     }
   }
 
@@ -278,10 +264,7 @@ public class JSORestrictionsChecker {
           errorOn(type, ERR_JS_TYPE_WITH_PROTOTYPE_SET_NOT_ALLOWED_ON_CLASS_TYPES);
         }
       }
-      Map<String, MethodBinding> methodSignatures = new HashMap<String, MethodBinding>();
-      Map<String, MethodBinding> noExports = new HashMap<String, MethodBinding>();
 
-      checkJsTypeMethodsForOverloads(methodSignatures, noExports, binding);
       for (MethodBinding mb : binding.methods()) {
         checkJsProperty(mb);
       }
@@ -329,52 +312,16 @@ public class JSORestrictionsChecker {
       }
     }
 
-    private void checkJsTypeMethodsForOverloads(Map<String, MethodBinding> methodNamesAndSigs,
-        Map<String, MethodBinding> noExports, ReferenceBinding binding) {
-      if (isJsType(binding)) {
-        for (MethodBinding mb : binding.methods()) {
-          String methodName = String.valueOf(mb.selector);
-          if (JdtUtil.getAnnotation(mb, JsInteropUtil.JSNOEXPORT_CLASS) != null) {
-            noExports.put(methodName, mb);
-            continue;
-          }
-          if (mb.isConstructor() || mb.isStatic()) {
-            continue;
-          }
-          if (JdtUtil.getAnnotation(mb, JsInteropUtil.JSPROPERTY_CLASS) != null) {
-            if (isGetter(methodName, mb) || isSetter(methodName, mb)) {
-              // JS properties are allowed to be overloaded (setter/getter)
-              continue;
-            }
-          }
-          if (methodNamesAndSigs.containsKey(methodName)) {
-            if (!methodNamesAndSigs.get(methodName).areParameterErasuresEqual(mb)) {
-              if (noExports.containsKey(methodName)
-                  && noExports.get(methodName).areParameterErasuresEqual(mb)) {
-                continue;
-              }
-              errorOn(mb, ERR_JSTYPE_OVERLOADS_NOT_ALLOWED);
-            }
-          } else {
-            methodNamesAndSigs.put(methodName, mb);
-          }
-        }
-      }
-      for (ReferenceBinding rb : binding.superInterfaces()) {
-        checkJsTypeMethodsForOverloads(methodNamesAndSigs, noExports, rb);
-      }
-    }
-
     private ClassState checkType(TypeDeclaration type) {
       SourceTypeBinding binding = type.binding;
       checkJsFunction(type, binding);
       if (isJsType(type.binding)) {
         checkJsType(type, type.binding);
-        return ClassState.JSTYPE;
+        return ClassState.NORMAL;
       }
 
       if (checkClassImplementingJsType(type)) {
-        return ClassState.JSTYPE_IMPL;
+        return ClassState.NORMAL;
       }
 
       if (!isJsoSubclass(binding)) {
@@ -509,13 +456,13 @@ public class JSORestrictionsChecker {
     /**
      * Walks up chain of interfaces and superinterfaces to find the first one marked with @JsType.
      */
-    private ReferenceBinding findNearestJsType(ReferenceBinding binding, boolean mustHavePrototype) {
+    private ReferenceBinding findNearestJsType(ReferenceBinding binding) {
       if (isJsType(binding)) {
         return binding;
       }
 
       for (ReferenceBinding intb : binding.superInterfaces()) {
-        ReferenceBinding checkSuperInt = findNearestJsType(intb, false);
+        ReferenceBinding checkSuperInt = findNearestJsType(intb);
         if (checkSuperInt != null) {
           return checkSuperInt;
         }
@@ -524,7 +471,7 @@ public class JSORestrictionsChecker {
     }
 
     private ReferenceBinding findNearestJsTypeRecursive(ReferenceBinding binding) {
-      ReferenceBinding nearest = findNearestJsType(binding, false);
+      ReferenceBinding nearest = findNearestJsType(binding);
       if (nearest != null) {
         return nearest;
       } else if (binding.superclass() != null) {
@@ -615,13 +562,6 @@ public class JSORestrictionsChecker {
     return "Only one JavaScriptObject type may implement the methods of an "
         + "interface that declared methods. The interface (" + intfName
         + ") is implemented by both (" + impl1 + ") and (" + impl2 + ")";
-  }
-
-  // TODO(rluble): (Separate compilation) It would be nice to have the actual module names here.
-  static String errMustBeDefinedInTheSameModule(String intfName, String jsoImplementation) {
-    return "A JavaScriptObject type may only implement an interface that is defined in the same"
-        + " module. The interface (" + intfName + ") and  the JavaScriptObject type (" +
-        jsoImplementation + ") are defined different modules";
   }
 
   private static void errorOn(ASTNode node, CompilationUnitDeclaration cud,

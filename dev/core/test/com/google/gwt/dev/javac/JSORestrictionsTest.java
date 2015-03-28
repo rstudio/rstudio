@@ -356,31 +356,6 @@ public class JSORestrictionsTest extends TestCase {
     shouldGenerateNoError(goodCode);
   }
 
-  public void testJsTypeNoOverloads() {
-    StringBuilder buggyCode = new StringBuilder();
-    buggyCode.append("import com.google.gwt.core.client.js.JsType;\n");
-    buggyCode.append("@JsType\n");
-    buggyCode.append("public interface Buggy {\n");
-    buggyCode.append("void foo();\n");
-    buggyCode.append("void foo(int x);\n");
-    buggyCode.append("}\n");
-
-    shouldGenerateError(buggyCode,
-        "Line 5: " + JSORestrictionsChecker.ERR_JSTYPE_OVERLOADS_NOT_ALLOWED);
-  }
-
-  public void testJsTypeNoOverloadsHierarchy() {
-    StringBuilder buggyCode = new StringBuilder();
-    buggyCode.append("import com.google.gwt.core.client.js.JsType;\n");
-    buggyCode.append("public interface Buggy {\n");
-    buggyCode.append("@JsType interface Buggy2 { void foo(); }\n");
-    buggyCode.append("@JsType interface Buggy3 extends Buggy2 { void foo(int x); }\n");
-    buggyCode.append("}\n");
-
-    shouldGenerateError(buggyCode,
-        "Line 3: " + JSORestrictionsChecker.ERR_JSTYPE_OVERLOADS_NOT_ALLOWED);
-  }
-
   public void testJsExport() {
     StringBuilder goodCode = new StringBuilder();
     goodCode.append("import com.google.gwt.core.client.js.JsExport;\n");
@@ -901,10 +876,6 @@ public class JSORestrictionsTest extends TestCase {
         CompilationStateTestBase.getGeneratedUnits(buggyResource),
         sourceLevel);
     logger.assertCorrectLogEntries();
-  }
-
-  private void shouldGenerateNoError(SourceLevel sourceLevel, StringBuilder buggyCode) {
-    shouldGenerateError(sourceLevel, buggyCode, (String[]) null);
   }
 
   private void shouldGenerateError(CharSequence buggyCode, String... expectedErrors) {

@@ -114,58 +114,58 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
         + "global name 'show' is already taken.");
   }
 
-  public void testCollidingJsPropertiesHasAndGetterSucceeds() throws Exception {
+  public void testJsPropertyGetterStyleSucceeds() throws Exception {
     addSnippetImport("com.google.gwt.core.client.js.JsType");
     addSnippetImport("com.google.gwt.core.client.js.JsProperty");
     addSnippetClassDecl(
         "@JsType",
         "public static interface IBuggy {",
-        "  @JsProperty",
-        "  boolean hasX();",
-        "  @JsProperty",
-        "  int x();",
+        "  @JsProperty boolean hasX();",
+        "  @JsProperty int getX();",
+        "  @JsProperty void setX(int x);",
         "}",
         "public static class Buggy implements IBuggy {",
         "  public boolean hasX() {return false;}",
-        "  public int x() {return 0;}",
+        "  public int getX() {return 0;}",
+        "  public void setX(int x) {};",
         "}");
 
     assertCompileSucceeds();
   }
 
-  public void testCollidingJsPropertiesHasAndSetterSucceeds() throws Exception {
+  public void testJsPropertyNonGetterStyleSucceeds() throws Exception {
     addSnippetImport("com.google.gwt.core.client.js.JsType");
     addSnippetImport("com.google.gwt.core.client.js.JsProperty");
     addSnippetClassDecl(
         "@JsType",
         "public static interface IBuggy {",
-        "  @JsProperty",
-        "  boolean hasX();",
-        "  @JsProperty",
-        "  void x(int x);",
+        "  @JsProperty boolean hasX();",
+        "  @JsProperty int x();",
+        "  @JsProperty void x(int x);",
         "}",
         "public static class Buggy implements IBuggy {",
         "  public boolean hasX() {return false;}",
-        "  public void x(int x) {}",
+        "  public int x() {return 0;}",
+        "  public void x(int x) {};",
         "}");
 
     assertCompileSucceeds();
   }
 
-  public void testCollidingJsPropertiesSetterAndGetterSucceeds() throws Exception {
+  public void testJsPropertyFluentStyleSucceeds() throws Exception {
     addSnippetImport("com.google.gwt.core.client.js.JsType");
     addSnippetImport("com.google.gwt.core.client.js.JsProperty");
     addSnippetClassDecl(
         "@JsType",
         "public static interface IBuggy {",
-        "  @JsProperty",
-        "  int x();",
-        "  @JsProperty",
-        "  void x(int x);",
+        "  @JsProperty boolean hasX();",
+        "  @JsProperty int x();",
+        "  @JsProperty IBuggy x(int x);",
         "}",
         "public static class Buggy implements IBuggy {",
+        "  public boolean hasX() {return false;}",
         "  public int x() {return 0;}",
-        "  public void x(int x) {}",
+        "  public IBuggy x(int x) {return null;};",
         "}");
 
     assertCompileSucceeds();
@@ -297,6 +297,19 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
         "public static class Buggy {",
         "  public void show() {}",
         "  public final int show = 0;",
+        "}");
+
+    assertCompileFails("Method 'test.EntryPoint$Buggy.show()V' can't be exported in type "
+        + "'test.EntryPoint$Buggy' because the member name 'show' is already taken.");
+  }
+
+  public void testCollidingMethodToMethodJsTypeFails() throws Exception {
+    addSnippetImport("com.google.gwt.core.client.js.JsType");
+    addSnippetClassDecl(
+        "@JsType",
+        "public static class Buggy {",
+        "  public void show(int x) {}",
+        "  public void show() {}",
         "}");
 
     assertCompileFails("Method 'test.EntryPoint$Buggy.show()V' can't be exported in type "
