@@ -92,6 +92,14 @@ public final class Objects {
     return Arrays.hashCode(values);
   }
 
+  public static boolean isNull(Object obj) {
+    return obj == null;
+  }
+
+  public static boolean nonNull(Object obj) {
+    return obj != null;
+  }
+
   public static <T> T requireNonNull(T obj) {
     if (obj == null) {
       throw new NullPointerException();
