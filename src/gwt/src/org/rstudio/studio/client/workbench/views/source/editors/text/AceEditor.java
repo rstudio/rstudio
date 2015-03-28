@@ -2221,6 +2221,10 @@ public class AceEditor implements DocDisplay,
       return lastCursorChangedTime_;
    }
    
+   public void blockOutdent()
+   {
+      widget_.getEditor().blockOutdent();
+   }
    
    private static final int DEBUG_CONTEXT_LINES = 2;
    private final HandlerManager handlers_ = new HandlerManager(this);

@@ -23,6 +23,7 @@ import com.google.inject.Inject;
 
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.JsArrayUtil;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.FilePathUtils;
@@ -33,6 +34,7 @@ import org.rstudio.studio.client.workbench.snippets.model.SnippetData;
 import org.rstudio.studio.client.workbench.snippets.model.SnippetsChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 
 import java.util.ArrayList;
 
@@ -68,40 +70,17 @@ public class SnippetHelper
       return $wnd.require("ace/snippets").snippetManager;
    }-*/;
    
-   public ArrayList<String> getCppSnippets()
-   {
-      ensureSnippetsLoaded();
-      return JsArrayUtil.fromJsArrayString(
-            getAvailableSnippetsImpl(manager_, "c_cpp"));
-   }
-   
-   public Snippet getCppSnippet(String name)
-   {    
-      return getSnippet(manager_, "c_cpp", name);
-   }
-   
    public ArrayList<String> getAvailableSnippets()
    {
       ensureSnippetsLoaded();
-      
       return JsArrayUtil.fromJsArrayString(
-            getAvailableSnippetsImpl(manager_, getEditorMode()));
+            getAvailableSnippetsImpl(manager_, getActiveMode()));
    }
    
    private final void ensureSnippetsLoaded()
    {
-      ensureRSnippetsLoaded();
-      ensureCppSnippetsLoaded();
-   }
-   
-   private void ensureRSnippetsLoaded()
-   {
-      ensureSnippetsLoaded("r", manager_);
-   }
-   
-   private void ensureCppSnippetsLoaded()
-   {
-      ensureSnippetsLoaded("c_cpp", manager_);
+      ensureSnippetsLoadedImpl(
+            getActiveMode(), manager_);
    }
    
    // Parse a snippet file and apply the parsed snippets for
@@ -154,7 +133,7 @@ public class SnippetHelper
             getSnippetManager());
    }
    
-   private static final native void ensureSnippetsLoaded(
+   private static final native void ensureSnippetsLoadedImpl(
          String mode,
          SnippetManager manager) /*-{
 
@@ -165,7 +144,7 @@ public class SnippetHelper
          // automatically register the snippets as necessary.
          var m = null;
          m = $wnd.require("rstudio/snippets/" + mode);
-         if (m !== null)
+         if (m != null)
             return;
             
          // Try loading internal Ace snippets. We need to pull the snippet
@@ -277,8 +256,18 @@ public class SnippetHelper
          return Object.keys(snippetsForMode);
       return [];
    }-*/;
-
-   private static final native Snippet getSnippet(
+   
+   public Snippet getSnippet(String name)
+   {
+      return getSnippet(name, getActiveMode());
+   }
+   
+   public Snippet getSnippet(String name, String mode)
+   {
+      return getSnippetImpl(manager_, mode, name);
+   }
+   
+   private static final native Snippet getSnippetImpl(
          SnippetManager manager,
          String mode,
          String name) /*-{
@@ -294,16 +283,42 @@ public class SnippetHelper
    // you need to call the ensure* functions)
    public String getSnippetContents(String snippetName)
    {
-      return getSnippet(manager_, getEditorMode(), snippetName).getContent();
+      return getSnippetImpl(manager_, getActiveMode(), snippetName).getContent();
    }
    
-   private String getEditorMode()
+   private static final native String getActiveModeImpl(AceEditorNative editor,
+                                                        Position position,
+                                                        String major)
+   /*-{
+      var Utils = $wnd.require("mode/utils");
+      var state = Utils.primaryState(editor.getSession().getState(position.row));
+      return Utils.activeMode(state, major);
+   }-*/;
+   
+   private String getMajorMode()
    {
-      String mode = editor_.getLanguageMode(
-            editor_.getCursorPosition());
+      String modeName = editor_.getFileType().getEditorLanguage().getModeName();
+      if (modeName == "rmarkdown")
+         return "markdown";
+      else if (modeName == "sweave")
+         return "tex";
+      else if (modeName == "rhtml")
+         return "html";
+      else
+         return modeName;
+   }
+   
+   private String getActiveMode()
+   {
+      String mode = getActiveModeImpl(
+            editor_.getWidget().getEditor(),
+            editor_.getCursorPosition(),
+            getMajorMode());
       
-      if (mode == null)
-         mode = "r";
+      // TODO: Find a way to unify 'mode names' and 'state names' we use as
+      // prefixes for multi-mode documents
+      if (mode == "r-cpp" || mode == "c" || mode == "cpp")
+         mode = "c_cpp";
       
       return mode.toLowerCase();
    }
@@ -320,6 +335,33 @@ public class SnippetHelper
                snippetData.getContents(),
                manager);
       }
+   }
+   
+   public boolean onInsertSnippet()
+   {
+      return attemptSnippetInsertion();
+   }
+   
+   public boolean attemptSnippetInsertion()
+   {
+      if (!editor_.getSelection().isEmpty())
+         return false;
+      
+      String token = StringUtil.getToken(
+            editor_.getCurrentLine(),
+            editor_.getCursorPosition().getColumn(),
+            "[^ \\s\\n\\t\\r\\v]",
+            false,
+            false);
+      
+      ArrayList<String> snippets = getAvailableSnippets();
+      if (snippets.contains(token))
+      {
+         applySnippet(token, token);
+         return true;
+      }
+      
+      return false;
    }
    
    private final AceEditor editor_;

@@ -102,6 +102,7 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefsAccessor;
+import org.rstudio.studio.client.workbench.snippets.SnippetHelper;
 import org.rstudio.studio.client.workbench.ui.FontSizeManager;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorPosition;
@@ -383,6 +384,7 @@ public class TextEditingTarget implements
       presentationHelper_ = new TextEditingTargetPresentationHelper(
                                                                   docDisplay_);
       reformatHelper_ = new TextEditingTargetReformatHelper(docDisplay_);
+      snippets_ = new SnippetHelper((AceEditor) docDisplay_);
       
       docDisplay_.setRnwCompletionContext(compilePdfHelper_);
       docDisplay_.setCppCompletionContext(cppCompletionContext_);
@@ -2057,6 +2059,15 @@ public class TextEditingTarget implements
    void onInsertRoxygenSkeleton()
    {
       roxygenHelper_.insertRoxygenSkeleton();
+   }
+   
+   @Handler
+   void onInsertSnippet()
+   {
+      // NOTE: Bound to Shift + Tab so we delegate back there
+      // if this isn't dispatched
+      if (!snippets_.onInsertSnippet())
+         docDisplay_.blockOutdent();
    }
    
    @Handler
@@ -4787,6 +4798,7 @@ public class TextEditingTarget implements
    private TextEditingTargetSpelling spelling_;
    private BreakpointManager breakpointManager_;
    private final LintManager lintManager_;
+   private final SnippetHelper snippets_;
 
    // Allows external edit checks to supercede one another
    private final Invalidation externalEditCheckInvalidation_ =

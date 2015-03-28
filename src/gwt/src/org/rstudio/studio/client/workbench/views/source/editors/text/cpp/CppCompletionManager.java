@@ -16,11 +16,8 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text.cpp;
 
 
-import java.util.ArrayList;
-
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Invalidation;
-import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.filetypes.DocumentMode;
@@ -203,7 +200,7 @@ public class CppCompletionManager implements CompletionManager
          else if (event.getKeyCode() == KeyCodes.KEY_TAB &&
                   modifier == KeyboardShortcut.SHIFT)
          {
-            return attemptImmediateSnippetInsertion();
+            return snippets_.attemptSnippetInsertion();
          }
          else if (event.getKeyCode() == 112 // F1
                   && modifier == KeyboardShortcut.NONE)
@@ -473,28 +470,6 @@ public class CppCompletionManager implements CompletionManager
    private boolean shouldComplete(NativeEvent event)
    {
       return initFilter_ == null || initFilter_.shouldComplete(event);
-   }
-   
-   private boolean attemptImmediateSnippetInsertion()
-   {
-      if (!docDisplay_.getSelection().isEmpty())
-         return false;
-      
-      String token = StringUtil.getToken(
-            docDisplay_.getCurrentLine(),
-            docDisplay_.getCursorPosition().getColumn(),
-            "[^ \\s\\n\\t\\r\\v]",
-            false,
-            false);
-      
-      ArrayList<String> snippets = snippets_.getCppSnippets();
-      if (snippets.contains(token))
-      {
-         snippets_.applySnippet(token, token);
-         return true;
-      }
-      
-      return false;
    }
    
    private CppServerOperations server_;

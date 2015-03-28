@@ -105,6 +105,7 @@ public abstract class
    public abstract AppCommand findUsages();
    public abstract AppCommand editRmdFormatOptions();
    public abstract AppCommand insertRoxygenSkeleton();
+   public abstract AppCommand insertSnippet();
  
    // Projects
    public abstract AppCommand newProject();
