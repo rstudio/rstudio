@@ -15,6 +15,8 @@
  */
 package java.util;
 
+import java.util.function.Supplier;
+
 /**
  * See <a
  * href="http://docs.oracle.com/javase/7/docs/api/java/util/Objects.html">the
@@ -110,6 +112,13 @@ public final class Objects {
   public static <T> T requireNonNull(T obj, String message) {
     if (obj == null) {
       throw new NullPointerException(message);
+    }
+    return obj;
+  }
+
+  public static <T> T requireNonNull(T obj, Supplier<String> messageSupplier) {
+    if (obj == null) {
+      throw new NullPointerException(messageSupplier.get());
     }
     return obj;
   }
