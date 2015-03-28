@@ -24,6 +24,8 @@ import com.google.inject.Inject;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.regex.Pattern;
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.FilePathUtils;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -312,6 +314,11 @@ public class SnippetHelper
             editor_.getWidget().getEditor(),
             editor_.getCursorPosition(),
             getMajorMode());
+      
+      // TODO: Find a way to unify 'mode names' and 'state names' we use as
+      // prefixes for multi-mode documents
+      if (mode == "r-cpp" || mode == "c" || mode == "cpp")
+         mode = "c_cpp";
       
       return mode.toLowerCase();
    }
