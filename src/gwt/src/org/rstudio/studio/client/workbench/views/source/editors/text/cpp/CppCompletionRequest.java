@@ -144,11 +144,11 @@ public class CppCompletionRequest
       if (uiPrefs_.enableSnippets().getValue() &&
           (completionPosition_.getScope() == CompletionPosition.Scope.Global))
       {
-         ArrayList<String> snippets = snippets_.getCppSnippets();
+         ArrayList<String> snippets = snippets_.getAvailableSnippets();
          for (String snippet : snippets)
             if (snippet.startsWith(userTypedText))
             {
-               String content = snippets_.getCppSnippet(snippet).getContent();
+               String content = snippets_.getSnippet(snippet).getContent();
                content = content.replace("\t", "  ");
                filtered.unshift(CppCompletion.createSnippetCompletion(snippet,
                                                                       content));
