@@ -22,6 +22,10 @@ var snippets = [
    {
       name: "[",
       content: '[${1:label}](${2:location})'
+   },
+   {
+      name: "![",
+      content: '![${1:label}](${2:location})'
    }
 ];
 

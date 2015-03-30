@@ -175,7 +175,7 @@ public class SnippetHelper
       // we only want to replace the token.
       int offset = token.length();
       if (StringUtil.isComplementOf(
-            token,
+            token.substring(offset - 1),
             String.valueOf(editor_.getCharacterAtCursor())))
       {
          editor_.moveCursorRight();
