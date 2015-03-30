@@ -247,11 +247,6 @@ public class RSConnectDeploy extends Composite
       accountList_.setAccountList(accounts);
    }
    
-   public RSConnectAccount getSelectedAccount()
-   {
-      return accountList_.getSelectedAccount();
-   }
-   
    public void setFileList(JsArrayString files, String[] unchecked)
    {
       if (forDocument_)
@@ -333,6 +328,7 @@ public class RSConnectDeploy extends Composite
                     style_.otherStatus()));
 
       appInfoPanel_.setVisible(true);
+      appDetailsPanel_.setVisible(true);
       newAppPanel_.setVisible(false);
    }
    
@@ -390,8 +386,14 @@ public class RSConnectDeploy extends Composite
          }
       }
       
+      // if we're redeploying to the same account, use the previous app name;
+      // otherwise, read the new name the user's entered
+      String appName = fromPrevious_ != null && 
+            getSelectedAccount().equals(fromPrevious_.getAccount()) ?
+            fromPrevious_.getName() : getNewAppName();
+      
       return new RSConnectPublishResult(
-            getNewAppName(), 
+            appName, 
             getSelectedAccount(), 
             FileSystemItem.createFile(contentPath_).getParentPathString(), 
             contentPath_,
@@ -407,6 +409,11 @@ public class RSConnectDeploy extends Composite
    
    // Private methods --------------------------------------------------------
    
+   private RSConnectAccount getSelectedAccount()
+   {
+      return accountList_.getSelectedAccount();
+   }
+   
    private void setPreviousInfo()
    {
       // when the dialog is servicing a redeploy, find information on the
@@ -415,6 +422,8 @@ public class RSConnectDeploy extends Composite
       {
          appProgressName_.setText(fromPrevious_.getName());
          appProgressPanel_.setVisible(true);
+         appInfoPanel_.setVisible(true);
+
          // get all of the apps deployed from the account to the server
          server_.getRSConnectAppList(
                fromPrevious_.getAccountName(), 
@@ -624,6 +633,7 @@ public class RSConnectDeploy extends Composite
    @UiField(provided=true) RSConnectAccountList accountList_;
    @UiField HTMLPanel newAppPanel_;
    @UiField HTMLPanel appInfoPanel_;
+   @UiField HTMLPanel appDetailsPanel_;
    @UiField HTMLPanel appProgressPanel_;
    @UiField InlineLabel appProgressName_;
    @UiField VerticalPanel fileListPanel_;

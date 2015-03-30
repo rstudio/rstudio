@@ -47,23 +47,25 @@
          </g:HTMLPanel>
          <g:HTMLPanel styleName="{res.style.controlLabel}" visible="false" 
                       ui:field="appInfoPanel_">
-            <g:Label text="Destination URL:" 
-                     styleName="{res.style.controlLabel}"></g:Label>
-            <g:Anchor styleName="{res.style.urlAnchor}" ui:field="urlAnchor_" 
-                      target="_blank"></g:Anchor>
-            <g:InlineLabel text="Status:"></g:InlineLabel>
-            <g:InlineLabel styleName="{res.style.statusLabel}" 
-                           ui:field="statusLabel_"></g:InlineLabel>
-         </g:HTMLPanel>
-         <g:HTMLPanel styleName="{res.style.progressPanel}" 
-                      ui:field="appProgressPanel_" visible="false">
-            <g:HTMLPanel>
-               <g:Image resource="{coreRes.progress_gray}"></g:Image>
+            <g:HTMLPanel ui:field="appDetailsPanel_" visible="false">
+               <g:Label text="Destination URL:" 
+                        styleName="{res.style.controlLabel}"></g:Label>
+               <g:Anchor styleName="{res.style.urlAnchor}" ui:field="urlAnchor_" 
+                         target="_blank"></g:Anchor>
+               <g:InlineLabel text="Status:"></g:InlineLabel>
+               <g:InlineLabel styleName="{res.style.statusLabel}" 
+                              ui:field="statusLabel_"></g:InlineLabel>
             </g:HTMLPanel>
-            <g:InlineLabel text="Looking up details for "></g:InlineLabel>
-            <g:InlineLabel styleName="{res.style.statusLabel}" 
-                           ui:field="appProgressName_"></g:InlineLabel>
-            <g:InlineLabel text="..."></g:InlineLabel>
+            <g:HTMLPanel styleName="{res.style.progressPanel}" 
+                         ui:field="appProgressPanel_" visible="false">
+               <g:HTMLPanel>
+                  <g:Image resource="{coreRes.progress_gray}"></g:Image>
+               </g:HTMLPanel>
+               <g:InlineLabel text="Looking up details for "></g:InlineLabel>
+               <g:InlineLabel styleName="{res.style.statusLabel}" 
+                              ui:field="appProgressName_"></g:InlineLabel>
+               <g:InlineLabel text="..."></g:InlineLabel>
+            </g:HTMLPanel>
          </g:HTMLPanel>
       </g:HTMLPanel>
      </g:customCell>

@@ -275,7 +275,7 @@ public class RSConnectPublishButton extends Composite
          {
             final RSConnectDeploymentRecord rec = recs.get(i);
             final DeploymentMenuItem menuItem = new DeploymentMenuItem(rec, 
-                  rec.getWhen() == defaultRec_.getWhen(), new Command()
+                  rec == defaultRec_, new Command()
                {
                   @Override
                   public void execute()
