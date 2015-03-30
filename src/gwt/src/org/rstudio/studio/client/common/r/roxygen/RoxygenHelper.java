@@ -531,7 +531,6 @@ public class RoxygenHelper
          if (type != null)
             entry += type = ". ";
             
-         entry += "Description of '" + arg + "'.";
          newRoxygenEntries.push(entry);
       }
          
@@ -669,7 +668,6 @@ public class RoxygenHelper
          String type,
          Position position)
    {
-      String typeCapitalized = StringUtil.capitalizeAllWords(type);
       String roxygenParams = argsToExampleRoxygen(
             argNames,
             argTypes,
@@ -681,21 +679,13 @@ public class RoxygenHelper
          roxygenParams += "\n#'\n";
       
       String block = 
-                  "#' " + typeCapitalized + " '" + name + "'\n" +
-                  "#'\n" +
-                  "#' Provide a description of your " + type + " in the\n" +
-                  "#' first paragraph. It can span multiple lines.\n" +
-                  "#'\n" +
-                  "#' Provide extra details (if necessary) about the usage\n" +
-                  "#' of your " + type + " in the second paragraph.\n" +
+                  "#' Title\n" +
                   "#'\n" +
                   roxygenParams +
-                  "#' @return What does the function return?\n" +
+                  "#' @return\n" +
                   "#' @export\n" +
                   "#'\n" +
-                  "#' @examples\n" +
-                  "#' ## How is '" + name + "' used?\n"
-       ;
+                  "#' @examples\n";
       
       Position insertionPosition = Position.create(
             position.getRow(),
@@ -731,12 +721,8 @@ public class RoxygenHelper
    private String argToExampleRoxygen(String argName, String argType, String tagName)
    {
       String output = "#' @" + tagName + " " + argName + " ";
-      
       if (argType != null)
-         output += "Object of class '" + argType + "'. ";
-      else
-         output += "Description of '" + argName + "'.";
-      
+         output += argType + ". ";
       return output;
    }
    

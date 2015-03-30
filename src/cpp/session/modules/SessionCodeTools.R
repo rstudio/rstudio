@@ -1024,22 +1024,26 @@
                                                  fnCallString,
                                                  envir = parent.frame(1))
 {
-   message <- .rs.scalar("")
+   default <- list(
+      message = .rs.scalar(""),
+      type = .rs.scalar("")
+   )
+   
    fnObject <- tryCatch(
       .rs.getAnywhere(fnNameString, envir = envir),
       error = function(e) NULL
    )
    
    if (is.null(fnObject))
-      return(message)
+      return(default)
    
    ## TODO: handle primitives
    if (is.primitive(fnObject))
-      return(message)
+      return(default)
    
    ## TODO: think about why this might occur
    if (!is.function(fnObject))
-      return(message)
+      return(default)
    
    fnCall <- tryCatch(
       suppressWarnings(parse(text = fnCallString)[[1]]),
@@ -1047,7 +1051,7 @@
    )
    
    if (is.null(fnCall))
-      return(message)
+      return(default)
    
    callFormals <- setdiff(names(fnCall), "")
    formals <- formals(fnObject)
@@ -1056,36 +1060,39 @@
    ## TODO: '...' is only valid for use when called within a function
    ## that also accepts '...' arguments.
    if ("..." %in% names)
-      return(message)
+      return(default)
    
    ## Check for '...' passed into function calls as well (ie, not
    ## just part of function object signature)
    for (i in seq_along(fnCall))
       if (.rs.isSymbolCalled(fnCall[[i]], "..."))
-         return(message)
+         return(default)
    
-   invalidNames <- callFormals[!(callFormals %in% names)]
-   
-   if (length(invalidNames))
-   {
-      return(.rs.scalar(paste("invalid argument names:",
-                              paste(shQuote(invalidNames), collapse = ", "))))
-   }
-   
-   if (length(callFormals) > length(formals))
-   {
-      return(.rs.scalar("too many arguments to function"))
-   }
-   
-   maybeError <- tryCatch(
+   # Execute 'match.call()' with warnings for partial
+   # matching turned on, so that we can capture and report
+   # those
+   old <- getOption("warnPartialMatchArgs", default = FALSE)
+   options(warnPartialMatchArgs = TRUE)
+   result <- tryCatch(
       match.call(fnObject, fnCall),
+      warning = function(w) w,
       error = function(e) e
    )
+   options(warnPartialMatchArgs = old)
    
-   if (inherits(maybeError, "error"))
-      return(.rs.scalar(maybeError$message))
+   if (inherits(result, "warning"))
+      return(list(
+         message = .rs.scalar(result$message),
+         type = .rs.scalar("warning")
+      ))
    
-   return(message)
+   if (inherits(result, "error"))
+      return(list(
+         message = .rs.scalar(result$message),
+         type = .rs.scalar("error")
+      ))
+   
+   return(default)
    
 })
 
@@ -1276,4 +1283,74 @@
       field.types = field.types
    )
    
+})
+
+.rs.addFunction("asLookupEnv", function(vector)
+{
+   env <- new.env(parent = emptyenv())
+   for (object in vector)
+      assign(object, TRUE, envir = env)
+   env
+})
+
+.rs.setVar("nse.functions", .rs.asLookupEnv(c(
+   "subset", "with", "quote", "substitute",
+   "match.call", "evalq", "enquote", "bquote"
+)))
+
+.rs.setVar("nse.cache", new.env(parent = emptyenv()))
+
+.rs.addFunction("maybePerformsNSE", function(objectString)
+{
+   # TODO: why can we get zero-length function calls?
+   if (!nzchar(objectString))
+      return(FALSE)
+   
+   # First, check the cache to see if we tried to lint this already.
+   # TODO: Should store some hash / representation of the function itself?
+   cache <- .rs.getVar("nse.cache")
+   cached <- cache[[objectString]]
+   if (is.logical(cached))
+      return(cached)
+   
+   # Try to resolve the object from the associated string.
+   object <- .rs.getAnywhere(objectString, envir = parent.frame())
+   if (!is.function(object))
+   {
+      cache[[objectString]] <- FALSE
+      return(FALSE)
+   }
+   
+   # Get the function body, and iterate through looking for 'NSE-performing' calls
+   body <- body(object)
+   nseFunctions <- .rs.getVar("nse.functions")
+   result <- .rs.checkForNSE(body, nseFunctions)
+   
+   # Update cache and return
+   cache[[objectString]] <- result
+   result
+   
+})
+
+.rs.addFunction("checkForNSE", function(body,
+                                        nseFunctions = .rs.getVar("nse.functions"))
+{
+   if (is.expression(body))
+      return(any(vapply(body, FUN.VALUE = logical(1), function(x) {
+         .rs.checkForNSE(x, nseFunctions)
+      })))
+   
+   if (is.call(body))
+   {
+      callName <- as.character(body[[1]])
+      if (length(callName) == 1 && !is.null(nseFunctions[[callName]]))
+         return(TRUE)
+      
+      if (length(body) > 1)
+         return(any(vapply(2:length(body), FUN.VALUE = logical(1), function(i) {
+            .rs.checkForNSE(body[[i]], nseFunctions)
+         })))
+   }
+   
+   return(FALSE)
 })

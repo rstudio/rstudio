@@ -995,6 +995,22 @@ public:
       return parseOptions_;
    }
    
+   void pushNseCall(const std::wstring& call)
+   {
+      nseCalls_.push(call);
+   }
+   
+   void popNseCall()
+   {
+      if (withinNseCall())
+         nseCalls_.pop();
+   }
+   
+   bool withinNseCall() const
+   {
+      return !nseCalls_.empty();
+   }
+   
 private:
    boost::shared_ptr<ParseNode> pRoot_;
    ParseNode* pNode_;
@@ -1002,6 +1018,7 @@ private:
    ParseOptions parseOptions_;
    Stack<ParseState> parseStateStack_;
    Stack<std::wstring> functionNames_;
+   Stack<std::wstring> nseCalls_;
    Position position_;
 };
 

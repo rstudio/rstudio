@@ -35,6 +35,7 @@ import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.codesearch.model.CodeSearchServerOperations;
 import org.rstudio.studio.client.workbench.prefs.model.PrefsServerOperations;
 import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
+import org.rstudio.studio.client.workbench.snippets.SnippetServerOperations;
 import org.rstudio.studio.client.workbench.views.buildtools.model.BuildServerOperations;
 import org.rstudio.studio.client.workbench.views.choosefile.model.ChooseFileServerOperations;
 import org.rstudio.studio.client.workbench.views.console.model.ConsoleServerOperations;
@@ -88,7 +89,8 @@ public interface WorkbenchServerOperations extends ConsoleServerOperations,
                                                    PackratServerOperations,
                                                    MarkersServerOperations,
                                                    LintServerOperations,
-                                                   RoxygenServerOperations
+                                                   RoxygenServerOperations,
+                                                   SnippetServerOperations
 {   
    void initializeForMainWorkbench();
    void disconnect();

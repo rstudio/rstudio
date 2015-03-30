@@ -32,8 +32,14 @@ var Mode = function(suppressHighlighting, session) {
    this.$session = session;
    this.$tokenizer = new Tokenizer(new RHtmlHighlightRules().getRules());
 
-   this.codeModel = new RCodeModel(session, this.$tokenizer, /^r-/,
-                                   /^<!--\s*begin.rcode\s*(.*)/);
+   this.codeModel = new RCodeModel(
+      session,
+      this.$tokenizer,
+      /^r-/,
+      /^<!--\s*begin.rcode\s*(.*)/,
+      /^\s*end.rcode\s*-->/
+   );
+   
    this.foldingRules = this.codeModel;
    this.$sweaveBackgroundHighlighter = new SweaveBackgroundHighlighter(
          session,
@@ -44,6 +50,7 @@ var Mode = function(suppressHighlighting, session) {
 oop.inherits(Mode, HtmlMode);
 
 (function() {
+
    this.insertChunkInfo = {
       value: "<!--begin.rcode\n\nend.rcode-->\n",
       position: {row: 0, column: 15}
@@ -55,9 +62,14 @@ oop.inherits(Mode, HtmlMode);
       return state.match(/^r-/) ? 'R' : 'HTML';
    };
 
-   this.getNextLineIndent = function(state, line, tab)
+   this.$getNextLineIndent = this.getNextLineIndent;
+   this.getNextLineIndent = function(state, line, tab, row)
    {
-      return this.codeModel.getNextLineIndent(state, line, tab);
+      var mode = Utils.activeMode(state, "html");
+      if (mode === "r")
+         return this.codeModel.getNextLineIndent(state, line, tab, row);
+      else
+         return this.$getNextLineIndent(state, line, tab);
    };
 
 }).call(Mode.prototype);

@@ -34,6 +34,7 @@ var Behaviour = require("ace/mode/behaviour").Behaviour;
 var CppCodeModel = require("mode/cpp_code_model").CppCodeModel;
 var CppTokenCursor = require("mode/token_cursor").CppTokenCursor;
 var TextMode = require("ace/mode/text").Mode;
+var Utils = require("mode/utils");
 
 var $fillinDoWhile = true;
 
@@ -143,9 +144,9 @@ var CStyleBehaviour = function(codeModel) {
             };
 
          // Comment indentation rules
-         if (state == "comment" || state == "doc-start") {
-         
-
+         if (Utils.endsWith(state, "comment") ||
+             Utils.endsWith(state, "doc-start"))
+         {
             // Choose indentation for the current line based on the position
             // of the cursor -- but make sure we only apply this if the
             // cursor is on the same row as the line being indented

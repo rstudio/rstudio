@@ -4040,6 +4040,15 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, GET_SET_REF_CLASS_CALL, params, requestCallback);
    }
    
+   @Override
+   public void transformSnippet(String snippetContent,
+                                ServerRequestCallback<String> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(snippetContent));
+      sendRequest(RPC_SCOPE, TRANSFORM_SNIPPET, params, requestCallback);
+   }
+   
    private String clientId_;
    private double clientVersion_ = 0;
    private boolean listeningForEvents_;
@@ -4369,4 +4378,5 @@ public class RemoteServer implements Server
    private static final String GET_SET_GENERIC_CALL = "get_set_generic_call";
    private static final String GET_SET_METHOD_CALL = "get_set_method_call";
    private static final String GET_SET_REF_CLASS_CALL = "get_set_ref_class_call";
+   private static final String TRANSFORM_SNIPPET = "transform_snippet";
 }

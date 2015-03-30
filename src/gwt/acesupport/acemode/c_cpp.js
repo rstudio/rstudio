@@ -35,7 +35,7 @@ var Range = require("ace/range").Range;
 var RHighlightRules = require("mode/r_highlight_rules").RHighlightRules;
 var c_cppHighlightRules = require("mode/c_cpp_highlight_rules").c_cppHighlightRules;
 
-var MatchingBraceOutdent = require("mode/c_cpp_matching_brace_outdent").MatchingBraceOutdent;
+var CppMatchingBraceOutdent = require("mode/c_cpp_matching_brace_outdent").CppMatchingBraceOutdent;
 var CStyleBehaviour = require("mode/behaviour/cstyle").CStyleBehaviour;
 
 var CppStyleFoldMode = null;
@@ -64,15 +64,20 @@ var Mode = function(suppressHighlighting, session) {
    this.$tokenizer = new Tokenizer(new c_cppHighlightRules().getRules());
 
    // R-related tokenization
-   this.$r_outdent = {};
-   oop.implement(this.$r_outdent, RMatchingBraceOutdent);
-   this.r_codeModel = new RCodeModel(session, this.$tokenizer, /^r-/, /^\s*\/\*{3,}\s*([Rr])\s*$/);
+   this.r_codeModel = new RCodeModel(
+      session,
+      this.$tokenizer,
+      /^r-/,
+      /^\s*\/\*{3,}\s*([Rr])\s*$/,
+      /^\s*\*+\//
+   );
+   this.$r_outdent = new RMatchingBraceOutdent(this.r_codeModel);
 
    // C/C++ related tokenization
    this.codeModel = new CppCodeModel(session, this.$tokenizer);
    
    this.$behaviour = new CStyleBehaviour(this.codeModel);
-   this.$outdent = new MatchingBraceOutdent(this.codeModel);
+   this.$cpp_outdent = new CppMatchingBraceOutdent(this.codeModel);
    
    this.$sweaveBackgroundHighlighter = new SweaveBackgroundHighlighter(
       session,
@@ -176,14 +181,14 @@ oop.inherits(Mode, TextMode);
       if (this.inRLanguageMode(state))
          return this.$r_outdent.checkOutdent(state, line, input);
       else
-         return this.$outdent.checkOutdent(state, line, input);
+         return this.$cpp_outdent.checkOutdent(state, line, input);
    };
 
    this.autoOutdent = function(state, doc, row) {
       if (this.inRLanguageMode(state))
          return this.$r_outdent.autoOutdent(state, doc, row, this.r_codeModel);
       else
-         return this.$outdent.autoOutdent(state, doc, row);
+         return this.$cpp_outdent.autoOutdent(state, doc, row);
    };
 
    this.$transformAction = this.transformAction;

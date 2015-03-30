@@ -38,70 +38,33 @@
       <fileset dir="lib/selenium/2.37.0/libs" includes="*.jar"/>
    </path>
 
+   <fileset id="acesupport.sources.fileset" dir="acesupport">
+      <include name="**/*.js"/>
+      <exclude name="extern.js"/>
+   </fileset>
+
+   <path id="acesupport.sources">
+      <fileset refid="acesupport.sources.fileset"/>
+   </path>
+
    <target name="ext">
       <jscomp compilationLevel="simple" warning="default"
               debug="false" output="${ace.bin}/acesupport.js">
-         <externs dir="acesupport">
-            <file name="extern.js"/>
-         </externs>
-         <sources dir="acesupport">
-            <file name="loader.js"/>
-         </sources>
-         <sources dir="acesupport/acemode">
-            <file name="auto_brace_insert.js"/>
-            <file name="token_utils.js"/>
-            <file name="token_cursor.js"/>
-            <file name="utils.js"/>
-            <file name="r_background_highlighter.js"/>
-            <file name="r_highlight_rules.js"/>
-            <file name="r_matching_brace_outdent.js"/>
-            <file name="r_code_model.js"/>
-            <file name="r_scope_tree.js"/>
-            <file name="r.js"/>
-            <file name="markdown_highlight_rules.js"/>
-            <file name="markdown_folding.js"/>
-            <file name="markdown.js"/>
-            <file name="tex_highlight_rules.js"/>
-            <file name="tex.js"/>
-            <file name="sweave_background_highlighter.js"/>
-            <file name="sweave_highlight_rules.js"/>
-            <file name="sweave.js"/>
-            <file name="rdoc_highlight_rules.js"/>
-            <file name="rdoc.js"/>
-            <file name="rmarkdown_highlight_rules.js"/>
-            <file name="rmarkdown.js"/>
-            <file name="rhtml_highlight_rules.js"/>
-            <file name="rhtml.js"/>
-            <file name="dcf_highlight_rules.js"/>
-            <file name="dcf.js"/>
-            <file name="mermaid_highlight_rules.js"/>
-            <file name="mermaid.js"/>
-            <file name="cpp_scope_tree.js"/>
-            <file name="cpp_code_model.js"/>
-            <file name="doc_comment_highlight_rules.js"/>
-            <file name="c_cpp_matching_brace_outdent.js"/>
-            <file name="c_cpp_style_behaviour.js"/>
-            <file name="c_cpp_highlight_rules.js"/>
-            <file name="c_cpp.js"/>
-            <file name="c_cpp_fold_mode.js"/>
-            <file name="xml.js"/>
-            <file name="xml_behavior.js"/>
-            <file name="xml_fold_mode.js"/>
-            <file name="xml_highlight_rules.js"/>
-            <file name="xml_util.js"/>
-            <file name="stan_highlight_rules.js"/>
-            <file name="stan.js"/>
-         </sources>
-         <sources dir="acesupport/snippets">
-            <file name="snippets.js"/>
-            <file name="snippets/r.js"/>
-            <file name="snippets/c_cpp.js"/>
-         </sources>
-         <sources dir="acesupport/acetheme">
-            <file name="default.js"/>
-         </sources>
-      </jscomp>
+              
+          <externs dir="acesupport">
+             <file name="extern.js"/>
+          </externs>
 
+          <path refid="acesupport.sources"/>
+
+      </jscomp>
+   </target>
+
+   <target name="acesupport" description="Compile (debugging) Ace support">
+      <concat destfile="${ace.bin}/acesupport.js">
+         <fileset refid="acesupport.sources.fileset"/>
+      </concat>
+      <echo>Concatenated acesupport files to 'acesupport.js'</echo>
    </target>
 
    <target name="javac" description="Compile java source">
@@ -173,7 +136,7 @@
       </antcall>
    </target>
 	
-   <target name="devmode" depends="ext,javac" description="Run development mode">
+   <target name="devmode" depends="acesupport,javac" description="Run development mode">
       <java failonerror="true" fork="true" classname="com.google.gwt.dev.DevMode">
          <classpath>
             <pathelement location="src"/>
@@ -190,7 +153,7 @@
          <arg value="org.rstudio.studio.RStudioSuperDevMode"/>
       </java>
    </target>
-   
+
    <target name="superdevmode" description="Run super dev mode">
    	<antcall target="gwtc">
           <param name="gwt.main.module" value="org.rstudio.studio.RStudioSuperDevMode"/>

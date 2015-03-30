@@ -1,7 +1,7 @@
 /*
- * ServerPAMAuthOverlay.cpp
+ * SnippetServerOperations.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-15 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -12,34 +12,12 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
+package org.rstudio.studio.client.workbench.snippets;
 
-#include "ServerPAMAuth.hpp"
+import org.rstudio.studio.client.server.ServerRequestCallback;
 
-namespace rstudio {
-namespace server {
-namespace pam_auth {
-
-bool canSetSignInCookies()
+public interface SnippetServerOperations
 {
-   return true;
+   void transformSnippet(String snippetContent,
+                         ServerRequestCallback<String> callBack);
 }
-
-bool canStaySignedIn()
-{
-   return true;
-}
-
-void onUserAuthenticated(const std::string& username,
-                         const std::string& password)
-{
-
-}
-
-void onUserUnauthenticated(const std::string& username)
-{
-
-}
-
-} // namespace pam_auth
-} // namespace server
-} // namespace rstudio

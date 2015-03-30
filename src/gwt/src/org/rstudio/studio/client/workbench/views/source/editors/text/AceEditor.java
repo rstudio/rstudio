@@ -1528,16 +1528,17 @@ public class AceEditor implements DocDisplay,
    }
 
    @Override
-   public Scope getCurrentFunction()
+   public ScopeFunction getCurrentFunction(boolean allowAnonymous)
    {
-      return getFunctionAtPosition(getCursorPosition());
+      return getFunctionAtPosition(getCursorPosition(), allowAnonymous);
    }
    
    @Override
-   public ScopeFunction getFunctionAtPosition(Position position)
+   public ScopeFunction getFunctionAtPosition(Position position,
+                                              boolean allowAnonymous)
    {
       return getSession().getMode().getCodeModel().getCurrentFunction(
-            position);
+            position, allowAnonymous);
    }
 
    @Override
@@ -2220,6 +2221,10 @@ public class AceEditor implements DocDisplay,
       return lastCursorChangedTime_;
    }
    
+   public void blockOutdent()
+   {
+      widget_.getEditor().blockOutdent();
+   }
    
    private static final int DEBUG_CONTEXT_LINES = 2;
    private final HandlerManager handlers_ = new HandlerManager(this);

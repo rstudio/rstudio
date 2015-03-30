@@ -77,20 +77,20 @@ void NseFunctionBlacklist::addProjectBlacklistedSymbols()
 {
    // Read lint items from a project lint file (if it exists)
    FilePath projectLintFile =
-         projects::projectContext().directory().complete("RStudioLintBlacklist");
+         projects::projectContext().directory().childPath("RStudioLintBlacklist");
    
    addLintFromFile(projectLintFile);
 }
    
 void NseFunctionBlacklist::addGlobalBlacklistedSymbols()
 {
-   FilePath homePath(core::system::getenv("HOME"));
+   FilePath homePath = module_context::userHomePath();
    
    if (!homePath.exists())
       return;
    
    FilePath globalLintFile =
-         homePath.complete(".R").complete("RStudioLintBlacklist");
+         homePath.childPath(".R").childPath("RStudioLintBlacklist");
    
    if (!globalLintFile.exists())
       return;
@@ -102,6 +102,11 @@ namespace {
 
 bool isWithinNseFunction(const ParseStatus& status)
 {
+   // Check if we've inferred the current function to be an NSE function
+   if (status.withinNseCall())
+      return true;
+   
+   // Check the blacklist of symbol names
    NseFunctionBlacklist& blacklist = NseFunctionBlacklist::instance();
    BOOST_FOREACH(const std::wstring& fnName, status.functionNames())
    {
@@ -159,6 +164,20 @@ bool isDataTableSingleBracketCall(RTokenCursor& cursor)
       return false;
    
    return r::sexp::inherits(resultSEXP, "data.table");
+}
+
+bool mightPerformNonstandardEvaluation(const std::wstring& callingString)
+{
+   using namespace r::exec;
+   RFunction maybePerformsNSE(".rs.maybePerformsNSE");
+   maybePerformsNSE.addParam(string_utils::wideToUtf8(callingString));
+   
+   bool performsNSE = false;
+   Error error = maybePerformsNSE.call(&performsNSE);
+   if (error)
+      LOG_ERROR(error);
+   
+   return performsNSE;
 }
 
 } // end anonymous namespace
@@ -415,21 +434,9 @@ void handleIdentifier(RTokenCursor& cursor,
 {
    // Check to see if we are defining a symbol at this location.
    // Note that both string and id are valid for assignments.
-   
-   // Bail if we're within an NSE function.
-   if (isWithinNseFunction(status))
-   {
-      DEBUG("--- Within NSE function; not adding symbol");
-      return;
-   }
-   
-   // Bail if we're in a function call and the user has not opted into function
-   // lint.
-   if (status.isInArgumentList() &&
-       !status.parseOptions().lintRFunctions())
-   {
-      return;
-   }
+   bool skipReferenceChecks =
+         isWithinNseFunction(status) ||
+         (status.isInArgumentList() && !status.parseOptions().lintRFunctions());
    
    // Don't cache identifiers if:
    //
@@ -462,7 +469,8 @@ void handleIdentifier(RTokenCursor& cursor,
       //
       // is legal, and `foo` might be an object on the search path. (For
       // variables, we prefer not searching the search path)
-      if (isLocalLeftAssign(cursor.nextSignificantToken()) &&
+      if (!skipReferenceChecks &&
+          isLocalLeftAssign(cursor.nextSignificantToken()) &&
           !status.node()->symbolHasDefinitionInTree(cursor.contentAsUtf8(), cursor.currentPosition()))
       {
          RTokenCursor clone = cursor.clone();
@@ -482,7 +490,7 @@ void handleIdentifier(RTokenCursor& cursor,
    }
    
    // If this is truly an identifier, add a reference.
-   if (cursor.isType(RToken::ID))
+   if (!skipReferenceChecks && cursor.isType(RToken::ID))
    {
       DEBUG("--- Adding reference to symbol");
       status.node()->addReferencedSymbol(cursor);
@@ -591,6 +599,9 @@ void checkBinaryOperatorWhitespace(RTokenCursor& cursor,
 void validateFunctionCall(const RTokenCursor& cursor,
                           ParseStatus& status)
 {
+   using namespace r::sexp;
+   using namespace r::exec;
+   
    if (!cursor.isType(RToken::LPAREN))
       return;
    
@@ -611,26 +622,42 @@ void validateFunctionCall(const RTokenCursor& cursor,
    std::string fnCallString = string_utils::wideToUtf8(
             std::wstring(startCursor.begin(), endCursor.end()));
    
-   r::exec::RFunction validate(".rs.validateFunctionCall");
+   RFunction validate(".rs.validateFunctionCall");
    validate.addParam(fnNameString);
    validate.addParam(fnCallString);
    
-   std::string message;
-   Error error = validate.call(&message);
-   if (error)
-   {
-      LOG_ERROR(error);
-      return;
-   }
+   Protect protect;
+   SEXP resultSEXP;
+   
+   Error error = validate.call(&resultSEXP, &protect);
+   IF_ERROR(error, return);
+   
+   std::string message, type;
+   
+   error = getNamedListElement(resultSEXP, "message", &message);
+   IF_ERROR(error, return);
+   
+   error = getNamedListElement(resultSEXP, "type", &type);
+   IF_ERROR(error, return);
    
    if (!message.empty())
    {
+      LintType lintType = LintTypeInfo;
+      if (type == "error")
+         lintType = LintTypeError;
+      else if (type == "warning")
+         lintType = LintTypeWarning;
+      else if (type == "note" || type == "info")
+         lintType = LintTypeInfo;
+      else if (type == "style")
+         lintType = LintTypeStyle;
+      
       status.lint().add(
                startCursor.row(),
                startCursor.column(),
                endCursor.row(),
                endCursor.column() + endCursor.length(),
-               LintTypeError,
+               lintType,
                message);
    }
 }
@@ -890,9 +917,7 @@ START:
          }
          
          if (cursor.isType(RToken::ID))
-         {
             handleIdentifier(cursor, status);
-         }
          
          // Identifiers following identifiers on the same line is
          // illegal (except for else), e.g.
@@ -1002,20 +1027,7 @@ ARGUMENT_LIST:
       DEBUG("-- Begin argument list " << cursor);
       validateFunctionCall(cursor, status);
       
-      // Skip over data.table `[` calls.
-      if (isDataTableSingleBracketCall(cursor))
-      {
-         cursor.fwdToMatchingToken();
-         
-         if (cursor.isAtEndOfDocument())
-            return;
-         
-         if (!cursor.moveToNextSignificantToken())
-            return;
-         
-         goto START;
-      }
-      
+      // Update the current state.
       switch (cursor.type())
       {
       case RToken::LPAREN:
@@ -1036,6 +1048,23 @@ ARGUMENT_LIST:
       default:
          GOTO_INVALID_TOKEN(cursor);
       }
+      
+      // Skip over data.table `[` calls
+      if (isDataTableSingleBracketCall(cursor))
+      {
+         cursor.fwdToMatchingToken();
+         
+         if (cursor.isAtEndOfDocument())
+            return;
+         
+         goto ARGUMENT_LIST_END;
+      }
+      
+      // If we're about to enter a function call that performs
+      // non-standard evaluation, then we want to record symbol definitions
+      // but _not_ lint symbol usage.
+      if (mightPerformNonstandardEvaluation(cursor.getCallingString()))
+         status.pushNseCall(cursor.getCallingString());
       
       MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
       
@@ -1061,6 +1090,7 @@ ARGUMENT_LIST_END:
       
       DEBUG("Argument list end: " << cursor);
       status.popState();
+      status.popNseCall();
       
       // An argument list may end _two_ states, e.g. in this:
       //
