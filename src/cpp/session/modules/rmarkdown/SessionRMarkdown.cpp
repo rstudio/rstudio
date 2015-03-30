@@ -175,7 +175,8 @@ private:
       }
 
       std::string extraParams;
-      std::string targetFile = targetFile_.absolutePath();
+      std::string targetFile =
+              string_utils::utf8ToSystem(targetFile_.absolutePath());
 
       std::string renderOptions("encoding = '" + encoding + "'");
 
@@ -206,7 +207,8 @@ private:
       {
          extraParams += "shiny_args = list(launch.browser = FALSE), "
                         "auto_reload = FALSE, ";
-         extraParams += "dir = '" + targetFile_.parent().absolutePath() + "', ";
+         extraParams += "dir = '" + string_utils::utf8ToSystem(
+                     targetFile_.parent().absolutePath()) + "', ";
 
          std::string rsIFramePath("rsiframe.js");
 
