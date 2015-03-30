@@ -30,6 +30,15 @@ public class SpecializationTest extends GWTTestCase {
   private static final String VALUE = "value";
   private static final String MSG = "Shouldn't be called due to specialization";
 
+  static class TestImplChild<K, V> extends TestImpl<K, V> {
+    @Override
+    public void put(K k, V v) {
+      if (Math.random() > 0) {
+        return;
+      }
+    }
+  }
+
   static class TestImpl<K, V> {
     @SpecializeMethod(params = {String.class, Object.class}, target = "putString")
     public void put(K k, V v) {
@@ -51,6 +60,11 @@ public class SpecializationTest extends GWTTestCase {
   }
 
   public void testSpecialization() {
+    // Existence of a live subclass with an overriding method makes sure that the specializaion is
+    // applied in realistic scenarios.
+    TestImplChild<String, Object> dummy = new TestImplChild<>();
+    dummy.put(KEY, VALUE);
+
     TestImpl<String, Object> succ = new TestImpl<>();
     try {
       succ.put("key", VALUE);

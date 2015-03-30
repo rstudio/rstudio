@@ -27,7 +27,7 @@ public abstract class JReferenceType extends JType implements CanBeAbstract {
       new JReferenceType(SourceOrigin.UNKNOWN, "null") {
         @Override
         AnalysisResult getAnalysisResult() {
-          return AnalysisResult.NULLABLE;
+          return AnalysisResult.NULLABLE_EXACT;
         }
 
         @Override
@@ -75,8 +75,10 @@ public abstract class JReferenceType extends JType implements CanBeAbstract {
   private transient AnalysisDecoratedTypePool analysisDecoratedTypePool = null;
 
   enum AnalysisResult {
-    NULLABLE,
-    NOT_NULLABLE,
+    NULLABLE_NOT_EXACT,
+    NOT_NULLABLE_NOT_EXACT,
+    NULLABLE_EXACT,
+    NOT_NULLABLE_EXACT;
   }
   /**
    * A reference type decorated with the result of static analysis. Only two analysis properties
@@ -156,7 +158,8 @@ public abstract class JReferenceType extends JType implements CanBeAbstract {
 
     @Override
     public String getDescription() {
-      return super.getDescription() + (!canBeNull() ? " (non-null)" : "");
+      return super.getDescription() + (!canBeNull() ? " (non-null)" : "") +
+          (!canBeSubclass() ? "(exact) " : "");
     }
   }
 
@@ -173,7 +176,7 @@ public abstract class JReferenceType extends JType implements CanBeAbstract {
       if (underlyingType.getAnalysisResult() == request) {
         return underlyingType;
       }
-      assert request != AnalysisResult.NULLABLE;
+      assert request != AnalysisResult.NULLABLE_NOT_EXACT;
       int poolIndex = request.ordinal() - 1;
       JAnalysisDecoratedType result = decoratedAnalysisTypePool[poolIndex];
       if (result == null) {
@@ -190,7 +193,14 @@ public abstract class JReferenceType extends JType implements CanBeAbstract {
 
   @Override
   public final boolean canBeNull() {
-    return getAnalysisResult() == AnalysisResult.NULLABLE;
+    return getAnalysisResult() == AnalysisResult.NULLABLE_EXACT ||
+        getAnalysisResult() == AnalysisResult.NULLABLE_NOT_EXACT;
+  }
+
+  @Override
+  public final boolean canBeSubclass() {
+    return getAnalysisResult() == AnalysisResult.NULLABLE_NOT_EXACT ||
+        getAnalysisResult() == AnalysisResult.NOT_NULLABLE_NOT_EXACT;
   }
 
   @Override
@@ -214,10 +224,33 @@ public abstract class JReferenceType extends JType implements CanBeAbstract {
       return this;
     }
     switch (getAnalysisResult()) {
-      case NOT_NULLABLE:
+      case NOT_NULLABLE_NOT_EXACT:
         return getAnalysisDecoratedTypePool().getAnalysisDecoratedType(
-            this, AnalysisResult.NULLABLE);
-      case NULLABLE:
+            this, AnalysisResult.NULLABLE_NOT_EXACT);
+      case NOT_NULLABLE_EXACT:
+        return getAnalysisDecoratedTypePool().getAnalysisDecoratedType(
+            this, AnalysisResult.NULLABLE_EXACT);
+      case NULLABLE_EXACT:
+      case NULLABLE_NOT_EXACT:
+        return this;
+    }
+    throw new AssertionError("Unknown AnalysisResult " + getAnalysisResult().toString());
+  }
+
+  public JReferenceType weakenToNonExact() {
+    if (getUnderlyingType() == this || !getUnderlyingType().canBeSubclass()) {
+      // Underlying types cannot be weakened.
+      return this;
+    }
+    switch (getAnalysisResult()) {
+      case NULLABLE_EXACT:
+        return getAnalysisDecoratedTypePool().getAnalysisDecoratedType(
+            this, AnalysisResult.NULLABLE_NOT_EXACT);
+      case NOT_NULLABLE_EXACT:
+        return getAnalysisDecoratedTypePool().getAnalysisDecoratedType(
+            this, AnalysisResult.NOT_NULLABLE_NOT_EXACT);
+      case NOT_NULLABLE_NOT_EXACT:
+      case NULLABLE_NOT_EXACT:
         return this;
     }
     throw new AssertionError("Unknown AnalysisResult " + getAnalysisResult().toString());
@@ -225,10 +258,29 @@ public abstract class JReferenceType extends JType implements CanBeAbstract {
 
   public JReferenceType strengthenToNonNull() {
     switch (getAnalysisResult()) {
-      case NULLABLE:
+      case NULLABLE_NOT_EXACT:
         return getAnalysisDecoratedTypePool().getAnalysisDecoratedType(
-            this, AnalysisResult.NOT_NULLABLE);
-      case NOT_NULLABLE:
+            this, AnalysisResult.NOT_NULLABLE_NOT_EXACT);
+      case NULLABLE_EXACT:
+        return getAnalysisDecoratedTypePool().getAnalysisDecoratedType(
+            this, AnalysisResult.NOT_NULLABLE_EXACT);
+      case NOT_NULLABLE_NOT_EXACT:
+      case NOT_NULLABLE_EXACT:
+        return this;
+    }
+    throw new AssertionError("Unknown AnalysisResult " + getAnalysisResult().toString());
+  }
+
+  public JReferenceType strengthenToExact() {
+    switch (getAnalysisResult()) {
+      case NOT_NULLABLE_NOT_EXACT:
+        return getAnalysisDecoratedTypePool().getAnalysisDecoratedType(
+            this, AnalysisResult.NOT_NULLABLE_EXACT);
+      case NULLABLE_NOT_EXACT:
+        return getAnalysisDecoratedTypePool().getAnalysisDecoratedType(
+            this, AnalysisResult.NULLABLE_EXACT);
+      case NULLABLE_EXACT:
+      case NOT_NULLABLE_EXACT:
         return this;
     }
     throw new AssertionError("Unknown AnalysisResult " + getAnalysisResult().toString());
@@ -255,6 +307,9 @@ public abstract class JReferenceType extends JType implements CanBeAbstract {
   }
 
   AnalysisResult getAnalysisResult() {
-    return AnalysisResult.NULLABLE;
+    if (isFinal()) {
+      return AnalysisResult.NULLABLE_EXACT;
+    }
+    return AnalysisResult.NULLABLE_NOT_EXACT;
   }
 }

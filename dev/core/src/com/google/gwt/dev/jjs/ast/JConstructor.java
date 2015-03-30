@@ -91,7 +91,7 @@ public class JConstructor extends JMethod {
   }
 
   public JReferenceType getNewType() {
-    return getEnclosingType().strengthenToNonNull();
+    return getEnclosingType().strengthenToNonNull().strengthenToExact();
   }
 
   @Override

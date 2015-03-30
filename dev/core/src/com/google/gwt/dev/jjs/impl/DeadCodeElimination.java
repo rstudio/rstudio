@@ -1590,6 +1590,14 @@ public class DeadCodeElimination {
           rhsType.isNullType() && !lhsType.canBeNull()) {
         return AnalysisResult.FALSE;
       }
+      if (!lhsType.canBeSubclass() && !rhsType.canBeSubclass() &&
+          !lhsType.canBeNull() && !rhsType.canBeNull() && lhsType instanceof JReferenceType &&
+          lhsType.getUnderlyingType() != rhsType.getUnderlyingType()) {
+        // We can conclude that lhs != rhs via type compatibility. If both lhs and rhs are typed
+        // as exact and not null then if the underlying types are different the comparison clearly
+        // fails.
+        return AnalysisResult.FALSE;
+      }
       return AnalysisResult.UNKNOWN;
     }
 

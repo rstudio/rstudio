@@ -62,7 +62,7 @@ public class ArrayNormalizer {
       } else if (!(elementType instanceof JReferenceType)) {
         // Primitive array types are statically correct, no need to set check.
         return;
-      } else if (elementType.isFinal() &&
+      } else if (!arrayInstance.getType().canBeSubclass() &&
           program.typeOracle.castSucceedsTrivially((JReferenceType) x.getRhs().getType(),
               (JReferenceType) elementType)) {
         // There is no need to check as the static check already proved the cast is correct.

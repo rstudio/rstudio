@@ -83,6 +83,7 @@ public class JjsTypeTest extends TestCase {
   private JInterfaceType intfIterable;
   private JInterfaceType intfJ;
   private JInterfaceType intfK;
+  private JInterfaceType intfL;
   private JInterfaceType intfList;
   private JReferenceType intfSerializable;
   private JProgram program;
@@ -139,6 +140,9 @@ public class JjsTypeTest extends TestCase {
 
     assertFalse(typeOracle.castFailsTrivially(intfJ, intfK));
     assertFalse(typeOracle.castFailsTrivially(intfK, intfJ));
+
+    assertFalse(typeOracle.castFailsTrivially(classB, intfL));
+    assertTrue(typeOracle.castFailsTrivially(classB.strengthenToExact(), intfL));
   }
 
   public void testCastSucceedsTrivially() {
@@ -250,7 +254,7 @@ public class JjsTypeTest extends TestCase {
     assertCastableDestinationTypes(classB, classB, classObject, classBase, intfIBase, intfI);
     assertCastableDestinationTypes(classC, classC, classObject, intfIBase, intfI);
     assertCastableDestinationTypes(classBSub, classBSub, classObject, classBase, classB, intfIBase,
-        intfI);
+        intfI, intfL);
     assertCastableDestinationTypes(classJso1, classObject, classJso, intfJ);
     assertCastableDestinationTypes(classJso2, classObject, classJso, intfK);
     assertCastableDestinationTypes(arrayOfJso, classObject, intfCloneable, intfSerializable,
@@ -508,6 +512,7 @@ public class JjsTypeTest extends TestCase {
 
     intfJ = createInterface("J");
     intfK = createInterface("K");
+    intfL = createInterface("L");
 
     classBase = createClass("Base", classObject, false, false);
 
@@ -520,6 +525,7 @@ public class JjsTypeTest extends TestCase {
     classC.addImplements(intfI);
 
     classBSub = createClass("BSub", classB, false, false);
+    classBSub.addImplements(intfL);
 
     classJso1 = createClass("Jso1", classJso, false, false);
     classJso1.addImplements(intfJ);

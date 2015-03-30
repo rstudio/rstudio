@@ -13,8 +13,10 @@
  */
 package com.google.gwt.dev.jjs.impl;
 
+import com.google.gwt.dev.jjs.ast.JInstanceOf;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JProgram;
+import com.google.gwt.thirdparty.guava.common.collect.FluentIterable;
 
 /**
  * Test for {@link TypeTightener}.
@@ -95,7 +97,7 @@ public class TypeTightenerTest extends OptimizerTestBase {
     assertParameterTypes(result, "fun", "EntryPoint$B");
   }
 
-  public void testTightenParameterBasedOnOverriddens() throws Exception {
+  public void testTightenParameterBasedOnOverriddenMethods() throws Exception {
     addSnippetClassDecl("static class A {}");
     addSnippetClassDecl("static class B extends A {}");
     addSnippetClassDecl("static class Test1 { public void fun(A a) {} }");
@@ -170,11 +172,21 @@ public class TypeTightenerTest extends OptimizerTestBase {
         result.findMethod("test.EntryPoint$A.m()V"));
   }
 
+  public void testTightenInstanceOf_singleConcrete() throws Exception {
+    addSnippetClassDecl("abstract static class A { public void m() {} }");
+    addSnippetClassDecl("static class B extends A { public void m() { super.m(); }}");
+
+    JMethod mainMethod = optimize("void"," A a= new B(); if (a instanceof B) { a.m(); }")
+        .findMethod("onModuleLoad()V");
+    JInstanceOf expression  =
+        FluentIterable.from(getNodes(JInstanceOf.class, mainMethod, true)).first().get();
+    assertEquals("test.EntryPoint$B", expression.getTestType().getName());
+  }
+
   @Override
   protected boolean optimizeMethod(JProgram program, JMethod method) {
     program.addEntryMethod(findMainMethod(program));
     boolean didChange = false;
-    // TODO(jbrosenberg): remove loop when Pruner/CFA interaction is perfect.
     while (TypeTightener.exec(program).didChange()) {
       didChange = true;
     }

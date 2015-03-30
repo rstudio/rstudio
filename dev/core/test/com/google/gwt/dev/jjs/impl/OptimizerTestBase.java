@@ -31,6 +31,7 @@ import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodBody;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JModVisitor;
+import com.google.gwt.dev.jjs.ast.JNode;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JReturnStatement;
@@ -43,9 +44,11 @@ import com.google.gwt.thirdparty.guava.common.base.Joiner;
 import com.google.gwt.thirdparty.guava.common.base.Preconditions;
 import com.google.gwt.thirdparty.guava.common.collect.FluentIterable;
 import com.google.gwt.thirdparty.guava.common.collect.ImmutableSet;
+import com.google.gwt.thirdparty.guava.common.collect.Lists;
 import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
@@ -199,6 +202,22 @@ public abstract class OptimizerTestBase extends JJSTestBase {
         })
         .toArray(JType.class);
     assertParameterTypes(method, parameterTypes);
+  }
+
+  protected static <T extends JNode> Collection<T> getNodes(
+      final Class<T> expressionClass, JNode inNode, final boolean exactClass) {
+    final List<T> result = Lists.newArrayList();
+    new JVisitor() {
+      @Override
+      public boolean visit(JNode x, Context ctx) {
+        if (x.getClass() == expressionClass || expressionClass.isInstance(x) && !exactClass) {
+          result.add(expressionClass.cast(x));
+        }
+        return true;
+      }
+
+    }.accept(inNode);
+    return result;
   }
 
   protected static void assertReturnType(

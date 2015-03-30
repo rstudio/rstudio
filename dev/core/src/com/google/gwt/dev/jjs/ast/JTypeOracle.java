@@ -591,6 +591,13 @@ public class JTypeOracle implements Serializable {
       return true;
     }
 
+    if (!fromType.canBeSubclass() && fromType.getUnderlyingType() instanceof JClassType &&
+        fromType.getUnderlyingType() != toType.getUnderlyingType() &&
+        !isSuperClass(fromType, toType) && !implementsInterface(fromType, toType)) {
+      // An exact type can only be cast to any of its supers or itself.
+      return true;
+    }
+
     // Compare the underlying types.
     fromType = fromType.getUnderlyingType();
     toType = toType.getUnderlyingType();
@@ -672,6 +679,15 @@ public class JTypeOracle implements Serializable {
       return true;
     }
 
+    if (toType.weakenToNullable() == fromType.weakenToNullable()) {
+      // These are either the same exact types or same inexact types.
+      return true;
+    }
+
+    if (!toType.canBeSubclass()) {
+      return false;
+    }
+
     // Compare the underlying types.
     fromType = fromType.getUnderlyingType();
     toType = toType.getUnderlyingType();
@@ -701,7 +717,7 @@ public class JTypeOracle implements Serializable {
 
   private boolean castSucceedsTrivially(JClassType fromType, JReferenceType toType) {
     if (toType instanceof JClassType) {
-      return isSuperClass(fromType, (JClassType) toType);
+      return isSuperClass(fromType, toType);
     }
     if (toType instanceof JInterfaceType) {
       return implementsInterface(fromType, (JInterfaceType) toType);
@@ -1227,7 +1243,7 @@ public class JTypeOracle implements Serializable {
   /**
    * Returns true if possibleSuperClass is a superclass of type, directly or indirectly.
    */
-  public boolean isSuperClass(JClassType type, JClassType possibleSuperClass) {
+  public boolean isSuperClass(JReferenceType type, JReferenceType possibleSuperClass) {
     return isSuperClass(type.getName(), possibleSuperClass.getName());
   }
 
@@ -1638,14 +1654,14 @@ public class JTypeOracle implements Serializable {
   }
 
   /**
-   * Returns true if type implements the interface represented by qType, either
+   * Returns true if type implements the interface represented by interfaceType, either
    * directly or indirectly.
    */
-  private boolean implementsInterface(JClassType type, JInterfaceType qType) {
-    return implementedInterfacesByClass.containsEntry(type.getName(), qType.getName());
+  private boolean implementsInterface(JReferenceType type, JReferenceType interfaceType) {
+    return implementedInterfacesByClass.containsEntry(type.getName(), interfaceType.getName());
   }
 
-  private boolean isSuperClass(String type, String qType) {
-    return subclassesByClass.containsEntry(qType, type);
+  private boolean isSuperClass(String type, String potentialSuperClass) {
+    return subclassesByClass.containsEntry(potentialSuperClass, type);
   }
 }

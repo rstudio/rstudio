@@ -500,21 +500,28 @@ public class JProgram extends JNode implements ArrayTypeCreator {
 
     // From here on nullability does not need to be considered.
 
+    // Generalization for exact types is as follows.
+    // exact(A) v null = exact(A)
     // A v null = A
     if (thatType.isNullType()) {
       return thisType;
     }
 
+    // null v exact(A) = exact(A)
     // null v A = A
     if (thisType.isNullType()) {
       return thatType;
     }
 
+    // exact(A) v exact(A)  = exact(A)
     // A v A  = A
     if (thisType == thatType) {
       return thisType;
     }
 
+    // exact(A) v exact(B) = A v B
+    // A v exact(B) = A v B
+    // exact(A) v B = A v B
     // A v B = A v B
     return generalizeUnderlyingTypes(thisType.getUnderlyingType(), thatType.getUnderlyingType());
   }

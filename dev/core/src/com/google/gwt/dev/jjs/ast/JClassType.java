@@ -23,7 +23,7 @@ import java.io.Serializable;
 /**
  * Java class type reference expression.
  */
-public class JClassType extends JDeclaredType implements CanBeSetFinal {
+public class JClassType extends JDeclaredType {
 
   private static class ExternalSerializedForm implements Serializable {
     private final String name;
@@ -38,7 +38,7 @@ public class JClassType extends JDeclaredType implements CanBeSetFinal {
   }
 
   private final boolean isAbstract;
-  private boolean isFinal;
+  private final boolean isFinal;
   private JClassType superClass;
   private boolean isJsPrototypeStub;
 
@@ -54,6 +54,7 @@ public class JClassType extends JDeclaredType implements CanBeSetFinal {
   JClassType(String name) {
     super(SourceOrigin.UNKNOWN, name);
     isAbstract = false;
+    isFinal = false;
     setExternal(true);
   }
 
@@ -78,11 +79,6 @@ public class JClassType extends JDeclaredType implements CanBeSetFinal {
   @Override
   public boolean isFinal() {
     return isFinal;
-  }
-
-  @Override
-  public void setFinal() {
-    isFinal = true;
   }
 
   /**

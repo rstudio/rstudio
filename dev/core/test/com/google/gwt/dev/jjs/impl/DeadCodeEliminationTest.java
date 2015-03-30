@@ -52,6 +52,32 @@ public class DeadCodeEliminationTest extends OptimizerTestBase {
     optimize("boolean", "return b ? b1 : false;").into("return b && b1;");
   }
 
+  public void testConditionalOptimizations_exactType() throws Exception {
+    addSnippetClassDecl("static class A {};");
+    addSnippetClassDecl("static class B extends A {};");
+    optimize("int", "return new A() == new B() ? 3 : 4;")
+        .intoString("return (new EntryPoint$A(), new EntryPoint$B(), 4);");
+    optimize("int", "return null == new B() ? 3 : 4;")
+        .intoString("return (new EntryPoint$B(), 4);");
+  }
+
+  public void testInstanceOf_exactNonNullTypes() throws Exception {
+    addSnippetClassDecl("static class A {};");
+    addSnippetClassDecl("static class B extends A {};");
+    Result result = optimize("void",
+        "boolean test;",
+        "test = new A() instanceof A;",
+        "test = new B() instanceof B;",
+        "test = new A() instanceof B;",
+        "test = new B() instanceof A;");
+    result.intoString(
+        "boolean test;",
+        "test = (new EntryPoint$A(), true);",
+        "test = (new EntryPoint$B(), true);",
+        "test = (new EntryPoint$A(), false);",
+        "test = (new EntryPoint$B(), true);");
+  }
+
   public void testInstanceOf_nullability() throws Exception {
     addSnippetClassDecl("static class A {};");
     addSnippetClassDecl("static class B extends A {};");

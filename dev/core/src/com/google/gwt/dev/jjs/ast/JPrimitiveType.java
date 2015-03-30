@@ -69,6 +69,11 @@ public class JPrimitiveType extends JType {
     return false;
   }
 
+  @Override
+  public boolean canBeSubclass() {
+    return false;
+  }
+
   public JValueLiteral coerce(JValueLiteral literal) {
     return this.coercion.coerce(literal);
   }

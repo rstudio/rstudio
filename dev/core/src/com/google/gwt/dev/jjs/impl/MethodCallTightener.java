@@ -87,7 +87,7 @@ public class MethodCallTightener {
     private JMethodCall maybeUpgradeToNonPolymorphicCall(JMethodCall x) {
       JReferenceType instanceType = (JReferenceType) x.getInstance().getType();
 
-      if (instanceType.isFinal()) {
+      if (!instanceType.canBeSubclass()) {
         // Mark a call as non-polymorphic if the targeted type is guaranteed to be not a subclass.
         x = maybeTightenMethodCall(x);
         x.setCannotBePolymorphic();

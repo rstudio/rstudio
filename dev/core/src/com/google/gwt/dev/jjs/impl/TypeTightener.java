@@ -649,6 +649,7 @@ public class TypeTightener {
         if (singleConcrete == null) {
           return null;
         }
+        singleConcrete = singleConcrete.strengthenToExact();
         return refType.canBeNull() ? singleConcrete : singleConcrete.strengthenToNonNull();
       }
       return null;

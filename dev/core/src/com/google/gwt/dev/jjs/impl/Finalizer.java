@@ -44,10 +44,11 @@ import com.google.gwt.thirdparty.guava.common.collect.Sets;
 import java.util.Set;
 
 /**
- * Finds all items are effectively final. That is, methods that are never
- * overridden, classes that are never subclassed, and variables that are never
- * reassigned. Mark all such methods and classes as final, since it helps us
- * optimize.
+ * Finds all items are effectively final. That is, methods that are never  overridden and variables
+ * that are never reassigned.
+ * <p>
+ * NOTE: Classes should not be marked final, since the analysis for classes is done through
+ * {@link JAnalysisDecoratedType}.
  */
 public class Finalizer {
   /**
@@ -63,13 +64,6 @@ public class Finalizer {
 
     public FinalizeVisitor(OptimizerContext optimizerCtx) {
       super(optimizerCtx);
-    }
-
-    @Override
-    public void endVisit(JClassType x, Context ctx) {
-      if (!x.isFinal() && !isSubclassed.contains(x)) {
-        setFinal(x);
-      }
     }
 
     @Override
@@ -137,13 +131,6 @@ public class Finalizer {
     public void endVisit(JBinaryOperation x, Context ctx) {
       if (x.getOp().isAssignment()) {
         recordAssignment(x.getLhs());
-      }
-    }
-
-    @Override
-    public void endVisit(JClassType x, Context ctx) {
-      if (x.getSuperClass() != null) {
-        isSubclassed.add(x.getSuperClass());
       }
     }
 
@@ -222,8 +209,6 @@ public class Finalizer {
   }
 
   private final Set<JVariable> isReassigned = Sets.newHashSet();
-
-  private final Set<JClassType> isSubclassed = Sets.newHashSet();
 
   private final JProgram program;
 
