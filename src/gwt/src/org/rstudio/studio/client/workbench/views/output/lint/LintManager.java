@@ -131,6 +131,8 @@ public class LintManager
                public void execute()
                {
                   docDisplay_.removeMarkersOnCursorLine();
+                  showMarkers_ = false;
+                  excludeCurrentStatement_ = true;
                   timer_.schedule(uiPrefs_.backgroundDiagnosticsDelayMs().getValue());
                }
             });
@@ -295,23 +297,14 @@ public class LintManager
       if (context.excludeCurrentStatement &&
           docDisplay_.getCursorPosition().isEqualTo(context.cursorPosition))
       {
-         int startRow = docDisplay_.getStartOfCurrentStatement();
-         int endRow = docDisplay_.getEndOfCurrentStatement();
+         Position pos = context.cursorPosition;
+         JsArray<LintItem> filteredLint = JsArray.createArray().cast();
+         for (int i = 0; i < lint.length(); i++)
+            if (!lint.get(i).asRange().contains(pos))
+               filteredLint.push(lint.get(i));
          
-         if (startRow != -1 && endRow != -1)
-         {
-            JsArray<LintItem> filteredLint = JsArray.createArray().cast();
-            for (int i = 0; i < lint.length(); i++)
-            {
-               if (lint.get(i).getStartRow() < startRow ||
-                     lint.get(i).getStartRow() > endRow)
-               {
-                  filteredLint.push(lint.get(i));
-               }
-            }
-            docDisplay_.showLint(filteredLint);
-            return;
-         }
+         docDisplay_.showLint(filteredLint);
+         return;
       }
       
       docDisplay_.showLint(lint);
