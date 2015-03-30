@@ -25,7 +25,7 @@ public class ConsoleLogger {
   }
 
   private static native boolean isSupported() /*-{
-    return console != null;
+    return !!window.console;
   }-*/;
 
   public native void log(String level, String message) /*-{
