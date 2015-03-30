@@ -41,7 +41,7 @@ var snippets = [
       name: "mat",
       content: 'matrix(${1:data}, nrow = ${2:rows}, ncol = ${3:cols})'
    },
-   
+
    /* S4 snippets */
    {
       name: "sg",
@@ -95,7 +95,7 @@ var snippets = [
       name: "fun",
       content: [
          "${1:name} <- function(${2:variables}) {",
-         "    {0}",
+         "    ${0}",
          "}"
       ].join("\n")
    },
@@ -152,6 +152,13 @@ var snippets = [
    {
       name: "rapply",
       content: "rapply(${1:list}, ${2:function})"
+   },
+
+   /* Utilities */
+
+   {
+      name: "ts",
+      content: '`r paste("#", date(), "------------------------------\n")`'
    }
 ];
 

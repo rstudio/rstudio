@@ -65,7 +65,7 @@ oop.inherits(Mode, HtmlMode);
    this.$getNextLineIndent = this.getNextLineIndent;
    this.getNextLineIndent = function(state, line, tab, row)
    {
-      var mode = Utils.getLanguageMode(state, "html");
+      var mode = Utils.activeMode(state, "html");
       if (mode === "r")
          return this.codeModel.getNextLineIndent(state, line, tab, row);
       else

@@ -98,7 +98,7 @@ oop.inherits(Mode, TextMode);
    this.$getNextLineIndent = this.getNextLineIndent;
    this.getNextLineIndent = function(state, line, tab, row)
    {
-      var mode = Utils.getLanguageMode(state, "tex");
+      var mode = Utils.activeMode(state, "tex");
       if (mode === "r")
          return this.codeModel.getNextLineIndent(state, line, tab, row);
       else
@@ -107,7 +107,7 @@ oop.inherits(Mode, TextMode);
 
    this.checkOutdent = function(state, line, input)
    {
-      var mode = Utils.getLanguageMode(state, "tex");
+      var mode = Utils.activeMode(state, "tex");
       if (mode === "r")
          return this.$r_outdent.checkOutdent(state, line, input);
       else
@@ -116,7 +116,7 @@ oop.inherits(Mode, TextMode);
 
    this.autoOutdent = function(state, session, row)
    {
-      var mode = Utils.getLanguageMode(state, "tex");
+      var mode = Utils.activeMode(state, "tex");
       if (mode === "r")
          return this.$r_outdent.autoOutdent(state, session, row);
       else

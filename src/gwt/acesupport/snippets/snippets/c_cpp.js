@@ -35,7 +35,7 @@ var snippets = [
       content: [
          "namespace {",
          "${0}",
-         "] // anonymous namespace"
+         "} // anonymous namespace"
       ].join("\n")
    },
    {
@@ -43,7 +43,7 @@ var snippets = [
       content: [
          "namespace ${1:ns} {",
          "${0}",
-         "] // namespace ${1:ns}"
+         "} // namespace ${1:ns}"
       ].join("\n")
    },
    {
@@ -54,7 +54,7 @@ var snippets = [
          "    ${2}",
          "private:",
          "    ${3}",
-         "}"
+         "};"
       ].join("\n")
    },
    {
@@ -62,7 +62,7 @@ var snippets = [
       content: [
          "struct ${1} {",
          "    ${0}",
-         "}"
+         "};"
       ].join("\n")
    }
 ];

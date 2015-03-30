@@ -160,9 +160,9 @@ bool isFilterSubset(const std::string& outer, const std::string& inner)
       if (boost::regex_search(innerValue, innerMatch, numFilter) &&
           boost::regex_search(outerValue, outerMatch, numFilter))
       {
-         // for numeric filters, the inner is a subset if its lower bound (1) is 
-         // larger than the outer lower bound, and the upper bound (2) is smaller
-         // than the outer upper bound
+         // for numeric filters, the inner is a subset if its lower bound (1)
+         // is larger than the outer lower bound, and the upper bound (2) is
+         // smaller than the outer upper bound
          return safe_convert::stringTo<double>(innerMatch[1], 0) >= 
                 safe_convert::stringTo<double>(outerMatch[1], 0) &&
                 safe_convert::stringTo<double>(innerMatch[2], 0) <= 
@@ -172,10 +172,10 @@ bool isFilterSubset(const std::string& outer, const std::string& inner)
       // if not identical and not a range, then not a subset
       return false;
    } 
-   else if (outerType == "factor")
+   else if (outerType == "factor" || outerType == "boolean")
    {
-      // factors have to be identical for subsetting, and we already checked
-      // above
+      // factors and boolean values have to be identical for subsetting, and we
+      // already checked above
       return false;
    }
    else if (outerType == "character")
@@ -470,8 +470,9 @@ json::Value getData(SEXP dataSEXP, const http::Fields& fields)
          -1);
    std::string orderdir = http::util::fieldValue<std::string>(fields, 
          "order[0][dir]", "asc");
-   std::string search = http::util::fieldValue<std::string>(fields, 
-         "search[value]", "");
+   std::string search = http::util::urlDecode(
+         http::util::fieldValue<std::string>(fields, "search[value]", ""), 
+         true);
    std::string cacheKey = http::util::urlDecode(
          http::util::fieldValue<std::string>(fields, "cache_key", ""), 
          true);
@@ -486,9 +487,10 @@ json::Value getData(SEXP dataSEXP, const http::Fields& fields)
    bool hasFilter = false;
    for (int i = 1; i <= ncol; i++) 
    {
-      std::string filterVal = http::util::fieldValue<std::string>(fields,
+      std::string filterVal = http::util::urlDecode( 
+            http::util::fieldValue<std::string>(fields,
                   "columns[" + boost::lexical_cast<std::string>(i) + "]" 
-                  "[search][value]", "");
+                  "[search][value]", ""), true);
       if (!filterVal.empty()) 
       {
          hasFilter = true;
