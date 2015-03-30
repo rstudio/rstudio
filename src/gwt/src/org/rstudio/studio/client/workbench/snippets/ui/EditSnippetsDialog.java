@@ -120,12 +120,13 @@ public class EditSnippetsDialog extends ModalDialogBase implements TextDisplay
       });
       snippetTypes_.addItem(new EditableSnippets("R", FileTypeRegistry.R));
       snippetTypes_.addItem(new EditableSnippets(FileTypeRegistry.CPP));
-      snippetTypes_.addItem(new EditableSnippets(FileTypeRegistry.JAVA));
-      snippetTypes_.addItem(new EditableSnippets(FileTypeRegistry.PYTHON));
-      snippetTypes_.addItem(new EditableSnippets(FileTypeRegistry.SQL));
+      snippetTypes_.addItem(new EditableSnippets(FileTypeRegistry.MARKDOWN));
       snippetTypes_.addItem(new EditableSnippets(FileTypeRegistry.JS));
       snippetTypes_.addItem(new EditableSnippets(FileTypeRegistry.HTML));
       snippetTypes_.addItem(new EditableSnippets(FileTypeRegistry.CSS));
+      snippetTypes_.addItem(new EditableSnippets(FileTypeRegistry.SQL));
+      snippetTypes_.addItem(new EditableSnippets(FileTypeRegistry.JAVA));
+      snippetTypes_.addItem(new EditableSnippets(FileTypeRegistry.PYTHON));
      
       panel_.addWest(snippetTypes_, 150);
      

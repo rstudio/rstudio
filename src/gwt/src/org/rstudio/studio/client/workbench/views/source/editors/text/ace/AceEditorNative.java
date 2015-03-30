@@ -300,12 +300,28 @@ public class AceEditorNative extends JavaScriptObject {
       });
    }-*/;
    
+   public final native void moveCursorRight(int times) /*-{
+      var that = this;
+      this.forEachSelection(function() {
+         that.navigateRight(times);
+      });
+   }-*/;
+   
    public final native void expandSelectionLeft(int times) /*-{
       var that = this;
       this.forEachSelection(function() {
          var selection = that.getSelection();
          for (var i = 0; i < times; i++)
             selection.selectLeft();
+      });
+   }-*/;
+   
+   public final native void expandSelectionRight(int times) /*-{
+      var that = this;
+      this.forEachSelection(function() {
+         var selection = that.getSelection();
+         for (var i = 0; i < times; i++)
+            selection.selectRight();
       });
    }-*/;
    

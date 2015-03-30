@@ -27,6 +27,7 @@ import org.rstudio.core.client.regex.Pattern.ReplaceOperation;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 
@@ -914,6 +915,33 @@ public class StringUtil
          "GB",
          "TB"
    };
+   
+   public static boolean isComplementOf(String self, String other)
+   {
+      return COMPLEMENTS.get(self).equals(other);
+   }
+   
+   private static final HashMap<String, String> makeComplementsMap()
+   {
+      HashMap<String, String> map = new HashMap<String, String>();
+      
+      map.put("[", "]");
+      map.put("]", "[");
+      
+      map.put("<", ">");
+      map.put(">", "<");
+      
+      map.put("{", "}");
+      map.put("}", "{");
+      
+      map.put("(", ")");
+      map.put(")", "(");
+      return map;
+   }
+   
+   public static final HashMap<String, String> COMPLEMENTS =
+         makeComplementsMap();
+   
    private static final NumberFormat FORMAT = NumberFormat.getFormat("0.#");
    private static final NumberFormat PRETTY_NUMBER_FORMAT = NumberFormat.getFormat("#,##0.#####");
    private static final DateTimeFormat DATE_FORMAT
