@@ -26,6 +26,14 @@ var snippets = [
    {
       name: "![",
       content: '![${1:label}](${2:location})'
+   },
+   {
+      name: "r",
+      content: "```{r ${1:label}, ${2:options}}\n${0}\n```"
+   },
+   {
+      name: "rcpp",
+      content: "```{Rcpp}\n#include <Rcpp.h>\nusing namespace Rcpp;\n\n${0}\n\n```"
    }
 ];
 
