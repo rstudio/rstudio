@@ -174,7 +174,9 @@ public class SnippetHelper
       // insertions, e.g. `[|]`, we want to replace both characters; typically
       // we only want to replace the token.
       int offset = token.length();
-      if (token.equals("[") && editor_.getCharacterAtCursor() == ']')
+      if (StringUtil.isComplementOf(
+            token,
+            String.valueOf(editor_.getCharacterAtCursor())))
       {
          editor_.moveCursorRight();
          offset++;
