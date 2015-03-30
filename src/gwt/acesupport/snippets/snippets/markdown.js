@@ -33,7 +33,7 @@ var snippets = [
    },
    {
       name: "rcpp",
-      content: "```{Rcpp}\n#include <Rcpp.h>\nusing namespace Rcpp;\n\n${0}\n\n```"
+      content: "```{r, engine='Rcpp'}\n#include <Rcpp.h>\nusing namespace Rcpp;\n\n${0}\n\n```"
    }
 ];
 
