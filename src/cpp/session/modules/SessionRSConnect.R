@@ -180,7 +180,15 @@
 
   # find the resources used by each document
   for (t in targets) {
-    deploy_frame <- rmarkdown::find_external_resources(t) 
+    tryCatch({
+      # this operation can be expensive and could also throw if e.g. the 
+      # document fails to parse or render
+      deploy_frame <- rmarkdown::find_external_resources(t) 
+    },
+    error = function(e) {
+      # errors are not fatal here; we just might miss some resources, which
+      # the user will have to add manually
+    })
     file_list <- c(file_list, deploy_frame$path, basename(t))
   }
 

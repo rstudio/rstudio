@@ -38,6 +38,7 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.dom.client.Style.FontWeight;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
@@ -280,20 +281,6 @@ public class RSConnectDeploy extends Composite
       addFile(path, true);
    }
    
-   public void setFileCheckEnabled(String path, boolean enabled)
-   {
-      if (fileChecks_ == null)
-         return;
-
-      for (int i = 0; i < fileChecks_.size(); i++)
-      {
-         if (fileChecks_.get(i).getText().equals(path))
-         {
-            fileChecks_.get(i).setEnabled(enabled);
-         }
-      }
-   }
-   
    public ArrayList<String> getFileList()
    {
       return getCheckedFileList(true);
@@ -531,9 +518,8 @@ public class RSConnectDeploy extends Composite
                   {
                      // TODO: ignored file persistence
                      setFileList(files.getDirList(), new String[]{});
-                     setFileCheckEnabled(
-                           FileSystemItem.createFile(contentPath_).getName(),
-                           false);
+                     setPrimaryFile(
+                           FileSystemItem.createFile(contentPath_).getName());
                   }
                   indicator.clearProgress();
                }
@@ -625,6 +611,28 @@ public class RSConnectDeploy extends Composite
             });
    }
 
+   private void setPrimaryFile(String path)
+   {
+      if (fileChecks_ == null)
+         return;
+
+      for (int i = 0; i < fileChecks_.size(); i++)
+      {
+         CheckBox fileCheck = fileChecks_.get(i);
+         if (fileCheck.getText().equals(path))
+         {
+            // don't allow the user to unselect the primary file
+            fileCheck.setEnabled(false);
+            
+            // make this bold and move it to the top
+            fileCheck.getElement().getStyle().setFontWeight(FontWeight.BOLD);
+            fileListPanel_.remove(fileCheck);
+            fileListPanel_.insert(fileCheck, 0);
+         }
+      }
+   }
+   
+   
    @UiField Image deployIllustration_;
    @UiField Anchor urlAnchor_;
    @UiField Anchor addAccountAnchor_;

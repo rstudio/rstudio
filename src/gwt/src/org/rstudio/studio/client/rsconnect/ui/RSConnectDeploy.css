@@ -12,6 +12,8 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
+ 
+@external .gwt-CheckBox;
 
 .sourceDestLabels
 {
@@ -89,6 +91,12 @@
 {
    width: 225px;
    height: 140px;
+}
+
+.fileList .gwt-CheckBox,
+.fileList .gwt-CheckBox label 
+{
+   white-space: nowrap;
 }
 
 .deployLabel
