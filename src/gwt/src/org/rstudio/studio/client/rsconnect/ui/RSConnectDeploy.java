@@ -89,6 +89,7 @@ public class RSConnectDeploy extends Composite
       String transferArrow();
       String urlAnchor();
       String wizard();
+      String progressPanel();
    }
    
    public interface DeployResources extends ClientBundle
@@ -383,6 +384,8 @@ public class RSConnectDeploy extends Composite
       // content as currently deployed
       if (fromPrevious_ != null)
       {
+         appProgressName_.setText(fromPrevious_.getName());
+         appProgressPanel_.setVisible(true);
          // get all of the apps deployed from the account to the server
          server_.getRSConnectAppList(
                fromPrevious_.getAccountName(), 
@@ -393,6 +396,9 @@ public class RSConnectDeploy extends Composite
                   public void onResponseReceived(
                         JsArray<RSConnectApplicationInfo> infos)
                   {
+                     // hide server progress
+                     appProgressPanel_.setVisible(false);
+
                      // find an app with the same account, server, and name;
                      // when found, populate the UI with app details
                      for (int i = 0; i < infos.length(); i++)
@@ -410,6 +416,7 @@ public class RSConnectDeploy extends Composite
                   {
                      // it's okay if we fail here, since the application info
                      // display is purely informative
+                     appProgressPanel_.setVisible(false);
                   }
                });
       }
@@ -587,6 +594,8 @@ public class RSConnectDeploy extends Composite
    @UiField InlineLabel statusLabel_;
    @UiField(provided=true) RSConnectAccountList accountList_;
    @UiField HTMLPanel appInfoPanel_;
+   @UiField HTMLPanel appProgressPanel_;
+   @UiField InlineLabel appProgressName_;
    @UiField VerticalPanel fileListPanel_;
    @UiField InlineLabel deployLabel_;
    @UiField ThemedButton addFileButton_;
