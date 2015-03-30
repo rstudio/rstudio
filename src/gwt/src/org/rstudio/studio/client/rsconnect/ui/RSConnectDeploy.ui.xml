@@ -38,11 +38,13 @@
          <rsc:RSConnectAccountList styleName="{res.style.accountList}" 
                                    ui:field="accountList_">
          </rsc:RSConnectAccountList>
-         <g:Label styleName="{res.style.controlLabel}" ui:field="nameLabel_" 
-                  text="Name:"></g:Label>
-         <rsc:AppNameTextbox styleName="{res.style.gridControl}" 
-                             ui:field="appName_">
-         </rsc:AppNameTextbox>
+         <g:HTMLPanel ui:field="newAppPanel_">
+            <g:Label styleName="{res.style.controlLabel}" ui:field="nameLabel_" 
+                     text="Name:"></g:Label>
+            <rsc:AppNameTextbox styleName="{res.style.gridControl}" 
+                                ui:field="appName_">
+            </rsc:AppNameTextbox>
+         </g:HTMLPanel>
          <g:HTMLPanel styleName="{res.style.controlLabel}" visible="false" 
                       ui:field="appInfoPanel_">
             <g:Label text="Destination URL:" 

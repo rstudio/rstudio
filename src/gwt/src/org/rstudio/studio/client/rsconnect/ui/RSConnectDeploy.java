@@ -18,6 +18,7 @@ import java.util.ArrayList;
 
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
@@ -38,6 +39,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -178,8 +180,7 @@ public class RSConnectDeploy extends Composite
       // If we're loading a previous deployment, hide new app name fields
       if (fromPrevious_ != null)
       {
-         nameLabel_.setVisible(false);
-         appName_.setVisible(false);
+         newAppPanel_.setVisible(false);
       }
       
    }
@@ -193,6 +194,36 @@ public class RSConnectDeploy extends Composite
       connector_ = connector;
       display_ = display;
       accountList_ = new RSConnectAccountList(server_, display_, false);
+      
+      // when the account list finishes populating, select the account from the
+      // previous deployment if we have one
+      accountList_.setOnRefreshCompleted(new Operation() {
+         @Override
+         public void execute()
+         {
+            if (fromPrevious_ != null)
+            {
+               accountList_.selectAccount(fromPrevious_.getAccount());
+            }
+         }
+      });
+      
+      // when the user selects a different account, show the appropriate UI
+      addAccountChangeHandler(new ChangeHandler()
+      {
+         @Override
+         public void onChange(ChangeEvent arg0)
+         {
+            if (fromPrevious_ != null)
+            {
+               // TODO: what if we're currently getting data?
+               boolean existing = accountList_.getSelectedAccount().equals(
+                     fromPrevious_.getAccount());
+               appInfoPanel_.setVisible(existing);
+               newAppPanel_.setVisible(!existing);
+            }
+         }
+      });
    }
     
    public void setSourceDir(String dir)
@@ -288,8 +319,7 @@ public class RSConnectDeploy extends Composite
       if (info == null)
       {
          appInfoPanel_.setVisible(false);
-         nameLabel_.setVisible(true);
-         appName_.setVisible(true);
+         newAppPanel_.setVisible(true);
          return;
       }
 
@@ -303,8 +333,7 @@ public class RSConnectDeploy extends Composite
                     style_.otherStatus()));
 
       appInfoPanel_.setVisible(true);
-      nameLabel_.setVisible(false);
-      appName_.setVisible(false);
+      newAppPanel_.setVisible(false);
    }
    
    public HandlerRegistration addAccountChangeHandler(ChangeHandler handler)
@@ -593,6 +622,7 @@ public class RSConnectDeploy extends Composite
    @UiField Label nameLabel_;
    @UiField InlineLabel statusLabel_;
    @UiField(provided=true) RSConnectAccountList accountList_;
+   @UiField HTMLPanel newAppPanel_;
    @UiField HTMLPanel appInfoPanel_;
    @UiField HTMLPanel appProgressPanel_;
    @UiField InlineLabel appProgressName_;
