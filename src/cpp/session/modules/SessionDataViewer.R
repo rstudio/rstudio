@@ -116,6 +116,11 @@
         col_type <- "character"
         col_search_type <- "character"
       }
+      else if (is.logical(val))
+      {
+        col_type <- "boolean"
+        col_search_type <- "boolean"
+      }
     }
     list(
       col_name        = .rs.scalar(col_name),
@@ -321,6 +326,13 @@
         else
           # equality filter
           x <- x[is.finite(x[[i]]) & x[[i]] == filterval, , drop = FALSE]
+      }
+      else if (identical(filtertype, "boolean")) 
+      {
+        filterval <- isTRUE(filterval == "TRUE")
+        matches <- x[[i]] == filterval
+        matches[is.na(matches)] <- FALSE
+        x <- x[matches, , drop = FALSE]
       }
     }
   }
