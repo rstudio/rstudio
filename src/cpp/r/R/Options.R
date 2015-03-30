@@ -21,7 +21,7 @@
 # custom browseURL implementation
 options(browser = function(url)
 {
-   .Call("rs_browseURL", url) ;
+   .Call(.rs.routines$rs_browseURL, url) ;
 })
 
 # default viewer option if not already set

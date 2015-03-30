@@ -26,7 +26,7 @@
 
 .rs.addFunction ("installPackratActionHook", function() {
   setHook("packrat.onAction", function(project, action, running) {
-    .Call("rs_onPackratAction", project, action, running)
+    .Call(.rs.routines$rs_onPackratAction, project, action, running)
   })
 })
 
