@@ -35,6 +35,7 @@ import org.rstudio.studio.client.rsconnect.model.RSConnectPublishSettings;
 import org.rstudio.studio.client.rsconnect.model.RSConnectServerOperations;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
@@ -112,7 +113,7 @@ public class RSConnectDeploy extends Composite
                           RSConnectDeploymentRecord fromPrevious,
                           boolean asWizard)
    {
-      if (contentPath_ != null)
+      if (contentPath != null)
       {
          String ext = FileSystemItem.getExtensionFromPath(contentPath)
                .toLowerCase();
@@ -198,11 +199,13 @@ public class RSConnectDeploy extends Composite
    @Inject
    public void initialize(RSConnectServerOperations server, 
                           RSAccountConnector connector,    
-                          GlobalDisplay display)
+                          GlobalDisplay display,
+                          UIPrefs prefs)
    {
       server_ = server;
       connector_ = connector;
       display_ = display;
+      prefs_ = prefs;
       accountList_ = new RSConnectAccountList(server_, display_, false);
       
       // when the account list finishes populating, select the account from the
@@ -213,7 +216,20 @@ public class RSConnectDeploy extends Composite
          {
             if (fromPrevious_ != null)
             {
+               // when re-deploying, select the account used the last time 
+               // around
                accountList_.selectAccount(fromPrevious_.getAccount());
+            }
+            else
+            {
+               // when doing a first-time publish, select the account the user
+               // prefers (currently this just tracks the last account used)
+               RSConnectAccount preferred = 
+                     prefs_.preferredPublishAccount().getGlobalValue();
+               if (preferred != null)
+               {
+                  accountList_.selectAccount(preferred);
+               }
             }
          }
       });
@@ -357,7 +373,14 @@ public class RSConnectDeploy extends Composite
       String appName = fromPrevious_ != null && 
             getSelectedAccount().equals(fromPrevious_.getAccount()) ?
             fromPrevious_.getName() : getNewAppName();
-      
+            
+      // if this was new content, set this account as the default to use for 
+      // new content
+      if (fromPrevious_ == null)
+      {
+         prefs_.preferredPublishAccount().setGlobalValue(getSelectedAccount());
+      }
+            
       return new RSConnectPublishResult(
             appName, 
             getSelectedAccount(), 
@@ -700,6 +723,8 @@ public class RSConnectDeploy extends Composite
    private RSConnectServerOperations server_;
    private GlobalDisplay display_;
    private RSAccountConnector connector_;
+   private UIPrefs prefs_;
+   
    private String contentPath_;
    private boolean asMultipleRmd_;
    private boolean asStatic_;
