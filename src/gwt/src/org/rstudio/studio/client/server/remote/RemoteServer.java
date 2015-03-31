@@ -1,7 +1,7 @@
 /*
  * RemoteServer.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-15 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -3656,6 +3656,8 @@ public class RemoteServer implements Server
    public void publishContent(String dir, ArrayList<String> deployFiles, 
          String file, String account, 
          String server, String appName, 
+         ArrayList<String> additionalFiles, ArrayList<String> ignoredFiles,
+         boolean asMultiple,
          ServerRequestCallback<Boolean> requestCallback)
    {
       JSONArray params = new JSONArray();
@@ -3665,6 +3667,9 @@ public class RemoteServer implements Server
       params.set(3, new JSONString(account));
       params.set(4, new JSONString(server));
       params.set(5, new JSONString(appName));
+      params.set(6, JSONUtils.toJSONStringArray(additionalFiles));
+      params.set(7, JSONUtils.toJSONStringArray(ignoredFiles));
+      params.set(8, JSONBoolean.getInstance(asMultiple));
       sendRequest(RPC_SCOPE,
             RSCONNECT_PUBLISH,
             params,

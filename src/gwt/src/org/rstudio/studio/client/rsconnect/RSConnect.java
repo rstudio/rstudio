@@ -477,10 +477,11 @@ public class RSConnect implements SessionInitHandler,
          JsArrayString deployFiles,
          JsArrayString additionalFiles,
          JsArrayString ignoredFiles,
+         boolean asMultiple,
          String file, 
          boolean launch, 
          JavaScriptObject record) /*-{
-      $wnd.opener.deployToRSConnect(path, deployFiles, additionalFiles, ignoredFiles, file, launch, record);
+      $wnd.opener.deployToRSConnect(path, deployFiles, additionalFiles, ignoredFiles, asMultiple, file, launch, record);
    }-*/;
    
    public static String contentTypeDesc(int contentType)
@@ -509,6 +510,7 @@ public class RSConnect implements SessionInitHandler,
                JsArrayUtil.toJsArrayString(result.getDeployFiles()),
                JsArrayUtil.toJsArrayString(result.getAdditionalFiles()),
                JsArrayUtil.toJsArrayString(result.getIgnoredFiles()),
+               result.getAsMultiple(),
                result.getSourceFile(), 
                launchBrowser, 
                RSConnectDeploymentRecord.create(result.getAppName(), 
@@ -532,6 +534,7 @@ public class RSConnect implements SessionInitHandler,
                result.getDeployFiles(),
                result.getAdditionalFiles(),
                result.getIgnoredFiles(),
+               result.getAsMultiple(),
                result.getSourceFile(),
                launchBrowser,
                RSConnectDeploymentRecord.create(result.getAppName(), 
@@ -612,6 +615,9 @@ public class RSConnect implements SessionInitHandler,
                             event.getRecord().getAccountName(), 
                             event.getRecord().getServer(),
                             event.getRecord().getName(), 
+                            event.getAdditionalFiles(),
+                            event.getIgnoredFiles(),
+                            event.getAsMultiple(),
       new ServerRequestCallback<Boolean>()
       {
          @Override
@@ -746,8 +752,8 @@ public class RSConnect implements SessionInitHandler,
    private final native void exportNativeCallbacks() /*-{
       var thiz = this;     
       $wnd.deployToRSConnect = $entry(
-         function(path, deployFiles, additionalFiles, ignoredFiles, file, launch, record) {
-            thiz.@org.rstudio.studio.client.rsconnect.RSConnect::deployToRSConnect(Ljava/lang/String;Lcom/google/gwt/core/client/JsArrayString;Lcom/google/gwt/core/client/JsArrayString;Lcom/google/gwt/core/client/JsArrayString;Ljava/lang/String;ZLcom/google/gwt/core/client/JavaScriptObject;)(path, deployFiles, additionalFiles, ignoredFiles, file, launch, record);
+         function(path, deployFiles, additionalFiles, ignoredFiles, asMultiple, file, launch, record) {
+            thiz.@org.rstudio.studio.client.rsconnect.RSConnect::deployToRSConnect(Ljava/lang/String;Lcom/google/gwt/core/client/JsArrayString;Lcom/google/gwt/core/client/JsArrayString;Lcom/google/gwt/core/client/JsArrayString;ZLjava/lang/String;ZLcom/google/gwt/core/client/JavaScriptObject;)(path, deployFiles, additionalFiles, ignoredFiles, asMultiple, file, launch, record);
          }
       ); 
    }-*/;
@@ -755,8 +761,8 @@ public class RSConnect implements SessionInitHandler,
    private void deployToRSConnect(String path, JsArrayString deployFiles, 
                                   JsArrayString additionalFiles, 
                                   JsArrayString ignoredFiles, 
-                                  String file, boolean launch, 
-                                  JavaScriptObject jsoRecord)
+                                  boolean asMultiple, String file, 
+                                  boolean launch, JavaScriptObject jsoRecord)
    {
       // this can be invoked by a satellite, so bring the main frame to the
       // front if we can
@@ -775,7 +781,7 @@ public class RSConnect implements SessionInitHandler,
       RSConnectDeploymentRecord record = jsoRecord.cast();
       events_.fireEvent(new RSConnectDeployInitiatedEvent(
             path, deployFilesList, additionalFilesList, ignoredFilesList, 
-            file, launch, record));
+            asMultiple, file, launch, record));
    }
    
    private final Commands commands_;

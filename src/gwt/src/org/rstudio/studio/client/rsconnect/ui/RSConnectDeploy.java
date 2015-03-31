@@ -386,7 +386,8 @@ public class RSConnectDeploy extends Composite
             contentPath_,
             deployFiles, 
             additionalFiles, 
-            getIgnoredFileList());
+            getIgnoredFileList(),
+            asMultipleRmd_);
    }
    
    public boolean isResultValid()

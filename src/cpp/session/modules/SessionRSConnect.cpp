@@ -42,6 +42,18 @@ namespace rsconnect {
 
 namespace {
 
+std::string quotedFilesFromArray(json::Array array) 
+{
+   std::string joined;
+   for (size_t i = 0; i < array.size(); i++) 
+   {
+      joined += "'" + string_utils::utf8ToSystem(array[i].get_str()) + "'";
+      if (i < array.size() - 1) 
+         joined += ", ";
+   }
+   return joined;
+}
+
 class RSConnectPublish : public async_r::AsyncRProcess
 {
 public:
@@ -51,7 +63,10 @@ public:
          const std::string& file, 
          const std::string& account,
          const std::string& server,
-         const std::string& app)
+         const std::string& app,
+         const json::Array& additionalFilesList,
+         const json::Array& ignoredFilesList,
+         bool asMultiple)
    {
       boost::shared_ptr<RSConnectPublish> pDeploy(new RSConnectPublish(file));
 
@@ -59,13 +74,9 @@ public:
                        module_context::CRANReposURL() + "')); ");
 
       // join and quote incoming filenames to deploy
-      std::string files;
-      for (size_t i = 0; i < fileList.size(); i++) 
-      {
-         files += "'" + fileList[i].get_str() + "'";
-         if (i < fileList.size() - 1) 
-            files += ", ";
-      }
+      std::string deployFiles = quotedFilesFromArray(fileList);
+      std::string additionalFiles = quotedFilesFromArray(additionalFilesList);
+      std::string ignoredFiles = quotedFilesFromArray(ignoredFilesList);
 
       // if an R Markdown document or HTML document is being deployed, mark it
       // as the primary file 
@@ -76,22 +87,31 @@ public:
          std::string extension = sourceFile.extensionLowerCase();
          if (extension == ".rmd" || extension == ".html") 
          {
-            primaryDoc = file;
+            primaryDoc = string_utils::utf8ToSystem(file);
          }
       }
 
       // form the deploy command to hand off to the async deploy process
       cmd += "rsconnect::deployApp("
-             "appDir = '" + dir + "'," +
-             (files.empty() ? "" : "appFiles = c(" + files + "), ") +
-             (primaryDoc.empty() ? "" : "appPrimaryDoc = '" + primaryDoc + "', ") + 
+             "appDir = '" + string_utils::utf8ToSystem(dir) + "'," +
+             (deployFiles.empty() ? "" : "appFiles = c(" + 
+                deployFiles + "), ") +
+             (primaryDoc.empty() ? "" : "appPrimaryDoc = '" + 
+                primaryDoc + "', ") + 
              "account = '" + account + "',"
              "server = '" + server + "', "
              "appName = '" + app + "', "
              "launch.browser = function (url) { "
              "   message('" kFinishedMarker "', url) "
              "}, "
-             "lint = FALSE)}";
+             "lint = FALSE,"
+             "metadata = list(" 
+             "   asMultiple = " + (asMultiple ? "TRUE" : "FALSE") + 
+                 (additionalFiles.empty() ? "" : ", additionalFiles = c(" + 
+                    additionalFiles + ")") + 
+                 (ignoredFiles.empty() ? "" : ", ignoredFiles = c(" + 
+                    ignoredFiles + ")") + 
+             "))}";
 
       std::cerr << cmd << std::endl;
       pDeploy->start(cmd.c_str(), FilePath(), async_r::R_PROCESS_VANILLA);
@@ -169,10 +189,13 @@ boost::shared_ptr<RSConnectPublish> s_pRSConnectPublish_;
 Error rsconnectPublish(const json::JsonRpcRequest& request,
                        json::JsonRpcResponse* pResponse)
 {
-   json::Array sourceFiles;
+   json::Array sourceFiles, additionalFiles, ignoredFiles;
    std::string sourceDir, sourceFile, account, server, appName;
+   bool asMultiple = false;
    Error error = json::readParams(request.params, &sourceDir, &sourceFiles,
-                                   &sourceFile, &account, &server, &appName);
+                                   &sourceFile, &account, &server, &appName,
+                                   &additionalFiles, &ignoredFiles, 
+                                   &asMultiple);
    if (error)
       return error;
 
@@ -185,7 +208,8 @@ Error rsconnectPublish(const json::JsonRpcRequest& request,
    {
       s_pRSConnectPublish_ = RSConnectPublish::create(sourceDir, sourceFiles, 
                                                   sourceFile, account, server, 
-                                                  appName);
+                                                  appName, additionalFiles,
+                                                  ignoredFiles, asMultiple);
       pResponse->setResult(true);
    }
 

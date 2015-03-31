@@ -35,6 +35,7 @@ public class RSConnectDeployInitiatedEvent extends GwtEvent<RSConnectDeployIniti
                                         ArrayList<String> deployFiles,
                                         ArrayList<String> additionalFiles,
                                         ArrayList<String> ignoredFiles,
+                                        boolean asMultiple,
                                         String sourceFile,
                                         boolean launchBrowser, 
                                         RSConnectDeploymentRecord record)
@@ -46,6 +47,7 @@ public class RSConnectDeployInitiatedEvent extends GwtEvent<RSConnectDeployIniti
       sourceFile_ = sourceFile;
       launchBrowser_ = launchBrowser;
       record_ = record;
+      asMultiple_ = asMultiple;
    }
    
    public RSConnectDeploymentRecord getRecord()
@@ -82,6 +84,11 @@ public class RSConnectDeployInitiatedEvent extends GwtEvent<RSConnectDeployIniti
    {
       return launchBrowser_; 
    }
+   
+   public boolean getAsMultiple()
+   {
+      return asMultiple_;
+   }
 
    @Override
    protected void dispatch(RSConnectDeployInitiatedEvent.Handler handler)
@@ -102,4 +109,5 @@ public class RSConnectDeployInitiatedEvent extends GwtEvent<RSConnectDeployIniti
    private final ArrayList<String> deployFiles_;
    private final ArrayList<String> additionalFiles_;
    private final ArrayList<String> ignoredFiles_;
+   private final boolean asMultiple_;
 }

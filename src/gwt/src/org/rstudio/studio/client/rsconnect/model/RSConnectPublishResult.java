@@ -38,6 +38,7 @@ public class RSConnectPublishResult
       deployFiles_     = deployFiles; 
       additionalFiles_ = null; 
       ignoredFiles_    = null;
+      asMultiple_      = false;
    }
 
    public RSConnectPublishResult(String appName, 
@@ -46,20 +47,22 @@ public class RSConnectPublishResult
          String sourceFile,
          ArrayList<String> deployFiles, 
          ArrayList<String> additionalFiles, 
-         ArrayList<String> ignoredFiles)
+         ArrayList<String> ignoredFiles,
+         boolean asMultiple)
    {     
       this(PUBLISH_CODE, appName, account, sourceDir, sourceFile, deployFiles,
-            additionalFiles, ignoredFiles);
+            additionalFiles, ignoredFiles, asMultiple);
    }
    
    public RSConnectPublishResult(String appName,
          RSConnectAccount account,
          String sourceDir, 
          String sourceFile, 
-         ArrayList<String> deployFiles)
+         ArrayList<String> deployFiles,
+         boolean asMultiple)
    {
       this(PUBLISH_STATIC, appName, account, sourceDir, sourceFile, deployFiles,
-            null, null);
+            null, null, asMultiple);
    }
    
    private RSConnectPublishResult(int publishType, 
@@ -69,7 +72,8 @@ public class RSConnectPublishResult
          String sourceFile,
          ArrayList<String> deployFiles, 
          ArrayList<String> additionalFiles, 
-         ArrayList<String> ignoredFiles)
+         ArrayList<String> ignoredFiles,
+         boolean asMultiple)
    {
       publishType_     = publishType;
       appName_         = appName; 
@@ -79,6 +83,7 @@ public class RSConnectPublishResult
       deployFiles_     = deployFiles; 
       additionalFiles_ = additionalFiles; 
       ignoredFiles_    = ignoredFiles;
+      asMultiple_      = asMultiple;
    }
    
    public String getSourceDir()
@@ -120,6 +125,11 @@ public class RSConnectPublishResult
    {
       return publishType_;
    }
+   
+   public boolean getAsMultiple()
+   {
+      return asMultiple_;
+   }
 
    private final String appName_; 
    private final RSConnectAccount account_; 
@@ -129,6 +139,7 @@ public class RSConnectPublishResult
    private final ArrayList<String> additionalFiles_; 
    private final ArrayList<String> ignoredFiles_;
    private final int publishType_;
+   private final boolean asMultiple_;
    
    public final static int PUBLISH_RPUBS = 0;
    public final static int PUBLISH_STATIC = 1;

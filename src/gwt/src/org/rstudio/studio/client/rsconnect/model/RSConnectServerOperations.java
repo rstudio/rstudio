@@ -44,6 +44,9 @@ public interface RSConnectServerOperations
    
    void publishContent(String dir, ArrayList<String> deployFiles, String file, 
                String account, String server, String appName, 
+               ArrayList<String> additionalFiles,
+               ArrayList<String> ignoredFiles,
+               boolean asMultiple,
                ServerRequestCallback<Boolean> requestCallback);
 
    void validateServerUrl (String url, 
