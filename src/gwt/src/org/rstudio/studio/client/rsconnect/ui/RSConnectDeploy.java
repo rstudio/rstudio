@@ -31,6 +31,7 @@ import org.rstudio.studio.client.rsconnect.model.RSConnectApplicationInfo;
 import org.rstudio.studio.client.rsconnect.model.RSConnectDeploymentFiles;
 import org.rstudio.studio.client.rsconnect.model.RSConnectDeploymentRecord;
 import org.rstudio.studio.client.rsconnect.model.RSConnectPublishResult;
+import org.rstudio.studio.client.rsconnect.model.RSConnectPublishSettings;
 import org.rstudio.studio.client.rsconnect.model.RSConnectServerOperations;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -125,6 +126,14 @@ public class RSConnectDeploy extends Composite
       contentPath_ = contentPath;
       fromPrevious_ = fromPrevious;
       
+      // import static/code and single/multiple settings from previous
+      // deployment, if we have one
+      if (fromPrevious != null)
+      {
+         asMultipleRmd_ = fromPrevious.getAsMultiple();
+         asStatic_ = fromPrevious.getAsStatic();
+      }
+      
       // inject dependencies 
       RStudioGinjector.INSTANCE.injectMembers(this);
       
@@ -217,7 +226,6 @@ public class RSConnectDeploy extends Composite
          {
             if (fromPrevious_ != null)
             {
-               // TODO: what if we're currently getting data?
                boolean existing = accountList_.getSelectedAccount().equals(
                      fromPrevious_.getAccount());
                appInfoPanel_.setVisible(existing);
@@ -246,34 +254,6 @@ public class RSConnectDeploy extends Composite
    public void setAccountList(JsArray<RSConnectAccount> accounts)
    {
       accountList_.setAccountList(accounts);
-   }
-   
-   public void setFileList(JsArrayString files, String[] unchecked)
-   {
-      if (forDocument_)
-      {
-         fileChecks_ = new ArrayList<CheckBox>();
-      }
-      
-      // clear existing file list
-      fileListPanel_.clear();
-      
-      for (int i = 0; i < files.length(); i++)
-      {
-         boolean checked = true;
-         if (unchecked != null)
-         {
-            for (int j = 0; j < unchecked.length; j++)
-            {
-               if (unchecked[j].equals(files.get(i)))
-               {
-                  checked = false; 
-                  break;
-               }
-            }
-         }
-         addFile(files.get(i), checked);
-      }
    }
    
    public void addFileToList(String path)
@@ -348,7 +328,6 @@ public class RSConnectDeploy extends Composite
    public void setContentPath(String contentPath, boolean asMultipleRmd, 
          boolean asStatic)
    {
-      // TODO: asMultipleRmd should be in the constructor too
       contentPath_ = contentPath;
       asMultipleRmd_ = asMultipleRmd;
    }
@@ -383,11 +362,12 @@ public class RSConnectDeploy extends Composite
             appName, 
             getSelectedAccount(), 
             FileSystemItem.createFile(contentPath_).getParentPathString(), 
-            contentPath_,
-            deployFiles, 
-            additionalFiles, 
-            getIgnoredFileList(),
-            asMultipleRmd_);
+            contentPath_, 
+            new RSConnectPublishSettings(deployFiles, 
+               additionalFiles, 
+               getIgnoredFileList(),
+               asMultipleRmd_,
+               asStatic_));
    }
    
    public boolean isResultValid()
@@ -396,6 +376,64 @@ public class RSConnectDeploy extends Composite
    }
    
    // Private methods --------------------------------------------------------
+   
+   private void setFileList(JsArrayString files, 
+         ArrayList<String> additionalFiles, ArrayList<String> ignoredFiles)
+   {
+      if (forDocument_)
+      {
+         fileChecks_ = new ArrayList<CheckBox>();
+      }
+      
+      // clear existing file list
+      fileListPanel_.clear(); 
+      for (int i = 0; i < files.length(); i++)
+      {
+         boolean checked = true;
+         boolean add = true;
+         
+         // if this file is marked ignored, uncheck it
+         if (ignoredFiles != null)
+         {
+            for (int j = 0; j < ignoredFiles.size(); j++)
+            {
+               if (ignoredFiles.get(j).equals(files.get(i)))
+               {
+                  checked = false; 
+                  break;
+               }
+            }
+         }
+
+         // if this file is marked additional, don't add it twice (we're about
+         // to add the additional files separately below)
+         if (additionalFiles != null)
+         {
+            for (int j = 0; j < additionalFiles.size(); j++)
+            {
+               if (additionalFiles.get(j).equals(files.get(i)))
+               {
+                  add = false; 
+                  break;
+               }
+            }
+         }
+
+         if (add)
+         {
+            addFile(files.get(i), checked);
+         }
+      }
+
+      // add any additional files 
+      if (additionalFiles != null)
+      {
+         for (int i = 0; i < additionalFiles.size(); i++)
+         {
+            addFile(additionalFiles.get(i), true);
+         }
+      }
+   }
    
    private RSConnectAccount getSelectedAccount()
    {
@@ -517,8 +555,11 @@ public class RSConnectDeploy extends Composite
                   }
                   else
                   {
-                     // TODO: ignored file persistence
-                     setFileList(files.getDirList(), new String[]{});
+                     setFileList(files.getDirList(), 
+                           fromPrevious_ != null ?
+                                 fromPrevious_.getAdditionalFiles() : null, 
+                           fromPrevious_ != null ? 
+                                 fromPrevious_.getIgnoredFiles() : null);
                      setPrimaryFile(
                            FileSystemItem.createFile(contentPath_).getName());
                   }
@@ -661,6 +702,7 @@ public class RSConnectDeploy extends Composite
    private RSAccountConnector connector_;
    private String contentPath_;
    private boolean asMultipleRmd_;
+   private boolean asStatic_;
 
    private final DeployStyle style_;
    private final boolean forDocument_;

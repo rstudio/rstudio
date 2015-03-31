@@ -42,14 +42,19 @@ namespace rsconnect {
 
 namespace {
 
-std::string quotedFilesFromArray(json::Array array) 
+// transforms a JSON array of file names into a single string. If 'quoted',
+// then the input strings are quoted and comma-delimited; otherwise, file names
+// are pipe-delimited.
+std::string quotedFilesFromArray(json::Array array, bool quoted) 
 {
    std::string joined;
    for (size_t i = 0; i < array.size(); i++) 
    {
-      joined += "'" + string_utils::utf8ToSystem(array[i].get_str()) + "'";
+      joined += (quoted ? "'" : "") + 
+                string_utils::utf8ToSystem(array[i].get_str()) +
+                (quoted ? "'" : "");
       if (i < array.size() - 1) 
-         joined += ", ";
+         joined += (quoted ? ", " : "|");
    }
    return joined;
 }
@@ -66,7 +71,8 @@ public:
          const std::string& app,
          const json::Array& additionalFilesList,
          const json::Array& ignoredFilesList,
-         bool asMultiple)
+         bool asMultiple,
+         bool asStatic)
    {
       boost::shared_ptr<RSConnectPublish> pDeploy(new RSConnectPublish(file));
 
@@ -74,9 +80,11 @@ public:
                        module_context::CRANReposURL() + "')); ");
 
       // join and quote incoming filenames to deploy
-      std::string deployFiles = quotedFilesFromArray(fileList);
-      std::string additionalFiles = quotedFilesFromArray(additionalFilesList);
-      std::string ignoredFiles = quotedFilesFromArray(ignoredFilesList);
+      std::string deployFiles = quotedFilesFromArray(fileList, true);
+      std::string additionalFiles = quotedFilesFromArray(additionalFilesList,
+            false);
+      std::string ignoredFiles = quotedFilesFromArray(ignoredFilesList,
+            false);
 
       // if an R Markdown document or HTML document is being deployed, mark it
       // as the primary file 
@@ -106,11 +114,12 @@ public:
              "}, "
              "lint = FALSE,"
              "metadata = list(" 
-             "   asMultiple = " + (asMultiple ? "TRUE" : "FALSE") + 
-                 (additionalFiles.empty() ? "" : ", additionalFiles = c(" + 
-                    additionalFiles + ")") + 
-                 (ignoredFiles.empty() ? "" : ", ignoredFiles = c(" + 
-                    ignoredFiles + ")") + 
+             "   asMultiple = " + (asMultiple ? "TRUE" : "FALSE") + ", "
+             "   asStatic = " + (asStatic ? "TRUE" : "FALSE") + 
+                 (additionalFiles.empty() ? "" : ", additionalFiles = '" + 
+                    additionalFiles + "'") + 
+                 (ignoredFiles.empty() ? "" : ", ignoredFiles = '" + 
+                    ignoredFiles + "'") + 
              "))}";
 
       std::cerr << cmd << std::endl;
@@ -191,11 +200,11 @@ Error rsconnectPublish(const json::JsonRpcRequest& request,
 {
    json::Array sourceFiles, additionalFiles, ignoredFiles;
    std::string sourceDir, sourceFile, account, server, appName;
-   bool asMultiple = false;
+   bool asMultiple = false, asStatic = false;
    Error error = json::readParams(request.params, &sourceDir, &sourceFiles,
                                    &sourceFile, &account, &server, &appName,
                                    &additionalFiles, &ignoredFiles, 
-                                   &asMultiple);
+                                   &asMultiple, &asStatic);
    if (error)
       return error;
 
@@ -209,7 +218,8 @@ Error rsconnectPublish(const json::JsonRpcRequest& request,
       s_pRSConnectPublish_ = RSConnectPublish::create(sourceDir, sourceFiles, 
                                                   sourceFile, account, server, 
                                                   appName, additionalFiles,
-                                                  ignoredFiles, asMultiple);
+                                                  ignoredFiles, asMultiple,
+                                                  asStatic);
       pResponse->setResult(true);
    }
 

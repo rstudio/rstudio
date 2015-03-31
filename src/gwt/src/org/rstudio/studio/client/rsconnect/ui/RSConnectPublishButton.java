@@ -31,6 +31,7 @@ import org.rstudio.studio.client.rsconnect.model.RSConnectDeploymentRecord;
 import org.rstudio.studio.client.rsconnect.model.RSConnectServerOperations;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.shiny.events.RSConnectDeploymentCompletedEvent;
 import org.rstudio.studio.client.workbench.commands.Commands;
 
 import com.google.gwt.core.client.JsArray;
@@ -44,6 +45,7 @@ import com.google.gwt.user.client.ui.MenuItem;
 import com.google.inject.Inject;
 
 public class RSConnectPublishButton extends Composite
+   implements RSConnectDeploymentCompletedEvent.Handler
 {
    public RSConnectPublishButton(int contentType, boolean showCaption,
          boolean manageVisiblity)
@@ -112,6 +114,8 @@ public class RSConnectPublishButton extends Composite
             }
          });
       }
+      
+      events_.addHandler(RSConnectDeploymentCompletedEvent.TYPE, this);
    }
    
    @Override
@@ -164,6 +168,23 @@ public class RSConnectPublishButton extends Composite
    {
       htmlGenerator_ = generator;
       setPreviousDeployments(null);
+   }
+
+
+   @Override
+   public void onRSConnectDeploymentCompleted(
+         RSConnectDeploymentCompletedEvent event)
+   {
+      if (!event.succeeded())
+         return;
+      
+      // when a deployment is successful, refresh ourselves. Consider: it's 
+      // a little wasteful to do this whether or not the deployment was for 
+      // the content on which this button is hosted, but there are unlikely to
+      // be more than a couple publish buttons at any one time, and this is
+      // cheap (just hits the local disk)
+      lastContentPath_ = null;
+      populateDeployments();
    }
 
    // Private methods --------------------------------------------------------

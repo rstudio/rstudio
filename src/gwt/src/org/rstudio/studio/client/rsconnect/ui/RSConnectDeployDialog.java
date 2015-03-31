@@ -43,7 +43,6 @@ public class RSConnectDeployDialog
                                 final GlobalDisplay display, 
                                 final String sourceDir, 
                                 String sourceFile,
-                                String[] ignoredFiles,
                                 RSConnectDeploymentRecord fromPrevious)
    {
       super(server, display, new RSConnectDeploy(sourceFile, fromPrevious, 

@@ -46,6 +46,7 @@ import org.rstudio.studio.client.rsconnect.model.RSConnectDirectoryState;
 import org.rstudio.studio.client.rsconnect.model.RSConnectLintResults;
 import org.rstudio.studio.client.rsconnect.model.RSConnectPublishInput;
 import org.rstudio.studio.client.rsconnect.model.RSConnectPublishResult;
+import org.rstudio.studio.client.rsconnect.model.RSConnectPublishSettings;
 import org.rstudio.studio.client.rsconnect.model.RSConnectServerOperations;
 import org.rstudio.studio.client.rsconnect.model.RmdPublishDetails;
 import org.rstudio.studio.client.rsconnect.ui.RSAccountConnector;
@@ -168,9 +169,9 @@ public class RSConnect implements SessionInitHandler,
             {
                publishAsRPubs(event);
             }
-            else
+            else 
             {
-               publishAsStatic(new RSConnectPublishInput(event));
+               publishAsFiles(event, event.getPath());
             }
             break;
          }
@@ -285,13 +286,11 @@ public class RSConnect implements SessionInitHandler,
 
    private void publishAsFiles(RSConnectActionEvent event, String path)
    {
-      // TODO: thread ignored files through properly
       RSConnectDeployDialog dialog = 
             new RSConnectDeployDialog(
                       server_, this, display_, 
                       FilePathUtils.dirFromFile(path), 
                       path,
-                      new String[]{},
                       event.getFromPrevious());
       dialog.showModal();
    }
@@ -478,10 +477,11 @@ public class RSConnect implements SessionInitHandler,
          JsArrayString additionalFiles,
          JsArrayString ignoredFiles,
          boolean asMultiple,
+         boolean asStatic,
          String file, 
          boolean launch, 
          JavaScriptObject record) /*-{
-      $wnd.opener.deployToRSConnect(path, deployFiles, additionalFiles, ignoredFiles, asMultiple, file, launch, record);
+      $wnd.opener.deployToRSConnect(path, deployFiles, additionalFiles, ignoredFiles, asMultiple, asStatic, file, launch, record);
    }-*/;
    
    public static String contentTypeDesc(int contentType)
@@ -507,10 +507,14 @@ public class RSConnect implements SessionInitHandler,
          // deployment
          RSConnect.deployFromSatellite(
                result.getSourceDir(), 
-               JsArrayUtil.toJsArrayString(result.getDeployFiles()),
-               JsArrayUtil.toJsArrayString(result.getAdditionalFiles()),
-               JsArrayUtil.toJsArrayString(result.getIgnoredFiles()),
-               result.getAsMultiple(),
+               JsArrayUtil.toJsArrayString(
+                     result.getSettings().getDeployFiles()),
+               JsArrayUtil.toJsArrayString(
+                     result.getSettings().getAdditionalFiles()),
+               JsArrayUtil.toJsArrayString(
+                     result.getSettings().getIgnoredFiles()),
+               result.getSettings().getAsMultiple(),
+               result.getSettings().getAsStatic(),
                result.getSourceFile(), 
                launchBrowser, 
                RSConnectDeploymentRecord.create(result.getAppName(), 
@@ -531,10 +535,7 @@ public class RSConnect implements SessionInitHandler,
          // in the main window, initiate the deployment directly
          events_.fireEvent(new RSConnectDeployInitiatedEvent(
                result.getSourceDir(),
-               result.getDeployFiles(),
-               result.getAdditionalFiles(),
-               result.getIgnoredFiles(),
-               result.getAsMultiple(),
+               result.getSettings(),
                result.getSourceFile(),
                launchBrowser,
                RSConnectDeploymentRecord.create(result.getAppName(), 
@@ -581,23 +582,6 @@ public class RSConnect implements SessionInitHandler,
          
          // show publish UI appropriate to the type of content being deployed
          showPublishUI(event);
-
-         /*
-         sourceServer_.getDocumentProperties(event.getPath(), 
-               new ServerRequestCallback<JsObject>()
-         {
-            @Override
-            public void onResponseReceived(JsObject properties)
-            {
-               String files = properties.getString(IGNORED_RESOURCES);
-               if (files != null && !files.isEmpty())
-               {
-                  files.split("\\|");
-               }
-            }
-         });
-         */;
-
       }
       else if (event.getAction() == RSConnectActionEvent.ACTION_TYPE_CONFIGURE)
       {
@@ -610,14 +594,11 @@ public class RSConnect implements SessionInitHandler,
       FileSystemItem sourceFile = FileSystemItem.createFile(
             event.getSourceFile());
       server_.publishContent(event.getPath(), 
-                            event.getDeployFiles(),
                             sourceFile.getName(),
                             event.getRecord().getAccountName(), 
                             event.getRecord().getServer(),
                             event.getRecord().getName(), 
-                            event.getAdditionalFiles(),
-                            event.getIgnoredFiles(),
-                            event.getAsMultiple(),
+                            event.getSettings(),
       new ServerRequestCallback<Boolean>()
       {
          @Override
@@ -752,8 +733,8 @@ public class RSConnect implements SessionInitHandler,
    private final native void exportNativeCallbacks() /*-{
       var thiz = this;     
       $wnd.deployToRSConnect = $entry(
-         function(path, deployFiles, additionalFiles, ignoredFiles, asMultiple, file, launch, record) {
-            thiz.@org.rstudio.studio.client.rsconnect.RSConnect::deployToRSConnect(Ljava/lang/String;Lcom/google/gwt/core/client/JsArrayString;Lcom/google/gwt/core/client/JsArrayString;Lcom/google/gwt/core/client/JsArrayString;ZLjava/lang/String;ZLcom/google/gwt/core/client/JavaScriptObject;)(path, deployFiles, additionalFiles, ignoredFiles, asMultiple, file, launch, record);
+         function(path, deployFiles, additionalFiles, ignoredFiles, asMultiple, asStatic, file, launch, record) {
+            thiz.@org.rstudio.studio.client.rsconnect.RSConnect::deployToRSConnect(Ljava/lang/String;Lcom/google/gwt/core/client/JsArrayString;Lcom/google/gwt/core/client/JsArrayString;Lcom/google/gwt/core/client/JsArrayString;ZZLjava/lang/String;ZLcom/google/gwt/core/client/JavaScriptObject;)(path, deployFiles, additionalFiles, ignoredFiles, asMultiple, asStatic, file, launch, record);
          }
       ); 
    }-*/;
@@ -761,8 +742,9 @@ public class RSConnect implements SessionInitHandler,
    private void deployToRSConnect(String path, JsArrayString deployFiles, 
                                   JsArrayString additionalFiles, 
                                   JsArrayString ignoredFiles, 
-                                  boolean asMultiple, String file, 
-                                  boolean launch, JavaScriptObject jsoRecord)
+                                  boolean asMultiple, boolean asStatic,
+                                  String file, boolean launch, 
+                                  JavaScriptObject jsoRecord)
    {
       // this can be invoked by a satellite, so bring the main frame to the
       // front if we can
@@ -779,9 +761,10 @@ public class RSConnect implements SessionInitHandler,
             JsArrayUtil.fromJsArrayString(ignoredFiles);
       
       RSConnectDeploymentRecord record = jsoRecord.cast();
-      events_.fireEvent(new RSConnectDeployInitiatedEvent(
-            path, deployFilesList, additionalFilesList, ignoredFilesList, 
-            asMultiple, file, launch, record));
+      events_.fireEvent(new RSConnectDeployInitiatedEvent(path, 
+            new RSConnectPublishSettings(deployFilesList, 
+                  additionalFilesList, ignoredFilesList, asMultiple, asStatic), 
+            file, launch, record));
    }
    
    private final Commands commands_;

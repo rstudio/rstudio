@@ -14,7 +14,12 @@
  */
 package org.rstudio.studio.client.rsconnect.model;
 
+import java.util.ArrayList;
+
+import org.rstudio.core.client.JsArrayUtil;
+
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.JsArrayString;
 
 public class RSConnectDeploymentRecord extends JavaScriptObject 
 {
@@ -57,9 +62,40 @@ public class RSConnectDeploymentRecord extends JavaScriptObject
    public final native String getUrl() /*-{
       return this.url;
    }-*/;
-
+   
    public final RSConnectAccount getAccount()
    {
       return RSConnectAccount.create(getAccountName(), getServer());
    };
+   
+   public final ArrayList<String> getAdditionalFiles() 
+   {
+      return JsArrayUtil.fromJsArrayString(getFileList("additionalFiles"));
+   }
+   
+   public final ArrayList<String> getIgnoredFiles() 
+   {
+      return JsArrayUtil.fromJsArrayString(getFileList("ignoredFiles"));
+   }
+   
+   public final native boolean getAsMultiple() /*-{
+      if (typeof this.asMultiple === "undefined") 
+         return false;
+      else
+         return this.asMultiple;
+   }-*/;
+   
+   public final native boolean getAsStatic() /*-{
+      if (typeof this.asStatic === "undefined") 
+         return false;
+      else
+         return this.asStatic;
+   }-*/;
+   
+   private final native JsArrayString getFileList(String name) /*-{
+      if (typeof this[name] === "undefined") 
+         return [];
+      else
+         return this[name].split("|");
+   }-*/;
 }

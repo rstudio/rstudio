@@ -91,6 +91,7 @@ import org.rstudio.studio.client.rmarkdown.ui.RmdTemplateOptionsDialog;
 import org.rstudio.studio.client.rsconnect.RSConnect;
 import org.rstudio.studio.client.rsconnect.events.RSConnectActionEvent;
 import org.rstudio.studio.client.rsconnect.events.RSConnectDeployInitiatedEvent;
+import org.rstudio.studio.client.rsconnect.model.RSConnectPublishSettings;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
@@ -652,16 +653,20 @@ public class TextEditingTarget implements
                   if (!getPath().equals(evtDir.completePath(event.getSourceFile())))
                      return;
                   
-                  if (event.getAdditionalFiles() != null &&
-                      event.getAdditionalFiles().size() > 0)
+                  RSConnectPublishSettings settings = event.getSettings();
+                  if (settings == null)
+                     return;
+                  
+                  if (settings.getAdditionalFiles() != null &&
+                      settings.getAdditionalFiles().size() > 0)
                   {
-                     addAdditionalResourceFiles(event.getAdditionalFiles());
+                     addAdditionalResourceFiles(settings.getAdditionalFiles());
                   }
                   
-                  if (event.getIgnoredFiles() != null &&
-                      event.getIgnoredFiles().size() > 0)
+                  if (settings.getIgnoredFiles() != null &&
+                      settings.getIgnoredFiles().size() > 0)
                   {
-                     setIgnoredFiles(event.getIgnoredFiles());
+                     setIgnoredFiles(settings.getIgnoredFiles());
                   }
                }
             });

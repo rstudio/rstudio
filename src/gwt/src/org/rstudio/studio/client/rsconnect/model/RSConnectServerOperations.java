@@ -14,8 +14,6 @@
  */
 package org.rstudio.studio.client.rsconnect.model;
 
-import java.util.ArrayList;
-
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 
@@ -42,11 +40,8 @@ public interface RSConnectServerOperations
                boolean asMultipleRmd,
                ServerRequestCallback<RSConnectDeploymentFiles> requestCallback);
    
-   void publishContent(String dir, ArrayList<String> deployFiles, String file, 
-               String account, String server, String appName, 
-               ArrayList<String> additionalFiles,
-               ArrayList<String> ignoredFiles,
-               boolean asMultiple,
+   void publishContent(String dir, String file, String account, String server, 
+               String appName, RSConnectPublishSettings settings,
                ServerRequestCallback<Boolean> requestCallback);
 
    void validateServerUrl (String url, 

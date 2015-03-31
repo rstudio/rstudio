@@ -14,9 +14,8 @@
  */
 package org.rstudio.studio.client.rsconnect.events;
 
-import java.util.ArrayList;
-
 import org.rstudio.studio.client.rsconnect.model.RSConnectDeploymentRecord;
+import org.rstudio.studio.client.rsconnect.model.RSConnectPublishSettings;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
@@ -32,22 +31,16 @@ public class RSConnectDeployInitiatedEvent extends GwtEvent<RSConnectDeployIniti
       new GwtEvent.Type<RSConnectDeployInitiatedEvent.Handler>();
    
    public RSConnectDeployInitiatedEvent(String path, 
-                                        ArrayList<String> deployFiles,
-                                        ArrayList<String> additionalFiles,
-                                        ArrayList<String> ignoredFiles,
-                                        boolean asMultiple,
+                                        RSConnectPublishSettings settings,
                                         String sourceFile,
                                         boolean launchBrowser, 
                                         RSConnectDeploymentRecord record)
    {
       path_ = path;
-      deployFiles_ = deployFiles;
-      additionalFiles_ = additionalFiles;
-      ignoredFiles_ = ignoredFiles;
       sourceFile_ = sourceFile;
       launchBrowser_ = launchBrowser;
       record_ = record;
-      asMultiple_ = asMultiple;
+      settings_ = settings;
    }
    
    public RSConnectDeploymentRecord getRecord()
@@ -65,29 +58,14 @@ public class RSConnectDeployInitiatedEvent extends GwtEvent<RSConnectDeployIniti
       return sourceFile_;
    }
    
-   public ArrayList<String> getDeployFiles()
-   {
-      return deployFiles_;
-   }
-   
-   public ArrayList<String> getAdditionalFiles()
-   {
-      return additionalFiles_;
-   }
-   
-   public ArrayList<String> getIgnoredFiles()
-   {
-      return ignoredFiles_;
-   }
-   
    public boolean getLaunchBrowser()
    {
       return launchBrowser_; 
    }
    
-   public boolean getAsMultiple()
+   public RSConnectPublishSettings getSettings()
    {
-      return asMultiple_;
+      return settings_;
    }
 
    @Override
@@ -106,8 +84,5 @@ public class RSConnectDeployInitiatedEvent extends GwtEvent<RSConnectDeployIniti
    private final String path_;
    private final String sourceFile_;
    private final boolean launchBrowser_;
-   private final ArrayList<String> deployFiles_;
-   private final ArrayList<String> additionalFiles_;
-   private final ArrayList<String> ignoredFiles_;
-   private final boolean asMultiple_;
+   private final RSConnectPublishSettings settings_;
 }
