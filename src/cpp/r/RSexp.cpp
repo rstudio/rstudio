@@ -23,6 +23,7 @@
 #include <boost/function.hpp>
 #include <boost/foreach.hpp>
 #include <boost/numeric/conversion/cast.hpp>
+#include <boost/container/flat_set.hpp>
 
 #include <core/Macros.hpp>
 #include <core/Log.hpp>
@@ -121,7 +122,17 @@ SEXP findNamespace(const std::string& name)
    // case 4071: namespace look up executes R code that can trip the debugger
    DisableDebugScope disableStepInto(R_GlobalEnv);
 
-   return R_FindNamespace(Rf_mkString(name.c_str()));
+   // R_FindNamespace will throw if it fails to find a particular name.
+   // Instead, we manually search the namespace registry.
+   r::sexp::Protect protect;
+   SEXP nameSEXP;
+   protect.add(nameSEXP = Rf_install(name.c_str()));
+   
+   SEXP ns = Rf_findVarInFrame(R_NamespaceRegistry, nameSEXP);
+   if (ns == R_UnboundValue)
+      return R_EmptyEnv;
+   
+   return ns;
 }
    
 void listEnvironment(SEXP env, 
@@ -188,24 +199,59 @@ SEXP findVar(const std::string& name, const std::string& ns)
    
    return findVar(name, env);
 }
+
+SEXP getPromiseValue(SEXP promSEXP, SEXP envir, Protect* pProtect)
+{
+   if (PRVALUE(promSEXP) == R_UnboundValue)
+   {
+      SEXP evaledSEXP = Rf_eval(promSEXP, envir);
+      pProtect->add(evaledSEXP);
+      return evaledSEXP;
+   }
+   else
+      return PRVALUE(promSEXP);
+}
   
 SEXP findFunction(const std::string& name, const std::string& ns) 
 {
+   r::sexp::Protect protect;
    if (name.empty())
       return R_UnboundValue;
    
    SEXP env = ns.empty() ? R_GlobalEnv : findNamespace(ns);
+   if (env == R_UnboundValue) return R_UnboundValue;
    
-   SEXP functionSEXP;
-   Error error = executeSafely<SEXP>(
-      boost::bind(Rf_findFun, Rf_install(name.c_str()), env), 
-      &functionSEXP
-   );
+   // We might want to use `Rf_findFun`, but it calls `Rf_error` on failure.
+   // We instead attempt to find the function by manually
+   // walking through the environment (and its enclosing environments)
+   SEXP nameSEXP;
+   protect.add(nameSEXP = Rf_install(name.c_str()));
    
-   if (error)
-      return R_UnboundValue;
-   else
-      return functionSEXP ;
+   // Search through frames until we find the global environment.
+   // Keep track of what's been visited, to avoid cycles.
+   boost::container::flat_set<SEXP> visitedEnvironments;
+   while (env != R_EmptyEnv)
+   {
+      if (visitedEnvironments.count(env)) break;
+      visitedEnvironments.insert(env);
+      
+      SEXP resultSEXP = Rf_findVarInFrame(env, nameSEXP);
+      if (resultSEXP != R_UnboundValue)
+      {
+         if (Rf_isFunction(resultSEXP))
+            return resultSEXP;
+         else if (TYPEOF(resultSEXP) == PROMSXP)
+         {
+            SEXP prValueSEXP = getPromiseValue(resultSEXP, env, &protect);
+            if (Rf_isFunction(prValueSEXP))
+               return prValueSEXP;
+         }
+      }
+      
+      env = ENCLOS(env);
+   }
+   
+   return R_UnboundValue;
 }   
    
 std::string typeAsString(SEXP object)
