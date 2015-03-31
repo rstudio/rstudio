@@ -14,9 +14,9 @@
  */
 package org.rstudio.studio.client.rsconnect.events;
 
-import org.rstudio.studio.client.rmarkdown.model.RmdPreviewParams;
 import org.rstudio.studio.client.rsconnect.RSConnect;
 import org.rstudio.studio.client.rsconnect.model.RSConnectDeploymentRecord;
+import org.rstudio.studio.client.rsconnect.model.RenderedDocPreview;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
@@ -44,12 +44,12 @@ public class RSConnectActionEvent extends GwtEvent<RSConnectActionEvent.Handler>
             RSConnect.CONTENT_TYPE_APP, path, null, null, fromPrevious);
    }
    
-   public static RSConnectActionEvent DeployRmdEvent(RmdPreviewParams params,
+   public static RSConnectActionEvent DeployDocEvent(RenderedDocPreview params,
          RSConnectDeploymentRecord fromPrevious)
    {
       return new RSConnectActionEvent(ACTION_TYPE_DEPLOY,
-            RSConnect.CONTENT_TYPE_RMD, 
-            params.getTargetFile(),
+            RSConnect.CONTENT_TYPE_DOCUMENT, 
+            params.getSourceFile(),
             params.getOutputFile(), 
             params,
             fromPrevious);
@@ -62,20 +62,20 @@ public class RSConnectActionEvent extends GwtEvent<RSConnectActionEvent.Handler>
    }
 
    private RSConnectActionEvent(int action, int contentType, String path, 
-                               String htmlFile, RmdPreviewParams fromRmdPreview,
+                               String htmlFile, RenderedDocPreview fromPreview,
                                RSConnectDeploymentRecord fromPrevious)
    {
       action_ = action;
       contentType_ = contentType;
       path_ = path;
       fromPrevious_ = fromPrevious;
-      rmdPreview_ = fromRmdPreview;
+      docPreview_ = fromPreview;
       
       // determine location of static content, if any
       if (htmlFile != null)
          htmlFile_ = htmlFile;
-      else if (fromRmdPreview != null)
-         htmlFile_ = fromRmdPreview.getOutputFile();
+      else if (fromPreview != null)
+         htmlFile_ = fromPreview.getOutputFile();
       else
          htmlFile_ = null;
    }
@@ -90,9 +90,9 @@ public class RSConnectActionEvent extends GwtEvent<RSConnectActionEvent.Handler>
       return action_;
    }
    
-   public RmdPreviewParams getFromRmdPreview()
+   public RenderedDocPreview getFromPreview()
    {
-      return rmdPreview_;
+      return docPreview_;
    }
    
    public RSConnectDeploymentRecord getFromPrevious()
@@ -126,7 +126,7 @@ public class RSConnectActionEvent extends GwtEvent<RSConnectActionEvent.Handler>
    public static int ACTION_TYPE_CONFIGURE = 1;
    
    private final String path_;
-   private final RmdPreviewParams rmdPreview_;
+   private final RenderedDocPreview docPreview_;
    private final int action_;
    private final RSConnectDeploymentRecord fromPrevious_;
    private final int contentType_;

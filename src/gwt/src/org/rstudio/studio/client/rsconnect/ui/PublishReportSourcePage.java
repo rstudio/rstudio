@@ -47,12 +47,17 @@ public class PublishReportSourcePage
                            new ArrayList<WizardPage<RSConnectPublishInput, 
                                                     RSConnectPublishResult>>();
       
-      pages.add(new PublishFilesPage("Publish document with source code",
-            "Choose this option if you want to create a scheduled report or " +
-            "execute your document on the server.", input, false, asMultiple, 
+      pages.add(new PublishFilesPage("Publish " +
+            (asMultiple? "documents" : "document") + " with source code",
+            "Choose this option if you want to create " + 
+            (asMultiple ? "scheduled reports" : "a scheduled report") + " or " +
+            "execute your " + 
+            (asMultiple ? "documents" : "document") + " on the server.", 
+            input, false, asMultiple, 
             false));
-      String staticTitle = "Publish finished document only";
-      String staticSubtitle = "Choose this option to publish the report as " +
+      String staticTitle = "Publish finished " + 
+            (asMultiple ? "documents" : "document") + " only";
+      String staticSubtitle = "Choose this option to publish the content as " +
              "it appears in RStudio.";
       if (input.isConnectUIEnabled() && input.isExternalUIEnabled())
       {

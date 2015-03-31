@@ -146,8 +146,8 @@ public class RSConnect implements SessionInitHandler,
       RPubsUploadDialog dlg = new RPubsUploadDialog(
             "Publish Wizard", 
             ctx, 
-            event.getFromRmdPreview() != null ? 
-                  event.getFromRmdPreview().getTargetFile() : null,
+            event.getFromPreview() != null ? 
+                  event.getFromPreview().getSourceFile() : null,
             event.getHtmlFile(), 
             event.getFromPrevious() == null ? 
                   "" : event.getFromPrevious().getBundleId(),
@@ -188,12 +188,12 @@ public class RSConnect implements SessionInitHandler,
                session_.getSessionInfo().getAllowExternalPublish());
          
          // if R Markdown, get info on what we're publishing from the server
-         if (event.getFromRmdPreview() != null)
+         if (event.getFromPreview() != null)
          {
             input.setSourceRmd(FileSystemItem.createFile(
-                  event.getFromRmdPreview().getTargetFile()));
+                  event.getFromPreview().getSourceFile()));
             server_.getRmdPublishDetails(
-                  event.getFromRmdPreview().getTargetFile(), 
+                  event.getFromPreview().getSourceFile(), 
                   new ServerRequestCallback<RmdPublishDetails>()
                   {
                      @Override
@@ -492,7 +492,7 @@ public class RSConnect implements SessionInitHandler,
          return "Application";
       case RSConnect.CONTENT_TYPE_PLOT:
          return "Plot";
-      case RSConnect.CONTENT_TYPE_RMD:
+      case RSConnect.CONTENT_TYPE_DOCUMENT:
          return "Document";
       }
       return "Content";
@@ -788,8 +788,8 @@ public class RSConnect implements SessionInitHandler,
    public final static String CLOUD_SERVICE_NAME = "ShinyApps.io";
    public static final String IGNORED_RESOURCES = "ignored_resources";
    
-   public final static int CONTENT_TYPE_NONE = 0;
-   public final static int CONTENT_TYPE_PLOT = 1;
-   public final static int CONTENT_TYPE_RMD  = 2;
-   public final static int CONTENT_TYPE_APP  = 3;
+   public final static int CONTENT_TYPE_NONE      = 0;
+   public final static int CONTENT_TYPE_PLOT      = 1;
+   public final static int CONTENT_TYPE_DOCUMENT  = 2;
+   public final static int CONTENT_TYPE_APP       = 3;
 }

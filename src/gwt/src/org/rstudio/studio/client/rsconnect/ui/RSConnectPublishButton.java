@@ -24,11 +24,13 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.rpubs.RPubsHtmlGenerator;
+import org.rstudio.studio.client.htmlpreview.model.HTMLPreviewResult;
 import org.rstudio.studio.client.rmarkdown.model.RmdPreviewParams;
 import org.rstudio.studio.client.rsconnect.RSConnect;
 import org.rstudio.studio.client.rsconnect.events.RSConnectActionEvent;
 import org.rstudio.studio.client.rsconnect.model.RSConnectDeploymentRecord;
 import org.rstudio.studio.client.rsconnect.model.RSConnectServerOperations;
+import org.rstudio.studio.client.rsconnect.model.RenderedDocPreview;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.shiny.events.RSConnectDeploymentCompletedEvent;
@@ -143,13 +145,23 @@ public class RSConnectPublishButton extends Composite
              params.getResult().getFormat() != null))
       {
          setVisible(true);
-         rmdPreview_ = params;
+         docPreview_ = params;
          setContentPath(params.getResult().getTargetFile());
       }
       else
       {
          setVisible(false);
-         rmdPreview_ = null;
+         docPreview_ = null;
+      }
+   }
+   
+   public void setHtmlPreview(HTMLPreviewResult params)
+   {
+      if (params.getSucceeded())
+      {
+         setVisible(true);
+         setContentPath(params.getSourceFile());
+         htmlPreview_ = params;
       }
    }
 
@@ -252,10 +264,10 @@ public class RSConnectPublishButton extends Composite
          events_.fireEvent(RSConnectActionEvent.DeployAppEvent(
                contentPath_, previous));
          break;
-      case RSConnect.CONTENT_TYPE_RMD:
+      case RSConnect.CONTENT_TYPE_DOCUMENT:
          // All R Markdown variants (single/multiple and static/Shiny)
-         events_.fireEvent(RSConnectActionEvent.DeployRmdEvent(
-               rmdPreview_, previous));
+         events_.fireEvent(RSConnectActionEvent.DeployDocEvent(
+               docPreview_, previous));
          break;
       default: 
          // should never happen 
@@ -359,7 +371,7 @@ public class RSConnectPublishButton extends Composite
    private int contentType_;
    private String lastContentPath_;
    private boolean populating_ = false;
-   private RmdPreviewParams rmdPreview_;
+   private RenderedDocPreview docPreview_;
    private RPubsHtmlGenerator htmlGenerator_;
 
    private final boolean showCaption_;

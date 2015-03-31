@@ -40,31 +40,30 @@
          </rsc:RSConnectAccountList>
          <g:HTMLPanel ui:field="newAppPanel_">
             <g:Label styleName="{res.style.controlLabel}" ui:field="nameLabel_" 
-                     text="Name:"></g:Label>
+                     text="Create New Content Named:"></g:Label>
             <rsc:AppNameTextbox styleName="{res.style.gridControl}" 
                                 ui:field="appName_">
             </rsc:AppNameTextbox>
          </g:HTMLPanel>
          <g:HTMLPanel styleName="{res.style.controlLabel}" visible="false" 
                       ui:field="appInfoPanel_">
-            <g:HTMLPanel ui:field="appDetailsPanel_" visible="false">
-               <g:Label text="Destination URL:" 
-                        styleName="{res.style.controlLabel}"></g:Label>
+            <g:Label text="Update Existing Content:" 
+                     styleName="{res.style.controlLabel}"></g:Label>
+            <g:HTMLPanel ui:field="appDetailsPanel_" 
+                         styleName="{res.style.appDetailsPanel}" 
+                         visible="false">
+               <g:Label styleName="{res.style.statusLabel}" 
+                        ui:field="appExistingName_"></g:Label>
                <g:Anchor styleName="{res.style.urlAnchor}" ui:field="urlAnchor_" 
                          target="_blank"></g:Anchor>
-               <g:InlineLabel text="Status:"></g:InlineLabel>
-               <g:InlineLabel styleName="{res.style.statusLabel}" 
-                              ui:field="statusLabel_"></g:InlineLabel>
             </g:HTMLPanel>
             <g:HTMLPanel styleName="{res.style.progressPanel}" 
                          ui:field="appProgressPanel_" visible="false">
-               <g:HTMLPanel>
-                  <g:Image resource="{coreRes.progress_gray}"></g:Image>
-               </g:HTMLPanel>
                <g:InlineLabel text="Looking up details for "></g:InlineLabel>
                <g:InlineLabel styleName="{res.style.statusLabel}" 
                               ui:field="appProgressName_"></g:InlineLabel>
                <g:InlineLabel text="..."></g:InlineLabel>
+               <g:Image resource="{coreRes.progress_gray}"></g:Image>
             </g:HTMLPanel>
          </g:HTMLPanel>
       </g:HTMLPanel>

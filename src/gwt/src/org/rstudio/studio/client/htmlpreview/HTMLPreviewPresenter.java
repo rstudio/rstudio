@@ -77,8 +77,7 @@ public class HTMLPreviewPresenter implements IsWidget, RPubsPresenter.Context
       HandlerRegistration addProgressClickHandler(ClickHandler handler);
       
       void showPreview(String url,
-                       String htmlFile, 
-                       boolean enableSaveAs,
+                       HTMLPreviewResult result,
                        boolean enablePublish,
                        boolean enableRefresh,
                        boolean enableShowLog);
@@ -207,8 +206,7 @@ public class HTMLPreviewPresenter implements IsWidget, RPubsPresenter.Context
                view_.closeProgress();
                view_.showPreview(
                   server_.getApplicationURL(result.getPreviewURL()),
-                  result.getHtmlFile(),
-                  result.getEnableSaveAs(),
+                  result,
                   isMarkdownFile(result.getSourceFile()) &&
                   SessionUtils.showPublishUi(session_, prefs_),
                   result.getEnableRefresh(),

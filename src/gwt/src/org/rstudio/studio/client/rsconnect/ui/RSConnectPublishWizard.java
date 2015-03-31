@@ -39,12 +39,12 @@ public class RSConnectPublishWizard
       {
          return new PublishStaticDestPage("Publish", "Publish", input, false);
       }
-      else if (input.getContentType() == RSConnect.CONTENT_TYPE_RMD &&
+      else if (input.getContentType() == RSConnect.CONTENT_TYPE_DOCUMENT &&
                input.isMultiRmd())
       {
          return new PublishMultiplePage(input);
       }
-      else if (input.getContentType() == RSConnect.CONTENT_TYPE_RMD &&
+      else if (input.getContentType() == RSConnect.CONTENT_TYPE_DOCUMENT &&
                !input.isMultiRmd() &&
                input.isConnectUIEnabled())
       {

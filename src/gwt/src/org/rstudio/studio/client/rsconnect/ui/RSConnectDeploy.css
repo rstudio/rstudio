@@ -118,6 +118,13 @@
 .urlAnchor
 {
    display: block;
+   width: 100%;
+   overflow: hidden;
+   white-space: nowrap;
+   text-overflow: ellipsis;
+   font-size: x-small;
+   margin-top: 3px;
+   margin-bottom: 3px;
 }
 
 .accountList
@@ -148,5 +155,13 @@
 .progressPanel
 {
    margin-top: 15px;
-   text-align: center;
 }
+
+.appDetailsPanel
+{
+   border: 1px solid gray;
+   background-color: white;
+   padding: 5px;
+   margin: 0px;
+}
+

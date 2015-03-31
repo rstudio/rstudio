@@ -95,6 +95,7 @@ public class RSConnectDeploy extends Composite
       String urlAnchor();
       String wizard();
       String progressPanel();
+      String appDetailsPanel();
    }
    
    public interface DeployResources extends ClientBundle
@@ -303,13 +304,6 @@ public class RSConnectDeploy extends Composite
 
       urlAnchor_.setText(info.getUrl());
       urlAnchor_.setHref(info.getUrl());
-      String status = info.getStatus();
-      statusLabel_.setText(status);
-      statusLabel_.setStyleName(style_.statusLabel() + " " + 
-              (status.equals("running") ?
-                    style_.normalStatus() :
-                    style_.otherStatus()));
-
       appInfoPanel_.setVisible(true);
       appDetailsPanel_.setVisible(true);
       newAppPanel_.setVisible(false);
@@ -470,6 +464,7 @@ public class RSConnectDeploy extends Composite
       if (fromPrevious_ != null)
       {
          appProgressName_.setText(fromPrevious_.getName());
+         appExistingName_.setText(fromPrevious_.getName());
          appProgressPanel_.setVisible(true);
          appInfoPanel_.setVisible(true);
 
@@ -702,13 +697,13 @@ public class RSConnectDeploy extends Composite
    @UiField Anchor urlAnchor_;
    @UiField Anchor addAccountAnchor_;
    @UiField Label nameLabel_;
-   @UiField InlineLabel statusLabel_;
    @UiField(provided=true) RSConnectAccountList accountList_;
    @UiField HTMLPanel newAppPanel_;
    @UiField HTMLPanel appInfoPanel_;
    @UiField HTMLPanel appDetailsPanel_;
    @UiField HTMLPanel appProgressPanel_;
-   @UiField InlineLabel appProgressName_;
+   @UiField Label appProgressName_;
+   @UiField Label appExistingName_;
    @UiField VerticalPanel fileListPanel_;
    @UiField InlineLabel deployLabel_;
    @UiField ThemedButton addFileButton_;

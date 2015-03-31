@@ -41,6 +41,9 @@ import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.htmlpreview.HTMLPreviewPresenter;
+import org.rstudio.studio.client.htmlpreview.model.HTMLPreviewResult;
+import org.rstudio.studio.client.rsconnect.RSConnect;
+import org.rstudio.studio.client.rsconnect.ui.RSConnectPublishButton;
 import org.rstudio.studio.client.workbench.commands.Commands;
 
 public class HTMLPreviewPanel extends ResizeComposite
@@ -105,8 +108,8 @@ public class HTMLPreviewPanel extends ResizeComposite
       
       publishButtonSeparator_ = toolbar.addLeftSeparator();
       toolbar.addLeftWidget(
-               publishButton_ = commands.publishHTML().createToolbarButton());
-      
+               publishButton_ = new RSConnectPublishButton(
+                     RSConnect.CONTENT_TYPE_DOCUMENT, true, false));
       
       findTextBox_ = new FindTextBox("Find");
       findTextBox_.setIconVisible(true);
@@ -221,23 +224,23 @@ public class HTMLPreviewPanel extends ResizeComposite
    
    @Override
    public void showPreview(String url, 
-                           String htmlFile,
-                           boolean enableSaveAs,
+                           HTMLPreviewResult result,
                            boolean enablePublish,
                            boolean enableRefresh,
                            boolean enableShowLog)
    {
       String shortFileName = StringUtil.shortPathName(
-            FileSystemItem.createFile(htmlFile), 
+            FileSystemItem.createFile(result.getHtmlFile()), 
             ThemeStyles.INSTANCE.subtitle(), 
             300);
       fileLabel_.setText(shortFileName);
       showLogButtonSeparator_.setVisible(enableShowLog);
       showLogButton_.setVisible(enableShowLog);
-      saveHtmlPreviewAsSeparator_.setVisible(enableSaveAs);
-      saveHtmlPreviewAs_.setVisible(enableSaveAs);
+      saveHtmlPreviewAsSeparator_.setVisible(result.getEnableSaveAs());
+      saveHtmlPreviewAs_.setVisible(result.getEnableSaveAs());
       publishButtonSeparator_.setVisible(enablePublish);
       publishButton_.setVisible(enablePublish);
+      publishButton_.setHtmlPreview(result);
       refreshButtonSeparator_.setVisible(enableRefresh);
       refreshButton_.setVisible(enableRefresh);
       previewFrame_.navigate(url);
@@ -269,7 +272,7 @@ public class HTMLPreviewPanel extends ResizeComposite
    private Widget saveHtmlPreviewAsSeparator_;
    private Widget saveHtmlPreviewAs_;
    private Widget publishButtonSeparator_;
-   private ToolbarButton publishButton_;
+   private RSConnectPublishButton publishButton_;
    private Widget showLogButtonSeparator_;
    private ToolbarButton showLogButton_;
    private Widget refreshButtonSeparator_;
