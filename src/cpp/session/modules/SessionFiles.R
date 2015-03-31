@@ -52,7 +52,7 @@
                                       asRelativePath = TRUE,
                                       maxCount = 200L)
 {
-   .Call("rs_scanFiles",
+   .Call(.rs.routines$rs_scanFiles,
          as.character(path),
          as.character(pattern),
          as.logical(asRelativePath),

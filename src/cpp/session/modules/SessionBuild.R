@@ -14,11 +14,11 @@
 #
 
 setHook("sourceCpp.onBuild", function(file, fromCode, showOutput) {
-   .Call("rs_sourceCppOnBuild", file, fromCode, showOutput)
+   .Call(.rs.routines$rs_sourceCppOnBuild, file, fromCode, showOutput)
 })
 
 setHook("sourceCpp.onBuildComplete", function(succeeded, output) {
-   .Call("rs_sourceCppOnBuildComplete", succeeded, output)
+   .Call(.rs.routines$rs_sourceCppOnBuildComplete, succeeded, output)
 })
 
 .rs.addFunction("installBuildTools", function(action) {
@@ -28,7 +28,7 @@ setHook("sourceCpp.onBuildComplete", function(succeeded, output) {
       paste(action, " requires installation of additional build tools.\n\n",
       "Do you want to install the additional tools now?", sep = ""))
    if (identical(response, "yes")) {
-      .Call("rs_installBuildTools")
+      .Call(.rs.routines$rs_installBuildTools)
       return(TRUE)
    } else {
       return(FALSE)
@@ -39,7 +39,7 @@ setHook("sourceCpp.onBuildComplete", function(succeeded, output) {
 
    if (identical(.Platform$pkgType, "mac.binary.mavericks")) {
       # this will auto-prompt to install on mavericks
-      .Call("rs_canBuildCpp")
+      .Call(.rs.routines$rs_canBuildCpp)
    } else {
       if (!.Call("rs_canBuildCpp")) {
         .rs.installBuildTools(action)

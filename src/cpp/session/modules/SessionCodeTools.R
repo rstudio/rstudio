@@ -237,7 +237,7 @@
 
 .rs.addFunction("getPendingInput", function()
 {
-   .Call("rs_getPendingInput")
+   .Call(.rs.routines$rs_getPendingInput)
 })
 
 .rs.addFunction("doStripSurrounding", function(string, complements)
@@ -552,7 +552,7 @@
 
 .rs.addFunction("isSubsequence", function(strings, string)
 {
-   .Call("rs_isSubsequence", strings, string)
+   .Call(.rs.routines$rs_isSubsequence, strings, string)
 })
 
 .rs.addFunction("whichIsSubsequence", function(strings, string)
@@ -643,12 +643,12 @@
 
 .rs.addFunction("packageNameForSourceFile", function(filePath)
 {
-   .Call("rs_packageNameForSourceFile", filePath)
+   .Call(.rs.routines$rs_packageNameForSourceFile, filePath)
 })
 
 .rs.addFunction("isRScriptInPackageBuildTarget", function(filePath)
 {
-   .Call("rs_isRScriptInPackageBuildTarget", filePath)
+   .Call(.rs.routines$rs_isRScriptInPackageBuildTarget, filePath)
 })
 
 .rs.addFunction("namedVectorAsList", function(vector)
@@ -722,17 +722,17 @@
 
 .rs.addFunction("scoreMatches", function(strings, string)
 {
-   .Call("rs_scoreMatches", strings, string)
+   .Call(.rs.routines$rs_scoreMatches, strings, string)
 })
 
 .rs.addFunction("getProjectDirectory", function()
 {
-   .Call("rs_getProjectDirectory")
+   .Call(.rs.routines$rs_getProjectDirectory)
 })
 
 .rs.addFunction("hasFileMonitor", function()
 {
-   .Call("rs_hasFileMonitor")
+   .Call(.rs.routines$rs_hasFileMonitor)
 })
 
 .rs.addFunction("listIndexedFiles", function(term = "",
@@ -742,7 +742,7 @@
    if (is.null(.rs.getProjectDirectory()))
       return(NULL)
    
-   .Call("rs_listIndexedFiles",
+   .Call(.rs.routines$rs_listIndexedFiles,
          term,
          suppressWarnings(.rs.normalizePath(inDirectory)),
          as.integer(maxCount))
@@ -755,7 +755,7 @@
    if (is.null(inDirectory))
       return(character())
    
-   .Call("rs_listIndexedFolders", term, inDirectory, maxCount)
+   .Call(.rs.routines$rs_listIndexedFolders, term, inDirectory, maxCount)
 })
 
 .rs.addFunction("listIndexedFilesAndFolders", function(term = "",
@@ -765,7 +765,7 @@
    if (is.null(inDirectory))
       return(character())
    
-   .Call("rs_listIndexedFilesAndFolders", term, inDirectory, maxCount)
+   .Call(.rs.routines$rs_listIndexedFilesAndFolders, term, inDirectory, maxCount)
 })
 
 .rs.addFunction("doGetIndex", function(term = "",
@@ -1353,4 +1353,30 @@
    }
    
    return(FALSE)
+})
+
+.rs.addFunction("registerNativeRoutines", function()
+{
+   pos <- match("tools:rstudio", search())
+   if (is.na(pos))
+      return()
+   
+   if (exists(".rs.routines", pos))
+      return()
+   
+   routineEnv <- new.env(parent = emptyenv())
+   routines <- tryCatch(
+      getDLLRegisteredRoutines("(embedding)"),
+      error = function(e) NULL
+   )
+   
+   if (is.null(routines))
+      return(NULL)
+   
+   .CallRoutines <- routines[[".Call"]]
+   lapply(.CallRoutines, function(routine) {
+      routineEnv[[routine$name]] <- routine
+   })
+   assign(".rs.routines", routineEnv, pos = which(search() == "tools:rstudio"))
+   routineEnv
 })

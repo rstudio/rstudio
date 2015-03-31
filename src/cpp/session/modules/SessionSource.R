@@ -31,14 +31,14 @@
    if (sweave)
    {
       op <- function() {
-         .Call("rs_rnwTangle", activeRStudioDoc, rnwWeave)
+         .Call(.rs.routines$rs_rnwTangle, activeRStudioDoc, rnwWeave)
          file.remove(activeRStudioDoc)
          file.rename(paste(activeRStudioDoc, ".R", sep=""), activeRStudioDoc)
       }
       capture.output(op())
    }
 
-   .Call("rs_ensureFileHidden", activeRStudioDoc)
+   .Call(.rs.routines$rs_ensureFileHidden, activeRStudioDoc)
 
    return()
 })
