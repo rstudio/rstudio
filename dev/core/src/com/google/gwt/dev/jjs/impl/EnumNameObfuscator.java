@@ -214,7 +214,7 @@ public class EnumNameObfuscator {
     if (!configProps.getBoolean(ENUM_NAME_OBFUSCATION_PROPERTY, false)) {
       return;
     }
-    boolean closureMode = options.isClosureCompilerEnabled();
+    boolean closureMode = options.isClosureCompilerFormatEnabled();
     List<String> blacklistedEnums =
         configProps.getCommaSeparatedStrings(ENUM_NAME_OBFUSCATION_BLACKLIST_PROPERTY);
     new EnumNameCallChecker(jprogram, logger, blacklistedEnums).accept(jprogram);
