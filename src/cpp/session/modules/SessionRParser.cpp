@@ -18,6 +18,7 @@
 #define RSTUDIO_DEBUG_LABEL "parser"
 
 #include <core/Macros.hpp>
+#include <core/StringUtils.hpp>
 #include <core/FileSerializer.hpp>
 
 #include "SessionRParser.hpp"
@@ -115,52 +116,40 @@ class NSEDatabase : boost::noncopyable
 {
 public:
    
-   enum PerformsNSE
-   {
-      PerformsNSEUnknown,
-      PerformsNSEFalse,
-      PerformsNSETrue
-   };
-   
    NSEDatabase()
    {
-      
    }
    
-   PerformsNSE get(const std::string& package,
-                   const std::string& symbol)
+   void add(SEXP symbolSEXP, bool performsNse)
    {
-      return packageDatabase_[package][symbol];
+      database_[address(symbolSEXP)] = performsNse;
    }
    
-   PerformsNSE get(const std::string& symbol)
+   bool isKnownToPerformNSE(SEXP symbolSEXP)
    {
-      return globalDatabase_[symbol];
+      return database_.count(address(symbolSEXP)) &&
+             database_[address(symbolSEXP)];
    }
    
-   void set(const std::string& package,
-            const std::string& symbol,
-            bool performsNse)
+   bool isKnownNotToPerformNSE(SEXP symbolSEXP)
    {
-      packageDatabase_[package][symbol] =
-            performsNse ? PerformsNSETrue : PerformsNSEFalse;
+      return database_.count(address(symbolSEXP)) &&
+             !database_[address(symbolSEXP)];
    }
    
-   void set(const std::string& symbol,
-            bool performsNse)
+   bool isNotYetCached(SEXP symbolSEXP)
    {
-      globalDatabase_[symbol] =
-            performsNse ? PerformsNSETrue : PerformsNSEFalse;
+      return !database_.count(address(symbolSEXP));
    }
-   
    
 private:
    
-   typedef std::map<std::string, PerformsNSE> NSESymbolMap;
-   typedef std::map<std::string, NSESymbolMap> PackageNSESymbolMap;
+   uintptr_t address(SEXP objectSEXP)
+   {
+      return reinterpret_cast<uintptr_t>(objectSEXP);
+   }
    
-   PackageNSESymbolMap packageDatabase_;
-   NSESymbolMap globalDatabase_;
+   std::map<uintptr_t, bool> database_;
 };
 
 NSEDatabase& nseDatabase()
@@ -169,90 +158,76 @@ NSEDatabase& nseDatabase()
    return instance;
 }
 
-bool maybePerformsNSE(const std::string& callingString)
-{
-   
-   static const boost::regex reNamespace("^\\s*([\\w.]+):{2,3}([\\w.])\\s*$");
-   static const boost::regex reSymbol("^\\s*([\\w.]+)\\s*$");
-   NSEDatabase& database = nseDatabase();
-   
-   // Check to see if this is a call of the form 'foo::bar', and if so,
-   // extract the namespace and the function name.
-   boost::smatch match;
-   if (boost::regex_match(callingString, match, reNamespace))
-   {
-      std::string package = std::string(match[1].first, match[1].second);
-      std::string symbol = std::string(match[2].first, match[2].second);
-      
-      // If we're making a call to a known NSE function, then exclude that.
-      switch (database.get(package, symbol))
-      {
-      case NSEDatabase::PerformsNSETrue:
-         return true;
-      case NSEDatabase::PerformsNSEFalse:
-         return false;
-      case NSEDatabase::PerformsNSEUnknown:
-         ; // fall through
-      }
-
-      // Try to see if we can find this symbol within the package declared.
-      SEXP resolvedSEXP = r::sexp::findVar(symbol, package);
-      
-      // Bail if it's not a function.
-      if (TYPEOF(resolvedSEXP) != FUNSXP)
-      {
-         database.set(package, symbol, false);
-         return false;
-      }
-      
-      // Check to see if there are any NSE smells in the function's body.
-      bool result = r::sexp::maybePerformsNSE(resolvedSEXP);
-      database.set(package, symbol, result);
-      return result;
-   }
-   
-   // Check to see if this is just a plain call to some symbol.
-   // TODO: Will probably need to refine where the symbol is actually looked
-   // up, but this will be 'good enough' for most cases.
-   if (boost::regex_match(callingString, match, reSymbol))
-   {
-      std::string symbol = std::string(match[1].first, match[1].second);
-      
-      switch (database.get(symbol))
-      {
-      case NSEDatabase::PerformsNSETrue:
-         return true;
-      case NSEDatabase::PerformsNSEFalse:
-         return false;
-      case NSEDatabase::PerformsNSEUnknown:
-         ; // fall through
-      }
-      
-      // Try to find the symbol in the global environment.
-      SEXP resolvedSEXP = r::sexp::findVar(symbol, R_GlobalEnv);
-      
-      // Bail if it's not a function.
-      if (TYPEOF(resolvedSEXP) != FUNSXP)
-      {
-         database.set(symbol, false);
-         return false;
-      }
-      
-      bool result = r::sexp::maybePerformsNSE(resolvedSEXP);
-      database.set(symbol, result);
-      return result;
-   }
-   
-   // Return false (this is not a 'plain' or 'namespace-qualified' symbol)
-   return false;
-}
-
-bool mightPerformNonstandardEvaluation(RTokenCursor& cursor,
+bool mightPerformNonstandardEvaluation(const RTokenCursor& origin,
                                        ParseStatus& status)
 {
-   // Get the string denoting what is about to be evaluated.
-   return maybePerformsNSE(
-            string_utils::wideToUtf8(cursor.getCallingString()));
+   RTokenCursor cursor = origin.clone();
+   
+   if (canOpenArgumentList(cursor))
+      if (!cursor.moveToPreviousSignificantToken())
+         return false;
+   
+   if (!canOpenArgumentList(cursor.nextSignificantToken()))
+      return false;
+   
+   // Attempt to resolve (potentially evaluate) the symbol, or statement,
+   // forming the function call.
+   SEXP symbolSEXP = R_NilValue;
+   r::sexp::Protect protect;
+   bool cacheable = true;
+   
+   if (cursor.isSimpleCall())
+   {
+      std::string symbol = string_utils::strippedOfQuotes(
+               cursor.contentAsUtf8());
+      
+      symbolSEXP = r::sexp::findFunction(symbol);
+   }
+   else if (cursor.isSimpleNamespaceCall())
+   {
+      std::string symbol = string_utils::strippedOfQuotes(
+               cursor.contentAsUtf8());
+      
+      std::string ns = string_utils::strippedOfQuotes(
+               cursor.previousSignificantToken(2).contentAsUtf8());
+      
+      symbolSEXP = r::sexp::findFunction(symbol, ns);
+   }
+   else
+   {
+      cacheable = false;
+      
+      std::string call = string_utils::wideToUtf8(cursor.getCallingString());
+      
+      // Don't evaluate nested function calls.
+      if (call.find('(') != std::string::npos)
+         return false;
+      
+      Error error = r::exec::evaluateString(call, &symbolSEXP, &protect);
+      if (error)
+      {
+         DEBUG("- Failed to evaluate call '" << call << "'");
+         return false;
+      }
+   }
+   
+   if (symbolSEXP == R_UnboundValue || symbolSEXP == R_NilValue)
+      return false;
+   
+   NSEDatabase& nseDb = nseDatabase();
+   if (cacheable)
+   {
+      if (nseDb.isKnownToPerformNSE(symbolSEXP))
+         return true;
+      else if (nseDb.isKnownNotToPerformNSE(symbolSEXP))
+         return false;
+   }
+   
+   bool result = r::sexp::maybePerformsNSE(symbolSEXP);
+   if (cacheable)
+      nseDb.add(symbolSEXP, result);
+   
+   return result;
 }
 
 } // end anonymous namespace

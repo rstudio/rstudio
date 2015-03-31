@@ -333,8 +333,8 @@ private:
       return false;
    }
    
-   bool doBwdToMatchingToken(RToken::TokenType leftTokenType,
-                             RToken::TokenType rightTokenType)
+   bool doBwdToMatchingToken(RToken::TokenType rightTokenType,
+                             RToken::TokenType leftTokenType)
    {
       if (!isType(rightTokenType))
          return false;
@@ -353,6 +353,7 @@ private:
             return true;
          }
       }
+      
       return false;
    }
    
@@ -457,8 +458,8 @@ public:
   // Note that we don't move to the start of a _statement_; e.g., we don't
   // walk over all binary operators. For example:
   //
-  //    foo + x$foo$bar(1)
-  //          ^   <--    ^
+  //    foo + x$foo$bar(1)[1]
+  //          ^   <--       ^
   //
   // We only move over extraction operators.
   bool moveToStartOfEvaluation()
@@ -466,15 +467,13 @@ public:
      RTokenCursor cursor = clone();
      while (true)
      {
-        if (isRightBracket(cursor))
+        while (isRightBracket(cursor))
         {
            if (!cursor.bwdToMatchingToken())
               return false;
            
            if (!cursor.moveToPreviousSignificantToken())
               return false;
-           
-           continue;
         }
         
         if (isExtractionOperator(cursor.previousSignificantToken()))
@@ -504,16 +503,73 @@ public:
   {
      RTokenCursor cursor = clone();
      
-     if (isLeftBracket(cursor))
+     if (canOpenArgumentList(cursor))
         if (!cursor.moveToPreviousSignificantToken())
            return std::wstring();
      
      std::wstring::const_iterator end = cursor.end();
      if (!cursor.moveToStartOfEvaluation())
-        return std::wstring();
+        return std::wstring(cursor.begin(), cursor.end());
      
      std::wstring::const_iterator begin = cursor.begin();
      return std::wstring(begin, end);
+  }
+  
+  // Check if this is a 'simple' call; that is, the call is a single
+  // call to a particular string / symbol, as in:
+  //
+  //    foo(1, 2)
+  //
+  // We optimize for this case as we can then search for the symbol directly,
+  // and avoid other slow evaluation codepaths.
+  bool isSimpleCall()
+  {
+     RTokenCursor cursor = clone();
+     if (canOpenArgumentList(cursor))
+        if (!cursor.moveToPreviousSignificantToken())
+           return false;
+     
+     if (!canOpenArgumentList(cursor.nextSignificantToken()))
+        return false;
+     
+     if (cursor.isType(RToken::ID) ||
+         cursor.isType(RToken::STRING))
+     {
+        return !isExtractionOperator(cursor.previousSignificantToken());
+     }
+     
+     return false;
+  }
+  
+  // Check if this is a 'namespace' call, e.g.
+  //
+  //    foo::bar(1, 2)
+  //
+  // We optimize for this case as we can then directly look up
+  // 'bar' in the 'foo' namespace.
+  bool isSimpleNamespaceCall()
+  {
+     RTokenCursor cursor = clone();
+     if (canOpenArgumentList(cursor))
+        if (!cursor.moveToPreviousSignificantToken())
+           return false;
+     
+     if (!canOpenArgumentList(cursor.nextSignificantToken()))
+        return false;
+     
+     if (cursor.isType(RToken::ID) ||
+         cursor.isType(RToken::STRING))
+     {
+        const RToken& prev = cursor.previousSignificantToken();
+        if (isNamespace(prev))
+        {
+           const RToken& beforeNs = cursor.previousSignificantToken(2);
+           return beforeNs.isType(RToken::ID) ||
+                  beforeNs.isType(RToken::STRING);
+        }
+     }
+     
+     return false;
   }
   
   // Move to the end of an R statement, e.g.
