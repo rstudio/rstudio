@@ -416,6 +416,33 @@ public:
             isType(RToken::COMMA);
   }
   
+  bool isAtEndOfStatement(const ParseStatus& status)
+  {
+     // Whether we're in a parenthetical scope is important!
+     // For example, these parse the same:
+     //
+     //     (foo\n(1))
+     //     (foo  (1))
+     //
+     // while these parse differently:
+     //
+     //      foo\n(1)
+     //      foo  (1)
+     //
+     if (!status.isInParentheticalScope() &&
+         isWhitespaceWithNewline(nextToken()))
+     {
+        return true;
+     }
+     
+     const RToken& next = nextSignificantToken();
+     return !(
+              isBinaryOp(next) ||
+              next.isType(RToken::LPAREN) ||
+              next.isType(RToken::LBRACKET) ||
+              next.isType(RToken::LDBRACKET));
+  }
+  
   bool appearsToBeBinaryOperator() const
   {
      return isBinaryOp(currentToken()) &&

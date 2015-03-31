@@ -173,6 +173,14 @@ context("Linter")
       EXPECT_NO_ERRORS("function(a)\nfor (i in 1) 1\n");
 
       EXPECT_NO_ERRORS("{if(!(a)){};if(b){}}");
+      EXPECT_NO_ERRORS("if (1) foo(1) <- 1 else 2; 1 + 2");
+      EXPECT_NO_ERRORS("if (1)\nfoo(1) <- 1\nelse 2; 4 + 8");
+      EXPECT_NO_ERRORS("if (1) (foo(1) <- {{1}})\n2 + 1");
+      
+      // EXPECT_ERRORS("if (1) (1)\nelse (2)");
+      EXPECT_NO_ERRORS("{if (1) (1)\nelse (2)}");
+      
+      EXPECT_NO_ERRORS("if (a)\nF(b) <- 'c'\nelse if (d) e");
 
       EXPECT_NO_ERRORS("lapply(x, `[[`, 1)");
 

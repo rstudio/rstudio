@@ -14,6 +14,7 @@
  */
 
 #include <r/RRoutines.hpp>
+#include <r/RExec.hpp>
 
 #include <algorithm>
 
@@ -76,7 +77,12 @@ void registerAll()
    }
    
    DllInfo *info = R_getEmbeddingDllInfo() ;
-   R_registerRoutines(info, pCMethods, pCallMethods, NULL, NULL) ;
+   R_registerRoutines(info, pCMethods, pCallMethods, NULL, NULL);
+   
+   exec::RFunction registerNativeRoutines(".rs.registerNativeRoutines");
+   core::Error error = registerNativeRoutines.call();
+   if (error)
+      LOG_ERROR(error);
 }
    
    

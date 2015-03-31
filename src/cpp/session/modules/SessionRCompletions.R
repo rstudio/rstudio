@@ -733,7 +733,7 @@ assign(x = ".rs.acCompletionTypes",
 
 .rs.addFunction("getSourceIndexCompletions", function(token)
 {
-   .Call("rs_getSourceIndexCompletions", token)
+   .Call(.rs.routines$rs_getSourceIndexCompletions, token)
 })
 
 .rs.addFunction("getCompletionsNamespace", function(token, string, exportsOnly, envir)
@@ -1307,7 +1307,7 @@ assign(x = ".rs.acCompletionTypes",
 
 .rs.addFunction("getNAMESPACEImportedSymbols", function(documentId)
 {
-   .Call("rs_getNAMESPACEImportedSymbols", documentId)
+   .Call(.rs.routines$rs_getNAMESPACEImportedSymbols, documentId)
 })
 
 .rs.addFunction("getCompletionsNAMESPACE", function(token, documentId)
@@ -1400,7 +1400,7 @@ assign(x = ".rs.acCompletionTypes",
 
 .rs.addFunction("finishExpression", function(string)
 {
-   .Call("rs_finishExpression", as.character(string))
+   .Call(.rs.routines$rs_finishExpression, as.character(string))
 })
 
 .rs.addFunction("getCompletionsAttr", function(token,
@@ -1435,7 +1435,7 @@ assign(x = ".rs.acCompletionTypes",
 
 .rs.addFunction("isBrowserActive", function()
 {
-   .Call("rs_isBrowserActive")
+   .Call(.rs.routines$rs_isBrowserActive)
 })
 
 .rs.addFunction("getActiveFrame", function(n = 0L)
@@ -1448,7 +1448,7 @@ assign(x = ".rs.acCompletionTypes",
    if (.rs.isBrowserActive())
       offset <- offset + 1L
    
-   .Call("rs_getActiveFrame", as.integer(n) + offset)
+   .Call(.rs.routines$rs_getActiveFrame, as.integer(n) + offset)
 })
 
 .rs.addFunction("getCompletionsNativeRoutine", function(token, interface)
@@ -1492,6 +1492,17 @@ assign(x = ".rs.acCompletionTypes",
                                                   filePath,
                                                   documentId)
 {
+   # Ensure UTF-8 encoding, as that's the encoding set when passed down from
+   # the client
+   token <- .rs.setEncodingUnknownToUTF8(token)
+   string <- .rs.setEncodingUnknownToUTF8(string)
+   functionCallString <- .rs.setEncodingUnknownToUTF8(functionCallString)
+   chainObjectName <- .rs.setEncodingUnknownToUTF8(chainObjectName)
+   additionalArgs <- .rs.setEncodingUnknownToUTF8(additionalArgs)
+   excludeArgs <- .rs.setEncodingUnknownToUTF8(excludeArgs)
+   excludeArgsFromObject <- .rs.setEncodingUnknownToUTF8(excludeArgsFromObject)
+   filePath <- .rs.setEncodingUnknownToUTF8(filePath)
+   
    # Get the currently active frame
    envir <- .rs.getActiveFrame(1L)
    
@@ -2618,12 +2629,12 @@ assign(x = ".rs.acCompletionTypes",
 
 .rs.addFunction("listInferredPackages", function(documentId)
 {
-   .Call("rs_listInferredPackages", documentId)
+   .Call(.rs.routines$rs_listInferredPackages, documentId)
 })
 
 .rs.addFunction("getInferredCompletions", function(packages = character())
 {
-   .Call("rs_getInferredCompletions", as.character(packages))
+   .Call(.rs.routines$rs_getInferredCompletions, as.character(packages))
 })
 
 .rs.addFunction("getCompletionsLibraryContext", function(token,

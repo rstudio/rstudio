@@ -21,6 +21,9 @@
 #ifndef SESSION_MODULES_RPARSER_HPP
 #define SESSION_MODULES_RPARSER_HPP
 
+// #define RSTUDIO_DEBUG_LABEL "parser"
+// #define RSTUDIO_ENABLE_DEBUG_MACROS
+
 #include <vector>
 #include <map>
 #include <set>
@@ -733,6 +736,7 @@ public:
    void pushFunctionCallState(ParseState state,
                               const std::wstring& functionName)
    {
+      DEBUG("Pushing state: " << stateAsString(state));
       parseStateStack_.push(state);
       functionNames_.push(functionName);
    }
@@ -782,7 +786,14 @@ public:
       }
 
       if (currentState() != ParseStateTopLevel)
+      {
+         DEBUG("Popping state: " << currentStateAsString());
          parseStateStack_.pop();
+      }
+      else
+      {
+         DEBUG("Already at top level; no state to pop");
+      }
    }
    
    ParseState peekState(std::size_t depth = 0) const
@@ -828,12 +839,12 @@ public:
    
    std::string currentStateAsString() const { return stateAsString(currentState()); }
    
-   bool isAtTopLevel()
+   bool isAtTopLevel() const
    {
       return currentState() == ParseStateTopLevel;
    }
    
-   bool isInArgumentList()
+   bool isInArgumentList() const
    {
       switch (currentState())
       {
@@ -847,7 +858,7 @@ public:
       }
    }
    
-   bool isInControlFlowStatement()
+   bool isInControlFlowStatement() const
    {
       switch (currentState())
       {
@@ -862,7 +873,7 @@ public:
       }
    }
    
-   bool isInControlFlowExpression()
+   bool isInControlFlowExpression() const
    {
       switch (currentState())
       {
@@ -877,7 +888,7 @@ public:
       }
    }
    
-   bool isInControlFlowCondition()
+   bool isInControlFlowCondition() const
    {
       switch (currentState())
       {
@@ -890,7 +901,7 @@ public:
       }
    }
    
-   bool isInParentheticalScope()
+   bool isInParentheticalScope() const
    {
       switch (currentState())
       {

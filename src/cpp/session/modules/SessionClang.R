@@ -25,7 +25,7 @@
 
 .rs.addFunction( "isClangAvailable", function() {
    cat("Attemping to load libclang for", R.version$platform, "\n")
-   .Call("rs_isLibClangAvailable")
+   .Call(.rs.routines$rs_isLibClangAvailable)
 })
 
 .rs.addFunction( "setClangDiagnostics", function(level) {
@@ -33,7 +33,7 @@
       stop("level must be 0, 1, or 2")
    if (level > 0)
       .rs.isClangAvailable()
-   .Call("rs_setClangDiagnostics", level)
+   .Call(.rs.routines$rs_setClangDiagnostics, level)
    .rs.restartR()
    invisible(NULL)
 })

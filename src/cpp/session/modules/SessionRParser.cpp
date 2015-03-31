@@ -16,6 +16,7 @@
 // #define RSTUDIO_ENABLE_PROFILING
 // #define RSTUDIO_ENABLE_DEBUG_MACROS
 #define RSTUDIO_DEBUG_LABEL "parser"
+
 #include <core/Macros.hpp>
 #include <core/FileSerializer.hpp>
 
@@ -779,6 +780,8 @@ void doParse(RTokenCursor& cursor,
       
 START:
       
+      DEBUG("== Current state: " << status.currentStateAsString());
+      
       // We want to skip over formulas if necessary.
       if (skipFormulas(cursor, status))
       {
@@ -808,6 +811,22 @@ START:
          goto IF_START;
       else if (cursor.contentEquals(L"repeat"))
          goto REPEAT_START;
+      
+      // 'else'. Implicitly ending an 'if' statement.
+      if (cursor.contentEquals(L"else"))
+      {
+         // Ensure that we're in an 'if' statement or expression.
+         if (status.currentState() == ParseStatus::ParseStateIfStatement ||
+             status.currentState() == ParseStatus::ParseStateIfExpression)
+         {
+            MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
+            goto START;
+         }
+         else
+         {
+            GOTO_INVALID_TOKEN(cursor);
+         }
+      }
       
       // Left paren.
       if (cursor.isType(RToken::LPAREN))
@@ -876,15 +895,33 @@ START:
          case ParseStatus::ParseStateWhileCondition:
             goto WHILE_CONDITION_END;
          case ParseStatus::ParseStateWithinParens:
-            DEBUG("Within parens");
             status.popState();
-            while (status.isInControlFlowStatement()) status.popState();
-            if (cursor.isAtEndOfDocument()) return;
+            
+            if (cursor.isAtEndOfDocument())
+               return;
+            
+            // Handle an 'else' following when we are closing an 'if' statement
+            if (status.currentState() == ParseStatus::ParseStateIfStatement &&
+                cursor.nextSignificantToken().contentEquals(L"else"))
+            {
+               status.popState();
+               MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
+               MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
+               goto START;
+            }
+            
+            // Check to see if this paren closes the current statement.
+            // If so, it effectively closes any parent conditional statements.
+            if (cursor.isAtEndOfStatement(status))
+               while (status.isInControlFlowStatement())
+                  status.popState();
+            
             MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
             if (isBinaryOp(cursor))
                goto BINARY_OPERATOR;
             else if (canOpenArgumentList(cursor))
                goto ARGUMENT_LIST;
+            
             goto START;
          default:
             GOTO_INVALID_TOKEN(cursor);
@@ -1163,15 +1200,20 @@ ARGUMENT_START:
 ARGUMENT_LIST_END:
       
       DEBUG("Argument list end: " << cursor);
+      DEBUG("== State: " << status.currentStateAsString());
+      
       status.popState();
       status.popNseCall();
+      
+      DEBUG("== State: " << status.currentStateAsString());
       
       // An argument list may end _two_ states, e.g. in this:
       //
       //    if (foo) a() else if (b()) b()
       //
       // We need to close both the 'if' and the argument list.
-      if (status.isInControlFlowStatement())
+      if (status.isInControlFlowStatement() &&
+          !canContinueStatement(cursor.nextSignificantToken()))
       {
          bool hasElse =
                status.currentState() == ParseStatus::ParseStateIfStatement &&
@@ -1186,8 +1228,10 @@ ARGUMENT_LIST_END:
          }
       }
       
-      while (status.isInControlFlowStatement())
-         status.popState();
+      // Pop out of control flow statements if this ends the statement.
+      if (cursor.isAtEndOfStatement(status))
+         while (status.isInControlFlowStatement())
+            status.popState();
       
       // Following the end of an argument list, we may see:
       //
