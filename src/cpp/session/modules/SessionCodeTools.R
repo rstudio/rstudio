@@ -1386,7 +1386,7 @@
    if (is.character(object) && Encoding(object) == "unknown")
       Encoding(object) <- "UTF-8"
    else if (is.list(object))
-      return(lapply(object, .rs.setEncodingUTF8))
+      return(lapply(object, .rs.setEncodingUnknownToUTF8))
    
    object
 })
