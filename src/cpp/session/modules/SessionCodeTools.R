@@ -1380,3 +1380,13 @@
    assign(".rs.routines", routineEnv, pos = which(search() == "tools:rstudio"))
    routineEnv
 })
+
+.rs.addFunction("setEncodingUnknownToUTF8", function(object)
+{
+   if (is.character(object) && Encoding(object) == "unknown")
+      Encoding(object) <- "UTF-8"
+   else if (is.list(object))
+      return(lapply(object, .rs.setEncodingUTF8))
+   
+   object
+})

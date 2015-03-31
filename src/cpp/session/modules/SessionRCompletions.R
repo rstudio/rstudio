@@ -1492,6 +1492,17 @@ assign(x = ".rs.acCompletionTypes",
                                                   filePath,
                                                   documentId)
 {
+   # Ensure UTF-8 encoding, as that's the encoding set when passed down from
+   # the client
+   token <- .rs.setEncodingUnknownToUTF8(token)
+   string <- .rs.setEncodingUnknownToUTF8(string)
+   functionCallString <- .rs.setEncodingUnknownToUTF8(functionCallString)
+   chainObjectName <- .rs.setEncodingUnknownToUTF8(chainObjectName)
+   additionalArgs <- .rs.setEncodingUnknownToUTF8(additionalArgs)
+   excludeArgs <- .rs.setEncodingUnknownToUTF8(excludeArgs)
+   excludeArgsFromObject <- .rs.setEncodingUnknownToUTF8(excludeArgsFromObject)
+   filePath <- .rs.setEncodingUnknownToUTF8(filePath)
+   
    # Get the currently active frame
    envir <- .rs.getActiveFrame(1L)
    
