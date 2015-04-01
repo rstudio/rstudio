@@ -48,6 +48,7 @@ class ListBuilder;
 class Protect;
    
 // environments and namespaces
+std::vector<std::string> getLoadedNamespaces();
 SEXP findNamespace(const std::string& name);
    
 // variables within an environment
@@ -328,6 +329,21 @@ private:
 
 void printValue(SEXP object);
 bool inherits(SEXP object, const char* S3Class);
+bool maybePerformsNSE(SEXP function);
+
+SEXP objects(SEXP environment, 
+             bool allNames,
+             Protect* pProtect);
+
+core::Error objects(SEXP environment,
+                    bool allNames,
+                    std::vector<std::string>* pNames);
+
+core::Error getNamespaceExports(SEXP ns,
+                                std::vector<std::string>* pNames);
+
+core::Error extractFormalNames(SEXP functionSEXP,
+                               std::vector<std::string>* pNames);
 
 } // namespace sexp
 } // namespace r

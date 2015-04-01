@@ -45,6 +45,7 @@
 #ifndef R_INTERNAL_FUNCTIONS
 
 // force compiler error if the client tries to call an R internal function
+// force compiler error if the client tries to call an R internal function
 #define Rf_asChar INTERNAL_R_FUNCTION
 #define Rf_coerceVector INTERNAL_R_FUNCTION
 #define Rf_PairToVectorList INTERNAL_R_FUNCTION

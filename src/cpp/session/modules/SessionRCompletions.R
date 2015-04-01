@@ -162,7 +162,7 @@ assign(x = ".rs.acCompletionTypes",
       "@useDynLib "
    )
    
-   matchingTags <- grep(paste("^", tag, sep=""), tags, value = TRUE)
+   matchingTags <- grep(paste("^", tag, sep = ""), tags, value = TRUE)
    
    .rs.makeCompletions(tag,
                        matchingTags,
@@ -1248,7 +1248,7 @@ assign(x = ".rs.acCompletionTypes",
    allOptions <- names(options())
    .rs.makeCompletions(token = token,
                        results = .rs.selectFuzzyMatches(allOptions, token),
-                       package = "options",
+                       packages = "options",
                        quote = TRUE,
                        type = .rs.acCompletionTypes$OPTION)
 })
@@ -1669,7 +1669,7 @@ assign(x = ".rs.acCompletionTypes",
    if (string[[1]] %in% c("library", "require", "requireNamespace") &&
        numCommas[[1]] == 0)
    {
-      quote <- ! (string[[1]] %in% c("library", "require"))
+      quote <- !(string[[1]] %in% c("library", "require"))
       return(.rs.getCompletionsPackages(token, 
                                         excludeOtherCompletions = TRUE,
                                         quote = quote))
@@ -2816,4 +2816,3 @@ assign(x = ".rs.acCompletionTypes",
    
    .rs.scalar(newSnippet)
 })
-
