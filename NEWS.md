@@ -93,7 +93,7 @@
 * Autocompletions now available when debugging
 * Improved debug stepping through statements wrapped in tryCatch()
 * Better call frame selection when using recover()
-* Keyboard shortcuts for Step Into (Alt+F10) and Step Out (Shift+F4)
+* Keyboard shortcuts for Step Into (Shift+F4) and Step Out (Shift+F6)
 
 ### Packages
 
