@@ -912,22 +912,33 @@ const std::set<std::string>& nsePrimitives()
    return set;
 }
 
+bool isCallToNSEFunction(SEXP node,
+                         const std::set<std::string>& nsePrimitives)
+{
+   if (TYPEOF(node) != LANGSXP)
+      return false;
+   
+   SEXP head = CAR(node);
+   while (TYPEOF(head) == LANGSXP)
+      head = CAR(head);
+   
+   return TYPEOF(head) == SYMSXP &&
+          nsePrimitives.count(CHAR(PRINTNAME(head)));
+}
+
 // Attempts to find calls to functions which perform NSE.
 bool maybePerformsNSEImpl(SEXP node,
                           const std::set<std::string>& nsePrimitives)
 {
+   // Check
+   if (isCallToNSEFunction(node, nsePrimitives))
+      return true;
+   
+   // Recurse
    if (TYPEOF(node) == LANGSXP)
    {
-      // Check to see if this is a call to a function typically
-      // used with non-standard evaluation
-      SEXP head = CAR(node);
-      if (TYPEOF(head) == SYMSXP && nsePrimitives.count(CHAR(PRINTNAME(head))))
-         return true;
-      
-      // Iterate over all other elements in the pairlist and check to see if
-      // they make calls to NSE primitives.
       SEXP tail = CDR(node);
-      head = CAR(tail);
+      SEXP head = CAR(tail);
       while (tail != R_NilValue)
       {
          if (TYPEOF(head) == LANGSXP && maybePerformsNSEImpl(head, nsePrimitives))
