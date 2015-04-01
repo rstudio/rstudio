@@ -546,7 +546,6 @@ public:
    {
       if (!pNode) return false;
       
-      std::cerr << pNode->name_ << " " << pNode->position_ << std::endl;
       if (pNode->name_ == name && pNode->position_ <= position)
       {
          *ppFoundNode = pNode;
@@ -561,7 +560,6 @@ public:
       {
          std::size_t index = n - i - 1;
          const boost::shared_ptr<ParseNode>& pChild = pNode->children_[index];
-         std::cerr << pChild->name_ << " " << pChild->position_ << std::endl;
          if (pChild->name_ == name && pChild->position_ <= position)
          {
             *ppFoundNode = pChild.get();
@@ -579,7 +577,6 @@ public:
                      const Position& position,
                      const ParseNode** ppFoundNode) const
    {
-      std::cerr << name << " " << position << std::endl;
       return doFindFunction(
                this,
                name,

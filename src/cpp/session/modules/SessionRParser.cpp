@@ -898,6 +898,9 @@ void validateFunctionCall(RTokenCursor cursor,
    if (!cursor.isType(RToken::LPAREN))
       return;
    
+   RTokenCursor endCursor = cursor.clone();
+   endCursor.fwdToMatchingToken();
+   
    if (!cursor.moveToPreviousSignificantToken())
       return;
    
@@ -908,9 +911,6 @@ void validateFunctionCall(RTokenCursor cursor,
    RTokenCursor startCursor = cursor.clone();
    startCursor.moveToStartOfEvaluation();
    
-   RTokenCursor endCursor = cursor.clone();
-   endCursor.fwdToMatchingToken();
-   
    // Bail if this function takes '...' -- TODO is to wire in
    // what we can for inferring a correct call.
    if (std::find(names.begin(), names.end(), "...") != names.end())
@@ -919,59 +919,82 @@ void validateFunctionCall(RTokenCursor cursor,
    // Get the arguments within the function call.
    std::vector<std::string> args = extractNamedArguments(cursor);
    
-   DEBUG_BLOCK("arguments")
-   {
-      r::sexp::Protect protect;
-      r::sexp::printValue(r::sexp::create(names, &protect));
-      r::sexp::printValue(r::sexp::create(args, &protect));
-   }
-   
    // Figure out which named arguments specified by the user don't actually
    // match the names of the available formals.
-   std::vector<std::string> unmatchedArgs =
+   std::vector<std::string> noExactMatchArgs =
          core::algorithm::set_difference(args, names);
    
    // Of the unmatched arguments, figure out which are / aren't prefix matches.
-   std::vector<std::string> prefixMatches =
-         core::algorithm::set_difference(
-            unmatchedArgs,
-            names,
-            string_utils::isPrefixOf);
-   
-   BOOST_FOREACH(const std::string& arg, unmatchedArgs)
+   typedef std::pair<std::string, std::string> Pair;
+   std::vector<Pair> prefixMatchedPairs;
+   BOOST_FOREACH(const std::string& arg, noExactMatchArgs)
    {
-      // Check to see if this argument is a prefix match
-      // of one of the available formals.
-      std::vector<std::string>::const_iterator it =
-            std::find_if(names.begin(),
-                         names.end(),
-                         boost::bind(string_utils::isPrefixOf, _1, arg));
-      
-      if (it != names.end())
+      BOOST_FOREACH(const std::string& name, names)
       {
-         // Supply a warning.
-         status.lint().add(
-                  startCursor.row(),
-                  startCursor.column(),
-                  endCursor.row(),
-                  endCursor.column() + endCursor.length(),
-                  LintTypeWarning,
-                  "partial match of argument '" + arg + "' to '" + *it + "'");
-      }
-      else
-      {
-         // Error -- named argument passed by user does not match
-         // anything within the set of available formals.
-         status.lint().add(
-                  startCursor.row(),
-                  startCursor.column(),
-                  endCursor.row(),
-                  endCursor.column() + endCursor.length(),
-                  LintTypeError,
-                  "no argument named '" + arg + "'");
+         if (string_utils::isPrefixOf(name, arg))
+         {
+            prefixMatchedPairs.push_back(std::make_pair(arg, name));
+            break;
+         }
       }
    }
+
+   // Now, collect the arguments with no match at all.
+   std::vector<std::string> prefixMatchedArgs;
+   BOOST_FOREACH(const Pair& pair, prefixMatchedPairs)
+   {
+      prefixMatchedArgs.push_back(pair.first);
+   }
    
+   std::vector<std::string> unmatchedArgs =
+         core::algorithm::set_difference(
+            noExactMatchArgs,
+            prefixMatchedArgs);
+   
+   // Collect warning + error messages. TODO: Do we want to keep these
+   // separated so we can provide nicer markers?
+   if (!prefixMatchedPairs.empty())
+   {
+      std::string prefix = prefixMatchedPairs.size() == 1 ?
+               "partial match of argument: " :
+               "partial match of arguments: ";
+      
+      std::string prefixMatched =
+            "['" + prefixMatchedPairs[0].first + "' -> " +
+             "'" + prefixMatchedPairs[0].second + "'";
+      
+      std::size_t n = prefixMatchedPairs.size();
+      
+      for (std::size_t i = 1; i < n; ++i)
+         prefixMatched += ", '" + prefixMatchedPairs[i].first + "' -> " +
+               "'" + prefixMatchedPairs[i].second + "'";
+      
+      prefixMatched += "]";
+      
+      status.lint().add(
+               startCursor.row(),
+               startCursor.column(),
+               endCursor.row(),
+               endCursor.column() + endCursor.length(),
+               LintTypeWarning,
+               prefix + prefixMatched);
+   }
+   
+   if (!unmatchedArgs.empty())
+   {
+      std::string unmatched = "'" + boost::algorithm::join(unmatchedArgs, "', '") + "'";
+      std::string prefix = unmatchedArgs.size() == 1 ?
+               "unused argument: " :
+               "unused arguments: ";
+      
+      status.lint().add(
+               startCursor.row(),
+               startCursor.column(),
+               endCursor.row(),
+               endCursor.column() + endCursor.length(),
+               LintTypeError,
+               prefix + unmatched);
+   }
 }
 
 bool skipFormulas(RTokenCursor& cursor,
