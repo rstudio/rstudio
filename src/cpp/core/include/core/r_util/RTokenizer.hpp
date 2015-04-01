@@ -30,6 +30,7 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/regex_fwd.hpp>
 
+#include <core/collection/Position.hpp>
 #include <core/Macros.hpp>
 
 // On Linux confirm that wchar_t is Unicode
@@ -84,11 +85,11 @@ public:
    };
 
 public:
-   
+
    RToken()
       : offset_(-1)
    {}
-   
+
    explicit RToken(TokenType type)
       : type_(type), offset_(-1)
    {}
@@ -103,7 +104,7 @@ public:
         offset_(offset), row_(row), column_(column)
    {
    }
-   
+
    // accessors
    TokenType type() const { return type_; }
    std::wstring content() const { return std::wstring(begin_, end_); }
@@ -112,7 +113,7 @@ public:
    std::size_t length() const { return end_ - begin_; }
    std::size_t row() const { return row_; }
    std::size_t column() const { return column_; }
-   
+
    core::collection::Position position() const
    {
       return core::collection::Position(row_, column_);
@@ -125,7 +126,7 @@ public:
       return distance == text.size() &&
              std::equal(begin_, end_, text.begin());
    }
-   
+
    bool contentContains(const wchar_t character) const
    {
       return std::find(begin_, end_, character) != end_;
@@ -160,22 +161,22 @@ public:
    {
       return offset_ == static_cast<std::size_t>(-1);
    }
-   
+
    std::wstring::const_iterator begin() const
    {
       return begin_;
    }
-   
+
    std::wstring::const_iterator end() const
    {
       return end_;
    }
-   
+
    std::pair<std::wstring::const_iterator, std::wstring::const_iterator> range() const
    {
       return std::make_pair(begin_, end_);
    }
-   
+
    std::string asString() const;
    friend std::ostream& operator <<(std::ostream& os,
                                     const RToken& self)
@@ -232,7 +233,7 @@ private:
    std::size_t tokenLength(const boost::wregex& regex);
    void eatUntil(const boost::wregex& regex);
    RToken consumeToken(RToken::TokenType tokenType, std::size_t length);
-   
+
 private:
    std::wstring data_;
    std::wstring::const_iterator begin_;
@@ -250,7 +251,7 @@ private:
 class RTokens
 {
    typedef std::vector<RToken> Tokens;
-   
+
 public:
    enum Flags
    {
@@ -260,10 +261,10 @@ public:
    };
 
 public:
-   
+
    void push_back(const RToken& rToken) { tokens_.push_back(rToken); }
    std::size_t size() const { return tokens_.size(); }
-   
+
    // Safe 'at' method that returns a dummy token if
    // an out of bounds offset is specified.
    const RToken& at(std::size_t offset) const
@@ -272,25 +273,25 @@ public:
          return dummyToken_;
       return tokens_[offset];
    }
-   
+
    // Unsafe 'at' method that should only used for functions that
    // have validated the range they will be iterating over
    const RToken& atUnsafe(std::size_t offset) const
    {
       return tokens_[offset];
    }
-   
+
    typedef Tokens::const_iterator const_iterator;
    typedef Tokens::iterator iterator;
-   
+
    const_iterator begin() const { return tokens_.begin(); }
    const_iterator end() const { return tokens_.end(); }
-   
+
    RTokens()
       : tokenizer_(L""),
         dummyToken_(RToken::ERR)
    {}
-   
+
    explicit RTokens(const std::wstring& code, int flags = None)
       : tokenizer_(code), dummyToken_(RToken::ERR)
    {
@@ -306,7 +307,7 @@ public:
          push_back(token);
       }
    }
-   
+
    friend std::ostream& operator <<(std::ostream& os,
                                     const RTokens& rTokens)
    {
@@ -504,7 +505,7 @@ inline RToken::TokenType typeComplement(RToken::TokenType lhsType)
    case RToken::LBRACE:    return RToken::RBRACE;
    case RToken::LBRACKET:  return RToken::RBRACKET;
    case RToken::LDBRACKET: return RToken::RDBRACKET;
-      
+
    case RToken::RPAREN:    return RToken::LPAREN;
    case RToken::RBRACE:    return RToken::LBRACE;
    case RToken::RBRACKET:  return RToken::LBRACKET;
@@ -537,7 +538,7 @@ inline bool isSymbolNamed(const RToken& rToken,
                rToken.end() - 1,
                name.begin());
    }
-   
+
    return rToken.contentEquals(name);
 }
 
@@ -549,7 +550,7 @@ inline std::string getSymbolName(const RToken& rToken)
        return string_utils::wideToUtf8(
           std::wstring(rToken.begin() + 1, rToken.end() - 1));
    }
-   
+
    return rToken.contentAsUtf8();
 }
 
@@ -566,17 +567,22 @@ inline bool canFollowBinaryOperator(const RToken& rToken)
    default:
       ; // fall-through
    }
-   
+
    if (isValidAsUnaryOperator(rToken))
       return true;
-   
+
    return false;
+}
+
+inline boolean isQuestionMark(const RToken& rToken)
+{
+   return rToken.contentEquals(L"?");
 }
 
 } // end namespace token_utils
 
 } // namespace r_util
-} // namespace core 
+} // namespace core
 } // namespace rstudio
 
 

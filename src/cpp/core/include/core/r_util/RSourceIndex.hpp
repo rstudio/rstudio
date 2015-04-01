@@ -197,6 +197,7 @@ public:
                 const std::string& code);
 
    const std::string& context() const { return context_; }
+   const RTokens& tokens() const { return tokens_; }
 
    template <typename OutputIterator>
    OutputIterator search(
@@ -408,6 +409,7 @@ public:
 
 private:
    std::string context_;
+   RTokens rTokens_;
    std::vector<RSourceItem> items_;
    
    // private fields related to the current set of library completions

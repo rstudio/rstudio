@@ -16,6 +16,7 @@
 #include "SessionRCompletions.hpp"
 
 #include <core/Exec.hpp>
+#include <core/collection/Position.hpp>
 
 #include <boost/range/adaptors.hpp>
 
@@ -36,6 +37,7 @@
 #include <core/r_util/RSourceIndex.hpp>
 
 #include <session/projects/SessionProjects.hpp>
+#include <session/modules/SessionRTokenCursor.hpp>
 #include <session/SessionModuleContext.hpp>
 
 #include "SessionCodeSearch.hpp"
@@ -46,6 +48,9 @@ namespace rstudio {
 namespace session {
 namespace modules {
 namespace r_packages {
+
+using namespace token_cursor;
+using namespace token_utils;
 
 namespace {
 
@@ -449,6 +454,209 @@ SEXP rs_listInferredPackages(SEXP documentIdSEXP)
    
 }
 
+Error namespaceCompletions(const std::wstring& token,
+                           bool exportsOnly,
+                           json::JsonRpcResponse* pResponse)
+{
+   return Success();
+}
+
+struct RCompletionEnclosingContext
+{
+   RCompletionEnclosingContext(r_util::RToken::TokenType type,
+                      const std::wstring& evaluation,
+                      const std::wstring& functionCall,
+                      std::size_t numCommas)
+      : type(type),
+        evaluation(evaluation),
+        functionCall(functionCall),
+        numCommas(numCommas)
+   {}
+   
+   r_util::RToken::TokenType type;
+   std::wstring evaluation;
+   std::wstring functionCall;
+   std::size_t numCommas;
+};
+
+struct RCompletionTopLevelContext
+{
+   enum RCompletionContextType
+   {
+      RCompletionContextTypeRoxygen,
+      RCompletionContextTypeFile,
+      RCompletionContextTypeDollar,
+      RCompletionContextTypeAt,
+      RCompletionContextTypeFile,
+      RCompletionContextTypeRoxygen,
+      RCompletionContextTypeNamespaceExported,
+      RCompletionContextTypeNamespaceAll,
+      RCompletionContextTypeHelp
+   };
+   
+   
+   RCompletionTopLevelContext(const std::wstring& token,
+                              const std::wstring& context,
+                              RCompletionContextType type)
+      : token(token), context(context), type(type) {}
+   
+   std::wstring token;
+   std::wstring context;
+   RCompletionContextType type;
+};
+
+std::vector<RCompletionEnclosingContext> buildEnclosingContext(RTokenCursor cursor)
+{
+   RTokenCursor origin = cursor.clone();
+   std::vector<RCompletionEnclosingContext> context;
+   std::size_t commaCount = 0;
+   
+   do
+   {
+      if (cursor.bwdToMatchingToken())
+         continue;
+      
+      if (cursor.isType(RToken::COMMA))
+         ++commaCount;
+      
+      if (isLeftBracket(cursor))
+      {
+         RTokenCursor startCursor = cursor.clone();
+         
+         if (!startCursor.moveToPreviousSignificantToken())
+            continue;
+         
+         if (!startCursor.moveToStartOfEvaluation())
+            continue;
+         
+         RTokenCursor endCursor = cursor.clone();
+         if (!endCursor.fwdToMatchingToken())
+            endCursor.setOffset(origin.getOffset());
+         
+         context.push_back(RCompletionEnclosingContext(
+                              cursor.type(),
+                              std::wstring(startCursor.begin(), cursor.begin()),
+                              std::wstring(startCursor.begin(), endCursor.end()),
+                              commaCount
+                              ));
+         
+         commaCount = 0;
+      }
+      
+   } while (cursor.moveToPreviousToken());
+}
+
+RCompletionTopLevelContext getTopLevelContext(RTokenCursor cursor)
+{
+   const RToken& prev = cursor.previousSignificantToken();
+   
+   // Is this a completion for a help query, e.g.
+   //
+   //    ?foo
+   //    ?foo::bar
+   //    foo?bar
+   //
+   // ?
+   if (isQuestionMark(cursor) || isQuestionMark(prev))
+   {
+      std::wstring token = isQuestionMark(cursor) ? L"" : cursor.content();
+      if (isQuestionMark(prev))
+         cursor.moveToPreviousSignificantToken();
+      
+      std::wstring context;
+      const RToken& beforeQuestionMark = cursor.previousSignificantToken();
+      if (beforeQuestionMark.row() == cursor.row() && (
+             beforeQuestionMark.isType(RToken::ID) ||
+             beforeQuestionMark.isType(RToken::STRING)))
+      {
+         context = beforeQuestionMark.content();
+      }
+      
+      return RCompletionTopLevelContext(
+               token,
+               context,
+               RCompletionTopLevelContext::RCompletionContextTypeHelp);
+   }
+   
+   // Is this a completion of a namespace export, e.g.
+   //
+   //    foo::bar
+   // 
+   // ?
+   if (isNamespace(cursor) || isNamespace(prev))
+   {
+      std::wstring token = isNamespace(cursor)
+            ? L""
+            : cursor.content();
+      
+      if (isNamespace(prev))
+         cursor.moveToPreviousSignificantToken();
+      
+      RCompletionTopLevelContext::RCompletionContextType type =
+            cursor.contentEquals(L":::") ?
+               RCompletionTopLevelContext::RCompletionContextTypeNamespaceAll :
+               RCompletionTopLevelContext::RCompletionContextTypeNamespaceExported;
+      
+      return RCompletionTopLevelContext(
+               token,
+               cursor.getCallingString(),
+               type);
+   }
+   
+   // Is this a completion for an extraction-type operator, e.g.
+   //
+   //    foo(1)$|
+   //    foo(2)@
+   //
+   // ?
+   if (isDollar(cursor) || isAt(cursor) ||
+       isDollar(prev) || isAt(prev))
+   {
+      if (isDollar(prev) || isAt(prev))
+         cursor.moveToPreviousSignificantToken();
+   }
+}
+
+Error getRCompletions(const json::JsonRpcRequest& request,
+                      json::JsonRpcResponse* pResponse)
+{
+   using namespace core::collection;
+   using namespace core::r_util;
+   using namespace modules::token_cursor;
+   
+   std::string documentId;
+   std::size_t row;
+   std::size_t column;
+   Error error = json::readParams(request.params, 
+                                  &documentId,
+                                  &row,
+                                  &column);
+   if (error)
+      return error;
+   
+   Position position(row, column);
+   boost::shared_ptr<RSourceIndex> pDoc =
+         code_search::rSourceIndex().get(documentId);
+   
+   if (!pDoc) return;
+   
+   const RTokens& tokens = pDoc->tokens();
+   if (tokens.size() == 0) return;
+   
+   RTokenCursor cursor(tokens);
+   if (!cursor.moveToPosition(position))
+      return;
+   
+   // Build the completion context -- this consists of the enclosing
+   // function calls and whatnot.
+   std::vector<RCompletionEnclosingContext> enclosingContext =
+         buildEnclosingContext(cursor);
+   
+   // Get the 'top-level' context -- this is for e.g. namespace completions,
+   // '$' accessors, help, and so on. This can be empty.
+   RCompletionTopLevelContext topLevelContext = getTopLevelContext(cursor);
+}
+
 } // end anonymous namespace
 
 Error initialize() {
@@ -466,7 +674,9 @@ Error initialize() {
    using namespace module_context;
    ExecBlock initBlock;
    initBlock.addFunctions()
-         (bind(sourceModuleRFile, "SessionRCompletions.R"));
+         (bind(sourceModuleRFile, "SessionRCompletions.R"))
+         (bind(registerRpcMethod, "get_r_completions", getRCompletions));
+   
    return initBlock.execute();
 }
 

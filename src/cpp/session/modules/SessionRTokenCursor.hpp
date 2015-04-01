@@ -166,6 +166,43 @@ public:
       return Position(token.row(), token.column());
    }
    
+   // Move a token cursor to document coordinates specified by
+   // [row, column]. We attempt to find the first token
+   // _to the left_ of the position supplied, and return 'false'
+   // if we were unable to find a token.
+   //
+   // TODO: Binary search?
+   bool moveToPosition(const Position& position)
+   {
+      std::size_t n = n_;
+      if (n == 0) return false;
+      
+      // If the position we want to move to exists before any
+      // tokens in the document, return false. (This shouldn't
+      // happen since whitespace is also tokenized, but safer
+      // to have this check anyhow)
+      if (position < rTokens_.at(0).position())
+         return false;
+      
+      // Iterate through the rest of the tokens, and stop once
+      // we find a token that lies ahead of the position specified.
+      // Return the immediately previous token.
+      for (std::size_t i = 1; i < n; ++i)
+      {
+         if (rTokens_.at(i).position() < position)
+         {
+            offset_ = i - 1;
+            return true;
+         }
+      }
+      
+      // If we iterated through all positions, then the position
+      // specified is beyond the edge of the document -- just move
+      // to the last token.
+      offset_ = n - 1;
+      return true;
+   }
+   
    std::wstring::const_iterator begin() const
    {
       return currentToken().begin();
@@ -788,6 +825,8 @@ public:
      }
   }
   
+  std::size_t getOffset() { return offset_; }
+  void setOffset(std::size_t offset) { offset_ = offset; }
   std::size_t length() const { return currentToken().length(); }
   
 private:

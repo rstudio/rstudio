@@ -237,6 +237,7 @@ RSourceIndex::RSourceIndex(const std::string& context,
 
    // tokenize
    RTokens rTokens(wCode, RTokens::StripWhitespace | RTokens::StripComments);
+   rTokens_ = rTokens;
 
    // track nest level
    int braceLevel = 0;
