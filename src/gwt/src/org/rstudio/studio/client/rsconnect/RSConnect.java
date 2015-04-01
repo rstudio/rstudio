@@ -164,7 +164,7 @@ public class RSConnect implements SessionInitHandler,
          case CONTENT_TYPE_APP:
             publishAsCode(event);
             break;
-         case CONTENT_TYPE_RMD:
+         case CONTENT_TYPE_DOCUMENT:
             if (event.getFromPrevious().getServer().equals("rpubs.com"))
             {
                publishAsRPubs(event);
@@ -239,7 +239,7 @@ public class RSConnect implements SessionInitHandler,
             publishAsStatic(input);
          }
       }
-      else if (input.getContentType() == CONTENT_TYPE_RMD)
+      else if (input.getContentType() == CONTENT_TYPE_DOCUMENT)
       {
          if (input.isShiny())
          {

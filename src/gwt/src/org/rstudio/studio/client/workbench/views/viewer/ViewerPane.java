@@ -91,8 +91,8 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
       toolbar_.addLeftWidget(commands_.viewerStop().createToolbarButton());
      
       // add publish button 
-      publishButton_ = new RSConnectPublishButton(RSConnect.CONTENT_TYPE_RMD, 
-            true, false);
+      publishButton_ = new RSConnectPublishButton(
+            RSConnect.CONTENT_TYPE_DOCUMENT, true, false);
       toolbar_.addRightWidget(publishButton_);
 
       // create an HTML generator (for plots)

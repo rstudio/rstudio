@@ -140,12 +140,13 @@ public class RSConnectPublishButton extends Composite
    
    public void setRmdPreview(RmdPreviewParams params)
    {
+      // TODO: we should be visible for all Rmd files
       if (params.isShinyDocument() || 
             (params.getResult().isHtml() &&
              params.getResult().getFormat() != null))
       {
          setVisible(true);
-         docPreview_ = params;
+         docPreview_ = new RenderedDocPreview(params);
          setContentPath(params.getResult().getTargetFile());
       }
       else
@@ -161,7 +162,7 @@ public class RSConnectPublishButton extends Composite
       {
          setVisible(true);
          setContentPath(params.getSourceFile());
-         htmlPreview_ = params;
+         docPreview_ = new RenderedDocPreview(params);
       }
    }
 

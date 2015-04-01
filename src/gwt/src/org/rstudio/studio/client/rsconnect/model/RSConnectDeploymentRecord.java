@@ -82,14 +82,14 @@ public class RSConnectDeploymentRecord extends JavaScriptObject
       if (typeof this.asMultiple === "undefined") 
          return false;
       else
-         return this.asMultiple;
+         return this.asMultiple === "TRUE" ? true : false;
    }-*/;
    
    public final native boolean getAsStatic() /*-{
       if (typeof this.asStatic === "undefined") 
          return false;
       else
-         return this.asStatic;
+         return this.asStatic === "TRUE" ? true : false;
    }-*/;
    
    private final native JsArrayString getFileList(String name) /*-{
