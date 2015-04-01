@@ -206,7 +206,7 @@ public:
    {
       return currentToken().isType(type);
    }
-
+   
    bool contentContains(wchar_t character) const
    {
       return currentToken().contentContains(character);

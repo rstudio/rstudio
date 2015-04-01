@@ -279,7 +279,7 @@ void UserSettings::updatePrefsCache(const json::Object& prefs) const
    bool enableStyleDiagnostics = readPref<bool>(prefs, "enable_style_diagnostics", false);
    pEnableStyleDiagnostics_.reset(new bool(enableStyleDiagnostics));
    
-   bool lintRFunctionCalls = readPref<bool>(prefs, "lint_r_function_calls", false);
+   bool lintRFunctionCalls = readPref<bool>(prefs, "show_diagnostics_in_r_function_calls", false);
    pLintRFunctionCalls_.reset(new bool(lintRFunctionCalls));
    
 }

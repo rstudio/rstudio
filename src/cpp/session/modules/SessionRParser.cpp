@@ -519,7 +519,7 @@ void handleIdentifier(RTokenCursor& cursor,
    if (isExtractionOperator(cursor.previousSignificantToken()) ||
        isNamespace(cursor.nextSignificantToken()))
    {
-      DEBUG("--- Cursor preceded by extraction op; not adding");
+      DEBUG("--- Symbol preceded by extraction op; not adding");
       return;
    }
    
@@ -555,6 +555,7 @@ void handleIdentifier(RTokenCursor& cursor,
       if (isLocalLeftAssign(cursor.nextSignificantToken()) ||
           isLocalRightAssign(cursor.previousSignificantToken()))
       {
+         DEBUG("--- Adding definition for symbol");
          status.node()->addDefinedSymbol(cursor);
       }
       
