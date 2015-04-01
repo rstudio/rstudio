@@ -506,7 +506,7 @@ well as menu structures (for main menu and popup menus).
       <shortcutgroup name="Debug">
          <shortcut refid="debugBreakpoint" value="Shift+F9"/>
          <shortcut refid="debugStep" value="F10"/>
-         <shortcut refid="debugStepInto" value="Shift+F10"/>
+         <shortcut refid="debugStepInto" value="Alt+F10"/>
          <shortcut refid="debugFinish" value="Shift+F4"/>
          <shortcut refid="debugContinue" value="Shift+F5"/>
          <shortcut refid="debugStop" value="Shift+F8"/>
