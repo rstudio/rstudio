@@ -17,6 +17,10 @@
 // #define RSTUDIO_ENABLE_DEBUG_MACROS
 #define RSTUDIO_DEBUG_LABEL "parser"
 
+// We use a couple internal R functions here; in particular,
+// simple accessors (which we know will not longjmp)
+#define R_INTERNAL_FUNCTIONS
+
 #include <core/Macros.hpp>
 #include <core/algorithm/Set.hpp>
 #include <core/StringUtils.hpp>
@@ -737,7 +741,11 @@ void validateFunctionCall(const RTokenCursor& cursor,
    // Get the formals associated with this function.
    std::vector<std::string> names;
    Error error = extractFormalNames(functionSEXP, &names);
-   IF_ERROR(error, return);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
    
    // Bail if this function takes '...' -- TODO is to wire in
    // what we can for inferring a correct call.
@@ -751,6 +759,13 @@ void validateFunctionCall(const RTokenCursor& cursor,
    // match the names of the available formals.
    std::vector<std::string> unmatchedArgs =
          core::algorithm::set_difference(args, names);
+   
+   // Of the unmatched arguments, figure out which are / aren't prefix matches.
+   std::vector<std::string> prefixMatches =
+         core::algorithm::set_difference(
+            unmatchedArgs,
+            names,
+            string_utils::isPrefixOf);
    
    BOOST_FOREACH(const std::string& arg, unmatchedArgs)
    {

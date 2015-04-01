@@ -23,7 +23,6 @@
 #include <boost/function.hpp>
 #include <boost/foreach.hpp>
 #include <boost/numeric/conversion/cast.hpp>
-#include <boost/container/flat_set.hpp>
 
 #include <core/Macros.hpp>
 #include <core/Log.hpp>
@@ -102,15 +101,10 @@ bool fillSetString(SEXP object, std::set<std::string>* pSet)
 std::vector<std::string> getLoadedNamespaces()
 {
    std::vector<std::string> result;
-   
-   r::exec::RFunction loadedNamespaces("loadedNamespaces");
-   Protect protect;
-   SEXP resultSEXP;
-   
-   Error error = loadedNamespaces.call(&resultSEXP, &protect);
-   IF_ERROR(error, return result);
-   
-   fillVectorString(resultSEXP, &result);
+   r::exec::RFunction loadedNamespaces("loadedNamespaces", "base");
+   Error error = loadedNamespaces.call(&result);
+   if (error)
+      LOG_ERROR(error);
    return result;
 }
 
@@ -124,10 +118,7 @@ SEXP findNamespace(const std::string& name)
 
    // R_FindNamespace will throw if it fails to find a particular name.
    // Instead, we manually search the namespace registry.
-   r::sexp::Protect protect;
-   SEXP nameSEXP;
-   protect.add(nameSEXP = Rf_install(name.c_str()));
-   
+   SEXP nameSEXP = Rf_install(name.c_str());
    SEXP ns = Rf_findVarInFrame(R_NamespaceRegistry, nameSEXP);
    return ns;
 }
@@ -206,31 +197,34 @@ SEXP findFunction(const std::string& name, const std::string& ns)
    SEXP env = ns.empty() ? R_GlobalEnv : findNamespace(ns);
    if (env == R_UnboundValue) return R_UnboundValue;
    
-   // We might want to use `Rf_findFun`, but it calls `Rf_error` on failure.
-   // We instead attempt to find the function by manually
+   // We might want to use `Rf_findFun`, but it calls `Rf_error`
+   // on failure, which involves printing the error message out
+   // to the console. To avoid this,
+   // we instead attempt to find the function by manually
    // walking through the environment (and its enclosing environments)
-   SEXP nameSEXP;
-   protect.add(nameSEXP = Rf_install(name.c_str()));
-   
-   // If we're searching the global environment, then
-   // try using 'Rf_findVar', as this will attempt a search
-   // of R's own internal global cache.
-   if (env == R_GlobalEnv)
-   {
-      SEXP resultSEXP = Rf_findVar(nameSEXP, R_GlobalEnv);
-      if (Rf_isFunction(resultSEXP))
-         return resultSEXP;
-      else if (TYPEOF(resultSEXP) == PROMSXP)
-      {
-         protect.add(resultSEXP = Rf_eval(resultSEXP, env));
-         if (Rf_isFunction(resultSEXP))
-            return resultSEXP;
-      }
-   }
+   SEXP nameSEXP = Rf_install(name.c_str());
    
    // Search through frames until we find the global environment.
    while (env != R_EmptyEnv)
    {
+      // If we're searching the global environment, then
+      // try using 'Rf_findVar', as this will attempt a search
+      // of R's own internal global cache.
+      if (env == R_GlobalEnv)
+      {
+         SEXP resultSEXP = Rf_findVar(nameSEXP, R_GlobalEnv);
+         if (Rf_isFunction(resultSEXP))
+            return resultSEXP;
+         else if (TYPEOF(resultSEXP) == PROMSXP)
+         {
+            protect.add(resultSEXP = Rf_eval(resultSEXP, env));
+            if (Rf_isFunction(resultSEXP))
+               return resultSEXP;
+         }
+      }
+      
+      // Otherwise, just perform a simple search through
+      // the current frame.
       SEXP resultSEXP = Rf_findVarInFrame(env, nameSEXP);
       if (resultSEXP != R_UnboundValue)
       {
@@ -962,7 +956,8 @@ bool maybePerformsNSE(SEXP function)
 
 // NOTE: Uses `R_lsInternal` which throws error if a non-environment is
 // passed; we therefore perform this validation ourselves before calling
-// `R_lsInternal`.
+// `R_lsInternal`. This is primarily done to avoid the error being printed
+// out to the R console.
 SEXP objects(SEXP environment,
              bool allNames,
              Protect* pProtect)
@@ -994,37 +989,15 @@ Error objects(SEXP environment,
    return Success();
 }
 
-SEXP mget(SEXP objectNames,
-          SEXP environment,
-          bool inherits,
-          Protect* pProtect)
-{
-   SEXP resultSEXP;
-   
-   r::exec::RFunction mget("mget");
-   mget.addParam("x", objectNames);
-   mget.addParam("envir", environment);
-   mget.addParam("inherits", inherits);
-   
-   Error error = mget.call(&resultSEXP, pProtect);
-   IF_ERROR(error, return R_NilValue);
-   return resultSEXP;
-}
-
 core::Error getNamespaceExports(SEXP ns,
                                 std::vector<std::string>* pNames)
 {
    r::exec::RFunction f("getNamespaceExports");
    f.addParam(ns);
-   
-   Protect protect;
-   SEXP exportsSEXP;
-   Error error = f.call(&exportsSEXP, &protect);
+   Error error = f.call(pNames);
    if (error)
-      return error;
-   
-   fillVectorString(exportsSEXP, pNames);
-   return Success();
+      LOG_ERROR(error);
+   return error;
 }
 
 core::Error extractFormalNames(SEXP functionSEXP,

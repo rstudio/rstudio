@@ -19,6 +19,7 @@
 #include <ostream>
 
 #include <algorithm>
+#include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/case_conv.hpp>
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/replace.hpp>
@@ -567,6 +568,12 @@ std::wstring::const_iterator countNewlines(std::wstring::const_iterator begin,
 {
    return countNewlinesImpl(begin, end, '\r', '\n', pCount);
 }
+
+bool isPrefixOf(const std::string& self, const std::string& prefix)
+{
+   return boost::algorithm::starts_with(self, prefix);
+}
+
 
 } // namespace string_utils
 } // namespace core 

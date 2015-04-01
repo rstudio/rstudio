@@ -37,12 +37,28 @@ namespace algorithm {
                          std::back_inserter(result));                          \
                                                                                \
       return result;                                                           \
+   }                                                                           \
+                                                                               \
+   template <typename Container, typename Comparator>                          \
+   Container __OPERATION__(Container c1, Container c2, Comparator comp)        \
+   {                                                                           \
+                                                                               \
+      std::sort(c1.begin(), c1.end(), comp);                                   \
+      std::sort(c2.begin(), c2.end(), comp);                                   \
+                                                                               \
+      Container result;                                                        \
+      std::__OPERATION__(c1.begin(), c1.end(), c2.begin(), c2.end(),           \
+                         std::back_inserter(result), comp);                    \
+                                                                               \
+      return result;                                                           \
    }
 
 RS_SET_OPERATION(set_union)
 RS_SET_OPERATION(set_difference)
 RS_SET_OPERATION(set_intersection)
 RS_SET_OPERATION(set_symmetric_difference)
+
+#undef RS_SET_OPERATION
 
 } // namespace algorithm
 } // namespace core

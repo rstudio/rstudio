@@ -108,7 +108,11 @@ void addInferredSymbols(const FilePath& filePath,
       // document, grab that ID, and then get the index.
       boost::shared_ptr<SourceDocument> pDoc(new SourceDocument());
       Error error = source_database::get(filePath.filename(), pDoc);
-      IF_ERROR(error, return);
+      if (error)
+      {
+         LOG_ERROR(error);
+         return;
+      }
 
       const std::string& id = pDoc->id();
       index = rSourceIndex().get(id);
@@ -154,39 +158,57 @@ void addNamespaceSymbols(std::set<std::string>* pSymbols)
    }
 }
 
-void fillNamespace(const std::string& nsName,
-                   std::vector<std::string>* pSymbols)
+void fillNamespaceExports(const std::string& nsName,
+                          std::vector<std::string>* pSymbols)
 {
    r::sexp::Protect protect;
    SEXP ns = r::sexp::findNamespace(nsName);
+   if (ns == R_UnboundValue)
+      return;
+   
    Error error = r::sexp::getNamespaceExports(ns, pSymbols);
    if (error)
       LOG_ERROR(error);
 }
 
+class ExportedSymbolsRegistry : boost::noncopyable
+{
+public:
+   
+   typedef std::map<std::string, std::vector<std::string> > Registry;
+   
+   void fillExportedSymbols(const std::string& pkgName,
+                            std::set<std::string>* pOutput)
+   {
+      if (!registry_.count(pkgName))
+         fillNamespaceExports(pkgName, &registry_[pkgName]);
+      
+      const std::vector<std::string>& symbols = registry_[pkgName];
+      pOutput->insert(
+               symbols.begin(),
+               symbols.end());
+   }
+
+private:
+   Registry registry_;
+};
+
+ExportedSymbolsRegistry& exportedSymbolsRegistry()
+{
+   static ExportedSymbolsRegistry instance;
+   return instance;
+}
+
 void addBaseSymbols(std::set<std::string>* pSymbols)
 {
-
-#define RS_GET_EXPORTED_SYMBOLS(__NAMESPACE__)                                 \
-   do                                                                          \
-   {                                                                           \
-      static std::vector<std::string> __NAMESPACE__##NamespaceSymbols;         \
-      if (__NAMESPACE__##NamespaceSymbols.empty())                             \
-         fillNamespace(#__NAMESPACE__, &__NAMESPACE__##NamespaceSymbols);      \
-      pSymbols->insert(__NAMESPACE__##NamespaceSymbols.begin(),                \
-                       __NAMESPACE__##NamespaceSymbols.end());                 \
-   } while (0);
-   
-   RS_GET_EXPORTED_SYMBOLS(base);
-   RS_GET_EXPORTED_SYMBOLS(graphics);
-   RS_GET_EXPORTED_SYMBOLS(grDevices);
-   RS_GET_EXPORTED_SYMBOLS(methods);
-   RS_GET_EXPORTED_SYMBOLS(stats);
-   RS_GET_EXPORTED_SYMBOLS(stats4);
-   RS_GET_EXPORTED_SYMBOLS(utils);
-   
-#undef RS_GET_EXPORTED_SYMBOLS
-   
+   ExportedSymbolsRegistry& registry = exportedSymbolsRegistry();
+   registry.fillExportedSymbols("base", pSymbols);
+   registry.fillExportedSymbols("graphics", pSymbols);
+   registry.fillExportedSymbols("grDevices", pSymbols);
+   registry.fillExportedSymbols("methods", pSymbols);
+   registry.fillExportedSymbols("stats", pSymbols);
+   registry.fillExportedSymbols("stats4", pSymbols);
+   registry.fillExportedSymbols("utils", pSymbols);
 }
 
 // For an R package, symbols are looked up in this order:

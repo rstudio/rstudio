@@ -50,10 +50,6 @@ class Protect;
 // environments and namespaces
 std::vector<std::string> getLoadedNamespaces();
 SEXP findNamespace(const std::string& name);
-SEXP mget(SEXP objectNames,
-          SEXP environment,
-          bool inherits,
-          Protect* pProtect);
    
 // variables within an environment
 typedef std::pair<std::string,SEXP> Variable ;

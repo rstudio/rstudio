@@ -45,6 +45,7 @@
 #ifndef R_INTERNAL_FUNCTIONS
 
 // force compiler error if the client tries to call an R internal function
+// force compiler error if the client tries to call an R internal function
 #define Rf_asChar INTERNAL_R_FUNCTION
 #define Rf_coerceVector INTERNAL_R_FUNCTION
 #define Rf_PairToVectorList INTERNAL_R_FUNCTION
@@ -153,7 +154,11 @@
 #define R_bcDecode INTERNAL_R_FUNCTION
 #define R_ToplevelExec INTERNAL_R_FUNCTION
 #define R_RestoreHashCount INTERNAL_R_FUNCTION
+#define R_IsPackageEnv INTERNAL_R_FUNCTION
+#define R_PackageEnvName INTERNAL_R_FUNCTION
 #define R_FindPackageEnv INTERNAL_R_FUNCTION
+#define R_IsNamespaceEnv INTERNAL_R_FUNCTION
+#define R_NamespaceEnvSpec INTERNAL_R_FUNCTION
 #define R_FindNamespace INTERNAL_R_FUNCTION
 #define R_LockEnvironment INTERNAL_R_FUNCTION
 #define R_EnvironmentIsLocked INTERNAL_R_FUNCTION
@@ -196,10 +201,23 @@
 #define Rf_isArray INTERNAL_R_FUNCTION
 #define Rf_isFactor INTERNAL_R_FUNCTION
 #define Rf_isFrame INTERNAL_R_FUNCTION
+#define Rf_isFunction INTERNAL_R_FUNCTION
 #define Rf_isInteger INTERNAL_R_FUNCTION
+#define Rf_isLanguage INTERNAL_R_FUNCTION
+#define Rf_isList INTERNAL_R_FUNCTION
 #define Rf_isMatrix INTERNAL_R_FUNCTION
+#define Rf_isNewList INTERNAL_R_FUNCTION
 #define Rf_isNumeric INTERNAL_R_FUNCTION
+#define Rf_isPairList INTERNAL_R_FUNCTION
+#define Rf_isPrimitive INTERNAL_R_FUNCTION
 #define Rf_isTs INTERNAL_R_FUNCTION
+#define Rf_isUserBinop INTERNAL_R_FUNCTION
+#define Rf_isValidString INTERNAL_R_FUNCTION
+#define Rf_isValidStringF INTERNAL_R_FUNCTION
+#define Rf_isVector INTERNAL_R_FUNCTION
+#define Rf_isVectorAtomic INTERNAL_R_FUNCTION
+#define Rf_isVectorList INTERNAL_R_FUNCTION
+#define Rf_isVectorizable INTERNAL_R_FUNCTION
 #define Rf_lang1 INTERNAL_R_FUNCTION
 #define Rf_lang2 INTERNAL_R_FUNCTION
 #define Rf_lang3 INTERNAL_R_FUNCTION
