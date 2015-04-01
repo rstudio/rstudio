@@ -288,8 +288,6 @@ public class JProgram extends JNode implements ArrayTypeCreator {
 
   private List<Integer> initialFragmentIdSequence = Lists.newArrayList();
 
-  private String runtimeRebindRegistratorTypeName;
-
   private final Map<JMethod, JMethod> staticToInstanceMap = Maps.newIdentityHashMap();
 
   private JClassType typeClass;
@@ -839,10 +837,6 @@ public class JProgram extends JNode implements ArrayTypeCreator {
     return fragmentPartitioningResult.getCommonAncestorFragmentId(thisFragmentId, thatFragmentId);
   }
 
-  public String getRuntimeRebindRegistratorTypeSourceName() {
-    return runtimeRebindRegistratorTypeName;
-  }
-
   public Collection<JType> getSubclasses(JType type) {
     return Collections2.transform(typeOracle.getSubTypeNames(type.getName()),
         new Function<String, JType>() {
@@ -1088,10 +1082,6 @@ public class JProgram extends JNode implements ArrayTypeCreator {
     this.propertyProviderRegistratorTypeSourceName = propertyProviderRegistratorTypeSourceName;
   }
 
-  public void setRuntimeRebindRegistratorTypeName(String runtimeRebindRegistratorTypeName) {
-    this.runtimeRebindRegistratorTypeName = runtimeRebindRegistratorTypeName;
-  }
-
   /**
    * If {@code method} is a static impl method, returns the instance method
    * that {@code method} is the implementation of. Otherwise, returns{@code null}.
@@ -1152,8 +1142,7 @@ public class JProgram extends JNode implements ArrayTypeCreator {
         "java.lang.AssertionError", "java.lang.Boolean", "java.lang.Byte", "java.lang.Character",
         "java.lang.Short", "java.lang.Integer", "java.lang.Long", "java.lang.Float",
         "java.lang.Double", "java.lang.Throwable", "com.google.gwt.core.client.GWT",
-        JAVASCRIPTOBJECT, "com.google.gwt.lang.RuntimeRebinder",
-        CLASS_LITERAL_HOLDER, "com.google.gwt.core.client.RunAsyncCallback",
+        JAVASCRIPTOBJECT, CLASS_LITERAL_HOLDER, "com.google.gwt.core.client.RunAsyncCallback",
         "com.google.gwt.core.client.impl.AsyncFragmentLoader",
         "com.google.gwt.core.client.impl.Impl",
         "com.google.gwt.core.client.prefetch.RunAsyncCode"));

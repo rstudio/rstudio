@@ -2407,8 +2407,6 @@ public class GenerateJavaScriptAST {
     private void setupGwtOnLoad(List<JsStatement> globalStmts) {
       /**
        * <pre>
-       * {MODULE_RuntimeRebindRegistrator}.register();
-       * {MODULE_PropertyProviderRegistrator}.register();
        * var $entry = Impl.registerEntry();
        * var gwtOnLoad = ModuleUtils.gwtOnLoad();
        * ModuleUtils.addInitFunctions(init1, init2,...)
@@ -2416,17 +2414,6 @@ public class GenerateJavaScriptAST {
        */
 
       final SourceInfo sourceInfo = SourceOrigin.UNKNOWN;
-
-      // {MODULE_RuntimeRebindRegistrator}.register();
-      // {MODULE_PropertyProviderRegistrator}.register();
-      List<String> registerFnList = Lists.newArrayList();
-      mayAddProviderRegisterFn(registerFnList,
-          program.getRuntimeRebindRegistratorTypeSourceName());
-      mayAddProviderRegisterFn(registerFnList,
-          program.getPropertyProviderRegistratorTypeSourceName());
-      for (String registerFnName : registerFnList) {
-        globalStmts.add(constructInvocation(sourceInfo, registerFnName).makeStmt());
-      }
 
       // var $entry = ModuleUtils.registerEntry();
       JsStatement entryVars = constructFunctionCallStatement(
