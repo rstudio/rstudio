@@ -1285,49 +1285,6 @@
    
 })
 
-.rs.addFunction("buildObjectLookupTable", function()
-{
-   .Call("rs_buildObjectLookupTable")
-})
-
-.rs.addFunction("findOriginalBinding", function(objects,
-                                                simplify = TRUE)
-{
-   if (is.function(objects) || is.environment(objects))
-      objects <- list(objects)
-   else if (!is.list(objects))
-      objects <- as.list(objects)
-   
-   result <- .Call("rs_findOriginalBinding", objects)
-   if (simplify && length(result) == 1)
-      result[[1]]
-   else
-      result
-})
-
-.rs.addFunction("checkForNSE", function(body,
-                                        nseFunctions = .rs.getVar("nse.functions"))
-{
-   if (is.expression(body))
-      return(any(vapply(body, FUN.VALUE = logical(1), function(x) {
-         .rs.checkForNSE(x, nseFunctions)
-      })))
-   
-   if (is.call(body))
-   {
-      callName <- as.character(body[[1]])
-      if (length(callName) == 1 && !is.null(nseFunctions[[callName]]))
-         return(TRUE)
-      
-      if (length(body) > 1)
-         return(any(vapply(2:length(body), FUN.VALUE = logical(1), function(i) {
-            .rs.checkForNSE(body[[i]], nseFunctions)
-         })))
-   }
-   
-   return(FALSE)
-})
-
 .rs.addFunction("registerNativeRoutines", function()
 {
    pos <- match("tools:rstudio", search())
