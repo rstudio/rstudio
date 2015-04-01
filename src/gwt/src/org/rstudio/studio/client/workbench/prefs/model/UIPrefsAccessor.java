@@ -198,7 +198,7 @@ public class UIPrefsAccessor extends Prefs
    
    public PrefValue<Boolean> diagnosticsInRFunctionCalls()
    {
-      return bool("diagnostics_in_r_function_calls", false);
+      return bool("show_diagnostics_in_r_function_calls", true);
    }
    
    public PrefValue<Boolean> autoAppendNewline()
