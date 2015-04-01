@@ -32,6 +32,7 @@ import org.rstudio.studio.client.rsconnect.model.RSConnectDeploymentFiles;
 import org.rstudio.studio.client.rsconnect.model.RSConnectDeploymentRecord;
 import org.rstudio.studio.client.rsconnect.model.RSConnectPublishResult;
 import org.rstudio.studio.client.rsconnect.model.RSConnectPublishSettings;
+import org.rstudio.studio.client.rsconnect.model.RSConnectPublishSource;
 import org.rstudio.studio.client.rsconnect.model.RSConnectServerOperations;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -110,22 +111,19 @@ public class RSConnectDeploy extends Composite
    
    public static DeployResources RESOURCES = GWT.create(DeployResources.class);
    
-   public RSConnectDeploy(String contentPath, 
+   public RSConnectDeploy(RSConnectPublishSource source,
                           RSConnectDeploymentRecord fromPrevious,
                           boolean asWizard)
    {
-      if (contentPath != null)
+      if (source != null)
       {
-         String ext = FileSystemItem.getExtensionFromPath(contentPath)
-               .toLowerCase();
-         forDocument_ = ext.equals(".rmd") || ext.equals("html");
+         forDocument_ = source.isDocument();
       }
       else
       {
          forDocument_ = asWizard;
       }
 
-      contentPath_ = contentPath;
       fromPrevious_ = fromPrevious;
       
       // import static/code and single/multiple settings from previous
@@ -335,11 +333,12 @@ public class RSConnectDeploy extends Composite
       populateDeploymentFiles(indicator);
    }
    
-   public void setContentPath(String contentPath, boolean asMultipleRmd, 
-         boolean asStatic)
+   public void setPublishSource(RSConnectPublishSource source, 
+         boolean asMultipleRmd, boolean asStatic)
    {
-      contentPath_ = contentPath;
+      source_ = source;
       asMultipleRmd_ = asMultipleRmd;
+      asStatic_ = asStatic;
    }
    
    public void focus()
@@ -373,13 +372,13 @@ public class RSConnectDeploy extends Composite
       if (fromPrevious_ == null)
       {
          prefs_.preferredPublishAccount().setGlobalValue(getSelectedAccount());
+         prefs_.writeUIPrefs();
       }
             
       return new RSConnectPublishResult(
             appName, 
             getSelectedAccount(), 
-            FileSystemItem.createFile(contentPath_).getParentPathString(), 
-            contentPath_, 
+            source_,
             new RSConnectPublishSettings(deployFiles, 
                additionalFiles, 
                getIgnoredFileList(),
@@ -544,15 +543,11 @@ public class RSConnectDeploy extends Composite
    
    private void populateDeploymentFiles(final ProgressIndicator indicator)
    {
-      if (contentPath_ == null)
+      if (source_ == null)
          return;
       
       // read the parent directory if we're "deploying" a .R file
-      final String deployTarget =  
-            FileSystemItem.getExtensionFromPath(contentPath_)
-            .toLowerCase().equals(".r") ?
-         FileSystemItem.createFile(contentPath_).getParentPathString() :
-         contentPath_;
+      final String deployTarget = source_.getDeployKey();
       indicator.onProgress("Collecting files...");
       server_.getDeploymentFiles(
             deployTarget,
@@ -565,7 +560,7 @@ public class RSConnectDeploy extends Composite
                   if (files.getDirSize() > files.getMaxSize())
                   {
                      display_.showErrorMessage("Directory Too Large", 
-                           "The directory to be deployed (" + deployTarget + ") " +
+                           "The item to be deployed (" + deployTarget + ") " +
                            "exceeds the maximum deployment size, which is " +
                            StringUtil.formatFileSize(files.getMaxSize()) + "." +
                            " Consider creating a new directory containing " + 
@@ -579,7 +574,8 @@ public class RSConnectDeploy extends Composite
                            fromPrevious_ != null ? 
                                  fromPrevious_.getIgnoredFiles() : null);
                      setPrimaryFile(
-                           FileSystemItem.createFile(contentPath_).getName());
+                           FileSystemItem.createFile(
+                                 source_.getDeployFile()).getName());
                   }
                   indicator.clearProgress();
                }
@@ -627,7 +623,7 @@ public class RSConnectDeploy extends Composite
    {
       FileDialogs dialogs = RStudioGinjector.INSTANCE.getFileDialogs();
       final FileSystemItem sourceDir = 
-            FileSystemItem.createFile(contentPath_).getParentPath();
+            FileSystemItem.createDir(source_.getDeployDir());
       dialogs.openFile("Select File", 
             RStudioGinjector.INSTANCE.getRemoteFileSystemContext(), 
             sourceDir, 
@@ -720,7 +716,7 @@ public class RSConnectDeploy extends Composite
    private RSAccountConnector connector_;
    private UIPrefs prefs_;
    
-   private String contentPath_;
+   private RSConnectPublishSource source_;
    private boolean asMultipleRmd_;
    private boolean asStatic_;
 

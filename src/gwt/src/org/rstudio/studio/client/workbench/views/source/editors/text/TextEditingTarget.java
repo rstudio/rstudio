@@ -649,8 +649,7 @@ public class TextEditingTarget implements
                      return;
                   
                   // see if the event corresponds to a deployment of this file
-                  FileSystemItem evtDir = FileSystemItem.createDir(event.getPath());
-                  if (!getPath().equals(evtDir.completePath(event.getSourceFile())))
+                  if (!getPath().equals(event.getSource().getDeployFile()))
                      return;
                   
                   RSConnectPublishSettings settings = event.getSettings();

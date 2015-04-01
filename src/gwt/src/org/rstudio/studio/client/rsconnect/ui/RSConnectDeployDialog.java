@@ -17,7 +17,6 @@ package org.rstudio.studio.client.rsconnect.ui;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.common.FilePathUtils;
@@ -25,6 +24,7 @@ import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.rsconnect.RSConnect;
 import org.rstudio.studio.client.rsconnect.model.RSConnectAccount;
 import org.rstudio.studio.client.rsconnect.model.RSConnectDeploymentRecord;
+import org.rstudio.studio.client.rsconnect.model.RSConnectPublishSource;
 import org.rstudio.studio.client.rsconnect.model.RSConnectServerOperations;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -41,12 +41,10 @@ public class RSConnectDeployDialog
    public RSConnectDeployDialog(RSConnectServerOperations server, 
                                 RSConnect connect,
                                 final GlobalDisplay display, 
-                                final String sourceDir, 
-                                String sourceFile,
+                                RSConnectPublishSource source,
                                 RSConnectDeploymentRecord fromPrevious)
    {
-      super(server, display, new RSConnectDeploy(sourceFile, fromPrevious, 
-            false));
+      super(server, display, new RSConnectDeploy(source, fromPrevious, false));
       setText("Publish to Server");
       setWidth("350px");
       deployButton_ = new ThemedButton("Publish");
@@ -54,17 +52,19 @@ public class RSConnectDeployDialog
       addOkButton(deployButton_);
       connect_ = connect;
 
-      String deployTarget = sourceDir;
-      if (StringUtil.getExtension(sourceFile).toLowerCase().equals("rmd")) 
+      String deployDir = source.getDeployDir();
+      String deployFile = source.getDeployFile();
+      String deployTarget = deployDir;
+      if (source.isDocument())
       {
-         FileSystemItem sourceFSI = FileSystemItem.createDir(sourceDir);
-         deployTarget = sourceFSI.completePath(sourceFile);
+         FileSystemItem sourceFSI = FileSystemItem.createDir(deployDir);
+         deployTarget = sourceFSI.completePath(deployFile);
          FileSystemItem fileFSI = FileSystemItem.createFile(deployTarget);
          contents_.setNewAppName(fileFSI.getStem());
       }
       else
       {
-         contents_.setNewAppName(FilePathUtils.friendlyFileName(sourceDir));
+         contents_.setNewAppName(FilePathUtils.friendlyFileName(deployDir));
       }
 
       launchCheck_ = new CheckBox("Launch browser");
@@ -72,7 +72,7 @@ public class RSConnectDeployDialog
       launchCheck_.setStyleName(contents_.getStyle().launchCheck());
       addLeftWidget(launchCheck_);
       
-      contents_.setSourceDir(sourceDir);
+      contents_.setSourceDir(deployDir);
       
       deployButton_.addClickHandler(new ClickHandler()
       {

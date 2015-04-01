@@ -17,6 +17,7 @@ package org.rstudio.studio.client.rsconnect.ui;
 import org.rstudio.core.client.widget.WizardPage;
 import org.rstudio.studio.client.rsconnect.model.RSConnectPublishInput;
 import org.rstudio.studio.client.rsconnect.model.RSConnectPublishResult;
+import org.rstudio.studio.client.rsconnect.model.RSConnectPublishSource;
 
 import com.google.gwt.user.client.ui.Widget;
 
@@ -53,9 +54,9 @@ public class PublishRPubsPage
    {
       // TODO: source dir / file
       return new RSConnectPublishResult(
-            initialData_.getOriginatingEvent().getPath(),
-            initialData_.getOriginatingEvent().getPath(), 
-            initialData_.getOriginatingEvent().getHtmlFile());
+            new RSConnectPublishSource(
+                  initialData_.getOriginatingEvent().getPath(), 
+                  initialData_.getOriginatingEvent().getHtmlFile()));
    }
 
    @Override

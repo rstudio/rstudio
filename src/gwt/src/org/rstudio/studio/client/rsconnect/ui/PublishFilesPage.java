@@ -18,6 +18,7 @@ import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.WizardPage;
 import org.rstudio.studio.client.rsconnect.model.RSConnectPublishInput;
 import org.rstudio.studio.client.rsconnect.model.RSConnectPublishResult;
+import org.rstudio.studio.client.rsconnect.model.RSConnectPublishSource;
 
 import com.google.gwt.user.client.ui.Widget;
 
@@ -38,10 +39,13 @@ public class PublishFilesPage
       {
          // publish the HTML file or the original R Markdown doc, as requested
          if (asStatic)
-            contents_.setContentPath(input.getOriginatingEvent().getHtmlFile(), 
+            contents_.setPublishSource(
+                  new RSConnectPublishSource(
+                        input.getOriginatingEvent().getFromPreview()),
                   asMultiple, true);
          else
-            contents_.setContentPath(input.getSourceRmd().getPath(), 
+            contents_.setPublishSource(
+                  new RSConnectPublishSource(input.getSourceRmd().getPath()),
                   asMultiple, false);
       }
    }
