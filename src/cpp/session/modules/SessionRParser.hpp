@@ -539,15 +539,63 @@ public:
       return searchPathObjects.count(symbol) != 0;
    }
    
+   static bool doFindFunction(const ParseNode* pNode,
+                              const std::string& name,
+                              const Position& position,
+                              const ParseNode** ppFoundNode)
+   {
+      if (!pNode) return false;
+      
+      std::cerr << pNode->name_ << " " << pNode->position_ << std::endl;
+      if (pNode->name_ == name && pNode->position_ <= position)
+      {
+         *ppFoundNode = pNode;
+         return true;
+      }
+      
+      // We search the children in reverse order, to ensure we find
+      // the first function with a particular name (in case multiple
+      // functions with the same name exist)
+      std::size_t n = pNode->children_.size();
+      for (std::size_t i = 0; i < n; i++)
+      {
+         std::size_t index = n - i - 1;
+         const boost::shared_ptr<ParseNode>& pChild = pNode->children_[index];
+         std::cerr << pChild->name_ << " " << pChild->position_ << std::endl;
+         if (pChild->name_ == name && pChild->position_ <= position)
+         {
+            *ppFoundNode = pChild.get();
+            return true;
+         }
+      }
+      
+      return doFindFunction(pNode->pParent_,
+                            name,
+                            position,
+                            ppFoundNode);
+   }
+   
+   bool findFunction(const std::string& name,
+                     const Position& position,
+                     const ParseNode** ppFoundNode) const
+   {
+      std::cerr << name << " " << position << std::endl;
+      return doFindFunction(
+               this,
+               name,
+               position,
+               ppFoundNode);
+   }
+   
    bool symbolHasDefinitionInTree(const std::string& symbol,
                                   const Position& position) const
    {
       if (definedSymbols_.count(symbol) != 0)
       {
          DEBUG("- Checking for symbol '" << symbol << "' in node");
-         const Positions& positions = const_cast<ParseNode*>(this)->definedSymbols_[symbol];
-         for (Positions::const_iterator it = positions.begin();
-              it != positions.end();
+         Positions& positions = const_cast<ParseNode*>(this)->definedSymbols_[symbol];
+         for (Positions::reverse_iterator it = positions.rbegin();
+              it != positions.rend();
               ++it)
          {
             // NOTE: '<=' because 'defined' variables are both referenced
@@ -618,6 +666,11 @@ public:
 
       return std::string();
    }
+   
+public:
+   
+   const std::string& name() const { return name_; }
+   const Position& position() const { return position_; }
    
 private:
    
@@ -745,18 +798,21 @@ public:
    {
       return functionNames_.peek();
    }
-
+   
+   void enterFunctionScope(const std::string& name,
+                           const Position& position)
+   {
+      addChildAndSetAsCurrentNode(
+               ParseNode::createNode(name),
+               position);
+      
+      DEBUG("Entering function scope: '" << name << "' at " << position);
+      pushState(ParseStateFunctionArgumentList);
+   }
+   
    void pushState(ParseState state)
    {
       DEBUG("Pushing state: " << stateAsString(state));
-      if (state == ParseStateFunctionArgumentList)
-      {
-         DEBUG("*** Entering function scope");
-         addChildAndSetAsCurrentNode(
-                  ParseNode::createNode("function"),
-                  getCachedPosition());
-      }
-      
       parseStateStack_.push(state);
    }
    
@@ -921,16 +977,6 @@ public:
       }
    }
    
-   void setCachedPosition(const Position& position)
-   {
-      position_ = position;
-   }
-   
-   const Position& getCachedPosition() const
-   {
-      return position_;
-   }
-   
    const Stack<std::wstring>& functionNames() const
    {
       return functionNames_;
@@ -965,7 +1011,6 @@ private:
    Stack<ParseState> parseStateStack_;
    Stack<std::wstring> functionNames_;
    Stack<std::wstring> nseCalls_;
-   Position position_;
 };
 
 class ParseResults {

@@ -24,6 +24,7 @@
 #include <sstream>
 
 #include <core/StringUtils.hpp>
+#include <core/collection/Position.hpp>
 
 #include <boost/utility.hpp>
 #include <boost/shared_ptr.hpp>
@@ -111,6 +112,11 @@ public:
    std::size_t length() const { return end_ - begin_; }
    std::size_t row() const { return row_; }
    std::size_t column() const { return column_; }
+   
+   core::collection::Position position() const
+   {
+      return core::collection::Position(row_, column_);
+   }
 
    // efficient comparison operations
    bool contentEquals(const std::wstring& text) const

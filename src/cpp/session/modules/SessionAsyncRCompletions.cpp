@@ -169,7 +169,7 @@ void AsyncRCompletions::update()
    // alias for readability
    const std::vector<std::string>& pkgs = s_pkgsToUpdate_;
    
-   DEBUG_BLOCK
+   DEBUG_BLOCK("Completions")
    {
       if (!pkgs.empty())
       {

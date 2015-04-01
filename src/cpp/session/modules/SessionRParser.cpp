@@ -169,6 +169,8 @@ SEXP resolveFunctionAtCursor(RTokenCursor cursor,
                              r::sexp::Protect* pProtect,
                              bool* pCacheable = NULL)
 {
+   DEBUG("--- Resolve function call: " << cursor);
+   
    if (canOpenArgumentList(cursor))
       if (!cursor.moveToPreviousSignificantToken())
          return R_UnboundValue;
@@ -216,6 +218,60 @@ SEXP resolveFunctionAtCursor(RTokenCursor cursor,
    return symbolSEXP;
 }
 
+std::set<std::wstring> makeWideNsePrimitives()
+{
+   std::set<std::wstring> wide;
+   const std::set<std::string>& nsePrimitives = r::sexp::nsePrimitives();
+   
+   BOOST_FOREACH(const std::string& primitive, nsePrimitives)
+   {
+      wide.insert(string_utils::utf8ToWide(primitive));
+   }
+
+   return wide;
+}
+
+const std::set<std::wstring>& wideNsePrimitives()
+{
+   static std::set<std::wstring> wideNsePrimitives = makeWideNsePrimitives();
+   return wideNsePrimitives;
+}
+
+bool maybePerformsNSE(RTokenCursor cursor)
+{
+   if (!cursor.nextSignificantToken().isType(RToken::LPAREN))
+      return false;
+   
+   if (!cursor.moveToNextSignificantToken())
+      return false;
+   
+   RTokenCursor endCursor = cursor.clone();
+   if (!endCursor.fwdToMatchingToken())
+      return false;
+   
+   const std::set<std::wstring>& nsePrimitives = wideNsePrimitives();
+   
+   const RTokens& rTokens = cursor.tokens();
+   std::size_t offset = cursor.offset();
+   std::size_t endOffset = endCursor.offset();
+   while (offset != endOffset)
+   {
+      const RToken& token = rTokens.at(offset);
+
+      if (token.isType(RToken::ID))
+      {
+         const RToken& next = rTokens.at(offset + 1);
+         if (next.isType(RToken::LPAREN) &&
+             nsePrimitives.count(token.content()))
+         {
+            return true;
+         }
+      }
+      ++offset;
+   }
+   return false;
+}
+
 bool mightPerformNonstandardEvaluation(const RTokenCursor& origin,
                                        ParseStatus& status)
 {
@@ -227,6 +283,23 @@ bool mightPerformNonstandardEvaluation(const RTokenCursor& origin,
    
    if (!canOpenArgumentList(cursor.nextSignificantToken()))
       return false;
+   
+   // TODO: How should we resolve conflicts between a function on
+   // the search path with some set of arguments, versus an identically
+   // named function in the source document which has not yet been sourced?
+   //
+   // For now, we prefer the current source document + the source
+   // database, and then use the search path after if necessary.
+   const ParseNode* pNode;
+   if (status.node()->findFunction(cursor.contentAsUtf8(),
+                                   cursor.currentPosition(),
+                                   &pNode))
+   {
+      DEBUG("--- Found function: '" << pNode->name());
+      if (cursor.moveToPosition(pNode->position()))
+         if (maybePerformsNSE(cursor))
+            return true;
+   }
    
    bool cacheable = true;
    r::sexp::Protect protect;
@@ -676,6 +749,11 @@ void checkBinaryOperatorWhitespace(RTokenCursor& cursor,
 std::vector<std::string> extractNamedArguments(RTokenCursor cursor)
 {
    std::vector<std::string> result;
+   
+   if (isLeftBracket(cursor.nextSignificantToken()))
+      if (!cursor.moveToNextSignificantToken())
+         return result;
+   
    if (!isLeftBracket(cursor))
       return result;
    
@@ -715,7 +793,103 @@ std::vector<std::string> extractNamedArguments(RTokenCursor cursor)
    return result;
 }
 
-void validateFunctionCall(const RTokenCursor& cursor,
+bool extractFormalsFromFunctionDefinition(RTokenCursor cursor,
+                                          std::vector<std::string>* pNames)
+{
+   do
+   {
+      if (cursor.contentEquals(L"function"))
+         break;
+      
+   } while (cursor.moveToNextSignificantToken());
+   
+   if (!cursor.moveToNextSignificantToken())
+      return false;
+   
+   if (!cursor.isType(RToken::LPAREN))
+      return false;
+   
+   if (!cursor.moveToNextSignificantToken())
+      return false;
+   
+   if (cursor.isType(RToken::RPAREN))
+      return true;
+   
+   if (cursor.isType(RToken::ID))
+      pNames->push_back(cursor.contentAsUtf8());
+   
+   do
+   {
+      if (cursor.fwdToMatchingToken())
+         continue;
+      
+      if (isRightBracket(cursor))
+         return true;
+      
+      if (cursor.isType(RToken::COMMA) &&
+          cursor.nextSignificantToken().isType(RToken::ID))
+      {
+         pNames->push_back(cursor.nextSignificantToken().contentAsUtf8());
+      }
+   } while (cursor.moveToNextSignificantToken());
+   
+   return false;
+}
+
+bool getFormalsAssociatedWithFunctionAtCursor(RTokenCursor cursor,
+                                              ParseStatus& status,
+                                              std::vector<std::string>* pNames)
+{
+   // If this is a direct call to a symbol, then first attempt to
+   // find this function in the current document, or the source database.
+   if (cursor.isSimpleCall())
+   {
+      if (cursor.isType(RToken::LPAREN))
+         if (!cursor.moveToPreviousSignificantToken())
+            return false;
+      
+      DEBUG("***** Attempting to resolve source function: '" << cursor.contentAsUtf8() << "'");
+      const ParseNode* pNode;
+      if (status.node()->findFunction(
+             cursor.contentAsUtf8(),
+             cursor.currentPosition(),
+             &pNode))
+      {
+         DEBUG("***** Found function: '" << pNode->name() << "' at: " << pNode->position());
+         if (cursor.moveToPosition(pNode->position()))
+         {
+            DEBUG("***** Moved to position");
+            if (extractFormalsFromFunctionDefinition(cursor, pNames))
+            {
+               DEBUG("Extracted arguments");
+               return true;
+            }
+         }
+      }
+   }
+   
+   // If the above failed, we'll fall back to evaluating and looking up
+   // the symbol on the search path.
+   r::sexp::Protect protect;
+   SEXP functionSEXP = resolveFunctionAtCursor(cursor, &protect);
+   if (functionSEXP == R_UnboundValue || !Rf_isFunction(functionSEXP))
+      return false;
+   
+   // TODO: Handle primitives.
+   if (Rf_isPrimitive(functionSEXP))
+      return false;
+   
+   // Get the formals associated with this function.
+   Error error = r::sexp::extractFormalNames(functionSEXP, pNames);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return false;
+   }
+   return true;
+}
+
+void validateFunctionCall(RTokenCursor cursor,
                           ParseStatus& status)
 {
    using namespace r::sexp;
@@ -724,29 +898,18 @@ void validateFunctionCall(const RTokenCursor& cursor,
    if (!cursor.isType(RToken::LPAREN))
       return;
    
+   if (!cursor.moveToPreviousSignificantToken())
+      return;
+   
+   std::vector<std::string> names;
+   if (!getFormalsAssociatedWithFunctionAtCursor(cursor, status, &names))
+      return;
+   
    RTokenCursor startCursor = cursor.clone();
    startCursor.moveToStartOfEvaluation();
    
    RTokenCursor endCursor = cursor.clone();
    endCursor.fwdToMatchingToken();
-   
-   r::sexp::Protect protect;
-   SEXP functionSEXP = resolveFunctionAtCursor(cursor, &protect);
-   if (functionSEXP == R_UnboundValue || !Rf_isFunction(functionSEXP))
-      return;
-   
-   // TODO: Handle primitives.
-   if (Rf_isPrimitive(functionSEXP))
-      return;
-   
-   // Get the formals associated with this function.
-   std::vector<std::string> names;
-   Error error = extractFormalNames(functionSEXP, &names);
-   if (error)
-   {
-      LOG_ERROR(error);
-      return;
-   }
    
    // Bail if this function takes '...' -- TODO is to wire in
    // what we can for inferring a correct call.
@@ -755,6 +918,13 @@ void validateFunctionCall(const RTokenCursor& cursor,
    
    // Get the arguments within the function call.
    std::vector<std::string> args = extractNamedArguments(cursor);
+   
+   DEBUG_BLOCK("arguments")
+   {
+      r::sexp::Protect protect;
+      r::sexp::printValue(r::sexp::create(names, &protect));
+      r::sexp::printValue(r::sexp::create(args, &protect));
+   }
    
    // Figure out which named arguments specified by the user don't actually
    // match the names of the available formals.
@@ -818,6 +988,32 @@ bool skipFormulas(RTokenCursor& cursor,
    }
    
    return false;
+}
+
+// Enter a function scope, starting at the first paren associated
+// with the 'function' token, e.g.
+//
+//    foo <- function(x, y, z) { ... }
+//                   ^
+//
+// We do a bit of lookaround to get the symbol name.
+void enterFunctionScope(RTokenCursor cursor,
+                        ParseStatus& status)
+{
+   std::string symbol = "(unknown function)";
+   Position position = cursor.currentPosition();
+   
+   if (cursor.moveToPreviousSignificantToken() &&
+       cursor.contentEquals(L"function") &&
+       cursor.moveToPreviousSignificantToken() &&
+       isLeftAssign(cursor) &&
+       cursor.moveToPreviousSignificantToken())
+   {
+      symbol = string_utils::wideToUtf8(cursor.getCallingString());
+      position = cursor.currentPosition();
+   }
+   
+   status.enterFunctionScope(symbol, position);
 }
 
 } // anonymous namespace
@@ -1341,7 +1537,7 @@ FUNCTION_START:
       ENSURE_CONTENT(cursor, status, L"function");
       MOVE_TO_NEXT_SIGNIFICANT_TOKEN_WARN_ON_BLANK(cursor, status);
       ENSURE_TYPE(cursor, status, RToken::LPAREN);
-      status.pushState(ParseStatus::ParseStateFunctionArgumentList);
+      enterFunctionScope(cursor, status);
       MOVE_TO_NEXT_SIGNIFICANT_TOKEN_WARN_ON_BLANK(cursor, status);
       if (cursor.isType(RToken::RPAREN))
          goto FUNCTION_ARGUMENT_LIST_END;
@@ -1352,7 +1548,7 @@ FUNCTION_ARGUMENT_START:
       if (cursor.isType(RToken::ID) &&
           cursor.nextSignificantToken().contentEquals(L"="))
       {
-         status.node()->addDefinedSymbol(cursor, status.getCachedPosition());
+         status.node()->addDefinedSymbol(cursor, status.node()->position());
          MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
          MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
          goto START;
@@ -1360,7 +1556,7 @@ FUNCTION_ARGUMENT_START:
       
       if (cursor.isType(RToken::ID))
       {
-         status.node()->addDefinedSymbol(cursor, status.getCachedPosition());
+         status.node()->addDefinedSymbol(cursor, status.node()->position());
          if (cursor.nextSignificantToken().isType(RToken::COMMA))
          {
             MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);

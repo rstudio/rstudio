@@ -69,6 +69,11 @@ public:
       return rTokens_;
    }
    
+   std::size_t offset() const
+   {
+      return offset_;
+   }
+   
    bool moveToNextToken()
    {
       if (UNLIKELY(offset_ == n_ - 1))
@@ -85,6 +90,28 @@ public:
       
       --offset_;
       return true;
+   }
+   
+   // TODO: May be worthwhile to implement binary search here.
+   bool moveToPosition(const Position& destination)
+   {
+      std::size_t n = n_;
+      
+      if (n_ == 0)
+         return false;
+      
+      std::size_t offset = 1;
+      while (offset < n)
+      {
+         if (destination < rTokens_.at(offset).position())
+         {
+            offset_ = offset - 1;
+            return true;
+         }
+         ++offset;
+      }
+      
+      return false;
    }
    
    const RToken& currentToken() const
