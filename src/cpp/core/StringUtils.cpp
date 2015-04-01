@@ -568,7 +568,6 @@ std::wstring::const_iterator countNewlines(std::wstring::const_iterator begin,
    return countNewlinesImpl(begin, end, '\r', '\n', pCount);
 }
 
-
 } // namespace string_utils
 } // namespace core 
 } // namespace rstudio

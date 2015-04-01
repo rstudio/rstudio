@@ -2816,4 +2816,3 @@ assign(x = ".rs.acCompletionTypes",
    
    .rs.scalar(newSnippet)
 })
-

@@ -18,6 +18,7 @@
 #define RSTUDIO_DEBUG_LABEL "parser"
 
 #include <core/Macros.hpp>
+#include <core/algorithm/Set.hpp>
 #include <core/StringUtils.hpp>
 #include <core/FileSerializer.hpp>
 
@@ -158,23 +159,20 @@ NSEDatabase& nseDatabase()
    return instance;
 }
 
-bool mightPerformNonstandardEvaluation(const RTokenCursor& origin,
-                                       ParseStatus& status)
+// TODO: Implement per-parse cache so that we avoid repeated
+// evaluations of the same symbol
+SEXP resolveFunctionAtCursor(RTokenCursor cursor,
+                             r::sexp::Protect* pProtect,
+                             bool* pCacheable = NULL)
 {
-   RTokenCursor cursor = origin.clone();
-   
    if (canOpenArgumentList(cursor))
       if (!cursor.moveToPreviousSignificantToken())
-         return false;
-   
-   if (!canOpenArgumentList(cursor.nextSignificantToken()))
-      return false;
+         return R_UnboundValue;
    
    // Attempt to resolve (potentially evaluate) the symbol, or statement,
    // forming the function call.
-   SEXP symbolSEXP = R_NilValue;
-   r::sexp::Protect protect;
-   bool cacheable = true;
+   SEXP symbolSEXP = R_UnboundValue;
+   if (pCacheable) *pCacheable = true;
    
    if (cursor.isSimpleCall())
    {
@@ -195,21 +193,40 @@ bool mightPerformNonstandardEvaluation(const RTokenCursor& origin,
    }
    else
    {
-      cacheable = false;
+      if (pCacheable) *pCacheable = false;
       
       std::string call = string_utils::wideToUtf8(cursor.getCallingString());
       
       // Don't evaluate nested function calls.
       if (call.find('(') != std::string::npos)
-         return false;
+         return R_UnboundValue;
       
-      Error error = r::exec::evaluateString(call, &symbolSEXP, &protect);
+      Error error = r::exec::evaluateString(call, &symbolSEXP, pProtect);
       if (error)
       {
          DEBUG("- Failed to evaluate call '" << call << "'");
-         return false;
+         return R_UnboundValue;
       }
    }
+   
+   return symbolSEXP;
+}
+
+bool mightPerformNonstandardEvaluation(const RTokenCursor& origin,
+                                       ParseStatus& status)
+{
+   RTokenCursor cursor = origin.clone();
+   
+   if (canOpenArgumentList(cursor))
+      if (!cursor.moveToPreviousSignificantToken())
+         return false;
+   
+   if (!canOpenArgumentList(cursor.nextSignificantToken()))
+      return false;
+   
+   bool cacheable = true;
+   r::sexp::Protect protect;
+   SEXP symbolSEXP = resolveFunctionAtCursor(cursor, &protect, &cacheable);
    
    if (symbolSEXP == R_UnboundValue || symbolSEXP == R_NilValue)
       return false;
@@ -646,6 +663,53 @@ void checkBinaryOperatorWhitespace(RTokenCursor& cursor,
    }
 }
 
+// Extract named arguments in a (tokenized) function call, e.g.
+//
+//     foo(alpha = 1, beta = 2, gamma = 3)
+//         ^^^^^      ^^^^      ^^^^^
+//
+std::vector<std::string> extractNamedArguments(RTokenCursor cursor)
+{
+   std::vector<std::string> result;
+   if (!isLeftBracket(cursor))
+      return result;
+   
+   if (!cursor.moveToNextSignificantToken())
+      return result;
+   
+   // Extract the first argument.
+   if (cursor.isType(RToken::ID) &&
+       cursor.nextSignificantToken().contentEquals(L"="))
+   {
+      result.push_back(cursor.contentAsUtf8());
+   }
+   
+   // Extract the rest of the arguments by finding the token sequence
+   //
+   //     , <id> =
+   //
+   // Bail once we find a closing paren, and walk over matching parens
+   // to handle expressions within the function argument list.
+   do
+   {
+      if (isRightBracket(cursor))
+         break;
+      
+      if (cursor.fwdToMatchingToken())
+         continue;
+      
+      if (cursor.isType(RToken::COMMA) &&
+          cursor.nextSignificantToken().isType(RToken::ID) &&
+          cursor.nextSignificantToken(2).contentEquals(L"="))
+      {
+         result.push_back(cursor.nextSignificantToken().contentAsUtf8());
+      }
+      
+   } while (cursor.moveToNextSignificantToken());
+   
+   return result;
+}
+
 void validateFunctionCall(const RTokenCursor& cursor,
                           ParseStatus& status)
 {
@@ -656,60 +720,72 @@ void validateFunctionCall(const RTokenCursor& cursor,
       return;
    
    RTokenCursor startCursor = cursor.clone();
-   if (!startCursor.moveToPreviousSignificantToken())
-      return;
-   
-   if (!startCursor.moveToStartOfEvaluation())
-      return;
+   startCursor.moveToStartOfEvaluation();
    
    RTokenCursor endCursor = cursor.clone();
-   if (!endCursor.fwdToMatchingToken())
+   endCursor.fwdToMatchingToken();
+   
+   r::sexp::Protect protect;
+   SEXP functionSEXP = resolveFunctionAtCursor(cursor, &protect);
+   if (functionSEXP == R_UnboundValue || !Rf_isFunction(functionSEXP))
       return;
-
-   std::string fnNameString = string_utils::wideToUtf8(
-       std::wstring(startCursor.begin(), cursor.begin()));
    
-   std::string fnCallString = string_utils::wideToUtf8(
-            std::wstring(startCursor.begin(), endCursor.end()));
+   // TODO: Handle primitives.
+   if (Rf_isPrimitive(functionSEXP))
+      return;
    
-   RFunction validate(".rs.validateFunctionCall");
-   validate.addParam(fnNameString);
-   validate.addParam(fnCallString);
-   
-   Protect protect;
-   SEXP resultSEXP;
-   
-   Error error = validate.call(&resultSEXP, &protect);
+   // Get the formals associated with this function.
+   std::vector<std::string> names;
+   Error error = extractFormalNames(functionSEXP, &names);
    IF_ERROR(error, return);
    
-   std::string message, type;
+   // Bail if this function takes '...' -- TODO is to wire in
+   // what we can for inferring a correct call.
+   if (std::find(names.begin(), names.end(), "...") != names.end())
+      return;
    
-   error = getNamedListElement(resultSEXP, "message", &message);
-   IF_ERROR(error, return);
+   // Get the arguments within the function call.
+   std::vector<std::string> args = extractNamedArguments(cursor);
    
-   error = getNamedListElement(resultSEXP, "type", &type);
-   IF_ERROR(error, return);
+   // Figure out which named arguments specified by the user don't actually
+   // match the names of the available formals.
+   std::vector<std::string> unmatchedArgs =
+         core::algorithm::set_difference(args, names);
    
-   if (!message.empty())
+   BOOST_FOREACH(const std::string& arg, unmatchedArgs)
    {
-      LintType lintType = LintTypeInfo;
-      if (type == "error")
-         lintType = LintTypeError;
-      else if (type == "warning")
-         lintType = LintTypeWarning;
-      else if (type == "note" || type == "info")
-         lintType = LintTypeInfo;
-      else if (type == "style")
-         lintType = LintTypeStyle;
+      // Check to see if this argument is a prefix match
+      // of one of the available formals.
+      std::vector<std::string>::const_iterator it =
+            std::find_if(names.begin(),
+                         names.end(),
+                         boost::bind(string_utils::isPrefixOf, _1, arg));
       
-      status.lint().add(
-               startCursor.row(),
-               startCursor.column(),
-               endCursor.row(),
-               endCursor.column() + endCursor.length(),
-               lintType,
-               message);
+      if (it != names.end())
+      {
+         // Supply a warning.
+         status.lint().add(
+                  startCursor.row(),
+                  startCursor.column(),
+                  endCursor.row(),
+                  endCursor.column() + endCursor.length(),
+                  LintTypeWarning,
+                  "partial match of argument '" + arg + "' to '" + *it + "'");
+      }
+      else
+      {
+         // Error -- named argument passed by user does not match
+         // anything within the set of available formals.
+         status.lint().add(
+                  startCursor.row(),
+                  startCursor.column(),
+                  endCursor.row(),
+                  endCursor.column() + endCursor.length(),
+                  LintTypeError,
+                  "no argument named '" + arg + "'");
+      }
    }
+   
 }
 
 bool skipFormulas(RTokenCursor& cursor,

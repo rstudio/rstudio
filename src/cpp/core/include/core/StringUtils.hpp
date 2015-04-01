@@ -216,6 +216,12 @@ std::wstring::const_iterator countNewlines(std::wstring::const_iterator begin,
                                            std::wstring::const_iterator end,
                                            std::size_t* pCount);
 
+inline bool isPrefixOf(const std::string& self, const std::string& prefix)
+{
+   return prefix.length() <= self.length() &&
+          std::equal(prefix.begin(), prefix.end(), self.begin());
+}
+
 } // namespace string_utils
 } // namespace core 
 } // namespace rstudio

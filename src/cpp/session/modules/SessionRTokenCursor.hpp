@@ -382,7 +382,7 @@ private:
       return map;
    }
    
-   static std::map<RToken::TokenType, RToken::TokenType> complements()
+   std::map<RToken::TokenType, RToken::TokenType>& complements()
    {
       static std::map<RToken::TokenType, RToken::TokenType> map = 
             makeComplementMap();
@@ -391,14 +391,17 @@ private:
    }
 
 public:
+   
   bool fwdToMatchingToken()
   {
-     return doFwdToMatchingToken(type(), complements()[type()]);
+     return isLeftBracket(*this) &&
+            doFwdToMatchingToken(type(), complements()[type()]);
   }
 
   bool bwdToMatchingToken()
   {
-     return doBwdToMatchingToken(type(), complements()[type()]);
+     return isRightBracket(*this) &&
+            doBwdToMatchingToken(type(), complements()[type()]);
   }
 
 public:
@@ -499,7 +502,7 @@ public:
   //    foo + bar::baz$bam()
   //          ^^^^^^^^^^^^
   //
-  std::wstring getCallingString()
+  std::wstring getCallingString() const
   {
      RTokenCursor cursor = clone();
      
@@ -522,7 +525,7 @@ public:
   //
   // We optimize for this case as we can then search for the symbol directly,
   // and avoid other slow evaluation codepaths.
-  bool isSimpleCall()
+  bool isSimpleCall() const
   {
      RTokenCursor cursor = clone();
      if (canOpenArgumentList(cursor))
@@ -547,7 +550,7 @@ public:
   //
   // We optimize for this case as we can then directly look up
   // 'bar' in the 'foo' namespace.
-  bool isSimpleNamespaceCall()
+  bool isSimpleNamespaceCall() const
   {
      RTokenCursor cursor = clone();
      if (canOpenArgumentList(cursor))

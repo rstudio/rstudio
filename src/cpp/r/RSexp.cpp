@@ -129,9 +129,6 @@ SEXP findNamespace(const std::string& name)
    protect.add(nameSEXP = Rf_install(name.c_str()));
    
    SEXP ns = Rf_findVarInFrame(R_NamespaceRegistry, nameSEXP);
-   if (ns == R_UnboundValue)
-      return R_EmptyEnv;
-   
    return ns;
 }
    
@@ -200,18 +197,6 @@ SEXP findVar(const std::string& name, const std::string& ns)
    return findVar(name, env);
 }
 
-SEXP getPromiseValue(SEXP promSEXP, SEXP envir, Protect* pProtect)
-{
-   if (PRVALUE(promSEXP) == R_UnboundValue)
-   {
-      SEXP evaledSEXP = Rf_eval(promSEXP, envir);
-      pProtect->add(evaledSEXP);
-      return evaledSEXP;
-   }
-   else
-      return PRVALUE(promSEXP);
-}
-  
 SEXP findFunction(const std::string& name, const std::string& ns) 
 {
    r::sexp::Protect protect;
@@ -227,14 +212,25 @@ SEXP findFunction(const std::string& name, const std::string& ns)
    SEXP nameSEXP;
    protect.add(nameSEXP = Rf_install(name.c_str()));
    
+   // If we're searching the global environment, then
+   // try using 'Rf_findVar', as this will attempt a search
+   // of R's own internal global cache.
+   if (env == R_GlobalEnv)
+   {
+      SEXP resultSEXP = Rf_findVar(nameSEXP, R_GlobalEnv);
+      if (Rf_isFunction(resultSEXP))
+         return resultSEXP;
+      else if (TYPEOF(resultSEXP) == PROMSXP)
+      {
+         protect.add(resultSEXP = Rf_eval(resultSEXP, env));
+         if (Rf_isFunction(resultSEXP))
+            return resultSEXP;
+      }
+   }
+   
    // Search through frames until we find the global environment.
-   // Keep track of what's been visited, to avoid cycles.
-   boost::container::flat_set<SEXP> visitedEnvironments;
    while (env != R_EmptyEnv)
    {
-      if (visitedEnvironments.count(env)) break;
-      visitedEnvironments.insert(env);
-      
       SEXP resultSEXP = Rf_findVarInFrame(env, nameSEXP);
       if (resultSEXP != R_UnboundValue)
       {
@@ -242,9 +238,9 @@ SEXP findFunction(const std::string& name, const std::string& ns)
             return resultSEXP;
          else if (TYPEOF(resultSEXP) == PROMSXP)
          {
-            SEXP prValueSEXP = getPromiseValue(resultSEXP, env, &protect);
-            if (Rf_isFunction(prValueSEXP))
-               return prValueSEXP;
+            protect.add(resultSEXP = Rf_eval(resultSEXP, env));
+            if (Rf_isFunction(resultSEXP))
+               return resultSEXP;
          }
       }
       
@@ -1028,6 +1024,33 @@ core::Error getNamespaceExports(SEXP ns,
       return error;
    
    fillVectorString(exportsSEXP, pNames);
+   return Success();
+}
+
+core::Error extractFormalNames(SEXP functionSEXP,
+                               std::vector<std::string>* pNames)
+{
+   if (!Rf_isFunction(functionSEXP))
+      return Error(errc::UnexpectedDataTypeError, ERROR_LOCATION);
+   
+   // TODO: Primitives don't have formals attached to them, but
+   // we could look them up in two environments in the base namespace,
+   // either '.ArgsEnv' or '.GenericArgsEnv'.
+   if (Rf_isPrimitive(functionSEXP))
+      return Success();
+   
+   SEXP formals = FORMALS(functionSEXP);
+   
+   // Iterate through the formals pairlist and append tag names
+   // to the output.
+   while (formals != R_NilValue)
+   {
+      if (TAG(formals) != R_NilValue)
+         pNames->push_back(CHAR(PRINTNAME(TAG(formals))));
+      
+      formals = CDR(formals);
+   }
+   
    return Success();
 }
 
