@@ -463,9 +463,47 @@ RToken RTokenizer::consumeToken(RToken::TokenType tokenType,
                  column);
 }
 
+class ConversionCache
+{
+public:
+   
+   typedef std::pair<std::wstring::const_iterator, std::wstring::const_iterator> key_type;
+   typedef std::string mapped_type;
+   
+   bool contains(const RToken& token) const
+   {
+      return database_.count(token.range());
+   }
+   
+   std::string& get(const RToken& token)
+   {
+      return database_[token.range()];
+   }
+   
+   void put(const RToken& token, const mapped_type& value)
+   {
+      database_[token.range()] = value;
+   }
+   
+private:
+   std::map<key_type, mapped_type> database_;
+};
+
+ConversionCache& conversionCache()
+{
+   static ConversionCache instance;
+   return instance;
+}
+
 std::string RToken::contentAsUtf8() const
 {
-   return string_utils::wideToUtf8(content());
+   ConversionCache& cache = conversionCache();
+   if (cache.contains(*this))
+      return cache.get(*this);
+   
+   std::string result = string_utils::wideToUtf8(content());
+   cache.put(*this, result);
+   return result;
 }
 
 std::string RToken::asString() const

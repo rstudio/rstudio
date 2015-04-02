@@ -171,6 +171,11 @@ public:
       return end_;
    }
    
+   std::pair<std::wstring::const_iterator, std::wstring::const_iterator> range() const
+   {
+      return std::make_pair(begin_, end_);
+   }
+   
    std::string asString() const;
    friend std::ostream& operator <<(std::ostream& os,
                                     const RToken& self)
