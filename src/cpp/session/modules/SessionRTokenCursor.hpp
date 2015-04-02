@@ -97,13 +97,13 @@ public:
    {
       std::size_t n = n_;
       
-      if (n_ == 0)
+      if (n == 0)
          return false;
       
       std::size_t offset = 1;
       while (offset < n)
       {
-         if (destination < rTokens_.at(offset).position())
+         if (destination < rTokens_.atUnsafe(offset).position())
          {
             offset_ = offset - 1;
             return true;
@@ -112,6 +112,42 @@ public:
       }
       
       return false;
+   }
+   
+   void moveToOffset(std::size_t destination,
+                     boost::function<void(const RToken&)> operation)
+   {
+      destination = destination > n_ ? n_ : destination;
+      std::size_t offset = offset_;
+      const RTokens& rTokens = rTokens_;
+      
+      if (offset == destination)
+      {
+         operation(rTokens.atUnsafe(offset));
+      }
+      else if (destination > offset)
+      {
+         while (offset != destination)
+         {
+            operation(rTokens.atUnsafe(offset));
+            ++offset;
+         }
+      }
+      else
+      {
+         while (offset != destination)
+         {
+            operation(rTokens.atUnsafe(offset));
+            offset--;
+         }
+      }
+      offset_ = offset;
+   }
+   
+   void moveToCursor(const RTokenCursor& other,
+                     boost::function<void(const RToken&)> operation)
+   {
+      moveToOffset(other.offset(), operation);
    }
    
    const RToken& currentToken() const
@@ -424,7 +460,7 @@ public:
      return isLeftBracket(*this) &&
             doFwdToMatchingToken(type(), complements()[type()]);
   }
-
+  
   bool bwdToMatchingToken()
   {
      return isRightBracket(*this) &&

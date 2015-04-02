@@ -104,17 +104,17 @@ bool isDataTableSingleBracketCall(RTokenCursor& cursor)
             startCursor.currentToken().begin(),
             cursor.currentToken().begin()));
    
-   // Get the object and check if it inherits from data.table
-   r::exec::RFunction getAnywhere(".rs.getAnywhere");
-   getAnywhere.addParam(objectString);
+   if (objectString.find('(') != std::string::npos)
+      return false;
    
-   SEXP resultSEXP;
+   // Get the object and check if it inherits from data.table
+   SEXP objectSEXP;
    r::sexp::Protect protect;
-   Error error = getAnywhere.call(&resultSEXP, &protect);
+   Error error = r::exec::evaluateString(objectString, &objectSEXP, &protect);
    if (error)
       return false;
    
-   return r::sexp::inherits(resultSEXP, "data.table");
+   return r::sexp::inherits(objectSEXP, "data.table");
 }
 
 class NSEDatabase : boost::noncopyable
@@ -256,11 +256,11 @@ bool maybePerformsNSE(RTokenCursor cursor)
    std::size_t endOffset = endCursor.offset();
    while (offset != endOffset)
    {
-      const RToken& token = rTokens.at(offset);
+      const RToken& token = rTokens.atUnsafe(offset);
 
       if (token.isType(RToken::ID))
       {
-         const RToken& next = rTokens.at(offset + 1);
+         const RToken& next = rTokens.atUnsafe(offset + 1);
          if (next.isType(RToken::LPAREN) &&
              nsePrimitives.count(token.content()))
          {
@@ -655,13 +655,8 @@ ParseResults parse(const std::string& rCode,
 ParseResults parse(const std::wstring& rCode,
                    const ParseOptions& parseOptions)
 {
-   using namespace boost::timer;
-   
-   if (rCode.empty() ||
-       rCode.find_first_not_of(L" \r\n\t\v") == std::string::npos)
-   {
+   if (rCode.empty() || rCode.find_first_not_of(L" \r\n\t\v") == std::string::npos)
       return ParseResults();
-   }
    
    RTokens rTokens(rCode);
    
@@ -746,25 +741,29 @@ void checkBinaryOperatorWhitespace(RTokenCursor& cursor,
 //     foo(alpha = 1, beta = 2, gamma = 3)
 //         ^^^^^      ^^^^      ^^^^^
 //
-std::vector<std::string> extractNamedArguments(RTokenCursor cursor)
+void extractNamedArguments(RTokenCursor cursor,
+                           std::vector<std::string>* pArgNames,
+                           std::size_t* pNumArgs)
 {
-   std::vector<std::string> result;
-   
    if (isLeftBracket(cursor.nextSignificantToken()))
       if (!cursor.moveToNextSignificantToken())
-         return result;
+         return;
    
    if (!isLeftBracket(cursor))
-      return result;
+      return;
    
    if (!cursor.moveToNextSignificantToken())
-      return result;
+      return;
+   
+   if (isRightBracket(cursor))
+      return;
    
    // Extract the first argument.
-   if (cursor.isType(RToken::ID) &&
-       cursor.nextSignificantToken().contentEquals(L"="))
+   ++*pNumArgs;
+   if (cursor.isType(RToken::ID))
    {
-      result.push_back(cursor.contentAsUtf8());
+      if (cursor.nextSignificantToken().contentEquals(L"="))
+         pArgNames->push_back(cursor.contentAsUtf8());
    }
    
    // Extract the rest of the arguments by finding the token sequence
@@ -781,16 +780,17 @@ std::vector<std::string> extractNamedArguments(RTokenCursor cursor)
       if (cursor.fwdToMatchingToken())
          continue;
       
-      if (cursor.isType(RToken::COMMA) &&
-          cursor.nextSignificantToken().isType(RToken::ID) &&
-          cursor.nextSignificantToken(2).contentEquals(L"="))
+      if (cursor.isType(RToken::COMMA))
       {
-         result.push_back(cursor.nextSignificantToken().contentAsUtf8());
+         ++*pNumArgs;
+         if (cursor.nextSignificantToken().isType(RToken::ID) &&
+             cursor.nextSignificantToken(2).contentEquals(L"="))
+         {
+            pArgNames->push_back(cursor.nextSignificantToken().contentAsUtf8());
+         }
       }
       
    } while (cursor.moveToNextSignificantToken());
-   
-   return result;
 }
 
 bool extractFormalsFromFunctionDefinition(RTokenCursor cursor,
@@ -916,8 +916,25 @@ void validateFunctionCall(RTokenCursor cursor,
    if (std::find(names.begin(), names.end(), "...") != names.end())
       return;
    
-   // Get the arguments within the function call.
-   std::vector<std::string> args = extractNamedArguments(cursor);
+   // Get the arguments within the function call, and the total number
+   // of arguments passed to the function call.
+   std::vector<std::string> args;
+   std::size_t nArgs = 0;
+   extractNamedArguments(cursor, &args, &nArgs);
+   
+   // Error if too many arguments were passed.
+   if (nArgs > names.size())
+   {
+      std::stringstream ss;
+      ss << "too many arguments [" << nArgs << "] to function call [" << names.size() << "]";
+      status.lint().add(
+               startCursor.row(),
+               startCursor.column(),
+               endCursor.row(),
+               endCursor.column() + endCursor.length(),
+               LintTypeError,
+               ss.str());
+   }
    
    // Figure out which named arguments specified by the user don't actually
    // match the names of the available formals.

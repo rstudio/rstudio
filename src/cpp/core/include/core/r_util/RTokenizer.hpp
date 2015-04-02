@@ -268,6 +268,13 @@ public:
       return tokens_[offset];
    }
    
+   // Unsafe 'at' method that should only used for functions that
+   // have validated the range they will be iterating over
+   const RToken& atUnsafe(std::size_t offset) const
+   {
+      return tokens_[offset];
+   }
+   
    typedef Tokens::const_iterator const_iterator;
    typedef Tokens::iterator iterator;
    
