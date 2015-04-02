@@ -32,6 +32,10 @@ FilePath uniqueFilePath(const core::FilePath& parent,
 
 std::string readFile(const core::FilePath& filePath);
 
+#ifdef WIN32
+bool isWindowsReservedName(const std::string& name);
+#endif
+
 } // namespace file_utils
 } // namespace core
 } // namespace rstudio

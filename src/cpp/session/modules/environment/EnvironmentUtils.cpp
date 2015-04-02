@@ -20,8 +20,8 @@
 #include <r/RExec.hpp>
 #include <r/RJson.hpp>
 #include <core/FileSerializer.hpp>
+#include <core/FileUtils.hpp>
 #include <session/SessionModuleContext.hpp>
-
 
 using namespace rstudio::core;
 
@@ -167,6 +167,17 @@ bool functionDiffersFromSource(
    {
       return true;
    }
+
+#ifdef WIN32
+   // on Windows, check for reserved device names--attempting to read from
+   // these may hang the session. source() can put things besides file names
+   // in the source file attribute (for instance, the name of a variable
+   // containing a connection).
+   if (file_utils::isWindowsReservedName(fileName))
+   {
+       return true;
+   }
+#endif
 
    // make sure the file exists and isn't a directory
    FilePath sourceFilePath = module_context::resolveAliasedPath(fileName);
