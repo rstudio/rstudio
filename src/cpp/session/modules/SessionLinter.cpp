@@ -32,6 +32,7 @@
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionSourceDatabase.hpp>
 #include <session/projects/SessionProjects.hpp>
+#include <session/modules/clang/RSourceIndex.hpp>
 
 #include <boost/shared_ptr.hpp>
 #include <boost/bind.hpp>
@@ -125,7 +126,7 @@ void addInferredSymbols(const FilePath& filePath,
    // We have the index -- now list the packages discovered in
    // 'library' calls, and add those here.
    BOOST_FOREACH(const std::string& package,
-                index->getInferredPackages())
+                 index->getInferredPackages())
    {
       const AsyncLibraryCompletions& completions =
             index->getCompletions(package);
@@ -211,6 +212,13 @@ void addBaseSymbols(std::set<std::string>* pSymbols)
    registry.fillExportedSymbols("utils", pSymbols);
 }
 
+void addRcppExportedSymbols(const FilePath& filePath,
+                            const std::string& documentId,
+                            std::set<std::string>* pSymbols)
+{
+   // TODO
+}
+
 // For an R package, symbols are looked up in this order:
 //
 // 1) The package's own objects (exported or not),
@@ -233,6 +241,9 @@ Error getAvailableSymbolsForPackage(const FilePath& filePath,
    // Add symbols made available by explicit `library()` calls
    // within this document.
    addInferredSymbols(filePath, documentId, pSymbols);
+   
+   // Add in symbols that would be made available by `// [[Rcpp::export]]`
+   addRcppExportedSymbols(filePath, documentId, pSymbols);
    
    // Symbols that are 'automatically' made available to packages. In other
    // words, symbols that packages can use without explicitly importing them.
