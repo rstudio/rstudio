@@ -90,7 +90,7 @@ public:
    {}
    
    explicit RToken(TokenType type)
-      : type_(RToken::ERR), offset_(-1)
+      : type_(type), offset_(-1)
    {}
 
    RToken(TokenType type,
@@ -280,7 +280,7 @@ public:
    {}
    
    explicit RTokens(const std::wstring& code, int flags = None)
-      : tokenizer_(code)
+      : tokenizer_(code), dummyToken_(RToken::ERR)
    {
       RToken token;
       while ((token = tokenizer_.nextToken()))
