@@ -32,7 +32,6 @@
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionSourceDatabase.hpp>
 #include <session/projects/SessionProjects.hpp>
-#include <session/modules/clang/RSourceIndex.hpp>
 
 #include <boost/shared_ptr.hpp>
 #include <boost/bind.hpp>
