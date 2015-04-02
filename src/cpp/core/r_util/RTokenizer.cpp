@@ -467,22 +467,22 @@ class ConversionCache
 {
 public:
    
-   typedef std::pair<std::wstring::const_iterator, std::wstring::const_iterator> key_type;
+   typedef std::wstring key_type;
    typedef std::string mapped_type;
    
    bool contains(const RToken& token) const
    {
-      return database_.count(token.range());
+      return database_.count(token.content());
    }
    
    std::string& get(const RToken& token)
    {
-      return database_[token.range()];
+      return database_[token.content()];
    }
    
    void put(const RToken& token, const mapped_type& value)
    {
-      database_[token.range()] = value;
+      database_[token.content()] = value;
    }
    
 private:

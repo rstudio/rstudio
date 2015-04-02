@@ -889,6 +889,67 @@ bool getFormalsAssociatedWithFunctionAtCursor(RTokenCursor cursor,
    return true;
 }
 
+class CustomFunctionValidators : boost::noncopyable
+{
+public:
+   
+   typedef std::wstring key_type;
+   typedef boost::function<void(const std::string&, ParseStatus*)> Validator;
+   typedef std::vector<Validator> mapped_type;
+   
+   CustomFunctionValidators()
+   {
+      // initialize our own custom validators here?
+   }
+   
+   bool applyValidators(RTokenCursor cursor,
+                        ParseStatus& status)
+   {
+      if (!cursor.isSimpleCall())
+         return false;
+      
+      std::wstring symbol = cursor.content();
+      
+      std::wstring::const_iterator begin = cursor.begin();
+      if (!cursor.moveToNextSignificantToken())
+         return false;
+      
+      if (!cursor.fwdToMatchingToken())
+         return false;
+      
+      std::wstring::const_iterator end = cursor.end();
+      
+      std::string content = string_utils::wideToUtf8(std::wstring(begin, end));
+      
+      if (database_.count(symbol))
+      {
+         BOOST_FOREACH(const Validator& validator, database_[symbol])
+         {
+            validator(boost::cref(content), &status);
+         }
+         return true;
+      }
+      
+      return false;
+   }
+   
+private:
+   std::map<key_type, mapped_type> database_;
+};
+
+CustomFunctionValidators& customFunctionValidators()
+{
+   static CustomFunctionValidators instance;
+   return instance;
+}
+
+bool applyCustomFunctionValidators(RTokenCursor cursor,
+                                   ParseStatus& status)
+{
+   CustomFunctionValidators& validators = customFunctionValidators();
+   return validators.applyValidators(cursor, status);
+}
+
 void validateFunctionCall(RTokenCursor cursor,
                           ParseStatus& status)
 {
@@ -904,12 +965,15 @@ void validateFunctionCall(RTokenCursor cursor,
    if (!cursor.moveToPreviousSignificantToken())
       return;
    
-   std::vector<std::string> names;
-   if (!getFormalsAssociatedWithFunctionAtCursor(cursor, status, &names))
-      return;
+   // Try applying a custom validator.
+   applyCustomFunctionValidators(cursor, status);
    
    RTokenCursor startCursor = cursor.clone();
    startCursor.moveToStartOfEvaluation();
+   
+   std::vector<std::string> names;
+   if (!getFormalsAssociatedWithFunctionAtCursor(cursor, status, &names))
+      return;
    
    // Bail if this function takes '...' -- TODO is to wire in
    // what we can for inferring a correct call.
