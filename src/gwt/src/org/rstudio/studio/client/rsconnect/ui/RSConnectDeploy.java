@@ -329,7 +329,7 @@ public class RSConnectDeploy extends Composite
    
    public void onActivate(ProgressIndicator indicator)
    {
-      populateAccountList(false);
+      populateAccountList(indicator, false);
       populateDeploymentFiles(indicator);
    }
    
@@ -503,7 +503,8 @@ public class RSConnectDeploy extends Composite
       }
    }
    
-   private void populateAccountList(final boolean isRetry)
+   private void populateAccountList(final ProgressIndicator indicator,
+                                    final boolean isRetry)
    {
        server_.getRSConnectAccountList(
             new ServerRequestCallback<JsArray<RSConnectAccount>>()
@@ -521,7 +522,7 @@ public class RSConnectDeploy extends Composite
                   @Override
                   public void execute(Boolean input)
                   {
-                     populateAccountList(true);
+                     populateAccountList(indicator, true);
                   }
                });
             }
@@ -535,8 +536,9 @@ public class RSConnectDeploy extends Composite
          @Override
          public void onError(ServerError error)
          {
-            display_.showErrorMessage("Error retrieving accounts", 
-                                      error.getMessage());
+            indicator.onError("Error retrieving accounts:\n\n" +
+                              error.getMessage());
+            indicator.onCompleted();
          }
       });
    }
@@ -559,15 +561,23 @@ public class RSConnectDeploy extends Composite
                {
                   if (files.getDirSize() > files.getMaxSize())
                   {
-                     display_.showErrorMessage("Directory Too Large", 
+                     indicator.onError(
                            "The item to be deployed (" + deployTarget + ") " +
                            "exceeds the maximum deployment size, which is " +
                            StringUtil.formatFileSize(files.getMaxSize()) + "." +
                            " Consider creating a new directory containing " + 
                            "only the content you wish to deploy.");
+
                   }
                   else
                   {
+                     if (files.getDirList() == null || 
+                         files.getDirList().length() == 0)
+                     {
+                        indicator.onError("Could not determine the list of " +
+                          "files to deploy.");
+                        indicator.onCompleted();
+                     }
                      setFileList(files.getDirList(), 
                            fromPrevious_ != null ?
                                  fromPrevious_.getAdditionalFiles() : null, 
@@ -582,8 +592,10 @@ public class RSConnectDeploy extends Composite
                @Override
                public void onError(ServerError error)
                {
-                  // we'll just show an empty list in the failure case
-                  indicator.clearProgress();
+                  // we need to have a list of files to deploy to proceed
+                  indicator.onError("Could not find files to deploy: \n\n" +
+                     error.getMessage());
+                  indicator.onCompleted();
                }
             });
       

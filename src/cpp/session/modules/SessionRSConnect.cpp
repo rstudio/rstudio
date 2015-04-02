@@ -66,6 +66,7 @@ public:
          const std::string& dir,
          const json::Array& fileList, 
          const std::string& file, 
+         const std::string& sourceDoc,
          const std::string& account,
          const std::string& server,
          const std::string& app,
@@ -91,8 +92,8 @@ public:
       std::string primaryDoc;
       if (!file.empty())
       {
-         FilePath sourceFile = module_context::resolveAliasedPath(file);
-         std::string extension = sourceFile.extensionLowerCase();
+         FilePath docFile = module_context::resolveAliasedPath(file);
+         std::string extension = docFile.extensionLowerCase();
          if (extension == ".rmd" || extension == ".html") 
          {
             primaryDoc = string_utils::utf8ToSystem(file);
@@ -106,6 +107,8 @@ public:
                 deployFiles + "), ") +
              (primaryDoc.empty() ? "" : "appPrimaryDoc = '" + 
                 primaryDoc + "', ") + 
+             (sourceDoc.empty() ? "" : "appSourceDoc = '" + 
+                sourceDoc + "', ") + 
              "account = '" + account + "',"
              "server = '" + server + "', "
              "appName = '" + app + "', "
@@ -199,11 +202,11 @@ Error rsconnectPublish(const json::JsonRpcRequest& request,
                        json::JsonRpcResponse* pResponse)
 {
    json::Array sourceFiles, additionalFiles, ignoredFiles;
-   std::string sourceDir, sourceFile, account, server, appName;
+   std::string sourceDir, sourceFile, sourceDoc, account, server, appName;
    bool asMultiple = false, asStatic = false;
    Error error = json::readParams(request.params, &sourceDir, &sourceFiles,
-                                   &sourceFile, &account, &server, &appName,
-                                   &additionalFiles, &ignoredFiles, 
+                                   &sourceFile, &sourceDoc, &account, &server, 
+                                   &appName, &additionalFiles, &ignoredFiles, 
                                    &asMultiple, &asStatic);
    if (error)
       return error;
@@ -216,8 +219,9 @@ Error rsconnectPublish(const json::JsonRpcRequest& request,
    else
    {
       s_pRSConnectPublish_ = RSConnectPublish::create(sourceDir, sourceFiles, 
-                                                  sourceFile, account, server, 
-                                                  appName, additionalFiles,
+                                                  sourceFile, sourceDoc, 
+                                                  account, server, appName, 
+                                                  additionalFiles,
                                                   ignoredFiles, asMultiple,
                                                   asStatic);
       pResponse->setResult(true);

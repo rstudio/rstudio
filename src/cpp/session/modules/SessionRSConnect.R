@@ -206,7 +206,7 @@
 .rs.addFunction("makeDeploymentList", function(target, asMultipleDoc, 
                                                max_size) {
    ext <- tolower(tools::file_ext(target))
-   if (ext %in% c("rmd", "html"))
+   if (ext %in% c("rmd", "html", "md"))
      .rs.docDeployList(target, asMultipleDoc)
    else
      .rs.maxDirectoryList(target, ".", 0, max_size, 

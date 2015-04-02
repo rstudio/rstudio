@@ -590,15 +590,11 @@ public class RSConnect implements SessionInitHandler,
    
    private void doDeployment(final RSConnectDeployInitiatedEvent event)
    {
-      // TODO: pass source file
-      FileSystemItem sourceFile = FileSystemItem.createFile(
-            event.getSource().getDeployFile());
-      server_.publishContent(event.getSource().getDeployDir(),
-                            sourceFile.getName(),
-                            event.getRecord().getAccountName(), 
-                            event.getRecord().getServer(),
-                            event.getRecord().getName(), 
-                            event.getSettings(),
+      server_.publishContent(event.getSource(),
+                             event.getRecord().getAccountName(), 
+                             event.getRecord().getServer(),
+                             event.getRecord().getName(), 
+                             event.getSettings(),
       new ServerRequestCallback<Boolean>()
       {
          @Override

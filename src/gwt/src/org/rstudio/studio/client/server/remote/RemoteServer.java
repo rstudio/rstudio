@@ -97,6 +97,7 @@ import org.rstudio.studio.client.rsconnect.model.RSConnectDeploymentRecord;
 import org.rstudio.studio.client.rsconnect.model.RSConnectLintResults;
 import org.rstudio.studio.client.rsconnect.model.RSConnectPreAuthToken;
 import org.rstudio.studio.client.rsconnect.model.RSConnectPublishSettings;
+import org.rstudio.studio.client.rsconnect.model.RSConnectPublishSource;
 import org.rstudio.studio.client.rsconnect.model.RSConnectServerInfo;
 import org.rstudio.studio.client.rsconnect.model.RmdPublishDetails;
 import org.rstudio.studio.client.server.Bool;
@@ -3654,15 +3655,17 @@ public class RemoteServer implements Server
    }
    
    @Override
-   public void publishContent(String dir, String file, String account, 
+   public void publishContent(
+         RSConnectPublishSource source, String account, 
          String server, String appName, 
          RSConnectPublishSettings settings,
          ServerRequestCallback<Boolean> requestCallback)
    {
       JSONArray params = new JSONArray();
-      params.set(0, new JSONString(dir));
+      params.set(0, new JSONString(source.getDeployDir()));
       params.set(1, JSONUtils.toJSONStringArray(settings.getDeployFiles()));
-      params.set(2, new JSONString(file));
+      params.set(2, new JSONString(source.getDeployFileName()));
+      params.set(2, new JSONString(source.getSourceFile()));
       params.set(3, new JSONString(account));
       params.set(4, new JSONString(server));
       params.set(5, new JSONString(appName));

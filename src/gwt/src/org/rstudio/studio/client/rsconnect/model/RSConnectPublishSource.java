@@ -69,12 +69,17 @@ public class RSConnectPublishSource
    
    public boolean isDocument()
    {
-      return isSourceExt("rmd") || isSourceExt("html");
+      return isSourceExt("rmd") || isSourceExt("html") || isSourceExt("md");
    }
    
    public String getDeployKey()
    {
       return isDocument() ? getSourceFile() : getDeployDir();
+   }
+   
+   public String getDeployFileName()
+   {
+      return FileSystemItem.createFile(getDeployFile()).getName();
    }
    
    private final String deployFile_;

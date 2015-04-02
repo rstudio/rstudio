@@ -40,8 +40,9 @@ public interface RSConnectServerOperations
                boolean asMultipleRmd,
                ServerRequestCallback<RSConnectDeploymentFiles> requestCallback);
    
-   void publishContent(String dir, String file, String account, String server, 
-               String appName, RSConnectPublishSettings settings,
+   void publishContent(RSConnectPublishSource source, 
+               String account, String server, String appName, 
+               RSConnectPublishSettings settings,
                ServerRequestCallback<Boolean> requestCallback);
 
    void validateServerUrl (String url, 
