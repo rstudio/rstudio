@@ -96,6 +96,25 @@
         all=sort(iconvlist()))
 })
 
+.rs.addGlobalFunction('source.with.encoding',
+   function(path, encoding,
+         echo=getOption('verbose'),
+         print.eval=echo,
+         max.deparse.length=150,
+         chdir=FALSE)
+{
+   warning("source.with.encoding is deprecated and will be removed in a ",
+           "future release of RStudio. Use source(..., encoding = '", encoding,
+           "') instead.")
+   conn = file(path, open='r', encoding=encoding)
+   on.exit(close(conn))
+   source(conn,
+          echo=echo,
+          print.eval=print.eval,
+          max.deparse.length=max.deparse.length,
+          chdir=chdir)
+})
+
 ### Detect free variables ###
 
 # Callback when code walker encounters function call.
