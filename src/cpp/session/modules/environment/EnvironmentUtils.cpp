@@ -15,8 +15,6 @@
 
 #include "EnvironmentUtils.hpp"
 
-#include <algorithm>
-
 #include <r/RExec.hpp>
 #include <r/RJson.hpp>
 #include <core/FileSerializer.hpp>
@@ -206,7 +204,13 @@ bool functionDiffersFromSource(
       LOG_ERROR(error);
       return true;
    }
-   return functionCode != fileContent;
+
+   // ignore leading/trailing whitespace
+   std::string trimmedFunctionCode(functionCode);
+   boost::algorithm::trim(trimmedFunctionCode);
+   boost::algorithm::trim(fileContent);
+
+   return trimmedFunctionCode != fileContent;
 }
 
 // given a source reference and a JSON object, add the line and character data
