@@ -345,6 +345,8 @@ core::Error getNamespaceExports(SEXP ns,
 core::Error extractFormalNames(SEXP functionSEXP,
                                std::vector<std::string>* pNames);
 
+const std::set<std::string>& nsePrimitives();
+
 } // namespace sexp
 } // namespace r
 } // namespace rstudio

@@ -15,6 +15,8 @@
 #ifndef CORE_COLLECTION_POSITION_HPP
 #define CORE_COLLECTION_POSITION_HPP
 
+#include <iostream>
+
 namespace rstudio {
 namespace core {
 namespace collection {
@@ -53,6 +55,11 @@ struct Position
       std::stringstream ss;
       ss << "(" << row << ", " << column << ")";
       return ss.str();
+   }
+   
+   friend std::ostream& operator <<(std::ostream& os, const Position& position)
+   {
+      return os << position.toString();
    }
    
    std::size_t row;

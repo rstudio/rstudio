@@ -24,6 +24,7 @@
 #include <sstream>
 
 #include <core/StringUtils.hpp>
+#include <core/collection/Position.hpp>
 
 #include <boost/utility.hpp>
 #include <boost/shared_ptr.hpp>
@@ -89,7 +90,7 @@ public:
    {}
    
    explicit RToken(TokenType type)
-      : type_(RToken::ERR), offset_(-1)
+      : type_(type), offset_(-1)
    {}
 
    RToken(TokenType type,
@@ -111,6 +112,11 @@ public:
    std::size_t length() const { return end_ - begin_; }
    std::size_t row() const { return row_; }
    std::size_t column() const { return column_; }
+   
+   core::collection::Position position() const
+   {
+      return core::collection::Position(row_, column_);
+   }
 
    // efficient comparison operations
    bool contentEquals(const std::wstring& text) const
@@ -163,6 +169,11 @@ public:
    std::wstring::const_iterator end() const
    {
       return end_;
+   }
+   
+   std::pair<std::wstring::const_iterator, std::wstring::const_iterator> range() const
+   {
+      return std::make_pair(begin_, end_);
    }
    
    std::string asString() const;
@@ -262,6 +273,13 @@ public:
       return tokens_[offset];
    }
    
+   // Unsafe 'at' method that should only used for functions that
+   // have validated the range they will be iterating over
+   const RToken& atUnsafe(std::size_t offset) const
+   {
+      return tokens_[offset];
+   }
+   
    typedef Tokens::const_iterator const_iterator;
    typedef Tokens::iterator iterator;
    
@@ -274,7 +292,7 @@ public:
    {}
    
    explicit RTokens(const std::wstring& code, int flags = None)
-      : tokenizer_(code)
+      : tokenizer_(code), dummyToken_(RToken::ERR)
    {
       RToken token;
       while ((token = tokenizer_.nextToken()))
