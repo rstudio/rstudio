@@ -53,8 +53,7 @@ public class PublishReportSourcePage
             (asMultiple ? "scheduled reports" : "a scheduled report") + " or " +
             "execute your " + 
             (asMultiple ? "documents" : "document") + " on the server.", 
-            input, false, asMultiple, 
-            false));
+            null, input, asMultiple, false));
       String staticTitle = "Publish finished " + 
             (asMultiple ? "documents" : "document") + " only";
       String staticSubtitle = "Choose this option to publish the content as " +
@@ -69,8 +68,8 @@ public class PublishReportSourcePage
       else if (input.isConnectUIEnabled())
       {
          // only RStudio Connect is available for static content
-         pages.add(new PublishFilesPage(staticTitle, staticSubtitle, input, 
-               false, asMultiple, true));
+         pages.add(new PublishFilesPage(staticTitle, staticSubtitle, null, 
+               input, asMultiple, true));
       }
       else
       {

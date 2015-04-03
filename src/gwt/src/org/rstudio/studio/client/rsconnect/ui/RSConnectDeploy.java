@@ -369,7 +369,9 @@ public class RSConnectDeploy extends Composite
             
       // if this was new content, set this account as the default to use for 
       // new content
-      if (fromPrevious_ == null)
+      if (fromPrevious_ == null && 
+          !getSelectedAccount().equals(
+                prefs_.preferredPublishAccount().getGlobalValue()))
       {
          prefs_.preferredPublishAccount().setGlobalValue(getSelectedAccount());
          prefs_.writeUIPrefs();

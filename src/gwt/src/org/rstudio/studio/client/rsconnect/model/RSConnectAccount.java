@@ -47,7 +47,9 @@ public class RSConnectAccount extends JavaScriptObject
 
    public final boolean equals(RSConnectAccount other)
    {
-      return getName().equals(other.getName()) && 
+      if (other == null)
+         return false;
+      else return getName().equals(other.getName()) && 
              getServer().equals(other.getServer());
    }
 }

@@ -20,19 +20,16 @@ import org.rstudio.studio.client.rsconnect.model.RSConnectPublishInput;
 import org.rstudio.studio.client.rsconnect.model.RSConnectPublishResult;
 import org.rstudio.studio.client.rsconnect.model.RSConnectPublishSource;
 
+import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.Widget;
 
 public class PublishFilesPage 
    extends WizardPage<RSConnectPublishInput, RSConnectPublishResult>
 {
-   public PublishFilesPage(String title, String subTitle, 
-         RSConnectPublishInput input, boolean showImage, boolean asMultiple, 
-         boolean asStatic)
+   public PublishFilesPage(String title, String subTitle, ImageResource icon,
+         RSConnectPublishInput input, boolean asMultiple, boolean asStatic)
    {
-      super(title, subTitle, "Publish", showImage ? (asMultiple ? 
-            RSConnectAccountResources.INSTANCE.publishMultipleRmd() :
-            RSConnectAccountResources.INSTANCE.publishSingleRmd()) : null, 
-            null);
+      super(title, subTitle, "Publish", icon, null);
       
       // createWidget is called by super() above
       if (contents_ != null)

@@ -42,7 +42,9 @@ public class PublishStaticDestPage
          "RStudio for sharing documents on the web."));
       pages.add(new PublishFilesPage("A server in your organization", 
          "RStudio Connect enables members of your organization to share and " + 
-         "collaborate privately and securely.", input, true, asMultiple, true));
+         "collaborate privately and securely.", 
+         RSConnectAccountResources.INSTANCE.localAccountIcon(),
+         input, asMultiple, true));
       return pages;
    }
 }
