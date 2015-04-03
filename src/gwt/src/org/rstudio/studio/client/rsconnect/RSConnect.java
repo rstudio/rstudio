@@ -131,7 +131,6 @@ public class RSConnect implements SessionInitHandler,
       // see if we have the requisite R packages
       dependencyManager_.withRSConnect(
          "Publishing content", null, new Command() {
-
             @Override
             public void execute()
             {
@@ -164,6 +163,7 @@ public class RSConnect implements SessionInitHandler,
          case CONTENT_TYPE_APP:
             publishAsCode(event);
             break;
+         case CONTENT_TYPE_PLOT:
          case CONTENT_TYPE_DOCUMENT:
             if (event.getFromPrevious().getServer().equals("rpubs.com"))
             {

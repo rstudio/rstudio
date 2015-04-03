@@ -131,12 +131,14 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
    {
       navigate(url, false);
       rmdPreviewParams_ = null;
+      publishButton_.setContentType(RSConnect.CONTENT_TYPE_PLOT);
    }
 
    @Override
    public void previewRmd(RmdPreviewParams params)
    {
       navigate(params.getOutputUrl(), true);
+      publishButton_.setContentType(RSConnect.CONTENT_TYPE_DOCUMENT);
       publishButton_.setVisible(true);
       publishButton_.setRmdPreview(params);
       rmdPreviewParams_ = params;

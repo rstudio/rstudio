@@ -36,10 +36,20 @@ public class PublishFilesPage
       {
          // publish the HTML file or the original R Markdown doc, as requested
          if (asStatic)
-            contents_.setPublishSource(
-                  new RSConnectPublishSource(
-                        input.getOriginatingEvent().getFromPreview()),
-                  asMultiple, true);
+         {
+            RSConnectPublishSource source = null;
+            if (input.getOriginatingEvent().getFromPreview() != null)
+            {
+               source = new RSConnectPublishSource(
+                              input.getOriginatingEvent().getFromPreview());
+            }
+            else
+            {
+               source = new RSConnectPublishSource(
+                              input.getOriginatingEvent().getHtmlFile());
+            }
+            contents_.setPublishSource(source, asMultiple, true);
+         }
          else
             contents_.setPublishSource(
                   new RSConnectPublishSource(input.getSourceRmd().getPath()),
