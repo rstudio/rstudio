@@ -88,7 +88,6 @@ import org.rstudio.studio.client.rmarkdown.model.RmdTemplateFormat;
 import org.rstudio.studio.client.rmarkdown.model.RmdYamlData;
 import org.rstudio.studio.client.rmarkdown.model.YamlFrontMatter;
 import org.rstudio.studio.client.rmarkdown.ui.RmdTemplateOptionsDialog;
-import org.rstudio.studio.client.rsconnect.RSConnect;
 import org.rstudio.studio.client.rsconnect.events.RSConnectActionEvent;
 import org.rstudio.studio.client.rsconnect.events.RSConnectDeployInitiatedEvent;
 import org.rstudio.studio.client.rsconnect.model.RSConnectPublishSettings;
@@ -649,7 +648,7 @@ public class TextEditingTarget implements
                      return;
                   
                   // see if the event corresponds to a deployment of this file
-                  if (!getPath().equals(event.getSource().getDeployFile()))
+                  if (!getPath().equals(event.getSource().getSourceFile()))
                      return;
                   
                   RSConnectPublishSettings settings = event.getSettings();
@@ -660,12 +659,6 @@ public class TextEditingTarget implements
                       settings.getAdditionalFiles().size() > 0)
                   {
                      addAdditionalResourceFiles(settings.getAdditionalFiles());
-                  }
-                  
-                  if (settings.getIgnoredFiles() != null &&
-                      settings.getIgnoredFiles().size() > 0)
-                  {
-                     setIgnoredFiles(settings.getIgnoredFiles());
                   }
                }
             });
@@ -4727,13 +4720,6 @@ public class TextEditingTarget implements
    public DocDisplay getDocDisplay()
    {
       return docDisplay_;
-   }
-   
-   private void setIgnoredFiles(ArrayList<String> ignoredFiles)
-   {
-      String ignoredFileList =  StringUtil.joinStrings(ignoredFiles, "|");
-      docUpdateSentinel_.setProperty(RSConnect.IGNORED_RESOURCES, 
-            ignoredFileList, null);
    }
    
    private void addAdditionalResourceFiles(ArrayList<String> additionalFiles)

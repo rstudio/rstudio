@@ -738,7 +738,7 @@ public class RSConnect implements SessionInitHandler,
       var thiz = this;     
       $wnd.deployToRSConnect = $entry(
          function(sourceFile, deployDir, deployFile, deployFiles, additionalFiles, ignoredFiles, asMultiple, asStatic, launch, record) {
-            thiz.@org.rstudio.studio.client.rsconnect.RSConnect::deployToRSConnect(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lcom/google/gwt/core/client/JsArrayString;Lcom/google/gwt/core/client/JsArrayString;Lcom/google/gwt/core/client/JsArrayString;ZZZLcom/google/gwt/core/client/JavaScriptObject;)(sourceFile, deployDir, deployFiles, additionalFiles, ignoredFiles, asMultiple, asStatic, launch, record);
+            thiz.@org.rstudio.studio.client.rsconnect.RSConnect::deployToRSConnect(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lcom/google/gwt/core/client/JsArrayString;Lcom/google/gwt/core/client/JsArrayString;Lcom/google/gwt/core/client/JsArrayString;ZZZLcom/google/gwt/core/client/JavaScriptObject;)(sourceFile, deployDir, deployFile, deployFiles, additionalFiles, ignoredFiles, asMultiple, asStatic, launch, record);
          }
       ); 
    }-*/;
