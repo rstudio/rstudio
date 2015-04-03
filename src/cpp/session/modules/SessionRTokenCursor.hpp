@@ -69,6 +69,11 @@ public:
       return rTokens_;
    }
    
+   std::size_t offset() const
+   {
+      return offset_;
+   }
+   
    bool moveToNextToken()
    {
       if (UNLIKELY(offset_ == n_ - 1))
@@ -85,6 +90,64 @@ public:
       
       --offset_;
       return true;
+   }
+   
+   // TODO: May be worthwhile to implement binary search here.
+   bool moveToPosition(const Position& destination)
+   {
+      std::size_t n = n_;
+      
+      if (n == 0)
+         return false;
+      
+      std::size_t offset = 1;
+      while (offset < n)
+      {
+         if (destination < rTokens_.atUnsafe(offset).position())
+         {
+            offset_ = offset - 1;
+            return true;
+         }
+         ++offset;
+      }
+      
+      return false;
+   }
+   
+   void moveToOffset(std::size_t destination,
+                     boost::function<void(const RToken&)> operation)
+   {
+      destination = destination > n_ ? n_ : destination;
+      std::size_t offset = offset_;
+      const RTokens& rTokens = rTokens_;
+      
+      if (offset == destination)
+      {
+         operation(rTokens.atUnsafe(offset));
+      }
+      else if (destination > offset)
+      {
+         while (offset != destination)
+         {
+            operation(rTokens.atUnsafe(offset));
+            ++offset;
+         }
+      }
+      else
+      {
+         while (offset != destination)
+         {
+            operation(rTokens.atUnsafe(offset));
+            offset--;
+         }
+      }
+      offset_ = offset;
+   }
+   
+   void moveToCursor(const RTokenCursor& other,
+                     boost::function<void(const RToken&)> operation)
+   {
+      moveToOffset(other.offset(), operation);
    }
    
    const RToken& currentToken() const
@@ -397,7 +460,7 @@ public:
      return isLeftBracket(*this) &&
             doFwdToMatchingToken(type(), complements()[type()]);
   }
-
+  
   bool bwdToMatchingToken()
   {
      return isRightBracket(*this) &&

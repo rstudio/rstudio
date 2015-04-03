@@ -104,17 +104,17 @@ bool isDataTableSingleBracketCall(RTokenCursor& cursor)
             startCursor.currentToken().begin(),
             cursor.currentToken().begin()));
    
-   // Get the object and check if it inherits from data.table
-   r::exec::RFunction getAnywhere(".rs.getAnywhere");
-   getAnywhere.addParam(objectString);
+   if (objectString.find('(') != std::string::npos)
+      return false;
    
-   SEXP resultSEXP;
+   // Get the object and check if it inherits from data.table
+   SEXP objectSEXP;
    r::sexp::Protect protect;
-   Error error = getAnywhere.call(&resultSEXP, &protect);
+   Error error = r::exec::evaluateString(objectString, &objectSEXP, &protect);
    if (error)
       return false;
    
-   return r::sexp::inherits(resultSEXP, "data.table");
+   return r::sexp::inherits(objectSEXP, "data.table");
 }
 
 class NSEDatabase : boost::noncopyable
@@ -169,6 +169,8 @@ SEXP resolveFunctionAtCursor(RTokenCursor cursor,
                              r::sexp::Protect* pProtect,
                              bool* pCacheable = NULL)
 {
+   DEBUG("--- Resolve function call: " << cursor);
+   
    if (canOpenArgumentList(cursor))
       if (!cursor.moveToPreviousSignificantToken())
          return R_UnboundValue;
@@ -216,6 +218,60 @@ SEXP resolveFunctionAtCursor(RTokenCursor cursor,
    return symbolSEXP;
 }
 
+std::set<std::wstring> makeWideNsePrimitives()
+{
+   std::set<std::wstring> wide;
+   const std::set<std::string>& nsePrimitives = r::sexp::nsePrimitives();
+   
+   BOOST_FOREACH(const std::string& primitive, nsePrimitives)
+   {
+      wide.insert(string_utils::utf8ToWide(primitive));
+   }
+
+   return wide;
+}
+
+const std::set<std::wstring>& wideNsePrimitives()
+{
+   static std::set<std::wstring> wideNsePrimitives = makeWideNsePrimitives();
+   return wideNsePrimitives;
+}
+
+bool maybePerformsNSE(RTokenCursor cursor)
+{
+   if (!cursor.nextSignificantToken().isType(RToken::LPAREN))
+      return false;
+   
+   if (!cursor.moveToNextSignificantToken())
+      return false;
+   
+   RTokenCursor endCursor = cursor.clone();
+   if (!endCursor.fwdToMatchingToken())
+      return false;
+   
+   const std::set<std::wstring>& nsePrimitives = wideNsePrimitives();
+   
+   const RTokens& rTokens = cursor.tokens();
+   std::size_t offset = cursor.offset();
+   std::size_t endOffset = endCursor.offset();
+   while (offset != endOffset)
+   {
+      const RToken& token = rTokens.atUnsafe(offset);
+
+      if (token.isType(RToken::ID))
+      {
+         const RToken& next = rTokens.atUnsafe(offset + 1);
+         if (next.isType(RToken::LPAREN) &&
+             nsePrimitives.count(token.content()))
+         {
+            return true;
+         }
+      }
+      ++offset;
+   }
+   return false;
+}
+
 bool mightPerformNonstandardEvaluation(const RTokenCursor& origin,
                                        ParseStatus& status)
 {
@@ -227,6 +283,23 @@ bool mightPerformNonstandardEvaluation(const RTokenCursor& origin,
    
    if (!canOpenArgumentList(cursor.nextSignificantToken()))
       return false;
+   
+   // TODO: How should we resolve conflicts between a function on
+   // the search path with some set of arguments, versus an identically
+   // named function in the source document which has not yet been sourced?
+   //
+   // For now, we prefer the current source document + the source
+   // database, and then use the search path after if necessary.
+   const ParseNode* pNode;
+   if (status.node()->findFunction(cursor.contentAsUtf8(),
+                                   cursor.currentPosition(),
+                                   &pNode))
+   {
+      DEBUG("--- Found function: '" << pNode->name());
+      if (cursor.moveToPosition(pNode->position()))
+         if (maybePerformsNSE(cursor))
+            return true;
+   }
    
    bool cacheable = true;
    r::sexp::Protect protect;
@@ -582,13 +655,8 @@ ParseResults parse(const std::string& rCode,
 ParseResults parse(const std::wstring& rCode,
                    const ParseOptions& parseOptions)
 {
-   using namespace boost::timer;
-   
-   if (rCode.empty() ||
-       rCode.find_first_not_of(L" \r\n\t\v") == std::string::npos)
-   {
+   if (rCode.empty() || rCode.find_first_not_of(L" \r\n\t\v") == std::string::npos)
       return ParseResults();
-   }
    
    RTokens rTokens(rCode);
    
@@ -673,20 +741,29 @@ void checkBinaryOperatorWhitespace(RTokenCursor& cursor,
 //     foo(alpha = 1, beta = 2, gamma = 3)
 //         ^^^^^      ^^^^      ^^^^^
 //
-std::vector<std::string> extractNamedArguments(RTokenCursor cursor)
+void extractNamedArguments(RTokenCursor cursor,
+                           std::vector<std::string>* pArgNames,
+                           std::size_t* pNumArgs)
 {
-   std::vector<std::string> result;
+   if (isLeftBracket(cursor.nextSignificantToken()))
+      if (!cursor.moveToNextSignificantToken())
+         return;
+   
    if (!isLeftBracket(cursor))
-      return result;
+      return;
    
    if (!cursor.moveToNextSignificantToken())
-      return result;
+      return;
+   
+   if (isRightBracket(cursor))
+      return;
    
    // Extract the first argument.
-   if (cursor.isType(RToken::ID) &&
-       cursor.nextSignificantToken().contentEquals(L"="))
+   ++*pNumArgs;
+   if (cursor.isType(RToken::ID))
    {
-      result.push_back(cursor.contentAsUtf8());
+      if (cursor.nextSignificantToken().contentEquals(L"="))
+         pArgNames->push_back(cursor.contentAsUtf8());
    }
    
    // Extract the rest of the arguments by finding the token sequence
@@ -703,19 +780,177 @@ std::vector<std::string> extractNamedArguments(RTokenCursor cursor)
       if (cursor.fwdToMatchingToken())
          continue;
       
-      if (cursor.isType(RToken::COMMA) &&
-          cursor.nextSignificantToken().isType(RToken::ID) &&
-          cursor.nextSignificantToken(2).contentEquals(L"="))
+      if (cursor.isType(RToken::COMMA))
       {
-         result.push_back(cursor.nextSignificantToken().contentAsUtf8());
+         ++*pNumArgs;
+         if (cursor.nextSignificantToken().isType(RToken::ID) &&
+             cursor.nextSignificantToken(2).contentEquals(L"="))
+         {
+            pArgNames->push_back(cursor.nextSignificantToken().contentAsUtf8());
+         }
       }
       
    } while (cursor.moveToNextSignificantToken());
-   
-   return result;
 }
 
-void validateFunctionCall(const RTokenCursor& cursor,
+bool extractFormalsFromFunctionDefinition(RTokenCursor cursor,
+                                          std::vector<std::string>* pNames)
+{
+   do
+   {
+      if (cursor.contentEquals(L"function"))
+         break;
+      
+   } while (cursor.moveToNextSignificantToken());
+   
+   if (!cursor.moveToNextSignificantToken())
+      return false;
+   
+   if (!cursor.isType(RToken::LPAREN))
+      return false;
+   
+   if (!cursor.moveToNextSignificantToken())
+      return false;
+   
+   if (cursor.isType(RToken::RPAREN))
+      return true;
+   
+   if (cursor.isType(RToken::ID))
+      pNames->push_back(cursor.contentAsUtf8());
+   
+   do
+   {
+      if (cursor.fwdToMatchingToken())
+         continue;
+      
+      if (isRightBracket(cursor))
+         return true;
+      
+      if (cursor.isType(RToken::COMMA) &&
+          cursor.nextSignificantToken().isType(RToken::ID))
+      {
+         pNames->push_back(cursor.nextSignificantToken().contentAsUtf8());
+      }
+   } while (cursor.moveToNextSignificantToken());
+   
+   return false;
+}
+
+bool getFormalsAssociatedWithFunctionAtCursor(RTokenCursor cursor,
+                                              ParseStatus& status,
+                                              std::vector<std::string>* pNames)
+{
+   // If this is a direct call to a symbol, then first attempt to
+   // find this function in the current document, or the source database.
+   if (cursor.isSimpleCall())
+   {
+      if (cursor.isType(RToken::LPAREN))
+         if (!cursor.moveToPreviousSignificantToken())
+            return false;
+      
+      DEBUG("***** Attempting to resolve source function: '" << cursor.contentAsUtf8() << "'");
+      const ParseNode* pNode;
+      if (status.node()->findFunction(
+             cursor.contentAsUtf8(),
+             cursor.currentPosition(),
+             &pNode))
+      {
+         DEBUG("***** Found function: '" << pNode->name() << "' at: " << pNode->position());
+         if (cursor.moveToPosition(pNode->position()))
+         {
+            DEBUG("***** Moved to position");
+            if (extractFormalsFromFunctionDefinition(cursor, pNames))
+            {
+               DEBUG("Extracted arguments");
+               return true;
+            }
+         }
+      }
+   }
+   
+   // If the above failed, we'll fall back to evaluating and looking up
+   // the symbol on the search path.
+   r::sexp::Protect protect;
+   SEXP functionSEXP = resolveFunctionAtCursor(cursor, &protect);
+   if (functionSEXP == R_UnboundValue || !Rf_isFunction(functionSEXP))
+      return false;
+   
+   // TODO: Handle primitives.
+   if (Rf_isPrimitive(functionSEXP))
+      return false;
+   
+   // Get the formals associated with this function.
+   Error error = r::sexp::extractFormalNames(functionSEXP, pNames);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return false;
+   }
+   return true;
+}
+
+class CustomFunctionValidators : boost::noncopyable
+{
+public:
+   
+   typedef std::wstring key_type;
+   typedef boost::function<void(const std::string&, ParseStatus*)> Validator;
+   typedef std::vector<Validator> mapped_type;
+   
+   CustomFunctionValidators()
+   {
+      // initialize our own custom validators here?
+   }
+   
+   bool applyValidators(RTokenCursor cursor,
+                        ParseStatus& status)
+   {
+      if (!cursor.isSimpleCall())
+         return false;
+      
+      std::wstring symbol = cursor.content();
+      
+      std::wstring::const_iterator begin = cursor.begin();
+      if (!cursor.moveToNextSignificantToken())
+         return false;
+      
+      if (!cursor.fwdToMatchingToken())
+         return false;
+      
+      std::wstring::const_iterator end = cursor.end();
+      
+      std::string content = string_utils::wideToUtf8(std::wstring(begin, end));
+      
+      if (database_.count(symbol))
+      {
+         BOOST_FOREACH(const Validator& validator, database_[symbol])
+         {
+            validator(boost::cref(content), &status);
+         }
+         return true;
+      }
+      
+      return false;
+   }
+   
+private:
+   std::map<key_type, mapped_type> database_;
+};
+
+CustomFunctionValidators& customFunctionValidators()
+{
+   static CustomFunctionValidators instance;
+   return instance;
+}
+
+bool applyCustomFunctionValidators(RTokenCursor cursor,
+                                   ParseStatus& status)
+{
+   CustomFunctionValidators& validators = customFunctionValidators();
+   return validators.applyValidators(cursor, status);
+}
+
+void validateFunctionCall(RTokenCursor cursor,
                           ParseStatus& status)
 {
    using namespace r::sexp;
@@ -724,84 +959,123 @@ void validateFunctionCall(const RTokenCursor& cursor,
    if (!cursor.isType(RToken::LPAREN))
       return;
    
-   RTokenCursor startCursor = cursor.clone();
-   startCursor.moveToStartOfEvaluation();
-   
    RTokenCursor endCursor = cursor.clone();
    endCursor.fwdToMatchingToken();
    
-   r::sexp::Protect protect;
-   SEXP functionSEXP = resolveFunctionAtCursor(cursor, &protect);
-   if (functionSEXP == R_UnboundValue || !Rf_isFunction(functionSEXP))
+   if (!cursor.moveToPreviousSignificantToken())
       return;
    
-   // TODO: Handle primitives.
-   if (Rf_isPrimitive(functionSEXP))
-      return;
+   // Try applying a custom validator.
+   applyCustomFunctionValidators(cursor, status);
    
-   // Get the formals associated with this function.
+   RTokenCursor startCursor = cursor.clone();
+   startCursor.moveToStartOfEvaluation();
+   
    std::vector<std::string> names;
-   Error error = extractFormalNames(functionSEXP, &names);
-   if (error)
-   {
-      LOG_ERROR(error);
+   if (!getFormalsAssociatedWithFunctionAtCursor(cursor, status, &names))
       return;
-   }
    
    // Bail if this function takes '...' -- TODO is to wire in
    // what we can for inferring a correct call.
    if (std::find(names.begin(), names.end(), "...") != names.end())
       return;
    
-   // Get the arguments within the function call.
-   std::vector<std::string> args = extractNamedArguments(cursor);
+   // Get the arguments within the function call, and the total number
+   // of arguments passed to the function call.
+   std::vector<std::string> args;
+   std::size_t nArgs = 0;
+   extractNamedArguments(cursor, &args, &nArgs);
+   
+   // Error if too many arguments were passed.
+   if (nArgs > names.size())
+   {
+      std::stringstream ss;
+      ss << "too many arguments [" << nArgs << "] to function call [" << names.size() << "]";
+      status.lint().add(
+               startCursor.row(),
+               startCursor.column(),
+               endCursor.row(),
+               endCursor.column() + endCursor.length(),
+               LintTypeError,
+               ss.str());
+   }
    
    // Figure out which named arguments specified by the user don't actually
    // match the names of the available formals.
-   std::vector<std::string> unmatchedArgs =
+   std::vector<std::string> noExactMatchArgs =
          core::algorithm::set_difference(args, names);
    
    // Of the unmatched arguments, figure out which are / aren't prefix matches.
-   std::vector<std::string> prefixMatches =
-         core::algorithm::set_difference(
-            unmatchedArgs,
-            names,
-            string_utils::isPrefixOf);
-   
-   BOOST_FOREACH(const std::string& arg, unmatchedArgs)
+   typedef std::pair<std::string, std::string> Pair;
+   std::vector<Pair> prefixMatchedPairs;
+   BOOST_FOREACH(const std::string& arg, noExactMatchArgs)
    {
-      // Check to see if this argument is a prefix match
-      // of one of the available formals.
-      std::vector<std::string>::const_iterator it =
-            std::find_if(names.begin(),
-                         names.end(),
-                         boost::bind(string_utils::isPrefixOf, _1, arg));
-      
-      if (it != names.end())
+      BOOST_FOREACH(const std::string& name, names)
       {
-         // Supply a warning.
-         status.lint().add(
-                  startCursor.row(),
-                  startCursor.column(),
-                  endCursor.row(),
-                  endCursor.column() + endCursor.length(),
-                  LintTypeWarning,
-                  "partial match of argument '" + arg + "' to '" + *it + "'");
-      }
-      else
-      {
-         // Error -- named argument passed by user does not match
-         // anything within the set of available formals.
-         status.lint().add(
-                  startCursor.row(),
-                  startCursor.column(),
-                  endCursor.row(),
-                  endCursor.column() + endCursor.length(),
-                  LintTypeError,
-                  "no argument named '" + arg + "'");
+         if (string_utils::isPrefixOf(name, arg))
+         {
+            prefixMatchedPairs.push_back(std::make_pair(arg, name));
+            break;
+         }
       }
    }
+
+   // Now, collect the arguments with no match at all.
+   std::vector<std::string> prefixMatchedArgs;
+   BOOST_FOREACH(const Pair& pair, prefixMatchedPairs)
+   {
+      prefixMatchedArgs.push_back(pair.first);
+   }
    
+   std::vector<std::string> unmatchedArgs =
+         core::algorithm::set_difference(
+            noExactMatchArgs,
+            prefixMatchedArgs);
+   
+   // Collect warning + error messages. TODO: Do we want to keep these
+   // separated so we can provide nicer markers?
+   if (!prefixMatchedPairs.empty())
+   {
+      std::string prefix = prefixMatchedPairs.size() == 1 ?
+               "partial match of argument: " :
+               "partial match of arguments: ";
+      
+      std::string prefixMatched =
+            "['" + prefixMatchedPairs[0].first + "' -> " +
+             "'" + prefixMatchedPairs[0].second + "'";
+      
+      std::size_t n = prefixMatchedPairs.size();
+      
+      for (std::size_t i = 1; i < n; ++i)
+         prefixMatched += ", '" + prefixMatchedPairs[i].first + "' -> " +
+               "'" + prefixMatchedPairs[i].second + "'";
+      
+      prefixMatched += "]";
+      
+      status.lint().add(
+               startCursor.row(),
+               startCursor.column(),
+               endCursor.row(),
+               endCursor.column() + endCursor.length(),
+               LintTypeWarning,
+               prefix + prefixMatched);
+   }
+   
+   if (!unmatchedArgs.empty())
+   {
+      std::string unmatched = "'" + boost::algorithm::join(unmatchedArgs, "', '") + "'";
+      std::string prefix = unmatchedArgs.size() == 1 ?
+               "unused argument: " :
+               "unused arguments: ";
+      
+      status.lint().add(
+               startCursor.row(),
+               startCursor.column(),
+               endCursor.row(),
+               endCursor.column() + endCursor.length(),
+               LintTypeError,
+               prefix + unmatched);
+   }
 }
 
 bool skipFormulas(RTokenCursor& cursor,
@@ -818,6 +1092,32 @@ bool skipFormulas(RTokenCursor& cursor,
    }
    
    return false;
+}
+
+// Enter a function scope, starting at the first paren associated
+// with the 'function' token, e.g.
+//
+//    foo <- function(x, y, z) { ... }
+//                   ^
+//
+// We do a bit of lookaround to get the symbol name.
+void enterFunctionScope(RTokenCursor cursor,
+                        ParseStatus& status)
+{
+   std::string symbol = "(unknown function)";
+   Position position = cursor.currentPosition();
+   
+   if (cursor.moveToPreviousSignificantToken() &&
+       cursor.contentEquals(L"function") &&
+       cursor.moveToPreviousSignificantToken() &&
+       isLeftAssign(cursor) &&
+       cursor.moveToPreviousSignificantToken())
+   {
+      symbol = string_utils::wideToUtf8(cursor.getCallingString());
+      position = cursor.currentPosition();
+   }
+   
+   status.enterFunctionScope(symbol, position);
 }
 
 } // anonymous namespace
@@ -1341,7 +1641,7 @@ FUNCTION_START:
       ENSURE_CONTENT(cursor, status, L"function");
       MOVE_TO_NEXT_SIGNIFICANT_TOKEN_WARN_ON_BLANK(cursor, status);
       ENSURE_TYPE(cursor, status, RToken::LPAREN);
-      status.pushState(ParseStatus::ParseStateFunctionArgumentList);
+      enterFunctionScope(cursor, status);
       MOVE_TO_NEXT_SIGNIFICANT_TOKEN_WARN_ON_BLANK(cursor, status);
       if (cursor.isType(RToken::RPAREN))
          goto FUNCTION_ARGUMENT_LIST_END;
@@ -1352,7 +1652,7 @@ FUNCTION_ARGUMENT_START:
       if (cursor.isType(RToken::ID) &&
           cursor.nextSignificantToken().contentEquals(L"="))
       {
-         status.node()->addDefinedSymbol(cursor, status.getCachedPosition());
+         status.node()->addDefinedSymbol(cursor, status.node()->position());
          MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
          MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
          goto START;
@@ -1360,7 +1660,7 @@ FUNCTION_ARGUMENT_START:
       
       if (cursor.isType(RToken::ID))
       {
-         status.node()->addDefinedSymbol(cursor, status.getCachedPosition());
+         status.node()->addDefinedSymbol(cursor, status.node()->position());
          if (cursor.nextSignificantToken().isType(RToken::COMMA))
          {
             MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);

@@ -1,9 +1,17 @@
 #!/usr/bin/env sh
 
+## Any arguments passed in are considered arguments to valgrind
+if [ "$#" -eq 0 ]; then
+	VALGRIND=
+else
+	VALGRIND="valgrind --dsymutil=yes $@"
+fi
+
 echo Running 'core' tests...
-${CMAKE_CURRENT_BINARY_DIR}/core/rstudio-core-tests
+$VALGRIND ${CMAKE_CURRENT_BINARY_DIR}/core/rstudio-core-tests
 
 echo Running 'rsession' tests...
-${CMAKE_CURRENT_BINARY_DIR}/session/rsession \
+$VALGRIND ${CMAKE_CURRENT_BINARY_DIR}/session/rsession \
     --run-tests \
     --config-file=${CMAKE_CURRENT_BINARY_DIR}/conf/rdesktop-dev.conf
+
