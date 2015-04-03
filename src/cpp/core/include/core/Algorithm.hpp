@@ -55,6 +55,21 @@ OutputIterator copy_transformed_if(InputIterator begin,
    return destBegin;
 }
 
+template <typename Container, typename ValueType>
+bool contains(const Container& container,
+              const ValueType& type,
+              typename Container::key_type* SFINAE__key_type = 0)
+{
+   return container.count(type);
+}
+
+template <typename Container, typename ValueType>
+bool contains(const Container& container,
+              const ValueType& type)
+{
+   return std::find(container.begin(), container.end(), type) != container.end();
+}
+
 
 } // namespace algorithm
 } // namespace core

@@ -137,6 +137,7 @@ SEXP create(const std::set<std::string>& value, Protect* pProtect);
 SEXP create(const core::json::Array& value, Protect* pProtect);
 SEXP create(const core::json::Object& value, Protect* pProtect);
 SEXP create(const ListBuilder& builder, Protect* pProtect);
+SEXP create(const std::map<std::string, std::string>& value, Protect* pProtect);
 
 // Create a named list
 SEXP createList(const std::vector<std::string>& names, Protect* pProtect);
@@ -342,8 +343,8 @@ core::Error objects(SEXP environment,
 core::Error getNamespaceExports(SEXP ns,
                                 std::vector<std::string>* pNames);
 
-core::Error extractFormalNames(SEXP functionSEXP,
-                               std::vector<std::string>* pNames);
+core::Error extractFormals(SEXP functionSEXP,
+                           std::map<std::string, std::string>* pFormals);
 
 const std::set<std::string>& nsePrimitives();
 

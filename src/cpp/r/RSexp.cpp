@@ -795,6 +795,28 @@ SEXP create(const ListBuilder& builder, Protect *pProtect)
    return resultSEXP;
 }
 
+SEXP create(const std::map<std::string, std::string>& map, Protect* pProtect)
+{
+   std::size_t n = map.size();
+   SEXP listSEXP;
+   pProtect->add(listSEXP = Rf_allocVector(STRSXP, n));
+   
+   SEXP namesSEXP;
+   pProtect->add(namesSEXP = Rf_allocVector(STRSXP, n));
+   
+   std::size_t i = 0;
+   for (std::map<std::string, std::string>::const_iterator it = map.begin();
+        it != map.end();
+        ++it, ++i)
+   {
+      SET_STRING_ELT(namesSEXP, i, Rf_mkChar(it->first.c_str()));
+      SET_STRING_ELT(listSEXP, i, Rf_mkChar(it->second.c_str()));
+   }
+   
+   Rf_setAttrib(listSEXP, R_NamesSymbol, namesSEXP);
+   return listSEXP;
+}
+
 SEXP createList(const std::vector<std::string>& names, Protect* pProtect)
 {
    std::size_t n = names.size();
@@ -1011,8 +1033,8 @@ core::Error getNamespaceExports(SEXP ns,
    return error;
 }
 
-core::Error extractFormalNames(SEXP functionSEXP,
-                               std::vector<std::string>* pNames)
+core::Error extractFormals(SEXP functionSEXP,
+                           std::map<std::string, std::string>* pFormals)
 {
    if (!Rf_isFunction(functionSEXP))
       return Error(errc::UnexpectedDataTypeError, ERROR_LOCATION);
@@ -1023,16 +1045,25 @@ core::Error extractFormalNames(SEXP functionSEXP,
    if (Rf_isPrimitive(functionSEXP))
       return Success();
    
+   r::sexp::Protect protect;
    SEXP formals = FORMALS(functionSEXP);
+   
+   // NOTE: 'as.character' has different behaviour for pairlist of calls vs.
+   // a call itself; we desire the behaviour associated with pairlists of
+   // calls
+   SEXP defaultValues;
+   protect.add(defaultValues = Rf_coerceVector(formals, STRSXP));
    
    // Iterate through the formals pairlist and append tag names
    // to the output.
+   std::size_t index = 0;
    while (formals != R_NilValue)
    {
-      if (TAG(formals) != R_NilValue)
-         pNames->push_back(CHAR(PRINTNAME(TAG(formals))));
+      (*pFormals)[CHAR(PRINTNAME(TAG(formals)))] =
+            CHAR(STRING_ELT(defaultValues, index));
       
       formals = CDR(formals);
+      ++index;
    }
    
    return Success();

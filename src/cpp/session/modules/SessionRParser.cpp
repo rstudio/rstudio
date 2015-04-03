@@ -14,7 +14,7 @@
  */
 
 // #define RSTUDIO_ENABLE_PROFILING
-// #define RSTUDIO_ENABLE_DEBUG_MACROS
+#define RSTUDIO_ENABLE_DEBUG_MACROS
 #define RSTUDIO_DEBUG_LABEL "parser"
 
 // We use a couple internal R functions here; in particular,
@@ -23,6 +23,7 @@
 
 #include <core/Macros.hpp>
 #include <core/algorithm/Set.hpp>
+#include <core/algorithm/Map.hpp>
 #include <core/StringUtils.hpp>
 #include <core/FileSerializer.hpp>
 
@@ -573,6 +574,95 @@ void lookAheadAndWarnOnUsagesOfSymbol(const RTokenCursor& startCursor,
    } while (clone.moveToNextSignificantToken());
 }
 
+// Extract the named, and unnamed, arguments supplied in a function call.
+// For example, in the following call:
+//
+//    foo(1 + 2, a = 3)
+//
+// we want to return:
+//
+//    Named Arguments: {a: "3"}
+//  Unnamed Arguments: ["1 + 2"]
+//
+void getNamedUnnamedArguments(RTokenCursor cursor,
+                              std::map<std::string, std::string>* pNamedArguments,
+                              std::vector<std::string>* pUnnamedArguments)
+{
+   if (cursor.nextSignificantToken().isType(RToken::LPAREN))
+      if (!cursor.moveToNextSignificantToken())
+         return;
+   
+   if (!cursor.isType(RToken::LPAREN))
+      return;
+   
+   if (!cursor.moveToNextSignificantToken())
+      return;
+   
+   if (cursor.isType(RToken::RPAREN))
+      return;
+   
+   // Special case: if the function call is as so:
+   //
+   //    foo(,)
+   //
+   // then we just have two empty (missing) arguments.
+   if (cursor.isType(RToken::COMMA) &&
+       cursor.nextSignificantToken().isType(RToken::RPAREN))
+   {
+      pUnnamedArguments->push_back(std::string());
+      pUnnamedArguments->push_back(std::string());
+      return;
+   }
+   
+   do
+   {
+      std::string argName;
+      bool isNamedArgument = false;
+      std::wstring::const_iterator begin = cursor.begin();
+
+      if (cursor.isType(RToken::ID) &&
+          cursor.nextSignificantToken().contentEquals(L"="))
+      {
+         isNamedArgument = true;
+         argName = cursor.contentAsUtf8();
+         
+         if (!cursor.moveToNextSignificantToken())
+            return;
+         
+         if (!cursor.moveToNextSignificantToken())
+            return;
+         
+         begin = cursor.begin();
+      }
+
+      do
+      {
+         if (cursor.fwdToMatchingToken())
+            continue;
+
+         if (cursor.isType(RToken::COMMA) || isRightBracket(cursor))
+            break;
+
+      } while (cursor.moveToNextSignificantToken());
+
+      if (isNamedArgument)
+      {
+         (*pNamedArguments)[argName] =
+               string_utils::wideToUtf8(std::wstring(begin, cursor.begin()));
+      }
+      else
+      {
+         pUnnamedArguments->push_back(
+                  string_utils::wideToUtf8(std::wstring(begin, cursor.begin())));
+      }
+
+   } while (cursor.isType(RToken::COMMA) && cursor.moveToNextSignificantToken());
+   
+   
+}
+
+
+
 void handleIdentifier(RTokenCursor& cursor,
                       ParseStatus& status)
 {
@@ -641,6 +731,363 @@ void handleIdentifier(RTokenCursor& cursor,
       status.node()->addReferencedSymbol(cursor);
    }
 }
+
+// Extract a single formal from an in-source function _definition_. For example,
+//
+//    foo <- function(alpha = 1, beta, gamma) {}
+//                    ^~~~>~~~~^
+// This function should fill a formals map, with mappings such as:
+//
+//    alpha -> "1"
+//    beta  -> <empty>
+//    gamma -> <empty>
+//
+// This function will 'consume' all data associated with the formal, and place
+// the cursor on the closing comma or right paren.
+void extractFormal(RTokenCursor& cursor,
+                   std::map<std::string, std::string>* pFormals)
+{
+   std::string formalName;
+   std::string defaultValue;
+   
+   bool hasDefaultValue = false;
+   std::wstring::const_iterator defaultValueStart;
+   
+   if (cursor.isType(RToken::ID))
+      formalName = cursor.contentAsUtf8();
+   
+   if (!cursor.moveToNextSignificantToken())
+      return;
+   
+   if (cursor.contentEquals(L"="))
+   {
+      if (!cursor.moveToNextSignificantToken())
+         return;
+      
+      if (cursor.isType(RToken::COMMA))
+         return;
+      
+      hasDefaultValue = true;
+      defaultValueStart = cursor.begin();
+   }
+      
+   do
+   {
+      if (cursor.fwdToMatchingToken())
+         continue;
+
+      if (cursor.isType(RToken::COMMA) || isRightBracket(cursor))
+         break;
+
+   } while (cursor.moveToNextSignificantToken());
+   
+   if (hasDefaultValue)
+   {
+      defaultValue = string_utils::wideToUtf8(
+               std::wstring(defaultValueStart, cursor.begin()));
+   }
+   
+   (*pFormals)[formalName] = defaultValue;
+   
+   if (cursor.isType(RToken::COMMA))
+      cursor.moveToNextSignificantToken();
+   
+}
+
+
+
+// Extract all formals from an in-source function _definition_. For example,
+//
+//    foo <- function(alpha = 1, beta, gamma) {}
+//
+// This function should fill a formals map, with mappings such as:
+//
+//    alpha -> "1"
+//    beta  -> <empty>
+//    gamma -> <empty>
+//
+bool extractFormalsFromFunctionDefinition(RTokenCursor cursor,
+                                          std::map<std::string, std::string>* pFormals)
+{
+   do
+   {
+      if (cursor.contentEquals(L"function"))
+         break;
+      
+   } while (cursor.moveToNextSignificantToken());
+   
+   if (!cursor.moveToNextSignificantToken())
+      return false;
+   
+   if (!cursor.isType(RToken::LPAREN))
+      return false;
+   
+   if (!cursor.moveToNextSignificantToken())
+      return false;
+   
+   if (cursor.isType(RToken::RPAREN))
+      return true;
+   
+   while (cursor.isType(RToken::ID))
+      extractFormal(cursor, pFormals);
+   
+   return false;
+}
+
+
+
+// Extract formals from the underlying object mapped by the symbol, or expression,
+// at the cursor. This involves (potentially) evaluating the expresion forming
+// the function object, e.g.
+//
+//     foo$bar(baz, bat)
+//     ^^^^^^^
+//
+// This code will attempt to resolve `foo$bar` (which likely requires evaluation),
+// and then, if it's a function will extract the formals associated with that function.
+bool getFormalsAssociatedWithFunctionAtCursor(RTokenCursor cursor,
+                                              ParseStatus& status,
+                                              std::map<std::string, std::string>* pFormals)
+{
+   // If this is a direct call to a symbol, then first attempt to
+   // find this function in the current document, or the source database.
+   if (cursor.isSimpleCall())
+   {
+      if (cursor.isType(RToken::LPAREN))
+         if (!cursor.moveToPreviousSignificantToken())
+            return false;
+      
+      DEBUG("***** Attempting to resolve source function: '" << cursor.contentAsUtf8() << "'");
+      const ParseNode* pNode;
+      if (status.node()->findFunction(
+             cursor.contentAsUtf8(),
+             cursor.currentPosition(),
+             &pNode))
+      {
+         DEBUG("***** Found function: '" << pNode->name() << "' at: " << pNode->position());
+         if (cursor.moveToPosition(pNode->position()))
+         {
+            DEBUG("***** Moved to position");
+            if (extractFormalsFromFunctionDefinition(cursor, pFormals))
+            {
+               DEBUG("Extracted arguments");
+               return true;
+            }
+         }
+      }
+   }
+   
+   // If the above failed, we'll fall back to evaluating and looking up
+   // the symbol on the search path.
+   r::sexp::Protect protect;
+   SEXP functionSEXP = resolveFunctionAtCursor(cursor, &protect);
+   if (functionSEXP == R_UnboundValue || !Rf_isFunction(functionSEXP))
+      return false;
+   
+   // TODO: Handle primitives.
+   if (Rf_isPrimitive(functionSEXP))
+      return false;
+   
+   // Get the formals associated with this function.
+   Error error = r::sexp::extractFormals(functionSEXP, pFormals);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return false;
+   }
+   return true;
+}
+
+// This class represents a matched call, similar to the result from R's
+// 'match.call()'. We maintain:
+//
+//    1. The actual formals (+ default values, as string) for a particular function,
+//    2. The function call made by the user,
+//    3. The actual matched call that would be executed.
+//
+// The goal is to create an object that is easily lintable by us downstream.
+class MatchedCall
+{
+private:
+   
+   // 'reduce-typing' typedefs
+   typedef std::map<std::string, std::string> MapStringString;
+   typedef std::set<std::string> SetString;
+   typedef std::pair<std::string, std::string> Pair;
+   
+public:
+   
+   // Expects a cursor to currently be on 
+   static MatchedCall match(RTokenCursor cursor,
+                            ParseStatus& status)
+   {
+      MatchedCall call;
+      
+      // Get the formals associated with the underlying function.
+      MapStringString formals;
+      getFormalsAssociatedWithFunctionAtCursor(cursor, status, &formals);
+      DEBUG_BLOCK("formals")
+      {
+         r::sexp::Protect protect;
+         std::cout << "Formals: " << std::endl;
+         r::sexp::printValue(r::sexp::create(formals, &protect));
+      }
+      
+      // Get the named, unnamed arguments supplied in the function call.
+      MapStringString namedArguments;
+      std::vector<std::string> unnamedArguments;
+      getNamedUnnamedArguments(cursor, &namedArguments, &unnamedArguments);
+      
+      DEBUG_BLOCK("named, unnamed")
+      {
+         r::sexp::Protect protect;
+         std::cout << "Named arguments: " << std::endl;
+         r::sexp::printValue(r::sexp::create(namedArguments, &protect));
+         std::cout << "Unnamed arguments: " << std::endl;
+         r::sexp::printValue(r::sexp::create(unnamedArguments, &protect));
+      }
+      
+      // Generate a matched call -- figure out what underlying call will
+      // actually be made. We'll get the set of formals, and match them in
+      // the same order that R would.
+      MapStringString matchedCall;
+      std::vector<std::string> formalsToMatch = core::algorithm::map_keys(formals);
+      
+      /*
+       * 1. Identify perfect matches in the set of formals to search.
+       */
+      std::vector<std::string> userSuppliedArgNames =
+            core::algorithm::map_keys(namedArguments);
+      
+      std::vector<std::string> perfectMatchArgs =
+            core::algorithm::set_intersection(formalsToMatch, userSuppliedArgNames);
+      
+      // Add them to the matched call
+      BOOST_FOREACH(const std::string& arg, perfectMatchArgs)
+      {
+         DEBUG("-- Adding perfect match: " << arg);
+         matchedCall[arg] = namedArguments[arg];
+      }
+      
+      // Trim the two lookup lists
+      formalsToMatch = core::algorithm::set_difference(formalsToMatch, perfectMatchArgs);
+      userSuppliedArgNames = core::algorithm::set_difference(userSuppliedArgNames, perfectMatchArgs);
+      
+      /*
+       * 2. Identify prefix matches in the set of remaining formals.
+       */
+      std::vector<Pair> prefixMatchedPairs;
+      BOOST_FOREACH(const std::string& userSuppliedArgName, userSuppliedArgNames)
+      {
+         BOOST_FOREACH(const std::string& formalName, formalsToMatch)
+         {
+            if (boost::algorithm::starts_with(formalName, userSuppliedArgName))
+            {
+               DEBUG("-- Adding prefix match: '" << userSuppliedArgName << "' -> '" << formalName << "'");
+               prefixMatchedPairs.push_back(std::make_pair(userSuppliedArgName, formalName));
+               break;
+            }
+         }
+      }
+      
+      // Add to the matched call, and warn
+      BOOST_FOREACH(const Pair& pair, prefixMatchedPairs)
+      {
+         matchedCall[pair.second] = namedArguments[pair.first];
+      }
+      
+      // Trim the lookup lists
+      std::vector<std::string> formalsToRemove;
+      BOOST_FOREACH(const Pair& pair, prefixMatchedPairs)
+      {
+         formalsToRemove.push_back(pair.second);
+      }
+      formalsToMatch = core::algorithm::set_difference(formalsToMatch, formalsToRemove);
+      
+      /*
+       * 3. Match other formals positionally.
+       */
+      std::size_t index = 0;
+      BOOST_FOREACH(const std::string& argument, unnamedArguments)
+      {
+         if (index == formalsToMatch.size())
+            break;
+
+         std::string formalName = formalsToMatch[index];
+         DEBUG("-- Adding positional match: " << formalName);
+         
+         matchedCall[formalName] = argument;
+         index++;
+      }
+      
+      /*
+       * 4. Fill default argument values.
+       */
+      for (MapStringString::const_iterator it = formals.begin();
+           it != formals.end();
+           ++it)
+      {
+         const std::string argName = it->first;
+         if (!matchedCall[argName].empty())
+         {
+            DEBUG("-- Adding default value for '" << it->first << "'");
+            matchedCall[argName] = it->second;
+         }
+      }
+     
+      // Now, we examine the end state and see if we successfully matched
+      // all available arguments.
+      call.namedArguments_ = namedArguments;
+      call.unnamedArguments_ = unnamedArguments;
+      call.formals_ = formals;
+      call.matchedCall_ = matchedCall;
+      call.prefixMatchedPairs_ = prefixMatchedPairs;
+      return call;
+   }
+
+   // Accessors
+   const std::map<std::string, std::string>& namedArguments() const
+   {
+      return namedArguments_;
+   }
+
+   const std::vector<std::string>& unnamedArguments() const
+   {
+      return unnamedArguments_;
+   }
+
+   const std::map<std::string, std::string>& formals() const
+   {
+      return formals_;
+   }
+
+   const std::map<std::string, std::string>& matchedCall() const
+   {
+      return matchedCall_;
+   }
+   
+   const std::vector<Pair>& prefixMatches() const
+   {
+      return prefixMatchedPairs_;
+   }
+   
+private:
+   
+   // Function call: named arguments to values, and unnamed (to be matched)
+   // values
+   std::map<std::string, std::string> namedArguments_;
+   std::vector<std::string> unnamedArguments_;
+   
+   // Function formals: map argument names to default values (if they exist)
+   std::map<std::string, std::string> formals_;
+   
+   // Matched call: map matched formals to values (as string). We include
+   // mapping of default values for formals here.
+   std::map<std::string, std::string> matchedCall_;
+   
+   // Prefix matches: used for warning later
+   std::vector<Pair> prefixMatchedPairs_;
+};
 
 } // anonymous namespace
 
@@ -736,159 +1183,6 @@ void checkBinaryOperatorWhitespace(RTokenCursor& cursor,
    }
 }
 
-// Extract named arguments in a (tokenized) function call, e.g.
-//
-//     foo(alpha = 1, beta = 2, gamma = 3)
-//         ^^^^^      ^^^^      ^^^^^
-//
-void extractNamedArguments(RTokenCursor cursor,
-                           std::vector<std::string>* pArgNames,
-                           std::size_t* pNumArgs)
-{
-   if (isLeftBracket(cursor.nextSignificantToken()))
-      if (!cursor.moveToNextSignificantToken())
-         return;
-   
-   if (!isLeftBracket(cursor))
-      return;
-   
-   if (!cursor.moveToNextSignificantToken())
-      return;
-   
-   if (isRightBracket(cursor))
-      return;
-   
-   // Extract the first argument.
-   ++*pNumArgs;
-   if (cursor.isType(RToken::ID))
-   {
-      if (cursor.nextSignificantToken().contentEquals(L"="))
-         pArgNames->push_back(cursor.contentAsUtf8());
-   }
-   
-   // Extract the rest of the arguments by finding the token sequence
-   //
-   //     , <id> =
-   //
-   // Bail once we find a closing paren, and walk over matching parens
-   // to handle expressions within the function argument list.
-   do
-   {
-      if (isRightBracket(cursor))
-         break;
-      
-      if (cursor.fwdToMatchingToken())
-         continue;
-      
-      if (cursor.isType(RToken::COMMA))
-      {
-         ++*pNumArgs;
-         if (cursor.nextSignificantToken().isType(RToken::ID) &&
-             cursor.nextSignificantToken(2).contentEquals(L"="))
-         {
-            pArgNames->push_back(cursor.nextSignificantToken().contentAsUtf8());
-         }
-      }
-      
-   } while (cursor.moveToNextSignificantToken());
-}
-
-bool extractFormalsFromFunctionDefinition(RTokenCursor cursor,
-                                          std::vector<std::string>* pNames)
-{
-   do
-   {
-      if (cursor.contentEquals(L"function"))
-         break;
-      
-   } while (cursor.moveToNextSignificantToken());
-   
-   if (!cursor.moveToNextSignificantToken())
-      return false;
-   
-   if (!cursor.isType(RToken::LPAREN))
-      return false;
-   
-   if (!cursor.moveToNextSignificantToken())
-      return false;
-   
-   if (cursor.isType(RToken::RPAREN))
-      return true;
-   
-   if (cursor.isType(RToken::ID))
-      pNames->push_back(cursor.contentAsUtf8());
-   
-   do
-   {
-      if (cursor.fwdToMatchingToken())
-         continue;
-      
-      if (isRightBracket(cursor))
-         return true;
-      
-      if (cursor.isType(RToken::COMMA) &&
-          cursor.nextSignificantToken().isType(RToken::ID))
-      {
-         pNames->push_back(cursor.nextSignificantToken().contentAsUtf8());
-      }
-   } while (cursor.moveToNextSignificantToken());
-   
-   return false;
-}
-
-bool getFormalsAssociatedWithFunctionAtCursor(RTokenCursor cursor,
-                                              ParseStatus& status,
-                                              std::vector<std::string>* pNames)
-{
-   // If this is a direct call to a symbol, then first attempt to
-   // find this function in the current document, or the source database.
-   if (cursor.isSimpleCall())
-   {
-      if (cursor.isType(RToken::LPAREN))
-         if (!cursor.moveToPreviousSignificantToken())
-            return false;
-      
-      DEBUG("***** Attempting to resolve source function: '" << cursor.contentAsUtf8() << "'");
-      const ParseNode* pNode;
-      if (status.node()->findFunction(
-             cursor.contentAsUtf8(),
-             cursor.currentPosition(),
-             &pNode))
-      {
-         DEBUG("***** Found function: '" << pNode->name() << "' at: " << pNode->position());
-         if (cursor.moveToPosition(pNode->position()))
-         {
-            DEBUG("***** Moved to position");
-            if (extractFormalsFromFunctionDefinition(cursor, pNames))
-            {
-               DEBUG("Extracted arguments");
-               return true;
-            }
-         }
-      }
-   }
-   
-   // If the above failed, we'll fall back to evaluating and looking up
-   // the symbol on the search path.
-   r::sexp::Protect protect;
-   SEXP functionSEXP = resolveFunctionAtCursor(cursor, &protect);
-   if (functionSEXP == R_UnboundValue || !Rf_isFunction(functionSEXP))
-      return false;
-   
-   // TODO: Handle primitives.
-   if (Rf_isPrimitive(functionSEXP))
-      return false;
-   
-   // Get the formals associated with this function.
-   Error error = r::sexp::extractFormalNames(functionSEXP, pNames);
-   if (error)
-   {
-      LOG_ERROR(error);
-      return false;
-   }
-   return true;
-}
-
 class CustomFunctionValidators : boost::noncopyable
 {
 public:
@@ -971,74 +1265,21 @@ void validateFunctionCall(RTokenCursor cursor,
    RTokenCursor startCursor = cursor.clone();
    startCursor.moveToStartOfEvaluation();
    
-   std::vector<std::string> names;
-   if (!getFormalsAssociatedWithFunctionAtCursor(cursor, status, &names))
-      return;
+   MatchedCall matched = MatchedCall::match(cursor, status);
    
    // Bail if this function takes '...' -- TODO is to wire in
    // what we can for inferring a correct call.
-   if (std::find(names.begin(), names.end(), "...") != names.end())
-      return;
+   if (matched.formals().count("...")) return;
    
-   // Get the arguments within the function call, and the total number
-   // of arguments passed to the function call.
-   std::vector<std::string> args;
-   std::size_t nArgs = 0;
-   extractNamedArguments(cursor, &args, &nArgs);
+   // Warn on partial matches.
+   const std::vector< std::pair<std::string, std::string> >& prefixMatchedPairs
+         = matched.prefixMatches();
    
-   // Error if too many arguments were passed.
-   if (nArgs > names.size())
-   {
-      std::stringstream ss;
-      ss << "too many arguments [" << nArgs << "] to function call [" << names.size() << "]";
-      status.lint().add(
-               startCursor.row(),
-               startCursor.column(),
-               endCursor.row(),
-               endCursor.column() + endCursor.length(),
-               LintTypeError,
-               ss.str());
-   }
-   
-   // Figure out which named arguments specified by the user don't actually
-   // match the names of the available formals.
-   std::vector<std::string> noExactMatchArgs =
-         core::algorithm::set_difference(args, names);
-   
-   // Of the unmatched arguments, figure out which are / aren't prefix matches.
-   typedef std::pair<std::string, std::string> Pair;
-   std::vector<Pair> prefixMatchedPairs;
-   BOOST_FOREACH(const std::string& arg, noExactMatchArgs)
-   {
-      BOOST_FOREACH(const std::string& name, names)
-      {
-         if (string_utils::isPrefixOf(name, arg))
-         {
-            prefixMatchedPairs.push_back(std::make_pair(arg, name));
-            break;
-         }
-      }
-   }
-
-   // Now, collect the arguments with no match at all.
-   std::vector<std::string> prefixMatchedArgs;
-   BOOST_FOREACH(const Pair& pair, prefixMatchedPairs)
-   {
-      prefixMatchedArgs.push_back(pair.first);
-   }
-   
-   std::vector<std::string> unmatchedArgs =
-         core::algorithm::set_difference(
-            noExactMatchArgs,
-            prefixMatchedArgs);
-   
-   // Collect warning + error messages. TODO: Do we want to keep these
-   // separated so we can provide nicer markers?
    if (!prefixMatchedPairs.empty())
    {
       std::string prefix = prefixMatchedPairs.size() == 1 ?
-               "partial match of argument: " :
-               "partial match of arguments: ";
+               "partially matched argument: " :
+               "partially matched arguments: ";
       
       std::string prefixMatched =
             "['" + prefixMatchedPairs[0].first + "' -> " +
@@ -1061,12 +1302,18 @@ void validateFunctionCall(RTokenCursor cursor,
                prefix + prefixMatched);
    }
    
-   if (!unmatchedArgs.empty())
+   // Error on too many arguments.
+   std::size_t numUserArguments =
+         matched.unnamedArguments().size() +
+         matched.namedArguments().size();
+   
+   std::size_t numFormals =
+         matched.formals().size();
+   
+   if (numUserArguments > numFormals)
    {
-      std::string unmatched = "'" + boost::algorithm::join(unmatchedArgs, "', '") + "'";
-      std::string prefix = unmatchedArgs.size() == 1 ?
-               "unused argument: " :
-               "unused arguments: ";
+      std::stringstream ss;
+      ss << "too many arguments to function call";
       
       status.lint().add(
                startCursor.row(),
@@ -1074,8 +1321,31 @@ void validateFunctionCall(RTokenCursor cursor,
                endCursor.row(),
                endCursor.column() + endCursor.length(),
                LintTypeError,
-               prefix + unmatched);
+               ss.str());
    }
+   
+   // Error on unmatched calls.
+   const std::map<std::string, std::string>& matchedCall = matched.matchedCall();
+   const std::map<std::string, std::string>& formals = matched.formals();
+   
+   for (std::map<std::string, std::string>::const_iterator it = formals.begin();
+        it != formals.end();
+        ++it)
+   {
+      std::cerr << "Formal name: '" << it->first << "'\n";
+      if (!matchedCall.count(it->first))
+      {
+         status.lint().add(
+                  startCursor.row(),
+                  startCursor.column(),
+                  endCursor.row(),
+                  endCursor.column() + endCursor.length(),
+                  LintTypeError,
+                  "argument '" + it->first + "' missing, with no default");
+      }
+   }
+         
+   
 }
 
 bool skipFormulas(RTokenCursor& cursor,
