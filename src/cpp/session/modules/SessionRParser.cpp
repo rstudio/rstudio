@@ -21,6 +21,7 @@
 // simple accessors (which we know will not longjmp)
 #define R_INTERNAL_FUNCTIONS
 
+#include <core/Debug.hpp>
 #include <core/Macros.hpp>
 #include <core/algorithm/Set.hpp>
 #include <core/algorithm/Map.hpp>
@@ -923,6 +924,12 @@ public:
       std::vector<std::string> unnamedArguments;
       getNamedUnnamedArguments(cursor, &namedArguments, &unnamedArguments);
       
+      DEBUG_BLOCK("Named, Unnamed Arguments")
+      {
+         LOG_OBJECT(namedArguments);
+         LOG_OBJECT(unnamedArguments);
+      }
+      
       // Generate a matched call -- figure out what underlying call will
       // actually be made. We'll get the set of formals, and match them in
       // the same order that R would.
@@ -1345,6 +1352,8 @@ void validateFunctionCall(RTokenCursor cursor,
       
       std::map<std::string, boost::optional<std::string> >& matchedCall =
             matched.matchedCall();
+      
+      debug::print(matchedCall);
       
       if (!matchedCall[formalName] && !info.missingnessHandled)
       {

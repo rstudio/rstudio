@@ -14,6 +14,9 @@
  */
 
 #define R_INTERNAL_FUNCTIONS
+#define RSTUDIO_DEBUG_LABEL "rsexp"
+#define RSTUDIO_ENABLE_DEBUG_MACROS
+
 #include <r/RSexp.hpp>
 #include <r/RInternal.hpp>
 
@@ -1047,6 +1050,7 @@ bool addSymbolCheckedForMissingness(
        CDDR(nodeSEXP) == R_NilValue &&
        strcmp(CHAR(PRINTNAME(CAR(nodeSEXP))), "missing") == 0)
    {
+      DEBUG("Handling 'missing(" << CHAR(PRINTNAME(CADR(nodeSEXP))) << ")'");
       pSymbolsCheckedForMissingness->insert(CHAR(PRINTNAME(CADR(nodeSEXP))));
    }
    return false;
@@ -1057,7 +1061,10 @@ bool addSymbols(
       std::set<const char*>* pSymbolsUsed)
 {
    if (TYPEOF(nodeSEXP) == SYMSXP)
+   {
+      DEBUG("Reporting symbol '" << CHAR(PRINTNAME(nodeSEXP)) << "' as used");
       pSymbolsUsed->insert(CHAR(PRINTNAME(nodeSEXP)));
+   }
    return false;
 }
 
@@ -1201,7 +1208,7 @@ core::Error extractFormals(
       FormalInformation formalInfo(CHAR(PRINTNAME(TAG(formals))));
       if (extractDefaultArguments)
       {
-         if (CAR(formals) == R_MissingArg)
+         if (CAR(formals) != R_MissingArg)
          {
             formalInfo.defaultValue = 
                   boost::optional<std::string>(CHAR(STRING_ELT(defaultValues, index)));

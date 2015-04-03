@@ -33,6 +33,7 @@
 #include <boost/logic/tribool.hpp>
 
 #include <core/Error.hpp>
+#include <core/Log.hpp>
 #include <core/json/Json.hpp>
 
 #include <r/RErrorCategory.hpp>
@@ -459,6 +460,7 @@ public:
          if (formals_[i].name == formalName)
             return formals_[i];
       
+      LOG_WARNING_MESSAGE("No such formal '" + formalName + "'");
       return noSuchFormal_;
    }
    

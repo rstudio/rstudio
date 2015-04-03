@@ -42,8 +42,11 @@
 # define RSTUDIO_DEBUG(x) do {} while (0)
 # define RSTUDIO_DEBUG_LINE(x) do {} while (0)
 # define RSTUDIO_DEBUG_BLOCK(x) if (false)
+# define RSTUDIO_LOG_OBJECT(x)
 
 #else
+
+#include <core/Debug.hpp>
 
 #define RSTUDIO_DEBUG(x)                                                       \
    do                                                                          \
@@ -69,6 +72,12 @@
                 << std::setfill('0') << __LINE__ << "): " << x << std::endl;   \
    if (true)
 
+# define RSTUDIO_LOG_OBJECT(x)                                                 \
+   do                                                                          \
+   {                                                                           \
+      ::rstudio::core::debug::print(x);                                        \
+   } while (0)
+
 #endif /* Debug logging macros */
 
 #ifndef DEBUG
@@ -81,6 +90,10 @@
 
 #ifndef DEBUG_BLOCK
 # define DEBUG_BLOCK RSTUDIO_DEBUG_BLOCK
+#endif
+
+#ifndef LOG_OBJECT
+# define LOG_OBJECT RSTUDIO_LOG_OBJECT
 #endif
 
 #endif
