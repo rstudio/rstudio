@@ -384,10 +384,6 @@ private:
       {
          while (nodeSEXP != R_NilValue)
          {
-            for (std::size_t i = 0; i < n; ++i)
-               if (operations[i](CAR(nodeSEXP)))
-                  return;
-            
             runImpl(CAR(nodeSEXP), operations, n);
             nodeSEXP = CDR(nodeSEXP);
          }
