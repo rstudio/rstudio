@@ -52,19 +52,15 @@ public class RSConnectDeployDialog
       addOkButton(deployButton_);
       connect_ = connect;
 
-      String deployDir = source.getDeployDir();
-      String deployFile = source.getDeployFile();
-      String deployTarget = deployDir;
       if (source.isDocument())
       {
-         FileSystemItem sourceFSI = FileSystemItem.createDir(deployDir);
-         deployTarget = sourceFSI.completePath(deployFile);
-         FileSystemItem fileFSI = FileSystemItem.createFile(deployTarget);
-         contents_.setNewAppName(fileFSI.getStem());
+         contents_.setNewAppName(
+               FileSystemItem.createFile(source.getSourceFile()).getStem());
       }
       else
       {
-         contents_.setNewAppName(FilePathUtils.friendlyFileName(deployDir));
+         contents_.setNewAppName(
+               FilePathUtils.friendlyFileName(source.getDeployDir()));
       }
 
       launchCheck_ = new CheckBox("Launch browser");
@@ -72,7 +68,7 @@ public class RSConnectDeployDialog
       launchCheck_.setStyleName(contents_.getStyle().launchCheck());
       addLeftWidget(launchCheck_);
       
-      contents_.setSourceDir(deployDir);
+      contents_.setSourceDir(source.getDeployDir());
       
       deployButton_.addClickHandler(new ClickHandler()
       {
@@ -88,7 +84,7 @@ public class RSConnectDeployDialog
       
       // Get the deployments of this directory from any account (should be fast,
       // since this information is stored locally in the directory). 
-      server_.getRSConnectDeployments(deployTarget, 
+      server_.getRSConnectDeployments(source.getDeployKey(), 
             new ServerRequestCallback<JsArray<RSConnectDeploymentRecord>>()
       {
          @Override

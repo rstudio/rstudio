@@ -549,10 +549,11 @@ public class RSConnectDeploy extends Composite
          return;
       
       // read the parent directory if we're "deploying" a .R file
-      final String deployTarget = source_.getDeployKey();
+      final String fileSource = source_.isDocument() ? 
+            source_.getDeployFile() : source_.getDeployDir();
       indicator.onProgress("Collecting files...");
       server_.getDeploymentFiles(
-            deployTarget,
+            fileSource,
             asMultipleRmd_,
             new ServerRequestCallback<RSConnectDeploymentFiles>()
             {
@@ -562,7 +563,7 @@ public class RSConnectDeploy extends Composite
                   if (files.getDirSize() > files.getMaxSize())
                   {
                      indicator.onError(
-                           "The item to be deployed (" + deployTarget + ") " +
+                           "The item to be deployed (" + fileSource + ") " +
                            "exceeds the maximum deployment size, which is " +
                            StringUtil.formatFileSize(files.getMaxSize()) + "." +
                            " Consider creating a new directory containing " + 
