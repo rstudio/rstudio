@@ -28,7 +28,7 @@ import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
-
+import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.command.ShortcutManager;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.events.NativeKeyDownEvent;
@@ -40,23 +40,33 @@ import org.rstudio.core.client.widget.AnchorableFrame;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
-
 import org.rstudio.studio.client.common.AutoGlassPanel;
+import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.common.presentation.SlideNavigationMenu;
 import org.rstudio.studio.client.common.presentation.SlideNavigationToolbarMenu;
+import org.rstudio.studio.client.common.rpubs.RPubsHtmlGenerator;
+import org.rstudio.studio.client.rsconnect.RSConnect;
+import org.rstudio.studio.client.rsconnect.ui.RSConnectPublishButton;
+import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
+import org.rstudio.studio.client.workbench.views.presentation.model.PresentationRPubsSource;
+import org.rstudio.studio.client.workbench.views.presentation.model.PresentationServerOperations;
 
 public class PresentationPane extends WorkbenchPane implements Presentation.Display
 {
    @Inject
-   public PresentationPane(Commands commands, Session session)
+   public PresentationPane(Commands commands, Session session,
+         PresentationServerOperations server, GlobalDisplay display)
    {
       super("Presentation");
       commands_ = commands;
       session_ = session;
+      server_ = server;
+      display_ = display;
       ensureWidget();
       
       initPresentationCallbacks();
@@ -85,14 +95,43 @@ public class PresentationPane extends WorkbenchPane implements Presentation.Disp
          moreMenu.addSeparator();
          moreMenu.addItem(commands_.presentationViewInBrowser().createMenuItem(false));
          moreMenu.addItem(commands_.presentationSaveAsStandalone().createMenuItem(false));
-         moreMenu.addSeparator();
-         moreMenu.addItem(commands_.presentationPublishToRpubs().createMenuItem(false));
          
          ToolbarButton moreButton = new ToolbarButton("More",
                                                       StandardIcons.INSTANCE.more_actions(),
                                                       moreMenu);
+
          toolbar.addRightWidget(moreButton);
-         
+
+         // Create the publish button and wire it to our HTML generator
+         publishButton_ = new RSConnectPublishButton(
+               RSConnect.CONTENT_TYPE_HTML, false, false);
+         publishButton_.setHtmlGenerator(new RPubsHtmlGenerator()
+         {
+            @Override
+            public void generateRPubsHtml(String title, String comment,
+                  final CommandWithArg<String> onCompleted)
+            {
+               server_.createPresentationRPubsSource(
+                  new SimpleRequestCallback<PresentationRPubsSource>() {
+                     
+                     @Override
+                     public void onResponseReceived(
+                           PresentationRPubsSource source)
+                     {
+                        onCompleted.execute(source.getSourceFilePath());
+                     }
+                     
+                     @Override
+                     public void onError(ServerError error)
+                     {
+                        display_.showErrorMessage("Error Saving Presentation",
+                          Presentation.getErrorMessage(error));
+                     }
+               });
+            }
+         });
+         toolbar.addRightSeparator();
+         toolbar.addRightWidget(publishButton_);
       }
       else
       {
@@ -290,10 +329,13 @@ public class PresentationPane extends WorkbenchPane implements Presentation.Disp
    private SlideNavigationToolbarMenu slideNavigationMenu_;
    private ToolbarButton refreshButton_;
    private ToolbarButton progressButton_;
+   private RSConnectPublishButton publishButton_;
    private boolean busyPending_ = false;
    private PresentationFrame frame_ ;
    private final Commands commands_;
    private final Session session_;
+   private final PresentationServerOperations server_;
+   private final GlobalDisplay display_;
    
    private FullscreenPopupPanel activeZoomPanel_ = null;
 }

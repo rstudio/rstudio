@@ -55,7 +55,6 @@ import org.rstudio.studio.client.common.presentation.SlideNavigationPresenter;
 import org.rstudio.studio.client.common.presentation.events.SlideIndexChangedEvent;
 import org.rstudio.studio.client.common.presentation.events.SlideNavigationChangedEvent;
 import org.rstudio.studio.client.common.presentation.model.SlideNavigation;
-import org.rstudio.studio.client.common.rpubs.ui.RPubsUploadDialog;
 
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.ServerError;
@@ -72,7 +71,6 @@ import org.rstudio.studio.client.workbench.views.edit.ui.EditDialog;
 import org.rstudio.studio.client.workbench.views.presentation.events.PresentationPaneRequestCompletedEvent;
 import org.rstudio.studio.client.workbench.views.presentation.events.ShowPresentationPaneEvent;
 import org.rstudio.studio.client.workbench.views.presentation.events.SourceFileSaveCompletedEvent;
-import org.rstudio.studio.client.workbench.views.presentation.model.PresentationRPubsSource;
 import org.rstudio.studio.client.workbench.views.presentation.model.PresentationServerOperations;
 import org.rstudio.studio.client.workbench.views.presentation.model.PresentationState;
 import org.rstudio.studio.client.workbench.views.source.events.EditPresentationSourceEvent;
@@ -324,35 +322,6 @@ public class Presentation extends BasePresenter
    }
    
    @Handler
-   void onPresentationPublishToRpubs()
-   {
-      server_.createPresentationRPubsSource(
-         new SimpleRequestCallback<PresentationRPubsSource>() {
-            
-            @Override
-            public void onResponseReceived(PresentationRPubsSource source)
-            {
-               // TODO: Presentation publish should go through new publish flow
-               RPubsUploadDialog dlg = new RPubsUploadDialog(
-                     "Presentation",
-                     view_.getPresentationTitle(),
-                     "",
-                     source.getSourceFilePath(),
-                     "",
-                     source.isPublished());
-               dlg.showModal();
-            }
-            
-            @Override
-            public void onError(ServerError error)
-            {
-               globalDisplay_.showErrorMessage("Error Saving Presentation",
-                                               getErrorMessage(error));
-            }
-      });
-   }
-   
-   @Handler
    void onClearPresentationCache()
    {
       globalDisplay_.showYesNoMessage(
@@ -526,6 +495,15 @@ public class Presentation extends BasePresenter
                               SlideIndexChangedEvent.Handler handler)
    {
       return handlerManager_.addHandler(SlideIndexChangedEvent.TYPE, handler);
+   }
+   
+   public static String getErrorMessage(ServerError error)
+   {
+      String message = error.getUserMessage();
+      JSONString userMessage = error.getClientInfo().isString();
+      if (userMessage != null)
+         message = userMessage.stringValue();
+      return message;
    }
    
    private void reloadWorkbench()
@@ -707,16 +685,6 @@ public class Presentation extends BasePresenter
       
       return -1;
    } 
-   
-   
-   private String getErrorMessage(ServerError error)
-   {
-      String message = error.getUserMessage();
-      JSONString userMessage = error.getClientInfo().isString();
-      if (userMessage != null)
-         message = userMessage.stringValue();
-      return message;
-   }
    
    private final Display view_ ; 
    private final PresentationServerOperations server_;
