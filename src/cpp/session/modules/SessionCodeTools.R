@@ -1244,3 +1244,7 @@
    
    object
 })
+
+.rs.addFunction("makePrimitiveWrapper", function(x) {
+   wrapper <- eval(parse(text = capture.output(x)), envir = parent.frame(1))
+})

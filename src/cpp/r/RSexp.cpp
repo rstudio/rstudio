@@ -23,6 +23,7 @@
 #include <boost/function.hpp>
 #include <boost/foreach.hpp>
 #include <boost/numeric/conversion/cast.hpp>
+#include <boost/optional.hpp>
 
 #include <core/Macros.hpp>
 #include <core/Log.hpp>
@@ -1033,38 +1034,190 @@ core::Error getNamespaceExports(SEXP ns,
    return error;
 }
 
-core::Error extractFormals(SEXP functionSEXP,
-                           std::map<std::string, std::string>* pFormals)
+namespace detail {
+
+bool addSymbolCheckedForMissingness(
+      SEXP nodeSEXP,
+      std::set<const char*>* pSymbolsCheckedForMissingness)
 {
+   if (TYPEOF(nodeSEXP) == LANGSXP &&
+       TYPEOF(CAR(nodeSEXP)) == SYMSXP &&
+       CDR(nodeSEXP) != R_NilValue &&
+       TYPEOF(CADR(nodeSEXP)) == SYMSXP &&
+       CDDR(nodeSEXP) == R_NilValue &&
+       strcmp(CHAR(PRINTNAME(CAR(nodeSEXP))), "missing") == 0)
+   {
+      pSymbolsCheckedForMissingness->insert(CHAR(PRINTNAME(CADR(nodeSEXP))));
+   }
+   return false;
+}
+
+bool addSymbols(
+      SEXP nodeSEXP,
+      std::set<const char*>* pSymbolsUsed)
+{
+   if (TYPEOF(nodeSEXP) == SYMSXP)
+      pSymbolsUsed->insert(CHAR(PRINTNAME(nodeSEXP)));
+   return false;
+}
+
+void examineSymbolUsage(
+      SEXP nodeSEXP,
+      std::set<const char*>* pSymbolsUsed,
+      std::set<const char*>* pSymbolsCheckedForMissingness)
+{
+   CallRecurser recurser(nodeSEXP);
+   recurser.add(boost::bind(addSymbols, _1, pSymbolsUsed));
+   recurser.add(boost::bind(addSymbolCheckedForMissingness, _1, pSymbolsCheckedForMissingness));
+   recurser.run();
+}
+
+} // namespace detail
+
+void examineSymbolUsage(
+      SEXP functionSEXP,
+      FunctionInformation* pInfo)
+{
+   if (Rf_isPrimitive(functionSEXP))
+      return;
+   
+   SEXP bodySEXP = BODY_EXPR(functionSEXP);
+   
+   // NOTE: const char* to re-use R's string cache
+   std::set<const char*> symbolsUsed;
+   std::set<const char*> symbolsCheckedForMissingness;
+   
+   detail::examineSymbolUsage(bodySEXP,
+                              &symbolsUsed,
+                              &symbolsCheckedForMissingness);
+   
+   // fill output
+   BOOST_FOREACH(FormalInformation& info, pInfo->formals())
+   {
+      const std::string& name = info.name;
+      info.isUsed = symbolsUsed.count(name.c_str());
+      info.missingnessHandled = symbolsCheckedForMissingness.count(name.c_str());
+   }
+}
+
+class PrimitiveWrappers : boost::noncopyable
+{
+   
+public:
+   
+   SEXP operator[](SEXP primitiveSEXP)
+   {
+      if (contains(primitiveSEXP))
+         return get(primitiveSEXP);
+      
+      r::sexp::Protect protect;
+      SEXP wrapperSEXP;
+      r::exec::RFunction makePrimitiveWrapper(".rs.makePrimitiveWrapper");
+      makePrimitiveWrapper.addParam(primitiveSEXP);
+      Error error = makePrimitiveWrapper.call(&wrapperSEXP, &protect);
+      if (error)
+         LOG_ERROR(error);
+      
+      R_PreserveObject(wrapperSEXP);
+      put(primitiveSEXP, wrapperSEXP);
+      return wrapperSEXP;
+   }
+   
+private:
+   bool contains(SEXP primitiveSEXP)
+   {
+      return database_.count(primitiveSEXP);
+   }
+   
+   SEXP get(SEXP primitiveSEXP)
+   {
+      return database_[primitiveSEXP];
+   }
+   
+   void put(SEXP primitiveSEXP, SEXP wrapperSEXP)
+   {
+      R_PreserveObject(wrapperSEXP);
+      database_[primitiveSEXP] = wrapperSEXP;
+   }
+   
+   std::map<SEXP, SEXP> database_;
+};
+
+PrimitiveWrappers& primitiveWrappers()
+{
+   static PrimitiveWrappers instance;
+   return instance;
+}
+
+SEXP primitiveWrapper(SEXP primitiveSEXP)
+{
+   PrimitiveWrappers& wrappers = primitiveWrappers();
+   return wrappers[primitiveSEXP];
+}
+
+core::Error extractFormals(
+      SEXP functionSEXP,
+      FunctionInformation* pInfo,
+      bool extractDefaultArguments,
+      bool recordSymbolUsage)
+{
+   r::sexp::Protect protect;
    if (!Rf_isFunction(functionSEXP))
       return Error(errc::UnexpectedDataTypeError, ERROR_LOCATION);
    
-   // TODO: Primitives don't have formals attached to them, but
-   // we could look them up in two environments in the base namespace,
-   // either '.ArgsEnv' or '.GenericArgsEnv'.
+   // Primitives don't actually have formals attached to them -- they are
+   // instead contained in a separate environment, and looking up those
+   // arguments involves the use of unexported (hidden) R functions. So,
+   // we mock the whole process by mapping primitive SEXPs to dummy functions
+   // which contain the appropriate formals.
+   bool isPrimitive = Rf_isPrimitive(functionSEXP);
+   pInfo->setIsPrimitive(isPrimitive);
+   if (isPrimitive)
+      functionSEXP = primitiveWrapper(functionSEXP);
+   
+   // TODO: Some primitives (e.g. language constructs like `if`, `return`)
+   // still do not have primitives; these functions only take arguments
+   // by position and so don't fit into this function's mold.
    if (Rf_isPrimitive(functionSEXP))
       return Success();
    
-   r::sexp::Protect protect;
    SEXP formals = FORMALS(functionSEXP);
    
    // NOTE: 'as.character' has different behaviour for pairlist of calls vs.
    // a call itself; we desire the behaviour associated with pairlists of
-   // calls
+   // calls (it generates a character vector, with the default values that
+   // the formals take as entries in that character vector). However, it does
+   // not distinguish between the case of having no default value, and an
+   // empty string as a default value, so we handle that specially.
    SEXP defaultValues;
-   protect.add(defaultValues = Rf_coerceVector(formals, STRSXP));
+   if (extractDefaultArguments)
+      protect.add(defaultValues = Rf_coerceVector(formals, STRSXP));
    
    // Iterate through the formals pairlist and append tag names
    // to the output.
    std::size_t index = 0;
    while (formals != R_NilValue)
    {
-      (*pFormals)[CHAR(PRINTNAME(TAG(formals)))] =
-            CHAR(STRING_ELT(defaultValues, index));
+      FormalInformation formalInfo(CHAR(PRINTNAME(TAG(formals))));
+      if (extractDefaultArguments)
+      {
+         if (CAR(formals) == R_MissingArg)
+         {
+            formalInfo.defaultValue = 
+                  boost::optional<std::string>(CHAR(STRING_ELT(defaultValues, index)));
+         }
+      }
       
       formals = CDR(formals);
       ++index;
+      pInfo->addFormal(formalInfo);
    }
+   
+   // Some callers might want to know whether a missing default argument
+   // is actually permissible. We attempt to infer this by checking whether
+   // 'missing' is called on that symbol name.
+   if (recordSymbolUsage)
+      examineSymbolUsage(functionSEXP, pInfo);
    
    return Success();
 }
@@ -1072,6 +1225,3 @@ core::Error extractFormals(SEXP functionSEXP,
 } // namespace sexp   
 } // namespace r
 } // namespace rstudio
-
-
-

@@ -45,12 +45,12 @@
 
 #else
 
-# define RSTUDIO_DEBUG(x)                                                      \
+#define RSTUDIO_DEBUG(x)                                                       \
    do                                                                          \
    {                                                                           \
-      std::cerr << "(" << RSTUDIO_DEBUG_LABEL << ":"                           \
-                << std::setw(4) << std::setfill('0') << __LINE__ << "): "      \
-                << x << std::endl;                                             \
+         std::cerr << "(" << RSTUDIO_DEBUG_LABEL << ":" << std::setw(4)        \
+                   << std::setfill('0') << __LINE__ << "): " << x              \
+                   << std::endl;                                               \
    } while (0)
 
 # define RSTUDIO_DEBUG_LINE(x)                                                 \
@@ -64,8 +64,9 @@
    } while (0)
 
 #define RSTUDIO_DEBUG_BLOCK(x)                                                 \
-   std::cerr << "(" << RSTUDIO_DEBUG_LABEL << ":" << std::setw(4)              \
-             << std::setfill('0') << __LINE__ << "): " << x << std::endl;      \
+   if (strlen(x))                                                              \
+      std::cerr << "(" << RSTUDIO_DEBUG_LABEL << ":" << std::setw(4)           \
+                << std::setfill('0') << __LINE__ << "): " << x << std::endl;   \
    if (true)
 
 #endif /* Debug logging macros */
