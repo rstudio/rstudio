@@ -487,6 +487,12 @@ inline RToken::TokenType typeComplement(RToken::TokenType lhsType)
    }
 }
 
+inline bool canContinueStatement(const RToken& rToken)
+{
+   return isBinaryOp(rToken) ||
+           canOpenArgumentList(rToken);
+}
+
 } // end namespace token_utils
 
 } // namespace r_util

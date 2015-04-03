@@ -170,7 +170,19 @@ public class SnippetHelper
    
    public void applySnippet(String token, String snippetName)
    {
-      editor_.expandSelectionLeft(token.length());
+      // Set the selection based on what we want to replace. For auto-paired
+      // insertions, e.g. `[|]`, we want to replace both characters; typically
+      // we only want to replace the token.
+      int offset = token.length();
+      if (StringUtil.isComplementOf(
+            token.substring(offset - 1),
+            String.valueOf(editor_.getCharacterAtCursor())))
+      {
+         editor_.moveCursorRight();
+         offset++;
+      }
+      editor_.expandSelectionLeft(offset);
+      
       String snippetContent = transformMacros(
             getSnippetContents(snippetName));
       

@@ -14,6 +14,9 @@
  */
 package org.rstudio.studio.client.workbench.views.output.lint.model;
 
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
+
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 
@@ -62,6 +65,13 @@ public class LintItem extends JavaScriptObject
    public final native String getType() /*-{
       return this["type"];
    }-*/;
+   
+   public final Range asRange()
+   {
+      return Range.fromPoints(
+            Position.create(getStartRow(), getStartColumn()),
+            Position.create(getEndRow(), getEndColumn()));
+   }
    
    public final AceAnnotation asAceAnnotation()
    {

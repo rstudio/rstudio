@@ -2118,9 +2118,24 @@ public class AceEditor implements DocDisplay,
       widget_.getEditor().moveCursorLeft(times);
    }
    
+   public void moveCursorRight()
+   {
+      moveCursorRight(1);
+   }
+   
+   public void moveCursorRight(int times)
+   {
+      widget_.getEditor().moveCursorRight(times);
+   }
+   
    public void expandSelectionLeft(int times)
    {
       widget_.getEditor().expandSelectionLeft(times);
+   }
+   
+   public void expandSelectionRight(int times)
+   {
+      widget_.getEditor().expandSelectionRight(times);
    }
    
    public int getTabSize()

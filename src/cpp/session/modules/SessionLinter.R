@@ -75,7 +75,7 @@
 
 .rs.addFunction("lintRFile", function(filePath)
 {
-   .Call("rs_lintRFile", filePath)
+   .Call(.rs.routines$rs_lintRFile, filePath)
 })
 
 .rs.addFunction("showLintMarkers", function(lint, filePath)

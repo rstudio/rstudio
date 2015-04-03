@@ -24,6 +24,7 @@
 #include <boost/foreach.hpp>
 #include <boost/numeric/conversion/cast.hpp>
 
+#include <core/Macros.hpp>
 #include <core/Log.hpp>
 #include <core/DateTime.hpp>
 
@@ -97,6 +98,16 @@ bool fillSetString(SEXP object, std::set<std::string>* pSet)
    return true;
 }
 
+std::vector<std::string> getLoadedNamespaces()
+{
+   std::vector<std::string> result;
+   r::exec::RFunction loadedNamespaces("loadedNamespaces", "base");
+   Error error = loadedNamespaces.call(&result);
+   if (error)
+      LOG_ERROR(error);
+   return result;
+}
+
 SEXP findNamespace(const std::string& name)
 {
    if (name.empty())
@@ -105,7 +116,11 @@ SEXP findNamespace(const std::string& name)
    // case 4071: namespace look up executes R code that can trip the debugger
    DisableDebugScope disableStepInto(R_GlobalEnv);
 
-   return R_FindNamespace(Rf_mkString(name.c_str()));
+   // R_FindNamespace will throw if it fails to find a particular name.
+   // Instead, we manually search the namespace registry.
+   SEXP nameSEXP = Rf_install(name.c_str());
+   SEXP ns = Rf_findVarInFrame(R_NamespaceRegistry, nameSEXP);
+   return ns;
 }
    
 void listEnvironment(SEXP env, 
@@ -172,24 +187,61 @@ SEXP findVar(const std::string& name, const std::string& ns)
    
    return findVar(name, env);
 }
-  
+
 SEXP findFunction(const std::string& name, const std::string& ns) 
 {
+   r::sexp::Protect protect;
    if (name.empty())
       return R_UnboundValue;
    
    SEXP env = ns.empty() ? R_GlobalEnv : findNamespace(ns);
+   if (env == R_UnboundValue) return R_UnboundValue;
    
-   SEXP functionSEXP;
-   Error error = executeSafely<SEXP>(
-      boost::bind(Rf_findFun, Rf_install(name.c_str()), env), 
-      &functionSEXP
-   );
+   // We might want to use `Rf_findFun`, but it calls `Rf_error`
+   // on failure, which involves printing the error message out
+   // to the console. To avoid this,
+   // we instead attempt to find the function by manually
+   // walking through the environment (and its enclosing environments)
+   SEXP nameSEXP = Rf_install(name.c_str());
    
-   if (error)
-      return R_UnboundValue;
-   else
-      return functionSEXP ;
+   // Search through frames until we find the global environment.
+   while (env != R_EmptyEnv)
+   {
+      // If we're searching the global environment, then
+      // try using 'Rf_findVar', as this will attempt a search
+      // of R's own internal global cache.
+      if (env == R_GlobalEnv)
+      {
+         SEXP resultSEXP = Rf_findVar(nameSEXP, R_GlobalEnv);
+         if (Rf_isFunction(resultSEXP))
+            return resultSEXP;
+         else if (TYPEOF(resultSEXP) == PROMSXP)
+         {
+            protect.add(resultSEXP = Rf_eval(resultSEXP, env));
+            if (Rf_isFunction(resultSEXP))
+               return resultSEXP;
+         }
+      }
+      
+      // Otherwise, just perform a simple search through
+      // the current frame.
+      SEXP resultSEXP = Rf_findVarInFrame(env, nameSEXP);
+      if (resultSEXP != R_UnboundValue)
+      {
+         if (Rf_isFunction(resultSEXP))
+            return resultSEXP;
+         else if (TYPEOF(resultSEXP) == PROMSXP)
+         {
+            protect.add(resultSEXP = Rf_eval(resultSEXP, env));
+            if (Rf_isFunction(resultSEXP))
+               return resultSEXP;
+         }
+      }
+      
+      env = ENCLOS(env);
+   }
+   
+   return R_UnboundValue;
 }   
    
 std::string typeAsString(SEXP object)
@@ -836,6 +888,154 @@ void printValue(SEXP object)
 bool inherits(SEXP object, const char* S3Class)
 {
    return Rf_inherits(object, S3Class);
+}
+
+std::set<std::string> makeNsePrimitives()
+{
+   std::set<std::string> nsePrimitives;
+   nsePrimitives.insert("quote");
+   nsePrimitives.insert("substitute");
+   nsePrimitives.insert("match.call");
+   nsePrimitives.insert("library");
+   nsePrimitives.insert("require");
+   nsePrimitives.insert("enquote");
+   nsePrimitives.insert("bquote");
+   nsePrimitives.insert("expression");
+   nsePrimitives.insert("evalq");
+   nsePrimitives.insert("subset");
+   return nsePrimitives;
+}
+
+const std::set<std::string>& nsePrimitives()
+{
+   static const std::set<std::string> set = makeNsePrimitives();
+   return set;
+}
+
+bool isCallToNSEFunction(SEXP node,
+                         const std::set<std::string>& nsePrimitives)
+{
+   if (TYPEOF(node) != LANGSXP)
+      return false;
+   
+   SEXP head = CAR(node);
+   while (TYPEOF(head) == LANGSXP)
+      head = CAR(head);
+   
+   return TYPEOF(head) == SYMSXP &&
+          nsePrimitives.count(CHAR(PRINTNAME(head)));
+}
+
+// Attempts to find calls to functions which perform NSE.
+bool maybePerformsNSEImpl(SEXP node,
+                          const std::set<std::string>& nsePrimitives)
+{
+   // Check
+   if (isCallToNSEFunction(node, nsePrimitives))
+      return true;
+   
+   // Recurse
+   if (TYPEOF(node) == LANGSXP)
+   {
+      SEXP tail = CDR(node);
+      SEXP head = CAR(tail);
+      while (tail != R_NilValue)
+      {
+         if (TYPEOF(head) == LANGSXP && maybePerformsNSEImpl(head, nsePrimitives))
+            return true;
+         
+         tail = CDR(tail);
+         head = CAR(tail);
+      }
+   }
+   
+   return false;
+}
+
+bool maybePerformsNSE(SEXP function)
+{
+   if (!Rf_isFunction(function))
+      return false;
+   
+   if (Rf_isPrimitive(function))
+      return false;
+   
+   return maybePerformsNSEImpl(
+            BODY_EXPR(function),
+            nsePrimitives());
+}
+
+// NOTE: Uses `R_lsInternal` which throws error if a non-environment is
+// passed; we therefore perform this validation ourselves before calling
+// `R_lsInternal`. This is primarily done to avoid the error being printed
+// out to the R console.
+SEXP objects(SEXP environment,
+             bool allNames,
+             Protect* pProtect)
+{
+   if (TYPEOF(environment) != ENVSXP)
+   {
+      LOG_ERROR_MESSAGE("'objects' called on non-environment");
+      return R_NilValue;
+   }
+   
+   SEXP resultSEXP;
+   pProtect->add(resultSEXP = R_lsInternal(environment, allNames ? TRUE : FALSE));
+   return resultSEXP;
+}
+
+Error objects(SEXP environment,
+              bool allNames,
+              std::vector<std::string>* pNames)
+{
+   Protect protect;
+   SEXP objectsSEXP = objects(environment, allNames, &protect);
+   
+   if (Rf_isNull(objectsSEXP))
+      return Error(errc::CodeExecutionError, ERROR_LOCATION);
+   
+   if (!fillVectorString(objectsSEXP, pNames))
+      return Error(errc::CodeExecutionError, ERROR_LOCATION);
+   
+   return Success();
+}
+
+core::Error getNamespaceExports(SEXP ns,
+                                std::vector<std::string>* pNames)
+{
+   r::exec::RFunction f("getNamespaceExports");
+   f.addParam(ns);
+   Error error = f.call(pNames);
+   if (error)
+      LOG_ERROR(error);
+   return error;
+}
+
+core::Error extractFormalNames(SEXP functionSEXP,
+                               std::vector<std::string>* pNames)
+{
+   if (!Rf_isFunction(functionSEXP))
+      return Error(errc::UnexpectedDataTypeError, ERROR_LOCATION);
+   
+   // TODO: Primitives don't have formals attached to them, but
+   // we could look them up in two environments in the base namespace,
+   // either '.ArgsEnv' or '.GenericArgsEnv'.
+   if (Rf_isPrimitive(functionSEXP))
+      return Success();
+   
+   SEXP formals = FORMALS(functionSEXP);
+   
+   // Iterate through the formals pairlist and append tag names
+   // to the output.
+   while (formals != R_NilValue)
+   {
+      if (TAG(formals) != R_NilValue)
+         pNames->push_back(CHAR(PRINTNAME(TAG(formals))));
+      
+      formals = CDR(formals);
+   }
+   
+   return Success();
 }
 
 } // namespace sexp   

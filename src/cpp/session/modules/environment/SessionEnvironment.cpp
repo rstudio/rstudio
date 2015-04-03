@@ -160,7 +160,7 @@ Error invokeFunctionOnCall(const char* rFunction,
                             .call(&result, &protect);
    if (!error && r::sexp::length(result) > 0)
    {
-      error = r::sexp::extract(result, pResult);
+      error = r::sexp::extract(result, pResult, true);
    }
    else
    {
@@ -622,11 +622,20 @@ bool functionIsOutOfSync(const RCNTXT *pContext,
                          std::string *pFunctionCode)
 {
    Error error;
+   r::sexp::Protect protect;
+   SEXP sexpCode = R_NilValue;
 
    // start by extracting the source code from the call site
    error = r::exec::RFunction(".rs.sourceCodeFromFunction",
                               getOriginalFunctionCallObject(pContext))
-         .call(pFunctionCode);
+         .call(&sexpCode, &protect);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return true;
+   }
+
+   error = r::sexp::extract(sexpCode, pFunctionCode, true);
    if (error)
    {
       LOG_ERROR(error);

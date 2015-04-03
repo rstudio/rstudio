@@ -21,6 +21,9 @@
 #ifndef SESSION_MODULES_RPARSER_HPP
 #define SESSION_MODULES_RPARSER_HPP
 
+// #define RSTUDIO_DEBUG_LABEL "parser"
+// #define RSTUDIO_ENABLE_DEBUG_MACROS
+
 #include <vector>
 #include <map>
 #include <set>
@@ -28,9 +31,11 @@
 #include <iomanip>
 
 #include <core/r_util/RTokenizer.hpp>
-
 #include <core/collection/Position.hpp>
 #include <core/collection/Stack.hpp>
+
+#include <r/RSexp.hpp>
+#include <r/RExec.hpp>
 
 #include <boost/container/flat_set.hpp>
 #include <boost/shared_ptr.hpp>
@@ -45,73 +50,6 @@ namespace modules {
 namespace rparser {
 
 using namespace core::collection;
-
-class NseFunctionBlacklist : boost::noncopyable
-{
-public:
-   void add(const std::wstring& item) { data_.insert(item); }
-   void remove(const std::wstring& item) { data_.erase(item); }
-   bool contains(const std::wstring& item) { return data_.count(item); }
-   void clear() { data_.clear(); }
-   
-   void sync();
-   
-   static NseFunctionBlacklist& instance()
-   {
-      static NseFunctionBlacklist instance;
-      instance.ensureInitialized();
-      return instance;
-   }
-   
-private:
-   
-   NseFunctionBlacklist()
-      : initialized_(false)
-   {}
-   
-   void addProjectBlacklistedSymbols();
-   void addGlobalBlacklistedSymbols();
-   void addLintFromFile(const core::FilePath& filePath);
-   
-   void populateDefaults()
-   {
-      // base R non-standard eval
-      add(std::wstring(L"library"));
-      add(std::wstring(L"require"));
-      add(std::wstring(L"quote"));
-      add(std::wstring(L"substitute"));
-      add(std::wstring(L"enquote"));
-      add(std::wstring(L"expression"));
-      add(std::wstring(L"evalq"));
-      add(std::wstring(L"subset"));
-
-      // other functions (std::wstring(e.g. dplyr))
-      // TODO: Should probably provide some kind of hook that packages can set to
-      // help the linter properly understand which functions perform NSE
-      add(std::wstring(L"summarise"));
-      add(std::wstring(L"mutate"));
-      add(std::wstring(L"select"));
-      add(std::wstring(L"arrange"));
-      add(std::wstring(L"filter"));
-      add(std::wstring(L"n"));
-      add(std::wstring(L"mutate_each"));
-      add(std::wstring(L"group_by"));
-      add(std::wstring(L"ntile"));
-      add(std::wstring(L"rename"));
-   }
-
-   void ensureInitialized()
-   {
-      if (initialized_)
-         return;
-      
-      initialized_ = true;
-      populateDefaults();
-   }
-   
-   boost::container::flat_set<std::wstring> data_;
-   bool initialized_;
-};
 
 class ParseOptions
 {
@@ -798,6 +736,7 @@ public:
    void pushFunctionCallState(ParseState state,
                               const std::wstring& functionName)
    {
+      DEBUG("Pushing state: " << stateAsString(state));
       parseStateStack_.push(state);
       functionNames_.push(functionName);
    }
@@ -847,7 +786,14 @@ public:
       }
 
       if (currentState() != ParseStateTopLevel)
+      {
+         DEBUG("Popping state: " << currentStateAsString());
          parseStateStack_.pop();
+      }
+      else
+      {
+         DEBUG("Already at top level; no state to pop");
+      }
    }
    
    ParseState peekState(std::size_t depth = 0) const
@@ -893,12 +839,12 @@ public:
    
    std::string currentStateAsString() const { return stateAsString(currentState()); }
    
-   bool isAtTopLevel()
+   bool isAtTopLevel() const
    {
       return currentState() == ParseStateTopLevel;
    }
    
-   bool isInArgumentList()
+   bool isInArgumentList() const
    {
       switch (currentState())
       {
@@ -912,7 +858,7 @@ public:
       }
    }
    
-   bool isInControlFlowStatement()
+   bool isInControlFlowStatement() const
    {
       switch (currentState())
       {
@@ -927,7 +873,7 @@ public:
       }
    }
    
-   bool isInControlFlowExpression()
+   bool isInControlFlowExpression() const
    {
       switch (currentState())
       {
@@ -942,7 +888,7 @@ public:
       }
    }
    
-   bool isInControlFlowCondition()
+   bool isInControlFlowCondition() const
    {
       switch (currentState())
       {
@@ -955,7 +901,7 @@ public:
       }
    }
    
-   bool isInParentheticalScope()
+   bool isInParentheticalScope() const
    {
       switch (currentState())
       {

@@ -87,11 +87,49 @@ void addUnreferencedSymbol(const ParseItem& item,
    }
 }
 
-void addInferredSymbols(std::set<std::string>* pSymbols)
+void addInferredSymbols(const FilePath& filePath,
+                        const std::string& documentId,
+                        std::set<std::string>* pSymbols)
 {
-   BOOST_FOREACH(const AsyncLibraryCompletions& completions,
-                 RSourceIndex::getAllCompletions() | boost::adaptors::map_values)
+   using namespace code_search;
+   using namespace source_database;
+   
+   // First, try to get the R source index directly from the id.
+   boost::shared_ptr<RSourceIndex> index =
+         rSourceIndex().get(documentId);
+   
+   // If that failed for some reason, just re-read and re-parse
+   // the document from that file path
+   if (!index)
    {
+      LOG_WARNING_MESSAGE("Failed to locate document with id '" + documentId + "'");
+      // Get the source index associated with this filepath.
+      // We have to round trip to map this filePath to a source
+      // document, grab that ID, and then get the index.
+      boost::shared_ptr<SourceDocument> pDoc(new SourceDocument());
+      Error error = source_database::get(filePath.filename(), pDoc);
+      if (error)
+      {
+         LOG_ERROR(error);
+         return;
+      }
+
+      const std::string& id = pDoc->id();
+      index = rSourceIndex().get(id);
+   }
+   
+   // If we still don't have an index, bail
+   if (!index)
+      return;
+   
+   // We have the index -- now list the packages discovered in
+   // 'library' calls, and add those here.
+   BOOST_FOREACH(const std::string& package,
+                index->getInferredPackages())
+   {
+      const AsyncLibraryCompletions& completions =
+            index->getCompletions(package);
+      
       pSymbols->insert(completions.exports.begin(),
                        completions.exports.end());
    }
@@ -99,41 +137,156 @@ void addInferredSymbols(std::set<std::string>* pSymbols)
 
 void addNamespaceSymbols(std::set<std::string>* pSymbols)
 {
+   // Add symbols specifically mentioned as 'importFrom'
+   // directives in the NAMESPACE.
    BOOST_FOREACH(const std::set<std::string>& symbolNames,
                  RSourceIndex::getImportFromDirectives() | boost::adaptors::map_values)
    {
       pSymbols->insert(symbolNames.begin(), symbolNames.end());
    }
+   
+   // Make all (exported) symbols published by packages
+   // that are 'import'ed in the NAMESPACE.
+   BOOST_FOREACH(const std::string& package,
+                 RSourceIndex::getImportedPackages())
+   {
+      const AsyncLibraryCompletions& completions =
+            RSourceIndex::getCompletions(package);
+      pSymbols->insert(
+               completions.exports.begin(),
+               completions.exports.end());
+   }
 }
 
-Error getAllAvailableRSymbols(const FilePath& filePath,
-                              std::set<std::string>* pSymbols)
+void fillNamespaceExports(const std::string& nsName,
+                          std::vector<std::string>* pSymbols)
 {
-   using namespace r::exec;
+   r::sexp::Protect protect;
+   SEXP ns = r::sexp::findNamespace(nsName);
+   if (ns == R_UnboundValue)
+      return;
    
-   Error error = RFunction(".rs.availableRSymbols").call(pSymbols);
+   Error error = r::sexp::getNamespaceExports(ns, pSymbols);
+   if (error)
+      LOG_ERROR(error);
+}
+
+class ExportedSymbolsRegistry : boost::noncopyable
+{
+public:
+   
+   typedef std::map<std::string, std::vector<std::string> > Registry;
+   
+   void fillExportedSymbols(const std::string& pkgName,
+                            std::set<std::string>* pOutput)
+   {
+      if (!registry_.count(pkgName))
+         fillNamespaceExports(pkgName, &registry_[pkgName]);
+      
+      const std::vector<std::string>& symbols = registry_[pkgName];
+      pOutput->insert(
+               symbols.begin(),
+               symbols.end());
+   }
+
+private:
+   Registry registry_;
+};
+
+ExportedSymbolsRegistry& exportedSymbolsRegistry()
+{
+   static ExportedSymbolsRegistry instance;
+   return instance;
+}
+
+void addBaseSymbols(std::set<std::string>* pSymbols)
+{
+   ExportedSymbolsRegistry& registry = exportedSymbolsRegistry();
+   registry.fillExportedSymbols("base", pSymbols);
+   registry.fillExportedSymbols("graphics", pSymbols);
+   registry.fillExportedSymbols("grDevices", pSymbols);
+   registry.fillExportedSymbols("methods", pSymbols);
+   registry.fillExportedSymbols("stats", pSymbols);
+   registry.fillExportedSymbols("stats4", pSymbols);
+   registry.fillExportedSymbols("utils", pSymbols);
+}
+
+// For an R package, symbols are looked up in this order:
+//
+// 1) The package's own objects (exported or not),
+// 2) In a special environment for 'importFrom' objects,
+// 3) In the set of namespaces gathered through 'import',
+// 4) The base namespace.
+//
+// We don't want to search for symbols on the search path here,
+// since they would not get properly resolved at runtime.
+Error getAvailableSymbolsForPackage(const FilePath& filePath,
+                                    const std::string& documentId,
+                                    std::set<std::string>* pSymbols)
+{
+   // Add project symbols (ie, top-level symbols within an R package)
+   code_search::addAllProjectSymbols(pSymbols);
+   
+   // Symbols inferred from the NAMESPACE (importFrom, import)
+   addNamespaceSymbols(pSymbols);
+   
+   // Add symbols made available by explicit `library()` calls
+   // within this document.
+   addInferredSymbols(filePath, documentId, pSymbols);
+   
+   // Symbols that are 'automatically' made available to packages. In other
+   // words, symbols that packages can use without explicitly importing them.
+   // In other words, symbols that `R CMD check` will silently resolve to one
+   // of the base packages. Note that not all `base` packages are allowed here.
+   // These packages appear to be (as of R 3.1.0):
+   //
+   //     base, graphics, grDevices, methods, stats, stats4, utils
+   //
+   addBaseSymbols(pSymbols);
+   
+   return Success();
+}
+
+// For a generic R project, we are less strict on where we attempt
+// to discover objects -- we simply consider all symbols available on
+// the current search path.
+Error getAvailableSymbolsForProject(const FilePath& filePath,
+                                    const std::string& documentId,
+                                    std::set<std::string>* pSymbols)
+{
+   // Get all available symbols on the search path.
+   Error error = r::exec::RFunction(".rs.availableRSymbols").call(pSymbols);
    if (error)
       return error;
    
    // Get all of the symbols made available by `library()` calls
-   addInferredSymbols(pSymbols);
-   
-   // Add symbols made available from a package NAMESPACE
-   if (projects::projectContext().directory().complete("NAMESPACE").exists())
-      addNamespaceSymbols(pSymbols);
-
-   // If this is an R package project, get the symbols for all functions
-   // etc. in the project.
-   if (filePath.isWithin(projects::projectContext().directory()))
-      code_search::addAllProjectSymbols(pSymbols);
+   // within this document.
+   addInferredSymbols(filePath, documentId, pSymbols);
    
    return Success();
+}
+
+
+
+Error getAllAvailableRSymbols(const FilePath& filePath,
+                              const std::string& documentId,
+                              std::set<std::string>* pSymbols)
+{
+   // If this file lies within the current project, then
+   // we want to pull symbols from specific places -- specifically,
+   // _not_ the current search path. We want to infer whether the
+   // functions in the package would work at runtime.
+   if (module_context::isRScriptInPackageBuildTarget(filePath))
+      return getAvailableSymbolsForPackage(filePath, documentId, pSymbols);
+   else
+      return getAvailableSymbolsForProject(filePath, documentId, pSymbols);
 }
 
 } // end anonymous namespace
 
 ParseResults parse(const std::wstring& rCode,
-                   const FilePath& origin)
+                   const FilePath& origin,
+                   const std::string& documentId = std::string())
 {
    ParseResults results;
    
@@ -167,9 +320,9 @@ ParseResults parse(const std::wstring& rCode,
    
    // Now, find all available R symbols -- that is, objects on the search path,
    // or symbols that would otherwise be made available at runtime (e.g.
-   // pacakge imports)
+   // package imports)
    std::set<std::string> objects;
-   Error error = getAllAvailableRSymbols(origin, &objects);
+   Error error = getAllAvailableRSymbols(origin, documentId, &objects);
    if (error)
    {
       LOG_ERROR(error);
@@ -191,9 +344,10 @@ ParseResults parse(const std::wstring& rCode,
 }
 
 ParseResults parse(const std::string& rCode,
-                   const FilePath& origin)
+                   const FilePath& origin,
+                   const std::string& documentId)
 {
-   return parse(string_utils::utf8ToWide(rCode), origin);
+   return parse(string_utils::utf8ToWide(rCode), origin, documentId);
 }
 
 namespace {
@@ -320,7 +474,7 @@ Error lintRSourceDocument(const json::JsonRpcRequest& request,
       return error;
    }
    
-   ParseResults results = parse(content, origin);
+   ParseResults results = parse(content, origin, documentId);
    
    pResponse->setResult(lintAsJson(results.lint()));
    
@@ -362,7 +516,7 @@ SEXP rs_lintRFile(SEXP filePathSEXP)
    }
    
    std::string rCode = file_utils::readFile(filePath);
-   ParseResults results = parse(rCode, filePath);
+   ParseResults results = parse(rCode, filePath, std::string());
    const std::vector<LintItem>& lint = results.lint().get();
    
    std::size_t n = lint.size();
@@ -397,7 +551,7 @@ SEXP rs_loadString(SEXP rCodeSEXP)
 SEXP rs_parse(SEXP rCodeSEXP)
 {
    std::string code = r::sexp::safeAsString(rCodeSEXP);
-   ParseResults results = parse(code, FilePath());
+   ParseResults results = parse(code, FilePath(), std::string());
    r::sexp::Protect protect;
    return r::sexp::create((int) results.lint().size(), &protect);
 }
@@ -449,11 +603,6 @@ void onNAMESPACEchanged()
    r_completions::AsyncRCompletions::update();
 }
 
-void onLintBlacklistChanged()
-{
-   NseFunctionBlacklist::instance().sync();
-}
-
 void onFilesChanged(const std::vector<core::system::FileChangeEvent>& events)
 {
    std::string namespacePath =
@@ -467,8 +616,6 @@ void onFilesChanged(const std::vector<core::system::FileChangeEvent>& events)
       std::string eventPath = event.fileInfo().absolutePath();
       if (eventPath == namespacePath)
          onNAMESPACEchanged();
-      else if (eventPath == lintFilePath)
-         onLintBlacklistChanged();
    }
 }
 
@@ -656,9 +803,6 @@ core::Error initialize()
          (bind(registerRpcMethod, "lint_r_source_document", lintRSourceDocument))
          (bind(registerRpcMethod, "save_snippets", saveSnippets));
    
-   // call once on initialization to ensure lint up to date
-   onLintBlacklistChanged();
-
    return initBlock.execute();
 
 }

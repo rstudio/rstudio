@@ -154,8 +154,8 @@ public class ConsoleDispatcher
                      "(" + escapedPath);
          else
          {
-            code.append((debug ? "debugSource" : "source.with.encoding") + 
-                  "(" + escapedPath + ", encoding='" +
+            code.append((debug ? "debugSource" : "source") + 
+                  "(" + escapedPath + ", encoding = '" +
                   (!StringUtil.isNullOrEmpty(encoding) ? encoding : "UTF-8") +
                   "'");
          }

@@ -16,7 +16,14 @@
 // #define RSTUDIO_ENABLE_PROFILING
 // #define RSTUDIO_ENABLE_DEBUG_MACROS
 #define RSTUDIO_DEBUG_LABEL "parser"
+
+// We use a couple internal R functions here; in particular,
+// simple accessors (which we know will not longjmp)
+#define R_INTERNAL_FUNCTIONS
+
 #include <core/Macros.hpp>
+#include <core/algorithm/Set.hpp>
+#include <core/StringUtils.hpp>
 #include <core/FileSerializer.hpp>
 
 #include "SessionRParser.hpp"
@@ -27,6 +34,7 @@
 
 #include <r/RExec.hpp>
 #include <r/RSexp.hpp>
+#include <r/RRoutines.hpp>
 
 #include <boost/container/flat_set.hpp>
 #include <boost/timer/timer.hpp>
@@ -36,7 +44,6 @@ namespace rstudio {
 namespace session {
 namespace modules {
 namespace rparser {
-
 
 void LintItems::dump()
 {
@@ -49,55 +56,6 @@ using namespace core::r_util;
 using namespace core::r_util::token_utils;
 using namespace token_cursor;
 
-void NseFunctionBlacklist::sync()
-{
-   clear();
-   populateDefaults();
-   addProjectBlacklistedSymbols();
-   addGlobalBlacklistedSymbols();
-}
-
-void NseFunctionBlacklist::addLintFromFile(const FilePath& filePath)
-{
-   if (!filePath.exists())
-      return;
-   
-   std::vector<std::string> symbols;
-   core::readStringVectorFromFile(
-            filePath,
-            &symbols);
-
-   BOOST_FOREACH(const std::string& symbol, symbols)
-   {
-      add(string_utils::utf8ToWide(symbol));
-   }
-}
-
-void NseFunctionBlacklist::addProjectBlacklistedSymbols()
-{
-   // Read lint items from a project lint file (if it exists)
-   FilePath projectLintFile =
-         projects::projectContext().directory().childPath("RStudioLintBlacklist");
-   
-   addLintFromFile(projectLintFile);
-}
-   
-void NseFunctionBlacklist::addGlobalBlacklistedSymbols()
-{
-   FilePath homePath = module_context::userHomePath();
-   
-   if (!homePath.exists())
-      return;
-   
-   FilePath globalLintFile =
-         homePath.childPath(".R").childPath("RStudioLintBlacklist");
-   
-   if (!globalLintFile.exists())
-      return;
-   
-   addLintFromFile(globalLintFile);
-}
-
 namespace {
 
 bool isWithinNseFunction(const ParseStatus& status)
@@ -106,13 +64,6 @@ bool isWithinNseFunction(const ParseStatus& status)
    if (status.withinNseCall())
       return true;
    
-   // Check the blacklist of symbol names
-   NseFunctionBlacklist& blacklist = NseFunctionBlacklist::instance();
-   BOOST_FOREACH(const std::wstring& fnName, status.functionNames())
-   {
-      if (blacklist.contains(fnName))
-         return true;
-   }
    return false;
 }
 
@@ -166,18 +117,138 @@ bool isDataTableSingleBracketCall(RTokenCursor& cursor)
    return r::sexp::inherits(resultSEXP, "data.table");
 }
 
-bool mightPerformNonstandardEvaluation(const std::wstring& callingString)
+class NSEDatabase : boost::noncopyable
 {
-   using namespace r::exec;
-   RFunction maybePerformsNSE(".rs.maybePerformsNSE");
-   maybePerformsNSE.addParam(string_utils::wideToUtf8(callingString));
+public:
    
-   bool performsNSE = false;
-   Error error = maybePerformsNSE.call(&performsNSE);
-   if (error)
-      LOG_ERROR(error);
+   NSEDatabase()
+   {
+   }
    
-   return performsNSE;
+   void add(SEXP symbolSEXP, bool performsNse)
+   {
+      database_[address(symbolSEXP)] = performsNse;
+   }
+   
+   bool isKnownToPerformNSE(SEXP symbolSEXP)
+   {
+      return database_.count(address(symbolSEXP)) &&
+             database_[address(symbolSEXP)];
+   }
+   
+   bool isKnownNotToPerformNSE(SEXP symbolSEXP)
+   {
+      return database_.count(address(symbolSEXP)) &&
+             !database_[address(symbolSEXP)];
+   }
+   
+   bool isNotYetCached(SEXP symbolSEXP)
+   {
+      return !database_.count(address(symbolSEXP));
+   }
+   
+private:
+   
+   uintptr_t address(SEXP objectSEXP)
+   {
+      return reinterpret_cast<uintptr_t>(objectSEXP);
+   }
+   
+   std::map<uintptr_t, bool> database_;
+};
+
+NSEDatabase& nseDatabase()
+{
+   static NSEDatabase instance;
+   return instance;
+}
+
+// TODO: Implement per-parse cache so that we avoid repeated
+// evaluations of the same symbol
+SEXP resolveFunctionAtCursor(RTokenCursor cursor,
+                             r::sexp::Protect* pProtect,
+                             bool* pCacheable = NULL)
+{
+   if (canOpenArgumentList(cursor))
+      if (!cursor.moveToPreviousSignificantToken())
+         return R_UnboundValue;
+   
+   // Attempt to resolve (potentially evaluate) the symbol, or statement,
+   // forming the function call.
+   SEXP symbolSEXP = R_UnboundValue;
+   if (pCacheable) *pCacheable = true;
+   
+   if (cursor.isSimpleCall())
+   {
+      std::string symbol = string_utils::strippedOfQuotes(
+               cursor.contentAsUtf8());
+      
+      symbolSEXP = r::sexp::findFunction(symbol);
+   }
+   else if (cursor.isSimpleNamespaceCall())
+   {
+      std::string symbol = string_utils::strippedOfQuotes(
+               cursor.contentAsUtf8());
+      
+      std::string ns = string_utils::strippedOfQuotes(
+               cursor.previousSignificantToken(2).contentAsUtf8());
+      
+      symbolSEXP = r::sexp::findFunction(symbol, ns);
+   }
+   else
+   {
+      if (pCacheable) *pCacheable = false;
+      
+      std::string call = string_utils::wideToUtf8(cursor.getCallingString());
+      
+      // Don't evaluate nested function calls.
+      if (call.find('(') != std::string::npos)
+         return R_UnboundValue;
+      
+      Error error = r::exec::evaluateString(call, &symbolSEXP, pProtect);
+      if (error)
+      {
+         DEBUG("- Failed to evaluate call '" << call << "'");
+         return R_UnboundValue;
+      }
+   }
+   
+   return symbolSEXP;
+}
+
+bool mightPerformNonstandardEvaluation(const RTokenCursor& origin,
+                                       ParseStatus& status)
+{
+   RTokenCursor cursor = origin.clone();
+   
+   if (canOpenArgumentList(cursor))
+      if (!cursor.moveToPreviousSignificantToken())
+         return false;
+   
+   if (!canOpenArgumentList(cursor.nextSignificantToken()))
+      return false;
+   
+   bool cacheable = true;
+   r::sexp::Protect protect;
+   SEXP symbolSEXP = resolveFunctionAtCursor(cursor, &protect, &cacheable);
+   
+   if (symbolSEXP == R_UnboundValue || symbolSEXP == R_NilValue)
+      return false;
+   
+   NSEDatabase& nseDb = nseDatabase();
+   if (cacheable)
+   {
+      if (nseDb.isKnownToPerformNSE(symbolSEXP))
+         return true;
+      else if (nseDb.isKnownNotToPerformNSE(symbolSEXP))
+         return false;
+   }
+   
+   bool result = r::sexp::maybePerformsNSE(symbolSEXP);
+   if (cacheable)
+      nseDb.add(symbolSEXP, result);
+   
+   return result;
 }
 
 } // end anonymous namespace
@@ -448,7 +519,7 @@ void handleIdentifier(RTokenCursor& cursor,
    if (isExtractionOperator(cursor.previousSignificantToken()) ||
        isNamespace(cursor.nextSignificantToken()))
    {
-      DEBUG("--- Cursor preceded by extraction op; not adding");
+      DEBUG("--- Symbol preceded by extraction op; not adding");
       return;
    }
    
@@ -484,6 +555,7 @@ void handleIdentifier(RTokenCursor& cursor,
       if (isLocalLeftAssign(cursor.nextSignificantToken()) ||
           isLocalRightAssign(cursor.previousSignificantToken()))
       {
+         DEBUG("--- Adding definition for symbol");
          status.node()->addDefinedSymbol(cursor);
       }
       
@@ -596,6 +668,53 @@ void checkBinaryOperatorWhitespace(RTokenCursor& cursor,
    }
 }
 
+// Extract named arguments in a (tokenized) function call, e.g.
+//
+//     foo(alpha = 1, beta = 2, gamma = 3)
+//         ^^^^^      ^^^^      ^^^^^
+//
+std::vector<std::string> extractNamedArguments(RTokenCursor cursor)
+{
+   std::vector<std::string> result;
+   if (!isLeftBracket(cursor))
+      return result;
+   
+   if (!cursor.moveToNextSignificantToken())
+      return result;
+   
+   // Extract the first argument.
+   if (cursor.isType(RToken::ID) &&
+       cursor.nextSignificantToken().contentEquals(L"="))
+   {
+      result.push_back(cursor.contentAsUtf8());
+   }
+   
+   // Extract the rest of the arguments by finding the token sequence
+   //
+   //     , <id> =
+   //
+   // Bail once we find a closing paren, and walk over matching parens
+   // to handle expressions within the function argument list.
+   do
+   {
+      if (isRightBracket(cursor))
+         break;
+      
+      if (cursor.fwdToMatchingToken())
+         continue;
+      
+      if (cursor.isType(RToken::COMMA) &&
+          cursor.nextSignificantToken().isType(RToken::ID) &&
+          cursor.nextSignificantToken(2).contentEquals(L"="))
+      {
+         result.push_back(cursor.nextSignificantToken().contentAsUtf8());
+      }
+      
+   } while (cursor.moveToNextSignificantToken());
+   
+   return result;
+}
+
 void validateFunctionCall(const RTokenCursor& cursor,
                           ParseStatus& status)
 {
@@ -606,60 +725,83 @@ void validateFunctionCall(const RTokenCursor& cursor,
       return;
    
    RTokenCursor startCursor = cursor.clone();
-   if (!startCursor.moveToPreviousSignificantToken())
-      return;
-   
-   if (!startCursor.moveToStartOfEvaluation())
-      return;
+   startCursor.moveToStartOfEvaluation();
    
    RTokenCursor endCursor = cursor.clone();
-   if (!endCursor.fwdToMatchingToken())
+   endCursor.fwdToMatchingToken();
+   
+   r::sexp::Protect protect;
+   SEXP functionSEXP = resolveFunctionAtCursor(cursor, &protect);
+   if (functionSEXP == R_UnboundValue || !Rf_isFunction(functionSEXP))
       return;
-
-   std::string fnNameString = string_utils::wideToUtf8(
-       std::wstring(startCursor.begin(), cursor.begin()));
    
-   std::string fnCallString = string_utils::wideToUtf8(
-            std::wstring(startCursor.begin(), endCursor.end()));
+   // TODO: Handle primitives.
+   if (Rf_isPrimitive(functionSEXP))
+      return;
    
-   RFunction validate(".rs.validateFunctionCall");
-   validate.addParam(fnNameString);
-   validate.addParam(fnCallString);
-   
-   Protect protect;
-   SEXP resultSEXP;
-   
-   Error error = validate.call(&resultSEXP, &protect);
-   IF_ERROR(error, return);
-   
-   std::string message, type;
-   
-   error = getNamedListElement(resultSEXP, "message", &message);
-   IF_ERROR(error, return);
-   
-   error = getNamedListElement(resultSEXP, "type", &type);
-   IF_ERROR(error, return);
-   
-   if (!message.empty())
+   // Get the formals associated with this function.
+   std::vector<std::string> names;
+   Error error = extractFormalNames(functionSEXP, &names);
+   if (error)
    {
-      LintType lintType = LintTypeInfo;
-      if (type == "error")
-         lintType = LintTypeError;
-      else if (type == "warning")
-         lintType = LintTypeWarning;
-      else if (type == "note" || type == "info")
-         lintType = LintTypeInfo;
-      else if (type == "style")
-         lintType = LintTypeStyle;
-      
-      status.lint().add(
-               startCursor.row(),
-               startCursor.column(),
-               endCursor.row(),
-               endCursor.column() + endCursor.length(),
-               lintType,
-               message);
+      LOG_ERROR(error);
+      return;
    }
+   
+   // Bail if this function takes '...' -- TODO is to wire in
+   // what we can for inferring a correct call.
+   if (std::find(names.begin(), names.end(), "...") != names.end())
+      return;
+   
+   // Get the arguments within the function call.
+   std::vector<std::string> args = extractNamedArguments(cursor);
+   
+   // Figure out which named arguments specified by the user don't actually
+   // match the names of the available formals.
+   std::vector<std::string> unmatchedArgs =
+         core::algorithm::set_difference(args, names);
+   
+   // Of the unmatched arguments, figure out which are / aren't prefix matches.
+   std::vector<std::string> prefixMatches =
+         core::algorithm::set_difference(
+            unmatchedArgs,
+            names,
+            string_utils::isPrefixOf);
+   
+   BOOST_FOREACH(const std::string& arg, unmatchedArgs)
+   {
+      // Check to see if this argument is a prefix match
+      // of one of the available formals.
+      std::vector<std::string>::const_iterator it =
+            std::find_if(names.begin(),
+                         names.end(),
+                         boost::bind(string_utils::isPrefixOf, _1, arg));
+      
+      if (it != names.end())
+      {
+         // Supply a warning.
+         status.lint().add(
+                  startCursor.row(),
+                  startCursor.column(),
+                  endCursor.row(),
+                  endCursor.column() + endCursor.length(),
+                  LintTypeWarning,
+                  "partial match of argument '" + arg + "' to '" + *it + "'");
+      }
+      else
+      {
+         // Error -- named argument passed by user does not match
+         // anything within the set of available formals.
+         status.lint().add(
+                  startCursor.row(),
+                  startCursor.column(),
+                  endCursor.row(),
+                  endCursor.column() + endCursor.length(),
+                  LintTypeError,
+                  "no argument named '" + arg + "'");
+      }
+   }
+   
 }
 
 bool skipFormulas(RTokenCursor& cursor,
@@ -705,6 +847,8 @@ void doParse(RTokenCursor& cursor,
       
 START:
       
+      DEBUG("== Current state: " << status.currentStateAsString());
+      
       // We want to skip over formulas if necessary.
       if (skipFormulas(cursor, status))
       {
@@ -734,6 +878,22 @@ START:
          goto IF_START;
       else if (cursor.contentEquals(L"repeat"))
          goto REPEAT_START;
+      
+      // 'else'. Implicitly ending an 'if' statement.
+      if (cursor.contentEquals(L"else"))
+      {
+         // Ensure that we're in an 'if' statement or expression.
+         if (status.currentState() == ParseStatus::ParseStateIfStatement ||
+             status.currentState() == ParseStatus::ParseStateIfExpression)
+         {
+            MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
+            goto START;
+         }
+         else
+         {
+            GOTO_INVALID_TOKEN(cursor);
+         }
+      }
       
       // Left paren.
       if (cursor.isType(RToken::LPAREN))
@@ -802,15 +962,33 @@ START:
          case ParseStatus::ParseStateWhileCondition:
             goto WHILE_CONDITION_END;
          case ParseStatus::ParseStateWithinParens:
-            DEBUG("Within parens");
             status.popState();
-            while (status.isInControlFlowStatement()) status.popState();
-            if (cursor.isAtEndOfDocument()) return;
+            
+            if (cursor.isAtEndOfDocument())
+               return;
+            
+            // Handle an 'else' following when we are closing an 'if' statement
+            if (status.currentState() == ParseStatus::ParseStateIfStatement &&
+                cursor.nextSignificantToken().contentEquals(L"else"))
+            {
+               status.popState();
+               MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
+               MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
+               goto START;
+            }
+            
+            // Check to see if this paren closes the current statement.
+            // If so, it effectively closes any parent conditional statements.
+            if (cursor.isAtEndOfStatement(status))
+               while (status.isInControlFlowStatement())
+                  status.popState();
+            
             MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
             if (isBinaryOp(cursor))
                goto BINARY_OPERATOR;
             else if (canOpenArgumentList(cursor))
                goto ARGUMENT_LIST;
+            
             goto START;
          default:
             GOTO_INVALID_TOKEN(cursor);
@@ -1063,7 +1241,7 @@ ARGUMENT_LIST:
       // If we're about to enter a function call that performs
       // non-standard evaluation, then we want to record symbol definitions
       // but _not_ lint symbol usage.
-      if (mightPerformNonstandardEvaluation(cursor.getCallingString()))
+      if (mightPerformNonstandardEvaluation(cursor, status))
          status.pushNseCall(cursor.getCallingString());
       
       MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
@@ -1089,15 +1267,20 @@ ARGUMENT_START:
 ARGUMENT_LIST_END:
       
       DEBUG("Argument list end: " << cursor);
+      DEBUG("== State: " << status.currentStateAsString());
+      
       status.popState();
       status.popNseCall();
+      
+      DEBUG("== State: " << status.currentStateAsString());
       
       // An argument list may end _two_ states, e.g. in this:
       //
       //    if (foo) a() else if (b()) b()
       //
       // We need to close both the 'if' and the argument list.
-      if (status.isInControlFlowStatement())
+      if (status.isInControlFlowStatement() &&
+          !canContinueStatement(cursor.nextSignificantToken()))
       {
          bool hasElse =
                status.currentState() == ParseStatus::ParseStateIfStatement &&
@@ -1112,8 +1295,10 @@ ARGUMENT_LIST_END:
          }
       }
       
-      while (status.isInControlFlowStatement())
-         status.popState();
+      // Pop out of control flow statements if this ends the statement.
+      if (cursor.isAtEndOfStatement(status))
+         while (status.isInControlFlowStatement())
+            status.popState();
       
       // Following the end of an argument list, we may see:
       //

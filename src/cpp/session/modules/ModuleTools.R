@@ -15,22 +15,22 @@
 
 .rs.addFunction("enqueClientEvent", function(type, data = NULL)
 {
-   .Call("rs_enqueClientEvent", type, data)
+   .Call(.rs.routines$rs_enqueClientEvent, type, data)
 })
 
 .rs.addFunction("showErrorMessage", function(title, message)
 {
-   .Call("rs_showErrorMessage", title, message)
+   .Call(.rs.routines$rs_showErrorMessage, title, message)
 })
 
 .rs.addFunction("logErrorMessage", function(message)
 {
-   .Call("rs_logErrorMessage", message)
+   .Call(.rs.routines$rs_logErrorMessage, message)
 })
 
 .rs.addFunction("logWarningMessage", function(message)
 {
-   .Call("rs_logWarningMessage", message)
+   .Call(.rs.routines$rs_logWarningMessage, message)
 })
 
 .rs.addFunction("getSignature", function(obj)
@@ -205,7 +205,7 @@
 {
   pkgDir <- find.package(name)
   .rs.forceUnloadPackage(name)
-  .Call("rs_installPackage",  archive, dirname(pkgDir))
+  .Call(.rs.routines$rs_installPackage,  archive, dirname(pkgDir))
 })
 
 
@@ -250,7 +250,7 @@
 .rs.addFunction("restartR", function(afterRestartCommand = "") {
    afterRestartCommand <- paste(as.character(afterRestartCommand),
                                 collapse = "\n")
-   .Call("rs_restartR", afterRestartCommand)
+   .Call(.rs.routines$rs_restartR, afterRestartCommand)
 })
 
 

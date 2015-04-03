@@ -237,7 +237,7 @@
 
 .rs.addFunction("getPendingInput", function()
 {
-   .Call("rs_getPendingInput")
+   .Call(.rs.routines$rs_getPendingInput)
 })
 
 .rs.addFunction("doStripSurrounding", function(string, complements)
@@ -552,7 +552,7 @@
 
 .rs.addFunction("isSubsequence", function(strings, string)
 {
-   .Call("rs_isSubsequence", strings, string)
+   .Call(.rs.routines$rs_isSubsequence, strings, string)
 })
 
 .rs.addFunction("whichIsSubsequence", function(strings, string)
@@ -643,12 +643,12 @@
 
 .rs.addFunction("packageNameForSourceFile", function(filePath)
 {
-   .Call("rs_packageNameForSourceFile", filePath)
+   .Call(.rs.routines$rs_packageNameForSourceFile, filePath)
 })
 
 .rs.addFunction("isRScriptInPackageBuildTarget", function(filePath)
 {
-   .Call("rs_isRScriptInPackageBuildTarget", filePath)
+   .Call(.rs.routines$rs_isRScriptInPackageBuildTarget, filePath)
 })
 
 .rs.addFunction("namedVectorAsList", function(vector)
@@ -722,17 +722,17 @@
 
 .rs.addFunction("scoreMatches", function(strings, string)
 {
-   .Call("rs_scoreMatches", strings, string)
+   .Call(.rs.routines$rs_scoreMatches, strings, string)
 })
 
 .rs.addFunction("getProjectDirectory", function()
 {
-   .Call("rs_getProjectDirectory")
+   .Call(.rs.routines$rs_getProjectDirectory)
 })
 
 .rs.addFunction("hasFileMonitor", function()
 {
-   .Call("rs_hasFileMonitor")
+   .Call(.rs.routines$rs_hasFileMonitor)
 })
 
 .rs.addFunction("listIndexedFiles", function(term = "",
@@ -742,7 +742,7 @@
    if (is.null(.rs.getProjectDirectory()))
       return(NULL)
    
-   .Call("rs_listIndexedFiles",
+   .Call(.rs.routines$rs_listIndexedFiles,
          term,
          suppressWarnings(.rs.normalizePath(inDirectory)),
          as.integer(maxCount))
@@ -755,7 +755,7 @@
    if (is.null(inDirectory))
       return(character())
    
-   .Call("rs_listIndexedFolders", term, inDirectory, maxCount)
+   .Call(.rs.routines$rs_listIndexedFolders, term, inDirectory, maxCount)
 })
 
 .rs.addFunction("listIndexedFilesAndFolders", function(term = "",
@@ -765,7 +765,7 @@
    if (is.null(inDirectory))
       return(character())
    
-   .Call("rs_listIndexedFilesAndFolders", term, inDirectory, maxCount)
+   .Call(.rs.routines$rs_listIndexedFilesAndFolders, term, inDirectory, maxCount)
 })
 
 .rs.addFunction("doGetIndex", function(term = "",
@@ -1285,72 +1285,38 @@
    
 })
 
-.rs.addFunction("asLookupEnv", function(vector)
+.rs.addFunction("registerNativeRoutines", function()
 {
-   env <- new.env(parent = emptyenv())
-   for (object in vector)
-      assign(object, TRUE, envir = env)
-   env
+   pos <- match("tools:rstudio", search())
+   if (is.na(pos))
+      return()
+   
+   if (exists(".rs.routines", pos))
+      return()
+   
+   routineEnv <- new.env(parent = emptyenv())
+   routines <- tryCatch(
+      getDLLRegisteredRoutines("(embedding)"),
+      error = function(e) NULL
+   )
+   
+   if (is.null(routines))
+      return(NULL)
+   
+   .CallRoutines <- routines[[".Call"]]
+   lapply(.CallRoutines, function(routine) {
+      routineEnv[[routine$name]] <- routine
+   })
+   assign(".rs.routines", routineEnv, pos = which(search() == "tools:rstudio"))
+   routineEnv
 })
 
-.rs.setVar("nse.functions", .rs.asLookupEnv(c(
-   "subset", "with", "quote", "substitute",
-   "match.call", "evalq", "enquote", "bquote"
-)))
-
-.rs.setVar("nse.cache", new.env(parent = emptyenv()))
-
-.rs.addFunction("maybePerformsNSE", function(objectString)
+.rs.addFunction("setEncodingUnknownToUTF8", function(object)
 {
-   # TODO: why can we get zero-length function calls?
-   if (!nzchar(objectString))
-      return(FALSE)
+   if (is.character(object) && Encoding(object) == "unknown")
+      Encoding(object) <- "UTF-8"
+   else if (is.list(object))
+      return(lapply(object, .rs.setEncodingUnknownToUTF8))
    
-   # First, check the cache to see if we tried to lint this already.
-   # TODO: Should store some hash / representation of the function itself?
-   cache <- .rs.getVar("nse.cache")
-   cached <- cache[[objectString]]
-   if (is.logical(cached))
-      return(cached)
-   
-   # Try to resolve the object from the associated string.
-   object <- .rs.getAnywhere(objectString, envir = parent.frame())
-   if (!is.function(object))
-   {
-      cache[[objectString]] <- FALSE
-      return(FALSE)
-   }
-   
-   # Get the function body, and iterate through looking for 'NSE-performing' calls
-   body <- body(object)
-   nseFunctions <- .rs.getVar("nse.functions")
-   result <- .rs.checkForNSE(body, nseFunctions)
-   
-   # Update cache and return
-   cache[[objectString]] <- result
-   result
-   
-})
-
-.rs.addFunction("checkForNSE", function(body,
-                                        nseFunctions = .rs.getVar("nse.functions"))
-{
-   if (is.expression(body))
-      return(any(vapply(body, FUN.VALUE = logical(1), function(x) {
-         .rs.checkForNSE(x, nseFunctions)
-      })))
-   
-   if (is.call(body))
-   {
-      callName <- as.character(body[[1]])
-      if (length(callName) == 1 && !is.null(nseFunctions[[callName]]))
-         return(TRUE)
-      
-      if (length(body) > 1)
-         return(any(vapply(2:length(body), FUN.VALUE = logical(1), function(i) {
-            .rs.checkForNSE(body[[i]], nseFunctions)
-         })))
-   }
-   
-   return(FALSE)
+   object
 })

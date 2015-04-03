@@ -173,7 +173,7 @@ assign(envir = .rs.Env, ".rs.getVar", function(name)
 
 .rs.addGlobalFunction( "RStudioGD", function()
 {
-   .Call("rs_createGD")
+   .Call(.rs.routines$rs_createGD)
 })
 
 # set our graphics device as the default and cause it to be created/set
@@ -270,7 +270,7 @@ assign(envir = .rs.Env, ".rs.getVar", function(name)
 # generate a uuid
 .rs.addFunction( "createUUID", function()
 {
-  .Call("rs_createUUID")
+  .Call(.rs.routines$rs_createUUID)
 })
 
 # check the current R architecture
@@ -288,7 +288,7 @@ assign(envir = .rs.Env, ".rs.getVar", function(name)
       else
          fileTitle <- header[[i]]
 
-      .Call("rs_showFile", fileTitle, files[[i]], delete.file)
+      .Call(.rs.routines$rs_showFile, fileTitle, files[[i]], delete.file)
    }
 })
 

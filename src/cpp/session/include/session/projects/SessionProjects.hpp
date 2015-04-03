@@ -148,7 +148,6 @@ public:
       return buildOptions_;
    }
 
-   // current package info (if this is a package)
    const core::r_util::RPackageInfo& packageInfo() const
    {
       return packageInfo_;

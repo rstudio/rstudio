@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.snippets.ui;
 
+import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 
 import com.google.gwt.dom.client.Style.Unit;
@@ -36,7 +37,8 @@ public class EditableSnippets extends Composite
       Image icon = new Image(fileType.getDefaultIcon());
       icon.getElement().getStyle().setMarginRight(2, Unit.PX);
       panel.add(icon);
-      Label label = new Label(name);    
+      Label label = new Label(name);
+      label.addStyleName(ThemeResources.INSTANCE.themeStyles().handCursor());
       label.getElement().getStyle().setMarginLeft(5, Unit.PX);
       panel.add(label);
       initWidget(panel);
