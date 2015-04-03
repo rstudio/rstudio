@@ -25,9 +25,9 @@ import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
-import org.rstudio.studio.client.common.rpubs.RPubsHtmlGenerator;
 import org.rstudio.studio.client.common.rpubs.RPubsUploader;
 import org.rstudio.studio.client.common.rpubs.model.RPubsServerOperations;
+import org.rstudio.studio.client.rsconnect.model.StaticHtmlGenerator;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -61,7 +61,7 @@ public class RPubsUploadDialog extends ModalDialogBase
    
    public RPubsUploadDialog(String contextId,
                             String title, 
-                            RPubsHtmlGenerator htmlGenerator, 
+                            StaticHtmlGenerator htmlGenerator, 
                             boolean isPublished)
    {
       this(contextId, title, null, null, null, htmlGenerator, isPublished);
@@ -72,7 +72,7 @@ public class RPubsUploadDialog extends ModalDialogBase
                              String rmdFile,
                              String htmlFile, 
                              String uploadId,
-                             RPubsHtmlGenerator htmlGenerator,
+                             StaticHtmlGenerator htmlGenerator,
                              boolean isPublished)
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
@@ -176,7 +176,7 @@ public class RPubsUploadDialog extends ModalDialogBase
             @Override
             public void onClick(ClickEvent event)
             { 
-               htmlGenerator_.generateRPubsHtml(
+               htmlGenerator_.generateStaticHtml(
                   titleTextBox_.getText().trim(), 
                   commentTextArea_.getText().trim(),
                   new CommandWithArg<String>() {
@@ -298,13 +298,13 @@ public class RPubsUploadDialog extends ModalDialogBase
       showProgressPanel();
 
       // synthesize html generator if necessary
-      RPubsHtmlGenerator htmlGenerator = htmlGenerator_;
+      StaticHtmlGenerator htmlGenerator = htmlGenerator_;
       if (htmlGenerator == null)
       {
-         htmlGenerator = new RPubsHtmlGenerator() {
+         htmlGenerator = new StaticHtmlGenerator() {
 
             @Override
-            public void generateRPubsHtml(String title, 
+            public void generateStaticHtml(String title, 
                                           String comment,
                                           CommandWithArg<String> onCompleted)
             {
@@ -315,7 +315,7 @@ public class RPubsUploadDialog extends ModalDialogBase
       
       // generate html and initiate the upload
       final String title = getTitleText();
-      htmlGenerator.generateRPubsHtml(
+      htmlGenerator.generateStaticHtml(
           title, getCommentText(), new CommandWithArg<String>() {
          @Override
          public void execute(String htmlFile)
@@ -392,7 +392,7 @@ public class RPubsUploadDialog extends ModalDialogBase
    private final String rmdFile_;
    private final String contextId_;
    private final String uploadId_;
-   private final RPubsHtmlGenerator htmlGenerator_;
+   private final StaticHtmlGenerator htmlGenerator_;
    
    private GlobalDisplay globalDisplay_;
    private EventBus eventBus_;

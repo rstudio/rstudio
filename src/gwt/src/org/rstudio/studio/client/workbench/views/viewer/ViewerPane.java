@@ -27,9 +27,9 @@ import org.rstudio.studio.client.common.AutoGlassPanel;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.icons.StandardIcons;
-import org.rstudio.studio.client.common.rpubs.RPubsHtmlGenerator;
 import org.rstudio.studio.client.rmarkdown.model.RmdPreviewParams;
 import org.rstudio.studio.client.rsconnect.RSConnect;
+import org.rstudio.studio.client.rsconnect.model.StaticHtmlGenerator;
 import org.rstudio.studio.client.rsconnect.ui.RSConnectPublishButton;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
@@ -96,10 +96,10 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
       toolbar_.addRightWidget(publishButton_);
 
       // create an HTML generator (for plots)
-      publishButton_.setHtmlGenerator(new RPubsHtmlGenerator()
+      publishButton_.setHtmlGenerator(new StaticHtmlGenerator()
       {
          @Override
-         public void generateRPubsHtml(String title, String comment,
+         public void generateStaticHtml(String title, String comment,
                final CommandWithArg<String> onCompleted)
          {
             server_.viewerCreateRPubsHtml(

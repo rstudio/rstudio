@@ -23,7 +23,6 @@ import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
-import org.rstudio.studio.client.common.rpubs.RPubsHtmlGenerator;
 import org.rstudio.studio.client.htmlpreview.model.HTMLPreviewResult;
 import org.rstudio.studio.client.rmarkdown.model.RmdPreviewParams;
 import org.rstudio.studio.client.rsconnect.RSConnect;
@@ -31,6 +30,7 @@ import org.rstudio.studio.client.rsconnect.events.RSConnectActionEvent;
 import org.rstudio.studio.client.rsconnect.model.RSConnectDeploymentRecord;
 import org.rstudio.studio.client.rsconnect.model.RSConnectServerOperations;
 import org.rstudio.studio.client.rsconnect.model.RenderedDocPreview;
+import org.rstudio.studio.client.rsconnect.model.StaticHtmlGenerator;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.shiny.events.RSConnectDeploymentCompletedEvent;
@@ -177,7 +177,7 @@ public class RSConnectPublishButton extends Composite
       contentType_ = contentType;
    }
    
-   public void setHtmlGenerator(RPubsHtmlGenerator generator)
+   public void setHtmlGenerator(StaticHtmlGenerator generator)
    {
       htmlGenerator_ = generator;
       setPreviousDeployments(null);
@@ -249,7 +249,7 @@ public class RSConnectPublishButton extends Composite
          // for plots, we need to generate the hosting HTML prior to publishing
          if (htmlGenerator_ != null)
          {
-            htmlGenerator_.generateRPubsHtml("Plot", "", 
+            htmlGenerator_.generateStaticHtml("Plot", "", 
                   new CommandWithArg<String>()
                   {
                      @Override
@@ -374,7 +374,7 @@ public class RSConnectPublishButton extends Composite
    private String lastContentPath_;
    private boolean populating_ = false;
    private RenderedDocPreview docPreview_;
-   private RPubsHtmlGenerator htmlGenerator_;
+   private StaticHtmlGenerator htmlGenerator_;
 
    private final boolean showCaption_;
    private final boolean manageVisiblity_;

@@ -19,14 +19,14 @@ import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.common.icons.StandardIcons;
-import org.rstudio.studio.client.common.rpubs.RPubsHtmlGenerator;
 import org.rstudio.studio.client.rsconnect.RSConnect;
+import org.rstudio.studio.client.rsconnect.model.StaticHtmlGenerator;
 import org.rstudio.studio.client.rsconnect.ui.RSConnectPublishButton;
 import org.rstudio.studio.client.workbench.commands.Commands;
 
 public class PlotsToolbar extends Toolbar implements HasCustomizableToolbar
 {    
-   public PlotsToolbar(Commands commands, RPubsHtmlGenerator plotHtmlGenerator)
+   public PlotsToolbar(Commands commands, StaticHtmlGenerator plotHtmlGenerator)
    {   
       commands_ = commands ;
       plotHtmlGenerator_ = plotHtmlGenerator;
@@ -86,5 +86,5 @@ public class PlotsToolbar extends Toolbar implements HasCustomizableToolbar
    }
    
    private final Commands commands_;   
-   private final RPubsHtmlGenerator plotHtmlGenerator_;
+   private final StaticHtmlGenerator plotHtmlGenerator_;
 }

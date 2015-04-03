@@ -32,8 +32,8 @@ import org.rstudio.core.client.Size;
 import org.rstudio.core.client.widget.ImageFrame;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
-import org.rstudio.studio.client.common.rpubs.RPubsHtmlGenerator;
 import org.rstudio.studio.client.common.zoom.ZoomUtils;
+import org.rstudio.studio.client.rsconnect.model.StaticHtmlGenerator;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.plots.model.PlotsServerOperations;
@@ -57,9 +57,9 @@ public class PlotsPane extends WorkbenchPane implements Plots.Display,
    protected Toolbar createMainToolbar()
    {
       plotsToolbar_ = new PlotsToolbar(commands_, 
-             new RPubsHtmlGenerator() {
+             new StaticHtmlGenerator() {
                    @Override
-                   public void generateRPubsHtml(
+                   public void generateStaticHtml(
                          String title, 
                          String comment,
                          final CommandWithArg<String> onCompleted)

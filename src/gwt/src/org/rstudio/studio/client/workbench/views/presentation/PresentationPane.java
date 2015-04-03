@@ -46,8 +46,8 @@ import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.common.presentation.SlideNavigationMenu;
 import org.rstudio.studio.client.common.presentation.SlideNavigationToolbarMenu;
-import org.rstudio.studio.client.common.rpubs.RPubsHtmlGenerator;
 import org.rstudio.studio.client.rsconnect.RSConnect;
+import org.rstudio.studio.client.rsconnect.model.StaticHtmlGenerator;
 import org.rstudio.studio.client.rsconnect.ui.RSConnectPublishButton;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -105,10 +105,10 @@ public class PresentationPane extends WorkbenchPane implements Presentation.Disp
          // Create the publish button and wire it to our HTML generator
          publishButton_ = new RSConnectPublishButton(
                RSConnect.CONTENT_TYPE_HTML, false, false);
-         publishButton_.setHtmlGenerator(new RPubsHtmlGenerator()
+         publishButton_.setHtmlGenerator(new StaticHtmlGenerator()
          {
             @Override
-            public void generateRPubsHtml(String title, String comment,
+            public void generateStaticHtml(String title, String comment,
                   final CommandWithArg<String> onCompleted)
             {
                server_.createPresentationRPubsSource(
