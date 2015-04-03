@@ -61,6 +61,12 @@ public class RSConnectActionEvent extends GwtEvent<RSConnectActionEvent.Handler>
             RSConnect.CONTENT_TYPE_PLOT, null, htmlFile, null, null);
    }
 
+   public static RSConnectActionEvent DeployHtmlEvent(String htmlFile)
+   {
+      return new RSConnectActionEvent(ACTION_TYPE_DEPLOY, 
+            RSConnect.CONTENT_TYPE_HTML, null, htmlFile, null, null);
+   }
+
    private RSConnectActionEvent(int action, int contentType, String path, 
                                String htmlFile, RenderedDocPreview fromPreview,
                                RSConnectDeploymentRecord fromPrevious)

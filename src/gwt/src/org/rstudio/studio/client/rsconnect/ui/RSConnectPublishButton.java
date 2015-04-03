@@ -244,6 +244,7 @@ public class RSConnectPublishButton extends Composite
    {
       switch (contentType_)
       {
+      case RSConnect.CONTENT_TYPE_HTML:
       case RSConnect.CONTENT_TYPE_PLOT:
          // for plots, we need to generate the hosting HTML prior to publishing
          if (htmlGenerator_ != null)

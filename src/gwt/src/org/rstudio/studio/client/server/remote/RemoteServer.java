@@ -3665,14 +3665,14 @@ public class RemoteServer implements Server
       params.set(0, new JSONString(source.getDeployDir()));
       params.set(1, JSONUtils.toJSONStringArray(settings.getDeployFiles()));
       params.set(2, new JSONString(source.getDeployFileName()));
-      params.set(2, new JSONString(source.getSourceFile()));
-      params.set(3, new JSONString(account));
-      params.set(4, new JSONString(server));
-      params.set(5, new JSONString(appName));
-      params.set(6, JSONUtils.toJSONStringArray(settings.getAdditionalFiles()));
-      params.set(7, JSONUtils.toJSONStringArray(settings.getIgnoredFiles()));
-      params.set(8, JSONBoolean.getInstance(settings.getAsMultiple()));
-      params.set(9, JSONBoolean.getInstance(settings.getAsStatic()));
+      params.set(3, new JSONString(source.getSourceFile()));
+      params.set(4, new JSONString(account));
+      params.set(5, new JSONString(server));
+      params.set(6, new JSONString(appName));
+      params.set(7, JSONUtils.toJSONStringArray(settings.getAdditionalFiles()));
+      params.set(8, JSONUtils.toJSONStringArray(settings.getIgnoredFiles()));
+      params.set(9, JSONBoolean.getInstance(settings.getAsMultiple()));
+      params.set(10, JSONBoolean.getInstance(settings.getAsStatic()));
       sendRequest(RPC_SCOPE,
             RSCONNECT_PUBLISH,
             params,

@@ -35,7 +35,8 @@ public class RSConnectPublishWizard
       // Select the first page of the wizard based on the kind of content we're
       // dealing with (all other content type situations don't require a 
       // wizard to resolve)
-      if (input.getContentType() == RSConnect.CONTENT_TYPE_PLOT)
+      if (input.getContentType() == RSConnect.CONTENT_TYPE_PLOT ||
+          input.getContentType() == RSConnect.CONTENT_TYPE_HTML)
       {
          return new PublishStaticDestPage("Publish", "Publish", input, false);
       }
