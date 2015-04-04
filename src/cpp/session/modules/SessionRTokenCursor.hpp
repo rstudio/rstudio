@@ -228,7 +228,7 @@ public:
       return currentToken().content();
    }
    
-   std::string contentAsUtf8() const
+   const std::string& contentAsUtf8() const
    {
       return currentToken().contentAsUtf8();
    }
