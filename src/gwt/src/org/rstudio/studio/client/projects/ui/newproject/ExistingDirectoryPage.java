@@ -14,8 +14,10 @@
  */
 package org.rstudio.studio.client.projects.ui.newproject;
 
+import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.DirectoryChooserTextBox;
 import org.rstudio.core.client.widget.MessageDialog;
+import org.rstudio.studio.client.projects.model.NewProjectInput;
 import org.rstudio.studio.client.projects.model.NewProjectResult;
 
 
@@ -39,12 +41,16 @@ public class ExistingDirectoryPage extends NewProjectWizardPage
    
       existingProjectDir_ = new DirectoryChooserTextBox(
             "Project working directory:", null);
-
       addWidget(existingProjectDir_);
-      
    }
    
-
+   @Override 
+   protected void initialize(NewProjectInput input)
+   {
+      defaultNewProjectLocation_ = input.getDefaultNewProjectLocation();
+      existingProjectDir_.setText(input.getContext().getWorkingDirectory());
+   }
+   
    @Override
    protected NewProjectResult collectInput()
    {

@@ -65,6 +65,8 @@ Error getNewProjectContext(const json::JsonRpcRequest& request,
    contextJson["packrat_available"] =
          module_context::packratContext().available &&
          module_context::canBuildCpp();
+   contextJson["working_directory"] = module_context::createAliasedPath(
+         r::session::utils::safeCurrentPath());
 
    pResponse->setResult(contextJson);
 
