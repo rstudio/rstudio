@@ -138,3 +138,8 @@
    
    .rs.scalar(paste(new, collapse = "\n"))
 })
+
+.rs.addFunction("lintProject", function()
+{
+   .Call(.rs.routines$rs_lintProject)
+})

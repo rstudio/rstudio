@@ -404,6 +404,33 @@ module_context::SourceMarkerSet asSourceMarkerSet(const LintItems& items,
    return SourceMarkerSet("Diagnostics", markers);
 }
 
+module_context::SourceMarkerSet asSourceMarkerSet(
+      std::map<FilePath, LintItems>& lint)
+{
+   using namespace module_context;
+   std::vector<SourceMarker> markers;
+   for (std::map<FilePath, LintItems>::const_iterator it = lint.begin();
+        it != lint.end();
+        ++it)
+   {
+      const FilePath& path = it->first;
+      const LintItems& lintItems = it->second;
+      BOOST_FOREACH(const LintItem& item, lintItems)
+      {
+         markers.push_back(SourceMarker(
+                              sourceMarkerTypeFromString(lintTypeToString(item.type)),
+                              path,
+                              item.startRow + 1,
+                              item.startColumn + 1,
+                              core::html_utils::HTML(item.message),
+                              true));
+      }
+   }
+   
+   return SourceMarkerSet("Diagnostics", markers);
+}
+
+
 Error extractRCode(const std::string& contents,
                    const std::string& reOpen,
                    const std::string& reClose,
@@ -788,6 +815,50 @@ Error saveSnippets(const json::JsonRpcRequest& request,
    return Success();
 }
 
+bool collectLint(int depth,
+                 const FilePath& path,
+                 std::map<FilePath, LintItems>* pLint)
+{
+   if (path.extensionLowerCase() != ".r")
+      return true;
+   
+   std::string contents;
+   Error error = core::readStringFromFile(path, &contents);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return true;
+   }
+   
+   ParseResults results = parse(
+            string_utils::utf8ToWide(contents),
+            path);
+   
+   (*pLint)[path] = results.lint();
+   return true;
+}
+
+SEXP rs_lintProject()
+{
+   if (!projects::projectContext().hasProject())
+      return R_NilValue;
+   
+   FilePath buildPath = projects::projectContext().buildTargetPath();
+   std::map<FilePath, LintItems> lint;
+   Error error = buildPath.childrenRecursive(
+            boost::bind(collectLint, _1, _2, &lint));
+   if (error)
+   {
+      LOG_ERROR(error);
+      return R_NilValue;
+   }
+   
+   using namespace module_context;
+   SourceMarkerSet markers = asSourceMarkerSet(lint);
+   showSourceMarkers(markers, MarkerAutoSelectNone);
+   return R_NilValue;
+}
+
 } // anonymous namespace
 
 core::Error initialize()
@@ -806,6 +877,7 @@ core::Error initialize()
    RS_REGISTER_CALL_METHOD(rs_lintRFile, 1);
    RS_REGISTER_CALL_METHOD(rs_loadString, 1);
    RS_REGISTER_CALL_METHOD(rs_parse, 1);
+   RS_REGISTER_CALL_METHOD(rs_lintProject, 0);
    
    ExecBlock initBlock;
    initBlock.addFunctions()
