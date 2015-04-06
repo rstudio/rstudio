@@ -450,7 +450,7 @@
          )
       )
       
-      object <- if (!(length(evaled)) && length(output))
+      object <- if (length(output))
          output
       else
          evaled
