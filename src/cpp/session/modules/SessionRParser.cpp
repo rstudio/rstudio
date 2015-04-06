@@ -828,9 +828,10 @@ bool extractFormalsFromFunctionDefinition(
    while (cursor.isType(RToken::ID))
       extractFormal(cursor, pInfo);
    
-   // TODO: Extract body information as well.
+   // TODO: Extract body information as well, so we can figure out
+   // whether a particular formal is used or not.
    
-   return false;
+   return true;
 }
 
 // Extract formals from the underlying object mapped by the symbol, or expression,
