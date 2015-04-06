@@ -526,7 +526,7 @@ SEXP rs_lintRFile(SEXP filePathSEXP)
    }
    
    std::string rCode;
-   Error error = core::readStringFromFile(filePath, &rCode);
+   error = core::readStringFromFile(filePath, &rCode);
    if (error)
    {
       LOG_ERROR(error);
