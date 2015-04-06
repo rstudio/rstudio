@@ -140,6 +140,7 @@
 * Enable specification of Sweave driver in Rnw magic comment
 * Re-map prev/next tab shortcuts to eliminate conflicts with window managers
 * Run App command for single file Shiny applications
+* Deprecated 'source.with.encoding' in favor of source(..., encoding = "...")
 
 ### Server
 
@@ -170,6 +171,6 @@
 * Only filter object file listings in 'src' directory
 * Fix crash in R tokenizer when source files have binary 0xFFF
 * Correctly navigate to package inst/include directory for template errors 
-
+* Fix visual debugging issues when code isn't saved in system encoding
 
 

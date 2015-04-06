@@ -217,8 +217,13 @@
      calltext <- unlist(strsplit(calltext, "\n", fixed = TRUE))
   }
 
+  # Remove leading/trailing whitespace on each line, and collapse the lines
   calltext <- sub("\\s+$", "", sub("^\\s+", "", calltext))
   calltext <- paste(calltext, collapse=" ")
+
+  # Any call text supplied is presumed UTF-8 unless we know otherwise
+  if (Encoding(calltext) == "unknown")
+     Encoding(calltext) <- "UTF-8"
 
   # NULL is output by R when it doesn't have an expression to output; don't
   # try to match it to code
@@ -226,7 +231,7 @@
      return(c(0L, 0L, 0L, 0L, 0L, 0L))
 
   pos <- gregexpr(calltext, singleline, fixed = TRUE)[[1]]
-  if (length(pos) > 1) 
+  if (length(pos) > 1)
   {
      # There is more than one instance of the call text in the function; try 
      # to pick the first match past the preferred line.

@@ -103,9 +103,12 @@
          max.deparse.length=150,
          chdir=FALSE)
 {
-   con = file(path, open='r', encoding=encoding)
-   on.exit(close(con))
-   source(con,
+   warning("source.with.encoding is deprecated and will be removed in a ",
+           "future release of RStudio. Use source(..., encoding = '", encoding,
+           "') instead.")
+   conn = file(path, open='r', encoding=encoding)
+   on.exit(close(conn))
+   source(conn,
           echo=echo,
           print.eval=print.eval,
           max.deparse.length=max.deparse.length,
