@@ -293,15 +293,11 @@ public class RSConnectDeploy extends Composite
    
    public void showAppInfo(RSConnectApplicationInfo info)
    {
-      if (info == null)
+      if (info != null)
       {
-         appInfoPanel_.setVisible(false);
-         newAppPanel_.setVisible(true);
-         return;
+         urlAnchor_.setText(info.getUrl());
+         urlAnchor_.setHref(info.getUrl());
       }
-
-      urlAnchor_.setText(info.getUrl());
-      urlAnchor_.setHref(info.getUrl());
       appInfoPanel_.setVisible(true);
       appDetailsPanel_.setVisible(true);
       newAppPanel_.setVisible(false);
@@ -500,6 +496,7 @@ public class RSConnectDeploy extends Composite
                      // it's okay if we fail here, since the application info
                      // display is purely informative
                      appProgressPanel_.setVisible(false);
+                     showAppInfo(null);
                   }
                });
       }
