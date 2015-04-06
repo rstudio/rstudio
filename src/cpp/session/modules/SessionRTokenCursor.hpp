@@ -152,7 +152,7 @@ public:
    
    const RToken& currentToken() const
    {
-      return rTokens_.at(offset_);
+      return rTokens_.atUnsafe(offset_);
    }
    
    const Position currentPosition() const
