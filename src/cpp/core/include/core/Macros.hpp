@@ -66,7 +66,7 @@
                 << x << std::endl;                                             \
    } while (0)
 
-#define RSTUDIO_DEBUG_BLOCK(x)                                                 \
+# define RSTUDIO_DEBUG_BLOCK(x)                                                \
    if (strlen(x))                                                              \
       std::cerr << "(" << RSTUDIO_DEBUG_LABEL << ":" << std::setw(4)           \
                 << std::setfill('0') << __LINE__ << "): " << x << std::endl;   \
@@ -93,7 +93,7 @@
 #endif
 
 #ifndef LOG_OBJECT
-# define LOG_OBJECT RSTUDIO_LOG_OBJECT
+# define LOG_OBJECT(x) RSTUDIO_LOG_OBJECT(x)
 #endif
 
 #endif
