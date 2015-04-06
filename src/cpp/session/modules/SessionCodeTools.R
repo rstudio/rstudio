@@ -562,7 +562,7 @@
 
 .rs.addFunction("selectIsSubsequence", function(strings, string)
 {
-   .subset(strings, .rs.isSubsequence(strings))
+   .subset(strings, .rs.isSubsequence(strings, string))
 })
 
 .rs.addFunction("escapeForRegex", function(regex)
