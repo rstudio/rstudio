@@ -39,10 +39,12 @@ void print(const std::map<K, V>& map, std::ostream& os = std::cerr)
    os << std::endl;
 }
 
-template <typename T>
-void print(const std::vector<T>& object, std::ostream& os = std::cerr)
+template <typename ConvertibleToArray>
+void print(const ConvertibleToArray& object, std::ostream& os = std::cerr)
 {
-   json::writeFormatted(json::toJsonArray(object), os);
+   typedef typename ConvertibleToArray::value_type value_type;
+   std::vector<value_type> asVector(object.begin(), object.end());
+   json::writeFormatted(json::toJsonArray(asVector), os);
    os << std::endl;
 }
 

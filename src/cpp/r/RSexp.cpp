@@ -15,7 +15,7 @@
 
 #define R_INTERNAL_FUNCTIONS
 #define RSTUDIO_DEBUG_LABEL "rsexp"
-#define RSTUDIO_ENABLE_DEBUG_MACROS
+// #define RSTUDIO_ENABLE_DEBUG_MACROS
 
 #include <r/RSexp.hpp>
 #include <r/RInternal.hpp>
@@ -48,6 +48,27 @@ namespace r {
 using namespace exec ;
    
 namespace sexp {
+
+namespace {
+
+struct LexicalComparator
+{
+   inline bool operator()(const char* lhs, const char* rhs) const
+   {
+      return strcmp(lhs, rhs) < 0;
+   }
+};
+
+class StringSet : public std::set<const char*, LexicalComparator>
+{
+public:
+   bool contains(const char* value)
+   {
+      return this->find(value) != this->end();
+   }
+};
+
+} // anonymous namespace
    
 std::string asString(SEXP object) 
 {
@@ -1041,7 +1062,7 @@ namespace detail {
 
 bool addSymbolCheckedForMissingness(
       SEXP nodeSEXP,
-      std::set<const char*>* pSymbolsCheckedForMissingness)
+      StringSet* pSymbolsCheckedForMissingness)
 {
    if (TYPEOF(nodeSEXP) == LANGSXP &&
        TYPEOF(CAR(nodeSEXP)) == SYMSXP &&
@@ -1058,7 +1079,7 @@ bool addSymbolCheckedForMissingness(
 
 bool addSymbols(
       SEXP nodeSEXP,
-      std::set<const char*>* pSymbolsUsed)
+      StringSet* pSymbolsUsed)
 {
    if (TYPEOF(nodeSEXP) == SYMSXP)
    {
@@ -1070,8 +1091,8 @@ bool addSymbols(
 
 void examineSymbolUsage(
       SEXP nodeSEXP,
-      std::set<const char*>* pSymbolsUsed,
-      std::set<const char*>* pSymbolsCheckedForMissingness)
+      StringSet* pSymbolsUsed,
+      StringSet* pSymbolsCheckedForMissingness)
 {
    CallRecurser recurser(nodeSEXP);
    recurser.add(boost::bind(addSymbols, _1, pSymbolsUsed));
@@ -1090,9 +1111,10 @@ void examineSymbolUsage(
    
    SEXP bodySEXP = BODY_EXPR(functionSEXP);
    
-   // NOTE: const char* to re-use R's string cache
-   std::set<const char*> symbolsUsed;
-   std::set<const char*> symbolsCheckedForMissingness;
+   // NOTE: const char* to re-use R's string cache;
+   // define custom comparator to enable binary search
+   StringSet symbolsUsed;
+   StringSet symbolsCheckedForMissingness;
    
    detail::examineSymbolUsage(bodySEXP,
                               &symbolsUsed,
@@ -1102,8 +1124,15 @@ void examineSymbolUsage(
    BOOST_FOREACH(FormalInformation& info, pInfo->formals())
    {
       const std::string& name = info.name;
-      info.isUsed = symbolsUsed.count(name.c_str());
-      info.missingnessHandled = symbolsCheckedForMissingness.count(name.c_str());
+      info.isUsed = symbolsUsed.contains(name.c_str());
+      
+      bool isInternalFunction = 
+            symbolsUsed.contains(".Internal") ||
+            symbolsUsed.contains(".Primitive");
+      
+      info.missingnessHandled =
+            isInternalFunction ||
+            symbolsCheckedForMissingness.contains(name.c_str());
    }
 }
 

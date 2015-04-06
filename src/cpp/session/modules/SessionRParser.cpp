@@ -13,9 +13,8 @@
  *
  */
 
-// #define RSTUDIO_ENABLE_PROFILING
-#define RSTUDIO_ENABLE_DEBUG_MACROS
 #define RSTUDIO_DEBUG_LABEL "parser"
+// #define RSTUDIO_ENABLE_DEBUG_MACROS
 
 // We use a couple internal R functions here; in particular,
 // simple accessors (which we know will not longjmp)
@@ -1353,7 +1352,10 @@ void validateFunctionCall(RTokenCursor cursor,
       std::map<std::string, boost::optional<std::string> >& matchedCall =
             matched.matchedCall();
       
-      debug::print(matchedCall);
+      DEBUG_BLOCK("")
+      {
+         debug::print(matchedCall);
+      }
       
       if (!matchedCall[formalName] && !info.missingnessHandled)
       {
