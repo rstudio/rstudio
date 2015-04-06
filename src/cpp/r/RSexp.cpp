@@ -178,17 +178,6 @@ SEXP findVar(const std::string &name, const SEXP env)
    return Rf_findVar(Rf_install(name.c_str()), env);
 }
 
-SEXP findVar(const std::string& name, const std::string& ns)
-{
-   if (name.empty())
-      return R_UnboundValue;
-   
-   ensureNamespaceLoaded(ns);
-   SEXP env = ns.empty() ? R_GlobalEnv : findNamespace(ns);
-   
-   return findVar(name, env);
-}
-
 namespace {
 
 void ensureNamespaceLoaded(const std::string& ns)
@@ -206,6 +195,19 @@ void ensureNamespaceLoaded(const std::string& ns)
 }
 
 } // anonymous namespace
+
+
+SEXP findVar(const std::string& name, const std::string& ns)
+{
+   if (name.empty())
+      return R_UnboundValue;
+   
+   ensureNamespaceLoaded(ns);
+   SEXP env = ns.empty() ? R_GlobalEnv : findNamespace(ns);
+   
+   return findVar(name, env);
+}
+
 
 SEXP findFunction(const std::string& name, const std::string& ns) 
 {
