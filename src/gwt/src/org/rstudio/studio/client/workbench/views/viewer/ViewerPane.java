@@ -12,6 +12,7 @@
  */
 package org.rstudio.studio.client.workbench.views.viewer;
 
+import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
@@ -31,6 +32,8 @@ import org.rstudio.studio.client.rmarkdown.model.RmdPreviewParams;
 import org.rstudio.studio.client.rsconnect.RSConnect;
 import org.rstudio.studio.client.rsconnect.model.StaticHtmlGenerator;
 import org.rstudio.studio.client.rsconnect.ui.RSConnectPublishButton;
+import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.viewer.events.ViewerNavigatedEvent;
@@ -95,19 +98,30 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
             RSConnect.CONTENT_TYPE_DOCUMENT, true, false);
       toolbar_.addRightWidget(publishButton_);
 
-      // create an HTML generator (for plots)
+      // create an HTML generator 
       publishButton_.setHtmlGenerator(new StaticHtmlGenerator()
       {
          @Override
          public void generateStaticHtml(String title, String comment,
                final CommandWithArg<String> onCompleted)
          {
+            final Command dismissProgress = 
+                  globalDisplay_.showProgress("Publishing...");
             server_.viewerCreateRPubsHtml(
-                  title, comment, new SimpleRequestCallback<String>(){
+                  title, comment, new ServerRequestCallback<String>()
+            {
                @Override
-               public void onResponseReceived(String rpubsHtmlFile)
+               public void onResponseReceived(String htmlFile)
                {
-                  onCompleted.execute(rpubsHtmlFile);
+                  dismissProgress.execute();
+                  onCompleted.execute(htmlFile);
+               }
+               @Override
+               public void onError(ServerError error)
+               {
+                  globalDisplay_.showErrorMessage("Could Not Publish", 
+                        error.getMessage());
+                  dismissProgress.execute();
                }
             });
          }

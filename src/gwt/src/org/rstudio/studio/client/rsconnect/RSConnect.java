@@ -614,7 +614,7 @@ public class RSConnect implements SessionInitHandler,
                dirStateDirty_ = true;
                launchBrowser_ = event.getLaunchBrowser();
                events_.fireEvent(new RSConnectDeploymentStartedEvent(
-                     event.getSource().getDeployDir()));
+                     event.getSource().getDeployKey()));
             }
             else
             {
