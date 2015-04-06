@@ -183,16 +183,37 @@ SEXP findVar(const std::string& name, const std::string& ns)
    if (name.empty())
       return R_UnboundValue;
    
+   ensureNamespaceLoaded(ns);
    SEXP env = ns.empty() ? R_GlobalEnv : findNamespace(ns);
    
    return findVar(name, env);
 }
+
+namespace {
+
+void ensureNamespaceLoaded(const std::string& ns)
+{
+   if (ns.empty()) return;
+   SEXP nsSEXP = findNamespace(ns);
+   if (nsSEXP == R_UnboundValue)
+   {
+      r::exec::RFunction loadNamespace("base:::loadNamespace");
+      loadNamespace.addParam(ns);
+      Error error = loadNamespace.call();
+      if (error)
+         LOG_ERROR(error);
+   }
+}
+
+} // anonymous namespace
 
 SEXP findFunction(const std::string& name, const std::string& ns) 
 {
    r::sexp::Protect protect;
    if (name.empty())
       return R_UnboundValue;
+   
+   ensureNamespaceLoaded(ns);
    
    SEXP env = ns.empty() ? R_GlobalEnv : findNamespace(ns);
    if (env == R_UnboundValue) return R_UnboundValue;
