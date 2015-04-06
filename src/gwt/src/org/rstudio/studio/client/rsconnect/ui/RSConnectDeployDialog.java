@@ -108,6 +108,21 @@ public class RSConnectDeployDialog
       });
       
       
+      if (fromPrevious != null)
+      {
+         // we know what the previous deployment settings are, so use them
+         contents_.setPublishSource(source, fromPrevious.getAsMultiple(), 
+               fromPrevious.getAsStatic());
+      }
+      else
+      {
+         // the only context in which we'd show this dialog without any prior 
+         // deployments, and not as part of a wizard, is if we're deploying 
+         // an unambiguously single, non-static asset (such as a Shiny app or
+         // an R Markdown document in its own directory)
+         contents_.setPublishSource(source, false, false);
+      }
+  
       contents_.setOnDeployDisabled(new Command()
       {
          @Override
