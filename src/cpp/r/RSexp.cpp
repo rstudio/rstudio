@@ -59,6 +59,9 @@ struct LexicalComparator
    }
 };
 
+// A simple wrapper set class that is primarily used as a means
+// to re-use R's internal string cache, while providing lexical
+// comparator for efficient lookup.
 class StringSet : public std::set<const char*, LexicalComparator>
 {
 public:
@@ -67,6 +70,51 @@ public:
       return this->find(value) != this->end();
    }
 };
+
+struct FunctionSymbolUsage
+{
+   StringSet symbolsUsed;
+   StringSet symbolsCheckedForMissingness;
+};
+
+// singleton: cache the result of 'examination' of functions
+class FunctionSymbolUsageCache : boost::noncopyable
+{
+   typedef std::pair<SEXP, SEXP> FunctionEnvironmentPair;
+   
+public:
+   
+   bool contains(SEXP object)
+   {
+      return database_.count(pair(object));
+   }
+   
+   FunctionSymbolUsage& get(SEXP object)
+   {
+      return database_[pair(object)];
+   }
+   
+   void put(SEXP object, const FunctionSymbolUsage& usage)
+   {
+      database_[pair(object)] = usage;
+   }
+   
+private:
+   
+   static FunctionEnvironmentPair pair(SEXP object)
+   {
+      return std::make_pair(object, CLOENV(object));
+   }
+
+   std::map<FunctionEnvironmentPair, FunctionSymbolUsage> database_;
+   
+};
+
+FunctionSymbolUsageCache& functionSymbolUsageCache()
+{
+   static FunctionSymbolUsageCache instance;
+   return instance;
+}
 
 } // anonymous namespace
    
@@ -1091,12 +1139,12 @@ bool addSymbols(
 
 void examineSymbolUsage(
       SEXP nodeSEXP,
-      StringSet* pSymbolsUsed,
-      StringSet* pSymbolsCheckedForMissingness)
+      FunctionSymbolUsage* usage)
 {
    CallRecurser recurser(nodeSEXP);
-   recurser.add(boost::bind(addSymbols, _1, pSymbolsUsed));
-   recurser.add(boost::bind(addSymbolCheckedForMissingness, _1, pSymbolsCheckedForMissingness));
+   recurser.add(boost::bind(addSymbols, _1, &(usage->symbolsUsed)));
+   recurser.add(boost::bind(addSymbolCheckedForMissingness, _1,
+                            &(usage->symbolsCheckedForMissingness)));
    recurser.run();
 }
 
@@ -1111,28 +1159,32 @@ void examineSymbolUsage(
    
    SEXP bodySEXP = BODY_EXPR(functionSEXP);
    
-   // NOTE: const char* to re-use R's string cache;
-   // define custom comparator to enable binary search
-   StringSet symbolsUsed;
-   StringSet symbolsCheckedForMissingness;
+   FunctionSymbolUsageCache& cache = functionSymbolUsageCache();
+   FunctionSymbolUsage usage;
    
-   detail::examineSymbolUsage(bodySEXP,
-                              &symbolsUsed,
-                              &symbolsCheckedForMissingness);
+   if (cache.contains(functionSEXP))
+   {
+      usage = cache.get(functionSEXP);
+   }
+   else
+   {
+      detail::examineSymbolUsage(bodySEXP, &usage);
+      cache.put(functionSEXP, usage);
+   }
    
    // fill output
    BOOST_FOREACH(FormalInformation& info, pInfo->formals())
    {
       const std::string& name = info.name;
-      info.isUsed = symbolsUsed.contains(name.c_str());
+      info.isUsed = usage.symbolsUsed.contains(name.c_str());
       
       bool isInternalFunction = 
-            symbolsUsed.contains(".Internal") ||
-            symbolsUsed.contains(".Primitive");
+            usage.symbolsUsed.contains(".Internal") ||
+            usage.symbolsUsed.contains(".Primitive");
       
       info.missingnessHandled =
             isInternalFunction ||
-            symbolsCheckedForMissingness.contains(name.c_str());
+            usage.symbolsCheckedForMissingness.contains(name.c_str());
    }
 }
 
@@ -1212,7 +1264,7 @@ core::Error extractFormals(
       functionSEXP = primitiveWrapper(functionSEXP);
    
    // TODO: Some primitives (e.g. language constructs like `if`, `return`)
-   // still do not have primitives; these functions only take arguments
+   // still do not have formals; these functions only take arguments
    // by position and so don't fit into this function's mold.
    if (Rf_isPrimitive(functionSEXP))
       return Success();
@@ -1249,9 +1301,8 @@ core::Error extractFormals(
       pInfo->addFormal(formalInfo);
    }
    
-   // Some callers might want to know whether a missing default argument
-   // is actually permissible. We attempt to infer this by checking whether
-   // 'missing' is called on that symbol name.
+   // Certain callers will want detailed information about how formals are
+   // actually used by this function.
    if (recordSymbolUsage)
       examineSymbolUsage(functionSEXP, pInfo);
    
