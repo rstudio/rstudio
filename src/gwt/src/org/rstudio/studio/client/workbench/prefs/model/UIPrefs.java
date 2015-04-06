@@ -181,7 +181,7 @@ public class UIPrefs extends UIPrefsAccessor implements UiPrefsChangedHandler
          // Configure R Linter
          
          enableStyleDiagnostics().setGlobalValue(
-               newUiPrefs.enableBackgroundDiagnostics().getGlobalValue());
+               newUiPrefs.enableStyleDiagnostics().getGlobalValue());
          
          diagnosticsInRFunctionCalls().setGlobalValue(
                newUiPrefs.diagnosticsInRFunctionCalls().getGlobalValue());
