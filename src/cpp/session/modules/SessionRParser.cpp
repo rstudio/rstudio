@@ -1064,8 +1064,12 @@ public:
                            MatchedCall* pCall)
    {
       // `old.packages()` delegates the 'method' formal even when missing
-      if (cursor.contentEquals(L"old.packages"))
+      // same with `available.packages()`
+      if (cursor.contentEquals(L"old.packages") ||
+          cursor.contentEquals(L"available.packages"))
+      {
          pCall->functionInfo().infoForFormal("method").missingnessHandled = true;
+      }
    }
 
    // Accessors

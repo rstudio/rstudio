@@ -834,9 +834,9 @@ SEXP rs_lintProject()
    if (!projects::projectContext().hasProject())
       return R_NilValue;
    
-   FilePath buildPath = projects::projectContext().buildTargetPath();
+   FilePath projDir = projects::projectContext().directory();
    std::map<FilePath, LintItems> lint;
-   Error error = buildPath.childrenRecursive(
+   Error error = projDir.childrenRecursive(
             boost::bind(collectLint, _1, _2, &lint));
    if (error)
    {
