@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.rsconnect.ui;
 
 import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.VisibleChangedHandler;
 import org.rstudio.core.client.files.FileSystemItem;
@@ -23,6 +24,7 @@ import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.rpubs.events.RPubsUploadStatusEvent;
 import org.rstudio.studio.client.htmlpreview.model.HTMLPreviewResult;
 import org.rstudio.studio.client.rmarkdown.model.RmdPreviewParams;
 import org.rstudio.studio.client.rsconnect.RSConnect;
@@ -47,7 +49,8 @@ import com.google.gwt.user.client.ui.MenuItem;
 import com.google.inject.Inject;
 
 public class RSConnectPublishButton extends Composite
-   implements RSConnectDeploymentCompletedEvent.Handler
+   implements RSConnectDeploymentCompletedEvent.Handler,
+              RPubsUploadStatusEvent.Handler
 {
    public RSConnectPublishButton(int contentType, boolean showCaption,
          boolean manageVisiblity)
@@ -118,6 +121,7 @@ public class RSConnectPublishButton extends Composite
       }
       
       events_.addHandler(RSConnectDeploymentCompletedEvent.TYPE, this);
+      events_.addHandler(RPubsUploadStatusEvent.TYPE, this);
    }
    
    @Override
@@ -198,6 +202,19 @@ public class RSConnectPublishButton extends Composite
       // cheap (just hits the local disk)
       lastContentPath_ = null;
       populateDeployments();
+   }
+
+   @Override
+   public void onRPubsPublishStatus(RPubsUploadStatusEvent event)
+   {
+      // make sure it applies to our context
+      RPubsUploadStatusEvent.Status status = event.getStatus();
+      
+      if (StringUtil.isNullOrEmpty(status.getError()))
+      {
+         lastContentPath_ = null;
+         populateDeployments();
+      }
    }
 
    // Private methods --------------------------------------------------------

@@ -640,7 +640,6 @@ public class TextEditingTarget implements
                public void onRSConnectDeployInitiated(
                      RSConnectDeployInitiatedEvent event)
                {
-
                   // no need to process this event if this target doesn't have a
                   // path, or if the event's contents don't include additional
                   // files.
@@ -653,6 +652,11 @@ public class TextEditingTarget implements
                   
                   RSConnectPublishSettings settings = event.getSettings();
                   if (settings == null)
+                     return;
+                  
+                  // ignore deployments of static content generated from this 
+                  // file
+                  if (settings.getAsStatic())
                      return;
                   
                   if (settings.getAdditionalFiles() != null &&
