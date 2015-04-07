@@ -200,6 +200,13 @@ public class RSConnect implements SessionInitHandler,
          input.setExternalUIEnabled(
                session_.getSessionInfo().getAllowExternalPublish());
          
+         // plots and HTML are implicitly self-contained
+         if (event.getContentType() == CONTENT_TYPE_PLOT ||
+             event.getContentType() == CONTENT_TYPE_HTML)
+         {
+            input.setIsSelfContained(true);
+         }
+         
          // if R Markdown, get info on what we're publishing from the server
          if (event.getFromPreview() != null)
          {
@@ -332,6 +339,9 @@ public class RSConnect implements SessionInitHandler,
                   {
                   case RSConnectPublishResult.PUBLISH_STATIC:
                   case RSConnectPublishResult.PUBLISH_CODE:
+                     // always launch the browser--the wizard implies we're 
+                     // doing a first-time publish, and we may need to do some
+                     // post-publish configuration
                      fireRSConnectPublishEvent(result, true);
                      indicator.onCompleted();
                      break;

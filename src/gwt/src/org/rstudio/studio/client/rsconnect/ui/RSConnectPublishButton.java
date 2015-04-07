@@ -178,7 +178,21 @@ public class RSConnectPublishButton extends Composite
    
    public void setContentType(int contentType)
    {
+      // this can happen in the viewer pane, which hosts e.g. both HTML widgets
+      // and R Markdown documents, each of which has its own publishing 
+      // semantics
+      boolean newType = contentType_ != contentType;
       contentType_ = contentType;
+      if (newType)
+      {
+         // moving to a document type: get its deployment status 
+         if (contentType == RSConnect.CONTENT_TYPE_DOCUMENT)
+            populateDeployments();
+         
+         // moving to a raw HTML type: erase the deployment list
+         if (contentType == RSConnect.CONTENT_TYPE_HTML)
+            setPreviousDeployments(null);
+      }
    }
    
    public void setHtmlGenerator(StaticHtmlGenerator generator)
@@ -355,6 +369,10 @@ public class RSConnectPublishButton extends Composite
       }
       else
       {
+         // show first-time publish button caption
+         if (showCaption_)
+            publishButton_.setText("Publish");
+
          // no existing deployments to redeploy to, so just offer to make a new
          // one
          publishMenu_.addItem(new MenuItem(
