@@ -1229,7 +1229,6 @@ public:
       if (error)
          LOG_ERROR(error);
       
-      R_PreserveObject(wrapperSEXP);
       put(primitiveSEXP, wrapperSEXP);
       return wrapperSEXP;
    }

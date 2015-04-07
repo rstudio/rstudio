@@ -398,7 +398,7 @@ private:
 struct FormalInformation
 {
    // default ctor -- must be initialized with a name
-   FormalInformation(const std::string& name)
+   explicit FormalInformation(const std::string& name)
       : name(name)
    {}
    
