@@ -763,7 +763,7 @@ public class Projects implements OpenProjectFileHandler,
    }
    
    @Handler
-   public void onAnalyzeProject()
+   public void onShowDiagnosticsProject()
    {
       projServer_.analyzeProject(new ServerRequestCallback<Void>()
       {
