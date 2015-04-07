@@ -116,6 +116,13 @@ public class RSConnect implements SessionInitHandler,
       events.addHandler(RSConnectDeployInitiatedEvent.TYPE, this); 
       events.addHandler(RSConnectDeploymentCompletedEvent.TYPE, this); 
       
+      // satellite windows don't get session init events, so initialize the
+      // session here
+      if (satellite_.isCurrentWindowSatellite())
+      {
+         ensureSessionInit();
+      }
+      
       exportNativeCallbacks();
    }
    
