@@ -44,7 +44,7 @@
 #include <r/RUtil.hpp>
 
 #include <core/r_util/RSourceIndex.hpp>
-#include <core/FileUtils.hpp>
+#include <core/FileSerializer.hpp>
 #include <core/collection/Tree.hpp>
 #include <core/collection/Stack.hpp>
 
@@ -552,7 +552,14 @@ SEXP rs_lintRFile(SEXP filePathSEXP)
       return r::sexp::create(builder, &protect);
    }
    
-   std::string rCode = file_utils::readFile(filePath);
+   std::string rCode;
+   error = core::readStringFromFile(filePath, &rCode);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return R_NilValue;
+   }
+   
    ParseResults results = parse(rCode, filePath, std::string());
    const std::vector<LintItem>& lint = results.lint().get();
    
@@ -575,22 +582,6 @@ SEXP rs_lintRFile(SEXP filePathSEXP)
    }
    
    return r::sexp::create(builder, &protect);
-}
-
-static std::wstring s_rCode;
-
-SEXP rs_loadString(SEXP rCodeSEXP)
-{
-   s_rCode = string_utils::utf8ToWide(CHAR(STRING_ELT(rCodeSEXP, 0)));
-   return R_NilValue;
-}
-
-SEXP rs_parse(SEXP rCodeSEXP)
-{
-   std::string code = r::sexp::safeAsString(rCodeSEXP);
-   ParseResults results = parse(code, FilePath(), std::string());
-   r::sexp::Protect protect;
-   return r::sexp::create((int) results.lint().size(), &protect);
 }
 
 void onNAMESPACEchanged()
@@ -875,8 +866,6 @@ core::Error initialize()
    projects::projectContext().subscribeToFileMonitor("Diagnostics", cb);
    
    RS_REGISTER_CALL_METHOD(rs_lintRFile, 1);
-   RS_REGISTER_CALL_METHOD(rs_loadString, 1);
-   RS_REGISTER_CALL_METHOD(rs_parse, 1);
    RS_REGISTER_CALL_METHOD(rs_lintProject, 0);
    
    ExecBlock initBlock;

@@ -17,6 +17,9 @@
 #ifndef CORE_ALGORITHM_HPP
 #define CORE_ALGORITHM_HPP
 
+#include <vector>
+#include <algorithm>
+
 namespace rstudio {
 namespace core {
 namespace algorithm {
@@ -55,6 +58,30 @@ OutputIterator copy_transformed_if(InputIterator begin,
    return destBegin;
 }
 
+template <typename Container, typename ValueType>
+bool contains(const Container& container,
+              const ValueType& type,
+              typename Container::key_type* SFINAE__key_type = 0)
+{
+   return container.count(type);
+}
+
+template <typename Container, typename ValueType>
+bool contains(const Container& container,
+              const ValueType& value)
+{
+   return std::find(container.begin(), container.end(), value) != container.end();
+}
+
+template <typename T>
+std::vector<T> seq(T length)
+{
+   std::vector<T> result;
+   result.reserve(length);
+   for (std::size_t i = 0; i < length; ++i)
+      result.push_back(i);
+   return result;
+}
 
 } // namespace algorithm
 } // namespace core

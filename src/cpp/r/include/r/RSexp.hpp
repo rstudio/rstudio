@@ -22,14 +22,18 @@
 #include <map>
 #include <set>
 
+#include <boost/function.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/any.hpp>
 #include <boost/utility.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/type_traits.hpp>
 #include <boost/type_traits/is_same.hpp>
+#include <boost/optional.hpp>
+#include <boost/logic/tribool.hpp>
 
 #include <core/Error.hpp>
+#include <core/Log.hpp>
 #include <core/json/Json.hpp>
 
 #include <r/RErrorCategory.hpp>
@@ -137,6 +141,7 @@ SEXP create(const std::set<std::string>& value, Protect* pProtect);
 SEXP create(const core::json::Array& value, Protect* pProtect);
 SEXP create(const core::json::Object& value, Protect* pProtect);
 SEXP create(const ListBuilder& builder, Protect* pProtect);
+SEXP create(const std::map<std::string, std::string>& value, Protect* pProtect);
 
 // Create a named list
 SEXP createList(const std::vector<std::string>& names, Protect* pProtect);
@@ -342,10 +347,131 @@ core::Error objects(SEXP environment,
 core::Error getNamespaceExports(SEXP ns,
                                 std::vector<std::string>* pNames);
 
-core::Error extractFormalNames(SEXP functionSEXP,
-                               std::vector<std::string>* pNames);
-
 const std::set<std::string>& nsePrimitives();
+
+// NOTE: Primarily to be used with boost::bind, to add functions that are then
+// called on each node within the call. Functions can return true to signal the
+// recursion should end.
+class CallRecurser : boost::noncopyable
+{
+public:
+   
+   explicit CallRecurser(SEXP callSEXP)
+      : callSEXP_(callSEXP)
+   {}
+
+   void add(const boost::function<bool(SEXP)>& operation)
+   {
+      operations_.push_back(operation);
+   }
+   
+   void run()
+   {
+      runImpl(callSEXP_, operations_, operations_.size());
+   }
+   
+private:
+   
+   static void runImpl(
+         SEXP nodeSEXP,
+         const std::vector< boost::function<bool(SEXP)> >& operations,
+         std::size_t n)
+   {
+      for (std::size_t i = 0; i < n; ++i)
+         if (operations[i](nodeSEXP))
+            return;
+      
+      if (TYPEOF(nodeSEXP) == LANGSXP)
+      {
+         while (nodeSEXP != R_NilValue)
+         {
+            runImpl(CAR(nodeSEXP), operations, n);
+            nodeSEXP = CDR(nodeSEXP);
+         }
+      }
+   }
+      
+   SEXP callSEXP_;
+   std::vector< boost::function<bool(SEXP)> > operations_;
+};
+
+struct FormalInformation
+{
+   // default ctor -- must be initialized with a name
+   explicit FormalInformation(const std::string& name)
+      : name(name)
+   {}
+   
+   std::string name;
+   boost::optional<std::string> defaultValue;
+   boost::tribool isUsed;
+   boost::tribool missingnessHandled;
+};
+
+class FunctionInformation
+{
+public:
+   
+   FunctionInformation()
+      : noSuchFormal_("")
+   {}
+   
+   void addFormal(const FormalInformation& info)
+   {
+      formals_.push_back(info);
+      formalNames_.push_back(info.name);
+   }
+   
+   bool isPrimitive()
+   {
+      return isPrimitive_ == true;
+   }
+   
+   void setIsPrimitive(bool isPrimitive)
+   {
+      isPrimitive_ = isPrimitive;
+   }
+   
+   std::vector<FormalInformation>& formals()
+   {
+      return formals_;
+   }
+   
+   std::vector<std::string>& getFormalNames()
+   {
+      return formalNames_;
+   }
+   
+   boost::optional<std::string>& defaultValueForFormal(
+         const std::string& formalName)
+   {
+      return infoForFormal(formalName).defaultValue;
+   }
+   
+   FormalInformation& infoForFormal(const std::string& formalName)
+   {
+      std::size_t n = formals_.size();
+      for (std::size_t i = 0; i < n; ++i)
+         if (formals_[i].name == formalName)
+            return formals_[i];
+      
+      LOG_WARNING_MESSAGE("No such formal '" + formalName + "'");
+      return noSuchFormal_;
+   }
+   
+private:
+   std::vector<FormalInformation> formals_;
+   std::vector<std::string> formalNames_;
+   boost::optional<std::string> originalBindingName_;
+   boost::tribool isPrimitive_;
+   FormalInformation noSuchFormal_;
+};
+
+core::Error extractFormals(
+      SEXP functionSEXP,
+      FunctionInformation* pInfo,
+      bool extractDefaultArguments,
+      bool recordSymbolUsage);
 
 } // namespace sexp
 } // namespace r

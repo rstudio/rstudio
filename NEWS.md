@@ -131,6 +131,7 @@
 * Windows: Use Rtools 3.3 when running under R 3.2
 * Bind Cmd+Shift+K shortcut to Compile PDF and Preview HTML
 * When evaluating R strings ensure 'try' is called from base package
+* Default to current working directory for New Project from existing directory
 * Add Clear Recent Projects menu item to toolbar project menu
 * Command to sync current working directory and Files pane to project directory
 * Eliminated rstudio and manipulate packages (both now available on CRAN)
