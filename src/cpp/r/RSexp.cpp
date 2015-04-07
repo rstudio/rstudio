@@ -1033,26 +1033,23 @@ const std::set<std::string>& nsePrimitives()
    return set;
 }
 
-// NOTE: returns 'false' to signal item found; 'true' to signal item
-// not found
 bool isCallToNSEFunction(SEXP node,
-                         const std::set<std::string>* pNsePrimitives,
+                         const std::set<std::string>& nsePrimitives,
                          bool* pResult)
 {
    if (TYPEOF(node) != LANGSXP)
-      return true;
+      return false;
    
-   SEXP head = CAR(node);
-   while (TYPEOF(head) == LANGSXP)
-      head = CAR(head);
+   while (TYPEOF(node) == LANGSXP)
+      node = CAR(node);
    
-   if (TYPEOF(head) == SYMSXP && pNsePrimitives->count(CHAR(PRINTNAME(head))))
+   if (TYPEOF(node) == SYMSXP && nsePrimitives.count(CHAR(PRINTNAME(node))))
    {
       *pResult = true;
-      return false;
+      return true;
    }
    
-   return true;
+   return false;
    
 }
 
@@ -1062,7 +1059,8 @@ bool maybePerformsNSEImpl(SEXP node,
 {
    r::sexp::CallRecurser recurser(node);
    bool result = false;
-   recurser.add(boost::bind(isCallToNSEFunction, _1, &nsePrimitives, &result));
+   recurser.add(boost::bind(
+                   isCallToNSEFunction, _1, boost::cref(nsePrimitives), &result));
    recurser.run();
    return result;
 }
