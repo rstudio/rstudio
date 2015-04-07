@@ -143,3 +143,8 @@
 {
    .Call(.rs.routines$rs_lintProject)
 })
+
+.rs.addJsonRpcHandler("analyze_project", function()
+{
+   .rs.lintProject()
+})

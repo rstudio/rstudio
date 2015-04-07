@@ -762,6 +762,19 @@ public class Projects implements OpenProjectFileHandler,
          onCompleted);  
    }
    
+   @Handler
+   public void onAnalyzeProject()
+   {
+      projServer_.analyzeProject(new ServerRequestCallback<Void>()
+      {
+         @Override
+         public void onError(ServerError error)
+         {
+            Debug.logError(error);
+         }
+      });
+   }
+   
    private final Provider<ProjectMRUList> pMRUList_;
    private final ApplicationQuit applicationQuit_;
    private final ProjectsServerOperations projServer_;
