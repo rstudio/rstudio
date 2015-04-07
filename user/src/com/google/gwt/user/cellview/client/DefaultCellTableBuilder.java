@@ -120,6 +120,7 @@ public class DefaultCellTableBuilder<T> extends AbstractCellTableBuilder<T> {
       if (vAlign != null) {
         td.vAlign(vAlign.getVerticalAlignString());
       }
+      addCellAttributes(td);
 
       // Add the inner div.
       DivBuilder div = td.startDiv();
@@ -135,5 +136,14 @@ public class DefaultCellTableBuilder<T> extends AbstractCellTableBuilder<T> {
 
     // End the row.
     tr.endTR();
+  }
+
+  /**
+   * Hook for subclasses to add their own attributes to each cell in the table. The default does
+   * nothing.
+   *
+   * @param cell the cell element
+   */
+  protected void addCellAttributes(TableCellBuilder cell) {
   }
 }
