@@ -259,7 +259,7 @@
   lines <- readLines(target, warn = FALSE)
   outputFormat <- rmarkdown:::output_format_from_yaml_front_matter(lines)
   if (is.list(outputFormat$options) &&
-      outputFormat$options$self_contained == FALSE) {
+      identical(outputFormat$options$self_contained, FALSE)) {
     selfContained <- FALSE
   }
 

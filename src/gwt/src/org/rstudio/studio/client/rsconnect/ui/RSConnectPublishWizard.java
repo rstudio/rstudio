@@ -49,19 +49,7 @@ public class RSConnectPublishWizard
                !input.isMultiRmd() &&
                input.isConnectUIEnabled())
       {
-         if (input.isSelfContained())
-         {
-            // if it's self-contained, it could go to either RPubs or RSConnect
-            return new PublishStaticDestPage("Publish", "Publish", input, 
-                  false);
-         }
-         else
-         {
-            // it's not self-contained, so skip to deciding whether to publish
-            // the code or the final product
-            return new PublishReportSourcePage("Publish", "Publish", input, 
-                  false);
-         }
+         return new PublishReportSourcePage("Publish", "Publish", input, false);
       }
       else
       {

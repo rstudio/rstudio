@@ -348,9 +348,15 @@ public class RSConnect implements SessionInitHandler,
    public void onRSConnectDeployInitiated(
          final RSConnectDeployInitiatedEvent event)
    {
+      // shortcut: when deploying static content we don't need to do any linting
+      if (event.getSettings().getAsStatic())
+      {
+         doDeployment(event);
+         return;
+      }
+
       // get lint results for the file or directory being deployed, as 
       // appropriate
-      // TODO: don't do this when deploying static content
       server_.getLintResults(event.getSource().getDeployKey(),
             new ServerRequestCallback<RSConnectLintResults>()
       {
