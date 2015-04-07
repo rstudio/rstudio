@@ -42,7 +42,11 @@ private:
    
 public:
    
-  typedef std::map< std::string, boost::shared_ptr<RSourceIndex> > IndexMap;
+   typedef std::string DocumentId;
+   typedef std::string AbsolutePath;
+   
+   // maps document id (as string) to associated index
+   typedef std::map< DocumentId, boost::shared_ptr<RSourceIndex> > IndexMap;
    
    RSourceIndexes() {}
    virtual ~RSourceIndexes() {}
@@ -56,6 +60,13 @@ public:
       if (indexes_.find(id) != indexes_.end())
          return indexes_[id];
       return boost::shared_ptr<RSourceIndex>();
+   }
+   
+   boost::shared_ptr<RSourceIndex> get(const core::FilePath& filePath)
+   {
+      const std::string& id = pathToIdMap_[filePath.absolutePath()];
+      if (id.empty()) return boost::shared_ptr<RSourceIndex>();
+      return get(id);
    }
 
    void remove(const std::string& id) { indexes_.erase(id); }
@@ -79,6 +90,8 @@ public:
 
 private:
   IndexMap indexes_;
+  std::map<AbsolutePath, DocumentId> pathToIdMap_;
+  
 };
 
 RSourceIndexes& rSourceIndex();

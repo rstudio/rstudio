@@ -98,25 +98,11 @@ void addInferredSymbols(const FilePath& filePath,
    boost::shared_ptr<RSourceIndex> index =
          rSourceIndex().get(documentId);
    
-   // If that failed for some reason, just re-read and re-parse
-   // the document from that file path
+   // If we were unable to get the R source index for
+   // some reason, try re-resolving the documentId based
+   // on the file path
    if (!index)
-   {
-      LOG_WARNING_MESSAGE("Failed to locate document with id '" + documentId + "'");
-      // Get the source index associated with this filepath.
-      // We have to round trip to map this filePath to a source
-      // document, grab that ID, and then get the index.
-      boost::shared_ptr<SourceDocument> pDoc(new SourceDocument());
-      Error error = source_database::get(filePath.filename(), pDoc);
-      if (error)
-      {
-         LOG_ERROR(error);
-         return;
-      }
-
-      const std::string& id = pDoc->id();
-      index = rSourceIndex().get(id);
-   }
+      index = rSourceIndex().get(filePath);
    
    // If we still don't have an index, bail
    if (!index)

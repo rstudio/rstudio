@@ -919,6 +919,12 @@ void RSourceIndexes::update(
 
    // insert it
    indexes_[pDoc->id()] = pIndex;
+   
+   // cache a link between the document path and the id
+   std::string absPath = module_context::resolveAliasedPath(
+            pDoc->path()).absolutePath();
+   
+   pathToIdMap_[absPath] = pDoc->id();
 
    // kick off an update if necessary
    r_completions::AsyncRCompletions::update();
