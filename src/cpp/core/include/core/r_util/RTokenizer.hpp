@@ -107,7 +107,7 @@ public:
    // accessors
    TokenType type() const { return type_; }
    std::wstring content() const { return std::wstring(begin_, end_); }
-   std::string contentAsUtf8() const;
+   const std::string& contentAsUtf8() const;
    std::size_t offset() const { return offset_; }
    std::size_t length() const { return end_ - begin_; }
    std::size_t row() const { return row_; }

@@ -42,15 +42,18 @@
 # define RSTUDIO_DEBUG(x) do {} while (0)
 # define RSTUDIO_DEBUG_LINE(x) do {} while (0)
 # define RSTUDIO_DEBUG_BLOCK(x) if (false)
+# define RSTUDIO_LOG_OBJECT(x)
 
 #else
 
-# define RSTUDIO_DEBUG(x)                                                      \
+#include <core/Debug.hpp>
+
+#define RSTUDIO_DEBUG(x)                                                       \
    do                                                                          \
    {                                                                           \
-      std::cerr << "(" << RSTUDIO_DEBUG_LABEL << ":"                           \
-                << std::setw(4) << std::setfill('0') << __LINE__ << "): "      \
-                << x << std::endl;                                             \
+         std::cerr << "(" << RSTUDIO_DEBUG_LABEL << ":" << std::setw(4)        \
+                   << std::setfill('0') << __LINE__ << "): " << x              \
+                   << std::endl;                                               \
    } while (0)
 
 # define RSTUDIO_DEBUG_LINE(x)                                                 \
@@ -63,10 +66,17 @@
                 << x << std::endl;                                             \
    } while (0)
 
-#define RSTUDIO_DEBUG_BLOCK(x)                                                 \
-   std::cerr << "(" << RSTUDIO_DEBUG_LABEL << ":" << std::setw(4)              \
-             << std::setfill('0') << __LINE__ << "): " << x << std::endl;      \
+# define RSTUDIO_DEBUG_BLOCK(x)                                                \
+   if (strlen(x))                                                              \
+      std::cerr << "(" << RSTUDIO_DEBUG_LABEL << ":" << std::setw(4)           \
+                << std::setfill('0') << __LINE__ << "): " << x << std::endl;   \
    if (true)
+
+# define RSTUDIO_LOG_OBJECT(x)                                                 \
+   do                                                                          \
+   {                                                                           \
+      ::rstudio::core::debug::print(x);                                        \
+   } while (0)
 
 #endif /* Debug logging macros */
 
@@ -80,6 +90,10 @@
 
 #ifndef DEBUG_BLOCK
 # define DEBUG_BLOCK RSTUDIO_DEBUG_BLOCK
+#endif
+
+#ifndef LOG_OBJECT
+# define LOG_OBJECT(x) RSTUDIO_LOG_OBJECT(x)
 #endif
 
 #endif

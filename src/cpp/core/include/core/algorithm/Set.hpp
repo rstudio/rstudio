@@ -25,30 +25,16 @@ namespace core {
 namespace algorithm {
 
 #define RS_SET_OPERATION(__OPERATION__)                                        \
-   template <typename Container>                                               \
-   Container __OPERATION__(Container c1, Container c2)                         \
+   template <typename C1, typename C2>                                         \
+   C1 __OPERATION__(C1 c1, C2 c2)                                              \
    {                                                                           \
                                                                                \
       std::sort(c1.begin(), c1.end());                                         \
       std::sort(c2.begin(), c2.end());                                         \
                                                                                \
-      Container result;                                                        \
+      C1 result;                                                               \
       std::__OPERATION__(c1.begin(), c1.end(), c2.begin(), c2.end(),           \
                          std::back_inserter(result));                          \
-                                                                               \
-      return result;                                                           \
-   }                                                                           \
-                                                                               \
-   template <typename Container, typename Comparator>                          \
-   Container __OPERATION__(Container c1, Container c2, Comparator comp)        \
-   {                                                                           \
-                                                                               \
-      std::sort(c1.begin(), c1.end(), comp);                                   \
-      std::sort(c2.begin(), c2.end(), comp);                                   \
-                                                                               \
-      Container result;                                                        \
-      std::__OPERATION__(c1.begin(), c1.end(), c2.begin(), c2.end(),           \
-                         std::back_inserter(result), comp);                    \
                                                                                \
       return result;                                                           \
    }

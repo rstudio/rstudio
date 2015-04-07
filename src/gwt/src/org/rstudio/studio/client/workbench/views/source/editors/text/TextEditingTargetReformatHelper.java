@@ -829,9 +829,14 @@ public class TextEditingTargetReformatHelper
          if (!rootState && cursor.isRightBrace())
             break;
          
-         // Ensure whitespace following 'if'
-         if (cursor.currentValue().equals("if"))
+         // Ensure a single space follows control flow statements
+         if (cursor.currentValue().equals("if") ||
+             cursor.currentValue().equals("for") ||
+             cursor.currentValue().equals("while") ||
+             cursor.currentValue().equals("repeat"))
+         {
             cursor.ensureSingleSpaceFollows();
+         }
          
          // Ensure newlines around 'naked' else
          if (cursor.currentValue().equals("else"))
