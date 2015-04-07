@@ -150,6 +150,12 @@ public:
    
 private:
    
+   void addNseFunction(const std::string& name,
+                       const std::string& ns)
+   {
+      add(r::sexp::findFunction(name, ns), true);
+   }
+   
    uintptr_t address(SEXP objectSEXP)
    {
       return reinterpret_cast<uintptr_t>(objectSEXP);

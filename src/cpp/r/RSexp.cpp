@@ -1021,6 +1021,7 @@ std::set<std::string> makeNsePrimitives()
    nsePrimitives.insert("expression");
    nsePrimitives.insert("evalq");
    nsePrimitives.insert("subset");
+   nsePrimitives.insert("eval.parent");
    return nsePrimitives;
 }
 
@@ -1031,43 +1032,35 @@ const std::set<std::string>& nsePrimitives()
 }
 
 bool isCallToNSEFunction(SEXP node,
-                         const std::set<std::string>& nsePrimitives)
+                         std::set<std::string>* pNsePrimitives,
+                         bool* pResult)
 {
    if (TYPEOF(node) != LANGSXP)
-      return false;
+      return true;
    
    SEXP head = CAR(node);
    while (TYPEOF(head) == LANGSXP)
       head = CAR(head);
    
-   return TYPEOF(head) == SYMSXP &&
-          nsePrimitives.count(CHAR(PRINTNAME(head)));
+   if (TYPEOF(head) == SYMSXP && pNsePrimitives->count(CHAR(PRINTNAME(head))))
+   {
+      *pResult = true;
+      return false;
+   }
+   
+   return true;
+   
 }
 
 // Attempts to find calls to functions which perform NSE.
 bool maybePerformsNSEImpl(SEXP node,
                           const std::set<std::string>& nsePrimitives)
 {
-   // Check
-   if (isCallToNSEFunction(node, nsePrimitives))
-      return true;
-   
-   // Recurse
-   if (TYPEOF(node) == LANGSXP)
-   {
-      SEXP tail = CDR(node);
-      SEXP head = CAR(tail);
-      while (tail != R_NilValue)
-      {
-         if (TYPEOF(head) == LANGSXP && maybePerformsNSEImpl(head, nsePrimitives))
-            return true;
-         
-         tail = CDR(tail);
-         head = CAR(tail);
-      }
-   }
-   
-   return false;
+   r::sexp::CallRecurser recurser;
+   bool result = false;
+   recurser.add(boost::bind(isCallToNSEFunction, _1, &nsePrimitives, &result));
+   recurser.run();
+   return result;
 }
 
 bool maybePerformsNSE(SEXP function)
