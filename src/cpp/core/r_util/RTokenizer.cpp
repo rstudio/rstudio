@@ -495,7 +495,7 @@ ConversionCache& conversionCache()
    return instance;
 }
 
-std::string RToken::contentAsUtf8() const
+const std::string& RToken::contentAsUtf8() const
 {
    ConversionCache& cache = conversionCache();
    if (cache.contains(*this))
@@ -503,7 +503,7 @@ std::string RToken::contentAsUtf8() const
    
    std::string result = string_utils::wideToUtf8(content());
    cache.put(*this, result);
-   return result;
+   return cache.get(*this);
 }
 
 std::string RToken::asString() const

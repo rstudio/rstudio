@@ -152,7 +152,7 @@ public:
    
    const RToken& currentToken() const
    {
-      return rTokens_.at(offset_);
+      return rTokens_.atUnsafe(offset_);
    }
    
    const Position currentPosition() const
@@ -228,7 +228,7 @@ public:
       return currentToken().content();
    }
    
-   std::string contentAsUtf8() const
+   const std::string& contentAsUtf8() const
    {
       return currentToken().contentAsUtf8();
    }

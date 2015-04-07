@@ -450,7 +450,7 @@
          )
       )
       
-      object <- if (!(length(evaled)) && length(output))
+      object <- if (length(output))
          output
       else
          evaled
@@ -562,7 +562,7 @@
 
 .rs.addFunction("selectIsSubsequence", function(strings, string)
 {
-   .subset(strings, .rs.isSubsequence(strings))
+   .subset(strings, .rs.isSubsequence(strings, string))
 })
 
 .rs.addFunction("escapeForRegex", function(regex)
@@ -1243,4 +1243,8 @@
       return(lapply(object, .rs.setEncodingUnknownToUTF8))
    
    object
+})
+
+.rs.addFunction("makePrimitiveWrapper", function(x) {
+   wrapper <- eval(parse(text = capture.output(x)), envir = parent.frame(1))
 })
