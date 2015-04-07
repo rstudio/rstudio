@@ -214,6 +214,7 @@ public class RSConnect implements SessionInitHandler,
                      {
                         input.setIsMultiRmd(details.isMultiRmd());
                         input.setIsShiny(details.isShinyRmd());
+                        input.setIsSelfContained(details.isSelfContained());
                         showPublishUI(input);
                      }
                      @Override
@@ -274,10 +275,17 @@ public class RSConnect implements SessionInitHandler,
             {
                publishWithWizard(input);
             }
-            else
+            else if (input.isSelfContained())
             {
                // RStudio Connect is disabled, go straight to RPubs
                publishAsRPubs(event);
+            }
+            else 
+            {
+               // we should generally hide the button in this case
+               display_.showErrorMessage("Content Not Publishable", 
+                     "Only self-contained documents can currently be " + 
+                     "published to RPubs.");
             }
          }
       }

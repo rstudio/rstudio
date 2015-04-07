@@ -58,7 +58,8 @@ public class PublishReportSourcePage
             (asMultiple ? "documents" : "document") + " only";
       String staticSubtitle = "Choose this option to publish the content as " +
              "it appears in RStudio.";
-      if (input.isConnectUIEnabled() && input.isExternalUIEnabled())
+      if (input.isConnectUIEnabled() && input.isExternalUIEnabled() && 
+          input.isSelfContained())
       {
          // if RStudio Connect and external accounts are both enabled, static 
          // content could go to either RPubs or Connect
@@ -71,7 +72,7 @@ public class PublishReportSourcePage
          pages.add(new PublishFilesPage(staticTitle, staticSubtitle, null, 
                input, asMultiple, true));
       }
-      else
+      else if (input.isSelfContained())
       {
          // only RPubs is available for static content
          pages.add(new PublishRPubsPage(staticTitle, staticSubtitle));

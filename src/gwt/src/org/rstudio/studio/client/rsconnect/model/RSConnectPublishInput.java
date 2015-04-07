@@ -75,6 +75,16 @@ public class RSConnectPublishInput
       isMultiRmd_ = isMulti;
    }
    
+   public boolean isSelfContained()
+   {
+      return isSelfContained_;
+   }
+   
+   public void setIsSelfContained(boolean isSelfContained)
+   {
+      isSelfContained_ = isSelfContained;
+   }
+   
    public int getContentType()
    {
       return getOriginatingEvent().getContentType();
@@ -89,6 +99,7 @@ public class RSConnectPublishInput
    private boolean isConnectUIEnabled_;
    private boolean isExternalUIEnabled_;
    private boolean isMultiRmd_;
+   private boolean isSelfContained_;
    private FileSystemItem sourceRmd_;
    private RSConnectActionEvent originatingEvent_;
 }
