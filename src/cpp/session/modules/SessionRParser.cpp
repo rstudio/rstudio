@@ -967,7 +967,10 @@ public:
       
       // Trim
       formalIndices = core::algorithm::set_difference(formalIndices, matchedIndices);
+      userSuppliedArgNames = core::algorithm::set_difference(userSuppliedArgNames, matchedArgNames);
+      
       matchedIndices.clear();
+      matchedArgNames.clear();
       
       /*
        * 2. Identify prefix matches in the set of remaining formals.
@@ -992,7 +995,10 @@ public:
       
       // Trim
       formalIndices = core::algorithm::set_difference(formalIndices, matchedIndices);
+      userSuppliedArgNames = core::algorithm::set_difference(userSuppliedArgNames, matchedArgNames);
+      
       matchedIndices.clear();
+      matchedArgNames.clear();
       
       /*
        * 3. Match other formals positionally.
@@ -1045,7 +1051,18 @@ public:
       call.unmatchedArgNames_ = core::algorithm::set_difference(
                userSuppliedArgNames, matchedArgNames);
       call.info_ = info;
+      
+      applyFixups(cursor, &call);
       return call;
+   }
+   
+   // Fixups for things that we cannot reasonably infer.
+   static void applyFixups(RTokenCursor cursor,
+                           MatchedCall* pCall)
+   {
+      // `old.packages()` delegates the 'method' formal even when missing
+      if (cursor.contentEquals(L"old.packages"))
+         pCall->functionInfo().infoForFormal("method").missingnessHandled = true;
    }
 
    // Accessors
@@ -1074,7 +1091,7 @@ public:
       return unmatchedArgNames_;
    }
    
-   const r::sexp::FunctionInformation& functionInfo() const
+   r::sexp::FunctionInformation& functionInfo()
    {
       return info_;
    }

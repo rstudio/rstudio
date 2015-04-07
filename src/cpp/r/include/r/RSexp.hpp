@@ -437,23 +437,18 @@ public:
       return formals_;
    }
    
-   const std::vector<FormalInformation>& formals() const
-   {
-      return formals_;
-   }
-   
-   const std::vector<std::string>& getFormalNames() const
+   std::vector<std::string>& getFormalNames()
    {
       return formalNames_;
    }
    
-   const boost::optional<std::string>& defaultValueForFormal(
+   boost::optional<std::string>& defaultValueForFormal(
          const std::string& formalName)
    {
       return infoForFormal(formalName).defaultValue;
    }
    
-   const FormalInformation& infoForFormal(const std::string& formalName) const
+   FormalInformation& infoForFormal(const std::string& formalName)
    {
       std::size_t n = formals_.size();
       for (std::size_t i = 0; i < n; ++i)
