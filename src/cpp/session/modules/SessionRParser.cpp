@@ -183,6 +183,7 @@ SEXP resolveFunctionAtCursor(RTokenCursor cursor,
    
    if (cursor.isSimpleCall())
    {
+      DEBUG("Resolving as 'simple' call");
       std::string symbol = string_utils::strippedOfQuotes(
                cursor.contentAsUtf8());
       
@@ -190,6 +191,7 @@ SEXP resolveFunctionAtCursor(RTokenCursor cursor,
    }
    else if (cursor.isSimpleNamespaceCall())
    {
+      DEBUG("Resolving as 'namespaced' call");
       std::string symbol = string_utils::strippedOfQuotes(
                cursor.contentAsUtf8());
       
@@ -200,6 +202,7 @@ SEXP resolveFunctionAtCursor(RTokenCursor cursor,
    }
    else
    {
+      DEBUG("Resolving as generic evaluation");
       if (pCacheable) *pCacheable = false;
       
       std::string call = string_utils::wideToUtf8(cursor.getCallingString());
