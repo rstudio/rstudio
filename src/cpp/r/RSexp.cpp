@@ -1031,6 +1031,8 @@ const std::set<std::string>& nsePrimitives()
    return set;
 }
 
+// NOTE: returns 'false' to signal item found; 'true' to signal item
+// not found
 bool isCallToNSEFunction(SEXP node,
                          std::set<std::string>* pNsePrimitives,
                          bool* pResult)
