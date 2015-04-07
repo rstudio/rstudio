@@ -253,10 +253,21 @@
                      all.files = FALSE, recursive = FALSE, ignore.case = TRUE,
                      include.dirs = FALSE)
 
+  # see if this format is self-contained (defaults to true for HTML-based 
+  # formats)
+  selfContained <- TRUE
+  lines <- readLines(target, warn = FALSE)
+  outputFormat <- rmarkdown:::output_format_from_yaml_front_matter(lines)
+  if (is.list(outputFormat$options) &&
+      outputFormat$options$self_contained == FALSE) {
+    selfContained <- FALSE
+  }
+
   # check to see if this is an interactive doc (i.e. needs to be run rather
   # rather than rendered)
   renderFunction <- .rs.getCustomRenderFunction(target)
   list(
-    is_multi_rmd = .rs.scalar(length(rmds) > 1), 
-    is_shiny_rmd = .rs.scalar(renderFunction == "rmarkdown::run"))
+    is_multi_rmd      = .rs.scalar(length(rmds) > 1), 
+    is_shiny_rmd      = .rs.scalar(renderFunction == "rmarkdown::run"),
+    is_self_contained = .rs.scalar(selfContained))
 })

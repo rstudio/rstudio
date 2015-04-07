@@ -30,4 +30,8 @@ public class RmdPublishDetails extends JavaScriptObject
    public final native boolean isShinyRmd() /*-{
       return this.is_shiny_rmd;
    }-*/;
+
+   public final native boolean isSelfContained() /*-{
+      return this.is_self_contained;
+   }-*/;
 }
