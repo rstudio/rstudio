@@ -1022,6 +1022,8 @@ std::set<std::string> makeNsePrimitives()
    nsePrimitives.insert("evalq");
    nsePrimitives.insert("subset");
    nsePrimitives.insert("eval.parent");
+   nsePrimitives.insert("::");
+   nsePrimitives.insert(":::");
    return nsePrimitives;
 }
 
@@ -1034,7 +1036,7 @@ const std::set<std::string>& nsePrimitives()
 // NOTE: returns 'false' to signal item found; 'true' to signal item
 // not found
 bool isCallToNSEFunction(SEXP node,
-                         std::set<std::string>* pNsePrimitives,
+                         const std::set<std::string>* pNsePrimitives,
                          bool* pResult)
 {
    if (TYPEOF(node) != LANGSXP)
@@ -1058,7 +1060,7 @@ bool isCallToNSEFunction(SEXP node,
 bool maybePerformsNSEImpl(SEXP node,
                           const std::set<std::string>& nsePrimitives)
 {
-   r::sexp::CallRecurser recurser;
+   r::sexp::CallRecurser recurser(node);
    bool result = false;
    recurser.add(boost::bind(isCallToNSEFunction, _1, &nsePrimitives, &result));
    recurser.run();
