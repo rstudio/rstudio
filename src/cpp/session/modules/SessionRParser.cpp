@@ -311,6 +311,10 @@ bool mightPerformNonstandardEvaluation(const RTokenCursor& origin,
             return true;
    }
    
+   // Handle some special cases first.
+   if (isSymbolNamed(cursor, L"::") || isSymbolNamed(cursor, L":::"))
+      return true;
+   
    bool cacheable = true;
    r::sexp::Protect protect;
    SEXP symbolSEXP = resolveFunctionAtCursor(cursor, &protect, &cacheable);
@@ -1236,6 +1240,11 @@ public:
    CustomFunctionValidators()
    {
       // initialize our own custom validators here?
+   }
+   
+   void add(const std::wstring& symbol, Validator validator)
+   {
+      database_[symbol].push_back(validator);
    }
    
    bool applyValidators(RTokenCursor cursor,

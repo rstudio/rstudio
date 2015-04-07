@@ -272,10 +272,26 @@ Error getAllAvailableRSymbols(const FilePath& filePath,
    // we want to pull symbols from specific places -- specifically,
    // _not_ the current search path. We want to infer whether the
    // functions in the package would work at runtime.
-   if (module_context::isRScriptInPackageBuildTarget(filePath))
-      return getAvailableSymbolsForPackage(filePath, documentId, pSymbols);
+   //
+   // For R package development, when linting a 'test' file, we can
+   // safely assume that the package itself will be loaded.
+   Error error;
+   if (module_context::isRScriptInPackageBuildTarget(filePath) ||
+       filePath.isWithin(projects::projectContext().directory().childPath("tests")))
+      error = getAvailableSymbolsForPackage(filePath, documentId, pSymbols);
    else
-      return getAvailableSymbolsForProject(filePath, documentId, pSymbols);
+      error = getAvailableSymbolsForProject(filePath, documentId, pSymbols);
+   
+   // If the file is within the 'tests/testthat' directory, then assume
+   // 'testthat' will be available for those tests.
+   if (filePath.isWithin(projects::projectContext().directory().childPath("tests/testthat")))
+   {
+      ExportedSymbolsRegistry& registry = exportedSymbolsRegistry();
+      registry.fillExportedSymbols("testthat", pSymbols);
+   }
+   
+   return Success();
+      
 }
 
 } // end anonymous namespace

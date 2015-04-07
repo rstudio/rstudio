@@ -1022,8 +1022,6 @@ std::set<std::string> makeNsePrimitives()
    nsePrimitives.insert("evalq");
    nsePrimitives.insert("subset");
    nsePrimitives.insert("eval.parent");
-   nsePrimitives.insert("::");
-   nsePrimitives.insert(":::");
    return nsePrimitives;
 }
 
