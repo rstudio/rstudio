@@ -124,7 +124,10 @@ public class Projects implements OpenProjectFileHandler,
             commands.closeProject().setEnabled(hasProject);
             commands.projectOptions().setEnabled(hasProject);
             if (!hasProject)
+            {
                commands.setWorkingDirToProjectDir().remove();
+               commands.showDiagnosticsProject().remove();
+            }
             
             // remove version control commands if necessary
             if (!sessionInfo.isVcsEnabled())
