@@ -965,7 +965,7 @@
 
 .rs.setVar("nse.primitives", c(
    "quote", "substitute", "match.call", "eval.parent",
-   "enquote", "bquote", "evalq"
+   "enquote", "bquote", "evalq", "lazy_dots"
 ))
 
 .rs.addFunction("performsNonstandardEvaluation", function(x)
