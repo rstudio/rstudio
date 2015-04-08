@@ -20,6 +20,9 @@
 #include <vector>
 #include <algorithm>
 
+#include <boost/type_traits.hpp>
+#include "../type_traits/TypeTraits.hpp"
+
 namespace rstudio {
 namespace core {
 namespace algorithm {
@@ -58,19 +61,34 @@ OutputIterator copy_transformed_if(InputIterator begin,
    return destBegin;
 }
 
+namespace detail {
+
 template <typename Container, typename ValueType>
-bool contains(const Container& container,
-              const ValueType& type,
-              typename Container::key_type* SFINAE__key_type = 0)
+typename boost::enable_if_c< type_traits::has_key_type<Container>::value, bool >::type
+contains(const Container& container, const ValueType& value, boost::true_type)
 {
-   return container.count(type);
+   return container.count(value);
 }
 
 template <typename Container, typename ValueType>
-bool contains(const Container& container,
-              const ValueType& value)
+typename boost::disable_if_c< type_traits::has_key_type<Container>::value, bool >::type
+contains(const Container& container, const ValueType& value, boost::false_type)
 {
    return std::find(container.begin(), container.end(), value) != container.end();
+}
+
+} // namespace detail
+
+template <typename Container, typename ValueType>
+bool contains(const Container& container, const ValueType& value)
+{
+   return detail::contains(
+            container,
+            value,
+            boost::integral_constant<
+               bool,
+               type_traits::has_key_type<Container>::value
+            >());
 }
 
 template <typename T>
