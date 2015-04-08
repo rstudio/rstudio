@@ -13,6 +13,9 @@
  *
  */
 
+// #define RSTUDIO_DEBUG_LABEL "source_index"
+// #define RSTUDIO_ENABLE_DEBUG_MACROS
+
 #include <core/r_util/RSourceIndex.hpp>
 
 #include <boost/algorithm/string.hpp>
@@ -199,6 +202,16 @@ void parseSignature(RTokens::const_iterator begin,
    }
 }
 
+bool isMethodOrClassDefinition(const RToken& token)
+{
+   return token.contentStartsWith(L"set") && (
+            token.contentEquals(L"setGeneric") ||
+            token.contentEquals(L"setMethod") ||
+            token.contentEquals(L"setClass") ||
+            token.contentEquals(L"setGroupGeneric") ||
+            token.contentEquals(L"setClassUnion") ||
+            token.contentEquals(L"setRefClass"));
+}
 
 }  // anonymous namespace
 
@@ -262,6 +275,7 @@ RSourceIndex::RSourceIndex(const std::string& context,
 
       // alias the token
       const RToken& token = rTokens.at(i);
+      DEBUG("Current token: " << token);
       
       // update brace nesting levels
       braceLevel += token.isType(RToken::LBRACE);
@@ -277,7 +291,7 @@ RSourceIndex::RSourceIndex(const std::string& context,
       doubleBracketLevel -= token.isType(RToken::RDBRACKET);
 
       // is this a potential method or class definition?
-      if (token.contentStartsWith(set))
+      if (isMethodOrClassDefinition(token))
       {
          RSourceItem::Type setType = RSourceItem::None;
 
@@ -485,17 +499,26 @@ RSourceIndex::RSourceIndex(const std::string& context,
       //    foo <- 1
       //
       // to the source index here
-      else if (i > 1 && isLeftAssign(rTokens.at(i - 1)))
+      else if (i >= 1 && isLeftAssign(rTokens.at(i - 1)))
       {
          // bail if we're not at the top level
          if (braceLevel || parenLevel || bracketLevel || doubleBracketLevel)
+         {
+            DEBUG("Bailing: [" << braceLevel << ", " << parenLevel << ", " <<
+                  bracketLevel << ", " << doubleBracketLevel << "]");
             continue;
+         }
          
          // ensure the token previous to the left assign is
          // an identifier or string
          const RToken& idToken = rTokens.at(i - 2);
+         DEBUG("- Token: " << idToken);
+         
          if (!(isId(idToken) || isString(idToken)))
+         {
+            DEBUG("* Not an id or string");
             continue;
+         }
          
          // ensure the token previous to the assignment token
          // is not a binary operator
@@ -503,7 +526,10 @@ RSourceIndex::RSourceIndex(const std::string& context,
          {
             const RToken& beforeId = rTokens.at(i - 3);
             if (isBinaryOp(beforeId))
+            {
+               DEBUG("* Has binary op before; skipping");
                continue;
+            }
          }
             
          // if we get this far then it's a variable def'n
