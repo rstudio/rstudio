@@ -826,7 +826,6 @@ public class RSConnect implements SessionInitHandler,
    private boolean dirStateDirty_ = false;
    
    public final static String CLOUD_SERVICE_NAME = "ShinyApps.io";
-   public static final String IGNORED_RESOURCES = "ignored_resources";
    
    // No/unknown content type 
    public final static int CONTENT_TYPE_NONE      = 0;

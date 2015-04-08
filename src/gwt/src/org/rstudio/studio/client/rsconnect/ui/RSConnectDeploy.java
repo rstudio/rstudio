@@ -205,7 +205,8 @@ public class RSConnectDeploy extends Composite
       connector_ = connector;
       display_ = display;
       prefs_ = prefs;
-      accountList_ = new RSConnectAccountList(server_, display_, false);
+      accountList_ = new RSConnectAccountList(server_, display_, false, 
+            !asStatic_);
       
       // when the account list finishes populating, select the account from the
       // previous deployment if we have one
@@ -334,6 +335,14 @@ public class RSConnectDeploy extends Composite
    {
       source_ = source;
       asMultipleRmd_ = asMultipleRmd;
+      
+      // not all destination accounts support static content
+      if (asStatic_ != asStatic)
+      {
+         accountList_.setShowCloudAccounts(!asStatic);
+         accountList_.refreshAccountList();
+      }
+
       asStatic_ = asStatic;
    }
    

@@ -14,6 +14,8 @@
  */
 package org.rstudio.studio.client.rsconnect.ui;
 
+import java.util.ArrayList;
+
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.WidgetListBox;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -66,10 +68,12 @@ public class RSConnectAccountList extends Composite
    
    public RSConnectAccountList(RSConnectServerOperations server, 
          GlobalDisplay display,
-         boolean refreshImmediately)
+         boolean refreshImmediately, 
+         boolean showCloudAccounts)
    {
       server_ = server;
       display_ = display;
+      showCloudAccounts_ = showCloudAccounts;
       accountList_ = new WidgetListBox<AccountEntry>();
       accountList_.setEmptyText("No accounts connected.");
       if (refreshImmediately)
@@ -104,11 +108,15 @@ public class RSConnectAccountList extends Composite
    
    public void setAccountList(JsArray<RSConnectAccount> accounts)
    {
-      accounts_ = accounts;
+      accounts_.clear();
       accountList_.clearItems();
       for (int i = 0; i < accounts.length(); i++)
       {
-         accountList_.addItem(new AccountEntry(accounts.get(i)));
+         if (showCloudAccounts_ || !accounts.get(i).isCloudAccount())
+         {
+            accounts_.add(accounts.get(i));
+            accountList_.addItem(new AccountEntry(accounts.get(i)));
+         }
       }
       if (onRefreshCompleted_ != null)
       {
@@ -124,7 +132,7 @@ public class RSConnectAccountList extends Composite
       }
 
       int idx = accountList_.getSelectedIndex();
-      if (idx < accounts_.length()) 
+      if (idx < accounts_.size()) 
       {
          return accounts_.get(idx);
       }
@@ -133,7 +141,7 @@ public class RSConnectAccountList extends Composite
    
    public void selectAccount(RSConnectAccount account)
    {
-      for (int i = 0; i < accounts_.length(); i ++)
+      for (int i = 0; i < accounts_.size(); i ++)
       {
          if (accounts_.get(i).equals(account))
          {
@@ -153,12 +161,21 @@ public class RSConnectAccountList extends Composite
       if (accounts_ == null)
          return 0;
       else
-         return accounts_.length();
+         return accounts_.size();
+   }
+   
+   public void setShowCloudAccounts(boolean show)
+   {
+      showCloudAccounts_ = show;
    }
    
    private final WidgetListBox<AccountEntry> accountList_;
    private final RSConnectServerOperations server_; 
    private final GlobalDisplay display_;
-   private JsArray<RSConnectAccount> accounts_;
+   
+   private boolean showCloudAccounts_;
+   
+   private ArrayList<RSConnectAccount> accounts_ = 
+         new ArrayList<RSConnectAccount>();
    private Operation onRefreshCompleted_ = null;
 }
