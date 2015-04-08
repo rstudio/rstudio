@@ -125,7 +125,6 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
             });
          }
       });
-      publishButton_.setVisible(false);
       
       return toolbar_;
    }
@@ -147,12 +146,10 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
       if (url.equals(ABOUT_BLANK))
       {
          publishButton_.setContentType(RSConnect.CONTENT_TYPE_NONE);
-         publishButton_.setVisible(false);
       }
       else 
       {
          publishButton_.setContentType(RSConnect.CONTENT_TYPE_HTML);
-         publishButton_.setVisible(true);
       }
    }
 
@@ -161,7 +158,6 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
    {
       navigate(params.getOutputUrl(), true);
       publishButton_.setContentType(RSConnect.CONTENT_TYPE_DOCUMENT);
-      publishButton_.setVisible(true);
       publishButton_.setRmdPreview(params);
       rmdPreviewParams_ = params;
       toolbar_.invalidateSeparators();
@@ -172,7 +168,6 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
    {
       exportButton_.setVisible(exportEnabled);
       exportButtonSeparator_.setVisible(exportEnabled);
-      publishButton_.setVisible(exportEnabled);
       toolbar_.invalidateSeparators();
    }
    

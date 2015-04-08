@@ -37,6 +37,8 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.shiny.events.RSConnectDeploymentCompletedEvent;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.Scheduler;
@@ -47,6 +49,7 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.MenuItem;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 public class RSConnectPublishButton extends Composite
    implements RSConnectDeploymentCompletedEvent.Handler,
@@ -55,9 +58,6 @@ public class RSConnectPublishButton extends Composite
    public RSConnectPublishButton(int contentType, boolean showCaption,
          boolean manageVisiblity)
    {
-      // TODO: are we responsible for hiding ourselves if e.g. internal and 
-      // external publishing is disabled?
-      
       contentType_ = contentType;
       showCaption_ = showCaption;
       manageVisiblity_ = manageVisiblity;
@@ -92,30 +92,36 @@ public class RSConnectPublishButton extends Composite
 
       // initialize injected members
       RStudioGinjector.INSTANCE.injectMembers(this);
+      
+      // compute initial visible state
+      applyVisiblity();
    }
    
    @Inject
    public void initialize(RSConnectServerOperations server,
          EventBus events, 
          Commands commands,
-         GlobalDisplay display)
+         GlobalDisplay display,
+         Provider<UIPrefs> pUiPrefs,
+         Session session)
    {
       server_ = server;
       events_ = events;
       commands_ = commands;
       display_ = display;
+      session_ = session;
+      pUiPrefs_ = pUiPrefs;
       
       // initialize visibility if requested
       if (manageVisiblity_) 
       {
-         setVisible(commands_.rsconnectDeploy().isVisible());
          commands_.rsconnectDeploy().addVisibleChangedHandler(
                new VisibleChangedHandler()
          {
             @Override
             public void onVisibleChanged(AppCommand command)
             {
-               setVisible(commands_.rsconnectDeploy().isVisible());
+               applyVisiblity();
             }
          });
       }
@@ -127,11 +133,12 @@ public class RSConnectPublishButton extends Composite
    @Override
    public void setVisible(boolean visible)
    {
+      boolean wasVisible = isVisible();
       super.setVisible(visible);
       
       // if becoming visible, repopulate the list of deployments if we haven't
       // already
-      if (visible)
+      if (!wasVisible && visible)
          populateDeployments(false);
    }
    
@@ -149,24 +156,23 @@ public class RSConnectPublishButton extends Composite
             (params.getResult().isHtml() &&
              params.getResult().getFormat() != null))
       {
-         setVisible(true);
          docPreview_ = new RenderedDocPreview(params);
          setContentPath(params.getResult().getTargetFile());
       }
       else
       {
-         setVisible(false);
          docPreview_ = null;
       }
+      applyVisiblity();
    }
    
    public void setHtmlPreview(HTMLPreviewResult params)
    {
       if (params.getSucceeded())
       {
-         setVisible(true);
          setContentPath(params.getSourceFile());
          docPreview_ = new RenderedDocPreview(params);
+         applyVisiblity();
       }
    }
 
@@ -181,9 +187,9 @@ public class RSConnectPublishButton extends Composite
       // this can happen in the viewer pane, which hosts e.g. both HTML widgets
       // and R Markdown documents, each of which has its own publishing 
       // semantics
-      boolean newType = contentType_ != contentType;
+      int oldType = contentType_;
       contentType_ = contentType;
-      if (newType)
+      if (oldType != contentType)
       {
          // moving to a document type: get its deployment status 
          if (contentType == RSConnect.CONTENT_TYPE_DOCUMENT)
@@ -193,12 +199,14 @@ public class RSConnectPublishButton extends Composite
          if (contentType == RSConnect.CONTENT_TYPE_HTML)
             setPreviousDeployments(null);
       }
+      applyVisiblity();
    }
    
    public void setHtmlGenerator(StaticHtmlGenerator generator)
    {
       htmlGenerator_ = generator;
       setPreviousDeployments(null);
+      applyVisiblity();
    }
 
 
@@ -396,6 +404,50 @@ public class RSConnectPublishButton extends Composite
             commands_.rsconnectManageAccounts().createMenuItem(false));
    }
    
+   private void applyVisiblity()
+   {
+      setVisible(recomputeVisibility());
+   }
+   
+   private boolean recomputeVisibility()
+   {
+      // if all publishing is disabled, hide ourselves 
+      if (!session_.getSessionInfo().getAllowPublish() ||
+          !pUiPrefs_.get().showPublishUi().getGlobalValue())
+         return false;
+      
+      // if both internal and external publishing is disabled, hide ourselves
+      if (!session_.getSessionInfo().getAllowExternalPublish() &&
+          !pUiPrefs_.get().enableRStudioConnect().getGlobalValue())
+         return false;
+      
+      // if we're bound to a command's visibility state, check that
+      if (manageVisiblity_ && !commands_.rsconnectDeploy().isVisible())
+         return false;
+
+      // if we have no content type, hide ourselves
+      if (contentType_ == RSConnect.CONTENT_TYPE_NONE)
+         return false;
+      
+      // if we do have a content type, ensure that we have actual content 
+      // bound to it
+      if ((contentType_ == RSConnect.CONTENT_TYPE_HTML || 
+            contentType_ == RSConnect.CONTENT_TYPE_PLOT) &&
+           htmlGenerator_ == null)
+         return false;
+      
+      if (contentType_ == RSConnect.CONTENT_TYPE_APP && 
+          StringUtil.isNullOrEmpty(contentPath_))
+         return false;
+
+      if (contentType_ == RSConnect.CONTENT_TYPE_DOCUMENT && 
+          docPreview_ == null)
+         return false;
+
+      // looks like we should be visible
+      return true;
+   }
+   
    private final ToolbarButton publishButton_;
    private final ToolbarPopupMenu publishMenu_;
 
@@ -403,14 +455,16 @@ public class RSConnectPublishButton extends Composite
    private EventBus events_;
    private Commands commands_;
    private GlobalDisplay display_;
+   private Session session_;
+   private Provider<UIPrefs> pUiPrefs_;
 
    private String contentPath_;
-   private int contentType_;
+   private int contentType_ = RSConnect.CONTENT_TYPE_NONE;
    private String lastContentPath_;
    private boolean populating_ = false;
    private RenderedDocPreview docPreview_;
    private StaticHtmlGenerator htmlGenerator_;
-
+   
    private final boolean showCaption_;
    private final boolean manageVisiblity_;
 

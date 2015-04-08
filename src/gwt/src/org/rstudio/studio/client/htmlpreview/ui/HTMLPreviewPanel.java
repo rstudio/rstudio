@@ -225,7 +225,6 @@ public class HTMLPreviewPanel extends ResizeComposite
    @Override
    public void showPreview(String url, 
                            HTMLPreviewResult result,
-                           boolean enablePublish,
                            boolean enableRefresh,
                            boolean enableShowLog)
    {
@@ -238,9 +237,8 @@ public class HTMLPreviewPanel extends ResizeComposite
       showLogButton_.setVisible(enableShowLog);
       saveHtmlPreviewAsSeparator_.setVisible(result.getEnableSaveAs());
       saveHtmlPreviewAs_.setVisible(result.getEnableSaveAs());
-      publishButtonSeparator_.setVisible(enablePublish);
-      publishButton_.setVisible(enablePublish);
       publishButton_.setHtmlPreview(result);
+      publishButtonSeparator_.setVisible(publishButton_.isVisible());
       refreshButtonSeparator_.setVisible(enableRefresh);
       refreshButton_.setVisible(enableRefresh);
       previewFrame_.navigate(url);

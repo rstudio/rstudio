@@ -27,7 +27,6 @@ import org.rstudio.core.client.widget.SatelliteFramePanel;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.studio.client.workbench.commands.Commands;
-import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.rsconnect.RSConnect;
 import org.rstudio.studio.client.rsconnect.ui.RSConnectPublishButton;
 import org.rstudio.studio.client.shiny.ShinyApplicationPresenter;
@@ -37,11 +36,9 @@ public class ShinyApplicationPanel extends SatelliteFramePanel<RStudioFrame>
                                    implements ShinyApplicationPresenter.Display
 {
    @Inject
-   public ShinyApplicationPanel(Commands commands, EventBus events,
-                                RSConnect rsconnect)
+   public ShinyApplicationPanel(Commands commands, RSConnect rsconnect)
    {
       super(commands);
-      events_ = events;
       rsconnect.ensureSessionInit();
    }
    
@@ -74,11 +71,9 @@ public class ShinyApplicationPanel extends SatelliteFramePanel<RStudioFrame>
    }
    
    @Override
-   public void showApp(ShinyApplicationParams params, boolean showDeploy)
+   public void showApp(ShinyApplicationParams params)
    {
       appParams_ = params;
-
-      publishButton_.setVisible(showDeploy);
       publishButton_.setContentPath(params.getPath());
          
       String url = params.getUrl();
@@ -126,6 +121,4 @@ public class ShinyApplicationPanel extends SatelliteFramePanel<RStudioFrame>
    private Label urlBox_;
    private ShinyApplicationParams appParams_;
    private RSConnectPublishButton publishButton_;
-   
-   private final EventBus events_; 
 }

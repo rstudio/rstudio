@@ -14,7 +14,6 @@
  */
 package org.rstudio.studio.client.projects.ui.newproject;
 
-import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.DirectoryChooserTextBox;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.studio.client.projects.model.NewProjectInput;
