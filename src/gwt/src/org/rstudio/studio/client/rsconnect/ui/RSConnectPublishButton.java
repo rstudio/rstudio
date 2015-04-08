@@ -132,14 +132,14 @@ public class RSConnectPublishButton extends Composite
       // if becoming visible, repopulate the list of deployments if we haven't
       // already
       if (visible)
-         populateDeployments();
+         populateDeployments(false);
    }
    
    public void setContentPath(String contentPath)
    {
       contentPath_ = contentPath;
       if (isVisible())
-         populateDeployments();
+         populateDeployments(false);
    }
    
    public void setRmdPreview(RmdPreviewParams params)
@@ -187,7 +187,7 @@ public class RSConnectPublishButton extends Composite
       {
          // moving to a document type: get its deployment status 
          if (contentType == RSConnect.CONTENT_TYPE_DOCUMENT)
-            populateDeployments();
+            populateDeployments(true);
          
          // moving to a raw HTML type: erase the deployment list
          if (contentType == RSConnect.CONTENT_TYPE_HTML)
@@ -214,8 +214,7 @@ public class RSConnectPublishButton extends Composite
       // the content on which this button is hosted, but there are unlikely to
       // be more than a couple publish buttons at any one time, and this is
       // cheap (just hits the local disk)
-      lastContentPath_ = null;
-      populateDeployments();
+      populateDeployments(true);
    }
 
    @Override
@@ -226,21 +225,22 @@ public class RSConnectPublishButton extends Composite
       
       if (StringUtil.isNullOrEmpty(status.getError()))
       {
-         lastContentPath_ = null;
-         populateDeployments();
+         populateDeployments(true);
       }
    }
 
    // Private methods --------------------------------------------------------
    
-   private void populateDeployments()
+   private void populateDeployments(boolean force)
    {
       // prevent reentrancy
       if (contentPath_ == null || populating_)
          return;
       
       // avoid populating if we've already set the deployments for this path
-      if (lastContentPath_ != null && lastContentPath_.equals(contentPath_))
+      // (unless we're forcefully repopulating)
+      if (lastContentPath_ != null && lastContentPath_.equals(contentPath_) &&
+            !force)
          return;
       
       // if this is a .R file, check for deployments of its parent path
