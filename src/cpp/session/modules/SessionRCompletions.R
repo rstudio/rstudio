@@ -754,9 +754,20 @@ assign(x = ".rs.acCompletionTypes",
       objectNames <- if (exportsOnly)
          getNamespaceExports(namespace)
       else
-         objects(namespace, all.names = TRUE)
+      {
+         # Take advantage of 'sorted' argument if 
+         # available -- we only want to sort a filtered
+         # subset
+         arguments <- list()
+         arguments[["name"]] <- namespace
+         arguments[["all.names"]] <- TRUE
+         if ("sorted" %in% names(formals(objects)))
+            arguments[["sorted"]] <- FALSE
+         
+         do.call(objects, arguments)
+      }
       
-      completions <- .rs.selectFuzzyMatches(objectNames, token)
+      completions <- sort(.rs.selectFuzzyMatches(objectNames, token))
       objects <- mget(completions, envir = namespace, inherits = TRUE)
       type <- vapply(objects, FUN.VALUE = numeric(1), USE.NAMES = FALSE, .rs.getCompletionType)
       
