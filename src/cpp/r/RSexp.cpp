@@ -171,6 +171,47 @@ bool fillSetString(SEXP object, std::set<std::string>* pSet)
    return true;
 }
 
+SEXP asEnvironment(std::string name)
+{
+   if (name == "base")
+      return R_BaseEnv;
+   
+   name = "package:" + name;
+   
+   SEXP envSEXP = ENCLOS(R_GlobalEnv);
+   while (envSEXP != R_EmptyEnv)
+   {
+      SEXP nameSEXP = Rf_getAttrib(envSEXP, R_NameSymbol);
+      if (TYPEOF(nameSEXP) == STRSXP &&
+          name == CHAR(STRING_ELT(nameSEXP, 0)))
+      {
+         return envSEXP;
+      }
+      envSEXP = ENCLOS(envSEXP);
+   }
+   
+   LOG_ERROR_MESSAGE("No environment named '" + name + "' on search path");
+   return envSEXP;
+}
+
+namespace {
+
+bool ensureNamespaceLoaded(const std::string& ns)
+{
+   if (ns.empty()) return false;
+   SEXP nsSEXP = findNamespace(ns);
+   if (nsSEXP == R_UnboundValue)
+   {
+      r::exec::RFunction loadNamespace("base:::loadNamespace");
+      loadNamespace.addParam(ns);
+      Error error = loadNamespace.call();
+      if (error) return false;
+   }
+   return true;
+}
+
+} // anonymous namespace
+
 std::vector<std::string> getLoadedNamespaces()
 {
    std::vector<std::string> result;
@@ -179,6 +220,14 @@ std::vector<std::string> getLoadedNamespaces()
    if (error)
       LOG_ERROR(error);
    return result;
+}
+
+SEXP asNamespace(const std::string& name)
+{
+   if (!ensureNamespaceLoaded(name))
+      return R_EmptyEnv;
+   
+   return findNamespace(name);
 }
 
 SEXP findNamespace(const std::string& name)
@@ -251,23 +300,6 @@ SEXP findVar(const std::string &name, const SEXP env)
    return Rf_findVar(Rf_install(name.c_str()), env);
 }
 
-namespace {
-
-void ensureNamespaceLoaded(const std::string& ns)
-{
-   if (ns.empty()) return;
-   SEXP nsSEXP = findNamespace(ns);
-   if (nsSEXP == R_UnboundValue)
-   {
-      r::exec::RFunction loadNamespace("base:::loadNamespace");
-      loadNamespace.addParam(ns);
-      Error error = loadNamespace.call();
-      if (error)
-         LOG_ERROR(error);
-   }
-}
-
-} // anonymous namespace
 
 
 SEXP findVar(const std::string& name, const std::string& ns)
@@ -275,7 +307,9 @@ SEXP findVar(const std::string& name, const std::string& ns)
    if (name.empty())
       return R_UnboundValue;
    
-   ensureNamespaceLoaded(ns);
+   if (!ensureNamespaceLoaded(ns))
+      return R_UnboundValue;
+   
    SEXP env = ns.empty() ? R_GlobalEnv : findNamespace(ns);
    
    return findVar(name, env);

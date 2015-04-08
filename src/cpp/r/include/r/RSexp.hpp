@@ -52,8 +52,10 @@ class ListBuilder;
 class Protect;
    
 // environments and namespaces
+SEXP asEnvironment(std::string name);
 std::vector<std::string> getLoadedNamespaces();
 SEXP findNamespace(const std::string& name);
+SEXP asNamespace(const std::string& name);
    
 // variables within an environment
 typedef std::pair<std::string,SEXP> Variable ;

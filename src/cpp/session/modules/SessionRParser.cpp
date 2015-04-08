@@ -124,6 +124,10 @@ public:
    
    NSEDatabase()
    {
+      BOOST_FOREACH(const std::string& name, r::sexp::nsePrimitives())
+      {
+         addNseFunction(name, "base");
+      }
    }
    
    void add(SEXP symbolSEXP, bool performsNse)

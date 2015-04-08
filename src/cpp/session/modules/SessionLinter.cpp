@@ -144,57 +144,70 @@ void addNamespaceSymbols(std::set<std::string>* pSymbols)
    }
 }
 
-void fillNamespaceExports(const std::string& nsName,
-                          std::vector<std::string>* pSymbols)
-{
-   r::sexp::Protect protect;
-   SEXP ns = r::sexp::findNamespace(nsName);
-   if (ns == R_UnboundValue)
-      return;
-   
-   Error error = r::sexp::getNamespaceExports(ns, pSymbols);
-   if (error)
-      LOG_ERROR(error);
-}
-
-class ExportedSymbolsRegistry : boost::noncopyable
+class PackageSymbolRegistry : boost::noncopyable
 {
 public:
    
    typedef std::map<std::string, std::vector<std::string> > Registry;
    
-   void fillExportedSymbols(const std::string& pkgName,
-                            std::set<std::string>* pOutput)
+   void fillPackageSymbols(const std::string& pkgName,
+                           std::set<std::string>* pOutput)
    {
       if (!registry_.count(pkgName))
-         fillNamespaceExports(pkgName, &registry_[pkgName]);
+      {
+         SEXP envSEXP = r::sexp::asEnvironment(pkgName);
+         if (envSEXP == R_EmptyEnv)
+            return;
+         
+         Error error = r::sexp::objects(envSEXP, true, &registry_[pkgName]);
+         if (error) LOG_ERROR(error);
+      }
       
       const std::vector<std::string>& symbols = registry_[pkgName];
       pOutput->insert(
                symbols.begin(),
                symbols.end());
    }
-
+   
+   void fillNamespaceExports(const std::string& pkgName,
+                            std::set<std::string>* pOutput)
+   {
+      if (!registry_.count(pkgName))
+      {
+         SEXP envSEXP = r::sexp::asNamespace(pkgName);
+         if (envSEXP == R_EmptyEnv)
+            return;
+         
+         Error error = r::sexp::getNamespaceExports(envSEXP, &registry_[pkgName]);
+         if (error) LOG_ERROR(error);
+      }
+      
+      const std::vector<std::string>& symbols = registry_[pkgName];
+      pOutput->insert(
+               symbols.begin(),
+               symbols.end());
+   }
+   
 private:
    Registry registry_;
 };
 
-ExportedSymbolsRegistry& exportedSymbolsRegistry()
+PackageSymbolRegistry& packageSymbolRegistry()
 {
-   static ExportedSymbolsRegistry instance;
+   static PackageSymbolRegistry instance;
    return instance;
 }
 
 void addBaseSymbols(std::set<std::string>* pSymbols)
 {
-   ExportedSymbolsRegistry& registry = exportedSymbolsRegistry();
-   registry.fillExportedSymbols("base", pSymbols);
-   registry.fillExportedSymbols("graphics", pSymbols);
-   registry.fillExportedSymbols("grDevices", pSymbols);
-   registry.fillExportedSymbols("methods", pSymbols);
-   registry.fillExportedSymbols("stats", pSymbols);
-   registry.fillExportedSymbols("stats4", pSymbols);
-   registry.fillExportedSymbols("utils", pSymbols);
+   PackageSymbolRegistry& registry = packageSymbolRegistry();
+   registry.fillPackageSymbols("base", pSymbols);
+   registry.fillPackageSymbols("datasets", pSymbols);
+   registry.fillPackageSymbols("graphics", pSymbols);
+   registry.fillPackageSymbols("grDevices", pSymbols);
+   registry.fillPackageSymbols("methods", pSymbols);
+   registry.fillPackageSymbols("stats", pSymbols);
+   registry.fillPackageSymbols("utils", pSymbols);
 }
 
 void addRcppExportedSymbols(const FilePath& filePath,
@@ -286,8 +299,8 @@ Error getAllAvailableRSymbols(const FilePath& filePath,
    // 'testthat' will be available for those tests.
    if (filePath.isWithin(projects::projectContext().directory().childPath("tests/testthat")))
    {
-      ExportedSymbolsRegistry& registry = exportedSymbolsRegistry();
-      registry.fillExportedSymbols("testthat", pSymbols);
+      PackageSymbolRegistry& registry = packageSymbolRegistry();
+      registry.fillNamespaceExports("testthat", pSymbols);
    }
    
    return error;
