@@ -169,17 +169,26 @@ public:
                symbols.end());
    }
    
-   void fillNamespaceExports(const std::string& pkgName,
-                            std::set<std::string>* pOutput)
+   void fillNamespaceObjects(const std::string& pkgName,
+                             std::set<std::string>* pOutput,
+                             bool exportsOnly = true)
    {
       if (!registry_.count(pkgName))
       {
          SEXP envSEXP = r::sexp::asNamespace(pkgName);
          if (envSEXP == R_EmptyEnv)
             return;
-         
-         Error error = r::sexp::getNamespaceExports(envSEXP, &registry_[pkgName]);
-         if (error) LOG_ERROR(error);
+
+         if (exportsOnly)
+         {
+            Error error = r::sexp::getNamespaceExports(envSEXP, &registry_[pkgName]);
+            if (error) LOG_ERROR(error);
+         }
+         else
+         {
+            Error error = r::sexp::objects(envSEXP, true, &registry_[pkgName]);
+            if (error) LOG_ERROR(error);
+         }
       }
       
       const std::vector<std::string>& symbols = registry_[pkgName];
@@ -300,7 +309,20 @@ Error getAllAvailableRSymbols(const FilePath& filePath,
    if (filePath.isWithin(projects::projectContext().directory().childPath("tests/testthat")))
    {
       PackageSymbolRegistry& registry = packageSymbolRegistry();
-      registry.fillNamespaceExports("testthat", pSymbols);
+      registry.fillNamespaceObjects("testthat", pSymbols, false);
+   }
+   
+   // If the file is named 'server.R', 'ui.R' or 'app.R', we'll implicitly
+   // assume that it depends on Shiny.
+   std::string basename = boost::algorithm::to_lower_copy(
+            filePath.filename());
+   
+   if (basename == "server.r" ||
+       basename == "ui.r" ||
+       basename == "app.r")
+   {
+      PackageSymbolRegistry& registry = packageSymbolRegistry();
+      registry.fillNamespaceObjects("shiny", pSymbols, false);
    }
    
    return error;
