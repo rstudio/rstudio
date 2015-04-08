@@ -378,10 +378,6 @@ private:
    // NOTE: All source indexes share a set of completions
    static std::map<std::string, AsyncLibraryCompletions> s_completions_;
    
-   // Cache the links between file paths and the associated source index
-   // for easy lookup
-   static std::map<std::string, std::string> s_absPathToIdMap_;
-   
 };
 
 } // namespace r_util
