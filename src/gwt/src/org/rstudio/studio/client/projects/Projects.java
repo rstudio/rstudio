@@ -762,6 +762,28 @@ public class Projects implements OpenProjectFileHandler,
          onCompleted);  
    }
    
+   @Handler
+   public void onShowDiagnosticsProject()
+   {
+      final ProgressIndicator indicator = globalDisplay_.getProgressIndicator("Lint");
+      indicator.onProgress("Analyzing project sources...");
+      projServer_.analyzeProject(new ServerRequestCallback<Void>()
+      {
+         @Override
+         public void onResponseReceived(Void response)
+         {
+            indicator.onCompleted();
+         }
+         
+         @Override
+         public void onError(ServerError error)
+         {
+            Debug.logError(error);
+            indicator.onCompleted();
+         }
+      });
+   }
+   
    private final Provider<ProjectMRUList> pMRUList_;
    private final ApplicationQuit applicationQuit_;
    private final ProjectsServerOperations projServer_;

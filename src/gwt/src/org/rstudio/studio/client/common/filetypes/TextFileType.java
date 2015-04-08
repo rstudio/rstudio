@@ -289,7 +289,7 @@ public class TextFileType extends EditableFileType
       if (canExecuteCode() || isC())
       {
          results.add(commands.reindent());
-         results.add(commands.lintActiveDocument());
+         results.add(commands.showDiagnosticsActiveDocument());
       }
       if (canExecuteCode()) {
          results.add(commands.executeCode());

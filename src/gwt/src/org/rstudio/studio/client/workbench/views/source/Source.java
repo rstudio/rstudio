@@ -285,7 +285,7 @@ public class Source implements InsertSourceHandler,
       dynamicCommands_.add(commands.vcsBlameOnGitHub());
       dynamicCommands_.add(commands.editRmdFormatOptions());
       dynamicCommands_.add(commands.reformatCode());
-      dynamicCommands_.add(commands.lintActiveDocument());
+      dynamicCommands_.add(commands.showDiagnosticsActiveDocument());
       dynamicCommands_.add(commands.insertRoxygenSkeleton());
       for (AppCommand command : dynamicCommands_)
       {

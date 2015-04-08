@@ -98,25 +98,11 @@ void addInferredSymbols(const FilePath& filePath,
    boost::shared_ptr<RSourceIndex> index =
          rSourceIndex().get(documentId);
    
-   // If that failed for some reason, just re-read and re-parse
-   // the document from that file path
+   // If we were unable to get the R source index for
+   // some reason, try re-resolving the documentId based
+   // on the file path
    if (!index)
-   {
-      LOG_WARNING_MESSAGE("Failed to locate document with id '" + documentId + "'");
-      // Get the source index associated with this filepath.
-      // We have to round trip to map this filePath to a source
-      // document, grab that ID, and then get the index.
-      boost::shared_ptr<SourceDocument> pDoc(new SourceDocument());
-      Error error = source_database::get(filePath.filename(), pDoc);
-      if (error)
-      {
-         LOG_ERROR(error);
-         return;
-      }
-
-      const std::string& id = pDoc->id();
-      index = rSourceIndex().get(id);
-   }
+      index = rSourceIndex().get(filePath);
    
    // If we still don't have an index, bail
    if (!index)
@@ -158,57 +144,70 @@ void addNamespaceSymbols(std::set<std::string>* pSymbols)
    }
 }
 
-void fillNamespaceExports(const std::string& nsName,
-                          std::vector<std::string>* pSymbols)
-{
-   r::sexp::Protect protect;
-   SEXP ns = r::sexp::findNamespace(nsName);
-   if (ns == R_UnboundValue)
-      return;
-   
-   Error error = r::sexp::getNamespaceExports(ns, pSymbols);
-   if (error)
-      LOG_ERROR(error);
-}
-
-class ExportedSymbolsRegistry : boost::noncopyable
+class PackageSymbolRegistry : boost::noncopyable
 {
 public:
    
    typedef std::map<std::string, std::vector<std::string> > Registry;
    
-   void fillExportedSymbols(const std::string& pkgName,
-                            std::set<std::string>* pOutput)
+   void fillPackageSymbols(const std::string& pkgName,
+                           std::set<std::string>* pOutput)
    {
       if (!registry_.count(pkgName))
-         fillNamespaceExports(pkgName, &registry_[pkgName]);
+      {
+         SEXP envSEXP = r::sexp::asEnvironment(pkgName);
+         if (envSEXP == R_EmptyEnv)
+            return;
+         
+         Error error = r::sexp::objects(envSEXP, true, &registry_[pkgName]);
+         if (error) LOG_ERROR(error);
+      }
       
       const std::vector<std::string>& symbols = registry_[pkgName];
       pOutput->insert(
                symbols.begin(),
                symbols.end());
    }
-
+   
+   void fillNamespaceExports(const std::string& pkgName,
+                            std::set<std::string>* pOutput)
+   {
+      if (!registry_.count(pkgName))
+      {
+         SEXP envSEXP = r::sexp::asNamespace(pkgName);
+         if (envSEXP == R_EmptyEnv)
+            return;
+         
+         Error error = r::sexp::getNamespaceExports(envSEXP, &registry_[pkgName]);
+         if (error) LOG_ERROR(error);
+      }
+      
+      const std::vector<std::string>& symbols = registry_[pkgName];
+      pOutput->insert(
+               symbols.begin(),
+               symbols.end());
+   }
+   
 private:
    Registry registry_;
 };
 
-ExportedSymbolsRegistry& exportedSymbolsRegistry()
+PackageSymbolRegistry& packageSymbolRegistry()
 {
-   static ExportedSymbolsRegistry instance;
+   static PackageSymbolRegistry instance;
    return instance;
 }
 
 void addBaseSymbols(std::set<std::string>* pSymbols)
 {
-   ExportedSymbolsRegistry& registry = exportedSymbolsRegistry();
-   registry.fillExportedSymbols("base", pSymbols);
-   registry.fillExportedSymbols("graphics", pSymbols);
-   registry.fillExportedSymbols("grDevices", pSymbols);
-   registry.fillExportedSymbols("methods", pSymbols);
-   registry.fillExportedSymbols("stats", pSymbols);
-   registry.fillExportedSymbols("stats4", pSymbols);
-   registry.fillExportedSymbols("utils", pSymbols);
+   PackageSymbolRegistry& registry = packageSymbolRegistry();
+   registry.fillPackageSymbols("base", pSymbols);
+   registry.fillPackageSymbols("datasets", pSymbols);
+   registry.fillPackageSymbols("graphics", pSymbols);
+   registry.fillPackageSymbols("grDevices", pSymbols);
+   registry.fillPackageSymbols("methods", pSymbols);
+   registry.fillPackageSymbols("stats", pSymbols);
+   registry.fillPackageSymbols("utils", pSymbols);
 }
 
 void addRcppExportedSymbols(const FilePath& filePath,
@@ -286,10 +285,26 @@ Error getAllAvailableRSymbols(const FilePath& filePath,
    // we want to pull symbols from specific places -- specifically,
    // _not_ the current search path. We want to infer whether the
    // functions in the package would work at runtime.
-   if (module_context::isRScriptInPackageBuildTarget(filePath))
-      return getAvailableSymbolsForPackage(filePath, documentId, pSymbols);
+   //
+   // For R package development, when linting a 'test' file, we can
+   // safely assume that the package itself will be loaded.
+   Error error;
+   if (module_context::isRScriptInPackageBuildTarget(filePath) ||
+       filePath.isWithin(projects::projectContext().directory().childPath("tests")))
+      error = getAvailableSymbolsForPackage(filePath, documentId, pSymbols);
    else
-      return getAvailableSymbolsForProject(filePath, documentId, pSymbols);
+      error = getAvailableSymbolsForProject(filePath, documentId, pSymbols);
+   
+   // If the file is within the 'tests/testthat' directory, then assume
+   // 'testthat' will be available for those tests.
+   if (filePath.isWithin(projects::projectContext().directory().childPath("tests/testthat")))
+   {
+      PackageSymbolRegistry& registry = packageSymbolRegistry();
+      registry.fillNamespaceExports("testthat", pSymbols);
+   }
+   
+   return error;
+      
 }
 
 } // end anonymous namespace
@@ -403,6 +418,33 @@ module_context::SourceMarkerSet asSourceMarkerSet(const LintItems& items,
    }
    return SourceMarkerSet("Diagnostics", markers);
 }
+
+module_context::SourceMarkerSet asSourceMarkerSet(
+      std::map<FilePath, LintItems>& lint)
+{
+   using namespace module_context;
+   std::vector<SourceMarker> markers;
+   for (std::map<FilePath, LintItems>::const_iterator it = lint.begin();
+        it != lint.end();
+        ++it)
+   {
+      const FilePath& path = it->first;
+      const LintItems& lintItems = it->second;
+      BOOST_FOREACH(const LintItem& item, lintItems)
+      {
+         markers.push_back(SourceMarker(
+                              sourceMarkerTypeFromString(lintTypeToString(item.type)),
+                              path,
+                              item.startRow + 1,
+                              item.startColumn + 1,
+                              core::html_utils::HTML(item.message),
+                              true));
+      }
+   }
+   
+   return SourceMarkerSet("Diagnostics", markers);
+}
+
 
 Error extractRCode(const std::string& contents,
                    const std::string& reOpen,
@@ -779,6 +821,51 @@ Error saveSnippets(const json::JsonRpcRequest& request,
    return Success();
 }
 
+bool collectLint(int depth,
+                 const FilePath& path,
+                 std::map<FilePath, LintItems>* pLint)
+{
+   if (path.extensionLowerCase() != ".r")
+      return true;
+   
+   std::string contents;
+   Error error = core::readStringFromFile(path, &contents);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return true;
+   }
+   
+   ParseResults results = parse(
+            string_utils::utf8ToWide(contents),
+            path);
+   
+   (*pLint)[path] = results.lint();
+   return true;
+}
+
+SEXP rs_lintDirectory(SEXP directorySEXP)
+{
+   std::string directory = r::sexp::asString(directorySEXP);
+   FilePath dirPath = module_context::resolveAliasedPath(directory);
+   if (!dirPath.exists())
+      return R_NilValue;
+   
+   std::map<FilePath, LintItems> lint;
+   Error error = dirPath.childrenRecursive(
+            boost::bind(collectLint, _1, _2, &lint));
+   if (error)
+   {
+      LOG_ERROR(error);
+      return R_NilValue;
+   }
+   
+   using namespace module_context;
+   SourceMarkerSet markers = asSourceMarkerSet(lint);
+   showSourceMarkers(markers, MarkerAutoSelectNone);
+   return R_NilValue;
+}
+
 } // anonymous namespace
 
 core::Error initialize()
@@ -795,6 +882,7 @@ core::Error initialize()
    projects::projectContext().subscribeToFileMonitor("Diagnostics", cb);
    
    RS_REGISTER_CALL_METHOD(rs_lintRFile, 1);
+   RS_REGISTER_CALL_METHOD(rs_lintDirectory, 1);
    
    ExecBlock initBlock;
    initBlock.addFunctions()

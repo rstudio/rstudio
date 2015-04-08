@@ -138,3 +138,13 @@
    
    .rs.scalar(paste(new, collapse = "\n"))
 })
+
+.rs.addFunction("lintDirectory", function(directory = .rs.getProjectDirectory())
+{
+   .Call(.rs.routines$rs_lintDirectory, directory)
+})
+
+.rs.addJsonRpcHandler("analyze_project", function(directory = .rs.getProjectDirectory())
+{
+   .rs.lintDirectory(directory)
+})
