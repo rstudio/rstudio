@@ -323,8 +323,31 @@ bool mightPerformNonstandardEvaluation(const RTokenCursor& origin,
    r::sexp::Protect protect;
    SEXP symbolSEXP = resolveFunctionAtCursor(cursor, &protect, &cacheable);
    
+   // It's possible that we weren't able to resolve this function,
+   // as it's from a package that hasn't actually been loaded in the
+   // current session. In this case, we do a search of our package
+   // information database to see if we have asynchronously ascertained
+   // that a function with this name does perform NSE.
    if (symbolSEXP == R_UnboundValue || symbolSEXP == R_NilValue)
-      return false;
+   {
+      std::string symbol = getSymbolName(cursor);
+      const RSourceIndex::PackageInformationDatabase& db =
+            RSourceIndex::getPackageInformationDatabase();
+      
+      BOOST_FOREACH(const PackageInformation& info, db | boost::adaptors::map_values)
+      {
+         for (std::size_t i = 0, n = info.exports.size();
+              i < n;
+              ++i)
+         {
+            if (info.exports[i] == symbol)
+            {
+               return info.performsNse[i];
+            }
+               
+         }
+      }
+   }
    
    NSEDatabase& nseDb = nseDatabase();
    if (cacheable)

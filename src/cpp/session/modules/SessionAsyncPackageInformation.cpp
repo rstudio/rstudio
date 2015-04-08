@@ -96,13 +96,16 @@ void AsyncPackageInformationProcess::onCompleted(int exitStatus)
    //    "package": <single package name>
    //    "exports": <array of object names in the namespace>,
    //    "types": <array of types (see .rs.acCompletionTypes)>,
-   //    "functions": <object mapping function names to arguments>
+   //    "functions": <object mapping function names to arguments>,
+   //    "performs_nse": <array of 0, 1 indicating whether NSE performed by fn>
    // }
    for (std::size_t i = 0; i < n; ++i)
    {
       json::Array exportsJson;
       json::Array typesJson;
       json::Object functionsJson;
+      json::Array performsNseJson;
+      
       core::r_util::PackageInformation completions;
 
       if (splat[i].empty())
@@ -126,7 +129,8 @@ void AsyncPackageInformationProcess::onCompleted(int exitStatus)
                                      "package", &completions.package,
                                      "exports", &exportsJson,
                                      "types", &typesJson,
-                                     "functions", &functionsJson);
+                                     "functions", &functionsJson,
+                                     "performs_nse", &performsNseJson);
 
       if (error)
       {
@@ -144,10 +148,12 @@ void AsyncPackageInformationProcess::onCompleted(int exitStatus)
 
       if (!json::fillMap(functionsJson, &(completions.functions)))
          LOG_ERROR_MESSAGE("Failed to read JSON 'functions' object to map");
-
+      
+      if (!json::fillVectorInt(performsNseJson, &(completions.performsNse)))
+         LOG_ERROR_MESSAGE("Failed to read JSON 'performs_nse' array to vector");
+      
       // Update the index
       core::r_util::RSourceIndex::addPackageInformation(completions.package, completions);
-
    }
 
 }
@@ -191,9 +197,8 @@ void AsyncPackageInformationProcess::update()
       return;
    }
    
-   // Construct a call to .rs.getAsyncExports
    std::stringstream ss;
-   ss << ".rs.getAsyncExports(";
+   ss << ".rs.getPackageInformation(";
    ss << "'" << pkgs[0] << "'";
    
    if (pkgs.size() > 0)

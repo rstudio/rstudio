@@ -300,7 +300,8 @@ public:
       return s_packageInformation_.find(package) != s_packageInformation_.end();
    }
    
-   static const std::map<std::string, PackageInformation>& getAllAvailablePackageInformation()
+   typedef std::map<std::string, PackageInformation> PackageInformationDatabase;
+   static const PackageInformationDatabase& getPackageInformationDatabase()
    {
       return s_packageInformation_;
    }

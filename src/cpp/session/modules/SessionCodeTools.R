@@ -910,7 +910,7 @@
    }
 })
 
-.rs.addFunction("getAsyncExports", function(...)
+.rs.addFunction("getPackageInformation", function(...)
 {
    invisible(lapply(list(...), function(x) {
       tryCatch({
@@ -923,7 +923,7 @@
          )))
          
          # Get the exported items in the NAMESPACE (for search path + `::`
-         # completions), and then everything else (for `:::` completions)
+         # completions)
          ns <- asNamespace(x)
          exports <- getNamespaceExports(ns)
          objects <- mget(exports, ns, inherits = TRUE)
@@ -935,22 +935,65 @@
          # names (since we want to enable function argument completions)
          isFunction <- unlist(lapply(objects, is.function))
          functions <- objects[isFunction]
-         functions <- lapply(functions, function(f) {
+         formals <- lapply(functions, function(f) {
             names(formals(f))
          })
+         
+         # For each object (function) exported, attempt to infer
+         # if it performs non-standard evaluation
+         performsNse <- vapply(
+            functions,
+            FUN.VALUE = integer(1),
+            USE.NAMES = FALSE,
+            .rs.performsNonstandardEvaluation
+         )
          
          # Generate the output
          output <- list(
             package = I(x),
             exports = exports,
             types = types,
-            functions = functions
+            functions = formals,
+            performs_nse = performsNse
          )
          
          # Write the JSON to stdout; parent processes
          cat(.rs.toJSON(output), sep = "\n")
       }, error = function(e) NULL)
    }))
+})
+
+.rs.setVar("nse.primitives", c(
+   "quote", "substitute", "match.call", "eval.parent",
+   "enquote", "bquote", "evalq"
+))
+
+.rs.addFunction("performsNonstandardEvaluation", function(x)
+{
+   if (!is.function(x)) return(FALSE)
+   if (is.primitive(x)) return(TRUE)
+   
+   body <- body(x)
+   
+   primitives <- .rs.getVar("nse.primitives")
+   .rs.recursiveSearch(body, .rs.performsNonstandardEvaluationImpl, primitives = primitives)
+})
+
+.rs.addFunction("performsNonstandardEvaluationImpl", function(node, primitives)
+{
+   is.symbol(node) && as.character(node) %in% primitives
+})
+
+.rs.addFunction("recursiveSearch", function(node, fn, ...)
+{
+   if (fn(node, ...)) return(TRUE)
+   
+   if (is.call(node))
+      for (i in seq_along(node))
+         if (.rs.recursiveSearch(node[[i]], fn, ...))
+            return(TRUE)
+   
+   return(FALSE)
 })
 
 .rs.addFunction("trimWhitespace", function(x)

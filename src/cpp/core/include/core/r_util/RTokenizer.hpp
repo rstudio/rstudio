@@ -533,6 +533,18 @@ inline bool isSymbolNamed(const RToken& rToken,
    return rToken.contentEquals(name);
 }
 
+inline std::string getSymbolName(const RToken& rToken)
+{
+   if (rToken.isType(RToken::STRING) ||
+       (rToken.isType(RToken::ID) && *rToken.begin() == '`'))
+   {
+       return string_utils::wideToUtf8(
+          std::wstring(rToken.begin() + 1, rToken.end() - 1));
+   }
+   
+   return rToken.contentAsUtf8();
+}
+
 } // end namespace token_utils
 
 } // namespace r_util
