@@ -144,7 +144,16 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
    {
       navigate(url, false);
       rmdPreviewParams_ = null;
-      publishButton_.setContentType(RSConnect.CONTENT_TYPE_HTML);
+      if (url.equals(ABOUT_BLANK))
+      {
+         publishButton_.setContentType(RSConnect.CONTENT_TYPE_NONE);
+         publishButton_.setVisible(false);
+      }
+      else 
+      {
+         publishButton_.setContentType(RSConnect.CONTENT_TYPE_HTML);
+         publishButton_.setVisible(true);
+      }
    }
 
    @Override

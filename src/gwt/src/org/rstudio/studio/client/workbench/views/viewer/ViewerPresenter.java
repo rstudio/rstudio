@@ -62,6 +62,7 @@ import org.rstudio.studio.client.workbench.views.viewer.model.ViewerServerOperat
 public class ViewerPresenter extends BasePresenter 
                              implements ViewerNavigateEvent.Handler, 
                                         ViewerPreviewRmdEvent.Handler,
+                                        ViewerClearedEvent.Handler,
                                         ShinyApplicationStatusEvent.Handler,
                                         RPubsPresenter.Context
 {
@@ -131,6 +132,14 @@ public class ViewerPresenter extends BasePresenter
       initializeEvents();
    }
    
+
+   @Override
+   public void onViewerCleared(ViewerClearedEvent event)
+   {
+      if (!event.isForStop())
+         navigate(ViewerPane.ABOUT_BLANK);
+   }
+
    @Override
    public void onViewerNavigate(ViewerNavigateEvent event)
    { 
@@ -473,7 +482,7 @@ public class ViewerPresenter extends BasePresenter
       }
       runningShinyAppParams_ = null;
       
-      events_.fireEvent(new ViewerClearedEvent());
+      events_.fireEvent(new ViewerClearedEvent(true));
       
       // if this was a static widget then clear the current widget
       if (clearAll)
