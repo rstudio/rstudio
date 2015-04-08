@@ -766,7 +766,7 @@ public class Projects implements OpenProjectFileHandler,
    public void onShowDiagnosticsProject()
    {
       final ProgressIndicator indicator = globalDisplay_.getProgressIndicator("Lint");
-      indicator.onProgress("Linting...");
+      indicator.onProgress("Analyzing project sources...");
       projServer_.analyzeProject(new ServerRequestCallback<Void>()
       {
          @Override
