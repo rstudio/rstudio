@@ -1073,6 +1073,25 @@ bool isCallToNSEFunction(SEXP node,
    if (TYPEOF(node) != LANGSXP)
       return false;
    
+   // Check for a namespaced call
+   if (TYPEOF(node) == LANGSXP &&
+       TYPEOF(CAR(node)) == SYMSXP)
+   {
+      const char* name = CHAR(PRINTNAME(CAR(node)));
+      if (strcmp(name, "::") == 0 ||
+          strcmp(name, ":::") == 0)
+      {
+         SEXP symSEXP = CAR(CDR(CDR(node)));
+         if (TYPEOF(symSEXP) == SYMSXP &&
+             nsePrimitives.count(CHAR(PRINTNAME(symSEXP))))
+         {
+            *pResult = true;
+            return true;
+         }
+      }
+   }
+   
+   // Check for other calls
    while (TYPEOF(node) == LANGSXP)
       node = CAR(node);
    
