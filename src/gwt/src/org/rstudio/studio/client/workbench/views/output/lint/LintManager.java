@@ -322,7 +322,9 @@ public class LintManager
    {
       showMarkers_ = showMarkers;
       excludeCurrentStatement_ = excludeCurrentStatement;
-      timer_.schedule(0);
+      
+      // Add tiny delay to ensure lint not cleared by other concurrent events
+      timer_.schedule(20);
    }
    
    private void getAceWorkerDiagnostics(final DocDisplay docDisplay)
