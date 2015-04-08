@@ -844,14 +844,15 @@ bool collectLint(int depth,
    return true;
 }
 
-SEXP rs_lintProject()
+SEXP rs_lintDirectory(SEXP directorySEXP)
 {
-   if (!projects::projectContext().hasProject())
+   std::string directory = r::sexp::asString(directorySEXP);
+   FilePath dirPath = module_context::resolveAliasedPath(directory);
+   if (!dirPath.exists())
       return R_NilValue;
    
-   FilePath projDir = projects::projectContext().directory();
    std::map<FilePath, LintItems> lint;
-   Error error = projDir.childrenRecursive(
+   Error error = dirPath.childrenRecursive(
             boost::bind(collectLint, _1, _2, &lint));
    if (error)
    {
@@ -881,7 +882,7 @@ core::Error initialize()
    projects::projectContext().subscribeToFileMonitor("Diagnostics", cb);
    
    RS_REGISTER_CALL_METHOD(rs_lintRFile, 1);
-   RS_REGISTER_CALL_METHOD(rs_lintProject, 0);
+   RS_REGISTER_CALL_METHOD(rs_lintDirectory, 1);
    
    ExecBlock initBlock;
    initBlock.addFunctions()
