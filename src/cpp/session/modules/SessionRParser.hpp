@@ -790,11 +790,13 @@ public:
    }
    
    void pushFunctionCallState(ParseState state,
-                              const std::wstring& functionName)
+                              const std::wstring& functionName,
+                              bool isNseFunction)
    {
       DEBUG("Pushing state: " << stateAsString(state));
       parseStateStack_.push(state);
       functionNames_.push(functionName);
+      nseCallStack_.push(isNseFunction);
    }
    
    const std::wstring& currentFunctionName() const
@@ -837,6 +839,7 @@ public:
       case ParseStateSingleBracketArgumentList:
       case ParseStateDoubleBracketArgumentList:
          popFunctionName();
+         popNseCall();
          break;
          
       // suppress compiler warnings
@@ -990,20 +993,20 @@ public:
       return parseOptions_;
    }
    
-   void pushNseCall(const std::wstring& call)
+   void pushNseCall(bool value)
    {
-      nseCalls_.push(call);
+      nseCallStack_.push(value);
    }
    
    void popNseCall()
    {
-      if (withinNseCall())
-         nseCalls_.pop();
+      nseCallStack_.pop();
    }
    
-   bool withinNseCall() const
+   bool isWithinNseCall() const
    {
-      return !nseCalls_.empty();
+      return !nseCallStack_.empty() &&
+              nseCallStack_.peek();
    }
    
 private:
@@ -1013,7 +1016,10 @@ private:
    ParseOptions parseOptions_;
    Stack<ParseState> parseStateStack_;
    Stack<std::wstring> functionNames_;
-   Stack<std::wstring> nseCalls_;
+   
+   // NOTE: Really prefer 'bool' here but that invokes the
+   // std::vector<bool> data member which we want to avoid
+   Stack<char> nseCallStack_;
 };
 
 class ParseResults {

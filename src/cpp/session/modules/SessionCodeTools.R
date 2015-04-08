@@ -975,22 +975,45 @@
    
    body <- body(x)
    
-   primitives <- .rs.getVar("nse.primitives")
-   .rs.recursiveSearch(body, .rs.performsNonstandardEvaluationImpl, primitives = primitives)
+   nsePrimitives <- .rs.getVar("nse.primitives")
+   .rs.recursiveSearch(body,
+                       .rs.performsNonstandardEvaluationImpl,
+                       nsePrimitives = nsePrimitives)
 })
 
-.rs.addFunction("performsNonstandardEvaluationImpl", function(node, primitives)
+.rs.addFunction("performsNonstandardEvaluationImpl", function(node,
+                                                              head,
+                                                              parent,
+                                                              nsePrimitives)
 {
-   is.symbol(node) && as.character(node) %in% primitives
+   # Check if this is a call to an NSE primitive.
+   if (is.symbol(node) &&
+       identical(node, head) &&
+       as.character(node) %in% nsePrimitives)
+   {
+      return(TRUE)
+   }
+   
+   # Check if this is a call to an NSE primitive, qualified through
+   # `::` or `:::`. (NOTE: This actually checks both the namespace and the
+   # function, but that's not a big deal)
+   if (is.symbol(head) &&
+       as.character(head) %in% c("::", ":::") &&
+       as.character(node) %in% nsePrimitives)
+   {
+      return(TRUE)
+   }
+   
+   return(FALSE)
 })
 
-.rs.addFunction("recursiveSearch", function(node, fn, ...)
+.rs.addFunction("recursiveSearch", function(node, fn, head = node, parent = NULL, ...)
 {
-   if (fn(node, ...)) return(TRUE)
+   if (fn(node, head, parent, ...)) return(TRUE)
    
    if (is.call(node))
       for (i in seq_along(node))
-         if (.rs.recursiveSearch(node[[i]], fn, ...))
+         if (.rs.recursiveSearch(node[[i]], fn, node[[1]], node, ...))
             return(TRUE)
    
    return(FALSE)

@@ -62,7 +62,7 @@ namespace {
 bool isWithinNseFunction(const ParseStatus& status)
 {
    // Check if we've inferred the current function to be an NSE function
-   if (status.withinNseCall())
+   if (status.isWithinNseCall())
       return true;
    
    return false;
@@ -1890,17 +1890,23 @@ ARGUMENT_LIST:
       case RToken::LPAREN:
          status.pushFunctionCallState(
                   ParseStatus::ParseStateParenArgumentList,
-                  cursor.previousSignificantToken().content());
+                  cursor.previousSignificantToken().content(),
+                  status.isWithinNseCall() ||
+                     mightPerformNonstandardEvaluation(cursor, status));
          break;
       case RToken::LBRACKET:
          status.pushFunctionCallState(
                   ParseStatus::ParseStateSingleBracketArgumentList,
-                  cursor.previousSignificantToken().content());
+                  cursor.previousSignificantToken().content(),
+                  status.isWithinNseCall() ||
+                     mightPerformNonstandardEvaluation(cursor, status));
          break;
       case RToken::LDBRACKET:
          status.pushFunctionCallState(
                   ParseStatus::ParseStateDoubleBracketArgumentList,
-                  cursor.previousSignificantToken().content());
+                  cursor.previousSignificantToken().content(),
+                  status.isWithinNseCall() ||
+                  mightPerformNonstandardEvaluation(cursor, status));
          break;
       default:
          GOTO_INVALID_TOKEN(cursor);
@@ -1916,12 +1922,6 @@ ARGUMENT_LIST:
          
          goto ARGUMENT_LIST_END;
       }
-      
-      // If we're about to enter a function call that performs
-      // non-standard evaluation, then we want to record symbol definitions
-      // but _not_ lint symbol usage.
-      if (mightPerformNonstandardEvaluation(cursor, status))
-         status.pushNseCall(cursor.getCallingString());
       
       MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
       
@@ -1949,7 +1949,6 @@ ARGUMENT_LIST_END:
       DEBUG("== State: " << status.currentStateAsString());
       
       status.popState();
-      status.popNseCall();
       
       DEBUG("== State: " << status.currentStateAsString());
       

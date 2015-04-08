@@ -1067,23 +1067,24 @@ const std::set<std::string>& nsePrimitives()
 }
 
 bool isCallToNSEFunction(SEXP node,
+                         SEXP head,
                          const std::set<std::string>& nsePrimitives,
                          bool* pResult)
 {
-   if (TYPEOF(node) != LANGSXP)
-      return false;
-   
-   // Check for a namespaced call
-   if (TYPEOF(node) == LANGSXP &&
-       TYPEOF(CAR(node)) == SYMSXP)
+   if (TYPEOF(head) == SYMSXP)
    {
-      const char* name = CHAR(PRINTNAME(CAR(node)));
+      const char* name = CHAR(PRINTNAME(head));
+      if (node == head && nsePrimitives.count(name))
+      {
+         *pResult = true;
+         return true;
+      }
+      
       if (strcmp(name, "::") == 0 ||
           strcmp(name, ":::") == 0)
       {
-         SEXP symSEXP = CAR(CDR(CDR(node)));
-         if (TYPEOF(symSEXP) == SYMSXP &&
-             nsePrimitives.count(CHAR(PRINTNAME(symSEXP))))
+         if (TYPEOF(node) == SYMSXP &&
+             nsePrimitives.count(CHAR(PRINTNAME(node))))
          {
             *pResult = true;
             return true;
@@ -1091,18 +1092,7 @@ bool isCallToNSEFunction(SEXP node,
       }
    }
    
-   // Check for other calls
-   while (TYPEOF(node) == LANGSXP)
-      node = CAR(node);
-   
-   if (TYPEOF(node) == SYMSXP && nsePrimitives.count(CHAR(PRINTNAME(node))))
-   {
-      *pResult = true;
-      return true;
-   }
-   
    return false;
-   
 }
 
 // Attempts to find calls to functions which perform NSE.
@@ -1112,7 +1102,8 @@ bool maybePerformsNSEImpl(SEXP node,
    r::sexp::CallRecurser recurser(node);
    bool result = false;
    recurser.add(boost::bind(
-                   isCallToNSEFunction, _1, boost::cref(nsePrimitives), &result));
+                   isCallToNSEFunction, _1, _2,
+                   boost::cref(nsePrimitives), &result));
    recurser.run();
    return result;
 }
@@ -1180,6 +1171,7 @@ namespace detail {
 
 bool addSymbolCheckedForMissingness(
       SEXP nodeSEXP,
+      SEXP headSEXP,
       StringSet* pSymbolsCheckedForMissingness)
 {
    if (TYPEOF(nodeSEXP) == LANGSXP &&
@@ -1197,6 +1189,7 @@ bool addSymbolCheckedForMissingness(
 
 bool addSymbols(
       SEXP nodeSEXP,
+      SEXP headSEXP,
       StringSet* pSymbolsUsed)
 {
    if (TYPEOF(nodeSEXP) == SYMSXP)
@@ -1212,8 +1205,8 @@ void examineSymbolUsage(
       FunctionSymbolUsage* usage)
 {
    CallRecurser recurser(nodeSEXP);
-   recurser.add(boost::bind(addSymbols, _1, &(usage->symbolsUsed)));
-   recurser.add(boost::bind(addSymbolCheckedForMissingness, _1,
+   recurser.add(boost::bind(addSymbols, _1, _2, &(usage->symbolsUsed)));
+   recurser.add(boost::bind(addSymbolCheckedForMissingness, _1, _2,
                             &(usage->symbolsCheckedForMissingness)));
    recurser.run();
 }

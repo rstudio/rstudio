@@ -357,44 +357,52 @@ const std::set<std::string>& nsePrimitives();
 class CallRecurser : boost::noncopyable
 {
 public:
+   typedef boost::function<bool(SEXP, SEXP)> Operation;
+   
+private:
+   typedef std::vector<Operation> Operations;
+   
+public:
    
    explicit CallRecurser(SEXP callSEXP)
       : callSEXP_(callSEXP)
    {}
 
-   void add(const boost::function<bool(SEXP)>& operation)
+   void add(const Operation& operation)
    {
       operations_.push_back(operation);
    }
    
    void run()
    {
-      runImpl(callSEXP_, operations_, operations_.size());
+      runImpl(callSEXP_, callSEXP_, operations_, operations_.size());
    }
    
 private:
    
    static void runImpl(
          SEXP nodeSEXP,
-         const std::vector< boost::function<bool(SEXP)> >& operations,
+         SEXP headSEXP,
+         Operations operations,
          std::size_t n)
    {
       for (std::size_t i = 0; i < n; ++i)
-         if (operations[i](nodeSEXP))
+         if (operations[i](nodeSEXP, headSEXP))
             return;
       
       if (TYPEOF(nodeSEXP) == LANGSXP)
       {
+         SEXP headSEXP = CAR(nodeSEXP);
          while (nodeSEXP != R_NilValue)
          {
-            runImpl(CAR(nodeSEXP), operations, n);
+            runImpl(CAR(nodeSEXP), headSEXP, operations, n);
             nodeSEXP = CDR(nodeSEXP);
          }
       }
    }
       
    SEXP callSEXP_;
-   std::vector< boost::function<bool(SEXP)> > operations_;
+   Operations operations_;
 };
 
 struct FormalInformation
