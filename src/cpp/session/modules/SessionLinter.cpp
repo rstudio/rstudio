@@ -290,7 +290,7 @@ Error getAllAvailableRSymbols(const FilePath& filePath,
       registry.fillExportedSymbols("testthat", pSymbols);
    }
    
-   return Success();
+   return error;
       
 }
 
