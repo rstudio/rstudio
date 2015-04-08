@@ -925,9 +925,26 @@ void RSourceIndexes::update(
             pDoc->path()).absolutePath();
    
    pathToIdMap_[absPath] = pDoc->id();
+   idToPathMap_[pDoc->id()] = absPath;
 
    // kick off an update if necessary
    r_completions::AsyncRCompletions::update();
+}
+
+void RSourceIndexes::remove(const std::string& id)
+{
+   std::string absPath = idToPathMap_[id];
+   
+   indexes_.erase(id);
+   pathToIdMap_.erase(absPath);
+   idToPathMap_.erase(id);
+}
+
+void RSourceIndexes::removeAll()
+{
+   indexes_.clear();
+   pathToIdMap_.clear();
+   idToPathMap_.clear();
 }
 
 RSourceIndexes& rSourceIndex()

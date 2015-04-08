@@ -69,9 +69,8 @@ public:
       return get(id);
    }
 
-   void remove(const std::string& id) { indexes_.erase(id); }
-
-   void removeAll() { indexes_.clear(); }
+   void remove(const std::string& id);
+   void removeAll();
 
    std::vector< boost::shared_ptr<RSourceIndex> > indexes()
    {
@@ -91,6 +90,7 @@ public:
 private:
   IndexMap indexes_;
   std::map<AbsolutePath, DocumentId> pathToIdMap_;
+  std::map<DocumentId, AbsolutePath> idToPathMap_;
   
 };
 
