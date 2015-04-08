@@ -365,6 +365,15 @@ RSourceIndex::RSourceIndex(const std::string& context,
          tokenOffset = idToken.offset();
       }
       
+      // is this a call to 'shinyServer' or 'shinyUI'?
+      else if (token.contentEquals(L"shinyServer") ||
+               token.contentEquals(L"shinyUI") ||
+               token.contentEquals(L"shinyApp") ||
+               token.contentEquals(L"shinyAppDir"))
+      {
+         addInferredPackage("shiny");
+      }
+      
       // is this a library / require call?
       else if (token.contentEquals(library) ||
                token.contentEquals(require))
