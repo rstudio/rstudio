@@ -1658,7 +1658,7 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       (modules::rsconnect::initialize)
       (modules::packrat::initialize)
       (modules::rhooks::initialize)
-      (modules::r_completions::initialize)
+      (modules::r_packages::initialize)
       (modules::linter::initialize)
       (modules::markers::initialize)
 

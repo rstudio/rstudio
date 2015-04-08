@@ -13,7 +13,7 @@
  *
  */
 
-#include "SessionAsyncRCompletions.hpp"
+#include "SessionAsyncPackageInformation.hpp"
 
 #include <string>
 #include <vector>
@@ -34,16 +34,14 @@
 namespace rstudio {
 namespace session {
 namespace modules {
-namespace r_completions {
+namespace r_packages {
 
 // static variables
-bool AsyncRCompletions::s_isUpdating_ = false;
-std::vector<std::string> AsyncRCompletions::s_pkgsToUpdate_;
+bool AsyncPackageInformationProcess::s_isUpdating_ = false;
+std::vector<std::string> AsyncPackageInformationProcess::s_pkgsToUpdate_;
 
 using namespace rstudio::core;
 
-// Class whose destructor ensures state variables in AsyncRCompletions
-// are cleaned up on exit
 class CompleteUpdateOnExit : public boost::noncopyable {
 
 public:
@@ -53,23 +51,23 @@ public:
       using namespace rstudio::core::r_util;
 
       // Give empty completions to the packages which weren't updated
-      for (std::vector<std::string>::const_iterator it = AsyncRCompletions::s_pkgsToUpdate_.begin();
-           it != AsyncRCompletions::s_pkgsToUpdate_.end();
+      for (std::vector<std::string>::const_iterator it = AsyncPackageInformationProcess::s_pkgsToUpdate_.begin();
+           it != AsyncPackageInformationProcess::s_pkgsToUpdate_.end();
            ++it)
       {
-         if (!RSourceIndex::hasCompletions(*it))
+         if (!RSourceIndex::hasInformation(*it))
          {
-            RSourceIndex::addCompletions(*it, AsyncLibraryCompletions());
+            RSourceIndex::addPackageInformation(*it, PackageInformation());
          }
       }
 
-      AsyncRCompletions::s_pkgsToUpdate_.clear();
-      AsyncRCompletions::s_isUpdating_ = false;
+      AsyncPackageInformationProcess::s_pkgsToUpdate_.clear();
+      AsyncPackageInformationProcess::s_isUpdating_ = false;
    }
 
 };
 
-void AsyncRCompletions::onCompleted(int exitStatus)
+void AsyncPackageInformationProcess::onCompleted(int exitStatus)
 {
    CompleteUpdateOnExit updateScope;
 
@@ -105,7 +103,7 @@ void AsyncRCompletions::onCompleted(int exitStatus)
       json::Array exportsJson;
       json::Array typesJson;
       json::Object functionsJson;
-      core::r_util::AsyncLibraryCompletions completions;
+      core::r_util::PackageInformation completions;
 
       if (splat[i].empty())
          continue;
@@ -148,13 +146,13 @@ void AsyncRCompletions::onCompleted(int exitStatus)
          LOG_ERROR_MESSAGE("Failed to read JSON 'functions' object to map");
 
       // Update the index
-      core::r_util::RSourceIndex::addCompletions(completions.package, completions);
+      core::r_util::RSourceIndex::addPackageInformation(completions.package, completions);
 
    }
 
 }
 
-void AsyncRCompletions::update()
+void AsyncPackageInformationProcess::update()
 {
    using namespace rstudio::core::r_util;
    
@@ -212,8 +210,8 @@ void AsyncRCompletions::update()
    std::string finalCmd = ss.str();
    DEBUG("Running command: '" << finalCmd << "'");
    
-   boost::shared_ptr<AsyncRCompletions> pProcess(
-         new AsyncRCompletions());
+   boost::shared_ptr<AsyncPackageInformationProcess> pProcess(
+         new AsyncPackageInformationProcess());
    
    pProcess->start(
             finalCmd.c_str(),

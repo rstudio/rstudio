@@ -27,7 +27,7 @@ class Error;
 namespace rstudio {
 namespace session {
 namespace modules {
-namespace r_completions {
+namespace r_packages {
 
 core::Error initialize();
 

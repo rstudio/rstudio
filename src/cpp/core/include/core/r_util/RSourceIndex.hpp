@@ -38,12 +38,13 @@ namespace rstudio {
 namespace core {
 namespace r_util {
 
-struct AsyncLibraryCompletions
+struct PackageInformation
 {
    std::string package;
    std::vector<std::string> exports;
    std::vector<int> types;
    std::map< std::string, std::vector<std::string> > functions;
+   std::vector<int> performsNse;
 };
 
 class RS4MethodParam
@@ -288,25 +289,25 @@ public:
       return inferredPkgNames_;
    }
    
-   static void addCompletions(const std::string& package,
-                              const AsyncLibraryCompletions& asyncCompletions)
+   static void addPackageInformation(const std::string& package,
+                                     const PackageInformation& info)
    {
-      s_completions_[package] = asyncCompletions;
+      s_packageInformation_[package] = info;
    }
 
-   static bool hasCompletions(const std::string& package)
+   static bool hasInformation(const std::string& package)
    {
-      return s_completions_.find(package) != s_completions_.end();
+      return s_packageInformation_.find(package) != s_packageInformation_.end();
    }
    
-   static const std::map<std::string, AsyncLibraryCompletions>& getAllCompletions()
+   static const std::map<std::string, PackageInformation>& getAllAvailablePackageInformation()
    {
-      return s_completions_;
+      return s_packageInformation_;
    }
    
-   static const AsyncLibraryCompletions& getCompletions(const std::string& package)
+   static const PackageInformation& getPackageInformation(const std::string& package)
    {
-      return s_completions_[package];
+      return s_packageInformation_[package];
    }
 
    static const std::vector<std::string> getAllUnindexedPackages()
@@ -317,7 +318,7 @@ public:
            it != s_allInferredPkgNames_.end();
            ++it)
       {
-         if (s_completions_.count(*it) == 0)
+         if (s_packageInformation_.count(*it) == 0)
             result.push_back(*it);
       }
       return result;
@@ -376,7 +377,7 @@ private:
    static std::set<std::string> s_allInferredPkgNames_;
    
    // NOTE: All source indexes share a set of completions
-   static std::map<std::string, AsyncLibraryCompletions> s_completions_;
+   static std::map<std::string, PackageInformation> s_packageInformation_;
    
 };
 

@@ -51,7 +51,7 @@
 #include <session/SessionAsyncRProcess.hpp>
 #include <session/projects/SessionProjects.hpp>
 
-#include "SessionAsyncRCompletions.hpp"
+#include "SessionAsyncPackageInformation.hpp"
 
 #include "SessionSource.hpp"
 #include "clang/DefinitionIndex.hpp"
@@ -813,7 +813,7 @@ private:
          pEntries_->insertEntry(entry);
 
          // kick off an update
-         r_completions::AsyncRCompletions::update();
+         r_packages::AsyncPackageInformationProcess::update();
       }
 
    }
@@ -928,7 +928,7 @@ void RSourceIndexes::update(
    idToPathMap_[pDoc->id()] = absPath;
 
    // kick off an update if necessary
-   r_completions::AsyncRCompletions::update();
+   r_packages::AsyncPackageInformationProcess::update();
 }
 
 void RSourceIndexes::remove(const std::string& id)

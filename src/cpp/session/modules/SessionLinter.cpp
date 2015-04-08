@@ -20,7 +20,7 @@
 
 #include "SessionLinter.hpp"
 #include "SessionCodeSearch.hpp"
-#include "SessionAsyncRCompletions.hpp"
+#include "SessionAsyncPackageInformation.hpp"
 
 #include <set>
 
@@ -113,8 +113,8 @@ void addInferredSymbols(const FilePath& filePath,
    BOOST_FOREACH(const std::string& package,
                  index->getInferredPackages())
    {
-      const AsyncLibraryCompletions& completions =
-            index->getCompletions(package);
+      const PackageInformation& completions =
+            index->getPackageInformation(package);
       
       pSymbols->insert(completions.exports.begin(),
                        completions.exports.end());
@@ -136,8 +136,8 @@ void addNamespaceSymbols(std::set<std::string>* pSymbols)
    BOOST_FOREACH(const std::string& package,
                  RSourceIndex::getImportedPackages())
    {
-      const AsyncLibraryCompletions& completions =
-            RSourceIndex::getCompletions(package);
+      const PackageInformation& completions =
+            RSourceIndex::getPackageInformation(package);
       pSymbols->insert(
                completions.exports.begin(),
                completions.exports.end());
@@ -643,7 +643,7 @@ void onNAMESPACEchanged()
    RSourceIndex::setImportFromDirectives(importFromSymbols);
    
    // Kick off an update of the cached async completions
-   r_completions::AsyncRCompletions::update();
+   r_packages::AsyncPackageInformationProcess::update();
 }
 
 void onFilesChanged(const std::vector<core::system::FileChangeEvent>& events)
