@@ -42,9 +42,16 @@
 #define R_NO_REMAP
 #include <Rinternals.h>
 
+// Hide macros that are always unsafe for us to use, because their
+// interface has changed between versions of R
+#undef BODY_EXPR
+#define BODY_EXPR UNSAFE_R_FUNCTION
+
+#undef PREXPR
+#define PREXPR    UNSAFE_R_FUNCTION
+
 #ifndef R_INTERNAL_FUNCTIONS
 
-// force compiler error if the client tries to call an R internal function
 // force compiler error if the client tries to call an R internal function
 #define Rf_asChar INTERNAL_R_FUNCTION
 #define Rf_coerceVector INTERNAL_R_FUNCTION

@@ -81,12 +81,14 @@ bool setNames(SEXP sexp, const std::vector<std::string>& names);
 core::Error getNames(SEXP sexp, std::vector<std::string>* pNames);  
 bool isActiveBinding(const std::string&, const SEXP);
 
+// function introspection
+SEXP functionBody(SEXP functionSEXP);
+
 // type checking
 bool isString(SEXP object);
 bool isLanguage(SEXP object);
 bool isMatrix(SEXP object);
 bool isDataFrame(SEXP object);   
-     
 bool isNull(SEXP object);
 
 // type coercions

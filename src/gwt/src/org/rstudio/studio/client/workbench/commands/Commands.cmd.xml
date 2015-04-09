@@ -905,7 +905,7 @@ well as menu structures (for main menu and popup menus).
         menuLabel="Show _Diagnostics"
         desc="Show diagnostics for the active document"/>
    <cmd id="showDiagnosticsProject"
-        menuLabel="Show _Diagnostics (Project)"
+        menuLabel="Show Diagnostics (Projec_t)"
         desc="Show diagnostics for all source files in the current project"/>
    <cmd id="reindent"
         menuLabel="_Reindent Lines"
