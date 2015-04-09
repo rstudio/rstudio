@@ -55,6 +55,7 @@ public class I18N2Test extends GWTTestCase {
     assertEquals("This {0} would be an argument if not quoted", m.quotedArg());
     assertEquals("Total is US$11,305.01", m.currencyFormat(11305.01));
     assertEquals("Default number format is 1,017.1", m.defaultNumberFormat(1017.1));
+    assertEquals("Default number format is 1,017", m.defaultNumberFormattedAsInteger(1017.1));
     assertEquals("It is 12:01 on 2007 December 1, Saturday",
         m.getTimeDate(new Date(107, 11, 1, 12, 1, 2)));
     assertEquals("13 widgets", m.pluralWidgetsOther(13));

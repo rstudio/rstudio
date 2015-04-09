@@ -539,7 +539,7 @@ class MessagesMethodCreator extends AbstractMethodCreator {
             numFormatClassName + ".getDecimalFormat().format(" + argName + ")");
       } else if ("integer".equals(subformat)) {
         out.appendStringValuedExpression(
-            numFormatClassName + ".getIntegerFormat().format(" + argName + ")");
+            numFormatClassName + ".getDecimalFormat().overrideFractionDigits(0).format(" + argName + ")");
       } else if ("currency".equals(subformat)) {
         out.appendStringValuedExpression(
             numFormatClassName + ".getCurrencyFormat(" + curCodeParam + ").format(" + argName

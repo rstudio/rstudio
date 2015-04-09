@@ -166,6 +166,9 @@ public interface TestAnnotatedMessages extends Messages {
   @Key("defaultNumberFormat")
   SafeHtml defaultNumberFormatAsSafeHtml(double value);
 
+  @DefaultMessage("Default number format is {0,number,integer}")
+  String defaultNumberFormattedAsInteger(double value);
+
   @DefaultMessage("{1} wants to sell their car")
   @AlternateMessage({
     "FEMALE", "{1} wants to sell her car",
