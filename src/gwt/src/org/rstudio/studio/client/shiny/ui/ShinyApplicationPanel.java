@@ -74,7 +74,7 @@ public class ShinyApplicationPanel extends SatelliteFramePanel<RStudioFrame>
    public void showApp(ShinyApplicationParams params)
    {
       appParams_ = params;
-      publishButton_.setContentPath(params.getPath());
+      publishButton_.setContentPath(params.getPath(), "");
          
       String url = params.getUrl();
       

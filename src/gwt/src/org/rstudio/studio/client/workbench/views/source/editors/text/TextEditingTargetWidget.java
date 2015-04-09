@@ -654,7 +654,7 @@ public class TextEditingTargetWidget
    public void setPublishPath(String publishPath)
    {
       if (publishButton_ != null)
-         publishButton_.setContentPath(publishPath);
+         publishButton_.setContentPath(publishPath, "");
    }
 
    private void setFormatText(String text)

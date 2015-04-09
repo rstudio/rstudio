@@ -142,9 +142,10 @@ public class RSConnectPublishButton extends Composite
          populateDeployments(false);
    }
    
-   public void setContentPath(String contentPath)
+   public void setContentPath(String contentPath, String outputPath)
    {
       contentPath_ = contentPath;
+      outputPath_ = outputPath;
       if (isVisible())
          populateDeployments(false);
    }
@@ -157,7 +158,8 @@ public class RSConnectPublishButton extends Composite
              params.getResult().getFormat() != null))
       {
          docPreview_ = new RenderedDocPreview(params);
-         setContentPath(params.getResult().getTargetFile());
+         setContentPath(params.getResult().getTargetFile(),
+               params.getOutputFile());
       }
       else
       {
@@ -170,7 +172,7 @@ public class RSConnectPublishButton extends Composite
    {
       if (params.getSucceeded())
       {
-         setContentPath(params.getSourceFile());
+         setContentPath(params.getSourceFile(), params.getHtmlFile());
          docPreview_ = new RenderedDocPreview(params);
          applyVisiblity();
       }
@@ -261,7 +263,7 @@ public class RSConnectPublishButton extends Composite
       
       populating_ = true;
       server_.getRSConnectDeployments(contentPath, 
-            "",
+            outputPath_,
             new ServerRequestCallback<JsArray<RSConnectDeploymentRecord>>()
       {
          @Override
@@ -477,6 +479,7 @@ public class RSConnectPublishButton extends Composite
    private Provider<UIPrefs> pUiPrefs_;
 
    private String contentPath_;
+   private String outputPath_;
    private int contentType_ = RSConnect.CONTENT_TYPE_NONE;
    private String lastContentPath_;
    private boolean populating_ = false;

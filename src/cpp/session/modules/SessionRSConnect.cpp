@@ -245,7 +245,7 @@ Error rsconnectDeployments(const json::JsonRpcRequest& request,
    std::string rpubsUploadId;
    if (!outputPath.empty())
    {
-     outputPath = module_context::previousRpubsUploadId(
+     rpubsUploadId = module_context::previousRpubsUploadId(
          module_context::resolveAliasedPath(outputPath));
    }
 
