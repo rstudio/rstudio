@@ -41,18 +41,24 @@ public class PublishFilesPage
             if (input.getOriginatingEvent().getFromPreview() != null)
             {
                source = new RSConnectPublishSource(
-                              input.getOriginatingEvent().getFromPreview());
+                              input.getOriginatingEvent().getFromPreview(),
+                              input.isSelfContained(),
+                              input.getDescription());
             }
             else
             {
                source = new RSConnectPublishSource(
-                              input.getOriginatingEvent().getHtmlFile());
+                              input.getOriginatingEvent().getHtmlFile(),
+                              input.isSelfContained(),
+                              input.getDescription());
             }
             contents_.setPublishSource(source, asMultiple, true);
          }
          else
             contents_.setPublishSource(
-                  new RSConnectPublishSource(input.getSourceRmd().getPath()),
+                  new RSConnectPublishSource(input.getSourceRmd().getPath(),
+                        input.isSelfContained(),
+                        input.getDescription()),
                   asMultiple, false);
       }
    }

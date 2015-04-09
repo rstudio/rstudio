@@ -34,14 +34,14 @@ public class RSConnectActionEvent extends GwtEvent<RSConnectActionEvent.Handler>
    public static RSConnectActionEvent ConfigureAppEvent(String path)
    {
       return new RSConnectActionEvent(ACTION_TYPE_CONFIGURE, 
-            RSConnect.CONTENT_TYPE_APP, path, null, null, null);
+            RSConnect.CONTENT_TYPE_APP, path, null, null, null, null);
    }
 
    public static RSConnectActionEvent DeployAppEvent(String path, 
          RSConnectDeploymentRecord fromPrevious)
    {
       return new RSConnectActionEvent(ACTION_TYPE_DEPLOY, 
-            RSConnect.CONTENT_TYPE_APP, path, null, null, fromPrevious);
+            RSConnect.CONTENT_TYPE_APP, path, null, null, null, fromPrevious);
    }
    
    public static RSConnectActionEvent DeployDocEvent(RenderedDocPreview params,
@@ -51,6 +51,7 @@ public class RSConnectActionEvent extends GwtEvent<RSConnectActionEvent.Handler>
             RSConnect.CONTENT_TYPE_DOCUMENT, 
             params.getSourceFile(),
             params.getOutputFile(), 
+            null,
             params,
             fromPrevious);
    }
@@ -58,17 +59,21 @@ public class RSConnectActionEvent extends GwtEvent<RSConnectActionEvent.Handler>
    public static RSConnectActionEvent DeployPlotEvent(String htmlFile)
    {
       return new RSConnectActionEvent(ACTION_TYPE_DEPLOY, 
-            RSConnect.CONTENT_TYPE_PLOT, null, htmlFile, null, null);
+            RSConnect.CONTENT_TYPE_PLOT, null, htmlFile, "Current Plot",
+            null, null);
    }
 
-   public static RSConnectActionEvent DeployHtmlEvent(String htmlFile)
+   public static RSConnectActionEvent DeployHtmlEvent(String htmlFile,
+         String selfContainedDesc)
    {
       return new RSConnectActionEvent(ACTION_TYPE_DEPLOY, 
-            RSConnect.CONTENT_TYPE_HTML, null, htmlFile, null, null);
+            RSConnect.CONTENT_TYPE_HTML, null, htmlFile, selfContainedDesc, 
+            null, null);
    }
 
    private RSConnectActionEvent(int action, int contentType, String path, 
-                               String htmlFile, RenderedDocPreview fromPreview,
+                               String htmlFile, String selfContainedDesc, 
+                               RenderedDocPreview fromPreview,
                                RSConnectDeploymentRecord fromPrevious)
    {
       action_ = action;

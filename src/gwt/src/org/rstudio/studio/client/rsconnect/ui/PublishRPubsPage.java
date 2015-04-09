@@ -52,11 +52,12 @@ public class PublishRPubsPage
    @Override
    protected RSConnectPublishResult collectInput()
    {
-      // TODO: source dir / file
       return new RSConnectPublishResult(
             new RSConnectPublishSource(
                   initialData_.getOriginatingEvent().getPath(), 
-                  initialData_.getOriginatingEvent().getHtmlFile()));
+                  initialData_.getOriginatingEvent().getHtmlFile(),
+                  initialData_.isSelfContained(),
+                  initialData_.getDescription()));
    }
 
    @Override

@@ -19,6 +19,7 @@ import java.util.List;
 
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.JsArrayUtil;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.files.FileSystemItem;
@@ -163,6 +164,16 @@ public class RSConnect implements SessionInitHandler,
    
    private void showPublishUI(final RSConnectActionEvent event)
    {
+
+      final RSConnectPublishInput input = new RSConnectPublishInput(event);
+
+      // set these inside the wizard input so we don't need to pass around
+      // session/prefs
+      input.setConnectUIEnabled(
+            pUiPrefs_.get().enableRStudioConnect().getGlobalValue());
+      input.setExternalUIEnabled(
+            session_.getSessionInfo().getAllowExternalPublish());
+      
       if (event.getFromPrevious() != null)
       {
          switch (event.getContentType())
@@ -179,27 +190,31 @@ public class RSConnect implements SessionInitHandler,
             }
             else 
             {
-               if (event.getFromPrevious().getAsStatic())
-                  publishAsFiles(event, 
-                        new RSConnectPublishSource(event.getPath(), 
-                              event.getHtmlFile()));
-               else
-                  publishAsCode(event);
+               fillInputFromDoc(input, event.getPath(), 
+                     new CommandWithArg<RSConnectPublishInput>()
+               {
+                  @Override
+                  public void execute(RSConnectPublishInput arg)
+                  {
+                     if (arg == null)
+                        return;
+                     
+                     if (event.getFromPrevious().getAsStatic())
+                        publishAsFiles(event, 
+                              new RSConnectPublishSource(event.getPath(), 
+                                    event.getHtmlFile(), 
+                                    arg.isSelfContained(), 
+                                    arg.getDescription()));
+                     else
+                        publishAsCode(event);
+                  }
+               });
             }
             break;
          }
       }
       else 
       {
-         final RSConnectPublishInput input = new RSConnectPublishInput(event);
-
-         // set these inside the wizard input so we don't need to pass around
-         // session/prefs
-         input.setConnectUIEnabled(
-               pUiPrefs_.get().enableRStudioConnect().getGlobalValue());
-         input.setExternalUIEnabled(
-               session_.getSessionInfo().getAllowExternalPublish());
-         
          // plots and HTML are implicitly self-contained
          if (event.getContentType() == CONTENT_TYPE_PLOT ||
              event.getContentType() == CONTENT_TYPE_HTML)
@@ -212,28 +227,15 @@ public class RSConnect implements SessionInitHandler,
          {
             input.setSourceRmd(FileSystemItem.createFile(
                   event.getFromPreview().getSourceFile()));
-            server_.getRmdPublishDetails(
-                  event.getFromPreview().getSourceFile(), 
-                  new ServerRequestCallback<RmdPublishDetails>()
-                  {
-                     @Override
-                     public void onResponseReceived(RmdPublishDetails details)
-                     {
-                        input.setIsMultiRmd(details.isMultiRmd());
-                        input.setIsShiny(details.isShinyRmd());
-                        input.setIsSelfContained(details.isSelfContained());
-                        showPublishUI(input);
-                     }
-                     @Override
-                     public void onError(ServerError error)
-                     {
-                        // this is unlikely since the RPC does little work, but
-                        // we can't offer the right choices in the wizard if we
-                        // don't know what we're working with.
-                        display_.showErrorMessage("Could Not Publish", 
-                              error.getMessage());
-                     }
-                  });
+            fillInputFromDoc(input, event.getFromPreview().getSourceFile(), 
+                  new CommandWithArg<RSConnectPublishInput>()
+            {
+               @Override
+               public void execute(RSConnectPublishInput arg)
+               {
+                  showPublishUI(arg);
+               }
+            });
          }
          else
          {
@@ -304,14 +306,17 @@ public class RSConnect implements SessionInitHandler,
    
    private void publishAsCode(RSConnectActionEvent event)
    {
-      publishAsFiles(event, new RSConnectPublishSource(event.getPath()));
+      publishAsFiles(event, new RSConnectPublishSource(event.getPath(), 
+            false, null));
    }
    
    private void publishAsStatic(RSConnectPublishInput input)
    {
       publishAsFiles(input.getOriginatingEvent(), 
             new RSConnectPublishSource(
-                  input.getOriginatingEvent().getFromPreview()));
+                  input.getOriginatingEvent().getFromPreview(),
+                  input.isSelfContained(),
+                  input.getDescription()));
    }
 
    private void publishAsFiles(RSConnectActionEvent event,
@@ -509,14 +514,19 @@ public class RSConnect implements SessionInitHandler,
          String sourceFile,
          String deployDir,
          String deployFile, 
+         String description,
          JsArrayString deployFiles,
          JsArrayString additionalFiles,
          JsArrayString ignoredFiles,
+         boolean isSelfContained,
          boolean asMultiple,
          boolean asStatic,
          boolean launch, 
          JavaScriptObject record) /*-{
-      $wnd.opener.deployToRSConnect(sourceFile, deployDir, deployFile, deployFiles, additionalFiles, ignoredFiles, asMultiple, asStatic, launch, record);
+      $wnd.opener.deployToRSConnect(sourceFile, deployDir, deployFile, 
+                                    description, deployFiles, additionalFiles, 
+                                    ignoredFiles, isSelfContained, asMultiple, 
+                                    asStatic, launch, record);
    }-*/;
    
    public static String contentTypeDesc(int contentType)
@@ -546,12 +556,14 @@ public class RSConnect implements SessionInitHandler,
                result.getSource().getSourceFile(), 
                result.getSource().getDeployDir(), 
                result.getSource().getDeployFile(), 
+               result.getSource().getDescription(),
                JsArrayUtil.toJsArrayString(
                      result.getSettings().getDeployFiles()),
                JsArrayUtil.toJsArrayString(
                      result.getSettings().getAdditionalFiles()),
                JsArrayUtil.toJsArrayString(
                      result.getSettings().getIgnoredFiles()),
+               result.getSource().isSelfContained(),
                result.getSettings().getAsMultiple(),
                result.getSettings().getAsStatic(),
                launchBrowser, 
@@ -768,8 +780,8 @@ public class RSConnect implements SessionInitHandler,
    private final native void exportNativeCallbacks() /*-{
       var thiz = this;     
       $wnd.deployToRSConnect = $entry(
-         function(sourceFile, deployDir, deployFile, deployFiles, additionalFiles, ignoredFiles, asMultiple, asStatic, launch, record) {
-            thiz.@org.rstudio.studio.client.rsconnect.RSConnect::deployToRSConnect(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lcom/google/gwt/core/client/JsArrayString;Lcom/google/gwt/core/client/JsArrayString;Lcom/google/gwt/core/client/JsArrayString;ZZZLcom/google/gwt/core/client/JavaScriptObject;)(sourceFile, deployDir, deployFile, deployFiles, additionalFiles, ignoredFiles, asMultiple, asStatic, launch, record);
+         function(sourceFile, deployDir, deployFile, description, deployFiles, additionalFiles, ignoredFiles, isSelfContained, asMultiple, asStatic, launch, record) {
+            thiz.@org.rstudio.studio.client.rsconnect.RSConnect::deployToRSConnect(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lcom/google/gwt/core/client/JsArrayString;Lcom/google/gwt/core/client/JsArrayString;Lcom/google/gwt/core/client/JsArrayString;ZZZZLcom/google/gwt/core/client/JavaScriptObject;)(sourceFile, deployDir, deployFile, description, deployFiles, additionalFiles, ignoredFiles, isSelfContained, asMultiple, asStatic, launch, record);
          }
       ); 
    }-*/;
@@ -777,9 +789,11 @@ public class RSConnect implements SessionInitHandler,
    private void deployToRSConnect(String sourceFile, 
                                   String deployDir, 
                                   String deployFile, 
+                                  String description,
                                   JsArrayString deployFiles, 
                                   JsArrayString additionalFiles, 
                                   JsArrayString ignoredFiles, 
+                                  boolean isSelfContained,
                                   boolean asMultiple, 
                                   boolean asStatic,
                                   boolean launch, 
@@ -801,10 +815,57 @@ public class RSConnect implements SessionInitHandler,
       
       RSConnectDeploymentRecord record = jsoRecord.cast();
       events_.fireEvent(new RSConnectDeployInitiatedEvent(
-            new RSConnectPublishSource(sourceFile, deployDir, deployFile),
+            new RSConnectPublishSource(sourceFile, deployDir, deployFile,
+                  isSelfContained, description),
             new RSConnectPublishSettings(deployFilesList, 
                   additionalFilesList, ignoredFilesList, asMultiple, asStatic), 
             launch, record));
+   }
+   
+   private void fillInputFromDoc(final RSConnectPublishInput input, 
+         final String docPath, 
+         final CommandWithArg<RSConnectPublishInput> onComplete)
+   {
+      server_.getRmdPublishDetails(
+            docPath, 
+            new ServerRequestCallback<RmdPublishDetails>()
+            {
+               @Override
+               public void onResponseReceived(RmdPublishDetails details)
+               {
+                  input.setIsMultiRmd(details.isMultiRmd());
+                  input.setIsShiny(details.isShinyRmd());
+                  input.setIsSelfContained(details.isSelfContained());
+                  if (StringUtil.isNullOrEmpty(input.getDescription()))
+                  {
+                     if (details.getTitle() != null && 
+                         !details.getTitle().isEmpty())
+                     {
+                        // set the description from the document title, if we
+                        // have it
+                        input.setDescription(details.getTitle());
+                     }
+                     else
+                     {
+                        // set the description from the document name
+                        input.setDescription(
+                              FilePathUtils.fileNameSansExtension(docPath));
+                     }
+                  }
+                  onComplete.execute(input);
+               }
+
+               @Override
+               public void onError(ServerError error)
+               {
+                  // this is unlikely since the RPC does little work, but
+                  // we can't offer the right choices in the wizard if we
+                  // don't know what we're working with.
+                  display_.showErrorMessage("Could Not Publish", 
+                        error.getMessage());
+                  onComplete.execute(null);
+               }
+            });
    }
    
    private final Commands commands_;

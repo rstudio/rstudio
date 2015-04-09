@@ -9,21 +9,30 @@
     <g:Image ui:field="deployIllustration_"></g:Image>
     <g:Grid ui:field="mainGrid_"><g:row>
     <g:customCell styleName="{res.style.rootCell}">
-      <g:VerticalPanel>
-        <g:HTMLPanel>
-          <g:InlineLabel text="Deploy Files From:"></g:InlineLabel>
-          <g:InlineLabel styleName="{res.style.deployLabel}" 
-                         ui:field="deployLabel_">
-          </g:InlineLabel>
-        </g:HTMLPanel>
-        <g:ScrollPanel styleName="{res.style.fileList}">
-          <g:VerticalPanel ui:field="fileListPanel_">
-          </g:VerticalPanel>
-        </g:ScrollPanel>
-        <rw:ThemedButton ui:field="addFileButton_" 
-                         text="Add More..."
-                         visible="false"></rw:ThemedButton>
-      </g:VerticalPanel>
+      <g:HTMLPanel>
+         <g:VerticalPanel ui:field="filePanel_">
+           <g:HTMLPanel>
+             <g:InlineLabel text="Publish Files From:"></g:InlineLabel>
+             <g:InlineLabel styleName="{res.style.deployLabel}" 
+                            ui:field="deployLabel_">
+             </g:InlineLabel>
+           </g:HTMLPanel>
+           <g:ScrollPanel styleName="{res.style.fileList}">
+             <g:VerticalPanel ui:field="fileListPanel_">
+             </g:VerticalPanel>
+           </g:ScrollPanel>
+           <rw:ThemedButton ui:field="addFileButton_" 
+                            text="Add More..."
+                            visible="false"></rw:ThemedButton>
+         </g:VerticalPanel>
+         <g:VerticalPanel ui:field="descriptionPanel_" visible="false">
+            <g:Label text="Publish: "></g:Label>
+            <g:Label ui:field="descriptionLabel_"></g:Label>
+            <rw:ThemedButton ui:field="previewButton_"
+                             text="Preview...">
+            </rw:ThemedButton>
+         </g:VerticalPanel>
+       </g:HTMLPanel>
      </g:customCell>
      <g:customCell styleName="{res.style.rootCell}">
       <g:HTMLPanel>

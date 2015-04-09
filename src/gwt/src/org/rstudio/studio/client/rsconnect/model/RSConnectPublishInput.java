@@ -80,9 +80,19 @@ public class RSConnectPublishInput
       return isSelfContained_;
    }
    
-   public void setIsSelfContained(boolean isSelfContained)
+   public void setIsSelfContained(boolean selfContained)
    {
-      isSelfContained_ = isSelfContained;
+      isSelfContained_ = selfContained;
+   }
+   
+   public void setDescription(String description)
+   {
+      description_ = description;
+   }
+   
+   public String getDescription()
+   {
+      return description_;
    }
    
    public int getContentType()
@@ -102,4 +112,5 @@ public class RSConnectPublishInput
    private boolean isSelfContained_;
    private FileSystemItem sourceRmd_;
    private RSConnectActionEvent originatingEvent_;
+   private String description_ = null;
 }

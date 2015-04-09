@@ -19,32 +19,41 @@ import org.rstudio.core.client.files.FileSystemItem;
 
 public class RSConnectPublishSource
 {
-   public RSConnectPublishSource(String sourceFile)
+   public RSConnectPublishSource(String sourceFile, boolean isSelfContained, 
+         String description)
    {
-      this(sourceFile, sourceFile);
+      this(sourceFile, sourceFile, isSelfContained, description);
    }
    
-   public RSConnectPublishSource(String sourceFile, String outputFile)
+   public RSConnectPublishSource(String sourceFile, String outputFile, 
+         boolean isSelfContained, String description)
    {
       deployFile_ = outputFile;
       sourceFile_ = sourceFile;
+      description_ = description;
+      isSelfContained_ = isSelfContained;
       deployDir_ = FileSystemItem.createFile(outputFile).getParentPathString();
    }
    
-   public RSConnectPublishSource(RenderedDocPreview preview)
+   public RSConnectPublishSource(RenderedDocPreview preview, 
+         boolean isSelfContained, String description)
    {
       deployFile_ = preview.getOutputFile();
       sourceFile_ = preview.getSourceFile();
+      description_ = description;
+      isSelfContained_ = isSelfContained;
       deployDir_ = FileSystemItem.createFile(preview.getOutputFile())
             .getParentPathString();
    }
    
    public RSConnectPublishSource(String sourceFile, String deployDir, 
-         String deployFile)
+         String deployFile, boolean isSelfContained, String description)
    {
       sourceFile_ = sourceFile;
       deployDir_ = deployDir;
       deployFile_ = deployFile;
+      isSelfContained_ = isSelfContained;
+      description_ = description;
    }
    
    public String getDeployFile()
@@ -83,7 +92,19 @@ public class RSConnectPublishSource
       return FileSystemItem.createFile(getDeployFile()).getName();
    }
    
+   public String getDescription()
+   {
+      return description_;
+   }
+   
+   public boolean isSelfContained()
+   {
+      return isSelfContained_;
+   }
+   
    private final String deployFile_;
    private final String deployDir_;
    private final String sourceFile_;
+   private final String description_;
+   private final boolean isSelfContained_;
 }

@@ -34,4 +34,8 @@ public class RmdPublishDetails extends JavaScriptObject
    public final native boolean isSelfContained() /*-{
       return this.is_self_contained;
    }-*/;
+   
+   public final native String getTitle() /*-{
+      return this.title;
+   }-*/;
 }

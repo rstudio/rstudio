@@ -187,12 +187,30 @@ public class RSConnectDeploy extends Composite
          }
       });
       
+      previewButton_.addClickHandler(new ClickHandler()
+      {
+         @Override
+         public void onClick(ClickEvent arg0)
+         {
+            if (display_ != null && !StringUtil.isNullOrEmpty(
+                  source_.getDeployFile()))
+            {
+               display_.showHtmlFile(source_.getDeployFile());
+            }
+         }
+      });
+      
       // If we're loading a previous deployment, hide new app name fields
       if (fromPrevious_ != null)
       {
          newAppPanel_.setVisible(false);
       }
       
+      // If we already know the source, apply it
+      if (source_ != null)
+      {
+         applySource();
+      }
    }
    
    @Inject
@@ -342,8 +360,10 @@ public class RSConnectDeploy extends Composite
          accountList_.setShowCloudAccounts(!asStatic);
          accountList_.refreshAccountList();
       }
-
+      
       asStatic_ = asStatic;
+
+      applySource();
    }
    
    public void focus()
@@ -709,24 +729,39 @@ public class RSConnectDeploy extends Composite
       }
    }
    
+   private void applySource()
+   {
+      // If this is a self-contained file, don't show the file list; instead, 
+      // show the description of what we're about to publish
+      if (source_.isSelfContained()) 
+      {
+         descriptionLabel_.setText(source_.getDescription());
+         filePanel_.setVisible(false);
+         descriptionPanel_.setVisible(true);
+      }
+   }
    
-   @UiField Image deployIllustration_;
-   @UiField Anchor urlAnchor_;
    @UiField Anchor addAccountAnchor_;
-   @UiField Label nameLabel_;
-   @UiField(provided=true) RSConnectAccountList accountList_;
-   @UiField HTMLPanel newAppPanel_;
-   @UiField HTMLPanel appInfoPanel_;
-   @UiField HTMLPanel appDetailsPanel_;
-   @UiField HTMLPanel appProgressPanel_;
-   @UiField Label appProgressName_;
-   @UiField Label appExistingName_;
-   @UiField VerticalPanel fileListPanel_;
-   @UiField InlineLabel deployLabel_;
-   @UiField ThemedButton addFileButton_;
-   @UiField HTMLPanel rootPanel_;
+   @UiField Anchor urlAnchor_;
    @UiField AppNameTextbox appName_;
    @UiField Grid mainGrid_;
+   @UiField HTMLPanel appDetailsPanel_;
+   @UiField HTMLPanel appInfoPanel_;
+   @UiField HTMLPanel appProgressPanel_;
+   @UiField HTMLPanel newAppPanel_;
+   @UiField HTMLPanel rootPanel_;
+   @UiField Image deployIllustration_;
+   @UiField InlineLabel deployLabel_;
+   @UiField Label appExistingName_;
+   @UiField Label appProgressName_;
+   @UiField Label descriptionLabel_;
+   @UiField Label nameLabel_;
+   @UiField ThemedButton addFileButton_;
+   @UiField ThemedButton previewButton_;
+   @UiField VerticalPanel fileListPanel_;
+   @UiField VerticalPanel filePanel_;
+   @UiField VerticalPanel descriptionPanel_;
+   @UiField(provided=true) RSConnectAccountList accountList_;
    
    private ArrayList<CheckBox> fileChecks_;
    private ArrayList<String> filesAddedManually_ = 

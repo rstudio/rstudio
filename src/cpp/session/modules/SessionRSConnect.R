@@ -263,11 +263,19 @@
     selfContained <- FALSE
   }
 
+  # extract the document's title
+  title <- ""
+  frontMatter <- rmarkdown:::parse_yaml_front_matter(lines) 
+  if (is.list(frontMatter) && is.character(frontMatter$title)) {
+    title <- frontMatter$title
+  }
+
   # check to see if this is an interactive doc (i.e. needs to be run rather
   # rather than rendered)
   renderFunction <- .rs.getCustomRenderFunction(target)
   list(
     is_multi_rmd      = .rs.scalar(length(rmds) > 1), 
     is_shiny_rmd      = .rs.scalar(renderFunction == "rmarkdown::run"),
-    is_self_contained = .rs.scalar(selfContained))
+    is_self_contained = .rs.scalar(selfContained),
+    title             = .rs.scalar(title))
 })
