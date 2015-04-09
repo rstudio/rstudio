@@ -16,6 +16,7 @@ package org.rstudio.studio.client.rsconnect.ui;
 
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.WizardPage;
+import org.rstudio.studio.client.rsconnect.RSConnect;
 import org.rstudio.studio.client.rsconnect.model.RSConnectPublishInput;
 import org.rstudio.studio.client.rsconnect.model.RSConnectPublishResult;
 import org.rstudio.studio.client.rsconnect.model.RSConnectPublishSource;
@@ -49,16 +50,18 @@ public class PublishFilesPage
             {
                source = new RSConnectPublishSource(
                               input.getOriginatingEvent().getHtmlFile(),
-                              input.isSelfContained(),
+                              input.isSelfContained() && asStatic,
                               input.getDescription());
             }
-            contents_.setPublishSource(source, asMultiple, true);
+            contents_.setPublishSource(source, input.getContentType(), 
+                  asMultiple, true);
          }
          else
             contents_.setPublishSource(
                   new RSConnectPublishSource(input.getSourceRmd().getPath(),
-                        input.isSelfContained(),
+                        input.isSelfContained() && asStatic,
                         input.getDescription()),
+                  input.getContentType(),
                   asMultiple, false);
       }
    }
@@ -78,7 +81,8 @@ public class PublishFilesPage
    @Override
    protected Widget createWidget()
    {
-      contents_ = new RSConnectDeploy(null, null, true);
+      contents_ = new RSConnectDeploy(null, RSConnect.CONTENT_TYPE_NONE, 
+            null, true);
       return contents_;
    }
 

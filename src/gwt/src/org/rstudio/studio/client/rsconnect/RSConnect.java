@@ -173,6 +173,7 @@ public class RSConnect implements SessionInitHandler,
             pUiPrefs_.get().enableRStudioConnect().getGlobalValue());
       input.setExternalUIEnabled(
             session_.getSessionInfo().getAllowExternalPublish());
+      input.setDescription(event.getDescription());
       
       if (event.getFromPrevious() != null)
       {

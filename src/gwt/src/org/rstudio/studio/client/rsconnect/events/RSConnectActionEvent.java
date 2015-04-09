@@ -81,6 +81,7 @@ public class RSConnectActionEvent extends GwtEvent<RSConnectActionEvent.Handler>
       path_ = path;
       fromPrevious_ = fromPrevious;
       docPreview_ = fromPreview;
+      description_ = selfContainedDesc;
       
       // determine location of static content, if any
       if (htmlFile != null)
@@ -121,6 +122,11 @@ public class RSConnectActionEvent extends GwtEvent<RSConnectActionEvent.Handler>
       return htmlFile_;
    }
    
+   public String getDescription()
+   {
+      return description_;
+   }
+   
    @Override
    protected void dispatch(RSConnectActionEvent.Handler handler)
    {
@@ -142,4 +148,5 @@ public class RSConnectActionEvent extends GwtEvent<RSConnectActionEvent.Handler>
    private final RSConnectDeploymentRecord fromPrevious_;
    private final int contentType_;
    private final String htmlFile_;
+   private final String description_;
 }

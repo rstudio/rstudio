@@ -25,7 +25,9 @@ import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.FileDialogs;
+import org.rstudio.studio.client.common.FilePathUtils;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.rsconnect.RSConnect;
 import org.rstudio.studio.client.rsconnect.model.RSConnectAccount;
 import org.rstudio.studio.client.rsconnect.model.RSConnectApplicationInfo;
 import org.rstudio.studio.client.rsconnect.model.RSConnectDeploymentFiles;
@@ -81,6 +83,8 @@ public class RSConnectDeploy extends Composite
       String accountList();
       String controlLabel();
       String deployLabel();
+      String descriptionLabel();
+      String descriptionPanel();
       String dropListControl();
       String fileList();
       String firstControlLabel();
@@ -112,6 +116,7 @@ public class RSConnectDeploy extends Composite
    public static DeployResources RESOURCES = GWT.create(DeployResources.class);
    
    public RSConnectDeploy(RSConnectPublishSource source,
+                          int contentType,
                           RSConnectDeploymentRecord fromPrevious,
                           boolean asWizard)
    {
@@ -123,7 +128,8 @@ public class RSConnectDeploy extends Composite
       {
          forDocument_ = asWizard;
       }
-
+      
+      contentType_ = contentType;
       fromPrevious_ = fromPrevious;
       
       // import static/code and single/multiple settings from previous
@@ -187,7 +193,7 @@ public class RSConnectDeploy extends Composite
          }
       });
       
-      addFileButton_.getElement().getStyle().setMarginLeft(0, Unit.PX);
+      previewButton_.getElement().getStyle().setMarginLeft(0, Unit.PX);
       previewButton_.addClickHandler(new ClickHandler()
       {
          @Override
@@ -350,9 +356,10 @@ public class RSConnectDeploy extends Composite
    }
    
    public void setPublishSource(RSConnectPublishSource source, 
-         boolean asMultipleRmd, boolean asStatic)
+         int contentType, boolean asMultipleRmd, boolean asStatic)
    {
       source_ = source;
+      contentType_ = contentType;
       asMultipleRmd_ = asMultipleRmd;
       
       // not all destination accounts support static content
@@ -735,10 +742,21 @@ public class RSConnectDeploy extends Composite
       // If this is a self-contained file, don't show the file list; instead, 
       // show the description of what we're about to publish
       if (source_.isSelfContained()) 
+         if (source_.isSelfContained()) 
       {
          descriptionLabel_.setText(source_.getDescription());
          filePanel_.setVisible(false);
          descriptionPanel_.setVisible(true);
+      }
+      
+      // if the app name textbox isn't populated, derive from the filename
+      // (for apps and documents--other content types use temporary filenames)
+      if (appName_.getText().isEmpty() && 
+            contentType_ == RSConnect.CONTENT_TYPE_APP || 
+            contentType_ == RSConnect.CONTENT_TYPE_DOCUMENT)
+      {
+         appName_.setText(FilePathUtils.fileNameSansExtension(
+               source_.getSourceFile()));
       }
    }
    
@@ -776,6 +794,7 @@ public class RSConnectDeploy extends Composite
    private RSConnectPublishSource source_;
    private boolean asMultipleRmd_;
    private boolean asStatic_;
+   private int contentType_;
 
    private final DeployStyle style_;
    private final boolean forDocument_;

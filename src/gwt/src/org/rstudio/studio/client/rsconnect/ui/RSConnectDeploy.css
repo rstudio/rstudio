@@ -165,3 +165,12 @@
    margin: 0px;
 }
 
+.descriptionLabel
+{
+   font-weight: bold;
+}
+
+.descriptionPanel
+{
+   text-align: center;
+}

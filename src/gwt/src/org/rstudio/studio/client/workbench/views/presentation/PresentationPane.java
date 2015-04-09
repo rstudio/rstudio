@@ -137,7 +137,7 @@ public class PresentationPane extends WorkbenchPane implements Presentation.Disp
             @Override
             public String getTitle()
             {
-               return getPresentationTitle();
+               return "Presentation:\n" + getPresentationTitle();
             }
          });
          toolbar.addRightSeparator();

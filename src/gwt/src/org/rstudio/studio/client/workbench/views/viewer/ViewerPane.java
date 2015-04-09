@@ -129,7 +129,7 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
          @Override
          public String getTitle()
          {
-            String title = getTitle();
+            String title = frame_.getTitle();
             if (StringUtil.isNullOrEmpty(title))
                title = "Viewer Content";
             return title;

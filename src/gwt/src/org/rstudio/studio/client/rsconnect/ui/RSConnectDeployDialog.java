@@ -44,7 +44,8 @@ public class RSConnectDeployDialog
                                 RSConnectPublishSource source,
                                 RSConnectDeploymentRecord fromPrevious)
    {
-      super(server, display, new RSConnectDeploy(source, fromPrevious, false));
+      super(server, display, new RSConnectDeploy(source, 
+            RSConnect.CONTENT_TYPE_NONE, fromPrevious, false));
       setText("Publish to Server");
       setWidth("350px");
       deployButton_ = new ThemedButton("Publish");
@@ -111,8 +112,8 @@ public class RSConnectDeployDialog
       if (fromPrevious != null)
       {
          // we know what the previous deployment settings are, so use them
-         contents_.setPublishSource(source, fromPrevious.getAsMultiple(), 
-               fromPrevious.getAsStatic());
+         contents_.setPublishSource(source, RSConnect.CONTENT_TYPE_NONE, 
+               fromPrevious.getAsMultiple(), fromPrevious.getAsStatic());
       }
       else
       {
@@ -120,7 +121,8 @@ public class RSConnectDeployDialog
          // deployments, and not as part of a wizard, is if we're deploying 
          // an unambiguously single, non-static asset (such as a Shiny app or
          // an R Markdown document in its own directory)
-         contents_.setPublishSource(source, false, false);
+         contents_.setPublishSource(source, RSConnect.CONTENT_TYPE_NONE, 
+               false, false);
       }
   
       contents_.setOnDeployDisabled(new Command()
