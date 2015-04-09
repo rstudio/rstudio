@@ -682,6 +682,7 @@ public class RSConnect implements SessionInitHandler,
    private void configureShinyApp(final String dir)
    {
       server_.getRSConnectDeployments(dir, 
+            "",
             new ServerRequestCallback<JsArray<RSConnectDeploymentRecord>>()
       {
          @Override

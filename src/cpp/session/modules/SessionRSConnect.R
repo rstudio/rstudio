@@ -34,6 +34,47 @@
    return(ret)
 })
 
+.rs.addFunction("getRSConnectDeployments", function(path, rpubsUploadId) {
+   deploymentsFrame <- rsconnect::deployments(path)
+   deployments <- .rs.scalarListFromFrame(deploymentsFrame)
+
+   # no RPubs upload IDs to consider
+   if (!is.character(rpubsUploadId) || nchar(rpubsUploadId) == 0) {
+     return(deployments)
+   }
+
+   # if there's already a deployment to rpubs.com, ignore legacy deployment
+   if ("rpubs.com" %in% deployments$server) {
+     return(deployments)
+   }
+
+   # create a new list with the same names as the one we're about to return,
+   # and populate the fields we know from RPubs. leave all others, including
+   # user-defined fields, blank; this allows us to tolerate changes to the
+   # deployment frame format.
+   rpubsDeployment <- list()
+   for (col in colnames(deploymentsFrame)) {
+     if (col == "name")
+       rpubsDeployment[col] = .rs.scalar("")
+     else if (col == "account")
+       rpubsDeployment[col] = .rs.scalar("rpubs")
+     else if (col == "server")
+       rpubsDeployment[col] = .rs.scalar("rpubs.com")
+     else if (col == "bundleId") 
+       rpubsDeployment[col] = .rs.scalar(rpubsUploadId)
+     else if (col == "asStatic")
+       rpubsDeployment[col] = .rs.scalar(TRUE)
+     else if (col == "when") 
+       rpubsDeployment[col] = .rs.scalar(0)
+     else 
+       rpubsDeployment[col] = .rs.scalar(NA)
+   }
+
+   # combine the deployments rsconnect knows about with the deployments we know
+   # about
+   c(rpubsDeployment, rpubsDeployment)
+})
+
 .rs.addJsonRpcHandler("get_rsconnect_account_list", function() {
    accounts <- list()
    # safely return an empty list--we want to consider there to be 0 connected
@@ -53,9 +94,6 @@
    .rs.scalarListFromFrame(rsconnect::applications(account, server))
 })
 
-.rs.addJsonRpcHandler("get_rsconnect_deployments", function(path) {
-   .rs.scalarListFromFrame(rsconnect::deployments(path))
-})
 
 .rs.addJsonRpcHandler("validate_server_url", function(url) {
    .rs.scalarListFromList(rsconnect:::validateServerUrl(url))

@@ -261,6 +261,7 @@ public class RSConnectPublishButton extends Composite
       
       populating_ = true;
       server_.getRSConnectDeployments(contentPath, 
+            "",
             new ServerRequestCallback<JsArray<RSConnectDeploymentRecord>>()
       {
          @Override

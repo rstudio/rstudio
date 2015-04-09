@@ -86,6 +86,7 @@ public class RSConnectDeployDialog
       // Get the deployments of this directory from any account (should be fast,
       // since this information is stored locally in the directory). 
       server_.getRSConnectDeployments(source.getDeployKey(), 
+            source.getDeployFile(),
             new ServerRequestCallback<JsArray<RSConnectDeploymentRecord>>()
       {
          @Override

@@ -3643,11 +3643,13 @@ public class RemoteServer implements Server
 
    @Override
    public void getRSConnectDeployments(
-         String dir,
+         String sourcePath,
+         String outputPath,
          ServerRequestCallback<JsArray<RSConnectDeploymentRecord>> requestCallback)
    {
       JSONArray params = new JSONArray();
-      params.set(0, new JSONString(dir));
+      params.set(0, new JSONString(sourcePath));
+      params.set(1, new JSONString(outputPath));
       sendRequest(RPC_SCOPE,
             GET_RSCONNECT_DEPLOYMENTS,
             params,

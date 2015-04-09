@@ -23,6 +23,7 @@
 
 #include <r/RSexp.hpp>
 #include <r/RExec.hpp>
+#include <r/RJson.hpp>
 
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionAsyncRProcess.hpp>
@@ -231,6 +232,41 @@ Error rsconnectPublish(const json::JsonRpcRequest& request,
 }
 
 
+Error rsconnectDeployments(const json::JsonRpcRequest& request,
+                           json::JsonRpcResponse* pResponse)
+{
+
+   std::string sourcePath, outputPath;
+   Error error = json::readParams(request.params, &sourcePath, &outputPath);
+   if (error)
+      return error;
+
+   // get prior RPubs upload IDs, if any are known
+   std::string rpubsUploadId;
+   if (!outputPath.empty())
+   {
+     outputPath = module_context::previousRpubsUploadId(
+         module_context::resolveAliasedPath(outputPath));
+   }
+
+   // blend with known deployments from the rsconnect package
+   r::sexp::Protect protect;
+   SEXP sexpDeployments;
+   error = r::exec::RFunction(".rs.getRSConnectDeployments", sourcePath, 
+         rpubsUploadId).call(&sexpDeployments, &protect);
+   if (error)
+      return error;
+   
+   // convert result to JSON and return
+   json::Value result;
+   error = r::json::jsonValueFromList(sexpDeployments, &result);
+   if (error)
+      return error;
+   pResponse->setResult(result);
+
+   return Success();
+}
+
 } // anonymous namespace
 
 Error initialize()
@@ -240,6 +276,7 @@ Error initialize()
 
    ExecBlock initBlock;
    initBlock.addFunctions()
+      (bind(registerRpcMethod, "get_rsconnect_deployments", rsconnectDeployments))
       (bind(registerRpcMethod, "rsconnect_publish", rsconnectPublish))
       (bind(sourceModuleRFile, "SessionRSConnect.R"));
 
