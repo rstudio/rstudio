@@ -295,12 +295,27 @@ bool isActiveBinding(const std::string& name, const SEXP env)
    return R_BindingIsActive(Rf_install(name.c_str()), env);
 }
 
+SEXP functionBody(SEXP functionSEXP)
+{
+   if (!Rf_isFunction(functionSEXP))
+      return R_NilValue;
+   
+   if (Rf_isPrimitive(functionSEXP))
+      return R_NilValue;
+   
+   SEXP bodySEXP = R_NilValue;
+   Protect protect;
+   RFunction getBody("base:::body");
+   getBody.addParam(functionSEXP);
+   Error error = getBody.call(&bodySEXP, &protect);
+   if (error) LOG_ERROR(error);
+   return bodySEXP;
+}
+
 SEXP findVar(const std::string &name, const SEXP env)
 {
    return Rf_findVar(Rf_install(name.c_str()), env);
 }
-
-
 
 SEXP findVar(const std::string& name, const std::string& ns)
 {
@@ -1106,7 +1121,7 @@ bool maybePerformsNSE(SEXP function)
       return false;
    
    return maybePerformsNSEImpl(
-            BODY_EXPR(function),
+            functionBody(function),
             nsePrimitives());
 }
 
@@ -1207,7 +1222,7 @@ void examineSymbolUsage(
    if (Rf_isPrimitive(functionSEXP))
       return;
    
-   SEXP bodySEXP = BODY_EXPR(functionSEXP);
+   SEXP bodySEXP = functionBody(functionSEXP);
    
    FunctionSymbolUsageCache& cache = functionSymbolUsageCache();
    FunctionSymbolUsage usage;
