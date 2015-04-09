@@ -29,6 +29,8 @@
 
 #include "SessionRParser.hpp"
 #include "SessionRTokenCursor.hpp"
+#include "SessionCodeSearch.hpp"
+#include "SessionAsyncPackageInformation.hpp"
 
 #include <session/SessionModuleContext.hpp>
 #include <session/projects/SessionProjects.hpp>
@@ -303,7 +305,7 @@ bool mightPerformNonstandardEvaluation(const RTokenCursor& origin,
    // named function in the source document which has not yet been sourced?
    //
    // For now, we prefer the current source document + the source
-   // database, and then use the search path after if necessary.
+   // index, and then use the search path after if necessary.
    const ParseNode* pNode;
    if (status.node()->findFunction(cursor.contentAsUtf8(),
                                    cursor.currentPosition(),
@@ -313,6 +315,23 @@ bool mightPerformNonstandardEvaluation(const RTokenCursor& origin,
       if (cursor.moveToPosition(pNode->position()))
          if (maybePerformsNSE(cursor))
             return true;
+   }
+   
+   // Search the R source index if this is a simple call, and
+   // we're within a package project.
+   if (cursor.isSimpleCall() &&
+       projects::projectContext().isPackageProject())
+   {
+      using namespace code_search;
+      std::string symbol = cursor.contentAsUtf8();
+      const PackageInformation& info = RSourceIndex::getPackageInformation(
+               projects::projectContext().packageInfo().name());
+      
+      for (std::size_t i = 0, n = info.exports.size(); i < n; ++i)
+      {
+         if (info.exports[i] == symbol)
+            return info.performsNse[i];
+      }
    }
    
    // Handle some special cases first.
@@ -334,18 +353,12 @@ bool mightPerformNonstandardEvaluation(const RTokenCursor& origin,
       const RSourceIndex::PackageInformationDatabase& db =
             RSourceIndex::getPackageInformationDatabase();
       
-      BOOST_FOREACH(const PackageInformation& info, db | boost::adaptors::map_values)
+      BOOST_FOREACH(const PackageInformation& info,
+                    db | boost::adaptors::map_values)
       {
-         for (std::size_t i = 0, n = info.exports.size();
-              i < n;
-              ++i)
-         {
+         for (std::size_t i = 0, n = info.exports.size(); i < n; ++i)
             if (info.exports[i] == symbol)
-            {
                return info.performsNse[i];
-            }
-               
-         }
       }
    }
    
@@ -874,6 +887,29 @@ bool extractFormalsFromFunctionDefinition(
    return true;
 }
 
+bool extractFormalsFromPackageInformationDatabase(
+      const std::string& symbol,
+      r::sexp::FunctionInformation* pInfo)
+{
+   if (projects::projectContext().isPackageProject())
+   {
+      std::string pkg = projects::projectContext().packageInfo().name();
+      if (!RSourceIndex::hasFormalsForFunction(symbol, pkg))
+         return false;
+      
+      const std::vector<std::string>& formals =
+            RSourceIndex::getFormalsForFunction(symbol, pkg);
+      
+      BOOST_FOREACH(const std::string& formal, formals)
+      {
+         pInfo->addFormal(formal);
+      }
+      
+      return true;
+   }
+   return false;
+}
+
 // Extract formals from the underlying object mapped by the symbol, or expression,
 // at the cursor. This involves (potentially) evaluating the expresion forming
 // the function object, e.g.
@@ -889,7 +925,7 @@ bool getFormalsAssociatedWithFunctionAtCursor(
       r::sexp::FunctionInformation* pInfo)
 {
    // If this is a direct call to a symbol, then first attempt to
-   // find this function in the current document, or the source database.
+   // find this function in the current document.
    if (cursor.isSimpleCall())
    {
       if (cursor.isType(RToken::LPAREN))
@@ -914,6 +950,13 @@ bool getFormalsAssociatedWithFunctionAtCursor(
             }
          }
       }
+      
+      // If we're within a package project, then attempt searching the
+      // source index for the formals associated with this function.
+      if (projects::projectContext().isPackageProject())
+         if (extractFormalsFromPackageInformationDatabase(
+                cursor.contentAsUtf8(), pInfo))
+            return true;
    }
    
    // If the above failed, we'll fall back to evaluating and looking up

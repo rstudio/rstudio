@@ -708,8 +708,13 @@ Error ProjectContext::writeBuildOptions(const RProjectBuildOptions& options)
    return Success();
 }
 
+bool ProjectContext::isPackageProject()
+{
+   return r_util::isPackageDirectory(directory());
+}
+
 
 } // namespace projects
-} // namesapce session
+} // namespace session
 } // namespace rstudio
 

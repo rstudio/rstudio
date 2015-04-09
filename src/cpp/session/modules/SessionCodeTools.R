@@ -887,7 +887,7 @@
          return('[]')
       }
       else if (is.character(object) || is.factor(object))
-      {
+    {
          object <- paste(collapse = ",", vapply(as.character(object), FUN.VALUE = character(1), USE.NAMES = FALSE, function(x) {
             if (is.na(x)) "null"
             else paste("\"", .rs.jsonEscapeString(enc2utf8(x)), "\"", sep = "")
@@ -899,7 +899,7 @@
       }
       else if (is.logical(object))
       {
-         object <- tolower(object)
+
          object[is.na(object)] <- 'null'
       }
       
@@ -907,6 +907,20 @@
          return(object)
       else
          return(paste('[', paste(object, collapse = ','), ']', sep = '', collapse = ','))
+   }
+})
+
+.rs.addFunction("checkMissingnessHandled", function(node,
+                                                    head,
+                                                    parent,
+                                                    env)
+{
+   if (is.symbol(head) &&
+       .rs.isSymbolCalled(head, "missing") &&
+       is.symbol(node) &&
+       !identical(head, node))
+   {
+      env[[as.character(node)]] <- TRUE
    }
 })
 
@@ -923,7 +937,7 @@
          )))
          
          # Get the exported items in the NAMESPACE (for search path + `::`
-         # completions)
+         # completions).
          ns <- asNamespace(x)
          exports <- getNamespaceExports(ns)
          objects <- mget(exports, ns, inherits = TRUE)
@@ -931,22 +945,27 @@
          # Figure out the completion types for these objects
          types <- unlist(lapply(objects, .rs.getCompletionType))
          
-         # Find the functions -- for these, we want to return the argument
-         # names (since we want to enable function argument completions)
+         # Find the functions, and generate information on each formal
+         # (does it have a default argument; is missingness handled; etc)
+         formalInfo <- lapply(functions, function(f) {
+            
+            formals <- formals(f)
+            formalNames <- names(formals)
+            hasDefaults <- vapply(formals, FUN.VALUE = integer(1), USE.NAMES = FALSE, function(x) {
+               identical(x, quote(expr =))
+            })
+            
+            env <- new.env(parent = emptyenv())
+            .rs.recursiveWalk(body(f), function(node, head, parent) {
+               .rs.checkMissingnessHandled(node, head, parent, env)
+            })
+         })
+         
          isFunction <- unlist(lapply(objects, is.function))
          functions <- objects[isFunction]
          formals <- lapply(functions, function(f) {
             names(formals(f))
          })
-         
-         # For each object (function) exported, attempt to infer
-         # if it performs non-standard evaluation
-         performsNse <- vapply(
-            functions,
-            FUN.VALUE = integer(1),
-            USE.NAMES = FALSE,
-            .rs.performsNonstandardEvaluation
-         )
          
          # Generate the output
          output <- list(
@@ -1007,16 +1026,25 @@
    return(FALSE)
 })
 
-.rs.addFunction("recursiveSearch", function(node, fn, head = node, parent = NULL, ...)
+.rs.addFunction("recursiveSearch", function(`_node`, fn, `_head` = `_node`, `_parent` = NULL, ...)
 {
-   if (fn(node, head, parent, ...)) return(TRUE)
+   if (fn(`_node`, `_head`, `_parent`, ...)) return(TRUE)
    
-   if (is.call(node))
-      for (i in seq_along(node))
-         if (.rs.recursiveSearch(node[[i]], fn, node[[1]], node, ...))
+   if (is.call(`_node`))
+      for (i in seq_along(`_node`))
+         if (.rs.recursiveSearch(`_node`[[i]], fn, `_node`[[1]], `_node`, ...))
             return(TRUE)
    
    return(FALSE)
+})
+
+.rs.addFunction("recursiveWalk", function(`_node`, fn, `_head` = `_node`, `_parent` = NULL, ...)
+{
+   fn(`_node`, `_head`, `_parent`, ...)
+   
+   if (is.call(`_node`))
+      for (i in seq_along(`_node`))
+         .rs.recursiveWalk(`_node`[[i]], fn, `_node`[[1]], `_node`, ...)
 })
 
 .rs.addFunction("trimWhitespace", function(x)

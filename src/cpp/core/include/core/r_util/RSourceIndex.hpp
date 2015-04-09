@@ -277,6 +277,21 @@ public:
       return search(term, context_, prefixOnly, caseSensitive, out);
    }
    
+private:
+   RSourceItem noSuchItem_;
+   
+   const RSourceItem& get(const std::string& name,
+                          const RSourceItem::Type type = RSourceItem::Function)
+   {
+      BOOST_FOREACH(const RSourceItem& item, items_)
+      {
+         if (item.name() == name && item.type() == type)
+            return item;
+      }
+      
+      return noSuchItem_;
+   }
+   
 public:
 
    static const std::set<std::string>& getAllInferredPackages()
@@ -310,8 +325,21 @@ public:
    {
       return s_packageInformation_[package];
    }
+   
+   static bool hasFormalsForFunction(const std::string& func,
+                                     const std::string& pkg)
+   {
+      return s_packageInformation_[pkg].functions.count(func);
+   }
+   
+   static const std::vector<std::string>& getFormalsForFunction(
+         const std::string& func,
+         const std::string& pkg)
+   {
+      return s_packageInformation_[pkg].functions[func];
+   }
 
-   static const std::vector<std::string> getAllUnindexedPackages()
+   static std::vector<std::string> getAllUnindexedPackages()
    {
       std::vector<std::string> result;
       typedef std::set<std::string>::const_iterator iterator_t;
@@ -329,6 +357,11 @@ public:
    {
       inferredPkgNames_.insert(packageName);
       s_allInferredPkgNames_.insert(packageName);
+   }
+   
+   static void addGloballyInferredPackage(const std::string& pkgName)
+   {
+      s_allInferredPkgNames_.insert(pkgName);
    }
    
    static void setImportedPackages(const std::set<std::string>& pkgNames)

@@ -300,9 +300,15 @@ Error getAllAvailableRSymbols(const FilePath& filePath,
    Error error;
    if (module_context::isRScriptInPackageBuildTarget(filePath) ||
        filePath.isWithin(projects::projectContext().directory().childPath("tests")))
+   {
+      DEBUG("- Package file:'" << filePath.absolutePath() << "'");
       error = getAvailableSymbolsForPackage(filePath, documentId, pSymbols);
+   }
    else
+   {
+      DEBUG("- Project file:'" << filePath.absolutePath() << "'");
       error = getAvailableSymbolsForProject(filePath, documentId, pSymbols);
+   }
    
    // If the file is within the 'tests/testthat' directory, then assume
    // 'testthat' will be available for those tests.
@@ -791,6 +797,13 @@ void afterSessionInitHook(bool newSession)
        projects::projectContext().directory().complete("NAMESPACE").exists())
    {
       onNAMESPACEchanged();
+   }
+   
+   if (projects::projectContext().isPackageProject())
+   {
+      RSourceIndex::addGloballyInferredPackage(
+               projects::projectContext().packageInfo().name());
+      r_packages::AsyncPackageInformationProcess::update();
    }
 
    // register to be notified when snippets are changed

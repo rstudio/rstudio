@@ -225,7 +225,7 @@ void AsyncPackageInformationProcess::update()
    
 }
 
-} // end namespace r_completions
+} // end namespace r_pacakges
 } // end namespace modules
 } // end namespace session
 } // end namespace rstudio

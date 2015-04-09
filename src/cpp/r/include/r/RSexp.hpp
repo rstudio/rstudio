@@ -426,6 +426,12 @@ public:
       : noSuchFormal_("")
    {}
    
+   void addFormal(const std::string& name)
+   {
+      formals_.push_back(FormalInformation(name));
+      formalNames_.push_back(name);
+   }
+   
    void addFormal(const FormalInformation& info)
    {
       formals_.push_back(info);
