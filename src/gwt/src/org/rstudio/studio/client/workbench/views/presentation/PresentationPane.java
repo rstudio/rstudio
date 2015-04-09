@@ -47,7 +47,7 @@ import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.common.presentation.SlideNavigationMenu;
 import org.rstudio.studio.client.common.presentation.SlideNavigationToolbarMenu;
 import org.rstudio.studio.client.rsconnect.RSConnect;
-import org.rstudio.studio.client.rsconnect.model.StaticHtmlGenerator;
+import org.rstudio.studio.client.rsconnect.model.PublishHtmlSource;
 import org.rstudio.studio.client.rsconnect.ui.RSConnectPublishButton;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -105,10 +105,10 @@ public class PresentationPane extends WorkbenchPane implements Presentation.Disp
          // Create the publish button and wire it to our HTML generator
          publishButton_ = new RSConnectPublishButton(
                RSConnect.CONTENT_TYPE_HTML, false, false);
-         publishButton_.setHtmlGenerator(new StaticHtmlGenerator()
+         publishButton_.setPublishHtmlSource(new PublishHtmlSource()
          {
             @Override
-            public void generateStaticHtml(String title, String comment,
+            public void generatePublishHtml(
                   final CommandWithArg<String> onCompleted)
             {
                final Command htmlGenComplete = 
@@ -132,6 +132,12 @@ public class PresentationPane extends WorkbenchPane implements Presentation.Disp
                           Presentation.getErrorMessage(error));
                      }
                });
+            }
+
+            @Override
+            public String getTitle()
+            {
+               return getPresentationTitle();
             }
          });
          toolbar.addRightSeparator();

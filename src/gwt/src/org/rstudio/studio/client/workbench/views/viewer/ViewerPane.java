@@ -18,6 +18,7 @@ import com.google.inject.Inject;
 
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Size;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.URIUtils;
 import org.rstudio.core.client.widget.RStudioFrame;
 import org.rstudio.core.client.widget.Toolbar;
@@ -29,7 +30,7 @@ import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.rmarkdown.model.RmdPreviewParams;
 import org.rstudio.studio.client.rsconnect.RSConnect;
-import org.rstudio.studio.client.rsconnect.model.StaticHtmlGenerator;
+import org.rstudio.studio.client.rsconnect.model.PublishHtmlSource;
 import org.rstudio.studio.client.rsconnect.ui.RSConnectPublishButton;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -98,16 +99,16 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
       toolbar_.addRightWidget(publishButton_);
 
       // create an HTML generator 
-      publishButton_.setHtmlGenerator(new StaticHtmlGenerator()
+      publishButton_.setPublishHtmlSource(new PublishHtmlSource()
       {
          @Override
-         public void generateStaticHtml(String title, String comment,
+         public void generatePublishHtml(
                final CommandWithArg<String> onCompleted)
          {
             final Command dismissProgress = 
                   globalDisplay_.showProgress("Publishing...");
             server_.viewerCreateRPubsHtml(
-                  title, comment, new ServerRequestCallback<String>()
+                  getTitle(), "", new ServerRequestCallback<String>()
             {
                @Override
                public void onResponseReceived(String htmlFile)
@@ -123,6 +124,15 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
                   dismissProgress.execute();
                }
             });
+         }
+
+         @Override
+         public String getTitle()
+         {
+            String title = getTitle();
+            if (StringUtil.isNullOrEmpty(title))
+               title = "Viewer Content";
+            return title;
          }
       });
       

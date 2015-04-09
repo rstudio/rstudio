@@ -187,6 +187,7 @@ public class RSConnectDeploy extends Composite
          }
       });
       
+      addFileButton_.getElement().getStyle().setMarginLeft(0, Unit.PX);
       previewButton_.addClickHandler(new ClickHandler()
       {
          @Override

@@ -42,7 +42,7 @@ public class PublishFilesPage
             {
                source = new RSConnectPublishSource(
                               input.getOriginatingEvent().getFromPreview(),
-                              input.isSelfContained(),
+                              input.isSelfContained() && asStatic,
                               input.getDescription());
             }
             else

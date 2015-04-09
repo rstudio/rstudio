@@ -29,10 +29,10 @@ import org.rstudio.studio.client.htmlpreview.model.HTMLPreviewResult;
 import org.rstudio.studio.client.rmarkdown.model.RmdPreviewParams;
 import org.rstudio.studio.client.rsconnect.RSConnect;
 import org.rstudio.studio.client.rsconnect.events.RSConnectActionEvent;
+import org.rstudio.studio.client.rsconnect.model.PublishHtmlSource;
 import org.rstudio.studio.client.rsconnect.model.RSConnectDeploymentRecord;
 import org.rstudio.studio.client.rsconnect.model.RSConnectServerOperations;
 import org.rstudio.studio.client.rsconnect.model.RenderedDocPreview;
-import org.rstudio.studio.client.rsconnect.model.StaticHtmlGenerator;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.shiny.events.RSConnectDeploymentCompletedEvent;
@@ -202,9 +202,9 @@ public class RSConnectPublishButton extends Composite
       applyVisiblity();
    }
    
-   public void setHtmlGenerator(StaticHtmlGenerator generator)
+   public void setPublishHtmlSource(PublishHtmlSource source)
    {
-      htmlGenerator_ = generator;
+      publishHtmlSource_ = source;
       setPreviousDeployments(null);
       applyVisiblity();
    }
@@ -236,6 +236,7 @@ public class RSConnectPublishButton extends Composite
          populateDeployments(true);
       }
    }
+   
 
    // Private methods --------------------------------------------------------
    
@@ -284,11 +285,27 @@ public class RSConnectPublishButton extends Composite
       switch (contentType_)
       {
       case RSConnect.CONTENT_TYPE_HTML:
+         if (publishHtmlSource_ == null) 
+         {
+            display_.showErrorMessage("Content Publish Failed",
+                  "No HTML could be generated for the content.");
+            return;
+         }
+         publishHtmlSource_.generatePublishHtml(
+               new CommandWithArg<String>() 
+               {
+                  @Override
+                  public void execute(String arg)
+                  {
+                     events_.fireEvent(RSConnectActionEvent.DeployHtmlEvent(
+                           arg, "HTML"));
+                  }
+               });
       case RSConnect.CONTENT_TYPE_PLOT:
          // for plots, we need to generate the hosting HTML prior to publishing
-         if (htmlGenerator_ != null)
+         if (publishHtmlSource_ != null)
          {
-            htmlGenerator_.generateStaticHtml("Plot", "", 
+            publishHtmlSource_.generatePublishHtml(
                   new CommandWithArg<String>()
                   {
                      @Override
@@ -433,7 +450,7 @@ public class RSConnectPublishButton extends Composite
       // bound to it
       if ((contentType_ == RSConnect.CONTENT_TYPE_HTML || 
             contentType_ == RSConnect.CONTENT_TYPE_PLOT) &&
-           htmlGenerator_ == null)
+           publishHtmlSource_ == null)
          return false;
       
       if (contentType_ == RSConnect.CONTENT_TYPE_APP && 
@@ -463,7 +480,7 @@ public class RSConnectPublishButton extends Composite
    private String lastContentPath_;
    private boolean populating_ = false;
    private RenderedDocPreview docPreview_;
-   private StaticHtmlGenerator htmlGenerator_;
+   private PublishHtmlSource publishHtmlSource_;
    
    private final boolean showCaption_;
    private final boolean manageVisiblity_;
