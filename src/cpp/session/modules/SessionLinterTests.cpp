@@ -206,6 +206,8 @@ context("Linter")
       EXPECT_LINT("foo <- rnorm(n = foo)");
       EXPECT_LINT("rnorm (1)");
       EXPECT_NO_LINT("n <- 1; rnorm(n = n)");
+      
+      EXPECT_NO_LINT("n <- 1 ## a comment\nprint(n)");
    }
    
    lintRStudioRFiles();

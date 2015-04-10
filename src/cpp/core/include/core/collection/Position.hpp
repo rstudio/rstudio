@@ -23,7 +23,6 @@ namespace collection {
 
 struct Position
 {
-   
    Position(std::size_t row = 0, std::size_t column = 0)
       : row(row), column(column) {}
    
@@ -48,6 +47,18 @@ struct Position
                            const Position& rhs)
    {
       return lhs.row == rhs.row && lhs.column == rhs.column;
+   }
+   
+   friend bool operator >(const Position& lhs,
+                          const Position& rhs)
+   {
+      return rhs < lhs;
+   }
+   
+   friend bool operator >=(const Position& lhs,
+                           const Position& rhs)
+   {
+      return rhs <= lhs;
    }
    
    std::string toString() const

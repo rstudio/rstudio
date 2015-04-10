@@ -13,6 +13,8 @@
  *
  */
 
+#define RSTUDIO_ENABLE_DEBUG_MACROS
+
 #include <core/r_util/RTokenizer.hpp>
 
 #include <iostream>
@@ -242,6 +244,16 @@ context("RTokenizer")
       testStrings();
       testIdentifiers();
       testWhitespace();
+   }
+   
+   test_that("Comments are tokenized without a trailing newline")
+   {
+      RTokens rTokens(L"## this is a comment\n1");
+      expect_true(rTokens.size() == 3);
+      expect_true(rTokens.at(0).isType(RToken::COMMENT));
+      expect_true(rTokens.at(1).isType(RToken::WHITESPACE));
+      expect_true(rTokens.at(1).contentEquals(L"\n"));
+      expect_true(rTokens.at(2).isType(RToken::NUMBER));
    }
 }
 

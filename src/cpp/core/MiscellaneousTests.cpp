@@ -1,5 +1,5 @@
 /*
- * TestThat.hpp
+ * MiscellaneousTests.cpp
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -13,26 +13,28 @@
  *
  */
 
-#ifndef TESTS_TESTTHAT_HPP
-#define TESTS_TESTTHAT_HPP
+#include <tests/TestThat.hpp>
 
-#ifdef RSTUDIO_UNIT_TESTS_ENABLED
+#include <iostream>
 
-# include "vendor/catch.hpp"
+#include <core/collection/Position.hpp>
 
-# define context(__X__, ...) TEST_CASE(__X__, __FILE__, ##__VA_ARGS__)
-# define test_that SECTION
-# define expect_true(x) CHECK((x))
-# define expect_false(x) CHECK_FALSE((x))
+namespace rstudio {
+namespace unit_tests {
 
-#else
+using namespace core::collection;
 
-# define context(__X__, ...) void RSTUDIO_UNIT_TESTS_DISABLED_##__LINE__()
-# define test_that(__X__) if (false)
-# define expect_true(__X__)
-# define expect_false(__X__)
+context("Position")
+{
+   test_that("Positions are compared correctly")
+   {
+      expect_true(Position(0, 0) == Position(0, 0));
+      expect_true(Position(0, 0) <  Position(0, 1));
+      expect_true(Position(0, 0) <  Position(1, 0));
+      expect_true(Position(2, 2) <  Position(2, 4));
+   }
+   
+}
 
-#endif
-
-#endif
-
+} // namespace unit_tests
+} // namespace rstudio

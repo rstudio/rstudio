@@ -56,7 +56,7 @@ private:
         QUOTED_IDENTIFIER(L"`[^`]*`"),
         UNTIL_END_QUOTE(L"[\\\\\'\"]"),
         WHITESPACE(L"[\\s\x00A0\x3000]+"),
-        COMMENT(L"#.*?$")
+        COMMENT(L"#[^\\n]*$")
    {
    }
 
@@ -214,8 +214,7 @@ RToken RTokenizer::nextToken()
 
 RToken RTokenizer::matchWhitespace()
 {
-   std::wstring whitespace = peek(tokenPatterns().WHITESPACE) ;
-   return consumeToken(RToken::WHITESPACE, whitespace.length()) ;
+   return consumeToken(RToken::WHITESPACE, tokenLength(tokenPatterns().WHITESPACE));
 }
 
 RToken RTokenizer::matchStringLiteral()
@@ -269,11 +268,11 @@ RToken RTokenizer::matchStringLiteral()
 
 RToken RTokenizer::matchNumber()
 {
-   std::wstring num = peek(tokenPatterns().HEX_NUMBER) ;
-   if (num.empty())
-      num = peek(tokenPatterns().NUMBER) ;
+   std::size_t length = tokenLength(tokenPatterns().HEX_NUMBER);
+   if (length == 0)
+      length = tokenLength(tokenPatterns().NUMBER);
 
-   return consumeToken(RToken::NUMBER, num.length());
+   return consumeToken(RToken::NUMBER, length);
 }
 
 RToken RTokenizer::matchIdentifier()
@@ -297,26 +296,25 @@ RToken RTokenizer::matchIdentifier()
 
 RToken RTokenizer::matchQuotedIdentifier()
 {
-   std::wstring iden = peek(tokenPatterns().QUOTED_IDENTIFIER) ;
-   if (iden.empty())
+   std::size_t length = tokenLength(tokenPatterns().QUOTED_IDENTIFIER);
+   if (length == 0)
       return consumeToken(RToken::ERR, 1);
    else
-      return consumeToken(RToken::ID, iden.length());
+      return consumeToken(RToken::ID, length);
 }
 
 RToken RTokenizer::matchComment()
 {
-   std::wstring comment = peek(tokenPatterns().COMMENT);
-   return consumeToken(RToken::COMMENT, comment.length());
+   return consumeToken(RToken::COMMENT, tokenLength(tokenPatterns().COMMENT));
 }
 
 RToken RTokenizer::matchUserOperator()
 {
-   std::wstring oper = peek(tokenPatterns().USER_OPERATOR) ;
-   if (oper.empty())
-      return consumeToken(RToken::ERR, 1) ;
+   std::size_t length = tokenLength(tokenPatterns().USER_OPERATOR);
+   if (length == 0)
+      return consumeToken(RToken::ERR, 1);
    else
-      return consumeToken(RToken::UOPER, oper.length()) ;
+      return consumeToken(RToken::UOPER, length);
 }
 
 
@@ -401,19 +399,15 @@ wchar_t RTokenizer::eat()
    return result ;
 }
 
-std::wstring RTokenizer::peek(const boost::wregex& regex)
+std::size_t RTokenizer::tokenLength(const boost::wregex& regex)
 {
    boost::wsmatch match;
    std::wstring::const_iterator end = data_.end();
    boost::match_flag_type flg = boost::match_default | boost::match_continuous;
    if (boost::regex_search(pos_, end, match, regex, flg))
-   {
-      return match[0];
-   }
+      return match.length();
    else
-   {
-      return std::wstring();
-   }
+      return 0;
 }
 
 void RTokenizer::eatUntil(const boost::wregex& regex)

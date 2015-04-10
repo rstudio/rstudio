@@ -1,0 +1,71 @@
+/*
+ * SessionRTokenCursorTests.cpp
+ *
+ * Copyright (C) 2009-12 by RStudio, Inc.
+ *
+ * Unless you have received this program directly from RStudio pursuant
+ * to the terms of a commercial license agreement with RStudio, then
+ * this program is licensed to you under the terms of version 3 of the
+ * GNU Affero General Public License. This program is distributed WITHOUT
+ * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+ * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+ *
+ */
+
+#include <tests/TestThat.hpp>
+
+#include "SessionRTokenCursor.hpp"
+
+namespace rstudio {
+namespace unit_tests {
+
+using namespace session::modules::token_cursor;
+
+context("RTokenCursor")
+{
+   test_that("Token cursors properly detect end of statements")
+   {
+      RTokens rTokens(L"1 + 2\n");
+      RTokenCursor cursor(rTokens);
+      
+      expect_true(cursor.isType(RToken::NUMBER));
+      expect_true(cursor.moveToNextSignificantToken());
+      expect_true(cursor.isType(RToken::OPER));
+      expect_true(cursor.moveToNextToken());
+      expect_true(cursor.isType(RToken::WHITESPACE));
+      expect_true(cursor.moveToNextToken());
+      expect_true(cursor.isType(RToken::NUMBER));
+      expect_true(cursor.isAtEndOfStatement(false));
+   }
+   
+   test_that("Token cursor ignores EOL when in parenthetical scope")
+   {
+      RTokens rTokens(L"(1\n+2)");
+      RTokenCursor cursor(rTokens);
+      expect_true(cursor.isType(RToken::LPAREN));
+      expect_true(cursor.moveToNextSignificantToken());
+      expect_true(cursor.isType(RToken::NUMBER));
+      expect_true(cursor.nextToken().isType(RToken::WHITESPACE));
+      expect_true(cursor.nextToken().contentEquals(L"\n"));
+      expect_false(cursor.isAtEndOfStatement(true));
+   }
+   
+   test_that("Move to position functions as expected")
+   {
+      RTokens rTokens(L"\n\napple + 2");
+      RTokenCursor cursor(rTokens);
+      
+      expect_true(cursor.moveToPosition(2, 0));
+      expect_true(cursor.isType(RToken::ID));
+      
+      expect_true(cursor.moveToPosition(2, 1));
+      expect_true(cursor.isType(RToken::ID));
+      
+      expect_true(cursor.moveToPosition(2, 5));
+      expect_true(cursor.isType(RToken::WHITESPACE));
+   }
+}
+
+} // namespace unit_tests
+} // namespace rstudio

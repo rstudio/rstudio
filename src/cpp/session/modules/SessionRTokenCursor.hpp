@@ -114,6 +114,11 @@ public:
       return false;
    }
    
+   bool moveToPosition(std::size_t row, std::size_t column)
+   {
+      return moveToPosition(Position(row, column));
+   }
+   
    void moveToOffset(std::size_t destination,
                      boost::function<void(const RToken&)> operation)
    {
@@ -473,7 +478,8 @@ public:
   {
      return nextToken().contentContains(L'\n') ||
             nextSignificantToken().isType(RToken::SEMI) ||
-            nextSignificantToken().isType(RToken::COMMA);
+            nextSignificantToken().isType(RToken::COMMA) ||
+            nextSignificantToken().row() > row();
   }
   
   bool endsExpression() const
@@ -483,7 +489,7 @@ public:
             isType(RToken::COMMA);
   }
   
-  bool isAtEndOfStatement(const ParseStatus& status)
+  bool isAtEndOfStatement(bool inParentheticalScope)
   {
      // Whether we're in a parenthetical scope is important!
      // For example, these parse the same:
@@ -496,11 +502,8 @@ public:
      //      foo\n(1)
      //      foo  (1)
      //
-     if (!status.isInParentheticalScope() &&
-         isWhitespaceWithNewline(nextToken()))
-     {
+     if (!inParentheticalScope && isWhitespaceWithNewline(nextToken()))
         return true;
-     }
      
      const RToken& next = nextSignificantToken();
      return !(
@@ -508,6 +511,12 @@ public:
               next.isType(RToken::LPAREN) ||
               next.isType(RToken::LBRACKET) ||
               next.isType(RToken::LDBRACKET));
+     
+  }
+  
+  bool isAtEndOfStatement(const ParseStatus& status)
+  {
+     return isAtEndOfStatement(status.isInParentheticalScope());
   }
   
   bool appearsToBeBinaryOperator() const

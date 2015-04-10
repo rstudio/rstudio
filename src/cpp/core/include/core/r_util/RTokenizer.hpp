@@ -229,7 +229,7 @@ private:
    wchar_t peek();
    wchar_t peek(std::size_t lookahead);
    wchar_t eat();
-   std::wstring peek(const boost::wregex& regex);
+   std::size_t tokenLength(const boost::wregex& regex);
    void eatUntil(const boost::wregex& regex);
    RToken consumeToken(RToken::TokenType tokenType, std::size_t length);
    

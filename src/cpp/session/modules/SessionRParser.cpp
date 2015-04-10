@@ -764,7 +764,8 @@ void handleIdentifier(RTokenCursor& cursor,
       {
          RTokenCursor clone = cursor.clone();
          if (clone.moveToNextSignificantToken() &&
-             clone.moveToNextSignificantToken())
+             clone.moveToNextSignificantToken() &&
+             !clone.isAtEndOfStatement(status))
          {
             lookAheadAndWarnOnUsagesOfSymbol(cursor, clone, status);
          }
@@ -1227,7 +1228,7 @@ ParseResults parse(const std::wstring& rCode,
    if (rCode.empty() || rCode.find_first_not_of(L" \r\n\t\v") == std::string::npos)
       return ParseResults();
    
-   RTokens rTokens(rCode);
+   RTokens rTokens(rCode, RTokens::StripComments);
    
    ParseStatus status(parseOptions);
    RTokenCursor cursor(rTokens);
