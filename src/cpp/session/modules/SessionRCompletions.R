@@ -2357,7 +2357,7 @@ assign(x = ".rs.acCompletionTypes",
    outputCount <- new.env(parent = emptyenv())
    outputCount$count <- 1
    
-   shinyFunctions <- .rs.getInferredCompletions("shiny")[["shiny"]][["functions"]]
+   shinyFunctions <- .rs.getInferredCompletions("shiny")$functions
    lapply(parsed, function(object) {
       .rs.doShinyUICompletions(object, inputEnv, outputEnv, inputCount, outputCount, shinyFunctions)
    })
@@ -2669,9 +2669,13 @@ assign(x = ".rs.acCompletionTypes",
    .Call(.rs.routines$rs_listInferredPackages, documentId)
 })
 
-.rs.addFunction("getInferredCompletions", function(packages = character())
+.rs.addFunction("getInferredCompletions", function(packages = character(),
+                                                   simplify = TRUE)
 {
-   .Call(.rs.routines$rs_getInferredCompletions, as.character(packages))
+   result <- .Call(.rs.routines$rs_getInferredCompletions, as.character(packages))
+   if (simplify && length(result) == 1)
+      return(result[[1]])
+   result
 })
 
 .rs.addFunction("getCompletionsLibraryContext", function(token,
@@ -2703,7 +2707,7 @@ assign(x = ".rs.acCompletionTypes",
    if (!length(packages))
       return(.rs.emptyCompletions())
    
-   completions <- .rs.getInferredCompletions(packages)
+   completions <- .rs.getInferredCompletions(packages, simplify = FALSE)
    
    # If we're getting completions for a particular function's arguments,
    # use those
