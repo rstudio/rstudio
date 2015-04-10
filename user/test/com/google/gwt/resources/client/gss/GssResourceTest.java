@@ -186,6 +186,11 @@ public class GssResourceTest extends RenamingClassNameTest {
     assertEquals("#012345", res().constants().mycolor1());
   }
 
+  public void testEmpty() {
+    // should not throw an exception if the file is empty
+    assertEquals("", res().empty().getText());
+  }
+
   private String runtimeExpectedCss(String color, String padding, String foo) {
     String s = "." + foo + "{width:100%}" + "." + foo + "{color:" + color + "}";
 

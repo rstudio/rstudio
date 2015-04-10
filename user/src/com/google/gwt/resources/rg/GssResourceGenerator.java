@@ -452,10 +452,10 @@ public class GssResourceGenerator extends AbstractCssResourceGenerator implement
 
   @Override
   public void init(TreeLogger logger, ResourceContext context) throws UnableToCompleteException {
-    cssParsingResultMap = new IdentityHashMap<JMethod, CssParsingResult>();
+    cssParsingResultMap = new IdentityHashMap<>();
     errorManager = new LoggerErrorManager(logger);
 
-    allowedNonStandardFunctions = new HashSet<String>();
+    allowedNonStandardFunctions = new HashSet<>();
     allowedAtRules = Sets.newHashSet(ExternalClassesCollector.EXTERNAL_AT_RULE);
 
     try {
@@ -565,7 +565,7 @@ public class GssResourceGenerator extends AbstractCssResourceGenerator implement
     TypeOracle typeOracle = context.getGeneratorContext().getTypeOracle();
     JClassType baseInterface = typeOracle.findType(CssResource.class.getCanonicalName());
 
-    SortedSet<JClassType> toReturn = new TreeSet<JClassType>(new JClassOrderComparator());
+    SortedSet<JClassType> toReturn = new TreeSet<>(new JClassOrderComparator());
 
     JClassType[] cssResourceSubtypes = baseInterface.getSubtypes();
     for (JClassType type : cssResourceSubtypes) {
@@ -674,7 +674,7 @@ public class GssResourceGenerator extends AbstractCssResourceGenerator implement
     Set<String> externalClasses = externalClassesCollector.getExternalClassNames(allStyleClassSet,
         renamingResult.externalClassCandidate);
 
-    final Map<String, String> revertMap = new HashMap<String, String>(externalClasses.size());
+    final Map<String, String> revertMap = new HashMap<>(externalClasses.size());
 
     for (String external : externalClasses) {
       revertMap.put(styleClassesMapping.get(external), external);
@@ -733,7 +733,7 @@ public class GssResourceGenerator extends AbstractCssResourceGenerator implement
     new ReplaceMixins(cssTree.getMutatingVisitController(), errorManager,
         collectMixinDefinitions.getDefinitions()).runPass();
 
-    new ProcessComponents<Object>(cssTree.getMutatingVisitController(), errorManager).runPass();
+    new ProcessComponents<>(cssTree.getMutatingVisitController(), errorManager).runPass();
 
     RuntimeConditionalBlockCollector runtimeConditionalBlockCollector = new
         RuntimeConditionalBlockCollector(cssTree.getVisitController());
@@ -859,7 +859,7 @@ public class GssResourceGenerator extends AbstractCssResourceGenerator implement
 
   private CssParsingResult parseResources(List<URL> resources, ResourceContext context,
       TreeLogger logger) throws UnableToCompleteException {
-    List<SourceCode> sourceCodes = new ArrayList<SourceCode>(resources.size());
+    List<SourceCode> sourceCodes = new ArrayList<>(resources.size());
     ImmutableMap.Builder<String, String> constantNameMappingBuilder = ImmutableMap.builder();
 
     // assert that we only support either gss or css on one resource.
@@ -964,10 +964,13 @@ public class GssResourceGenerator extends AbstractCssResourceGenerator implement
 
   private String extractCharset(ByteSource byteSource) throws IOException {
     String firstLine = byteSource.asCharSource(Charsets.UTF_8).readFirstLine();
-    Matcher matcher = CHARSET.matcher(firstLine);
 
-    if (matcher.matches()) {
-      return matcher.group(1);
+    if (firstLine != null) {
+      Matcher matcher = CHARSET.matcher(firstLine);
+
+      if (matcher.matches()) {
+        return matcher.group(1);
+      }
     }
 
     return null;

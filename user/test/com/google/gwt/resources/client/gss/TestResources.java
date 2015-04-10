@@ -173,6 +173,12 @@ public interface TestResources extends ClientBundle {
     String padding2();
   }
 
+  /**
+   * Used to test empty file.
+   */
+  interface Empty extends CssResource {
+  }
+
   @Source("constants.gss")
   Constants constants();
 
@@ -218,4 +224,6 @@ public interface TestResources extends ClientBundle {
   NonStandardFunctions nonStandardFunctions();
 
   Charset charset();
+
+  Empty empty();
 }
