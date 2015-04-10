@@ -488,6 +488,16 @@ public class TreeItem extends UIObject implements IsTreeItem, HasTreeItems,
     return widget;
   }
 
+  @Override
+  public String getTitle() {
+    return contentElem.getTitle();
+  }
+
+  @Override
+  public void setTitle(String title) {
+    contentElem.setTitle(title);
+  }
+
   /**
    * Inserts a child tree item at the specified index containing the specified
    * html.
