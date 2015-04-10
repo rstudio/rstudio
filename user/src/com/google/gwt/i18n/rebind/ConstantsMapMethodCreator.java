@@ -70,7 +70,8 @@ class ConstantsMapMethodCreator extends AbstractLocalizableMethodCreator {
     // if not found create Map
     println("if (args == null) {");
     indent();
-    println("args = new java.util.HashMap<String, String>();");
+    // Use a LinkedHashMap to preserve declaration order.
+    println("args = new java.util.LinkedHashMap<String, String>();");
 
     String keyString;
     try {
