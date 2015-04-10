@@ -88,9 +88,9 @@ void fillFormalInfo(const json::Object& formalInfoJson,
       JSON_CHECK_TYPE(it->second, json::ObjectType);
       const json::Object& fieldsJson = it->second.get_obj();
       
-      info.isUsed             = intField(fieldsJson, "is_used", 0);
-      info.hasDefault         = intField(fieldsJson, "has_default", 1);
-      info.missingnessHandled = intField(fieldsJson, "missingness_handled", 1);
+      info.isUsed             = JSON_INT_FIELD(fieldsJson, "is_used", 0);
+      info.hasDefault         = JSON_INT_FIELD(fieldsJson, "has_default", 1);
+      info.missingnessHandled = JSON_INT_FIELD(fieldsJson, "missingness_handled", 1);
       
       pInfo->addFormal(info);
    }
@@ -112,7 +112,7 @@ bool fillFunctionInfo(const json::Object& functionObjectJson,
       JSON_CHECK_TYPE(it->second, json::ObjectType);
       const json::Object& functionFieldsJson = it->second.get_obj();
       
-      info.setPerformsNse(intField(functionFieldsJson, "performs_nse", 0));
+      info.setPerformsNse(JSON_INT_FIELD(functionFieldsJson, "performs_nse", 0));
       info.setIsPrimitive(false);
       
       if (!functionFieldsJson.count("formal_info"))
