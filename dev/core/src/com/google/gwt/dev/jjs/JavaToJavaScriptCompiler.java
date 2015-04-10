@@ -1171,13 +1171,10 @@ public final class JavaToJavaScriptCompiler {
       }
       ImplementClassLiteralsAsFields.exec(jprogram);
 
-      // (5) Optimize the unresolved Java AST
-      optimizeJava(singlePermutation);
-
       // TODO(stalcup): hide metrics gathering in a callback or subclass
       logAstTypeMetrics(precompilationMetrics);
 
-      // (6) Construct and return a value.
+      // (5) Construct and return a value.
       Event createUnifiedAstEvent = SpeedTracerLogger.start(CompilerEventType.CREATE_UNIFIED_AST);
       UnifiedAst result = new UnifiedAst(
           options, new AST(jprogram, jsProgram), singlePermutation, RecordRebinds.exec(jprogram));
@@ -1276,31 +1273,6 @@ public final class JavaToJavaScriptCompiler {
         finalTypeOracleTypes.add(type.getPackage().getName() + "." + type.getName());
       }
       precompilationMetrics.setFinalTypeOracleTypes(finalTypeOracleTypes);
-    }
-  }
-
-  private void optimizeJava(boolean singlePermutation) throws InterruptedException {
-    if (options.getOptimizationLevel() > OptionOptimize.OPTIMIZE_LEVEL_DRAFT
-        && !singlePermutation) {
-      if (options.isOptimizePrecompile()) {
-        /*
-         * Go ahead and optimize early, so that each permutation will run faster. This code path
-         * is used by the Compiler entry point. We assume that we will not be able to perfectly
-         * parallelize the permutation compiles, so let's optimize as much as possible the common
-         * AST. In some cases, this might also have the side benefit of reducing the total
-         * permutation count.
-         */
-        optimizeJavaToFixedPoint();
-      } else {
-        /*
-         * Do only minimal early optimizations. This code path is used by the Precompile entry
-         * point. The external system might be able to perfectly parallelize the permutation
-         * compiles, so let's avoid doing potentially superlinear optimizations on the unified
-         * AST.
-         */
-        optimizeJavaOneTime("Early Optimization", jprogram.getNodeCount(),
-            new FullOptimizerContext(jprogram));
-      }
     }
   }
 

@@ -176,8 +176,6 @@ public class Precompile {
           new PropertyCombinations(module.getProperties(), module.getActiveLinkerNames()));
       // Allow GC later.
       compilationState = null;
-      // Never optimize on a validation run.
-      jjsOptions.setOptimizePrecompile(false);
       JavaToJavaScriptCompiler.precompile(
           logger, compilerContext, rpo, declEntryPts, additionalRootTypes, true, null);
       return true;
@@ -384,10 +382,6 @@ public class Precompile {
   }
 
   public boolean run(TreeLogger logger) throws UnableToCompleteException {
-    // Avoid early optimizations since permutation compiles will run
-    // separately.
-    options.setOptimizePrecompile(false);
-
     for (String moduleName : options.getModuleNames()) {
       File compilerWorkDir = options.getCompilerWorkDir(moduleName);
       Util.recursiveDelete(compilerWorkDir, true);

@@ -43,7 +43,6 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
   private JsNamespaceOption namespace = JsNamespaceOption.NONE;
   private int optimizationLevel = OptionOptimize.OPTIMIZE_LEVEL_DEFAULT;
   private boolean optimizeDataflow = true;
-  private boolean optimizePrecompile = false;
   private boolean ordinalizeEnums = true;
   private JsOutputOption output = JsOutputOption.OBFUSCATED;
   private boolean removeDuplicateFunctions = true;
@@ -176,11 +175,6 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
   }
 
   @Override
-  public boolean isOptimizePrecompile() {
-    return optimizePrecompile;
-  }
-
-  @Override
   public boolean isRunAsyncEnabled() {
     return runAsyncEnabled;
   }
@@ -294,11 +288,6 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
   @Override
   public void setOptimizeDataflow(boolean enabled) {
     optimizeDataflow = enabled;
-  }
-
-  @Override
-  public void setOptimizePrecompile(boolean optimize) {
-    optimizePrecompile = optimize;
   }
 
   @Override

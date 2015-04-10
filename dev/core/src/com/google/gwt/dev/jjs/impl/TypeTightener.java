@@ -62,7 +62,6 @@ import com.google.gwt.thirdparty.guava.common.collect.Maps;
 import com.google.gwt.thirdparty.guava.common.collect.Multimap;
 import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -471,18 +470,8 @@ public class TypeTightener {
 
     @Override
     public void endVisit(JGwtCreate x, Context ctx) {
-      List<JReferenceType> typeList = new ArrayList<JReferenceType>();
-      for (JExpression expr : x.getInstantiationExpressions()) {
-        JReferenceType type = (JReferenceType) expr.getType();
-        typeList.add(type);
-      }
-
-      JReferenceType refType = (JReferenceType) x.getType();
-      JReferenceType resultType = strongerType(refType, typeList);
-      if (refType != resultType) {
-        x.setType(resultType);
-        madeChanges();
-      }
+      throw new IllegalStateException("AST should not contain permutation dependent values at " +
+          "this point but contains " + x);
     }
 
     @Override

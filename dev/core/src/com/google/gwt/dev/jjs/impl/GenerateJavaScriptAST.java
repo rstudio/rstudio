@@ -1141,7 +1141,8 @@ public class GenerateJavaScriptAST {
 
     @Override
     public void endVisit(JGwtCreate x, Context ctx) {
-      throw new InternalCompilerException("Should not get here.");
+      throw new IllegalStateException("AST should not contain permutation dependent values at " +
+          "this point but contains " + x);
     }
 
     @Override

@@ -187,9 +187,6 @@ public class PrecompileOnePerm {
       return false;
     }
 
-    // Avoid early optimizations since permutation compiles will run separately.
-    options.setOptimizePrecompile(false);
-
     List<String> moduleNames = options.getModuleNames();
 
     int permToRun = options.getPermToCompile();

@@ -191,11 +191,6 @@ public class PrecompileTaskOptionsImpl extends CompileTaskOptionsImpl
   }
 
   @Override
-  public boolean isOptimizePrecompile() {
-    return jjsOptions.isOptimizePrecompile();
-  }
-
-  @Override
   public boolean isRunAsyncEnabled() {
     return jjsOptions.isRunAsyncEnabled();
   }
@@ -342,11 +337,6 @@ public class PrecompileTaskOptionsImpl extends CompileTaskOptionsImpl
   @Override
   public void setOptimizeDataflow(boolean enabled) {
     jjsOptions.setOptimizeDataflow(enabled);
-  }
-
-  @Override
-  public void setOptimizePrecompile(boolean optimize) {
-    jjsOptions.setOptimizePrecompile(optimize);
   }
 
   @Override

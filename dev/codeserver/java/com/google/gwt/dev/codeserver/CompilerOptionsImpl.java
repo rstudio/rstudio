@@ -223,11 +223,6 @@ class CompilerOptionsImpl extends UnmodifiableCompilerOptions {
   }
 
   @Override
-  public boolean isOptimizePrecompile() {
-    return true;
-  }
-
-  @Override
   public boolean isRunAsyncEnabled() {
     return false;
   }

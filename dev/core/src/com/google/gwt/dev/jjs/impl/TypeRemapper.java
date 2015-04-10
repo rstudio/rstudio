@@ -68,7 +68,8 @@ public abstract class TypeRemapper extends JChangeTrackingVisitor {
 
   @Override
   public void endVisit(JGwtCreate x, Context ctx) {
-    x.setType(modRemap(x.getType()));
+    throw new IllegalStateException("AST should not contain permutation dependent values at " +
+        "this point but contains " + x);
   }
 
   @Override

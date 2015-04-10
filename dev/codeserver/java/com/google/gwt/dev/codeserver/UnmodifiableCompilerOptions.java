@@ -181,11 +181,6 @@ abstract class UnmodifiableCompilerOptions implements CompilerOptions {
   }
 
   @Override
-  public final void setOptimizePrecompile(boolean optimize) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
   public void setOrdinalizeEnums(boolean enabled) {
     throw new UnsupportedOperationException();
   }

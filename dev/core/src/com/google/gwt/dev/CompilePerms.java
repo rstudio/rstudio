@@ -351,7 +351,6 @@ public class CompilePerms {
   private boolean precompileAndCompile(TreeLogger logger, String moduleName,
       File compilerWorkDir, PrecompileTaskOptions precompilationOptions)
       throws UnableToCompleteException {
-    precompilationOptions.setOptimizePrecompile(false);
     precompilationOptions.setGenDir(null);
     compilerContext = compilerContextBuilder.options(precompilationOptions).build();
 

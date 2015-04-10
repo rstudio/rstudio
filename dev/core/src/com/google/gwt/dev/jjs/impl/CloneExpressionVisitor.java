@@ -178,19 +178,8 @@ public class CloneExpressionVisitor extends JVisitor {
 
   @Override
   public boolean visit(JGwtCreate x, Context ctx) {
-    // Clone the internal instantiation expressions directly.
-    ArrayList<JExpression> clonedExprs = new ArrayList<JExpression>();
-    for (JExpression expr : x.getInstantiationExpressions()) {
-      clonedExprs.add(cloneExpression(expr));
-    }
-
-    // Use the clone constructor.
-    JGwtCreate gwtCreate =
-        new JGwtCreate(x.getSourceInfo(), x.getSourceType(), x.getResultTypes(), x.getType(),
-            cloneExpressions(x.getInstantiationExpressions()));
-
-    expression = gwtCreate;
-    return false;
+    throw new IllegalStateException("AST should not contain permutation dependent values at " +
+        "this point but contains " + x);
   }
 
   @Override
