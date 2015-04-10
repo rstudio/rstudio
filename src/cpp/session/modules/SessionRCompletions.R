@@ -1496,7 +1496,7 @@ assign(x = ".rs.acCompletionTypes",
    # Try seeing if there's a function with this name on the
    # search path, and return TRUE if it has 'inputId' or
    # 'outputId' as parameters.
-   result <- tryCatch(get(string), pos = 0, error = function(e) NULL)
+   result <- tryCatch(get(string, pos = 0), error = function(e) NULL)
    if (is.function(result) && !is.primitive(result))
    {
       formalNames <- names(formals(result))
