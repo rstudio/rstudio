@@ -327,10 +327,13 @@ bool mightPerformNonstandardEvaluation(const RTokenCursor& origin,
       const PackageInformation& info = RSourceIndex::getPackageInformation(
                projects::projectContext().packageInfo().name());
       
-      for (std::size_t i = 0, n = info.exports.size(); i < n; ++i)
+      if (info.functionInfo.count(symbol))
       {
-         if (info.exports[i] == symbol)
-            return info.performsNse[i];
+         const FunctionInformation& fnInfo =
+               const_cast<FunctionInformationMap&>(info.functionInfo)[symbol];
+         
+         if (fnInfo.performsNse())
+            return true;
       }
    }
    
@@ -356,9 +359,8 @@ bool mightPerformNonstandardEvaluation(const RTokenCursor& origin,
       BOOST_FOREACH(const PackageInformation& info,
                     db | boost::adaptors::map_values)
       {
-         for (std::size_t i = 0, n = info.exports.size(); i < n; ++i)
-            if (info.exports[i] == symbol)
-               return info.performsNse[i];
+         if (info.functionInfo.count(symbol))
+            return const_cast<FunctionInformationMap&>(info.functionInfo)[symbol].performsNse();
       }
    }
    
@@ -799,7 +801,7 @@ void handleIdentifier(RTokenCursor& cursor,
 // the cursor on the closing comma or right paren.
 void extractFormal(
       RTokenCursor& cursor,
-      r::sexp::FunctionInformation* pInfo)
+      FunctionInformation* pInfo)
       
 {
    std::string formalName;
@@ -835,10 +837,14 @@ void extractFormal(
 
    } while (cursor.moveToNextSignificantToken());
    
-   r::sexp::FormalInformation info(formalName);
+   FormalInformation info(formalName);
    if (hasDefaultValue)
+   {
+      info.hasDefault = true;
       info.defaultValue = string_utils::wideToUtf8(
                std::wstring(defaultValueStart, cursor.begin()));
+   }
+   
    pInfo->addFormal(info);
    
    if (cursor.isType(RToken::COMMA))
@@ -855,9 +861,9 @@ void extractFormal(
 //    beta  -> <empty>
 //    gamma -> <empty>
 //
-bool extractFormalsFromFunctionDefinition(
+bool extractInfoFromFunctionDefinition(
       RTokenCursor cursor,
-      r::sexp::FunctionInformation* pInfo)
+      FunctionInformation* pInfo)
 {
    do
    {
@@ -887,20 +893,20 @@ bool extractFormalsFromFunctionDefinition(
    return true;
 }
 
-bool extractFormalsFromPackageInformationDatabase(
+bool extractInfoFromPackageInformationDatabase(
       const std::string& symbol,
-      r::sexp::FunctionInformation* pInfo)
+      FunctionInformation* pInfo)
 {
    if (projects::projectContext().isPackageProject())
    {
       std::string pkg = projects::projectContext().packageInfo().name();
-      if (!RSourceIndex::hasFormalsForFunction(symbol, pkg))
+      if (!RSourceIndex::hasFunctionInformation(symbol, pkg))
          return false;
       
-      const std::vector<std::string>& formals =
-            RSourceIndex::getFormalsForFunction(symbol, pkg);
+      const FunctionInformation& info =
+            RSourceIndex::getFunctionInformation(symbol, pkg);
       
-      BOOST_FOREACH(const std::string& formal, formals)
+      BOOST_FOREACH(const std::string& formal, info.getFormalNames())
       {
          pInfo->addFormal(formal);
       }
@@ -919,10 +925,10 @@ bool extractFormalsFromPackageInformationDatabase(
 //
 // This code will attempt to resolve `foo$bar` (which likely requires evaluation),
 // and then, if it's a function will extract the formals associated with that function.
-bool getFormalsAssociatedWithFunctionAtCursor(
+bool getInfoAssociatedWithFunctionAtCursor(
       RTokenCursor cursor,
       ParseStatus& status,
-      r::sexp::FunctionInformation* pInfo)
+      FunctionInformation* pInfo)
 {
    // If this is a direct call to a symbol, then first attempt to
    // find this function in the current document.
@@ -943,7 +949,7 @@ bool getFormalsAssociatedWithFunctionAtCursor(
          if (cursor.moveToPosition(pNode->position()))
          {
             DEBUG("***** Moved to position");
-            if (extractFormalsFromFunctionDefinition(cursor, pInfo))
+            if (extractInfoFromFunctionDefinition(cursor, pInfo))
             {
                DEBUG("Extracted arguments");
                return true;
@@ -954,7 +960,7 @@ bool getFormalsAssociatedWithFunctionAtCursor(
       // If we're within a package project, then attempt searching the
       // source index for the formals associated with this function.
       if (projects::projectContext().isPackageProject())
-         if (extractFormalsFromPackageInformationDatabase(
+         if (extractInfoFromPackageInformationDatabase(
                 cursor.contentAsUtf8(), pInfo))
             return true;
    }
@@ -967,7 +973,7 @@ bool getFormalsAssociatedWithFunctionAtCursor(
       return false;
    
    // Get the formals associated with this function.
-   Error error = r::sexp::extractFormals(
+   Error error = r::sexp::extractFunctionInfo(
             functionSEXP,
             pInfo,
             true,
@@ -999,8 +1005,8 @@ public:
       MatchedCall call;
       
       // Get the formals associated with the underlying function.
-      r::sexp::FunctionInformation info;
-      getFormalsAssociatedWithFunctionAtCursor(cursor, status, &info);
+      FunctionInformation info;
+      getInfoAssociatedWithFunctionAtCursor(cursor, status, &info);
       
       // Get the named, unnamed arguments supplied in the function call.
       std::map<std::string, std::string> namedArguments;
@@ -1178,7 +1184,7 @@ public:
       return unmatchedArgNames_;
    }
    
-   r::sexp::FunctionInformation& functionInfo()
+   FunctionInformation& functionInfo()
    {
       return info_;
    }
@@ -1202,7 +1208,7 @@ private:
    std::vector<std::string> unmatchedArgNames_;
    
    // Information about the function itself
-   r::sexp::FunctionInformation info_;
+   FunctionInformation info_;
 };
 
 } // anonymous namespace

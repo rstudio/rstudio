@@ -13,6 +13,8 @@
  *
  */
 
+#define RSTUDIO_ENABLE_DEBUG_MACROS
+
 #include "SessionAsyncPackageInformation.hpp"
 
 #include <string>
@@ -35,6 +37,8 @@ namespace rstudio {
 namespace session {
 namespace modules {
 namespace r_packages {
+
+using namespace core::r_util;
 
 // static variables
 bool AsyncPackageInformationProcess::s_isUpdating_ = false;
@@ -67,6 +71,71 @@ public:
 
 };
 
+namespace {
+
+void fillFormalInfo(const json::Object& formalInfoJson,
+                    FunctionInformation* pInfo)
+{
+   using namespace core::json;
+   for (json::Object::const_iterator it = formalInfoJson.begin();
+        it != formalInfoJson.end();
+        ++it)
+   {
+      std::string formalName = it->first;
+      FormalInformation info(formalName);
+      
+      JSON_CHECK_TYPE(it->second, json::ObjectType);
+      const json::Object& fieldsJson = it->second.get_obj();
+      
+      info.isUsed             = intField(fieldsJson, "is_used", 0);
+      info.hasDefault         = intField(fieldsJson, "has_default", 1);
+      info.missingnessHandled = intField(fieldsJson, "missingness_handled", 1);
+      
+      pInfo->addFormal(info);
+   }
+}
+
+bool fillFunctionInfo(const json::Object& functionObjectJson,
+                      std::map<std::string, FunctionInformation>* pInfo)
+{
+   using namespace core::json;
+   
+   for (json::Object::const_iterator it = functionObjectJson.begin();
+        it != functionObjectJson.end();
+        ++it)
+   {
+      FunctionInformation info;
+      
+      const std::string& functionName = it->first;
+      JSON_CHECK_TYPE(it->second, json::ObjectType);
+      const json::Object& functionFieldsJson = it->second.get_obj();
+      
+      info.setPerformsNse(intField(functionFieldsJson, "performs_nse", 0));
+      info.setIsPrimitive(false);
+      
+      if (!functionFieldsJson.count("formal_info"))
+      {
+         LOG_WARNING_MESSAGE("No formal information for function '" + functionName + "'");
+         return false;
+      }
+      
+      json::Object& casted = const_cast<json::Object&>(functionFieldsJson);
+      const json::Value& value = casted["formal_info"];
+      JSON_CHECK_TYPE(value, json::ObjectType);
+      if (value.type() != json::ObjectType)
+         continue;
+      
+      fillFormalInfo(value.get_obj(), &info);
+      
+      (*pInfo)[functionName] = info;
+   }
+   
+   return true;
+   
+}
+
+} // anonymous namespace
+
 void AsyncPackageInformationProcess::onCompleted(int exitStatus)
 {
    CompleteUpdateOnExit updateScope;
@@ -96,17 +165,15 @@ void AsyncPackageInformationProcess::onCompleted(int exitStatus)
    //    "package": <single package name>
    //    "exports": <array of object names in the namespace>,
    //    "types": <array of types (see .rs.acCompletionTypes)>,
-   //    "functions": <object mapping function names to arguments>,
-   //    "performs_nse": <array of 0, 1 indicating whether NSE performed by fn>
+   //    "function_info": {big ugly object with function info}
    // }
    for (std::size_t i = 0; i < n; ++i)
    {
       json::Array exportsJson;
       json::Array typesJson;
-      json::Object functionsJson;
-      json::Array performsNseJson;
+      json::Object functionInfoJson;
       
-      core::r_util::PackageInformation completions;
+      core::r_util::PackageInformation pkgInfo;
 
       if (splat[i].empty())
          continue;
@@ -126,11 +193,10 @@ void AsyncPackageInformationProcess::onCompleted(int exitStatus)
       }
 
       Error error = json::readObject(value.get_obj(),
-                                     "package", &completions.package,
+                                     "package", &pkgInfo.package,
                                      "exports", &exportsJson,
                                      "types", &typesJson,
-                                     "functions", &functionsJson,
-                                     "performs_nse", &performsNseJson);
+                                     "function_info", &functionInfoJson);
 
       if (error)
       {
@@ -138,22 +204,19 @@ void AsyncPackageInformationProcess::onCompleted(int exitStatus)
          continue;
       }
 
-      DEBUG("Adding entry for package: '" << completions.package << "'");
+      DEBUG("Adding entry for package: '" << pkgInfo.package << "'");
 
-      if (!json::fillVectorString(exportsJson, &(completions.exports)))
+      if (!json::fillVectorString(exportsJson, &(pkgInfo.exports)))
          LOG_ERROR_MESSAGE("Failed to read JSON 'objects' array to vector");
 
-      if (!json::fillVectorInt(typesJson, &(completions.types)))
+      if (!json::fillVectorInt(typesJson, &(pkgInfo.types)))
          LOG_ERROR_MESSAGE("Failed to read JSON 'types' array to vector");
 
-      if (!json::fillMap(functionsJson, &(completions.functions)))
+      if (!fillFunctionInfo(functionInfoJson, &(pkgInfo.functionInfo)))
          LOG_ERROR_MESSAGE("Failed to read JSON 'functions' object to map");
       
-      if (!json::fillVectorInt(performsNseJson, &(completions.performsNse)))
-         LOG_ERROR_MESSAGE("Failed to read JSON 'performs_nse' array to vector");
-      
       // Update the index
-      core::r_util::RSourceIndex::addPackageInformation(completions.package, completions);
+      core::r_util::RSourceIndex::addPackageInformation(pkgInfo.package, pkgInfo);
    }
 
 }

@@ -33,19 +33,11 @@
 #include <core/RegexUtils.hpp>
 
 #include <core/r_util/RTokenizer.hpp>
+#include <core/r_util/RFunctionInformation.hpp>
 
 namespace rstudio {
 namespace core {
 namespace r_util {
-
-struct PackageInformation
-{
-   std::string package;
-   std::vector<std::string> exports;
-   std::vector<int> types;
-   std::map< std::string, std::vector<std::string> > functions;
-   std::vector<int> performsNse;
-};
 
 class RS4MethodParam
 {
@@ -326,17 +318,17 @@ public:
       return s_packageInformation_[package];
    }
    
-   static bool hasFormalsForFunction(const std::string& func,
-                                     const std::string& pkg)
+   static bool hasFunctionInformation(const std::string& func,
+                                      const std::string& pkg)
    {
-      return s_packageInformation_[pkg].functions.count(func);
+      return s_packageInformation_[pkg].functionInfo.count(func);
    }
    
-   static const std::vector<std::string>& getFormalsForFunction(
+   static const FunctionInformation& getFunctionInformation(
          const std::string& func,
          const std::string& pkg)
    {
-      return s_packageInformation_[pkg].functions[func];
+      return s_packageInformation_[pkg].functionInfo[func];
    }
 
    static std::vector<std::string> getAllUnindexedPackages()

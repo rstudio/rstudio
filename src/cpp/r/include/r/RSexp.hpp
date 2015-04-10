@@ -27,14 +27,11 @@
 #include <boost/any.hpp>
 #include <boost/utility.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
-#include <boost/type_traits.hpp>
-#include <boost/type_traits/is_same.hpp>
-#include <boost/optional.hpp>
-#include <boost/logic/tribool.hpp>
 
 #include <core/Error.hpp>
 #include <core/Log.hpp>
 #include <core/json/Json.hpp>
+#include <core/r_util/RFunctionInformation.hpp>
 
 #include <r/RErrorCategory.hpp>
 #include <r/RInternal.hpp>
@@ -359,7 +356,7 @@ const std::set<std::string>& nsePrimitives();
 class CallRecurser : boost::noncopyable
 {
 public:
-   typedef boost::function<bool(SEXP, SEXP)> Operation;
+   typedef boost::function<bool(SEXP)> Operation;
    
 private:
    typedef std::vector<Operation> Operations;
@@ -377,27 +374,25 @@ public:
    
    void run()
    {
-      runImpl(callSEXP_, callSEXP_, operations_, operations_.size());
+      runImpl(callSEXP_, operations_, operations_.size());
    }
    
 private:
    
    static void runImpl(
          SEXP nodeSEXP,
-         SEXP headSEXP,
          Operations operations,
          std::size_t n)
    {
       for (std::size_t i = 0; i < n; ++i)
-         if (operations[i](nodeSEXP, headSEXP))
+         if (operations[i](nodeSEXP))
             return;
       
       if (TYPEOF(nodeSEXP) == LANGSXP)
       {
-         SEXP headSEXP = CAR(nodeSEXP);
          while (nodeSEXP != R_NilValue)
          {
-            runImpl(CAR(nodeSEXP), headSEXP, operations, n);
+            runImpl(CAR(nodeSEXP), operations, n);
             nodeSEXP = CDR(nodeSEXP);
          }
       }
@@ -407,87 +402,9 @@ private:
    Operations operations_;
 };
 
-struct FormalInformation
-{
-   // default ctor -- must be initialized with a name
-   explicit FormalInformation(const std::string& name)
-      : name(name)
-   {}
-   
-   std::string name;
-   boost::optional<std::string> defaultValue;
-   boost::tribool isUsed;
-   boost::tribool missingnessHandled;
-};
-
-class FunctionInformation
-{
-public:
-   
-   FunctionInformation()
-      : noSuchFormal_("")
-   {}
-   
-   void addFormal(const std::string& name)
-   {
-      formals_.push_back(FormalInformation(name));
-      formalNames_.push_back(name);
-   }
-   
-   void addFormal(const FormalInformation& info)
-   {
-      formals_.push_back(info);
-      formalNames_.push_back(info.name);
-   }
-   
-   bool isPrimitive()
-   {
-      return isPrimitive_ == true;
-   }
-   
-   void setIsPrimitive(bool isPrimitive)
-   {
-      isPrimitive_ = isPrimitive;
-   }
-   
-   std::vector<FormalInformation>& formals()
-   {
-      return formals_;
-   }
-   
-   std::vector<std::string>& getFormalNames()
-   {
-      return formalNames_;
-   }
-   
-   boost::optional<std::string>& defaultValueForFormal(
-         const std::string& formalName)
-   {
-      return infoForFormal(formalName).defaultValue;
-   }
-   
-   FormalInformation& infoForFormal(const std::string& formalName)
-   {
-      std::size_t n = formals_.size();
-      for (std::size_t i = 0; i < n; ++i)
-         if (formals_[i].name == formalName)
-            return formals_[i];
-      
-      LOG_WARNING_MESSAGE("No such formal '" + formalName + "'");
-      return noSuchFormal_;
-   }
-   
-private:
-   std::vector<FormalInformation> formals_;
-   std::vector<std::string> formalNames_;
-   boost::optional<std::string> originalBindingName_;
-   boost::tribool isPrimitive_;
-   FormalInformation noSuchFormal_;
-};
-
-core::Error extractFormals(
+core::Error extractFunctionInfo(
       SEXP functionSEXP,
-      FunctionInformation* pInfo,
+      core::r_util::FunctionInformation* pInfo,
       bool extractDefaultArguments,
       bool recordSymbolUsage);
 

@@ -418,12 +418,12 @@ SEXP rs_getInferredCompletions(SEXP packagesSEXP)
         ++it)
    {
       DEBUG("Adding entry for '" << *it << "'");
-      PackageInformation completions = RSourceIndex::getPackageInformation(*it);
+      PackageInformation pkgInfo = RSourceIndex::getPackageInformation(*it);
       
       r::sexp::ListBuilder builder(&protect);
-      builder.add("exports", completions.exports);
-      builder.add("types", completions.types);
-      builder.add("functions", completions.functions);
+      builder.add("exports", pkgInfo.exports);
+      builder.add("types", pkgInfo.types);
+      builder.add("functions", core::r_util::infoToFormalMap(pkgInfo.functionInfo));
       parent.add(*it, builder);
    }
    

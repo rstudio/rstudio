@@ -856,6 +856,10 @@
 ## 
 ## NOTE: Function may be used by async R process; must not call back into
 ## 'rs_' compiled code!
+##
+## NOTE: lists are considered as objects if they are named, and as arrays if
+## they are not. If you have an empty list that you want to treat as an object,
+## you must give it a names attribute.
 .rs.addFunction("toJSON", function(object)
 {
    AsIs <- inherits(object, "AsIs") || inherits(object, ".rs.scalar")
@@ -887,7 +891,7 @@
          return('[]')
       }
       else if (is.character(object) || is.factor(object))
-    {
+      {
          object <- paste(collapse = ",", vapply(as.character(object), FUN.VALUE = character(1), USE.NAMES = FALSE, function(x) {
             if (is.na(x)) "null"
             else paste("\"", .rs.jsonEscapeString(enc2utf8(x)), "\"", sep = "")
@@ -910,20 +914,44 @@
    }
 })
 
-.rs.addFunction("checkMissingnessHandled", function(node,
-                                                    head,
-                                                    parent,
-                                                    env)
+.rs.addFunction("recordFunctionInformation", function(node,
+                                                      missingEnv,
+                                                      symbolsUsedEnv)
 {
-   if (is.symbol(head) &&
-       .rs.isSymbolCalled(head, "missing") &&
-       is.symbol(node) &&
-       !identical(head, node))
+   if (is.call(node) && length(node) == 2)
    {
-      env[[as.character(node)]] <- TRUE
+      head <- node[[1]]
+      second <- node[[2]]
+      if (.rs.isSymbolCalled(head, "missing") &&
+          is.symbol(second))
+      {
+         missingEnv[[as.character(second)]] <- TRUE
+      }
    }
+   
+   ## TODO: Obviously not perfect because of NSE.
+   if (is.symbol(node) && !identical(node, quote(expr = )))
+      symbolsUsedEnv[[as.character(node)]] <- TRUE
 })
 
+.rs.addFunction("emptyNamedList", function()
+{
+   `names<-`(list(), character())
+})
+
+.rs.addFunction("emptyFunctionInfo", function()
+{
+   list(
+      formal_info = .rs.emptyNamedList(),
+      performs_nse = I(0L)
+   )
+})
+
+# NOTE: This function is used in asynchronous R processes and so
+# cannot call back into any RStudio compiled code! Even further,
+# `SessionAsyncPackageInformation.cpp` decodes fields based on
+# their names, so if you re-name a field here you must modify the
+# extraction implementation there as well.
 .rs.addFunction("getPackageInformation", function(...)
 {
    invisible(lapply(list(...), function(x) {
@@ -941,30 +969,54 @@
          ns <- asNamespace(x)
          exports <- getNamespaceExports(ns)
          objects <- mget(exports, ns, inherits = TRUE)
+         isFunction <- vapply(objects, FUN.VALUE = logical(1), USE.NAMES = FALSE, is.function)
+         functions <- objects[isFunction]
          
          # Figure out the completion types for these objects
-         types <- unlist(lapply(objects, .rs.getCompletionType))
+         types <- vapply(objects, FUN.VALUE = numeric(1), USE.NAMES = FALSE, .rs.getCompletionType)
          
          # Find the functions, and generate information on each formal
          # (does it have a default argument; is missingness handled; etc)
-         formalInfo <- lapply(functions, function(f) {
+         functionInfo <- lapply(functions, function(f) {
             
             formals <- formals(f)
+            if (!length(formals))
+               return(.rs.emptyFunctionInfo())
+            
             formalNames <- names(formals)
-            hasDefaults <- vapply(formals, FUN.VALUE = integer(1), USE.NAMES = FALSE, function(x) {
-               identical(x, quote(expr =))
+            hasDefault <- vapply(formals, FUN.VALUE = integer(1), USE.NAMES = FALSE, function(x) {
+               !identical(x, quote(expr =))
             })
             
-            env <- new.env(parent = emptyenv())
-            .rs.recursiveWalk(body(f), function(node, head, parent) {
-               .rs.checkMissingnessHandled(node, head, parent, env)
+            # Record which symbols in the function body handle missingness,
+            # to check if missingness of default arguments is handled
+            missingEnv <- new.env(parent = emptyenv())
+            usedSymbolsEnv <- new.env(parent = emptyenv())
+            .rs.recursiveWalk(body(f), function(node) {
+               .rs.recordFunctionInformation(node, missingEnv, usedSymbolsEnv)
             })
-         })
-         
-         isFunction <- unlist(lapply(objects, is.function))
-         functions <- objects[isFunction]
-         formals <- lapply(functions, function(f) {
-            names(formals(f))
+            
+            # Figure out which functions perform NSE. TODO: Figure out which
+            # arguments are actually involved in NSE.
+            performsNse <- as.integer(
+               .rs.recursiveSearch(body(f), .rs.performsNonstandardEvaluation)
+            )
+            
+            formalInfo <- setNames(lapply(seq_along(formalNames), function(i) {
+               list(
+                  has_default = I(hasDefault[[i]]),
+                  missingness_handled = I(as.integer(
+                     formalNames[[i]] == "..." ||
+                     exists(formalNames[[i]], envir = missingEnv)
+                  )),
+                  is_used = I(as.integer(exists(formalNames[[i]], envir = usedSymbolsEnv)))
+               )
+            }), formalNames)
+            
+            list(
+               formal_info = formalInfo,
+               performs_nse = I(performsNse)
+            )
          })
          
          # Generate the output
@@ -972,8 +1024,7 @@
             package = I(x),
             exports = exports,
             types = types,
-            functions = formals,
-            performs_nse = performsNse
+            function_info = functionInfo
          )
          
          # Write the JSON to stdout; parent processes
@@ -1026,25 +1077,25 @@
    return(FALSE)
 })
 
-.rs.addFunction("recursiveSearch", function(`_node`, fn, `_head` = `_node`, `_parent` = NULL, ...)
+.rs.addFunction("recursiveSearch", function(`_node`, fn, ...)
 {
-   if (fn(`_node`, `_head`, `_parent`, ...)) return(TRUE)
+   if (fn(`_node`, ...)) return(TRUE)
    
    if (is.call(`_node`))
       for (i in seq_along(`_node`))
-         if (.rs.recursiveSearch(`_node`[[i]], fn, `_node`[[1]], `_node`, ...))
+         if (.rs.recursiveSearch(`_node`[[i]], fn, ...))
             return(TRUE)
    
    return(FALSE)
 })
 
-.rs.addFunction("recursiveWalk", function(`_node`, fn, `_head` = `_node`, `_parent` = NULL, ...)
+.rs.addFunction("recursiveWalk", function(`_node`, fn, ...)
 {
-   fn(`_node`, `_head`, `_parent`, ...)
+   fn(`_node`, ...)
    
    if (is.call(`_node`))
       for (i in seq_along(`_node`))
-         .rs.recursiveWalk(`_node`[[i]], fn, `_node`[[1]], `_node`, ...)
+         .rs.recursiveWalk(`_node`[[i]], fn, ...)
 })
 
 .rs.addFunction("trimWhitespace", function(x)

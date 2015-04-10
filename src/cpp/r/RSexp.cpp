@@ -45,9 +45,11 @@ using namespace rstudio::core ;
 namespace rstudio {
 namespace r {
    
-using namespace exec ;
+using namespace exec;
    
 namespace sexp {
+
+using namespace core::r_util;
 
 namespace {
 
@@ -1081,32 +1083,41 @@ const std::set<std::string>& nsePrimitives()
    return set;
 }
 
-bool isCallToNSEFunction(SEXP node,
-                         SEXP head,
+bool isNSEPrimitiveSymbolOrString(
+      SEXP objectSEXP,
+      const std::set<std::string>& nsePrimitives)
+{
+   if (TYPEOF(objectSEXP) == SYMSXP)
+      return nsePrimitives.count(CHAR(PRINTNAME(objectSEXP)));
+   else if (TYPEOF(objectSEXP) == STRSXP &&
+            length(objectSEXP) == 1)
+      return nsePrimitives.count(CHAR(STRING_ELT(objectSEXP, 0)));
+   
+   return false;
+}
+
+bool isCallToNSEFunction(SEXP nodeSEXP,
                          const std::set<std::string>& nsePrimitives,
                          bool* pResult)
 {
-   if (TYPEOF(head) == SYMSXP)
+   if (TYPEOF(nodeSEXP) == LANGSXP)
    {
-      const char* name = CHAR(PRINTNAME(head));
-      if (node == head && nsePrimitives.count(name))
+      SEXP headSEXP = CAR(nodeSEXP);
+      if (TYPEOF(headSEXP) == SYMSXP)
       {
-         *pResult = true;
-         return true;
-      }
-      
-      if (strcmp(name, "::") == 0 ||
-          strcmp(name, ":::") == 0)
-      {
-         if (TYPEOF(node) == SYMSXP &&
-             nsePrimitives.count(CHAR(PRINTNAME(node))))
-         {
-            *pResult = true;
+         const char* name = CHAR(PRINTNAME(headSEXP));
+         if (nsePrimitives.count(name))
             return true;
+         
+         if (strcmp(name, "::") == 0 ||
+             strcmp(name, ":::") == 0)
+         {
+            SEXP fnSEXP = CADDR(nodeSEXP);
+            if (isNSEPrimitiveSymbolOrString(fnSEXP, nsePrimitives))
+               return true;
          }
       }
    }
-   
    return false;
 }
 
@@ -1117,7 +1128,7 @@ bool maybePerformsNSEImpl(SEXP node,
    r::sexp::CallRecurser recurser(node);
    bool result = false;
    recurser.add(boost::bind(
-                   isCallToNSEFunction, _1, _2,
+                   isCallToNSEFunction, _1,
                    boost::cref(nsePrimitives), &result));
    recurser.run();
    return result;
@@ -1186,7 +1197,6 @@ namespace detail {
 
 bool addSymbolCheckedForMissingness(
       SEXP nodeSEXP,
-      SEXP headSEXP,
       StringSet* pSymbolsCheckedForMissingness)
 {
    if (TYPEOF(nodeSEXP) == LANGSXP &&
@@ -1204,7 +1214,6 @@ bool addSymbolCheckedForMissingness(
 
 bool addSymbols(
       SEXP nodeSEXP,
-      SEXP headSEXP,
       StringSet* pSymbolsUsed)
 {
    if (TYPEOF(nodeSEXP) == SYMSXP)
@@ -1220,8 +1229,8 @@ void examineSymbolUsage(
       FunctionSymbolUsage* usage)
 {
    CallRecurser recurser(nodeSEXP);
-   recurser.add(boost::bind(addSymbols, _1, _2, &(usage->symbolsUsed)));
-   recurser.add(boost::bind(addSymbolCheckedForMissingness, _1, _2,
+   recurser.add(boost::bind(addSymbols, _1, &(usage->symbolsUsed)));
+   recurser.add(boost::bind(addSymbolCheckedForMissingness, _1,
                             &(usage->symbolsCheckedForMissingness)));
    recurser.run();
 }
@@ -1320,7 +1329,7 @@ SEXP primitiveWrapper(SEXP primitiveSEXP)
    return wrappers[primitiveSEXP];
 }
 
-core::Error extractFormals(
+core::Error extractFunctionInfo(
       SEXP functionSEXP,
       FunctionInformation* pInfo,
       bool extractDefaultArguments,

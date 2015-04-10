@@ -42,7 +42,7 @@ typedef json_spirit::Value_impl<json_spirit::mConfig> Value;
 typedef json_spirit::mConfig::Array_type Array;
 typedef json_spirit::mConfig::Object_type Object;
 typedef Object::value_type Member;
-   
+
 template <typename T>
 bool isType(const Value& value) 
 { 
@@ -64,6 +64,42 @@ bool isType(const Value& value)
       return false;
 }
 
+inline std::string typeAsString(json_spirit::Value_type type)
+{
+        if (type == ObjectType)
+      return "<Object>";
+   else if (type == ArrayType)
+      return "<Array>";
+   else if (type == StringType)
+      return "<string>";
+   else if (type == BooleanType)
+      return "<Boolean>";
+   else if (type == IntegerType)
+      return "<Integer>";
+   else if (type == RealType)
+      return "<Real>";
+   else
+      return "<unknown>";
+}
+
+inline std::string typeAsString(const Value& value)
+{
+   if (value.is_null())
+      return "<null>";
+   return typeAsString(value.type());
+}
+
+#define JSON_CHECK_TYPE(__OBJECT__, __TYPE__)                                  \
+   do                                                                          \
+   {                                                                           \
+      if (__OBJECT__.type() != __TYPE__)                                       \
+      {                                                                        \
+         LOG_WARNING_MESSAGE(std::string() + "Expected object of type '" +     \
+                             typeAsString(__TYPE__) + "'; got '" +             \
+                             typeAsString(__OBJECT__.type()) + "'");           \
+      }                                                                        \
+   } while (0)
+
 template<typename T>
 json::Value toJsonValue(const T& val)
 {
@@ -83,6 +119,24 @@ json::Array toJsonArray(const std::vector<T>& val)
 bool fillVectorString(const Array& array, std::vector<std::string>* pVector);
 bool fillVectorInt(const Array& array, std::vector<int>* pVector);
 bool fillMap(const Object& array, std::map< std::string, std::vector<std::string> >* pMap);
+
+inline int intField(const Object& object, const std::string& name, int ifNotFound)
+{
+   if (object.count(name) == 0)
+      return ifNotFound;
+   
+   return const_cast<Object&>(object)[name].get_int();
+}
+
+inline std::string stringField(const Object& object,
+                               const std::string& name,
+                               const std::string& ifNotFound)
+{
+   if (object.count(name) == 0)
+      return ifNotFound;
+   
+   return const_cast<Object&>(object)[name].get_str();
+}
 
 bool parse(const std::string& input, Value* pValue);
 
