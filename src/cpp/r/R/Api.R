@@ -117,6 +117,3 @@
    
    invisible(.Call("rs_sourceMarkers", name, markers, basePath, autoSelect))
 })
-
-
-

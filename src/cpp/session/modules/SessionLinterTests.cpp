@@ -144,7 +144,8 @@ context("Linter")
       EXPECT_NO_ERRORS("if (foo) bar else if (baz) bam");
       EXPECT_NO_ERRORS("if (foo) bar else if (baz) bam else bat");
       EXPECT_NO_ERRORS("if (foo) {} else if (bar) {}");
-      EXPECT_NO_ERRORS("if (foo) {()} else {()}");
+      EXPECT_NO_ERRORS("if (foo) {(1)} else {(1)}");
+      EXPECT_ERRORS("if (foo) {()} else {()}"); // () with no contents invalid if not function
       EXPECT_NO_ERRORS("if(foo){bar}else{baz}");
       EXPECT_NO_ERRORS("if (a) a() else if (b()) b");
       
@@ -179,6 +180,16 @@ context("Linter")
       EXPECT_NO_ERRORS("if (1) function() 1 else 2");
       EXPECT_NO_ERRORS("if (1) function() b()() else 2");
       EXPECT_NO_ERRORS("if (1) if (2) function() a() else 3 else 4");
+      
+      EXPECT_NO_ERRORS("if(1)while(2) 2 else 3");
+      EXPECT_NO_ERRORS("if(1)if(2)while(3)while(4)if(5) 6 else 7 else 8 else 9");
+      EXPECT_NO_ERRORS("if(1)if(2)while(3)while(4)if(5) foo()[]() else bar() else 8 else 9");
+      EXPECT_ERRORS("if(1)while(2)function(3)repeat(4)if(5)(function())() else 6");
+      
+      // function body cannot be empty paren list; in general, '()' not allowed
+      // at 'start' scope
+      EXPECT_ERRORS("(function() ())()");
+      EXPECT_NO_ERRORS("(function() (1))()");
       
       // EXPECT_ERRORS("if (1) (1)\nelse (2)");
       EXPECT_NO_ERRORS("{if (1) (1)\nelse (2)}");

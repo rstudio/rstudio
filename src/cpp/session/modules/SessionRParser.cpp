@@ -1593,6 +1593,7 @@ START:
          if (status.currentState() == ParseStatus::ParseStateIfStatement ||
              status.currentState() == ParseStatus::ParseStateIfExpression)
          {
+            status.popState();
             MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
             goto START;
          }
@@ -1602,15 +1603,17 @@ START:
          }
       }
       
-      // Left paren.
+      // Left parenthesis.
       if (cursor.isType(RToken::LPAREN))
       {
          status.pushState(ParseStatus::ParseStateWithinParens);
          MOVE_TO_NEXT_SIGNIFICANT_TOKEN_WARN_ON_BLANK(cursor, status);
+         if (cursor.isType(RToken::RPAREN))
+            status.lint().unexpectedToken(cursor);
          goto START;
       }
       
-      // Left bracket.
+      // Left brace.
       if (cursor.isType(RToken::LBRACE))
       {
          status.pushState(ParseStatus::ParseStateWithinBraces);
@@ -2003,26 +2006,30 @@ ARGUMENT_LIST_END:
       
       DEBUG("== State: " << status.currentStateAsString());
       
-      // An argument list may end _two_ states, e.g. in this:
+      // An argument list may end multiple states, e.g. in this:
       //
       //    if (foo) a() else if (b()) b()
       //
-      // We need to close both the 'if' and the argument list.
+      // or even
+      //
+      //    if (1) if (2) if (3) a()\n
+      //
+      // The following newline signals that we are ending all current statements.
+      // We need to close both the 'if' and the argument list. Yet, context
+      // matters, as this would parse:
+      //
+      //    (if(1)if(2)if(3) 4\nelse 5)
+      //
+      // Even more, the number of 'scopes' closed if only 1 if there is a
+      // trailing else (as it just consumes the current 'if'); if there is
+      // no accompanying 'else' then all other parent scopes are closed.
       if (status.isInControlFlowStatement() &&
-          !canContinueStatement(cursor.nextSignificantToken()))
+          cursor.nextSignificantToken().contentEquals(L"else"))
       {
-         bool hasElse =
-               status.currentState() == ParseStatus::ParseStateIfStatement &&
-               cursor.nextSignificantToken().contentEquals(L"else");
-         
          status.popState();
-         
-         if (hasElse)
-         {
-            MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
-            MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
-            goto START;
-         }
+         MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
+         MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
+         goto START;
       }
       
       // Pop out of control flow statements if this ends the statement.
