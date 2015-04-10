@@ -1,12 +1,3 @@
-@if (is("custom.one", "bar")) {
-  @def COLOR1 #012345;
-}
-@else {
-  @def COLOR1 #543210;
-}
-
+@def COLOR1 #012345;
 @def MYCOLOR COLOR1;
 @def MYCOLOR1 MYCOLOR;
-
-@def PADDING add(5px, 5px);
-@def PADDING2 PADDING;
