@@ -20,6 +20,7 @@
 #include <vector>
 #include <iosfwd>
 
+#include <core/Error.hpp>
 #include <core/Log.hpp>
 
 #include <boost/type_traits/is_same.hpp>
@@ -91,16 +92,24 @@ inline std::string typeAsString(const Value& value)
    return typeAsString(value.type());
 }
 
-#define JSON_CHECK_TYPE(__OBJECT__, __TYPE__)                                  \
-   do                                                                          \
-   {                                                                           \
-      if (__OBJECT__.type() != __TYPE__)                                       \
-      {                                                                        \
-         LOG_WARNING_MESSAGE(std::string() + "Expected object of type '" +     \
-                             typeAsString(__TYPE__) + "'; got '" +             \
-                             typeAsString(__OBJECT__.type()) + "'");           \
-      }                                                                        \
-   } while (0)
+inline bool checkIsType(const json::Value& value,
+                        json_spirit::Value_type type,
+                        const ErrorLocation& location)
+{
+   if (value.type() != type)
+   {
+      std::string message = std::string() +
+            "Expected JSON object of type '" +
+            typeAsString(type) + "'; got '" +
+            typeAsString(value.type()) + "'";
+      log::logWarningMessage(message, location);
+      return false;
+   }
+   return true;
+}
+
+#define JSON_CHECK_TYPE(__VALUE__, __TYPE__) \
+   (checkIsType(__VALUE__, __TYPE__, ERROR_LOCATION))
 
 template<typename T>
 json::Value toJsonValue(const T& val)
@@ -125,7 +134,10 @@ bool fillMap(const Object& array, std::map< std::string, std::vector<std::string
 inline int intField(const Object& object, const std::string& name, int ifNotFound)
 {
    if (object.count(name) == 0)
+   {
+      LOG_WARNING_MESSAGE("No field named '" + name + "'");
       return ifNotFound;
+   }
    
    return const_cast<Object&>(object)[name].get_int();
 }
@@ -135,7 +147,10 @@ inline std::string stringField(const Object& object,
                                const std::string& ifNotFound)
 {
    if (object.count(name) == 0)
+   {
+      LOG_WARNING_MESSAGE("No field named '" + name + "'");
       return ifNotFound;
+   }
    
    return const_cast<Object&>(object)[name].get_str();
 }

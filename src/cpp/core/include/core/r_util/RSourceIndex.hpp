@@ -330,6 +330,23 @@ public:
    {
       return s_packageInformation_[pkg].functionInfo[func];
    }
+   
+   static const FunctionInformation& getFunctionInformationAnywhere(
+         const std::string& func,
+         bool* pLookupFailed)
+   {
+      for (PackageInformationDatabase::const_iterator it = s_packageInformation_.begin();
+           it != s_packageInformation_.end();
+           ++it)
+      {
+         const PackageInformation& pkgInfo = it->second;
+         if (pkgInfo.functionInfo.count(func))
+            return const_cast<FunctionInformationMap&>(pkgInfo.functionInfo)[func];
+      }
+      
+      *pLookupFailed = true;
+      return s_noSuchFunction_;
+   }
 
    static std::vector<std::string> getAllUnindexedPackages()
    {
@@ -404,6 +421,7 @@ private:
    
    // NOTE: All source indexes share a set of completions
    static std::map<std::string, PackageInformation> s_packageInformation_;
+   static FunctionInformation s_noSuchFunction_;
    
 };
 

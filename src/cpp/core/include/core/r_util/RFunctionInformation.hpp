@@ -39,6 +39,13 @@ struct Binding
       : name(name), origin(origin)
    {}
    
+   friend std::ostream& operator <<(std::ostream& os,
+                                    const Binding& self)
+   {
+      os << "[" << self.origin << "::" << self.name << "]";
+      return os;
+   }
+   
    std::string name;
    std::string origin;
 };

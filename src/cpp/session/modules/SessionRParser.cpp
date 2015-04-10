@@ -14,7 +14,7 @@
  */
 
 #define RSTUDIO_DEBUG_LABEL "parser"
-// #define RSTUDIO_ENABLE_DEBUG_MACROS
+#define RSTUDIO_ENABLE_DEBUG_MACROS
 
 // We use a couple internal R functions here; in particular,
 // simple accessors (which we know will not longjmp)
@@ -176,8 +176,6 @@ NSEDatabase& nseDatabase()
    return instance;
 }
 
-// TODO: Implement per-parse cache so that we avoid repeated
-// evaluations of the same symbol
 SEXP resolveFunctionAtCursor(RTokenCursor cursor,
                              r::sexp::Protect* pProtect,
                              bool* pCacheable = NULL)
@@ -300,6 +298,8 @@ bool mightPerformNonstandardEvaluation(const RTokenCursor& origin,
    if (!canOpenArgumentList(cursor.nextSignificantToken()))
       return false;
    
+   DEBUG("- Checking whether NSE performed here: " << cursor);
+   
    // TODO: How should we resolve conflicts between a function on
    // the search path with some set of arguments, versus an identically
    // named function in the source document which has not yet been sourced?
@@ -319,11 +319,11 @@ bool mightPerformNonstandardEvaluation(const RTokenCursor& origin,
    
    // Search the R source index if this is a simple call, and
    // we're within a package project.
+   const std::string& symbol = cursor.contentAsUtf8();
    if (cursor.isSimpleCall() &&
        projects::projectContext().isPackageProject())
    {
       using namespace code_search;
-      std::string symbol = cursor.contentAsUtf8();
       const PackageInformation& info = RSourceIndex::getPackageInformation(
                projects::projectContext().packageInfo().name());
       
@@ -336,11 +336,24 @@ bool mightPerformNonstandardEvaluation(const RTokenCursor& origin,
             return true;
       }
    }
+      
+   // Search the whole index.
+   bool failed = false;
+   const FunctionInformation& fnInfo =
+         RSourceIndex::getFunctionInformationAnywhere(
+            symbol, &failed);
+
+   if (!failed)
+   {
+      DEBUG("--- Found function in pkgInfo index: " << *fnInfo.binding());
+      return fnInfo.performsNse();
+   }
    
    // Handle some special cases first.
    if (isSymbolNamed(cursor, L"::") || isSymbolNamed(cursor, L":::"))
       return true;
    
+   // Drop down into R.
    bool cacheable = true;
    r::sexp::Protect protect;
    SEXP symbolSEXP = resolveFunctionAtCursor(cursor, &protect, &cacheable);
@@ -947,13 +960,21 @@ FunctionInformation getInfoAssociatedWithFunctionAtCursor(
       
       // If we're within a package project, then attempt searching the
       // source index for the formals associated with this function.
+      const std::string& fnName = cursor.contentAsUtf8();
       if (projects::projectContext().isPackageProject())
       {
-         const std::string& fnName = cursor.contentAsUtf8();
          std::string pkgName = projects::projectContext().packageInfo().name();
          if (RSourceIndex::hasFunctionInformation(fnName, pkgName))
                   return RSourceIndex::getFunctionInformation(fnName, pkgName);
       }
+      
+      // Try looking up the symbol by name.
+      bool lookupFailed = false;
+      FunctionInformation info =
+            RSourceIndex::getFunctionInformationAnywhere(fnName, &lookupFailed);
+      
+      if (!lookupFailed)
+         return info;
    }
    
    // If the above failed, we'll fall back to evaluating and looking up

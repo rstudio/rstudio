@@ -960,9 +960,12 @@
          # Explicitly load the library, and do everything we can to hide any
          # package startup messages (because we don't want to put non-JSON
          # on stdout)
-         invisible(capture.output(suppressPackageStartupMessages(
-            library(x, character.only = TRUE, quietly = TRUE)
-         )))
+         invisible(capture.output(suppressPackageStartupMessages(suppressWarnings(
+            success <- library(x, character.only = TRUE, quietly = TRUE, logical.return = TRUE)
+         ))))
+         
+         if (!success)
+            return(.rs.emptyFunctionInfo())
          
          # Get the exported items in the NAMESPACE (for search path + `::`
          # completions).
@@ -1029,6 +1032,10 @@
          
          # Write the JSON to stdout; parent processes
          cat(.rs.toJSON(output), sep = "\n")
+         
+         # Return output for debug purposes
+         output
+         
       }, error = function(e) NULL)
    }))
 })
@@ -1038,15 +1045,14 @@
    "enquote", "bquote", "evalq", "lazy_dots"
 ))
 
-.rs.addFunction("performsNonstandardEvaluation", function(x)
+.rs.addFunction("performsNonstandardEvaluation", function(functionBody)
 {
-   if (!is.function(x)) return(FALSE)
-   if (is.primitive(x)) return(TRUE)
-   
-   body <- body(x)
+   # Allow callers to just pass in functions
+   if (is.function(functionBody))
+      functionBody <- body(functionBody)
    
    nsePrimitives <- .rs.getVar("nse.primitives")
-   .rs.recursiveSearch(body,
+   .rs.recursiveSearch(functionBody,
                        .rs.performsNonstandardEvaluationImpl,
                        nsePrimitives = nsePrimitives)
 })
@@ -1057,17 +1063,20 @@
    if (is.call(node))
    {
       head <- node[[1]]
+      if (!is.symbol(head))
+         return(FALSE)
+      
       headString <- as.character(head)
       if (headString %in% nsePrimitives)
          return(TRUE)
       
       # Check if this is a call to an NSE primitive, qualified through
       # `::` or `:::`.
-      if (headString %in% c("::", ":::") &&
-          length(node) == 3)
+      if (headString %in% c("::", ":::") && length(node) == 3)
       {
+         pkg <- node[[2]]
          export <- node[[3]]
-         if (as.character(export) %in% nsePrimitives)
+         if (as.character(pkg) == "base" && as.character(export) %in% nsePrimitives)
             return(TRUE)
       }
    }
