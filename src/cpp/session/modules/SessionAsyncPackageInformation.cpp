@@ -88,9 +88,9 @@ void fillFormalInfo(const json::Object& formalInfoJson,
       JSON_CHECK_TYPE(it->second, json::ObjectType);
       const json::Object& fieldsJson = it->second.get_obj();
       
-      info.isUsed             = JSON_INT_FIELD(fieldsJson, "is_used", 0);
-      info.hasDefault         = JSON_INT_FIELD(fieldsJson, "has_default", 1);
-      info.missingnessHandled = JSON_INT_FIELD(fieldsJson, "missingness_handled", 1);
+      info.setIsUsed(             JSON_INT_FIELD(fieldsJson, "is_used", 0));
+      info.setHasDefaultValue(    JSON_INT_FIELD(fieldsJson, "has_default", 1));
+      info.setMissingnessHandled( JSON_INT_FIELD(fieldsJson, "missingness_handled", 1));
       
       pInfo->addFormal(info);
    }

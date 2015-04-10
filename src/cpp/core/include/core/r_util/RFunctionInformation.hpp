@@ -50,21 +50,49 @@ struct Binding
    std::string origin;
 };
 
-struct FormalInformation
+class FormalInformation
 {
+public:
+   
    // ctor -- must be initialized with a name;
    // all other information is optional
    explicit FormalInformation(const std::string& name)
-      : name(name)
+      : name_(name)
    {}
    
-   std::string name;
-   boost::optional<std::string> defaultValue;
-   boost::tribool hasDefault;
-   boost::tribool isUsed;
-   boost::tribool missingnessHandled;
+   void setDefaultValue(const std::string& defaultValue)
+   {
+      hasDefault_ = true;
+      defaultValue_ = defaultValue;
+   }
+   
+   void setHasDefaultValue(bool value)
+   {
+      hasDefault_ = value;
+   }
+   
+   const std::string& name() const { return name_; }
+   const boost::optional<std::string>& defaultValue() const { return defaultValue_; }
+   boost::tribool hasDefault() const { return hasDefault_; }
+   bool isUsed() const { return isUsed_; }
+   void setIsUsed(bool value) { isUsed_ = value; }
+   bool isMissingnessHandled() const { return isMissingnessHandled_; }
+   void setMissingnessHandled(bool value) { isMissingnessHandled_ = value; }
    
 private:
+   std::string name_;
+   
+   // NOTE: It is possible for us to know that a particular
+   // function has a default value, but not what that default
+   // value is, hence why we have separate fields here.
+   boost::optional<std::string> defaultValue_;
+   boost::tribool hasDefault_;
+   
+   // Whether this formal is used in the body of its associated function
+   boost::tribool isUsed_;
+   
+   // Whether this formal is tested in a `missing()` call
+   boost::tribool isMissingnessHandled_;
    
    // private c-tor used as dummy 'no such formal', for friend classes
    friend class FunctionInformation;
@@ -96,7 +124,7 @@ public:
    void addFormal(const FormalInformation& info)
    {
       formals_.push_back(info);
-      formalNames_.push_back(info.name);
+      formalNames_.push_back(info.name());
    }
    
    bool isPrimitive()
@@ -125,17 +153,17 @@ public:
       return formalNames_;
    }
    
-   boost::optional<std::string>& defaultValueForFormal(
+   const boost::optional<std::string>& defaultValueForFormal(
          const std::string& formalName)
    {
-      return infoForFormal(formalName).defaultValue;
+      return infoForFormal(formalName).defaultValue();
    }
    
    FormalInformation& infoForFormal(const std::string& formalName)
    {
       std::size_t n = formals_.size();
       for (std::size_t i = 0; i < n; ++i)
-         if (formals_[i].name == formalName)
+         if (formals_[i].name() == formalName)
             return formals_[i];
       
       LOG_WARNING_MESSAGE("No such formal '" + formalName + "'");

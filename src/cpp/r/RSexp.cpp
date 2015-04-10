@@ -1262,16 +1262,16 @@ void examineSymbolUsage(
    // fill output
    BOOST_FOREACH(FormalInformation& info, pInfo->formals())
    {
-      const std::string& name = info.name;
-      info.isUsed = usage.symbolsUsed.contains(name.c_str());
+      const std::string& name = info.name();
+      info.setIsUsed(usage.symbolsUsed.contains(name.c_str()));
       
       bool isInternalFunction = 
             usage.symbolsUsed.contains(".Internal") ||
             usage.symbolsUsed.contains(".Primitive");
-      
-      info.missingnessHandled =
-            isInternalFunction ||
-            usage.symbolsCheckedForMissingness.contains(name.c_str());
+
+      info.setMissingnessHandled(
+          isInternalFunction ||
+          usage.symbolsCheckedForMissingness.contains(name.c_str()));
    }
 }
 
@@ -1377,8 +1377,8 @@ core::Error extractFunctionInfo(
       {
          if (CAR(formals) != R_MissingArg)
          {
-            formalInfo.defaultValue = 
-                  boost::optional<std::string>(CHAR(STRING_ELT(defaultValues, index)));
+            formalInfo.setDefaultValue( 
+                  CHAR(STRING_ELT(defaultValues, index)));
          }
       }
       

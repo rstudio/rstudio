@@ -323,7 +323,6 @@ bool mightPerformNonstandardEvaluation(const RTokenCursor& origin,
    if (cursor.isSimpleCall() &&
        projects::projectContext().isPackageProject())
    {
-      using namespace code_search;
       const PackageInformation& info = RSourceIndex::getPackageInformation(
                projects::projectContext().packageInfo().name());
       
@@ -852,12 +851,10 @@ void extractFormal(
    } while (cursor.moveToNextSignificantToken());
    
    FormalInformation info(formalName);
+   
    if (hasDefaultValue)
-   {
-      info.hasDefault = true;
-      info.defaultValue = string_utils::wideToUtf8(
-               std::wstring(defaultValueStart, cursor.begin()));
-   }
+      info.setDefaultValue(string_utils::wideToUtf8(
+                              std::wstring(defaultValueStart, cursor.begin())));
    
    pInfo->addFormal(info);
    
@@ -1049,6 +1046,10 @@ public:
       std::vector<std::string> userSuppliedArgNames = core::algorithm::map_keys(namedArguments);
       std::map<std::string, boost::optional<std::string> > matchedCall;
       const std::vector<std::string>& formalNames = info.getFormalNames();
+      DEBUG_BLOCK("Formal names")
+      {
+         LOG_OBJECT(formalNames);
+      }
       
       /*
        * 1. Identify perfect matches in the set of formals to search.
@@ -1171,13 +1172,13 @@ public:
       if (cursor.contentEquals(L"old.packages") ||
           cursor.contentEquals(L"available.packages"))
       {
-         pCall->functionInfo().infoForFormal("method").missingnessHandled = true;
+         pCall->functionInfo().infoForFormal("method").setMissingnessHandled(true);
       }
       
       // `file_test` allows 'y' to be missing, and is only used when
       // 'op' is a 'binary-accepting' operator
       if (cursor.contentEquals(L"file_test"))
-         pCall->functionInfo().infoForFormal("y").missingnessHandled = true;
+         pCall->functionInfo().infoForFormal("y").setMissingnessHandled(true);
    }
    
    static void applyCustomWarnings(const MatchedCall& call,
@@ -1416,8 +1417,13 @@ void validateFunctionCall(RTokenCursor cursor,
                ss.str());
    }
    
+   DEBUG_BLOCK("Checking whether missingness is handled")
+   {
+      debug::print(matched.matchedCall());
+   }
+   
    // Error on unmatched calls.
-   for (std::size_t i = 0; i < formalNames.size(); ++i)
+   for (std::size_t i = 0, n = formalNames.size(); i < n; ++i)
    {
       const std::string& formalName = formalNames[i];
       const FormalInformation& info =
@@ -1426,12 +1432,9 @@ void validateFunctionCall(RTokenCursor cursor,
       std::map<std::string, boost::optional<std::string> >& matchedCall =
             matched.matchedCall();
       
-      DEBUG_BLOCK("")
-      {
-         debug::print(matchedCall);
-      }
-      
-      if (!matchedCall[formalName] && !info.missingnessHandled)
+      if (!matchedCall[formalName] &&
+          !info.hasDefault() &&
+          !info.isMissingnessHandled())
       {
          status.lint().add(
                   startCursor.row(),
@@ -1836,6 +1839,7 @@ START:
             }
             
             status.popState();
+            
             MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
             MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
             goto START;
@@ -2012,6 +2016,7 @@ ARGUMENT_LIST_END:
                cursor.nextSignificantToken().contentEquals(L"else");
          
          status.popState();
+         
          if (hasElse)
          {
             MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
