@@ -1607,9 +1607,22 @@ START:
       else if (cursor.contentEquals(L"repeat"))
          goto REPEAT_START;
       
-      // 'else'. Implicitly ending an 'if' statement.
+      // 'else'. Implicitly ending an 'if' statement, and any other
+      // associated statements; e.g.
+      //
+      //     if (1) while(1) 1 else 2
+      //
+      // is a valid expression.
       if (cursor.contentEquals(L"else"))
       {
+         while (status.isInControlFlowStatement())
+         {
+            if (status.currentState() == ParseStatus::ParseStateIfStatement)
+               break;
+            
+            status.popState();
+         }
+         
          // Ensure that we're in an 'if' statement or expression.
          if (status.currentState() == ParseStatus::ParseStateIfStatement ||
              status.currentState() == ParseStatus::ParseStateIfExpression)
@@ -1696,9 +1709,20 @@ START:
                return;
             
             // Handle an 'else' following when we are closing an 'if' statement
-            if (status.currentState() == ParseStatus::ParseStateIfStatement &&
-                cursor.nextSignificantToken().contentEquals(L"else"))
+            if (cursor.nextSignificantToken().contentEquals(L"else"))
             {
+               while (status.isInControlFlowStatement())
+               {
+                  if (status.currentState() == ParseStatus::ParseStateIfStatement)
+                     break;
+                  status.popState();
+               }
+               
+               if (status.currentState() != ParseStatus::ParseStateIfStatement)
+               {
+                  GOTO_INVALID_TOKEN(cursor);
+               }
+               
                status.popState();
                MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
                MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
@@ -1829,14 +1853,25 @@ START:
          // illegal (except for else), e.g.
          //
          //    a b c                      /* illegal */
-         //    if (foo) bar else baz      /* legal */
+         //    if (foo) bar else baz      /*  legal  */
+         //    if (1) while (1) 1 else 2  /*  legal  */
          //
          // Check for the 'else' special case first, then the
          // other cases.
-         if (status.currentState() == ParseStatus::ParseStateIfStatement &&
-             cursor.nextSignificantToken().contentEquals(L"else"))
+         if (cursor.nextSignificantToken().contentEquals(L"else"))
          {
-            DEBUG("-- Found 'else' following end of 'if' statement");
+            while (status.isInControlFlowStatement())
+            {
+               if (status.currentState() == ParseStatus::ParseStateIfStatement)
+                  break;
+               status.popState();
+            }
+            
+            if (status.currentState() != ParseStatus::ParseStateIfStatement)
+            {
+               GOTO_INVALID_TOKEN(cursor);
+            }
+            
             status.popState();
             MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
             MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);

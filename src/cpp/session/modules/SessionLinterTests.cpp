@@ -176,6 +176,7 @@ context("Linter")
       EXPECT_NO_ERRORS("if (1) foo(1) <- 1 else 2; 1 + 2");
       EXPECT_NO_ERRORS("if (1)\nfoo(1) <- 1\nelse 2; 4 + 8");
       EXPECT_NO_ERRORS("if (1) (foo(1) <- {{1}})\n2 + 1");
+      EXPECT_NO_ERRORS("if (1) function() 1 else 2");
       
       // EXPECT_ERRORS("if (1) (1)\nelse (2)");
       EXPECT_NO_ERRORS("{if (1) (1)\nelse (2)}");
