@@ -1491,6 +1491,28 @@ assign(x = ".rs.acCompletionTypes",
    
 })
 
+.rs.addFunction("mightBeShinyFunction", function(string)
+{
+   # Try seeing if there's a function with this name on the
+   # search path, and return TRUE if it has 'inputId' or
+   # 'outputId' as parameters.
+   result <- tryCatch(get(string), pos = 0, error = function(e) NULL)
+   if (is.function(result) && !is.primitive(result))
+   {
+      formalNames <- names(formals(result))
+      if (any(c("inputId", "outputId") %in% formalNames))
+         return(TRUE)
+   }
+      
+   # Try seeing if there's a function of this name
+   # in the 'shiny' completion database.
+   shinyFunctions <- .rs.getInferredCompletions("shiny")$functions
+   if (string %in% names(shinyFunctions))
+      return(TRUE)
+   
+   return(FALSE)
+})
+
 .rs.addJsonRpcHandler("get_completions", function(token,
                                                   string,
                                                   type,
@@ -1749,7 +1771,7 @@ assign(x = ".rs.acCompletionTypes",
    if (type[[1]] == .rs.acContextTypes$FUNCTION &&
        tolower(basename(filePath)) == "ui.r" &&
        numCommas[[1]] == 0 &&
-       (.rs.endsWith(string[[1]], "Input") || .rs.endsWith(string[[1]], "Output")))
+       .rs.mightBeShinyFunction(string[[1]]))
    {
       completions <- .rs.getCompletionsFromShinyServer(token, filePath, string[[1]], type[[1]])
       if (!is.null(completions))
@@ -2335,8 +2357,9 @@ assign(x = ".rs.acCompletionTypes",
    outputCount <- new.env(parent = emptyenv())
    outputCount$count <- 1
    
+   shinyFunctions <- .rs.getInferredCompletions("shiny")[["shiny"]][["functions"]]
    lapply(parsed, function(object) {
-      .rs.doShinyUICompletions(object, inputEnv, outputEnv, inputCount, outputCount)
+      .rs.doShinyUICompletions(object, inputEnv, outputEnv, inputCount, outputCount, shinyFunctions)
    })
    
    completions <- list(input = unlist(mget(objects(inputEnv), envir = inputEnv), use.names = FALSE),
@@ -2353,7 +2376,8 @@ assign(x = ".rs.acCompletionTypes",
                                                  inputs,
                                                  outputs,
                                                  inputCount,
-                                                 outputCount)
+                                                 outputCount,
+                                                 shinyFunctions)
 {
    if (is.call(object) && length(object) > 1)
    {
@@ -2365,13 +2389,14 @@ assign(x = ".rs.acCompletionTypes",
       
       if (nzchar(firstArgName))
       {
-         if (.rs.endsWith(functionName, "Output"))
+         functionArgs <- shinyFunctions[[functionName]]
+         if ("outputId" %in% functionArgs)
          {
             outputCount$count <- outputCount$count + 1
             outputs[[as.character(outputCount$count)]] <- firstArgName
          }
          
-         if (.rs.endsWith(functionName, "Input"))
+         else if ("inputId" %in% functionArgs)
          {
             inputCount$count <- inputCount$count + 1
             inputs[[as.character(inputCount$count)]] <- firstArgName
@@ -2386,7 +2411,8 @@ assign(x = ".rs.acCompletionTypes",
                                      inputs,
                                      outputs,
                                      inputCount,
-                                     outputCount)
+                                     outputCount,
+                                     shinyFunctions)
          }
       }
    }
