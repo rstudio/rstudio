@@ -23,6 +23,7 @@ import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.util.DiskCache;
 import com.google.gwt.dev.util.Util;
+import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -31,7 +32,6 @@ import java.io.Serializable;
 import java.util.Collections;
 import java.util.Set;
 import java.util.SortedSet;
-import java.util.TreeSet;
 
 /**
  * Represents a unified, non-permutation specific AST. This AST is used to drive
@@ -104,7 +104,7 @@ public class UnifiedAst implements Serializable {
       Set<String> rebindRequests) {
     this.options = new PrecompileTaskOptionsImpl(options);
     this.initialAst = initialAst;
-    this.rebindRequests = Collections.unmodifiableSortedSet(new TreeSet<String>(rebindRequests));
+    this.rebindRequests = Collections.unmodifiableSortedSet(Sets.newTreeSet(rebindRequests));
     this.serializedAstToken = singlePermutation ? -1 : diskCache.writeObject(initialAst);
   }
 

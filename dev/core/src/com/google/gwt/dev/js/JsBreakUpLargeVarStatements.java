@@ -34,8 +34,8 @@ import java.util.List;
 public class JsBreakUpLargeVarStatements extends JsModVisitor {
   private static final String CONFIG_PROP_MAX_VARS = "compiler.max.vars.per.var";
 
-  public static void exec(JsProgram program, ConfigurationProperties configMap) {
-    (new JsBreakUpLargeVarStatements(configMap)).accept(program);
+  public static void exec(JsProgram program, ConfigurationProperties configurationProperties) {
+    (new JsBreakUpLargeVarStatements(configurationProperties)).accept(program);
   }
 
   private static JsVars last(List<JsVars> list) {

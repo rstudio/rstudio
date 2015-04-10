@@ -24,6 +24,8 @@ import com.google.gwt.dev.jjs.ast.JBinaryOperation;
 import com.google.gwt.dev.jjs.ast.JBinaryOperator;
 import com.google.gwt.dev.jjs.ast.JBooleanLiteral;
 import com.google.gwt.dev.jjs.ast.JCharLiteral;
+import com.google.gwt.dev.jjs.ast.JClassType;
+import com.google.gwt.dev.jjs.ast.JConstructor;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JDoubleLiteral;
 import com.google.gwt.dev.jjs.ast.JExpression;
@@ -34,6 +36,7 @@ import com.google.gwt.dev.jjs.ast.JLongLiteral;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodBody;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
+import com.google.gwt.dev.jjs.ast.JNewInstance;
 import com.google.gwt.dev.jjs.ast.JNullLiteral;
 import com.google.gwt.dev.jjs.ast.JParameter;
 import com.google.gwt.dev.jjs.ast.JParameterRef;
@@ -72,6 +75,98 @@ import java.util.Map;
  * General utilities related to Java AST manipulation.
  */
 public class JjsUtils {
+
+  public static boolean closureStyleLiteralsNeeded(PrecompileTaskOptions options) {
+    return closureStyleLiteralsNeeded(options.isIncrementalCompileEnabled(),
+        options.getJsInteropMode(), options.isClosureCompilerFormatEnabled());
+  }
+
+  public static boolean closureStyleLiteralsNeeded(boolean incremental, Mode jsInteropMode,
+      boolean closureOutputFormat) {
+    return !incremental && jsInteropMode == Mode.JS && closureOutputFormat;
+  }
+
+  public static String computeSignature(
+      String name, List<JType> params, JType returnType, boolean isCtor) {
+    StringBuilder sb = new StringBuilder(name);
+    sb.append('(');
+    for (JType type : params) {
+      sb.append(type.getJsniSignatureName());
+    }
+    sb.append(')');
+    if (!isCtor) {
+      sb.append(returnType.getJsniSignatureName());
+    } else {
+      sb.append(" <init>");
+    }
+    return sb.toString();
+  }
+
+  public static void constructManglingSignature(JMethod x, StringBuilder partialSignature) {
+    partialSignature.append("__");
+    for (int i = 0; i < x.getOriginalParamTypes().size(); ++i) {
+      JType type = x.getOriginalParamTypes().get(i);
+      partialSignature.append(type.getJavahSignatureName());
+    }
+    partialSignature.append(x.getOriginalReturnType().getJavahSignatureName());
+  }
+
+  /**
+   * Returns an instantiation expression for {@code type} using the default constructor,
+   * Returns {@code null} if {@code type} does not have a default constructor.
+   */
+  public static JExpression createDefaultConstructorInstantiation(
+      SourceInfo info, JClassType type) {
+    /*
+     * Find the appropriate (noArg) constructor. In our AST, constructors are
+     * instance methods that should be qualified with a new expression.
+     */
+    JConstructor noArgCtor = (JConstructor) FluentIterable.from(type.getMethods()).firstMatch(
+        new Predicate<JMethod>() {
+          @Override
+          public boolean apply(JMethod method) {
+            return method instanceof JConstructor &&  method.getOriginalParamTypes().size() == 0;
+          }
+        }).get();
+    if (noArgCtor == null) {
+      return null;
+    }
+    // Call it, using a new expression as a qualifier
+    return new JNewInstance(info, noArgCtor);
+  }
+
+  /**
+   * Creates a synthetic forwarding  stub in {@code type} with the same signature as
+   * {@code superTypeMethod} that dispatchs to that method..
+   */
+  public static JMethod createForwardingMethod(JDeclaredType type,
+      JMethod methodToDelegateTo) {
+    JMethod forwardingMethod = createEmptyMethodFromExample(type, methodToDelegateTo, false);
+    forwardingMethod.setForwarding();
+
+    // This is a synthetic forwading method due to a default.
+    if (methodToDelegateTo.isDefaultMethod()) {
+      forwardingMethod.setDefaultMethod();
+    }
+
+    // Create the forwarding body.
+    JMethodBody body = (JMethodBody) forwardingMethod.getBody();
+    // Invoke methodToDelegate
+    JMethodCall forwardingCall = new JMethodCall(methodToDelegateTo.getSourceInfo(),
+        new JThisRef(methodToDelegateTo.getSourceInfo(), methodToDelegateTo.getEnclosingType()),
+        methodToDelegateTo);
+    forwardingCall.setStaticDispatchOnly();
+    // copy params
+    for (JParameter p : forwardingMethod.getParams()) {
+      forwardingCall.addArg(new JParameterRef(p.getSourceInfo(), p));
+    }
+
+    // return statement if not void return type
+    body.getBlock().addStmt(forwardingMethod.getType() == JPrimitiveType.VOID ?
+        forwardingCall.makeStatement() :
+        new JReturnStatement(methodToDelegateTo.getSourceInfo(), forwardingCall));
+    return forwardingMethod;
+  }
 
   /**
    * Creates a multi expression from a list of expressions, removing expressions that do
@@ -122,65 +217,21 @@ public class JjsUtils {
   }
 
   /**
-   * Translates a Java literal into a JavaScript literal.
+   * Returns an ast node representing the expression {@code expression != null}.
    */
-  public static JsLiteral translateLiteral(JLiteral literal) {
-    return translatorByLiteralClass.get(literal.getClass()).translate(literal);
-  }
-
-  public static boolean closureStyleLiteralsNeeded(PrecompileTaskOptions options) {
-    return closureStyleLiteralsNeeded(options.isIncrementalCompileEnabled(),
-        options.getJsInteropMode(), options.isClosureCompilerFormatEnabled());
-  }
-
-  public static boolean closureStyleLiteralsNeeded(boolean incremental, Mode jsInteropMode,
-      boolean closureOutputFormat) {
-    return !incremental && jsInteropMode == Mode.JS && closureOutputFormat;
-  }
-
-  private static Map<Class<? extends JLiteral>, LiteralTranslators> translatorByLiteralClass =
-      new ImmutableMap.Builder()
-          .put(JBooleanLiteral.class, LiteralTranslators.BOOLEAN_LITERAL_TRANSLATOR)
-          .put(JCharLiteral.class, LiteralTranslators.CHAR_LITERAL_TRANSLATOR)
-          .put(JFloatLiteral.class, LiteralTranslators.FLOAT_LITERAL_TRANSLATOR)
-          .put(JDoubleLiteral.class, LiteralTranslators.DOUBLE_LITERAL_TRANSLATOR)
-          .put(JIntLiteral.class, LiteralTranslators.INT_LITERAL_TRANSLATOR)
-          .put(JLongLiteral.class, LiteralTranslators.LONG_LITERAL_TRANSLATOR)
-          .put(JNullLiteral.class, LiteralTranslators.NULL_LITERAL_TRANSLATOR)
-          .put(JStringLiteral.class, LiteralTranslators.STRING_LITERAL_TRANSLATOR)
-          .build();
-
-  /**
-   * Creates a synthetic forwarding  stub in {@code type} with the same signature as
-   * {@code superTypeMethod} that dispatchs to that method..
-   */
-  public static JMethod createForwardingMethod(JDeclaredType type,
-      JMethod methodToDelegateTo) {
-    JMethod forwardingMethod = createEmptyMethodFromExample(type, methodToDelegateTo, false);
-    forwardingMethod.setForwarding();
-
-    // This is a synthetic forwading method due to a default.
-    if (methodToDelegateTo.isDefaultMethod()) {
-      forwardingMethod.setDefaultMethod();
+  public static JExpression createOptimizedNotNullComparison(
+      JProgram program, SourceInfo info, JExpression expression) {
+    JReferenceType type = (JReferenceType) expression.getType();
+    if (type.isNullType()) {
+      return program.getLiteralBoolean(false);
     }
 
-    // Create the forwarding body.
-    JMethodBody body = (JMethodBody) forwardingMethod.getBody();
-    // Invoke methodToDelegate
-    JMethodCall forwardingCall = new JMethodCall(methodToDelegateTo.getSourceInfo(),
-        new JThisRef(methodToDelegateTo.getSourceInfo(), methodToDelegateTo.getEnclosingType()),
-        methodToDelegateTo);
-    forwardingCall.setStaticDispatchOnly();
-    // copy params
-    for (JParameter p : forwardingMethod.getParams()) {
-      forwardingCall.addArg(new JParameterRef(p.getSourceInfo(), p));
+    if (!type.canBeNull()) {
+      return createOptimizedMultiExpression(expression, program.getLiteralBoolean(true));
     }
 
-    // return statement if not void return type
-    body.getBlock().addStmt(forwardingMethod.getType() == JPrimitiveType.VOID ?
-        forwardingCall.makeStatement() :
-        new JReturnStatement(methodToDelegateTo.getSourceInfo(), forwardingCall));
-    return forwardingMethod;
+    return new JBinaryOperation(info, program.getTypePrimitiveBoolean(),
+        JBinaryOperator.NEQ, expression, program.getLiteralNull());
   }
 
   /**
@@ -191,54 +242,6 @@ public class JjsUtils {
     assert type.isAbstract();
     assert superTypeMethod.isAbstract();
     return createEmptyMethodFromExample(type, superTypeMethod, true);
-  }
-
-  private static JMethod createEmptyMethodFromExample(
-      JDeclaredType inType, JMethod exampleMethod, boolean isAbstract) {
-    JMethod emptyMethod = new JMethod(exampleMethod.getSourceInfo(), exampleMethod.getName(),
-        inType, exampleMethod.getType(), isAbstract, false, false, exampleMethod.getAccess());
-    emptyMethod.addThrownExceptions(exampleMethod.getThrownExceptions());
-    emptyMethod.setSynthetic();
-    // Copy parameters.
-    for (JParameter param : exampleMethod.getParams()) {
-      emptyMethod.addParam(new JParameter(param.getSourceInfo(), param.getName(), param.getType(),
-          param.isFinal(), param.isThis(), emptyMethod));
-    }
-    JMethodBody body = new JMethodBody(exampleMethod.getSourceInfo());
-    emptyMethod.setBody(body);
-    emptyMethod.freezeParamTypes();
-    inType.addMethod(emptyMethod);
-    return emptyMethod;
-  }
-
-  public static void constructManglingSignature(JMethod x, StringBuilder partialSignature) {
-    partialSignature.append("__");
-    for (int i = 0; i < x.getOriginalParamTypes().size(); ++i) {
-      JType type = x.getOriginalParamTypes().get(i);
-      partialSignature.append(type.getJavahSignatureName());
-    }
-    partialSignature.append(x.getOriginalReturnType().getJavahSignatureName());
-  }
-
-  public static String getNameString(HasName hasName) {
-    String s = hasName.getName().replaceAll("_", "_1").replace('.', '_');
-    return s;
-  }
-
-  public static String computeSignature(
-      String name, List<JType> params, JType returnType, boolean isCtor) {
-    StringBuilder sb = new StringBuilder(name);
-    sb.append('(');
-    for (JType type : params) {
-      sb.append(type.getJsniSignatureName());
-    }
-    sb.append(')');
-    if (!isCtor) {
-      sb.append(returnType.getJsniSignatureName());
-    } else {
-      sb.append(" <init>");
-    }
-    return sb.toString();
   }
 
   /**
@@ -258,22 +261,31 @@ public class JjsUtils {
   }
 
   /**
-   * Returns an ast node representing the expression {@code expression != null}.
+   * Returns an valid identifier for a named Java entity.
    */
-  public static JExpression createOptimizedNotNullComparison(
-      JProgram program, SourceInfo info, JExpression expression) {
-    JReferenceType type = (JReferenceType) expression.getType();
-    if (type.isNullType()) {
-      return program.getLiteralBoolean(false);
-    }
-
-    if (!type.canBeNull()) {
-      return createOptimizedMultiExpression(expression, program.getLiteralBoolean(true));
-    }
-
-    return new JBinaryOperation(info, program.getTypePrimitiveBoolean(),
-        JBinaryOperator.NEQ, expression, program.getLiteralNull());
+  public static String getNameString(HasName hasName) {
+    String s = hasName.getName().replaceAll("_", "_1").replace('.', '_');
+    return s;
   }
+
+  /**
+   * Translates a Java literal into a JavaScript literal.
+   */
+  public static JsLiteral translateLiteral(JLiteral literal) {
+    return translatorByLiteralClass.get(literal.getClass()).translate(literal);
+  }
+
+  private static Map<Class<? extends JLiteral>, LiteralTranslators> translatorByLiteralClass =
+      new ImmutableMap.Builder()
+          .put(JBooleanLiteral.class, LiteralTranslators.BOOLEAN_LITERAL_TRANSLATOR)
+          .put(JCharLiteral.class, LiteralTranslators.CHAR_LITERAL_TRANSLATOR)
+          .put(JFloatLiteral.class, LiteralTranslators.FLOAT_LITERAL_TRANSLATOR)
+          .put(JDoubleLiteral.class, LiteralTranslators.DOUBLE_LITERAL_TRANSLATOR)
+          .put(JIntLiteral.class, LiteralTranslators.INT_LITERAL_TRANSLATOR)
+          .put(JLongLiteral.class, LiteralTranslators.LONG_LITERAL_TRANSLATOR)
+          .put(JNullLiteral.class, LiteralTranslators.NULL_LITERAL_TRANSLATOR)
+          .put(JStringLiteral.class, LiteralTranslators.STRING_LITERAL_TRANSLATOR)
+          .build();
 
   private enum LiteralTranslators {
     BOOLEAN_LITERAL_TRANSLATOR() {
@@ -357,6 +369,24 @@ public class JjsUtils {
     JsExpression label = propertyName.makeRef(sourceInfo);
     JsExpression value = new JsNumberLiteral(sourceInfo, propertyValue);
     objectLiteral.addProperty(sourceInfo, label, value);
+  }
+
+  private static JMethod createEmptyMethodFromExample(
+      JDeclaredType inType, JMethod exampleMethod, boolean isAbstract) {
+    JMethod emptyMethod = new JMethod(exampleMethod.getSourceInfo(), exampleMethod.getName(),
+        inType, exampleMethod.getType(), isAbstract, false, false, exampleMethod.getAccess());
+    emptyMethod.addThrownExceptions(exampleMethod.getThrownExceptions());
+    emptyMethod.setSynthetic();
+    // Copy parameters.
+    for (JParameter param : exampleMethod.getParams()) {
+      emptyMethod.addParam(new JParameter(param.getSourceInfo(), param.getName(), param.getType(),
+          param.isFinal(), param.isThis(), emptyMethod));
+    }
+    JMethodBody body = new JMethodBody(exampleMethod.getSourceInfo());
+    emptyMethod.setBody(body);
+    emptyMethod.freezeParamTypes();
+    inType.addMethod(emptyMethod);
+    return emptyMethod;
   }
 
   private JjsUtils() {

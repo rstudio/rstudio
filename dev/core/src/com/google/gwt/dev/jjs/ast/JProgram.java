@@ -371,16 +371,22 @@ public class JProgram extends JNode implements ArrayTypeCreator {
     for (JField field : type.getFields()) {
       indexedFields.put(type.getShortName() + '.' + field.getName(), field);
     }
-    if (name.equals("java.lang.Object")) {
-      typeJavaLangObject = (JClassType) type;
-    } else if (name.equals("java.lang.String")) {
-      typeString = (JClassType) type;
-    } else if (name.equals("java.lang.Class")) {
-      typeClass = (JClassType) type;
-    } else if (name.equals(JAVASCRIPTOBJECT)) {
-      typeSpecialJavaScriptObject = (JClassType) type;
-    } else if (name.equals(CLASS_LITERAL_HOLDER)) {
-      typeSpecialClassLiteralHolder = (JClassType) type;
+    switch (name) {
+      case "java.lang.Object":
+        typeJavaLangObject = (JClassType) type;
+        break;
+      case "java.lang.String":
+        typeString = (JClassType) type;
+        break;
+      case "java.lang.Class":
+        typeClass = (JClassType) type;
+        break;
+      case JAVASCRIPTOBJECT:
+        typeSpecialJavaScriptObject = (JClassType) type;
+        break;
+      case CLASS_LITERAL_HOLDER:
+        typeSpecialClassLiteralHolder = (JClassType) type;
+        break;
     }
   }
 
@@ -764,13 +770,35 @@ public class JProgram extends JNode implements ArrayTypeCreator {
   }
 
   public JLiteral getLiteral(Object value) {
+    return getLiteral(SourceOrigin.UNKNOWN, value);
+  }
+
+  public JLiteral getLiteral(SourceInfo info,  Object value) {
+    if (value == null) {
+      return getLiteralNull();
+    }
     if (value instanceof String) {
-      return getStringLiteral(SourceOrigin.UNKNOWN, (String) value);
+      return getStringLiteral(info, (String) value);
     }
     if (value instanceof Integer) {
       return getLiteralInt((Integer) value);
     }
-    throw new IllegalArgumentException("Argument must be a String or an Integer but was " + value);
+    if (value instanceof Long) {
+      return getLiteralLong((Long) value);
+    }
+    if (value instanceof Character) {
+      return getLiteralChar((Character) value);
+    }
+    if (value instanceof Boolean) {
+      return getLiteralBoolean((Boolean) value);
+    }
+    if (value instanceof Double) {
+      return getLiteralDouble((Double) value);
+    }
+    if (value instanceof Float) {
+      return getLiteralFloat((Float) value);
+    }
+    throw new IllegalArgumentException("Unknown literal type for " + value);
   }
 
   public JBooleanLiteral getLiteralBoolean(boolean value) {

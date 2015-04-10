@@ -229,10 +229,10 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
    * chunk.
    */
   protected int charsPerChunk(LinkerContext context, TreeLogger logger) {
-    SortedSet<ConfigurationProperty> configProps = context.getConfigurationProperties();
-    for (ConfigurationProperty prop : configProps) {
-      if (prop.getName().equals(CHUNK_SIZE_PROPERTY)) {
-        return Integer.parseInt(prop.getValues().get(0));
+    SortedSet<ConfigurationProperty> configurationProperties = context.getConfigurationProperties();
+    for (ConfigurationProperty property : configurationProperties) {
+      if (property.getName().equals(CHUNK_SIZE_PROPERTY)) {
+        return Integer.parseInt(property.getValues().get(0));
       }
     }
     // CompilerParameters.gwt.xml indicates that if this property is -1, then

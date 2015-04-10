@@ -22,12 +22,11 @@ import com.google.gwt.dev.util.CollapsedPropertyKey;
 import com.google.gwt.thirdparty.guava.common.base.Objects;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
 import com.google.gwt.thirdparty.guava.common.collect.Maps;
+import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -98,12 +97,11 @@ public class PropertyCombinations implements Iterable<String[]> {
      * We delete items from this set, but want to retain the original order as
      * much as possible.
      */
-    Set<BindingProperty> bindingProperties = new LinkedHashSet<BindingProperty>(
+    Set<BindingProperty> bindingProperties = Sets.newLinkedHashSet(
         properties.getBindingProperties());
 
     // Accumulates the order in which the properties should be evaluated
-    Map<String, BindingProperty> evaluationOrder = new LinkedHashMap<String, BindingProperty>(
-        bindingProperties.size());
+    Map<String, BindingProperty> evaluationOrder = Maps.newLinkedHashMap();
 
     /*
      * Insert a property after all of the properties that it depends upon have

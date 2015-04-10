@@ -31,10 +31,9 @@ import com.google.gwt.dev.jdt.RebindOracle;
 import com.google.gwt.dev.util.log.speedtracer.DevModeEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
+import com.google.gwt.thirdparty.guava.common.collect.Maps;
 
 import java.util.Deque;
-import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 
 /**
@@ -103,7 +102,6 @@ public class StandardRebindOracle implements RebindOracle {
     private Rule getRebindRule(TreeLogger logger, String typeName) throws UnableToCompleteException {
 
       // Make the rebind decision.
-      //
       if (rules.isEmpty()) {
         logger.log(TreeLogger.DEBUG, "No rules are defined, so no substitution can occur", null);
         return null;
@@ -111,31 +109,27 @@ public class StandardRebindOracle implements RebindOracle {
 
       Rule minCostRuleSoFar = null;
 
-      for (Iterator<Rule> iter = rules.iterator(); iter.hasNext();) {
-        Rule rule = iter.next();
+      for (Rule rule : rules) {
 
-        // Branch the logger.
-        //
         TreeLogger branch = Messages.TRACE_CHECKING_RULE.branch(logger, rule, null);
 
         if (rule.isApplicable(branch, genCtx, typeName)) {
           Messages.TRACE_RULE_MATCHED.log(logger, null);
           return rule;
-        } else {
-          Messages.TRACE_RULE_DID_NOT_MATCH.log(logger, null);
+        }
+        Messages.TRACE_RULE_DID_NOT_MATCH.log(logger, null);
 
-          // keep track of fallback partial matches
-          if (minCostRuleSoFar == null) {
-            minCostRuleSoFar = rule;
+        // keep track of fallback partial matches
+        if (minCostRuleSoFar == null) {
+          minCostRuleSoFar = rule;
+        }
+        assert rule.getFallbackEvaluationCost() != 0;
+        // if we found a better match, keep that as the best candidate so far
+        if (rule.getFallbackEvaluationCost() <= minCostRuleSoFar.getFallbackEvaluationCost()) {
+          if (logger.isLoggable(TreeLogger.DEBUG)) {
+            logger.log(TreeLogger.DEBUG, "Found better fallback match for " + rule);
           }
-          assert rule.getFallbackEvaluationCost() != 0;
-          // if we found a better match, keep that as the best candidate so far
-          if (rule.getFallbackEvaluationCost() <= minCostRuleSoFar.getFallbackEvaluationCost()) {
-            if (logger.isLoggable(TreeLogger.DEBUG)) {
-              logger.log(TreeLogger.DEBUG, "Found better fallback match for " + rule);
-            }
-            minCostRuleSoFar = rule;
-          }
+          minCostRuleSoFar = rule;
         }
       }
 
@@ -235,7 +229,7 @@ public class StandardRebindOracle implements RebindOracle {
     }
   }
 
-  private final Map<String, String> typeNameBindingMap = new HashMap<String, String>();
+  private final Map<String, String> typeNameBindingMap = Maps.newHashMap();
 
   private final StandardGeneratorContext genCtx;
 
@@ -250,14 +244,6 @@ public class StandardRebindOracle implements RebindOracle {
     this.propOracle = propOracle;
     this.rules = rules;
     this.genCtx = genCtx;
-  }
-
-  /**
-   * Invalidates the given source type name, so the next rebind request will
-   * generate the type again.
-   */
-  public void invalidateRebind(String sourceTypeName) {
-    typeNameBindingMap.remove(sourceTypeName);
   }
 
   @Override

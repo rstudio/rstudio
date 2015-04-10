@@ -142,7 +142,7 @@ public class BindingProperties implements Serializable {
   @Override
   public String toString() {
     StringBuilder out = new StringBuilder();
-    out.append("SoftProps(");
+    out.append("SoftProperties(");
     for (int i = 0, j = orderedProperties.length; i < j; i++) {
       if (out.length() > 0) {
         out.append(" ");
