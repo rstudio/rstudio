@@ -163,7 +163,7 @@ public class UIPrefsAccessor extends Prefs
    
    public PrefValue<Boolean> showDiagnosticsR()
    {
-      return bool("show_diagnostics_r", true);
+      return bool("show_r_diagnostics", false);
    }
    
    public PrefValue<Boolean> showDiagnosticsCpp()

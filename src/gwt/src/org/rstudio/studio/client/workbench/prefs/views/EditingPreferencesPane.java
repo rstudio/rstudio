@@ -208,13 +208,12 @@ public class EditingPreferencesPane extends PreferencesPane
       VerticalPanel diagnosticsPanel = new VerticalPanel();
       
       diagnosticsPanel.add(checkboxPref("Show diagnostics for R", prefs.showDiagnosticsR()));
-      diagnosticsPanel.add(checkboxPref("Show diagnostics for C/C++", prefs.showDiagnosticsCpp()));
-      diagnosticsPanel.add(checkboxPref("Show diagnostics for JavaScript, HTML, and CSS", prefs.showDiagnosticsOther()));
-    
-      diagnosticsPanel.add(checkboxPref("Provide R style diagnostics (e.g. whitespace)", prefs.enableStyleDiagnostics()));
       diagnosticsPanel.add(checkboxPref("Enable diagnostics within R function calls", prefs.diagnosticsInRFunctionCalls()));
-      
-
+      diagnosticsPanel.add(spaced(checkboxPref("Provide R style diagnostics (e.g. whitespace)", prefs.enableStyleDiagnostics())));
+  
+      diagnosticsPanel.add(checkboxPref("Show diagnostics for C/C++", prefs.showDiagnosticsCpp()));
+      diagnosticsPanel.add(spaced(checkboxPref("Show diagnostics for JavaScript, HTML, and CSS", prefs.showDiagnosticsOther())));
+    
       diagnosticsPanel.add(checkboxPref("Show diagnostics whenever source files are saved", prefs.diagnosticsOnSave()));
       diagnosticsPanel.add(tight(checkboxPref("Show diagnostics after keyboard is idle for a period of time", prefs.enableBackgroundDiagnostics())));
       diagnosticsPanel.add(indent(backgroundDiagnosticsDelayMs_ =
