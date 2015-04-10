@@ -15,7 +15,7 @@
  */
 package com.google.gwt.dev.jjs.impl;
 
-import com.google.gwt.dev.cfg.PermProps;
+import com.google.gwt.dev.cfg.PermutationProperties;
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.js.ast.JsBinaryOperation;
 import com.google.gwt.dev.js.ast.JsBinaryOperator;
@@ -194,8 +194,8 @@ public class HandleCrossFragmentReferences {
     }
   }
 
-  public static void exec(JsProgram jsProgram, PermProps props) {
-    new HandleCrossFragmentReferences(jsProgram, props).execImpl();
+  public static void exec(JsProgram jsProgram, PermutationProperties properties) {
+    new HandleCrossFragmentReferences(jsProgram, properties).execImpl();
   }
 
   private static boolean containsOtherThan(Set<Integer> set, int allowed) {
@@ -212,10 +212,10 @@ public class HandleCrossFragmentReferences {
   private final Set<JsName> namesToPredefine = new LinkedHashSet<JsName>();
   private final boolean shouldPredeclareReferences;
 
-  private HandleCrossFragmentReferences(JsProgram jsProgram, PermProps props) {
+  private HandleCrossFragmentReferences(JsProgram jsProgram, PermutationProperties properties) {
     this.jsProgram = jsProgram;
     // TODO: should it be a compiler error if soft permutations differ?
-    this.shouldPredeclareReferences = props.isTrueInAnyPermutation(
+    this.shouldPredeclareReferences = properties.isTrueInAnyPermutation(
         "compiler.predeclare.cross.fragment.references");
   }
 

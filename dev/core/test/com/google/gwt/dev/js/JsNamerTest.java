@@ -15,7 +15,7 @@
  */
 package com.google.gwt.dev.js;
 
-import com.google.gwt.dev.cfg.ConfigProps;
+import com.google.gwt.dev.cfg.ConfigurationProperties;
 import com.google.gwt.dev.jjs.JsOutputOption;
 import com.google.gwt.dev.jjs.SourceOrigin;
 import com.google.gwt.dev.js.JsIncrementalNamer.JsIncrementalNamerState;
@@ -170,7 +170,7 @@ public class JsNamerTest extends TestCase {
   private String rename(JsProgram program, JsOutputOption outputOption, boolean persistent)
       throws IllegalNameException {
     JsSymbolResolver.exec(program);
-    ConfigProps config = props.makeConfig();
+    ConfigurationProperties config = props.makeConfig();
     switch (outputOption) {
       case PRETTY:
         if (persistent) {
@@ -200,7 +200,7 @@ public class JsNamerTest extends TestCase {
     List<String> blacklist;
     List<String> blacklistSuffixes;
 
-    private ConfigProps makeConfig() {
+    private ConfigurationProperties makeConfig() {
       Map<String, List<String>> props = Maps.newHashMap();
       if (blacklist != null) {
         props.put(ReservedNames.BLACKLIST, blacklist);
@@ -208,7 +208,7 @@ public class JsNamerTest extends TestCase {
       if (blacklistSuffixes != null) {
         props.put(ReservedNames.BLACKLIST_SUFFIXES, blacklistSuffixes);
       }
-      return new ConfigProps(props);
+      return new ConfigurationProperties(props);
     }
   }
 }

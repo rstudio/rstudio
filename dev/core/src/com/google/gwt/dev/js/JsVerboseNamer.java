@@ -15,7 +15,7 @@
  */
 package com.google.gwt.dev.js;
 
-import com.google.gwt.dev.cfg.ConfigProps;
+import com.google.gwt.dev.cfg.ConfigurationProperties;
 import com.google.gwt.dev.js.ast.JsName;
 import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.js.ast.JsScope;
@@ -26,11 +26,11 @@ import com.google.gwt.dev.js.ast.JsScope;
  */
 public class JsVerboseNamer extends JsNamer {
 
-  public static void exec(JsProgram program, ConfigProps config) throws IllegalNameException {
+  public static void exec(JsProgram program, ConfigurationProperties config) throws IllegalNameException {
     new JsVerboseNamer(program, config).execImpl();
   }
 
-  public JsVerboseNamer(JsProgram program, ConfigProps config) {
+  public JsVerboseNamer(JsProgram program, ConfigurationProperties config) {
     super(program, config);
   }
 

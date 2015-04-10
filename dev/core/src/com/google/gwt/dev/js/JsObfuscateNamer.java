@@ -15,7 +15,7 @@
  */
 package com.google.gwt.dev.js;
 
-import com.google.gwt.dev.cfg.ConfigProps;
+import com.google.gwt.dev.cfg.ConfigurationProperties;
 import com.google.gwt.dev.js.ast.JsName;
 import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.js.ast.JsScope;
@@ -40,7 +40,7 @@ public class JsObfuscateNamer extends JsNamer implements FreshNameGenerator {
     return exec(program, null);
   }
 
-  public static FreshNameGenerator exec(JsProgram program, ConfigProps config)
+  public static FreshNameGenerator exec(JsProgram program, ConfigurationProperties config)
       throws IllegalNameException {
     JsObfuscateNamer namer = new JsObfuscateNamer(program, config);
     namer.execImpl();
@@ -75,7 +75,7 @@ public class JsObfuscateNamer extends JsNamer implements FreshNameGenerator {
    */
   private int maxId = -1;
 
-  public JsObfuscateNamer(JsProgram program, ConfigProps config) {
+  public JsObfuscateNamer(JsProgram program, ConfigurationProperties config) {
     super(program, config);
   }
 

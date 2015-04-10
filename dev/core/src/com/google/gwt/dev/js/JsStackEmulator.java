@@ -15,8 +15,8 @@
  */
 package com.google.gwt.dev.js;
 
-import com.google.gwt.dev.cfg.ConfigProps;
-import com.google.gwt.dev.cfg.PermProps;
+import com.google.gwt.dev.cfg.ConfigurationProperties;
+import com.google.gwt.dev.cfg.PermutationProperties;
 import com.google.gwt.dev.jjs.HasSourceInfo;
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
@@ -953,15 +953,16 @@ public class JsStackEmulator {
     STRIP, NATIVE, EMULATED
   }
 
-  public static void exec(JProgram jprogram, JsProgram jsProgram, PermProps props,
+  public static void exec(JProgram jprogram, JsProgram jsProgram, PermutationProperties properties,
       JavaToJavaScriptMap jjsmap) {
-    if (getStackMode(props) == StackMode.EMULATED) {
-      (new JsStackEmulator(jprogram, jsProgram, jjsmap, props.getConfigProps())).execImpl();
+    if (getStackMode(properties) == StackMode.EMULATED) {
+      new JsStackEmulator(jprogram, jsProgram, jjsmap, properties.getConfigurationProperties())
+          .execImpl();
     }
   }
 
-  public static StackMode getStackMode(PermProps props) {
-    String value = props.mustGetString("compiler.stackMode");
+  public static StackMode getStackMode(PermutationProperties properties) {
+    String value = properties.mustGetString("compiler.stackMode");
     return StackMode.valueOf(value.toUpperCase(Locale.ROOT));
   }
 
@@ -978,7 +979,7 @@ public class JsStackEmulator {
   private JDeclaredType exceptionsClass;
 
   private JsStackEmulator(JProgram jprogram, JsProgram jsProgram,
-      JavaToJavaScriptMap jjsmap, ConfigProps config) {
+      JavaToJavaScriptMap jjsmap, ConfigurationProperties config) {
     this.jprogram = jprogram;
     this.jsProgram = jsProgram;
     this.jjsmap = jjsmap;

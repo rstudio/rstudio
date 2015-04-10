@@ -21,7 +21,7 @@ import com.google.gwt.core.ext.linker.impl.StandardLinkerContext;
 import com.google.gwt.dev.CompileTaskRunner.CompileTask;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.cfg.ModuleDefLoader;
-import com.google.gwt.dev.cfg.PropertyPermutations;
+import com.google.gwt.dev.cfg.PropertyCombinations;
 import com.google.gwt.dev.shell.CheckForUpdates;
 import com.google.gwt.dev.shell.CheckForUpdates.UpdateResult;
 import com.google.gwt.dev.util.Memory;
@@ -242,10 +242,10 @@ public class PrecompileOnePerm {
       throws UnableToCompleteException {
 
     // Only precompile specified permutations
-    List<PropertyPermutations> collapsedPermutations =
+    List<PropertyCombinations> collapsedPermutations =
       Precompile.getCollapsedPermutations(module);
 
-    PropertyPermutations onePerm = collapsedPermutations.get(permId);
+    PropertyCombinations onePerm = collapsedPermutations.get(permId);
     Precompilation precompilation = Precompile.precompile(branch, compilerContext, permId, onePerm);
     if (precompilation == null) {
       branch.log(TreeLogger.ERROR, "Precompilation failed");

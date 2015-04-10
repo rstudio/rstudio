@@ -38,10 +38,10 @@ import com.google.gwt.dev.CompilerContext;
 import com.google.gwt.dev.MinimalRebuildCache;
 import com.google.gwt.dev.Permutation;
 import com.google.gwt.dev.PrecompileTaskOptions;
-import com.google.gwt.dev.cfg.ConfigProps;
+import com.google.gwt.dev.cfg.ConfigurationProperties;
 import com.google.gwt.dev.cfg.EntryMethodHolderGenerator;
 import com.google.gwt.dev.cfg.ModuleDef;
-import com.google.gwt.dev.cfg.PermProps;
+import com.google.gwt.dev.cfg.PermutationProperties;
 import com.google.gwt.dev.javac.CompilationProblemReporter;
 import com.google.gwt.dev.javac.CompilationState;
 import com.google.gwt.dev.javac.StandardGeneratorContext;
@@ -304,7 +304,7 @@ public final class JavaToJavaScriptCompiler {
   private PermutationResult compilePermutation(Permutation permutation, UnifiedAst unifiedAst)
       throws UnableToCompleteException {
     Event jjsCompilePermutationEvent = SpeedTracerLogger.start(
-        CompilerEventType.JJS_COMPILE_PERMUTATION, "name", permutation.getProps().prettyPrint()
+        CompilerEventType.JJS_COMPILE_PERMUTATION, "name", permutation.getProperties().prettyPrint()
     );
     /*
      * Do not introduce any new pass here unless it is logically a part of one of the 9 defined
@@ -317,7 +317,7 @@ public final class JavaToJavaScriptCompiler {
 
       // (1) Initialize local state.
       long startTimeMs = System.currentTimeMillis();
-      PermProps props = permutation.getProps();
+      PermutationProperties properties = permutation.getProperties();
       int permutationId = permutation.getId();
       AST ast = unifiedAst.getFreshAst();
       jprogram = ast.getJProgram();
@@ -377,7 +377,7 @@ public final class JavaToJavaScriptCompiler {
       // (5) Construct the Js AST
       Pair<? extends JavaToJavaScriptMap, Set<JsNode>> jjsMapAndInlineableFunctions =
           GenerateJavaScriptAST.exec(logger, jprogram, jsProgram,
-              compilerContext, typeMapper, symbolTable, props);
+              compilerContext, typeMapper, symbolTable, properties);
       JavaToJavaScriptMap jjsmap = jjsMapAndInlineableFunctions.getLeft();
 
       // TODO(stalcup): hide metrics gathering in a callback or subclass
@@ -403,21 +403,21 @@ public final class JavaToJavaScriptCompiler {
 
       // TODO(stalcup): move to normalization
       // Must run before code splitter and namer.
-      JsStackEmulator.exec(jprogram, jsProgram, props, jjsmap);
+      JsStackEmulator.exec(jprogram, jsProgram, properties, jjsmap);
 
       // TODO(stalcup): move to normalization
       Pair<SyntheticArtifact, MultipleDependencyGraphRecorder> dependenciesAndRecorder =
-          splitJsIntoFragments(props, permutationId, jjsmap);
+          splitJsIntoFragments(properties, permutationId, jjsmap);
 
       // TODO(stalcup): move to optimize.
-      Map<JsName, JsLiteral> internedLiteralByVariableName = renameJsSymbols(props, jjsmap);
+      Map<JsName, JsLiteral> internedLiteralByVariableName = renameJsSymbols(properties, jjsmap);
 
       // TODO(stalcup): move to normalization
-      JsBreakUpLargeVarStatements.exec(jsProgram, props.getConfigProps());
+      JsBreakUpLargeVarStatements.exec(jsProgram, properties.getConfigurationProperties());
 
       // (8) Generate Js source
       List<JsSourceMap> sourceInfoMaps = new ArrayList<JsSourceMap>();
-      boolean isSourceMapsEnabled = props.isTrueInAnyPermutation("compiler.useSourceMaps");
+      boolean isSourceMapsEnabled = properties.isTrueInAnyPermutation("compiler.useSourceMaps");
       String[] jsFragments = new String[jsProgram.getFragmentCount()];
       StatementRanges[] ranges = new StatementRanges[jsFragments.length];
       SizeBreakdown[] sizeBreakdowns = options.isJsonSoycEnabled() || options.isSoycEnabled()
@@ -526,7 +526,7 @@ public final class JavaToJavaScriptCompiler {
     }
   }
 
-  private Map<JsName, JsLiteral> runDetailedNamer(ConfigProps config)
+  private Map<JsName, JsLiteral> runDetailedNamer(ConfigurationProperties config)
       throws IllegalNameException {
     Map<JsName, JsLiteral> internedTextByVariableName = null;
     if (shouldOptimize()) {
@@ -541,7 +541,7 @@ public final class JavaToJavaScriptCompiler {
   }
 
   private Pair<SyntheticArtifact, MultipleDependencyGraphRecorder> splitJsIntoFragments(
-      PermProps props, int permutationId, JavaToJavaScriptMap jjsmap) {
+      PermutationProperties properties, int permutationId, JavaToJavaScriptMap jjsmap) {
     Pair<SyntheticArtifact, MultipleDependencyGraphRecorder> dependenciesAndRecorder;
     MultipleDependencyGraphRecorder dependencyRecorder = null;
     SyntheticArtifact dependencies = null;
@@ -561,7 +561,8 @@ public final class JavaToJavaScriptCompiler {
         }
       }
 
-      int minFragmentSize = props.getConfigProps().getInteger(CodeSplitters.MIN_FRAGMENT_SIZE, 0);
+      int minFragmentSize = properties.getConfigurationProperties()
+          .getInteger(CodeSplitters.MIN_FRAGMENT_SIZE, 0);
 
       dependencyRecorder = chooseDependencyRecorder(baos);
       CodeSplitter.exec(logger, jprogram, jsProgram, jjsmap, expectedFragmentCount,
@@ -583,7 +584,7 @@ public final class JavaToJavaScriptCompiler {
 
     // No new JsNames or references to JSNames can be introduced after this
     // point.
-    HandleCrossFragmentReferences.exec(jsProgram, props);
+    HandleCrossFragmentReferences.exec(jsProgram, properties);
 
     return dependenciesAndRecorder;
   }
@@ -644,7 +645,7 @@ public final class JavaToJavaScriptCompiler {
         compilationMetrics.setElapsedMilliseconds(
             System.currentTimeMillis() - ManagementFactory.getRuntimeMXBean().getStartTime());
         compilationMetrics.setJsSize(sizeBreakdowns);
-        compilationMetrics.setPermutationDescription(permutation.getProps().prettyPrint());
+        compilationMetrics.setPermutationDescription(permutation.getProperties().prettyPrint());
         permutationResult.addArtifacts(Lists.newArrayList(
             unifiedAst.getModuleMetrics(), unifiedAst.getPrecompilationMetrics(),
             compilationMetrics));
@@ -1028,19 +1029,21 @@ public final class JavaToJavaScriptCompiler {
     }
   }
 
-  private Map<JsName, JsLiteral> renameJsSymbols(PermProps props, JavaToJavaScriptMap jjsmap)
+  private Map<JsName, JsLiteral> renameJsSymbols(PermutationProperties properties,
+      JavaToJavaScriptMap jjsmap)
       throws UnableToCompleteException {
     Map<JsName, JsLiteral> internedLiteralByVariableName;
     try {
       switch (options.getOutput()) {
         case OBFUSCATED:
-          internedLiteralByVariableName = runObfuscateNamer(props);
+          internedLiteralByVariableName = runObfuscateNamer(properties);
           break;
         case PRETTY:
-          internedLiteralByVariableName = runPrettyNamer(props.getConfigProps(), jjsmap);
+          internedLiteralByVariableName =
+              runPrettyNamer(properties.getConfigurationProperties(), jjsmap);
           break;
         case DETAILED:
-          internedLiteralByVariableName = runDetailedNamer(props.getConfigProps());
+          internedLiteralByVariableName = runDetailedNamer(properties.getConfigurationProperties());
           break;
         default:
           throw new InternalCompilerException("Unknown output mode");
@@ -1053,21 +1056,22 @@ public final class JavaToJavaScriptCompiler {
         ImmutableMap.<JsName, JsLiteral>of() : internedLiteralByVariableName;
   }
 
-  private Map<JsName, JsLiteral> runObfuscateNamer(PermProps props) throws IllegalNameException {
+  private Map<JsName, JsLiteral> runObfuscateNamer(PermutationProperties properties)
+      throws IllegalNameException {
     Map<JsName, JsLiteral> internedLiteralByVariableName =
         JsLiteralInterner.exec(jprogram, jsProgram, (byte) (JsLiteralInterner.INTERN_ALL
             & (byte) (jprogram.typeOracle.isJsInteropEnabled()
             ? ~JsLiteralInterner.INTERN_STRINGS : ~0)));
     FreshNameGenerator freshNameGenerator = JsObfuscateNamer.exec(jsProgram,
-        props.getConfigProps());
+        properties.getConfigurationProperties());
     if (options.shouldRemoveDuplicateFunctions()
-        && JsStackEmulator.getStackMode(props) == JsStackEmulator.StackMode.STRIP) {
+        && JsStackEmulator.getStackMode(properties) == JsStackEmulator.StackMode.STRIP) {
       JsDuplicateFunctionRemover.exec(jsProgram, freshNameGenerator);
     }
     return internedLiteralByVariableName;
   }
 
-  private Map<JsName, JsLiteral> runPrettyNamer(ConfigProps config, JavaToJavaScriptMap jjsmap)
+  private Map<JsName, JsLiteral> runPrettyNamer(ConfigurationProperties config, JavaToJavaScriptMap jjsmap)
       throws IllegalNameException {
     if (compilerContext.getOptions().isIncrementalCompileEnabled()) {
       JsIncrementalNamer.exec(jsProgram, config,
@@ -1147,8 +1151,8 @@ public final class JavaToJavaScriptCompiler {
       AstDumper.maybeDumpAST(jprogram);
 
       // TODO(stalcup): is in wrong place, move to optimization stage
-      ConfigProps configProps = new ConfigProps(module);
-      EnumNameObfuscator.exec(jprogram, logger, configProps, options);
+      ConfigurationProperties configurationProperties = new ConfigurationProperties(module);
+      EnumNameObfuscator.exec(jprogram, logger, configurationProperties, options);
 
       // (4) Normalize the unresolved Java AST
       // Replace defender method references
@@ -1162,7 +1166,7 @@ public final class JavaToJavaScriptCompiler {
       }
       if (module != null && options.isRunAsyncEnabled()) {
         ReplaceRunAsyncs.exec(logger, jprogram);
-        ConfigProps config = new ConfigProps(module);
+        ConfigurationProperties config = new ConfigurationProperties(module);
         CodeSplitters.pickInitialLoadSequence(logger, jprogram, config);
       }
       ImplementClassLiteralsAsFields.exec(jprogram);

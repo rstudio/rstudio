@@ -20,7 +20,7 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.CompilerContext;
 import com.google.gwt.dev.NullRebuildCache;
 import com.google.gwt.dev.PrecompileTaskOptions;
-import com.google.gwt.dev.cfg.ConfigProps;
+import com.google.gwt.dev.cfg.ConfigurationProperties;
 import com.google.gwt.dev.javac.CompilationState;
 import com.google.gwt.dev.javac.StandardGeneratorContext;
 import com.google.gwt.dev.jdt.RebindPermutationOracle;
@@ -46,7 +46,7 @@ public class AstConstructor {
    * {@link JavaToJavaScriptCompiler}.
    */
   public static JProgram construct(TreeLogger logger, final CompilationState state,
-      PrecompileTaskOptions options, ConfigProps config) throws UnableToCompleteException {
+      PrecompileTaskOptions options, ConfigurationProperties config) throws UnableToCompleteException {
 
     InternalCompilerException.preload();
 

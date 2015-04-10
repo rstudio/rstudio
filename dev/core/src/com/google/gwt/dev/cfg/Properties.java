@@ -15,28 +15,29 @@
  */
 package com.google.gwt.dev.cfg;
 
+import com.google.gwt.thirdparty.guava.common.collect.Maps;
+import com.google.gwt.thirdparty.guava.common.collect.Sets;
+
 import java.lang.reflect.InvocationTargetException;
 import java.util.SortedMap;
 import java.util.SortedSet;
-import java.util.TreeMap;
-import java.util.TreeSet;
 
 /**
  * A typed map of deferred binding properties.
  */
 public class Properties {
 
-  private final SortedSet<BindingProperty> bindingProps = new TreeSet<BindingProperty>();
+  private final SortedSet<BindingProperty> bindingProperties = Sets.newTreeSet();
 
-  private final SortedSet<ConfigurationProperty> configProps = new TreeSet<ConfigurationProperty>();
+  private final SortedSet<ConfigurationProperty> configurationProperties = Sets.newTreeSet();
 
-  private final SortedMap<String, Property> map = new TreeMap<String, Property>();
+  private final SortedMap<String, Property> map = Maps.newTreeMap();
 
   /**
    * Adds a previously created deferred-binding property.
    */
   public void addBindingProperty(BindingProperty bindingProperty) {
-    bindingProps.add(bindingProperty);
+    bindingProperties.add(bindingProperty);
   }
 
   /**
@@ -45,7 +46,7 @@ public class Properties {
    */
   public BindingProperty createBinding(String name) {
     BindingProperty prop = create(name, BindingProperty.class);
-    bindingProps.add(prop);
+    bindingProperties.add(prop);
     return prop;
   }
 
@@ -57,7 +58,7 @@ public class Properties {
       boolean allowMultipleValues) {
     ConfigurationProperty prop = create(name, allowMultipleValues,
         ConfigurationProperty.class);
-    configProps.add(prop);
+    configurationProperties.add(prop);
     return prop;
   }
 
@@ -93,11 +94,11 @@ public class Properties {
    * Gets all deferred binding properties in sorted order.
    */
   public SortedSet<BindingProperty> getBindingProperties() {
-    return bindingProps;
+    return bindingProperties;
   }
 
   public SortedSet<ConfigurationProperty> getConfigurationProperties() {
-    return configProps;
+    return configurationProperties;
   }
 
   private <T extends Property> T create(String name, boolean flag,

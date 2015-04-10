@@ -17,7 +17,7 @@ package com.google.gwt.dev.jjs.impl.codesplitter;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
-import com.google.gwt.dev.cfg.ConfigProps;
+import com.google.gwt.dev.cfg.ConfigurationProperties;
 import com.google.gwt.dev.jjs.ast.JArrayType;
 import com.google.gwt.dev.jjs.ast.JExpression;
 import com.google.gwt.dev.jjs.ast.JMethod;
@@ -58,7 +58,7 @@ public class CodeSplitters {
    * @throws UnableToCompleteException If the module specifies a bad load order
    */
   public static void pickInitialLoadSequence(TreeLogger logger,
-      JProgram program, ConfigProps config) throws UnableToCompleteException {
+      JProgram program, ConfigurationProperties config) throws UnableToCompleteException {
     SpeedTracerLogger.Event codeSplitterEvent =
         SpeedTracerLogger
             .start(CompilerEventType.CODE_SPLITTER, "phase", "pickInitialLoadSequence");

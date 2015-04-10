@@ -20,7 +20,7 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.CompileTaskRunner.CompileTask;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.cfg.ModuleDefLoader;
-import com.google.gwt.dev.cfg.PropertyPermutations;
+import com.google.gwt.dev.cfg.PropertyCombinations;
 import com.google.gwt.dev.util.Memory;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
@@ -157,7 +157,7 @@ public class AnalyzeModule {
        * Count the permutations to expose to external build tools performing a
        * sharded compile.
        */
-      int numPermutations = new PropertyPermutations(module.getProperties(),
+      int numPermutations = new PropertyCombinations(module.getProperties(),
           module.getActiveLinkerNames()).collapseProperties().size();
       Util.writeStringAsFile(logger, new File(compilerWorkDir,
           AnalyzeModule.PERM_COUNT_FILENAME), String.valueOf(numPermutations));

@@ -34,9 +34,9 @@ import java.util.Set;
 public class PropertyTest extends TestCase {
 
   private static int computePermutationCount(ModuleDef moduleDef) {
-    PropertyPermutations propertyPermutations =
-        new PropertyPermutations(moduleDef.getProperties(), moduleDef.getActiveLinkerNames());
-    List<PropertyPermutations> collapsePropertySets = propertyPermutations.collapseProperties();
+    PropertyCombinations propertyCombinations =
+        new PropertyCombinations(moduleDef.getProperties(), moduleDef.getActiveLinkerNames());
+    List<PropertyCombinations> collapsePropertySets = propertyCombinations.collapseProperties();
     int numPermutations = collapsePropertySets.size();
     return numPermutations;
   }

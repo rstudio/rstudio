@@ -19,11 +19,11 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.linker.SymbolData;
 import com.google.gwt.core.ext.linker.impl.StandardSymbolData;
 import com.google.gwt.dev.CompilerContext;
+import com.google.gwt.dev.cfg.BindingProperties;
 import com.google.gwt.dev.cfg.BindingProperty;
-import com.google.gwt.dev.cfg.BindingProps;
-import com.google.gwt.dev.cfg.ConfigProps;
+import com.google.gwt.dev.cfg.ConfigurationProperties;
 import com.google.gwt.dev.cfg.ConfigurationProperty;
-import com.google.gwt.dev.cfg.PermProps;
+import com.google.gwt.dev.cfg.PermutationProperties;
 import com.google.gwt.dev.javac.CompilationState;
 import com.google.gwt.dev.javac.CompilationStateBuilder;
 import com.google.gwt.dev.javac.testing.impl.MockJavaResource;
@@ -51,7 +51,7 @@ public abstract class FullCompileTestBase extends JJSTestBase {
   // Compilation Configuration Properties.
   private BindingProperty[] orderedProps = null;
   private String[] orderedPropValues = null;
-  private ConfigurationProperty[] configProps = {};
+  private ConfigurationProperty[] configurationProperties = {};
 
   protected JProgram jProgram = null;
   protected JsProgram jsProgram = null;
@@ -78,7 +78,8 @@ public abstract class FullCompileTestBase extends JJSTestBase {
     CompilationState state =
         CompilationStateBuilder.buildFrom(logger, compilerContext,
             sourceOracle.getResources(), getAdditionalTypeProviderDelegate());
-    ConfigProps config = new ConfigProps(Lists.newArrayList(configProps));
+    ConfigurationProperties config = new ConfigurationProperties(Lists.newArrayList(
+        configurationProperties));
 
     jProgram =
         JavaAstConstructor.construct(logger, state, compilerContext.getOptions(), config,
@@ -99,8 +100,8 @@ public abstract class FullCompileTestBase extends JJSTestBase {
     Map<StandardSymbolData, JsName> symbolTable =
         new TreeMap<StandardSymbolData, JsName>(new SymbolData.ClassIdentComparator());
 
-    PermProps props = new PermProps(Arrays.asList(
-        new BindingProps(orderedProps, orderedPropValues, config)
+    PermutationProperties props = new PermutationProperties(Arrays.asList(
+        new BindingProperties(orderedProps, orderedPropValues, config)
     ));
     return GenerateJavaScriptAST.exec(logger, jProgram, jsProgram, compilerContext,
         typeMapper, symbolTable, props);
@@ -116,6 +117,6 @@ public abstract class FullCompileTestBase extends JJSTestBase {
       ConfigurationProperty[] configurationProperties) {
     this.orderedProps = orderedProps;
     this.orderedPropValues = orderedValues;
-    this.configProps = configurationProperties;
+    this.configurationProperties = configurationProperties;
   }
 }

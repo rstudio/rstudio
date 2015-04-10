@@ -47,18 +47,18 @@ public class ModuleSpacePropertyOracle implements PropertyOracle {
 
   private final Map<String, String> prevAnswers = new HashMap<String, String>();
 
-  private final Properties props;
+  private final Properties properties;
 
   private final ModuleSpace space;
 
   /**
    * Create a property oracle that computes its properties from a module.
    */
-  public ModuleSpacePropertyOracle(Properties props,
+  public ModuleSpacePropertyOracle(Properties properties,
       Set<String> activeLinkerNames, ModuleSpace space) {
     this.space = space;
     this.activeLinkerNames = activeLinkerNames;
-    this.props = props;
+    this.properties = properties;
   }
 
   @Override
@@ -182,7 +182,7 @@ public class ModuleSpacePropertyOracle implements PropertyOracle {
       throw new NullPointerException("propertyName");
     }
 
-    Property prop = props.find(propertyName);
+    Property prop = properties.find(propertyName);
     if (prop == null) {
       // Don't know this property; that's not good.
       //

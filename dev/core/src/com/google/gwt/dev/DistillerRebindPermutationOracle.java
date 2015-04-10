@@ -18,11 +18,11 @@ package com.google.gwt.dev;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.linker.ArtifactSet;
+import com.google.gwt.dev.cfg.BindingProperties;
 import com.google.gwt.dev.cfg.BindingProperty;
-import com.google.gwt.dev.cfg.BindingProps;
-import com.google.gwt.dev.cfg.ConfigProps;
+import com.google.gwt.dev.cfg.ConfigurationProperties;
 import com.google.gwt.dev.cfg.ModuleDef;
-import com.google.gwt.dev.cfg.PropertyPermutations;
+import com.google.gwt.dev.cfg.PropertyCombinations;
 import com.google.gwt.dev.cfg.Rule;
 import com.google.gwt.dev.javac.CompilationState;
 import com.google.gwt.dev.javac.StandardGeneratorContext;
@@ -49,7 +49,7 @@ class DistillerRebindPermutationOracle implements RebindPermutationOracle {
 
   public DistillerRebindPermutationOracle(CompilerContext compilerContext,
       CompilationState compilationState, ArtifactSet generatorArtifacts,
-      PropertyPermutations perms) {
+      PropertyCombinations perms) {
     ModuleDef module = compilerContext.getModule();
     this.compilationState = compilationState;
     permutations = new Permutation[perms.size()];
@@ -57,13 +57,14 @@ class DistillerRebindPermutationOracle implements RebindPermutationOracle {
     generatorContext = new StandardGeneratorContext(
         compilerContext, compilationState, generatorArtifacts, true);
     BindingProperty[] orderedProps = perms.getOrderedProperties();
-    ConfigProps config = new ConfigProps(module);
+    ConfigurationProperties config = new ConfigurationProperties(module);
     Deque<Rule> rules = module.getRules();
     for (int i = 0; i < rebindOracles.length; ++i) {
-      BindingProps props = new BindingProps(orderedProps, perms.getOrderedPropertyValues(i), config);
-      rebindOracles[i] = new StandardRebindOracle(props.toPropertyOracle(), rules,
+      BindingProperties properties =
+          new BindingProperties(orderedProps, perms.getOrderedPropertyValues(i), config);
+      rebindOracles[i] = new StandardRebindOracle(properties.toPropertyOracle(), rules,
           generatorContext);
-      permutations[i] = new Permutation(i, props);
+      permutations[i] = new Permutation(i, properties);
     }
   }
 

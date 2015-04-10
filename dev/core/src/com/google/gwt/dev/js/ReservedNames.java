@@ -15,7 +15,7 @@
  */
 package com.google.gwt.dev.js;
 
-import com.google.gwt.dev.cfg.ConfigProps;
+import com.google.gwt.dev.cfg.ConfigurationProperties;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -37,7 +37,7 @@ class ReservedNames {
 
   private final List<String> blacklistedSuffixes;
 
-  ReservedNames(ConfigProps config) {
+  ReservedNames(ConfigurationProperties config) {
     Set<String> blacklist = new HashSet<String>();
     List<String> blacklistSuffixes = new ArrayList<String>();
     if (config != null) {

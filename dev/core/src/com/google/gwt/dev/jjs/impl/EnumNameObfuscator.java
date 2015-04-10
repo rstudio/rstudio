@@ -17,7 +17,7 @@ package com.google.gwt.dev.jjs.impl;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.dev.PrecompileTaskOptions;
-import com.google.gwt.dev.cfg.ConfigProps;
+import com.google.gwt.dev.cfg.ConfigurationProperties;
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JConstructor;
@@ -209,14 +209,14 @@ public class EnumNameObfuscator {
     return blacklistedEnums.contains(cType.getName().replace('$', '.'));
   }
 
-  public static void exec(JProgram jprogram, TreeLogger logger, ConfigProps configProps,
+  public static void exec(JProgram jprogram, TreeLogger logger, ConfigurationProperties configurationProperties,
       PrecompileTaskOptions options) {
-    if (!configProps.getBoolean(ENUM_NAME_OBFUSCATION_PROPERTY, false)) {
+    if (!configurationProperties.getBoolean(ENUM_NAME_OBFUSCATION_PROPERTY, false)) {
       return;
     }
     boolean closureMode = options.isClosureCompilerFormatEnabled();
     List<String> blacklistedEnums =
-        configProps.getCommaSeparatedStrings(ENUM_NAME_OBFUSCATION_BLACKLIST_PROPERTY);
+        configurationProperties.getCommaSeparatedStrings(ENUM_NAME_OBFUSCATION_BLACKLIST_PROPERTY);
     new EnumNameCallChecker(jprogram, logger, blacklistedEnums).accept(jprogram);
     new EnumNameReplacer(jprogram, logger, blacklistedEnums, closureMode).exec();
   }

@@ -20,7 +20,7 @@ import com.google.gwt.core.ext.linker.impl.StandardSymbolData;
 import com.google.gwt.dev.CompilerContext;
 import com.google.gwt.dev.MinimalRebuildCache;
 import com.google.gwt.dev.PrecompileTaskOptions;
-import com.google.gwt.dev.cfg.PermProps;
+import com.google.gwt.dev.cfg.PermutationProperties;
 import com.google.gwt.dev.jjs.HasSourceInfo;
 import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.JsOutputOption;
@@ -175,7 +175,6 @@ import com.google.gwt.thirdparty.guava.common.base.Function;
 import com.google.gwt.thirdparty.guava.common.base.Predicate;
 import com.google.gwt.thirdparty.guava.common.base.Predicates;
 import com.google.gwt.thirdparty.guava.common.collect.ImmutableList;
-import com.google.gwt.thirdparty.guava.common.collect.ImmutableMap;
 import com.google.gwt.thirdparty.guava.common.collect.ImmutableSortedSet;
 import com.google.gwt.thirdparty.guava.common.collect.Iterables;
 import com.google.gwt.thirdparty.guava.common.collect.LinkedHashMultimap;
@@ -1696,21 +1695,22 @@ public class GenerateJavaScriptAST {
       // The outermost list is indexed by soft permutation id. Each item represents
       // a map from binding properties to their values, but is stored as a list of pairs
       // for easy iteration.
-      JsArrayLiteral permProps = new JsArrayLiteral(sourceInfo);
-      for (ImmutableMap<String, String> propMap : props.findEmbeddedProperties(TreeLogger.NULL)) {
+      JsArrayLiteral permutationProperties = new JsArrayLiteral(sourceInfo);
+      for (Map<String, String> propertyValueByPropertyName :
+          properties.findEmbeddedProperties(TreeLogger.NULL)) {
         JsArrayLiteral entryList = new JsArrayLiteral(sourceInfo);
-        for (Entry<String, String> entry : propMap.entrySet()) {
+        for (Entry<String, String> entry : propertyValueByPropertyName.entrySet()) {
           JsArrayLiteral pair = new JsArrayLiteral(sourceInfo,
               new JsStringLiteral(sourceInfo, entry.getKey()),
               new JsStringLiteral(sourceInfo, entry.getValue()));
           entryList.getExpressions().add(pair);
         }
-        permProps.getExpressions().add(entryList);
+        permutationProperties.getExpressions().add(entryList);
       }
 
       jsProgram.getGlobalBlock().getStatements().add(
           constructInvocation(sourceInfo, "ModuleUtils.setGwtProperty",
-              new JsStringLiteral(sourceInfo, "permProps"), permProps).makeStmt());
+              new JsStringLiteral(sourceInfo, "permProps"), permutationProperties).makeStmt());
     }
 
     @Override
@@ -3283,7 +3283,7 @@ public class GenerateJavaScriptAST {
    */
   public static Pair<JavaToJavaScriptMap, Set<JsNode>> exec(TreeLogger logger, JProgram program,
       JsProgram jsProgram, CompilerContext compilerContext, TypeMapper<?> typeMapper,
-      Map<StandardSymbolData, JsName> symbolTable, PermProps props) {
+      Map<StandardSymbolData, JsName> symbolTable, PermutationProperties props) {
 
     Event event = SpeedTracerLogger.start(CompilerEventType.GENERATE_JS_AST);
     try {
@@ -3408,7 +3408,7 @@ public class GenerateJavaScriptAST {
 
   private final MinimalRebuildCache minimalRebuildCache;
 
-  private final PermProps props;
+  private final PermutationProperties properties;
 
   private OptionMethodNameDisplayMode.Mode methodNameMappingMode;
 
@@ -3416,7 +3416,7 @@ public class GenerateJavaScriptAST {
 
   private GenerateJavaScriptAST(TreeLogger logger, JProgram program, JsProgram jsProgram,
       CompilerContext compilerContext, TypeMapper<?> typeMapper,
-      Map<StandardSymbolData, JsName> symbolTable, PermProps props) {
+      Map<StandardSymbolData, JsName> symbolTable, PermutationProperties properties) {
     this.logger = logger;
     this.program = program;
     this.typeOracle = program.typeOracle;
@@ -3427,7 +3427,7 @@ public class GenerateJavaScriptAST {
     this.minimalRebuildCache = compilerContext.getMinimalRebuildCache();
     this.symbolTable = symbolTable;
     this.typeMapper = typeMapper;
-    this.props = props;
+    this.properties = properties;
 
     PrecompileTaskOptions options = compilerContext.getOptions();
     this.output = options.getOutput();
@@ -3437,7 +3437,7 @@ public class GenerateJavaScriptAST {
     this.hasWholeWorldKnowledge = !options.isIncrementalCompileEnabled();
     this.incremental = options.isIncrementalCompileEnabled();
 
-    this.stripStack = JsStackEmulator.getStackMode(props) == JsStackEmulator.StackMode.STRIP;
+    this.stripStack = JsStackEmulator.getStackMode(properties) == JsStackEmulator.StackMode.STRIP;
     this.jsInteropMode = options.getJsInteropMode();
     this.closureCompilerFormatEnabled = options.isClosureCompilerFormatEnabled();
 

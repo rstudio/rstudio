@@ -14,7 +14,7 @@
 package com.google.gwt.dev;
 
 import com.google.gwt.core.ext.TreeLogger;
-import com.google.gwt.dev.cfg.PropertyPermutations.PermutationDescription;
+import com.google.gwt.dev.cfg.PropertyCombinations.PermutationDescription;
 import com.google.gwt.dev.util.CompilerVersion;
 import com.google.gwt.thirdparty.guava.common.annotations.VisibleForTesting;
 import com.google.gwt.thirdparty.guava.common.cache.Cache;

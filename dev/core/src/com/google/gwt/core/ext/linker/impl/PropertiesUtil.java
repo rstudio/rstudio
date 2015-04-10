@@ -113,13 +113,13 @@ public class PropertiesUtil {
   }
 
   private static String generatePropertyProvider(TreeLogger logger,
-      SelectionProperty prop, SortedSet<ConfigurationProperty> configProps)
+      SelectionProperty prop, SortedSet<ConfigurationProperty> configurationProperties)
       throws UnableToCompleteException {
     StringBuilder toReturn = new StringBuilder();
 
     if (prop.tryGetValue() == null && !prop.isDerived()) {
       toReturn.append("providers['" + prop.getName() + "'] = function()");
-      toReturn.append(prop.getPropertyProvider(logger, configProps));
+      toReturn.append(prop.getPropertyProvider(logger, configurationProperties));
       toReturn.append(";");
 
       toReturn.append("values['" + prop.getName() + "'] = {");

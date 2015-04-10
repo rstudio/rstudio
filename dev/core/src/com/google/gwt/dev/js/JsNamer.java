@@ -15,7 +15,7 @@
  */
 package com.google.gwt.dev.js;
 
-import com.google.gwt.dev.cfg.ConfigProps;
+import com.google.gwt.dev.cfg.ConfigurationProperties;
 import com.google.gwt.dev.js.ast.JsContext;
 import com.google.gwt.dev.js.ast.JsForIn;
 import com.google.gwt.dev.js.ast.JsFunction;
@@ -100,7 +100,7 @@ public abstract class JsNamer {
 
   protected final ReservedNames reserved;
 
-  public JsNamer(JsProgram program, ConfigProps config) {
+  public JsNamer(JsProgram program, ConfigurationProperties config) {
     this.program = program;
     referenced = collectReferencedNames(program);
     reserved = new ReservedNames(config);

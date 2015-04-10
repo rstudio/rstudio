@@ -15,8 +15,8 @@
  */
 package com.google.gwt.dev;
 
-import com.google.gwt.dev.cfg.BindingProps;
-import com.google.gwt.dev.cfg.PermProps;
+import com.google.gwt.dev.cfg.BindingProperties;
+import com.google.gwt.dev.cfg.PermutationProperties;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
 
 import java.io.Serializable;
@@ -30,7 +30,7 @@ public final class Permutation implements Serializable {
 
   private final int id;
 
-  private List<BindingProps> orderedProps = Lists.newArrayList();
+  private List<BindingProperties> orderedProps = Lists.newArrayList();
   private List<GwtCreateMap> gwtCreateAnswers = Lists.newArrayList();
 
   /**
@@ -45,9 +45,9 @@ public final class Permutation implements Serializable {
     gwtCreateAnswers = Lists.newArrayList(other.gwtCreateAnswers);
   }
 
-  public Permutation(int id, BindingProps props) {
+  public Permutation(int id, BindingProperties properties) {
     this.id = id;
-    orderedProps.add(props);
+    orderedProps.add(properties);
     gwtCreateAnswers.add(new GwtCreateMap());
   }
 
@@ -66,8 +66,8 @@ public final class Permutation implements Serializable {
   /**
    * Returns the properties to be used for generating this (hard) permutation.
    */
-  public PermProps getProps() {
-    return new PermProps(orderedProps);
+  public PermutationProperties getProperties() {
+    return new PermutationProperties(orderedProps);
   }
 
   /**

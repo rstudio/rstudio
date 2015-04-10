@@ -20,7 +20,7 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.CompileTaskRunner.CompileTask;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.cfg.ModuleDefLoader;
-import com.google.gwt.dev.cfg.PropertyPermutations;
+import com.google.gwt.dev.cfg.PropertyCombinations;
 import com.google.gwt.dev.jjs.JavaToJavaScriptCompiler;
 import com.google.gwt.dev.jjs.PermutationResult;
 import com.google.gwt.dev.jjs.UnifiedAst;
@@ -357,9 +357,9 @@ public class CompilePerms {
 
     ModuleDef module = ModuleDefLoader.loadFromClassPath(logger, compilerContext, moduleName);
     compilerContext = compilerContextBuilder.module(module).build();
-    PropertyPermutations allPermutations = new PropertyPermutations(
+    PropertyCombinations allPermutations = new PropertyCombinations(
         module.getProperties(), module.getActiveLinkerNames());
-    List<PropertyPermutations> collapsedPermutations = allPermutations.collapseProperties();
+    List<PropertyCombinations> collapsedPermutations = allPermutations.collapseProperties();
     int[] perms = options.getPermsToCompile();
     if (perms == null) {
       perms = new int[collapsedPermutations.size()];
@@ -376,7 +376,7 @@ public class CompilePerms {
        * per shard. Then figure out a way to avoid copying the generated
        * artifacts into every perm result on a shard.
        */
-      PropertyPermutations onePerm = collapsedPermutations.get(permId);
+      PropertyCombinations onePerm = collapsedPermutations.get(permId);
 
       Precompilation precompilation =
           Precompile.precompile(logger, compilerContext, permId, onePerm);

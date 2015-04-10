@@ -26,7 +26,7 @@ import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.dev.CompileTaskRunner.CompileTask;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.cfg.ModuleDefLoader;
-import com.google.gwt.dev.cfg.PropertyPermutations;
+import com.google.gwt.dev.cfg.PropertyCombinations;
 import com.google.gwt.dev.javac.CompilationState;
 import com.google.gwt.dev.javac.CompilationUnit;
 import com.google.gwt.dev.jjs.JavaToJavaScriptCompiler;
@@ -131,7 +131,7 @@ public class Precompile {
    */
   public static Precompilation precompile(TreeLogger logger, CompilerContext compilerContext)
       throws UnableToCompleteException {
-    PropertyPermutations allPermutations = new PropertyPermutations(
+    PropertyCombinations allPermutations = new PropertyCombinations(
         compilerContext.getModule().getProperties(),
         compilerContext.getModule().getActiveLinkerNames());
     if (compilerContext.getOptions().isIncrementalCompileEnabled() && allPermutations.size() > 1) {
@@ -173,7 +173,7 @@ public class Precompile {
       ArtifactSet generatorArtifacts = new ArtifactSet();
       DistillerRebindPermutationOracle rpo = new DistillerRebindPermutationOracle(
           compilerContext, compilationState, generatorArtifacts,
-          new PropertyPermutations(module.getProperties(), module.getActiveLinkerNames()));
+          new PropertyCombinations(module.getProperties(), module.getActiveLinkerNames()));
       // Allow GC later.
       compilationState = null;
       // Never optimize on a validation run.
@@ -193,21 +193,21 @@ public class Precompile {
    * Create a list of all possible permutations configured for this module after
    * collapsing soft permutations.
    */
-  static List<PropertyPermutations> getCollapsedPermutations(ModuleDef module) {
-    PropertyPermutations allPermutations =
-        new PropertyPermutations(module.getProperties(), module.getActiveLinkerNames());
-    List<PropertyPermutations> collapsedPermutations = allPermutations.collapseProperties();
+  static List<PropertyCombinations> getCollapsedPermutations(ModuleDef module) {
+    PropertyCombinations allPermutations =
+        new PropertyCombinations(module.getProperties(), module.getActiveLinkerNames());
+    List<PropertyCombinations> collapsedPermutations = allPermutations.collapseProperties();
     return collapsedPermutations;
   }
 
   static Precompilation precompile(TreeLogger logger, CompilerContext compilerContext,
-      int permutationBase, PropertyPermutations allPermutations) {
+      int permutationBase, PropertyCombinations allPermutations) {
     return precompile(logger, compilerContext, permutationBase,
         allPermutations, ManagementFactory.getRuntimeMXBean().getStartTime());
   }
 
   static Precompilation precompile(TreeLogger logger, CompilerContext compilerContext,
-      int permutationBase, PropertyPermutations allPermutations, long startTimeMilliseconds) {
+      int permutationBase, PropertyCombinations allPermutations, long startTimeMilliseconds) {
 
     Event precompileEvent = SpeedTracerLogger.start(CompilerEventType.PRECOMPILE);
 
@@ -434,7 +434,7 @@ public class Precompile {
             logger.branch(TreeLogger.INFO, "Precompiling (minimal) module " + module.getName());
         Util.writeObjectAsFile(logger, precompilationFile, options);
         int numPermutations =
-            new PropertyPermutations(module.getProperties(), module.getActiveLinkerNames())
+            new PropertyCombinations(module.getProperties(), module.getActiveLinkerNames())
                 .collapseProperties().size();
         Util.writeStringAsFile(logger, new File(compilerWorkDir, PERM_COUNT_FILENAME), String
             .valueOf(numPermutations));

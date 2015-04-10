@@ -16,17 +16,14 @@
 package com.google.gwt.dev.util;
 
 import com.google.gwt.dev.Permutation;
+import com.google.gwt.dev.cfg.BindingProperties;
 import com.google.gwt.dev.cfg.BindingProperty;
-import com.google.gwt.dev.cfg.BindingProps;
 import com.google.gwt.thirdparty.guava.common.collect.ImmutableList;
+import com.google.gwt.thirdparty.guava.common.collect.SortedSetMultimap;
+import com.google.gwt.thirdparty.guava.common.collect.TreeMultimap;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
-import java.util.SortedMap;
-import java.util.SortedSet;
-import java.util.TreeMap;
-import java.util.TreeSet;
 
 /**
  * Creates a string representation of the binding property key/value pairs used
@@ -42,42 +39,33 @@ public class CollapsedPropertyKey extends StringKey {
   /**
    * Create the string key for a collection of property oracles.
    */
-  private static String collapse(List<BindingProps> allProps) {
+  private static String collapse(List<BindingProperties> allPropertiesSets) {
     // The map used to create the string key
-    SortedMap<String, SortedSet<String>> collapsedPropertyMap = new TreeMap<String, SortedSet<String>>();
-    for (BindingProps bindingProps : allProps) {
-      BindingProperty[] props = bindingProps.getOrderedProps();
-      String[] values = bindingProps.getOrderedPropValues();
-      for (int i = 0; i < props.length; i++) {
-        BindingProperty prop = props[i];
+    SortedSetMultimap<String, String> propertyValuesByPropertyName = TreeMultimap.create();
+    for (BindingProperties bindingProperties : allPropertiesSets) {
+      BindingProperty[] properties = bindingProperties.getOrderedProps();
+      String[] values = bindingProperties.getOrderedPropValues();
+      for (int i = 0; i < properties.length; i++) {
+        BindingProperty property = properties[i];
         String value = values[i];
-        boolean isCollapsed = false;
+
+        // For "hard" properties, add the singleton value.
+        propertyValuesByPropertyName.put(property.getName(), value);
 
         // Iterate over the equivalence sets defined in the property
-        for (Set<String> equivalenceSet : prop.getCollapsedValues()) {
-          if (equivalenceSet.contains(value)) {
-            /*
-             * If we find a set that contains the current value, add all the
-             * values in the set. This accounts for the transitive nature of
-             * equality.
-             */
-            SortedSet<String> toAdd = collapsedPropertyMap.get(prop.getName());
-            if (toAdd == null) {
-              toAdd = new TreeSet<String>();
-              collapsedPropertyMap.put(prop.getName(), toAdd);
-              isCollapsed = true;
-            }
-            toAdd.addAll(equivalenceSet);
+        for (Set<String> collapsedValues : property.getCollapsedValuesSets()) {
+          if (collapsedValues.contains(value)) {
+          /*
+           * If we find a set that contains the current value, add all the
+           * values in the set. This accounts for the transitive nature of
+           * equality.
+           */
+            propertyValuesByPropertyName.putAll(property.getName(), collapsedValues);
           }
-        }
-        if (!isCollapsed) {
-          // For "hard" properties, add the singleton value
-          collapsedPropertyMap.put(prop.getName(), new TreeSet<String>(
-              Arrays.asList(value)));
         }
       }
     }
-    return collapsedPropertyMap.toString();
+    return propertyValuesByPropertyName.toString();
   }
 
   private final Permutation permutation;
@@ -88,14 +76,14 @@ public class CollapsedPropertyKey extends StringKey {
    * through {@link #getPermutation()}.
    */
   public CollapsedPropertyKey(Permutation permutation) {
-    super(collapse(permutation.getProps().getSoftProps()));
+    super(collapse(permutation.getProperties().getSoftProperties()));
     this.permutation = permutation;
   }
 
   /**
    * Creates a key based on all collapsed property/value pairs for a single permutation.
    */
-  public CollapsedPropertyKey(BindingProps props) {
+  public CollapsedPropertyKey(BindingProperties props) {
     super(collapse(ImmutableList.of(props)));
     this.permutation = null;
   }

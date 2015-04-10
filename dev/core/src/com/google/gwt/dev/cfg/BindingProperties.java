@@ -32,33 +32,33 @@ import java.util.TreeSet;
  * <p>If soft permutations aren't turned on, these are also the properties
  * for the enclosing hard permutation.
  */
-public class BindingProps implements Serializable {
+public class BindingProperties implements Serializable {
 
-  private final ConfigProps configProps;
+  private final ConfigurationProperties configurationProperties;
 
-  private final BindingProperty[] orderedProps;
+  private final BindingProperty[] orderedProperties;
 
-  private final String[] orderedPropValues;
+  private final String[] orderedPropertyValues;
 
   /**
    * Create a property oracle that will return the supplied values.
    *
-   * @param orderedProps array of binding properties in dependency order
-   * @param orderedPropValues a parallel array containing the property values
+   * @param orderedProperties array of binding properties in dependency order
+   * @param orderedPropertyValues a parallel array containing the property values
    */
-  public BindingProps(BindingProperty[] orderedProps, String[] orderedPropValues,
-      ConfigProps configProps) {
-    this.orderedProps = orderedProps;
-    this.orderedPropValues = orderedPropValues;
-    this.configProps = configProps;
+  public BindingProperties(BindingProperty[] orderedProperties, String[] orderedPropertyValues,
+      ConfigurationProperties configurationProperties) {
+    this.orderedProperties = orderedProperties;
+    this.orderedPropertyValues = orderedPropertyValues;
+    this.configurationProperties = configurationProperties;
 
-    assert orderedProps.length == orderedPropValues.length;
+    assert orderedProperties.length == orderedPropertyValues.length;
 
     // Reject illegal values at construction time
-    int len = orderedProps.length;
+    int len = orderedProperties.length;
     for (int i = 0; i < len; i++) {
-      BindingProperty prop = orderedProps[i];
-      String value = orderedPropValues[i];
+      BindingProperty prop = orderedProperties[i];
+      String value = orderedPropertyValues[i];
       if (!prop.isGeneratedValue(value)) {
         throw new IllegalArgumentException("Property " + prop.getName()
             + " cannot have value " + value);
@@ -81,9 +81,9 @@ public class BindingProps implements Serializable {
    * Returns the value of a property as a string. If it doesn't exist, returns the default value.
    */
   public String getString(String key, String defaultValue) {
-    for (int i = 0; i < orderedProps.length; i++) {
-      if (orderedProps[i].getName().equals(key)) {
-        return orderedPropValues[i];
+    for (int i = 0; i < orderedProperties.length; i++) {
+      if (orderedProperties[i].getName().equals(key)) {
+        return orderedPropertyValues[i];
       }
     }
     return defaultValue;
@@ -93,8 +93,8 @@ public class BindingProps implements Serializable {
    * Returns the configuration properties for this compile.
    * (They are the same in every permutation.)
    */
-  public ConfigProps getConfigProps() {
-    return configProps;
+  public ConfigurationProperties getConfigurationProperties() {
+    return configurationProperties;
   }
 
   /**
@@ -102,21 +102,21 @@ public class BindingProps implements Serializable {
    * (Earlier properties may not depend on later properties.)
    */
   public BindingProperty[] getOrderedProps() {
-    return orderedProps;
+    return orderedProperties;
   }
 
   /**
    * Returns the value of each binding property, in the same order as {@link #getOrderedProps}.
    */
   public String[] getOrderedPropValues() {
-    return orderedPropValues;
+    return orderedPropertyValues;
   }
 
   /**
    * Returns a view of the properties as a PropertyOracle.
    */
   public PropertyOracle toPropertyOracle() {
-    return new SoftPropsOracle();
+    return new SoftPropertiesOracle();
   }
 
   /**
@@ -124,11 +124,11 @@ public class BindingProps implements Serializable {
    */
   public String prettyPrint() {
     StringBuilder out = new StringBuilder();
-    for (BindingProperty prop : getOrderedProps()) {
+    for (BindingProperty property : getOrderedProps()) {
       if (out.length() > 0) {
         out.append(",");
       }
-      String name = prop.getName();
+      String name = property.getName();
       out.append(name);
       out.append("=");
       out.append(getString(name, "(missing)"));
@@ -143,37 +143,37 @@ public class BindingProps implements Serializable {
   public String toString() {
     StringBuilder out = new StringBuilder();
     out.append("SoftProps(");
-    for (int i = 0, j = orderedProps.length; i < j; i++) {
+    for (int i = 0, j = orderedProperties.length; i < j; i++) {
       if (out.length() > 0) {
         out.append(" ");
       }
-      out.append(orderedProps[i].getName());
+      out.append(orderedProperties[i].getName());
       out.append(" = ");
-      out.append(orderedPropValues[i]);
+      out.append(orderedPropertyValues[i]);
     }
     out.append(")");
     return out.toString();
   }
 
-  boolean hasSameBindingProperties(BindingProps other) {
-    if (orderedProps.length != other.orderedProps.length) {
+  boolean hasSameBindingProperties(BindingProperties other) {
+    if (orderedProperties.length != other.orderedProperties.length) {
       return false;
     }
-    for (int i = 0; i < orderedProps.length; i++) {
-      if (orderedProps[i] != other.orderedProps[i]) {
+    for (int i = 0; i < orderedProperties.length; i++) {
+      if (orderedProperties[i] != other.orderedProperties[i]) {
         return false;
       }
     }
     return true;
   }
 
-  private class SoftPropsOracle implements PropertyOracle {
+  private class SoftPropertiesOracle implements PropertyOracle {
 
     @Override
     public com.google.gwt.core.ext.ConfigurationProperty getConfigurationProperty(
         String propertyName)
         throws BadPropertyValueException {
-      return configProps.getConfigurationProperty(propertyName);
+      return configurationProperties.getConfigurationProperty(propertyName);
     }
 
     @Override
@@ -184,11 +184,11 @@ public class BindingProps implements Serializable {
       // search is at least as fast as a map lookup by name would be.
       // If that turns out not to be the case, the ctor could build a
       // name-to-index map.
-      for (int i = 0; i < orderedProps.length; i++) {
-        final BindingProperty prop = orderedProps[i];
+      for (int i = 0; i < orderedProperties.length; i++) {
+        final BindingProperty prop = orderedProperties[i];
         final String name = prop.getName();
         if (name.equals(propertyName)) {
-          String value = orderedPropValues[i];
+          String value = orderedPropertyValues[i];
           TreeSet<String> possibleValues =
               new TreeSet<String>(Arrays.asList(prop.getDefinedValues()));
           return new DefaultSelectionProperty(value, prop.getFallback(), name,

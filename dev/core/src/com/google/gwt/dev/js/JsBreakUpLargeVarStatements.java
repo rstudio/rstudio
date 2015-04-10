@@ -15,7 +15,7 @@
  */
 package com.google.gwt.dev.js;
 
-import com.google.gwt.dev.cfg.ConfigProps;
+import com.google.gwt.dev.cfg.ConfigurationProperties;
 import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.js.ast.JsContext;
 import com.google.gwt.dev.js.ast.JsModVisitor;
@@ -34,7 +34,7 @@ import java.util.List;
 public class JsBreakUpLargeVarStatements extends JsModVisitor {
   private static final String CONFIG_PROP_MAX_VARS = "compiler.max.vars.per.var";
 
-  public static void exec(JsProgram program, ConfigProps configMap) {
+  public static void exec(JsProgram program, ConfigurationProperties configMap) {
     (new JsBreakUpLargeVarStatements(configMap)).accept(program);
   }
 
@@ -44,7 +44,7 @@ public class JsBreakUpLargeVarStatements extends JsModVisitor {
 
   private final int maxVarsPerStatement;
 
-  private JsBreakUpLargeVarStatements(ConfigProps configMap) {
+  private JsBreakUpLargeVarStatements(ConfigurationProperties configMap) {
     int maxVars = configMap.getInteger(CONFIG_PROP_MAX_VARS, -1);
     if (maxVars < 1) {
       throw new InternalCompilerException("Could not find property " + CONFIG_PROP_MAX_VARS);

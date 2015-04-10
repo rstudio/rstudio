@@ -29,12 +29,12 @@ import com.google.gwt.dev.MinimalRebuildCache;
 import com.google.gwt.dev.MinimalRebuildCacheManager;
 import com.google.gwt.dev.NullRebuildCache;
 import com.google.gwt.dev.cfg.BindingProperty;
-import com.google.gwt.dev.cfg.ConfigProps;
+import com.google.gwt.dev.cfg.ConfigurationProperties;
 import com.google.gwt.dev.cfg.ConfigurationProperty;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.cfg.ModuleDefLoader;
-import com.google.gwt.dev.cfg.PropertyPermutations;
-import com.google.gwt.dev.cfg.PropertyPermutations.PermutationDescription;
+import com.google.gwt.dev.cfg.PropertyCombinations;
+import com.google.gwt.dev.cfg.PropertyCombinations.PermutationDescription;
 import com.google.gwt.dev.cfg.ResourceLoader;
 import com.google.gwt.dev.cfg.ResourceLoaders;
 import com.google.gwt.dev.codeserver.Job.Result;
@@ -317,9 +317,9 @@ public class Recompiler {
 
     // Check if the module definition + job specific binding property restrictions expanded to more
     // than permutation.
-    PropertyPermutations propertyPermutations =
-        new PropertyPermutations(module.getProperties(), module.getActiveLinkerNames());
-    List<PropertyPermutations> permutationPropertySets = propertyPermutations.collapseProperties();
+    PropertyCombinations propertyCombinations =
+        new PropertyCombinations(module.getProperties(), module.getActiveLinkerNames());
+    List<PropertyCombinations> permutationPropertySets = propertyCombinations.collapseProperties();
     if (options.isIncrementalCompileEnabled() && permutationPropertySets.size() > 1) {
       compileLogger.log(Type.INFO,
           "Current binding properties are expanding to more than one permutation "
@@ -328,7 +328,7 @@ public class Recompiler {
       job.setCompileStrategy(CompileStrategy.SKIPPED);
       return true;
     }
-    PropertyPermutations permutationPropertySet = permutationPropertySets.get(0);
+    PropertyCombinations permutationPropertySet = permutationPropertySets.get(0);
     PermutationDescription permutationDescription =
         permutationPropertySet.getPermutationDescription(0);
 
@@ -449,7 +449,7 @@ public class Recompiler {
     }
 
     // A snapshot of the module's configuration before we modified it.
-    ConfigProps config = new ConfigProps(moduleDef);
+    ConfigurationProperties config = new ConfigurationProperties(moduleDef);
 
     // We need a cross-site linker. Automatically replace the default linker.
     if (IFrameLinker.class.isAssignableFrom(moduleDef.getActivePrimaryLinker())) {

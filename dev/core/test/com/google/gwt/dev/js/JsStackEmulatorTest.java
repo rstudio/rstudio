@@ -22,12 +22,12 @@ import com.google.gwt.dev.CompilerContext;
 import com.google.gwt.dev.MinimalRebuildCache;
 import com.google.gwt.dev.PrecompileTaskOptions;
 import com.google.gwt.dev.PrecompileTaskOptionsImpl;
+import com.google.gwt.dev.cfg.BindingProperties;
 import com.google.gwt.dev.cfg.BindingProperty;
-import com.google.gwt.dev.cfg.BindingProps;
 import com.google.gwt.dev.cfg.ConditionNone;
-import com.google.gwt.dev.cfg.ConfigProps;
+import com.google.gwt.dev.cfg.ConfigurationProperties;
 import com.google.gwt.dev.cfg.ConfigurationProperty;
-import com.google.gwt.dev.cfg.PermProps;
+import com.google.gwt.dev.cfg.PermutationProperties;
 import com.google.gwt.dev.javac.CompilationState;
 import com.google.gwt.dev.javac.CompilationStateBuilder;
 import com.google.gwt.dev.javac.testing.impl.MockJavaResource;
@@ -263,7 +263,7 @@ public class JsStackEmulatorTest extends FullCompileTestBase {
     CompilerContext context = new CompilerContext.Builder().options(options)
         .minimalRebuildCache(new MinimalRebuildCache()).build();
 
-    ConfigProps config = new ConfigProps(Arrays.asList(recordFileNamesProp,
+    ConfigurationProperties config = new ConfigurationProperties(Arrays.asList(recordFileNamesProp,
         recordLineNumbersProp));
 
     CompilationState state =
@@ -293,17 +293,17 @@ public class JsStackEmulatorTest extends FullCompileTestBase {
     BindingProperty stackMode = new BindingProperty("compiler.stackMode");
     stackMode.addDefinedValue(new ConditionNone(), "EMULATED");
 
-    PermProps props = new PermProps(Arrays.asList(
-        new BindingProps(new BindingProperty[]{stackMode}, new String[]{"EMULATED"}, config)
+    PermutationProperties properties = new PermutationProperties(Arrays.asList(
+        new BindingProperties(new BindingProperty[]{stackMode}, new String[]{"EMULATED"}, config)
     ));
 
     JsProgram jsProgram = new JsProgram();
     JavaToJavaScriptMap jjsmap = GenerateJavaScriptAST.exec(
         logger, jProgram, jsProgram, context, typeMapper,
-        symbolTable, props).getLeft();
+        symbolTable, properties).getLeft();
 
     // Finally, run the pass we care about.
-    JsStackEmulator.exec(jProgram, jsProgram, props, jjsmap);
+    JsStackEmulator.exec(jProgram, jsProgram, properties, jjsmap);
 
     return jsProgram;
   }

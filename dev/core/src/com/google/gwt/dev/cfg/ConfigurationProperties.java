@@ -33,10 +33,10 @@ import java.util.Map.Entry;
  * These are properties that don't vary by permutation.
  * They may be single-valued or multi-valued.
  */
-public class ConfigProps implements Serializable {
+public class ConfigurationProperties implements Serializable {
 
-  public static final ConfigProps EMPTY =
-      new ConfigProps(Collections.<ConfigurationProperty>emptyList());
+  public static final ConfigurationProperties EMPTY =
+      new ConfigurationProperties(Collections.<ConfigurationProperty>emptyList());
 
   private static final Splitter SPLIT_ON_COMMAS =
       Splitter.on(',').omitEmptyStrings().trimResults();
@@ -56,35 +56,35 @@ public class ConfigProps implements Serializable {
    *
    * <p>(We can't use a Multimap due to the above requirements.)
    */
-  private final ImmutableMap<String, List<String>> props;
+  private final ImmutableMap<String, List<String>> properties;
 
   /**
    * Takes a snapshot of some ConfigurationProperty instances.
    */
-  public ConfigProps(Iterable<ConfigurationProperty> props) {
+  public ConfigurationProperties(Iterable<ConfigurationProperty> properties) {
     Builder<String, List<String>> builder = ImmutableMap.builder();
-    for (ConfigurationProperty prop : props) {
-      builder.put(prop.getName(), copyOf(prop.getValues()));
+    for (ConfigurationProperty property : properties) {
+      builder.put(property.getName(), copyOf(property.getValues()));
     }
-    this.props = builder.build();
+    this.properties = builder.build();
   }
 
   /**
    * Takes a snapshot of a module's configuration properties.
    */
-  public ConfigProps(ModuleDef def) {
+  public ConfigurationProperties(ModuleDef def) {
     this(def.getProperties().getConfigurationProperties());
   }
 
   /**
    * Construct from a map (for testing).
    */
-  public ConfigProps(Map<String, List<String>> map) {
+  public ConfigurationProperties(Map<String, List<String>> map) {
     Builder<String, List<String>> builder = ImmutableMap.builder();
     for (Entry<String, List<String>> entry : map.entrySet()) {
       builder.put(entry.getKey(), copyOf(entry.getValue()));
     }
-    this.props = builder.build();
+    this.properties = builder.build();
   }
 
   /**
@@ -135,10 +135,10 @@ public class ConfigProps implements Serializable {
    * containing one null.
    */
   public List<String> getStrings(String key) {
-    if (!props.containsKey(key)) {
+    if (!properties.containsKey(key)) {
       return Collections.emptyList();
     }
-    return props.get(key);
+    return properties.get(key);
   }
 
   /**
@@ -167,10 +167,10 @@ public class ConfigProps implements Serializable {
    */
   com.google.gwt.core.ext.ConfigurationProperty getConfigurationProperty(String key)
       throws BadPropertyValueException {
-    if (!props.containsKey(key)) {
+    if (!properties.containsKey(key)) {
       throw new BadPropertyValueException(key);
     }
-    return new DefaultConfigurationProperty(key, props.get(key));
+    return new DefaultConfigurationProperty(key, properties.get(key));
   }
 
   /**

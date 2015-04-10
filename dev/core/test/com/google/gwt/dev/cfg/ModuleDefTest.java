@@ -118,7 +118,7 @@ public class ModuleDefTest extends TestCase {
 
     b.normalizeCollapsedValues();
 
-    List<SortedSet<String>> collapsedValues = b.getCollapsedValues();
+    List<SortedSet<String>> collapsedValues = b.getCollapsedValuesSets();
     assertEquals(4, collapsedValues.size());
     assertEquals(Arrays.asList("a", "b"), new ArrayList<String>(
         collapsedValues.get(0)));
@@ -133,7 +133,7 @@ public class ModuleDefTest extends TestCase {
     b.addCollapsedValues("*");
     b.normalizeCollapsedValues();
 
-    collapsedValues = b.getCollapsedValues();
+    collapsedValues = b.getCollapsedValuesSets();
     assertEquals(1, collapsedValues.size());
     assertEquals(Arrays.asList(b.getDefinedValues()), new ArrayList<String>(
         collapsedValues.get(0)));

@@ -154,7 +154,7 @@ public class BindingProperty extends Property {
     return generatedValues.getValuesAsArray(condition);
   }
 
-  public List<SortedSet<String>> getCollapsedValues() {
+  public List<SortedSet<String>> getCollapsedValuesSets() {
     return collapsedValues;
   }
 

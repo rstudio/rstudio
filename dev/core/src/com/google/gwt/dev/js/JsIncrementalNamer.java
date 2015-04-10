@@ -13,7 +13,7 @@
  */
 package com.google.gwt.dev.js;
 
-import com.google.gwt.dev.cfg.ConfigProps;
+import com.google.gwt.dev.cfg.ConfigurationProperties;
 import com.google.gwt.dev.jjs.impl.JavaToJavaScriptMap;
 import com.google.gwt.dev.js.ast.JsName;
 import com.google.gwt.dev.js.ast.JsProgram;
@@ -68,7 +68,7 @@ public class JsIncrementalNamer extends JsNamer {
   @VisibleForTesting
   public static final String RESERVED_IDENT_SUFFIX = "_g$";
 
-  public static void exec(JsProgram program, ConfigProps config, JsIncrementalNamerState state,
+  public static void exec(JsProgram program, ConfigurationProperties config, JsIncrementalNamerState state,
       JavaToJavaScriptMap jjsmap) throws IllegalNameException {
     new JsIncrementalNamer(program, config, state, jjsmap).execImpl();
   }
@@ -77,7 +77,7 @@ public class JsIncrementalNamer extends JsNamer {
 
   private final JsIncrementalNamerState state;
 
-  public JsIncrementalNamer(JsProgram program, ConfigProps config,
+  public JsIncrementalNamer(JsProgram program, ConfigurationProperties config,
       JsIncrementalNamerState state, JavaToJavaScriptMap jjsmap) {
     super(program, config);
     this.state = state;

@@ -32,24 +32,24 @@ import java.util.SortedSet;
  *
  * <p>This is essentially a table where columns are soft permutations
  * and rows are property names. Each values for each column are stored
- * in an instance of {@link BindingProps}).
+ * in an instance of {@link BindingProperties}).
  */
-public class PermProps {
-  private final ImmutableList<BindingProps> props;
+public class PermutationProperties {
+  private final ImmutableList<BindingProperties> softProperties;
 
-  public PermProps(Iterable<BindingProps> softProps) {
-    this.props = ImmutableList.copyOf(softProps);
-    assert props.size() >= 1;
-    assert sameBindingProperties(props) :
+  public PermutationProperties(Iterable<BindingProperties> softProperties) {
+    this.softProperties = ImmutableList.copyOf(softProperties);
+    assert this.softProperties.size() >= 1;
+    assert sameBindingProperties(this.softProperties) :
         "The binding properties should be the same for each soft permutation.";
   }
 
   /**
    * Returns the permutation-independent properties.
    */
-  public ConfigProps getConfigProps() {
+  public ConfigurationProperties getConfigurationProperties() {
     // They are all the same, so just take the first one.
-    return props.get(0).getConfigProps();
+    return softProperties.get(0).getConfigurationProperties();
   }
 
   /**
@@ -57,7 +57,7 @@ public class PermProps {
    */
   public ImmutableList<BindingProperty> getBindingProperties() {
     // Just take the first one.
-    return ImmutableList.copyOf(props.get(0).getOrderedProps());
+    return ImmutableList.copyOf(softProperties.get(0).getOrderedProps());
   }
 
   /**
@@ -65,8 +65,8 @@ public class PermProps {
    *
    * <p>If soft permutations aren't turned on, the list will contain one item.
    */
-  public ImmutableList<BindingProps> getSoftProps() {
-    return props;
+  public ImmutableList<BindingProperties> getSoftProperties() {
+    return softProperties;
   }
 
   /**
@@ -80,7 +80,7 @@ public class PermProps {
       throw new IllegalStateException("The '" + key +
           "' binding property must be the same in each soft permutation");
     }
-    String value = props.get(0).getString(key, null);
+    String value = softProperties.get(0).getString(key, null);
     if (value == null) {
       throw new IllegalStateException("The '" + key + "' binding property is not defined");
     }
@@ -91,8 +91,8 @@ public class PermProps {
    * Returns true if a binding property has the same value in every soft permutation.
    */
   public boolean isEqualInEachPermutation(String key) {
-    String expected = props.get(0).getString(key, null);
-    for (BindingProps prop : props.subList(1, props.size())) {
+    String expected = softProperties.get(0).getString(key, null);
+    for (BindingProperties prop : softProperties.subList(1, softProperties.size())) {
       String actual = prop.getString(key, null);
       if (!Objects.equal(expected, actual)) {
         return false;
@@ -105,8 +105,8 @@ public class PermProps {
    * Checks if a boolean binding property is set to true in any soft permutation.
    */
   public boolean isTrueInAnyPermutation(String name) {
-    for (BindingProps bindingProps : props) {
-      if (bindingProps.getBoolean(name, false)) {
+    for (BindingProperties bindingProperties : softProperties) {
+      if (bindingProperties.getBoolean(name, false)) {
         return true;
       }
     }
@@ -119,7 +119,7 @@ public class PermProps {
    */
   public ImmutableList<ImmutableMap<String, String>> findEmbeddedProperties(TreeLogger logger) {
 
-    Set<String> propsWanted = Sets.newTreeSet(getConfigProps().getStrings(
+    Set<String> propsWanted = Sets.newTreeSet(getConfigurationProperties().getStrings(
         "js.embedded.properties"));
 
     // Filter out any binding properties that don't exist.
@@ -142,10 +142,10 @@ public class PermProps {
 
     // Find the values.
     List<ImmutableMap<String, String>> result = Lists.newArrayList();
-    for (BindingProps softProps : getSoftProps()) {
+    for (BindingProperties properties : getSoftProperties()) {
       ImmutableMap.Builder<String, String> values = ImmutableMap.builder();
       for (String key : propsToSave) {
-        values.put(key, softProps.getString(key, null));
+        values.put(key, properties.getString(key, null));
       }
       result.add(values.build());
     }
@@ -158,18 +158,18 @@ public class PermProps {
    */
   public String prettyPrint() {
     StringBuilder out = new StringBuilder();
-    for (BindingProps bindingProps : getSoftProps()) {
+    for (BindingProperties properties : getSoftProperties()) {
       if (out.length() > 0) {
         out.append("; ");
       }
-      out.append(bindingProps.prettyPrint());
+      out.append(properties.prettyPrint());
     }
     return out.toString();
   }
 
-  private boolean sameBindingProperties(ImmutableList<BindingProps> props) {
-    BindingProps expected = props.get(0);
-    for (BindingProps actual : props.subList(1, props.size())) {
+  private boolean sameBindingProperties(ImmutableList<BindingProperties> properties) {
+    BindingProperties expected = properties.get(0);
+    for (BindingProperties actual : properties.subList(1, properties.size())) {
       if (!expected.hasSameBindingProperties(actual)) {
         return false;
       }

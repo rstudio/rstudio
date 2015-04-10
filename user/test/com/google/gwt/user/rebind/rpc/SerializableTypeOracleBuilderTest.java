@@ -31,9 +31,9 @@ import com.google.gwt.core.ext.typeinfo.JWildcardType.BoundType;
 import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.CompilerContext;
+import com.google.gwt.dev.cfg.BindingProperties;
 import com.google.gwt.dev.cfg.BindingProperty;
-import com.google.gwt.dev.cfg.BindingProps;
-import com.google.gwt.dev.cfg.ConfigProps;
+import com.google.gwt.dev.cfg.ConfigurationProperties;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.cfg.ModuleDefLoader;
 import com.google.gwt.dev.javac.TypeOracleTestingUtils;
@@ -229,7 +229,7 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
       TreeLogger logger, TypeOracle to) throws UnableToCompleteException {
     // Make an empty property oracle.
     PropertyOracle props =
-        new BindingProps(new BindingProperty[0], new String[0], ConfigProps.EMPTY).toPropertyOracle();
+        new BindingProperties(new BindingProperty[0], new String[0], ConfigurationProperties.EMPTY).toPropertyOracle();
     return new SerializableTypeOracleBuilder(logger, new MockContext(to, props));
   }
 

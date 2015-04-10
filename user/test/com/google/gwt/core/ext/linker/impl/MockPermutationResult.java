@@ -19,9 +19,9 @@ import com.google.gwt.core.ext.linker.Artifact;
 import com.google.gwt.core.ext.linker.ArtifactSet;
 import com.google.gwt.core.ext.linker.StatementRanges;
 import com.google.gwt.dev.Permutation;
+import com.google.gwt.dev.cfg.BindingProperties;
 import com.google.gwt.dev.cfg.BindingProperty;
-import com.google.gwt.dev.cfg.BindingProps;
-import com.google.gwt.dev.cfg.ConfigProps;
+import com.google.gwt.dev.cfg.ConfigurationProperties;
 import com.google.gwt.dev.jjs.PermutationResult;
 
 import java.util.Collection;
@@ -67,8 +67,8 @@ public class MockPermutationResult implements PermutationResult {
 
   @Override
   public Permutation getPermutation() {
-    return new Permutation(0, new BindingProps(new BindingProperty[0], new String[0],
-        ConfigProps.EMPTY));
+    return new Permutation(0, new BindingProperties(new BindingProperty[0], new String[0],
+        ConfigurationProperties.EMPTY));
   }
 
   @Override

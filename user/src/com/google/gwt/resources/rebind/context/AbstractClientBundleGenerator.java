@@ -213,7 +213,7 @@ public abstract class AbstractClientBundleGenerator extends IncrementalGenerator
     private final Set<String> axes;
     private boolean axesLocked = false;
     private final boolean canBeCacheable;
-    private final Set<String> configProps;
+    private final Set<String> configurationProperties;
     private final PropertyOracle propertyOracle;
     private final Map<String, URL> resolvedResources;
     private final Set<JClassType> types;
@@ -227,11 +227,11 @@ public abstract class AbstractClientBundleGenerator extends IncrementalGenerator
 
       // only need to track these if generator caching is a possibility
       if (canBeCacheable) {
-        configProps = new HashSet<String>();
+        configurationProperties = new HashSet<String>();
         types = new HashSet<JClassType>();
         resolvedResources = new HashMap<String, URL>();
       } else {
-        configProps = null;
+        configurationProperties = null;
         types = null;
         resolvedResources = null;
       }
@@ -246,7 +246,7 @@ public abstract class AbstractClientBundleGenerator extends IncrementalGenerator
       }
       // Ensure the property exists
       propertyOracle.getConfigurationProperty(propertyName).getValues();
-      configProps.add(propertyName);
+      configurationProperties.add(propertyName);
     }
 
     @Override
@@ -298,7 +298,7 @@ public abstract class AbstractClientBundleGenerator extends IncrementalGenerator
       if (!canBeCacheable) {
         return null;
       }
-      return configProps;
+      return configurationProperties;
     }
 
     public Collection<String> getPermutationAxes() {

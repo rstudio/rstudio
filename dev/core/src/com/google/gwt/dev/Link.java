@@ -27,11 +27,11 @@ import com.google.gwt.core.ext.linker.impl.JarEntryEmittedArtifact;
 import com.google.gwt.core.ext.linker.impl.StandardCompilationResult;
 import com.google.gwt.core.ext.linker.impl.StandardLinkerContext;
 import com.google.gwt.dev.CompileTaskRunner.CompileTask;
+import com.google.gwt.dev.cfg.BindingProperties;
 import com.google.gwt.dev.cfg.BindingProperty;
-import com.google.gwt.dev.cfg.BindingProps;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.cfg.ModuleDefLoader;
-import com.google.gwt.dev.cfg.PropertyPermutations;
+import com.google.gwt.dev.cfg.PropertyCombinations;
 import com.google.gwt.dev.cfg.ResourceLoader;
 import com.google.gwt.dev.cfg.ResourceLoaders;
 import com.google.gwt.dev.jjs.PermutationResult;
@@ -316,11 +316,11 @@ public class Link {
    * associated permutation.
    */
   private static void addSelectionPermutations(
-      StandardCompilationResult compilation, Permutation perm,
+      StandardCompilationResult compilation, Permutation permutation,
       StandardLinkerContext linkerContext) {
-    for (BindingProps props : perm.getProps().getSoftProps()) {
-      compilation.addSelectionPermutation(computeSelectionPermutation(linkerContext, props));
-      compilation.addSoftPermutation(computeSoftPermutation(linkerContext, props));
+    for (BindingProperties properties : permutation.getProperties().getSoftProperties()) {
+      compilation.addSelectionPermutation(computeSelectionPermutation(linkerContext, properties));
+      compilation.addSoftPermutation(computeSoftPermutation(linkerContext, properties));
     }
   }
 
@@ -348,9 +348,9 @@ public class Link {
    * Return a map giving the value of each non-trivial selection property.
    */
   private static Map<SelectionProperty, String> computeSelectionPermutation(
-      StandardLinkerContext linkerContext, BindingProps props) {
-    BindingProperty[] orderedProps = props.getOrderedProps();
-    String[] orderedPropValues = props.getOrderedPropValues();
+      StandardLinkerContext linkerContext, BindingProperties properties) {
+    BindingProperty[] orderedProps = properties.getOrderedProps();
+    String[] orderedPropValues = properties.getOrderedPropValues();
     Map<SelectionProperty, String> unboundProperties = new HashMap<SelectionProperty, String>();
     for (int i = 0; i < orderedProps.length; i++) {
       SelectionProperty key = linkerContext.getProperty(orderedProps[i].getName());
@@ -373,12 +373,12 @@ public class Link {
   }
 
   private static Map<SelectionProperty, String> computeSoftPermutation(
-      StandardLinkerContext linkerContext, BindingProps props) {
-    BindingProperty[] orderedProps = props.getOrderedProps();
-    String[] orderedPropValues = props.getOrderedPropValues();
+      StandardLinkerContext linkerContext, BindingProperties properties) {
+    BindingProperty[] orderedProps = properties.getOrderedProps();
+    String[] orderedPropValues = properties.getOrderedPropValues();
     Map<SelectionProperty, String> softProperties = new HashMap<SelectionProperty, String>();
     for (int i = 0; i < orderedProps.length; i++) {
-      if (orderedProps[i].getCollapsedValues().isEmpty()) {
+      if (orderedProps[i].getCollapsedValuesSets().isEmpty()) {
         continue;
       }
 
@@ -697,7 +697,7 @@ public class Link {
   private boolean doLinkFinal(TreeLogger logger, File compilerWorkDir, ModuleDef module,
       ResourceOracle publicResourceOracle, PrecompileTaskOptions precompileOptions)
       throws UnableToCompleteException {
-    int numPermutations = new PropertyPermutations(module.getProperties(),
+    int numPermutations = new PropertyCombinations(module.getProperties(),
         module.getActiveLinkerNames()).collapseProperties().size();
     List<File> resultFiles = new ArrayList<File>(numPermutations);
     for (int i = 0; i < numPermutations; ++i) {
