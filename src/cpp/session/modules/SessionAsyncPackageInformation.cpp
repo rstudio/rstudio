@@ -13,7 +13,8 @@
  *
  */
 
-#define RSTUDIO_ENABLE_DEBUG_MACROS
+// #define RSTUDIO_DEBUG_LABEL "pkginfo"
+// #define RSTUDIO_ENABLE_DEBUG_MACROS
 
 #include "SessionAsyncPackageInformation.hpp"
 
