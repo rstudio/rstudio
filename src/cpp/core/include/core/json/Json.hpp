@@ -20,6 +20,8 @@
 #include <vector>
 #include <iosfwd>
 
+#include <core/Log.hpp>
+
 #include <boost/type_traits/is_same.hpp>
 
 #include <core/json/spirit/json_spirit_value.h>

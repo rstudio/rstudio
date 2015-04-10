@@ -1515,8 +1515,13 @@ void validateFunctionCall(RTokenCursor cursor,
 bool skipFormulas(RTokenCursor& cursor,
                   ParseStatus& status)
 {
+   
    if (cursor.nextSignificantToken().contentEquals(L"~"))
+   {
+      if (isRightBracket(cursor) && status.isInParentheticalScope())
+         status.popState();
       cursor.moveToNextSignificantToken();
+   }
    
    if (cursor.contentEquals(L"~"))
    {
