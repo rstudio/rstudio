@@ -26,16 +26,18 @@ namespace type_traits {
 #define RS_GENERATE_HAS_TYPE_TRAIT(__NAME__)                                   \
    template <typename T> struct has_##__NAME__                                 \
    {                                                                           \
-      template <typename U, typename V> struct SFINAE                          \
-      {                                                                        \
-      };                                                                       \
+      template <typename U, typename V> struct SFINAE {};                      \
                                                                                \
-      template <typename U>                                                    \
-      static char test(SFINAE<U, typename U::__NAME__>*);                      \
+      template <typename U> static char test(SFINAE<U, typename U::__NAME__>*);\
       template <typename U> static int test(...);                              \
                                                                                \
       static const bool value = sizeof(test<T>(0)) == sizeof(char);            \
-   }
+   };                                                                          \
+                                                                               \
+   template <typename T>                                                       \
+   struct has_##__NAME__##_t                                                   \
+       : public boost::integral_constant<bool, has_##__NAME__<T>::value>       \
+   {}
 
 RS_GENERATE_HAS_TYPE_TRAIT(key_type);
 

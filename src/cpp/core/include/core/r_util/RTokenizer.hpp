@@ -306,6 +306,14 @@ public:
          push_back(token);
       }
    }
+   
+   friend std::ostream& operator <<(std::ostream& os,
+                                    const RTokens& rTokens)
+   {
+      for (std::size_t i = 0, n = rTokens.size(); i < n; ++i)
+         os << rTokens.atUnsafe(i) << std::endl;
+      return os;
+   }
 
 private:
     RTokenizer tokenizer_;

@@ -85,10 +85,7 @@ bool contains(const Container& container, const ValueType& value)
    return detail::contains(
             container,
             value,
-            boost::integral_constant<
-               bool,
-               type_traits::has_key_type<Container>::value
-            >());
+            type_traits::has_key_type_t<Container>());
 }
 
 /* Wrappers for the erase-remove idiom */
