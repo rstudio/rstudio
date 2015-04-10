@@ -1395,6 +1395,45 @@ core::Error extractFunctionInfo(
    return Success();
 }
 
+namespace {
+
+std::string addressAsString(void* ptr)
+{
+   // NOTE: over-allocating but whatever
+   char buf[33];
+   snprintf(buf, 32, "<%p>", ptr);
+   return buf;
+}
+
+} // anonymous namespace
+
+// NOTE: Based on 'PrintEnvironment' in 'main/inspect.c' from R sources
+// NOTE: accept both functions and environments (for functions, we return
+// the name of the enclosing environment)
+std::string environmentName(SEXP envSEXP)
+{
+   if (Rf_isPrimitive(envSEXP))
+      return "<base>";
+   
+   if (Rf_isFunction(envSEXP))
+      envSEXP = CLOENV(envSEXP);
+   
+   if (TYPEOF(envSEXP) != ENVSXP)
+      return "<unknown>";
+   
+   if (envSEXP == R_GlobalEnv)
+      return "<R_GlobalEnv>";
+   else if (envSEXP == R_BaseEnv)
+      return "<base>";
+   else if (R_IsPackageEnv(envSEXP))
+      return CHAR(STRING_ELT(R_PackageEnvName(envSEXP), 0));
+   else if (R_IsNamespaceEnv(envSEXP))
+      return std::string("namespace:") +
+            CHAR(STRING_ELT(R_NamespaceEnvSpec(envSEXP), 0));
+   else
+      return addressAsString((void*) envSEXP);
+}
+
 } // namespace sexp   
 } // namespace r
 } // namespace rstudio

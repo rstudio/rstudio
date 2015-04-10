@@ -96,6 +96,7 @@ void fillFormalInfo(const json::Object& formalInfoJson,
 }
 
 bool fillFunctionInfo(const json::Object& functionObjectJson,
+                      const std::string& pkgName,
                       std::map<std::string, FunctionInformation>* pInfo)
 {
    using namespace core::json;
@@ -104,9 +105,9 @@ bool fillFunctionInfo(const json::Object& functionObjectJson,
         it != functionObjectJson.end();
         ++it)
    {
-      FunctionInformation info;
-      
       const std::string& functionName = it->first;
+      FunctionInformation info(functionName, pkgName);
+      
       JSON_CHECK_TYPE(it->second, json::ObjectType);
       const json::Object& functionFieldsJson = it->second.get_obj();
       
@@ -212,7 +213,7 @@ void AsyncPackageInformationProcess::onCompleted(int exitStatus)
       if (!json::fillVectorInt(typesJson, &(pkgInfo.types)))
          LOG_ERROR_MESSAGE("Failed to read JSON 'types' array to vector");
 
-      if (!fillFunctionInfo(functionInfoJson, &(pkgInfo.functionInfo)))
+      if (!fillFunctionInfo(functionInfoJson, pkgInfo.package, &(pkgInfo.functionInfo)))
          LOG_ERROR_MESSAGE("Failed to read JSON 'functions' object to map");
       
       // Update the index

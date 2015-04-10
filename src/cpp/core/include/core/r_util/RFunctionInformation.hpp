@@ -23,6 +23,8 @@
 #include <string>
 #include <map>
 
+#include <core/Log.hpp>
+
 #include <boost/optional.hpp>
 #include <boost/logic/tribool.hpp>
 
@@ -30,9 +32,21 @@ namespace rstudio {
 namespace core {
 namespace r_util {
 
+struct Binding
+{
+   Binding(const std::string& name,
+           const std::string& origin)
+      : name(name), origin(origin)
+   {}
+   
+   std::string name;
+   std::string origin;
+};
+
 struct FormalInformation
 {
-   // default ctor -- must be initialized with a name
+   // ctor -- must be initialized with a name;
+   // all other information is optional
    explicit FormalInformation(const std::string& name)
       : name(name)
    {}
@@ -42,14 +56,28 @@ struct FormalInformation
    boost::tribool hasDefault;
    boost::tribool isUsed;
    boost::tribool missingnessHandled;
+   
+private:
+   
+   // private c-tor used as dummy 'no such formal', for friend classes
+   friend class FunctionInformation;
+   FormalInformation() {}
 };
 
 class FunctionInformation
 {
 public:
    
+   // default ctor: we may not know the original binding
+   // for this function
    FunctionInformation()
-      : noSuchFormal_("")
+   {}
+   
+   // binding ctor: gives the 'origin' of this function name
+   // (name + 'origin', which could be a package, namespace, env, ...)
+   FunctionInformation(const std::string& name,
+                       const std::string& origin)
+      : binding_(Binding(name, origin))
    {}
    
    void addFormal(const std::string& name)
@@ -107,15 +135,22 @@ public:
       return noSuchFormal_;
    }
    
+   const boost::optional<Binding>& binding() const
+   {
+      return binding_;
+   }
+   
    void setPerformsNse(bool performsNse) { performsNse_ = performsNse; }
    boost::tribool performsNse() const { return performsNse_; }
    
 private:
+   boost::optional<Binding> binding_;
    std::vector<FormalInformation> formals_;
    std::vector<std::string> formalNames_;
-   boost::optional<std::string> originalBindingName_;
    boost::tribool isPrimitive_;
    boost::tribool performsNse_;
+   
+   // Provided so that 'infoForFormal' can return by reference
    FormalInformation noSuchFormal_;
 };
 

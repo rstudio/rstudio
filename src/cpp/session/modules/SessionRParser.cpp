@@ -894,28 +894,6 @@ bool extractInfoFromFunctionDefinition(
    return true;
 }
 
-bool extractInfoFromPackageInformationDatabase(
-      const std::string& symbol,
-      FunctionInformation* pInfo)
-{
-   if (projects::projectContext().isPackageProject())
-   {
-      std::string pkg = projects::projectContext().packageInfo().name();
-      if (!RSourceIndex::hasFunctionInformation(symbol, pkg))
-         return false;
-      
-      const FunctionInformation& info =
-            RSourceIndex::getFunctionInformation(symbol, pkg);
-      
-      BOOST_FOREACH(const std::string& formal, info.getFormalNames())
-      {
-         pInfo->addFormal(formal);
-      }
-      
-      return true;
-   }
-   return false;
-}
 
 // Extract formals from the underlying object mapped by the symbol, or expression,
 // at the cursor. This involves (potentially) evaluating the expresion forming
@@ -926,10 +904,9 @@ bool extractInfoFromPackageInformationDatabase(
 //
 // This code will attempt to resolve `foo$bar` (which likely requires evaluation),
 // and then, if it's a function will extract the formals associated with that function.
-bool getInfoAssociatedWithFunctionAtCursor(
+FunctionInformation getInfoAssociatedWithFunctionAtCursor(
       RTokenCursor cursor,
-      ParseStatus& status,
-      FunctionInformation* pInfo)
+      ParseStatus& status)
 {
    // If this is a direct call to a symbol, then first attempt to
    // find this function in the current document.
@@ -937,7 +914,7 @@ bool getInfoAssociatedWithFunctionAtCursor(
    {
       if (cursor.isType(RToken::LPAREN))
          if (!cursor.moveToPreviousSignificantToken())
-            return false;
+            return FunctionInformation();
       
       DEBUG("***** Attempting to resolve source function: '" << cursor.contentAsUtf8() << "'");
       const ParseNode* pNode;
@@ -947,13 +924,23 @@ bool getInfoAssociatedWithFunctionAtCursor(
              &pNode))
       {
          DEBUG("***** Found function: '" << pNode->name() << "' at: " << pNode->position());
+         
+         // TODO: When we infer a function from the source code, and that
+         // function is a top-level source function, should we give it an
+         // 'origin' name equal to the current package's name?
+         const std::string& name = pNode->name();
+         std::string origin = "<root>";
+         if (pNode->getParent())
+            origin = pNode->getParent()->name();
+         
+         FunctionInformation info(origin, name);
          if (cursor.moveToPosition(pNode->position()))
          {
             DEBUG("***** Moved to position");
-            if (extractInfoFromFunctionDefinition(cursor, pInfo))
+            if (extractInfoFromFunctionDefinition(cursor, &info))
             {
                DEBUG("Extracted arguments");
-               return true;
+               return info;
             }
          }
       }
@@ -961,9 +948,12 @@ bool getInfoAssociatedWithFunctionAtCursor(
       // If we're within a package project, then attempt searching the
       // source index for the formals associated with this function.
       if (projects::projectContext().isPackageProject())
-         if (extractInfoFromPackageInformationDatabase(
-                cursor.contentAsUtf8(), pInfo))
-            return true;
+      {
+         const std::string& fnName = cursor.contentAsUtf8();
+         std::string pkgName = projects::projectContext().packageInfo().name();
+         if (RSourceIndex::hasFunctionInformation(fnName, pkgName))
+                  return RSourceIndex::getFunctionInformation(fnName, pkgName);
+      }
    }
    
    // If the above failed, we'll fall back to evaluating and looking up
@@ -971,21 +961,24 @@ bool getInfoAssociatedWithFunctionAtCursor(
    r::sexp::Protect protect;
    SEXP functionSEXP = resolveFunctionAtCursor(cursor, &protect);
    if (functionSEXP == R_UnboundValue || !Rf_isFunction(functionSEXP))
-      return false;
+      return FunctionInformation();
    
    // Get the formals associated with this function.
+   FunctionInformation info(
+            string_utils::wideToUtf8(cursor.getCallingString()),
+            r::sexp::environmentName(functionSEXP));
+   
    Error error = r::sexp::extractFunctionInfo(
             functionSEXP,
-            pInfo,
+            &info,
             true,
             true);
    
    if (error)
-   {
       LOG_ERROR(error);
-      return false;
-   }
-   return true;
+   
+   return info;
+   
 }
 
 // This class represents a matched call, similar to the result from R's
@@ -1005,9 +998,10 @@ public:
    {
       MatchedCall call;
       
-      // Get the formals associated with the underlying function.
-      FunctionInformation info;
-      getInfoAssociatedWithFunctionAtCursor(cursor, status, &info);
+      // Get the information associated with the underlying function
+      // (formals, does it perform NSE, etc.)
+      FunctionInformation info =
+            getInfoAssociatedWithFunctionAtCursor(cursor, status);
       
       // Get the named, unnamed arguments supplied in the function call.
       std::map<std::string, std::string> namedArguments;
@@ -1143,6 +1137,7 @@ public:
       call.info_ = info;
       
       applyFixups(cursor, &call);
+      applyCustomWarnings(call, status);
       return call;
    }
    
@@ -1162,6 +1157,11 @@ public:
       // 'op' is a 'binary-accepting' operator
       if (cursor.contentEquals(L"file_test"))
          pCall->functionInfo().infoForFormal("y").missingnessHandled = true;
+   }
+   
+   static void applyCustomWarnings(const MatchedCall& call,
+                                   ParseStatus& status)
+   {
    }
 
    // Accessors
@@ -1311,72 +1311,6 @@ void checkBinaryOperatorWhitespace(RTokenCursor& cursor,
    }
 }
 
-class CustomFunctionValidators : boost::noncopyable
-{
-public:
-   
-   typedef std::wstring key_type;
-   typedef boost::function<void(const std::string&, ParseStatus*)> Validator;
-   typedef std::vector<Validator> mapped_type;
-   
-   CustomFunctionValidators()
-   {
-      // initialize our own custom validators here?
-   }
-   
-   void add(const std::wstring& symbol, Validator validator)
-   {
-      database_[symbol].push_back(validator);
-   }
-   
-   bool applyValidators(RTokenCursor cursor,
-                        ParseStatus& status)
-   {
-      if (!cursor.isSimpleCall())
-         return false;
-      
-      std::wstring symbol = cursor.content();
-      
-      std::wstring::const_iterator begin = cursor.begin();
-      if (!cursor.moveToNextSignificantToken())
-         return false;
-      
-      if (!cursor.fwdToMatchingToken())
-         return false;
-      
-      std::wstring::const_iterator end = cursor.end();
-      
-      std::string content = string_utils::wideToUtf8(std::wstring(begin, end));
-      
-      if (database_.count(symbol))
-      {
-         BOOST_FOREACH(const Validator& validator, database_[symbol])
-         {
-            validator(boost::cref(content), &status);
-         }
-         return true;
-      }
-      
-      return false;
-   }
-   
-private:
-   std::map<key_type, mapped_type> database_;
-};
-
-CustomFunctionValidators& customFunctionValidators()
-{
-   static CustomFunctionValidators instance;
-   return instance;
-}
-
-bool applyCustomFunctionValidators(RTokenCursor cursor,
-                                   ParseStatus& status)
-{
-   CustomFunctionValidators& validators = customFunctionValidators();
-   return validators.applyValidators(cursor, status);
-}
-
 void validateFunctionCall(RTokenCursor cursor,
                           ParseStatus& status)
 {
@@ -1391,9 +1325,6 @@ void validateFunctionCall(RTokenCursor cursor,
    
    if (!cursor.moveToPreviousSignificantToken())
       return;
-   
-   // Try applying a custom validator.
-   applyCustomFunctionValidators(cursor, status);
    
    RTokenCursor startCursor = cursor.clone();
    startCursor.moveToStartOfEvaluation();

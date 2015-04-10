@@ -408,6 +408,8 @@ core::Error extractFunctionInfo(
       bool extractDefaultArguments,
       bool recordSymbolUsage);
 
+std::string environmentName(SEXP envSEXP);
+
 } // namespace sexp
 } // namespace r
 } // namespace rstudio
