@@ -1062,8 +1062,7 @@
          return(TRUE)
       
       # Check if this is a call to an NSE primitive, qualified through
-      # `::` or `:::`. (NOTE: This actually checks both the namespace and the
-      # function, but that's not a big deal)
+      # `::` or `:::`.
       if (headString %in% c("::", ":::") &&
           length(node) == 3)
       {
