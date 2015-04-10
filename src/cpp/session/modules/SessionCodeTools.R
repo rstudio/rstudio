@@ -1051,27 +1051,26 @@
                        nsePrimitives = nsePrimitives)
 })
 
-.rs.addFunction("performsNonstandardEvaluationImpl", function(node,
-                                                              head,
-                                                              parent,
-                                                              nsePrimitives)
+.rs.addFunction("performsNonstandardEvaluationImpl", function(node, nsePrimitives)
 {
    # Check if this is a call to an NSE primitive.
-   if (is.symbol(node) &&
-       identical(node, head) &&
-       as.character(node) %in% nsePrimitives)
+   if (is.call(node))
    {
-      return(TRUE)
-   }
-   
-   # Check if this is a call to an NSE primitive, qualified through
-   # `::` or `:::`. (NOTE: This actually checks both the namespace and the
-   # function, but that's not a big deal)
-   if (is.symbol(head) &&
-       as.character(head) %in% c("::", ":::") &&
-       as.character(node) %in% nsePrimitives)
-   {
-      return(TRUE)
+      head <- node[[1]]
+      headString <- as.character(head)
+      if (headString %in% nsePrimitives)
+         return(TRUE)
+      
+      # Check if this is a call to an NSE primitive, qualified through
+      # `::` or `:::`. (NOTE: This actually checks both the namespace and the
+      # function, but that's not a big deal)
+      if (headString %in% c("::", ":::") &&
+          length(node) == 3)
+      {
+         export <- node[[3]]
+         if (as.character(export) %in% nsePrimitives)
+            return(TRUE)
+      }
    }
    
    return(FALSE)
@@ -1162,7 +1161,7 @@
 
 .rs.addFunction("isSymbolCalled", function(maybeSymbol, name)
 {
-   is.symbol(maybeSymbol) && identical(as.character(maybeSymbol), name)
+   is.symbol(maybeSymbol) && as.character(maybeSymbol) == name
 })
 
 .rs.addJsonRpcHandler("get_set_class_slots", function(setClassCallString)

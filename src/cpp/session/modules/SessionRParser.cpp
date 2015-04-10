@@ -1157,6 +1157,11 @@ public:
       {
          pCall->functionInfo().infoForFormal("method").missingnessHandled = true;
       }
+      
+      // `file_test` allows 'y' to be missing, and is only used when
+      // 'op' is a 'binary-accepting' operator
+      if (cursor.contentEquals(L"file_test"))
+         pCall->functionInfo().infoForFormal("y").missingnessHandled = true;
    }
 
    // Accessors
