@@ -55,24 +55,24 @@
    rpubsDeployment <- list()
    for (col in colnames(deploymentsFrame)) {
      if (col == "name")
-       rpubsDeployment[col] = .rs.scalar("")
+       rpubsDeployment[col] = ""
      else if (col == "account")
-       rpubsDeployment[col] = .rs.scalar("rpubs")
+       rpubsDeployment[col] = "rpubs"
      else if (col == "server")
-       rpubsDeployment[col] = .rs.scalar("rpubs.com")
+       rpubsDeployment[col] = "rpubs.com"
      else if (col == "bundleId") 
-       rpubsDeployment[col] = .rs.scalar(rpubsUploadId)
+       rpubsDeployment[col] = rpubsUploadId
      else if (col == "asStatic")
-       rpubsDeployment[col] = .rs.scalar(TRUE)
+       rpubsDeployment[col] = TRUE
      else if (col == "when") 
-       rpubsDeployment[col] = .rs.scalar(0)
+       rpubsDeployment[col] = 0
      else 
-       rpubsDeployment[col] = .rs.scalar(NA)
+       rpubsDeployment[col] = NA
    }
 
    # combine the deployments rsconnect knows about with the deployments we know
    # about
-   c(rpubsDeployment, rpubsDeployment)
+   c(deployments, .rs.scalarListFromList(rpubsDeployment))
 })
 
 .rs.addJsonRpcHandler("get_rsconnect_account_list", function() {

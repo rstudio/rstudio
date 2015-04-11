@@ -259,9 +259,19 @@ Error rsconnectDeployments(const json::JsonRpcRequest& request,
    
    // convert result to JSON and return
    json::Value result;
-   error = r::json::jsonValueFromList(sexpDeployments, &result);
+   error = r::json::jsonValueFromObject(sexpDeployments, &result);
    if (error)
       return error;
+
+   // we want to always return an array, even if it's just one element long, so
+   // wrap the result in an array if it isn't one already
+   if (result.type() != json::ArrayType) 
+   {
+      json::Array singleEle;
+      singleEle.push_back(result);
+      result = singleEle;
+   }
+
    pResponse->setResult(result);
 
    return Success();
