@@ -1024,7 +1024,7 @@ public:
    }
    
    // to be called after parsing finished
-   void warnIfBracketStackNotEmpty()
+   void addLintIfBracketStackNotEmpty()
    {
       while (!bracketStack_.empty())
       {

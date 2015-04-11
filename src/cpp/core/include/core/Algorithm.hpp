@@ -21,7 +21,8 @@
 #include <algorithm>
 
 #include <boost/type_traits.hpp>
-#include "../type_traits/TypeTraits.hpp"
+
+#include <core/type_traits/TypeTraits.hpp>
 
 namespace rstudio {
 namespace core {
