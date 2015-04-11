@@ -69,12 +69,12 @@ bool isType(const Value& value)
 
 inline std::string typeAsString(json_spirit::Value_type type)
 {
-        if (type == ObjectType)
+   if (type == ObjectType)
       return "<Object>";
    else if (type == ArrayType)
       return "<Array>";
    else if (type == StringType)
-      return "<string>";
+      return "<String>";
    else if (type == BooleanType)
       return "<Boolean>";
    else if (type == IntegerType)
@@ -83,6 +83,47 @@ inline std::string typeAsString(json_spirit::Value_type type)
       return "<Real>";
    else
       return "<unknown>";
+}
+
+namespace detail {
+
+template <typename T>
+json_spirit::Value_type asJsonType(const T& object,
+                                   boost::true_type)
+{
+   return object.type();
+}
+
+template <typename T>
+json_spirit::Value_type asJsonType(const T& object,
+                                   boost::false_type)
+{
+   if (boost::is_same<T, bool>::value)
+      return BooleanType;
+   else if (boost::is_same<T, int>::value)
+      return IntegerType;
+   else if (boost::is_same<T, double>::value)
+      return RealType;
+   else if (boost::is_same<T, std::string>::value)
+      return StringType;
+   
+   LOG_ERROR_MESSAGE("Unexpected type");
+   return NullType;
+}
+
+template <typename T>
+struct is_json_type : public boost::is_same<T, json_spirit::Value_type>
+{
+};
+
+} // namespace detail
+
+template <typename T>
+json_spirit::Value_type asJsonType(const T& object)
+{
+   return detail::asJsonType(
+            object,
+            detail::is_json_type<T>());
 }
 
 inline std::string typeAsString(const Value& value)

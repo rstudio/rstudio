@@ -17,6 +17,8 @@
 #ifndef CORE_TYPETRAITS_HPP
 #define CORE_TYPETRAITS_HPP
 
+#include <core/json/Json.hpp>
+
 #include <boost/type_traits.hpp>
 
 namespace rstudio {
@@ -24,27 +26,31 @@ namespace core {
 namespace type_traits {
 
 #define RS_GENERATE_HAS_TYPE_TRAIT(__NAME__)                                   \
-   template <typename T> struct has_##__NAME__                                 \
+   template <typename T> struct has_##__NAME__##_impl                          \
    {                                                                           \
-      template <typename U, typename V> struct SFINAE {};                      \
+      template <typename U, typename V> struct SFINAE                          \
+      {                                                                        \
+      };                                                                       \
                                                                                \
-      template <typename U> static char test(SFINAE<U, typename U::__NAME__>*);\
+      template <typename U>                                                    \
+      static char test(SFINAE<U, typename U::__NAME__>*);                      \
       template <typename U> static int test(...);                              \
                                                                                \
       static const bool value = sizeof(test<T>(0)) == sizeof(char);            \
    };                                                                          \
                                                                                \
    template <typename T>                                                       \
-   struct has_##__NAME__##_t                                                   \
-       : public boost::integral_constant<bool, has_##__NAME__<T>::value>       \
-   {}
+   struct has_##__NAME__                                                       \
+       : public boost::integral_constant<bool,                                 \
+                                         has_##__NAME__##_impl<T>::value>      \
+   {                                                                           \
+   }
 
 RS_GENERATE_HAS_TYPE_TRAIT(key_type);
 
 } // namespace algorithm
 } // namespace core
 } // namespace rstudio
-
 
 #endif // CORE_TYPETRAITS_HPP
 

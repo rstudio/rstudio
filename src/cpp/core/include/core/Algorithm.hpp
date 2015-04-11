@@ -86,7 +86,7 @@ bool contains(const Container& container, const ValueType& value)
    return detail::contains(
             container,
             value,
-            type_traits::has_key_type_t<Container>());
+            type_traits::has_key_type<Container>());
 }
 
 /* Wrappers for the erase-remove idiom */
