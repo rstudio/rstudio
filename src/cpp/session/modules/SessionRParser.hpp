@@ -235,6 +235,13 @@ public:
                   "unexpected closing bracket '" + token.contentAsUtf8() + "'");
    }
    
+   void expectedMatchForOpenBracket(const RToken& openBracketToken)
+   {
+      addLintItem(openBracketToken,
+                  LintTypeError,
+                  "unmatched opening bracket '" + openBracketToken.contentAsUtf8() + "'");
+   }
+   
    void unexpectedEndOfDocument(const RToken& token)
    {
       addLintItem(token,
@@ -994,24 +1001,37 @@ public:
    
    void pushBracket(const RToken& token)
    {
-      bracketStack_.push(asBracket(token));
+      bracketStack_.push(token);
    }
    
-   void popBracket(const RToken& token)
+   void popBracket(const RToken& rhs)
    {
       using namespace token_utils;
       if (bracketStack_.empty())
       {
-         lint_.unexpectedClosingBracket(token);
+         lint_.unexpectedClosingBracket(rhs);
          return;
       }
       
-      const Bracket& bracket = bracketStack_.peek();
-      
-      if (typeComplement(token.type()) != bracket.type())
-         lint_.unexpectedClosingBracket(token);
+      const RToken& lhs = bracketStack_.peek();
+      if (typeComplement(lhs.type()) != rhs.type())
+      {
+         lint_.unexpectedClosingBracket(rhs);
+         lint_.expectedMatchForOpenBracket(lhs);
+      }
       
       bracketStack_.pop();
+   }
+   
+   // to be called after parsing finished
+   void warnIfBracketStackNotEmpty()
+   {
+      while (!bracketStack_.empty())
+      {
+         const RToken& lhs = bracketStack_.peek();
+         lint_.expectedMatchForOpenBracket(lhs);
+         bracketStack_.pop();
+      }
    }
 
 private:
@@ -1026,26 +1046,11 @@ private:
    // std::vector<bool> data member which we want to avoid
    Stack<char> nseCallStack_;
    
-   // Used so we can provide useful error messages on unmatched
-   // braces
-   struct Bracket
-   {
-      Bracket(RToken::TokenType type, const Position& position)
-         : type_(type), position_(position)
-      {}
-      
-      RToken::TokenType type() const { return type_; }
-      Position position() const { return position_; }
-      RToken::TokenType type_;
-      Position position_;
-   };
-
-   static Bracket asBracket(const RToken& token)
-   {
-      return Bracket(token.type(), token.position());
-   }
-
-   Stack<Bracket> bracketStack_;
+   // NOTE: Using 'RToken' here implies that the parse tree
+   // is only valid as long as the underlying tokens are valid;
+   // this should be the case but should attempt to enforce
+   // this.
+   Stack<RToken> bracketStack_;
 };
 
 class ParseResults {

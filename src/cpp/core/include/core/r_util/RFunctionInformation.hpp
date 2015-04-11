@@ -24,6 +24,7 @@
 #include <map>
 
 #include <core/Log.hpp>
+#include <core/collection/Position.hpp>
 
 #include <boost/optional.hpp>
 #include <boost/logic/tribool.hpp>

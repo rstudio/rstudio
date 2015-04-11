@@ -1268,6 +1268,8 @@ ParseResults parse(const std::wstring& rCode,
       status.lint().unexpectedEndOfDocument(cursor.currentToken());
    }
    
+   status.addLintIfBracketStackNotEmpty();
+   
    return ParseResults(status.root(), status.lint());
 }
 

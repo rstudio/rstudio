@@ -1407,13 +1407,12 @@ std::string addressAsString(void* ptr)
 
 } // anonymous namespace
 
-// NOTE: Based on 'PrintEnvironment' in 'main/inspect.c' from R sources
-// NOTE: accept both functions and environments (for functions, we return
-// the name of the enclosing environment)
+// NOTE: accept both functions and environments
+// for functions, we return the name of the enclosing environment
 std::string environmentName(SEXP envSEXP)
 {
    if (Rf_isPrimitive(envSEXP))
-      return "<base>";
+      return "base";
    
    if (Rf_isFunction(envSEXP))
       envSEXP = CLOENV(envSEXP);
@@ -1422,11 +1421,12 @@ std::string environmentName(SEXP envSEXP)
       return "<unknown>";
    
    if (envSEXP == R_GlobalEnv)
-      return "<R_GlobalEnv>";
+      return "R_GlobalEnv";
    else if (envSEXP == R_BaseEnv)
-      return "<base>";
+      return "base";
    else if (R_IsPackageEnv(envSEXP))
-      return CHAR(STRING_ELT(R_PackageEnvName(envSEXP), 0));
+      return std::string("package:") +
+            CHAR(STRING_ELT(R_PackageEnvName(envSEXP), 0));
    else if (R_IsNamespaceEnv(envSEXP))
       return std::string("namespace:") +
             CHAR(STRING_ELT(R_NamespaceEnvSpec(envSEXP), 0));
