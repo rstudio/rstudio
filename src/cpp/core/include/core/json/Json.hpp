@@ -92,24 +92,18 @@ inline std::string typeAsString(const Value& value)
    return typeAsString(value.type());
 }
 
-inline bool checkIsType(const json::Value& value,
-                        json_spirit::Value_type type,
-                        const ErrorLocation& location)
+inline void logIncompatibleTypes(const Value& value,
+                                 const json_spirit::Value_type expectedType,
+                                 const ErrorLocation& location)
 {
-   if (value.type() != type)
+   if (value.type() != expectedType)
    {
-      std::string message = std::string() +
-            "Expected JSON object of type '" +
-            typeAsString(type) + "'; got '" +
-            typeAsString(value.type()) + "'";
-      log::logWarningMessage(message, location);
-      return false;
+      log::logErrorMessage("Invalid JSON type: expected '" +
+                           typeAsString(expectedType) + "', got '" +
+                           typeAsString(value.type()) + "'",
+                           location);
    }
-   return true;
 }
-
-#define JSON_CHECK_TYPE(__VALUE__, __TYPE__) \
-   (::rstudio::core::json::checkIsType(__VALUE__, __TYPE__, ERROR_LOCATION))
 
 template<typename T>
 json::Value toJsonValue(const T& val)
@@ -130,46 +124,6 @@ json::Array toJsonArray(const std::vector<T>& val)
 bool fillVectorString(const Array& array, std::vector<std::string>* pVector);
 bool fillVectorInt(const Array& array, std::vector<int>* pVector);
 bool fillMap(const Object& array, std::map< std::string, std::vector<std::string> >* pMap);
-
-namespace detail {
-
-inline int intField(const Object& object,
-                    const std::string& name,
-                    int ifNotFound,
-                    const ErrorLocation& location)
-{
-   if (object.count(name) == 0)
-   {
-      log::logWarningMessage("No field named '" + name + "'", location);
-      return ifNotFound;
-   }
-   
-   return const_cast<Object&>(object)[name].get_int();
-}
-
-inline std::string stringField(const Object& object,
-                               const std::string& name,
-                               const std::string& ifNotFound,
-                               const ErrorLocation& location)
-{
-   if (object.count(name) == 0)
-   {
-      log::logWarningMessage("No field named '" + name + "'", location);
-      return ifNotFound;
-   }
-   
-   return const_cast<Object&>(object)[name].get_str();
-}
-
-} // namespace detail
-
-#define JSON_STRING_FIELD(__OBJECT__, __NAME__, __IF_NOT_FOUND__)              \
-   (::rstudio::core::json::detail::stringField(                                \
-       __OBJECT__, __NAME__, __IF_NOT_FOUND__, ERROR_LOCATION))
-
-#define JSON_INT_FIELD(__OBJECT__, __NAME__, __IF_NOT_FOUND__)                 \
-   (::rstudio::core::json::detail::intField(__OBJECT__, __NAME__,              \
-                                            __IF_NOT_FOUND__, ERROR_LOCATION))
 
 bool parse(const std::string& input, Value* pValue);
 

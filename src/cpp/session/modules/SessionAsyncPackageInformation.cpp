@@ -85,12 +85,28 @@ void fillFormalInfo(const json::Object& formalInfoJson,
       std::string formalName = it->first;
       FormalInformation info(formalName);
       
-      JSON_CHECK_TYPE(it->second, json::ObjectType);
+      if (!isType<json::Object>(it->second))
+      {
+         logIncompatibleTypes(it->second, json::ObjectType, ERROR_LOCATION);
+         return;
+      }
+      
       const json::Object& fieldsJson = it->second.get_obj();
       
-      info.setIsUsed(             JSON_INT_FIELD(fieldsJson, "is_used", 0));
-      info.setHasDefaultValue(    JSON_INT_FIELD(fieldsJson, "has_default", 1));
-      info.setMissingnessHandled( JSON_INT_FIELD(fieldsJson, "missingness_handled", 1));
+      int isUsed = 0;
+      int hasDefaultValue = 1;
+      int isMissingnessHandled = 1;
+      
+      Error error = json::readObject(fieldsJson,
+                                     "is_used", &isUsed,
+                                     "has_default", &hasDefaultValue,
+                                     "missingness_handled", &isMissingnessHandled);
+      if (error)
+         LOG_ERROR(error);
+      
+      info.setIsUsed(isUsed);
+      info.setHasDefaultValue(hasDefaultValue);
+      info.setMissingnessHandled(isMissingnessHandled);
       
       pInfo->addFormal(info);
    }
@@ -109,10 +125,22 @@ bool fillFunctionInfo(const json::Object& functionObjectJson,
       const std::string& functionName = it->first;
       FunctionInformation info(functionName, pkgName);
       
-      JSON_CHECK_TYPE(it->second, json::ObjectType);
+      if (!isType<json::Object>(it->second))
+      {
+         logIncompatibleTypes(it->second, json::ObjectType, ERROR_LOCATION);
+         continue;
+      }
+      
       const json::Object& functionFieldsJson = it->second.get_obj();
       
-      info.setPerformsNse(JSON_INT_FIELD(functionFieldsJson, "performs_nse", 0));
+      int performsNse = 0;
+      Error error = json::readObject(functionFieldsJson,
+                                     "performs_nse", &performsNse);
+      
+      if (error)
+         LOG_ERROR(error);
+      
+      info.setPerformsNse(performsNse);
       info.setIsPrimitive(false);
       
       if (!functionFieldsJson.count("formal_info"))
@@ -123,9 +151,12 @@ bool fillFunctionInfo(const json::Object& functionObjectJson,
       
       json::Object& casted = const_cast<json::Object&>(functionFieldsJson);
       const json::Value& value = casted["formal_info"];
-      JSON_CHECK_TYPE(value, json::ObjectType);
-      if (value.type() != json::ObjectType)
+      
+      if (!isType<json::Object>(value))
+      {
+         logIncompatibleTypes(value, json::ObjectType, ERROR_LOCATION);
          continue;
+      }
       
       fillFormalInfo(value.get_obj(), &info);
       
