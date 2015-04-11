@@ -595,7 +595,7 @@ public class JTypeOracle implements Serializable {
     fromType = fromType.getUnderlyingType();
     toType = toType.getUnderlyingType();
 
-    if (fromType == toType || isJavaLangObject(toType)) {
+    if (fromType == toType || isJavaLangObject(fromType)) {
       return false;
     }
 
