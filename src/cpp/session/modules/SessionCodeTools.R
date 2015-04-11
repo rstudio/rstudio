@@ -942,7 +942,8 @@
 .rs.addFunction("emptyFunctionInfo", function()
 {
    list(
-      formal_info = .rs.emptyNamedList(),
+      formal_names = character(),
+      formal_info  = list(),
       performs_nse = I(0L)
    )
 })
@@ -1005,19 +1006,17 @@
                .rs.recursiveSearch(body(f), .rs.performsNonstandardEvaluation)
             )
             
-            formalInfo <- setNames(lapply(seq_along(formalNames), function(i) {
-               list(
-                  has_default = I(hasDefault[[i]]),
-                  missingness_handled = I(as.integer(
-                     formalNames[[i]] == "..." ||
-                     exists(formalNames[[i]], envir = missingEnv)
-                  )),
-                  is_used = I(as.integer(exists(formalNames[[i]], envir = usedSymbolsEnv)))
-               )
-            }), formalNames)
+            formalInfo <- lapply(seq_along(formalNames), function(i) {
+               as.integer(c(
+                  hasDefault[[i]],
+                  formalNames[[i]] == "..." || exists(formalNames[[i]], envir = missingEnv),
+                  exists(formalNames[[i]], envir = usedSymbolsEnv)
+               ))
+            })
             
             list(
-               formal_info = formalInfo,
+               formal_names = formalNames,
+               formal_info  = formalInfo,
                performs_nse = I(performsNse)
             )
          })

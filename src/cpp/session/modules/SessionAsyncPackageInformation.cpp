@@ -74,39 +74,24 @@ public:
 
 namespace {
 
-void fillFormalInfo(const json::Object& formalInfoJson,
+void fillFormalInfo(const json::Array& formalNamesJson,
+                    const json::Array& formalInfoJsonArray,
                     FunctionInformation* pInfo)
 {
-   using namespace core::json;
-   for (json::Object::const_iterator it = formalInfoJson.begin();
-        it != formalInfoJson.end();
-        ++it)
+   for (std::size_t i = 0, n = formalNamesJson.size(); i < n; ++i)
    {
-      std::string formalName = it->first;
+      std::string formalName = formalNamesJson[i].get_str();
       FormalInformation info(formalName);
       
-      if (!isType<json::Object>(it->second))
-      {
-         logIncompatibleTypes(it->second, json::ObjectType, ERROR_LOCATION);
-         return;
-      }
+      const json::Array& formalInfoJson = formalInfoJsonArray[i].get_array();
       
-      const json::Object& fieldsJson = it->second.get_obj();
+      int hasDefaultValue = formalInfoJson[0].get_int();
+      int isMissingnessHandled = formalInfoJson[1].get_int();
+      int isUsed = formalInfoJson[2].get_int();
       
-      int isUsed = 0;
-      int hasDefaultValue = 1;
-      int isMissingnessHandled = 1;
-      
-      Error error = json::readObject(fieldsJson,
-                                     "is_used", &isUsed,
-                                     "has_default", &hasDefaultValue,
-                                     "missingness_handled", &isMissingnessHandled);
-      if (error)
-         LOG_ERROR(error);
-      
-      info.setIsUsed(isUsed);
       info.setHasDefaultValue(hasDefaultValue);
       info.setMissingnessHandled(isMissingnessHandled);
+      info.setIsUsed(isUsed);
       
       pInfo->addFormal(info);
    }
@@ -125,16 +110,14 @@ bool fillFunctionInfo(const json::Object& functionObjectJson,
       const std::string& functionName = it->first;
       FunctionInformation info(functionName, pkgName);
       
-      if (!isType<json::Object>(it->second))
-      {
-         logIncompatibleTypes(it->second, json::ObjectType, ERROR_LOCATION);
-         continue;
-      }
+      const json::Value& valueJson = it->second;
       
-      const json::Object& functionFieldsJson = it->second.get_obj();
-      
+      json::Array formalNamesJson;
+      json::Array formalInfoJson;
       int performsNse = 0;
-      Error error = json::readObject(functionFieldsJson,
+      Error error = json::readObject(valueJson.get_obj(),
+                                     "formal_names", &formalNamesJson,
+                                     "formal_info",  &formalInfoJson,
                                      "performs_nse", &performsNse);
       
       if (error)
@@ -143,22 +126,7 @@ bool fillFunctionInfo(const json::Object& functionObjectJson,
       info.setPerformsNse(performsNse);
       info.setIsPrimitive(false);
       
-      if (!functionFieldsJson.count("formal_info"))
-      {
-         LOG_WARNING_MESSAGE("No formal information for function '" + functionName + "'");
-         return false;
-      }
-      
-      json::Object& casted = const_cast<json::Object&>(functionFieldsJson);
-      const json::Value& value = casted["formal_info"];
-      
-      if (!isType<json::Object>(value))
-      {
-         logIncompatibleTypes(value, json::ObjectType, ERROR_LOCATION);
-         continue;
-      }
-      
-      fillFormalInfo(value.get_obj(), &info);
+      fillFormalInfo(formalNamesJson, formalInfoJson, &info);
       
       (*pInfo)[functionName] = info;
    }
