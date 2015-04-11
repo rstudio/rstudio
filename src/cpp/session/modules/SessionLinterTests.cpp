@@ -168,6 +168,9 @@ context("Linter")
       EXPECT_NO_ERRORS("x(1,,)");
       EXPECT_NO_ERRORS("a=1 #\nb");
       
+      EXPECT_ERRORS("foo(a = 1 b = 2)");
+      EXPECT_ERRORS("foo(a = 1\nb = 2)");
+      
       EXPECT_NO_ERRORS("c(a=function()a,)");
       EXPECT_NO_ERRORS("function(a) a");
       EXPECT_NO_ERRORS("function(a)\nwhile (1) 1\n");

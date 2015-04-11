@@ -150,7 +150,8 @@ struct LintItem
         endRow(endRow),
         endColumn(endColumn),
         type(type),
-        message(message) {}
+        message(message)
+   {}
    
    LintItem(const RToken& item,
             LintType type,
@@ -160,7 +161,19 @@ struct LintItem
         endRow(item.row()),
         endColumn(item.column() + item.length()),
         type(type),
-        message(message) {}
+        message(message)
+   {}
+   
+   LintItem(const ParseItem& item,
+            LintType type,
+            const std::string& message)
+      : startRow(item.position.row),
+        startColumn(item.position.column),
+        endRow(item.position.row),
+        endColumn(item.position.column + item.symbol.length()),
+        type(type),
+        message(message)
+   {}
 
    int startRow;
    int startColumn;
@@ -185,72 +198,48 @@ public:
    
    // default ctors: copyable members
    
-   void add(int startRow,
-            int startColumn,
-            int endRow,
-            int endColumn,
+   void add(std::size_t startRow,
+            std::size_t startColumn,
+            std::size_t endRow,
+            std::size_t endColumn,
             LintType type,
             const std::string& message)
    {
-      LintItem lint(startRow,
-                    startColumn,
-                    endRow,
-                    endColumn,
-                    type,
-                    message);
-      
-      lintItems_.push_back(lint);
+      LintItem item(startRow, startColumn, endRow, endColumn, type, message);
+      add(item);
    }
    
    void unexpectedToken(const RToken& token,
-                           const std::string& expected = std::string())
+                        const std::string& expected = std::string())
    {
-      std::string content = token.contentAsUtf8();
+      const std::string& content = token.contentAsUtf8();
       std::string message = "unexpected token '" + content + "'";
       if (!expected.empty())
          message = message + ", expected " + expected;
       
-      LintItem lint(token.row(),
-                    token.column(),
-                    token.row(),
-                    token.column() + content.length(),
-                    LintTypeError,
-                    message);
-      
-      lintItems_.push_back(lint);
-      ++errorCount_;
+      addLintItem(token,
+                  LintTypeError,
+                  message);
    }
    
    void unexpectedToken(const RToken& token,
-                           const std::wstring& expected)
+                        const std::wstring& expected)
    {
       unexpectedToken(token, string_utils::wideToUtf8(expected));
    }
    
    void unexpectedClosingBracket(const RToken& token)
    {
-      std::string content = token.contentAsUtf8();
-      
-      LintItem lint(token.row(),
-                    token.column(),
-                    token.row(),
-                    token.column() + content.length(),
-                    LintTypeError,
-                    "unexpected closing bracket '" + content + "'");
-      
-      lintItems_.push_back(lint);
-      ++errorCount_;
+      addLintItem(token,
+                  LintTypeError,
+                  "unexpected closing bracket '" + token.contentAsUtf8() + "'");
    }
    
    void unexpectedEndOfDocument(const RToken& token)
    {
-      LintItem lint(token.row(),
-                    token.column() + token.length(),
-                    token.row(),
-                    token.column() + token.length(),
-                    LintTypeError,
-                    "unexpected end of document");
-      lintItems_.push_back(lint);
+      addLintItem(token,
+                  LintTypeError,
+                  "unexpected end of document");
    }
    
    void noSymbolNamed(const ParseItem& item,
@@ -260,14 +249,9 @@ public:
       if (!candidate.empty())
          message += "; did you mean '" + candidate + "'?";
       
-      LintItem lint(item.position.row,
-                    item.position.column,
-                    item.position.row,
-                    item.position.column + item.symbol.size(),
-                    LintTypeWarning,
-                    message);
-      
-      lintItems_.push_back(lint);
+      addLintItem(item,
+                  LintTypeWarning,
+                  message);
    }
    
    void symbolDefinedAfterUsage(const ParseItem& item,
@@ -285,60 +269,32 @@ public:
    
    void expectedWhitespace(const RToken& token)
    {
-      if (!parseOptions_.recordStyleLint())
-         return;
-      
-      LintItem lint(token.row(),
-                    token.column(),
-                    token.row(),
-                    token.column(),
-                    LintTypeStyle,
-                    "expected whitespace");
-      lintItems_.push_back(lint);
+      addLintItem(token,
+                  LintTypeStyle,
+                  "expected whitespace");
    }
    
    void unnecessaryWhitespace(const RToken& token)
    {
-      if (!parseOptions_.recordStyleLint())
-         return;
-      
-      LintItem lint(token.row(),
-                    token.column(),
-                    token.row(),
-                    token.column() + token.length(),
-                    LintTypeStyle,
-                    "unnecessary whitespace");
-      lintItems_.push_back(lint);
+      addLintItem(token,
+                  LintTypeStyle,
+                  "unnecessary whitespace");
    }
    
    void unexpectedWhitespaceAroundOperator(const RToken& token)
    {
-      if (!parseOptions_.recordStyleLint())
-         return;
-      
-      LintItem lint(token.row(),
-                    token.column(),
-                    token.row(),
-                    token.column() + token.length(),
-                    LintTypeStyle,
-                    "unexpected whitespace around extraction operator");
-      lintItems_.push_back(lint);
+      addLintItem(token,
+                  LintTypeStyle,
+                  "unexpected whitespace around extraction operator");
    }
    
    void expectedWhitespaceAroundOperator(const RToken& token)
    {
-      if (!parseOptions_.recordStyleLint())
-         return;
-      
-      LintItem lint(token.row(),
-                    token.column(),
-                    token.row(),
-                    token.column() + token.length(),
-                    LintTypeStyle,
-                    "expected whitespace around binary operator");
-      lintItems_.push_back(lint);
+      addLintItem(token,
+                  LintTypeStyle,
+                  "expected whitespace around binary operator");
    }
-   
+
    void tooManyErrors(const Position& position)
    {
       LintItem lint(position.row,
@@ -351,6 +307,12 @@ public:
       ++errorCount_;
    }
    
+   void expectedCommaFollowingToken(const RToken& rToken)
+   {
+      addLintItem(rToken,
+                  LintTypeWarning,
+                  "expected ',' following token");
+   }
    
    const std::vector<LintItem>& get() const
    {
@@ -381,6 +343,27 @@ public:
    void dump();
    
 private:
+   
+   void addLintItem(const RToken& rToken,
+                    LintType type,
+                    const std::string& message)
+   {
+      add(LintItem(rToken, type, message));
+   }
+   
+   void addLintItem(const ParseItem& item,
+                    LintType type,
+                    const std::string& message)
+   {
+      add(LintItem(item, type, message));
+   }
+   
+   void add(const LintItem& item)
+   {
+      lintItems_.push_back(item);
+      errorCount_ += item.type == LintTypeError;
+   }
+
    std::vector<LintItem> lintItems_;
    std::size_t errorCount_;
    ParseOptions parseOptions_;

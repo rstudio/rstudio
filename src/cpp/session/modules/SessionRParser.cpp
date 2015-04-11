@@ -14,7 +14,7 @@
  */
 
 #define RSTUDIO_DEBUG_LABEL "rparser"
-// #define RSTUDIO_ENABLE_DEBUG_MACROS
+#define RSTUDIO_ENABLE_DEBUG_MACROS
 
 // We use a couple internal R functions here; in particular,
 // simple accessors (which we know will not longjmp)
@@ -1514,6 +1514,17 @@ void enterFunctionScope(RTokenCursor cursor,
    status.enterFunctionScope(symbol, position);
 }
 
+void checkForMissingComma(const RTokenCursor& cursor,
+                          ParseStatus& status)
+{
+   const RToken& next = cursor.nextSignificantToken();
+   if (status.isInParentheticalScope() && isValidAsIdentifier(next))
+   {
+      status.lint().unexpectedToken(next);
+      status.lint().expectedCommaFollowingToken(cursor);
+   }
+}
+
 } // anonymous namespace
 
 #define GOTO_INVALID_TOKEN(__CURSOR__)                                         \
@@ -1574,7 +1585,7 @@ START:
          goto REPEAT_START;
       
       // 'else'. Implicitly ending an 'if' statement, and any other
-      // associated statements; e.g.
+      // associated non-if statements; e.g.
       //
       //     if (1) while(1) 1 else 2
       //
@@ -1676,6 +1687,8 @@ START:
             
             if (cursor.isAtEndOfDocument())
                return;
+            
+            checkForMissingComma(cursor, status);
             
             // Handle an 'else' following when we are closing an 'if' statement
             if (cursor.nextSignificantToken().contentEquals(L"else"))
@@ -1905,6 +1918,10 @@ START:
                status.popState();
          }
          
+         // If we're within a parenthetical scope, it's an
+         // error for an identifier to follow.
+         checkForMissingComma(cursor, status);
+         
          MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
          goto START;
          
@@ -2062,6 +2079,8 @@ ARGUMENT_LIST_END:
          MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
          goto START;
       }
+      
+      checkForMissingComma(cursor, status);
       
       MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
       
