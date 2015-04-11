@@ -85,14 +85,6 @@ namespace rpubs {
 
 namespace {
 
-void saveUploadId(const FilePath& filePath, const std::string& uploadId)
-{
-   Settings settings;
-   getUploadIdSettings(&settings);
-   settings.set(pathIdentifier(filePath), uploadId);
-}
-
-
 class RPubsUpload : boost::noncopyable,
                     public boost::enable_shared_from_this<RPubsUpload>
 {
@@ -296,10 +288,6 @@ private:
    void terminateWithResult(const Result& result)
    {
       isRunning_ = false;
-
-      if (!result.id.empty())
-         saveUploadId(htmlFile_, result.id);
-
       json::Object statusJson;
       statusJson["contextId"] = contextId_;
       statusJson["id"] = result.id;
