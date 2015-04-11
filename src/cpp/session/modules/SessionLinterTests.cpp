@@ -207,6 +207,10 @@ context("Linter")
       EXPECT_ERRORS("for {i in 1:10}");
       EXPECT_ERRORS("((()})");
       
+      EXPECT_ERRORS("(a +)");
+      EXPECT_ERRORS("{a +}");
+      EXPECT_ERRORS("foo[[bar][baz]]");
+      
       EXPECT_NO_ERRORS("myvar <- con; readLines(con = stdin())");
 
       EXPECT_NO_LINT("(function(a) a)");

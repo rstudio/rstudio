@@ -14,7 +14,7 @@
  */
 
 #define RSTUDIO_DEBUG_LABEL "rparser"
-#define RSTUDIO_ENABLE_DEBUG_MACROS
+// #define RSTUDIO_ENABLE_DEBUG_MACROS
 
 // We use a couple internal R functions here; in particular,
 // simple accessors (which we know will not longjmp)
@@ -1618,6 +1618,7 @@ START:
       if (cursor.isType(RToken::LPAREN))
       {
          status.pushState(ParseStatus::ParseStateWithinParens);
+         status.pushBracket(cursor);
          MOVE_TO_NEXT_SIGNIFICANT_TOKEN_WARN_ON_BLANK(cursor, status);
          if (cursor.isType(RToken::RPAREN))
             status.lint().unexpectedToken(cursor);
@@ -1628,6 +1629,7 @@ START:
       if (cursor.isType(RToken::LBRACE))
       {
          status.pushState(ParseStatus::ParseStateWithinBraces);
+         status.pushBracket(cursor);
          MOVE_TO_NEXT_SIGNIFICANT_TOKEN_WARN_ON_BLANK(cursor, status);
          goto START;
       }
@@ -1683,7 +1685,9 @@ START:
          case ParseStatus::ParseStateWhileCondition:
             goto WHILE_CONDITION_END;
          case ParseStatus::ParseStateWithinParens:
+            
             status.popState();
+            status.popBracket(cursor);
             
             if (cursor.isAtEndOfDocument())
                return;
@@ -1736,6 +1740,7 @@ START:
       //
       if (cursor.isType(RToken::RBRACE))
       {
+         status.popBracket(cursor);
          if (startedWithUnaryOperator)
             GOTO_INVALID_TOKEN(cursor);
          
@@ -1932,14 +1937,8 @@ START:
 BINARY_OPERATOR:
       
       checkBinaryOperatorWhitespace(cursor, status);
-      if (isExtractionOperator(cursor))
-      {
-         if (!(cursor.nextSignificantToken().isType(RToken::ID) ||
-              (cursor.nextSignificantToken().isType(RToken::STRING))))
-         {
-            status.lint().unexpectedToken(cursor.nextSignificantToken());
-         }
-      }
+      if (!canFollowBinaryOperator(cursor.nextSignificantToken()))
+         status.lint().unexpectedToken(cursor.nextSignificantToken());
       
       MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
       goto START;
@@ -1983,6 +1982,8 @@ ARGUMENT_LIST:
          GOTO_INVALID_TOKEN(cursor);
       }
       
+      status.pushBracket(cursor);
+      
       // Skip over data.table `[` calls
       if (isDataTableSingleBracketCall(cursor))
       {
@@ -2020,6 +2021,7 @@ ARGUMENT_LIST_END:
       DEBUG("== State: " << status.currentStateAsString());
       
       status.popState();
+      status.popBracket(cursor);
       
       DEBUG("== State: " << status.currentStateAsString());
       
@@ -2097,6 +2099,7 @@ FUNCTION_START:
       ENSURE_CONTENT(cursor, status, L"function");
       MOVE_TO_NEXT_SIGNIFICANT_TOKEN_WARN_ON_BLANK(cursor, status);
       ENSURE_TYPE(cursor, status, RToken::LPAREN);
+      status.pushBracket(cursor);
       enterFunctionScope(cursor, status);
       MOVE_TO_NEXT_SIGNIFICANT_TOKEN_WARN_ON_BLANK(cursor, status);
       if (cursor.isType(RToken::RPAREN))
@@ -2132,10 +2135,12 @@ FUNCTION_ARGUMENT_LIST_END:
       
       ENSURE_TYPE(cursor, status, RToken::RPAREN);
       status.popState();
+      status.popBracket(cursor);
       MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
       if (cursor.isType(RToken::LBRACE))
       {
          status.pushState(ParseStatus::ParseStateFunctionExpression);
+         status.pushBracket(cursor);
          MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
       }
       else
@@ -2148,6 +2153,7 @@ FOR_START:
       ENSURE_CONTENT(cursor, status, L"for");
       MOVE_TO_NEXT_SIGNIFICANT_TOKEN_WARN_IF_NO_WHITESPACE(cursor, status);
       ENSURE_TYPE(cursor, status, RToken::LPAREN);
+      status.pushBracket(cursor);
       MOVE_TO_NEXT_SIGNIFICANT_TOKEN_WARN_ON_BLANK(cursor, status);
       ENSURE_TYPE(cursor, status, RToken::ID);
       status.node()->addDefinedSymbol(cursor, cursor.currentPosition());
@@ -2162,11 +2168,13 @@ FOR_CONDITION_END:
       
       DEBUG("** For condition end ** " << cursor);
       ENSURE_TYPE(cursor, status, RToken::RPAREN);
-      MOVE_TO_NEXT_SIGNIFICANT_TOKEN_WARN_IF_NO_WHITESPACE(cursor, status);
       status.popState();
+      status.popBracket(cursor);
+      MOVE_TO_NEXT_SIGNIFICANT_TOKEN_WARN_IF_NO_WHITESPACE(cursor, status);
       if (cursor.isType(RToken::LBRACE))
       {
          status.pushState(ParseStatus::ParseStateForExpression);
+         status.pushBracket(cursor);
          MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
       }
       else
@@ -2179,6 +2187,7 @@ WHILE_START:
       ENSURE_CONTENT(cursor, status, L"while");
       MOVE_TO_NEXT_SIGNIFICANT_TOKEN_WARN_IF_NO_WHITESPACE(cursor, status);
       ENSURE_TYPE(cursor, status, RToken::LPAREN);
+      status.pushBracket(cursor);
       status.pushState(ParseStatus::ParseStateWhileCondition);
       MOVE_TO_NEXT_SIGNIFICANT_TOKEN_WARN_ON_BLANK(cursor, status);
       ENSURE_TYPE_NOT(cursor, status, RToken::RPAREN);
@@ -2189,11 +2198,13 @@ WHILE_CONDITION_END:
       
       DEBUG("** While condition end ** " << cursor);
       ENSURE_TYPE(cursor, status, RToken::RPAREN);
-      MOVE_TO_NEXT_SIGNIFICANT_TOKEN_WARN_IF_NO_WHITESPACE(cursor, status);
       status.popState();
+      status.popBracket(cursor);
+      MOVE_TO_NEXT_SIGNIFICANT_TOKEN_WARN_IF_NO_WHITESPACE(cursor, status);
       if (cursor.isType(RToken::LBRACE))
       {
          status.pushState(ParseStatus::ParseStateWhileExpression);
+         status.pushBracket(cursor);
          MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
       }
       else
@@ -2206,6 +2217,7 @@ IF_START:
       ENSURE_CONTENT(cursor, status, L"if");
       MOVE_TO_NEXT_SIGNIFICANT_TOKEN_WARN_IF_NO_WHITESPACE(cursor, status);
       ENSURE_TYPE(cursor, status, RToken::LPAREN);
+      status.pushBracket(cursor);
       MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
       ENSURE_TYPE_NOT(cursor, status, RToken::RPAREN);
       status.pushState(ParseStatus::ParseStateIfCondition);
@@ -2215,11 +2227,13 @@ IF_CONDITION_END:
       
       DEBUG("** If condition end ** " << cursor);
       ENSURE_TYPE(cursor, status, RToken::RPAREN);
-      MOVE_TO_NEXT_SIGNIFICANT_TOKEN_WARN_IF_NO_WHITESPACE(cursor, status);
       status.popState();
+      status.popBracket(cursor);
+      MOVE_TO_NEXT_SIGNIFICANT_TOKEN_WARN_IF_NO_WHITESPACE(cursor, status);
       if (cursor.isType(RToken::LBRACE))
       {
          status.pushState(ParseStatus::ParseStateIfExpression);
+         status.pushBracket(cursor);
          MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
       }
       else
@@ -2234,6 +2248,7 @@ REPEAT_START:
       if (cursor.isType(RToken::LBRACE))
       {
          status.pushState(ParseStatus::ParseStateRepeatExpression);
+         status.pushBracket(cursor);
          MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
       }
       else

@@ -992,6 +992,28 @@ public:
               nseCallStack_.peek();
    }
    
+   void pushBracket(const RToken& token)
+   {
+      bracketStack_.push(asBracket(token));
+   }
+   
+   void popBracket(const RToken& token)
+   {
+      using namespace token_utils;
+      if (bracketStack_.empty())
+      {
+         lint_.unexpectedClosingBracket(token);
+         return;
+      }
+      
+      const Bracket& bracket = bracketStack_.peek();
+      
+      if (typeComplement(token.type()) != bracket.type())
+         lint_.unexpectedClosingBracket(token);
+      
+      bracketStack_.pop();
+   }
+
 private:
    boost::shared_ptr<ParseNode> pRoot_;
    ParseNode* pNode_;
@@ -1003,6 +1025,27 @@ private:
    // NOTE: Really prefer 'bool' here but that invokes the
    // std::vector<bool> data member which we want to avoid
    Stack<char> nseCallStack_;
+   
+   // Used so we can provide useful error messages on unmatched
+   // braces
+   struct Bracket
+   {
+      Bracket(RToken::TokenType type, const Position& position)
+         : type_(type), position_(position)
+      {}
+      
+      RToken::TokenType type() const { return type_; }
+      Position position() const { return position_; }
+      RToken::TokenType type_;
+      Position position_;
+   };
+
+   static Bracket asBracket(const RToken& token)
+   {
+      return Bracket(token.type(), token.position());
+   }
+
+   Stack<Bracket> bracketStack_;
 };
 
 class ParseResults {

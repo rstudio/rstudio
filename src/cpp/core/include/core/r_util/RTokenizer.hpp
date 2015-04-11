@@ -553,6 +553,26 @@ inline std::string getSymbolName(const RToken& rToken)
    return rToken.contentAsUtf8();
 }
 
+inline bool canFollowBinaryOperator(const RToken& rToken)
+{
+   switch (rToken.type())
+   {
+   case RToken::ID:
+   case RToken::LBRACE:
+   case RToken::LPAREN:
+   case RToken::NUMBER:
+   case RToken::STRING:
+      return true;
+   default:
+      ; // fall-through
+   }
+   
+   if (isValidAsUnaryOperator(rToken))
+      return true;
+   
+   return false;
+}
+
 } // end namespace token_utils
 
 } // namespace r_util
