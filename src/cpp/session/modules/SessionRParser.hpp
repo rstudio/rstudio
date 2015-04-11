@@ -367,6 +367,9 @@ private:
    
    void add(const LintItem& item)
    {
+      if (!parseOptions_.recordStyleLint() && item.type == LintTypeStyle)
+         return;
+      
       lintItems_.push_back(item);
       errorCount_ += item.type == LintTypeError;
    }
