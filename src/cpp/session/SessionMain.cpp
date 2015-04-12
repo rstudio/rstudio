@@ -140,6 +140,7 @@ extern "C" const char *locale2charset(const char *);
 #include "modules/viewer/SessionViewer.hpp"
 #include "modules/SessionDiagnostics.hpp"
 #include "modules/SessionMarkers.hpp"
+#include "modules/SessionSnippets.hpp"
 
 #include "modules/SessionGit.hpp"
 #include "modules/SessionSVN.hpp"
@@ -1661,6 +1662,7 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       (modules::r_packages::initialize)
       (modules::diagnostics::initialize)
       (modules::markers::initialize)
+      (modules::snippets::initialize)
 
       // workers
       (workers::web_request::initialize)
