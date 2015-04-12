@@ -1,5 +1,5 @@
 /*
- * SessionLinter.cpp
+ * SessionDiagnostics.cpp
  *
  * Copyright (C) 2009-2015 by RStudio, Inc.
  *
@@ -18,7 +18,7 @@
 #define RSTUDIO_DEBUG_LABEL "linter"
 #include <core/Macros.hpp>
 
-#include "SessionLinter.hpp"
+#include "SessionDiagnostics.hpp"
 #include "SessionCodeSearch.hpp"
 #include "SessionAsyncPackageInformation.hpp"
 
@@ -921,7 +921,7 @@ core::Error initialize()
    
    ExecBlock initBlock;
    initBlock.addFunctions()
-         (bind(sourceModuleRFile, "SessionLinter.R"))
+         (bind(sourceModuleRFile, "SessionDiagnostics.R"))
          (bind(registerRpcMethod, "lint_r_source_document", lintRSourceDocument))
          (bind(registerRpcMethod, "save_snippets", saveSnippets));
    

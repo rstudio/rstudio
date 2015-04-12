@@ -138,7 +138,7 @@ extern "C" const char *locale2charset(const char *);
 #include "modules/rmarkdown/SessionRMarkdown.hpp"
 #include "modules/shiny/SessionShiny.hpp"
 #include "modules/viewer/SessionViewer.hpp"
-#include "modules/SessionLinter.hpp"
+#include "modules/SessionDiagnostics.hpp"
 #include "modules/SessionMarkers.hpp"
 
 #include "modules/SessionGit.hpp"

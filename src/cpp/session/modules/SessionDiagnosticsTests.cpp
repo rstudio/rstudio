@@ -1,5 +1,5 @@
 /*
- * SessionLinterTests.cpp
+ * SessionDiagnosticsTests.cpp
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -15,7 +15,7 @@
 
 #include <tests/TestThat.hpp>
 
-#include "SessionLinter.hpp"
+#include "SessionDiagnostics.hpp"
 
 #include <iostream>
 
@@ -119,7 +119,7 @@ void lintRStudioRFiles()
    lintRFilesInSubdirectory(options().modulesRSourcePath());
 }
 
-context("Linter")
+context("Diagnostics")
 {
    test_that("valid expressions generate no lint")
    {

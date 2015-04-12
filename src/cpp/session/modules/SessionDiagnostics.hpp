@@ -1,5 +1,5 @@
 /*
- * SessionLinter.hpp
+ * SessionDiagnostics.hpp
  *
  * Copyright (C) 2009-2015 by RStudio, Inc.
  *

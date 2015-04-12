@@ -1,5 +1,5 @@
 #
-# SessionLinter.R
+# SessionDiagnostics.R
 #
 # Copyright (C) 2015 by RStudio, Inc.
 #

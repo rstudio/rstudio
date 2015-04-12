@@ -87,6 +87,7 @@ set (SESSION_SOURCE_FILES
    modules/SessionCodeSearch.cpp
    modules/SessionConsole.cpp
    modules/SessionDependencies.cpp
+   modules/SessionDiagnostics.cpp
    modules/SessionDirty.cpp
    modules/SessionErrors.cpp
    modules/SessionFiles.cpp
@@ -100,7 +101,6 @@ set (SESSION_SOURCE_FILES
    modules/SessionHistoryArchive.cpp
    modules/SessionHTMLPreview.cpp
    modules/SessionLimits.cpp
-   modules/SessionLinter.cpp
    modules/SessionLists.cpp
    modules/SessionMarkers.cpp
    modules/SessionPackages.cpp
