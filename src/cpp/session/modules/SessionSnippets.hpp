@@ -1,7 +1,7 @@
 /*
- * SessionDiagnostics.hpp
+ * SessionSnippets.hpp
  *
- * Copyright (C) 2009-2015 by RStudio, Inc.
+ * Copyright (C) 2009-12 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -13,8 +13,8 @@
  *
  */
 
-#ifndef SESSION_MODULES_DIAGNOSTICS_HPP
-#define SESSION_MODULES_DIAGNOSTICS_HPP
+#ifndef SESSION_MODULES_SNIPPETS_HPP
+#define SESSION_MODULES_SNIPPETS_HPP
 
 namespace rstudio {
 namespace core {
@@ -25,13 +25,14 @@ namespace core {
 namespace rstudio {
 namespace session {
 namespace modules {
-namespace diagnostics {
+namespace snippets {
 
 core::Error initialize();
 
-} // namespace diagnostics
-} // namespace modules
-} // namespace session
-} // namespace rstudio
+} // end namespace snippets
+} // end namespace modules
+} // end namespace session
+} // end namespace rstudio
 
-#endif /* SESSION_MODULES_DIAGNOSTICS_HPP */
+
+#endif /* SESSION_MODULES_SNIPPETS_HPP */

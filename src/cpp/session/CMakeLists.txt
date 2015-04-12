@@ -114,6 +114,7 @@ set (SESSION_SOURCE_FILES
    modules/SessionRPubs.cpp
    modules/SessionRSConnect.cpp
    modules/SessionShinyViewer.cpp
+   modules/SessionSnippets.cpp
    modules/SessionSource.cpp
    modules/SessionSpelling.cpp
    modules/SessionSVN.cpp

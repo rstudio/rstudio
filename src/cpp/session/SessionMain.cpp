@@ -1659,7 +1659,7 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       (modules::packrat::initialize)
       (modules::rhooks::initialize)
       (modules::r_packages::initialize)
-      (modules::linter::initialize)
+      (modules::diagnostics::initialize)
       (modules::markers::initialize)
 
       // workers

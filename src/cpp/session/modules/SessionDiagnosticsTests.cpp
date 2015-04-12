@@ -29,11 +29,12 @@
 #include <boost/foreach.hpp>
 
 #include <session/SessionOptions.hpp>
+#include "SessionRParser.hpp"
 
 namespace rstudio {
 namespace session {
 namespace modules {
-namespace linter {
+namespace diagnostics {
 
 using namespace rparser;
 

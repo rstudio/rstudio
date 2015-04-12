@@ -19,8 +19,10 @@
 #include <core/Macros.hpp>
 
 #include "SessionDiagnostics.hpp"
+
 #include "SessionCodeSearch.hpp"
 #include "SessionAsyncPackageInformation.hpp"
+#include "SessionRParser.hpp"
 
 #include <set>
 
@@ -51,7 +53,7 @@
 namespace rstudio {
 namespace session {
 namespace modules {
-namespace linter {
+namespace diagnostics {
 
 using namespace core;
 using namespace core::r_util;
@@ -679,116 +681,12 @@ void onFilesChanged(const std::vector<core::system::FileChangeEvent>& events)
    std::string namespacePath =
          projects::projectContext().directory().complete("NAMESPACE").absolutePath();
    
-   std::string lintFilePath =
-         projects::projectContext().directory().complete(".rstudio_lint_blacklist").absolutePath();
-   
    BOOST_FOREACH(const core::system::FileChangeEvent& event, events)
    {
       std::string eventPath = event.fileInfo().absolutePath();
       if (eventPath == namespacePath)
          onNAMESPACEchanged();
    }
-}
-
-bool isSnippetFilePath(const FilePath& filePath,
-                       std::string* pMode)
-{
-   if (filePath.isDirectory())
-      return false;
-   
-   if (filePath.extensionLowerCase() != ".snippets")
-      return false;
-   
-   *pMode = boost::algorithm::to_lower_copy(filePath.stem());
-   return true;
-}
-
-FilePath getSnippetsDir(bool autoCreate = false)
-{
-   FilePath homeDir = module_context::userHomePath();
-   FilePath snippetsDir = homeDir.childPath(".R/snippets");
-   if (autoCreate)
-   {
-      Error error = snippetsDir.ensureDirectory();
-      if (error)
-         LOG_ERROR(error);
-   }
-   return snippetsDir;
-}
-
-void checkAndNotifyClientIfSnippetsAvailable()
-{
-   FilePath snippetsDir = getSnippetsDir();
-   if (!snippetsDir.exists() || !snippetsDir.isDirectory())
-      return;
-   
-   // Get the contents of each file here, and pass that info back up
-   // to the client
-   std::vector<FilePath> snippetPaths;
-   Error error = snippetsDir.children(&snippetPaths);
-   if (error)
-   {
-      LOG_ERROR(error);
-      return;
-   }
-   
-   json::Array jsonData;
-   BOOST_FOREACH(const FilePath& filePath, snippetPaths)
-   {
-      // bail if this doesn't appear to be a snippets file
-      std::string mode;
-      if (!isSnippetFilePath(filePath, &mode))
-         continue;
-      
-      std::string contents;
-      error = readStringFromFile(filePath, &contents);
-      if (error)
-      {
-         LOG_ERROR(error);
-         return;
-      }
-      
-      json::Object snippetJson;
-      snippetJson["mode"] = mode;
-      snippetJson["contents"] = contents;
-      jsonData.push_back(snippetJson);
-   }
-
-   ClientEvent event(client_events::kSnippetsChanged, jsonData);
-   module_context::enqueClientEvent(event);
-}
-
-FilePath s_snippetsMonitoredDir;
-
-void notifySnippetsChanged()
-{
-   Error error = core::writeStringToFile(
-          s_snippetsMonitoredDir.childPath("changed"),
-          core::system::generateUuid());
-   if (error)
-      LOG_ERROR(error);
-}
-
-void onDocUpdated(boost::shared_ptr<source_database::SourceDocument> pDoc)
-{
-   if (s_snippetsMonitoredDir.empty())
-      return;
-
-   if (pDoc->path().empty() || pDoc->dirty())
-      return;
-
-   FilePath snippetsDir = getSnippetsDir();
-   if (!snippetsDir.exists())
-      return;
-
-   // if this was within the snippets dir then
-   if (module_context::resolveAliasedPath(pDoc->path()).isWithin(snippetsDir))
-      notifySnippetsChanged();
-}
-
-void onSnippetsChanged()
-{
-   checkAndNotifyClientIfSnippetsAvailable();
 }
 
 void afterSessionInitHook(bool newSession)
@@ -805,55 +703,6 @@ void afterSessionInitHook(bool newSession)
                projects::projectContext().packageInfo().name());
       r_packages::AsyncPackageInformationProcess::update();
    }
-
-   // register to be notified when snippets are changed
-   s_snippetsMonitoredDir = module_context::registerMonitoredUserScratchDir(
-                                            "snippets",
-                                            boost::bind(onSnippetsChanged));
-
-   // fire snippet changed when a user edits a snippet directly in the
-   // source editor
-   source_database::events().onDocUpdated.connect(onDocUpdated);
-}
-
-void onClientInit()
-{
-   checkAndNotifyClientIfSnippetsAvailable();
-}
-
-Error saveSnippets(const json::JsonRpcRequest& request,
-                   json::JsonRpcResponse* pResponse)
-{
-   json::Array snippetsJson;
-   Error error = json::readParams(request.params, &snippetsJson);
-   if (error)
-      return error;
-
-   FilePath snippetsDir = getSnippetsDir(true);
-   BOOST_FOREACH(const json::Value& valueJson, snippetsJson)
-   {
-      if (json::isType<json::Object>(valueJson))
-      {
-         json::Object snippetJson = valueJson.get_obj();
-         std::string mode, contents;
-         Error error = json::readObject(snippetJson, "mode", &mode,
-                                                     "contents", &contents);
-         if (error)
-         {
-            LOG_ERROR(error);
-            continue;
-         }
-
-         error = writeStringToFile(snippetsDir.childPath(mode + ".snippets"),
-                                   contents);
-         if (error)
-            LOG_ERROR(error);
-      }
-   }
-
-   notifySnippetsChanged();
-
-   return Success();
 }
 
 bool collectLint(int depth,
@@ -910,7 +759,6 @@ core::Error initialize()
    using namespace module_context;
    
    events().afterSessionInitHook.connect(afterSessionInitHook);
-   events().onClientInit.connect(onClientInit);
    
    session::projects::FileMonitorCallbacks cb;
    cb.onFilesChanged = onFilesChanged;
@@ -922,8 +770,7 @@ core::Error initialize()
    ExecBlock initBlock;
    initBlock.addFunctions()
          (bind(sourceModuleRFile, "SessionDiagnostics.R"))
-         (bind(registerRpcMethod, "lint_r_source_document", lintRSourceDocument))
-         (bind(registerRpcMethod, "save_snippets", saveSnippets));
+         (bind(registerRpcMethod, "lint_r_source_document", lintRSourceDocument));
    
    return initBlock.execute();
 
