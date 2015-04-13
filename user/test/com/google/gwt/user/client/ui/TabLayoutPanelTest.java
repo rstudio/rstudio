@@ -1,12 +1,12 @@
 /*
  * Copyright 2009 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -25,6 +25,7 @@ import com.google.gwt.junit.Platform;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DeferredCommand;
+import com.google.gwt.user.client.Timer;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -487,13 +488,24 @@ public class TabLayoutPanelTest extends GWTTestCase {
    * Tests that tabs actually line up properly (see issue 4447).
    */
   public void testTabLayout() {
-    TabLayoutPanel p = new TabLayoutPanel(2, Unit.EM);
+    final TabLayoutPanel p = new TabLayoutPanel(2, Unit.EM);
     RootPanel.get().add(p);
 
     p.add(new Button("foo"), new Label("foo"));
     p.add(new Button("bar"), new Label("bar"));
 
-    assertEquals(p.getTabWidget(0).getElement().getOffsetTop(),
-        p.getTabWidget(1).getElement().getOffsetTop());
+    // Give the browser some time to layout
+    new Timer() {
+
+      @Override
+      public void run() {
+        assertEquals(p.getTabWidget(0).getElement().getOffsetTop(),
+            p.getTabWidget(1).getElement().getOffsetTop());
+        finishTest();
+      }
+
+    }.schedule(100);
+
+    delayTestFinish(200);
   }
 }

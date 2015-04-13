@@ -45,6 +45,11 @@ public class RadioButtonTest extends GWTTestCase {
   private static final String html1 = "<b>hello</b><i>world</i>:)";
   private static final String html2 = "<b>goodbye</b><i>world</i>:(";
 
+  @Override
+  protected void gwtTearDown() {
+    RootPanel.get().clear();
+  }
+
   /**
    * TODO: Re-enable when we figure out how to make them work properly on IE
    * (which has the unfortunate property of not passing synthesized events on to
