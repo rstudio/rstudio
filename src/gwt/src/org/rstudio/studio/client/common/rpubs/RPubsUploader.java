@@ -52,7 +52,7 @@ public class RPubsUploader
       // do upload
       if (Desktop.isDesktop())
       {
-         performUpload(title, rmdFile, htmlFile, uploadId, modify);
+         performUpload(title, rmdFile, htmlFile, uploadId, null, modify);
       }
       else
       {

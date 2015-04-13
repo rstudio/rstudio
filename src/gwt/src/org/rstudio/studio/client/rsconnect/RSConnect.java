@@ -605,7 +605,6 @@ public class RSConnect implements SessionInitHandler,
       indicator.onProgress("Uploading " + contentType);
       uploader.setOnUploadComplete(new CommandWithArg<Boolean>()
       {
-         
          @Override
          public void execute(Boolean arg)
          {
