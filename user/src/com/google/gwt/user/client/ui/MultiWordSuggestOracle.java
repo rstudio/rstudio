@@ -25,9 +25,11 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
+import java.util.TreeSet;
 
 /**
  * The default {@link com.google.gwt.user.client.ui.SuggestOracle}. The default
@@ -143,9 +145,19 @@ public class MultiWordSuggestOracle extends SuggestOracle {
   private HashMap<String, Set<String>> toCandidates = new HashMap<String, Set<String>>();
 
   /**
-   * Associates candidates with their formatted suggestions.
+   * Associates candidates with their formatted suggestions. Multiple formatted
+   * suggestions could be normalized to the same candidate, e.g. both 'Mobile'
+   * and 'MOBILE' are normalized to 'mobile'.
    */
-  private HashMap<String, String> toRealSuggestions = new HashMap<String, String>();
+  private HashMap<String, List<String>> toRealSuggestions =
+      new HashMap<>();
+  
+  /**
+   * Specifies whether all formatted suggestions should be returned per
+   * normalized candidate. Refer ro {@link #setSuggestAllMatchingWords}
+   * for more details.
+   */
+  private boolean suggestAllMatchingWords = false;
 
   /**
    * The whitespace masks used to prevent matching and replacing of the given
@@ -159,7 +171,7 @@ public class MultiWordSuggestOracle extends SuggestOracle {
    * Comparator used for sorting candidates from search.
    */
   private Comparator<String> comparator = null;
-
+  
   /**
    * Constructor for <code>MultiWordSuggestOracle</code>. This uses a space as
    * the whitespace character.
@@ -198,7 +210,12 @@ public class MultiWordSuggestOracle extends SuggestOracle {
   public void add(String suggestion) {
     String candidate = normalizeSuggestion(suggestion);
     // candidates --> real suggestions.
-    toRealSuggestions.put(candidate, suggestion);
+    List<String> realSuggestions = toRealSuggestions.get(candidate);
+    if (realSuggestions == null) {
+      realSuggestions = new ArrayList<String>();
+      toRealSuggestions.put(candidate, realSuggestions);
+    }
+    realSuggestions.add(0, suggestion);
 
     // word fragments --> candidates.
     String[] words = candidate.split(WHITESPACE_STRING);
@@ -305,7 +322,22 @@ public class MultiWordSuggestOracle extends SuggestOracle {
     }
     setDefaultSuggestions(accum);
   }
-
+  
+  /**
+   * Sets the flag on whether to suggest all matching words. With words
+   * 'Mobile', 'MOBILE', 'mobile', 'MoBILE', typing 'm' will only build one
+   * suggestion for 'MoBILE' if {@code suggestAllMatchingWords} is
+   * {@code false}. However, it will build suggestions for all four words if
+   * {@code suggestAllMatchingWords} is {@code true}.
+   * 
+   * @param suggestAllMatchingWords true to return all formatted suggestions
+   *          per normalized candidate, false to return the last formatted
+   *          suggestions per normalized candidate.  
+   */
+  public final void setSuggestAllMatchingWords(boolean suggestAllMatchingWords) {
+    this.suggestAllMatchingWords = suggestAllMatchingWords;
+  }
+  
   /**
    * Creates the suggestion based on the given replacement and display strings.
    *
@@ -334,43 +366,55 @@ public class MultiWordSuggestOracle extends SuggestOracle {
 
     for (int i = 0; i < candidates.size(); i++) {
       String candidate = candidates.get(i);
-      int cursor = 0;
-      int index = 0;
       // Use real suggestion for assembly.
-      String formattedSuggestion = toRealSuggestions.get(candidate);
-
-      // Create strong search string.
-      SafeHtmlBuilder accum = new SafeHtmlBuilder();
-
-      String[] searchWords = query.split(WHITESPACE_STRING);
-      while (true) {
-        WordBounds wordBounds = findNextWord(candidate, searchWords, index);
-        if (wordBounds == null) {
-          break;
-        }
-        if (wordBounds.startIndex == 0 ||
-            WHITESPACE_CHAR == candidate.charAt(wordBounds.startIndex - 1)) {
-          String part1 = formattedSuggestion.substring(cursor, wordBounds.startIndex);
-          String part2 = formattedSuggestion.substring(wordBounds.startIndex,
-              wordBounds.endIndex);
-          cursor = wordBounds.endIndex;
-          accum.appendEscaped(part1);
-          accum.appendHtmlConstant("<strong>");
-          accum.appendEscaped(part2);
-          accum.appendHtmlConstant("</strong>");
-        }
-        index = wordBounds.endIndex;
+      List<String> realSuggestions = toRealSuggestions.get(candidate);
+      TreeSet<String> realSuggestionsSet = new TreeSet<>();
+      if (suggestAllMatchingWords) {
+        realSuggestionsSet.addAll(realSuggestions);
+      } else {
+        // Build only one suggestion per normalized candidate if
+        // suggestAllMatchingWords is false.
+        realSuggestionsSet.add(realSuggestions.get(0));
       }
+      Iterator<String> realSuggestionsIterator = realSuggestionsSet.iterator();
+      while (realSuggestionsIterator.hasNext()) {
+        int cursor = 0;
+        int index = 0;
+        String formattedSuggestion = realSuggestionsIterator.next();
 
-      // Check to make sure the search was found in the string.
-      if (cursor == 0) {
-        continue;
+        // Create strong search string.
+        SafeHtmlBuilder accum = new SafeHtmlBuilder();
+
+        String[] searchWords = query.split(WHITESPACE_STRING);
+        while (true) {
+          WordBounds wordBounds = findNextWord(candidate, searchWords, index);
+          if (wordBounds == null) {
+            break;
+          }
+          if (wordBounds.startIndex == 0 ||
+              WHITESPACE_CHAR == candidate.charAt(wordBounds.startIndex - 1)) {
+            String part1 = formattedSuggestion.substring(cursor, wordBounds.startIndex);
+            String part2 = formattedSuggestion.substring(wordBounds.startIndex,
+                wordBounds.endIndex);
+            cursor = wordBounds.endIndex;
+            accum.appendEscaped(part1);
+            accum.appendHtmlConstant("<strong>");
+            accum.appendEscaped(part2);
+            accum.appendHtmlConstant("</strong>");
+          }
+          index = wordBounds.endIndex;
+        }
+
+        // Check to make sure the search was found in the string.
+        if (cursor == 0) {
+          continue;
+        }
+
+        accum.appendEscaped(formattedSuggestion.substring(cursor));
+        MultiWordSuggestion suggestion = createSuggestion(formattedSuggestion,
+            accum.toSafeHtml().asString());
+        suggestions.add(suggestion);
       }
-
-      accum.appendEscaped(formattedSuggestion.substring(cursor));
-      MultiWordSuggestion suggestion = createSuggestion(formattedSuggestion,
-          accum.toSafeHtml().asString());
-      suggestions.add(suggestion);
     }
     return suggestions;
   }
