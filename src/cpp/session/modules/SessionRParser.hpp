@@ -689,6 +689,10 @@ public:
       if (checkNseCalls)
          useCount += nseReferencedSymbols_[symbolName].size();
       
+      // NOTE: We record a definition at the same position of 
+      // each reference as well, so a symbol is effectively defined
+      // but not used if there is only one defintion, and one reference,
+      // and they both map to the same position.
       if (definitionCount == 1 &&
           useCount == 1)
       {

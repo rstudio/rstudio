@@ -425,6 +425,7 @@ ParseResults parse(const std::wstring& rCode,
    BOOST_FOREACH(const ParseItem& item, unresolvedItems)
    {
       if (!r::util::isRKeyword(item.symbol) &&
+          !r::util::isWindowsOnlyFunction(item.symbol) &&
           objects.count(string_utils::strippedOfBackQuotes(item.symbol)) == 0)
       {
          addUnreferencedSymbol(item, results.lint());

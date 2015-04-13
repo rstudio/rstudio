@@ -1397,6 +1397,11 @@ void validateFunctionCall(RTokenCursor cursor,
          matched.unnamedArguments().size() +
          matched.namedArguments().size();
    
+   // Consider '...' as a zero-sized argument for purposes of counting
+   // the number of arguments the user is passing down.
+   numUserArguments -=
+         core::algorithm::contains(matched.unnamedArguments(), "...");
+   
    std::size_t numFormals = matched.functionInfo().formals().size();
    if (numUserArguments > numFormals)
    {
