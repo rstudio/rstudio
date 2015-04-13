@@ -20,6 +20,7 @@ import com.google.gwt.event.logical.shared.HasResizeHandlers;
 import com.google.gwt.event.logical.shared.ResizeEvent;
 import com.google.gwt.event.logical.shared.ResizeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.LayoutPanel;
 import com.google.gwt.user.client.ui.Panel;
@@ -32,6 +33,7 @@ import org.rstudio.core.client.Size;
 import org.rstudio.core.client.widget.ImageFrame;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
+import org.rstudio.studio.client.common.dependencies.DependencyManager;
 import org.rstudio.studio.client.common.zoom.ZoomUtils;
 import org.rstudio.studio.client.rsconnect.model.StaticHtmlGenerator;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -45,11 +47,13 @@ public class PlotsPane extends WorkbenchPane implements Plots.Display,
       HasResizeHandlers
 {
    @Inject
-   public PlotsPane(Commands commands, PlotsServerOperations server)
+   public PlotsPane(Commands commands, PlotsServerOperations server,
+         DependencyManager dependencies)
    {
       super("Plots");
       commands_ = commands;
       server_ = server;
+      dependencies_ = dependencies;
       ensureWidget();
    }
 
@@ -57,31 +61,38 @@ public class PlotsPane extends WorkbenchPane implements Plots.Display,
    protected Toolbar createMainToolbar()
    {
       plotsToolbar_ = new PlotsToolbar(commands_, 
-             new StaticHtmlGenerator() {
-                   @Override
-                   public void generateStaticHtml(
-                         String title, 
-                         String comment,
-                         final CommandWithArg<String> onCompleted)
-                   {
-                     final Size size = ZoomUtils.getZoomedSize(
-                           getPlotFrameSize(), 
-                           new Size(400, 350), 
-                           new Size(750, 600));
-                      server_.plotsCreateRPubsHtml(
-                         title, 
-                         comment, 
-                         size.width,
-                         size.height,
-                         new SimpleRequestCallback<String>() {
-                            @Override
-                            public void onResponseReceived(String rpubsHtmlFile)
-                            {
-                               onCompleted.execute(rpubsHtmlFile);
-                            }
-                      });
-                   }
-                });
+        new StaticHtmlGenerator() {
+           @Override
+           public void generateStaticHtml(
+                 final String title, 
+                 final String comment,
+                 final CommandWithArg<String> onCompleted)
+           {
+              dependencies_.withRMarkdown("Publishing plots", new Command()
+              {
+                 @Override
+                 public void execute()
+                 {
+                   final Size size = ZoomUtils.getZoomedSize(
+                         getPlotFrameSize(), 
+                         new Size(400, 350), 
+                         new Size(750, 600));
+                    server_.plotsCreateRPubsHtml(
+                       title, 
+                       comment, 
+                       size.width,
+                       size.height,
+                       new SimpleRequestCallback<String>() {
+                          @Override
+                          public void onResponseReceived(String rpubsHtmlFile)
+                          {
+                             onCompleted.execute(rpubsHtmlFile);
+                          }
+                    });
+                 }
+              });
+            }
+         });
       return plotsToolbar_;
    }
 
@@ -182,11 +193,13 @@ public class PlotsPane extends WorkbenchPane implements Plots.Display,
       return addHandler(resizeHandler, ResizeEvent.getType());
    }
 
+   private final Commands commands_;
+   private final PlotsServerOperations server_;
+   private final DependencyManager dependencies_;
+   
    private LayoutPanel panel_;
    private ImageFrame frame_;
    private String plotUrl_;
-   private final Commands commands_;
-   private final PlotsServerOperations server_;
    private PlotsToolbar plotsToolbar_ = null;
    private FlowPanel plotsSurface_ = null;
    private Plots.Parent plotsParent_ = new Plots.Parent() { 
