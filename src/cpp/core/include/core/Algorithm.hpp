@@ -124,6 +124,20 @@ std::vector<T> seq(T length)
    return result;
 }
 
+template <typename AssociativeContainer,
+          typename KeyType,
+          typename MappedType>
+bool get(const AssociativeContainer& container,
+         const KeyType& key,
+         MappedType** ppValue)
+{
+   if (!container.count(key))
+      return false;
+   
+   *ppValue = &(const_cast<AssociativeContainer&>(container)[key]);
+   return true;
+}
+
 } // namespace algorithm
 } // namespace core
 } // namespace rstudio

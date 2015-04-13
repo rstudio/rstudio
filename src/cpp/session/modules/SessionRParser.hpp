@@ -321,6 +321,17 @@ public:
                   "expected ',' following token");
    }
    
+   void symbolDefinedButNotUsed(const std::string& symbol,
+                                const Position& position)
+   {
+      add(position.row,
+          position.column,
+          position.row,
+          position.column + symbol.length(),
+          LintTypeWarning,
+          "variable '" + symbol + "' is defined but not used");
+   }
+   
    const std::vector<LintItem>& get() const
    {
       return lintItems_;
@@ -387,10 +398,16 @@ std::string& complement(const std::string& bracket);
 
 class ParseNode : public boost::noncopyable
 {
+   
 public:
    
+   typedef std::vector< boost::shared_ptr<ParseNode> > Children;
    typedef std::vector<Position> Positions;
    typedef std::map<std::string, Positions> SymbolPositions;
+   
+   typedef std::string PackageName;
+   typedef std::set<std::string> Symbols;
+   typedef std::map<PackageName, Symbols> PackageSymbols;
    
 private:
    
@@ -502,7 +519,7 @@ public:
       return pNode;
    }
    
-   const std::vector< boost::shared_ptr<ParseNode> >& getChildren() const
+   const Children& getChildren() const
    {
       return children_;
    }
@@ -635,7 +652,18 @@ public:
       return unresolvedSymbols;
    }
    
-public:
+   bool isSymbolUsedInChildNode(const std::string& symbolName)
+   {
+      BOOST_FOREACH(const boost::shared_ptr<ParseNode>& pChild, children_)
+      {
+         if (pChild->getReferencedSymbols().count(symbolName))
+            return true;
+         
+         if (pChild->isSymbolUsedInChildNode(symbolName))
+            return true;
+      }
+      return false;
+   }
    
    std::string suggestSimilarSymbolFor(const ParseItem& item) const
    {
@@ -673,7 +701,6 @@ private:
    // tree reference -- children and parent
    ParseNode* pParent_;
    
-   typedef std::vector< boost::shared_ptr<ParseNode> > Children;
    Children children_;
    
    // member variables
@@ -691,9 +718,6 @@ private:
    // for e.g. <pkg>::<foo>, we keep a cache of those symbols
    // in case we want to verify that e.g. <foo> really is an
    // exported function from <pkg>. TODO: keep position
-   typedef std::string PackageName;
-   typedef std::set<std::string> Symbols;
-   typedef std::map<PackageName, Symbols> PackageSymbols;
    
    PackageSymbols internalSymbols_; // <pkg>::<foo>
    PackageSymbols exportedSymbols_; // <pgk>:::<bar>

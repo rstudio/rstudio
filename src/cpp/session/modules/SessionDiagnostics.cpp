@@ -89,6 +89,62 @@ void addUnreferencedSymbol(const ParseItem& item,
    }
 }
 
+void doCheckDefinedButNotUsed(ParseNode* pNode, ParseResults& results)
+{
+   using namespace core::algorithm;
+   
+   // Find the definition positions.
+   const ParseNode::SymbolPositions& definitions =
+         pNode->getDefinedSymbols();
+   
+   const ParseNode::SymbolPositions& references =
+         pNode->getReferencedSymbols();
+   
+   for (ParseNode::SymbolPositions::const_iterator it = definitions.begin();
+        it != definitions.end();
+        ++it)
+   {
+      const std::string& symbolName = it->first;
+      
+      // if the symbol is used in any child node, bail
+      // this protects against false lint of the form e.g.
+      //
+      //    y <- 1
+      //    foo <- function() {
+      //       print(y)
+      //    }
+      //
+      // as the closure of 'foo' will have access to 'y'
+      if (pNode->isSymbolUsedInChildNode(symbolName))
+         continue;
+      
+      ParseNode::Positions* symbolDefinitionPositions = NULL;
+      ParseNode::Positions* symbolReferencePositions = NULL;
+      
+      if (get(definitions, symbolName, &symbolDefinitionPositions) &&
+          get(references, symbolName, &symbolReferencePositions))
+      {
+         if (symbolDefinitionPositions->size() == 1 &&
+             symbolReferencePositions->size() == 1 &&
+             (*symbolDefinitionPositions)[0] == (*symbolReferencePositions)[0])
+         {
+            results.lint().symbolDefinedButNotUsed(
+                     symbolName,
+                     (*symbolDefinitionPositions)[0]);
+         }
+      }
+   }
+}
+
+void checkDefinedButNotUsed(ParseResults& results)
+{
+   ParseNode::Children children = results.parseTree()->getChildren();
+   BOOST_FOREACH(const boost::shared_ptr<ParseNode>& child, children)
+   {
+      doCheckDefinedButNotUsed(child.get(), results);
+   }
+}
+
 void addInferredSymbols(const FilePath& filePath,
                         const std::string& documentId,
                         std::set<std::string>* pSymbols)
@@ -394,6 +450,9 @@ ParseResults parse(const std::wstring& rCode,
          addUnreferencedSymbol(item, results.lint());
       }
    }
+   
+   // Provide lint when a variable is assigned but not used.
+   checkDefinedButNotUsed(results);
    
    return results;
 }
