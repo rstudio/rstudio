@@ -453,8 +453,8 @@ public:
    }
 
    void addDefinedSymbol(int row,
-                           int column,
-                           const std::string& name)
+                         int column,
+                         const std::string& name)
    {
       DEBUG("--- Adding defined variable '" << name << "' (" << row << ", " << column << ")");
       definedSymbols_[name].push_back(Position(row, column));
@@ -474,8 +474,8 @@ public:
    }
    
    void addReferencedSymbol(int row,
-                              int column,
-                              const std::string& name)
+                            int column,
+                            const std::string& name)
    {
       referencedSymbols_[name].push_back(Position(row, column));
    }
@@ -484,6 +484,12 @@ public:
    {
       referencedSymbols_[rToken.contentAsUtf8()].push_back(
             Position(rToken.row(), rToken.column()));
+   }
+   
+   void addNseReferencedSymbol(const RToken& rToken)
+   {
+      nseReferencedSymbols_[rToken.contentAsUtf8()].push_back(
+               Position(rToken.row(), rToken.column()));
    }
    
    void addInternalPackageSymbol(const std::string& package,
@@ -665,6 +671,42 @@ public:
       return false;
    }
    
+   bool isSymbolDefinedButNotUsed(const std::string& symbolName,
+                                  bool checkChildNodes,
+                                  bool checkNseCalls)
+   {
+      if (!definedSymbols_.count(symbolName))
+         return false;
+      
+      if (checkChildNodes && isSymbolUsedInChildNode(symbolName))
+         return false;
+      
+      std::size_t definitionCount =
+            definedSymbols_[symbolName].size();
+      
+      std::size_t useCount = 0;
+      useCount += referencedSymbols_[symbolName].size();
+      if (checkNseCalls)
+         useCount += nseReferencedSymbols_[symbolName].size();
+      
+      if (definitionCount == 1 &&
+          useCount == 1)
+      {
+         Position defnPos = definedSymbols_[symbolName][0];
+         Position usePos;
+         
+         if (referencedSymbols_[symbolName].size())
+            usePos = referencedSymbols_[symbolName][0];
+         else if (nseReferencedSymbols_[symbolName].size())
+            usePos = nseReferencedSymbols_[symbolName][0];
+         
+         return defnPos == usePos;
+      }
+      
+      return false;
+      
+   }
+   
    std::string suggestSimilarSymbolFor(const ParseItem& item) const
    {
       std::string nameLower = boost::algorithm::to_lower_copy(item.symbol);
@@ -714,6 +756,10 @@ private:
    // variables referenced in this scope
    // map variable names to locations(row, column)
    SymbolPositions referencedSymbols_;
+   
+   // variables referenced within NSE-performing functions
+   // currently used to resolve 'is variable used?' lint
+   SymbolPositions nseReferencedSymbols_;
    
    // for e.g. <pkg>::<foo>, we keep a cache of those symbols
    // in case we want to verify that e.g. <foo> really is an

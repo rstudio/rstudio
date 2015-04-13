@@ -61,15 +61,6 @@ using namespace token_cursor;
 
 namespace {
 
-bool isWithinNseFunction(const ParseStatus& status)
-{
-   // Check if we've inferred the current function to be an NSE function
-   if (status.isWithinNseCall())
-      return true;
-   
-   return false;
-}
-
 std::map<std::string, std::string> makeComplementMap()
 {
    std::map<std::string, std::string> m;
@@ -320,7 +311,7 @@ bool mightPerformNonstandardEvaluation(const RTokenCursor& origin,
                                    cursor.currentPosition(),
                                    &pNode))
    {
-      DEBUG("--- Found function: '" << pNode->name());
+      DEBUG("--- Found function in parse tree: '" << pNode->name() << "'");
       if (cursor.moveToPosition(pNode->position()))
          if (maybePerformsNSE(cursor))
             return true;
@@ -337,6 +328,7 @@ bool mightPerformNonstandardEvaluation(const RTokenCursor& origin,
       
       if (info.functionInfo.count(symbol))
       {
+         DEBUG("--- Found function in source index");
          const FunctionInformation& fnInfo =
                const_cast<FunctionInformationMap&>(info.functionInfo)[symbol];
          
@@ -365,36 +357,26 @@ bool mightPerformNonstandardEvaluation(const RTokenCursor& origin,
    bool cacheable = true;
    r::sexp::Protect protect;
    SEXP symbolSEXP = resolveFunctionAtCursor(cursor, &protect, &cacheable);
-   
-   // It's possible that we weren't able to resolve this function,
-   // as it's from a package that hasn't actually been loaded in the
-   // current session. In this case, we do a search of our package
-   // information database to see if we have asynchronously ascertained
-   // that a function with this name does perform NSE.
-   if (symbolSEXP == R_UnboundValue || symbolSEXP == R_NilValue)
-   {
-      std::string symbol = getSymbolName(cursor);
-      const RSourceIndex::PackageInformationDatabase& db =
-            RSourceIndex::getPackageInformationDatabase();
-      
-      BOOST_FOREACH(const PackageInformation& info,
-                    db | boost::adaptors::map_values)
-      {
-         if (info.functionInfo.count(symbol))
-            return const_cast<FunctionInformationMap&>(info.functionInfo)[symbol].performsNse();
-      }
-   }
+   if (symbolSEXP == R_UnboundValue)
+      return false;
    
    NSEDatabase& nseDb = nseDatabase();
    if (cacheable)
    {
       if (nseDb.isKnownToPerformNSE(symbolSEXP))
+      {
+         DEBUG("-- Known to perform NSE");
          return true;
+      }
       else if (nseDb.isKnownNotToPerformNSE(symbolSEXP))
+      {
+         DEBUG("-- Known not to perform NSE");
          return false;
+      }
    }
    
    bool result = r::sexp::maybePerformsNSE(symbolSEXP);
+   DEBUG("----- Does '" << cursor << "' perform NSE? " << result);
    if (cacheable)
       nseDb.add(symbolSEXP, result);
    
@@ -745,8 +727,8 @@ void handleIdentifier(RTokenCursor& cursor,
    // Check to see if we are defining a symbol at this location.
    // Note that both string and id are valid for assignments.
    bool skipReferenceChecks =
-         isWithinNseFunction(status) ||
-         (status.isInArgumentList() && !status.parseOptions().lintRFunctions());
+         status.isInArgumentList() && !status.parseOptions().lintRFunctions();
+   bool inNseFunction = status.isWithinNseCall();
    
    // Don't cache identifiers if:
    //
@@ -802,10 +784,12 @@ void handleIdentifier(RTokenCursor& cursor,
    }
    
    // If this is truly an identifier, add a reference.
-   if (!skipReferenceChecks && cursor.isType(RToken::ID))
+   if (cursor.isType(RToken::ID))
    {
-      DEBUG("--- Adding reference to symbol");
-      status.node()->addReferencedSymbol(cursor);
+      if (inNseFunction)
+         status.node()->addNseReferencedSymbol(cursor);
+      else
+         status.node()->addReferencedSymbol(cursor);
    }
 }
 

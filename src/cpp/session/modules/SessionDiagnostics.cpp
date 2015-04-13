@@ -97,40 +97,20 @@ void doCheckDefinedButNotUsed(ParseNode* pNode, ParseResults& results)
    const ParseNode::SymbolPositions& definitions =
          pNode->getDefinedSymbols();
    
-   const ParseNode::SymbolPositions& references =
-         pNode->getReferencedSymbols();
-   
    for (ParseNode::SymbolPositions::const_iterator it = definitions.begin();
         it != definitions.end();
         ++it)
    {
       const std::string& symbolName = it->first;
       
-      // if the symbol is used in any child node, bail
-      // this protects against false lint of the form e.g.
-      //
-      //    y <- 1
-      //    foo <- function() {
-      //       print(y)
-      //    }
-      //
-      // as the closure of 'foo' will have access to 'y'
-      if (pNode->isSymbolUsedInChildNode(symbolName))
-         continue;
-      
-      ParseNode::Positions* symbolDefinitionPositions = NULL;
-      ParseNode::Positions* symbolReferencePositions = NULL;
-      
-      if (get(definitions, symbolName, &symbolDefinitionPositions) &&
-          get(references, symbolName, &symbolReferencePositions))
+      if (pNode->isSymbolDefinedButNotUsed(symbolName, true, true))
       {
-         if (symbolDefinitionPositions->size() == 1 &&
-             symbolReferencePositions->size() == 1 &&
-             (*symbolDefinitionPositions)[0] == (*symbolReferencePositions)[0])
+         ParseNode::Positions* symbolPos = NULL;
+         if (get(definitions, symbolName, &symbolPos))
          {
             results.lint().symbolDefinedButNotUsed(
                      symbolName,
-                     (*symbolDefinitionPositions)[0]);
+                     it->second[0]);
          }
       }
    }
