@@ -15,6 +15,7 @@
  */
 package com.google.gwt.dev.jjs.impl;
 
+import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.dev.jjs.ast.CanBeFinal;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JProgram;
@@ -106,7 +107,7 @@ public class FinalizerTest extends OptimizerTestBase {
   }
 
   @Override
-  protected boolean optimizeMethod(JProgram program, JMethod method) {
+  protected boolean doOptimizeMethod(TreeLogger logger, JProgram program, JMethod method) {
     return Finalizer.exec(program).didChange();
   }
 }

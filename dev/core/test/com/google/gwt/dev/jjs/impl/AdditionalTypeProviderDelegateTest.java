@@ -15,6 +15,7 @@
  */
 package com.google.gwt.dev.jjs.impl;
 
+import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.javac.GeneratedUnit;
 import com.google.gwt.dev.javac.JdtCompiler.AdditionalTypeProviderDelegate;
@@ -235,7 +236,7 @@ public class AdditionalTypeProviderDelegateTest extends OptimizerTestBase {
   }
 
   @Override
-  protected boolean optimizeMethod(JProgram program, JMethod method) {
+  protected boolean doOptimizeMethod(TreeLogger logger, JProgram program, JMethod method) {
     return false;
   }
 }

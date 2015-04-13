@@ -17,6 +17,7 @@
 
 package com.google.gwt.dev.jjs.impl;
 
+import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JProgram;
 
@@ -28,7 +29,7 @@ public class SameParameterValueOptimizerTest extends OptimizerTestBase {
     addSnippetClassDecl("static void foo(int i) { int j = i; }");
     optimizeMethod("foo", "void",
         "foo(1); foo(2);").intoString(
-            "int j = i;");
+        "int j = i;");
   }
 
   public void testDifferentParameter_Null() throws Exception {
@@ -117,7 +118,7 @@ public class SameParameterValueOptimizerTest extends OptimizerTestBase {
   public void testKillParameterValue_Postfix() throws Exception {
     addSnippetClassDecl("static void foo(int i) { i++; int j = i; }");
     optimizeMethod("foo", "void",
-    "foo(1); ").intoString(
+        "foo(1); ").intoString(
         "i++;",
         "int j = i;");
   }
@@ -159,7 +160,7 @@ public class SameParameterValueOptimizerTest extends OptimizerTestBase {
   }
 
   @Override
-  protected boolean optimizeMethod(JProgram program, JMethod method) {
+  protected boolean doOptimizeMethod(TreeLogger logger, JProgram program, JMethod method) {
     MakeCallsStatic.exec(program, false);
     return SameParameterValueOptimizer.exec(program).didChange();
   }

@@ -15,6 +15,7 @@
  */
 package com.google.gwt.dev.jjs.impl.gflow;
 
+import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodBody;
@@ -34,7 +35,7 @@ public abstract class CfgIntegratedAnalysisTestBase<A extends Assumption<A>>
   protected boolean forward = true;
 
   @Override
-  protected boolean optimizeMethod(JProgram program, JMethod method) {
+  protected boolean doOptimizeMethod(TreeLogger logger, JProgram program, JMethod method) {
     JMethodBody body = (JMethodBody) method.getBody();
     Cfg cfgGraph = CfgBuilder.build(program, body.getBlock());
 

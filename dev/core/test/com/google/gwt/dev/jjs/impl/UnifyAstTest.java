@@ -13,6 +13,7 @@
  */
 package com.google.gwt.dev.jjs.impl;
 
+import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.javac.testing.impl.JavaResourceBase;
 import com.google.gwt.dev.javac.testing.impl.MockJavaResource;
@@ -480,7 +481,7 @@ public class UnifyAstTest extends OptimizerTestBase {
   }
 
   @Override
-  protected boolean optimizeMethod(JProgram program, JMethod method) {
+  protected boolean doOptimizeMethod(TreeLogger logger, JProgram program, JMethod method) {
     program.addEntryMethod(findMainMethod(program));
     return false;
   }

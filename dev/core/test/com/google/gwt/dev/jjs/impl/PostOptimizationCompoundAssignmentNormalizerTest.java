@@ -15,6 +15,7 @@
  */
 package com.google.gwt.dev.jjs.impl;
 
+import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JProgram;
 
@@ -55,7 +56,7 @@ public class PostOptimizationCompoundAssignmentNormalizerTest
   }
 
   @Override
-  protected boolean optimizeMethod(JProgram program, JMethod method) {
+  protected boolean doOptimizeMethod(TreeLogger logger, JProgram program, JMethod method) {
     PostOptimizationCompoundAssignmentNormalizer.exec(program);
     LongCastNormalizer.exec(program);
     return true;

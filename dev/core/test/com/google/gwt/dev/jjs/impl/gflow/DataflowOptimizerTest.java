@@ -15,6 +15,7 @@
  */
 package com.google.gwt.dev.jjs.impl.gflow;
 
+import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.impl.DeadCodeElimination;
@@ -446,7 +447,7 @@ public class DataflowOptimizerTest extends OptimizerTestBase {
   private boolean runMethodInliner;
 
   @Override
-  protected boolean optimizeMethod(JProgram program, JMethod method) {
+  protected boolean doOptimizeMethod(TreeLogger logger, JProgram program, JMethod method) {
     boolean didChange = false;
     boolean optimizeChange;
 

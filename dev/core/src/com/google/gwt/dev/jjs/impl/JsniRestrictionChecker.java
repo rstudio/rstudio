@@ -14,6 +14,7 @@
 package com.google.gwt.dev.jjs.impl;
 
 import com.google.gwt.core.ext.TreeLogger;
+import com.google.gwt.core.ext.TreeLogger.Type;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
@@ -66,13 +67,27 @@ public class JsniRestrictionChecker extends JVisitor {
       logError("JSNI method %s attempts to call method %s on an instance which might be a "
           + "JavaScriptObject. Such a method call is only allowed in pure Java (non-JSNI) "
           + "functions.", currentJsniMethod.getQualifiedName(), calledMethod.getQualifiedName());
+    } else if (jprogram.isJavaLangString(enclosingTypeOfCalledMethod) && !calledMethod.isStatic()) {
+      logError("JSNI method %s attempts to call method %s. Only static methods from " +
+              "java.lang.String can be called from JSNI.",
+          currentJsniMethod.getQualifiedName(),
+          calledMethod.getQualifiedName());
+    } else if (jprogram.isJavaLangObject(enclosingTypeOfCalledMethod) && !calledMethod.isStatic()) {
+      log(Type.WARN, "JSNI method %s calls method %s. Instance java.lang.Object methods should " +
+              "not be called on String, Array or JSO instances.",
+          currentJsniMethod.getQualifiedName(),
+          calledMethod.getQualifiedName());
     }
     return super.visit(x, ctx);
   }
 
+  private void log(Type type, String format, Object... args) {
+    logger.log(type, String.format(format, args));
+    hasErrors |= type == Type.ERROR;
+  }
+
   private void logError(String format, Object... args) {
-    logger.log(TreeLogger.ERROR, String.format(format, args));
-    hasErrors = true;
+    log(Type.ERROR, format, args);
   }
 
   private boolean isJsoInterface(JDeclaredType type) {

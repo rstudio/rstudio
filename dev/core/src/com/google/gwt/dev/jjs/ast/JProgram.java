@@ -1014,6 +1014,11 @@ public class JProgram extends JNode implements ArrayTypeCreator {
     return type.getUnderlyingType() == typeString;
   }
 
+  public boolean isJavaLangObject(JType type) {
+    assert type != null;
+    return type.getUnderlyingType() == typeJavaLangObject;
+  }
+
   public boolean isReferenceOnly(JDeclaredType type) {
     if (type != null) {
       return referenceOnlyTypeNames.contains(type.getName());

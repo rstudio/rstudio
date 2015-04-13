@@ -15,6 +15,7 @@
  */
 package com.google.gwt.dev.jjs.impl;
 
+import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JDeclarationStatement;
@@ -1096,7 +1097,7 @@ public class EnumOrdinalizerTest extends OptimizerTestBase {
   }
 
   @Override
-  protected boolean optimizeMethod(JProgram program, JMethod method) {
+  protected boolean doOptimizeMethod(TreeLogger logger, JProgram program, JMethod method) {
     /*
      * EnumOrdinalizer depends MakeCallsStatic and MethodInliner running before
      * it runs, since they cleanup the internal structure of an enum class to

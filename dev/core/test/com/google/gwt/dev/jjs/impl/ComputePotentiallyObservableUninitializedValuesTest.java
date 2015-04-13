@@ -15,6 +15,7 @@
  */
 package com.google.gwt.dev.jjs.impl;
 
+import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JProgram;
@@ -207,8 +208,7 @@ public class ComputePotentiallyObservableUninitializedValuesTest extends Optimiz
   }
 
   @Override
-  protected boolean optimizeMethod(JProgram program, JMethod method) {
-
+  protected boolean doOptimizeMethod(TreeLogger logger, JProgram program, JMethod method) {
     if (runMethodInliner) {
       MethodInliner.exec(program);
     }
