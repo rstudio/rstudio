@@ -212,7 +212,7 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
       toolbar.addLeftWidget(commands.viewerRefresh().createToolbarButton());
       
       publishButton_ = new RSConnectPublishButton(
-            RSConnect.CONTENT_TYPE_DOCUMENT, true, false);
+            RSConnect.CONTENT_TYPE_DOCUMENT, true, null);
       toolbar.addRightWidget(publishButton_);
    }
    

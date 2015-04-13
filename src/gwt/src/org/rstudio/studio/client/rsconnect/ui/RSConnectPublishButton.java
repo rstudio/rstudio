@@ -17,6 +17,7 @@ package org.rstudio.studio.client.rsconnect.ui;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.AppCommand;
+import org.rstudio.core.client.command.EnabledChangedHandler;
 import org.rstudio.core.client.command.VisibleChangedHandler;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.ToolbarButton;
@@ -56,11 +57,11 @@ public class RSConnectPublishButton extends Composite
               RPubsUploadStatusEvent.Handler
 {
    public RSConnectPublishButton(int contentType, boolean showCaption,
-         boolean manageVisiblity)
+         AppCommand boundCommand)
    {
       contentType_ = contentType;
       showCaption_ = showCaption;
-      manageVisiblity_ = manageVisiblity;
+      boundCommand_ = boundCommand;
       
       // create root widget
       HorizontalPanel panel = new HorizontalPanel();
@@ -113,13 +114,23 @@ public class RSConnectPublishButton extends Composite
       pUiPrefs_ = pUiPrefs;
       
       // initialize visibility if requested
-      if (manageVisiblity_) 
+      if (boundCommand_ != null) 
       {
-         commands_.rsconnectDeploy().addVisibleChangedHandler(
+         boundCommand_.addVisibleChangedHandler(
                new VisibleChangedHandler()
          {
             @Override
             public void onVisibleChanged(AppCommand command)
+            {
+               applyVisiblity();
+            }
+         });
+
+         boundCommand_.addEnabledChangedHandler(
+               new EnabledChangedHandler()
+         {
+            @Override
+            public void onEnabledChanged(AppCommand command)
             {
                applyVisiblity();
             }
@@ -441,8 +452,9 @@ public class RSConnectPublishButton extends Composite
           !pUiPrefs_.get().enableRStudioConnect().getGlobalValue())
          return false;
       
-      // if we're bound to a command's visibility state, check that
-      if (manageVisiblity_ && !commands_.rsconnectDeploy().isVisible())
+      // if we're bound to a command's visibility/enabled state, check that
+      if (boundCommand_ != null && (!boundCommand_.isVisible() || 
+            !boundCommand_.isEnabled()))
          return false;
 
       // if we have no content type, hide ourselves
@@ -487,7 +499,7 @@ public class RSConnectPublishButton extends Composite
    private PublishHtmlSource publishHtmlSource_;
    
    private final boolean showCaption_;
-   private final boolean manageVisiblity_;
+   private final AppCommand boundCommand_;
 
    private RSConnectDeploymentRecord defaultRec_;
 }

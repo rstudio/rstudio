@@ -115,7 +115,6 @@ public class PlotsTab extends DelayLoadWorkbenchTab<Plots>
       commands_.savePlotAsImage().setEnabled(false);
       commands_.savePlotAsPdf().setEnabled(false);
       commands_.copyPlotToClipboard().setEnabled(false);
-      commands_.publishPlotToRPubs().setEnabled(false);
       commands_.zoomPlot().setEnabled(false);
       commands_.removePlot().setEnabled(false);
       commands_.clearPlots().setEnabled(false);
@@ -171,7 +170,6 @@ public class PlotsTab extends DelayLoadWorkbenchTab<Plots>
       commands_.savePlotAsImage().setEnabled(hasPlots);
       commands_.savePlotAsPdf().setEnabled(hasPlots);
       commands_.copyPlotToClipboard().setEnabled(hasPlots);
-      commands_.publishPlotToRPubs().setEnabled(hasPlots);
       commands_.zoomPlot().setEnabled(hasPlots);
       commands_.removePlot().setEnabled(hasPlots);
       commands_.clearPlots().setEnabled(hasPlots);

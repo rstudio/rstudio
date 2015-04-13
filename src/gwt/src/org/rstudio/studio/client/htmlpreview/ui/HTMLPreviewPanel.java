@@ -109,7 +109,7 @@ public class HTMLPreviewPanel extends ResizeComposite
       publishButtonSeparator_ = toolbar.addLeftSeparator();
       toolbar.addLeftWidget(
                publishButton_ = new RSConnectPublishButton(
-                     RSConnect.CONTENT_TYPE_DOCUMENT, true, false));
+                     RSConnect.CONTENT_TYPE_DOCUMENT, true, null));
       
       findTextBox_ = new FindTextBox("Find");
       findTextBox_.setIconVisible(true);

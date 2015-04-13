@@ -238,7 +238,6 @@ public abstract class
    public abstract AppCommand savePlotAsImage();
    public abstract AppCommand savePlotAsPdf();
    public abstract AppCommand copyPlotToClipboard();
-   public abstract AppCommand publishPlotToRPubs();
    public abstract AppCommand zoomPlot();
    public abstract AppCommand removePlot();
    public abstract AppCommand clearPlots();
