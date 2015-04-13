@@ -590,15 +590,36 @@ public:
      return std::wstring(begin, end);
   }
   
+  // Check to see if this is an 'assignment' call, e.g.
+  //
+  //    body(f, where) <- x
+  //
+  bool isAssignmentCall() const
+  {
+     RTokenCursor cursor = clone();
+     if (canOpenArgumentList(cursor.nextSignificantToken()))
+        if (!cursor.moveToNextSignificantToken())
+           return false;
+     
+     if (!canOpenArgumentList(cursor))
+        return false;
+     
+     if (!cursor.fwdToMatchingToken())
+        return false;
+     
+     return isLeftAssign(cursor.nextSignificantToken());
+  }
+  
   // Check if this is a 'simple' call; that is, the call is a single
   // call to a particular string / symbol, as in:
   //
   //    foo(1, 2)
   //
-  // We optimize for this case as we can then search for the symbol directly,
-  // and avoid other slow evaluation codepaths.
   bool isSimpleCall() const
   {
+     if (isAssignmentCall())
+        return false;
+     
      RTokenCursor cursor = clone();
      if (canOpenArgumentList(cursor))
         if (!cursor.moveToPreviousSignificantToken())
@@ -616,6 +637,8 @@ public:
      return false;
   }
   
+  
+  
   // Check if this is a 'namespace' call, e.g.
   //
   //    foo::bar(1, 2)
@@ -624,6 +647,9 @@ public:
   // 'bar' in the 'foo' namespace.
   bool isSimpleNamespaceCall() const
   {
+     if (isAssignmentCall())
+        return false;
+     
      RTokenCursor cursor = clone();
      if (canOpenArgumentList(cursor))
         if (!cursor.moveToPreviousSignificantToken())

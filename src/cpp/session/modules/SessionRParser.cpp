@@ -191,7 +191,16 @@ SEXP resolveFunctionAtCursor(RTokenCursor cursor,
    SEXP symbolSEXP = R_UnboundValue;
    if (pCacheable) *pCacheable = true;
    
-   if (cursor.isSimpleCall())
+   if (cursor.isAssignmentCall())
+   {
+      // TODO: Right now our match.call doesn't understand how
+      // to handle `fn(x) <- bar` calls, as we don't fully parse these
+      // expressions into the associated `foo<-`(x, bar) call. By
+      // not resolving a function in these situations we simply avoid
+      // linting such calls.
+      return R_UnboundValue;
+   }
+   else if (cursor.isSimpleCall())
    {
       DEBUG("Resolving as 'simple' call");
       std::string symbol = string_utils::strippedOfQuotes(
