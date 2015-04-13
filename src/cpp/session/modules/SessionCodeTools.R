@@ -1351,13 +1351,29 @@
             ""
       }))
    }
+   
+   methods <- .rs.extractElement(matched, "methods")
+   method.names <- if (length(methods))
+      names(methods)[-1]
+   else
+      character()
 
    list(
       Class = Class,
       field.names = field.names,
-      field.types = field.types
+      field.types = field.types,
+      method.names = method.names
    )
    
+})
+
+.rs.addFunction("getSetRefClassSymbols", function(callString)
+{
+   parsed <- .rs.rpc.get_set_ref_class_call(callString)
+   as.character(c(
+      parsed$field.names,
+      parsed$method.name
+   ))
 })
 
 .rs.addFunction("registerNativeRoutines", function()

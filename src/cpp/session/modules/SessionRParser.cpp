@@ -215,7 +215,7 @@ SEXP resolveFunctionAtCursor(RTokenCursor cursor,
       DEBUG("Resolving as generic evaluation");
       if (pCacheable) *pCacheable = false;
       
-      std::string call = string_utils::wideToUtf8(cursor.getCallingString());
+      std::string call = string_utils::wideToUtf8(cursor.getEvaluationAssociatedWithCall());
       
       // Don't evaluate nested function calls.
       if (call.find('(') != std::string::npos)
@@ -976,7 +976,7 @@ FunctionInformation getInfoAssociatedWithFunctionAtCursor(
    
    // Get the formals associated with this function.
    FunctionInformation info(
-            string_utils::wideToUtf8(cursor.getCallingString()),
+            string_utils::wideToUtf8(cursor.getEvaluationAssociatedWithCall()),
             r::sexp::environmentName(functionSEXP));
    
    Error error = r::sexp::extractFunctionInfo(
@@ -1328,6 +1328,43 @@ void checkBinaryOperatorWhitespace(RTokenCursor& cursor,
    }
 }
 
+void addExtraScopedSymbolsForCall(RTokenCursor startCursor,
+                                  ParseStatus& status)
+{
+   if (startCursor.isType(RToken::LPAREN))
+      if (!startCursor.moveToPreviousSignificantToken())
+         return;
+   
+   if (startCursor.contentEquals(L"setRefClass"))
+   {
+      RTokenCursor endCursor = startCursor.clone();
+      if (!endCursor.moveToNextSignificantToken())
+         return;
+      
+      if (!endCursor.fwdToMatchingToken())
+         return;
+      
+      std::set<std::string> symbols;
+      r::exec::RFunction getSetRefClassCall(".rs.getSetRefClassSymbols");
+      getSetRefClassCall.addParam(
+               string_utils::wideToUtf8(
+                  std::wstring(startCursor.begin(), endCursor.end())));
+      
+      Error error = getSetRefClassCall.call(&symbols);
+      if (error)
+      {
+         LOG_ERROR(error);
+         return;
+      }
+      
+      status.makeSymbolsAvailableInRange(
+               symbols,
+               startCursor.currentPosition(),
+               endCursor.currentPosition());
+   }
+   
+}
+
 void validateFunctionCall(RTokenCursor cursor,
                           ParseStatus& status)
 {
@@ -1507,7 +1544,7 @@ void enterFunctionScope(RTokenCursor cursor,
        isLeftAssign(cursor) &&
        cursor.moveToPreviousSignificantToken())
    {
-      symbol = string_utils::wideToUtf8(cursor.getCallingString());
+      symbol = string_utils::wideToUtf8(cursor.getEvaluationAssociatedWithCall());
       position = cursor.currentPosition();
    }
    
@@ -1953,6 +1990,7 @@ ARGUMENT_LIST:
       
       DEBUG("-- Begin argument list " << cursor);
       validateFunctionCall(cursor, status);
+      addExtraScopedSymbolsForCall(cursor, status);
       
       // Update the current state.
       switch (cursor.type())

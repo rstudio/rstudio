@@ -574,7 +574,7 @@ public:
   //    foo + bar::baz$bam()
   //          ^^^^^^^^^^^^
   //
-  std::wstring getCallingString() const
+  std::wstring getEvaluationAssociatedWithCall() const
   {
      RTokenCursor cursor = clone();
      
@@ -588,6 +588,24 @@ public:
      
      std::wstring::const_iterator begin = cursor.begin();
      return std::wstring(begin, end);
+  }
+  
+  // Get the entirety of a function call, e.g.
+  //
+  //    foo + bar::baz$bam(a, b, c)
+  //          ^^^^^^^^^^^^^^^^^^^^^
+  //
+  std::wstring getFunctionCall() const
+  {
+     std::wstring evaluation = getEvaluationAssociatedWithCall();
+     RTokenCursor cursor = clone();
+     if (!cursor.moveToNextSignificantToken())
+        return std::wstring();
+     
+     if (!cursor.fwdToMatchingToken())
+        return std::wstring();
+     
+     return evaluation + std::wstring(this->end(), cursor.end());
   }
   
   // Check to see if this is an 'assignment' call, e.g.

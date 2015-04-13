@@ -630,6 +630,22 @@ public:
       return false;
    }
    
+   bool symbolHasDefinitionInRange(const std::string& symbol,
+                                   const Position& position) const
+   {
+      for (SymbolRanges::const_iterator it = symbolRanges().begin();
+           it != symbolRanges().end();
+           ++it)
+      {
+         if (it->first.contains(position) &&
+             it->second.count(symbol))
+         {
+            return true;
+         }
+      }
+      return false;
+   }
+   
    std::set<ParseItem> getUnresolvedSymbols() const
    {
       std::set<ParseItem> unresolvedSymbols;
@@ -642,7 +658,8 @@ public:
          BOOST_FOREACH(const Position& position, it->second)
          {
             DEBUG("-- Checking for symbol '" << symbol << "' " << position.toString());
-            if (!symbolHasDefinitionInTree(symbol, position))
+            if (!symbolHasDefinitionInTree(symbol, position) &&
+                !symbolHasDefinitionInRange(symbol, position))
             {
                DEBUG("--- No definition for symbol '" << symbol << "'");
                unresolvedSymbols.insert(
@@ -737,6 +754,14 @@ public:
       return std::string();
    }
    
+   void makeSymbolsAvailableInRange(
+         const std::set<std::string>& symbols,
+         const Position& begin,
+         const Position& end)
+   {
+      symbolRanges()[Range(begin, end)] = symbols;
+   }
+   
 public:
    
    const std::string& name() const { return name_; }
@@ -771,6 +796,13 @@ private:
    
    PackageSymbols internalSymbols_; // <pkg>::<foo>
    PackageSymbols exportedSymbols_; // <pgk>:::<bar>
+   
+   typedef std::map<Range, std::set<std::string> > SymbolRanges;
+   static SymbolRanges& symbolRanges()
+   {
+      static SymbolRanges instance;
+      return instance;
+   }
 };
 
 class ParseStatus
@@ -1110,6 +1142,17 @@ public:
          bracketStack_.pop();
       }
    }
+   
+   void makeSymbolsAvailableInRange(
+         const std::set<std::string>& symbols,
+         const Position& begin,
+         const Position& end)
+   {
+      pNode_->makeSymbolsAvailableInRange(
+               symbols,
+               begin,
+               end);
+   }
 
 private:
    boost::shared_ptr<ParseNode> pRoot_;
@@ -1128,6 +1171,13 @@ private:
    // this should be the case but should attempt to enforce
    // this.
    Stack<RToken> bracketStack_;
+   
+   // NOTE: This is kind of a hack based on the fact that only
+   // function scopes are parsed as explicit scopes; this is an
+   // alternative mechanism to make symbols available within
+   // given ranges.
+   typedef std::map< Range, std::set<std::string> > SymbolRanges;
+   SymbolRanges symbolRanges_;
 };
 
 class ParseResults {
