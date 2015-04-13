@@ -124,7 +124,10 @@ public class Projects implements OpenProjectFileHandler,
             commands.closeProject().setEnabled(hasProject);
             commands.projectOptions().setEnabled(hasProject);
             if (!hasProject)
+            {
                commands.setWorkingDirToProjectDir().remove();
+               commands.showDiagnosticsProject().remove();
+            }
             
             // remove version control commands if necessary
             if (!sessionInfo.isVcsEnabled())
@@ -760,6 +763,28 @@ public class Projects implements OpenProjectFileHandler,
                pUIPrefs_.get().defaultProjectLocation().getValue()),
          "R Projects (*.Rproj)",
          onCompleted);  
+   }
+   
+   @Handler
+   public void onShowDiagnosticsProject()
+   {
+      final ProgressIndicator indicator = globalDisplay_.getProgressIndicator("Lint");
+      indicator.onProgress("Analyzing project sources...");
+      projServer_.analyzeProject(new ServerRequestCallback<Void>()
+      {
+         @Override
+         public void onResponseReceived(Void response)
+         {
+            indicator.onCompleted();
+         }
+         
+         @Override
+         public void onError(ServerError error)
+         {
+            Debug.logError(error);
+            indicator.onCompleted();
+         }
+      });
    }
    
    private final Provider<ProjectMRUList> pMRUList_;

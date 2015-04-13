@@ -362,6 +362,12 @@ public:
       lintItems_.push_back(item);
    }
    
+   void push_back(const LintItems& items)
+   {
+      for (std::size_t i = 0, n = items.size(); i < n; ++i)
+         lintItems_.push_back(items.get()[i]);
+   }
+   
    typedef std::vector<LintItem>::iterator iterator;
    typedef std::vector<LintItem>::const_iterator const_iterator;
    

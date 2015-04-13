@@ -2077,7 +2077,7 @@ public class TextEditingTarget implements
    }
    
    @Handler
-   void onLintActiveDocument()
+   void onShowDiagnosticsActiveDocument()
    {
       lintManager_.lint(true, false);
    }

@@ -4015,6 +4015,12 @@ public class RemoteServer implements Server
    }
    
    @Override
+   public void analyzeProject(ServerRequestCallback<Void> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, ANALYZE_PROJECT, requestCallback);
+   }
+   
+   @Override
    public void getSetClassCall(String call,
                                ServerRequestCallback<SetClassCall> requestCallback)
    {
@@ -4383,6 +4389,7 @@ public class RemoteServer implements Server
    private static final String GET_PENDING_ACTIONS = "get_pending_actions";
    
    private static final String LINT_R_SOURCE_DOCUMENT = "lint_r_source_document";
+   private static final String ANALYZE_PROJECT = "analyze_project";
    
    private static final String GET_SET_CLASS_CALL = "get_set_class_slots";
    private static final String GET_SET_GENERIC_CALL = "get_set_generic_call";

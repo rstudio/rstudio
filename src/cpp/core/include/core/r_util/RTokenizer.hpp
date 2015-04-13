@@ -511,6 +511,28 @@ inline bool canContinueStatement(const RToken& rToken)
            canOpenArgumentList(rToken);
 }
 
+inline bool isSymbolNamed(const RToken& rToken,
+                          const std::wstring& name)
+{
+   // For strings, check if the content within the quotes
+   // is equal to the name provided. TODO: handle escaped
+   // quotes within
+   if (rToken.isType(RToken::STRING) ||
+       (rToken.isType(RToken::ID) && *rToken.begin() == '`'))
+   {
+      std::size_t distance = std::distance(
+               rToken.begin(), rToken.end());
+      if (distance < 2) return false;
+      return distance - 2 == name.size() &&
+            std::equal(
+               rToken.begin() + 1,
+               rToken.end() - 1,
+               name.begin());
+   }
+   
+   return rToken.contentEquals(name);
+}
+
 } // end namespace token_utils
 
 } // namespace r_util

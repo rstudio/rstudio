@@ -40,6 +40,9 @@ class Error ;
 class FilePath
 {
 public:
+   
+   // NOTE: function returns 'true' if computation can continue;
+   // false if computation should stop
    typedef boost::function<bool(int, const FilePath&)>  
                                                 RecursiveIterationFunction;
 

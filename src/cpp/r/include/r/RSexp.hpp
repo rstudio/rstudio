@@ -52,8 +52,10 @@ class ListBuilder;
 class Protect;
    
 // environments and namespaces
+SEXP asEnvironment(std::string name);
 std::vector<std::string> getLoadedNamespaces();
 SEXP findNamespace(const std::string& name);
+SEXP asNamespace(const std::string& name);
    
 // variables within an environment
 typedef std::pair<std::string,SEXP> Variable ;
@@ -79,12 +81,14 @@ bool setNames(SEXP sexp, const std::vector<std::string>& names);
 core::Error getNames(SEXP sexp, std::vector<std::string>* pNames);  
 bool isActiveBinding(const std::string&, const SEXP);
 
+// function introspection
+SEXP functionBody(SEXP functionSEXP);
+
 // type checking
 bool isString(SEXP object);
 bool isLanguage(SEXP object);
 bool isMatrix(SEXP object);
 bool isDataFrame(SEXP object);   
-     
 bool isNull(SEXP object);
 
 // type coercions

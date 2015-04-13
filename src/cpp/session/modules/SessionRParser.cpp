@@ -124,6 +124,10 @@ public:
    
    NSEDatabase()
    {
+      BOOST_FOREACH(const std::string& name, r::sexp::nsePrimitives())
+      {
+         addNseFunction(name, "base");
+      }
    }
    
    void add(SEXP symbolSEXP, bool performsNse)
@@ -149,6 +153,12 @@ public:
    }
    
 private:
+   
+   void addNseFunction(const std::string& name,
+                       const std::string& ns)
+   {
+      add(r::sexp::findFunction(name, ns), true);
+   }
    
    uintptr_t address(SEXP objectSEXP)
    {
@@ -304,6 +314,10 @@ bool mightPerformNonstandardEvaluation(const RTokenCursor& origin,
          if (maybePerformsNSE(cursor))
             return true;
    }
+   
+   // Handle some special cases first.
+   if (isSymbolNamed(cursor, L"::") || isSymbolNamed(cursor, L":::"))
+      return true;
    
    bool cacheable = true;
    r::sexp::Protect protect;
@@ -1064,8 +1078,12 @@ public:
                            MatchedCall* pCall)
    {
       // `old.packages()` delegates the 'method' formal even when missing
-      if (cursor.contentEquals(L"old.packages"))
+      // same with `available.packages()`
+      if (cursor.contentEquals(L"old.packages") ||
+          cursor.contentEquals(L"available.packages"))
+      {
          pCall->functionInfo().infoForFormal("method").missingnessHandled = true;
+      }
    }
 
    // Accessors
@@ -1226,6 +1244,11 @@ public:
    CustomFunctionValidators()
    {
       // initialize our own custom validators here?
+   }
+   
+   void add(const std::wstring& symbol, Validator validator)
+   {
+      database_[symbol].push_back(validator);
    }
    
    bool applyValidators(RTokenCursor cursor,
