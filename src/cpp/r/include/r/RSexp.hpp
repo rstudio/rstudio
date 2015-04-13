@@ -335,7 +335,7 @@ private:
 
 void printValue(SEXP object);
 bool inherits(SEXP object, const char* S3Class);
-bool maybePerformsNSE(SEXP function);
+bool maybePerformsNSE(SEXP functionSEXP);
 
 SEXP objects(SEXP environment, 
              bool allNames,

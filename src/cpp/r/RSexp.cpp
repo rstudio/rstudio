@@ -20,7 +20,7 @@
 #include <r/RSexp.hpp>
 #include <r/RInternal.hpp>
 
-#include <algorithm>
+#include <core/Algorithm.hpp>
 
 #include <boost/bind.hpp>
 #include <boost/function.hpp>
@@ -1134,16 +1134,35 @@ bool maybePerformsNSEImpl(SEXP node,
    return result;
 }
 
-bool maybePerformsNSE(SEXP function)
+std::set<SEXP> makeKnownNSEFunctions()
 {
-   if (!Rf_isFunction(function))
+   std::set<SEXP> set;
+   
+   set.insert(findFunction("with", "base"));
+   set.insert(findFunction("within", "base"));
+   
+   return set;
+}
+
+bool isKnownNseFunction(SEXP functionSEXP)
+{
+   static const std::set<SEXP> knownNseFunctions = makeKnownNSEFunctions();
+   return core::algorithm::contains(knownNseFunctions, functionSEXP);
+}
+
+bool maybePerformsNSE(SEXP functionSEXP)
+{
+   if (!Rf_isFunction(functionSEXP))
       return false;
    
-   if (Rf_isPrimitive(function))
+   if (Rf_isPrimitive(functionSEXP))
       return false;
+   
+   if (isKnownNseFunction(functionSEXP))
+      return true;
    
    return maybePerformsNSEImpl(
-            functionBody(function),
+            functionBody(functionSEXP),
             nsePrimitives());
 }
 
