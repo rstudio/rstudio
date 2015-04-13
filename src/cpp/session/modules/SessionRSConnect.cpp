@@ -126,7 +126,6 @@ public:
                     ignoredFiles + "'") + 
              "))}";
 
-      std::cerr << cmd << std::endl;
       pDeploy->start(cmd.c_str(), FilePath(), async_r::R_PROCESS_VANILLA);
       return pDeploy;
    }

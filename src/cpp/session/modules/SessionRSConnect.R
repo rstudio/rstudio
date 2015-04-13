@@ -218,6 +218,7 @@
 
   # find the resources used by each document
   for (t in targets) {
+    deploy_frame <- NULL
     tryCatch({
       # this operation can be expensive and could also throw if e.g. the 
       # document fails to parse or render
@@ -227,7 +228,9 @@
       # errors are not fatal here; we just might miss some resources, which
       # the user will have to add manually
     })
-    file_list <- c(file_list, deploy_frame$path, basename(t))
+    if (!is.null(deploy_frame)) {
+      file_list <- c(file_list, deploy_frame$path, basename(t))
+    }
   }
 
   # discard any duplicates (the same resource may be depended upon by multiple
