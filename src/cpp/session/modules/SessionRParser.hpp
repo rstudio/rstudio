@@ -318,7 +318,7 @@ public:
    {
       addLintItem(rToken,
                   LintTypeWarning,
-                  "expected ',' following token");
+                  "expected ',' after expression");
    }
    
    void symbolDefinedButNotUsed(const std::string& symbol,
