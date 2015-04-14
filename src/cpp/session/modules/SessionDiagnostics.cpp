@@ -207,7 +207,7 @@ public:
                symbols.end());
    }
    
-   void fillNamespaceObjects(const std::string& pkgName,
+   void fillNamespaceSymbols(const std::string& pkgName,
                              std::set<std::string>* pOutput,
                              bool exportsOnly = true)
    {
@@ -322,7 +322,29 @@ Error getAvailableSymbolsForProject(const FilePath& filePath,
    return Success();
 }
 
-
+void addTestPackageSymbols(std::set<std::string>* pSymbols)
+{
+   if (!projects::projectContext().isPackageProject())
+      return;
+   
+   PackageSymbolRegistry& registry = packageSymbolRegistry();
+   
+   const r_util::RPackageInfo& pkgInfo =
+         projects::projectContext().packageInfo();
+   
+   std::string packageFields;
+   
+   packageFields += pkgInfo.depends();
+   packageFields += pkgInfo.imports();
+   packageFields += pkgInfo.suggests();
+   
+   if (packageFields.find("testthat") != std::string::npos)
+      registry.fillNamespaceSymbols("testthat", pSymbols, false);
+   else if (packageFields.find("RUnit") != std::string::npos)
+      registry.fillNamespaceSymbols("RUnit", pSymbols, false);
+   else if (packageFields.find("assertthat") != std::string::npos)
+      registry.fillNamespaceSymbols("assertthat", pSymbols, false);
+}
 
 Error getAllAvailableRSymbols(const FilePath& filePath,
                               const std::string& documentId,
@@ -335,9 +357,10 @@ Error getAllAvailableRSymbols(const FilePath& filePath,
    //
    // For R package development, when linting a 'test' file, we can
    // safely assume that the package itself will be loaded.
+   FilePath projDir = projects::projectContext().directory();
    Error error;
-   if (module_context::isRScriptInPackageBuildTarget(filePath) ||
-       filePath.isWithin(projects::projectContext().directory().childPath("tests")))
+   
+   if (filePath.isWithin(projDir))
    {
       DEBUG("- Package file:'" << filePath.absolutePath() << "'");
       error = getAvailableSymbolsForPackage(filePath, documentId, pSymbols);
@@ -348,12 +371,21 @@ Error getAllAvailableRSymbols(const FilePath& filePath,
       error = getAvailableSymbolsForProject(filePath, documentId, pSymbols);
    }
    
-   // If the file is within the 'tests/testthat' directory, then assume
-   // 'testthat' will be available for those tests.
+   if (error) LOG_ERROR(error);
+   
+   // Add common 'testing' packages, based on the DESCRIPTION's
+   // 'Imports' and 'Suggests' fields, and use that if we're within a
+   // common 'test'ing directory.
+   if (filePath.isWithin(projDir.childPath("inst")) ||
+       filePath.isWithin(projDir.childPath("tests")))
+   {
+      addTestPackageSymbols(pSymbols);
+   }
+   
    if (filePath.isWithin(projects::projectContext().directory().childPath("tests/testthat")))
    {
       PackageSymbolRegistry& registry = packageSymbolRegistry();
-      registry.fillNamespaceObjects("testthat", pSymbols, false);
+      registry.fillNamespaceSymbols("testthat", pSymbols, false);
    }
    
    // If the file is named 'server.R', 'ui.R' or 'app.R', we'll implicitly
@@ -366,7 +398,7 @@ Error getAllAvailableRSymbols(const FilePath& filePath,
        basename == "app.r")
    {
       PackageSymbolRegistry& registry = packageSymbolRegistry();
-      registry.fillNamespaceObjects("shiny", pSymbols, false);
+      registry.fillNamespaceSymbols("shiny", pSymbols, false);
    }
    
    return error;
