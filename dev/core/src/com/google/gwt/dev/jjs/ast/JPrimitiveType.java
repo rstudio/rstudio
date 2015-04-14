@@ -103,6 +103,10 @@ public class JPrimitiveType extends JType {
   }
 
   @Override
+  public boolean isJsoType() {
+    return false;
+  }
+  @Override
   public void traverse(JVisitor visitor, Context ctx) {
     if (visitor.visit(this, ctx)) {
     }

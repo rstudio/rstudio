@@ -51,6 +51,12 @@ public abstract class JReferenceType extends JType implements CanBeAbstract {
         }
 
         @Override
+        public boolean isJsoType() {
+          // TODO(rluble): check why it is needed that the NULL_TYPE is considered a Jso.
+          return true;
+        }
+
+        @Override
         public boolean isNullType() {
           return true;
         }
@@ -133,6 +139,11 @@ public abstract class JReferenceType extends JType implements CanBeAbstract {
     @Override
     public boolean isAbstract() {
       return ref.isAbstract();
+    }
+
+    @Override
+    public boolean isJsoType() {
+      return ref.isJsoType();
     }
 
     @Override
@@ -289,6 +300,7 @@ public abstract class JReferenceType extends JType implements CanBeAbstract {
   /**
    * If this type is a non-null type, returns the underlying (original) type.
    */
+  @Override
   public JReferenceType getUnderlyingType() {
     return this;
   }
@@ -307,7 +319,7 @@ public abstract class JReferenceType extends JType implements CanBeAbstract {
   }
 
   AnalysisResult getAnalysisResult() {
-    if (isFinal()) {
+    if (isFinal() && !isJsoType()) {
       return AnalysisResult.NULLABLE_EXACT;
     }
     return AnalysisResult.NULLABLE_NOT_EXACT;

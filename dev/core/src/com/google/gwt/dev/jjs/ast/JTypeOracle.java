@@ -541,7 +541,7 @@ public class JTypeOracle implements Serializable {
    */
   public boolean canBeJavaScriptObject(JType type) {
     type = type.getUnderlyingType();
-    return isJavaScriptObject(type) || isSingleJsoImpl(type);
+    return type.isJsoType() || isSingleJsoImpl(type);
   }
 
   /**
@@ -986,7 +986,7 @@ public class JTypeOracle implements Serializable {
       ensureTypeExistsAndAppend(JProgram.JAVASCRIPTOBJECT, castableDestinationTypes);
     }
     // Do not add itself if it is a JavaScriptObject subclass, add JavaScriptObject.
-    if (isJavaScriptObject(type)) {
+    if (type.isJsoType()) {
       ensureTypeExistsAndAppend(JProgram.JAVASCRIPTOBJECT, castableDestinationTypes);
     } else {
       castableDestinationTypes.add(type);
@@ -1040,28 +1040,7 @@ public class JTypeOracle implements Serializable {
    * True if either a JSO, or is an interface that is ONLY implemented by a JSO.
    */
   public boolean isEffectivelyJavaScriptObject(JType type) {
-    if (type instanceof JReferenceType) {
-      JReferenceType refType = (JReferenceType) type;
-      return isJavaScriptObject(refType)
-          || (isSingleJsoImpl(refType) && !isDualJsoInterface(refType));
-    } else {
-      return false;
-    }
-  }
-
-  public boolean isJavaScriptObject(JType type) {
-    if (!(type instanceof JReferenceType)) {
-      return false;
-    }
-
-    type = type.getUnderlyingType();
-
-    // TODO(dankurka): Null should not be recognized as a possible JSO.
-    // Take a look on how to refactor this inside of the compiler
-    if (type.isNullType()) {
-      return true;
-    }
-    return isJavaScriptObject(type.getName());
+    return type.isJsoType() || (isSingleJsoImpl(type) && !isDualJsoInterface(type));
   }
 
   // Note: This method does not account for null types and only relies on static
@@ -1253,14 +1232,12 @@ public class JTypeOracle implements Serializable {
    */
   public void recomputeAfterOptimizations(Collection<JDeclaredType> declaredTypes) {
     Set<JDeclaredType> computed = Sets.newIdentityHashSet();
-
+    assert optimize;
     if (hasWholeWorldKnowledge) {
-      if (optimize) {
-        // Optimizations that only make sense in whole world compiles:
-        //   (1) minimize clinit()s.
-        for (JDeclaredType type : declaredTypes) {
-          computeClinitTarget(type, computed);
-        }
+      // Optimizations that only make sense in whole world compiles:
+      //   (1) minimize clinit()s.
+      for (JDeclaredType type : declaredTypes) {
+        computeClinitTarget(type, computed);
       }
 
       //   (2) make JSOs singleImpl when all the Java implementors are gone.
@@ -1269,7 +1246,8 @@ public class JTypeOracle implements Serializable {
         String dualIntf = it.next();
         for (String implementorName : classesByImplementingInterface.get(dualIntf)) {
           JClassType implementor = (JClassType) referenceTypesByName.get(implementorName);
-          if (isInstantiatedType(implementor) && !isJavaScriptObject(implementor)) {
+          assert implementor != null;
+          if (isInstantiatedType(implementor) && !implementor.isJsoType()) {
             // This dual is still implemented by a Java class.
             continue nextDual;
           }

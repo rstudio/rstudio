@@ -368,8 +368,6 @@ public final class JavaToJavaScriptCompiler {
       // Now that the AST has stopped mutating update with the final references.
       maybeRecordReferencesAndControlFlow(true);
 
-      jprogram.typeOracle.recomputeAfterOptimizations(jprogram.getDeclaredTypes());
-
       javaEvent.end();
 
       Event javaScriptEvent = SpeedTracerLogger.start(CompilerEventType.PERMUTATION_JAVASCRIPT);
@@ -519,6 +517,8 @@ public final class JavaToJavaScriptCompiler {
       if (shouldOptimize()) {
         RemoveSpecializations.exec(jprogram);
         Pruner.exec(jprogram, false);
+        // Last Java optimization step, update type oracle accordingly.
+        jprogram.typeOracle.recomputeAfterOptimizations(jprogram.getDeclaredTypes());
       }
       ReplaceGetClassOverrides.exec(jprogram);
     } finally {
@@ -1216,7 +1216,7 @@ public final class JavaToJavaScriptCompiler {
 
   private CompilationState constructJavaAst(RebindPermutationOracle rpo,
       String[] entryPointTypeNames, String[] additionalRootTypes)
-      throws UnableToCompleteException {
+  throws UnableToCompleteException {
     Set<String> allRootTypes = Sets.newTreeSet();
     CompilationState compilationState = rpo.getCompilationState();
     Memory.maybeDumpMemory("CompStateBuilt");

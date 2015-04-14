@@ -126,7 +126,7 @@ public class Devirtualizer {
           // it is a super.m() call and the superclass is not a JSO. (this case is NOT reached if
           // MakeCallsStatic was called).
           || x.isStaticDispatchOnly()
-          && !program.typeOracle.isJavaScriptObject(method.getEnclosingType())) {
+          && !method.getEnclosingType().isJsoType()) {
         return;
       }
 
@@ -184,7 +184,7 @@ public class Devirtualizer {
         JMethod jsoStaticImpl =
             staticImplCreator.getOrCreateStaticImpl(program, overridingMethod);
         devirtualMethodByMethod.put(method, jsoStaticImpl);
-      } else if (program.typeOracle.isJavaScriptObject(targetType)) {
+      } else if (targetType.isJsoType()) {
         // A virtual dispatch on a target that is already known to be a JavaScriptObject, this
         // should have been handled by MakeCallsStatic.
         // TODO(rluble): verify that this case can not arise in optimized mode and if so
@@ -203,7 +203,7 @@ public class Devirtualizer {
       if (targetType == null || !method.needsVtable()) {
         return false;
       } else if (devirtualMethodByMethod.containsKey(method)
-          || program.typeOracle.isJavaScriptObject(targetType)
+          || targetType.isJsoType()
           || program.typeOracle.isSingleJsoImpl(targetType)
           || program.typeOracle.isDualJsoInterface(targetType)
           || targetType == program.getTypeJavaLangObject()
@@ -430,8 +430,7 @@ public class Devirtualizer {
     if (program.typeOracle.isDualJsoInterface(enclosingType)) {
       // If it is an interface implemented both by JSOs and regular Java Objects;
       possibleTargetTypes = HAS_JAVA_VIRTUAL_DISPATCH | JSO;
-    } else if (program.typeOracle.isSingleJsoImpl(enclosingType) ||
-        program.typeOracle.isJavaScriptObject(enclosingType)) {
+    } else if (program.typeOracle.isSingleJsoImpl(enclosingType) || enclosingType.isJsoType()) {
       // If it is either an interface implemented by JSOs or JavaScriptObject or one of its
       // subclasses.
       possibleTargetTypes = JSO;

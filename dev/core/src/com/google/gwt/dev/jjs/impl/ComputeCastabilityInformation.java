@@ -163,23 +163,27 @@ public class ComputeCastabilityInformation {
       recordCast(x.getTestType(), x.getExpr());
     }
 
-    private boolean canTriviallyCastJsoSemantics(JReferenceType type, JReferenceType qType) {
-      type = type.getUnderlyingType();
-      qType = qType.getUnderlyingType();
+    private boolean castSucceedsTriviallyJsoSemantics(
+        JReferenceType fromType, JReferenceType toType) {
+      // TODO(rluble): this should be the semantics of castSucceedsTrivially; no need for two
+      // different semantics. However changing JTypeOracle.castSucceedsTrivially affects how
+      // decisions are made to remove casts and change return types, which in turn affects
+      // how we compute liveness of JSO type.
+      fromType = fromType.getUnderlyingType();
+      toType = toType.getUnderlyingType();
 
-      if (typeOracle.castSucceedsTrivially(type, qType)) {
+      if (typeOracle.castSucceedsTrivially(fromType, toType)) {
         return true;
       }
 
-      if (type instanceof JArrayType && qType instanceof JArrayType) {
-        JArrayType aType = (JArrayType) type;
-        JArrayType aqType = (JArrayType) qType;
-        return (typeOracle.isJavaScriptObject(aType.getLeafType()) &&
-            typeOracle.isJavaScriptObject(aqType.getLeafType()));
+      if (fromType instanceof JArrayType && toType instanceof JArrayType) {
+        JArrayType fromArrayType = (JArrayType) fromType;
+        JArrayType toArrayType = (JArrayType) toType;
+        return (fromArrayType.getLeafType().isJsoType() &&
+            toArrayType.getLeafType().isJsoType());
       }
 
-      return (typeOracle.isJavaScriptObject(type) &&
-          typeOracle.isJavaScriptObject(qType));
+      return fromType.isJsoType() && toType.isJsoType();
     }
 
     /**
@@ -199,7 +203,7 @@ public class ComputeCastabilityInformation {
       }
 
       if (!typeOracle.isInstantiatedType(type) ||
-          typeOracle.isJavaScriptObject(type)) {
+          type.isJsoType()) {
         return;
       }
 
@@ -211,7 +215,7 @@ public class ComputeCastabilityInformation {
        * because we're sorting the results.
        */
       for (JReferenceType castTargetType : castSourceTypesPerCastTargetType.keySet()) {
-        if (!canTriviallyCastJsoSemantics(type, castTargetType)) {
+        if (!castSucceedsTriviallyJsoSemantics(type, castTargetType)) {
           continue;
         }
 
@@ -222,8 +226,8 @@ public class ComputeCastabilityInformation {
          * with JSO cross-casts anymore.
          */
         for (JReferenceType castSourceType : castSourceTypes) {
-          if (canTriviallyCastJsoSemantics(type, castSourceType) ||
-              typeOracle.isJavaScriptObject(castTargetType)) {
+          if (castSucceedsTriviallyJsoSemantics(type, castSourceType) ||
+              castTargetType.isJsoType()) {
             boolean isTrivialCast = castTargetType == program.getTypeJavaLangObject()
                 || castTargetType == program.getJavaScriptObject();
             if (recordTrivialCasts || !isTrivialCast) {
@@ -262,7 +266,7 @@ public class ComputeCastabilityInformation {
         return;
       }
 
-      if (!recordTrivialCasts && typeOracle.isJavaScriptObject(targetType)) {
+      if (!recordTrivialCasts && targetType.isJsoType()) {
         // If the target type is a JavaScriptObject, don't record an id.
         return;
       }

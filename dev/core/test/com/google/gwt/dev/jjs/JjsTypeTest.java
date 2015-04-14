@@ -74,6 +74,8 @@ public class JjsTypeTest extends TestCase {
   private JClassType classJso;
   private JClassType classJso1;
   private JClassType classJso2;
+  private JClassType classFinalJso1;
+  private JClassType classFinalJso2;
   private JClassType classObject;
   private JClassType classString;
   private JReferenceType intfCloneable;
@@ -97,99 +99,109 @@ public class JjsTypeTest extends TestCase {
 
   private static final Collection<String> EMPTY_LIST = Collections.<String>emptySet();
 
+  public void testCrossCasts() {
+    JClassType[] jsoClasses =
+        new JClassType[] { classJso, classJso1, classJso2, classFinalJso1, classFinalJso2 };
+    for (JClassType thisJsoClass : jsoClasses) {
+      for (JClassType thatJsoClass : jsoClasses) {
+        assertCrossCasts(thisJsoClass, thatJsoClass);
+      }
+    }
+  }
+
   public void testCastFailsTrivially() {
-    assertTrue(typeOracle.castFailsTrivially(classBnn, typeNull));
+    assertShouldFailTrivially(classBnn, typeNull);
 
-    assertFalse(typeOracle.castFailsTrivially(classBSub, classB));
-    assertFalse(typeOracle.castFailsTrivially(classB, classBSub));
+    assertShouldNotFailTrivially(classBSub, classB);
+    assertShouldNotFailTrivially(classB, classBSub);
 
-    assertFalse(typeOracle.castFailsTrivially(classB, classBnn));
-    assertFalse(typeOracle.castFailsTrivially(classBnn, classB));
+    assertShouldNotFailTrivially(classB, classBnn);
+    assertShouldNotFailTrivially(classBnn, classB);
 
-    assertFalse(typeOracle.castFailsTrivially(classB, classB));
+    assertShouldNotFailTrivially(classB, classB);
 
-    assertFalse(typeOracle.castFailsTrivially(classObject, arrayOfB));
-    assertTrue(typeOracle.castFailsTrivially(arrayOfA, arrayOfArrayOfB));
+    assertShouldNotFailTrivially(classObject, arrayOfB);
+    assertShouldFailTrivially(arrayOfA, arrayOfArrayOfB);
 
-    assertFalse(typeOracle.castFailsTrivially(arrayOfObject, arrayOfArrayOfB));
+    assertShouldNotFailTrivially(arrayOfObject, arrayOfArrayOfB);
 
-    assertFalse(typeOracle.castFailsTrivially(arrayOfB, arrayOfBSub));
+    assertShouldNotFailTrivially(arrayOfB, arrayOfBSub);
 
-    assertFalse(typeOracle.castFailsTrivially(classBase, intfI));
-    assertTrue(typeOracle.castFailsTrivially(classA, intfJ));
+    assertShouldNotFailTrivially(classBase, intfI);
+    assertShouldFailTrivially(classA, intfJ);
 
-    assertFalse(typeOracle.castFailsTrivially(intfIBase, intfI));
+    assertShouldNotFailTrivially(intfIBase, intfI);
 
-    assertFalse(typeOracle.castFailsTrivially(intfIBase, classBase));
-    assertTrue(typeOracle.castFailsTrivially(intfJ, classA));
+    assertShouldNotFailTrivially(intfIBase, classBase);
+    assertShouldFailTrivially(intfJ, classA);
 
-    assertFalse(typeOracle.castFailsTrivially(arrayOfA, intfSerializable));
-    assertFalse(typeOracle.castFailsTrivially(intfSerializable, arrayOfA));
+    assertShouldNotFailTrivially(arrayOfA, intfSerializable);
+    assertShouldNotFailTrivially(intfSerializable, arrayOfA);
 
-    assertFalse(typeOracle.castFailsTrivially(arrayOfA, intfCloneable));
-    assertFalse(typeOracle.castFailsTrivially(intfCloneable, arrayOfA));
+    assertShouldNotFailTrivially(arrayOfA, intfCloneable);
+    assertShouldNotFailTrivially(intfCloneable, arrayOfA);
 
-    assertFalse(typeOracle.castFailsTrivially(intfList, intfIterable));
-    assertFalse(typeOracle.castFailsTrivially(classArrayList, intfIterable));
+    assertShouldNotFailTrivially(intfList, intfIterable);
+    assertShouldNotFailTrivially(classArrayList, intfIterable);
 
-    assertFalse(typeOracle.castFailsTrivially(classJso1, classJso2));
-    assertFalse(typeOracle.castFailsTrivially(classJso2, classJso1));
+    assertShouldNotFailTrivially(classJso1, classJso2);
+    assertShouldNotFailTrivially(classJso2, classJso1);
 
-    assertFalse(typeOracle.castFailsTrivially(classJso1, intfK));
-    assertFalse(typeOracle.castFailsTrivially(intfK, classJso1));
+    assertShouldNotFailTrivially(classJso1, intfK);
+    assertShouldNotFailTrivially(intfK, classJso1);
 
-    assertFalse(typeOracle.castFailsTrivially(intfJ, intfK));
-    assertFalse(typeOracle.castFailsTrivially(intfK, intfJ));
+    assertShouldNotFailTrivially(intfJ, intfK);
+    assertShouldNotFailTrivially(intfK, intfJ);
 
-    assertFalse(typeOracle.castFailsTrivially(classB, intfL));
-    assertTrue(typeOracle.castFailsTrivially(classB.strengthenToExact(), intfL));
+    assertShouldNotFailTrivially(classB, intfL);
+    assertShouldFailTrivially(classB.strengthenToExact(), intfL);
   }
 
   public void testCastSucceedsTrivially() {
-    assertTrue(typeOracle.castSucceedsTrivially(classB, classB));
+    assertShouldSucceedTrivially(classB, classB);
 
-    assertTrue(typeOracle.castSucceedsTrivially(classBSub, classB));
-    assertFalse(typeOracle.castSucceedsTrivially(classB, classBSub));
+    assertShouldSucceedTrivially(classBSub, classB);
+    assertShouldNotSucceedTrivially(classB, classBSub);
 
-    assertFalse(typeOracle.castSucceedsTrivially(classC, classA));
-    assertFalse(typeOracle.castSucceedsTrivially(classA, classC));
+    assertShouldNotSucceedTrivially(classC, classA);
+    assertShouldNotSucceedTrivially(classA, classC);
 
-    assertTrue(typeOracle.castSucceedsTrivially(classB, intfI));
-    assertFalse(typeOracle.castSucceedsTrivially(intfI, classB));
+    assertShouldSucceedTrivially(classB, intfI);
+    assertShouldNotSucceedTrivially(intfI, classB);
 
-    assertTrue(typeOracle.castSucceedsTrivially(classB, classObject));
-    assertFalse(typeOracle.castSucceedsTrivially(classObject, classB));
+    assertShouldSucceedTrivially(classB, classObject);
+    assertShouldNotSucceedTrivially(classObject, classB);
 
-    assertTrue(typeOracle.castSucceedsTrivially(classB, intfI));
-    assertFalse(typeOracle.castSucceedsTrivially(intfI, classB));
+    assertShouldSucceedTrivially(classB, intfI);
+    assertShouldNotSucceedTrivially(intfI, classB);
 
-    assertTrue(typeOracle.castSucceedsTrivially(classBnn, classB));
-    assertFalse(typeOracle.castSucceedsTrivially(classB, classBnn));
+    assertShouldSucceedTrivially(classBnn, classB);
+    assertShouldNotSucceedTrivially(classB, classBnn);
 
-    assertTrue(typeOracle.castSucceedsTrivially(typeNull, classB));
-    assertFalse(typeOracle.castSucceedsTrivially(classB, typeNull));
+    assertShouldSucceedTrivially(typeNull, classB);
+    assertShouldNotSucceedTrivially(classB, typeNull);
 
-    assertTrue(typeOracle.castSucceedsTrivially(arrayOfA, classObject));
+    assertShouldSucceedTrivially(arrayOfA, classObject);
 
-    assertTrue(typeOracle.castSucceedsTrivially(arrayOfBSub, arrayOfB));
-    assertFalse(typeOracle.castSucceedsTrivially(arrayOfB, arrayOfBSub));
+    assertShouldSucceedTrivially(arrayOfBSub, arrayOfB);
+    assertShouldNotSucceedTrivially(arrayOfB, arrayOfBSub);
 
-    assertFalse(typeOracle.castSucceedsTrivially(arrayOfA, arrayOfB));
-    assertFalse(typeOracle.castSucceedsTrivially(arrayOfB, arrayOfA));
+    assertShouldNotSucceedTrivially(arrayOfA, arrayOfB);
+    assertShouldNotSucceedTrivially(arrayOfB, arrayOfA);
 
-    assertFalse(typeOracle.castSucceedsTrivially(arrayOfArrayOfB, arrayOfB));
-    assertFalse(typeOracle.castSucceedsTrivially(arrayOfB, arrayOfArrayOfB));
+    assertShouldNotSucceedTrivially(arrayOfArrayOfB, arrayOfB);
+    assertShouldNotSucceedTrivially(arrayOfB, arrayOfArrayOfB);
 
-    assertTrue(typeOracle.castSucceedsTrivially(arrayOfArrayOfB, arrayOfObject));
-    assertFalse(typeOracle.castSucceedsTrivially(arrayOfObject, arrayOfArrayOfB));
+    assertShouldSucceedTrivially(arrayOfArrayOfB, arrayOfObject);
+    assertShouldNotSucceedTrivially(arrayOfObject, arrayOfArrayOfB);
 
-    assertTrue(typeOracle.castSucceedsTrivially(classJso1, classJso));
+    assertShouldSucceedTrivially(classJso1, classJso);
 
-    assertTrue(typeOracle.castSucceedsTrivially(arrayOfA, intfSerializable));
-    assertFalse(typeOracle.castSucceedsTrivially(intfSerializable, arrayOfA));
+    assertShouldSucceedTrivially(arrayOfA, intfSerializable);
+    assertShouldNotSucceedTrivially(intfSerializable, arrayOfA);
 
-    assertTrue(typeOracle.castSucceedsTrivially(arrayOfA, intfCloneable));
-    assertFalse(typeOracle.castSucceedsTrivially(intfCloneable, arrayOfA));
+    assertShouldSucceedTrivially(arrayOfA, intfCloneable);
+    assertShouldNotSucceedTrivially(intfCloneable, arrayOfA);
 
     /*
      * Test that two types cannot both be trivially castable to each other,
@@ -198,7 +210,8 @@ public class JjsTypeTest extends TestCase {
     for (JReferenceType type1 : severalTypes()) {
       for (JReferenceType type2 : severalTypes()) {
         if (type1 != type2) {
-          assertFalse(typeOracle.castSucceedsTrivially(type1, type2)
+          assertFalse(type1.toString() + " and " + type2 + " should not be castable to each other",
+              typeOracle.castSucceedsTrivially(type1, type2)
               && typeOracle.castSucceedsTrivially(type2, type1));
         }
       }
@@ -233,8 +246,8 @@ public class JjsTypeTest extends TestCase {
     for (JReferenceType type1 : severalTypes()) {
       for (JReferenceType type2 : severalTypes()) {
         JReferenceType generalized = generalizeTypes(type1, type2);
-        assertTrue(typeOracle.castSucceedsTrivially(type1, generalized));
-        assertTrue(typeOracle.castSucceedsTrivially(type2, generalized));
+        assertShouldSucceedTrivially(type1, generalized);
+        assertShouldSucceedTrivially(type2, generalized);
       }
     }
   }
@@ -337,43 +350,6 @@ public class JjsTypeTest extends TestCase {
     assertSame(intfI, strongerType(intfI, intfJ));
     assertSame(arrayOfA, strongerType(intfSerializable, arrayOfA));
     assertSame(arrayOfA, strongerType(intfCloneable, arrayOfA));
-  }
-
-  public void testUpdateTypeInformation_isJavaScriptObject() {
-    List<String> emptyList = Lists.<String> newArrayList();
-    program.typeOracle.computeBeforeAST(StandardTypes.createFrom(program),
-        program.getDeclaredTypes(), program.getModuleDeclaredTypes(), emptyList);
-
-    JClassType jso = createClass("SomeJSO", classJso, false, false);
-    program.typeOracle.computeBeforeAST(StandardTypes.createFrom(program),
-        program.getDeclaredTypes(), Sets.<JDeclaredType> newHashSet(jso), emptyList);
-    Assert.assertTrue(program.typeOracle.isJavaScriptObject(jso));
-    program.typeOracle.computeBeforeAST(StandardTypes.createFrom(program),
-        program.getDeclaredTypes(), Collections.<JDeclaredType> emptySet(),
-        Lists.newArrayList(jso.getName()));
-    Assert.assertFalse(program.typeOracle.isJavaScriptObject(jso));
-
-    jso = createClass("SomeJSO", classJso, false, false);
-    JClassType jsoChild = createClass("SomeJSOChild", jso, false, false);
-    program.typeOracle.computeBeforeAST(StandardTypes.createFrom(program),
-        program.getDeclaredTypes(), Sets.<JDeclaredType> newHashSet(jso, jsoChild), emptyList);
-    Assert.assertTrue(program.typeOracle.isJavaScriptObject(jsoChild));
-    jsoChild = createClass("SomeJSOChild", classObject, false, false);
-    program.typeOracle.computeBeforeAST(StandardTypes.createFrom(program),
-        program.getDeclaredTypes(), Sets.<JDeclaredType> newHashSet(jsoChild), emptyList);
-    Assert.assertFalse(program.typeOracle.isJavaScriptObject(jsoChild));
-
-    jso = createClass("SomeJSO", classJso, false, false);
-    jsoChild = createClass("SomeJSOChild", jso, false, false);
-    program.typeOracle.computeBeforeAST(StandardTypes.createFrom(program),
-        program.getDeclaredTypes(), Sets.<JDeclaredType> newHashSet(jsoChild), emptyList);
-    Assert.assertTrue(program.typeOracle.isJavaScriptObject(jsoChild));
-    Assert.assertTrue(program.typeOracle.isJavaScriptObject(jso));
-    jso = createClass("SomeJSO", classObject, false, false);
-    program.typeOracle.computeBeforeAST(StandardTypes.createFrom(program),
-        program.getDeclaredTypes(), Sets.<JDeclaredType> newHashSet(jso), emptyList);
-    Assert.assertFalse(program.typeOracle.isJavaScriptObject(jsoChild));
-    Assert.assertFalse(program.typeOracle.isJavaScriptObject(jso));
   }
 
   public void testUpdateTypeInformation_JSODualImpl() {
@@ -532,6 +508,9 @@ public class JjsTypeTest extends TestCase {
     classJso2 = createClass("Jso2", classJso, false, false);
     classJso2.addImplements(intfK);
 
+    classFinalJso1 = createClass("FinalJso1", classJso, false, true);
+    classFinalJso2 = createClass("FinalJso2", classJso, false, true);
+
     intfIterable = createInterface("java.util.Iterable");
     intfCollection = createInterface("java.util.Collection");
     intfCollection.addImplements(intfIterable);
@@ -583,6 +562,40 @@ public class JjsTypeTest extends TestCase {
   private JReferenceType generalizeTypes(JReferenceType type1, JReferenceType type2) {
     return program.strengthenType(program.getTypeJavaLangObject(),
         program.generalizeTypes(Arrays.asList(type1, type2)));
+  }
+
+  private void assertCrossCasts(JClassType thisType, JClassType thatType) {
+    // Uncomment the following once the JSO/non-JSO semantics issue is sorted, Ideally
+    // castXXXTrivially should be more precise and include casting JSO types; however in the current
+    // architecture the results of these tests are used to remove casts and change return types
+    // which in turn might affect the liveness computation for JSOs.
+    //
+    // assertShouldSucceedTrivially(thisType, thatType));
+    // assertShouldSucceedTrivially(thatType, thisType));
+    assertShouldNotFailTrivially(thisType, thatType);
+    assertShouldNotFailTrivially(thatType, thisType);
+    assertTrue(typeOracle.canCrossCastLikeJso(thisType));
+    assertTrue(typeOracle.canCrossCastLikeJso(thatType));
+  }
+
+  private void assertShouldNotFailTrivially(JReferenceType thisType, JReferenceType thatType) {
+    assertFalse("Casting " + thisType + " to "  + thatType + " should not fail trivially",
+        typeOracle.castFailsTrivially(thisType, thatType));
+  }
+
+  private void assertShouldFailTrivially(JReferenceType thisType, JReferenceType thatType) {
+    assertTrue("Casting " + thisType + " to "  + thatType + " should fail trivially",
+        typeOracle.castFailsTrivially(thisType, thatType));
+  }
+
+  private void assertShouldNotSucceedTrivially(JReferenceType thisType, JReferenceType thatType) {
+    assertFalse("Casting " + thisType + " to "  + thatType + " should not succeed trivially",
+        typeOracle.castSucceedsTrivially(thisType, thatType));
+  }
+
+  private void assertShouldSucceedTrivially(JReferenceType thisType, JReferenceType thatType) {
+    assertTrue("Casting " + thisType + " to "  + thatType + " should succeed trivially",
+        typeOracle.castSucceedsTrivially(thisType, thatType));
   }
 
   private void assertSignaturesMatch(

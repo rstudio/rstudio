@@ -63,6 +63,10 @@ public class JInterfaceType extends JDeclaredType {
   public boolean isFinal() {
     return false;
   }
+  @Override
+  public boolean isJsoType() {
+    return false;
+  }
 
   @Override
   public void traverse(JVisitor visitor, Context ctx) {

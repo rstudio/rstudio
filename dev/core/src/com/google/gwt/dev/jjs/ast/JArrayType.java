@@ -85,6 +85,11 @@ public class JArrayType extends JReferenceType {
   }
 
   @Override
+  public boolean isJsoType() {
+    return false;
+  }
+
+  @Override
   public boolean replaces(JType originalType) {
     return (originalType instanceof JArrayType)
         && elementType.replaces(((JArrayType) originalType).getElementType());

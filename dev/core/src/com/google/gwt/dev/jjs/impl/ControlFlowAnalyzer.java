@@ -347,7 +347,7 @@ public class ControlFlowAnalyzer {
     @Override
     public boolean visit(final JMethod x, Context ctx) {
       JReferenceType enclosingType = x.getEnclosingType();
-      if (program.typeOracle.isJavaScriptObject(enclosingType)) {
+      if (enclosingType.isJsoType()) {
         // Calls to JavaScriptObject types rescue those types.
         boolean instance = !x.isStatic() || program.isStaticImpl(x);
         rescue(enclosingType, true, instance);
@@ -398,8 +398,7 @@ public class ControlFlowAnalyzer {
          */
         return true;
       }
-      if (method.isStatic() || program.typeOracle.isJavaScriptObject(method.getEnclosingType())
-          || instantiatedTypes.contains(method.getEnclosingType())) {
+      if (method.isStatic() || isTypeInstantiatedOrJso(method.getEnclosingType())) {
         rescue(method);
       } else {
         // It's a virtual method whose class is not instantiable
@@ -911,6 +910,14 @@ public class ControlFlowAnalyzer {
         }
       }
     }
+  }
+
+  private boolean isTypeInstantiatedOrJso(JType type) {
+    if (type == null) {
+      return false;
+    }
+
+    return type.isJsoType() || instantiatedTypes.contains(type);
   }
 
   /**

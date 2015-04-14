@@ -696,7 +696,7 @@ public class JProgram extends JNode implements ArrayTypeCreator {
 
   public JField getClassLiteralField(JType type) {
     return classLiteralFieldsByType.get(
-        typeOracle.isJavaScriptObject(type) ? getJavaScriptObject() : type);
+        type.isJsoType() ? getJavaScriptObject() : type);
   }
 
   public List<JDeclaredType> getDeclaredTypes() {
@@ -1056,7 +1056,7 @@ public class JProgram extends JNode implements ArrayTypeCreator {
           ((JArrayType) type).getDims());
     }
 
-    if (typeOracle.isJavaScriptObject(type)) {
+    if (type.isJsoType()) {
       return getJavaScriptObject();
     }
     return type;

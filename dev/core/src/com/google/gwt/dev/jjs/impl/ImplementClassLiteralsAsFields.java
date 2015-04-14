@@ -192,7 +192,7 @@ public class ImplementClassLiteralsAsFields {
       String[] compoundName = type.getCompoundName();
 
       // Mangle the class name to match hosted mode.
-      if (program.typeOracle.isJavaScriptObject(type)) {
+      if (type.isJsoType()) {
         compoundName[compoundName.length - 1] = compoundName[compoundName.length - 1] + '$';
       }
       return compoundName;

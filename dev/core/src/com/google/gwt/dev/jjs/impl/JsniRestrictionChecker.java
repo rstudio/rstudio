@@ -96,6 +96,6 @@ public class JsniRestrictionChecker extends JVisitor {
   }
 
   private boolean isNonStaticJsoClassDispatch(JMethod method, JDeclaredType enclosingType) {
-    return !method.isStatic() && jprogram.typeOracle.isJavaScriptObject(enclosingType);
+    return !method.isStatic() && enclosingType.isJsoType();
   }
 }
