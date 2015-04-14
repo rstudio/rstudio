@@ -1141,6 +1141,14 @@ std::set<SEXP> makeKnownNSEFunctions()
    set.insert(findFunction("with", "base"));
    set.insert(findFunction("within", "base"));
    
+   // TODO: These don't really perform NSE, but the symbols
+   // used for '.Call' are not generated in a way that we can
+   // easily detect until the package is actually built.
+   set.insert(findFunction(".Call", "base"));
+   set.insert(findFunction(".C", "base"));
+   set.insert(findFunction(".Fortran", "base"));
+   set.insert(findFunction(".External", "base"));
+   
    return set;
 }
 
@@ -1152,14 +1160,14 @@ bool isKnownNseFunction(SEXP functionSEXP)
 
 bool maybePerformsNSE(SEXP functionSEXP)
 {
+   if (isKnownNseFunction(functionSEXP))
+      return true;
+   
    if (!Rf_isFunction(functionSEXP))
       return false;
    
    if (Rf_isPrimitive(functionSEXP))
       return false;
-   
-   if (isKnownNseFunction(functionSEXP))
-      return true;
    
    return maybePerformsNSEImpl(
             functionBody(functionSEXP),
