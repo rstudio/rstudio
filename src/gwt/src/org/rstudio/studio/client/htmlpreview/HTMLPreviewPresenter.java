@@ -15,7 +15,6 @@
 package org.rstudio.studio.client.htmlpreview;
 
 import org.rstudio.core.client.BrowseCap;
-import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.command.KeyboardShortcut;
@@ -27,8 +26,6 @@ import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.fileexport.FileExport;
-import org.rstudio.studio.client.common.rpubs.RPubsPresenter;
-import org.rstudio.studio.client.common.rpubs.events.RPubsUploadStatusEvent;
 import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.htmlpreview.events.HTMLPreviewCompletedEvent;
 import org.rstudio.studio.client.htmlpreview.events.HTMLPreviewOutputEvent;
@@ -57,7 +54,7 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 
-public class HTMLPreviewPresenter implements IsWidget, RPubsPresenter.Context
+public class HTMLPreviewPresenter implements IsWidget
 {
    public interface Binder extends CommandBinder<Commands, HTMLPreviewPresenter>
    {}
@@ -96,7 +93,6 @@ public class HTMLPreviewPresenter implements IsWidget, RPubsPresenter.Context
                                FileDialogs fileDialogs,
                                RemoteFileSystemContext fileSystemContext,
                                HTMLPreviewServerOperations server,
-                               RPubsPresenter rpubsPresenter,
                                Provider<FileExport> pFileExport)
    {
       view_ = view;
@@ -106,8 +102,6 @@ public class HTMLPreviewPresenter implements IsWidget, RPubsPresenter.Context
       fileDialogs_ = fileDialogs;
       fileSystemContext_ = fileSystemContext;
       pFileExport_ = pFileExport;
-      
-      rpubsPresenter.setContext(this);
       
       binder.bind(commands, this);  
       
@@ -208,27 +202,6 @@ public class HTMLPreviewPresenter implements IsWidget, RPubsPresenter.Context
          }
       });
 
-      eventBus.addHandler(RPubsUploadStatusEvent.TYPE,
-                          new org.rstudio.studio.client.common.rpubs.events.RPubsUploadStatusEvent.Handler()
-      {
-         @Override
-         public void onRPubsPublishStatus(
-               RPubsUploadStatusEvent event)
-         {
-            // make sure it applies to our context
-            RPubsUploadStatusEvent.Status status = event.getStatus();
-            if (!status.getContextId().equals(getContextId()))
-               return;
-            
-            if (StringUtil.isNullOrEmpty(status.getError())
-                && !isPublished_)
-            {
-               isPublished_ = true;
-               view_.setPublishButtonLabel("Republish");
-            }
-         }
-      });
-      
       new StringStateValue(
             MODULE_HTML_PREVIEW,
             KEY_SAVEAS_DIR,
@@ -344,50 +317,6 @@ public class HTMLPreviewPresenter implements IsWidget, RPubsPresenter.Context
       view_.showLog(lastPreviewOutput_.toString());
    }
    
-   @Override
-   public String getContextId()
-   {
-      return "HTMLPreview";
-   }
-   
-   @Override
-   public String getTitle()
-   {
-      String title = StringUtil.notNull(view_.getDocumentTitle());
-      if (title.length() == 0)
-      {
-         String htmlFile = getHtmlFile();
-         if (htmlFile != null)
-         {
-            FileSystemItem fsi = FileSystemItem.createFile(htmlFile);
-            return fsi.getStem();
-         }
-         else
-         {
-            return "(Untitled)";
-         }
-      }
-      else
-      {
-         return title;
-      }
-   }
-
-   @Override
-   public String getHtmlFile()
-   {
-      if (lastSuccessfulPreview_ != null)
-         return lastSuccessfulPreview_.getHtmlFile();
-      else
-         return null;
-   }
-
-   @Override
-   public boolean isPublished()
-   {
-      return isPublished_;
-   }
-
    private void terminateRunningPreview()
    {
       server_.terminatePreviewHTML(new VoidServerRequestCallback());

@@ -34,7 +34,6 @@ import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.GlobalDisplay.NewWindowOptions;
 import org.rstudio.studio.client.common.dependencies.DependencyManager;
-import org.rstudio.studio.client.common.rpubs.RPubsPresenter;
 import org.rstudio.studio.client.common.zoom.ZoomUtils;
 import org.rstudio.studio.client.rmarkdown.model.RmdPreviewParams;
 import org.rstudio.studio.client.server.ServerError;
@@ -63,8 +62,7 @@ public class ViewerPresenter extends BasePresenter
                              implements ViewerNavigateEvent.Handler, 
                                         ViewerPreviewRmdEvent.Handler,
                                         ViewerClearedEvent.Handler,
-                                        ShinyApplicationStatusEvent.Handler,
-                                        RPubsPresenter.Context
+                                        ShinyApplicationStatusEvent.Handler
 {
    public interface Binder extends CommandBinder<Commands, ViewerPresenter> {}
    
@@ -92,7 +90,6 @@ public class ViewerPresenter extends BasePresenter
                           Binder binder,
                           ViewerServerOperations server,
                           SourceShim sourceShim,
-                          RPubsPresenter rpubsPresenter,
                           Provider<UIPrefs> pUIPrefs)
    {
       super(display);
@@ -107,7 +104,6 @@ public class ViewerPresenter extends BasePresenter
       globalDisplay_ = globalDisplay;
       sourceShim_ = sourceShim;
       pUIPrefs_ = pUIPrefs;
-      rpubsPresenter.setContext(this);
       
       binder.bind(commands, this);
       
@@ -393,51 +389,6 @@ public class ViewerPresenter extends BasePresenter
       stop(true);
    }
    
-   @Override
-   public String getContextId()
-   {
-      return "RMarkdownPreview";
-   }
-
-   @Override
-   public String getTitle()
-   {
-      String title = display_.getTitle();
-      if (title != null && !title.isEmpty())
-         return title;
-      
-      String htmlFile = null;
-      if (rmdPreviewParams_ != null)
-         htmlFile = rmdPreviewParams_.getOutputFile();
-      if (htmlFile != null)
-      {
-         FileSystemItem fsi = FileSystemItem.createFile(htmlFile);
-         return fsi.getStem();
-      }
-      else
-      {
-         return "(Untitled)";
-      }
-   }
-
-   @Override
-   public String getHtmlFile()
-   {
-      if (rmdPreviewParams_ != null)
-         return rmdPreviewParams_.getOutputFile();
-      else
-         return "";
-   }
-
-   @Override
-   public boolean isPublished()
-   {
-      if (rmdPreviewParams_ != null)
-         return rmdPreviewParams_.getResult().getRpubsPublished();
-      else
-         return false;
-   }
-
    private void navigate(String url)
    {
       if (Desktop.isDesktop())

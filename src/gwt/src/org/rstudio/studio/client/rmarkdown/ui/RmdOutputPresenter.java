@@ -23,7 +23,6 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SuperDevMode;
 import org.rstudio.studio.client.common.presentation.SlideNavigationPresenter;
-import org.rstudio.studio.client.common.rpubs.RPubsPresenter;
 import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.rmarkdown.model.RmdPreviewParams;
 import org.rstudio.studio.client.shiny.ShinyDisconnectNotifier;
@@ -42,7 +41,6 @@ import com.google.inject.Inject;
 
 public class RmdOutputPresenter implements 
    IsWidget, 
-   RPubsPresenter.Context,
    ShinyDisconnectSource
 {
    public interface Binder 
@@ -64,7 +62,6 @@ public class RmdOutputPresenter implements
    public RmdOutputPresenter(Display view,
                              Binder binder,
                              GlobalDisplay globalDisplay,
-                             RPubsPresenter rpubsPresenter,
                              Session session,
                              Commands commands,
                              EventBus eventBus,
@@ -76,7 +73,6 @@ public class RmdOutputPresenter implements
       session_ = session;
       prefs_ = prefs;
       
-      rpubsPresenter.setContext(this);
       slideNavigationPresenter_ = new SlideNavigationPresenter(view_);
       disconnectNotifier_ = new ShinyDisconnectNotifier(this);
       
@@ -116,45 +112,6 @@ public class RmdOutputPresenter implements
       return view_.asWidget();
    }
    
-   @Override
-   public String getContextId()
-   {
-      return "RMarkdownPreview";
-   }
-
-   @Override
-   public String getTitle()
-   {
-      String title = view_.getTitle();
-      if (title != null && !title.isEmpty())
-         return title;
-      
-      String htmlFile = getHtmlFile();
-      if (htmlFile != null)
-      {
-         FileSystemItem fsi = FileSystemItem.createFile(htmlFile);
-         return fsi.getStem();
-      }
-      else
-      {
-         return "(Untitled)";
-      }
-   }
-
-   @Override
-   public String getHtmlFile()
-   {
-      return params_ == null ? 
-         null : params_.getOutputFile();
-   }
-
-   @Override
-   public boolean isPublished()
-   {
-      return params_ == null ?
-          false : params_.getResult().getRpubsPublished();
-   }
-
    @Override
    public String getShinyUrl()
    {
