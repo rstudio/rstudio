@@ -17,6 +17,7 @@
 package com.google.gwt.dev.jjs.impl;
 
 import com.google.gwt.dev.jjs.ast.Context;
+import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JFieldRef;
@@ -58,6 +59,11 @@ public class JavaAstVerifier extends JVisitor {
   }
 
   @Override
+  public void endVisit(JClassType x, Context ctx) {
+    assertJsoCorrectness(x);
+  }
+
+  @Override
   public void endVisit(JFieldRef x, Context ctx) {
     assertReferencedFieldIsInAst(x);
   }
@@ -89,5 +95,16 @@ public class JavaAstVerifier extends JVisitor {
       return;
     }
     assert membersByType.containsEntry(x.getField().getEnclosingType(), x.getField());
+  }
+
+  private void assertJsoCorrectness(JClassType x) {
+    boolean isJSOorSubclassOfJSO = false;
+    for (JClassType current = x; current != null; current = current.getSuperClass()) {
+      if (current.getName().equals(JProgram.JAVASCRIPTOBJECT)) {
+        isJSOorSubclassOfJSO = true;
+        break;
+      }
+    }
+    assert isJSOorSubclassOfJSO == x.isJsoType();
   }
 }
