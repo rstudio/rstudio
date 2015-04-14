@@ -2389,7 +2389,7 @@ void addAllProjectSymbols(std::set<std::string>* pSymbols)
       BOOST_FOREACH(const r_util::RSourceItem& item, items)
       {
          DEBUG("Item: " << item.name());
-         pSymbols->insert(item.name());
+         pSymbols->insert(string_utils::strippedOfQuotes(item.name()));
       }
    }
 }
