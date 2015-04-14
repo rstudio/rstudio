@@ -172,6 +172,10 @@ context("Diagnostics")
       EXPECT_ERRORS("foo(a = 1 b = 2)");
       EXPECT_ERRORS("foo(a = 1\nb = 2)");
       
+      EXPECT_NO_ERRORS("rnorm(n = 1)");
+      EXPECT_NO_ERRORS("rnorm(`n` = 1)");
+      EXPECT_NO_ERRORS("rnorm('n' = 1)");
+      
       EXPECT_NO_ERRORS("c(a=function()a,)");
       EXPECT_NO_ERRORS("function(a) a");
       EXPECT_NO_ERRORS("function(a)\nwhile (1) 1\n");
@@ -190,9 +194,10 @@ context("Diagnostics")
       EXPECT_NO_ERRORS("if(1)if(2)while(3)while(4)if(5) foo()[]() else bar() else 8 else 9");
       EXPECT_ERRORS("if(1)while(2)function(3)repeat(4)if(5)(function())() else 6");
       
+      
       EXPECT_NO_ERRORS("if(1)function(){}else 2");
       EXPECT_NO_ERRORS("if(1){}\n{}");
-      EXPECT_NO_ERRORS("foo(1, x=,y=,,,z=1,,,,)");
+      EXPECT_NO_ERRORS("foo(1, 'x'=,\"y\"=,,,z=1,,,,)");
       
       // function body cannot be empty paren list; in general, '()' not allowed
       // at 'start' scope
