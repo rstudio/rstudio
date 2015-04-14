@@ -31,7 +31,7 @@ var snippets = [
    },
    {
       name: "src",
-      content: 'source("${1:file.R}}")'
+      content: 'source("${1:file.R}")'
    },
    {
       name: "ret",
