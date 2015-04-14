@@ -43,6 +43,7 @@ using namespace core::r_util;
 
 // static variables
 bool AsyncPackageInformationProcess::s_isUpdating_ = false;
+bool AsyncPackageInformationProcess::s_updateRequested_ = false;
 std::vector<std::string> AsyncPackageInformationProcess::s_pkgsToUpdate_;
 
 using namespace rstudio::core;
@@ -65,9 +66,15 @@ public:
             RSourceIndex::addPackageInformation(*it, PackageInformation());
          }
       }
-
+      
       AsyncPackageInformationProcess::s_pkgsToUpdate_.clear();
       AsyncPackageInformationProcess::s_isUpdating_ = false;
+      
+      if (AsyncPackageInformationProcess::s_updateRequested_)
+      {
+         AsyncPackageInformationProcess::s_updateRequested_ = false;
+         AsyncPackageInformationProcess::update();
+      }
    }
 
 };
@@ -226,10 +233,12 @@ void AsyncPackageInformationProcess::update()
 {
    using namespace rstudio::core::r_util;
    
+   s_updateRequested_ = true;
    if (s_isUpdating_)
       return;
    
    s_isUpdating_ = true;
+   s_updateRequested_ = false;
    
    s_pkgsToUpdate_ =
       RSourceIndex::getAllUnindexedPackages();

@@ -48,6 +48,7 @@ protected:
 
 private:
    static bool s_isUpdating_;
+   static bool s_updateRequested_;
    static std::vector<std::string> s_pkgsToUpdate_;
 
    std::stringstream stdOut_;

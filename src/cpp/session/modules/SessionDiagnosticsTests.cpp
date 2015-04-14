@@ -199,6 +199,10 @@ context("Diagnostics")
       EXPECT_NO_ERRORS("if(1){}\n{}");
       EXPECT_NO_ERRORS("foo(1, 'x'=,\"y\"=,,,z=1,,,`k`=,)");
       
+      EXPECT_NO_ERRORS("foo()\n{}");
+      EXPECT_NO_ERRORS("{}\n{}");
+      EXPECT_NO_ERRORS("1\n{}");
+      
       // function body cannot be empty paren list; in general, '()' not allowed
       // at 'start' scope
       EXPECT_ERRORS("(function() ())()");

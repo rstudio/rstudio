@@ -1169,6 +1169,13 @@ public:
       // 'op' is a 'binary-accepting' operator
       if (cursor.contentEquals(L"file_test"))
          pCall->functionInfo().infoForFormal("y").setMissingnessHandled(true);
+      
+      // 'globalVariables' doens't need 'package' argument
+      if (cursor.contentEquals(L"globalVariables") ||
+          cursor.contentEquals(L"vignetteEngine"))
+      {
+         pCall->functionInfo().infoForFormal("package").setMissingnessHandled(true);
+      }
    }
    
    static void applyCustomWarnings(const MatchedCall& call,

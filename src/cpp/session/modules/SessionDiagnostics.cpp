@@ -15,7 +15,8 @@
 
 // #define RSTUDIO_ENABLE_PROFILING
 // #define RSTUDIO_ENABLE_DEBUG_MACROS
-#define RSTUDIO_DEBUG_LABEL "linter"
+#define RSTUDIO_DEBUG_LABEL "diagnostics"
+
 #include <core/Macros.hpp>
 
 #include "SessionDiagnostics.hpp"
@@ -174,11 +175,14 @@ void addNamespaceSymbols(std::set<std::string>* pSymbols)
    BOOST_FOREACH(const std::string& package,
                  RSourceIndex::getImportedPackages())
    {
-      const PackageInformation& completions =
+      DEBUG("- Adding imports for package '" << package << "'");
+      const PackageInformation& pkgInfo =
             RSourceIndex::getPackageInformation(package);
+      
+      DEBUG("--- Adding " << pkgInfo.exports.size() << " symbols");
       pSymbols->insert(
-               completions.exports.begin(),
-               completions.exports.end());
+               pkgInfo.exports.begin(),
+               pkgInfo.exports.end());
    }
 }
 
@@ -792,7 +796,7 @@ bool collectLint(int depth,
       return true;
    }
    
-   ParseResults results = parse(
+   ParseResults results = diagnostics::parse(
             string_utils::utf8ToWide(contents),
             path);
    
