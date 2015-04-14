@@ -600,7 +600,7 @@ public class RSConnect implements SessionInitHandler,
          final ProgressIndicator indicator)
    {
       RPubsUploader uploader = new RPubsUploader(rpubsServer_, display_, 
-            events_, "Publish Wizard");
+            events_, "rpubs-" + rpubsCount_++);
       String contentType = contentTypeDesc(input.getContentType());
       indicator.onProgress("Uploading " + contentType);
       uploader.setOnUploadComplete(new CommandWithArg<Boolean>()
@@ -884,23 +884,26 @@ public class RSConnect implements SessionInitHandler,
    private boolean launchBrowser_ = false;
    private boolean sessionInited_ = false;
    
+   // incremented on each RPubs publish (to provide a unique context)
+   private static int rpubsCount_ = 0;
+   
    private RSConnectDirectoryState dirState_;
    private boolean dirStateDirty_ = false;
    
    public final static String CLOUD_SERVICE_NAME = "ShinyApps.io";
    
    // No/unknown content type 
-   public final static int CONTENT_TYPE_NONE      = 0;
+   public final static int CONTENT_TYPE_NONE     = 0;
    
    // A single HTML file representing a plot
-   public final static int CONTENT_TYPE_PLOT      = 1;
+   public final static int CONTENT_TYPE_PLOT     = 1;
    
    // A document (.Rmd, .md, etc.), 
-   public final static int CONTENT_TYPE_DOCUMENT  = 2;
+   public final static int CONTENT_TYPE_DOCUMENT = 2;
    
    // A Shiny application
-   public final static int CONTENT_TYPE_APP       = 3;
+   public final static int CONTENT_TYPE_APP      = 3;
    
    // Standalone HTML (from .RPres, HTML widgets/viewer pane, etc.)
-   public final static int CONTENT_TYPE_HTML      = 4;
+   public final static int CONTENT_TYPE_HTML     = 4;
 }
