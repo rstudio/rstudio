@@ -678,11 +678,10 @@ void getNamedUnnamedArguments(RTokenCursor cursor,
       bool isNamedArgument = false;
       std::wstring::const_iterator begin = cursor.begin();
 
-      if (cursor.isType(RToken::ID) &&
-          cursor.nextSignificantToken().contentEquals(L"="))
+      if (cursor.isLookingAtNamedArgumentInFunctionCall())
       {
          isNamedArgument = true;
-         argName = cursor.contentAsUtf8();
+         argName = getSymbolName(cursor);
          
          if (!cursor.moveToNextSignificantToken())
             return;
@@ -718,8 +717,6 @@ void getNamedUnnamedArguments(RTokenCursor cursor,
    
    
 }
-
-
 
 void handleIdentifier(RTokenCursor& cursor,
                       ParseStatus& status)
@@ -1556,10 +1553,7 @@ void checkForMissingComma(const RTokenCursor& cursor,
 {
    const RToken& next = cursor.nextSignificantToken();
    if (status.isInParentheticalScope() && isValidAsIdentifier(next))
-   {
-      status.lint().unexpectedToken(next);
       status.lint().expectedCommaFollowingToken(cursor);
-   }
 }
 
 } // anonymous namespace
@@ -1784,7 +1778,10 @@ START:
          if (status.isInParentheticalScope())
             status.lint().unexpectedToken(cursor, L")");
          
-         // Check for 'else' following for 'if' expressions.
+         // Check for 'else' following for 'if' expression, as in
+         //
+         //    if (1) { ... } else
+         //
          if (status.currentState() == ParseStatus::ParseStateIfExpression &&
              cursor.nextSignificantToken().contentEquals(L"else"))
          {
@@ -1797,6 +1794,42 @@ START:
          // Close an explicit expression, and any parent
          // control flow statements.
          status.popState();
+         
+         // We now have to resolve any non-braced statements, so that we can
+         // handle e.g.
+         //
+         //    if (1) function() function() function() {} else 1
+         //
+         while (status.isInControlFlowStatement())
+         {
+            if (status.currentState() == ParseStatus::ParseStateIfExpression ||
+                status.currentState() == ParseStatus::ParseStateIfStatement)
+            {
+               break;
+            }
+            status.popState();
+         }
+         
+         // It's possible that we're within a control flow 'statement' at this
+         // point; for example:
+         //
+         //    if (1) function() {} else 2
+         //                       ^
+         //
+         // The '}' above explicitly closes the function body, placing us
+         // back within the 'if (1)' statement -- so we then need to check
+         // forward for an 'else'.
+         if ((status.currentState() == ParseStatus::ParseStateIfExpression ||
+              status.currentState() == ParseStatus::ParseStateIfStatement) &&
+             cursor.nextSignificantToken().contentEquals(L"else"))
+         {
+            status.popState();
+            MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
+            MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
+            goto START;
+         }
+         
+         // Pop the rest of the 'statement' states.
          while (status.isInControlFlowStatement()) status.popState();
          if (cursor.isAtEndOfDocument()) return;
          
@@ -1810,9 +1843,6 @@ START:
          if (canOpenArgumentList(cursor))
             goto ARGUMENT_LIST;
 
-         if (cursor.isType(RToken::LBRACE))
-            GOTO_INVALID_TOKEN(cursor);
-         
          goto START;
       }
       
@@ -2043,9 +2073,9 @@ ARGUMENT_START:
       if (closesArgumentList(cursor, status))
          goto ARGUMENT_LIST_END;
       
-      // Step over named arguments.
-      if (cursor.isType(RToken::ID) &&
-          cursor.nextSignificantToken().contentEquals(L"="))
+      // Step over named arguments. Note that it is legal to quote named
+      // arguments, with any of [`'"].
+      if (cursor.isLookingAtNamedArgumentInFunctionCall())
       {
          MOVE_TO_NEXT_SIGNIFICANT_TOKEN_WARN_IF_NO_WHITESPACE(cursor, status);
          MOVE_TO_NEXT_SIGNIFICANT_TOKEN_WARN_IF_NO_WHITESPACE(cursor, status);

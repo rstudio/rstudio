@@ -526,7 +526,7 @@ inline bool isSymbolNamed(const RToken& rToken,
    // is equal to the name provided. TODO: handle escaped
    // quotes within
    if (rToken.isType(RToken::STRING) ||
-       (rToken.isType(RToken::ID) && *rToken.begin() == '`'))
+       (rToken.isType(RToken::ID) && *rToken.begin() == L'`'))
    {
       std::size_t distance = std::distance(
                rToken.begin(), rToken.end());
@@ -544,7 +544,7 @@ inline bool isSymbolNamed(const RToken& rToken,
 inline std::string getSymbolName(const RToken& rToken)
 {
    if (rToken.isType(RToken::STRING) ||
-       (rToken.isType(RToken::ID) && *rToken.begin() == '`'))
+       (rToken.isType(RToken::ID) && *rToken.begin() == L'`'))
    {
        return string_utils::wideToUtf8(
           std::wstring(rToken.begin() + 1, rToken.end() - 1));

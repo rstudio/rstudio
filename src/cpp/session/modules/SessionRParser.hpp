@@ -317,7 +317,7 @@ public:
    void expectedCommaFollowingToken(const RToken& rToken)
    {
       addLintItem(rToken,
-                  LintTypeWarning,
+                  LintTypeError,
                   "expected ',' after expression");
    }
    

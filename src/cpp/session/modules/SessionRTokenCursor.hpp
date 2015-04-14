@@ -514,6 +514,12 @@ public:
      
   }
   
+  bool isLookingAtNamedArgumentInFunctionCall()
+  {
+     return isValidAsIdentifier(*this) &&
+            nextSignificantToken().contentEquals(L"=");
+  }
+  
   bool isAtEndOfStatement(const ParseStatus& status)
   {
      return isAtEndOfStatement(status.isInParentheticalScope());
@@ -654,8 +660,6 @@ public:
      
      return false;
   }
-  
-  
   
   // Check if this is a 'namespace' call, e.g.
   //
