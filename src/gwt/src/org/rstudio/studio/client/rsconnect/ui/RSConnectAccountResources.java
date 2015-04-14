@@ -58,4 +58,7 @@ public interface RSConnectAccountResources extends ClientBundle
 
    @Source("publishMultipleRmd.png")
    ImageResource publishMultipleRmd();
+   
+   @Source("publishPlot.png")
+   ImageResource publishPlot();
 }

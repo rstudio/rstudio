@@ -111,8 +111,6 @@ public class PresentationPane extends WorkbenchPane implements Presentation.Disp
             public void generatePublishHtml(
                   final CommandWithArg<String> onCompleted)
             {
-               final Command htmlGenComplete = 
-                     display_.showProgress("Publishing Presentation...");
                server_.createPresentationRPubsSource(
                   new SimpleRequestCallback<PresentationRPubsSource>() {
                      
@@ -120,14 +118,12 @@ public class PresentationPane extends WorkbenchPane implements Presentation.Disp
                      public void onResponseReceived(
                            PresentationRPubsSource source)
                      {
-                        htmlGenComplete.execute();
                         onCompleted.execute(source.getSourceFilePath());
                      }
                      
                      @Override
                      public void onError(ServerError error)
                      {
-                        htmlGenComplete.execute();
                         display_.showErrorMessage("Error Saving Presentation",
                           Presentation.getErrorMessage(error));
                      }

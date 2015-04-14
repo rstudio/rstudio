@@ -12,7 +12,6 @@
  */
 package org.rstudio.studio.client.workbench.views.viewer;
 
-import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
@@ -95,7 +94,8 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
      
       // add publish button 
       publishButton_ = new RSConnectPublishButton(
-            RSConnect.CONTENT_TYPE_DOCUMENT, true, null);
+            RSConnect.CONTENT_TYPE_DOCUMENT, true, 
+            commands_.viewerSaveAsWebPage());
       toolbar_.addRightWidget(publishButton_);
 
       // create an HTML generator 
@@ -105,15 +105,12 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
          public void generatePublishHtml(
                final CommandWithArg<String> onCompleted)
          {
-            final Command dismissProgress = 
-                  globalDisplay_.showProgress("Publishing...");
             server_.viewerCreateRPubsHtml(
                   getTitle(), "", new ServerRequestCallback<String>()
             {
                @Override
                public void onResponseReceived(String htmlFile)
                {
-                  dismissProgress.execute();
                   onCompleted.execute(htmlFile);
                }
                @Override
@@ -121,7 +118,6 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
                {
                   globalDisplay_.showErrorMessage("Could Not Publish", 
                         error.getMessage());
-                  dismissProgress.execute();
                }
             });
          }

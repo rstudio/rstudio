@@ -5,7 +5,6 @@
     xmlns:rw="urn:import:org.rstudio.core.client.widget">
     <ui:with field="res" type="org.rstudio.studio.client.rsconnect.ui.RSConnectDeploy.DeployResources" />
     <ui:with field="coreRes" type="org.rstudio.core.client.resources.CoreResources" />
-    <ui:with field="fileRes" type="org.rstudio.studio.client.common.filetypes.FileIconResources" />
     <g:HTMLPanel ui:field="rootPanel_">
     <g:Image ui:field="deployIllustration_"></g:Image>
     <g:Grid ui:field="mainGrid_"><g:row>
@@ -30,7 +29,7 @@
                           visible="false">
             <g:Label text="Publish: "></g:Label>
             <g:HTMLPanel styleName="{res.style.fileList} {res.style.descriptionPanel}">
-               <g:Image resource="{fileRes.iconHTML}"></g:Image>
+               <g:Image ui:field="descriptionImage_"></g:Image>
                <g:Label styleName="{res.style.descriptionLabel}"
                         ui:field="descriptionLabel_">
                </g:Label>

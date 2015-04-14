@@ -27,6 +27,7 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.FilePathUtils;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.filetypes.FileIconResources;
 import org.rstudio.studio.client.rsconnect.RSConnect;
 import org.rstudio.studio.client.rsconnect.model.RSConnectAccount;
 import org.rstudio.studio.client.rsconnect.model.RSConnectApplicationInfo;
@@ -108,6 +109,7 @@ public class RSConnectDeploy extends Composite
       ImageResource publishShinyIllustration();
       ImageResource publishRmdIllustration();
       ImageResource publishPlotIllustration();
+      ImageResource publishPlot();
 
       @Source("RSConnectDeploy.css")
       DeployStyle style();
@@ -742,11 +744,14 @@ public class RSConnectDeploy extends Composite
       // If this is a self-contained file, don't show the file list; instead, 
       // show the description of what we're about to publish
       if (source_.isSelfContained()) 
-         if (source_.isSelfContained()) 
       {
          descriptionLabel_.setText(source_.getDescription());
          filePanel_.setVisible(false);
          descriptionPanel_.setVisible(true);
+         descriptionImage_.setResource(
+               contentType_ == RSConnect.CONTENT_TYPE_PLOT ?
+                     RESOURCES.publishPlot() : 
+                     FileIconResources.INSTANCE.iconHTML());
       }
       
       // if the app name textbox isn't populated, derive from the filename
@@ -758,6 +763,8 @@ public class RSConnectDeploy extends Composite
          appName_.setText(FilePathUtils.fileNameSansExtension(
                source_.getSourceFile()));
       }
+      
+      
    }
    
    @UiField Anchor addAccountAnchor_;
@@ -770,6 +777,7 @@ public class RSConnectDeploy extends Composite
    @UiField HTMLPanel newAppPanel_;
    @UiField HTMLPanel rootPanel_;
    @UiField Image deployIllustration_;
+   @UiField Image descriptionImage_;
    @UiField InlineLabel deployLabel_;
    @UiField Label appExistingName_;
    @UiField Label appProgressName_;
