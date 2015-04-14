@@ -255,6 +255,16 @@ context("RTokenizer")
       expect_true(rTokens.at(1).contentEquals(L"\n"));
       expect_true(rTokens.at(2).isType(RToken::NUMBER));
    }
+   
+   test_that("'**' is properly tokenized as a single operator")
+   {
+      RTokens rTokens(L"1 ** 2");
+      expect_true(rTokens.size() == 5);
+      expect_true(rTokens.at(0).isType(RToken::NUMBER));
+      expect_true(rTokens.at(1).isType(RToken::WHITESPACE));
+      expect_true(rTokens.at(2).isType(RToken::OPER));
+      expect_true(rTokens.at(2).contentEquals(L"**"));
+   }
 }
 
 } // namespace r_util

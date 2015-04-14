@@ -357,7 +357,10 @@ RToken RTokenizer::matchOperator()
       else
          return consumeToken(RToken::OPER, 1);
       
-   case L'+': case L'*': case L'/': case L'?':
+   case L'*': // '*' and '**' (which R's parser converts to '^')
+      return consumeToken(RToken::OPER, 1 + cNext == L'*');
+      
+   case L'+': case L'/': case L'?':
    case L'^': case L'~': case L'$': case L'@':
       // single-character operators
       return consumeToken(RToken::OPER, 1) ;
