@@ -343,7 +343,7 @@ public:
       DEBUG("");
    }
 
-private:
+public:
 
    iterator find_leaf(const Entry& entry)
    {
@@ -361,6 +361,8 @@ private:
       do_find_branch(entry, parent, &result);
       return result;
    }
+   
+private:
 
    void do_find_branch(const Entry& entry,
                        iterator parent,
@@ -720,7 +722,29 @@ public:
          }
       }
    }
-
+   
+   void walkFiles(const FilePath& parentPath,
+                  boost::function<void(const Entry&)> operation,
+                  boost::function<bool(const Entry&)> filter = NULL)
+   {
+      Entry parentEntry(core::toFileInfo(parentPath));
+      EntryTree::iterator parentItr = pEntries_->find_branch(parentEntry);
+      if (parentItr == pEntries_->end())
+      {
+         LOG_ERROR_MESSAGE("Failed to find node '" + parentPath.absolutePath() + "'");
+         return;
+      }
+      
+      EntryTree::leaf_iterator it = parentItr.begin();
+      for (; pEntries_->is_valid(it); ++it)
+      {
+         if (filter && filter(*it))
+            continue;
+         
+         operation(*it);
+      }
+   }
+   
    void clear()
    {
       indexing_ = false;
@@ -2377,20 +2401,44 @@ Error initialize()
    return initBlock.execute();
 }
 
+namespace callbacks {
+
+void addAllProjectSymbols(const Entry& entry,
+                          std::set<std::string>* pSymbols)
+{
+   if (!entry.hasIndex())
+      return;
+   
+   const std::vector<r_util::RSourceItem>& items = entry.pIndex->items();
+   BOOST_FOREACH(const r_util::RSourceItem& item, items)
+   {
+      pSymbols->insert(string_utils::strippedOfQuotes(item.name()));
+   } 
+}
+
+} // namespace callbacks
+
 void addAllProjectSymbols(std::set<std::string>* pSymbols)
 {
-   BOOST_FOREACH(const Entry& entry, *s_projectIndex.entries())
+   FilePath buildTarget =
+         projects::projectContext().buildTargetPath();
+   
+   s_projectIndex.walkFiles(
+            buildTarget,
+            boost::bind(callbacks::addAllProjectSymbols, _1, pSymbols));
+   
+   // Add in symbols made available as part of registration of native routines,
+   // if this is a package project.
+   if (projects::projectContext().isPackageProject())
    {
-      DEBUG("Entry: " << entry.fileInfo.absolutePath());
-      if (!entry.hasIndex())
-         continue;
-      
-      const std::vector<r_util::RSourceItem>& items = entry.pIndex->items();
-      BOOST_FOREACH(const r_util::RSourceItem& item, items)
-      {
-         DEBUG("Item: " << item.name());
-         pSymbols->insert(string_utils::strippedOfQuotes(item.name()));
-      }
+      std::string pkgName = projects::projectContext().packageInfo().name();
+      std::vector<std::string> nativeRoutineNames;
+      r::exec::RFunction getNativeSymbols(".rs.getNativeSymbols");
+      getNativeSymbols.addParam(pkgName);
+      Error error = getNativeSymbols.call(&nativeRoutineNames);
+      if (error)
+         LOG_ERROR(error);
+      pSymbols->insert(nativeRoutineNames.begin(), nativeRoutineNames.end());
    }
 }
 
