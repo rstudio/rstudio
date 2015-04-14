@@ -273,6 +273,13 @@ public class RSConnectDeploy extends Composite
                      fromPrevious_.getAccount());
                appInfoPanel_.setVisible(existing);
                newAppPanel_.setVisible(!existing);
+
+               // validate name if necessary
+               if (existing && onDeployEnabled_ != null)
+                  onDeployEnabled_.execute();
+               else if (!existing)
+                  appName_.validateAppName();
+                  
             }
          }
       });
@@ -329,6 +336,8 @@ public class RSConnectDeploy extends Composite
       appInfoPanel_.setVisible(true);
       appDetailsPanel_.setVisible(true);
       newAppPanel_.setVisible(false);
+      if (onDeployEnabled_ != null)
+         onDeployEnabled_.execute();
    }
    
    public HandlerRegistration addAccountChangeHandler(ChangeHandler handler)
@@ -339,6 +348,7 @@ public class RSConnectDeploy extends Composite
    public void setOnDeployEnabled(Command cmd)
    {
       appName_.setOnNameIsValid(cmd);
+      onDeployEnabled_ = cmd;
    }
    
    public void setOnDeployDisabled(Command cmd)
@@ -815,6 +825,7 @@ public class RSConnectDeploy extends Composite
    private boolean asMultipleRmd_;
    private boolean asStatic_;
    private int contentType_;
+   private Command onDeployEnabled_;
 
    private final DeployStyle style_;
    private final boolean forDocument_;

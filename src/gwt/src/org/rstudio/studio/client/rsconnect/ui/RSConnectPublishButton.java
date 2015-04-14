@@ -311,7 +311,8 @@ public class RSConnectPublishButton extends Composite
                   public void execute(String arg)
                   {
                      events_.fireEvent(RSConnectActionEvent.DeployHtmlEvent(
-                           contentPath_, arg, publishHtmlSource_.getTitle()));
+                           contentPath_, arg, publishHtmlSource_.getTitle(),
+                           previous));
                   }
                });
          break;

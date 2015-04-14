@@ -58,7 +58,7 @@ public class AppNameTextbox extends Composite
    
    public void setOnNameIsInvalid(Command cmd)
    {
-      onNameIsValid_ = cmd;
+      onNameIsInvalid_ = cmd;
    }
    
    public void setText(String text)

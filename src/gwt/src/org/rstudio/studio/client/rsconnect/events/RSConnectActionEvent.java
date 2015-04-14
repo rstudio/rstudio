@@ -64,11 +64,12 @@ public class RSConnectActionEvent extends GwtEvent<RSConnectActionEvent.Handler>
    }
 
    public static RSConnectActionEvent DeployHtmlEvent(String sourceFile,
-         String htmlFile, String selfContainedDesc)
+         String htmlFile, String selfContainedDesc, 
+         RSConnectDeploymentRecord fromPrevious)
    {
       return new RSConnectActionEvent(ACTION_TYPE_DEPLOY, 
             RSConnect.CONTENT_TYPE_HTML, sourceFile, htmlFile, 
-            selfContainedDesc, null, null);
+            selfContainedDesc, null, fromPrevious);
    }
 
    private RSConnectActionEvent(int action, int contentType, String path, 
