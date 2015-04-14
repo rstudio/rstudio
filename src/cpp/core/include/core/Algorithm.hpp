@@ -89,6 +89,55 @@ bool contains(const Container& container, const ValueType& value)
             type_traits::has_key_type<Container>());
 }
 
+namespace detail {
+
+template <typename Container, typename ValueType>
+typename boost::enable_if_c<type_traits::has_key_type<Container>::value, void>::type
+insert(Container& container, const ValueType& value, boost::true_type)
+{
+   container.insert(value);
+}
+
+template <typename Container, typename ValueType>
+typename boost::disable_if_c<type_traits::has_key_type<Container>::value, void>::type
+insert(Container& container, const ValueType& value, boost::false_type)
+{
+   container.push_back(value);
+}
+
+} // namespace detail
+
+template <typename Container, typename ValueType>
+void insert(Container& container, const ValueType& value)
+{
+   detail::insert(container, value, type_traits::has_key_type<Container>());
+}
+
+namespace detail {
+
+template <typename Container, typename Iterator>
+typename boost::enable_if_c<type_traits::has_key_type<Container>::value, void>::type
+insert(Container& container, Iterator begin, Iterator end, boost::true_type)
+{
+   container.insert(begin, end);
+}
+
+template <typename Container, typename Iterator>
+typename boost::disable_if_c<type_traits::has_key_type<Container>::value, void>::type
+insert(Container& container, Iterator begin, Iterator end, boost::false_type)
+{
+   container.insert(container.end(), begin, end);
+}
+
+} // namespace detail
+
+template <typename Container, typename Iterator>
+void insert(Container& container, Iterator begin, Iterator end)
+{
+   detail::insert(container, begin, end,
+                  type_traits::has_key_type<Container>());
+}
+
 /* Wrappers for the erase-remove idiom */
 template <typename Container, typename ValueType>
 void discard(Container& container, const ValueType& value)
