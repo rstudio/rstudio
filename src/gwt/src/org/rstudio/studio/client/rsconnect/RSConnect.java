@@ -39,6 +39,7 @@ import org.rstudio.studio.client.common.rpubs.ui.RPubsUploadDialog;
 import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.rsconnect.events.RSConnectActionEvent;
 import org.rstudio.studio.client.rsconnect.events.RSConnectDeployInitiatedEvent;
+import org.rstudio.studio.client.rsconnect.events.RSConnectDeploymentCompletedEvent;
 import org.rstudio.studio.client.rsconnect.events.RSConnectDeploymentStartedEvent;
 import org.rstudio.studio.client.rsconnect.model.RSConnectApplicationInfo;
 import org.rstudio.studio.client.rsconnect.model.RSConnectDeploymentRecord;
@@ -55,7 +56,6 @@ import org.rstudio.studio.client.rsconnect.ui.RSConnectDeployDialog;
 import org.rstudio.studio.client.rsconnect.ui.RSConnectPublishWizard;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.shiny.events.RSConnectDeploymentCompletedEvent;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.events.SessionInitHandler;
@@ -657,7 +657,8 @@ public class RSConnect implements SessionInitHandler,
                dirStateDirty_ = true;
                launchBrowser_ = event.getLaunchBrowser();
                events_.fireEvent(new RSConnectDeploymentStartedEvent(
-                     event.getSource().getDeployKey()));
+                     event.getSource().getDeployKey(), 
+                     event.getSource().getDescription()));
             }
             else
             {
