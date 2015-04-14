@@ -16,6 +16,7 @@ package org.rstudio.studio.client.rsconnect.ui;
 
 import java.util.ArrayList;
 
+import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.Operation;
@@ -43,7 +44,6 @@ import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
-import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.dom.client.Style.FontWeight;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ChangeEvent;
@@ -430,7 +430,7 @@ public class RSConnectDeploy extends Composite
    
    // Private methods --------------------------------------------------------
    
-   private void setFileList(JsArrayString files, 
+   private void setFileList(ArrayList<String> files,
          ArrayList<String> additionalFiles, ArrayList<String> ignoredFiles)
    {
       if (forDocument_)
@@ -440,7 +440,7 @@ public class RSConnectDeploy extends Composite
       
       // clear existing file list
       fileListPanel_.clear(); 
-      for (int i = 0; i < files.length(); i++)
+      for (int i = 0; i < files.size(); i++)
       {
          boolean checked = true;
          boolean add = true;
@@ -586,6 +586,19 @@ public class RSConnectDeploy extends Composite
       if (source_ == null)
          return;
       
+      // if this is a self-contained document, we don't need to scrape it for
+      // dependencies; just inject it directly into the list.
+      if (source_.isSelfContained())
+      {
+         ArrayList<String> files = new ArrayList<String>();
+         FileSystemItem selfContained = FileSystemItem.createFile(
+                     source_.getDeployFile());
+         files.add(selfContained.getName());
+         setFileList(files, null, null);
+         setPrimaryFile(selfContained.getName());
+         return;
+      }
+
       // read the parent directory if we're "deploying" a .R file
       final String fileSource = source_.isDocument() ? 
             source_.getDeployFile() : source_.getDeployDir();
@@ -617,7 +630,8 @@ public class RSConnectDeploy extends Composite
                           "files to deploy.");
                         indicator.onCompleted();
                      }
-                     setFileList(files.getDirList(), 
+                     setFileList(
+                           JsArrayUtil.fromJsArrayString(files.getDirList()), 
                            fromPrevious_ != null ?
                                  fromPrevious_.getAdditionalFiles() : null, 
                            fromPrevious_ != null ? 
@@ -763,8 +777,6 @@ public class RSConnectDeploy extends Composite
          appName_.setText(FilePathUtils.fileNameSansExtension(
                source_.getSourceFile()));
       }
-      
-      
    }
    
    @UiField Anchor addAccountAnchor_;

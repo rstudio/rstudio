@@ -171,9 +171,13 @@ public class PresentationPane extends WorkbenchPane implements Presentation.Disp
    }
    
    @Override
-   public void load(String url)
+   public void load(String url, String sourceFile)
    {   
       frame_.navigate(url);
+      if (publishButton_ != null)
+      {
+         publishButton_.setContentPath(sourceFile, null);
+      }
    }
    
    @Override

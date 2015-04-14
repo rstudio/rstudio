@@ -32,6 +32,12 @@ public class RenderedDocPreview
       outputFile_ = result.getHtmlFile();
    }
    
+   public RenderedDocPreview(String sourceFile, String outputFile)
+   {
+      sourceFile_ = sourceFile;
+      outputFile_ = outputFile;
+   }
+   
    public String getSourceFile()
    {
       return sourceFile_;

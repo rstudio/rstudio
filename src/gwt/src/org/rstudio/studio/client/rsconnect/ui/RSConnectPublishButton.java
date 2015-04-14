@@ -273,7 +273,7 @@ public class RSConnectPublishButton extends Composite
       
       populating_ = true;
       server_.getRSConnectDeployments(contentPath, 
-            outputPath_,
+            outputPath_ == null ? "" : outputPath_,
             new ServerRequestCallback<JsArray<RSConnectDeploymentRecord>>()
       {
          @Override
@@ -293,7 +293,7 @@ public class RSConnectPublishButton extends Composite
       });
    }
    
-   private void onPublishClick(RSConnectDeploymentRecord previous)
+   private void onPublishClick(final RSConnectDeploymentRecord previous)
    {
       switch (contentType_)
       {
@@ -311,9 +311,10 @@ public class RSConnectPublishButton extends Composite
                   public void execute(String arg)
                   {
                      events_.fireEvent(RSConnectActionEvent.DeployHtmlEvent(
-                           arg, publishHtmlSource_.getTitle()));
+                           contentPath_, arg, publishHtmlSource_.getTitle()));
                   }
                });
+         break;
       case RSConnect.CONTENT_TYPE_PLOT:
          // for plots, we need to generate the hosting HTML prior to publishing
          if (publishHtmlSource_ != null)
@@ -368,6 +369,8 @@ public class RSConnectPublishButton extends Composite
          for (int i  = 0; i < recs.length(); i++)
          {
             final RSConnectDeploymentRecord rec = recs.get(i);
+            if (rec == null)
+               continue;
             if (defaultRec_ == null || defaultRec_.getWhen() < rec.getWhen())
             {
                defaultRec_ = rec;

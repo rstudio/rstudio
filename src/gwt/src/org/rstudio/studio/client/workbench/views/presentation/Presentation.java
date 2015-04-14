@@ -82,7 +82,7 @@ public class Presentation extends BasePresenter
    
    public interface Display extends WorkbenchView
    {  
-      void load(String url);
+      void load(String url, String sourceFile);
       void zoom(String title, String url, Command onClosed);
       void clear();
       boolean hasSlides();
@@ -235,7 +235,7 @@ public class Presentation extends BasePresenter
          @Override
          public void execute()
          {
-            view_.load(buildPresentationUrl()); 
+            view_.load(buildPresentationUrl(), currentState_.getFilePath()); 
          } 
       });
    }
@@ -383,7 +383,7 @@ public class Presentation extends BasePresenter
    private void refreshPresentation()
    {
       view_.showBusy();
-      view_.load(buildPresentationUrl());
+      view_.load(buildPresentationUrl(), currentState_.getFilePath());
    }
    
    @Handler
@@ -533,7 +533,7 @@ public class Presentation extends BasePresenter
    private void init(PresentationState state)
    {
       currentState_ = state;
-      view_.load(buildPresentationUrl());
+      view_.load(buildPresentationUrl(), currentState_.getFilePath());
    }
    
    private String buildPresentationUrl()
