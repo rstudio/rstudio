@@ -190,10 +190,13 @@ context("Diagnostics")
       EXPECT_NO_ERRORS("if(1)if(2)while(3)while(4)if(5) foo()[]() else bar() else 8 else 9");
       EXPECT_ERRORS("if(1)while(2)function(3)repeat(4)if(5)(function())() else 6");
       
+      EXPECT_NO_ERRORS("if(1)function(){}else 2");
+      EXPECT_NO_ERRORS("if(1){}\n{}");
+      EXPECT_NO_ERRORS("foo(1, x=,y=,,,z=1,,,,)");
+      
       // function body cannot be empty paren list; in general, '()' not allowed
       // at 'start' scope
       EXPECT_ERRORS("(function() ())()");
-      EXPECT_NO_ERRORS("(function() (1))()");
       
       // EXPECT_ERRORS("if (1) (1)\nelse (2)");
       EXPECT_NO_ERRORS("{if (1) (1)\nelse (2)}");
