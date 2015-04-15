@@ -39,6 +39,7 @@ public interface PreferencesDialogBaseResources extends ClientBundle
       String textBoxWithChooser();
       String infoLabel();
       String headerLabel();
+      String spacedBefore();
    }
 
    @Source("PreferencesDialogBase.css")
