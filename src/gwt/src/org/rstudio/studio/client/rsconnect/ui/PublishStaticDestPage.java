@@ -40,9 +40,9 @@ public class PublishStaticDestPage
                                                     RSConnectPublishResult>>();
       pages.add(new PublishRPubsPage("RPubs", "RPubs is a free service from " + 
          "RStudio for sharing documents on the web."));
-      pages.add(new PublishFilesPage("A server in your organization", 
-         "RStudio Connect enables members of your organization to share and " + 
-         "collaborate privately and securely.", 
+      pages.add(new PublishFilesPage("RStudio Connect", 
+            "A local service running inside your organization. Publish and " +
+            "collaborate privately and securely.",
          RSConnectAccountResources.INSTANCE.localAccountIcon(),
          input, asMultiple, true));
       return pages;
