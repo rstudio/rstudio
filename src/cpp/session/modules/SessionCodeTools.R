@@ -1073,9 +1073,8 @@
       # `::` or `:::`.
       if (headString %in% c("::", ":::") && length(node) == 3)
       {
-         pkg <- node[[2]]
          export <- node[[3]]
-         if (as.character(pkg) == "base" && as.character(export) %in% nsePrimitives)
+         if (as.character(export) %in% nsePrimitives)
             return(TRUE)
       }
    }
