@@ -79,7 +79,7 @@ public class RSConnectPublishSource
    public boolean isDocument()
    {
       return isSourceExt("rmd") || isSourceExt("md") || isSourceExt("html") ||
-             isSourceExt("htm");
+             isSourceExt("htm") || isSourceExt("rpres");
    }
    
    public String getDeployKey()
