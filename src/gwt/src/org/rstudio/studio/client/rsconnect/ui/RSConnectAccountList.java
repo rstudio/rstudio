@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.rsconnect.ui;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.WidgetListBox;
@@ -145,13 +146,21 @@ public class RSConnectAccountList extends Composite
       {
          if (accounts_.get(i).equals(account))
          {
-            // move the entry to the top and select it
-            AccountEntry entry = accountList_.getItemAtIdx(i);
-            accountList_.remove(entry);
-            accountList_.addItem(entry, false);
-            accountList_.setSelectedIndex(0);
+            // extract the list of accounts, sort the desired account to the
+            // top, and put them back
+            List<AccountEntry> entries = new ArrayList<AccountEntry>();
+            entries.addAll(accountList_.getItems());
+            if (entries.size() <= i)
+               return;
+            accountList_.clearItems();
+            AccountEntry entry = entries.get(i);
+            entries.remove(i);
+            entries.add(0, entry);
+            for (int j = 0; j < entries.size(); j++) {
+               accountList_.addItem(entries.get(j));
+            }
 
-            // sychronize the backing array
+            // synchronize the backing array
             accounts_.remove(i);
             accounts_.add(0, account);
             break;

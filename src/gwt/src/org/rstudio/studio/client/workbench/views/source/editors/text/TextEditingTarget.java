@@ -2590,6 +2590,18 @@ public class TextEditingTarget implements
    {
       docDisplay_.toggleBreakpointAtCursor();
    }
+   
+   @Handler
+   void onRsconnectDeploy()
+   {
+      if (docUpdateSentinel_ == null)
+         return;
+
+      // only Shiny files get the deploy command, so we can be confident we're
+      // deploying an app here
+      events_.fireEvent(RSConnectActionEvent.DeployAppEvent(
+            docUpdateSentinel_.getPath(), null));
+   }
 
    @Handler 
    void onRsconnectConfigure()
