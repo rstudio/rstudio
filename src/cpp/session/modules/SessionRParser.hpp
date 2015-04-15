@@ -59,11 +59,13 @@ public:
                          bool checkForMissingArgumentsInFunctionCalls = false,
                          bool warnIfNoSuchVariableInScope = false,
                          bool warnIfVariableIsDefinedButNotUsed = false,
+                         bool validateFunctionCalls = false,
                          bool recordStyleLint = false)
       : lintRFunctions_(lintRFunctions),
         checkForMissingArgumentsInFunctionCalls_(checkForMissingArgumentsInFunctionCalls),
         warnIfNoSuchVariableInScope_(warnIfNoSuchVariableInScope),
         warnIfVariableIsDefinedButNotUsed_(warnIfVariableIsDefinedButNotUsed),
+        validateFunctionCalls_(validateFunctionCalls),
         recordStyleLint_(recordStyleLint)
    {}
    
@@ -107,6 +109,16 @@ public:
       warnIfNoSuchVariableInScope_ = value;
    }
    
+   bool validateFunctionCalls() const
+   {
+      return validateFunctionCalls_;
+   }
+   
+   void setValidateFunctionCalls(bool value)
+   {
+      validateFunctionCalls_ = value;
+   }
+   
    bool warnIfVariableIsDefinedButNotUsed() const
    {
       return warnIfVariableIsDefinedButNotUsed_;
@@ -122,6 +134,7 @@ private:
    bool checkForMissingArgumentsInFunctionCalls_;
    bool warnIfNoSuchVariableInScope_;
    bool warnIfVariableIsDefinedButNotUsed_;
+   bool validateFunctionCalls_;
    bool recordStyleLint_;
 };
 

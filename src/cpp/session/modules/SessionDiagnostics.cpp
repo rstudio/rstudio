@@ -464,6 +464,9 @@ ParseResults parse(const std::wstring& rCode,
    options.setWarnIfNoSuchVariableInScope(
             userSettings().warnIfNoSuchVariableInScope());
    
+   options.setValidateFunctionCalls(
+            userSettings().validateFunctionCalls());
+   
    options.setRecordStyleLint(
             userSettings().enableStyleDiagnostics());
    

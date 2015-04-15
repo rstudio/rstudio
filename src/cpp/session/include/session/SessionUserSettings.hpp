@@ -183,6 +183,9 @@ public:
    bool warnIfVariableDefinedButNotUsed() const;
    void setWarnIfVariableDefinedButNotUsed(bool enable);
    
+   bool validateFunctionCalls() const;
+   void setValidateFunctionCalls(bool enable);
+   
    bool enableStyleDiagnostics() const;
    void setEnableStyleDiagnostics(bool enable);
 
@@ -230,6 +233,7 @@ private:
    mutable boost::scoped_ptr<bool> pWarnIfNoSuchVariableInScope_;
    mutable boost::scoped_ptr<bool> pWarnIfVariableDefinedButNotUsed_;
    mutable boost::scoped_ptr<bool> pEnableStyleDiagnostics_;
+   mutable boost::scoped_ptr<bool> pValidateFunctionCalls_;
    
 };
    

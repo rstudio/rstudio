@@ -216,6 +216,11 @@ public class UIPrefsAccessor extends Prefs
       return bool("warn_if_variable_defined_but_not_used", true);
    }
    
+   public PrefValue<Boolean> validateFunctionCalls()
+   {
+      return bool("validate_function_calls", true);
+   }
+   
    public PrefValue<Boolean> autoAppendNewline()
    {
       return bool("auto_append_newline", false);

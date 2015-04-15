@@ -173,6 +173,9 @@ public class UIPrefs extends UIPrefsAccessor implements UiPrefsChangedHandler
          warnIfVariableDefinedButNotUsed().setGlobalValue(
                newUiPrefs.warnIfVariableDefinedButNotUsed().getGlobalValue());
          
+         validateFunctionCalls().setGlobalValue(
+               newUiPrefs.validateFunctionCalls().getGlobalValue());
+         
          enableStyleDiagnostics().setGlobalValue(
                newUiPrefs.enableStyleDiagnostics().getGlobalValue());
          

@@ -288,6 +288,9 @@ void UserSettings::updatePrefsCache(const json::Object& prefs) const
    bool warnIfVariableDefinedButNotUsed = readPref<bool>(prefs, "warn_if_variable_defined_but_not_used", true);
    pWarnIfVariableDefinedButNotUsed_.reset(new bool(warnIfVariableDefinedButNotUsed));
    
+   bool validateFunctionCalls = readPref<bool>(prefs, "validate_function_calls", true);
+   pValidateFunctionCalls_.reset(new bool(validateFunctionCalls));
+   
    bool enableStyleDiagnostics = readPref<bool>(prefs, "enable_style_diagnostics", false);
    pEnableStyleDiagnostics_.reset(new bool(enableStyleDiagnostics));
    
@@ -369,6 +372,11 @@ bool UserSettings::warnIfNoSuchVariableInScope() const
 bool UserSettings::warnIfVariableDefinedButNotUsed() const
 {
    return readUiPref<bool>(pWarnIfVariableDefinedButNotUsed_);
+}
+
+bool UserSettings::validateFunctionCalls() const
+{
+   return readUiPref<bool>(pValidateFunctionCalls_);
 }
 
 bool UserSettings::enableStyleDiagnostics() const

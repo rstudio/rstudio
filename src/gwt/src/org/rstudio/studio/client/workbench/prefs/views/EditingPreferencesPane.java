@@ -216,6 +216,7 @@ public class EditingPreferencesPane extends PreferencesPane
       rOptionsPanel.add(spaced(checkboxPref("Check for missing arguments in function call", prefs.checkForMissingArgumentsInFunctionCalls())));
       rOptionsPanel.add(spaced(checkboxPref("Warn if variable used has no definition in scope", prefs.warnIfNoSuchVariableInScope())));
       rOptionsPanel.add(spaced(checkboxPref("Warn if variable is defined but not used", prefs.warnIfVariableDefinedButNotUsed())));
+      rOptionsPanel.add(spaced(checkboxPref("Validate function calls", prefs.validateFunctionCalls())));
       rOptionsPanel.add(spaced(checkboxPref("Provide R style diagnostics (e.g. whitespace)", prefs.enableStyleDiagnostics())));
       rOptionsPanel.setVisible(prefs.showDiagnosticsR().getValue());
       chkShowRDiagnostics.addValueChangeHandler(new ValueChangeHandler<Boolean>() {
