@@ -52,8 +52,7 @@ public abstract class JReferenceType extends JType implements CanBeAbstract {
 
         @Override
         public boolean isJsoType() {
-          // TODO(rluble): check why it is needed that the NULL_TYPE is considered a Jso.
-          return true;
+          return false;
         }
 
         @Override
@@ -210,8 +209,10 @@ public abstract class JReferenceType extends JType implements CanBeAbstract {
 
   @Override
   public final boolean canBeSubclass() {
-    return getAnalysisResult() == AnalysisResult.NULLABLE_NOT_EXACT ||
+    boolean canBeSubclass = getAnalysisResult() == AnalysisResult.NULLABLE_NOT_EXACT ||
         getAnalysisResult() == AnalysisResult.NOT_NULLABLE_NOT_EXACT;
+    assert canBeSubclass || !isJsoType() : "A JSO type can never be EXACT but " + name + " is.";
+    return canBeSubclass;
   }
 
   @Override
@@ -283,6 +284,10 @@ public abstract class JReferenceType extends JType implements CanBeAbstract {
   }
 
   public JReferenceType strengthenToExact() {
+    if (isJsoType()) {
+      // JSOs can not be strengthened to EXACT.
+      return this;
+    }
     switch (getAnalysisResult()) {
       case NOT_NULLABLE_NOT_EXACT:
         return getAnalysisDecoratedTypePool().getAnalysisDecoratedType(

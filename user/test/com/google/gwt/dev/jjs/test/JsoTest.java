@@ -723,4 +723,107 @@ public class JsoTest extends GWTTestCase {
     assertEquals("Foo2", FooSub.staticValue());
     assertEquals("nativeFoo", FooSub.staticNative());
   }
+
+  static JavaScriptObject someObject;
+  static class JSO1 extends JavaScriptObject {
+    protected JSO1() {
+    }
+    static native JSO1 create() /*-{
+      @com.google.gwt.dev.jjs.test.JsoTest::someObject =
+          @com.google.gwt.dev.jjs.test.JsoTest::someObject || [];
+      return @com.google.gwt.dev.jjs.test.JsoTest::someObject;
+    }-*/;
+  }
+
+  static class JSO2 extends JavaScriptObject {
+    protected JSO2() {
+    }
+    static native JSO2 create() /*-{
+      @com.google.gwt.dev.jjs.test.JsoTest::someObject =
+          @com.google.gwt.dev.jjs.test.JsoTest::someObject || [];
+      return @com.google.gwt.dev.jjs.test.JsoTest::someObject;
+    }-*/;
+  }
+
+  /**
+   * Some final JSOs classes to make sure exactness (inferred from final) does not affect
+   * JSO cast semantics.
+   */
+  static final class FinalJSO1 extends JavaScriptObject {
+    protected FinalJSO1() {
+    }
+    static native FinalJSO1 create() /*-{
+      @com.google.gwt.dev.jjs.test.JsoTest::someObject =
+          @com.google.gwt.dev.jjs.test.JsoTest::someObject || [];
+      return @com.google.gwt.dev.jjs.test.JsoTest::someObject;
+    }-*/;
+  }
+
+  static final class FinalJSO2 extends JavaScriptObject {
+    protected FinalJSO2() {
+    }
+    static native FinalJSO2 create() /*-{
+      @com.google.gwt.dev.jjs.test.JsoTest::someObject =
+          @com.google.gwt.dev.jjs.test.JsoTest::someObject || [];
+      return @com.google.gwt.dev.jjs.test.JsoTest::someObject;
+    }-*/;
+  }
+
+  interface I {
+  }
+
+  /**
+   * A JSO class that is the sole implementor of an interface to make sure that the logic in
+   * {@link TypeTightener#getSingleConcreteType()} does not create an EXACT JSO type.
+   */
+  static class JSOImplementingI extends JavaScriptObject implements I {
+    protected JSOImplementingI() {
+    }
+    static native I create() /*-{
+      @com.google.gwt.dev.jjs.test.JsoTest::someObject =
+          @com.google.gwt.dev.jjs.test.JsoTest::someObject || [];
+      return @com.google.gwt.dev.jjs.test.JsoTest::someObject;
+    }-*/;
+  }
+
+  /**
+   * Tests various crosscasting scenarios to make sure that casts are erased and not transformed
+   * into throws.
+   */
+  public void testCrossCasting() {
+    JSO1 jso1 = JSO1.create();
+    JSO2 jso2 = JSO2.create();
+    FinalJSO1 finalJso1 = FinalJSO1.create();
+    FinalJSO2 finalJso2 = FinalJSO2.create();
+    I i = JSOImplementingI.create();
+
+    assertTrue(jso1 == (JSO1) (trueFn() ? jso2 : (JavaScriptObject) null));
+    assertTrue(jso1 == (JSO1) (trueFn() ? i : (JavaScriptObject) null));
+    assertTrue(jso1 == (JSO1) (trueFn() ? finalJso1 : (JavaScriptObject) null));
+    assertTrue(jso1 == (JSO1) (trueFn() ? finalJso2 : (JavaScriptObject) null));
+
+    assertTrue(jso2 == (JSO2) (trueFn() ? jso1 : (JavaScriptObject) null));
+    assertTrue(jso2 == (JSO2) (trueFn() ? i : (JavaScriptObject) null));
+    assertTrue(jso2 == (JSO2) (trueFn() ? finalJso1 : (JavaScriptObject) null));
+    assertTrue(jso2 == (JSO2) (trueFn() ? finalJso2 : (JavaScriptObject) null));
+
+    assertTrue(finalJso1 == (FinalJSO1) (trueFn() ? jso1 : (JavaScriptObject) null));
+    assertTrue(finalJso1 == (FinalJSO1) (trueFn() ? i : (JavaScriptObject) null));
+    assertTrue(finalJso1 == (FinalJSO1) (trueFn() ? jso2 : (JavaScriptObject) null));
+    assertTrue(finalJso1 == (FinalJSO1) (trueFn() ? finalJso2 : (JavaScriptObject) null));
+
+    assertTrue(finalJso2 == (FinalJSO2) (trueFn() ? jso1 : (JavaScriptObject) null));
+    assertTrue(finalJso2 == (FinalJSO2) (trueFn() ? i : (JavaScriptObject) null));
+    assertTrue(finalJso2 == (FinalJSO2) (trueFn() ? jso2 : (JavaScriptObject) null));
+    assertTrue(finalJso2 == (FinalJSO2) (trueFn() ? finalJso1 : (JavaScriptObject) null));
+
+    assertTrue(i == (I) (trueFn() ? jso1 : (JavaScriptObject) null));
+    assertTrue(i == (I) (trueFn() ? jso2 : (JavaScriptObject) null));
+    assertTrue(i == (I) (trueFn() ? finalJso1 : (JavaScriptObject) null));
+    assertTrue(i == (I) (trueFn() ? finalJso2 : (JavaScriptObject) null));
+  }
+
+  private boolean trueFn() {
+    return true;
+  }
 }
