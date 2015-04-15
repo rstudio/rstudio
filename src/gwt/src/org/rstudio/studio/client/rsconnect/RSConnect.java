@@ -164,7 +164,6 @@ public class RSConnect implements SessionInitHandler,
    
    private void showPublishUI(final RSConnectActionEvent event)
    {
-
       final RSConnectPublishInput input = new RSConnectPublishInput(event);
 
       // set these inside the wizard input so we don't need to pass around
@@ -307,7 +306,17 @@ public class RSConnect implements SessionInitHandler,
    
    private void publishAsCode(RSConnectActionEvent event)
    {
-      publishAsFiles(event, new RSConnectPublishSource(event.getPath(), 
+      String publishSource = event.getPath();
+      
+      // publish the whole directory if it's a Shiny application
+      if (StringUtil.getExtension(event.getPath()).toLowerCase().equals("r") &&
+          event.getContentType() == CONTENT_TYPE_APP) 
+      {
+         FileSystemItem sourceFile = FileSystemItem.createFile(event.getPath());
+         publishSource = sourceFile.getParentPathString();
+      }
+
+      publishAsFiles(event, new RSConnectPublishSource(publishSource, 
             false, null));
    }
    
