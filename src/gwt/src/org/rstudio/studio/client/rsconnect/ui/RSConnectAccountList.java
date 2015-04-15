@@ -145,7 +145,15 @@ public class RSConnectAccountList extends Composite
       {
          if (accounts_.get(i).equals(account))
          {
-            accountList_.setSelectedIndex(i);
+            // move the entry to the top and select it
+            AccountEntry entry = accountList_.getItemAtIdx(i);
+            accountList_.remove(entry);
+            accountList_.addItem(entry, false);
+            accountList_.setSelectedIndex(0);
+
+            // sychronize the backing array
+            accounts_.remove(i);
+            accounts_.add(0, account);
             break;
          }
       }
