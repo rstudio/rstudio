@@ -264,10 +264,11 @@ public class RSConnectPublishButton extends Composite
             !force)
          return;
       
-      // if this is a .R file, check for deployments of its parent path
+      // if this is a Shiny application, check for deployments of its parent
+      // path
       String contentPath = contentPath_;
-      FileSystemItem fsiContent = FileSystemItem.createFile(contentPath_);
-      if (fsiContent.getExtension().toLowerCase().equals(".r")) {
+      if (contentType_ == RSConnect.CONTENT_TYPE_APP) {
+         FileSystemItem fsiContent = FileSystemItem.createFile(contentPath_);
          contentPath = fsiContent.getParentPathString();
       }
       
