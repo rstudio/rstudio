@@ -156,10 +156,27 @@ public class UIPrefs extends UIPrefsAccessor implements UiPrefsChangedHandler
          
          /* Diagnostics */
          
-         // Enable Diagnostics
+         // R Diagnostics
          
          showDiagnosticsR().setGlobalValue(
                newUiPrefs.showDiagnosticsR().getGlobalValue());
+         
+         diagnosticsInRFunctionCalls().setGlobalValue(
+               newUiPrefs.diagnosticsInRFunctionCalls().getGlobalValue());
+         
+         checkForMissingArgumentsInFunctionCalls().setGlobalValue(
+               newUiPrefs.checkForMissingArgumentsInFunctionCalls().getGlobalValue());
+         
+         warnIfNoSuchVariableInScope().setGlobalValue(
+               newUiPrefs.warnIfNoSuchVariableInScope().getGlobalValue());
+         
+         warnIfVariableDefinedButNotUsed().setGlobalValue(
+               newUiPrefs.warnIfVariableDefinedButNotUsed().getGlobalValue());
+         
+         enableStyleDiagnostics().setGlobalValue(
+               newUiPrefs.enableStyleDiagnostics().getGlobalValue());
+         
+         // Other diagnostics
          
          showDiagnosticsCpp().setGlobalValue(
                newUiPrefs.showDiagnosticsCpp().getGlobalValue());
@@ -178,16 +195,7 @@ public class UIPrefs extends UIPrefsAccessor implements UiPrefsChangedHandler
          backgroundDiagnosticsDelayMs().setGlobalValue(
                newUiPrefs.backgroundDiagnosticsDelayMs().getGlobalValue());
          
-         // Configure R Linter
-         
-         enableStyleDiagnostics().setGlobalValue(
-               newUiPrefs.enableStyleDiagnostics().getGlobalValue());
-         
-         diagnosticsInRFunctionCalls().setGlobalValue(
-               newUiPrefs.diagnosticsInRFunctionCalls().getGlobalValue());
-         
-         
-         
+         /* End Diagnostics UI Prefs */
          
          autoAppendNewline().setGlobalValue(
                                  newUiPrefs.autoAppendNewline().getGlobalValue());

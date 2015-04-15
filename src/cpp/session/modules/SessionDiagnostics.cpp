@@ -409,6 +409,39 @@ Error getAllAvailableRSymbols(const FilePath& filePath,
       
 }
 
+void checkNoDefinitionInScope(const FilePath& origin,
+                              const std::string& documentId,
+                              ParseResults& results)
+{
+   ParseNode* pRoot = results.parseTree();
+   
+   std::vector<ParseItem> unresolvedItems;
+   pRoot->findAllUnresolvedSymbols(&unresolvedItems);
+   
+   // Now, find all available R symbols -- that is, objects on the search path,
+   // or symbols that would otherwise be made available at runtime (e.g.
+   // package imports)
+   std::set<std::string> objects;
+   Error error = getAllAvailableRSymbols(origin, documentId, &objects);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+   
+   // For each unresolved symbol, add it to the lint if it's not on the search
+   // path.
+   BOOST_FOREACH(const ParseItem& item, unresolvedItems)
+   {
+      if (!r::util::isRKeyword(item.symbol) &&
+          !r::util::isWindowsOnlyFunction(item.symbol) &&
+          objects.count(string_utils::strippedOfBackQuotes(item.symbol)) == 0)
+      {
+         addUnreferencedSymbol(item, results.lint());
+      }
+   }
+}
+
 } // end anonymous namespace
 
 ParseResults parse(const std::wstring& rCode,
@@ -418,8 +451,21 @@ ParseResults parse(const std::wstring& rCode,
    ParseResults results;
    
    ParseOptions options;
-   options.setRecordStyleLint(userSettings().enableStyleDiagnostics());
-   options.setLintRFunctions(userSettings().lintRFunctionCalls());
+   
+   options.setLintRFunctions(
+            userSettings().lintRFunctionCalls());
+   
+   options.setCheckForMissingArgumentsInFunctionCalls(
+            userSettings().checkForMissingArgumentsInFunctionCalls());
+   
+   options.setWarnIfVariableIsDefinedButNotUsed(
+            userSettings().warnIfVariableDefinedButNotUsed());
+   
+   options.setWarnIfNoSuchVariableInScope(
+            userSettings().warnIfNoSuchVariableInScope());
+   
+   options.setRecordStyleLint(
+            userSettings().enableStyleDiagnostics());
    
    results = rparser::parse(rCode, options);
    
@@ -440,36 +486,11 @@ ParseResults parse(const std::wstring& rCode,
       return ParseResults();
    }
    
-   // First, get all of the symbols within the parse tree that do not have
-   // an associated definition in scope.
-   std::vector<ParseItem> unresolvedItems;
-   pRoot->findAllUnresolvedSymbols(&unresolvedItems);
+   if (options.warnIfNoSuchVariableInScope())
+      checkNoDefinitionInScope(origin, documentId, results);
    
-   // Now, find all available R symbols -- that is, objects on the search path,
-   // or symbols that would otherwise be made available at runtime (e.g.
-   // package imports)
-   std::set<std::string> objects;
-   Error error = getAllAvailableRSymbols(origin, documentId, &objects);
-   if (error)
-   {
-      LOG_ERROR(error);
-      return ParseResults();
-   }
-   
-   // For each unresolved symbol, add it to the lint if it's not on the search
-   // path.
-   BOOST_FOREACH(const ParseItem& item, unresolvedItems)
-   {
-      if (!r::util::isRKeyword(item.symbol) &&
-          !r::util::isWindowsOnlyFunction(item.symbol) &&
-          objects.count(string_utils::strippedOfBackQuotes(item.symbol)) == 0)
-      {
-         addUnreferencedSymbol(item, results.lint());
-      }
-   }
-   
-   // Provide lint when a variable is assigned but not used.
-   checkDefinedButNotUsed(results);
+   if (options.warnIfVariableIsDefinedButNotUsed())
+      checkDefinedButNotUsed(results);
    
    return results;
 }

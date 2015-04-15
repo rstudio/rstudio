@@ -758,7 +758,8 @@ void handleIdentifier(RTokenCursor& cursor,
       //
       // is legal, and `foo` might be an object on the search path. (For
       // variables, we prefer not searching the search path)
-      if (!skipReferenceChecks &&
+      if (status.parseOptions().warnIfNoSuchVariableInScope() &&
+          !skipReferenceChecks &&
           isLocalLeftAssign(cursor.nextSignificantToken()) &&
           !status.node()->symbolHasDefinitionInTree(cursor.contentAsUtf8(), cursor.currentPosition()))
       {
@@ -2026,7 +2027,9 @@ BINARY_OPERATOR:
 ARGUMENT_LIST:
       
       DEBUG("-- Begin argument list " << cursor);
-      validateFunctionCall(cursor, status);
+      if (status.parseOptions().checkForMissingArgumentsInFunctionCalls())
+         validateFunctionCall(cursor, status);
+      
       addExtraScopedSymbolsForCall(cursor, status);
       
       // Update the current state.
@@ -2074,11 +2077,29 @@ ARGUMENT_LIST:
       
 ARGUMENT_START:
       
-      while (cursor.isType(RToken::COMMA))
+      if (cursor.isType(RToken::COMMA))
+      {
+         if (cursor.previousSignificantToken().isType(RToken::LPAREN))
+            status.lint().missingArgumentToFunctionCall(cursor);
+         
          MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
+         while (cursor.isType(RToken::COMMA))
+         {
+            if (status.isWithinParenFunctionCall())
+               status.lint().missingArgumentToFunctionCall(cursor);
+            MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
+         }
+      }
       
       if (closesArgumentList(cursor, status))
+      {
+         if (status.isWithinParenFunctionCall() &&
+             cursor.previousSignificantToken().isType(RToken::COMMA))
+         {
+            status.lint().missingArgumentToFunctionCall(cursor.previousSignificantToken());
+         }
          goto ARGUMENT_LIST_END;
+      }
       
       // Step over named arguments. Note that it is legal to quote named
       // arguments, with any of [`'"].

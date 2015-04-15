@@ -55,10 +55,16 @@ class ParseOptions
 {
 public:
    
-   explicit ParseOptions(bool recordStyleLint = false,
-                         bool lintRFunctions = false)
-      : recordStyleLint_(recordStyleLint),
-        lintRFunctions_(lintRFunctions)
+   explicit ParseOptions(bool lintRFunctions = false,
+                         bool checkForMissingArgumentsInFunctionCalls = false,
+                         bool warnIfNoSuchVariableInScope = false,
+                         bool warnIfVariableIsDefinedButNotUsed = false,
+                         bool recordStyleLint = false)
+      : lintRFunctions_(lintRFunctions),
+        checkForMissingArgumentsInFunctionCalls_(checkForMissingArgumentsInFunctionCalls),
+        warnIfNoSuchVariableInScope_(warnIfNoSuchVariableInScope),
+        warnIfVariableIsDefinedButNotUsed_(warnIfVariableIsDefinedButNotUsed),
+        recordStyleLint_(recordStyleLint)
    {}
    
    void setRecordStyleLint(bool record)
@@ -80,10 +86,43 @@ public:
    {
       return lintRFunctions_;
    }
+   
+   bool checkForMissingArgumentsInFunctionCalls() const
+   {
+      return checkForMissingArgumentsInFunctionCalls_;
+   }
+   
+   void setCheckForMissingArgumentsInFunctionCalls(bool checkForMissingArgumentsInFunctionCalls)
+   {
+      checkForMissingArgumentsInFunctionCalls_ = checkForMissingArgumentsInFunctionCalls;
+   }
+   
+   bool warnIfNoSuchVariableInScope() const
+   {
+      return warnIfNoSuchVariableInScope_;
+   }
+   
+   void setWarnIfNoSuchVariableInScope(bool value)
+   {
+      warnIfNoSuchVariableInScope_ = value;
+   }
+   
+   bool warnIfVariableIsDefinedButNotUsed() const
+   {
+      return warnIfVariableIsDefinedButNotUsed_;
+   }
+   
+   void setWarnIfVariableIsDefinedButNotUsed(bool warnIfVariableIsDefinedButNotUsed)
+   {
+      warnIfVariableIsDefinedButNotUsed_ = warnIfVariableIsDefinedButNotUsed;
+   }
 
 private:
-   bool recordStyleLint_;
    bool lintRFunctions_;
+   bool checkForMissingArgumentsInFunctionCalls_;
+   bool warnIfNoSuchVariableInScope_;
+   bool warnIfVariableIsDefinedButNotUsed_;
+   bool recordStyleLint_;
 };
 
 struct ParseItem;
@@ -330,6 +369,13 @@ public:
           position.column + symbol.length(),
           LintTypeWarning,
           "variable '" + symbol + "' is defined but not used");
+   }
+   
+   void missingArgumentToFunctionCall(const RToken& rToken)
+   {
+      addLintItem(rToken,
+                  LintTypeWarning,
+                  "missing argument to function call");
    }
    
    const std::vector<LintItem>& get() const
@@ -1080,6 +1126,11 @@ public:
       default:
          return false;
       }
+   }
+   
+   bool isWithinParenFunctionCall() const
+   {
+      return currentState() == ParseStateParenArgumentList;
    }
    
    const Stack<std::wstring>& functionNames() const
