@@ -3667,7 +3667,7 @@ public class RemoteServer implements Server
       params.set(0, new JSONString(source.getDeployDir()));
       params.set(1, JSONUtils.toJSONStringArray(settings.getDeployFiles()));
       params.set(2, new JSONString(source.getDeployFileName()));
-      params.set(3, new JSONString(source.getSourceFile()));
+      params.set(3, new JSONString(source.isDocument() ? source.getSourceFile() : ""));
       params.set(4, new JSONString(account));
       params.set(5, new JSONString(server));
       params.set(6, new JSONString(appName));
