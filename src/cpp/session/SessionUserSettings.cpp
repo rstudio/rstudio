@@ -276,7 +276,7 @@ void UserSettings::updatePrefsCache(const json::Object& prefs) const
    int shinyViewerType = readPref<int>(prefs, "shiny_viewer_type", modules::shiny_viewer::SHINY_VIEWER_WINDOW);
    pShinyViewerType_.reset(new int(shinyViewerType));
    
-   bool lintRFunctionCalls = readPref<bool>(prefs, "diagnostics_in_function_calls", false);
+   bool lintRFunctionCalls = readPref<bool>(prefs, "diagnostics_in_function_calls", true);
    pLintRFunctionCalls_.reset(new bool(lintRFunctionCalls));
    
    bool checkForMissingArgumentsInFunctionCalls = readPref<bool>(prefs, "check_for_missing_arguments_in_function_calls", true);
@@ -288,7 +288,7 @@ void UserSettings::updatePrefsCache(const json::Object& prefs) const
    bool warnIfVariableDefinedButNotUsed = readPref<bool>(prefs, "warn_if_variable_defined_but_not_used", true);
    pWarnIfVariableDefinedButNotUsed_.reset(new bool(warnIfVariableDefinedButNotUsed));
    
-   bool validateFunctionCalls = readPref<bool>(prefs, "validate_function_calls", true);
+   bool validateFunctionCalls = readPref<bool>(prefs, "validate_function_calls", false);
    pValidateFunctionCalls_.reset(new bool(validateFunctionCalls));
    
    bool enableStyleDiagnostics = readPref<bool>(prefs, "enable_style_diagnostics", false);
