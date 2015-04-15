@@ -16,6 +16,8 @@
 #ifndef SESSION_MODULES_RTOKENCURSOR_HPP
 #define SESSION_MODULES_RTOKENCURSOR_HPP
 
+#include <iostream>
+
 #include <core/r_util/RTokenizer.hpp>
 #include "SessionRParser.hpp"
 
@@ -72,6 +74,16 @@ public:
    std::size_t offset() const
    {
       return offset_;
+   }
+   
+   void moveToStartOfTokenStream()
+   {
+      offset_ = 0;
+   }
+   
+   void moveToEndOfTokenStream()
+   {
+      offset_ = n_ - 1;
    }
    
    bool moveToNextToken()
@@ -790,6 +802,69 @@ public:
         
         return true;
      }
+  }
+  
+  std::string getHeadOfPipeChain()
+  {
+     RTokenCursor cursor = clone();
+     std::string onFailure;
+     
+     do
+     {
+        if (cursor.bwdToMatchingToken())
+           continue;
+        
+        if (isPipeOperator(cursor.previousSignificantToken()))
+           goto PIPE_START;
+        
+        // mtcars %>% foo$bar(
+        //                   ^
+        if (cursor.isType(RToken::LPAREN))
+        {
+           
+           // mtcars %>% foo$bar(
+           //                ^<<^
+           if (!cursor.moveToPreviousSignificantToken())
+              return onFailure;
+           
+           // mtcars %>% foo$bar(
+           //            ^<<<^
+           if (!cursor.moveToStartOfEvaluation())
+              return onFailure;
+           
+           PIPE_START:
+           
+           // mtcars %>% foo$bar(
+           //        ???
+           if (!isPipeOperator(cursor.previousSignificantToken()))
+              continue;
+           
+           // mtcars %>% foo$bar(
+           //        ^<<<^
+           if (!cursor.moveToPreviousSignificantToken())
+              return onFailure;
+           
+           // mtcars %>% foo$bar(
+           // ^<<<<<<^
+           if (!cursor.moveToPreviousSignificantToken())
+              return onFailure;
+           
+           RTokenCursor endCursor = cursor.clone();
+           
+           if (!cursor.moveToStartOfEvaluation())
+              return onFailure;
+           
+           if (isPipeOperator(cursor.previousSignificantToken()))
+              goto PIPE_START;
+           
+           return string_utils::wideToUtf8(std::wstring(
+                    cursor.begin(), endCursor.end()));
+        }
+        
+     } while (cursor.moveToPreviousSignificantToken());
+     
+     return onFailure;
+     
   }
   
   std::size_t length() const { return currentToken().length(); }

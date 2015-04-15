@@ -28,7 +28,7 @@
 
 #include <boost/utility.hpp>
 #include <boost/shared_ptr.hpp>
-#include <boost/regex_fwd.hpp>
+#include <boost/regex.hpp>
 
 #include <core/Macros.hpp>
 
@@ -571,6 +571,12 @@ inline bool canFollowBinaryOperator(const RToken& rToken)
       return true;
    
    return false;
+}
+
+inline bool isPipeOperator(const RToken& rToken)
+{
+   static const boost::wregex rePipe(L"^%[^>]*>+[^>]*%$");
+   return boost::regex_match(rToken.begin(), rToken.end(), rePipe);
 }
 
 } // end namespace token_utils

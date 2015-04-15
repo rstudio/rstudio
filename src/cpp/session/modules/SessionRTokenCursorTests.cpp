@@ -22,6 +22,12 @@ namespace unit_tests {
 
 using namespace session::modules::token_cursor;
 
+bool isPipeOperator(const std::wstring& string)
+{
+   static const boost::wregex rePipe(L"^%[^>]*>+[^>]*%$");
+   return boost::regex_match(string.begin(), string.end(), rePipe);
+}
+
 context("RTokenCursor")
 {
    test_that("Token cursors properly detect end of statements")
@@ -64,6 +70,21 @@ context("RTokenCursor")
       
       expect_true(cursor.moveToPosition(2, 5));
       expect_true(cursor.isType(RToken::WHITESPACE));
+   }
+   
+   test_that("pipe / chain operation heads are extracted successfully")
+   {
+      expect_true(isPipeOperator(L"%>%"));
+      expect_true(isPipeOperator(L"%>>%"));
+      expect_true(isPipeOperator(L"%T>%"));
+      
+      RTokens rTokens(L"mtcars %>% first_level() %>% second_level(1");
+      RTokenCursor cursor(rTokens);
+      cursor.moveToEndOfTokenStream();
+      expect_true(cursor.isType(RToken::NUMBER) &&
+                  cursor.contentEquals(L"1"));
+      
+      expect_true(cursor.getHeadOfPipeChain() == "mtcars");
    }
 }
 
