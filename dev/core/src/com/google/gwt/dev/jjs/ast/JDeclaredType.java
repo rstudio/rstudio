@@ -69,19 +69,33 @@ public abstract class JDeclaredType extends JReferenceType {
     /**
      * Local Class.
      */
-    LOCAL,
+    LOCAL(true),
     /**
      * Anonymous Inner Class.
      */
-    ANONYMOUS,
+    ANONYMOUS(true),
     /**
      * Synthetic Inner Class from Lambda or method reference.
      */
-    LAMBDA,
+    LAMBDA(true),
     /**
      * Regular top-level class.
      */
-    TOP_LEVEL
+    TOP_LEVEL;
+
+    private final boolean localType;
+
+    NestedClassDisposition(boolean local) {
+      this.localType = local;
+    }
+
+    NestedClassDisposition() {
+      this.localType = false;
+    }
+
+    public boolean isLocalType() {
+      return localType;
+    }
   }
 
   private NestedClassDisposition nestedClassDisposition = NestedClassDisposition.TOP_LEVEL;

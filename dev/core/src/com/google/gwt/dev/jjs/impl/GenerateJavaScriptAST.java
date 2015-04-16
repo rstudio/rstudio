@@ -109,7 +109,6 @@ import com.google.gwt.dev.js.ast.JsArrayLiteral;
 import com.google.gwt.dev.js.ast.JsBinaryOperation;
 import com.google.gwt.dev.js.ast.JsBinaryOperator;
 import com.google.gwt.dev.js.ast.JsBlock;
-import com.google.gwt.dev.js.ast.JsBooleanLiteral;
 import com.google.gwt.dev.js.ast.JsBreak;
 import com.google.gwt.dev.js.ast.JsCase;
 import com.google.gwt.dev.js.ast.JsCatch;
@@ -183,7 +182,6 @@ import com.google.gwt.thirdparty.guava.common.collect.Maps;
 import com.google.gwt.thirdparty.guava.common.collect.Multimap;
 import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -2636,11 +2634,11 @@ public class GenerateJavaScriptAST {
      * the compiler disambiguate which methods belong to which type.
      */
     private void generateClosureClassDefinition(JClassType x, List<JsStatement> globalStmts) {
-      // defineClass(...)
-      generateCallToDefineClass(x, globalStmts, new ArrayList<JsNameRef>());
+      // function ClassName(){}
+      JsName classVar = declareSynthesizedClosureConstructor(x, globalStmts);
 
-      // var ClassName = defineHiddenClosureConstructor()
-      declareSynthesizedClosureConstructor(x, globalStmts);
+      // defineClass(..., ClassName)
+      generateCallToDefineClass(x, globalStmts, Arrays.asList(classVar.makeRef(x.getSourceInfo())));
 
       // Ctor1.prototype = ClassName.prototype
       // Ctor2.prototype = ClassName.prototype
@@ -2657,19 +2655,21 @@ public class GenerateJavaScriptAST {
 
     /*
      * Declare an empty synthesized constructor that looks like:
-     *  var ClassName = defineHiddenClosureConstructor()
+     * function ClassName(){}
+     *
+     * Closure Compiler's RewriteFunctionExpressions pass can be enabled to turn these back
+     * into a factory method after optimizations.
      *
      * TODO(goktug): throw Error in the body to prevent instantiation via this constructor.
      */
-    private void declareSynthesizedClosureConstructor(JDeclaredType x,
+    private JsName declareSynthesizedClosureConstructor(JDeclaredType x,
         List<JsStatement> globalStmts) {
       SourceInfo sourceInfo = x.getSourceInfo();
       JsName classVar = topScope.declareName(JjsUtils.getNameString(x));
-      JsVar var = new JsVar(sourceInfo, classVar);
-      var.setInitExpr(constructInvocation(sourceInfo,
-          "JavaClassHierarchySetupUtil.defineHiddenClosureConstructor"));
-      globalStmts.add(new JsVars(sourceInfo, var));
+      JsFunction closureCtor = JsUtils.createEmptyFunctionLiteral(sourceInfo, topScope, classVar);
+      globalStmts.add(closureCtor.makeStmt());
       names.put(x, classVar);
+      return classVar;
     }
 
     /*
@@ -2780,12 +2780,10 @@ public class GenerateJavaScriptAST {
           if (typeOracle.needsJsInteropBridgeMethod(method)) {
             JsName exportedName = polyJsName.getEnclosing().declareName(method.getName(),
                 method.getName());
-            // _.exportedName = makeBridgeMethod(_.polyName)
+            // _.exportedName = [obfuscatedMethodReference | function() { bridge code }]
             exportedName.setObfuscatable(false);
-            JsNameRef polyRef = polyJsName.makeRef(sourceInfo);
-            polyRef.setQualifier(getPrototypeQualifierOf(method));
             generateVTableAssignment(globalStmts, method, exportedName,
-                createJsInteropBridgeMethod(method, polyRef));
+                createBridgeMethodOrReturnAlias(method, polyJsName));
           }
           if (method.exposesOverriddenPackagePrivateMethod() &&
               getPackagePrivateName(method) != null) {
@@ -2852,8 +2850,8 @@ public class GenerateJavaScriptAST {
     }
 
     private void collectExports(JDeclaredType x) {
-      if (x.isJsType()) {
-        // Note that this initial export may later be overridden by a real exported constructor.
+      if (x.isJsType() && !x.getClassDisposition().isLocalType()) {
+        // only types with explicit source names in Java may have an exported prototype
         exportedMembersByExportName.put(x.getQualifiedExportName(), x);
       }
 
@@ -2875,28 +2873,54 @@ public class GenerateJavaScriptAST {
       }
     }
 
-    private JsExpression createJsInteropBridgeMethod(JMethod m, JsNameRef methodRef) {
-      if (m.isStatic() || m instanceof JConstructor) {
-        return methodRef;
+    /*
+     * If a method needs a bridge, there are two cases:
+     * 1) the method merely needs an alias (one or more names), e.g. return Foo.prototype.methodRef
+     * 2) the method needs to coerce parameters somehow. For now, this means long <-> JS number,
+     * but in the future, this will be how @JsConvert/@JsAware are implemented. A synthetic
+     * function is generated which invokes the method and coerces each argument or return type
+     * as needed.
+     */
+    private JsExpression createBridgeMethodOrReturnAlias(JMethod method, JsName
+       aliasedMethodName) {
+      SourceInfo info = method.getSourceInfo();
+      if (method.isStatic() || method instanceof JConstructor) {
+        return aliasedMethodName.makeRef(info);
       } else {
-        // call JHCSU.makeBridgeMethod(functionRefToBeCalled)
-        JsFunction makeBridgeMethod = indexedFunctions.get("JavaClassHierarchySetupUtil.makeBridgeMethod");
-        JsNameRef makeBridgeMethodRef = makeBridgeMethod.getName().makeRef(methodRef.getSourceInfo());
-        JsInvocation invokeBridge = new JsInvocation(methodRef.getSourceInfo());
-        invokeBridge.setQualifier(makeBridgeMethodRef);
-        invokeBridge.getArguments().add(methodRef);
-        invokeBridge.getArguments().add(m.getType() == JPrimitiveType.LONG ?
-            JsBooleanLiteral.TRUE : JsBooleanLiteral.FALSE);
-        JsArrayLiteral arrayLiteral = new JsArrayLiteral(m.getSourceInfo());
-        for (JParameter p : m.getParams()) {
-          if (p.getType() == JPrimitiveType.LONG) {
-            arrayLiteral.getExpressions().add(JsBooleanLiteral.TRUE);
-          } else {
-            arrayLiteral.getExpressions().add(JsBooleanLiteral.FALSE);
-          }
+        boolean needsLongConversions = method.getType() == JPrimitiveType.LONG ||
+            Iterables.any(method.getParams(), new Predicate<JParameter>() {
+              @Override
+              public boolean apply(JParameter jParameter) {
+                return jParameter.getType() == JPrimitiveType.LONG;
+              }
+            });
+
+        JsNameRef aliasedMethodRef = aliasedMethodName.makeRef(info);
+
+        if (!needsLongConversions) {
+          // simply return Foo.prototype.aliasedMethod or _.aliasedMethod
+          aliasedMethodRef.setQualifier(getPrototypeQualifierOf(method));
+          return aliasedMethodRef;
         }
-        invokeBridge.getArguments().add(arrayLiteral);
-        return invokeBridge;
+
+        // Construct function($arg1, $arg2, ...){ return this.meth($arg1, $arg2); }
+        JsFunction bridgeMethod = JsUtils.createEmptyFunctionLiteral(info, topScope, null);
+
+        // Bridge requires conversions.
+        // return coerceFromLong(this.aliasedMethodRef(coerceToLong(arg1), arg2, ...))
+        JsInvocation aliasedMethodInvocation = new JsInvocation(info, aliasedMethodRef);
+        aliasedMethodInvocation.setQualifier(new JsThisRef(info));
+        for (JParameter param : method.getParams()) {
+          JsName argJsName = bridgeMethod.getScope().declareName("$arg_" + param.getName());
+          aliasedMethodInvocation.getArguments().add(param.getType() == JPrimitiveType.LONG ?
+              constructInvocation(info, "Cast.coerceToLong",
+                  argJsName.makeRef(info)) : argJsName.makeRef(info));
+        }
+
+        bridgeMethod.getBody().getStatements().add(new JsReturn(info,
+            method.getType() == JPrimitiveType.LONG ? constructInvocation(info,
+                "Cast.coerceFromLong", aliasedMethodInvocation) : aliasedMethodInvocation));
+        return bridgeMethod;
       }
     }
 

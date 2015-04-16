@@ -28,17 +28,6 @@ public class JavaClassHierarchySetupUtil {
   private static JavaScriptObject prototypesByTypeId = JavaScriptObject.createObject();
 
   /**
-   * Defines a hidden constructor for closure using the prototype set to globalTemp (i.e. '_'). The
-   * constructor is intentionally hidden as Closure -for some unknown reason right now- having
-   * trouble dealing with an explicit one and increases code size.
-   */
-  public static native void defineHiddenClosureConstructor()/*-{
-    function F() {};
-    F.prototype = _;
-    return F;
-  }-*/;
-
-  /**
    * If not already created it creates the prototype for the class and stores it in
    * {@code prototypesByTypeId}. If superTypeId is null, it means that the class being defined
    * is the topmost class (i.e. java.lang.Object) and creates an empty prototype for it.
@@ -190,22 +179,6 @@ public class JavaClassHierarchySetupUtil {
   }-*/;
 
   /**
-   * Create a function that invokes the specified method reference.
-   */
-  public static native JavaScriptObject makeBridgeMethod(
-      JavaScriptObject methodRef, boolean returnsLong, boolean[] longParams) /*-{
-    return function() {
-      var args = [];
-      for (var i = 0; i < arguments.length; i++) {
-        var maybeCoerced = @JavaClassHierarchySetupUtil::maybeCoerceToLong(Ljava/lang/Object;Z)(arguments[i], longParams[i]);
-        args.push(maybeCoerced);
-      }
-      var result = methodRef.apply(this, args);
-      return returnsLong ? @JavaClassHierarchySetupUtil::maybeCoerceFromLong(Ljava/lang/Object;Z)(result, returnsLong) : result;
-    };
-  }-*/;
-
-  /**
    * Create a function that applies the specified samMethod on itself, and whose __proto__ points to
    * <code>instance</code>.
    */
@@ -228,30 +201,6 @@ public class JavaClassHierarchySetupUtil {
       Object nonbridgeRef) /*-{
     return @com.google.gwt.lang.Cast::isJavaScriptObject(Ljava/lang/Object;)(o)
         ? bridgeRef : nonbridgeRef;
-  }-*/;
-
-  /**
-   * Converts an input object (LongEmul) to a double, otherwise return the value.
-   */
-  private static native Object maybeCoerceToLong(Object o, boolean isLong) /*-{
-    if (!isLong) {
-      return o;
-    }
-    if (typeof(o) == 'number') {
-      return @com.google.gwt.lang.LongLib::fromDouble(D)(o);
-    }
-    return o;
-  }-*/;
-
-  /**
-   * Convert a double to a long if a long is expected.
-   */
-  private static native Object maybeCoerceFromLong(Object o, boolean isLong) /*-{
-      if (!isLong) {
-          return o;
-      }
-
-      return @com.google.gwt.lang.LongLib::toDouble(Lcom/google/gwt/lang/LongLibBase$LongEmul;)(o);
   }-*/;
 
   /**

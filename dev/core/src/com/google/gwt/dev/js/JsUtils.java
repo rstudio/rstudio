@@ -88,8 +88,8 @@ public class JsUtils {
     return new JsBinaryOperation(lhs.getSourceInfo(), JsBinaryOperator.ASG, lhs, rhs);
   }
 
-  public static JsFunction createEmptyFunctionLiteral(SourceInfo info, JsScope scope) {
-    JsFunction func = new JsFunction(info, scope);
+  public static JsFunction createEmptyFunctionLiteral(SourceInfo info, JsScope scope, JsName name) {
+    JsFunction func = new JsFunction(info, scope, name);
     func.setBody(new JsBlock(info));
     return func;
   }
