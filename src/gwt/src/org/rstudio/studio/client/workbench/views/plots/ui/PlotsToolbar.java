@@ -14,24 +14,20 @@
  */
 package org.rstudio.studio.client.workbench.views.plots.ui;
 
-import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.widget.HasCustomizableToolbar;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.common.icons.StandardIcons;
-import org.rstudio.studio.client.rsconnect.RSConnect;
-import org.rstudio.studio.client.rsconnect.model.PublishHtmlSource;
-import org.rstudio.studio.client.rsconnect.model.StaticHtmlGenerator;
 import org.rstudio.studio.client.rsconnect.ui.RSConnectPublishButton;
 import org.rstudio.studio.client.workbench.commands.Commands;
 
 public class PlotsToolbar extends Toolbar implements HasCustomizableToolbar
 {    
-   public PlotsToolbar(Commands commands, StaticHtmlGenerator plotHtmlGenerator)
+   public PlotsToolbar(Commands commands, RSConnectPublishButton publishButton)
    {   
       commands_ = commands ;
-      plotHtmlGenerator_ = plotHtmlGenerator;
+      publishButton_ = publishButton;
       installStandardUI();
    }
    
@@ -81,25 +77,9 @@ public class PlotsToolbar extends Toolbar implements HasCustomizableToolbar
       addLeftWidget(commands_.refreshPlot().createToolbarButton());
       
       // publish
-      RSConnectPublishButton publishButton = new RSConnectPublishButton(
-            RSConnect.CONTENT_TYPE_PLOT, true, commands_.savePlotAsImage());
-      publishButton.setPublishHtmlSource(new PublishHtmlSource()
-      {
-         @Override
-         public String getTitle()
-         {
-            return "Current Plot";
-         }
-         
-         @Override
-         public void generatePublishHtml(CommandWithArg<String> onComplete)
-         {
-            plotHtmlGenerator_.generateStaticHtml("Plot", "", onComplete);
-         }
-      });
-      addRightWidget(publishButton);
+      addRightWidget(publishButton_);
    }
    
    private final Commands commands_;   
-   private final StaticHtmlGenerator plotHtmlGenerator_;
+   private final RSConnectPublishButton publishButton_;
 }

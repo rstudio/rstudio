@@ -35,7 +35,9 @@ import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.dependencies.DependencyManager;
 import org.rstudio.studio.client.common.zoom.ZoomUtils;
-import org.rstudio.studio.client.rsconnect.model.StaticHtmlGenerator;
+import org.rstudio.studio.client.rsconnect.RSConnect;
+import org.rstudio.studio.client.rsconnect.model.PublishHtmlSource;
+import org.rstudio.studio.client.rsconnect.ui.RSConnectPublishButton;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.plots.model.PlotsServerOperations;
@@ -60,39 +62,47 @@ public class PlotsPane extends WorkbenchPane implements Plots.Display,
    @Override
    protected Toolbar createMainToolbar()
    {
-      plotsToolbar_ = new PlotsToolbar(commands_, 
-        new StaticHtmlGenerator() {
-           @Override
-           public void generateStaticHtml(
-                 final String title, 
-                 final String comment,
-                 final CommandWithArg<String> onCompleted)
-           {
-              dependencies_.withRMarkdown("Publishing plots", new Command()
-              {
-                 @Override
-                 public void execute()
-                 {
-                   final Size size = ZoomUtils.getZoomedSize(
-                         getPlotFrameSize(), 
-                         new Size(400, 350), 
-                         new Size(750, 600));
-                    server_.plotsCreateRPubsHtml(
-                       title, 
-                       comment, 
-                       size.width,
-                       size.height,
-                       new SimpleRequestCallback<String>() {
-                          @Override
-                          public void onResponseReceived(String rpubsHtmlFile)
-                          {
-                             onCompleted.execute(rpubsHtmlFile);
-                          }
-                    });
+      publishButton_ = new RSConnectPublishButton(
+            RSConnect.CONTENT_TYPE_PLOT, true, commands_.savePlotAsImage());
+      publishButton_.setPublishHtmlSource(new PublishHtmlSource()
+      {
+         @Override
+         public String getTitle()
+         {
+            return "Current Plot";
+         }
+         
+         @Override
+         public void generatePublishHtml(
+               final CommandWithArg<String> onComplete)
+         {
+            dependencies_.withRMarkdown("Publishing plots", new Command()
+            {
+               @Override
+               public void execute()
+               {
+                 final Size size = ZoomUtils.getZoomedSize(
+                       getPlotFrameSize(), 
+                       new Size(400, 350), 
+                       new Size(750, 600));
+                  server_.plotsCreateRPubsHtml(
+                     "Plot", 
+                     "", 
+                     size.width,
+                     size.height,
+                     new SimpleRequestCallback<String>() 
+                     {
+                        @Override
+                        public void onResponseReceived(String rpubsHtmlFile)
+                        {
+                           onComplete.execute(rpubsHtmlFile);
+                        }
+                     });
                  }
-              });
-            }
-         });
+             });
+         }
+      });
+      plotsToolbar_ = new PlotsToolbar(commands_, publishButton_);
       return plotsToolbar_;
    }
 
@@ -185,7 +195,13 @@ public class PlotsPane extends WorkbenchPane implements Plots.Display,
    public void onResize()
    {
       super.onResize();
-      ResizeEvent.fire(this, getOffsetWidth(), getOffsetHeight());
+      int width = getOffsetWidth();
+      ResizeEvent.fire(this, width, getOffsetHeight());
+      
+      if (width > 0 && publishButton_ != null)
+      {
+         publishButton_.setShowCaption(width > 500);
+      }
    }
 
    public HandlerRegistration addResizeHandler(ResizeHandler resizeHandler)
@@ -197,6 +213,7 @@ public class PlotsPane extends WorkbenchPane implements Plots.Display,
    private final PlotsServerOperations server_;
    private final DependencyManager dependencies_;
    
+   private RSConnectPublishButton publishButton_;
    private LayoutPanel panel_;
    private ImageFrame frame_;
    private String plotUrl_;
