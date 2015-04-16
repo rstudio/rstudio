@@ -1019,9 +1019,12 @@ public:
       
       // Figure out if this function call is being made as part of a magrittr
       // chain. If so, then we implicitly set the first argument as that object.
-      std::string chainHead = cursor.getHeadOfPipeChain();
-      if (!chainHead.empty())
-         unnamedArguments.insert(unnamedArguments.begin(), chainHead);
+      if (isPipeOperator(cursor.previousSignificantToken()))
+      {
+         std::string chainHead = cursor.getHeadOfPipeChain();
+         if (!chainHead.empty())
+            unnamedArguments.insert(unnamedArguments.begin(), chainHead);
+      }
       
       DEBUG_BLOCK("Named, Unnamed Arguments")
       {

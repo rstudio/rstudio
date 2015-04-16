@@ -76,6 +76,11 @@ public:
       return offset_;
    }
    
+   void setOffset(std::size_t offset)
+   {
+      offset_ = offset;
+   }
+   
    void moveToStartOfTokenStream()
    {
       offset_ = 0;
@@ -804,64 +809,81 @@ public:
      }
   }
   
-  std::string getHeadOfPipeChain()
+  // Move (backwards) to an opening paren, associated with
+  // a function call. This name is terribly long because it's
+  // surprisingly hard to express this concept.
+  //
+  //    my$call(a, b, c)
+  //           ^<<<^
+  //
+  // Note that we are careful to differentiate between
+  // opening parens associated with function calls (e.g. `foo()`)
+  // and statements placed within parens (e.g. `(1 + 2)`)
+  bool moveToOpeningParenAssociatedWithCurrentFunctionCall()
   {
      RTokenCursor cursor = clone();
-     std::string onFailure;
      
      do
      {
         if (cursor.bwdToMatchingToken())
            continue;
         
-        if (isPipeOperator(cursor.previousSignificantToken()))
-           goto PIPE_START;
-        
-        // mtcars %>% foo$bar(
-        //                   ^
         if (cursor.isType(RToken::LPAREN))
         {
-           
-           // mtcars %>% foo$bar(
-           //                ^<<^
-           if (!cursor.moveToPreviousSignificantToken())
-              return onFailure;
-           
-           // mtcars %>% foo$bar(
-           //            ^<<<^
-           if (!cursor.moveToStartOfEvaluation())
-              return onFailure;
-           
-           PIPE_START:
-           
-           // mtcars %>% foo$bar(
-           //        ???
-           if (!isPipeOperator(cursor.previousSignificantToken()))
-              continue;
-           
-           // mtcars %>% foo$bar(
-           //        ^<<<^
-           if (!cursor.moveToPreviousSignificantToken())
-              return onFailure;
-           
-           // mtcars %>% foo$bar(
-           // ^<<<<<<^
-           if (!cursor.moveToPreviousSignificantToken())
-              return onFailure;
-           
-           RTokenCursor endCursor = cursor.clone();
-           
-           if (!cursor.moveToStartOfEvaluation())
-              return onFailure;
-           
-           if (isPipeOperator(cursor.previousSignificantToken()))
-              goto PIPE_START;
-           
-           return string_utils::wideToUtf8(std::wstring(
-                    cursor.begin(), endCursor.end()));
+           const RToken& prev = cursor.previousSignificantToken();
+           if (isRightBracket(prev) || isValidAsIdentifier(prev))
+           {
+              setOffset(cursor.offset());
+              return true;
+           }
         }
         
      } while (cursor.moveToPreviousSignificantToken());
+     
+     return false;
+  }
+  
+  // Get the head of a (magrittr) pipe chain.
+  //
+  // This function expects to be called with a pipe immediate
+  // preceding the current cursor position; for example:
+  //
+  //    head %>% foo() %>% bar$baz(1, 2, 3)
+  //                       ^^^
+  //
+  // In this example, the cursor should be on the 'bar' token.
+  std::string getHeadOfPipeChain()
+  {
+     RTokenCursor cursor = clone();
+     std::string onFailure;
+     
+PIPE_START:
+
+     // mtcars %>% foo$bar(
+     //        ???
+     if (!isPipeOperator(cursor.previousSignificantToken()))
+        return onFailure;
+
+     // mtcars %>% foo$bar(
+     //        ^<<<^
+     if (!cursor.moveToPreviousSignificantToken())
+        return onFailure;
+
+     // mtcars %>% foo$bar(
+     // ^<<<<<<^
+     if (!cursor.moveToPreviousSignificantToken())
+        return onFailure;
+
+     RTokenCursor endCursor = cursor.clone();
+
+     if (!cursor.moveToStartOfEvaluation())
+        return onFailure;
+
+     if (isPipeOperator(cursor.previousSignificantToken()))
+        goto PIPE_START;
+
+     return string_utils::wideToUtf8(std::wstring(
+                                        cursor.begin(), endCursor.end()));
      
      return onFailure;
      
