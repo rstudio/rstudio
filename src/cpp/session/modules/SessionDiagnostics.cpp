@@ -1,5 +1,5 @@
 /*
- * SessionLinter.cpp
+ * SessionDiagnostics.cpp
  *
  * Copyright (C) 2009-2015 by RStudio, Inc.
  *
@@ -15,12 +15,15 @@
 
 // #define RSTUDIO_ENABLE_PROFILING
 // #define RSTUDIO_ENABLE_DEBUG_MACROS
-#define RSTUDIO_DEBUG_LABEL "linter"
+#define RSTUDIO_DEBUG_LABEL "diagnostics"
+
 #include <core/Macros.hpp>
 
-#include "SessionLinter.hpp"
+#include "SessionDiagnostics.hpp"
+
 #include "SessionCodeSearch.hpp"
-#include "SessionAsyncRCompletions.hpp"
+#include "SessionAsyncPackageInformation.hpp"
+#include "SessionRParser.hpp"
 
 #include <set>
 
@@ -51,7 +54,7 @@
 namespace rstudio {
 namespace session {
 namespace modules {
-namespace linter {
+namespace diagnostics {
 
 using namespace core;
 using namespace core::r_util;
@@ -87,6 +90,42 @@ void addUnreferencedSymbol(const ParseItem& item,
    }
 }
 
+void doCheckDefinedButNotUsed(ParseNode* pNode, ParseResults& results)
+{
+   using namespace core::algorithm;
+   
+   // Find the definition positions.
+   const ParseNode::SymbolPositions& definitions =
+         pNode->getDefinedSymbols();
+   
+   for (ParseNode::SymbolPositions::const_iterator it = definitions.begin();
+        it != definitions.end();
+        ++it)
+   {
+      const std::string& symbolName = it->first;
+      
+      if (pNode->isSymbolDefinedButNotUsed(symbolName, true, true))
+      {
+         ParseNode::Positions* symbolPos = NULL;
+         if (get(definitions, symbolName, &symbolPos))
+         {
+            results.lint().symbolDefinedButNotUsed(
+                     symbolName,
+                     it->second[0]);
+         }
+      }
+   }
+}
+
+void checkDefinedButNotUsed(ParseResults& results)
+{
+   ParseNode::Children children = results.parseTree()->getChildren();
+   BOOST_FOREACH(const boost::shared_ptr<ParseNode>& child, children)
+   {
+      doCheckDefinedButNotUsed(child.get(), results);
+   }
+}
+
 void addInferredSymbols(const FilePath& filePath,
                         const std::string& documentId,
                         std::set<std::string>* pSymbols)
@@ -113,8 +152,8 @@ void addInferredSymbols(const FilePath& filePath,
    BOOST_FOREACH(const std::string& package,
                  index->getInferredPackages())
    {
-      const AsyncLibraryCompletions& completions =
-            index->getCompletions(package);
+      const PackageInformation& completions =
+            index->getPackageInformation(package);
       
       pSymbols->insert(completions.exports.begin(),
                        completions.exports.end());
@@ -136,11 +175,14 @@ void addNamespaceSymbols(std::set<std::string>* pSymbols)
    BOOST_FOREACH(const std::string& package,
                  RSourceIndex::getImportedPackages())
    {
-      const AsyncLibraryCompletions& completions =
-            RSourceIndex::getCompletions(package);
+      DEBUG("- Adding imports for package '" << package << "'");
+      const PackageInformation& pkgInfo =
+            RSourceIndex::getPackageInformation(package);
+      
+      DEBUG("--- Adding " << pkgInfo.exports.size() << " symbols");
       pSymbols->insert(
-               completions.exports.begin(),
-               completions.exports.end());
+               pkgInfo.exports.begin(),
+               pkgInfo.exports.end());
    }
 }
 
@@ -169,17 +211,26 @@ public:
                symbols.end());
    }
    
-   void fillNamespaceExports(const std::string& pkgName,
-                            std::set<std::string>* pOutput)
+   void fillNamespaceSymbols(const std::string& pkgName,
+                             std::set<std::string>* pOutput,
+                             bool exportsOnly = true)
    {
       if (!registry_.count(pkgName))
       {
          SEXP envSEXP = r::sexp::asNamespace(pkgName);
          if (envSEXP == R_EmptyEnv)
             return;
-         
-         Error error = r::sexp::getNamespaceExports(envSEXP, &registry_[pkgName]);
-         if (error) LOG_ERROR(error);
+
+         if (exportsOnly)
+         {
+            Error error = r::sexp::getNamespaceExports(envSEXP, &registry_[pkgName]);
+            if (error) LOG_ERROR(error);
+         }
+         else
+         {
+            Error error = r::sexp::objects(envSEXP, true, &registry_[pkgName]);
+            if (error) LOG_ERROR(error);
+         }
       }
       
       const std::vector<std::string>& symbols = registry_[pkgName];
@@ -275,7 +326,29 @@ Error getAvailableSymbolsForProject(const FilePath& filePath,
    return Success();
 }
 
-
+void addTestPackageSymbols(std::set<std::string>* pSymbols)
+{
+   if (!projects::projectContext().isPackageProject())
+      return;
+   
+   PackageSymbolRegistry& registry = packageSymbolRegistry();
+   
+   const r_util::RPackageInfo& pkgInfo =
+         projects::projectContext().packageInfo();
+   
+   std::string packageFields;
+   
+   packageFields += pkgInfo.depends();
+   packageFields += pkgInfo.imports();
+   packageFields += pkgInfo.suggests();
+   
+   if (packageFields.find("testthat") != std::string::npos)
+      registry.fillNamespaceSymbols("testthat", pSymbols, false);
+   else if (packageFields.find("RUnit") != std::string::npos)
+      registry.fillNamespaceSymbols("RUnit", pSymbols, false);
+   else if (packageFields.find("assertthat") != std::string::npos)
+      registry.fillNamespaceSymbols("assertthat", pSymbols, false);
+}
 
 Error getAllAvailableRSymbols(const FilePath& filePath,
                               const std::string& documentId,
@@ -288,23 +361,85 @@ Error getAllAvailableRSymbols(const FilePath& filePath,
    //
    // For R package development, when linting a 'test' file, we can
    // safely assume that the package itself will be loaded.
+   FilePath projDir = projects::projectContext().directory();
    Error error;
-   if (module_context::isRScriptInPackageBuildTarget(filePath) ||
-       filePath.isWithin(projects::projectContext().directory().childPath("tests")))
-      error = getAvailableSymbolsForPackage(filePath, documentId, pSymbols);
-   else
-      error = getAvailableSymbolsForProject(filePath, documentId, pSymbols);
    
-   // If the file is within the 'tests/testthat' directory, then assume
-   // 'testthat' will be available for those tests.
+   if (filePath.isWithin(projDir))
+   {
+      DEBUG("- Package file:'" << filePath.absolutePath() << "'");
+      error = getAvailableSymbolsForPackage(filePath, documentId, pSymbols);
+   }
+   else
+   {
+      DEBUG("- Project file:'" << filePath.absolutePath() << "'");
+      error = getAvailableSymbolsForProject(filePath, documentId, pSymbols);
+   }
+   
+   if (error) LOG_ERROR(error);
+   
+   // Add common 'testing' packages, based on the DESCRIPTION's
+   // 'Imports' and 'Suggests' fields, and use that if we're within a
+   // common 'test'ing directory.
+   if (filePath.isWithin(projDir.childPath("inst")) ||
+       filePath.isWithin(projDir.childPath("tests")))
+   {
+      addTestPackageSymbols(pSymbols);
+   }
+   
    if (filePath.isWithin(projects::projectContext().directory().childPath("tests/testthat")))
    {
       PackageSymbolRegistry& registry = packageSymbolRegistry();
-      registry.fillNamespaceExports("testthat", pSymbols);
+      registry.fillNamespaceSymbols("testthat", pSymbols, false);
+   }
+   
+   // If the file is named 'server.R', 'ui.R' or 'app.R', we'll implicitly
+   // assume that it depends on Shiny.
+   std::string basename = boost::algorithm::to_lower_copy(
+            filePath.filename());
+   
+   if (basename == "server.r" ||
+       basename == "ui.r" ||
+       basename == "app.r")
+   {
+      PackageSymbolRegistry& registry = packageSymbolRegistry();
+      registry.fillNamespaceSymbols("shiny", pSymbols, false);
    }
    
    return error;
       
+}
+
+void checkNoDefinitionInScope(const FilePath& origin,
+                              const std::string& documentId,
+                              ParseResults& results)
+{
+   ParseNode* pRoot = results.parseTree();
+   
+   std::vector<ParseItem> unresolvedItems;
+   pRoot->findAllUnresolvedSymbols(&unresolvedItems);
+   
+   // Now, find all available R symbols -- that is, objects on the search path,
+   // or symbols that would otherwise be made available at runtime (e.g.
+   // package imports)
+   std::set<std::string> objects;
+   Error error = getAllAvailableRSymbols(origin, documentId, &objects);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+   
+   // For each unresolved symbol, add it to the lint if it's not on the search
+   // path.
+   BOOST_FOREACH(const ParseItem& item, unresolvedItems)
+   {
+      if (!r::util::isRKeyword(item.symbol) &&
+          !r::util::isWindowsOnlyFunction(item.symbol) &&
+          objects.count(string_utils::strippedOfBackQuotes(item.symbol)) == 0)
+      {
+         addUnreferencedSymbol(item, results.lint());
+      }
+   }
 }
 
 } // end anonymous namespace
@@ -316,8 +451,24 @@ ParseResults parse(const std::wstring& rCode,
    ParseResults results;
    
    ParseOptions options;
-   options.setRecordStyleLint(userSettings().enableStyleDiagnostics());
-   options.setLintRFunctions(userSettings().lintRFunctionCalls());
+   
+   options.setLintRFunctions(
+            userSettings().lintRFunctionCalls());
+   
+   options.setCheckForMissingArgumentsInFunctionCalls(
+            userSettings().checkForMissingArgumentsInFunctionCalls());
+   
+   options.setWarnIfVariableIsDefinedButNotUsed(
+            userSettings().warnIfVariableDefinedButNotUsed());
+   
+   options.setWarnIfNoSuchVariableInScope(
+            userSettings().warnIfNoSuchVariableInScope());
+   
+   options.setValidateFunctionCalls(
+            userSettings().validateFunctionCalls());
+   
+   options.setRecordStyleLint(
+            userSettings().enableStyleDiagnostics());
    
    results = rparser::parse(rCode, options);
    
@@ -338,32 +489,11 @@ ParseResults parse(const std::wstring& rCode,
       return ParseResults();
    }
    
-   // First, get all of the symbols within the parse tree that do not have
-   // an associated definition in scope.
-   std::vector<ParseItem> unresolvedItems;
-   pRoot->findAllUnresolvedSymbols(&unresolvedItems);
+   if (options.warnIfNoSuchVariableInScope())
+      checkNoDefinitionInScope(origin, documentId, results);
    
-   // Now, find all available R symbols -- that is, objects on the search path,
-   // or symbols that would otherwise be made available at runtime (e.g.
-   // package imports)
-   std::set<std::string> objects;
-   Error error = getAllAvailableRSymbols(origin, documentId, &objects);
-   if (error)
-   {
-      LOG_ERROR(error);
-      return ParseResults();
-   }
-   
-   // For each unresolved symbol, add it to the lint if it's not on the search
-   // path.
-   BOOST_FOREACH(const ParseItem& item, unresolvedItems)
-   {
-      if (!r::util::isRKeyword(item.symbol) &&
-          objects.count(string_utils::strippedOfBackQuotes(item.symbol)) == 0)
-      {
-         addUnreferencedSymbol(item, results.lint());
-      }
-   }
+   if (options.warnIfVariableIsDefinedButNotUsed())
+      checkDefinedButNotUsed(results);
    
    return results;
 }
@@ -643,16 +773,13 @@ void onNAMESPACEchanged()
    RSourceIndex::setImportFromDirectives(importFromSymbols);
    
    // Kick off an update of the cached async completions
-   r_completions::AsyncRCompletions::update();
+   r_packages::AsyncPackageInformationProcess::update();
 }
 
 void onFilesChanged(const std::vector<core::system::FileChangeEvent>& events)
 {
    std::string namespacePath =
          projects::projectContext().directory().complete("NAMESPACE").absolutePath();
-   
-   std::string lintFilePath =
-         projects::projectContext().directory().complete(".rstudio_lint_blacklist").absolutePath();
    
    BOOST_FOREACH(const core::system::FileChangeEvent& event, events)
    {
@@ -662,107 +789,6 @@ void onFilesChanged(const std::vector<core::system::FileChangeEvent>& events)
    }
 }
 
-bool isSnippetFilePath(const FilePath& filePath,
-                       std::string* pMode)
-{
-   if (filePath.isDirectory())
-      return false;
-   
-   if (filePath.extensionLowerCase() != ".snippets")
-      return false;
-   
-   *pMode = boost::algorithm::to_lower_copy(filePath.stem());
-   return true;
-}
-
-FilePath getSnippetsDir(bool autoCreate = false)
-{
-   FilePath homeDir = module_context::userHomePath();
-   FilePath snippetsDir = homeDir.childPath(".R/snippets");
-   if (autoCreate)
-   {
-      Error error = snippetsDir.ensureDirectory();
-      if (error)
-         LOG_ERROR(error);
-   }
-   return snippetsDir;
-}
-
-void checkAndNotifyClientIfSnippetsAvailable()
-{
-   FilePath snippetsDir = getSnippetsDir();
-   if (!snippetsDir.exists() || !snippetsDir.isDirectory())
-      return;
-   
-   // Get the contents of each file here, and pass that info back up
-   // to the client
-   std::vector<FilePath> snippetPaths;
-   Error error = snippetsDir.children(&snippetPaths);
-   if (error)
-   {
-      LOG_ERROR(error);
-      return;
-   }
-   
-   json::Array jsonData;
-   BOOST_FOREACH(const FilePath& filePath, snippetPaths)
-   {
-      // bail if this doesn't appear to be a snippets file
-      std::string mode;
-      if (!isSnippetFilePath(filePath, &mode))
-         continue;
-      
-      std::string contents;
-      error = readStringFromFile(filePath, &contents);
-      if (error)
-      {
-         LOG_ERROR(error);
-         return;
-      }
-      
-      json::Object snippetJson;
-      snippetJson["mode"] = mode;
-      snippetJson["contents"] = contents;
-      jsonData.push_back(snippetJson);
-   }
-
-   ClientEvent event(client_events::kSnippetsChanged, jsonData);
-   module_context::enqueClientEvent(event);
-}
-
-FilePath s_snippetsMonitoredDir;
-
-void notifySnippetsChanged()
-{
-   Error error = core::writeStringToFile(
-          s_snippetsMonitoredDir.childPath("changed"),
-          core::system::generateUuid());
-   if (error)
-      LOG_ERROR(error);
-}
-
-void onDocUpdated(boost::shared_ptr<source_database::SourceDocument> pDoc)
-{
-   if (s_snippetsMonitoredDir.empty())
-      return;
-
-   if (pDoc->path().empty() || pDoc->dirty())
-      return;
-
-   FilePath snippetsDir = getSnippetsDir();
-   if (!snippetsDir.exists())
-      return;
-
-   // if this was within the snippets dir then
-   if (module_context::resolveAliasedPath(pDoc->path()).isWithin(snippetsDir))
-      notifySnippetsChanged();
-}
-
-void onSnippetsChanged()
-{
-   checkAndNotifyClientIfSnippetsAvailable();
-}
-
 void afterSessionInitHook(bool newSession)
 {
    if (projects::projectContext().hasProject() &&
@@ -770,55 +796,13 @@ void afterSessionInitHook(bool newSession)
    {
       onNAMESPACEchanged();
    }
-
-   // register to be notified when snippets are changed
-   s_snippetsMonitoredDir = module_context::registerMonitoredUserScratchDir(
-                                            "snippets",
-                                            boost::bind(onSnippetsChanged));
-
-   // fire snippet changed when a user edits a snippet directly in the
-   // source editor
-   source_database::events().onDocUpdated.connect(onDocUpdated);
-}
-
-void onClientInit()
-{
-   checkAndNotifyClientIfSnippetsAvailable();
-}
-
-Error saveSnippets(const json::JsonRpcRequest& request,
-                   json::JsonRpcResponse* pResponse)
-{
-   json::Array snippetsJson;
-   Error error = json::readParams(request.params, &snippetsJson);
-   if (error)
-      return error;
-
-   FilePath snippetsDir = getSnippetsDir(true);
-   BOOST_FOREACH(const json::Value& valueJson, snippetsJson)
+   
+   if (projects::projectContext().isPackageProject())
    {
-      if (json::isType<json::Object>(valueJson))
-      {
-         json::Object snippetJson = valueJson.get_obj();
-         std::string mode, contents;
-         Error error = json::readObject(snippetJson, "mode", &mode,
-                                                     "contents", &contents);
-         if (error)
-         {
-            LOG_ERROR(error);
-            continue;
-         }
-
-         error = writeStringToFile(snippetsDir.childPath(mode + ".snippets"),
-                                   contents);
-         if (error)
-            LOG_ERROR(error);
-      }
+      RSourceIndex::addGloballyInferredPackage(
+               projects::projectContext().packageInfo().name());
+      r_packages::AsyncPackageInformationProcess::update();
    }
-
-   notifySnippetsChanged();
-
-   return Success();
 }
 
 bool collectLint(int depth,
@@ -836,7 +820,7 @@ bool collectLint(int depth,
       return true;
    }
    
-   ParseResults results = parse(
+   ParseResults results = diagnostics::parse(
             string_utils::utf8ToWide(contents),
             path);
    
@@ -875,7 +859,6 @@ core::Error initialize()
    using namespace module_context;
    
    events().afterSessionInitHook.connect(afterSessionInitHook);
-   events().onClientInit.connect(onClientInit);
    
    session::projects::FileMonitorCallbacks cb;
    cb.onFilesChanged = onFilesChanged;
@@ -886,9 +869,8 @@ core::Error initialize()
    
    ExecBlock initBlock;
    initBlock.addFunctions()
-         (bind(sourceModuleRFile, "SessionLinter.R"))
-         (bind(registerRpcMethod, "lint_r_source_document", lintRSourceDocument))
-         (bind(registerRpcMethod, "save_snippets", saveSnippets));
+         (bind(sourceModuleRFile, "SessionDiagnostics.R"))
+         (bind(registerRpcMethod, "lint_r_source_document", lintRSourceDocument));
    
    return initBlock.execute();
 

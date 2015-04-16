@@ -55,10 +55,18 @@ class ParseOptions
 {
 public:
    
-   explicit ParseOptions(bool recordStyleLint = false,
-                         bool lintRFunctions = false)
-      : recordStyleLint_(recordStyleLint),
-        lintRFunctions_(lintRFunctions)
+   explicit ParseOptions(bool lintRFunctions = false,
+                         bool checkForMissingArgumentsInFunctionCalls = false,
+                         bool warnIfNoSuchVariableInScope = false,
+                         bool warnIfVariableIsDefinedButNotUsed = false,
+                         bool validateFunctionCalls = false,
+                         bool recordStyleLint = false)
+      : lintRFunctions_(lintRFunctions),
+        checkForMissingArgumentsInFunctionCalls_(checkForMissingArgumentsInFunctionCalls),
+        warnIfNoSuchVariableInScope_(warnIfNoSuchVariableInScope),
+        warnIfVariableIsDefinedButNotUsed_(warnIfVariableIsDefinedButNotUsed),
+        validateFunctionCalls_(validateFunctionCalls),
+        recordStyleLint_(recordStyleLint)
    {}
    
    void setRecordStyleLint(bool record)
@@ -80,10 +88,54 @@ public:
    {
       return lintRFunctions_;
    }
+   
+   bool checkForMissingArgumentsInFunctionCalls() const
+   {
+      return checkForMissingArgumentsInFunctionCalls_;
+   }
+   
+   void setCheckForMissingArgumentsInFunctionCalls(bool checkForMissingArgumentsInFunctionCalls)
+   {
+      checkForMissingArgumentsInFunctionCalls_ = checkForMissingArgumentsInFunctionCalls;
+   }
+   
+   bool warnIfNoSuchVariableInScope() const
+   {
+      return warnIfNoSuchVariableInScope_;
+   }
+   
+   void setWarnIfNoSuchVariableInScope(bool value)
+   {
+      warnIfNoSuchVariableInScope_ = value;
+   }
+   
+   bool validateFunctionCalls() const
+   {
+      return validateFunctionCalls_;
+   }
+   
+   void setValidateFunctionCalls(bool value)
+   {
+      validateFunctionCalls_ = value;
+   }
+   
+   bool warnIfVariableIsDefinedButNotUsed() const
+   {
+      return warnIfVariableIsDefinedButNotUsed_;
+   }
+   
+   void setWarnIfVariableIsDefinedButNotUsed(bool warnIfVariableIsDefinedButNotUsed)
+   {
+      warnIfVariableIsDefinedButNotUsed_ = warnIfVariableIsDefinedButNotUsed;
+   }
 
 private:
-   bool recordStyleLint_;
    bool lintRFunctions_;
+   bool checkForMissingArgumentsInFunctionCalls_;
+   bool warnIfNoSuchVariableInScope_;
+   bool warnIfVariableIsDefinedButNotUsed_;
+   bool validateFunctionCalls_;
+   bool recordStyleLint_;
 };
 
 struct ParseItem;
@@ -150,7 +202,8 @@ struct LintItem
         endRow(endRow),
         endColumn(endColumn),
         type(type),
-        message(message) {}
+        message(message)
+   {}
    
    LintItem(const RToken& item,
             LintType type,
@@ -160,7 +213,19 @@ struct LintItem
         endRow(item.row()),
         endColumn(item.column() + item.length()),
         type(type),
-        message(message) {}
+        message(message)
+   {}
+   
+   LintItem(const ParseItem& item,
+            LintType type,
+            const std::string& message)
+      : startRow(item.position.row),
+        startColumn(item.position.column),
+        endRow(item.position.row),
+        endColumn(item.position.column + item.symbol.length()),
+        type(type),
+        message(message)
+   {}
 
    int startRow;
    int startColumn;
@@ -185,72 +250,55 @@ public:
    
    // default ctors: copyable members
    
-   void add(int startRow,
-            int startColumn,
-            int endRow,
-            int endColumn,
+   void add(std::size_t startRow,
+            std::size_t startColumn,
+            std::size_t endRow,
+            std::size_t endColumn,
             LintType type,
             const std::string& message)
    {
-      LintItem lint(startRow,
-                    startColumn,
-                    endRow,
-                    endColumn,
-                    type,
-                    message);
-      
-      lintItems_.push_back(lint);
+      LintItem item(startRow, startColumn, endRow, endColumn, type, message);
+      add(item);
    }
    
    void unexpectedToken(const RToken& token,
-                           const std::string& expected = std::string())
+                        const std::string& expected = std::string())
    {
-      std::string content = token.contentAsUtf8();
+      const std::string& content = token.contentAsUtf8();
       std::string message = "unexpected token '" + content + "'";
       if (!expected.empty())
          message = message + ", expected " + expected;
       
-      LintItem lint(token.row(),
-                    token.column(),
-                    token.row(),
-                    token.column() + content.length(),
-                    LintTypeError,
-                    message);
-      
-      lintItems_.push_back(lint);
-      ++errorCount_;
+      addLintItem(token,
+                  LintTypeError,
+                  message);
    }
    
    void unexpectedToken(const RToken& token,
-                           const std::wstring& expected)
+                        const std::wstring& expected)
    {
       unexpectedToken(token, string_utils::wideToUtf8(expected));
    }
    
    void unexpectedClosingBracket(const RToken& token)
    {
-      std::string content = token.contentAsUtf8();
-      
-      LintItem lint(token.row(),
-                    token.column(),
-                    token.row(),
-                    token.column() + content.length(),
-                    LintTypeError,
-                    "unexpected closing bracket '" + content + "'");
-      
-      lintItems_.push_back(lint);
-      ++errorCount_;
+      addLintItem(token,
+                  LintTypeError,
+                  "unexpected closing bracket '" + token.contentAsUtf8() + "'");
+   }
+   
+   void expectedMatchForOpenBracket(const RToken& openBracketToken)
+   {
+      addLintItem(openBracketToken,
+                  LintTypeError,
+                  "unmatched opening bracket '" + openBracketToken.contentAsUtf8() + "'");
    }
    
    void unexpectedEndOfDocument(const RToken& token)
    {
-      LintItem lint(token.row(),
-                    token.column() + token.length(),
-                    token.row(),
-                    token.column() + token.length(),
-                    LintTypeError,
-                    "unexpected end of document");
-      lintItems_.push_back(lint);
+      addLintItem(token,
+                  LintTypeError,
+                  "unexpected end of document");
    }
    
    void noSymbolNamed(const ParseItem& item,
@@ -260,14 +308,9 @@ public:
       if (!candidate.empty())
          message += "; did you mean '" + candidate + "'?";
       
-      LintItem lint(item.position.row,
-                    item.position.column,
-                    item.position.row,
-                    item.position.column + item.symbol.size(),
-                    LintTypeWarning,
-                    message);
-      
-      lintItems_.push_back(lint);
+      addLintItem(item,
+                  LintTypeWarning,
+                  message);
    }
    
    void symbolDefinedAfterUsage(const ParseItem& item,
@@ -285,60 +328,32 @@ public:
    
    void expectedWhitespace(const RToken& token)
    {
-      if (!parseOptions_.recordStyleLint())
-         return;
-      
-      LintItem lint(token.row(),
-                    token.column(),
-                    token.row(),
-                    token.column(),
-                    LintTypeStyle,
-                    "expected whitespace");
-      lintItems_.push_back(lint);
+      addLintItem(token,
+                  LintTypeStyle,
+                  "expected whitespace");
    }
    
    void unnecessaryWhitespace(const RToken& token)
    {
-      if (!parseOptions_.recordStyleLint())
-         return;
-      
-      LintItem lint(token.row(),
-                    token.column(),
-                    token.row(),
-                    token.column() + token.length(),
-                    LintTypeStyle,
-                    "unnecessary whitespace");
-      lintItems_.push_back(lint);
+      addLintItem(token,
+                  LintTypeStyle,
+                  "unnecessary whitespace");
    }
    
    void unexpectedWhitespaceAroundOperator(const RToken& token)
    {
-      if (!parseOptions_.recordStyleLint())
-         return;
-      
-      LintItem lint(token.row(),
-                    token.column(),
-                    token.row(),
-                    token.column() + token.length(),
-                    LintTypeStyle,
-                    "unexpected whitespace around extraction operator");
-      lintItems_.push_back(lint);
+      addLintItem(token,
+                  LintTypeStyle,
+                  "unexpected whitespace around extraction operator");
    }
    
    void expectedWhitespaceAroundOperator(const RToken& token)
    {
-      if (!parseOptions_.recordStyleLint())
-         return;
-      
-      LintItem lint(token.row(),
-                    token.column(),
-                    token.row(),
-                    token.column() + token.length(),
-                    LintTypeStyle,
-                    "expected whitespace around binary operator");
-      lintItems_.push_back(lint);
+      addLintItem(token,
+                  LintTypeStyle,
+                  "expected whitespace around binary operator");
    }
-   
+
    void tooManyErrors(const Position& position)
    {
       LintItem lint(position.row,
@@ -351,6 +366,30 @@ public:
       ++errorCount_;
    }
    
+   void expectedCommaFollowingToken(const RToken& rToken)
+   {
+      addLintItem(rToken,
+                  LintTypeError,
+                  "expected ',' after expression");
+   }
+   
+   void symbolDefinedButNotUsed(const std::string& symbol,
+                                const Position& position)
+   {
+      add(position.row,
+          position.column,
+          position.row,
+          position.column + symbol.length(),
+          LintTypeWarning,
+          "variable '" + symbol + "' is defined but not used");
+   }
+   
+   void missingArgumentToFunctionCall(const RToken& rToken)
+   {
+      addLintItem(rToken,
+                  LintTypeWarning,
+                  "missing argument to function call");
+   }
    
    const std::vector<LintItem>& get() const
    {
@@ -381,6 +420,30 @@ public:
    void dump();
    
 private:
+   
+   void addLintItem(const RToken& rToken,
+                    LintType type,
+                    const std::string& message)
+   {
+      add(LintItem(rToken, type, message));
+   }
+   
+   void addLintItem(const ParseItem& item,
+                    LintType type,
+                    const std::string& message)
+   {
+      add(LintItem(item, type, message));
+   }
+   
+   void add(const LintItem& item)
+   {
+      if (!parseOptions_.recordStyleLint() && item.type == LintTypeStyle)
+         return;
+      
+      lintItems_.push_back(item);
+      errorCount_ += item.type == LintTypeError;
+   }
+
    std::vector<LintItem> lintItems_;
    std::size_t errorCount_;
    ParseOptions parseOptions_;
@@ -394,10 +457,16 @@ std::string& complement(const std::string& bracket);
 
 class ParseNode : public boost::noncopyable
 {
+   
 public:
    
+   typedef std::vector< boost::shared_ptr<ParseNode> > Children;
    typedef std::vector<Position> Positions;
    typedef std::map<std::string, Positions> SymbolPositions;
+   
+   typedef std::string PackageName;
+   typedef std::set<std::string> Symbols;
+   typedef std::map<PackageName, Symbols> PackageSymbols;
    
 private:
    
@@ -443,8 +512,8 @@ public:
    }
 
    void addDefinedSymbol(int row,
-                           int column,
-                           const std::string& name)
+                         int column,
+                         const std::string& name)
    {
       DEBUG("--- Adding defined variable '" << name << "' (" << row << ", " << column << ")");
       definedSymbols_[name].push_back(Position(row, column));
@@ -464,8 +533,8 @@ public:
    }
    
    void addReferencedSymbol(int row,
-                              int column,
-                              const std::string& name)
+                            int column,
+                            const std::string& name)
    {
       referencedSymbols_[name].push_back(Position(row, column));
    }
@@ -474,6 +543,12 @@ public:
    {
       referencedSymbols_[rToken.contentAsUtf8()].push_back(
             Position(rToken.row(), rToken.column()));
+   }
+   
+   void addNseReferencedSymbol(const RToken& rToken)
+   {
+      nseReferencedSymbols_[rToken.contentAsUtf8()].push_back(
+               Position(rToken.row(), rToken.column()));
    }
    
    void addInternalPackageSymbol(const std::string& package,
@@ -509,7 +584,7 @@ public:
       return pNode;
    }
    
-   const std::vector< boost::shared_ptr<ParseNode> >& getChildren() const
+   const Children& getChildren() const
    {
       return children_;
    }
@@ -614,6 +689,22 @@ public:
       return false;
    }
    
+   bool symbolHasDefinitionInRange(const std::string& symbol,
+                                   const Position& position) const
+   {
+      for (SymbolRanges::const_iterator it = symbolRanges().begin();
+           it != symbolRanges().end();
+           ++it)
+      {
+         if (it->first.contains(position) &&
+             it->second.count(symbol))
+         {
+            return true;
+         }
+      }
+      return false;
+   }
+   
    std::set<ParseItem> getUnresolvedSymbols() const
    {
       std::set<ParseItem> unresolvedSymbols;
@@ -626,7 +717,8 @@ public:
          BOOST_FOREACH(const Position& position, it->second)
          {
             DEBUG("-- Checking for symbol '" << symbol << "' " << position.toString());
-            if (!symbolHasDefinitionInTree(symbol, position))
+            if (!symbolHasDefinitionInTree(symbol, position) &&
+                !symbolHasDefinitionInRange(symbol, position))
             {
                DEBUG("--- No definition for symbol '" << symbol << "'");
                unresolvedSymbols.insert(
@@ -642,7 +734,58 @@ public:
       return unresolvedSymbols;
    }
    
-public:
+   bool isSymbolUsedInChildNode(const std::string& symbolName)
+   {
+      BOOST_FOREACH(const boost::shared_ptr<ParseNode>& pChild, children_)
+      {
+         if (pChild->getReferencedSymbols().count(symbolName))
+            return true;
+         
+         if (pChild->isSymbolUsedInChildNode(symbolName))
+            return true;
+      }
+      return false;
+   }
+   
+   bool isSymbolDefinedButNotUsed(const std::string& symbolName,
+                                  bool checkChildNodes,
+                                  bool checkNseCalls)
+   {
+      if (!definedSymbols_.count(symbolName))
+         return false;
+      
+      if (checkChildNodes && isSymbolUsedInChildNode(symbolName))
+         return false;
+      
+      std::size_t definitionCount =
+            definedSymbols_[symbolName].size();
+      
+      std::size_t useCount = 0;
+      useCount += referencedSymbols_[symbolName].size();
+      if (checkNseCalls)
+         useCount += nseReferencedSymbols_[symbolName].size();
+      
+      // NOTE: We record a definition at the same position of 
+      // each reference as well, so a symbol is effectively defined
+      // but not used if there is only one defintion, and one reference,
+      // and they both map to the same position.
+      if (definitionCount == 1 &&
+          useCount == 1)
+      {
+         Position defnPos = definedSymbols_[symbolName][0];
+         Position usePos;
+         
+         if (referencedSymbols_[symbolName].size())
+            usePos = referencedSymbols_[symbolName][0];
+         else if (nseReferencedSymbols_[symbolName].size())
+            usePos = nseReferencedSymbols_[symbolName][0];
+         
+         return defnPos == usePos;
+      }
+      
+      return false;
+      
+   }
    
    std::string suggestSimilarSymbolFor(const ParseItem& item) const
    {
@@ -670,6 +813,14 @@ public:
       return std::string();
    }
    
+   void makeSymbolsAvailableInRange(
+         const std::set<std::string>& symbols,
+         const Position& begin,
+         const Position& end)
+   {
+      symbolRanges()[Range(begin, end)] = symbols;
+   }
+   
 public:
    
    const std::string& name() const { return name_; }
@@ -680,7 +831,6 @@ private:
    // tree reference -- children and parent
    ParseNode* pParent_;
    
-   typedef std::vector< boost::shared_ptr<ParseNode> > Children;
    Children children_;
    
    // member variables
@@ -695,15 +845,23 @@ private:
    // map variable names to locations(row, column)
    SymbolPositions referencedSymbols_;
    
+   // variables referenced within NSE-performing functions
+   // currently used to resolve 'is variable used?' lint
+   SymbolPositions nseReferencedSymbols_;
+   
    // for e.g. <pkg>::<foo>, we keep a cache of those symbols
    // in case we want to verify that e.g. <foo> really is an
    // exported function from <pkg>. TODO: keep position
-   typedef std::string PackageName;
-   typedef std::set<std::string> Symbols;
-   typedef std::map<PackageName, Symbols> PackageSymbols;
    
    PackageSymbols internalSymbols_; // <pkg>::<foo>
    PackageSymbols exportedSymbols_; // <pgk>:::<bar>
+   
+   typedef std::map<Range, std::set<std::string> > SymbolRanges;
+   static SymbolRanges& symbolRanges()
+   {
+      static SymbolRanges instance;
+      return instance;
+   }
 };
 
 class ParseStatus
@@ -790,11 +948,13 @@ public:
    }
    
    void pushFunctionCallState(ParseState state,
-                              const std::wstring& functionName)
+                              const std::wstring& functionName,
+                              bool isNseFunction)
    {
       DEBUG("Pushing state: " << stateAsString(state));
       parseStateStack_.push(state);
       functionNames_.push(functionName);
+      nseCallStack_.push(isNseFunction);
    }
    
    const std::wstring& currentFunctionName() const
@@ -837,6 +997,7 @@ public:
       case ParseStateSingleBracketArgumentList:
       case ParseStateDoubleBracketArgumentList:
          popFunctionName();
+         popNseCall();
          break;
          
       // suppress compiler warnings
@@ -980,6 +1141,11 @@ public:
       }
    }
    
+   bool isWithinParenFunctionCall() const
+   {
+      return currentState() == ParseStateParenArgumentList;
+   }
+   
    const Stack<std::wstring>& functionNames() const
    {
       return functionNames_;
@@ -990,22 +1156,68 @@ public:
       return parseOptions_;
    }
    
-   void pushNseCall(const std::wstring& call)
+   void pushNseCall(bool value)
    {
-      nseCalls_.push(call);
+      nseCallStack_.push(value);
    }
    
    void popNseCall()
    {
-      if (withinNseCall())
-         nseCalls_.pop();
+      nseCallStack_.pop();
    }
    
-   bool withinNseCall() const
+   bool isWithinNseCall() const
    {
-      return !nseCalls_.empty();
+      return !nseCallStack_.empty() &&
+              nseCallStack_.peek();
    }
    
+   void pushBracket(const RToken& token)
+   {
+      bracketStack_.push(token);
+   }
+   
+   void popBracket(const RToken& rhs)
+   {
+      using namespace token_utils;
+      if (bracketStack_.empty())
+      {
+         lint_.unexpectedClosingBracket(rhs);
+         return;
+      }
+      
+      const RToken& lhs = bracketStack_.peek();
+      if (typeComplement(lhs.type()) != rhs.type())
+      {
+         lint_.unexpectedClosingBracket(rhs);
+         lint_.expectedMatchForOpenBracket(lhs);
+      }
+      
+      bracketStack_.pop();
+   }
+   
+   // to be called after parsing finished
+   void addLintIfBracketStackNotEmpty()
+   {
+      while (!bracketStack_.empty())
+      {
+         const RToken& lhs = bracketStack_.peek();
+         lint_.expectedMatchForOpenBracket(lhs);
+         bracketStack_.pop();
+      }
+   }
+   
+   void makeSymbolsAvailableInRange(
+         const std::set<std::string>& symbols,
+         const Position& begin,
+         const Position& end)
+   {
+      pNode_->makeSymbolsAvailableInRange(
+               symbols,
+               begin,
+               end);
+   }
+
 private:
    boost::shared_ptr<ParseNode> pRoot_;
    ParseNode* pNode_;
@@ -1013,7 +1225,23 @@ private:
    ParseOptions parseOptions_;
    Stack<ParseState> parseStateStack_;
    Stack<std::wstring> functionNames_;
-   Stack<std::wstring> nseCalls_;
+   
+   // NOTE: Really prefer 'bool' here but that invokes the
+   // std::vector<bool> data member which we want to avoid
+   Stack<char> nseCallStack_;
+   
+   // NOTE: Using 'RToken' here implies that the parse tree
+   // is only valid as long as the underlying tokens are valid;
+   // this should be the case but should attempt to enforce
+   // this.
+   Stack<RToken> bracketStack_;
+   
+   // NOTE: This is kind of a hack based on the fact that only
+   // function scopes are parsed as explicit scopes; this is an
+   // alternative mechanism to make symbols available within
+   // given ranges.
+   typedef std::map< Range, std::set<std::string> > SymbolRanges;
+   SymbolRanges symbolRanges_;
 };
 
 class ParseResults {

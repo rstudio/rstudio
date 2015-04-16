@@ -13,8 +13,8 @@
  *
  */
 
-#ifndef CORE_STACK_HPP
-#define CORE_STACK_HPP
+#ifndef CORE_COLLECTION_STACK_HPP
+#define CORE_COLLECTION_STACK_HPP
 
 #include <vector>
 

@@ -1,5 +1,5 @@
 /*
- * TestThat.hpp
+ * SessionSnippets.hpp
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -13,26 +13,26 @@
  *
  */
 
-#ifndef TESTS_TESTTHAT_HPP
-#define TESTS_TESTTHAT_HPP
+#ifndef SESSION_MODULES_SNIPPETS_HPP
+#define SESSION_MODULES_SNIPPETS_HPP
 
-#ifdef RSTUDIO_UNIT_TESTS_ENABLED
+namespace rstudio {
+namespace core {
+   class Error;
+}
+}
 
-# include "vendor/catch.hpp"
+namespace rstudio {
+namespace session {
+namespace modules {
+namespace snippets {
 
-# define context(__X__, ...) TEST_CASE(__X__, __FILE__, ##__VA_ARGS__)
-# define test_that SECTION
-# define expect_true(x) CHECK((x))
-# define expect_false(x) CHECK_FALSE((x))
+core::Error initialize();
 
-#else
+} // end namespace snippets
+} // end namespace modules
+} // end namespace session
+} // end namespace rstudio
 
-# define context(__X__, ...) void RSTUDIO_UNIT_TESTS_DISABLED_##__LINE__()
-# define test_that(__X__) if (false)
-# define expect_true(__X__)
-# define expect_false(__X__)
 
-#endif
-
-#endif
-
+#endif /* SESSION_MODULES_SNIPPETS_HPP */

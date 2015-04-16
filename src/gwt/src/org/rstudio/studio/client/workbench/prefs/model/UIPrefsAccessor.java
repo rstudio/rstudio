@@ -198,7 +198,27 @@ public class UIPrefsAccessor extends Prefs
    
    public PrefValue<Boolean> diagnosticsInRFunctionCalls()
    {
-      return bool("diagnostics_in_function_calls", false);
+      return bool("diagnostics_in_function_calls", true);
+   }
+   
+   public PrefValue<Boolean> checkForMissingArgumentsInFunctionCalls()
+   {
+      return bool("check_for_missing_arguments_in_function_calls", true);
+   }
+   
+   public PrefValue<Boolean> warnIfNoSuchVariableInScope()
+   {
+      return bool("warn_if_no_such_variable_in_scope", true);
+   }
+   
+   public PrefValue<Boolean> warnIfVariableDefinedButNotUsed()
+   {
+      return bool("warn_if_variable_defined_but_not_used", true);
+   }
+   
+   public PrefValue<Boolean> validateFunctionCalls()
+   {
+      return bool("validate_function_calls", false);
    }
    
    public PrefValue<Boolean> autoAppendNewline()

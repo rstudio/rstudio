@@ -13,8 +13,8 @@
  *
  */
 
-#ifndef SESSION_ASYNC_R_COMPLETIONS_HPP
-#define SESSION_ASYNC_R_COMPLETIONS_HPP
+#ifndef SESSION_ASYNC_PACKAGE_INFORMATION_HPP
+#define SESSION_ASYNC_PACKAGE_INFORMATION_HPP
 
 #include <core/r_util/RSourceIndex.hpp>
 #include <session/SessionAsyncRProcess.hpp>
@@ -22,9 +22,9 @@
 namespace rstudio {
 namespace session {
 namespace modules {
-namespace r_completions {
+namespace r_packages {
 
-class AsyncRCompletions : public async_r::AsyncRProcess
+class AsyncPackageInformationProcess : public async_r::AsyncRProcess
 {
 public:
    static void update();
@@ -48,6 +48,7 @@ protected:
 
 private:
    static bool s_isUpdating_;
+   static bool s_updateRequested_;
    static std::vector<std::string> s_pkgsToUpdate_;
 
    std::stringstream stdOut_;
