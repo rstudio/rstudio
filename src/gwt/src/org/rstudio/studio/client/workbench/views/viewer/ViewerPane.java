@@ -217,6 +217,18 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
       return new Size(frame_.getOffsetWidth(), frame_.getOffsetHeight());
    }
    
+   
+   @Override
+   public void onResize()
+   {
+      super.onResize();
+      int width = getOffsetWidth();
+      if (width == 0)
+         return;
+      
+      publishButton_.setShowCaption(width > 500);
+   }
+
    private void navigate(String url, boolean useRawURL)
    {
       // save the unmodified URL for pop-out

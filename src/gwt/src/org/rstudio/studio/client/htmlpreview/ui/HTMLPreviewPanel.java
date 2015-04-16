@@ -258,12 +258,6 @@ public class HTMLPreviewPanel extends ResizeComposite
       return previewFrame_.getWindow().getDocument().getTitle();
    }
 
-   @Override
-   public void setPublishButtonLabel(String label)
-   {
-      publishButton_.setText(label);
-   }
- 
    private final AnchorableFrame previewFrame_;
    private ToolbarLabel fileLabel_;
    private FindTextBox findTextBox_;

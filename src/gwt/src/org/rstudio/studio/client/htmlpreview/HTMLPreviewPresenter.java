@@ -76,8 +76,6 @@ public class HTMLPreviewPresenter implements IsWidget
       void print();
       
       String getDocumentTitle();
-
-      void setPublishButtonLabel(String label);
       
       void showLog(String log);
    }
@@ -189,10 +187,6 @@ public class HTMLPreviewPresenter implements IsWidget
                   result,
                   result.getEnableRefresh(),
                   lastPreviewOutput_.length() > 0);
-
-               isPublished_ = result.getPreviouslyPublished();
-               if (isPublished_)
-                  view_.setPublishButtonLabel("Republish");
             }
             else
             {
@@ -329,7 +323,6 @@ public class HTMLPreviewPresenter implements IsWidget
    private StringBuilder lastPreviewOutput_ = new StringBuilder();
    
    private String savePreviewDir_;
-   private boolean isPublished_;
    private static final String MODULE_HTML_PREVIEW = "html_preview";
    private static final String KEY_SAVEAS_DIR = "saveAsDir";
    

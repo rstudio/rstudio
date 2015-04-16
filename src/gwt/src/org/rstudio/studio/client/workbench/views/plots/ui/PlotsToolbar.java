@@ -82,7 +82,7 @@ public class PlotsToolbar extends Toolbar implements HasCustomizableToolbar
       
       // publish
       RSConnectPublishButton publishButton = new RSConnectPublishButton(
-            RSConnect.CONTENT_TYPE_PLOT, false, commands_.savePlotAsImage());
+            RSConnect.CONTENT_TYPE_PLOT, true, commands_.savePlotAsImage());
       publishButton.setPublishHtmlSource(new PublishHtmlSource()
       {
          @Override

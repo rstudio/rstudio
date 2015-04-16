@@ -79,8 +79,6 @@ public class RSConnectPublishButton extends Composite
                }
             });
       
-      if (showCaption_)
-         publishButton_.setText("Publish");
       panel.add(publishButton_);
       
       // create drop menu of previous deployments/other commands
@@ -96,6 +94,7 @@ public class RSConnectPublishButton extends Composite
       
       // compute initial visible state
       applyVisiblity();
+      applyCaption("Publish");
    }
    
    @Inject
@@ -193,12 +192,6 @@ public class RSConnectPublishButton extends Composite
       }
    }
 
-   public void setText(String text)
-   {
-      if (showCaption_)
-         publishButton_.setText(text);
-   }
-   
    public void setContentType(int contentType)
    {
       // this can happen in the viewer pane, which hosts e.g. both HTML widgets
@@ -254,6 +247,15 @@ public class RSConnectPublishButton extends Composite
       }
    }
    
+
+   public void setShowCaption(boolean show)
+   {
+      if (showCaption_ != show)
+      {
+         showCaption_ = show;
+         applyCaption();
+      }
+   }
 
    // Private methods --------------------------------------------------------
    
@@ -387,8 +389,7 @@ public class RSConnectPublishButton extends Composite
       // republish
       if (recs != null && recs.length() > 0)
       {
-         if (showCaption_)
-            publishButton_.setText("Republish");
+         applyCaption("Republish");
 
          // find the default (last deployed record)--this needs to be done as
          // a first pass so we can identify the associated menu item in one
@@ -438,8 +439,7 @@ public class RSConnectPublishButton extends Composite
       else
       {
          // show first-time publish button caption
-         if (showCaption_)
-            publishButton_.setText("Publish");
+         applyCaption("Publish");
 
          // no existing deployments to redeploy to, so just offer to make a new
          // one
@@ -509,6 +509,17 @@ public class RSConnectPublishButton extends Composite
       return true;
    }
    
+   private void applyCaption(String caption)
+   {
+      caption_ = caption;
+      applyCaption();
+   }
+
+   private void applyCaption()
+   {
+      publishButton_.setText(showCaption_ ? caption_ : "");
+   }
+   
    private final ToolbarButton publishButton_;
    private final ToolbarPopupMenu publishMenu_;
 
@@ -524,10 +535,11 @@ public class RSConnectPublishButton extends Composite
    private int contentType_ = RSConnect.CONTENT_TYPE_NONE;
    private String populatedPath_;
    private boolean populating_ = false;
+   private boolean showCaption_ = true;
    private RenderedDocPreview docPreview_;
    private PublishHtmlSource publishHtmlSource_;
+   private String caption_;
    
-   private final boolean showCaption_;
    private final AppCommand boundCommand_;
 
    private RSConnectDeploymentRecord defaultRec_;
