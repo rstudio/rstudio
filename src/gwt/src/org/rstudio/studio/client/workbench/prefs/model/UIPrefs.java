@@ -164,17 +164,14 @@ public class UIPrefs extends UIPrefsAccessor implements UiPrefsChangedHandler
          diagnosticsInRFunctionCalls().setGlobalValue(
                newUiPrefs.diagnosticsInRFunctionCalls().getGlobalValue());
          
-         checkForMissingArgumentsInFunctionCalls().setGlobalValue(
-               newUiPrefs.checkForMissingArgumentsInFunctionCalls().getGlobalValue());
+         checkArgumentsToRFunctionCalls().setGlobalValue(
+               newUiPrefs.checkArgumentsToRFunctionCalls().getGlobalValue());
          
          warnIfNoSuchVariableInScope().setGlobalValue(
                newUiPrefs.warnIfNoSuchVariableInScope().getGlobalValue());
          
          warnIfVariableDefinedButNotUsed().setGlobalValue(
                newUiPrefs.warnIfVariableDefinedButNotUsed().getGlobalValue());
-         
-         validateFunctionCalls().setGlobalValue(
-               newUiPrefs.validateFunctionCalls().getGlobalValue());
          
          enableStyleDiagnostics().setGlobalValue(
                newUiPrefs.enableStyleDiagnostics().getGlobalValue());

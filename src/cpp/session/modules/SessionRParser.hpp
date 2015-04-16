@@ -56,16 +56,14 @@ class ParseOptions
 public:
    
    explicit ParseOptions(bool lintRFunctions = false,
-                         bool checkForMissingArgumentsInFunctionCalls = false,
+                         bool checkArgumentsToRFunctionCalls = false,
                          bool warnIfNoSuchVariableInScope = false,
                          bool warnIfVariableIsDefinedButNotUsed = false,
-                         bool validateFunctionCalls = false,
                          bool recordStyleLint = false)
       : lintRFunctions_(lintRFunctions),
-        checkForMissingArgumentsInFunctionCalls_(checkForMissingArgumentsInFunctionCalls),
+        checkArgumentsToRFunctionCalls_(checkArgumentsToRFunctionCalls),
         warnIfNoSuchVariableInScope_(warnIfNoSuchVariableInScope),
         warnIfVariableIsDefinedButNotUsed_(warnIfVariableIsDefinedButNotUsed),
-        validateFunctionCalls_(validateFunctionCalls),
         recordStyleLint_(recordStyleLint)
    {}
    
@@ -89,14 +87,14 @@ public:
       return lintRFunctions_;
    }
    
-   bool checkForMissingArgumentsInFunctionCalls() const
+   bool checkArgumentsToRFunctionCalls() const
    {
-      return checkForMissingArgumentsInFunctionCalls_;
+      return checkArgumentsToRFunctionCalls_;
    }
    
-   void setCheckForMissingArgumentsInFunctionCalls(bool checkForMissingArgumentsInFunctionCalls)
+   void setCheckArgumentsToRFunctionCalls(bool checkArgumentsToRFunctionCalls)
    {
-      checkForMissingArgumentsInFunctionCalls_ = checkForMissingArgumentsInFunctionCalls;
+      checkArgumentsToRFunctionCalls_ = checkArgumentsToRFunctionCalls;
    }
    
    bool warnIfNoSuchVariableInScope() const
@@ -107,16 +105,6 @@ public:
    void setWarnIfNoSuchVariableInScope(bool value)
    {
       warnIfNoSuchVariableInScope_ = value;
-   }
-   
-   bool validateFunctionCalls() const
-   {
-      return validateFunctionCalls_;
-   }
-   
-   void setValidateFunctionCalls(bool value)
-   {
-      validateFunctionCalls_ = value;
    }
    
    bool warnIfVariableIsDefinedButNotUsed() const
@@ -131,10 +119,9 @@ public:
 
 private:
    bool lintRFunctions_;
-   bool checkForMissingArgumentsInFunctionCalls_;
+   bool checkArgumentsToRFunctionCalls_;
    bool warnIfNoSuchVariableInScope_;
    bool warnIfVariableIsDefinedButNotUsed_;
-   bool validateFunctionCalls_;
    bool recordStyleLint_;
 };
 

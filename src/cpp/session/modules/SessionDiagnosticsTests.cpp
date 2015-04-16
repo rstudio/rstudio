@@ -38,7 +38,7 @@ namespace diagnostics {
 
 using namespace rparser;
 
-static const ParseOptions s_parseOptions(true, true, true, true, true, true);
+static const ParseOptions s_parseOptions(true, true, true, true, true);
 
 using namespace core;
 using namespace core::r_util;

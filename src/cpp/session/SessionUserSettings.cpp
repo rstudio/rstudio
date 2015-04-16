@@ -279,21 +279,17 @@ void UserSettings::updatePrefsCache(const json::Object& prefs) const
    bool lintRFunctionCalls = readPref<bool>(prefs, "diagnostics_in_function_calls", true);
    pLintRFunctionCalls_.reset(new bool(lintRFunctionCalls));
    
-   bool checkForMissingArgumentsInFunctionCalls = readPref<bool>(prefs, "check_for_missing_arguments_in_function_calls", true);
-   pCheckForMissingArgumentsInFunctionCalls_.reset(new bool(checkForMissingArgumentsInFunctionCalls));
-   
+   bool checkArgumentsToRFunctionCalls = readPref<bool>(prefs, "check_arguments_to_r_function_calls", true);
+   pCheckArgumentsToRFunctionCalls_.reset(new bool(checkArgumentsToRFunctionCalls));
+
    bool warnIfNoSuchVariableInScope = readPref<bool>(prefs, "warn_if_no_such_variable_in_scope", true);
    pWarnIfNoSuchVariableInScope_.reset(new bool(warnIfNoSuchVariableInScope));
-   
+
    bool warnIfVariableDefinedButNotUsed = readPref<bool>(prefs, "warn_if_variable_defined_but_not_used", true);
    pWarnIfVariableDefinedButNotUsed_.reset(new bool(warnIfVariableDefinedButNotUsed));
-   
-   bool validateFunctionCalls = readPref<bool>(prefs, "validate_function_calls", false);
-   pValidateFunctionCalls_.reset(new bool(validateFunctionCalls));
-   
+
    bool enableStyleDiagnostics = readPref<bool>(prefs, "enable_style_diagnostics", false);
    pEnableStyleDiagnostics_.reset(new bool(enableStyleDiagnostics));
-   
 }
 
 
@@ -359,9 +355,9 @@ bool UserSettings::lintRFunctionCalls() const
    return readUiPref<bool>(pLintRFunctionCalls_);
 }
 
-bool UserSettings::checkForMissingArgumentsInFunctionCalls() const
+bool UserSettings::checkArgumentsToRFunctionCalls() const
 {
-   return readUiPref<bool>(pCheckForMissingArgumentsInFunctionCalls_);
+   return readUiPref<bool>(pCheckArgumentsToRFunctionCalls_);
 }
 
 bool UserSettings::warnIfNoSuchVariableInScope() const
@@ -372,11 +368,6 @@ bool UserSettings::warnIfNoSuchVariableInScope() const
 bool UserSettings::warnIfVariableDefinedButNotUsed() const
 {
    return readUiPref<bool>(pWarnIfVariableDefinedButNotUsed_);
-}
-
-bool UserSettings::validateFunctionCalls() const
-{
-   return readUiPref<bool>(pValidateFunctionCalls_);
 }
 
 bool UserSettings::enableStyleDiagnostics() const

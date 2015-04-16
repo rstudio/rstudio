@@ -2033,7 +2033,7 @@ BINARY_OPERATOR:
 ARGUMENT_LIST:
       
       DEBUG("-- Begin argument list " << cursor);
-      if (status.parseOptions().validateFunctionCalls())
+      if (status.parseOptions().checkArgumentsToRFunctionCalls())
          validateFunctionCall(cursor, status);
       
       addExtraScopedSymbolsForCall(cursor, status);
@@ -2085,14 +2085,14 @@ ARGUMENT_START:
       
       if (cursor.isType(RToken::COMMA))
       {
-         if (status.parseOptions().checkForMissingArgumentsInFunctionCalls())
+         if (status.parseOptions().checkArgumentsToRFunctionCalls())
             if (cursor.previousSignificantToken().isType(RToken::LPAREN))
                status.lint().missingArgumentToFunctionCall(cursor);
          
          MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
          while (cursor.isType(RToken::COMMA))
          {
-            if (status.parseOptions().checkForMissingArgumentsInFunctionCalls())
+            if (status.parseOptions().checkArgumentsToRFunctionCalls())
                if (status.isWithinParenFunctionCall())
                   status.lint().missingArgumentToFunctionCall(cursor);
             MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
@@ -2101,7 +2101,7 @@ ARGUMENT_START:
       
       if (closesArgumentList(cursor, status))
       {
-         if (status.parseOptions().checkForMissingArgumentsInFunctionCalls() &&
+         if (status.parseOptions().checkArgumentsToRFunctionCalls() &&
              status.isWithinParenFunctionCall() &&
              cursor.previousSignificantToken().isType(RToken::COMMA))
          {

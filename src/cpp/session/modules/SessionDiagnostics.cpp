@@ -455,17 +455,14 @@ ParseResults parse(const std::wstring& rCode,
    options.setLintRFunctions(
             userSettings().lintRFunctionCalls());
    
-   options.setCheckForMissingArgumentsInFunctionCalls(
-            userSettings().checkForMissingArgumentsInFunctionCalls());
+   options.setCheckArgumentsToRFunctionCalls(
+            userSettings().checkArgumentsToRFunctionCalls());
    
    options.setWarnIfVariableIsDefinedButNotUsed(
             userSettings().warnIfVariableDefinedButNotUsed());
    
    options.setWarnIfNoSuchVariableInScope(
             userSettings().warnIfNoSuchVariableInScope());
-   
-   options.setValidateFunctionCalls(
-            userSettings().validateFunctionCalls());
    
    options.setRecordStyleLint(
             userSettings().enableStyleDiagnostics());

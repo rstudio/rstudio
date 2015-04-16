@@ -174,17 +174,14 @@ public:
    bool lintRFunctionCalls() const;
    void setLintRFunctionCalls(bool enable);
    
-   bool checkForMissingArgumentsInFunctionCalls() const;
-   void setCheckForMissingArgumentsInFunctionCalls(bool enable);
+   bool checkArgumentsToRFunctionCalls() const;
+   void setCheckArgumentsToRFunctionCalls(bool check);
    
    bool warnIfNoSuchVariableInScope() const;
    void setWarnIfNoSuchVariableInScope(bool enable);
    
    bool warnIfVariableDefinedButNotUsed() const;
    void setWarnIfVariableDefinedButNotUsed(bool enable);
-   
-   bool validateFunctionCalls() const;
-   void setValidateFunctionCalls(bool enable);
    
    bool enableStyleDiagnostics() const;
    void setEnableStyleDiagnostics(bool enable);
@@ -229,12 +226,10 @@ private:
    
    // diagnostic-related prefs
    mutable boost::scoped_ptr<bool> pLintRFunctionCalls_;
-   mutable boost::scoped_ptr<bool> pCheckForMissingArgumentsInFunctionCalls_;
+   mutable boost::scoped_ptr<bool> pCheckArgumentsToRFunctionCalls_;
    mutable boost::scoped_ptr<bool> pWarnIfNoSuchVariableInScope_;
    mutable boost::scoped_ptr<bool> pWarnIfVariableDefinedButNotUsed_;
    mutable boost::scoped_ptr<bool> pEnableStyleDiagnostics_;
-   mutable boost::scoped_ptr<bool> pValidateFunctionCalls_;
-   
 };
    
 } // namespace session
