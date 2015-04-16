@@ -491,23 +491,25 @@ public:
 
 public:
   
-  bool isAtEndOfExpression() const
+  // Significant here means non-comma and non-whitespace.
+  // This is slightly misleading as whitespace (newlines)
+  // are occasionally 'significant' insofar as newlines
+  // can end statements.
+  bool isLastSignificantTokenOnLine()
   {
-     return nextToken().contentContains(L'\n') ||
-            nextSignificantToken().isType(RToken::SEMI) ||
-            nextSignificantToken().isType(RToken::COMMA) ||
-            nextSignificantToken().row() > row();
-  }
-  
-  bool endsExpression() const
-  {
-     return contentContains(L'\n') ||
-            isType(RToken::SEMI) ||
-            isType(RToken::COMMA);
+     RTokenCursor cursor = clone();
+     
+     if (!cursor.moveToNextSignificantToken())
+        return true;
+     
+     return cursor.row() > row();
   }
   
   bool isAtEndOfStatement(bool inParentheticalScope)
   {
+     if (isBinaryOp(*this) || isLeftBracket(*this))
+        return false;
+     
      // Whether we're in a parenthetical scope is important!
      // For example, these parse the same:
      //
@@ -519,7 +521,7 @@ public:
      //      foo\n(1)
      //      foo  (1)
      //
-     if (!inParentheticalScope && isWhitespaceWithNewline(nextToken()))
+     if (!inParentheticalScope && isLastSignificantTokenOnLine())
         return true;
      
      const RToken& next = nextSignificantToken();

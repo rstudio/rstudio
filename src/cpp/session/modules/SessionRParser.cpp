@@ -589,7 +589,7 @@ void lookAheadAndWarnOnUsagesOfSymbol(const RTokenCursor& startCursor,
                return;
          }
          
-         if (clone.isAtEndOfExpression())
+         if (clone.isAtEndOfStatement(status.isInParentheticalScope()))
             return;
          
          continue;
@@ -623,11 +623,10 @@ void lookAheadAndWarnOnUsagesOfSymbol(const RTokenCursor& startCursor,
             return;
       }
       
-      if (clone.nextToken().contentContains(L'\n') ||
-          clone.isType(RToken::SEMI))
-      {
+      // NOTE: We'll be conservative on lookahead and assume non-parenthetical
+      // scope (which is more restrictive)
+      if (clone.isAtEndOfStatement(false))
          return;
-      }
       
    } while (clone.moveToNextSignificantToken());
 }
