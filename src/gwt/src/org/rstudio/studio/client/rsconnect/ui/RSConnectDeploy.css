@@ -85,6 +85,7 @@
    margin-top: 5px;
    margin-bottom: 10px;
    margin-right: 30px;
+   overflow: hidden;
 }
 
 .wizard .fileList
@@ -163,11 +164,6 @@
    background-color: white;
    padding: 5px;
    margin: 0px;
-}
-
-.descriptionLabel
-{
-   font-weight: bold;
 }
 
 .descriptionPanel

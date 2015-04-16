@@ -30,9 +30,6 @@
             <g:Label text="Publish: "></g:Label>
             <g:HTMLPanel styleName="{res.style.fileList} {res.style.descriptionPanel}">
                <g:Image ui:field="descriptionImage_"></g:Image>
-               <g:Label styleName="{res.style.descriptionLabel}"
-                        ui:field="descriptionLabel_">
-               </g:Label>
             </g:HTMLPanel>
             <rw:ThemedButton ui:field="previewButton_"
                              text="Preview...">

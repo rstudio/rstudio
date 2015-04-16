@@ -28,7 +28,6 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.FilePathUtils;
 import org.rstudio.studio.client.common.GlobalDisplay;
-import org.rstudio.studio.client.common.filetypes.FileIconResources;
 import org.rstudio.studio.client.rsconnect.RSConnect;
 import org.rstudio.studio.client.rsconnect.model.RSConnectAccount;
 import org.rstudio.studio.client.rsconnect.model.RSConnectApplicationInfo;
@@ -84,7 +83,6 @@ public class RSConnectDeploy extends Composite
       String accountList();
       String controlLabel();
       String deployLabel();
-      String descriptionLabel();
       String descriptionPanel();
       String dropListControl();
       String fileList();
@@ -109,7 +107,6 @@ public class RSConnectDeploy extends Composite
       ImageResource publishShinyIllustration();
       ImageResource publishRmdIllustration();
       ImageResource publishPlotIllustration();
-      ImageResource publishPlot();
 
       @Source("RSConnectDeploy.css")
       DeployStyle style();
@@ -769,13 +766,12 @@ public class RSConnectDeploy extends Composite
       // show the description of what we're about to publish
       if (source_.isSelfContained()) 
       {
-         descriptionLabel_.setText(source_.getDescription());
          filePanel_.setVisible(false);
          descriptionPanel_.setVisible(true);
          descriptionImage_.setResource(
                contentType_ == RSConnect.CONTENT_TYPE_PLOT ?
-                     RESOURCES.publishPlot() : 
-                     FileIconResources.INSTANCE.iconHTML());
+                     RSConnectResources.INSTANCE.previewPlot() :
+                     RSConnectResources.INSTANCE.previewDoc());
       }
       
       // if the app name textbox isn't populated, derive from the filename
@@ -803,7 +799,6 @@ public class RSConnectDeploy extends Composite
    @UiField InlineLabel deployLabel_;
    @UiField Label appExistingName_;
    @UiField Label appProgressName_;
-   @UiField Label descriptionLabel_;
    @UiField Label nameLabel_;
    @UiField ThemedButton addFileButton_;
    @UiField ThemedButton previewButton_;
