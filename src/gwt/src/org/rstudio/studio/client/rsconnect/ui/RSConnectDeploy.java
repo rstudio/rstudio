@@ -764,10 +764,21 @@ public class RSConnectDeploy extends Composite
       {
          filePanel_.setVisible(false);
          descriptionPanel_.setVisible(true);
-         descriptionImage_.setResource(
-               contentType_ == RSConnect.CONTENT_TYPE_PLOT ?
-                     RSConnectResources.INSTANCE.previewPlot() :
+         if (contentType_ == RSConnect.CONTENT_TYPE_PLOT)
+         {
+            descriptionImage_.setResource(
+                  RSConnectResources.INSTANCE.previewPlot());
+         }
+         else if (contentType_ == RSConnect.CONTENT_TYPE_PRES)
+         {
+            descriptionImage_.setResource(
+                  RSConnectResources.INSTANCE.previewPresentation());
+         }
+         else
+         {
+            descriptionImage_.setResource(
                      RSConnectResources.INSTANCE.previewDoc());
+         }
       }
       
       // if the app name textbox isn't populated, derive from the filename

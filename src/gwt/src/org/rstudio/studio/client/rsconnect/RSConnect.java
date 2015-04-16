@@ -181,9 +181,9 @@ public class RSConnect implements SessionInitHandler,
          case CONTENT_TYPE_APP:
             publishAsCode(event);
             break;
+         case CONTENT_TYPE_PRES:
          case CONTENT_TYPE_PLOT:
          case CONTENT_TYPE_HTML:
-         case CONTENT_TYPE_PRES:
          case CONTENT_TYPE_DOCUMENT:
             if (event.getFromPrevious().getServer().equals("rpubs.com"))
             {
@@ -218,7 +218,8 @@ public class RSConnect implements SessionInitHandler,
       {
          // plots and HTML are implicitly self-contained
          if (event.getContentType() == CONTENT_TYPE_PLOT ||
-             event.getContentType() == CONTENT_TYPE_HTML)
+             event.getContentType() == CONTENT_TYPE_HTML ||
+             event.getContentType() == CONTENT_TYPE_PRES)
          {
             input.setIsSelfContained(true);
          }
