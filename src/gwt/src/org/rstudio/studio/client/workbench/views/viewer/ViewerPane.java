@@ -94,8 +94,7 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
      
       // add publish button 
       publishButton_ = new RSConnectPublishButton(
-            RSConnect.CONTENT_TYPE_DOCUMENT, true, 
-            commands_.viewerSaveAsWebPage());
+            RSConnect.CONTENT_TYPE_DOCUMENT, true, null);
       toolbar_.addRightWidget(publishButton_);
 
       // create an HTML generator 
@@ -163,6 +162,7 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
    public void previewRmd(RmdPreviewParams params)
    {
       navigate(params.getOutputUrl(), true);
+      publishButton_.setManuallyHidden(false);
       publishButton_.setContentType(RSConnect.CONTENT_TYPE_DOCUMENT);
       publishButton_.setRmdPreview(params);
       rmdPreviewParams_ = params;
@@ -174,6 +174,7 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
    {
       exportButton_.setVisible(exportEnabled);
       exportButtonSeparator_.setVisible(exportEnabled);
+      publishButton_.setManuallyHidden(!exportEnabled);
       toolbar_.invalidateSeparators();
    }
    

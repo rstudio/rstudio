@@ -256,6 +256,15 @@ public class RSConnectPublishButton extends Composite
          applyCaption();
       }
    }
+   
+   public void setManuallyHidden(boolean hide)
+   {
+      if (manuallyHidden_ != hide)
+      {
+         manuallyHidden_ = hide;
+         applyVisiblity();
+      }
+   }
 
    // Private methods --------------------------------------------------------
    
@@ -504,6 +513,9 @@ public class RSConnectPublishButton extends Composite
       if (contentType_ == RSConnect.CONTENT_TYPE_DOCUMENT && 
           docPreview_ == null)
          return false;
+      
+      if (manuallyHidden_)
+         return false;
 
       // looks like we should be visible
       return true;
@@ -539,6 +551,7 @@ public class RSConnectPublishButton extends Composite
    private RenderedDocPreview docPreview_;
    private PublishHtmlSource publishHtmlSource_;
    private String caption_;
+   private boolean manuallyHidden_ = false;
    
    private final AppCommand boundCommand_;
 
