@@ -917,6 +917,23 @@ FunctionInformation getInfoAssociatedWithFunctionAtCursor(
          if (!cursor.moveToPreviousSignificantToken())
             return FunctionInformation();
       
+      // Try seeing if a symbol of this name has already been defined in scope,
+      // to protect against instances of the form e.g.
+      //
+      //    pf <- identity
+      //    pf
+      //
+      // In these cases, we will (for now) simply fail to resolve the function,
+      // to ensure that we don't supply incorrect lint for that function call.
+      //
+      // Note that this behaviour is quite conservative; however, the alternative
+      // would involve implementing a pseudo-evaluator to actually figure out what
+      // 'pf' is now actually bound to; this could be doable in some simple cases
+      // but the pattern is uncommon enough that it's better that we just don't
+      // supply incorrect diagnostics, rather than attempt to supply correct diagnostics.
+      if (status.node()->getDefinedSymbols().count(cursor.contentAsUtf8()))
+         return FunctionInformation();
+      
       DEBUG("***** Attempting to resolve source function: '" << cursor.contentAsUtf8() << "'");
       const ParseNode* pNode;
       if (status.node()->findFunction(
@@ -935,10 +952,11 @@ FunctionInformation getInfoAssociatedWithFunctionAtCursor(
             origin = pNode->getParent()->name();
          
          FunctionInformation info(origin, name);
-         if (cursor.moveToPosition(pNode->position()))
+         RTokenCursor clone = cursor.clone();
+         if (clone.moveToPosition(pNode->position()))
          {
             DEBUG("***** Moved to position");
-            if (extractInfoFromFunctionDefinition(cursor, &info))
+            if (extractInfoFromFunctionDefinition(clone, &info))
             {
                DEBUG("Extracted arguments");
                return info;
@@ -963,6 +981,7 @@ FunctionInformation getInfoAssociatedWithFunctionAtCursor(
       
       if (!lookupFailed)
          return info;
+      
    }
    
    // If the above failed, we'll fall back to evaluating and looking up
