@@ -107,6 +107,8 @@ public class RSConnectDeploy extends Composite
       ImageResource publishShinyIllustration();
       ImageResource publishRmdIllustration();
       ImageResource publishPlotIllustration();
+      ImageResource publishPresentationIllustration();
+      ImageResource publishHTMLIllustration();
 
       @Source("RSConnectDeploy.css")
       DeployStyle style();
@@ -151,13 +153,7 @@ public class RSConnectDeploy extends Composite
          deployIllustration_.setVisible(false);
          rootPanel_.addStyleName(style_.wizard());
       }
-      else
-      {
-         deployIllustration_.setResource(forDocument_ ?
-                              RESOURCES.publishRmdIllustration() :
-                              RESOURCES.publishShinyIllustration());
-      }
-      
+
       // Invoke the "add account" wizard
       addAccountAnchor_.addClickHandler(new ClickHandler()
       {
@@ -783,6 +779,18 @@ public class RSConnectDeploy extends Composite
          appName_.setText(FilePathUtils.fileNameSansExtension(
                source_.getSourceFile()));
       }
+      
+      ImageResource illustration = null;
+      if (contentType_ == RSConnect.CONTENT_TYPE_APP)
+         illustration = RESOURCES.publishShinyIllustration();
+      else if (contentType_ == RSConnect.CONTENT_TYPE_PLOT)
+         illustration = RESOURCES.publishPlotIllustration();
+      else if (contentType_ == RSConnect.CONTENT_TYPE_DOCUMENT)
+         illustration = RESOURCES.publishRmdIllustration();
+      else if (contentType_ == RSConnect.CONTENT_TYPE_HTML)
+         illustration = RESOURCES.publishHTMLIllustration();
+      if (illustration != null)
+         deployIllustration_.setResource(illustration);
    }
    
    @UiField Anchor addAccountAnchor_;

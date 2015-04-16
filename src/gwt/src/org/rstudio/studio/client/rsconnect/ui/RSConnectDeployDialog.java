@@ -38,14 +38,15 @@ import com.google.gwt.user.client.ui.CheckBox;
 public class RSConnectDeployDialog 
              extends RSConnectDialog<RSConnectDeploy>
 {
-   public RSConnectDeployDialog(RSConnectServerOperations server, 
+   public RSConnectDeployDialog(int contentType, 
+                                RSConnectServerOperations server, 
                                 RSConnect connect,
                                 final GlobalDisplay display, 
                                 RSConnectPublishSource source,
                                 RSConnectDeploymentRecord fromPrevious)
    {
       super(server, display, new RSConnectDeploy(source, 
-            RSConnect.CONTENT_TYPE_NONE, fromPrevious, false));
+            contentType, fromPrevious, false));
       setText("Publish to Server");
       setWidth("350px");
       deployButton_ = new ThemedButton("Publish");
@@ -113,7 +114,7 @@ public class RSConnectDeployDialog
       if (fromPrevious != null)
       {
          // we know what the previous deployment settings are, so use them
-         contents_.setPublishSource(source, RSConnect.CONTENT_TYPE_NONE, 
+         contents_.setPublishSource(source, contentType, 
                fromPrevious.getAsMultiple(), fromPrevious.getAsStatic());
       }
       else
@@ -122,7 +123,7 @@ public class RSConnectDeployDialog
          // deployments, and not as part of a wizard, is if we're deploying 
          // an unambiguously single, non-static asset (such as a Shiny app or
          // an R Markdown document in its own directory)
-         contents_.setPublishSource(source, RSConnect.CONTENT_TYPE_NONE, 
+         contents_.setPublishSource(source, contentType, 
                false, false);
       }
   

@@ -324,6 +324,7 @@ public class RSConnect implements SessionInitHandler,
    {
       RSConnectDeployDialog dialog = 
             new RSConnectDeployDialog(
+                      event.getContentType(),
                       server_, this, display_, 
                       source,
                       event.getFromPrevious());
