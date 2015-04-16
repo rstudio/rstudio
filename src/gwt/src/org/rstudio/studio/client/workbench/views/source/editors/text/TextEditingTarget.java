@@ -1055,7 +1055,9 @@ public class TextEditingTarget implements
       });
       
       if (extendedType_.equals("shiny"))
+      {
          view_.setPublishPath(document.getPath());
+      }
 
       initStatusBar();
    }

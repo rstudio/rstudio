@@ -158,7 +158,12 @@ public class RSConnectPublishButton extends Composite
       contentPath_ = contentPath;
       outputPath_ = outputPath;
       if (isVisible())
-         populateDeployments(false);
+      {
+         // setting the content path of the publish button happens in the editor
+         // load path; defer it so it doesn't delay bringing up the rest of the
+         // interface
+         populateDeployments(false, true);
+      }
    }
    
    public void setRmdPreview(RmdPreviewParams params)
@@ -254,13 +259,33 @@ public class RSConnectPublishButton extends Composite
    
    private void populateDeployments(boolean force)
    {
+      populateDeployments(force, false);
+   }
+
+   private void populateDeployments(final boolean force, boolean defer)
+   {
+      // if a deferred population was requested, defer now and call ourselves
+      // back 
+      if (defer) 
+      {
+         Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand()
+         {
+            @Override
+            public void execute()
+            {
+               populateDeployments(force, false);
+            }
+         });
+         return;
+      }
+
       // prevent reentrancy
       if (contentPath_ == null || populating_)
          return;
       
       // avoid populating if we've already set the deployments for this path
       // (unless we're forcefully repopulating)
-      if (lastContentPath_ != null && lastContentPath_.equals(contentPath_) &&
+      if (populatedPath_ != null && populatedPath_.equals(contentPath_) &&
             !force)
          return;
       
@@ -281,7 +306,7 @@ public class RSConnectPublishButton extends Composite
          public void onResponseReceived(JsArray<RSConnectDeploymentRecord> recs)
          {
             populating_ = false;
-            lastContentPath_ = contentPath_;
+            populatedPath_ = contentPath_;
             setPreviousDeployments(recs);
          }
          
@@ -497,7 +522,7 @@ public class RSConnectPublishButton extends Composite
    private String contentPath_;
    private String outputPath_;
    private int contentType_ = RSConnect.CONTENT_TYPE_NONE;
-   private String lastContentPath_;
+   private String populatedPath_;
    private boolean populating_ = false;
    private RenderedDocPreview docPreview_;
    private PublishHtmlSource publishHtmlSource_;
