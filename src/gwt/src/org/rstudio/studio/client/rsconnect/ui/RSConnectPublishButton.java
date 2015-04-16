@@ -56,6 +56,17 @@ public class RSConnectPublishButton extends Composite
    implements RSConnectDeploymentCompletedEvent.Handler,
               RPubsUploadStatusEvent.Handler
 {
+
+   class DeploymentPopupMenu extends ToolbarPopupMenu
+   {
+      @Override
+      public void getDynamicPopupMenu(final 
+            ToolbarPopupMenu.DynamicPopupMenuCallback callback)
+      {
+         rebuildPopupMenu(callback);
+      }
+   }
+
    public RSConnectPublishButton(int contentType, boolean showCaption,
          AppCommand boundCommand)
    {
@@ -82,7 +93,7 @@ public class RSConnectPublishButton extends Composite
       panel.add(publishButton_);
       
       // create drop menu of previous deployments/other commands
-      publishMenu_ = new ToolbarPopupMenu();
+      publishMenu_ = new DeploymentPopupMenu();
       ToolbarButton publishMenuButton = new ToolbarButton(publishMenu_, false);
       panel.add(publishMenuButton);
       
@@ -157,12 +168,7 @@ public class RSConnectPublishButton extends Composite
       contentPath_ = contentPath;
       outputPath_ = outputPath;
       if (isVisible())
-      {
-         // setting the content path of the publish button happens in the editor
-         // load path; defer it so it doesn't delay bringing up the rest of the
-         // interface
-         populateDeployments(false, true);
-      }
+         populateDeployments(false);
    }
    
    public void setRmdPreview(RmdPreviewParams params)
@@ -268,66 +274,17 @@ public class RSConnectPublishButton extends Composite
 
    // Private methods --------------------------------------------------------
    
-   private void populateDeployments(boolean force)
+   private void populateDeployments(final boolean force)
    {
-      populateDeployments(force, false);
-   }
+      // force menu to think this is a new path to check for deployments
+      if (force)
+         populatedPath_ = null;
+      
+      // if we don't need to recompute the caption, stop now
+      if (!showCaption_)
+         return;
 
-   private void populateDeployments(final boolean force, boolean defer)
-   {
-      // if a deferred population was requested, defer now and call ourselves
-      // back 
-      if (defer) 
-      {
-         Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand()
-         {
-            @Override
-            public void execute()
-            {
-               populateDeployments(force, false);
-            }
-         });
-         return;
-      }
-
-      // prevent reentrancy
-      if (contentPath_ == null || populating_)
-         return;
-      
-      // avoid populating if we've already set the deployments for this path
-      // (unless we're forcefully repopulating)
-      if (populatedPath_ != null && populatedPath_.equals(contentPath_) &&
-            !force)
-         return;
-      
-      // if this is a Shiny application, check for deployments of its parent
-      // path
-      String contentPath = contentPath_;
-      if (contentType_ == RSConnect.CONTENT_TYPE_APP) {
-         FileSystemItem fsiContent = FileSystemItem.createFile(contentPath_);
-         contentPath = fsiContent.getParentPathString();
-      }
-      
-      populating_ = true;
-      server_.getRSConnectDeployments(contentPath, 
-            outputPath_ == null ? "" : outputPath_,
-            new ServerRequestCallback<JsArray<RSConnectDeploymentRecord>>()
-      {
-         @Override
-         public void onResponseReceived(JsArray<RSConnectDeploymentRecord> recs)
-         {
-            populating_ = false;
-            populatedPath_ = contentPath_;
-            setPreviousDeployments(recs);
-         }
-         
-         @Override
-         public void onError(ServerError error)
-         {
-            // mark population finished, but allow a retry 
-            populating_ = false;
-         }
-      });
+      rebuildPopupMenu(null);
    }
    
    private void onPublishClick(final RSConnectDeploymentRecord previous)
@@ -532,8 +489,65 @@ public class RSConnectPublishButton extends Composite
       publishButton_.setText(showCaption_ ? caption_ : "");
    }
    
+   // rebuilds the popup menu--this can happen when the menu is invoked; it can
+   // also happen when the button is created if we're aggressively checking
+   // publish status
+   private void rebuildPopupMenu(final 
+         ToolbarPopupMenu.DynamicPopupMenuCallback callback)
+   {
+      final ToolbarPopupMenu menu = publishMenu_;
+
+      // prevent reentrancy
+      if (contentPath_ == null || populating_)
+      {
+         if (callback != null)
+            callback.onPopupMenu(menu);
+         return;
+      }
+      
+      // avoid populating if we've already set the deployments for this path
+      // (unless we're forcefully repopulating)
+      if (populatedPath_ != null && populatedPath_.equals(contentPath_))
+      {
+         if (callback != null)
+            callback.onPopupMenu(menu);
+         return;
+      }
+   
+      // if this is a Shiny application, check for deployments of its parent
+      // path
+      String contentPath = contentPath_;
+      if (contentType_ == RSConnect.CONTENT_TYPE_APP) {
+         FileSystemItem fsiContent = FileSystemItem.createFile(contentPath_);
+         contentPath = fsiContent.getParentPathString();
+      }
+      populating_ = true;
+      server_.getRSConnectDeployments(contentPath, 
+            outputPath_ == null ? "" : outputPath_,
+            new ServerRequestCallback<JsArray<RSConnectDeploymentRecord>>()
+      {
+         @Override
+         public void onResponseReceived(JsArray<RSConnectDeploymentRecord> recs)
+         {
+            populatedPath_ = contentPath_;
+            populating_ = false;
+            setPreviousDeployments(recs);
+            if (callback != null)
+               callback.onPopupMenu(menu);
+         }
+         
+         @Override
+         public void onError(ServerError error)
+         {
+            populating_ = false;
+            if (callback != null)
+               callback.onPopupMenu(menu);
+         }
+      });
+   }
+   
    private final ToolbarButton publishButton_;
-   private final ToolbarPopupMenu publishMenu_;
+   private final DeploymentPopupMenu publishMenu_;
 
    private RSConnectServerOperations server_;
    private EventBus events_;
