@@ -183,6 +183,7 @@ public class RSConnect implements SessionInitHandler,
             break;
          case CONTENT_TYPE_PLOT:
          case CONTENT_TYPE_HTML:
+         case CONTENT_TYPE_PRES:
          case CONTENT_TYPE_DOCUMENT:
             if (event.getFromPrevious().getServer().equals("rpubs.com"))
             {
@@ -248,7 +249,8 @@ public class RSConnect implements SessionInitHandler,
    {
       final RSConnectActionEvent event = input.getOriginatingEvent();
       if (input.getContentType() == CONTENT_TYPE_PLOT ||
-          input.getContentType() == CONTENT_TYPE_HTML)
+          input.getContentType() == CONTENT_TYPE_HTML ||
+          input.getContentType() == CONTENT_TYPE_PRES)
       {
          if (!input.isConnectUIEnabled() && input.isExternalUIEnabled())
          {
@@ -312,11 +314,22 @@ public class RSConnect implements SessionInitHandler,
    
    private void publishAsStatic(RSConnectPublishInput input)
    {
-      publishAsFiles(input.getOriginatingEvent(), 
-            new RSConnectPublishSource(
-                  input.getOriginatingEvent().getFromPreview(),
-                  input.isSelfContained(),
-                  input.getDescription()));
+      RSConnectPublishSource source = null;
+      if (input.getContentType() == RSConnect.CONTENT_TYPE_DOCUMENT)
+      {
+         source = new RSConnectPublishSource(
+                     input.getOriginatingEvent().getFromPreview(),
+                     input.isSelfContained(),
+                     input.getDescription());
+      }
+      else
+      {
+         source = new RSConnectPublishSource(
+               input.getOriginatingEvent().getHtmlFile(),
+               input.isSelfContained(), 
+               input.getDescription());
+      }
+      publishAsFiles(input.getOriginatingEvent(), source);
    }
 
    private void publishAsFiles(RSConnectActionEvent event,
@@ -542,6 +555,8 @@ public class RSConnect implements SessionInitHandler,
          return "HTML";
       case RSConnect.CONTENT_TYPE_DOCUMENT:
          return "Document";
+      case RSConnect.CONTENT_TYPE_PRES:
+         return "Presentation";
       }
       return "Content";
    }
@@ -905,6 +920,9 @@ public class RSConnect implements SessionInitHandler,
    // A Shiny application
    public final static int CONTENT_TYPE_APP      = 3;
    
-   // Standalone HTML (from .RPres, HTML widgets/viewer pane, etc.)
+   // Standalone HTML (from HTML widgets/viewer pane, etc.)
    public final static int CONTENT_TYPE_HTML     = 4;
+   
+   // A .Rpres presentation
+   public final static int CONTENT_TYPE_PRES     = 5;
 }

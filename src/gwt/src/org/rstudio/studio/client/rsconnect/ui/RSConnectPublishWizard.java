@@ -36,7 +36,8 @@ public class RSConnectPublishWizard
       // dealing with (all other content type situations don't require a 
       // wizard to resolve)
       if (input.getContentType() == RSConnect.CONTENT_TYPE_PLOT ||
-          input.getContentType() == RSConnect.CONTENT_TYPE_HTML)
+          input.getContentType() == RSConnect.CONTENT_TYPE_HTML ||
+          input.getContentType() == RSConnect.CONTENT_TYPE_PRES)
       {
          return new PublishStaticDestPage("Publish", "Publish", null, input, 
                false);

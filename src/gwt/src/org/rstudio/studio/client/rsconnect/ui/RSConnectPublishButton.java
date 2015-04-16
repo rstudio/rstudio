@@ -212,7 +212,8 @@ public class RSConnectPublishButton extends Composite
             populateDeployments(true);
          
          // moving to a raw HTML type: erase the deployment list
-         if (contentType == RSConnect.CONTENT_TYPE_HTML)
+         if (contentType == RSConnect.CONTENT_TYPE_HTML ||
+             contentType == RSConnect.CONTENT_TYPE_PRES)
             setPreviousDeployments(null);
       }
       applyVisiblity();
@@ -292,6 +293,7 @@ public class RSConnectPublishButton extends Composite
       switch (contentType_)
       {
       case RSConnect.CONTENT_TYPE_HTML:
+      case RSConnect.CONTENT_TYPE_PRES:
          if (publishHtmlSource_ == null) 
          {
             display_.showErrorMessage("Content Publish Failed",
@@ -305,8 +307,8 @@ public class RSConnectPublishButton extends Composite
                   public void execute(String arg)
                   {
                      events_.fireEvent(RSConnectActionEvent.DeployHtmlEvent(
-                           contentPath_, arg, publishHtmlSource_.getTitle(),
-                           previous));
+                           contentType_, contentPath_, arg, 
+                           publishHtmlSource_.getTitle(), previous));
                   }
                });
          break;
@@ -459,7 +461,8 @@ public class RSConnectPublishButton extends Composite
       // if we do have a content type, ensure that we have actual content 
       // bound to it
       if ((contentType_ == RSConnect.CONTENT_TYPE_HTML || 
-            contentType_ == RSConnect.CONTENT_TYPE_PLOT) &&
+            contentType_ == RSConnect.CONTENT_TYPE_PLOT ||
+            contentType_ == RSConnect.CONTENT_TYPE_PRES) &&
            publishHtmlSource_ == null)
          return false;
       
