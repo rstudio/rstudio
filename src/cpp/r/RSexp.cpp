@@ -20,7 +20,7 @@
 #include <r/RSexp.hpp>
 #include <r/RInternal.hpp>
 
-#include <algorithm>
+#include <core/Algorithm.hpp>
 
 #include <boost/bind.hpp>
 #include <boost/function.hpp>
@@ -45,9 +45,11 @@ using namespace rstudio::core ;
 namespace rstudio {
 namespace r {
    
-using namespace exec ;
+using namespace exec;
    
 namespace sexp {
+
+using namespace core::r_util;
 
 namespace {
 
@@ -1071,6 +1073,7 @@ std::set<std::string> makeNsePrimitives()
    nsePrimitives.insert("evalq");
    nsePrimitives.insert("subset");
    nsePrimitives.insert("eval.parent");
+   nsePrimitives.insert("lazy_dots");
    return nsePrimitives;
 }
 
@@ -1080,24 +1083,42 @@ const std::set<std::string>& nsePrimitives()
    return set;
 }
 
-bool isCallToNSEFunction(SEXP node,
+bool isNSEPrimitiveSymbolOrString(
+      SEXP objectSEXP,
+      const std::set<std::string>& nsePrimitives)
+{
+   if (TYPEOF(objectSEXP) == SYMSXP)
+      return nsePrimitives.count(CHAR(PRINTNAME(objectSEXP)));
+   else if (TYPEOF(objectSEXP) == STRSXP &&
+            length(objectSEXP) == 1)
+      return nsePrimitives.count(CHAR(STRING_ELT(objectSEXP, 0)));
+   
+   return false;
+}
+
+bool isCallToNSEFunction(SEXP nodeSEXP,
                          const std::set<std::string>& nsePrimitives,
                          bool* pResult)
 {
-   if (TYPEOF(node) != LANGSXP)
-      return false;
-   
-   while (TYPEOF(node) == LANGSXP)
-      node = CAR(node);
-   
-   if (TYPEOF(node) == SYMSXP && nsePrimitives.count(CHAR(PRINTNAME(node))))
+   if (TYPEOF(nodeSEXP) == LANGSXP)
    {
-      *pResult = true;
-      return true;
+      SEXP headSEXP = CAR(nodeSEXP);
+      if (TYPEOF(headSEXP) == SYMSXP)
+      {
+         const char* name = CHAR(PRINTNAME(headSEXP));
+         if (nsePrimitives.count(name))
+            return true;
+         
+         if (strcmp(name, "::") == 0 ||
+             strcmp(name, ":::") == 0)
+         {
+            SEXP fnSEXP = CADDR(nodeSEXP);
+            if (isNSEPrimitiveSymbolOrString(fnSEXP, nsePrimitives))
+               return true;
+         }
+      }
    }
-   
    return false;
-   
 }
 
 // Attempts to find calls to functions which perform NSE.
@@ -1107,21 +1128,49 @@ bool maybePerformsNSEImpl(SEXP node,
    r::sexp::CallRecurser recurser(node);
    bool result = false;
    recurser.add(boost::bind(
-                   isCallToNSEFunction, _1, boost::cref(nsePrimitives), &result));
+                   isCallToNSEFunction, _1,
+                   boost::cref(nsePrimitives), &result));
    recurser.run();
    return result;
 }
 
-bool maybePerformsNSE(SEXP function)
+std::set<SEXP> makeKnownNSEFunctions()
 {
-   if (!Rf_isFunction(function))
+   std::set<SEXP> set;
+   
+   set.insert(findFunction("with", "base"));
+   set.insert(findFunction("within", "base"));
+   
+   // TODO: These don't really perform NSE, but the symbols
+   // used for '.Call' are not generated in a way that we can
+   // easily detect until the package is actually built.
+   set.insert(findFunction(".Call", "base"));
+   set.insert(findFunction(".C", "base"));
+   set.insert(findFunction(".Fortran", "base"));
+   set.insert(findFunction(".External", "base"));
+   
+   return set;
+}
+
+bool isKnownNseFunction(SEXP functionSEXP)
+{
+   static const std::set<SEXP> knownNseFunctions = makeKnownNSEFunctions();
+   return core::algorithm::contains(knownNseFunctions, functionSEXP);
+}
+
+bool maybePerformsNSE(SEXP functionSEXP)
+{
+   if (isKnownNseFunction(functionSEXP))
+      return true;
+   
+   if (!Rf_isFunction(functionSEXP))
       return false;
    
-   if (Rf_isPrimitive(function))
+   if (Rf_isPrimitive(functionSEXP))
       return false;
    
    return maybePerformsNSEImpl(
-            functionBody(function),
+            functionBody(functionSEXP),
             nsePrimitives());
 }
 
@@ -1240,16 +1289,16 @@ void examineSymbolUsage(
    // fill output
    BOOST_FOREACH(FormalInformation& info, pInfo->formals())
    {
-      const std::string& name = info.name;
-      info.isUsed = usage.symbolsUsed.contains(name.c_str());
+      const std::string& name = info.name();
+      info.setIsUsed(usage.symbolsUsed.contains(name.c_str()));
       
       bool isInternalFunction = 
             usage.symbolsUsed.contains(".Internal") ||
             usage.symbolsUsed.contains(".Primitive");
-      
-      info.missingnessHandled =
-            isInternalFunction ||
-            usage.symbolsCheckedForMissingness.contains(name.c_str());
+
+      info.setMissingnessHandled(
+          isInternalFunction ||
+          usage.symbolsCheckedForMissingness.contains(name.c_str()));
    }
 }
 
@@ -1307,7 +1356,7 @@ SEXP primitiveWrapper(SEXP primitiveSEXP)
    return wrappers[primitiveSEXP];
 }
 
-core::Error extractFormals(
+core::Error extractFunctionInfo(
       SEXP functionSEXP,
       FunctionInformation* pInfo,
       bool extractDefaultArguments,
@@ -1355,8 +1404,8 @@ core::Error extractFormals(
       {
          if (CAR(formals) != R_MissingArg)
          {
-            formalInfo.defaultValue = 
-                  boost::optional<std::string>(CHAR(STRING_ELT(defaultValues, index)));
+            formalInfo.setDefaultValue( 
+                  CHAR(STRING_ELT(defaultValues, index)));
          }
       }
       
@@ -1371,6 +1420,45 @@ core::Error extractFormals(
       examineSymbolUsage(functionSEXP, pInfo);
    
    return Success();
+}
+
+namespace {
+
+std::string addressAsString(void* ptr)
+{
+   // NOTE: over-allocating but whatever
+   char buf[33];
+   snprintf(buf, 32, "<%p>", ptr);
+   return buf;
+}
+
+} // anonymous namespace
+
+// NOTE: accept both functions and environments
+// for functions, we return the name of the enclosing environment
+std::string environmentName(SEXP envSEXP)
+{
+   if (Rf_isPrimitive(envSEXP))
+      return "base";
+   
+   if (Rf_isFunction(envSEXP))
+      envSEXP = CLOENV(envSEXP);
+   
+   if (TYPEOF(envSEXP) != ENVSXP)
+      return "<unknown>";
+   
+   if (envSEXP == R_GlobalEnv)
+      return "R_GlobalEnv";
+   else if (envSEXP == R_BaseEnv)
+      return "base";
+   else if (R_IsPackageEnv(envSEXP))
+      return std::string("package:") +
+            CHAR(STRING_ELT(R_PackageEnvName(envSEXP), 0));
+   else if (R_IsNamespaceEnv(envSEXP))
+      return std::string("namespace:") +
+            CHAR(STRING_ELT(R_NamespaceEnvSpec(envSEXP), 0));
+   else
+      return addressAsString((void*) envSEXP);
 }
 
 } // namespace sexp   

@@ -97,6 +97,12 @@ implements HasEnsureVisibleHandlers
          return widget;
       }
    }
+   
+   protected Widget spacedBefore(Widget widget)
+   {
+      widget.addStyleName(res_.styles().spacedBefore());
+      return widget;
+   }
 
    protected Widget spaced(Widget widget)
    {

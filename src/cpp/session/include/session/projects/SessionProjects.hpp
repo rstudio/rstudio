@@ -152,6 +152,8 @@ public:
    {
       return packageInfo_;
    }
+   
+   bool isPackageProject();
 
    // does this project context have a file monitor? (might not have one
    // if the user has disabled code indexing or if file monitoring failed

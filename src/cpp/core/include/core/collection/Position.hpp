@@ -23,7 +23,6 @@ namespace collection {
 
 struct Position
 {
-   
    Position(std::size_t row = 0, std::size_t column = 0)
       : row(row), column(column) {}
    
@@ -50,6 +49,18 @@ struct Position
       return lhs.row == rhs.row && lhs.column == rhs.column;
    }
    
+   friend bool operator >(const Position& lhs,
+                          const Position& rhs)
+   {
+      return rhs < lhs;
+   }
+   
+   friend bool operator >=(const Position& lhs,
+                           const Position& rhs)
+   {
+      return rhs <= lhs;
+   }
+   
    std::string toString() const
    {
       std::stringstream ss;
@@ -65,6 +76,59 @@ struct Position
    std::size_t row;
    std::size_t column;
 };
+
+class Range
+{
+public:
+   
+   Range(const Position& begin, const Position& end)
+      : begin_(begin), end_(end)
+   {}
+   
+   const Position& begin() const
+   {
+      return begin_;
+   }
+   
+   const Position& end() const
+   {
+      return end_;
+   }
+   
+   friend bool operator <(const Range& lhs,
+                          const Range& rhs)
+   {
+      return lhs.begin() < rhs.begin() &&
+             lhs.end() < rhs.end();
+   }
+   
+   bool isWithin(const Range& range) const
+   {
+      return begin() >= range.begin() && end() <= range.end();
+   }
+   
+   bool contains(const Position& position) const
+   {
+      return begin() <= position && end() >= position;
+   }
+   
+   bool contains(const Range& range) const
+   {
+      return contains(range.begin()) && contains(range.end());
+   }
+   
+   bool overlaps(const Range& range) const
+   {
+      return contains(range.begin()) || contains(range.end());
+   }
+   
+private:
+   
+   Position begin_;
+   Position end_;
+};
+
+
 
 } // namespace collection
 } // namespace core

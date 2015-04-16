@@ -856,6 +856,10 @@
 ## 
 ## NOTE: Function may be used by async R process; must not call back into
 ## 'rs_' compiled code!
+##
+## NOTE: lists are considered as objects if they are named, and as arrays if
+## they are not. If you have an empty list that you want to treat as an object,
+## you must give it a names attribute.
 .rs.addFunction("toJSON", function(object)
 {
    AsIs <- inherits(object, "AsIs") || inherits(object, ".rs.scalar")
@@ -899,7 +903,7 @@
       }
       else if (is.logical(object))
       {
-         object <- tolower(object)
+
          object[is.na(object)] <- 'null'
       }
       
@@ -910,7 +914,46 @@
    }
 })
 
-.rs.addFunction("getAsyncExports", function(...)
+.rs.addFunction("recordFunctionInformation", function(node,
+                                                      missingEnv,
+                                                      symbolsUsedEnv)
+{
+   if (is.call(node) && length(node) == 2)
+   {
+      head <- node[[1]]
+      second <- node[[2]]
+      if (.rs.isSymbolCalled(head, "missing") &&
+          is.symbol(second))
+      {
+         missingEnv[[as.character(second)]] <- TRUE
+      }
+   }
+   
+   ## TODO: Obviously not perfect because of NSE.
+   if (is.symbol(node) && !identical(node, quote(expr = )))
+      symbolsUsedEnv[[as.character(node)]] <- TRUE
+})
+
+.rs.addFunction("emptyNamedList", function()
+{
+   `names<-`(list(), character())
+})
+
+.rs.addFunction("emptyFunctionInfo", function()
+{
+   list(
+      formal_names = character(),
+      formal_info  = list(),
+      performs_nse = I(0L)
+   )
+})
+
+# NOTE: This function is used in asynchronous R processes and so
+# cannot call back into any RStudio compiled code! Even further,
+# `SessionAsyncPackageInformation.cpp` decodes fields based on
+# their names, so if you re-name a field here you must modify the
+# extraction implementation there as well.
+.rs.addFunction("getPackageInformation", function(...)
 {
    invisible(lapply(list(...), function(x) {
       tryCatch({
@@ -918,25 +961,64 @@
          # Explicitly load the library, and do everything we can to hide any
          # package startup messages (because we don't want to put non-JSON
          # on stdout)
-         invisible(capture.output(suppressPackageStartupMessages(
-            library(x, character.only = TRUE, quietly = TRUE)
-         )))
+         invisible(capture.output(suppressPackageStartupMessages(suppressWarnings(
+            success <- library(x, character.only = TRUE, quietly = TRUE, logical.return = TRUE)
+         ))))
+         
+         if (!success)
+            return(.rs.emptyFunctionInfo())
          
          # Get the exported items in the NAMESPACE (for search path + `::`
-         # completions), and then everything else (for `:::` completions)
+         # completions).
          ns <- asNamespace(x)
          exports <- getNamespaceExports(ns)
          objects <- mget(exports, ns, inherits = TRUE)
+         isFunction <- vapply(objects, FUN.VALUE = logical(1), USE.NAMES = FALSE, is.function)
+         functions <- objects[isFunction]
          
          # Figure out the completion types for these objects
-         types <- unlist(lapply(objects, .rs.getCompletionType))
+         types <- vapply(objects, FUN.VALUE = numeric(1), USE.NAMES = FALSE, .rs.getCompletionType)
          
-         # Find the functions -- for these, we want to return the argument
-         # names (since we want to enable function argument completions)
-         isFunction <- unlist(lapply(objects, is.function))
-         functions <- objects[isFunction]
-         functions <- lapply(functions, function(f) {
-            names(formals(f))
+         # Find the functions, and generate information on each formal
+         # (does it have a default argument; is missingness handled; etc)
+         functionInfo <- lapply(functions, function(f) {
+            
+            formals <- formals(f)
+            if (!length(formals))
+               return(.rs.emptyFunctionInfo())
+            
+            formalNames <- names(formals)
+            hasDefault <- vapply(formals, FUN.VALUE = integer(1), USE.NAMES = FALSE, function(x) {
+               !identical(x, quote(expr =))
+            })
+            
+            # Record which symbols in the function body handle missingness,
+            # to check if missingness of default arguments is handled
+            missingEnv <- new.env(parent = emptyenv())
+            usedSymbolsEnv <- new.env(parent = emptyenv())
+            .rs.recursiveWalk(body(f), function(node) {
+               .rs.recordFunctionInformation(node, missingEnv, usedSymbolsEnv)
+            })
+            
+            # Figure out which functions perform NSE. TODO: Figure out which
+            # arguments are actually involved in NSE.
+            performsNse <- as.integer(
+               .rs.recursiveSearch(body(f), .rs.performsNonstandardEvaluation)
+            )
+            
+            formalInfo <- lapply(seq_along(formalNames), function(i) {
+               as.integer(c(
+                  hasDefault[[i]],
+                  formalNames[[i]] == "..." || exists(formalNames[[i]], envir = missingEnv),
+                  exists(formalNames[[i]], envir = usedSymbolsEnv)
+               ))
+            })
+            
+            list(
+               formal_names = formalNames,
+               formal_info  = formalInfo,
+               performs_nse = I(performsNse)
+            )
          })
          
          # Generate the output
@@ -944,13 +1026,81 @@
             package = I(x),
             exports = exports,
             types = types,
-            functions = functions
+            function_info = functionInfo
          )
          
          # Write the JSON to stdout; parent processes
          cat(.rs.toJSON(output), sep = "\n")
+         
+         # Return output for debug purposes
+         output
+         
       }, error = function(e) NULL)
    }))
+})
+
+.rs.setVar("nse.primitives", c(
+   "quote", "substitute", "match.call", "eval.parent",
+   "enquote", "bquote", "evalq", "lazy_dots"
+))
+
+.rs.addFunction("performsNonstandardEvaluation", function(functionBody)
+{
+   # Allow callers to just pass in functions
+   if (is.function(functionBody))
+      functionBody <- body(functionBody)
+   
+   nsePrimitives <- .rs.getVar("nse.primitives")
+   .rs.recursiveSearch(functionBody,
+                       .rs.performsNonstandardEvaluationImpl,
+                       nsePrimitives = nsePrimitives)
+})
+
+.rs.addFunction("performsNonstandardEvaluationImpl", function(node, nsePrimitives)
+{
+   # Check if this is a call to an NSE primitive.
+   if (is.call(node))
+   {
+      head <- node[[1]]
+      if (!is.symbol(head))
+         return(FALSE)
+      
+      headString <- as.character(head)
+      if (headString %in% nsePrimitives)
+         return(TRUE)
+      
+      # Check if this is a call to an NSE primitive, qualified through
+      # `::` or `:::`.
+      if (headString %in% c("::", ":::") && length(node) == 3)
+      {
+         export <- node[[3]]
+         if (as.character(export) %in% nsePrimitives)
+            return(TRUE)
+      }
+   }
+   
+   return(FALSE)
+})
+
+.rs.addFunction("recursiveSearch", function(`_node`, fn, ...)
+{
+   if (fn(`_node`, ...)) return(TRUE)
+   
+   if (is.call(`_node`))
+      for (i in seq_along(`_node`))
+         if (.rs.recursiveSearch(`_node`[[i]], fn, ...))
+            return(TRUE)
+   
+   return(FALSE)
+})
+
+.rs.addFunction("recursiveWalk", function(`_node`, fn, ...)
+{
+   fn(`_node`, ...)
+   
+   if (is.call(`_node`))
+      for (i in seq_along(`_node`))
+         .rs.recursiveWalk(`_node`[[i]], fn, ...)
 })
 
 .rs.addFunction("trimWhitespace", function(x)
@@ -1017,7 +1167,7 @@
 
 .rs.addFunction("isSymbolCalled", function(maybeSymbol, name)
 {
-   is.symbol(maybeSymbol) && identical(as.character(maybeSymbol), name)
+   is.symbol(maybeSymbol) && as.character(maybeSymbol) == name
 })
 
 .rs.addJsonRpcHandler("get_set_class_slots", function(setClassCallString)
@@ -1200,13 +1350,29 @@
             ""
       }))
    }
+   
+   methods <- .rs.extractElement(matched, "methods")
+   method.names <- if (length(methods))
+      names(methods)[-1]
+   else
+      character()
 
    list(
       Class = Class,
       field.names = field.names,
-      field.types = field.types
+      field.types = field.types,
+      method.names = method.names
    )
    
+})
+
+.rs.addFunction("getSetRefClassSymbols", function(callString)
+{
+   parsed <- .rs.rpc.get_set_ref_class_call(callString)
+   as.character(c(
+      parsed$field.names,
+      parsed$method.name
+   ))
 })
 
 .rs.addFunction("registerNativeRoutines", function()
@@ -1246,5 +1412,58 @@
 })
 
 .rs.addFunction("makePrimitiveWrapper", function(x) {
-   wrapper <- eval(parse(text = capture.output(x)), envir = parent.frame(1))
+   eval(parse(text = capture.output(x)), envir = parent.frame(1))
+})
+
+.rs.addFunction("extractNativeSymbols", function(DLL, collapse = TRUE)
+{
+   info <- getDLLRegisteredRoutines(DLL)
+   result <- lapply(info, function(routine) {
+      as.character(names(routine))
+   })
+   
+   if (collapse)
+      result <- as.character(unlist(result))
+   
+   result
+})
+
+.rs.addFunction("getNativeSymbols", function(package)
+{
+   loadedDLLs <- getLoadedDLLs()
+   if (package %in% names(loadedDLLs))
+      return(.rs.extractNativeSymbols(loadedDLLs[[package]]))
+   
+   reExtension <- paste("\\", .Platform$dynlib.ext, "$", sep = "")
+   
+   # Try loading the DLL temporarily so we can extract the symbols.
+   # Note that the shared object name does not necessarily match that
+   # of the package; e.g. `data.table` munges the object name.
+   libPath <- system.file("libs", package = package)
+   dllNames <- sub(
+      reExtension,
+      "",
+      list.files(libPath, pattern = reExtension)
+   )
+   
+   as.character(unlist(lapply(dllNames, function(name) {
+      
+      # TODO: Are there side-effects of this call that we want to avoid? If so
+      # we might want to execute this in a separate R process.
+      DLL <- try(
+         library.dynam(name, package = package, lib.loc = .libPaths()),
+         silent = TRUE
+      )
+      
+      if (inherits(DLL, "try-error"))
+         return(character())
+      
+      dllPath <- DLL[["path"]]
+      on.exit({
+         library.dynam.unload(name, libpath = system.file(package = package))
+      }, add = TRUE)
+      
+      return(.rs.extractNativeSymbols(DLL))
+   })))
+   
 })

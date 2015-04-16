@@ -1,5 +1,5 @@
 /*
- * SessionLinter.hpp
+ * SessionDiagnostics.hpp
  *
  * Copyright (C) 2009-2015 by RStudio, Inc.
  *
@@ -13,29 +13,8 @@
  *
  */
 
-#ifndef SESSION_LINTER_HPP
-#define SESSION_LINTER_HPP
-
-#include <vector>
-#include <string>
-#include <iostream>
-#include <sstream>
-#include <map>
-#include <set>
-
-#include <core/r_util/RTokenizer.hpp>
-#include "SessionRParser.hpp"
-#include "SessionRTokenCursor.hpp"
-#include <core/collection/Stack.hpp>
-#include <core/collection/Position.hpp>
-#include <core/StringUtils.hpp>
-
-#include <boost/shared_ptr.hpp>
-#include <boost/foreach.hpp>
-#include <boost/algorithm/string.hpp>
-#include <boost/range/adaptor/map.hpp>
-
-#include <core/Macros.hpp>
+#ifndef SESSION_MODULES_DIAGNOSTICS_HPP
+#define SESSION_MODULES_DIAGNOSTICS_HPP
 
 namespace rstudio {
 namespace core {
@@ -46,13 +25,13 @@ namespace core {
 namespace rstudio {
 namespace session {
 namespace modules {
-namespace linter {
+namespace diagnostics {
 
 core::Error initialize();
 
-} // namespace linter
+} // namespace diagnostics
 } // namespace modules
 } // namespace session
 } // namespace rstudio
 
-#endif // SESSION_LINTER_HPP
+#endif /* SESSION_MODULES_DIAGNOSTICS_HPP */

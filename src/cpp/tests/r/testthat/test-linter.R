@@ -2,7 +2,7 @@
 ## source files.
 library(testthat)
 
-context("Linter")
+context("Diagnostics")
 setwd(.rs.getProjectDirectory())
 
 lint <- function(x) {

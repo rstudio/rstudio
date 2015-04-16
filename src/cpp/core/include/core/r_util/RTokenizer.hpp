@@ -28,7 +28,7 @@
 
 #include <boost/utility.hpp>
 #include <boost/shared_ptr.hpp>
-#include <boost/regex_fwd.hpp>
+#include <boost/regex.hpp>
 
 #include <core/Macros.hpp>
 
@@ -229,7 +229,7 @@ private:
    wchar_t peek();
    wchar_t peek(std::size_t lookahead);
    wchar_t eat();
-   std::wstring peek(const boost::wregex& regex);
+   std::size_t tokenLength(const boost::wregex& regex);
    void eatUntil(const boost::wregex& regex);
    RToken consumeToken(RToken::TokenType tokenType, std::size_t length);
    
@@ -305,6 +305,14 @@ public:
 
          push_back(token);
       }
+   }
+   
+   friend std::ostream& operator <<(std::ostream& os,
+                                    const RTokens& rTokens)
+   {
+      for (std::size_t i = 0, n = rTokens.size(); i < n; ++i)
+         os << rTokens.atUnsafe(i) << std::endl;
+      return os;
    }
 
 private:
@@ -518,7 +526,7 @@ inline bool isSymbolNamed(const RToken& rToken,
    // is equal to the name provided. TODO: handle escaped
    // quotes within
    if (rToken.isType(RToken::STRING) ||
-       (rToken.isType(RToken::ID) && *rToken.begin() == '`'))
+       (rToken.isType(RToken::ID) && *rToken.begin() == L'`'))
    {
       std::size_t distance = std::distance(
                rToken.begin(), rToken.end());
@@ -531,6 +539,44 @@ inline bool isSymbolNamed(const RToken& rToken,
    }
    
    return rToken.contentEquals(name);
+}
+
+inline std::string getSymbolName(const RToken& rToken)
+{
+   if (rToken.isType(RToken::STRING) ||
+       (rToken.isType(RToken::ID) && *rToken.begin() == L'`'))
+   {
+       return string_utils::wideToUtf8(
+          std::wstring(rToken.begin() + 1, rToken.end() - 1));
+   }
+   
+   return rToken.contentAsUtf8();
+}
+
+inline bool canFollowBinaryOperator(const RToken& rToken)
+{
+   switch (rToken.type())
+   {
+   case RToken::ID:
+   case RToken::LBRACE:
+   case RToken::LPAREN:
+   case RToken::NUMBER:
+   case RToken::STRING:
+      return true;
+   default:
+      ; // fall-through
+   }
+   
+   if (isValidAsUnaryOperator(rToken))
+      return true;
+   
+   return false;
+}
+
+inline bool isPipeOperator(const RToken& rToken)
+{
+   static const boost::wregex rePipe(L"^%[^>]*>+[^>]*%$");
+   return boost::regex_match(rToken.begin(), rToken.end(), rePipe);
 }
 
 } // end namespace token_utils

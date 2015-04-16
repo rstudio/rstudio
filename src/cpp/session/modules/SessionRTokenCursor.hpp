@@ -16,6 +16,8 @@
 #ifndef SESSION_MODULES_RTOKENCURSOR_HPP
 #define SESSION_MODULES_RTOKENCURSOR_HPP
 
+#include <iostream>
+
 #include <core/r_util/RTokenizer.hpp>
 #include "SessionRParser.hpp"
 
@@ -74,6 +76,16 @@ public:
       return offset_;
    }
    
+   void moveToStartOfTokenStream()
+   {
+      offset_ = 0;
+   }
+   
+   void moveToEndOfTokenStream()
+   {
+      offset_ = n_ - 1;
+   }
+   
    bool moveToNextToken()
    {
       if (UNLIKELY(offset_ == n_ - 1))
@@ -112,6 +124,11 @@ public:
       }
       
       return false;
+   }
+   
+   bool moveToPosition(std::size_t row, std::size_t column)
+   {
+      return moveToPosition(Position(row, column));
    }
    
    void moveToOffset(std::size_t destination,
@@ -473,7 +490,8 @@ public:
   {
      return nextToken().contentContains(L'\n') ||
             nextSignificantToken().isType(RToken::SEMI) ||
-            nextSignificantToken().isType(RToken::COMMA);
+            nextSignificantToken().isType(RToken::COMMA) ||
+            nextSignificantToken().row() > row();
   }
   
   bool endsExpression() const
@@ -483,7 +501,7 @@ public:
             isType(RToken::COMMA);
   }
   
-  bool isAtEndOfStatement(const ParseStatus& status)
+  bool isAtEndOfStatement(bool inParentheticalScope)
   {
      // Whether we're in a parenthetical scope is important!
      // For example, these parse the same:
@@ -496,11 +514,8 @@ public:
      //      foo\n(1)
      //      foo  (1)
      //
-     if (!status.isInParentheticalScope() &&
-         isWhitespaceWithNewline(nextToken()))
-     {
+     if (!inParentheticalScope && isWhitespaceWithNewline(nextToken()))
         return true;
-     }
      
      const RToken& next = nextSignificantToken();
      return !(
@@ -508,6 +523,18 @@ public:
               next.isType(RToken::LPAREN) ||
               next.isType(RToken::LBRACKET) ||
               next.isType(RToken::LDBRACKET));
+     
+  }
+  
+  bool isLookingAtNamedArgumentInFunctionCall()
+  {
+     return isValidAsIdentifier(*this) &&
+            nextSignificantToken().contentEquals(L"=");
+  }
+  
+  bool isAtEndOfStatement(const ParseStatus& status)
+  {
+     return isAtEndOfStatement(status.isInParentheticalScope());
   }
   
   bool appearsToBeBinaryOperator() const
@@ -565,7 +592,7 @@ public:
   //    foo + bar::baz$bam()
   //          ^^^^^^^^^^^^
   //
-  std::wstring getCallingString() const
+  std::wstring getEvaluationAssociatedWithCall() const
   {
      RTokenCursor cursor = clone();
      
@@ -581,15 +608,54 @@ public:
      return std::wstring(begin, end);
   }
   
+  // Get the entirety of a function call, e.g.
+  //
+  //    foo + bar::baz$bam(a, b, c)
+  //          ^^^^^^^^^^^^^^^^^^^^^
+  //
+  std::wstring getFunctionCall() const
+  {
+     std::wstring evaluation = getEvaluationAssociatedWithCall();
+     RTokenCursor cursor = clone();
+     if (!cursor.moveToNextSignificantToken())
+        return std::wstring();
+     
+     if (!cursor.fwdToMatchingToken())
+        return std::wstring();
+     
+     return evaluation + std::wstring(this->end(), cursor.end());
+  }
+  
+  // Check to see if this is an 'assignment' call, e.g.
+  //
+  //    body(f, where) <- x
+  //
+  bool isAssignmentCall() const
+  {
+     RTokenCursor cursor = clone();
+     if (canOpenArgumentList(cursor.nextSignificantToken()))
+        if (!cursor.moveToNextSignificantToken())
+           return false;
+     
+     if (!canOpenArgumentList(cursor))
+        return false;
+     
+     if (!cursor.fwdToMatchingToken())
+        return false;
+     
+     return isLeftAssign(cursor.nextSignificantToken());
+  }
+  
   // Check if this is a 'simple' call; that is, the call is a single
   // call to a particular string / symbol, as in:
   //
   //    foo(1, 2)
   //
-  // We optimize for this case as we can then search for the symbol directly,
-  // and avoid other slow evaluation codepaths.
   bool isSimpleCall() const
   {
+     if (isAssignmentCall())
+        return false;
+     
      RTokenCursor cursor = clone();
      if (canOpenArgumentList(cursor))
         if (!cursor.moveToPreviousSignificantToken())
@@ -615,6 +681,9 @@ public:
   // 'bar' in the 'foo' namespace.
   bool isSimpleNamespaceCall() const
   {
+     if (isAssignmentCall())
+        return false;
+     
      RTokenCursor cursor = clone();
      if (canOpenArgumentList(cursor))
         if (!cursor.moveToPreviousSignificantToken())
@@ -733,6 +802,69 @@ public:
         
         return true;
      }
+  }
+  
+  std::string getHeadOfPipeChain()
+  {
+     RTokenCursor cursor = clone();
+     std::string onFailure;
+     
+     do
+     {
+        if (cursor.bwdToMatchingToken())
+           continue;
+        
+        if (isPipeOperator(cursor.previousSignificantToken()))
+           goto PIPE_START;
+        
+        // mtcars %>% foo$bar(
+        //                   ^
+        if (cursor.isType(RToken::LPAREN))
+        {
+           
+           // mtcars %>% foo$bar(
+           //                ^<<^
+           if (!cursor.moveToPreviousSignificantToken())
+              return onFailure;
+           
+           // mtcars %>% foo$bar(
+           //            ^<<<^
+           if (!cursor.moveToStartOfEvaluation())
+              return onFailure;
+           
+           PIPE_START:
+           
+           // mtcars %>% foo$bar(
+           //        ???
+           if (!isPipeOperator(cursor.previousSignificantToken()))
+              continue;
+           
+           // mtcars %>% foo$bar(
+           //        ^<<<^
+           if (!cursor.moveToPreviousSignificantToken())
+              return onFailure;
+           
+           // mtcars %>% foo$bar(
+           // ^<<<<<<^
+           if (!cursor.moveToPreviousSignificantToken())
+              return onFailure;
+           
+           RTokenCursor endCursor = cursor.clone();
+           
+           if (!cursor.moveToStartOfEvaluation())
+              return onFailure;
+           
+           if (isPipeOperator(cursor.previousSignificantToken()))
+              goto PIPE_START;
+           
+           return string_utils::wideToUtf8(std::wstring(
+                    cursor.begin(), endCursor.end()));
+        }
+        
+     } while (cursor.moveToPreviousSignificantToken());
+     
+     return onFailure;
+     
   }
   
   std::size_t length() const { return currentToken().length(); }

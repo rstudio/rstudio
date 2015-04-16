@@ -19,6 +19,7 @@
 #include <boost/algorithm/string/replace.hpp>
 #include <boost/regex.hpp>
 
+#include <core/Algorithm.hpp>
 #include <core/FilePath.hpp>
 #include <core/StringUtils.hpp>
 #include <core/Error.hpp>
@@ -190,12 +191,28 @@ std::set<std::string> makeRKeywords()
 }
 
 
-bool isRKeyword(const std::string &name)
+bool isRKeyword(const std::string& name)
 {
    static const std::set<std::string> s_rKeywords = makeRKeywords();
    static const boost::regex s_reDotDotNumbers("\\.\\.[0-9]+");
    return s_rKeywords.count(name) != 0 ||
           regex_utils::textMatches(name, s_reDotDotNumbers, false, false);
+}
+
+std::set<std::string> makeWindowsOnlyFunctions()
+{
+   std::set<std::string> fns;
+   
+   fns.insert("shell.exec");
+   fns.insert("Sys.junction");
+   
+   return fns;
+}
+
+bool isWindowsOnlyFunction(const std::string& name)
+{
+   static const std::set<std::string> s_rWindowsOnly = makeWindowsOnlyFunctions();
+   return core::algorithm::contains(s_rWindowsOnly, name);
 }
 
 } // namespace util

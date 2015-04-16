@@ -39,6 +39,34 @@ Error fieldNotFoundError(const FilePath& descFilePath,
             location);
 }
 
+template <typename Container>
+Error readField(const Container& container,
+                const std::string& fieldName,
+                std::string* pField,
+                const FilePath& descFilePath,
+                const ErrorLocation& errorLocation)
+{
+   typename Container::const_iterator it = container.find(fieldName);
+   if (it == container.end())
+      return fieldNotFoundError(descFilePath, fieldName, errorLocation);
+   
+   *pField = it->second;
+   return Success();
+}
+
+template <typename Container>
+void readField(const Container& container,
+               const std::string& fieldName,
+               std::string* pField,
+               const std::string& defaultValue = std::string())
+{
+   typename Container::const_iterator it = container.find(fieldName);
+   if (it != container.end())
+      *pField = it->second;
+   else if (!defaultValue.empty())
+      *pField = defaultValue;
+}
+
 } // anonymous namespace
 
 
@@ -54,37 +82,18 @@ Error RPackageInfo::read(const FilePath& packageDir)
    if (error)
       return error;
 
-   // Package field
-   std::map<std::string,std::string>::const_iterator it;
-   it = fields.find("Package");
-   if (it != fields.end())
-      name_ = it->second;
-   else
-      return fieldNotFoundError(descFilePath, "Package", ERROR_LOCATION);
-
-   //  Version field
-   it = fields.find("Version");
-   if (it != fields.end())
-      version_ = it->second;
-   else
-      return fieldNotFoundError(descFilePath, "Version", ERROR_LOCATION);
-
-   // Linking to field
-   it = fields.find("LinkingTo");
-   if (it != fields.end())
-      linkingTo_ = it->second;
-
-   // SystemRequirements field
-   it = fields.find("SystemRequirements");
-   if (it != fields.end())
-      systemRequirements_ = it->second;
-
-   // Type field
-   it = fields.find("Type");
-   if (it != fields.end())
-      type_ = it->second;
-   else
-      type_ = kPackageType;
+   error = readField(fields, "Package", &name_, descFilePath, ERROR_LOCATION);
+   if (error) return error;
+   
+   error = readField(fields, "Version", &version_, descFilePath, ERROR_LOCATION);
+   if (error) return error;
+   
+   readField(fields, "Depends", &depends_);
+   readField(fields, "Imports", &imports_);
+   readField(fields, "Suggests", &suggests_);
+   readField(fields, "LinkingTo", &linkingTo_);
+   readField(fields, "SystemRequirements", &systemRequirements_);
+   readField(fields, "Type", &type_, kPackageType);
 
    return Success();
 }

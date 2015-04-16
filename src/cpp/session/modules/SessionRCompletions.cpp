@@ -45,7 +45,7 @@ using namespace rstudio::core;
 namespace rstudio {
 namespace session {
 namespace modules {
-namespace r_completions {
+namespace r_packages {
 
 namespace {
 
@@ -355,7 +355,7 @@ SEXP rs_getNAMESPACEImportedSymbols(SEXP documentIdSEXP)
    
    BOOST_FOREACH(const std::string& pkg, pkgs)
    {
-      const AsyncLibraryCompletions& completions = RSourceIndex::getCompletions(pkg);
+      const PackageInformation& completions = RSourceIndex::getPackageInformation(pkg);
       r::sexp::ListBuilder child(&protect);
       
       // If the inferred package is listed _only_ in the NAMESPACE 'importFrom',
@@ -418,12 +418,12 @@ SEXP rs_getInferredCompletions(SEXP packagesSEXP)
         ++it)
    {
       DEBUG("Adding entry for '" << *it << "'");
-      AsyncLibraryCompletions completions = RSourceIndex::getCompletions(*it);
+      PackageInformation pkgInfo = RSourceIndex::getPackageInformation(*it);
       
       r::sexp::ListBuilder builder(&protect);
-      builder.add("exports", completions.exports);
-      builder.add("types", completions.types);
-      builder.add("functions", completions.functions);
+      builder.add("exports", pkgInfo.exports);
+      builder.add("types", pkgInfo.types);
+      builder.add("functions", core::r_util::infoToFormalMap(pkgInfo.functionInfo));
       parent.add(*it, builder);
    }
    

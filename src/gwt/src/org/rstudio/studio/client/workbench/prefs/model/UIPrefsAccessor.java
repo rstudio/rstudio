@@ -164,7 +164,7 @@ public class UIPrefsAccessor extends Prefs
    
    public PrefValue<Boolean> showDiagnosticsR()
    {
-      return bool("show_r_diagnostics", false);
+      return bool("show_diagnostics_r", true);
    }
    
    public PrefValue<Boolean> showDiagnosticsCpp()
@@ -199,7 +199,22 @@ public class UIPrefsAccessor extends Prefs
    
    public PrefValue<Boolean> diagnosticsInRFunctionCalls()
    {
-      return bool("diagnostics_in_function_calls", false);
+      return bool("diagnostics_in_function_calls", true);
+   }
+   
+   public PrefValue<Boolean> checkArgumentsToRFunctionCalls()
+   {
+      return bool("check_arguments_to_r_function_calls", true);
+   }
+   
+   public PrefValue<Boolean> warnIfNoSuchVariableInScope()
+   {
+      return bool("warn_if_no_such_variable_in_scope", true);
+   }
+   
+   public PrefValue<Boolean> warnIfVariableDefinedButNotUsed()
+   {
+      return bool("warn_if_variable_defined_but_not_used", true);
    }
    
    public PrefValue<Boolean> autoAppendNewline()

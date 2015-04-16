@@ -1,5 +1,5 @@
 /*
- * SessionLinterTests.cpp
+ * SessionDiagnosticsTests.cpp
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -15,7 +15,7 @@
 
 #include <tests/TestThat.hpp>
 
-#include "SessionLinter.hpp"
+#include "SessionDiagnostics.hpp"
 
 #include <iostream>
 
@@ -29,15 +29,16 @@
 #include <boost/foreach.hpp>
 
 #include <session/SessionOptions.hpp>
+#include "SessionRParser.hpp"
 
 namespace rstudio {
 namespace session {
 namespace modules {
-namespace linter {
+namespace diagnostics {
 
 using namespace rparser;
 
-static const ParseOptions s_parseOptions(true);
+static const ParseOptions s_parseOptions(true, true, true, true, true);
 
 using namespace core;
 using namespace core::r_util;
@@ -119,7 +120,7 @@ void lintRStudioRFiles()
    lintRFilesInSubdirectory(options().modulesRSourcePath());
 }
 
-context("Linter")
+context("Diagnostics")
 {
    test_that("valid expressions generate no lint")
    {
@@ -144,7 +145,8 @@ context("Linter")
       EXPECT_NO_ERRORS("if (foo) bar else if (baz) bam");
       EXPECT_NO_ERRORS("if (foo) bar else if (baz) bam else bat");
       EXPECT_NO_ERRORS("if (foo) {} else if (bar) {}");
-      EXPECT_NO_ERRORS("if (foo) {()} else {()}");
+      EXPECT_NO_ERRORS("if (foo) {(1)} else {(1)}");
+      EXPECT_ERRORS("if (foo) {()} else {()}"); // () with no contents invalid if not function
       EXPECT_NO_ERRORS("if(foo){bar}else{baz}");
       EXPECT_NO_ERRORS("if (a) a() else if (b()) b");
       
@@ -167,6 +169,13 @@ context("Linter")
       EXPECT_NO_ERRORS("x(1,,)");
       EXPECT_NO_ERRORS("a=1 #\nb");
       
+      EXPECT_ERRORS("foo(a = 1 b = 2)");
+      EXPECT_ERRORS("foo(a = 1\nb = 2)");
+      
+      EXPECT_NO_ERRORS("rnorm(n = 1)");
+      EXPECT_NO_ERRORS("rnorm(`n` = 1)");
+      EXPECT_NO_ERRORS("rnorm('n' = 1)");
+      
       EXPECT_NO_ERRORS("c(a=function()a,)");
       EXPECT_NO_ERRORS("function(a) a");
       EXPECT_NO_ERRORS("function(a)\nwhile (1) 1\n");
@@ -176,6 +185,27 @@ context("Linter")
       EXPECT_NO_ERRORS("if (1) foo(1) <- 1 else 2; 1 + 2");
       EXPECT_NO_ERRORS("if (1)\nfoo(1) <- 1\nelse 2; 4 + 8");
       EXPECT_NO_ERRORS("if (1) (foo(1) <- {{1}})\n2 + 1");
+      EXPECT_NO_ERRORS("if (1) function() 1 else 2");
+      EXPECT_NO_ERRORS("if (1) function() b()() else 2");
+      EXPECT_NO_ERRORS("if (1) if (2) function() a() else 3 else 4");
+      
+      EXPECT_NO_ERRORS("if(1)while(2) 2 else 3");
+      EXPECT_NO_ERRORS("if(1)if(2)while(3)while(4)if(5) 6 else 7 else 8 else 9");
+      EXPECT_NO_ERRORS("if(1)if(2)while(3)while(4)if(5) foo()[]() else bar() else 8 else 9");
+      EXPECT_ERRORS("if(1)while(2)function(3)repeat(4)if(5)(function())() else 6");
+      
+      EXPECT_NO_ERRORS("if(1)function(){}else 2");
+      EXPECT_NO_ERRORS("if(1)function()function(){}else 2");
+      EXPECT_NO_ERRORS("if(1){}\n{}");
+      EXPECT_NO_ERRORS("foo(1, 'x'=,\"y\"=,,,z=1,,,`k`=,)");
+      
+      EXPECT_NO_ERRORS("foo()\n{}");
+      EXPECT_NO_ERRORS("{}\n{}");
+      EXPECT_NO_ERRORS("1\n{}");
+      
+      // function body cannot be empty paren list; in general, '()' not allowed
+      // at 'start' scope
+      EXPECT_ERRORS("(function() ())()");
       
       // EXPECT_ERRORS("if (1) (1)\nelse (2)");
       EXPECT_NO_ERRORS("{if (1) (1)\nelse (2)}");
@@ -189,6 +219,10 @@ context("Linter")
 
       EXPECT_ERRORS("for {i in 1:10}");
       EXPECT_ERRORS("((()})");
+      
+      EXPECT_ERRORS("(a +)");
+      EXPECT_ERRORS("{a +}");
+      EXPECT_ERRORS("foo[[bar][baz]]");
       
       EXPECT_NO_ERRORS("myvar <- con; readLines(con = stdin())");
 
@@ -205,6 +239,8 @@ context("Linter")
       EXPECT_LINT("foo <- rnorm(n = foo)");
       EXPECT_LINT("rnorm (1)");
       EXPECT_NO_LINT("n <- 1; rnorm(n = n)");
+      
+      EXPECT_NO_LINT("n <- 1 ## a comment\nprint(n)");
    }
    
    lintRStudioRFiles();

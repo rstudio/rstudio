@@ -487,11 +487,22 @@ void stripQuotes(std::string* pStr)
       *pStr = pStr->substr(0, len -1);
 }
 
-std::string strippedOfQuotes(const std::string &str)
+std::string strippedOfQuotes(const std::string& string)
 {
-   std::string copy = str;
-   stripQuotes(&copy);
-   return copy;
+   std::string::size_type n = string.length();
+   if (n < 2) return string;
+   
+   char first = string[0];
+   char last  = string[n - 1];
+   
+   if ((first == '\'' && last == '\'') ||
+       (first == '"' && last == '"') |\
+       (first == '`' && last == '`'))
+   {
+      return string.substr(1, n - 2);
+   }
+   
+   return string;
 }
 
 template <typename Iter, typename U>
