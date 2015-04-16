@@ -32,8 +32,8 @@ public class PublishReportSourcePage
          boolean asMultiple)
    {
       super(title, subTitle, "Publish Source Code", asMultiple ? 
-            RSConnectAccountResources.INSTANCE.publishMultipleRmd() :
-            RSConnectAccountResources.INSTANCE.publishSingleRmd(),
+            RSConnectResources.INSTANCE.publishMultipleRmd() :
+            RSConnectResources.INSTANCE.publishSingleRmd(),
             null, 
             createPages(input, asMultiple));
    }
@@ -53,7 +53,8 @@ public class PublishReportSourcePage
             (asMultiple ? "scheduled reports" : "a scheduled report") + " or " +
             "execute your " + 
             (asMultiple ? "documents" : "document") + " on the server.", 
-            null, input, asMultiple, false));
+            RSConnectResources.INSTANCE.publishDocWithSource(), 
+            input, asMultiple, false));
       String staticTitle = "Publish finished " + 
             (asMultiple ? "documents" : "document") + " only";
       String staticSubtitle = "Choose this option to publish the content as " +
@@ -64,12 +65,14 @@ public class PublishReportSourcePage
          // if RStudio Connect and external accounts are both enabled, static 
          // content could go to either RPubs or Connect
          pages.add(new PublishStaticDestPage(staticTitle, staticSubtitle, 
+               RSConnectResources.INSTANCE.publishDocWithoutSource(),
                input, asMultiple));
       }
       else if (input.isConnectUIEnabled())
       {
          // only RStudio Connect is available for static content
-         pages.add(new PublishFilesPage(staticTitle, staticSubtitle, null, 
+         pages.add(new PublishFilesPage(staticTitle, staticSubtitle, 
+               RSConnectResources.INSTANCE.publishDocWithoutSource(), 
                input, asMultiple, true));
       }
       else if (input.isSelfContained())

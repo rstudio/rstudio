@@ -27,8 +27,8 @@ public class NewRSConnectAuthPage
    public NewRSConnectAuthPage()
    {
       super("", "", "Verifying Account", 
-            RSConnectAccountResources.INSTANCE.localAccountIcon(), 
-            RSConnectAccountResources.INSTANCE.localAccountIconLarge());
+            RSConnectResources.INSTANCE.localAccountIcon(), 
+            RSConnectResources.INSTANCE.localAccountIconLarge());
 
       // listen for window close events (this page needs to know when the user
       // closes the auth dialog

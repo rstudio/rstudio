@@ -20,13 +20,16 @@ import org.rstudio.core.client.widget.WizardPage;
 import org.rstudio.studio.client.rsconnect.model.RSConnectPublishInput;
 import org.rstudio.studio.client.rsconnect.model.RSConnectPublishResult;
 
+import com.google.gwt.resources.client.ImageResource;
+
 public class PublishStaticDestPage 
    extends WizardNavigationPage<RSConnectPublishInput, RSConnectPublishResult>
 {
    public PublishStaticDestPage(String title, String subTitle, 
+                                ImageResource icon,
                                 RSConnectPublishInput input, boolean asMultiple)
    {
-      super(title, subTitle, "Publish To", null, null, createPages(input,
+      super(title, subTitle, "Publish To", icon, null, createPages(input,
             asMultiple));
    }
    
@@ -43,7 +46,7 @@ public class PublishStaticDestPage
       pages.add(new PublishFilesPage("RStudio Connect", 
             "A local service running inside your organization. Publish and " +
             "collaborate privately and securely.",
-         RSConnectAccountResources.INSTANCE.localAccountIcon(),
+         RSConnectResources.INSTANCE.localAccountIcon(),
          input, asMultiple, true));
       return pages;
    }

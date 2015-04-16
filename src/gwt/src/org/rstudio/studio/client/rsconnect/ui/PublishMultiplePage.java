@@ -49,10 +49,10 @@ public class PublishMultiplePage
       if (input.isShiny())
       {
          pages.add(new PublishFilesPage(singleTitle, singleSubtitle, 
-               RSConnectAccountResources.INSTANCE.publishSingleRmd(), 
+               RSConnectResources.INSTANCE.publishSingleRmd(), 
                input, false, false));
          pages.add(new PublishFilesPage(multipleTitle, multipleSubtitle,
-               RSConnectAccountResources.INSTANCE.publishMultipleRmd(), 
+               RSConnectResources.INSTANCE.publishMultipleRmd(), 
                input, true, false));
       }
       else

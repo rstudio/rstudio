@@ -38,7 +38,8 @@ public class RSConnectPublishWizard
       if (input.getContentType() == RSConnect.CONTENT_TYPE_PLOT ||
           input.getContentType() == RSConnect.CONTENT_TYPE_HTML)
       {
-         return new PublishStaticDestPage("Publish", "Publish", input, false);
+         return new PublishStaticDestPage("Publish", "Publish", null, input, 
+               false);
       }
       else if (input.getContentType() == RSConnect.CONTENT_TYPE_DOCUMENT &&
                input.isMultiRmd())

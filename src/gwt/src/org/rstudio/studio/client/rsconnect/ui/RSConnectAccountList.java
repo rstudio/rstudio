@@ -44,8 +44,8 @@ public class RSConnectAccountList extends Composite
          account_ = account;
          HorizontalPanel panel = new HorizontalPanel();
          Image icon = new Image(account.isCloudAccount() ? 
-               RSConnectAccountResources.INSTANCE.cloudAccountIconSmall() : 
-               RSConnectAccountResources.INSTANCE.localAccountIconSmall());
+               RSConnectResources.INSTANCE.cloudAccountIconSmall() : 
+               RSConnectResources.INSTANCE.localAccountIconSmall());
          icon.getElement().getStyle().setMarginRight(2, Unit.PX);
          panel.add(icon);
          Label serverLabel = new Label(account.getServer() + ": ");

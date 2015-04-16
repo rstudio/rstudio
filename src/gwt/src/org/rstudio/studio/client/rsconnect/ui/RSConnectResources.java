@@ -18,10 +18,10 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.ImageResource;
 
-public interface RSConnectAccountResources extends ClientBundle
+public interface RSConnectResources extends ClientBundle
 {
-   static RSConnectAccountResources INSTANCE = 
-                  (RSConnectAccountResources)GWT.create(RSConnectAccountResources.class);
+   static RSConnectResources INSTANCE = 
+                  (RSConnectResources)GWT.create(RSConnectResources.class);
    
    @Source("localAccountIconSmall.png")
    ImageResource localAccountIconSmall();
@@ -61,4 +61,10 @@ public interface RSConnectAccountResources extends ClientBundle
    
    @Source("publishPlot.png")
    ImageResource publishPlot();
+
+   @Source("publishDocWithSource.png")
+   ImageResource publishDocWithSource();
+   
+   @Source("publishDocWithoutSource.png")
+   ImageResource publishDocWithoutSource();
 }
