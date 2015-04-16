@@ -1204,6 +1204,8 @@ public:
           cursor.contentEquals(L"vignetteEngine"))
       {
          pCall->functionInfo().infoForFormal("package").setMissingnessHandled(true);
+         pCall->functionInfo().infoForFormal("name").setMissingnessHandled(true);
+         pCall->functionInfo().infoForFormal("tangle").setMissingnessHandled(true);
       }
    }
    
