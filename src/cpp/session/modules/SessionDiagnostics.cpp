@@ -134,18 +134,21 @@ void addInferredSymbols(const FilePath& filePath,
    using namespace source_database;
    
    // First, try to get the R source index directly from the id.
-   boost::shared_ptr<RSourceIndex> index =
+   boost::shared_ptr<RSourceIndex> index = 
          rSourceIndex().get(documentId);
    
    // If we were unable to get the R source index for
    // some reason, try re-resolving the documentId based
    // on the file path
    if (!index)
-      index = rSourceIndex().get(filePath);
+      index = code_search::getIndexedProjectFile(filePath);
    
    // If we still don't have an index, bail
    if (!index)
+   {
+      LOG_WARNING_MESSAGE("No index for file '" + filePath.absolutePath() + "'");
       return;
+   }
    
    // We have the index -- now list the packages discovered in
    // 'library' calls, and add those here.

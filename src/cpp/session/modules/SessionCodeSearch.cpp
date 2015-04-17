@@ -416,6 +416,19 @@ public:
    }
 
    // COPYING: prohibited
+   
+   boost::shared_ptr<core::r_util::RSourceIndex> get(
+         const FilePath& filePath)
+   {
+      Entry entry(core::toFileInfo(filePath));
+      EntryTree::iterator it = pEntries_->find(entry);
+      if (pEntries_->is_valid(it) && it != pEntries_->end())
+      {
+         const Entry& entry = *it;
+         return entry.pIndex;
+      }
+      return boost::shared_ptr<core::r_util::RSourceIndex>();
+   }
 
    template <typename ForwardIterator>
    void enqueFiles(ForwardIterator begin, ForwardIterator end)
@@ -915,9 +928,6 @@ private:
    std::queue<core::system::FileChangeEvent> indexingQueue_;
 };
 
-// global source file index
-SourceFileIndex s_projectIndex;
-
 } // anonymous namespace
 
 void RSourceIndexes::initialize()
@@ -944,31 +954,18 @@ void RSourceIndexes::update(
    // insert it
    indexes_[pDoc->id()] = pIndex;
    
-   // cache a link between the document path and the id
-   std::string absPath = module_context::resolveAliasedPath(
-            pDoc->path()).absolutePath();
-   
-   pathToIdMap_[absPath] = pDoc->id();
-   idToPathMap_[pDoc->id()] = absPath;
-
    // kick off an update if necessary
    r_packages::AsyncPackageInformationProcess::update();
 }
 
 void RSourceIndexes::remove(const std::string& id)
 {
-   std::string absPath = idToPathMap_[id];
-   
    indexes_.erase(id);
-   pathToIdMap_.erase(absPath);
-   idToPathMap_.erase(id);
 }
 
 void RSourceIndexes::removeAll()
 {
    indexes_.clear();
-   pathToIdMap_.clear();
-   idToPathMap_.clear();
 }
 
 RSourceIndexes& rSourceIndex()
@@ -1066,7 +1063,16 @@ void searchSourceDatabase(const std::string& term,
    }
 }
 
+// global source file index
+SourceFileIndex s_projectIndex;
+
 } // end anonymous namespace
+
+boost::shared_ptr<r_util::RSourceIndex> getIndexedProjectFile(
+      const FilePath& filePath)
+{
+   return s_projectIndex.get(filePath);
+}
 
 void searchSource(const std::string& term,
                   std::size_t maxResults,

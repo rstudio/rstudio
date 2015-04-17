@@ -62,13 +62,6 @@ public:
       return boost::shared_ptr<RSourceIndex>();
    }
    
-   boost::shared_ptr<RSourceIndex> get(const core::FilePath& filePath)
-   {
-      const std::string& id = pathToIdMap_[filePath.absolutePath()];
-      if (id.empty()) return boost::shared_ptr<RSourceIndex>();
-      return get(id);
-   }
-
    void remove(const std::string& id);
    void removeAll();
 
@@ -89,12 +82,13 @@ public:
 
 private:
   IndexMap indexes_;
-  std::map<AbsolutePath, DocumentId> pathToIdMap_;
-  std::map<DocumentId, AbsolutePath> idToPathMap_;
   
 };
 
 RSourceIndexes& rSourceIndex();
+
+boost::shared_ptr<core::r_util::RSourceIndex> getIndexedProjectFile(
+      const core::FilePath& filePath);
 
 void searchSource(const std::string& term,
                   std::size_t maxResults,
