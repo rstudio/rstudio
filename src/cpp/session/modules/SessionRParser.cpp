@@ -916,23 +916,6 @@ FunctionInformation getInfoAssociatedWithFunctionAtCursor(
          if (!cursor.moveToPreviousSignificantToken())
             return FunctionInformation();
       
-      // Try seeing if a symbol of this name has already been defined in scope,
-      // to protect against instances of the form e.g.
-      //
-      //    pf <- identity
-      //    pf
-      //
-      // In these cases, we will (for now) simply fail to resolve the function,
-      // to ensure that we don't supply incorrect lint for that function call.
-      //
-      // Note that this behaviour is quite conservative; however, the alternative
-      // would involve implementing a pseudo-evaluator to actually figure out what
-      // 'pf' is now actually bound to; this could be doable in some simple cases
-      // but the pattern is uncommon enough that it's better that we just don't
-      // supply incorrect diagnostics, rather than attempt to supply correct diagnostics.
-      if (status.node()->getDefinedSymbols().count(cursor.contentAsUtf8()))
-         return FunctionInformation();
-      
       DEBUG("***** Attempting to resolve source function: '" << cursor.contentAsUtf8() << "'");
       const ParseNode* pNode;
       if (status.node()->findFunction(
@@ -962,6 +945,23 @@ FunctionInformation getInfoAssociatedWithFunctionAtCursor(
             }
          }
       }
+      
+      // Try seeing if a symbol of this name has already been defined in scope,
+      // to protect against instances of the form e.g.
+      //
+      //    pf <- identity
+      //    pf
+      //
+      // In these cases, we will (for now) simply fail to resolve the function,
+      // to ensure that we don't supply incorrect lint for that function call.
+      //
+      // Note that this behaviour is quite conservative; however, the alternative
+      // would involve implementing a pseudo-evaluator to actually figure out what
+      // 'pf' is now actually bound to; this could be doable in some simple cases
+      // but the pattern is uncommon enough that it's better that we just don't
+      // supply incorrect diagnostics, rather than attempt to supply correct diagnostics.
+      if (status.node()->getDefinedSymbols().count(cursor.contentAsUtf8()))
+         return FunctionInformation();
       
       // If we're within a package project, then attempt searching the
       // source index for the formals associated with this function.
