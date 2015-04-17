@@ -2426,15 +2426,12 @@ void addAllProjectSymbols(const Entry& entry,
 
 void addAllProjectSymbols(std::set<std::string>* pSymbols)
 {
-   if (!projects::projectContext().hasProject())
-      return;
+   FilePath buildTarget = projects::projectContext().buildTargetPath();
    
-   FilePath buildTarget =
-         projects::projectContext().buildTargetPath();
-   
-   s_projectIndex.walkFiles(
-            buildTarget,
-            boost::bind(callbacks::addAllProjectSymbols, _1, pSymbols));
+   if (!buildTarget.empty())
+      s_projectIndex.walkFiles(
+               buildTarget,
+               boost::bind(callbacks::addAllProjectSymbols, _1, pSymbols));
    
    // Add in symbols made available as part of registration of native routines,
    // if this is a package project.
