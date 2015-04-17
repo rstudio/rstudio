@@ -33,13 +33,13 @@
 .gridControl
 {
    display: block;
-   width: 244px;
-   padding: 3px;
+   width: 240px;
+   padding: 4px;
 }
 
 .wizard .gridControl
 {
-   width: 210px;
+   width: 215px;
 }
 
 .source
@@ -78,7 +78,7 @@
 .fileList
 {
    background-color: #ffffff;
-   border: 1px solid gray;
+   border: 1px solid #999999;
    height: 165px;
    width: 250px;
    padding: 7px;
@@ -112,7 +112,7 @@
 
 .controlLabel
 {
-   margin-top: 5px;
+   margin-top: 10px;
    margin-bottom: 3px;
 }
 
@@ -160,7 +160,7 @@
 
 .appDetailsPanel
 {
-   border: 1px solid gray;
+   border: 1px solid #999999;
    background-color: white;
    padding: 5px;
    margin: 0px;
