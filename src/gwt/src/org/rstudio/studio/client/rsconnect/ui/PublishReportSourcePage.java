@@ -60,7 +60,7 @@ public class PublishReportSourcePage
       String staticSubtitle = "Choose this option to publish the content as " +
              "it appears in RStudio.";
       if (input.isConnectUIEnabled() && input.isExternalUIEnabled() && 
-          input.isSelfContained())
+          input.isSelfContained() && !asMultiple)
       {
          // if RStudio Connect and external accounts are both enabled, static 
          // content could go to either RPubs or Connect
