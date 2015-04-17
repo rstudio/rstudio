@@ -51,23 +51,27 @@ public class LintManager
       public LintContext(Invalidation.Token token,
                          Position cursorPosition,
                          boolean showMarkers,
+                         boolean explicit,
                          boolean excludeCurrentStatement)
       {
          this.cursorPosition = cursorPosition;
          this.token = token;
          this.showMarkers = showMarkers;
+         this.explicit = explicit;
          this.excludeCurrentStatement = excludeCurrentStatement;
       }
       
       public final Invalidation.Token token;
       public final Position cursorPosition;
       public final boolean showMarkers;
+      public final boolean explicit;
       public final boolean excludeCurrentStatement;
    }
    
    private void reset()
    {
       showMarkers_ = false;
+      explicit_ = false;
       excludeCurrentStatement_ = true;
    }
    
@@ -86,6 +90,7 @@ public class LintManager
       target_ = target;
       docDisplay_ = target.getDocDisplay();
       showMarkers_ = false;
+      explicit_ = false;
       invalidation_ = new Invalidation();
       timer_ = new Timer()
       {
@@ -104,6 +109,7 @@ public class LintManager
                   invalidation_.getInvalidationToken(),
                   docDisplay_.getCursorPosition(),
                   showMarkers_,
+                  explicit_,
                   excludeCurrentStatement_);
             reset();
             lintActiveDocument(context);
@@ -133,6 +139,7 @@ public class LintManager
                   docDisplay_.removeMarkersOnCursorLine();
                   showMarkers_ = false;
                   excludeCurrentStatement_ = true;
+                  explicit_ = false;
                   timer_.schedule(uiPrefs_.backgroundDiagnosticsDelayMs().getValue());
                }
             });
@@ -151,7 +158,7 @@ public class LintManager
                return;
             
             if (uiPrefs_.diagnosticsOnSave().getValue())
-               lint(false, false);
+               lint(false, true, false);
          }
       });
    }
@@ -228,6 +235,7 @@ public class LintManager
                         target_.getId(),
                         target_.getPath(),
                         context.showMarkers,
+                        context.explicit,
                         new ServerRequestCallback<JsArray<LintItem>>()
                         {
                            @Override
@@ -267,6 +275,7 @@ public class LintManager
             target_.getId(),
             target_.getPath(),
             context.showMarkers,
+            context.explicit,
             new ServerRequestCallback<JsArray<LintItem>>()
             {
                @Override
@@ -318,9 +327,11 @@ public class LintManager
    }
    
    public void lint(boolean showMarkers,
+                    boolean explicit,
                     boolean excludeCurrentStatement)
    {
       showMarkers_ = showMarkers;
+      explicit_ = explicit;
       excludeCurrentStatement_ = excludeCurrentStatement;
       
       // Add tiny delay to ensure lint not cleared by other concurrent events
@@ -355,6 +366,7 @@ public class LintManager
    private final DocDisplay docDisplay_;
    private final Invalidation invalidation_;
    
+   private boolean explicit_;
    private boolean showMarkers_;
    private boolean excludeCurrentStatement_;
    

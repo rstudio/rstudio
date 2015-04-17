@@ -2073,7 +2073,7 @@ public class TextEditingTarget implements
    @Handler
    void onShowDiagnosticsActiveDocument()
    {
-      lintManager_.lint(true, false);
+      lintManager_.lint(true, true, false);
    }
    
    public void withSavedDoc(Command onsaved)

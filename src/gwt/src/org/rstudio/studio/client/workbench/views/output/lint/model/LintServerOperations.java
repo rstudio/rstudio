@@ -25,6 +25,7 @@ public interface LintServerOperations
    void lintRSourceDocument(String documentId,
                             String documentPath,
                             boolean showMarkersPane,
+                            boolean explicit,
                             ServerRequestCallback<JsArray<LintItem>> requestCallback);
    
    void getCppDiagnostics(
