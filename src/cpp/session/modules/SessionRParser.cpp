@@ -1477,7 +1477,9 @@ void validateFunctionCall(RTokenCursor cursor,
    if (numUserArguments > numFormals)
    {
       std::stringstream ss;
-      ss << "too many arguments to function call";
+      ss << "too many arguments in call to'"
+         << string_utils::wideToUtf8(cursor.getEvaluationAssociatedWithCall())
+         << "'";
       
       status.lint().add(
                startCursor.row(),
