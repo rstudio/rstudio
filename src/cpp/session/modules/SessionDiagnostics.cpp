@@ -599,10 +599,12 @@ Error lintRSourceDocument(const json::JsonRpcRequest& request,
    std::string documentId;
    std::string documentPath;
    bool showMarkersTab = false;
+   bool isExplicit = false;
    Error error = json::readParams(request.params,
                                   &documentId,
                                   &documentPath,
-                                  &showMarkersTab);
+                                  &showMarkersTab,
+                                  &isExplicit);
    
    if (error)
    {
@@ -658,7 +660,7 @@ Error lintRSourceDocument(const json::JsonRpcRequest& request,
             string_utils::utf8ToWide(content),
             origin,
             documentId,
-            showMarkersTab);
+            isExplicit);
    
    pResponse->setResult(lintAsJson(results.lint()));
    
