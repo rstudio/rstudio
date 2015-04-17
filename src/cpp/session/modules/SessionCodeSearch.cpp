@@ -2420,6 +2420,9 @@ void addAllProjectSymbols(const Entry& entry,
 
 void addAllProjectSymbols(std::set<std::string>* pSymbols)
 {
+   if (!projects::projectContext().hasProject())
+      return;
+   
    FilePath buildTarget =
          projects::projectContext().buildTargetPath();
    
