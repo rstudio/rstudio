@@ -1214,6 +1214,15 @@ public:
       
       if (cursor.contentEquals(L"as.lazy_dots"))
           pCall->functionInfo().infoForFormal("env").setMissingnessHandled(true);
+      
+      if (cursor.contentEquals(L"trace"))
+      {
+         std::vector<FormalInformation>& formals = pCall->functionInfo().formals();
+         BOOST_FOREACH(FormalInformation& formal, formals)
+         {
+            formal.setMissingnessHandled(true);
+         }
+      }
    }
    
    static void applyCustomWarnings(const MatchedCall& call,

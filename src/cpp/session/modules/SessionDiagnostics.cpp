@@ -145,10 +145,7 @@ void addInferredSymbols(const FilePath& filePath,
    
    // If we still don't have an index, bail
    if (!index)
-   {
-      LOG_WARNING_MESSAGE("No index for file '" + filePath.absolutePath() + "'");
       return;
-   }
    
    // We have the index -- now list the packages discovered in
    // 'library' calls, and add those here.
