@@ -1211,6 +1211,9 @@ public:
          pCall->functionInfo().infoForFormal("name").setMissingnessHandled(true);
          pCall->functionInfo().infoForFormal("tangle").setMissingnessHandled(true);
       }
+      
+      if (cursor.contentEquals(L"as.lazy_dots"))
+          pCall->functionInfo().infoForFormal("env").setMissingnessHandled(true);
    }
    
    static void applyCustomWarnings(const MatchedCall& call,
