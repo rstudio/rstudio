@@ -55,6 +55,38 @@ public abstract class JDeclaredType extends JReferenceType {
   private boolean isJsFunction;
 
   /**
+   * The types of nested classes, https://docs.oracle.com/javase/tutorial/java/javaOO/nested.html
+   */
+  public enum NestedClassDisposition {
+    /**
+     * Static Nested Class.
+     */
+    STATIC,
+    /**
+     * Inner Nested Class.
+     */
+    INNER,
+    /**
+     * Local Class.
+     */
+    LOCAL,
+    /**
+     * Anonymous Inner Class.
+     */
+    ANONYMOUS,
+    /**
+     * Synthetic Inner Class from Lambda or method reference.
+     */
+    LAMBDA,
+    /**
+     * Regular top-level class.
+     */
+    TOP_LEVEL
+  }
+
+  private NestedClassDisposition nestedClassDisposition = NestedClassDisposition.TOP_LEVEL;
+
+  /**
    * This type's fields. Special serialization treatment.
    */
   protected transient List<JField> fields = Lists.create();
@@ -569,5 +601,13 @@ public abstract class JDeclaredType extends JReferenceType {
   public String getQualifiedExportName() {
     String namespace = getExportNamespace();
     return namespace.isEmpty() ? getSimpleName() : namespace + "." + getSimpleName();
+  }
+
+  public NestedClassDisposition getClassDisposition() {
+    return nestedClassDisposition;
+  }
+
+  public void setClassDisposition(NestedClassDisposition nestedClassDisposition) {
+    this.nestedClassDisposition = nestedClassDisposition;
   }
 }

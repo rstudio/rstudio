@@ -15,6 +15,7 @@
  */
 package com.google.gwt.dev.javac;
 
+import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.thirdparty.guava.common.base.Joiner;
 import com.google.gwt.thirdparty.guava.common.base.Strings;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
@@ -296,5 +297,29 @@ public final class JdtUtil {
     } else {
       return String.valueOf(binding.constantPoolName());
     }
+  }
+
+  public static void setClassDispositionFromBinding(SourceTypeBinding binding, JDeclaredType type) {
+    if (binding.isNestedType()) {
+      if (isLocalClass(binding)) {
+        type.setClassDisposition(JDeclaredType.NestedClassDisposition.LOCAL);
+      } else if (binding.isAnonymousType()) {
+        type.setClassDisposition(JDeclaredType.NestedClassDisposition.ANONYMOUS);
+      } else if (isInnerClass(binding)) {
+        type.setClassDisposition(JDeclaredType.NestedClassDisposition.INNER);
+      } else if (isStaticClass(binding)) {
+        type.setClassDisposition(JDeclaredType.NestedClassDisposition.STATIC);
+      }
+    } else {
+      type.setClassDisposition(JDeclaredType.NestedClassDisposition.TOP_LEVEL);
+    }
+  }
+
+  public static boolean isLocalClass(SourceTypeBinding binding) {
+    return binding.isLocalType() && !binding.isAnonymousType();
+  }
+
+  public static boolean isStaticClass(SourceTypeBinding binding) {
+    return binding.isNestedType() && binding.isStatic();
   }
 }

@@ -36,6 +36,7 @@ import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.ast.JVariable;
 import com.google.gwt.dev.jjs.ast.JVisitor;
 import com.google.gwt.dev.resource.Resource;
+import com.google.gwt.dev.util.arg.SourceLevel;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
 import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
@@ -171,6 +172,49 @@ public class GwtAstBuilderTest extends JJSTestBase {
         + "  }",
         "}"
     ));
+
+    sources.add(JavaResourceBase.createMockJavaResource("test.NestedClasses",
+        "package test;",
+        "public class NestedClasses {",
+        "  static class StaticNestedClass {}",
+        "  class InnerNestedClass {}",
+        "  interface Lambda { void run(); }",
+        "  public static void referencedMethod() {}",
+        "  public void m() {",
+        "    class LocalClass {}",
+        "    Object anonymousInner = new Object(){};",
+        "    Lambda lambda = () -> {};",
+        "    Lambda methodRef = NestedClasses::referencedMethod;",
+        "  }",
+        "}"
+    ));
+    sourceLevel = SourceLevel.DEFAULT_SOURCE_LEVEL;
+  }
+
+  public void testNestedClassDisposition() throws UnableToCompleteException {
+    sourceLevel = SourceLevel.JAVA8;
+
+    JProgram program = compileProgram("test.NestedClasses");
+    JDeclaredType staticNested = program.getFromTypeMap("test.NestedClasses$StaticNestedClass");
+    assertEquals(JDeclaredType.NestedClassDisposition.STATIC, staticNested.getClassDisposition());
+
+    JDeclaredType innerNested = program.getFromTypeMap("test.NestedClasses$InnerNestedClass");
+    assertEquals(JDeclaredType.NestedClassDisposition.INNER, innerNested.getClassDisposition());
+
+    JDeclaredType localNested = program.getFromTypeMap("test.NestedClasses$1LocalClass");
+    assertEquals(JDeclaredType.NestedClassDisposition.LOCAL, localNested.getClassDisposition());
+
+    JDeclaredType anonymousNested = program.getFromTypeMap("test.NestedClasses$1");
+    assertEquals(JDeclaredType.NestedClassDisposition.ANONYMOUS,
+        anonymousNested.getClassDisposition());
+
+    JDeclaredType lambdaNested = program.getFromTypeMap("test.NestedClasses$lambda$0$Type");
+    assertEquals(JDeclaredType.NestedClassDisposition.LAMBDA, lambdaNested.getClassDisposition());
+
+    JDeclaredType referenceNested = program.getFromTypeMap(
+        "test.NestedClasses$Lambda$$test$NestedClasses$referencedMethod__V$Type");
+    assertEquals(JDeclaredType.NestedClassDisposition.LAMBDA,
+        referenceNested.getClassDisposition());
   }
 
   public void testUniqueArrayTypeInstance() throws UnableToCompleteException {

@@ -1453,6 +1453,7 @@ public class GwtAstBuilder {
           AccessModifier.PUBLIC,
           new JReturnStatement(info, new JClassLiteral(info, innerLambdaClass)));
 
+      innerLambdaClass.setClassDisposition(JDeclaredType.NestedClassDisposition.LAMBDA);
       return innerLambdaClass;
     }
 
@@ -4193,7 +4194,7 @@ public class GwtAstBuilder {
           JsInteropUtil.maybeGetJsNamespace(x));
       type.setJsExportInfo(JsInteropUtil.isClassWideJsExport(x));
       type.setJsFunctionInfo(JsInteropUtil.isJsFunction(x));
-
+      JdtUtil.setClassDispositionFromBinding(binding, type);
       typeMap.setSourceType(binding, type);
       newTypes.add(type);
       if (x.memberTypes != null) {
