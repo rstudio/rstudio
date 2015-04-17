@@ -740,6 +740,11 @@ void handleIdentifier(RTokenCursor& cursor,
       return;
    }
    
+   // Don't add references to '.' -- in most situations where it's used,
+   // it's for NSE (e.g. magrittr pipes)
+   if (status.isInArgumentList() && cursor.contentEquals(L"."))
+      return;
+   
    if (cursor.isType(RToken::ID) ||
        cursor.isType(RToken::STRING))
    {
