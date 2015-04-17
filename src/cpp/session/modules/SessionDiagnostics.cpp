@@ -446,7 +446,8 @@ void checkNoDefinitionInScope(const FilePath& origin,
 
 ParseResults parse(const std::wstring& rCode,
                    const FilePath& origin,
-                   const std::string& documentId = std::string())
+                   const std::string& documentId = std::string(),
+                   bool isExplicit = false)
 {
    ParseResults results;
    
@@ -459,7 +460,7 @@ ParseResults parse(const std::wstring& rCode,
             userSettings().checkArgumentsToRFunctionCalls());
    
    options.setWarnIfVariableIsDefinedButNotUsed(
-            userSettings().warnIfVariableDefinedButNotUsed());
+            isExplicit && userSettings().warnIfVariableDefinedButNotUsed());
    
    options.setWarnIfNoSuchVariableInScope(
             userSettings().warnIfNoSuchVariableInScope());
@@ -653,7 +654,11 @@ Error lintRSourceDocument(const json::JsonRpcRequest& request,
       return error;
    }
    
-   ParseResults results = parse(content, origin, documentId);
+   ParseResults results = diagnostics::parse(
+            string_utils::utf8ToWide(content),
+            origin,
+            documentId,
+            showMarkersTab);
    
    pResponse->setResult(lintAsJson(results.lint()));
    
@@ -819,7 +824,9 @@ bool collectLint(int depth,
    
    ParseResults results = diagnostics::parse(
             string_utils::utf8ToWide(contents),
-            path);
+            path,
+            std::string(),
+            true);
    
    (*pLint)[path] = results.lint();
    return true;
