@@ -367,14 +367,14 @@ Error getAllAvailableRSymbols(const FilePath& filePath,
    FilePath projDir = projects::projectContext().directory();
    Error error;
    
-   if (filePath.isWithin(projDir))
+   if (projects::projectContext().isPackageProject() && filePath.isWithin(projDir))
    {
-      DEBUG("- Package file:'" << filePath.absolutePath() << "'");
+      DEBUG("- Package file: '" << filePath.absolutePath() << "'");
       error = getAvailableSymbolsForPackage(filePath, documentId, pSymbols);
    }
    else
    {
-      DEBUG("- Project file:'" << filePath.absolutePath() << "'");
+      DEBUG("- Project file: '" << filePath.absolutePath() << "'");
       error = getAvailableSymbolsForProject(filePath, documentId, pSymbols);
    }
    
