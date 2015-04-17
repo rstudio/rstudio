@@ -788,16 +788,25 @@ bool hasBinaryMimeType(const FilePath& filePath)
           boost::algorithm::starts_with(mimeType, "video/");
 }
 
+bool isJsonFile(const FilePath& filePath)
+{
+   std::string mimeType = filePath.mimeContentType();
+   return boost::algorithm::ends_with(mimeType, "json");
+}
+
 } // anonymous namespace
 
 bool isTextFile(const FilePath& targetPath)
 {
    if (hasTextMimeType(targetPath))
       return true;
+   
+   if (isJsonFile(targetPath))
+      return true;
 
    if (hasBinaryMimeType(targetPath))
       return false;
-
+   
    if (targetPath.size() == 0)
       return true;
 
