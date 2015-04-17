@@ -1375,6 +1375,19 @@
    ))
 })
 
+.rs.addFunction("getR6ClassSymbols", function(callString)
+{
+   parsed <- .rs.tryParseCall(callString)
+   if (is.null(parsed)) return(character())
+   
+   symbols <- c("self", "public", "private", "super")
+   public <- .rs.extractElement(parsed, "public")
+   if (!is.null(public))
+      symbols <- c(symbols, names(public)[-1])
+   
+   symbols
+})
+
 .rs.addFunction("registerNativeRoutines", function()
 {
    pos <- match("tools:rstudio", search())

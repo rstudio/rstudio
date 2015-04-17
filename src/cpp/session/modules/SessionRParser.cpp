@@ -1405,6 +1405,33 @@ void addExtraScopedSymbolsForCall(RTokenCursor startCursor,
                endCursor.currentPosition());
    }
    
+   if (startCursor.contentEquals(L"R6Class"))
+   {
+      RTokenCursor endCursor = startCursor.clone();
+      if (!endCursor.moveToNextSignificantToken())
+         return;
+      
+      if (!endCursor.fwdToMatchingToken())
+         return;
+      
+      std::set<std::string> symbols;
+      r::exec::RFunction getR6ClassSymbols(".rs.getR6ClassSymbols");
+      getR6ClassSymbols.addParam(
+               string_utils::wideToUtf8(std::wstring(startCursor.begin(), endCursor.end())));
+      
+      Error error = getR6ClassSymbols.call(&symbols);
+      if (error)
+      {
+         LOG_ERROR(error);
+         return;
+      }
+      
+      status.makeSymbolsAvailableInRange(
+               symbols,
+               startCursor.currentPosition(),
+               endCursor.currentPosition());
+   }
+   
 }
 
 void validateFunctionCall(RTokenCursor cursor,
