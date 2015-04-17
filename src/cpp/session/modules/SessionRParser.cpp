@@ -1434,11 +1434,8 @@ void validateFunctionCall(RTokenCursor cursor,
    const std::vector<std::string>& formalNames = 
          matched.functionInfo().getFormalNames();
    
-   if (formalNames.empty() ||
-       core::algorithm::contains(formalNames, "..."))
-   {
+   if (formalNames.empty() || core::algorithm::contains(formalNames, "..."))
       return;
-   }
    
    // Warn on partial matches.
    const std::vector< std::pair<std::string, std::string> >& prefixMatchedPairs
@@ -1503,27 +1500,32 @@ void validateFunctionCall(RTokenCursor cursor,
       debug::print(matched.matchedCall());
    }
    
-   // Error on unmatched calls.
-   for (std::size_t i = 0, n = formalNames.size(); i < n; ++i)
+   // Error on missing arguments to call. If the user is passing down '...',
+   // we'll avoid this check and assume it's being inheritted from the parent
+   // function.
+   if (!core::algorithm::contains(matched.unnamedArguments(), "..."))
    {
-      const std::string& formalName = formalNames[i];
-      const FormalInformation& info =
-            matched.functionInfo().infoForFormal(formalName);
-      
-      std::map<std::string, boost::optional<std::string> >& matchedCall =
-            matched.matchedCall();
-      
-      if (!matchedCall[formalName] &&
-          !info.hasDefault() &&
-          !info.isMissingnessHandled())
+      for (std::size_t i = 0, n = formalNames.size(); i < n; ++i)
       {
-         status.lint().add(
-                  startCursor.row(),
-                  startCursor.column(),
-                  endCursor.row(),
-                  endCursor.column() + endCursor.length(),
-                  LintTypeWarning,
-                  "argument '" + formalName + "' is missing, with no default");
+         const std::string& formalName = formalNames[i];
+         const FormalInformation& info =
+               matched.functionInfo().infoForFormal(formalName);
+
+         std::map<std::string, boost::optional<std::string> >& matchedCall =
+               matched.matchedCall();
+
+         if (!matchedCall[formalName] &&
+             !info.hasDefault() &&
+             !info.isMissingnessHandled())
+         {
+            status.lint().add(
+                     startCursor.row(),
+                     startCursor.column(),
+                     endCursor.row(),
+                     endCursor.column() + endCursor.length(),
+                     LintTypeWarning,
+                     "argument '" + formalName + "' is missing, with no default");
+         }
       }
    }
 
