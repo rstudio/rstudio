@@ -23,16 +23,10 @@ import com.google.gwt.core.client.js.impl.PrototypeOfJsType;
 interface MyJsInterface {
 
   @JsProperty
-  int x();
+  int getX();
 
   @JsProperty
-  MyJsInterface x(int a);
-
-  @JsProperty
-  int getY();
-
-  @JsProperty
-  void setY(int a);
+  void setX(int a);
 
   int sum(int bias);
 
@@ -40,22 +34,12 @@ interface MyJsInterface {
   static class Prototype implements MyJsInterface {
 
     @Override
-    public int x() {
+    public int getX() {
       return 0;
     }
 
     @Override
-    public MyJsInterface x(int a) {
-      return this;
-    }
-
-    @Override
-    public int getY() {
-      return 0;
-    }
-
-    @Override
-    public void setY(int a) {
+    public void setX(int a) {
     }
 
     @Override

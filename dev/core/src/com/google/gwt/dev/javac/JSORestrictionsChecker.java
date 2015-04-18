@@ -65,8 +65,6 @@ public class JSORestrictionsChecker {
       + "static final fields in public classes.";
   public static final String ERR_EITHER_JSEXPORT_JSNOEXPORT =
       "@JsExport and @JsNoExport is not allowed at the same time.";
-  public static final String ERR_JSPROPERTY_ONLY_BEAN_OR_FLUENT_STYLE_NAMING =
-      "@JsProperty is only allowed on JavaBean-style or fluent-style named methods";
   public static final String ERR_JSEXPORT_ON_ENUMERATION =
       "@JsExport is not allowed on individual enumerations";
   public static final String ERR_MUST_EXTEND_MAGIC_PROTOTYPE_CLASS =
@@ -264,10 +262,6 @@ public class JSORestrictionsChecker {
           errorOn(type, ERR_JS_TYPE_WITH_PROTOTYPE_SET_NOT_ALLOWED_ON_CLASS_TYPES);
         }
       }
-
-      for (MethodBinding mb : binding.methods()) {
-        checkJsProperty(mb);
-      }
     }
 
     private void checkJsExport(MethodBinding mb) {
@@ -300,16 +294,6 @@ public class JSORestrictionsChecker {
     private boolean isEnumConstant(FieldDeclaration fd) {
       return (fd.initialization != null && fd.initialization instanceof AllocationExpression
           && ((AllocationExpression) fd.initialization).enumConstant != null);
-    }
-
-    private void checkJsProperty(MethodBinding mb) {
-      AnnotationBinding jsProperty = JdtUtil.getAnnotation(mb, JsInteropUtil.JSPROPERTY_CLASS);
-      if (jsProperty != null) {
-        String methodName = String.valueOf(mb.selector);
-        if (!isGetter(methodName, mb) && !isSetter(methodName, mb)) {
-          errorOn(mb, ERR_JSPROPERTY_ONLY_BEAN_OR_FLUENT_STYLE_NAMING);
-        }
-      }
     }
 
     private ClassState checkType(TypeDeclaration type) {
@@ -359,10 +343,6 @@ public class JSORestrictionsChecker {
         return false;
       }
 
-      for (MethodBinding mb : type.binding.methods()) {
-        checkJsProperty(mb);
-      }
-
       AnnotationBinding jsinterfaceAnn = JdtUtil.getAnnotation(jsInterface,
           JsInteropUtil.JSTYPE_CLASS);
       String jsPrototype = JdtUtil.getAnnotationParameterString(jsinterfaceAnn, "prototype");
@@ -393,44 +373,6 @@ public class JSORestrictionsChecker {
           errorOn(type, ERR_CLASS_EXTENDS_MAGIC_PROTOTYPE_BUT_NO_PROTOTYPE_ATTRIBUTE);
         }
       }
-    }
-
-    private boolean isGetter(String methodName, MethodBinding methodBinding) {
-      // Anything that takes parameters or doesn't return a value can't be a getter.
-      if (methodBinding.parameters.length > 0 || methodBinding.returnType == TypeBinding.VOID) {
-        return false;
-      }
-      // If it sounds like a setter then it can't be a getter.
-      if (startsWithCamelCase(methodName, "set")) {
-        return false;
-      }
-      // If it sounds like an "is" or "has" getter but doesn't return a boolean it can't be a
-      // getter.
-      if ((startsWithCamelCase(methodName, "is") || startsWithCamelCase(methodName, "has"))
-          && methodBinding.returnType != TypeBinding.BOOLEAN) {
-        return false;
-      }
-      // Everything else is a getter.
-      return true;
-    }
-
-    private boolean isSetter(String methodName, MethodBinding methodBinding) {
-      // Anything that doesn't take exactly 1 parameter can't be a setter.
-      if (methodBinding.parameters.length != 1) {
-        return false;
-      }
-      // If it sounds like a getter then it can't be a setter.
-      if (startsWithCamelCase(methodName, "get") || startsWithCamelCase(methodName, "is")
-          || startsWithCamelCase(methodName, "has")) {
-        return false;
-      }
-      // If it doesn't return void and isn't fluent then it isn't a setter.
-      if (methodBinding.returnType != TypeBinding.VOID
-          && methodBinding.returnType != methodBinding.declaringClass) {
-        return false;
-      }
-      // Everything else is a setter.
-      return true;
     }
 
     // Roughly parallels JProgram.isJsTypePrototype()
@@ -568,11 +510,6 @@ public class JSORestrictionsChecker {
       String error) {
     GWTProblem.recordError(node, cud, error, new InstalledHelpInfo(
         "jsoRestrictions.html"));
-  }
-
-  private static boolean startsWithCamelCase(String string, String prefix) {
-    return string.length() > prefix.length() && string.startsWith(prefix)
-        && Character.isUpperCase(string.charAt(prefix.length()));
   }
 
   private final CompilationUnitDeclaration cud;

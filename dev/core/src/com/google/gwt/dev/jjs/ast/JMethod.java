@@ -40,11 +40,13 @@ import java.util.Set;
 public class JMethod extends JNode implements JMember, CanBeAbstract, CanBeNative {
 
   /**
-   * Indicates whether a JsProperty method is a getter or setter. Getters come with names like x(),
-   * isX(), hasX() and getX() while setters have signatures like x(int a) and setX(int a).
+   * Indicates whether a JsProperty method is a getter or setter. Getters come with names like isX()
+   * and getX() while setters have signatures like setX(int a). If the property doesn't match these
+   * patterns, then it will marked as {@code UNDEFINED} to be later signaled as error in
+   * {@link JsInteropRestrictionChecker}.
    */
   public static enum JsPropertyType {
-    HAS, GET, SET
+    GET, SET, UNDEFINED;
   }
 
   public static final Comparator<JMethod> BY_SIGNATURE_COMPARATOR = new Comparator<JMethod>() {

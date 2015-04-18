@@ -1422,9 +1422,6 @@ public class GenerateJavaScriptAST {
         if (isJsProperty) {
           JsExpression qualExpr = pop();
           switch (method.getImmediateOrTransitiveJsPropertyType()) {
-            case HAS:
-              result = createHasDispatch(x, method, qualExpr);
-              break;
             case GET:
               result = createGetterDispatch(x, unnecessaryQualifier, method, qualExpr);
               break;
@@ -1432,7 +1429,7 @@ public class GenerateJavaScriptAST {
               result = createSetterDispatch(x, jsInvocation, method, qualExpr);
               break;
             default:
-              throw new InternalCompilerException("JsProperty not a setter, getter, or has.");
+              throw new InternalCompilerException("JsProperty not a setter or getter.");
           }
         } else if (isSam) {
           JsExpression qualExpr = pop();
@@ -1525,35 +1522,12 @@ public class GenerateJavaScriptAST {
       return result;
     }
 
-    private JsExpression createHasDispatch(JMethodCall x, JMethod targetMethod,
-        JsExpression qualExpr) {
-      String propertyName = targetMethod.getImmediateOrTransitiveJsMemberName();
-      JsStringLiteral propertyNameLiteral = new JsStringLiteral(x.getSourceInfo(), propertyName);
-      return new JsBinaryOperation(x.getSourceInfo(), JsBinaryOperator.INOP, propertyNameLiteral,
-          qualExpr);
-    }
-
     private JsExpression createSetterDispatch(JMethodCall x, JsInvocation jsInvocation,
         JMethod targetMethod, JsExpression qualExpr) {
-      JType returnType = targetMethod.getType();
-      boolean fluent = returnType instanceof JReferenceType
-          && returnType != program.getTypeJavaLangObject() && typeOracle.castSucceedsTrivially(
-          x.getTarget().getEnclosingType(), returnType.getUnderlyingType());
       String propertyName = targetMethod.getImmediateOrTransitiveJsMemberName();
-
-      JsExpression result;
       JsNameRef propertyReference = new JsNameRef(x.getSourceInfo(), propertyName);
-      // either qualExpr.prop or _.prop depending on fluent or not
-      propertyReference.setQualifier(fluent ? globalTemp.makeRef(x.getSourceInfo()) : qualExpr);
-      // propExpr = arg
-      result = createAssignment(propertyReference, jsInvocation.getArguments().get(0));
-      if (fluent) {
-        // (_ = qualExpr, _.prop = arg, _)
-        result = createCommaExpression(
-            createAssignment(globalTemp.makeRef(x.getSourceInfo()), qualExpr),
-            createCommaExpression(result, globalTemp.makeRef(x.getSourceInfo())));
-      }
-      return result;
+      propertyReference.setQualifier(qualExpr);
+      return createAssignment(propertyReference, jsInvocation.getArguments().get(0));
     }
 
     private JsExpression createGetterDispatch(JMethodCall x, JsExpression unnecessaryQualifier,

@@ -23,6 +23,7 @@ import com.google.gwt.dev.jjs.ast.JInterfaceType;
 import com.google.gwt.dev.jjs.ast.JMember;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethod.JsPropertyType;
+import com.google.gwt.dev.jjs.ast.JPrimitiveType;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.ast.JVisitor;
@@ -205,28 +206,45 @@ public class JsInteropRestrictionChecker extends JVisitor {
     if (jsMemberName == null) {
       logError("'%s' can't be exported because the method overloads multiple methods with "
           + "different names.", qualifiedMethodName);
-    } else if (jsPropertyType == JsPropertyType.HAS) {
-      // Has JS dispatch consumes no named slot on the prototype and so can not cause or suffer from
-      // any collisions.
-    } else if (jsPropertyType == JsPropertyType.GET) {
-      // If it's a getter.
+    }
+
+    if (jsPropertyType == JsPropertyType.GET) {
+      if (!method.getParams().isEmpty() || method.getType() == JPrimitiveType.VOID) {
+        logError("There can't be void return type or any parameters for the JsProperty getter"
+            + " '%s'.", qualifiedMethodName);
+        return;
+      }
+      if (method.getType() != JPrimitiveType.BOOLEAN && method.getName().startsWith("is")) {
+        logError("There can't be non-booelean return for the JsProperty 'is' getter '%s'.",
+            qualifiedMethodName);
+        return;
+      }
       if (currentJsTypeMethodNameByGetterNames.put(jsMemberName, qualifiedMethodName) != null) {
         // Don't allow multiple getters for the same property name.
         logError("There can't be more than one getter for JsProperty '%s' in type '%s'.",
             jsMemberName, typeName);
+        return;
       }
       checkNameCollisionForGetterAndRegular(jsMemberName, typeName);
       checkInconsistentPropertyType(jsMemberName, typeName, method.getOriginalReturnType());
     } else if (jsPropertyType == JsPropertyType.SET) {
-      // If it's a setter.
+      if (method.getParams().size() != 1 || method.getType() != JPrimitiveType.VOID) {
+        logError("There needs to be single parameter and void return type for the JsProperty setter"
+            + " '%s'.", qualifiedMethodName);
+        return;
+      }
       if (currentJsTypeMethodNameBySetterNames.put(jsMemberName, qualifiedMethodName) != null) {
         // Don't allow multiple setters for the same property name.
         logError("There can't be more than one setter for JsProperty '%s' in type '%s'.",
             jsMemberName, typeName);
+        return;
       }
       checkNameCollisionForSetterAndRegular(jsMemberName, typeName);
       checkInconsistentPropertyType(jsMemberName, typeName,
           Iterables.getOnlyElement(method.getParams()).getType());
+    } else if (jsPropertyType == JsPropertyType.UNDEFINED) {
+      // We couldn't extract the JsPropertyType.
+      logError("JsProperty '%s' doesn't follow Java Bean naming conventions.", qualifiedMethodName);
     } else {
       // If it's just an regular JsType method.
       if (currentJsTypeMethodNameByMemberNames.put(jsMemberName, qualifiedMethodName) != null) {

@@ -80,30 +80,17 @@ public final class JsInteropUtil {
 
   private static void setJsPropertyProperties(JMethod method) {
     String methodName = method.getName();
-    if (method.getParams().isEmpty()) {
-      if (startsWithCamelCase(method.getName(), "has")) {
-        // Has
-        method.setJsPropertyType(JsPropertyType.HAS);
-        method.setJsMemberName(Introspector.decapitalize(methodName.substring(3)));
-      } else {
-        // Getter
-        method.setJsPropertyType(JsPropertyType.GET);
-        if (startsWithCamelCase(methodName, "is")) {
-          method.setJsMemberName(Introspector.decapitalize(methodName.substring(2)));
-        } else if (startsWithCamelCase(methodName, "get")) {
-          method.setJsMemberName(Introspector.decapitalize(methodName.substring(3)));
-        } else {
-          method.setJsMemberName(methodName);
-        }
-      }
-    } else {
-      // Setter
+    if (startsWithCamelCase(methodName, "set")) {
       method.setJsPropertyType(JsPropertyType.SET);
-      if (startsWithCamelCase(methodName, "set")) {
-        method.setJsMemberName(Introspector.decapitalize(methodName.substring(3)));
-      } else {
-        method.setJsMemberName(methodName);
-      }
+      method.setJsMemberName(Introspector.decapitalize(methodName.substring(3)));
+    } else if (startsWithCamelCase(methodName, "get")) {
+      method.setJsPropertyType(JsPropertyType.GET);
+      method.setJsMemberName(Introspector.decapitalize(methodName.substring(3)));
+    } else if (startsWithCamelCase(methodName, "is")) {
+      method.setJsPropertyType(JsPropertyType.GET);
+      method.setJsMemberName(Introspector.decapitalize(methodName.substring(2)));
+    } else {
+      method.setJsPropertyType(JsPropertyType.UNDEFINED);
     }
   }
 

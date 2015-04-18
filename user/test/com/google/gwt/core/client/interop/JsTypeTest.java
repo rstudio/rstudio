@@ -37,8 +37,7 @@ public class JsTypeTest extends GWTTestCase {
   @Override
   protected void gwtSetUp() throws Exception {
     ScriptInjector.fromString("function MyJsInterface() {}\n"
-        + "MyJsInterface.prototype.sum = function sum(bias) { return this.x + this.y + bias; }\n"
-        + "MyJsInterface.prototype.go = function(cb) { cb('Hello'); }")
+        + "MyJsInterface.prototype.sum = function sum(bias) { return this.x + bias; };")
         .setWindow(TOP_WINDOW).inject();
     patchPrototype(MyClassExtendsJsPrototype.class);
   }
@@ -115,13 +114,10 @@ public class JsTypeTest extends GWTTestCase {
 
   public void testSubClassWithSuperCalls() {
     MyClassExtendsJsPrototype mc = new MyClassExtendsJsPrototype();
-    assertEquals(150, mc.sum(1));
-  }
+    assertEquals(143, mc.sum(1));
 
-  public void testJsProperties() {
-    MyClassExtendsJsPrototype mc = new MyClassExtendsJsPrototype();
-    // Tests both fluent and non-fluent accessors.
-    mc.x(-mc.x()).setY(0);
+    // Also test with setting properties
+    mc.setX(-mc.getX());
     assertEquals(58, mc.sum(0));
   }
 
@@ -135,16 +131,6 @@ public class JsTypeTest extends GWTTestCase {
     assertFalse(object.isX());
   }
 
-  public void testJsPropertyHasX() {
-    JsTypeHasProperty object = (JsTypeHasProperty) JavaScriptObject.createObject();
-
-    assertFalse(object.hasX());
-    object.setX(10);
-    assertTrue(object.hasX());
-    object.setX(0);
-    assertTrue(object.hasX());
-  }
-
   public void testJsPropertyGetX() {
     JsTypeGetProperty object = (JsTypeGetProperty) JavaScriptObject.createObject();
 
@@ -153,38 +139,6 @@ public class JsTypeTest extends GWTTestCase {
     assertEquals(10, object.getX());
     object.setX(0);
     assertEquals(0, object.getX());
-  }
-
-  public void testJsPropertyX() {
-    JsTypeRawGetProperty object = (JsTypeRawGetProperty) JavaScriptObject.createObject();
-
-    assertTrue(isUndefined(object.x()));
-    object.setX(10);
-    assertEquals(10, object.x());
-    object.setX(0);
-    assertEquals(0, object.x());
-  }
-
-  public void testJsPropertyFluentLongSetter() {
-    JsTypeFluentLongSetterProperty object =
-        (JsTypeFluentLongSetterProperty) JavaScriptObject.createObject();
-
-    assertTrue(isUndefined(object.getX()));
-    object.setX(6).setX(7).setX(8).setX(9).setX(10);
-    assertEquals(10, object.getX());
-    object.setX(4).setX(3).setX(2).setX(1).setX(0);
-    assertEquals(0, object.getX());
-  }
-
-  public void testJsPropertyFluentShortSetter() {
-    JsTypeFluentShortSetterProperty object =
-        (JsTypeFluentShortSetterProperty) JavaScriptObject.createObject();
-
-    assertTrue(isUndefined(object.x()));
-    object.x(6).x(7).x(8).x(9).x(10);
-    assertEquals(10, object.x());
-    object.x(4).x(3).x(2).x(1).x(0);
-    assertEquals(0, object.x());
   }
 
   public void testCasts() {

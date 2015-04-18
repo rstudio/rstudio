@@ -201,7 +201,7 @@ public abstract class OptimizerTestBase extends JJSTestBase {
   /**
    * Asserts that the compile succeeds with {@code expectedWarnings}.
    */
-  public final void assertCompileSucceeds(String code,
+  public final Result assertCompileSucceeds(String code,
       String... expectedWarnings) throws UnableToCompleteException {
     UnitTestTreeLogger.Builder builder = new UnitTestTreeLogger.Builder();
     builder.setLowestLogLevel(TreeLogger.WARN);
@@ -213,12 +213,13 @@ public abstract class OptimizerTestBase extends JJSTestBase {
     UnitTestTreeLogger errorLogger = builder.createLogger();
 
     try {
-      optimize(errorLogger, "void", code);
+      return optimize(errorLogger, "void", code);
     } catch (UnableToCompleteException e) {
       fail("Compile failed");
     } finally {
       errorLogger.assertCorrectLogEntries();
     }
+    return null;
   }
 
   /**
