@@ -173,6 +173,12 @@ public class GwtAstBuilderTest extends JJSTestBase {
         "}"
     ));
 
+    sourceLevel = SourceLevel.DEFAULT_SOURCE_LEVEL;
+  }
+
+  public void testNestedClassDisposition() throws UnableToCompleteException {
+    sourceLevel = SourceLevel.JAVA8;
+
     sources.add(JavaResourceBase.createMockJavaResource("test.NestedClasses",
         "package test;",
         "public class NestedClasses {",
@@ -188,11 +194,6 @@ public class GwtAstBuilderTest extends JJSTestBase {
         "  }",
         "}"
     ));
-    sourceLevel = SourceLevel.DEFAULT_SOURCE_LEVEL;
-  }
-
-  public void testNestedClassDisposition() throws UnableToCompleteException {
-    sourceLevel = SourceLevel.JAVA8;
 
     JProgram program = compileProgram("test.NestedClasses");
     JDeclaredType staticNested = program.getFromTypeMap("test.NestedClasses$StaticNestedClass");
@@ -215,6 +216,9 @@ public class GwtAstBuilderTest extends JJSTestBase {
         "test.NestedClasses$Lambda$$test$NestedClasses$referencedMethod__V$Type");
     assertEquals(JDeclaredType.NestedClassDisposition.LAMBDA,
         referenceNested.getClassDisposition());
+
+    JDeclaredType topLevel = program.getFromTypeMap("test.NestedClasses");
+    assertEquals(JDeclaredType.NestedClassDisposition.TOP_LEVEL, topLevel.getClassDisposition());
   }
 
   public void testUniqueArrayTypeInstance() throws UnableToCompleteException {
