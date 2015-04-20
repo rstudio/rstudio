@@ -33,7 +33,20 @@
      # show everything else as characters
      col <- as.character(col)
    }
-   format(col, trim = TRUE, justify = "none", ...)
+
+   # remember which values are NA 
+   naVals <- is.na(col) 
+
+   # format all the values; this drops NAs (the na.encode option only preserves
+   # NA for character cols)
+   vals <- format(col, trim = TRUE, justify = "none", ...)
+
+   # restore NAs if there were any
+   if (any(naVals)) {
+     vals[naVals] <- NA
+   } 
+
+   vals
 })
 
 .rs.addFunction("describeCols", function(x, maxCols, maxFactors) 

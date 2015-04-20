@@ -284,6 +284,11 @@ th:focus {
     background-color: #e8e8ff;
 }
 
+.naCell {
+    color: #b0b0b0;
+    font-style: italic;
+}
+
 div.DTS div.DTS_Loading {
     border: none;
     background: none;

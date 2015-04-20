@@ -101,6 +101,11 @@ var showError = function(msg) {
 
 // simple HTML escaping (avoid XSS in data)
 var escapeHtml = function(html) {
+  // handle special cells
+  if (typeof(html) === "number")
+    return html.toString();
+
+  // in other types, replace special characters
   var replacements = {
     "<":  "&lt;",
     ">":  "&gt;",
@@ -120,6 +125,11 @@ var highlightSearchMatch = function(data, search, pos) {
 // literally; when search is active, highlights the portion of the text that
 // matches the search
 var renderCellContents = function(data, type, row, meta) {
+
+  // usually data is a string; 0 is a special value signifying NA 
+  if (data === 0) {
+    return '<span class="naCell">NA</span>';
+  }
 
   // if row matches because of a global search, highlight that
   if (cachedSearch.length > 0) {

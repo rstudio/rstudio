@@ -58,6 +58,9 @@
 // point the column's text is searched as though it were a character column)
 #define MAX_FACTORS 64
 
+// special cell values
+#define SPECIAL_CELL_NA 0
+
 using namespace rstudio::core;
 
 namespace rstudio {
@@ -649,6 +652,10 @@ json::Value getData(SEXP dataSEXP, const http::Fields& fields)
                 r::sexp::length(stringSEXP) > 0)
             {
                rowData.push_back(Rf_translateCharUTF8(stringSEXP));
+            }
+            else if (stringSEXP == NA_STRING) 
+            {
+               rowData.push_back(SPECIAL_CELL_NA);
             }
             else
             {
