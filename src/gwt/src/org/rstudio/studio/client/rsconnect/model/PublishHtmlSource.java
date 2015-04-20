@@ -1,7 +1,7 @@
 /*
- * RPubsHtmlGenerator.java
+ * PublishHtmlSource.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-15 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -12,14 +12,12 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-
-package org.rstudio.studio.client.common.rpubs;
+package org.rstudio.studio.client.rsconnect.model;
 
 import org.rstudio.core.client.CommandWithArg;
 
-public interface RPubsHtmlGenerator
+public interface PublishHtmlSource
 {
-   void generateRPubsHtml(String title,
-                          String comment,
-                          CommandWithArg<String> onCompleted);
+   public void generatePublishHtml(CommandWithArg<String> onComplete);
+   public String getTitle();
 }

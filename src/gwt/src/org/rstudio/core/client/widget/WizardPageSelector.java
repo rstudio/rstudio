@@ -18,10 +18,10 @@ import java.util.ArrayList;
 
 import org.rstudio.core.client.CommandWithArg;
 
-
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Image;
@@ -86,15 +86,19 @@ public class WizardPageSelector<I,T> extends Composite
          LayoutPanel layoutPanel = new LayoutPanel();
          layoutPanel.addStyleName(styles.wizardPageSelectorItem());
          
-         Image image = new Image(pageInfo.getImage());
-         layoutPanel.add(image);
-         layoutPanel.setWidgetLeftWidth(image, 
-                                        10, Unit.PX, 
-                                        image.getWidth(), Unit.PX);
-         layoutPanel.setWidgetTopHeight(image, 
-                                        40-(image.getHeight()/2), Unit.PX, 
-                                        image.getHeight(), Unit.PX);
-         
+         ImageResource pageImageResource = pageInfo.getImage();
+         Image image = null;
+         if (pageImageResource != null)
+         {
+            image = new Image(pageImageResource);
+            layoutPanel.add(image);
+            layoutPanel.setWidgetLeftWidth(image, 
+                                           10, Unit.PX, 
+                                           image.getWidth(), Unit.PX);
+            layoutPanel.setWidgetTopHeight(image, 
+                                           40-(image.getHeight()/2), Unit.PX, 
+                                           image.getHeight(), Unit.PX);
+         }
         
          FlowPanel captionPanel = new FlowPanel();
          Label titleLabel = new Label(pageInfo.getTitle());
@@ -105,7 +109,7 @@ public class WizardPageSelector<I,T> extends Composite
          captionPanel.add(subTitleLabel);
          layoutPanel.add(captionPanel);
          layoutPanel.setWidgetLeftWidth(captionPanel,
-                                        10 + image.getWidth() + 12, Unit.PX,
+                                        10 + (image == null ? 0 : image.getWidth()) + 12, Unit.PX,
                                         450, Unit.PX);
          layoutPanel.setWidgetTopHeight(captionPanel,
                                         19, Unit.PX, 

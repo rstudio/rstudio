@@ -20,18 +20,27 @@ import com.google.gwt.event.logical.shared.HasResizeHandlers;
 import com.google.gwt.event.logical.shared.ResizeEvent;
 import com.google.gwt.event.logical.shared.ResizeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.LayoutPanel;
 import com.google.gwt.user.client.ui.Panel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
+import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.Size;
 import org.rstudio.core.client.widget.ImageFrame;
 import org.rstudio.core.client.widget.Toolbar;
+import org.rstudio.studio.client.common.SimpleRequestCallback;
+import org.rstudio.studio.client.common.dependencies.DependencyManager;
+import org.rstudio.studio.client.common.zoom.ZoomUtils;
+import org.rstudio.studio.client.rsconnect.RSConnect;
+import org.rstudio.studio.client.rsconnect.model.PublishHtmlSource;
+import org.rstudio.studio.client.rsconnect.ui.RSConnectPublishButton;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
+import org.rstudio.studio.client.workbench.views.plots.model.PlotsServerOperations;
 import org.rstudio.studio.client.workbench.views.plots.ui.PlotsToolbar;
 
 import java.util.Iterator;
@@ -40,17 +49,60 @@ public class PlotsPane extends WorkbenchPane implements Plots.Display,
       HasResizeHandlers
 {
    @Inject
-   public PlotsPane(Commands commands)
+   public PlotsPane(Commands commands, PlotsServerOperations server,
+         DependencyManager dependencies)
    {
       super("Plots");
       commands_ = commands;
+      server_ = server;
+      dependencies_ = dependencies;
       ensureWidget();
    }
 
    @Override
    protected Toolbar createMainToolbar()
    {
-      plotsToolbar_ = new PlotsToolbar(commands_);
+      publishButton_ = new RSConnectPublishButton(
+            RSConnect.CONTENT_TYPE_PLOT, true, commands_.savePlotAsImage());
+      publishButton_.setPublishHtmlSource(new PublishHtmlSource()
+      {
+         @Override
+         public String getTitle()
+         {
+            return "Current Plot";
+         }
+         
+         @Override
+         public void generatePublishHtml(
+               final CommandWithArg<String> onComplete)
+         {
+            dependencies_.withRMarkdown("Publishing plots", new Command()
+            {
+               @Override
+               public void execute()
+               {
+                 final Size size = ZoomUtils.getZoomedSize(
+                       getPlotFrameSize(), 
+                       new Size(400, 350), 
+                       new Size(750, 600));
+                  server_.plotsCreateRPubsHtml(
+                     "Plot", 
+                     "", 
+                     size.width,
+                     size.height,
+                     new SimpleRequestCallback<String>() 
+                     {
+                        @Override
+                        public void onResponseReceived(String rpubsHtmlFile)
+                        {
+                           onComplete.execute(rpubsHtmlFile);
+                        }
+                     });
+                 }
+             });
+         }
+      });
+      plotsToolbar_ = new PlotsToolbar(commands_, publishButton_);
       return plotsToolbar_;
    }
 
@@ -143,7 +195,13 @@ public class PlotsPane extends WorkbenchPane implements Plots.Display,
    public void onResize()
    {
       super.onResize();
-      ResizeEvent.fire(this, getOffsetWidth(), getOffsetHeight());
+      int width = getOffsetWidth();
+      ResizeEvent.fire(this, width, getOffsetHeight());
+      
+      if (width > 0 && publishButton_ != null)
+      {
+         publishButton_.setShowCaption(width > 500);
+      }
    }
 
    public HandlerRegistration addResizeHandler(ResizeHandler resizeHandler)
@@ -151,10 +209,14 @@ public class PlotsPane extends WorkbenchPane implements Plots.Display,
       return addHandler(resizeHandler, ResizeEvent.getType());
    }
 
+   private final Commands commands_;
+   private final PlotsServerOperations server_;
+   private final DependencyManager dependencies_;
+   
+   private RSConnectPublishButton publishButton_;
    private LayoutPanel panel_;
    private ImageFrame frame_;
    private String plotUrl_;
-   private final Commands commands_;
    private PlotsToolbar plotsToolbar_ = null;
    private FlowPanel plotsSurface_ = null;
    private Plots.Parent plotsParent_ = new Plots.Parent() { 

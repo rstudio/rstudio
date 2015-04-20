@@ -116,7 +116,7 @@ public class PaneManager
                       @Named("Compile PDF") final WorkbenchTab compilePdfTab,
                       @Named("Source Cpp") final WorkbenchTab sourceCppTab,
                       @Named("R Markdown") final WorkbenchTab renderRmdTab,
-                      @Named("Deploy") final WorkbenchTab deployShinyTab,
+                      @Named("Deploy") final WorkbenchTab deployContentTab,
                       final MarkersOutputTab markersTab,
                       final FindOutputTab findOutputTab)
    {
@@ -140,7 +140,7 @@ public class PaneManager
       findOutputTab_ = findOutputTab;
       sourceCppTab_ = sourceCppTab;
       renderRmdTab_ = renderRmdTab;
-      deployShinyTab_ = deployShinyTab;
+      deployContentTab_ = deployContentTab;
       markersTab_ = markersTab;
       
       binder.bind(commands, this);
@@ -350,7 +350,7 @@ public class PaneManager
                                                             findOutputTab_,
                                                             sourceCppTab_,
                                                             renderRmdTab_,
-                                                            deployShinyTab_,
+                                                            deployContentTab_,
                                                             markersTab_,
                                                             eventBus_,
                                                             consoleInterrupt_,
@@ -503,7 +503,7 @@ public class PaneManager
    private final WorkbenchTab environmentTab_;
    private final WorkbenchTab viewerTab_;
    private final WorkbenchTab renderRmdTab_;
-   private final WorkbenchTab deployShinyTab_;
+   private final WorkbenchTab deployContentTab_;
    private final MarkersOutputTab markersTab_;
    private MainSplitPanel panel_;
    private LogicalWindow sourceLogicalWindow_;

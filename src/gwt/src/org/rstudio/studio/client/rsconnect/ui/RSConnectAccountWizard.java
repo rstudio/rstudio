@@ -50,8 +50,8 @@ public class RSConnectAccountWizard
    {
       return new NewRSConnectAccountPage("Connect Publishing Account", 
             "Pick an account", "Connect Publishing Account", 
-            RSConnectAccountResources.INSTANCE.publishIcon(),
-            RSConnectAccountResources.INSTANCE.publishIconLarge(),
+            RSConnectResources.INSTANCE.publishIcon(),
+            RSConnectResources.INSTANCE.publishIconLarge(),
             createSelectorPage(showCloudPage));
    }
    

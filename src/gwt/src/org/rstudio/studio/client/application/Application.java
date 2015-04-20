@@ -613,9 +613,6 @@ public class Application implements ApplicationEventHandlers
       if (!SessionUtils.showExternalPublishUi(session_, uiPrefs_.get()))
       {
          commands_.publishHTML().remove();
-         commands_.publishPlotToRPubs().remove();
-         commands_.presentationPublishToRpubs().remove();
-         commands_.viewerPublishToRPubs().remove();
       } 
       
       // hide the agreement menu item if we don't have one

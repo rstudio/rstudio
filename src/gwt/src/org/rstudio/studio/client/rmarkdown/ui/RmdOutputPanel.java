@@ -19,8 +19,6 @@ import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyDownHandler;
@@ -51,10 +49,9 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownServerOperations;
 import org.rstudio.studio.client.rmarkdown.model.RmdPreviewParams;
 import org.rstudio.studio.client.rsconnect.RSConnect;
-import org.rstudio.studio.client.rsconnect.events.RSConnectActionEvent;
+import org.rstudio.studio.client.rsconnect.ui.RSConnectPublishButton;
 import org.rstudio.studio.client.shiny.ShinyFrameHelper;
 import org.rstudio.studio.client.workbench.commands.Commands;
-import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.presentation.SlideNavigationMenu;
 import org.rstudio.studio.client.common.presentation.SlideNavigationToolbarMenu;
@@ -71,7 +68,6 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
    public RmdOutputPanel(Commands commands, 
                          FileTypeRegistry fileTypeRegistry,
                          RMarkdownServerOperations server,
-                         EventBus events, 
                          RSConnect rsconnect,
                          Satellite satellite)
    {
@@ -79,7 +75,6 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
       fileTypeRegistry_ = fileTypeRegistry;
       server_ = server;
       shinyFrame_ = new ShinyFrameHelper();
-      events_ = events;
       
       // if this window is a satellite, ensure that the rsconnect instance
       // is initialized
@@ -88,7 +83,7 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
    
    @Override
    public void showOutput(RmdPreviewParams params, boolean enablePublish, 
-                          boolean enableDeploy, boolean refresh)
+                          boolean refresh)
    {
       // remember output parameters
       outputParms_ = params;
@@ -118,19 +113,8 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
          isShiny_ = false;
       }
       
-      // RPubs
-      boolean showPublish = enablePublish && 
-                            params.getResult().isHtml() &&
-                            params.getResult().getFormat() != null &&
-                            params.getResult().getFormat().isSelfContained();
-      publishButton_.setText(params.getResult().getRpubsPublished() ? 
-            "Republish" : "Publish");
-      publishButton_.setVisible(showPublish);
-      
-      // RSConnect
-      boolean showDeploy = enableDeploy && params.isShinyDocument();
-      deployButton_.setVisible(showDeploy);
-      deployButton_.setText("Publish");
+
+      publishButton_.setRmdPreview(params);
       
       // find text box
       boolean showFind = params.getResult().isHtml() && 
@@ -227,22 +211,9 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
       toolbar.addLeftSeparator();
       toolbar.addLeftWidget(commands.viewerRefresh().createToolbarButton());
       
-      publishButton_ = commands.publishHTML().createToolbarButton(false);
+      publishButton_ = new RSConnectPublishButton(
+            RSConnect.CONTENT_TYPE_DOCUMENT, true, null);
       toolbar.addRightWidget(publishButton_);
-
-      deployButton_ = new ToolbarButton("Publish", 
-            commands.rsconnectDeploy().getImageResource(), 
-            new ClickHandler()
-      {
-         @Override
-         public void onClick(ClickEvent evt)
-         {
-            events_.fireEvent(new RSConnectActionEvent(
-                  RSConnectActionEvent.ACTION_TYPE_DEPLOY, 
-                  targetFile_.getPath()));
-         }
-      });
-      toolbar.addRightWidget(deployButton_);
    }
    
    @Override
@@ -504,13 +475,11 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
 
    private Label fileLabel_;
    private Widget fileLabelSeparator_;
-   private ToolbarButton publishButton_;
-   private ToolbarButton deployButton_;
+   private RSConnectPublishButton publishButton_;
    private String title_;
    
    private final FileTypeRegistry fileTypeRegistry_;
    private final RMarkdownServerOperations server_;
-   private final EventBus events_;
 
    private int scrollPosition_ = 0;
    

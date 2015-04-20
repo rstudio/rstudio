@@ -19,6 +19,7 @@ import org.rstudio.studio.client.shiny.events.ShinyApplicationStatusEvent;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.ui.DelayLoadTabShim;
 import org.rstudio.studio.client.workbench.ui.DelayLoadWorkbenchTab;
+import org.rstudio.studio.client.workbench.views.viewer.events.ViewerClearedEvent;
 import org.rstudio.studio.client.workbench.views.viewer.events.ViewerNavigateEvent;
 import org.rstudio.studio.client.workbench.views.viewer.events.ViewerPreviewRmdEvent;
 
@@ -28,6 +29,7 @@ public class ViewerTab extends DelayLoadWorkbenchTab<ViewerPresenter>
         extends DelayLoadTabShim<ViewerPresenter, ViewerTab>
         implements ViewerNavigateEvent.Handler,
                    ViewerPreviewRmdEvent.Handler,
+                   ViewerClearedEvent.Handler,
                    ShinyApplicationStatusEvent.Handler {}
 
    @Inject
@@ -38,6 +40,7 @@ public class ViewerTab extends DelayLoadWorkbenchTab<ViewerPresenter>
       
       eventBus.addHandler(ViewerNavigateEvent.TYPE, shim);
       eventBus.addHandler(ViewerPreviewRmdEvent.TYPE, shim);
+      eventBus.addHandler(ViewerClearedEvent.TYPE, shim);
       eventBus.addHandler(ShinyApplicationStatusEvent.TYPE, shim);
    }
    

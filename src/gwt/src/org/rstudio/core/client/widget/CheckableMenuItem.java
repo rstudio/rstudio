@@ -13,7 +13,12 @@ public abstract class CheckableMenuItem extends MenuItem
 {
    public CheckableMenuItem()
    {
-      super("", false, (Scheduler.ScheduledCommand)null);
+      this("");
+   }
+
+   public CheckableMenuItem(String label)
+   {
+      super(label, false, (Scheduler.ScheduledCommand)null);
       setHTML(getHTMLContent());
       setScheduledCommand(new ScheduledCommand()
       {
@@ -23,6 +28,7 @@ public abstract class CheckableMenuItem extends MenuItem
             onInvoked();
          }
       });
+      
    }
 
    public void onStateChanged()

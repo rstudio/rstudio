@@ -204,6 +204,11 @@ public class WidgetListBox<T extends Widget>
       return null;
    }
    
+   public List<T> getItems()
+   {
+      return items_;
+   }
+   
    public T getSelectedItem()
    {
       return getItemAtIdx(getSelectedIndex());

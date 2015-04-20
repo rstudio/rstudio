@@ -12,7 +12,7 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.shiny.events;
+package org.rstudio.studio.client.rsconnect.events;
 
 import org.rstudio.studio.client.common.compile.CompileOutput;
 

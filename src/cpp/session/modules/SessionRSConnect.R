@@ -34,6 +34,47 @@
    return(ret)
 })
 
+.rs.addFunction("getRSConnectDeployments", function(path, rpubsUploadId) {
+   deploymentsFrame <- rsconnect::deployments(path)
+   deployments <- .rs.scalarListFromFrame(deploymentsFrame)
+
+   # no RPubs upload IDs to consider
+   if (!is.character(rpubsUploadId) || nchar(rpubsUploadId) == 0) {
+     return(deployments)
+   }
+
+   # if there's already a deployment to rpubs.com, ignore legacy deployment
+   if ("rpubs.com" %in% deployments$server) {
+     return(deployments)
+   }
+
+   # create a new list with the same names as the one we're about to return,
+   # and populate the fields we know from RPubs. leave all others, including
+   # user-defined fields, blank; this allows us to tolerate changes to the
+   # deployment frame format.
+   rpubsDeployment <- list()
+   for (col in colnames(deploymentsFrame)) {
+     if (col == "name")
+       rpubsDeployment[col] = ""
+     else if (col == "account")
+       rpubsDeployment[col] = "rpubs"
+     else if (col == "server")
+       rpubsDeployment[col] = "rpubs.com"
+     else if (col == "bundleId") 
+       rpubsDeployment[col] = rpubsUploadId
+     else if (col == "asStatic")
+       rpubsDeployment[col] = TRUE
+     else if (col == "when") 
+       rpubsDeployment[col] = 0
+     else 
+       rpubsDeployment[col] = NA
+   }
+
+   # combine the deployments rsconnect knows about with the deployments we know
+   # about
+   c(deployments, .rs.scalarListFromList(rpubsDeployment))
+})
+
 .rs.addJsonRpcHandler("get_rsconnect_account_list", function() {
    accounts <- list()
    # safely return an empty list--we want to consider there to be 0 connected
@@ -53,9 +94,6 @@
    .rs.scalarListFromFrame(rsconnect::applications(account, server))
 })
 
-.rs.addJsonRpcHandler("get_rsconnect_deployments", function(path) {
-   .rs.scalarListFromFrame(rsconnect::deployments(path))
-})
 
 .rs.addJsonRpcHandler("validate_server_url", function(url) {
    .rs.scalarListFromList(rsconnect:::validateServerUrl(url))
@@ -165,26 +203,60 @@
                       subdir_contents))
 })
 
-.rs.addFunction("rmdDeployList", function(target) {
-  deploy_frame <- rmarkdown::find_external_resources(target) 
-  file_list <- c(deploy_frame$path, basename(target))
+.rs.addFunction("docDeployList", function(target, asMultipleDoc) {
+  file_list <- c()
+
+  # if deploying multiple documents, find all the files in the with a matching
+  # extension; otherwise, just use the single document we were given
+  if (asMultipleDoc) {
+    targets <- list.files(path = dirname(target), 
+      pattern = glob2rx(paste("*", tools::file_ext(target), sep = ".")), 
+      ignore.case = TRUE, full.names = TRUE)
+  } else {
+    targets <- target
+  }
+
+  # find the resources used by each document
+  for (t in targets) {
+    deploy_frame <- NULL
+    tryCatch({
+      # this operation can be expensive and could also throw if e.g. the 
+      # document fails to parse or render
+      deploy_frame <- rmarkdown::find_external_resources(t) 
+    },
+    error = function(e) {
+      # errors are not fatal here; we just might miss some resources, which
+      # the user will have to add manually
+    })
+    if (!is.null(deploy_frame)) {
+      file_list <- c(file_list, deploy_frame$path, basename(t))
+    }
+  }
+
+  # discard any duplicates (the same resource may be depended upon by multiple
+  # R Markdown documents)
+  file_list <- unique(file_list)
+
+  # compose the result
   list (
     contents = paste("./", file_list, sep = ""),
     cur_size = sum(
        file.info(file.path(dirname(target), file_list))$size))
 })
 
-.rs.addFunction("makeDeploymentList", function(target, max_size) {
-   if (identical(tolower(tools::file_ext(target)), "rmd")) 
-     .rs.rmdDeployList(target)
+.rs.addFunction("makeDeploymentList", function(target, asMultipleDoc, 
+                                               max_size) {
+   ext <- tolower(tools::file_ext(target))
+   if (ext %in% c("rmd", "html", "htm", "md"))
+     .rs.docDeployList(target, asMultipleDoc)
    else
      .rs.maxDirectoryList(target, ".", 0, max_size, 
                           c("rsconnect", "packrat"), "Rproj")
 })
 
-.rs.addFunction("rsconnectDeployList", function(target) {
+.rs.addFunction("rsconnectDeployList", function(target, asMultipleDoc) {
   max_size <- 104857600   # 100MB
-  dirlist <- .rs.makeDeploymentList(target, max_size)
+  dirlist <- .rs.makeDeploymentList(target, asMultipleDoc, max_size)
   list (
     # if the directory is too large, no need to bother sending a potentially
     # large blob of data to the client
@@ -202,8 +274,8 @@
   invisible(enable)
 })
 
-.rs.addJsonRpcHandler("get_deployment_files", function(target) {
-  .rs.rsconnectDeployList(target)
+.rs.addJsonRpcHandler("get_deployment_files", function(target, asMultipleDoc) {
+  .rs.rsconnectDeployList(target, asMultipleDoc)
 })
 
 # The parameter to this function is a string containing the R command from
@@ -215,3 +287,36 @@
    eval(cmd, envir = globalenv())
 })
 
+
+.rs.addJsonRpcHandler("get_rmd_publish_details", function(target) {
+  # check for multiple R Markdown documents in the directory 
+  rmds <- list.files(path = dirname(target), pattern = glob2rx("*.Rmd"),
+                     all.files = FALSE, recursive = FALSE, ignore.case = TRUE,
+                     include.dirs = FALSE)
+
+  # see if this format is self-contained (defaults to true for HTML-based 
+  # formats)
+  selfContained <- TRUE
+  lines <- readLines(target, warn = FALSE)
+  outputFormat <- rmarkdown:::output_format_from_yaml_front_matter(lines)
+  if (is.list(outputFormat$options) &&
+      identical(outputFormat$options$self_contained, FALSE)) {
+    selfContained <- FALSE
+  }
+
+  # extract the document's title
+  title <- ""
+  frontMatter <- rmarkdown:::parse_yaml_front_matter(lines) 
+  if (is.list(frontMatter) && is.character(frontMatter$title)) {
+    title <- frontMatter$title
+  }
+
+  # check to see if this is an interactive doc (i.e. needs to be run rather
+  # rather than rendered)
+  renderFunction <- .rs.getCustomRenderFunction(target)
+  list(
+    is_multi_rmd      = .rs.scalar(length(rmds) > 1), 
+    is_shiny_rmd      = .rs.scalar(renderFunction == "rmarkdown::run"),
+    is_self_contained = .rs.scalar(selfContained),
+    title             = .rs.scalar(title))
+})

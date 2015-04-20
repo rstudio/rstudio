@@ -20,6 +20,7 @@ import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.notebook.CompileNotebookPrefs;
 import org.rstudio.studio.client.notebookv2.CompileNotebookv2Prefs;
 import org.rstudio.studio.client.rmarkdown.RmdOutput;
+import org.rstudio.studio.client.rsconnect.model.RSConnectAccount;
 import org.rstudio.studio.client.shiny.model.ShinyViewerType;
 import org.rstudio.studio.client.workbench.exportplot.model.ExportPlotOptions;
 import org.rstudio.studio.client.workbench.ui.PaneConfig;
@@ -468,6 +469,11 @@ public class UIPrefsAccessor extends Prefs
    public PrefValue<Boolean> enableRStudioConnect()
    {
       return bool("enable_rstudio_connect", false);
+   }
+   
+   public PrefValue<RSConnectAccount> preferredPublishAccount()
+   {
+      return object("preferred_publish_account");
    }
 
    private String getDefaultPdfPreview()

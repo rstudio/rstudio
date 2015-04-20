@@ -23,6 +23,7 @@
 
 #include <r/RSexp.hpp>
 #include <r/RExec.hpp>
+#include <r/RJson.hpp>
 
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionAsyncRProcess.hpp>
@@ -42,62 +43,95 @@ namespace rsconnect {
 
 namespace {
 
-class ShinyAppDeploy : public async_r::AsyncRProcess
+// transforms a JSON array of file names into a single string. If 'quoted',
+// then the input strings are quoted and comma-delimited; otherwise, file names
+// are pipe-delimited.
+std::string quotedFilesFromArray(json::Array array, bool quoted) 
+{
+   std::string joined;
+   for (size_t i = 0; i < array.size(); i++) 
+   {
+      joined += (quoted ? "'" : "") + 
+                string_utils::utf8ToSystem(array[i].get_str()) +
+                (quoted ? "'" : "");
+      if (i < array.size() - 1) 
+         joined += (quoted ? ", " : "|");
+   }
+   return joined;
+}
+
+class RSConnectPublish : public async_r::AsyncRProcess
 {
 public:
-   static boost::shared_ptr<ShinyAppDeploy> create(
+   static boost::shared_ptr<RSConnectPublish> create(
          const std::string& dir,
          const json::Array& fileList, 
          const std::string& file, 
+         const std::string& sourceDoc,
          const std::string& account,
          const std::string& server,
-         const std::string& app)
+         const std::string& app,
+         const json::Array& additionalFilesList,
+         const json::Array& ignoredFilesList,
+         bool asMultiple,
+         bool asStatic)
    {
-      boost::shared_ptr<ShinyAppDeploy> pDeploy(new ShinyAppDeploy(file));
+      boost::shared_ptr<RSConnectPublish> pDeploy(new RSConnectPublish(file));
 
       std::string cmd("{ options(repos = c(CRAN='" +
                        module_context::CRANReposURL() + "')); ");
 
       // join and quote incoming filenames to deploy
-      std::string files;
-      for (size_t i = 0; i < fileList.size(); i++) 
-      {
-         files += "'" + fileList[i].get_str() + "'";
-         if (i < fileList.size() - 1) 
-            files += ", ";
-      }
+      std::string deployFiles = quotedFilesFromArray(fileList, true);
+      std::string additionalFiles = quotedFilesFromArray(additionalFilesList,
+            false);
+      std::string ignoredFiles = quotedFilesFromArray(ignoredFilesList,
+            false);
 
-      // if a R Markdown document is being deployed, mark it as the primary
-      // file 
-      std::string primaryRmd;
+      // if an R Markdown document or HTML document is being deployed, mark it
+      // as the primary file 
+      std::string primaryDoc;
       if (!file.empty())
       {
-         FilePath sourceFile = module_context::resolveAliasedPath(file);
-         if (sourceFile.extensionLowerCase() == ".rmd") 
+         FilePath docFile = module_context::resolveAliasedPath(file);
+         std::string extension = docFile.extensionLowerCase();
+         if (extension == ".rmd" || extension == ".html") 
          {
-            primaryRmd = file;
+            primaryDoc = string_utils::utf8ToSystem(file);
          }
       }
 
       // form the deploy command to hand off to the async deploy process
       cmd += "rsconnect::deployApp("
-             "appDir = '" + dir + "'," +
-             (files.empty() ? "" : "appFiles = c(" + files + "), ") +
-             (primaryRmd.empty() ? "" : "appPrimaryRmd = '" + primaryRmd + "', ") + 
+             "appDir = '" + string_utils::utf8ToSystem(dir) + "'," +
+             (deployFiles.empty() ? "" : "appFiles = c(" + 
+                deployFiles + "), ") +
+             (primaryDoc.empty() ? "" : "appPrimaryDoc = '" + 
+                primaryDoc + "', ") + 
+             (sourceDoc.empty() ? "" : "appSourceDoc = '" + 
+                sourceDoc + "', ") + 
              "account = '" + account + "',"
              "server = '" + server + "', "
              "appName = '" + app + "', "
              "launch.browser = function (url) { "
              "   message('" kFinishedMarker "', url) "
              "}, "
-             "lint = FALSE)}";
+             "lint = FALSE,"
+             "metadata = list(" 
+             "   asMultiple = " + (asMultiple ? "TRUE" : "FALSE") + ", "
+             "   asStatic = " + (asStatic ? "TRUE" : "FALSE") + 
+                 (additionalFiles.empty() ? "" : ", additionalFiles = '" + 
+                    additionalFiles + "'") + 
+                 (ignoredFiles.empty() ? "" : ", ignoredFiles = '" + 
+                    ignoredFiles + "'") + 
+             "))}";
 
       pDeploy->start(cmd.c_str(), FilePath(), async_r::R_PROCESS_VANILLA);
       return pDeploy;
    }
 
 private:
-   ShinyAppDeploy(const std::string& file)
+   RSConnectPublish(const std::string& file)
    {
       sourceFile_ = file;
    }
@@ -162,34 +196,85 @@ private:
    std::string sourceFile_;
 };
 
-boost::shared_ptr<ShinyAppDeploy> s_pShinyAppDeploy_;
+boost::shared_ptr<RSConnectPublish> s_pRSConnectPublish_;
 
-Error deployShinyApp(const json::JsonRpcRequest& request,
-                     json::JsonRpcResponse* pResponse)
+Error rsconnectPublish(const json::JsonRpcRequest& request,
+                       json::JsonRpcResponse* pResponse)
 {
-   json::Array sourceFiles;
-   std::string sourceDir, sourceFile, account, server, appName;
+   json::Array sourceFiles, additionalFiles, ignoredFiles;
+   std::string sourceDir, sourceFile, sourceDoc, account, server, appName;
+   bool asMultiple = false, asStatic = false;
    Error error = json::readParams(request.params, &sourceDir, &sourceFiles,
-                                   &sourceFile, &account, &server, &appName);
+                                   &sourceFile, &sourceDoc, &account, &server, 
+                                   &appName, &additionalFiles, &ignoredFiles, 
+                                   &asMultiple, &asStatic);
    if (error)
       return error;
 
-   if (s_pShinyAppDeploy_ &&
-       s_pShinyAppDeploy_->isRunning())
+   if (s_pRSConnectPublish_ &&
+       s_pRSConnectPublish_->isRunning())
    {
       pResponse->setResult(false);
    }
    else
    {
-      s_pShinyAppDeploy_ = ShinyAppDeploy::create(sourceDir, sourceFiles, 
-                                                  sourceFile, account, server, 
-                                                  appName);
+      s_pRSConnectPublish_ = RSConnectPublish::create(sourceDir, sourceFiles, 
+                                                  sourceFile, sourceDoc, 
+                                                  account, server, appName, 
+                                                  additionalFiles,
+                                                  ignoredFiles, asMultiple,
+                                                  asStatic);
       pResponse->setResult(true);
    }
 
    return Success();
 }
 
+
+Error rsconnectDeployments(const json::JsonRpcRequest& request,
+                           json::JsonRpcResponse* pResponse)
+{
+
+   std::string sourcePath, outputPath;
+   Error error = json::readParams(request.params, &sourcePath, &outputPath);
+   if (error)
+      return error;
+
+   // get prior RPubs upload IDs, if any are known
+   std::string rpubsUploadId;
+   if (!outputPath.empty())
+   {
+     rpubsUploadId = module_context::previousRpubsUploadId(
+         module_context::resolveAliasedPath(outputPath));
+   }
+
+   // blend with known deployments from the rsconnect package
+   r::sexp::Protect protect;
+   SEXP sexpDeployments;
+   error = r::exec::RFunction(".rs.getRSConnectDeployments", sourcePath, 
+         rpubsUploadId).call(&sexpDeployments, &protect);
+   if (error)
+      return error;
+   
+   // convert result to JSON and return
+   json::Value result;
+   error = r::json::jsonValueFromObject(sexpDeployments, &result);
+   if (error)
+      return error;
+
+   // we want to always return an array, even if it's just one element long, so
+   // wrap the result in an array if it isn't one already
+   if (result.type() != json::ArrayType) 
+   {
+      json::Array singleEle;
+      singleEle.push_back(result);
+      result = singleEle;
+   }
+
+   pResponse->setResult(result);
+
+   return Success();
+}
 
 } // anonymous namespace
 
@@ -200,7 +285,8 @@ Error initialize()
 
    ExecBlock initBlock;
    initBlock.addFunctions()
-      (bind(registerRpcMethod, "deploy_shiny_app", deployShinyApp))
+      (bind(registerRpcMethod, "get_rsconnect_deployments", rsconnectDeployments))
+      (bind(registerRpcMethod, "rsconnect_publish", rsconnectPublish))
       (bind(sourceModuleRFile, "SessionRSConnect.R"));
 
    return initBlock.execute();

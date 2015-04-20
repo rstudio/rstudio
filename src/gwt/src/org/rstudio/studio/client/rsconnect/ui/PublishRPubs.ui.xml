@@ -1,0 +1,20 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+   xmlns:g="urn:import:com.google.gwt.user.client.ui">
+   <ui:style>
+   
+   </ui:style>
+   <g:HTMLPanel>
+      <g:HTML>
+      <p>
+         RPubs is a free service from RStudio for sharing documents on the web. 
+         Click Publish to get started.
+      </p>
+      <p>
+         <strong>IMPORTANT: All documents published to RPubs are publicly 
+         visible.</strong> You should only publish documents you wish to share
+         publicly.
+      </p>
+      </g:HTML>
+   </g:HTMLPanel>
+</ui:UiBinder> 

@@ -39,8 +39,8 @@ public class NewRSConnectLocalPage
             "A local service running inside your organization. Publish and " +
             "collaborate privately and securely.",
             "RStudio Connect Account",
-            RSConnectAccountResources.INSTANCE.localAccountIcon(), 
-            RSConnectAccountResources.INSTANCE.localAccountIconLarge(),
+            RSConnectResources.INSTANCE.localAccountIcon(), 
+            RSConnectResources.INSTANCE.localAccountIconLarge(),
             new NewRSConnectAuthPage());
    }
 

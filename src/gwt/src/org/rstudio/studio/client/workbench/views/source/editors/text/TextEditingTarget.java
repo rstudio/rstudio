@@ -88,9 +88,9 @@ import org.rstudio.studio.client.rmarkdown.model.RmdTemplateFormat;
 import org.rstudio.studio.client.rmarkdown.model.RmdYamlData;
 import org.rstudio.studio.client.rmarkdown.model.YamlFrontMatter;
 import org.rstudio.studio.client.rmarkdown.ui.RmdTemplateOptionsDialog;
-import org.rstudio.studio.client.rsconnect.RSConnect;
 import org.rstudio.studio.client.rsconnect.events.RSConnectActionEvent;
 import org.rstudio.studio.client.rsconnect.events.RSConnectDeployInitiatedEvent;
+import org.rstudio.studio.client.rsconnect.model.RSConnectPublishSettings;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
@@ -197,6 +197,8 @@ public class TextEditingTarget implements
       void setFormatOptionsVisible(boolean visible);
       HandlerRegistration addRmdFormatChangedHandler(
             RmdOutputFormatChangedEvent.Handler handler);
+      
+      void setPublishPath(String publishPath);
    }
 
    private class SaveProgressIndicator implements ProgressIndicator
@@ -638,7 +640,6 @@ public class TextEditingTarget implements
                public void onRSConnectDeployInitiated(
                      RSConnectDeployInitiatedEvent event)
                {
-
                   // no need to process this event if this target doesn't have a
                   // path, or if the event's contents don't include additional
                   // files.
@@ -646,20 +647,22 @@ public class TextEditingTarget implements
                      return;
                   
                   // see if the event corresponds to a deployment of this file
-                  FileSystemItem evtDir = FileSystemItem.createDir(event.getPath());
-                  if (!getPath().equals(evtDir.completePath(event.getSourceFile())))
+                  if (!getPath().equals(event.getSource().getSourceFile()))
                      return;
                   
-                  if (event.getAdditionalFiles() != null &&
-                      event.getAdditionalFiles().size() > 0)
-                  {
-                     addAdditionalResourceFiles(event.getAdditionalFiles());
-                  }
+                  RSConnectPublishSettings settings = event.getSettings();
+                  if (settings == null)
+                     return;
                   
-                  if (event.getIgnoredFiles() != null &&
-                      event.getIgnoredFiles().size() > 0)
+                  // ignore deployments of static content generated from this 
+                  // file
+                  if (settings.getAsStatic())
+                     return;
+                  
+                  if (settings.getAdditionalFiles() != null &&
+                      settings.getAdditionalFiles().size() > 0)
                   {
-                     setIgnoredFiles(event.getIgnoredFiles());
+                     addAdditionalResourceFiles(settings.getAdditionalFiles());
                   }
                }
             });
@@ -1050,6 +1053,11 @@ public class TextEditingTarget implements
             setRmdFormat(event.getFormat());
          }
       });
+      
+      if (extendedType_.equals("shiny"))
+      {
+         view_.setPublishPath(document.getPath());
+      }
 
       initStatusBar();
    }
@@ -2584,21 +2592,23 @@ public class TextEditingTarget implements
    {
       docDisplay_.toggleBreakpointAtCursor();
    }
-
-   @Handler 
+   
+   @Handler
    void onRsconnectDeploy()
    {
-      RSConnectActionEvent evt = new RSConnectActionEvent(
-            RSConnectActionEvent.ACTION_TYPE_DEPLOY, 
-            docUpdateSentinel_.getPath());
-      events_.fireEvent(evt);
+      if (docUpdateSentinel_ == null)
+         return;
+
+      // only Shiny files get the deploy command, so we can be confident we're
+      // deploying an app here
+      events_.fireEvent(RSConnectActionEvent.DeployAppEvent(
+            docUpdateSentinel_.getPath(), null));
    }
 
    @Handler 
    void onRsconnectConfigure()
    {
-      events_.fireEvent(new RSConnectActionEvent(
-            RSConnectActionEvent.ACTION_TYPE_CONFIGURE, 
+      events_.fireEvent(RSConnectActionEvent.ConfigureAppEvent(
             docUpdateSentinel_.getPath()));
    }
 
@@ -4728,13 +4738,6 @@ public class TextEditingTarget implements
    public DocDisplay getDocDisplay()
    {
       return docDisplay_;
-   }
-   
-   private void setIgnoredFiles(ArrayList<String> ignoredFiles)
-   {
-      String ignoredFileList =  StringUtil.joinStrings(ignoredFiles, "|");
-      docUpdateSentinel_.setProperty(RSConnect.IGNORED_RESOURCES, 
-            ignoredFileList, null);
    }
    
    private void addAdditionalResourceFiles(ArrayList<String> additionalFiles)

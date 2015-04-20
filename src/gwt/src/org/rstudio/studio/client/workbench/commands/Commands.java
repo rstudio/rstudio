@@ -187,7 +187,6 @@ public abstract class
    public abstract AppCommand presentationEdit();
    public abstract AppCommand presentationViewInBrowser();
    public abstract AppCommand presentationSaveAsStandalone();
-   public abstract AppCommand presentationPublishToRpubs();
    public abstract AppCommand activatePresentation();
    public abstract AppCommand tutorialFeedback();
    public abstract AppCommand clearPresentationCache();
@@ -239,7 +238,6 @@ public abstract class
    public abstract AppCommand savePlotAsImage();
    public abstract AppCommand savePlotAsPdf();
    public abstract AppCommand copyPlotToClipboard();
-   public abstract AppCommand publishPlotToRPubs();
    public abstract AppCommand zoomPlot();
    public abstract AppCommand removePlot();
    public abstract AppCommand clearPlots();
@@ -310,7 +308,6 @@ public abstract class
    public abstract AppCommand viewerSaveAsImage();
    public abstract AppCommand viewerSaveAsWebPage();
    public abstract AppCommand viewerCopyToClipboard();
-   public abstract AppCommand viewerPublishToRPubs();
 
    // Application
    public abstract AppCommand quitSession();

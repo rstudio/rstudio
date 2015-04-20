@@ -27,14 +27,20 @@ public class RSConnectDeploymentStartedEvent extends GwtEvent<RSConnectDeploymen
    public static final GwtEvent.Type<RSConnectDeploymentStartedEvent.Handler> TYPE =
       new GwtEvent.Type<RSConnectDeploymentStartedEvent.Handler>();
    
-   public RSConnectDeploymentStartedEvent(String path)
+   public RSConnectDeploymentStartedEvent(String path, String title)
    {
       path_ = path;
+      title_ = title;
    }
    
    public String getPath()
    {
       return path_;
+   }
+   
+   public String getTitle()
+   {
+      return title_;
    }
    
    @Override
@@ -50,4 +56,5 @@ public class RSConnectDeploymentStartedEvent extends GwtEvent<RSConnectDeploymen
    }
    
    private final String path_;
+   private final String title_;
 }

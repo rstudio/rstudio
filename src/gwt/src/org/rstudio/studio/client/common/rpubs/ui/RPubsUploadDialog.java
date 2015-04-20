@@ -16,27 +16,18 @@
 package org.rstudio.studio.client.common.rpubs.ui;
 
 import org.rstudio.core.client.CommandWithArg;
-import org.rstudio.core.client.HandlerRegistrations;
-import org.rstudio.core.client.StringUtil;
-import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.resources.CoreResources;
 import org.rstudio.core.client.widget.FixedTextArea;
 import org.rstudio.core.client.widget.ModalDialogBase;
 import org.rstudio.core.client.widget.Operation;
-import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressImage;
 import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.RStudioGinjector;
-import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
-import org.rstudio.studio.client.common.rpubs.RPubsHtmlGenerator;
-import org.rstudio.studio.client.common.rpubs.events.RPubsUploadStatusEvent;
+import org.rstudio.studio.client.common.rpubs.RPubsUploader;
 import org.rstudio.studio.client.common.rpubs.model.RPubsServerOperations;
-import org.rstudio.studio.client.server.ServerError;
-import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.server.VoidServerRequestCallback;
-import org.rstudio.studio.client.workbench.views.vcs.common.ConsoleProgressDialog;
+import org.rstudio.studio.client.rsconnect.model.StaticHtmlGenerator;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -60,33 +51,49 @@ public class RPubsUploadDialog extends ModalDialogBase
 {
    public RPubsUploadDialog(String contextId,
                             String title, 
+                            String rmdFile,
                             String htmlFile, 
+                            String uploadId,
                             boolean isPublished)
    {
-      this(contextId, title, htmlFile, null, isPublished);
+      this(contextId, title, rmdFile, htmlFile, uploadId, null, isPublished);
    }
    
    public RPubsUploadDialog(String contextId,
                             String title, 
-                            RPubsHtmlGenerator htmlGenerator, 
+                            StaticHtmlGenerator htmlGenerator, 
                             boolean isPublished)
    {
-      this(contextId, title, null, htmlGenerator, isPublished);
+      this(contextId, title, null, null, null, htmlGenerator, isPublished);
    }
    
    private RPubsUploadDialog(String contextId,
                              String title, 
+                             String rmdFile,
                              String htmlFile, 
-                             RPubsHtmlGenerator htmlGenerator,
+                             String uploadId,
+                             StaticHtmlGenerator htmlGenerator,
                              boolean isPublished)
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
       setText("Publish to RPubs");
       title_ = title;
       htmlFile_ = htmlFile;
+      rmdFile_ = rmdFile;
       htmlGenerator_ = htmlGenerator;
       isPublished_ = isPublished;
       contextId_ = contextId;
+      uploadId_ = uploadId == null ? "" : uploadId;
+      uploader_ = new RPubsUploader(server_, globalDisplay_,
+            eventBus_, contextId_);
+      uploader_.setOnUploadComplete(new CommandWithArg<Boolean>()
+      {
+         @Override
+         public void execute(Boolean arg)
+         {
+            closeDialog();
+         }
+      });
    }
 
    
@@ -124,7 +131,7 @@ public class RPubsUploadDialog extends ModalDialogBase
       verticalPanel.add(headerPanel);
 
       String msg;
-      if (!isPublished_)
+      if (!isPublished_ && uploadId_.isEmpty())
       {
          msg = "RPubs is a free service from RStudio for sharing " +
                        "documents on the web. Click Publish to get " +
@@ -169,7 +176,7 @@ public class RPubsUploadDialog extends ModalDialogBase
             @Override
             public void onClick(ClickEvent event)
             { 
-               htmlGenerator_.generateRPubsHtml(
+               htmlGenerator_.generateStaticHtml(
                   titleTextBox_.getText().trim(), 
                   commentTextArea_.getText().trim(),
                   new CommandWithArg<String>() {
@@ -196,13 +203,9 @@ public class RPubsUploadDialog extends ModalDialogBase
          public void execute()
          {
             // if an upload is in progress then terminate it
-            if (uploadInProgress_)
+            if (uploader_.isUploadInProgress())
             {
-               server_.rpubsTerminateUpload(contextId_,
-                                            new VoidServerRequestCallback());
-               
-               if (uploadProgressWindow_ != null)
-                  uploadProgressWindow_.close();
+               uploader_.terminateUpload();
             }
          }
          
@@ -234,7 +237,7 @@ public class RPubsUploadDialog extends ModalDialogBase
          }
       });
 
-      if (!isPublished_)
+      if (!isPublished_ && uploadId_.isEmpty())
       {
          addOkButton(continueButton_);
          addCancelButton(cancelButton);
@@ -261,7 +264,6 @@ public class RPubsUploadDialog extends ModalDialogBase
    
    protected void onUnload()
    {
-      eventRegistrations_.removeHandler();
       super.onUnload();
    }
    
@@ -293,92 +295,16 @@ public class RPubsUploadDialog extends ModalDialogBase
   
    private void performUpload(final boolean modify)
    {
-      // set state
-      uploadInProgress_ = true;
-    
-      // do upload
-      if (Desktop.isDesktop())
-      {
-         performUpload(null, modify);
-      }
-      else
-      {
-         // randomize the name so firefox doesn't prevent us from reactivating
-         // the window programatically 
-         globalDisplay_.openProgressWindow(
-               "_rpubs_upload" + (int)(Math.random() * 10000), 
-               PROGRESS_MESSAGE, 
-               new OperationWithInput<WindowEx>() {
-
-                  @Override
-                  public void execute(WindowEx window)
-                  {
-                     performUpload(window, modify);
-                  }
-               });
-      }
-      
-   }
-   
-   
-   private void performUpload(final WindowEx progressWindow,
-                              final boolean modify)
-   {  
-      // record progress window
-      uploadProgressWindow_ = progressWindow;
-      
-      // show progress
       showProgressPanel();
-      
-      // subscribe to notification of upload completion
-      eventRegistrations_.add(
-                        eventBus_.addHandler(RPubsUploadStatusEvent.TYPE, 
-                        new RPubsUploadStatusEvent.Handler()
-      {
-         @Override
-         public void onRPubsPublishStatus(RPubsUploadStatusEvent event)
-         {
-            // make sure it applies to our context
-            RPubsUploadStatusEvent.Status status = event.getStatus();
-            if (!status.getContextId().equals(contextId_))
-               return;
-            
-            uploadInProgress_ = false;
-            
-            closeDialog();
 
-            if (!StringUtil.isNullOrEmpty(status.getError()))
-            {
-               if (progressWindow != null)
-                  progressWindow.close();
-               
-               new ConsoleProgressDialog("Upload Error Occurred", 
-                     status.getError(),
-                     1).showModal();
-            }
-            else
-            {
-               if (progressWindow != null)
-               {
-                  progressWindow.replaceLocationHref(status.getContinueUrl());
-               }
-               else
-               {
-                  globalDisplay_.openWindow(status.getContinueUrl());
-               }
-            }
-
-         }
-      }));
-      
       // synthesize html generator if necessary
-      RPubsHtmlGenerator htmlGenerator = htmlGenerator_;
+      StaticHtmlGenerator htmlGenerator = htmlGenerator_;
       if (htmlGenerator == null)
       {
-         htmlGenerator = new RPubsHtmlGenerator() {
+         htmlGenerator = new StaticHtmlGenerator() {
 
             @Override
-            public void generateRPubsHtml(String title, 
+            public void generateStaticHtml(String title, 
                                           String comment,
                                           CommandWithArg<String> onCompleted)
             {
@@ -389,47 +315,18 @@ public class RPubsUploadDialog extends ModalDialogBase
       
       // generate html and initiate the upload
       final String title = getTitleText();
-      htmlGenerator.generateRPubsHtml(
+      htmlGenerator.generateStaticHtml(
           title, getCommentText(), new CommandWithArg<String>() {
-
          @Override
          public void execute(String htmlFile)
          {
-            // initiate the upload
-            server_.rpubsUpload(
-               contextId_,
-               title, 
-               htmlFile,
-               modify,
-               new ServerRequestCallback<Boolean>() {
-
-                  @Override
-                  public void onResponseReceived(Boolean response)
-                  {
-                     if (!response.booleanValue())
-                     {
-                        closeDialog();
-                        globalDisplay_.showErrorMessage(
-                               "Error",
-                               "Unable to continue " +
-                               "(another publish is currently running)");
-                     }
-                  }
-                  
-                  @Override
-                  public void onError(ServerError error)
-                  {
-                     closeDialog();
-                     globalDisplay_.showErrorMessage("Error",
-                                                     error.getUserMessage());
-                  }
-              });
-            
+            if (modify)
+               uploader_.performUpload(title, rmdFile_, htmlFile, 
+                     uploadId_, modify);
+            else
+               uploader_.performUpload(title, rmdFile_, htmlFile, "", false);
          }
-           
-        });
-      
-      
+      });
    }
    
    private void showProgressPanel()
@@ -449,7 +346,7 @@ public class RPubsUploadDialog extends ModalDialogBase
       progressImage.addStyleName(RESOURCES.styles().progressImage());
       progressImage.show(true);
       progressPanel.add(progressImage);
-      progressPanel.add(new Label(PROGRESS_MESSAGE));
+      progressPanel.add(new Label(RPubsUploader.PROGRESS_MESSAGE));
       addLeftWidget(progressPanel);
    }
    
@@ -492,17 +389,13 @@ public class RPubsUploadDialog extends ModalDialogBase
 
    private final String title_;
    private final String htmlFile_;
+   private final String rmdFile_;
    private final String contextId_;
-   private final RPubsHtmlGenerator htmlGenerator_;
-   
-   private boolean uploadInProgress_ = false;
-   private WindowEx uploadProgressWindow_ = null;
+   private final String uploadId_;
+   private final StaticHtmlGenerator htmlGenerator_;
    
    private GlobalDisplay globalDisplay_;
    private EventBus eventBus_;
    private RPubsServerOperations server_;
-   
-   private HandlerRegistrations eventRegistrations_ = new HandlerRegistrations();
-   
-   private static final String PROGRESS_MESSAGE = "Uploading document to RPubs...";
+   private RPubsUploader uploader_;
 }

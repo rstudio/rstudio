@@ -1,7 +1,7 @@
 /*
  * RemoteServer.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-15 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -96,7 +96,10 @@ import org.rstudio.studio.client.rsconnect.model.RSConnectDeploymentFiles;
 import org.rstudio.studio.client.rsconnect.model.RSConnectDeploymentRecord;
 import org.rstudio.studio.client.rsconnect.model.RSConnectLintResults;
 import org.rstudio.studio.client.rsconnect.model.RSConnectPreAuthToken;
+import org.rstudio.studio.client.rsconnect.model.RSConnectPublishSettings;
+import org.rstudio.studio.client.rsconnect.model.RSConnectPublishSource;
 import org.rstudio.studio.client.rsconnect.model.RSConnectServerInfo;
+import org.rstudio.studio.client.rsconnect.model.RmdPublishDetails;
 import org.rstudio.studio.client.server.Bool;
 import org.rstudio.studio.client.server.ClientException;
 import org.rstudio.studio.client.server.Server;
@@ -2991,15 +2994,19 @@ public class RemoteServer implements Server
    
    public void rpubsUpload(String contextId,
                            String title, 
+                           String rmdFile,
                            String htmlFile,
+                           String uploadId,
                            boolean isUpdate,
                            ServerRequestCallback<Boolean> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(contextId));
       params.set(1, new JSONString(title));
-      params.set(2, new JSONString(htmlFile));
-      params.set(3, JSONBoolean.getInstance(isUpdate));
+      params.set(2, new JSONString(rmdFile));
+      params.set(3, new JSONString(htmlFile));
+      params.set(4, new JSONString(uploadId));
+      params.set(5, JSONBoolean.getInstance(isUpdate));
       sendRequest(RPC_SCOPE, RPUBS_UPLOAD, params, requestCallback);
    }
 
@@ -3636,11 +3643,13 @@ public class RemoteServer implements Server
 
    @Override
    public void getRSConnectDeployments(
-         String dir,
+         String sourcePath,
+         String outputPath,
          ServerRequestCallback<JsArray<RSConnectDeploymentRecord>> requestCallback)
    {
       JSONArray params = new JSONArray();
-      params.set(0, new JSONString(dir));
+      params.set(0, new JSONString(sourcePath));
+      params.set(1, new JSONString(outputPath));
       sendRequest(RPC_SCOPE,
             GET_RSCONNECT_DEPLOYMENTS,
             params,
@@ -3648,19 +3657,27 @@ public class RemoteServer implements Server
    }
    
    @Override
-   public void deployShinyApp(String dir, ArrayList<String> deployFiles, 
-         String file, String account, 
-         String server, String appName, ServerRequestCallback<Boolean> requestCallback)
+   public void publishContent(
+         RSConnectPublishSource source, String account, 
+         String server, String appName, 
+         RSConnectPublishSettings settings,
+         ServerRequestCallback<Boolean> requestCallback)
    {
       JSONArray params = new JSONArray();
-      params.set(0, new JSONString(dir));
-      params.set(1, JSONUtils.toJSONStringArray(deployFiles));
-      params.set(2, new JSONString(file));
-      params.set(3, new JSONString(account));
-      params.set(4, new JSONString(server));
-      params.set(5, new JSONString(appName));
+      params.set(0, new JSONString(source.getDeployDir()));
+      params.set(1, JSONUtils.toJSONStringArray(settings.getDeployFiles()));
+      params.set(2, new JSONString(source.isDocument() ? source.getDeployFileName() : ""));
+      params.set(3, new JSONString(source.isDocument() && source.getSourceFile() != null ? 
+            source.getSourceFile() : ""));
+      params.set(4, new JSONString(account));
+      params.set(5, new JSONString(server));
+      params.set(6, new JSONString(appName));
+      params.set(7, JSONUtils.toJSONStringArray(settings.getAdditionalFiles()));
+      params.set(8, JSONUtils.toJSONStringArray(settings.getIgnoredFiles()));
+      params.set(9, JSONBoolean.getInstance(settings.getAsMultiple()));
+      params.set(10, JSONBoolean.getInstance(settings.getAsStatic()));
       sendRequest(RPC_SCOPE,
-            DEPLOY_SHINY_APP,
+            RSCONNECT_PUBLISH,
             params,
             requestCallback);
    }
@@ -3723,10 +3740,12 @@ public class RemoteServer implements Server
 
    @Override
    public void getDeploymentFiles(String dir,
+         boolean asMultipleRmd,
          ServerRequestCallback<RSConnectDeploymentFiles> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(dir));
+      params.set(1, JSONBoolean.getInstance(asMultipleRmd));
       sendRequest(RPC_SCOPE,
             GET_DEPLOYMENT_FILES,
             params,
@@ -3741,6 +3760,18 @@ public class RemoteServer implements Server
       params.set(0, new JSONString(target));
       sendRequest(RPC_SCOPE,
             GET_RSCONNECT_LINT_RESULTS,
+            params,
+            requestCallback);
+   }
+  
+   @Override
+   public void getRmdPublishDetails(String target,
+         ServerRequestCallback<RmdPublishDetails> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(target));
+      sendRequest(RPC_SCOPE,
+            GET_RMD_PUBLISH_DETAILS,
             params,
             requestCallback);
    }
@@ -4335,13 +4366,14 @@ public class RemoteServer implements Server
    private static final String CONNECT_RSCONNECT_ACCOUNT = "connect_rsconnect_account";
    private static final String GET_RSCONNECT_APP_LIST = "get_rsconnect_app_list";
    private static final String GET_RSCONNECT_DEPLOYMENTS = "get_rsconnect_deployments";
-   private static final String DEPLOY_SHINY_APP = "deploy_shiny_app";
+   private static final String RSCONNECT_PUBLISH = "rsconnect_publish";
    private static final String GET_DEPLOYMENT_FILES = "get_deployment_files";
    private static final String VALIDATE_SERVER_URL = "validate_server_url";
    private static final String GET_AUTH_TOKEN = "get_auth_token";
    private static final String GET_USER_FROM_TOKEN = "get_user_from_token";
    private static final String REGISTER_USER_TOKEN = "register_user_token";
    private static final String GET_RSCONNECT_LINT_RESULTS = "get_rsconnect_lint_results";
+   private static final String GET_RMD_PUBLISH_DETAILS = "get_rmd_publish_details";
 
    private static final String RENDER_RMD = "render_rmd";
    private static final String RENDER_RMD_SOURCE = "render_rmd_source";
@@ -4366,7 +4398,5 @@ public class RemoteServer implements Server
    private static final String GET_SET_GENERIC_CALL = "get_set_generic_call";
    private static final String GET_SET_METHOD_CALL = "get_set_method_call";
    private static final String GET_SET_REF_CLASS_CALL = "get_set_ref_class_call";
-   
    private static final String TRANSFORM_SNIPPET = "transform_snippet";
-  
 }

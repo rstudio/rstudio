@@ -58,22 +58,24 @@ public abstract class WizardPage<I,T> extends Composite
          
          LayoutPanel layoutPanel = new LayoutPanel();
          
-         Image pageImage = new Image(largeImage_);
-         layoutPanel.add(pageImage);
-         layoutPanel.setWidgetLeftWidth(pageImage,
-                                        8, Unit.PX, 
-                                        pageImage.getWidth(), Unit.PX);
-         layoutPanel.setWidgetTopHeight(pageImage,
-                                        10, Unit.PX, 
-                                        pageImage.getHeight(), Unit.PX);
-         
-         
-         
+         if (largeImage_ != null)
+         {
+            Image pageImage = new Image(largeImage_);
+            layoutPanel.add(pageImage);
+            layoutPanel.setWidgetLeftWidth(pageImage,
+                                           8, Unit.PX, 
+                                           pageImage.getWidth(), Unit.PX);
+            layoutPanel.setWidgetTopHeight(pageImage,
+                                           10, Unit.PX, 
+                                           pageImage.getHeight(), Unit.PX);
+         }
+            
          Widget pageWidget = createWidget();
      
          layoutPanel.add(pageWidget);
          layoutPanel.setWidgetLeftRight(pageWidget,
-                                        133, Unit.PX, 
+                                        largeImage_ != null ? 133 : 15, 
+                                        Unit.PX, 
                                         15, Unit.PX);
          layoutPanel.setWidgetTopBottom(pageWidget, 
                                         10, Unit.PX, 
@@ -119,7 +121,7 @@ public abstract class WizardPage<I,T> extends Composite
    {
    }
    
-   public void onActivate()
+   public void onActivate(ProgressIndicator indicator)
    {
    }
    

@@ -25,7 +25,6 @@ import org.rstudio.studio.client.rmarkdown.model.RMarkdownServerOperations;
 import org.rstudio.studio.client.rmarkdown.model.RmdPreviewParams;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.shiny.ShinyFrameHelper;
-import org.rstudio.studio.client.workbench.views.viewer.ViewerPane;
 import org.rstudio.studio.client.workbench.views.viewer.events.ViewerClearedEvent;
 import org.rstudio.studio.client.workbench.views.viewer.events.ViewerNavigatedEvent;
 import org.rstudio.studio.client.workbench.views.viewer.events.ViewerPreviewRmdEvent;
@@ -50,8 +49,7 @@ public class RmdOutputFramePane extends RmdOutputFrameBase
    @Override
    public void closeOutputFrame(boolean forReopen)
    {
-      if (frame_ != null)
-         frame_.setUrl(ViewerPane.ABOUT_BLANK);
+      events_.fireEvent(new ViewerClearedEvent(false));
    }
 
    @Override
@@ -109,7 +107,7 @@ public class RmdOutputFramePane extends RmdOutputFrameBase
    {
       // if a Shiny document is running in the viewer, stop render when the
       // viewer is cleared
-      if (isShiny_)
+      if (isShiny_ && event.isForStop())
       {
          server_.terminateRenderRmd(true, new VoidServerRequestCallback());
          isShiny_ = false;

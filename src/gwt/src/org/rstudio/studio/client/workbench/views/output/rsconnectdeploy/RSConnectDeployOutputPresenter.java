@@ -18,12 +18,13 @@ package org.rstudio.studio.client.workbench.views.output.rsconnectdeploy;
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.RestartStatusEvent;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.rsconnect.events.RSConnectDeploymentCompletedEvent;
+import org.rstudio.studio.client.rsconnect.events.RSConnectDeploymentOutputEvent;
 import org.rstudio.studio.client.rsconnect.events.RSConnectDeploymentStartedEvent;
-import org.rstudio.studio.client.shiny.events.RSConnectDeploymentCompletedEvent;
-import org.rstudio.studio.client.shiny.events.RSConnectDeploymentOutputEvent;
 import org.rstudio.studio.client.workbench.views.BusyPresenter;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleActivateEvent;
 import org.rstudio.studio.client.workbench.views.output.common.CompileOutputPaneDisplay;
@@ -61,7 +62,19 @@ public class RSConnectDeployOutputPresenter extends BusyPresenter
    {
       switchToConsoleAfterDeploy_ = !view_.isEffectivelyVisible();
       view_.ensureVisible(true);
-      view_.compileStarted(event.getPath());
+      
+      // show the filename in the deployment tab, unless we're deploying an 
+      // HTML file for which we know the title--this may very well be a
+      // temporary file
+      String title = event.getPath();
+      if ((title.toLowerCase().endsWith(".htm") || 
+           title.toLowerCase().endsWith(".html") &&
+           !StringUtil.isNullOrEmpty(event.getTitle())))
+      {
+         title = event.getTitle();
+      }
+
+      view_.compileStarted(title);
       setIsBusy(true);
    }
 
