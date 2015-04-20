@@ -522,4 +522,3 @@
 .rs.addFunction("haveAdvancedSteppingCommands", function() {
    getRversion() >= "3.1" && .rs.haveRequiredRSvnRev(63400)
 })
-

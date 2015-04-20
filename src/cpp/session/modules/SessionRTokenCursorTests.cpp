@@ -84,7 +84,21 @@ context("RTokenCursor")
       expect_true(cursor.isType(RToken::NUMBER) &&
                   cursor.contentEquals(L"1"));
       
+      expect_true(cursor.moveToOpeningParenAssociatedWithCurrentFunctionCall());
+      expect_true(cursor.isType(RToken::LPAREN));
+      expect_true(cursor.moveToPreviousSignificantToken());
+      expect_true(cursor.contentEquals(L"second_level"));
+      expect_true(cursor.moveToStartOfEvaluation());
+      expect_true(cursor.contentEquals(L"second_level"));
       expect_true(cursor.getHeadOfPipeChain() == "mtcars");
+   }
+   
+   test_that("pipe / chain operation lookups fail when not within associated chain")
+   {
+      RTokens rTokens(L"mtcars %>% foo\nbar");
+      RTokenCursor cursor(rTokens);
+      cursor.moveToEndOfTokenStream();
+      expect_true(cursor.getHeadOfPipeChain().empty());
    }
 }
 

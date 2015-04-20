@@ -589,7 +589,7 @@ void lookAheadAndWarnOnUsagesOfSymbol(const RTokenCursor& startCursor,
                return;
          }
          
-         if (clone.isAtEndOfExpression())
+         if (clone.isAtEndOfStatement(status.isInParentheticalScope()))
             return;
          
          continue;
@@ -623,11 +623,10 @@ void lookAheadAndWarnOnUsagesOfSymbol(const RTokenCursor& startCursor,
             return;
       }
       
-      if (clone.nextToken().contentContains(L'\n') ||
-          clone.isType(RToken::SEMI))
-      {
+      // NOTE: We'll be conservative on lookahead and assume non-parenthetical
+      // scope (which is more restrictive)
+      if (clone.isAtEndOfStatement(false))
          return;
-      }
       
    } while (clone.moveToNextSignificantToken());
 }
@@ -740,6 +739,11 @@ void handleIdentifier(RTokenCursor& cursor,
       DEBUG("--- Symbol preceded by extraction op; not adding");
       return;
    }
+   
+   // Don't add references to '.' -- in most situations where it's used,
+   // it's for NSE (e.g. magrittr pipes)
+   if (status.isInArgumentList() && cursor.contentEquals(L"."))
+      return;
    
    if (cursor.isType(RToken::ID) ||
        cursor.isType(RToken::STRING))
@@ -935,16 +939,34 @@ FunctionInformation getInfoAssociatedWithFunctionAtCursor(
             origin = pNode->getParent()->name();
          
          FunctionInformation info(origin, name);
-         if (cursor.moveToPosition(pNode->position()))
+         RTokenCursor clone = cursor.clone();
+         if (clone.moveToPosition(pNode->position()))
          {
             DEBUG("***** Moved to position");
-            if (extractInfoFromFunctionDefinition(cursor, &info))
+            if (extractInfoFromFunctionDefinition(clone, &info))
             {
                DEBUG("Extracted arguments");
                return info;
             }
          }
       }
+      
+      // Try seeing if a symbol of this name has already been defined in scope,
+      // to protect against instances of the form e.g.
+      //
+      //    pf <- identity
+      //    pf
+      //
+      // In these cases, we will (for now) simply fail to resolve the function,
+      // to ensure that we don't supply incorrect lint for that function call.
+      //
+      // Note that this behaviour is quite conservative; however, the alternative
+      // would involve implementing a pseudo-evaluator to actually figure out what
+      // 'pf' is now actually bound to; this could be doable in some simple cases
+      // but the pattern is uncommon enough that it's better that we just don't
+      // supply incorrect diagnostics, rather than attempt to supply correct diagnostics.
+      if (status.node()->getDefinedSymbols().count(cursor.contentAsUtf8()))
+         return FunctionInformation();
       
       // If we're within a package project, then attempt searching the
       // source index for the formals associated with this function.
@@ -963,6 +985,7 @@ FunctionInformation getInfoAssociatedWithFunctionAtCursor(
       
       if (!lookupFailed)
          return info;
+      
    }
    
    // If the above failed, we'll fall back to evaluating and looking up
@@ -1019,9 +1042,12 @@ public:
       
       // Figure out if this function call is being made as part of a magrittr
       // chain. If so, then we implicitly set the first argument as that object.
-      std::string chainHead = cursor.getHeadOfPipeChain();
-      if (!chainHead.empty())
-         unnamedArguments.insert(unnamedArguments.begin(), chainHead);
+      if (isPipeOperator(cursor.previousSignificantToken()))
+      {
+         std::string chainHead = cursor.getHeadOfPipeChain();
+         if (!chainHead.empty())
+            unnamedArguments.insert(unnamedArguments.begin(), chainHead);
+      }
       
       DEBUG_BLOCK("Named, Unnamed Arguments")
       {
@@ -1182,6 +1208,20 @@ public:
           cursor.contentEquals(L"vignetteEngine"))
       {
          pCall->functionInfo().infoForFormal("package").setMissingnessHandled(true);
+         pCall->functionInfo().infoForFormal("name").setMissingnessHandled(true);
+         pCall->functionInfo().infoForFormal("tangle").setMissingnessHandled(true);
+      }
+      
+      if (cursor.contentEquals(L"as.lazy_dots"))
+          pCall->functionInfo().infoForFormal("env").setMissingnessHandled(true);
+      
+      if (cursor.contentEquals(L"trace"))
+      {
+         std::vector<FormalInformation>& formals = pCall->functionInfo().formals();
+         BOOST_FOREACH(FormalInformation& formal, formals)
+         {
+            formal.setMissingnessHandled(true);
+         }
       }
    }
    
@@ -1374,6 +1414,33 @@ void addExtraScopedSymbolsForCall(RTokenCursor startCursor,
                endCursor.currentPosition());
    }
    
+   if (startCursor.contentEquals(L"R6Class"))
+   {
+      RTokenCursor endCursor = startCursor.clone();
+      if (!endCursor.moveToNextSignificantToken())
+         return;
+      
+      if (!endCursor.fwdToMatchingToken())
+         return;
+      
+      std::set<std::string> symbols;
+      r::exec::RFunction getR6ClassSymbols(".rs.getR6ClassSymbols");
+      getR6ClassSymbols.addParam(
+               string_utils::wideToUtf8(std::wstring(startCursor.begin(), endCursor.end())));
+      
+      Error error = getR6ClassSymbols.call(&symbols);
+      if (error)
+      {
+         LOG_ERROR(error);
+         return;
+      }
+      
+      status.makeSymbolsAvailableInRange(
+               symbols,
+               startCursor.currentPosition(),
+               endCursor.currentPosition());
+   }
+   
 }
 
 void validateFunctionCall(RTokenCursor cursor,
@@ -1403,11 +1470,8 @@ void validateFunctionCall(RTokenCursor cursor,
    const std::vector<std::string>& formalNames = 
          matched.functionInfo().getFormalNames();
    
-   if (formalNames.empty() ||
-       core::algorithm::contains(formalNames, "..."))
-   {
+   if (formalNames.empty() || core::algorithm::contains(formalNames, "..."))
       return;
-   }
    
    // Warn on partial matches.
    const std::vector< std::pair<std::string, std::string> >& prefixMatchedPairs
@@ -1454,7 +1518,9 @@ void validateFunctionCall(RTokenCursor cursor,
    if (numUserArguments > numFormals)
    {
       std::stringstream ss;
-      ss << "too many arguments to function call";
+      ss << "too many arguments in call to '"
+         << string_utils::wideToUtf8(cursor.getEvaluationAssociatedWithCall())
+         << "'";
       
       status.lint().add(
                startCursor.row(),
@@ -1470,27 +1536,32 @@ void validateFunctionCall(RTokenCursor cursor,
       debug::print(matched.matchedCall());
    }
    
-   // Error on unmatched calls.
-   for (std::size_t i = 0, n = formalNames.size(); i < n; ++i)
+   // Error on missing arguments to call. If the user is passing down '...',
+   // we'll avoid this check and assume it's being inheritted from the parent
+   // function.
+   if (!core::algorithm::contains(matched.unnamedArguments(), "..."))
    {
-      const std::string& formalName = formalNames[i];
-      const FormalInformation& info =
-            matched.functionInfo().infoForFormal(formalName);
-      
-      std::map<std::string, boost::optional<std::string> >& matchedCall =
-            matched.matchedCall();
-      
-      if (!matchedCall[formalName] &&
-          !info.hasDefault() &&
-          !info.isMissingnessHandled())
+      for (std::size_t i = 0, n = formalNames.size(); i < n; ++i)
       {
-         status.lint().add(
-                  startCursor.row(),
-                  startCursor.column(),
-                  endCursor.row(),
-                  endCursor.column() + endCursor.length(),
-                  LintTypeWarning,
-                  "argument '" + formalName + "' is missing, with no default");
+         const std::string& formalName = formalNames[i];
+         const FormalInformation& info =
+               matched.functionInfo().infoForFormal(formalName);
+
+         std::map<std::string, boost::optional<std::string> >& matchedCall =
+               matched.matchedCall();
+
+         if (!matchedCall[formalName] &&
+             !info.hasDefault() &&
+             !info.isMissingnessHandled())
+         {
+            status.lint().add(
+                     startCursor.row(),
+                     startCursor.column(),
+                     endCursor.row(),
+                     endCursor.column() + endCursor.length(),
+                     LintTypeWarning,
+                     "argument '" + formalName + "' is missing, with no default");
+         }
       }
    }
 

@@ -4006,12 +4006,14 @@ public class RemoteServer implements Server
    public void lintRSourceDocument(String documentId,
                                    String documentPath,
                                    boolean showMarkersPane,
+                                   boolean explicit,
                                    ServerRequestCallback<JsArray<LintItem>> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(documentId));
       params.set(1, new JSONString(documentPath));
       params.set(2, JSONBoolean.getInstance(showMarkersPane));
+      params.set(3, JSONBoolean.getInstance(explicit));
       sendRequest(RPC_SCOPE, LINT_R_SOURCE_DOCUMENT, params, requestCallback);
    }
    

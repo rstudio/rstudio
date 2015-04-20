@@ -134,14 +134,14 @@ void addInferredSymbols(const FilePath& filePath,
    using namespace source_database;
    
    // First, try to get the R source index directly from the id.
-   boost::shared_ptr<RSourceIndex> index =
+   boost::shared_ptr<RSourceIndex> index = 
          rSourceIndex().get(documentId);
    
    // If we were unable to get the R source index for
    // some reason, try re-resolving the documentId based
    // on the file path
    if (!index)
-      index = rSourceIndex().get(filePath);
+      index = code_search::getIndexedProjectFile(filePath);
    
    // If we still don't have an index, bail
    if (!index)
@@ -364,14 +364,14 @@ Error getAllAvailableRSymbols(const FilePath& filePath,
    FilePath projDir = projects::projectContext().directory();
    Error error;
    
-   if (filePath.isWithin(projDir))
+   if (projects::projectContext().isPackageProject() && filePath.isWithin(projDir))
    {
-      DEBUG("- Package file:'" << filePath.absolutePath() << "'");
+      DEBUG("- Package file: '" << filePath.absolutePath() << "'");
       error = getAvailableSymbolsForPackage(filePath, documentId, pSymbols);
    }
    else
    {
-      DEBUG("- Project file:'" << filePath.absolutePath() << "'");
+      DEBUG("- Project file: '" << filePath.absolutePath() << "'");
       error = getAvailableSymbolsForProject(filePath, documentId, pSymbols);
    }
    
@@ -446,7 +446,8 @@ void checkNoDefinitionInScope(const FilePath& origin,
 
 ParseResults parse(const std::wstring& rCode,
                    const FilePath& origin,
-                   const std::string& documentId = std::string())
+                   const std::string& documentId = std::string(),
+                   bool isExplicit = false)
 {
    ParseResults results;
    
@@ -459,7 +460,7 @@ ParseResults parse(const std::wstring& rCode,
             userSettings().checkArgumentsToRFunctionCalls());
    
    options.setWarnIfVariableIsDefinedButNotUsed(
-            userSettings().warnIfVariableDefinedButNotUsed());
+            isExplicit && userSettings().warnIfVariableDefinedButNotUsed());
    
    options.setWarnIfNoSuchVariableInScope(
             userSettings().warnIfNoSuchVariableInScope());
@@ -598,10 +599,12 @@ Error lintRSourceDocument(const json::JsonRpcRequest& request,
    std::string documentId;
    std::string documentPath;
    bool showMarkersTab = false;
+   bool isExplicit = false;
    Error error = json::readParams(request.params,
                                   &documentId,
                                   &documentPath,
-                                  &showMarkersTab);
+                                  &showMarkersTab,
+                                  &isExplicit);
    
    if (error)
    {
@@ -653,7 +656,11 @@ Error lintRSourceDocument(const json::JsonRpcRequest& request,
       return error;
    }
    
-   ParseResults results = parse(content, origin, documentId);
+   ParseResults results = diagnostics::parse(
+            string_utils::utf8ToWide(content),
+            origin,
+            documentId,
+            isExplicit);
    
    pResponse->setResult(lintAsJson(results.lint()));
    
@@ -819,7 +826,9 @@ bool collectLint(int depth,
    
    ParseResults results = diagnostics::parse(
             string_utils::utf8ToWide(contents),
-            path);
+            path,
+            std::string(),
+            true);
    
    (*pLint)[path] = results.lint();
    return true;

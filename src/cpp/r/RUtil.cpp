@@ -203,6 +203,7 @@ std::set<std::string> makeWindowsOnlyFunctions()
 {
    std::set<std::string> fns;
    
+   fns.insert("shell");
    fns.insert("shell.exec");
    fns.insert("Sys.junction");
    

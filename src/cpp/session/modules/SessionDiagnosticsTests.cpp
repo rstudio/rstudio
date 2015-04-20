@@ -241,6 +241,7 @@ context("Diagnostics")
       EXPECT_NO_LINT("n <- 1; rnorm(n = n)");
       
       EXPECT_NO_LINT("n <- 1 ## a comment\nprint(n)");
+      EXPECT_NO_LINT("n <- 1 + 2 ## a comment\nprint(n)");
    }
    
    lintRStudioRFiles();

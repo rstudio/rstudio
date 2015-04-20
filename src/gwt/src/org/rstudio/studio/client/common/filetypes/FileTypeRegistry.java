@@ -338,6 +338,7 @@ public class FileTypeRegistry
       register("*.bib", TEXT, icons.iconText());
       register("*.c", C, icons.iconC());
       register("*.cpp", CPP, icons.iconCpp());
+      register("*.cc", CPP, icons.iconCpp());
       register("*.h", H, icons.iconH());
       register("*.hpp", HPP, icons.iconHpp());
       register("*.f", TEXT, icons.iconText());

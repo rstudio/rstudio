@@ -368,7 +368,7 @@ public:
           position.row,
           position.column + symbol.length(),
           LintTypeWarning,
-          "variable '" + symbol + "' is defined but not used");
+          "'" + symbol + "' is defined but not used");
    }
    
    void missingArgumentToFunctionCall(const RToken& rToken)
