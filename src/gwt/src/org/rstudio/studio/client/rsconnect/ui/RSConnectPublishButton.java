@@ -154,7 +154,8 @@ public class RSConnectPublishButton extends Composite
    @Override
    public void setVisible(boolean visible)
    {
-      boolean wasVisible = isVisible();
+      boolean wasVisible = visible_;
+      visible_ = visible;
       super.setVisible(visible);
       
       // if becoming visible, repopulate the list of deployments if we haven't
@@ -570,6 +571,7 @@ public class RSConnectPublishButton extends Composite
    private PublishHtmlSource publishHtmlSource_;
    private String caption_;
    private boolean manuallyHidden_ = false;
+   private boolean visible_ = false;
    
    private final AppCommand boundCommand_;
 

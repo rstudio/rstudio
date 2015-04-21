@@ -72,7 +72,7 @@
 
    # combine the deployments rsconnect knows about with the deployments we know
    # about
-   c(deployments, .rs.scalarListFromList(rpubsDeployment))
+   c(deployments, list(.rs.scalarListFromList(rpubsDeployment)))
 })
 
 .rs.addJsonRpcHandler("get_rsconnect_account_list", function() {
