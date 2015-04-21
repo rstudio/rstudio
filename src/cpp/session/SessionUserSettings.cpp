@@ -279,13 +279,13 @@ void UserSettings::updatePrefsCache(const json::Object& prefs) const
    bool lintRFunctionCalls = readPref<bool>(prefs, "diagnostics_in_function_calls", true);
    pLintRFunctionCalls_.reset(new bool(lintRFunctionCalls));
    
-   bool checkArgumentsToRFunctionCalls = readPref<bool>(prefs, "check_arguments_to_r_function_calls", true);
+   bool checkArgumentsToRFunctionCalls = readPref<bool>(prefs, "check_arguments_to_r_function_calls", false);
    pCheckArgumentsToRFunctionCalls_.reset(new bool(checkArgumentsToRFunctionCalls));
 
-   bool warnIfNoSuchVariableInScope = readPref<bool>(prefs, "warn_if_no_such_variable_in_scope", true);
+   bool warnIfNoSuchVariableInScope = readPref<bool>(prefs, "warn_if_no_such_variable_in_scope", false);
    pWarnIfNoSuchVariableInScope_.reset(new bool(warnIfNoSuchVariableInScope));
 
-   bool warnIfVariableDefinedButNotUsed = readPref<bool>(prefs, "warn_if_variable_defined_but_not_used", true);
+   bool warnIfVariableDefinedButNotUsed = readPref<bool>(prefs, "warn_if_variable_defined_but_not_used", false);
    pWarnIfVariableDefinedButNotUsed_.reset(new bool(warnIfVariableDefinedButNotUsed));
 
    bool enableStyleDiagnostics = readPref<bool>(prefs, "enable_style_diagnostics", false);
