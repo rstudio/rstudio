@@ -1601,11 +1601,10 @@ bool skipFormulas(RTokenCursor& origin,
    RTokenCursor cursor = origin.clone();
    bool foundTilde = false;
    
-   
    while (cursor.moveToEndOfStatement(false))
    {
       if (!cursor.moveToNextSignificantToken())
-         return false;
+         break;
 
       if (cursor.contentEquals(L"~"))
          foundTilde = true;
@@ -1614,7 +1613,7 @@ bool skipFormulas(RTokenCursor& origin,
          break;
 
       if (!cursor.moveToNextSignificantToken())
-         return false;
+         break;
    }
    
    if (foundTilde)
