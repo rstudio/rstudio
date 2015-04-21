@@ -14,7 +14,7 @@
  */
 
 #define RSTUDIO_DEBUG_LABEL "rparser"
-// #define RSTUDIO_ENABLE_DEBUG_MACROS
+#define RSTUDIO_ENABLE_DEBUG_MACROS
 
 // We use a couple internal R functions here; in particular,
 // simple accessors (which we know will not longjmp)
@@ -117,10 +117,13 @@ public:
    
    NSEDatabase()
    {
+      // Add in a set of 'known' NSE-performing functinos.
       BOOST_FOREACH(const std::string& name, r::sexp::nsePrimitives())
       {
          addNseFunction(name, "base");
       }
+      
+      addNseFunction("data", "base");
    }
    
    void add(SEXP symbolSEXP, bool performsNse)
@@ -929,7 +932,7 @@ FunctionInformation getInfoAssociatedWithFunctionAtCursor(
              &pNode))
       {
          DEBUG("***** Found function: '" << pNode->name() << "' at: " << pNode->position());
-         
+
          // TODO: When we infer a function from the source code, and that
          // function is a top-level source function, should we give it an
          // 'origin' name equal to the current package's name?
@@ -937,7 +940,7 @@ FunctionInformation getInfoAssociatedWithFunctionAtCursor(
          std::string origin = "<root>";
          if (pNode->getParent())
             origin = pNode->getParent()->name();
-         
+
          FunctionInformation info(origin, name);
          RTokenCursor clone = cursor.clone();
          if (clone.moveToPosition(pNode->position()))
@@ -1223,6 +1226,27 @@ public:
             formal.setMissingnessHandled(true);
          }
       }
+      
+      if (cursor.contentEquals(L"txtProgressBar"))
+      {
+         pCall->functionInfo().infoForFormal("label").setMissingnessHandled(true);
+         pCall->functionInfo().infoForFormal("title").setMissingnessHandled(true);
+      }
+      
+      if (cursor.contentEquals(L"spin"))
+         pCall->functionInfo().infoForFormal("hair").setMissingnessHandled(true);
+      
+      if (cursor.contentEquals(L"read_chunk"))
+         pCall->functionInfo().infoForFormal("path").setMissingnessHandled(true);
+      
+      if (cursor.contentEquals(L"fig_path") ||
+          cursor.contentEquals(L"fig_chunk"))
+      {
+         pCall->functionInfo().infoForFormal("number").setMissingnessHandled(true);
+      }
+      
+      if (cursor.contentEquals(L"need"))
+         pCall->functionInfo().infoForFormal("label").setMissingnessHandled(true);
    }
    
    static void applyCustomWarnings(const MatchedCall& call,
@@ -1342,10 +1366,14 @@ void checkBinaryOperatorWhitespace(RTokenCursor& cursor,
    //
    //    x $ foo
    //
-   // is bad style. Note that ':' is the other 'no-whitespace-preferred'
-   // binary operator.
+   // is bad style.
+   
+   // Allow 'both' styles for division, multiplication
+   if (cursor.contentEquals(L'/') || cursor.contentEquals(L'*'))
+      return;
+   
    bool isExtraction = isExtractionOperator(cursor);
-   bool isColon = cursor.contentEquals(L":");
+   bool isColon = cursor.contentEquals(L':');
    if (isExtraction || isColon)
    {
       if (isWhitespace(cursor.previousToken()) ||
@@ -2060,8 +2088,30 @@ START:
          bool isNumber = cursor.isType(RToken::NUMBER);
          const RToken& next = cursor.nextSignificantToken();
          
+         // If we encounter an operator, we need to figure out whether it's
+         // a unary operator, or a binary operator. For example:
+         //
+         //    foo
+         //    -1
+         //
+         // parses with '-' as a unary operator, but
+         //
+         //    (foo
+         //     -1)
+         //
+         // parses with '-' as a binary operator.
          if (isBinaryOp(next))
          {
+            if (!status.isInParentheticalScope() &&
+                isValidAsUnaryOperator(next) &&
+                (next.row() > cursor.row()))
+            {
+               DEBUG("----- Unary operator: " << next);
+               MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
+               goto START;
+            }
+            
+            DEBUG("----- Binary operator: " << next);
             MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
             goto BINARY_OPERATOR;
          }

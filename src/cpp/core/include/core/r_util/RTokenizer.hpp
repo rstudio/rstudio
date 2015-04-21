@@ -126,6 +126,11 @@ public:
              std::equal(begin_, end_, text.begin());
    }
    
+   bool contentEquals(wchar_t character) const
+   {
+      return std::distance(begin_, end_) == 1 && *begin_ == character;
+   }
+   
    bool contentContains(const wchar_t character) const
    {
       return std::find(begin_, end_, character) != end_;
@@ -325,6 +330,9 @@ namespace token_utils {
 
 inline bool isBinaryOp(const RToken& token)
 {
+   if (token.contentEquals(L'!'))
+      return false;
+   
    return token.isType(RToken::OPER) ||
           token.isType(RToken::UOPER);
 }

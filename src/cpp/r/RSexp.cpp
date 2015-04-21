@@ -1073,6 +1073,12 @@ std::set<std::string> makeNsePrimitives()
    nsePrimitives.insert("evalq");
    nsePrimitives.insert("subset");
    nsePrimitives.insert("eval.parent");
+   nsePrimitives.insert("sys.call");
+   nsePrimitives.insert("sys.calls");
+   nsePrimitives.insert("sys.frame");
+   nsePrimitives.insert("sys.frames");
+   nsePrimitives.insert("sys.function");
+   nsePrimitives.insert("sys.parent");
    nsePrimitives.insert("lazy_dots");
    return nsePrimitives;
 }

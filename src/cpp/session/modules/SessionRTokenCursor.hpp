@@ -282,6 +282,11 @@ public:
       return currentToken().contentEquals(content);
    }
    
+   bool contentEquals(wchar_t character) const
+   {
+      return currentToken().contentEquals(character);
+   }
+   
    RToken::TokenType type() const
    {
       return currentToken().type();
