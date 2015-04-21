@@ -160,21 +160,7 @@ private:
       BOOST_FOREACH(std::string& line, lines)
       {
          if (line.substr(0, ncharMarker) == kFinishedMarker)
-         {
             deployedUrl_ = line.substr(ncharMarker, line.size() - ncharMarker);
-
-            // check to see if a source file was specified; if so return a URL
-            // with the source file appended
-            if (!sourceFile_.empty() &&
-                !boost::algorithm::iends_with(deployedUrl_, ".rmd") &&
-                (string_utils::toLower(sourceFile_) != "index.rmd"))
-            {
-               // append / to the URL if it doesn't already have one
-               if (deployedUrl_[deployedUrl_.length() - 1] != '/')
-                  deployedUrl_.append("/");
-               deployedUrl_.append(sourceFile_);
-            }
-         }
       }
 
       // emit the output to the client for display
