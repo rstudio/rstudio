@@ -1672,6 +1672,15 @@ public class AceEditor implements DocDisplay,
       }
    }
    
+   public JsArray<ScopeFunction> getAllFunctionScopes()
+   {
+      CodeModel codeModel = widget_.getEditor().getSession().getMode().getRCodeModel();
+      if (codeModel == null)
+         return null;
+      
+      return codeModel.getAllFunctionScopes();
+   }
+   
    @Override 
    public void recordCurrentNavigationPosition()
    {

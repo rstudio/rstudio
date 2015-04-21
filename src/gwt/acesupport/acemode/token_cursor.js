@@ -552,7 +552,61 @@ var TokenCursor = function(tokens, row, offset) {
       }
 
       return false;
+   };
+
+   this.moveToPositionRightInclusive = function(pos)
+   {
+      var row = pos.row;
+      var column = pos.column;
+
+      var rowTokens = this.$tokens[row];
+
+      // Ensure that we have tokenized up to the current position,
+      // if a code model is available.
+      if (rowTokens == null &&
+          this.$codeModel &&
+          this.$codeModel.$tokenizeUpToRow)
+      {
+         this.$codeModel.$tokenizeUpToRow.call(this.$codeModel, row);
+         rowTokens = this.$tokens[row];
+      }
+
+      // If there are tokens on this row, we can move to the first token
+      // on that line before the cursor position.
+      //
+      // Note that we validate that there is at least one token
+      // left of, or at, of the cursor position before entering
+      // this block.
+      if (rowTokens && rowTokens.length > 0 && rowTokens[0].column <= column)
+      {
+         // We want to find the index of the largest token column still less than
+         // the column passed in by the caller.
+         var index = 0;
+         for (; index < rowTokens.length; index++)
+            if (rowTokens[index].column >= column)
+               break;
+
+         this.$row = row;
+         this.$offset = rowTokens[index].column === column ? index : index - 1;
+         return true;
+      }
+
+      // Otherwise, we just move to the first token previous to this line.
+      // Clone the cursor, put that cursor at the start of the row, and try
+      // to find the previous token.
+      var clone = this.cloneCursor();
+      clone.$row = row;
+      clone.$offset = 0;
       
+      if (clone.moveToPreviousToken())
+      {
+         this.$row = clone.$row;
+         this.$offset = clone.$offset;
+         return true;
+      }
+
+      return false;
+
    };
 
    // Walk backwards to find an opening bracket (in the array 'tokens').

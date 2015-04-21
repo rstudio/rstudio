@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.views.source.editors.text;
 import org.rstudio.studio.client.workbench.views.source.events.RecordNavigationPositionHandler;
 import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
 
+import com.google.gwt.core.client.JsArray;
 import com.google.gwt.event.shared.HandlerRegistration;
 
 
@@ -34,6 +35,8 @@ public interface NavigableSourceEditor
                            boolean highlightLine);
 
    void restorePosition(SourcePosition position);
+   
+   JsArray<ScopeFunction> getAllFunctionScopes();
    
    boolean isAtSourceRow(SourcePosition position);
    
