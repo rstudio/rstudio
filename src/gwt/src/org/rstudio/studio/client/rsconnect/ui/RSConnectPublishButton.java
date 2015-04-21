@@ -352,6 +352,7 @@ public class RSConnectPublishButton extends Composite
    {
       // clear existing deployment menu, if any
       publishMenu_.clearItems();
+      defaultRec_ = null;
 
       // if there are existing deployments, make the UI reflect that this is a
       // republish
