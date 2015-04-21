@@ -125,6 +125,10 @@
       start <- pair[[1]]
       end <- pair[[2]]
       
+      # Ignore pairs that include 'eval = FALSE'
+      if (grepl(",\\s*eval\\s*=\\s*F", splat[[start]], perl = TRUE))
+         next
+      
       # Ignore pairs that include 'engine=', assuming they're non-R chunks
       if (grepl(",\\s*engine\\s*=", splat[[start]], perl = TRUE))
          next
