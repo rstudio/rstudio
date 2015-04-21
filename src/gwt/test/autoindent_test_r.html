@@ -4,6 +4,7 @@
   <link rel="stylesheet" type="text/css" href="../src/org/rstudio/studio/client/workbench/views/source/editors/text/themes/tomorrow_night_bright.css" />
   <!script type="text/javascript" src="../tools/ace/build_support/mini_require.js"></script>
   <script type="text/javascript" src="../src/org/rstudio/studio/client/workbench/views/source/editors/text/ace/ace-uncompressed.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/utils.js"></script>
   <script type="text/javascript" src="../acesupport/acemode/auto_brace_insert.js"></script>
   <script type="text/javascript" src="../acesupport/acemode/tex_highlight_rules.js"></script>
   <script type="text/javascript" src="../acesupport/acemode/token_cursor.js"></script>
@@ -365,6 +366,11 @@ if ()
 <li><pre data-expected="4" data-expected-vertical-args="4">
 else
   x <-
+</pre></li>
+
+<li><pre data-expected="0">
+    x <- 1
+y
 </pre></li>
 
 </ol>
