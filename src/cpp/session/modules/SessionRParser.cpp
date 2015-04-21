@@ -1586,25 +1586,41 @@ void validateFunctionCall(RTokenCursor cursor,
    }
 }
 
-bool skipFormulas(RTokenCursor& cursor,
+// Skipping formulas is tricky! It may require an arbitrary amount of
+// lookahead, as the semantics of formulas are as such:
+//
+//    (expression) ~ (expression)
+//
+// which means beasts like this are valid formulas:
+//
+//    foo$bar$log(1 + y) + log(2 + y) ~ ({1 ~ 2}) ^ 5
+//
+bool skipFormulas(RTokenCursor& origin,
                   ParseStatus& status)
 {
+   RTokenCursor cursor = origin.clone();
+   bool foundTilde = false;
    
-   if (cursor.nextSignificantToken().contentEquals(L"~"))
+   
+   while (cursor.moveToEndOfStatement(false))
    {
-      if (isRightBracket(cursor) && status.isInParentheticalScope())
-         status.popState();
-      cursor.moveToNextSignificantToken();
+      if (!cursor.moveToNextSignificantToken())
+         return false;
+
+      if (cursor.contentEquals(L"~"))
+         foundTilde = true;
+
+      if (!isBinaryOp(cursor))
+         break;
+
+      if (!cursor.moveToNextSignificantToken())
+         return false;
    }
    
-   if (cursor.contentEquals(L"~"))
-   {
-      if (cursor.moveToEndOfStatement(status.isInParentheticalScope()))
-         return cursor.moveToNextSignificantToken();
-      
-   }
+   if (foundTilde)
+      origin.setOffset(cursor.offset());
    
-   return false;
+   return foundTilde;
 }
 
 // Enter a function scope, starting at the first paren associated
