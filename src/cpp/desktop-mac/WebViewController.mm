@@ -53,7 +53,8 @@ NSString* authorityFromUrl (NSString* url)
 {
    // extract the authority (domain and port) from the URL:
    // e.g. for http://foo:8402/bar/baz.html, extract http://foo:8402/
-   NSURL* authorityUrl = [NSURL URLWithString: url];
+   NSURL* authorityUrl = [NSURL URLWithString: 
+        [url stringByAddingPercentEscapesUsingEncoding: NSUTF8StringEncoding]];
    NSString* port = @"";
    if ([authorityUrl port] != nil) {
       port = [NSString stringWithFormat: @":%@", [authorityUrl port]];
