@@ -378,15 +378,21 @@ public:
                   "missing argument to function call");
    }
    
-   void incorrectNullComparison(const Position& start,
-                                const Position& end)
+   void incorrectEqualityComparison(
+         const std::string& what,
+         const std::string& suggestion,
+         const Position& start,
+         const Position& end)
    {
+      std::string message =
+            "use '" + suggestion + "' to check whether expression evaluates to " + what;
+      
       add(start.row,
           start.column,
           end.row,
           end.column,
-          LintTypeError,
-          "use 'is.null()' to check whether expression evaluates to NULL");
+          LintTypeWarning,
+          message);
    }
    
    const std::vector<LintItem>& get() const

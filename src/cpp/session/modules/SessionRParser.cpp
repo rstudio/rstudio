@@ -1684,27 +1684,48 @@ void checkForMissingComma(const RTokenCursor& cursor,
       status.lint().expectedCommaFollowingToken(cursor);
 }
 
-void checkIncorrectNullComparison(const RTokenCursor& origin,
-                                  ParseStatus& status)
+void checkIncorrectComparison(const RTokenCursor& origin,
+                              ParseStatus& status)
 {
-   if (origin.contentEquals(L"NULL") &&
-       origin.previousSignificantToken().contentEquals(L"=="))
-   {
-      // Put a cursor at the start of the statement prior to '=='
-      RTokenCursor startCursor = origin.clone();
-      if (!startCursor.moveToPreviousSignificantToken())
-         return;
-      
-      if (!startCursor.moveToPreviousSignificantToken())
-         return;
-      
-      if (!startCursor.moveToStartOfEvaluation())
-         return;
-      
-      status.lint().incorrectNullComparison(
-               startCursor.currentPosition(),
-               origin.currentPosition(true));
-   }
+   if (!origin.previousSignificantToken().contentEquals(L"=="))
+      return;
+   
+   bool isNULL = origin.contentEquals(L"NULL");
+   bool isNA   = isNaKeyword(origin);
+   bool isNaN  = origin.contentEquals(L"NaN");
+   
+   bool needsSpecialHandling =
+         isNULL || isNA || isNaN;
+   
+   if (!needsSpecialHandling)
+      return;
+   
+   std::string content = origin.contentAsUtf8();
+   std::string suggestion;
+   if (isNULL)
+      suggestion = "is.null";
+   else if (isNA)
+      suggestion = "is.na";
+   else if (isNaN)
+      suggestion = "is.nan";
+   
+   // Clone a cursor and put it at the start of the statement
+   // prior to the '==' token
+   RTokenCursor startCursor = origin.clone();
+   if (!startCursor.moveToPreviousSignificantToken())
+      return;
+
+   if (!startCursor.moveToPreviousSignificantToken())
+      return;
+
+   if (!startCursor.moveToStartOfEvaluation())
+      return;
+
+   status.lint().incorrectEqualityComparison(
+            content,
+            suggestion,
+            startCursor.currentPosition(),
+            origin.currentPosition(true));
 }
 
 } // anonymous namespace
@@ -1736,7 +1757,7 @@ START:
       
       DEBUG("== Current state: " << status.currentStateAsString());
       
-      checkIncorrectNullComparison(cursor, status);
+      checkIncorrectComparison(cursor, status);
       
       // We want to skip over formulas if necessary.
       if (skipFormulas(cursor, status))
