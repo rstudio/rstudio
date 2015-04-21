@@ -177,10 +177,10 @@ public:
       return rTokens_.atUnsafe(offset_);
    }
    
-   const Position currentPosition() const
+   Position currentPosition(bool endOfToken = false) const
    {
       const RToken& token = currentToken();
-      return Position(token.row(), token.column());
+      return Position(token.row(), token.column() + (endOfToken ? token.length() : 0));
    }
    
    std::wstring::const_iterator begin() const

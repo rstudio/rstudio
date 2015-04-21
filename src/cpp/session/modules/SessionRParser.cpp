@@ -14,7 +14,7 @@
  */
 
 #define RSTUDIO_DEBUG_LABEL "rparser"
-#define RSTUDIO_ENABLE_DEBUG_MACROS
+// #define RSTUDIO_ENABLE_DEBUG_MACROS
 
 // We use a couple internal R functions here; in particular,
 // simple accessors (which we know will not longjmp)
@@ -1684,6 +1684,29 @@ void checkForMissingComma(const RTokenCursor& cursor,
       status.lint().expectedCommaFollowingToken(cursor);
 }
 
+void checkIncorrectNullComparison(const RTokenCursor& origin,
+                                  ParseStatus& status)
+{
+   if (origin.contentEquals(L"NULL") &&
+       origin.previousSignificantToken().contentEquals(L"=="))
+   {
+      // Put a cursor at the start of the statement prior to '=='
+      RTokenCursor startCursor = origin.clone();
+      if (!startCursor.moveToPreviousSignificantToken())
+         return;
+      
+      if (!startCursor.moveToPreviousSignificantToken())
+         return;
+      
+      if (!startCursor.moveToStartOfEvaluation())
+         return;
+      
+      status.lint().incorrectNullComparison(
+               startCursor.currentPosition(),
+               origin.currentPosition(true));
+   }
+}
+
 } // anonymous namespace
 
 #define GOTO_INVALID_TOKEN(__CURSOR__)                                         \
@@ -1712,6 +1735,8 @@ void doParse(RTokenCursor& cursor,
 START:
       
       DEBUG("== Current state: " << status.currentStateAsString());
+      
+      checkIncorrectNullComparison(cursor, status);
       
       // We want to skip over formulas if necessary.
       if (skipFormulas(cursor, status))
