@@ -2806,8 +2806,8 @@ public class RPCTypeCheckTest extends TestCase {
       // table.
       RPC.decodeRequest(generateIntSpoofingString());
       returned = true;
-    } catch (AssertionError e) {
-      // Expected
+    } catch (ArrayIndexOutOfBoundsException expected) {
+    } catch (AssertionError expected) {
     }
     if (returned) {
       fail("RPC.decodeRequest should have thrown.");

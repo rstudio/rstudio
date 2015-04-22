@@ -119,7 +119,7 @@ public class ServerSerializationStreamWriterTest extends TestCase {
     writer.writeDouble(Double.NEGATIVE_INFINITY);
     writer.writeDouble(Double.POSITIVE_INFINITY);
     writer.writeDouble(Double.NaN);
-    assertEquals("[3,2,1,[\"-Infinity\",\"Infinity\",\"NaN\"],0,8]", writer.toString());
+    assertEquals("[\"NaN\",\"Infinity\",\"-Infinity\",[],0,8]", writer.toString());
   }
 
   public void testVersion8Fallbacks() {

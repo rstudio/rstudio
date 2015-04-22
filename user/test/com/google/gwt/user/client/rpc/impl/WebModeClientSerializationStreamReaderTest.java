@@ -34,6 +34,7 @@ public class WebModeClientSerializationStreamReaderTest extends RpcTestBase {
         + "\"NaN\"," // a stringified double
         + "\"Infinity\"," // a stringified double
         + "\"-Infinity\"," // a stringified double
+        + "[]," // stringTable
         + "0," // flags
         + "8" // version
         + "]";
@@ -57,6 +58,7 @@ public class WebModeClientSerializationStreamReaderTest extends RpcTestBase {
         + "NaN," // a double
         + "Infinity," // a double
         + "-Infinity," // a double
+        + "[]," // stringTable
         + "0," // flags
         + "7" // version
         + "]";
