@@ -160,7 +160,8 @@ public class RSConnectDeploy extends Composite
          @Override
          public void onClick(ClickEvent event)
          {
-            connector_.showAccountWizard(false, new OperationWithInput<Boolean>() 
+            connector_.showAccountWizard(false, !asStatic_, 
+                  new OperationWithInput<Boolean>() 
             {
                @Override
                public void execute(Boolean successful)
@@ -557,7 +558,7 @@ public class RSConnectDeploy extends Composite
             // since none are currently connected
             if (accounts.length() == 0 && !isRetry)
             {
-               connector_.showAccountWizard(true, 
+               connector_.showAccountWizard(true, !asStatic_,
                      new OperationWithInput<Boolean>() 
                {
                   @Override

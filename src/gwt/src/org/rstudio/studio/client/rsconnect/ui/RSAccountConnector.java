@@ -81,11 +81,12 @@ public class RSAccountConnector implements
    
    public void showAccountWizard(
          boolean forFirstAccount,
+         boolean withCloudOption,
          final OperationWithInput<Boolean> onCompleted)
    {
       if (pUiPrefs_.get().enableRStudioConnect().getGlobalValue())
       {
-         showAccountTypeWizard(forFirstAccount, onCompleted);
+         showAccountTypeWizard(forFirstAccount, withCloudOption, onCompleted);
       }
       else
       {
@@ -136,13 +137,15 @@ public class RSAccountConnector implements
 
    private void showAccountTypeWizard(
          boolean forFirstAccount,
+         boolean withCloudOption,
          final OperationWithInput<Boolean> onCompleted)
    {
       RSConnectAccountWizard wizard = new RSConnectAccountWizard(
             server_,
             display_,
             forFirstAccount,
-            SessionUtils.showExternalPublishUi(session_, pUiPrefs_.get()),
+            withCloudOption && 
+               SessionUtils.showExternalPublishUi(session_, pUiPrefs_.get()),
             new ProgressOperationWithInput<NewRSConnectAccountResult>()
       {
          @Override
