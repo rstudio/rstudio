@@ -204,9 +204,10 @@ bool ensureNamespaceLoaded(const std::string& ns)
    SEXP nsSEXP = findNamespace(ns);
    if (nsSEXP == R_UnboundValue)
    {
-      r::exec::RFunction loadNamespace("base:::loadNamespace");
-      loadNamespace.addParam(ns);
-      Error error = loadNamespace.call();
+      r::exec::RFunction requireNamespace("base:::requireNamespace");
+      requireNamespace.addParam("package", ns);
+      requireNamespace.addParam("quietly", true);
+      Error error = requireNamespace.call();
       if (error) return false;
    }
    return true;
@@ -324,8 +325,9 @@ SEXP findVar(const std::string& name, const std::string& ns)
    if (name.empty())
       return R_UnboundValue;
    
-   if (!ensureNamespaceLoaded(ns))
-      return R_UnboundValue;
+   if (!ns.empty())
+      if (!ensureNamespaceLoaded(ns))
+         return R_UnboundValue;
    
    SEXP env = ns.empty() ? R_GlobalEnv : findNamespace(ns);
    
@@ -339,7 +341,9 @@ SEXP findFunction(const std::string& name, const std::string& ns)
    if (name.empty())
       return R_UnboundValue;
    
-   ensureNamespaceLoaded(ns);
+   if (!ns.empty())
+      if (!ensureNamespaceLoaded(ns))
+         return R_UnboundValue;
    
    SEXP env = ns.empty() ? R_GlobalEnv : findNamespace(ns);
    if (env == R_UnboundValue) return R_UnboundValue;
