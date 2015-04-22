@@ -150,6 +150,7 @@
 * Server Pro: Support for SPDY protocol
 * Server Pro: Custom header name for proxied authentication
 * Server Pro: Option to eliminate "stay signed in" option for PAM authentication.
+* Server Pro: Update to Nginx 1.8.0
 
 ### Bug Fixes
 
