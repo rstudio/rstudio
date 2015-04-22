@@ -180,6 +180,8 @@ public slots:
 
    void installRtools(QString version, QString installerPath);
 
+   int getDisplayDpi();
+
 private:
    Synctex& synctex();
 

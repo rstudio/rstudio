@@ -95,6 +95,7 @@ public interface DesktopFrame extends JavaScriptPassthrough
    boolean canChooseRVersion();
 
    double devicePixelRatio();
+   int getDisplayDpi();
    
    void cleanClipboard();
    

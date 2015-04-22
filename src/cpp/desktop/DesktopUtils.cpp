@@ -221,14 +221,23 @@ bool isFixedWidthFont(const QFont& font)
    return true;
 }
 
+int getDpi()
+{
+#ifdef _WIN32
+   HDC defaultDC = GetDC(NULL);
+   int dpi = GetDeviceCaps(defaultDC, LOGPIXELSX);
+   ReleaseDC(NULL, defaultDC);
+   return dpi;
+#else
+   // presume 96 DPI on other Qt platforms (i.e. Linux) for now
+   return 96;
+#endif
+}
+
 double getDpiZoomScaling()
 {
    double dpiZoomScaling = 1.0;
-#ifdef _WIN32
-   // On Windows, check for high DPI; if present, scale the zoom factors
-   // accordingly.
-   HDC defaultDC = GetDC(NULL);
-   int dpi = GetDeviceCaps(defaultDC, LOGPIXELSX);
+   int dpi = getDpi();
    if (dpi >= 192)
    {
       // Corresponds to 200% scaling (introduced in Windows 8.1)
@@ -239,8 +248,6 @@ double getDpiZoomScaling()
       // Corresponds to 150% scaling
       dpiZoomScaling = 1.2;
    }
-   ReleaseDC(NULL, defaultDC);
-#endif
    return dpiZoomScaling;
 }
 
