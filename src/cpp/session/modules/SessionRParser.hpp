@@ -395,6 +395,13 @@ public:
           message);
    }
    
+   void noExistingDefinitionForParentAssignment(const RToken& rToken)
+   {
+      addLintItem(rToken,
+                  LintTypeStyle,
+                  "no definition for '" + rToken.contentAsUtf8() + "' in scope");
+   }
+   
    const std::vector<LintItem>& get() const
    {
       return lintItems_;

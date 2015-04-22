@@ -767,7 +767,7 @@ void handleIdentifier(RTokenCursor& cursor,
       // variables, we prefer not searching the search path)
       if (status.parseOptions().warnIfNoSuchVariableInScope() &&
           !skipReferenceChecks &&
-          isLocalLeftAssign(cursor.nextSignificantToken()) &&
+          isLeftAssign(cursor.nextSignificantToken()) &&
           !status.node()->symbolHasDefinitionInTree(cursor.contentAsUtf8(), cursor.currentPosition()))
       {
          RTokenCursor clone = cursor.clone();
@@ -779,8 +779,14 @@ void handleIdentifier(RTokenCursor& cursor,
          }
       }
       
-      if (isLocalLeftAssign(cursor.nextSignificantToken()) ||
-          isLocalRightAssign(cursor.previousSignificantToken()))
+      // Check that parent assignments reference a variable within scope
+      if (isParentLeftAssign(cursor.nextSignificantToken()))
+         if (!status.node()->symbolHasDefinitionInTree(cursor.contentAsUtf8(), cursor.currentPosition()))
+            status.lint().noExistingDefinitionForParentAssignment(cursor);
+      
+      // Add a definition for this symbol
+      if (isLeftAssign(cursor.nextSignificantToken()) ||
+          isRightAssign(cursor.previousSignificantToken()))
       {
          DEBUG("--- Adding definition for symbol");
          status.node()->addDefinedSymbol(cursor);
