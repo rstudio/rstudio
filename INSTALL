@@ -11,7 +11,7 @@ Windows, OSX, as well as recent versions of various Linux distributions.
 ----------------------------------------------------------------------------
 
 Building RStudio requires a number of dependencies (including R itself).
-There are platform-specific instructions for satsifying these dependencies
+There are platform-specific instructions for satisfying these dependencies
 within the following directories
 
    dependencies
@@ -33,7 +33,7 @@ a) From the root of the RStudio tree create a build directory and then
    cd build
 
 
-b) Configure the build using cmake as appopriate, e.g.
+b) Configure the build using cmake as appropriate, e.g.
 
    cmake .. -DRSTUDIO_TARGET=Server -DCMAKE_BUILD_TYPE=Release
    
@@ -53,7 +53,7 @@ b) Configure the build using cmake as appopriate, e.g.
 c) There are a couple of additional considerations on Windows. First,
    RStudio Server is not supported on Windows so the configuration 
    always defaults to Desktop. Second, you need to add an extra -G 
-   paramater to specify MinGW as the build toolchain, for example:
+   parameter to specify MinGW as the build toolchain, for example:
 
    cmake .. -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release
     
