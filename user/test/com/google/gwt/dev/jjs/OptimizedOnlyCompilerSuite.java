@@ -16,6 +16,7 @@
 package com.google.gwt.dev.jjs;
 
 import com.google.gwt.dev.jjs.test.HasNoSideEffecstTest;
+import com.google.gwt.dev.jjs.test.RunAsyncContentTest;
 import com.google.gwt.dev.jjs.test.SpecializationTest;
 import com.google.gwt.junit.tools.GWTTestSuite;
 
@@ -32,6 +33,10 @@ public class OptimizedOnlyCompilerSuite {
     // $JUnit-BEGIN$
     suite.addTestSuite(SpecializationTest.class);
     suite.addTestSuite(HasNoSideEffecstTest.class);
+    // RunAsyncContentTest relies in string interning for its assertions which is now always off
+    // in non optimzied compiles.
+    suite.addTestSuite(RunAsyncContentTest.class);
+
     // $JUnit-END$
 
     return suite;

@@ -240,7 +240,7 @@ public class JsLiteralInterner {
     /**
      * This is a set of flags indicating what types of literals are to be interned.
      */
-    private final byte whatToIntern;
+    private final int whatToIntern;
 
     /**
      * Constructor.
@@ -252,7 +252,7 @@ public class JsLiteralInterner {
      * @param whatToIntern what types of literals are to be interned.
      */
     public LiteralInterningVisitor(JProgram program, JsScope scope, boolean alwaysIntern,
-        Multiset<JsLiteral> occurrencesPerLiteral, byte whatToIntern) {
+        Multiset<JsLiteral> occurrencesPerLiteral, int whatToIntern) {
 
       assert alwaysIntern || (occurrencesPerLiteral != null);
 
@@ -442,12 +442,12 @@ public class JsLiteralInterner {
   /**
    * Flags to control what type of literals to intern.
    */
-  public static final byte INTERN_ARRAY_LITERALS = 0x01;
-  public static final byte INTERN_NUMBERS = 0x02;
-  public static final byte INTERN_OBJECT_LITERALS = 0x04;
-  public static final byte INTERN_REGEXES = 0x08;
-  public static final byte INTERN_STRINGS = 0x10;
-  public static final byte INTERN_ALL = INTERN_ARRAY_LITERALS | INTERN_NUMBERS |
+  public static final int INTERN_ARRAY_LITERALS = 0x01;
+  public static final int INTERN_NUMBERS = 0x02;
+  public static final int INTERN_OBJECT_LITERALS = 0x04;
+  public static final int INTERN_REGEXES = 0x08;
+  public static final int INTERN_STRINGS = 0x10;
+  public static final int INTERN_ALL = INTERN_ARRAY_LITERALS | INTERN_NUMBERS |
       INTERN_OBJECT_LITERALS | INTERN_REGEXES | INTERN_STRINGS;
 
   private static final String PREFIX = "$intern_";
@@ -464,7 +464,7 @@ public class JsLiteralInterner {
    * @return a map describing the interning that occurred
    */
   public static Map<JsName, JsLiteral> exec(JProgram jprogram, JsProgram program,
-      byte whatToIntern) {
+      int whatToIntern) {
     LiteralInterningVisitor v = new LiteralInterningVisitor(jprogram, program.getScope(), false,
         computeOccurrenceCounts(program), whatToIntern);
     v.accept(program);
