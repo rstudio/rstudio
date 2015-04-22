@@ -1,3 +1,20 @@
+/*
+ * RSConnectDeploy.css
+ *
+ * Copyright (C) 2009-15 by RStudio, Inc.
+ *
+ * Unless you have received this program directly from RStudio pursuant
+ * to the terms of a commercial license agreement with RStudio, then
+ * this program is licensed to you under the terms of version 3 of the
+ * GNU Affero General Public License. This program is distributed WITHOUT
+ * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+ * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+ *
+ */
+ 
+@external .gwt-CheckBox;
+
 .sourceDestLabels
 {
    color: #808080;
@@ -8,11 +25,21 @@
    width: 250px;
 }
 
+.wizard .dropListControl
+{
+   width: 225px;
+}
+
 .gridControl
 {
    display: block;
-   width: 244px;
-   padding: 3px;
+   width: 240px;
+   padding: 4px;
+}
+
+.wizard .gridControl
+{
+   width: 215px;
 }
 
 .source
@@ -42,12 +69,6 @@
    color: red;
 }
 
-.validateError
-{
-   margin-left: 25px;
-   color: red;
-}
-
 .launchCheck
 {
    display: block;
@@ -57,13 +78,26 @@
 .fileList
 {
    background-color: #ffffff;
-   border: 1px solid gray;
+   border: 1px solid #999999;
    height: 165px;
    width: 250px;
    padding: 7px;
    margin-top: 5px;
    margin-bottom: 10px;
    margin-right: 30px;
+   overflow: hidden;
+}
+
+.wizard .fileList
+{
+   width: 225px;
+   height: 140px;
+}
+
+.fileList .gwt-CheckBox,
+.fileList .gwt-CheckBox label 
+{
+   white-space: nowrap;
 }
 
 .deployLabel
@@ -78,18 +112,31 @@
 
 .controlLabel
 {
-   margin-top: 5px;
+   margin-top: 10px;
    margin-bottom: 3px;
 }
 
 .urlAnchor
 {
    display: block;
+   width: 100%;
+   overflow: hidden;
+   white-space: nowrap;
+   text-overflow: ellipsis;
+   font-size: x-small;
+   margin-top: 3px;
+   margin-bottom: 3px;
 }
 
 .accountList
 {
    height: 100px;
+   width: 250px;
+}
+
+.wizard .accountList
+{
+   width: 225px;
 }
 
 .accountAnchor
@@ -104,4 +151,22 @@
 .firstControlLabel
 {
    margin-bottom: 5px;
+}
+
+.progressPanel
+{
+   margin-top: 15px;
+}
+
+.appDetailsPanel
+{
+   border: 1px solid #999999;
+   background-color: white;
+   padding: 5px;
+   margin: 0px;
+}
+
+.descriptionPanel
+{
+   text-align: center;
 }

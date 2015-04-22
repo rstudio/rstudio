@@ -17,8 +17,6 @@ package org.rstudio.studio.client.shiny.ui;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.ui.Label;
 import com.google.inject.Inject;
 
@@ -29,9 +27,8 @@ import org.rstudio.core.client.widget.SatelliteFramePanel;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.studio.client.workbench.commands.Commands;
-import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.rsconnect.RSConnect;
-import org.rstudio.studio.client.rsconnect.events.RSConnectActionEvent;
+import org.rstudio.studio.client.rsconnect.ui.RSConnectPublishButton;
 import org.rstudio.studio.client.shiny.ShinyApplicationPresenter;
 import org.rstudio.studio.client.shiny.model.ShinyApplicationParams;
 
@@ -39,11 +36,9 @@ public class ShinyApplicationPanel extends SatelliteFramePanel<RStudioFrame>
                                    implements ShinyApplicationPresenter.Display
 {
    @Inject
-   public ShinyApplicationPanel(Commands commands, EventBus events,
-                                RSConnect rsconnect)
+   public ShinyApplicationPanel(Commands commands, RSConnect rsconnect)
    {
       super(commands);
-      events_ = events;
       rsconnect.ensureSessionInit();
    }
    
@@ -70,37 +65,16 @@ public class ShinyApplicationPanel extends SatelliteFramePanel<RStudioFrame>
       refreshButton.getElement().getStyle().setMarginTop(1, Unit.PX);
       toolbar.addLeftWidget(refreshButton);
       
-      deployButton_ = new ToolbarButton("Publish", 
-            commands.rsconnectDeploy().getImageResource(), 
-            new ClickHandler()
-      {
-         @Override
-         public void onClick(ClickEvent evt)
-         {
-            if (appParams_ != null)
-            {
-               // we initiate deployment from a specific file; choose server.R
-               // (it's okay if it doesn't exist since we're just going to 
-               // deploy its parent)
-               String deployPath = appParams_.getPath();
-               if (!deployPath.endsWith("/"))
-                  deployPath += "/";
-               deployPath += "server.R";
-               events_.fireEvent(new RSConnectActionEvent(
-                     RSConnectActionEvent.ACTION_TYPE_DEPLOY,
-                     deployPath));
-            }
-         }
-      });
-      toolbar.addRightWidget(deployButton_);
+      publishButton_ = new RSConnectPublishButton(
+            RSConnect.CONTENT_TYPE_APP, true, null);
+      toolbar.addRightWidget(publishButton_);
    }
    
    @Override
-   public void showApp(ShinyApplicationParams params, boolean showDeploy)
+   public void showApp(ShinyApplicationParams params)
    {
       appParams_ = params;
-
-      deployButton_.setVisible(showDeploy);
+      publishButton_.setContentPath(params.getPath(), "");
          
       String url = params.getUrl();
       
@@ -146,7 +120,5 @@ public class ShinyApplicationPanel extends SatelliteFramePanel<RStudioFrame>
 
    private Label urlBox_;
    private ShinyApplicationParams appParams_;
-   private ToolbarButton deployButton_;
-   
-   private final EventBus events_; 
+   private RSConnectPublishButton publishButton_;
 }

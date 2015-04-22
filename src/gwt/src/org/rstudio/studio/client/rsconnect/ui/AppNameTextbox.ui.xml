@@ -1,0 +1,20 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+   xmlns:g="urn:import:com.google.gwt.user.client.ui">
+   <ui:style>
+   .validateError
+   {
+      margin-top: 5px;
+      color: red;
+   }
+   </ui:style>
+   <g:HTMLPanel>
+   <g:TextBox ui:field="appName_" 
+              maxLength="63"></g:TextBox>
+   <g:HTMLPanel visible="false" ui:field="nameValidatePanel_">
+     <g:Label styleName="{style.validateError}" 
+              text="Valid names contain 4 to 64 alphanumeric characters, dashes, and underscores.">
+     </g:Label>
+   </g:HTMLPanel>
+   </g:HTMLPanel>
+</ui:UiBinder> 

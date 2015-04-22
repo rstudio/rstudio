@@ -126,6 +126,11 @@ public:
              std::equal(begin_, end_, text.begin());
    }
    
+   bool contentEquals(wchar_t character) const
+   {
+      return std::distance(begin_, end_) == 1 && *begin_ == character;
+   }
+   
    bool contentContains(const wchar_t character) const
    {
       return std::find(begin_, end_, character) != end_;
@@ -325,6 +330,9 @@ namespace token_utils {
 
 inline bool isBinaryOp(const RToken& token)
 {
+   if (token.contentEquals(L'!'))
+      return false;
+   
    return token.isType(RToken::OPER) ||
           token.isType(RToken::UOPER);
 }
@@ -577,6 +585,35 @@ inline bool isPipeOperator(const RToken& rToken)
 {
    static const boost::wregex rePipe(L"^%[^>]*>+[^>]*%$");
    return boost::regex_match(rToken.begin(), rToken.end(), rePipe);
+}
+
+namespace {
+
+std::vector<std::wstring> makeNaKeywords()
+{
+   std::vector<std::wstring> keywords;
+   
+   keywords.push_back(L"NA");
+   keywords.push_back(L"NA_character_");
+   keywords.push_back(L"NA_complex_");
+   keywords.push_back(L"NA_integer_");
+   keywords.push_back(L"NA_real_");
+   
+   return keywords;
+}
+
+} // anonymous namespace
+
+inline bool isNaKeyword(const RToken& rToken)
+{
+   if (!rToken.isType(RToken::ID))
+      return false;
+   
+   static const std::vector<std::wstring> naKeywords = makeNaKeywords();
+   for (std::size_t i = 0, n = naKeywords.size(); i < n; ++i)
+      if (rToken.contentEquals(naKeywords[i]))
+         return true;
+   return false;
 }
 
 } // end namespace token_utils

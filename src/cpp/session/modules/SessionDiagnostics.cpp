@@ -634,7 +634,7 @@ Error lintRSourceDocument(const json::JsonRpcRequest& request,
       content = pDoc->contents();
    else if (pDoc->type() == SourceDocument::SourceDocumentTypeRMarkdown)
       error = extractRCode(pDoc->contents(),
-                           "^\\s*[`]{3}{\\s*r.*}\\s*$",
+                           "^\\s*[`]{3}{\\s*[Rr](?:}|[\\s,].*})\\s*$",
                            "^\\s*[`]{3}\\s*$",
                            &content);
    else if (pDoc->type() == SourceDocument::SourceDocumentTypeSweave)

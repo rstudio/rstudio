@@ -177,10 +177,10 @@ public:
       return rTokens_.atUnsafe(offset_);
    }
    
-   const Position currentPosition() const
+   Position currentPosition(bool endOfToken = false) const
    {
       const RToken& token = currentToken();
-      return Position(token.row(), token.column());
+      return Position(token.row(), token.column() + (endOfToken ? token.length() : 0));
    }
    
    std::wstring::const_iterator begin() const
@@ -280,6 +280,11 @@ public:
    bool contentEquals(const std::wstring& content) const
    {
       return currentToken().contentEquals(content);
+   }
+   
+   bool contentEquals(wchar_t character) const
+   {
+      return currentToken().contentEquals(character);
    }
    
    RToken::TokenType type() const

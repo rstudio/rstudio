@@ -14,6 +14,9 @@
  */
 package org.rstudio.studio.client.rsconnect.ui;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.WidgetListBox;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -41,8 +44,8 @@ public class RSConnectAccountList extends Composite
          account_ = account;
          HorizontalPanel panel = new HorizontalPanel();
          Image icon = new Image(account.isCloudAccount() ? 
-               RSConnectAccountResources.INSTANCE.cloudAccountIconSmall() : 
-               RSConnectAccountResources.INSTANCE.localAccountIconSmall());
+               RSConnectResources.INSTANCE.cloudAccountIconSmall() : 
+               RSConnectResources.INSTANCE.localAccountIconSmall());
          icon.getElement().getStyle().setMarginRight(2, Unit.PX);
          panel.add(icon);
          Label serverLabel = new Label(account.getServer() + ": ");
@@ -66,10 +69,12 @@ public class RSConnectAccountList extends Composite
    
    public RSConnectAccountList(RSConnectServerOperations server, 
          GlobalDisplay display,
-         boolean refreshImmediately)
+         boolean refreshImmediately, 
+         boolean showCloudAccounts)
    {
       server_ = server;
       display_ = display;
+      showCloudAccounts_ = showCloudAccounts;
       accountList_ = new WidgetListBox<AccountEntry>();
       accountList_.setEmptyText("No accounts connected.");
       if (refreshImmediately)
@@ -104,11 +109,15 @@ public class RSConnectAccountList extends Composite
    
    public void setAccountList(JsArray<RSConnectAccount> accounts)
    {
-      accounts_ = accounts;
+      accounts_.clear();
       accountList_.clearItems();
       for (int i = 0; i < accounts.length(); i++)
       {
-         accountList_.addItem(new AccountEntry(accounts.get(i)));
+         if (showCloudAccounts_ || !accounts.get(i).isCloudAccount())
+         {
+            accounts_.add(accounts.get(i));
+            accountList_.addItem(new AccountEntry(accounts.get(i)));
+         }
       }
       if (onRefreshCompleted_ != null)
       {
@@ -124,7 +133,7 @@ public class RSConnectAccountList extends Composite
       }
 
       int idx = accountList_.getSelectedIndex();
-      if (idx < accounts_.length()) 
+      if (idx < accounts_.size()) 
       {
          return accounts_.get(idx);
       }
@@ -133,11 +142,27 @@ public class RSConnectAccountList extends Composite
    
    public void selectAccount(RSConnectAccount account)
    {
-      for (int i = 0; i < accounts_.length(); i ++)
+      for (int i = 0; i < accounts_.size(); i ++)
       {
          if (accounts_.get(i).equals(account))
          {
-            accountList_.setSelectedIndex(i);
+            // extract the list of accounts, sort the desired account to the
+            // top, and put them back
+            List<AccountEntry> entries = new ArrayList<AccountEntry>();
+            entries.addAll(accountList_.getItems());
+            if (entries.size() <= i)
+               return;
+            accountList_.clearItems();
+            AccountEntry entry = entries.get(i);
+            entries.remove(i);
+            entries.add(0, entry);
+            for (int j = 0; j < entries.size(); j++) {
+               accountList_.addItem(entries.get(j));
+            }
+
+            // synchronize the backing array
+            accounts_.remove(i);
+            accounts_.add(0, account);
             break;
          }
       }
@@ -153,12 +178,21 @@ public class RSConnectAccountList extends Composite
       if (accounts_ == null)
          return 0;
       else
-         return accounts_.length();
+         return accounts_.size();
+   }
+   
+   public void setShowCloudAccounts(boolean show)
+   {
+      showCloudAccounts_ = show;
    }
    
    private final WidgetListBox<AccountEntry> accountList_;
    private final RSConnectServerOperations server_; 
    private final GlobalDisplay display_;
-   private JsArray<RSConnectAccount> accounts_;
+   
+   private boolean showCloudAccounts_;
+   
+   private ArrayList<RSConnectAccount> accounts_ = 
+         new ArrayList<RSConnectAccount>();
    private Operation onRefreshCompleted_ = null;
 }

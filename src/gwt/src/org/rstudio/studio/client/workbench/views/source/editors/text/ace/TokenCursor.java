@@ -88,7 +88,7 @@ public class TokenCursor extends JavaScriptObject
    }-*/;
    
    public native final boolean moveToPositionRightInclusive(Position position) /*-{
-      return this.moveToPosition({row: position.row, column: position.column + 1});
+      return this.moveToPositionRightInclusive(position);
    }-*/;
    
    public native final boolean findOpeningBracket(String token, boolean failOnOpenBrace) /*-{
@@ -153,6 +153,16 @@ public class TokenCursor extends JavaScriptObject
    public native final boolean isLeftAssign() /*-{
       var value = this.currentValue();
       return value === "<-" || value === "=";
+   }-*/;
+   
+   public native final boolean isLeftBracket() /*-{
+      var value = this.currentValue();
+      return ["(", "[", "{"].some(function(x) { return x === value; });
+   }-*/;
+   
+   public native final boolean isExtractionOperator() /*-{
+      var value = this.currentValue();
+      return ["$", "@", "?", "~"].some(function(x) { return x === value; });
    }-*/;
    
 }

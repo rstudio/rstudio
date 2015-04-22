@@ -1302,7 +1302,10 @@ assign(x = ".rs.acCompletionTypes",
       types <- c(
          types,
          vapply(objects, USE.NAMES = FALSE, FUN.VALUE = numeric(1), function(object) {
-            .rs.getCompletionType(get(object, envir = currentEnv, inherits = TRUE))
+            tryCatch(
+               .rs.getCompletionType(get(object, envir = currentEnv, inherits = TRUE)),
+               error = function(e) .rs.acCompletionTypes$UNKNOWN
+            )
          })
       )
       

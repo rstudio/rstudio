@@ -15,23 +15,17 @@
 package org.rstudio.studio.client.htmlpreview;
 
 import org.rstudio.core.client.BrowseCap;
-import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
-import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.fileexport.FileExport;
-import org.rstudio.studio.client.common.filetypes.FileType;
-import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
-import org.rstudio.studio.client.common.rpubs.RPubsPresenter;
-import org.rstudio.studio.client.common.rpubs.events.RPubsUploadStatusEvent;
 import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.htmlpreview.events.HTMLPreviewCompletedEvent;
 import org.rstudio.studio.client.htmlpreview.events.HTMLPreviewOutputEvent;
@@ -43,9 +37,7 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.model.Session;
-import org.rstudio.studio.client.workbench.model.SessionUtils;
 import org.rstudio.studio.client.workbench.model.helper.StringStateValue;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 
 import com.google.gwt.dom.client.NativeEvent;
@@ -62,7 +54,7 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 
-public class HTMLPreviewPresenter implements IsWidget, RPubsPresenter.Context
+public class HTMLPreviewPresenter implements IsWidget
 {
    public interface Binder extends CommandBinder<Commands, HTMLPreviewPresenter>
    {}
@@ -77,17 +69,13 @@ public class HTMLPreviewPresenter implements IsWidget, RPubsPresenter.Context
       HandlerRegistration addProgressClickHandler(ClickHandler handler);
       
       void showPreview(String url,
-                       String htmlFile, 
-                       boolean enableSaveAs,
-                       boolean enablePublish,
+                       HTMLPreviewResult result,
                        boolean enableRefresh,
                        boolean enableShowLog);
       
       void print();
       
       String getDocumentTitle();
-
-      void setPublishButtonLabel(String label);
       
       void showLog(String log);
    }
@@ -103,8 +91,6 @@ public class HTMLPreviewPresenter implements IsWidget, RPubsPresenter.Context
                                FileDialogs fileDialogs,
                                RemoteFileSystemContext fileSystemContext,
                                HTMLPreviewServerOperations server,
-                               RPubsPresenter rpubsPresenter,
-                               UIPrefs prefs,
                                Provider<FileExport> pFileExport)
    {
       view_ = view;
@@ -114,17 +100,8 @@ public class HTMLPreviewPresenter implements IsWidget, RPubsPresenter.Context
       fileDialogs_ = fileDialogs;
       fileSystemContext_ = fileSystemContext;
       pFileExport_ = pFileExport;
-      prefs_ = prefs;
-      
-      rpubsPresenter.setContext(this);
       
       binder.bind(commands, this);  
-      
-      // disable external publishing if requested
-      if (!SessionUtils.showExternalPublishUi(session, prefs))
-      {
-         commands.publishHTML().remove();
-      }
       
       // map Ctrl-R to our internal refresh handler
       Event.addNativePreviewHandler(new NativePreviewHandler() {
@@ -207,16 +184,9 @@ public class HTMLPreviewPresenter implements IsWidget, RPubsPresenter.Context
                view_.closeProgress();
                view_.showPreview(
                   server_.getApplicationURL(result.getPreviewURL()),
-                  result.getHtmlFile(),
-                  result.getEnableSaveAs(),
-                  isMarkdownFile(result.getSourceFile()) &&
-                  SessionUtils.showPublishUi(session_, prefs_),
+                  result,
                   result.getEnableRefresh(),
                   lastPreviewOutput_.length() > 0);
-
-               isPublished_ = result.getPreviouslyPublished();
-               if (isPublished_)
-                  view_.setPublishButtonLabel("Republish");
             }
             else
             {
@@ -226,27 +196,6 @@ public class HTMLPreviewPresenter implements IsWidget, RPubsPresenter.Context
          }
       });
 
-      eventBus.addHandler(RPubsUploadStatusEvent.TYPE,
-                          new org.rstudio.studio.client.common.rpubs.events.RPubsUploadStatusEvent.Handler()
-      {
-         @Override
-         public void onRPubsPublishStatus(
-               RPubsUploadStatusEvent event)
-         {
-            // make sure it applies to our context
-            RPubsUploadStatusEvent.Status status = event.getStatus();
-            if (!status.getContextId().equals(getContextId()))
-               return;
-            
-            if (StringUtil.isNullOrEmpty(status.getError())
-                && !isPublished_)
-            {
-               isPublished_ = true;
-               view_.setPublishButtonLabel("Republish");
-            }
-         }
-      });
-      
       new StringStateValue(
             MODULE_HTML_PREVIEW,
             KEY_SAVEAS_DIR,
@@ -265,16 +214,6 @@ public class HTMLPreviewPresenter implements IsWidget, RPubsPresenter.Context
             return savePreviewDir_;
          }
       };
-   }
-   
-   private boolean isMarkdownFile(String file)
-   {
-      FileSystemItem fsi = FileSystemItem.createFile(file);
-      FileTypeRegistry ftReg = RStudioGinjector.INSTANCE.getFileTypeRegistry();
-      FileType fileType = ftReg.getTypeForFile(fsi);
-      return (fileType != null) &&
-             (fileType.equals(FileTypeRegistry.MARKDOWN) ||
-              fileType.equals(FileTypeRegistry.RMARKDOWN));
    }
    
    public void onActivated(HTMLPreviewParams params)
@@ -372,50 +311,6 @@ public class HTMLPreviewPresenter implements IsWidget, RPubsPresenter.Context
       view_.showLog(lastPreviewOutput_.toString());
    }
    
-   @Override
-   public String getContextId()
-   {
-      return "HTMLPreview";
-   }
-   
-   @Override
-   public String getTitle()
-   {
-      String title = StringUtil.notNull(view_.getDocumentTitle());
-      if (title.length() == 0)
-      {
-         String htmlFile = getHtmlFile();
-         if (htmlFile != null)
-         {
-            FileSystemItem fsi = FileSystemItem.createFile(htmlFile);
-            return fsi.getStem();
-         }
-         else
-         {
-            return "(Untitled)";
-         }
-      }
-      else
-      {
-         return title;
-      }
-   }
-
-   @Override
-   public String getHtmlFile()
-   {
-      if (lastSuccessfulPreview_ != null)
-         return lastSuccessfulPreview_.getHtmlFile();
-      else
-         return null;
-   }
-
-   @Override
-   public boolean isPublished()
-   {
-      return isPublished_;
-   }
-
    private void terminateRunningPreview()
    {
       server_.terminatePreviewHTML(new VoidServerRequestCallback());
@@ -428,7 +323,6 @@ public class HTMLPreviewPresenter implements IsWidget, RPubsPresenter.Context
    private StringBuilder lastPreviewOutput_ = new StringBuilder();
    
    private String savePreviewDir_;
-   private boolean isPublished_;
    private static final String MODULE_HTML_PREVIEW = "html_preview";
    private static final String KEY_SAVEAS_DIR = "saveAsDir";
    
@@ -438,5 +332,4 @@ public class HTMLPreviewPresenter implements IsWidget, RPubsPresenter.Context
    private final RemoteFileSystemContext fileSystemContext_;
    private final HTMLPreviewServerOperations server_;
    private final Provider<FileExport> pFileExport_;
-   private final UIPrefs prefs_;
 }

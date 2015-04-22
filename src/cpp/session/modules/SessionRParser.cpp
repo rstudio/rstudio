@@ -117,10 +117,13 @@ public:
    
    NSEDatabase()
    {
+      // Add in a set of 'known' NSE-performing functinos.
       BOOST_FOREACH(const std::string& name, r::sexp::nsePrimitives())
       {
          addNseFunction(name, "base");
       }
+      
+      addNseFunction("data", "base");
    }
    
    void add(SEXP symbolSEXP, bool performsNse)
@@ -929,7 +932,7 @@ FunctionInformation getInfoAssociatedWithFunctionAtCursor(
              &pNode))
       {
          DEBUG("***** Found function: '" << pNode->name() << "' at: " << pNode->position());
-         
+
          // TODO: When we infer a function from the source code, and that
          // function is a top-level source function, should we give it an
          // 'origin' name equal to the current package's name?
@@ -937,7 +940,7 @@ FunctionInformation getInfoAssociatedWithFunctionAtCursor(
          std::string origin = "<root>";
          if (pNode->getParent())
             origin = pNode->getParent()->name();
-         
+
          FunctionInformation info(origin, name);
          RTokenCursor clone = cursor.clone();
          if (clone.moveToPosition(pNode->position()))
@@ -1223,6 +1226,27 @@ public:
             formal.setMissingnessHandled(true);
          }
       }
+      
+      if (cursor.contentEquals(L"txtProgressBar"))
+      {
+         pCall->functionInfo().infoForFormal("label").setMissingnessHandled(true);
+         pCall->functionInfo().infoForFormal("title").setMissingnessHandled(true);
+      }
+      
+      if (cursor.contentEquals(L"spin"))
+         pCall->functionInfo().infoForFormal("hair").setMissingnessHandled(true);
+      
+      if (cursor.contentEquals(L"read_chunk"))
+         pCall->functionInfo().infoForFormal("path").setMissingnessHandled(true);
+      
+      if (cursor.contentEquals(L"fig_path") ||
+          cursor.contentEquals(L"fig_chunk"))
+      {
+         pCall->functionInfo().infoForFormal("number").setMissingnessHandled(true);
+      }
+      
+      if (cursor.contentEquals(L"need"))
+         pCall->functionInfo().infoForFormal("label").setMissingnessHandled(true);
    }
    
    static void applyCustomWarnings(const MatchedCall& call,
@@ -1342,10 +1366,14 @@ void checkBinaryOperatorWhitespace(RTokenCursor& cursor,
    //
    //    x $ foo
    //
-   // is bad style. Note that ':' is the other 'no-whitespace-preferred'
-   // binary operator.
+   // is bad style.
+   
+   // Allow 'both' styles for division, multiplication
+   if (cursor.contentEquals(L'/') || cursor.contentEquals(L'*'))
+      return;
+   
    bool isExtraction = isExtractionOperator(cursor);
-   bool isColon = cursor.contentEquals(L":");
+   bool isColon = cursor.contentEquals(L':');
    if (isExtraction || isColon)
    {
       if (isWhitespace(cursor.previousToken()) ||
@@ -1586,25 +1614,40 @@ void validateFunctionCall(RTokenCursor cursor,
    }
 }
 
-bool skipFormulas(RTokenCursor& cursor,
+// Skipping formulas is tricky! It may require an arbitrary amount of
+// lookahead, as the semantics of formulas are as such:
+//
+//    (expression) ~ (expression)
+//
+// which means beasts like this are valid formulas:
+//
+//    foo$bar$log(1 + y) + log(2 + y) ~ ({1 ~ 2}) ^ 5
+//
+bool skipFormulas(RTokenCursor& origin,
                   ParseStatus& status)
 {
+   RTokenCursor cursor = origin.clone();
+   bool foundTilde = false;
    
-   if (cursor.nextSignificantToken().contentEquals(L"~"))
+   while (cursor.moveToEndOfStatement(false))
    {
-      if (isRightBracket(cursor) && status.isInParentheticalScope())
-         status.popState();
-      cursor.moveToNextSignificantToken();
+      if (!cursor.moveToNextSignificantToken())
+         break;
+
+      if (cursor.contentEquals(L"~"))
+         foundTilde = true;
+
+      if (!isBinaryOp(cursor))
+         break;
+
+      if (!cursor.moveToNextSignificantToken())
+         break;
    }
    
-   if (cursor.contentEquals(L"~"))
-   {
-      if (cursor.moveToEndOfStatement(status.isInParentheticalScope()))
-         return cursor.moveToNextSignificantToken();
-      
-   }
+   if (foundTilde)
+      origin.setOffset(cursor.offset());
    
-   return false;
+   return foundTilde;
 }
 
 // Enter a function scope, starting at the first paren associated
@@ -1641,6 +1684,50 @@ void checkForMissingComma(const RTokenCursor& cursor,
       status.lint().expectedCommaFollowingToken(cursor);
 }
 
+void checkIncorrectComparison(const RTokenCursor& origin,
+                              ParseStatus& status)
+{
+   if (!origin.previousSignificantToken().contentEquals(L"=="))
+      return;
+   
+   bool isNULL = origin.contentEquals(L"NULL");
+   bool isNA   = isNaKeyword(origin);
+   bool isNaN  = origin.contentEquals(L"NaN");
+   
+   bool needsSpecialHandling =
+         isNULL || isNA || isNaN;
+   
+   if (!needsSpecialHandling)
+      return;
+   
+   std::string content = origin.contentAsUtf8();
+   std::string suggestion;
+   if (isNULL)
+      suggestion = "is.null";
+   else if (isNA)
+      suggestion = "is.na";
+   else if (isNaN)
+      suggestion = "is.nan";
+   
+   // Clone a cursor and put it at the start of the statement
+   // prior to the '==' token
+   RTokenCursor startCursor = origin.clone();
+   if (!startCursor.moveToPreviousSignificantToken())
+      return;
+
+   if (!startCursor.moveToPreviousSignificantToken())
+      return;
+
+   if (!startCursor.moveToStartOfEvaluation())
+      return;
+
+   status.lint().incorrectEqualityComparison(
+            content,
+            suggestion,
+            startCursor.currentPosition(),
+            origin.currentPosition(true));
+}
+
 } // anonymous namespace
 
 #define GOTO_INVALID_TOKEN(__CURSOR__)                                         \
@@ -1669,6 +1756,8 @@ void doParse(RTokenCursor& cursor,
 START:
       
       DEBUG("== Current state: " << status.currentStateAsString());
+      
+      checkIncorrectComparison(cursor, status);
       
       // We want to skip over formulas if necessary.
       if (skipFormulas(cursor, status))
@@ -2045,8 +2134,30 @@ START:
          bool isNumber = cursor.isType(RToken::NUMBER);
          const RToken& next = cursor.nextSignificantToken();
          
+         // If we encounter an operator, we need to figure out whether it's
+         // a unary operator, or a binary operator. For example:
+         //
+         //    foo
+         //    -1
+         //
+         // parses with '-' as a unary operator, but
+         //
+         //    (foo
+         //     -1)
+         //
+         // parses with '-' as a binary operator.
          if (isBinaryOp(next))
          {
+            if (!status.isInParentheticalScope() &&
+                isValidAsUnaryOperator(next) &&
+                (next.row() > cursor.row()))
+            {
+               DEBUG("----- Unary operator: " << next);
+               MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
+               goto START;
+            }
+            
+            DEBUG("----- Binary operator: " << next);
             MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
             goto BINARY_OPERATOR;
          }

@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.console.shell.assist;
 
+import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.NativeEvent;
@@ -65,6 +66,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.NavigableSourceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.RCompletionContext;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ScopeFunction;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.CodeModel;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.DplyrJoinContext;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
@@ -244,11 +246,54 @@ public class RCompletionManager implements CompletionManager
    
    public void goToFunctionDefinition()
    {   
+      // check for a file-local definition (intra-file navigation -- using
+      // the active scope tree)
+      AceEditor editor = (AceEditor) docDisplay_;
+      if (editor != null)
+      {
+         TokenCursor cursor = editor.getSession().getMode().getRCodeModel().getTokenCursor();
+         if (cursor.moveToPositionRightInclusive(editor.getCursorPosition()))
+         {
+            // if the cursor is 'on' a left bracket, move back to the associated
+            // token (obstensibly a funciton name)
+            if (cursor.isLeftBracket())
+               cursor.moveToPreviousToken();
+            
+            // if the previous token is an extraction operator, we shouldn't
+            // navigate (as this isn't the 'full' function name)
+            if (cursor.moveToPreviousToken())
+            {
+               if (cursor.isExtractionOperator())
+                  return;
+               
+               cursor.moveToNextToken();
+            }
+            
+            String functionName = cursor.currentValue();
+            JsArray<ScopeFunction> scopes =
+                  editor.getAllFunctionScopes();
+
+            for (int i = 0; i < scopes.length(); i++)
+            {
+               ScopeFunction scope = scopes.get(i);
+               if (scope.getFunctionName().equals(functionName))
+               {
+                  navigableSourceEditor_.navigateToPosition(
+                        SourcePosition.create(scope.getPreamble().getRow(),
+                              scope.getPreamble().getColumn()),
+                              true);
+                  return;
+               }
+            }
+         }
+      }
+      
+      // intra-file navigation failed -- hit the server and find a definition
+      // in the project index
+      
       // determine current line and cursor position
       InputEditorLineWithCursorPosition lineWithPos = 
                       InputEditorUtil.getLineWithCursorPosition(input_);
-      
-      // lookup function definition at this location
       
       // delayed progress indicator
       final GlobalProgressDelayer progress = new GlobalProgressDelayer(

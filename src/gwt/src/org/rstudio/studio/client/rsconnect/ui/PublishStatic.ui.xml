@@ -1,0 +1,43 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+   xmlns:rsc="urn:import:org.rstudio.studio.client.rsconnect.ui"
+   xmlns:g="urn:import:com.google.gwt.user.client.ui">
+   <ui:style>
+   .accountList
+   {
+      height: 120px;
+      margin-top: 5px;
+      margin-bottom: 15px;
+   }
+   
+   .inputField
+   {
+      width: 250px;
+   }
+   
+   .existingName
+   {
+      font-size: 10pt;
+      text-weight: bold;
+   }
+   </ui:style>
+   <g:HTMLPanel>
+   <g:VerticalPanel>
+      <g:Label text="Publish to:"></g:Label> 
+      <rsc:RSConnectAccountList styleName="{style.accountList} {style.inputField}"
+                                ui:field="accountList_">
+      </rsc:RSConnectAccountList>
+      <g:VerticalPanel ui:field="newContentPanel_">
+         <g:Label text="Create a new item named:"></g:Label>
+         <rsc:AppNameTextbox styleName="{style.inputField}" 
+                    ui:field="contentNameTextbox_">
+         </rsc:AppNameTextbox>
+      </g:VerticalPanel>
+      <g:VerticalPanel ui:field="existingContentPanel_">
+         <g:Label text="Updating existing item:"></g:Label>
+         <g:Label styleName="{style.existingName}" 
+                  ui:field="contentNameLabel_"></g:Label>
+      </g:VerticalPanel>
+   </g:VerticalPanel>
+   </g:HTMLPanel>
+</ui:UiBinder> 

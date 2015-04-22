@@ -242,6 +242,10 @@ context("Diagnostics")
       
       EXPECT_NO_LINT("n <- 1 ## a comment\nprint(n)");
       EXPECT_NO_LINT("n <- 1 + 2 ## a comment\nprint(n)");
+      
+      EXPECT_NO_ERRORS("{lm(formula = log(y - 1) ~ x, data = mtcars)}");
+      EXPECT_NO_ERRORS("list(par = function(a) par(mar = a))");
+      EXPECT_NO_LINT("f <- function(x) {\n  TRUE\n  !grepl(':$', x)\n}");
    }
    
    lintRStudioRFiles();

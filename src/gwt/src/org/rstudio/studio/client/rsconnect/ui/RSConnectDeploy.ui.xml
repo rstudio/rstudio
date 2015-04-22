@@ -1,49 +1,85 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
-	xmlns:g="urn:import:com.google.gwt.user.client.ui"
-	xmlns:rsc="urn:import:org.rstudio.studio.client.rsconnect.ui"
-	xmlns:rw="urn:import:org.rstudio.core.client.widget">
-	<ui:with field="res" type="org.rstudio.studio.client.rsconnect.ui.RSConnectDeploy.DeployResources" />
-	<ui:with field="projRes" type="org.rstudio.studio.client.projects.ui.newproject.NewProjectResources" />
-	<g:HTMLPanel>
-	<g:Image ui:field="deployIllustration_"></g:Image>
-	<g:Grid><g:row>
+    xmlns:g="urn:import:com.google.gwt.user.client.ui"
+    xmlns:rsc="urn:import:org.rstudio.studio.client.rsconnect.ui"
+    xmlns:rw="urn:import:org.rstudio.core.client.widget">
+    <ui:with field="res" type="org.rstudio.studio.client.rsconnect.ui.RSConnectDeploy.DeployResources" />
+    <ui:with field="coreRes" type="org.rstudio.core.client.resources.CoreResources" />
+    <g:HTMLPanel ui:field="rootPanel_">
+    <g:Image ui:field="deployIllustration_"></g:Image>
+    <g:Grid ui:field="mainGrid_"><g:row>
     <g:customCell styleName="{res.style.rootCell}">
-      <g:VerticalPanel>
-        <g:HTMLPanel>
-          <g:InlineLabel text="Deploy Files From:"></g:InlineLabel>
-          <g:InlineLabel styleName="{res.style.deployLabel}" ui:field="deployLabel_"></g:InlineLabel>
-        </g:HTMLPanel>
-        <g:ScrollPanel styleName="{res.style.fileList}">
-          <g:VerticalPanel ui:field="fileListPanel_">
-          </g:VerticalPanel>
-        </g:ScrollPanel>
-        <rw:ThemedButton ui:field="addFileButton_" 
-                         text="Add More..."
-                         visible="false"></rw:ThemedButton>
-      </g:VerticalPanel>
+      <g:HTMLPanel>
+         <g:VerticalPanel ui:field="filePanel_">
+           <g:HTMLPanel>
+             <g:InlineLabel text="Publish Files From:"></g:InlineLabel>
+             <g:InlineLabel styleName="{res.style.deployLabel}" 
+                            ui:field="deployLabel_">
+             </g:InlineLabel>
+           </g:HTMLPanel>
+           <g:ScrollPanel styleName="{res.style.fileList}">
+             <g:VerticalPanel ui:field="fileListPanel_">
+             </g:VerticalPanel>
+           </g:ScrollPanel>
+           <rw:ThemedButton ui:field="addFileButton_" 
+                            text="Add More..."
+                            visible="false"></rw:ThemedButton>
+         </g:VerticalPanel>
+         <g:VerticalPanel ui:field="descriptionPanel_" 
+                          visible="false">
+            <g:Label text="Publish: "></g:Label>
+            <g:HTMLPanel styleName="{res.style.fileList} {res.style.descriptionPanel}">
+               <g:Image ui:field="descriptionImage_"></g:Image>
+            </g:HTMLPanel>
+            <rw:ThemedButton ui:field="previewButton_"
+                             text="Preview...">
+            </rw:ThemedButton>
+         </g:VerticalPanel>
+       </g:HTMLPanel>
      </g:customCell>
      <g:customCell styleName="{res.style.rootCell}">
       <g:HTMLPanel>
          <g:HorizontalPanel width="100%">
-         <g:Label styleName="{res.style.firstControlLabel}" text="Destination Account:"></g:Label>
-         <g:Anchor styleName="rstudio-HyperlinkLabel {res.style.accountAnchor}" ui:field="addAccountAnchor" text="Add New Account"></g:Anchor>
+         <g:Label styleName="{res.style.firstControlLabel}" 
+                  text="Destination Account:">
+         </g:Label>
+         <g:Anchor styleName="rstudio-HyperlinkLabel {res.style.accountAnchor}" 
+                    ui:field="addAccountAnchor_" text="Add New Account">
+         </g:Anchor>
          </g:HorizontalPanel>
-         <rsc:RSConnectAccountList styleName="{res.style.accountList}" ui:field="accountList"></rsc:RSConnectAccountList>
-         <g:Label styleName="{res.style.controlLabel}" text="Application:"></g:Label>
-         <g:ListBox styleName="{res.style.dropListControl}" ui:field="appList"></g:ListBox>
-         <g:Label styleName="{res.style.controlLabel}" ui:field="nameLabel" text="Name:"></g:Label>
-         <g:TextBox styleName="{res.style.gridControl}" ui:field="appName" maxLength="63"></g:TextBox>
-         <g:HTMLPanel styleName="{res.style.controlLabel}" visible="false" ui:field="appInfoPanel">
-            <g:InlineLabel text="URL:"></g:InlineLabel>
-            <g:InlineLabel styleName="{res.style.statusLabel}" ui:field="statusLabel"></g:InlineLabel>
-            <g:Anchor styleName="{res.style.urlAnchor}" ui:field="urlAnchor" target="_blank"></g:Anchor>
+         <rsc:RSConnectAccountList styleName="{res.style.accountList}" 
+                                   ui:field="accountList_">
+         </rsc:RSConnectAccountList>
+         <g:HTMLPanel ui:field="newAppPanel_">
+            <g:Label styleName="{res.style.controlLabel}" ui:field="nameLabel_" 
+                     text="Create New Content Named:"></g:Label>
+            <rsc:AppNameTextbox styleName="{res.style.gridControl}" 
+                                ui:field="appName_">
+            </rsc:AppNameTextbox>
+         </g:HTMLPanel>
+         <g:HTMLPanel styleName="{res.style.controlLabel}" visible="false" 
+                      ui:field="appInfoPanel_">
+            <g:Label text="Update Existing Content:" 
+                     styleName="{res.style.controlLabel}"></g:Label>
+            <g:HTMLPanel ui:field="appDetailsPanel_" 
+                         styleName="{res.style.appDetailsPanel}" 
+                         visible="false">
+               <g:Label styleName="{res.style.statusLabel}" 
+                        ui:field="appExistingName_"></g:Label>
+               <g:Anchor styleName="{res.style.urlAnchor}" ui:field="urlAnchor_" 
+                         target="_blank"></g:Anchor>
+            </g:HTMLPanel>
+            <g:HTMLPanel styleName="{res.style.progressPanel}" 
+                         ui:field="appProgressPanel_" visible="false">
+               <g:InlineLabel text="Looking up details for "></g:InlineLabel>
+               <g:InlineLabel styleName="{res.style.statusLabel}" 
+                              ui:field="appProgressName_"></g:InlineLabel>
+               <g:InlineLabel text="..."></g:InlineLabel>
+               <g:Image resource="{coreRes.progress_gray}"></g:Image>
+            </g:HTMLPanel>
          </g:HTMLPanel>
       </g:HTMLPanel>
      </g:customCell>
-	</g:row></g:Grid>
-	<g:HTMLPanel visible="false" ui:field="nameValidatePanel">
-	  <g:Label styleName="{res.style.validateError}" text="Application names must be between 4 and 63 characters, and can contain only alphanumeric characters, dashes, and underscores."></g:Label>
-	</g:HTMLPanel>
-	</g:HTMLPanel>
+   </g:row></g:Grid>
+   </g:HTMLPanel>
 </ui:UiBinder> 

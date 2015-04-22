@@ -14,9 +14,9 @@
  */
 package org.rstudio.studio.client.rsconnect.events;
 
-import java.util.ArrayList;
-
 import org.rstudio.studio.client.rsconnect.model.RSConnectDeploymentRecord;
+import org.rstudio.studio.client.rsconnect.model.RSConnectPublishSettings;
+import org.rstudio.studio.client.rsconnect.model.RSConnectPublishSource;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
@@ -31,21 +31,15 @@ public class RSConnectDeployInitiatedEvent extends GwtEvent<RSConnectDeployIniti
    public static final GwtEvent.Type<RSConnectDeployInitiatedEvent.Handler> TYPE =
       new GwtEvent.Type<RSConnectDeployInitiatedEvent.Handler>();
    
-   public RSConnectDeployInitiatedEvent(String path, 
-                                        ArrayList<String> deployFiles,
-                                        ArrayList<String> additionalFiles,
-                                        ArrayList<String> ignoredFiles,
-                                        String sourceFile,
+   public RSConnectDeployInitiatedEvent(RSConnectPublishSource source,
+                                        RSConnectPublishSettings settings,
                                         boolean launchBrowser, 
                                         RSConnectDeploymentRecord record)
    {
-      path_ = path;
-      deployFiles_ = deployFiles;
-      additionalFiles_ = additionalFiles;
-      ignoredFiles_ = ignoredFiles;
-      sourceFile_ = sourceFile;
       launchBrowser_ = launchBrowser;
       record_ = record;
+      settings_ = settings;
+      source_ = source;
    }
    
    public RSConnectDeploymentRecord getRecord()
@@ -53,34 +47,19 @@ public class RSConnectDeployInitiatedEvent extends GwtEvent<RSConnectDeployIniti
       return record_;
    }
    
-   public String getPath()
-   {
-      return path_; 
-   }
-   
-   public String getSourceFile()
-   {
-      return sourceFile_;
-   }
-   
-   public ArrayList<String> getDeployFiles()
-   {
-      return deployFiles_;
-   }
-   
-   public ArrayList<String> getAdditionalFiles()
-   {
-      return additionalFiles_;
-   }
-   
-   public ArrayList<String> getIgnoredFiles()
-   {
-      return ignoredFiles_;
-   }
-   
    public boolean getLaunchBrowser()
    {
       return launchBrowser_; 
+   }
+   
+   public RSConnectPublishSettings getSettings()
+   {
+      return settings_;
+   }
+   
+   public RSConnectPublishSource getSource()
+   {
+      return source_;
    }
 
    @Override
@@ -96,10 +75,7 @@ public class RSConnectDeployInitiatedEvent extends GwtEvent<RSConnectDeployIniti
    }
    
    private final RSConnectDeploymentRecord record_;
-   private final String path_;
-   private final String sourceFile_;
    private final boolean launchBrowser_;
-   private final ArrayList<String> deployFiles_;
-   private final ArrayList<String> additionalFiles_;
-   private final ArrayList<String> ignoredFiles_;
+   private final RSConnectPublishSettings settings_;
+   private final RSConnectPublishSource source_;
 }

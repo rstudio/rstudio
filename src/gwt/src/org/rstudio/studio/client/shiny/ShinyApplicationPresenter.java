@@ -23,7 +23,6 @@ import org.rstudio.studio.client.shiny.model.ShinyApplicationParams;
 import org.rstudio.studio.client.shiny.events.ShinyApplicationStatusEvent;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
-import org.rstudio.studio.client.workbench.model.SessionUtils;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 
 import com.google.gwt.core.client.JavaScriptObject;
@@ -45,7 +44,7 @@ public class ShinyApplicationPresenter implements
       String getDocumentTitle();
       String getUrl();
       String getAbsoluteUrl();
-      void showApp(ShinyApplicationParams params, boolean showDeploy);
+      void showApp(ShinyApplicationParams params);
       void reloadApp();
    }
    
@@ -115,7 +114,7 @@ public class ShinyApplicationPresenter implements
    public void loadApp(ShinyApplicationParams params) 
    {
       params_ = params;
-      view_.showApp(params, SessionUtils.showPublishUi(session_, prefs_));
+      view_.showApp(params);
    }
    
    private native void initializeEvents() /*-{  
