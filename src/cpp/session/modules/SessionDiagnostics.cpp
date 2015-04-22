@@ -155,6 +155,9 @@ void addInferredSymbols(const FilePath& filePath,
                        completions.exports.end());
    }
    
+   // make 'params' implicitly available if we have a YAML header
+   if (r_utils::hasYamlHeader(filePath))
+      pSymbols->insert("params");
 }
 
 void addNamespaceSymbols(std::set<std::string>* pSymbols)
