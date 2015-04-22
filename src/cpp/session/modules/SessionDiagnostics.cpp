@@ -13,9 +13,8 @@
  *
  */
 
-// #define RSTUDIO_ENABLE_PROFILING
-// #define RSTUDIO_ENABLE_DEBUG_MACROS
 #define RSTUDIO_DEBUG_LABEL "diagnostics"
+// #define RSTUDIO_ENABLE_DEBUG_MACROS
 
 #include <core/Macros.hpp>
 
@@ -31,6 +30,7 @@
 #include <core/Error.hpp>
 #include <core/FileSerializer.hpp>
 
+#include <session/SessionRUtil.hpp>
 #include <session/SessionUserSettings.hpp>
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionSourceDatabase.hpp>
@@ -133,13 +133,9 @@ void addInferredSymbols(const FilePath& filePath,
    using namespace code_search;
    using namespace source_database;
    
-   // First, try to get the R source index directly from the id.
-   boost::shared_ptr<RSourceIndex> index = 
-         rSourceIndex().get(documentId);
+   boost::shared_ptr<RSourceIndex> index = rSourceIndex().get(documentId);
    
-   // If we were unable to get the R source index for
-   // some reason, try re-resolving the documentId based
-   // on the file path
+   // If that failed, try getting the index from the project index.
    if (!index)
       index = code_search::getIndexedProjectFile(filePath);
    
@@ -158,6 +154,7 @@ void addInferredSymbols(const FilePath& filePath,
       pSymbols->insert(completions.exports.begin(),
                        completions.exports.end());
    }
+   
 }
 
 void addNamespaceSymbols(std::set<std::string>* pSymbols)
@@ -573,21 +570,6 @@ module_context::SourceMarkerSet asSourceMarkerSet(
    return SourceMarkerSet("Diagnostics", markers);
 }
 
-
-Error extractRCode(const std::string& contents,
-                   const std::string& reOpen,
-                   const std::string& reClose,
-                   std::string* pContent)
-{
-   using namespace r::exec;
-   RFunction extract(".rs.extractRCode");
-   extract.addParam(contents);
-   extract.addParam(reOpen);
-   extract.addParam(reClose);
-   Error error = extract.call(pContent);
-   return error;
-}
-
 Error lintRSourceDocument(const json::JsonRpcRequest& request,
                           json::JsonRpcResponse* pResponse)
 {
@@ -630,31 +612,9 @@ Error lintRSourceDocument(const json::JsonRpcRequest& request,
    
    // Extract R code from various R-code-containing filetypes.
    std::string content;
-   if (pDoc->type() == SourceDocument::SourceDocumentTypeRSource)
-      content = pDoc->contents();
-   else if (pDoc->type() == SourceDocument::SourceDocumentTypeRMarkdown)
-      error = extractRCode(pDoc->contents(),
-                           "^\\s*[`]{3}{\\s*[Rr](?:}|[\\s,].*})\\s*$",
-                           "^\\s*[`]{3}\\s*$",
-                           &content);
-   else if (pDoc->type() == SourceDocument::SourceDocumentTypeSweave)
-      error = extractRCode(pDoc->contents(),
-                           "^\\s*<<.*>>=\\s*$",
-                           "^\\s*@\\s*$",
-                           &content);
-   else if (pDoc->type() == SourceDocument::SourceDocumentTypeCpp)
-      error = extractRCode(pDoc->contents(),
-                           "^\\s*/[*]{3,}\\s*[rR]\\s*$",
-                           "^\\s*[*]+/",
-                           &content);
-   else
-      return Success();
-   
+   error = r_utils::extractRCode(pDoc->contents(), pDoc->type(), &content);
    if (error)
-   {
-      LOG_ERROR(error);
       return error;
-   }
    
    ParseResults results = diagnostics::parse(
             string_utils::utf8ToWide(content),

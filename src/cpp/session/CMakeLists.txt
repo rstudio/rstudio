@@ -72,6 +72,7 @@ set (SESSION_SOURCE_FILES
    SessionOptionsOverlay.cpp
    SessionPersistentState.cpp
    SessionPostback.cpp
+   SessionRUtil.cpp
    SessionSourceDatabase.cpp
    SessionSourceDatabaseSupervisor.cpp
    SessionUserSettings.cpp

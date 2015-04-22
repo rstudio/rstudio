@@ -13,7 +13,7 @@
  *
  */
 
-// #define RSTUDIO_DEBUG_LABEL "source_index"
+#define RSTUDIO_DEBUG_LABEL "source_index"
 // #define RSTUDIO_ENABLE_DEBUG_MACROS
 
 #include <core/r_util/RSourceIndex.hpp>
@@ -237,7 +237,7 @@ RSourceIndex::RSourceIndex(const std::string& context,
 
    // tokenize
    RTokens rTokens(wCode, RTokens::StripWhitespace | RTokens::StripComments);
-
+   
    // track nest level
    int braceLevel = 0;
    int parenLevel = 0;

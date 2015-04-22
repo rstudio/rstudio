@@ -96,6 +96,8 @@ extern "C" const char *locale2charset(const char *);
 #include "SessionClientEventQueue.hpp"
 #include "SessionClientEventService.hpp"
 
+#include <session/SessionRUtil.hpp>
+
 #include "modules/SessionAbout.hpp"
 #include "modules/SessionAgreement.hpp"
 #include "modules/SessionAskPass.hpp"
@@ -1613,7 +1615,10 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       (addins::initialize)
 
       // console processes
-       (console_process::initialize)
+      (console_process::initialize)
+         
+      // r utils
+      (r_utils::initialize)
 
       // modules with c++ implementations
       (modules::spelling::initialize)
