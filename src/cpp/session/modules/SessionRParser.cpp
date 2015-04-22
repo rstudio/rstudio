@@ -1689,7 +1689,8 @@ void checkForMissingComma(const RTokenCursor& cursor,
 void checkIncorrectComparison(const RTokenCursor& origin,
                               ParseStatus& status)
 {
-   if (!origin.previousSignificantToken().contentEquals(L"=="))
+   const RToken& prev = origin.previousSignificantToken();
+   if (!(prev.contentEquals(L"==") || prev.contentEquals(L"!=")))
       return;
    
    bool isNULL = origin.contentEquals(L"NULL");
