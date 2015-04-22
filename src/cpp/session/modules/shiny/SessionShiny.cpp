@@ -106,6 +106,9 @@ bool isShinyDocument(const FilePath& filePath,
                      const std::string& contents)
 {
    static const boost::regex reRuntimeShiny("runtime:\\s*shiny");
+   
+   // Check for 'runtime: shiny' in a YAML header.
+   // TODO: Enable only for R Markdown documents?
    std::string yamlHeader = r_utils::extractYamlHeader(contents);
    if (boost::regex_search(yamlHeader.begin(), yamlHeader.end(), reRuntimeShiny))
    {

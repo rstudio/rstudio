@@ -102,7 +102,6 @@ std::set<std::string> implicitlyAvailablePackages(const FilePath& filePath,
 {
    std::set<std::string> dependencies;
    
-   // Check for a YAML header (TODO: limit to only .Rmd documents?)
    if (modules::shiny::isShinyDocument(filePath, contents))
       dependencies.insert("shiny");
    
