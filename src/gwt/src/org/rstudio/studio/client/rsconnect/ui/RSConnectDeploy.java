@@ -764,7 +764,8 @@ public class RSConnectDeploy extends Composite
       {
          filePanel_.setVisible(false);
          descriptionPanel_.setVisible(true);
-         if (contentType_ == RSConnect.CONTENT_TYPE_PLOT)
+         if (contentType_ == RSConnect.CONTENT_TYPE_PLOT ||
+             contentType_ == RSConnect.CONTENT_TYPE_HTML)
          {
             descriptionImage_.setResource(
                   RSConnectResources.INSTANCE.previewPlot());
