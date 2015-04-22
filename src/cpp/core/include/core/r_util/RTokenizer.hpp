@@ -268,6 +268,7 @@ public:
    
    void push_back(const RToken& rToken) { tokens_.push_back(rToken); }
    std::size_t size() const { return tokens_.size(); }
+   bool empty() const { return tokens_.empty(); }
    
    // Safe 'at' method that returns a dummy token if
    // an out of bounds offset is specified.

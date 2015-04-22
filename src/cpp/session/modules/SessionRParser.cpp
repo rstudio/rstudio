@@ -1324,6 +1324,8 @@ ParseResults parse(const std::wstring& rCode,
       return ParseResults();
    
    RTokens rTokens(rCode, RTokens::StripComments);
+   if (rTokens.empty())
+      return ParseResults();
    
    ParseStatus status(parseOptions);
    RTokenCursor cursor(rTokens);
