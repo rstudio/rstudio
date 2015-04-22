@@ -1,28 +1,31 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder'
   xmlns:g='urn:import:com.google.gwt.user.client.ui'>
-  <ui:style>
+  <ui:style gss="true">
     .container {
       position: absolute;
       height: 0;
       text-align: center;
       width: 100%;
     }
+
     .centered {
       margin-left: auto;
       margin-right: auto;
-      border-left: 1px solid #96A2B5;
-      border-right: 1px solid #96A2B5;
-      border-bottom: 1px solid #96A2B5;
-      background-color: #E5EDF9;
+      border-left: 1px solid #96a2b5;
+      border-right: 1px solid #96a2b5;
+      border-bottom: 1px solid #96a2b5;
+      background-color: #e5edf9;
       padding: 5px;
       overflow: hidden;
       display: inline-block;
     }
+
     .notificationText {
       font-family: Helvetica;
       font-size: 1em;
     }
+
   </ui:style>
   <g:HTMLPanel styleName='{style.container}'>
     <div class='{style.centered}' style='display:none' ui:field='borderElement'>

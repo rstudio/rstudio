@@ -1,17 +1,18 @@
 <ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder'
   xmlns:g='urn:import:com.google.gwt.user.client.ui' xmlns:dt='urn:import:com.google.gwt.sample.dynatablerf.client.widgets'>
-  <ui:style>
+  <ui:style gss="true">
     .all {
-    	float: left;
+      float: left;
     }
-    
+
     .cb {
-    	display: block;
+      display: block;
     }
-    
+
     .none {
-    	margin-left: 5px;
+      margin-left: 5px;
     }
+
   </ui:style>
   <g:FlowPanel>
     <dt:DayCheckBox ui:field="sunday" caption="Sunday"

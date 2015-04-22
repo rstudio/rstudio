@@ -3,26 +3,27 @@
   xmlns:ui="urn:ui:com.google.gwt.uibinder"
   xmlns:g="urn:import:com.google.gwt.user.client.ui">
 
-  <ui:style>
+  <ui:style gss="true">
     .viewport {
-    	position: relative;
-    	overflow: hidden;
+      position: relative;
+      overflow: hidden;
     }
-    
+
     .scrollable {
-    	position: absolute;
-    	left: 0px;
-    	bottom: 0px;
-    	width: 100%;
-    	height: 100px;
-    	overflow: auto;
-    	overflow-x: scroll;
-    	overflow-y: hidden;
+      position: absolute;
+      left: 0;
+      bottom: 0;
+      width: 100%;
+      height: 100px;
+      overflow: auto;
+      overflow-x: scroll;
+      overflow-y: hidden;
     }
-    
+
     .content {
-    	height: 1px;
+      height: 1px;
     }
+
   </ui:style>
 
   <!-- Viewport: reveals only the scrollbar from the scrollable div. -->

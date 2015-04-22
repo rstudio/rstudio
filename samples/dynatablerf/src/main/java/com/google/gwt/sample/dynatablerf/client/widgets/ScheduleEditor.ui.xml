@@ -2,10 +2,11 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder" 
   xmlns:g="urn:import:com.google.gwt.user.client.ui"
   xmlns:dt='urn:import:com.google.gwt.sample.dynatablerf.client.widgets' >
-  <ui:style>
+  <ui:style gss="true">
     .table {
       width: 100%;
     }
+
   </ui:style>
   <g:HTMLPanel>
     <dt:TimeSlotListWidget ui:field="timeSlots" stylePrimaryName="{style.table}" />

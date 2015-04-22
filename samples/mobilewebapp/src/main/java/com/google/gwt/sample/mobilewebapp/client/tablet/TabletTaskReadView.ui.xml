@@ -4,73 +4,73 @@
   xmlns:g="urn:import:com.google.gwt.user.client.ui"
   xmlns:app="urn:import:com.google.gwt.sample.mobilewebapp.client.ui">
 
-  <ui:style>
+  <ui:style gss="true">
     .outer {
       background: #eee;
     }
-    
+
     .title {
       background: #393939;
       color: white;
       padding: 4px 10px;
       font-size: 20pt;
     }
-    
+
     .editForm {
       padding: 10px;
       background: white;
     }
-    
+
     .label {
       color: #666;
       font-size: 20pt;
       padding-bottom: 3px;
     }
-    
+
     .field {
       width: 100%;
       margin-bottom: 12px;
       font-size: 20pt;
     }
-    
+
     .textBoxWrapper {
       margin-right: 10px;
     }
-    
+
     .nameBox {
       height: 2em;
     }
-    
+
     .notesBox {
       height: 4em;
     }
-    
+
     .violation {
       color: red;
       font-size: 18pt;
     }
-    
+
     .button {
       padding-top: 8px;
       padding-bottom: 8px;
       color: #3f3f3f;
       font-size: 20pt;
     }
-    
+
     .dateButton {
       text-align: left;
     }
-    
+
     .buttonPanel {
       width: 100%;
       padding: 10px;
       margin-top: 15px;
     }
-    
+
     .saveButton {
       width: 100%;
     }
-    
+
   </ui:style>
 
   <g:DockLayoutPanel

@@ -1,25 +1,26 @@
 <ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder' xmlns:g='urn:import:com.google.gwt.user.client.ui'>
-  <ui:style>
+  <ui:style gss="true">
     .dialog {
-    	background: white;
-    	border: thin solid black;
-    	margin: 2px;
-    	overflow: hidden;
-    	padding: 5px;
-    	-moz-border-radius: 5px;
-    	-webkit-border-radius: 5px;
+      background: white;
+      border: thin solid black;
+      margin: 2px;
+      overflow: hidden;
+      padding: 5px;
+      -moz-border-radius: 5px;
+      -webkit-border-radius: 5px;
     }
-    
+
     .glass {
-    	filter: literal('alpha(opacity = 75)');
-    	opacity: 0.75;
-    	background-color: #000000;
+      filter: alpha(opacity = 75);
+      opacity: 0.75;
+      background-color: #000;
     }
-    
+
     .message {
-    	height: 400px;
-    	width: 400px;
+      height: 400px;
+      width: 400px;
     }
+
   </ui:style>
   <g:DialogBox ui:field="errorDialog" glassEnabled="true"
     stylePrimaryName="{style.dialog}" glassStyleName="{style.glass}">

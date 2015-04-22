@@ -4,11 +4,11 @@
   xmlns:g="urn:import:com.google.gwt.user.client.ui"
   xmlns:c="urn:import:com.google.gwt.user.cellview.client">
 
-  <ui:style>
+  <ui:style gss="true">
     .backButton {
       display: none;
     }
-    
+
     .header {
       background: #1a1a1a;
       color: white;
@@ -17,7 +17,7 @@
       text-align: center;
       font-weight: bold;
     }
-    
+
     .addButton {
       color: white;
       font-size: 18pt;
@@ -26,6 +26,7 @@
       text-align: right;
       font-weight: bold;
     }
+
   </ui:style>
 
   <g:LayoutPanel

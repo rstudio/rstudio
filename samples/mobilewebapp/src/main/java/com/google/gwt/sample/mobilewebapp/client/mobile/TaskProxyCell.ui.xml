@@ -2,11 +2,22 @@
 <ui:UiBinder
   xmlns:ui="urn:ui:com.google.gwt.uibinder">
 
-  <ui:style field="cellStyle"
+  <ui:style gss="true" field="cellStyle"
       type="com.google.gwt.sample.mobilewebapp.client.mobile.TaskProxyCell.CellStyle">
-    .noDate {font-size:80%;}
-    .onTime {font-size:80%;color:#999;}
-    .pastDue {font-size:80%;color:red;}
+    .noDate {
+      font-size: 80%;
+    }
+
+    .onTime {
+      font-size: 80%;
+      color: #999;
+    }
+
+    .pastDue {
+      font-size: 80%;
+      color: red;
+    }
+
   </ui:style>
 
   <ui:with field="date" type="java.lang.String"/>

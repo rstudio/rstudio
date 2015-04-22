@@ -3,20 +3,21 @@
   xmlns:ui="urn:ui:com.google.gwt.uibinder"
   xmlns:g="urn:import:com.google.gwt.user.client.ui">
 
-  <ui:style>
+  <ui:style gss="true">
     .name {
-      color: #4B4A4A;
+      color: #4b4a4a;
       font-size: 17pt;
       font-weight: bold;
-      margin: 10px 10px 0px;
+      margin: 10px 10px 0;
     }
-    
+
     .description {
-      color: #4B4A4A;
-      padding: 10px 0px;
-      border-bottom: 1px solid #6F7277;
-      margin: 0px 10px 12px 10px;
+      color: #4b4a4a;
+      padding: 10px 0;
+      border-bottom: 1px solid #6f7277;
+      margin: 0 10px 12px 10px;
     }
+
   </ui:style>
 
   <g:HeaderPanel>

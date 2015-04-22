@@ -14,9 +14,13 @@
 <ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder' >
   <ui:with field='bundle' type='com.google.gwt.uibinder.test.client.CssImportScopeSample.Bundle' />
   
-  <ui:style import='com.google.gwt.uibinder.test.client.CssImportScopeSample.OuterStyle
+  <ui:style gss="true" import='com.google.gwt.uibinder.test.client.CssImportScopeSample.OuterStyle
         com.google.gwt.uibinder.test.client.CssImportScopeSample.InnerStyle'>
-    .outer-body .inner-body { width: 100px; background-color: red; }   
+    .outer-body .inner-body {
+      width: 100px;
+      background-color: red;
+    }
+
   </ui:style>
 
   <div class='{bundle.style.body}'> 

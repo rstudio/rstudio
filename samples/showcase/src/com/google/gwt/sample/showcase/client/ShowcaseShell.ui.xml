@@ -10,23 +10,23 @@
     field='res'
     type='com.google.gwt.sample.showcase.client.ShowcaseResources' />
 
-  <ui:style>
+  <ui:style gss="true">
     .linkBar {
-      padding: 2px 22px 2px 0px;
+      padding: 2px 22px 2px 0;
       background: white;
       text-align: right;
     }
-    
+
     .link {
       font-size: 8pt;
       line-height: 10pt;
     }
-    
+
     .titleBar {
       padding: 0 10px;
-      border-bottom: 1px solid #C3C3C3;
+      border-bottom: 1px solid #c3c3c3;
     }
-    
+
     .title {
       color: #7b8fae;
       font-size: 20pt;
@@ -35,78 +35,79 @@
       margin: 0;
       padding: 0 0 0 4px;
     }
-    
+
     .subtitle {
       color: #888;
       font-size: 16pt;
       margin: 0;
       padding: 0 0 0 6px;
     }
-    
+
     .options {
       padding: 6px 10px 0 0;
     }
-    
+
     .localeBox {
       color: blue;
       font-size: 8pt;
       margin-left: 4px;
     }
-    
+
     .styleSelectionButton {
       width: 36px;
       height: 16px;
-      margin: 3px 0px 0px 10px;
-      padding: 0px;
+      margin: 3px 0 0 10px;
+      padding: 0;
     }
-    
+
     .styleSelectionStandard {
       background: #d0e4f6;
     }
-    
+
     .styleSelectionChrome {
       background: #ccc;
     }
-    
+
     .styleSelectionDark {
       background: #3d3d3d;
     }
-    
+
     .mainMenu {
       background-color: #d7dde8;
       border-right: 1px solid #c3c3c3;
     }
-    
+
     .contentButtons {
       background-color: #d7dde8;
       border-bottom: 1px solid #c3c3c3;
-      padding: 0px 10px;
+      padding: 0 10px;
     }
-    
+
     .contentButton {
       margin-right: 20px;
-      color: #888888;
+      color: #888;
       font-weight: bold;
       cursor: hand;
-      cursor: pointer;
+      /* @alternate */ cursor: pointer;
       line-height: 20pt;
       vertical-align: middle;
     }
-    
+
     .contentButton:hover {
-      color: #4B4A4A;
+      color: #4b4a4a;
       text-decoration: underline;
     }
-    
+
     .contentButtonSource {
       margin-right: 4px;
     }
-    
+
     .contentList {
       font-size: 8pt;
-      color: #4B4A4A;
+      color: #4b4a4a;
       direction: ltr;
     }
+
   </ui:style>
 
   <g:DockLayoutPanel
