@@ -37,10 +37,12 @@ core::Error extractRCode(const std::string& fileContents,
                          const std::string& documentType,
                          std::string* pCode);
 
-std::set<std::string> implicitlyAvailablePackages(const std::string& fileContents,
-                                                  const std::string& basename = std::string());
-
 std::set<std::string> implicitlyAvailablePackages(const core::FilePath& filePath);
+std::set<std::string> implicitlyAvailablePackages(const core::FilePath& filePath,
+                                                  const std::string& fileContents);
+
+bool isShinyDocument(const core::FilePath& filePath,
+                     const std::string& fileContents);
 
 
 core::Error initialize();

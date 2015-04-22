@@ -962,8 +962,9 @@ void RSourceIndexes::update(
        new r_util::RSourceIndex(pDoc->path(), code));
    
    // add implicitly available packages
+   FilePath filePath = module_context::resolveAliasedPath(pDoc->path());
    std::set<std::string> implicitlyAvailable =
-         r_utils::implicitlyAvailablePackages(pDoc->contents());
+         r_utils::implicitlyAvailablePackages(filePath, pDoc->contents());
    
    BOOST_FOREACH(const std::string& package, implicitlyAvailable)
    {

@@ -28,6 +28,8 @@
 
 #include <boost/regex.hpp>
 
+#include "modules/shiny/SessionShiny.hpp"
+
 namespace rstudio {
 
 using namespace core;
@@ -95,49 +97,26 @@ Error extractRCode(const std::string& fileContents,
    return error;
 }
 
-std::set<std::string> implicitlyAvailablePackages(const std::string& contents,
-                                                  const std::string& basename)
+std::set<std::string> implicitlyAvailablePackages(const FilePath& filePath,
+                                                  const std::string& contents)
 {
-   static const boost::regex reRuntimeShiny("runtime:\\s*shiny");
-   static const boost::regex reShinyApp("shinyApp\\s*\\(");
-   
    std::set<std::string> dependencies;
    
    // Check for a YAML header (TODO: limit to only .Rmd documents?)
-   std::string yamlHeader = extractYamlHeader(contents);
-   if (boost::regex_search(yamlHeader.begin(), yamlHeader.end(), reRuntimeShiny))
-   {
-      DEBUG("YAML header contains 'runtime: shiny': adding implicit 'shiny' dependency");
+   if (modules::shiny::isShinyDocument(filePath, contents))
       dependencies.insert("shiny");
-   }
-   
-   // Let 'shiny' be implicitly available for 'ui.R', 'server.R', 'app.R'
-   if (basename == "server.r" || basename == "ui.r" || basename == "app.r")
-   {
-      DEBUG("Shiny file: adding implicit 'shiny' dependency");
-      dependencies.insert("shiny");
-   }
-   
-   // Check for a call to 'shinyApp' and implicitly depend on 'shiny' if found
-   if (boost::regex_search(contents.begin(), contents.end(), reShinyApp))
-   {
-      DEBUG("Call to 'shinyApp': adding implicit 'shiny' dependency");
-      dependencies.insert("shiny");
-   }
    
    return dependencies;
-   
 }
 
 std::set<std::string> implicitlyAvailablePackages(const FilePath& filePath)
 {
-   std::string content;
-   Error error = readStringFromFile(filePath, &content);
+   std::string contents;
+   Error error = readStringFromFile(filePath, &contents);
    if (error)
       LOG_ERROR(error);
    
-   std::string basename = boost::algorithm::to_lower_copy(filePath.filename());
-   return implicitlyAvailablePackages(content, basename);
+   return implicitlyAvailablePackages(filePath, contents);
 }
 
 Error initialize()

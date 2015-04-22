@@ -19,9 +19,11 @@
 
 #include <core/Error.hpp>
 #include <core/Exec.hpp>
+#include <core/FileSerializer.hpp>
 
 #include <r/RExec.hpp>
 
+#include <session/SessionRUtil.hpp>
 #include <session/SessionOptions.hpp>
 #include <session/SessionModuleContext.hpp>
 
@@ -81,30 +83,8 @@ std::string onDetectShinySourceType(
    if (!pDoc->path().empty())
    {
       FilePath filePath = module_context::resolveAliasedPath(pDoc->path());
-      std::string filename = filePath.filename();
-
-      if (boost::algorithm::iequals(filename, "ui.r") &&
-          boost::algorithm::icontains(pDoc->contents(), "shinyUI"))
-      {
+      if (isShinyDocument(filePath, pDoc->contents()))
          return kShinyType;
-      }
-      else if (boost::algorithm::iequals(filename, "server.r") &&
-               boost::algorithm::icontains(pDoc->contents(), "shinyServer"))
-      {
-         return kShinyType;
-      }
-      else if (boost::algorithm::iequals(filename, "app.r") && 
-               boost::algorithm::icontains(pDoc->contents(), "shinyApp"))
-      {
-         return kShinyType;
-      }
-      else if ((boost::algorithm::iequals(filename, "global.r") ||
-                boost::algorithm::iequals(filename, "ui.r") ||
-                boost::algorithm::iequals(filename, "server.r")) &&
-               isShinyAppDir(filePath.parent()))
-      {
-         return kShinyType;
-      }
    }
 
    return std::string();
@@ -122,7 +102,56 @@ Error getShinyCapabilities(const json::JsonRpcRequest& request,
 
 } // anonymous namespace
 
+bool isShinyDocument(const FilePath& filePath,
+                     const std::string& contents)
+{
+   static const boost::regex reRuntimeShiny("runtime:\\s*shiny");
+   std::string yamlHeader = r_utils::extractYamlHeader(contents);
+   if (boost::regex_search(yamlHeader.begin(), yamlHeader.end(), reRuntimeShiny))
+   {
+      return true;
+   }
+   
+   std::string filename = filePath.filename();
 
+   if (boost::algorithm::iequals(filename, "ui.r") &&
+       boost::algorithm::icontains(contents, "shinyUI"))
+   {
+      return true;
+   }
+   else if (boost::algorithm::iequals(filename, "server.r") &&
+            boost::algorithm::icontains(contents, "shinyServer"))
+   {
+      return true;
+   }
+   else if (boost::algorithm::iequals(filename, "app.r") && 
+            boost::algorithm::icontains(contents, "shinyApp"))
+   {
+      return true;
+   }
+   else if ((boost::algorithm::iequals(filename, "global.r") ||
+             boost::algorithm::iequals(filename, "ui.r") ||
+             boost::algorithm::iequals(filename, "server.r")) &&
+            isShinyAppDir(filePath.parent()))
+   {
+      return true;
+   }
+
+   return false;
+}
+
+bool isShinyDocument(const FilePath& filePath)
+{
+   std::string contents;
+   Error error = readStringFromFile(filePath, &contents);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return false;
+   }
+   
+   return isShinyDocument(filePath, contents);
+}
 
 Error initialize()
 {
