@@ -2021,7 +2021,7 @@ public class GenerateJavaScriptAST {
       if (closureCompilerFormatEnabled) {
         exportGenerator = new ClosureJsInteropExportsGenerator(globalStmts, names);
       } else {
-        exportGenerator = new DefaultJsInteropExportsGenerator(globalStmts, names, globalTemp,
+        exportGenerator = new DefaultJsInteropExportsGenerator(globalStmts, globalTemp,
             indexedFunctions);
       }
 
@@ -2033,7 +2033,8 @@ public class GenerateJavaScriptAST {
         } else {
           JMember member = (JMember) exportedEntity;
           maybeHoistClinit(globalStmts, generatedClinits, member);
-          exportGenerator.exportMember(member);
+          exportGenerator.exportMember(member, createBridgeMethodOrReturnAlias(member,
+              names.get(member)));
         }
       }
     }
@@ -2881,12 +2882,12 @@ public class GenerateJavaScriptAST {
      * function is generated which invokes the method and coerces each argument or return type
      * as needed.
      */
-    private JsExpression createBridgeMethodOrReturnAlias(JMethod method, JsName
-       aliasedMethodName) {
-      SourceInfo info = method.getSourceInfo();
-      if (method.isStatic() || method instanceof JConstructor) {
+    JsExpression createBridgeMethodOrReturnAlias(JMember member, JsName aliasedMethodName) {
+      SourceInfo info = member.getSourceInfo();
+      if (member instanceof JConstructor || member instanceof JField) {
         return aliasedMethodName.makeRef(info);
       } else {
+        JMethod method = (JMethod) member;
         boolean needsLongConversions = method.getType() == JPrimitiveType.LONG ||
             Iterables.any(method.getParams(), new Predicate<JParameter>() {
               @Override
@@ -2898,8 +2899,10 @@ public class GenerateJavaScriptAST {
         JsNameRef aliasedMethodRef = aliasedMethodName.makeRef(info);
 
         if (!needsLongConversions) {
-          // simply return Foo.prototype.aliasedMethod or _.aliasedMethod
-          aliasedMethodRef.setQualifier(getPrototypeQualifierOf(method));
+          if (!method.isStatic()) {
+            // simply return Foo.prototype.aliasedMethod or _.aliasedMethod
+            aliasedMethodRef.setQualifier(getPrototypeQualifierOf(method));
+          }
           return aliasedMethodRef;
         }
 
@@ -2907,19 +2910,23 @@ public class GenerateJavaScriptAST {
         JsFunction bridgeMethod = JsUtils.createEmptyFunctionLiteral(info, topScope, null);
 
         // Bridge requires conversions.
-        // return coerceFromLong(this.aliasedMethodRef(coerceToLong(arg1), arg2, ...))
+        // return coerceFromLong([this.]?aliasedMethodRef(coerceToLong(arg1), arg2, ...))
+        if (!method.isStatic()) {
+          aliasedMethodRef.setQualifier(new JsThisRef(info));
+        }
         JsInvocation aliasedMethodInvocation = new JsInvocation(info, aliasedMethodRef);
-        aliasedMethodInvocation.setQualifier(new JsThisRef(info));
         for (JParameter param : method.getParams()) {
           JsName argJsName = bridgeMethod.getScope().declareName("$arg_" + param.getName());
+          bridgeMethod.getParameters().add(new JsParameter(info, argJsName));
           aliasedMethodInvocation.getArguments().add(param.getType() == JPrimitiveType.LONG ?
-              constructInvocation(info, "Cast.coerceToLong",
+              constructInvocation(info, "JavaClassHierarchySetupUtil.coerceToLong",
                   argJsName.makeRef(info)) : argJsName.makeRef(info));
         }
 
         bridgeMethod.getBody().getStatements().add(new JsReturn(info,
             method.getType() == JPrimitiveType.LONG ? constructInvocation(info,
-                "Cast.coerceFromLong", aliasedMethodInvocation) : aliasedMethodInvocation));
+                "JavaClassHierarchySetupUtil.coerceFromLong", aliasedMethodInvocation) :
+                aliasedMethodInvocation));
         return bridgeMethod;
       }
     }

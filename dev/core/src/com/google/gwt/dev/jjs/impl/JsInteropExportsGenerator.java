@@ -15,6 +15,7 @@ package com.google.gwt.dev.jjs.impl;
 
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JMember;
+import com.google.gwt.dev.js.ast.JsExpression;
 
 /**
  * Generates codes to handle @JsExport.
@@ -32,5 +33,5 @@ public interface JsInteropExportsGenerator {
   /**
    * Exports a member to the namespace that is provided by its qualified export name.
    */
-  void exportMember(JMember member);
+  void exportMember(JMember member, JsExpression bridgeMethodOrAlias);
 }

@@ -16,10 +16,10 @@ package com.google.gwt.dev.jjs.impl;
 import static com.google.gwt.dev.js.JsUtils.createAssignment;
 
 import com.google.gwt.dev.jjs.SourceInfo;
-import com.google.gwt.dev.jjs.ast.HasName;
 import com.google.gwt.dev.jjs.ast.JConstructor;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JMember;
+import com.google.gwt.dev.js.ast.JsExpression;
 import com.google.gwt.dev.js.ast.JsFunction;
 import com.google.gwt.dev.js.ast.JsInvocation;
 import com.google.gwt.dev.js.ast.JsName;
@@ -43,15 +43,13 @@ import java.util.Map;
 class DefaultJsInteropExportsGenerator implements JsInteropExportsGenerator {
 
   private final List<JsStatement> exportStmts;
-  private final Map<HasName, JsName> names;
   private final JsName globalTemp;
   private final JsName provideFunc;
   private String lastExportedNamespace;
 
-  public DefaultJsInteropExportsGenerator(List<JsStatement> exportStmts, Map<HasName, JsName> names,
-      JsName globalTemp, Map<String, JsFunction> indexedFunctions) {
+  public DefaultJsInteropExportsGenerator(List<JsStatement> exportStmts, JsName globalTemp,
+      Map<String, JsFunction> indexedFunctions) {
     this.exportStmts = exportStmts;
-    this.names = names;
     this.globalTemp = globalTemp;
     this.provideFunc = indexedFunctions.get("JavaClassHierarchySetupUtil.provide").getName();
   }
@@ -69,14 +67,12 @@ class DefaultJsInteropExportsGenerator implements JsInteropExportsGenerator {
    * TODO(goktug): optimizing provide calls shouldn't be difficult as exports are now sorted.
    */
   @Override
-  public void exportMember(JMember x) {
-    JsNameRef rhs = names.get(x).makeRef(x.getSourceInfo());
-
+  public void exportMember(JMember x, JsExpression bridgeMethodOrAlias) {
     if (x.getExportName().isEmpty()) {
       assert x instanceof JConstructor;
 
       // _ = provide('foo.bar.ExportNamespace', ExportedConstructor)
-      ensureProvideNamespace(x, rhs);
+      ensureProvideNamespace(x, bridgeMethodOrAlias);
       return;
     }
 
@@ -86,10 +82,10 @@ class DefaultJsInteropExportsGenerator implements JsInteropExportsGenerator {
     // _.memberName = RHS
     JsNameRef lhs = new JsNameRef(x.getSourceInfo(), x.getExportName());
     lhs.setQualifier(globalTemp.makeRef(x.getSourceInfo()));
-    exportStmts.add(createAssignment(lhs, rhs).makeStmt());
+    exportStmts.add(createAssignment(lhs, bridgeMethodOrAlias).makeStmt());
   }
 
-  private void ensureProvideNamespace(JMember member, JsNameRef ctor) {
+  private void ensureProvideNamespace(JMember member, JsExpression ctor) {
     String namespace = member.getExportNamespace();
     if (namespace.equals(lastExportedNamespace)) {
       return;
