@@ -974,7 +974,7 @@ FunctionInformation getInfoAssociatedWithFunctionAtCursor(
       // 'pf' is now actually bound to; this could be doable in some simple cases
       // but the pattern is uncommon enough that it's better that we just don't
       // supply incorrect diagnostics, rather than attempt to supply correct diagnostics.
-      if (status.node()->getDefinedSymbols().count(cursor.contentAsUtf8()))
+      if (status.node()->findVariable(cursor.contentAsUtf8(), cursor.currentPosition()))
          return FunctionInformation();
       
       // If we're within a package project, then attempt searching the
