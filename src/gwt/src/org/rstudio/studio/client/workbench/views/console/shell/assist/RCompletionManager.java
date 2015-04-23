@@ -705,12 +705,14 @@ public class RCompletionManager implements CompletionManager
             }
          }
          
-         // 
          if (c == ':')
          {
             suggestTimer_.schedule(false, true, false);
             return false;
          }
+         
+         if (c == ' ')
+            return false;
          
          // Always update the current set of completions following
          // a key insertion. Defer execution so the key insertion can
