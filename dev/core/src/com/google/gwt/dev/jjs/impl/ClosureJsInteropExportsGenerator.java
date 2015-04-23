@@ -15,7 +15,6 @@ package com.google.gwt.dev.jjs.impl;
 
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.ast.HasName;
-import com.google.gwt.dev.jjs.ast.JConstructor;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JMember;
 import com.google.gwt.dev.js.JsUtils;
@@ -83,11 +82,8 @@ class ClosureJsInteropExportsGenerator implements JsInteropExportsGenerator {
    */
   @Override
   public void exportMember(JMember member) {
-    // TODO(goktug): fix export namespace for constructor to be same as qualified export name.
-    String namespace = member instanceof JConstructor ? member.getQualifiedExportName()
-        : member.getExportNamespace();
-
-    generateExport(namespace, member.getQualifiedExportName(), member, member.getSourceInfo());
+    generateExport(member.getExportNamespace(), member.getQualifiedExportName(), member,
+        member.getSourceInfo());
   }
 
   private void generateExport(String exportNamespace, String qualifiedExportName, HasName nameRef,

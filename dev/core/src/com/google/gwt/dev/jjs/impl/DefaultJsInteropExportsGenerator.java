@@ -17,6 +17,7 @@ import static com.google.gwt.dev.js.JsUtils.createAssignment;
 
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.ast.HasName;
+import com.google.gwt.dev.jjs.ast.JConstructor;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JMember;
 import com.google.gwt.dev.js.ast.JsFunction;
@@ -69,26 +70,40 @@ class DefaultJsInteropExportsGenerator implements JsInteropExportsGenerator {
    */
   @Override
   public void exportMember(JMember x) {
-    // _ = provide('foo.bar.ExportNamespace')
-    ensureProvideNamespace(x.getExportNamespace(), x.getSourceInfo());
+    JsNameRef rhs = names.get(x).makeRef(x.getSourceInfo());
+
+    if (x.getExportName().isEmpty()) {
+      assert x instanceof JConstructor;
+
+      // _ = provide('foo.bar.ExportNamespace', ExportedConstructor)
+      ensureProvideNamespace(x, rhs);
+      return;
+    }
+
+    // _ = provide('foo.bar.ExportNamespace', null)
+    ensureProvideNamespace(x, null);
 
     // _.memberName = RHS
     JsNameRef lhs = new JsNameRef(x.getSourceInfo(), x.getExportName());
     lhs.setQualifier(globalTemp.makeRef(x.getSourceInfo()));
-    JsNameRef rhs = names.get(x).makeRef(x.getSourceInfo());
     exportStmts.add(createAssignment(lhs, rhs).makeStmt());
   }
 
-  private void ensureProvideNamespace(String namespace, SourceInfo sourceInfo) {
+  private void ensureProvideNamespace(JMember member, JsNameRef ctor) {
+    String namespace = member.getExportNamespace();
     if (namespace.equals(lastExportedNamespace)) {
       return;
     }
     lastExportedNamespace = namespace;
 
     // _ = JCHSU.provide('foo.bar')
+    SourceInfo sourceInfo = member.getSourceInfo();
     JsInvocation provideCall = new JsInvocation(sourceInfo);
     provideCall.setQualifier(provideFunc.makeRef(sourceInfo));
     provideCall.getArguments().add(new JsStringLiteral(sourceInfo, namespace));
+    if (ctor != null) {
+      provideCall.getArguments().add(ctor);
+    }
     exportStmts.add(createAssignment(globalTemp.makeRef(sourceInfo), provideCall).makeStmt());
   }
 }

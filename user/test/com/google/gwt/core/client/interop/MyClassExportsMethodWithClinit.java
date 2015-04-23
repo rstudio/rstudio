@@ -30,7 +30,7 @@ class MyClassExportsMethodWithClinit {
     }
   }
 
-  @JsExport("MyClassExportsMethodWithClinit")
+  @JsExport
   public MyClassExportsMethodWithClinit() {
     // ensure clinit() is called even when invoked from JS
     assertEquals(42, magicNumber);

@@ -608,13 +608,8 @@ public abstract class JDeclaredType extends JReferenceType {
     return null;
   }
 
-  public String getExportNamespace() {
-    return jsNamespace;
-  }
-
   public String getQualifiedExportName() {
-    String namespace = getExportNamespace();
-    return namespace.isEmpty() ? getSimpleName() : namespace + "." + getSimpleName();
+    return jsNamespace.isEmpty() ? getSimpleName() : jsNamespace + "." + getSimpleName();
   }
 
   public NestedClassDisposition getClassDisposition() {

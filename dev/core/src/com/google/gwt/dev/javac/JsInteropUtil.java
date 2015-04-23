@@ -103,10 +103,7 @@ public final class JsInteropUtil {
   }
 
   private static String computeExportName(JMember member) {
-    // Constructors for nested class might have different name in the AST than the original source
-    // so use the simple name of the enclosing type instead that always matches the source name.
-    return member instanceof JConstructor ? member.getEnclosingType().getSimpleName()
-        : member.getName();
+    return member instanceof JConstructor ? "" : member.getName();
   }
 
   public static boolean isJsType(TypeDeclaration x) {

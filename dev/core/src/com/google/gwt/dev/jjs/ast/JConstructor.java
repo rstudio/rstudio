@@ -58,12 +58,6 @@ public class JConstructor extends JMethod {
         true, access);
   }
 
-  @Override
-  protected String computeExportNamespace() {
-    // Constructors use the namespace of the class.
-    return getEnclosingType().getExportNamespace();
-  }
-
   public void setDefaultConstructor() {
     defaultConstructor = true;
   }

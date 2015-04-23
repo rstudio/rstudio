@@ -85,19 +85,21 @@ public class JMethod extends JNode implements JMember, CanBeAbstract, CanBeNativ
   @Override
   public String getExportNamespace() {
     if (exportNamespace == null) {
-      exportNamespace = computeExportNamespace();
+      exportNamespace = enclosingType.getQualifiedExportName();
     }
     return exportNamespace;
-  }
-
-  protected String computeExportNamespace() {
-    return enclosingType.getQualifiedExportName();
   }
 
   @Override
   public String getQualifiedExportName() {
     String namespace = getExportNamespace();
-    return namespace.isEmpty() ? exportName : namespace + "." + exportName;
+    if (exportName.isEmpty()) {
+      return namespace;
+    } else if (namespace.isEmpty()) {
+      return exportName;
+    } else {
+      return namespace + "." + exportName;
+    }
   }
 
   @Override

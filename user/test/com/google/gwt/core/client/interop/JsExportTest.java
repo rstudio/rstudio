@@ -144,12 +144,12 @@ public class JsExportTest extends GWTTestCase {
   }
 
   private native int getSumByDefaultConstructor() /*-{
-    var obj = new $global.woo.MyClassConstructor1();
+    var obj = new $global.woo.MyExportedClassWithMultipleConstructors.MyClassConstructor1();
     return obj.sum();
   }-*/;
 
   private native int getSumByConstructor() /*-{
-    var obj = new $global.woo.MyClassConstructor2(10, 20);
+    var obj = new $global.woo.MyExportedClassWithMultipleConstructors.MyClassConstructor2(10, 20);
     return obj.sum();
   }-*/;
 
@@ -161,24 +161,29 @@ public class JsExportTest extends GWTTestCase {
   }
 
   private native Object createMyExportedClassWithMultipleConstructors1() /*-{
-    return new $global.woo.MyClassConstructor1();
+    return new $global.woo.MyExportedClassWithMultipleConstructors.MyClassConstructor1();
   }-*/;
 
   private native Object createMyExportedClassWithMultipleConstructors2() /*-{
-    return new $global.woo.MyClassConstructor2(10, 20);
+    return new $global.woo.MyExportedClassWithMultipleConstructors.MyClassConstructor2(10, 20);
   }-*/;
 
   public void testExportConstructors() {
     assertEquals(4, createMyClassExportsConstructors().foo());
-    assertNull(getNotExportedConstructor());
+    assertTrue(isNotExportedConstructorExported());
   }
 
   private native MyClassExportsConstructors createMyClassExportsConstructors() /*-{
-    return new $global.woo.MyClassExportsConstructors1(2);
+    return new $global.woo.MyClassExportsConstructors.MyClassExportsConstructors1(2);
   }-*/;
 
-  private native Object getNotExportedConstructor() /*-{
-    return $global.woo.MyClassExportsConstructors;
+  private native boolean isNotExportedConstructorExported() /*-{
+    var namespace = $global.woo.MyClassExportsConstructors;
+    if (typeof(namespace) == 'function')
+      return false;
+    if (Object.getOwnPropertyNames($global.woo.MyClassExportsConstructors).length != 1)
+      return false;
+    return true;
   }-*/;
 
   public void testExportedField() {
