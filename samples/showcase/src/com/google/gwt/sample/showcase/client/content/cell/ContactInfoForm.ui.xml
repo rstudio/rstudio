@@ -6,16 +6,17 @@
   ui:generateFormat='com.google.gwt.i18n.rebind.format.PropertiesFormat'
   ui:generateLocales='default'>
 
-  <ui:style>
+  <ui:style gss="true">
     .header {
       font-size: 110%;
       font-weight: bold;
-      color: #555
+      color: #555;
     }
-    
+
     .label {
       font-weight: bold;
     }
+
   </ui:style>
 
   <g:DecoratorPanel>

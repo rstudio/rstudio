@@ -1,6 +1,6 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder">
-  <ui:style>
+  <ui:style gss="true">
     .taskTemplateCell {
       margin: 8px;
       border: 1px solid #666;
@@ -11,6 +11,7 @@
       background-color: #eee;
       -webkit-user-drag: element;
     }
+
   </ui:style>
 
   <ui:with field="name" type="java.lang.String"/>

@@ -10,67 +10,68 @@
   <ui:data field='tasksgroupIe6Data' src='tasksgroup_ie6.gif' />
   <ui:data field='contactsgroupIe6Data' src='contactsgroup_ie6.gif' />
 
-  <ui:style>
+  <ui:style gss="true">
   .shortcuts {
     border-left: 1px solid #999;
     border-right: 1px solid #999;
     border-bottom: 1px solid #999;
   }
 
-  @sprite .stackHeader {
-    gwt-image: 'gradient';
+  .stackHeader {
+    gwt-sprite: "gradient";
     background-color: #b4b6bc;
     cursor: pointer;
-
     text-shadow: rgba(255, 255, 255, 1) 0 1px 1px;
     font-size: 1.2em;
     font-weight: bold;
     color: #000;
-    padding: .7em .5em 0 .6em;
+    padding: 0.7em 0.5em 0 0.6em;
     border-top: 1px solid #888;
   }
 
-  @if user.agent ie6 {
-    @url mailboxesgroupIe6 mailboxesgroupIe6Data;
-    @url tasksgroupIe6 tasksgroupIe6Data;
-    @url contactsgroupIe6 contactsgroupIe6Data;
+  @if (is("user.agent", "ie6")) {
+    @def MAILBOXESGROUP_IE6 resourceUrl("mailboxesgroupIe6Data");
+    @def TASKSGROUP_IE6 resourceUrl("tasksgroupIe6Data");
+    @def CONTACTSGROUP_IE6 resourceUrl("contactsgroupIe6Data");
 
     .mailboxesIcon {
-      background-image: mailboxesgroupIe6;
+      background-image: MAILBOXESGROUP_IE6;
       width: 31px;
       height: 22px;
       float: left;
     }
 
     .tasksIcon {
-      background-image: tasksgroupIe6;
+      background-image: TASKSGROUP_IE6;
       width: 31px;
       height: 22px;
       float: left;
     }
 
     .contactsIcon {
-      background-image: contactsgroupIe6;
+      background-image: CONTACTSGROUP_IE6;
       width: 31px;
       height: 22px;
       float: left;
     }
-  } @else {
-    @sprite .mailboxesIcon {
-      gwt-image: 'mailboxesgroup';
+  }
+  @else  {
+    .mailboxesIcon {
+      gwt-sprite: "mailboxesgroup";
       float: left;
     }
-  
-    @sprite .tasksIcon {
-      gwt-image: 'tasksgroup';
+
+    .tasksIcon {
+      gwt-sprite: "tasksgroup";
       float: left;
     }
-  
-    @sprite .contactsIcon {
-      gwt-image: 'contactsgroup';
+
+    .contactsIcon {
+      gwt-sprite: "contactsgroup";
       float: left;
     }
   }
+
   </ui:style>
 
   <ui:image field='mailboxesgroup' src='mailboxesgroup.png'/>

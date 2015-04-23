@@ -4,10 +4,6 @@
   xmlns:c="urn:import:com.google.gwt.user.cellview.client"
   xmlns:g="urn:import:com.google.gwt.user.client.ui">
 
-  <ui:style>
-    
-  </ui:style>
-
   <g:ScrollPanel>
     <c:DataGrid
       ui:field="taskList" />

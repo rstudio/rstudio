@@ -4,11 +4,12 @@
   xmlns:g="urn:import:com.google.gwt.user.client.ui"
   xmlns:c='urn:import:com.google.gwt.user.cellview.client'>
 
-  <ui:style>
+  <ui:style gss="true">
     .buttonPanel {
       padding: 8px 20px;
       border-top: 1px solid #ccc;
     }
+
   </ui:style>
 
   <g:DockLayoutPanel

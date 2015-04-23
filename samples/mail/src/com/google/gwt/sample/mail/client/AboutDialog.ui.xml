@@ -4,17 +4,17 @@
 
   <ui:image field='logo' src='gwt-logo.png'/>
 
-  <ui:style>
+  <ui:style gss="true">
   .panel {
     padding: 10px;
- 	}
+  }
 
   .aboutText {
     text-align: left;
   }
 
-  @sprite .logo {
-    gwt-image: 'logo';
+  .logo {
+    gwt-sprite: "logo";
     float: left;
     padding-right: 1em;
   }
@@ -22,6 +22,7 @@
   .buttons {
     text-align: right;
   }
+
   </ui:style>
 
   <g:HTMLPanel width='24em' styleName='{style.panel}'>

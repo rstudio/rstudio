@@ -5,7 +5,7 @@
 
   <ui:image field='photo' src='default_photo.jpg'/>
 
-  <ui:style>
+  <ui:style gss="true">
   .popup {
     background: #fff;
     border: 1px solid #666;
@@ -14,9 +14,8 @@
     height: 2.5em;
   }
 
-  @sprite .photo {
-    gwt-image: 'photo';
-
+  .photo {
+    gwt-sprite: "photo";
     float: left;
     margin-right: 4px;
   }
@@ -26,8 +25,9 @@
   }
 
   .email {
-    font-style:italic;
+    font-style: italic;
   }
+
   </ui:style>
 
   <g:HTMLPanel styleName='{style.popup}'>

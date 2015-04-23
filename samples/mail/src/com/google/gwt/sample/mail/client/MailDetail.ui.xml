@@ -2,7 +2,7 @@
   xmlns:g='urn:import:com.google.gwt.user.client.ui'
   xmlns:mail='urn:import:com.google.gwt.sample.mail.client'>
 
-  <ui:style>
+  <ui:style gss="true">
   .detail {
     border: 1px solid #666;
     background-color: white;
@@ -15,14 +15,15 @@
   }
 
   .headerItem {
-    margin-bottom:0.5em;
+    margin-bottom: 0.5em;
   }
 
   .body {
     line-height: 150%;
     padding: 20px 40px 20px 10px;
-    font-family: 'Times New Roman', Times, serif;
+    font-family: "Times New Roman",Times,serif;
   }
+
   </ui:style>
 
   <g:DockLayoutPanel unit='EM' styleName='{style.detail}'>

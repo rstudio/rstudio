@@ -5,64 +5,65 @@
   xmlns:c="urn:import:com.google.gwt.user.cellview.client"
   xmlns:app="urn:import:com.google.gwt.sample.mobilewebapp.client.ui">
 
-  <ui:style>
+  <ui:style gss="true">
     .title {
       padding: 4px 10px;
       font-size: 14pt;
       font-weight: bold;
       color: #666;
     }
-    
+
     .editForm {
       padding: 10px;
       background: white;
     }
-    
+
     .label {
       color: #333;
       font-size: 10pt;
       padding-bottom: 3px;
     }
-    
+
     .field {
       width: 300px;
     }
-    
+
     .textBoxWrapper {
       margin-right: 10px;
     }
-    
+
     .notesBox {
       height: 6em;
     }
-    
+
     .violation {
       color: red;
     }
-    
+
     .button {
       padding-top: 8px;
       padding-bottom: 8px;
       color: #3f3f3f;
     }
-    
+
     .dateButton {
       text-align: center;
     }
-    
+
     .buttonPanel {
       padding: 10px;
       margin-top: 15px;
     }
-    
+
     .saveButton {
       width: 130px;
       margin-right: 5px;
     }
-    
+
     .templateList {
       border-left: 1px solid #aaa;
     }
+
   </ui:style>
 
   <g:DockLayoutPanel

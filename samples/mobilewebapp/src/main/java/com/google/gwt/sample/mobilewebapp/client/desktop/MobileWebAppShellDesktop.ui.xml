@@ -6,49 +6,50 @@
   xmlns:c="urn:import:com.google.gwt.user.cellview.client"
   xmlns:d="urn:import:com.google.gwt.sample.mobilewebapp.client.desktop">
 
-  <ui:style>
+  <ui:style gss="true">
     .header {
       border-bottom: 1px solid #666;
       padding-top: 6px;
       padding-left: 20px;
       position: relative;
     }
-    
+
     .headerWord {
       font-size: 20pt;
       font-weight: bold;
       color: #889;
       text-shadow: 5px 5px 6px #aaa;
-      -moz-transform: matrix(1, -0.04, 0, 1, 0pt, 0pt);
-      -webkit-transform: matrix(1, -0.04, 0, 1, 0pt, 0pt);
+      -moz-transform: matrix(1, -0.04, 0, 1, 0, 0);
+      -webkit-transform: matrix(1, -0.04, 0, 1, 0, 0);
       padding-right: 14px;
     }
-    
+
     .helpLink {
       position: absolute;
       top: 10px;
       right: 16px;
       cursor: pointer;
     }
-    
+
     .leftNav {
       border-right: 1px solid #666;
     }
-    
+
     .mainMenuContainer {
       background: #eee;
       border-bottom: 1px solid #666;
     }
-    
+
     .legendColor {
       height: 1em;
       width: 1em;
       margin-left: 5px;
     }
-    
+
     .legendText {
-      font-size: 80%
+      font-size: 80%;
     }
+
   </ui:style>
 
   <g:DockLayoutPanel

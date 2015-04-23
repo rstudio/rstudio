@@ -4,12 +4,13 @@
   xmlns:g="urn:import:com.google.gwt.user.client.ui"
   xmlns:c="urn:import:com.google.gwt.user.cellview.client">
 
-  <ui:style>
+  <ui:style gss="true">
     .cellTable {
       border-bottom: 1px solid #ccc;
       text-align: left;
       margin-bottom: 4px;
     }
+
   </ui:style>
 
   <g:HTMLPanel>

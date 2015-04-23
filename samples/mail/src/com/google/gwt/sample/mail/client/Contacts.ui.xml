@@ -3,17 +3,17 @@
   xmlns:g='urn:import:com.google.gwt.user.client.ui'
   xmlns:mail='urn:import:com.google.gwt.sample.mail.client'>
 
-  <ui:style field='style'
+  <ui:style gss="true" field='style'
     type='com.google.gwt.sample.mail.client.Contacts.Style'>
-
   .contacts {
     padding: 0.5em;
     line-height: 150%;
   }
 
   .item {
-  	display: block;
- 	}
+    display: block;
+  }
+
   </ui:style>
 
   <g:FlowPanel styleName='{style.contacts}' ui:field='panel'/>
