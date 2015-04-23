@@ -145,8 +145,9 @@ public class CompilerTest extends ArgProcessorTestBase {
       JavaResourceBase.createMockJavaResource("com.foo.SimpleDialog",
           "package com.foo;",
           "import com.google.gwt.core.client.js.JsExport;",
+          "import com.google.gwt.core.client.js.JsNamespace;",
           "public class SimpleDialog {",
-          "  @JsExport(\"show\")",
+          "  @JsNamespace(JsNamespace.GLOBAL) @JsExport(\"show\")",
           "  public static void show() {}",
           "}");
 
@@ -154,8 +155,9 @@ public class CompilerTest extends ArgProcessorTestBase {
       JavaResourceBase.createMockJavaResource("com.foo.ComplexDialog",
           "package com.foo;",
           "import com.google.gwt.core.client.js.JsExport;",
+          "import com.google.gwt.core.client.js.JsNamespace;",
           "public class ComplexDialog {",
-          "  @JsExport(\"show\")",
+          "  @JsNamespace(JsNamespace.GLOBAL) @JsExport(\"show\")",
           "  public static void show() {}",
           "}");
 

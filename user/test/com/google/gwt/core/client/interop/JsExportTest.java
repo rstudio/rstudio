@@ -43,13 +43,27 @@ public class JsExportTest extends GWTTestCase {
 
   public void testMethodExport() {
     // Test exported method can be called from JS in host page
-    ScriptInjector.fromString("$global.exportedFromJava();").setWindow(TOP_WINDOW).inject();
-    assertTrue(MyClassExportsMethod.calledFromJs);
+    ScriptInjector.fromString("$global.exported();").setWindow(TOP_WINDOW).inject();
+    assertTrue(MyClassExportsMethod.calledFromCallMe1);
 
-    MyClassExportsMethod.calledFromJs = false;
+    ScriptInjector.fromString("$global.exportNamespace.exported();").setWindow(TOP_WINDOW).inject();
+    assertTrue(MyClassExportsMethod.calledFromCallMe2);
+
+    ScriptInjector.fromString("$global.exportNamespace.callMe3();").setWindow(TOP_WINDOW).inject();
+    assertTrue(MyClassExportsMethod.calledFromCallMe3);
+
+    ScriptInjector.fromString("$global.woo.MyClassExportsMethod.exported();").setWindow(TOP_WINDOW)
+        .inject();
+    assertTrue(MyClassExportsMethod.calledFromCallMe4);
+
+    ScriptInjector.fromString("$global.woo.MyClassExportsMethod.callMe5();").setWindow(TOP_WINDOW)
+        .inject();
+    assertTrue(MyClassExportsMethod.calledFromCallMe5);
+
+    MyClassExportsMethod.calledFromCallMe1 = false;
     // Test exported constructor called from JS in module window
-    ScriptInjector.fromString("$global.exportedFromJava();").inject();
-    assertTrue(MyClassExportsMethod.calledFromJs);
+    ScriptInjector.fromString("$global.exported();").inject();
+    assertTrue(MyClassExportsMethod.calledFromCallMe1);
   }
 
   public void testMethodExport_noTypeTightenParams() {
@@ -73,11 +87,11 @@ public class JsExportTest extends GWTTestCase {
   }
 
   private native int onlyCalledFromJs() /*-{
-    return $global.onlyCalledFromJs();
+    return $global.woo.MyClassExportsMethodWithoutReference.onlyCalledFromJs();
   }-*/;
 
   public void testClinit() {
-    ScriptInjector.fromString("new $global.MyClassExportsMethodWithClinit();").inject();
+    ScriptInjector.fromString("new $global.woo.MyClassExportsMethodWithClinit();").inject();
     assertEquals(23, MyClassExportsMethodWithClinit.magicNumber);
   }
 
@@ -130,12 +144,12 @@ public class JsExportTest extends GWTTestCase {
   }
 
   private native int getSumByDefaultConstructor() /*-{
-    var obj = new $global.MyClassConstructor1();
+    var obj = new $global.woo.MyClassConstructor1();
     return obj.sum();
   }-*/;
 
   private native int getSumByConstructor() /*-{
-    var obj = new $global.MyClassConstructor2(10, 20);
+    var obj = new $global.woo.MyClassConstructor2(10, 20);
     return obj.sum();
   }-*/;
 
@@ -147,11 +161,11 @@ public class JsExportTest extends GWTTestCase {
   }
 
   private native Object createMyExportedClassWithMultipleConstructors1() /*-{
-    return new $global.MyClassConstructor1();
+    return new $global.woo.MyClassConstructor1();
   }-*/;
 
   private native Object createMyExportedClassWithMultipleConstructors2() /*-{
-    return new $global.MyClassConstructor2(10, 20);
+    return new $global.woo.MyClassConstructor2(10, 20);
   }-*/;
 
   public void testExportConstructors() {
@@ -160,7 +174,7 @@ public class JsExportTest extends GWTTestCase {
   }
 
   private native MyClassExportsConstructors createMyClassExportsConstructors() /*-{
-    return new $global.MyClassExportsConstructors1(2);
+    return new $global.woo.MyClassExportsConstructors1(2);
   }-*/;
 
   private native Object getNotExportedConstructor() /*-{
@@ -216,7 +230,7 @@ public class JsExportTest extends GWTTestCase {
   }-*/;
 
   private native void setExportedField2(int a) /*-{
-    $global.woo.MyExportedClass.EXPORTED_2 = $global.newInnerClass(a);
+    $global.woo.MyExportedClass.EXPORTED_2 = $global.woo.MyExportedClass.newInnerClass(a);
   }-*/;
 
   private native int getExportedField2() /*-{

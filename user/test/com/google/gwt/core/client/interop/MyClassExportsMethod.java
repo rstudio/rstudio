@@ -15,17 +15,47 @@
  */
 package com.google.gwt.core.client.interop;
 
+import static com.google.gwt.core.client.js.JsNamespace.GLOBAL;
+
 import com.google.gwt.core.client.js.JsExport;
+import com.google.gwt.core.client.js.JsNamespace;
 
 /**
  * A test class that exhibits a variety of @JsExports.
  */
 public class MyClassExportsMethod {
-  public static boolean calledFromJs = false;
+  public static boolean calledFromCallMe1 = false;
+  public static boolean calledFromCallMe2 = false;
+  public static boolean calledFromCallMe3 = false;
+  public static boolean calledFromCallMe4 = false;
+  public static boolean calledFromCallMe5 = false;
 
-  @JsExport("exportedFromJava")
-  public static void callMe() {
-    calledFromJs = true;
+  @JsNamespace(GLOBAL)
+  @JsExport("exported")
+  public static void callMe1() {
+    calledFromCallMe1 = true;
+  }
+
+  @JsNamespace("exportNamespace")
+  @JsExport("exported")
+  public static void callMe2(int i) {
+    calledFromCallMe2 = true;
+  }
+
+  @JsNamespace("exportNamespace")
+  @JsExport
+  public static void callMe3(float f) {
+    calledFromCallMe3 = true;
+  }
+
+  @JsExport("exported")
+  public static void callMe4(boolean f) {
+    calledFromCallMe4 = true;
+  }
+
+  @JsExport
+  public static void callMe5(byte f) {
+    calledFromCallMe5 = true;
   }
 
   static boolean calledFromFoo = false;
@@ -53,17 +83,20 @@ public class MyClassExportsMethod {
   }
 
   // There should be no calls to this method from java.
+  @JsNamespace(GLOBAL)
   @JsExport("callBar")
   public static void callBar(A a) {
     a.bar();
   }
 
   // There should be a call to this method from java.
+  @JsNamespace(GLOBAL)
   @JsExport("callFoo")
   public static void callFoo(A a) {
     a.foo();
   }
 
+  @JsNamespace(GLOBAL)
   @JsExport("newA")
   public static A newA() {
     return new A();

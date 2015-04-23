@@ -21,6 +21,7 @@ import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JMember;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethod.JsPropertyType;
+import com.google.gwt.thirdparty.guava.common.base.Strings;
 
 import org.eclipse.jdt.internal.compiler.ast.Annotation;
 import org.eclipse.jdt.internal.compiler.ast.TypeDeclaration;
@@ -54,10 +55,17 @@ public final class JsInteropUtil {
   }
 
   private static void setJsInteropProperties(JMember member, Annotation... annotations) {
+    String namespace = null;
+    AnnotationBinding jsNamespace = JdtUtil.getAnnotation(annotations, JSNAMESPACE_CLASS);
+    if (jsNamespace != null) {
+      namespace = JdtUtil.getAnnotationParameterString(jsNamespace, "value");
+    }
+
     AnnotationBinding jsExport = JdtUtil.getAnnotation(annotations, JSEXPORT_CLASS);
     if (jsExport != null) {
       String value = JdtUtil.getAnnotationParameterString(jsExport, "value");
-      setExportInfo(member, value == null ? "" : value);
+      String exportName = Strings.isNullOrEmpty(value) ? computeExportName(member) : value;
+      member.setExportInfo(namespace, exportName);
     }
 
     /* Apply class wide JsInterop annotations */
@@ -74,7 +82,7 @@ public final class JsInteropUtil {
     }
 
     if (enclosingType.isClassWideExport() && !member.needsVtable() && jsExport == null) {
-      setExportInfo(member, "");
+      member.setExportInfo(namespace, computeExportName(member));
     }
   }
 
@@ -91,21 +99,6 @@ public final class JsInteropUtil {
       method.setJsMemberName(Introspector.decapitalize(methodName.substring(2)));
     } else {
       method.setJsPropertyType(JsPropertyType.UNDEFINED);
-    }
-  }
-
-  // TODO(goktug): Move other namespace logic to here as well after we get access to package
-  // annotations in GwtAstBuilder.
-  private static void setExportInfo(JMember member, String exportName) {
-    if (exportName.isEmpty()) {
-      member.setExportInfo(null, computeExportName(member));
-    } else {
-      int split = exportName.lastIndexOf('.');
-      if (split == -1) {
-        member.setExportInfo("", exportName);
-      } else {
-        member.setExportInfo(exportName.substring(0, split), exportName.substring(split + 1));
-      }
     }
   }
 

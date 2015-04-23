@@ -22,14 +22,17 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Provides a default namespace for @JsExport annotations which don't specify a value. The
- * computed fully qualified export symbol will be a combination of the nearest enclosing
- * \@JsNamespace and the Java name of the method or field @JsExport is applied to. If applied to
- * package-info.java, applies to all types in a package.
+ * Provides a namespace for @JsExport annotations. The computed fully qualified export symbol will
+ * be a combination of the nearest enclosing {@code @JsNamespace} and the Java name of the method or
+ * field {@code @JsExport} is applied to. If applied to package-info.java, applies to all types in a
+ * package.
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.TYPE, ElementType.PACKAGE})
+@Target({ElementType.TYPE, ElementType.PACKAGE, ElementType.CONSTRUCTOR, ElementType.METHOD,
+    ElementType.FIELD})
 @Documented
 public @interface JsNamespace {
+  String GLOBAL = "";
+
   String value();
 }

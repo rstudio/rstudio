@@ -60,7 +60,6 @@ public class MyExportedClass {
     }
   }
 
-  @JsExport("newInnerClass")
   public static InnerClass newInnerClass(int field) {
     return new InnerClass(field);
   }

@@ -109,7 +109,7 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
 
     assertBuggyFails(
         "Member 'test.EntryPoint$Buggy.display' can't be exported because the "
-        + "global name 'show' is already taken.");
+        + "global name 'test.EntryPoint.Buggy.show' is already taken.");
   }
 
   public void testJsPropertyGetterStyleSucceeds() throws Exception {
@@ -276,7 +276,7 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
 
     assertBuggyFails(
         "Member 'test.EntryPoint$Buggy.display()V' can't be exported "
-        + "because the global name 'show' is already taken.");
+        + "because the global name 'test.EntryPoint.Buggy.show' is already taken.");
   }
 
   public void testCollidingMethodToFieldExportsFails() throws Exception {
@@ -291,7 +291,7 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
 
     assertBuggyFails(
         "Member 'test.EntryPoint$Buggy.show()V' can't be exported because the "
-        + "global name 'show' is already taken.");
+        + "global name 'test.EntryPoint.Buggy.show' is already taken.");
   }
 
   public void testCollidingMethodToFieldJsTypeFails() throws Exception {
