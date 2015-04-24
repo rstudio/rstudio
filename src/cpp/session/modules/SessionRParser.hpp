@@ -1157,6 +1157,18 @@ public:
       }
    }
    
+   bool isInIfStatementOrExpression() const
+   {
+      switch (currentState())
+      {
+      case ParseStateIfStatement:
+      case ParseStateIfExpression:
+         return true;
+      default:
+         return false;
+      }
+   }
+   
    bool isInControlFlowStatement() const
    {
       switch (currentState())
@@ -1253,14 +1265,18 @@ public:
    
    void pushBracket(const RToken& token)
    {
+      DEBUG("===== Pushing bracket: " << token);
       bracketStack_.push(token);
    }
    
    void popBracket(const RToken& rhs)
    {
+      DEBUG("===== Popping bracket; cursor: " << rhs);
+      
       using namespace token_utils;
       if (bracketStack_.empty())
       {
+         DEBUG("===== Attempted to pop bracket from empty stack: " << rhs);
          lint_.unexpectedClosingBracket(rhs);
          return;
       }
@@ -1268,6 +1284,7 @@ public:
       const RToken& lhs = bracketStack_.peek();
       if (typeComplement(lhs.type()) != rhs.type())
       {
+         DEBUG("===== Incorrect closing bracket [" << lhs << " : " << rhs << "]");
          lint_.unexpectedClosingBracket(rhs);
          lint_.expectedMatchForOpenBracket(lhs);
       }

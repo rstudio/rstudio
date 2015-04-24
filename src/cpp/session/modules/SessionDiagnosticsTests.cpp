@@ -183,7 +183,8 @@ context("Diagnostics")
 
       EXPECT_NO_ERRORS("{if(!(a)){};if(b){}}");
       EXPECT_NO_ERRORS("if (1) foo(1) <- 1 else 2; 1 + 2");
-      EXPECT_NO_ERRORS("if (1)\nfoo(1) <- 1\nelse 2; 4 + 8");
+      EXPECT_ERRORS("if (1)\nfoo(1) <- 1\nelse 2; 4 + 8"); // invalid 'else' at top level
+      EXPECT_NO_ERRORS("{if (1)\nfoo(1) <- 1\nelse 2\n4 + 8}");
       EXPECT_NO_ERRORS("if (1) (foo(1) <- {{1}})\n2 + 1");
       EXPECT_NO_ERRORS("if (1) function() 1 else 2");
       EXPECT_NO_ERRORS("if (1) function() b()() else 2");
@@ -210,7 +211,7 @@ context("Diagnostics")
       // EXPECT_ERRORS("if (1) (1)\nelse (2)");
       EXPECT_NO_ERRORS("{if (1) (1)\nelse (2)}");
       
-      EXPECT_NO_ERRORS("if (a)\nF(b) <- 'c'\nelse if (d) e");
+      EXPECT_NO_ERRORS("{if (a)\nF(b) <- 'c'\nelse if (d) e}");
 
       EXPECT_NO_ERRORS("lapply(x, `[[`, 1)");
 
@@ -248,6 +249,12 @@ context("Diagnostics")
       EXPECT_NO_LINT("f <- function(x) {\n  TRUE\n  !grepl(':$', x)\n}");
       
       EXPECT_NO_ERRORS("# ouch"); // previously segfaulted due to lack of significant tokens
+      
+      EXPECT_NO_ERRORS("if(1)while(2)while(3)while(4)foo() else 5");
+      
+      EXPECT_NO_ERRORS("{\nif (1) {} else if (2) {}\nif (1)\n1\nelse if (2)\n2}");
+      
+      EXPECT_NO_ERRORS("({if (1) for(i in 1) {}})");
    }
    
    lintRStudioRFiles();

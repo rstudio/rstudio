@@ -510,6 +510,16 @@ public:
      return cursor.row() > row();
   }
   
+  bool isFirstSignificantTokenOnLine()
+  {
+     RTokenCursor cursor = clone();
+     
+     if (!cursor.moveToPreviousSignificantToken())
+        return true;
+     
+     return cursor.row() < row();
+  }
+  
   bool isAtEndOfStatement(bool inParentheticalScope)
   {
      if (isBinaryOp(*this) || isLeftBracket(*this))

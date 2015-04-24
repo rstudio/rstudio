@@ -64,6 +64,10 @@ var snippets = [
          "    ${0}",
          "};"
       ].join("\n")
+   },
+   {
+      name: "ept",
+      content: "// [[Rcpp::export]]"
    }
 ];
 
