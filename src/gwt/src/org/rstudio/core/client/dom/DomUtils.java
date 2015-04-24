@@ -27,6 +27,7 @@ import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.Point;
 import org.rstudio.core.client.Rectangle;
+import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.dom.impl.DomUtilsImpl;
 import org.rstudio.core.client.dom.impl.NodeRelativePosition;
 import org.rstudio.core.client.regex.Match;
@@ -707,17 +708,13 @@ public class DomUtils
    
    public static boolean isCommandClick(NativeEvent nativeEvt)
    {
-      boolean commandKey;
-      if (BrowseCap.isMacintosh())
-      {
-         commandKey = nativeEvt.getMetaKey();
-      }
-      else
-      {
-         commandKey = nativeEvt.getCtrlKey();
-      }
+      int modifierKeys = KeyboardShortcut.getModifierValue(nativeEvt);
       
-      return (nativeEvt.getButton() == NativeEvent.BUTTON_LEFT) && commandKey;
+      boolean isCommandPressed = BrowseCap.isMacintosh() ?
+            modifierKeys == KeyboardShortcut.META :
+               modifierKeys == KeyboardShortcut.CTRL;
+      
+      return (nativeEvt.getButton() == NativeEvent.BUTTON_LEFT) && isCommandPressed;
    }
    
    // Returns the relative vertical position of a child to its parent. 
