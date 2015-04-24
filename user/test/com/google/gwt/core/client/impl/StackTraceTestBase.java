@@ -50,6 +50,10 @@ public abstract class StackTraceTestBase extends GWTTestCase {
     assertJse("testing");
   }
 
+  public void testTraceStringMultiline() {
+    assertJse("multi\nline\nerror\nmessage");
+  }
+
   public void testTraceNull() {
     assertJse(null);
   }

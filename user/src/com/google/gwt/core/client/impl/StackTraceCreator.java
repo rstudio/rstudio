@@ -186,7 +186,10 @@ public class StackTraceCreator {
 
       var backingJsError;
       if (typeof jsThrown == 'string') {
-        backingJsError = fixIE(new Error(jsThrown));
+        // Replace newlines with spaces so that we don't confuse the parser
+        // below which splits on newlines, and will otherwise try to parse
+        // the error message as part of the stack trace.
+        backingJsError = fixIE(new Error(jsThrown.replace('\n', ' ')));
       } else if (jsThrown && typeof jsThrown == 'object' && "stack" in jsThrown){
         backingJsError = jsThrown;
       } else {
