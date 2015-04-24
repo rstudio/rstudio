@@ -1737,6 +1737,65 @@ void checkIncorrectComparison(const RTokenCursor& origin,
             origin.currentPosition(true));
 }
 
+bool handleElseToken(RTokenCursor& cursor,
+                     ParseStatus& status)
+{
+   // Checking for whether an else token is valid here is a little tricky:
+   // For example, all of these are valid:
+   //
+   //    if (1) 1 else 2
+   //    if (1) function() function() {} else 2
+   //    if (1) if (2) while (3) 4 else 5
+   //    if (1) function() while(for(i in 1) 1) 1 else 2
+   //
+   // The net result is that an 'else' token must:
+   //
+   //    (1) Consume all statements (up to an if statement),
+   //    (2) Verify that there is an if statement to consume.
+   if (!cursor.nextSignificantToken().contentEquals(L"else"))
+      return false;
+   
+   // Move on to the 'else' token.
+   if (!cursor.moveToNextSignificantToken())
+      return false;
+   
+   // The 'else' can consume all non-if control flow statements.
+   while (status.isInControlFlowStatement())
+   {
+      if (status.isInIfStatementOrExpression())
+         break;
+      
+      status.popState();
+   }
+   
+   // TODO: Can we validate that this 'else' was valid?
+   
+   // Now, pop the 'if' state.
+   status.popState();
+   
+   // Interestingly, this construct is _not_ valid at the top level:
+   //
+   //    if (1) 2
+   //    else 3
+   //
+   // but this is okay:
+   //
+   //    {
+   //       if (1) 2
+   //       else 3
+   //    }
+   //
+   // So, if we're now at the top level, this is an error!
+   if (status.isAtTopLevel() && cursor.isFirstSignificantTokenOnLine())
+      status.lint().unexpectedToken(cursor);
+   
+   // Move after the 'else' token.
+   if (!cursor.moveToNextSignificantToken())
+      return false;
+   
+   return true;
+}
+
 } // anonymous namespace
 
 #define GOTO_INVALID_TOKEN(__CURSOR__)                                         \
@@ -1797,36 +1856,6 @@ START:
          goto IF_START;
       else if (cursor.contentEquals(L"repeat"))
          goto REPEAT_START;
-      
-      // 'else'. Implicitly ending an 'if' statement, and any other
-      // associated non-if statements; e.g.
-      //
-      //     if (1) while(1) 1 else 2
-      //
-      // is a valid expression.
-      if (cursor.contentEquals(L"else"))
-      {
-         while (status.isInControlFlowStatement())
-         {
-            if (status.currentState() == ParseStatus::ParseStateIfStatement)
-               break;
-            
-            status.popState();
-         }
-         
-         // Ensure that we're in an 'if' statement or expression.
-         if (status.currentState() == ParseStatus::ParseStateIfStatement ||
-             status.currentState() == ParseStatus::ParseStateIfExpression)
-         {
-            status.popState();
-            MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
-            goto START;
-         }
-         else
-         {
-            GOTO_INVALID_TOKEN(cursor);
-         }
-      }
       
       // Left parenthesis.
       if (cursor.isType(RToken::LPAREN))
@@ -1908,26 +1937,14 @@ START:
             
             checkForMissingComma(cursor, status);
             
-            // Handle an 'else' following when we are closing an 'if' statement
-            if (cursor.nextSignificantToken().contentEquals(L"else"))
-            {
-               while (status.isInControlFlowStatement())
-               {
-                  if (status.currentState() == ParseStatus::ParseStateIfStatement)
-                     break;
-                  status.popState();
-               }
-               
-               if (status.currentState() != ParseStatus::ParseStateIfStatement)
-               {
-                  GOTO_INVALID_TOKEN(cursor);
-               }
-               
-               status.popState();
-               MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
-               MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
+            // Handle an 'else' following when we are closing an 'if' statement,
+            // e.g.
+            //
+            //    if (1) if (2) (3) else 4
+            //                    ^
+            //
+            if (handleElseToken(cursor, status))
                goto START;
-            }
             
             // Check to see if this paren closes the current statement.
             // If so, it effectively closes any parent conditional statements.
@@ -1955,66 +1972,20 @@ START:
       if (cursor.isType(RToken::RBRACE))
       {
          status.popBracket(cursor);
+         
+         if (handleElseToken(cursor, status))
+            goto START;
+         
+         status.popState();
+         
          if (startedWithUnaryOperator)
             GOTO_INVALID_TOKEN(cursor);
          
-         if (status.isInParentheticalScope())
-            status.lint().unexpectedToken(cursor, L")");
-         
-         // Check for 'else' following for 'if' expression, as in
-         //
-         //    if (1) { ... } else
-         //
-         if (status.currentState() == ParseStatus::ParseStateIfExpression &&
-             cursor.nextSignificantToken().contentEquals(L"else"))
-         {
-            status.popState();
-            MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
-            MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
-            goto START;
-         }
-         
-         // Close an explicit expression, and any parent
-         // control flow statements.
-         status.popState();
-         
-         // We now have to resolve any non-braced statements, so that we can
-         // handle e.g.
-         //
-         //    if (1) function() function() function() {} else 1
-         //
          while (status.isInControlFlowStatement())
-         {
-            if (status.currentState() == ParseStatus::ParseStateIfExpression ||
-                status.currentState() == ParseStatus::ParseStateIfStatement)
-            {
-               break;
-            }
             status.popState();
-         }
          
-         // It's possible that we're within a control flow 'statement' at this
-         // point; for example:
-         //
-         //    if (1) function() {} else 2
-         //                       ^
-         //
-         // The '}' above explicitly closes the function body, placing us
-         // back within the 'if (1)' statement -- so we then need to check
-         // forward for an 'else'.
-         if ((status.currentState() == ParseStatus::ParseStateIfExpression ||
-              status.currentState() == ParseStatus::ParseStateIfStatement) &&
-             cursor.nextSignificantToken().contentEquals(L"else"))
-         {
-            status.popState();
-            MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
-            MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
-            goto START;
-         }
-         
-         // Pop the rest of the 'statement' states.
-         while (status.isInControlFlowStatement()) status.popState();
-         if (cursor.isAtEndOfDocument()) return;
+         if (cursor.isAtEndOfDocument())
+            return;
          
          MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
          if (isBinaryOp(cursor) &&
@@ -2095,26 +2066,8 @@ START:
          //
          // Check for the 'else' special case first, then the
          // other cases.
-         if (cursor.nextSignificantToken().contentEquals(L"else"))
-         {
-            while (status.isInControlFlowStatement())
-            {
-               if (status.currentState() == ParseStatus::ParseStateIfStatement)
-                  break;
-               status.popState();
-            }
-            
-            if (status.currentState() != ParseStatus::ParseStateIfStatement)
-            {
-               GOTO_INVALID_TOKEN(cursor);
-            }
-            
-            status.popState();
-            
-            MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
-            MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
+         if (handleElseToken(cursor, status))
             goto START;
-         }
          
          if (cursor.nextSignificantToken().row() == cursor.row() &&
              isValidAsIdentifier(cursor.nextSignificantToken()))
@@ -2321,31 +2274,8 @@ ARGUMENT_LIST_END:
       
       DEBUG("== State: " << status.currentStateAsString());
       
-      // An argument list may end multiple states, e.g. in this:
-      //
-      //    if (foo) a() else if (b()) b()
-      //
-      // or even
-      //
-      //    if (1) if (2) if (3) a()\n
-      //
-      // The following newline signals that we are ending all current statements.
-      // We need to close both the 'if' and the argument list. Yet, context
-      // matters, as this would parse:
-      //
-      //    (if(1)if(2)if(3) 4\nelse 5)
-      //
-      // Even more, the number of 'scopes' closed if only 1 if there is a
-      // trailing else (as it just consumes the current 'if'); if there is
-      // no accompanying 'else' then all other parent scopes are closed.
-      if (status.isInControlFlowStatement() &&
-          cursor.nextSignificantToken().contentEquals(L"else"))
-      {
-         status.popState();
-         MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
-         MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
+      if (handleElseToken(cursor, status))
          goto START;
-      }
       
       // Pop out of control flow statements if this ends the statement.
       if (cursor.isAtEndOfStatement(status))
@@ -2514,9 +2444,11 @@ IF_START:
       MOVE_TO_NEXT_SIGNIFICANT_TOKEN_WARN_IF_NO_WHITESPACE(cursor, status);
       ENSURE_TYPE(cursor, status, RToken::LPAREN);
       status.pushBracket(cursor);
+      status.pushState(ParseStatus::ParseStateIfCondition);
       MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
       ENSURE_TYPE_NOT(cursor, status, RToken::RPAREN);
-      status.pushState(ParseStatus::ParseStateIfCondition);
+      if (cursor.isType(RToken::RPAREN))
+         goto IF_CONDITION_END;
       goto START;
       
 IF_CONDITION_END:
