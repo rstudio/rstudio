@@ -165,5 +165,32 @@ public class TokenCursor extends JavaScriptObject
       return ["$", "@", "?", "~"].some(function(x) { return x === value; });
    }-*/;
    
+   public final boolean moveToActiveFunction()
+   {
+      TokenCursor clone = cloneCursor();
+      if (clone.moveToNextToken() && clone.currentValue().equals("("))
+         return true;
+      
+      clone = cloneCursor();
+      if (TokenUtils.isRightBracket(clone))
+      {
+         if (!clone.bwdToMatchingToken())
+            return false;
+         
+         if (!clone.moveToPreviousToken())
+            return false;
+      }
+      
+      if (!clone.findOpeningBracket("(", true))
+         return false;
+      
+      if (!clone.moveToPreviousToken())
+         return false;
+      
+      setRow(clone.getRow());
+      setOffset(clone.getOffset());
+      return true;
+   }
+   
 }
 

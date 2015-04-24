@@ -704,7 +704,7 @@
 .rs.addJsonRpcHandler("get_args", function(name, src)
 {
    if (identical(src, ""))
-      src <- NULL
+      src <- .GlobalEnv
    
    result <- .rs.getSignature(.rs.getAnywhere(name, src))
    result <- sub("function ", "", result)

@@ -30,7 +30,6 @@ import com.google.gwt.user.client.Event.NativePreviewHandler;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.inject.Inject;
 
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.Invalidation;
 import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.RegexUtil;
@@ -75,7 +74,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.RInfixD
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.TokenCursor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.PasteEvent;
-import org.rstudio.studio.client.workbench.views.source.editors.text.r.RCompletionToolTip;
+import org.rstudio.studio.client.workbench.views.source.editors.text.r.SignatureToolTipManager;
 import org.rstudio.studio.client.workbench.views.source.events.CodeBrowserNavigationEvent;
 import org.rstudio.studio.client.workbench.views.source.model.RnwCompletionContext;
 import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
@@ -134,7 +133,7 @@ public class RCompletionManager implements CompletionManager
       rnwContext_ = rnwContext;
       docDisplay_ = docDisplay;
       isConsole_ = isConsole;
-      sigTip_ = new RCompletionToolTip(docDisplay_);
+      sigTipManager_ = new SignatureToolTipManager(docDisplay_);
       suggestTimer_ = new SuggestionTimer();
       snippets_ = new SnippetHelper((AceEditor) docDisplay, getSourceDocumentPath());
       requester_ = new CompletionRequester(rnwContext, navigableSourceEditor, snippets_);
@@ -364,9 +363,8 @@ public class RCompletionManager implements CompletionManager
    {
       suggestTimer_.cancel();
       
-      if (sigTip_ != null)
-         if (sigTip_.previewKeyDown(event))
-            return true;
+      if (sigTipManager_.previewKeyDown(event))
+         return true;
       
       /**
        * KEYS THAT MATTER
@@ -787,7 +785,7 @@ public class RCompletionManager implements CompletionManager
          // Check for a valid number of R identifier characters for autopopup
          boolean canAutoPopup = checkCanAutoPopup(c, uiPrefs_.alwaysCompleteCharacters().getValue() - 1);
          
-         // Automatically popup completions after certain function calls
+         // Attempt to pop up completions immediately after a function call.
          if (c == '(' && !isLineInComment(docDisplay_.getCurrentLine()))
          {
             String token = StringUtil.getToken(
@@ -797,15 +795,10 @@ public class RCompletionManager implements CompletionManager
                   false,
                   true);
             
-            QualifiedName lastSelectedItem = popup_.getLastSelectedValue();
-            if (lastSelectedItem != null)
-            {
-               if (lastSelectedItem.name.equals(token))
-                  displaySignatureToolTip(lastSelectedItem);
-            }
-            
             if (token.matches("^(library|require|requireNamespace|data)\\s*$"))
                canAutoPopup = true;
+            
+            sigTipManager_.resolveActiveFunctionAndDisplayToolTip(false);
          }
          
          if (
@@ -2040,9 +2033,8 @@ public class RCompletionManager implements CompletionManager
          if (needToMoveCursorInsideParens)
             editor.moveCursorLeft();
          
-         // Show a signature popup if we just completed a function
          if (RCompletionType.isFunctionType(qualifiedName.type))
-            displaySignatureToolTip(qualifiedName);
+            sigTipManager_.displayToolTip(qualifiedName.name, qualifiedName.source);
       }
       
       private final Invalidation.Token invalidationToken_ ;
@@ -2051,44 +2043,6 @@ public class RCompletionManager implements CompletionManager
       private boolean suggestOnAccept_;
       private boolean overrideInsertParens_;
       
-   }
-   
-   private void displaySignatureToolTip(final QualifiedName qualifiedName)
-   {
-      // Bail on lack of UI prefs
-      if (!uiPrefs_.showSignatureTooltips().getValue())
-         return;
-      
-      // We want to find the cursor position, and place the popup
-      // above the cursor.
-      server_.getArgs(
-            qualifiedName.name,
-            qualifiedName.source,
-            new ServerRequestCallback<String>()
-            {
-
-               @Override
-               public void onResponseReceived(String args)
-               {
-                  if (!StringUtil.isNullOrEmpty(args))
-                     doDisplaySignatureToolTip(qualifiedName.name + args);
-               }
-
-               @Override
-               public void onError(ServerError error)
-               {
-                  Debug.logError(error);
-               }
-            });
-   }
-   
-   
-   private void doDisplaySignatureToolTip(String signature)
-   {
-      if (sigTip_.isShowing())
-         sigTip_.hide();
-
-      sigTip_.resolvePositionAndShow(signature);
    }
    
    private String getSourceDocumentPath()
@@ -2151,7 +2105,8 @@ public class RCompletionManager implements CompletionManager
    private final RCompletionContext rContext_;
    private final RnwCompletionContext rnwContext_;
    
-   private RCompletionToolTip sigTip_;
+   private final SignatureToolTipManager sigTipManager_;
+   
    private NativeEvent nativeEvent_;
    
    private QualifiedName lastSelectedItem_;

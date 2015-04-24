@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
+import org.rstudio.core.client.Rectangle;
 import org.rstudio.studio.client.common.debugging.model.Breakpoint;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.server.Void;
@@ -263,4 +264,6 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    long getLastCursorChangedTime();
    
    void blockOutdent();
+   
+   Rectangle getPositionBounds(Position position);
 }

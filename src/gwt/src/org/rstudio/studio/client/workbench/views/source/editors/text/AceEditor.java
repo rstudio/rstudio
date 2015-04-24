@@ -1005,19 +1005,24 @@ public class AceEditor implements DocDisplay,
             renderer.screenToTextCoordinates(rectangle.getRight(), rectangle.getBottom()));
    }
    
-   public Rectangle getPositionBounds(InputEditorPosition position)
+   @Override
+   public Rectangle getPositionBounds(Position position)
    {
       Renderer renderer = widget_.getEditor().getRenderer();
-
-      Position pos = ((AceInputEditorPosition) position).getValue();
-
       ScreenCoordinates start = renderer.textToScreenCoordinates(
-            pos.getRow(),
-            pos.getColumn());
+            position.getRow(),
+            position.getColumn());
 
       return new Rectangle(start.getPageX(), start.getPageY(),
                            (int) Math.round(renderer.getCharacterWidth()),
                            (int) (renderer.getLineHeight() * 0.8));
+   }
+   
+   @Override
+   public Rectangle getPositionBounds(InputEditorPosition position)
+   {
+      Position pos = ((AceInputEditorPosition) position).getValue();
+      return getPositionBounds(pos);
    }
 
    public Rectangle getBounds()
