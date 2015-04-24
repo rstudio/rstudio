@@ -75,7 +75,7 @@ public class RoxygenHelper
       // anonymous function scope, whereas what we first want
       // to check is for an enclosing `setGeneric` etc.
       TokenCursor cursor = getTokenCursor();
-      if (cursor.moveToPositionRightInclusive(editor_.getCursorPosition()))
+      if (cursor.moveToPosition(editor_.getCursorPosition(), true))
       {
          String enclosingScope = findEnclosingScope(cursor);
          
