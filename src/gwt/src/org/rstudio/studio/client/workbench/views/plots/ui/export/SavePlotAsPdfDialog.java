@@ -64,6 +64,8 @@ public class SavePlotAsPdfDialog extends ModalDialogBase
                               FileSystemItem defaultDirectory,
                               String defaultPlotName,
                               final SavePlotAsPdfOptions options,
+                              double plotWidth,
+                              double plotHeight,
                               final OperationWithInput<SavePlotAsPdfOptions> onClose)
    {
       setText("Save Plot as PDF");
@@ -74,6 +76,8 @@ public class SavePlotAsPdfDialog extends ModalDialogBase
       defaultDirectory_ = defaultDirectory;
       defaultPlotName_ = defaultPlotName;
       options_ = options;
+      plotWidth_ = plotWidth;
+      plotHeight_ = plotHeight;
       
       progressIndicator_ = addProgressIndicator();
       
@@ -385,13 +389,15 @@ public class SavePlotAsPdfDialog extends ModalDialogBase
                selectedPaperSize = i;
             }
          }
-         PaperSize customPaperSize = new PaperSize("(Custom)", 8.5, 11);
+         PaperSize customPaperSize = new PaperSize("(Device Size)", 
+                                                   plotWidth_, 
+                                                   plotHeight_);
          paperSizes_.add(customPaperSize);
          paperSizeListBox_.addItem(customPaperSize.getName());
          
          if (selectedPaperSize == -1)
          {
-            setCustomPaperSize(options_.getWidth(), options_.getHeight());
+            setCustomPaperSize(plotWidth_, plotHeight_);
             selectedPaperSize = paperSizes_.size() - 1;
          }
          
@@ -523,6 +529,8 @@ public class SavePlotAsPdfDialog extends ModalDialogBase
    private final SessionInfo sessionInfo_;
    private final PlotsServerOperations server_;
    private final SavePlotAsPdfOptions options_;
+   private final double plotWidth_;
+   private final double plotHeight_;
    private final FileSystemItem defaultDirectory_;
    private final String defaultPlotName_;
    private final ProgressIndicator progressIndicator_;
