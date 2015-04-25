@@ -154,6 +154,17 @@ json::Value toJsonValue(const T& val)
 
 json::Value toJsonString(const std::string& val);
 
+// NOTE: we can't use the templatized version for bool because
+// some compilers specialize std::vector<bool> such that the
+// concept check for std::copy fails
+inline json::Array toJsonArray(const std::vector<bool>& val)
+{
+   json::Array results;
+   for (size_t i=0; i<val.size(); i++)
+      results.push_back(val[i] ? true : false);
+   return results;
+}
+
 template<typename T>
 json::Array toJsonArray(const std::vector<T>& val)
 {
