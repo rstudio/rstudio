@@ -25,6 +25,7 @@ import com.google.gwt.resources.css.GenerateCssAst;
 import com.google.gwt.resources.css.ast.CssStylesheet;
 import com.google.gwt.resources.ext.ResourceGeneratorUtil;
 import com.google.gwt.resources.gss.ClassNamesCollector;
+import com.google.gwt.resources.rg.GssResourceGenerator;
 import com.google.gwt.thirdparty.common.css.SourceCode;
 import com.google.gwt.thirdparty.common.css.compiler.ast.CssTree;
 import com.google.gwt.thirdparty.common.css.compiler.ast.GssParser;
@@ -55,14 +56,13 @@ public class ImplicitCssResource {
   private static Set<String> getCssClassNames(String fileName, String cssSource,
       Set<JClassType> imports, TreeLogger logger) throws UnableToCompleteException {
     SourceCode sourceCode = new SourceCode(fileName, cssSource);
-    CssTree tree;
     try {
-      tree = new GssParser(sourceCode).parse();
+      CssTree tree = new GssParser(sourceCode).parse();
+      return new ClassNamesCollector().getClassNames(tree, imports);
     } catch (GssParserException e) {
       logger.log(TreeLogger.ERROR, "Unable to parse CSS", e);
       throw new UnableToCompleteException();
     }
-    return new ClassNamesCollector().getClassNames(tree, imports);
   }
 
   private static final CssNameConverter nameConverter = new CssNameConverter();
@@ -127,7 +127,9 @@ public class ImplicitCssResource {
       assert urls.size() > 0;
 
       if (gss) {
-       return getCssClassNames(bodyFile.getName(), body, imports, logger.getTreeLogger());
+        String gssContent = GssResourceGenerator.concatCssFiles(urls, logger.getTreeLogger());
+        String fileName = bodyFile != null ? bodyFile.getName() : name;
+        return getCssClassNames(fileName, gssContent, imports, logger.getTreeLogger());
       } else {
         CssStylesheet sheet = GenerateCssAst.exec(logger.getTreeLogger(),
             urls.toArray(new URL[urls.size()]));

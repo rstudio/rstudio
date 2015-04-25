@@ -1023,7 +1023,7 @@ public class GssResourceGenerator extends AbstractCssResourceGenerator implement
     }
   }
 
-  private String concatCssFiles(List<URL> resources, TreeLogger logger)
+  public static String concatCssFiles(List<URL> resources, TreeLogger logger)
       throws UnableToCompleteException {
     StringBuffer buffer = new StringBuffer();
     for (URL stylesheet : resources) {
