@@ -551,12 +551,17 @@ bool okToGenerateFile(const FilePath& rmdPath,
          return false;
       }
 
+      // copy the file's contents
+      std::vector<char> contents;
+      std::copy(std::istream_iterator<char>(*pStr),
+                std::istream_iterator<char>(),
+                std::back_inserter(contents));
+
       std::string magicGuid(MAGIC_GUID);
-      std::istreambuf_iterator<char> eod;
-      if (eod == std::search(std::istreambuf_iterator<char>(*pStr),
-                             eod,
-                             magicGuid.begin(),
-                             magicGuid.end()))
+      if (contents.end() == std::search(contents.begin(),
+                                        contents.end(),
+                                        magicGuid.begin(),
+                                        magicGuid.end()))
       {
          *pErrMsg = "Unable to generate the file '" +
                     filePath.filename() + "' because it already "
