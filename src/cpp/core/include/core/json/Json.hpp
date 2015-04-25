@@ -161,7 +161,7 @@ inline json::Array toJsonArray(const std::vector<bool>& val)
 {
    json::Array results;
    for (size_t i=0; i<val.size(); i++)
-      results.push_back(val[i]);
+      results.push_back(val[i] ? true : false);
    return results;
 }
 
