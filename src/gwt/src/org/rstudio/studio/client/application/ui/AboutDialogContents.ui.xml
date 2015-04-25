@@ -58,7 +58,7 @@
 				<g:HTMLPanel styleName="{style.productVersion}">
 					<g:InlineLabel text="Version "></g:InlineLabel>
 					<g:InlineLabel ui:field="versionLabel"></g:InlineLabel>
-					<g:InlineLabel text="&ndash; &copy; 2009-2014 RStudio, Inc."></g:InlineLabel>
+					<g:InlineLabel text="&ndash; &copy; 2009-2015 RStudio, Inc."></g:InlineLabel>
 				</g:HTMLPanel>
 			</g:HTMLPanel>
 	   </g:HTMLPanel>
