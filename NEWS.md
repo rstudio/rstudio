@@ -174,5 +174,7 @@
 * Fix crash in R tokenizer when source files have binary 0xFFF
 * Correctly navigate to package inst/include directory for template errors 
 * Fix visual debugging issues when code isn't saved in system encoding
+* Fix compilation errors that occurred as a result of GCC concept checks
+
 
 
