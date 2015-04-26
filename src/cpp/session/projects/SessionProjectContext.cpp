@@ -381,7 +381,7 @@ void ProjectContext::setLastProjectPath(const FilePath& lastProjectPath)
 void ProjectContext::onDeferredInit(bool newSession)
 {
    // kickoff file monitoring for this directory
-   using namespace boost;
+   using boost::bind;
    core::system::file_monitor::Callbacks cb;
    cb.onRegistered = bind(&ProjectContext::fileMonitorRegistered,
                           this, _1, _2);
