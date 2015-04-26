@@ -40,7 +40,7 @@ namespace spelling {
 namespace {
 
 // underlying spelling engine
-boost::scoped_ptr<core::spelling::SpellingEngine> s_pSpellingEngine;
+boost::scoped_ptr< ::core::spelling::SpellingEngine> s_pSpellingEngine;
 
 // R function for testing & debugging
 SEXP rs_checkSpelling(SEXP wordSEXP)
@@ -62,7 +62,7 @@ SEXP rs_checkSpelling(SEXP wordSEXP)
 }
 
 
-json::Object dictionaryAsJson(const core::spelling::HunspellDictionary& dict)
+json::Object dictionaryAsJson(const ::core::spelling::HunspellDictionary& dict)
 {
    json::Object dictJson;
    dictJson["id"] = dict.id();
@@ -84,7 +84,7 @@ void syncSpellingEngineDictionaries()
 
 core::spelling::HunspellDictionaryManager hunspellDictionaryManager()
 {
-   core::spelling::HunspellDictionaryManager dictManager(
+   ::core::spelling::HunspellDictionaryManager dictManager(
                                          options().hunspellDictionariesPath(),
                                          userDictionariesDir());
    return dictManager;
@@ -261,7 +261,7 @@ core::json::Object spellingPrefsContextAsJson()
 {
    using namespace rstudio::core::spelling;
 
-   core::json::Object contextJson;
+   ::core::json::Object contextJson;
 
    HunspellDictionaryManager dictManager = hunspellDictionaryManager();
    std::vector<HunspellDictionary> dictionaries;
@@ -269,10 +269,10 @@ core::json::Object spellingPrefsContextAsJson()
    if (error)
    {
       LOG_ERROR(error);
-      return core::json::Object();
+      return ::core::json::Object();
    }
 
-   core::json::Array dictionariesJson;
+   ::core::json::Array dictionariesJson;
    std::transform(dictionaries.begin(),
                   dictionaries.end(),
                   std::back_inserter(dictionariesJson),
@@ -280,7 +280,7 @@ core::json::Object spellingPrefsContextAsJson()
 
 
    std::vector<std::string> customDicts = dictManager.custom().dictionaries();
-   core::json::Array customDictsJson = json::toJsonArray(customDicts);
+   ::core::json::Array customDictsJson = json::toJsonArray(customDicts);
 
    // return json
    contextJson["all_languages_installed"] = dictManager.allLanguagesInstalled();

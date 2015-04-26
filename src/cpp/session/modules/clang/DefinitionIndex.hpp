@@ -59,7 +59,7 @@ struct CppDefinition
                  CppDefinitionKind kind,
                  const std::string& parentName,
                  const std::string& name,
-                 const core::libclang::FileLocation& location)
+                 const ::core::libclang::FileLocation& location)
       : USR(USR),
         kind(kind),
         parentName(parentName),
@@ -74,13 +74,13 @@ struct CppDefinition
    CppDefinitionKind kind;
    std::string parentName; // e.g. containing C++ class
    std::string name;
-   core::libclang::FileLocation location;
+   ::core::libclang::FileLocation location;
 };
 
 std::ostream& operator<<(std::ostream& os, const CppDefinition& definition);
 
 core::libclang::FileLocation findDefinitionLocation(
-                     const core::libclang::FileLocation& location);
+                     const ::core::libclang::FileLocation& location);
 
 void searchDefinitions(const std::string& term,
                        std::vector<CppDefinition>* pDefinitions);

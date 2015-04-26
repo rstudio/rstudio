@@ -62,31 +62,31 @@ private:
 public:
    virtual ~PlotManager() {}
    
-   core::Error initialize(const core::FilePath& graphicsPath,
+   ::core::Error initialize(const ::core::FilePath& graphicsPath,
                           const GraphicsDeviceFunctions& graphicsDevice,
                           GraphicsDeviceEvents* pEvents);
    
    // plot list
    virtual int plotCount() const;
-   virtual core::Error plotImageFilename(int index, 
+   virtual ::core::Error plotImageFilename(int index, 
                                          std::string* pImageFilename) const;
    virtual int activePlotIndex() const;
-   virtual core::Error setActivePlot(int index) ;
-   virtual core::Error removePlot(int index);
+   virtual ::core::Error setActivePlot(int index) ;
+   virtual ::core::Error removePlot(int index);
    
    // actions on active plot
-   virtual core::Error savePlotAsImage(const core::FilePath& filePath,
+   virtual ::core::Error savePlotAsImage(const ::core::FilePath& filePath,
                                        const std::string& format,
                                        int widthPx,
                                        int heightPx,
                                        bool useDevicePixelRatio = false);
 
-   virtual core::Error savePlotAsPdf(const core::FilePath& filePath,
+   virtual ::core::Error savePlotAsPdf(const ::core::FilePath& filePath,
                                      double widthInches,
                                      double heightInches,
                                      bool useCairoPdf);
 
-   virtual core::Error savePlotAsMetafile(const core::FilePath& filePath,
+   virtual ::core::Error savePlotAsMetafile(const ::core::FilePath& filePath,
                                           int widthPx,
                                           int heightPx);
 
@@ -100,23 +100,23 @@ public:
    virtual void refresh() ;
    
     // retrieve image path based on filename
-   virtual core::FilePath imagePath(const std::string& imageFilename) const;
+   virtual ::core::FilePath imagePath(const std::string& imageFilename) const;
    
    virtual void clear();
 
    virtual boost::signal<void ()>& onShowManipulator() ;
-   virtual void setPlotManipulatorValues(const core::json::Object& values);
+   virtual void setPlotManipulatorValues(const ::core::json::Object& values);
    virtual void manipulatorPlotClicked(int x, int y);
 
    virtual void onBeforeExecute();
 
    // manipulate persistent state
-   core::Error savePlotsState();
-   core::Error restorePlotsState();
+   ::core::Error savePlotsState();
+   ::core::Error restorePlotsState();
 
    // fully serialize and deserialize to an external directory
-   core::Error serialize(const core::FilePath& saveToPath);
-   core::Error deserialize(const core::FilePath& restoreFromPath);
+   ::core::Error serialize(const ::core::FilePath& saveToPath);
+   ::core::Error deserialize(const ::core::FilePath& restoreFromPath);
       
 private:
    
@@ -147,27 +147,27 @@ private:
    void renderActivePlotToDisplay();
    
    // render active plot file file
-   core::Error savePlotAsFile(const boost::function<core::Error()>&
+   ::core::Error savePlotAsFile(const boost::function< ::core::Error()>&
                                                          deviceCreationFunction);
-   core::Error savePlotAsFile(const std::string& fileDeviceCreationCode);
+   ::core::Error savePlotAsFile(const std::string& fileDeviceCreationCode);
 
-   core::Error savePlotAsBitmapFile(const core::FilePath& targetPath,
+   ::core::Error savePlotAsBitmapFile(const ::core::FilePath& targetPath,
                                     const std::string& bitmapFileType,
                                     int width,
                                     int height,
                                     bool useDevicePixelRatio);
 
-   core::Error savePlotAsSvg(const core::FilePath& targetPath,
+   ::core::Error savePlotAsSvg(const ::core::FilePath& targetPath,
                              int width,
                              int height);
 
-   core::Error savePlotAsPostscript(const core::FilePath& targetPath,
+   ::core::Error savePlotAsPostscript(const ::core::FilePath& targetPath,
                                     int width,
                                     int height);
 
    
    // error helpers
-   core::Error plotIndexError(int index, const core::ErrorLocation& location)
+   ::core::Error plotIndexError(int index, const ::core::ErrorLocation& location)
                                                                          const;
 
    std::string emptyImageFilename() const ;
@@ -176,8 +176,8 @@ private:
    friend class SuppressDeviceEventsScope;
 
    // storage paths
-   core::FilePath plotsStateFile_;
-   core::FilePath graphicsPath_;
+   ::core::FilePath plotsStateFile_;
+   ::core::FilePath graphicsPath_;
   
    // interface to graphics device
    GraphicsDeviceFunctions graphicsDevice_ ;

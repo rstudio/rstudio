@@ -38,26 +38,26 @@ struct RTexmfPaths
 {
    bool empty() const { return texInputsPath.empty(); }
 
-   core::FilePath texInputsPath;
-   core::FilePath bibInputsPath;
-   core::FilePath bstInputsPath;
+   ::core::FilePath texInputsPath;
+   ::core::FilePath bibInputsPath;
+   ::core::FilePath bstInputsPath;
 };
 
 RTexmfPaths rTexmfPaths();
 
 core::system::Options rTexInputsEnvVars();
 
-core::Error runTexCompile(const core::FilePath& texProgramPath,
-                          const core::system::Options& envVars,
-                          const core::shell_utils::ShellArgs& args,
-                          const core::FilePath& texFilePath,
-                          core::system::ProcessResult* pResult);
+core::Error runTexCompile(const ::core::FilePath& texProgramPath,
+                          const ::core::system::Options& envVars,
+                          const ::core::shell_utils::ShellArgs& args,
+                          const ::core::FilePath& texFilePath,
+                          ::core::system::ProcessResult* pResult);
 
 core::Error runTexCompile(
-              const core::FilePath& texProgramPath,
-              const core::system::Options& envVars,
-              const core::shell_utils::ShellArgs& args,
-              const core::FilePath& texFilePath,
+              const ::core::FilePath& texProgramPath,
+              const ::core::system::Options& envVars,
+              const ::core::shell_utils::ShellArgs& args,
+              const ::core::FilePath& texFilePath,
               const boost::function<void(int,const std::string&)>& onExited);
 
 } // namespace utils

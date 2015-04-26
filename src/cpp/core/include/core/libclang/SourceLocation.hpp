@@ -55,7 +55,7 @@ struct FileLocation
       return !(*this == other);
    }
 
-   core::FilePath filePath;
+   ::core::FilePath filePath;
    unsigned line;
    unsigned column;
 };

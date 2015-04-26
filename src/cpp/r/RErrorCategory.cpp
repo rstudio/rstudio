@@ -21,7 +21,7 @@ namespace r {
 class RErrorCategory : public boost::system::error_category
 {
 public:
-   virtual const char * name() const;
+   virtual const char * name() const BOOST_NOEXCEPT;
    virtual std::string message( int ev ) const;
 };
 
@@ -31,7 +31,7 @@ const boost::system::error_category& rCategory()
 	return rErrorCategoryConst ;
 }
 
-const char * RErrorCategory::name() const
+const char * RErrorCategory::name() const BOOST_NOEXCEPT
 {
 	return "r" ;
 }
@@ -82,15 +82,15 @@ std::string RErrorCategory::message( int ev ) const
 }
 
 core::Error rCodeExecutionError(const std::string& errMsg, 
-                                const core::ErrorLocation& location)
+                                const ::core::ErrorLocation& location)
 {
-   core::Error error(errc::CodeExecutionError, location);
+   ::core::Error error(errc::CodeExecutionError, location);
    error.addProperty("errormsg", errMsg);
    return error;
 }
    
    
-bool isCodeExecutionError(const core::Error& error, std::string* pErrMsg)
+bool isCodeExecutionError(const ::core::Error& error, std::string* pErrMsg)
 {
    if (error.code() == r::errc::CodeExecutionError)
    {
@@ -104,7 +104,7 @@ bool isCodeExecutionError(const core::Error& error, std::string* pErrMsg)
    }
 }
    
-std::string endUserErrorMessage(const core::Error& error)
+std::string endUserErrorMessage(const ::core::Error& error)
 {
    std::string errMsg;
    if (isCodeExecutionError(error, &errMsg))

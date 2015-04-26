@@ -513,7 +513,7 @@ private:
                      targetFile_.parent().complete(matches[3].str()),
                      boost::lexical_cast<int>(matches[1].str()),
                      1,
-                     core::html_utils::HTML(matches[4].str()),
+                     ::core::html_utils::HTML(matches[4].str()),
                      true);
             knitrErrors_.push_back(err);
          }
@@ -820,7 +820,7 @@ Error renderRmdSource(const json::JsonRpcRequest& request,
 
    // create temp file
    FilePath rmdTempFile = module_context::tempFile("Preview-", "Rmd");
-   error = core::writeStringToFile(rmdTempFile, source);
+   error = ::core::writeStringToFile(rmdTempFile, source);
    if (error)
       return error;
 

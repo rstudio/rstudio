@@ -84,7 +84,7 @@ void mergeState(const json::Object& sourceState,
 
 void commitState(const json::Object& stateContainer,
                  const std::string& fileExt,
-                 const core::FilePath& stateDir)
+                 const ::core::FilePath& stateDir)
 {
    for (json::Object::const_iterator
         it = stateContainer.begin(); it != stateContainer.end(); ++it)
@@ -101,7 +101,7 @@ void commitState(const json::Object& stateContainer,
    }
 }
    
-void restoreState(const core::FilePath& stateFilePath,
+void restoreState(const ::core::FilePath& stateFilePath,
                   json::Object* pStateContainer)
 {
    // read the contents of the file
@@ -249,7 +249,7 @@ json::Value ClientState::getProjectPersistent(std::string scope,
    }
    else
    {
-      if (!json::isType<core::json::Object>(i->second))
+      if (!json::isType< ::core::json::Object>(i->second))
          return json::Value();
       json::Object& scopeObject = (i->second).get_obj();
       return scopeObject[name];
@@ -264,8 +264,8 @@ void ClientState::putProjectPersistent(
 
 
 Error ClientState::commit(ClientStateCommitType commitType, 
-                          const core::FilePath& stateDir,
-                          const core::FilePath& projectStateDir)
+                          const ::core::FilePath& stateDir,
+                          const ::core::FilePath& projectStateDir)
 {
    // remove and re-create the stateDirs
    Error error = removeAndRecreateStateDir(stateDir);

@@ -159,8 +159,8 @@ json::Array getCppDiagnosticsJson(const FilePath& filePath)
    return diagnosticsJson;
 }
 
-Error getCppDiagnostics(const core::json::JsonRpcRequest& request,
-                        core::json::JsonRpcResponse* pResponse)
+Error getCppDiagnostics(const ::core::json::JsonRpcRequest& request,
+                        ::core::json::JsonRpcResponse* pResponse)
 {
    // get params
    std::string docPath;

@@ -115,13 +115,13 @@ Error UserSettings::initialize()
 
    // make sure we have a context id
    if (contextId().empty())
-      setContextId(core::system::generateShortenedUuid());
+      setContextId(::core::system::generateShortenedUuid());
 
    return Success();
 }
 
 void UserSettings::onSettingsFileChanged(
-                     const core::system::FileChangeEvent& changeEvent)
+                     const ::core::system::FileChangeEvent& changeEvent)
 {
    // ensure this is for our target file
    if (settingsFilePath_.absolutePath() !=
@@ -198,14 +198,14 @@ core::json::Object UserSettings::uiPrefs() const
 {
    std::string value = settings_.get(kUiPrefs, "{}");
    json::Value jsonValue;
-   bool success = core::json::parse(value, &jsonValue);
+   bool success = ::core::json::parse(value, &jsonValue);
    if (success)
       return jsonValue.get_obj();
    else
       return json::Object();
 }
 
-void UserSettings::setUiPrefs(const core::json::Object& prefsObject)
+void UserSettings::setUiPrefs(const ::core::json::Object& prefsObject)
 {
    std::ostringstream output;
    json::writeFormatted(prefsObject, output);
@@ -267,7 +267,7 @@ void UserSettings::updatePrefsCache(const json::Object& prefs) const
    std::string spellingLanguage = readPref<std::string>(prefs, "spelling_dictionary_language", "en_US");
    pSpellingLanguage_.reset(new std::string(spellingLanguage));
 
-   json::Array spellingCustomDicts = readPref<core::json::Array>(prefs, "spelling_custom_dictionaries", core::json::Array());
+   json::Array spellingCustomDicts = readPref< ::core::json::Array>(prefs, "spelling_custom_dictionaries", ::core::json::Array());
    pSpellingCustomDicts_.reset(new json::Array(spellingCustomDicts));
 
    bool handleErrorsInUserCodeOnly = readPref<bool>(prefs, "handle_errors_in_user_code_only", true);

@@ -513,14 +513,14 @@ Error initBreakpoints()
       r::session::clientState().getProjectPersistent("debug-breakpoints",
                                                      "debugBreakpointsState");
    if (!breakpointStateValue.is_null() &&
-       json::isType<core::json::Object>(breakpointStateValue))
+       json::isType< ::core::json::Object>(breakpointStateValue))
    {
       json::Object breakpointState = breakpointStateValue.get_obj();
       json::Array breakpointArray = breakpointState["breakpoints"].get_array();
       s_breakpoints.clear();
       BOOST_FOREACH(json::Value bp, breakpointArray)
       {
-         if (json::isType<core::json::Object>(bp))
+         if (json::isType< ::core::json::Object>(bp))
          {
             s_breakpoints.push_back(breakpointFromJson(bp.get_obj()));
          }

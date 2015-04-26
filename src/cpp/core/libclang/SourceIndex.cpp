@@ -144,11 +144,11 @@ TranslationUnit SourceIndex::getTranslationUnit(const std::string& filename,
 {
    FilePath filePath(filename);
 
-   boost::scoped_ptr<core::PerformanceTimer> pTimer;
+   boost::scoped_ptr< ::core::PerformanceTimer> pTimer;
    if (verbose_ > 0)
    {
       std::cerr << "CLANG INDEXING: " << filePath.absolutePath() << std::endl;
-      pTimer.reset(new core::PerformanceTimer(filePath.filename()));
+      pTimer.reset(new ::core::PerformanceTimer(filePath.filename()));
    }
 
    // get the arguments and last write time for this file
@@ -225,7 +225,7 @@ TranslationUnit SourceIndex::getTranslationUnit(const std::string& filename,
      args.push_back("-v");
 
    // get the args in the fashion libclang expects (char**)
-   core::system::ProcessArgs argsArray(args);
+   ::core::system::ProcessArgs argsArray(args);
 
    if (verbose_ > 0)
       std::cerr << "  (Creating new index)" << std::endl;

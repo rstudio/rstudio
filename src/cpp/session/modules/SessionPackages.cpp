@@ -51,7 +51,7 @@ namespace packages {
 
 namespace {
 
-Error availablePackagesBegin(const core::json::JsonRpcRequest& request,
+Error availablePackagesBegin(const ::core::json::JsonRpcRequest& request,
                              std::vector<std::string>* pContribUrls)
 {
    return r::exec::evaluateString<std::vector<std::string> >(
@@ -209,9 +209,9 @@ SEXP rs_getCachedAvailablePackages(SEXP contribUrlSEXP)
       return R_NilValue;
 }
 
-Error availablePackagesEnd(const core::json::JsonRpcRequest& request,
+Error availablePackagesEnd(const ::core::json::JsonRpcRequest& request,
                            const std::vector<std::string>& contribUrls,
-                           core::json::JsonRpcResponse* pResponse)
+                           ::core::json::JsonRpcResponse* pResponse)
 {
    // download available packages
    std::vector<std::string> availablePackages;

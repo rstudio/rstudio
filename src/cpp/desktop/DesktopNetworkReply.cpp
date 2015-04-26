@@ -282,7 +282,7 @@ void NetworkReply::onError(const Error& networkError)
    if ((networkError.code() != boost::asio::error::operation_aborted) &&
        (networkError.code() != boost::asio::error::broken_pipe) &&
        (networkError.code() != boost::asio::error::eof) &&
-       !core::isPathNotFoundError(networkError) )
+       !::core::isPathNotFoundError(networkError) )
    {
       LOG_ERROR(networkError);
    }

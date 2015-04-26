@@ -54,7 +54,7 @@ enum EscapeMode
 class ShellCommand
 {
 public:
-   explicit ShellCommand(const core::FilePath& filePath)
+   explicit ShellCommand(const ::core::FilePath& filePath)
       : escapeMode_(EscapeAll)
    {
       output_ = escape(string_utils::utf8ToSystem(filePath.absolutePath()));

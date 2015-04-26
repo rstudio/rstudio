@@ -91,7 +91,7 @@ Error FileLock::acquire(const FilePath& lockFilePath)
    // make sure the lock file exists
    if (!lockFilePath.exists())
    {
-      Error error = core::writeStringToFile(lockFilePath, "");
+      Error error = ::core::writeStringToFile(lockFilePath, "");
       if (error)
          return error;
    }

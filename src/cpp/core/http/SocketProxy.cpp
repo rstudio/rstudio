@@ -146,13 +146,13 @@ void SocketProxy::handleServerWrite(const boost::system::error_code& e,
 namespace {
 
 #ifndef _WIN32
-bool isSslShutdownError(const core::Error& error)
+bool isSslShutdownError(const ::core::Error& error)
 {
    return error.code().category() == boost::asio::error::get_ssl_category() &&
           error.code().value() == ERR_PACK(ERR_LIB_SSL, 0, SSL_R_SHORT_READ);
 }
 #else
-bool isSslShutdownError(const core::Error& error)
+bool isSslShutdownError(const ::core::Error& error)
 {
    return false;
 }
@@ -160,7 +160,7 @@ bool isSslShutdownError(const core::Error& error)
 } // anonymous namespace
 
 void SocketProxy::handleError(const boost::system::error_code& e,
-                              const core::ErrorLocation& location)
+                              const ::core::ErrorLocation& location)
 {
    // log the error if it wasn't connection terminated
    Error error(e, location);

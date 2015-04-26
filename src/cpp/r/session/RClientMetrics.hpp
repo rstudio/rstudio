@@ -32,8 +32,8 @@ namespace client_metrics {
 
 RClientMetrics get();
 void set(const RClientMetrics& metrics);
-void save(core::Settings* pSettings);
-void restore(const core::Settings& settings);
+void save(::core::Settings* pSettings);
+void restore(const ::core::Settings& settings);
    
 } // namespace client_metrics
 } // namespace session

@@ -28,7 +28,7 @@ namespace session {
 namespace modules {      
 namespace files {
    
-bool isMonitoringDirectory(const core::FilePath& directory);
+bool isMonitoringDirectory(const ::core::FilePath& directory);
 
 core::Error initialize();
                        

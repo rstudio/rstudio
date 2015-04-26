@@ -63,7 +63,7 @@ public:
    // COPYING: boost::noncopyable
    
    // intialize
-   core::Error initialize();
+   ::core::Error initialize();
    
    // enable batch updates
    void beginUpdate() { settings_.beginUpdate(); }
@@ -84,8 +84,8 @@ public:
    bool autoCreatedProfile() const;
    void setAutoCreatedProfile(bool autoCreated) ;
 
-   core::json::Object uiPrefs() const;
-   void setUiPrefs(const core::json::Object& prefsObject);
+   ::core::json::Object uiPrefs() const;
+   void setUiPrefs(const ::core::json::Object& prefsObject);
 
    // readers for ui prefs
    bool useSpacesForTab() const;
@@ -111,8 +111,8 @@ public:
    bool loadRData() const;
    void setLoadRData(bool loadRData);
 
-   core::FilePath initialWorkingDirectory() const;
-   void setInitialWorkingDirectory(const core::FilePath& filePath);
+   ::core::FilePath initialWorkingDirectory() const;
+   void setInitialWorkingDirectory(const ::core::FilePath& filePath);
 
    bool alwaysSaveHistory() const;
    void setAlwaysSaveHistory(bool alwaysSave);
@@ -129,14 +129,14 @@ public:
    bool vcsEnabled() const;
    void setVcsEnabled(bool enabled);
 
-   core::FilePath gitExePath() const;
-   void setGitExePath(const core::FilePath& gitExePath);
+   ::core::FilePath gitExePath() const;
+   void setGitExePath(const ::core::FilePath& gitExePath);
 
-   core::FilePath svnExePath() const;
-   void setSvnExePath(const core::FilePath& svnExePath);
+   ::core::FilePath svnExePath() const;
+   void setSvnExePath(const ::core::FilePath& svnExePath);
 
-   core::FilePath vcsTerminalPath() const;
-   void setVcsTerminalPath(const core::FilePath& terminalPath);
+   ::core::FilePath vcsTerminalPath() const;
+   void setVcsTerminalPath(const ::core::FilePath& terminalPath);
 
    bool vcsUseGitBash() const;
    void setVcsUseGitBash(bool useGitBash);
@@ -189,13 +189,13 @@ public:
 private:
 
    void onSettingsFileChanged(
-                        const core::system::FileChangeEvent& changeEvent);
+                        const ::core::system::FileChangeEvent& changeEvent);
 
-   core::FilePath getWorkingDirectoryValue(const std::string& key) const;
+   ::core::FilePath getWorkingDirectoryValue(const std::string& key) const;
    void setWorkingDirectoryValue(const std::string& key,
-                                 const core::FilePath& filePath) ;
+                                 const ::core::FilePath& filePath) ;
 
-   void updatePrefsCache(const core::json::Object& uiPrefs) const;
+   void updatePrefsCache(const ::core::json::Object& uiPrefs) const;
 
    template <typename T>
    T readUiPref(const boost::scoped_ptr<T>& pPref) const
@@ -207,8 +207,8 @@ private:
    }
 
 private:
-   core::FilePath settingsFilePath_;
-   core::Settings settings_;
+   ::core::FilePath settingsFilePath_;
+   ::core::Settings settings_;
 
    // cached prefs values
    mutable boost::scoped_ptr<bool> pUseSpacesForTab_;
@@ -220,7 +220,7 @@ private:
    mutable boost::scoped_ptr<std::string> pDefaultLatexProgram_;
    mutable boost::scoped_ptr<bool> pAlwaysEnableRnwConcordance_;
    mutable boost::scoped_ptr<std::string> pSpellingLanguage_;
-   mutable boost::scoped_ptr<core::json::Array> pSpellingCustomDicts_;
+   mutable boost::scoped_ptr< ::core::json::Array> pSpellingCustomDicts_;
    mutable boost::scoped_ptr<bool> pHandleErrorsInUserCodeOnly_;
    mutable boost::scoped_ptr<int> pShinyViewerType_;
    

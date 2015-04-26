@@ -48,7 +48,7 @@ void addFirstRunDoc(const FilePath& projectFile, const std::string& doc)
 
    std::ostringstream ostr;
    ostr << doc << std::endl;
-   error = core::appendToFile(scratchPath.childPath(kFirstRunDocs), ostr.str());
+   error = ::core::appendToFile(scratchPath.childPath(kFirstRunDocs), ostr.str());
    if (error)
       LOG_ERROR(error);
 }
@@ -71,7 +71,7 @@ std::vector<std::string> collectFirstRunDocs(const FilePath& projectFile)
    FilePath firstRunDocsPath = scratchPath.childPath(kFirstRunDocs);
    if (firstRunDocsPath.exists())
    {
-      Error error = core::readStringVectorFromFile(firstRunDocsPath, &docs);
+      Error error = ::core::readStringVectorFromFile(firstRunDocsPath, &docs);
       if (error)
          LOG_ERROR(error);
 

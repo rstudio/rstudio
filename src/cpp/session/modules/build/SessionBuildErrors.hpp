@@ -65,9 +65,9 @@ private:
    std::vector<CompileErrorParser> parsers_;
 };
 
-CompileErrorParser gccErrorParser(const core::FilePath& basePath);
+CompileErrorParser gccErrorParser(const ::core::FilePath& basePath);
 
-CompileErrorParser rErrorParser(const core::FilePath& basePath);
+CompileErrorParser rErrorParser(const ::core::FilePath& basePath);
 
 
 } // namespace build

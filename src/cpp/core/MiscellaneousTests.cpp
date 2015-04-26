@@ -22,7 +22,7 @@
 namespace rstudio {
 namespace unit_tests {
 
-using namespace core::collection;
+using namespace ::core::collection;
 
 context("Position")
 {

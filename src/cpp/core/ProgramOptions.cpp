@@ -61,19 +61,19 @@ bool validateOptionsProvided(const variables_map& vm,
   
 void reportError(const std::string& errorMessage, const ErrorLocation& location)
 {
-   if (core::system::stderrIsTerminal())
+   if (::core::system::stderrIsTerminal())
       std::cerr << errorMessage << std::endl;
    else
-      core::log::logErrorMessage(errorMessage, location);
+      ::core::log::logErrorMessage(errorMessage, location);
 }
 
 void reportWarnings(const std::string& warningMessages,
                     const ErrorLocation& location)
 {
-   if (core::system::stderrIsTerminal())
+   if (::core::system::stderrIsTerminal())
       std::cerr << "WARNINGS: " << warningMessages << std::endl;
    else
-      core::log::logWarningMessage(warningMessages, location);
+      ::core::log::logWarningMessage(warningMessages, location);
 }
 
 

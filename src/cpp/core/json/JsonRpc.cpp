@@ -243,8 +243,8 @@ void JsonRpcResponse::setAsyncHandle(const std::string& handle)
    setField(kRpcAsyncHandle, handle);
 }
 
-void setJsonRpcResponse(const core::json::JsonRpcResponse& jsonRpcResponse,
-                        core::http::Response* pResponse)
+void setJsonRpcResponse(const ::core::json::JsonRpcResponse& jsonRpcResponse,
+                        ::core::http::Response* pResponse)
 {
    // no cache!
    pResponse->setNoCacheHeaders();
@@ -274,7 +274,7 @@ void setJsonRpcResponse(const core::json::JsonRpcResponse& jsonRpcResponse,
 class JsonRpcErrorCategory : public boost::system::error_category
 {
 public:
-   virtual const char * name() const;
+   virtual const char * name() const BOOST_NOEXCEPT;
    virtual std::string message( int ev ) const;
 };
 
@@ -284,7 +284,7 @@ const boost::system::error_category& jsonRpcCategory()
    return jsonRpcErrorCategoryConst ;
 }
 
-const char * JsonRpcErrorCategory::name() const
+const char * JsonRpcErrorCategory::name() const BOOST_NOEXCEPT
 {
    return "jsonrpc" ;
 }
@@ -350,13 +350,13 @@ std::string JsonRpcErrorCategory::message( int ev ) const
 namespace {
 
 void runSynchronousFunction(const JsonRpcFunction& func,
-                            const core::json::JsonRpcRequest& request,
+                            const ::core::json::JsonRpcRequest& request,
                             const JsonRpcFunctionContinuation& continuation)
 {
-   core::json::JsonRpcResponse response;
+   ::core::json::JsonRpcResponse response;
    if (request.isBackgroundConnection)
       response.setSuppressDetectChanges(true);
-   core::Error error = func(request, &response);
+   ::core::Error error = func(request, &response);
    continuation(error, &response);
 }
 

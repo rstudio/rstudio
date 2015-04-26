@@ -130,7 +130,7 @@ Error Plot::renderFromDisplay()
    }
     
    // generate a new storage uuid
-   std::string storageUuid = core::system::generateUuid();
+   std::string storageUuid = ::core::system::generateUuid();
    
    // generate snapshot and image files
    Error error = graphicsDevice_.saveSnapshot(snapshotFilePath(storageUuid),
@@ -164,7 +164,7 @@ Error Plot::renderFromDisplaySnapshot(SEXP snapshot)
       return Success();
 
    // generate a new storage uuid
-   std::string storageUuid = core::system::generateUuid();
+   std::string storageUuid = ::core::system::generateUuid();
  
    // generate snapshot file
    FilePath snapshotFile = snapshotFilePath(storageUuid);

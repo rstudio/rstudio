@@ -38,8 +38,8 @@ namespace rstudio {
 namespace r {
 namespace options {
    
-core::Error saveOptions(const core::FilePath& filePath);  
-core::Error restoreOptions(const core::FilePath& filePath);
+core::Error saveOptions(const ::core::FilePath& filePath);  
+core::Error restoreOptions(const ::core::FilePath& filePath);
 
 // console width
 extern const int kDefaultWidth;
@@ -63,7 +63,7 @@ T getOption(const std::string& name,
    if (valueSEXP != R_NilValue)
    {
       T value;
-      core::Error error = sexp::extract(valueSEXP, &value);
+      ::core::Error error = sexp::extract(valueSEXP, &value);
       if (error)
       {
          error.addProperty("symbol (option)", name);
@@ -75,7 +75,7 @@ T getOption(const std::string& name,
    }
    else
    {
-      core::Error error(errc::SymbolNotFoundError, ERROR_LOCATION);
+      ::core::Error error(errc::SymbolNotFoundError, ERROR_LOCATION);
       error.addProperty("symbol (option)", name);
       if (logNotFound)
          LOG_ERROR(error);
@@ -88,7 +88,7 @@ core::Error setOption(const std::string& name, const T& value)
 {
    r::exec::RFunction optionsFunction("options");
    optionsFunction.addParam(name, value);
-   core::Error error = optionsFunction.call();
+   ::core::Error error = optionsFunction.call();
    if (error)
    {
       error.addProperty("option-name", name);
@@ -96,7 +96,7 @@ core::Error setOption(const std::string& name, const T& value)
    }
    else
    {
-      return core::Success();
+      return ::core::Success();
    }
 }
 

@@ -49,8 +49,8 @@ inline Error initializeStreamDir(const FilePath& streamDir)
    
 inline Error initLocalStreamAcceptor(
    SocketAcceptorService<boost::asio::local::stream_protocol>& acceptorService,
-   const core::FilePath& localStreamPath,
-   core::system::FileMode fileMode)
+   const ::core::FilePath& localStreamPath,
+   ::core::system::FileMode fileMode)
 {
    // initialize endpoint
    using boost::asio::local::stream_protocol;

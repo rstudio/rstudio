@@ -48,9 +48,9 @@ public:
    // COPYING: via compiler
 
    // create by parsing a concordance file
-   core::Error parse(const core::FilePath& sourceFile,
+   ::core::Error parse(const ::core::FilePath& sourceFile,
                      const std::string& input,
-                     const core::FilePath& baseDir);
+                     const ::core::FilePath& baseDir);
 
    // append another concordance to this concordance (assumes they have
    // the same input and output file and they originate from a common
@@ -59,9 +59,9 @@ public:
 
    bool empty() const { return mapping_.empty(); }
 
-   const core::FilePath& outputFile() const { return outputFile_; }
+   const ::core::FilePath& outputFile() const { return outputFile_; }
 
-   const core::FilePath& inputFile() const { return inputFile_; }
+   const ::core::FilePath& inputFile() const { return inputFile_; }
 
    std::size_t offset() const { return offset_; }
 
@@ -76,7 +76,7 @@ public:
       texLine -= offset_;
 
       // return the mapping (but return -1 if it is out of range)
-      int mappingSize = core::safe_convert::numberTo<int>(mapping_.size(), 0);
+      int mappingSize = ::core::safe_convert::numberTo<int>(mapping_.size(), 0);
       if (texLine >= 0 && texLine < mappingSize)
          return mapping_[texLine];
       else
@@ -115,8 +115,8 @@ public:
    }
 
 private:
-   core::FilePath outputFile_;
-   core::FilePath inputFile_;
+   ::core::FilePath outputFile_;
+   ::core::FilePath inputFile_;
    std::size_t offset_;
    std::vector<int> mapping_;
 };
@@ -129,7 +129,7 @@ public:
    {
    }
 
-   FileAndLine(const core::FilePath& filePath, int line)
+   FileAndLine(const ::core::FilePath& filePath, int line)
       : filePath_(filePath), line_(line)
    {
    }
@@ -138,11 +138,11 @@ public:
 
    bool empty() const { return filePath_.empty(); }
 
-   const core::FilePath& filePath() const { return filePath_; }
+   const ::core::FilePath& filePath() const { return filePath_; }
    int line() const { return line_; }
 
 private:
-   core::FilePath filePath_;
+   ::core::FilePath filePath_;
    int line_;
 };
 
@@ -165,16 +165,16 @@ public:
    FileAndLine rnwLine(const FileAndLine& texLine) const;
    FileAndLine texLine(const FileAndLine& rnwLine) const;
 
-   core::tex::LogEntry fixup(const core::tex::LogEntry& entry,
+   ::core::tex::LogEntry fixup(const ::core::tex::LogEntry& entry,
                              bool* pSuccess=NULL) const;
 
 private:
    std::vector<Concordance> concordances_;
 };
 
-void removePrevious(const core::FilePath& rnwFile);
+void removePrevious(const ::core::FilePath& rnwFile);
 
-core::Error readIfExists(const core::FilePath& srcFile,
+core::Error readIfExists(const ::core::FilePath& srcFile,
                          Concordances* pConcordances);
 
 } // namespace rnw_concordance

@@ -157,8 +157,8 @@ struct ProcessConfig
       : stdStreamBehavior(StdStreamInherit)
    {
    }
-   core::system::Options args;
-   core::system::Options environment;
+   ::core::system::Options args;
+   ::core::system::Options environment;
    std::string stdInput;
    StdStreamBehavior stdStreamBehavior;
    ProcessLimits limits;
@@ -171,7 +171,7 @@ core::Error launchChildProcess(std::string path,
                                ProcessConfig config,
                                PidType* pProcessId ) ;
 
-bool isUserNotFoundError(const core::Error& error);
+bool isUserNotFoundError(const ::core::Error& error);
 
 core::Error userBelongsToGroup(const user::User& user,
                                const std::string& groupName,

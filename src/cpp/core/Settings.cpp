@@ -39,7 +39,7 @@ Error Settings::initialize(const FilePath& filePath)
 {
    settingsFile_ = filePath ;
    settingsMap_.clear() ;
-   Error error = core::readStringMapFromFile(settingsFile_, &settingsMap_) ;
+   Error error = ::core::readStringMapFromFile(settingsFile_, &settingsMap_) ;
    if (error)
    {
       // we don't consider file-not-found and error because it is a 
@@ -151,7 +151,7 @@ void Settings::endUpdate()
 void Settings::writeSettings() 
 {
    isDirty_ = false;
-   Error error = core::writeStringMapToFile(settingsFile_, settingsMap_) ; 
+   Error error = ::core::writeStringMapToFile(settingsFile_, settingsMap_) ; 
    if (error)
      LOG_ERROR(error);
 }

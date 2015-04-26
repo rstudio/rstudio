@@ -215,7 +215,7 @@ Error ConsoleActions::loadFromFile(const FilePath& filePath)
    return Success();
 }
    
-Error ConsoleActions::saveToFile(const core::FilePath& filePath) const
+Error ConsoleActions::saveToFile(const ::core::FilePath& filePath) const
 {
    // write actions
    json::Object actionsObject;

@@ -161,9 +161,9 @@ public:
    {
       // validate that dictionaries exist
       if (!dictionary.affPath().exists())
-         return core::fileNotFoundError(dictionary.affPath(), ERROR_LOCATION);
+         return ::core::fileNotFoundError(dictionary.affPath(), ERROR_LOCATION);
       if (!dictionary.dicPath().exists())
-         return core::fileNotFoundError(dictionary.dicPath(), ERROR_LOCATION);
+         return ::core::fileNotFoundError(dictionary.dicPath(), ERROR_LOCATION);
 
       // convert paths to system encoding before sending to external API
       std::string systemAffPath = string_utils::utf8ToSystem(
@@ -229,10 +229,10 @@ private:
 
       // read the file and strip the BOM
       std::string contents;
-      Error error = core::readStringFromFile(dicDeltaPath, &contents);
+      Error error = ::core::readStringFromFile(dicDeltaPath, &contents);
       if (error)
          return error;
-      core::stripBOM(&contents);
+      ::core::stripBOM(&contents);
 
       // split into lines
       std::vector<std::string> lines;
@@ -356,7 +356,7 @@ public:
                        bool *pAdded)
    {
       if (!dicPath.exists())
-         return core::fileNotFoundError(dicPath, ERROR_LOCATION);
+         return ::core::fileNotFoundError(dicPath, ERROR_LOCATION);
 
       // Convert path to system encoding before sending to external api
       std::string systemDicPath = string_utils::utf8ToSystem(dicPath.absolutePath());

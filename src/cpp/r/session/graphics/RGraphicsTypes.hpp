@@ -66,9 +66,9 @@ struct GraphicsDeviceFunctions
    boost::function<bool()> isActive;
    boost::function<DisplaySize()> displaySize;
    UnitConversionFunctions convert;
-   boost::function<core::Error(const core::FilePath&,
-                               const core::FilePath&)> saveSnapshot;
-   boost::function<core::Error(const core::FilePath&)> restoreSnapshot;
+   boost::function< ::core::Error(const ::core::FilePath&,
+                               const ::core::FilePath&)> saveSnapshot;
+   boost::function< ::core::Error(const ::core::FilePath&)> restoreSnapshot;
    boost::function<void()> copyToActiveDevice;
    boost::function<std::string()> imageFileExtension;
    boost::function<void()> close;

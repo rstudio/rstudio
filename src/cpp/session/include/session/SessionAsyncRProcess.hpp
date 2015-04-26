@@ -53,9 +53,9 @@ public:
    virtual ~AsyncRProcess();
 
    void start(const char* rCommand,
-              const core::FilePath& workingDir,
+              const ::core::FilePath& workingDir,
               AsyncRProcessOptions rOptions,
-              std::vector<core::FilePath> rSourceFiles = std::vector<core::FilePath>());
+              std::vector< ::core::FilePath> rSourceFiles = std::vector< ::core::FilePath>());
 
    bool isRunning();
    void terminate();

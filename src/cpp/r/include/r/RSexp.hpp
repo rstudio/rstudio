@@ -121,7 +121,7 @@ core::Error extract(SEXP valueSEXP, std::set<std::string>* pSet);
 core::Error extract(SEXP valueSEXP, std::map< std::string, std::set<std::string> >* pMap);
       
 // create SEXP from c++ type
-SEXP create(const core::json::Value& value, Protect* pProtect);
+SEXP create(const ::core::json::Value& value, Protect* pProtect);
 SEXP create(const char* value, Protect* pProtect);
 SEXP create(const std::string& value, Protect* pProtect);
 SEXP create(int value, Protect* pProtect);
@@ -139,8 +139,8 @@ SEXP create(const std::map<std::string, std::vector<std::string> >& value,
 SEXP create(const std::vector<std::pair<std::string,std::string> >& value, 
             Protect* pProtect);
 SEXP create(const std::set<std::string>& value, Protect* pProtect);
-SEXP create(const core::json::Array& value, Protect* pProtect);
-SEXP create(const core::json::Object& value, Protect* pProtect);
+SEXP create(const ::core::json::Array& value, Protect* pProtect);
+SEXP create(const ::core::json::Object& value, Protect* pProtect);
 SEXP create(const ListBuilder& builder, Protect* pProtect);
 SEXP create(const std::map<std::string, std::string>& value, Protect* pProtect);
 
@@ -151,7 +151,7 @@ inline int indexOfElementNamed(SEXP listSEXP, const std::string& name)
 {
    // get the names so we can determine which slot the element is in are in
    std::vector<std::string> names;
-   core::Error error = r::sexp::getNames(listSEXP, &names);
+   ::core::Error error = r::sexp::getNames(listSEXP, &names);
    if (error)
       return -1;
 
@@ -180,7 +180,7 @@ core::Error getNamedListElement(SEXP listSEXP,
                                 T* pValue)
 {
    SEXP valueSEXP;
-   core::Error error = getNamedListSEXP(listSEXP, name, &valueSEXP);
+   ::core::Error error = getNamedListSEXP(listSEXP, name, &valueSEXP);
    if (error)
       return error;
    else
@@ -193,13 +193,13 @@ core::Error getNamedListElement(SEXP listSEXP,
                                 T* pValue,
                                 const T& defaultValue)
 {
-  core:: Error error = getNamedListElement(listSEXP, name, pValue);
+  ::core:: Error error = getNamedListElement(listSEXP, name, pValue);
   if (error)
   {
      if (error.code() == r::errc::ListElementNotFoundError)
      {
         *pValue = defaultValue;
-        return core::Success();
+        return ::core::Success();
      }
      else
      {
@@ -208,7 +208,7 @@ core::Error getNamedListElement(SEXP listSEXP,
    }
    else
    {
-      return core::Success();
+      return ::core::Success();
    }
 }
 
@@ -257,12 +257,12 @@ core::Error setNamedListElement(SEXP listSEXP,
    {
       // set the appropriate value and return success
       SET_VECTOR_ELT(listSEXP, valueIndex, valueSEXP);
-      return core::Success();
+      return ::core::Success();
    }
    else
    {
       // otherwise an error
-      core::Error error(r::errc::ListElementNotFoundError, ERROR_LOCATION);
+      ::core::Error error(r::errc::ListElementNotFoundError, ERROR_LOCATION);
       error.addProperty("element", name);
       return error;
    }
@@ -404,7 +404,7 @@ private:
 
 core::Error extractFunctionInfo(
       SEXP functionSEXP,
-      core::r_util::FunctionInformation* pInfo,
+      ::core::r_util::FunctionInformation* pInfo,
       bool extractDefaultArguments,
       bool recordSymbolUsage);
 

@@ -51,7 +51,7 @@ ProgramStatus Options::read(int argc, char * const argv[])
    optionsDesc.positionalOptions.add("argument", 1);
    
    // read options
-   ProgramStatus status = core::program_options::read(optionsDesc, argc, argv);
+   ProgramStatus status = ::core::program_options::read(optionsDesc, argc, argv);
    if (status.exit())
       return status;
    

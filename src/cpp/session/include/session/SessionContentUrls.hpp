@@ -29,7 +29,7 @@ namespace rstudio {
 namespace session {    
 namespace content_urls {
 
-std::string provision(const std::string& title, const core::FilePath& filePath);
+std::string provision(const std::string& title, const ::core::FilePath& filePath);
 
 std::string provision(const std::string& title,
                       const std::string& content,

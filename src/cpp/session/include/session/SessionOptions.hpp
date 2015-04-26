@@ -56,7 +56,7 @@ private:
 
 public:
    // read options  
-   core::ProgramStatus read(int argc, char * const argv[]);   
+   ::core::ProgramStatus read(int argc, char * const argv[]);   
    virtual ~Options() {}
    
    bool runTests() const
@@ -69,12 +69,12 @@ public:
       return verifyInstallation_;
    }
 
-   core::FilePath verifyInstallationHomeDir() const
+   ::core::FilePath verifyInstallationHomeDir() const
    {
       if (!verifyInstallationHomeDir_.empty())
-         return core::FilePath(verifyInstallationHomeDir_.c_str());
+         return ::core::FilePath(verifyInstallationHomeDir_.c_str());
       else
-         return core::FilePath();
+         return ::core::FilePath();
    }
 
    std::string programIdentity() const 
@@ -93,12 +93,12 @@ public:
    }
    
    // agreement
-   core::FilePath agreementFilePath() const
+   ::core::FilePath agreementFilePath() const
    { 
       if (!agreementFilePath_.empty())
-         return core::FilePath(agreementFilePath_.c_str());
+         return ::core::FilePath(agreementFilePath_.c_str());
       else
-         return core::FilePath();
+         return ::core::FilePath();
    }
 
    // docs
@@ -113,9 +113,9 @@ public:
       return std::string(wwwLocalPath_.c_str());
    }
 
-   core::FilePath wwwSymbolMapsPath() const
+   ::core::FilePath wwwSymbolMapsPath() const
    {
-      return core::FilePath(wwwSymbolMapsPath_.c_str());
+      return ::core::FilePath(wwwSymbolMapsPath_.c_str());
    }
 
    std::string wwwPort() const
@@ -133,9 +133,9 @@ public:
       return std::string(secret_.c_str());
    }
 
-   core::FilePath preflightScriptPath() const
+   ::core::FilePath preflightScriptPath() const
    {
-      return core::FilePath(preflightScript_.c_str());
+      return ::core::FilePath(preflightScript_.c_str());
    }
 
    int timeoutMinutes() const { return timeoutMinutes_; }
@@ -154,24 +154,24 @@ public:
 
    bool showHelpHome() const { return showHelpHome_; }
    
-   core::FilePath coreRSourcePath() const 
+   ::core::FilePath coreRSourcePath() const 
    { 
-      return core::FilePath(coreRSourcePath_.c_str());
+      return ::core::FilePath(coreRSourcePath_.c_str());
    }
    
-   core::FilePath modulesRSourcePath() const 
+   ::core::FilePath modulesRSourcePath() const 
    { 
-      return core::FilePath(modulesRSourcePath_.c_str()); 
+      return ::core::FilePath(modulesRSourcePath_.c_str()); 
    }
 
-   core::FilePath sessionLibraryPath() const
+   ::core::FilePath sessionLibraryPath() const
    {
-      return core::FilePath(sessionLibraryPath_.c_str());
+      return ::core::FilePath(sessionLibraryPath_.c_str());
    }
    
-   core::FilePath sessionPackageArchivesPath() const
+   ::core::FilePath sessionPackageArchivesPath() const
    {
-      return core::FilePath(sessionPackageArchivesPath_.c_str());
+      return ::core::FilePath(sessionPackageArchivesPath_.c_str());
    }
 
    
@@ -190,9 +190,9 @@ public:
       return rCompatibleGraphicsEngineVersion_;
    }
 
-   core::FilePath rResourcesPath() const
+   ::core::FilePath rResourcesPath() const
    {
-      return core::FilePath(rResourcesPath_.c_str());
+      return ::core::FilePath(rResourcesPath_.c_str());
    }
 
    std::string rHomeDirOverride()
@@ -216,59 +216,59 @@ public:
    bool limitXfsDiskQuota() const { return limitXfsDiskQuota_; }
    
    // external
-   core::FilePath rpostbackPath() const
+   ::core::FilePath rpostbackPath() const
    {
-      return core::FilePath(rpostbackPath_.c_str());
+      return ::core::FilePath(rpostbackPath_.c_str());
    }
 
-   core::FilePath consoleIoPath() const
+   ::core::FilePath consoleIoPath() const
    {
-      return core::FilePath(consoleIoPath_.c_str());
+      return ::core::FilePath(consoleIoPath_.c_str());
    }
 
-   core::FilePath gnudiffPath() const
+   ::core::FilePath gnudiffPath() const
    {
-      return core::FilePath(gnudiffPath_.c_str());
+      return ::core::FilePath(gnudiffPath_.c_str());
    }
 
-   core::FilePath gnugrepPath() const
+   ::core::FilePath gnugrepPath() const
    {
-      return core::FilePath(gnugrepPath_.c_str());
+      return ::core::FilePath(gnugrepPath_.c_str());
    }
 
-   core::FilePath msysSshPath() const
+   ::core::FilePath msysSshPath() const
    {
-      return core::FilePath(msysSshPath_.c_str());
+      return ::core::FilePath(msysSshPath_.c_str());
    }
 
-   core::FilePath sumatraPath() const
+   ::core::FilePath sumatraPath() const
    {
-      return core::FilePath(sumatraPath_.c_str());
+      return ::core::FilePath(sumatraPath_.c_str());
    }
    
-   core::FilePath hunspellDictionariesPath() const
+   ::core::FilePath hunspellDictionariesPath() const
    {
-      return core::FilePath(hunspellDictionariesPath_.c_str());
+      return ::core::FilePath(hunspellDictionariesPath_.c_str());
    }
 
-   core::FilePath mathjaxPath() const
+   ::core::FilePath mathjaxPath() const
    {
-      return core::FilePath(mathjaxPath_.c_str());
+      return ::core::FilePath(mathjaxPath_.c_str());
    }
 
-   core::FilePath pandocPath() const
+   ::core::FilePath pandocPath() const
    {
-      return core::FilePath(pandocPath_.c_str());
+      return ::core::FilePath(pandocPath_.c_str());
    }
 
-   core::FilePath libclangPath() const
+   ::core::FilePath libclangPath() const
    {
-      return core::FilePath(libclangPath_.c_str());
+      return ::core::FilePath(libclangPath_.c_str());
    }
 
-   core::FilePath libclangHeadersPath() const
+   ::core::FilePath libclangHeadersPath() const
    {
-      return core::FilePath(libclangHeadersPath_.c_str());
+      return ::core::FilePath(libclangHeadersPath_.c_str());
    }
 
    bool allowFileDownloads() const
@@ -332,43 +332,43 @@ public:
       return showUserIdentity_;
    }
 
-   core::FilePath userHomePath() const 
+   ::core::FilePath userHomePath() const 
    { 
-      return core::FilePath(userHomePath_.c_str());
+      return ::core::FilePath(userHomePath_.c_str());
    }
    
-   core::FilePath userScratchPath() const 
+   ::core::FilePath userScratchPath() const 
    { 
-      return core::FilePath(userScratchPath_.c_str()); 
+      return ::core::FilePath(userScratchPath_.c_str()); 
    }
 
-   core::FilePath userLogPath() const
+   ::core::FilePath userLogPath() const
    {
       return userScratchPath().childPath("log");
    }
 
-   core::FilePath initialWorkingDirOverride()
+   ::core::FilePath initialWorkingDirOverride()
    {
       if (!initialWorkingDirOverride_.empty())
-         return core::FilePath(initialWorkingDirOverride_.c_str());
+         return ::core::FilePath(initialWorkingDirOverride_.c_str());
       else
-         return core::FilePath();
+         return ::core::FilePath();
    }
 
-   core::FilePath initialEnvironmentFileOverride()
+   ::core::FilePath initialEnvironmentFileOverride()
    {
       if (!initialEnvironmentFileOverride_.empty())
-         return core::FilePath(initialEnvironmentFileOverride_.c_str());
+         return ::core::FilePath(initialEnvironmentFileOverride_.c_str());
       else
-         return core::FilePath();
+         return ::core::FilePath();
    }
 
-   core::FilePath initialProjectPath()
+   ::core::FilePath initialProjectPath()
    {
       if (!initialProjectPath_.empty())
-         return core::FilePath(initialProjectPath_.c_str());
+         return ::core::FilePath(initialProjectPath_.c_str());
       else
-         return core::FilePath();
+         return ::core::FilePath();
    }
 
    void clearInitialContextSettings()
@@ -381,16 +381,16 @@ public:
    // The line ending we use when working with source documents
    // in memory. This doesn't really make sense for the user to
    // change.
-   core::string_utils::LineEnding sourceLineEnding() const
+   ::core::string_utils::LineEnding sourceLineEnding() const
    {
-      return core::string_utils::LineEndingPosix;
+      return ::core::string_utils::LineEndingPosix;
    }
 
    // The line ending we persist to disk with. This could potentially
    // be a per-user or even per-file option.
-   core::string_utils::LineEnding sourcePersistLineEnding() const
+   ::core::string_utils::LineEnding sourcePersistLineEnding() const
    {
-      return core::string_utils::LineEndingNative;
+      return ::core::string_utils::LineEndingNative;
    }
 
    std::string monitorSharedSecret() const
@@ -411,13 +411,13 @@ public:
    bool getBoolOverlayOption(const std::string& name);
 
 private:
-   void resolvePath(const core::FilePath& resourcePath,
+   void resolvePath(const ::core::FilePath& resourcePath,
                     std::string* pPath);
-   void resolvePostbackPath(const core::FilePath& resourcePath,
+   void resolvePostbackPath(const ::core::FilePath& resourcePath,
                             std::string* pPath);
-   void resolvePandocPath(const core::FilePath& resourcePath, std::string* pPath);
+   void resolvePandocPath(const ::core::FilePath& resourcePath, std::string* pPath);
 
-   void resolveRsclangPath(const core::FilePath& resourcePath, std::string* pPath);
+   void resolveRsclangPath(const ::core::FilePath& resourcePath, std::string* pPath);
 
    void addOverlayOptions(boost::program_options::options_description* pOpt);
    bool validateOverlayOptions(std::string* pErrMsg);

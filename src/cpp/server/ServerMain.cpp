@@ -80,8 +80,8 @@ void shutdown();
 
 namespace {
    
-bool mainPageFilter(const core::http::Request& request,
-                    core::http::Response* pResponse)
+bool mainPageFilter(const ::core::http::Request& request,
+                    ::core::http::Response* pResponse)
 {
    return server::eval::expirationFilter(request, pResponse) &&
           server::browser::supportedBrowserFilter(request, pResponse) &&
@@ -198,7 +198,7 @@ void httpServerAddHandlers()
    FilePath progressPagePath = wwwPath.complete("progress.htm");
    uri_handlers::addBlocking("/progress",
                                secureHttpHandler(boost::bind(
-                               core::text::handleSecureTemplateRequest,
+                               ::core::text::handleSecureTemplateRequest,
                                _1, progressPagePath, _2, _3)));
 
    // establish browser unsupported handler
@@ -275,7 +275,7 @@ Error waitForSignals()
          overlay::shutdown();
 
          // clear the signal mask
-         Error error = core::system::clearSignalMask();
+         Error error = ::core::system::clearSignalMask();
          if (error)
             LOG_ERROR(error);
 
@@ -353,11 +353,11 @@ int main(int argc, char * const argv[])
    {
       // initialize log
       const char * const kProgramIdentity = "rserver";
-      initializeSystemLog(kProgramIdentity, core::system::kLogLevelWarning);
+      initializeSystemLog(kProgramIdentity, ::core::system::kLogLevelWarning);
 
       // ignore SIGPIPE (don't log error because we should never call
       // syslog prior to daemonizing)
-      core::system::ignoreSignal(core::system::SigPipe);
+      ::core::system::ignoreSignal(::core::system::SigPipe);
 
       // read program options 
       std::ostringstream osWarnings;
@@ -375,17 +375,17 @@ int main(int argc, char * const argv[])
       // daemonize if requested
       if (options.serverDaemonize())
       {
-         Error error = core::system::daemonize();
+         Error error = ::core::system::daemonize();
          if (error)
-            return core::system::exitFailure(error, ERROR_LOCATION);
+            return ::core::system::exitFailure(error, ERROR_LOCATION);
 
-         error = core::system::ignoreTerminalSignals();
+         error = ::core::system::ignoreTerminalSignals();
          if (error)
-            return core::system::exitFailure(error, ERROR_LOCATION);
+            return ::core::system::exitFailure(error, ERROR_LOCATION);
 
          // set file creation mask to 022 (might have inherted 0 from init)
          if (options.serverSetUmask())
-            setUMask(core::system::OthersNoWriteMask);
+            setUMask(::core::system::OthersNoWriteMask);
       }
 
       // wait until now to output options warnings (we need to wait for our
@@ -405,41 +405,41 @@ int main(int argc, char * const argv[])
 
       // increase the number of open files allowed (need more files
       // so we can supports lots of concurrent connectins)
-      if (core::system::realUserIsRoot())
+      if (::core::system::realUserIsRoot())
       {
-         Error error = setResourceLimit(core::system::FilesLimit, 4096);
+         Error error = setResourceLimit(::core::system::FilesLimit, 4096);
          if (error)
-            return core::system::exitFailure(error, ERROR_LOCATION);
+            return ::core::system::exitFailure(error, ERROR_LOCATION);
       }
 
       // set working directory
       Error error = FilePath(options.serverWorkingDir()).makeCurrentPath();
       if (error)
-         return core::system::exitFailure(error, ERROR_LOCATION);
+         return ::core::system::exitFailure(error, ERROR_LOCATION);
 
       // initialize crypto utils
-      core::system::crypto::initialize();
+      ::core::system::crypto::initialize();
 
       // initialize secure cookie module
       error = auth::secure_cookie::initialize();
       if (error)
-         return core::system::exitFailure(error, ERROR_LOCATION);
+         return ::core::system::exitFailure(error, ERROR_LOCATION);
 
       // initialize the session proxy
       error = session_proxy::initialize();
       if (error)
-         return core::system::exitFailure(error, ERROR_LOCATION);
+         return ::core::system::exitFailure(error, ERROR_LOCATION);
 
       // initialize http server
       error = httpServerInit();
       if (error)
-         return core::system::exitFailure(error, ERROR_LOCATION);
+         return ::core::system::exitFailure(error, ERROR_LOCATION);
 
       // initialize the process supervisor (needs to happen post http server
       // init for access to the scheduled command list)
       error = process_supervisor::initialize();
       if (error)
-         return core::system::exitFailure(error, ERROR_LOCATION);
+         return ::core::system::exitFailure(error, ERROR_LOCATION);
 
       // initialize monitor (needs to happen post http server init for access
       // to the server's io service)
@@ -448,13 +448,13 @@ int main(int argc, char * const argv[])
                                        s_pHttpServer->ioService());
 
       // add a monitor log writer
-      core::system::addLogWriter(
+      ::core::system::addLogWriter(
                 monitor::client().createLogWriter(kProgramIdentity));
 
       // call overlay initialize
       error = overlay::initialize();
       if (error)
-         return core::system::exitFailure(error, ERROR_LOCATION);
+         return ::core::system::exitFailure(error, ERROR_LOCATION);
 
       // add handlers and initiliaze addins (offline has distinct behavior)
       if (server::options().serverOffline())
@@ -469,14 +469,14 @@ int main(int argc, char * const argv[])
          // initialize addins
          error = addins::initialize();
          if (error)
-            return core::system::exitFailure(error, ERROR_LOCATION);
+            return ::core::system::exitFailure(error, ERROR_LOCATION);
 
          // initialize pam auth if we don't already have an auth handler
          if (!auth::handler::isRegistered())
          {
             error = pam_auth::initialize();
             if (error)
-               return core::system::exitFailure(error, ERROR_LOCATION);
+               return ::core::system::exitFailure(error, ERROR_LOCATION);
          }
       }
 
@@ -499,9 +499,9 @@ int main(int argc, char * const argv[])
       if (!runAsUser.empty())
       {
          // drop root priv
-         Error error = core::system::temporarilyDropPriv(runAsUser);
+         Error error = ::core::system::temporarilyDropPriv(runAsUser);
          if (error)
-            return core::system::exitFailure(error, ERROR_LOCATION);
+            return ::core::system::exitFailure(error, ERROR_LOCATION);
       }
 
       // run special verify installation mode if requested
@@ -509,7 +509,7 @@ int main(int argc, char * const argv[])
       {
          Error error = session_proxy::runVerifyInstallationSession();
          if (error)
-            return core::system::exitFailure(error, ERROR_LOCATION);
+            return ::core::system::exitFailure(error, ERROR_LOCATION);
 
          return EXIT_SUCCESS;
       }
@@ -517,17 +517,17 @@ int main(int argc, char * const argv[])
       // call overlay startup
       error = overlay::startup();
       if (error)
-         return core::system::exitFailure(error, ERROR_LOCATION);
+         return ::core::system::exitFailure(error, ERROR_LOCATION);
 
       // run http server
       error = s_pHttpServer->run(options.wwwThreadPoolSize());
       if (error)
-         return core::system::exitFailure(error, ERROR_LOCATION);
+         return ::core::system::exitFailure(error, ERROR_LOCATION);
 
       // wait for signals
       error = waitForSignals();
       if (error)
-         return core::system::exitFailure(error, ERROR_LOCATION);
+         return ::core::system::exitFailure(error, ERROR_LOCATION);
 
       // NOTE: we never get here because waitForSignals waits forever
       return EXIT_SUCCESS;

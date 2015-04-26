@@ -74,7 +74,7 @@ std::string Base64ImageFilter::toBase64Image(const boost::cmatch& match)
        boost::algorithm::starts_with(imagePath.mimeContentType(), "image/"))
    {     
       std::string imageBase64;
-      Error error = core::base64::encode(imagePath, &imageBase64);
+      Error error = ::core::base64::encode(imagePath, &imageBase64);
       if (!error)
       {
          imgRef = "data:" + imagePath.mimeContentType() + ";base64,";
@@ -109,7 +109,7 @@ std::string CssUrlFilter::toBase64Url(const boost::cmatch& match)
    if (urlPath.exists() && (ext == ".ttf" || ext == ".otf"))
    {
       std::string fontBase64;
-      Error error = core::base64::encode(urlPath, &fontBase64);
+      Error error = ::core::base64::encode(urlPath, &fontBase64);
       if (!error)
       {
          // return base64 encoded font

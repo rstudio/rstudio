@@ -60,7 +60,7 @@ std::ostream& operator << (std::ostream& os, const PerformanceTimer& t) ;
 } // namespace core 
 } // namespace rstudio
 
-#define TIME_FUNCTION core::PerformanceTimer t(BOOST_CURRENT_FUNCTION);
+#define TIME_FUNCTION ::core::PerformanceTimer t(BOOST_CURRENT_FUNCTION);
 
 #endif // CORE_PERFORMANCE_TIMER_HPP
 

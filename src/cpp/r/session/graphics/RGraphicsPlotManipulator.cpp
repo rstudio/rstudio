@@ -79,12 +79,12 @@ Error PlotManipulator::load(const FilePath& filePath)
    return Success();
 }
 
-void PlotManipulator::asJson(core::json::Value* pValue) const
+void PlotManipulator::asJson(::core::json::Value* pValue) const
 {
    if (!empty())
    {
       // build manipulator json
-      core::json::Object manipulator;
+      ::core::json::Object manipulator;
 
       // meta-info
       manipulator["id"] = getAsJson(".id");
@@ -92,7 +92,7 @@ void PlotManipulator::asJson(core::json::Value* pValue) const
       manipulator["variables"] = getAsJson(".variables");
 
       // variable values
-      core::json::Value valuesJson;
+      ::core::json::Value valuesJson;
       SEXP valuesSEXP = getUserVisibleValuesList();
       Error error = r::json::jsonValueFromObject(valuesSEXP, &valuesJson);
       if (error)
@@ -104,7 +104,7 @@ void PlotManipulator::asJson(core::json::Value* pValue) const
    }
    else
    {
-      *pValue = core::json::Value();
+      *pValue = ::core::json::Value();
    }
 }
 
@@ -141,7 +141,7 @@ SEXP PlotManipulator::get(const std::string& name) const
 
 core::json::Value PlotManipulator::getAsJson(const std::string& name) const
 {
-   core::json::Value value;
+   ::core::json::Value value;
    Error error = r::json::jsonValueFromObject(get(name), &value);
    if (error)
       LOG_ERROR(error);
@@ -156,11 +156,11 @@ core::json::Object PlotManipulator::getControlAsJson(SEXP controlSEXP) const
    if (error)
    {
       LOG_ERROR(error);
-      return core::json::Object();
+      return ::core::json::Object();
    }
 
    // json object to return
-   core::json::Object control;
+   ::core::json::Object control;
 
    int length = r::sexp::length(controlSEXP);
    for (int i=0; i<length; i++)
@@ -174,12 +174,12 @@ core::json::Object PlotManipulator::getControlAsJson(SEXP controlSEXP) const
 
       // get json for field
       SEXP fieldSEXP = VECTOR_ELT(controlSEXP, i);
-      core::json::Value fieldValue;
+      ::core::json::Value fieldValue;
       Error error = r::json::jsonValueFromObject(fieldSEXP, &fieldValue);
       if (error)
       {
          LOG_ERROR(error);
-         return core::json::Object();
+         return ::core::json::Object();
       }
 
       // set the field
@@ -209,11 +209,11 @@ core::json::Object PlotManipulator::getControlsAsJson() const
          if (error)
          {
             LOG_ERROR(error);
-            return core::json::Object();
+            return ::core::json::Object();
          }
 
          // json object to return
-         core::json::Object controls;
+         ::core::json::Object controls;
 
          int length = r::sexp::length(controlsSEXP);
          for (int i=0; i<length; i++)
@@ -229,12 +229,12 @@ core::json::Object PlotManipulator::getControlsAsJson() const
       }
       else
       {
-         return core::json::Object();
+         return ::core::json::Object();
       }
    }
    else
    {
-      return core::json::Object();
+      return ::core::json::Object();
    }
 }
 

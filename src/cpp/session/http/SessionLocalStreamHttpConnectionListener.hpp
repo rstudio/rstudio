@@ -36,7 +36,7 @@ class LocalStreamHttpConnectionListener :
 {
 public:
    LocalStreamHttpConnectionListener(const FilePath& streamPath,
-                                     core::system::FileMode streamFileMode,
+                                     ::core::system::FileMode streamFileMode,
                                      const std::string& secret,
                                      int limitRpcClientUid)
       : localStreamPath_(streamPath),
@@ -75,8 +75,8 @@ private:
          int socket = ptrConnection->socket().native();
 
          // get client identity
-         core::system::user::UserIdentity userIdentity;
-         core::Error error = socketPeerIdentity(socket,&userIdentity);
+         ::core::system::user::UserIdentity userIdentity;
+         ::core::Error error = socketPeerIdentity(socket,&userIdentity);
          if (error)
          {
             LOG_ERROR(error);
@@ -121,8 +121,8 @@ protected:
    }
 
 private:
-   core::FilePath localStreamPath_;
-   core::system::FileMode streamFileMode_;
+   ::core::FilePath localStreamPath_;
+   ::core::system::FileMode streamFileMode_;
 
    // desktop shared secret
    std::string secret_;

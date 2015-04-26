@@ -21,7 +21,7 @@ namespace server {
 class ServerErrorCategory : public boost::system::error_category
 {
 public:
-   virtual const char * name() const;
+   virtual const char * name() const BOOST_NOEXCEPT;
    virtual std::string message( int ev ) const;
 };
 
@@ -31,7 +31,7 @@ const boost::system::error_category& serverCategory()
    return serverErrorCategoryConst ;
 }
 
-const char * ServerErrorCategory::name() const
+const char * ServerErrorCategory::name() const BOOST_NOEXCEPT
 {
    return "server" ;
 }
@@ -58,7 +58,7 @@ std::string ServerErrorCategory::message( int ev ) const
 }
 
 
-bool isAuthenticationError(const core::Error& error)
+bool isAuthenticationError(const ::core::Error& error)
 {
    if (error.code() == server::errc::AuthenticationError)
       return true;
@@ -66,7 +66,7 @@ bool isAuthenticationError(const core::Error& error)
       return false;
 }
 
-bool isSessionUnavailableError(const core::Error& error)
+bool isSessionUnavailableError(const ::core::Error& error)
 {
    if (error.code() == server::errc::SessionUnavailableError)
       return true;

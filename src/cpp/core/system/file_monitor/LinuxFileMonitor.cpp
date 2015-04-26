@@ -436,7 +436,7 @@ Handle registrationFailure(int errorNumber,
 namespace detail {
 
 // register a new file monitor
-Handle registerMonitor(const core::FilePath& filePath,
+Handle registerMonitor(const ::core::FilePath& filePath,
                        bool recursive,
                        const boost::function<bool(const FileInfo&)>& filter,
                        const Callbacks& callbacks)

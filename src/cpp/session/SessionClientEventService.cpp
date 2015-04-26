@@ -65,7 +65,7 @@ Error ClientEventService::start(const std::string& clientId)
    
    // block all signals for launch of background thread (will cause it
    // to never receive signals)
-   core::system::SignalBlocker signalBlocker;
+   ::core::system::SignalBlocker signalBlocker;
    Error error = signalBlocker.blockAll();
    if (error)
       return error ;
@@ -75,7 +75,7 @@ Error ClientEventService::start(const std::string& clientId)
    {
       using boost::bind;
       boost::thread serviceThread(bind(&ClientEventService::run, this));       
-      serviceThread_ = serviceThread.move();
+      serviceThread_ = std::move(serviceThread);
       
       return Success();
    }
@@ -174,7 +174,7 @@ void ClientEventService::addClientEvent(const json::Object& eventObject)
 }
 
 void ClientEventService::setClientEventResult(
-                                       core::json::JsonRpcResponse* pResponse)
+                                       ::core::json::JsonRpcResponse* pResponse)
 {
    LOCK_MUTEX(mutex_)
    {

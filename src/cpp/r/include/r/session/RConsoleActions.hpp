@@ -62,17 +62,17 @@ public:
    
    // get actions in their wire-representation (two identically sized arrays, 
    // one for type and one for data)
-   void asJson(core::json::Object* pActions) const;
+   void asJson(::core::json::Object* pActions) const;
    
-   core::Error loadFromFile(const core::FilePath& filePath);
-   core::Error saveToFile(const core::FilePath& filePath) const;
+   ::core::Error loadFromFile(const ::core::FilePath& filePath);
+   ::core::Error saveToFile(const ::core::FilePath& filePath) const;
 
 private:
    // protect data using a mutex because background threads (e.g.
    // console output capture threads) can interact with console actions
    mutable boost::mutex mutex_;
-   boost::circular_buffer<core::json::Value> actionsType_;
-   boost::circular_buffer<core::json::Value> actionsData_;
+   boost::circular_buffer< ::core::json::Value> actionsType_;
+   boost::circular_buffer< ::core::json::Value> actionsData_;
    std::vector<std::string> pendingInput_;
 };
 

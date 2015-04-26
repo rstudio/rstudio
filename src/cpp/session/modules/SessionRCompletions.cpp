@@ -173,7 +173,7 @@ struct SourceIndexCompletions {
 SourceIndexCompletions getSourceIndexCompletions(const std::string& token)
 {
    // get functions from the source index
-   std::vector<core::r_util::RSourceItem> items;
+   std::vector< ::core::r_util::RSourceItem> items;
    bool moreAvailable = false;
 
    // TODO: wire up 'moreAvailable'
@@ -184,7 +184,7 @@ SourceIndexCompletions getSourceIndexCompletions(const std::string& token)
                                       &moreAvailable);
 
    SourceIndexCompletions srcCompletions;
-   BOOST_FOREACH(const core::r_util::RSourceItem& item, items)
+   BOOST_FOREACH(const ::core::r_util::RSourceItem& item, items)
    {
       if (item.braceLevel() == 0)
       {
@@ -262,7 +262,7 @@ SEXP rs_scanFiles(SEXP pathSEXP,
    FileInfo fileInfo(filePath);
    tree<FileInfo> tree;
 
-   core::system::FileScannerOptions options;
+   ::core::system::FileScannerOptions options;
    options.recursive = true;
    options.yield = true;
 
@@ -332,10 +332,10 @@ SEXP rs_getActiveFrame(SEXP depthSEXP)
 SEXP rs_getNAMESPACEImportedSymbols(SEXP documentIdSEXP)
 {
    std::string documentId = r::sexp::asString(documentIdSEXP);
-   boost::shared_ptr<core::r_util::RSourceIndex> index =
+   boost::shared_ptr< ::core::r_util::RSourceIndex> index =
          code_search::rSourceIndex().get(documentId);
    
-   using namespace core::r_util;
+   using namespace ::core::r_util;
    std::vector<std::string> pkgs;
    
    BOOST_FOREACH(const std::string& pkg, RSourceIndex::getImportedPackages())
@@ -423,7 +423,7 @@ SEXP rs_getInferredCompletions(SEXP packagesSEXP)
       r::sexp::ListBuilder builder(&protect);
       builder.add("exports", pkgInfo.exports);
       builder.add("types", pkgInfo.types);
-      builder.add("functions", core::r_util::infoToFormalMap(pkgInfo.functionInfo));
+      builder.add("functions", ::core::r_util::infoToFormalMap(pkgInfo.functionInfo));
       parent.add(*it, builder);
    }
    
@@ -433,7 +433,7 @@ SEXP rs_getInferredCompletions(SEXP packagesSEXP)
 SEXP rs_listInferredPackages(SEXP documentIdSEXP)
 {
    std::string documentId = r::sexp::asString(documentIdSEXP);
-   boost::shared_ptr<core::r_util::RSourceIndex> index =
+   boost::shared_ptr< ::core::r_util::RSourceIndex> index =
          code_search::rSourceIndex().get(documentId);
 
    // NOTE: can occur when user edits file not in source index

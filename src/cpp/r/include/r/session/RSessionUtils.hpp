@@ -40,7 +40,7 @@ bool isDevtoolsDevModeOn();
 bool isDefaultPrompt(const std::string& prompt);
 
 // user home path
-const core::FilePath& userHomePath();  
+const ::core::FilePath& userHomePath();  
 
 core::FilePath safeCurrentPath();
    

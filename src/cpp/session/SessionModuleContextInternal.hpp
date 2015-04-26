@@ -42,8 +42,8 @@ core::Error initialize();
 // suspend and resume
 
 void onSuspended(const r::session::RSuspendOptions& options,
-                 core::Settings* pPersistentState);
-void onResumed(const core::Settings& persistentState);
+                 ::core::Settings* pPersistentState);
+void onResumed(const ::core::Settings& persistentState);
 
 // notify of backgound processing
 void onBackgroundProcessing(bool isIdle);

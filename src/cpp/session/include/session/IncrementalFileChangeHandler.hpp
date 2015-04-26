@@ -38,8 +38,8 @@ namespace session {
 class IncrementalFileChangeHandler : boost::noncopyable
 {
 public:
-   typedef boost::function<bool(const core::FileInfo&)> Filter;
-   typedef boost::function<void(const core::system::FileChangeEvent&)> Handler;
+   typedef boost::function<bool(const ::core::FileInfo&)> Filter;
+   typedef boost::function<void(const ::core::system::FileChangeEvent&)> Handler;
 
 public:
    IncrementalFileChangeHandler(
@@ -94,7 +94,7 @@ public:
          scheduleProcessing(initialDelayPeriod_);
    }
 
-   void enqueFileChange(const core::system::FileChangeEvent& event)
+   void enqueFileChange(const ::core::system::FileChangeEvent& event)
    {
       // screen out files which don't pass the filter
       if (!filter_(event.fileInfo()))
@@ -109,7 +109,7 @@ public:
 
    void clear()
    {
-      queue_ = std::queue<core::system::FileChangeEvent>();
+      queue_ = std::queue< ::core::system::FileChangeEvent>();
    }
 
 private:
@@ -129,7 +129,7 @@ private:
       while (!queue_.empty() && (now() < workUntil))
       {
          // remove the event from the queue
-         core::system::FileChangeEvent event = queue_.front();
+         ::core::system::FileChangeEvent event = queue_.front();
          queue_.pop();
 
          // process the change
@@ -161,12 +161,12 @@ private:
 
    // hooks for file monitor subscription
 
-   void onMonitoringEnabled(const tree<core::FileInfo>& files)
+   void onMonitoringEnabled(const tree< ::core::FileInfo>& files)
    {
       enqueFiles(files.begin_leaf(), files.end_leaf());
    }
 
-   void onFilesChanged(const std::vector<core::system::FileChangeEvent>& events)
+   void onFilesChanged(const std::vector< ::core::system::FileChangeEvent>& events)
    {
       std::for_each(
         events.begin(),
@@ -175,7 +175,7 @@ private:
    }
 
 private:
-   std::queue<core::system::FileChangeEvent> queue_;
+   std::queue< ::core::system::FileChangeEvent> queue_;
    Filter filter_;
    Handler handler_;
    boost::posix_time::time_duration initialDelayPeriod_;

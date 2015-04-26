@@ -122,7 +122,7 @@ namespace {
 
 FilePath userHomePath()
 {
-   return core::system::userHomePath("R_USER|HOME");
+   return ::core::system::userHomePath("R_USER|HOME");
 }
 
 QString createAliasedPath(const QString& path)
@@ -859,10 +859,10 @@ void GwtCallback::openTerminal(QString terminalPath,
                                QString extraPathEntries)
 {
    // append extra path entries to our path before launching
-   std::string path = core::system::getenv("PATH");
+   std::string path = ::core::system::getenv("PATH");
    std::string previousPath = path;
-   core::system::addToPath(&path, extraPathEntries.toStdString());
-   core::system::setenv("PATH", path);
+   ::core::system::addToPath(&path, extraPathEntries.toStdString());
+   ::core::system::setenv("PATH", path);
 
 #if defined(Q_OS_MAC)
 
@@ -893,9 +893,9 @@ void GwtCallback::openTerminal(QString terminalPath,
    else
    {
       // set HOME to USERPROFILE so msys ssh can find our keys
-      std::string previousHome = core::system::getenv("HOME");
-      std::string userProfile = core::system::getenv("USERPROFILE");
-      core::system::setenv("HOME", userProfile);
+      std::string previousHome = ::core::system::getenv("HOME");
+      std::string userProfile = ::core::system::getenv("USERPROFILE");
+      ::core::system::setenv("HOME", userProfile);
 
       // run the process
       QProcess::startDetached(QString::fromUtf8("cmd.exe"),
@@ -903,7 +903,7 @@ void GwtCallback::openTerminal(QString terminalPath,
                               resolveAliasedPath(workingDirectory));
 
       // revert to previous home
-      core::system::setenv("HOME", previousHome);
+      ::core::system::setenv("HOME", previousHome);
    }
 
 
@@ -929,7 +929,7 @@ void GwtCallback::openTerminal(QString terminalPath,
 #endif
 
    // restore previous path
-   core::system::setenv("PATH", previousPath);
+   ::core::system::setenv("PATH", previousPath);
 }
 
 bool isProportionalFont(QString fontFamily)
@@ -1085,7 +1085,7 @@ void GwtCallback::installRtools(QString version, QString installerPath)
    args.push_back(QString::fromUtf8("/SILENT"));
 
    // custom install directory
-   std::string systemDrive = core::system::getenv("SYSTEMDRIVE");
+   std::string systemDrive = ::core::system::getenv("SYSTEMDRIVE");
    if (!systemDrive.empty() && FilePath(systemDrive).exists())
    {
       std::string dir = systemDrive + "\\RBuildTools\\" + version.toStdString();

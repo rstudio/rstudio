@@ -60,7 +60,7 @@ struct Handle
    }
 
    explicit Handle(void* pData)
-      : id(core::system::generateUuid()),
+      : id(::core::system::generateUuid()),
         pData(pData)
    {
    }
@@ -90,11 +90,11 @@ struct Callbacks
    boost::function<void(Handle, const tree<FileInfo>&)> onRegistered;
 
    // callback which occurs if a registration error occurs
-   boost::function<void(const core::Error&)> onRegistrationError;
+   boost::function<void(const ::core::Error&)> onRegistrationError;
 
    // callback which occurs if an error occurs during monitoring (the
    // monitor is automatically unregistered if a monitoring error occurs)
-   boost::function<void(const core::Error&)> onMonitoringError;
+   boost::function<void(const ::core::Error&)> onMonitoringError;
 
    // callback which occurs when files change
    boost::function<void(const std::vector<FileChangeEvent>&)> onFilesChanged;
@@ -116,7 +116,7 @@ struct Callbacks
 // guarantee that the deletion of your shared_ptr object is invoked on the same
 // thread that called registerMonitor you should also bind a function to
 // onUnregistered (otherwise the delete will occur on the file monitoring thread)
-void registerMonitor(const core::FilePath& filePath,
+void registerMonitor(const ::core::FilePath& filePath,
                      bool recursive,
                      const boost::function<bool(const FileInfo&)>& filter,
                      const Callbacks& callbacks);

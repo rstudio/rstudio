@@ -30,9 +30,9 @@ void enqueRefreshEventWithDelay(int delay);
 void enqueueRefreshEvent();
 
 core::json::Object processResultToJson(
-      const core::system::ProcessResult& result);
+      const ::core::system::ProcessResult& result);
 
-core::FilePath fileFilterPath(const core::json::Value& fileFilterJson);
+core::FilePath fileFilterPath(const ::core::json::Value& fileFilterJson);
 
 void splitMessage(const std::string message,
                   std::string* pSubject,

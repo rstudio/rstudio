@@ -84,7 +84,7 @@ public:
 
    bool allLanguagesInstalled() const { return allLanguagesDir().exists(); }
 
-   core::Error availableLanguages(
+   ::core::Error availableLanguages(
                      std::vector<HunspellDictionary>* pDictionaries) const;
 
    HunspellDictionary dictionaryForLanguageId(const std::string& langId) const;
@@ -92,12 +92,12 @@ public:
    const HunspellCustomDictionaries& custom() const;
 
 private:
-   core::FilePath allLanguagesDir() const;
-   core::FilePath userLanguagesDir() const;
+   ::core::FilePath allLanguagesDir() const;
+   ::core::FilePath userLanguagesDir() const;
 
 private:
-   core::FilePath coreLanguagesDir_;
-   core::FilePath userDir_;
+   ::core::FilePath coreLanguagesDir_;
+   ::core::FilePath userDir_;
    HunspellCustomDictionaries customDicts_;
 };
 

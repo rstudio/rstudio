@@ -49,7 +49,7 @@ using namespace exec;
    
 namespace sexp {
 
-using namespace core::r_util;
+using namespace ::core::r_util;
 
 namespace {
 
@@ -530,12 +530,12 @@ core::Error getNamedListSEXP(SEXP listSEXP,
    {
       // get the appropriate value
       *pValueSEXP = VECTOR_ELT(listSEXP, valueIndex);
-      return core::Success();
+      return ::core::Success();
    }
    else
    {
       // otherwise an error
-      core::Error error(r::errc::ListElementNotFoundError, ERROR_LOCATION);
+      ::core::Error error(r::errc::ListElementNotFoundError, ERROR_LOCATION);
       error.addProperty("element", name);
       return error;
    }
@@ -1165,7 +1165,7 @@ std::set<SEXP> makeKnownNSEFunctions()
 bool isKnownNseFunction(SEXP functionSEXP)
 {
    static const std::set<SEXP> knownNseFunctions = makeKnownNSEFunctions();
-   return core::algorithm::contains(knownNseFunctions, functionSEXP);
+   return ::core::algorithm::contains(knownNseFunctions, functionSEXP);
 }
 
 bool maybePerformsNSE(SEXP functionSEXP)

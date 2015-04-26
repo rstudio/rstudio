@@ -51,39 +51,39 @@ class FilesListingMonitor : boost::noncopyable
 {
 public:
    // kickoff monitoring
-   core::Error start(const core::FilePath& filePath, core::json::Array* pJsonFiles);
+   ::core::Error start(const ::core::FilePath& filePath, ::core::json::Array* pJsonFiles);
 
    void stop();
 
    // what path are we currently monitoring?
-   const core::FilePath& currentMonitoredPath() const;
+   const ::core::FilePath& currentMonitoredPath() const;
 
    // convenience method which is also called by listFiles for requests that
    // don't specify monitoring (e.g. file dialog listing)
-   static core::Error listFiles(const core::FilePath& rootPath,
-                                core::json::Array* pJsonFiles)
+   static ::core::Error listFiles(const ::core::FilePath& rootPath,
+                                ::core::json::Array* pJsonFiles)
    {
-      std::vector<core::FilePath> files;
+      std::vector< ::core::FilePath> files;
       return listFiles(rootPath, &files, pJsonFiles);
    }
 
 private:
    // stateful handlers for registration and unregistration
-   void onRegistered(core::system::file_monitor::Handle handle,
-                     const core::FilePath& filePath,
-                     const std::vector<core::FileInfo>& prevFiles,
-                     const tree<core::FileInfo>& files);
+   void onRegistered(::core::system::file_monitor::Handle handle,
+                     const ::core::FilePath& filePath,
+                     const std::vector< ::core::FileInfo>& prevFiles,
+                     const tree< ::core::FileInfo>& files);
 
-   void onUnregistered(core::system::file_monitor::Handle handle);
+   void onUnregistered(::core::system::file_monitor::Handle handle);
 
    // helpers
-   static core::Error listFiles(const core::FilePath& rootPath,
-                                std::vector<core::FilePath>* pFiles,
-                                core::json::Array* pJsonFiles);
+   static ::core::Error listFiles(const ::core::FilePath& rootPath,
+                                std::vector< ::core::FilePath>* pFiles,
+                                ::core::json::Array* pJsonFiles);
 
 private:
-   core::FilePath currentPath_;
-   core::system::file_monitor::Handle currentHandle_;
+   ::core::FilePath currentPath_;
+   ::core::system::file_monitor::Handle currentHandle_;
 };
 
 

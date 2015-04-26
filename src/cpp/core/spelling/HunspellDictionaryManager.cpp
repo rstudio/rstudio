@@ -96,7 +96,7 @@ Error listAffFiles(const FilePath& baseDir, std::vector<FilePath>* pAffFiles)
    if (error)
       return error;
 
-   core::algorithm::copy_if(children.begin(),
+   ::core::algorithm::copy_if(children.begin(),
                             children.end(),
                             std::back_inserter(*pAffFiles),
                             isDictionaryAff);

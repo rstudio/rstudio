@@ -45,13 +45,13 @@ void initializeHttpConnectionListener()
 
    if (options.programMode() == kSessionProgramModeDesktop)
    {
-      std::string localPeer = core::system::getenv("RS_LOCAL_PEER");
+      std::string localPeer = ::core::system::getenv("RS_LOCAL_PEER");
       if (!localPeer.empty())
       {
          FilePath streamPath(localPeer);
          s_pHttpConnectionListener = new LocalStreamHttpConnectionListener(
                                            streamPath,
-                                           core::system::UserReadWriteMode,
+                                           ::core::system::UserReadWriteMode,
                                            options.sharedSecret(),
                                            -1);
       }
@@ -79,7 +79,7 @@ void initializeHttpConnectionListener()
          FilePath localStreamPath = local_streams::streamPath(userIdentity);
          s_pHttpConnectionListener = new LocalStreamHttpConnectionListener(
                                           localStreamPath,
-                                          core::system::EveryoneReadWriteMode,
+                                          ::core::system::EveryoneReadWriteMode,
                                           "", // no shared secret
                                           options.limitRpcClientUid());
       }

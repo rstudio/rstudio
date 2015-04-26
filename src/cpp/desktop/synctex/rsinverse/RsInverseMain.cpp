@@ -45,10 +45,10 @@ int main(int argc, char** argv)
    try
    {
       // initialize log
-      initializeSystemLog("rsinverse", core::system::kLogLevelWarning);
+      initializeSystemLog("rsinverse", ::core::system::kLogLevelWarning);
 
       // ignore SIGPIPE
-      Error error = core::system::ignoreSignal(core::system::SigPipe);
+      Error error = ::core::system::ignoreSignal(::core::system::SigPipe);
       if (error)
          LOG_ERROR(error);
 
@@ -76,7 +76,7 @@ int main(int argc, char** argv)
             "line of code to navigate to");
 
       // define program options (allow positional specification)
-      core::program_options::OptionsDescription optDesc("rsinverse");
+      ::core::program_options::OptionsDescription optDesc("rsinverse");
       optDesc.commandLine.add(rsinverseOptions);
       optDesc.positionalOptions.add("hwnd", 1);
       optDesc.positionalOptions.add("port", 1);
@@ -85,7 +85,7 @@ int main(int argc, char** argv)
       optDesc.positionalOptions.add("line", 1);
 
       // read options
-      ProgramStatus status = core::program_options::read(optDesc, argc, argv);
+      ProgramStatus status = ::core::program_options::read(optDesc, argc, argv);
       if (status.exit())
          return status.exitCode();
 
@@ -106,7 +106,7 @@ int main(int argc, char** argv)
 
       // enocde the source file and line as a query string
       std::string requestBody;
-      core::http::Fields args;
+      ::core::http::Fields args;
       args.push_back(std::make_pair("source-file", sourceFile));
       args.push_back(std::make_pair("line",
                                      safe_convert::numberToString(line)));
@@ -128,7 +128,7 @@ int main(int argc, char** argv)
 
       // send it
       http::Response response;
-      std::string pipeName = core::system::getenv("RS_LOCAL_PEER");
+      std::string pipeName = ::core::system::getenv("RS_LOCAL_PEER");
       error = http::sendRequest(pipeName,
                                 request,
                                 http::ConnectionRetryProfile(

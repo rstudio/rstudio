@@ -45,7 +45,7 @@ public:
    };
    
 public:
-   FileChangeEvent(Type type, const core::FileInfo& fileInfo)
+   FileChangeEvent(Type type, const ::core::FileInfo& fileInfo)
       : type_(type), fileInfo_(fileInfo)
    {
    }
@@ -68,7 +68,7 @@ public:
    
 private:
    Type type_;
-   core::FileInfo fileInfo_;
+   ::core::FileInfo fileInfo_;
 };
 
 inline std::ostream& operator << (std::ostream& ostr, 

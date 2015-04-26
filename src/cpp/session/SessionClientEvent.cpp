@@ -133,7 +133,7 @@ void ClientEvent::init(int type, const json::Value& data)
 {
    type_ = type;
    data_ = data;
-   id_ = core::system::generateUuid();
+   id_ = ::core::system::generateUuid();
 }
    
 void ClientEvent::asJsonObject(int id, json::Object* pObject) const

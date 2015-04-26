@@ -312,7 +312,7 @@ Error installDependencies(const json::JsonRpcRequest& request,
       return error;
 
    // options
-   core::system::ProcessOptions options;
+   ::core::system::ProcessOptions options;
    options.terminateChildren = true;
    options.redirectStdErrToStdOut = true;
 
@@ -364,11 +364,11 @@ Error installDependencies(const json::JsonRpcRequest& request,
    else
    {
       args.push_back("--vanilla");
-      core::system::Options childEnv;
-      core::system::environment(&childEnv);
+      ::core::system::Options childEnv;
+      ::core::system::environment(&childEnv);
       std::string libPaths = module_context::libPathsString();
       if (!libPaths.empty())
-         core::system::setenv(&childEnv, "R_LIBS", libPaths);
+         ::core::system::setenv(&childEnv, "R_LIBS", libPaths);
       options.environment = childEnv;
    }
 

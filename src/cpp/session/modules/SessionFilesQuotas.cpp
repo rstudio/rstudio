@@ -163,9 +163,9 @@ void checkQuotaThread()
    try
    {
       // run the command
-      core::system::ProcessResult result;
+      ::core::system::ProcessResult result;
       Error error = runCommand("xfs_quota -c 'quota -N'",
-                               core::system::ProcessOptions(),
+                               ::core::system::ProcessOptions(),
                                &result);
       if (error)
       {
@@ -223,7 +223,7 @@ void checkQuotaStatus()
       {
          // block all signals for launch of background thread (will cause it
          // to never receive signals)
-         core::system::SignalBlocker signalBlocker;
+         ::core::system::SignalBlocker signalBlocker;
          Error error = signalBlocker.blockAll();
          if (error)
             LOG_ERROR(error);

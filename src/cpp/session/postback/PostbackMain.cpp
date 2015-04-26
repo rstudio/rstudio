@@ -59,9 +59,9 @@ Error sendRequest(http::Request* pRequest, http::Response* pResponse)
 {
 #ifdef _WIN32
    // get local peer
-   std::string pipeName = core::system::getenv("RS_LOCAL_PEER");
+   std::string pipeName = ::core::system::getenv("RS_LOCAL_PEER");
    pRequest->setHeader("X-Shared-Secret",
-                       core::system::getenv("RS_SHARED_SECRET"));
+                       ::core::system::getenv("RS_SHARED_SECRET"));
    return http::sendRequest(pipeName,
                             *pRequest,
                             http::ConnectionRetryProfile(
@@ -69,7 +69,7 @@ Error sendRequest(http::Request* pRequest, http::Response* pResponse)
                                   boost::posix_time::milliseconds(50)),
                             pResponse);
 #else
-   std::string tcpipPort = core::system::getenv(kRSessionStandalonePortNumber);
+   std::string tcpipPort = ::core::system::getenv(kRSessionStandalonePortNumber);
    if (!tcpipPort.empty())
    {
       return http::sendRequest("127.0.0.1", tcpipPort, *pRequest, pResponse);
@@ -77,7 +77,7 @@ Error sendRequest(http::Request* pRequest, http::Response* pResponse)
    else
    {
       // determine stream path
-      std::string userIdentity = core::system::getenv(kRStudioUserIdentity);
+      std::string userIdentity = ::core::system::getenv(kRStudioUserIdentity);
       FilePath streamPath = session::local_streams::streamPath(userIdentity);
       return http::sendRequest(streamPath, *pRequest, pResponse);
    }
@@ -90,10 +90,10 @@ int main(int argc, char * const argv[])
    try
    {
       // initialize log
-      initializeSystemLog("rpostback", core::system::kLogLevelWarning);
+      initializeSystemLog("rpostback", ::core::system::kLogLevelWarning);
 
       // ignore SIGPIPE
-      Error error = core::system::ignoreSignal(core::system::SigPipe);
+      Error error = ::core::system::ignoreSignal(::core::system::SigPipe);
       if (error)
          LOG_ERROR(error);
 

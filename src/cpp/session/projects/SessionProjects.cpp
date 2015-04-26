@@ -93,7 +93,7 @@ Error createProject(const json::JsonRpcRequest& request,
       // error if the shiny app dir already exists
       FilePath appDir = projectFilePath.parent();
       if (appDir.exists())
-         return core::fileExistsError(ERROR_LOCATION);
+         return ::core::fileExistsError(ERROR_LOCATION);
 
       // now create it
       Error error = appDir.ensureDirectory();
@@ -452,9 +452,9 @@ void syncProjectFileChanges()
    module_context::enqueClientEvent(event);
 }
 
-void onFilesChanged(const std::vector<core::system::FileChangeEvent>& events)
+void onFilesChanged(const std::vector< ::core::system::FileChangeEvent>& events)
 {
-   BOOST_FOREACH(const core::system::FileChangeEvent& event, events)
+   BOOST_FOREACH(const ::core::system::FileChangeEvent& event, events)
    {
       // if the project file changed then sync its changes
       if (event.fileInfo().absolutePath() ==
@@ -478,7 +478,7 @@ void onMonitoringDisabled()
 
 
 // Note that the logic here needs to be synchronized with the logic in
-// core::r_util::RSessionContext::nextSessionWorkingDir (so that both
+// ::core::r_util::RSessionContext::nextSessionWorkingDir (so that both
 // reach the same conclusion about what the next working directory is)
 void startup()
 {

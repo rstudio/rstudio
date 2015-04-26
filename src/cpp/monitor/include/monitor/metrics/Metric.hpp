@@ -150,11 +150,11 @@ typedef boost::function<void(const MultiMetric&)> MultiMetricHandler;
 
 // json serialization
 core::json::Object metricToJson(const Metric& metric);
-core::Error metricFromJson(const core::json::Object& metricJson,
+core::Error metricFromJson(const ::core::json::Object& metricJson,
                            Metric* pMetric);
 
 core::json::Object metricToJson(const MultiMetric& multiMetric);
-core::Error metricFromJson(const core::json::Object& multiMetricJson,
+core::Error metricFromJson(const ::core::json::Object& multiMetricJson,
                            MultiMetric* pMultiMetric);
 
 

@@ -30,7 +30,7 @@ class FilePath;
 
 namespace spelling {
 
-typedef boost::function<core::Error(const std::string&,
+typedef boost::function< ::core::Error(const std::string&,
                                     const std::string&,
                                     const std::string&,
                                     bool,

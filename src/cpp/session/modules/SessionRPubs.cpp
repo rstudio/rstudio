@@ -178,12 +178,12 @@ private:
       args.push_back(cmd);
 
       // options
-      core::system::ProcessOptions options;
+      ::core::system::ProcessOptions options;
       options.terminateChildren = true;
       options.workingDir = htmlFile.parent();
 
       // callbacks
-      core::system::ProcessCallbacks cb;
+      ::core::system::ProcessCallbacks cb;
       cb.onContinue = boost::bind(&RPubsUpload::onContinue,
                                   RPubsUpload::shared_from_this());
       cb.onStdout = boost::bind(&RPubsUpload::onStdOut,
@@ -222,7 +222,7 @@ private:
          if(csvOutputFile_.exists())
          {
             std::string csvOutput;
-            Error error = core::readStringFromFile(
+            Error error = ::core::readStringFromFile(
                                              csvOutputFile_,
                                              &csvOutput,
                                              string_utils::LineEndingPosix);

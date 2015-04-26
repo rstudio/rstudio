@@ -73,7 +73,7 @@ void reportRestoreError(const std::string& context,
    // add context to error and log it
    Error restoreError = error ;
    restoreError.addProperty("context", message);
-   core::log::logError(restoreError, location);
+   ::core::log::logError(restoreError, location);
    
    // notify end-user
    std::string report = message + ": " + error.code().message() + "\n";
@@ -87,7 +87,7 @@ Error saveGlobalEnvironmentToFile(const FilePath& environmentFile)
    return executeSafely(boost::bind(R_SaveGlobalEnvToFile, envPath.c_str()));
 }
    
-Error restoreGlobalEnvironment(const core::FilePath& environmentFile)
+Error restoreGlobalEnvironment(const ::core::FilePath& environmentFile)
 {
    // tolerate no environment saved
    if (!environmentFile.exists())
@@ -283,7 +283,7 @@ Error save(const FilePath& statePath)
 
          if (!path.empty())
          {
-            path = core::string_utils::systemToUtf8(path);
+            path = ::core::string_utils::systemToUtf8(path);
             packagePaths[name] = path;
          }
       }

@@ -263,7 +263,7 @@ void enumRegistry(QList<RVersion>* pResults)
 {
    enumRegistry(ArchX86, HKEY_CURRENT_USER, pResults);
    enumRegistry(ArchX86, HKEY_LOCAL_MACHINE, pResults);
-   if (core::system::isWin64())
+   if (::core::system::isWin64())
    {
        enumRegistry(ArchX64, HKEY_CURRENT_USER, pResults);
        enumRegistry(ArchX64, HKEY_LOCAL_MACHINE, pResults);
@@ -503,7 +503,7 @@ QString RVersion::description() const
 {
    QString result;
 
-   if (core::system::isWin64())
+   if (::core::system::isWin64())
    {
       if (architecture() == ArchX64)
          result.append(QString::fromUtf8("[64-bit] "));

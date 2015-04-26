@@ -42,7 +42,7 @@ int getFdEnv(std::string name, int defaultVal)
    char* result = ::getenv(name.c_str());
    if (!result)
       return defaultVal;
-   return core::safe_convert::stringTo(result, defaultVal);
+   return ::core::safe_convert::stringTo(result, defaultVal);
 }
 
 void exitHandler()

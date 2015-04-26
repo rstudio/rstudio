@@ -128,8 +128,8 @@ public:
    const std::string& name() const { return name_; }
    const std::vector<RS4MethodParam>& signature() const { return signature_; }
    const int braceLevel() const { return braceLevel_; }
-   int line() const { return core::safe_convert::numberTo<int>(line_,0); }
-   int column() const { return core::safe_convert::numberTo<int>(column_,0); }
+   int line() const { return ::core::safe_convert::numberTo<int>(line_,0); }
+   int column() const { return ::core::safe_convert::numberTo<int>(column_,0); }
 
    // support for RSourceIndex::search
 
@@ -205,7 +205,7 @@ public:
                   OutputIterator out) const
    {
       // perform the copy and transform to include context
-      core::algorithm::copy_transformed_if(
+      ::core::algorithm::copy_transformed_if(
                 items_.begin(),
                 items_.end(),
                 out,

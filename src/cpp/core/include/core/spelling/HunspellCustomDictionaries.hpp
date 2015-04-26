@@ -49,7 +49,7 @@ public:
    Error remove(const std::string& name) const;
 
 private:
-   core::FilePath customDictionariesDir_;
+   ::core::FilePath customDictionariesDir_;
 };
 
 } // namespace spelling

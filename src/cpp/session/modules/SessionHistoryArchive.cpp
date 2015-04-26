@@ -138,7 +138,7 @@ Error HistoryArchive::add(const std::string& command)
 
    // write the entry to the file
    std::ostringstream ostrEntry ;
-   double currentTime = core::date_time::millisecondsSinceEpoch();
+   double currentTime = ::core::date_time::millisecondsSinceEpoch();
    writeEntry(currentTime, command, &ostrEntry);
    ostrEntry << std::endl;
    return appendToFile(historyDatabaseFilePath(), ostrEntry.str());

@@ -113,9 +113,9 @@ public:
    std::size_t row() const { return row_; }
    std::size_t column() const { return column_; }
    
-   core::collection::Position position() const
+   ::core::collection::Position position() const
    {
-      return core::collection::Position(row_, column_);
+      return ::core::collection::Position(row_, column_);
    }
 
    // efficient comparison operations

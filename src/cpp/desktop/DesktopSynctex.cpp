@@ -57,9 +57,9 @@ SynctexViewerInfo discoverViewer()
 SynctexViewerInfo discoverViewer()
 {
    // probe for evince version
-   core::system::ProcessResult result;
-   Error error = core::system::runCommand("evince --version",
-                                          core::system::ProcessOptions(),
+   ::core::system::ProcessResult result;
+   Error error = ::core::system::runCommand("evince --version",
+                                          ::core::system::ProcessOptions(),
                                           &result);
    if (error)
    {

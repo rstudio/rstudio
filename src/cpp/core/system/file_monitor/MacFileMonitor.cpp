@@ -246,7 +246,7 @@ Handle registerMonitor(const FilePath& filePath,
    }
 
    // scan the files
-   core::system::FileScannerOptions options;
+   ::core::system::FileScannerOptions options;
    options.recursive = recursive;
    options.yield = true;
    options.filter = filter;

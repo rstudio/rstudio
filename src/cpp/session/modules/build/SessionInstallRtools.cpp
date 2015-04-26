@@ -38,7 +38,7 @@ namespace build {
 
 namespace {
 
-void onDownloadCompleted(const core::system::ProcessResult& result,
+void onDownloadCompleted(const ::core::system::ProcessResult& result,
                          const std::string& version,
                          const FilePath& installerPath)
 {
@@ -87,7 +87,7 @@ Error installRtools()
       }
    }
    if (version.empty())
-      return core::pathNotFoundError(ERROR_LOCATION);
+      return ::core::pathNotFoundError(ERROR_LOCATION);
 
    // R binary
    FilePath rProgramPath;

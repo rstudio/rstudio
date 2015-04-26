@@ -41,7 +41,7 @@ bool detectREnvironment(const FilePath& whichRScript,
 
 void setREnvironmentVars(const EnvironmentVars& vars);
 void setREnvironmentVars(const EnvironmentVars& vars,
-                         core::system::Options* pEnv);
+                         ::core::system::Options* pEnv);
 
 std::string rLibraryPath(const FilePath& rHomePath,
                          const FilePath& rLibPath,

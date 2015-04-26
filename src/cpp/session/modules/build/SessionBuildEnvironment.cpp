@@ -52,7 +52,7 @@ r_util::RToolsInfo scanPathForRTools()
 
    // we have a candidate installPath
    FilePath installPath = lsPath.parent().parent();
-   core::system::ensureLongPath(&installPath);
+   ::core::system::ensureLongPath(&installPath);
    if (!installPath.childPath("Rtools.txt").exists())
       return noToolsFound;
 
@@ -70,7 +70,7 @@ r_util::RToolsInfo scanPathForRTools()
 
    // Rtools is in the path -- now crack the VERSION file
    std::string contents;
-   Error error = core::readStringFromFile(versionPath, &contents);
+   Error error = ::core::readStringFromFile(versionPath, &contents);
    if (error)
    {
       LOG_ERROR(error);
@@ -90,14 +90,14 @@ r_util::RToolsInfo scanPathForRTools()
 std::string formatPath(const FilePath& filePath)
 {
    FilePath displayPath = filePath;
-   core::system::ensureLongPath(&displayPath);
+   ::core::system::ensureLongPath(&displayPath);
    return boost::algorithm::replace_all_copy(
                                  displayPath.absolutePath(), "/", "\\");
 }
 
 template <typename T>
 bool doAddRtoolsToPathIfNecessary(T* pTarget,
-                                  std::vector<core::system::Option>* pEnvironmentVars,
+                                  std::vector< ::core::system::Option>* pEnvironmentVars,
                                   std::string* pWarningMessage)
 {
     // can we find ls.exe and gcc.exe on the path? if so then
@@ -135,7 +135,7 @@ bool doAddRtoolsToPathIfNecessary(T* pTarget,
 
     // ok so scan for R tools
     std::vector<r_util::RToolsInfo> rTools;
-    error = core::r_util::scanRegistryForRTools(&rTools);
+    error = ::core::r_util::scanRegistryForRTools(&rTools);
     if (error)
     {
        LOG_ERROR(error);
@@ -207,14 +207,14 @@ bool isRtoolsCompatible(const r_util::RToolsInfo& rTools)
 bool addRtoolsToPathIfNecessary(std::string* pPath,
                                 std::string* pWarningMessage)
 {
-   std::vector<core::system::Option> environmentVars;
+   std::vector< ::core::system::Option> environmentVars;
    if (doAddRtoolsToPathIfNecessary(pPath,
                                     &environmentVars,
                                     pWarningMessage))
    {
-      BOOST_FOREACH(const core::system::Option& var, environmentVars)
+      BOOST_FOREACH(const ::core::system::Option& var, environmentVars)
       {
-         core::system::setenv(var.first, var.second);
+         ::core::system::setenv(var.first, var.second);
       }
       return true;
    }
@@ -224,17 +224,17 @@ bool addRtoolsToPathIfNecessary(std::string* pPath,
    }
 }
 
-bool addRtoolsToPathIfNecessary(core::system::Options* pEnvironment,
+bool addRtoolsToPathIfNecessary(::core::system::Options* pEnvironment,
                                 std::string* pWarningMessage)
 {
-   std::vector<core::system::Option> environmentVars;
+   std::vector< ::core::system::Option> environmentVars;
    if (doAddRtoolsToPathIfNecessary(pEnvironment,
                                     &environmentVars,
                                     pWarningMessage))
    {
-      BOOST_FOREACH(const core::system::Option& var, environmentVars)
+      BOOST_FOREACH(const ::core::system::Option& var, environmentVars)
       {
-         core::system::setenv(pEnvironment, var.first, var.second);
+         ::core::system::setenv(pEnvironment, var.first, var.second);
       }
       return true;
    }
@@ -258,7 +258,7 @@ bool addRtoolsToPathIfNecessary(std::string* pPath,
    return false;
 }
 
-bool addRtoolsToPathIfNecessary(core::system::Options* pEnvironment,
+bool addRtoolsToPathIfNecessary(::core::system::Options* pEnvironment,
                                 std::string* pWarningMessage)
 {
    return false;

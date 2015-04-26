@@ -64,8 +64,8 @@ struct InternalCallbacks
    void (*cleanUp)(SA_TYPE, int, int);
 };
 
-void runEmbeddedR(const core::FilePath& rHome,
-                  const core::FilePath& userHome,
+void runEmbeddedR(const ::core::FilePath& rHome,
+                  const ::core::FilePath& userHome,
                   bool quiet,
                   bool loadInitFile,
                   SA_TYPE defaultSaveAction,

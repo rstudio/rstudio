@@ -44,10 +44,10 @@ namespace compile_pdf_supervisor {
 bool hasRunningChildren();
 core::Error terminateAll(const boost::posix_time::time_duration& waitDuration);
 
-core::Error runProgram(const core::FilePath& programFilePath,
+core::Error runProgram(const ::core::FilePath& programFilePath,
                        const std::vector<std::string>& args,
-                       const core::system::Options& extraEnvVars,
-                       const core::FilePath& workingDir,
+                       const ::core::system::Options& extraEnvVars,
+                       const ::core::FilePath& workingDir,
                        const boost::function<void(const std::string&)>& onOutput,
                        const boost::function<void(int,const std::string&)>& onExited);
 

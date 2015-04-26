@@ -80,7 +80,7 @@ void registerAll()
    R_registerRoutines(info, pCMethods, pCallMethods, NULL, NULL);
    
    exec::RFunction registerNativeRoutines(".rs.registerNativeRoutines");
-   core::Error error = registerNativeRoutines.call();
+   ::core::Error error = registerNativeRoutines.call();
    if (error)
       LOG_ERROR(error);
 }

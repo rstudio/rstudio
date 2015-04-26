@@ -55,7 +55,7 @@ public:
    double created() const { return created_; }
    bool sourceOnSave() const { return sourceOnSave_; }
    int relativeOrder() const { return relativeOrder_; } 
-   const core::json::Object& properties() const { return properties_; }
+   const ::core::json::Object& properties() const { return properties_; }
    const std::string& folds() const { return folds_; }
    std::string getProperty(const std::string& name) const;
 
@@ -66,10 +66,10 @@ public:
    void setContents(const std::string& contents);
 
    // set contents from file
-   core::Error setPathAndContents(const std::string& path,
+   ::core::Error setPathAndContents(const std::string& path,
                                   bool allowSubstChars = true);
 
-   core::Error updateDirty();
+   ::core::Error updateDirty();
 
    // set dirty
    void setDirty(bool dirty)
@@ -107,7 +107,7 @@ public:
    // properties that already exist but are not present in the given object are
    // left unchanged. if an entry in the given object has a null value, that
    // property should be removed.
-   void editProperties(core::json::Object& properties);
+   void editProperties(::core::json::Object& properties);
 
    void setType(const std::string& type)
    {
@@ -126,13 +126,13 @@ public:
                type_ == SourceDocumentTypeCpp);
    }
 
-   core::Error readFromJson(core::json::Object* pDocJson);
-   void writeToJson(core::json::Object* pDocJson) const;
+   ::core::Error readFromJson(::core::json::Object* pDocJson);
+   void writeToJson(::core::json::Object* pDocJson) const;
 
-   core::Error writeToFile(const core::FilePath& filePath) const;
+   ::core::Error writeToFile(const ::core::FilePath& filePath) const;
 
 private:
-   void editProperty(const core::json::Object::value_type& property);
+   void editProperty(const ::core::json::Object::value_type& property);
 
 private:
    std::string id_;
@@ -147,7 +147,7 @@ private:
    double created_;
    bool sourceOnSave_;
    int relativeOrder_;
-   core::json::Object properties_;
+   ::core::json::Object properties_;
    
 public:
    
@@ -168,7 +168,7 @@ bool sortByRelativeOrder(const boost::shared_ptr<SourceDocument>& pDoc1,
 core::FilePath path();
 core::Error get(const std::string& id, boost::shared_ptr<SourceDocument> pDoc);
 core::Error getDurableProperties(const std::string& path,
-                                 core::json::Object* pProperties);
+                                 ::core::json::Object* pProperties);
 core::Error list(std::vector<boost::shared_ptr<SourceDocument> >* pDocs);
 core::Error put(boost::shared_ptr<SourceDocument> pDoc);
 core::Error remove(const std::string& id);

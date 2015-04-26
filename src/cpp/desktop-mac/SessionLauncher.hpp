@@ -49,14 +49,14 @@ private:
    friend SessionLauncher& sessionLauncher();
    
 public:
-   void init(const core::FilePath& sessionPath,
-             const core::FilePath& confPath);
+   void init(const ::core::FilePath& sessionPath,
+             const ::core::FilePath& confPath);
    
    bool sessionProcessActive() { return sessionProcessActive_; }
    
    void setPendingQuit(PendingQuit pendingQuit);
    
-   core::Error launchFirstSession(const std::string& filename);
+   ::core::Error launchFirstSession(const std::string& filename);
    
    void launchNextSession(bool reload);
    
@@ -73,20 +73,20 @@ private:
                            std::vector<std::string>* pArgList,
                            std::string* pUrl) const;
    
-   core::Error launchSession(const std::string& host,
+   ::core::Error launchSession(const std::string& host,
                              const std::string& port,
                              std::vector<std::string> args);
    
       
-   void onRSessionExited(const core::system::ProcessResult& result);
+   void onRSessionExited(const ::core::system::ProcessResult& result);
    
    std::string collectAbendLogMessage();
    
    void closeAllWindows();
    
 private:
-   core::FilePath confPath_;
-   core::FilePath sessionPath_;
+   ::core::FilePath confPath_;
+   ::core::FilePath sessionPath_;
    std::string sessionStderr_;
    PendingQuit pendingQuit_;
    bool sessionProcessActive_;

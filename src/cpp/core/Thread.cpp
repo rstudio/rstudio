@@ -28,7 +28,7 @@ void safeLaunchThread(boost::function<void()> threadMain,
    {
       // block all signals for launch of background thread (will cause it
       // to never receive signals)
-      core::system::SignalBlocker signalBlocker;
+      ::core::system::SignalBlocker signalBlocker;
       Error error = signalBlocker.blockAll();
       if (error)
          LOG_ERROR(error);
@@ -36,7 +36,7 @@ void safeLaunchThread(boost::function<void()> threadMain,
       boost::thread t(threadMain);
 
       if (pThread)
-         *pThread = t.move();
+         *pThread = std::move(t);
    }
    catch(const boost::thread_resource_error& e)
    {

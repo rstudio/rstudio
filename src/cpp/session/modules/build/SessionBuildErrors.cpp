@@ -78,7 +78,7 @@ FilePath scanForRSourceFile(const FilePath& basePath,
       if (isRSourceFile(child))
       {
          std::vector<std::string> lines;
-         Error error = core::readStringVectorFromFile(child, &lines, false);
+         Error error = ::core::readStringVectorFromFile(child, &lines, false);
          if (error)
          {
             LOG_ERROR(error);
@@ -117,7 +117,7 @@ std::vector<module_context::SourceMarker> parseRErrors(
 
       // we need to guess the file based on the contextual information
       // provided in the error message
-      int diagLine = core::safe_convert::stringTo<int>(match[4], -1);
+      int diagLine = ::core::safe_convert::stringTo<int>(match[4], -1);
       if (diagLine != -1)
       {
          FilePath rSrcFile = scanForRSourceFile(basePath,
@@ -129,9 +129,9 @@ std::vector<module_context::SourceMarker> parseRErrors(
             // create error and add it
             SourceMarker err(SourceMarker::Error,
                              rSrcFile,
-                             core::safe_convert::stringTo<int>(line, 1),
-                             core::safe_convert::stringTo<int>(column, 1),
-                             core::html_utils::HTML(message),
+                             ::core::safe_convert::stringTo<int>(line, 1),
+                             ::core::safe_convert::stringTo<int>(column, 1),
+                             ::core::html_utils::HTML(message),
                              false);
             errors.push_back(err);
          }
@@ -203,7 +203,7 @@ std::vector<module_context::SourceMarker> parseGccErrors(
          continue;
 
       FilePath realPath;
-      Error error = core::system::realPath(filePath, &realPath);
+      Error error = ::core::system::realPath(filePath, &realPath);
       if (error)
          LOG_ERROR(error);
       else
@@ -238,9 +238,9 @@ std::vector<module_context::SourceMarker> parseGccErrors(
       // create marker and add it
       SourceMarker err(module_context::sourceMarkerTypeFromString(type),
                        filePath,
-                       core::safe_convert::stringTo<int>(line, 1),
-                       core::safe_convert::stringTo<int>(column, 1),
-                       core::html_utils::HTML(message),
+                       ::core::safe_convert::stringTo<int>(line, 1),
+                       ::core::safe_convert::stringTo<int>(column, 1),
+                       ::core::html_utils::HTML(message),
                        true);
       errors.push_back(err);
    }

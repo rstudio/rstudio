@@ -34,10 +34,10 @@ namespace rstudio {
 namespace r {
 namespace json {
    
-core::Error jsonValueFromScalar(SEXP scalarSEXP, core::json::Value* pValue);
-core::Error jsonValueFromVector(SEXP vectorSEXP, core::json::Value* pValue);
-core::Error jsonValueFromList(SEXP listSEXP, core::json::Value* pValue);
-core::Error jsonValueFromObject(SEXP objectSEXP, core::json::Value* pValue);
+core::Error jsonValueFromScalar(SEXP scalarSEXP, ::core::json::Value* pValue);
+core::Error jsonValueFromVector(SEXP vectorSEXP, ::core::json::Value* pValue);
+core::Error jsonValueFromList(SEXP listSEXP, ::core::json::Value* pValue);
+core::Error jsonValueFromObject(SEXP objectSEXP, ::core::json::Value* pValue);
    
 } // namespace json
 } // namesapce r

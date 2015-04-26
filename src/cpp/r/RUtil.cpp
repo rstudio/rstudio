@@ -213,7 +213,7 @@ std::set<std::string> makeWindowsOnlyFunctions()
 bool isWindowsOnlyFunction(const std::string& name)
 {
    static const std::set<std::string> s_rWindowsOnly = makeWindowsOnlyFunctions();
-   return core::algorithm::contains(s_rWindowsOnly, name);
+   return ::core::algorithm::contains(s_rWindowsOnly, name);
 }
 
 } // namespace util

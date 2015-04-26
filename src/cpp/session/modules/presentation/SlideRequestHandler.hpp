@@ -37,30 +37,30 @@ namespace presentation {
 struct ErrorResponse
 {
    explicit ErrorResponse(const std::string& message = std::string(),
-                          core::http::status::Code statusCode
-                                  = core::http::status::InternalServerError)
+                          ::core::http::status::Code statusCode
+                                  = ::core::http::status::InternalServerError)
       : message(message), statusCode(statusCode)
    {
    }
 
    std::string message;
-   core::http::status::Code statusCode;
+   ::core::http::status::Code statusCode;
 };
 
 bool clearKnitrCache(ErrorResponse* pErrorResponse);
 
-void handlePresentationPaneRequest(const core::http::Request& request,
-                                  core::http::Response* pResponse);
+void handlePresentationPaneRequest(const ::core::http::Request& request,
+                                  ::core::http::Response* pResponse);
                        
 
-void handlePresentationHelpRequest(const core::http::Request& request,
+void handlePresentationHelpRequest(const ::core::http::Request& request,
                                    const std::string& jsCallbacks,
-                                   core::http::Response* pResponse);
+                                   ::core::http::Response* pResponse);
 
-bool savePresentationAsStandalone(const core::FilePath& filePath,
+bool savePresentationAsStandalone(const ::core::FilePath& filePath,
                                   ErrorResponse* pErrorResponse);
 
-bool savePresentationAsRpubsSource(const core::FilePath& filePath,
+bool savePresentationAsRpubsSource(const ::core::FilePath& filePath,
                                    ErrorResponse* pErrorResponse);
 
 } // namespace presentation

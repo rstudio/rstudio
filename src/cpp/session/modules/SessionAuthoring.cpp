@@ -62,7 +62,7 @@ void viewPdfExternal(const FilePath& texPath)
                             "_rstudio_compile_pdf");
 }
 
-Error getTexCapabilities(const core::json::JsonRpcRequest& request,
+Error getTexCapabilities(const ::core::json::JsonRpcRequest& request,
                          json::JsonRpcResponse* pResponse)
 {
    pResponse->setResult(authoring::texCapabilitiesAsJson());

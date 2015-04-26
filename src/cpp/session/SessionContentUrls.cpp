@@ -64,7 +64,7 @@ std::string buildContentUrl(const std::string& title,
 
 Error contentFileInfo(const std::string& contentUrl,
                       std::string* pTitle,
-                      core::FilePath* pFilePath)
+                      ::core::FilePath* pFilePath)
 {
    // extract and parse query string
    std::string queryString;
@@ -103,7 +103,7 @@ Error contentFileInfo(const std::string& contentUrl,
 std::string provision(const std::string& title, const FilePath& filePath)
 {
    // calculate content path
-   std::string contentFile = core::system::generateUuid(false) +
+   std::string contentFile = ::core::system::generateUuid(false) +
                              filePath.extension();
    FilePath contentPath = contentUrlPath().complete(contentFile);
 
@@ -121,7 +121,7 @@ std::string provision(const std::string& title,
                       const std::string& extension)
 {
    // calculate content path
-   std::string contentFile = core::system::generateUuid(false) + extension;
+   std::string contentFile = ::core::system::generateUuid(false) + extension;
    FilePath contentPath = contentUrlPath().complete(contentFile);
 
    // write the file
@@ -152,7 +152,7 @@ void handleContentRequest(const http::Request& request, http::Response* pRespons
 
    // read file
    std::string contents;
-   error = core::readStringFromFile(contentFilePath, &contents);
+   error = ::core::readStringFromFile(contentFilePath, &contents);
    if (error)
    {
       pResponse->setError(error);
@@ -189,7 +189,7 @@ void handleContentRequest(const http::Request& request, http::Response* pRespons
       // If the content looks like valid UTF-8, assume it is. Otherwise, assume
       // it's the system encoding.
       std::string contents;
-      error = core::readStringFromFile(contentFilePath, &contents);
+      error = ::core::readStringFromFile(contentFilePath, &contents);
       if (!error)
       {
          for (std::string::iterator pos = contents.begin(); pos != contents.end(); )

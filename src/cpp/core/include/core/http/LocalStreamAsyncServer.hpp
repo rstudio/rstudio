@@ -33,7 +33,7 @@ class LocalStreamAsyncServer
 public:
    LocalStreamAsyncServer(const std::string& serverName,
                           const std::string& baseUri,
-                          core::system::FileMode fileMode)
+                          ::core::system::FileMode fileMode)
       : AsyncServerImpl<boost::asio::local::stream_protocol>(serverName, baseUri),
         fileMode_(fileMode)
    {
@@ -61,7 +61,7 @@ public:
    
    
 public:
-   Error init(const core::FilePath& localStreamPath)
+   Error init(const ::core::FilePath& localStreamPath)
    {
       // set stream path
       localStreamPath_ = localStreamPath;
@@ -87,8 +87,8 @@ private:
                           http::Request* pRequest)
    {
       // get peer identity
-      core::system::user::UserIdentity peerIdentity;
-      Error error = core::system::user::socketPeerIdentity(pSocket->native(), 
+      ::core::system::user::UserIdentity peerIdentity;
+      Error error = ::core::system::user::socketPeerIdentity(pSocket->native(), 
                                                            &peerIdentity);
       if (error)
       {
@@ -115,8 +115,8 @@ private:
    }
    
 private:
-   core::system::FileMode fileMode_;
-   core::FilePath localStreamPath_;
+   ::core::system::FileMode fileMode_;
+   ::core::FilePath localStreamPath_;
 
 };
 

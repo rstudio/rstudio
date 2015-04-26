@@ -33,9 +33,9 @@ namespace rmarkdown {
 namespace presentation {
 
 void ammendResults(const std::string& formatName,
-                   core::FilePath& targetFile,
+                   ::core::FilePath& targetFile,
                    int sourceLine,
-                   core::json::Object* pResultsJson);
+                   ::core::json::Object* pResultsJson);
 
 
 } // namespace presentation

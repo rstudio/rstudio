@@ -53,7 +53,7 @@ public:
    
    static Error makeCurrent(const std::string& path);
 
-   static std::string createAliasedPath(const core::FilePath& path,
+   static std::string createAliasedPath(const ::core::FilePath& path,
                                         const FilePath& userHomePath);
    static FilePath resolveAliasedPath(const std::string& aliasedPath,
                                       const FilePath& userHomePath) ;

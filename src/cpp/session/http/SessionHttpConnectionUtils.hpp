@@ -34,7 +34,7 @@ namespace rstudio {
 namespace session {
 namespace connection {
 
-std::string rstudioRequestIdFromRequest(const core::http::Request& request);
+std::string rstudioRequestIdFromRequest(const ::core::http::Request& request);
 
 bool isMethod(boost::shared_ptr<HttpConnection> ptrConnection,
               const std::string& method);

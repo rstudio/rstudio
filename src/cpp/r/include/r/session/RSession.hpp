@@ -62,17 +62,17 @@ struct ROptions
          rProfileOnResume(false)
    {
    }
-   core::FilePath userHomePath;
-   core::FilePath userScratchPath;
-   core::FilePath scopedScratchPath;
-   core::FilePath logPath;
-   core::FilePath startupEnvironmentFilePath;
+   ::core::FilePath userHomePath;
+   ::core::FilePath userScratchPath;
+   ::core::FilePath scopedScratchPath;
+   ::core::FilePath logPath;
+   ::core::FilePath startupEnvironmentFilePath;
    std::string sessionPort;
-   boost::function<core::Settings&()> persistentState;
-   boost::function<core::FilePath()> rEnvironmentDir;
-   boost::function<core::FilePath()> rHistoryDir;
+   boost::function< ::core::Settings&()> persistentState;
+   boost::function< ::core::FilePath()> rEnvironmentDir;
+   boost::function< ::core::FilePath()> rHistoryDir;
    boost::function<bool()> alwaysSaveHistory;
-   core::FilePath rSourcePath;
+   ::core::FilePath rSourcePath;
    std::string rLibsUser;
    std::string rCRANRepos;
    bool useInternet2;
@@ -120,16 +120,16 @@ extern const int kSerializationActionCompleted;
 struct RSuspendOptions;
 struct RCallbacks
 {
-   boost::function<core::Error(const RInitInfo&)> init ;
+   boost::function< ::core::Error(const RInitInfo&)> init ;
    boost::function<bool(const std::string&,bool,RConsoleInput*)> consoleRead;
    boost::function<void(const std::string&)> browseURL;
-   boost::function<void(const core::FilePath&)> browseFile;
+   boost::function<void(const ::core::FilePath&)> browseFile;
    boost::function<void(const std::string&)> showHelp;
-   boost::function<void(const std::string&, core::FilePath&, bool)> showFile;
+   boost::function<void(const std::string&, ::core::FilePath&, bool)> showFile;
    boost::function<void(const std::string&, int)> consoleWrite;
    boost::function<void()> consoleHistoryReset;
    boost::function<bool(double*,double*)> locator;
-   boost::function<core::FilePath(bool)> chooseFile;
+   boost::function< ::core::FilePath(bool)> chooseFile;
    boost::function<int(const std::string&)> editFile;
    boost::function<void(const std::string&)> showMessage ;
    boost::function<void(bool)> busy;
@@ -140,7 +140,7 @@ struct RCallbacks
    boost::function<void()> quit;
    boost::function<void(const std::string&)> suicide;
    boost::function<void(bool)> cleanup;
-   boost::function<void(int,const core::FilePath&)> serialization;
+   boost::function<void(int,const ::core::FilePath&)> serialization;
 };
 
 // run the session   

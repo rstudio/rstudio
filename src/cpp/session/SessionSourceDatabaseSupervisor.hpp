@@ -28,7 +28,7 @@ namespace session {
 namespace source_database {
 namespace supervisor {
 
-core::Error attachToSourceDatabase(core::FilePath* pSessionDir);
+core::Error attachToSourceDatabase(::core::FilePath* pSessionDir);
 
 core::Error detachFromSourceDatabase();
 

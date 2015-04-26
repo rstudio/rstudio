@@ -58,7 +58,7 @@ public:
    static void migrateRhistoryIfNecessary();
 
 public:
-   core::Error add(const std::string& command);
+   ::core::Error add(const std::string& command);
    const std::vector<HistoryEntry>& entries() const;
 
 private:

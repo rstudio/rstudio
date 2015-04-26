@@ -166,12 +166,12 @@ bool parseJsonRpcRequestForMethod(const std::string& input,
 //
    
 
-inline core::Error readParam(const json::Array& params, 
+inline ::core::Error readParam(const json::Array& params, 
                              unsigned int index, 
                              json::Value* pValue)
 {
    if (index >= params.size())
-      return core::Error(errc::ParamMissing, ERROR_LOCATION);
+      return ::core::Error(errc::ParamMissing, ERROR_LOCATION);
    
    *pValue = params[index] ;
    return Success();
@@ -181,10 +181,10 @@ template <typename T>
 core::Error readParam(const json::Array& params, unsigned int index, T* pValue)
 {
    if (index >= params.size())
-      return core::Error(errc::ParamMissing, ERROR_LOCATION);
+      return ::core::Error(errc::ParamMissing, ERROR_LOCATION);
 
    if (!isType<T>(params[index]))
-      return core::Error(errc::ParamTypeMismatch, ERROR_LOCATION) ;
+      return ::core::Error(errc::ParamTypeMismatch, ERROR_LOCATION) ;
 
    *pValue = params[index].get_value<T>();
 
@@ -200,7 +200,7 @@ core::Error readParams(const json::Array& params, T1* pValue1)
 template <typename T1, typename T2>
 core::Error readParams(const json::Array& params, T1* pValue1, T2* pValue2)
 {
-   core::Error error = readParam(params, 0, pValue1) ;
+   ::core::Error error = readParam(params, 0, pValue1) ;
    if (error)
       return error ;
 
@@ -213,7 +213,7 @@ core::Error readParams(const json::Array& params,
                         T2* pValue2, 
                         T3* pValue3)
 {
-   core::Error error = readParams(params, pValue1, pValue2) ;
+   ::core::Error error = readParams(params, pValue1, pValue2) ;
    if (error)
       return error ;
 
@@ -227,7 +227,7 @@ core::Error readParams(const json::Array& params,
                        T3* pValue3,
                        T4* pValue4)
 {
-   core::Error error = readParams(params, pValue1, pValue2, pValue3) ;
+   ::core::Error error = readParams(params, pValue1, pValue2, pValue3) ;
    if (error)
       return error ;
    
@@ -243,7 +243,7 @@ core::Error readParams(const json::Array& params,
                        T4* pValue4,
                        T5* pValue5)
 {
-   core::Error error = readParams(params, pValue1, pValue2, pValue3, pValue4) ;
+   ::core::Error error = readParams(params, pValue1, pValue2, pValue3, pValue4) ;
    if (error)
       return error ;
    
@@ -260,7 +260,7 @@ core::Error readParams(const json::Array& params,
                        T5* pValue5,
                        T6* pValue6)
 {
-   core::Error error = readParams(params,
+   ::core::Error error = readParams(params,
                                   pValue1,
                                   pValue2,
                                   pValue3, 
@@ -283,7 +283,7 @@ core::Error readParams(const json::Array& params,
                        T6* pValue6,
                        T7* pValue7)
 {
-   core::Error error = readParams(params,
+   ::core::Error error = readParams(params,
                                   pValue1,
                                   pValue2,
                                   pValue3,
@@ -308,7 +308,7 @@ core::Error readParams(const json::Array& params,
                        T7* pValue7,
                        T8* pValue8)
 {
-   core::Error error = readParams(params,
+   ::core::Error error = readParams(params,
                                   pValue1,
                                   pValue2,
                                   pValue3,
@@ -335,7 +335,7 @@ core::Error readParams(const json::Array& params,
                        T8* pValue8,
                        T9* pValue9)
 {
-   core::Error error = readParams(params,
+   ::core::Error error = readParams(params,
                                   pValue1,
                                   pValue2,
                                   pValue3,
@@ -364,7 +364,7 @@ core::Error readParams(const json::Array& params,
                        T9* pValue9,
                        T10* pValue10)
 {
-   core::Error error = readParams(params,
+   ::core::Error error = readParams(params,
                                   pValue1,
                                   pValue2,
                                   pValue3,
@@ -395,7 +395,7 @@ core::Error readParams(const json::Array& params,
                        T10* pValue10,
                        T11* pValue11)
 {
-   core::Error error = readParams(params,
+   ::core::Error error = readParams(params,
                                   pValue1,
                                   pValue2,
                                   pValue3,
@@ -955,9 +955,9 @@ public:
       return response_[kRpcResult];
    }
    
-   void setError(const core::Error& error);
+   void setError(const ::core::Error& error);
 
-   void setError(const core::Error& error, const json::Value& clientInfo);
+   void setError(const ::core::Error& error, const json::Value& clientInfo);
 
    void setError(const boost::system::error_code& ec);
 
@@ -1024,7 +1024,7 @@ void setJsonRpcResult(const T& result, http::Response* pResponse)
 }   
 
 template <typename T>
-void setJsonRpcError(const T& error, core::http::Response* pResponse)
+void setJsonRpcError(const T& error, ::core::http::Response* pResponse)
 {   
    JsonRpcResponse jsonRpcResponse ;
    jsonRpcResponse.setError(error);
@@ -1033,9 +1033,9 @@ void setJsonRpcError(const T& error, core::http::Response* pResponse)
 
 
 // convenience typedefs for managing a map of json rpc functions
-typedef boost::function<core::Error(const core::json::JsonRpcRequest&, core::json::JsonRpcResponse*)>
+typedef boost::function< ::core::Error(const ::core::json::JsonRpcRequest&, ::core::json::JsonRpcResponse*)>
       JsonRpcFunction ;
-typedef std::pair<std::string,core::json::JsonRpcFunction>
+typedef std::pair<std::string,::core::json::JsonRpcFunction>
       JsonRpcMethod ;
 typedef boost::unordered_map<std::string,JsonRpcFunction>
       JsonRpcMethods;
@@ -1050,9 +1050,9 @@ typedef boost::unordered_map<std::string,JsonRpcFunction>
 
 // JsonRpcFunctionContinuation is what a JsonRpcAsyncFunction needs to call
 // when its work is complete
-typedef boost::function<void(const core::Error&, core::json::JsonRpcResponse*)>
+typedef boost::function<void(const ::core::Error&, ::core::json::JsonRpcResponse*)>
       JsonRpcFunctionContinuation ;
-typedef boost::function<void(const core::json::JsonRpcRequest&, const JsonRpcFunctionContinuation&)>
+typedef boost::function<void(const ::core::json::JsonRpcRequest&, const JsonRpcFunctionContinuation&)>
       JsonRpcAsyncFunction ;
 // The bool in the next two typedefs specifies whether the function wants the
 // HTTP connection to stay open until the method finishes executing (direct return),
@@ -1061,7 +1061,7 @@ typedef boost::function<void(const core::json::JsonRpcRequest&, const JsonRpcFun
 // return). Direct return provides lower latency for short operations, and indirect
 // return must be used for longer-running operations to prevent the browser from
 // being starved of available HTTP connections to the server.
-typedef std::pair<std::string,std::pair<bool, core::json::JsonRpcAsyncFunction> >
+typedef std::pair<std::string,std::pair<bool, ::core::json::JsonRpcAsyncFunction> >
       JsonRpcAsyncMethod ;
 typedef boost::unordered_map<std::string,std::pair<bool, JsonRpcAsyncFunction> >
       JsonRpcAsyncMethods ;

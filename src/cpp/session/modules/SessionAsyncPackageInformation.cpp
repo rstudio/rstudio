@@ -39,7 +39,7 @@ namespace session {
 namespace modules {
 namespace r_packages {
 
-using namespace core::r_util;
+using namespace ::core::r_util;
 
 // static variables
 bool AsyncPackageInformationProcess::s_isUpdating_ = false;
@@ -108,7 +108,7 @@ bool fillFunctionInfo(const json::Object& functionObjectJson,
                       const std::string& pkgName,
                       std::map<std::string, FunctionInformation>* pInfo)
 {
-   using namespace core::json;
+   using namespace ::core::json;
    
    for (json::Object::const_iterator it = functionObjectJson.begin();
         it != functionObjectJson.end();
@@ -181,7 +181,7 @@ void AsyncPackageInformationProcess::onCompleted(int exitStatus)
       json::Array typesJson;
       json::Object functionInfoJson;
       
-      core::r_util::PackageInformation pkgInfo;
+      ::core::r_util::PackageInformation pkgInfo;
 
       if (splat[i].empty())
          continue;
@@ -224,7 +224,7 @@ void AsyncPackageInformationProcess::onCompleted(int exitStatus)
          LOG_ERROR_MESSAGE("Failed to read JSON 'functions' object to map");
       
       // Update the index
-      core::r_util::RSourceIndex::addPackageInformation(pkgInfo.package, pkgInfo);
+      ::core::r_util::RSourceIndex::addPackageInformation(pkgInfo.package, pkgInfo);
    }
 
 }
@@ -293,7 +293,7 @@ void AsyncPackageInformationProcess::update()
    
    pProcess->start(
             finalCmd.c_str(),
-            core::FilePath(),
+            ::core::FilePath(),
             async_r::R_PROCESS_VANILLA | async_r::R_PROCESS_AUGMENTED);
    
 }

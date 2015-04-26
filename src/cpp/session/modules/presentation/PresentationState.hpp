@@ -32,7 +32,7 @@ namespace presentation {
 namespace state {
 
 
-void init(const core::FilePath& filePath,
+void init(const ::core::FilePath& filePath,
           const std::string& caption = "Presentation",
           bool isTutorial = false);
 void setSlideIndex(int index);

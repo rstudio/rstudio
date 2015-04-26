@@ -164,7 +164,7 @@ pDevDesc shadowDevDesc(pDevDesc dev)
 FilePath tempFile(const std::string& extension)
 {
    FilePath tempFileDir(string_utils::systemToUtf8(R_TempDir));
-   FilePath tempFilePath = tempFileDir.complete(core::system::generateUuid(false) +
+   FilePath tempFilePath = tempFileDir.complete(::core::system::generateUuid(false) +
                                                 "." + extension);
    return tempFilePath;
 }

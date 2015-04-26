@@ -159,7 +159,7 @@ SourceLocation Synctex::inverseSearch(const PdfLocation& location)
          FilePath filePath = pImpl_->pdfPath.parent().complete(adjustedName);
 
          // fully normalize
-         Error error = core::system::realPath(filePath, &filePath);
+         Error error = ::core::system::realPath(filePath, &filePath);
          if (error)
             LOG_ERROR(error);
 

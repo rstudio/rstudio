@@ -35,8 +35,8 @@ core::Error runProgram(
   const std::string& executable,
   const std::vector<std::string>& args,
   const std::string& input,
-  const core::system::ProcessOptions& options,
-  const boost::function<void(const core::system::ProcessResult&)>& onCompleted);
+  const ::core::system::ProcessOptions& options,
+  const boost::function<void(const ::core::system::ProcessResult&)>& onCompleted);
 
 core::Error initialize();
 

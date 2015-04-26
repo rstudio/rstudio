@@ -36,12 +36,12 @@ void ProcessOptionsCreator::rmEnv(const std::string& name)
    env_.erase(name);
 }
 
-void ProcessOptionsCreator::addToPath(const core::FilePath& dir)
+void ProcessOptionsCreator::addToPath(const ::core::FilePath& dir)
 {
    pathDirs_.push_back(dir);
 }
 
-void ProcessOptionsCreator::setWorkingDirectory(const core::FilePath& dir)
+void ProcessOptionsCreator::setWorkingDirectory(const ::core::FilePath& dir)
 {
    workingDir_ = dir;
 }
@@ -53,23 +53,23 @@ void ProcessOptionsCreator::clearWorkingDirectory()
 
 core::system::ProcessOptions ProcessOptionsCreator::processOptions() const
 {
-   core::system::ProcessOptions options = baseOptions_;
+   ::core::system::ProcessOptions options = baseOptions_;
 
    // Set up environment
-   core::system::Options envOpts;
-   core::system::environment(&envOpts);
+   ::core::system::Options envOpts;
+   ::core::system::environment(&envOpts);
    typedef std::pair<std::string, std::string> StringPair;
    BOOST_FOREACH(StringPair var, env_)
    {
       if (var.second.empty())
-         core::system::unsetenv(&envOpts, var.first);
+         ::core::system::unsetenv(&envOpts, var.first);
       else
-         core::system::setenv(&envOpts, var.first, var.second);
+         ::core::system::setenv(&envOpts, var.first, var.second);
    }
 
    if (!pathDirs_.empty())
    {
-      std::string path = core::system::getenv(envOpts, "PATH");
+      std::string path = ::core::system::getenv(envOpts, "PATH");
       BOOST_FOREACH(FilePath pathDir, pathDirs_)
       {
 #ifdef _WIN32
@@ -79,7 +79,7 @@ core::system::ProcessOptions ProcessOptionsCreator::processOptions() const
 #endif
          path += pathDir.absolutePathNative();
       }
-      core::system::setenv(&envOpts, "PATH", path);
+      ::core::system::setenv(&envOpts, "PATH", path);
    }
 
    if (!workingDir_.empty())

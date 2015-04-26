@@ -33,9 +33,9 @@ namespace synctex {
 
 // returns an object suitable for jnsi binding back into a PdfLocation
 // (or null if the search didn't succeed)
-core::Error forwardSearch(const core::FilePath& rootDocument,
-                          const core::json::Object& sourceLocation,
-                          core::json::Value* pPdfLocation);
+core::Error forwardSearch(const ::core::FilePath& rootDocument,
+                          const ::core::json::Object& sourceLocation,
+                          ::core::json::Value* pPdfLocation);
 
 core::Error initialize();
 

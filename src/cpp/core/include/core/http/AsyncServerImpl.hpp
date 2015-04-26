@@ -157,7 +157,7 @@ public:
          
          // block all signals for the creation of the thread pool
          // (prevents signals from occurring on any of the handler threads)
-         core::system::SignalBlocker signalBlocker;
+         ::core::system::SignalBlocker signalBlocker;
          Error error = signalBlocker.blockAll();
          if (error)
             return error ;
@@ -411,23 +411,23 @@ private:
    }
    
    void maybeAbortServer(const std::string& message, 
-                         const core::ErrorLocation& location)
+                         const ::core::ErrorLocation& location)
    {
       if (abortOnResourceError_)
       {
-         core::log::logErrorMessage("(ABORTING SERVER): " + message, location);
+         ::core::log::logErrorMessage("(ABORTING SERVER): " + message, location);
          ::abort();
       }
       else
       {
-         core::log::logWarningMessage(
+         ::core::log::logWarningMessage(
                   "Resource exhaustion error occurred (continuing to run)",
                   location);
       }
    }
    
    void checkForResourceExhaustion(const boost::system::error_code& ec,
-                                   const core::ErrorLocation& location)
+                                   const ::core::ErrorLocation& location)
    {
       if ( ec.category() == boost::system::get_system_category() &&
           (ec.value() == boost::system::errc::too_many_files_open ||

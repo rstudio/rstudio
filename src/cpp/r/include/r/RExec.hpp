@@ -83,7 +83,7 @@ core::Error evaluateString(const std::string& str, T* pValue)
 {
    sexp::Protect rProtect;
    SEXP valueSEXP ;
-   core::Error error = evaluateString(str, &valueSEXP, &rProtect);
+   ::core::Error error = evaluateString(str, &valueSEXP, &rProtect);
    if (error)
       return error ;
 
@@ -177,27 +177,27 @@ public:
       params_.push_back(Param(name, paramSEXP));
    }
                         
-   core::Error call(SEXP evalNS = R_GlobalEnv, bool safely = true);
-   core::Error callUnsafe();
+   ::core::Error call(SEXP evalNS = R_GlobalEnv, bool safely = true);
+   ::core::Error callUnsafe();
 
-   core::Error call(SEXP* pResultSEXP, sexp::Protect* pProtect);
-   core::Error call(SEXP evalNS, SEXP* pResultSEXP, sexp::Protect* pProtect);
-   core::Error call(SEXP evalNS, bool safely, SEXP* pResultSEXP,
+   ::core::Error call(SEXP* pResultSEXP, sexp::Protect* pProtect);
+   ::core::Error call(SEXP evalNS, SEXP* pResultSEXP, sexp::Protect* pProtect);
+   ::core::Error call(SEXP evalNS, bool safely, SEXP* pResultSEXP,
                     sexp::Protect* pProtect);
 
    template <typename T>
-   core::Error call(T* pValue)
+   ::core::Error call(T* pValue)
    {
       return call(R_GlobalEnv, pValue);
    }
 
    template <typename T>
-   core::Error call(SEXP evalNS, T* pValue)
+   ::core::Error call(SEXP evalNS, T* pValue)
    {
       // call the function
       sexp::Protect rProtect;
       SEXP resultSEXP ;
-      core::Error error = call(evalNS, &resultSEXP, &rProtect);  
+      ::core::Error error = call(evalNS, &resultSEXP, &rProtect);  
       if (error)
          return error ;
       
@@ -277,7 +277,7 @@ public:
    virtual ~IgnoreInterruptsScope();
 private:
    bool previousInterruptsSuspended_ ;
-   boost::scoped_ptr<core::system::SignalBlocker> pSignalBlocker_;
+   boost::scoped_ptr< ::core::system::SignalBlocker> pSignalBlocker_;
 };
 
 // returns true if the global context is on the top (i.e. the context stack is
