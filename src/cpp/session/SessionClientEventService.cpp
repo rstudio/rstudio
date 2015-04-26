@@ -75,7 +75,7 @@ Error ClientEventService::start(const std::string& clientId)
    {
       using boost::bind;
       boost::thread serviceThread(bind(&ClientEventService::run, this));       
-      serviceThread_ = serviceThread.move();
+      serviceThread_ = std::move(serviceThread);
       
       return Success();
    }

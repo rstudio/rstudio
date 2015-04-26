@@ -36,7 +36,7 @@ void safeLaunchThread(boost::function<void()> threadMain,
       boost::thread t(threadMain);
 
       if (pThread)
-         *pThread = t.move();
+         *pThread = std::move(t);
    }
    catch(const boost::thread_resource_error& e)
    {

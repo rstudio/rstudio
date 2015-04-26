@@ -274,7 +274,7 @@ void setJsonRpcResponse(const core::json::JsonRpcResponse& jsonRpcResponse,
 class JsonRpcErrorCategory : public boost::system::error_category
 {
 public:
-   virtual const char * name() const;
+   virtual const char * name() const BOOST_NOEXCEPT;
    virtual std::string message( int ev ) const;
 };
 
@@ -284,7 +284,7 @@ const boost::system::error_category& jsonRpcCategory()
    return jsonRpcErrorCategoryConst ;
 }
 
-const char * JsonRpcErrorCategory::name() const
+const char * JsonRpcErrorCategory::name() const BOOST_NOEXCEPT
 {
    return "jsonrpc" ;
 }
