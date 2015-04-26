@@ -634,7 +634,7 @@ private:
    NSImage* image = [self nsImageForPageRegion: regionRect];
    
    // determine format and properties for writing file
-   NSBitmapImageFileType imageFileType = nil;
+   NSBitmapImageFileType imageFileType;
    NSDictionary* properties = nil;
    if ([format isEqualToString: @"png"])
    {

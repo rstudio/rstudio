@@ -109,7 +109,7 @@ public:
          using boost::bind;
          boost::thread listenerThread(bind(&boost::asio::io_service::run,
                                            &(acceptorService_.ioService())));
-         listenerThread_ = listenerThread.move();
+         listenerThread_ = std::move(listenerThread);
 
          // set started flag
          started_ = true;
