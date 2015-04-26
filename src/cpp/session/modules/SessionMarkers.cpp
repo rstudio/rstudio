@@ -169,7 +169,7 @@ public:
                       module_context::resolveAliasedPath(path),
                       line,
                       column,
-                      core::html_utils::HTML(message, true),
+                      ::core::html_utils::HTML(message, true),
                       showErrorList);
 
                   markers.push_back(marker);
@@ -292,7 +292,7 @@ namespace markers {
 
 namespace {
 
-Error markersTabClosed(const core::json::JsonRpcRequest& request,
+Error markersTabClosed(const ::core::json::JsonRpcRequest& request,
                        json::JsonRpcResponse* pResponse)
 {
    sourceMarkers().clear();
@@ -302,7 +302,7 @@ Error markersTabClosed(const core::json::JsonRpcRequest& request,
    return Success();
 }
 
-Error updateActiveMarkerSet(const core::json::JsonRpcRequest& request,
+Error updateActiveMarkerSet(const ::core::json::JsonRpcRequest& request,
                             json::JsonRpcResponse* pResponse)
 {
    std::string set;
@@ -317,7 +317,7 @@ Error updateActiveMarkerSet(const core::json::JsonRpcRequest& request,
    return Success();
 }
 
-Error clearActiveMarkerSet(const core::json::JsonRpcRequest& request,
+Error clearActiveMarkerSet(const ::core::json::JsonRpcRequest& request,
                            json::JsonRpcResponse* pResponse)
 {
    sourceMarkers().clearActiveMarkers();
@@ -384,7 +384,7 @@ SEXP rs_sourceMarkers(SEXP nameSEXP,
                 FilePath(path),
                 safe_convert::numberTo<int>(line, 1),
                 safe_convert::numberTo<int>(column, 1),
-                core::html_utils::HTML(message, messageHTML),
+                ::core::html_utils::HTML(message, messageHTML),
                 true);
 
             markers.push_back(marker);

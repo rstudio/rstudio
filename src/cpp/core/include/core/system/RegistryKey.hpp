@@ -38,12 +38,12 @@ public:
     RegistryKey();
     virtual ~RegistryKey();
 
-    core::Error open(HKEY hKey, std::string subKey, REGSAM samDesired);
+    ::core::Error open(HKEY hKey, std::string subKey, REGSAM samDesired);
     bool isOpen();
 
     HKEY handle();
 
-    core::Error getStringValue(std::string name, std::string* pValue);
+    ::core::Error getStringValue(std::string name, std::string* pValue);
     std::string getStringValue(std::string name, std::string defaultValue);
 
     std::vector<std::string> keyNames();

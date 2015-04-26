@@ -48,7 +48,7 @@ Error closeSocket(SocketService& socket)
    return Success() ; 
 }
 
-inline bool isConnectionTerminatedError(const core::Error& error)
+inline bool isConnectionTerminatedError(const ::core::Error& error)
 {
    // look for errors that indicate the client closing the connection
    bool timedOut = error.code() == boost::asio::error::timed_out;

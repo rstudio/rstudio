@@ -43,7 +43,7 @@ core::system::Option inputsEnvVar(const std::string& name,
                                   const FilePath& extraPath,
                                   bool ensureForwardSlashes)
 {
-   std::string value = core::system::getenv(name);
+   std::string value = ::core::system::getenv(name);
    if (value.empty())
       value = ".";
 
@@ -55,8 +55,8 @@ core::system::Option inputsEnvVar(const std::string& name,
 #endif
 
    std::string sysPath = string_utils::utf8ToSystem(extraPath.absolutePath());
-   core::system::addToPath(&value, sysPath);
-   core::system::addToPath(&value, ""); // trailing : required by tex
+   ::core::system::addToPath(&value, sysPath);
+   ::core::system::addToPath(&value, ""); // trailing : required by tex
 
    return std::make_pair(name, value);
 }
@@ -90,7 +90,7 @@ RTexmfPaths rTexmfPaths()
    FilePath rHomeSharePath(rHomeShare);
    if (!rHomeSharePath.exists())
    {
-      LOG_ERROR(core::pathNotFoundError(rHomeShare, ERROR_LOCATION));
+      LOG_ERROR(::core::pathNotFoundError(rHomeShare, ERROR_LOCATION));
       return RTexmfPaths();
    }
 
@@ -98,7 +98,7 @@ RTexmfPaths rTexmfPaths()
    FilePath rTexmfPath(rHomeSharePath.complete("texmf"));
    if (!rTexmfPath.exists())
    {
-      LOG_ERROR(core::pathNotFoundError(rTexmfPath.absolutePath(),
+      LOG_ERROR(::core::pathNotFoundError(rTexmfPath.absolutePath(),
                                         ERROR_LOCATION));
       return RTexmfPaths();
    }
@@ -116,7 +116,7 @@ RTexmfPaths rTexmfPaths()
 // the environment (or . if none) with the R dirs in share/texmf
 core::system::Options rTexInputsEnvVars()
 {
-   core::system::Options envVars;
+   ::core::system::Options envVars;
    RTexmfPaths texmfPaths = rTexmfPaths();
    if (!texmfPaths.empty())
    {
@@ -134,28 +134,28 @@ core::system::Options rTexInputsEnvVars()
 }
 
 Error runTexCompile(const FilePath& texProgramPath,
-                    const core::system::Options& envVars,
+                    const ::core::system::Options& envVars,
                     const shell_utils::ShellArgs& args,
                     const FilePath& texFilePath,
-                    core::system::ProcessResult* pResult)
+                    ::core::system::ProcessResult* pResult)
 {
    // copy extra environment variables
-   core::system::Options env;
-   core::system::environment(&env);
-   BOOST_FOREACH(const core::system::Option& var, envVars)
+   ::core::system::Options env;
+   ::core::system::environment(&env);
+   BOOST_FOREACH(const ::core::system::Option& var, envVars)
    {
-      core::system::setenv(&env, var.first, var.second);
+      ::core::system::setenv(&env, var.first, var.second);
    }
 
    // set options
-   core::system::ProcessOptions procOptions;
+   ::core::system::ProcessOptions procOptions;
    procOptions.terminateChildren = true;
    procOptions.redirectStdErrToStdOut = true;
    procOptions.environment = env;
    procOptions.workingDir = texFilePath.parent();
 
    // run the program
-   return core::system::runProgram(
+   return ::core::system::runProgram(
                string_utils::utf8ToSystem(texProgramPath.absolutePath()),
                buildArgs(args, texFilePath),
                "",
@@ -164,10 +164,10 @@ Error runTexCompile(const FilePath& texProgramPath,
 }
 
 core::Error runTexCompile(
-              const core::FilePath& texProgramPath,
-              const core::system::Options& envVars,
-              const core::shell_utils::ShellArgs& args,
-              const core::FilePath& texFilePath,
+              const ::core::FilePath& texProgramPath,
+              const ::core::system::Options& envVars,
+              const ::core::shell_utils::ShellArgs& args,
+              const ::core::FilePath& texFilePath,
               const boost::function<void(int,const std::string&)>& onExited)
 {
    return compile_pdf_supervisor::runProgram(

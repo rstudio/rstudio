@@ -84,7 +84,7 @@ QString Options::portNumber() const
    {
       // Use a random-ish port number to avoid collisions between different
       // instances of rdesktop-launched rsessions
-      int base = std::abs(core::random::uniformRandomInteger<int>());
+      int base = std::abs(::core::random::uniformRandomInteger<int>());
       portNumber_ = QString::number((base % 40000) + 8080);
 
       // recalculate the local peer and set RS_LOCAL_PEER so that
@@ -98,7 +98,7 @@ QString Options::portNumber() const
                           QString::fromUtf8("-rsession");
 #endif
       localPeer_ = localPeer.toUtf8().constData();
-      core::system::setenv("RS_LOCAL_PEER", localPeer_);
+      ::core::system::setenv("RS_LOCAL_PEER", localPeer_);
    }
 
    return portNumber_;
@@ -249,7 +249,7 @@ void Options::setRBinDir(QString path)
 
 bool Options::preferR64() const
 {
-   if (!core::system::isWin64())
+   if (!::core::system::isWin64())
       return false;
 
    if (!settings_.contains(QString::fromUtf8("PreferR64")))
@@ -278,7 +278,7 @@ FilePath Options::executablePath() const
 {
    if (executablePath_.empty())
    {
-      Error error = core::system::executablePath(QApplication::arguments().at(0).toUtf8(),
+      Error error = ::core::system::executablePath(QApplication::arguments().at(0).toUtf8(),
                                                  &executablePath_);
       if (error)
          LOG_ERROR(error);
@@ -291,7 +291,7 @@ FilePath Options::supportingFilePath() const
    if (supportingFilePath_.empty())
    {
       // default to install path
-      core::system::installPath("..",
+      ::core::system::installPath("..",
                                 QApplication::arguments().at(0).toUtf8(),
                                 &supportingFilePath_);
 
@@ -353,14 +353,14 @@ void Options::setIgnoredUpdateVersions(const QStringList& ignoredVersions)
    settings_.setValue(QString::fromUtf8("ignoredUpdateVersions"), ignoredVersions);
 }
 
-core::FilePath Options::scratchTempDir(core::FilePath defaultPath)
+core::FilePath Options::scratchTempDir(::core::FilePath defaultPath)
 {
-   core::FilePath dir(scratchPath.toUtf8().constData());
+   ::core::FilePath dir(scratchPath.toUtf8().constData());
 
    if (!dir.empty() && dir.exists())
    {
       dir = dir.childPath("tmp");
-      core::Error error = dir.ensureDirectory();
+      ::core::Error error = dir.ensureDirectory();
       if (!error)
          return dir;
    }
@@ -369,7 +369,7 @@ core::FilePath Options::scratchTempDir(core::FilePath defaultPath)
 
 void Options::cleanUpScratchTempDir()
 {
-   core::FilePath temp = scratchTempDir(core::FilePath());
+   ::core::FilePath temp = scratchTempDir(::core::FilePath());
    if (!temp.empty())
       temp.removeIfExists();
 }

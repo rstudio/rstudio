@@ -125,19 +125,19 @@ struct Entry
    }
    
    Entry(const FileInfo& fileInfo,
-         boost::shared_ptr<core::r_util::RSourceIndex> pIndex)
+         boost::shared_ptr< ::core::r_util::RSourceIndex> pIndex)
       : fileInfo(fileInfo), pIndex(pIndex)
    {
    }
    
    FileInfo fileInfo;
-   boost::shared_ptr<core::r_util::RSourceIndex> pIndex;
+   boost::shared_ptr< ::core::r_util::RSourceIndex> pIndex;
    
    bool hasIndex() const { return pIndex.get() != NULL; }
    
    bool operator < (const Entry& other) const
    {
-      return core::fileInfoPathLessThan(fileInfo, other.fileInfo);
+      return ::core::fileInfoPathLessThan(fileInfo, other.fileInfo);
    }
    
    bool operator == (const Entry& other) const
@@ -417,17 +417,17 @@ public:
 
    // COPYING: prohibited
    
-   boost::shared_ptr<core::r_util::RSourceIndex> get(
+   boost::shared_ptr< ::core::r_util::RSourceIndex> get(
          const FilePath& filePath)
    {
-      Entry entry(core::toFileInfo(filePath));
+      Entry entry(::core::toFileInfo(filePath));
       EntryTree::iterator it = pEntries_->find(entry);
       if (pEntries_->is_valid(it) && it != pEntries_->end())
       {
          const Entry& entry = *it;
          return entry.pIndex;
       }
-      return boost::shared_ptr<core::r_util::RSourceIndex>();
+      return boost::shared_ptr< ::core::r_util::RSourceIndex>();
    }
 
    template <typename ForwardIterator>
@@ -456,7 +456,7 @@ public:
       }
    }
 
-   void enqueFileChange(const core::system::FileChangeEvent& event)
+   void enqueFileChange(const ::core::system::FileChangeEvent& event)
    {
       // add to the queue
       indexingQueue_.push(event);
@@ -566,7 +566,7 @@ public:
       EntryTree::leaf_iterator it = pEntries_->begin_leaf();
       
       DEBUG("Searching for node '" << parentPath.absolutePath());
-      Entry parentEntry(core::toFileInfo(parentPath));
+      Entry parentEntry(::core::toFileInfo(parentPath));
       EntryTree::iterator parent = pEntries_->find(parentEntry);
       if (parent != pEntries_->end())
       {
@@ -649,7 +649,7 @@ public:
                       bool* pMoreAvailable)
    {
       // Find the parent node in the tree
-      Entry parentEntry(core::toFileInfo(parentPath));
+      Entry parentEntry(::core::toFileInfo(parentPath));
       EntryTree::iterator parentItr = pEntries_->find(parentEntry);
       if (parentItr == pEntries_->end())
       {
@@ -696,7 +696,7 @@ public:
                               bool* pMoreAvailable)
    {
       // Find the parent node in the tree
-      Entry parentEntry(core::toFileInfo(parentPath));
+      Entry parentEntry(::core::toFileInfo(parentPath));
       EntryTree::iterator parentItr = pEntries_->find(parentEntry);
       if (parentItr == pEntries_->end())
       {
@@ -740,7 +740,7 @@ public:
                   boost::function<void(const Entry&)> operation,
                   boost::function<bool(const Entry&)> filter = NULL)
    {
-      Entry parentEntry(core::toFileInfo(parentPath));
+      Entry parentEntry(::core::toFileInfo(parentPath));
       EntryTree::iterator parentItr = pEntries_->find_branch(parentEntry);
       if (parentItr == pEntries_->end())
       {
@@ -761,7 +761,7 @@ public:
    void clear()
    {
       indexing_ = false;
-      indexingQueue_ = std::queue<core::system::FileChangeEvent>();
+      indexingQueue_ = std::queue< ::core::system::FileChangeEvent>();
       pEntries_->clear();
    }
 
@@ -828,7 +828,7 @@ private:
          {
             // log if not path not found error (this can happen if the
             // file was removed after entering the indexing queue)
-            if (!core::isPathNotFoundError(error))
+            if (!::core::isPathNotFoundError(error))
             {
                error.addProperty("src-file", filePath.absolutePath());
                LOG_ERROR(error);
@@ -925,7 +925,7 @@ private:
 
    // indexing queue
    bool indexing_;
-   std::queue<core::system::FileChangeEvent> indexingQueue_;
+   std::queue< ::core::system::FileChangeEvent> indexingQueue_;
 };
 
 } // anonymous namespace
@@ -2207,12 +2207,12 @@ Error findFunctionInSearchPath(const json::JsonRpcRequest& request,
    return Success();
 }
 
-void onFileMonitorEnabled(const tree<core::FileInfo>& files)
+void onFileMonitorEnabled(const tree< ::core::FileInfo>& files)
 {
    s_projectIndex.enqueFiles(files.begin_leaf(), files.end_leaf());
 }
 
-void onFilesChanged(const std::vector<core::system::FileChangeEvent>& events)
+void onFilesChanged(const std::vector< ::core::system::FileChangeEvent>& events)
 {
    std::for_each(
          events.begin(),

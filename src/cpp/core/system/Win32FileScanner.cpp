@@ -71,7 +71,7 @@ FileInfo convertToFileInfo(const FilePath& filePath, bool yield, int *pCount)
 // interfere with the caller getting a listing of everything else
 // and proceeding with its work
 Error scanFiles(const tree<FileInfo>::iterator_base& fromNode,
-                const core::system::FileScannerOptions& options,
+                const ::core::system::FileScannerOptions& options,
                 tree<FileInfo>* pTree)
 {
    // clear all existing

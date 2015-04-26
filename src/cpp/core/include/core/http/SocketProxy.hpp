@@ -33,8 +33,8 @@ namespace http {
 class SocketProxy : public boost::enable_shared_from_this<SocketProxy>
 {
 public:
-   static void create(boost::shared_ptr<core::http::Socket> ptrClient,
-                      boost::shared_ptr<core::http::Socket> ptrServer)
+   static void create(boost::shared_ptr< ::core::http::Socket> ptrClient,
+                      boost::shared_ptr< ::core::http::Socket> ptrServer)
    {
       boost::shared_ptr<SocketProxy> pProxy(new SocketProxy(ptrClient,
                                                             ptrServer));
@@ -43,8 +43,8 @@ public:
    }
 
 private:
-   SocketProxy(boost::shared_ptr<core::http::Socket> ptrClient,
-               boost::shared_ptr<core::http::Socket> ptrServer)
+   SocketProxy(boost::shared_ptr< ::core::http::Socket> ptrClient,
+               boost::shared_ptr< ::core::http::Socket> ptrServer)
       : ptrClient_(ptrClient), ptrServer_(ptrServer)
    {
    }
@@ -61,13 +61,13 @@ private:
    void handleServerWrite(const boost::system::error_code& e,
                           std::size_t bytesTransferred);
    void handleError(const boost::system::error_code& e,
-                    const core::ErrorLocation& location);
+                    const ::core::ErrorLocation& location);
 
    void close();
 
 private:
-   boost::shared_ptr<core::http::Socket> ptrClient_;
-   boost::shared_ptr<core::http::Socket> ptrServer_;
+   boost::shared_ptr< ::core::http::Socket> ptrClient_;
+   boost::shared_ptr< ::core::http::Socket> ptrServer_;
    boost::array<char, 8192> clientBuffer_;
    boost::array<char, 8192> serverBuffer_;
    boost::mutex socketMutex_;

@@ -37,8 +37,8 @@ void handleInitMessagesRequest(const json::JsonRpcRequest& request,
 } // anonymous namespace
 
 void handleMetaRequest(const std::string& username,
-                       const core::http::Request& request,
-                       core::http::Response* pResponse)
+                       const ::core::http::Request& request,
+                       ::core::http::Response* pResponse)
 {
    // parse request
    json::JsonRpcRequest jsonRpcRequest;

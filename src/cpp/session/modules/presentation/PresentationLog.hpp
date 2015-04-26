@@ -48,7 +48,7 @@ private:
    friend Log& log();
 
 public:
-   core::Error initialize();
+   ::core::Error initialize();
 
    void onSlideDeckChanged(const SlideDeck& slideDeck);
    void onSlideIndexChanged(int index);

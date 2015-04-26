@@ -42,7 +42,7 @@ private:
    // COPYING: boost::noncopyable
    
 public:
-   core::ProgramStatus read(int argc, char * const argv[]);
+   ::core::ProgramStatus read(int argc, char * const argv[]);
 
    std::string command() const
    {

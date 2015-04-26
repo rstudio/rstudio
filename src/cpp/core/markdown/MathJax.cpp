@@ -229,7 +229,7 @@ std::string MathJaxFilter::substitute(
    }
    else
    {
-      std::string guid = core::system::generateUuid(false);
+      std::string guid = ::core::system::generateUuid(false);
       std::string suffix = (match.size() > 2) ? std::string(match[2]) : "";
       pMathBlocks->insert(std::make_pair(guid, MathBlock(equation,suffix)));
       return guid;

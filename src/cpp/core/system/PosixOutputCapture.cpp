@@ -156,7 +156,7 @@ Error captureStandardStreams(
    {
       // block all signals for launch of background thread (will cause it
       // to never receive signals)
-      core::system::SignalBlocker signalBlocker;
+      ::core::system::SignalBlocker signalBlocker;
       Error error = signalBlocker.blockAll();
       if (error)
          LOG_ERROR(error);

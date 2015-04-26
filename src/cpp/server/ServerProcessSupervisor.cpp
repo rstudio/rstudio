@@ -36,7 +36,7 @@ boost::mutex s_mutex;
 
 core::system::ProcessSupervisor& processSupervisor()
 {
-   static core::system::ProcessSupervisor instance;
+   static ::core::system::ProcessSupervisor instance;
    return instance;
 }
 
@@ -57,8 +57,8 @@ Error runProgram(
   const std::string& executable,
   const std::vector<std::string>& args,
   const std::string& input,
-  const core::system::ProcessOptions& options,
-  const boost::function<void(const core::system::ProcessResult&)>& onCompleted)
+  const ::core::system::ProcessOptions& options,
+  const boost::function<void(const ::core::system::ProcessResult&)>& onCompleted)
 {
    LOCK_MUTEX(s_mutex)
    {
@@ -71,7 +71,7 @@ Error runProgram(
    END_LOCK_MUTEX
 
    // fulfill closure and keep compiler happy
-   core::system::ProcessResult result;
+   ::core::system::ProcessResult result;
    result.exitStatus = EXIT_FAILURE;
    result.stdErr = "Thread resource error occurred while running program " +
                    executable;

@@ -27,10 +27,10 @@ class FilePath;
 
 namespace file_utils {
 
-FilePath uniqueFilePath(const core::FilePath& parent,
+FilePath uniqueFilePath(const ::core::FilePath& parent,
                         const std::string& prefix = "");
 
-std::string readFile(const core::FilePath& filePath);
+std::string readFile(const ::core::FilePath& filePath);
 
 #ifdef WIN32
 bool isWindowsReservedName(const std::string& name);

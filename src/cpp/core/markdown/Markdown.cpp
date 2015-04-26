@@ -322,7 +322,7 @@ Error markdownToHTML(const FilePath& markdownFile,
    if (error)
       return error;
 
-   return core::writeStringToFile(htmlFile,
+   return ::core::writeStringToFile(htmlFile,
                                   markdownOutput,
                                   string_utils::LineEndingNative);
 }
@@ -334,7 +334,7 @@ Error markdownToHTML(const FilePath& markdownFile,
                      std::string* pHTMLOutput)
 {
    std::string markdownInput;
-   Error error = core::readStringFromFile(markdownFile,
+   Error error = ::core::readStringFromFile(markdownFile,
                                           &markdownInput,
                                           string_utils::LineEndingPosix);
    if (error)

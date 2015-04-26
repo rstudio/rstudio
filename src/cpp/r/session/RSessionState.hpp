@@ -33,25 +33,25 @@ namespace r {
 namespace session {
 namespace state {
         
-bool save(const core::FilePath& statePath,
+bool save(const ::core::FilePath& statePath,
           bool serverMode,
           bool excludePackages,
           bool disableSaveCompression);
 
-bool saveMinimal(const core::FilePath& statePath,
+bool saveMinimal(const ::core::FilePath& statePath,
                  bool saveGlobalEnvironment);
    
 
-bool rProfileOnRestore(const core::FilePath& statePath);
+bool rProfileOnRestore(const ::core::FilePath& statePath);
 
-bool packratModeEnabled(const core::FilePath& statePath);
+bool packratModeEnabled(const ::core::FilePath& statePath);
 
-bool restore(const core::FilePath& statePath, 
+bool restore(const ::core::FilePath& statePath, 
              bool serverMode,
-             boost::function<core::Error()>* pDeferredRestoreAction,
+             boost::function< ::core::Error()>* pDeferredRestoreAction,
              std::string* pErrorMessages); 
    
-bool destroy(const core::FilePath& statePath);
+bool destroy(const ::core::FilePath& statePath);
      
 } // namespace state
 } // namespace session

@@ -39,12 +39,12 @@ bool validateUser(const std::string& username,
       return true;
    
    // get the user
-   core::system::user::User user;
+   ::core::system::user::User user;
    Error error = userFromUsername(username, &user);
    if (error)
    {
       // log the error only if it is unexpected
-      if (!core::system::isUserNotFoundError(error))
+      if (!::core::system::isUserNotFoundError(error))
          LOG_ERROR(error);
 
       // not found either due to non-existence or an unexpected error
@@ -56,7 +56,7 @@ bool validateUser(const std::string& username,
    {    
       // see if they are a member of the required group
       bool belongsToGroup ;
-      error = core::system::userBelongsToGroup(user,
+      error = ::core::system::userBelongsToGroup(user,
                                                requiredGroup,
                                                &belongsToGroup);
       if (error)

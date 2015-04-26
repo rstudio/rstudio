@@ -28,7 +28,7 @@ namespace worker_context {
     
 // register a worker method
 core::Error registerWorkerRpcMethod(const std::string& name,
-                                    const core::json::JsonRpcFunction& function);
+                                    const ::core::json::JsonRpcFunction& function);
 
 
 // enque client event

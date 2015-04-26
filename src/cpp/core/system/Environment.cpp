@@ -53,10 +53,10 @@ std::string getenv(const Options& environment, const std::string& name)
 
 void getModifiedEnv(const Options& extraVars, Options* pEnv)
 {
-   core::system::environment(pEnv);
+   ::core::system::environment(pEnv);
    BOOST_FOREACH(const Option& var, extraVars)
    {
-      core::system::setenv(pEnv, var.first, var.second);
+      ::core::system::setenv(pEnv, var.first, var.second);
    }
 }
 

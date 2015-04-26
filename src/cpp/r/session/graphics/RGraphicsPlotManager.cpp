@@ -390,7 +390,7 @@ Error PlotManager::savePlotAsPostscript(const FilePath& targetPath,
 }
 
 
-Error PlotManager::savePlotAsMetafile(const core::FilePath& filePath,
+Error PlotManager::savePlotAsMetafile(const ::core::FilePath& filePath,
                                       int widthPx,
                                       int heightPx)
 { 

@@ -31,7 +31,7 @@ namespace rstudio {
 namespace server {
 
 core::http::AsyncServer* httpServerCreate();
-core::Error httpServerInit(core::http::AsyncServer* pAsyncServer);
+core::Error httpServerInit(::core::http::AsyncServer* pAsyncServer);
 
 
 } // namespace server

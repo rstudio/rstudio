@@ -98,7 +98,7 @@ private:
 
 private:
    boost::asio::local::stream_protocol::socket socket_;
-   core::FilePath localStreamPath_;
+   ::core::FilePath localStreamPath_;
 };
    
    

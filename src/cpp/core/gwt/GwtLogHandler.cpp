@@ -173,7 +173,7 @@ void handleLogExceptionRequest(const std::string& username,
                             % log::cleanDelims(userAgent));
 
    // log it
-   core::system::log(core::system::kLogLevelError, logEntry);
+   ::core::system::log(::core::system::kLogLevelError, logEntry);
 
 
    // set void result
@@ -232,7 +232,7 @@ void handleLogMessageRequest(const std::string& username,
    
                                            userAgent);
    // log it
-   core::system::log(logLevel, logEntry);
+   ::core::system::log(logLevel, logEntry);
    
    // set void result
    json::setVoidJsonRpcResult(pResponse);
@@ -241,7 +241,7 @@ void handleLogMessageRequest(const std::string& username,
 
 } // anonymous namespace
 
-void initializeSymbolMaps(const core::FilePath& symbolMapsPath)
+void initializeSymbolMaps(const ::core::FilePath& symbolMapsPath)
 {
    // allocate this on the heap so that order of C++ static destruction
    // issues don't cause a crash during shutdown

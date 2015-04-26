@@ -66,11 +66,11 @@ struct SourceCppFileInfo
    std::string rcppPkg;
 };
 
-SourceCppFileInfo sourceCppFileInfo(const core::FilePath& srcPath)
+SourceCppFileInfo sourceCppFileInfo(const ::core::FilePath& srcPath)
 {
    // read file
    std::string contents;
-   Error error = core::readStringFromFile(srcPath, &contents);
+   Error error = ::core::readStringFromFile(srcPath, &contents);
    if (error)
    {
       LOG_ERROR(error);
@@ -273,7 +273,7 @@ void RCompilationDatabase::updateForCurrentPackage()
    // read the package description file
    using namespace projects;
    FilePath pkgPath = projectContext().buildTargetPath();
-   core::r_util::RPackageInfo pkgInfo;
+   ::core::r_util::RPackageInfo pkgInfo;
    Error error = pkgInfo.read(pkgPath);
    if (error)
    {
@@ -294,7 +294,7 @@ void RCompilationDatabase::updateForCurrentPackage()
    }
 
    // get the build environment (e.g. Rtools config)
-   core::system::Options env = compilationEnvironment();
+   ::core::system::Options env = compilationEnvironment();
 
    // Check for C++11 in SystemRequirements
    if (boost::algorithm::icontains(pkgInfo.systemRequirements(), "C++11"))
@@ -303,7 +303,7 @@ void RCompilationDatabase::updateForCurrentPackage()
    // Run R CMD SHLIB
    FilePath srcDir = pkgPath.childPath("src");
    FilePath tempSrcFile = srcDir.childPath(
-          kCompilationDbPrefix + core::system::generateUuid() + ".cpp");
+          kCompilationDbPrefix + ::core::system::generateUuid() + ".cpp");
    std::vector<std::string> compileArgs = argsForRCmdSHLIB(env, tempSrcFile);
 
    if (!compileArgs.empty())
@@ -406,7 +406,7 @@ void RCompilationDatabase::restorePackageCompilationConfig()
    }
 }
 
-void RCompilationDatabase::updateForSourceCpp(const core::FilePath& srcFile)
+void RCompilationDatabase::updateForSourceCpp(const ::core::FilePath& srcFile)
 {
    // read the the source cpp hash for this file
    SourceCppFileInfo info = sourceCppFileInfo(srcFile);
@@ -437,10 +437,10 @@ void RCompilationDatabase::updateForSourceCpp(const core::FilePath& srcFile)
 
 
 Error RCompilationDatabase::executeSourceCpp(
-                                      core::system::Options env,
+                                      ::core::system::Options env,
                                       const std::string& rcppPkg,
-                                      const core::FilePath& srcPath,
-                                      core::system::ProcessResult* pResult)
+                                      const ::core::FilePath& srcPath,
+                                      ::core::system::ProcessResult* pResult)
 {
    // get path to R script
    FilePath rScriptPath;
@@ -449,7 +449,7 @@ Error RCompilationDatabase::executeSourceCpp(
       return error;
 
    // establish options
-   core::system::ProcessOptions options;
+   ::core::system::ProcessOptions options;
 
    // always run as a slave
    std::vector<std::string> args;
@@ -469,7 +469,7 @@ Error RCompilationDatabase::executeSourceCpp(
       args.push_back("--vanilla");
       std::string libPaths = module_context::libPathsString();
       if (!libPaths.empty())
-         core::system::setenv(&env, "R_LIBS", libPaths);
+         ::core::system::setenv(&env, "R_LIBS", libPaths);
    }
 
    // execute code
@@ -483,7 +483,7 @@ Error RCompilationDatabase::executeSourceCpp(
       if (module_context::isPackageVersionInstalled("Rcpp", "0.11.3"))
          extraParams = ", dryRun = TRUE";
       else
-         core::system::setenv(&env, "MAKE", "make --dry-run");
+         ::core::system::setenv(&env, "MAKE", "make --dry-run");
 
       // add command to arguments
       boost::format fmt("Rcpp::sourceCpp('%1%', showOutput = TRUE%2%)");
@@ -491,7 +491,7 @@ Error RCompilationDatabase::executeSourceCpp(
    }
    else
    {
-      core::system::setenv(&env, "MAKE", "make --dry-run");
+      ::core::system::setenv(&env, "MAKE", "make --dry-run");
       boost::format fmt("attributes::sourceCpp('%1%', verbose = TRUE)");
       args.push_back(boost::str(fmt % srcPath.absolutePath()));
    }
@@ -501,8 +501,8 @@ Error RCompilationDatabase::executeSourceCpp(
    options.environment = env;
 
    // execute and capture output
-   return core::system::runProgram(
-            core::string_utils::utf8ToSystem(rScriptPath.absolutePath()),
+   return ::core::system::runProgram(
+            ::core::string_utils::utf8ToSystem(rScriptPath.absolutePath()),
             args,
             "",
             options,
@@ -510,9 +510,9 @@ Error RCompilationDatabase::executeSourceCpp(
 }
 
 core::Error RCompilationDatabase::executeRCmdSHLIB(
-                                 core::system::Options env,
-                                 const core::FilePath& srcPath,
-                                 core::system::ProcessResult* pResult)
+                                 ::core::system::Options env,
+                                 const ::core::FilePath& srcPath,
+                                 ::core::system::ProcessResult* pResult)
 {
    // get R bin directory
    FilePath rBinDir;
@@ -527,10 +527,10 @@ core::Error RCompilationDatabase::executeRCmdSHLIB(
    rCmd << srcPath.filename();
 
    // set options and run
-   core::system::ProcessOptions options;
+   ::core::system::ProcessOptions options;
    options.workingDir = srcPath.parent();
    options.environment = env;
-   return core::system::runCommand(rCmd.commandString(), options, pResult);
+   return ::core::system::runCommand(rCmd.commandString(), options, pResult);
 }
 
 bool RCompilationDatabase::isProjectTranslationUnit(
@@ -556,7 +556,7 @@ bool translationUnitFilter(const FileInfo& fileInfo,
                            const FilePath& pkgIncludeDir)
 {
    FilePath filePath(fileInfo.absolutePath());
-   if (core::system::isHiddenFile(fileInfo))
+   if (::core::system::isHiddenFile(fileInfo))
       return false;
    else if (filePath.isDirectory())
       return true;
@@ -596,7 +596,7 @@ std::vector<std::string> RCompilationDatabase::projectTranslationUnits() const
          LOG_ERROR(error);
 
       // copy them to the out vector if they aren't directories
-      core::algorithm::copy_transformed_if(
+      ::core::algorithm::copy_transformed_if(
                               files.begin(),
                               files.end(),
                               std::back_inserter(units),
@@ -689,8 +689,8 @@ RCompilationDatabase::CompilationConfig
    std::vector<std::string> args = baseCompilationArgs(true);
 
    // execute sourceCpp
-   core::system::ProcessResult result;
-   core::system::Options env = compilationEnvironment();
+   ::core::system::ProcessResult result;
+   ::core::system::Options env = compilationEnvironment();
    Error error = executeSourceCpp(env, rcppPkg, srcFile, &result);
    if (error)
    {
@@ -715,10 +715,10 @@ RCompilationDatabase::CompilationConfig
 }
 
 std::vector<std::string> RCompilationDatabase::argsForRCmdSHLIB(
-                                          core::system::Options env,
+                                          ::core::system::Options env,
                                           FilePath tempSrcFile)
 {
-   Error error = core::writeStringToFile(tempSrcFile, "void foo() {}\n");
+   Error error = ::core::writeStringToFile(tempSrcFile, "void foo() {}\n");
    if (error)
    {
       LOG_ERROR(error);
@@ -726,7 +726,7 @@ std::vector<std::string> RCompilationDatabase::argsForRCmdSHLIB(
    }
 
    // execute R CMD SHLIB
-   core::system::ProcessResult result;
+   ::core::system::ProcessResult result;
    error = executeRCmdSHLIB(env, tempSrcFile, &result);
 
    // remove the temporary source file
@@ -774,8 +774,8 @@ std::vector<std::string> RCompilationDatabase::rToolsArgs() const
    if (rToolsArgs_.empty())
    {
       // scan for Rtools
-      std::vector<core::r_util::RToolsInfo> rTools;
-      Error error = core::r_util::scanRegistryForRTools(&rTools);
+      std::vector< ::core::r_util::RToolsInfo> rTools;
+      Error error = ::core::r_util::scanRegistryForRTools(&rTools);
       if (error)
          LOG_ERROR(error);
 
@@ -813,8 +813,8 @@ std::vector<std::string> RCompilationDatabase::rToolsArgs() const
 core::system::Options RCompilationDatabase::compilationEnvironment() const
 {
    // rtools on windows
-   core::system::Options env;
-   core::system::environment(&env);
+   ::core::system::Options env;
+   ::core::system::environment(&env);
 #if defined(_WIN32)
    std::string warning;
    module_context::addRtoolsToPathIfNecessary(&env, &warning);
@@ -851,7 +851,7 @@ std::vector<std::string> RCompilationDatabase::precompiledHeaderArgs(
       LOG_ERROR(error);
       return std::vector<std::string>();
    }
-   pkgPath = core::hash::crc32HexHash(pkgPath);
+   pkgPath = ::core::hash::crc32HexHash(pkgPath);
    precompiledDir = precompiledDir.childPath(pkgPath);
 
    // platform/rcpp version specific directory name
@@ -898,7 +898,7 @@ std::vector<std::string> RCompilationDatabase::precompiledHeaderArgs(
       std::string contents;
       boost::format fmt("#include <%1%.h>\n");
       contents.append(boost::str(fmt % pkgName));
-      error = core::writeStringToFile(cppPath, contents);
+      error = ::core::writeStringToFile(cppPath, contents);
       if (error)
       {
          LOG_ERROR(error);
@@ -913,7 +913,7 @@ std::vector<std::string> RCompilationDatabase::precompiledHeaderArgs(
          args.push_back(stdArg);
 
       // run R CMD SHLIB
-      core::system::Options env = compilationEnvironment();
+      ::core::system::Options env = compilationEnvironment();
       FilePath tempSrcFile = module_context::tempFile("clang", "cpp");
       std::vector<std::string> cArgs = argsForRCmdSHLIB(env, tempSrcFile);
       std::copy(cArgs.begin(), cArgs.end(), std::back_inserter(args));
@@ -923,7 +923,7 @@ std::vector<std::string> RCompilationDatabase::precompiledHeaderArgs(
       std::copy(pkgArgs.begin(), pkgArgs.end(), std::back_inserter(args));
 
       // create args array
-      core::system::ProcessArgs argsArray(args);
+      ::core::system::ProcessArgs argsArray(args);
 
       CXIndex index = clang().createIndex(
                                  0,

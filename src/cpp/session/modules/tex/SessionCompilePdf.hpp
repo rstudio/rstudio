@@ -33,9 +33,9 @@ namespace modules {
 namespace tex {
 namespace compile_pdf {
 
-bool startCompile(const core::FilePath& targetFilePath,
+bool startCompile(const ::core::FilePath& targetFilePath,
                   const std::string& encoding,
-                  const core::json::Object& sourceLocation,
+                  const ::core::json::Object& sourceLocation,
                   const boost::function<void()>& onCompleted);
 
 bool compileIsRunning();

@@ -56,9 +56,9 @@ void assumeRootPriv()
     // running with geteuid != getuid (as is the case when we temporarily
     // drop privileges). We've also seen kerberos on Ubuntu require
     // priv to work correctly -- so, restore privilliges in the child
-    if (core::system::realUserIsRoot())
+    if (::core::system::realUserIsRoot())
     {
-       Error error = core::system::restorePriv();
+       Error error = ::core::system::restorePriv();
        if (error)
        {
           LOG_ERROR(error);
@@ -116,10 +116,10 @@ std::string applicationSignInURL(const http::Request& request,
    return signInURL;
 }
 
-std::string getUserIdentifier(const core::http::Request& request)
+std::string getUserIdentifier(const ::core::http::Request& request)
 {
    if (server::options().authNone())
-      return core::system::username();
+      return ::core::system::username();
    else
       return auth::secure_cookie::readSecureCookie(request, kUserId);
 }
@@ -146,14 +146,14 @@ bool mainPageFilter(const http::Request& request,
    }
 }
 
-void signInThenContinue(const core::http::Request& request,
-                        core::http::Response* pResponse)
+void signInThenContinue(const ::core::http::Request& request,
+                        ::core::http::Response* pResponse)
 {
    pResponse->setMovedTemporarily(request, applicationSignInURL(request, request.uri()));
 }
 
 void refreshCredentialsThenContinue(
-            boost::shared_ptr<core::http::AsyncConnection> pConnection)
+            boost::shared_ptr< ::core::http::AsyncConnection> pConnection)
 {
    // no silent refresh possible so delegate to sign-in and continue
    signInThenContinue(pConnection->request(),
@@ -200,16 +200,16 @@ void publicKey(const http::Request&,
                http::Response* pResponse)
 {
    std::string exp, mod;
-   core::system::crypto::rsaPublicKey(&exp, &mod);
+   ::core::system::crypto::rsaPublicKey(&exp, &mod);
    pResponse->setNoCacheHeaders();
    pResponse->setBody(exp + ":" + mod);
    pResponse->setContentType("text/plain");
 }
 
-void setSignInCookies(const core::http::Request& request,
+void setSignInCookies(const ::core::http::Request& request,
                       const std::string& username,
                       bool persist,
-                      core::http::Response* pResponse)
+                      ::core::http::Response* pResponse)
 {
    boost::optional<boost::gregorian::days> expiry;
    if (persist && canStaySignedIn())
@@ -245,7 +245,7 @@ void doSignIn(const http::Request& request,
    {
       std::string encryptedValue = request.formFieldValue("v");
       std::string plainText;
-      Error error = core::system::crypto::rsaPrivateDecrypt(encryptedValue,
+      Error error = ::core::system::crypto::rsaPrivateDecrypt(encryptedValue,
                                                             &plainText);
       if (error)
       {
@@ -356,12 +356,12 @@ bool pamLogin(const std::string& username, const std::string& password)
    args.push_back(username);
 
    // options (assume priv after fork)
-   core::system::ProcessOptions options;
+   ::core::system::ProcessOptions options;
    options.onAfterFork = assumeRootPriv;
 
    // run pam helper
-   core::system::ProcessResult result;
-   Error error = core::system::runProgram(pamHelperPath.absolutePath(),
+   ::core::system::ProcessResult result;
+   Error error = ::core::system::runProgram(pamHelperPath.absolutePath(),
                                           args,
                                           password,
                                           options,
@@ -397,7 +397,7 @@ Error initialize()
    uri_handlers::addBlocking(kPublicKey, publicKey);
 
    // initialize crypto
-   return core::system::crypto::rsaInit();
+   return ::core::system::crypto::rsaInit();
 }
 
 

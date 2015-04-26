@@ -31,7 +31,7 @@ namespace modules {
 namespace tex {
 namespace view_pdf {
 
-std::string createViewPdfUrl(const core::FilePath& filePath);
+std::string createViewPdfUrl(const ::core::FilePath& filePath);
 
 core::Error initialize();
 

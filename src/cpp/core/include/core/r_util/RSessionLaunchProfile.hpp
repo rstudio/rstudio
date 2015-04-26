@@ -31,7 +31,7 @@ struct SessionLaunchProfile
    std::string username;
    std::string password;
    std::string executablePath;
-   core::system::ProcessConfig config;
+   ::core::system::ProcessConfig config;
 };
 
 json::Object sessionLaunchProfileToJson(const SessionLaunchProfile& profile);

@@ -171,7 +171,7 @@ CXChildVisitResult cursorVisitor(CXCursor cxCursor,
    }
 }
 
-void fileChangeHandler(const core::system::FileChangeEvent& event)
+void fileChangeHandler(const ::core::system::FileChangeEvent& event)
 {
    // alias the filename
    std::string file = event.fileInfo().absolutePath();
@@ -180,7 +180,7 @@ void fileChangeHandler(const core::system::FileChangeEvent& event)
    // we come back up all of the files will come back in as "add" events,
    // for this case we need to ignore the add if we already have a fresh
    // enough index of the file
-   if (event.type() == core::system::FileChangeEvent::FileAdded)
+   if (event.type() == ::core::system::FileChangeEvent::FileAdded)
    {
       // if we have a definition
       DefinitionsByFile::const_iterator it = s_definitionsByFile.find(file);
@@ -196,8 +196,8 @@ void fileChangeHandler(const core::system::FileChangeEvent& event)
    s_definitionsByFile.erase(file);
 
    // if this is an add or an update then re-index
-   if (event.type() == core::system::FileChangeEvent::FileAdded ||
-       event.type() == core::system::FileChangeEvent::FileModified)
+   if (event.type() == ::core::system::FileChangeEvent::FileAdded ||
+       event.type() == ::core::system::FileChangeEvent::FileModified)
    {    
       // get the compilation arguments for this file and use them to
       // create a translation unit
@@ -212,7 +212,7 @@ void fileChangeHandler(const core::system::FileChangeEvent& event)
                    (rSourceIndex().verbose() > 0) ? 1 : 0);
 
          // get args in form clang expects
-         core::system::ProcessArgs argsArray(compileArgs);
+         ::core::system::ProcessArgs argsArray(compileArgs);
 
          // parse the translation unit
          CXTranslationUnit tu = libclang::clang().parseTranslationUnit(

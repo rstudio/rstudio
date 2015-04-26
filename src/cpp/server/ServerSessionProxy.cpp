@@ -97,7 +97,7 @@ ProxyFilter s_proxyFilter;
 
 bool applyProxyFilter(
       const std::string& username,
-      boost::shared_ptr<core::http::AsyncConnection> ptrConnection)
+      boost::shared_ptr< ::core::http::AsyncConnection> ptrConnection)
 {
    if (s_proxyFilter)
       return s_proxyFilter(username, ptrConnection);
@@ -106,7 +106,7 @@ bool applyProxyFilter(
 }
 
 void handleProxyResponse(
-      boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
+      boost::shared_ptr< ::core::http::AsyncConnection> ptrConnection,
       std::string username,
       const http::Response& response)
 {
@@ -179,7 +179,7 @@ void rewriteLocalhostAddressHeader(const std::string& headerName,
 }
 
 void handleLocalhostResponse(
-      boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
+      boost::shared_ptr< ::core::http::AsyncConnection> ptrConnection,
       boost::shared_ptr<LocalhostAsyncClient> ptrLocalhost,
       const std::string& port,
       const http::Response& response)
@@ -242,7 +242,7 @@ void handleLocalhostResponse(
 }
 
 void handleLocalhostError(
-      boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
+      boost::shared_ptr< ::core::http::AsyncConnection> ptrConnection,
       const Error& error)
 {
    // if this request required a session then return a standard 503
@@ -271,7 +271,7 @@ void logIfNotConnectionTerminated(const Error& error,
 }
 
 void handleContentError(
-      boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
+      boost::shared_ptr< ::core::http::AsyncConnection> ptrConnection,
       std::string username,
       const Error& error)
 {   
@@ -316,7 +316,7 @@ void handleContentError(
 }
 
 void handleRpcError(
-      boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
+      boost::shared_ptr< ::core::http::AsyncConnection> ptrConnection,
        std::string username,
       const Error& error)
 {
@@ -360,7 +360,7 @@ void handleRpcError(
 }
 
 void handleEventsError(
-      boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
+      boost::shared_ptr< ::core::http::AsyncConnection> ptrConnection,
       const Error& error)
 {
    // NOTE: events requests don't initiate session launches so
@@ -396,7 +396,7 @@ void handleEventsError(
 
 void proxyRequest(
       const std::string& username,
-      boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
+      boost::shared_ptr< ::core::http::AsyncConnection> ptrConnection,
       const http::ErrorHandler& errorHandler,
       const http::ConnectionRetryProfile& connectionRetryProfile)
 {
@@ -462,26 +462,26 @@ Error initialize()
 Error runVerifyInstallationSession()
 {
    // get current user
-   core::system::user::User user;
+   ::core::system::user::User user;
    Error error = currentUser(&user);
    if (error)
       return error;
 
    // launch verify installation session
-   core::system::Options args;
-   args.push_back(core::system::Option("--" kVerifyInstallationSessionOption, "1"));
+   ::core::system::Options args;
+   args.push_back(::core::system::Option("--" kVerifyInstallationSessionOption, "1"));
    PidType sessionPid;
    error = server::launchSession(user.username, args, &sessionPid);
    if (error)
       return error;
 
    // wait for exit
-   return core::system::waitForProcessExit(sessionPid);
+   return ::core::system::waitForProcessExit(sessionPid);
 }
 
 void proxyContentRequest(
       const std::string& username,
-      boost::shared_ptr<core::http::AsyncConnection> ptrConnection)
+      boost::shared_ptr< ::core::http::AsyncConnection> ptrConnection)
 {
    proxyRequest(username,
                 ptrConnection,
@@ -491,7 +491,7 @@ void proxyContentRequest(
 
 void proxyRpcRequest(
       const std::string& username,
-      boost::shared_ptr<core::http::AsyncConnection> ptrConnection)
+      boost::shared_ptr< ::core::http::AsyncConnection> ptrConnection)
 {
    // validate the user if this is client_init
    if (boost::algorithm::ends_with(ptrConnection->request().uri(),
@@ -509,7 +509,7 @@ void proxyRpcRequest(
    
 void proxyEventsRequest(
       const std::string& username,
-      boost::shared_ptr<core::http::AsyncConnection> ptrConnection)
+      boost::shared_ptr< ::core::http::AsyncConnection> ptrConnection)
 {
    // validate the user
    if (!validateUser(ptrConnection, username))
@@ -523,7 +523,7 @@ void proxyEventsRequest(
 
 void proxyLocalhostRequest(
       const std::string& username,
-      boost::shared_ptr<core::http::AsyncConnection> ptrConnection)
+      boost::shared_ptr< ::core::http::AsyncConnection> ptrConnection)
 {
    // apply optional proxy filter
    if (applyProxyFilter(username, ptrConnection))

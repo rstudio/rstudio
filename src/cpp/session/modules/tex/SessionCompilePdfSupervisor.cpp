@@ -111,10 +111,10 @@ Error terminateAll(const boost::posix_time::time_duration& waitDuration)
    }
 }
 
-Error runProgram(const core::FilePath& programFilePath,
+Error runProgram(const ::core::FilePath& programFilePath,
                  const std::vector<std::string>& args,
-                 const core::system::Options& extraEnvVars,
-                 const core::FilePath& workingDir,
+                 const ::core::system::Options& extraEnvVars,
+                 const ::core::FilePath& workingDir,
                  const boost::function<void(const std::string&)>& onOutput,
                  const boost::function<void(int,const std::string&)>& onExited)
 {
@@ -123,17 +123,17 @@ Error runProgram(const core::FilePath& programFilePath,
                                           programFilePath.absolutePath());
 
    // setup options
-   core::system::ProcessOptions options;
+   ::core::system::ProcessOptions options;
    options.terminateChildren = true;
    options.redirectStdErrToStdOut = true;
-   core::system::Options env;
-   core::system::getModifiedEnv(extraEnvVars, &env);
+   ::core::system::Options env;
+   ::core::system::getModifiedEnv(extraEnvVars, &env);
    options.environment = env;
    options.workingDir = workingDir;
 
    // setup callbacks
    boost::shared_ptr<CB> pCB(new CB(onOutput, onExited));
-   core::system::ProcessCallbacks cb;
+   ::core::system::ProcessCallbacks cb;
    cb.onStdout = cb.onStderr = boost::bind(&CB::onOutput, pCB, _2);
    cb.onExit = boost::bind(&CB::onExit, pCB, _1);
 

@@ -47,10 +47,10 @@ private:
    boost::shared_ptr<Impl> pImpl_;
 };
 
-void reportError(const core::Error& error);
+void reportError(const ::core::Error& error);
 
-void logAndReportError(const core::Error& error,
-                       const core::ErrorLocation& location);
+void logAndReportError(const ::core::Error& error,
+                       const ::core::ErrorLocation& location);
 
 } // namespace graphics
 } // namespace session

@@ -73,7 +73,7 @@ std::string PersistentState::newActiveClientId()
 {
    if (serverMode_)
    {
-      std::string newId = core::system::generateUuid();
+      std::string newId = ::core::system::generateUuid();
       settings_.set(kActiveClientId, newId);
       return newId;
    }

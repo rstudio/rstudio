@@ -50,7 +50,7 @@ FilePath scanForRScript(const std::vector<std::string>& rScriptPaths,
       if (rScriptPath.exists() && !rScriptPath.isDirectory())
       {
          // verify that the alias points to a real version of R
-         Error error = core::system::realPath(*it, &rScriptPath);
+         Error error = ::core::system::realPath(*it, &rScriptPath);
          if (!error)
          {
             return rScriptPath;
@@ -193,7 +193,7 @@ std::string extraLibraryPaths(const FilePath& ldPathsScript,
    // run script to capture paths
    std::string command = ldPathsScript.absolutePath() + " " + rHome;
    system::ProcessResult result;
-   Error error = runCommand(command, core::system::ProcessOptions(), &result);
+   Error error = runCommand(command, ::core::system::ProcessOptions(), &result);
    if (error)
       LOG_ERROR(error);
    std::string libraryPaths = result.stdOut;
@@ -205,8 +205,8 @@ FilePath systemDefaultRScript(std::string* pErrMsg)
 {
    // ask system which R to use
    system::ProcessResult result;
-   Error error = core::system::runCommand("which R",
-                                          core::system::ProcessOptions(),
+   Error error = ::core::system::runCommand("which R",
+                                          ::core::system::ProcessOptions(),
                                           &result);
    std::string whichR = result.stdOut;
    boost::algorithm::trim(whichR);
@@ -256,12 +256,12 @@ bool getRHomeAndLibPath(const FilePath& rScriptPath,
    // (the normal semantics of invoking the R script are that it overwrites
    // R_HOME and prints a warning -- this warning is co-mingled with the
    // output of "R RHOME" and messes up our parsing)
-   core::system::setenv("R_HOME", "");
+   ::core::system::setenv("R_HOME", "");
 
    // run R script to detect R home
    std::string command = rScriptPath.absolutePath() + " RHOME";
    system::ProcessResult result;
-   Error error = runCommand(command, core::system::ProcessOptions(), &result);
+   Error error = runCommand(command, ::core::system::ProcessOptions(), &result);
    if (error)
    {
       *pErrMsg = "Error running R (" + rScriptPath.absolutePath() + "): " +
@@ -289,7 +289,7 @@ bool validateRScriptPath(const std::string& rScriptPath,
 {
    // get realpath
    FilePath rBinaryPath;
-   Error error = core::system::realPath(rScriptPath, &rBinaryPath);
+   Error error = ::core::system::realPath(rScriptPath, &rBinaryPath);
    if (error)
    {
       *pErrMsg = "Unable to determine real path of R script " +
@@ -462,7 +462,7 @@ bool detectRLocationsUsingR(const std::string& rScriptPath,
    // (the normal semantics of invoking the R script are that it overwrites
    // R_HOME and prints a warning -- this warning is co-mingled with the
    // output of R and messes up our parsing)
-   core::system::setenv("R_HOME", "");
+   ::core::system::setenv("R_HOME", "");
 
    // call R to determine the locations
    std::string command = rScriptPath +
@@ -693,18 +693,18 @@ void setREnvironmentVars(const EnvironmentVars& vars)
         it != vars.end();
         ++it)
    {
-      core::system::setenv(it->first, it->second);
+      ::core::system::setenv(it->first, it->second);
    }
 }
 
 void setREnvironmentVars(const EnvironmentVars& vars,
-                         core::system::Options* pEnv)
+                         ::core::system::Options* pEnv)
 {
    for (EnvironmentVars::const_iterator it = vars.begin();
         it != vars.end();
         ++it)
    {
-      core::system::setenv(pEnv, it->first, it->second);
+      ::core::system::setenv(pEnv, it->first, it->second);
    }
 }
 
@@ -714,7 +714,7 @@ std::string rLibraryPath(const FilePath& rHomePath,
                          const std::string& ldLibraryPath)
 {
    // determine library path (existing + r lib dir + r extra lib dirs)
-   std::string libraryPath = core::system::getenv(kLibraryPathEnvVariable);
+   std::string libraryPath = ::core::system::getenv(kLibraryPathEnvVariable);
 #ifdef __APPLE__
    // if this isn't set explicitly then initalize it with the default
    // of $HOME/lib:/usr/local/lib:/usr/lib. See documentation here:
@@ -722,7 +722,7 @@ std::string rLibraryPath(const FilePath& rHomePath,
    if (libraryPath.empty())
    {
       boost::format fmt("%1%/lib:/usr/local/lib:/usr/lib");
-      libraryPath = boost::str(fmt % core::system::getenv("HOME"));
+      libraryPath = boost::str(fmt % ::core::system::getenv("HOME"));
    }
 #endif
    if (!libraryPath.empty())
@@ -743,13 +743,13 @@ Error rVersion(const FilePath& rHomePath,
                std::string* pVersion)
 {
    // determine the R version
-   core::system::ProcessOptions options;
-   core::system::Options env;
-   core::system::environment(&env);
-   core::system::setenv(&env, "R_HOME", rHomePath.absolutePath());
+   ::core::system::ProcessOptions options;
+   ::core::system::Options env;
+   ::core::system::environment(&env);
+   ::core::system::setenv(&env, "R_HOME", rHomePath.absolutePath());
    options.environment = env;
-   core::system::ProcessResult result;
-   Error error = core::system::runCommand(rScriptPath.absolutePath() +
+   ::core::system::ProcessResult result;
+   Error error = ::core::system::runCommand(rScriptPath.absolutePath() +
                                           " --slave --vanilla --version",
                                           options,
                                           &result);

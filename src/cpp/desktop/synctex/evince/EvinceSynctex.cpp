@@ -42,7 +42,7 @@ void logDBusError(const QDBusError& error, const ErrorLocation& location)
    std::string msg = boost::str(fmt % error.type() %
                                       error.name().toStdString() %
                                       error.message().toStdString());
-   core::log::logErrorMessage(msg, location);
+   ::core::log::logErrorMessage(msg, location);
 }
 
 } // anonymous namespace
@@ -161,7 +161,7 @@ void EvinceSynctex::syncView(EvinceWindow* pWindow,
    QDBusPendingReply<> reply = pWindow->SyncView(
                                        srcFile,
                                        srcLoc,
-                                       core::date_time::secondsSinceEpoch());
+                                       ::core::date_time::secondsSinceEpoch());
 
    // wait for the results asynchronously
    QDBusPendingCallWatcher* pWatcher = new QDBusPendingCallWatcher(reply,

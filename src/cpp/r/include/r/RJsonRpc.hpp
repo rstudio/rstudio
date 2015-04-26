@@ -33,7 +33,7 @@ namespace rstudio {
 namespace r {
 namespace json {
    
-core::Error getRpcMethods(core::json::JsonRpcMethods* pMethods);
+core::Error getRpcMethods(::core::json::JsonRpcMethods* pMethods);
    
 } // namespace json
 } // namesapce r

@@ -36,25 +36,25 @@ core::Error runVerifyInstallationSession();
    
 void proxyContentRequest(
       const std::string& username,
-      boost::shared_ptr<core::http::AsyncConnection> ptrConnection) ;
+      boost::shared_ptr< ::core::http::AsyncConnection> ptrConnection) ;
 
 void proxyRpcRequest(
       const std::string& username,
-      boost::shared_ptr<core::http::AsyncConnection> ptrConnection) ;
+      boost::shared_ptr< ::core::http::AsyncConnection> ptrConnection) ;
 
 void proxyEventsRequest(
       const std::string& username,
-      boost::shared_ptr<core::http::AsyncConnection> ptrConnection);
+      boost::shared_ptr< ::core::http::AsyncConnection> ptrConnection);
 
 void proxyLocalhostRequest(
       const std::string& username,
-      boost::shared_ptr<core::http::AsyncConnection> ptrConnection);
+      boost::shared_ptr< ::core::http::AsyncConnection> ptrConnection);
    
-bool requiresSession(const core::http::Request& request);
+bool requiresSession(const ::core::http::Request& request);
 
 typedef boost::function<bool(
     const std::string&,
-    boost::shared_ptr<core::http::AsyncConnection>)> ProxyFilter;
+    boost::shared_ptr< ::core::http::AsyncConnection>)> ProxyFilter;
 void setProxyFilter(ProxyFilter filter);
 
 } // namespace session_proxy

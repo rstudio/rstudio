@@ -422,7 +422,7 @@ void handleGridResReq(const http::Request& request,
 
    // setCacheableFile is responsible for emitting a 404 when the file doesn't
    // exist.
-   core::FilePath gridResource = options().rResourcesPath().childPath(path);
+   ::core::FilePath gridResource = options().rResourcesPath().childPath(path);
    pResponse->setCacheableFile(gridResource, request);
 }
 
@@ -852,7 +852,7 @@ void onShutdown(bool terminatedNormally)
    }
 }
 
-void onSuspend(const r::session::RSuspendOptions&, core::Settings*)
+void onSuspend(const r::session::RSuspendOptions&, ::core::Settings*)
 {
    onShutdown(true);
 }

@@ -164,7 +164,7 @@ class SourceMarkerGenerator
 {
 public:
    std::vector<module_context::SourceMarker> markersForCursorLocations(
-              const std::vector<core::libclang::FileRange>& locations)
+              const std::vector< ::core::libclang::FileRange>& locations)
    {
       using namespace module_context;
       std::vector<SourceMarker> markers;
@@ -187,7 +187,7 @@ public:
                              startLoc.filePath,
                              startLoc.line,
                              startLoc.column,
-                             core::html_utils::HTML(message, true),
+                             ::core::html_utils::HTML(message, true),
                              true);
 
          // add it to the list
@@ -294,7 +294,7 @@ private:
 void findReferences(std::string USR,
                     CXTranslationUnit tu,
                     std::string* pSpelling,
-                    std::vector<core::libclang::FileRange>* pRefs)
+                    std::vector< ::core::libclang::FileRange>* pRefs)
 {
    FindReferencesData findReferencesData(tu, USR);
    libclang::clang().visitChildren(
@@ -314,9 +314,9 @@ void findReferences(std::string USR,
 
 
 
-core::Error findReferences(const core::libclang::FileLocation& location,
+core::Error findReferences(const ::core::libclang::FileLocation& location,
                            std::string* pSpelling,
-                           std::vector<core::libclang::FileRange>* pRefs)
+                           std::vector< ::core::libclang::FileRange>* pRefs)
 {
    Cursor cursor = rSourceIndex().referencedCursorForFileLocation(location);
    if (!cursor.isValid() || !cursor.isDeclaration())
@@ -370,7 +370,7 @@ core::Error findReferences(const core::libclang::FileLocation& location,
                               (rSourceIndex().verbose() > 0) ? 1 : 0);
 
             // get args in form clang expects
-            core::system::ProcessArgs argsArray(compileArgs);
+            ::core::system::ProcessArgs argsArray(compileArgs);
 
             // parse the translation unit
             CXTranslationUnit tu = libclang::clang().parseTranslationUnit(
@@ -422,11 +422,11 @@ Error findUsages(const json::JsonRpcRequest& request,
    FilePath filePath = module_context::resolveAliasedPath(docPath);
 
    // get the declaration cursor for this file location
-   core::libclang::FileLocation location(filePath, line, column);
+   ::core::libclang::FileLocation location(filePath, line, column);
 
    // find the references
    std::string spelling;
-   std::vector<core::libclang::FileRange> usageLocations;
+   std::vector< ::core::libclang::FileRange> usageLocations;
    error = findReferences(location, &spelling, &usageLocations);
    if (error)
       return error;

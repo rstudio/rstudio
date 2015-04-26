@@ -31,9 +31,9 @@ namespace session {
 namespace modules {      
 namespace help {
 
-void handleHelpHomeRequest(const core::http::Request& request,
+void handleHelpHomeRequest(const ::core::http::Request& request,
                            const std::string& jsCallbacks,
-                           core::http::Response* pResponse);
+                           ::core::http::Response* pResponse);
 
    
 } // namespace help

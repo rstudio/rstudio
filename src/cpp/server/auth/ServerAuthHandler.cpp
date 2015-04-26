@@ -37,7 +37,7 @@ namespace {
 Handler s_handler;
 
 void updateCredentialsNotSupported(
-      boost::shared_ptr<core::http::AsyncConnection> pConnection)
+      boost::shared_ptr< ::core::http::AsyncConnection> pConnection)
 {
    // alias response
    http::Response* pResponse = &(pConnection->response());
@@ -61,7 +61,7 @@ const char * const kSignOut = "/auth-sign-out";
 const char * const kRefreshCredentialsAndContinue = "/auth-refresh-credentials";
 
 
-std::string getUserIdentifier(const core::http::Request& request)
+std::string getUserIdentifier(const ::core::http::Request& request)
 {
    return s_handler.getUserIdentifier(request);
 }
@@ -71,20 +71,20 @@ std::string userIdentifierToLocalUsername(const std::string& userIdentifier)
    return s_handler.userIdentifierToLocalUsername(userIdentifier);
 }
 
-bool mainPageFilter(const core::http::Request& request,
-                    core::http::Response* pResponse)
+bool mainPageFilter(const ::core::http::Request& request,
+                    ::core::http::Response* pResponse)
 {
    return s_handler.mainPageFilter(request, pResponse);
 }
 
-void signInThenContinue(const core::http::Request& request,
-                        core::http::Response* pResponse)
+void signInThenContinue(const ::core::http::Request& request,
+                        ::core::http::Response* pResponse)
 {
    s_handler.signInThenContinue(request, pResponse);
 }
 
 void refreshCredentialsThenContinue(
-      boost::shared_ptr<core::http::AsyncConnection> pConnection)
+      boost::shared_ptr< ::core::http::AsyncConnection> pConnection)
 {
    s_handler.refreshCredentialsThenContinue(pConnection);
 }
@@ -123,10 +123,10 @@ bool canSetSignInCookies()
    return !s_handler.setSignInCookies.empty();
 }
 
-void setSignInCookies(const core::http::Request& request,
+void setSignInCookies(const ::core::http::Request& request,
                       const std::string& username,
                       bool persist,
-                      core::http::Response* pResponse)
+                      ::core::http::Response* pResponse)
 {
    s_handler.setSignInCookies(request, username, persist, pResponse);
 }

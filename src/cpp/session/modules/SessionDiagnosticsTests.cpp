@@ -41,7 +41,7 @@ using namespace rparser;
 static const ParseOptions s_parseOptions(true, true, true, true, true);
 
 using namespace core;
-using namespace core::r_util;
+using namespace ::core::r_util;
 
 // We use macros so that the test output gives
 // meaningful line numbers.
@@ -83,17 +83,17 @@ bool isRFile(const FileInfo& info)
 
 void lintRFilesInSubdirectory(const FilePath& path)
 {
-   tree<core::FileInfo> fileTree;
+   tree< ::core::FileInfo> fileTree;
    
-   core::system::FileScannerOptions fsOptions;
+   ::core::system::FileScannerOptions fsOptions;
    fsOptions.recursive = true;
    fsOptions.yield = true;
    
-   core::system::scanFiles(core::toFileInfo(path),
+   ::core::system::scanFiles(::core::toFileInfo(path),
              fsOptions,
              &fileTree);
    
-   tree<core::FileInfo>::leaf_iterator it = fileTree.begin_leaf();
+   tree< ::core::FileInfo>::leaf_iterator it = fileTree.begin_leaf();
    for (; fileTree.is_valid(it); ++it)
    {
       const FileInfo& info = *it;
@@ -104,7 +104,7 @@ void lintRFilesInSubdirectory(const FilePath& path)
       if (!isRFile(info))
          continue;
       
-      std::string content = file_utils::readFile(core::toFilePath(info));
+      std::string content = file_utils::readFile(::core::toFilePath(info));
       ParseResults results = parse(content);
       
       if (results.lint().hasErrors())

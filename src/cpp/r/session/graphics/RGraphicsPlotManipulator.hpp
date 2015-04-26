@@ -45,18 +45,18 @@ public:
 
    void clear();
 
-   core::Error save(const core::FilePath& filePath) const;
-   core::Error load(const core::FilePath& filePath);
+   ::core::Error save(const ::core::FilePath& filePath) const;
+   ::core::Error load(const ::core::FilePath& filePath);
 
-   void asJson(core::json::Value* pValue) const;
+   void asJson(::core::json::Value* pValue) const;
 
    SEXP sexp() const;
 
 private:
    SEXP get(const std::string& name) const;
-   core::json::Value getAsJson(const std::string& name) const;
-   core::json::Object getControlAsJson(SEXP controlSEXP) const;
-   core::json::Object getControlsAsJson() const;
+   ::core::json::Value getAsJson(const std::string& name) const;
+   ::core::json::Object getControlAsJson(SEXP controlSEXP) const;
+   ::core::json::Object getControlsAsJson() const;
    SEXP getUserVisibleValuesList() const;
 
 private:

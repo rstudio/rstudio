@@ -35,12 +35,12 @@ namespace session {
 namespace modules {      
 namespace clang {
 
-core::Error findReferences(const core::libclang::FileLocation& location,
+core::Error findReferences(const ::core::libclang::FileLocation& location,
                            std::string* pSpelling,
-                           std::vector<core::libclang::FileRange>* pRefs);
+                           std::vector< ::core::libclang::FileRange>* pRefs);
 
-core::Error findUsages(const core::json::JsonRpcRequest& request,
-                       core::json::JsonRpcResponse* pResponse);
+core::Error findUsages(const ::core::json::JsonRpcRequest& request,
+                       ::core::json::JsonRpcResponse* pResponse);
    
 } // namespace clang
 } // namepace modules

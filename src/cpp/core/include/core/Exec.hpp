@@ -28,7 +28,7 @@ class Error ;
 class ExecBlock
 {
 public:
-   typedef boost::function<core::Error()> Function ; 
+   typedef boost::function< ::core::Error()> Function ; 
 
 public:
    ExecBlock() {}
@@ -43,10 +43,10 @@ public:
    EasyInit addFunctions() { return EasyInit(this); }
    
    // execute the block
-   core::Error execute() const;
+   ::core::Error execute() const;
    
-   // allow an ExecBlock to act as a boost::function<core::Error()>
-   core::Error operator()() const;
+   // allow an ExecBlock to act as a boost::function< ::core::Error()>
+   ::core::Error operator()() const;
    
 public:
    // easy init helper class

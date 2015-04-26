@@ -59,13 +59,13 @@ class HttpConnection
 public:
    virtual ~HttpConnection() {}
 
-   virtual const core::http::Request& request() = 0;
-   virtual void sendResponse(const core::http::Response& response) = 0;
+   virtual const ::core::http::Request& request() = 0;
+   virtual void sendResponse(const ::core::http::Response& response) = 0;
 
-   void sendJsonRpcError(const core::Error& error);
+   void sendJsonRpcError(const ::core::Error& error);
    void sendJsonRpcResponse();
    void sendJsonRpcResponse(
-                  const core::json::JsonRpcResponse& jsonRpcResponse);
+                  const ::core::json::JsonRpcResponse& jsonRpcResponse);
 
 
    // close (occurs automatically after writeResponse, here in case it

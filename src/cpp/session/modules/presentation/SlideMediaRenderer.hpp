@@ -36,7 +36,7 @@ namespace presentation {
 
 void renderMedia(const std::string& type,
                  int slideNumber,
-                 const core::FilePath& baseDir,
+                 const ::core::FilePath& baseDir,
                  const std::string& fileName,
                  const std::vector<AtCommand>& atCommands,
                  std::ostream& os,

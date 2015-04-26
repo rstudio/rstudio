@@ -89,11 +89,11 @@ public:
 
    virtual bool isInstalled() const = 0;
 
-   virtual core::json::Value chunkOptions() const = 0;
+   virtual ::core::json::Value chunkOptions() const = 0;
 
    // tangle the passed file (note that the implementation can assume
    // that the working directory is already set to that of the file)
-   virtual core::Error tangle(const std::string& file) = 0;
+   virtual ::core::Error tangle(const std::string& file) = 0;
 
    virtual std::vector<std::string> commandArgs(
                                        const std::string& file,
@@ -115,17 +115,17 @@ public:
                                     const std::string& encoding,
                                     const std::string& driver) const = 0;
 
-   virtual core::Error parseOutputForErrors(
+   virtual ::core::Error parseOutputForErrors(
                                     const std::string& output,
-                                    const core::FilePath& rnwFilePath,
-                                    core::tex::LogEntries* pLogEntries) const
+                                    const ::core::FilePath& rnwFilePath,
+                                    ::core::tex::LogEntries* pLogEntries) const
    {
       // split into lines so we can determine the line numbers for the chunks
       // NOTE: will need to read this using global/project encoding if we
       // want to look for text outside of theh orignal error parsing
       // scenario (which only required ascii)
       std::string rnwContents;
-      Error error = core::readStringFromFile(rnwFilePath, &rnwContents);
+      Error error = ::core::readStringFromFile(rnwFilePath, &rnwContents);
       if (error)
          return error;
       std::vector<std::string> lines;
@@ -148,14 +148,14 @@ public:
       {
          std::string match1(match[1]);
          std::string match2(match[2]);
-         std::size_t chunk = core::safe_convert::stringTo<int>(match1, 0);
+         std::size_t chunk = ::core::safe_convert::stringTo<int>(match1, 0);
          std::string msg = boost::algorithm::trim_copy(match2);
          if (chunk > 0 && chunk <= chunkLineNumbers.size())
          {
             boost::format fmt("(chunk %1%) %2%");
-            core::tex::LogEntry logEntry(FilePath(),
+            ::core::tex::LogEntry logEntry(FilePath(),
                                          -1,
-                                         core::tex::LogEntry::Error,
+                                         ::core::tex::LogEntry::Error,
                                          rnwFilePath,
                                          chunkLineNumbers[chunk-1],
                                          boost::str(fmt % chunk % msg));
@@ -167,7 +167,7 @@ public:
    }
 
 protected:
-   core::json::Value chunkOptions(const std::string& chunkFunction) const
+   ::core::json::Value chunkOptions(const std::string& chunkFunction) const
    {
       SEXP optionsSEXP;
       r::sexp::Protect rProtect;
@@ -179,7 +179,7 @@ protected:
          return json::Value();
       }
 
-      core::json::Value optionsJson;
+      ::core::json::Value optionsJson;
       error = r::json::jsonValueFromList(optionsSEXP, &optionsJson);
       if (error)
          LOG_ERROR(error);
@@ -208,12 +208,12 @@ public:
 
    virtual bool forceEchoOnExec() const { return false; }
 
-   virtual core::json::Value chunkOptions() const
+   virtual ::core::json::Value chunkOptions() const
    {
       return RnwWeave::chunkOptions(".rs.sweaveChunkOptions");
    }
 
-   virtual core::Error tangle(const std::string& file)
+   virtual ::core::Error tangle(const std::string& file)
    {
       return r::exec::RFunction("utils:::Stangle", file).call();
    }
@@ -274,10 +274,10 @@ public:
       return cmd;
    }
 
-   virtual core::Error parseOutputForErrors(
+   virtual ::core::Error parseOutputForErrors(
                                     const std::string& output,
-                                    const core::FilePath& rnwFilePath,
-                                    core::tex::LogEntries* pLogEntries) const
+                                    const ::core::FilePath& rnwFilePath,
+                                    ::core::tex::LogEntries* pLogEntries) const
    {
       // older error style
       boost::regex errRe("^\\s*Quitting from lines ([0-9]+)-([0-9]+): "
@@ -304,9 +304,9 @@ public:
             message = match[2];
          }
 
-         core::tex::LogEntry logEntry(FilePath(),
+         ::core::tex::LogEntry logEntry(FilePath(),
                                       -1,
-                                      core::tex::LogEntry::Error,
+                                      ::core::tex::LogEntry::Error,
                                       rnwFilePath,
                                       lineBegin,
                                       message);
@@ -319,9 +319,9 @@ public:
          int lineBegin = safe_convert::stringTo<int>(match[1], -1);
          std::string message = match[4];
 
-         core::tex::LogEntry logEntry(FilePath(),
+         ::core::tex::LogEntry logEntry(FilePath(),
                                       -1,
-                                      core::tex::LogEntry::Error,
+                                      ::core::tex::LogEntry::Error,
                                       rnwFilePath,
                                       lineBegin,
                                       message);
@@ -331,7 +331,7 @@ public:
       return Success();
    }
 
-   virtual core::json::Value chunkOptions() const
+   virtual ::core::json::Value chunkOptions() const
    {
       if (isInstalled())
          return RnwWeave::chunkOptions(".rs.knitrChunkOptions");
@@ -339,7 +339,7 @@ public:
          return json::Value();
    }
 
-   virtual core::Error tangle(const std::string& file)
+   virtual ::core::Error tangle(const std::string& file)
    {
       r::session::utils::SuppressOutputInScope suppressOutput;
       r::exec::RFunction purlFunc("knitr:::purl");
@@ -404,10 +404,10 @@ const RnwWeaveRegistry& weaveRegistry()
    return instance;
 }
 
-std::string weaveTypeForFile(const core::tex::TexMagicComments& magicComments)
+std::string weaveTypeForFile(const ::core::tex::TexMagicComments& magicComments)
 {
    // first see if the file contains an rnw weave magic comment
-   BOOST_FOREACH(const core::tex::TexMagicComment& mc, magicComments)
+   BOOST_FOREACH(const ::core::tex::TexMagicComment& mc, magicComments)
    {
       if (boost::algorithm::iequals(mc.scope(), "rnw") &&
           boost::algorithm::iequals(mc.variable(), "weave"))
@@ -423,9 +423,9 @@ std::string weaveTypeForFile(const core::tex::TexMagicComments& magicComments)
       return userSettings().defaultSweaveEngine();
 }
 
-std::string driverForFile(const core::tex::TexMagicComments& magicComments)
+std::string driverForFile(const ::core::tex::TexMagicComments& magicComments)
 {
-   BOOST_FOREACH(const core::tex::TexMagicComment& mc, magicComments)
+   BOOST_FOREACH(const ::core::tex::TexMagicComment& mc, magicComments)
    {
       if (boost::algorithm::iequals(mc.scope(), "rnw") &&
           boost::algorithm::iequals(mc.variable(), "driver"))
@@ -458,7 +458,7 @@ void onWeaveProcessExit(boost::shared_ptr<RnwWeave> pRnwWeave,
    else
    {
       // parse for errors
-      core::tex::LogEntries entries;
+      ::core::tex::LogEntries entries;
       Error error = pRnwWeave->parseOutputForErrors(output, rnwPath, &entries);
       if (error)
          LOG_ERROR(error);
@@ -495,9 +495,9 @@ void runTangle(const std::string& filePath, const std::string& rnwWeave)
    }
 }
 
-void runWeave(const core::FilePath& rnwPath,
+void runWeave(const ::core::FilePath& rnwPath,
               const std::string& encoding,
-              const core::tex::TexMagicComments& magicComments,
+              const ::core::tex::TexMagicComments& magicComments,
               const boost::function<void(const std::string&)>& onOutput,
               const CompletedFunction& onCompleted)
 {
@@ -541,7 +541,7 @@ void runWeave(const core::FilePath& rnwPath,
       Error error = compile_pdf_supervisor::runProgram(
                rBinPath,
                args,
-               core::system::Options(),
+               ::core::system::Options(),
                rnwPath.parent(),
                onOutput,
                boost::bind(onWeaveProcessExit,
@@ -567,7 +567,7 @@ core::json::Value chunkOptions(const std::string& weaveType)
    if (pRnwWeave)
       return pRnwWeave->chunkOptions();
    else
-      return core::json::Value();
+      return ::core::json::Value();
 }
 
 core::json::Array supportedTypes()

@@ -29,8 +29,8 @@ namespace rstudio {
 namespace server {
 namespace eval {
    
-bool expirationFilter(const core::http::Request& request,
-                      core::http::Response* pResponse);
+bool expirationFilter(const ::core::http::Request& request,
+                      ::core::http::Response* pResponse);
 
 } // namespace eval
 } // namespace server

@@ -91,7 +91,7 @@ ProgramStatus Options::read(int argc,
    using namespace boost::program_options ;
 
    // compute install path
-   Error error = core::system::installPath("..", argv[0], &installPath_);
+   Error error = ::core::system::installPath("..", argv[0], &installPath_);
    if (error)
    {
       LOG_ERROR_MESSAGE("Unable to determine install path: "+error.summary());
@@ -123,7 +123,7 @@ ProgramStatus Options::read(int argc,
    serverOffline_ = FilePath("/var/lib/rstudio-server/offline").exists();
 
    // generate monitor shared secret
-   monitorSharedSecret_ = core::system::generateUuid();
+   monitorSharedSecret_ = ::core::system::generateUuid();
 
    // program - name and execution
    options_description server("server");
@@ -136,7 +136,7 @@ ProgramStatus Options::read(int argc,
          "program user")
       ("server-daemonize",
          value<bool>(&serverDaemonize_)->default_value(
-                                      core::system::effectiveUserIsRoot()),
+                                      ::core::system::effectiveUserIsRoot()),
          "run program as daemon")
       ("server-app-armor-enabled",
          value<bool>(&serverAppArmorEnabled_)->default_value(1),
@@ -205,11 +205,11 @@ ProgramStatus Options::read(int argc,
    auth.add_options()
       ("auth-none",
         value<bool>(&authNone_)->default_value(
-                                 !core::system::effectiveUserIsRoot()),
+                                 !::core::system::effectiveUserIsRoot()),
         "don't do any authentication")
       ("auth-validate-users",
         value<bool>(&authValidateUsers_)->default_value(
-                                 core::system::effectiveUserIsRoot()),
+                                 ::core::system::effectiveUserIsRoot()),
         "validate that authenticated users exist on the target system")
       ("auth-encrypt-password",
         value<bool>(&authEncryptPassword_)->default_value(true),
@@ -245,7 +245,7 @@ ProgramStatus Options::read(int argc,
  
    // read options
    bool help = false;
-   ProgramStatus status = core::program_options::read(optionsDesc,
+   ProgramStatus status = ::core::program_options::read(optionsDesc,
                                                       argc,
                                                       argv,
                                                       &help);
@@ -283,12 +283,12 @@ ProgramStatus Options::read(int argc,
    if (!serverUser_.empty())
    {
       // if we aren't running as root then forget the programUser
-      if (!core::system::realUserIsRoot())
+      if (!::core::system::realUserIsRoot())
       {
          serverUser_ = "";
       }
       // if there is a program user specified and it doesn't exist....
-      else if (!core::system::user::exists(serverUser_))
+      else if (!::core::system::user::exists(serverUser_))
       {
          if (serverUser_ == kDefaultProgramUser)
          {

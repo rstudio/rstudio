@@ -29,8 +29,8 @@ namespace rstudio {
 namespace session {
 namespace projects {
 
-void addFirstRunDoc(const core::FilePath& projectFile, const std::string& doc);
-std::vector<std::string> collectFirstRunDocs(const core::FilePath& projectFile);
+void addFirstRunDoc(const ::core::FilePath& projectFile, const std::string& doc);
+std::vector<std::string> collectFirstRunDocs(const ::core::FilePath& projectFile);
 
 } // namespace projects
 } // namesapce session

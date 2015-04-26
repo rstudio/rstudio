@@ -481,7 +481,7 @@ void checkUserInterrupt()
 }
    
 IgnoreInterruptsScope::IgnoreInterruptsScope()
-   : pSignalBlocker_(new core::system::SignalBlocker())
+   : pSignalBlocker_(new ::core::system::SignalBlocker())
 {
    // save suspend state and set suspend flag
    previousInterruptsSuspended_ = (R_interrupts_suspended == TRUE);
@@ -491,7 +491,7 @@ IgnoreInterruptsScope::IgnoreInterruptsScope()
    setInterruptsPending(false);
       
    // enable signal blocker
-   Error error = pSignalBlocker_->block(core::system::SigInt);
+   Error error = pSignalBlocker_->block(::core::system::SigInt);
    if (error)
       LOG_ERROR(error);
 }

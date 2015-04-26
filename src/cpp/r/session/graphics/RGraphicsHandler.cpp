@@ -32,7 +32,7 @@ void (*setDeviceAttributes)(pDevDesc pDev);
 void (*onBeforeAddDevice)(DeviceContext* pDC);
 void (*onAfterAddDevice)(DeviceContext* pDC);
 
-core::Error (*writeToPNG)(const core::FilePath& targetPath,
+core::Error (*writeToPNG)(const ::core::FilePath& targetPath,
                                  DeviceContext* pDC);
 
 void (*circle)(double x,

@@ -27,17 +27,17 @@ namespace uri_handlers {
 
 // add async uri handler
 void add(const std::string& prefix,
-         const core::http::AsyncUriHandlerFunction& handler);
+         const ::core::http::AsyncUriHandlerFunction& handler);
 
 // add blocking uri handler
 void addBlocking(const std::string& prefix,
-                 const core::http::UriHandlerFunction& handler);
+                 const ::core::http::UriHandlerFunction& handler);
 
 // set async default handler
-void setDefault(const core::http::AsyncUriHandlerFunction& handler);
+void setDefault(const ::core::http::AsyncUriHandlerFunction& handler);
 
 // set blocking default handler
-void setBlockingDefault(const core::http::UriHandlerFunction& handler);
+void setBlockingDefault(const ::core::http::UriHandlerFunction& handler);
 
 } // namespace uri_handlers
 } // namespace server

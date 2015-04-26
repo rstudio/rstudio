@@ -60,10 +60,10 @@ protected:
    qint64 readData(char *data, qint64 maxSize);
 
 private:
-   void onResponse(const core::http::Response& response);
-   void onError(const core::Error& error);
+   void onResponse(const ::core::http::Response& response);
+   void onError(const ::core::Error& error);
 
-   void executeRequest(const core::http::Request& request);
+   void executeRequest(const ::core::http::Request& request);
 
 private:
    struct Impl;

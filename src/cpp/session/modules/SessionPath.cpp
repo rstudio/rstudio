@@ -44,7 +44,7 @@ Error readPathsFromFile(const FilePath& filePath,
                         std::vector<std::string>* pPaths)
 {
    std::vector<std::string> paths;
-   Error error = core::readStringVectorFromFile(filePath, &paths);
+   Error error = ::core::readStringVectorFromFile(filePath, &paths);
    if (error)
    {
       error.addProperty("path-source", filePath.absolutePath());
@@ -103,7 +103,7 @@ Error initialize()
    }
 
    // build the PATH
-   std::string path = core::system::getenv("PATH");
+   std::string path = ::core::system::getenv("PATH");
    std::for_each(paths.begin(),
                  paths.end(),
                  boost::bind(addToPathIfNecessary, _1, &path));
@@ -120,7 +120,7 @@ Error initialize()
       addToPathIfNecessary(optLocalBinPath.absolutePath(), &path);
 
    // set the path
-   core::system::setenv("PATH", path);
+   ::core::system::setenv("PATH", path);
 #endif
 
    return Success();

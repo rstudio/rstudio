@@ -65,10 +65,10 @@ namespace json {
 
 namespace {
          
-Error setJsonResult(SEXP resultSEXP, core::json::JsonRpcResponse* pResponse)
+Error setJsonResult(SEXP resultSEXP, ::core::json::JsonRpcResponse* pResponse)
 {   
    // get the result
-   core::json::Value resultValue ;
+   ::core::json::Value resultValue ;
    Error error = jsonValueFromObject(resultSEXP, &resultValue);
    if (error)
       return error ;
@@ -79,7 +79,7 @@ Error setJsonResult(SEXP resultSEXP, core::json::JsonRpcResponse* pResponse)
 }
 
 Error callRHandler(const std::string& functionName,
-                   const core::json::JsonRpcRequest& request,
+                   const ::core::json::JsonRpcRequest& request,
                    SEXP* pResult,
                    sexp::Protect* pProtect)
 {
@@ -87,13 +87,13 @@ Error callRHandler(const std::string& functionName,
    r::exec::RFunction rFunction(functionName);
    
    // add params
-   const core::json::Array& params = request.params;
-   for (core::json::Array::size_type i=0; i<params.size(); i++)
+   const ::core::json::Array& params = request.params;
+   for (::core::json::Array::size_type i=0; i<params.size(); i++)
       rFunction.addParam(params[i]);
    
    // add kwparams
-   const core::json::Object& kwparams = request.kwparams;
-   for (core::json::Object::const_iterator 
+   const ::core::json::Object& kwparams = request.kwparams;
+   for (::core::json::Object::const_iterator 
         it = kwparams.begin();
         it != kwparams.end();
         ++it)
@@ -106,8 +106,8 @@ Error callRHandler(const std::string& functionName,
 }
 
 Error handleRequest(const std::string& rFunctionName,
-                    const core::json::JsonRpcRequest& request, 
-                    core::json::JsonRpcResponse* pResponse)
+                    const ::core::json::JsonRpcRequest& request, 
+                    ::core::json::JsonRpcResponse* pResponse)
 {
    // call the function
    sexp::Protect rProtect;
@@ -123,7 +123,7 @@ Error handleRequest(const std::string& rFunctionName,
 } // anonymous namespace 
 
    
-Error getRpcMethods(core::json::JsonRpcMethods* pMethods)
+Error getRpcMethods(::core::json::JsonRpcMethods* pMethods)
 {
    // find all of the rpc handlers
    std::vector<std::string> rpcHandlers;

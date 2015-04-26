@@ -56,7 +56,7 @@ private:
 
    ConsoleProcess(
          const std::string& command,
-         const core::system::ProcessOptions& options,
+         const ::core::system::ProcessOptions& options,
          const std::string& caption,
          bool dialog,
          InteractionMode mode,
@@ -65,7 +65,7 @@ private:
    ConsoleProcess(
          const std::string& program,
          const std::vector<std::string>& args,
-         const core::system::ProcessOptions& options,
+         const ::core::system::ProcessOptions& options,
          const std::string& caption,
          bool dialog,
          InteractionMode mode,
@@ -98,7 +98,7 @@ public:
    // the runProgram codepath
    static boost::shared_ptr<ConsoleProcess> create(
          const std::string& command,
-         core::system::ProcessOptions options,
+         ::core::system::ProcessOptions options,
          const std::string& caption,
          bool dialog,
          InteractionMode mode,
@@ -107,7 +107,7 @@ public:
    static boost::shared_ptr<ConsoleProcess> create(
          const std::string& program,
          const std::vector<std::string>& args,
-         core::system::ProcessOptions options,
+         ::core::system::ProcessOptions options,
          const std::string& caption,
          bool dialog,
          InteractionMode mode,
@@ -127,29 +127,29 @@ public:
    std::string handle() const { return handle_; }
    InteractionMode interactionMode() const { return interactionMode_; }
 
-   core::Error start();
+   ::core::Error start();
    void enqueInput(const Input& input);
    void interrupt();
 
    void setShowOnOutput(bool showOnOutput) { showOnOutput_ = showOnOutput; }
 
-   core::json::Object toJson() const;
+   ::core::json::Object toJson() const;
    static boost::shared_ptr<ConsoleProcess> fromJson(
-                                              core::json::Object& obj);
+                                              ::core::json::Object& obj);
 
 private:
-   core::system::ProcessCallbacks createProcessCallbacks();
-   bool onContinue(core::system::ProcessOperations& ops);
-   void onStdout(core::system::ProcessOperations& ops,
+   ::core::system::ProcessCallbacks createProcessCallbacks();
+   bool onContinue(::core::system::ProcessOperations& ops);
+   void onStdout(::core::system::ProcessOperations& ops,
                  const std::string& output);
    void onExit(int exitCode);
 
    std::string bufferedOutput() const;
    void appendToOutputBuffer(const std::string& str);
    void enqueOutputEvent(const std::string& output, bool error);
-   void handleConsolePrompt(core::system::ProcessOperations& ops,
+   void handleConsolePrompt(::core::system::ProcessOperations& ops,
                             const std::string& prompt);
-   void maybeConsolePrompt(core::system::ProcessOperations& ops,
+   void maybeConsolePrompt(::core::system::ProcessOperations& ops,
                            const std::string& output);
 
 private:
@@ -157,7 +157,7 @@ private:
    std::string command_;
    std::string program_;
    std::vector<std::string> args_;
-   core::system::ProcessOptions options_;
+   ::core::system::ProcessOptions options_;
 
    std::string caption_;
    bool dialog_;

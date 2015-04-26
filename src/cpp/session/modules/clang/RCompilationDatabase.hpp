@@ -52,17 +52,17 @@ public:
 
 private:
 
-   core::Error executeSourceCpp(core::system::Options env,
+   ::core::Error executeSourceCpp(::core::system::Options env,
                                 const std::string& rcppPkg,
-                                const core::FilePath& srcPath,
-                                core::system::ProcessResult* pResult);
+                                const ::core::FilePath& srcPath,
+                                ::core::system::ProcessResult* pResult);
 
-   core::Error executeRCmdSHLIB(core::system::Options env,
-                                const core::FilePath& srcPath,
-                                core::system::ProcessResult* pResult);
+   ::core::Error executeRCmdSHLIB(::core::system::Options env,
+                                const ::core::FilePath& srcPath,
+                                ::core::system::ProcessResult* pResult);
 
    void updateForCurrentPackage();
-   void updateForSourceCpp(const core::FilePath& cppPath);
+   void updateForSourceCpp(const ::core::FilePath& cppPath);
 
 
    void savePackageCompilationConfig();
@@ -77,14 +77,14 @@ private:
       bool isCpp;
    };
    CompilationConfig configForSourceCpp(const std::string& rcppPkg,
-                                        core::FilePath srcFile);
+                                        ::core::FilePath srcFile);
 
-   std::vector<std::string> argsForRCmdSHLIB(core::system::Options env,
-                                             core::FilePath tempSrcFile);
+   std::vector<std::string> argsForRCmdSHLIB(::core::system::Options env,
+                                             ::core::FilePath tempSrcFile);
 
    std::vector<std::string> baseCompilationArgs(bool isCppFile) const;
    std::vector<std::string> rToolsArgs() const;
-   core::system::Options compilationEnvironment() const;
+   ::core::system::Options compilationEnvironment() const;
    std::vector<std::string> precompiledHeaderArgs(const std::string& pkgName,
                                                   const std::string& stdArg);
 

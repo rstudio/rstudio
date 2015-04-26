@@ -254,52 +254,52 @@ void enqueErrorsEvent(const json::Array& logEntriesJson)
 }
 
 // NOTE: sync changes with SessionModuleContext.cpp sourceMarkerJson
-json::Object logEntryJson(const core::tex::LogEntry& logEntry)
+json::Object logEntryJson(const ::core::tex::LogEntry& logEntry)
 {
    json::Object obj;
    obj["type"] = static_cast<int>(logEntry.type());
    obj["path"] = module_context::createAliasedPath(logEntry.filePath());
    obj["line"] = logEntry.line();
    obj["column"] = 1;
-   obj["message"] = core::html_utils::HTML(logEntry.message()).text();
+   obj["message"] = ::core::html_utils::HTML(logEntry.message()).text();
    obj["log_path"] = module_context::createAliasedPath(logEntry.logFilePath());
    obj["log_line"] = logEntry.logLine();
    obj["show_error_list"] = true;
    return obj;
 }
 
-void showLogEntries(const core::tex::LogEntries& logEntries,
+void showLogEntries(const ::core::tex::LogEntries& logEntries,
                     const rnw_concordance::Concordances& rnwConcordances =
                                              rnw_concordance::Concordances())
 {
    json::Array logEntriesJson;
-   BOOST_FOREACH(const core::tex::LogEntry& logEntry, logEntries)
+   BOOST_FOREACH(const ::core::tex::LogEntry& logEntry, logEntries)
    {
       using namespace tex::rnw_concordance;
-      core::tex::LogEntry rnwEntry = rnwConcordances.fixup(logEntry);
+      ::core::tex::LogEntry rnwEntry = rnwConcordances.fixup(logEntry);
       logEntriesJson.push_back(logEntryJson(rnwEntry));
    }
 
    enqueErrorsEvent(logEntriesJson);
 }
 
-void writeLogEntriesOutput(const core::tex::LogEntries& logEntries)
+void writeLogEntriesOutput(const ::core::tex::LogEntries& logEntries)
 {
    if (logEntries.empty())
       return;
 
    std::string output = "\n";
-   BOOST_FOREACH(const core::tex::LogEntry& logEntry, logEntries)
+   BOOST_FOREACH(const ::core::tex::LogEntry& logEntry, logEntries)
    {
       switch(logEntry.type())
       {
-         case core::tex::LogEntry::Error:
+         case ::core::tex::LogEntry::Error:
             output += "Error: ";
             break;
-         case core::tex::LogEntry::Warning:
+         case ::core::tex::LogEntry::Warning:
             output += "Warning: ";
             break;
-         case core::tex::LogEntry::Box:
+         case ::core::tex::LogEntry::Box:
             output += "Bad Box: ";
             break;
       }
@@ -318,36 +318,36 @@ void writeLogEntriesOutput(const core::tex::LogEntries& logEntries)
 }
 
 
-bool includeLogEntry(const core::tex::LogEntry& logEntry)
+bool includeLogEntry(const ::core::tex::LogEntry& logEntry)
 {
    return true;
 }
 
 // filter out log entries which we view as superflous or distracting
-void filterLatexLog(const core::tex::LogEntries& logEntries,
-                    core::tex::LogEntries* pFilteredLogEntries)
+void filterLatexLog(const ::core::tex::LogEntries& logEntries,
+                    ::core::tex::LogEntries* pFilteredLogEntries)
 {
-   core::algorithm::copy_if(logEntries.begin(),
+   ::core::algorithm::copy_if(logEntries.begin(),
                             logEntries.end(),
                             std::back_inserter(*pFilteredLogEntries),
                             includeLogEntry);
 }
 
-bool isLogEntryFromTargetFile(const core::tex::LogEntry& logEntry,
+bool isLogEntryFromTargetFile(const ::core::tex::LogEntry& logEntry,
                               const FilePath& texPath)
 {
    return logEntry.filePath() == texPath;
 }
 
 void getLogEntries(const FilePath& texPath,
-                   core::tex::LogEntries* pLogEntries)
+                   ::core::tex::LogEntries* pLogEntries)
 {
    // latex log file
    FilePath logPath = ancillaryFilePath(texPath, ".log");
    if (logPath.exists())
    {
-      core::tex::LogEntries logEntries;
-      Error error = core::tex::parseLatexLog(logPath, &logEntries);
+      ::core::tex::LogEntries logEntries;
+      Error error = ::core::tex::parseLatexLog(logPath, &logEntries);
       if (error)
          LOG_ERROR(error);
 
@@ -361,11 +361,11 @@ void getLogEntries(const FilePath& texPath,
    }
 
    // bibtex log file
-   core::tex::LogEntries bibtexLogEntries;
+   ::core::tex::LogEntries bibtexLogEntries;
    logPath = ancillaryFilePath(texPath, ".blg");
    if (logPath.exists())
    {
-      Error error = core::tex::parseBibtexLog(logPath, &bibtexLogEntries);
+      Error error = ::core::tex::parseBibtexLog(logPath, &bibtexLogEntries);
       if (error)
          LOG_ERROR(error);
    }
@@ -392,20 +392,20 @@ void removeExistingLatexAncillaryFiles(const FilePath& texFilePath)
    removeExistingAncillary(texFilePath, ".synctex.gz");
  }
 
-std::string buildIssuesMessage(const core::tex::LogEntries& logEntries)
+std::string buildIssuesMessage(const ::core::tex::LogEntries& logEntries)
 {
    if (logEntries.empty())
       return std::string();
 
    // count error types
    int errors = 0, warnings = 0, badBoxes = 0;
-   BOOST_FOREACH(const core::tex::LogEntry& logEntry, logEntries)
+   BOOST_FOREACH(const ::core::tex::LogEntry& logEntry, logEntries)
    {
-      if (logEntry.type() == core::tex::LogEntry::Error)
+      if (logEntry.type() == ::core::tex::LogEntry::Error)
          errors++;
-      else if (logEntry.type() == core::tex::LogEntry::Warning)
+      else if (logEntry.type() == ::core::tex::LogEntry::Warning)
          warnings++;
-      else if (logEntry.type() == core::tex::LogEntry::Box)
+      else if (logEntry.type() == ::core::tex::LogEntry::Box)
          badBoxes++;
    }
 
@@ -473,9 +473,9 @@ public:
    }
 
    void preserveLogReferencedFiles(
-               const core::tex::LogEntries& logEntries)
+               const ::core::tex::LogEntries& logEntries)
    {
-      BOOST_FOREACH(const core::tex::LogEntry& logEntry, logEntries)
+      BOOST_FOREACH(const ::core::tex::LogEntry& logEntry, logEntries)
       {
          logRefFiles_.insert(logEntry.filePath());
       }
@@ -563,7 +563,7 @@ private:
    {
       if (targetFilePath_.exists())
       {
-         Error error = core::system::realPath(targetFilePath_, &targetFilePath_);
+         Error error = ::core::system::realPath(targetFilePath_, &targetFilePath_);
          if (error)
             LOG_ERROR(error);
       }
@@ -592,7 +592,7 @@ private:
       }
 
       // parse magic comments
-      Error error = core::tex::parseMagicComments(targetFilePath_,
+      Error error = ::core::tex::parseMagicComments(targetFilePath_,
                                                   &magicComments_);
       if (error)
          LOG_ERROR(error);
@@ -655,12 +655,12 @@ private:
       options.shellEscape = userSettings().enableLaTeXShellEscape();
 
       // get back-end version info
-      core::system::ProcessResult result;
-      Error error = core::system::runProgram(
+      ::core::system::ProcessResult result;
+      Error error = ::core::system::runProgram(
                   string_utils::utf8ToSystem(texProgramPath_.absolutePath()),
-                  core::shell_utils::ShellArgs() << "--version",
+                  ::core::shell_utils::ShellArgs() << "--version",
                   "",
-                  core::system::ProcessOptions(),
+                  ::core::system::ProcessOptions(),
                   &result);
       if (error)
          LOG_ERROR(error);
@@ -725,7 +725,7 @@ private:
                                 const rnw_concordance::Concordances& concords)
    {
       // collect errors from the log
-      core::tex::LogEntries logEntries;
+      ::core::tex::LogEntries logEntries;
       getLogEntries(texFilePath, &logEntries);
 
       // determine whether they will be shown in the list
@@ -798,7 +798,7 @@ private:
       enqueCompletedWithFailureEvent(targetFilePath_, sourceLocation_);
    }
 
-   void terminateWithErrorLogEntries(const core::tex::LogEntries& logEntries)
+   void terminateWithErrorLogEntries(const ::core::tex::LogEntries& logEntries)
    {
       showLogEntries(logEntries);
       enqueCompletedWithFailureEvent(targetFilePath_, sourceLocation_);
@@ -814,7 +814,7 @@ private:
    std::string encoding_;
    json::Object sourceLocation_;
    const boost::function<void()> onCompleted_;
-   core::tex::TexMagicComments magicComments_;
+   ::core::tex::TexMagicComments magicComments_;
    FilePath texProgramPath_;
    AuxillaryFileCleanupContext auxillaryFileCleanupContext_;
 };
@@ -823,7 +823,7 @@ private:
 } // anonymous namespace
 
 
-bool startCompile(const core::FilePath& targetFilePath,
+bool startCompile(const ::core::FilePath& targetFilePath,
                   const std::string& encoding,
                   const json::Object& sourceLocation,
                   const boost::function<void()>& onCompleted)

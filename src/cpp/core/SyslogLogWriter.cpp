@@ -68,7 +68,7 @@ SyslogLogWriter::~SyslogLogWriter()
 SyslogLogWriter::SyslogLogWriter(const std::string& programIdentity,
                                  int logLevel)
    : programIdentity_(programIdentity),
-     logToStderr_(core::system::stderrIsTerminal())
+     logToStderr_(::core::system::stderrIsTerminal())
 {
    // copy program identity into new string whose buffer will stay
    // around long enough to successfully register with openlog
@@ -83,7 +83,7 @@ SyslogLogWriter::SyslogLogWriter(const std::string& programIdentity,
    ::setlogmask(LOG_UPTO(logPriority(logLevel)));
 }
 
-void SyslogLogWriter::log(core::system::LogLevel logLevel,
+void SyslogLogWriter::log(::core::system::LogLevel logLevel,
                           const std::string& message)
 {
    if (logToStderr_)
@@ -100,7 +100,7 @@ void SyslogLogWriter::log(core::system::LogLevel logLevel,
 }
 
 void SyslogLogWriter::log(const std::string&,
-                          core::system::LogLevel logLevel,
+                          ::core::system::LogLevel logLevel,
                           const std::string& message)
 {
    log(logLevel, message);

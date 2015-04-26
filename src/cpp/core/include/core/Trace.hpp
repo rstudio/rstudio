@@ -32,7 +32,7 @@ void add(void* key, const std::string& functionName);
 } // namespace rstudio
 
 #define TRACE_CURRENT_METHOD \
-   core::trace::add(this, BOOST_CURRENT_FUNCTION);
+   ::core::trace::add(this, BOOST_CURRENT_FUNCTION);
 
 #endif // CORE_PERFORMANCE_TIMER_HPP
 

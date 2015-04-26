@@ -48,11 +48,11 @@ namespace {
 
 core::system::ProcessConfig sessionProcessConfig(
          const std::string& username,
-         const core::system::Options& extraArgs = core::system::Options())
+         const ::core::system::Options& extraArgs = ::core::system::Options())
 {
    // prepare command line arguments
    server::Options& options = server::options();
-   core::system::Options args ;
+   ::core::system::Options args ;
 
    // check for options-specified config file and add to command
    // line if specified
@@ -65,13 +65,13 @@ core::system::ProcessConfig sessionProcessConfig(
                                  username));
 
    // allow session timeout to be overridden via environment variable
-   std::string timeout = core::system::getenv("RSTUDIO_SESSION_TIMEOUT");
+   std::string timeout = ::core::system::getenv("RSTUDIO_SESSION_TIMEOUT");
    if (!timeout.empty())
       args.push_back(std::make_pair("--" kTimeoutSessionOption, timeout));
 
    // pass our uid to instruct rsession to limit rpc clients to us and itself
-   core::system::Options environment;
-   uid_t uid = core::system::user::currentUserIdentity().userId;
+   ::core::system::Options environment;
+   uid_t uid = ::core::system::user::currentUserIdentity().userId;
    environment.push_back(std::make_pair(
                            kRStudioLimitRpcClientUid,
                            safe_convert::numberToString(uid)));
@@ -80,7 +80,7 @@ core::system::ProcessConfig sessionProcessConfig(
    std::copy(extraArgs.begin(), extraArgs.end(), std::back_inserter(args));
 
    // append R environment variables
-   core::system::Options rEnvVars = r_environment::variables();
+   ::core::system::Options rEnvVars = r_environment::variables();
    environment.insert(environment.end(), rEnvVars.begin(), rEnvVars.end());
 
    // add monitor shared secret
@@ -88,10 +88,10 @@ core::system::ProcessConfig sessionProcessConfig(
                                         options.monitorSharedSecret()));
 
    // build the config object and return it
-   core::system::ProcessConfig config;
+   ::core::system::ProcessConfig config;
    config.args = args;
    config.environment = environment;
-   config.stdStreamBehavior = core::system::StdStreamInherit;
+   config.stdStreamBehavior = ::core::system::StdStreamInherit;
    return config;
 }
 
@@ -173,7 +173,7 @@ Error SessionManager::launchSession(const std::string& username)
 // default session launcher -- does the launch then tracks the pid
 // for later reaping
 Error SessionManager::launchAndTrackSession(
-                           const core::r_util::SessionLaunchProfile& profile)
+                           const ::core::r_util::SessionLaunchProfile& profile)
 {
    // if we are root then assume the identity of the user
    using namespace rstudio::core::system;
@@ -225,17 +225,17 @@ void SessionManager::notifySIGCHLD()
 
 // helper function for verify-installation
 Error launchSession(const std::string& username,
-                    const core::system::Options& extraArgs,
+                    const ::core::system::Options& extraArgs,
                     PidType* pPid)
 {
    // launch the session
    std::string rsessionPath = server::options().rsessionPath();
-   std::string runAsUser = core::system::realUserIsRoot() ? username : "";
-   core::system::ProcessConfig config = sessionProcessConfig(username,
+   std::string runAsUser = ::core::system::realUserIsRoot() ? username : "";
+   ::core::system::ProcessConfig config = sessionProcessConfig(username,
                                                              extraArgs);
 
    *pPid = -1;
-   return core::system::launchChildProcess(rsessionPath,
+   return ::core::system::launchChildProcess(rsessionPath,
                                            runAsUser,
                                            config,
                                            pPid);

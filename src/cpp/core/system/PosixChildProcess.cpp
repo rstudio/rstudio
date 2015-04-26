@@ -468,7 +468,7 @@ Error ChildProcess::run()
       }
 
       // clear the child signal mask
-      Error error = core::system::clearSignalMask();
+      Error error = ::core::system::clearSignalMask();
       if (error)
       {
          LOG_ERROR(error);
@@ -527,7 +527,7 @@ Error ChildProcess::run()
       }
 
       // close all open file descriptors other than std streams
-      error = core::system::closeNonStdFileDescriptors();
+      error = ::core::system::closeNonStdFileDescriptors();
       if (error)
       {
          LOG_ERROR(error);
@@ -547,7 +547,7 @@ Error ChildProcess::run()
       std::vector<std::string> args;
       args.push_back(exe_);
       args.insert(args.end(), args_.begin(), args_.end());
-      using core::system::ProcessArgs;
+      using ::core::system::ProcessArgs;
       ProcessArgs* pProcessArgs = new ProcessArgs(args);
 
       if (options_.environment)

@@ -145,19 +145,19 @@ Error createNewPresentation(const json::JsonRpcRequest& request,
    // process template
    std::map<std::string,std::string> vars;
    vars["name"] = filePath.stem();
-   core::text::TemplateFilter filter(vars);
+   ::core::text::TemplateFilter filter(vars);
 
    // read file with template filter
    FilePath templatePath = session::options().rResourcesPath().complete(
                                              "templates/r_presentation.Rpres");
    std::string presContents;
-   error = core::readStringFromFile(templatePath, filter, &presContents);
+   error = ::core::readStringFromFile(templatePath, filter, &presContents);
    if (error)
       return error;
 
 
    // write file
-   return core::writeStringToFile(filePath,
+   return ::core::writeStringToFile(filePath,
                                   presContents,
                                   string_utils::LineEndingNative);
 }
@@ -172,7 +172,7 @@ Error showPresentationPane(const json::JsonRpcRequest& request,
 
    FilePath filePath = module_context::resolveAliasedPath(file);
    if (!filePath.exists())
-      return core::fileNotFoundError(filePath, ERROR_LOCATION);
+      return ::core::fileNotFoundError(filePath, ERROR_LOCATION);
 
    showPresentation(filePath);
 
@@ -327,7 +327,7 @@ Error getSlideNavigationForFile(const json::JsonRpcRequest& request,
 
    // read code
    std::string code;
-   error = core::readStringFromFile(filePath,
+   error = ::core::readStringFromFile(filePath,
                                     &code,
                                     string_utils::LineEndingPosix);
    if (error)

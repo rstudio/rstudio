@@ -40,8 +40,8 @@ namespace modules {
 namespace html_preview {
 
 core::json::Object capabilitiesAsJson();
-void addFileSpecificHeaders(const core::FilePath& filePath,
-                            core::http::Response* pResponse);
+void addFileSpecificHeaders(const ::core::FilePath& filePath,
+                            ::core::http::Response* pResponse);
 
 core::Error initialize();
                        

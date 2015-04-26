@@ -29,10 +29,10 @@ namespace r_util {
 
 namespace {
 
-json::Object optionsAsJson(const core::system::Options& options)
+json::Object optionsAsJson(const ::core::system::Options& options)
 {
    json::Object optionsJson;
-   BOOST_FOREACH(const core::system::Option& option, options)
+   BOOST_FOREACH(const ::core::system::Option& option, options)
    {
       optionsJson[option.first] = option.second;
    }
@@ -41,7 +41,7 @@ json::Object optionsAsJson(const core::system::Options& options)
 
 core::system::Options optionsFromJson(const json::Object& optionsJson)
 {
-   core::system::Options options;
+   ::core::system::Options options;
    BOOST_FOREACH(const json::Member& member, optionsJson)
    {
       std::string name = member.first;
@@ -53,7 +53,7 @@ core::system::Options optionsFromJson(const json::Object& optionsJson)
 }
 
 Error cpuAffinityFromJson(const json::Array& affinityJson,
-                          core::system::CpuAffinity* pAffinity)
+                          ::core::system::CpuAffinity* pAffinity)
 {
    pAffinity->clear();
 
@@ -139,7 +139,7 @@ SessionLaunchProfile sessionLaunchProfileFromJson(
       LOG_ERROR(error);
 
    // read and convert cpu affinity
-   core::system::CpuAffinity cpuAffinity;
+   ::core::system::CpuAffinity cpuAffinity;
    json::Array cpuAffinityJson;
    error = json::readObject(configJson,
                             "cpuAffinity", &cpuAffinityJson);
@@ -157,7 +157,7 @@ SessionLaunchProfile sessionLaunchProfileFromJson(
    profile.config.environment = optionsFromJson(envJson);
    profile.config.stdInput = stdInput;
    profile.config.stdStreamBehavior =
-            static_cast<core::system::StdStreamBehavior>(stdStreamBehavior);
+            static_cast< ::core::system::StdStreamBehavior>(stdStreamBehavior);
    profile.config.limits.priority = priority;
    profile.config.limits.memoryLimitBytes = memoryLimitBytes;
    profile.config.limits.stackLimitBytes = stackLimitBytes;

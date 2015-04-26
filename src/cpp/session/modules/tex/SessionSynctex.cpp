@@ -39,7 +39,7 @@ namespace synctex {
 namespace {
 
 json::Value toJson(const FilePath& pdfFile,
-                   const core::tex::PdfLocation& pdfLoc,
+                   const ::core::tex::PdfLocation& pdfLoc,
                    bool fromClick)
 {
    if (!pdfLoc.empty())
@@ -60,7 +60,7 @@ json::Value toJson(const FilePath& pdfFile,
    }
 }
 
-json::Value toJson(const core::tex::SourceLocation& srcLoc)
+json::Value toJson(const ::core::tex::SourceLocation& srcLoc)
 {
    if (!srcLoc.empty())
    {
@@ -77,7 +77,7 @@ json::Value toJson(const core::tex::SourceLocation& srcLoc)
 }
 
 void applyForwardConcordance(const FilePath& mainFile,
-                             core::tex::SourceLocation* pLoc)
+                             ::core::tex::SourceLocation* pLoc)
 {
    // skip if this isn't an Rnw
    if (pLoc->file().extensionLowerCase() != ".rnw")
@@ -98,14 +98,14 @@ void applyForwardConcordance(const FilePath& mainFile,
                                                           pLoc->line()));
    if (!texLine.empty())
    {
-      *pLoc = core::tex::SourceLocation(texLine.filePath(),
+      *pLoc = ::core::tex::SourceLocation(texLine.filePath(),
                                         texLine.line(),
                                         pLoc->column());
    }
 }
 
 
-json::Object sourceLocationAsJson(const core::tex::SourceLocation& srcLoc,
+json::Object sourceLocationAsJson(const ::core::tex::SourceLocation& srcLoc,
                                   bool fromClick)
 {
    json::Object sourceLocation;
@@ -141,7 +141,7 @@ Error synctexForwardSearch(const json::JsonRpcRequest& request,
 }
 
 
-void applyInverseConcordance(core::tex::SourceLocation* pLoc)
+void applyInverseConcordance(::core::tex::SourceLocation* pLoc)
 {
     // try to read concordance
    using namespace tex::rnw_concordance;
@@ -158,7 +158,7 @@ void applyInverseConcordance(core::tex::SourceLocation* pLoc)
                                                           pLoc->line()));
    if (!rnwLine.empty())
    {
-      *pLoc = core::tex::SourceLocation(rnwLine.filePath(),
+      *pLoc = ::core::tex::SourceLocation(rnwLine.filePath(),
                                         rnwLine.line(),
                                         pLoc->column());
    }
@@ -190,7 +190,7 @@ Error rpcApplyForwardConcordance(const json::JsonRpcRequest& request,
 
    FilePath srcPath = module_context::resolveAliasedPath(file);
 
-   core::tex::SourceLocation srcLoc(srcPath, line, column);
+   ::core::tex::SourceLocation srcLoc(srcPath, line, column);
 
    applyForwardConcordance(rootDocPath, &srcLoc);
 
@@ -216,7 +216,7 @@ Error rpcApplyInverseConcordance(const json::JsonRpcRequest& request,
       return error;
    FilePath srcPath = module_context::resolveAliasedPath(file);
 
-   core::tex::SourceLocation srcLoc(srcPath, line, column);
+   ::core::tex::SourceLocation srcLoc(srcPath, line, column);
 
    applyInverseConcordance(&srcLoc);
 
@@ -245,7 +245,7 @@ Error synctexInverseSearch(const json::JsonRpcRequest& request,
       return error;
    FilePath pdfPath = module_context::resolveAliasedPath(file);
 
-   core::tex::Synctex synctex;
+   ::core::tex::Synctex synctex;
    if (synctex.parse(pdfPath))
    {
       if (!fromClick)
@@ -254,14 +254,14 @@ Error synctexInverseSearch(const json::JsonRpcRequest& request,
          // the passed x and y coordinates since they represent the
          // top of the user-visible content (in case the page is
          // scrolled down from the top)
-         core::tex::PdfLocation contLoc = synctex.topOfPageContent(page);
+         ::core::tex::PdfLocation contLoc = synctex.topOfPageContent(page);
          x = std::max((float)x, contLoc.x());
          y = std::max((float)y, contLoc.y());
       }
 
-      core::tex::PdfLocation pdfLocation(page, x, y, width, height);
+      ::core::tex::PdfLocation pdfLocation(page, x, y, width, height);
 
-      core::tex::SourceLocation srcLoc = synctex.inverseSearch(pdfLocation);
+      ::core::tex::SourceLocation srcLoc = synctex.inverseSearch(pdfLocation);
       applyInverseConcordance(&srcLoc);
 
       pResponse->setResult(toJson(srcLoc));
@@ -287,7 +287,7 @@ void rsinversePostback(const std::string& arguments,
    int line = safe_convert::stringTo<int>(args[1].second, 1);
 
    // apply inverse concordance
-   core::tex::SourceLocation srcLoc(FilePath(sourceFile), line, 1);
+   ::core::tex::SourceLocation srcLoc(FilePath(sourceFile), line, 1);
    applyInverseConcordance(&srcLoc);
 
    // edit the file
@@ -324,13 +324,13 @@ Error forwardSearch(const FilePath& rootFile,
    // determine pdf
    FilePath pdfFile = rootFile.parent().complete(rootFile.stem() + ".pdf");
 
-   core::tex::Synctex synctex;
+   ::core::tex::Synctex synctex;
    if (synctex.parse(pdfFile))
    {
-      core::tex::SourceLocation srcLoc(inputFile, line, column);
+      ::core::tex::SourceLocation srcLoc(inputFile, line, column);
       applyForwardConcordance(rootFile, &srcLoc);
 
-      core::tex::PdfLocation pdfLoc = synctex.forwardSearch(srcLoc);
+      ::core::tex::PdfLocation pdfLoc = synctex.forwardSearch(srcLoc);
       *pPdfLocation = toJson(pdfFile, pdfLoc, fromClick);
    }
    else

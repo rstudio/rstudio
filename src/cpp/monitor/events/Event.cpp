@@ -70,7 +70,7 @@ std::ostream& operator<<(std::ostream& ostr, const Event& event)
 
    ostr << " - ";
    ostr << event.username() << " [" << event.pid() << "] - ";
-   ostr << core::http::util::httpDate(event.timestamp());
+   ostr << ::core::http::util::httpDate(event.timestamp());
    if (!event.data().empty())
    {
       ostr << " - " << event.data();

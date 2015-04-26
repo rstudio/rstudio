@@ -602,8 +602,8 @@ void deviceToNDC(double* x, double* y)
    *y = grconvertY(*y, "device", "ndc");
 }
 
-Error saveSnapshot(const core::FilePath& snapshotFile,
-                   const core::FilePath& imageFile)
+Error saveSnapshot(const ::core::FilePath& snapshotFile,
+                   const ::core::FilePath& imageFile)
 {
    // ensure we are active
    Error error = makeActive();
@@ -621,7 +621,7 @@ Error saveSnapshot(const core::FilePath& snapshotFile,
    return handler::writeToPNG(imageFile, pDC);
 }
 
-Error restoreSnapshot(const core::FilePath& snapshotFile)
+Error restoreSnapshot(const ::core::FilePath& snapshotFile)
 {
    // ensure we are active
    Error error = makeActive();

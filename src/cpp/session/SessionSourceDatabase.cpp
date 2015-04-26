@@ -330,7 +330,7 @@ void SourceDocument::checkForExternalEdit(std::time_t* pTime)
    if (lastKnownWriteTime_ == 0)
       return;
 
-   core::FilePath filePath = module_context::resolveAliasedPath(path_);
+   ::core::FilePath filePath = module_context::resolveAliasedPath(path_);
    if (!filePath.exists())
       return;
 
@@ -345,7 +345,7 @@ void SourceDocument::updateLastKnownWriteTime()
    if (path_.empty())
       return;
 
-   core::FilePath filePath = module_context::resolveAliasedPath(path_);
+   ::core::FilePath filePath = module_context::resolveAliasedPath(path_);
    if (!filePath.exists())
       return;
 

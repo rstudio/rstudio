@@ -41,7 +41,7 @@ enum VCS
 };
 
 boost::shared_ptr<FileDecorationContext> fileDecorationContext(
-                                            const core::FilePath& rootDir);
+                                            const ::core::FilePath& rootDir);
 
 VCS activeVCS();
 std::string activeVCSName();
@@ -53,7 +53,7 @@ core::FilePath defaultSshKeyDir();
 
 void enqueueRefreshEvent();
 
-core::Error fileStatus(const core::FilePath& filePath,
+core::Error fileStatus(const ::core::FilePath& filePath,
                        source_control::VCSStatus* pStatus);
 
 core::Error initialize();

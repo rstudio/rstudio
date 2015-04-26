@@ -32,7 +32,7 @@ Error parseMagicComments(const FilePath& texFile,
                          TexMagicComments* pComments)
 {
    std::vector<std::string> lines;
-   Error error = core::readStringVectorFromFile(texFile, &lines);
+   Error error = ::core::readStringVectorFromFile(texFile, &lines);
    if (error)
       return error;
 

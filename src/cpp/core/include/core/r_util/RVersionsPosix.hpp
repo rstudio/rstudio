@@ -34,11 +34,11 @@ struct RVersion
    RVersion() : isDefault(false) {}
    bool isDefault;
    std::string number;
-   core::system::Options environment;
+   ::core::system::Options environment;
 
    FilePath homeDir() const
    {
-      return FilePath(core::system::getenv(environment, "R_HOME"));
+      return FilePath(::core::system::getenv(environment, "R_HOME"));
    }
 };
 

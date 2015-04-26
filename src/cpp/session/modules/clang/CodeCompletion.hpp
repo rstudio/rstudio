@@ -25,8 +25,8 @@ namespace session {
 namespace modules {      
 namespace clang {
 
-core::Error getCppCompletions(const core::json::JsonRpcRequest& request,
-                              core::json::JsonRpcResponse* pResponse);
+core::Error getCppCompletions(const ::core::json::JsonRpcRequest& request,
+                              ::core::json::JsonRpcResponse* pResponse);
    
 } // namespace clang
 } // namepace handlers

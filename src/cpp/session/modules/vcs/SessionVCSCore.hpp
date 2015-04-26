@@ -52,7 +52,7 @@ private:
 struct FileWithStatus
 {
    VCSStatus status;
-   core::FilePath path;
+   ::core::FilePath path;
 };
 
 class StatusResult
@@ -70,7 +70,7 @@ public:
       }
    }
 
-   VCSStatus getStatus(const core::FilePath& fileOrDirectory) const;
+   VCSStatus getStatus(const ::core::FilePath& fileOrDirectory) const;
    std::vector<FileWithStatus> files() const { return files_; }
 
 private:
@@ -85,8 +85,8 @@ public:
    FileDecorationContext() {}
    virtual ~FileDecorationContext() {}
 
-   virtual void decorateFile(const core::FilePath& filePath,
-                             core::json::Object* pFileObject) = 0;
+   virtual void decorateFile(const ::core::FilePath& filePath,
+                             ::core::json::Object* pFileObject) = 0;
 };
 
 } // namespace source_control

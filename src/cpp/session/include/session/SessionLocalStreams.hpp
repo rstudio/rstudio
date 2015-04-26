@@ -30,20 +30,20 @@ namespace rstudio {
 namespace session {
 namespace local_streams {
 
-inline core::Error ensureStreamsDir()
+inline ::core::Error ensureStreamsDir()
 {
-   core::FilePath sessionStreamsPath(kSessionLocalStreamsDir);
-   return core::http::initializeStreamDir(sessionStreamsPath);
+   ::core::FilePath sessionStreamsPath(kSessionLocalStreamsDir);
+   return ::core::http::initializeStreamDir(sessionStreamsPath);
 }
    
-inline core::FilePath streamPath(const std::string& user)
+inline ::core::FilePath streamPath(const std::string& user)
 {
-   return core::FilePath(kSessionLocalStreamsDir).complete(user);
+   return ::core::FilePath(kSessionLocalStreamsDir).complete(user);
 }
 
 inline void removeStreams(const std::string& user)
 {
-   core::Error error = streamPath(user).removeIfExists();
+   ::core::Error error = streamPath(user).removeIfExists();
    if (error)
       LOG_ERROR(error);
 }

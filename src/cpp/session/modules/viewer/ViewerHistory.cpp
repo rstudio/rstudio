@@ -104,12 +104,12 @@ module_context::ViewerHistoryEntry ViewerHistory::goBack()
 
 namespace {
 
-FilePath historyEntriesPath(const core::FilePath& serializationPath)
+FilePath historyEntriesPath(const ::core::FilePath& serializationPath)
 {
    return serializationPath.complete("history_entries");
 }
 
-FilePath currentIndexPath(const core::FilePath& serializationPath)
+FilePath currentIndexPath(const ::core::FilePath& serializationPath)
 {
    return serializationPath.complete("current_index");
 }
@@ -129,7 +129,7 @@ ReadCollectionAction historyEntryFromString(
 
 } // anonymous namespace
 
-void ViewerHistory::saveTo(const core::FilePath& serializationPath) const
+void ViewerHistory::saveTo(const ::core::FilePath& serializationPath) const
 {
    // blow away any existing serialization data
    Error error = serializationPath.removeIfExists();
@@ -150,7 +150,7 @@ void ViewerHistory::saveTo(const core::FilePath& serializationPath) const
 
    // save the current index
    std::string currentIndex = safe_convert::numberToString(currentIndex_);
-   error = core::writeStringToFile(currentIndexPath(serializationPath),
+   error = ::core::writeStringToFile(currentIndexPath(serializationPath),
                                    currentIndex);
    if (error)
    {
@@ -180,7 +180,7 @@ void ViewerHistory::saveTo(const core::FilePath& serializationPath) const
    }
 }
 
-void ViewerHistory::restoreFrom(const core::FilePath& serializationPath)
+void ViewerHistory::restoreFrom(const ::core::FilePath& serializationPath)
 {
    // skip if the directory doesn't exist
    if (!serializationPath.exists())
@@ -197,7 +197,7 @@ void ViewerHistory::restoreFrom(const core::FilePath& serializationPath)
 
    // read the index
    std::string currentIndex;
-   Error error = core::readStringFromFile(indexPath, &currentIndex);
+   Error error = ::core::readStringFromFile(indexPath, &currentIndex);
    if (error)
    {
       LOG_ERROR(error);
@@ -243,8 +243,8 @@ std::string ViewerHistoryEntry::url() const
 }
 
 core::Error ViewerHistoryEntry::copy(
-             const core::FilePath& sourceDir,
-             const core::FilePath& destinationDir) const
+             const ::core::FilePath& sourceDir,
+             const ::core::FilePath& destinationDir) const
 {
    // copy enclosing directory to the destinationDir
    FilePath entryPath = sourceDir.childPath(sessionTempPath_);

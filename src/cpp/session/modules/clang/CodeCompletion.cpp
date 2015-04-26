@@ -158,8 +158,8 @@ core::json::Object toJson(const CodeCompleteResult& result)
 } // anonymous namespace
 
 
-Error getCppCompletions(const core::json::JsonRpcRequest& request,
-                        core::json::JsonRpcResponse* pResponse)
+Error getCppCompletions(const ::core::json::JsonRpcRequest& request,
+                        ::core::json::JsonRpcResponse* pResponse)
 {
    // get params
    std::string docPath, userText;

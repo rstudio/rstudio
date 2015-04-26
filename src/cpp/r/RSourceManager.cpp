@@ -38,7 +38,7 @@ SourceManager& sourceManager()
    return instance ;
 }
    
-Error SourceManager::sourceTools(const core::FilePath& filePath)
+Error SourceManager::sourceTools(const ::core::FilePath& filePath)
 {
    Error error = sourceLocal(filePath);
    if (error)
@@ -86,7 +86,7 @@ void SourceManager::reloadIfNecessary()
 }
 
 
-void SourceManager::reSourceTools(const core::FilePath& filePath)
+void SourceManager::reSourceTools(const ::core::FilePath& filePath)
 {
    Error error = source(filePath, true);
    if (error)

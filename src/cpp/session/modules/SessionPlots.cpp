@@ -74,7 +74,7 @@ Error removePlot(const json::JsonRpcRequest& request,
 
    if (display.plotCount() < 1)
    {
-      return Error(core::json::errc::ParamInvalid, ERROR_LOCATION);
+      return Error(::core::json::errc::ParamInvalid, ERROR_LOCATION);
    }
    else if (display.plotCount() == 1)
    {
@@ -322,7 +322,7 @@ Error plotsCreateRPubsHtml(const json::JsonRpcRequest& request,
        "</body>\n"
        "</html>\n");
    std::string html = boost::str(fmt % width % plotPath.filename());
-   error = core::writeStringToFile(sourceFilePath, html);
+   error = ::core::writeStringToFile(sourceFilePath, html);
    if (error)
       return error;
 
@@ -470,7 +470,7 @@ void setImageFileResponse(const FilePath& imageFilePath,
    Error error = pResponse->setBody(imageFilePath);
    if (error)
    {
-      if (!core::isPathNotFoundError(error))
+      if (!::core::isPathNotFoundError(error))
          LOG_ERROR(error);
       pResponse->setError(http::status::InternalServerError,
                           error.code().message());
@@ -823,7 +823,7 @@ bool haveCairoPdf()
 {
    // make sure there is a real x server running on osx
 #ifdef __APPLE__
-   std::string display = core::system::getenv("DISPLAY");
+   std::string display = ::core::system::getenv("DISPLAY");
    if (display.empty() || (display == ":0"))
       return false;
 #endif

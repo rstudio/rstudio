@@ -64,7 +64,7 @@ using namespace session::source_database;
 namespace {
 
 void writeDocToJson(boost::shared_ptr<SourceDocument> pDoc,
-                    core::json::Object* pDocJson)
+                    ::core::json::Object* pDocJson)
 {
    // write the doc
    pDoc->writeToJson(pDocJson);
@@ -163,7 +163,7 @@ Error openDocument(const json::JsonRpcRequest& request,
 
    std::string encoding;
    error = json::readParam(request.params, 2, &encoding);
-   if (error && error.code() != core::json::errc::ParamTypeMismatch)
+   if (error && error.code() != ::core::json::errc::ParamTypeMismatch)
       return error ;
    if (encoding.empty())
       encoding = ::locale2charset(NULL);
@@ -312,7 +312,7 @@ Error saveDocumentCore(const std::string& contents,
       // enque file changed event if we need to
       if (!module_context::isDirectoryMonitored(fullDocPath.parent()))
       {
-         using core::system::FileChangeEvent;
+         using ::core::system::FileChangeEvent;
          FileChangeEvent changeEvent(newFile ? FileChangeEvent::FileAdded :
                                                FileChangeEvent::FileModified,
                                      FileInfo(fullDocPath));
@@ -689,12 +689,12 @@ Error processSourceTemplate(const std::string& name,
    // setup template filter
    std::map<std::string,std::string> vars;
    vars["name"] = name;
-   core::text::TemplateFilter filter(vars);
+   ::core::text::TemplateFilter filter(vars);
 
    // read file with template filter
    FilePath templatePath = session::options().rResourcesPath().complete(
                                              "templates/" +  templateName);
-   return core::readStringFromFile(templatePath,
+   return ::core::readStringFromFile(templatePath,
                                    filter,
                                    pContents,
                                    string_utils::LineEndingPosix);
@@ -729,7 +729,7 @@ Error defaultRdResponse(const std::string& name,
       return error;
 
    std::string contents;
-   error = core::readStringFromFile(
+   error = ::core::readStringFromFile(
                         FilePath(string_utils::systemToUtf8(filePath)),
                         &contents,
                         string_utils::LineEndingPosix);
@@ -798,7 +798,7 @@ Error createRdShell(const json::JsonRpcRequest& request,
          else
          {
             std::string contents;
-            error = core::readStringFromFile(rdFilePath,
+            error = ::core::readStringFromFile(rdFilePath,
                                              &contents,
                                              string_utils::LineEndingPosix);
             if (error)
@@ -835,7 +835,7 @@ Error isReadOnlyFile(const json::JsonRpcRequest& request,
    FilePath filePath = module_context::resolveAliasedPath(path);
 
    pResponse->setResult(filePath.exists() &&
-                        core::system::isReadOnly(filePath));
+                        ::core::system::isReadOnly(filePath));
 
    return Success();
 }
@@ -958,7 +958,7 @@ void enqueFileEditEvent(const std::string& file)
    // if it doesn't exist then create it
    if (!filePath.exists())
    {
-      Error error = core::writeStringToFile(filePath, "",
+      Error error = ::core::writeStringToFile(filePath, "",
                                             options().sourcePersistLineEnding());
       if (error)
       {
@@ -1047,7 +1047,7 @@ SEXP rs_fileEdit(SEXP fileSEXP)
 
 } // anonymous namespace
 
-Error clientInitDocuments(core::json::Array* pJsonDocs)
+Error clientInitDocuments(::core::json::Array* pJsonDocs)
 {
    source_database::events().onRemoveAll();
 

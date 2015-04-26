@@ -39,10 +39,10 @@ extern const char * const kVcsId;
 class SvnFileDecorationContext : public source_control::FileDecorationContext
 {
 public:
-   SvnFileDecorationContext(const core::FilePath& rootDir);
+   SvnFileDecorationContext(const ::core::FilePath& rootDir);
    virtual ~SvnFileDecorationContext();
-   void decorateFile(const core::FilePath& filePath,
-                     core::json::Object* pFileObject);
+   void decorateFile(const ::core::FilePath& filePath,
+                     ::core::json::Object* pFileObject);
 private:
    source_control::StatusResult vcsResult_;
 };
@@ -51,9 +51,9 @@ private:
 bool isSvnInstalled();
 
 // Returns true if the working directory is in a Subversion tree
-bool isSvnDirectory(const core::FilePath& workingDir);
+bool isSvnDirectory(const ::core::FilePath& workingDir);
 
-std::string repositoryRoot(const core::FilePath& workingDir);
+std::string repositoryRoot(const ::core::FilePath& workingDir);
 
 bool isSvnEnabled();
 
@@ -64,13 +64,13 @@ std::string nonPathSvnBinDir();
 core::Error checkout(const std::string& url,
                      const std::string& username,
                      const std::string dirName,
-                     const core::FilePath& parentPath,
+                     const ::core::FilePath& parentPath,
                      boost::shared_ptr<console_process::ConsoleProcess>* ppCP);
 
 core::Error initialize();
 
 // Initialize SVN with the given working directory
-core::Error initializeSvn(const core::FilePath& workingDir);
+core::Error initializeSvn(const ::core::FilePath& workingDir);
 
 } // namespace svn
 } // namespace modules

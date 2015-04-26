@@ -66,18 +66,18 @@ Error base64HMAC(const std::string& value,
 
    // compute hmac for the message
    std::vector<unsigned char> hmac;
-   Error error = core::system::crypto::HMAC_SHA1(message, cookieKey, &hmac);
+   Error error = ::core::system::crypto::HMAC_SHA1(message, cookieKey, &hmac);
    if (error)
       return error;
 
    // base 64 encode it
-   return core::system::crypto::base64Encode(hmac, pHMAC);
+   return ::core::system::crypto::base64Encode(hmac, pHMAC);
 }
 
 http::Cookie createSecureCookie(
                           const std::string& name,
                           const std::string& value,
-                          const core::http::Request& request,
+                          const ::core::http::Request& request,
                           const boost::posix_time::time_duration& validDuration,
                           const std::string& path)
 {
@@ -116,7 +116,7 @@ http::Cookie createSecureCookie(
 
 } // anonymous namespace
 
-std::string readSecureCookie(const core::http::Request& request,
+std::string readSecureCookie(const ::core::http::Request& request,
                              const std::string& name)
 {
    // get the signed cookie value
@@ -220,7 +220,7 @@ void set(const std::string& name,
 void remove(const http::Request& request,
             const std::string& name,
             const std::string& path,
-            core::http::Response* pResponse)
+            ::core::http::Response* pResponse)
 {
    // create vanilla cookie (no need for secure cookie since we are removing)
    http::Cookie cookie(request, name, std::string(), path);
@@ -236,7 +236,7 @@ Error initialize()
 {
    // determine path to use for secure cookie key file
    FilePath secureCookieKeyPath;
-   if (core::system::effectiveUserIsRoot())
+   if (::core::system::effectiveUserIsRoot())
    {
       secureCookieKeyPath = FilePath("/etc/rstudio/secure-cookie-key");
       if (!secureCookieKeyPath.exists())
@@ -270,7 +270,7 @@ Error initialize()
    else
    {
       // generate a new key
-      std::string secureCookieKey = core::system::generateUuid(false);
+      std::string secureCookieKey = ::core::system::generateUuid(false);
 
       // ensure the parent directory
       Error error = secureCookieKeyPath.parent().ensureDirectory();
@@ -284,7 +284,7 @@ Error initialize()
 
       // change mode it so it is only readable and writeable by this user
       if (changeFileMode(secureCookieKeyPath,
-                         core::system::UserReadWriteMode) < 0)
+                         ::core::system::UserReadWriteMode) < 0)
       {
          return systemError(errno, ERROR_LOCATION);
       }

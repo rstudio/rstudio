@@ -68,7 +68,7 @@ QStringList inverseSearchArgs(WId mainWindowId)
 
    // shared secret
    cmdFormat.append(
-          QString::fromStdString(core::system::getenv("RS_SHARED_SECRET")));
+          QString::fromStdString(::core::system::getenv("RS_SHARED_SECRET")));
    cmdFormat.append(space);
 
    // file and line placeholders

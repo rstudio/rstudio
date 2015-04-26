@@ -54,8 +54,8 @@ public:
    bool hasPrevious() const;
    module_context::ViewerHistoryEntry goBack();
 
-   void saveTo(const core::FilePath& serializationPath) const;
-   void restoreFrom(const core::FilePath& serializationPath);
+   void saveTo(const ::core::FilePath& serializationPath) const;
+   void restoreFrom(const ::core::FilePath& serializationPath);
 
 private:
    int currentIndex_;

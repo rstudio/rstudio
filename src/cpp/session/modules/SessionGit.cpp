@@ -91,7 +91,7 @@ const uint64_t GIT_1_7_2 = ((uint64_t)1 << 48) |
 
 core::system::ProcessOptions procOptions()
 {
-   core::system::ProcessOptions options;
+   ::core::system::ProcessOptions options;
 
    // detach the session so there is no terminal
 #ifndef _WIN32
@@ -99,24 +99,24 @@ core::system::ProcessOptions procOptions()
 #endif
 
    // get current environment for modification prior to passing to child
-   core::system::Options childEnv;
-   core::system::environment(&childEnv);
+   ::core::system::Options childEnv;
+   ::core::system::environment(&childEnv);
 
    // add git bin dir to PATH if necessary
    std::string nonPathGitBinDir = git::nonPathGitBinDir();
    if (!nonPathGitBinDir.empty())
-      core::system::addToPath(&childEnv, nonPathGitBinDir);
+      ::core::system::addToPath(&childEnv, nonPathGitBinDir);
 
    // add postback directory to PATH
    FilePath postbackDir = session::options().rpostbackPath().parent();
-   core::system::addToPath(&childEnv, postbackDir.absolutePath());
+   ::core::system::addToPath(&childEnv, postbackDir.absolutePath());
 
    options.workingDir = projects::projectContext().directory();
 
    // on windows set HOME to USERPROFILE
 #ifdef _WIN32
-   std::string userProfile = core::system::getenv(childEnv, "USERPROFILE");
-   core::system::setenv(&childEnv, "HOME", userProfile);
+   std::string userProfile = ::core::system::getenv(childEnv, "USERPROFILE");
+   ::core::system::setenv(&childEnv, "HOME", userProfile);
 #endif
 
    // set custom environment
@@ -203,10 +203,10 @@ std::string gitBin()
 #endif
 
 Error gitExec(const ShellArgs& args,
-              const core::FilePath& workingDir,
-              core::system::ProcessResult* pResult)
+              const ::core::FilePath& workingDir,
+              ::core::system::ProcessResult* pResult)
 {
-   core::system::ProcessOptions options = procOptions();
+   ::core::system::ProcessOptions options = procOptions();
    options.workingDir = workingDir;
    // Important to ensure SSH_ASKPASS works
 #ifdef _WIN32
@@ -267,7 +267,7 @@ private:
    FilePath root_;
 
 protected:
-   core::Error runGit(const ShellArgs& args,
+   ::core::Error runGit(const ShellArgs& args,
                       std::string* pStdOut=NULL,
                       std::string* pStdErr=NULL,
                       int* pExitCode=NULL)
@@ -294,7 +294,7 @@ protected:
       return Success();
    }
 
-   core::Error createConsoleProc(const ShellArgs& args,
+   ::core::Error createConsoleProc(const ShellArgs& args,
                                  const std::string& caption,
                                  bool dialog,
                                  boost::shared_ptr<ConsoleProcess>* ppCP,
@@ -302,7 +302,7 @@ protected:
    {
       using namespace session::console_process;
 
-      core::system::ProcessOptions options = procOptions();
+      ::core::system::ProcessOptions options = procOptions();
 #ifdef _WIN32
       options.detachProcess = true;
 #endif
@@ -386,7 +386,7 @@ public:
       root_ = path;
    }
 
-   core::Error status(const FilePath& dir,
+   ::core::Error status(const FilePath& dir,
                       StatusResult* pStatusResult)
    {
       using namespace boost;
@@ -425,12 +425,12 @@ public:
       return Success();
    }
 
-   core::Error add(const std::vector<FilePath>& filePaths)
+   ::core::Error add(const std::vector<FilePath>& filePaths)
    {
       return runGit(ShellArgs() << "add" << "--" << filePaths);
    }
 
-   core::Error remove(const std::vector<FilePath>& filePaths)
+   ::core::Error remove(const std::vector<FilePath>& filePaths)
    {
       ShellArgs args;
       args << "rm" << "--";
@@ -438,7 +438,7 @@ public:
       return runGit(args);
    }
 
-   core::Error discard(const std::vector<FilePath>& filePaths)
+   ::core::Error discard(const std::vector<FilePath>& filePaths)
    {
       source_control::StatusResult statusResult;
       Error error = status(root_, &statusResult);
@@ -462,7 +462,7 @@ public:
       }
    }
 
-   core::Error stage(const std::vector<FilePath> &filePaths)
+   ::core::Error stage(const std::vector<FilePath> &filePaths)
    {
       StatusResult statusResult;
       this->status(root_, &statusResult);
@@ -508,7 +508,7 @@ public:
       return Success();
    }
 
-   core::Error unstage(const std::vector<FilePath>& filePaths)
+   ::core::Error unstage(const std::vector<FilePath>& filePaths)
    {
       source_control::StatusResult statusResult;
       Error error = status(root_, &statusResult);
@@ -545,7 +545,7 @@ public:
       }
    }
 
-   core::Error listBranches(std::vector<std::string>* pBranches,
+   ::core::Error listBranches(std::vector<std::string>* pBranches,
                             boost::optional<size_t>* pActiveBranchIndex)
    {
       std::vector<std::string> lines;
@@ -570,7 +570,7 @@ public:
       return Success();
    }
 
-   core::Error checkout(const std::string& id,
+   ::core::Error checkout(const std::string& id,
                         boost::shared_ptr<ConsoleProcess>* ppCP)
    {
       return createConsoleProc(ShellArgs() << "checkout" << id << "--",
@@ -579,7 +579,7 @@ public:
                                ppCP);
    }
 
-   core::Error commit(std::string message, bool amend, bool signOff,
+   ::core::Error commit(std::string message, bool amend, bool signOff,
                       boost::shared_ptr<ConsoleProcess>* ppCP)
    {
       bool alwaysUseUtf8 = s_gitVersion >= GIT_1_7_2;
@@ -628,7 +628,7 @@ public:
          if (mergeMsg.exists())
          {
             std::string mergeMsgStr;
-            error = core::readStringFromFile(mergeMsg, &mergeMsgStr);
+            error = ::core::readStringFromFile(mergeMsg, &mergeMsgStr);
             if (!error)
             {
                if (!message.empty())
@@ -659,7 +659,7 @@ public:
                                ppCP);
    }
 
-   core::Error clone(const std::string& url,
+   ::core::Error clone(const std::string& url,
                      const std::string dirName,
                      const FilePath& parentPath,
                      boost::shared_ptr<ConsoleProcess>* ppCP)
@@ -729,7 +729,7 @@ public:
       return true;
    }
 
-   core::Error push(boost::shared_ptr<ConsoleProcess>* ppCP)
+   ::core::Error push(boost::shared_ptr<ConsoleProcess>* ppCP)
    {
       std::string branch;
       Error error = currentBranch(&branch);
@@ -747,13 +747,13 @@ public:
       return createConsoleProc(args, "Git Push", true, ppCP);
    }
 
-   core::Error pull(boost::shared_ptr<ConsoleProcess>* ppCP)
+   ::core::Error pull(boost::shared_ptr<ConsoleProcess>* ppCP)
    {
       return createConsoleProc(ShellArgs() << "pull",
                                "Git Pull", true, ppCP);
    }
 
-   core::Error doDiffFile(const FilePath& filePath,
+   ::core::Error doDiffFile(const FilePath& filePath,
                           const FilePath* pCompareTo,
                           PatchMode mode,
                           int contextLines,
@@ -771,7 +771,7 @@ public:
       return runGit(args, pOutput, NULL, NULL);
    }
 
-   core::Error diffFile(const FilePath& filePath,
+   ::core::Error diffFile(const FilePath& filePath,
                         PatchMode mode,
                         int contextLines,
                         std::string* pOutput)
@@ -823,7 +823,7 @@ public:
       return secs;
    }
 
-   core::Error applyPatch(const FilePath& patchFile,
+   ::core::Error applyPatch(const FilePath& patchFile,
                           PatchMode patchMode)
    {
       ShellArgs args = ShellArgs() << "apply";
@@ -871,7 +871,7 @@ public:
       }
    }
 
-   core::Error logLength(const std::string &rev,
+   ::core::Error logLength(const std::string &rev,
                          const FilePath& fileFilter,
                          const std::string &searchText,
                          int *pLength)
@@ -905,7 +905,7 @@ public:
       }
    }
 
-   core::Error log(const std::string& rev,
+   ::core::Error log(const std::string& rev,
                    const FilePath& fileFilter,
                    int skip,
                    int maxentries,
@@ -1090,7 +1090,7 @@ public:
       return Success();
    }
 
-   virtual core::Error show(const std::string& rev,
+   virtual ::core::Error show(const std::string& rev,
                             std::string* pOutput)
    {
       ShellArgs args = ShellArgs() << "show" << "--pretty=oneline" << "-M";
@@ -1101,7 +1101,7 @@ public:
       return runGit(args, pOutput);
    }
 
-   virtual core::Error showFile(const std::string& rev,
+   virtual ::core::Error showFile(const std::string& rev,
                                 const std::string& filename,
                                 std::string* pOutput)
    {
@@ -1112,7 +1112,7 @@ public:
       return runGit(args, pOutput);
    }
 
-   virtual core::Error remoteBranchInfo(RemoteBranchInfo* pRemoteBranchInfo)
+   virtual ::core::Error remoteBranchInfo(RemoteBranchInfo* pRemoteBranchInfo)
    {
       // default to none
       *pRemoteBranchInfo = RemoteBranchInfo();
@@ -1202,14 +1202,14 @@ std::vector<FilePath> resolveAliasedPaths(const json::Array& paths,
 
 FilePath detectGitDir(const FilePath& workingDir)
 {
-   core::system::ProcessOptions options = procOptions();
+   ::core::system::ProcessOptions options = procOptions();
    options.workingDir = workingDir;
 #ifndef _WIN32
    options.detachSession = true;
 #endif
 
-   core::system::ProcessResult result;
-   Error error = core::system::runCommand(
+   ::core::system::ProcessResult result;
+   Error error = ::core::system::runCommand(
             git() << "rev-parse" << "--show-toplevel",
             "",
             options,
@@ -1641,14 +1641,14 @@ Error vcsGetIgnores(const json::JsonRpcRequest& request,
    FilePath gitIgnorePath = filePath.complete(".gitignore");
 
    // setup result (default to empty)
-   core::system::ProcessResult result;
+   ::core::system::ProcessResult result;
    result.exitStatus = EXIT_SUCCESS;
    result.stdOut = "";
 
    // read the file if it exists
    if (gitIgnorePath.exists())
    {
-      Error error = core::readStringFromFile(gitIgnorePath,
+      Error error = ::core::readStringFromFile(gitIgnorePath,
                                              &result.stdOut,
                                              string_utils::LineEndingPosix);
       if (error)
@@ -1676,14 +1676,14 @@ Error vcsSetIgnores(const json::JsonRpcRequest& request,
    FilePath gitIgnorePath = filePath.complete(".gitignore");
 
    // write the .gitignore file
-   error = core::writeStringToFile(gitIgnorePath,
+   error = ::core::writeStringToFile(gitIgnorePath,
                                    ignores,
                                    string_utils::LineEndingNative);
    if (error)
       return error;
 
    // always return an empty (successful) ProcessResult
-   core::system::ProcessResult result;
+   ::core::system::ProcessResult result;
    result.exitStatus = EXIT_SUCCESS;
    pResponse->setResult(processResultToJson(result));
    return Success();
@@ -1699,7 +1699,7 @@ std::string getUpstream(const std::string& branch = std::string())
 
    // get the upstream
    std::string upstream;
-   core::system::ProcessResult result;
+   ::core::system::ProcessResult result;
    Error error = gitExec(ShellArgs() <<
                            "rev-parse" << "--abbrev-ref" << query,
                          s_git_.root(),
@@ -1745,7 +1745,7 @@ std::string githubUrl(const std::string& view,
    std::string upstreamBranch = upstream.substr(pos + 1);
 
    // now get the remote url
-   core::system::ProcessResult result;
+   ::core::system::ProcessResult result;
    Error error = gitExec(ShellArgs() <<
                    "config" << "--get" << ("remote." + upstreamName + ".url"),
                    s_git_.root(),
@@ -1995,7 +1995,7 @@ Error vcsExportFile(const json::JsonRpcRequest& request,
       return error;
 
    // write it
-   return core::writeStringToFile(
+   return ::core::writeStringToFile(
                   module_context::resolveAliasedPath(targetPath),
                   output);
 }
@@ -2015,13 +2015,13 @@ Error vcsSshPublicKey(const json::JsonRpcRequest& request,
    FilePath publicKeyPath = module_context::resolveAliasedPath(aliasedPath);
    if (!publicKeyPath.exists())
    {
-      return core::fileNotFoundError(publicKeyPath.absolutePath(),
+      return ::core::fileNotFoundError(publicKeyPath.absolutePath(),
                                      ERROR_LOCATION);
    }
 
    // read the key
    std::string publicKeyContents;
-   error = core::readStringFromFile(publicKeyPath, &publicKeyContents);
+   error = ::core::readStringFromFile(publicKeyPath, &publicKeyContents);
    if (error)
       return error;
 
@@ -2058,11 +2058,11 @@ Error vcsInitRepo(const json::JsonRpcRequest& request,
       return error;
    FilePath dirPath = module_context::resolveAliasedPath(directory);
 
-   core::system::ProcessOptions options = procOptions();
+   ::core::system::ProcessOptions options = procOptions();
    options.workingDir = dirPath;
 
    // run it
-   core::system::ProcessResult result;
+   ::core::system::ProcessResult result;
    error = runCommand(git() << "init", options, &result);
    if (error)
       return error;
@@ -2083,7 +2083,7 @@ Error vcsInitRepo(const json::JsonRpcRequest& request,
 bool ensureSSHAgentIsRunning()
 {
    // Use "ssh-add -l" to see if ssh-agent is running
-   core::system::ProcessResult result;
+   ::core::system::ProcessResult result;
    Error error = runCommand(shell_utils::sendStdErrToNull("ssh-add -l"),
                             procOptions(), &result);
    if (error)
@@ -2126,7 +2126,7 @@ bool ensureSSHAgentIsRunning()
    {
       std::string name = (*it).str(1);
       std::string value = (*it).str(2);
-      core::system::setenv(name, value);
+      ::core::system::setenv(name, value);
 
       if (name == "SSH_AGENT_PID")
       {
@@ -2139,7 +2139,7 @@ bool ensureSSHAgentIsRunning()
    return true;
 }
 
-void addKeyToSSHAgent_onCompleted(const core::system::ProcessResult& result)
+void addKeyToSSHAgent_onCompleted(const ::core::system::ProcessResult& result)
 {
    if (result.exitStatus != EXIT_SUCCESS)
       LOG_ERROR_MESSAGE(result.stdErr);
@@ -2148,11 +2148,11 @@ void addKeyToSSHAgent_onCompleted(const core::system::ProcessResult& result)
 void addKeyToSSHAgent(const FilePath& keyFile,
                       const std::string& passphrase)
 {
-   core::system::ProcessOptions options = procOptions();
-   core::system::setenv(options.environment.get_ptr(),
+   ::core::system::ProcessOptions options = procOptions();
+   ::core::system::setenv(options.environment.get_ptr(),
                         "__ASKPASS_PASSTHROUGH_RESULT",
                         passphrase);
-   core::system::setenv(options.environment.get_ptr(),
+   ::core::system::setenv(options.environment.get_ptr(),
                         "SSH_ASKPASS",
                         "askpass-passthrough");
 
@@ -2425,7 +2425,7 @@ Error detectAndSaveGitExePath()
 void onShutdown(bool)
 {
    std::for_each(s_pidsToTerminate_.begin(), s_pidsToTerminate_.end(),
-                 &core::system::terminateProcess);
+                 &::core::system::terminateProcess);
    s_pidsToTerminate_.clear();
 }
 
@@ -2495,7 +2495,7 @@ Error augmentGitIgnore(const FilePath& gitIgnoreFile)
       // If .gitignore exists, add .Rproj.user unless it's already there
 
       std::string strIgnore;
-      Error error = core::readStringFromFile(gitIgnoreFile, &strIgnore);
+      Error error = ::core::readStringFromFile(gitIgnoreFile, &strIgnore);
       if (error)
          return error;
 
@@ -2555,8 +2555,8 @@ bool isGitInstalled()
       return false;
    }
 
-   core::system::ProcessResult result;
-   Error error = core::system::runCommand(git() << "--version",
+   ::core::system::ProcessResult result;
+   Error error = ::core::system::runCommand(git() << "--version",
                                           procOptions(),
                                           &result);
    if (error)
@@ -2627,9 +2627,9 @@ void onUserSettingsChanged()
    }
 }
 
-Error statusToJson(const core::FilePath &path,
+Error statusToJson(const ::core::FilePath &path,
                    const VCSStatus &status,
-                   core::json::Object *pObject)
+                   ::core::json::Object *pObject)
 {
    json::Object& obj = *pObject;
    obj["status"] = status.status();
@@ -2640,11 +2640,11 @@ Error statusToJson(const core::FilePath &path,
    return Success();
 }
 
-void onSuspend(core::Settings*)
+void onSuspend(::core::Settings*)
 {
 }
 
-void onResume(const core::Settings&)
+void onResume(const ::core::Settings&)
 {
    enqueueRefreshEvent();
 }
@@ -2673,8 +2673,8 @@ bool initGitBin()
 
    // Save version
    s_gitVersion = GIT_1_7_2;
-   core::system::ProcessResult result;
-   error = core::system::runCommand(git() << "--version",
+   ::core::system::ProcessResult result;
+   error = ::core::system::runCommand(git() << "--version",
                                     procOptions(),
                                     &result);
    if (error)
@@ -2696,7 +2696,7 @@ bool initGitBin()
    return true;
 }
 
-bool isGitDirectory(const core::FilePath& workingDir)
+bool isGitDirectory(const ::core::FilePath& workingDir)
 {
    return !detectGitDir(workingDir).empty();
 }
@@ -2707,7 +2707,7 @@ std::string remoteOriginUrl(const FilePath& workingDir)
    // default to none
    std::string remoteOriginUrl;
 
-   core::system::ProcessResult result;
+   ::core::system::ProcessResult result;
    Error error = gitExec(ShellArgs() <<
                            "config" << "--get" << "remote.origin.url",
                          workingDir,
@@ -2733,7 +2733,7 @@ bool isGithubRepository()
 }
 
 
-core::Error initializeGit(const core::FilePath& workingDir)
+core::Error initializeGit(const ::core::FilePath& workingDir)
 {
    s_git_.setRoot(detectGitDir(workingDir));
 
@@ -2799,11 +2799,11 @@ core::Error initialize()
 
    // setup environment
    BOOST_ASSERT(boost::algorithm::ends_with(sshAskCmd, "rpostback-askpass"));
-   core::system::setenv("GIT_ASKPASS", "rpostback-askpass");
+   ::core::system::setenv("GIT_ASKPASS", "rpostback-askpass");
 
    if (interceptAskPass)
    {
-      core::system::setenv("SSH_ASKPASS", "rpostback-askpass");
+      ::core::system::setenv("SSH_ASKPASS", "rpostback-askpass");
    }
 
    // add suspend/resume handler

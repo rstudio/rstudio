@@ -92,7 +92,7 @@ bool isValidSrcref(SEXP srcref)
    return srcref && TYPEOF(srcref) != NILSXP;
 }
 
-bool handleRBrowseEnv(const core::FilePath& filePath)
+bool handleRBrowseEnv(const ::core::FilePath& filePath)
 {
    if (filePath.filename() == "wsbrowser.html")
    {

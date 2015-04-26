@@ -207,7 +207,7 @@ void computeColumnWidths(const std::string& width,
                          std::string* pSpecifiedWidth,
                          std::string* pOtherWidth)
 {
-   int w = core::safe_convert::stringTo<int>(width, 50);
+   int w = ::core::safe_convert::stringTo<int>(width, 50);
    *pSpecifiedWidth = safe_convert::numberToString(w - 2) + "%";
    *pOtherWidth = safe_convert::numberToString(100 - w - 2) + "%";
 }

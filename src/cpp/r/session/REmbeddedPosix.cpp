@@ -46,8 +46,8 @@ namespace rstudio {
 namespace r {
 namespace session {
 
-void runEmbeddedR(const core::FilePath& /*rHome*/,    // ignored on posix
-                  const core::FilePath& /*userHome*/, // ignored on posix
+void runEmbeddedR(const ::core::FilePath& /*rHome*/,    // ignored on posix
+                  const ::core::FilePath& /*userHome*/, // ignored on posix
                   bool quiet,
                   bool loadInitFile,
                   SA_TYPE defaultSaveAction,
@@ -186,7 +186,7 @@ void logDLError(const std::string& message, const ErrorLocation& location)
    char* dlError = ::dlerror();
    if (dlError)
       errmsg += ": " + std::string(dlError);
-   core::log::logErrorMessage(errmsg, location);
+   ::core::log::logErrorMessage(errmsg, location);
 }
 
 // Note that when we passed QCF_SET_FRONT to QuartzCocoa_SetupEventLoop

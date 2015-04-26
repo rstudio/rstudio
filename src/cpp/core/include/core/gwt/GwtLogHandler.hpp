@@ -31,7 +31,7 @@ namespace http {
 namespace gwt {
    
 
-void initializeSymbolMaps(const core::FilePath& symbolMapsPath);
+void initializeSymbolMaps(const ::core::FilePath& symbolMapsPath);
 
 void handleLogRequest(const std::string& username,
                       const http::Request& request, 

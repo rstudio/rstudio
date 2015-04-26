@@ -33,11 +33,11 @@ namespace browser {
   
 extern const char * const kBrowserUnsupported;
 
-bool supportedBrowserFilter(const core::http::Request& request,
-                            core::http::Response* pResponse);
+bool supportedBrowserFilter(const ::core::http::Request& request,
+                            ::core::http::Response* pResponse);
 
-void handleBrowserUnsupportedRequest(const core::http::Request& request,
-                                     core::http::Response* pResponse);
+void handleBrowserUnsupportedRequest(const ::core::http::Request& request,
+                                     ::core::http::Response* pResponse);
 
 } // namespace browser
 } // namespace server

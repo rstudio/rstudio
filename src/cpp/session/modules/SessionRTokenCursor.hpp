@@ -33,9 +33,9 @@ namespace modules {
 namespace token_cursor {
 
 using namespace rparser;
-using namespace core::collection;
-using namespace core::r_util;
-using namespace core::r_util::token_utils;
+using namespace ::core::collection;
+using namespace ::core::r_util;
+using namespace ::core::r_util::token_utils;
 
 // NOTE: TokenCursors store a reference to the set of tokens
 // they use, so they are only valid as long as the underlying
@@ -44,7 +44,7 @@ class RTokenCursor
 {
 private:
    
-   RTokenCursor(const core::r_util::RTokens &rTokens,
+   RTokenCursor(const ::core::r_util::RTokens &rTokens,
                std::size_t offset,
                std::size_t n)
       : rTokens_(rTokens),
@@ -54,10 +54,10 @@ private:
    
 public:
    
-   explicit RTokenCursor(const core::r_util::RTokens& rTokens)
+   explicit RTokenCursor(const ::core::r_util::RTokens& rTokens)
       : rTokens_(rTokens), offset_(0), n_(rTokens.size()) {}
    
-   RTokenCursor(const core::r_util::RTokens &rTokens,
+   RTokenCursor(const ::core::r_util::RTokens &rTokens,
                std::size_t offset)
       : rTokens_(rTokens), offset_(offset), n_(rTokens.size()) {}
    
@@ -66,7 +66,7 @@ public:
       return RTokenCursor(rTokens_, offset_, n_);
    }
    
-   const core::r_util::RTokens& tokens() const
+   const ::core::r_util::RTokens& tokens() const
    {
       return rTokens_;
    }
@@ -910,7 +910,7 @@ PIPE_START:
   
 private:
    
-   const core::r_util::RTokens& rTokens_;
+   const ::core::r_util::RTokens& rTokens_;
    std::size_t offset_;
    std::size_t n_;
 };

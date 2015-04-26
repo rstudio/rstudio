@@ -135,7 +135,7 @@ class NullFileDecorationContext : public FileDecorationContext
 } // anonymous namespace
 
 boost::shared_ptr<FileDecorationContext> fileDecorationContext(
-                                            const core::FilePath& rootDir)
+                                            const ::core::FilePath& rootDir)
 {
    if (git::isGitEnabled())
    {
@@ -184,9 +184,9 @@ FilePath getTrueHomeDir()
 #if _WIN32
    // On Windows, R's idea of "$HOME" is not, by default, the same as
    // $USERPROFILE, which is what we want for ssh purposes
-   return FilePath(string_utils::systemToUtf8(core::system::getenv("USERPROFILE")));
+   return FilePath(string_utils::systemToUtf8(::core::system::getenv("USERPROFILE")));
 #else
-   return FilePath(string_utils::systemToUtf8(core::system::getenv("HOME")));
+   return FilePath(string_utils::systemToUtf8(::core::system::getenv("HOME")));
 #endif
 }
 

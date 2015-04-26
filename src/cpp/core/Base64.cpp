@@ -62,7 +62,7 @@ Error encode(const std::string& input, std::string* pOutput)
 Error encode(const FilePath& inputFile, std::string* pOutput)
 {
    std::string contents;
-   Error error = core::readStringFromFile(inputFile, &contents);
+   Error error = ::core::readStringFromFile(inputFile, &contents);
    if (error)
       return error;
 

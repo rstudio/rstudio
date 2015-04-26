@@ -44,7 +44,7 @@ RToolsInfo::RToolsInfo(const std::string& name, const FilePath& installPath)
 {
    std::string versionMin, versionMax;
    std::vector<std::string> relativePathEntries;
-   std::vector<core::system::Option> environmentVars;
+   std::vector< ::core::system::Option> environmentVars;
    if (name == "2.11")
    {
       versionMin = "2.10.0";
@@ -133,7 +133,7 @@ std::string RToolsInfo::url(const std::string& repos) const
 {
    // strip period from name
    std::string ver = boost::algorithm::replace_all_copy(name(), ".", "");
-   std::string url = core::http::URL::complete(
+   std::string url = ::core::http::URL::complete(
                         repos, "bin/windows/Rtools/Rtools" + ver + ".exe");
    return url;
 }
@@ -146,7 +146,7 @@ std::ostream& operator<<(std::ostream& os, const RToolsInfo& info)
    {
      os << pathEntry << std::endl;
    }
-   BOOST_FOREACH(const core::system::Option& var, info.environmentVars())
+   BOOST_FOREACH(const ::core::system::Option& var, info.environmentVars())
    {
       os << var.first << "=" << var.second << std::endl;
    }
@@ -156,7 +156,7 @@ std::ostream& operator<<(std::ostream& os, const RToolsInfo& info)
 
 Error scanRegistryForRTools(std::vector<RToolsInfo>* pRTools)
 {
-   core::system::RegistryKey regKey;
+   ::core::system::RegistryKey regKey;
    Error error = regKey.open(HKEY_LOCAL_MACHINE,
                              "Software\\R-core\\Rtools",
                              KEY_READ | KEY_WOW64_32KEY);
@@ -172,7 +172,7 @@ Error scanRegistryForRTools(std::vector<RToolsInfo>* pRTools)
    for (int i = 0; i < keys.size(); i++)
    {
       std::string name = keys.at(i);
-      core::system::RegistryKey verKey;
+      ::core::system::RegistryKey verKey;
       error = verKey.open(regKey.handle(),
                           name,
                           KEY_READ | KEY_WOW64_32KEY);

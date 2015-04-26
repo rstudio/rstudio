@@ -132,7 +132,7 @@ Error Response::setCacheableBody(const FilePath& filePath,
                                  const Request& request)
 {
    std::string content;
-   Error error = core::readStringFromFile(filePath, &content);
+   Error error = ::core::readStringFromFile(filePath, &content);
    if (error)
       return error;
 
@@ -159,7 +159,7 @@ void Response::setRangeableFile(const FilePath& filePath,
 {
    // read the file in from disk
    std::string contents;
-   Error error = core::readStringFromFile(filePath, &contents);
+   Error error = ::core::readStringFromFile(filePath, &contents);
    if (error)
    {
       setError(error);
@@ -303,7 +303,7 @@ void Response::removeCachingHeaders()
    
 std::string Response::eTagForContent(const std::string& content)
 {
-   return core::hash::crc32Hash(content);
+   return ::core::hash::crc32Hash(content);
 }   
 
 void Response::appendFirstLineBuffers(

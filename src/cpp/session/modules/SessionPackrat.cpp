@@ -599,9 +599,9 @@ void onFileChanged(FilePath sourceFilePath)
    }
 }
 
-void onFilesChanged(const std::vector<core::system::FileChangeEvent>& changes)
+void onFilesChanged(const std::vector< ::core::system::FileChangeEvent>& changes)
 {
-   BOOST_FOREACH(const core::system::FileChangeEvent& fileChange, changes)
+   BOOST_FOREACH(const ::core::system::FileChangeEvent& fileChange, changes)
    {
       FilePath changedFilePath(fileChange.fileInfo().absolutePath());
       onFileChanged(changedFilePath);
@@ -778,7 +778,7 @@ void onPackratAction(const std::string& project,
                      bool running)
 {
    // if this doesn't apply to the current project then skip it
-   if (!core::system::realPathsEqual(
+   if (!::core::system::realPathsEqual(
           projects::projectContext().directory(), FilePath(project)))
    {
       return;

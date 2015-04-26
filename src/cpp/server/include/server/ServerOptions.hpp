@@ -48,7 +48,7 @@ private:
    
 public:
    virtual ~Options() {}
-   core::ProgramStatus read(int argc,
+   ::core::ProgramStatus read(int argc,
                             char * const argv[],
                             std::ostream& osWarnings);
    
@@ -104,9 +104,9 @@ public:
       return std::string(wwwLocalPath_.c_str()); 
    }
 
-   core::FilePath wwwSymbolMapsPath() const
+   ::core::FilePath wwwSymbolMapsPath() const
    {
-      return core::FilePath(wwwSymbolMapsPath_.c_str());
+      return ::core::FilePath(wwwSymbolMapsPath_.c_str());
    }
 
    bool wwwUseEmulatedStack() const
@@ -193,7 +193,7 @@ public:
 
 private:
 
-   void resolvePath(const core::FilePath& basePath,
+   void resolvePath(const ::core::FilePath& basePath,
                     std::string* pPath) const;
 
    void addOverlayOptions(boost::program_options::options_description* pServer,
@@ -218,12 +218,12 @@ private:
 
    void setOverlayOption(const std::string& name, int value)
    {
-      setOverlayOption(name, core::safe_convert::numberToString(value));
+      setOverlayOption(name, ::core::safe_convert::numberToString(value));
    }
 
 
 private:
-   core::FilePath installPath_;
+   ::core::FilePath installPath_;
    bool verifyInstallation_;
    std::string serverWorkingDir_;
    std::string serverUser_;

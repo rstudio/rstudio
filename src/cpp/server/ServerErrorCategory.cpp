@@ -58,7 +58,7 @@ std::string ServerErrorCategory::message( int ev ) const
 }
 
 
-bool isAuthenticationError(const core::Error& error)
+bool isAuthenticationError(const ::core::Error& error)
 {
    if (error.code() == server::errc::AuthenticationError)
       return true;
@@ -66,7 +66,7 @@ bool isAuthenticationError(const core::Error& error)
       return false;
 }
 
-bool isSessionUnavailableError(const core::Error& error)
+bool isSessionUnavailableError(const ::core::Error& error)
 {
    if (error.code() == server::errc::SessionUnavailableError)
       return true;

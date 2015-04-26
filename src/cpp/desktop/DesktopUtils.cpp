@@ -61,8 +61,8 @@ void reattachConsoleIfNecessary()
 // SessionOptions.hpp although the code path isn't exactly the same)
 FilePath userLogPath()
 {
-   FilePath userHomePath = core::system::userHomePath("R_USER|HOME");
-   FilePath logPath = core::system::userSettingsPath(
+   FilePath userHomePath = ::core::system::userHomePath("R_USER|HOME");
+   FilePath logPath = ::core::system::userSettingsPath(
          userHomePath,
          "RStudio-Desktop").childPath("log");
    return logPath;
@@ -267,15 +267,15 @@ void openUrl(const QUrl& url)
    }
    else
    {
-      core::system::ProcessOptions options;
+      ::core::system::ProcessOptions options;
       options.breakawayFromJob = true;
       options.detachProcess = true;
 
       std::vector<std::string> args;
       args.push_back(url.toString().toStdString());
 
-      core::system::ProcessResult result;
-      Error error = core::system::runProgram(
+      ::core::system::ProcessResult result;
+      Error error = ::core::system::runProgram(
             desktop::options().urlopenerPath().absolutePath(),
             args,
             "",
@@ -296,7 +296,7 @@ void openUrl(const QUrl& url)
 QFileDialog::Options standardFileDialogOptions()
 {
     bool isWindowsXP = QSysInfo::windowsVersion() == QSysInfo::WV_XP;
-    if (isWindowsXP || core::system::isWin64())
+    if (isWindowsXP || ::core::system::isWin64())
         return 0;
     else
         return QFileDialog::DontUseNativeDialog;

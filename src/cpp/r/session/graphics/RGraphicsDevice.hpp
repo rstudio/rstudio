@@ -37,7 +37,7 @@ extern const double kDefaultDevicePixelRatio;
    
 // initialize
 core::Error initialize(
-          const core::FilePath& graphicsPath,
+          const ::core::FilePath& graphicsPath,
           const boost::function<bool(double*,double*)>& locatorFunction);
    
 // device size

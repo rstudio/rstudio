@@ -51,7 +51,7 @@ namespace session {
 namespace modules {
 namespace rparser {
 
-using namespace core::collection;
+using namespace ::core::collection;
 
 class ParseOptions
 {
@@ -175,7 +175,7 @@ inline std::string lintTypeToString(LintType type)
 }
 
 using namespace core;
-using namespace core::r_util;
+using namespace ::core::r_util;
 
 struct LintItem
 {
@@ -695,7 +695,7 @@ private:
       
       // First, perform a position-wide search in the current node.
       Positions* pPositions = NULL;
-      core::algorithm::get(pNode->getDefinedSymbols(), name, &pPositions);
+      ::core::algorithm::get(pNode->getDefinedSymbols(), name, &pPositions);
       
       if (!pPositions)
          return findVariableImpl(pNode->getParent(),

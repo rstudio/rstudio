@@ -37,7 +37,7 @@ namespace server {
 namespace auth {
 namespace secure_cookie {
 
-std::string readSecureCookie(const core::http::Request& request,
+std::string readSecureCookie(const ::core::http::Request& request,
                              const std::string& name);
 
 void set(const std::string& name,
@@ -58,7 +58,7 @@ void set(const std::string& name,
 void remove(const http::Request& request,
             const std::string& name,
             const std::string& path,
-            core::http::Response* pResponse);
+            ::core::http::Response* pResponse);
 
 core::Error initialize();
 

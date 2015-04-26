@@ -57,7 +57,7 @@ namespace core {
 namespace http {
 
 typedef boost::function<void(const http::Response&)> ResponseHandler;
-typedef boost::function<void(const core::Error&)> ErrorHandler;
+typedef boost::function<void(const ::core::Error&)> ErrorHandler;
 
 
 template <typename SocketService>
@@ -137,7 +137,7 @@ public:
    void close()
    {
       Error error = closeSocket(socket().lowest_layer());
-      if (error && !core::http::isConnectionTerminatedError(error))
+      if (error && !::core::http::isConnectionTerminatedError(error))
          logError(error);
    }
 

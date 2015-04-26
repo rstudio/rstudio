@@ -36,23 +36,23 @@ private:
 
 public:
 
-   void initialize(const core::FilePath& scopePath,
+   void initialize(const ::core::FilePath& scopePath,
                    const std::string& contextId);
 
    bool hasSessionState() const;
 
    bool rProfileOnRestore() const;
 
-   core::FilePath sessionStatePath() const;
+   ::core::FilePath sessionStatePath() const;
 
    void removeSessionState();
 
-   static core::FilePath createSessionStatePath(
-                                            const core::FilePath& scopePath,
+   static ::core::FilePath createSessionStatePath(
+                                            const ::core::FilePath& scopePath,
                                             const std::string& contextId);
 
 private:
-   core::FilePath sessionStatePath_;
+   ::core::FilePath sessionStatePath_;
 };
 
 

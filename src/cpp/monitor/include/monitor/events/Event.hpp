@@ -51,8 +51,8 @@ public:
    Event(EventScope scope,
          int id,
          const std::string& data = std::string(),
-         const std::string& username = core::system::username(),
-         PidType pid = core::system::currentProcessId(),
+         const std::string& username = ::core::system::username(),
+         PidType pid = ::core::system::currentProcessId(),
          boost::posix_time::ptime timestamp =
                         boost::posix_time::microsec_clock::universal_time())
       : empty_(false),

@@ -33,8 +33,8 @@ class SessionLauncher : public QObject
 {
    Q_OBJECT
 public:
-   SessionLauncher(const core::FilePath& sessionPath,
-                   const core::FilePath& confPath)
+   SessionLauncher(const ::core::FilePath& sessionPath,
+                   const ::core::FilePath& confPath)
       : confPath_(confPath),
         sessionPath_(sessionPath),
         pAppLaunch_(NULL),
@@ -43,10 +43,10 @@ public:
    {
    }
 
-   core::Error launchFirstSession(const QString& filename,
+   ::core::Error launchFirstSession(const QString& filename,
                                   ApplicationLaunch* pAppLaunch);
 
-   core::Error launchNextSession(bool reload);
+   ::core::Error launchNextSession(bool reload);
 
    QString launchFailedErrorMessage() const;
 
@@ -62,7 +62,7 @@ private:
 
    void closeAllSatillites();
 
-   core::Error launchSession(const QStringList& argList,
+   ::core::Error launchSession(const QStringList& argList,
                              QProcess** ppRSessionProcess);
 
    void buildLaunchContext(QString* pHost,
@@ -72,8 +72,8 @@ private:
 
 
 private:
-   core::FilePath confPath_;
-   core::FilePath sessionPath_;
+   ::core::FilePath confPath_;
+   ::core::FilePath sessionPath_;
    ApplicationLaunch* pAppLaunch_;
    MainWindow* pMainWindow_;
    QProcess* pRSessionProcess_;

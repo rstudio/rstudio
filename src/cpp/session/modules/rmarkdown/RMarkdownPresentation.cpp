@@ -60,7 +60,7 @@ json::Value itemAsJson(const SlideNavigationItem& item)
 
 
 void ammendResults(const std::string& formatName,
-                   core::FilePath& targetFile,
+                   ::core::FilePath& targetFile,
                    int sourceLine,
                    json::Object* pResultJson)
 {
@@ -77,7 +77,7 @@ void ammendResults(const std::string& formatName,
 
    // read the input file
    std::vector<std::string> lines;
-   Error error = core::readStringVectorFromFile(targetFile, &lines, false);
+   Error error = ::core::readStringVectorFromFile(targetFile, &lines, false);
    if (error)
    {
       LOG_ERROR(error);

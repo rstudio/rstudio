@@ -57,9 +57,9 @@ namespace modules {
 namespace diagnostics {
 
 using namespace core;
-using namespace core::r_util;
-using namespace core::r_util::token_utils;
-using namespace core::collection;
+using namespace ::core::r_util;
+using namespace ::core::r_util::token_utils;
+using namespace ::core::collection;
 using namespace rparser;
 
 namespace {
@@ -92,7 +92,7 @@ void addUnreferencedSymbol(const ParseItem& item,
 
 void doCheckDefinedButNotUsed(ParseNode* pNode, ParseResults& results)
 {
-   using namespace core::algorithm;
+   using namespace ::core::algorithm;
    
    // Find the definition positions.
    const ParseNode::SymbolPositions& definitions =
@@ -541,7 +541,7 @@ module_context::SourceMarkerSet asSourceMarkerSet(const LintItems& items,
                            filePath,
                            item.startRow + 1,
                            item.startColumn + 1,
-                           core::html_utils::HTML(item.message),
+                           ::core::html_utils::HTML(item.message),
                            true));
    }
    return SourceMarkerSet("Diagnostics", markers);
@@ -565,7 +565,7 @@ module_context::SourceMarkerSet asSourceMarkerSet(
                               path,
                               item.startRow + 1,
                               item.startColumn + 1,
-                              core::html_utils::HTML(item.message),
+                              ::core::html_utils::HTML(item.message),
                               true));
       }
    }
@@ -668,7 +668,7 @@ Error lintRSourceDocument(const json::JsonRpcRequest& request,
    {
       using namespace module_context;
       SourceMarkerSet markers = asSourceMarkerSet(results.lint(),
-                                                  core::FilePath(pDoc->path()));
+                                                  ::core::FilePath(pDoc->path()));
       showSourceMarkers(markers, MarkerAutoSelectNone);
    }
    
@@ -702,7 +702,7 @@ SEXP rs_lintRFile(SEXP filePathSEXP)
    }
    
    std::string rCode;
-   error = core::readStringFromFile(filePath, &rCode);
+   error = ::core::readStringFromFile(filePath, &rCode);
    if (error)
    {
       LOG_ERROR(error);
@@ -780,12 +780,12 @@ void onNAMESPACEchanged()
    r_packages::AsyncPackageInformationProcess::update();
 }
 
-void onFilesChanged(const std::vector<core::system::FileChangeEvent>& events)
+void onFilesChanged(const std::vector< ::core::system::FileChangeEvent>& events)
 {
    std::string namespacePath =
          projects::projectContext().directory().complete("NAMESPACE").absolutePath();
    
-   BOOST_FOREACH(const core::system::FileChangeEvent& event, events)
+   BOOST_FOREACH(const ::core::system::FileChangeEvent& event, events)
    {
       std::string eventPath = event.fileInfo().absolutePath();
       if (eventPath == namespacePath)
@@ -817,7 +817,7 @@ bool collectLint(int depth,
       return true;
    
    std::string contents;
-   Error error = core::readStringFromFile(path, &contents);
+   Error error = ::core::readStringFromFile(path, &contents);
    if (error)
    {
       LOG_ERROR(error);

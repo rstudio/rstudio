@@ -440,15 +440,15 @@ void ammendShellPaths(T* pTarget)
    // non-path git bin dir
    std::string gitBinDir = git::nonPathGitBinDir();
    if (!gitBinDir.empty())
-      core::system::addToPath(pTarget, gitBinDir);
+      ::core::system::addToPath(pTarget, gitBinDir);
 
    // non-path svn bin dir
    std::string svnBinDir = svn::nonPathSvnBinDir();
    if (!svnBinDir.empty())
-      core::system::addToPath(pTarget, svnBinDir);
+      ::core::system::addToPath(pTarget, svnBinDir);
 
    // msys_ssh path
-   core::system::addToPath(pTarget,
+   ::core::system::addToPath(pTarget,
                            session::options().msysSshPath().absolutePath());
 }
 
@@ -557,7 +557,7 @@ Error createSshKey(const json::JsonRpcRequest& request,
    cmd << "-f" << sshKeyPath;
 
    // process options
-   core::system::ProcessOptions options;
+   ::core::system::ProcessOptions options;
 
    // detach the session so there is no terminal
 #ifndef _WIN32
@@ -566,22 +566,22 @@ Error createSshKey(const json::JsonRpcRequest& request,
 
    // customize the environment on Win32
 #ifdef _WIN32
-   core::system::Options childEnv;
-   core::system::environment(&childEnv);
+   ::core::system::Options childEnv;
+   ::core::system::environment(&childEnv);
 
    // set HOME to USERPROFILE
-   std::string userProfile = core::system::getenv(childEnv, "USERPROFILE");
-   core::system::setenv(&childEnv, "HOME", userProfile);
+   std::string userProfile = ::core::system::getenv(childEnv, "USERPROFILE");
+   ::core::system::setenv(&childEnv, "HOME", userProfile);
 
    // add msys_ssh to path
-   core::system::addToPath(&childEnv,
+   ::core::system::addToPath(&childEnv,
                            session::options().msysSshPath().absolutePath());
 
    options.environment = childEnv;
 #endif
 
    // run it
-   core::system::ProcessResult result;
+   ::core::system::ProcessResult result;
    error = runCommand(shell_utils::sendStdErrToStdOut(cmd),
                       options,
                       &result);
@@ -612,7 +612,7 @@ void editFilePostback(const std::string& file,
    // read file contents
    FilePath filePath(file);
    std::string fileContents;
-   Error error = core::readStringFromFile(filePath, &fileContents);
+   Error error = ::core::readStringFromFile(filePath, &fileContents);
    if (error)
    {
       LOG_ERROR(error);
@@ -645,7 +645,7 @@ void editFilePostback(const std::string& file,
    }
 
    // write the content back to the file
-   error = core::writeStringToFile(filePath, editedFileContents);
+   error = ::core::writeStringToFile(filePath, editedFileContents);
    if (error)
    {
       LOG_ERROR(error);
@@ -665,36 +665,36 @@ Error startShellDialog(const json::JsonRpcRequest& request,
    using namespace session::console_process;
 
    // configure environment for shell
-   core::system::Options shellEnv;
-   core::system::environment(&shellEnv);
+   ::core::system::Options shellEnv;
+   ::core::system::environment(&shellEnv);
 
    // set dumb terminal
-   core::system::setenv(&shellEnv, "TERM", "dumb");
+   ::core::system::setenv(&shellEnv, "TERM", "dumb");
 
    // set prompt
    std::string path = module_context::createAliasedPath(
                                  module_context::safeCurrentPath());
    std::string prompt = (path.length() > 30) ? "\\W$ " : "\\w$ ";
-   core::system::setenv(&shellEnv, "PS1", prompt);
+   ::core::system::setenv(&shellEnv, "PS1", prompt);
 
    // disable screen oriented facillites
-   core::system::unsetenv(&shellEnv, "EDITOR");
-   core::system::unsetenv(&shellEnv, "VISUAL");
-   core::system::setenv(&shellEnv, "PAGER", "/bin/cat");
+   ::core::system::unsetenv(&shellEnv, "EDITOR");
+   ::core::system::unsetenv(&shellEnv, "VISUAL");
+   ::core::system::setenv(&shellEnv, "PAGER", "/bin/cat");
 
-   core::system::setenv(&shellEnv, "GIT_EDITOR", s_editFileCommand);
-   core::system::setenv(&shellEnv, "SVN_EDITOR", s_editFileCommand);
+   ::core::system::setenv(&shellEnv, "GIT_EDITOR", s_editFileCommand);
+   ::core::system::setenv(&shellEnv, "SVN_EDITOR", s_editFileCommand);
 
    // ammend shell paths as appropriate
    ammendShellPaths(&shellEnv);
 
    // set options
-   core::system::ProcessOptions options;
+   ::core::system::ProcessOptions options;
    options.workingDir = module_context::shellWorkingDirectory();
    options.environment = shellEnv;
 
    // configure bash command
-   core::shell_utils::ShellCommand bashCommand("/bin/bash");
+   ::core::shell_utils::ShellCommand bashCommand("/bin/bash");
    bashCommand << "--norc";
 
    // run process

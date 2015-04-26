@@ -71,17 +71,17 @@ struct PdfLatexOptions
    std::string versionInfo;
 };
 
-core::Error texToPdf(const core::FilePath& texProgramPath,
-                     const core::FilePath& texFilePath,
+core::Error texToPdf(const ::core::FilePath& texProgramPath,
+                     const ::core::FilePath& texFilePath,
                      const tex::pdflatex::PdfLatexOptions& options,
-                     core::system::ProcessResult* pResult);
+                     ::core::system::ProcessResult* pResult);
 
 bool isInstalled();
 
 core::json::Array supportedTypes();
 
-bool latexProgramForFile(const core::tex::TexMagicComments& magicComments,
-                         core::FilePath* pTexProgramPath,
+bool latexProgramForFile(const ::core::tex::TexMagicComments& magicComments,
+                         ::core::FilePath* pTexProgramPath,
                          std::string* pUserErrMsg);
 
 } // namespace pdflatex

@@ -45,7 +45,7 @@ class SourceIndex : boost::noncopyable
 {   
 public:
    static bool isSourceFile(const std::string& filename);
-   static bool isSourceFile(const core::FilePath& filePath);
+   static bool isSourceFile(const ::core::FilePath& filePath);
 
 public:
    explicit SourceIndex(

@@ -32,13 +32,13 @@ AsyncRProcess::AsyncRProcess():
 }
 
 void AsyncRProcess::start(const char* rCommand, 
-                          const core::FilePath& workingDir, 
+                          const ::core::FilePath& workingDir, 
                           AsyncRProcessOptions rOptions,
-                          std::vector<core::FilePath> rSourceFiles)
+                          std::vector< ::core::FilePath> rSourceFiles)
 {
    // R binary
-   core::FilePath rProgramPath;
-   core::Error error = module_context::rScriptPath(&rProgramPath);
+   ::core::FilePath rProgramPath;
+   ::core::Error error = module_context::rScriptPath(&rProgramPath);
    if (error)
    {
       LOG_ERROR(error);
@@ -50,15 +50,15 @@ void AsyncRProcess::start(const char* rCommand,
    if (rOptions & R_PROCESS_AUGMENTED)
    {
       // R files we wish to source to provide functionality to async process
-      const core::FilePath modulesPath =
+      const ::core::FilePath modulesPath =
             session::options().modulesRSourcePath();
       
-      const core::FilePath rPath =
+      const ::core::FilePath rPath =
             session::options().coreRSourcePath();
       
-      const core::FilePath rTools =  rPath.childPath("Tools.R");
-      const core::FilePath sessionCodeTools = modulesPath.childPath("SessionCodeTools.R");
-      const core::FilePath sessionRCompletions = modulesPath.childPath("SessionRCompletions.R");
+      const ::core::FilePath rTools =  rPath.childPath("Tools.R");
+      const ::core::FilePath sessionCodeTools = modulesPath.childPath("SessionCodeTools.R");
+      const ::core::FilePath sessionRCompletions = modulesPath.childPath("SessionRCompletions.R");
       
       rSourceFiles.push_back(rTools);
       rSourceFiles.push_back(sessionCodeTools);
@@ -96,7 +96,7 @@ void AsyncRProcess::start(const char* rCommand,
    if (rSourceFiles.size())
    {
       // add in the r source files requested
-      for (std::vector<core::FilePath>::const_iterator it = rSourceFiles.begin();
+      for (std::vector< ::core::FilePath>::const_iterator it = rSourceFiles.begin();
            it != rSourceFiles.end();
            ++it)
       {
@@ -116,7 +116,7 @@ void AsyncRProcess::start(const char* rCommand,
    args.push_back(command.str());
 
    // options
-   core::system::ProcessOptions options;
+   ::core::system::ProcessOptions options;
    options.terminateChildren = true;
    if (rOptions & R_PROCESS_REDIRECTSTDERR)
       options.redirectStdErrToStdOut = true;
@@ -129,16 +129,16 @@ void AsyncRProcess::start(const char* rCommand,
 
    // forward R_LIBS so the child process has access to the same libraries
    // we do
-   core::system::Options childEnv;
-   core::system::environment(&childEnv);
+   ::core::system::Options childEnv;
+   ::core::system::environment(&childEnv);
    std::string libPaths = module_context::libPathsString();
    if (!libPaths.empty())
    {
-      core::system::setenv(&childEnv, "R_LIBS", libPaths);
+      ::core::system::setenv(&childEnv, "R_LIBS", libPaths);
       options.environment = childEnv;
    }
 
-   core::system::ProcessCallbacks cb;
+   ::core::system::ProcessCallbacks cb;
    using namespace module_context;
    cb.onContinue = boost::bind(&AsyncRProcess::onContinue,
                                AsyncRProcess::shared_from_this());

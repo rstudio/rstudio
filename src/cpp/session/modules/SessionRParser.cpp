@@ -55,8 +55,8 @@ void LintItems::dump()
 }
 
 using namespace core;
-using namespace core::r_util;
-using namespace core::r_util::token_utils;
+using namespace ::core::r_util;
+using namespace ::core::r_util::token_utils;
 using namespace token_cursor;
 
 namespace {
@@ -1072,10 +1072,10 @@ public:
       // of indices which we make multiple passes through on each match course,
       // and trim from those indices as we form matches.
       std::vector<std::size_t> formalIndices =
-            core::algorithm::seq(info.formals().size());
+            ::core::algorithm::seq(info.formals().size());
       
       std::vector<std::string> matchedArgNames;
-      std::vector<std::string> userSuppliedArgNames = core::algorithm::map_keys(namedArguments);
+      std::vector<std::string> userSuppliedArgNames = ::core::algorithm::map_keys(namedArguments);
       std::map<std::string, boost::optional<std::string> > matchedCall;
       const std::vector<std::string>& formalNames = info.getFormalNames();
       DEBUG_BLOCK("Formal names")
@@ -1104,8 +1104,8 @@ public:
       }
       
       // Trim
-      formalIndices = core::algorithm::set_difference(formalIndices, matchedIndices);
-      userSuppliedArgNames = core::algorithm::set_difference(userSuppliedArgNames, matchedArgNames);
+      formalIndices = ::core::algorithm::set_difference(formalIndices, matchedIndices);
+      userSuppliedArgNames = ::core::algorithm::set_difference(userSuppliedArgNames, matchedArgNames);
       
       matchedIndices.clear();
       matchedArgNames.clear();
@@ -1132,8 +1132,8 @@ public:
       }
       
       // Trim
-      formalIndices = core::algorithm::set_difference(formalIndices, matchedIndices);
-      userSuppliedArgNames = core::algorithm::set_difference(userSuppliedArgNames, matchedArgNames);
+      formalIndices = ::core::algorithm::set_difference(formalIndices, matchedIndices);
+      userSuppliedArgNames = ::core::algorithm::set_difference(userSuppliedArgNames, matchedArgNames);
       
       matchedIndices.clear();
       matchedArgNames.clear();
@@ -1156,7 +1156,7 @@ public:
       }
       
       // Trim
-      formalIndices = core::algorithm::set_difference(formalIndices, matchedIndices);
+      formalIndices = ::core::algorithm::set_difference(formalIndices, matchedIndices);
       matchedIndices.clear();
       
       /*
@@ -1177,7 +1177,7 @@ public:
       }
       
       // Trim
-      formalIndices = core::algorithm::set_difference(formalIndices, matchedIndices);
+      formalIndices = ::core::algorithm::set_difference(formalIndices, matchedIndices);
       matchedIndices.clear();
       
       // Now, we examine the end state and see if we successfully matched
@@ -1186,7 +1186,7 @@ public:
       call.unnamedArguments_ = unnamedArguments;
       call.matchedCall_ = matchedCall;
       call.prefixMatchedPairs_ = prefixMatchedPairs;
-      call.unmatchedArgNames_ = core::algorithm::set_difference(
+      call.unmatchedArgNames_ = ::core::algorithm::set_difference(
                userSuppliedArgNames, matchedArgNames);
       call.info_ = info;
       
@@ -1506,7 +1506,7 @@ void validateFunctionCall(RTokenCursor cursor,
    const std::vector<std::string>& formalNames = 
          matched.functionInfo().getFormalNames();
    
-   if (formalNames.empty() || core::algorithm::contains(formalNames, "..."))
+   if (formalNames.empty() || ::core::algorithm::contains(formalNames, "..."))
       return;
    
    // Warn on partial matches.
@@ -1548,7 +1548,7 @@ void validateFunctionCall(RTokenCursor cursor,
    // Consider '...' as a zero-sized argument for purposes of counting
    // the number of arguments the user is passing down.
    numUserArguments -=
-         core::algorithm::contains(matched.unnamedArguments(), "...");
+         ::core::algorithm::contains(matched.unnamedArguments(), "...");
    
    std::size_t numFormals = matched.functionInfo().formals().size();
    if (numUserArguments > numFormals)
@@ -1575,7 +1575,7 @@ void validateFunctionCall(RTokenCursor cursor,
    // Error on missing arguments to call. If the user is passing down '...',
    // we'll avoid this check and assume it's being inheritted from the parent
    // function.
-   if (!core::algorithm::contains(matched.unnamedArguments(), "..."))
+   if (!::core::algorithm::contains(matched.unnamedArguments(), "..."))
    {
       for (std::size_t i = 0, n = formalNames.size(); i < n; ++i)
       {

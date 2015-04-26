@@ -38,9 +38,9 @@ FilePath s_snippetsMonitoredDir;
 
 void notifySnippetsChanged()
 {
-   Error error = core::writeStringToFile(
+   Error error = ::core::writeStringToFile(
           s_snippetsMonitoredDir.childPath("changed"),
-          core::system::generateUuid());
+          ::core::system::generateUuid());
    if (error)
       LOG_ERROR(error);
 }

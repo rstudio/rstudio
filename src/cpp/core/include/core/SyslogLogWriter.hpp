@@ -26,10 +26,10 @@ class SyslogLogWriter : public LogWriter
 public:
     SyslogLogWriter(const std::string& programIdentity, int logLevel);
     virtual ~SyslogLogWriter();
-    virtual void log(core::system::LogLevel level,
+    virtual void log(::core::system::LogLevel level,
                      const std::string& message);
     virtual void log(const std::string& programIdentity,
-                     core::system::LogLevel level,
+                     ::core::system::LogLevel level,
                      const std::string& message);
 
     virtual void setLogToStderr(bool logToStderr)

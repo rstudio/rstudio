@@ -38,7 +38,7 @@ class RSourceIndexes : boost::noncopyable
 private:
    
    typedef session::source_database::SourceDocument SourceDocument;
-   typedef core::r_util::RSourceIndex RSourceIndex;
+   typedef ::core::r_util::RSourceIndex RSourceIndex;
    
 public:
    
@@ -87,13 +87,13 @@ private:
 
 RSourceIndexes& rSourceIndex();
 
-boost::shared_ptr<core::r_util::RSourceIndex> getIndexedProjectFile(
-      const core::FilePath& filePath);
+boost::shared_ptr< ::core::r_util::RSourceIndex> getIndexedProjectFile(
+      const ::core::FilePath& filePath);
 
 void searchSource(const std::string& term,
                   std::size_t maxResults,
                   bool prefixOnly,
-                  std::vector<core::r_util::RSourceItem>* pItems,
+                  std::vector< ::core::r_util::RSourceItem>* pItems,
                   bool* pMoreAvailable);
 
 void addAllProjectSymbols(std::set<std::string>* pSymbols);

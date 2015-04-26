@@ -66,14 +66,14 @@ void addToSystemPath(const FilePath& path, bool prepend)
 
 int exitFailure(const Error& error, const ErrorLocation& loggedFromLocation)
 {
-   core::log::logError(error, loggedFromLocation);
+   ::core::log::logError(error, loggedFromLocation);
    return EXIT_FAILURE;
 }
 
 int exitFailure(const std::string& errMsg,
                 const ErrorLocation& loggedFromLocation)
 {
-   core::log::logErrorMessage(errMsg, loggedFromLocation);
+   ::core::log::logErrorMessage(errMsg, loggedFromLocation);
    return EXIT_FAILURE;
 }
    
@@ -84,8 +84,8 @@ int exitSuccess()
 
 std::string generateShortenedUuid()
 {
-   std::string uuid = core::system::generateUuid(false);
-   return core::hash::crc32HexHash(uuid);
+   std::string uuid = ::core::system::generateUuid(false);
+   return ::core::hash::crc32HexHash(uuid);
 }
 
 

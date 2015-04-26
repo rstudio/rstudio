@@ -111,14 +111,14 @@ struct ProcessOptions
    // (respectively) should be redirected to. Note that this ONLY works
    // if you use runCommand, not runProgram, as we use the shell to do
    // the redirection.
-   core::FilePath stdOutFile;
-   core::FilePath stdErrFile;
+   ::core::FilePath stdOutFile;
+   ::core::FilePath stdErrFile;
 
    // function to run within the child process immediately after the fork
    // NOTE: only supported on posix as there is no fork on Win32
    boost::function<void()> onAfterFork;
 
-   core::FilePath workingDir;
+   ::core::FilePath workingDir;
 };
 
 // Struct for returning output and exit status from a process
@@ -246,7 +246,7 @@ ProcessCallbacks createProcessCallbacks(
                const std::string& input,
                const boost::function<void(const ProcessResult&)>& onCompleted,
                const boost::function<void(const Error&)>& onError=
-                                  boost::function<void(const core::Error&)>());
+                                  boost::function<void(const ::core::Error&)>());
 
 // Process supervisor
 class ProcessSupervisor : boost::noncopyable

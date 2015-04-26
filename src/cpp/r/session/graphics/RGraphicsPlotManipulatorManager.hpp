@@ -51,10 +51,10 @@ public:
    virtual ~PlotManipulatorManager() {}
 
 public:
-   core::Error initialize(const UnitConversionFunctions& convert);
+   ::core::Error initialize(const UnitConversionFunctions& convert);
 
    boost::signal<void ()>& onShowManipulator() ;
-   void setPlotManipulatorValues(const core::json::Object& values);
+   void setPlotManipulatorValues(const ::core::json::Object& values);
    void manipulatorPlotClicked(int x, int y);
    
    void executeAndAttachManipulator(SEXP manipulatorSEXP);

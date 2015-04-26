@@ -30,9 +30,9 @@ namespace {
 
 } // anonymous namespace
 
-void handleHelpHomeRequest(const core::http::Request& request,
+void handleHelpHomeRequest(const ::core::http::Request& request,
                                 const std::string& jsCallbacks,
-                                core::http::Response* pResponse)
+                                ::core::http::Response* pResponse)
 {
    // get the resource path
    FilePath helpResPath = options().rResourcesPath().complete("help_resources");

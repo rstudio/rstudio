@@ -32,8 +32,8 @@ namespace server {
 namespace meta {
    
 void handleMetaRequest(const std::string& username,
-                       const core::http::Request& request,
-                       core::http::Response* pResponse);
+                       const ::core::http::Request& request,
+                       ::core::http::Response* pResponse);
 
 } // namespace meta
 } // namespace server

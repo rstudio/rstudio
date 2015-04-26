@@ -58,17 +58,17 @@ Error FilesListingMonitor::start(const FilePath& filePath, json::Array* pJsonFil
    std::transform(files.begin(),
                   files.end(),
                   std::back_inserter(prevFiles),
-                  core::toFileInfo);
+                  ::core::toFileInfo);
 
    // kickoff new monitor
-   core::system::file_monitor::Callbacks cb;
+   ::core::system::file_monitor::Callbacks cb;
    cb.onRegistered = boost::bind(&FilesListingMonitor::onRegistered,
                                     this, _1, filePath, prevFiles, _2);
-   cb.onRegistrationError =  boost::bind(core::log::logError, _1, ERROR_LOCATION);
+   cb.onRegistrationError =  boost::bind(::core::log::logError, _1, ERROR_LOCATION);
    cb.onFilesChanged = boost::bind(module_context::enqueFileChangedEvents, filePath, _1);
-   cb.onMonitoringError = boost::bind(core::log::logError, _1, ERROR_LOCATION);
+   cb.onMonitoringError = boost::bind(::core::log::logError, _1, ERROR_LOCATION);
    cb.onUnregistered = boost::bind(&FilesListingMonitor::onUnregistered, this, _1);
-   core::system::file_monitor::registerMonitor(filePath,
+   ::core::system::file_monitor::registerMonitor(filePath,
                                                false,
                                                module_context::fileListingFilter,
                                                cb);
@@ -82,8 +82,8 @@ void FilesListingMonitor::stop()
    currentPath_ = FilePath();
    if (!currentHandle_.empty())
    {
-      core::system::file_monitor::unregisterMonitor(currentHandle_);
-      currentHandle_ = core::system::file_monitor::Handle();
+      ::core::system::file_monitor::unregisterMonitor(currentHandle_);
+      currentHandle_ = ::core::system::file_monitor::Handle();
    }
 }
 
@@ -106,11 +106,11 @@ namespace {
 //   - The above two behaviors intersect to cause a pair of add/remove events
 //     for symliniks within onRegistered (because the initial snapshot
 //     was taken with FilePath::children and the file monitor enumeration
-//     is taken using core::scanFiles). When propagated to the client this
+//     is taken using ::core::scanFiles). When propagated to the client this
 //     results in symlinked directories appearing as documents and not
 //     being traversable in the files pane
 //
-//   - We could fix this by changing the behavior of core::scanFiles and/or
+//   - We could fix this by changing the behavior of ::core::scanFiles and/or
 //     another layer in the file listing / monitoring code however we
 //     are making the fix late in the cycle and therefore want to treat
 //     only the symptom (it's not clear that this isn't the best fix anyway,
@@ -125,10 +125,10 @@ FileInfo normalizeFileScannerPath(const FileInfo& fileInfo)
 
 } // anonymous namespace
 
-void FilesListingMonitor::onRegistered(core::system::file_monitor::Handle handle,
+void FilesListingMonitor::onRegistered(::core::system::file_monitor::Handle handle,
                                        const FilePath& filePath,
                                        const std::vector<FileInfo>& prevFiles,
-                                       const tree<core::FileInfo>& files)
+                                       const tree< ::core::FileInfo>& files)
 {
    // set path and current handle
    currentPath_ = filePath;
@@ -143,8 +143,8 @@ void FilesListingMonitor::onRegistered(core::system::file_monitor::Handle handle
 
    // compare the previously returned listing with the initial scan to see if any
    // file changes occurred between listings
-   std::vector<core::system::FileChangeEvent> events;
-   core::system::collectFileChangeEvents(prevFiles.begin(),
+   std::vector< ::core::system::FileChangeEvent> events;
+   ::core::system::collectFileChangeEvents(prevFiles.begin(),
                                          prevFiles.end(),
                                          currFiles.begin(),
                                          currFiles.end(),
@@ -156,7 +156,7 @@ void FilesListingMonitor::onRegistered(core::system::file_monitor::Handle handle
       module_context::enqueFileChangedEvents(filePath, events);
 }
 
-void FilesListingMonitor::onUnregistered(core::system::file_monitor::Handle handle)
+void FilesListingMonitor::onUnregistered(::core::system::file_monitor::Handle handle)
 {
    // typically we clear our internal state explicitly when a new registration
    // comes in. however, it is possible that our monitor could be unregistered
@@ -165,7 +165,7 @@ void FilesListingMonitor::onUnregistered(core::system::file_monitor::Handle hand
    if (currentHandle_ == handle)
    {
       currentPath_ = FilePath();
-      currentHandle_ = core::system::file_monitor::Handle();
+      currentHandle_ = ::core::system::file_monitor::Handle();
    }
 }
 
@@ -175,7 +175,7 @@ Error FilesListingMonitor::listFiles(const FilePath& rootPath,
 {
    // enumerate the files
    pFiles->clear();
-   core::Error error = rootPath.children(pFiles) ;
+   ::core::Error error = rootPath.children(pFiles) ;
    if (error)
       return error;
 
@@ -184,16 +184,16 @@ Error FilesListingMonitor::listFiles(const FilePath& rootPath,
                   source_control::fileDecorationContext(rootPath);
 
    // sort the files by name
-   std::sort(pFiles->begin(), pFiles->end(), core::compareAbsolutePathNoCase);
+   std::sort(pFiles->begin(), pFiles->end(), ::core::compareAbsolutePathNoCase);
 
    // produce json listing
-   BOOST_FOREACH( core::FilePath& filePath, *pFiles)
+   BOOST_FOREACH( ::core::FilePath& filePath, *pFiles)
    {
       // files which may have been deleted after the listing or which
       // are not end-user visible
-      if (filePath.exists() && module_context::fileListingFilter(core::FileInfo(filePath)))
+      if (filePath.exists() && module_context::fileListingFilter(::core::FileInfo(filePath)))
       {
-         core::json::Object fileObject = module_context::createFileSystemItem(filePath);
+         ::core::json::Object fileObject = module_context::createFileSystemItem(filePath);
          pCtx->decorateFile(filePath, &fileObject);
          pJsonFiles->push_back(fileObject) ;
       }

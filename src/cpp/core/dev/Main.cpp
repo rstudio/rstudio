@@ -32,10 +32,10 @@ int test_main(int argc, char * argv[])
    try
    { 
       // setup log
-      initializeStderrLog("coredev", core::system::kLogLevelWarning);
+      initializeStderrLog("coredev", ::core::system::kLogLevelWarning);
 
       // ignore sigpipe
-      Error error = core::system::ignoreSignal(core::system::SigPipe);
+      Error error = ::core::system::ignoreSignal(::core::system::SigPipe);
       if (error)
          LOG_ERROR(error);
 
