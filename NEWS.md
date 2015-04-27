@@ -142,6 +142,8 @@
 * Re-map prev/next tab shortcuts to eliminate conflicts with window managers
 * Run App command for single file Shiny applications
 * Deprecated 'source.with.encoding' in favor of source(..., encoding = "...")
+* Make source code compatible with -std=c++11
+
 
 ### Server
 
