@@ -327,7 +327,8 @@
       else if (identical(filtertype, "character"))
       {
         # apply character filter: non-case-sensitive prefix
-        x <- x[grepl(filterval, x[[i]], ignore.case = TRUE), , drop = FALSE]
+        x <- x[grepl(tolower(filterval), tolower(x[[i]]), fixed = TRUE), , 
+               drop = FALSE]
       } 
       else if (identical(filtertype, "numeric"))
       {
@@ -354,7 +355,7 @@
   if (!is.null(search) && nchar(search) > 0)
   {
     x <- x[Reduce("|", lapply(x, function(column) { 
-             grepl(search, column, ignore.case = TRUE)
+             grepl(tolower(search), tolower(column), fixed = TRUE)
            })), , drop = FALSE]
   }
 
