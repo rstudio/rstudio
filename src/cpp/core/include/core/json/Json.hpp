@@ -147,10 +147,26 @@ inline void logIncompatibleTypes(const Value& value,
    }
 }
 
+namespace detail {
+
 template <typename T>
 inline json::Value toJsonValue(const T& val)
 {
    return json::Value(val);
+}
+
+template <typename T>
+inline json::Value toJsonValue(const boost::optional<T>& val)
+{
+   return val ? json::Value(*val) : json::Value();
+}
+
+} // namespace detail
+
+template <typename T>
+inline json::Value toJsonValue(const T& val)
+{
+   return detail::toJsonValue(val);
 }
 
 inline json::Value toJsonValue(const boost::optional<std::string>& val)
