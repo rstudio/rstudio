@@ -4190,10 +4190,7 @@ public class GwtAstBuilder {
       } else {
         throw new InternalCompilerException("ReferenceBinding is not a class, interface, or enum.");
       }
-      type.setJsTypeInfo(JsInteropUtil.isJsType(x), JsInteropUtil.maybeGetJsTypePrototype(x),
-          JsInteropUtil.maybeGetJsNamespace(x));
-      type.setJsExportInfo(JsInteropUtil.isClassWideJsExport(x));
-      type.setJsFunctionInfo(JsInteropUtil.isJsFunction(x));
+      JsInteropUtil.maybeSetJsInteropProperties(type, x.annotations);
       JdtUtil.setClassDispositionFromBinding(binding, type);
       typeMap.setSourceType(binding, type);
       newTypes.add(type);

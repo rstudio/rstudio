@@ -43,6 +43,18 @@ public final class JsInteropUtil {
   public static final String JSTYPEPROTOTYPE_CLASS =
       "com.google.gwt.core.client.js.impl.PrototypeOfJsType";
 
+  public static void maybeSetJsInteropProperties(JDeclaredType type, Annotation... annotations) {
+    AnnotationBinding jsType = JdtUtil.getAnnotation(annotations, JSTYPE_CLASS);
+    String jsPrototype = JdtUtil.getAnnotationParameterString(jsType, "prototype");
+    type.setJsTypeInfo(jsType != null, jsPrototype);
+
+    String namespace = maybeGetJsNamespace(annotations);
+    String exportName = maybeGetJsExportName(annotations, "");
+    type.setExportInfo(namespace, exportName);
+
+    type.setJsFunctionInfo(JdtUtil.getAnnotation(annotations, JSFUNCTION_CLASS) != null);
+  }
+
   public static void maybeSetJsInteropProperties(JMethod method, Annotation... annotations) {
     setJsInteropProperties(method, annotations);
     if (JdtUtil.getAnnotation(annotations, JSPROPERTY_CLASS) != null) {
@@ -55,18 +67,9 @@ public final class JsInteropUtil {
   }
 
   private static void setJsInteropProperties(JMember member, Annotation... annotations) {
-    String namespace = null;
-    AnnotationBinding jsNamespace = JdtUtil.getAnnotation(annotations, JSNAMESPACE_CLASS);
-    if (jsNamespace != null) {
-      namespace = JdtUtil.getAnnotationParameterString(jsNamespace, "value");
-    }
-
-    AnnotationBinding jsExport = JdtUtil.getAnnotation(annotations, JSEXPORT_CLASS);
-    if (jsExport != null) {
-      String value = JdtUtil.getAnnotationParameterString(jsExport, "value");
-      String exportName = Strings.isNullOrEmpty(value) ? computeExportName(member) : value;
-      member.setExportInfo(namespace, exportName);
-    }
+    String namespace = maybeGetJsNamespace(annotations);
+    String exportName = maybeGetJsExportName(annotations, computeExportName(member));
+    member.setExportInfo(namespace, exportName);
 
     /* Apply class wide JsInterop annotations */
 
@@ -81,7 +84,7 @@ public final class JsInteropUtil {
       member.setJsMemberName(member.getName());
     }
 
-    if (enclosingType.isClassWideExport() && !member.needsVtable() && jsExport == null) {
+    if (enclosingType.isClassWideExport() && !member.needsVtable() && exportName == null) {
       member.setExportInfo(namespace, computeExportName(member));
     }
   }
@@ -106,30 +109,22 @@ public final class JsInteropUtil {
     return member instanceof JConstructor ? "" : member.getName();
   }
 
-  public static boolean isJsType(TypeDeclaration x) {
-    return JdtUtil.getAnnotation(x.annotations, JSTYPE_CLASS) != null;
-  }
-
   public static boolean isJsPrototypeFlag(TypeDeclaration x) {
     return JdtUtil.getAnnotation(x.annotations, JSTYPEPROTOTYPE_CLASS) != null;
   }
 
-  public static boolean isClassWideJsExport(TypeDeclaration x) {
-    return JdtUtil.getAnnotation(x.annotations, JSEXPORT_CLASS) != null;
-  }
-
-  public static String maybeGetJsNamespace(TypeDeclaration x) {
-    AnnotationBinding jsNamespace = JdtUtil.getAnnotation(x.annotations, JSNAMESPACE_CLASS);
+  private static String maybeGetJsNamespace(Annotation[] annotations) {
+    AnnotationBinding jsNamespace = JdtUtil.getAnnotation(annotations, JSNAMESPACE_CLASS);
     return JdtUtil.getAnnotationParameterString(jsNamespace, "value");
   }
 
-  public static String maybeGetJsTypePrototype(TypeDeclaration x) {
-    AnnotationBinding jsType = JdtUtil.getAnnotation(x.annotations, JSTYPE_CLASS);
-    return JdtUtil.getAnnotationParameterString(jsType, "prototype");
-  }
-
-  public static boolean isJsFunction(TypeDeclaration x) {
-    return JdtUtil.getAnnotation(x.annotations, JSFUNCTION_CLASS) != null;
+  private static String maybeGetJsExportName(Annotation[] annotations, String calculatedName) {
+    AnnotationBinding jsExport = JdtUtil.getAnnotation(annotations, JSEXPORT_CLASS);
+    if (jsExport == null) {
+      return null;
+    }
+    String value = JdtUtil.getAnnotationParameterString(jsExport, "value");
+    return Strings.isNullOrEmpty(value) ? calculatedName : value;
   }
 
   private static boolean startsWithCamelCase(String string, String prefix) {

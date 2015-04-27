@@ -20,6 +20,7 @@ import com.google.gwt.dev.jjs.impl.GwtAstBuilder;
 import com.google.gwt.dev.util.StringInterner;
 import com.google.gwt.dev.util.collect.Lists;
 import com.google.gwt.thirdparty.guava.common.base.Preconditions;
+import com.google.gwt.thirdparty.guava.common.base.Strings;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -49,9 +50,9 @@ import java.util.List;
 public abstract class JDeclaredType extends JReferenceType {
 
   private String jsPrototype;
-  private boolean isClassWideExport;
   private boolean isJsType;
-  private String jsNamespace = null;
+  private String exportNamespace = null;
+  private String exportName = null;
   private boolean isJsFunction;
 
   /**
@@ -383,7 +384,7 @@ public abstract class JDeclaredType extends JReferenceType {
   }
 
   public boolean isClassWideExport() {
-    return isClassWideExport;
+    return exportName != null;
   }
 
   public boolean hasAnyExports() {
@@ -462,8 +463,8 @@ public abstract class JDeclaredType extends JReferenceType {
   public void resolve(List<JInterfaceType> resolvedInterfaces, JDeclaredType pkgInfo) {
     assert JType.replaces(resolvedInterfaces, superInterfaces);
     superInterfaces = Lists.normalize(resolvedInterfaces);
-    if (jsNamespace == null) {
-      jsNamespace = computeExportNamespace(pkgInfo);
+    if (exportNamespace == null) {
+      exportNamespace = computeExportNamespace(pkgInfo);
     }
   }
 
@@ -471,7 +472,8 @@ public abstract class JDeclaredType extends JReferenceType {
     if (enclosingType != null) {
       return enclosingType.getQualifiedExportName();
     }
-    return pkgInfo != null && pkgInfo.jsNamespace != null ? pkgInfo.jsNamespace : getPackageName();
+    return pkgInfo != null && pkgInfo.exportNamespace != null ? pkgInfo.exportNamespace
+        : getPackageName();
   }
 
   /**
@@ -487,14 +489,14 @@ public abstract class JDeclaredType extends JReferenceType {
     this.isExternal = isExternal;
   }
 
-  public void setJsTypeInfo(boolean isJsType, String jsPrototype, String jsNamespace) {
+  public void setJsTypeInfo(boolean isJsType, String jsPrototype) {
     this.isJsType = isJsType;
     this.jsPrototype = jsPrototype;
-    this.jsNamespace = jsNamespace;
   }
 
-  public void setJsExportInfo(boolean isClassWideJsExport) {
-    this.isClassWideExport = isClassWideJsExport;
+  public void setExportInfo(String exportNamespace, String exportName) {
+    this.exportNamespace = exportNamespace;
+    this.exportName = exportName;
   }
 
   public void setJsFunctionInfo(boolean isJsFunction) {
@@ -609,7 +611,8 @@ public abstract class JDeclaredType extends JReferenceType {
   }
 
   public String getQualifiedExportName() {
-    return jsNamespace.isEmpty() ? getSimpleName() : jsNamespace + "." + getSimpleName();
+    String simpleExportName = Strings.isNullOrEmpty(exportName) ? getSimpleName() : exportName;
+    return exportNamespace.isEmpty() ? simpleExportName : exportNamespace + "." + simpleExportName;
   }
 
   public NestedClassDisposition getClassDisposition() {

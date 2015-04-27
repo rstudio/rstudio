@@ -281,6 +281,14 @@ public class JsExportTest extends GWTTestCase {
     return new $global.MyClassWithEmptyNamespace();
   }-*/;
 
+  public static void testInheritClassNamespace_withName() {
+    assertEquals(42, getBooBAR());
+  }
+
+  private static native int getBooBAR() /*-{
+    return $global.foo.boo.BAR;
+  }-*/;
+
   public static void testInheritClassNamespace_noExport() {
     assertEquals(99, getBAZ());
   }
@@ -290,6 +298,19 @@ public class JsExportTest extends GWTTestCase {
   }-*/;
 
   public static void testInheritClassNamespace_nested() {
+    assertEquals(99, getLOO());
+    assertNotNull(createNestedExportedClassInExportedClass());
+  }
+
+  private static native int getLOO() /*-{
+    return $global.woo.Bloo.Inner.LOO;
+  }-*/;
+
+  private static native Object createNestedExportedClassInExportedClass() /*-{
+    return new $global.woo.Bloo.Inner();
+  }-*/;
+
+  public static void testInheritClassNamespace_nestedNoExport() {
     assertEquals(999, getWOOZ());
     assertNotNull(createNestedExportedClassWithNamespace());
   }
