@@ -24,6 +24,7 @@
 #include <boost/asio/placeholders.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 
+#include <core/Macros.hpp>
 #include <core/BoostThread.hpp>
 #include <core/FilePath.hpp>
 #include <core/Error.hpp>
@@ -109,7 +110,7 @@ public:
          using boost::bind;
          boost::thread listenerThread(bind(&boost::asio::io_service::run,
                                            &(acceptorService_.ioService())));
-         listenerThread_ = listenerThread.move();
+         listenerThread_ = MOVE_THREAD(listenerThread);
 
          // set started flag
          started_ = true;

@@ -25,7 +25,7 @@ namespace graphics {
 class RGraphicsErrorCategory : public boost::system::error_category
 {
 public:
-   virtual const char * name() const;
+   virtual const char * name() const BOOST_NOEXCEPT;
    virtual std::string message( int ev ) const;
 };
 
@@ -35,7 +35,7 @@ const boost::system::error_category& rGraphicsCategory()
    return rGraphicsErrorCategoryConst ;
 }
 
-const char * RGraphicsErrorCategory::name() const
+const char * RGraphicsErrorCategory::name() const BOOST_NOEXCEPT
 {
    return "r-graphics" ;
 }

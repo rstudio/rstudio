@@ -26,8 +26,6 @@
 #include <core/Error.hpp>
 #include <core/Log.hpp>
 
-
-
 #define LOCK_MUTEX(m) try { \
    boost::lock_guard<boost::mutex> lock(m); 
 

@@ -25,6 +25,7 @@
 #include <core/BoostErrors.hpp>
 #include <core/Thread.hpp>
 #include <core/system/System.hpp>
+#include <core/Macros.hpp>
 
 
 #include <core/http/Request.hpp>
@@ -75,7 +76,7 @@ Error ClientEventService::start(const std::string& clientId)
    {
       using boost::bind;
       boost::thread serviceThread(bind(&ClientEventService::run, this));       
-      serviceThread_ = serviceThread.move();
+      serviceThread_ = MOVE_THREAD(serviceThread);
       
       return Success();
    }
