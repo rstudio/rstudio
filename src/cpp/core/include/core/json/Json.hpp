@@ -24,6 +24,7 @@
 #include <core/Log.hpp>
 
 #include <boost/type_traits/is_same.hpp>
+#include <boost/optional.hpp>
 
 #include <core/json/spirit/json_spirit_value.h>
 
@@ -146,10 +147,15 @@ inline void logIncompatibleTypes(const Value& value,
    }
 }
 
-template<typename T>
-json::Value toJsonValue(const T& val)
+template <typename T>
+inline json::Value toJsonValue(const T& val)
 {
    return json::Value(val);
+}
+
+inline json::Value toJsonValue(const boost::optional<std::string>& val)
+{
+   return val ? json::Value(*val) : json::Value();
 }
 
 json::Value toJsonString(const std::string& val);
