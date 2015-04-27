@@ -443,6 +443,15 @@ public class Source implements InsertSourceHandler,
          }
       });
       
+      uiPrefs_.matchLastStatementIndentation().bind(new CommandWithArg<Boolean>()
+      {
+         @Override
+         public void execute(Boolean arg)
+         {
+            AceEditorNative.setMatchLastStatementIndentation(arg);
+         }
+      });
+      
       // adjust shortcuts when vim mode changes
       uiPrefs_.useVimMode().bind(new CommandWithArg<Boolean>()
       {

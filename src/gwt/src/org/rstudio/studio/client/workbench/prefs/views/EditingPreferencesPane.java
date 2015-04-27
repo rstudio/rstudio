@@ -55,6 +55,7 @@ public class EditingPreferencesPane extends PreferencesPane
       editingPanel.add(checkboxPref("Insert matching parens/quotes", prefs_.insertMatching()));
       editingPanel.add(checkboxPref("Auto-indent code after paste", prefs_.reindentOnPaste()));
       editingPanel.add(checkboxPref("Vertically align arguments in auto-indent", prefs_.verticallyAlignArgumentIndent()));
+      editingPanel.add(checkboxPref("Match last statement's indentation", prefs_.matchLastStatementIndentation()));
       editingPanel.add(checkboxPref("Soft-wrap R source files", prefs_.softWrapRFiles()));
       editingPanel.add(checkboxPref("Ensure that source files end with newline", prefs_.autoAppendNewline()));
       editingPanel.add(checkboxPref("Strip trailing horizontal whitespace when saving", prefs_.stripTrailingWhitespace()));

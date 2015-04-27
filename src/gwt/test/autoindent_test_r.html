@@ -509,11 +509,14 @@ var test = document.getElementById("runme");
 var container = document.getElementById("testcontainer");
 var passed = 0, failed = 0;
 var states = [ "", "vertical-args" ];
+
+require('mode/r_code_model').setMatchLastStatementIndentation(true);
+
 for (var i = 0; i < states.length; i++) 
 {
    // Set up the state to be tested
    require('mode/r_code_model').setVerticallyAlignFunctionArgs(
-      states[i] === "vertical-args");
+       states[i] === "vertical-args");
 
    // Clone the tests for the new state
    var testnode = container.cloneNode(true);
