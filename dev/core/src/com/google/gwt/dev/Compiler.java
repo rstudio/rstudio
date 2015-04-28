@@ -25,7 +25,6 @@ import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.cfg.ModuleDefLoader;
 import com.google.gwt.dev.javac.UnitCache;
 import com.google.gwt.dev.javac.UnitCacheSingleton;
-import com.google.gwt.dev.jjs.JsOutputOption;
 import com.google.gwt.dev.jjs.PermutationResult;
 import com.google.gwt.dev.js.JsNamespaceOption;
 import com.google.gwt.dev.shell.CheckForUpdates;
@@ -187,11 +186,6 @@ public class Compiler {
         options.setClusterSimilarFunctions(false);
         options.setOptimizationLevel(OptionOptimize.OPTIMIZE_LEVEL_DRAFT);
         options.setRunAsyncEnabled(false);
-
-        // Only Pretty and Detailed namers are currently supported in per-file compiles.
-        if (options.getOutput() == JsOutputOption.OBFUSCATED) {
-          options.setOutput(JsOutputOption.PRETTY);
-        }
 
         // Disable options that disrupt reference consistency across multiple compiles.
         // TODO(stalcup): preserve Namespace state in MinimalRebuildCache across compiles.

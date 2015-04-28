@@ -147,7 +147,7 @@ public class JsNamerTest extends TestCase {
       JsProgram jsProgram = parseJs(
           "function " + functionName + "() { return 42; }");
       jsProgram.getScope().findExistingName(functionName).setObfuscatable(false);
-      rename(jsProgram, JsOutputOption.PRETTY, true);
+      rename(jsProgram, JsOutputOption.OBFUSCATED, true);
       fail("Naming an unobfuscatable identifier containing the reserved suffix should have "
           + "thrown an exception in JsIncrementalNamer.");
     } catch (IllegalNameException e) {
@@ -174,13 +174,17 @@ public class JsNamerTest extends TestCase {
     switch (outputOption) {
       case PRETTY:
         if (persistent) {
-          JsIncrementalNamer.exec(program, config, jsIncrementalNamerState, null);
+          JsIncrementalNamer.exec(program, config, jsIncrementalNamerState, null, false);
         } else {
           JsPrettyNamer.exec(program, config);
         }
         break;
       case OBFUSCATED:
-        JsObfuscateNamer.exec(program, config);
+        if (persistent) {
+          JsIncrementalNamer.exec(program, config, jsIncrementalNamerState, null, true);
+        } else {
+          JsObfuscateNamer.exec(program, config);
+        }
         break;
       case DETAILED:
         JsVerboseNamer.exec(program, config);

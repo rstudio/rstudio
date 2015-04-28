@@ -177,6 +177,10 @@ public class SuperDevListener implements CodeServerListener {
       args.add("-XmethodNameDisplayMode");
       args.add(options.getMethodNameDisplayMode().name());
     }
+
+    args.add("-style");
+    args.add(options.getOutput().name());
+
     if (options.getProperties().size() > 0) {
       args.addAll(makeSetPropertyArgs(options.getProperties()));
     }

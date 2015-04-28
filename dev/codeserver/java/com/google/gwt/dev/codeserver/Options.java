@@ -19,11 +19,13 @@ package com.google.gwt.dev.codeserver;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.dev.ArgProcessorBase;
 import com.google.gwt.dev.cfg.ModuleDef;
+import com.google.gwt.dev.jjs.JsOutputOption;
 import com.google.gwt.dev.util.arg.ArgHandlerClosureFormattedOutput;
 import com.google.gwt.dev.util.arg.ArgHandlerIncrementalCompile;
 import com.google.gwt.dev.util.arg.ArgHandlerJsInteropMode;
 import com.google.gwt.dev.util.arg.ArgHandlerLogLevel;
 import com.google.gwt.dev.util.arg.ArgHandlerMethodNameDisplayMode;
+import com.google.gwt.dev.util.arg.ArgHandlerScriptStyle;
 import com.google.gwt.dev.util.arg.ArgHandlerSetProperties;
 import com.google.gwt.dev.util.arg.ArgHandlerSourceLevel;
 import com.google.gwt.dev.util.arg.OptionClosureFormattedOutput;
@@ -31,6 +33,7 @@ import com.google.gwt.dev.util.arg.OptionIncrementalCompile;
 import com.google.gwt.dev.util.arg.OptionJsInteropMode;
 import com.google.gwt.dev.util.arg.OptionLogLevel;
 import com.google.gwt.dev.util.arg.OptionMethodNameDisplayMode;
+import com.google.gwt.dev.util.arg.OptionScriptStyle;
 import com.google.gwt.dev.util.arg.OptionSetProperties;
 import com.google.gwt.dev.util.arg.OptionSourceLevel;
 import com.google.gwt.dev.util.arg.SourceLevel;
@@ -88,6 +91,7 @@ public class Options {
   private OptionMethodNameDisplayMode.Mode methodNameDisplayMode =
       OptionMethodNameDisplayMode.Mode.NONE;
   private boolean closureFormattedOutput = false;
+  private JsOutputOption output = JsOutputOption.OBFUSCATED;
 
   private final ListMultimap<String, String> properties = LinkedListMultimap.create();
 
@@ -308,6 +312,10 @@ public class Options {
     return jsInteropMode;
   }
 
+  JsOutputOption getOutput() {
+    return output;
+  }
+
   ListMultimap<String, String> getProperties() {
     return properties;
   }
@@ -331,6 +339,17 @@ public class Options {
       registerHandler(new StrictResourcesFlag());
       registerHandler(new WorkDirFlag());
       registerHandler(new LauncherDir());
+      registerHandler(new ArgHandlerScriptStyle(new OptionScriptStyle() {
+        @Override
+        public JsOutputOption getOutput() {
+          return Options.this.output;
+        }
+
+        @Override
+        public void setOutput(JsOutputOption output) {
+          Options.this.output = output;
+        }
+      }));
       registerHandler(new ArgHandlerSetProperties(new OptionSetProperties() {
 
           @Override

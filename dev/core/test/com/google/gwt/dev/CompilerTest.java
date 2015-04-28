@@ -947,7 +947,7 @@ public class CompilerTest extends ArgProcessorTestBase {
     compilerOptions.setJsInteropMode(OptionJsInteropMode.Mode.JS);
     compileToJs(compilerOptions, Files.createTempDir(), "com.foo.SimpleModule",
         Lists.newArrayList(simpleModuleResource, gwtCreateEntryPointResource),
-        new MinimalRebuildCache(), emptySet, JsOutputOption.PRETTY);
+        new MinimalRebuildCache(), emptySet, JsOutputOption.OBFUSCATED);
   }
 
   public void testJsInteropNameCollision() throws Exception {
@@ -959,13 +959,13 @@ public class CompilerTest extends ArgProcessorTestBase {
     // Simple compile with one dialog.alert() export succeeds.
     compileToJs(compilerOptions, applicationDir, "com.foo.SimpleModule", Lists.newArrayList(
         simpleModuleResource, dialogEntryPointResource, simpleDialogResourceWithExport,
-        complexDialogResourceSansExport), minimalRebuildCache, emptySet, JsOutputOption.PRETTY);
+        complexDialogResourceSansExport), minimalRebuildCache, emptySet, JsOutputOption.OBFUSCATED);
 
     try {
       // Exporting a second dialog.alert() fails with an exported name collision.
       compileToJs(compilerOptions, applicationDir, "com.foo.SimpleModule",
           Lists.<MockResource> newArrayList(complexDialogResourceWithExport), minimalRebuildCache,
-          emptySet, JsOutputOption.PRETTY);
+          emptySet, JsOutputOption.OBFUSCATED);
       fail("Compile should have failed");
     } catch (UnableToCompleteException e) {
       // success
@@ -975,14 +975,14 @@ public class CompilerTest extends ArgProcessorTestBase {
     compileToJs(compilerOptions, applicationDir, "com.foo.SimpleModule",
         Lists.<MockResource> newArrayList(complexDialogResourceSansExport), minimalRebuildCache,
         stringSet("com.foo.SimpleDialog", "com.foo.ComplexDialog", "com.foo.TestEntryPoint"),
-        JsOutputOption.PRETTY);
+        JsOutputOption.OBFUSCATED);
   }
 
   public void testGwtCreateJsoRebindResult() throws Exception {
     try {
       compileToJs(Files.createTempDir(), "com.foo.SimpleModule",
           Lists.newArrayList(simpleModuleResource, brokenGwtCreateEntryPointResource),
-          new MinimalRebuildCache(), emptySet, JsOutputOption.PRETTY);
+          new MinimalRebuildCache(), emptySet, JsOutputOption.OBFUSCATED);
       fail("Compile should have failed");
     } catch (UnableToCompleteException e) {
       // success
@@ -1011,13 +1011,13 @@ public class CompilerTest extends ArgProcessorTestBase {
 
   public void testIncrementalRecompile_noop() throws UnableToCompleteException, IOException,
       InterruptedException {
-    checkIncrementalRecompile_noop(JsOutputOption.PRETTY);
+    checkIncrementalRecompile_noop(JsOutputOption.OBFUSCATED);
     checkIncrementalRecompile_noop(JsOutputOption.DETAILED);
   }
 
   public void testIncrementalRecompile_dateStampChange() throws UnableToCompleteException,
       IOException, InterruptedException {
-    checkIncrementalRecompile_dateStampChange(JsOutputOption.PRETTY);
+    checkIncrementalRecompile_dateStampChange(JsOutputOption.OBFUSCATED);
     checkIncrementalRecompile_dateStampChange(JsOutputOption.DETAILED);
   }
 
@@ -1029,14 +1029,14 @@ public class CompilerTest extends ArgProcessorTestBase {
     // Perform a first compile.
     compileToJs(relinkApplicationDir, "com.foo.SimpleModule",
         Lists.newArrayList(simpleModuleResource, emptyEntryPointResource),
-        relinkMinimalRebuildCache, null, JsOutputOption.PRETTY);
+        relinkMinimalRebuildCache, null, JsOutputOption.OBFUSCATED);
     // On first compile nothing is explicitly stale, only implicitly stale.
     assertEquals(0, relinkMinimalRebuildCache.getStaleTypeNames().size());
 
     // Recompile with a deep change that invalidates the preamble.
     relinkMinimalRebuildCache.markSourceFileStale("java/lang/Object.java");
     compileToJs(relinkApplicationDir, "com.foo.SimpleModule", Lists.<MockResource> newArrayList(),
-        relinkMinimalRebuildCache, null, JsOutputOption.PRETTY);
+        relinkMinimalRebuildCache, null, JsOutputOption.OBFUSCATED);
     // Show that preamble invalidation marks everything stale.
     assertTrue(relinkMinimalRebuildCache.getProcessedStaleTypeNames().size() > 100);
 
@@ -1044,7 +1044,7 @@ public class CompilerTest extends ArgProcessorTestBase {
     // whole world.
     compileToJs(relinkApplicationDir, "com.foo.SimpleModule",
         Lists.<MockResource> newArrayList(emptyEntryPointResource), relinkMinimalRebuildCache, null,
-        JsOutputOption.PRETTY);
+        JsOutputOption.OBFUSCATED);
     // Show that only this little change is stale, not the whole world.
     assertEquals(2, relinkMinimalRebuildCache.getProcessedStaleTypeNames().size());
   }
@@ -1057,14 +1057,14 @@ public class CompilerTest extends ArgProcessorTestBase {
     // Perform a first compile.
     compileToJs(relinkApplicationDir, "com.foo.SimpleModule", Lists.newArrayList(
         simpleModuleResource, overriddenMethodChainEntryPointResource, topResource, middleResource,
-        bottomResource), relinkMinimalRebuildCache, null, JsOutputOption.PRETTY);
+        bottomResource), relinkMinimalRebuildCache, null, JsOutputOption.OBFUSCATED);
     // On first compile nothing is explicitly stale, only implicitly stale.
     assertEquals(0, relinkMinimalRebuildCache.getStaleTypeNames().size());
 
     // Recompile with a change to Bottom.
     relinkMinimalRebuildCache.markSourceFileStale("com/foo/Bottom.java");
     compileToJs(relinkApplicationDir, "com.foo.SimpleModule", Lists.<MockResource> newArrayList(),
-        relinkMinimalRebuildCache, null, JsOutputOption.PRETTY);
+        relinkMinimalRebuildCache, null, JsOutputOption.OBFUSCATED);
     // Show that the third level bridge method override of Top.run() is seen to be live and thus
     // makes type com.foo.Bottom$Value live.
     assertTrue(
@@ -1077,139 +1077,146 @@ public class CompilerTest extends ArgProcessorTestBase {
     // Linked output is sorted alphabetically except that super-classes come before sub-classes. If
     // on recompile a sub-class -> super-class relationship is lost then a sub-class with an
     // alphabetically earlier name might start linking out before the super-class.
-    checkIncrementalRecompile_superClassOrder(JsOutputOption.PRETTY);
+    checkIncrementalRecompile_superClassOrder(JsOutputOption.OBFUSCATED);
     checkIncrementalRecompile_superClassOrder(JsOutputOption.DETAILED);
   }
 
   public void testIncrementalRecompile_superFromStaleInner() throws UnableToCompleteException,
       IOException,
       InterruptedException {
-    checkIncrementalRecompile_superFromStaleInner(JsOutputOption.PRETTY);
+    checkIncrementalRecompile_superFromStaleInner(JsOutputOption.OBFUSCATED);
     checkIncrementalRecompile_superFromStaleInner(JsOutputOption.DETAILED);
   }
 
   public void testIncrementalRecompile_deterministicUiBinder() throws UnableToCompleteException,
       IOException, InterruptedException {
-    checkIncrementalRecompile_deterministicUiBinder(JsOutputOption.PRETTY);
+    checkIncrementalRecompile_deterministicUiBinder(JsOutputOption.OBFUSCATED);
     checkIncrementalRecompile_deterministicUiBinder(JsOutputOption.DETAILED);
   }
 
   public void testIncrementalRecompile_uiBinderCssChange() throws UnableToCompleteException,
       IOException, InterruptedException {
-    checkIncrementalRecompile_uiBinderCssChange(JsOutputOption.PRETTY);
+    checkIncrementalRecompile_uiBinderCssChange(JsOutputOption.OBFUSCATED);
     checkIncrementalRecompile_uiBinderCssChange(JsOutputOption.DETAILED);
   }
 
   public void testIncrementalRecompile_unstableGeneratorReferencesModifiedType()
       throws UnableToCompleteException, IOException, InterruptedException {
-    checkIncrementalRecompile_unstableGeneratorReferencesModifiedType(JsOutputOption.PRETTY);
+    checkIncrementalRecompile_unstableGeneratorReferencesModifiedType(JsOutputOption.OBFUSCATED);
     checkIncrementalRecompile_unstableGeneratorReferencesModifiedType(JsOutputOption.DETAILED);
   }
 
   public void testIncrementalRecompile_functionSignatureChange() throws UnableToCompleteException,
       IOException, InterruptedException {
-    // Not testing recompile equality with Pretty output since the Pretty namer's behavior is order
-    // dependent, and while still correct, will come out different in a recompile with this change
-    // versus a from scratch compile with this change.
+    // Not testing recompile equality with Pretty/Obfuscated output since the JsIncrementalNamer's
+    // behavior is order dependent, and while still correct, will come out different in a recompile
+    // with this change versus a from scratch compile with this change.
     checkIncrementalRecompile_functionSignatureChange(JsOutputOption.DETAILED);
   }
 
   public void testIncrementalRecompile_compileTimeConstantChange() throws UnableToCompleteException,
       IOException, InterruptedException {
     checkIncrementalRecompile_compileTimeConstantChange(JsOutputOption.DETAILED);
-    checkIncrementalRecompile_compileTimeConstantChange(JsOutputOption.PRETTY);
+    checkIncrementalRecompile_compileTimeConstantChange(JsOutputOption.OBFUSCATED);
   }
 
   public void testIncrementalRecompile_transitivelyFoldableConstant()
       throws UnableToCompleteException,
       IOException, InterruptedException {
     checkIncrementalRecompile_transitivelyFoldableConstant(JsOutputOption.DETAILED);
-    checkIncrementalRecompile_transitivelyFoldableConstant(JsOutputOption.PRETTY);
+    checkIncrementalRecompile_transitivelyFoldableConstant(JsOutputOption.OBFUSCATED);
   }
 
   public void testIncrementalRecompile_packagePrivateDispatch() throws UnableToCompleteException,
       IOException, InterruptedException {
-    checkIncrementalRecompile_packagePrivateOverride(JsOutputOption.PRETTY);
+    checkIncrementalRecompile_packagePrivateOverride(JsOutputOption.OBFUSCATED);
     checkIncrementalRecompile_packagePrivateOverride(JsOutputOption.DETAILED);
   }
 
+  public void testIncrementalRecompile_prettyOutput()
+      throws UnableToCompleteException, IOException, InterruptedException {
+    // Nominal tests for pretty output. Pretty and Obfuscated output share most of the same code
+    // paths.
+    checkIncrementalRecompile_typeHierarchyChange(JsOutputOption.PRETTY);
+    checkIncrementalRecompile_unreachableIncompatibleChange(JsOutputOption.PRETTY);
+  }
+
   public void testIncrementalRecompile_regularClassMadeIntoJsoClass()
-      throws UnableToCompleteException,
-      IOException, InterruptedException {
-    // Not testing recompile equality with Pretty output since the Pretty namer's behavior is order
-    // dependent, and while still correct, will come out different in a recompile with this change
-    // versus a from scratch compile with this change.
+      throws UnableToCompleteException, IOException, InterruptedException {
+    // Not testing recompile equality with Pretty/Obfuscated output since the JsIncrementalNamer's
+    // behavior is order dependent, and while still correct, will come out different in a recompile
+    // with this change versus a from scratch compile with this change.
     checkIncrementalRecompile_regularClassMadeIntoJsoClass(JsOutputOption.DETAILED);
   }
 
   public void testIncrementalRecompile_unreachableIncompatibleChange()
       throws UnableToCompleteException, IOException, InterruptedException {
-    // Foo class is uncompilable but unreachable, so the first compile should succeed. Modifying it
-    // should still succeed since staleness marking should be smart enough to not force it to be
-    // unnecessarily traversed.
-    checkIncrementalRecompile_unreachableIncompatibleChange(JsOutputOption.PRETTY);
+    // Not testing recompile equality with Pretty/Obfuscated output since the JsIncrementalNamer's
+    // behavior is order dependent, and while still correct, will come out different in a recompile
+    // with this change versus a from scratch compile with this change.
+    checkIncrementalRecompile_unreachableIncompatibleChange(JsOutputOption.OBFUSCATED);
     checkIncrementalRecompile_unreachableIncompatibleChange(JsOutputOption.DETAILED);
   }
 
-  public void testIncrementalRecompile_typeHierarchyChange() throws UnableToCompleteException,
-      IOException, InterruptedException {
-    checkIncrementalRecompile_typeHierarchyChange(JsOutputOption.PRETTY);
+  public void testIncrementalRecompile_typeHierarchyChange()
+      throws UnableToCompleteException, IOException, InterruptedException {
+    checkIncrementalRecompile_typeHierarchyChange(JsOutputOption.OBFUSCATED);
     checkIncrementalRecompile_typeHierarchyChange(JsOutputOption.DETAILED);
   }
 
-  public void testIncrementalRecompile_defaultMethod() throws UnableToCompleteException,
-      IOException, InterruptedException {
+  public void testIncrementalRecompile_defaultMethod()
+      throws UnableToCompleteException, IOException, InterruptedException {
     // Tests that default method on superclasses are correctly constructed
-    checkIncrementalRecompile_defaultMethod(JsOutputOption.PRETTY);
+    checkIncrementalRecompile_defaultMethod(JsOutputOption.OBFUSCATED);
     checkIncrementalRecompile_defaultMethod(JsOutputOption.DETAILED);
   }
 
-  public void testIncrementalRecompile_devirtualizeUnchangedJso() throws UnableToCompleteException,
-      IOException, InterruptedException {
+  public void testIncrementalRecompile_devirtualizeUnchangedJso()
+      throws UnableToCompleteException, IOException, InterruptedException {
     // Tests that a JSO calls through interfaces are correctly devirtualized when compiling per file
     // and the JSOs nor their single impl interfaces are not stale.
-    checkIncrementalRecompile_devirtualizeUnchangedJso(JsOutputOption.PRETTY);
+    checkIncrementalRecompile_devirtualizeUnchangedJso(JsOutputOption.OBFUSCATED);
     checkIncrementalRecompile_devirtualizeUnchangedJso(JsOutputOption.DETAILED);
   }
 
-  public void testIncrementalRecompile_devirtualizeString() throws UnableToCompleteException,
-      IOException, InterruptedException {
+  public void testIncrementalRecompile_devirtualizeString()
+      throws UnableToCompleteException, IOException, InterruptedException {
     // Tests that String calls through interfaces are correctly devirtualized when compiling per
     // file and neither String nor CharSequence interface are stale.
-    checkIncrementalRecompile_devirtualizeString(JsOutputOption.PRETTY);
+    checkIncrementalRecompile_devirtualizeString(JsOutputOption.OBFUSCATED);
     checkIncrementalRecompile_devirtualizeString(JsOutputOption.DETAILED);
   }
 
-  public void testIncrementalRecompile_multipleClassGenerator() throws UnableToCompleteException,
-      IOException, InterruptedException {
+  public void testIncrementalRecompile_multipleClassGenerator()
+      throws UnableToCompleteException, IOException, InterruptedException {
     // Tests that a Generated type that is not directly referenced from the rebound GWT.create()
     // call is still marked stale, regenerated, retraversed and output as JS.
-    checkIncrementalRecompile_multipleClassGenerator(JsOutputOption.PRETTY);
+    checkIncrementalRecompile_multipleClassGenerator(JsOutputOption.OBFUSCATED);
     checkIncrementalRecompile_multipleClassGenerator(JsOutputOption.DETAILED);
   }
 
   public void testIncrementalRecompile_singleJsoIntfDispatchChange()
       throws UnableToCompleteException,
       IOException, InterruptedException {
-    // Not testing recompile equality with Pretty output since the Pretty namer's behavior is order
-    // dependent, and while still correct, will come out different in a recompile with this change
-    // versus a from scratch compile with this change.
+    // Not testing recompile equality with Pretty/Obfuscated output since the JsIncrementalNamer's
+    // behavior is order dependent, and while still correct, will come out different in a recompile
+    // with this change versus a from scratch compile with this change.
     checkIncrementalRecompile_singleJsoIntfDispatchChange(JsOutputOption.DETAILED);
   }
 
   public void testIncrementalRecompile_dualJsoIntfDispatchChange() throws UnableToCompleteException,
       IOException, InterruptedException {
-    // Not testing recompile equality with Pretty output since the Pretty namer's behavior is order
-    // dependent, and while still correct, will come out different in a recompile with this change
-    // versus a from scratch compile with this change.
+    // Not testing recompile equality with Pretty/Obfuscated output since the JsIncrementalNamer's
+    // behavior is order dependent, and while still correct, will come out different in a recompile
+    // with this change versus a from scratch compile with this change.
     checkIncrementalRecompile_dualJsoIntfDispatchChange(JsOutputOption.DETAILED);
   }
 
   public void testIncrementalRecompile_generatorInputResourceChange() throws IOException,
       UnableToCompleteException, InterruptedException {
-    // Not testing recompile equality with Pretty output since the Pretty namer's behavior is order
-    // dependent, and while still correct, will come out different in a recompile with this change
-    // versus a from scratch compile with this change.
+    // Not testing recompile equality with Pretty/Obfuscated output since the JsIncrementalNamer's
+    // behavior is order dependent, and while still correct, will come out different in a recompile
+    // with this change versus a from scratch compile with this change.
     checkIncrementalRecompile_generatorInputResourceChange(JsOutputOption.DETAILED);
   }
 
@@ -1221,7 +1228,7 @@ public class CompilerTest extends ArgProcessorTestBase {
     CompilerOptions compilerOptions = new CompilerOptionsImpl();
     List<MockResource> sharedResources =
         Lists.newArrayList(barReferencesFooGeneratorModuleResource, generatorEntryPointResource);
-    JsOutputOption output = JsOutputOption.PRETTY;
+    JsOutputOption output = JsOutputOption.OBFUSCATED;
 
     List<MockResource> originalResources = Lists.newArrayList(sharedResources);
     originalResources.add(fooResource);
@@ -1262,7 +1269,7 @@ public class CompilerTest extends ArgProcessorTestBase {
     CompilerOptions compilerOptions = new CompilerOptionsImpl();
     List<MockResource> sharedResources = Lists.newArrayList(cascadingGeneratorModuleResource,
         generatorEntryPointResource, classNameToGenerateResource);
-    JsOutputOption output = JsOutputOption.PRETTY;
+    JsOutputOption output = JsOutputOption.OBFUSCATED;
 
     List<MockResource> originalResources = Lists.newArrayList(sharedResources);
 
@@ -1279,7 +1286,7 @@ public class CompilerTest extends ArgProcessorTestBase {
 
     // Recompile with no changes, which should not trigger any Generator runs.
     compileToJs(compilerOptions, relinkApplicationDir, "com.foo.SimpleModule",
-        Lists.<MockResource> newArrayList(), relinkMinimalRebuildCache, emptySet, output);
+        Lists.<MockResource>newArrayList(), relinkMinimalRebuildCache, emptySet, output);
 
     // Since there were no changes Generators were not run again.
     assertEquals(1, CauseStringRebindGenerator.runCount);
@@ -1290,7 +1297,7 @@ public class CompilerTest extends ArgProcessorTestBase {
     // FooResourceGenerator and cascade the invalidate the Generators that triggered
     // FooResourceGenerator.
     compileToJs(compilerOptions, relinkApplicationDir, "com.foo.SimpleModule",
-        Lists.<MockResource> newArrayList(modifiedClassNameToGenerateResource),
+        Lists.<MockResource>newArrayList(modifiedClassNameToGenerateResource),
         relinkMinimalRebuildCache, stringSet("com.foo.TestEntryPoint", "com.foo.Baz$InnerBaz",
             "com.foo.Bar", "com.foo.HasCustomContent", "com.foo.FooReplacementTwo"), output);
 
@@ -1310,7 +1317,7 @@ public class CompilerTest extends ArgProcessorTestBase {
     List<MockResource> sharedResources = Lists.newArrayList(resourceReadingGeneratorModuleResource,
         referencesBarAndGeneratorEntryPointResource, classNameToGenerateResource,
         barReferencesFooResource);
-    JsOutputOption output = JsOutputOption.PRETTY;
+    JsOutputOption output = JsOutputOption.OBFUSCATED;
 
     List<MockResource> originalResources = Lists.newArrayList(sharedResources);
     originalResources.add(fooResource);
@@ -1350,7 +1357,7 @@ public class CompilerTest extends ArgProcessorTestBase {
     CompilerOptions compilerOptions = new CompilerOptionsImpl();
     List<MockResource> originalResources = Lists.newArrayList(helloEntryPointResource,
         helloModuleResource);
-    JsOutputOption output = JsOutputOption.PRETTY;
+    JsOutputOption output = JsOutputOption.OBFUSCATED;
 
     // Compile the app with original files.
     MinimalRebuildCache relinkMinimalRebuildCache = new MinimalRebuildCache();
@@ -1371,7 +1378,7 @@ public class CompilerTest extends ArgProcessorTestBase {
 
     // Compile again with absolutely no file changes and reusing the minimalRebuildCache.
     String relinkedJs = compileToJs(relinkApplicationDir, "com.foo.SimpleModule",
-        Lists.<MockResource> newArrayList(), relinkMinimalRebuildCache, emptySet, output);
+        Lists.<MockResource>newArrayList(), relinkMinimalRebuildCache, emptySet, output);
 
     assertTrue(originalJs.equals(relinkedJs));
   }
@@ -1503,9 +1510,9 @@ public class CompilerTest extends ArgProcessorTestBase {
     compilerOptions.setUseDetailedTypeIds(true);
 
     checkRecompiledModifiedApp(compilerOptions, "com.foo.SimpleModule", Lists.newArrayList(
-        simpleModuleResource, packagePrivateDispatchEntryPointResource,
-        packagePrivateParentResource, referencesParentResource), packagePrivateChildResource,
-        packagePrivateChildResource,
+            simpleModuleResource, packagePrivateDispatchEntryPointResource,
+            packagePrivateParentResource, referencesParentResource),
+        packagePrivateChildResource, packagePrivateChildResource,
         stringSet("com.foo.PackagePrivateChild", "com.foo.TestEntryPoint"), output);
   }
 
@@ -1543,18 +1550,16 @@ public class CompilerTest extends ArgProcessorTestBase {
 
   private void checkIncrementalRecompile_functionSignatureChange(JsOutputOption output)
       throws UnableToCompleteException, IOException, InterruptedException {
-    checkRecompiledModifiedApp("com.foo.SimpleModule",
-        Lists.newArrayList(simpleModuleResource, simpleModelEntryPointResource,
-            constantsModelResource),
+    checkRecompiledModifiedApp("com.foo.SimpleModule", Lists.newArrayList(
+            simpleModuleResource, simpleModelEntryPointResource, constantsModelResource),
         simpleModelResource, modifiedFunctionSignatureSimpleModelResource,
         stringSet("com.foo.TestEntryPoint", "com.foo.SimpleModel"), output);
   }
 
   private void checkIncrementalRecompile_compileTimeConstantChange(JsOutputOption output)
       throws UnableToCompleteException, IOException, InterruptedException {
-    checkRecompiledModifiedApp("com.foo.SimpleModule",
-        Lists.newArrayList(simpleModuleResource, simpleModelEntryPointResource,
-            simpleModelResource),
+    checkRecompiledModifiedApp("com.foo.SimpleModule", Lists.newArrayList(
+            simpleModuleResource, simpleModelEntryPointResource, simpleModelResource),
         constantsModelResource, modifiedConstantsModelResource,
         stringSet("com.foo.SimpleModel", "com.foo.Constants"), output);
   }
@@ -1563,9 +1568,8 @@ public class CompilerTest extends ArgProcessorTestBase {
       throws UnableToCompleteException, IOException, InterruptedException {
     // Tests that constants that are provided by types are only referenced by reference only types
     // (hence not traversed) are still available for constant propagation.
-    checkRecompiledModifiedApp("com.foo.TransitivelyFoldableConstantModule",
-        Lists.newArrayList(transitivelyFoldableConstantModuleResource, classOneResource,
-            classTwoResource),
+    checkRecompiledModifiedApp("com.foo.TransitivelyFoldableConstantModule", Lists.newArrayList(
+            transitivelyFoldableConstantModuleResource, classOneResource, classTwoResource),
         transitivelyFoldableConstantEntryPointResource,
         transitivelyFoldableConstantEntryPointResource,
         stringSet("com.foo.TransitivelyFoldableConstantEntryPoint",
@@ -1652,9 +1656,9 @@ public class CompilerTest extends ArgProcessorTestBase {
 
     checkRecompiledModifiedApp(compilerOptions, "com.foo.SimpleModule", Lists.newArrayList(
         resourceReadingGeneratorModuleResource, generatorEntryPointResource, fooInterfaceResource,
-        nonJsoFooResource), classNameToGenerateResource, modifiedClassNameToGenerateResource, Sets.<
-        String> newHashSet("com.foo.TestEntryPoint", "com.foo.HasCustomContent",
-        "com.foo.FooReplacementTwo"), outputOption);
+        nonJsoFooResource), classNameToGenerateResource, modifiedClassNameToGenerateResource,
+        stringSet("com.foo.TestEntryPoint", "com.foo.HasCustomContent",
+            "com.foo.FooReplacementTwo"), outputOption);
   }
 
   private void assertDeterministicBuild(String topLevelModule, int optimizationLevel)

@@ -766,7 +766,8 @@ public final class JavaToJavaScriptCompiler {
     }
 
     for (int i = 0; i < jsFragments.length; i++) {
-      DefaultTextOutput out = new DefaultTextOutput(options.getOutput().shouldMinimize());
+      DefaultTextOutput out = new DefaultTextOutput(!options.isIncrementalCompileEnabled() &&
+          options.getOutput().shouldMinimize());
       JsReportGenerationVisitor v = new JsReportGenerationVisitor(out, jjsMap,
           options.isJsonSoycEnabled());
       v.accept(jsProgram.getFragmentBlock(i));
@@ -1034,17 +1035,15 @@ public final class JavaToJavaScriptCompiler {
   }
 
   private Map<JsName, JsLiteral> renameJsSymbols(PermutationProperties properties,
-      JavaToJavaScriptMap jjsmap)
-      throws UnableToCompleteException {
-    Map<JsName, JsLiteral> internedLiteralByVariableName;
+      JavaToJavaScriptMap jjsmap) throws UnableToCompleteException {
+    Map<JsName, JsLiteral> internedLiteralByVariableName = null;
     try {
       switch (options.getOutput()) {
         case OBFUSCATED:
-          internedLiteralByVariableName = runObfuscateNamer(properties);
+          internedLiteralByVariableName = runObfuscateNamer(options, properties, jjsmap);
           break;
         case PRETTY:
-          internedLiteralByVariableName =
-              runPrettyNamer(properties.getConfigurationProperties(), jjsmap);
+          internedLiteralByVariableName = runPrettyNamer(options, properties, jjsmap);
           break;
         case DETAILED:
           internedLiteralByVariableName = runDetailedNamer(properties.getConfigurationProperties());
@@ -1060,12 +1059,18 @@ public final class JavaToJavaScriptCompiler {
         ImmutableMap.<JsName, JsLiteral>of() : internedLiteralByVariableName;
   }
 
-  private Map<JsName, JsLiteral> runObfuscateNamer(PermutationProperties properties)
+  private Map<JsName, JsLiteral> runObfuscateNamer(JJSOptions options,
+      PermutationProperties properties, JavaToJavaScriptMap jjsmap)
       throws IllegalNameException {
+    if (options.isIncrementalCompileEnabled()) {
+      runIncrementalNamer(options, properties.getConfigurationProperties(), jjsmap);
+      return null;
+    }
+
     Map<JsName, JsLiteral> internedLiteralByVariableName =
         maybeInternLiterals(JsLiteralInterner.INTERN_ALL);
-    FreshNameGenerator freshNameGenerator = JsObfuscateNamer.exec(jsProgram,
-        properties.getConfigurationProperties());
+    FreshNameGenerator freshNameGenerator =
+        JsObfuscateNamer.exec(jsProgram, properties.getConfigurationProperties());
     if (options.shouldRemoveDuplicateFunctions()
         && JsStackEmulator.getStackMode(properties) == JsStackEmulator.StackMode.STRIP) {
       JsDuplicateFunctionRemover.exec(jsProgram, freshNameGenerator);
@@ -1073,21 +1078,27 @@ public final class JavaToJavaScriptCompiler {
     return internedLiteralByVariableName;
   }
 
-  private Map<JsName, JsLiteral> runPrettyNamer(ConfigurationProperties configurationProperties,
-      JavaToJavaScriptMap jjsmap)
+  private Map<JsName, JsLiteral> runPrettyNamer(JJSOptions options,
+      PermutationProperties properties, JavaToJavaScriptMap jjsmap)
       throws IllegalNameException {
-    if (compilerContext.getOptions().isIncrementalCompileEnabled()) {
-      JsIncrementalNamer.exec(jsProgram, configurationProperties,
-          compilerContext.getMinimalRebuildCache().getPersistentPrettyNamerState(), jjsmap);
+    if (options.isIncrementalCompileEnabled()) {
+      runIncrementalNamer(options, properties.getConfigurationProperties(), jjsmap);
       return null;
     }
-
     // We don't intern strings in pretty mode to improve readability
     Map<JsName, JsLiteral> internedLiteralByVariableName =
         maybeInternLiterals(JsLiteralInterner.INTERN_ALL & ~JsLiteralInterner.INTERN_STRINGS);
 
-    JsPrettyNamer.exec(jsProgram, configurationProperties);
+    JsPrettyNamer.exec(jsProgram, properties.getConfigurationProperties());
     return internedLiteralByVariableName;
+  }
+
+  private void runIncrementalNamer(JJSOptions options,
+      ConfigurationProperties configurationProperties, JavaToJavaScriptMap jjsmap)
+    throws IllegalNameException {
+    JsIncrementalNamer.exec(jsProgram, configurationProperties,
+        compilerContext.getMinimalRebuildCache().getPersistentPrettyNamerState(), jjsmap,
+        options.getOutput() == JsOutputOption.OBFUSCATED);
   }
 
   /**

@@ -48,6 +48,7 @@ class CompilerOptionsImpl extends UnmodifiableCompilerOptions {
   private final OptionMethodNameDisplayMode.Mode methodNameDisplayMode;
   private final ListMultimap<String, String> properties;
   private final boolean closureFormattedOutput;
+  private final JsOutputOption output;
 
   CompilerOptionsImpl(CompileDir compileDir, String moduleName, Options options) {
     this.compileDir = compileDir;
@@ -62,6 +63,7 @@ class CompilerOptionsImpl extends UnmodifiableCompilerOptions {
     this.methodNameDisplayMode = options.getMethodNameDisplayMode();
     this.properties = LinkedListMultimap.create(options.getProperties());
     this.closureFormattedOutput = options.isClosureFormattedOutput();
+    this.output = options.getOutput();
   }
 
   @Override
@@ -149,7 +151,7 @@ class CompilerOptionsImpl extends UnmodifiableCompilerOptions {
 
   @Override
   public JsOutputOption getOutput() {
-    return JsOutputOption.PRETTY;
+    return output;
   }
 
   @Override
