@@ -62,6 +62,7 @@ DOMSettableTokenList
 DOMStringList
 DOMStringMap
 DOMTokenList
+DataTransferItem
 DataTransferItemList
 DataView
 Date
@@ -91,6 +92,7 @@ FormData
 Function
 GainNode
 Gamepad
+GamepadButton
 GamepadEvent
 HTMLAllCollection
 HTMLAnchorElement
@@ -170,6 +172,7 @@ HTMLUListElement
 HTMLUnknownElement
 HTMLVideoElement
 HashChangeEvent
+Headers
 History
 IDBCursor
 IDBCursorWithValue
@@ -197,9 +200,15 @@ Location
 Math
 MediaController
 MediaElementAudioSourceNode
+MediaEncryptedEvent
 MediaError
 MediaKeyError
 MediaKeyEvent
+MediaKeyMessageEvent
+MediaKeySession
+MediaKeyStatusMap
+MediaKeySystemAccess
+MediaKeys
 MediaList
 MediaQueryListEvent
 MediaStreamAudioDestinationNode
@@ -247,6 +256,8 @@ PopStateEvent
 ProcessingInstruction
 ProgressEvent
 Promise
+PushManager
+PushSubscription
 RGBColor
 RTCIceCandidate
 RTCSessionDescription
@@ -256,6 +267,8 @@ RangeError
 Rect
 ReferenceError
 RegExp
+Request
+Response
 SVGAElement
 SVGAltGlyphDefElement
 SVGAltGlyphElement
@@ -416,6 +429,7 @@ SpeechSynthesisUtterance
 Storage
 StorageEvent
 String
+SubtleCrypto
 StyleSheet
 StyleSheetList
 Symbol
@@ -479,6 +493,7 @@ Window
 Worker
 XMLDocument
 XMLHttpRequest
+XMLHttpRequestEventTarget
 XMLHttpRequestProgressEvent
 XMLHttpRequestUpload
 XMLSerializer
