@@ -71,6 +71,7 @@
 ### C/C++ Development
     
  - Code completion
+ - Code diagnostics
  - F2 code navigation (go to definition)
  - Go to file/function for C/C++
  - Find usages for C++ symbols
