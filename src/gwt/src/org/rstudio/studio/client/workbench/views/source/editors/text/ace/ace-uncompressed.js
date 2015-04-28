@@ -48158,7 +48158,9 @@ var Text = function(parentEl) {
     };
 
     this.getLineHeight = function() {
-        return this.$fontMetrics.$characterSize.height || 0;
+        if (this.$fontMetrics.$characterSize.height)
+          return Math.round(this.$fontMetrics.$characterSize.height);
+        return 0;
     };
 
     this.getCharacterWidth = function() {

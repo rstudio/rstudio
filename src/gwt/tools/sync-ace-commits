@@ -86,6 +86,7 @@ git merge \
     origin/patch/completion-throttling \
     origin/patch/bundle-snippets \
     origin/patch/cmd-click-multi-select \
+    origin/bugfix/firefox-fractional-height \
     -m "merge branches"
 
 # Need to merge separately to handle merge conflicts
