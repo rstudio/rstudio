@@ -91,7 +91,9 @@ public class Options {
   private OptionMethodNameDisplayMode.Mode methodNameDisplayMode =
       OptionMethodNameDisplayMode.Mode.NONE;
   private boolean closureFormattedOutput = false;
-  private JsOutputOption output = JsOutputOption.OBFUSCATED;
+  // Incremental superdevmod has different defaults than devmode and regular superdevmode; we use
+  // null here means not set by the user (and the right default is computed by getOutput().
+  private JsOutputOption output = null;
 
   private final ListMultimap<String, String> properties = LinkedListMultimap.create();
 
@@ -313,6 +315,9 @@ public class Options {
   }
 
   JsOutputOption getOutput() {
+    if (output == null) {
+      return isIncrementalCompileEnabled() ? JsOutputOption.OBFUSCATED : JsOutputOption.PRETTY;
+    }
     return output;
   }
 
