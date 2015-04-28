@@ -175,6 +175,8 @@ public interface TestResources extends ClientBundle {
     String mycolor1();
 
     String padding2();
+
+    int width();
   }
 
   /**

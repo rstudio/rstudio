@@ -14,3 +14,9 @@
 @def MARGIN1 5px;
 @def MARGIN2 5px;
 @def MARGIN add(MARGIN1, MARGIN2);
+
+@def WIDTH add(MARGIN, PADDING, 100px);
+
+div {
+  width: WIDTH;
+}

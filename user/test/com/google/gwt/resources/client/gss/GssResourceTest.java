@@ -185,6 +185,9 @@ public class GssResourceTest extends RenamingClassNameTest {
     assertEquals("#012345", res().constants().mycolor());
     assertEquals("#012345", res().constants().mycolor1());
     assertEquals(10, res().constants().margin());
+    assertEquals(120, res().constants().width());
+
+    assertEquals("div{width:120px}", res().constants().getText());
   }
 
   public void testEmpty() {
