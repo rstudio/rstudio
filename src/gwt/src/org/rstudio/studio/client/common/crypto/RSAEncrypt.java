@@ -41,6 +41,12 @@ public class RSAEncrypt
          callback.onSuccess(input);
          return;
       }
+      
+      if (input == null)
+      {
+         // fallback case for null input (see case 4375)
+         callback.onSuccess("");
+      }
 
       loader_.addCallback(new Callback()
       {
@@ -77,6 +83,12 @@ public class RSAEncrypt
          // Don't encrypt for desktop, Windows can't decrypt it.
          callback.execute(input);
          return;
+      }
+
+      if (input == null)
+      {
+         // fallback case for null input (see case 4375)
+         callback.execute("");
       }
 
       loader_.addCallback(new Callback()
