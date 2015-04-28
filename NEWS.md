@@ -3,26 +3,35 @@
 
 ### Data Viewer
 
-- Support for viewing large data sets (removed 1k row limit)
-- Data can be filtered, searched, and sorted
-- Viewer updates to reflect changes in data
+* Support for viewing large data sets (removed 1k row limit)
+* Data can be filtered, searched, and sorted
+* Viewer updates to reflect changes in data
 
 ### R Code Completion
 
- - Completions provided automatically without an explicit gesture
- - All objects visible from the current scope are now included in completions
- - Completions in more contexts including S3 and S4 methods and dplyr pipelines
- - Automatic insertion of closing parens when appropriate
- - Inline help tooltip for signatures of completed functions
- - Completion for statements spanning multiple lines
- - Specialized autocompletions provided for library, data, vignette, ?
- - For Shiny applications, autocompletions for ui.R + server.R pairs
- - Completions for dimension names in [, [[ calls
- - Completions from packages in library, require calls automatically
-   inferred and supplied even when not loaded
- - Completions for knitr options, e.g. in opts_chunk$get(), are now supplied
- - Completions for dynamic symbols within .C, .Call, .Fortran, .External
- - Completions for object names for 'formula' arguments, e.g. lm(|, data = mtcars)
+* Completions provided automatically without an explicit gesture
+* All objects visible from the current scope are now included in completions
+* Completions in more contexts including S3 and S4 methods and dplyr pipelines
+* Automatic insertion of closing parens when appropriate
+* Inline help tooltip for signatures of completed functions
+* Completion for statements spanning multiple lines
+* Specialized autocompletions provided for library, data, vignette, ?
+* For Shiny applications, autocompletions for ui.R + server.R pairs
+* Completions for dimension names in [, [[ calls
+* Completions from packages in library, require calls automatically
+  inferred and supplied even when not loaded
+* Completions for knitr options, e.g. in opts_chunk$get(), are now supplied
+* Completions for dynamic symbols within .C, .Call, .Fortran, .External
+* Completions for object names for 'formula' arguments, e.g. lm(|, data = mtcars)
+
+### R Code Diagnostics
+
+* Syntax errors are highlighted and displayed in red
+  (e.g. missing commas, unmatched brackets)
+* Function calls are checked and validated with e.g. `match.call()`
+* Warn if variable is used but no definition is available in scope
+* Warn if variable is defined but never subsequently used
+* Whitespace diagnostics to help code conform to http://adv-r.had.co.nz/Style.html
 
 ### Source Editor
 
@@ -70,18 +79,18 @@
 
 ### C/C++ Development
     
- - Code completion
- - Code diagnostics
- - F2 code navigation (go to definition)
- - Go to file/function for C/C++
- - Find usages for C++ symbols
- - Intelligent auto-indentation
- - Scope tree for quick intra-file navigation
+* Code completion
+* Code diagnostics
+* F2 code navigation (go to definition)
+* Go to file/function for C/C++
+* Find usages for C++ symbols
+* Intelligent auto-indentation
+* Scope tree for quick intra-file navigation
  
 ### Web Development (HTML/CSS/JavaScript)
 
- - Code completion
- - Inline diagnostics (JSHint) on syntax and other issues
+* Code completion
+* Inline diagnostics (JSHint) on syntax and other issues
 
 ### Workspace
 
