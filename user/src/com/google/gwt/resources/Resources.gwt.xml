@@ -96,4 +96,8 @@
   <!-- Can be set to: strict | lenient | off -->
   <define-configuration-property name="CssResource.conversionMode" is-multi-valued="false" />
   <set-configuration-property name="CssResource.conversionMode" value="strict" />
+
+  <!-- The default for GSS in UiBinder -->
+  <define-configuration-property name="CssResource.gssDefaultInUiBinder" is-multi-valued="false" />
+  <set-configuration-property name="CssResource.gssDefaultInUiBinder" value="false" />
 </module>

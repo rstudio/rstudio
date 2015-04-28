@@ -70,6 +70,7 @@ import com.google.gwt.resources.ext.ClientBundleRequirements;
 import com.google.gwt.resources.ext.ResourceContext;
 import com.google.gwt.resources.ext.ResourceGeneratorUtil;
 import com.google.gwt.resources.ext.SupportsGeneratorResultCaching;
+import com.google.gwt.resources.rg.GssResourceGenerator.GssOptions;
 import com.google.gwt.thirdparty.guava.common.base.Joiner;
 import com.google.gwt.user.rebind.SourceWriter;
 import com.google.gwt.user.rebind.StringSourceWriter;
@@ -142,7 +143,6 @@ public class CssResourceGenerator extends AbstractCssResourceGenerator
   private static final String KEY_RESERVED_PREFIXES = "CssResource.reservedClassPrefixes";
   private static final String KEY_SHARED_METHODS = "sharedMethods";
   private static final String KEY_STYLE = "CssResource.style";
-  private static final String KEY_ENABLE_GSS = "CssResource.enableGss";
 
   /**
    * This character must not appear in {@link #BASE32_CHARS}.
@@ -465,9 +465,11 @@ public class CssResourceGenerator extends AbstractCssResourceGenerator
       throws UnableToCompleteException {
 
     // if Gss is enabled, defer the call to the Gss generator.
-    if (checkIfGssEnabled(context, logger)) {
+    GssOptions gssOptions = GssResourceGenerator.getGssOptions(
+        context.getGeneratorContext().getPropertyOracle(), logger);
+    if (gssOptions.isEnabled()) {
       gssEnabled = true;
-      gssResourceGenerator = new GssResourceGenerator();
+      gssResourceGenerator = new GssResourceGenerator(gssOptions);
       gssResourceGenerator.init(logger, context);
       return;
     }
@@ -1223,23 +1225,5 @@ public class CssResourceGenerator extends AbstractCssResourceGenerator
     }
 
     writeSimpleGetter(toImplement, returnExpr, sw);
-  }
-
-  private boolean checkIfGssEnabled(ResourceContext context, TreeLogger logger)
-      throws UnableToCompleteException {
-    try {
-      PropertyOracle propertyOracle =
-          context.getGeneratorContext().getPropertyOracle();
-
-      ConfigurationProperty enableGssProp =
-          propertyOracle.getConfigurationProperty(KEY_ENABLE_GSS);
-      String enableGss = enableGssProp.getValues().get(0);
-
-      return "true".equals(enableGss);
-
-    } catch (BadPropertyValueException ex) {
-      logger.log(Type.ERROR, "Unable to determine if GSS need to be used");
-      throw new UnableToCompleteException();
-    }
   }
 }

@@ -27,6 +27,8 @@ import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.resource.ResourceOracle;
 import com.google.gwt.dev.util.collect.HashSet;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
+import com.google.gwt.resources.rg.GssResourceGenerator.AutoConversionMode;
+import com.google.gwt.resources.rg.GssResourceGenerator.GssOptions;
 import com.google.gwt.uibinder.attributeparsers.AttributeParsers;
 import com.google.gwt.uibinder.rebind.messages.MessagesWriter;
 import com.google.gwt.uibinder.test.UiJavaResources;
@@ -189,10 +191,11 @@ public abstract class AbstractUiBinderWriterTest extends TestCase {
         new MessagesWriter(types, BINDER_URI, logger, rendererClass.getPath(), "rendererPackage",
             "rendererClassName");
     ResourceOracle resourceOracle = new MockResourceOracle();
+    GssOptions gssOptions = new GssOptions(true, AutoConversionMode.OFF, true);
     writer = new UiBinderWriter(aClass, "foo", "", types, logger, fieldManager, messages,
-        DesignTimeUtilsStub.EMPTY, uiBinderCtx, true, true, BINDER_URI, resourceOracle);
+        DesignTimeUtilsStub.EMPTY, uiBinderCtx, true, true, BINDER_URI, resourceOracle, gssOptions);
     parser = new UiBinderParser(writer, messages, fieldManager, types, null, BINDER_URI,
-        new UiBinderContext(), resourceOracle);
+        new UiBinderContext(), resourceOracle, gssOptions);
     designTime.rememberPathForElements(doc);
   }
 }

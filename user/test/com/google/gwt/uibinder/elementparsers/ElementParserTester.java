@@ -26,6 +26,8 @@ import com.google.gwt.dev.javac.testing.impl.MockJavaResource;
 import com.google.gwt.dev.javac.testing.impl.MockResourceOracle;
 import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
+import com.google.gwt.resources.rg.GssResourceGenerator.AutoConversionMode;
+import com.google.gwt.resources.rg.GssResourceGenerator.GssOptions;
 import com.google.gwt.uibinder.attributeparsers.AttributeParsers;
 import com.google.gwt.uibinder.rebind.DesignTimeUtilsStub;
 import com.google.gwt.uibinder.rebind.FieldManager;
@@ -110,8 +112,9 @@ class ElementParserTester {
     MessagesWriter messages = new MessagesWriter(types, BINDER_URI, logger,
         templatePath, baseType.getPackage().getName(), implName);
 
-    writer = new MockUiBinderWriter(baseType, implName, templatePath, types,
-        logger, fieldManager, messages, BINDER_URI, new MockResourceOracle());
+    writer = new MockUiBinderWriter(baseType, implName, templatePath, types, logger, fieldManager,
+        messages, BINDER_URI, new MockResourceOracle(),
+        new GssOptions(true, AutoConversionMode.OFF, true));
     fieldManager.registerField(types.findType(parsedTypeName), FIELD_NAME);
     parsedType = types.findType(parsedTypeName);
   }

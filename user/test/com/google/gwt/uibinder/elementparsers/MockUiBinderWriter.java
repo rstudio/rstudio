@@ -19,6 +19,7 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.resource.ResourceOracle;
+import com.google.gwt.resources.rg.GssResourceGenerator.GssOptions;
 import com.google.gwt.uibinder.rebind.DesignTimeUtilsStub;
 import com.google.gwt.uibinder.rebind.FieldManager;
 import com.google.gwt.uibinder.rebind.FieldWriter;
@@ -36,10 +37,11 @@ class MockUiBinderWriter extends UiBinderWriter {
 
   public MockUiBinderWriter(JClassType baseClass, String implClassName, String templatePath,
       TypeOracle oracle, MortalLogger logger, FieldManager fieldManager,
-      MessagesWriter messagesWriter, String binderUri, ResourceOracle resourceOracle)
-      throws UnableToCompleteException {
+      MessagesWriter messagesWriter, String binderUri, ResourceOracle resourceOracle,
+      GssOptions gssOptions) throws UnableToCompleteException {
     super(baseClass, implClassName, templatePath, oracle, logger, fieldManager, messagesWriter,
-        DesignTimeUtilsStub.EMPTY, new UiBinderContext(), true, false, binderUri, resourceOracle);
+        DesignTimeUtilsStub.EMPTY, new UiBinderContext(), true, false, binderUri, resourceOracle,
+        gssOptions);
   }
 
   @Override

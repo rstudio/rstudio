@@ -1,16 +1,14 @@
 /*
  * Copyright 2008 Google Inc.
  *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not
- * use this file except in compliance with the License. You may obtain a copy of
- * the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
 package com.google.gwt.uibinder.rebind;
@@ -28,6 +26,8 @@ import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.resource.ResourceOracle;
 import com.google.gwt.dev.util.Util;
+import com.google.gwt.resources.rg.GssResourceGenerator;
+import com.google.gwt.resources.rg.GssResourceGenerator.GssOptions;
 import com.google.gwt.uibinder.client.UiTemplate;
 import com.google.gwt.uibinder.rebind.messages.MessagesWriter;
 import com.google.gwt.uibinder.rebind.model.ImplicitClientBundle;
@@ -42,7 +42,9 @@ import java.util.List;
 /**
  * Generator for implementations of {@link com.google.gwt.uibinder.client.UiBinder}.
  */
-@RunsLocal(requiresProperties = {"UiBinder.useSafeHtmlTemplates", "UiBinder.useLazyWidgetBuilders"})
+@RunsLocal(requiresProperties = {
+    "UiBinder.useSafeHtmlTemplates", "UiBinder.useLazyWidgetBuilders", "CssResource.enableGss",
+    "CssResource.conversionMode", "CssResource.gssDefaultInUiBinder"})
 public class UiBinderGenerator extends Generator {
 
   private static final String BINDER_URI = "urn:ui:com.google.gwt.uibinder";
@@ -56,11 +58,11 @@ public class UiBinderGenerator extends Generator {
   private static final String XSS_SAFE_CONFIG_PROPERTY = "UiBinder.useSafeHtmlTemplates";
 
   /**
-   * Given a UiBinder interface, return the path to its ui.xml file, suitable
-   * for any classloader to find it as a resource.
+   * Given a UiBinder interface, return the path to its ui.xml file, suitable for any classloader to
+   * find it as a resource.
    */
-  private static String deduceTemplateFile(MortalLogger logger,
-      JClassType interfaceType) throws UnableToCompleteException {
+  private static String deduceTemplateFile(MortalLogger logger, JClassType interfaceType)
+      throws UnableToCompleteException {
     String templateName = null;
     UiTemplate annotation = interfaceType.getAnnotation(UiTemplate.class);
     if (annotation == null) {
@@ -77,14 +79,12 @@ public class UiBinderGenerator extends Generator {
       }
 
       /*
-       * If the template file name (minus suffix) has no dots, make it relative
-       * to the binder's package, otherwise slashify the dots
+       * If the template file name (minus suffix) has no dots, make it relative to the binder's
+       * package, otherwise slashify the dots
        */
-      String unsuffixed = templateName.substring(0,
-          templateName.lastIndexOf(TEMPLATE_SUFFIX));
+      String unsuffixed = templateName.substring(0, templateName.lastIndexOf(TEMPLATE_SUFFIX));
       if (!unsuffixed.contains(".")) {
-        templateName = slashify(interfaceType.getPackage().getName()) + "/"
-            + templateName;
+        templateName = slashify(interfaceType.getPackage().getName()) + "/" + templateName;
       } else {
         templateName = slashify(unsuffixed) + TEMPLATE_SUFFIX;
       }
@@ -99,8 +99,8 @@ public class UiBinderGenerator extends Generator {
   private final UiBinderContext uiBinderCtx = new UiBinderContext();
 
   @Override
-  public String generate(TreeLogger logger, GeneratorContext genCtx,
-      String fqInterfaceName) throws UnableToCompleteException {
+  public String generate(TreeLogger logger, GeneratorContext genCtx, String fqInterfaceName)
+      throws UnableToCompleteException {
     TypeOracle oracle = genCtx.getTypeOracle();
 
     JClassType interfaceType;
@@ -121,8 +121,7 @@ public class UiBinderGenerator extends Generator {
     implName = designTime.getImplName(implName);
 
     String packageName = interfaceType.getPackage().getName();
-    PrintWriterManager writers = new PrintWriterManager(genCtx, logger,
-        packageName);
+    PrintWriterManager writers = new PrintWriterManager(genCtx, logger, packageName);
     PrintWriter printWriter = writers.tryToMakePrintWriterFor(implName);
 
     if (printWriter != null) {
@@ -132,8 +131,8 @@ public class UiBinderGenerator extends Generator {
     return packageName + "." + implName;
   }
 
-  private Boolean extractConfigProperty(MortalLogger logger,
-      PropertyOracle propertyOracle, String configProperty, boolean defaultValue) {
+  private Boolean extractConfigProperty(MortalLogger logger, PropertyOracle propertyOracle,
+      String configProperty, boolean defaultValue) {
     List<String> values;
     try {
       values = propertyOracle.getConfigurationProperty(configProperty).getValues();
@@ -156,21 +155,24 @@ public class UiBinderGenerator extends Generator {
       PrintWriter binderPrintWriter, TreeLogger treeLogger, TypeOracle oracle,
       ResourceOracle resourceOracle, PropertyOracle propertyOracle,
       PrintWriterManager writerManager, DesignTimeUtils designTime)
-  throws UnableToCompleteException {
+      throws UnableToCompleteException {
 
     MortalLogger logger = new MortalLogger(treeLogger);
     String templatePath = deduceTemplateFile(logger, interfaceType);
-    MessagesWriter messages = new MessagesWriter(oracle, BINDER_URI, logger,
-        templatePath, interfaceType.getPackage().getName(), implName);
+    MessagesWriter messages = new MessagesWriter(oracle, BINDER_URI, logger, templatePath,
+        interfaceType.getPackage().getName(), implName);
 
     boolean useLazyWidgetBuilders =
         useLazyWidgetBuilders(logger, propertyOracle) && !designTime.isDesignTime();
     FieldManager fieldManager = new FieldManager(oracle, logger, useLazyWidgetBuilders);
 
+    GssOptions gssOptions =
+        GssResourceGenerator.getGssOptions(propertyOracle, logger.getTreeLogger());
+
     UiBinderWriter uiBinderWriter = new UiBinderWriter(interfaceType, implName, templatePath,
         oracle, logger, fieldManager, messages, designTime, uiBinderCtx,
         useSafeHtmlTemplates(logger, propertyOracle), useLazyWidgetBuilders, BINDER_URI,
-        resourceOracle);
+        resourceOracle, gssOptions);
 
     Resource resource = getTemplateResource(logger, templatePath, resourceOracle);
 
@@ -203,14 +205,12 @@ public class UiBinderGenerator extends Generator {
       if (content == null) {
         content = Util.readStreamAsString(resource.openContents());
       }
-      doc = new W3cDomHelper(logger.getTreeLogger(), resourceOracle).documentFor(
-          content, resource.getPath());
+      doc = new W3cDomHelper(logger.getTreeLogger(), resourceOracle).documentFor(content,
+          resource.getPath());
     } catch (IOException iex) {
       logger.die("Error opening resource:" + resource.getLocation(), iex);
     } catch (SAXParseException e) {
-      logger.die(
-          "Error parsing XML (line " + e.getLineNumber() + "): "
-              + e.getMessage(), e);
+      logger.die("Error parsing XML (line " + e.getLineNumber() + "): " + e.getMessage(), e);
     }
     return doc;
   }
@@ -225,24 +225,23 @@ public class UiBinderGenerator extends Generator {
   }
 
   private Boolean useLazyWidgetBuilders(MortalLogger logger, PropertyOracle propertyOracle) {
-    Boolean rtn = extractConfigProperty(logger, propertyOracle, LAZY_WIDGET_BUILDERS_PROPERTY, true);
+    Boolean rtn =
+        extractConfigProperty(logger, propertyOracle, LAZY_WIDGET_BUILDERS_PROPERTY, true);
     if (!gaveLazyBuildersWarning && !rtn) {
-      logger.warn("Configuration property %s is false. Deprecated code generation is in play. " +
-                  "This property will soon become a no-op.",
-                  LAZY_WIDGET_BUILDERS_PROPERTY);
+      logger.warn("Configuration property %s is false. Deprecated code generation is in play. "
+          + "This property will soon become a no-op.", LAZY_WIDGET_BUILDERS_PROPERTY);
       gaveLazyBuildersWarning = true;
     }
     return rtn;
   }
 
   private Boolean useSafeHtmlTemplates(MortalLogger logger, PropertyOracle propertyOracle) {
-    Boolean rtn = extractConfigProperty(
-        logger, propertyOracle, XSS_SAFE_CONFIG_PROPERTY, true);
+    Boolean rtn = extractConfigProperty(logger, propertyOracle, XSS_SAFE_CONFIG_PROPERTY, true);
 
     if (!gaveSafeHtmlWarning && !rtn) {
       logger.warn("Configuration property %s is false! UiBinder SafeHtml integration is off, "
-          + "leaving your users more vulnerable to cross-site scripting attacks. This property " +
-          "will soon become a no-op, and SafeHtml integration will always be on.",
+          + "leaving your users more vulnerable to cross-site scripting attacks. This property "
+          + "will soon become a no-op, and SafeHtml integration will always be on.",
           XSS_SAFE_CONFIG_PROPERTY);
       gaveSafeHtmlWarning = true;
     }

@@ -26,6 +26,8 @@ import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.resource.ResourceOracle;
 import com.google.gwt.dev.util.collect.HashSet;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
+import com.google.gwt.resources.rg.GssResourceGenerator.AutoConversionMode;
+import com.google.gwt.resources.rg.GssResourceGenerator.GssOptions;
 import com.google.gwt.uibinder.attributeparsers.AttributeParsers;
 import com.google.gwt.uibinder.test.UiJavaResources;
 
@@ -277,10 +279,12 @@ public class UiBinderParserUiWithTest extends TestCase {
     elm = elemProvider.get(item);
     JClassType aClass = types.findType(baseClass);
     ResourceOracle resourceOracle = new MockResourceOracle();
+    GssOptions gssOptions = new GssOptions(true, AutoConversionMode.OFF, true);
     writer = new UiBinderWriter(aClass, "foo", "", types, logger, fieldManager, null,
-        DesignTimeUtilsStub.EMPTY, new UiBinderContext(), true, true, "", resourceOracle);
+        DesignTimeUtilsStub.EMPTY, new UiBinderContext(), true, true, "", resourceOracle,
+        gssOptions);
     parser = new UiBinderParser(writer, null, fieldManager, types, null, "", new UiBinderContext(),
-        resourceOracle);
+        resourceOracle, gssOptions);
     designTime.rememberPathForElements(doc);
     UiBinderParser.Resource.WITH.create(parser, elm);
   }

@@ -28,6 +28,7 @@ import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.resources.client.DataResource;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.resources.client.ImageResource.RepeatStyle;
+import com.google.gwt.resources.rg.GssResourceGenerator.GssOptions;
 import com.google.gwt.uibinder.elementparsers.BeanParser;
 import com.google.gwt.uibinder.elementparsers.SimpleInterpeter;
 import com.google.gwt.uibinder.rebind.messages.MessagesWriter;
@@ -114,10 +115,12 @@ public class UiBinderParser {
   private final String binderUri;
   private final UiBinderContext uiBinderContext;
   private final ResourceOracle resourceOracle;
+  private GssOptions gssOptions;
 
   public UiBinderParser(UiBinderWriter writer, MessagesWriter messagesWriter,
       FieldManager fieldManager, TypeOracle oracle, ImplicitClientBundle bundleClass,
-      String binderUri, UiBinderContext uiBinderContext, ResourceOracle resourceOracle) {
+      String binderUri, UiBinderContext uiBinderContext, ResourceOracle resourceOracle,
+      GssOptions gssOptions) {
     this.writer = writer;
     this.oracle = oracle;
     this.messagesWriter = messagesWriter;
@@ -129,6 +132,7 @@ public class UiBinderParser {
     this.dataResourceType = oracle.findType(DataResource.class.getCanonicalName());
     this.binderUri = binderUri;
     this.resourceOracle = resourceOracle;
+    this.gssOptions = gssOptions;
   }
 
   /**
@@ -136,6 +140,7 @@ public class UiBinderParser {
    * the document.
    */
   public FieldWriter parse(XMLElement elem) throws UnableToCompleteException {
+
     if (!writer.isBinderElement(elem)) {
       writer.die(elem, "Bad prefix on <%s:%s>? The root element must be in "
           + "xml namespace \"%s\" (usually with prefix \"ui:\"), "
@@ -452,8 +457,7 @@ public class UiBinderParser {
       importTypes.add(findCssResourceType(elem, type));
     }
 
-    Boolean gss = elem.consumeBooleanConstantAttribute(GSS_ATTRIBUTE);
-
+    boolean gss = determineGssForFile(elem.consumeBooleanConstantAttribute(GSS_ATTRIBUTE));
     ImplicitCssResource cssMethod = bundleClass.createCssResource(name, source,
         publicType, body, importTypes, gss, resourceOracle);
 
@@ -461,6 +465,29 @@ public class UiBinderParser {
     field.setInitializer(String.format("%s.%s()",
         fieldManager.convertFieldToGetter(bundleClass.getFieldName()),
         cssMethod.getName()));
+  }
+
+  private boolean determineGssForFile(Boolean attributeInUiBinderFile) throws UnableToCompleteException {
+    if (attributeInUiBinderFile == null) {
+      if (!gssOptions.isEnabled() && gssOptions.isGssDefaultInUiBinder()) {
+        writer.die("Invalid combination of configuration properties. "
+            + "CssResource.enableGss is false, but CssResource.uiBinderGssDefault is true");
+      }
+      return gssOptions.isGssDefaultInUiBinder();
+    }
+
+    if (Boolean.TRUE.equals(attributeInUiBinderFile)) {
+      if (!gssOptions.isEnabled()) {
+        writer.die("UiBinder file has attribute gss=\"true\", but GSS is disabled globally");
+      }
+      return true;
+    }
+
+    if (gssOptions.isEnabled() && gssOptions.isAutoConversionOff()) {
+      writer.die("UiBinder file has attribute gss=\"false\", "
+          + "but CssResource.conversionMode is \"off\"");
+    }
+    return false;
   }
 
   private JClassType findCssResourceType(XMLElement elem, String typeName)

@@ -86,7 +86,7 @@ public class ImplicitCssResource {
    */
   public ImplicitCssResource(String packageName, String className, String name,
       String[] source, JClassType extendedInterface, String body,
-      MortalLogger logger, Set<JClassType> importTypes, Boolean gss,
+      MortalLogger logger, Set<JClassType> importTypes, boolean gss,
       ResourceOracle resourceOracle) {
     this.packageName = packageName;
     this.className = className;
@@ -96,7 +96,7 @@ public class ImplicitCssResource {
     this.logger = logger;
     this.imports = Collections.unmodifiableSet(importTypes);
     this.resourceOracle = resourceOracle;
-    this.gss = Boolean.TRUE.equals(gss);
+    this.gss = gss;
     sources = Arrays.asList(source);
   }
 

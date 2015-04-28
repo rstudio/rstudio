@@ -150,7 +150,42 @@ import java.util.zip.Adler32;
 public class GssResourceGenerator extends AbstractCssResourceGenerator implements
     SupportsGeneratorResultCaching {
 
-  private enum AutoConversionMode { STRICT, LENIENT, OFF }
+  /**
+   * GssOptions contains the values of all configuration properties that can be used with
+   * GssResource.
+   */
+  public static class GssOptions {
+    private final boolean enabled;
+    private final AutoConversionMode autoConversionMode;
+    private final boolean gssDefaultInUiBinder;
+
+    public GssOptions(boolean enabled, AutoConversionMode autoConversionMode, boolean gssDefaultInUiBinder) {
+      this.enabled = enabled;
+      this.autoConversionMode = autoConversionMode;
+      this.gssDefaultInUiBinder = gssDefaultInUiBinder;
+    }
+
+    public boolean isEnabled() {
+      return enabled;
+    }
+
+    public boolean isGssDefaultInUiBinder() {
+      return gssDefaultInUiBinder;
+    }
+
+    public boolean isAutoConversionOff() {
+      return autoConversionMode == AutoConversionMode.OFF;
+    }
+
+    public boolean isLenientConversion() {
+      return autoConversionMode == AutoConversionMode.LENIENT;
+    }
+  }
+
+  /**
+   * Different conversion modes from css to gss.
+   */
+  public enum AutoConversionMode { STRICT, LENIENT, OFF }
 
   /*
    * TODO(dankurka): This is a nasty hack to get the compiler to output all @def's
@@ -159,6 +194,9 @@ public class GssResourceGenerator extends AbstractCssResourceGenerator implement
   private static boolean shouldEmitVariables;
   private static PrintWriter printWriter;
   private static Set<String> writtenAtDefs = new HashSet<>();
+
+  private static final String KEY_ENABLE_GSS = "CssResource.enableGss";
+  private static final String KEY_GSS_DEFAULT_IN_UIBINDER = "CssResource.gssDefaultInUiBinder";
 
   static {
     String varFileName = System.getProperty("emitGssVarNameFile");
@@ -174,6 +212,40 @@ public class GssResourceGenerator extends AbstractCssResourceGenerator implement
         System.exit(-1);
       }
     }
+  }
+
+  public static GssOptions getGssOptions(PropertyOracle propertyOracle, TreeLogger logger) throws UnableToCompleteException {
+    boolean gssEnabled;
+    boolean gssDefaultInUiBinder;
+    AutoConversionMode conversionMode;
+
+    try {
+      ConfigurationProperty enableGssProp =
+          propertyOracle.getConfigurationProperty(KEY_ENABLE_GSS);
+      String enableGss = enableGssProp.getValues().get(0);
+      gssEnabled = Boolean.parseBoolean(enableGss);
+    } catch (BadPropertyValueException ex) {
+      logger.log(Type.ERROR, "Unable to determine if GSS need to be used");
+      throw new UnableToCompleteException();
+    }
+    try {
+      conversionMode = Enum.valueOf(AutoConversionMode.class, propertyOracle
+          .getConfigurationProperty(KEY_CONVERSION_MODE).getValues().get(0)
+          .toUpperCase(Locale.ROOT));
+    } catch (BadPropertyValueException ex) {
+      logger.log(Type.ERROR, "Unable to conversion mode for GSS");
+      throw new UnableToCompleteException();
+    }
+    try {
+      ConfigurationProperty uiBinderGssDefaultProp =
+          propertyOracle.getConfigurationProperty(KEY_GSS_DEFAULT_IN_UIBINDER);
+      String uiBinderGssDefaultValue = uiBinderGssDefaultProp.getValues().get(0);
+      gssDefaultInUiBinder =  Boolean.parseBoolean(uiBinderGssDefaultValue);
+    } catch (BadPropertyValueException ex) {
+      logger.log(Type.ERROR, "Unable to determine default for GSS in UiBinder");
+      throw new UnableToCompleteException();
+    }
+    return new GssOptions(gssEnabled, conversionMode, gssDefaultInUiBinder);
   }
 
   private static synchronized void write(Set<String> variables) {
@@ -389,7 +461,11 @@ public class GssResourceGenerator extends AbstractCssResourceGenerator implement
   private Set<String> allowedAtRules;
   private Map<JClassType, Map<String, String>> replacementsByClassAndMethod;
   private Map<JMethod, String> replacementsForSharedMethods;
-  private AutoConversionMode conversionMode;
+  private final GssOptions gssOptions;
+
+  public GssResourceGenerator(GssOptions gssOptions) {
+    this.gssOptions = gssOptions;
+  }
 
   @Override
   public String createAssignment(TreeLogger logger, ResourceContext context, JMethod method)
@@ -473,10 +549,6 @@ public class GssResourceGenerator extends AbstractCssResourceGenerator implement
           .getConfigurationProperty(ALLOWED_FUNCTIONS);
       allowedNonStandardFunctions.addAll(allowedFunctionsProperty.getValues());
 
-      conversionMode = Enum.valueOf(AutoConversionMode.class, propertyOracle
-          .getConfigurationProperty(KEY_CONVERSION_MODE).getValues().get(0)
-          .toUpperCase(Locale.ROOT));
-
       ClientBundleRequirements requirements = context.getRequirements();
       requirements.addConfigurationProperty(KEY_STYLE);
       requirements.addConfigurationProperty(KEY_OBFUSCATION_PREFIX);
@@ -518,10 +590,6 @@ public class GssResourceGenerator extends AbstractCssResourceGenerator implement
 
     replacementsByClassAndMethod = context.getCachedData(KEY_BY_CLASS_AND_METHOD, Map.class);
     replacementsForSharedMethods = context.getCachedData(KEY_SHARED_METHODS, Map.class);
-  }
-
-  private boolean isLenientConversion() {
-    return conversionMode == AutoConversionMode.LENIENT;
   }
 
   private String getObfuscationPrefix(PropertyOracle propertyOracle, ResourceContext context)
@@ -750,7 +818,7 @@ public class GssResourceGenerator extends AbstractCssResourceGenerator implement
         .runPass();
 
     new ValidateRuntimeConditionalNode(cssTree.getVisitController(), errorManager,
-        isLenientConversion()).runPass();
+        gssOptions.isLenientConversion()).runPass();
 
     // Don't continue if errors exist
     checkErrors();
@@ -866,7 +934,7 @@ public class GssResourceGenerator extends AbstractCssResourceGenerator implement
     // assert that we only support either gss or css on one resource.
     boolean css = ensureEitherCssOrGss(resources, logger);
 
-    if (css && conversionMode == AutoConversionMode.OFF) {
+    if (css && gssOptions.isAutoConversionOff()) {
       // TODO(dankurka): add link explaining the situation in detail.
       logger.log(Type.ERROR,
           "Your ClientBundle is referencing css files instead of gss. "
@@ -992,8 +1060,8 @@ public class GssResourceGenerator extends AbstractCssResourceGenerator implement
       ConfigurationPropertyMatcher configurationPropertyMatcher =
           new ConfigurationPropertyMatcher(context, logger);
 
-      Css2Gss converter = new Css2Gss(tempFile.toURI().toURL(), logger, isLenientConversion(),
-          configurationPropertyMatcher);
+      Css2Gss converter = new Css2Gss(tempFile.toURI().toURL(), logger,
+          gssOptions.isLenientConversion(), configurationPropertyMatcher);
 
       String gss = converter.toGss();
 
@@ -1005,7 +1073,7 @@ public class GssResourceGenerator extends AbstractCssResourceGenerator implement
 
     } catch (Css2GssConversionException e) {
       String message = "An error occurs during the automatic conversion: " + e.getMessage();
-      if (!isLenientConversion()) {
+      if (!gssOptions.isLenientConversion()) {
         message += "\n You should try to change the faulty css to fix this error. If you are " +
             "unable to change the css, you can setup the automatic conversion to be lenient. Add " +
             "the following line to your gwt.xml file: " +
