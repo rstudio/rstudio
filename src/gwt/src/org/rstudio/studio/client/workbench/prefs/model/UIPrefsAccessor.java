@@ -247,6 +247,11 @@ public class UIPrefsAccessor extends Prefs
       return bool("focus_console_after_exec", false);
    }
    
+   public PrefValue<Boolean> saveBeforeSourcing()
+   {
+      return bool("save_before_sourcing", true);
+   }
+   
    public PrefValue<Boolean> syntaxColorConsole()
    {
       return bool("syntax_color_console", false);

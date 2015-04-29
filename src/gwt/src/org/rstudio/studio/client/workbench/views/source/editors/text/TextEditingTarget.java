@@ -3459,7 +3459,7 @@ public class TextEditingTarget implements
          // then you don't see any of the output
          
          boolean saveWhenSourcing = fileType_.isCpp() || 
-               docDisplay_.hasBreakpoints();
+               docDisplay_.hasBreakpoints() || (prefs_.saveBeforeSourcing().getValue() && (getPath() != null));
          
          if ((dirtyState_.getValue() || sweave) && !saveWhenSourcing)
          {
