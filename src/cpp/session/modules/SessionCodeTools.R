@@ -328,6 +328,23 @@
    
 })
 
+.rs.addFunction("resolveAliasedSymbol", function(object)
+{
+   if (!is.function(object))
+      return(object)
+   
+   if (is.primitive(object))
+      return(object)
+   
+   body <- body(object)
+   env <- environment(object)
+   
+   if (length(body) && .rs.isSymbolCalled(body[[1]], ".rs.callAs"))
+      return(env$original)
+   
+   return(object)
+})
+
 .rs.addFunction("getAnywhere", function(name, envir = parent.frame())
 {
    result <- NULL
@@ -354,7 +371,7 @@
          )
          
          if (!is.null(object))
-            return(object)
+            return(.rs.resolveAliasedSymbol(object))
       }
       
       # Otherwise, maybe envir is the name of a package -- search there
@@ -366,7 +383,7 @@
          )
          
          if (!is.null(object))
-            return(object)
+            return(.rs.resolveAliasedSymbol(object))
       }
    }
    
@@ -390,7 +407,7 @@
       )
    }
    
-   result
+   .rs.resolveAliasedSymbol(result)
    
 })
 
