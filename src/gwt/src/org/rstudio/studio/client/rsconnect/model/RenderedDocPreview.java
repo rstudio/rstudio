@@ -24,18 +24,22 @@ public class RenderedDocPreview
    {
       sourceFile_ = params.getTargetFile();
       outputFile_ = params.getOutputFile();
+      isStatic_ = !params.isShinyDocument();
    }
    
    public RenderedDocPreview(HTMLPreviewResult result)
    {
       sourceFile_ = result.getSourceFile();
       outputFile_ = result.getHtmlFile();
+      isStatic_ = true;
    }
    
-   public RenderedDocPreview(String sourceFile, String outputFile)
+   public RenderedDocPreview(String sourceFile, String outputFile, 
+                             boolean isStatic)
    {
       sourceFile_ = sourceFile;
       outputFile_ = outputFile;
+      isStatic_ = isStatic;
    }
    
    public String getSourceFile()
@@ -48,6 +52,12 @@ public class RenderedDocPreview
       return outputFile_;
    }
    
+   public boolean isStatic()
+   {
+      return isStatic_;
+   }
+   
    private final String sourceFile_;
    private final String outputFile_;
+   private final boolean isStatic_;
 }

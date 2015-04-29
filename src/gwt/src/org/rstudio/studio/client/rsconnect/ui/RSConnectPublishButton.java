@@ -94,8 +94,8 @@ public class RSConnectPublishButton extends Composite
       
       // create drop menu of previous deployments/other commands
       publishMenu_ = new DeploymentPopupMenu();
-      ToolbarButton publishMenuButton = new ToolbarButton(publishMenu_, false);
-      panel.add(publishMenuButton);
+      publishMenuButton_ = new ToolbarButton(publishMenu_, false);
+      panel.add(publishMenuButton_);
       
       // initialize composite widget
       initWidget(panel);
@@ -436,7 +436,33 @@ public class RSConnectPublishButton extends Composite
    
    private void applyVisiblity()
    {
+      publishMenuButton_.setVisible(recomputeMenuVisiblity());
       setVisible(recomputeVisibility());
+   }
+   
+   // recomputes visibility for the popup menu that offers republish
+   // destinations
+   private boolean recomputeMenuVisiblity()
+   {
+      if (pUiPrefs_.get().enableRStudioConnect().getGlobalValue())
+      {
+         // always show the menu when RSConnect is enabled
+         return true;
+      }
+      else if (contentType_ == RSConnect.CONTENT_TYPE_DOCUMENT &&
+          docPreview_ != null)
+      {
+         // show the menu for Shiny documents
+         return !docPreview_.isStatic();
+      }
+      else if (contentType_ == RSConnect.CONTENT_TYPE_APP)
+      {
+         // show the menu for Shiny apps
+         return true;
+      }
+      
+      // hide the menu for everything else
+      return false;
    }
    
    private boolean recomputeVisibility()
@@ -553,6 +579,7 @@ public class RSConnectPublishButton extends Composite
    
    private final ToolbarButton publishButton_;
    private final DeploymentPopupMenu publishMenu_;
+   private ToolbarButton publishMenuButton_;
 
    private RSConnectServerOperations server_;
    private EventBus events_;
