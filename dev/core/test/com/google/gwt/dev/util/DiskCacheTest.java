@@ -56,7 +56,7 @@ public class DiskCacheTest extends TestCase {
     for (int i = 1; i < c.length; ++i) {
       c[i] = (char) (i * 31 + c[i - 1]);
       // Avoid problematic characters.
-      c[i] &= 0x7FFF;
+      c[i] &= (char) 0x7FFF;
       --c[i];
     }
     String s = String.valueOf(c);

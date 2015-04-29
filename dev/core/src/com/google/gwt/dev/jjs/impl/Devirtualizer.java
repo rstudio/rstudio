@@ -438,7 +438,7 @@ public class Devirtualizer {
 
     if (program.getTypeJavaLangString().getImplements().contains(enclosingType)) {
       // If it is an interface implemented by String.
-      possibleTargetTypes |= STRING | HAS_JAVA_VIRTUAL_DISPATCH;
+      possibleTargetTypes |= (byte) (STRING | HAS_JAVA_VIRTUAL_DISPATCH);
     }
 
     /////////////////////////////////////////////////////////////////
