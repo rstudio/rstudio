@@ -153,6 +153,7 @@
 * Run App command for single file Shiny applications
 * Deprecated 'source.with.encoding' in favor of source(..., encoding = "...")
 * Make source code compatible with -std=c++11
+* Allow specifying character encoding, row name source, and comment character when importing data
 
 
 ### Server
