@@ -54,6 +54,7 @@
     - Use :help for documentation on available commands
 * Configurable snippets for fast insertion of common blocks of code
 * Editor tabs in the source pane can now be rearranged
+* Automatically save files prior to sourcing (controlled by option)
 * Support for multiple cursors via Ctrl+Alt+Up/Down
 * Alt+Enter to run code while retaining cursor position
 * Ctrl+Shift+P to expand selection to matching paren / brace
@@ -121,10 +122,12 @@
 ### Plots
 
 * Render plots using devicePixelRatio for retina and HDPI screens
+* Preserve last exported size in Save Plot as PDF dialog
 
 ### R Markdown
 
 * Updated to pandoc 1.13.1
+* Support for parameterized R Markdown reports
 * Ensure that .RData from Rmd directory isn't loaded during Knit
 * Improved handling of lists in editor
 * Syntax highlighting for comments in markdown documents
@@ -177,6 +180,8 @@
 * Correct handling for breakpoints in files with non-ascii filenames on Windows
 * Next/previous word behavior in Rmd is now consistent with behavior in R scripts
 * Don't parse YAML front matter if not preceded by whitespace
+* Eliminate some UI problems on Windows HDPI systems
+* Allow JSON as text file type in the editor
 * Only hide object files (e.g. *.o) in Files pane when in package src directory
 * Ensure cursor is always visible after source navigation
 * Server: Ensure that LANG is populated from system default when not inherited
