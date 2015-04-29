@@ -41,6 +41,7 @@ public class BrowserEvents {
   public static final String GESTURECHANGE = "gesturechange";
   public static final String GESTUREEND = "gestureend";
   public static final String GESTURESTART = "gesturestart";
+  public static final String INPUT = "input";
   public static final String KEYDOWN = "keydown";
   public static final String KEYPRESS = "keypress";
   public static final String KEYUP = "keyup";
