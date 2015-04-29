@@ -255,6 +255,8 @@ context("Diagnostics")
       EXPECT_NO_ERRORS("{\nif (1) {} else if (2) {}\nif (1)\n1\nelse if (2)\n2}");
       
       EXPECT_NO_ERRORS("({if (1) for(i in 1) {}})");
+      
+      EXPECT_LINT("c(1,,2)");
    }
    
    lintRStudioRFiles();

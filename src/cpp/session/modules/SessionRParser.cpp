@@ -1889,7 +1889,7 @@ START:
          case ParseStatus::ParseStateParenArgumentList:
          case ParseStatus::ParseStateSingleBracketArgumentList:
          case ParseStatus::ParseStateDoubleBracketArgumentList:
-            MOVE_TO_NEXT_SIGNIFICANT_TOKEN_WARN_IF_NO_WHITESPACE(cursor, status);
+            // ARGUMENT_START will handle moving over this token
             goto ARGUMENT_START;
          case ParseStatus::ParseStateFunctionArgumentList:
             MOVE_TO_NEXT_SIGNIFICANT_TOKEN_WARN_IF_NO_WHITESPACE(cursor, status);
