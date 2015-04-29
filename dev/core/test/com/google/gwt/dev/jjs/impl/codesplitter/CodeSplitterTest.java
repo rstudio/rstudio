@@ -23,11 +23,15 @@ import com.google.gwt.dev.cfg.BindingProperty;
 import com.google.gwt.dev.cfg.ConditionNone;
 import com.google.gwt.dev.cfg.ConfigurationProperty;
 import com.google.gwt.dev.jjs.JsOutputOption;
+import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JMethod;
+import com.google.gwt.dev.jjs.ast.JPrimitiveType;
+import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.impl.FullCompileTestBase;
 import com.google.gwt.dev.jjs.impl.JavaToJavaScriptMap;
 import com.google.gwt.dev.js.ast.JsBlock;
 import com.google.gwt.dev.js.ast.JsContext;
+import com.google.gwt.dev.js.ast.JsExprStmt;
 import com.google.gwt.dev.js.ast.JsFunction;
 import com.google.gwt.dev.js.ast.JsName;
 import com.google.gwt.dev.js.ast.JsNode;
@@ -79,11 +83,20 @@ public class CodeSplitterTest extends FullCompileTestBase {
   private final String initialA = "public static void initialA() {}";
   private final String initialB = "public static void initialB() {}";
 
+  private final String functionAllocateFooInt = "public static void functionAllocateFooInt() { "
+      + "new Foo(42); }";
+
+  private final String functionAllocateFooString =
+      "public static void functionAllocateFooString() { new Foo(\"Hello\"); }";
+
   public int leftOverMergeSize = 0;
   public int expectedFragmentCount = 0;
 
   private ConfigurationProperty initialSequenceProp =
       new ConfigurationProperty(CodeSplitters.PROP_INITIAL_SEQUENCE, true);
+
+  private boolean closureOutputFormat = false;
+  private JavaToJavaScriptMap currentJjsMap;
 
   @Override
   public void setUp() throws Exception {
@@ -94,6 +107,7 @@ public class CodeSplitterTest extends FullCompileTestBase {
         new ConfigurationProperty[]{initialSequenceProp});
     super.setUp();
     jsProgram = new JsProgram();
+    currentJjsMap = null;
   }
 
   public void testSimple() throws UnableToCompleteException {
@@ -137,6 +151,75 @@ public class CodeSplitterTest extends FullCompileTestBase {
     assertInFragment("functionC", 0);
   }
 
+  public void testClosureConstructorPrototypeMovement() throws UnableToCompleteException {
+    closureOutputFormat = true;
+    StringBuilder code = new StringBuilder();
+    code.append("package test;\n");
+    code.append("import com.google.gwt.core.client.GWT;\n");
+    code.append("import com.google.gwt.core.client.RunAsyncCallback;\n");
+    code.append("public class EntryPoint {\n");
+    code.append("static class Foo {");
+    code.append("  int x; String y;\n");
+    code.append("  public Foo(int x) { this.x = x; }\n");
+    code.append("  public Foo(String y) { this.y = y; }\n");
+    code.append("};");
+    code.append(functionAllocateFooInt);
+    code.append(functionAllocateFooString);
+    code.append("  public static void onModuleLoad() {\n");
+    code.append("functionAllocateFooInt();");
+//  Fragment #1
+    code.append(createRunAsync("functionAllocateFooString();"));
+    code.append("  }\n");
+    code.append("}\n");
+
+    expectedFragmentCount = 3;
+    compileSnippet(code.toString());
+
+    // init + 1 fragments + leftover.
+    assertFragmentCount(3);
+
+    // ------- Verify Fragment 0 -------
+    // Int related function and int ctor, plus prototype ctor in fragment 0
+    assertInFragment("functionAllocateFooInt", 0);
+
+    // assert synthetic prototype ctor is in fragment 0
+    assertClosureTypeCtorInFragment("EntryPoint$Foo", 0);
+
+    // and int ctor in fragment 0
+    assertClosureMethodInFragment("EntryPoint$Foo", 0, JPrimitiveType.INT);
+
+    // we also don't want string related ctor stuff in fragment 0
+    assertNotInFragment("functionAllocateFooString", 0);
+    JClassType stringType = jProgram.getTypeJavaLangString();
+    assertClosureFunctionNotInFragment("EntryPoint$Foo", 0, stringType);
+
+    assertPrototypeAssignmentStatementInFragment("EntryPoint$Foo", 0, JPrimitiveType.INT);
+    assertPrototypeAssignmentStatementNotInFragment("EntryPoint$Foo", 0, stringType);
+
+    // ------- Verify fragment 1 -------
+    // check if string ctor and related code is in fragment 1
+    assertInFragment("functionAllocateFooString", 1);
+    assertClosureMethodInFragment("EntryPoint$Foo", 1, stringType);
+    assertPrototypeAssignmentStatementInFragment("EntryPoint$Foo", 1, stringType);
+    assertPrototypeAssignmentStatementNotInFragment("EntryPoint$Foo", 1, JPrimitiveType.INT);
+
+    // Verify that the Class prototype ctor isn't duplicated here
+    assertClosureTypeCtorNotInFragment("EntryPoint$Foo", 1);
+
+    // but no int related code is here
+    assertNotInFragment("functionAllocateFooInt", 1);
+    assertClosureFunctionNotInFragment("EntryPoint$Foo", 1, JPrimitiveType.INT);
+
+    // Verify fragment 2 (leftovers)
+    assertNotInFragment("functionAllocateFooInt", 2);
+    assertNotInFragment("functionAllocateFooString", 2);
+
+    assertClosureFunctionNotInFragment("EntryPoint$Foo", 2, JPrimitiveType.INT);
+    assertClosureFunctionNotInFragment("EntryPoint$Foo", 2, stringType);
+    assertClosureTypeCtorNotInFragment("EntryPoint$Foo", 2);
+    assertPrototypeAssignmentStatementNotInFragment("EntryPoint$Foo", 2, JPrimitiveType.INT);
+    assertPrototypeAssignmentStatementNotInFragment("EntryPoint$Foo", 2, stringType);
+  }
 
   public void testPredefinedAsyncGrouping() throws UnableToCompleteException {
     StringBuilder code = new StringBuilder();
@@ -442,10 +525,69 @@ public class CodeSplitterTest extends FullCompileTestBase {
         " but is in " + fragments, fragments.equals(Sets.newHashSet(expectedFragmentNumber)));
   }
 
+  private void assertClosureTypeCtorInFragment(String functionName, int expectedFragmentNumber) {
+    Set<Integer> fragments = Sets.newHashSet();
+    for (int fragmentNumber = 0; fragmentNumber < jsProgram.getFragmentCount(); fragmentNumber++) {
+      JsBlock fragment = jsProgram.getFragmentBlock(fragmentNumber);
+      if (findClosureTypeFunctionIn(functionName, fragment)) {
+        fragments.add(fragmentNumber);
+      }
+    }
+    assertTrue("function " + functionName + " should be in fragments " + expectedFragmentNumber +
+        " but is in " + fragments, fragments.equals(Sets.newHashSet(expectedFragmentNumber)));
+  }
+
+  private void assertClosureMethodInFragment(String functionName, int expectedFragmentNumber,
+      JType... args) {
+    Set<Integer> fragments = Sets.newHashSet();
+    for (int fragmentNumber = 0; fragmentNumber < jsProgram.getFragmentCount(); fragmentNumber++) {
+      JsBlock fragment = jsProgram.getFragmentBlock(fragmentNumber);
+      if (findClosureFunctionIn(functionName, fragment, args)) {
+        fragments.add(fragmentNumber);
+      }
+    }
+    assertTrue("function " + functionName + " should be in fragments " + expectedFragmentNumber +
+        " but is in " + fragments, fragments.equals(Sets.newHashSet(expectedFragmentNumber)));
+  }
+
+  private void assertPrototypeAssignmentStatementInFragment(String functionName,
+      int expectedFragmentNumber, JType... args) {
+    Set<Integer> fragments = Sets.newHashSet();
+    for (int fragmentNumber = 0; fragmentNumber < jsProgram.getFragmentCount(); fragmentNumber++) {
+      JsBlock fragment = jsProgram.getFragmentBlock(fragmentNumber);
+      if (findPrototypeChainStatementIn(functionName, fragment, args)) {
+        fragments.add(fragmentNumber);
+      }
+    }
+    assertTrue("Prototype chain assignment for " + functionName + " should be in "
+        + "fragments " + expectedFragmentNumber + " but is in " + fragments,
+        fragments.equals(Sets.newHashSet(expectedFragmentNumber)));
+  }
+
   private void assertNotInFragment(String functionName, int fragmentNum) {
     JsBlock fragment = jsProgram.getFragmentBlock(fragmentNum);
     assertFalse("function " + functionName + " should not be in fragment " + fragmentNum,
         findFunctionIn(functionName, fragment));
+  }
+
+  private void assertClosureTypeCtorNotInFragment(String functionName, int fragmentNum) {
+    JsBlock fragment = jsProgram.getFragmentBlock(fragmentNum);
+    assertFalse("function " + functionName + " should not be in fragment " + fragmentNum,
+        findClosureTypeFunctionIn(functionName, fragment));
+  }
+
+  private void assertClosureFunctionNotInFragment(String functionName, int fragmentNum, JType...
+      args) {
+    JsBlock fragment = jsProgram.getFragmentBlock(fragmentNum);
+    assertFalse("function " + functionName + " should not be in fragment " + fragmentNum,
+        findClosureFunctionIn(functionName, fragment, args));
+  }
+
+  private void assertPrototypeAssignmentStatementNotInFragment(String functionName, int
+      fragmentNum, JType... args) {
+    JsBlock fragment = jsProgram.getFragmentBlock(fragmentNum);
+    assertFalse("function " + functionName + " should not be in fragment " + fragmentNum,
+        findPrototypeChainStatementIn(functionName, fragment, args));
   }
 
   /**
@@ -466,6 +608,81 @@ public class CodeSplitterTest extends FullCompileTestBase {
     visitor.accept(fragment);
     return found[0];
   }
+
+  /**
+   * @return true if the function exists in that fragment and it mapes to a classType
+   */
+  private boolean findClosureTypeFunctionIn(final String functionName, JsBlock fragment) {
+    final boolean[] found = {false};
+    JsVisitor visitor = new JsVisitor() {
+      @Override
+      public boolean visit(JsFunction x, JsContext ctx) {
+        JsName jsName = x.getName();
+        if (jsName != null && jsName.getShortIdent().equals(functionName)
+            && currentJjsMap.nameToType(jsName) != null) {
+          found[0] = true;
+        }
+        return false;
+      }
+    };
+    visitor.accept(fragment);
+    return found[0];
+  }
+
+  /**
+   * @return true if the function exists in that fragment and it maps to a function
+   * with the expected args.
+   */
+  private boolean findClosureFunctionIn(final String functionName, JsBlock fragment,
+      final JType... args) {
+    final boolean[] found = {false};
+    JsVisitor visitor = new JsVisitor() {
+      @Override
+      public boolean visit(JsFunction x, JsContext ctx) {
+        JsName jsName = x.getName();
+        if (jsName != null && jsName.getShortIdent().equals(functionName)) {
+          JMethod meth = currentJjsMap.nameToMethod(jsName);
+          if (meth != null) {
+            found[0] = checkArguments(meth, args);
+          }
+        }
+        return false;
+      }
+    };
+    visitor.accept(fragment);
+    return found[0];
+  }
+
+  /**
+   * @return true if a statement of the form FunctionName.prototype = ClassFunction.prototype
+   */
+  private boolean findPrototypeChainStatementIn(final String functionName, JsBlock fragment,
+      final JType... args) {
+    final boolean[] found = {false};
+    JsVisitor visitor = new JsVisitor() {
+      @Override
+      public boolean visit(JsExprStmt x, JsContext ctx) {
+        JMethod meth = currentJjsMap.vtableInitToMethod(x);
+        JsName jsName = currentJjsMap.nameForMethod(meth);
+        if (meth != null && jsName != null && jsName.getShortIdent().equals(functionName)) {
+          found[0] = checkArguments(meth, args);
+        }
+        return false;
+      }
+    };
+    visitor.accept(fragment);
+    return found[0];
+  }
+
+  private boolean checkArguments(JMethod meth, JType[] args) {
+    for (int i = 0; i < args.length; i++) {
+      if (meth.getParams().get(i).getType().getUnderlyingType() != args[i]) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   @Override
   protected void optimizeJava() {
   }
@@ -475,14 +692,18 @@ public class CodeSplitterTest extends FullCompileTestBase {
     PrecompileTaskOptions options = new PrecompileTaskOptionsImpl();
     options.setOutput(JsOutputOption.PRETTY);
     options.setRunAsyncEnabled(true);
+    if (closureOutputFormat) {
+      options.setClosureCompilerFormatEnabled(true);
+    }
     return new CompilerContext.Builder().options(options).build();
   }
 
   @Override
   protected Pair<JavaToJavaScriptMap, Set<JsNode>> compileSnippet(final String code)
       throws UnableToCompleteException {
-    JavaToJavaScriptMap map = super.compileSnippet(code).getLeft();
-    CodeSplitter.exec(logger, jProgram, jsProgram, map, expectedFragmentCount, leftOverMergeSize,
+    currentJjsMap = super.compileSnippet(code).getLeft();
+    CodeSplitter.exec(logger, jProgram, jsProgram, currentJjsMap, expectedFragmentCount,
+        leftOverMergeSize,
        NULL_RECORDER);
     return null;
   }
