@@ -1516,6 +1516,39 @@ assign(x = ".rs.acCompletionTypes",
    return(FALSE)
 })
 
+.rs.addFunction("getKnitParamsForDocument", function(documentId)
+{
+   .Call(.rs.routines$rs_getKnitParamsForDocument, documentId)
+})
+
+.rs.addFunction("knitParams", function(content)
+{
+   
+   if (!("knitr" %in% loadedNamespaces()))
+      if (!requireNamespace("knitr", quietly = TRUE))
+         return(NULL)
+   
+   if (!("knit_params" %in% getNamespaceExports(asNamespace("knitr"))))
+      return(NULL)
+   
+   knitr::knit_params(content)
+})
+
+.rs.addFunction("getCompletionsRMarkdownParams", function(token, type, documentId)
+{
+   params <- .rs.getKnitParamsForDocument(documentId)
+   if (!length(params))
+      return(.rs.emptyCompletions())
+   
+   names <- vapply(params, FUN.VALUE = character(1), USE.NAMES = FALSE, function(x) {
+      x$name
+   })
+   
+   completions <- .rs.selectFuzzyMatches(names, token)
+   .rs.makeCompletions(token = token,
+                       results = completions)
+})
+
 .rs.addJsonRpcHandler("get_completions", function(token,
                                                   string,
                                                   type,
@@ -1644,6 +1677,10 @@ assign(x = ".rs.acCompletionTypes",
       return(.rs.getCompletionsPackages(token = token,
                                         appendColons = TRUE,
                                         excludeOtherCompletions = TRUE))
+   
+   # params (for .Rmd with YAML frontmatter)
+   if (.rs.acContextTypes$DOLLAR %in% type && string[[1]] == "params")
+      return(.rs.getCompletionsRMarkdownParams(token, type[[1]], documentId))
    
    # No information on completions other than token
    if (!length(string))

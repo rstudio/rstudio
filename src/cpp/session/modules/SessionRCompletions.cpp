@@ -449,6 +449,35 @@ SEXP rs_listInferredPackages(SEXP documentIdSEXP)
    
 }
 
+SEXP rs_getKnitParamsForDocument(SEXP documentIdSEXP)
+{
+   using namespace source_database;
+   
+   std::string documentId = r::sexp::asString(documentIdSEXP);
+   boost::shared_ptr<SourceDocument> pDoc(new SourceDocument());
+   
+   Error error = get(documentId, pDoc);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return R_NilValue;
+   }
+   
+   r::exec::RFunction knitParams(".rs.knitParams");
+   knitParams.addParam(pDoc->contents());
+   
+   r::sexp::Protect protect;
+   SEXP resultSEXP;
+   error = knitParams.call(&resultSEXP, &protect);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return R_NilValue;
+   }
+   
+   return resultSEXP;
+}
+
 } // end anonymous namespace
 
 Error initialize() {
@@ -461,6 +490,7 @@ Error initialize() {
    RS_REGISTER_CALL_METHOD(rs_listInferredPackages, 1);
    RS_REGISTER_CALL_METHOD(rs_getInferredCompletions, 1);
    RS_REGISTER_CALL_METHOD(rs_getNAMESPACEImportedSymbols, 1);
+   RS_REGISTER_CALL_METHOD(rs_getKnitParamsForDocument, 1);
    
    using boost::bind;
    using namespace module_context;
