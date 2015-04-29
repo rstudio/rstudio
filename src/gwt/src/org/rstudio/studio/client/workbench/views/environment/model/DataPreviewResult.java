@@ -33,6 +33,10 @@ public class DataPreviewResult extends JavaScriptObject
       return this.output;
    }-*/;
 
+   public final native String getEncoding() /*-{
+      return this.encoding[0];
+   }-*/;
+
    public final native JsArrayString getOutputNames() /*-{
       return this.outputNames;
    }-*/;
@@ -51,6 +55,10 @@ public class DataPreviewResult extends JavaScriptObject
 
    public final native String getQuote() /*-{
       return this.quote[0];
+   }-*/;
+   
+   public final native String getComment() /*-{
+      return this.comment[0];
    }-*/;
    
    public final native boolean getDefaultStringsAsFactors() /*-{

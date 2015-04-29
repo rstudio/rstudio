@@ -121,6 +121,7 @@
         separator=sep,
         decimal=dec,
         quote=quote,
+        comment=comment,
         defaultStringsAsFactors=default.stringsAsFactors())
 })
 

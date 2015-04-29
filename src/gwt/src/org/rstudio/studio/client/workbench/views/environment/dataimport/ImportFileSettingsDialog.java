@@ -182,6 +182,8 @@ public class ImportFileSettingsDialog extends ModalDialog<ImportFileSettingsDial
       separator_.addChangeHandler(changeHandler);
       decimal_.addChangeHandler(changeHandler);
       quote_.addChangeHandler(changeHandler);
+      encoding_.addChangeHandler(changeHandler);
+      comment_.addChangeHandler(changeHandler);
    }
 
    private void updateOutput()
@@ -257,6 +259,7 @@ public class ImportFileSettingsDialog extends ModalDialog<ImportFileSettingsDial
                   selectByValue(separator_, response.getSeparator());
                   selectByValue(decimal_, response.getDecimal());
                   selectByValue(quote_, response.getQuote());
+                  selectByValue(comment_, response.getComment());
                   
                   defaultStringsAsFactors_ = response.getDefaultStringsAsFactors();
                   stringsAsFactors_.setValue(defaultStringsAsFactors_);
