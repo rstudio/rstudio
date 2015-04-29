@@ -652,6 +652,10 @@ private:
       [properties setValue: [NSNumber numberWithInteger: NSTIFFCompressionNone]
                     forKey: NSImageCompressionMethod];
    }
+   else // keep compiler happy
+   {
+      imageFileType = NSPNGFileType;
+   }
    
    // write to file
    NSBitmapImageRep *imageRep = [[image representations] objectAtIndex: 0];
