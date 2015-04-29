@@ -1988,11 +1988,8 @@ START:
             return;
          
          MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
-         if (isBinaryOp(cursor) &&
-             status.currentState() == ParseStatus::ParseStateWithinBraces)
-         {
+         if (isBinaryOp(cursor))
             goto BINARY_OPERATOR;
-         }
 
          if (canOpenArgumentList(cursor))
             goto ARGUMENT_LIST;

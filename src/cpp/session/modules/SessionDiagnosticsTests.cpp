@@ -257,6 +257,8 @@ context("Diagnostics")
       EXPECT_NO_ERRORS("({if (1) for(i in 1) {}})");
       
       EXPECT_LINT("c(1,,2)");
+      
+      EXPECT_NO_ERRORS("1:10 %>% {} %>% print");
    }
    
    lintRStudioRFiles();
