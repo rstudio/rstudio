@@ -20,19 +20,25 @@ public class ImportFileSettings
 {
    public ImportFileSettings(FileSystemItem file,
                              String varname,
+                             String encoding,
                              boolean header,
+                             String rowNames,
                              String sep,
                              String decimal,
                              String quote,
+                             String comment,
                              String naStrings,
                              boolean stringsAsFactors)
    {
       file_ = file;
       varname_ = varname;
+      encoding_ = encoding;
       header_ = header;
+      rowNames_ = rowNames;
       sep_ = sep;
       decimal_ = decimal;
       quote_ = quote;
+      comment_ = comment;
       naStrings_ = naStrings;
       stringsAsFactors_ = stringsAsFactors;
    }
@@ -46,10 +52,20 @@ public class ImportFileSettings
    {
       return varname_;
    }
+   
+   public String getEncoding()
+   {
+      return encoding_;
+   }
 
    public boolean isHeader()
    {
       return header_;
+   }
+   
+   public String getRowNames()
+   {
+      return rowNames_;
    }
 
    public String getSep()
@@ -67,6 +83,11 @@ public class ImportFileSettings
       return quote_;
    }
    
+   public String getComment()
+   {
+      return comment_;
+   }
+   
    public String getNAStrings()
    {
       return naStrings_;
@@ -82,21 +103,28 @@ public class ImportFileSettings
       int score = 0;
       if (isHeader() == other.isHeader())
          score++;
+      if (getRowNames().equals(other.getRowNames()))
+         score++;
       if (getSep().equals(other.getSep()))
          score += 2;
       if (getDec().equals(other.getDec()))
          score += 2;
       if (getQuote().equals(other.getQuote()))
          score++;
+      if (getComment().equals(other.getComment()))
+         score++;
       return score;
    }
 
    private final FileSystemItem file_;
    private final String varname_;
+   private final String encoding_;
    private final boolean header_;
+   private final String rowNames_;
    private final String sep_;
    private final String decimal_;
    private final String quote_;
+   private final String comment_;
    private final String naStrings_;
    private final boolean stringsAsFactors_;
 }
