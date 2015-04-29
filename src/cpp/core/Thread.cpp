@@ -14,6 +14,7 @@
  */
 
 #include <core/Thread.hpp>
+#include <core/Macros.hpp>
 
 #include <core/system/System.hpp>
 
@@ -36,7 +37,7 @@ void safeLaunchThread(boost::function<void()> threadMain,
       boost::thread t(threadMain);
 
       if (pThread)
-         *pThread = t.move();
+         *pThread = MOVE_THREAD(t);
    }
    catch(const boost::thread_resource_error& e)
    {

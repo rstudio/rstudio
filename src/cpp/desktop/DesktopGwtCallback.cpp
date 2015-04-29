@@ -1102,6 +1102,10 @@ void GwtCallback::installRtools(QString version, QString installerPath)
 }
 #endif
 
+int GwtCallback::getDisplayDpi()
+{
+   return getDpi();
+}
 
 } // namespace desktop
 } // namespace rstudio

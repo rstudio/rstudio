@@ -30,6 +30,7 @@
 #include <iostream>
 #include <iomanip>
 
+#include <core/Algorithm.hpp>
 #include <core/r_util/RTokenizer.hpp>
 #include <core/collection/Position.hpp>
 #include <core/collection/Stack.hpp>
@@ -37,6 +38,7 @@
 #include <r/RSexp.hpp>
 #include <r/RExec.hpp>
 
+#include <boost/bind.hpp>
 #include <boost/container/flat_set.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/foreach.hpp>
@@ -395,6 +397,13 @@ public:
           message);
    }
    
+   void noExistingDefinitionForParentAssignment(const RToken& rToken)
+   {
+      addLintItem(rToken,
+                  LintTypeStyle,
+                  "no definition for '" + rToken.contentAsUtf8() + "' in scope");
+   }
+   
    const std::vector<LintItem>& get() const
    {
       return lintItems_;
@@ -624,16 +633,18 @@ public:
       return searchPathObjects.count(symbol) != 0;
    }
    
-   static bool doFindFunction(const ParseNode* pNode,
-                              const std::string& name,
-                              const Position& position,
-                              const ParseNode** ppFoundNode)
+private:
+   
+   static bool findFunctionImpl(const ParseNode* pNode,
+                                const std::string& name,
+                                const Position& position,
+                                const ParseNode** ppFoundNode)
    {
       if (!pNode) return false;
       
       if (pNode->name_ == name && pNode->position_ <= position)
       {
-         *ppFoundNode = pNode;
+         if (ppFoundNode) *ppFoundNode = pNode;
          return true;
       }
       
@@ -647,26 +658,90 @@ public:
          const boost::shared_ptr<ParseNode>& pChild = pNode->children_[index];
          if (pChild->name_ == name && pChild->position_ <= position)
          {
-            *ppFoundNode = pChild.get();
+            if (ppFoundNode) *ppFoundNode = pChild.get();
             return true;
          }
       }
       
-      return doFindFunction(pNode->pParent_,
-                            name,
-                            position,
-                            ppFoundNode);
+      return findFunctionImpl(
+               pNode->pParent_,
+               name,
+               position,
+               ppFoundNode);
    }
+   
+public:
    
    bool findFunction(const std::string& name,
                      const Position& position,
-                     const ParseNode** ppFoundNode) const
+                     const ParseNode** ppFoundNode = NULL) const
    {
-      return doFindFunction(
+      return findFunctionImpl(
                this,
                name,
                position,
                ppFoundNode);
+   }
+   
+private:
+   
+   static bool findVariableImpl(const ParseNode* pNode,
+                                const std::string& name,
+                                const Position& position,
+                                bool checkPosition,
+                                Position* pFoundPosition)
+   {
+      if (!pNode) return false;
+      
+      // First, perform a position-wide search in the current node.
+      Positions* pPositions = NULL;
+      core::algorithm::get(pNode->getDefinedSymbols(), name, &pPositions);
+      
+      if (!pPositions)
+         return findVariableImpl(pNode->getParent(),
+                                 name,
+                                 position,
+                                 false,
+                                 pFoundPosition);
+      
+      std::size_t n = pPositions->size();
+      if (checkPosition)
+      {
+         for (std::size_t i = n; i != 0; --i)
+         {
+            Position& definitionPos = (*pPositions)[i - 1];
+            if (definitionPos < position)
+            {
+               if (pFoundPosition) *pFoundPosition = definitionPos;
+               return true;
+            }
+         }
+      }
+      else if (n > 0)
+      {
+         if (pFoundPosition) *pFoundPosition = (*pPositions)[n - 1];
+         return true;
+      }
+      
+      return findVariableImpl(
+               pNode->getParent(),
+               name,
+               position,
+               false,
+               pFoundPosition);
+   }
+   
+public:
+   
+   bool findVariable(const std::string& name,
+                     const Position& position,
+                     Position* pFoundPosition = NULL) const
+   {
+      return findVariableImpl(this,
+                              name,
+                              position,
+                              true,
+                              pFoundPosition);
    }
    
    bool symbolHasDefinitionInTree(const std::string& symbol,
@@ -1082,6 +1157,18 @@ public:
       }
    }
    
+   bool isInIfStatementOrExpression() const
+   {
+      switch (currentState())
+      {
+      case ParseStateIfStatement:
+      case ParseStateIfExpression:
+         return true;
+      default:
+         return false;
+      }
+   }
+   
    bool isInControlFlowStatement() const
    {
       switch (currentState())
@@ -1178,14 +1265,18 @@ public:
    
    void pushBracket(const RToken& token)
    {
+      DEBUG("===== Pushing bracket: " << token);
       bracketStack_.push(token);
    }
    
    void popBracket(const RToken& rhs)
    {
+      DEBUG("===== Popping bracket; cursor: " << rhs);
+      
       using namespace token_utils;
       if (bracketStack_.empty())
       {
+         DEBUG("===== Attempted to pop bracket from empty stack: " << rhs);
          lint_.unexpectedClosingBracket(rhs);
          return;
       }
@@ -1193,6 +1284,7 @@ public:
       const RToken& lhs = bracketStack_.peek();
       if (typeComplement(lhs.type()) != rhs.type())
       {
+         DEBUG("===== Incorrect closing bracket [" << lhs << " : " << rhs << "]");
          lint_.unexpectedClosingBracket(rhs);
          lint_.expectedMatchForOpenBracket(lhs);
       }

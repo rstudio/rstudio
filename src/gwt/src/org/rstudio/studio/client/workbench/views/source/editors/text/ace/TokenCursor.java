@@ -87,8 +87,8 @@ public class TokenCursor extends JavaScriptObject
       return this.moveToPosition(position);
    }-*/;
    
-   public native final boolean moveToPositionRightInclusive(Position position) /*-{
-      return this.moveToPositionRightInclusive(position);
+   public native final boolean moveToPosition(Position position, boolean rightInclusive) /*-{
+      return this.moveToPosition(position, rightInclusive);
    }-*/;
    
    public native final boolean findOpeningBracket(String token, boolean failOnOpenBrace) /*-{

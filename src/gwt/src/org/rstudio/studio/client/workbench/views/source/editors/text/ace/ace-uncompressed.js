@@ -48158,7 +48158,9 @@ var Text = function(parentEl) {
     };
 
     this.getLineHeight = function() {
-        return this.$fontMetrics.$characterSize.height || 0;
+        if (this.$fontMetrics.$characterSize.height)
+          return Math.round(this.$fontMetrics.$characterSize.height);
+        return 0;
     };
 
     this.getCharacterWidth = function() {
@@ -51011,20 +51013,10 @@ function onMouseDown(e) {
     var screenCursor = screenAnchor;
     
     var selectionMode;
-    if (editor.$mouseHandler.$enableJumpToDef) {
-        if (ctrl && alt || accel && alt)
-            selectionMode = "add";
-        else if (alt)
-            selectionMode = "block";
-    } else {
-        if (accel && !alt) {
-            selectionMode = "add";
-            if (!isMultiSelect && shift)
-                return;
-        } else if (alt) {
-            selectionMode = "block";
-        }
-    }
+    if (ctrl && alt || accel && alt)
+        selectionMode = "add";
+    else if (alt)
+        selectionMode = "block";
     
     if (selectionMode && useragent.isMac && ev.ctrlKey) {
         editor.$mouseHandler.cancelContextMenu();

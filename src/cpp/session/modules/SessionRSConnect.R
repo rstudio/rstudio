@@ -35,8 +35,23 @@
 })
 
 .rs.addFunction("getRSConnectDeployments", function(path, rpubsUploadId) {
-   deploymentsFrame <- rsconnect::deployments(path)
-   deployments <- .rs.scalarListFromFrame(deploymentsFrame)
+   # start with an empty list
+   deploymentsFrame <- data.frame(
+     name = character(0),
+     account = character(0),
+     server = character(0),
+     bundleId = character(0),
+     asStatic = logical(0),
+     when = numeric(0))
+   deployments <- list()
+     
+   # attempt to populate the list from rsconnect; this can throw if e.g. the
+   # package is not installed. in the case of any error we'll safely return 
+   # an empty list, or a stored RPubs upload ID if one was given (below)
+   tryCatch({
+     deploymentsFrame <- rsconnect::deployments(path)
+     deployments <- .rs.scalarListFromFrame(deploymentsFrame)
+   }, error = function(e) { })
 
    # no RPubs upload IDs to consider
    if (!is.character(rpubsUploadId) || nchar(rpubsUploadId) == 0) {

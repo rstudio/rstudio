@@ -48,6 +48,8 @@ public class ExportPlot
                              FileSystemItem defaultDirectory,
                              String defaultPlotName,
                              final SavePlotAsPdfOptions options,
+                             double plotWidth,
+                             double plotHeight,
                              final OperationWithInput<SavePlotAsPdfOptions> onClose)
    {
       new SavePlotAsPdfDialog(globalDisplay,
@@ -56,6 +58,8 @@ public class ExportPlot
                               defaultDirectory,
                               defaultPlotName,
                               options,
+                              plotWidth,
+                              plotHeight,
                               onClose).showModal();
    }
    

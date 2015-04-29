@@ -39,6 +39,14 @@ public class RSConnectPublishWizard
           input.getContentType() == RSConnect.CONTENT_TYPE_HTML ||
           input.getContentType() == RSConnect.CONTENT_TYPE_PRES)
       {
+         // self-contained static content
+         return new PublishStaticDestPage("Publish", "Publish", null, input, 
+               false);
+      }
+      else if (input.getContentType() == RSConnect.CONTENT_TYPE_DOCUMENT &&
+               input.getSourceRmd().getExtension().toLowerCase().equals(".md"))
+      {
+         // pure Markdown -- always publish as static
          return new PublishStaticDestPage("Publish", "Publish", null, input, 
                false);
       }

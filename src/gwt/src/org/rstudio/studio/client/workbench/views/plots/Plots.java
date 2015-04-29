@@ -339,11 +339,7 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
 
                Size size = getPlotSize();
                final SavePlotAsPdfOptions currentOptions = 
-                   SavePlotAsPdfOptions.adaptToSize(
-                         uiPrefs_.get().savePlotAsPdfOptions().getValue(),
-                         pixelsToInches(size.width),
-                         pixelsToInches(size.height));
-               
+                         uiPrefs_.get().savePlotAsPdfOptions().getValue();
                
                exportPlot_.savePlotAsPdf(
                  globalDisplay_,
@@ -352,6 +348,8 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
                  defaultDir,
                  stem,
                  currentOptions, 
+                 pixelsToInches(size.width),
+                 pixelsToInches(size.height),
                  new OperationWithInput<SavePlotAsPdfOptions>() {
                     @Override
                     public void execute(SavePlotAsPdfOptions options)

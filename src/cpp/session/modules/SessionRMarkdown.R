@@ -97,6 +97,24 @@
    templateDetails
 })
 
+
+.rs.addFunction("evaluateRmdParams", function(contents) {
+
+   # extract the params using knitr::knit_params
+   knitParams <- knitr::knit_params(contents)
+
+   if (length(knitParams) > 0)
+   {
+      # turn them into a named list
+      params <- list()
+      for (param in knitParams)
+         params[[param$name]] <- param$value
+
+      # inject into global environment
+      assign("params", params, envir = globalenv())
+   }
+})
+
 .rs.addJsonRpcHandler("convert_to_yaml", function(input)
 {
    yaml <- yaml::as.yaml(input)

@@ -19,6 +19,13 @@
 #include <iostream>
 #include <iomanip>
 
+/* Compatibility Macros */
+#if __cplusplus < 201103L
+# define MOVE_THREAD(t) t.move()
+#else
+# define MOVE_THREAD(t) std::move(t)
+#endif
+
 /* Utility Macros */
 
 #if defined(__GNUC__)

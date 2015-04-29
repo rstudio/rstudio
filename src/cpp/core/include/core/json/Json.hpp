@@ -24,6 +24,7 @@
 #include <core/Log.hpp>
 
 #include <boost/type_traits/is_same.hpp>
+#include <boost/optional.hpp>
 
 #include <core/json/spirit/json_spirit_value.h>
 
@@ -146,13 +147,45 @@ inline void logIncompatibleTypes(const Value& value,
    }
 }
 
-template<typename T>
-json::Value toJsonValue(const T& val)
+namespace detail {
+
+template <typename T>
+inline json::Value toJsonValue(const T& val)
 {
    return json::Value(val);
 }
 
+template <typename T>
+inline json::Value toJsonValue(const boost::optional<T>& val)
+{
+   return val ? json::Value(*val) : json::Value();
+}
+
+} // namespace detail
+
+template <typename T>
+inline json::Value toJsonValue(const T& val)
+{
+   return detail::toJsonValue(val);
+}
+
+inline json::Value toJsonValue(const boost::optional<std::string>& val)
+{
+   return val ? json::Value(*val) : json::Value();
+}
+
 json::Value toJsonString(const std::string& val);
+
+// NOTE: we can't use the templatized version for bool because
+// some compilers specialize std::vector<bool> such that the
+// concept check for std::copy fails
+inline json::Array toJsonArray(const std::vector<bool>& val)
+{
+   json::Array results;
+   for (size_t i=0; i<val.size(); i++)
+      results.push_back(val[i] ? true : false);
+   return results;
+}
 
 template<typename T>
 json::Array toJsonArray(const std::vector<T>& val)

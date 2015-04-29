@@ -252,7 +252,7 @@ public class RCompletionManager implements CompletionManager
       if (editor != null)
       {
          TokenCursor cursor = editor.getSession().getMode().getRCodeModel().getTokenCursor();
-         if (cursor.moveToPositionRightInclusive(editor.getCursorPosition()))
+         if (cursor.moveToPosition(editor.getCursorPosition(), true))
          {
             // if the cursor is 'on' a left bracket, move back to the associated
             // token (obstensibly a funciton name)
@@ -705,12 +705,14 @@ public class RCompletionManager implements CompletionManager
             }
          }
          
-         // 
          if (c == ':')
          {
             suggestTimer_.schedule(false, true, false);
             return false;
          }
+         
+         if (c == ' ')
+            return false;
          
          // Always update the current set of completions following
          // a key insertion. Defer execution so the key insertion can

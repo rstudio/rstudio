@@ -206,6 +206,11 @@ public class BrowseCap
    {
       Document.get().getBody().addClassName(OPERATING_SYSTEM);
 
+      if (isWindowsDesktop() && Desktop.getFrame().getDisplayDpi() >= 192)
+      {
+         Document.get().getBody().addClassName("windows-highdpi");
+      }
+
       if (FIXED_UBUNTU_MONO)
       {
          Document.get().getBody().addClassName("ubuntu_mono");

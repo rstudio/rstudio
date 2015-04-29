@@ -634,7 +634,7 @@ private:
    NSImage* image = [self nsImageForPageRegion: regionRect];
    
    // determine format and properties for writing file
-   NSBitmapImageFileType imageFileType = nil;
+   NSBitmapImageFileType imageFileType;
    NSDictionary* properties = nil;
    if ([format isEqualToString: @"png"])
    {
@@ -651,6 +651,10 @@ private:
       imageFileType = NSTIFFFileType;
       [properties setValue: [NSNumber numberWithInteger: NSTIFFCompressionNone]
                     forKey: NSImageCompressionMethod];
+   }
+   else // keep compiler happy
+   {
+      imageFileType = NSPNGFileType;
    }
    
    // write to file

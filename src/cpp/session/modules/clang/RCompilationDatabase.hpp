@@ -63,6 +63,9 @@ private:
 
    void updateForCurrentPackage();
    void updateForSourceCpp(const core::FilePath& cppPath);
+   std::vector<std::string> compileArgsForPackage(
+                                     const core::system::Options& env,
+                                     const core::FilePath& pkgPath);
 
 
    void savePackageCompilationConfig();

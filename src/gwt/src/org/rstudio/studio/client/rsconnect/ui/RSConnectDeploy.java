@@ -789,8 +789,20 @@ public class RSConnectDeploy extends Composite
             contentType_ == RSConnect.CONTENT_TYPE_APP || 
             contentType_ == RSConnect.CONTENT_TYPE_DOCUMENT)
       {
-         appName_.setText(FilePathUtils.fileNameSansExtension(
-               source_.getSourceFile()));
+         // set the app name to the filename
+         String appName = 
+               FilePathUtils.fileNameSansExtension(source_.getSourceFile());
+
+         // if this is a document with the name "index", guess the directory
+         // as the content name rather than the file
+         if (contentType_ == RSConnect.CONTENT_TYPE_DOCUMENT &&
+             appName.toLowerCase().equals("index"))
+         {
+            appName = FilePathUtils.fileNameSansExtension(
+                  source_.getDeployDir());
+         }
+
+         appName_.setText(appName);
       }
       
       ImageResource illustration = null;

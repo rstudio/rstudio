@@ -302,10 +302,7 @@ void RCompilationDatabase::updateForCurrentPackage()
 
    // Run R CMD SHLIB
    FilePath srcDir = pkgPath.childPath("src");
-   FilePath tempSrcFile = srcDir.childPath(
-          kCompilationDbPrefix + core::system::generateUuid() + ".cpp");
-   std::vector<std::string> compileArgs = argsForRCmdSHLIB(env, tempSrcFile);
-
+   std::vector<std::string> compileArgs = compileArgsForPackage(env, srcDir);
    if (!compileArgs.empty())
    {
       // do path substitutions
@@ -335,6 +332,59 @@ void RCompilationDatabase::updateForCurrentPackage()
       savePackageCompilationConfig();
    }
 
+}
+
+std::vector<std::string> RCompilationDatabase::compileArgsForPackage(
+                                  const core::system::Options& env,
+                                  const FilePath& srcDir)
+{
+   // empty compile args to return on error
+   std::vector<std::string> emptyCompileArgs;
+
+   // create a temp dir to call R CMD SHLIB within
+   FilePath tempDir = module_context::tempFile(kCompilationDbPrefix, "dir");
+   Error error = tempDir.ensureDirectory();
+   if (error)
+   {
+      LOG_ERROR(error);
+      return emptyCompileArgs;
+   }
+
+   // copy Makevars to tempdir if it exists
+   FilePath makevarsPath = srcDir.childPath("Makevars");
+   if (makevarsPath.exists())
+   {
+      Error error = makevarsPath.copy(tempDir.childPath("Makevars"));
+      if (error)
+      {
+         LOG_ERROR(error);
+         return emptyCompileArgs;
+      }
+   }
+
+   FilePath makevarsWinPath = srcDir.childPath("Makevars.win");
+   if (makevarsWinPath.exists())
+   {
+      Error error = makevarsWinPath.copy(tempDir.childPath("Makevars.win"));
+      if (error)
+      {
+         LOG_ERROR(error);
+         return emptyCompileArgs;
+      }
+   }
+
+   // call R CMD SHLIB on a temp file to capture the compilation args
+   FilePath tempSrcFile = tempDir.childPath(
+          kCompilationDbPrefix + core::system::generateUuid() + ".cpp");
+   std::vector<std::string> compileArgs = argsForRCmdSHLIB(env, tempSrcFile);
+
+   // remove the tempDir
+   error = tempDir.remove();
+   if (error)
+      LOG_ERROR(error);
+
+   // return the compileArgs
+   return compileArgs;
 }
 
 

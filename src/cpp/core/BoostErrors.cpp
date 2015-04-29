@@ -35,7 +35,7 @@ namespace interprocess {
 class interprocess_error_category : public error_category
 {
 public:
-   const char* name() const ;
+   const char* name() const BOOST_NOEXCEPT;
    std::string message(int ev) const ;
 };
 
@@ -45,7 +45,7 @@ const error_category& interprocess_category()
    return interprocessCategoryConst ;
 }
 
-const char* interprocess_error_category::name() const 
+const char* interprocess_error_category::name() const BOOST_NOEXCEPT
 {
    return "interprocess" ;
 }
@@ -169,7 +169,7 @@ enum errc_t {
 class thread_error_category : public error_category
 {
 public:
-   const char* name() const ;
+   const char* name() const BOOST_NOEXCEPT;
    std::string message(int ev) const ;
 };
 
@@ -179,7 +179,7 @@ const error_category& thread_category()
    return threadCategoryConst ;
 }
 
-const char* thread_error_category::name() const 
+const char* thread_error_category::name() const BOOST_NOEXCEPT
 {
    return "thread" ;
 }

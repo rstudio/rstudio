@@ -54,7 +54,6 @@ core::Error filterString(
                 const boost::iostreams::regex_filter& filter,
                 std::string* pOutput);
 
-
 } // namespace regex_utils
 } // namespace core 
 } // namespace rstudio

@@ -1147,7 +1147,11 @@ bool maybePerformsNSEImpl(SEXP node,
 std::set<SEXP> makeKnownNSEFunctions()
 {
    std::set<SEXP> set;
-   
+
+   // .Internal performs lookup of functions in a way
+   // not readily exposed (nor available in the evaluation env)
+   set.insert(findFunction(".Internal", "base"));
+
    set.insert(findFunction("with", "base"));
    set.insert(findFunction("within", "base"));
    

@@ -95,3 +95,8 @@ div.vignettes a:hover {
    background: rgb(85%, 85%, 85%);
 }
 
+table p {
+   margin-top: 0;
+   margin-bottom: 6px;
+}
+

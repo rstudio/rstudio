@@ -29,7 +29,7 @@
 
 @external windowframe, windowframe-maximized, windowframe-exclusive;
 
-@external windows, macintosh, linux;
+@external windows, windows-highdpi, macintosh, linux;
 @external ubuntu_mono;
 
 @external dialogTopLeft, dialogTopLeftInner,
@@ -1211,7 +1211,9 @@ body.ubuntu_mono .searchBox {
 
 .macintosh .gwt-CheckBox input[type="checkbox"],
 .linux .gwt-CheckBox input[type="checkbox"],
-.linux .gwt-RadioButton input[type="radio"] {
+.linux .gwt-RadioButton input[type="radio"],
+.windows-highdpi .gwt-CheckBox input[type="checkbox"],
+.windows-highdpi .gwt-RadioButton input[type="radio"] {
   -webkit-appearance: none;
   outline: none;
   width: 13px;
@@ -1222,12 +1224,14 @@ body.ubuntu_mono .searchBox {
   margin: 3px 3px 5px 3px;
 }
 
+.macintosh .gwt-CheckBox input[type="checkbox"],
 .linux .gwt-CheckBox input[type="checkbox"],
-.macintosh .gwt-CheckBox input[type="checkbox"] {
+.windows-highdpi .gwt-CheckBox input[type="checkbox"] {
   -webkit-border-radius: 3px;
 }
 
-.linux .gwt-RadioButton input[type="radio"] {
+.linux .gwt-RadioButton input[type="radio"],
+.windows-highdpi .gwt-RadioButton input[type="radio"] {
   -webkit-border-radius: 7px;
 }
 
@@ -1236,28 +1240,40 @@ body.ubuntu_mono .searchBox {
 .linux .gwt-CheckBox input[type="checkbox"]:focus,
 .linux .gwt-CheckBox input[type="checkbox"]:active,
 .linux .gwt-RadioButton input[type="radio"]:focus,
-.linux .gwt-RadioButton input[type="radio"]:active {
+.linux .gwt-RadioButton input[type="radio"]:active,
+.windows-highdpi .gwt-CheckBox input[type="checkbox"]:focus,
+.windows-highdpi .gwt-CheckBox input[type="checkbox"]:active,
+.windows-highdpi .gwt-RadioButton input[type="radio"]:focus,
+.windows-highdpi .gwt-RadioButton input[type="radio"]:active
+{
   border-color: #707070;
 }
 
 .macintosh .gwt-CheckBox input[type="checkbox"]:checked,
 .linux .gwt-CheckBox input[type="checkbox"]:checked,
-.linux .gwt-RadioButton input[type="radio"]:checked {
+.linux .gwt-RadioButton input[type="radio"]:checked,
+.windows-highdpi .gwt-CheckBox input[type="checkbox"]:checked,
+.windows-highdpi .gwt-RadioButton input[type="radio"]:checked
+{
   position: relative;
 }
 
 .macintosh .gwt-CheckBox input[type="checkbox"]:checked:before,
-.linux .gwt-CheckBox input[type="checkbox"]:checked:before {
+.linux .gwt-CheckBox input[type="checkbox"]:checked:before, 
+.windows-highdpi .gwt-CheckBox input[type="checkbox"]:checked:before {
   background: MACCHECK;
 }
 
-.linux .gwt-RadioButton input[type="radio"]:checked:before {
+.linux .gwt-RadioButton input[type="radio"]:checked:before,
+.windows-highdpi .gwt-RadioButton input[type="radio"]:checked:before {
   background: RADIOBUTTONON;
 }
 
 .macintosh .gwt-CheckBox input[type="checkbox"]:checked:before,
 .linux .gwt-CheckBox input[type="checkbox"]:checked:before,
-.linux .gwt-RadioButton input[type="radio"]:checked:before {
+.linux .gwt-RadioButton input[type="radio"]:checked:before,
+.windows-highdpi .gwt-CheckBox input[type="checkbox"]:checked:before,
+.windows-highdpi .gwt-RadioButton input[type="radio"]:checked:before {
   content: '';
   display: block;
   position: absolute;

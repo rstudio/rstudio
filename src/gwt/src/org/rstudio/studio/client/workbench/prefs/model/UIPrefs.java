@@ -211,6 +211,10 @@ public class UIPrefs extends UIPrefsAccessor implements UiPrefsChangedHandler
          focusConsoleAfterExec().setGlobalValue(
                          newUiPrefs.focusConsoleAfterExec().getGlobalValue());
          
+         // save before sourcing
+         saveBeforeSourcing().setGlobalValue(
+                         newUiPrefs.saveBeforeSourcing().getGlobalValue());
+         
          // syntax color console
          syntaxColorConsole().setGlobalValue(
                              newUiPrefs.syntaxColorConsole().getGlobalValue());
