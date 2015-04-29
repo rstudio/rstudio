@@ -1516,6 +1516,69 @@ assign(x = ".rs.acCompletionTypes",
    return(FALSE)
 })
 
+.rs.addFunction("getKnitParamsForDocument", function(documentId)
+{
+   .Call(.rs.routines$rs_getKnitParamsForDocument, documentId)
+})
+
+.rs.addFunction("knitParams", function(content)
+{
+   if (!("knitr" %in% loadedNamespaces()))
+      if (!requireNamespace("knitr", quietly = TRUE))
+         return(NULL)
+   
+   if (!("knit_params" %in% getNamespaceExports(asNamespace("knitr"))))
+      return(NULL)
+   
+   knitr::knit_params(content)
+})
+
+.rs.addFunction("getCompletionsRMarkdownParams", function(token, type, documentId)
+{
+   # TODO: Bail if 'params' is already defined?
+   if (exists("params", envir = .GlobalEnv))
+      return(NULL)
+   
+   params <- .rs.getKnitParamsForDocument(documentId)
+   if (!length(params))
+      return(.rs.emptyCompletions())
+   
+   names <- vapply(params, FUN.VALUE = character(1), USE.NAMES = FALSE, function(x) {
+      x$name
+   })
+   
+   completions <- .rs.selectFuzzyMatches(names, token)
+   .rs.makeCompletions(token = token,
+                       results = completions)
+})
+
+.rs.addFunction("injectKnitrParamsObject", function(documentId)
+{
+   if (exists("params", envir = .GlobalEnv))
+      return(FALSE)
+   
+   params <- .rs.getKnitParamsForDocument(documentId)
+   if (!length(params))
+      return(FALSE)
+   
+   mockedObject <- lapply(params, `[[`, "value")
+   names(mockedObject) <- unlist(lapply(params, `[[`, "name"))
+   class(mockedObject) <- "rstudio_mock"
+   assign("params", mockedObject, envir = .GlobalEnv)
+   
+   return(TRUE)
+})
+
+.rs.addFunction("removeKnitrParamsObject", function()
+{
+   if (exists("params", envir = .GlobalEnv))
+   {
+      params <- get("params", envir = .GlobalEnv)
+      if (inherits(params, "rstudio_mock"))
+         remove(params, envir = .GlobalEnv) 
+   }
+})
+
 .rs.addJsonRpcHandler("get_completions", function(token,
                                                   string,
                                                   type,
@@ -1538,6 +1601,11 @@ assign(x = ".rs.acCompletionTypes",
    excludeArgs <- .rs.setEncodingUnknownToUTF8(excludeArgs)
    excludeArgsFromObject <- .rs.setEncodingUnknownToUTF8(excludeArgsFromObject)
    filePath <- .rs.setEncodingUnknownToUTF8(filePath)
+   
+   # Inject 'params' into the global env to provide for completions in
+   # parameterized R Markdown documents
+   if (length(string) && string[[1]] == "params" && .rs.injectKnitrParamsObject(documentId))
+      on.exit(.rs.removeKnitrParamsObject(), add = TRUE)
    
    # Get the currently active frame
    envir <- .rs.getActiveFrame(1L)
