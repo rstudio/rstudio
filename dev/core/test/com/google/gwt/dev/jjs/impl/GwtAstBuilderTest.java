@@ -191,6 +191,11 @@ public class GwtAstBuilderTest extends JJSTestBase {
         "    Object anonymousInner = new Object(){};",
         "    Lambda lambda = () -> {};",
         "    Lambda methodRef = NestedClasses::referencedMethod;",
+        "    new Lambda(){",
+        "      public void run(){",
+        "        Lambda lambda = () -> {};",
+        "      }",
+        "    };",
         "  }",
         "}"
     ));
@@ -219,6 +224,10 @@ public class GwtAstBuilderTest extends JJSTestBase {
 
     JDeclaredType topLevel = program.getFromTypeMap("test.NestedClasses");
     assertEquals(JDeclaredType.NestedClassDisposition.TOP_LEVEL, topLevel.getClassDisposition());
+
+    JDeclaredType lambdaNestedInner = program.getFromTypeMap("test.NestedClasses$2$lambda$0$Type");
+    assertEquals(JDeclaredType.NestedClassDisposition.LAMBDA, lambdaNestedInner
+        .getClassDisposition());
   }
 
   public void testUniqueArrayTypeInstance() throws UnableToCompleteException {

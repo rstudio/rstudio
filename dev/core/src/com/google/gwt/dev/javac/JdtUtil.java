@@ -16,6 +16,7 @@
 package com.google.gwt.dev.javac;
 
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
+import com.google.gwt.dev.util.Name.InternalName;
 import com.google.gwt.thirdparty.guava.common.base.Joiner;
 import com.google.gwt.thirdparty.guava.common.base.Strings;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
@@ -30,6 +31,7 @@ import org.eclipse.jdt.internal.compiler.lookup.Binding;
 import org.eclipse.jdt.internal.compiler.lookup.ClassScope;
 import org.eclipse.jdt.internal.compiler.lookup.ElementValuePair;
 import org.eclipse.jdt.internal.compiler.lookup.FieldBinding;
+import org.eclipse.jdt.internal.compiler.lookup.LocalTypeBinding;
 import org.eclipse.jdt.internal.compiler.lookup.MethodBinding;
 import org.eclipse.jdt.internal.compiler.lookup.NestedTypeBinding;
 import org.eclipse.jdt.internal.compiler.lookup.ReferenceBinding;
@@ -66,6 +68,26 @@ public final class JdtUtil {
       result.append(name[i]);
     }
     return result.toString();
+  }
+
+  /**
+   * Returns the name of the class from reference binding.
+   * <p>
+   * JDT Core (at least 3.11.0.v20150407) returns <code>$Local$</code> synthetic name for local
+   * classes.<br>
+   * This method aware about local classes and instead of <code>$Local$</code> synthetic name
+   * returns fully qualified name of the local class in form of anonymous class (e.g.
+   * <code>test.Class1$2</code>).
+   * </p>
+   */
+  public static String getClassName(ReferenceBinding binding) {
+    if (binding instanceof LocalTypeBinding) {
+      // Using here constantPoolName() instead of coumpoundName due JDT not computing the
+      // right compoundName for lambdas inside local class.
+      return InternalName.toBinaryName(String.valueOf(binding.constantPoolName()));
+    }
+
+    return asDottedString(binding.compoundName);
   }
 
   /**

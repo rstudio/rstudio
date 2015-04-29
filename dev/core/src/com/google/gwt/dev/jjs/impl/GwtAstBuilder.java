@@ -1226,8 +1226,10 @@ public class GwtAstBuilder {
 
       // Create an inner class to implement the interface and SAM method.
       // class lambda$0$Type implements T {}
-      JClassType innerLambdaClass = createInnerClass(JdtUtil.asDottedString(x.binding.declaringClass.compoundName) +
-          "$" + new String(x.binding.selector), x, info, funcType);
+
+      String innerLambdaClassName =
+          JdtUtil.getClassName(x.binding.declaringClass) + "$" + String.valueOf(x.binding.selector);
+      JClassType innerLambdaClass = createInnerClass(innerLambdaClassName, x, info, funcType);
       JConstructor ctor = new JConstructor(info, innerLambdaClass, AccessModifier.PRIVATE);
 
       // locals captured by the lambda and saved as fields on the anonymous inner class
