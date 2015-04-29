@@ -3281,29 +3281,61 @@ public class TextEditingTarget implements
       docDisplay_.scrollToY(scrollPosition);
    }
 
-   private void executeSweaveChunk(Scope chunk, boolean scrollNearTop)
+   private void executeSweaveChunk(final Scope chunk, 
+                                   final boolean scrollNearTop)
    {
       if (chunk == null)
          return;
 
-      Range range = scopeHelper_.getSweaveChunkInnerRange(chunk);
-      if (scrollNearTop)
-      {
-         docDisplay_.navigateToPosition(
-               SourcePosition.create(range.getStart().getRow(),
-                                     range.getStart().getColumn()),
-               true);
-      }
-      docDisplay_.setSelection(
-            docDisplay_.createSelection(range.getStart(), range.getEnd()));
-      if (!range.isEmpty())
-      {
-         codeExecution_.setLastExecuted(range.getStart(), range.getEnd());
-         String code = scopeHelper_.getSweaveChunkText(chunk);
-         events_.fireEvent(new SendToConsoleEvent(code, true));
+      // command used to execute chunk (we may need to defer it if this
+      // is an Rmd document as populating params might be necessary)
+      final Command executeChunk = new Command() {
+         @Override
+         public void execute()
+         {
+            Range range = scopeHelper_.getSweaveChunkInnerRange(chunk);
+            if (scrollNearTop)
+            {
+               docDisplay_.navigateToPosition(
+                     SourcePosition.create(range.getStart().getRow(),
+                                           range.getStart().getColumn()),
+                     true);
+            }
+            docDisplay_.setSelection(
+                docDisplay_.createSelection(range.getStart(), range.getEnd()));
+            if (!range.isEmpty())
+            {
+               codeExecution_.setLastExecuted(range.getStart(), range.getEnd());
+               String code = scopeHelper_.getSweaveChunkText(chunk);
+               events_.fireEvent(new SendToConsoleEvent(code, true));
 
-         docDisplay_.collapseSelection(true);
+               docDisplay_.collapseSelection(true);
+            }
+         }
+      };
+      
+      // Rmd allows server-side prep for chunk execution
+      if (fileType_.isRmd())
+      {
+         // ensure source is synced with server
+         docUpdateSentinel_.withSavedDoc(new Command() {
+            @Override
+            public void execute()
+            {
+               // allow server to prepare for chunk execution
+               // (e.g. by populating 'params' in the global environment)
+               rmarkdownHelper_.prepareForRmdChunkExecution(
+                     docUpdateSentinel_.getId(),
+                     docUpdateSentinel_.getContents(), 
+                     executeChunk);
+            }
+         });  
       }
+      else
+      {
+         executeChunk.execute();
+      }
+      
    }
    
    @Handler

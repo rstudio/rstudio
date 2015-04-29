@@ -56,4 +56,7 @@ public interface RMarkdownServerOperations extends CryptoServerOperations
                        ServerRequestCallback<RmdTemplateContent> requestCallback);
    
    public String getApplicationURL(String pathName);
+   
+   void prepareForRmdChunkExecution(String id,
+                                    ServerRequestCallback<Void> requestCallback);
 }
