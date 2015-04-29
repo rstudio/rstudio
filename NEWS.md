@@ -28,7 +28,7 @@
 
 * Syntax errors are highlighted and displayed in red
   (e.g. missing commas, unmatched brackets)
-* Function calls are checked and validated with e.g. `match.call()`
+* Function calls are checked and validated with e.g. match.call()
 * Warn if variable is used but no definition is available in scope
 * Warn if variable is defined but never subsequently used
 * Whitespace diagnostics to help code conform to http://adv-r.had.co.nz/Style.html
@@ -71,7 +71,7 @@
   CoffeeScript, C#, Go, Groovy, Haskell, Java, Julia, Lisp, Lua, Matlab, Perl,
   Ruby, Rust, and Scala.
 * Syntax highlighting for GraphViz and mermaid.js diagrams. 
-* Diagram previews using the `DiagrammeR` package (requires recent version from GitHub).
+* Diagram previews using the DiagrammeR package (requires recent version from GitHub).
 * Syntax highlighting modes for many new languages including Clojure, CoffeeScript, C#, Graphviz, Go, Groovy, Haskell, Java, Julia, Lisp, Lua, Matlab, Perl, Ruby, Rust, Scala, and Stan.
 * Keyword and text based code completion for many languages including JavaScript, HTML, CSS, Python, and SQL.
 * A wide variety of new editor themes (color schemes) are now available.
