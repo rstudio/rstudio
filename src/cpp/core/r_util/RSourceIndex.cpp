@@ -13,7 +13,7 @@
  *
  */
 
-// #define RSTUDIO_DEBUG_LABEL "source_index"
+#define RSTUDIO_DEBUG_LABEL "source_index"
 // #define RSTUDIO_ENABLE_DEBUG_MACROS
 
 #include <core/r_util/RSourceIndex.hpp>
@@ -237,7 +237,7 @@ RSourceIndex::RSourceIndex(const std::string& context,
 
    // tokenize
    RTokens rTokens(wCode, RTokens::StripWhitespace | RTokens::StripComments);
-
+   
    // track nest level
    int braceLevel = 0;
    int parenLevel = 0;
@@ -378,15 +378,6 @@ RSourceIndex::RSourceIndex(const std::string& context,
          type = RSourceItem::Function;
          name = idToken.content();
          tokenOffset = idToken.offset();
-      }
-      
-      // is this a call to 'shinyServer' or 'shinyUI'?
-      else if (token.contentEquals(L"shinyServer") ||
-               token.contentEquals(L"shinyUI") ||
-               token.contentEquals(L"shinyApp") ||
-               token.contentEquals(L"shinyAppDir"))
-      {
-         addInferredPackage("shiny");
       }
       
       // is this a library / require call?

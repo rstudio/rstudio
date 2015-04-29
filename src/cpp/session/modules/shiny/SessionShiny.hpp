@@ -29,6 +29,10 @@ namespace session {
 namespace modules { 
 namespace shiny {
 
+bool isShinyDocument(const core::FilePath& filePath);
+bool isShinyDocument(const core::FilePath& filePath,
+                     const std::string& contents);
+
 core::Error initialize();
                        
 } // namespace shiny

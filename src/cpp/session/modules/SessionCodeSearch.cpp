@@ -49,6 +49,8 @@
 #include <session/SessionUserSettings.hpp>
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionAsyncRProcess.hpp>
+#include <session/SessionRUtil.hpp>
+
 #include <session/projects/SessionProjects.hpp>
 
 #include "SessionAsyncPackageInformation.hpp"
@@ -948,9 +950,27 @@ void RSourceIndexes::update(
       return;
 
    // index the source
+   std::string code;
+   Error error = r_utils::extractRCode(pDoc->contents(), pDoc->type(), &code);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+   
    boost::shared_ptr<r_util::RSourceIndex> pIndex(
-       new r_util::RSourceIndex(pDoc->path(), pDoc->contents()));
-
+       new r_util::RSourceIndex(pDoc->path(), code));
+   
+   // add implicitly available packages
+   FilePath filePath = module_context::resolveAliasedPath(pDoc->path());
+   std::set<std::string> implicitlyAvailable =
+         r_utils::implicitlyAvailablePackages(filePath, pDoc->contents());
+   
+   BOOST_FOREACH(const std::string& package, implicitlyAvailable)
+   {
+      pIndex->addInferredPackage(package);
+   }
+   
    // insert it
    indexes_[pDoc->id()] = pIndex;
    
