@@ -1099,8 +1099,7 @@ bool isNSEPrimitiveSymbolOrString(
 {
    if (TYPEOF(objectSEXP) == SYMSXP)
       return nsePrimitives.count(CHAR(PRINTNAME(objectSEXP)));
-   else if (TYPEOF(objectSEXP) == STRSXP &&
-            length(objectSEXP) == 1)
+   else if (TYPEOF(objectSEXP) == STRSXP && length(objectSEXP) == 1)
       return nsePrimitives.count(CHAR(STRING_ELT(objectSEXP, 0)));
    
    return false;
@@ -1117,14 +1116,19 @@ bool isCallToNSEFunction(SEXP nodeSEXP,
       {
          const char* name = CHAR(PRINTNAME(headSEXP));
          if (nsePrimitives.count(name))
+         {
+            *pResult = true;
             return true;
+         }
          
-         if (strcmp(name, "::") == 0 ||
-             strcmp(name, ":::") == 0)
+         if (strcmp(name, "::") == 0 || strcmp(name, ":::") == 0)
          {
             SEXP fnSEXP = CADDR(nodeSEXP);
             if (isNSEPrimitiveSymbolOrString(fnSEXP, nsePrimitives))
+            {
+               *pResult = true;
                return true;
+            }
          }
       }
    }
