@@ -3894,6 +3894,17 @@ public class RemoteServer implements Server
    }
    
    @Override
+   public void prepareForRmdChunkExecution(
+                                String id,
+                                ServerRequestCallback<Void> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, 
+                  "prepare_for_rmd_chunk_execution", 
+                  id, 
+                  requestCallback);
+   }
+   
+   @Override
    public void unsatisfiedDependencies(
       JsArray<Dependency> dependencies,
       boolean silentUpdate,

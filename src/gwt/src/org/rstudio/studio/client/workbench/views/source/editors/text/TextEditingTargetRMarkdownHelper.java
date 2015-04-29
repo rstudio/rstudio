@@ -63,6 +63,7 @@ import org.rstudio.studio.client.rmarkdown.model.YamlTree;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperations;
@@ -117,8 +118,7 @@ public class TextEditingTargetRMarkdownHelper
    {
       if (extendedType.length() == 0 && 
           fileType.isMarkdown() &&
-          !contents.contains("<!-- rmarkdown v1 -->") && 
-          session_.getSessionInfo().getRMarkdownPackageAvailable())
+          useRMarkdownV2(contents))
       {
          return "rmarkdown";
       }
@@ -293,6 +293,31 @@ public class TextEditingTargetRMarkdownHelper
          }
       });
    }
+   
+   
+   public void prepareForRmdChunkExecution(String id, 
+                                        String contents,
+                                        final Command onExecuteChunk)
+   {
+      // if this is R Markdown v2 then look for params
+      if (useRMarkdownV2(contents))
+      {
+         server_.prepareForRmdChunkExecution(id, 
+                                             new VoidServerRequestCallback() {
+            
+            @Override
+            protected void onCompleted()
+            {
+               onExecuteChunk.execute();
+            }
+         });
+      }
+      else
+      {
+         onExecuteChunk.execute();
+      }
+   }
+  
    
    public boolean verifyPrerequisites(WarningBarDisplay display,
                                       TextFileType fileType)
@@ -699,6 +724,12 @@ public class TextEditingTargetRMarkdownHelper
       }
 
       frontMatterToYAML(frontMatter, null, onCompleted);
+   }
+   
+   private boolean useRMarkdownV2(String contents)
+   {
+      return !contents.contains("<!-- rmarkdown v1 -->") && 
+              session_.getSessionInfo().getRMarkdownPackageAvailable();
    }
    
    private Session session_;

@@ -35,6 +35,7 @@ public class VoidServerRequestCallback extends ServerRequestCallback<Void>
          progress_.onCompleted();
       
       onSuccess();
+      onCompleted();
    }
    
    public void onError(ServerError error)
@@ -45,6 +46,7 @@ public class VoidServerRequestCallback extends ServerRequestCallback<Void>
          progress_.onError(error.getUserMessage());
       
       onFailure();
+      onCompleted();
    }
    
    protected void onSuccess()
@@ -53,6 +55,11 @@ public class VoidServerRequestCallback extends ServerRequestCallback<Void>
    }
    
    protected void onFailure()
+   {
+      
+   }
+   
+   protected void onCompleted()
    {
       
    }
