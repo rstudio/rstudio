@@ -442,6 +442,65 @@ void checkNoDefinitionInScope(const FilePath& origin,
    }
 }
 
+bool lintOptionValueAsBool(const std::wstring& value)
+{
+   if (value.empty())
+      return false;
+   
+   std::wstring lower = boost::algorithm::to_lower_copy(value);
+   if (lower[0] == 'n' || lower[0] == 'f')
+      return false;
+   
+   if (lower[0] == 'y' || lower[0] == 't')
+      return true;
+   
+   return false;
+}
+
+void applyOptionPair(const std::wstring& name,
+                     const std::wstring& value,
+                     ParseOptions* pOptions,
+                     bool* pNoLint)
+{
+   bool valueBool = lintOptionValueAsBool(value);
+   if (name == L"style")
+      pOptions->setRecordStyleLint(valueBool);
+}
+
+void setFileLocalParseOptions(const std::wstring& rCode,
+                              ParseOptions* pOptions,
+                              bool* pNoLint)
+{
+   using namespace string_utils;
+   
+   static const boost::regex reLintComments("^[\\s\\n]*#+>");
+   
+   if (boost::regex_search(rCode.begin(), rCode.end(), reLintComments))
+   {
+      std::size_t startPos = rCode.find(L"#>") + 2;
+      std::size_t endPos = rCode.find(L'\n', startPos);
+      
+      std::wstring line = substring(rCode, startPos, endPos);
+      std::size_t startIndex = 0;
+      while (true)
+      {
+         std::size_t colonIndex = line.find(L':', startIndex);
+         if (colonIndex == std::wstring::npos)
+            break;
+         
+         std::size_t endIndex = line.find(L',', colonIndex);
+         if (endIndex == std::wstring::npos)
+            endIndex = line.size();
+         
+         std::wstring name = trimWhitespace(substring(line, startIndex, colonIndex));
+         std::wstring value = trimWhitespace(substring(line, colonIndex + 1, endIndex));
+         
+         applyOptionPair(name, value, pOptions, pNoLint);
+         startIndex = endIndex + 1;
+      }
+   }
+}
+
 } // end anonymous namespace
 
 ParseResults parse(const std::wstring& rCode,
@@ -450,7 +509,6 @@ ParseResults parse(const std::wstring& rCode,
                    bool isExplicit = false)
 {
    ParseResults results;
-   
    ParseOptions options;
    
    options.setLintRFunctions(
@@ -467,6 +525,11 @@ ParseResults parse(const std::wstring& rCode,
    
    options.setRecordStyleLint(
             userSettings().enableStyleDiagnostics());
+   
+   bool noLint = false;
+   setFileLocalParseOptions(rCode, &options, &noLint);
+   if (noLint)
+      return ParseResults();
    
    results = rparser::parse(rCode, options);
    

@@ -585,7 +585,6 @@ bool isPrefixOf(const std::string& self, const std::string& prefix)
    return boost::algorithm::starts_with(self, prefix);
 }
 
-
 } // namespace string_utils
 } // namespace core 
 } // namespace rstudio

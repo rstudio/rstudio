@@ -1313,6 +1313,80 @@ private:
    FunctionInformation info_;
 };
 
+bool lintOptionValueAsBool(const std::wstring& value)
+{
+   if (value.empty())
+      return false;
+   
+   std::wstring lower = boost::algorithm::to_lower_copy(value);
+   if (lower[0] == 'n' || lower[0] == 'f')
+      return false;
+   
+   if (lower[0] == 'y' || lower[0] == 't')
+      return true;
+   
+   return false;
+}
+
+void applyOptionPair(const std::wstring& name,
+                     const std::wstring& value,
+                     ParseOptions* pOptions,
+                     bool* pNoLint)
+{
+   std::wcout << "Name:  '" << name << "'\n";
+   std::wcout << "Value: '" << value << "'\n";
+   
+   bool valueBool = lintOptionValueAsBool(value);
+   if (name == L"style")
+      pOptions->setRecordStyleLint(valueBool);
+   
+   if (name == L"lint")
+   {
+      if (value == L"core")
+      {
+         pOptions->setCheckArgumentsToRFunctionCalls(false);
+         pOptions->setLintRFunctions(false);
+         pOptions->setRecordStyleLint(false);
+         pOptions->setWarnIfNoSuchVariableInScope(false);
+         pOptions->setWarnIfVariableIsDefinedButNotUsed(false);
+      }
+   }
+}
+
+void setFileLocalParseOptions(const std::wstring& rCode,
+                              ParseOptions* pOptions,
+                              bool* pNoLint)
+{
+   using namespace string_utils;
+   
+   static const boost::regex reLintComments("^[\\s\\n]*#+>");
+   
+   if (boost::regex_search(rCode.begin(), rCode.end(), reLintComments))
+   {
+      std::size_t startPos = rCode.find(L"#>") + 2;
+      std::size_t endPos = rCode.find(L'\n', startPos);
+      
+      std::wstring line = substring(rCode, startPos, endPos);
+      std::size_t startIndex = 0;
+      while (true)
+      {
+         std::size_t colonIndex = line.find(L':', startIndex);
+         if (colonIndex == std::wstring::npos)
+            break;
+         
+         std::size_t endIndex = line.find(L',', colonIndex);
+         if (endIndex == std::wstring::npos)
+            endIndex = line.size();
+         
+         std::wstring name = trimWhitespace(substring(line, startIndex, colonIndex));
+         std::wstring value = trimWhitespace(substring(line, colonIndex + 1, endIndex));
+         
+         applyOptionPair(name, value, pOptions, pNoLint);
+         startIndex = endIndex + 1;
+      }
+   }
+}
+
 } // anonymous namespace
 
 void doParse(RTokenCursor&, ParseStatus&);
@@ -1333,8 +1407,8 @@ ParseResults parse(const std::wstring& rCode,
    if (rTokens.empty())
       return ParseResults();
    
-   ParseStatus status(parseOptions);
    RTokenCursor cursor(rTokens);
+   ParseStatus status(parseOptions);
    
    doParse(cursor, status);
    
