@@ -2207,8 +2207,6 @@ ARGUMENT_LIST:
          GOTO_INVALID_TOKEN(cursor);
       }
       
-      status.pushBracket(cursor);
-      
       // Skip over data.table `[` calls
       if (isDataTableSingleBracketCall(cursor))
       {
@@ -2220,6 +2218,7 @@ ARGUMENT_LIST:
          goto ARGUMENT_LIST_END;
       }
       
+      status.pushBracket(cursor);
       MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
       
 ARGUMENT_START:
