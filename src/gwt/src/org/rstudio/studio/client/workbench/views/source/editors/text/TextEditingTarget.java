@@ -916,9 +916,12 @@ public class TextEditingTarget implements
                   Position breakpointPosition = 
                         Position.create(event.getLineNumber() - 1, 1);
                   
-                  // if we're not in function scope, set a top-level breakpoint
-                  ScopeFunction innerFunction =
-                        docDisplay_.getFunctionAtPosition(breakpointPosition, false);
+                  // if we're not in function scope, or this is a Shiny file,
+                  // set a top-level (aka. Shiny-deferred) breakpoint
+                  ScopeFunction innerFunction = null;
+                  if (!extendedType_.equals("shiny")) 
+                     innerFunction = docDisplay_.getFunctionAtPosition(
+                           breakpointPosition, false);
                   if (innerFunction == null || !innerFunction.isFunction() ||
                       StringUtil.isNullOrEmpty(innerFunction.getFunctionName()))
                   {
