@@ -779,18 +779,22 @@ public class RemoteServer implements Server
    }
 
    public void getOutputPreview(String dataFilePath,
+                                String encoding,
                                 boolean heading,
                                 String separator,
                                 String decimal,
                                 String quote,
+                                String comment,
                                 ServerRequestCallback<DataPreviewResult> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(dataFilePath));
-      params.set(1, JSONBoolean.getInstance(heading));
-      params.set(2, new JSONString(separator));
-      params.set(3, new JSONString(decimal));
-      params.set(4, new JSONString(quote));
+      params.set(1, new JSONString(encoding));
+      params.set(2, JSONBoolean.getInstance(heading));
+      params.set(3, new JSONString(separator));
+      params.set(4, new JSONString(decimal));
+      params.set(5, new JSONString(quote));
+      params.set(6, new JSONString(comment));
 
       sendRequest(RPC_SCOPE,
                   GET_OUTPUT_PREVIEW,

@@ -27,6 +27,7 @@ import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.*;
+
 import org.rstudio.core.client.Invalidation;
 import org.rstudio.core.client.Invalidation.Token;
 import org.rstudio.core.client.files.FileSystemItem;
@@ -39,6 +40,8 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.views.environment.model.DataPreviewResult;
 import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentServerOperations;
+import org.rstudio.studio.client.workbench.views.source.editors.text.IconvListResult;
+import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
 
 public class ImportFileSettingsDialog extends ModalDialog<ImportFileSettingsDialogResult>
 {
@@ -66,6 +69,7 @@ public class ImportFileSettingsDialog extends ModalDialog<ImportFileSettingsDial
    
    public ImportFileSettingsDialog(
          EnvironmentServerOperations server,
+         SourceServerOperations sourceServer,
          FileSystemItem dataFile,
          String varname,
          String caption,
@@ -74,6 +78,7 @@ public class ImportFileSettingsDialog extends ModalDialog<ImportFileSettingsDial
    {
       super(caption, operation);
       server_ = server;
+      sourceServer_ = sourceServer;
       dataFile_ = dataFile;
       globalDisplay_ = globalDisplay;
 
@@ -101,6 +106,38 @@ public class ImportFileSettingsDialog extends ModalDialog<ImportFileSettingsDial
       quote_.addItem("Double quote (\")", "\"");
       quote_.addItem("Single quote (')", "'");
       quote_.addItem("None", "");
+      
+      comment_.addItem("None", "");
+      comment_.addItem("#", "#");
+      comment_.addItem("!", "!");
+      comment_.addItem("%", "%");
+      comment_.addItem("@", "@");
+      comment_.addItem("/", "/");
+      comment_.addItem("~", "~");
+      
+      rowNames_.addItem("Automatic", autoValue);
+      rowNames_.addItem("Use first column", "1");
+      rowNames_.addItem("Use numbers", "NULL");
+      
+      encoding_.addItem("Automatic", "unknown");
+      sourceServer_.iconvlist(new ServerRequestCallback<IconvListResult>()
+      {
+         @Override
+         public void onResponseReceived(IconvListResult result)
+         {
+            JsArrayString encodings = result.getAll();
+            for (int i = 0; i < encodings.length(); i++)
+            {
+               encoding_.addItem(encodings.get(i), encodings.get(i));
+            }
+         }
+
+         @Override
+         public void onError(ServerError error)
+         {
+            // not fatal; we'll just leave Automatic as the only option
+         }
+      });
 
       hookChangeEvents();
 
@@ -145,6 +182,8 @@ public class ImportFileSettingsDialog extends ModalDialog<ImportFileSettingsDial
       separator_.addChangeHandler(changeHandler);
       decimal_.addChangeHandler(changeHandler);
       quote_.addChangeHandler(changeHandler);
+      encoding_.addChangeHandler(changeHandler);
+      comment_.addChangeHandler(changeHandler);
    }
 
    private void updateOutput()
@@ -158,14 +197,15 @@ public class ImportFileSettingsDialog extends ModalDialog<ImportFileSettingsDial
 
       updateRequest_.invalidate();
       final Token invalidationToken = updateRequest_.getInvalidationToken();
-
       progress_.onProgress("Updating preview");
       server_.getOutputPreview(
             dataFile_.getPath(),
+            encoding_.getValue(encoding_.getSelectedIndex()),
             headingYes_.getValue().booleanValue(),
             separator_.getValue(separator_.getSelectedIndex()),
             decimal_.getValue(decimal_.getSelectedIndex()),
             quote_.getValue(quote_.getSelectedIndex()),
+            comment_.getValue(comment_.getSelectedIndex()),
             new ServerRequestCallback<DataPreviewResult>()
             {
                @Override
@@ -219,6 +259,7 @@ public class ImportFileSettingsDialog extends ModalDialog<ImportFileSettingsDial
                   selectByValue(separator_, response.getSeparator());
                   selectByValue(decimal_, response.getDecimal());
                   selectByValue(quote_, response.getQuote());
+                  selectByValue(comment_, response.getComment());
                   
                   defaultStringsAsFactors_ = response.getDefaultStringsAsFactors();
                   stringsAsFactors_.setValue(defaultStringsAsFactors_);
@@ -302,14 +343,19 @@ public class ImportFileSettingsDialog extends ModalDialog<ImportFileSettingsDial
    @Override
    protected ImportFileSettingsDialogResult collectInput()
    {
+      String rowNames = rowNames_.getValue(rowNames_.getSelectedIndex());
+
       return new ImportFileSettingsDialogResult(
          new ImportFileSettings(
             dataFile_,
             varname_.getText().trim(),
+            encoding_.getValue(encoding_.getSelectedIndex()),
             headingYes_.getValue(),
+            rowNames.equals(autoValue) ? null : rowNames,
             separator_.getValue(separator_.getSelectedIndex()),
             decimal_.getValue(decimal_.getSelectedIndex()),
             quote_.getValue(quote_.getSelectedIndex()),
+            comment_.getValue(comment_.getSelectedIndex()),
             naStrings_.getText().trim(),
             stringsAsFactors_.getValue()),
          defaultStringsAsFactors_);
@@ -363,13 +409,22 @@ public class ImportFileSettingsDialog extends ModalDialog<ImportFileSettingsDial
    TextBox naStrings_;
    @UiField
    CheckBox stringsAsFactors_;
+   @UiField
+   ListBox encoding_;
+   @UiField
+   ListBox rowNames_;
+   @UiField
+   ListBox comment_;
 
    private final Widget widget_;
    private final EnvironmentServerOperations server_;
    private final FileSystemItem dataFile_;
+   private final SourceServerOperations sourceServer_;
    private boolean defaultStringsAsFactors_ = true;
    private final GlobalDisplay globalDisplay_;
    private ProgressIndicator progress_;
    private final Invalidation updateRequest_ = new Invalidation();
    private final Styles styles_;
+   
+   private static final String autoValue = "Auto";
 }

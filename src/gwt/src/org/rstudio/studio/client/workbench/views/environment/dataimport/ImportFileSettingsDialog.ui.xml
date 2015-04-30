@@ -14,11 +14,19 @@
                   </td>
                </tr>
                <tr>
+                  <td>Encoding</td>
+                  <td><g:ListBox ui:field="encoding_" styleName="{res.styles.list}" /></td>
+               </tr>
+               <tr>
                   <td>Heading</td>
                   <td>
                      <g:RadioButton ui:field="headingYes_" name="importFileSettingsHeading" text="Yes"/>
                      <g:RadioButton ui:field="headingNo_" name="importFileSettingsHeading" text="No"/>
                   </td>
+               </tr>
+               <tr>
+                  <td>Row names</td>
+                  <td><g:ListBox ui:field="rowNames_" styleName="{res.styles.list}" /></td>
                </tr>
                <tr>
                   <td>Separator</td>
@@ -33,11 +41,15 @@
                   <td><g:ListBox ui:field="quote_" styleName="{res.styles.list}" /></td>
                </tr>
                <tr>
+                  <td>Comment</td>
+                  <td><g:ListBox ui:field="comment_" styleName="{res.styles.list}" /></td>
+               </tr>
+               <tr>
                   <td>na.strings</td>
                   <td><g:TextBox ui:field="naStrings_" styleName="{res.styles.nastrings}"></g:TextBox></td>
                </tr>
                <tr>
-                  <td><g:CheckBox ui:field="stringsAsFactors_" text="Strings as factors"></g:CheckBox></td>
+                  <td colspan="2"><g:CheckBox ui:field="stringsAsFactors_" text="Strings as factors"></g:CheckBox></td>
                </tr>
             </table>
          </g:HTMLPanel>

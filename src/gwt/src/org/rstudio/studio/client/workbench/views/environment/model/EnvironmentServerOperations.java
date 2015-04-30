@@ -40,10 +40,12 @@ public interface EnvironmentServerOperations
 
    void getOutputPreview(
            String dataFilePath,
+           String encoding,
            boolean heading,
            String separator,
            String decimal,
            String quote,
+           String comment,
            ServerRequestCallback<DataPreviewResult> requestCallback);
 
    void setContextDepth(int newContextDepth,

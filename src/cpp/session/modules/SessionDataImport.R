@@ -13,16 +13,19 @@
 #
 #
 
-.rs.addFunction("parseDataFile", function(path, header, sep, dec, quote, nrows) {
+.rs.addFunction("parseDataFile", function(path, encoding, header, sep, dec, 
+                                          quote, comment, nrows) {
    data <- tryCatch(
       # try to use read.csv directly if possible (since this is a common case
       # and since LibreOffice spreadsheet exports produce files unparsable
       # by read.table). check Workspace.makeCommand if we want to deduce
       # other more concrete read calls.
       if (identical(sep,",") && identical(dec,".") && identical(quote,"\""))
-         read.csv(path, header=header, nrows=nrows)
+         read.csv(path, encoding=encoding, header=header, nrows=nrows,
+                  comment.char=comment)
       else
-         read.table(path, header=header, sep=sep, dec=dec, quote=quote, nrows=nrows),
+         read.table(path, encoding=encoding, header=header, sep=sep, dec=dec, 
+                    quote=quote, comment.char=comment, nrows=nrows),
       error=function(e) {
          data.frame(Error=e$message)
       })
@@ -67,6 +70,13 @@
 
    # Drop comment lines, leaving the significant ones
    siglines <- grep("^[^#].*", lines, value=TRUE)
+
+   # If any comment lines were found, presume # to be the comment character
+   comment <- ""
+   if (length(siglines) < length(lines)) {
+     comment <- "#"
+   } 
+
    firstline <- siglines[1]
 
    dataline <- siglines[2]
@@ -95,31 +105,41 @@
    quote <- "\""
 
    output <- .rs.parseDataFile(path,
+                               encoding="unknown",
                                header=header,
                                sep=sep,
                                dec=dec,
                                quote=quote,
+                               comment=comment,
                                nrows=nrows)
 
    list(inputLines=paste(lines, collapse="\n"),
         output=output,
         outputNames=names(output),
+        encoding="unknown",
         header=header,
         separator=sep,
         decimal=dec,
         quote=quote,
+        comment=comment,
         defaultStringsAsFactors=default.stringsAsFactors())
 })
 
-.rs.addJsonRpcHandler("get_output_preview", function(path, header, sep, decimal, quote)
+.rs.addJsonRpcHandler("get_output_preview", function(path, encoding, header,
+                                                     sep, decimal, quote, 
+                                                     comment)
 {
    nrows <- 20
-   output <- .rs.parseDataFile(path, header=header, sep=sep, dec=decimal, quote=quote, nrows=nrows)
+   output <- .rs.parseDataFile(path, encoding=encoding, header=header, sep=sep, 
+                               dec=decimal, quote=quote, comment=comment, 
+                               nrows=nrows)
 
    list(output=output,
         outputNames=names(output),
         header=header,
+        encoding=encoding,
         separator=sep,
         quote=quote,
+        comment=comment,
         defaultStringsAsFactors=default.stringsAsFactors())
 })
