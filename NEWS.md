@@ -118,7 +118,7 @@
 * Escape backslashes in library names when loading packages
 * Call to library after Build and Reload respects --library argument
 * Validate that required versions are available for prompted installs
-* Set R_BROWSER=false (as CRAN does) for R CMD check
+* Set R_BROWSER=false and R_PDFVIEWER=false (as CRAN does) for R CMD check
 
 ### Plots
 
