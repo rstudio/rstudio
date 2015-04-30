@@ -3,13 +3,6 @@
   xmlns:g='urn:import:com.google.gwt.user.client.ui'
   xmlns:mail='urn:import:com.google.gwt.sample.mail.client'>
 
-  <!--
-      GIFs needed for ie6 work arounds. Can't use <ui:image>, it makes PNGs
-   -->
-  <ui:data field='mailboxesgroupIe6Data' src='mailboxesgroup_ie6.gif' />
-  <ui:data field='tasksgroupIe6Data' src='tasksgroup_ie6.gif' />
-  <ui:data field='contactsgroupIe6Data' src='contactsgroup_ie6.gif' />
-
   <ui:style gss="true">
   .shortcuts {
     border-left: 1px solid #999;
@@ -29,47 +22,19 @@
     border-top: 1px solid #888;
   }
 
-  @if (is("user.agent", "ie6")) {
-    @def MAILBOXESGROUP_IE6 resourceUrl("mailboxesgroupIe6Data");
-    @def TASKSGROUP_IE6 resourceUrl("tasksgroupIe6Data");
-    @def CONTACTSGROUP_IE6 resourceUrl("contactsgroupIe6Data");
-
-    .mailboxesIcon {
-      background-image: MAILBOXESGROUP_IE6;
-      width: 31px;
-      height: 22px;
-      float: left;
-    }
-
-    .tasksIcon {
-      background-image: TASKSGROUP_IE6;
-      width: 31px;
-      height: 22px;
-      float: left;
-    }
-
-    .contactsIcon {
-      background-image: CONTACTSGROUP_IE6;
-      width: 31px;
-      height: 22px;
-      float: left;
-    }
+  .mailboxesIcon {
+    gwt-sprite: "mailboxesgroup";
+    float: left;
   }
-  @else  {
-    .mailboxesIcon {
-      gwt-sprite: "mailboxesgroup";
-      float: left;
-    }
 
-    .tasksIcon {
-      gwt-sprite: "tasksgroup";
-      float: left;
-    }
+  .tasksIcon {
+    gwt-sprite: "tasksgroup";
+    float: left;
+  }
 
-    .contactsIcon {
-      gwt-sprite: "contactsgroup";
-      float: left;
-    }
+  .contactsIcon {
+    gwt-sprite: "contactsgroup";
+    float: left;
   }
 
   </ui:style>

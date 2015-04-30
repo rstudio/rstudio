@@ -8,9 +8,6 @@
 
   <ui:image field='logo' src='logo.png'/>
 
-  <!-- IE6 cannot handle transparent png, which is what ImageResource creates -->
-  <ui:data field='logoIe6Data' src='logo_ie6.gif' />
-
   <ui:style gss="true">
   .statusDiv {
     text-align: right;
@@ -21,21 +18,9 @@
     text-align: right;
   }
 
-  @if (is("user.agent", "ie6")) {
-    @def LOGO_IE6 resourceUrl("logoIe6Data");
-
-    .logo {
-      background-image: LOGO_IE6;
-      width: 140px;
-      height: 75px;
-      position: absolute;
-    }
-  }
-  @else  {
-    .logo {
-      gwt-sprite: "logo";
-      position: absolute;
-    }
+  .logo {
+    gwt-sprite: "logo";
+    position: absolute;
   }
 
   </ui:style>
