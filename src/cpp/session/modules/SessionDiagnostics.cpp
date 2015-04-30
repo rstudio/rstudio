@@ -493,7 +493,8 @@ void parseLintOption(const std::string& text, FileLocalLintOptions* pOptions)
 {
    using namespace core::text;
    
-   if (boost::algorithm::starts_with(text, "globals="))
+   boost::regex reGlobals("^\\s*globals\\s*=");
+   if (boost::regex_search(text, reGlobals))
       return parseLintOptionGlobals(text, pOptions);
    
    ParsedCSVLine line = parseCsvLine(text.begin(), text.end(), true);
