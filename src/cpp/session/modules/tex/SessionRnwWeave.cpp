@@ -93,7 +93,8 @@ public:
 
    // tangle the passed file (note that the implementation can assume
    // that the working directory is already set to that of the file)
-   virtual core::Error tangle(const std::string& file) = 0;
+   virtual core::Error tangle(const std::string& file,
+                              const std::string& encoding) = 0;
 
    virtual std::vector<std::string> commandArgs(
                                        const std::string& file,
@@ -213,9 +214,14 @@ public:
       return RnwWeave::chunkOptions(".rs.sweaveChunkOptions");
    }
 
-   virtual core::Error tangle(const std::string& file)
+   virtual core::Error tangle(const std::string& file,
+                              const std::string& encoding)
    {
-      return r::exec::RFunction("utils:::Stangle", file).call();
+      r::exec::RFunction stangle("utils:::Stangle");
+      stangle.addParam(file);
+      if (!encoding.empty())
+         stangle.addParam("encoding", encoding);
+      return stangle.call();
    }
 
    virtual std::string weaveCommand(const std::string& file,
@@ -339,12 +345,15 @@ public:
          return json::Value();
    }
 
-   virtual core::Error tangle(const std::string& file)
+   virtual core::Error tangle(const std::string& file,
+                              const std::string& encoding)
    {
       r::session::utils::SuppressOutputInScope suppressOutput;
       r::exec::RFunction purlFunc("knitr:::purl");
       purlFunc.addParam("input", file);
       purlFunc.addParam("output", file + ".R");
+      if (!encoding.empty())
+         purlFunc.addParam("encoding", encoding);
       return purlFunc.call();
    }
 };
@@ -478,7 +487,9 @@ void onWeaveProcessExit(boost::shared_ptr<RnwWeave> pRnwWeave,
 
 } // anonymous namespace
 
-void runTangle(const std::string& filePath, const std::string& rnwWeave)
+void runTangle(const std::string& filePath,
+               const std::string& encoding,
+               const std::string& rnwWeave)
 {
    using namespace module_context;
    boost::shared_ptr<RnwWeave> pWeave =
@@ -489,7 +500,7 @@ void runTangle(const std::string& filePath, const std::string& rnwWeave)
    }
    else
    {
-      Error error = pWeave->tangle(filePath);
+      Error error = pWeave->tangle(filePath, encoding);
       if (error)
          consoleWriteError(r::endUserErrorMessage(error) + "\n");
    }
