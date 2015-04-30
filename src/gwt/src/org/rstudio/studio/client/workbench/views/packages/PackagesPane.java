@@ -689,7 +689,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
    private LayoutPanel packagesTableContainer_;
    private ActionCenter actionCenter_ = null;
    private int gridRenderRetryCount_;
-   private PackratContext packratContext_;
+   private PackratContext packratContext_ = PackratContext.empty();
 
    private final Commands commands_;
    private final Session session_;

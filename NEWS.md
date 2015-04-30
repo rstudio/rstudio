@@ -182,6 +182,7 @@
 * Next/previous word behavior in Rmd is now consistent with behavior in R scripts
 * Don't parse YAML front matter if not preceded by whitespace
 * Eliminate some UI problems on Windows HDPI systems
+* Prevent null reference exception in packages pane with active filter + packrat
 * Allow JSON as text file type in the editor
 * Only hide object files (e.g. *.o) in Files pane when in package src directory
 * Ensure cursor is always visible after source navigation

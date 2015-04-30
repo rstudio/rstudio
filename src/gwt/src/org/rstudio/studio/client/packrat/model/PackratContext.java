@@ -23,6 +23,17 @@ public class PackratContext extends JavaScriptObject
    {
    }
    
+   
+   public final native static PackratContext empty() /*-{
+      return {
+        available: false,
+        applicable: false, 
+        packified: false,
+        mode_on: false 
+      };
+   }-*/;
+   
+   
    public final native boolean isAvailable() /*-{
       return this.available;
    }-*/;
