@@ -34,6 +34,8 @@ import org.rstudio.core.client.widget.HelpButton;
 import org.rstudio.core.client.widget.NumericValueWidget;
 import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.core.client.widget.SmallButton;
+import org.rstudio.studio.client.common.DiagnosticsHelpLink;
+import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefsAccessor;
@@ -244,6 +246,11 @@ public class EditingPreferencesPane extends PreferencesPane
       diagnosticsPanel.add(tight(checkboxPref("Show diagnostics after keyboard is idle for a period of time", prefs.enableBackgroundDiagnostics())));
       diagnosticsPanel.add(indent(backgroundDiagnosticsDelayMs_ =
             numericPref("Keyboard idle time (ms):", prefs.backgroundDiagnosticsDelayMs())));
+      
+      HelpLink diagnosticsHelpLink = new DiagnosticsHelpLink();
+      diagnosticsHelpLink.getElement().getStyle().setMarginTop(12, Unit.PX);
+      nudgeRight(diagnosticsHelpLink); 
+      diagnosticsPanel.add(diagnosticsHelpLink);
       
       
       DialogTabLayoutPanel tabPanel = new DialogTabLayoutPanel();

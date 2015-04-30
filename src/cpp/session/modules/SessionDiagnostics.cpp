@@ -493,7 +493,7 @@ void parseLintOption(const std::string& text, FileLocalLintOptions* pOptions)
 {
    using namespace core::text;
    
-   boost::regex reGlobals("^\\s*globals\\s*=");
+   boost::regex reGlobals("^\\s*suppress\\s*=");
    if (boost::regex_search(text, reGlobals))
       return parseLintOptionGlobals(text, pOptions);
    
