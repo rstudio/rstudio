@@ -627,7 +627,7 @@ public class RCompletionManager implements CompletionManager
          String[] keywords = {
                "for", "if", "in", "function", "while", "repeat",
                "break", "switch", "return", "library", "require",
-               "TRUE", "FALSE"
+               "TRUE", "FALSE", "NULL"
          };
 
          for (String keyword : keywords)
