@@ -118,6 +118,33 @@ public:
    {
       warnIfVariableIsDefinedButNotUsed_ = warnIfVariableIsDefinedButNotUsed;
    }
+   
+   void setSyntaxOnly()
+   {
+      lintRFunctions_ = false;
+      checkArgumentsToRFunctionCalls_ = false;
+      warnIfNoSuchVariableInScope_ = false;
+      warnIfVariableIsDefinedButNotUsed_ = false;
+   }
+   
+   void setCoreDiagnostics()
+   {
+      lintRFunctions_ = true;
+      checkArgumentsToRFunctionCalls_ = false;
+      warnIfNoSuchVariableInScope_ = false;
+      warnIfVariableIsDefinedButNotUsed_ = false;
+   }
+   
+   void enableAllDiagnostics()
+   {
+      lintRFunctions_ = true;
+      checkArgumentsToRFunctionCalls_ = true;
+      warnIfNoSuchVariableInScope_ = true;
+      warnIfVariableIsDefinedButNotUsed_ = true;
+   }
+   
+   std::set<std::string>& globals() { return globals_; }
+   const std::set<std::string>& globals() const { return globals_; }
 
 private:
    bool lintRFunctions_;
@@ -125,6 +152,8 @@ private:
    bool warnIfNoSuchVariableInScope_;
    bool warnIfVariableIsDefinedButNotUsed_;
    bool recordStyleLint_;
+   
+   std::set<std::string> globals_;
 };
 
 struct ParseItem;
@@ -1349,9 +1378,16 @@ public:
    {}
    
    ParseResults(boost::shared_ptr<ParseNode> parseTree,
-                LintItems lint)
+                const LintItems& lint)
       : parseTree_(parseTree),
         lint_(lint)
+   {}
+   ParseResults(boost::shared_ptr<ParseNode> parseTree,
+                const LintItems& lint,
+                const std::set<std::string>& globals)
+      : parseTree_(parseTree),
+        lint_(lint),
+        globals_(globals)
    {}
    
    // copy ctor: copyable members
@@ -1364,10 +1400,14 @@ public:
    const LintItems& lint() const { return lint_; }
    LintItems& lint() { return lint_; }
    
+   const std::set<std::string>& globals() const { return globals_; }
+   std::set<std::string>& globals() { return globals_; }
+   
 private:
    
    boost::shared_ptr<ParseNode> parseTree_;
    LintItems lint_;
+   std::set<std::string> globals_;
 };
 
 ParseResults parse(const std::string& rCode,
