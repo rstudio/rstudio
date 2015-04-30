@@ -193,11 +193,8 @@ public class StringUtil
 
    public static String toRSymbolName(String name)
    {
-      if (!name.matches("^[a-zA-Z_.][a-zA-Z0-9_.]*$")
-          || isRKeyword(name))
-      {
+      if (!RegexUtil.isSyntacticRIdentifier(name) || isRKeyword(name))
          return "`" + name + "`";
-      }
       else
          return name;
    }
