@@ -521,6 +521,9 @@ private:
       // set the not cran env var
       core::system::setenv(&childEnv, "NOT_CRAN", "true");
 
+      // turn off browser launching
+      core::system::setenv(&childEnv, "R_BROWSER", "false");
+
       // add r tools to path if necessary
       module_context::addRtoolsToPathIfNecessary(&childEnv, &buildToolsWarning_);
 
