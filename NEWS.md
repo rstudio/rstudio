@@ -133,6 +133,7 @@
 * Syntax highlighting for comments in markdown documents
 * Make publishing UI easier to discover
 * Require save before previewing Rmd file
+* Handle encoding correctly for Run All Chunks on Windows
 * Support for deploying single interactive documents (not just directories)
 * Updated internal PDF viewer (PDF.js) to version 1.0.1040 
 

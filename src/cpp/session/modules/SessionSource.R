@@ -26,12 +26,17 @@
    if (file.exists(activeRStudioDoc))
       file.remove(activeRStudioDoc)
 
-   writeChar(contents, activeRStudioDoc, eos=NULL)
+   # The contents are always passed as UTF-8 from the client and
+   # we want to make sure this is preserved on disk. Note that
+   # when the source command is issued by the client for
+   # "~/active-rstudio-document" UTF-8 is specified explicitly
+   # (see TextEditingTarget.sourceActiveDocument)
+   writeChar(contents, activeRStudioDoc, eos=NULL, useBytes = TRUE)
 
    if (sweave)
    {
       op <- function() {
-         .Call(.rs.routines$rs_rnwTangle, activeRStudioDoc, rnwWeave)
+         .Call(.rs.routines$rs_rnwTangle, activeRStudioDoc, "UTF-8", rnwWeave)
          file.remove(activeRStudioDoc)
          file.rename(paste(activeRStudioDoc, ".R", sep=""), activeRStudioDoc)
       }
