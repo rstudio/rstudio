@@ -2,7 +2,7 @@
 @eval fixedWidthFont org.rstudio.core.client.theme.ThemeFonts.getFixedWidthFont();
 
 @external popupContent;
-@external ace_sb, ace_cursor, ace_hidden;
+@external ace_sb, ace_cursor, ace_hidden, ace_tooltip;
 
 .console {
    font-family: fixedWidthFont;
@@ -148,4 +148,10 @@
 	padding: 4px;
 	font-style: italic;
 	color: #888888;
+}
+
+.ace_tooltip {
+	max-width: 400px;
+	max-height: 300px;
+}
 }
