@@ -33,6 +33,7 @@ import com.google.inject.Inject;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.Invalidation;
 import org.rstudio.core.client.Rectangle;
+import org.rstudio.core.client.RegexUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.KeyboardHelper;
 import org.rstudio.core.client.command.KeyboardShortcut;
@@ -620,8 +621,9 @@ public class RCompletionManager implements CompletionManager
       if (completeChars >= 2)
       {
          // Grab the current token on the line
+         String regex = "^[" + RegexUtil.wordCharacter() + "._'\"`]$";
          String currentToken = StringUtil.getToken(
-               currentLine, cursorColumn, "^[a-zA-Z0-9._'\"`]$", false, false);
+               currentLine, cursorColumn, regex, false, false);
 
          // Don't auto-popup for common keywords + symbols
          String[] keywords = {
@@ -791,7 +793,7 @@ public class RCompletionManager implements CompletionManager
             String token = StringUtil.getToken(
                   docDisplay_.getCurrentLine(),
                   input_.getCursorPosition().getColumn(),
-                  "[a-zA-Z0-9._]",
+                  "[" + RegexUtil.wordCharacter() + "._]",
                   false,
                   true);
             
@@ -1352,8 +1354,11 @@ public class RCompletionManager implements CompletionManager
             firstLine.matches(".*\\[.*\\]\\(.*"))
          return getAutocompletionContextForFileMarkdownLink(firstLine);
       
-      // Get the token at the cursor position
-      String token = firstLine.replaceAll(".*[^a-zA-Z0-9._:$@'\"`-]", "");
+      // Get the token at the cursor position.
+      String tokenRegex = ".*[^" +
+         RegexUtil.wordCharacter() +
+         "._:$@'\"`-]";
+      String token = firstLine.replaceAll(tokenRegex, "");
       
       // If we're completing an object within a string, assume it's a
       // file-system completion. Note that we may need other contextual information
@@ -1849,10 +1854,10 @@ public class RCompletionManager implements CompletionManager
       // return as is
       private String quoteIfNotSyntacticNameCompletion(String string)
       {
-         if (!string.matches("^[a-zA-Z_.][a-zA-Z0-9_.]*$"))
-               return "`" + string + "`";
-         else
+         if (RegexUtil.isSyntacticRIdentifier(string))
             return string;
+         else
+            return "`" + string + "`";
       }
       
       private void applyValueRmdOption(final String value)
