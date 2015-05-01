@@ -914,7 +914,9 @@ assign(x = ".rs.acCompletionTypes",
    old
 })
 
-.rs.addFunction("sortCompletions", function(completions, token)
+.rs.addFunction("sortCompletions", function(completions,
+                                            token,
+                                            shortestFirst = FALSE)
 {
    scores <- .rs.scoreMatches(completions$results, token)
    
@@ -926,7 +928,10 @@ assign(x = ".rs.acCompletionTypes",
    # TODO: figure out what, upstream, might cause this
    if (length(scores))
    {
-      order <- order(scores, nchar(completions$results))
+      order <- if (shortestFirst)
+         order(scores, nchar(completions$results))
+      else
+         order(scores)
       completions <- .rs.subsetCompletions(completions, order)
    }
    
@@ -1755,7 +1760,9 @@ assign(x = ".rs.acCompletionTypes",
             .rs.getCompletionsActivePackage(token, pkgName)
          )
       }
-      return(completions)
+      
+      # Ensure case-sensitive matches come first.
+      return(.rs.sortCompletions(completions, token))
    }
    
    # transform 'install.packages' to 'utils::install.packages' to avoid
@@ -2729,8 +2736,6 @@ assign(x = ".rs.acCompletionTypes",
                                     appendColons = FALSE,
                                     excludeOtherCompletions = FALSE)
       )
-   
-   # TODO: Wire up file completions (e.g. 'Ctrl + P'-like behaviour)
    
    completions
 })
