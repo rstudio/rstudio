@@ -61,16 +61,12 @@
 * Ctrl+Alt+Shift+P to select within matching parens / braces
 * Comment/uncomment respects indent level when appropriate
 * New Reformat Code command for R scripts
-* New integrated linter for R scripts
 * Shift+Enter now searches backwards in Find/Replace
 * Find All option added in Find/Replace
 * Ctrl+E now focuses the editor after finding from selection
 * New option to control comment continuation on insertion of new lines
 * Reflow text (comment) for markdown and plain text modes
 * Updated to Ace (source editor component) v1.1.8
-* Syntax highlighting modes for many new languages including Clojure,
-  CoffeeScript, C#, Go, Groovy, Haskell, Java, Julia, Lisp, Lua, Matlab, Perl,
-  Ruby, Rust, and Scala.
 * Syntax highlighting for GraphViz and mermaid.js diagrams. 
 * Diagram previews using the DiagrammeR package (requires recent version from GitHub).
 * Syntax highlighting modes for many new languages including Clojure, CoffeeScript, C#, Graphviz, Go, Groovy, Haskell, Java, Julia, Lisp, Lua, Matlab, Perl, Ruby, Rust, Scala, and Stan.
