@@ -21,6 +21,6 @@ public class DiagnosticsHelpLink extends HelpLink
 {
    public DiagnosticsHelpLink()
    {
-      super("Code Diagnostics", "code_diagnostics");
+      super("Using Code Diagnostics", "code_diagnostics");
    }
 }
