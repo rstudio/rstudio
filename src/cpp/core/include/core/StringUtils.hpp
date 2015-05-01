@@ -218,6 +218,40 @@ std::wstring::const_iterator countNewlines(std::wstring::const_iterator begin,
 
 bool isPrefixOf(const std::string& self, const std::string& prefix);
 
+template <typename StringType>
+inline StringType substring(const StringType& string,
+                            std::size_t startPos,
+                            std::size_t endPos)
+{
+   return string.substr(startPos, endPos - startPos);
+}
+
+namespace detail {
+
+template <typename StringType>
+inline StringType trimWhitespace(const StringType& string,
+                                 const StringType& whitespace)
+{
+   std::size_t start = string.find_first_not_of(whitespace);
+   if (start == StringType::npos)
+      return StringType();
+   
+   std::size_t end = string.find_last_not_of(whitespace);
+   return substring(string, start, end + 1);
+}
+
+} // namespace detail
+
+inline std::string trimWhitespace(const std::string& string)
+{
+   return detail::trimWhitespace(string, std::string(" \t\n\r\f\v"));
+}
+
+inline std::wstring trimWhitespace(const std::wstring& string)
+{
+   return detail::trimWhitespace(string, std::wstring(L" \t\n\r\f\v"));
+}
+
 } // namespace string_utils
 } // namespace core 
 } // namespace rstudio

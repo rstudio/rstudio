@@ -1333,8 +1333,8 @@ ParseResults parse(const std::wstring& rCode,
    if (rTokens.empty())
       return ParseResults();
    
-   ParseStatus status(parseOptions);
    RTokenCursor cursor(rTokens);
+   ParseStatus status(parseOptions);
    
    doParse(cursor, status);
    
@@ -1346,7 +1346,7 @@ ParseResults parse(const std::wstring& rCode,
    
    status.addLintIfBracketStackNotEmpty();
    
-   return ParseResults(status.root(), status.lint());
+   return ParseResults(status.root(), status.lint(), parseOptions.globals());
 }
 
 namespace {
@@ -2225,24 +2225,21 @@ ARGUMENT_START:
       
       if (cursor.isType(RToken::COMMA))
       {
-         if (status.parseOptions().checkArgumentsToRFunctionCalls())
-            if (cursor.previousSignificantToken().isType(RToken::LPAREN))
-               status.lint().missingArgumentToFunctionCall(cursor);
+         if (cursor.previousSignificantToken().isType(RToken::LPAREN))
+            status.lint().missingArgumentToFunctionCall(cursor);
          
          MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
          while (cursor.isType(RToken::COMMA))
          {
-            if (status.parseOptions().checkArgumentsToRFunctionCalls())
-               if (status.isWithinParenFunctionCall())
-                  status.lint().missingArgumentToFunctionCall(cursor);
+            if (status.isWithinParenFunctionCall())
+               status.lint().missingArgumentToFunctionCall(cursor);
             MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
          }
       }
       
       if (closesArgumentList(cursor, status))
       {
-         if (status.parseOptions().checkArgumentsToRFunctionCalls() &&
-             status.isWithinParenFunctionCall() &&
+         if (status.isWithinParenFunctionCall() &&
              cursor.previousSignificantToken().isType(RToken::COMMA))
          {
             status.lint().missingArgumentToFunctionCall(cursor.previousSignificantToken());

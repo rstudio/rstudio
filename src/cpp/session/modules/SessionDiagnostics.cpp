@@ -26,6 +26,7 @@
 
 #include <set>
 
+#include <core/Debug.hpp>
 #include <core/Exec.hpp>
 #include <core/Error.hpp>
 #include <core/FileSerializer.hpp>
@@ -48,6 +49,7 @@
 
 #include <core/r_util/RSourceIndex.hpp>
 #include <core/FileSerializer.hpp>
+#include <core/text/CsvParser.hpp>
 #include <core/collection/Tree.hpp>
 #include <core/collection/Stack.hpp>
 
@@ -352,6 +354,7 @@ void addTestPackageSymbols(std::set<std::string>* pSymbols)
 
 Error getAllAvailableRSymbols(const FilePath& filePath,
                               const std::string& documentId,
+                              const ParseResults& results,
                               std::set<std::string>* pSymbols)
 {
    // If this file lies within the current project, then
@@ -405,6 +408,8 @@ Error getAllAvailableRSymbols(const FilePath& filePath,
       registry.fillNamespaceSymbols("shiny", pSymbols, false);
    }
    
+   pSymbols->insert(results.globals().begin(), results.globals().end());
+   
    return error;
       
 }
@@ -422,7 +427,7 @@ void checkNoDefinitionInScope(const FilePath& origin,
    // or symbols that would otherwise be made available at runtime (e.g.
    // package imports)
    std::set<std::string> objects;
-   Error error = getAllAvailableRSymbols(origin, documentId, &objects);
+   Error error = getAllAvailableRSymbols(origin, documentId, results, &objects);
    if (error)
    {
       LOG_ERROR(error);
@@ -442,6 +447,140 @@ void checkNoDefinitionInScope(const FilePath& origin,
    }
 }
 
+bool lintOptionValueAsBool(const std::string& value)
+{
+   if (value.empty())
+      return false;
+   
+   std::string lower = boost::algorithm::to_lower_copy(value);
+   if (lower[0] == 'n' || lower[0] == 'f')
+      return false;
+   
+   if (lower[0] == 'y' || lower[0] == 't')
+      return true;
+   
+   return false;
+}
+
+struct FileLocalLintOptions
+{
+   std::vector< std::pair<std::string, std::string> > options;
+   std::set<std::string> globals;
+};
+
+typedef std::pair< std::vector<std::string>, std::string::const_iterator> ParsedCSVLine;
+
+void parseLintOptionGlobals(const std::string& text, FileLocalLintOptions* pOptions)
+{
+   using namespace core::text;
+   
+   // Find the first '=' after "globals"
+   std::string::const_iterator begin = std::find(text.begin(), text.end(), '=');
+   if (begin == text.end())
+      return;
+   
+   // Parse the rest as a CSV line
+   std::string::const_iterator end = text.end();
+   
+   ParsedCSVLine parsed = parseCsvLine(begin + 1, end, true);
+   BOOST_FOREACH(const std::string element, parsed.first)
+   {
+      pOptions->globals.insert(string_utils::trimWhitespace(element));
+   }
+}
+
+void parseLintOption(const std::string& text, FileLocalLintOptions* pOptions)
+{
+   using namespace core::text;
+   
+   boost::regex reGlobals("^\\s*suppress\\s*=");
+   if (boost::regex_search(text, reGlobals))
+      return parseLintOptionGlobals(text, pOptions);
+   
+   ParsedCSVLine line = parseCsvLine(text.begin(), text.end(), true);
+   
+   BOOST_FOREACH(const std::string& entry, line.first)
+   {
+      std::string::const_iterator it = 
+            std::find(entry.begin(), entry.end(), '=');
+      
+      if (it == entry.end()) continue;
+      pOptions->options.push_back(
+               std::make_pair(
+                  string_utils::trimWhitespace(std::string(entry.begin(), it)),
+                  string_utils::trimWhitespace(std::string(it + 1, entry.end()))));
+   }
+}
+
+FileLocalLintOptions parseLintOptions(const std::vector<std::string>& lintText)
+{
+   FileLocalLintOptions options;
+   BOOST_FOREACH(const std::string text, lintText)
+   {
+      parseLintOption(text, &options);
+   }
+   return options;
+}
+
+void applyOptions(const FileLocalLintOptions& fileOptions,
+                  ParseOptions* pOptions)
+{
+   if (!fileOptions.globals.empty())
+      pOptions->globals().insert(fileOptions.globals.begin(),
+                                 fileOptions.globals.end());
+   
+   typedef std::pair<std::string, std::string> PairStringString;
+   BOOST_FOREACH(const PairStringString& option, fileOptions.options)
+   {
+      if (option.first == "style")
+         pOptions->setRecordStyleLint(lintOptionValueAsBool(option.second));
+      else if (option.first == "level")
+      {
+         if (option.second == "syntax")
+            pOptions->setSyntaxOnly();
+         else if (option.second == "core")
+            pOptions->setCoreDiagnostics();
+         else if (option.second == "all")
+            pOptions->enableAllDiagnostics();
+      }
+   }
+}
+
+const char * const kLintComment = "(?:^|\\n)#+\\s+\\!diagnostics";
+
+void setFileLocalParseOptions(const std::wstring& rCode,
+                              ParseOptions* pOptions,
+                              bool* pNoLint)
+{
+   using namespace string_utils;
+   
+   // Extract all of the lint commands.
+   boost::regex reLintComments(kLintComment);
+   std::vector<std::string> lintCommands;
+   boost::wsmatch match;
+   
+   std::wstring::const_iterator start = rCode.begin();
+   std::wstring::const_iterator end = rCode.end();
+   while (boost::regex_search(start, end, match, reLintComments))
+   {
+      std::wstring::const_iterator matchBegin = match[0].second;
+      std::wstring::const_iterator matchEnd   = std::find(matchBegin, end, L'\n');
+      std::string command = string_utils::trimWhitespace(std::string(matchBegin, matchEnd));
+      
+      if (command == "off")
+      {
+         *pNoLint = true;
+         return;
+      }
+      
+      lintCommands.push_back(command);
+      start = match[0].second;
+   }
+   
+   FileLocalLintOptions options = parseLintOptions(lintCommands);
+   applyOptions(options, pOptions);
+}
+
 } // end anonymous namespace
 
 ParseResults parse(const std::wstring& rCode,
@@ -450,7 +589,6 @@ ParseResults parse(const std::wstring& rCode,
                    bool isExplicit = false)
 {
    ParseResults results;
-   
    ParseOptions options;
    
    options.setLintRFunctions(
@@ -467,6 +605,11 @@ ParseResults parse(const std::wstring& rCode,
    
    options.setRecordStyleLint(
             userSettings().enableStyleDiagnostics());
+   
+   bool noLint = false;
+   setFileLocalParseOptions(rCode, &options, &noLint);
+   if (noLint)
+      return ParseResults();
    
    results = rparser::parse(rCode, options);
    
