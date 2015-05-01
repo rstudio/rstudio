@@ -93,7 +93,7 @@ public class RSConnectDeploymentRecord extends JavaScriptObject
    }-*/;
    
    private final native JsArrayString getFileList(String name) /*-{
-      if (typeof this[name] === "undefined") 
+      if (typeof this[name] === "undefined" || this[name] === null) 
          return [];
       else
          return this[name].split("|");

@@ -2442,13 +2442,17 @@ public class Source implements InsertSourceHandler,
    
    private void manageRSConnectCommands()
    {
-      boolean shinyCommandsAvailable = 
+      boolean rsCommandsAvailable = 
             SessionUtils.showPublishUi(session_, uiPrefs_) &&
             (activeEditor_ != null) &&
             (activeEditor_.getPath() != null) &&
-            ((activeEditor_.getExtendedFileType() == "shiny"));
-      commands_.rsconnectDeploy().setVisible(shinyCommandsAvailable);
-      commands_.rsconnectConfigure().setVisible(shinyCommandsAvailable);
+            ((activeEditor_.getExtendedFileType() == "shiny") ||
+             (activeEditor_.getExtendedFileType() == "rmarkdown"));
+      commands_.rsconnectDeploy().setVisible(rsCommandsAvailable);
+      commands_.rsconnectDeploy().setLabel(
+            activeEditor_.getExtendedFileType().equals("shiny") ?
+            "Publish Application..." : "Publish Document...");
+      commands_.rsconnectConfigure().setVisible(rsCommandsAvailable);
    }
    
    private void manageRMarkdownCommands()

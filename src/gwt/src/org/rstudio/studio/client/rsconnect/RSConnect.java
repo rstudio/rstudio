@@ -285,9 +285,19 @@ public class RSConnect implements SessionInitHandler,
          {
             if (input.isConnectUIEnabled())
             {
-               publishWithWizard(input);
+               if (input.hasDocOutput() || input.isMultiRmd())
+               {
+                  // need to disambiguate between code/output and/or
+                  // single/multi page
+                  publishWithWizard(input);
+               }
+               else
+               {
+                  // we don't have output, always publish the code
+                  publishAsCode(event);
+               }
             }
-            else if (input.isSelfContained())
+            else if (input.isSelfContained() && input.hasDocOutput())
             {
                // RStudio Connect is disabled, go straight to RPubs
                publishAsRPubs(event);

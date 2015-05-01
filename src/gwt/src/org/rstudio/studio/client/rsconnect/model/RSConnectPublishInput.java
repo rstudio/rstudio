@@ -15,6 +15,7 @@
 
 package org.rstudio.studio.client.rsconnect.model;
 
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.rsconnect.events.RSConnectActionEvent;
 
@@ -58,6 +59,14 @@ public class RSConnectPublishInput
    public boolean isExternalUIEnabled()
    {
       return isExternalUIEnabled_;
+   }
+   
+   public boolean hasDocOutput()
+   {
+      return originatingEvent_ != null &&
+            originatingEvent_.getFromPreview() != null &&
+            !StringUtil.isNullOrEmpty(
+                  originatingEvent_.getFromPreview().getOutputFile());
    }
    
    public void setExternalUIEnabled(boolean enabled)

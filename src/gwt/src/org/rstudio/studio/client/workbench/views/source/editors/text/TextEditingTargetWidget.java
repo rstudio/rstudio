@@ -613,6 +613,9 @@ public class TextEditingTargetWidget
          addRmdViewerMenuItems(rmdFormatButton_.getMenu());
       }
       setFormatOptionsVisible(true);
+      if (publishButton_ != null)
+         publishButton_.setIsStatic(true);
+      isShiny_ = false;
    }
 
    @Override
@@ -650,13 +653,26 @@ public class TextEditingTargetWidget
                   commands_.knitDocument().getShortcutPrettyHtml()) + ")");
       knitDocumentButton_.setText(knitCommandText_);
       knitDocumentButton_.setLeftImage(StandardIcons.INSTANCE.run());
+      isShiny_ = true;
+      if (publishButton_ != null)
+         publishButton_.setIsStatic(false);
    }
    
    @Override
-   public void setPublishPath(String publishPath)
+   public void setPublishPath(int contentType, String publishPath)
    {
       if (publishButton_ != null)
-         publishButton_.setContentPath(publishPath, "");
+      {
+         if (contentType == RSConnect.CONTENT_TYPE_APP)
+         {
+            publishButton_.setContentPath(publishPath, "");
+            publishButton_.setContentType(contentType);
+         }
+         else
+         {
+            publishButton_.setRmd(publishPath, !isShiny_);
+         }
+      }
    }
 
    private void setFormatText(String text)
@@ -804,4 +820,5 @@ public class TextEditingTargetWidget
    private String sourceCommandText_ = "Source";
    private String knitCommandText_ = "Knit";
    private String previewCommandText_ = "Preview";
+   private boolean isShiny_ = false;
 }

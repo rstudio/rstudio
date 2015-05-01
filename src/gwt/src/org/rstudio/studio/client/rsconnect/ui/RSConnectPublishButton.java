@@ -198,6 +198,23 @@ public class RSConnectPublishButton extends Composite
          applyVisiblity();
       }
    }
+   
+   public void setRmd(String rmd, boolean isStatic)
+   {
+      docPreview_ = new RenderedDocPreview(rmd, "", isStatic);
+      setContentPath(rmd, "");
+      setContentType(RSConnect.CONTENT_TYPE_DOCUMENT);
+      applyVisiblity();
+   }
+   
+   public void setIsStatic(boolean isStatic)
+   {
+      if (docPreview_ != null)
+      {
+        docPreview_.setIsStatic(isStatic);
+      }
+      applyVisiblity();
+   }
 
    public void setContentType(int contentType)
    {
@@ -501,6 +518,16 @@ public class RSConnectPublishButton extends Composite
       if (contentType_ == RSConnect.CONTENT_TYPE_DOCUMENT && 
           docPreview_ == null)
          return false;
+      
+      // if we don't have static output and RStudio Connect isn't enabled
+      if (contentType_ == RSConnect.CONTENT_TYPE_DOCUMENT && 
+          StringUtil.isNullOrEmpty(outputPath_) &&
+          !pUiPrefs_.get().enableRStudioConnect().getGlobalValue() &&
+          docPreview_ != null && 
+          docPreview_.isStatic())
+      {
+         return false;
+      }
       
       if (manuallyHidden_)
          return false;

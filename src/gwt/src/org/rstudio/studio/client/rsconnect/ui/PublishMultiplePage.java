@@ -46,7 +46,7 @@ public class PublishMultiplePage
       String multipleSubtitle = "All of the documents in the directory " + 
                                 input.getSourceRmd().getParentPathString() + 
                                 " will be published.";
-      if (input.isShiny())
+      if (input.isShiny() || !input.hasDocOutput())
       {
          pages.add(new PublishFilesPage(singleTitle, singleSubtitle, 
                RSConnectResources.INSTANCE.publishSingleRmd(), 

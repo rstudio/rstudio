@@ -1510,8 +1510,8 @@ well as menu structures (for main menu and popup menus).
         checkable="true"/>
 
    <cmd id="rsconnectDeploy"
-        menuLabel="_Publish Application..."
-        desc="Publish the application"
+        menuLabel="_Publish..."
+        desc="Publish the application or document"
         visible="false"/>
    <cmd id="rsconnectConfigure"
         menuLabel="_Configure Application..."

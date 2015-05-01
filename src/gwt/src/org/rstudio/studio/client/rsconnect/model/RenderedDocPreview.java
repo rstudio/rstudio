@@ -57,7 +57,12 @@ public class RenderedDocPreview
       return isStatic_;
    }
    
+   public void setIsStatic(boolean isStatic)
+   {
+      isStatic_ = isStatic;
+   }
+   
    private final String sourceFile_;
    private final String outputFile_;
-   private final boolean isStatic_;
+   private boolean isStatic_;
 }
