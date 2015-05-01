@@ -1983,11 +1983,8 @@ public class GenerateJavaScriptAST {
 
     private void generateEpilogue(List<JsStatement> globalStmts) {
       // Emit all the class literals for classes that where pruned.
-      // NOTE: this should not happen in fully unoptimized compiles.
       generateClassLiterals(globalStmts, Iterables.filter(classLiteralDeclarationsByType.keySet(),
           Predicates.not(Predicates.<JType>in(alreadyRan))));
-      assert Sets.difference(classLiteralDeclarationsByType.keySet(), alreadyRan).isEmpty()
-          || !incremental;
 
       // add all @JsExport assignments
       generateExports(globalStmts);
