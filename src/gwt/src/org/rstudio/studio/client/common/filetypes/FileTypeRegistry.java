@@ -159,7 +159,7 @@ public class FileTypeRegistry
    public static final TextFileType CPP = new CppFileType("cpp", ".cpp", ICONS.iconCpp(), true, true);
    
    public static final TextFileType CLOJURE = 
-         new TextFileType("clojure", "Clojure", EditorLanguage.LANG_CLOJURE, ".clojure", ICONS.iconClojure(),
+         new TextFileType("clojure", "Clojure", EditorLanguage.LANG_CLOJURE, ".clj", ICONS.iconClojure(),
                false, false, false, false, false,
                false, false, false, false, false, false, false, false);
    
@@ -359,6 +359,8 @@ public class FileTypeRegistry
       register("*.xml", XML, icons.iconXml());
       register("*.stan", STAN, icons.iconStan());
       
+      register("*.clj", CLOJURE, icons.iconClojure());
+      register("*.cloj", CLOJURE, icons.iconClojure());
       register("*.clojure", CLOJURE, icons.iconClojure());
       register("*.coffee", COFFEE, icons.iconCoffee());
       register("*.cs", CSHARP, icons.iconCsharp());
