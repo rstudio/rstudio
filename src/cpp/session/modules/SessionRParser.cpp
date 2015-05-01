@@ -170,9 +170,10 @@ NSEDatabase& nseDatabase()
    return instance;
 }
 
-SEXP resolveFunctionAtCursor(RTokenCursor cursor,
-                             r::sexp::Protect* pProtect,
-                             bool* pCacheable = NULL)
+SEXP resolveObjectAssociatedWithCall(RTokenCursor cursor,
+                                     r::sexp::Protect* pProtect,
+                                     bool functionsOnly = false,
+                                     bool* pCacheable = NULL)
 {
    DEBUG("--- Resolve function call: " << cursor);
    
@@ -200,7 +201,10 @@ SEXP resolveFunctionAtCursor(RTokenCursor cursor,
       std::string symbol = string_utils::strippedOfQuotes(
                cursor.contentAsUtf8());
       
-      symbolSEXP = r::sexp::findFunction(symbol);
+      if (functionsOnly)
+         symbolSEXP = r::sexp::findFunction(symbol);
+      else
+         symbolSEXP = r::sexp::findVar(symbol);
    }
    else if (cursor.isSimpleNamespaceCall())
    {
@@ -211,7 +215,10 @@ SEXP resolveFunctionAtCursor(RTokenCursor cursor,
       std::string ns = string_utils::strippedOfQuotes(
                cursor.previousSignificantToken(2).contentAsUtf8());
       
-      symbolSEXP = r::sexp::findFunction(symbol, ns);
+      if (functionsOnly)
+         symbolSEXP = r::sexp::findFunction(symbol);
+      else
+         symbolSEXP = r::sexp::findVar(symbol);
    }
    else
    {
@@ -230,9 +237,19 @@ SEXP resolveFunctionAtCursor(RTokenCursor cursor,
          DEBUG("- Failed to evaluate call '" << call << "'");
          return R_UnboundValue;
       }
+      
+      if (functionsOnly && !Rf_isFunction(symbolSEXP))
+         return R_UnboundValue;
    }
    
    return symbolSEXP;
+}
+
+SEXP resolveFunctionAssociatedWithCall(RTokenCursor cursor,
+                                       r::sexp::Protect* pProtect,
+                                       bool* pCacheable = NULL)
+{
+   return resolveObjectAssociatedWithCall(cursor, pProtect, true, pCacheable);
 }
 
 std::set<std::wstring> makeWideNsePrimitives()
@@ -359,7 +376,9 @@ bool mightPerformNonstandardEvaluation(const RTokenCursor& origin,
    // Drop down into R.
    bool cacheable = true;
    r::sexp::Protect protect;
-   SEXP symbolSEXP = resolveFunctionAtCursor(cursor, &protect, &cacheable);
+   SEXP symbolSEXP = resolveFunctionAssociatedWithCall(
+            cursor, &protect, &cacheable);
+   
    if (symbolSEXP == R_UnboundValue)
       return false;
    
@@ -1000,7 +1019,7 @@ FunctionInformation getInfoAssociatedWithFunctionAtCursor(
    // If the above failed, we'll fall back to evaluating and looking up
    // the symbol on the search path.
    r::sexp::Protect protect;
-   SEXP functionSEXP = resolveFunctionAtCursor(cursor, &protect);
+   SEXP functionSEXP = resolveFunctionAssociatedWithCall(cursor, &protect);
    if (functionSEXP == R_UnboundValue || !Rf_isFunction(functionSEXP))
       return FunctionInformation();
    
@@ -1796,6 +1815,40 @@ bool handleElseToken(RTokenCursor& cursor,
    return true;
 }
 
+bool makeSymbolsAvailableInCallFromObjectNames(RTokenCursor cursor,
+                                               ParseStatus& status)
+{
+   RTokenCursor startCursor = cursor.clone();
+   if (!startCursor.findTokenFwd(boost::bind(isLeftBracket, _1)))
+      return false;
+   
+   RTokenCursor endCursor = cursor.clone();
+   if (!endCursor.fwdToMatchingToken())
+      return false;
+   
+   r::sexp::Protect protect;
+   SEXP objectSEXP = resolveObjectAssociatedWithCall(startCursor, &protect);
+   if (objectSEXP != R_UnboundValue)
+   {
+      r::exec::RFunction getNames(".rs.getNames");
+      getNames.addParam(objectSEXP);
+      
+      std::vector<std::string> names;
+      Error error = getNames.call(&names);
+      if (error)
+         LOG_ERROR(error);
+      
+      status.makeSymbolsAvailableInRange(
+               names,
+               startCursor.currentPosition(),
+               endCursor.currentPosition(true));
+      
+      return true;
+   }
+   
+   return false;
+}
+
 } // anonymous namespace
 
 #define GOTO_INVALID_TOKEN(__CURSOR__)                                         \
@@ -2209,14 +2262,7 @@ ARGUMENT_LIST:
       
       // Skip over data.table `[` calls
       if (isDataTableSingleBracketCall(cursor))
-      {
-         cursor.fwdToMatchingToken();
-         
-         if (cursor.isAtEndOfDocument())
-            return;
-         
-         goto ARGUMENT_LIST_END;
-      }
+         makeSymbolsAvailableInCallFromObjectNames(cursor, status);
       
       status.pushBracket(cursor);
       MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);

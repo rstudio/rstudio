@@ -109,6 +109,15 @@ public:
       return true;
    }
    
+private:
+   
+   bool moveInDirection(bool forward)
+   {
+      return forward ? moveToNextToken() : moveToPreviousToken();
+   }
+   
+public:
+   
    // TODO: May be worthwhile to implement binary search here.
    bool moveToPosition(const Position& destination)
    {
@@ -824,6 +833,42 @@ public:
         
         return true;
      }
+  }
+  
+private:
+  
+  template <bool ForwardDirection>
+  bool findTokenImpl(const boost::function<bool(RTokenCursor)>& predicate,
+                     std::size_t maxLookaround)
+  {
+     RTokenCursor cursor = clone();
+     std::size_t count = 0;
+     do
+     {
+        if (++count == maxLookaround)
+           return false;
+        
+        if (predicate(cursor))
+        {
+           setOffset(cursor.offset());
+           return true;
+        }
+     } while (cursor.moveInDirection(ForwardDirection));
+     return false;
+  }
+  
+public:
+  
+  bool findTokenFwd(const boost::function<bool(RTokenCursor)>& predicate,
+                    std::size_t maxLookaround = 200)
+  {
+     return findTokenImpl<true>(predicate, maxLookaround);
+  }
+  
+  bool findTokenBwd(const boost::function<bool(RTokenCursor)>& predicate,
+                    std::size_t maxLookaround = 200)
+  {
+     return findTokenImpl<false>(predicate, maxLookaround);
   }
   
   // Move (backwards) to an opening paren, associated with

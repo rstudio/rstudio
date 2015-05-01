@@ -921,12 +921,16 @@ public:
       return std::string();
    }
    
+   template <typename Container>
    void makeSymbolsAvailableInRange(
-         const std::set<std::string>& symbols,
+         const Container& symbols,
          const Position& begin,
          const Position& end)
    {
-      symbolRanges()[Range(begin, end)] = symbols;
+      core::algorithm::insert(
+            symbolRanges()[Range(begin, end)],
+            symbols.begin(),
+            symbols.end());
    }
    
 public:
@@ -1332,8 +1336,9 @@ public:
       }
    }
    
+   template <typename Container>
    void makeSymbolsAvailableInRange(
-         const std::set<std::string>& symbols,
+         const Container& symbols,
          const Position& begin,
          const Position& end)
    {
