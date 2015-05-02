@@ -16,18 +16,14 @@
 package com.google.gwt.dev.util;
 
 import com.google.gwt.core.ext.TreeLogger;
-import com.google.gwt.thirdparty.guava.common.collect.HashMultimap;
-import com.google.gwt.thirdparty.guava.common.collect.Multimap;
-import com.google.gwt.thirdparty.guava.common.collect.Sets;
+import com.google.gwt.thirdparty.guava.common.collect.ComparisonChain;
 
 import junit.framework.Assert;
 
 import java.util.ArrayList;
-import java.util.Collection;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
-import java.util.Map.Entry;
-import java.util.Set;
 import java.util.regex.Pattern;
 
 /**
@@ -112,7 +108,7 @@ public class UnitTestTreeLogger extends TreeLogger {
   /**
    * Represents a log event to check for.
    */
-  private static class LogEntry {
+  private static class LogEntry implements Comparable<LogEntry> {
     private final Class<? extends Throwable> caught;
     private String msg;
     private Pattern msgPattern;
@@ -195,6 +191,14 @@ public class UnitTestTreeLogger extends TreeLogger {
       }
       return true;
     }
+
+    @Override
+    public int compareTo(LogEntry that) {
+      return ComparisonChain.start()
+          .compare(this.msg, that.msg)
+          .compare(this.type, that.type)
+          .result();
+    }
   }
 
   private static void assertCorrectLogEntry(LogEntry expected, LogEntry actual) {
@@ -240,35 +244,16 @@ public class UnitTestTreeLogger extends TreeLogger {
    * no other entries were logged.
    */
   public void assertCorrectLogEntries() {
+    Collections.sort(expectedEntries);
+    Collections.sort(actualEntries);
+
     if (expectedEntries.size() != actualEntries.size()) {
       Assert.fail("Wrong log count: expected=" + expectedEntries + ", actual=" + actualEntries);
     }
 
-    assertMatches(expectedEntries, actualEntries);
-  }
-
-  private void assertMatches(Iterable<LogEntry> expectedEntries, Iterable<LogEntry> actualEntries) {
-    Multimap<LogEntry, LogEntry> matches = HashMultimap.create();
-    for (LogEntry expectedEntry : expectedEntries) {
-      for (LogEntry actualEntry : actualEntries) {
-        if (expectedEntry.matches(actualEntry)) {
-          matches.put(expectedEntry, actualEntry);
-        }
-      }
+    for (int i = 0; i < expectedEntries.size(); ++i) {
+      assertCorrectLogEntry(expectedEntries.get(i), actualEntries.get(i));
     }
-
-    // Assure only one match per expected entry.
-    for (Entry<LogEntry, Collection<LogEntry>> entry : matches.asMap().entrySet()) {
-      Assert.assertTrue(entry.getKey() + " matches multiple actual entries " + entry.getValue(),
-          entry.getValue().size() == 1);
-    }
-
-    Set<LogEntry> unmatchedActualEntries =
-        Sets.difference(Sets.newHashSet(actualEntries), Sets.newHashSet(matches.values()));
-    Set<LogEntry> unmatchedExpectedEntries =
-        Sets.difference(Sets.newHashSet(expectedEntries), Sets.newHashSet(matches.keySet()));
-    // This is a HACK to get a nice printout, entries are only equals when they are empty.
-    Assert.assertEquals(unmatchedExpectedEntries, unmatchedActualEntries);
   }
 
   /**
