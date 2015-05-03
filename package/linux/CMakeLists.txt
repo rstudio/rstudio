@@ -46,7 +46,7 @@ if(RSTUDIO_SERVER)
   # automatic dependency resolution use e.g.
   #   sudo apt-get install gdebi-core
   #   sudo gdebi rstudio-server-0.97.151-amd64.deb
-  set(RSTUDIO_DEBIAN_DEPENDS "psmisc, ")
+  set(RSTUDIO_DEBIAN_DEPENDS "psmisc, libapparmor1, ")
 
   # rpm dependencies
   set(RSTUDIO_RPM_DEPENDS "psmisc, ")
