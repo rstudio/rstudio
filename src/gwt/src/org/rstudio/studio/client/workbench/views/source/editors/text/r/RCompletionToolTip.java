@@ -54,13 +54,34 @@ public class RCompletionToolTip extends CppCompletionToolTip
             rectangle.getTop());
    }
    
+   public void resolvePositionAndShow(String signature)
+   {
+      setCursorAnchor();
+      resolvePositionAndShow(signature, docDisplay_.getCursorBounds());
+   }
+   
+   private String truncateSignature(String signature)
+   {
+      return truncateSignature(signature, 500);
+   }
+   
+   private String truncateSignature(String signature, int length)
+   {
+      if (signature.length() > length)
+         return signature.substring(0, length) + "<...truncated...> )";
+      else
+         return signature;
+   }
+   
    public void resolvePositionAndShow(String signature,
                                       int left,
                                       int top)
    {
+      signature = truncateSignature(signature);
       if (signature != null)
          setText(signature);
       
+      resolveWidth(signature);
       resolvePositionRelativeTo(left, top);
       
       setVisible(true);
@@ -68,10 +89,16 @@ public class RCompletionToolTip extends CppCompletionToolTip
       
    }
    
-   public void resolvePositionAndShow(String signature)
+   private void resolveWidth(String signature)
    {
-      setCursorAnchor();
-      resolvePositionAndShow(signature, docDisplay_.getCursorBounds());
+      if (signature.length() > 400)
+         setWidth("800px");
+      else if (signature.length() > 300)
+         setWidth("700px");
+      else if (signature.length() > 200)
+         setWidth("600px");
+      else
+         setWidth(getOffsetWidth() + "px");
    }
    
    private void resolvePositionRelativeTo(final int left,
