@@ -273,7 +273,8 @@ public class EnvironmentPresenter extends BasePresenter
          @Override
          public void onJumpToFunction(JumpToFunctionEvent event)
          {
-            FilePosition pos = FilePosition.create(event.getLineNumber(), 0);
+            FilePosition pos = FilePosition.create(event.getLineNumber(), 
+                  event.getColumnNumber());
             FileSystemItem destFile = FileSystemItem.createFile(
                   event.getFileName());
             eventBus_.fireEvent(new OpenSourceFileEvent(destFile, pos,

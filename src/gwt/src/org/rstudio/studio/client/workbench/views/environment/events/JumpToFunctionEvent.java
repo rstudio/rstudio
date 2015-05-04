@@ -34,6 +34,10 @@ public class JumpToFunctionEvent
       public final native int getLineNumber() /*-{
          return this.line_number;
       }-*/;
+
+      public final native int getColumnNumber() /*-{
+         return this.column_number;
+      }-*/;
    }
 
    public interface Handler extends EventHandler
@@ -49,6 +53,11 @@ public class JumpToFunctionEvent
    public int getLineNumber()
    {
       return data_.getLineNumber();
+   }
+   
+   public int getColumnNumber()
+   {
+      return data_.getColumnNumber();
    }
    
    public String getFileName()

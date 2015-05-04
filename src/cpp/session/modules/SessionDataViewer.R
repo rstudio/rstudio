@@ -536,7 +536,7 @@
            file.exists(srcfile$filename)) {
          # the srcref points to a valid file--go there 
          invisible(.Call("rs_jumpToFunction", normalizePath(srcfile$filename), 
-                         srcref[[1]]))
+                         srcref[[1]], srcref[[5]]))
          return(invisible(NULL))
        }
      }

@@ -1078,12 +1078,13 @@ void onConsoleOutput(boost::shared_ptr<LineDebugState> pLineDebugState,
 }
 
 
-SEXP rs_jumpToFunction(SEXP file, SEXP line) 
+SEXP rs_jumpToFunction(SEXP file, SEXP line, SEXP col) 
 {
    json::Object funcLoc;
    FilePath path(r::sexp::safeAsString(file));
    funcLoc["file_name"] = module_context::createAliasedPath(path);
    funcLoc["line_number"] = r::sexp::asInteger(line);
+   funcLoc["column_number"] = r::sexp::asInteger(col);
    ClientEvent jumpEvent(client_events::kJumpToFunction, funcLoc);
    module_context::enqueClientEvent(jumpEvent);
    return R_NilValue;
@@ -1137,7 +1138,7 @@ Error initialize()
    R_CallMethodDef methodDef ;
    methodDef.name = "rs_jumpToFunction" ;
    methodDef.fun = (DL_FUNC) rs_jumpToFunction ;
-   methodDef.numArgs = 2;
+   methodDef.numArgs = 3;
    r::routines::addCallMethod(methodDef);
 
    // subscribe to events
