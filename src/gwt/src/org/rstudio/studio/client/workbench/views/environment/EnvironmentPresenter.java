@@ -71,6 +71,7 @@ import org.rstudio.studio.client.workbench.views.environment.events.ContextDepth
 import org.rstudio.studio.client.workbench.views.environment.events.EnvironmentObjectAssignedEvent;
 import org.rstudio.studio.client.workbench.views.environment.events.EnvironmentObjectRemovedEvent;
 import org.rstudio.studio.client.workbench.views.environment.events.EnvironmentRefreshEvent;
+import org.rstudio.studio.client.workbench.views.environment.events.JumpToFunctionEvent;
 import org.rstudio.studio.client.workbench.views.environment.model.CallFrame;
 import org.rstudio.studio.client.workbench.views.environment.model.DownloadInfo;
 import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentContextData;
@@ -262,6 +263,22 @@ public class EnvironmentPresenter extends BasePresenter
                // time, poll the server once for its current status.
                requeryContextTimer_.schedule(500);
             }
+         }
+      });
+      
+      
+      eventBus.addHandler(JumpToFunctionEvent.TYPE, 
+            new JumpToFunctionEvent.Handler()
+      {
+         @Override
+         public void onJumpToFunction(JumpToFunctionEvent event)
+         {
+            FilePosition pos = FilePosition.create(event.getLineNumber(), 0);
+            FileSystemItem destFile = FileSystemItem.createFile(
+                  event.getFileName());
+            eventBus_.fireEvent(new OpenSourceFileEvent(destFile, pos,
+                                   FileTypeRegistry.R,
+                                   NavigationMethod.Default));
          }
       });
       
