@@ -1,7 +1,11 @@
 #!/bin/sh
 
 daemonCmd() {
-  if test -e /etc/init/rstudio-server.conf
+  INIT_SYSTEM=`cat /proc/1/comm`
+  if test $INIT_SYSTEM = "systemd"
+  then
+     eval "systemctl $1 rstudio-server.service"
+  elif test -e /etc/init/rstudio-server.conf
   then
      eval "initctl $1 rstudio-server"
   else
