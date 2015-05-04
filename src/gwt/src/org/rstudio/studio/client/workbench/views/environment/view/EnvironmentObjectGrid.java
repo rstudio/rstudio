@@ -49,7 +49,7 @@ public class EnvironmentObjectGrid extends EnvironmentObjectDisplay
       String checkColumn();
       String objectGrid();
       String valueColumn();
-      String dataFrameValueCol();
+      String decoratedValueCol();
    }
 
    public interface Resources extends ClientBundle
@@ -344,7 +344,7 @@ public class EnvironmentObjectGrid extends EnvironmentObjectDisplay
                    (rowValue.getCategory() == Categories.Data ||
                     rowValue.getCategory() == Categories.Function))
                {
-                  className += " " + style_.dataFrameValueCol() +
+                  className += " " + style_.decoratedValueCol() +
                                " " +
                                (rowValue.getCategory() == Categories.Function ?
                                ThemeStyles.INSTANCE.environmentFunctionCol () :

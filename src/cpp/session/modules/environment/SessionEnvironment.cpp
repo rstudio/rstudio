@@ -1134,7 +1134,6 @@ Error initialize()
             (DL_FUNC) rs_isBrowserActive,
             0);
 
-   // register viewFunction method
    R_CallMethodDef methodDef ;
    methodDef.name = "rs_jumpToFunction" ;
    methodDef.fun = (DL_FUNC) rs_jumpToFunction ;

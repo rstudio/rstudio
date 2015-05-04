@@ -53,7 +53,7 @@ public class EnvironmentObjectList extends EnvironmentObjectDisplay
       String valueCol();
       String categoryHeaderText();
       String clickableCol();
-      String dataFrameValueCol();
+      String decoratedValueCol();
       String detailRow();
       String objectList();
    }
@@ -337,7 +337,7 @@ public class EnvironmentObjectList extends EnvironmentObjectDisplay
                 host_.enableClickableObjects())
          {
             descriptionStyle += (" " +
-                                 style_.dataFrameValueCol() + " " +
+                                 style_.decoratedValueCol() + " " +
                                  style_.clickableCol() + " " + 
                                  ThemeStyles.INSTANCE.handCursor());
          }

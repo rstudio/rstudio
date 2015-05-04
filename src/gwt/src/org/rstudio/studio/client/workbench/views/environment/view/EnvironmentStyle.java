@@ -33,7 +33,7 @@ interface EnvironmentStyle extends CssResource
    String unevaluatedPromise();
    String objectGrid();
    String widthSettingRow();
-   String dataFrameValueCol();
+   String decoratedValueCol();
    String environmentPanel();
    String filterMatch();
    String environmentPane();
