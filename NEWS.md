@@ -155,6 +155,7 @@
 * Deprecated 'source.with.encoding' in favor of source(..., encoding = "...")
 * Make source code compatible with -std=c++11
 * Allow specifying character encoding, row name source, and comment character when importing data
+* Jump to the definition of a function by clicking it in the environment pane
 
 
 ### Server
