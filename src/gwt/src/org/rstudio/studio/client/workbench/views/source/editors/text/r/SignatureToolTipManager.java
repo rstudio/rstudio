@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text.r;
 
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.DocumentIdleBackgroundTask;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
@@ -26,11 +27,8 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.TokenCursor;
-import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedEvent;
-import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedHandler;
 
 import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.user.client.Timer;
 import com.google.inject.Inject;
 
 public class SignatureToolTipManager
@@ -40,31 +38,17 @@ public class SignatureToolTipManager
       RStudioGinjector.INSTANCE.injectMembers(this);
       toolTip_ = new RCompletionToolTip(docDisplay);
       docDisplay_ = docDisplay;
-      timer_ = new Timer()
-      {
-         @Override
-         public void run()
-         {
-            Position position = docDisplay_.getCursorPosition();
-            if (position.isEqualTo(lastCursorPosition_))
+      idleTask_ = new DocumentIdleBackgroundTask(
+            docDisplay,
+            new DocumentIdleBackgroundTask.Command()
             {
-               resolveActiveFunctionAndDisplayToolTip(true);
-            }
-         }
-      };
-
-      docDisplay_.addCursorChangedHandler(new CursorChangedHandler()
-      {
-         @Override
-         public void onCursorChanged(CursorChangedEvent event)
-         {
-            if (!uiPrefs_.showSignatureTooltips().getValue())
-               return;
-            
-            timer_.schedule(DELAY_MS);
-            lastCursorPosition_ = event.getPosition();
-         }
-      });
+               @Override
+               public boolean onIdle(Position position)
+               {
+                  resolveActiveFunctionAndDisplayToolTip(position, true);
+                  return true;
+               }
+            });
    }
    
    @Inject
@@ -109,17 +93,28 @@ public class SignatureToolTipManager
       });
    }
    
-   public void resolveActiveFunctionAndDisplayToolTip(final boolean searchForFunction)
+   public void resolveActiveFunctionAndDisplayToolTip(
+         final boolean searchForFunction)
    {
+      resolveActiveFunctionAndDisplayToolTip(
+            docDisplay_.getCursorPosition(),
+            searchForFunction);
+   }
+   
+   public void resolveActiveFunctionAndDisplayToolTip(
+         final Position position,
+         final boolean searchForFunction)
+   {
+            
       if (!uiPrefs_.showSignatureTooltips().getValue())
          return;
       
       AceEditor editor = (AceEditor) docDisplay_;
       if (editor == null)
          return;
-
+      
       TokenCursor cursor = editor.getSession().getMode().getRCodeModel().getTokenCursor();
-      if (!cursor.moveToPosition(docDisplay_.getCursorPosition()))
+      if (!cursor.moveToPosition(position))
          return;
 
       if (searchForFunction && !cursor.moveToActiveFunction())
@@ -177,10 +172,10 @@ public class SignatureToolTipManager
          }
       });
    }
-
+   
    private final RCompletionToolTip toolTip_;
    private final DocDisplay docDisplay_;
-   private final Timer timer_;
+   private final DocumentIdleBackgroundTask idleTask_;
    private Position lastCursorPosition_;
 
    private UIPrefs uiPrefs_;
