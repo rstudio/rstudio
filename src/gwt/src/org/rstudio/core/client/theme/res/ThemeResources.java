@@ -158,6 +158,7 @@ public interface ThemeResources extends ClientBundle
    @Source("workspaceSectionHeaderTile.png")
    DataResource workspaceSectionHeaderTile();
    ImageResource zoomDataset();
+   ImageResource viewFunctionCode();
 
    @Source("inlineEditIcon.png")
    DataResource inlineEditIcon();

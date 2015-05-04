@@ -1090,6 +1090,11 @@ body.ubuntu_mono .searchBox {
    background-position: right center; 
 }
 
+@sprite td.environmentFunctionCol {
+   gwt-image: 'viewFunctionCode';
+   background-position: right center;
+}
+
 .odd {
    background-color: #f2f2f2;
 }

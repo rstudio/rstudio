@@ -53,7 +53,7 @@ public class EnvironmentObjectList extends EnvironmentObjectDisplay
       String valueCol();
       String categoryHeaderText();
       String clickableCol();
-      String dataFrameValueCol();
+      String decoratedValueCol();
       String detailRow();
       String objectList();
    }
@@ -331,11 +331,13 @@ public class EnvironmentObjectList extends EnvironmentObjectDisplay
          {
             descriptionStyle += (" " + style_.unevaluatedPromise());
          }
-         else if (rowValue.getCategory() == RObjectEntry.Categories.Data &&
-             host_.enableClickableObjects())
+         else if ((rowValue.getCategory() == RObjectEntry.Categories.Data ||
+                   rowValue.getCategory() == RObjectEntry.Categories.Function)
+                   &&
+                host_.enableClickableObjects())
          {
             descriptionStyle += (" " +
-                                 style_.dataFrameValueCol() + " " +
+                                 style_.decoratedValueCol() + " " +
                                  style_.clickableCol() + " " + 
                                  ThemeStyles.INSTANCE.handCursor());
          }
@@ -343,6 +345,11 @@ public class EnvironmentObjectList extends EnvironmentObjectDisplay
          {
             descriptionStyle += (" " + 
                                 ThemeStyles.INSTANCE.environmentDataFrameCol());
+         }
+         else if (rowValue.getCategory() == RObjectEntry.Categories.Function)
+         {
+            descriptionStyle += (" " + 
+                                ThemeStyles.INSTANCE.environmentFunctionCol());
          }
          descCol.className(descriptionStyle);
          renderCell(descCol, createContext(2), objectDescriptionColumn_, rowValue);
