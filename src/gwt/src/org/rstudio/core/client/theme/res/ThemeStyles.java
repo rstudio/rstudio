@@ -122,6 +122,7 @@ public interface ThemeStyles extends CssResource
    String applicationHeaderStrong();
           
    String environmentDataFrameCol();
+   String environmentFunctionCol();
 
    String odd();
    

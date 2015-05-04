@@ -105,7 +105,8 @@ public abstract class EnvironmentObjectDisplay
          @Override
          public void update(int index, RObjectEntry object, String value)
          {
-            if (object.getCategory() == RObjectEntry.Categories.Data &&
+            if ((object.getCategory() == RObjectEntry.Categories.Data ||
+                 object.getCategory() == RObjectEntry.Categories.Function) &&
                 host_.enableClickableObjects())
             {
                observer_.viewObject(object.rObject.getName());

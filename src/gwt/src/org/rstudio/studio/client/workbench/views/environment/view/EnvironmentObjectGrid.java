@@ -49,7 +49,7 @@ public class EnvironmentObjectGrid extends EnvironmentObjectDisplay
       String checkColumn();
       String objectGrid();
       String valueColumn();
-      String dataFrameValueCol();
+      String decoratedValueCol();
    }
 
    public interface Resources extends ClientBundle
@@ -340,12 +340,15 @@ public class EnvironmentObjectGrid extends EnvironmentObjectDisplay
             if (col.getType() == ObjectGridColumn.COLUMN_VALUE)
             {
                className += " " + style_.valueColumn();
-               if (host_.enableClickableObjects() && 
-                   rowValue.getCategory() == Categories.Data)
+               if (host_.enableClickableObjects() &&
+                   (rowValue.getCategory() == Categories.Data ||
+                    rowValue.getCategory() == Categories.Function))
                {
-                  className += " " + style_.dataFrameValueCol() +
+                  className += " " + style_.decoratedValueCol() +
                                " " +
-                               ThemeStyles.INSTANCE.environmentDataFrameCol() +
+                               (rowValue.getCategory() == Categories.Function ?
+                               ThemeStyles.INSTANCE.environmentFunctionCol () :
+                               ThemeStyles.INSTANCE.environmentDataFrameCol()) +
                                "  " +
                                ThemeStyles.INSTANCE.handCursor();
                }

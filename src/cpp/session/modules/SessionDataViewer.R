@@ -527,6 +527,23 @@
    # is this a function? if it is, view as a function instead
    if (is.function(x)) 
    {
+     # check the source refs to see if we can open the file itself instead of
+     # opening a read-only source viewer
+     srcref <- .rs.getSrcref(x)
+     if (!is.null(srcref)) {
+       srcfile <- attr(srcref, "srcfile", exact = TRUE)
+       if (!is.null(srcfile) && !is.null(srcfile$filename) && 
+           file.exists(srcfile$filename)) {
+         # the srcref points to a valid file--go there 
+         invisible(.Call("rs_jumpToFunction", normalizePath(srcfile$filename), 
+                         srcref[[1]], srcref[[5]]))
+         return(invisible(NULL))
+       }
+     }
+
+     # either this function doesn't have a source reference or its source
+     # reference points to a file we can't locate on disk--show a deparsed
+     # version of the function
      namespace <- environmentName(env)
      if (identical(namespace, "R_EmptyEnv") || identical(namespace, ""))
        namespace <- "viewing"

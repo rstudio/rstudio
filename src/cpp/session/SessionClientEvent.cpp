@@ -127,6 +127,7 @@ const int kMarkersChanged = 102;
 const int kEnableRStudioConnect = 103;
 const int kUpdateGutterMarkers = 104;
 const int kSnippetsChanged = 105;
+const int kJumpToFunction = 106;
 }
 
 void ClientEvent::init(int type, const json::Value& data)
@@ -340,6 +341,8 @@ std::string ClientEvent::typeName() const
          return "update_gutter_markers";
       case client_events::kSnippetsChanged:
          return "snippets_changed";
+      case client_events::kJumpToFunction:
+         return "jump_to_function";
       default:
          LOG_WARNING_MESSAGE("unexpected event type: " + 
                              safe_convert::numberToString(type_));
