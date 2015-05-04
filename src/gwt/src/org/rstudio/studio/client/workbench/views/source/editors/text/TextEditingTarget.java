@@ -456,6 +456,11 @@ public class TextEditingTarget implements
             {
                event.preventDefault();
                event.stopPropagation();
+               
+               // Don't send an interrupt if a popup is visible
+               if (docDisplay_.isPopupVisible())
+                  return;
+               
                if (commands_.interruptR().isEnabled())
                   commands_.interruptR().execute();
             }
