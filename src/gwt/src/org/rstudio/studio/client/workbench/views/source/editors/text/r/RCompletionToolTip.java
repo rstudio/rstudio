@@ -253,6 +253,11 @@ public class RCompletionToolTip extends CppCompletionToolTip
       nativePreviewReg_.removeHandler();
    }
    
+   public String getSignature()
+   {
+      return getLabel();
+   }
+   
    private final DocDisplay docDisplay_;
    private HandlerRegistration nativePreviewReg_;
    private AnchoredSelection anchor_;

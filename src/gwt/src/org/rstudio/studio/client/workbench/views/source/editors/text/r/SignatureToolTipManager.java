@@ -147,13 +147,18 @@ public class SignatureToolTipManager
          @Override
          public void onResponseReceived(String arguments)
          {
+            final String signature = callString + arguments;
+            
             if (StringUtil.isNullOrEmpty(arguments))
+               return;
+            
+            if (toolTip_.isShowing() && toolTip_.getSignature().equals(signature))
                return;
             
             if (!searchForFunction)
             {
                toolTip_.resolvePositionAndShow(
-                     callString + arguments,
+                     signature,
                      position);
             }
             else
@@ -166,7 +171,7 @@ public class SignatureToolTipManager
                   return;
                
                toolTip_.resolvePositionAndShow(
-                     callString + arguments,
+                     signature,
                      Range.fromPoints(
                            callEndCursor.currentPosition(),
                            endCursor.currentPosition()));

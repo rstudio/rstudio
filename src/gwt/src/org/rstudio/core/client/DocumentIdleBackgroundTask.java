@@ -41,9 +41,20 @@ public class DocumentIdleBackgroundTask
       public void onStop() { return; }
    }
    
-   public DocumentIdleBackgroundTask(DocDisplay docDisplay, Command command)
+   public DocumentIdleBackgroundTask(DocDisplay docDisplay,
+                                     Command command)
+   {
+      this(docDisplay, 500, 500, command);
+   }
+   
+   public DocumentIdleBackgroundTask(DocDisplay docDisplay,
+                                     long pollDelayMs,
+                                     long idleThresholdMs,
+                                     Command command)
    {
       docDisplay_ = docDisplay;
+      pollDelayMs_ = pollDelayMs;
+      idleThresholdMs_ = idleThresholdMs;
       command_ = command;
       
       docDisplay_.addFocusHandler(new FocusHandler()
@@ -71,11 +82,6 @@ public class DocumentIdleBackgroundTask
    }
    
    public void start()
-   {
-      start(500, 500);
-   }
-   
-   public void start(final int pollDelayMs, final long idleThresholdMs)
    {
       assert !isRunning_ : "Background process already running!";
       
@@ -115,23 +121,23 @@ public class DocumentIdleBackgroundTask
             long lastModifiedTime = docDisplay_.getLastModifiedTime();
             long lastCursorChangedTime = docDisplay_.getLastCursorChangedTime();
             
-            if ((currentTime - lastModifiedTime) < idleThresholdMs)
+            if ((currentTime - lastModifiedTime) < idleThresholdMs_)
                return true;
             
-            if ((currentTime - lastCursorChangedTime) < idleThresholdMs)
+            if ((currentTime - lastCursorChangedTime) < idleThresholdMs_)
                return true;
             
-            if ((currentTime - lastMouseMoveTime_) < idleThresholdMs)
+            if ((currentTime - lastMouseMoveTime_) < idleThresholdMs_)
                return true;
             
             Position position =
                   lastEventWasMouseMove_ ?
                         docDisplay_.toDocumentPosition(lastMouseCoords_) :
                            docDisplay_.getCursorPosition();
-                        
+            
             return command_.onIdle(position, lastEventWasMouseMove_);
          }
-      }, pollDelayMs);
+      }, (int) pollDelayMs_);
       
    }
    
@@ -152,6 +158,8 @@ public class DocumentIdleBackgroundTask
    private boolean stopRequested_;
    
    private final DocDisplay docDisplay_;
+   private final long pollDelayMs_;
+   private final long idleThresholdMs_;
    private final Command command_;
    
    private long lastMouseMoveTime_;
