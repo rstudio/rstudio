@@ -5,7 +5,7 @@ Description=RStudio Server
 Type=forking
 ExecStart=${CMAKE_INSTALL_PREFIX}/bin/rserver
 KillMode=process
-Restart=always
+Restart=on-failure
 
 [Install]
 WantedBy=multi-user.target
