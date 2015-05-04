@@ -1064,15 +1064,22 @@ public class ControlFlowAnalyzer {
      * All exported methods must be treated as entry points. We need to invent a way to
      * scope this down via flags or module properties.
      */
-    for (JMethod method : program.typeOracle.getExportedMethods()) {
-      // treat class as instantiated, since a ctor may be called from JS export
-      rescuer.rescue(method.getEnclosingType(), true, true);
-      traverseFrom(method);
-    }
-
-    for (JField field : program.typeOracle.getExportedFields()) {
-      rescuer.rescue(field.getEnclosingType(), true, true);
-      rescuer.rescue(field);
+    List<JDeclaredType> declaredTypes = program.getDeclaredTypes();
+    for (JDeclaredType type : declaredTypes) {
+      // first time through, record all exported methods
+      for (JMethod method : type.getMethods()) {
+        if (program.typeOracle.isExportedMethod(method)) {
+          // treat class as instantiated, since a ctor may be called from JS export
+          rescuer.rescue(method.getEnclosingType(), true, true);
+          traverseFrom(method);
+        }
+      }
+      for (JField field : type.getFields()) {
+        if (program.typeOracle.isExportedField(field)) {
+          rescuer.rescue(field.getEnclosingType(), true, true);
+          rescuer.rescue(field);
+        }
+      }
     }
 
     if (program.getRunAsyncs().size() > 0) {

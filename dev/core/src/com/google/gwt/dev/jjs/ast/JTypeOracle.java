@@ -134,19 +134,8 @@ public class JTypeOracle implements Serializable {
     private String javaLangObject;
   }
 
-  private Set<JMethod> exportedMethods = Sets.newLinkedHashSet();
-  private Set<JField> exportedFields = Sets.newLinkedHashSet();
-
   private Set<JReferenceType> instantiatedJsoTypesViaCast = Sets.newHashSet();
   private OptionJsInteropMode.Mode jsInteropMode;
-
-  public Set<JMethod> getExportedMethods() {
-    return exportedMethods;
-  }
-
-  public Set<JField> getExportedFields() {
-    return exportedFields;
-  }
 
   public void setInstantiatedJsoTypesViaCast(Set<JReferenceType> instantiatedJsoTypesViaCast) {
     this.instantiatedJsoTypesViaCast = instantiatedJsoTypesViaCast;
@@ -720,7 +709,7 @@ public class JTypeOracle implements Serializable {
       return isSuperClass(fromType, toType);
     }
     if (toType instanceof JInterfaceType) {
-      return implementsInterface(fromType, (JInterfaceType) toType);
+      return implementsInterface(fromType, toType);
     }
     return false;
   }
@@ -789,21 +778,6 @@ public class JTypeOracle implements Serializable {
     deleteImmediateTypeRelations(getNamesOf(moduleDeclaredTypes));
     recordImmediateTypeRelations(moduleDeclaredTypes);
     computeExtendedTypeRelations();
-
-    for (JDeclaredType type : declaredTypes) {
-
-      // first time through, record all exported methods
-      for (JMethod method : type.getMethods()) {
-        if (isExportedMethod(method)) {
-          exportedMethods.add(method);
-        }
-      }
-      for (JField field : type.getFields()) {
-        if (isExportedField(field)) {
-          exportedFields.add(field);
-        }
-      }
-    }
   }
 
   private static Collection<String> getNamesOf(Collection<JDeclaredType> types) {
@@ -1019,8 +993,7 @@ public class JTypeOracle implements Serializable {
       if (overriddenMethod.getEnclosingType() instanceof JInterfaceType) {
         continue;
       }
-      if (isSuperClass((JClassType) currentMethod.getEnclosingType(),
-          (JClassType) overriddenMethod.getEnclosingType())) {
+      if (isSuperClass(currentMethod.getEnclosingType(), overriddenMethod.getEnclosingType())) {
         currentMethod = overriddenMethod;
       }
     }
@@ -1459,7 +1432,7 @@ public class JTypeOracle implements Serializable {
     if (clinitTargets.length == 1) {
       JDeclaredType singleTarget = clinitTargets[0];
       if (type instanceof JClassType && singleTarget instanceof JClassType
-          && isSuperClass((JClassType) type, (JClassType) singleTarget)) {
+          && isSuperClass(type, singleTarget)) {
         return singleTarget.getClinitTarget();
       }
     }
