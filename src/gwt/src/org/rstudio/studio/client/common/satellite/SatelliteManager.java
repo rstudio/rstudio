@@ -393,6 +393,19 @@ public class SatelliteManager implements CloseHandler<Window>
       if (SatelliteUtils.windowNameIsSatellite(name))
          name = SatelliteUtils.getWindowNameFromSatelliteName(name);
       events_.fireEvent(new WindowClosedEvent(name));
+
+      // remove this satellite from the list of active satellites; ordinarily
+      // we'd rely on the window object's isClosed() method, but it's possible
+      // in some cases for the window to enter a zombie state in which it exists
+      // and reports as open even after being closed, apparently due to 
+      // exceptions occurring during teardown (see case 4436). 
+      for (ActiveSatellite satellite: satellites_)
+      {
+         if (satellite.getName() == name)
+         {
+            satellites_.remove(satellite);
+         }
+      }
    }
 
    private void flushPendingEvents(String name)
