@@ -19,6 +19,15 @@ import org.rstudio.core.client.files.FileSystemItem;
 
 public class RSConnectPublishSource
 {
+   public RSConnectPublishSource(String sourceDir)
+   {
+      sourceFile_ = sourceDir;
+      deployFile_ = sourceDir;
+      isSelfContained_ = false;
+      description_ = null;
+      deployDir_ = sourceDir;
+   }
+
    public RSConnectPublishSource(String sourceFile, boolean isSelfContained, 
          String description)
    {
