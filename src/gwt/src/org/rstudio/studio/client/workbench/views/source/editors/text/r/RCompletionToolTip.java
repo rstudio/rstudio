@@ -1,6 +1,9 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text.r;
 
+import java.util.ArrayList;
+
 import org.rstudio.core.client.Rectangle;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay.AnchoredSelection;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
@@ -54,13 +57,55 @@ public class RCompletionToolTip extends CppCompletionToolTip
             rectangle.getTop());
    }
    
+   public void resolvePositionAndShow(String signature)
+   {
+      setCursorAnchor();
+      resolvePositionAndShow(signature, docDisplay_.getCursorBounds());
+   }
+   
+   private String truncateSignature(String signature)
+   {
+      return truncateSignature(signature, 200);
+   }
+   
+   private String truncateSignature(String signature, int length)
+   {
+      // Perform smart truncation -- look for a comma at or after the
+      // length specified (so we don't cut argument names in half)
+      if (signature.length() > length)
+      {
+         String truncated = signature;
+         ArrayList<Integer> commaIndices = StringUtil.indicesOf(signature, ',');
+         if (commaIndices.size() == 0)
+         {
+            truncated = signature.substring(0, length);
+         }
+         
+         for (int i = 0; i < commaIndices.size(); i++)
+         {
+            int index = commaIndices.get(i);
+            if (index >= length)
+            {
+               truncated = signature.substring(0, index + 1);
+               break;
+            }
+         }
+         
+         return truncated + " <...truncated...> )";
+      }
+      
+      return signature;
+   }
+   
    public void resolvePositionAndShow(String signature,
                                       int left,
                                       int top)
    {
+      signature = truncateSignature(signature);
       if (signature != null)
          setText(signature);
       
+      resolveWidth(signature);
       resolvePositionRelativeTo(left, top);
       
       setVisible(true);
@@ -68,10 +113,16 @@ public class RCompletionToolTip extends CppCompletionToolTip
       
    }
    
-   public void resolvePositionAndShow(String signature)
+   private void resolveWidth(String signature)
    {
-      setCursorAnchor();
-      resolvePositionAndShow(signature, docDisplay_.getCursorBounds());
+      if (signature.length() > 400)
+         setWidth("800px");
+      else if (signature.length() > 300)
+         setWidth("700px");
+      else if (signature.length() > 200)
+         setWidth("600px");
+      else
+         setWidth(getOffsetWidth() + "px");
    }
    
    private void resolvePositionRelativeTo(final int left,

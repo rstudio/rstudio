@@ -46,7 +46,6 @@ public class CppCompletionToolTip extends PopupPanel
    public CppCompletionToolTip(String text, String comment)
    {
       super(true);
-      
       CppCompletionResources.Styles styles = 
                               CppCompletionResources.INSTANCE.styles();
       
