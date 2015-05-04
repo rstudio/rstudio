@@ -108,7 +108,7 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
    options_description log("log");
    log.add_options()
       ("log-stderr",
-      value<bool>(&logStderr_)->default_value(true),
+      value<bool>(&logStderr_)->default_value(false),
       "write log entries to stderr");
 
    // agreement

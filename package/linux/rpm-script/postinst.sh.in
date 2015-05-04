@@ -49,8 +49,22 @@ then
   fi
 fi
 
-# add upstart profile or init.d script and start the server
-if test -d /etc/init/
+# add systemd, upstart, or init.d script and start the server
+INIT_SYSTEM=`cat /proc/1/comm`
+if test $INIT_SYSTEM = "systemd"
+then
+   # remove any previously existing init.d based scheme
+   service rstudio-server stop 2>/dev/null
+   rm -f /etc/init.d/rstudio-server
+   
+   systemctl stop rstudio-server.service 2>/dev/null
+   systemctl disable rstudio-server.service 2>/dev/null
+   cp ${CMAKE_INSTALL_PREFIX}/extras/systemd/rstudio-server.service /etc/systemd/system/rstudio-server.service
+   systemctl daemon-reload
+   systemctl enable rstudio-server.service
+   systemctl start rstudio-server.service
+   systemctl --no-pager status rstudio-server.service
+elif test -d /etc/init/
 then
    # remove any previously existing init.d based scheme
    service rstudio-server stop 2>/dev/null
