@@ -1,6 +1,9 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text.r;
 
+import java.util.ArrayList;
+
 import org.rstudio.core.client.Rectangle;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay.AnchoredSelection;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
@@ -62,15 +65,36 @@ public class RCompletionToolTip extends CppCompletionToolTip
    
    private String truncateSignature(String signature)
    {
-      return truncateSignature(signature, 500);
+      return truncateSignature(signature, 200);
    }
    
    private String truncateSignature(String signature, int length)
    {
+      // Perform smart truncation -- look for a comma at or after the
+      // length specified (so we don't cut argument names in half)
       if (signature.length() > length)
-         return signature.substring(0, length) + "<...truncated...> )";
-      else
-         return signature;
+      {
+         String truncated = signature;
+         ArrayList<Integer> commaIndices = StringUtil.indicesOf(signature, ',');
+         if (commaIndices.size() == 0)
+         {
+            truncated = signature.substring(0, length);
+         }
+         
+         for (int i = 0; i < commaIndices.size(); i++)
+         {
+            int index = commaIndices.get(i);
+            if (index >= length)
+            {
+               truncated = signature.substring(0, index + 1);
+               break;
+            }
+         }
+         
+         return truncated + " <...truncated...> )";
+      }
+      
+      return signature;
    }
    
    public void resolvePositionAndShow(String signature,
