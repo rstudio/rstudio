@@ -185,11 +185,18 @@ public class AceEditorNative extends JavaScriptObject {
    }-*/;
    
    public final native void manageDefaultKeybindings() /*-{
-      // We bind 'Ctrl + Shift + M' to insert a magrittr shortcut on Windows
-      delete this.commands.commandKeyBinding["ctrl-shift-m"];
       
-      // We bind 'Ctrl + Shift + P' to run previous code on Windows
-      delete this.commands.commandKeyBinding["ctrl-shift-p"];
+      // Delay execution just to ensure that the editor has finished
+      // initialization before we attempt to clear commands
+      $wnd.setTimeout(function() {
+         
+         // We bind 'Ctrl + Shift + M' to insert a magrittr shortcut on Windows
+         delete this.commands.commandKeyBinding["ctrl-shift-m"];
+
+         // We bind 'Ctrl + Shift + P' to run previous code on Windows
+         delete this.commands.commandKeyBinding["ctrl-shift-p"];
+      
+      }, 1000);
    }-*/;
 
    public static <T> HandlerRegistration addEventListener(
