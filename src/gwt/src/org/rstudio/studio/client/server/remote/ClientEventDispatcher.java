@@ -645,6 +645,11 @@ public class ClientEventDispatcher
             SnippetsChangedEvent.Data data = event.getData();
             eventBus_.fireEvent(new SnippetsChangedEvent(data));
          }
+         else if (type.equals(ClientEvent.JumpToFunction))
+         {
+            JumpToFunctionEvent.Data data = event.getData();
+            eventBus_.fireEvent(new JumpToFunctionEvent(data));
+         }
          else
          {
             GWT.log("WARNING: Server event not dispatched: " + type, null);
