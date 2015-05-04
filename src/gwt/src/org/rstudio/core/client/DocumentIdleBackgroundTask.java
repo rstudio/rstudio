@@ -34,7 +34,7 @@ public class DocumentIdleBackgroundTask
    public static abstract class Command
    {
       // Return 'true' to continue execution, 'false' to end execution
-      public abstract boolean onIdle(Position pos);
+      public abstract boolean onIdle(Position pos, boolean isMouse);
       
       // Return 'false' to signal a stop / failure to start
       public boolean onStart() { return true; }
@@ -129,7 +129,7 @@ public class DocumentIdleBackgroundTask
                         docDisplay_.toDocumentPosition(lastMouseCoords_) :
                            docDisplay_.getCursorPosition();
                         
-            return command_.onIdle(position);
+            return command_.onIdle(position, lastEventWasMouseMove_);
          }
       }, pollDelayMs);
       

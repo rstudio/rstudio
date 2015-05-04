@@ -43,9 +43,9 @@ public class SignatureToolTipManager
             new DocumentIdleBackgroundTask.Command()
             {
                @Override
-               public boolean onIdle(Position position)
+               public boolean onIdle(Position position, boolean isMouse)
                {
-                  resolveActiveFunctionAndDisplayToolTip(position, true);
+                  resolveActiveFunctionAndDisplayToolTip(position, !isMouse);
                   return true;
                }
             });
@@ -109,6 +109,9 @@ public class SignatureToolTipManager
       if (!uiPrefs_.showSignatureTooltips().getValue())
          return;
       
+      if (docDisplay_.isPopupVisible())
+         return;
+      
       AceEditor editor = (AceEditor) docDisplay_;
       if (editor == null)
          return;
@@ -118,6 +121,9 @@ public class SignatureToolTipManager
          return;
 
       if (searchForFunction && !cursor.moveToActiveFunction())
+         return;
+      
+      if (!cursor.nextValue().equals("("))
          return;
       
       final TokenCursor callEndCursor = cursor.cloneCursor();
@@ -146,7 +152,9 @@ public class SignatureToolTipManager
             
             if (!searchForFunction)
             {
-               toolTip_.resolvePositionAndShow(callString + arguments);
+               toolTip_.resolvePositionAndShow(
+                     callString + arguments,
+                     position);
             }
             else
             {

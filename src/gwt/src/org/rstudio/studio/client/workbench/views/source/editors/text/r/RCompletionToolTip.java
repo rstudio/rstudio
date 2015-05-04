@@ -137,6 +137,12 @@ public class RCompletionToolTip extends CppCompletionToolTip
          setWidth(getOffsetWidth() + "px");
    }
    
+   public void resolvePositionAndShow(String signature,
+                                      Position displayPos)
+   {
+      resolvePositionAndShow(signature, docDisplay_.getPositionBounds(displayPos));
+   }
+   
    public void resolvePositionAndShow(String signature, Range activeRange)
    {
       setAnchor(activeRange.getStart(), activeRange.getEnd());
