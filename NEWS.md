@@ -57,8 +57,8 @@
 * Automatically save files prior to sourcing (controlled by option)
 * Support for multiple cursors via Ctrl+Alt+Up/Down
 * Alt+Enter to run code while retaining cursor position
-* Ctrl+Shift+P to expand selection to matching paren / brace
-* Ctrl+Alt+Shift+P to select within matching parens / braces
+* Ctrl+Shift+E to expand selection to matching paren / brace
+* Ctrl+Alt+Shift+E to select within matching parens / braces
 * Comment/uncomment respects indent level when appropriate
 * New Reformat Code command for R scripts
 * Shift+Enter now searches backwards in Find/Replace
@@ -160,6 +160,7 @@
 
 ### Server
 
+* Use systemd to manage server processes on platforms where it is the default
 * Add server-set-umask option to control whether the server sets its umask to 022 at startup
 * Improved installation by reducing dependencies and providing additional platform-specific builds (e.g. SUSE, RHEL5 vs. RHEL6/7)
 * Server Pro: Support for SPDY protocol
@@ -194,6 +195,7 @@
 * Fix visual debugging issues when code isn't saved in system encoding
 * Fix compilation errors that occurred as a result of GCC concept checks
 * Persist last size setting in Save Plot as PDF dialog
+* R 3.2: Specify .Platform$pkgType when installing binary package archives
 
 
 
