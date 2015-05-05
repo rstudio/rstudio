@@ -3,7 +3,7 @@
   xmlns:ui="urn:ui:com.google.gwt.uibinder"
   xmlns:g="urn:import:com.google.gwt.user.client.ui">
 
-  <ui:style gss="true">
+  <ui:style>
     .viewport {
       position: relative;
       overflow: hidden;
@@ -41,4 +41,4 @@
         class="{style.content}" />
     </div>
   </div>
-</ui:UiBinder> 
+</ui:UiBinder>

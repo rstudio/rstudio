@@ -3,7 +3,7 @@
   xmlns:ui="urn:ui:com.google.gwt.uibinder"
   xmlns:g="urn:import:com.google.gwt.user.client.ui">
 
-  <ui:style gss="true">
+  <ui:style>
     .viewport {
       position: relative;
       overflow: hidden;
@@ -11,14 +11,16 @@
       direction: ltr;
     }
     /* scrollable is in LTR mode even if the body is in RTL mode. */
-    .scrollable {
-      position: absolute;
-      top: 0;
-      /* @noflip */ right: 0;
-      height: 100%;
-      width: 100px;
-      overflow-y: scroll;
-      overflow-x: hidden;
+    @noflip {
+      .scrollable {
+        position: absolute;
+        top: 0;
+        right: 0;
+        height: 100%;
+        width: 100px;
+        overflow-y: scroll;
+        overflow-x: hidden;
+      }
     }
 
   </ui:style>
