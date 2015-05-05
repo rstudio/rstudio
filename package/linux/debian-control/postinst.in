@@ -37,7 +37,7 @@ sudo rstudio-server force-suspend-all
 
 # check lsb release and init system
 LSB_RELEASE=`lsb_release --id --short`
-INIT_SYSTEM=`cat /proc/1/comm`
+INIT_SYSTEM=`cat /proc/1/comm 2>/dev/null`
 
 # add apparmor profile (but don't for systemd as this borks up process management)
 if test $LSB_RELEASE = "Ubuntu" && test -d /etc/apparmor.d/ && ! test $INIT_SYSTEM = "systemd"
@@ -51,7 +51,7 @@ then
 fi
 
 # add systemd, upstart, or init.d script and start the server
-if test $INIT_SYSTEM = "systemd"
+if test "$INIT_SYSTEM" = "systemd"
 then
    sudo systemctl stop rstudio-server.service 2>/dev/null
    sudo systemctl disable rstudio-server.service 2>/dev/null
