@@ -25,12 +25,14 @@ import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.regexp.shared.MatchResult;
 import com.google.gwt.regexp.shared.RegExp;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+import com.google.gwt.user.cellview.client.AbstractHasData.RedrawEvent.Handler;
 import com.google.gwt.user.cellview.client.HasKeyboardSelectionPolicy.KeyboardSelectionPolicy;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.view.client.ListDataProvider;
 import com.google.gwt.view.client.Range;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -244,9 +246,35 @@ public abstract class AbstractHasDataTestBase extends GWTTestCase {
     assertEquals(2, display.getKeyboardSelectedElement().getTabIndex());
   }
 
+  public void testRenderedEvent() {
+    final Counter counter = new Counter();
+    AbstractHasData<String> hasData = createAbstractHasData(new TextCell());
+    hasData.addRedrawHandler(new Handler() {
+      @Override
+      public void onRedraw() {
+        counter.increment();
+      }
+    });
+
+    // Cause redraw by changing the data.
+    hasData.setRowData(Arrays.asList(new String[]{"a", "b", "c"}));
+    hasData.getPresenter().flush();
+    assertEquals(1, counter.getCount());
+
+    // Cause redraw directly.
+    hasData.redraw();
+    hasData.getPresenter().flush();
+    assertEquals(2, counter.getCount());
+
+    // Cause a specific row to redraw.
+    hasData.redrawRow(0);
+    hasData.getPresenter().flush();
+    assertEquals(3, counter.getCount());
+  }
+
   /**
    * Create an {@link AbstractHasData} to test.
-   * 
+   *
    * @param cell the cell to use
    * @return the widget to test
    */
@@ -276,5 +304,20 @@ public abstract class AbstractHasDataTestBase extends GWTTestCase {
     int start = range.getStart();
     int length = range.getLength();
     view.setRowData(start, createData(start, length));
+  }
+
+  /**
+   * A mutable number, so that we can modify the value from within anonymous classes.
+   */
+  protected static final class Counter {
+    private int number = 0;
+
+    protected void increment() {
+      number++;
+    }
+
+    protected int getCount() {
+      return number;
+    }
   }
 }

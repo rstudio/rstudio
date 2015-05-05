@@ -24,6 +24,7 @@ import com.google.gwt.dom.client.TableElement;
 import com.google.gwt.dom.client.TableRowElement;
 import com.google.gwt.dom.client.TableSectionElement;
 import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.user.cellview.client.AbstractHasData.RedrawEvent.Handler;
 import com.google.gwt.user.cellview.client.CellTable.Resources;
 import com.google.gwt.user.cellview.client.CellTable.Style;
 import com.google.gwt.user.client.DOM;
@@ -382,6 +383,28 @@ public class CellTableTest extends AbstractCellTableTestBase<CellTable<String>> 
 
     TableElement tableElem = table.getElement().cast();
     assertTrue(tableElem.getClassName().contains(tableWidgetStyle));
+  }
+
+  public void testTableRenderedEvent() {
+    final Counter counter = new Counter();
+    CellTable<String> table = createAbstractHasData(new TextCell());
+    table.addRedrawHandler(new Handler() {
+      @Override
+      public void onRedraw() {
+        counter.increment();
+      }
+    });
+
+    // Cause table to redraw by removing a column.
+    Column<String, ?> column1 = table.getColumn(1);
+    table.removeColumn(column1);
+    table.getPresenter().flush();
+    assertEquals(1, counter.getCount());
+
+    // Cause the table to redraw by resetting the {@link CellTableBuilder}.
+    table.setTableBuilder(new DefaultCellTableBuilder<String>(table));
+    table.getPresenter().flush();
+    assertEquals(2, counter.getCount());
   }
 
   @Override
