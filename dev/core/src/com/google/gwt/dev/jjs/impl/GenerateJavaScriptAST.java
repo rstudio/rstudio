@@ -160,10 +160,8 @@ import com.google.gwt.dev.js.ast.JsVars;
 import com.google.gwt.dev.js.ast.JsVars.JsVar;
 import com.google.gwt.dev.js.ast.JsVisitable;
 import com.google.gwt.dev.js.ast.JsWhile;
-import com.google.gwt.dev.util.Name.SourceName;
 import com.google.gwt.dev.util.Pair;
 import com.google.gwt.dev.util.StringInterner;
-import com.google.gwt.dev.util.arg.OptionJsInteropMode;
 import com.google.gwt.dev.util.arg.OptionMethodNameDisplayMode;
 import com.google.gwt.dev.util.arg.OptionOptimize;
 import com.google.gwt.dev.util.collect.Stack;
@@ -1137,6 +1135,7 @@ public class GenerateJavaScriptAST {
       push(jsFor);
     }
 
+    @Override
     public void endVisit(JIfStatement x, Context ctx) {
       JsIf stmt = new JsIf(x.getSourceInfo());
 
@@ -2232,8 +2231,7 @@ public class GenerateJavaScriptAST {
     private JsExpression buildJsCastMapLiteral(
         List<JsExpression> runtimeTypeIdLiterals,
         SourceInfo sourceInfo) {
-      if (JjsUtils.closureStyleLiteralsNeeded(incremental, jsInteropMode,
-          closureCompilerFormatEnabled)) {
+      if (JjsUtils.closureStyleLiteralsNeeded(incremental, closureCompilerFormatEnabled)) {
         return buildClosureStyleCastMapFromArrayLiteral(runtimeTypeIdLiterals, sourceInfo);
       } else {
         return buildCastMapAsObjectLiteral(runtimeTypeIdLiterals, sourceInfo);
@@ -2414,15 +2412,6 @@ public class GenerateJavaScriptAST {
           constructInvocation("ModuleUtils.addInitFunctions", arguments).makeStmt();
 
       globalStmts.add(createGwtOnLoadFunctionCall);
-    }
-
-    private void mayAddProviderRegisterFn(List<String> providerFnNames,
-        String providerTypeSourceName) {
-      // ProviderClass.register();
-      if (providerTypeSourceName == null) {
-        return;
-      }
-      providerFnNames.add(SourceName.getShortClassName(providerTypeSourceName) + ".register");
     }
 
     /**
@@ -2959,7 +2948,7 @@ public class GenerateJavaScriptAST {
     }
 
     private boolean isMethodPotentiallyCalledAcrossClasses(JMethod method) {
-      assert !hasWholeWorldKnowledge || crossClassTargets != null;
+      assert incremental || crossClassTargets != null;
       return crossClassTargets == null || crossClassTargets.contains(method)
           || typeOracle.isExportedMethod(method) || typeOracle.isJsTypeMethod(method);
     }
@@ -2981,7 +2970,7 @@ public class GenerateJavaScriptAST {
       if (!(method instanceof JConstructor)) {
         return false;
       }
-      assert !hasWholeWorldKnowledge || liveCtors != null;
+      assert incremental || liveCtors != null;
       return liveCtors == null || liveCtors.contains(method);
     }
 
@@ -3336,8 +3325,6 @@ public class GenerateJavaScriptAST {
    */
   private final JsScope interfaceScope;
 
-  private final OptionJsInteropMode.Mode jsInteropMode;
-
   private final JsProgram jsProgram;
 
   private boolean closureCompilerFormatEnabled;
@@ -3369,15 +3356,13 @@ public class GenerateJavaScriptAST {
   private Set<HasName> nameOfTargets = Sets.newHashSet();
 
   private final JsOutputOption output;
-  // Whether the AST for the whole program arrived to this pass or just for one module.
-  // This is used to do some final optimizations.
-  // TODO(rluble) move optimization to a Java AST optimization pass.
-  private final boolean hasWholeWorldKnowledge;
 
   private final boolean optimize;
 
   private final TreeLogger logger;
 
+  // This is also used to do some final optimizations.
+  // TODO(rluble) move optimizations to a Java AST optimization pass.
   private final boolean incremental;
 
   /**
@@ -3442,11 +3427,9 @@ public class GenerateJavaScriptAST {
     this.optimize = options.getOptimizationLevel() > OptionOptimize.OPTIMIZE_LEVEL_DRAFT;
     this.methodNameMappingMode = options.getMethodNameDisplayMode();
     assert methodNameMappingMode != null;
-    this.hasWholeWorldKnowledge = !options.isIncrementalCompileEnabled();
     this.incremental = options.isIncrementalCompileEnabled();
 
     this.stripStack = JsStackEmulator.getStackMode(properties) == JsStackEmulator.StackMode.STRIP;
-    this.jsInteropMode = options.getJsInteropMode();
     this.closureCompilerFormatEnabled = options.isClosureCompilerFormatEnabled();
 
     /*
@@ -3625,7 +3608,7 @@ public class GenerateJavaScriptAST {
         ComputePotentiallyObservableUninitializedValues.analyze(program) : Predicates.<JField>alwaysTrue();
     new FindNameOfTargets().accept(program);
     new SortVisitor().accept(program);
-    if (hasWholeWorldKnowledge) {
+    if (!incremental) {
       // TODO(rluble): pull out this analysis and make it a Java AST optimization pass.
       new RecordCrossClassCallsAndConstructorLiveness().accept(program);
       new RecordJSInlinableMethods().accept(program);

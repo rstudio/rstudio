@@ -56,7 +56,6 @@ import com.google.gwt.dev.js.ast.JsNullLiteral;
 import com.google.gwt.dev.js.ast.JsNumberLiteral;
 import com.google.gwt.dev.js.ast.JsObjectLiteral;
 import com.google.gwt.dev.js.ast.JsStringLiteral;
-import com.google.gwt.dev.util.arg.OptionJsInteropMode.Mode;
 import com.google.gwt.lang.LongLib;
 import com.google.gwt.thirdparty.guava.common.base.Function;
 import com.google.gwt.thirdparty.guava.common.base.Predicate;
@@ -78,12 +77,12 @@ public class JjsUtils {
 
   public static boolean closureStyleLiteralsNeeded(PrecompileTaskOptions options) {
     return closureStyleLiteralsNeeded(options.isIncrementalCompileEnabled(),
-        options.getJsInteropMode(), options.isClosureCompilerFormatEnabled());
+        options.isClosureCompilerFormatEnabled());
   }
 
-  public static boolean closureStyleLiteralsNeeded(boolean incremental, Mode jsInteropMode,
+  public static boolean closureStyleLiteralsNeeded(boolean incremental,
       boolean closureOutputFormat) {
-    return !incremental && jsInteropMode == Mode.JS && closureOutputFormat;
+    return !incremental && closureOutputFormat;
   }
 
   public static String computeSignature(
