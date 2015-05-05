@@ -133,6 +133,9 @@ int signalForType(SignalType type)
 
       case SigChld:
          return SIGCHLD;
+
+      case SigTerm:
+         return SIGTERM;
          
       default:
          return -1;
