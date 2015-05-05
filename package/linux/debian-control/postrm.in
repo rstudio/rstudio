@@ -10,15 +10,5 @@ sudo rm -f /usr/sbin/rstudio-server
 sudo rm -rf /tmp/rstudio-rsession
 sudo rm -rf /tmp/rstudio-rserver
 
-# stop and remove service under systemd
-INIT_SYSTEM=`cat /proc/1/comm`
-if test $INIT_SYSTEM = "systemd"
-then
-   sudo systemctl stop rstudio-server.service 2>/dev/null
-   sudo systemctl disable rstudio-server.service 2>/dev/null
-   sudo rm -rf /etc/systemd/system/rstudio-server.service
-   sudo systemctl daemon-reload
-fi
-
 # clear error termination state
 set -e
