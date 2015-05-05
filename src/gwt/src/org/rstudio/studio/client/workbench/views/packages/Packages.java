@@ -350,6 +350,8 @@ public class Packages
                   // append type if needed
                   if (path.endsWith(".tar.gz"))
                      command.append(", type = \"source\"");
+                  else if (path.endsWith(".zip"))
+                     command.append(", type = \"win.binary\"");
                   else if (path.endsWith(".tgz"))
                      command.append(", type = .Platform$pkgType");
                }
