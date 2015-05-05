@@ -199,7 +199,12 @@ void AsyncPackageInformationProcess::onCompleted(int exitStatus)
          LOG_ERROR_MESSAGE("Failed to parse JSON: '" + subset + "'");
          continue;
       }
-
+      
+      // Ensure that this parsed as an Object -- this might have parsed as
+      // something else if e.g. we got malformed output on load of a package
+      if (!json::isType<json::Object>(value))
+         continue;
+      
       Error error = json::readObject(value.get_obj(),
                                      "package", &pkgInfo.package,
                                      "exports", &exportsJson,
