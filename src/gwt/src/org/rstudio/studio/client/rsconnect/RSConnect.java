@@ -319,8 +319,26 @@ public class RSConnect implements SessionInitHandler,
    
    private void publishAsCode(RSConnectActionEvent event)
    {
-      publishAsFiles(event, new RSConnectPublishSource(event.getPath(), 
-            false, null));
+      RSConnectPublishSource source = null;
+      if (event.getContentType() == CONTENT_TYPE_APP)
+      {
+         if (StringUtil.getExtension(event.getPath()).equalsIgnoreCase("r"))
+         {
+            FileSystemItem rFile = FileSystemItem.createFile(event.getPath());
+            source = new RSConnectPublishSource(rFile.getParentPathString());
+         }
+         else
+         {
+            source = new RSConnectPublishSource(event.getPath());
+         }
+      }
+      else
+      {
+         source = new RSConnectPublishSource(event.getPath(), 
+            false, null);
+      }
+         
+      publishAsFiles(event, source);
    }
    
    private void publishAsStatic(RSConnectPublishInput input)

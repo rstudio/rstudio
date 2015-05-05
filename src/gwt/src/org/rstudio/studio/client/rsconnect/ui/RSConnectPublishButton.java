@@ -226,7 +226,8 @@ public class RSConnectPublishButton extends Composite
       if (oldType != contentType)
       {
          // moving to a document type: get its deployment status 
-         if (contentType == RSConnect.CONTENT_TYPE_DOCUMENT)
+         if (contentType == RSConnect.CONTENT_TYPE_DOCUMENT ||
+             contentType == RSConnect.CONTENT_TYPE_APP)
             populateDeployments(true);
          
          // moving to a raw HTML type: erase the deployment list
@@ -572,10 +573,11 @@ public class RSConnectPublishButton extends Composite
          return;
       }
    
-      // if this is a Shiny application, check for deployments of its parent
-      // path
+      // if this is a Shiny application and an .R file is being invoked, check
+      // for deployments of its parent path
       String contentPath = contentPath_;
-      if (contentType_ == RSConnect.CONTENT_TYPE_APP) {
+      if (contentType_ == RSConnect.CONTENT_TYPE_APP &&
+          StringUtil.getExtension(contentPath_).equalsIgnoreCase("r")) {
          FileSystemItem fsiContent = FileSystemItem.createFile(contentPath_);
          contentPath = fsiContent.getParentPathString();
       }
