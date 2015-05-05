@@ -27,6 +27,9 @@ import com.google.gwt.json.client.JSONString;
 import com.google.gwt.json.client.JSONValue;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.Event;
+import com.google.gwt.user.client.Event.NativePreviewEvent;
+import com.google.gwt.user.client.Event.NativePreviewHandler;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Widget;
@@ -402,6 +405,25 @@ public class Source implements InsertSourceHandler,
          public void onSynctexStatusChanged(SynctexStatusChangedEvent event)
          {
             manageSynctexCommands();
+         }
+      });
+      
+      // Suppress 'CTRL + ALT + SHIFT + click' to work around #2483 in Ace
+      Event.addNativePreviewHandler(new NativePreviewHandler()
+      {
+         @Override
+         public void onPreviewNativeEvent(NativePreviewEvent event)
+         {
+            int type = event.getTypeInt();
+            if (type == Event.ONMOUSEDOWN || type == Event.ONMOUSEUP)
+            {
+               int modifier = KeyboardShortcut.getModifierValue(event.getNativeEvent());
+               if (modifier == (KeyboardShortcut.ALT | KeyboardShortcut.CTRL | KeyboardShortcut.SHIFT))
+               {
+                  event.cancel();
+                  return;
+               }
+            }
          }
       });
       
