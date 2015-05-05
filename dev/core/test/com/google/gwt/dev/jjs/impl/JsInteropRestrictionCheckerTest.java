@@ -661,6 +661,41 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
     assertBuggySucceeds();
   }
 
+  public void testMultiplePublicConstructorsAllDelegatesToExportedConstructorSucceeds()
+      throws Exception {
+    addSnippetImport("com.google.gwt.core.client.js.JsExport");
+    addSnippetImport("com.google.gwt.core.client.js.JsNoExport");
+    addSnippetClassDecl(
+        "@JsExport",
+        "public static class Buggy {",
+        "  public Buggy() {}",
+        "  @JsNoExport",
+        "  public Buggy(int a) {",
+        "    this();",
+        "  }",
+        "}");
+
+    assertBuggySucceeds();
+  }
+
+  public void testMultipleConstructorsNotAllDelegatedToExportedConstructorFails()
+      throws Exception {
+    addSnippetImport("com.google.gwt.core.client.js.JsExport");
+    addSnippetImport("com.google.gwt.core.client.js.JsNoExport");
+    addSnippetClassDecl(
+        "@JsExport",
+        "public static class Buggy {",
+        "  public Buggy() {}",
+        "  private Buggy(int a) {",
+        "    new Buggy();",
+        "  }",
+        "}");
+
+    assertBuggyFails(
+        "Constructor 'test.EntryPoint$Buggy.EntryPoint$Buggy() <init>' can only be exported if all "
+        + "constructors in the class are delegating to it.");
+  }
+
   public void testMultiplePublicConstructorsExportFails() throws Exception {
     addSnippetImport("com.google.gwt.core.client.js.JsExport");
     addSnippetClassDecl(
@@ -671,6 +706,9 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
         "}");
 
     assertBuggyFails(
+        "More than one constructor exported for test.EntryPoint$Buggy.",
+        "Constructor 'test.EntryPoint$Buggy.EntryPoint$Buggy() <init>' can only be exported if all "
+        + "constructors in the class are delegating to it.",
         "Member 'test.EntryPoint$Buggy.EntryPoint$Buggy(I) <init>' can't be "
         + "exported because the global name 'test.EntryPoint.Buggy' is already taken.");
   }
@@ -695,6 +733,19 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
         "public static class Buggy extends Parent implements Foo {}");
 
     assertBuggySucceeds();
+  }
+
+  public void testSingleConstructortExportWithNameFails() throws Exception {
+    addSnippetImport("com.google.gwt.core.client.js.JsExport");
+    addSnippetClassDecl(
+        "public static class Buggy {",
+        "  @JsExport(\"Create\")",
+        "  public Buggy() {}",
+        "}");
+
+    assertBuggyFails(
+        "Constructor 'test.EntryPoint$Buggy.EntryPoint$Buggy() <init>' cannot have an export "
+        + "name.");
   }
 
   public void testSingleExportSucceeds() throws Exception {

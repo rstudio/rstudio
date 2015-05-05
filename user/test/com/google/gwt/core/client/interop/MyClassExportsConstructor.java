@@ -20,16 +20,16 @@ import com.google.gwt.core.client.js.JsExport;
 /**
  * A test class that exhibits a variety of @JsExports on constructors.
  */
-public class MyClassExportsConstructors {
+public class MyClassExportsConstructor {
   private int a;
 
-  @JsExport("MyClassExportsConstructors1")
-  public MyClassExportsConstructors(int a) {
+  @JsExport
+  public MyClassExportsConstructor(int a) {
     this.a = a;
   }
 
-  public MyClassExportsConstructors() {
-    this.a = 1;
+  public MyClassExportsConstructor() {
+    this(1);
   }
 
   public int foo() {

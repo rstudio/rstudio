@@ -17,23 +17,29 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.MinimalRebuildCache;
 import com.google.gwt.dev.jjs.ast.Context;
+import com.google.gwt.dev.jjs.ast.JConstructor;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
+import com.google.gwt.dev.jjs.ast.JExpressionStatement;
 import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JInterfaceType;
 import com.google.gwt.dev.jjs.ast.JMember;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethod.JsPropertyType;
+import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JPrimitiveType;
 import com.google.gwt.dev.jjs.ast.JProgram;
+import com.google.gwt.dev.jjs.ast.JStatement;
 import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.ast.JVisitor;
 import com.google.gwt.thirdparty.guava.common.base.Function;
+import com.google.gwt.thirdparty.guava.common.base.Predicate;
 import com.google.gwt.thirdparty.guava.common.collect.FluentIterable;
 import com.google.gwt.thirdparty.guava.common.collect.Iterables;
 import com.google.gwt.thirdparty.guava.common.collect.Maps;
 import com.google.gwt.thirdparty.guava.common.collect.Ordering;
 import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
@@ -43,6 +49,8 @@ import java.util.SortedSet;
  */
 // TODO: handle custom JsType field/method names when that feature exists.
 // TODO: move JsInterop checks from JSORestrictionsChecker to here.
+// TODO: provide more information in global name collisions as it could be difficult to pinpoint in
+// big projects.
 public class JsInteropRestrictionChecker extends JVisitor {
 
   public static void exec(TreeLogger logger, JProgram jprogram,
@@ -94,6 +102,8 @@ public class JsInteropRestrictionChecker extends JVisitor {
     checkJsFunctionJsTypeCollision(x);
     if (currentType instanceof JInterfaceType) {
       checkJsTypeHierarchy((JInterfaceType) currentType);
+    } else {
+      checkConstructors(x);
     }
 
     // Perform custom class traversal to examine fields and methods of this class and all
@@ -106,6 +116,51 @@ public class JsInteropRestrictionChecker extends JVisitor {
 
     // Skip the default class traversal.
     return false;
+  }
+
+  private void checkConstructors(JDeclaredType x) {
+    List<JMethod> exportedCtors = FluentIterable
+        .from(x.getMethods())
+        .filter(new Predicate<JMethod>() {
+           @Override
+           public boolean apply(JMethod m) {
+             return m.isExported() && m instanceof JConstructor;
+           }
+        }).toList();
+
+    if (exportedCtors.isEmpty()) {
+      return;
+    }
+
+    if (exportedCtors.size() > 1) {
+      logError("More than one constructor exported for %s.", x.getName());
+    }
+
+    final JConstructor exportedCtor = (JConstructor) exportedCtors.get(0);
+    if (!exportedCtor.getExportName().isEmpty()) {
+      logError("Constructor '%s' cannot have an export name.", exportedCtor.getQualifiedName());
+    }
+
+    boolean anyNonDelegatingConstructor = Iterables.any(x.getMethods(), new Predicate<JMethod>() {
+      @Override
+      public boolean apply(JMethod method) {
+        return method != exportedCtor && method instanceof JConstructor
+            && !isDelegatingToConstructor((JConstructor) method, exportedCtor);
+      }
+    });
+
+    if (anyNonDelegatingConstructor) {
+      logError("Constructor '%s' can only be exported if all constructors in the class are "
+          + "delegating to it.", exportedCtor.getQualifiedName());
+    }
+  }
+
+  private boolean isDelegatingToConstructor(JConstructor ctor, JConstructor targetCtor) {
+    List<JStatement> statements = ctor.getBody().getBlock().getStatements();
+    JExpressionStatement statement = (JExpressionStatement) statements.get(0);
+    JMethodCall call = (JMethodCall) statement.getExpr();
+    assert call.isStaticDispatchOnly() : "Every ctor should either have this() or super() call";
+    return call.getTarget().equals(targetCtor);
   }
 
   @Override

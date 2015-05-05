@@ -138,52 +138,13 @@ public class JsExportTest extends GWTTestCase {
     return new $global.woo.MyExportedClassWithImplicitConstructor();
   }-*/;
 
-  public void testExportClass_multipleConstructors() {
-    assertEquals(3, getSumByDefaultConstructor());
-    assertEquals(30, getSumByConstructor());
-  }
-
-  private native int getSumByDefaultConstructor() /*-{
-    var obj = new $global.woo.MyExportedClassWithMultipleConstructors.MyClassConstructor1();
-    return obj.sum();
-  }-*/;
-
-  private native int getSumByConstructor() /*-{
-    var obj = new $global.woo.MyExportedClassWithMultipleConstructors.MyClassConstructor2(10, 20);
-    return obj.sum();
-  }-*/;
-
-  public void testExportClass_instanceOf() {
-    assertTrue(createMyExportedClassWithMultipleConstructors1()
-        instanceof MyExportedClassWithMultipleConstructors);
-    assertTrue(createMyExportedClassWithMultipleConstructors2()
-        instanceof MyExportedClassWithMultipleConstructors);
-  }
-
-  private native Object createMyExportedClassWithMultipleConstructors1() /*-{
-    return new $global.woo.MyExportedClassWithMultipleConstructors.MyClassConstructor1();
-  }-*/;
-
-  private native Object createMyExportedClassWithMultipleConstructors2() /*-{
-    return new $global.woo.MyExportedClassWithMultipleConstructors.MyClassConstructor2(10, 20);
-  }-*/;
-
   public void testExportConstructors() {
-    assertEquals(4, createMyClassExportsConstructors().foo());
-    assertTrue(isNotExportedConstructorExported());
+    assertEquals(4, createMyClassExportsConstructor().foo());
+    assertEquals(2, new MyClassExportsConstructor().foo());
   }
 
-  private native MyClassExportsConstructors createMyClassExportsConstructors() /*-{
-    return new $global.woo.MyClassExportsConstructors.MyClassExportsConstructors1(2);
-  }-*/;
-
-  private native boolean isNotExportedConstructorExported() /*-{
-    var namespace = $global.woo.MyClassExportsConstructors;
-    if (typeof(namespace) == 'function')
-      return false;
-    if (Object.getOwnPropertyNames($global.woo.MyClassExportsConstructors).length != 1)
-      return false;
-    return true;
+  private native MyClassExportsConstructor createMyClassExportsConstructor() /*-{
+    return new $global.woo.MyClassExportsConstructor(2);
   }-*/;
 
   public void testExportedField() {
