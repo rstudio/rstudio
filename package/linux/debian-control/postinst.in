@@ -55,6 +55,7 @@ then
    sudo systemctl daemon-reload
    sudo systemctl enable rstudio-server.service
    sudo systemctl start rstudio-server.service
+   sleep 1
    sudo systemctl --no-pager status rstudio-server.service
 elif test $LSB_RELEASE = "Ubuntu" && test -d /etc/init/
 then

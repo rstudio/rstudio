@@ -63,6 +63,7 @@ then
    systemctl daemon-reload
    systemctl enable rstudio-server.service
    systemctl start rstudio-server.service
+   sleep 1
    systemctl --no-pager status rstudio-server.service
 elif test -d /etc/init/
 then
