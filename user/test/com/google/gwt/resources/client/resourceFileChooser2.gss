@@ -1,0 +1,3 @@
+.myClass {
+  margin: MY_CONSTANT;
+}

@@ -169,6 +169,14 @@ public class CSSResourceTest extends GWTTestCase {
     String replacement();
   }
 
+  /**
+   * CssResource used to test that the compiler will pick up the right resource (.css or .gss)
+   * according to the module configuration.
+   */
+  interface ResourceFileChooser extends CssResource {
+    String myClass();
+  }
+
   interface NestedResources extends ClientBundle {
     @Source("32x32.png")
     DataResource dataMethod();
@@ -213,6 +221,23 @@ public class CSSResourceTest extends GWTTestCase {
 
     @Source("16x16.png")
     ImageResource spriteMethod();
+
+    ResourceFileChooser resourceFileChooser();
+
+    @Source("resourceFileChooser.css")
+    ResourceFileChooser resourceFileChooserWithSourceTargetingOneCssFile();
+
+    @Source("resourceFileChooser.gss")
+    ResourceFileChooser resourceFileChooserWithSourceTargetingOneGssFile();
+
+    @Source({"resourceFileChooser.css", "resourceFileChooser2.css"})
+    ResourceFileChooser resourceFileChooserWithSourceTargetingCssFiles();
+
+    @Source({"resourceFileChooser.gss", "resourceFileChooser2.gss"})
+    ResourceFileChooser resourceFileChooserWithSourceTargetingGssFiles();
+
+    @Source({"resourceFileChooser.css", "resourceFileChooser2.css", "resourceFileChooser3.css"})
+    ResourceFileChooser resourceFileChooserWithSourceTargetingCssFilesWithoutGssFile();
   }
 
   interface SharedBase extends CssResource {
@@ -409,6 +434,35 @@ public class CSSResourceTest extends GWTTestCase {
 
     r = GWT.create(ChildResources.class);
     assertTrue(r.empty().ensureInjected());
+  }
+
+  public void testFileChoice() {
+    // resource without @Source annotation
+    ResourceFileChooser css = Resources.INSTANCE.resourceFileChooser();
+    // should use the css file.
+    String expectedCss = "." + css.myClass() + "{width:5px;}";
+    assertEquals(expectedCss, css.getText());
+
+    // resource with @Source annotation targeting one .css file
+    css = Resources.INSTANCE.resourceFileChooserWithSourceTargetingOneCssFile();
+    // should use the css file.
+    assertEquals(expectedCss, css.getText());
+
+    // resource with @Source annotation targeting one .gss file
+    css = Resources.INSTANCE.resourceFileChooserWithSourceTargetingOneGssFile();
+    // should use the css file instead of the gss file
+    assertEquals(expectedCss, css.getText());
+
+    // resource with @Source annotation targeting several .css files
+    css = Resources.INSTANCE.resourceFileChooserWithSourceTargetingCssFiles();
+    // should use the css files.
+    expectedCss = "." + css.myClass() + "{width:5px;padding:5px;}";
+    assertEquals(expectedCss, css.getText());
+
+    // resource with @Source annotation targeting several .gss files
+    css = Resources.INSTANCE.resourceFileChooserWithSourceTargetingGssFiles();
+    // should use the css files instead of the gss files
+    assertEquals(expectedCss, css.getText());
   }
 
   public void testMultipleBundles() {

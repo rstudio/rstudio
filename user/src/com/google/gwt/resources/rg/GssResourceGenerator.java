@@ -31,6 +31,7 @@ import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.i18n.client.LocaleInfo;
+import com.google.gwt.resources.client.ClientBundle.Source;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.resources.client.CssResource.ClassName;
 import com.google.gwt.resources.client.CssResource.Import;
@@ -450,6 +451,77 @@ public class GssResourceGenerator extends AbstractCssResourceGenerator implement
     return true;
   }
 
+  /**
+   * Temporary method needed when GSS and the old CSS syntax are both supported by the sdk.
+   * It aims to choose the right resource file according to whether gss is enabled or not. If gss is
+   * enabled, it will try to find the resource file ending by .gss first. If GSS is disabled it will
+   * try to find the .css file. This logic is applied even if a
+   * {@link com.google.gwt.resources.client.ClientBundle.Source} annotation is used to define
+   * the resource file.
+   * <p>
+   * This method can be deleted once the support for the old CssResource is removed and use directly
+   * ResourceGeneratorUtil.findResources().
+   */
+  static URL[] findResources(TreeLogger logger, ResourceContext context, JMethod method,
+      boolean gssEnabled) throws UnableToCompleteException {
+
+    boolean isSourceAnnotationUsed = method.getAnnotation(Source.class) != null;
+
+    if (!isSourceAnnotationUsed) {
+      // ResourceGeneratorUtil will try to find automatically the resource file. Give him the right
+      // extension to use first
+      String[] extensions = gssEnabled ?
+          new String[]{".gss", ".css"} : new String[]{".css", ".gss"};
+      return  ResourceGeneratorUtil.findResources(logger, context, method, extensions);
+    }
+
+    // find the original resource files specified by the @Source annotation
+    URL[] originalResources = ResourceGeneratorUtil.findResources(logger, context, method);
+    URL[] resourcesToUse = new URL[originalResources.length];
+
+    String preferredExtension = gssEnabled ? ".gss" : ".css";
+
+    // Try to find all the resources by using the preferred extension according to whether gss is
+    // enabled or not. If one file with the preferred extension is missing, return the original
+    // resource files otherwise return the preferred files.
+    String[] sourceFiles = method.getAnnotation(Source.class).value();
+    for (int i = 0; i < sourceFiles.length; i++) {
+      String original = sourceFiles[i];
+
+      if (!original.endsWith(preferredExtension) && original.length() > 4) {
+        String preferredFile = original.substring(0, original.length() - 4) + preferredExtension;
+
+        // try to find the resource relative to the package
+        String path = method.getEnclosingType().getPackage().getName().replace('.', '/') + '/';
+        URL preferredUrl = ResourceGeneratorUtil
+            .tryFindResource(logger, context.getGeneratorContext(), context, path + preferredFile);
+
+        if (preferredUrl == null) {
+          // if it doesn't exist, assume it is absolute
+          preferredUrl = ResourceGeneratorUtil
+              .tryFindResource(logger, context.getGeneratorContext(), context, preferredFile);
+        }
+
+        if (preferredUrl == null) {
+          // avoid to mix gss and css, if one file with the preferred extension is missing
+          return originalResources;
+        }
+
+        logger.log(Type.INFO, "Preferred resource file found: " + preferredFile + ". This file " +
+            "will be used in replacement of " + original);
+
+        resourcesToUse[i] = preferredUrl;
+      } else {
+        // gss and css files shouldn't be used together for a same resource. So if one of the file
+        // is using the the preferred extension, return the original resources. If the dev has mixed
+        // gss and ccs files, that will fail later.
+        return originalResources;
+      }
+    }
+
+    return resourcesToUse;
+  }
+
   private Map<JMethod, CssParsingResult> cssParsingResultMap;
   private Set<String> allowedNonStandardFunctions;
   private LoggerErrorManager errorManager;
@@ -654,7 +726,7 @@ public class GssResourceGenerator extends AbstractCssResourceGenerator implement
       throw new UnableToCompleteException();
     }
 
-    URL[] resourceUrls = ResourceGeneratorUtil.findResources(logger, context, method);
+    URL[] resourceUrls = findResources(logger, context, method, gssOptions.isEnabled());
     if (resourceUrls.length == 0) {
       logger.log(TreeLogger.ERROR, "At least one source must be specified");
       throw new UnableToCompleteException();

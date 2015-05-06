@@ -126,4 +126,41 @@ public class CSSResourceWithGSSTest extends CSSResourceTest {
     // Test font-face contents
     assertTrue(text.contains("url(Foo.otf) format(\"opentype\")"));
   }
+
+  @Override
+  public void testFileChoice() {
+    // resource without @Source annotation
+    ResourceFileChooser css = Resources.INSTANCE.resourceFileChooser();
+    // should use the gss file.
+    String expectedCss = "." + css.myClass() + "{width:10px}";
+    assertEquals(expectedCss, css.getText());
+
+    // resource with @Source annotation targeting one .css file
+    css = Resources.INSTANCE.resourceFileChooserWithSourceTargetingOneCssFile();
+    // should use the gss file instead of the css file.
+    assertEquals(expectedCss, css.getText());
+
+    // resource with @Source annotation targeting one .gss file
+    css = Resources.INSTANCE.resourceFileChooserWithSourceTargetingOneGssFile();
+    // should use the gss file
+    assertEquals(expectedCss, css.getText());
+
+    // resource with @Source annotation targeting several .css files
+    css = Resources.INSTANCE.resourceFileChooserWithSourceTargetingCssFiles();
+    // should use the gss files instead of the css files
+    expectedCss = "." + css.myClass() + "{width:10px;margin:10px}";
+    assertEquals(expectedCss, css.getText());
+
+    // resource with @Source annotation targeting several .gss files
+    css = Resources.INSTANCE.resourceFileChooserWithSourceTargetingGssFiles();
+    // should use the gss files
+    assertEquals(expectedCss, css.getText());
+
+    // resource with @Source annotation targeting several .css files but one css file doesn't have
+    // a corresponding gss file.
+    css = Resources.INSTANCE.resourceFileChooserWithSourceTargetingCssFilesWithoutGssFile();
+    // should use the css file (will be auto-converted)
+    expectedCss = "." + css.myClass() + "{width:5px;padding:5px;height:5px}";
+    assertEquals(expectedCss, css.getText());
+  }
 }

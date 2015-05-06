@@ -609,7 +609,7 @@ public class CssResourceGenerator extends AbstractCssResourceGenerator
 
   protected URL[] getResources(TreeLogger logger, ResourceContext context,
       JMethod method) throws UnableToCompleteException {
-    return ResourceGeneratorUtil.findResources(logger, context, method);
+    return GssResourceGenerator.findResources(logger, context, method, false);
   }
 
   /**

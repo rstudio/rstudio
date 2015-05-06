@@ -1,0 +1,5 @@
+@def MY_CONSTANT 10px;
+
+.myClass {
+  width: MY_CONSTANT;
+}
