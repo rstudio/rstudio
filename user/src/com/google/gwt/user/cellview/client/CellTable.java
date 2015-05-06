@@ -502,6 +502,7 @@ public class CellTable<T> extends AbstractCellTable<T> implements
   private TableSectionElement tfoot;
   private TableSectionElement thead;
   private boolean colGroupEnabled = true;
+  private boolean removeColumnsOnHide = true;
 
   /**
    * Constructs a table with a default page size of 15.
@@ -581,11 +582,11 @@ public class CellTable<T> extends AbstractCellTable<T> implements
       Widget loadingIndicator) {
     this(pageSize, resources, keyProvider, loadingIndicator, true, true);
   }
-  
+
   /**
    * Constructs a table with the specified page size, {@link Resources}, key
    * provider, and loading indicator.
-   * 
+   *
    * @param pageSize the page size
    * @param resources the resources to use for this widget
    * @param keyProvider an instance of ProvidesKey<T>, or null if the record
@@ -595,7 +596,7 @@ public class CellTable<T> extends AbstractCellTable<T> implements
    * @param enableColGroup enable colgroup element. This is used when the table is using fixed
    *          layout and when column style is added. Ignoring this element will boost rendering
    *          performance. Note that when colgroup is disabled, {@link #setColumnWidth},
-   *          {@link setTableLayoutFixed} and {@link addColumnStyleName} are no longe supported
+   *          {@link setTableLayoutFixed} and {@link addColumnStyleName} are no longer supported
    * @param attachLoadingPanel attaching the table section that contains the empty table widget and
    *          the loading indicator. Attaching this to the table significantly improve the rendering
    *          performance in webkit based browsers but also introduces significantly larger latency
@@ -818,6 +819,10 @@ public class CellTable<T> extends AbstractCellTable<T> implements
     setTableLayoutFixed(isFixedLayout);
   }
 
+  public void setRemoveColumnsOnHide(boolean removeColumnsOnHide) {
+    this.removeColumnsOnHide = removeColumnsOnHide;
+  }
+
   @Override
   protected void doSetColumnWidth(int column, String width) {
     // This is invoked when column width is set (which will throw an exception if colgroup is not
@@ -889,21 +894,22 @@ public class CellTable<T> extends AbstractCellTable<T> implements
     super.refreshColumnWidths();
 
     /*
-     * Set the width to zero and the display to none for all col elements that 
-     * appear after the last column. Clearing the width would cause it to take 
-     * up the remaining width in a fixed layout table.
-     * 
-     * Clear the display for all columns that appear in the table. 
+     * Clear the display for all columns that appear in the table. And removes any cols from the
+     * colgroup that are no longer in the table.
      */
     if (colGroupEnabled) {
       int colCount = colgroup.getChildCount();
-      int lastColumn = getRealColumnCount(); 
+      int lastColumn = getRealColumnCount();
       for (int i = 0; i < lastColumn; i++) {
         ensureTableColElement(i).getStyle().clearDisplay();
       }
-      for (int i = lastColumn; i < colCount; i++) {
-        doSetColumnWidth(i, "0px");
-        ensureTableColElement(i).getStyle().setDisplay(Display.NONE);
+      for (int i = colCount - 1; i >= lastColumn; i--) {
+        if (removeColumnsOnHide) {
+          doSetColumnWidth(i, "0px");
+          ensureTableColElement(i).getStyle().setDisplay(Display.NONE);
+        } else {
+          colgroup.removeChild(colgroup.getChild(i));
+        }
       }
     }
   }

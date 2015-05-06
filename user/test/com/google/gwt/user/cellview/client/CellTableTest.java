@@ -291,17 +291,38 @@ public class CellTableTest extends AbstractCellTableTestBase<CellTable<String>> 
   /**
    * Test that removing a column sets its width to zero and the display to none.
    */
-  public void testRemoveColumnWithWidth() {
+  public void testRemoveColumnWithWidth_withRemoveColumnsOnHideDisabled() {
     CellTable<String> table = createAbstractHasData(new TextCell());
+    table.setRemoveColumnsOnHide(false);
     Column<String, ?> column1 = table.getColumn(1);
     table.setColumnWidth(column1, "100px");
     Element col0 = table.colgroup.getFirstChildElement();
     Element col1 = col0.getNextSiblingElement();
     assertEquals("100px", col1.getStyle().getWidth().toLowerCase(Locale.ROOT));
+    assertEquals(2, table.colgroup.getChildCount());
 
     // Remove column 1.
     table.removeColumn(column1);
     table.getPresenter().flush();
+
+    assertNull(col0.getNextSiblingElement());
+    assertEquals(1, table.colgroup.getChildCount());
+  }
+
+  public void testRemoveColumnWithWidth_withRemoveColumnsOnHideEnabled() {
+    CellTable<String> table = createAbstractHasData(new TextCell());
+    table.setRemoveColumnsOnHide(true);
+    Column<String, ?> column1 = table.getColumn(1);
+    table.setColumnWidth(column1, "100px");
+    Element col0 = table.colgroup.getFirstChildElement();
+    Element col1 = col0.getNextSiblingElement();
+    assertEquals("100px", col1.getStyle().getWidth().toLowerCase(Locale.ROOT));
+    assertEquals(2, table.colgroup.getChildCount());
+
+    // Remove column 1.
+    table.removeColumn(column1);
+    table.getPresenter().flush();
+
     assertEquals("0px", col1.getStyle().getWidth());
     assertEquals("none", col1.getStyle().getDisplay().toLowerCase(Locale.ROOT));
   }
