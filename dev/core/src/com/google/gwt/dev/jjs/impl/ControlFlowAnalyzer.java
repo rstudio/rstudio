@@ -29,7 +29,6 @@ import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JExpression;
 import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JFieldRef;
-import com.google.gwt.dev.jjs.ast.JInstanceOf;
 import com.google.gwt.dev.jjs.ast.JInterfaceType;
 import com.google.gwt.dev.jjs.ast.JLocal;
 import com.google.gwt.dev.jjs.ast.JLocalRef;
@@ -299,17 +298,6 @@ public class ControlFlowAnalyzer {
         if (!liveFieldsAndMethods.contains(target)) {
           membersToRescueIfTypeIsInstantiated.add(target);
         }
-      }
-      return true;
-    }
-
-    @Override
-    public boolean visit(JInstanceOf x, Context ctx) {
-      JReferenceType targetType = x.getTestType();
-      if (program.typeOracle.isJsType(targetType)
-          && ((JDeclaredType) targetType).getJsPrototype() != null) {
-        // keep alive JsType with prototype used in cast so it can used in cast checks against JS objects later
-        rescue(targetType, true, true);
       }
       return true;
     }

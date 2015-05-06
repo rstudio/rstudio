@@ -571,7 +571,7 @@ public class JTypeOracle implements Serializable {
    * True if the type is a JSO or interface implemented by a JSO, or a JsType, or a JsFunction.
    */
   public boolean canBeInstantiatedInJavascript(JType type) {
-    return canBeJavaScriptObject(type) || isOrExtendsJsType(type, false) || isJsFunction(type);
+    return canBeJavaScriptObject(type) || isJsType(type) || isJsFunction(type);
   }
 
   public boolean castFailsTrivially(JReferenceType fromType, JReferenceType toType) {
