@@ -607,17 +607,17 @@ public class ControlFlowAnalyzer {
         if (dependencyRecorder != null) {
           curMethodStack.remove(curMethodStack.size() - 1);
         }
-        if (method.isNative() || program.typeOracle.isJsTypeMethod(method)
-            || program.typeOracle.isJsFunctionMethod(method)) {
+        if (method.isNative() || method.isOrOverridesJsTypeMethod()
+            || method.isOrOverridesJsFunctionMethod()) {
             /*
              * SPECIAL: returning from this method passes a value from
              * JavaScript into Java.
              */
           maybeRescueJavaScriptObjectPassingIntoJava(method.getType());
         }
-        if (program.typeOracle.isExportedMethod(method)
-            || program.typeOracle.isJsTypeMethod(method)
-            || program.typeOracle.isJsFunctionMethod(method)) {
+        if (method.isExported()
+            || method.isOrOverridesJsTypeMethod()
+            || method.isOrOverridesJsFunctionMethod()) {
           for (JParameter param : method.getParams()) {
             /**
              * TODO (cromwellian): JS visible methods (virtual or static) may be supplied
@@ -708,13 +708,13 @@ public class ControlFlowAnalyzer {
         // already safely rescued by other ControlFlow logic.
         if (dtype.isJsType() || dtype.isJsFunction()) {
           for (JMethod method : dtype.getMethods()) {
-            if (program.typeOracle.isJsTypeMethod(method)
-                || program.typeOracle.isJsFunctionMethod(method)) {
+            if (method.isOrOverridesJsTypeMethod()
+                || method.isOrOverridesJsFunctionMethod()) {
               rescue(method);
             }
           }
           for (JField field : dtype.getFields()) {
-            if (program.typeOracle.isJsTypeField(field)) {
+            if (field.isJsTypeMember()) {
               rescue(field);
             }
           }
@@ -800,8 +800,8 @@ public class ControlFlowAnalyzer {
         JParameter param = params.get(i);
         if (arg.hasSideEffects() || liveFieldsAndMethods.contains(param)
             // rescue any args of JsInterface Prototype methods or JsInterface
-            || program.typeOracle.isJsTypeMethod(method)
-            || program.typeOracle.isJsFunctionMethod(method)
+            || method.isOrOverridesJsTypeMethod()
+            || method.isOrOverridesJsFunctionMethod()
             || program.isJsTypePrototype(method.getEnclosingType())) {
           this.accept(arg);
           continue;
@@ -864,8 +864,8 @@ public class ControlFlowAnalyzer {
       for (JMethod method : type.getMethods()) {
         if (!method.isStatic() && (membersToRescueIfTypeIsInstantiated.contains(method)
             // method may be called from JS as well
-           || program.typeOracle.isJsTypeMethod(method)
-           || program.typeOracle.isJsFunctionMethod(method))) {
+           || method.isOrOverridesJsTypeMethod()
+           || method.isOrOverridesJsFunctionMethod())) {
           rescue(method);
         }
       }
@@ -1056,14 +1056,14 @@ public class ControlFlowAnalyzer {
     for (JDeclaredType type : declaredTypes) {
       // first time through, record all exported methods
       for (JMethod method : type.getMethods()) {
-        if (program.typeOracle.isExportedMethod(method)) {
+        if (method.isExported()) {
           // treat class as instantiated, since a ctor may be called from JS export
           rescuer.rescue(method.getEnclosingType(), true, true);
           traverseFrom(method);
         }
       }
       for (JField field : type.getFields()) {
-        if (program.typeOracle.isExportedField(field)) {
+        if (field.isExported()) {
           rescuer.rescue(field.getEnclosingType(), true, true);
           rescuer.rescue(field);
         }

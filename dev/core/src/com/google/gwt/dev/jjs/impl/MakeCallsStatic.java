@@ -317,7 +317,7 @@ public class MakeCallsStatic {
         return false;
       }
 
-      if (program.typeOracle.isJsTypeMethod(method)) {
+      if (method.isOrOverridesJsTypeMethod()) {
         return false;
       }
 

@@ -338,9 +338,6 @@ public final class JavaToJavaScriptCompiler {
         instrumentableLines = BaselineCoverageGatherer.exec(jprogram);
       }
 
-      // TypeOracle needs this to make decisions in several optimization passes
-      jprogram.typeOracle.setJsInteropMode(compilerContext.getOptions().getJsInteropMode());
-
       // Record initial set of type->type references.
       // type->type references need to be collected in two phases, 1) before any process to the
       // AST has happened (to record for example reference to types declaring compile-time
@@ -1149,7 +1146,6 @@ public final class JavaToJavaScriptCompiler {
       // Synchronize JTypeOracle with compile optimization behavior.
       jprogram.typeOracle.setOptimize(
           options.getOptimizationLevel() > OptionOptimize.OPTIMIZE_LEVEL_DRAFT);
-      jprogram.typeOracle.setJsInteropMode(options.getJsInteropMode());
 
       jsProgram = new JsProgram();
 
@@ -1291,9 +1287,7 @@ public final class JavaToJavaScriptCompiler {
       String[] additionalRootTypes, CompilationState compilationState) {
 
     Set<String> allRootTypes = Sets.newTreeSet();
-    if (jprogram.typeOracle.isJsInteropEnabled()) {
-      Iterables.addAll(allRootTypes, compilationState.getQualifiedJsInteropRootTypesNames());
-    }
+    Iterables.addAll(allRootTypes, compilationState.getQualifiedJsInteropRootTypesNames());
     Collections.addAll(allRootTypes, entryPointTypeNames);
     Collections.addAll(allRootTypes, additionalRootTypes);
     allRootTypes.addAll(JProgram.CODEGEN_TYPES_SET);

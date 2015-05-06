@@ -459,7 +459,7 @@ public class TypeTightener {
     public void exit(JField x, Context ctx) {
       // TODO: we should also skip @JsType fields when we implement them.
       if (program.codeGenTypes.contains(x.getEnclosingType())
-          || program.typeOracle.isExportedField(x)) {
+          || x.isExported()) {
         // We cannot tighten this field as we don't know all callers.
         return;
       }
@@ -523,8 +523,8 @@ public class TypeTightener {
        * The only information that we can infer about native methods is if they
        * are declared to return a leaf type.
        */
-      if (x.isNative() || program.typeOracle.isJsTypeMethod(x)
-          || program.typeOracle.isJsFunctionMethod(x)) {
+      if (x.isNative() || x.isOrOverridesJsTypeMethod()
+          || x.isOrOverridesJsFunctionMethod()) {
         return;
       }
 
@@ -564,9 +564,9 @@ public class TypeTightener {
     public void endVisit(JParameter x, Context ctx) {
       JMethod currentMethod = getCurrentMethod();
       if (program.codeGenTypes.contains(currentMethod.getEnclosingType())
-          || program.typeOracle.isExportedMethod(currentMethod)
-          || program.typeOracle.isJsFunctionMethod(currentMethod)
-          || program.typeOracle.isJsTypeMethod(currentMethod)) {
+          || currentMethod.isExported()
+          || currentMethod.isOrOverridesJsFunctionMethod()
+          || currentMethod.isOrOverridesJsTypeMethod()) {
         // We cannot tighten this parameter as we don't know all callers.
         return;
       }

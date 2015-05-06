@@ -165,9 +165,9 @@ public class JsInteropRestrictionChecker extends JVisitor {
 
   @Override
   public boolean visit(JField x, Context ctx) {
-    if (currentType == x.getEnclosingType() && jprogram.typeOracle.isExportedField(x)) {
+    if (currentType == x.getEnclosingType() && x.isExported()) {
       checkExportName(x);
-    } else if (jprogram.typeOracle.isJsTypeField(x)) {
+    } else if (x.isJsTypeMember()) {
       checkJsTypeFieldName(x, x.getJsMemberName());
     }
 
@@ -181,14 +181,14 @@ public class JsInteropRestrictionChecker extends JVisitor {
     }
     currentJsTypeProcessedMethods.addAll(x.getOverriddenMethods());
 
-    if (currentType == x.getEnclosingType() && jprogram.typeOracle.isExportedMethod(x)) {
+    if (currentType == x.getEnclosingType() && x.isExported()) {
       checkExportName(x);
-    } else if (jprogram.typeOracle.isJsTypeMethod(x)) {
+    } else if (x.isOrOverridesJsTypeMethod()) {
       checkJsTypeMethod(x);
     }
 
     if (currentType == x.getEnclosingType()) {
-      if (jprogram.typeOracle.isJsPropertyMethod(x) && !jprogram.typeOracle.isJsType(currentType)) {
+      if (x.isJsPropertyAccessor() && !currentType.isJsType()) {
         if (currentType instanceof JInterfaceType) {
           logError("Method '%s' can't be a JsProperty since interface '%s' is not a JsType.",
               x.getName(), x.getEnclosingType().getName());
@@ -221,9 +221,9 @@ public class JsInteropRestrictionChecker extends JVisitor {
   }
 
   private void checkJsTypeHierarchy(JInterfaceType interfaceType) {
-    if (jprogram.typeOracle.isJsType(currentType)) {
+    if (currentType.isJsType()) {
       for (JDeclaredType superInterface : interfaceType.getImplements()) {
-        if (!jprogram.typeOracle.isJsType(superInterface)) {
+        if (!superInterface.isJsType()) {
           logWarning(
               "JsType interface '%s' extends non-JsType interface '%s'. This is not recommended.",
               interfaceType.getName(), superInterface.getName());

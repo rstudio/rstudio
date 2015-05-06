@@ -112,7 +112,7 @@ public class ControlFlowRecorder extends JVisitor {
   public boolean visit(JField x, Context ctx) {
     String typeName = x.getEnclosingType().getName();
 
-    if (program.typeOracle.isExportedField(x) && x.isStatic()) {
+    if (x.isExported() && x.isStatic()) {
       stringAnalyzableTypeEnvironment.recordExportedStaticReferenceInType(typeName);
     }
 
@@ -136,7 +136,7 @@ public class ControlFlowRecorder extends JVisitor {
           overriddenMethodName);
     }
 
-    if (program.typeOracle.isExportedMethod(x) || program.typeOracle.isJsTypeMethod(x)) {
+    if (x.isExported() || x.isOrOverridesJsTypeMethod()) {
       if (x.isStatic() || x.isConstructor()) {
         stringAnalyzableTypeEnvironment.recordExportedStaticReferenceInType(typeName);
       }

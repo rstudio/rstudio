@@ -71,9 +71,9 @@ public class SameParameterValueOptimizer {
            * parameter values they'll supply.
            */
           || program.isJsTypePrototype(method.getEnclosingType())
-          || program.typeOracle.isJsTypeMethod(method)
-          || program.typeOracle.isJsFunctionMethod(method)
-          || program.typeOracle.isExportedMethod(method)) {
+          || method.isOrOverridesJsTypeMethod()
+          || method.isOrOverridesJsFunctionMethod()
+          || method.isExported()) {
         return;
       }
 
@@ -135,9 +135,9 @@ public class SameParameterValueOptimizer {
     @Override
     public boolean visit(JMethod x, Context ctx) {
       Set<JMethod> overriddenMethods = x.getOverriddenMethods();
-      if (!overriddenMethods.isEmpty() || program.typeOracle.isJsTypeMethod(x)
-          || program.typeOracle.isJsFunctionMethod(x)
-          || program.typeOracle.isExportedMethod(x)) {
+      if (!overriddenMethods.isEmpty() || x.isOrOverridesJsTypeMethod()
+          || x.isOrOverridesJsFunctionMethod()
+          || x.isExported()) {
         for (JMethod m : overriddenMethods) {
           rescuedMethods.add(m);
         }

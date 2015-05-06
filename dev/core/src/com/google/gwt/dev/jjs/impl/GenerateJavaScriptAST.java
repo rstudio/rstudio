@@ -437,7 +437,7 @@ public class GenerateJavaScriptAST {
         if (specialObfuscatedFields.containsKey(x)) {
           jsName = scopeStack.peek().declareName(mangleNameSpecialObfuscate(x));
           jsName.setObfuscatable(false);
-        } else if (typeOracle.isJsTypeField(x)) {
+        } else if (x.isJsTypeMember()) {
           jsName = scopeStack.peek().declareName(name, name);
           jsName.setObfuscatable(false);
         } else {
@@ -569,7 +569,7 @@ public class GenerateJavaScriptAST {
             polyName = interfaceScope.declareName(mangleNameSpecialObfuscate(x));
             polyName.setObfuscatable(false);
             // if a JsType and we can set set the interface method to non-obfuscatable
-          } else if (typeOracle.isJsTypeMethod(x) && !typeOracle.needsJsInteropBridgeMethod(x)) {
+          } else if (x.isOrOverridesJsTypeMethod() && !typeOracle.needsJsInteropBridgeMethod(x)) {
             if (x.isOrOverridesJsProperty()) {
               // Prevent JsProperty functions like x() from colliding with intended JS native
               // properties like .x;
@@ -944,10 +944,7 @@ public class GenerateJavaScriptAST {
         globalStmts.add(vars);
       }
 
-      if (typeOracle.isJsInteropEnabled() && typeOracle.isInstantiatedType(x) && !x.isJsoType() &&
-        x !=  program.getTypeJavaLangString()) {
-        collectExports(x);
-      }
+      collectExports(x);
 
       // TODO(zundel): Check that each unique method has a unique
       // name / poly name.
@@ -1194,19 +1191,17 @@ public class GenerateJavaScriptAST {
         globalStmts.add(vars);
       }
 
-      if (typeOracle.isJsInteropEnabled()) {
-        /*
-         * If a @JsType is exported, but no constructors are, @JsDoc type declarations added by the
-         * linker will fail in uncompiled mode, as they will try to access the 'Foo.prototype' which
-         * is undefined even though the goog.provide('Foo') statement exists. Here we synthesize a
-         * simple constructor to aid the linker.
-         */
-        if (closureCompilerFormatEnabled && x.isJsType()) {
-          declareSynthesizedClosureConstructor(x, globalStmts);
-        }
-
-        collectExports(x);
+      /*
+       * If a @JsType is exported, but no constructors are, @JsDoc type declarations added by the
+       * linker will fail in uncompiled mode, as they will try to access the 'Foo.prototype' which
+       * is undefined even though the goog.provide('Foo') statement exists. Here we synthesize a
+       * simple constructor to aid the linker.
+       */
+      if (closureCompilerFormatEnabled && x.isJsType()) {
+        declareSynthesizedClosureConstructor(x, globalStmts);
       }
+
+      collectExports(x);
     }
 
     @Override
@@ -1560,7 +1555,7 @@ public class GenerateJavaScriptAST {
 
       // in JsType case, super.foo() call requires SuperCtor.prototype.foo.call(this, args)
       // the method target should be on a class that ends with $Prototype and implements a JsType
-      if (!(method instanceof JConstructor) && typeOracle.isJsTypeMethod(method)) {
+      if (!(method instanceof JConstructor) && method.isOrOverridesJsTypeMethod()) {
         JsNameRef protoRef = prototype.makeRef(x.getSourceInfo());
         methodRef = new JsNameRef(methodRef.getSourceInfo(), method.getName());
         // add qualifier so we have jsPrototype.prototype.methodName.call(this, args)
@@ -2855,13 +2850,13 @@ public class GenerateJavaScriptAST {
       }
 
       for (JMethod m : x.getMethods()) {
-        if (typeOracle.isExportedMethod(m)) {
+        if (m.isExported()) {
           exportedMembersByExportName.put(m.getQualifiedExportName(), m);
         }
       }
 
       for (JField f : x.getFields()) {
-        if (typeOracle.isExportedField(f)) {
+        if (f.isExported()) {
           if (!f.isFinal()) {
             logger.log(TreeLogger.Type.WARN, "Exporting effectively non-final field "
                 + f.getQualifiedName() + ". Due to the way exporting works, the value of the"
@@ -2955,7 +2950,7 @@ public class GenerateJavaScriptAST {
     private boolean isMethodPotentiallyCalledAcrossClasses(JMethod method) {
       assert incremental || crossClassTargets != null;
       return crossClassTargets == null || crossClassTargets.contains(method)
-          || typeOracle.isExportedMethod(method) || typeOracle.isJsTypeMethod(method);
+          || method.isExported() || method.isOrOverridesJsTypeMethod();
     }
 
     private Iterable<JMethod> getPotentiallyAliveConstructors(JClassType x) {
@@ -3193,7 +3188,7 @@ public class GenerateJavaScriptAST {
     @Override
     public void endVisit(JMethod x, Context ctx) {
       // methods which are exported or static indexed methods may be called externally
-      if (typeOracle.isExportedMethod(x) || x.isStatic() && program.getIndexedMethods()
+      if (x.isExported() || x.isStatic() && program.getIndexedMethods()
           .contains(x)) {
         if (x instanceof JConstructor) {
           // exported ctors always considered live

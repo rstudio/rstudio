@@ -17,7 +17,6 @@ package com.google.gwt.dev.jjs.ast;
 
 import com.google.gwt.dev.MinimalRebuildCache;
 import com.google.gwt.dev.jjs.ast.js.JMultiExpression;
-import com.google.gwt.dev.util.arg.OptionJsInteropMode;
 import com.google.gwt.thirdparty.guava.common.annotations.VisibleForTesting;
 import com.google.gwt.thirdparty.guava.common.base.Function;
 import com.google.gwt.thirdparty.guava.common.base.Objects;
@@ -135,7 +134,6 @@ public class JTypeOracle implements Serializable {
   }
 
   private Set<JReferenceType> instantiatedJsoTypesViaCast = Sets.newHashSet();
-  private OptionJsInteropMode.Mode jsInteropMode;
 
   public void setInstantiatedJsoTypesViaCast(Set<JReferenceType> instantiatedJsoTypesViaCast) {
     this.instantiatedJsoTypesViaCast = instantiatedJsoTypesViaCast;
@@ -152,10 +150,6 @@ public class JTypeOracle implements Serializable {
    * 3) the method returns or accepts JsAware/JsConvert types.
    */
   public boolean needsJsInteropBridgeMethod(JMethod x) {
-    if (!isJsInteropEnabled()) {
-      return false;
-    }
-
     /*
      * We need Javascript bridge methods for exports in this class
      * @JsType
@@ -196,12 +190,12 @@ public class JTypeOracle implements Serializable {
      */
     // covariant methods need JS bridges
     List<JParameter> xParams = x.getParams();
-    if (isJsTypeMethod(x)) {
+    if (x.isOrOverridesJsTypeMethod()) {
       for (JMethod other : x.getEnclosingType().getMethods()) {
          if (other == x) {
            continue;
          }
-         if (isJsTypeMethod(other) && x.getName().equals(other.getName())) {
+        if (other.isOrOverridesJsTypeMethod() && x.getName().equals(other.getName())) {
            List<JParameter> otherParams = other.getParams();
            if (otherParams.size() == xParams.size()) {
              for (int i = 0; i < otherParams.size(); i++) {
@@ -218,16 +212,16 @@ public class JTypeOracle implements Serializable {
       }
     }
 
-    if (x.needsVtable() && isJsTypeMethod(x)) {
+    if (x.needsVtable() && x.isOrOverridesJsTypeMethod()) {
       for (JMethod override : x.getOverriddenMethods()) {
-        if (!isJsTypeMethod(override)) {
+        if (!override.isOrOverridesJsTypeMethod()) {
           return true;
         }
       }
     }
 
     // implicit builtin @JsConvert, longs are converted
-    if (isJsTypeMethod(x) || isExportedMethod(x)) {
+    if (x.isOrOverridesJsTypeMethod() || x.isExported()) {
       if (x.getOriginalReturnType() == JPrimitiveType.LONG) {
         return true;
       }
@@ -239,14 +233,6 @@ public class JTypeOracle implements Serializable {
     }
     // TODO (cromwellian): add SAM and JsAware/Convert cases in follow up
     return false;
-  }
-
-  public boolean isJsInteropEnabled() {
-    return jsInteropMode != OptionJsInteropMode.Mode.NONE;
-  }
-
-  public void setJsInteropMode(OptionJsInteropMode.Mode jsInteropMode) {
-    this.jsInteropMode = jsInteropMode;
   }
 
   public void setOptimize(boolean optimize) {
@@ -795,10 +781,6 @@ public class JTypeOracle implements Serializable {
    * Get the nearest JS type.
    */
   public JDeclaredType getNearestJsType(JType type, boolean mustHavePrototype) {
-    if (!isJsInteropEnabled()) {
-      return null;
-    }
-
     type = type.getUnderlyingType();
 
     if (!(type instanceof JDeclaredType)) {
@@ -806,7 +788,7 @@ public class JTypeOracle implements Serializable {
     }
 
     JDeclaredType dtype = (JDeclaredType) type;
-    if (isJsType(dtype) && (!mustHavePrototype || !Strings.isNullOrEmpty(dtype.getJsPrototype()))) {
+    if (dtype.isJsType() && (!mustHavePrototype || !Strings.isNullOrEmpty(dtype.getJsPrototype()))) {
       return dtype;
     }
 
@@ -825,7 +807,7 @@ public class JTypeOracle implements Serializable {
    */
   public JMethod getJsFunctionMethod(JClassType type) {
     for (JMethod method : type.getMethods()) {
-      if (isJsFunctionMethod(method)) {
+      if (method.isOrOverridesJsFunctionMethod()) {
         return method;
       }
     }
@@ -1079,64 +1061,15 @@ public class JTypeOracle implements Serializable {
     return classType.getSuperClass() == null;
   }
 
-
-  public boolean isExportedField(JField field) {
-    return isJsInteropEnabled() && field.isExported();
-  }
-
-  public boolean isExportedMethod(JMethod method) {
-    return isJsInteropEnabled() && method.isExported();
-  }
-
-  /**
-   * Returns whether the given method is exported by an @JsType annotation.
-   * <p>
-   * A method is a JsType method if it is a public instance method that has not been marked NoExport
-   * and is in a concrete class that has been annotated @JsType or overrides some other JsType
-   * method.
-   */
-  public boolean isJsTypeMethod(JMethod x) {
-    return isJsInteropEnabled() && x.isOrOverridesJsTypeMethod();
-  }
-
-  /**
-   * Returns whether the given method is directly marked with an @JsProperty annotation.
-   */
-  public boolean isJsPropertyMethod(JMethod x) {
-    return isJsInteropEnabled() && x.isJsProperty();
-  }
-
-  /**
-   * Returns whether the given field is exported by an @JsType annotation.
-   * <p>
-   * A field is a JsType field if it is a public instance field on a concrete class that has been
-   * annotated @JsType.
-   */
-  public boolean isJsTypeField(JField x) {
-    return isJsInteropEnabled() && x.isJsTypeMember();
-  }
-
   public boolean isSingleJsoImpl(JType type) {
     return type instanceof JReferenceType && getSingleJsoImpl((JReferenceType) type) != null;
-  }
-
-  /**
-   * Returns whether the given method may be implicitly called by a instance of a class that
-   * is exported by an @JsFunction annotation.
-   * <p>
-   * A method is a JsFunction method if it is or overrides a SAM function of a @JsFunction annotated
-   * functional interface.
-   */
-  public boolean isJsFunctionMethod(JMethod x) {
-    return isJsInteropEnabled() && x.isOrOverridesJsFunctionMethod();
   }
 
   /**
    * Whether the type is a JS interface (does not check supertypes).
    */
   public boolean isJsType(JType type) {
-    return isJsInteropEnabled()
-        && (type instanceof JDeclaredType && ((JDeclaredType) type).isJsType());
+    return type instanceof JDeclaredType && ((JDeclaredType) type).isJsType();
   }
 
   /**
@@ -1144,27 +1077,14 @@ public class JTypeOracle implements Serializable {
    * one of the types has a js prototype.
    */
   public boolean isOrExtendsJsType(JType type, boolean mustHavePrototype) {
-    if (isJsInteropEnabled()) {
-      JDeclaredType dtype = getNearestJsType(type, mustHavePrototype);
-      return dtype != null;
-    } else {
-      return false;
-    }
+    return getNearestJsType(type, mustHavePrototype) != null;
   }
 
   /**
    * Whether the type is a JsFunction interface.
    */
   public boolean isJsFunction(JType type) {
-    return isJsInteropEnabled()
-        && (type instanceof JInterfaceType && ((JInterfaceType) type).isJsFunction());
-  }
-
-  /**
-   * Whether the type or any supertypes is a JsFunction type.
-   */
-  public boolean isOrExtendsJsFunction(JDeclaredType type) {
-    return isJsInteropEnabled() && !getImplementedJsFunctions(type).isEmpty();
+    return type instanceof JInterfaceType && ((JInterfaceType) type).isJsFunction();
   }
 
   /**

@@ -726,7 +726,6 @@ public class UnifyAst {
 
   private MinimalRebuildCache minimalRebuildCache;
   private boolean incrementalCompile;
-  private boolean jsInteropEnabled;
   private final List<String> rootTypeSourceNames = Lists.newArrayList();
   private final Permutation[] permutations;
 
@@ -734,7 +733,6 @@ public class UnifyAst {
       JsProgram jsProgram, PrecompilationContext precompilationContext) {
 
     this.incrementalCompile = compilerContext.getOptions().isIncrementalCompileEnabled();
-    this.jsInteropEnabled = program.typeOracle.isJsInteropEnabled();
 
     this.logger = logger;
     this.compilerContext = compilerContext;
@@ -805,8 +803,8 @@ public class UnifyAst {
       }
 
       rootTypeBinaryNames.add(rootType.getName());
-      if (jsInteropEnabled && (rootType.hasAnyExports() || rootType.isOrExtendsJsType()
-          || rootType.isOrExtendsJsFunction())) {
+      if (rootType.hasAnyExports() || rootType.isOrExtendsJsType()
+          || rootType.isOrExtendsJsFunction()) {
         fullFlowIntoType(rootType);
       }
     }
@@ -1021,8 +1019,7 @@ public class UnifyAst {
       if (t instanceof JClassType && requiresDevirtualization(t)) {
         instantiate(t);
       }
-      if (jsInteropEnabled
-          && (t.hasAnyExports() || t.isOrExtendsJsType() || t.isOrExtendsJsFunction())) {
+      if (t.hasAnyExports() || t.isOrExtendsJsType() || t.isOrExtendsJsFunction()) {
         instantiate(t);
       }
     }
@@ -1323,13 +1320,12 @@ public class UnifyAst {
       instantiate(translate(intf));
     }
     staticInitialize(type);
-    boolean isJsType = jsInteropEnabled && type.isOrExtendsJsType();
-    boolean isJsFunction = jsInteropEnabled && type.isOrExtendsJsFunction();
+    boolean isJsTypeOrFunction = type.isOrExtendsJsType() || type.isOrExtendsJsFunction();
 
     // Flow into any reachable virtual methods.
     for (JMethod method : type.getMethods()) {
-      if ((isJsType || isJsFunction) && method.canBePolymorphic() ||
-          program.typeOracle.isExportedMethod(method)) {
+      if (isJsTypeOrFunction && method.canBePolymorphic()
+          || method.isExported()) {
         // Fake a call into the method to keep it around. For JsType, JsFunction and exported
         // methods.
         flowInto(method);
@@ -1349,7 +1345,7 @@ public class UnifyAst {
     }
 
     for (JField field : type.getFields()) {
-      if (program.typeOracle.isExportedField(field)) {
+      if (field.isExported()) {
         flowInto(field);
       }
     }

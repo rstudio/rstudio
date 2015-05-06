@@ -153,23 +153,23 @@ public class JMethod extends JNode implements JMember, CanBeAbstract, CanBeNativ
   }
 
   public JsPropertyType getImmediateOrTransitiveJsPropertyType() {
-    if (isJsProperty()) {
+    if (isJsPropertyAccessor()) {
       return getJsPropertyType();
     }
     for (JMethod overriddenMethod : getOverriddenMethods()) {
-      if (overriddenMethod.isJsProperty()) {
+      if (overriddenMethod.isJsPropertyAccessor()) {
         return overriddenMethod.getJsPropertyType();
       }
     }
     return null;
   }
 
-  public boolean isJsProperty() {
+  public boolean isJsPropertyAccessor() {
     return jsPropertyType != null;
   }
 
   public boolean isOrOverridesJsProperty() {
-    if (isJsProperty()) {
+    if (isJsPropertyAccessor()) {
       return true;
     }
     for (JMethod overriddenMethod : getOverriddenMethods()) {
