@@ -504,7 +504,6 @@ public class JTypeOracle implements Serializable {
   private final Map<JClassType, Map<String, JMethod>> methodsBySignatureForType =
       Maps.newIdentityHashMap();
 
-  private final boolean hasWholeWorldKnowledge;
   private boolean optimize = true;
 
   private ImmediateTypeRelations immediateTypeRelations;
@@ -514,11 +513,9 @@ public class JTypeOracle implements Serializable {
   /**
    * Constructs a new JTypeOracle.
    */
-  public JTypeOracle(ArrayTypeCreator arrayTypeCreator, MinimalRebuildCache minimalRebuildCache,
-      boolean hasWholeWorldKnowledge) {
+  public JTypeOracle(ArrayTypeCreator arrayTypeCreator, MinimalRebuildCache minimalRebuildCache) {
     this.immediateTypeRelations = minimalRebuildCache.getImmediateTypeRelations();
     this.arrayTypeCreator = arrayTypeCreator;
-    this.hasWholeWorldKnowledge = hasWholeWorldKnowledge;
 
     // Be ready to answer simple questions (type hierarchy) even before recompute...().
     computeExtendedTypeRelations();
@@ -552,8 +549,7 @@ public class JTypeOracle implements Serializable {
   }
 
   public boolean hasLiveImplementors(JType type) {
-    // If our knowledge is limited or we're not optimizing.
-    if (!hasWholeWorldKnowledge || !optimize) {
+    if (!optimize) {
       // Assume the worst case, that the provided type does have live implementors.
       return true;
     }
@@ -1001,15 +997,6 @@ public class JTypeOracle implements Serializable {
   }
 
   /**
-   * Whether this type oracle has whole world knowledge or not. Monolithic compiles have whole
-   * world knowledge but separate compiles know only about their immediate source and the
-   * immediately referenced types.
-   */
-  public boolean hasWholeWorldKnowledge() {
-    return hasWholeWorldKnowledge;
-  }
-
-  /**
    * True if either a JSO, or is an interface that is ONLY implemented by a JSO.
    */
   public boolean isEffectivelyJavaScriptObject(JType type) {
@@ -1206,41 +1193,38 @@ public class JTypeOracle implements Serializable {
   public void recomputeAfterOptimizations(Collection<JDeclaredType> declaredTypes) {
     Set<JDeclaredType> computed = Sets.newIdentityHashSet();
     assert optimize;
-    if (hasWholeWorldKnowledge) {
-      // Optimizations that only make sense in whole world compiles:
-      //   (1) minimize clinit()s.
-      for (JDeclaredType type : declaredTypes) {
-        computeClinitTarget(type, computed);
-      }
 
-      //   (2) make JSOs singleImpl when all the Java implementors are gone.
-      nextDual:
-      for (Iterator<String> it = dualImplInterfaces.iterator(); it.hasNext(); ) {
-        String dualIntf = it.next();
-        for (String implementorName : classesByImplementingInterface.get(dualIntf)) {
-          JClassType implementor = (JClassType) referenceTypesByName.get(implementorName);
-          assert implementor != null;
-          if (isInstantiatedType(implementor) && !implementor.isJsoType()) {
-            // This dual is still implemented by a Java class.
-            continue nextDual;
-          }
+    // Optimizations that only make sense in whole world compiles:
+    //   (1) minimize clinit()s.
+    for (JDeclaredType type : declaredTypes) {
+      computeClinitTarget(type, computed);
+    }
+    //   (2) make JSOs singleImpl when all the Java implementors are gone.
+    nextDual:
+    for (Iterator<String> it = dualImplInterfaces.iterator(); it.hasNext(); ) {
+      String dualIntf = it.next();
+      for (String implementorName : classesByImplementingInterface.get(dualIntf)) {
+        JClassType implementor = (JClassType) referenceTypesByName.get(implementorName);
+        assert implementor != null;
+        if (isInstantiatedType(implementor) && !implementor.isJsoType()) {
+          // This dual is still implemented by a Java class.
+          continue nextDual;
         }
-        // No Java implementors.
-        it.remove();
       }
-
-      //   (3) prune JSOs from jsoByInterface and dualImplInterfaces when JSO isn't live hence the
-      //       interface is no longer considered to be implemented by a JSO.
-      Iterator<Entry<String, String>> jit = jsoByInterface.entrySet().iterator();
-      while (jit.hasNext()) {
-        Entry<String, String> jsoSingleImplEntry = jit.next();
-        JClassType clazz = (JClassType) referenceTypesByName.get(jsoSingleImplEntry.getValue());
-        if (isInstantiatedType(clazz)) {
-          continue;
-        }
-        dualImplInterfaces.remove(jsoSingleImplEntry.getKey());
-        jit.remove();
+      // No Java implementors.
+      it.remove();
+    }
+    //   (3) prune JSOs from jsoByInterface and dualImplInterfaces when JSO isn't live hence the
+    //       interface is no longer considered to be implemented by a JSO.
+    Iterator<Entry<String, String>> jit = jsoByInterface.entrySet().iterator();
+    while (jit.hasNext()) {
+      Entry<String, String> jsoSingleImplEntry = jit.next();
+      JClassType clazz = (JClassType) referenceTypesByName.get(jsoSingleImplEntry.getValue());
+      if (isInstantiatedType(clazz)) {
+        continue;
       }
+      dualImplInterfaces.remove(jsoSingleImplEntry.getKey());
+      jit.remove();
     }
   }
 
@@ -1321,7 +1305,7 @@ public class JTypeOracle implements Serializable {
     // Create dual mappings for any jso interface with a Java implementor.
     for (String jsoIntfName : jsoByInterface.keySet()) {
       for (String implementor : classesByImplementingInterface.get(jsoIntfName)) {
-        if (!hasWholeWorldKnowledge || !isJavaScriptObject(implementor)) {
+        if (!isJavaScriptObject(implementor)) {
           // Assume always dualImpl for separate compilation. Due to the nature of separate
           // compilation, the compiler can not know if a specific interface is implemented in a
           // different module unless it is a monolithic whole world compile.

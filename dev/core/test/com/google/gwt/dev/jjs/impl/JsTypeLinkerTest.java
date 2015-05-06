@@ -125,7 +125,7 @@ public class JsTypeLinkerTest extends TestCase {
 
     JsTypeLinker jsTypeLinker = new JsTypeLinker(TreeLogger.NULL,
         new JsNoopTransformer(originalJs, srb.build(), smb.build()), classRanges, programRange,
-        minimalRebuildCache, new JTypeOracle(null, minimalRebuildCache, true));
+        minimalRebuildCache, new JTypeOracle(null, minimalRebuildCache));
 
     // Run the JS Type Linker.
     jsTypeLinker.exec();
@@ -145,7 +145,7 @@ public class JsTypeLinkerTest extends TestCase {
     superClassesByClass.put("com.some.app.SomeAModel", "com.some.app.SomeBModel");
     jsTypeLinker = new JsTypeLinker(TreeLogger.NULL,
         new JsNoopTransformer(originalJs, srb.build(), smb.build()), classRanges, programRange,
-        minimalRebuildCache, new JTypeOracle(null, minimalRebuildCache, true));
+        minimalRebuildCache, new JTypeOracle(null, minimalRebuildCache));
     jsTypeLinker.exec();
     assertEquals("<preamble>\n<java.lang.Object />\n<java.lang.Class />\n</preamble>\n"
         + "<com.some.app.EntryPoint>\n" + "<com.some.app.SomeModelB>\n"
@@ -174,7 +174,7 @@ public class JsTypeLinkerTest extends TestCase {
 
     jsTypeLinker = new JsTypeLinker(TreeLogger.NULL,
         new JsNoopTransformer(originalJs, srb.build(), smb.build()), classRanges, programRange,
-        minimalRebuildCache, new JTypeOracle(null, minimalRebuildCache, true));
+        minimalRebuildCache, new JTypeOracle(null, minimalRebuildCache));
     jsTypeLinker.exec();
     assertEquals("<preamble>\n<java.lang.Object />\n<java.lang.Class />\n</preamble>\n"
         + "<com.some.app.EntryPoint>\n" + "<com.some.app.SomeModelB>\n"

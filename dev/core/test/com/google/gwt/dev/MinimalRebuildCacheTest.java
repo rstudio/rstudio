@@ -91,7 +91,7 @@ public class MinimalRebuildCacheTest extends TestCase {
 
     // Request clearing of cache related to stale types.
     minimalRebuildCache.computeAndClearStaleTypesCache(TreeLogger.NULL,
-        new JTypeOracle(null, minimalRebuildCache, true));
+        new JTypeOracle(null, minimalRebuildCache));
 
     // Has the expected JS been cleared?
     assertNull(minimalRebuildCache.getJs("Foo"));

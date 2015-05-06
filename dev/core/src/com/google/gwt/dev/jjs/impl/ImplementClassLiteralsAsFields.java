@@ -179,7 +179,7 @@ public class ImplementClassLiteralsAsFields {
     private static JMethodCall createBaseCall(SourceInfo info, JProgram program, JType type,
         String indexedMethodName) {
 
-      String[] compoundName = maybeMangleJSOTypeName(program, type);
+      String[] compoundName = maybeMangleJSOTypeName(type);
       JMethodCall call = new JMethodCall(info, null, program.getIndexedMethod(indexedMethodName),
           program.getStringLiteral(info, type.getPackageName()),
           getCompoundNameLiteral(program, info, compoundName));
@@ -187,7 +187,7 @@ public class ImplementClassLiteralsAsFields {
       return call;
     }
 
-    private static String[] maybeMangleJSOTypeName(JProgram program, JType type) {
+    private static String[] maybeMangleJSOTypeName(JType type) {
       assert !(type instanceof JArrayType);
       String[] compoundName = type.getCompoundName();
 
@@ -377,14 +377,6 @@ public class ImplementClassLiteralsAsFields {
   private void execImpl() {
     NormalizeVisitor visitor = new NormalizeVisitor();
     visitor.accept(program);
-    if (!program.typeOracle.hasWholeWorldKnowledge()) {
-      // TODO(rluble): This is kind of hacky. It would be more general purpose to create a class
-      // literal implementation for every class and let unused ones be pruned by optimization.
-      // Instead we're prematurely optimizing. We should be doing this traversal unconditionally.
-      for (JType type : program.getDeclaredTypes()) {
-        resolveClassLiteralField(type);
-      }
-    }
     program.recordClassLiteralFields(classLiteralFields);
   }
 

@@ -435,7 +435,7 @@ public class JjsTypeTest extends TestCase {
     MinimalRebuildCache minimalRebuildCache = new MinimalRebuildCache();
     ImmediateTypeRelations immediateTypeRelations = minimalRebuildCache.getImmediateTypeRelations();
     immediateTypeRelations.getImmediateSuperclassesByClass().put("Foo", "java.lang.Object");
-    JTypeOracle typeOracle = new JTypeOracle(null, minimalRebuildCache, true);
+    JTypeOracle typeOracle = new JTypeOracle(null, minimalRebuildCache);
 
     // Show that the typeOracle can already answer basic type relation questions.
     assertEquals("java.lang.Object", typeOracle.getSuperTypeName("Foo"));

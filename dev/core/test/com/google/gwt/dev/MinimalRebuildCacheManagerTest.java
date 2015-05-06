@@ -85,7 +85,7 @@ public class MinimalRebuildCacheManagerTest extends TestCase {
     typeEnvironment.recordMethodCallsMethod("Bar::run()V", "Baz::run()V");
     startingCache.computeReachableTypeNames();
     startingCache.computeAndClearStaleTypesCache(TreeLogger.NULL,
-        new JTypeOracle(null, startingCache, true));
+        new JTypeOracle(null, startingCache));
     startingCache.addExportedGlobalName("alert", "Window");
 
     // Save and reload the cache.
