@@ -1063,13 +1063,7 @@ public class TextEditingTarget implements
          }
       });
       
-      if (extendedType_.equals("shiny") || extendedType_.equals("rmarkdown"))
-      {
-         view_.setPublishPath(extendedType_.equals("shiny") ?
-               RSConnect.CONTENT_TYPE_APP : 
-               RSConnect.CONTENT_TYPE_DOCUMENT, document.getPath());
-      }
-
+      syncPublishPath(document.getPath());
       initStatusBar();
    }
    
@@ -1832,12 +1826,15 @@ public class TextEditingTarget implements
                         @Override
                         public void execute()
                         {
-                           // breakpoints are file-specific, so when saving as
-                           // a different file, clear the display of breakpoints
-                           // from the old file name
                            if (!getPath().equals(saveItem.getPath()))
                            {
+                              // breakpoints are file-specific, so when saving
+                              // as a different file, clear the display of
+                              // breakpoints from the old file name
                               docDisplay_.removeAllBreakpoints();
+                              
+                              // update publish settings 
+                              syncPublishPath(saveItem.getPath());
                            }
                            
                            fixupCodeBeforeSaving();
@@ -4803,6 +4800,19 @@ public class TextEditingTarget implements
                   }
                }
             });
+   }
+   
+   private void syncPublishPath(String path)
+   {
+      // if we have a view, a type, and a path, sync the view's content publish
+      // path to the new content path
+      if (view_ != null && extendedType_ != null && path != null &&
+          (extendedType_.equals("shiny") || extendedType_.equals("rmarkdown")))
+      {
+         view_.setPublishPath(extendedType_.equals("shiny") ?
+               RSConnect.CONTENT_TYPE_APP : 
+               RSConnect.CONTENT_TYPE_DOCUMENT, path);
+      }
    }
    
    private StatusBar statusBar_;
