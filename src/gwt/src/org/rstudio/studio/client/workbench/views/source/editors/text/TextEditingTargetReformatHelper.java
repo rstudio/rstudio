@@ -818,6 +818,14 @@ public class TextEditingTargetReformatHelper
       else if (!rootState)
          peekFwd.trimWhitespaceFwd();
       
+      String value = cursor.currentValue();
+      if (StringUtil.isOneOf(value, new String[] {
+            "if", "for", "while", "repeat"
+      }))
+      {
+         cursor.ensureSingleSpaceFollows();
+      }
+      
       // Now, walk through and replace tokens with appropriately white-spaced
       // versions.
       while (cursor.moveToNextToken())
@@ -829,17 +837,16 @@ public class TextEditingTargetReformatHelper
          if (!rootState && cursor.isRightBrace())
             break;
          
-         // Ensure a single space follows control flow statements
-         if (cursor.currentValue().equals("if") ||
-             cursor.currentValue().equals("for") ||
-             cursor.currentValue().equals("while") ||
-             cursor.currentValue().equals("repeat"))
+         value = cursor.currentValue();
+         if (StringUtil.isOneOf(value, new String[] {
+               "if", "for", "while", "repeat"
+         }))
          {
             cursor.ensureSingleSpaceFollows();
          }
          
          // Ensure newlines around 'naked' else
-         if (cursor.currentValue().equals("else"))
+         if (value.equals("else"))
          {
             if (!cursor.previousSignificantToken().getValue().equals("}"))
                cursor.ensureNewlinePreceeds();
@@ -854,8 +861,6 @@ public class TextEditingTargetReformatHelper
          // Ensure spaces around operators.
          if (cursor.isOperator())
          {
-            String value = cursor.currentValue();
-            
             // Prefer newlines after comparison operators within 'if'
             // statements when the enclosed selection is long
             if (prevSignificantValue.equals("if"))
@@ -956,10 +961,17 @@ public class TextEditingTargetReformatHelper
             {
                cursor.setValue(cursor.getValue().replaceAll(",[\\s\\n]*", ", "));
             }
-            
-            // Transform semi-colons into newlines.
-            // TODO: Too destructive?
-            cursor.setValue(cursor.getValue().replaceAll(";+\\s*(?!\\n)", "\n"));
+         }
+         
+         // Transform semi-colons into newlines.
+         // TODO: Too destructive?
+         if (cursor.getValue().equals(";"))
+         {
+            String peekValue = cursor.peek(1).getValue();
+            if (peekValue.equals(";") || peekValue.indexOf('\n') != -1)
+               cursor.setValue("");
+            else
+               cursor.setValue("\n");
          }
          
          // If we encounter an opening paren, recurse a new token cursor within,

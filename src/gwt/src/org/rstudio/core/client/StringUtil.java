@@ -939,6 +939,10 @@ public class StringUtil
    public static final HashMap<String, String> COMPLEMENTS =
          makeComplementsMap();
    
+   public static final native boolean isOneOf(String string, String[] candidates) /*-{
+      return candidates.some(function(x) { return x === string; });
+   }-*/;
+   
    private static final NumberFormat FORMAT = NumberFormat.getFormat("0.#");
    private static final NumberFormat PRETTY_NUMBER_FORMAT = NumberFormat.getFormat("#,##0.#####");
    private static final DateTimeFormat DATE_FORMAT
