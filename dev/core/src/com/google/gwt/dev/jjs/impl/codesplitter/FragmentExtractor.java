@@ -100,15 +100,15 @@ public class FragmentExtractor {
       JClassType classType = map.nameToType(x.getName());
       JMethod method = map.nameToMethod(x.getName());
       method = method instanceof JConstructor ? method : null;
-      if (classType == null || method == null) {
+      if (classType == null && method == null) {
         // Regular argument to defineClass, ignore;
         return;
       }
-      assert classType == null || method == null;
+      assert classType != null || method != null;
 
       boolean isConstructorLive = method != null ?
-          alreadyLoadedPredicate.isLive(method) && livenessPredicate.isLive(method) :
-          alreadyLoadedPredicate.isLive(classType) && livenessPredicate.isLive(classType);
+          !alreadyLoadedPredicate.isLive(method) && livenessPredicate.isLive(method) :
+          !alreadyLoadedPredicate.isLive(classType) && livenessPredicate.isLive(classType);
       if (isConstructorLive) {
         // Constructor is live in current fragment.
         // Counts kept references to live constructors.
