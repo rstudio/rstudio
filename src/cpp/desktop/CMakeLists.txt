@@ -20,7 +20,12 @@ cmake_policy(SET CMP0020 OLD)
 project(DESKTOP)
 
 # require Qt 5.4
-set(QT_VERSION "5.4.0")
+if(WIN32)
+  set(QT_VERSION "5.4.1")
+else()
+  set(QT_VERSION "5.4.0")
+endif()
+
 set(QT_VERSION_SUBDIR "5.4")
 
 # on unix prefer qtsdk installs over system-level libraries. note this
