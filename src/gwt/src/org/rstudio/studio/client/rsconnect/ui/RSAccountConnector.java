@@ -22,6 +22,7 @@ import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.rsconnect.events.EnableRStudioConnectUIEvent;
 import org.rstudio.studio.client.rsconnect.model.NewRSConnectAccountResult;
 import org.rstudio.studio.client.rsconnect.model.NewRSConnectAccountResult.AccountType;
@@ -66,17 +67,23 @@ public class RSAccountConnector implements
          OptionsLoader.Shim optionsLoader,
          EventBus events,
          Session session,
-         Provider<UIPrefs> pUiPrefs)
+         Provider<UIPrefs> pUiPrefs,
+         Satellite satellite)
    {
       server_ = server;
       display_ = display;
       optionsLoader_ = optionsLoader;
       pUiPrefs_ = pUiPrefs;
       session_ = session;
+      satellite_ = satellite;
 
       events.addHandler(EnableRStudioConnectUIEvent.TYPE, this);
 
       binder.bind(commands, this);
+      
+      // register satellite callback
+      if (!satellite_.isCurrentWindowSatellite())
+         exportManageAccountsCallback();
    }
    
    public void showAccountWizard(
@@ -97,7 +104,14 @@ public class RSAccountConnector implements
    @Handler
    public void onRsconnectManageAccounts()
    {
-      optionsLoader_.showOptions(PublishingPreferencesPane.class);
+      if (satellite_.isCurrentWindowSatellite())
+      {
+         callSatelliteManageAccounts();
+      }
+      else
+      {
+         optionsLoader_.showOptions(PublishingPreferencesPane.class);
+      }
    }
    
    // Event handlers ---------------------------------------------------------
@@ -281,10 +295,25 @@ public class RSAccountConnector implements
          }
       });
    }
+   
+   private final native void exportManageAccountsCallback()/*-{
+      var rsAccount = this;     
+      $wnd.rsManageAccountsFromRStudioSatellite = $entry(
+         function() {
+            rsAccount.@org.rstudio.studio.client.rsconnect.ui.RSAccountConnector::onRsconnectManageAccounts()();
+         }
+      ); 
+   }-*/;
+
+   private final native void callSatelliteManageAccounts()/*-{
+      $wnd.opener.rsManageAccountsFromRStudioSatellite();
+   }-*/;
+
 
    private final GlobalDisplay display_;
    private final RSConnectServerOperations server_;
    private final OptionsLoader.Shim optionsLoader_;
    private final Provider<UIPrefs> pUiPrefs_;
    private final Session session_;
+   private final Satellite satellite_;
 }
