@@ -210,5 +210,7 @@ public interface ThemeResources extends ClientBundle
    @Source("handCursor.png")
    DataResource handCursor();
    
+   ImageResource executeChunk();
+   
    ImageResource menuCheck();
 }

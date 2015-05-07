@@ -45,7 +45,7 @@ define("mode/sweave_background_highlighter", function(require, exports, module)
       for (var markerId in markers) {
           var marker = markers[markerId];
           if (marker.range &&
-              marker.clazz === markerClass &&
+              marker.clazz.indexOf(markerClass) !== -1 &&
               marker.type == markerType) {
               this.$markers[marker.range.start.row] = markerId;
     	  }
@@ -136,29 +136,58 @@ define("mode/sweave_background_highlighter", function(require, exports, module)
          }
       };
 
-      this.$syncMarkers = function(startRow, rowsChanged) {
-         var dontStopBeforeRow =
-               (typeof(rowsChanged) == 'undefined' ? this.$doc.getLength()
-                                                   : startRow + rowsChanged);
+      this.$clearMarkers = function() {
+         for (var i = 0; i < this.$markers.length; i++)
+            this.$session.removeMarker(this.$markers[i]);
+         this.$markers = [];
+      };
 
-         var endRow = this.$doc.getLength() - 1;
+      this.$syncMarkers = function(startRow, rowsChanged) {
+
+         // Determine how many markers need to be updated. We
+         // attempt to be conservative and only 
+         var endRow;
+         if (rowsChanged == null)
+            endRow = this.$doc.getLength() - 1;
+         else
+            endRow = startRow + rowsChanged;
+
+         if (endRow >= this.$doc.getLength())
+            endRow = this.$doc.getLength() - 1;
+
+         // If the initial state is an 'end' state, we need to update
+         // all markers later on in the document, as we may have just
+         // closed a chunk.
+         var state = this.$rowState[startRow];
+         if (state === TYPE_END)
+            endRow = this.$doc.getLength() - 1;
+
          for (var row = startRow; row <= endRow; row++) {
-            var foreign = this.$rowState[row] != TYPE_TEXT;
-            if (!!foreign != !!this.$markers[row]) {
-               if (this.$markers[row]) 
-                  this.$session.removeMarker(this.$markers[row]);
-               if (foreign) {
-                  this.$markers[row] = this.$session.addMarker(new Range(row, 0, row + 1, 0),
-                                                               markerClass,
-                                                               markerType,
-                                                               false);
-               }
-               else {
-                  delete this.$markers[row];
-               }
+
+            state = this.$rowState[row];
+            var isForeign = state !== TYPE_TEXT;
+
+            if (this.$markers[row]) {
+               this.$session.removeMarker(this.$markers[row]);
+               this.$markers[row] = null;
             }
-            else if (row > dontStopBeforeRow)
-               break;
+
+            if (isForeign) {
+
+               var isChunkStart = state === TYPE_BEGIN;
+
+               var clazz = isChunkStart ?
+                  markerClass + " rstudio_chunk_start" :
+                  markerClass;
+
+               this.$markers[row] =
+                  this.$session.addMarker(
+                        new Range(row, 0, row + 1, 0),
+                        clazz,
+                        markerType,
+                        false);
+            }
+
          }
       };
 
