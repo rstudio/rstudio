@@ -27,12 +27,22 @@ public class Dependency extends JavaScriptObject
    {
    }
    
+   public static Dependency cranPackage(String name, 
+                                        String version)
+   {
+      return cranPackage(name, version, false);
+   }
+            
+            
+   
    public native static final Dependency cranPackage(String name, 
-                                                     String version) /*-{
+                                                     String version,
+                                                     boolean source) /*-{
       var dep = new Object();
       dep.type = 0;
       dep.name = name;
       dep.version = version;
+      dep.source = source;
       return dep;
    }-*/;
    
@@ -41,6 +51,7 @@ public class Dependency extends JavaScriptObject
       dep.type = 1;
       dep.name = name;
       dep.version = "";
+      dep.source = true;
       return dep;
    }-*/;
    
@@ -54,6 +65,10 @@ public class Dependency extends JavaScriptObject
    
    public final native String getVersion() /*-{
       return this.version;
+   }-*/;
+   
+   public final native boolean getSource() /*-{
+      return this.source;
    }-*/;
 
    public final native String getAvailableVersion() /*-{
