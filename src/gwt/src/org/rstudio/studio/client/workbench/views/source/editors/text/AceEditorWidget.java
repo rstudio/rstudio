@@ -41,6 +41,7 @@ import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
+import org.rstudio.core.client.dom.StyleBuilder;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.FontSizer;
@@ -295,8 +296,10 @@ public class AceEditorWidget extends Composite
             virtualParent.getAbsoluteTop();
       
       icon.addStyleName(ThemeStyles.INSTANCE.inlineChunkIcon());
-      icon.getElement().setAttribute("style",
-            "top: " + top + "px;\n");
+      
+      StyleBuilder builder = new StyleBuilder();
+      builder.add("top", top + "px");
+      icon.getElement().setAttribute("style", builder.toString());
       
       // Since we don't have a GWT panel to bind to, we need to capture
       // the mouse events natively.
