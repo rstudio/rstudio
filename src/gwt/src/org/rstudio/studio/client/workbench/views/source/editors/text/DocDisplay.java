@@ -263,4 +263,5 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    long getLastCursorChangedTime();
    
    void blockOutdent();
+   void splitIntoLines();
 }

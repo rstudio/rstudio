@@ -1658,6 +1658,12 @@ public class AceEditor implements DocDisplay,
    }
    
    @Override
+   public void splitIntoLines()
+   {
+      widget_.getEditor().splitIntoLines();
+   }
+   
+   @Override
    public SourcePosition findFunctionPositionFromCursor(String functionName)
    {
       Scope func =

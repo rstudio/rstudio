@@ -241,6 +241,10 @@ public class AceEditorNative extends JavaScriptObject {
       this.jumpToMatching(select, expand);
    }-*/;
    
+   public final native void splitIntoLines() /*-{
+      return this.multiSelect && this.multiSelect.splitIntoLines();
+   }-*/;
+   
    public native final void revealRange(Range range, boolean animate) /*-{
       this.revealRange(range, animate);
    }-*/;

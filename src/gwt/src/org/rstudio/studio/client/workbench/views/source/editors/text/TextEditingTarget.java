@@ -2425,6 +2425,12 @@ public class TextEditingTarget implements
       docDisplay_.expandToMatching();
       docDisplay_.ensureCursorVisible();
    }
+   
+   @Handler
+   void onSplitIntoLines()
+   {
+      docDisplay_.splitIntoLines();
+   }
 
    @Handler
    void onCommentUncomment()
