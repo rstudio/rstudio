@@ -128,7 +128,7 @@ public class DependencyManager implements InstallShinyEvent.Handler
           Dependency.cranPackage("htmltools", "0.2.4"),
           Dependency.cranPackage("caTools", "1.14"),
           Dependency.cranPackage("bitops", "1.0-6"),
-          Dependency.embeddedPackage("rmarkdown")
+          Dependency.cranPackage("rmarkdown", "0.6.1", true)
         }, 
         false,
         command

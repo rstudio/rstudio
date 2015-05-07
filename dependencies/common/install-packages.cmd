@@ -9,7 +9,6 @@ set "PATH=C:\Program Files (x86)\Git\bin;%PATH%"
 
 set PATH=%PATH%;%CD%\tools
 
-call:install rmarkdown master
 call:install rsconnect v0.99
 
 GOTO:EOF
