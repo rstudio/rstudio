@@ -145,7 +145,8 @@ define("mode/sweave_background_highlighter", function(require, exports, module)
       this.$syncMarkers = function(startRow, rowsChanged) {
 
          // Determine how many markers need to be updated. We
-         // attempt to be conservative and only 
+         // attempt to be conservative and only update markers
+         // we know need to be changed.
          var endRow;
          if (rowsChanged == null)
             endRow = this.$doc.getLength() - 1;

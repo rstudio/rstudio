@@ -420,7 +420,6 @@ public class Source implements InsertSourceHandler,
             if (!(activeEditor_ instanceof TextEditingTarget))
                return;
             
-            // Save the editor ID so we can return focus deferred
             TextEditingTarget target = (TextEditingTarget) activeEditor_;
             Position position =
                   target.screenCoordinatesToDocumentPosition(
