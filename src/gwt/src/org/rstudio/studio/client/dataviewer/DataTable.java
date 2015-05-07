@@ -119,7 +119,15 @@ public class DataTable
    
    public void onDeactivate()
    {
-      onDeactivate(getWindow());
+      try
+      {
+         onDeactivate(getWindow());
+      }
+      catch(Exception e)
+      {
+         // swallow exceptions occurring when deactivating, as they'll keep
+         // users from switching tabs
+      }
    }
 
    private static final native boolean setFilterUIVisible (WindowEx frame, boolean visible) /*-{
