@@ -17,30 +17,14 @@ package org.rstudio.core.client.widget;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
-import com.google.gwt.resources.client.ImageResource;
-import com.google.gwt.resources.client.ImageResource.ImageOptions;
-import com.google.gwt.resources.client.ImageResource.RepeatStyle;
-import com.google.gwt.user.client.ui.DecoratedPopupPanel;
+import com.google.gwt.user.client.ui.PopupPanel;
 
-public class ThemedPopupPanel extends DecoratedPopupPanel
+public class ThemedPopupPanel extends PopupPanel
 {
    public interface Resources extends ClientBundle
    {
       @Source("ThemedPopupPanel.css")
       Styles styles();
-
-      ImageResource popupTopLeft();
-      @ImageOptions(repeatStyle = RepeatStyle.Horizontal)
-      ImageResource popupTopCenter();
-      ImageResource popupTopRight();
-      @ImageOptions(repeatStyle = RepeatStyle.Vertical)
-      ImageResource popupMiddleLeft();
-      @ImageOptions(repeatStyle = RepeatStyle.Vertical)
-      ImageResource popupMiddleRight();
-      ImageResource popupBottomLeft();
-      @ImageOptions(repeatStyle = RepeatStyle.Horizontal)
-      ImageResource popupBottomCenter();
-      ImageResource popupBottomRight();
    }
 
    public interface Styles extends CssResource

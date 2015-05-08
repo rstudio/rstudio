@@ -52,13 +52,9 @@
 }
 
 .completionPopup {
-   padding: 0;
    margin-left: -8px !important;
-   margin-top: 4px !important;
+   margin-top: 6px !important;
    z-index: 1002;
-}
-.completionPopup .popupContent {
-   margin: -4px;
 }
 
 .completionGrid {

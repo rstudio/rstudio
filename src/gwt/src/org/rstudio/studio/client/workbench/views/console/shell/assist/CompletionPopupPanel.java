@@ -325,7 +325,7 @@ public class CompletionPopupPanel extends ThemedPopupPanel
          top = bottom - help_.getOffsetHeight()
                - 9; // fudge factor
       
-      help_.setPopupPosition(left + width - 4, top + 3);
+      help_.setPopupPosition(left + width + 2, top);
       help_.setVisible(setVisible);
    }
    

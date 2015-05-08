@@ -1,67 +1,18 @@
-@external popupTopLeft, popupTopCenter, popupTopRight,
-   popupMiddleLeft, popupMiddleCenter, popupMiddleRight,
-   popupBottomLeft, popupBottomCenter, popupBottomRight,
-   popupContent;
-@external gwt-MenuBarPopup, menuPopupTopLeft, menuPopupTopCenter, menuPopupTopRight,
-   menuPopupMiddleLeft, menuPopupMiddleCenter, menuPopupMiddleRight,
-   menuPopupBottomLeft, menuPopupBottomCenter, menuPopupBottomRight,
-   menuPopupContent;
-@external gwt-SuggestBoxPopup, suggestPopupTopLeft, suggestPopupTopCenter, suggestPopupTopRight,
-   suggestPopupMiddleLeft, suggestPopupMiddleCenter, suggestPopupMiddleRight,
-   suggestPopupBottomLeft, suggestPopupBottomCenter, suggestPopupBottomRight,
-   suggestPopupContent;
-@external gwt-MenuBar-vertical;
+
+@def BORDER-RADIUS 1px;
+
+@def BOX-SHADOW-RADIUS 3px;
+@def BOX-SHADOW-SPREAD 1px;
+@def BOX-SHADOW-COLOR rgba(0, 0, 0, 0.5);
 
 .themedPopupPanel {
-   margin: -6px;
-   margin-top: 0px;
-}
-
-@sprite .themedPopupPanel .popupTopLeft, .menuPopupTopLeft, .suggestPopupTopLeft {
-   gwt-image: 'popupTopLeft';
-   width: value('popupTopLeft.getWidth', 'px');
-   height: value('popupTopLeft.getHeight', 'px');
-}
-@sprite .themedPopupPanel .popupTopCenter, .menuPopupTopCenter, .suggestPopupTopCenter {
-   gwt-image: 'popupTopCenter';
-   height: value('popupTopCenter.getHeight', 'px');
-}
-@sprite .themedPopupPanel .popupTopRight, .menuPopupTopRight, .suggestPopupTopRight {
-   gwt-image: 'popupTopRight';
-   width: value('popupTopRight.getWidth', 'px');
-   height: value('popupTopRight.getHeight', 'px');
-}
-@sprite .themedPopupPanel .popupMiddleLeft, .menuPopupMiddleLeft, .suggestPopupMiddleLeft {
-   gwt-image: 'popupMiddleLeft';
-   width: value('popupMiddleLeft.getWidth', 'px');
-}
-.themedPopupPanel .popupMiddleCenter, .menuPopupMiddleCenter, .suggestPopupMiddleCenter {
-   background-color: white;
-}
-
-.themedPopupPanel .popupMiddleLeft {
-	min-width: value('popupMiddleLeft.getWidth', 'px'); /* don't let the browser collapse the table cell if there's no space */
-}
-@sprite .themedPopupPanel .popupMiddleRight, .menuPopupMiddleRight, .suggestPopupMiddleRight {
-   gwt-image: 'popupMiddleRight';
-   width: value('popupMiddleRight.getWidth', 'px');
-}
-@sprite .themedPopupPanel .popupBottomLeft, .menuPopupBottomLeft, .suggestPopupBottomLeft {
-   gwt-image: 'popupBottomLeft';
-   width: value('popupBottomLeft.getWidth', 'px');
-   height: value('popupBottomLeft.getHeight', 'px');
-}
-@sprite .themedPopupPanel .popupBottomCenter, .menuPopupBottomCenter, .suggestPopupBottomCenter {
-   gwt-image: 'popupBottomCenter';
-   height: value('popupBottomCenter.getHeight', 'px');
-}
-@sprite .themedPopupPanel .popupBottomRight, .menuPopupBottomRight, .suggestPopupBottomRight {
-   gwt-image: 'popupBottomRight';
-   width: value('popupBottomRight.getWidth', 'px');
-   height: value('popupBottomRight.getHeight', 'px');
-}
-
-.gwt-MenuBarPopup {
-   margin: -5px;
-   margin-top: 0;
+	        box-shadow: 0 0 BOX-SHADOW-RADIUS BOX-SHADOW-SPREAD BOX-SHADOW-COLOR;
+	   -moz-box-shadow: 0 0 BOX-SHADOW-RADIUS BOX-SHADOW-SPREAD BOX-SHADOW-COLOR;
+	-webkit-box-shadow: 0 0 BOX-SHADOW-RADIUS BOX-SHADOW-SPREAD BOX-SHADOW-COLOR;
+	
+	        border-radius: BORDER-RADIUS;
+	   -moz-border-radius: BORDER-RADIUS;
+	-webkit-border-radius: BORDER-RADIUS;
+	
+	background-color: white;
 }
