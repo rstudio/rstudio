@@ -460,7 +460,7 @@ private:
       r::sexp::Protect protect;
       SEXP sexpOutputFormat;
       Error error = r::exec::RFunction("rmarkdown:::default_output_format",
-                                       path, encoding)
+                                       string_utils::utf8ToSystem(path), encoding)
                                       .call(&sexpOutputFormat, &protect);
       if (error)
       {
