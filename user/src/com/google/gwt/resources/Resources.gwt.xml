@@ -79,7 +79,7 @@
 
   <!-- Enable GSS with CssResource -->
   <define-configuration-property name="CssResource.enableGss" is-multi-valued="false" />
-  <set-configuration-property name="CssResource.enableGss" value="true" />
+  <set-configuration-property name="CssResource.enableGss" value="false" />
 
   <!-- A multi-valued configuration property that defines the list of allowed non standard -->
   <!-- at-rules in the css files -->
@@ -95,7 +95,7 @@
   <!-- Enable the in-memory conversion of css files with .css extension to GSS -->
   <!-- Can be set to: strict | lenient | off -->
   <define-configuration-property name="CssResource.conversionMode" is-multi-valued="false" />
-  <set-configuration-property name="CssResource.conversionMode" value="strict" />
+  <set-configuration-property name="CssResource.conversionMode" value="off" />
 
   <!-- The default for GSS in UiBinder -->
   <define-configuration-property name="CssResource.gssDefaultInUiBinder" is-multi-valued="false" />
