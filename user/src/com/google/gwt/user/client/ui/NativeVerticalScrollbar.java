@@ -83,6 +83,24 @@ public class NativeVerticalScrollbar extends AbstractNativeScrollbar implements 
     String DEFAULT_CSS = "com/google/gwt/user/client/ui/NativeVerticalScrollbarTransparent.css";
   }
 
+  /**
+   * Client bundle used in the uibinder template.
+   */
+  interface UiBinderBundle extends ClientBundle {
+    UiBinderBundle INSTANCE = GWT.create(UiBinderBundle.class);
+
+    UiStyle nativeVerticalScrollbarUi();
+  }
+
+  /**
+   * Style used in uibinder template. These styles aren't intended to be extended.
+   */
+  interface UiStyle extends CssResource {
+    String viewport();
+
+    String scrollable();
+  }
+
   private static Resources DEFAULT_RESOURCES;
   private static NativeVerticalScrollbarUiBinder uiBinder = GWT
       .create(NativeVerticalScrollbarUiBinder.class);
@@ -130,6 +148,9 @@ public class NativeVerticalScrollbar extends AbstractNativeScrollbar implements 
     Style style = resources.nativeVerticalScrollbarStyle();
     style.ensureInjected();
     getScrollableElement().addClassName(style.nativeVerticalScrollbar());
+
+    // inject style used in uibinder
+    UiBinderBundle.INSTANCE.nativeVerticalScrollbarUi().ensureInjected();
 
     // Initialize the implementation.
     ScrollImpl.get().initialize(scrollable, contentDiv);

@@ -8,7 +8,6 @@
       display: none;
       white-space: pre;
     }
-
   </ui:style>
   <g:HTMLPanel>
     <div class="{style.errorLabel}" ui:field="errorLabel" />

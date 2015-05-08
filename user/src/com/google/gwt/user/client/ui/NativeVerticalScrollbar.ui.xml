@@ -3,40 +3,17 @@
   xmlns:ui="urn:ui:com.google.gwt.uibinder"
   xmlns:g="urn:import:com.google.gwt.user.client.ui">
 
-  <ui:style>
-    .viewport {
-      position: relative;
-      overflow: hidden;
-      /* Force the scrollbar into LTR mode so it is reliably aligned to the left. */
-      direction: ltr;
-    }
-    /* scrollable is in LTR mode even if the body is in RTL mode. */
-    @noflip {
-      .scrollable {
-        position: absolute;
-        top: 0;
-        right: 0;
-        height: 100%;
-        width: 100px;
-        overflow-y: scroll;
-        overflow-x: hidden;
-      }
-    }
-
-  </ui:style>
+  <ui:with field="res" type="com.google.gwt.user.client.ui.NativeVerticalScrollbar.UiBinderBundle"/>
 
   <!-- Viewport: reveals only the scrollbar from the scrollable div. -->
-  <div
-    class="{style.viewport}">
+  <div class="{res.nativeVerticalScrollbarUi.viewport}">
 
     <!-- Scrollable: a scrollable div. -->
-    <div
-      ui:field="scrollable"
-      class="{style.scrollable}">
+    <div ui:field="scrollable" class="{res.nativeVerticalScrollbarUi.scrollable}">
 
       <!-- Content: controls how far the div can be scrolled. -->
       <div
         ui:field="contentDiv" />
     </div>
   </div>
-</ui:UiBinder> 
+</ui:UiBinder>

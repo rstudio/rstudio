@@ -25,7 +25,6 @@
       font-family: Helvetica;
       font-size: 1em;
     }
-
   </ui:style>
   <g:HTMLPanel styleName='{style.container}'>
     <div class='{style.centered}' style='display:none' ui:field='borderElement'>

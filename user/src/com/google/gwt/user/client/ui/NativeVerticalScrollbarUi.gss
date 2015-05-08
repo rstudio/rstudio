@@ -1,0 +1,17 @@
+.viewport {
+  position: relative;
+  overflow: hidden;
+  /* Force the scrollbar into LTR mode so it is reliably aligned to the left. */
+  direction: ltr;
+}
+
+/* scrollable is in LTR mode even if the body is in RTL mode. */
+.scrollable {
+  position: absolute;
+  top: 0;
+  /* @noflip */ right: 0;
+  height: 100%;
+  width: 100px;
+  overflow-y: scroll;
+  overflow-x: hidden;
+}
