@@ -502,7 +502,7 @@ public class CellTable<T> extends AbstractCellTable<T> implements
   private TableSectionElement tfoot;
   private TableSectionElement thead;
   private boolean colGroupEnabled = true;
-  private boolean removeColumnsOnHide = true;
+  private boolean removeColumnsOnHide = false;
 
   /**
    * Constructs a table with a default page size of 15.
@@ -819,6 +819,14 @@ public class CellTable<T> extends AbstractCellTable<T> implements
     setTableLayoutFixed(isFixedLayout);
   }
 
+  /**
+   * Configures how the colgroup is updated when a column is removed. If true, removing a column
+   * will also remove the corresponding col element from the colgroup. If false, removing a
+   * column will leave the col element on the colgroup and set it to zero width and display hidden.
+   *
+   * <p>For legacy reasons, the default is false even though it is known to cause some column sizing
+   * issues in Firefox.
+   */
   public void setRemoveColumnsOnHide(boolean removeColumnsOnHide) {
     this.removeColumnsOnHide = removeColumnsOnHide;
   }
@@ -894,8 +902,8 @@ public class CellTable<T> extends AbstractCellTable<T> implements
     super.refreshColumnWidths();
 
     /*
-     * Clear the display for all columns that appear in the table. And removes any cols from the
-     * colgroup that are no longer in the table.
+     * Clear the display for all columns that appear in the table. And update or remove the cols of
+     * the colgroup that are no longer in the table according to the removeCOlumnsOnHide flag.
      */
     if (colGroupEnabled) {
       int colCount = colgroup.getChildCount();
@@ -905,10 +913,10 @@ public class CellTable<T> extends AbstractCellTable<T> implements
       }
       for (int i = colCount - 1; i >= lastColumn; i--) {
         if (removeColumnsOnHide) {
+          colgroup.removeChild(colgroup.getChild(i));
+        } else {
           doSetColumnWidth(i, "0px");
           ensureTableColElement(i).getStyle().setDisplay(Display.NONE);
-        } else {
-          colgroup.removeChild(colgroup.getChild(i));
         }
       }
     }

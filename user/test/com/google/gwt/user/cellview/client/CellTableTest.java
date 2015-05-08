@@ -291,9 +291,9 @@ public class CellTableTest extends AbstractCellTableTestBase<CellTable<String>> 
   /**
    * Test that removing a column sets its width to zero and the display to none.
    */
-  public void testRemoveColumnWithWidth_withRemoveColumnsOnHideDisabled() {
+  public void testRemoveColumnWithWidth_withRemoveColumnsOnHideEnabled() {
     CellTable<String> table = createAbstractHasData(new TextCell());
-    table.setRemoveColumnsOnHide(false);
+    table.setRemoveColumnsOnHide(true);
     Column<String, ?> column1 = table.getColumn(1);
     table.setColumnWidth(column1, "100px");
     Element col0 = table.colgroup.getFirstChildElement();
@@ -309,9 +309,9 @@ public class CellTableTest extends AbstractCellTableTestBase<CellTable<String>> 
     assertEquals(1, table.colgroup.getChildCount());
   }
 
-  public void testRemoveColumnWithWidth_withRemoveColumnsOnHideEnabled() {
+  public void testRemoveColumnWithWidth_withRemoveColumnsOnHideDisabled() {
     CellTable<String> table = createAbstractHasData(new TextCell());
-    table.setRemoveColumnsOnHide(true);
+    table.setRemoveColumnsOnHide(false);
     Column<String, ?> column1 = table.getColumn(1);
     table.setColumnWidth(column1, "100px");
     Element col0 = table.colgroup.getFirstChildElement();
