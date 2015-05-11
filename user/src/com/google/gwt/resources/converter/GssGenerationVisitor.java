@@ -593,7 +593,7 @@ public class GssGenerationVisitor extends ExtendedCssVisitor {
   @Override
   public boolean visit(CssSelector x, Context ctx) {
     if (needsComma) {
-      comma();
+      comma(false);
     }
 
     maybePrintNewLine();
@@ -663,8 +663,15 @@ public class GssGenerationVisitor extends ExtendedCssVisitor {
   }
 
   private void comma() {
+    comma(true);
+  }
+
+  private void comma(boolean addSpace) {
     out.print(',');
-    spaceOpt();
+
+    if (addSpace) {
+      spaceOpt();
+    }
   }
 
   private void openBrace() {

@@ -1,0 +1,4 @@
+.foo,
+.bar {
+  width: 100px;
+}
