@@ -16,5 +16,7 @@
 	<classpathentry kind="lib" path="lib/selenium/2.37.0/selenium-java-2.37.0.jar"/>
 	<classpathentry kind="lib" path="lib/junit-4.9b3.jar"/>
 	<classpathentry kind="lib" path="lib/selenium/2.37.0/libs/guava-15.0.jar"/>
+	<classpathentry kind="lib" path="lib/gwt/2.7.0/gwt-user.jar"/>
+	<classpathentry kind="lib" path="lib/gwt/2.7.0/gwt-dev.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
