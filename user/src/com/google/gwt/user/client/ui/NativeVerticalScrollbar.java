@@ -89,6 +89,7 @@ public class NativeVerticalScrollbar extends AbstractNativeScrollbar implements 
   interface UiBinderBundle extends ClientBundle {
     UiBinderBundle INSTANCE = GWT.create(UiBinderBundle.class);
 
+    @Source("com/google/gwt/user/client/ui/NativeVerticalScrollbarUi.css")
     UiStyle nativeVerticalScrollbarUi();
   }
 
