@@ -190,7 +190,8 @@ public class VirtualConsole
       }
       else
       {
-         emitRange(data, clazz, parent);
+         // consolify just the data to be rendered
+         emitRange(consolify(data), clazz, parent);
       }
    }
    
