@@ -4,8 +4,11 @@
 
 ### Miscellaneous
 
+* Improve performance of console for large and/or rapdily updating output
+
 
 ### Server
+
 
 
 ### Bug Fixes
