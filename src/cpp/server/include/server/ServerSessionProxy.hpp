@@ -20,6 +20,8 @@
 
 #include <core/http/AsyncConnection.hpp>
 
+#include "ServerSessionManager.hpp"
+
 namespace rstudio {
 namespace core {
    class Error;
@@ -53,7 +55,7 @@ void proxyLocalhostRequest(
 bool requiresSession(const core::http::Request& request);
 
 typedef boost::function<bool(
-    const std::string&,
+    const SessionContext&,
     boost::shared_ptr<core::http::AsyncConnection>)> ProxyFilter;
 void setProxyFilter(ProxyFilter filter);
 

@@ -42,6 +42,32 @@ namespace server {
 class SessionManager;
 SessionManager& sessionManager();
 
+
+//http://stackoverflow.com/questions/7204283/struct-as-a-key-in-a-stdmap
+
+// session context
+struct SessionContext
+{
+   explicit SessionContext(const std::string& username,
+                           const std::string& id = std::string())
+      : username(username), id(id)
+   {
+   }
+   std::string username;
+   std::string id;
+
+   bool operator==(const SessionContext &other) const {
+      return username == other.username && id == other.id;
+   }
+
+   bool operator<(const SessionContext &other) const {
+       return username < other.username ||
+              (username == other.username && id < other.id);
+   }
+};
+
+
+
 // Session manager for launching managed sessions. This includes
 // automatically waiting for other pending launches (rather than
 // attempting to launch the same session twice) as well as reaping
@@ -55,8 +81,8 @@ private:
 
 public:
    // launching
-   core::Error launchSession(const std::string& username);
-   void removePendingLaunch(const std::string& username);
+   core::Error launchSession(const SessionContext& context);
+   void removePendingLaunch(const SessionContext& context);
 
    // set a custom session launcher
    typedef boost::function<core::Error(
@@ -82,7 +108,7 @@ private:
 private:
    // pending launches
    boost::mutex launchesMutex_;
-   typedef std::map<std::string,boost::posix_time::ptime> LaunchMap;
+   typedef std::map<SessionContext,boost::posix_time::ptime> LaunchMap;
    LaunchMap pendingLaunches_;
 
    // session launch function
@@ -97,7 +123,7 @@ private:
 
 // Lower-level global functions for launching sessions. These are used
 // internally by the SessionManager as well as for verify-installation
-core::Error launchSession(const std::string& username,
+core::Error launchSession(const SessionContext& context,
                           const core::system::Options& extraArgs,
                           PidType* pPid);
 

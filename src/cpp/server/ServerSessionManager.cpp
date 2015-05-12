@@ -47,7 +47,7 @@ namespace server {
 namespace {
 
 core::system::ProcessConfig sessionProcessConfig(
-         const std::string& username,
+         SessionContext context,
          const core::system::Options& extraArgs = core::system::Options())
 {
    // prepare command line arguments
@@ -62,7 +62,7 @@ core::system::ProcessConfig sessionProcessConfig(
 
    // pass the user-identity
    args.push_back(std::make_pair("-" kUserIdentitySessionOptionShort,
-                                 username));
+                                 context.username));
 
    // allow session timeout to be overridden via environment variable
    std::string timeout = core::system::getenv("RSTUDIO_SESSION_TIMEOUT");
@@ -118,13 +118,13 @@ SessionManager::SessionManager()
                                            this, _1);
 }
 
-Error SessionManager::launchSession(const std::string& username)
+Error SessionManager::launchSession(const SessionContext& context)
 {
    using namespace boost::posix_time;
    LOCK_MUTEX(launchesMutex_)
    {
       // check whether we already have a launch pending
-      LaunchMap::const_iterator pos = pendingLaunches_.find(username);
+      LaunchMap::const_iterator pos = pendingLaunches_.find(context);
       if (pos != pendingLaunches_.end())
       {
          // if the launch is less than one minute old then return success
@@ -139,22 +139,23 @@ Error SessionManager::launchSession(const std::string& username)
          {
             // very unexpected condition
             LOG_WARNING_MESSAGE("Very long session launch delay for "
-                                "user " + username + " (aborting wait)");
+                                "user " + context.username +" (aborting wait)");
 
-            pendingLaunches_.erase(username);
+            pendingLaunches_.erase(context);
          }
       }
 
       // record the launch
-      pendingLaunches_[username] =  microsec_clock::universal_time();
+      pendingLaunches_[context] =  microsec_clock::universal_time();
    }
    END_LOCK_MUTEX
 
    // determine launch options
    r_util::SessionLaunchProfile profile;
-   profile.username = username;
+   profile.username = context.username;
+   profile.contextId = context.id;
    profile.executablePath = server::options().rsessionPath();
-   profile.config = sessionProcessConfig(username);
+   profile.config = sessionProcessConfig(context);
 
    // pass the profile to any filters we have
    BOOST_FOREACH(SessionLaunchProfileFilter f, sessionLaunchProfileFilters_)
@@ -166,7 +167,7 @@ Error SessionManager::launchSession(const std::string& username)
    Error error = sessionLaunchFunction_(profile);
    if (error)
    {
-      removePendingLaunch(username);
+      removePendingLaunch(context);
       return error;
    }
 
@@ -213,11 +214,11 @@ void SessionManager::addSessionLaunchProfileFilter(
    sessionLaunchProfileFilters_.push_back(filter);
 }
 
-void SessionManager::removePendingLaunch(const std::string& username)
+void SessionManager::removePendingLaunch(const SessionContext& context)
 {
    LOCK_MUTEX(launchesMutex_)
    {
-      pendingLaunches_.erase(username);
+      pendingLaunches_.erase(context);
    }
    END_LOCK_MUTEX
 }
@@ -228,14 +229,15 @@ void SessionManager::notifySIGCHLD()
 }
 
 // helper function for verify-installation
-Error launchSession(const std::string& username,
+Error launchSession(const SessionContext& context,
                     const core::system::Options& extraArgs,
                     PidType* pPid)
 {
    // launch the session
+   std::string username = context.username;
    std::string rsessionPath = server::options().rsessionPath();
    std::string runAsUser = core::system::realUserIsRoot() ? username : "";
-   core::system::ProcessConfig config = sessionProcessConfig(username,
+   core::system::ProcessConfig config = sessionProcessConfig(context,
                                                              extraArgs);
 
    *pPid = -1;
