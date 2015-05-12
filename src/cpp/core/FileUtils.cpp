@@ -16,6 +16,8 @@
 #include <fstream>
 #include <iostream>
 
+#include <boost/bind.hpp>
+
 #include <core/FileUtils.hpp>
 #include <core/FilePath.hpp>
 #include <core/StringUtils.hpp>
@@ -25,6 +27,36 @@
 namespace rstudio {
 namespace core {
 namespace file_utils {
+
+namespace {
+
+bool copySourceFile(const FilePath& sourceDir,
+                    const FilePath& destDir,
+                    const FilePath& sourceFilePath)
+{
+   // compute the target path
+   std::string relativePath = sourceFilePath.relativePath(sourceDir);
+   FilePath targetPath = destDir.complete(relativePath);
+
+   // if the copy item is a directory just create it
+   if (sourceFilePath.isDirectory())
+   {
+      Error error = targetPath.ensureDirectory();
+      if (error)
+         LOG_ERROR(error);
+   }
+   // otherwise copy it
+   else
+   {
+      Error error = sourceFilePath.copy(targetPath);
+      if (error)
+         LOG_ERROR(error);
+   }
+
+   return true;
+}
+
+} // anonymous namespace
 
 FilePath uniqueFilePath(const FilePath& parent, const std::string& prefix)
 {
@@ -87,6 +119,20 @@ bool isWindowsReservedName(const std::string& name)
    return false;
 }
 #endif
+
+Error copyDirectory(const FilePath& sourceDirectory,
+                    const FilePath& targetDirectory)
+{
+   // create the target directory
+   Error error = targetDirectory.ensureDirectory();
+   if (error)
+      return error ;
+
+   // iterate over the source
+   return sourceDirectory.childrenRecursive(
+     boost::bind(copySourceFile, sourceDirectory, targetDirectory, _2));
+}
+
 
 } // namespace file_utils
 } // namespace core
