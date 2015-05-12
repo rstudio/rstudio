@@ -70,7 +70,11 @@ public class VirtualConsole
          {
             case '\r':
                carriageReturn();
-               appendOnly = false;
+               // the sequence \r\n or \n\r can be represented in an append-only
+               // way, so treat these cases as an append
+               appendOnly = 
+                     ((pos > 0 && data.charAt(pos - 1) == '\n') ||
+                      (tail < data.length() && data.charAt(tail) == '\n'));
                break;
             case '\b':
                backspace();
@@ -173,6 +177,35 @@ public class VirtualConsole
       return o.length();
    }
    
+   public void submitAndRender(String data, String clazz, Element parent)
+   {
+      if (!submit(data, clazz))
+      {
+         // output isn't append-only; redraw the whole thing
+         // (note that even this isn't technically necessary but control 
+         // characters are relatively infrequent and additional bookkeeping
+         // would be required to determine the invalidated range when 
+         // control characters are used)
+         redraw(parent);
+      }
+      else
+      {
+         emitRange(data, clazz, parent);
+      }
+   }
+   
+   public void clear()
+   {
+      formfeed();
+   }
+   
+   public static String consolify(String text)
+   {
+      VirtualConsole console = new VirtualConsole();
+      console.submit(text);
+      return console.toString();
+   }
+
    private void emitRange(String text, String clazz, Element parent)
    {
       if (StringUtil.isNullOrEmpty(text))
@@ -188,7 +221,7 @@ public class VirtualConsole
       parent.appendChild(textNode);
    }
    
-   public void renderIncremental(int fromIndex, Element parent)
+   private void redraw(Element parent)
    {
       // convert to a plain-text string
       String plainText = toString();
@@ -196,20 +229,18 @@ public class VirtualConsole
       String lastClass = null;
       padCharClass(len);
       
-      // if requesting past the end of the buffer, return nothing
-      if (fromIndex >= len)
-         return;
-
+      // clean existing content
+      parent.setInnerHTML("");
+      
       // for performance reasons, we don't emit one character at a time;
       // instead, we keep track of the string indices that correspond to
       // contiguous runs of characters to emit into the stream
-      int accumulateBegin = fromIndex;
-      int accumulateEnd = fromIndex;
+      int accumulateBegin = 0;
+      int accumulateEnd = 0;
 
       // iterate in lockstep over the plain-text string and character class
       // assignment list; emit the appropriate tags when switching classes
-      int i = 0;
-      for (i = fromIndex; i < len; i++)
+      for (int i = 0; i < len; i++)
       {
          if (!charClass.get(i).equals(lastClass))
          {
@@ -230,20 +261,6 @@ public class VirtualConsole
             lastClass, parent);
       return;
    }
-   
-   
-   public void clear()
-   {
-      formfeed();
-   }
-   
-   public static String consolify(String text)
-   {
-      VirtualConsole console = new VirtualConsole();
-      console.submit(text);
-      return console.toString();
-   }
-
    private final StringBuilder o = new StringBuilder();
    private final ArrayList<String> charClass = new ArrayList<String>();
    private int pos_ = 0;
