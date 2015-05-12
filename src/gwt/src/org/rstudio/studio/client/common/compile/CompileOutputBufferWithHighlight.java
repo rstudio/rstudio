@@ -78,12 +78,25 @@ public class CompileOutputBufferWithHighlight extends Composite
    {
       console_.clear();
       output_.setText("");
+      length_ = 0;
    }
    
    private void write(String output, String className)
    {
-      console_.submit(output, className);
-      output_.getElement().setInnerSafeHtml(console_.toSafeHtml());
+      if (!console_.submit(output, className))
+      {
+         // output isn't append-only; redraw the whole thing
+         // (note that even this isn't technically necessary but control 
+         // characters are relatively infrequent and additional bookkeeping
+         // would be required to determine the invalidated range when 
+         // control characters are used)
+         output_.getElement().setInnerHTML("");
+         length_ = 0;
+      }
+      console_.renderIncremental(length_, output_.getElement());
+      
+      // remember how much output we emitted so we can start at that point
+      length_ = console_.getLength();
 
       scrollPanel_.onContentSizeChanged();
    }
@@ -95,6 +108,7 @@ public class CompileOutputBufferWithHighlight extends Composite
    }
  
    PreWidget output_;
+   int length_ = 0;
    VirtualConsole console_ = new VirtualConsole();
    private BottomScrollPanel scrollPanel_;
    private ConsoleResources.ConsoleStyles styles_;

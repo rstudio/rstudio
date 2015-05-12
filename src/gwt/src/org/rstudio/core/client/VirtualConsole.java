@@ -19,8 +19,10 @@ import java.util.ArrayList;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
 
-import com.google.gwt.safehtml.shared.SafeHtml;
-import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.SpanElement;
+import com.google.gwt.dom.client.Text;
 
 /**
  * Simulates a console that behaves like the R console, specifically with
@@ -32,20 +34,24 @@ public class VirtualConsole
    {
    }
    
-   public void submit(String data)
+   public boolean submit(String data)
    {
-      submit(data, null);
+      return submit(data, null);
    }
 
-   public void submit(String data, String className)
+   // Adds the given data to the console. Returns true if the data can be 
+   // processed as an append-only operation, false if characters were 
+   // overwritten.
+   public boolean submit(String data, String className)
    {
+      boolean appendOnly = true;
       if (StringUtil.isNullOrEmpty(data))
-         return;
+         return true;
 
       if (CONTROL_SPECIAL.match(data, 0) == null)
       {
          text(data, className);
-         return;
+         return true;
       }
 
       int tail = 0;
@@ -64,15 +70,18 @@ public class VirtualConsole
          {
             case '\r':
                carriageReturn();
+               appendOnly = false;
                break;
             case '\b':
                backspace();
+               appendOnly = false;
                break;
             case '\n':
                newline();
                break;
             case '\f':
                formfeed();
+               appendOnly = false;
                break;
             default:
                assert false : "Unknown control char, please check regex";
@@ -85,28 +94,29 @@ public class VirtualConsole
 
       // If there was any plain text after the last control character, add it
       text(data.substring(tail), className);
+      return appendOnly;
    }
 
    private void backspace()
    {
-      if (pos == 0)
+      if (pos_ == 0)
          return;
-      o.deleteCharAt(--pos);
+      o.deleteCharAt(--pos_);
    }
 
    private void carriageReturn()
    {
-      if (pos == 0)
+      if (pos_ == 0)
          return;
-      while (pos > 0 && o.charAt(pos - 1) != '\n')
-         pos--;
+      while (pos_ > 0 && o.charAt(pos_ - 1) != '\n')
+         pos_--;
       // Now we're either at the beginning of the buffer, or just past a '\n'
    }
 
    private void newline()
    {
-      while (pos < o.length() && o.charAt(pos) != '\n')
-         pos++;
+      while (pos_ < o.length() && o.charAt(pos_) != '\n')
+         pos_++;
       // Now we're either at the end of the buffer, or on top of a '\n'
       text("\n", null);
    }
@@ -114,6 +124,7 @@ public class VirtualConsole
    private void formfeed()
    {
       o.setLength(0);
+      pos_ = 0;
       charClass.clear();
    }
 
@@ -121,21 +132,21 @@ public class VirtualConsole
    {
       assert text.indexOf('\r') < 0 && text.indexOf('\b') < 0;
 
-      int endPos = pos + text.length();
+      int endPos = pos_ + text.length();
       
-      o.replace(pos, endPos, text);
+      o.replace(pos_, endPos, text);
       
       // record the class of each character emitted
       if (className != null) 
       {
          padCharClass(endPos);
-         for (int i = pos; i < endPos; i++)
+         for (int i = pos_; i < endPos; i++)
          {
             charClass.set(i, className);
          }
       }
 
-      pos = endPos;
+      pos_ = endPos;
    }
    
    // ensures that the character class mapping buffer is at least 'len' 
@@ -157,34 +168,69 @@ public class VirtualConsole
       return o.toString();
    }
    
-   public SafeHtml toSafeHtml()
+   public int getLength()
+   {
+      return o.length();
+   }
+   
+   private void emitRange(String text, String clazz, Element parent)
+   {
+      if (StringUtil.isNullOrEmpty(text))
+         return;
+      Text textNode = Document.get().createTextNode(text);
+      if (clazz != null)
+      {
+         SpanElement span = Document.get().createSpanElement();
+         span.addClassName(clazz);
+         parent.appendChild(span);
+         parent = span;
+      }
+      parent.appendChild(textNode);
+   }
+   
+   public void renderIncremental(int fromIndex, Element parent)
    {
       // convert to a plain-text string
       String plainText = toString();
-      SafeHtmlBuilder sb = new SafeHtmlBuilder();
-      String lastClass = null;
       int len = plainText.length();
+      String lastClass = null;
       padCharClass(len);
       
+      // if requesting past the end of the buffer, return nothing
+      if (fromIndex >= len)
+         return;
+
+      // for performance reasons, we don't emit one character at a time;
+      // instead, we keep track of the string indices that correspond to
+      // contiguous runs of characters to emit into the stream
+      int accumulateBegin = fromIndex;
+      int accumulateEnd = fromIndex;
+
       // iterate in lockstep over the plain-text string and character class
       // assignment list; emit the appropriate tags when switching classes
-      for (int i = 0; i < len; i++)
+      int i = 0;
+      for (i = fromIndex; i < len; i++)
       {
          if (!charClass.get(i).equals(lastClass))
          {
-            if (lastClass != null) 
-               sb.appendHtmlConstant("</span>");
-            lastClass = charClass.get(i);
-            if (lastClass != null)
-               sb.appendHtmlConstant("<span class=\"" + lastClass + "\">");
+            emitRange(
+                  plainText.substring(accumulateBegin, accumulateEnd),
+                  lastClass, parent);
+            
+            // begin accumulating from the emitted point
+            accumulateBegin = accumulateEnd;
          }
-         sb.appendEscaped(plainText.substring(i, i+1));
+         lastClass = charClass.get(i);
+         accumulateEnd = i;
       }
-      if (lastClass != null)
-         sb.appendHtmlConstant("</span>");
-      
-      return sb.toSafeHtml();
+
+      // finishing up--emit accumulated text into stream
+      emitRange(
+            plainText.substring(accumulateBegin),
+            lastClass, parent);
+      return;
    }
+   
    
    public void clear()
    {
@@ -200,7 +246,7 @@ public class VirtualConsole
 
    private final StringBuilder o = new StringBuilder();
    private final ArrayList<String> charClass = new ArrayList<String>();
-   private int pos = 0;
+   private int pos_ = 0;
    private static final Pattern CONTROL = Pattern.create("[\r\b\f\n]");
    private static final Pattern CONTROL_SPECIAL = Pattern.create("[\r\b\f]");
 }
