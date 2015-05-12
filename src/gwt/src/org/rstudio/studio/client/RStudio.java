@@ -156,6 +156,11 @@ public class RStudio implements EntryPoint
          }
 
          public void onSuccess()
+         {   
+            loadApplication(dismissProgressAnimation);
+         }
+
+         private void loadApplication(final Command dismissProgressAnimation)
          {
             AceEditor.load(new Command()
             {
