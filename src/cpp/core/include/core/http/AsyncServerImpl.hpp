@@ -234,7 +234,7 @@ private:
 
          // response filter
          boost::bind(&AsyncServerImpl<ProtocolType>::connectionResponseFilter,
-                     this, _1)
+                     this, _1, _2)
       ));
       
       // wait for next connection
@@ -345,7 +345,8 @@ private:
 
    }
 
-   void connectionResponseFilter(http::Response* pResponse)
+   void connectionResponseFilter(const std::string& originalUri,
+                                 http::Response* pResponse)
    {
       // set server header (evade ref-counting to defend against
       // non-threadsafe std::string implementations)
