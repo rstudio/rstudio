@@ -157,7 +157,17 @@ public class RStudio implements EntryPoint
 
          public void onSuccess()
          {   
-            loadApplication(dismissProgressAnimation);
+            // initialize application context
+            RStudioGinjector.INSTANCE.getApplicationContextInit().initialize(
+                new Command() {
+                  @Override
+                  public void execute()
+                  {
+                     loadApplication(dismissProgressAnimation);
+                  }
+                },
+                dismissProgressAnimation
+            );
          }
 
          private void loadApplication(final Command dismissProgressAnimation)

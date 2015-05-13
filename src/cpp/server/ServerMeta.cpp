@@ -34,6 +34,12 @@ void handleInitMessagesRequest(const json::JsonRpcRequest& request,
    pResponse->setResult(json::Value());
 }
 
+void handleContextInitRequest(const json::JsonRpcRequest& request,
+                              json::JsonRpcResponse* pResponse)
+{
+   pResponse->setResult(json::Value());
+}
+
 } // anonymous namespace
 
 void handleMetaRequest(const std::string& username,
@@ -55,6 +61,12 @@ void handleMetaRequest(const std::string& username,
    {
       json::JsonRpcResponse jsonResponse;
       handleInitMessagesRequest(jsonRpcRequest, &jsonResponse);
+      json::setJsonRpcResponse(jsonResponse, pResponse);
+   }
+   else if (jsonRpcRequest.method == "context_init")
+   {
+      json::JsonRpcResponse jsonResponse;
+      handleContextInitRequest(jsonRpcRequest, &jsonResponse);
       json::setJsonRpcResponse(jsonResponse, pResponse);
    }
    else
