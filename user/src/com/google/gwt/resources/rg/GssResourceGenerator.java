@@ -587,8 +587,10 @@ public class GssResourceGenerator extends AbstractCssResourceGenerator implement
 
     for (String candidate : externalClassCandidates) {
       if (!externalClasses.contains(candidate)) {
-        logger.log(Type.ERROR, "The following non-obfuscated class is present in a strict " +
-            "CssResource: " + candidate);
+        logger.log(Type.ERROR, "The following non-obfuscated class is present in a strict "
+            + "CssResource: " + candidate + ". Fix by adding String accessor "
+            + "method(s) to the CssResource interface for obfuscated classes, "
+            + "or use an @external declaration for unobfuscated classes.");
         hasError = true;
       }
     }
