@@ -1,12 +1,12 @@
 /*
  * Copyright 2011 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -89,7 +89,6 @@ public class NativeVerticalScrollbar extends AbstractNativeScrollbar implements 
   interface UiBinderBundle extends ClientBundle {
     UiBinderBundle INSTANCE = GWT.create(UiBinderBundle.class);
 
-    @Source("com/google/gwt/user/client/ui/NativeVerticalScrollbarUi.css")
     UiStyle nativeVerticalScrollbarUi();
   }
 
@@ -137,7 +136,7 @@ public class NativeVerticalScrollbar extends AbstractNativeScrollbar implements 
 
   /**
    * Construct a new {@link NativeVerticalScrollbar}.
-   * 
+   *
    * @param resources the resources used by this widget
    */
   public NativeVerticalScrollbar(Resources resources) {
@@ -168,11 +167,11 @@ public class NativeVerticalScrollbar extends AbstractNativeScrollbar implements 
   /**
    * Get the height in pixels of the scrollable content that the scrollbar
    * controls.
-   * 
+   *
    * <p>
    * This is not the same as the maximum scroll top position. The maximum scroll
    * position equals the <code>scrollHeight- offsetHeight</code>;
-   * 
+   *
    * @return the scroll height
    * @see #setScrollHeight(int)
    */
@@ -187,11 +186,11 @@ public class NativeVerticalScrollbar extends AbstractNativeScrollbar implements 
   /**
    * Set the height in pixels of the scrollable content that the scrollbar
    * controls.
-   * 
+   *
    * <p>
    * This is not the same as the maximum scroll top position. The maximum scroll
    * position equals the <code>scrollHeight- offsetHeight</code>;
-   * 
+   *
    * @param height the size height pixels
    */
   public void setScrollHeight(int height) {
@@ -204,7 +203,7 @@ public class NativeVerticalScrollbar extends AbstractNativeScrollbar implements 
 
   /**
    * Get the width of the scrollbar.
-   * 
+   *
    * @return the width of the scrollbar in pixels
    */
   protected int getNativeWidth() {
