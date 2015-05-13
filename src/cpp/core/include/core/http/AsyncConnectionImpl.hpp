@@ -49,16 +49,20 @@ public:
          boost::shared_ptr<AsyncConnectionImpl<ProtocolType> >,
          http::Request*)> Handler;
 
+   typedef boost::function<void(http::Request*)> RequestFilter;
+
    typedef boost::function<void(const std::string&,
                                 http::Response*)> ResponseFilter;
 
 public:
    AsyncConnectionImpl(boost::asio::io_service& ioService,
                        const Handler& handler,
-                       const ResponseFilter& responseFilter =ResponseFilter())
+                       const RequestFilter& requestFilter = RequestFilter(),
+                       const ResponseFilter& responseFilter = ResponseFilter())
       : ioService_(ioService),
         socket_(ioService),
         handler_(handler),
+        requestFilter_(requestFilter),
         responseFilter_(responseFilter)
         
    {
@@ -180,7 +184,14 @@ private:
             // got valid request -- handle it 
             else
             {
+               // record the original uri
                originalUri_ = request_.uri();
+
+               // call the request filter if we have one
+               if (requestFilter_)
+                  requestFilter_(&request_);
+
+               // call the handler
                handler_(AsyncConnectionImpl<ProtocolType>::shared_from_this(),
                         &request_);
             }
@@ -251,6 +262,7 @@ private:
    boost::asio::io_service& ioService_;
    typename ProtocolType::socket socket_;
    Handler handler_;
+   RequestFilter requestFilter_;
    ResponseFilter responseFilter_;
    boost::array<char, 8192> buffer_ ;
    RequestParser requestParser_ ;

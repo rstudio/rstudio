@@ -232,6 +232,10 @@ private:
          boost::bind(&AsyncServerImpl<ProtocolType>::handleConnection,
                      this, _1, _2),
 
+         // request filter
+         boost::bind(&AsyncServerImpl<ProtocolType>::connectionRequestFilter,
+                     this, _1),
+
          // response filter
          boost::bind(&AsyncServerImpl<ProtocolType>::connectionResponseFilter,
                      this, _1, _2)
@@ -295,8 +299,8 @@ private:
    {
       try
       {
-         // call filter
-         connectionRequestFilter(pConnection, pRequest);
+         // call subclass
+         onRequest(&(pConnection->socket()), pRequest);
 
          // convert to cannonical HttpConnection
          boost::shared_ptr<AsyncConnection> pAsyncConnection =
@@ -335,12 +339,9 @@ private:
       CATCH_UNEXPECTED_EXCEPTION
    }
 
-   void connectionRequestFilter(
-          boost::shared_ptr<AsyncConnectionImpl<ProtocolType> > pConnection,
-          http::Request* pRequest)
+   void connectionRequestFilter(http::Request* pRequest)
    {
-      // call subclass
-      onRequest(&(pConnection->socket()), pRequest);
+
 
 
    }
