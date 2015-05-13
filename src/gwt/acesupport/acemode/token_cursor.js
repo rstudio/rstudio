@@ -852,6 +852,8 @@ oop.mixin(RTokenCursor.prototype, TokenCursor.prototype);
 
 (function() {
 
+   var contains = Utils.contains;
+
    this.isValidAsIdentifier = function() {
       var type = this.currentType();
       return type === "identifier" ||
@@ -1112,18 +1114,20 @@ oop.mixin(RTokenCursor.prototype, TokenCursor.prototype);
    this.isConditionalControlFlowKeyword = function()
    {
       var value = this.currentValue();
-      return ["if", "for", "while", "function"].some(function(x) {
-         return x === value;
-      });
+      return contains(
+         ["if", "for", "while", "function"],
+         value
+      );
    };
 
    this.isControlFlowKeyword = function()
    {
       var value = this.currentValue();
-      return ["if", "for", "while", "else", "function",
-              "repeat", "break", "next"].some(function(x) {
-         return x === value;
-      });
+      return contains(
+         ["if", "for", "while", "else", "function",
+          "repeat", "break", "next"],
+         value
+      );
    };
 
    this.isAtStartOfNewExpression = function(ifAtStartOfDocument)
