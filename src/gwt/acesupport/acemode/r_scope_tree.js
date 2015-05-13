@@ -14,8 +14,10 @@
  */
 define('mode/r_scope_tree', function(require, exports, module) {
 
+   var $debuggingEnabled = false;
    function debuglog(str) {
-      // console.log(str);
+      if ($debuggingEnabled)
+         console.log(str);
    }
 
    function assert(condition, label) {
@@ -141,6 +143,9 @@ define('mode/r_scope_tree', function(require, exports, module) {
       };
 
       this.printScopeTree = function() {
+         if (!$debuggingEnabled)
+            return;
+         
          this.$root.printDebug();
       };
 
