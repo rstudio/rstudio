@@ -296,8 +296,8 @@ private:
       try
       {
          // call filter
-         onRequest(&(pConnection->socket()), pRequest);
-         
+         connectionRequestFilter(pConnection, pRequest);
+
          // convert to cannonical HttpConnection
          boost::shared_ptr<AsyncConnection> pAsyncConnection =
              boost::static_pointer_cast<AsyncConnection>(pConnection);
@@ -335,11 +335,23 @@ private:
       CATCH_UNEXPECTED_EXCEPTION
    }
 
+   void connectionRequestFilter(
+          boost::shared_ptr<AsyncConnectionImpl<ProtocolType> > pConnection,
+          http::Request* pRequest)
+   {
+      // call subclass
+      onRequest(&(pConnection->socket()), pRequest);
+
+
+   }
+
    void connectionResponseFilter(http::Response* pResponse)
    {
       // set server header (evade ref-counting to defend against
       // non-threadsafe std::string implementations)
       pResponse->setHeader("Server", std::string(serverName_.c_str()));
+
+
    }
 
    void waitForScheduledCommandTimer()
