@@ -1084,6 +1084,139 @@ oop.mixin(RTokenCursor.prototype, TokenCursor.prototype);
       this.$offset = clone.$offset;
       return true;
    };
+
+   function isSingleLineString(value)
+   {
+      if (value.indexOf("'") === 0)
+         return value.lastIndexOf("'") === value.length - 1;
+      else if (value.indexOf('"') === 0)
+         return value.lastIndexOf('"') === value.length - 1;
+
+      return false;
+   }
+   
+   this.isSingleLineString = function()
+   {
+      return isSingleLineString(this.currentValue());
+   };
+
+   function isLeftBracket(bracket)
+   {
+      return bracket === '(' ||
+             bracket === '[' ||
+             bracket === '{';
+   }
+
+   this.isLeftBracket = function()
+   {
+      return isLeftBracket(this.currentValue());
+   };
+
+   function isRightBracket(bracket)
+   {
+      return bracket === ')' ||
+             bracket === ']' ||
+             bracket === '}';
+   }
+
+   this.isRightBracket = function()
+   {
+      return isRightBracket(this.currentValue());
+   };
+
+   // NOTE: A lot of the ugliness here stems from the fact that
+   // both open and closing brackets have the same type; that is,
+   //
+   //    paren.keyword.operator
+   //
+   // and so we need to be careful when testing for the 'keyword'
+   // or 'operator' types.
+   this.isValidForEndOfStatement = function()
+   {
+      var token = this.currentToken();
+      if (!token) return false;
+      
+      var value = token.value;
+      var type  = token.type;
+
+      if (type === "paren.keyword.operator")
+         return isRightBracket(value);
+
+      return isSingleLineString(value) ||
+             type === "identifier" ||
+             type.indexOf("constant") !== -1 ||
+             type.indexOf("variable") !== -1;
+   };
+
+   this.isValidForStartOfStatement = function()
+   {
+      var token = this.currentToken();
+      
+      var value = token.value;
+      var type = token.type;
+
+      if (type === "paren.keyword.operator")
+         return isLeftBracket(value);
+
+      return isSingleLineString(value) ||
+             type === "identifier" ||
+             type.indexOf("constant") !== -1 ||
+             type.indexOf("variable") !== -1;
+   };
+
+   // NOTE: By 'conditional' we mean following by a parenthetical
+   // expression of some form
+   this.isConditionalControlFlowKeyword = function()
+   {
+      var value = this.currentValue();
+      return ["if", "for", "while", "function"].some(function(x) {
+         return x === value;
+      });
+   };
+
+   this.isControlFlowKeyword = function()
+   {
+      var value = this.currentValue();
+      return ["if", "for", "while", "else", "function",
+              "repeat", "break", "next"].some(function(x) {
+         return x === value;
+      });
+   };
+
+   this.isAtStartOfNewExpression = function(ifAtStartOfDocument)
+   {
+      var clone = this.cloneCursor();
+
+      if (!clone.moveToPreviousToken())
+         return ifAtStartOfDocument;
+
+      if (this.isValidForStartOfStatement() &&
+          clone.isValidForEndOfStatement() &&
+          this.$row > clone.$row)
+      {
+         // If the previous token is a control flow keyword,
+         // this is not a new expression (current cursor continues
+         // previous expression)
+         if (clone.isControlFlowKeyword())
+            return false;
+         
+         // If the previous cursor is on a closing bracket,
+         // ensure that it's not associated with control flow
+         if (clone.currentValue() === ")" &&
+             clone.bwdToMatchingToken() &&
+             clone.moveToPreviousToken() &&
+             clone.isConditionalControlFlowKeyword())
+         {
+            return false;
+         }
+
+         // Otherwise, these are separate statements.
+         return true;
+      }
+
+      return false;
+      
+   };
    
 }).call(RTokenCursor.prototype);
 
