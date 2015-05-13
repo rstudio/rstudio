@@ -25,6 +25,10 @@
 #include <core/json/JsonRpc.hpp>
 
 namespace rstudio {
+namespace core {
+   class Error;
+}
+
 namespace server {
   
 struct SessionContext
@@ -60,6 +64,8 @@ bool sessionContextForRequest(
 
 void handleContextInitRequest(const core::json::JsonRpcRequest& request,
                               core::json::JsonRpcResponse* pResponse);
+
+core::Error initializeSessionContext();
 
 } // namespace server
 } // namespace rstudio

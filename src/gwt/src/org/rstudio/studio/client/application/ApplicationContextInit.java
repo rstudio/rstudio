@@ -15,15 +15,12 @@
 
 package org.rstudio.studio.client.application;
 
-
-import org.rstudio.core.client.URIUtils;
-import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.studio.client.application.model.ApplicationServerOperations;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 
-import com.google.gwt.http.client.URL;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Window;
 import com.google.inject.Inject;
@@ -45,56 +42,22 @@ public class ApplicationContextInit
    public void initialize(final Command onSuccess,
                           final Command onFailure)
    {
-      // if this is the desktop then just execute the success path right away
       if (Desktop.isDesktop())
       {
          onSuccess.execute();
       }
       else
       {
-         // get project and context id url parameters
-         String project = Window.Location.getParameter("proj");
-         final String contextId = Window.Location.getParameter("ctx");
-         server_.contextInit(project, contextId, 
+         server_.contextInit(GWT.getHostPageBaseURL(), 
                              new ServerRequestCallback<String>() {
                
             @Override
-            public void onResponseReceived(String responseContextId)
+            public void onResponseReceived(String redirectToURL)
             {
-               // if the returned context id is null then the server 
-               // doesn't support contexts. if it's the same as the 
-               // current url parameter then we've got the right context.
-               // in either case we move on by executing onSuccess
-               if ((responseContextId == null) ||
-                   responseContextId.equals(contextId))
-               {
-                  onSuccess.execute();
-               }
-               
-               // othewise reload with the correct context id
+               if (redirectToURL != null)
+                  Window.Location.replace(redirectToURL);
                else
-               {
-                  // get the url
-                  String url = Window.Location.getHref();
-                  
-                  // if we already have a context id then just replace it
-                  if (url.contains("ctx="))
-                  {
-                     responseContextId = URL.encodeQueryString(responseContextId);
-                     url = Pattern.replace("ctx=[\\w]+", 
-                                           "ctx=" + responseContextId, 
-                                           true);
-                  }
-                  else 
-                  {
-                     url = URIUtils.addQueryParam(url, 
-                                                  "ctx", 
-                                                  responseContextId);
-                  }
-                  
-                  // reload
-                  Window.Location.replace(url);
-               }
+                  onSuccess.execute();
             }
    
             @Override
@@ -107,10 +70,7 @@ public class ApplicationContextInit
          });
       }
    }
-   
-   
-  
-   
+    
    private final GlobalDisplay globalDisplay_;
    private final ApplicationServerOperations server_;
 }

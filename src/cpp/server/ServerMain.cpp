@@ -50,6 +50,7 @@
 #include <server/ServerSessionProxy.hpp>
 #include <server/ServerSessionManager.hpp>
 #include <server/ServerProcessSupervisor.hpp>
+#include <server/ServerSessionContext.hpp>
 
 #include "ServerAddins.hpp"
 #include "ServerAppArmor.hpp"
@@ -438,6 +439,12 @@ int main(int argc, char * const argv[])
       // initialize the process supervisor (needs to happen post http server
       // init for access to the scheduled command list)
       error = process_supervisor::initialize();
+      if (error)
+         return core::system::exitFailure(error, ERROR_LOCATION);
+
+      // initialize session context (needs to happen post http server
+      // init for access to server request/response filters)
+      error = initializeSessionContext();
       if (error)
          return core::system::exitFailure(error, ERROR_LOCATION);
 

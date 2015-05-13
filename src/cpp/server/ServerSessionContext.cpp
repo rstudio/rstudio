@@ -13,10 +13,6 @@
  *
  */
 
-// TODO: Save Viewer as Web page open after has no ctx
-// TODO: Help href and src replacements need to add ctx
-
-
 #include <server/ServerSessionContext.hpp>
 
 #include <core/Error.hpp>
@@ -42,8 +38,25 @@ bool sessionContextForRequest(
 void handleContextInitRequest(const json::JsonRpcRequest& request,
                               json::JsonRpcResponse* pResponse)
 {
+   // read parameters
+   std::string hostPageUrl;
+   Error error = json::readParams(request.params, &hostPageUrl);
+   if (error)
+   {
+      pResponse->setError(error);
+      return;
+   }
+
+   // supress polling for events after this RPC request
    pResponse->setField("ep", "false");
+
+   // no redirect for now
    pResponse->setResult(json::Value());
+}
+
+Error initializeSessionContext()
+{
+   return Success();
 }
 
 } // namespace server
