@@ -62,6 +62,8 @@ var RCodeModel = function(session, tokenizer,
 
 (function () {
 
+   var contains = Utils.contains;
+
    this.getTokenCursor = function() {
       return new RTokenCursor(this.$tokens, 0, 0, this);
    };
@@ -521,12 +523,8 @@ var RCodeModel = function(session, tokenizer,
          // If this identifier is a dplyr 'mutate'r, then parse
          // those variables.
          var value = clone.currentValue();
-         if ($dplyrMutaterVerbs.some(function(x) {
-            return x === value;
-         }))
-         {
+         if (contains($dplyrMutaterVerbs, value))
             addDplyrArguments(clone.cloneCursor(), data, tokenCursor, value);
-         }
 
          // Move off of identifier, on to new infix operator.
          // Note that we may already be at the start of the document,
@@ -1258,9 +1256,7 @@ var RCodeModel = function(session, tokenizer,
 
             // If we find an open parenthesis or bracket, we
             // can use this to provide the indentation context.
-            if (["[", "("].some(function(x) {
-               return x === tokenCursor.currentValue();
-            }))
+            if (contains(["[", "("], currentValue))
             {
                var openBracePos = tokenCursor.currentPosition();
                var nextTokenPos = null;
@@ -1467,9 +1463,10 @@ var RCodeModel = function(session, tokenizer,
                          clone.moveToPreviousToken())
                      {
                         var currentValue = clone.currentValue();
-                        if (["if", "for", "while", "repeat", "else"].some(function(x) {
-                           return x === currentValue;
-                        }))
+                        if (contains(
+                           ["if", "for", "while", "repeat", "else"],
+                           currentValue
+                        ))
                         {
                            return this.$getIndent(
                               this.$doc.getLine(clone.$row)

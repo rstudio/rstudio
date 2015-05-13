@@ -16,6 +16,7 @@
 define("mode/token_cursor", function(require, exports, module) {
 
 var oop = require("ace/lib/oop");
+var Utils = require("mode/utils");
 var TokenCursor = function(tokens, row, offset) {
 
    this.$tokens = tokens;
@@ -26,23 +27,9 @@ var TokenCursor = function(tokens, row, offset) {
 
 (function () {
 
-   function isArray(o)
-   {
-      return Object.prototype.toString.call(o) === '[object Array]';
-   }
-
-   // Simulate 'new Foo([args])'; ie, construction of an
-   // object from an array of arguments
-   function construct(constructor, args)
-   {
-      function F()
-      {
-         return constructor.apply(this, args);
-      }
-
-      F.prototype = constructor.prototype;
-      return new F();
-   }
+   var isArray = Utils.isArray;
+   var contains = Utils.contains;
+   var construct = Utils.construct;
 
    var $complements = {
       "(" : ")",
@@ -54,6 +41,9 @@ var TokenCursor = function(tokens, row, offset) {
       ">" : "<",
       "]" : "["
    };
+
+   var $leftBrackets  = ["(", "[", "{"];
+   var $rightBrackets = [")", "]", "}"];
 
    this.moveToStartOfRow = function(row)
    {
@@ -251,21 +241,18 @@ var TokenCursor = function(tokens, row, offset) {
    this.bwdToMatchingToken = function() {
 
       var thisValue = this.currentValue();
-      var compValue = $complements[thisValue];
-
-      var isCloser = [")", "}", "]"].some(function(x) {
-         return x === thisValue;
-      });
-
-      if (!isCloser) {
+      if (!contains($rightBrackets, thisValue))
          return false;
-      }
-
+      
+      var compValue = $complements[thisValue];
+      
       var success = false;
       var parenCount = 0;
+      
       while (this.moveToPreviousToken())
       {
-         if (this.currentValue() === compValue)
+         var currentValue = this.currentValue();
+         if (currentValue === compValue)
          {
             if (parenCount === 0)
             {
@@ -273,7 +260,7 @@ var TokenCursor = function(tokens, row, offset) {
             }
             parenCount--;
          }
-         else if (this.currentValue() === thisValue)
+         else if (currentValue === thisValue)
          {
             parenCount++;
          }
@@ -286,21 +273,17 @@ var TokenCursor = function(tokens, row, offset) {
    this.fwdToMatchingToken = function() {
 
       var thisValue = this.currentValue();
-      var compValue = $complements[thisValue];
-
-      var isOpener = ["(", "{", "["].some(function(x) {
-         return x === thisValue;
-      });
-
-      if (!isOpener) {
+      if (!contains($leftBrackets, thisValue))
          return false;
-      }
+      
+      var compValue = $complements[thisValue];
 
       var success = false;
       var parenCount = 0;
       while (this.moveToNextToken())
       {
-         if (this.currentValue() === compValue)
+         var currentValue = this.currentValue();
+         if (currentValue === compValue)
          {
             if (parenCount === 0)
             {
@@ -308,7 +291,7 @@ var TokenCursor = function(tokens, row, offset) {
             }
             parenCount--;
          }
-         else if (this.currentValue() === thisValue)
+         else if (currentValue === thisValue)
          {
             parenCount++;
          }
@@ -321,47 +304,6 @@ var TokenCursor = function(tokens, row, offset) {
    this.equals = function(other) {
       return this.$row === other.$row && this.$offset === other.$offset;
    };
-
-   this.bwdToMatchingTokenShortCircuit = function(shortCircuit) {
-
-      var thisValue = this.currentValue();
-      var compValue = $complements[thisValue];
-
-      var isCloser = [")", "}", "]", ">", "'", "\""].some(function(x) {
-         return x === thisValue;
-      });
-
-      if (!isCloser) {
-         return false;
-      }
-
-      var success = false;
-      var parenCount = 0;
-      while (this.moveToPreviousToken())
-      {
-         if (shortCircuit(this))
-         {
-            return false;
-         }
-         
-         if (this.currentValue() === compValue)
-         {
-            if (parenCount === 0)
-            {
-               return true;
-            }
-            parenCount--;
-         }
-         else if (this.currentValue() === thisValue)
-         {
-            parenCount++;
-         }
-      }
-
-      return false;
-      
-   };
-
 
    this.moveBackwardOverMatchingParens = function()
    {
@@ -377,7 +319,8 @@ var TokenCursor = function(tokens, row, offset) {
       var parenCount = 0;
       while (this.moveToPreviousToken())
       {
-         if (this.currentValue() === "(")
+         var currentValue = "(";
+         if (currentValue === "(")
          {
             if (parenCount === 0)
             {
@@ -386,7 +329,7 @@ var TokenCursor = function(tokens, row, offset) {
             }
             parenCount--;
          }
-         else if (this.currentValue() === ")")
+         else if (currentValue === ")")
          {
             parenCount++;
          }
@@ -420,10 +363,15 @@ var TokenCursor = function(tokens, row, offset) {
 
    this.currentToken = function()
    {
-      var token = (this.$tokens[this.$row] || [])[this.$offset];
-      return typeof token === "undefined" ?
-         {} :
-      token;
+      var rowTokens = this.$tokens[this.$row];
+      if (rowTokens == null)
+         return {};
+
+      var token = rowTokens[this.$offset];
+      if (token == null)
+         return {};
+
+      return token;
    };
 
    this.currentValue = function()
@@ -439,7 +387,7 @@ var TokenCursor = function(tokens, row, offset) {
    this.currentPosition = function()
    {
       var token = this.currentToken();
-      if (token === null)
+      if (token == null)
          return null;
       else
          return {row: this.$row, column: token.column};
@@ -573,14 +521,13 @@ var TokenCursor = function(tokens, row, offset) {
 
       do
       {
+         if (clone.bwdToMatchingToken())
+            continue;
+         
          var currentValue = clone.currentValue();
-         if (failOnOpenBrace)
-         {
-            if (currentValue === "{")
-            {
-               return false;
-            }
-         }
+         
+         if (failOnOpenBrace && currentValue === "{")
+            return false;
 
          for (var i = 0; i < tokens.length; i++)
          {
@@ -592,9 +539,6 @@ var TokenCursor = function(tokens, row, offset) {
             }
          }
 
-         if (clone.bwdToMatchingToken())
-            continue;
-         
       } while (clone.moveToPreviousToken());
 
       return false;
@@ -611,17 +555,16 @@ var TokenCursor = function(tokens, row, offset) {
       
       do
       {
+         if (clone.bwdToMatchingToken())
+            continue;
+         
          var currentValue = clone.currentValue();
+         
          if (currentValue === ",")
             commaCount += 1;
 
-         if (failOnOpenBrace)
-         {
-            if (currentValue === "{")
-            {
-               return -1;
-            }
-         }
+         if (failOnOpenBrace && currentValue === "{")
+            return -1;
 
          for (var i = 0; i < tokens.length; i++)
          {
@@ -632,9 +575,6 @@ var TokenCursor = function(tokens, row, offset) {
                return commaCount;
             }
          }
-         
-         if (clone.bwdToMatchingToken())
-            continue;
          
       } while (clone.moveToPreviousToken());
       
@@ -653,6 +593,8 @@ var CppTokenCursor = function(tokens, row, offset, codeModel) {
 oop.mixin(CppTokenCursor.prototype, TokenCursor.prototype);
 
 (function() {
+
+   var contains = Utils.contains;
 
    // Move the tokne cursor backwards from an open brace over const, noexcept,
    // for function definitions.
@@ -882,9 +824,10 @@ oop.mixin(CppTokenCursor.prototype, TokenCursor.prototype);
             return this.doBwdOverInitializationList(clonedCursor, tokenCursor);
          } else if (value === ":") {
             var prevValue = clonedCursor.peekBwd().currentValue();
-            if (!["public", "private", "protected"].some(function(x) {
-               return x === prevValue;
-            }))
+            if (contains(
+               ["public", "private", "protected"],
+               prevValue
+            ))
             {
                tokenCursor.$row = clonedCursor.$row;
                tokenCursor.$offset = clonedCursor.$offset;
