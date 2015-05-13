@@ -98,59 +98,6 @@ var RCodeModel = function(session, tokenizer,
       return $truncate($normalizeWhitespace(text), width);
    };
 
-   function isOpenBracket(bracket)
-   {
-      return bracket === '(' ||
-             bracket === '[' ||
-             bracket === '{';
-   }
-
-   function isClosingBracket(bracket)
-   {
-      return bracket === ')' ||
-             bracket === ']' ||
-             bracket === '}';
-   }
-
-   // NOTE: A lot of the ugliness here stems from the fact that
-   // both open and closing brackets have the same type; that is,
-   //
-   //    paren.keyword.operator
-   //
-   // and so we need to be careful when testing for the 'keyword'
-   // or 'operator' types.
-   function isValidForEndOfStatement(token)
-   {
-      if (!token) return false;
-      
-      var value = token.value;
-      var type  = token.type;
-
-      if (type === "paren.keyword.operator")
-         return isClosingBracket(value);
-
-      return type === "string" ||
-             type === "identifier" ||
-             type.indexOf("constant") !== -1 ||
-             type.indexOf("variable") !== -1;
-   }
-
-   function isValidForStartOfStatement(token)
-   {
-      if (!token) return false;
-      
-      var value = token.value;
-      var type = token.type;
-
-      if (type === "paren.keyword.operator")
-         return isOpenBracket(value);
-
-      return type === "string" ||
-             type === "identifier" ||
-             type.indexOf("constant") !== -1 ||
-             type.indexOf("variable") !== -1;
-   }
-
    function pFunction(t)
    {
       return t.type == 'keyword' && t.value == 'function';
@@ -1243,6 +1190,13 @@ var RCodeModel = function(session, tokenizer,
          do
          {
             var currentValue = tokenCursor.currentValue();
+
+            if (tokenCursor.isAtStartOfNewExpression(false))
+            {
+               return this.$getIndent(
+                  this.$doc.getLine(tokenCursor.$row)
+               ) + continuationIndent;
+            }
              
             // Walk over matching braces ('()', '{}', '[]')
             if (tokenCursor.bwdToMatchingToken())
@@ -1393,7 +1347,6 @@ var RCodeModel = function(session, tokenizer,
          if (!tokenCursor.moveToPosition(startPos))
             return "";
 
-         var prevCursor = tokenCursor.cloneCursor(); // updated by loop below
          do
          {
             // Walk over matching parens.
@@ -1409,23 +1362,6 @@ var RCodeModel = function(session, tokenizer,
                ) + tab + continuationIndent;
             }
 
-            // Try to detect statements. This is somewhat ad-hoc, but
-            // the idea is basically to look for token streams of the
-            // form:
-            //
-            //    (valid-for-end-of-statement) (newline) (valid-for-start-of-statement)
-            //
-            // Once detected, we use the indentation of the line
-            // following that newline.
-            if (isValidForEndOfStatement(tokenCursor.currentToken()) &&
-                isValidForStartOfStatement(prevCursor.currentToken()) &&
-                prevCursor.$row > tokenCursor.$row)
-            {
-               return this.$getIndent(
-                  this.$doc.getLine(prevCursor.$row)
-               ) + continuationIndent;
-            }
-                  
             // If we found an assignment token, use that for indentation
             if (pAssign(tokenCursor.currentToken()))
             {
@@ -1489,9 +1425,7 @@ var RCodeModel = function(session, tokenizer,
                ) + continuationIndent;
             }
 
-         } while (
-            (prevCursor = tokenCursor.cloneCursor()) &&
-               tokenCursor.moveToPreviousToken());
+         } while (tokenCursor.moveToPreviousToken());
 
          // Fix some edge-case indentation issues, mainly for naked
          // 'if' and 'else' blocks.
