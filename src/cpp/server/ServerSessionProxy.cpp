@@ -507,8 +507,8 @@ void proxyRpcRequest(
       boost::shared_ptr<core::http::AsyncConnection> ptrConnection)
 {
    // validate the user if this is client_init
-   if (boost::algorithm::ends_with(ptrConnection->request().uri(),
-                                   "client_init"))
+   if (boost::algorithm::contains(ptrConnection->request().uri(),
+                                  "/rpc/client_init"))
    {
       if (!validateUser(ptrConnection, username))
          return;
