@@ -37,6 +37,7 @@ set(SERVER_SOURCE_FILES
    ServerPAMAuthOverlay.cpp
    ServerProcessSupervisor.cpp
    ServerREnvironment.cpp
+   ServerSessionContext.cpp
    ServerSessionProxy.cpp
    ServerSessionManager.cpp
    auth/ServerAuthHandler.cpp

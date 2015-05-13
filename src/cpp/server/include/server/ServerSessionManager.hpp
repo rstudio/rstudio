@@ -29,6 +29,8 @@
 
 #include <core/r_util/RSessionLaunchProfile.hpp>
 
+#include <server/ServerSessionContext.hpp>
+
 namespace rstudio {
 namespace core {
    class Error;
@@ -41,31 +43,6 @@ namespace server {
 // singleton
 class SessionManager;
 SessionManager& sessionManager();
-
-
-//http://stackoverflow.com/questions/7204283/struct-as-a-key-in-a-stdmap
-
-// session context
-struct SessionContext
-{
-   explicit SessionContext(const std::string& username,
-                           const std::string& id = std::string())
-      : username(username), id(id)
-   {
-   }
-   std::string username;
-   std::string id;
-
-   bool operator==(const SessionContext &other) const {
-      return username == other.username && id == other.id;
-   }
-
-   bool operator<(const SessionContext &other) const {
-       return username < other.username ||
-              (username == other.username && id < other.id);
-   }
-};
-
 
 
 // Session manager for launching managed sessions. This includes

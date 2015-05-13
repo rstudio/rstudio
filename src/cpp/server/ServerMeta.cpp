@@ -20,6 +20,8 @@
 
 #include <core/json/JsonRpc.hpp>
 
+#include <server/ServerSessionContext.hpp>
+
 using namespace rstudio::core;
 
 namespace rstudio {
@@ -30,12 +32,6 @@ namespace {
 
 void handleInitMessagesRequest(const json::JsonRpcRequest& request,
                                json::JsonRpcResponse* pResponse)
-{
-   pResponse->setResult(json::Value());
-}
-
-void handleContextInitRequest(const json::JsonRpcRequest& request,
-                              json::JsonRpcResponse* pResponse)
 {
    pResponse->setResult(json::Value());
 }

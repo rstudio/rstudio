@@ -451,15 +451,6 @@ bool validateUser(boost::shared_ptr<http::AsyncConnection> ptrConnection,
    }
 }
 
-SessionContext contextForRequest(
-      const std::string& username,
-      boost::shared_ptr<core::http::AsyncConnection> ptrConnection)
-{
-   SessionContext context(username);
-
-   return context;
-}
-
 } // anonymous namespace
 
 
@@ -494,7 +485,10 @@ void proxyContentRequest(
       const std::string& username,
       boost::shared_ptr<core::http::AsyncConnection> ptrConnection)
 {
-   SessionContext context = contextForRequest(username, ptrConnection);
+   // get session context
+   SessionContext context;
+   if (!sessionContextForRequest(ptrConnection, username, &context))
+      return;
 
    proxyRequest(context,
                 ptrConnection,
@@ -514,7 +508,10 @@ void proxyRpcRequest(
          return;
    }
 
-   SessionContext context = contextForRequest(username, ptrConnection);
+   // get session context
+   SessionContext context;
+   if (!sessionContextForRequest(ptrConnection, username, &context))
+      return;
 
    proxyRequest(context,
                 ptrConnection,
@@ -530,7 +527,10 @@ void proxyEventsRequest(
    if (!validateUser(ptrConnection, username))
       return;
 
-   SessionContext context = contextForRequest(username, ptrConnection);
+   // get session context
+   SessionContext context;
+   if (!sessionContextForRequest(ptrConnection, username, &context))
+      return;
 
    proxyRequest(context,
                 ptrConnection,
@@ -542,8 +542,10 @@ void proxyLocalhostRequest(
       const std::string& username,
       boost::shared_ptr<core::http::AsyncConnection> ptrConnection)
 {
-   // get context for request
-   SessionContext context = contextForRequest(username, ptrConnection);
+   // get session context
+   SessionContext context;
+   if (!sessionContextForRequest(ptrConnection, username, &context))
+      return;
 
    // apply optional proxy filter
    if (applyProxyFilter(context, ptrConnection))
