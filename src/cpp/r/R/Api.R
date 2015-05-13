@@ -113,7 +113,5 @@
    else if (!is.character(basePath))
       stop("basePath parameter is not of type character", call. = FALSE)
    
-   str(markers)
-   
    invisible(.Call("rs_sourceMarkers", name, markers, basePath, autoSelect))
 })
