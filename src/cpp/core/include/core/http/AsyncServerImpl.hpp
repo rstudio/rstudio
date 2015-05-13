@@ -21,6 +21,7 @@
 #include <boost/utility.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/function.hpp>
+#include <boost/foreach.hpp>
 #include <boost/algorithm/string.hpp>
 
 #include <boost/asio/io_service.hpp>
@@ -120,6 +121,18 @@ public:
    {
       BOOST_ASSERT(!running_);
       scheduledCommands_.push_back(pCmd);
+   }
+
+   virtual void addRequestFilter(RequestFilter requestFilter)
+   {
+      BOOST_ASSERT(!running_);
+      requestFilters_.push_back(requestFilter);
+   }
+
+   virtual void addResponseFilter(ResponseFilter responseFilter)
+   {
+      BOOST_ASSERT(!running_);
+      responseFilters_.push_back(responseFilter);
    }
 
    virtual Error runSingleThreaded()
@@ -341,9 +354,10 @@ private:
 
    void connectionRequestFilter(http::Request* pRequest)
    {
-
-
-
+      BOOST_FOREACH(const RequestFilter& filter, requestFilters_)
+      {
+         filter(pRequest);
+      }
    }
 
    void connectionResponseFilter(const std::string& originalUri,
@@ -353,7 +367,10 @@ private:
       // non-threadsafe std::string implementations)
       pResponse->setHeader("Server", std::string(serverName_.c_str()));
 
-
+      BOOST_FOREACH(const ResponseFilter& filter, responseFilters_)
+      {
+         filter(originalUri, pResponse);
+      }
    }
 
    void waitForScheduledCommandTimer()
@@ -474,6 +491,8 @@ private:
    boost::posix_time::time_duration scheduledCommandInterval_;
    boost::asio::deadline_timer scheduledCommandTimer_;
    std::vector<boost::shared_ptr<ScheduledCommand> > scheduledCommands_;
+   std::vector<RequestFilter> requestFilters_;
+   std::vector<ResponseFilter> responseFilters_;
    bool running_;
 };
 

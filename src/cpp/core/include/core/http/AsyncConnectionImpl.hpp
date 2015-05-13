@@ -49,11 +49,6 @@ public:
          boost::shared_ptr<AsyncConnectionImpl<ProtocolType> >,
          http::Request*)> Handler;
 
-   typedef boost::function<void(http::Request*)> RequestFilter;
-
-   typedef boost::function<void(const std::string&,
-                                http::Response*)> ResponseFilter;
-
 public:
    AsyncConnectionImpl(boost::asio::io_service& ioService,
                        const Handler& handler,
