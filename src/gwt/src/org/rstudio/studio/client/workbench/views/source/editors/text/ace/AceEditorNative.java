@@ -273,10 +273,6 @@ public class AceEditorNative extends JavaScriptObject {
          boolean verticallyAlign) /*-{
       $wnd.require("mode/r_code_model").setVerticallyAlignFunctionArgs(verticallyAlign);
    }-*/;
-   
-   public static native void setMatchLastStatementIndentation(boolean value) /*-{
-      $wnd.require("mode/r_code_model").setMatchLastStatementIndentation(value);
-   }-*/;
 
    public final native int getFirstVisibleRow() /*-{
       return this.getFirstVisibleRow();

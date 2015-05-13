@@ -20,9 +20,7 @@ var TokenIterator = require("ace/token_iterator").TokenIterator;
 var RTokenCursor = require("mode/token_cursor").RTokenCursor;
 var Utils = require("mode/utils");
 
-// Options to control R indentation
 var $verticallyAlignFunctionArgs = false;
-var $matchLastStatementIndentation = false;
 
 function comparePoints(pos1, pos2)
 {
@@ -1195,8 +1193,7 @@ var RCodeModel = function(session, tokenizer,
          {
             var currentValue = tokenCursor.currentValue();
 
-            if ($matchLastStatementIndentation &&
-                tokenCursor.isAtStartOfNewExpression(false))
+            if (tokenCursor.isAtStartOfNewExpression(false))
             {
                return this.$getIndent(
                   this.$doc.getLine(tokenCursor.$row)
@@ -1370,8 +1367,7 @@ var RCodeModel = function(session, tokenizer,
             }
 
             // If we found an assignment token, use that for indentation
-            if ($matchLastStatementIndentation &&
-                pAssign(tokenCursor.currentToken()))
+            if (pAssign(tokenCursor.currentToken()))
             {
                while (pAssign(tokenCursor.currentToken()))
                {
@@ -1937,14 +1933,6 @@ exports.setVerticallyAlignFunctionArgs = function(verticallyAlign) {
 
 exports.getVerticallyAlignFunctionArgs = function() {
    return $verticallyAlignFunctionArgs;
-};
-
-exports.setMatchLastStatementIndentation = function(value) {
-   $matchLastStatementIndentation = value;
-};
-
-exports.getMatchLastStatementIndentation = function() {
-   return $matchLastStatementIndentation;
 };
 
 });

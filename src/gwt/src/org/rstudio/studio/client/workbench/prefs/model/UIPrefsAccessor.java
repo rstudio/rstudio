@@ -236,11 +236,6 @@ public class UIPrefsAccessor extends Prefs
    {
       return bool("valign_argument_indent", true);
    }
-   
-   public PrefValue<Boolean> matchLastStatementIndentation()
-   {
-      return bool("match_last_statement_indentation", false);
-   }
 
    public PrefValue<Boolean> softWrapRFiles()
    {
