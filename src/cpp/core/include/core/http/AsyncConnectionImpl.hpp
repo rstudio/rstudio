@@ -180,7 +180,7 @@ private:
             else
             {
                // record the original uri
-               originalUri_ = request_.uri();
+               originalUri_ = request_.absoluteUri();
 
                // call the request filter if we have one
                if (requestFilter_)
