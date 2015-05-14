@@ -59,6 +59,8 @@ var CppCodeModel = function(session, tokenizer,
 
 (function() {
 
+   var contains = Utils.contains;
+
    this.getTokenCursor = function() {
       return new CppTokenCursor(this.$tokens, 0, 0, this);
    };
@@ -76,17 +78,13 @@ var CppCodeModel = function(session, tokenizer,
 
          // Bail on some specific tokens not found in
          // function type specifiers
-         if (["{", "}", ";"].some(function(x) {
-            return x === value;
-         }))
+         if (contains(["{", "}", ";"], value))
             break;
 
          // Bail on 'public:' etc.
          if (value === ":") {
             var prevValue = cursor.peekBwd().currentValue();
-            if (["public", "private", "protected"].some(function(x) {
-               return x === prevValue;
-            }))
+            if (contains(["public", "private", "protected"], prevValue))
                break;
          }
 
@@ -673,18 +671,15 @@ var CppCodeModel = function(session, tokenizer,
 
                // Return on 'control flow' keywords.
                var value = tokenCursor.currentValue();
-               if (controlFlowKeywords.some(function(x) { return x === value; }))
-               {
-                  return tokenCursor.$row;
-               }
-
-               if (tokenCursor.$row === 0 && tokenCursor.$offset === 0) {
-                  return tokenCursor.$row;
-               }
                
-               if (!tokenCursor.moveToPreviousToken()) {
+               if (contains(controlFlowKeywords, value))
+                  return tokenCursor.$row;
+
+               if (tokenCursor.$row === 0 && tokenCursor.$offset === 0)
+                  return tokenCursor.$row;
+               
+               if (!tokenCursor.moveToPreviousToken())
                   return -1;
-               }
             }
 
             // Move backwards over matching parens.
@@ -695,9 +690,7 @@ var CppCodeModel = function(session, tokenizer,
             if (tokenCursor.currentValue() === ":") {
 
                var prevValue = tokenCursor.peekBwd().currentValue();
-               if (["public", "private", "protected"].some(function(x) {
-                  return x === prevValue;
-               }))
+               if (contains(["public", "private", "protected"], prevValue))
                {
                   tokenCursor.moveToNextToken();
                   return tokenCursor.$row;
@@ -1300,9 +1293,8 @@ var CppCodeModel = function(session, tokenizer,
                if (startType === "constant" ||
                    startType === "keyword" ||
                    startType === "identifier" ||
-                   ["{", ")", ">", ":"].some(function(x) {
-                      return x === startValue;
-                   })) {
+                   contains(["{", ")", ">", ":"], startValue))
+               {
                   additionalIndent = tab;
                }
 
@@ -1429,9 +1421,9 @@ var CppCodeModel = function(session, tokenizer,
                   }
 
                   // We hit a 'control flow' keyword ...
-                  if (["for", "while", "do", "try"].some(function(x) {
-                     return x === tokenCursor.currentValue();
-                  }))
+                  if (contains(
+                        ["for", "while", "do", "try"],
+                        tokenCursor.currentValue()))
                   {
                      // ... and the first token wasn't a semi-colon, then indent
                      if (startValue !== ";") {
@@ -1445,9 +1437,8 @@ var CppCodeModel = function(session, tokenizer,
                   if (tokenCursor.currentValue() === ":") {
 
                      // ... preceeded by a class access modifier
-                     if (["public", "private", "protected"].some(function(x) {
-                        return x === peekOne.currentValue();
-                     }))
+                     if (contains(["public", "private", "protected"],
+                                  peekOne.currentValue()))
                      {
                         // Indent once relative to the 'public:'s indentation.
                         return this.$getIndent(lines[peekOne.$row]) + tab;
