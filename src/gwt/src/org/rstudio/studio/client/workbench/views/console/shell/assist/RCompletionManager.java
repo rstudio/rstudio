@@ -418,7 +418,7 @@ public class RCompletionManager implements CompletionManager
          else if (event.getKeyCode() == KeyCodes.KEY_TAB &&
                   modifier == KeyboardShortcut.SHIFT)
          {
-            return snippets_.attemptSnippetInsertion();
+            return snippets_.attemptSnippetInsertion(true);
          }
          else if (keycode == 112 // F1
                   && modifier == KeyboardShortcut.NONE)

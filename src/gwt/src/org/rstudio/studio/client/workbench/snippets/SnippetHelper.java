@@ -184,7 +184,9 @@ public class SnippetHelper
       editor_.expandSelectionLeft(offset);
       
       String snippetContent = transformMacros(
-            getSnippetContents(snippetName));
+            getSnippetContents(snippetName),
+            token,
+            snippetName);
       
       // For snippets that contain code we want to execute in R, we pass the
       // snippet down to the server and then apply the response.
@@ -243,14 +245,18 @@ public class SnippetHelper
       return snippet.replaceAll("`HeaderGuardFileName`", path);
    }
    
-   private String transformMacros(String snippet)
+   private String transformMacros(
+         String snippet,
+         String token,
+         String snippetName)
    {
       if (path_ != null)
       {
          snippet = replaceFilename(snippet);
          snippet = replaceHeaderGuard(snippet);
       }
-      return snippet;
+      
+      return snippet.replaceAll("\\$\\$", token.substring(snippetName.length()));
    }
    
    public final native void applySnippetImpl(
@@ -351,10 +357,10 @@ public class SnippetHelper
    
    public boolean onInsertSnippet()
    {
-      return attemptSnippetInsertion();
+      return attemptSnippetInsertion(true);
    }
    
-   public boolean attemptSnippetInsertion()
+   public boolean attemptSnippetInsertion(boolean allowPrefixMatch)
    {
       if (!editor_.getSelection().isEmpty())
          return false;
@@ -371,6 +377,19 @@ public class SnippetHelper
       {
          applySnippet(token, token);
          return true;
+      }
+      
+      if (allowPrefixMatch)
+      {
+         for (int i = 0; i < snippets.size(); i++)
+         {
+            String snippetName = snippets.get(i);
+            if (token.startsWith(snippetName))
+            {
+               applySnippet(token, snippetName);
+               return true;
+            }
+         }
       }
       
       return false;

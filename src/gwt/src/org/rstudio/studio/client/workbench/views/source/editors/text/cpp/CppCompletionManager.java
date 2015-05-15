@@ -200,7 +200,7 @@ public class CppCompletionManager implements CompletionManager
          else if (event.getKeyCode() == KeyCodes.KEY_TAB &&
                   modifier == KeyboardShortcut.SHIFT)
          {
-            return snippets_.attemptSnippetInsertion();
+            return snippets_.attemptSnippetInsertion(true);
          }
          else if (event.getKeyCode() == 112 // F1
                   && modifier == KeyboardShortcut.NONE)
