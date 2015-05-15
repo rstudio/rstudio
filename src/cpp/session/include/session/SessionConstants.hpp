@@ -35,6 +35,9 @@
 #define kProjectSessionOptionShort        "p"
 #define kProjectSessionDelimiter          ":::"
 
+#define kScopeSessionOption               "scope"
+#define kScopeSessionOptionShort          "s"
+
 #define kVerifyInstallationSessionOption  "verify-installation"
 
 #define kRunTestsSessionOption            "run-tests"

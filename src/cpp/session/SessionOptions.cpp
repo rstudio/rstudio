@@ -315,7 +315,10 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
        "show the user identity")
       (kProjectSessionOption "," kProjectSessionOptionShort,
        value<std::string>(&project_)->default_value(""),
-       "project" );
+       "active project" )
+      (kScopeSessionOption "," kScopeSessionOptionShort,
+        value<std::string>(&scope_)->default_value(""),
+       "session scope id");
 
    // overlay options
    options_description overlay("overlay");
