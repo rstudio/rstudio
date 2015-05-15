@@ -22,6 +22,8 @@
 
 #include <core/json/Json.hpp>
 
+#include <core/r_util/RSessionScope.hpp>
+
 namespace rstudio {
 namespace core {
 namespace r_util {
@@ -30,7 +32,7 @@ struct SessionLaunchProfile
 {
    std::string username;
    std::string password;
-   std::string contextId;
+   SessionScope scope;
    std::string executablePath;
    core::system::ProcessConfig config;
 };

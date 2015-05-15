@@ -153,7 +153,7 @@ Error SessionManager::launchSession(const SessionContext& context)
    // determine launch options
    r_util::SessionLaunchProfile profile;
    profile.username = context.username;
-   profile.contextId = context.id;
+   profile.scope = context.scope;
    profile.executablePath = server::options().rsessionPath();
    profile.config = sessionProcessConfig(context);
 

@@ -24,6 +24,9 @@
 
 #include <core/json/JsonRpc.hpp>
 
+
+#include <core/r_util/RSessionScope.hpp>
+
 namespace rstudio {
 namespace core {
    class Error;
@@ -38,22 +41,23 @@ struct SessionContext
    }
 
    explicit SessionContext(const std::string& username,
-                           const std::string& id = std::string())
-      : username(username), id(id)
+                           const core::r_util::SessionScope& scope =
+                                             core::r_util::SessionScope())
+      : username(username), scope(scope)
    {
    }
    std::string username;
-   std::string id;
+   core::r_util::SessionScope scope;
 
    bool empty() const { return username.empty(); }
 
    bool operator==(const SessionContext &other) const {
-      return username == other.username && id == other.id;
+      return username == other.username && scope == other.scope;
    }
 
    bool operator<(const SessionContext &other) const {
        return username < other.username ||
-              (username == other.username && id < other.id);
+              (username == other.username && scope < other.scope);
    }
 };
 
