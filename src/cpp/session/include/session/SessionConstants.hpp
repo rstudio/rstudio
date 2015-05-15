@@ -33,7 +33,6 @@
 
 #define kProjectSessionOption             "project"
 #define kProjectSessionOptionShort        "p"
-#define kProjectSessionDelimiter          ":::"
 
 #define kScopeSessionOption               "scope"
 #define kScopeSessionOptionShort          "s"

@@ -18,10 +18,13 @@
 #include <iostream>
 
 #include <boost/algorithm/string/trim.hpp>
+#include <boost/algorithm/string/regex.hpp>
 
 #include <core/FilePath.hpp>
 #include <core/Settings.hpp>
 #include <core/FileSerializer.hpp>
+
+#include <core/http/Util.hpp>
 
 #include <core/system/System.hpp>
 #include <core/system/Environment.hpp>
@@ -191,6 +194,48 @@ RVersionInfo nextSessionRVersion(SessionType sessionType,
 
    // return the version
    return projectConfig.rVersion;
+}
+
+namespace {
+
+const char* const kSessionContextDelimeter = ":::";
+
+} // anonymous namespace
+
+
+std::ostream& operator<< (std::ostream& os, const SessionContext& context)
+{
+   os << context.username;
+   if (!context.scope.project.empty())
+      os << " -- " << context.scope.project;
+   if (!context.scope.id.empty())
+      os << " [" << context.scope.id << "]";
+   return os;
+}
+
+
+std::string sessionContextToStreamFile(const SessionContext& context)
+{
+   std::string streamFile = context.username;
+   if (!context.scope.project.empty())
+      streamFile += kSessionContextDelimeter + context.scope.project;
+   if (!context.scope.id.empty())
+      streamFile += kSessionContextDelimeter + context.scope.id;
+   return http::util::urlEncode(streamFile);
+}
+
+SessionContext streamFileToSessionContext(const std::string& file)
+{
+   std::vector<std::string> result;
+   boost::algorithm::split_regex(result,
+                                 http::util::urlDecode(file),
+                                 boost::regex("\\:\\:\\:"));
+   SessionContext context = SessionContext(result[0]);
+   if (result.size() > 1)
+      context.scope.project = result[1];
+   if (result.size() > 2)
+      context.scope.id = result[2];
+   return context;
 }
 
 } // namespace r_util

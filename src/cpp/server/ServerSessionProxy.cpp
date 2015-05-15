@@ -405,7 +405,8 @@ void proxyRequest(
       return;
 
    // create async client
-   FilePath streamPath = session::local_streams::streamPath(context.username);
+   std::string streamFile = r_util::sessionContextToStreamFile(context);
+   FilePath streamPath = session::local_streams::streamPath(streamFile);
    boost::shared_ptr<http::LocalStreamAsyncClient> pClient(
     new http::LocalStreamAsyncClient(ptrConnection->ioService(), streamPath));
 

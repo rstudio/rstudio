@@ -17,6 +17,7 @@
 #define CORE_R_UTIL_R_SESSION_CONTEXT_HPP
 
 #include <string>
+#include <iosfwd>
 
 #include <core/FilePath.hpp>
 
@@ -96,6 +97,14 @@ struct SessionContext
               (username == other.username && scope < other.scope);
    }
 };
+
+
+std::ostream& operator<< (std::ostream& os, const SessionContext& context);
+
+std::string sessionContextToStreamFile(const SessionContext& context);
+
+SessionContext streamFileToSessionContext(const std::string& file);
+
 
 
 } // namespace r_util
