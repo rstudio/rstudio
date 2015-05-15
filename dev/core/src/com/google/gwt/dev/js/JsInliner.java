@@ -644,11 +644,9 @@ public class JsInliner {
       this.whitelist = whitelist;
       invocationCountingVisitor.accept(program);
       JsName defineClass = getFunctionName(program, "JavaClassHierarchySetupUtil.defineClass");
-      JsName defineClassProto = getFunctionName(program,
-          "JavaClassHierarchySetupUtil.defineClassWithPrototype");
       // JsInlinerTest doesn't have these functions, but doesn't need them
-      safeToInlineAtTopLevel = defineClass != null ? ImmutableSet.of(
-          defineClass, defineClassProto) : ImmutableSet.<JsName>of();
+      safeToInlineAtTopLevel = defineClass != null ? ImmutableSet.of(defineClass)
+          : ImmutableSet.<JsName>of();
     }
 
     private static JsName getFunctionName(JsProgram program, String name) {

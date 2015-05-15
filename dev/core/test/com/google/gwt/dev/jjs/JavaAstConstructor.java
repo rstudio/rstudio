@@ -262,11 +262,6 @@ public class JavaAstConstructor {
               "  public static Object defineClass(int typeId, int superTypeId, Object map) {",
               "    return null;",
               "  }",
-              " public static Object defineClassWithPrototype(int typeId, "
-                  + "int superTypeId, ",
-              " Object map) {",
-              "    return null;",
-              "  }",
               "  public static void modernizeBrowser() {}",
               "  public static void emptyMethod() {}",
               "}"

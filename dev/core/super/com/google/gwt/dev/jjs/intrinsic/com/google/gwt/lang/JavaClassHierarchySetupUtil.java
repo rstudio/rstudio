@@ -29,8 +29,8 @@ public class JavaClassHierarchySetupUtil {
 
   /**
    * If not already created it creates the prototype for the class and stores it in
-   * {@code prototypesByTypeId}. If superTypeId is null, it means that the class being defined
-   * is the topmost class (i.e. java.lang.Object) and creates an empty prototype for it.
+   * {@code prototypesByTypeId}. If superTypeIdOrPrototype is null, it means that the class being
+   * defined is the topmost class (i.e. java.lang.Object) and creates an empty prototype for it.
    * Otherwise it creates the prototype for the class by calling {@code createSubclassPrototype()}.
    * It also assigns the castable type map and sets the constructors prototype field to the
    * current prototype.
@@ -39,78 +39,41 @@ public class JavaClassHierarchySetupUtil {
    * code-split fragments. In that case Class.createFor* methods will have created a placeholder and
    * stored in {@code prototypesByTypeId} the class literal.
    * <p>
-   * As a prerequisite if superTypeId is not null, it is assumed that defineClass for the supertype
-   * has already been called.
+   * As a prerequisite if superTypeIdOrPrototype is not null, it is assumed that defineClass for the
+   * supertype has already been called.
    * <p>
    * This method has the effect of assigning the newly created prototype to the global temp variable
    * '_'.
    */
   public static native void defineClass(JavaScriptObject typeId,
-      JavaScriptObject superTypeId, JavaScriptObject castableTypeMap) /*-{
+      JavaScriptObject superTypeIdOrPrototype, JavaScriptObject castableTypeMap) /*-{
     // Setup aliases for (horribly long) JSNI references.
-    var prototypesByTypeId = @com.google.gwt.lang.JavaClassHierarchySetupUtil::prototypesByTypeId;
-    var createSubclassPrototype =
-        @com.google.gwt.lang.JavaClassHierarchySetupUtil::createSubclassPrototype(*)
-    var maybeGetClassLiteralFromPlaceHolder =  @com.google.gwt.lang.JavaClassHierarchySetupUtil::
-        maybeGetClassLiteralFromPlaceHolder(*);
+    var prototypesByTypeId = @JavaClassHierarchySetupUtil::prototypesByTypeId;
     // end of alias definitions.
 
     var prototype = prototypesByTypeId[typeId];
-    var clazz = maybeGetClassLiteralFromPlaceHolder(prototype);
+    var clazz = @JavaClassHierarchySetupUtil::maybeGetClassLiteralFromPlaceHolder(*)(prototype);
     if (prototype && !clazz) {
       // not a placeholder entry setup by Class.setClassLiteral
       _ = prototype;
     } else {
-      _ = prototypesByTypeId[typeId]  = (!superTypeId) ? {} : createSubclassPrototype(superTypeId);
-      _.@java.lang.Object::castableTypeMap = castableTypeMap;
+      _ = @JavaClassHierarchySetupUtil::createSubclassPrototype(*)(superTypeIdOrPrototype);
+      _.@Object::castableTypeMap = castableTypeMap;
       _.constructor = _;
-      if (!superTypeId) {
+      if (!superTypeIdOrPrototype) {
         // Set the typeMarker on java.lang.Object's prototype, implicitly setting it for all
         // Java subclasses (String and Arrays have special handling in Cast and Array respectively).
-        _.@java.lang.Object::typeMarker =
-            @JavaClassHierarchySetupUtil::typeMarkerFn(*);
+        _.@Object::typeMarker = @JavaClassHierarchySetupUtil::typeMarkerFn(*);
       }
+      prototypesByTypeId[typeId] = _;
     }
     for (var i = 3; i < arguments.length; ++i) {
       // Assign the type prototype to each constructor.
       arguments[i].prototype = _;
     }
     if (clazz) {
-      _.@java.lang.Object::___clazz = clazz;
+      _.@Object::___clazz = clazz;
     }
-  }-*/;
-
-  /**
-   * Like defineClass() but second parameter is a native JS prototype reference.
-   */
-  public static native void defineClassWithPrototype(int typeId,
-      JavaScriptObject jsSuperClass, JavaScriptObject castableTypeMap) /*-{
-      // Setup aliases for (horribly long) JSNI references.
-      var prototypesByTypeId = @com.google.gwt.lang.JavaClassHierarchySetupUtil::prototypesByTypeId;
-
-      var maybeGetClassLiteralFromPlaceHolder =  @com.google.gwt.lang.JavaClassHierarchySetupUtil::
-          maybeGetClassLiteralFromPlaceHolder(Lcom/google/gwt/core/client/JavaScriptObject;);
-      // end of alias definitions.
-
-      var prototype = prototypesByTypeId[typeId];
-      var clazz = maybeGetClassLiteralFromPlaceHolder(prototype);
-
-      if (prototype && !clazz) {
-          // not a placeholder entry setup by Class.setClassLiteral
-          _ = prototype;
-      } else {
-          var superPrototype = jsSuperClass && jsSuperClass.prototype || {};
-          _ = prototypesByTypeId[typeId] =  @com.google.gwt.lang.JavaClassHierarchySetupUtil::
-              portableObjCreate(Lcom/google/gwt/core/client/JavaScriptObject;)(superPrototype);
-          _.@java.lang.Object::castableTypeMap = castableTypeMap;
-      }
-      for (var i = 3; i < arguments.length; ++i) {
-          // Assign the type prototype to each constructor.
-          arguments[i].prototype = _;
-      }
-      if (clazz) {
-          _.@java.lang.Object::___clazz = clazz;
-      }
   }-*/;
 
   private static native JavaScriptObject portableObjCreate(JavaScriptObject obj) /*-{
@@ -122,12 +85,17 @@ public class JavaClassHierarchySetupUtil {
   /**
    * Create a subclass prototype.
    */
-  public static native JavaScriptObject createSubclassPrototype(JavaScriptObject superTypeId) /*-{
-    // Setup aliases for (horribly long) JSNI references.
-    var prototypesByTypeId = @com.google.gwt.lang.JavaClassHierarchySetupUtil::prototypesByTypeId;
-    // end of alias definitions.
-    return @com.google.gwt.lang.JavaClassHierarchySetupUtil::
-        portableObjCreate(Lcom/google/gwt/core/client/JavaScriptObject;)(prototypesByTypeId[superTypeId]);
+  private static native JavaScriptObject createSubclassPrototype(
+      JavaScriptObject superTypeIdOrPrototype) /*-{
+    var superPrototype;
+    if (typeof superTypeIdOrPrototype != 'number') {
+      // Either it is null or the prototype of the super type.
+      superPrototype = (superTypeIdOrPrototype && superTypeIdOrPrototype.prototype) || {};
+    } else {
+      superPrototype = @JavaClassHierarchySetupUtil::prototypesByTypeId[superTypeIdOrPrototype];
+    }
+
+    return @JavaClassHierarchySetupUtil::portableObjCreate(*)(superPrototype);
   }-*/;
 
   /**
@@ -220,9 +188,7 @@ public class JavaClassHierarchySetupUtil {
    * Retrieves the prototype for a type if it exists, null otherwise.
    */
   public static native JavaScriptObject getClassPrototype(JavaScriptObject typeId) /*-{
-    var prototypeForTypeId =
-        @com.google.gwt.lang.JavaClassHierarchySetupUtil::prototypesByTypeId[typeId];
-    return prototypeForTypeId;
+    return @JavaClassHierarchySetupUtil::prototypesByTypeId[typeId];
   }-*/;
 
   /**

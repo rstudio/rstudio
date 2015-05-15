@@ -2572,9 +2572,7 @@ public class GenerateJavaScriptAST {
       // choose appropriate setup function
       // JavaClassHierarchySetupUtil.defineClass(typeId, superTypeId, castableMap, constructors)
       JsStatement defineClassStatement = constructInvocation(x.getSourceInfo(),
-          jsPrototype == null ? "JavaClassHierarchySetupUtil.defineClass" :
-              "JavaClassHierarchySetupUtil.defineClassWithPrototype",
-          defineClassArguments).makeStmt();
+          "JavaClassHierarchySetupUtil.defineClass", defineClassArguments).makeStmt();
       globalStmts.add(defineClassStatement);
       typeForStatMap.put(defineClassStatement, x);
     }
