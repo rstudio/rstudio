@@ -81,15 +81,14 @@ std::string rstudioRequestIdFromRequest(const core::http::Request& request)
 bool isMethod(boost::shared_ptr<HttpConnection> ptrConnection,
                      const std::string& method)
 {
-   return boost::algorithm::contains(ptrConnection->request().uri(),
-                                     "/rpc/" + method);
+   return boost::algorithm::ends_with(ptrConnection->request().uri(),
+                                      "rpc/" + method);
 }
 
 bool isGetEvents(boost::shared_ptr<HttpConnection> ptrConnection)
 {
-   std::string uri = ptrConnection->request().uri();
-   return boost::algorithm::contains(uri, "/events/get_events") &&
-          !boost::algorithm::contains(uri, "/rpc/");
+   return boost::algorithm::ends_with(ptrConnection->request().uri(),
+                                      "events/get_events");
 }
 
 void handleAbortNextProjParam(
