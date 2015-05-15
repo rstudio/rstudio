@@ -17,7 +17,6 @@ package com.google.gwt.sample.showcase.client;
 
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
-import com.google.gwt.resources.client.CssResource.NotStrict;
 import com.google.gwt.resources.client.ImageResource;
 
 /**
@@ -43,8 +42,7 @@ public interface ShowcaseResources extends ClientBundle {
   /**
    * The styles used in LTR mode.
    */
-  @NotStrict
-  @Source("Showcase.css")
+  @Source("Showcase.gss")
   CssResource css();
 
   ImageResource gwtLogo();

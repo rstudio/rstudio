@@ -18,5 +18,5 @@
   <set-configuration-property name="UiBinder.useLazyWidgetBuilders" value="true"/>
   <set-configuration-property name="CssResource.enableGss" value="true" />
   <set-configuration-property name="CssResource.conversionMode" value="strict" />
-  <set-configuration-property name="CssResource.gssInUiBinder" value="true" />
+  <set-configuration-property name="CssResource.gssDefaultInUiBinder" value="true" />
 </module>

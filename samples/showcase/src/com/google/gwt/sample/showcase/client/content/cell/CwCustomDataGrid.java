@@ -79,7 +79,7 @@ import java.util.Set;
  * example that shows how to completely customize the appearance of the headers,
  * data rows, and footers in a CellTable.
  */
-@ShowcaseRaw({"ContactDatabase.java", "CwCustomDataGrid.ui.xml", "CwCustomDataGrid.css"})
+@ShowcaseRaw({"ContactDatabase.java", "CwCustomDataGrid.ui.xml", "CwCustomDataGrid.gss"})
 public class CwCustomDataGrid extends ContentWidget {
 
   /**
@@ -120,7 +120,7 @@ public class CwCustomDataGrid extends ContentWidget {
     /**
      * Get the styles used but this example.
      */
-    @Source("CwCustomDataGrid.css")
+    @Source("CwCustomDataGrid.gss")
     Styles styles();
   }
 

@@ -29,5 +29,8 @@
   <set-configuration-property name="locale.cookie" value="SHOWCASE_LOCALE"/>
   <set-configuration-property name="locale.useragent" value="Y"/>
 
+  <set-configuration-property name="CssResource.enableGss" value="true" />
+  <set-configuration-property name="CssResource.gssDefaultInUiBinder" value="true" />
+
   <source path="client" />
 </module>

@@ -507,7 +507,7 @@ public class GssResourceGenerator extends AbstractCssResourceGenerator implement
           return originalResources;
         }
 
-        logger.log(Type.INFO, "Preferred resource file found: " + preferredFile + ". This file " +
+        logger.log(Type.DEBUG, "Preferred resource file found: " + preferredFile + ". This file " +
             "will be used in replacement of " + original);
 
         resourcesToUse[i] = preferredUrl;

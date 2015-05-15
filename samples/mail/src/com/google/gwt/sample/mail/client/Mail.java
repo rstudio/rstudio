@@ -21,7 +21,6 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style.Overflow;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
-import com.google.gwt.resources.client.CssResource.NotStrict;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.Window;
@@ -38,8 +37,7 @@ public class Mail implements EntryPoint {
   interface Binder extends UiBinder<DockLayoutPanel, Mail> { }
 
   interface GlobalResources extends ClientBundle {
-    @NotStrict
-    @Source("global.css")
+    @Source("global.gss")
     CssResource css();
   }
 

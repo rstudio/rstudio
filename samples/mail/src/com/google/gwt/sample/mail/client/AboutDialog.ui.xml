@@ -4,7 +4,7 @@
 
   <ui:image field='logo' src='gwt-logo.png'/>
 
-  <ui:style gss="true">
+  <ui:style>
   .panel {
     padding: 10px;
   }

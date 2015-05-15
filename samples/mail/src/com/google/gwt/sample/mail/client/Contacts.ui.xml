@@ -3,7 +3,7 @@
   xmlns:g='urn:import:com.google.gwt.user.client.ui'
   xmlns:mail='urn:import:com.google.gwt.sample.mail.client'>
 
-  <ui:style gss="true" field='style'
+  <ui:style field='style'
     type='com.google.gwt.sample.mail.client.Contacts.Style'>
   .contacts {
     padding: 0.5em;

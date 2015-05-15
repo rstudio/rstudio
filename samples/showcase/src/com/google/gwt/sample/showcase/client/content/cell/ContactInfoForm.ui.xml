@@ -6,7 +6,7 @@
   ui:generateFormat='com.google.gwt.i18n.rebind.format.PropertiesFormat'
   ui:generateLocales='default'>
 
-  <ui:style gss="true">
+  <ui:style>
     .header {
       font-size: 110%;
       font-weight: bold;

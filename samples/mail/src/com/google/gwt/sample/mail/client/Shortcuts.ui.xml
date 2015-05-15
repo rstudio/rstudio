@@ -3,7 +3,7 @@
   xmlns:g='urn:import:com.google.gwt.user.client.ui'
   xmlns:mail='urn:import:com.google.gwt.sample.mail.client'>
 
-  <ui:style gss="true">
+  <ui:style>
   .shortcuts {
     border-left: 1px solid #999;
     border-right: 1px solid #999;

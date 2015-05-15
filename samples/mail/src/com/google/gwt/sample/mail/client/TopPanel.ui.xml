@@ -8,7 +8,7 @@
 
   <ui:image field='logo' src='logo.png'/>
 
-  <ui:style gss="true">
+  <ui:style>
   .statusDiv {
     text-align: right;
     margin: 1em;

@@ -10,7 +10,7 @@
     field='res'
     type='com.google.gwt.sample.showcase.client.ShowcaseResources' />
 
-  <ui:style gss="true">
+  <ui:style>
     .linkBar {
       padding: 2px 22px 2px 0;
       background: white;

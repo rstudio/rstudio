@@ -1,3 +1,5 @@
+@external 'gwt-*' 'dialog*' Caption;
+
 body, table {
   font-size: small;
 }
@@ -37,7 +39,7 @@ a:link, a:visited, a:hover, a:active {
 .gwt-PopupPanelGlass {
   background-color: #000;
   opacity: 0.3;
-  filter: literal("alpha(opacity=30)");
+  filter: alpha(opacity=30);
   z-index: 2;
 }
 

@@ -4,7 +4,7 @@
   xmlns:g="urn:import:com.google.gwt.user.client.ui"
   xmlns:c='urn:import:com.google.gwt.user.cellview.client'>
 
-  <ui:style gss="true">
+  <ui:style>
     .browser {
       height: 200px;
       border: 1px solid #ccc;
