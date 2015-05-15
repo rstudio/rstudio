@@ -159,6 +159,10 @@ Error SessionLauncher::launchFirstSession(const std::string& filename)
    
 void SessionLauncher::launchNextSession(bool reload)
 {   
+   // unset the initial project environment variable so it doesn't
+   // polute future sessions
+   core::system::unsetenv(kRStudioInitialProject);
+
    // build a new launch context -- re-use the same port if we aren't reloading
    std::string port = !reload ? options().portNumber() : "";
    std::string host, url;
