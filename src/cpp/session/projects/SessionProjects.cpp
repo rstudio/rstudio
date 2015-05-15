@@ -489,14 +489,20 @@ void startup()
    // determine project file path
    FilePath projectFilePath;
 
-   // see if there is a project path hard-wired for the next session
-   // (this would be used for a switch to project or for the resuming of
-   // a suspended session)
+   // alias some project context data
    std::string nextSessionProject = s_projectContext.nextSessionProject();
    FilePath lastProjectPath = s_projectContext.lastProjectPath();
 
-   // check for next session project path (see above for comment)
-   if (!nextSessionProject.empty())
+   // check for explicit request for a project (file association or url based)
+   if (!session::options().initialProjectPath().empty())
+   {
+      projectFilePath = session::options().initialProjectPath();
+   }
+
+   // see if there is a project path hard-wired for the next session
+   // (this would be used for a switch to project or for the resuming of
+   // a suspended session)
+   else if (!nextSessionProject.empty())
    {
       // reset next session project path so its a one shot deal
       s_projectContext.setNextSessionProject("");
@@ -519,12 +525,6 @@ void startup()
          projectFilePath = module_context::resolveAliasedPath(
                                                    nextSessionProject);
       }
-   }
-
-   // check for envrionment variable (file association)
-   else if (!session::options().initialProjectPath().empty())
-   {
-      projectFilePath = session::options().initialProjectPath();
    }
 
    // check for other working dir override (implies a launch of a file
