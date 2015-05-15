@@ -31,6 +31,10 @@
 #define kUserIdentitySessionOption        "user-identity"
 #define kUserIdentitySessionOptionShort   "u"
 
+#define kProjectSessionOption             "project"
+#define kProjectSessionOptionShort        "p"
+#define kProjectSessionDelimiter          ":::"
+
 #define kVerifyInstallationSessionOption  "verify-installation"
 
 #define kRunTestsSessionOption            "run-tests"

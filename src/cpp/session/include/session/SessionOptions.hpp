@@ -332,6 +332,11 @@ public:
       return showUserIdentity_;
    }
 
+   std::string project() const
+   {
+      return project_;
+   }
+
    core::FilePath userHomePath() const 
    { 
       return core::FilePath(userHomePath_.c_str());
@@ -509,6 +514,7 @@ private:
    // user info
    bool showUserIdentity_;
    std::string userIdentity_;
+   std::string project_;
    std::string userHomePath_;
    std::string userScratchPath_;   
 
