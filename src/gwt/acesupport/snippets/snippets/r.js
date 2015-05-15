@@ -154,6 +154,22 @@ var snippets = [
       content: "rapply(${1:list}, ${2:function})"
    },
 
+   /* Shiny */
+   {
+      name: "shiny",
+      content: [
+         "library(shiny)",
+         "",
+         "server <- function(input, output) {",
+         "${0}",
+         "}",
+         "",
+         "ui <- fluidPage()",
+         "",
+         "shinyApp(ui = ui, server = server)"
+      ].join("\n")
+   },
+
    /* Utilities */
 
    {
