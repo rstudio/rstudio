@@ -26,6 +26,8 @@
 #include <core/StringUtils.hpp>
 #include <core/ProgramOptions.hpp>
 
+#include <core/r_util/RSessionContext.hpp>
+
 #include <R_ext/RStartup.h>
 
 #include <session/SessionConstants.hpp>
@@ -340,6 +342,13 @@ public:
    std::string scope() const
    {
       return scope_;
+   }
+
+   core::r_util::SessionContext sessionContext() const
+   {
+      return core::r_util::SessionContext(
+                              userIdentity(),
+                              core::r_util::SessionScope(project(), scope()));
    }
 
    core::FilePath userHomePath() const 

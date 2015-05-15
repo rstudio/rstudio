@@ -64,6 +64,7 @@
 #include <core/system/ParentProcessMonitor.hpp>
 #include <core/system/FileMonitor.hpp>
 #include <core/text/TemplateFilter.hpp>
+#include <core/r_util/RSessionContext.hpp>
 
 #include <r/RJsonRpc.hpp>
 #include <r/RExec.hpp>
@@ -2939,6 +2940,14 @@ int main (int argc, char * const argv[])
       {
          // do the same for port number, for rpostback in rdesktop configs
          core::system::setenv(kRSessionPortNumber, options.wwwPort());
+      }
+
+      // provide session stream for postback in server mode
+      if (serverMode)
+      {
+         r_util::SessionContext context = options.sessionContext();
+         std::string stream = r_util::sessionContextToStreamFile(context);
+         core::system::setenv(kRStudioSessionStream, stream);
       }
 
       // set the standalone port if we are running in standalone mode

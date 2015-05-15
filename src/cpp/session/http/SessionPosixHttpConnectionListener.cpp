@@ -77,9 +77,7 @@ void initializeHttpConnectionListener()
       else
       {
          // create listener based on options
-         r_util::SessionContext context(
-                  options.userIdentity(),
-                  r_util::SessionScope(options.project(), options.scope()));
+         r_util::SessionContext context = options.sessionContext();
          std::string streamFile = r_util::sessionContextToStreamFile(context);
          FilePath localStreamPath = local_streams::streamPath(streamFile);
          s_pHttpConnectionListener = new LocalStreamHttpConnectionListener(

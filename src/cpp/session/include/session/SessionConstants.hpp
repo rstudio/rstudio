@@ -22,6 +22,7 @@
 #define kRStudioLimitRpcClientUid         "RSTUDIO_LIMIT_RPC_CLIENT_UID"
 #define kRSessionPortNumber               "RSTUDIO_SESSION_PORT"
 #define kRSessionStandalonePortNumber     "RSTUDIO_STANDALONE_PORT"
+#define kRStudioSessionStream             "RSTUDIO_SESSION_STREAM"
 
 #define kProgramModeSessionOption         "program-mode"
 #define kSessionProgramModeDesktop        "desktop"
