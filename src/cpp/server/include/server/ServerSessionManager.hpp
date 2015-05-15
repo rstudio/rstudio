@@ -58,8 +58,8 @@ private:
 
 public:
    // launching
-   core::Error launchSession(const SessionContext& context);
-   void removePendingLaunch(const SessionContext& context);
+   core::Error launchSession(const core::r_util::SessionContext& context);
+   void removePendingLaunch(const core::r_util::SessionContext& context);
 
    // set a custom session launcher
    typedef boost::function<core::Error(
@@ -85,7 +85,8 @@ private:
 private:
    // pending launches
    boost::mutex launchesMutex_;
-   typedef std::map<SessionContext,boost::posix_time::ptime> LaunchMap;
+   typedef std::map<core::r_util::SessionContext,
+                    boost::posix_time::ptime> LaunchMap;
    LaunchMap pendingLaunches_;
 
    // session launch function
@@ -100,7 +101,7 @@ private:
 
 // Lower-level global functions for launching sessions. These are used
 // internally by the SessionManager as well as for verify-installation
-core::Error launchSession(const SessionContext& context,
+core::Error launchSession(const core::r_util::SessionContext& context,
                           const core::system::Options& extraArgs,
                           PidType* pPid);
 

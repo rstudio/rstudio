@@ -21,6 +21,7 @@
 #include <core/FilePath.hpp>
 
 #include <core/r_util/RVersionInfo.hpp>
+#include <core/r_util/RSessionScope.hpp>
 
 #define kUserSettings                  "monitored/user-settings/user-settings"
 #define kAlwaysRestoreLastProject      "restoreLastProject"
@@ -68,6 +69,34 @@ FilePath nextSessionProject(SessionType sessionType,
 
 RVersionInfo nextSessionRVersion(SessionType sessionType,
                                  const std::string& homePath = std::string());
+
+struct SessionContext
+{
+   SessionContext()
+   {
+   }
+
+   explicit SessionContext(const std::string& username,
+                           const core::r_util::SessionScope& scope =
+                                             core::r_util::SessionScope())
+      : username(username), scope(scope)
+   {
+   }
+   std::string username;
+   core::r_util::SessionScope scope;
+
+   bool empty() const { return username.empty(); }
+
+   bool operator==(const SessionContext &other) const {
+      return username == other.username && scope == other.scope;
+   }
+
+   bool operator<(const SessionContext &other) const {
+       return username < other.username ||
+              (username == other.username && scope < other.scope);
+   }
+};
+
 
 } // namespace r_util
 } // namespace core 

@@ -55,7 +55,7 @@ void proxyLocalhostRequest(
 bool requiresSession(const core::http::Request& request);
 
 typedef boost::function<bool(
-    const SessionContext&,
+    const core::r_util::SessionContext&,
     boost::shared_ptr<core::http::AsyncConnection>)> ProxyFilter;
 void setProxyFilter(ProxyFilter filter);
 

@@ -25,7 +25,7 @@
 #include <core/json/JsonRpc.hpp>
 
 
-#include <core/r_util/RSessionScope.hpp>
+#include <core/r_util/RSessionContext.hpp>
 
 namespace rstudio {
 namespace core {
@@ -34,37 +34,10 @@ namespace core {
 
 namespace server {
   
-struct SessionContext
-{
-   SessionContext()
-   {
-   }
-
-   explicit SessionContext(const std::string& username,
-                           const core::r_util::SessionScope& scope =
-                                             core::r_util::SessionScope())
-      : username(username), scope(scope)
-   {
-   }
-   std::string username;
-   core::r_util::SessionScope scope;
-
-   bool empty() const { return username.empty(); }
-
-   bool operator==(const SessionContext &other) const {
-      return username == other.username && scope == other.scope;
-   }
-
-   bool operator<(const SessionContext &other) const {
-       return username < other.username ||
-              (username == other.username && scope < other.scope);
-   }
-};
-
 bool sessionContextForRequest(
       boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
       const std::string& username,
-      SessionContext* pSessionContext);
+      core::r_util::SessionContext* pSessionContext);
 
 void handleContextInitRequest(const core::json::JsonRpcRequest& request,
                               core::json::JsonRpcResponse* pResponse);

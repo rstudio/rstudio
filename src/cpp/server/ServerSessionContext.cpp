@@ -29,9 +29,9 @@ namespace server {
 bool sessionContextForRequest(
       boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
       const std::string& username,
-      SessionContext* pSessionContext)
+      r_util::SessionContext* pSessionContext)
 {
-   *pSessionContext = SessionContext(username);
+   *pSessionContext = r_util::SessionContext(username);
    return true;
 }
 

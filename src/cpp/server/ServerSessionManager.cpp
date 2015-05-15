@@ -26,6 +26,7 @@
 #include <core/system/PosixSystem.hpp>
 #include <core/system/PosixUser.hpp>
 #include <core/system/Environment.hpp>
+#include <core/r_util/RSessionContext.hpp>
 
 #include <monitor/MonitorClient.hpp>
 #include <session/SessionConstants.hpp>
@@ -47,7 +48,7 @@ namespace server {
 namespace {
 
 core::system::ProcessConfig sessionProcessConfig(
-         SessionContext context,
+         r_util::SessionContext context,
          const core::system::Options& extraArgs = core::system::Options())
 {
    // prepare command line arguments
@@ -132,7 +133,7 @@ SessionManager::SessionManager()
                                            this, _1);
 }
 
-Error SessionManager::launchSession(const SessionContext& context)
+Error SessionManager::launchSession(const r_util::SessionContext& context)
 {
    using namespace boost::posix_time;
    LOCK_MUTEX(launchesMutex_)
@@ -228,7 +229,7 @@ void SessionManager::addSessionLaunchProfileFilter(
    sessionLaunchProfileFilters_.push_back(filter);
 }
 
-void SessionManager::removePendingLaunch(const SessionContext& context)
+void SessionManager::removePendingLaunch(const r_util::SessionContext& context)
 {
    LOCK_MUTEX(launchesMutex_)
    {
@@ -243,7 +244,7 @@ void SessionManager::notifySIGCHLD()
 }
 
 // helper function for verify-installation
-Error launchSession(const SessionContext& context,
+Error launchSession(const r_util::SessionContext& context,
                     const core::system::Options& extraArgs,
                     PidType* pPid)
 {

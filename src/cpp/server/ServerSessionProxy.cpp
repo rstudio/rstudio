@@ -68,7 +68,7 @@ namespace session_proxy {
 namespace {
 
 Error launchSessionRecovery(const http::Request& request,
-                            const SessionContext& context)
+                            const r_util::SessionContext& context)
 {
    // if this request is marked as requiring an existing
    // session then return session unavilable error
@@ -83,7 +83,7 @@ Error launchSessionRecovery(const http::Request& request,
    return sessionManager().launchSession(context);
 }
 
-http::ConnectionRetryProfile sessionRetryProfile(const SessionContext& context)
+http::ConnectionRetryProfile sessionRetryProfile(const r_util::SessionContext& context)
 {
    http::ConnectionRetryProfile retryProfile;
    retryProfile.retryInterval = boost::posix_time::milliseconds(25);
@@ -96,7 +96,7 @@ http::ConnectionRetryProfile sessionRetryProfile(const SessionContext& context)
 ProxyFilter s_proxyFilter;
 
 bool applyProxyFilter(
-      const SessionContext& context,
+      const r_util::SessionContext& context,
       boost::shared_ptr<core::http::AsyncConnection> ptrConnection)
 {
    if (s_proxyFilter)
@@ -107,7 +107,7 @@ bool applyProxyFilter(
 
 void handleProxyResponse(
       boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
-      const SessionContext& context,
+      const r_util::SessionContext& context,
       const http::Response& response)
 {
    // if there was a launch pending then remove it
@@ -272,7 +272,7 @@ void logIfNotConnectionTerminated(const Error& error,
 
 void handleContentError(
       boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
-      const SessionContext& context,
+      const r_util::SessionContext& context,
       const Error& error)
 {   
    // if there was a launch pending then remove it
@@ -317,7 +317,7 @@ void handleContentError(
 
 void handleRpcError(
       boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
-      const SessionContext& context,
+      const r_util::SessionContext& context,
       const Error& error)
 {
    // if there was a launch pending then remove it
@@ -395,7 +395,7 @@ void handleEventsError(
 }
 
 void proxyRequest(
-      const SessionContext& context,
+      const r_util::SessionContext& context,
       boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
       const http::ErrorHandler& errorHandler,
       const http::ConnectionRetryProfile& connectionRetryProfile)
@@ -471,7 +471,7 @@ Error runVerifyInstallationSession()
    core::system::Options args;
    args.push_back(core::system::Option("--" kVerifyInstallationSessionOption, "1"));
    PidType sessionPid;
-   error = server::launchSession(SessionContext(user.username),
+   error = server::launchSession(r_util::SessionContext(user.username),
                                  args,
                                  &sessionPid);
    if (error)
@@ -486,7 +486,7 @@ void proxyContentRequest(
       boost::shared_ptr<core::http::AsyncConnection> ptrConnection)
 {
    // get session context
-   SessionContext context;
+   r_util::SessionContext context;
    if (!sessionContextForRequest(ptrConnection, username, &context))
       return;
 
@@ -509,7 +509,7 @@ void proxyRpcRequest(
    }
 
    // get session context
-   SessionContext context;
+   r_util::SessionContext context;
    if (!sessionContextForRequest(ptrConnection, username, &context))
       return;
 
@@ -528,7 +528,7 @@ void proxyEventsRequest(
       return;
 
    // get session context
-   SessionContext context;
+   r_util::SessionContext context;
    if (!sessionContextForRequest(ptrConnection, username, &context))
       return;
 
@@ -543,7 +543,7 @@ void proxyLocalhostRequest(
       boost::shared_ptr<core::http::AsyncConnection> ptrConnection)
 {
    // get session context
-   SessionContext context;
+   r_util::SessionContext context;
    if (!sessionContextForRequest(ptrConnection, username, &context))
       return;
 
