@@ -50,7 +50,7 @@ Error PersistentState::initialize()
    desktopClientId_ = "33e600bb-c1b1-46bf-b562-ab5cba070b0e";
 
    FilePath scratchPath = module_context::scopedScratchPath();
-   activeClientIdPath_ = scratchPath.childPath("active-client-id");
+   activeClientIdPath_ = scratchPath.childPath(kActiveClientId);
    FilePath statePath = scratchPath.complete("persistent-state");
    return settings_.initialize(statePath);
 }
