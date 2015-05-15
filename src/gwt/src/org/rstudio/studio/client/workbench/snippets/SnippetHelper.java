@@ -168,11 +168,8 @@ public class SnippetHelper
       
    }-*/;
    
-   public void applySnippet(String token, String snippetName)
+   private void selectToken(String token)
    {
-      // Set the selection based on what we want to replace. For auto-paired
-      // insertions, e.g. `[|]`, we want to replace both characters; typically
-      // we only want to replace the token.
       int offset = token.length();
       if (StringUtil.isComplementOf(
             token.substring(offset - 1),
@@ -182,7 +179,14 @@ public class SnippetHelper
          offset++;
       }
       editor_.expandSelectionLeft(offset);
-      
+   }
+   
+   public void applySnippet(final String token,
+                            final String snippetName)
+   {
+      // Set the selection based on what we want to replace. For auto-paired
+      // insertions, e.g. `[|]`, we want to replace both characters; typically
+      // we only want to replace the token.
       String snippetContent = transformMacros(
             getSnippetContents(snippetName),
             token,
@@ -203,12 +207,14 @@ public class SnippetHelper
             @Override
             public void onResponseReceived(String transformed)
             {
+               selectToken(token);
                applySnippetImpl(transformed, manager_, editor_.getWidget().getEditor());
             }
          });
       }
       else
       {
+         selectToken(token);
          applySnippetImpl(snippetContent, manager_, editor_.getWidget().getEditor());
       }
    }
