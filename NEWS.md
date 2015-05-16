@@ -9,7 +9,7 @@
 
 ### Server
 
-
+* Include active project in document title (caption of browser tab) 
 
 ### Bug Fixes
 

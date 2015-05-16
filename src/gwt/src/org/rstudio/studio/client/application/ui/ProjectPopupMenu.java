@@ -18,11 +18,13 @@ import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.projects.ProjectMRUList;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Document;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.inject.Inject;
@@ -81,7 +83,13 @@ public class ProjectPopupMenu extends ToolbarPopupMenu
                 true);
           
          if (activeProjectFile_ != null)
+         {
             toolbarButton_.setTitle(activeProjectFile_);
+          
+            // also set the doc title so the browser tab carries the project
+            if (!Desktop.isDesktop())
+               Document.get().setTitle("RStudio - " + buttonText);
+         }
         
           if (activeProjectFile_ == null)
           {
