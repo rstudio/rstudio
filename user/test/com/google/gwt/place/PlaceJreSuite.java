@@ -15,6 +15,7 @@
  */
 package com.google.gwt.place;
 
+import com.google.gwt.place.rebind.MostToLeastDerivedPlaceTypeComparatorTest;
 import com.google.gwt.place.rebind.PlaceHistoryGeneratorContextTest;
 import com.google.gwt.place.shared.PlaceChangeRequestEventTest;
 import com.google.gwt.place.shared.PlaceControllerTest;
@@ -30,6 +31,7 @@ public class PlaceJreSuite {
   public static Test suite() {
     TestSuite suite = new TestSuite("JRE Tests of the place package");
 
+    suite.addTestSuite(MostToLeastDerivedPlaceTypeComparatorTest.class);
     suite.addTestSuite(PlaceControllerTest.class);
     suite.addTestSuite(PlaceChangeRequestEventTest.class);
     suite.addTestSuite(PlaceHistoryGeneratorContextTest.class);

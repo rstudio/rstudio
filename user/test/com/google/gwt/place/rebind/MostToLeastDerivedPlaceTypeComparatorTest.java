@@ -74,17 +74,17 @@ public class MostToLeastDerivedPlaceTypeComparatorTest extends TestCase {
         CompilationStateBuilder.buildFrom(logger, new CompilerContext(), getJavaResources());
     typeOracle = state.getTypeOracle();
 
-    place = typeOracle.getType("com.google.gwt.app.place.shared.Place");
+    place = typeOracle.getType("com.google.gwt.place.shared.Place");
     assertNotNull(place);
-    place1 = typeOracle.getType("com.google.gwt.app.place.shared.testplaces.Place1");
+    place1 = typeOracle.getType("com.google.gwt.place.testplaces.Place1");
     assertNotNull(place1);
-    place2 = typeOracle.getType("com.google.gwt.app.place.shared.testplaces.Place2");
+    place2 = typeOracle.getType("com.google.gwt.place.testplaces.Place2");
     assertNotNull(place2);
-    place3 = typeOracle.getType("com.google.gwt.app.place.shared.testplaces.Place3");
+    place3 = typeOracle.getType("com.google.gwt.place.testplaces.Place3");
     assertNotNull(place3);
-    place4 = typeOracle.getType("com.google.gwt.app.place.shared.testplaces.Place4");
+    place4 = typeOracle.getType("com.google.gwt.place.testplaces.Place4");
     assertNotNull(place4);
-    place5 = typeOracle.getType("com.google.gwt.app.place.shared.testplaces.Place5");
+    place5 = typeOracle.getType("com.google.gwt.place.testplaces.Place5");
     assertNotNull(place5);
   }
 
