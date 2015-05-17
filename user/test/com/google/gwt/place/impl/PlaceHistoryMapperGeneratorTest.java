@@ -49,6 +49,11 @@ public class PlaceHistoryMapperGeneratorTest extends GWTTestCase {
       PlaceHistoryMapperWithFactory<TokenizerFactory> {
   };
 
+  // Note: tokenizer order here is important for the test!
+  @WithTokenizers({Tokenizer2.class, Place1.Tokenizer.class, Tokenizer3.class})
+  interface SortOrder extends PlaceHistoryMapper {
+  }
+
   /**
    * The goal is only to test that the generator doesn't fail (but doesn't
    * generate anything either).
@@ -114,6 +119,16 @@ public class PlaceHistoryMapperGeneratorTest extends GWTTestCase {
     PlaceHistoryMapper subject = GWT.create(LocalConcreteClass.class);
     assertNull(subject.getToken(null));
     assertNull(subject.getPlace(null));
+  }
+
+  /**
+   * See https://code.google.com/p/google-web-toolkit/issues/detail?id=8036
+   */
+  public void testSortOrder() {
+    PlaceHistoryMapper subject = GWT.create(SortOrder.class);
+    assertEquals(Place1.Tokenizer.PREFIX + ":" + place1.content, subject.getToken(place1));
+    assertEquals("Place2:" + place2.content, subject.getToken(place2));
+    assertEquals("Place3:" + place3.content, subject.getToken(place3));
   }
 
   // CHECKSTYLE_OFF

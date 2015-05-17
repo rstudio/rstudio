@@ -37,8 +37,10 @@ import junit.framework.TestCase;
 
 import java.io.PrintWriter;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -138,14 +140,37 @@ public class MostToLeastDerivedPlaceTypeComparatorTest extends TestCase {
   }
 
   public void testFallbackToClassName() {
-    // Array sorted from least derived to most derived. In each pair of adjacent
-    // values, neither place extends the other.
-    JClassType[] places = {place1, place2, place3, place4, place5};
-    for (int i = 0; i < places.length - 1; i++) {
-      assertEquals(-1, (int) Math.signum(comparator.compare(places[i],
-          places[i + 1])));
-      assertEquals(1, (int) Math.signum(comparator.compare(places[i + 1],
-          places[i])));
+    JClassType[][] places = {
+        {place3, place4}, // place3 and place4 both extend directly from place1
+        {place1, place2}, // place1 and place2 both extend directly from place
+    };
+    for (JClassType[] pair : places) {
+      assertEquals(-1, (int) Math.signum(comparator.compare(pair[0], pair[1])));
+      assertEquals(1, (int) Math.signum(comparator.compare(pair[1], pair[0])));
     }
+  }
+
+  public void testCollectionSort() {
+    List<JClassType> actual = Arrays.asList(place, place1, place3, place5);
+    Collections.sort(actual, comparator);
+    assertEquals(Arrays.asList(place5, place3, place1, place), actual);
+
+    actual = Arrays.asList(place5, place3, place1, place);
+    Collections.sort(actual, comparator);
+    assertEquals(Arrays.asList(place5, place3, place1, place), actual);
+
+    actual = Arrays.asList(place, place1, place2, place3, place4, place5);
+    Collections.sort(actual, comparator);
+    assertEquals(Arrays.asList(place5, place3, place4, place1, place2, place), actual);
+
+    actual = Arrays.asList(place5, place4, place3, place2, place1, place);
+    Collections.sort(actual, comparator);
+    assertEquals(Arrays.asList(place5, place3, place4, place1, place2, place), actual);
+
+    // This is equivalent to the test-case from issue 8036
+    // https://code.google.com/p/google-web-toolkit/issues/detail?id=8036
+    actual = Arrays.asList(place2, place1, place3);
+    Collections.sort(actual, comparator);
+    assertEquals(Arrays.asList(place3, place1, place2), actual);
   }
 }
