@@ -77,8 +77,8 @@ Error sendRequest(http::Request* pRequest, http::Response* pResponse)
    else
    {
       // determine stream path
-      std::string userIdentity = core::system::getenv(kRStudioUserIdentity);
-      FilePath streamPath = session::local_streams::streamPath(userIdentity);
+      std::string stream = core::system::getenv(kRStudioSessionStream);
+      FilePath streamPath = session::local_streams::streamPath(stream);
       return http::sendRequest(streamPath, *pRequest, pResponse);
    }
 #endif

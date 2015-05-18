@@ -83,6 +83,7 @@ import org.rstudio.studio.client.rmarkdown.events.ConvertToShinyDocEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdOutputFormatChangedEvent;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownContext;
 import org.rstudio.studio.client.rmarkdown.model.RmdFrontMatter;
+import org.rstudio.studio.client.rmarkdown.model.RmdFrontMatterOutputOptions;
 import org.rstudio.studio.client.rmarkdown.model.RmdOutputFormat;
 import org.rstudio.studio.client.rmarkdown.model.RmdTemplateFormat;
 import org.rstudio.studio.client.rmarkdown.model.RmdYamlData;
@@ -2721,7 +2722,7 @@ public class TextEditingTarget implements
                {
                   // when the dialog is completed successfully, apply the new
                   // front matter
-                  applyRmdFrontMatter(in);
+                  applyRmdFormatOptions(in.format, in.outputOptions);
                }
             }, 
             new Operation()
@@ -2735,6 +2736,21 @@ public class TextEditingTarget implements
                }
             });
       dialog.showModal();
+   }
+   
+   private void applyRmdFormatOptions(String format, 
+         RmdFrontMatterOutputOptions options)
+   {
+      rmarkdownHelper_.replaceOutputFormatOptions(
+            getRmdFrontMatter(), format, options, 
+            new OperationWithInput<String>()
+            {
+               @Override
+               public void execute(String input)
+               {
+                  applyRmdFrontMatter(input);
+               }
+            });
    }
    
    private String getRmdFrontMatter()
@@ -2753,20 +2769,6 @@ public class TextEditingTarget implements
       }
    }
 
-   private void applyRmdFrontMatter(RmdTemplateOptionsDialog.Result result)
-   {
-      rmarkdownHelper_.frontMatterToYAML(result.frontMatter, 
-            result.format,
-            new CommandWithArg<String>()
-      {
-         @Override
-         public void execute(String yaml)
-         {
-            applyRmdFrontMatter(yaml);
-         }
-      });
-   }
-   
    private RmdSelectedTemplate getSelectedTemplate()
    {
       // try to extract the front matter and ascertain the template to which

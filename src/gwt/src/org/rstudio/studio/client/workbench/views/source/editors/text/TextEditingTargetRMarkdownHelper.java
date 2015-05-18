@@ -541,6 +541,125 @@ public class TextEditingTargetRMarkdownHelper
       return yamlTree.toString();
    }
    
+   public void replaceOutputFormatOptions(final String yaml, 
+         final String format, final RmdFrontMatterOutputOptions options, 
+         final OperationWithInput<String> onCompleted)
+   {
+      server_.convertToYAML(options, new ServerRequestCallback<RmdYamlResult>()
+      {
+         @Override
+         public void onResponseReceived(RmdYamlResult result)
+         {
+            boolean isDefault = options.getOptionList().length() == 0;
+            YamlTree yamlTree = new YamlTree(yaml);
+            YamlTree optionTree = new YamlTree(result.getYaml());
+            // add the output key if needed
+            if (!yamlTree.containsKey(RmdFrontMatter.OUTPUT_KEY))
+            {
+               yamlTree.addYamlValue(null, RmdFrontMatter.OUTPUT_KEY, 
+                     RmdOutputFormat.OUTPUT_HTML_DOCUMENT);
+            }
+            String treeFormat = yamlTree.getKeyValue(RmdFrontMatter.OUTPUT_KEY);
+
+            if (treeFormat.equals(format))
+            {
+               // case 1: the output format is a simple format and we're not
+               // changing to a different format
+
+               if (isDefault)
+               {
+                  // 1-a: if all options are still at their defaults, leave
+                  // untouched
+               }
+               else
+               {
+                  // 1-b: not all options are at defaults; replace the simple
+                  // format with an option list
+                  yamlTree.setKeyValue(RmdFrontMatter.OUTPUT_KEY, "");
+                  yamlTree.addYamlValue(RmdFrontMatter.OUTPUT_KEY, format, "");
+                  yamlTree.setKeyValue(format, optionTree);
+               }
+            }
+            else if (treeFormat.length() > 0)
+            {
+               // case 2: the output format is a simple format and we are 
+               // changing it
+               if (isDefault)
+               {
+                  // case 2-a: change one simple format to another 
+                  yamlTree.setKeyValue(RmdFrontMatter.OUTPUT_KEY, format);
+               }
+               
+               else
+               {
+                  // case 2-b: change a simple format to a complex one
+                  yamlTree.setKeyValue(RmdFrontMatter.OUTPUT_KEY, "");
+                  yamlTree.addYamlValue(RmdFrontMatter.OUTPUT_KEY, format, "");
+                  yamlTree.setKeyValue(format, optionTree);
+               }
+            }
+            else
+            {
+               // case 3: the output format is already not simple
+               treeFormat = yamlTree.getKeyValue(format);
+               
+               if (treeFormat.equals(RmdFrontMatter.DEFAULT_FORMAT))
+               {
+                  if (isDefault)
+                  {
+                     // case 3-a: still at default settings
+                  }
+                  else
+                  {
+                     // case 3-b: default to complex
+                     yamlTree.setKeyValue(format, optionTree);
+                  }
+               }
+               else
+               {
+                  if (isDefault)
+                  {
+                     // case 3-c: complex to default
+                     if (yamlTree.getChildKeys(
+                           RmdFrontMatter.OUTPUT_KEY).size() == 1)
+                     {
+                        // case 3-c-i: only one format, and has default settings
+                        yamlTree.clearChildren(RmdFrontMatter.OUTPUT_KEY);
+                        yamlTree.setKeyValue(RmdFrontMatter.OUTPUT_KEY, format);
+                     }
+                     else
+                     {
+                        // case 3-c-i: multiple formats, this one's becoming
+                        // the default
+                        yamlTree.clearChildren(format);
+                        yamlTree.setKeyValue(format, RmdFrontMatter.DEFAULT_FORMAT);
+                     }
+                  }
+                  else
+                  {
+                     // case 3-d: complex to complex
+                     if (!yamlTree.containsKey(format))
+                     {
+                        yamlTree.addYamlValue(RmdFrontMatter.OUTPUT_KEY, 
+                              format, "");
+                     }
+                     yamlTree.setKeyValue(format, optionTree);
+                  }
+               }
+            }
+
+            yamlTree.reorder(Arrays.asList(format));
+            onCompleted.execute(yamlTree.toString());
+         }
+         @Override
+         public void onError(ServerError error)
+         {
+            // if we fail, return the unmodified YAML
+            onCompleted.execute(yaml);
+         }
+      });
+   }
+   
    public void getTemplateContent(
          final RmdChosenTemplate template, 
          final OperationWithInput<String> onContentReceived)

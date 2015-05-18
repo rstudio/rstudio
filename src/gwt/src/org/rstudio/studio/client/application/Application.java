@@ -34,15 +34,11 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
 
-import org.rstudio.core.client.Barrier;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Debug;
-import org.rstudio.core.client.Barrier.Token;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.dom.DomUtils;
-import org.rstudio.core.client.events.BarrierReleasedEvent;
-import org.rstudio.core.client.events.BarrierReleasedHandler;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.application.events.*;
 import org.rstudio.studio.client.application.model.ProductInfo;
@@ -58,7 +54,6 @@ import org.rstudio.studio.client.server.*;
 import org.rstudio.studio.client.workbench.ClientStateUpdater;
 import org.rstudio.studio.client.workbench.Workbench;
 import org.rstudio.studio.client.workbench.commands.Commands;
-import org.rstudio.studio.client.workbench.events.LastChanceSaveEvent;
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.model.Agreement;
 import org.rstudio.studio.client.workbench.model.Session;
@@ -153,17 +148,8 @@ public class Application implements ApplicationEventHandlers
 
                   session_.setSessionInfo(sessionInfo);
                   
-                  // hide the workbench if we have a project parameter 
-                  // (since we are going to redirect anyway)
-                  if (haveProjectParameter()) 
-                     hideWorkbench(rootPanel);
-                  
                   // initialize workbench
                   initializeWorkbench();
-                  
-                  // reload application if we have a project parameter
-                  if (haveProjectParameter())
-                     reloadApplication(sessionInfo.getSwitchToProject());
                }
             }); 
          }
@@ -179,33 +165,6 @@ public class Application implements ApplicationEventHandlers
       }) ;
    }  
    
-   private void reloadApplication(final String switchToProject)
-   {
-      // use a last chance save barrier since we typically call this very
-      // early in the lifetime of the application before client/server
-      // sync has occurred
-      Barrier barrier = new Barrier();
-      barrier.addBarrierReleasedHandler(new BarrierReleasedHandler() {
-         @Override
-         public void onBarrierReleased(BarrierReleasedEvent event)
-         { 
-            if (switchToProject.length() > 0)
-               pApplicationQuit_.get().forceSwitchProject(switchToProject);
-            else
-               reloadWindowWithDelay(true);
-         }
-      });
-      
-      Token token = barrier.acquire();
-      try
-      {
-         events_.fireEvent(new LastChanceSaveEvent(barrier));
-      }
-      finally
-      {
-         token.release();
-      }
-   }
    
    @Handler
    public void onShowToolbar()
@@ -697,10 +656,6 @@ public class Application implements ApplicationEventHandlers
       navigateWindowTo("auth-sign-in");
    }
    
-   private boolean haveProjectParameter()
-   {
-      return Window.Location.getParameter("project") != null; 
-   }
    
    private final ApplicationView view_ ;
    private final GlobalDisplay globalDisplay_ ;

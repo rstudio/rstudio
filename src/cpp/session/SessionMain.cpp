@@ -64,6 +64,8 @@
 #include <core/system/ParentProcessMonitor.hpp>
 #include <core/system/FileMonitor.hpp>
 #include <core/text/TemplateFilter.hpp>
+#include <core/r_util/RSessionContext.hpp>
+#include <core/r_util/REnvironment.hpp>
 
 #include <r/RJsonRpc.hpp>
 #include <r/RExec.hpp>
@@ -367,51 +369,6 @@ FilePath getInitialWorkingDirectory()
    }
 }
 
-std::string switchToProject(const http::Request& request)
-{
-   std::string referrer = request.headerValue("referer");
-   std::string baseURL, queryString;
-   http::URL(referrer).split(&baseURL, &queryString);
-   http::Fields fields;
-   http::util::parseQueryString(queryString, &fields);
-   std::string project = http::util::fieldValue(fields, "project");
-
-   if (!project.empty())
-   {
-      // resolve project
-      FilePath projectPath = module_context::resolveAliasedPath(project);
-      if ((projectPath.extensionLowerCase() != ".rproj") &&
-          projectPath.isDirectory())
-      {
-         FilePath discoveredPath = r_util::projectFromDirectory(projectPath);
-         if (!discoveredPath.empty())
-            projectPath = discoveredPath;
-      }
-      project = module_context::createAliasedPath(projectPath);
-
-      // check if we're already in this project
-      if (projects::projectContext().hasProject())
-      {
-         std::string currentProject = module_context::createAliasedPath(
-                                          projects::projectContext().file());
-         if (project != currentProject)
-            return project;
-         else
-            return std::string();
-      }
-      // no project active so need to switch
-      else
-      {
-         return project;
-      }
-   }
-   // no project in the query string
-   else
-   {
-      return std::string();
-   }
-}
-
 
 void handleClientInit(const boost::function<void()>& initFunction,
                       boost::shared_ptr<HttpConnection> ptrConnection)
@@ -641,9 +598,6 @@ void handleClientInit(const boost::function<void()>& initFunction,
       options.allowExternalPublish() &&
       core::system::getenv("RSTUDIO_DISABLE_EXTERNAL_PUBLISH").empty() &&
       allowPublish;
-
-   // check whether a switch project is required
-   sessionInfo["switch_to_project"] = switchToProject(ptrConnection->request());
 
    sessionInfo["environment_state"] = modules::environment::environmentStateAsJson();
    sessionInfo["error_state"] = modules::errors::errorStateAsJson();
@@ -928,7 +882,7 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
             // note switch to project
             if (!switchToProject.empty())
             {
-               rsession::projects::projectContext().setNextSessionProject(
+               rsession::projects::projectContext().setSwitchToProjectPath(
                                                                   switchToProject);
             }
 
@@ -2231,7 +2185,7 @@ void rQuit()
 
    // enque a quit event
    bool switchProjects =
-         !rsession::projects::projectContext().nextSessionProject().empty();
+         !rsession::projects::projectContext().switchToProjectPath().empty();
    ClientEvent quitEvent(kQuit, switchProjects);
    rsession::clientEventQueue().add(quitEvent);
 }
@@ -2784,45 +2738,6 @@ int sessionExitFailure(const core::Error& error,
    return EXIT_FAILURE;
 }
 
-/*
-We've observed that Ubuntu 14.10 no longer passes the LANG environment
-variable to daemon processes so we lose the automatic inheritence of
-LANG from the system default. For this case we'll do automatic detection
-and setting of LANG.
-*/
-void ensureLang()
-{
-#if !defined(_WIN32) && !defined(__APPLE__)
-   // if no LANG environment variable is already defined
-   if (core::system::getenv("LANG").empty())
-   {
-      // try to read the LANG from the various places it might be defined
-      std::vector<std::pair<std::string,std::string> > langDefs;
-      langDefs.push_back(std::make_pair("LANG", "/etc/default/locale"));
-      langDefs.push_back(std::make_pair("LANG", "/etc/sysconfig/i18n"));
-      langDefs.push_back(std::make_pair("LANG", "/etc/locale.conf"));
-      langDefs.push_back(std::make_pair("RC_LANG", "/etc/sysconfig/language"));
-      for (size_t i = 0; i<langDefs.size(); i++)
-      {
-         std::string var = langDefs[i].first;
-         std::string file = langDefs[i].second;
-         std::map<std::string,std::string> vars;
-         Error error = config_utils::extractVariables(FilePath(file), &vars);
-         if (error)
-         {
-            LOG_ERROR(error);
-            continue;
-         }
-         std::string value = vars[var];
-         if (!value.empty())
-         {
-            core::system::setenv("LANG", value);
-            break;
-         }
-      }
-   }
-#endif
-}
 
 std::string ctypeEnvName()
 {
@@ -2923,7 +2838,7 @@ int main (int argc, char * const argv[])
       s_mainThreadId = boost::this_thread::get_id();
 
       // ensure LANG and UTF-8 character set
-      ensureLang();
+      r_util::ensureLang();
       s_printCharsetWarning = !ensureUtf8Charset();
       
       // read program options
@@ -2987,6 +2902,14 @@ int main (int argc, char * const argv[])
       {
          // do the same for port number, for rpostback in rdesktop configs
          core::system::setenv(kRSessionPortNumber, options.wwwPort());
+      }
+
+      // provide session stream for postback in server mode
+      if (serverMode)
+      {
+         r_util::SessionContext context = options.sessionContext();
+         std::string stream = r_util::sessionContextToStreamFile(context);
+         core::system::setenv(kRStudioSessionStream, stream);
       }
 
       // set the standalone port if we are running in standalone mode

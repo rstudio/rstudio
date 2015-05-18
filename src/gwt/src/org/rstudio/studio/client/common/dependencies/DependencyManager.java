@@ -88,7 +88,7 @@ public class DependencyManager implements InstallShinyEvent.Handler
          "Packrat",
          userAction,
          new Dependency[] {
-            Dependency.cranPackage("packrat", "0.4.3")
+            Dependency.cranPackage("packrat", "0.4.3", true)
          },
          false,
          command);
@@ -128,7 +128,7 @@ public class DependencyManager implements InstallShinyEvent.Handler
           Dependency.cranPackage("htmltools", "0.2.4"),
           Dependency.cranPackage("caTools", "1.14"),
           Dependency.cranPackage("bitops", "1.0-6"),
-          Dependency.embeddedPackage("rmarkdown")
+          Dependency.cranPackage("rmarkdown", "0.6.1", true)
         }, 
         false,
         command
@@ -171,7 +171,7 @@ public class DependencyManager implements InstallShinyEvent.Handler
             Dependency.cranPackage("xtable", "1.7"),
             Dependency.cranPackage("digest", "0.6"),
             Dependency.cranPackage("htmltools", "0.2.4"),
-            Dependency.cranPackage("shiny", "0.10.0")
+            Dependency.cranPackage("shiny", "0.10.0", true)
           }, 
           true,
           command

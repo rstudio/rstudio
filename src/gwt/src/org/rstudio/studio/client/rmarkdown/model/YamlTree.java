@@ -58,6 +58,29 @@ public class YamlTree
          return false;
       }
       
+      public void adopt(YamlTree tree)
+      {
+         children.clear();
+         adoptNode(tree.root_, true);
+      }
+      
+      public void adoptNode(YamlTreeNode node, boolean isRoot)
+      {
+         for (YamlTreeNode child: node.children)
+         {
+            // increase the indentation level of the children to match our own
+            child.indentLevel += indentLevel + 2;
+            child.yamlLine = getIndent() + "  " + child.yamlLine;
+            
+            // if this is the root node, adopt is children as our own
+            if (isRoot)
+            {
+               children.add(child);
+            }
+            adoptNode(child, false);
+         }
+      }
+      
       public String getIndent()
       {
          // consider the list element indicator (-) to be part of the node's
@@ -191,13 +214,40 @@ public class YamlTree
          return keyMap_.get(key).getValue();
       return "";
    }
+   
+   public boolean containsKey(String key)
+   {
+      return keyMap_.containsKey(key);
+   }
 
    public void setKeyValue(String key, String value)
    {
       if (keyMap_.containsKey(key))
          keyMap_.get(key).setValue(value);
    }
-
+   
+   public void setKeyValue(String key, YamlTree subtree)
+   {
+      if (keyMap_.containsKey(key))
+      {
+         YamlTreeNode node = keyMap_.get(key);
+         node.adopt(subtree);
+         node.setValue("");
+         keyMap_.clear();
+         createKeyMap(root_, keyMap_);
+      }
+   }
+   
+   public void clearChildren(String key)
+   {
+      if (keyMap_.containsKey(key))
+      {
+         keyMap_.get(key).children.clear();
+         keyMap_.clear();
+         createKeyMap(root_, keyMap_);
+      }
+   }
+   
    private YamlTreeNode createYamlTree(String yaml)
    {
       String[] lines = yaml.split("\n");

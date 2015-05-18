@@ -105,6 +105,7 @@
                                          reStart,
                                          reEnd)
 {
+   Encoding(content) <- "UTF-8"
    splat <- strsplit(content, "\n", fixed = TRUE)[[1]]
    starts <- grep(reStart, splat, perl = TRUE)
    ends <- grep(reEnd, splat, perl = TRUE)

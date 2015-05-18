@@ -59,6 +59,9 @@ public:
                            boost::posix_time::time_duration interval) = 0;
    virtual void addScheduledCommand(boost::shared_ptr<ScheduledCommand> pCmd) = 0;
 
+   virtual void setRequestFilter(RequestFilter requestFilter) = 0;
+   virtual void setResponseFilter(ResponseFilter responseFilter) = 0;
+
    virtual Error runSingleThreaded() = 0;
 
    virtual Error run(std::size_t threadPoolSize = 1) = 0;

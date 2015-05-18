@@ -22,7 +22,8 @@
 #include <core/Log.hpp>
 #include <core/system/System.hpp>
 
-#include <core/libclang/LibClang.hpp>
+
+#include <core/r_util/RSessionContext.hpp>
 
 using namespace rstudio;
 using namespace rstudio::core;
@@ -39,46 +40,16 @@ int test_main(int argc, char * argv[])
       if (error)
          LOG_ERROR(error);
 
-      // write a C++ file
-      std::string cpp =
-        "#include <string>\n"
-        "class X { public:\n"
-        "   void test(int y, int x = 10);\n"
-        "}\n"
-        "void X::test(int y, int x) {}\n"
-        "void foobar() {\n"
-        "   X x;\n"
-        "   x."
-        "}";
-      std::ofstream ostr("foo.cpp");
-      ostr << cpp;
-      ostr.close();
 
-      // load libclang
-      using namespace libclang;
-      std::string diagnostics;
-      clang().load(EmbeddedLibrary(), LibraryVersion(3,4,0), &diagnostics);
-      if (!clang().isLoaded())
-      {
-         std::cerr << "Failed to load libclang: " << diagnostics << std::endl;
-         return EXIT_FAILURE;
-      }
+      r_util::SessionContext context(
+          "jsmith", r_util::SessionScope("~/finance/reports/q1-final", "45"));
 
-      // create a source index and get a translation unit for it
-      SourceIndex sourceIndex;
-      TranslationUnit tu = sourceIndex.getTranslationUnit("foo.cpp");
-      if (tu.empty())
-      {
-         std::cerr << "No translation unit foo.cpp" << std::endl;
-         return EXIT_FAILURE;
-      }
+      std::string file = r_util::sessionContextToStreamFile(context);
+      std::cerr << file << std::endl;
 
-      // code complete
-      CodeCompleteResults results = tu.codeCompleteAt("foo.cpp", 8, 6);
-      for (unsigned i = 0; i<results.getNumResults(); i++) {
-        std::cout << results.getResult(i).getTypedText() << std::endl;
-        std::cout << "   " << results.getResult(i).getText() << std::endl;
-      }
+      r_util::SessionContext context2 = r_util::streamFileToSessionContext(file);
+
+      BOOST_CHECK(context == context2);
 
       return EXIT_SUCCESS;
    }

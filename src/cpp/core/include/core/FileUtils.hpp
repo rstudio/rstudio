@@ -23,6 +23,7 @@
 namespace rstudio {
 namespace core {
 
+class Error;
 class FilePath;
 
 namespace file_utils {
@@ -35,6 +36,9 @@ std::string readFile(const core::FilePath& filePath);
 #ifdef WIN32
 bool isWindowsReservedName(const std::string& name);
 #endif
+
+Error copyDirectory(const FilePath& sourceDirectory,
+                    const FilePath& targetDirectory);
 
 } // namespace file_utils
 } // namespace core

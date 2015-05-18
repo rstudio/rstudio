@@ -19,6 +19,7 @@ import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.rmarkdown.model.RmdFrontMatter;
+import org.rstudio.studio.client.rmarkdown.model.RmdFrontMatterOutputOptions;
 import org.rstudio.studio.client.rmarkdown.model.RmdTemplate;
 
 import com.google.gwt.user.client.ui.Widget;
@@ -28,14 +29,14 @@ public class RmdTemplateOptionsDialog
 {
    public class Result
    {
-      public Result(RmdFrontMatter frontMatter, String format)
+      public Result(String format, RmdFrontMatterOutputOptions options)
       {
-         this.frontMatter = frontMatter;
+         this.outputOptions = options;
          this.format = format;
       }
 
-      public RmdFrontMatter frontMatter;
       public String format;
+      public RmdFrontMatterOutputOptions outputOptions;
    }
 
    public RmdTemplateOptionsDialog(RmdTemplate template,
@@ -67,8 +68,8 @@ public class RmdTemplateOptionsDialog
    @Override
    protected RmdTemplateOptionsDialog.Result collectInput()
    {
-      return new Result(templateOptions_.getFrontMatter(), 
-                        templateOptions_.getSelectedFormat());
+      return new Result(templateOptions_.getSelectedFormat(),
+                        templateOptions_.getOutputOptions());
    }
 
    @Override

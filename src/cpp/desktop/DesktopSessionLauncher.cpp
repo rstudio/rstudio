@@ -23,6 +23,7 @@
 #include <core/FileSerializer.hpp>
 #include <core/system/Environment.hpp>
 #include <core/system/ParentProcessMonitor.hpp>
+#include <core/r_util/RSessionContext.hpp>
 
 #include <QProcess>
 #include <QtNetwork/QTcpSocket>
@@ -234,6 +235,10 @@ void SessionLauncher::onRSessionExited(int, QProcess::ExitStatus)
 
 Error SessionLauncher::launchNextSession(bool reload)
 {
+   // unset the initial project environment variable it this doesn't
+   // polute future sessions
+   core::system::unsetenv(kRStudioInitialProject);
+
    // disconnect the firstWorkbenchInitialized event so it doesn't occur
    // again when we launch the next session
    pMainWindow_->disconnect(SIGNAL(firstWorkbenchInitialized()));

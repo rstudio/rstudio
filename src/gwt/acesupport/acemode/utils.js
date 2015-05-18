@@ -19,6 +19,18 @@ define("mode/utils", function(require, exports, module) {
 
    var that = this;
 
+   // Simulate 'new Foo([args])'; ie, construction of an
+   // object from an array of arguments
+   this.construct = function(constructor, args)
+   {
+      function F() {
+         return constructor.apply(this, args);
+      }
+
+      F.prototype = constructor.prototype;
+      return new F();
+   };
+
    this.contains = function(array, object)
    {
       for (var i = 0; i < array.length; i++)

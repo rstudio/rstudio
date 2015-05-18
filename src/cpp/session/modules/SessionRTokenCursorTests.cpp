@@ -100,6 +100,21 @@ context("RTokenCursor")
       cursor.moveToEndOfTokenStream();
       expect_true(cursor.getHeadOfPipeChain().empty());
    }
+   
+   test_that("evaluation lookarounds work")
+   {
+      RTokens rTokens(L"foo$bar$baz[[1]]$bam");
+      RTokenCursor cursor(rTokens);
+      
+      expect_true(cursor.contentEquals(L"foo"));
+      expect_true(cursor.moveToEndOfEvaluation());
+      expect_true(cursor.contentEquals(L"baz"));
+      expect_true(cursor.moveToStartOfEvaluation());
+      expect_true(cursor.contentEquals(L"foo"));
+      
+      expect_true(cursor.moveToEndOfStatement(false));
+      expect_true(cursor.contentEquals(L"bam"));
+   }
 }
 
 } // namespace unit_tests

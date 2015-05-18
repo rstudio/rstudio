@@ -17,17 +17,20 @@
 #define CORE_R_UTIL_R_SESSION_CONTEXT_HPP
 
 #include <string>
+#include <iosfwd>
 
 #include <core/FilePath.hpp>
 
 #include <core/r_util/RVersionInfo.hpp>
+#include <core/r_util/RSessionScope.hpp>
 
 #define kUserSettings                  "monitored/user-settings/user-settings"
 #define kAlwaysRestoreLastProject      "restoreLastProject"
 
 #define kProjectsSettings              "projects_settings"
 #define kNextSessionProject            "next-session-project"
-#define kNextSessionProjectNone        "none"
+#define kSwitchToProject               "switch-to-project"
+#define kProjectNone                   "none"
 #define kLastProjectPath               "last-project-path"
 
 #define kRStudioInitialWorkingDir      "RS_INITIAL_WD"
@@ -63,11 +66,41 @@ void writeProjectsSetting(const FilePath& settingsPath,
                           const char * const settingName,
                           const std::string& value);
 
-FilePath nextSessionProject(SessionType sessionType,
-                            const std::string& homePath = std::string());
+struct SessionContext
+{
+   SessionContext()
+   {
+   }
 
-RVersionInfo nextSessionRVersion(SessionType sessionType,
-                                 const std::string& homePath = std::string());
+   explicit SessionContext(const std::string& username,
+                           const core::r_util::SessionScope& scope =
+                                             core::r_util::SessionScope())
+      : username(username), scope(scope)
+   {
+   }
+   std::string username;
+   core::r_util::SessionScope scope;
+
+   bool empty() const { return username.empty(); }
+
+   bool operator==(const SessionContext &other) const {
+      return username == other.username && scope == other.scope;
+   }
+
+   bool operator<(const SessionContext &other) const {
+       return username < other.username ||
+              (username == other.username && scope < other.scope);
+   }
+};
+
+
+std::ostream& operator<< (std::ostream& os, const SessionContext& context);
+
+std::string sessionContextToStreamFile(const SessionContext& context);
+
+SessionContext streamFileToSessionContext(const std::string& file);
+
+
 
 } // namespace r_util
 } // namespace core 

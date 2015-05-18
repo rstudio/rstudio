@@ -333,6 +333,17 @@ void setBlockingDefault(const http::UriHandlerFunction& handler)
   s_pHttpServer->setBlockingDefaultHandler(handler);
 }
 
+void setRequestFilter(const core::http::RequestFilter& filter)
+{
+   s_pHttpServer->setRequestFilter(filter);
+}
+
+void setResponseFilter(const core::http::ResponseFilter& filter)
+{
+   s_pHttpServer->setResponseFilter(filter);
+}
+
+
 } // namespace uri_handlers
 
 namespace scheduler {
