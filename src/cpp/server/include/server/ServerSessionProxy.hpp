@@ -20,6 +20,8 @@
 
 #include <core/http/AsyncConnection.hpp>
 
+#include <core/r_util/RSessionContext.hpp>
+
 #include "ServerSessionManager.hpp"
 
 namespace rstudio {
@@ -58,6 +60,12 @@ typedef boost::function<bool(
     const core::r_util::SessionContext&,
     boost::shared_ptr<core::http::AsyncConnection>)> ProxyFilter;
 void setProxyFilter(ProxyFilter filter);
+
+typedef boost::function<bool(
+    boost::shared_ptr<core::http::AsyncConnection>,
+    const std::string&,
+    core::r_util::SessionContext*)> SessionContextSource;
+void setSessionContextSource(SessionContextSource source);
 
 } // namespace session_proxy
 } // namespace server

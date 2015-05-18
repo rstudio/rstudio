@@ -27,9 +27,8 @@
 #include <core/system/PosixSystem.hpp>
 #include <core/system/PosixChildProcessTracker.hpp>
 
+#include <core/r_util/RSessionContext.hpp>
 #include <core/r_util/RSessionLaunchProfile.hpp>
-
-#include <server/ServerSessionContext.hpp>
 
 namespace rstudio {
 namespace core {

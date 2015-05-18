@@ -105,6 +105,24 @@ bool applyProxyFilter(
       return false;
 }
 
+SessionContextSource s_sessionContextSource;
+
+bool sessionContextForRequest(
+      boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
+      const std::string& username,
+      r_util::SessionContext* pSessionContext)
+{
+   if (s_sessionContextSource)
+   {
+      return s_sessionContextSource(ptrConnection, username, pSessionContext);
+   }
+   else
+   {
+      *pSessionContext = r_util::SessionContext(username);
+      return true;
+   }
+}
+
 void handleProxyResponse(
       boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
       const r_util::SessionContext& context,
@@ -609,6 +627,11 @@ bool requiresSession(const http::Request& request)
 void setProxyFilter(ProxyFilter filter)
 {
    s_proxyFilter = filter;
+}
+
+void setSessionContextSource(SessionContextSource source)
+{
+   s_sessionContextSource = source;
 }
 
 } // namespace session_proxy
