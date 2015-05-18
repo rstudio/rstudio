@@ -209,16 +209,19 @@ SEXP resolveObjectAssociatedWithCall(RTokenCursor cursor,
    else if (cursor.isSimpleNamespaceCall())
    {
       DEBUG("Resolving as 'namespaced' call");
+      
       std::string symbol = string_utils::strippedOfQuotes(
                cursor.contentAsUtf8());
       
       std::string ns = string_utils::strippedOfQuotes(
                cursor.previousSignificantToken(2).contentAsUtf8());
       
+      DEBUG("Resolving: '" << ns << ":::" << symbol << "'");
+      
       if (functionsOnly)
-         symbolSEXP = r::sexp::findFunction(symbol);
+         symbolSEXP = r::sexp::findFunction(symbol, ns);
       else
-         symbolSEXP = r::sexp::findVar(symbol);
+         symbolSEXP = r::sexp::findVar(symbol, ns);
    }
    else
    {
