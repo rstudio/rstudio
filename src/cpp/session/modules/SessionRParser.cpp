@@ -1650,13 +1650,13 @@ void validateFunctionCall(RTokenCursor cursor,
 //
 //    foo$bar$log(1 + y) + log(2 + y) ~ ({1 ~ 2}) ^ 5
 //
-bool skipFormulas(RTokenCursor& origin,
-                  ParseStatus& status)
+bool skipFormulas(RTokenCursor& origin, ParseStatus& status)
 {
    RTokenCursor cursor = origin.clone();
+
    bool foundTilde = false;
    
-   while (cursor.moveToEndOfStatement(false))
+   while (cursor.moveToEndOfEvaluation())
    {
       if (!cursor.moveToNextSignificantToken())
          break;
@@ -1881,11 +1881,7 @@ START:
       checkIncorrectComparison(cursor, status);
       
       // We want to skip over formulas if necessary.
-      if (skipFormulas(cursor, status))
-      {
-         if (cursor.isAtEndOfDocument())
-            return;
-      }
+      skipFormulas(cursor, status);
       
       DEBUG("Start: " << cursor);
       // Move over unary operators -- any sequence is valid,
@@ -2206,6 +2202,10 @@ START:
          goto START;
          
       }
+
+      // End of document. Let's go home.
+      if (cursor.isAtEndOfDocument())
+         return;
       
       GOTO_INVALID_TOKEN(cursor);
       

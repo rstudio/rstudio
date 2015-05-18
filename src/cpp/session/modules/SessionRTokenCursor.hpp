@@ -574,7 +574,51 @@ public:
             isValidAsIdentifier(previousSignificantToken()) &&
             isValidAsIdentifier(nextSignificantToken());
   }
-  
+
+  // Move to the end of an 'evaluation', e.g.
+  //
+  //    x$foo[[1]]$bar(1, 2, 3)$baz
+  //
+  // Note that we don't move to the start of a _statement_; e.g., we don't
+  // walk over all binary operators. For example:
+  //
+  //    foo + x$foo$bar(1)[1]
+  //          ^   <--       ^
+  //
+  // We only move over extraction operators.
+  bool moveToEndOfEvaluation()
+  {
+     RTokenCursor cursor = clone();
+     while (true)
+     {
+        while (isRightBracket(cursor))
+        {
+           if (!cursor.fwdToMatchingToken())
+              return false;
+
+           if (!cursor.moveToNextSignificantToken())
+              return false;
+        }
+
+        if (isExtractionOperator(cursor.nextSignificantToken()))
+        {
+           if (!cursor.moveToNextSignificantToken())
+              return false;
+
+           if (!cursor.moveToNextSignificantToken())
+              return false;
+
+           continue;
+        }
+
+        break;
+
+     }
+
+     setOffset(cursor.offset());
+     return true;
+  }
+
   // Move to the start of an 'evaluation' (from the end of a statement), e.g.
   //
   //    x$foo[[1]]$bar(1, 2, 3)$baz
