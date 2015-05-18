@@ -881,7 +881,7 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
             // note switch to project
             if (!switchToProject.empty())
             {
-               rsession::projects::projectContext().setNextSessionProject(
+               rsession::projects::projectContext().setSwitchToProjectPath(
                                                                   switchToProject);
             }
 
@@ -2184,7 +2184,7 @@ void rQuit()
 
    // enque a quit event
    bool switchProjects =
-         !rsession::projects::projectContext().nextSessionProject().empty();
+         !rsession::projects::projectContext().switchToProjectPath().empty();
    ClientEvent quitEvent(kQuit, switchProjects);
    rsession::clientEventQueue().add(quitEvent);
 }

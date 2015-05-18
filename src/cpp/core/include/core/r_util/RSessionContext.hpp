@@ -29,7 +29,8 @@
 
 #define kProjectsSettings              "projects_settings"
 #define kNextSessionProject            "next-session-project"
-#define kNextSessionProjectNone        "none"
+#define kSwitchToProject               "switch-to-project"
+#define kProjectNone                   "none"
 #define kLastProjectPath               "last-project-path"
 
 #define kRStudioInitialWorkingDir      "RS_INITIAL_WD"
