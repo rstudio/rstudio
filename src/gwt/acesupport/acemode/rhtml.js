@@ -26,6 +26,8 @@ var Tokenizer = require("ace/tokenizer").Tokenizer;
 var RHtmlHighlightRules = require("mode/rhtml_highlight_rules").RHtmlHighlightRules;
 var SweaveBackgroundHighlighter = require("mode/sweave_background_highlighter").SweaveBackgroundHighlighter;
 var RCodeModel = require("mode/r_code_model").RCodeModel;
+var MatchingBraceOutdent = require("ace/mode/matching_brace_outdent").MatchingBraceOutdent;
+var RMatchingBraceOutdent = require("mode/r_matching_brace_outdent").RMatchingBraceOutdent;
 var Utils = require("mode/utils");
 
 var Mode = function(suppressHighlighting, session) {
@@ -39,6 +41,9 @@ var Mode = function(suppressHighlighting, session) {
       /^<!--\s*begin.rcode\s*(.*)/,
       /^\s*end.rcode\s*-->/
    );
+
+   this.$outdent = new MatchingBraceOutdent();
+   this.$r_outdent = new RMatchingBraceOutdent(this.codeModel);
    
    this.foldingRules = this.codeModel;
    this.$sweaveBackgroundHighlighter = new SweaveBackgroundHighlighter(
@@ -51,9 +56,32 @@ oop.inherits(Mode, HtmlMode);
 
 (function() {
 
+   function activeMode(state)
+   {
+      return Utils.activeMode(state, "html");
+   }
+
    this.insertChunkInfo = {
       value: "<!--begin.rcode\n\nend.rcode-->\n",
       position: {row: 0, column: 15}
+   };
+
+   this.checkOutdent = function(state, line, input)
+   {
+      var mode = activeMode(state);
+      if (mode === "r")
+         return this.$r_outdent.checkOutdent(state, line, input);
+      else
+         return this.$outdent.checkOutdent(line, input);
+   };
+
+   this.autoOutdent = function(state, session, row)
+   {
+      var mode = activeMode(state);
+      if (mode === "r")
+         return this.$r_outdent.autoOutdent(state, session, row);
+      else
+         return this.$outdent.autoOutdent(session, row);
    };
     
    this.getLanguageMode = function(position)
