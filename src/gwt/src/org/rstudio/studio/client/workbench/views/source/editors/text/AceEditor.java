@@ -1895,6 +1895,11 @@ public class AceEditor implements DocDisplay,
       return handlers_.addHandler(FoldChangeEvent.TYPE, handler);
    }
    
+   public HandlerRegistration addAceRenderFinishedHandler(AceRenderFinishedEvent.Handler handler)
+   {
+      return handlers_.addHandler(AceRenderFinishedEvent.TYPE, handler);
+   }
+   
    public HandlerRegistration addCapturingKeyDownHandler(KeyDownHandler handler)
    {
       return widget_.addCapturingKeyDownHandler(handler);
@@ -2256,6 +2261,11 @@ public class AceEditor implements DocDisplay,
    public void blockOutdent()
    {
       widget_.getEditor().blockOutdent();
+   }
+   
+   public Position screenCoordinatesToDocumentPosition(int pageX, int pageY)
+   {
+      return widget_.getEditor().getRenderer().screenToTextCoordinates(pageX, pageY);
    }
    
    private static final int DEBUG_CONTEXT_LINES = 2;

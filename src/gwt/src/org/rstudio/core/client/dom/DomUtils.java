@@ -755,4 +755,24 @@ public class DomUtils
                                             String value) /*-{
       element.style[name] = value;
    }-*/;
+   
+   public static final native Element[] getElementsByClassName(String classes) /*-{
+      var result = [];
+      var elements = $wnd.document.getElementsByClassName(classes);
+      for (var i = 0; i < elements.length; i++) {
+         result.push(elements[i]);
+      }
+      return result;
+   }-*/;
+   
+   public static final Element getParent(Element element, int times)
+   {
+      Element parent = element;
+      for (int i = 0; i < times; i++)
+      {
+         if (parent == null) return null;
+         parent = parent.getParentElement();
+      }
+      return parent;
+   }
 }

@@ -164,4 +164,6 @@ public interface ThemeStyles extends CssResource
    String dialogTabPanel();
    
    String handCursor();
+   
+   String inlineChunkIcon();
 }
