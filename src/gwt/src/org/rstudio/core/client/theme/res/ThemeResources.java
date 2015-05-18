@@ -211,6 +211,7 @@ public interface ThemeResources extends ClientBundle
    DataResource handCursor();
    
    ImageResource executeChunk();
+   ImageResource runChunk();
    
    ImageResource menuCheck();
 }

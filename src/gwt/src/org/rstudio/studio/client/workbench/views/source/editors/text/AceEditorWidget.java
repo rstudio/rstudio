@@ -295,6 +295,13 @@ public class AceEditorWidget extends Composite
             underlyingMarker.getAbsoluteTop() -
             virtualParent.getAbsoluteTop();
       
+      // Manually align the icon so it lies in the 'middle' of the marker.
+      int iconHeight = icon.getHeight();
+      int markerHeight = underlyingMarker.getOffsetHeight();
+      
+      if (markerHeight > iconHeight)
+         top += (markerHeight - iconHeight) / 2;
+      
       icon.addStyleName(ThemeStyles.INSTANCE.inlineChunkIcon());
       
       StyleBuilder builder = new StyleBuilder();
@@ -326,7 +333,7 @@ public class AceEditorWidget extends Composite
    
    private Image createRunIcon()
    {
-      Image icon = new Image(ThemeResources.INSTANCE.executeChunk());
+      Image icon = new Image(ThemeResources.INSTANCE.runChunk());
       return icon;
    }
 
