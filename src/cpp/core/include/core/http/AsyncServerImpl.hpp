@@ -123,16 +123,16 @@ public:
       scheduledCommands_.push_back(pCmd);
    }
 
-   virtual void addRequestFilter(RequestFilter requestFilter)
+   virtual void setRequestFilter(RequestFilter requestFilter)
    {
       BOOST_ASSERT(!running_);
-      requestFilters_.push_back(requestFilter);
+      requestFilter_ = requestFilter;
    }
 
-   virtual void addResponseFilter(ResponseFilter responseFilter)
+   virtual void setResponseFilter(ResponseFilter responseFilter)
    {
       BOOST_ASSERT(!running_);
-      responseFilters_.push_back(responseFilter);
+      responseFilter_ = responseFilter;
    }
 
    virtual Error runSingleThreaded()
@@ -247,7 +247,7 @@ private:
 
          // request filter
          boost::bind(&AsyncServerImpl<ProtocolType>::connectionRequestFilter,
-                     this, _1),
+                     this, _1, _2),
 
          // response filter
          boost::bind(&AsyncServerImpl<ProtocolType>::connectionResponseFilter,
@@ -352,12 +352,13 @@ private:
       CATCH_UNEXPECTED_EXCEPTION
    }
 
-   void connectionRequestFilter(http::Request* pRequest)
+   void connectionRequestFilter(http::Request* pRequest,
+                                boost::function<void()> continuation)
    {
-      BOOST_FOREACH(const RequestFilter& filter, requestFilters_)
-      {
-         filter(pRequest);
-      }
+      if (requestFilter_)
+         requestFilter_(pRequest, continuation);
+      else
+         continuation();
    }
 
    void connectionResponseFilter(const std::string& originalUri,
@@ -367,10 +368,8 @@ private:
       // non-threadsafe std::string implementations)
       pResponse->setHeader("Server", std::string(serverName_.c_str()));
 
-      BOOST_FOREACH(const ResponseFilter& filter, responseFilters_)
-      {
-         filter(originalUri, pResponse);
-      }
+      if (responseFilter_)
+         responseFilter_(originalUri, pResponse);
    }
 
    void waitForScheduledCommandTimer()
@@ -491,8 +490,8 @@ private:
    boost::posix_time::time_duration scheduledCommandInterval_;
    boost::asio::deadline_timer scheduledCommandTimer_;
    std::vector<boost::shared_ptr<ScheduledCommand> > scheduledCommands_;
-   std::vector<RequestFilter> requestFilters_;
-   std::vector<ResponseFilter> responseFilters_;
+   RequestFilter requestFilter_;
+   ResponseFilter responseFilter_;
    bool running_;
 };
 

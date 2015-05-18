@@ -184,11 +184,21 @@ private:
 
                // call the request filter if we have one
                if (requestFilter_)
-                  requestFilter_(&request_);
-
-               // call the handler
-               handler_(AsyncConnectionImpl<ProtocolType>::shared_from_this(),
-                        &request_);
+               {
+                  // call the filter (passing a continuation to be invoked
+                  // once the filter is completed)
+                  requestFilter_(
+                     &request_,
+                     boost::bind(
+                        &AsyncConnectionImpl<ProtocolType>::callHandler,
+                        AsyncConnectionImpl<ProtocolType>::shared_from_this()
+                     ));
+               }
+               else
+               {
+                  // call the handler directly
+                  callHandler();
+               }
             }
          }
          else // error reading
@@ -212,6 +222,11 @@ private:
       CATCH_UNEXPECTED_EXCEPTION
    }
    
+   void callHandler()
+   {
+      handler_(AsyncConnectionImpl<ProtocolType>::shared_from_this(),
+               &request_);
+   }
 
    void handleWrite(const boost::system::error_code& e, bool close)
    {

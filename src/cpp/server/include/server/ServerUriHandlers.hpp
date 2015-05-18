@@ -39,8 +39,8 @@ void setDefault(const core::http::AsyncUriHandlerFunction& handler);
 // set blocking default handler
 void setBlockingDefault(const core::http::UriHandlerFunction& handler);
 
-void addRequestFilter(const core::http::RequestFilter& filter);
-void addResponseFilter(const core::http::ResponseFilter& filter);
+void setRequestFilter(const core::http::RequestFilter& filter);
+void setResponseFilter(const core::http::ResponseFilter& filter);
 
 } // namespace uri_handlers
 } // namespace server
