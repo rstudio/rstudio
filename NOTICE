@@ -30,7 +30,7 @@ used by these components are included below):
 - Catch
 
 RStudio also includes a binary copy of libclang. This component is
-licensed to your under the University of Illinois/NCSA Open Source
+licensed to you under the University of Illinois/NCSA Open Source
 License (a BSD-style license), the terms of which are included below.
 You can obtain the source code for libclang at:
 
