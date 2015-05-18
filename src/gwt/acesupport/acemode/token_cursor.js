@@ -319,7 +319,7 @@ var TokenCursor = function(tokens, row, offset) {
       var parenCount = 0;
       while (this.moveToPreviousToken())
       {
-         var currentValue = "(";
+         var currentValue = this.currentValue();
          if (currentValue === "(")
          {
             if (parenCount === 0)
