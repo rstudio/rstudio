@@ -101,6 +101,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditing
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetPresentationHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetRMarkdownHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.ExecuteChunkEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.FileTypeChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.FileTypeChangedHandler;
@@ -405,6 +406,27 @@ public class Source implements InsertSourceHandler,
          public void onSynctexStatusChanged(SynctexStatusChangedEvent event)
          {
             manageSynctexCommands();
+         }
+      });
+      
+      events.addHandler(ExecuteChunkEvent.TYPE, new ExecuteChunkEvent.Handler()
+      {
+         @Override
+         public void onExecuteChunk(ExecuteChunkEvent event)
+         {
+            if (activeEditor_ == null)
+               return;
+            
+            if (!(activeEditor_ instanceof TextEditingTarget))
+               return;
+            
+            TextEditingTarget target = (TextEditingTarget) activeEditor_;
+            Position position =
+                  target.screenCoordinatesToDocumentPosition(
+                        event.getPageX(), event.getPageY());
+            
+            target.executeChunk(position);
+            target.focus();
          }
       });
       

@@ -3218,6 +3218,12 @@ public class TextEditingTarget implements
       
    }
    
+   public void executeChunk(Position position)
+   {
+      docDisplay_.getScopeTree();
+      executeSweaveChunk(scopeHelper_.getCurrentSweaveChunk(position), false);
+   }
+   
    @Handler
    void onExecuteCurrentChunk()
    {
@@ -4781,6 +4787,11 @@ public class TextEditingTarget implements
                                                    pos))); 
               }           
            }));
+   }
+   
+   public Position screenCoordinatesToDocumentPosition(int pageX, int pageY)
+   {
+      return docDisplay_.screenCoordinatesToDocumentPosition(pageX, pageY);
    }
    
    public DocDisplay getDocDisplay()

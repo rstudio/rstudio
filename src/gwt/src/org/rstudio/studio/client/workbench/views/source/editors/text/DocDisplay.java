@@ -264,4 +264,6 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    
    void blockOutdent();
    void splitIntoLines();
+   
+   Position screenCoordinatesToDocumentPosition(int pageX, int pageY);
 }
