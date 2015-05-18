@@ -52,6 +52,8 @@ Error rVersion(const FilePath& rHomePath,
                const FilePath& rScriptPath,
                std::string* pVersion);
 
+void ensureLang();
+
 } // namespace r_util
 } // namespace core 
 } // namespace rstudio
