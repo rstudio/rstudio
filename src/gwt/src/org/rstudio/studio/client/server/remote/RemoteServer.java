@@ -252,14 +252,6 @@ public class RemoteServer implements Server
    {
       sendRequest(LOG_SCOPE, LOG_EXCEPTION, e, requestCallback);
    }
-   
-   public void contextInit(String hostPageURL,
-                           ServerRequestCallback<String> requestCallback)
-   {
-      JSONArray params = new JSONArray();
-      params.set(0, new JSONString(hostPageURL));
-      sendRequest(META_SCOPE, "context_init", params, requestCallback);
-   }
     
    public void clientInit(
                      final ServerRequestCallback<SessionInfo> requestCallback)

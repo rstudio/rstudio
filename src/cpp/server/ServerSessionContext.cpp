@@ -17,10 +17,6 @@
 
 #include <core/Error.hpp>
 
-#include <core/http/URL.hpp>
-#include <core/http/Util.hpp>
-#include <core/http/Response.hpp>
-
 using namespace rstudio::core;
 
 namespace rstudio {
@@ -33,25 +29,6 @@ bool sessionContextForRequest(
 {
    *pSessionContext = r_util::SessionContext(username);
    return true;
-}
-
-void handleContextInitRequest(const json::JsonRpcRequest& request,
-                              json::JsonRpcResponse* pResponse)
-{
-   // read parameters
-   std::string hostPageUrl;
-   Error error = json::readParams(request.params, &hostPageUrl);
-   if (error)
-   {
-      pResponse->setError(error);
-      return;
-   }
-
-   // supress polling for events after this RPC request
-   pResponse->setField("ep", "false");
-
-   // no redirect for now
-   pResponse->setResult(json::Value());
 }
 
 Error initializeSessionContext()

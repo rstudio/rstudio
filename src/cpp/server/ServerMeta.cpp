@@ -20,8 +20,6 @@
 
 #include <core/json/JsonRpc.hpp>
 
-#include <server/ServerSessionContext.hpp>
-
 using namespace rstudio::core;
 
 namespace rstudio {
@@ -57,12 +55,6 @@ void handleMetaRequest(const std::string& username,
    {
       json::JsonRpcResponse jsonResponse;
       handleInitMessagesRequest(jsonRpcRequest, &jsonResponse);
-      json::setJsonRpcResponse(jsonResponse, pResponse);
-   }
-   else if (jsonRpcRequest.method == "context_init")
-   {
-      json::JsonRpcResponse jsonResponse;
-      handleContextInitRequest(jsonRpcRequest, &jsonResponse);
       json::setJsonRpcResponse(jsonResponse, pResponse);
    }
    else

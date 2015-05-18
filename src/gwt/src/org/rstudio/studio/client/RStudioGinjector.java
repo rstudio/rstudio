@@ -23,7 +23,6 @@ import org.rstudio.core.client.files.filedialog.PathBreadcrumbWidget;
 import org.rstudio.core.client.widget.CaptionWithHelp;
 import org.rstudio.core.client.widget.LocalRepositoriesWidget;
 import org.rstudio.studio.client.application.Application;
-import org.rstudio.studio.client.application.ApplicationContextInit;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.ui.ProjectPopupMenu;
 import org.rstudio.studio.client.application.ui.impl.DesktopApplicationHeader;
@@ -126,7 +125,6 @@ public interface RStudioGinjector extends Ginjector
    public static final RStudioGinjector INSTANCE = GWT.create(RStudioGinjector.class);
 
    Application getApplication() ;
-   ApplicationContextInit getApplicationContextInit();
    VCSApplication getVCSApplication();
    HTMLPreviewApplication getHTMLPreviewApplication();
    ShinyApplicationSatellite getShinyApplicationSatellite();
