@@ -96,11 +96,11 @@ http::ConnectionRetryProfile sessionRetryProfile(const r_util::SessionContext& c
 ProxyFilter s_proxyFilter;
 
 bool applyProxyFilter(
-      const r_util::SessionContext& context,
-      boost::shared_ptr<core::http::AsyncConnection> ptrConnection)
+      boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
+      const std::string& username)
 {
    if (s_proxyFilter)
-      return s_proxyFilter(context, ptrConnection);
+      return s_proxyFilter(ptrConnection, username);
    else
       return false;
 }
@@ -419,7 +419,7 @@ void proxyRequest(
       const http::ConnectionRetryProfile& connectionRetryProfile)
 {
    // apply optional proxy filter
-   if (applyProxyFilter(context, ptrConnection))
+   if (applyProxyFilter(ptrConnection, context.username))
       return;
 
    // create async client
@@ -567,7 +567,7 @@ void proxyLocalhostRequest(
       return;
 
    // apply optional proxy filter
-   if (applyProxyFilter(context, ptrConnection))
+   if (applyProxyFilter(ptrConnection, context.username))
       return;
 
    // make a copy of the request for forwarding
