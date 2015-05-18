@@ -26,6 +26,8 @@
 #include <core/StringUtils.hpp>
 #include <core/ProgramOptions.hpp>
 
+#include <core/r_util/RSessionContext.hpp>
+
 #include <R_ext/RStartup.h>
 
 #include <session/SessionConstants.hpp>
@@ -332,6 +334,23 @@ public:
       return showUserIdentity_;
    }
 
+   std::string project() const
+   {
+      return project_;
+   }
+
+   std::string scope() const
+   {
+      return scope_;
+   }
+
+   core::r_util::SessionContext sessionContext() const
+   {
+      return core::r_util::SessionContext(
+                              userIdentity(),
+                              core::r_util::SessionScope(project(), scope()));
+   }
+
    core::FilePath userHomePath() const 
    { 
       return core::FilePath(userHomePath_.c_str());
@@ -509,6 +528,8 @@ private:
    // user info
    bool showUserIdentity_;
    std::string userIdentity_;
+   std::string project_;
+   std::string scope_;
    std::string userHomePath_;
    std::string userScratchPath_;   
 

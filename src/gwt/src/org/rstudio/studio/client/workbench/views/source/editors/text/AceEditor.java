@@ -268,6 +268,9 @@ public class AceEditor implements DocDisplay,
          @Override
          public void onKeyDown(KeyDownEvent event)
          {
+            if (isVimModeOn())
+               return;
+            
             int mod = KeyboardShortcut.getModifierValue(event.getNativeEvent());
             if (mod == KeyboardShortcut.CTRL)
             {
@@ -1897,6 +1900,11 @@ public class AceEditor implements DocDisplay,
       return handlers_.addHandler(FoldChangeEvent.TYPE, handler);
    }
    
+   public HandlerRegistration addAceRenderFinishedHandler(AceRenderFinishedEvent.Handler handler)
+   {
+      return handlers_.addHandler(AceRenderFinishedEvent.TYPE, handler);
+   }
+   
    public HandlerRegistration addCapturingKeyDownHandler(KeyDownHandler handler)
    {
       return widget_.addCapturingKeyDownHandler(handler);
@@ -2122,6 +2130,11 @@ public class AceEditor implements DocDisplay,
       widget_.getEditor().findAll(needle);
    }
    
+   public void selectAll(String needle, Range range, boolean wholeWord, boolean caseSensitive)
+   {
+      widget_.getEditor().findAll(needle, range, wholeWord, caseSensitive);
+   }
+   
    public void moveCursorLeft()
    {
       moveCursorLeft(1);
@@ -2253,6 +2266,11 @@ public class AceEditor implements DocDisplay,
    public void blockOutdent()
    {
       widget_.getEditor().blockOutdent();
+   }
+   
+   public Position screenCoordinatesToDocumentPosition(int pageX, int pageY)
+   {
+      return widget_.getEditor().getRenderer().screenToTextCoordinates(pageX, pageY);
    }
    
    private static final int DEBUG_CONTEXT_LINES = 2;

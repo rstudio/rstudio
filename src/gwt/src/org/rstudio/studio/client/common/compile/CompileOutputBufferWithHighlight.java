@@ -82,9 +82,7 @@ public class CompileOutputBufferWithHighlight extends Composite
    
    private void write(String output, String className)
    {
-      console_.submit(output, className);
-      output_.getElement().setInnerSafeHtml(console_.toSafeHtml());
-
+      console_.submitAndRender(output, className, output_.getElement());
       scrollPanel_.onContentSizeChanged();
    }
    

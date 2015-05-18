@@ -268,4 +268,5 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    
    Rectangle getPositionBounds(Position position);
    Position toDocumentPosition(ScreenCoordinates coordinates);
+   Position screenCoordinatesToDocumentPosition(int pageX, int pageY);
 }

@@ -120,19 +120,12 @@ public class RmdTemplateOptionsWidget extends Composite
       return listFormats_.getValue(listFormats_.getSelectedIndex());
    }
    
-   // Returns a modified version of the front matter, with the current set
-   // of options applied.
-   public RmdFrontMatter getFrontMatter()
+   public RmdFrontMatterOutputOptions getOutputOptions()
    {
-      if (frontMatter_ == null)
-         return null;
-      frontMatter_.setOutputOption(
-            getSelectedFormat(), 
-            RmdFormatOptionsHelper.optionsListToJson(
-                  optionWidgets_, 
-                  document_, 
-                  frontMatter_.getOutputOption(getSelectedFormat())));
-      return frontMatter_;
+      return RmdFormatOptionsHelper.optionsListToJson(
+            optionWidgets_, 
+            document_, 
+            frontMatter_.getOutputOption(getSelectedFormat())).cast();
    }
    
    public void setSelectedFormat(String format)

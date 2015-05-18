@@ -14,8 +14,8 @@ then
    rm -rf /tmp/rstudio-rserver
 
    # stop and remove service under systemd
-   INIT_SYSTEM=`cat /proc/1/comm`
-   if test $INIT_SYSTEM = "systemd"
+   INIT_SYSTEM=`cat /proc/1/comm 2>/dev/null`
+   if test "$INIT_SYSTEM" = "systemd"
    then
       systemctl stop rstudio-server.service 2>/dev/null
       systemctl disable rstudio-server.service 2>/dev/null

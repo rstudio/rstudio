@@ -18,6 +18,7 @@
 #include <core/Log.hpp>
 #include <core/Error.hpp>
 #include <core/FilePath.hpp>
+#include <core/FileSerializer.hpp>
 #include <core/system/System.hpp>
 
 #include <session/SessionOptions.hpp>
@@ -49,6 +50,7 @@ Error PersistentState::initialize()
    desktopClientId_ = "33e600bb-c1b1-46bf-b562-ab5cba070b0e";
 
    FilePath scratchPath = module_context::scopedScratchPath();
+   activeClientIdPath_ = scratchPath.childPath(kActiveClientId);
    FilePath statePath = scratchPath.complete("persistent-state");
    return settings_.initialize(statePath);
 }
@@ -57,7 +59,17 @@ std::string PersistentState::activeClientId()
 {
    if (serverMode_)
    {
-      std::string activeClientId = settings_.get(kActiveClientId);
+      std::string activeClientId;
+      if (activeClientIdPath_.exists())
+      {
+         Error error = core::readStringFromFile(activeClientIdPath_,
+                                                &activeClientId);
+         if (error)
+            LOG_ERROR(error);
+
+         boost::algorithm::trim(activeClientId);
+      }
+
       if (!activeClientId.empty())
          return activeClientId;
       else
@@ -74,7 +86,9 @@ std::string PersistentState::newActiveClientId()
    if (serverMode_)
    {
       std::string newId = core::system::generateUuid();
-      settings_.set(kActiveClientId, newId);
+      Error error = core::writeStringToFile(activeClientIdPath_, newId);
+      if (error)
+         LOG_ERROR(error);
       return newId;
    }
    else

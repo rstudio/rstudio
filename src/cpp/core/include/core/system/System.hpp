@@ -193,7 +193,8 @@ enum SignalType
    SigUsr1,
    SigUsr2,
    SigPipe,
-   SigChld
+   SigChld,
+   SigTerm
 };
 
 

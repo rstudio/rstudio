@@ -4,7 +4,8 @@ Description=RStudio Server
 [Service]
 Type=forking
 ExecStart=${CMAKE_INSTALL_PREFIX}/bin/rserver
-KillMode=process
+ExecStop=/usr/bin/killall -TERM rserver
+KillMode=none
 Restart=on-failure
 
 [Install]

@@ -205,10 +205,18 @@ public class FindReplace
    
    public void selectAll()
    {
+      // NOTE: 'null' range here implies whole document
+      Range range = null;
+      if (targetSelection_ != null)
+         range = targetSelection_.getRange();
+      
+      boolean wholeWord = display_.getWholeWord().getValue();
+      boolean caseSensitive = display_.getCaseSensitive().getValue();
+      
       String searchString = display_.getFindValue().getValue();
       if (searchString.length() != 0)
       {
-         editor_.selectAll(searchString);
+         editor_.selectAll(searchString, range, wholeWord, caseSensitive);
          editor_.focus();
       }
    }

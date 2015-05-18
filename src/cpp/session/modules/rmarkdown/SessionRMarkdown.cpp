@@ -27,6 +27,7 @@
 #include <core/Exec.hpp>
 #include <core/system/Environment.hpp>
 #include <core/system/Process.hpp>
+#include <core/StringUtils.hpp>
 
 #include <r/RExec.hpp>
 #include <r/RJson.hpp>
@@ -267,12 +268,14 @@ private:
 
    void onStdout(const std::string& output)
    {
-      onRenderOutput(module_context::kCompileOutputNormal, output);
+      onRenderOutput(module_context::kCompileOutputNormal,
+                     string_utils::systemToUtf8(output));
    }
 
    void onStderr(const std::string& output)
    {
-      onRenderOutput(module_context::kCompileOutputError, output);
+      onRenderOutput(module_context::kCompileOutputError,
+                     string_utils::systemToUtf8(output));
    }
 
    void onRenderOutput(int type, const std::string& output)
@@ -460,7 +463,7 @@ private:
       r::sexp::Protect protect;
       SEXP sexpOutputFormat;
       Error error = r::exec::RFunction("rmarkdown:::default_output_format",
-                                       path, encoding)
+                                       string_utils::utf8ToSystem(path), encoding)
                                       .call(&sexpOutputFormat, &protect);
       if (error)
       {

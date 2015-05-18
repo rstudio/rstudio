@@ -18,10 +18,13 @@
 #include <iostream>
 
 #include <boost/algorithm/string/trim.hpp>
+#include <boost/algorithm/string/regex.hpp>
 
 #include <core/FilePath.hpp>
 #include <core/Settings.hpp>
 #include <core/FileSerializer.hpp>
+
+#include <core/http/Util.hpp>
 
 #include <core/system/System.hpp>
 #include <core/system/Environment.hpp>
@@ -103,94 +106,46 @@ void writeProjectsSetting(const FilePath& settingsPath,
       LOG_ERROR(error);
 }
 
-// Determine the project for the next RStudio session. This is
-// used principally to inspect .Rproj and packrat configuration files
-// to determine whether we need to use an alternate version of R. Note that
-// the logic here must be synchronized with the logic in the startup method
-// of session::projects
-FilePath nextSessionProject(SessionType sessionType,
-                            const std::string& homePath)
+namespace {
+
+const char* const kSessionContextDelimeter = ":::";
+
+} // anonymous namespace
+
+
+std::ostream& operator<< (std::ostream& os, const SessionContext& context)
 {
-   // get the user scratch path and projects settings path
-   UserDirectories dirs = userDirectories(sessionType, homePath);
-   FilePath userScratchPath(dirs.scratchPath);
-   FilePath projectsSettings = r_util::projectsSettingsPath(userScratchPath);
-
-   // read the startup oriented project options
-   std::string nextSessionProject = readProjectsSetting(projectsSettings,
-                                                        kNextSessionProject);
-   std::string lastProjectPath = readProjectsSetting(projectsSettings,
-                                                     kLastProjectPath);
-
-   // read environment variables derived from startup file associations
-   std::string initialProjPath = core::system::getenv(kRStudioInitialProject);
-   std::string initialWDPath = core::system::getenv(kRStudioInitialWorkingDir);
-
-   // read the always restore last project user setting
-   bool alwaysRestoreLastProject = false;
-   core::Settings uSettings;
-   FilePath userSettingsPath = userScratchPath.childPath(kUserSettings);
-   Error error = uSettings.initialize(userSettingsPath);
-   if (error)
-      LOG_ERROR(error);
-   else
-      alwaysRestoreLastProject = uSettings.getBool(kAlwaysRestoreLastProject,
-                                                   true);
-
-   // apply logic required to determine the next project (if any)
-
-   if (!nextSessionProject.empty())
-   {
-      if (nextSessionProject == kNextSessionProjectNone)
-         return FilePath();
-      else
-         return FilePath::resolveAliasedPath(nextSessionProject,
-                                             FilePath(dirs.homePath));
-   }
-   else if (!initialProjPath.empty())
-   {
-      return FilePath(initialProjPath);
-   }
-   else if (!initialWDPath.empty())
-      // this is here just to prevent the next case
-      // (b/c we are opening based on a file association)
-   {
-      return FilePath();
-   }
-   else if (alwaysRestoreLastProject && !lastProjectPath.empty())
-   {
-      return FilePath(lastProjectPath);
-   }
-   else
-   {
-      return FilePath();
-   }
+   os << context.username;
+   if (!context.scope.project.empty())
+      os << " -- " << context.scope.project;
+   if (!context.scope.id.empty())
+      os << " [" << context.scope.id << "]";
+   return os;
 }
 
-RVersionInfo nextSessionRVersion(SessionType sessionType,
-                                 const std::string& homePath)
+
+std::string sessionContextToStreamFile(const SessionContext& context)
 {
-   // first determine the project path -- if there is none then we return
-   // an empty RVersionInfo (which will result in just using the default)
-   FilePath nextProject = nextSessionProject(sessionType, homePath);
-   if (nextProject.empty())
-      return RVersionInfo();
+   std::string streamFile = context.username;
+   if (!context.scope.project.empty())
+      streamFile += kSessionContextDelimeter + context.scope.project;
+   if (!context.scope.id.empty())
+      streamFile += kSessionContextDelimeter + context.scope.id;
+   return http::util::urlEncode(streamFile);
+}
 
-   // read the project file
-   std::string errMsg;
-   r_util::RProjectConfig projectConfig;
-   Error error = r_util::readProjectFile(nextProject, &projectConfig, &errMsg);
-   if (error)
-   {
-      error.addProperty("message", errMsg);
-      LOG_ERROR(error);
-      return RVersionInfo();
-   }
-
-   // TODO: look for packrat version as well
-
-   // return the version
-   return projectConfig.rVersion;
+SessionContext streamFileToSessionContext(const std::string& file)
+{
+   std::vector<std::string> result;
+   boost::algorithm::split_regex(result,
+                                 http::util::urlDecode(file),
+                                 boost::regex("\\:\\:\\:"));
+   SessionContext context = SessionContext(result[0]);
+   if (result.size() > 1)
+      context.scope.project = result[1];
+   if (result.size() > 2)
+      context.scope.id = result[2];
+   return context;
 }
 
 } // namespace r_util

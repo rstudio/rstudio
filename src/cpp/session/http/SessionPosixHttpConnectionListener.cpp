@@ -18,6 +18,8 @@
 #include <core/system/Environment.hpp>
 #include <core/system/FileMode.hpp>
 
+#include <core/r_util/RSessionContext.hpp>
+
 #include <session/SessionConstants.hpp>
 #include <session/SessionOptions.hpp>
 #include <session/SessionLocalStreams.hpp>
@@ -75,8 +77,9 @@ void initializeHttpConnectionListener()
       else
       {
          // create listener based on options
-         std::string userIdentity = options.userIdentity();
-         FilePath localStreamPath = local_streams::streamPath(userIdentity);
+         r_util::SessionContext context = options.sessionContext();
+         std::string streamFile = r_util::sessionContextToStreamFile(context);
+         FilePath localStreamPath = local_streams::streamPath(streamFile);
          s_pHttpConnectionListener = new LocalStreamHttpConnectionListener(
                                           localStreamPath,
                                           core::system::EveryoneReadWriteMode,

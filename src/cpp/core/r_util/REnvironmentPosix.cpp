@@ -779,6 +779,50 @@ Error rVersion(const FilePath& rHomePath,
    }
 }
 
+/*
+We've observed that Ubuntu 14.10 no longer passes the LANG environment
+variable to daemon processes so we lose the automatic inheritence of
+LANG from the system default. For this case we'll do automatic detection
+and setting of LANG.
+*/
+#if !defined(__APPLE__)
+void ensureLang()
+{
+   // if no LANG environment variable is already defined
+   if (core::system::getenv("LANG").empty())
+   {
+      // try to read the LANG from the various places it might be defined
+      std::vector<std::pair<std::string,std::string> > langDefs;
+      langDefs.push_back(std::make_pair("LANG", "/etc/default/locale"));
+      langDefs.push_back(std::make_pair("LANG", "/etc/sysconfig/i18n"));
+      langDefs.push_back(std::make_pair("LANG", "/etc/locale.conf"));
+      langDefs.push_back(std::make_pair("RC_LANG", "/etc/sysconfig/language"));
+      for (size_t i = 0; i<langDefs.size(); i++)
+      {
+         std::string var = langDefs[i].first;
+         std::string file = langDefs[i].second;
+         std::map<std::string,std::string> vars;
+         Error error = config_utils::extractVariables(FilePath(file), &vars);
+         if (error)
+         {
+            LOG_ERROR(error);
+            continue;
+         }
+         std::string value = vars[var];
+         if (!value.empty())
+         {
+            core::system::setenv("LANG", value);
+            break;
+         }
+      }
+   }
+}
+#else
+void ensureLang()
+{
+}
+#endif
+
 } // namespace r_util
 } // namespace core 
 } // namespace rstudio

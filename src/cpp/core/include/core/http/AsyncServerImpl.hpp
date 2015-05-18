@@ -21,6 +21,7 @@
 #include <boost/utility.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/function.hpp>
+#include <boost/foreach.hpp>
 #include <boost/algorithm/string.hpp>
 
 #include <boost/asio/io_service.hpp>
@@ -120,6 +121,18 @@ public:
    {
       BOOST_ASSERT(!running_);
       scheduledCommands_.push_back(pCmd);
+   }
+
+   virtual void setRequestFilter(RequestFilter requestFilter)
+   {
+      BOOST_ASSERT(!running_);
+      requestFilter_ = requestFilter;
+   }
+
+   virtual void setResponseFilter(ResponseFilter responseFilter)
+   {
+      BOOST_ASSERT(!running_);
+      responseFilter_ = responseFilter;
    }
 
    virtual Error runSingleThreaded()
@@ -232,9 +245,13 @@ private:
          boost::bind(&AsyncServerImpl<ProtocolType>::handleConnection,
                      this, _1, _2),
 
+         // request filter
+         boost::bind(&AsyncServerImpl<ProtocolType>::connectionRequestFilter,
+                     this, _1, _2),
+
          // response filter
          boost::bind(&AsyncServerImpl<ProtocolType>::connectionResponseFilter,
-                     this, _1)
+                     this, _1, _2)
       ));
       
       // wait for next connection
@@ -295,9 +312,9 @@ private:
    {
       try
       {
-         // call filter
+         // call subclass
          onRequest(&(pConnection->socket()), pRequest);
-         
+
          // convert to cannonical HttpConnection
          boost::shared_ptr<AsyncConnection> pAsyncConnection =
              boost::static_pointer_cast<AsyncConnection>(pConnection);
@@ -335,11 +352,24 @@ private:
       CATCH_UNEXPECTED_EXCEPTION
    }
 
-   void connectionResponseFilter(http::Response* pResponse)
+   void connectionRequestFilter(http::Request* pRequest,
+                                boost::function<void()> continuation)
+   {
+      if (requestFilter_)
+         requestFilter_(pRequest, continuation);
+      else
+         continuation();
+   }
+
+   void connectionResponseFilter(const std::string& originalUri,
+                                 http::Response* pResponse)
    {
       // set server header (evade ref-counting to defend against
       // non-threadsafe std::string implementations)
       pResponse->setHeader("Server", std::string(serverName_.c_str()));
+
+      if (responseFilter_)
+         responseFilter_(originalUri, pResponse);
    }
 
    void waitForScheduledCommandTimer()
@@ -460,6 +490,8 @@ private:
    boost::posix_time::time_duration scheduledCommandInterval_;
    boost::asio::deadline_timer scheduledCommandTimer_;
    std::vector<boost::shared_ptr<ScheduledCommand> > scheduledCommands_;
+   RequestFilter requestFilter_;
+   ResponseFilter responseFilter_;
    bool running_;
 };
 

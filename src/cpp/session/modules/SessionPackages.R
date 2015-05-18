@@ -600,6 +600,15 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
       LazyData = "TRUE"
    )
    
+   # If we filled in an 'Authors@R' field for Authors (e.g. provided for new
+   # 'devtools'), then name this field as such.
+   if (isTRUE(grepl("^\\s*(?:as\\.person|person|c)\\(", DESCRIPTION[["Maintainer"]], perl = TRUE)))
+   {
+      maintainerIdx <- which(names(DESCRIPTION) == "Maintainer")
+      names(DESCRIPTION)[[maintainerIdx]] <- "Authors@R"
+      DESCRIPTION[["Author"]] <- NULL
+   }
+   
    # Create a NAMESPACE file
    NAMESPACE <- c(
       'exportPattern("^[[:alpha:]]+")'

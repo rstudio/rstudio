@@ -31,8 +31,9 @@
    # when the source command is issued by the client for
    # "~/active-rstudio-document" UTF-8 is specified explicitly
    # (see TextEditingTarget.sourceActiveDocument)
-   writeChar(contents, activeRStudioDoc, eos=NULL, useBytes = TRUE)
-
+   Encoding(contents) <- "UTF-8"
+   writeLines(contents, activeRStudioDoc, useBytes = TRUE)
+  
    if (sweave)
    {
       op <- function() {

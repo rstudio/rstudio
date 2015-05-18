@@ -52,6 +52,22 @@ core::system::Options optionsFromJson(const json::Object& optionsJson)
    return options;
 }
 
+json::Object scopeAsJson(const SessionScope& scope)
+{
+   json::Object scopeJson;
+   scopeJson["project"] = scope.project;
+   scopeJson["id"] = scope.id;
+   return scopeJson;
+}
+
+Error scopeFromJson(const json::Object& scopeJson, SessionScope* pScope)
+{
+   return json::readObject(scopeJson,
+                           "project", &(pScope->project),
+                           "id", &(pScope->id));
+}
+
+
 Error cpuAffinityFromJson(const json::Array& affinityJson,
                           core::system::CpuAffinity* pAffinity)
 {
@@ -82,6 +98,7 @@ json::Object sessionLaunchProfileToJson(const SessionLaunchProfile& profile)
    json::Object profileJson;
    profileJson["username"] = profile.username;
    profileJson["password"] = profile.password;
+   profileJson["scope"] = scopeAsJson(profile.scope);
    profileJson["executablePath"] = profile.executablePath;
    json::Object configJson;
    configJson["args"] = optionsAsJson(profile.config.args);
@@ -106,15 +123,21 @@ SessionLaunchProfile sessionLaunchProfileFromJson(
    SessionLaunchProfile profile;
 
    // read top level fields
-   json::Object configJson;
+   json::Object configJson, scopeJson;
    Error error = json::readObject(jsonProfile,
                                   "username", &profile.username,
                                   "password", &profile.password,
+                                  "scope", &scopeJson,
                                   "executablePath", &profile.executablePath,
                                   "config", &configJson);
    if (error)
       LOG_ERROR(error);
 
+
+   // read scope object
+   error = scopeFromJson(scopeJson, &(profile.scope));
+   if (error)
+      LOG_ERROR(error);
 
    // read config object
    json::Object argsJson, envJson;

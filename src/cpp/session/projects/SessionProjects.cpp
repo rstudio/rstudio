@@ -473,6 +473,31 @@ void onMonitoringDisabled()
    // a conveninece to have these synced we don't do this
 }
 
+FilePath resolveProjectSwitch(const std::string& projectPath)
+{
+   FilePath projectFilePath;
+
+   // clear any initial context settings which may be leftover
+   // by a re-instatiation of rsession by desktop
+   session::options().clearInitialContextSettings();
+
+   // check for special "none" value (used for close project)
+   if (projectPath == kProjectNone)
+   {
+      projectFilePath = FilePath();
+
+      // flush the last project path so restarts won't put us back into
+      // project context (see case 4015)
+      s_projectContext.setLastProjectPath(FilePath());
+   }
+   else
+   {
+      projectFilePath = module_context::resolveAliasedPath(projectPath);
+   }
+
+   return projectFilePath;
+}
+
 
 }  // anonymous namespace
 
@@ -489,42 +514,34 @@ void startup()
    // determine project file path
    FilePath projectFilePath;
 
-   // see if there is a project path hard-wired for the next session
-   // (this would be used for a switch to project or for the resuming of
-   // a suspended session)
+   // alias some project context data
    std::string nextSessionProject = s_projectContext.nextSessionProject();
+   std::string switchToProject = s_projectContext.switchToProjectPath();
    FilePath lastProjectPath = s_projectContext.lastProjectPath();
 
-   // check for next session project path (see above for comment)
-   if (!nextSessionProject.empty())
+   // check for explicit request for a project (file association or url based)
+   if (!session::options().initialProjectPath().empty())
+   {
+      projectFilePath = session::options().initialProjectPath();
+   }
+
+   // see if there is a project path hard-wired for the next session
+   // (this would be used for resuming of a suspended session)
+   else if (!nextSessionProject.empty())
    {
       // reset next session project path so its a one shot deal
       s_projectContext.setNextSessionProject("");
 
-      // clear any initial context settings which may be leftover
-      // by a re-instatiation of rsession by desktop
-      session::options().clearInitialContextSettings();
-
-      // check for special "none" value (used for close project)
-      if (nextSessionProject == kNextSessionProjectNone)
-      {
-         projectFilePath = FilePath();
-
-         // flush the last project path so restarts won't put us back into
-         // project context (see case 4015)
-         s_projectContext.setLastProjectPath(FilePath());
-      }
-      else
-      {
-         projectFilePath = module_context::resolveAliasedPath(
-                                                   nextSessionProject);
-      }
+      projectFilePath = resolveProjectSwitch(nextSessionProject);
    }
 
-   // check for envrionment variable (file association)
-   else if (!session::options().initialProjectPath().empty())
+   // see if this is a project switch
+   else if (!switchToProject.empty())
    {
-      projectFilePath = session::options().initialProjectPath();
+      // reset switch to project path so its a one shot deal
+      s_projectContext.setSwitchToProjectPath("");
+
+      projectFilePath = resolveProjectSwitch(switchToProject);
    }
 
    // check for other working dir override (implies a launch of a file

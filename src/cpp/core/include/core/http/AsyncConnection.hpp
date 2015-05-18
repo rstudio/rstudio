@@ -31,6 +31,15 @@ namespace http {
 class Request;
 class Response;
 
+class AsyncConnection;
+
+typedef boost::function<void(
+            http::Request*,
+            boost::function<void()> continuation)> RequestFilter;
+
+typedef boost::function<void(const std::string&,
+                             http::Response*)> ResponseFilter;
+
 // abstract base (insulate clients from knowledge of protocol-specifics)
 class AsyncConnection : public Socket
 {

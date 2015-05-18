@@ -984,7 +984,10 @@ assign(x = ".rs.acCompletionTypes",
    
    ## Blacklist certain evaluations
    if (!is.null(blacklist <- .rs.blackListEvaluation(token, string, functionCall, envir)))
+   {
+      blacklist$excludeOtherCompletions <- .rs.scalar(TRUE)
       return(blacklist)
+   }
    
    object <- .rs.getAnywhere(string, envir)
    

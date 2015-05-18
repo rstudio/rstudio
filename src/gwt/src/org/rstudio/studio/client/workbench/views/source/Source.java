@@ -27,6 +27,9 @@ import com.google.gwt.json.client.JSONString;
 import com.google.gwt.json.client.JSONValue;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.Event;
+import com.google.gwt.user.client.Event.NativePreviewEvent;
+import com.google.gwt.user.client.Event.NativePreviewHandler;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Widget;
@@ -98,6 +101,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditing
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetPresentationHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetRMarkdownHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.ExecuteChunkEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.FileTypeChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.FileTypeChangedHandler;
@@ -402,6 +406,46 @@ public class Source implements InsertSourceHandler,
          public void onSynctexStatusChanged(SynctexStatusChangedEvent event)
          {
             manageSynctexCommands();
+         }
+      });
+      
+      events.addHandler(ExecuteChunkEvent.TYPE, new ExecuteChunkEvent.Handler()
+      {
+         @Override
+         public void onExecuteChunk(ExecuteChunkEvent event)
+         {
+            if (activeEditor_ == null)
+               return;
+            
+            if (!(activeEditor_ instanceof TextEditingTarget))
+               return;
+            
+            TextEditingTarget target = (TextEditingTarget) activeEditor_;
+            Position position =
+                  target.screenCoordinatesToDocumentPosition(
+                        event.getPageX(), event.getPageY());
+            
+            target.executeChunk(position);
+            target.focus();
+         }
+      });
+      
+      // Suppress 'CTRL + ALT + SHIFT + click' to work around #2483 in Ace
+      Event.addNativePreviewHandler(new NativePreviewHandler()
+      {
+         @Override
+         public void onPreviewNativeEvent(NativePreviewEvent event)
+         {
+            int type = event.getTypeInt();
+            if (type == Event.ONMOUSEDOWN || type == Event.ONMOUSEUP)
+            {
+               int modifier = KeyboardShortcut.getModifierValue(event.getNativeEvent());
+               if (modifier == (KeyboardShortcut.ALT | KeyboardShortcut.CTRL | KeyboardShortcut.SHIFT))
+               {
+                  event.cancel();
+                  return;
+               }
+            }
          }
       });
       

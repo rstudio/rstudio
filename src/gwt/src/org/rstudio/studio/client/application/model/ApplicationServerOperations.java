@@ -22,7 +22,7 @@ import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.prefs.model.PrefsServerOperations;
 
 public interface ApplicationServerOperations extends PrefsServerOperations
-{   
+{    
    // establish new session for this client
    void clientInit(ServerRequestCallback<SessionInfo> requestCallback);
 

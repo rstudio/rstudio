@@ -66,7 +66,7 @@ public class ShinyApplicationPanel extends SatelliteFramePanel<RStudioFrame>
       toolbar.addLeftWidget(refreshButton);
       
       publishButton_ = new RSConnectPublishButton(
-            RSConnect.CONTENT_TYPE_APP, true, null);
+            RSConnect.CONTENT_TYPE_NONE, true, null);
       toolbar.addRightWidget(publishButton_);
    }
    
@@ -75,6 +75,7 @@ public class ShinyApplicationPanel extends SatelliteFramePanel<RStudioFrame>
    {
       appParams_ = params;
       publishButton_.setContentPath(params.getPath(), "");
+      publishButton_.setContentType(RSConnect.CONTENT_TYPE_APP);
          
       String url = params.getUrl();
       

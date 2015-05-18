@@ -30,6 +30,7 @@
 #include <core/system/System.hpp>
 #include <core/system/Environment.hpp>
 #include <core/FileSerializer.hpp>
+#include <core/FileUtils.hpp>
 #include <core/http/Util.hpp>
 
 #include <r/RExec.hpp>
@@ -1342,9 +1343,35 @@ Error run(const ROptions& options, const RCallbacks& callbacks)
    sourceManager().setAutoReload(options.autoReloadSource);
      
    // initialize suspended session path
-   FilePath userScratchPath = s_options.userScratchPath;
-   s_suspendedSessionPath = userScratchPath.complete("suspended-session");  
-   
+   FilePath userScratch = s_options.userScratchPath;
+   FilePath oldSuspendedSessionPath = userScratch.complete("suspended-session");
+   FilePath scopedScratch = s_options.scopedScratchPath;
+   // SEE ALSO: activeClientId storage is also effectively per-suspend context
+   s_suspendedSessionPath = scopedScratch.complete("suspended-session-data");
+
+   // one time migration of global suspended to scoped suspended
+   if (!s_suspendedSessionPath.exists() && oldSuspendedSessionPath.exists())
+   {
+     // try to move it first
+     Error error = oldSuspendedSessionPath.move(s_suspendedSessionPath);
+     if (error)
+     {
+        // log the move error
+        LOG_ERROR(error);
+
+        // try to copy it as a failsafe (eliminates cross-volume issues)
+        error = file_utils::copyDirectory(oldSuspendedSessionPath,
+                                                s_suspendedSessionPath);
+        if (error)
+           LOG_ERROR(error);
+
+        // remove so this is always a one-time only thing
+        error = oldSuspendedSessionPath.remove();
+        if (error)
+           LOG_ERROR(error);
+     }
+   }
+
    // initialize restart context
    restartContext().initialize(s_options.scopedScratchPath,
                                s_options.sessionPort);

@@ -1,8 +1,8 @@
 #!/bin/sh
 
 daemonCmd() {
-  INIT_SYSTEM=`cat /proc/1/comm`
-  if test $INIT_SYSTEM = "systemd"
+  INIT_SYSTEM=`cat /proc/1/comm 2>/dev/null`
+  if test "$INIT_SYSTEM" = "systemd"
   then
      eval "systemctl $1 rstudio-server.service"
   elif test -e /etc/init/rstudio-server.conf
@@ -24,6 +24,11 @@ verifyInstallation() {
 
 
 case "$1" in
+    
+    status)
+        daemonCmd "status"
+        ;;
+    
     start)
         testConfig || return $?
         daemonCmd "start"
@@ -99,7 +104,7 @@ case "$1" in
         ;;
 
     *)
-        echo $"Usage: rstudio-server {start|stop|restart|test-config|verify-installation|suspend-session|suspend-all|force-suspend-session|force-suspend-all|offline|online|active-sessions|version}"
+        echo $"Usage: rstudio-server {status|start|stop|restart|test-config|verify-installation|suspend-session|suspend-all|force-suspend-session|force-suspend-all|offline|online|active-sessions|version}"
         exit 2
 esac
 

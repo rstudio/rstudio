@@ -359,6 +359,18 @@ void ProjectContext::setNextSessionProject(
    writeSetting(kNextSessionProject, nextSessionProject);
 }
 
+// switch to project path
+std::string ProjectContext::switchToProjectPath() const
+{
+   return readSetting(kSwitchToProject);
+}
+
+void ProjectContext::setSwitchToProjectPath(
+                                 const std::string& switchToProjectPath)
+{
+   writeSetting(kSwitchToProject, switchToProjectPath);
+}
+
 
 FilePath ProjectContext::lastProjectPath() const
 {
