@@ -279,7 +279,7 @@ public class AceEditorWidget extends Composite
    private void displayIcon(Image icon, Element underlyingMarker)
    {
       // Bail if the underlying marker isn't wide enough
-      if (underlyingMarker.getOffsetWidth() < 150)
+      if (underlyingMarker.getOffsetWidth() < 250)
          return;
       
       // Get the 'virtual' parent -- this is the Ace scroller that houses all
