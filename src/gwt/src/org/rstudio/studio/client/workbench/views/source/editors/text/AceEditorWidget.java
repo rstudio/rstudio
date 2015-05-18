@@ -49,6 +49,7 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.debugging.model.Breakpoint;
 import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.output.lint.LintResources;
 import org.rstudio.studio.client.workbench.views.output.lint.model.AceAnnotation;
 import org.rstudio.studio.client.workbench.views.output.lint.model.LintItem;
@@ -334,6 +335,8 @@ public class AceEditorWidget extends Composite
    private Image createRunIcon()
    {
       Image icon = new Image(ThemeResources.INSTANCE.runChunk());
+      icon.setTitle(
+            commands_.executeCurrentChunk().getTooltip());
       return icon;
    }
 
@@ -1002,6 +1005,7 @@ public class AceEditorWidget extends Composite
    private LintResources.Styles lintStyles_ = LintResources.INSTANCE.styles();
    
    private EventBus events_;
+   private Commands commands_ = RStudioGinjector.INSTANCE.getCommands();
    
    
 }
