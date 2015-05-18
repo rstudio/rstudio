@@ -65,12 +65,6 @@ void writeProjectsSetting(const FilePath& settingsPath,
                           const char * const settingName,
                           const std::string& value);
 
-FilePath nextSessionProject(SessionType sessionType,
-                            const std::string& homePath = std::string());
-
-RVersionInfo nextSessionRVersion(SessionType sessionType,
-                                 const std::string& homePath = std::string());
-
 struct SessionContext
 {
    SessionContext()
