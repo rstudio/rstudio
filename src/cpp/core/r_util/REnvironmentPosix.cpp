@@ -816,6 +816,7 @@ void ensureLang()
          }
       }
    }
+}
 #else
 void ensureLang()
 {
