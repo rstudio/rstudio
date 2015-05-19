@@ -37,10 +37,6 @@ body {
    vertical-align: top;
 }
 
-p {
-   font-size: 0.9em;
-}
-
 h4 {
    color: rgb(20%, 20%, 20%);
 }
@@ -61,10 +57,15 @@ h4 {
 
 <h1>Roxygen Quick Reference</h1>
 
-<code>roxygen2</code> is an <code>R</code> package that allows
-you to write in-source documentation for your package functions and objects.
-Write documentation above your package functions with the <code>#'</code> comment
-prefix.
+<p>
+   <code>roxygen2</code> is an <code>R</code> package that allows
+   you to write in-source documentation for your package functions and objects.
+</p>
+
+<p>
+   Write documentation above your package functions with the <code>#'</code> comment
+   prefix.
+</p>
 
 <div id="roxygen_examples">
 
@@ -79,7 +80,7 @@ prefix.
 #'
 #' These are further details.
 #'
-#' A Custom Section:
+#' @section A Custom Section:
 #'
 #' Text accompanying the custom section.
 #'
@@ -109,6 +110,7 @@ add_numbers <- function(x, y) {
 <h4>Common Tags</h4>
 
 <table class="common-tags-table">
+   
    <tr>
       <td>
 	 <code>@param &lt;name&gt; &lt;description&gt;</code>
@@ -117,26 +119,7 @@ add_numbers <- function(x, y) {
 	 Document a function parameter.
       </td>
    </tr>
-   <tr>
-      <td>
-	 <code>@author &lt;name&gt;</code>
-      </td>
-      <td>
-	 Who wrote it.
-      </td>
-   </tr>
-   <tr>
-      <td>
-	 <code>@examples &lt;r-code&gt;</code>
-      </td>
-      <td>
-	 Inline R code showing how the function is used.
-	 Wrap code blocks in <code>\dontrun{}</code> to prevent
-	 them from running on calls to <code>example()</code>.
-	 Use <code>\donttest{}</code> to disable running this
-	 code in <code>R CMD check</code>.
-      </td>
-   </tr>
+   
    <tr>
       <td>
 	 <code>@export</code>
@@ -145,6 +128,24 @@ add_numbers <- function(x, y) {
 	 Make this function available to users of your package.
       </td>
    </tr>
+   
+   <tr>
+      <td>
+	 <code>@examples &lt;r-code&gt;</code>
+      </td>
+      <td>
+         <p>
+	    Inline R code showing how the function is used.
+         </p>
+         <p>
+	    Wrap code blocks in <code>\dontrun{}</code> to prevent
+	    them from running on calls to <code>example()</code>.
+	    Use <code>\donttest{}</code> to disable running this
+	    code in <code>R CMD check</code>.
+         </p>
+      </td>
+   </tr>
+   
    <tr>
       <td>
 	 <code>@return</code>
@@ -153,6 +154,17 @@ add_numbers <- function(x, y) {
 	 Describe what this function returns.
       </td>
    </tr>
+
+   <tr>
+      <td>
+         <code>@family &lt;family-name&gt;</code>
+      </td>
+      <td>
+         Automatically generate links to other functions within this
+         family in the documentation's <strong>See Also</strong> section.
+      </td>
+   </tr>
+   
    <tr>
       <td>
 	 <code>@seealso</code>
@@ -162,15 +174,52 @@ add_numbers <- function(x, y) {
 	 understand how to use your function.
       </td>
    </tr>
+   
+   <tr>
+      <td>
+	 <code>@inheritParams &lt;function&gt;</code>
+      </td>
+      <td>
+         <p>
+            Re-use parameter documentation from another function.
+         </p>
+         <p>
+            Use
+            <code>@inheritParams &lt;package::function&gt;</code> to
+            re-use documentation from a function in a separate package.
+         </p>
+      </td>
+   </tr>
+
+   <tr>
+      <td>
+	 <code>@section &lt;name&gt;:</code>
+      </td>
+      <td>
+         <p>
+            Provide a custom section with the name <code>&lt;name&gt;</code>.
+            The line must end with a colon (<code>:</code>).
+         </p>
+      </td>
+   </tr>
+   
+   
 </table>
 
+<p>
+   In addition, you can use <strong><code>@keywords internal</code></strong> to ensure
+   that documentation for a particular function is generated, but not added to the package
+   index.
+</p>
 
 <h3>Documenting Packages</h3>
 
-By convention, package documentation is usually included in a file
-<code>R/&lt;package-name&gt;-package.R</code>. The <code>roxygen</code> block
-providing package documentation should contain the
-<code>@docType package</code> field declaration, and should end with <code>NULL</code>.
+<p>
+   By convention, package documentation is usually included in a file
+   <code>R/&lt;package-name&gt;-package.R</code>. The <code>roxygen</code> block
+   providing package documentation should contain the
+   <code>@docType package</code> field declaration, and should end with <code>NULL</code>.
+</p>
 
 <h4>Example</h4>
 
@@ -334,10 +383,14 @@ NULL
    </tr>
 </table>
 
-<br />
-
 <h3>Learning More</h3>
 
+<p>
+   Read Hadley Wickham's guide in <a href="http://r-pkgs.had.co.nz/">R Packages</a> to learn
+   more about how to use <code>roxygen2</code> and <code>devtools</code> to produce
+   documentation for your R packages.
+</p>
+   
 <p>
    Read the
    <code><a href="http://cran.r-project.org/web/packages/roxygen2/vignettes/roxygen2.html">roxygen</a></code>
@@ -347,7 +400,7 @@ NULL
 </p>
 
 <p>
-   See <a href="http://cran.r-project.org/doc/manuals/r-release/R-exts.html#Rd-format">R-exts</a>
+   Read <a href="http://cran.r-project.org/doc/manuals/r-release/R-exts.html#Rd-format">R-exts</a>
    for a comprehensive guide to <code>.Rd</code> documentation and the set of available
    tags (which are understood by <code>roxygen</code> as well).
 </p>
