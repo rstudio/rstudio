@@ -3646,6 +3646,42 @@ public class TextEditingTarget implements
    }
    
    @Handler
+   void onOpenDataVisualizationCheatSheet()
+   {
+      globalDisplay_.openRStudioLink("data_visualization_cheat_sheet");
+   }
+   
+   @Handler
+   void onOpenPackageDevelopmentCheatSheet()
+   {
+      globalDisplay_.openRStudioLink("package_development_cheat_sheet");
+   }
+   
+   @Handler
+   void onOpenDataWranglingCheatSheet()
+   {
+      globalDisplay_.openRStudioLink("data_wrangling_cheat_sheet");
+   }
+   
+   @Handler
+   void onOpenRMarkdownCheatSheet()
+   {
+      globalDisplay_.openRStudioLink("r_markdown_cheat_sheet");
+   }
+   
+   @Handler
+   void onOpenRMarkdownReferenceGuide()
+   {
+      globalDisplay_.openRStudioLink("r_markdown_reference_guide");
+   }
+   
+   @Handler
+   void onOpenShinyCheatSheet()
+   {
+      globalDisplay_.openRStudioLink("shiny_cheat_sheet");
+   }
+   
+   @Handler
    void onOpenRoxygenQuickReference()
    {
       events_.fireEvent(new ShowHelpEvent("help/doc/roxygen_help.html"));
