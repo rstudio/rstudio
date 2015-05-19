@@ -37,6 +37,7 @@ case "$1" in
     stop)
         daemonCmd "stop"
         killall -s USR2 $2 $3 $4 $5 $6 $7 $8 $9  rsession
+        killall -s USR2 $2 $3 $4 $5 $6 $7 $8 $9  rworkspaces
         ;;
 
     restart)
@@ -66,6 +67,7 @@ case "$1" in
 
     suspend-all)
         killall -s USR1 $2 $3 $4 $5 $6 $7 $8 $9 rsession
+        killall -s USR1 $2 $3 $4 $5 $6 $7 $8 $9 rworkspaces
         ;;
 
     force-suspend-session)
@@ -80,6 +82,7 @@ case "$1" in
 
     force-suspend-all)
         killall -s USR2 $2 $3 $4 $5 $6 $7 $8 $9  rsession
+        killall -s USR2 $2 $3 $4 $5 $6 $7 $8 $9  rworkspaces
         ;;
 
     offline)
@@ -87,6 +90,7 @@ case "$1" in
         touch /var/lib/rstudio-server/offline
         daemonCmd "restart"
         killall -s USR2 $2 $3 $4 $5 $6 $7 $8 $9  rsession
+        killall -s USR2 $2 $3 $4 $5 $6 $7 $8 $9  rworkspaces
         ;;
 
     online)
