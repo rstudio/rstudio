@@ -344,6 +344,8 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="rstudioSupport"/>
          <separator/>
          <cmd refid="markdownHelp"/>
+         <cmd refid="openRoxygenQuickReference"/>
+         <separator/>
          <cmd refid="helpKeyboardShortcuts"/>
          <separator/>
          <cmd refid="rstudioAgreement"/>

@@ -162,9 +162,6 @@ public class TextEditingTargetWidget
       helpMenu.addSeparator();
       helpMenu.addItem(commands_.markdownHelp().createMenuItem(false));
       
-      if (uiPrefs_.useRoxygen().getValue())
-         helpMenu.addItem(commands_.openRoxygenQuickReference().createMenuItem(false));
-      
       helpMenuButton_ = new ToolbarButton(null, 
                                           StandardIcons.INSTANCE.help(), 
                                           helpMenu);
@@ -317,7 +314,6 @@ public class TextEditingTargetWidget
    public void adaptToFileType(TextFileType fileType)
    {
       editor_.setFileType(fileType);
-      boolean isR = fileType.isR();
       boolean canCompilePdf = fileType.canCompilePDF();
       boolean canKnitToHTML = fileType.canKnitToHTML();
       boolean canCompileNotebook = fileType.canCompileNotebook();
@@ -368,10 +364,7 @@ public class TextEditingTargetWidget
       editRmdFormatButton_.setVisible(isRMarkdown2);
       editRmdFormatButton_.setEnabled(isRMarkdown2);
 
-      helpMenuButton_.setVisible(
-            helpMenuButton_.getElement().getChildCount() > 0 && (
-                  isMarkdown || isRPresentation || isR));
-      
+      helpMenuButton_.setVisible(isMarkdown || isRPresentation);
       rcppHelpButton_.setVisible(isCpp);
       
       if (isShinyFile())
