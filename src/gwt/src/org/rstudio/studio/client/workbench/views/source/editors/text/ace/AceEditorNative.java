@@ -190,6 +190,10 @@ public class AceEditorNative extends JavaScriptObject {
       
       // We bind 'Ctrl + Shift + P' to run previous code on Windows
       delete this.commands.commandKeyBinding["ctrl-shift-p"];
+      
+      // We bind 'Ctrl + Alt + A' to 'split into lines'
+      if (this.commands.platform !== "mac")
+         delete this.commands.commandKeyBinding["ctrl-alt-a"];
    }-*/;
 
    public static <T> HandlerRegistration addEventListener(
