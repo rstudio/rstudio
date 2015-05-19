@@ -7,6 +7,7 @@
 * Snippets: pass parameters to snippet generating R functions
 * Split into lines command for multiple cursors (Ctrl+Alt+A)
 
+
 ### R Markdown
 
 * New run chunk button overlaid at the top right of chunks in the editor
@@ -29,4 +30,6 @@
 * Diagnostics: Resolve functions in correct namespace 
 * Enable outdenting in Rhtml documents
 * Find all now respects active search/replace options
+* Fix issue with cursor dissapearing in Rmd chunks for ambiance theme
+
 
