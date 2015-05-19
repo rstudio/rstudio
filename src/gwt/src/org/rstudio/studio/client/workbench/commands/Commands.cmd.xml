@@ -960,8 +960,8 @@ well as menu structures (for main menu and popup menus).
          desc="R Markdown reference guide"/>
          
     <cmd id="openShinyCheatSheet"
-         menuLabel="Shiny Cheat Sheet"
-         desc="Shiny cheat sheet"/>
+         menuLabel="Shiny Web Applications"
+         desc="Shiny web applications"/>
   
    <cmd id="knitDocument"
         buttonLabel="Knit"

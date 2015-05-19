@@ -253,10 +253,7 @@ public class Source implements InsertSourceHandler,
       dynamicCommands_.add(commands.executeNextChunk());
       dynamicCommands_.add(commands.sourceActiveDocument());
       dynamicCommands_.add(commands.sourceActiveDocumentWithEcho());
-      dynamicCommands_.add(commands.markdownHelp());
-      dynamicCommands_.add(commands.openRoxygenQuickReference());
       dynamicCommands_.add(commands.usingRMarkdownHelp());
-      dynamicCommands_.add(commands.openRoxygenQuickReference());
       dynamicCommands_.add(commands.authoringRPresentationsHelp());
       dynamicCommands_.add(commands.knitDocument());
       dynamicCommands_.add(commands.previewHTML());

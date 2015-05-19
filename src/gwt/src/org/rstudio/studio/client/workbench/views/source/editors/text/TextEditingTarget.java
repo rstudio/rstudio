@@ -3640,51 +3640,9 @@ public class TextEditingTarget implements
    }
    
    @Handler
-   void onMarkdownHelp()
+   void onKnitDocument()
    {
-      events_.fireEvent(new ShowHelpEvent("help/doc/markdown_help.html")) ;
-   }
-   
-   @Handler
-   void onOpenDataVisualizationCheatSheet()
-   {
-      globalDisplay_.openRStudioLink("data_visualization_cheat_sheet");
-   }
-   
-   @Handler
-   void onOpenPackageDevelopmentCheatSheet()
-   {
-      globalDisplay_.openRStudioLink("package_development_cheat_sheet");
-   }
-   
-   @Handler
-   void onOpenDataWranglingCheatSheet()
-   {
-      globalDisplay_.openRStudioLink("data_wrangling_cheat_sheet");
-   }
-   
-   @Handler
-   void onOpenRMarkdownCheatSheet()
-   {
-      globalDisplay_.openRStudioLink("r_markdown_cheat_sheet");
-   }
-   
-   @Handler
-   void onOpenRMarkdownReferenceGuide()
-   {
-      globalDisplay_.openRStudioLink("r_markdown_reference_guide");
-   }
-   
-   @Handler
-   void onOpenShinyCheatSheet()
-   {
-      globalDisplay_.openRStudioLink("shiny_cheat_sheet");
-   }
-   
-   @Handler
-   void onOpenRoxygenQuickReference()
-   {
-      events_.fireEvent(new ShowHelpEvent("help/doc/roxygen_help.html"));
+      onPreviewHTML();
    }
    
    @Handler
@@ -3694,30 +3652,6 @@ public class TextEditingTarget implements
          globalDisplay_.openRStudioLink("using_rmarkdown");
       else
          globalDisplay_.openRStudioLink("using_markdown");
-   }
-   
-   @Handler
-   void onAuthoringRPresentationsHelp()
-   {
-      globalDisplay_.openRStudioLink("authoring_presentations");
-   }
-   
-   @Handler
-   void onRcppHelp()
-   {
-      globalDisplay_.openRStudioLink("rcpp_help");
-   }
-   
-   @Handler
-   void onDebugHelp()
-   {
-      globalDisplay_.openRStudioLink("visual_debugger");
-   }
-   
-   @Handler
-   void onKnitDocument()
-   {
-      onPreviewHTML();
    }
    
    @Handler
