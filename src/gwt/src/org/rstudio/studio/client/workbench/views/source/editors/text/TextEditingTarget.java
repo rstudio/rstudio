@@ -3646,6 +3646,12 @@ public class TextEditingTarget implements
    }
    
    @Handler
+   void onMarkdownHelp()
+   {
+      events_.fireEvent(new ShowHelpEvent("help/doc/markdown_help.html")) ;
+   }
+   
+   @Handler
    void onUsingRMarkdownHelp()
    {
       if (extendedType_.equals("rmarkdown"))

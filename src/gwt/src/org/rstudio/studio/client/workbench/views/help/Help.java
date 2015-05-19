@@ -226,12 +226,6 @@ public class Help extends BasePresenter implements ShowHelpHandler
    }
    
    @Handler
-   void onMarkdownHelp()
-   {
-      events_.fireEvent(new ShowHelpEvent("help/doc/markdown_help.html")) ;
-   }
-   
-   @Handler
    void onOpenDataVisualizationCheatSheet()
    {
       globalDisplay_.openRStudioLink("data_visualization_cheat_sheet");
@@ -289,6 +283,12 @@ public class Help extends BasePresenter implements ShowHelpHandler
    void onDebugHelp()
    {
       globalDisplay_.openRStudioLink("visual_debugger");
+   }
+   
+   @Handler
+   void onMarkdownHelp()
+   {
+      events_.fireEvent(new ShowHelpEvent("help/doc/markdown_help.html")) ;
    }
 
    private Display view_ ;

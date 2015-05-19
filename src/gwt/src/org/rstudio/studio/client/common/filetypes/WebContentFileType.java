@@ -57,8 +57,6 @@ public class WebContentFileType extends TextFileType
    public HashSet<AppCommand> getSupportedCommands(Commands commands)
    {
       HashSet<AppCommand> result = super.getSupportedCommands(commands);
-      if (isMarkdown_)
-         result.add(commands.markdownHelp());
       return result;
    }
    
