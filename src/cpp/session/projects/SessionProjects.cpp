@@ -506,9 +506,6 @@ FilePath resolveProjectSwitch(const std::string& projectPath)
 }  // anonymous namespace
 
 
-// Note that the logic here needs to be synchronized with the logic in
-// core::r_util::RSessionContext::nextSessionWorkingDir (so that both
-// reach the same conclusion about what the next working directory is)
 void startup()
 {
    // register suspend handler
@@ -597,7 +594,18 @@ void startup()
          openProjError["message"] = userErrMsg;
          ClientEvent event(client_events::kOpenProjectError, openProjError);
          module_context::enqueClientEvent(event);
+
+         projSettings.setLastProjectOpened(kProjectNone);
       }
+      else
+      {
+         projSettings.setLastProjectOpened(
+                 module_context::createAliasedPath(projectFilePath));
+      }
+   }
+   else
+   {
+      projSettings.setLastProjectOpened(kProjectNone);
    }
 }
 

@@ -74,6 +74,27 @@ public:
          writeSetting(kLastProjectPath, "");
    }
 
+   std::string lastProjectOpened() const
+   {
+      std::string value = readSetting(kLastProjectOpenedPath);
+
+      // if we've never set this value before then migrate whatever
+      // value happens to be in nextSessionProject
+      if (value.empty())
+         value = nextSessionProject();
+
+      // if the value is still empty then set it to 'none'
+      if (value.empty())
+         value = kProjectNone;
+
+      return value;
+   }
+
+   void setLastProjectOpened(const std::string& lastProject)
+   {
+      writeSetting(kLastProjectOpenedPath, lastProject);
+   }
+
    std::string readSetting(const char * const settingName) const
    {
       return core::r_util::readProjectsSetting(settingsPath_, settingName);

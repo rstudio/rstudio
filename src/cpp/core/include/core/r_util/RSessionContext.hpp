@@ -32,6 +32,7 @@
 #define kSwitchToProject               "switch-to-project"
 #define kProjectNone                   "none"
 #define kLastProjectPath               "last-project-path"
+#define kLastProjectOpenedPath         "last-project-opened-path"
 
 #define kRStudioInitialWorkingDir      "RS_INITIAL_WD"
 #define kRStudioInitialEnvironment     "RS_INITIAL_ENV"
