@@ -190,6 +190,10 @@ public class AceEditorNative extends JavaScriptObject {
       
       // We bind 'Ctrl + Shift + P' to run previous code on Windows
       delete this.commands.commandKeyBinding["ctrl-shift-p"];
+      
+      // We bind 'Ctrl + Alt + A' to 'split into lines'
+      if (this.commands.platform !== "mac")
+         delete this.commands.commandKeyBinding["ctrl-alt-a"];
    }-*/;
 
    public static <T> HandlerRegistration addEventListener(
@@ -239,6 +243,10 @@ public class AceEditorNative extends JavaScriptObject {
    
    public final native void jumpToMatching(boolean select, boolean expand) /*-{
       this.jumpToMatching(select, expand);
+   }-*/;
+   
+   public final native void splitIntoLines() /*-{
+      return this.multiSelect && this.multiSelect.splitIntoLines();
    }-*/;
    
    public native final void revealRange(Range range, boolean animate) /*-{
