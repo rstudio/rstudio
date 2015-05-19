@@ -151,6 +151,7 @@ extern "C" const char *locale2charset(const char *);
 
 #include <session/SessionConsoleProcess.hpp>
 
+#include <session/projects/ProjectsSettings.hpp>
 #include <session/projects/SessionProjects.hpp>
 #include "projects/SessionProjectsInternal.hpp"
 
@@ -882,8 +883,8 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
             // note switch to project
             if (!switchToProject.empty())
             {
-               rsession::projects::projectContext().setSwitchToProjectPath(
-                                                                  switchToProject);
+               projects::ProjectsSettings(options().userScratchPath()).
+                                    setSwitchToProjectPath(switchToProject);
             }
 
             // exit status
@@ -2185,7 +2186,8 @@ void rQuit()
 
    // enque a quit event
    bool switchProjects =
-         !rsession::projects::projectContext().switchToProjectPath().empty();
+     !projects::ProjectsSettings(options().userScratchPath())
+                                          .switchToProjectPath().empty();
    ClientEvent quitEvent(kQuit, switchProjects);
    rsession::clientEventQueue().add(quitEvent);
 }

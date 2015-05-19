@@ -26,6 +26,8 @@
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionUserSettings.hpp>
 
+#include <session/projects/ProjectsSettings.hpp>
+
 #include <r/RExec.hpp>
 #include <r/RRoutines.hpp>
 #include <r/session/RSessionUtils.hpp>
@@ -50,8 +52,8 @@ void onSuspend(Settings*)
    // on resume. we read this back in initalize (rather than in
    // the onResume handler) becuase we need it very early in the
    // processes lifetime and onResume happens too late
-   s_projectContext.setNextSessionProject(
-                              s_projectContext.file().absolutePath());
+   projects::ProjectsSettings(options().userScratchPath()).
+         setNextSessionProject(s_projectContext.file().absolutePath());
 }
 
 void onResume(const Settings&) {}
@@ -420,7 +422,8 @@ Error writeProjectVcsOptions(const json::JsonRpcRequest& request,
 
 void onQuit()
 {
-   s_projectContext.setLastProjectPath(s_projectContext.file());
+   projects::ProjectsSettings(options().userScratchPath()).
+                        setLastProjectPath(s_projectContext.file());
 }
 
 void syncProjectFileChanges()
@@ -488,7 +491,8 @@ FilePath resolveProjectSwitch(const std::string& projectPath)
 
       // flush the last project path so restarts won't put us back into
       // project context (see case 4015)
-      s_projectContext.setLastProjectPath(FilePath());
+      projects::ProjectsSettings(options().userScratchPath()).
+                                       setLastProjectPath(FilePath());
    }
    else
    {
@@ -515,9 +519,10 @@ void startup()
    FilePath projectFilePath;
 
    // alias some project context data
-   std::string nextSessionProject = s_projectContext.nextSessionProject();
-   std::string switchToProject = s_projectContext.switchToProjectPath();
-   FilePath lastProjectPath = s_projectContext.lastProjectPath();
+   projects::ProjectsSettings projSettings(options().userScratchPath());
+   std::string nextSessionProject = projSettings.nextSessionProject();
+   std::string switchToProject = projSettings.switchToProjectPath();
+   FilePath lastProjectPath = projSettings.lastProjectPath();
 
    // check for explicit request for a project (file association or url based)
    if (!session::options().initialProjectPath().empty())
@@ -530,7 +535,7 @@ void startup()
    else if (!nextSessionProject.empty())
    {
       // reset next session project path so its a one shot deal
-      s_projectContext.setNextSessionProject("");
+      projSettings.setNextSessionProject("");
 
       projectFilePath = resolveProjectSwitch(nextSessionProject);
    }
@@ -539,7 +544,7 @@ void startup()
    else if (!switchToProject.empty())
    {
       // reset switch to project path so its a one shot deal
-      s_projectContext.setSwitchToProjectPath("");
+      projSettings.setSwitchToProjectPath("");
 
       projectFilePath = resolveProjectSwitch(switchToProject);
    }
@@ -563,7 +568,7 @@ void startup()
       // reset it to empty so that we only attempt to load the "lastProject"
       // a single time (this will be reset to the path below after we
       // clear the s_projectContext.initialize)
-      s_projectContext.setLastProjectPath(FilePath());
+      projSettings.setLastProjectPath(FilePath());
    }
 
    // else no active project for this session

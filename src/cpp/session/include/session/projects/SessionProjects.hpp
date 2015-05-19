@@ -93,18 +93,6 @@ public:
    // these functions can be called even when there is no project
    bool hasProject() const { return !file_.empty(); }
 
-   // next session project path -- low level value used by suspend
-   std::string nextSessionProject() const;
-   void setNextSessionProject(const std::string& nextSessionProject);
-
-   // switch to project path
-   std::string switchToProjectPath() const;
-   void setSwitchToProjectPath(const std::string& switchToProjectPath);
-
-   // last project path -- used to implement restore last project user setting
-   core::FilePath lastProjectPath() const;
-   void setLastProjectPath(const core::FilePath& lastProjectPath);
-
    const core::FilePath& file() const { return file_; }
    const core::FilePath& directory() const { return directory_; }
    const core::FilePath& scratchPath() const { return scratchPath_; }

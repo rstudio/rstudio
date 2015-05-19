@@ -32,6 +32,8 @@
 #include <session/SessionUserSettings.hpp>
 #include <session/SessionModuleContext.hpp>
 
+#include <session/projects/ProjectsSettings.hpp>
+
 #include "SessionProjectFirstRun.hpp"
 
 using namespace rstudio::core;
@@ -59,10 +61,6 @@ bool canWriteToProjectDir(const FilePath& projectDirPath)
       return true;
    }
 }
-
-// access to project settings
-std::string readSetting(const char * const settingName);
-void writeSetting(const char * const settingName, const std::string& value);
 
 }  // anonymous namespace
 
@@ -168,10 +166,11 @@ Error ProjectContext::startup(const FilePath& projectFile,
       return error;
 
    // update package install args with new defaults (one time only)
+   ProjectsSettings projSettings(options().userScratchPath());
    const char * kUpdatePackageInstallDefault = "update-pkg-install-default";
-   if (readSetting(kUpdatePackageInstallDefault).empty())
+   if (projSettings.readSetting(kUpdatePackageInstallDefault).empty())
    {
-      writeSetting(kUpdatePackageInstallDefault, "1");
+      projSettings.writeSetting(kUpdatePackageInstallDefault, "1");
       if (r_util::updateSetPackageInstallArgsDefault(&config))
          providedDefaults = true;
    }
@@ -323,71 +322,6 @@ Error ProjectContext::initialize()
    return Success();
 }
 
-
-namespace {
-
-// NOTE: the HttpConnectionListener relies on this path as well as the
-// kNextSessionProject constant in order to write the next session project
-// in the case of a forced abort (the two implementations are synchronized
-// using constants so that the connection listener doesn't call into modules
-// that are single threaded by convention
-FilePath settingsPath()
-{
-   return r_util::projectsSettingsPath(session::options().userScratchPath());
-}
-
-std::string readSetting(const char * const settingName)
-{
-   return r_util::readProjectsSetting(settingsPath(), settingName);
-}
-
-void writeSetting(const char * const settingName, const std::string& value)
-{
-   r_util::writeProjectsSetting(settingsPath(), settingName, value);
-}
-
-} // anonymous namespace
-
-std::string ProjectContext::nextSessionProject() const
-{
-   return readSetting(kNextSessionProject);
-}
-
-void ProjectContext::setNextSessionProject(
-                           const std::string& nextSessionProject)
-{
-   writeSetting(kNextSessionProject, nextSessionProject);
-}
-
-// switch to project path
-std::string ProjectContext::switchToProjectPath() const
-{
-   return readSetting(kSwitchToProject);
-}
-
-void ProjectContext::setSwitchToProjectPath(
-                                 const std::string& switchToProjectPath)
-{
-   writeSetting(kSwitchToProject, switchToProjectPath);
-}
-
-
-FilePath ProjectContext::lastProjectPath() const
-{
-   std::string path = readSetting(kLastProjectPath);
-   if (!path.empty())
-      return FilePath(path);
-   else
-      return FilePath();
-}
-
-void ProjectContext::setLastProjectPath(const FilePath& lastProjectPath)
-{
-   if (!lastProjectPath.empty())
-      writeSetting(kLastProjectPath, lastProjectPath.absolutePath());
-   else
-      writeSetting(kLastProjectPath, "");
-}
 
 
 void ProjectContext::onDeferredInit(bool newSession)
