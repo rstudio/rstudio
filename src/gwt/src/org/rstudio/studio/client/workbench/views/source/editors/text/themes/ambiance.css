@@ -75,9 +75,9 @@
   background: #766B13;
 }
 
-.ace_cursor-layer {
-  z-index: 0;
-}
+
+
+
  
 .ace_marker-layer .ace_selection {
   background: rgba(221, 240, 255, 0.20);

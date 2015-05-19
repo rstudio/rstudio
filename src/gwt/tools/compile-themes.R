@@ -1,6 +1,6 @@
 #!/usr/bin/env Rscript
 
-if (!require("highlight")) {
+if (!require("highlight", quietly = TRUE)) {
    install.packages("highlight")
    if (!require("highlight")) {
       stop("This script requires 'highlight' in order to run!")
@@ -133,6 +133,31 @@ get_chunk_bg_color <- function(themeName, isDark) {
       if (isDark) 0.9 else 0.95
    else
       p
+}
+
+applyFixups <- function(content, fileName) {
+   
+   methodName <- paste("applyFixups", fileName, sep = ".")
+   method <- try(get(methodName), silent = TRUE)
+   if (inherits(method, "try-error"))
+      return(content)
+   
+   method(content)
+}
+
+findNext <- function(regex, content, start = 1, end = length(content)) {
+   matches <- grep(regex, content, perl = TRUE)
+   matches[(matches > start) & (matches < end)][1]
+}
+
+applyFixups.ambiance <- function(content) {
+   
+   aceCursorLayerLoc <- grep("^\\s*\\.ace_cursor-layer\\s*{", content, perl = TRUE)
+   nextBraceLoc <- findNext("}", content, aceCursorLayerLoc)
+   
+   content[aceCursorLayerLoc:nextBraceLoc] <- ""
+   
+   content
 }
 
 ## Get the set of all theme .css files
@@ -355,6 +380,9 @@ for (file in themeFiles) {
    ## Add keyword colors if necessary.
    if (fileName %in% names(keyword_theme_map))
       content <- add_keyword_color(content, fileName)
+   
+   # Apply other custom fixups
+   content <- applyFixups(content, fileName)
    
    ## Phew! Write it out.
    outputPath <- file.path(outDir, basename(file))
