@@ -709,6 +709,17 @@ void handleHttpdRequest(const std::string& location,
          return;
       }
    }
+   
+   // roxygen help
+   if (path == "/doc/roxygen_help.html")
+   {
+      core::FilePath helpFile = options().rResourcesPath().childPath("roxygen_help.html");
+      if (helpFile.exists())
+      {
+         pResponse->setFile(helpFile, request, filter);
+         return;
+      }
+   }
 
    if (boost::algorithm::starts_with(path, "/doc/home/"))
    {
