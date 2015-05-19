@@ -161,6 +161,7 @@ public class TextEditingTargetWidget
       helpMenu.addItem(commands_.authoringRPresentationsHelp().createMenuItem(false));
       helpMenu.addSeparator();
       helpMenu.addItem(commands_.markdownHelp().createMenuItem(false));
+      
       helpMenuButton_ = new ToolbarButton(null, 
                                           StandardIcons.INSTANCE.help(), 
                                           helpMenu);

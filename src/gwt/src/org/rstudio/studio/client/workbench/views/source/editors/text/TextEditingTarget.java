@@ -3646,9 +3646,9 @@ public class TextEditingTarget implements
    }
    
    @Handler
-   void onMarkdownHelp()
+   void onKnitDocument()
    {
-      events_.fireEvent(new ShowHelpEvent("help/doc/markdown_help.html")) ;
+      onPreviewHTML();
    }
    
    @Handler
@@ -3658,30 +3658,6 @@ public class TextEditingTarget implements
          globalDisplay_.openRStudioLink("using_rmarkdown");
       else
          globalDisplay_.openRStudioLink("using_markdown");
-   }
-   
-   @Handler
-   void onAuthoringRPresentationsHelp()
-   {
-      globalDisplay_.openRStudioLink("authoring_presentations");
-   }
-   
-   @Handler
-   void onRcppHelp()
-   {
-      globalDisplay_.openRStudioLink("rcpp_help");
-   }
-   
-   @Handler
-   void onDebugHelp()
-   {
-      globalDisplay_.openRStudioLink("visual_debugger");
-   }
-   
-   @Handler
-   void onKnitDocument()
-   {
-      onPreviewHTML();
    }
    
    @Handler

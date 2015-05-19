@@ -24,6 +24,7 @@ import org.rstudio.core.client.CsvWriter;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.workbench.WorkbenchList;
 import org.rstudio.studio.client.workbench.WorkbenchListManager;
 import org.rstudio.studio.client.workbench.WorkbenchView;
@@ -75,17 +76,20 @@ public class Help extends BasePresenter implements ShowHelpHandler
    
    @Inject
    public Help(Display view,
+               GlobalDisplay globalDisplay,
                HelpServerOperations server,
                WorkbenchListManager listManager,
                Commands commands,
                Binder binder,
                final Session session,
-               final EventBus eventBus)
+               final EventBus events)
    {
       super(view);
       server_ = server ;
       helpHistoryList_ = listManager.getHelpHistoryList();
       view_ = view;
+      globalDisplay_ = globalDisplay;
+      events_ = events;
 
       binder.bind(commands, this);
 
@@ -220,9 +224,77 @@ public class Help extends BasePresenter implements ShowHelpHandler
       else
          return helpUrl;
    }
+   
+   @Handler
+   void onOpenDataVisualizationCheatSheet()
+   {
+      globalDisplay_.openRStudioLink("data_visualization_cheat_sheet");
+   }
+   
+   @Handler
+   void onOpenPackageDevelopmentCheatSheet()
+   {
+      globalDisplay_.openRStudioLink("package_development_cheat_sheet");
+   }
+   
+   @Handler
+   void onOpenDataWranglingCheatSheet()
+   {
+      globalDisplay_.openRStudioLink("data_wrangling_cheat_sheet");
+   }
+   
+   @Handler
+   void onOpenRMarkdownCheatSheet()
+   {
+      globalDisplay_.openRStudioLink("r_markdown_cheat_sheet");
+   }
+   
+   @Handler
+   void onOpenRMarkdownReferenceGuide()
+   {
+      globalDisplay_.openRStudioLink("r_markdown_reference_guide");
+   }
+   
+   @Handler
+   void onOpenShinyCheatSheet()
+   {
+      globalDisplay_.openRStudioLink("shiny_cheat_sheet");
+   }
+   
+   @Handler
+   void onOpenRoxygenQuickReference()
+   {
+      events_.fireEvent(new ShowHelpEvent("help/doc/roxygen_help.html"));
+   }
+   
+   @Handler
+   void onAuthoringRPresentationsHelp()
+   {
+      globalDisplay_.openRStudioLink("authoring_presentations");
+   }
+   
+   @Handler
+   void onRcppHelp()
+   {
+      globalDisplay_.openRStudioLink("rcpp_help");
+   }
+   
+   @Handler
+   void onDebugHelp()
+   {
+      globalDisplay_.openRStudioLink("visual_debugger");
+   }
+   
+   @Handler
+   void onMarkdownHelp()
+   {
+      events_.fireEvent(new ShowHelpEvent("help/doc/markdown_help.html")) ;
+   }
 
    private Display view_ ;
    private HelpServerOperations server_ ;
    private WorkbenchList helpHistoryList_;
    private boolean historyInitialized_ ;
+   private GlobalDisplay globalDisplay_;
+   private EventBus events_;
 }

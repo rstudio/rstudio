@@ -1,0 +1,412 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html>
+<head>
+<title>Roxygen Quick Reference</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link rel="stylesheet" type="text/css" href="R.css">
+
+<style type="text/css">
+
+body {
+   max-width: 600px;
+}
+
+.common-tags-table {
+   max-width: 600px;
+   margin-left: 10px;
+   margin-right: 10px;
+   border-collapse: collapse;
+   background-color: #f5f5f5;
+}
+
+.common-tags-table pre {
+   border: none !important;
+}
+
+.common-tags-table code {
+   font-weight: bold;
+}
+
+.common-tags-table td {
+   padding: 6px;
+   width: 50%;
+   border: 1px solid #ccc;
+   text-align: left;
+   vertical-align: top;
+}
+
+h4 {
+   color: rgb(20%, 20%, 20%);
+}
+
+#roxygen_examples pre {	
+   margin-top: 3px;
+   margin-left: 10px;
+   margin-right: 10px;
+   background-color: #f5f5f5;
+   border: 1px solid #ccc;
+   padding: 4px;
+   max-width: 600px;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<h1>Roxygen Quick Reference</h1>
+
+<p>
+   <code>roxygen2</code> is an <code>R</code> package that allows
+   you to write in-source documentation for your package functions and objects.
+</p>
+
+<p>
+   Write documentation above your package functions with the <code>#'</code> comment
+   prefix.
+</p>
+
+<div id="roxygen_examples">
+
+<h3>Documenting Functions</h3>
+
+<h4>Example</h4>
+
+<pre>
+#' This is the title.
+#'
+#' This is the description.
+#'
+#' These are further details.
+#'
+#' @section A Custom Section:
+#'
+#' Text accompanying the custom section.
+#'
+#' @param x A description of the parameter 'x'. The
+#'   description can span multiple lines.
+#' @param y A description of the parameter 'y'.
+#'
+#' @export
+#'
+#' @examples
+#' add_numbers(1, 2) ## returns 3
+#'
+#' ## don't run this in calls to 'example(add_numbers)'
+#' \dontrun{
+#'    add_numbers(2, 3)
+#' }
+#'
+#' ## don't test this during 'R CMD check'
+#' \donttest{
+#'    add_numbers(4, 5)
+#' }
+add_numbers <- function(x, y) {
+     x + y
+}
+</pre>
+
+<h4>Common Tags</h4>
+
+<table class="common-tags-table">
+   
+   <tr>
+      <td>
+	 <code>@param &lt;name&gt; &lt;description&gt;</code>
+      </td>
+      <td>
+	 Document a function parameter.
+      </td>
+   </tr>
+   
+   <tr>
+      <td>
+	 <code>@export</code>
+      </td>
+      <td>
+	 Make this function available to users of your package.
+      </td>
+   </tr>
+   
+   <tr>
+      <td>
+	 <code>@examples &lt;r-code&gt;</code>
+      </td>
+      <td>
+         <p>
+	    Inline R code showing how the function is used.
+         </p>
+         <p>
+	    Wrap code blocks in <code>\dontrun{}</code> to prevent
+	    them from running on calls to <code>example()</code>.
+	    Use <code>\donttest{}</code> to disable running this
+	    code in <code>R CMD check</code>.
+         </p>
+      </td>
+   </tr>
+   
+   <tr>
+      <td>
+	 <code>@return</code>
+      </td>
+      <td>
+	 Describe what this function returns.
+      </td>
+   </tr>
+
+   <tr>
+      <td>
+         <code>@family &lt;family-name&gt;</code>
+      </td>
+      <td>
+         Automatically generate links to other functions within this
+         family in the documentation's <strong>See Also</strong> section.
+      </td>
+   </tr>
+   
+   <tr>
+      <td>
+	 <code>@seealso</code>
+      </td>
+      <td>
+	 Provide links to other resources that could help users
+	 understand how to use your function.
+      </td>
+   </tr>
+   
+   <tr>
+      <td>
+	 <code>@inheritParams &lt;function&gt;</code>
+      </td>
+      <td>
+         <p>
+            Re-use parameter documentation from another function.
+         </p>
+         <p>
+            Use
+            <code>@inheritParams &lt;package::function&gt;</code> to
+            re-use documentation from a function in a separate package.
+         </p>
+      </td>
+   </tr>
+
+   <tr>
+      <td>
+	 <code>@section &lt;name&gt;:</code>
+      </td>
+      <td>
+         <p>
+            Provide a custom section with the name <code>&lt;name&gt;</code>.
+            The line must end with a colon (<code>:</code>).
+         </p>
+      </td>
+   </tr>
+   
+   
+</table>
+
+<p>
+   In addition, you can use <strong><code>@keywords internal</code></strong> to ensure
+   that documentation for a particular function is generated, but not added to the package
+   index.
+</p>
+
+<h3>Documenting Packages</h3>
+
+<p>
+   By convention, package documentation is usually included in a file
+   <code>R/&lt;package-name&gt;-package.R</code>. The <code>roxygen</code> block
+   providing package documentation should contain the
+   <code>@docType package</code> field declaration, and should end with <code>NULL</code>.
+</p>
+
+<h4>Example</h4>
+
+<pre>
+#' Package Name
+#'
+#' Package description.
+#'
+#' @docType package
+#' @name &lt;package-name&gt;
+#' @import assertthat
+#' @importFrom utils head tail
+#' @useDynLib &lt;package-name&gt;
+NULL
+</pre>
+
+<h4>Common Tags</h4>
+
+<table class="common-tags-table">
+   <tr>
+      <td>
+	 <code>@import &lt;pkg&gt;</code>
+      </td>
+      <td>
+	 Import all symbols from a package, for use
+	 in your own package's functions.
+      </td>
+   </tr>
+   <tr>
+      <td>
+	 <code>@importFrom &lt;pkg&gt; &lt;symbols...&gt;</code>
+      </td>
+      <td>
+	 Selectively import symbols from a package, for use
+	 in your own package's functions.
+      </td>
+   </tr>
+   <tr>
+      <td>
+	 <code>@useDynLib &lt;own-pkg&gt;</code>
+      </td>
+      <td>
+	 Include this if your package contains C / C++ code.
+      </td>
+   </tr>
+</table>
+
+<h3>Rd Markup</h3>
+
+<p>
+   Use <code>R Documentation</code> LaTeX-style markup to further style your documentation.
+</p>
+
+<table class="common-tags-table">
+   <tr>
+      <td>
+         <code>\emph{}</code>
+      </td>
+      <td>
+         For <em>italicized</em> text.
+      </td>
+   </tr>
+   <tr>
+      <td>
+         <code>\strong{}</code>
+      </td>
+      <td>
+         For <strong>bold</strong> text.
+      </td>
+   </tr>
+   <tr>
+      <td>
+         <code>\code{}</code>
+      </td>
+      <td>
+         For <code>code</code> or otherwise
+         <code>pre-formatted</code> text.
+      </td>
+   </tr>
+   <tr>
+      <td>
+         <code>\link{object}</code>
+         <br/>
+         <br/>
+         <code>\link[=class]{object}</code>
+         <br/>
+         <code>\linkS4class{S4Class}</code>
+      </td>
+      <td>
+         <p>
+            Used to link to other <code>R</code> documentation.
+         </p>
+         <p>
+            For example, use <code>\code{\link{rnorm}}</code> to link to the
+            documentation associated with the <code>rnorm</code> function.
+         </p>
+      </td>
+   </tr>
+   <tr>
+      <td>
+         <code>\url{URL}</code>
+         <br/>
+         <code>\href{URL}{text}</code>
+      </td>
+      <td>
+         <p>
+            Link to content on the internet; for example, external
+            documentation.
+         </p>
+         <p>
+            Use <code>\href{URL}{text}</code> if you want
+            the displayed text to differ from the linked URL.
+         </p>
+      </td>
+   </tr>
+   <tr>
+      <td>
+         <code>\enumerate{&lt;items...&gt;}</code>
+         <br/>
+         <code>\itemize{&lt;items...&gt;}</code>
+         <br/>
+         <code>\describe{&lt;items...&gt;}</code>
+      </td>
+      <td>
+         <p>
+            Provide a list of items. <code>\enumerate{}</code>
+            delimits entries with sequential numbers, while
+            <code>\itemize{}</code> delimits entries with bullets.
+         </p>
+         <pre>\enumerate{
+   \item Item 1.
+   \item Item 2.
+   \item Item 3.
+}</pre>
+         <p>
+            <code>\describe{}</code> differs in that items are
+            specified with labels as well as text, e.g.
+         </p>
+         <pre>\describe{
+   \item{label-1}{text-1}
+   \item{label-2}{text-2}
+}</pre>
+      </td>
+   </tr>
+   <tr>
+      <td>
+         <code>\tabular{alignment}{text}</code>
+      </td>
+      <td>
+         <p>
+            Provide a table of text.
+         </p>
+         <p>
+            Separate fields with <code>\tab</code>,
+            and rows with <code>\cr</code>. <code>alignment</code> is a string
+            of <code>l</code> / <code>c</code> / <code>r</code>, indicating
+            <strong>l</strong>eft, <strong>c</strong>enter, and <strong>r</strong>ight
+            alignment respectively. There should be one letter for each column in the table.
+         </p>
+         <pre>\tabular{rl}{
+   Entry 1 \tab Entry 2 \cr
+   Entry 3 \tab Entry 4 \cr
+}</pre>
+      </td>
+   </tr>
+</table>
+
+<h3>Learning More</h3>
+
+<p>
+   Read Hadley Wickham's guide in <a href="http://r-pkgs.had.co.nz/">R Packages</a> to learn
+   more about how to use <code>roxygen2</code> and <code>devtools</code> to produce
+   documentation for your R packages.
+</p>
+   
+<p>
+   Read the
+   <code><a href="http://cran.r-project.org/web/packages/roxygen2/vignettes/roxygen2.html">roxygen</a></code>
+   vignettes: start with the introductory vignette
+   with <code>vignette("roxygen2")</code>, and view other available vignettes with
+   <code>vignette(package = "roxygen2")</code>.
+</p>
+
+<p>
+   Read <a href="http://cran.r-project.org/doc/manuals/r-release/R-exts.html#Rd-format">R-exts</a>
+   for a comprehensive guide to <code>.Rd</code> documentation and the set of available
+   tags (which are understood by <code>roxygen</code> as well).
+</p>
