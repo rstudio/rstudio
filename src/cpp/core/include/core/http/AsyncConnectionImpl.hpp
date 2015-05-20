@@ -190,8 +190,9 @@ private:
                   requestFilter_(
                      &request_,
                      boost::bind(
-                        &AsyncConnectionImpl<ProtocolType>::callHandler,
-                        AsyncConnectionImpl<ProtocolType>::shared_from_this()
+                        &AsyncConnectionImpl<ProtocolType>::requestFilterContinuation,
+                        AsyncConnectionImpl<ProtocolType>::shared_from_this(),
+                        _1
                      ));
                }
                else
@@ -222,6 +223,19 @@ private:
       CATCH_UNEXPECTED_EXCEPTION
    }
    
+   void requestFilterContinuation(status::Code code)
+   {
+      if (code == http::status::Ok)
+      {
+         callHandler();
+      }
+      else
+      {
+         response_.setStatusCode(code);
+         writeResponse();
+      }
+   }
+
    void callHandler()
    {
       handler_(AsyncConnectionImpl<ProtocolType>::shared_from_this(),

@@ -352,13 +352,14 @@ private:
       CATCH_UNEXPECTED_EXCEPTION
    }
 
-   void connectionRequestFilter(http::Request* pRequest,
-                                boost::function<void()> continuation)
+   void connectionRequestFilter(
+            http::Request* pRequest,
+            boost::function<void(http::status::Code)> continuation)
    {
       if (requestFilter_)
          requestFilter_(pRequest, continuation);
       else
-         continuation();
+         continuation(http::status::Ok);
    }
 
    void connectionResponseFilter(const std::string& originalUri,

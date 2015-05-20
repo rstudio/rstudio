@@ -19,6 +19,7 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/asio/io_service.hpp>
 
+#include <core/http/Response.hpp>
 #include <core/http/Socket.hpp>
 
 namespace rstudio {
@@ -35,7 +36,7 @@ class AsyncConnection;
 
 typedef boost::function<void(
             http::Request*,
-            boost::function<void()> continuation)> RequestFilter;
+            boost::function<void(status::Code)>)> RequestFilter;
 
 typedef boost::function<void(const std::string&,
                              http::Response*)> ResponseFilter;
