@@ -31,5 +31,6 @@
 * Enable outdenting in Rhtml documents
 * Find all now respects active search/replace options
 * Fix issue with cursor dissapearing in Rmd chunks for ambiance theme
+* Publish button shows in the editor and viewer at the appropriate times
 
 
