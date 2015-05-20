@@ -9,7 +9,7 @@ set "PATH=C:\Program Files (x86)\Git\bin;%PATH%"
 
 set PATH=%PATH%;%CD%\tools
 
-call:install rsconnect v0.99
+call:install rsconnect master
 
 GOTO:EOF
 

@@ -63,7 +63,7 @@ mv $PACKAGE_ARCHIVE $PACKAGE_ARCHIVE_SHA1
 
 }
 
-install rsconnect v0.99
+install rsconnect master
 
 # back to install-dir
 cd $INSTALL_DIR
