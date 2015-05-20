@@ -150,6 +150,8 @@
 
 
 .rs.addJsonRpcHandler("rmd_output_format", function(input, encoding) {
+  if (Encoding(input) == "unknown")
+    Encoding(input) <- "UTF-8"
   formats <- rmarkdown:::enumerate_output_formats(input, encoding = encoding)
   if (is.character(formats))
     .rs.scalar(formats[[1]])
