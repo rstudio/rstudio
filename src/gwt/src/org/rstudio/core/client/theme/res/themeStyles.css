@@ -1392,9 +1392,8 @@ body.ubuntu_mono .searchBox {
    background-image: ERRORDARK;
 }
 
-.inlineChunkIcon {
+.inlineChunkToolbar {
 	position: absolute;
 	right: 10px;
 	z-index: 10;
-	cursor: pointer !important;
 }

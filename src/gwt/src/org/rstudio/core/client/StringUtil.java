@@ -30,6 +30,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 public class StringUtil
 {
@@ -934,6 +935,23 @@ public class StringUtil
       map.put("(", ")");
       map.put(")", "(");
       return map;
+   }
+
+   public static String collapse(Map<String, String> map,
+                                 String keyValueSeparator,
+                                 String fieldSeparator)
+   {
+      StringBuilder builder = new StringBuilder();
+      int count = 0;
+      for (Map.Entry<String, String> cursor : map.entrySet())
+      {
+         if (count != 0) builder.append(fieldSeparator);
+         builder.append(cursor.getKey());
+         builder.append(keyValueSeparator);
+         builder.append(cursor.getValue());
+         count++;
+      }
+      return builder.toString();
    }
    
    public static final HashMap<String, String> COMPLEMENTS =

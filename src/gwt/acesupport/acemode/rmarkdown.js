@@ -184,7 +184,8 @@ oop.inherits(Mode, MarkdownMode);
         + unicode.packages.Nd
         + unicode.packages.Pc + "._]|\\s])+", "g"
     );
-   
+
+    this.$id = "mode/rmarkdown";
 
 }).call(Mode.prototype);
 

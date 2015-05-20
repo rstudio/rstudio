@@ -125,6 +125,8 @@ oop.inherits(Mode, TextMode);
 
    this.allowAutoInsert = this.smartAllowAutoInsert;
 
+   this.$id = "mode/sweave";
+
 }).call(Mode.prototype);
 
 exports.Mode = Mode;
