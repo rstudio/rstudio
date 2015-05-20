@@ -89,7 +89,6 @@ import org.rstudio.studio.client.rmarkdown.model.RmdTemplateFormat;
 import org.rstudio.studio.client.rmarkdown.model.RmdYamlData;
 import org.rstudio.studio.client.rmarkdown.model.YamlFrontMatter;
 import org.rstudio.studio.client.rmarkdown.ui.RmdTemplateOptionsDialog;
-import org.rstudio.studio.client.rsconnect.RSConnect;
 import org.rstudio.studio.client.rsconnect.events.RSConnectActionEvent;
 import org.rstudio.studio.client.rsconnect.events.RSConnectDeployInitiatedEvent;
 import org.rstudio.studio.client.rsconnect.model.RSConnectPublishSettings;
@@ -200,7 +199,7 @@ public class TextEditingTarget implements
       HandlerRegistration addRmdFormatChangedHandler(
             RmdOutputFormatChangedEvent.Handler handler);
       
-      void setPublishPath(int contentType, String publishPath);
+      void setPublishPath(String type, String publishPath);
    }
 
    private class SaveProgressIndicator implements ProgressIndicator
@@ -4800,13 +4799,12 @@ public class TextEditingTarget implements
    private void syncPublishPath(String path)
    {
       // if we have a view, a type, and a path, sync the view's content publish
-      // path to the new content path
-      if (view_ != null && extendedType_ != null && path != null &&
-          (extendedType_.equals("shiny") || extendedType_.equals("rmarkdown")))
+      // path to the new content path--note that we need to do this even if the
+      // document isn't currently of a publishable type, since it may become 
+      // publishable once saved.
+      if (view_ != null && path != null)
       {
-         view_.setPublishPath(extendedType_.equals("shiny") ?
-               RSConnect.CONTENT_TYPE_APP : 
-               RSConnect.CONTENT_TYPE_DOCUMENT, path);
+         view_.setPublishPath(extendedType_, path);
       }
    }
    
