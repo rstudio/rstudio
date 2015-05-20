@@ -71,6 +71,7 @@ public:
          const std::string& account,
          const std::string& server,
          const std::string& app,
+         const std::string& contentCategory,
          const json::Array& additionalFilesList,
          const json::Array& ignoredFilesList,
          bool asMultiple,
@@ -112,7 +113,9 @@ public:
                 sourceDoc + "', ") + 
              "account = '" + account + "',"
              "server = '" + server + "', "
-             "appName = '" + app + "', "
+             "appName = '" + app + "', " + 
+             (contentCategory.empty() ? "" : "contentCategory = '" + 
+                contentCategory + "', ") +
              "launch.browser = function (url) { "
              "   message('" kFinishedMarker "', url) "
              "}, "
@@ -188,11 +191,13 @@ Error rsconnectPublish(const json::JsonRpcRequest& request,
                        json::JsonRpcResponse* pResponse)
 {
    json::Array sourceFiles, additionalFiles, ignoredFiles;
-   std::string sourceDir, sourceFile, sourceDoc, account, server, appName;
+   std::string sourceDir, sourceFile, sourceDoc, account, server, appName,
+               contentCategory;
    bool asMultiple = false, asStatic = false;
    Error error = json::readParams(request.params, &sourceDir, &sourceFiles,
                                    &sourceFile, &sourceDoc, &account, &server, 
-                                   &appName, &additionalFiles, &ignoredFiles, 
+                                   &appName, &contentCategory, 
+                                   &additionalFiles, &ignoredFiles, 
                                    &asMultiple, &asStatic);
    if (error)
       return error;
@@ -207,6 +212,7 @@ Error rsconnectPublish(const json::JsonRpcRequest& request,
       s_pRSConnectPublish_ = RSConnectPublish::create(sourceDir, sourceFiles, 
                                                   sourceFile, sourceDoc, 
                                                   account, server, appName, 
+                                                  contentCategory,
                                                   additionalFiles,
                                                   ignoredFiles, asMultiple,
                                                   asStatic);
