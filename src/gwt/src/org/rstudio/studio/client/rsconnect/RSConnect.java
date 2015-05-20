@@ -205,7 +205,8 @@ public class RSConnect implements SessionInitHandler,
                               new RSConnectPublishSource(event.getPath(), 
                                     event.getHtmlFile(), 
                                     arg.isSelfContained(), 
-                                    arg.getDescription()));
+                                    arg.getDescription(),
+                                    event.getContentType()));
                      else
                         publishAsCode(event);
                   }
@@ -335,7 +336,7 @@ public class RSConnect implements SessionInitHandler,
       else
       {
          source = new RSConnectPublishSource(event.getPath(), 
-            false, null);
+            false, null, event.getContentType());
       }
          
       publishAsFiles(event, source);
@@ -356,7 +357,8 @@ public class RSConnect implements SessionInitHandler,
          source = new RSConnectPublishSource(
                input.getOriginatingEvent().getHtmlFile(),
                input.isSelfContained(), 
-               input.getDescription());
+               input.getDescription(),
+               input.getContentType());
       }
       publishAsFiles(input.getOriginatingEvent(), source);
    }
