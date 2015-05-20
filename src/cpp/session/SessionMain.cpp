@@ -2840,7 +2840,9 @@ int main (int argc, char * const argv[])
       s_mainThreadId = boost::this_thread::get_id();
 
       // ensure LANG and UTF-8 character set
+#ifndef _WIN32
       r_util::ensureLang();
+#endif
       s_printCharsetWarning = !ensureUtf8Charset();
       
       // read program options
