@@ -71,6 +71,7 @@ public class ViewerPresenter extends BasePresenter
       void navigate(String url);
       void setExportEnabled(boolean exportEnabled);
       void previewRmd(RmdPreviewParams params);
+      void previewShiny(ShinyApplicationParams params);
       String getUrl();
       String getTitle();
       void popout();
@@ -189,7 +190,7 @@ public class ViewerPresenter extends BasePresenter
       {
          manageCommands(true);
          display_.bringToFront();
-         navigate(event.getParams().getUrl());
+         display_.previewShiny(event.getParams());
          runningShinyAppParams_ = event.getParams();
       }
    }

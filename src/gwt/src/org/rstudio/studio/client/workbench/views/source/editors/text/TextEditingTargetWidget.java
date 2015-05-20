@@ -253,7 +253,7 @@ public class TextEditingTargetWidget
       {
          toolbar.addRightSeparator();
          publishButton_ = new RSConnectPublishButton(
-               RSConnect.CONTENT_TYPE_APP, false, commands_.rsconnectDeploy());
+               RSConnect.CONTENT_TYPE_APP, false, null);
          toolbar.addRightWidget(publishButton_);
       }
       
@@ -383,6 +383,9 @@ public class TextEditingTargetWidget
                                         canPreviewFromR,
                                         fileType.getPreviewButtonText());
       }
+      
+      // set the content type based on the extended type
+      setPublishPath(extendedType_, publishPath_);
       
       toolbar_.invalidateSeparators();
    }
@@ -660,18 +663,23 @@ public class TextEditingTargetWidget
    }
    
    @Override
-   public void setPublishPath(int contentType, String publishPath)
+   public void setPublishPath(String type, String publishPath)
    {
+      publishPath_ = publishPath;
       if (publishButton_ != null)
       {
-         if (contentType == RSConnect.CONTENT_TYPE_APP)
+         if (type == "shiny")
          {
             publishButton_.setContentPath(publishPath, "");
-            publishButton_.setContentType(contentType);
+            publishButton_.setContentType(RSConnect.CONTENT_TYPE_APP);
          }
-         else
+         else if (type == "rmarkdown")
          {
             publishButton_.setRmd(publishPath, !isShiny_);
+         }
+         else 
+         {
+            publishButton_.setContentType(RSConnect.CONTENT_TYPE_NONE);
          }
       }
    }
@@ -787,6 +795,7 @@ public class TextEditingTargetWidget
    private final DocDisplay editor_;
    private final ShinyViewerTypePopupMenu shinyViewerMenu_;
    private String extendedType_;
+   private String publishPath_;
    private CheckBox sourceOnSave_;
    private PanelWithToolbars panel_;
    private Toolbar toolbar_;
