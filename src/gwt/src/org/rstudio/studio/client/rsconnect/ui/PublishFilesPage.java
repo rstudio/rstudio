@@ -52,7 +52,8 @@ public class PublishFilesPage
                               input.getOriginatingEvent().getPath(),
                               input.getOriginatingEvent().getHtmlFile(),
                               input.isSelfContained() && asStatic,
-                              input.getDescription());
+                              input.getDescription(),
+                              input.getContentType());
             }
             contents_.setPublishSource(source, input.getContentType(), 
                   asMultiple, true);
@@ -61,7 +62,8 @@ public class PublishFilesPage
             contents_.setPublishSource(
                   new RSConnectPublishSource(input.getSourceRmd().getPath(),
                         input.isSelfContained() && asStatic,
-                        input.getDescription()),
+                        input.getDescription(),
+                        input.getContentType()),
                   input.getContentType(),
                   asMultiple, false);
       }

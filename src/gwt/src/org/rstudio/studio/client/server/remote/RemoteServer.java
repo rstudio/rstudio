@@ -3676,10 +3676,12 @@ public class RemoteServer implements Server
       params.set(4, new JSONString(account));
       params.set(5, new JSONString(server));
       params.set(6, new JSONString(appName));
-      params.set(7, JSONUtils.toJSONStringArray(settings.getAdditionalFiles()));
-      params.set(8, JSONUtils.toJSONStringArray(settings.getIgnoredFiles()));
-      params.set(9, JSONBoolean.getInstance(settings.getAsMultiple()));
-      params.set(10, JSONBoolean.getInstance(settings.getAsStatic()));
+      params.set(7, new JSONString(source.getContentCategory() == null ? "" :
+            source.getContentCategory()));
+      params.set(8, JSONUtils.toJSONStringArray(settings.getAdditionalFiles()));
+      params.set(9, JSONUtils.toJSONStringArray(settings.getIgnoredFiles()));
+      params.set(10, JSONBoolean.getInstance(settings.getAsMultiple()));
+      params.set(11, JSONBoolean.getInstance(settings.getAsStatic()));
       sendRequest(RPC_SCOPE,
             RSCONNECT_PUBLISH,
             params,
