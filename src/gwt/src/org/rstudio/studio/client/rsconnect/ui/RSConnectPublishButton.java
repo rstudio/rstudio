@@ -37,6 +37,7 @@ import org.rstudio.studio.client.rsconnect.model.RSConnectServerOperations;
 import org.rstudio.studio.client.rsconnect.model.RenderedDocPreview;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.shiny.model.ShinyApplicationParams;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
@@ -178,6 +179,7 @@ public class RSConnectPublishButton extends Composite
             (params.getResult().isHtml() &&
              params.getResult().getFormat() != null))
       {
+         setContentType(RSConnect.CONTENT_TYPE_DOCUMENT);
          docPreview_ = new RenderedDocPreview(params);
          setContentPath(params.getResult().getTargetFile(),
                params.getOutputFile());
@@ -187,6 +189,12 @@ public class RSConnectPublishButton extends Composite
          docPreview_ = null;
       }
       applyVisiblity();
+   }
+   
+   public void setShinyPreview(ShinyApplicationParams params)
+   {
+      setContentPath(params.getPath(), "");
+      setContentType(RSConnect.CONTENT_TYPE_APP);
    }
    
    public void setHtmlPreview(HTMLPreviewResult params)

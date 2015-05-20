@@ -33,6 +33,7 @@ import org.rstudio.studio.client.rsconnect.model.PublishHtmlSource;
 import org.rstudio.studio.client.rsconnect.ui.RSConnectPublishButton;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.shiny.model.ShinyApplicationParams;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.viewer.events.ViewerNavigatedEvent;
@@ -163,11 +164,19 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
    {
       navigate(params.getOutputUrl(), true);
       publishButton_.setManuallyHidden(false);
-      publishButton_.setContentType(RSConnect.CONTENT_TYPE_DOCUMENT);
       publishButton_.setRmdPreview(params);
       rmdPreviewParams_ = params;
       toolbar_.invalidateSeparators();
    }
+   
+   @Override
+   public void previewShiny(ShinyApplicationParams params) 
+   {
+      navigate(params.getUrl(), true);
+      publishButton_.setManuallyHidden(false);
+      publishButton_.setShinyPreview(params);
+      toolbar_.invalidateSeparators();
+   };
    
    @Override
    public void setExportEnabled(boolean exportEnabled)
