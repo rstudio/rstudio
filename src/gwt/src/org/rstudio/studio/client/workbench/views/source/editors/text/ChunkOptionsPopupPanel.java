@@ -168,6 +168,9 @@ public class ChunkOptionsPopupPanel extends ThemedPopupPanel
       int firstSpaceIdx = extractedChunkHeader.indexOf(' ');
       int firstCommaIdx = extractedChunkHeader.indexOf(',');
       
+      if (firstSpaceIdx == -1)
+         return "";
+      
       if (firstCommaIdx == -1)
          firstCommaIdx = extractedChunkHeader.length();
       
