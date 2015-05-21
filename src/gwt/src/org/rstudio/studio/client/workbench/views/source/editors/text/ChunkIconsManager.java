@@ -22,9 +22,11 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.PopupPositioner;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.DisplayChunkOptionsEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.ExecuteChunkEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Renderer;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.events.AfterAceRenderEvent;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
@@ -32,19 +34,30 @@ import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
+import com.google.inject.Singleton;
 
+@Singleton
 public class ChunkIconsManager
 {
-   public ChunkIconsManager(AceEditorWidget widget)
+   public ChunkIconsManager()
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
-      widget_ = widget;
+      events_.addHandler(
+            AfterAceRenderEvent.TYPE,
+            new AfterAceRenderEvent.Handler()
+            {
+               
+               @Override
+               public void onAfterAceRender(AfterAceRenderEvent event)
+               {
+                  manageChunkIcons();
+               }
+            });
       optionsPanel_ = new ChunkOptionsPopupPanel();
    }
    
    @Inject
-   private void initialize(EventBus events,
-                           Commands commands)
+   private void initialize(EventBus events, Commands commands)
    {
       events_ = events;
       commands_ = commands;
@@ -55,7 +68,7 @@ public class ChunkIconsManager
       return el.getOffsetHeight() == 0 || el.getOffsetWidth() == 0;
    }
    
-   public void manageChunkIcons()
+   private void manageChunkIcons()
    {
       Element[] icons = DomUtils.getElementsByClassName(
             ThemeStyles.INSTANCE.inlineChunkToolbar());
@@ -151,7 +164,7 @@ public class ChunkIconsManager
                                                                  Element element) 
    /*-{
       element.addEventListener("click", function(evt) {
-         manager.@org.rstudio.studio.client.workbench.views.source.editors.text.ChunkIconsManager::displayChunkOptionsPopup(Ljava/lang/Object;)(evt);
+         manager.@org.rstudio.studio.client.workbench.views.source.editors.text.ChunkIconsManager::fireDisplayChunkOptionsEvent(Ljava/lang/Object;)(evt);
       });
    }-*/;
    
@@ -164,20 +177,24 @@ public class ChunkIconsManager
       events_.fireEvent(new ExecuteChunkEvent(event.getClientX(), event.getClientY()));
    }
    
-   private final void displayChunkOptionsPopup(Object object)
+   private final void fireDisplayChunkOptionsEvent(Object object)
    {
       if (!(object instanceof NativeEvent))
          return;
       
       NativeEvent event = (NativeEvent) object;
+      events_.fireEvent(new DisplayChunkOptionsEvent(event));
+   }
       
+   public void displayChunkOptions(AceEditor editor, NativeEvent event)
+   {
       // Translate the 'pageX' + 'pageY' position to document position
       int pageX = event.getClientX();
       int pageY = event.getClientY();
       
-      Renderer renderer = widget_.getEditor().getRenderer();
+      Renderer renderer = editor.getWidget().getEditor().getRenderer();
       Position position = renderer.screenToTextCoordinates(pageX, pageY);
-      optionsPanel_.init(widget_, position);
+      optionsPanel_.init(editor.getWidget(), position);
       optionsPanel_.show();
       PopupPositioner.setPopupPosition(
             optionsPanel_,
@@ -186,7 +203,6 @@ public class ChunkIconsManager
             10);
    }
    
-   private final AceEditorWidget widget_;
    private final ChunkOptionsPopupPanel optionsPanel_;
    
    private Commands commands_;

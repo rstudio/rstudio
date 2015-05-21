@@ -18,6 +18,7 @@ import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
+import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.dom.client.KeyCodes;
@@ -97,10 +98,13 @@ import org.rstudio.studio.client.workbench.views.source.editors.codebrowser.Code
 import org.rstudio.studio.client.workbench.views.source.editors.data.DataEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.profiler.ProfilerEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.profiler.model.ProfilerContents;
+import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkIconsManager;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetPresentationHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetRMarkdownHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.DisplayChunkOptionsEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.ExecuteChunkEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.FileTypeChangedEvent;
@@ -201,7 +205,8 @@ public class Source implements InsertSourceHandler,
                  WorkbenchContext workbenchContext,
                  Provider<FileMRUList> pMruList,
                  UIPrefs uiPrefs,
-                 RnwWeaveRegistry rnwWeaveRegistry)
+                 RnwWeaveRegistry rnwWeaveRegistry,
+                 ChunkIconsManager chunkIconsManager)
    {
       commands_ = commands;
       view_ = view;
@@ -219,6 +224,7 @@ public class Source implements InsertSourceHandler,
       pMruList_ = pMruList;
       uiPrefs_ = uiPrefs;
       rnwWeaveRegistry_ = rnwWeaveRegistry;
+      chunkIconsManager_ = chunkIconsManager;
       
       vimCommands_ = new SourceVimCommands();
       
@@ -511,6 +517,9 @@ public class Source implements InsertSourceHandler,
       
       // add vim commands
       initVimCommands();
+      
+      // handle chunk options event
+      handleChunkOptionsEvent();
    }
    
    private void initVimCommands()
@@ -2995,6 +3004,37 @@ public class Source implements InsertSourceHandler,
       return activeEditor_;
    }
    
+   public void handleChunkOptionsEvent()
+   {
+      events_.addHandler(
+            DisplayChunkOptionsEvent.TYPE,
+            new DisplayChunkOptionsEvent.Handler()
+            {
+               
+               @Override
+               public void onDisplayChunkOptions(DisplayChunkOptionsEvent event)
+               {
+                  // Ensure the source pane (not the console) is activated
+                  if (activeEditor_ == null)
+                     return;
+                  
+                  // Ensure we have an Ace Editor
+                  if (!(activeEditor_ instanceof TextEditingTarget))
+                     return;
+                  
+                  TextEditingTarget target = (TextEditingTarget) activeEditor_;
+                  AceEditor editor = (AceEditor) target.getDocDisplay();
+                  if (editor == null)
+                     return;
+                  
+                  NativeEvent nativeEvent = event.getNativeEvent();
+                  chunkIconsManager_.displayChunkOptions(
+                        editor,
+                        nativeEvent);
+               }
+            });
+   }
+   
    ArrayList<EditingTarget> editors_ = new ArrayList<EditingTarget>();
    ArrayList<Integer> tabOrder_ = new ArrayList<Integer>();
    private EditingTarget activeEditor_;
@@ -3029,4 +3069,6 @@ public class Source implements InsertSourceHandler,
 
    // If positive, a new tab is about to be created
    private int newTabPending_;
+   
+   private ChunkIconsManager chunkIconsManager_;
 }
