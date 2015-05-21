@@ -28,6 +28,7 @@ import org.rstudio.core.client.widget.ThemedPopupPanel;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.dom.client.KeyCodes;
@@ -35,6 +36,8 @@ import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.event.dom.client.KeyUpHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.resources.client.ClientBundle;
+import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
@@ -96,8 +99,16 @@ public class ChunkOptionsPopupPanel extends ThemedPopupPanel
       });
       
       HorizontalPanel labelPanel = new HorizontalPanel();
-      labelPanel.add(new Label("Chunk Name:"));
+      labelPanel.addStyleName(RES.styles().labelPanel());
+      labelPanel.setVerticalAlignment(VerticalPanel.ALIGN_MIDDLE);
+      
+      Label chunkLabel = new Label("Chunk Name:");
+      chunkLabel.addStyleName(RES.styles().chunkLabel());
+      labelPanel.add(chunkLabel);
+      
+      tbChunkLabel_.addStyleName(RES.styles().chunkName());
       labelPanel.add(tbChunkLabel_);
+      
       panel_.add(labelPanel);
       
       for (Map.Entry<String, String> entry : BOOLEAN_CHUNK_OPTIONS.entrySet())
@@ -293,5 +304,23 @@ public class ChunkOptionsPopupPanel extends ThemedPopupPanel
       BOOLEAN_CHUNK_OPTIONS.put("include", "Include chunk output in generated document?");
       BOOLEAN_CHUNK_OPTIONS.put("tidy", "Tidy R code?");
       BOOLEAN_CHUNK_OPTIONS.put("cache", "Cache the output from this chunk?");
+   }
+   
+   public interface Styles extends CssResource
+   {
+      String chunkLabel();
+      String chunkName();
+      String labelPanel();
+   }
+   
+   public interface Resources extends ClientBundle
+   {
+      @Source("ChunkOptionsPopupPanel.css")
+      Styles styles();
+   }
+   
+   private static Resources RES = GWT.create(Resources.class);
+   static {
+      RES.styles().ensureInjected();
    }
 }
