@@ -1,0 +1,34 @@
+.checkboxOuter {
+	width: 10px;
+	height: 10px;
+	border: 1px solid #b0b0b0;
+	border-radius: 3px;
+	vertical-align: middle;
+}
+
+.checkboxInner {
+}
+
+.checkboxOff {
+	background-color: white;
+}
+
+.checkboxIndeterminate {
+	width: 6px;
+	height: 2px;
+	margin: auto;
+	margin-top: 4px;
+	background-color: black;
+}
+
+.checkboxOn {
+    width: 6px;
+    height: 6px;
+    margin: auto;
+    margin-top: 2px;
+	background-color: black;
+}
+
+.checkboxLabel {
+	margin-left: 3px;
+}

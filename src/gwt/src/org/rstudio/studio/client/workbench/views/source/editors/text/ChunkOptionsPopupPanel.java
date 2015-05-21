@@ -25,6 +25,7 @@ import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.widget.TextBoxWithCue;
 import org.rstudio.core.client.widget.ThemedPopupPanel;
+import org.rstudio.core.client.widget.TriStateCheckBox;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 
@@ -41,7 +42,6 @@ import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.ui.Button;
-import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.VerticalPanel;
@@ -53,7 +53,7 @@ public class ChunkOptionsPopupPanel extends ThemedPopupPanel
       super(true);
       
       chunkOptions_ = new HashMap<String, String>();
-      checkboxMap_ = new HashMap<String, CheckBox>();
+      checkboxMap_ = new HashMap<String, TriStateCheckBox>();
       
       panel_ = new VerticalPanel();
       add(panel_);
@@ -174,14 +174,22 @@ public class ChunkOptionsPopupPanel extends ThemedPopupPanel
       
       for (String option : BOOLEAN_CHUNK_OPTIONS.keySet())
       {
-         CheckBox cb = checkboxMap_.get(option);
+         TriStateCheckBox cb = checkboxMap_.get(option);
          assert cb != null :
             "No checkbox for boolean option '" + option + "'";
          
          if (chunkOptions_.containsKey(option))
-            cb.setValue(isTrue(chunkOptions_.get(option)));
+         {
+            boolean truthy = isTrue(chunkOptions_.get(option));
+            if (truthy)
+               cb.setState(TriStateCheckBox.STATE_ON);
+            else
+               cb.setState(TriStateCheckBox.STATE_INDETERMINATE);
+         }
          else
-            cb.setValue(false);
+         {
+            cb.setState(TriStateCheckBox.STATE_OFF);
+         }
       }
    }
    
@@ -332,13 +340,19 @@ public class ChunkOptionsPopupPanel extends ThemedPopupPanel
    private void addCheckboxController(final String optionName,
                                       final String label)
    {
-      final CheckBox cb = new CheckBox(label);
-      cb.addValueChangeHandler(new ValueChangeHandler<Boolean>()
+      final TriStateCheckBox cb = new TriStateCheckBox(label);
+      cb.addValueChangeHandler(new ValueChangeHandler<TriStateCheckBox.State>()
       {
          @Override
-         public void onValueChange(ValueChangeEvent<Boolean> event)
+         public void onValueChange(ValueChangeEvent<TriStateCheckBox.State> event)
          {
-            chunkOptions_.put(optionName, event.getValue() ? "TRUE" : "FALSE");
+            TriStateCheckBox.State state = event.getValue();
+            if (state == TriStateCheckBox.STATE_INDETERMINATE)
+               chunkOptions_.put(optionName, "FALSE");
+            else if (state == TriStateCheckBox.STATE_OFF)
+               chunkOptions_.remove(optionName);
+            else
+               chunkOptions_.put(optionName,  "TRUE");
             synchronize();
          }
       });
@@ -362,7 +376,7 @@ public class ChunkOptionsPopupPanel extends ThemedPopupPanel
    
    private final VerticalPanel panel_;
    private final TextBoxWithCue tbChunkLabel_;
-   private final HashMap<String, CheckBox> checkboxMap_;
+   private final HashMap<String, TriStateCheckBox> checkboxMap_;
    
    private String originalLine_;
    private String chunkPreamble_;
