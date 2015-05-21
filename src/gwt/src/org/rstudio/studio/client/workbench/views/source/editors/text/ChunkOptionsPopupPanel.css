@@ -2,6 +2,16 @@
 	padding: 3px;
 }
 
+.textBox {
+    border: 1px solid #999;
+    border-radius: 3px;
+}
+
+.textBox:focus {
+    outline: 0;
+    box-shadow: 0 0 5px rgb(50, 100, 150);
+}
+
 .chunkLabel {
 	padding: 0 10px;
 }
@@ -16,8 +26,21 @@
 
 .button {
 	margin-right: 10px;
-	background-color: #DEDEDE;
+	background-color: #ECECEC;
+	border: 1px solid #999;
+	border-radius: 5px;
 }
+
+.button:focus {
+	box-shadow: 0 0 5px rgb(50, 100, 150);
+	outline: 0;
+}
+
+.button:active {
+	box-shadow: 0 0 5px rgb(0, 50, 150);
+	outline: 0;
+}
+
 
 .buttonPanel {
 	margin-top: 8px;

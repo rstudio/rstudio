@@ -62,6 +62,7 @@ public class ChunkOptionsPopupPanel extends ThemedPopupPanel
       add(panel_);
       
       tbChunkLabel_ = new TextBoxWithCue("Unnamed chunk");
+      tbChunkLabel_.addStyleName(RES.styles().textBox());
       tbChunkLabel_.addChangeHandler(new ChangeHandler()
       {
          @Override
@@ -422,6 +423,8 @@ public class ChunkOptionsPopupPanel extends ThemedPopupPanel
    public interface Styles extends CssResource
    {
       String containerPanel();
+      
+      String textBox();
       
       String chunkLabel();
       String chunkName();
