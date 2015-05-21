@@ -85,6 +85,7 @@ public class ChunkIconsManager
       panel.addStyleName(ThemeStyles.INSTANCE.inlineChunkToolbar());
       
       Image optionsIcon = createOptionsIcon();
+      optionsIcon.getElement().setAttribute("style", "margin-right: 2px");
       panel.add(optionsIcon);
       
       Image runIcon = createRunIcon();
@@ -122,7 +123,7 @@ public class ChunkIconsManager
    private Image createRunIcon()
    {
       Image icon = new Image(ThemeResources.INSTANCE.runChunk());
-      icon.addStyleName(ThemeStyles.INSTANCE.handCursor());
+      icon.addStyleName(ThemeStyles.INSTANCE.highlightIcon());
       icon.setTitle(commands_.executeCurrentChunk().getTooltip());
       bindNativeClickToExecuteChunk(this, icon.getElement());
       return icon;
@@ -131,7 +132,7 @@ public class ChunkIconsManager
    private Image createOptionsIcon()
    {
       Image icon = new Image(ThemeResources.INSTANCE.runChunkOptions());
-      icon.addStyleName(ThemeStyles.INSTANCE.handCursor());
+      icon.addStyleName(ThemeStyles.INSTANCE.highlightIcon());
       icon.setTitle("Modify chunk options");
       bindNativeClickToOpenOptions(this, icon.getElement());
       return icon;
