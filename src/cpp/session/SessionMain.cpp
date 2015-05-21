@@ -889,13 +889,7 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
             // note switch to project
             if (!switchToProject.empty())
             {
-               if (options().programMode() == kSessionProgramModeDesktop ||
-                   options().multiSession() == false)
-               {
-                  projects::ProjectsSettings(options().userScratchPath()).
-                                    setSwitchToProjectPath(switchToProject);
-               }
-               else
+               if (options().switchProjectsWithUrl())
                {
                   r_util::SessionScope scope;
                   if (switchToProject == kProjectNone)
@@ -915,7 +909,11 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
 
                   s_nextSessionUrl = r_util::createSessionUrl(hostPageUrl,
                                                               scope);
-
+               }
+               else
+               {
+                  projects::ProjectsSettings(options().userScratchPath()).
+                                    setSwitchToProjectPath(switchToProject);
                }
             }
 
@@ -2217,10 +2215,16 @@ void rQuit()
    module_context::events().onQuit();
 
    // enque a quit event
-   bool switchProjects =
-            !projects::ProjectsSettings(options().userScratchPath())
-                                          .switchToProjectPath().empty() ||
-            !s_nextSessionUrl.empty();
+   bool switchProjects;
+   if (options().switchProjectsWithUrl())
+   {
+      switchProjects = !s_nextSessionUrl.empty();
+   }
+   else
+   {
+      switchProjects = !projects::ProjectsSettings(options().userScratchPath())
+                              .switchToProjectPath().empty();
+   }
 
    json::Object jsonData;
    jsonData["switch_projects"] = switchProjects;

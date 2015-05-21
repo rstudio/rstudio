@@ -349,6 +349,12 @@ public:
       return multiSession_;
    }
 
+   bool switchProjectsWithUrl() const
+   {
+      return programMode() == kSessionProgramModeServer &&
+             options().multiSession() == true;
+   }
+
    core::FilePath userHomePath() const 
    { 
       return core::FilePath(userHomePath_.c_str());
