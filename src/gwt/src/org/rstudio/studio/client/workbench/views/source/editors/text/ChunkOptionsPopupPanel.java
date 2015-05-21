@@ -26,6 +26,7 @@ import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.widget.TextBoxWithCue;
 import org.rstudio.core.client.widget.ThemedPopupPanel;
 import org.rstudio.core.client.widget.TriStateCheckBox;
+import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 
@@ -42,6 +43,7 @@ import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.ui.Button;
+import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.VerticalPanel;
@@ -56,6 +58,7 @@ public class ChunkOptionsPopupPanel extends ThemedPopupPanel
       checkboxMap_ = new HashMap<String, TriStateCheckBox>();
       
       panel_ = new VerticalPanel();
+      panel_.setStyleName(RES.styles().containerPanel());
       add(panel_);
       
       tbChunkLabel_ = new TextBoxWithCue("Unnamed chunk");
@@ -121,7 +124,16 @@ public class ChunkOptionsPopupPanel extends ThemedPopupPanel
          addCheckboxController(entry.getKey(), entry.getValue());
       }
       
+      HorizontalPanel footerPanel = new HorizontalPanel();
+      footerPanel.getElement().setAttribute("style", "width: 100%");
+      
+      FlowPanel linkPanel = new FlowPanel();
+      HelpLink helpLink = new HelpLink("Chunk Options", "chunk-options");
+      linkPanel.add(helpLink);
+      
       HorizontalPanel buttonPanel = new HorizontalPanel();
+      buttonPanel.addStyleName(RES.styles().buttonPanel());
+      buttonPanel.setHorizontalAlignment(HorizontalPanel.ALIGN_RIGHT);
       
       Button revertButton = new Button("Revert");
       revertButton.addStyleName(RES.styles().button());
@@ -152,9 +164,13 @@ public class ChunkOptionsPopupPanel extends ThemedPopupPanel
       });
       buttonPanel.add(applyButton);
       
-      panel_.setHorizontalAlignment(VerticalPanel.ALIGN_RIGHT);
-      panel_.add(buttonPanel);
+      footerPanel.setVerticalAlignment(VerticalPanel.ALIGN_BOTTOM);
+      footerPanel.add(linkPanel);
       
+      footerPanel.setHorizontalAlignment(HorizontalPanel.ALIGN_RIGHT);
+      footerPanel.add(buttonPanel);
+      
+      panel_.add(footerPanel);
    }
    
    public void show(AceEditorWidget widget, Position position)
@@ -411,9 +427,13 @@ public class ChunkOptionsPopupPanel extends ThemedPopupPanel
    
    public interface Styles extends CssResource
    {
+      String containerPanel();
+      
       String chunkLabel();
       String chunkName();
       String labelPanel();
+      
+      String buttonPanel();
       String button();
    }
    
