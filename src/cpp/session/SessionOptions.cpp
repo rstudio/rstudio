@@ -29,6 +29,7 @@
 
 #include <core/r_util/RProjectFile.hpp>
 #include <core/r_util/RSessionContext.hpp>
+#include <core/r_util/RSessionScope.hpp>
 
 #include <monitor/MonitorConstants.hpp>
 
@@ -305,6 +306,7 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
 
    // user options (default user identity to current username)
    std::string currentUsername = core::system::username();
+   std::string project, scopeId;
    options_description user("user") ;
    user.add_options()
       (kUserIdentitySessionOption "," kUserIdentitySessionOptionShort,
@@ -314,10 +316,10 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
        value<bool>(&showUserIdentity_)->default_value(true),
        "show the user identity")
       (kProjectSessionOption "," kProjectSessionOptionShort,
-       value<std::string>(&project_)->default_value(""),
+       value<std::string>(&project)->default_value(""),
        "active project" )
       (kScopeSessionOption "," kScopeSessionOptionShort,
-        value<std::string>(&scope_)->default_value(""),
+        value<std::string>(&scopeId)->default_value(""),
        "session scope id");
 
    // overlay options
@@ -371,6 +373,9 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
       LOG_ERROR_MESSAGE("invalid program mode: " + programMode_);
       return ProgramStatus::exitFailure();
    }
+
+   // resolve scope
+   scope_ = r_util::SessionScope(project, scopeId);
 
    // call overlay hooks
    resolveOverlayOptions();
@@ -491,10 +496,11 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
    core::system::unsetenv(kRStudioInitialEnvironment);
 
    // initial project (can either be a command line param or via env)
-   if (!project_.empty())
+   r_util::SessionScope scope = sessionScope();
+   if (!scope.empty() && (scope != r_util::projectNoneSessionScope()))
    {
      FilePath projectDir =
-        FilePath::resolveAliasedPath(project_, FilePath(userHomePath_));
+        FilePath::resolveAliasedPath(scope.project, FilePath(userHomePath_));
 
      FilePath projectPath = r_util::projectFromDirectory(projectDir);
      if (projectPath.exists())

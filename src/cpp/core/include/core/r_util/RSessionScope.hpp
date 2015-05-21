@@ -41,6 +41,10 @@ struct SessionScope
       return project == other.project && id == other.id;
    }
 
+   bool operator!=(const SessionScope &other) const {
+      return !(*this == other);
+   }
+
    bool operator<(const SessionScope &other) const {
        return project < other.project ||
               (project == other.project && id < other.id);

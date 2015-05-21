@@ -336,7 +336,7 @@ public:
 
    core::r_util::SessionScope sessionScope() const
    {
-      return core::r_util::SessionScope(project_, scope_);
+      return scope_;
    }
 
    core::r_util::SessionContext sessionContext() const
@@ -521,8 +521,7 @@ private:
    // user info
    bool showUserIdentity_;
    std::string userIdentity_;
-   std::string project_;
-   std::string scope_;
+   core::r_util::SessionScope scope_;
    std::string userHomePath_;
    std::string userScratchPath_;   
 
