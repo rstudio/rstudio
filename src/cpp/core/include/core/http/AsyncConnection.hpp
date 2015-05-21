@@ -34,12 +34,11 @@ class Response;
 
 class AsyncConnection;
 
-typedef boost::function<void(
-            http::Request*,
-            boost::function<void(status::Code)>)> RequestFilter;
+typedef boost::function<void(boost::shared_ptr<Response>)> RequestFilterContinuation;
 
-typedef boost::function<void(const std::string&,
-                             http::Response*)> ResponseFilter;
+typedef boost::function<void(Request*,RequestFilterContinuation)> RequestFilter;
+
+typedef boost::function<void(const std::string&,Response*)> ResponseFilter;
 
 // abstract base (insulate clients from knowledge of protocol-specifics)
 class AsyncConnection : public Socket

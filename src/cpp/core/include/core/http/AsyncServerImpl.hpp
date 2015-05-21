@@ -354,12 +354,12 @@ private:
 
    void connectionRequestFilter(
             http::Request* pRequest,
-            boost::function<void(http::status::Code)> continuation)
+            http::RequestFilterContinuation continuation)
    {
       if (requestFilter_)
          requestFilter_(pRequest, continuation);
       else
-         continuation(http::status::Ok);
+         continuation(boost::shared_ptr<http::Response>());
    }
 
    void connectionResponseFilter(const std::string& originalUri,

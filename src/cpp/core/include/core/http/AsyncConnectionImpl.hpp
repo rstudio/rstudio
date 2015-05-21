@@ -223,16 +223,16 @@ private:
       CATCH_UNEXPECTED_EXCEPTION
    }
    
-   void requestFilterContinuation(status::Code code)
+   void requestFilterContinuation(boost::shared_ptr<http::Response> response)
    {
-      if (code == http::status::Ok)
+      if (response)
       {
-         callHandler();
+         response_.assign(*response);
+         writeResponse();
       }
       else
       {
-         response_.setStatusCode(code);
-         writeResponse();
+         callHandler();
       }
    }
 
