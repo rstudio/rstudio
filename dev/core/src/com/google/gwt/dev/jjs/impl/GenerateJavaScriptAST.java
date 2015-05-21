@@ -2553,6 +2553,9 @@ public class GenerateJavaScriptAST {
       // check if there's an overriding prototype
       JInterfaceType jsPrototypeIntf = JProgram.maybeGetJsTypeFromPrototype(superClass);
       String jsPrototype = jsPrototypeIntf != null ? jsPrototypeIntf.getJsPrototype() : null;
+      if (x.isOrExtendsJsFunction()) {
+        jsPrototype = "Function";
+      }
 
       List<JsExpression> defineClassArguments = Lists.newArrayList();
 
@@ -2562,6 +2565,7 @@ public class GenerateJavaScriptAST {
         defineClassArguments.add(convertJavaLiteral(superTypeId));
       } else {
         // setup extension of native JS object
+        // TODO(goktug): need to stash Object methods to the prototype as they are not inhertied.
         defineClassArguments.add(createJsQualifier(jsPrototype, x.getSourceInfo()));
       }
       JsExpression castMap = generateCastableTypeMap(x);

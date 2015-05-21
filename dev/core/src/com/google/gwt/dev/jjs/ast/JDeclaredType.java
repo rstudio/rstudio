@@ -372,14 +372,12 @@ public abstract class JDeclaredType extends JReferenceType {
     if (isJsFunction()) {
       return true;
     }
-    if (getSuperClass() != null && getSuperClass().isOrExtendsJsFunction()) {
-      return true;
-    }
     for (JInterfaceType subInterface : getImplements()) {
-      if (subInterface.isOrExtendsJsFunction()) {
+      if (subInterface.isJsFunction()) {
         return true;
       }
     }
+    // We don't need to recurse as inheritance is not supported by JsFunction.
     return false;
   }
 

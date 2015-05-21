@@ -709,18 +709,6 @@ public class JSORestrictionsTest extends TestCase {
         "Line 2: " + JSORestrictionsChecker.ERR_JS_FUNCTION_ONLY_ALLOWED_ON_FUNCTIONAL_INTERFACE);
   }
 
-  public void testJsFunctionNotOnInterfaceWithSuperInterfaces() {
-    StringBuilder buggyCode = new StringBuilder();
-    buggyCode.append("import com.google.gwt.core.client.js.JsFunction;\n");
-    buggyCode.append("import java.io.Serializable;\n");
-    buggyCode.append("@JsFunction public interface Buggy extends Serializable {\n");
-    buggyCode.append("int foo(int x);\n");
-    buggyCode.append("}\n");
-
-    shouldGenerateError(buggyCode,
-        "Line 3: " + JSORestrictionsChecker.ERR_JS_FUNCTION_INTERFACE_CANNOT_EXTEND_ANY_INTERFACE);
-  }
-
   public void testJsFunctionNotOnInterfaceWithDefaultMethod() {
     StringBuilder buggyCode = new StringBuilder();
     buggyCode.append("import com.google.gwt.core.client.js.JsFunction;\n");

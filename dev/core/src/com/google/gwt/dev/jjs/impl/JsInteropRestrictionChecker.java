@@ -31,18 +31,15 @@ import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JStatement;
 import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.ast.JVisitor;
-import com.google.gwt.thirdparty.guava.common.base.Function;
 import com.google.gwt.thirdparty.guava.common.base.Predicate;
 import com.google.gwt.thirdparty.guava.common.collect.FluentIterable;
 import com.google.gwt.thirdparty.guava.common.collect.Iterables;
 import com.google.gwt.thirdparty.guava.common.collect.Maps;
-import com.google.gwt.thirdparty.guava.common.collect.Ordering;
 import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.SortedSet;
 
 /**
  * Checks and throws errors for invalid JsInterop constructs.
@@ -99,7 +96,7 @@ public class JsInteropRestrictionChecker extends JVisitor {
     currentType = x;
 
     checkJsFunctionHierarchy(x);
-    checkJsFunctionJsTypeCollision(x);
+
     if (currentType instanceof JInterfaceType) {
       checkJsTypeHierarchy((JInterfaceType) currentType);
     } else {
@@ -330,27 +327,43 @@ public class JsInteropRestrictionChecker extends JVisitor {
   }
 
   private void checkJsFunctionHierarchy(JDeclaredType type) {
-    SortedSet<String> implementedJsFunctions =
-        FluentIterable.from(jprogram.typeOracle.getImplementedJsFunctions(type)).transform(
-        new Function<JInterfaceType, String>() {
-          @Override
-          public String apply(JInterfaceType type) {
-            return type.getName();
-          }
-        }).toSortedSet(Ordering.natural());
-    if (implementedJsFunctions.size() > 1) {
-      logError("'%s' implements more than one JsFunction interfaces: %s", type.getName(),
-          implementedJsFunctions);
+    if (!type.isOrExtendsJsFunction()) {
+      return;
+    }
+
+    List<JInterfaceType> implementedInterfaces = type.getImplements();
+
+    if (type.isJsFunction()) {
+      if (implementedInterfaces.size() > 0) {
+        logError("JsFunction '%s' cannot extend other interfaces.", type);
+      }
+      if (type.isJsType()) {
+        logError("'%s' cannot be both a JsFunction and a JsType at the same time.", type);
+      }
+      return;
+    }
+
+    if (type instanceof JInterfaceType) {
+      logError("Interface '%s' cannot extend a JsFunction interface.", type);
+      return;
+    }
+
+    if (implementedInterfaces.size() != 1) {
+      logError("JsFunction implementation '%s' cannot implement more than one interface.", type);
+    }
+
+    if (type.isJsType()) {
+      logError("'%s' cannot be both a JsFunction implementation and a JsType at the same time.",
+          type);
+    }
+
+    if (type.getSuperClass() != jprogram.getTypeJavaLangObject()) {
+      logError("JsFunction implementation '%s' cannot extend a class.", type);
     }
   }
 
-  // To prevent potential name collisions, we disallow JsFunction implementations to be also a
-  // JsType.
-  private void checkJsFunctionJsTypeCollision(JDeclaredType type) {
-    if (type.isOrExtendsJsType() && type.isOrExtendsJsFunction()) {
-      logError("'%s' cannot be annotated as (or extend) both a @JsFunction and a @JsType at the "
-          + "same time.", type.getName());
-    }
+  private void logError(String format, JType type) {
+    logError(format, type.getName());
   }
 
   private void logError(String format, Object... args) {

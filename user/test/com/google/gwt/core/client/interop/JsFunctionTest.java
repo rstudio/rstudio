@@ -48,24 +48,15 @@ public class JsFunctionTest extends GWTTestCase {
     assertEquals(12, jsFunctionInterface.foo(10));
   }
 
-  public void testJsFunctionSubInterface_js() {
-    MySubinterfaceOfJsFunctionInterface impl = new MySubinterfaceOfJsFunctionInterface() {
+  public void testJsFunctionViaFunctionMethods() {
+    MyJsFunctionInterface jsFunctionInterface = new MyJsFunctionInterface() {
       @Override
       public int foo(int a) {
-        return a + 3;
+        return a + 2;
       }
     };
-    assertEquals(13, callAsFunction(impl, 10));
-  }
-
-  public void testJsFunctionSubInterface_java() {
-    MySubinterfaceOfJsFunctionInterface impl = new MySubinterfaceOfJsFunctionInterface() {
-        @Override
-      public int foo(int a) {
-        return a + 3;
-      }
-    };
-    assertEquals(13, impl.foo(10));
+    assertEquals(12, callWithFunctionApply(jsFunctionInterface, 10));
+    assertEquals(12, callWithFunctionCall(jsFunctionInterface, 10));
   }
 
   public void testJsFunctionSubImpl_js() {
@@ -75,16 +66,6 @@ public class JsFunctionTest extends GWTTestCase {
 
   public void testJsFunctionSubImpl_java() {
     MySubclassOfJsFunctionInterfaceImpl impl = new MySubclassOfJsFunctionInterfaceImpl();
-    assertEquals(21, impl.foo(10));
-  }
-
-  public void testJsFunctionMultipleInheritance_js() {
-    MyJsFunctionMultipleInheritance impl = new MyJsFunctionMultipleInheritance();
-    assertEquals(21, callAsFunction(impl, 10));
-  }
-
-  public void testJsFunctionMultipleInheritance_java() {
-    MyJsFunctionMultipleInheritance impl = new MyJsFunctionMultipleInheritance();
     assertEquals(21, impl.foo(10));
   }
 
@@ -203,15 +184,8 @@ public class JsFunctionTest extends GWTTestCase {
     assertNotNull(c3);
     MyJsFunctionIdentityInterface c4 = (MyJsFunctionIdentityInterface) object;
     assertNotNull(c4);
-
-    // TODO: unexpected behavior. Anything can be cast to a JsType(without prototype).
-    try {
-      ElementLikeJsInterface c5 = (ElementLikeJsInterface) object;
-      assertNotNull(c5);
-      fail("ClassCastException should be caught.");
-    } catch (ClassCastException cce) {
-      // Expected.
-    }
+    ElementLikeJsInterface c5 = (ElementLikeJsInterface) object;
+    assertNotNull(c5);
   }
 
   public void testCast_crossCastJavaInstance() {
@@ -241,8 +215,7 @@ public class JsFunctionTest extends GWTTestCase {
     assertTrue(object instanceof MyJsFunctionInterface);
     assertTrue(object instanceof MyJsFunctionInterfaceImpl);
     assertTrue(object instanceof MyJsFunctionIdentityInterface);
-    // TODO: unexpected behavior. Anything can be instanceof a JsType(without prototype).
-    assertFalse(object instanceof ElementLikeJsInterface);
+    assertTrue(object instanceof ElementLikeJsInterface);
   }
 
   // uncomment when Java8 is supported.
@@ -265,20 +238,20 @@ public class JsFunctionTest extends GWTTestCase {
 //    assertEquals(10, callAsFunction(impl, 10));
 //  }
 
-  public void testJsFunctionAccidentalOverrides() {
-    MyJsFunctionAccidentalOverrideParent p = new MyJsFunctionAccidentalOverrideParent();
-    assertEquals(10, p.foo(10));
-    MyJsFunctionAccidentalOverrideChild c = new MyJsFunctionAccidentalOverrideChild();
-    assertEquals(10, c.foo(10));
-    assertEquals(10, callAsFunction(c, 10));
-  }
-
-  private static native Object callAsFunction(Object obj) /*-{
-    return obj();
+  private static native Object callAsFunction(Object fn) /*-{
+    return fn();
   }-*/;
 
-  private static native int callAsFunction(Object obj, int arg) /*-{
-    return obj(arg);
+  private static native int callAsFunction(Object fn, int arg) /*-{
+    return fn(arg);
+  }-*/;
+
+  private static native int callWithFunctionApply(Object fn, int arg) /*-{
+    return fn.apply(this, [arg]);
+  }-*/;
+
+  private static native int callWithFunctionCall(Object fn, int arg) /*-{
+    return fn.call(this, arg);
   }-*/;
 
   private static native void setField(Object object, String fieldName, int value) /*-{

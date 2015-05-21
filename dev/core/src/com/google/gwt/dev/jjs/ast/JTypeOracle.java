@@ -22,7 +22,6 @@ import com.google.gwt.thirdparty.guava.common.base.Function;
 import com.google.gwt.thirdparty.guava.common.base.Objects;
 import com.google.gwt.thirdparty.guava.common.base.Predicate;
 import com.google.gwt.thirdparty.guava.common.base.Strings;
-import com.google.gwt.thirdparty.guava.common.collect.Collections2;
 import com.google.gwt.thirdparty.guava.common.collect.HashMultimap;
 import com.google.gwt.thirdparty.guava.common.collect.ImmutableList;
 import com.google.gwt.thirdparty.guava.common.collect.ImmutableSetMultimap;
@@ -812,39 +811,6 @@ public class JTypeOracle implements Serializable {
       }
     }
     return (type.getSuperClass() != null) ? getJsFunctionMethod(type.getSuperClass()) : null;
-  }
-
-  /**
-   * Get all implemented interfaces of {@code type}.
-   */
-  public Collection<JInterfaceType> getImplementedInterfaces(JDeclaredType type) {
-    Multimap<String, String> implementedInterfaces =
-        (type instanceof JClassType) ? implementedInterfacesByClass : superInterfacesByInterface;
-    return Collections2.transform(implementedInterfaces.get(type.getName()),
-        new Function<String, JInterfaceType>() {
-          @Override
-          public JInterfaceType apply(String typeName) {
-            JReferenceType referenceType = referenceTypesByName.get(typeName);
-            assert (referenceType instanceof JInterfaceType);
-            return (JInterfaceType) referenceType;
-          }
-        }
-    );
-  }
-
-  /**
-   * Get all implemented JsFunction interfaces of {@code type}.
-   * After JsInteropRestrictionChecker, jsFunctions.size() <= 1 would always be true.
-   */
-  public Collection<JInterfaceType> getImplementedJsFunctions(JDeclaredType type) {
-    Collection<JInterfaceType> jsFunctions =
-        Collections2.filter(getImplementedInterfaces(type), new Predicate<JInterfaceType>() {
-          @Override
-          public boolean apply(JInterfaceType implementedInterface) {
-            return implementedInterface.isJsFunction();
-          }
-        });
-    return jsFunctions;
   }
 
   public JMethod getInstanceMethodBySignature(JClassType type, String signature) {
