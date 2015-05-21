@@ -168,6 +168,9 @@ public class ChunkOptionsPopupPanel extends ThemedPopupPanel
       int firstSpaceIdx = extractedChunkHeader.indexOf(' ');
       int firstCommaIdx = extractedChunkHeader.indexOf(',');
       
+      if (firstCommaIdx == -1)
+         firstCommaIdx = extractedChunkHeader.length();
+      
       return firstCommaIdx <= firstSpaceIdx ?
             "" :
             extractedChunkHeader.substring(firstSpaceIdx + 1, firstCommaIdx).trim();
@@ -253,9 +256,16 @@ public class ChunkOptionsPopupPanel extends ThemedPopupPanel
       String newLine =
             chunkHeaderBounds.first +
             chunkPreamble_ +
-            (label.isEmpty() ? "" : " " + label) +
+            (label.isEmpty() ? "" : " " + label);
+      
+      if (!chunkOptions_.isEmpty())
+      {
+         newLine +=
             ", " +
-            StringUtil.collapse(chunkOptions_, "=", ", ") +
+            StringUtil.collapse(chunkOptions_, "=", ", ");
+      }
+      
+      newLine +=
             chunkHeaderBounds.second +
             "\n";
       
