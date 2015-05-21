@@ -344,6 +344,11 @@ public:
       return core::r_util::SessionContext(userIdentity(), sessionScope());
    }
 
+   bool multiSession() const
+   {
+      return multiSession_;
+   }
+
    core::FilePath userHomePath() const 
    { 
       return core::FilePath(userHomePath_.c_str());
@@ -522,6 +527,7 @@ private:
    bool showUserIdentity_;
    std::string userIdentity_;
    core::r_util::SessionScope scope_;
+   bool multiSession_;
    std::string userHomePath_;
    std::string userScratchPath_;   
 

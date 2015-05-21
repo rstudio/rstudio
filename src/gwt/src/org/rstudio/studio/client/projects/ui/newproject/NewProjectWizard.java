@@ -21,7 +21,6 @@ import org.rstudio.core.client.widget.Wizard;
 import org.rstudio.core.client.widget.WizardNavigationPage;
 import org.rstudio.studio.client.projects.model.NewProjectInput;
 import org.rstudio.core.client.widget.WizardPage;
-import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.projects.model.NewProjectResult;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
@@ -43,6 +42,7 @@ public class NewProjectWizard extends Wizard<NewProjectInput,NewProjectResult>
             createFirstPage(sessionInfo),
             operation);
     
+      sessionInfo_ = sessionInfo;
       openInNewWindow_ = new CheckBox("Open in new window");
       addLeftWidget(openInNewWindow_);
       openInNewWindow_.setVisible(false);
@@ -53,7 +53,8 @@ public class NewProjectWizard extends Wizard<NewProjectInput,NewProjectResult>
                      WizardPage<NewProjectInput,NewProjectResult> page,
                      boolean okButtonVisible)
    {
-      openInNewWindow_.setVisible(Desktop.isDesktop() && okButtonVisible);
+      openInNewWindow_.setVisible(sessionInfo_.getMultiSession() && 
+                                  okButtonVisible);
    }
    
    @Override
@@ -99,4 +100,5 @@ public class NewProjectWizard extends Wizard<NewProjectInput,NewProjectResult>
    }
    
    private final CheckBox openInNewWindow_;
+   private final SessionInfo sessionInfo_;
 }

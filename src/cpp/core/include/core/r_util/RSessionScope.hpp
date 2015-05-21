@@ -16,6 +16,11 @@
 #ifndef CORE_R_UTIL_R_SESSION_SCOPE_HPP
 #define CORE_R_UTIL_R_SESSION_SCOPE_HPP
 
+#include <boost/regex.hpp>
+#include <boost/format.hpp>
+
+#include <core/http/Util.hpp>
+
 namespace rstudio {
 namespace core {
 namespace r_util {
@@ -54,6 +59,53 @@ struct SessionScope
 inline SessionScope projectNoneSessionScope()
 {
    return SessionScope("default", "0");
+}
+
+inline std::string urlPathForSessionScope(const SessionScope& scope)
+{
+   // get a URL compatible project path
+   std::string project = http::util::urlEncode(scope.project);
+   boost::algorithm::replace_all(project, "%2F", "/");
+
+   // create url
+   boost::format fmt("/s/%1%/~%2%/");
+   return boost::str(fmt % project % scope.id);
+}
+
+inline void parseSessionUrl(const std::string& url,
+                            SessionScope* pScope,
+                            std::string* pUrlPrefix,
+                            std::string* pUrlWithoutPrefix)
+{
+   static boost::regex re("/s/(.+?)/~(\\d+)/");
+
+   boost::smatch match;
+   if (boost::regex_search(url, match, re))
+   {
+      if (pScope)
+      {
+         pScope->project = http::util::urlDecode(match[1]);
+         pScope->id = match[2];
+      }
+      if (pUrlPrefix)
+      {
+         *pUrlPrefix = match[0];
+      }
+      if (pUrlWithoutPrefix)
+      {
+         *pUrlWithoutPrefix = boost::algorithm::replace_first_copy(
+                                                   url, *pUrlPrefix, "/");
+      }
+   }
+   else
+   {
+      if (pScope)
+         *pScope = SessionScope();
+      if (pUrlPrefix)
+         *pUrlPrefix = std::string();
+      if (pUrlWithoutPrefix)
+         *pUrlWithoutPrefix = url;
+   }
 }
 
 

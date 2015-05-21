@@ -23,6 +23,7 @@
 #define kRSessionPortNumber               "RSTUDIO_SESSION_PORT"
 #define kRSessionStandalonePortNumber     "RSTUDIO_STANDALONE_PORT"
 #define kRStudioSessionStream             "RSTUDIO_SESSION_STREAM"
+#define kRStudioMultiSession              "RSTUDIO_MULTI_SESSION"
 
 #define kProgramModeSessionOption         "program-mode"
 #define kSessionProgramModeDesktop        "desktop"

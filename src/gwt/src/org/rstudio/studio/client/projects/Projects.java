@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.projects;
 
+
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.SerializedCommand;
 import org.rstudio.core.client.SerializedCommandQueue;
@@ -64,6 +65,7 @@ import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.vcs.common.ConsoleProgressDialog;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -159,8 +161,8 @@ public class Projects implements OpenProjectFileHandler,
                }
             }
             
-            // disable the open project in new window command in web mode
-            if (!Desktop.isDesktop())
+            // disable the open project in new window if necessary
+            if (!sessionInfo.getMultiSession())
                commands.openProjectInNewWindow().remove();
             
             // maintain mru
@@ -502,12 +504,32 @@ public class Projects implements OpenProjectFileHandler,
          createProjectCmds.addCommand(new SerializedCommand() {
 
             @Override
-            public void onExecute(Command continuation)
+            public void onExecute(final Command continuation)
             {
-               Desktop.getFrame().openProjectInNewWindow(
-                                             newProject.getProjectFile());
-               continuation.execute();
-               
+               FileSystemItem project = FileSystemItem.createFile(
+                                               newProject.getProjectFile());
+               if (Desktop.isDesktop())
+               {
+                  Desktop.getFrame().openProjectInNewWindow(project.getPath());                   
+                  continuation.execute();
+               }
+               else
+               {
+                  indicator.onProgress("Preparing to open project...");
+                  
+                  projServer_.getProjectUrl(
+                                GWT.getHostPageBaseURL(),
+                                project.getParentPathString(), 
+                    new SimpleRequestCallback<String>() {
+
+                     @Override
+                     public void onResponseReceived(String url)
+                     {
+                        globalDisplay_.openWindow(url);
+                        continuation.execute();
+                     }
+                  }); 
+               } 
             }
          }, false);
       }

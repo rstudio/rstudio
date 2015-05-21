@@ -20,6 +20,7 @@
 #include <core/Exec.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/system/System.hpp>
+#include <core/http/URL.hpp>
 #include <core/r_util/RProjectFile.hpp>
 #include <core/r_util/RSessionContext.hpp>
 #include <core/r_util/RSessionScope.hpp>
@@ -75,6 +76,31 @@ Error getNewProjectContext(const json::JsonRpcRequest& request,
 
    return Success();
 }
+
+Error getProjectUrl(const json::JsonRpcRequest& request,
+                    json::JsonRpcResponse* pResponse)
+{
+   // read params
+   std::string hostPageUrl, projectDir;
+   Error error = json::readParams(request.params, &hostPageUrl, &projectDir);
+   if (error)
+      return error;
+
+   // get url without prefix
+   using namespace r_util;
+   std::string url;
+   parseSessionUrl(hostPageUrl, NULL, NULL, &url);
+
+   // build path for project
+   std::string path = urlPathForSessionScope(SessionScope(projectDir, "1"));
+
+   // complete the url and return it
+   url = http::URL::complete(url, path);
+   pResponse->setResult(url);
+
+   return Success();
+}
+
 
 Error createProject(const json::JsonRpcRequest& request,
                     json::JsonRpcResponse* pResponse)
@@ -674,6 +700,7 @@ Error initialize()
    ExecBlock initBlock ;
    initBlock.addFunctions()
       (bind(registerRpcMethod, "get_new_project_context", getNewProjectContext))
+      (bind(registerRpcMethod, "get_project_url", getProjectUrl))
       (bind(registerRpcMethod, "create_project", createProject))
       (bind(registerRpcMethod, "read_project_options", readProjectOptions))
       (bind(registerRpcMethod, "write_project_options", writeProjectOptions))

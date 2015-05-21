@@ -617,6 +617,8 @@ void handleClientInit(const boost::function<void()>& initFunction,
    // sessionInfo["show_help_home"] = options.showHelpHome();
    sessionInfo["show_help_home"] = false;
 
+   sessionInfo["multi_session"] = options.multiSession();
+
    // send response  (we always set kEventsPending to false so that the client
    // won't poll for events until it is ready)
    json::JsonRpcResponse jsonRpcResponse ;
