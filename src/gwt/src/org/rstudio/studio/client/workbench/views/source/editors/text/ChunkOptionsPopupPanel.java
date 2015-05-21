@@ -415,9 +415,9 @@ public class ChunkOptionsPopupPanel extends ThemedPopupPanel
    
    static {
       BOOLEAN_CHUNK_OPTIONS = new HashMap<String, String>();
-      BOOLEAN_CHUNK_OPTIONS.put("eval", "Evaluate this chunk?");
-      BOOLEAN_CHUNK_OPTIONS.put("echo", "Print R output to knitted document?");
-      BOOLEAN_CHUNK_OPTIONS.put("include", "Include chunk output in generated document?");
+      BOOLEAN_CHUNK_OPTIONS.put("eval", "Evaluate this chunk");
+      BOOLEAN_CHUNK_OPTIONS.put("echo", "Print R output to knitted document");
+      BOOLEAN_CHUNK_OPTIONS.put("include", "Include chunk output in generated document");
    }
    
    public interface Styles extends CssResource
