@@ -551,7 +551,7 @@ void startup()
    // check for explicit project none scope
    if (session::options().sessionScope() == r_util::projectNoneSessionScope())
    {
-      projectFilePath = FilePath();
+      projectFilePath = resolveProjectSwitch(kProjectNone);
    }
 
    // check for explicit request for a project (file association or url based)
