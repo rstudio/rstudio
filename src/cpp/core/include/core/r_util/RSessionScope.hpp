@@ -47,6 +47,11 @@ struct SessionScope
    }
 };
 
+inline SessionScope projectNoneSessionScope()
+{
+   return SessionScope("default", "0");
+}
+
 
 } // namespace r_util
 } // namespace core 

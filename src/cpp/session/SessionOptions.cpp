@@ -491,7 +491,7 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
    core::system::unsetenv(kRStudioInitialEnvironment);
 
    // initial project (can either be a command line param or via env)
-   if (!project().empty())
+   if (!project_.empty())
    {
      FilePath projectDir =
         FilePath::resolveAliasedPath(project_, FilePath(userHomePath_));

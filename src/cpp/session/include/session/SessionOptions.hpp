@@ -334,21 +334,14 @@ public:
       return showUserIdentity_;
    }
 
-   std::string project() const
+   core::r_util::SessionScope sessionScope() const
    {
-      return project_;
-   }
-
-   std::string scope() const
-   {
-      return scope_;
+      return core::r_util::SessionScope(project_, scope_);
    }
 
    core::r_util::SessionContext sessionContext() const
    {
-      return core::r_util::SessionContext(
-                              userIdentity(),
-                              core::r_util::SessionScope(project(), scope()));
+      return core::r_util::SessionContext(userIdentity(), sessionScope());
    }
 
    core::FilePath userHomePath() const 

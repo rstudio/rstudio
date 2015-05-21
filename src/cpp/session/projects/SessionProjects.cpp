@@ -22,6 +22,7 @@
 #include <core/system/System.hpp>
 #include <core/r_util/RProjectFile.hpp>
 #include <core/r_util/RSessionContext.hpp>
+#include <core/r_util/RSessionScope.hpp>
 
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionUserSettings.hpp>
@@ -521,8 +522,14 @@ void startup()
    std::string switchToProject = projSettings.switchToProjectPath();
    FilePath lastProjectPath = projSettings.lastProjectPath();
 
+   // check for explicit project none scope
+   if (session::options().sessionScope() == r_util::projectNoneSessionScope())
+   {
+      projectFilePath = FilePath();
+   }
+
    // check for explicit request for a project (file association or url based)
-   if (!session::options().initialProjectPath().empty())
+   else if (!session::options().initialProjectPath().empty())
    {
       projectFilePath = session::options().initialProjectPath();
    }
