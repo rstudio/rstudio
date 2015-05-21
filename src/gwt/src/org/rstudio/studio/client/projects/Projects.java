@@ -811,9 +811,10 @@ public class Projects implements OpenProjectFileHandler,
          @Override
          public void onResponseReceived(String url)
          {
-            globalDisplay_.openWindow(url);
             if (onSuccess != null)
                onSuccess.execute();
+            
+            globalDisplay_.openWindow(url);
          }
       });
    }
