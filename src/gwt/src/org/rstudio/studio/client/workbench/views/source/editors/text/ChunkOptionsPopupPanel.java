@@ -406,12 +406,7 @@ public class ChunkOptionsPopupPanel extends ThemedPopupPanel
       BOOLEAN_CHUNK_OPTIONS = new HashMap<String, String>();
       BOOLEAN_CHUNK_OPTIONS.put("eval", "Evaluate this chunk?");
       BOOLEAN_CHUNK_OPTIONS.put("echo", "Print R output to knitted document?");
-      BOOLEAN_CHUNK_OPTIONS.put("warning", "Print R warnings?");
-      BOOLEAN_CHUNK_OPTIONS.put("error", "Print R errors?");
-      BOOLEAN_CHUNK_OPTIONS.put("message", "Print R messages?");
       BOOLEAN_CHUNK_OPTIONS.put("include", "Include chunk output in generated document?");
-      BOOLEAN_CHUNK_OPTIONS.put("tidy", "Tidy R code?");
-      BOOLEAN_CHUNK_OPTIONS.put("cache", "Cache the output from this chunk?");
    }
    
    public interface Styles extends CssResource
