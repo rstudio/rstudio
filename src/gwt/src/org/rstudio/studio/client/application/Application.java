@@ -36,6 +36,7 @@ import com.google.inject.Singleton;
 
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.dom.DomUtils;
@@ -414,7 +415,14 @@ public class Application implements ApplicationEventHandlers
          // the R session to fully exit on the server)
          if (event.getSwitchProjects())
          {
-            reloadWindowWithDelay(true);
+            if (!StringUtil.isNullOrEmpty(event.getNextSessionUrl()))
+            {
+               navigateWindowWithDelay(event.getNextSessionUrl());
+            }
+            else
+            {
+               reloadWindowWithDelay(true);
+            }
          }
          else
          {
@@ -434,6 +442,17 @@ public class Application implements ApplicationEventHandlers
                Window.Location.replace(GWT.getHostPageBaseURL());
             else
                Window.Location.reload();
+         }
+      }.schedule(100);
+   }
+   
+   private void navigateWindowWithDelay(final String url)
+   {
+      new Timer() {
+         @Override
+         public void run()
+         { 
+            Window.Location.replace(url);
          }
       }.schedule(100);
    }
@@ -493,6 +512,7 @@ public class Application implements ApplicationEventHandlers
                                        DesktopFrame.PENDING_QUIT_AND_EXIT);
                      server_.quitSession(false,
                                          null,
+                                         GWT.getHostPageBaseURL(),
                                          new SimpleRequestCallback<Boolean>());
                   }
                   else

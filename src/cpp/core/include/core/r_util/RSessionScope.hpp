@@ -19,6 +19,7 @@
 #include <boost/regex.hpp>
 #include <boost/format.hpp>
 
+#include <core/http/URL.hpp>
 #include <core/http/Util.hpp>
 
 namespace rstudio {
@@ -107,6 +108,22 @@ inline void parseSessionUrl(const std::string& url,
          *pUrlWithoutPrefix = url;
    }
 }
+
+inline std::string createSessionUrl(const std::string& hostPageUrl,
+                                    const SessionScope& scope)
+{
+   // get url without prefix
+   using namespace r_util;
+   std::string url;
+   parseSessionUrl(hostPageUrl, NULL, NULL, &url);
+
+   // build path for project
+   std::string path = urlPathForSessionScope(scope);
+
+   // complete the url and return it
+   return http::URL::complete(url, path);
+}
+
 
 
 } // namespace r_util

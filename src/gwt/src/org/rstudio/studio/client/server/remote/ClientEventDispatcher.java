@@ -480,8 +480,8 @@ public class ClientEventDispatcher
          }
          else if (type.equals(ClientEvent.Quit))
          {
-            boolean switchProjects = event.<Bool>getData().getValue();
-            eventBus_.fireEvent(new QuitEvent(switchProjects));
+            QuitEvent.Data data = event.getData();
+            eventBus_.fireEvent(new QuitEvent(data));
          }
          else if (type.equals(ClientEvent.Suicide))
          {

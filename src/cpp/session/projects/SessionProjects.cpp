@@ -86,17 +86,8 @@ Error getProjectUrl(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-   // get url without prefix
-   using namespace r_util;
-   std::string url;
-   parseSessionUrl(hostPageUrl, NULL, NULL, &url);
-
-   // build path for project
-   std::string path = urlPathForSessionScope(SessionScope(projectDir, "1"));
-
-   // complete the url and return it
-   url = http::URL::complete(url, path);
-   pResponse->setResult(url);
+   r_util::SessionScope scope(projectDir, "1");
+   pResponse->setResult(r_util::createSessionUrl(hostPageUrl, scope));
 
    return Success();
 }

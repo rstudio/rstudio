@@ -209,6 +209,9 @@ bool s_sessionInitialized = false;
 // was the underlying r session resumed
 bool s_rSessionResumed = false;
 
+// url for next session
+std::string s_nextSessionUrl;
+
 // manage global state indicating whether R is processing input
 volatile sig_atomic_t s_rProcessingInput = 0;
 
@@ -875,18 +878,36 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
 
             // see whether we should save the workspace
             bool saveWorkspace = true;
-            std::string switchToProject;
+            std::string switchToProject, hostPageUrl;
             Error error = json::readParams(jsonRpcRequest.params,
                                            &saveWorkspace,
-                                           &switchToProject) ;
+                                           &switchToProject,
+                                           &hostPageUrl) ;
             if (error)
                LOG_ERROR(error);
 
             // note switch to project
             if (!switchToProject.empty())
             {
-               projects::ProjectsSettings(options().userScratchPath()).
+               if (options().programMode() == kSessionProgramModeDesktop ||
+                   options().multiSession() == false)
+               {
+                  projects::ProjectsSettings(options().userScratchPath()).
                                     setSwitchToProjectPath(switchToProject);
+               }
+               else
+               {
+                  r_util::SessionScope scope;
+                  if (switchToProject == kProjectNone)
+                     scope = r_util::projectNoneSessionScope();
+                  else
+                     scope = r_util::SessionScope(switchToProject, "1");
+
+                  std::string url = r_util::createSessionUrl(hostPageUrl,
+                                                             scope);
+
+                  s_nextSessionUrl = url;
+               }
             }
 
             // exit status
@@ -2188,9 +2209,14 @@ void rQuit()
 
    // enque a quit event
    bool switchProjects =
-     !projects::ProjectsSettings(options().userScratchPath())
-                                          .switchToProjectPath().empty();
-   ClientEvent quitEvent(kQuit, switchProjects);
+            !projects::ProjectsSettings(options().userScratchPath())
+                                          .switchToProjectPath().empty() ||
+            !s_nextSessionUrl.empty();
+
+   json::Object jsonData;
+   jsonData["switch_projects"] = switchProjects;
+   jsonData["next_session_url"] = s_nextSessionUrl;
+   ClientEvent quitEvent(kQuit, jsonData);
    rsession::clientEventQueue().add(quitEvent);
 }
    

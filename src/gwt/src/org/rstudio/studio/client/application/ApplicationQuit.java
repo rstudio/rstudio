@@ -56,6 +56,7 @@ import org.rstudio.studio.client.workbench.views.console.events.ConsoleRestartRC
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.source.SourceShim;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 import com.google.gwt.resources.client.ImageResource;
@@ -581,6 +582,7 @@ public class ApplicationQuit implements SaveActionChangedHandler,
                server_.quitSession(
                   saveChanges_,
                   switchToProject_,
+                  GWT.getHostPageBaseURL(),
                   new ServerRequestCallback<Boolean>()
                   {
                      @Override

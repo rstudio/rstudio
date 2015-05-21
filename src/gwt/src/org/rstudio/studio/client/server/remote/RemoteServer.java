@@ -326,11 +326,13 @@ public class RemoteServer implements Server
    
    public void quitSession(boolean saveWorkspace, 
                            String switchToProject,
+                           String hostPageUrl,
                            ServerRequestCallback<Boolean> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, JSONBoolean.getInstance(saveWorkspace));
       params.set(1, new JSONString(StringUtil.notNull(switchToProject)));
+      params.set(2, new JSONString(StringUtil.notNull(hostPageUrl)));
       sendRequest(RPC_SCOPE, QUIT_SESSION, params, requestCallback);
    }
    
