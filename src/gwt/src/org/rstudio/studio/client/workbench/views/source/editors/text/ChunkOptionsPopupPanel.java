@@ -198,8 +198,12 @@ public class ChunkOptionsPopupPanel extends ThemedPopupPanel
       return string.equals("TRUE") || string.equals("T");
    }
    
-   private String extractChunkPreamble(String extractedChunkHeader)
+   private String extractChunkPreamble(String extractedChunkHeader,
+                                       String modeId)
    {
+      if (modeId.equals("mode/sweave"))
+         return "";
+      
       int firstSpaceIdx = extractedChunkHeader.indexOf(' ');
       if (firstSpaceIdx == -1)
          return extractedChunkHeader;
@@ -248,7 +252,7 @@ public class ChunkOptionsPopupPanel extends ThemedPopupPanel
       if (match == null) return;
       
       String extracted = match.getGroup(1);
-      chunkPreamble_ = extractChunkPreamble(extracted);
+      chunkPreamble_ = extractChunkPreamble(extracted, modeId);
       
       String chunkLabel = extractChunkLabel(extracted);
       if (StringUtil.isNullOrEmpty(chunkLabel))
@@ -317,14 +321,25 @@ public class ChunkOptionsPopupPanel extends ThemedPopupPanel
       String label = tbChunkLabel_.getText();
       String newLine =
             chunkHeaderBounds.first +
-            chunkPreamble_ +
-            (label.isEmpty() ? "" : " " + label);
+            chunkPreamble_;
+      
+      if (!label.isEmpty())
+      {
+         if (StringUtil.isNullOrEmpty(chunkPreamble_))
+            newLine += label;
+         else
+            newLine += " " + label;
+      }
       
       if (!chunkOptions_.isEmpty())
       {
-         newLine +=
-            ", " +
-            StringUtil.collapse(chunkOptions_, "=", ", ");
+         if (!(StringUtil.isNullOrEmpty(chunkPreamble_) &&
+             label.isEmpty()))
+         {
+            newLine += ", ";
+         }
+         
+         newLine += StringUtil.collapse(chunkOptions_, "=", ", ");
       }
       
       newLine +=
