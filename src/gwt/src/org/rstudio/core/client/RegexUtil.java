@@ -72,7 +72,7 @@ public class RegexUtil
          Pattern.create("^\\s*```\\s*$", "");
    
    public static final Pattern RE_RHTML_CHUNK_BEGIN =
-         Pattern.create("^\\s*<!-{2,}\\s*begin\\.rcode\\s+(.*?)\\s*$", "");
+         Pattern.create("^\\s*<!-{2,}\\s*(.*?)\\s*$", "");
    
    public static final Pattern RE_RHTML_CHUNK_END =
          Pattern.create("end\\.rcode\\s*-{2,}\\>", "");

@@ -31,6 +31,8 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.event.dom.client.KeyUpHandler;
@@ -38,6 +40,7 @@ import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
+import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
@@ -71,7 +74,8 @@ public class ChunkOptionsPopupPanel extends ThemedPopupPanel
          public void onKeyUp(KeyUpEvent event)
          {
             int keyCode = event.getNativeKeyCode();
-            if (keyCode == KeyCodes.KEY_ESCAPE)
+            if (keyCode == KeyCodes.KEY_ESCAPE ||
+                keyCode == KeyCodes.KEY_ENTER)
             {
                ChunkOptionsPopupPanel.this.hide();
                widget_.getEditor().focus();
@@ -86,7 +90,8 @@ public class ChunkOptionsPopupPanel extends ThemedPopupPanel
          public void onKeyUp(KeyUpEvent event)
          {
             int keyCode = event.getNativeKeyCode();
-            if (keyCode == KeyCodes.KEY_ESCAPE)
+            if (keyCode == KeyCodes.KEY_ESCAPE ||
+                keyCode == KeyCodes.KEY_ENTER)
             {
                ChunkOptionsPopupPanel.this.hide();
                widget_.getEditor().focus();
@@ -115,6 +120,41 @@ public class ChunkOptionsPopupPanel extends ThemedPopupPanel
       {
          addCheckboxController(entry.getKey(), entry.getValue());
       }
+      
+      HorizontalPanel buttonPanel = new HorizontalPanel();
+      
+      Button revertButton = new Button("Revert");
+      revertButton.addStyleName(RES.styles().button());
+      revertButton.addClickHandler(new ClickHandler()
+      {
+         
+         @Override
+         public void onClick(ClickEvent event)
+         {
+            revert();
+            parseHeaderAndInit(widget_, position_);
+         }
+      });
+      buttonPanel.add(revertButton);
+      
+      Button applyButton = new Button("Apply");
+      applyButton.addStyleName(RES.styles().button());
+      applyButton.addClickHandler(new ClickHandler()
+      {
+         
+         @Override
+         public void onClick(ClickEvent event)
+         {
+            synchronize();
+            ChunkOptionsPopupPanel.this.hide();
+            widget_.getEditor().focus();
+         }
+      });
+      buttonPanel.add(applyButton);
+      
+      panel_.setHorizontalAlignment(VerticalPanel.ALIGN_RIGHT);
+      panel_.add(buttonPanel);
+      
    }
    
    public void show(AceEditorWidget widget, Position position)
@@ -129,17 +169,19 @@ public class ChunkOptionsPopupPanel extends ThemedPopupPanel
       position_ = position;
       chunkOptions_.clear();
       
-      String line = widget_.getEditor().getSession().getLine(position_.getRow());
-      parseChunkHeader(line, chunkOptions_);
+      originalLine_ = widget_.getEditor().getSession().getLine(position_.getRow());
+      parseChunkHeader(originalLine_, chunkOptions_);
       
       for (String option : BOOLEAN_CHUNK_OPTIONS.keySet())
       {
+         CheckBox cb = checkboxMap_.get(option);
+         assert cb != null :
+            "No checkbox for boolean option '" + option + "'";
+         
          if (chunkOptions_.containsKey(option))
-         {
-            CheckBox cb = checkboxMap_.get(option);
-            if (cb == null) continue;
             cb.setValue(isTrue(chunkOptions_.get(option)));
-         }
+         else
+            cb.setValue(false);
       }
    }
    
@@ -151,14 +193,15 @@ public class ChunkOptionsPopupPanel extends ThemedPopupPanel
    private String extractChunkPreamble(String extractedChunkHeader)
    {
       int firstSpaceIdx = extractedChunkHeader.indexOf(' ');
+      if (firstSpaceIdx == -1)
+         return extractedChunkHeader;
+      
       int firstCommaIdx = extractedChunkHeader.indexOf(',');
+      if (firstCommaIdx == -1)
+         firstCommaIdx = extractedChunkHeader.length();
       
       String label = extractedChunkHeader.substring(
             0, Math.min(firstSpaceIdx, firstCommaIdx)).trim();
-      
-      // If there was no label discovered for some reason, just use 'r'
-      if (label.isEmpty())
-         return "r";
       
       return label;
    }
@@ -166,11 +209,10 @@ public class ChunkOptionsPopupPanel extends ThemedPopupPanel
    private String extractChunkLabel(String extractedChunkHeader)
    {
       int firstSpaceIdx = extractedChunkHeader.indexOf(' ');
-      int firstCommaIdx = extractedChunkHeader.indexOf(',');
-      
       if (firstSpaceIdx == -1)
          return "";
       
+      int firstCommaIdx = extractedChunkHeader.indexOf(',');
       if (firstCommaIdx == -1)
          firstCommaIdx = extractedChunkHeader.length();
       
@@ -199,7 +241,17 @@ public class ChunkOptionsPopupPanel extends ThemedPopupPanel
       
       String extracted = match.getGroup(1);
       chunkPreamble_ = extractChunkPreamble(extracted);
-      tbChunkLabel_.setText(extractChunkLabel(extracted));
+      
+      String chunkLabel = extractChunkLabel(extracted);
+      if (StringUtil.isNullOrEmpty(chunkLabel))
+      {
+         tbChunkLabel_.setCueMode(true);
+      }
+      else
+      {
+         tbChunkLabel_.setCueMode(false);
+         tbChunkLabel_.setText(extractChunkLabel(extracted));
+      }
       
       int firstCommaIndex = extracted.indexOf(',');
       String arguments = extracted.substring(firstCommaIndex + 1);
@@ -229,7 +281,6 @@ public class ChunkOptionsPopupPanel extends ThemedPopupPanel
    {
       position_ = null;
       chunkOptions_.clear();
-      checkboxMap_.clear();
       super.hide();
    }
    
@@ -240,9 +291,9 @@ public class ChunkOptionsPopupPanel extends ThemedPopupPanel
       else if (modeId.equals("mode/sweave"))
          return new Pair<String, String>("<<", ">>=");
       else if (modeId.equals("mode/rhtml"))
-         return new Pair<String, String>("<!-- begin.rcode", "");
+         return new Pair<String, String>("<!--", "");
       else if (modeId.equals("mode/c_cpp"))
-         return new Pair<String, String>("/*** R", "");
+         return new Pair<String, String>("/***", "");
       
       return null;
    }
@@ -295,10 +346,25 @@ public class ChunkOptionsPopupPanel extends ThemedPopupPanel
       panel_.add(cb);
    }
    
+   private void revert()
+   {
+      if (position_ == null)
+         return;
+      
+      Range replaceRange = Range.fromPoints(
+            Position.create(position_.getRow(), 0),
+            Position.create(position_.getRow() + 1, 0));
+      
+      widget_.getEditor().getSession().replace(
+            replaceRange,
+            originalLine_ + "\n");
+   }
+   
    private final VerticalPanel panel_;
    private final TextBoxWithCue tbChunkLabel_;
    private final HashMap<String, CheckBox> checkboxMap_;
    
+   private String originalLine_;
    private String chunkPreamble_;
    private HashMap<String, String> chunkOptions_;
    
@@ -324,6 +390,7 @@ public class ChunkOptionsPopupPanel extends ThemedPopupPanel
       String chunkLabel();
       String chunkName();
       String labelPanel();
+      String button();
    }
    
    public interface Resources extends ClientBundle

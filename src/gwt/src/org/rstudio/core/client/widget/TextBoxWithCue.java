@@ -121,6 +121,19 @@ public class TextBoxWithCue extends TextBox
    {
       return (getStyleName() + " ").indexOf(CUE_STYLE + " ") >= 0;
    }
+   
+   public void setCueMode(boolean cueMode)
+   {
+      if (cueMode)
+      {
+         addStyleName(CUE_STYLE);
+         setText(cueText_);
+      }
+      else
+      {
+         removeStyleName(CUE_STYLE);
+      }
+   }
 
    private void unhookEvents()
    {
