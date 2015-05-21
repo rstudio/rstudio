@@ -144,7 +144,7 @@ public class ChunkOptionsPopupPanel extends ThemedPopupPanel
          public void onClick(ClickEvent event)
          {
             revert();
-            parseHeaderAndInit(widget_, position_);
+            init(widget_, position_);
          }
       });
       buttonPanel.add(revertButton);
@@ -173,13 +173,7 @@ public class ChunkOptionsPopupPanel extends ThemedPopupPanel
       panel_.add(footerPanel);
    }
    
-   public void show(AceEditorWidget widget, Position position)
-   {
-      parseHeaderAndInit(widget, position);
-      show();
-   }
-   
-   private void parseHeaderAndInit(AceEditorWidget widget, Position position)
+   public void init(AceEditorWidget widget, Position position)
    {
       widget_ = widget;
       position_ = position;

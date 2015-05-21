@@ -21,6 +21,7 @@ import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.views.console.shell.assist.PopupPositioner;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.ExecuteChunkEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Renderer;
@@ -176,8 +177,13 @@ public class ChunkIconsManager
       
       Renderer renderer = widget_.getEditor().getRenderer();
       Position position = renderer.screenToTextCoordinates(pageX, pageY);
-      optionsPanel_.setPopupPosition(pageX + 10, pageY + 10);
-      optionsPanel_.show(widget_, position);
+      optionsPanel_.init(widget_, position);
+      optionsPanel_.show();
+      PopupPositioner.setPopupPosition(
+            optionsPanel_,
+            pageX,
+            pageY,
+            10);
    }
    
    private final AceEditorWidget widget_;
