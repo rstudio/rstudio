@@ -899,14 +899,23 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
                {
                   r_util::SessionScope scope;
                   if (switchToProject == kProjectNone)
+                  {
                      scope = r_util::projectNoneSessionScope();
+                  }
                   else
+                  {
+                     // extract the directory (aliased)
+                     using namespace module_context;
+                     FilePath projFile = resolveAliasedPath(switchToProject);
+                     FilePath projDir = projFile.parent();
+                     switchToProject = createAliasedPath(projDir);
+
                      scope = r_util::SessionScope(switchToProject, "1");
+                  }
 
-                  std::string url = r_util::createSessionUrl(hostPageUrl,
-                                                             scope);
+                  s_nextSessionUrl = r_util::createSessionUrl(hostPageUrl,
+                                                              scope);
 
-                  s_nextSessionUrl = url;
                }
             }
 
