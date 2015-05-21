@@ -516,19 +516,7 @@ public class Projects implements OpenProjectFileHandler,
                else
                {
                   indicator.onProgress("Preparing to open project...");
-                  
-                  projServer_.getProjectUrl(
-                                GWT.getHostPageBaseURL(),
-                                project.getParentPathString(), 
-                    new SimpleRequestCallback<String>() {
-
-                     @Override
-                     public void onResponseReceived(String url)
-                     {
-                        globalDisplay_.openWindow(url);
-                        continuation.execute();
-                     }
-                  }); 
+                  serverOpenProjectInNewWindow(project, continuation); 
                } 
             }
          }, false);
@@ -607,7 +595,10 @@ public class Projects implements OpenProjectFileHandler,
                // a conventional foreground gui application it has
                // less chance of running afowl of desktop app creation
                // & activation restrictions)
-               Desktop.getFrame().openProjectInNewWindow(input.getPath());
+               if (Desktop.isDesktop())
+                  Desktop.getFrame().openProjectInNewWindow(input.getPath());
+               else
+                  serverOpenProjectInNewWindow(input, null);
             }   
          });
    }
@@ -809,6 +800,24 @@ public class Projects implements OpenProjectFileHandler,
       });
    }
    
+   private void serverOpenProjectInNewWindow(FileSystemItem project,
+                                             final Command onSuccess)
+   {
+      projServer_.getProjectUrl(
+                    GWT.getHostPageBaseURL(),
+                    project.getParentPathString(), 
+        new SimpleRequestCallback<String>() {
+
+         @Override
+         public void onResponseReceived(String url)
+         {
+            globalDisplay_.openWindow(url);
+            if (onSuccess != null)
+               onSuccess.execute();
+         }
+      });
+   }
+
    private final Provider<ProjectMRUList> pMRUList_;
    private final ApplicationQuit applicationQuit_;
    private final ProjectsServerOperations projServer_;
