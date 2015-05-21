@@ -94,7 +94,7 @@ inline void parseSessionUrl(const std::string& url,
       if (pUrlWithoutPrefix)
       {
          *pUrlWithoutPrefix = boost::algorithm::replace_first_copy(
-                                                   url, *pUrlPrefix, "/");
+                                   url, std::string(match[0]), "/");
       }
    }
    else
