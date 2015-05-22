@@ -24,6 +24,7 @@ import org.rstudio.core.client.TextCursor;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.widget.MiniPopupPanel;
+import org.rstudio.core.client.widget.SmallButton;
 import org.rstudio.core.client.widget.TextBoxWithCue;
 import org.rstudio.core.client.widget.TriStateCheckBox;
 import org.rstudio.studio.client.common.HelpLink;
@@ -31,6 +32,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Positio
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -42,7 +44,6 @@ import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
-import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
@@ -125,7 +126,7 @@ public class ChunkOptionsPopupPanel extends MiniPopupPanel
       }
       
       HorizontalPanel footerPanel = new HorizontalPanel();
-      footerPanel.getElement().setAttribute("style", "width: 100%");
+      footerPanel.getElement().getStyle().setWidth(100, Unit.PCT);
       
       FlowPanel linkPanel = new FlowPanel();
       HelpLink helpLink = new HelpLink("Chunk Options", "chunk-options");
@@ -135,7 +136,7 @@ public class ChunkOptionsPopupPanel extends MiniPopupPanel
       buttonPanel.addStyleName(RES.styles().buttonPanel());
       buttonPanel.setHorizontalAlignment(HorizontalPanel.ALIGN_RIGHT);
       
-      Button revertButton = new Button("Revert");
+      SmallButton revertButton = new SmallButton("Revert");
       revertButton.addStyleName(RES.styles().button());
       revertButton.addClickHandler(new ClickHandler()
       {
@@ -149,8 +150,7 @@ public class ChunkOptionsPopupPanel extends MiniPopupPanel
       });
       buttonPanel.add(revertButton);
       
-      Button applyButton = new Button("Apply");
-      applyButton.addStyleName(RES.styles().button());
+      SmallButton applyButton = new SmallButton("Apply");
       applyButton.addClickHandler(new ClickHandler()
       {
          
