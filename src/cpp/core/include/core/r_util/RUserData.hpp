@@ -1,5 +1,5 @@
 /*
- * RSessionLaunchProfile.hpp
+ * RUserData.hpp
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -13,38 +13,39 @@
  *
  */
 
-#ifndef CORE_R_UTIL_R_SESSION_LAUNCH_PROFILE_HPP
-#define CORE_R_UTIL_R_SESSION_LAUNCH_PROFILE_HPP
+#ifndef CORE_R_UTIL_R_USER_DATA_HPP
+#define CORE_R_UTIL_R_USER_DATA_HPP
 
 #include <string>
 
-#include <core/system/PosixSystem.hpp>
-
-#include <core/json/Json.hpp>
-
-#include <core/r_util/RSessionContext.hpp>
+#define kRStudioInitialWorkingDir      "RS_INITIAL_WD"
+#define kRStudioInitialEnvironment     "RS_INITIAL_ENV"
+#define kRStudioInitialProject         "RS_INITIAL_PROJECT"
 
 namespace rstudio {
 namespace core {
 namespace r_util {
 
-struct SessionLaunchProfile
+enum SessionType
 {
-   SessionContext context;
-   std::string password;
-   std::string executablePath;
-   core::system::ProcessConfig config;
+   SessionTypeDesktop,
+   SessionTypeServer
 };
 
-json::Object sessionLaunchProfileToJson(const SessionLaunchProfile& profile);
+struct UserDirectories
+{
+   std::string homePath;
+   std::string scratchPath;
+};
 
-SessionLaunchProfile sessionLaunchProfileFromJson(
-                                           const json::Object& jsonProfile);
+UserDirectories userDirectories(SessionType sessionType,
+                                const std::string& homePath = std::string());
+
 
 } // namespace r_util
 } // namespace core 
 } // namespace rstudio
 
 
-#endif // CORE_R_UTIL_R_SESSION_LAUNCH_PROFILE_HPP
+#endif // CORE_R_UTIL_R_USER_DATA_HPP
 

@@ -6,7 +6,7 @@
 #include <core/system/Environment.hpp>
 
 #include <core/r_util/RProjectFile.hpp>
-#include <core/r_util/RSessionContext.hpp>
+#include <core/r_util/RUserData.hpp>
 #include <core/r_util/REnvironment.hpp>
 
 #import <AppKit/AppKit.h>

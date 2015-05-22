@@ -17,6 +17,8 @@
 
 #include <iostream>
 
+#include <boost/format.hpp>
+
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/algorithm/string/regex.hpp>
 
@@ -25,11 +27,10 @@
 #include <core/FileSerializer.hpp>
 
 #include <core/http/Util.hpp>
+#include <core/http/URL.hpp>
 
 #include <core/system/System.hpp>
 #include <core/system/Environment.hpp>
-
-#include <core/r_util/RProjectFile.hpp>
 
 namespace rstudio {
 namespace core {
@@ -37,38 +38,77 @@ namespace r_util {
 
 namespace {
 
-
-} // anonymous namespace
-
-
-UserDirectories userDirectories(SessionType sessionType,
-                                const std::string& homePath)
-{
-   UserDirectories dirs;
-   if (!homePath.empty())
-      dirs.homePath = homePath;
-   else
-      dirs.homePath = core::system::userHomePath("R_USER|HOME").absolutePath();
-
-   // compute user scratch path
-   std::string scratchPathName;
-   if (sessionType == SessionTypeDesktop)
-      scratchPathName = "RStudio-Desktop";
-   else
-      scratchPathName = "RStudio";
-
-   dirs.scratchPath = core::system::userSettingsPath(
-                                          FilePath(dirs.homePath),
-                                          scratchPathName).absolutePath();
-
-   return dirs;
-}
-
-namespace {
-
 const char* const kSessionContextDelimeter = ":::";
 
 } // anonymous namespace
+
+
+SessionScope projectNoneSessionScope()
+{
+   return SessionScope("default", "0");
+}
+
+std::string urlPathForSessionScope(const SessionScope& scope)
+{
+   // get a URL compatible project path
+   std::string project = http::util::urlEncode(scope.project);
+   boost::algorithm::replace_all(project, "%2F", "/");
+
+   // create url
+   boost::format fmt("/s/%1%/~%2%/");
+   return boost::str(fmt % project % scope.id);
+}
+
+void parseSessionUrl(const std::string& url,
+                     SessionScope* pScope,
+                     std::string* pUrlPrefix,
+                     std::string* pUrlWithoutPrefix)
+{
+   static boost::regex re("/s/(.+?)/~(\\d+)/");
+
+   boost::smatch match;
+   if (boost::regex_search(url, match, re))
+   {
+      if (pScope)
+      {
+         pScope->project = http::util::urlDecode(match[1]);
+         pScope->id = match[2];
+      }
+      if (pUrlPrefix)
+      {
+         *pUrlPrefix = match[0];
+      }
+      if (pUrlWithoutPrefix)
+      {
+         *pUrlWithoutPrefix = boost::algorithm::replace_first_copy(
+                                   url, std::string(match[0]), "/");
+      }
+   }
+   else
+   {
+      if (pScope)
+         *pScope = SessionScope();
+      if (pUrlPrefix)
+         *pUrlPrefix = std::string();
+      if (pUrlWithoutPrefix)
+         *pUrlWithoutPrefix = url;
+   }
+}
+
+
+std::string createSessionUrl(const std::string& hostPageUrl,
+                             const SessionScope& scope)
+{
+   // get url without prefix
+   std::string url;
+   parseSessionUrl(hostPageUrl, NULL, NULL, &url);
+
+   // build path for project
+   std::string path = urlPathForSessionScope(scope);
+
+   // complete the url and return it
+   return http::URL::complete(url, path);
+}
 
 
 std::ostream& operator<< (std::ostream& os, const SessionContext& context)

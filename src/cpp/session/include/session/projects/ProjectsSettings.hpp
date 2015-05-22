@@ -21,9 +21,18 @@
 
 #include <string>
 
-#include <core/FilePath.hpp>
+#include <boost/algorithm/string/trim.hpp>
 
-#include <core/r_util/RSessionContext.hpp>
+#include <core/FilePath.hpp>
+#include <core/FileSerializer.hpp>
+
+#define kProjectsSettings              "projects_settings"
+#define kNextSessionProject            "next-session-project"
+#define kSwitchToProject               "switch-to-project"
+#define kProjectNone                   "none"
+#define kLastProjectPath               "last-project-path"
+#define kLastProjectOpenedPath         "last-project-opened-path"
+#define kAlwaysRestoreLastProject      "restoreLastProject"
 
 namespace rstudio {
 namespace session {

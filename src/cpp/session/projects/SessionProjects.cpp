@@ -23,7 +23,6 @@
 #include <core/http/URL.hpp>
 #include <core/r_util/RProjectFile.hpp>
 #include <core/r_util/RSessionContext.hpp>
-#include <core/r_util/RSessionScope.hpp>
 
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionUserSettings.hpp>

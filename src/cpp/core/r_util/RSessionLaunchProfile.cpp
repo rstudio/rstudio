@@ -52,19 +52,21 @@ core::system::Options optionsFromJson(const json::Object& optionsJson)
    return options;
 }
 
-json::Object scopeAsJson(const SessionScope& scope)
+json::Object contextAsJson(const SessionContext& context)
 {
    json::Object scopeJson;
-   scopeJson["project"] = scope.project;
-   scopeJson["id"] = scope.id;
+   scopeJson["username"] = context.username;
+   scopeJson["project"] = context.scope.project;
+   scopeJson["id"] = context.scope.id;
    return scopeJson;
 }
 
-Error scopeFromJson(const json::Object& scopeJson, SessionScope* pScope)
+Error contextFromJson(const json::Object& contextJson, SessionContext* pContext)
 {
-   return json::readObject(scopeJson,
-                           "project", &(pScope->project),
-                           "id", &(pScope->id));
+   return json::readObject(contextJson,
+                           "username", &(pContext->username),
+                           "project", &(pContext->scope.project),
+                           "id", &(pContext->scope.id));
 }
 
 
@@ -96,9 +98,8 @@ json::Value toJson(RLimitType limit)
 json::Object sessionLaunchProfileToJson(const SessionLaunchProfile& profile)
 {
    json::Object profileJson;
-   profileJson["username"] = profile.username;
+   profileJson["context"] = contextAsJson(profile.context);
    profileJson["password"] = profile.password;
-   profileJson["scope"] = scopeAsJson(profile.scope);
    profileJson["executablePath"] = profile.executablePath;
    json::Object configJson;
    configJson["args"] = optionsAsJson(profile.config.args);
@@ -123,19 +124,18 @@ SessionLaunchProfile sessionLaunchProfileFromJson(
    SessionLaunchProfile profile;
 
    // read top level fields
-   json::Object configJson, scopeJson;
+   json::Object configJson, contextJson;
    Error error = json::readObject(jsonProfile,
-                                  "username", &profile.username,
+                                  "context", &contextJson,
                                   "password", &profile.password,
-                                  "scope", &scopeJson,
                                   "executablePath", &profile.executablePath,
                                   "config", &configJson);
    if (error)
       LOG_ERROR(error);
 
 
-   // read scope object
-   error = scopeFromJson(scopeJson, &(profile.scope));
+   // read context object
+   error = contextFromJson(contextJson, &(profile.context));
    if (error)
       LOG_ERROR(error);
 

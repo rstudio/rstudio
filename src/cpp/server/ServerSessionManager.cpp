@@ -167,8 +167,7 @@ Error SessionManager::launchSession(const r_util::SessionContext& context)
 
    // determine launch options
    r_util::SessionLaunchProfile profile;
-   profile.username = context.username;
-   profile.scope = context.scope;
+   profile.context = context;
    profile.executablePath = server::options().rsessionPath();
    profile.config = sessionProcessConfig(context);
 
@@ -197,7 +196,7 @@ Error SessionManager::launchAndTrackSession(
 {
    // if we are root then assume the identity of the user
    using namespace rstudio::core::system;
-   std::string runAsUser = realUserIsRoot() ? profile.username : "";
+   std::string runAsUser = realUserIsRoot() ? profile.context.username : "";
 
    // launch the session
    PidType pid = 0;
@@ -210,7 +209,7 @@ Error SessionManager::launchAndTrackSession(
 
    // track it for subsequent reaping
    processTracker_.addProcess(pid, boost::bind(onProcessExit,
-                                               profile.username,
+                                               profile.context.username,
                                                pid));
 
    // return success

@@ -27,6 +27,7 @@
 
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionOptions.hpp>
+#include <session/projects/ProjectsSettings.hpp>
 #include "modules/SessionErrors.hpp"
 #include "modules/SessionShinyViewer.hpp"
 

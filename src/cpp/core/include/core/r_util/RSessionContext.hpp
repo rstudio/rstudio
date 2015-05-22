@@ -17,45 +17,54 @@
 #define CORE_R_UTIL_R_SESSION_CONTEXT_HPP
 
 #include <string>
-#include <iosfwd>
-
-#include <core/FilePath.hpp>
-
-#include <core/r_util/RVersionInfo.hpp>
-#include <core/r_util/RSessionScope.hpp>
-
-#define kUserSettings                  "monitored/user-settings/user-settings"
-#define kAlwaysRestoreLastProject      "restoreLastProject"
-
-#define kProjectsSettings              "projects_settings"
-#define kNextSessionProject            "next-session-project"
-#define kSwitchToProject               "switch-to-project"
-#define kProjectNone                   "none"
-#define kLastProjectPath               "last-project-path"
-#define kLastProjectOpenedPath         "last-project-opened-path"
-
-#define kRStudioInitialWorkingDir      "RS_INITIAL_WD"
-#define kRStudioInitialEnvironment     "RS_INITIAL_ENV"
-#define kRStudioInitialProject         "RS_INITIAL_PROJECT"
 
 namespace rstudio {
 namespace core {
 namespace r_util {
 
-enum SessionType
+struct SessionScope
 {
-   SessionTypeDesktop,
-   SessionTypeServer
+   SessionScope()
+   {
+   }
+
+   explicit SessionScope(const std::string& project,
+                         const std::string& id)
+      : project(project), id(id)
+   {
+   }
+
+   std::string project;
+   std::string id;
+
+   bool empty() const { return project.empty(); }
+
+   bool operator==(const SessionScope &other) const {
+      return project == other.project && id == other.id;
+   }
+
+   bool operator!=(const SessionScope &other) const {
+      return !(*this == other);
+   }
+
+   bool operator<(const SessionScope &other) const {
+       return project < other.project ||
+              (project == other.project && id < other.id);
+   }
 };
 
-struct UserDirectories
-{
-   std::string homePath;
-   std::string scratchPath;
-};
+SessionScope projectNoneSessionScope();
 
-UserDirectories userDirectories(SessionType sessionType,
-                                const std::string& homePath = std::string());
+std::string urlPathForSessionScope(const SessionScope& scope);
+
+
+void parseSessionUrl(const std::string& url,
+                     SessionScope* pScope,
+                     std::string* pUrlPrefix,
+                     std::string* pUrlWithoutPrefix);
+
+std::string createSessionUrl(const std::string& hostPageUrl,
+                             const SessionScope& scope);
 
 
 struct SessionContext
@@ -65,13 +74,12 @@ struct SessionContext
    }
 
    explicit SessionContext(const std::string& username,
-                           const core::r_util::SessionScope& scope =
-                                             core::r_util::SessionScope())
+                           const SessionScope& scope = SessionScope())
       : username(username), scope(scope)
    {
    }
    std::string username;
-   core::r_util::SessionScope scope;
+   SessionScope scope;
 
    bool empty() const { return username.empty(); }
 
