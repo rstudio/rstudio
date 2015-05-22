@@ -23,7 +23,7 @@
 #include <core/FileSerializer.hpp>
 #include <core/system/Environment.hpp>
 #include <core/system/ParentProcessMonitor.hpp>
-#include <core/r_util/RSessionContext.hpp>
+#include <core/r_util/RUserData.hpp>
 
 #include <QProcess>
 #include <QtNetwork/QTcpSocket>
