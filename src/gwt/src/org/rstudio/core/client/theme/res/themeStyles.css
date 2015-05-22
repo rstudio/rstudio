@@ -1393,7 +1393,6 @@ body.ubuntu_mono .searchBox {
 }
 
 .inlineChunkToolbar {
-	background-color: rgba(160, 160, 160, 0.15);
 	position: absolute;
 	right: 10px;
 	z-index: 10;

@@ -775,4 +775,11 @@ public class DomUtils
       }
       return parent;
    }
+   
+   // NOTE: Not supported in IE8
+   public static final native Style getComputedStyles(Element el)
+   /*-{
+      return $wnd.getComputedStyle(el);
+   }-*/;
+   
 }

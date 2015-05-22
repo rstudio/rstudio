@@ -14,8 +14,8 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
+import org.rstudio.core.client.ColorUtil.RGBColor;
 import org.rstudio.core.client.dom.DomUtils;
-import org.rstudio.core.client.dom.StyleBuilder;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -30,6 +30,8 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.events.
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.dom.client.Style;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Widget;
@@ -97,15 +99,32 @@ public class ChunkIconsManager
    {
       FlowPanel panel = new FlowPanel();
       panel.addStyleName(ThemeStyles.INSTANCE.inlineChunkToolbar());
+      setBackgroundColor(panel, el);
       
       Image optionsIcon = createOptionsIcon();
-      optionsIcon.getElement().setAttribute("style", "margin-right: 2px");
+      optionsIcon.getElement().getStyle().setMarginRight(2, Unit.PX);
       panel.add(optionsIcon);
       
       Image runIcon = createRunIcon();
       panel.add(runIcon);
       
       display(panel, el);
+   }
+   
+   private void setBackgroundColor(FlowPanel panel, Element underlyingMarker)
+   {
+      Style computedStyles = DomUtils.getComputedStyles(underlyingMarker);
+      String bgColor = computedStyles.getBackgroundColor();
+      
+      RGBColor rgbColor = RGBColor.fromCss(bgColor);
+      
+      RGBColor mixed = null;
+      if (rgbColor.isDark())
+         mixed = rgbColor.mixedWith(RGBColor.WHITE, 0.95, 2);
+      else
+         mixed = rgbColor.mixedWith(RGBColor.BLACK, 0.9, 2);
+      
+      panel.getElement().getStyle().setBackgroundColor(mixed.asRgb());
    }
    
    private void display(Widget panel, Element underlyingMarker)
@@ -127,10 +146,7 @@ public class ChunkIconsManager
             underlyingMarker.getAbsoluteTop() -
             virtualParent.getAbsoluteTop();
       
-      StyleBuilder builder = new StyleBuilder();
-      builder.add("top", top + "px");
-      panel.getElement().setAttribute("style", builder.toString());
-      
+      panel.getElement().getStyle().setTop(top, Unit.PX);
       virtualParent.appendChild(panel.getElement());
    }
    
