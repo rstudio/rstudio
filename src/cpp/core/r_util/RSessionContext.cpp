@@ -123,13 +123,17 @@ std::ostream& operator<< (std::ostream& os, const SessionContext& context)
 }
 
 
-std::string sessionScopeFile(const std::string& prefix,
+std::string sessionScopeFile(std::string prefix,
                              const SessionScope& scope)
 {   
    // resolve project path
    std::string project = scope.project;
    if (!project.empty())
    {
+      // pluralize the prefix so there is no conflict when switching
+      // between the single file and directory based schemas
+      prefix += "s";
+
       if (!boost::algorithm::starts_with(project, "/"))
          project = "/" + project;
 

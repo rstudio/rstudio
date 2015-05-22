@@ -94,7 +94,7 @@ struct SessionContext
 
 std::ostream& operator<< (std::ostream& os, const SessionContext& context);
 
-std::string sessionScopeFile(const std::string& prefix,
+std::string sessionScopeFile(std::string prefix,
                              const SessionScope& scope);
 
 std::string sessionContextFile(const SessionContext& context);
