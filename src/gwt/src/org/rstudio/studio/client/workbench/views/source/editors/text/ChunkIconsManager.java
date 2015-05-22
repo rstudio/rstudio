@@ -21,6 +21,7 @@ import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.PopupPositioner;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.DisplayChunkOptionsEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.ExecuteChunkEvent;
@@ -59,10 +60,13 @@ public class ChunkIconsManager
    }
    
    @Inject
-   private void initialize(EventBus events, Commands commands)
+   private void initialize(EventBus events,
+                           Commands commands,
+                           UIPrefs uiPrefs)
    {
       events_ = events;
       commands_ = commands;
+      uiPrefs_ = uiPrefs;
    }
    
    private boolean isPseudoMarker(Element el)
@@ -77,6 +81,9 @@ public class ChunkIconsManager
       
       for (Element icon : icons)
          icon.removeFromParent();
+      
+      if (!uiPrefs_.showInlineToolbarForRCodeChunks().getValue())
+         return;
       
       Element[] chunkStarts = DomUtils.getElementsByClassName(
             "rstudio_chunk_start ace_start");
@@ -223,5 +230,6 @@ public class ChunkIconsManager
    
    private Commands commands_;
    private EventBus events_;
+   private UIPrefs uiPrefs_;
 
 }
