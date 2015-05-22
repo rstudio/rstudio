@@ -1,6 +1,7 @@
 .textBox {
     border: 1px solid #999;
     border-radius: 3px;
+    padding-left: 3px !important;
 }
 
 .textBox:focus {
