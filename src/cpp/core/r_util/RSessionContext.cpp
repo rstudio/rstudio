@@ -64,48 +64,6 @@ UserDirectories userDirectories(SessionType sessionType,
    return dirs;
 }
 
-FilePath projectsSettingsPath(const FilePath& userScratchPath)
-{
-   FilePath settingsPath = userScratchPath.complete(kProjectsSettings);
-   Error error = settingsPath.ensureDirectory();
-   if (error)
-      LOG_ERROR(error);
-
-   return settingsPath;
-}
-
-std::string readProjectsSetting(const FilePath& settingsPath,
-                                const char * const settingName)
-{
-   FilePath readPath = settingsPath.complete(settingName);
-   if (readPath.exists())
-   {
-      std::string value;
-      Error error = core::readStringFromFile(readPath, &value);
-      if (error)
-      {
-         LOG_ERROR(error);
-         return std::string();
-      }
-      boost::algorithm::trim(value);
-      return value;
-   }
-   else
-   {
-      return std::string();
-   }
-}
-
-void writeProjectsSetting(const FilePath& settingsPath,
-                          const char * const settingName,
-                          const std::string& value)
-{
-   FilePath writePath = settingsPath.complete(settingName);
-   Error error = core::writeStringToFile(writePath, value);
-   if (error)
-      LOG_ERROR(error);
-}
-
 namespace {
 
 const char* const kSessionContextDelimeter = ":::";

@@ -58,15 +58,6 @@ UserDirectories userDirectories(SessionType sessionType,
                                 const std::string& homePath = std::string());
 
 
-FilePath projectsSettingsPath(const FilePath& userScratchPath);
-
-std::string readProjectsSetting(const FilePath& settingsPath,
-                                const char * const settingName);
-
-void writeProjectsSetting(const FilePath& settingsPath,
-                          const char * const settingName,
-                          const std::string& value);
-
 struct SessionContext
 {
    SessionContext()
