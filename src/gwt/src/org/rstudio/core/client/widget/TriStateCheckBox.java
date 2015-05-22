@@ -18,8 +18,8 @@ import org.rstudio.core.client.theme.res.ThemeResources;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.event.dom.client.MouseUpEvent;
-import com.google.gwt.event.dom.client.MouseUpHandler;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
@@ -51,14 +51,14 @@ public class TriStateCheckBox implements
    {
       panel_ = new HorizontalPanel();
       panel_.setVerticalAlignment(HorizontalPanel.ALIGN_MIDDLE);
-      panel_.addDomHandler(new MouseUpHandler()
+      panel_.addDomHandler(new ClickHandler()
       {
          @Override
-         public void onMouseUp(MouseUpEvent event)
+         public void onClick(ClickEvent event)
          {
             toggleState();
          }
-      }, MouseUpEvent.getType());
+      }, ClickEvent.getType());
       
       alignHelper_ = new InlineHTML();
       alignHelper_.addStyleName(RES.styles().alignHelper());
