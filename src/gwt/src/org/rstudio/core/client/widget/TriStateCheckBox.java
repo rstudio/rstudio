@@ -14,7 +14,10 @@
  */
 package org.rstudio.core.client.widget;
 
+import org.rstudio.core.client.theme.res.ThemeResources;
+
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.MouseUpEvent;
 import com.google.gwt.event.dom.client.MouseUpHandler;
 import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
@@ -25,10 +28,12 @@ import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
+import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.Image;
+import com.google.gwt.user.client.ui.InlineHTML;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
 // A three state checkbox that toggles between
@@ -55,12 +60,12 @@ public class TriStateCheckBox implements
          }
       }, MouseUpEvent.getType());
       
-      checkboxOuter_ = new SimplePanel();
-      checkboxOuter_.addStyleName(RES.styles().checkboxOuter());
+      alignHelper_ = new InlineHTML();
+      alignHelper_.addStyleName(RES.styles().alignHelper());
       
-      checkboxInner_ = new SimplePanel();
-      checkboxInner_.addStyleName(RES.styles().checkboxInner());
-      
+      checkboxInner_ = new Image();
+      checkboxOuter_ = new FlowPanel();
+      checkboxOuter_.add(alignHelper_);
       checkboxOuter_.add(checkboxInner_);
       panel_.add(checkboxOuter_);
       
@@ -77,23 +82,17 @@ public class TriStateCheckBox implements
       return panel_;
    }
    
-   private void resetCheckboxStyles()
-   {
-      checkboxInner_.removeStyleName(RES.styles().checkboxIndeterminate());
-      checkboxInner_.removeStyleName(RES.styles().checkboxOff());
-      checkboxInner_.removeStyleName(RES.styles().checkboxOn());
-   }
-   
    public void setState(State state)
    {
-      resetCheckboxStyles();
       if (state == STATE_INDETERMINATE)
-         checkboxInner_.addStyleName(RES.styles().checkboxIndeterminate());
+         checkboxInner_.setResource(ThemeResources.INSTANCE.checkboxTri());
       else if (state == STATE_OFF)
-         checkboxInner_.addStyleName(RES.styles().checkboxOff());
+         checkboxInner_.setResource(ThemeResources.INSTANCE.checkboxOff());
       else if (state == STATE_ON)
-         checkboxInner_.addStyleName(RES.styles().checkboxOn());
-   
+         checkboxInner_.setResource(ThemeResources.INSTANCE.checkboxOn());
+      
+      checkboxOuter_.getElement().getStyle().setHeight(
+            checkboxInner_.getHeight(), Unit.PX);
       state_ = state;
    }
    
@@ -112,8 +111,9 @@ public class TriStateCheckBox implements
    private final HorizontalPanel panel_;
    private final Label label_;
    
-   private final SimplePanel checkboxOuter_;
-   private final SimplePanel checkboxInner_;
+   private final InlineHTML alignHelper_;
+   private final Image checkboxInner_;
+   private final FlowPanel checkboxOuter_;
    private State state_;
    
    public static final State STATE_INDETERMINATE = new State();
@@ -122,13 +122,7 @@ public class TriStateCheckBox implements
    
    public interface Styles extends CssResource
    {
-      String checkboxOuter();
-      String checkboxInner();
-      
-      String checkboxOff();
-      String checkboxOn();
-      String checkboxIndeterminate();
-      
+      String alignHelper();
       String checkboxLabel();
    }
    

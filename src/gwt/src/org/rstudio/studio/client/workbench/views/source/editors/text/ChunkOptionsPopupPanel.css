@@ -1,5 +1,7 @@
 .containerPanel {
-	padding: 3px;
+	margin: -4px;
+	padding: 4px;
+    background-color: rgb(239, 243, 245);
 }
 
 .textBox {
