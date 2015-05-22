@@ -38,7 +38,11 @@ inline core::Error ensureStreamsDir()
    
 inline core::FilePath streamPath(const std::string& file)
 {
-   return core::FilePath(kSessionLocalStreamsDir).complete(file);
+   core::FilePath path = core::FilePath(kSessionLocalStreamsDir).complete(file);
+   core::Error error = path.parent().ensureDirectory();
+   if (error)
+      LOG_ERROR(error);
+   return path;
 }
 
 } // namepspace local_streams

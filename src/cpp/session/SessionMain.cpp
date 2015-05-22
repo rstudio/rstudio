@@ -2953,7 +2953,7 @@ int main (int argc, char * const argv[])
       if (serverMode)
       {
          r_util::SessionContext context = options.sessionContext();
-         std::string stream = r_util::sessionContextToStreamFile(context);
+         std::string stream = r_util::sessionContextFile(context);
          core::system::setenv(kRStudioSessionStream, stream);
       }
 

@@ -21,6 +21,7 @@
 
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/algorithm/string/regex.hpp>
+#include <boost/algorithm/string/predicate.hpp>
 
 #include <core/FilePath.hpp>
 #include <core/Settings.hpp>
@@ -32,13 +33,13 @@
 #include <core/system/System.hpp>
 #include <core/system/Environment.hpp>
 
+#define kSessionSuffix "-session"
+
 namespace rstudio {
 namespace core {
 namespace r_util {
 
 namespace {
-
-const char* const kSessionContextDelimeter = ":::";
 
 std::string urlPathForSessionScope(const SessionScope& scope)
 {
@@ -122,28 +123,30 @@ std::ostream& operator<< (std::ostream& os, const SessionContext& context)
 }
 
 
-std::string sessionContextToStreamFile(const SessionContext& context)
-{
-   std::string streamFile = context.username;
-   if (!context.scope.project.empty())
-      streamFile += kSessionContextDelimeter + context.scope.project;
-   if (!context.scope.id.empty())
-      streamFile += kSessionContextDelimeter + context.scope.id;
-   return http::util::urlEncode(streamFile);
+std::string sessionScopeFile(const std::string& prefix,
+                             const SessionScope& scope)
+{   
+   // resolve project path
+   std::string project = scope.project;
+   if (!project.empty())
+   {
+      if (!boost::algorithm::starts_with(project, "/"))
+         project = "/" + project;
+
+      if (!scope.id.empty())
+      {
+         if (!boost::algorithm::ends_with(project, "/"))
+            project = project + "/";
+      }
+   }
+
+   // return file path
+   return prefix + project + scope.id;
 }
 
-SessionContext streamFileToSessionContext(const std::string& file)
+std::string sessionContextFile(const SessionContext& context)
 {
-   std::vector<std::string> result;
-   boost::algorithm::split_regex(result,
-                                 http::util::urlDecode(file),
-                                 boost::regex("\\:\\:\\:"));
-   SessionContext context = SessionContext(result[0]);
-   if (result.size() > 1)
-      context.scope.project = result[1];
-   if (result.size() > 2)
-      context.scope.id = result[2];
-   return context;
+   return sessionScopeFile(context.username + kSessionSuffix, context.scope);
 }
 
 } // namespace r_util

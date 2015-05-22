@@ -94,11 +94,10 @@ struct SessionContext
 
 std::ostream& operator<< (std::ostream& os, const SessionContext& context);
 
-std::string sessionContextToStreamFile(const SessionContext& context);
+std::string sessionScopeFile(const std::string& prefix,
+                             const SessionScope& scope);
 
-SessionContext streamFileToSessionContext(const std::string& file);
-
-
+std::string sessionContextFile(const SessionContext& context);
 
 } // namespace r_util
 } // namespace core 

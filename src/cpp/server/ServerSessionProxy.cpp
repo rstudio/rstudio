@@ -44,6 +44,7 @@
 #include <core/http/Util.hpp>
 #include <core/system/PosixSystem.hpp>
 #include <core/system/PosixUser.hpp>
+#include <core/r_util/RSessionContext.hpp>
 
 #include <core/json/JsonRpc.hpp>
 
@@ -423,7 +424,7 @@ void proxyRequest(
       return;
 
    // create async client
-   std::string streamFile = r_util::sessionContextToStreamFile(context);
+   std::string streamFile = r_util::sessionContextFile(context);
    FilePath streamPath = session::local_streams::streamPath(streamFile);
    boost::shared_ptr<http::LocalStreamAsyncClient> pClient(
     new http::LocalStreamAsyncClient(ptrConnection->ioService(), streamPath));
