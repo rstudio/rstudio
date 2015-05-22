@@ -137,7 +137,7 @@ public class ChunkOptionsPopupPanel extends MiniPopupPanel
       buttonPanel.setHorizontalAlignment(HorizontalPanel.ALIGN_RIGHT);
       
       SmallButton revertButton = new SmallButton("Revert");
-      revertButton.addStyleName(RES.styles().button());
+      revertButton.getElement().getStyle().setMarginRight(10, Unit.PX);
       revertButton.addClickHandler(new ClickHandler()
       {
          
@@ -414,15 +414,13 @@ public class ChunkOptionsPopupPanel extends MiniPopupPanel
    
    static {
       BOOLEAN_CHUNK_OPTIONS = new HashMap<String, String>();
-      BOOLEAN_CHUNK_OPTIONS.put("eval", "Evaluate this chunk");
-      BOOLEAN_CHUNK_OPTIONS.put("echo", "Print R output to knitted document");
-      BOOLEAN_CHUNK_OPTIONS.put("include", "Include chunk output in generated document");
+      BOOLEAN_CHUNK_OPTIONS.put("eval", "Evaluate R code");
+      BOOLEAN_CHUNK_OPTIONS.put("include", "Include chunk output");
+      BOOLEAN_CHUNK_OPTIONS.put("echo", "Echo R code");
    }
    
    public interface Styles extends CssResource
    {
-      String containerPanel();
-      
       String textBox();
       
       String chunkLabel();
@@ -430,7 +428,6 @@ public class ChunkOptionsPopupPanel extends MiniPopupPanel
       String labelPanel();
       
       String buttonPanel();
-      String button();
    }
    
    public interface Resources extends ClientBundle
