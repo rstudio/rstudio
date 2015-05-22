@@ -23,8 +23,8 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.TextCursor;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
+import org.rstudio.core.client.widget.MiniPopupPanel;
 import org.rstudio.core.client.widget.TextBoxWithCue;
-import org.rstudio.core.client.widget.ThemedPopupPanel;
 import org.rstudio.core.client.widget.TriStateCheckBox;
 import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
@@ -48,7 +48,7 @@ import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.VerticalPanel;
 
-public class ChunkOptionsPopupPanel extends ThemedPopupPanel
+public class ChunkOptionsPopupPanel extends MiniPopupPanel
 {
    public ChunkOptionsPopupPanel()
    {
@@ -58,7 +58,6 @@ public class ChunkOptionsPopupPanel extends ThemedPopupPanel
       checkboxMap_ = new HashMap<String, TriStateCheckBox>();
       
       panel_ = new VerticalPanel();
-      panel_.setStyleName(RES.styles().containerPanel());
       add(panel_);
       
       tbChunkLabel_ = new TextBoxWithCue("Unnamed chunk");
