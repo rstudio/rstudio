@@ -219,6 +219,7 @@ public class ChunkIconsManager
       Position position = renderer.screenToTextCoordinates(pageX, pageY);
       optionsPanel_.init(editor.getWidget(), position);
       optionsPanel_.show();
+      optionsPanel_.focus();
       PopupPositioner.setPopupPosition(
             optionsPanel_,
             pageX,

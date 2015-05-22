@@ -173,6 +173,11 @@ public class ChunkOptionsPopupPanel extends MiniPopupPanel
       panel_.add(footerPanel);
    }
    
+   public void focus()
+   {
+      tbChunkLabel_.setFocus(true);
+   }
+   
    public void init(AceEditorWidget widget, Position position)
    {
       widget_ = widget;

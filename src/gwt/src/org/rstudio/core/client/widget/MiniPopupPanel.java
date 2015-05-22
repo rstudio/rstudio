@@ -59,7 +59,5 @@ public class MiniPopupPanel extends DecoratedPopupPanel
    static {
       RES.styles().ensureInjected();
    }
-   
-   
 
 }
