@@ -40,14 +40,6 @@ namespace {
 
 const char* const kSessionContextDelimeter = ":::";
 
-} // anonymous namespace
-
-
-SessionScope projectNoneSessionScope()
-{
-   return SessionScope("default", "0");
-}
-
 std::string urlPathForSessionScope(const SessionScope& scope)
 {
    // get a URL compatible project path
@@ -57,6 +49,14 @@ std::string urlPathForSessionScope(const SessionScope& scope)
    // create url
    boost::format fmt("/s/%1%/~%2%/");
    return boost::str(fmt % project % scope.id);
+}
+
+} // anonymous namespace
+
+
+SessionScope projectNoneSessionScope()
+{
+   return SessionScope("default", "0");
 }
 
 void parseSessionUrl(const std::string& url,

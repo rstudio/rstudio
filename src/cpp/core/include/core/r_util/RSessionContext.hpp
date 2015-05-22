@@ -55,16 +55,14 @@ struct SessionScope
 
 SessionScope projectNoneSessionScope();
 
-std::string urlPathForSessionScope(const SessionScope& scope);
 
+std::string createSessionUrl(const std::string& hostPageUrl,
+                             const SessionScope& scope);
 
 void parseSessionUrl(const std::string& url,
                      SessionScope* pScope,
                      std::string* pUrlPrefix,
                      std::string* pUrlWithoutPrefix);
-
-std::string createSessionUrl(const std::string& hostPageUrl,
-                             const SessionScope& scope);
 
 
 struct SessionContext
