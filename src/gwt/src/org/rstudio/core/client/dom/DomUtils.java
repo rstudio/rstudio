@@ -552,6 +552,19 @@ public class DomUtils
       return false ;
    }
    
+   public static boolean isDescendantOfElementWithTag(Element el, String[] tags)
+   {
+      for (Element parent = el.getParentElement(); 
+           parent != null; 
+           parent = parent.getParentElement())
+      {
+         for (String tag : tags)
+            if (tag.toLowerCase().equals(parent.getTagName().toLowerCase()))
+               return true;
+      }
+      return false ;
+   }
+   
    /**
     * Finds a node that matches the predicate.
     * 
