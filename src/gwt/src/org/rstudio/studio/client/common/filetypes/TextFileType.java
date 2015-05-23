@@ -305,7 +305,10 @@ public class TextFileType extends EditableFileType
       {
          results.add(commands.executeAllCode());
          results.add(commands.sourceActiveDocument());
-         results.add(commands.sourceActiveDocumentWithEcho());
+         // file types with chunks take the Cmd+Shift+Enter shortcut
+         // for run current chunk
+         if (!canExecuteChunks())
+            results.add(commands.sourceActiveDocumentWithEcho());
       }
       if (canExecuteToCurrentLine())
       {
