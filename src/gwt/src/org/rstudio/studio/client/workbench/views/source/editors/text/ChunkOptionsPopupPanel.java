@@ -129,7 +129,7 @@ public class ChunkOptionsPopupPanel extends MiniPopupPanel
       footerPanel.getElement().getStyle().setWidth(100, Unit.PCT);
       
       FlowPanel linkPanel = new FlowPanel();
-      HelpLink helpLink = new HelpLink("Chunk options", "chunk-options");
+      HelpLink helpLink = new HelpLink("Chunk options", "chunk-options", false);
       linkPanel.add(helpLink);
       
       HorizontalPanel buttonPanel = new HorizontalPanel();

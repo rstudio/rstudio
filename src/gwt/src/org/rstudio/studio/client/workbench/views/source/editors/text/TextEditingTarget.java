@@ -4705,6 +4705,11 @@ public class TextEditingTarget implements
                public void execute(Integer arg) {
                   docDisplay.syncDiagnosticsPrefs();
                }}));
+      releaseOnDismiss.add(prefs.showInlineToolbarForRCodeChunks().bind(
+            new CommandWithArg<Boolean>() {
+               public void execute(Boolean arg) {
+                  docDisplay.forceImmediateRender();
+               }}));
       
    }
    

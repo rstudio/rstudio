@@ -93,11 +93,11 @@ public class TriStateCheckBox extends Composite
    private void toggleState()
    {
       if (state_ == STATE_OFF)
-         setState(STATE_INDETERMINATE);
-      else if (state_ == STATE_INDETERMINATE)
          setState(STATE_ON);
-      else if (state_ == STATE_ON)
+      else if (state_ == STATE_INDETERMINATE)
          setState(STATE_OFF);
+      else if (state_ == STATE_ON)
+         setState(STATE_INDETERMINATE);
       
       ValueChangeEvent.fire(this, state_);
    }
