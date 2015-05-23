@@ -111,7 +111,7 @@ public class ChunkOptionsPopupPanel extends MiniPopupPanel
       labelPanel.addStyleName(RES.styles().labelPanel());
       labelPanel.setVerticalAlignment(VerticalPanel.ALIGN_MIDDLE);
       
-      Label chunkLabel = new Label("Chunk Name:");
+      Label chunkLabel = new Label("Chunk name:");
       chunkLabel.addStyleName(RES.styles().chunkLabel());
       labelPanel.add(chunkLabel);
       
@@ -129,7 +129,7 @@ public class ChunkOptionsPopupPanel extends MiniPopupPanel
       footerPanel.getElement().getStyle().setWidth(100, Unit.PCT);
       
       FlowPanel linkPanel = new FlowPanel();
-      HelpLink helpLink = new HelpLink("Chunk Options", "chunk-options");
+      HelpLink helpLink = new HelpLink("Chunk options", "chunk-options");
       linkPanel.add(helpLink);
       
       HorizontalPanel buttonPanel = new HorizontalPanel();
@@ -137,7 +137,7 @@ public class ChunkOptionsPopupPanel extends MiniPopupPanel
       buttonPanel.setHorizontalAlignment(HorizontalPanel.ALIGN_RIGHT);
       
       SmallButton revertButton = new SmallButton("Revert");
-      revertButton.getElement().getStyle().setMarginRight(10, Unit.PX);
+      revertButton.getElement().getStyle().setMarginRight(8, Unit.PX);
       revertButton.addClickHandler(new ClickHandler()
       {
          
@@ -199,11 +199,11 @@ public class ChunkOptionsPopupPanel extends MiniPopupPanel
             if (truthy)
                cb.setState(TriStateCheckBox.STATE_ON);
             else
-               cb.setState(TriStateCheckBox.STATE_INDETERMINATE);
+               cb.setState(TriStateCheckBox.STATE_OFF);
          }
          else
          {
-            cb.setState(TriStateCheckBox.STATE_OFF);
+            cb.setState(TriStateCheckBox.STATE_INDETERMINATE);
          }
       }
    }
@@ -371,6 +371,7 @@ public class ChunkOptionsPopupPanel extends MiniPopupPanel
                                       final String label)
    {
       final TriStateCheckBox cb = new TriStateCheckBox(label);
+      cb.addStyleName(RES.styles().checkBox());
       cb.addValueChangeHandler(new ValueChangeHandler<TriStateCheckBox.State>()
       {
          @Override
@@ -378,9 +379,9 @@ public class ChunkOptionsPopupPanel extends MiniPopupPanel
          {
             TriStateCheckBox.State state = event.getValue();
             if (state == TriStateCheckBox.STATE_INDETERMINATE)
-               chunkOptions_.put(optionName, "FALSE");
-            else if (state == TriStateCheckBox.STATE_OFF)
                chunkOptions_.remove(optionName);
+            else if (state == TriStateCheckBox.STATE_OFF)
+               chunkOptions_.put(optionName, "FALSE");
             else
                chunkOptions_.put(optionName,  "TRUE");
             synchronize();
@@ -433,6 +434,8 @@ public class ChunkOptionsPopupPanel extends MiniPopupPanel
       String labelPanel();
       
       String buttonPanel();
+      
+      String checkBox();
    }
    
    public interface Resources extends ClientBundle

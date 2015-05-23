@@ -28,19 +28,17 @@ import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
+import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.InlineHTML;
-import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.Widget;
 
 // A three state checkbox that toggles between
 // off -> indeterminate -> on
-public class TriStateCheckBox implements
-   IsWidget,
-   HasValueChangeHandlers<TriStateCheckBox.State>
+public class TriStateCheckBox extends Composite
+   implements HasValueChangeHandlers<TriStateCheckBox.State>
 {
    public static class State
    {
@@ -74,12 +72,8 @@ public class TriStateCheckBox implements
       panel_.add(label_);
       
       setState(STATE_OFF);
-   }
-   
-   @Override
-   public Widget asWidget()
-   {
-      return panel_;
+      
+      initWidget(panel_);
    }
    
    public void setState(State state)
