@@ -15,7 +15,9 @@
 package org.rstudio.studio.client.workbench.views.console.shell.assist;
 
 import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.PopupPanel.PositionCallback;
+
 import org.rstudio.core.client.Rectangle;
 
 public class PopupPositioner implements PositionCallback
@@ -45,5 +47,36 @@ public class PopupPositioner implements PositionCallback
       else
          popup_.setPopupPosition(cursorBounds_.getLeft(), 
                                  cursorBounds_.getTop() - popupHeight) ;
+   }
+   
+   public static void setPopupPosition(PopupPanel panel,
+                                       int pageX,
+                                       int pageY,
+                                       int fudgeFactor)
+   {
+      int windowTop = Window.getScrollTop();
+      int windowLeft = Window.getScrollLeft();
+      int windowRight = windowLeft + Window.getClientWidth();
+      int windowBottom = windowTop + Window.getClientHeight();
+      
+      int panelWidth = panel.getOffsetWidth();
+      int panelHeight = panel.getOffsetHeight();
+      
+      boolean positionRight =
+            pageX + panelWidth + fudgeFactor < windowRight;
+      
+      boolean positionBottom =
+            pageY + panelHeight + fudgeFactor < windowBottom;
+      
+      int left = positionRight ?
+            pageX + fudgeFactor :
+            pageX - panelWidth - fudgeFactor;
+      
+      int top = positionBottom ?
+            pageY + fudgeFactor :
+            pageY - panelHeight - fudgeFactor;
+      
+      panel.setPopupPosition(left, top);
+
    }
 }

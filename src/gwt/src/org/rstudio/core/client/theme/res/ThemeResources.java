@@ -212,6 +212,11 @@ public interface ThemeResources extends ClientBundle
    
    ImageResource executeChunk();
    ImageResource runChunk();
+   ImageResource runChunkOptions();
+   
+   ImageResource checkboxOff();
+   ImageResource checkboxOn();
+   ImageResource checkboxTri();
    
    ImageResource menuCheck();
 }

@@ -32,7 +32,6 @@ import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HTML;
-import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.inject.Inject;
 
@@ -40,10 +39,6 @@ import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
-import org.rstudio.core.client.dom.DomUtils;
-import org.rstudio.core.client.dom.StyleBuilder;
-import org.rstudio.core.client.theme.res.ThemeResources;
-import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -62,6 +57,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Execute
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Marker;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.events.AfterAceRenderEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.*;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.FoldChangeEvent.Handler;
 
@@ -235,111 +231,18 @@ public class AceEditorWidget extends Composite
                @Override
                public void execute(Void event)
                {
-                  manageChunkIcons();
+                  events_.fireEvent(new AfterAceRenderEvent());
                }
             });
    }
    
    @Inject
-   private void initialize(EventBus events)
+   private void initialize(EventBus events, ChunkIconsManager manager)
    {
       events_ = events;
+      chunkIconsManager_ = manager;
    }
    
-   private boolean isPseudoMarker(Element el)
-   {
-      return el.getOffsetHeight() == 0 || el.getOffsetWidth() == 0;
-   }
-   
-   private void manageChunkIcons()
-   {
-      Element[] icons = DomUtils.getElementsByClassName(
-            ThemeStyles.INSTANCE.inlineChunkIcon());
-      
-      for (Element icon : icons)
-         icon.removeFromParent();
-      
-      Element[] chunkStarts =
-            DomUtils.getElementsByClassName("rstudio_chunk_start");
-      
-      for (int i = 0; i < chunkStarts.length; i++)
-      {
-         Element el = chunkStarts[i];
-         
-         if (isPseudoMarker(el))
-            continue;
-         
-         if (el.getChildCount() > 0)
-            el.removeAllChildren();
-         
-         Image icon = createRunIcon();
-         displayIcon(icon, el);
-      }
-   }
-   
-   private void displayIcon(Image icon, Element underlyingMarker)
-   {
-      // Bail if the underlying marker isn't wide enough
-      if (underlyingMarker.getOffsetWidth() < 250)
-         return;
-      
-      // Get the 'virtual' parent -- this is the Ace scroller that houses all
-      // of the Ace content, where we want our icons to live. We need them
-      // to live here so that they properly hide when the user scrolls and
-      // e.g. markers are only partially visible.
-      Element virtualParent = DomUtils.getParent(underlyingMarker, 3);
-      
-      // We'd prefer to use 'getOffsetTop()' here, but that seems to give
-      // some janky dimensions due to how the Ace layers are ... layered,
-      // so we manually compute it.
-      int top =
-            underlyingMarker.getAbsoluteTop() -
-            virtualParent.getAbsoluteTop();
-      
-      // Manually align the icon so it lies in the 'middle' of the marker.
-      int iconHeight = icon.getHeight();
-      int markerHeight = underlyingMarker.getOffsetHeight();
-      
-      if (markerHeight > iconHeight)
-         top += (markerHeight - iconHeight) / 2;
-      
-      icon.addStyleName(ThemeStyles.INSTANCE.inlineChunkIcon());
-      
-      StyleBuilder builder = new StyleBuilder();
-      builder.add("top", top + "px");
-      icon.getElement().setAttribute("style", builder.toString());
-      
-      // Since we don't have a GWT panel to bind to, we need to capture
-      // the mouse events natively.
-      bindNativeClickToExecuteChunk(this, icon.getElement());
-      
-      virtualParent.appendChild(icon.getElement());
-   }
-   
-   private final void fireExecuteChunkEvent(Object object)
-   {
-      NativeEvent event = (NativeEvent) object;
-      if (event == null) return;
-      events_.fireEvent(new ExecuteChunkEvent(event.getClientX(), event.getClientY()));
-   }
-   
-   private static final native void bindNativeClickToExecuteChunk(AceEditorWidget widget,
-                                                                  Element element) 
-   /*-{
-      var self = this;
-      element.addEventListener("click", function(evt) {
-         widget.@org.rstudio.studio.client.workbench.views.source.editors.text.AceEditorWidget::fireExecuteChunkEvent(Ljava/lang/Object;)(evt);
-      });
-   }-*/;
-   
-   private Image createRunIcon()
-   {
-      Image icon = new Image(ThemeResources.INSTANCE.runChunk());
-      icon.setTitle(
-            commands_.executeCurrentChunk().getTooltip());
-      return icon;
-   }
-
    public HandlerRegistration addCursorChangedHandler(
          CursorChangedHandler handler)
    {
@@ -1005,6 +908,7 @@ public class AceEditorWidget extends Composite
    private LintResources.Styles lintStyles_ = LintResources.INSTANCE.styles();
    
    private EventBus events_;
+   private ChunkIconsManager chunkIconsManager_;
    private Commands commands_ = RStudioGinjector.INSTANCE.getCommands();
    
    

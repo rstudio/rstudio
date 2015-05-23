@@ -165,5 +165,6 @@ public interface ThemeStyles extends CssResource
    
    String handCursor();
    
-   String inlineChunkIcon();
+   String inlineChunkToolbar();
+   String highlightIcon();
 }

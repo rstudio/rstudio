@@ -100,6 +100,8 @@ oop.inherits(Mode, HtmlMode);
          return this.$getNextLineIndent(state, line, tab);
    };
 
+   this.$id = "mode/rhtml";
+
 }).call(Mode.prototype);
 
 exports.Mode = Mode;

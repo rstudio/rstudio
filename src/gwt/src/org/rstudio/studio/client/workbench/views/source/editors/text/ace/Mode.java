@@ -76,4 +76,6 @@ public class Mode extends JavaScriptObject
    public native final Tokenizer getTokenizer() /*-{
       return this.$tokenizer;
    }-*/;
+   
+   public native final String getId() /*-{ return this.$id; }-*/;
 }

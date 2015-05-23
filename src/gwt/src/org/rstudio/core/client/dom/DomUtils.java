@@ -552,6 +552,19 @@ public class DomUtils
       return false ;
    }
    
+   public static boolean isDescendantOfElementWithTag(Element el, String[] tags)
+   {
+      for (Element parent = el.getParentElement(); 
+           parent != null; 
+           parent = parent.getParentElement())
+      {
+         for (String tag : tags)
+            if (tag.toLowerCase().equals(parent.getTagName().toLowerCase()))
+               return true;
+      }
+      return false ;
+   }
+   
    /**
     * Finds a node that matches the predicate.
     * 
@@ -775,4 +788,11 @@ public class DomUtils
       }
       return parent;
    }
+   
+   // NOTE: Not supported in IE8
+   public static final native Style getComputedStyles(Element el)
+   /*-{
+      return $wnd.getComputedStyle(el);
+   }-*/;
+   
 }

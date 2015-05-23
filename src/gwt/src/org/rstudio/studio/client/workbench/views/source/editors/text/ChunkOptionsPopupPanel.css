@@ -1,0 +1,26 @@
+.textBox {
+    border: 1px solid #999;
+    border-radius: 3px;
+    padding-left: 3px !important;
+}
+
+.textBox:focus {
+    outline: 0;
+    box-shadow: 0 0 5px rgb(50, 100, 150);
+}
+
+.chunkLabel {
+	padding: 0 10px;
+}
+
+.chunkName {
+	padding: 2px;
+}
+
+.labelPanel {
+	margin-bottom: 5px;
+}
+
+.buttonPanel {
+	margin-top: 8px;
+}
