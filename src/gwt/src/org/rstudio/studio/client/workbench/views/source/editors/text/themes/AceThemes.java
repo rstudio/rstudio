@@ -129,9 +129,12 @@ public class AceThemes
          darkThemes_.put(name, true);
    }
    
-   private boolean isDark(String themeName)
+   public boolean isDark(String themeName)
    {
-      return darkThemes_.containsKey(themeName);
+      if (themeName == null)
+         return false;
+      else
+         return darkThemes_.containsKey(themeName);
    }
    
    private void applyTheme(String themeName)

@@ -1398,6 +1398,7 @@ body.ubuntu_mono .searchBox {
 	z-index: 10;
 	padding-left: 5px;
 	padding-right: 5px;
+	padding-top: 2px;
 	border-radius: 5px;
 }
 

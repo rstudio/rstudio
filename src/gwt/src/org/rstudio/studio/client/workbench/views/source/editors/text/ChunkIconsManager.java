@@ -27,6 +27,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Execute
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Renderer;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.events.AfterAceRenderEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceThemes;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
@@ -60,11 +61,13 @@ public class ChunkIconsManager
    @Inject
    private void initialize(EventBus events,
                            Commands commands,
-                           UIPrefs uiPrefs)
+                           UIPrefs uiPrefs,
+                           AceThemes themes)
    {
       events_ = events;
       commands_ = commands;
       uiPrefs_ = uiPrefs;
+      themes_ = themes;
    }
    
    private boolean isPseudoMarker(Element el)
@@ -105,7 +108,9 @@ public class ChunkIconsManager
       FlowPanel panel = new FlowPanel();
       panel.addStyleName(ThemeStyles.INSTANCE.inlineChunkToolbar());
     
-      Image optionsIcon = createOptionsIcon();
+      boolean dark = themes_.isDark(
+            themes_.getEffectiveThemeName(uiPrefs_.theme().getValue()));
+      Image optionsIcon = createOptionsIcon(dark);
       optionsIcon.getElement().getStyle().setMarginRight(5, Unit.PX);
       panel.add(optionsIcon);
       
@@ -147,9 +152,11 @@ public class ChunkIconsManager
       return icon;
    }
    
-   private Image createOptionsIcon()
+   private Image createOptionsIcon(boolean dark)
    {
-      Image icon = new Image(ThemeResources.INSTANCE.runChunkOptions());
+      Image icon = new Image(dark ? 
+            ThemeResources.INSTANCE.chunkOptionsDark() :
+            ThemeResources.INSTANCE.chunkOptionsLight());
       icon.addStyleName(ThemeStyles.INSTANCE.highlightIcon());
       icon.setTitle("Modify chunk options");
       bindNativeClickToOpenOptions(this, icon.getElement());
@@ -214,5 +221,6 @@ public class ChunkIconsManager
    private Commands commands_;
    private EventBus events_;
    private UIPrefs uiPrefs_;
+   private AceThemes themes_;
 
 }
