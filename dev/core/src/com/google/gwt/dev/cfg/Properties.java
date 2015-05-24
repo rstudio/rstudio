@@ -15,10 +15,13 @@
  */
 package com.google.gwt.dev.cfg;
 
+import com.google.gwt.thirdparty.guava.common.collect.ListMultimap;
 import com.google.gwt.thirdparty.guava.common.collect.Maps;
 import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
 import java.lang.reflect.InvocationTargetException;
+import java.util.Collection;
+import java.util.Map.Entry;
 import java.util.SortedMap;
 import java.util.SortedSet;
 
@@ -99,6 +102,36 @@ public class Properties {
 
   public SortedSet<ConfigurationProperty> getConfigurationProperties() {
     return configurationProperties;
+  }
+
+  public void setProperties(ListMultimap<String, String> properties) {
+    for (Entry<String, Collection<String>> property : properties.asMap().entrySet()) {
+      String propertyName = property.getKey();
+      Collection<String> propertyValues = property.getValue();
+      BindingProperty bindingProp = findBindingProp(propertyName);
+      ConfigurationProperty configProp = findConfigProp(propertyName);
+      if (bindingProp != null) {
+        bindingProp.setValues(bindingProp.getRootCondition(),
+            propertyValues.toArray(new String[propertyValues.size()]));
+      } else if (configProp != null) {
+        if (configProp.allowsMultipleValues()) {
+          configProp.clear();
+          for (String propertyValue : propertyValues) {
+            configProp.addValue(propertyValue);
+          }
+        } else {
+          String firstValue = propertyValues.iterator().next();
+          if (propertyValues.size() > 1) {
+            throw new IllegalArgumentException(
+                "Attemp to set multiple values to a single-valued configuration property '"
+                + propertyName + "'.");
+          }
+          configProp.setValue(firstValue);
+        }
+      } else {
+        throw new IllegalArgumentException("Unknown property: " + propertyName);
+      }
+    }
   }
 
   private <T extends Property> T create(String name, boolean flag,

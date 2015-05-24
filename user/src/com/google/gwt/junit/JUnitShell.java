@@ -1083,10 +1083,6 @@ public class JUnitShell extends DevMode {
       }
     }
 
-    if (!Compiler.maybeRestrictProperties(getTopLogger(), module, options.getProperties())) {
-      throw new UnableToCompleteException();
-    }
-
     if (options.isClosureCompilerFormatEnabled()) {
       module.addLinker("closureHelpers");
     }

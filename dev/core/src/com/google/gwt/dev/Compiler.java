@@ -19,8 +19,6 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.linker.ArtifactSet;
 import com.google.gwt.dev.CompileTaskRunner.CompileTask;
-import com.google.gwt.dev.cfg.BindingProperty;
-import com.google.gwt.dev.cfg.ConfigurationProperty;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.cfg.ModuleDefLoader;
 import com.google.gwt.dev.javac.UnitCache;
@@ -36,24 +34,19 @@ import com.google.gwt.dev.util.arg.ArgHandlerDeployDir;
 import com.google.gwt.dev.util.arg.ArgHandlerExtraDir;
 import com.google.gwt.dev.util.arg.ArgHandlerIncrementalCompile;
 import com.google.gwt.dev.util.arg.ArgHandlerLocalWorkers;
-import com.google.gwt.dev.util.arg.ArgHandlerMethodNameDisplayMode;
 import com.google.gwt.dev.util.arg.ArgHandlerSaveSourceOutput;
-import com.google.gwt.dev.util.arg.ArgHandlerSetProperties;
 import com.google.gwt.dev.util.arg.ArgHandlerWarDir;
 import com.google.gwt.dev.util.arg.ArgHandlerWorkDirOptional;
 import com.google.gwt.dev.util.arg.OptionOptimize;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
-import com.google.gwt.thirdparty.guava.common.collect.ListMultimap;
 import com.google.gwt.thirdparty.guava.common.collect.Sets;
 import com.google.gwt.util.tools.Utility;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Collection;
 import java.util.List;
-import java.util.Map.Entry;
 import java.util.concurrent.FutureTask;
 
 /**
@@ -75,8 +68,6 @@ public class Compiler {
       registerHandler(new ArgHandlerDeployDir(options));
       registerHandler(new ArgHandlerExtraDir(options));
       registerHandler(new ArgHandlerSaveSourceOutput(options));
-      registerHandler(new ArgHandlerMethodNameDisplayMode(options));
-      registerHandler(new ArgHandlerSetProperties(options));
     }
 
     @Override
@@ -162,9 +153,6 @@ public class Compiler {
       ModuleDef module =
           ModuleDefLoader.loadFromClassPath(logger, compilerContext, moduleName, true);
       modules[i++] = module;
-      if (!maybeRestrictProperties(logger, module, options.getProperties())) {
-        return false;
-      }
     }
     return run(logger, modules);
   }
@@ -177,8 +165,8 @@ public class Compiler {
         options.setWorkDir(Utility.makeTemporaryDirectory(null, "gwtc"));
         tempWorkDir = true;
       }
-      if ((options.isSoycEnabled() || options.isJsonSoycEnabled()) &&
-           options.getExtraDir() == null) {
+      if ((options.isSoycEnabled() || options.isJsonSoycEnabled())
+          && options.getExtraDir() == null) {
         options.setExtraDir(new File("extras"));
       }
       if (options.isIncrementalCompileEnabled()) {
@@ -265,45 +253,6 @@ public class Compiler {
       if (tempWorkDir) {
         Util.recursiveDelete(options.getWorkDir(), false);
       }
-    }
-    return true;
-  }
-
-  public static boolean maybeRestrictProperties(TreeLogger logger, ModuleDef module,
-      ListMultimap<String, String> properties) {
-    try {
-      for (Entry<String, Collection<String>> property : properties.asMap().entrySet()) {
-        String propertyName = property.getKey();
-        Collection<String> propertyValues = property.getValue();
-        BindingProperty bindingProp = module.getProperties().findBindingProp(propertyName);
-        ConfigurationProperty configProp = module.getProperties().findConfigProp(propertyName);
-        if (bindingProp != null) {
-          bindingProp.setValues(bindingProp.getRootCondition(),
-              propertyValues.toArray(new String[propertyValues.size()]));
-        } else if (configProp != null) {
-          if (configProp.allowsMultipleValues()) {
-            configProp.clear();
-            for (String propertyValue : propertyValues) {
-              configProp.addValue(propertyValue);
-            }
-          } else {
-            String firstValue = propertyValues.iterator().next();
-            if (propertyValues.size() > 1) {
-              logger.log(TreeLogger.ERROR,
-                  "Attemp to set multiple values to a single-valued configuration property '"
-                  + propertyName + "'.");
-              return false;
-            }
-            configProp.setValue(firstValue);
-          }
-        } else {
-          logger.log(TreeLogger.ERROR, "Unknown property: " + propertyName);
-          return false;
-        }
-      }
-    } catch (IllegalArgumentException e) {
-      logger.log(TreeLogger.ERROR, e.getMessage());
-      return false;
     }
     return true;
   }

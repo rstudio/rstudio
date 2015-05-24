@@ -42,6 +42,9 @@ public class CompilerContext {
     private UnitCache unitCache = new MemoryUnitCache();
 
     public CompilerContext build() {
+      if (options != null && module != null) {
+        module.getProperties().setProperties(options.getProperties());
+      }
       initializeResourceOracles();
       initializeCompilationErrorIndexes();
 
