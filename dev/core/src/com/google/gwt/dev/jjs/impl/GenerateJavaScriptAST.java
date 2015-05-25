@@ -486,9 +486,9 @@ public class GenerateJavaScriptAST {
        * referenced as instance on null-types (as determined by type flow)
        */
       JMethod nullMethod = x.getNullMethod();
-      polymorphicNames.put(nullMethod, objectScope.declareName(nullMethod.getName()));
+      polymorphicNames.put(nullMethod, objectScope.declareName("$_nullMethod"));
       JField nullField = x.getNullField();
-      JsName nullFieldName = objectScope.declareName(nullField.getName());
+      JsName nullFieldName = objectScope.declareName("$_nullField");
       names.put(nullField, nullFieldName);
 
       /*

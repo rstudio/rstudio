@@ -871,6 +871,14 @@ public class CompilerTest extends GWTTestCase {
     assertEquals(1, x);
   }
 
+  public void testCatchBlockWithKeyword() {
+    try {
+      throw new RuntimeException();
+    } catch (Exception var) {
+      assertFalse(var.toString().isEmpty());
+    }
+  }
+
   /** Ensure that only final fields are initializers when cstrs run, see issue 380. */
   public void testFieldInitializationOrder() {
     ArrayList<String> seenValues = new ArrayList<String>();

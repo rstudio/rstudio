@@ -13,7 +13,6 @@
  */
 package com.google.gwt.dev.js.ast;
 
-import com.google.gwt.dev.js.JsProtectedNames;
 import com.google.gwt.dev.util.StringInterner;
 
 import java.io.Serializable;
@@ -42,16 +41,6 @@ import java.util.List;
  */
 public abstract class JsScope implements Serializable {
 
-  /**
-   * Prevents the client from programmatically creating an illegal ident.
-   */
-  private static String maybeMangleKeyword(String ident) {
-    if (JsProtectedNames.isKeyword(ident)) {
-      ident = ident + "_$";
-    }
-    return StringInterner.get().intern(ident);
-  }
-
   private final String description;
 
   protected JsScope(String description) {
@@ -64,7 +53,6 @@ public abstract class JsScope implements Serializable {
    * @param ident An identifier that is unique within this scope.
    */
   public final JsName declareName(String ident) {
-    ident = maybeMangleKeyword(ident);
     JsName name = findExistingNameNoRecurse(ident);
     if (name != null) {
       return name;
@@ -81,8 +69,6 @@ public abstract class JsScope implements Serializable {
    *           name does not match the existing short name.
    */
   public final JsName declareName(String ident, String shortIdent) {
-    ident = maybeMangleKeyword(ident);
-    shortIdent = maybeMangleKeyword(shortIdent);
     JsName name = findExistingNameNoRecurse(ident);
     if (name != null) {
       if (!name.getShortIdent().equals(shortIdent)) {
@@ -102,7 +88,6 @@ public abstract class JsScope implements Serializable {
    * @return <code>null</code> if the identifier has no associated name
    */
   public final JsName findExistingName(String ident) {
-    ident = maybeMangleKeyword(ident);
     JsName name = findExistingNameNoRecurse(ident);
     if (name == null && getParent() != null) {
       return getParent().findExistingName(ident);
@@ -117,7 +102,6 @@ public abstract class JsScope implements Serializable {
    * @return <code>null</code> if the identifier has no associated name
    */
   public final JsName findExistingUnobfuscatableName(String ident) {
-    ident = maybeMangleKeyword(ident);
     JsName name = findExistingNameNoRecurse(ident);
     if (name != null && name.isObfuscatable()) {
       name = null;
