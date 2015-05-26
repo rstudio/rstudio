@@ -90,6 +90,7 @@ extern "C" const char *locale2charset(const char *);
 #include <session/SessionSourceDatabase.hpp>
 #include <session/SessionPersistentState.hpp>
 #include <session/SessionContentUrls.hpp>
+#include <session/SessionScopes.hpp>
 
 #include "SessionAddins.hpp"
 
@@ -901,12 +902,12 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
                      // extract the directory (aliased)
                      using namespace module_context;
                      FilePath projFile = resolveAliasedPath(switchToProject);
-                     FilePath projDir = projFile.parent();
+                     std::string projDir = createAliasedPath(projFile.parent());
 
                      scope = r_util::SessionScope::fromProjectPath(
-                                                projDir,
-                                                "1",
-                                                options().userHomePath());
+                              projDir,
+                              "1",
+                              filePathToProjectId(options().userScratchPath()));
                   }
 
                   s_nextSessionUrl = r_util::createSessionUrl(hostPageUrl,

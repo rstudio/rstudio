@@ -26,6 +26,7 @@
 
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionUserSettings.hpp>
+#include <session/SessionScopes.hpp>
 
 #include <session/projects/ProjectsSettings.hpp>
 
@@ -86,9 +87,9 @@ Error getProjectUrl(const json::JsonRpcRequest& request,
       return error;
 
    r_util::SessionScope scope = r_util::SessionScope::fromProjectPath(
-                              module_context::resolveAliasedPath(projectDir),
-                              "1",
-                              module_context::userHomePath());
+                     projectDir,
+                     "1",
+                     filePathToProjectId(module_context::userScratchPath()));
    pResponse->setResult(r_util::createSessionUrl(hostPageUrl, scope));
 
    return Success();

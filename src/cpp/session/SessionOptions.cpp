@@ -36,6 +36,7 @@
 #include <r/session/RSession.hpp>
 
 #include <session/SessionConstants.hpp>
+#include <session/SessionScopes.hpp>
 
 #include "session-config.h"
 
@@ -503,9 +504,10 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
    r_util::SessionScope scope = sessionScope();
    if (!scope.empty() && (scope != r_util::SessionScope::projectNone()))
    {
-     FilePath projectDir = r_util::SessionScope::projectPathForScope(
-                                                   scope,
-                                                   userHomePath());
+     std::string project = r_util::SessionScope::projectPathForScope(
+                                      scope,
+                                      projectIdToFilePath(userScratchPath()));
+     FilePath projectDir = FilePath::resolveAliasedPath(project, userHomePath());
      FilePath projectPath = r_util::projectFromDirectory(projectDir);
      if (projectPath.exists())
         initialProjectPath_ = projectPath.absolutePath();

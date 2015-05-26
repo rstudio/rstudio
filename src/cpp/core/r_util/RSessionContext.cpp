@@ -39,20 +39,21 @@ namespace rstudio {
 namespace core {
 namespace r_util {
 
-
-SessionScope SessionScope::fromProjectPath(const FilePath& projPath,
-                                           const std::string& id,
-                                           const FilePath& userHomePath)
+SessionScope SessionScope::fromProjectPath(
+                               const std::string& projPath,
+                               const std::string& id,
+                               const FilePathToProjectId& filePathToProjectId)
 {
-   std::string project = FilePath::createAliasedPath(projPath, userHomePath);
+   std::string project = filePathToProjectId(projPath);
    return SessionScope(project, id);
 }
 
 
-FilePath SessionScope::projectPathForScope(const SessionScope& scope,
-                                           const FilePath& userHomePath)
+std::string SessionScope::projectPathForScope(
+                               const SessionScope& scope,
+                               const ProjectIdToFilePath& projectIdToFilePath)
 {
-   return FilePath::resolveAliasedPath(scope.project(), userHomePath);
+   return projectIdToFilePath(scope.project());
 }
 
 

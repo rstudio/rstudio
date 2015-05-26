@@ -18,6 +18,8 @@
 
 #include <string>
 
+#include <boost/function.hpp>
+
 namespace rstudio {
 namespace core {
 
@@ -25,6 +27,8 @@ class FilePath;
 
 namespace r_util {
 
+typedef boost::function<std::string(const std::string&)> ProjectIdToFilePath;
+typedef boost::function<std::string(const std::string&)> FilePathToProjectId;
 
 class SessionScope
 {
@@ -36,12 +40,14 @@ private:
 
 public:
 
-   static SessionScope fromProjectPath(const core::FilePath& projPath,
-                                       const std::string& id,
-                                       const core::FilePath& userHomePath);
+   static SessionScope fromProjectPath(
+                           const std::string& projPath,
+                           const std::string& id,
+                           const FilePathToProjectId& filePathToProjectId);
 
-   static core::FilePath projectPathForScope(const SessionScope& scope,
-                                             const core::FilePath& userHomePath);
+   static std::string projectPathForScope(
+                           const SessionScope& scope,
+                           const ProjectIdToFilePath& projectIdToFilePath);
 
    static SessionScope fromProjectId(const std::string& project,
                                      const std::string& id);
