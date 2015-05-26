@@ -504,13 +504,29 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
    r_util::SessionScope scope = sessionScope();
    if (!scope.empty() && (scope != r_util::SessionScope::projectNone()))
    {
-     std::string project = r_util::SessionScope::projectPathForScope(
+      // lookup the project path by id
+      std::string project = r_util::SessionScope::projectPathForScope(
                                       scope,
                                       projectIdToFilePath(userScratchPath()));
-     FilePath projectDir = FilePath::resolveAliasedPath(project, userHomePath());
-     FilePath projectPath = r_util::projectFromDirectory(projectDir);
-     if (projectPath.exists())
-        initialProjectPath_ = projectPath.absolutePath();
+      if (!project.empty())
+      {
+         FilePath projectDir = FilePath::resolveAliasedPath(project,
+                                                           userHomePath());
+         if (projectDir.exists())
+         {
+            FilePath projectPath = r_util::projectFromDirectory(projectDir);
+            if (projectPath.exists())
+               initialProjectPath_ = projectPath.absolutePath();
+         }
+      }
+
+      // if we failed to set the initialProjectPath_ we need to fault
+      // back into something reasonable. what we fault to has to match
+      // the URL though, so we need this code to force a redirect somehow
+      if (initialProjectPath_.empty())
+      {
+         // TODO: failure mode
+      }
    }
    else
    {
