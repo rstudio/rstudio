@@ -85,7 +85,10 @@ Error getProjectUrl(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-   r_util::SessionScope scope(projectDir, "1");
+   r_util::SessionScope scope = r_util::SessionScope::fromProjectPath(
+                              module_context::resolveAliasedPath(projectDir),
+                              "1",
+                              module_context::userHomePath());
    pResponse->setResult(r_util::createSessionUrl(hostPageUrl, scope));
 
    return Success();
@@ -539,7 +542,7 @@ void startup()
    FilePath lastProjectPath = projSettings.lastProjectPath();
 
    // check for explicit project none scope
-   if (session::options().sessionScope() == r_util::projectNoneSessionScope())
+   if (session::options().sessionScope() == r_util::SessionScope::projectNone())
    {
       projectFilePath = resolveProjectSwitch(kProjectNone);
    }

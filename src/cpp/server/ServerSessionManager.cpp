@@ -66,17 +66,17 @@ core::system::ProcessConfig sessionProcessConfig(
                                  context.username));
 
    // pass the project if specified
-   if (!context.scope.project.empty())
+   if (!context.scope.project().empty())
    {
       args.push_back(std::make_pair("-" kProjectSessionOptionShort,
-                                    context.scope.project));
+                                    context.scope.project()));
    }
 
    // pass the scope id if specified
-   if (!context.scope.id.empty())
+   if (!context.scope.id().empty())
    {
       args.push_back(std::make_pair("-" kScopeSessionOptionShort,
-                                    context.scope.id));
+                                    context.scope.id()));
    }
 
    // allow session timeout to be overridden via environment variable

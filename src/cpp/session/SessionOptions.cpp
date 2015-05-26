@@ -375,7 +375,7 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
    }
 
    // resolve scope
-   scope_ = r_util::SessionScope(project, scopeId);
+   scope_ = r_util::SessionScope::fromProjectId(project, scopeId);
 
    // call overlay hooks
    resolveOverlayOptions();
@@ -501,11 +501,11 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
 
    // initial project (can either be a command line param or via env)
    r_util::SessionScope scope = sessionScope();
-   if (!scope.empty() && (scope != r_util::projectNoneSessionScope()))
+   if (!scope.empty() && (scope != r_util::SessionScope::projectNone()))
    {
-     FilePath projectDir =
-        FilePath::resolveAliasedPath(scope.project, FilePath(userHomePath_));
-
+     FilePath projectDir = r_util::SessionScope::projectPathForScope(
+                                                   scope,
+                                                   userHomePath());
      FilePath projectPath = r_util::projectFromDirectory(projectDir);
      if (projectPath.exists())
         initialProjectPath_ = projectPath.absolutePath();

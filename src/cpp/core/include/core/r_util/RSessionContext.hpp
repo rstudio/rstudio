@@ -20,27 +20,46 @@
 
 namespace rstudio {
 namespace core {
+
+class FilePath;
+
 namespace r_util {
 
-struct SessionScope
+
+class SessionScope
 {
+private:
+   SessionScope(const std::string& project, const std::string& id)
+      : project_(project), id_(id)
+   {
+   }
+
+public:
+
+   static SessionScope fromProjectPath(const core::FilePath& projPath,
+                                       const std::string& id,
+                                       const core::FilePath& userHomePath);
+
+   static core::FilePath projectPathForScope(const SessionScope& scope,
+                                             const core::FilePath& userHomePath);
+
+   static SessionScope fromProjectId(const std::string& project,
+                                     const std::string& id);
+
+   static SessionScope projectNone();
+
    SessionScope()
    {
    }
 
-   explicit SessionScope(const std::string& project,
-                         const std::string& id)
-      : project(project), id(id)
-   {
-   }
+   const std::string& project() const { return project_; }
 
-   std::string project;
-   std::string id;
+   const std::string& id() const { return id_; }
 
-   bool empty() const { return project.empty(); }
+   bool empty() const { return project_.empty(); }
 
    bool operator==(const SessionScope &other) const {
-      return project == other.project && id == other.id;
+      return project_ == other.project_ && id_ == other.id_;
    }
 
    bool operator!=(const SessionScope &other) const {
@@ -48,12 +67,15 @@ struct SessionScope
    }
 
    bool operator<(const SessionScope &other) const {
-       return project < other.project ||
-              (project == other.project && id < other.id);
+       return project_ < other.project_ ||
+              (project_ == other.project_ && id_ < other.id_);
    }
+
+private:
+   std::string project_;
+   std::string id_;
 };
 
-SessionScope projectNoneSessionScope();
 
 std::string urlPathForSessionScope(const SessionScope& scope);
 

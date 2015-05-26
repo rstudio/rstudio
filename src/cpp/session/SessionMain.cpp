@@ -894,7 +894,7 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
                   r_util::SessionScope scope;
                   if (switchToProject == kProjectNone)
                   {
-                     scope = r_util::projectNoneSessionScope();
+                     scope = r_util::SessionScope::projectNone();
                   }
                   else
                   {
@@ -902,9 +902,11 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
                      using namespace module_context;
                      FilePath projFile = resolveAliasedPath(switchToProject);
                      FilePath projDir = projFile.parent();
-                     switchToProject = createAliasedPath(projDir);
 
-                     scope = r_util::SessionScope(switchToProject, "1");
+                     scope = r_util::SessionScope::fromProjectPath(
+                                                projDir,
+                                                "1",
+                                                options().userHomePath());
                   }
 
                   s_nextSessionUrl = r_util::createSessionUrl(hostPageUrl,

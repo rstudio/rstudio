@@ -39,7 +39,31 @@ namespace rstudio {
 namespace core {
 namespace r_util {
 
-SessionScope projectNoneSessionScope()
+
+SessionScope SessionScope::fromProjectPath(const FilePath& projPath,
+                                           const std::string& id,
+                                           const FilePath& userHomePath)
+{
+   std::string project = FilePath::createAliasedPath(projPath, userHomePath);
+   return SessionScope(project, id);
+}
+
+
+FilePath SessionScope::projectPathForScope(const SessionScope& scope,
+                                           const FilePath& userHomePath)
+{
+   return FilePath::resolveAliasedPath(scope.project(), userHomePath);
+}
+
+
+SessionScope SessionScope::fromProjectId(const std::string& project,
+                                         const std::string& id)
+{
+   return SessionScope(project, id);
+}
+
+
+SessionScope SessionScope::projectNone()
 {
    return SessionScope("default", "0");
 }
@@ -47,12 +71,12 @@ SessionScope projectNoneSessionScope()
 std::string urlPathForSessionScope(const SessionScope& scope)
 {
    // get a URL compatible project path
-   std::string project = http::util::urlEncode(scope.project);
+   std::string project = http::util::urlEncode(scope.project());
    boost::algorithm::replace_all(project, "%2F", "/");
 
    // create url
    boost::format fmt("/s/%1%/~%2%/");
-   return boost::str(fmt % project % scope.id);
+   return boost::str(fmt % project % scope.id());
 }
 
 void parseSessionUrl(const std::string& url,
@@ -67,8 +91,9 @@ void parseSessionUrl(const std::string& url,
    {
       if (pScope)
       {
-         pScope->project = http::util::urlDecode(match[1]);
-         pScope->id = match[2];
+         std::string project = http::util::urlDecode(match[1]);
+         std::string id = match[2];
+         *pScope = r_util::SessionScope::fromProjectId(project, id);
       }
       if (pUrlPrefix)
       {
@@ -110,10 +135,10 @@ std::string createSessionUrl(const std::string& hostPageUrl,
 std::ostream& operator<< (std::ostream& os, const SessionContext& context)
 {
    os << context.username;
-   if (!context.scope.project.empty())
-      os << " -- " << context.scope.project;
-   if (!context.scope.id.empty())
-      os << " [" << context.scope.id << "]";
+   if (!context.scope.project().empty())
+      os << " -- " << context.scope.project();
+   if (!context.scope.id().empty())
+      os << " [" << context.scope.id() << "]";
    return os;
 }
 
@@ -122,7 +147,7 @@ std::string sessionScopeFile(std::string prefix,
                              const SessionScope& scope)
 {   
    // resolve project path
-   std::string project = scope.project;
+   std::string project = scope.project();
    if (!project.empty())
    {
       // pluralize the prefix so there is no conflict when switching
@@ -132,7 +157,7 @@ std::string sessionScopeFile(std::string prefix,
       if (!boost::algorithm::starts_with(project, "/"))
          project = "/" + project;
 
-      if (!scope.id.empty())
+      if (!scope.id().empty())
       {
          if (!boost::algorithm::ends_with(project, "/"))
             project = project + "/";
@@ -140,7 +165,7 @@ std::string sessionScopeFile(std::string prefix,
    }
 
    // return file path
-   return prefix + project + scope.id;
+   return prefix + project + scope.id();
 }
 
 std::string sessionContextFile(const SessionContext& context)

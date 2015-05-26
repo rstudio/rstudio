@@ -56,17 +56,24 @@ json::Object contextAsJson(const SessionContext& context)
 {
    json::Object scopeJson;
    scopeJson["username"] = context.username;
-   scopeJson["project"] = context.scope.project;
-   scopeJson["id"] = context.scope.id;
+   scopeJson["project"] = context.scope.project();
+   scopeJson["id"] = context.scope.id();
    return scopeJson;
 }
 
 Error contextFromJson(const json::Object& contextJson, SessionContext* pContext)
 {
-   return json::readObject(contextJson,
+   std::string project, id;
+   Error error = json::readObject(contextJson,
                            "username", &(pContext->username),
-                           "project", &(pContext->scope.project),
-                           "id", &(pContext->scope.id));
+                           "project", &project,
+                           "id", &id);
+   if (error)
+      return error;
+
+   pContext->scope = r_util::SessionScope::fromProjectId(project, id);
+
+   return Success();
 }
 
 
