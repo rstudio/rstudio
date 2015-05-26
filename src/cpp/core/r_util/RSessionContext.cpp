@@ -65,7 +65,7 @@ SessionScope SessionScope::fromProjectId(const std::string& project,
 
 SessionScope SessionScope::projectNone()
 {
-   return SessionScope("default", "0");
+   return SessionScope("c005c133-62fc-48e9-b486-451c0fc7847a", "0");
 }
 
 std::string urlPathForSessionScope(const SessionScope& scope)
