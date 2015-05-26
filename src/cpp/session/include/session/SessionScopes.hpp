@@ -26,6 +26,10 @@
 #include <core/FileSerializer.hpp>
 #include <core/system/System.hpp>
 
+#ifndef _WIN32
+#include <core/system/FileMode.hpp>
+#endif
+
 #include <core/r_util/RSessionContext.hpp>
 
 namespace rstudio {
@@ -85,6 +89,14 @@ inline std::string toProjectId(const std::string& projectDir,
    core::Error error = core::writeStringMapToFile(projectIdsPath, idMap);
    if (error)
       LOG_ERROR(error);
+
+   // ensure the file has restrictive permissions
+#ifndef _WIN32
+   error = core::system::changeFileMode(projectIdsPath,
+                                        core::system::UserReadWriteMode);
+   if (error)
+      LOG_ERROR(error);
+#endif
 
    // return the id
    return id;
