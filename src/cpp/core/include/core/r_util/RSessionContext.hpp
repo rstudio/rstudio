@@ -55,6 +55,7 @@ struct SessionScope
 
 SessionScope projectNoneSessionScope();
 
+std::string urlPathForSessionScope(const SessionScope& scope);
 
 std::string createSessionUrl(const std::string& hostPageUrl,
                              const SessionScope& scope);
