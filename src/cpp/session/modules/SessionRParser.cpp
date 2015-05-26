@@ -1659,7 +1659,7 @@ bool skipFormulas(RTokenCursor& origin, ParseStatus& status)
 
    bool foundTilde = false;
    
-   while (cursor.moveToEndOfStatement(status.isInParentheticalScope()))
+   while (cursor.moveToEndOfEvaluation())
    {
       if (!cursor.moveToNextSignificantToken())
          break;
