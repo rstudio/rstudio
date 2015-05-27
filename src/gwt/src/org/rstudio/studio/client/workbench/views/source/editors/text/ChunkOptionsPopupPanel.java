@@ -145,7 +145,7 @@ public class ChunkOptionsPopupPanel extends MiniPopupPanel
          public void onClick(ClickEvent event)
          {
             revert();
-            init(widget_, position_);
+            hideAndFocusEditor();
          }
       });
       buttonPanel.add(revertButton);
@@ -158,8 +158,7 @@ public class ChunkOptionsPopupPanel extends MiniPopupPanel
          public void onClick(ClickEvent event)
          {
             synchronize();
-            ChunkOptionsPopupPanel.this.hide();
-            widget_.getEditor().focus();
+            hideAndFocusEditor();
          }
       });
       buttonPanel.add(applyButton);
@@ -403,6 +402,12 @@ public class ChunkOptionsPopupPanel extends MiniPopupPanel
       widget_.getEditor().getSession().replace(
             replaceRange,
             originalLine_ + "\n");
+   }
+   
+   private void hideAndFocusEditor()
+   {
+      hide();
+      widget_.getEditor().focus();
    }
    
    private final VerticalPanel panel_;
