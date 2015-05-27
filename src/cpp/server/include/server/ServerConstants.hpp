@@ -17,6 +17,7 @@
 #define SERVER_CONSTANTS_HPP
 
 #define kRStudioSessionRequiredHeader "X-RStudio-Session-Required"
+#define kRStudioServerLocalStream     "/tmp/rstudio-rserver/rserver.socket"
 
 #endif // SERVER_CONSTANTS_HPP
 
