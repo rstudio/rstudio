@@ -51,6 +51,7 @@
 
 #include <session/SessionConstants.hpp>
 #include <session/SessionLocalStreams.hpp>
+#include <session/SessionInvalidScope.hpp>
 
 #include <server/auth/ServerValidateUser.hpp>
 #include <server/auth/ServerAuthHandler.hpp>
@@ -76,6 +77,11 @@ Error launchSessionRecovery(const http::Request& request,
    // session then return session unavilable error
    if (requiresSession(request))
       return Error(server::errc::SessionUnavailableError, ERROR_LOCATION);
+
+   // if the session scope is marked as invalid then return
+   // invalid session scope error
+   if (session::collectInvalidScope(context))
+      return Error(server::errc::InvalidSessionScopeError, ERROR_LOCATION);
 
    // recreate streams dir if necessary
    Error error = session::local_streams::ensureStreamsDir();
