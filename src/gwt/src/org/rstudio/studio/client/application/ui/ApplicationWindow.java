@@ -74,6 +74,11 @@ public class ApplicationWindow extends Composite
       applicationPanel_.forceLayout();  
    }
    
+   public boolean isToolbarShowing()
+   {
+      return applicationHeader_.isToolbarVisible();
+   }
+   
    public void performGoToFunction()
    {
       new CodeSearchDialog(pCodeSearch_).showModal();  
