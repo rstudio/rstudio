@@ -494,7 +494,7 @@ assign(x = ".rs.acCompletionTypes",
 .rs.addFunction("resolveObjectFromFunctionCall", function(functionCall,
                                                           envir)
 {
-   string <- capture.output(print(functionCall[[1]]))
+   string <- capture.output(print(functionCall[[1]]))[[1]]
    splat <- strsplit(string, ":{2,3}", perl = TRUE)[[1]]
    object <- NULL
    if (length(splat) == 1)
