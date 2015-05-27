@@ -45,6 +45,7 @@ enum errc_t {
    MethodUnexpected = 11, // method unexpected for current application state
    InvalidClientVersion = 12, // client is running an invalid version
    ServerOffline = 13,    // server is offline
+   InvalidSession = 14,   // target session is invalid
 
    // Execution errors -- These errors occurred during execution of the method.
    // Application state is therefore known based on the expected behavior
@@ -1026,7 +1027,8 @@ public:
 
    void setError(const core::Error& error, const json::Value& clientInfo);
 
-   void setError(const boost::system::error_code& ec);
+   void setError(const boost::system::error_code& ec,
+                 const json::Value& clientInfo = json::Value());
 
    void setAsyncHandle(const std::string& handle);
 

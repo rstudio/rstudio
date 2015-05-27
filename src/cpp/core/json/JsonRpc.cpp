@@ -218,7 +218,8 @@ void JsonRpcResponse::setError(const Error& error)
    setError(error, json::Value());
 }
    
-void JsonRpcResponse::setError(const boost::system::error_code& ec)
+void JsonRpcResponse::setError(const boost::system::error_code& ec,
+                               const json::Value& clientInfo)
 {
    // remove result
    response_.erase(kRpcResult);
@@ -227,6 +228,12 @@ void JsonRpcResponse::setError(const boost::system::error_code& ec)
    // error from error code
    json::Object error ;
    copyErrorCodeToJsonError(ec, &error);
+
+   // client info if provided
+   if (!clientInfo.is_null())
+   {
+      error["client_info"] = clientInfo;
+   }
    
    // sub-error is null
    error["error"] = json::Value();
@@ -340,6 +347,9 @@ std::string JsonRpcErrorCategory::message( int ev ) const
          
       case errc::ServerOffline:
          return "Server is offline";
+
+      case errc::InvalidSession:
+         return "Invalid session";
 
       default:
          BOOST_ASSERT(false);

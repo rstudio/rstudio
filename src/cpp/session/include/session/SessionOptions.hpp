@@ -339,6 +339,11 @@ public:
       return scope_;
    }
 
+   bool invalidScope() const
+   {
+      return invalidScope_;
+   }
+
    core::r_util::SessionContext sessionContext() const
    {
       return core::r_util::SessionContext(userIdentity(), sessionScope());
@@ -533,6 +538,7 @@ private:
    bool showUserIdentity_;
    std::string userIdentity_;
    core::r_util::SessionScope scope_;
+   bool invalidScope_;
    bool multiSession_;
    std::string userHomePath_;
    std::string userScratchPath_;   

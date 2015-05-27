@@ -48,6 +48,10 @@ std::string ServerErrorCategory::message( int ev ) const
      case errc::SessionUnavailableError:
          message = "Session unavailable error";
          break;
+
+     case errc::InvalidSessionScopeError:
+         message = "Invalid session scope error";
+         break;
          
       default:
          message = "Unknown error" ;
@@ -69,6 +73,14 @@ bool isAuthenticationError(const core::Error& error)
 bool isSessionUnavailableError(const core::Error& error)
 {
    if (error.code() == server::errc::SessionUnavailableError)
+      return true;
+   else
+      return false;
+}
+
+bool isInvalidSessionScopeError(const core::Error& error)
+{
+   if (error.code() == server::errc::InvalidSessionScopeError)
       return true;
    else
       return false;

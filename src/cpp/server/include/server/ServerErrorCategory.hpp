@@ -25,7 +25,8 @@ namespace errc {
 enum errc_t {
    Success = 0,
    AuthenticationError,
-   SessionUnavailableError
+   SessionUnavailableError,
+   InvalidSessionScopeError
 };
 
 } // namespace errc
@@ -66,6 +67,8 @@ inline boost::system::error_condition make_error_condition( errc_t e )
 bool isAuthenticationError(const core::Error& error);
 
 bool isSessionUnavailableError(const core::Error& error);
+
+bool isInvalidSessionScopeError(const core::Error& error);
 
 } // namespace server
 } // namespace rstudio

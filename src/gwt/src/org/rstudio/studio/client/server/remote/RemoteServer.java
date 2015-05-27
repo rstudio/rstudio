@@ -36,8 +36,10 @@ import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.ClientDisconnectedEvent;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.InvalidClientVersionEvent;
+import org.rstudio.studio.client.application.events.InvalidSessionEvent;
 import org.rstudio.studio.client.application.events.ServerOfflineEvent;
 import org.rstudio.studio.client.application.events.UnauthorizedEvent;
+import org.rstudio.studio.client.application.model.InvalidSessionInfo;
 import org.rstudio.studio.client.application.model.ProductInfo;
 import org.rstudio.studio.client.application.model.SuspendOptions;
 import org.rstudio.studio.client.application.model.UpdateCheckResult;
@@ -2576,6 +2578,20 @@ public class RemoteServer implements Server
          // handled
          return true;
 
+      }
+      else if (error.getCode() == RpcError.INVALID_SESSION)
+      {
+         // disconnect
+         disconnect();
+         
+         // fire event
+         InvalidSessionInfo info = error.getClientInfo().isObject()
+                                             .getJavaScriptObject().cast();
+         InvalidSessionEvent event = new InvalidSessionEvent(info);
+         eventBus_.fireEvent(event);
+         
+         // handled
+         return true;
       }
       else
       {

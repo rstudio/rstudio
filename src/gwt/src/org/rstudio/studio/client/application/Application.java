@@ -122,6 +122,7 @@ public class Application implements ApplicationEventHandlers
       events.addHandler(ServerUnavailableEvent.TYPE, this);
       events.addHandler(InvalidClientVersionEvent.TYPE, this);
       events.addHandler(ServerOfflineEvent.TYPE, this);
+      events.addHandler(InvalidSessionEvent.TYPE, this);
       
       // register for uncaught exceptions
       uncaughtExHandler.register();
@@ -474,6 +475,18 @@ public class Application implements ApplicationEventHandlers
       cleanupWorkbench();
       view_.showApplicationUpdateRequired();
    }
+   
+
+   public void onInvalidSession(InvalidSessionEvent event)
+   {
+      String baseURL = GWT.getHostPageBaseURL();
+      String scopePath = event.getInfo().getScopePath();
+      int loc = baseURL.indexOf(scopePath);
+      if (loc != -1)
+         baseURL = baseURL.substring(0, loc) + "/";
+      navigateWindowWithDelay(baseURL);
+   }
+   
 
    public void onSessionAbendWarning(SessionAbendWarningEvent event)
    {

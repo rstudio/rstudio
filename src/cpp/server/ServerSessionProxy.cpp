@@ -42,6 +42,7 @@
 #include <core/http/LocalStreamAsyncClient.hpp>
 #include <core/http/TcpIpAsyncClient.hpp>
 #include <core/http/Util.hpp>
+#include <core/http/URL.hpp>
 #include <core/system/PosixSystem.hpp>
 #include <core/system/PosixUser.hpp>
 #include <core/r_util/RSessionContext.hpp>
@@ -306,7 +307,8 @@ void handleContentError(
       return;
    }
 
-   if (server::isSessionUnavailableError(error))
+   if (server::isSessionUnavailableError(error) ||
+       server::isInvalidSessionScopeError(error))
    {
       http::Response& response = ptrConnection->response();
       response.setStatusCode(http::status::ServiceUnavailable);
@@ -359,6 +361,20 @@ void handleRpcError(
       return;
    }
 
+   if (server::isInvalidSessionScopeError(error))
+   {
+      // prepare client info
+      json::Object clJson;
+      clJson["scope_path"] = r_util::urlPathForSessionScope(context.scope);
+      clJson["project"] = context.scope.project();
+      clJson["id"] = context.scope.id();
+      json::JsonRpcResponse jsonRpcResponse ;
+      jsonRpcResponse.setError(json::errc::InvalidSession, clJson);
+      json::setJsonRpcResponse(jsonRpcResponse, &(ptrConnection->response()));
+      ptrConnection->writeResponse();
+      return;
+   }
+
    // log if not connection terminated
    logIfNotConnectionTerminated(error, ptrConnection->request());
 
@@ -399,6 +415,11 @@ void handleEventsError(
          json::setJsonRpcError(json::errc::Unavailable,
                               &(ptrConnection->response()));
       }
+   }
+   else if (server::isInvalidSessionScopeError(error))
+   {
+      json::setJsonRpcError(json::errc::Unavailable,
+                           &(ptrConnection->response()));
    }
    else
    {

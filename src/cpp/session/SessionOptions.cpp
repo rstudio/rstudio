@@ -377,6 +377,7 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
 
    // resolve scope
    scope_ = r_util::SessionScope::fromProjectId(project, scopeId);
+   invalidScope_ = false;
 
    // call overlay hooks
    resolveOverlayOptions();
@@ -520,12 +521,10 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
          }
       }
 
-      // if we failed to set the initialProjectPath_ we need to fault
-      // back into something reasonable. what we fault to has to match
-      // the URL though, so we need this code to force a redirect somehow
+      // if we failed to set the initialProjectPath_ then our scope is invalid
       if (initialProjectPath_.empty())
       {
-         // TODO: failure mode
+         invalidScope_ = true;
       }
    }
    else
