@@ -305,7 +305,8 @@ bool FilePath::exists() const
     }
     catch(const boost::filesystem::filesystem_error& e)
     {
-       logError(pImpl_->path, e, ERROR_LOCATION) ;
+       if (e.code() != boost::system::errc::permission_denied)
+         logError(pImpl_->path, e, ERROR_LOCATION) ;
        return false ;
     }
 }
