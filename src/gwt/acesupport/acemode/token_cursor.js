@@ -857,24 +857,19 @@ oop.mixin(RTokenCursor.prototype, TokenCursor.prototype);
    this.isValidAsIdentifier = function() {
       var type = this.currentType();
       return type === "identifier" ||
-         type === "symbol" ||
-         type === "keyword" ||
-         type === "string" ||
-         type.indexOf("constant") !== -1;
+             type === "symbol" ||
+             type === "keyword" ||
+             type === "string" ||
+             type.indexOf("constant") !== -1;
    };
 
-   this.isLookingAtInfixySymbol = function() {
-      
+   this.isExtractionOperator = function()
+   {
       var value = this.currentValue();
-      if (value === "$" ||
-          value === "@" ||
-          value === ":")
-         return true;
-      
-      if (this.currentType().indexOf("infix") !== -1)
-         return true;
-      
-      return false;
+      return value === "$" ||
+             value === "@" ||
+             value === "::" ||
+             value === ":::";
    };
 
    // Find the start of the evaluation context for a generic expression,
@@ -898,19 +893,8 @@ oop.mixin(RTokenCursor.prototype, TokenCursor.prototype);
             if (!clone.moveToPreviousToken())
                break;
 
-            // TODO: explicitly tokenize '::', ':::' so we don't have to do this hack
-            if (clone.isLookingAtInfixySymbol())
-            {
-               while (clone.isLookingAtInfixySymbol())
-                  if (!clone.moveToPreviousToken())
-                     return false;
-
-               // Move back up one because the loop condition will take us back again
-               if (!clone.moveToNextToken())
-                  return false;
-
+            if (clone.isExtractionOperator())
                continue;
-            }
             
             if (!clone.moveToNextToken())
                return false;
