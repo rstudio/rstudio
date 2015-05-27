@@ -188,6 +188,7 @@ private:
                   // call the filter (passing a continuation to be invoked
                   // once the filter is completed)
                   requestFilter_(
+                     ioService(),
                      &request_,
                      boost::bind(
                         &AsyncConnectionImpl<ProtocolType>::requestFilterContinuation,

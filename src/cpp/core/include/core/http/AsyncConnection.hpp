@@ -36,7 +36,9 @@ class AsyncConnection;
 
 typedef boost::function<void(boost::shared_ptr<Response>)> RequestFilterContinuation;
 
-typedef boost::function<void(Request*,RequestFilterContinuation)> RequestFilter;
+typedef boost::function<void(boost::asio::io_service&,
+                             Request*,
+                             RequestFilterContinuation)> RequestFilter;
 
 typedef boost::function<void(const std::string&,Response*)> ResponseFilter;
 
