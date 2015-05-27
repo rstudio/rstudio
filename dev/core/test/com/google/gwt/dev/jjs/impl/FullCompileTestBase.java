@@ -82,7 +82,7 @@ public abstract class FullCompileTestBase extends JJSTestBase {
         configurationProperties));
 
     jProgram =
-        JavaAstConstructor.construct(logger, state, compilerContext.getOptions(), config,
+        JavaAstConstructor.construct(logger, state, compilerContext, config,
             "test.EntryPoint", "com.google.gwt.lang.Exceptions");
     jProgram.addEntryMethod(findMethod(jProgram, "onModuleLoad"));
 

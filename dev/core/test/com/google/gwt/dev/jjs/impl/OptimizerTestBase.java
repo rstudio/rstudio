@@ -476,14 +476,17 @@ public abstract class OptimizerTestBase extends JJSTestBase {
   protected final Result optimizeMethod(final String methodName,
       final String mainMethodReturnType, final String... mainMethodSnippet)
       throws UnableToCompleteException {
-    return optimizeMethod(TreeLogger.NULL, methodName, mainMethodReturnType, mainMethodSnippet);
+    return optimizeMethod(null, methodName, mainMethodReturnType, mainMethodSnippet);
   }
 
   protected final Result optimizeMethod(TreeLogger logger, final String methodName,
       final String mainMethodReturnType, final String... mainMethodSnippet)
       throws UnableToCompleteException {
+    if (logger == null) {
+      logger = this.logger;
+    }
     String snippet = Joiner.on("\n").join(mainMethodSnippet);
-    JProgram program = compileSnippet(mainMethodReturnType, snippet, true);
+    JProgram program = compileSnippet(logger, mainMethodReturnType, snippet, true);
     JMethod method = findMethod(program, methodName);
     boolean madeChanges = doOptimizeMethod(logger, program, method);
     if (madeChanges && runDeadCodeElimination) {

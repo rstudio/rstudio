@@ -40,18 +40,24 @@ import com.google.gwt.dev.js.ast.JsProgram;
  */
 public class AstConstructor {
 
+  public static JProgram construct(TreeLogger logger, final CompilationState state,
+      PrecompileTaskOptions options, ConfigurationProperties config)
+      throws UnableToCompleteException {
+    CompilerContext compilerContext = new CompilerContext.Builder().options(options)
+        .minimalRebuildCache(new NullRebuildCache()).build();
+    return construct(logger, state, compilerContext, config);
+  }
+
   /**
    * Construct an simple AST representing an entire {@link CompilationState}.
    * Does not support deferred binding. Implementation mostly copied from
    * {@link JavaToJavaScriptCompiler}.
    */
   public static JProgram construct(TreeLogger logger, final CompilationState state,
-      PrecompileTaskOptions options, ConfigurationProperties config) throws UnableToCompleteException {
+      CompilerContext compilerContext, ConfigurationProperties config)
+      throws UnableToCompleteException {
 
     InternalCompilerException.preload();
-
-    CompilerContext compilerContext = new CompilerContext.Builder().options(options)
-        .minimalRebuildCache(new NullRebuildCache()).build();
 
     PrecompilationContext precompilationContext = new PrecompilationContext(
         new RebindPermutationOracle() {
@@ -93,7 +99,7 @@ public class AstConstructor {
      * TODO: If we defer this until later, we could maybe use the results of the
      * assertions to enable more optimizations.
      */
-    if (options.isEnableAssertions()) {
+    if (compilerContext.getOptions().isEnableAssertions()) {
       // Turn into assertion checking calls.
       AssertionNormalizer.exec(jprogram);
     } else {
@@ -101,7 +107,7 @@ public class AstConstructor {
       AssertionRemover.exec(jprogram);
     }
 
-    if (options.isRunAsyncEnabled()) {
+    if (compilerContext.getOptions().isRunAsyncEnabled()) {
       ReplaceRunAsyncs.exec(logger, jprogram);
       if (config != null) {
         CodeSplitters.pickInitialLoadSequence(logger, jprogram, config);

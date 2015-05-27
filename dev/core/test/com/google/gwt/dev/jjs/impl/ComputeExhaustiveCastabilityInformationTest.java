@@ -40,7 +40,7 @@ public class ComputeExhaustiveCastabilityInformationTest extends JJSTestBase {
     registerCompilableResources();
 
     // Compiles and gets a reference to the String[] type.
-    JProgram program = compileSnippet("void", "", "", false, true);
+    JProgram program = compileSnippet(null, "void", "", "", true);
     ComputeExhaustiveCastabilityInformation.exec(program);
     JDeclaredType stringType = program.getIndexedType("String");
     JArrayType stringArrayType = program.getTypeArray(stringType);
@@ -84,7 +84,7 @@ public class ComputeExhaustiveCastabilityInformationTest extends JJSTestBase {
 
   private void assertSourceCastsToTargets(String sourceTypeName,
       Set<String> expectedTargetTypeNames) throws UnableToCompleteException {
-    JProgram program = compileSnippet("void", "", "", false, true);
+    JProgram program = compileSnippet(null, "void", "", "", true);
     ComputeExhaustiveCastabilityInformation.exec(program);
     JDeclaredType sourceType = program.getIndexedType(sourceTypeName);
     assertSourceCastsToTargets(program, sourceType, expectedTargetTypeNames);

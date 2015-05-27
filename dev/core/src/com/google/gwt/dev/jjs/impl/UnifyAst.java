@@ -21,6 +21,8 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.CompilerContext;
 import com.google.gwt.dev.MinimalRebuildCache;
 import com.google.gwt.dev.Permutation;
+import com.google.gwt.dev.cfg.ConfigurationProperty;
+import com.google.gwt.dev.cfg.Property;
 import com.google.gwt.dev.javac.CompilationProblemReporter;
 import com.google.gwt.dev.javac.CompilationState;
 import com.google.gwt.dev.javac.CompilationUnit;
@@ -413,22 +415,30 @@ public class UnifyAst {
     private JExpression handleSystemGetProperty(JMethodCall gwtGetPropertyCall) {
       assert (gwtGetPropertyCall.getArgs().size() == 1 || gwtGetPropertyCall.getArgs().size() == 2);
       JExpression propertyNameExpression = gwtGetPropertyCall.getArgs().get(0);
-      JExpression defaultValueExpression = gwtGetPropertyCall.getArgs().size() == 2 ?
+      boolean defaultVersionCalled = gwtGetPropertyCall.getArgs().size() == 2;
+      JExpression defaultValueExpression = defaultVersionCalled ?
           gwtGetPropertyCall.getArgs().get(1) : null;
 
       if (!(propertyNameExpression instanceof JStringLiteral) ||
-          (defaultValueExpression != null && !(defaultValueExpression instanceof JStringLiteral))) {
+          (defaultVersionCalled && !(defaultValueExpression instanceof JStringLiteral))) {
         error(gwtGetPropertyCall,
             "Only string constants may be used as arguments to System.getProperty()");
         return null;
       }
       String propertyName = ((JStringLiteral) propertyNameExpression).getValue();
 
-      if (isMultivaluedProperty(propertyName)) {
-        error(gwtGetPropertyCall,
-            "Multivalued properties are not supported by System.getProperty()");
+      if (!defaultVersionCalled && !isPropertyDefined(propertyName)) {
+        error(gwtGetPropertyCall, "Property '" + propertyName + "' is not defined.");
         return null;
       }
+
+      if (isMultivaluedProperty(propertyName)) {
+        error(gwtGetPropertyCall,
+            "Property '" + propertyName + "' is multivalued. " +
+                "Multivalued properties are not supported by System.getProperty().");
+        return null;
+      }
+
       String defaultValue = defaultValueExpression == null ? null :
           ((JStringLiteral) defaultValueExpression).getValue();
       return JPermutationDependentValue
@@ -591,9 +601,16 @@ public class UnifyAst {
   }
 
   private boolean isMultivaluedProperty(String propertyName) {
-    // Multivalued properties can only be Configuration properties, and those do not change between
-    // permutations.
-    return permutations[0].getProperties().getConfigurationProperties().isMultiValued(propertyName);
+    Property property = compilerContext.getModule().getProperties().find(propertyName);
+    if (!(property instanceof ConfigurationProperty)) {
+      return false;
+    }
+
+    return ((ConfigurationProperty) property).allowsMultipleValues();
+  }
+
+  private boolean isPropertyDefined(String propertyName) {
+    return compilerContext.getModule().getProperties().find(propertyName) != null;
   }
 
   private static final String CLASS_DESIRED_ASSERTION_STATUS =

@@ -345,6 +345,16 @@ public class JavaResourceBase {
           "  String[] value();",
           "}");
 
+  public static final MockJavaResource SYSTEM =
+      createMockJavaResource("java.lang.System",
+          "package java.lang;",
+          "public class System {",
+          "  public static String getProperty(String propertyName) { return null; }",
+          "  public static String getProperty(String propertyName, String defaultValue) {",
+          "    return defaultValue;",
+          "  }",
+          "}");
+
   public static final MockJavaResource THROWABLE =
       createMockJavaResource("java.lang.Throwable",
           "package java.lang;",
@@ -400,7 +410,7 @@ public class JavaResourceBase {
         CLASS_NOT_FOUND_EXCEPTION, CLONEABLE, COLLECTION, COMPARABLE, DOUBLE, ENUM, EXCEPTION,
         ERROR, FUNCTIONALINTERFACE, FLOAT, INTEGER, IS_SERIALIZABLE, JAVASCRIPTEXCEPTION,
         JAVASCRIPTOBJECT, LIST, LONG, MAP, NO_CLASS_DEF_FOUND_ERROR, NUMBER, OBJECT,
-        RUNTIME_EXCEPTION, SERIALIZABLE, SHORT, STRING, STRING_BUILDER, SUPPRESS_WARNINGS,
+        RUNTIME_EXCEPTION, SERIALIZABLE, SHORT, STRING, STRING_BUILDER, SUPPRESS_WARNINGS, SYSTEM,
         THROWABLE, SPECIALIZE_METHOD, JSTYPE, JSTYPEPROTOTYPE, JSEXPORT, JSPROPERTY, JSFUNCTION};
   }
 

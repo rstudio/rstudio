@@ -262,18 +262,11 @@ public class GwtAstBuilderTest extends JJSTestBase {
   }
 
   private JProgram compileProgram(String entryType) throws UnableToCompleteException {
-    CompilerContext compilerContext =
-        new CompilerContext.Builder().options(new PrecompileTaskOptionsImpl() {
-            @Override
-          public boolean shouldJDTInlineCompileTimeConstants() {
-            return false;
-          }
-        }).build();
-    compilerContext.getOptions().setSourceLevel(sourceLevel);
-    compilerContext.getOptions().setStrict(true);
+    CompilerContext compilerContext = provideCompilerContext();
+;
     CompilationState state = CompilationStateBuilder.buildFrom(logger, compilerContext, sources,
         getAdditionalTypeProviderDelegate());
-    JProgram program = JavaAstConstructor.construct(logger, state, compilerContext.getOptions(),
+    JProgram program = JavaAstConstructor.construct(logger, state, compilerContext,
         null, entryType, "com.google.gwt.lang.Exceptions");
     return program;
   }

@@ -27,7 +27,7 @@ public class SystemGetPropertyTest extends GWTTestCase {
     return "com.google.gwt.dev.jjs.SystemGetPropertyTest";
   }
 
-  // TODO(rluble): Remove DoNotRun here is System.getProperty is ever implemented for devmode.
+  // In DevMode System.getProperty is routed to the standard Java implementation.
   @DoNotRunWith(Platform.Devel)
   public void testBindingProperties() {
     assertEquals("two", System.getProperty("collapsedProperty"));
@@ -40,7 +40,6 @@ public class SystemGetPropertyTest extends GWTTestCase {
 
   @DoNotRunWith(Platform.Devel)
   public void testConfigurationProperties() {
-    assertNull(System.getProperty("nonExistent"));
     assertEquals("conf", System.getProperty("someConfigurationProperty"));
     assertEquals("conf", System.getProperty("someConfigurationProperty", "default"));
   }

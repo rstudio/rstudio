@@ -56,9 +56,16 @@ public class MockModuleDef extends ModuleDef {
     }
   };
 
+  private Properties properties = new Properties();
+
   public MockModuleDef() {
     super("mock");
     normalize(TreeLogger.NULL);
     lazyPublicOracle = new MockResourceOracle(publicResource);
+  }
+
+  @Override
+  public Properties getProperties() {
+    return properties;
   }
 }

@@ -22,6 +22,7 @@ import com.google.gwt.dev.CompilerContext;
 import com.google.gwt.dev.javac.testing.impl.JavaResourceBase;
 import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.util.arg.SourceLevel;
+import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -72,36 +73,13 @@ public class TypeOracleTestingUtils {
     return buildUpdaterWith(logger, standardBuildersPlus(resources));
   }
 
-  public static TypeOracle buildStandardTypeOracleWith(TreeLogger logger,
-      Resource... resources) {
-    return buildStandardTypeOracleWith(logger, new HashSet<Resource>(
-        Arrays.asList(resources)));
-  }
-
-  public static TypeOracle buildStandardTypeOracleWith(TreeLogger logger,
-      Set<Resource> resources) {
-    return buildTypeOracle(logger, standardBuildersPlus(resources));
-  }
-
-  public static TypeOracle buildStandardTypeOracleWith(TreeLogger logger,
-      Set<Resource> resources, Set<GeneratedUnit> generatedUnits, SourceLevel sourceLevel) {
-    return buildTypeOracle(logger, standardBuildersPlus(resources),
-        generatedUnits, sourceLevel);
-  }
-
-  public static TypeOracle buildStandardTypeOracleWith(TreeLogger logger,
+  public static CompilationState buildCompilationStateWith(TreeLogger logger,
       Set<Resource> resources, Set<GeneratedUnit> generatedUnits) {
-    return buildTypeOracle(logger, standardBuildersPlus(resources),
+    return buildCompilationState(logger, standardBuildersPlus(resources),
         generatedUnits, SourceLevel.DEFAULT_SOURCE_LEVEL);
   }
 
-  public static TypeOracle buildTypeOracle(TreeLogger logger,
-      Set<Resource> resources) {
-    return buildTypeOracle(logger, resources,
-        Collections.<GeneratedUnit> emptySet());
-  }
-
-  public static TypeOracle buildTypeOracle(TreeLogger logger,
+  public static CompilationState buildCompilationState(TreeLogger logger,
       Set<Resource> resources, Set<GeneratedUnit> generatedUnits, SourceLevel sourceLevel) {
     try {
       CompilerContext compilerContext = new CompilerContext();
@@ -110,15 +88,38 @@ public class TypeOracleTestingUtils {
       CompilationState state =
           CompilationStateBuilder.buildFrom(logger, compilerContext, resources);
       state.addGeneratedCompilationUnits(logger, generatedUnits);
-      return state.getTypeOracle();
+      return state;
     } catch (UnableToCompleteException e) {
       throw new RuntimeException(e);
     }
   }
 
+  public static TypeOracle buildTypeOracle(TreeLogger logger, Set<Resource> resources) {
+    return buildTypeOracle(logger, resources,
+        Collections.<GeneratedUnit>emptySet());
+  }
+
   public static TypeOracle buildTypeOracle(TreeLogger logger,
       Set<Resource> resources, Set<GeneratedUnit> generatedUnits) {
-    return buildTypeOracle(logger, resources, generatedUnits, SourceLevel.DEFAULT_SOURCE_LEVEL);
+    return buildCompilationState(logger, resources, generatedUnits,
+        SourceLevel.DEFAULT_SOURCE_LEVEL).getTypeOracle();
+  }
+
+  public static TypeOracle buildStandardTypeOracleWith(TreeLogger logger,
+      Set<Resource> resources, Set<GeneratedUnit> generatedUnits, SourceLevel sourceLevel) {
+    return buildCompilationState(logger, standardBuildersPlus(resources),
+        generatedUnits, sourceLevel).getTypeOracle();
+  }
+
+  public static TypeOracle buildStandardTypeOracleWith(TreeLogger logger,
+      Set<Resource> resources) {
+    return buildTypeOracle(logger, standardBuildersPlus(resources));
+  }
+
+  public static TypeOracle buildStandardTypeOracleWith(TreeLogger logger,
+      Resource... resources) {
+    return buildStandardTypeOracleWith(logger, Sets.newHashSet(
+        Arrays.asList(resources)));
   }
 
   /**

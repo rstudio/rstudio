@@ -14,7 +14,9 @@
 package com.google.gwt.dev.jjs.impl;
 
 import com.google.gwt.core.ext.TreeLogger;
+import com.google.gwt.core.ext.TreeLogger.Type;
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.dev.CompilerContext;
 import com.google.gwt.dev.javac.testing.impl.JavaResourceBase;
 import com.google.gwt.dev.javac.testing.impl.MockJavaResource;
 import com.google.gwt.dev.jjs.ast.JClassType;
@@ -480,10 +482,100 @@ public class UnifyAstTest extends OptimizerTestBase {
             .typeOracle.getInstanceMethodBySignature(testImplClass, mSignature));
   }
 
+  public void testGetProperty_error_undefinedProperty()
+      throws UnableToCompleteException {
+
+    final MockJavaResource someClass =
+        JavaResourceBase.createMockJavaResource("test.SomeClass",
+            "package test;",
+            "public class SomeClass {",
+            "  public void m() { String a = System.getProperty(\"undefined\"); }",
+            "}");
+
+    shouldGenerateError(someClass, 3, "Property 'undefined' is not defined.");
+  }
+
+  public void testGetProperty_error_multivalued()
+      throws UnableToCompleteException {
+
+    final MockJavaResource someClass =
+        JavaResourceBase.createMockJavaResource("test.SomeClass",
+            "package test;",
+            "public class SomeClass {",
+            "  public void m() { String a = System.getProperty(\"multivalued\"); }",
+            "}");
+
+    shouldGenerateError(someClass, 3, "Property 'multivalued' is multivalued." +
+        " Multivalued properties are not supported by System.getProperty().");
+  }
+
+  public void testGetPropertyWithDefault_error_multivalued()
+      throws UnableToCompleteException {
+
+    final MockJavaResource someClass =
+        JavaResourceBase.createMockJavaResource("test.SomeClass",
+            "package test;",
+            "public class SomeClass {",
+            "  public void m() { String a = System.getProperty(\"multivalued\", \"somevalue\"); }",
+            "}");
+
+    shouldGenerateError(someClass, 3, "Property 'multivalued' is multivalued." +
+        " Multivalued properties are not supported by System.getProperty().");
+  }
+
+  public void testGetPropertyWithDefault_success_undefined()
+      throws UnableToCompleteException {
+
+    final MockJavaResource someClass =
+        JavaResourceBase.createMockJavaResource("test.SomeClass",
+            "package test;",
+            "public class SomeClass {",
+            "  public void m() { String a = System.getProperty(\"undefined\", \"somevalue\"); }",
+            "}");
+
+    shouldGenerateNoError(someClass);
+  }
+
   @Override
   protected boolean doOptimizeMethod(TreeLogger logger, JProgram program, JMethod method) {
     program.addEntryMethod(findMainMethod(program));
     return false;
+  }
+
+  @Override
+  protected CompilerContext provideCompilerContext() {
+    CompilerContext context = super.provideCompilerContext();
+    context.getModule().getProperties().createConfiguration("multivalued", true);
+    return context;
+  }
+
+  @Override
+  protected Pass providePass() {
+    return new Pass() {
+      private Result result = null;
+      @Override
+      public boolean run(TreeLogger logger, MockJavaResource buggyResource,
+          MockJavaResource extraResource) {
+        addAll(buggyResource, extraResource);
+        try {
+          result = optimize(logger, "void", "new SomeClass().m();");
+        } catch (UnableToCompleteException e) {
+          return false;
+        }
+        return true;
+      }
+
+      @Override
+      public boolean classAvailable(String className) {
+        return result != null && result.findClass(className) != null;
+      }
+
+      @Override
+      public String getTopErrorMessage(Type logLevel, MockJavaResource resource) {
+        return (logLevel == Type.WARN ? "Warnings" : "Errors") +
+            " in '" + resource.getPath() + "'";
+      }
+    };
   }
 
   private static final MockJavaResource A_A =

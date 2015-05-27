@@ -19,6 +19,8 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.CompilerContext;
 import com.google.gwt.dev.PrecompileTaskOptionsImpl;
+import com.google.gwt.dev.cfg.MockModuleDef;
+import com.google.gwt.dev.javac.CheckerTestCase;
 import com.google.gwt.dev.javac.CompilationState;
 import com.google.gwt.dev.javac.CompilationStateBuilder;
 import com.google.gwt.dev.javac.JdtCompiler.AdditionalTypeProviderDelegate;
@@ -51,8 +53,6 @@ import com.google.gwt.thirdparty.guava.common.collect.FluentIterable;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
 import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
-import junit.framework.TestCase;
-
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
@@ -62,7 +62,7 @@ import java.util.regex.Pattern;
 /**
  * A useful base class for tests that build JJS ASTs.
  */
-public abstract class JJSTestBase extends TestCase {
+public abstract class JJSTestBase extends CheckerTestCase {
 
   public static final String MAIN_METHOD_NAME = "onModuleLoad";
 
@@ -245,42 +245,68 @@ public abstract class JJSTestBase extends TestCase {
   /**
    * Returns the program that results from compiling the specified code snippet
    * as the body of an entry point method.
-   *  @param returnType the return type of the method to compile; use "void" if
+   * @param logger a logger where to log, the default logger will be used if null.
+   * @param returnType the return type of the method to compile; use "void" if
    *          the code snippet has no return statement
    * @param codeSnippet the body of the entry method
    */
-  protected JProgram compileSnippet(final String returnType,
+  protected JProgram compileSnippet(TreeLogger logger,  final String returnType,
       final String codeSnippet) throws UnableToCompleteException {
-    return compileSnippet(returnType, "", codeSnippet, true, false);
+    return compileSnippet(logger, returnType, "", codeSnippet, false);
   }
 
   /**
    * Returns the program that results from compiling the specified code snippet
    * as the body of an entry point method.
-   *  @param returnType the return type of the method to compile; use "void" if
+   * @param logger a logger where to log, the default logger will be used if null.
+   * @param returnType the return type of the method to compile; use "void" if
+   *          the code snippet has no return statement
+   * @param codeSnippet the body of the entry method
+   * @param staticMethod whether to make the method static
+   */
+  protected JProgram compileSnippet(TreeLogger logger,  final String returnType,
+      final String codeSnippet, boolean staticMethod) throws UnableToCompleteException {
+    return compileSnippet(logger, returnType, "", codeSnippet, staticMethod);
+  }
+
+  /**
+   * Returns the program that results from compiling the specified code snippet
+   * as the body of an entry point method.
+   * @param returnType the return type of the method to compile; use "void" if
    *          the code snippet has no return statement
    * @param codeSnippet the body of the entry method
    * @param staticMethod whether to make the method static
    */
   protected JProgram compileSnippet(final String returnType,
       final String codeSnippet, boolean staticMethod) throws UnableToCompleteException {
-    return compileSnippet(returnType, "", codeSnippet, true, staticMethod);
+    return compileSnippet(logger, returnType, "", codeSnippet, staticMethod);
+  }
+
+  /**
+   * Returns the program that results from compiling the specified code snippet
+   * as the body of an entry point method.
+   * @param returnType the return type of the method to compile; use "void" if
+   *          the code snippet has no return statement
+   * @param codeSnippet the body of the entry method
+   */
+  protected JProgram compileSnippet(final String returnType,
+      final String codeSnippet) throws UnableToCompleteException {
+    return compileSnippet(logger, returnType, "", codeSnippet, false);
   }
 
   /**
    * Returns the program that results from compiling the specified code snippet
    * as the body of an entry point method.
    *
+   * @param logger a logger where to log, the default logger will be used if null.
    * @param returnType the return type of the method to compile; use "void" if
    *          the code snippet has no return statement
    * @param params the parameter list of the method to compile
    * @param codeSnippet the body of the entry method
-   * @param compileMonolithic whether the compile is monolithic
    * @param staticMethod whether the entryPoint should be static
    */
-  protected JProgram compileSnippet(final String returnType,
-      final String params, final String codeSnippet, boolean compileMonolithic,
-      final boolean staticMethod)
+  protected JProgram compileSnippet(TreeLogger logger, final String returnType,
+      final String params, final String codeSnippet, final boolean staticMethod)
       throws UnableToCompleteException {
     sourceOracle.addOrReplace(new MockJavaResource("test.EntryPoint") {
       @Override
@@ -302,23 +328,37 @@ public abstract class JJSTestBase extends TestCase {
         return code;
       }
     });
-    CompilerContext compilerContext =
-        new CompilerContext.Builder().options(new PrecompileTaskOptionsImpl() {
-          @Override
-          public boolean shouldJDTInlineCompileTimeConstants() {
-            return false;
-          }
-        }).build();
-    compilerContext.getOptions().setSourceLevel(sourceLevel);
-    compilerContext.getOptions().setStrict(true);
-    compilerContext.getOptions().setJsInteropMode(OptionJsInteropMode.Mode.JS);
+    CompilerContext compilerContext = provideCompilerContext();
+
+    if (logger == null)  {
+      logger = this.logger;
+    }
     CompilationState state =
         CompilationStateBuilder.buildFrom(logger, compilerContext,
             sourceOracle.getResources(), getAdditionalTypeProviderDelegate());
     JProgram program =
-        JavaAstConstructor.construct(logger, state, compilerContext.getOptions(),
+        JavaAstConstructor.construct(logger, state, compilerContext,
             null, "test.EntryPoint", "com.google.gwt.lang.Exceptions");
     return program;
+  }
+
+  /**
+   * Returns a compiler context to be used for compiling code within the test.
+   */
+  protected CompilerContext provideCompilerContext() {
+    CompilerContext compilerContext = new CompilerContext.Builder().module(new MockModuleDef())
+        .options(new PrecompileTaskOptionsImpl() {
+                   @Override
+                   public boolean shouldJDTInlineCompileTimeConstants() {
+                     return false;
+                   }
+                 }
+        ).build();
+
+    compilerContext.getOptions().setSourceLevel(sourceLevel);
+    compilerContext.getOptions().setStrict(true);
+    compilerContext.getOptions().setJsInteropMode(OptionJsInteropMode.Mode.JS);
+    return compilerContext;
   }
 
   /**
@@ -420,7 +460,9 @@ public abstract class JJSTestBase extends TestCase {
 
   protected void addAll(Resource... sourceFiles) {
     for (Resource sourceFile : sourceFiles) {
-      sourceOracle.addOrReplace(sourceFile);
+      if (sourceFile != null) {
+        sourceOracle.addOrReplace(sourceFile);
+      }
     }
   }
 
