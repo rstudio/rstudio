@@ -11,6 +11,7 @@
 ### R Markdown
 
 * New run chunk button overlaid at the top right of chunks in the editor
+* New shortcut for run current chunk (Cmd+Shift+Enter)
 
 
 ### Miscellaneous
