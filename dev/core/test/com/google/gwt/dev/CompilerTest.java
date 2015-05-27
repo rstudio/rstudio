@@ -1477,7 +1477,8 @@ public class CompilerTest extends ArgProcessorTestBase {
     checkRecompiledModifiedApp("com.foo.SuperFromStaleInnerModule",
         Lists.newArrayList(superFromStaleInnerModuleResource,
             superFromStaleInnerEntryPointResource), interfaceOneResource, interfaceOneResource,
-        stringSet("com.foo.SuperFromStaleInnerEntryPoint$B$1"), output);
+        stringSet(interfaceOneResource.getTypeName(), "com.foo.SuperFromStaleInnerEntryPoint$B$1"),
+        output);
   }
 
   private void checkIncrementalRecompile_deterministicUiBinder(JsOutputOption output)
@@ -1486,7 +1487,7 @@ public class CompilerTest extends ArgProcessorTestBase {
 
     checkRecompiledModifiedApp(compilerOptions, "com.foo.UiBinderTestModule", Lists.newArrayList(
         uiBinderTestModuleResource, uiBinderTestEntryPointResource, myWidgetUiXml), myWidget,
-        myWidget, stringSet("com.foo.MyWidget", "com.foo.TestEntryPoint",
+        myWidget, stringSet("com.foo.MyWidget", "com.foo.MyWidget$Binder", "com.foo.TestEntryPoint",
             "com.foo.MyWidget_BinderImpl", "com.foo.MyWidget_BinderImpl$Widgets"), output);
   }
 
@@ -1497,11 +1498,13 @@ public class CompilerTest extends ArgProcessorTestBase {
     String binderImpl = "com.foo.MyWidget_BinderImpl";
     checkRecompiledModifiedApp("com.foo.UiBinderTestModule",
         Lists.newArrayList(uiBinderTestModuleResource, uiBinderTestEntryPointResource, myWidget),
-        myWidgetWithWhiteStyleUiXml, myWidgetWithGreyStyleUiXml, stringSet("com.foo.MyWidget",
+        myWidgetWithWhiteStyleUiXml, myWidgetWithGreyStyleUiXml,
+        stringSet("com.foo.MyWidget",
             binderImpl, binderImpl + "_GenBundle_default_InlineClientBundleGenerator",
             binderImpl + "_GenBundle_default_InlineClientBundleGenerator$1",
             binderImpl + "_GenBundle_default_InlineClientBundleGenerator$styleInitializer",
-            binderImpl + "_TemplateImpl", binderImpl + "$Widgets"), output);
+            binderImpl + "_TemplateImpl",
+            binderImpl + "$Widgets", binderImpl + "$Template"), output);
   }
 
   private void checkIncrementalRecompile_packagePrivateOverride(JsOutputOption output)

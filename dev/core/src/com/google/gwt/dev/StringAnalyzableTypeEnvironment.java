@@ -73,7 +73,6 @@ public class StringAnalyzableTypeEnvironment implements AnalyzableTypeEnvironmen
   private final IntHashMultimap memberMethodIdsByTypeId = new IntHashMultimap();
   private final Map<String, Integer> methodIdsByName = Maps.newHashMap();
   private final List<String> methodNamesById = Lists.newArrayList();
-  private MinimalRebuildCache minimalRebuildCache;
   private final IntMultimap overidingMethodIdsByOverriddenMethodId = new IntMultimap();
   private final IntHashMultimap overriddenMethodIdsByOverridingMethodId = new IntHashMultimap();
   private final IntHashMultimap staticallyReferencedTypeIdsByMethodId = new IntHashMultimap();
@@ -81,8 +80,7 @@ public class StringAnalyzableTypeEnvironment implements AnalyzableTypeEnvironmen
   private final OpenIntIntHashMap typeIdsWithExportedStaticReferences = new OpenIntIntHashMap();
   private final List<String> typeNamesById = Lists.newArrayList();
 
-  StringAnalyzableTypeEnvironment(MinimalRebuildCache minimalRebuildCache) {
-    this.minimalRebuildCache = minimalRebuildCache;
+  StringAnalyzableTypeEnvironment() {
   }
 
   @Override
@@ -108,17 +106,6 @@ public class StringAnalyzableTypeEnvironment implements AnalyzableTypeEnvironmen
   @Override
   public IntArrayList getStaticallyReferencedTypeIdsIn(int reachableMethodId) {
     return staticallyReferencedTypeIdsByMethodId.get(reachableMethodId);
-  }
-
-  @Override
-  public int getSuperTypeId(int typeId) {
-    String typeName = getTypeNameById(typeId);
-    String superTypeName = minimalRebuildCache.getImmediateTypeRelations()
-        .getImmediateSuperclassesByClass().get(typeName);
-    if (superTypeName != null) {
-      return getTypeIdByName(superTypeName);
-    }
-    return -1;
   }
 
   @Override

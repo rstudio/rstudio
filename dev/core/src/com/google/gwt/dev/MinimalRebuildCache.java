@@ -193,8 +193,7 @@ public class MinimalRebuildCache implements Serializable {
   private final Map<String, JsSourceMap> sourceMapsByTypeName = Maps.newHashMap();
   private final Set<String> staleTypeNames = Sets.newHashSet();
   private final Map<String, StatementRanges> statementRangesByTypeName = Maps.newHashMap();
-  private StringAnalyzableTypeEnvironment typeEnvironment =
-      new StringAnalyzableTypeEnvironment(this);
+  private StringAnalyzableTypeEnvironment typeEnvironment = new StringAnalyzableTypeEnvironment();
   private final Multimap<String, String> typeNamesByReferencingTypeName = HashMultimap.create();
 
   public boolean addExportedGlobalName(String exportedGlobalName, String inTypeName) {

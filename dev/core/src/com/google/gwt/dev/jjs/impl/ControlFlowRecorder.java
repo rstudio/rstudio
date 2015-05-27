@@ -16,12 +16,13 @@ package com.google.gwt.dev.jjs.impl;
 import com.google.gwt.dev.StringAnalyzableTypeEnvironment;
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JClassLiteral;
+import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JFieldRef;
+import com.google.gwt.dev.jjs.ast.JInterfaceType;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
-import com.google.gwt.dev.jjs.ast.JNewInstance;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.ast.JVisitor;
@@ -143,6 +144,11 @@ public class ControlFlowRecorder extends JVisitor {
       stringAnalyzableTypeEnvironment.recordExportedMethodInType(currentMethodName, typeName);
     }
 
+    if (x.isConstructor()) {
+      // Constructor calls if reachable are deemed to instantiate the class.
+      recordCurrentMethodInstantiatesType(x.getEnclosingType());
+    }
+
     return true;
   }
 
@@ -150,15 +156,6 @@ public class ControlFlowRecorder extends JVisitor {
   public boolean visit(JMethodCall x, Context ctx) {
     processMethodCall(x);
     return true;
-  }
-
-  @Override
-  public boolean visit(JNewInstance x, Context ctx) {
-    String typeName = x.getTarget().getEnclosingType().getName();
-    stringAnalyzableTypeEnvironment.recordMethodInstantiatesType(currentMethodName, typeName);
-    maybeRecordClinitCall(typeName);
-    // Apply JMethodCall handling as well.
-    return super.visit(x, ctx);
   }
 
   private void execImpl() {
@@ -209,6 +206,21 @@ public class ControlFlowRecorder extends JVisitor {
       String typeName = targetMethod.getEnclosingType().getName();
       stringAnalyzableTypeEnvironment.recordMethodInstantiatesType(currentMethodName, typeName);
       maybeRecordClinitCall(typeName);
+    }
+  }
+
+  private void recordCurrentMethodInstantiatesType(JDeclaredType type) {
+    String typeName = type.getName();
+    stringAnalyzableTypeEnvironment.recordMethodInstantiatesType(currentMethodName, typeName);
+    maybeRecordClinitCall(typeName);
+
+    JClassType superClass = type.getSuperClass();
+    if (superClass != null) {
+      recordCurrentMethodInstantiatesType(superClass);
+    }
+
+    for (JInterfaceType interfaceType : type.getImplements()) {
+      recordCurrentMethodInstantiatesType(interfaceType);
     }
   }
 }

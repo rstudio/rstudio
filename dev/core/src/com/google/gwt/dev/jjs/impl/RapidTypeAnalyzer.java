@@ -63,11 +63,6 @@ public class RapidTypeAnalyzer {
     IntArrayList getStaticallyReferencedTypeIdsIn(int methodId);
 
     /**
-     * Returns the id of the super type of the given type and -1 if there is no super type.
-     */
-    int getSuperTypeId(int typeId);
-
-    /**
      * Returns a list of the ids of types instantiated within the given method and null if there are
      * none.
      */
@@ -214,35 +209,33 @@ public class RapidTypeAnalyzer {
   }
 
   private void markTypeIdInstantiated(int typeId) {
-    if (!instantiatedTypeIds.get(typeId)) {
-      instantiatedTypeIds.set(typeId);
-      markTypeIdReachable(typeId);
-      IntArrayList memberMethodIds = analyzableTypeEnvironment.getMemberMethodIdsIn(typeId);
+    if (instantiatedTypeIds.get(typeId)) {
+      return;
+    }
+    instantiatedTypeIds.set(typeId);
+    markTypeIdReachable(typeId);
+    IntArrayList memberMethodIds = analyzableTypeEnvironment.getMemberMethodIdsIn(typeId);
 
-      if (memberMethodIds != null) {
-        for (int i = 0; i < memberMethodIds.size(); i++) {
-          int memberMethodId = memberMethodIds.get(i);
-          IntArrayList overriddenMethodIds =
-              analyzableTypeEnvironment.getOverriddenMethodIds(memberMethodId);
-          if (overriddenMethodIds != null) {
-            for (int j = 0; j < overriddenMethodIds.size(); j++) {
-              int overriddenMethodId = overriddenMethodIds.get(j);
-              knownOverridingMethodIdsByOverriddenMethodId.put(overriddenMethodId, memberMethodId);
-            }
-          }
-        }
+    if (memberMethodIds == null) {
+      return;
+    }
 
-        for (int i = 0; i < memberMethodIds.size(); i++) {
-          int memberMethodId = memberMethodIds.get(i);
-          if (overidingMethodIdsOfReachableMethods.get(memberMethodId)) {
-            markMethodIdReachable(memberMethodId, true);
-          }
+    for (int i = 0; i < memberMethodIds.size(); i++) {
+      int memberMethodId = memberMethodIds.get(i);
+      IntArrayList overriddenMethodIds =
+          analyzableTypeEnvironment.getOverriddenMethodIds(memberMethodId);
+      if (overriddenMethodIds != null) {
+        for (int j = 0; j < overriddenMethodIds.size(); j++) {
+          int overriddenMethodId = overriddenMethodIds.get(j);
+          knownOverridingMethodIdsByOverriddenMethodId.put(overriddenMethodId, memberMethodId);
         }
       }
+    }
 
-      int superTypeId = analyzableTypeEnvironment.getSuperTypeId(typeId);
-      if (superTypeId != -1) {
-        markTypeIdInstantiated(superTypeId);
+    for (int i = 0; i < memberMethodIds.size(); i++) {
+      int memberMethodId = memberMethodIds.get(i);
+      if (overidingMethodIdsOfReachableMethods.get(memberMethodId)) {
+        markMethodIdReachable(memberMethodId, true);
       }
     }
   }
