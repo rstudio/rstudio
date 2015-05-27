@@ -71,6 +71,7 @@ namespace session_proxy {
 namespace {
 
 Error launchSessionRecovery(const http::Request& request,
+                            bool firstAttempt,
                             const r_util::SessionContext& context)
 {
    // if this request is marked as requiring an existing
@@ -89,6 +90,11 @@ Error launchSessionRecovery(const http::Request& request,
       LOG_ERROR(error);
 
    return sessionManager().launchSession(context);
+   // attempt to launch the session only if this is the first recovery attempt
+   if (firstAttempt)
+      return sessionManager().launchSession(context);
+   else
+      return Success();
 }
 
 http::ConnectionRetryProfile sessionRetryProfile(const r_util::SessionContext& context)
@@ -97,7 +103,7 @@ http::ConnectionRetryProfile sessionRetryProfile(const r_util::SessionContext& c
    retryProfile.retryInterval = boost::posix_time::milliseconds(25);
    retryProfile.maxWait = boost::posix_time::seconds(10);
    retryProfile.recoveryFunction = boost::bind(launchSessionRecovery,
-                                               _1, context);
+                                               _1, _2, context);
    return retryProfile;
 }
 

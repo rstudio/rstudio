@@ -215,22 +215,25 @@ private:
           !connectionRetryContext_.profile.empty())
       {
          // if this is our first retry then set our stop trying time
-         // and call the (optional) recovery function
+         bool firstAttempt = false;
          if (connectionRetryContext_.stopTryingTime.is_not_a_date_time())
          {
             connectionRetryContext_.stopTryingTime =
                   boost::posix_time::microsec_clock::universal_time() +
                   connectionRetryContext_.profile.maxWait;
 
-            if (connectionRetryContext_.profile.recoveryFunction)
+            firstAttempt = true;
+         }
+
+         // call recovery function if we have it
+         if (connectionRetryContext_.profile.recoveryFunction)
+         {
+            Error error = connectionRetryContext_.profile
+                                   .recoveryFunction(request_, firstAttempt);
+            if (error)
             {
-               Error error = connectionRetryContext_.profile
-                                      .recoveryFunction(request_);
-               if (error)
-               {
-                  *pOtherError = error;
-                  return false;
-               }
+               *pOtherError = error;
+               return false;
             }
          }
 
