@@ -41,7 +41,6 @@ import org.rstudio.studio.client.common.AutoGlassAttacher;
 import org.rstudio.studio.client.workbench.model.UnsavedChangesTarget;
 import org.rstudio.studio.client.workbench.ui.unsaved.UnsavedChangesDialog;
 import org.rstudio.studio.client.workbench.views.source.Source.Display;
-
 import java.util.ArrayList;
 
 public class SourcePane extends Composite implements Display,
@@ -99,7 +98,7 @@ public class SourcePane extends Composite implements Display,
       panel_.setWidgetRightWidth(chevron_,
                                 52, Unit.PX,
                                 chevron_.getWidth(), Unit.PX);
-
+      
       initWidget(panel_);
    }
 
