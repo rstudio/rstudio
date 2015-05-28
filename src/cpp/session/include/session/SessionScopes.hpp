@@ -82,7 +82,7 @@ inline std::string toProjectId(const std::string& projectDir,
    }
 
    // if we didn't find it then we need to generate a new one
-   std::string id = core::system::generateUuid();
+   std::string id = core::system::generateUuid(false);
 
    // add it to the map then save the map
    idMap[id] = projectDir;

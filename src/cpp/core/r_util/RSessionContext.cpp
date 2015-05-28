@@ -76,7 +76,7 @@ std::string urlPathForSessionScope(const SessionScope& scope)
    boost::algorithm::replace_all(project, "%2F", "/");
 
    // create url
-   boost::format fmt("/s/%1%/~%2%/");
+   boost::format fmt("/s/%1%%2%/");
    return boost::str(fmt % project % scope.id());
 }
 
@@ -85,7 +85,7 @@ void parseSessionUrl(const std::string& url,
                      std::string* pUrlPrefix,
                      std::string* pUrlWithoutPrefix)
 {
-   static boost::regex re("/s/(.+?)/~(\\d+)/");
+   static boost::regex re("/s/([A-Fa-f0-9]{32})(\\d+)/");
 
    boost::smatch match;
    if (boost::regex_search(url, match, re))
