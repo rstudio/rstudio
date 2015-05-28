@@ -25,6 +25,11 @@
 * Include active project in document title (caption of browser tab) 
 
 
+### Miscelleous
+
+* Raise limit on shinyapps uploads to 1GB from 100MB
+
+
 ### Bug Fixes
 
 * Diagnostics: Avoid linting symbols in R formulas
@@ -33,5 +38,4 @@
 * Find all now respects active search/replace options
 * Fix issue with cursor dissapearing in Rmd chunks for ambiance theme
 * Publish button shows in the editor and viewer at the appropriate times
-
 
