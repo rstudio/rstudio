@@ -180,6 +180,11 @@ public class Application implements ApplicationEventHandlers
       setToolbarPref(false);
    }
    
+   @Handler
+   public void onToggleToolbar()
+   {
+      setToolbarPref(!view_.isToolbarShowing());
+   }
    
    @Handler
    void onShowAboutDialog()
