@@ -26,7 +26,7 @@ cleanupStreams
 # generic cleanup routine
 cleanup()
 {
-   killall rworkspaces
+   killall rworkspaces 2>/dev/null
    cleanupStreams
    exit $?
 }
