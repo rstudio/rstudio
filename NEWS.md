@@ -6,6 +6,7 @@
 
 * Snippets: pass parameters to snippet generating R functions
 * Split into lines command for multiple cursors (Ctrl+Alt+A)
+* Enhanced display of sections in R scope navigator
 
 
 ### R Markdown
