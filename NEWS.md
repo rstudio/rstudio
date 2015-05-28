@@ -6,6 +6,7 @@
 
 * Snippets: pass parameters to snippet generating R functions
 * Split into lines command for multiple cursors (Ctrl+Alt+A)
+* Enhanced display of sections in R scope navigator
 
 
 ### R Markdown
@@ -19,6 +20,8 @@
 * Improve performance of console for large and/or rapdily updating output
 * Roxygen quick reference available from the Help menu
 * Links to RStudio cheat sheets available on the Help menu
+* Add keyboard shortcut (Ctrl+Option+`) to toggle toolbar visibility
+
 
 ### Server
 

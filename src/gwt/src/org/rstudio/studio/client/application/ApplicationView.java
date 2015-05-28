@@ -31,6 +31,7 @@ public interface ApplicationView
    
    // toolbar
    void showToolbar(boolean showToolbar);
+   boolean isToolbarShowing();
    
    // go to function
    void performGoToFunction();

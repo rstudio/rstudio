@@ -21,6 +21,7 @@ import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.dom.client.Style.FontWeight;
 import com.google.gwt.event.dom.client.*;
 import com.google.gwt.event.logical.shared.*;
 import com.google.gwt.event.shared.GwtEvent;
@@ -52,6 +53,7 @@ import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
+import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.*;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
@@ -1317,6 +1319,12 @@ public class TextEditingTarget implements
       
       return menuItem;
    }
+   
+   private void addScopeStyle(MenuItem item, Scope scope)
+   {
+      if (scope.isSection())
+         item.getElement().getStyle().setFontWeight(FontWeight.BOLD);
+   }
 
    private MenuItem addFunctionsToMenu(StatusBarPopupMenu menu,
                                        final JsArray<Scope> funcs,
@@ -1358,6 +1366,7 @@ public class TextEditingTarget implements
                                                        true);
                      }
                   });
+            addScopeStyle(menuItem, func);
             menu.addItem(menuItem);
 
             childIndent = indent + "&nbsp;&nbsp;";

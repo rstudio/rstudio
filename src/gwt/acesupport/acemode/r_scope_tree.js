@@ -43,11 +43,22 @@ define('mode/r_scope_tree', function(require, exports, module) {
 
       this.onSectionHead = function(sectionLabel, sectionPos) {
          var existingScopes = this.getActiveScopes(sectionPos);
-         if (existingScopes.length == 2 && existingScopes[1].isSection()) {
-            this.$root.closeScope(sectionPos, ScopeNode.TYPE_SECTION);
+
+         // A section will close a previous section that exists as part
+         // of that parent node (if it exists).
+         if (existingScopes.length > 1)
+         {
+            var parentNode = existingScopes[existingScopes.length - 2];
+            var children = parentNode.$children;
+            for (var i = children.length - 1; i >= 0; i--)
+            {
+               if (children[i].isSection())
+               {
+                  this.$root.closeScope(sectionPos, ScopeNode.TYPE_SECTION);
+                  break;
+               }
+            }
          }
-         else if (existingScopes.length != 1)
-            return;
 
          this.$root.addNode(new this.$ScopeNodeFactory(sectionLabel, sectionPos, sectionPos,
                                           ScopeNode.TYPE_SECTION));
