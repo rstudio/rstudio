@@ -32,6 +32,8 @@
 
 #include <core/r_util/RSessionContext.hpp>
 
+#include <session/projects/ProjectsSettings.hpp>
+
 namespace rstudio {
 namespace session {
 
@@ -39,7 +41,12 @@ namespace {
 
 inline core::FilePath projectIdsFilePath(const core::FilePath& userScratchPath)
 {
-   return userScratchPath.childPath("project_ids");
+   core::FilePath filePath = userScratchPath.childPath(
+                                       kProjectsSettings "/project_ids");
+   core::Error error = filePath.parent().ensureDirectory();
+   if (error)
+      LOG_ERROR(error);
+   return filePath;
 }
 
 inline std::map<std::string,std::string> projectIdsMap(
