@@ -110,7 +110,7 @@ public:
                                                          cache_.find(contribUrl);
          if (it != cache_.end())
          {
-            *pAvailablePackages = it->second;
+            core::algorithm::append(pAvailablePackages, it->second);
             return true;
          }
          else
