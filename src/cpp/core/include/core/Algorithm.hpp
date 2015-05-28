@@ -187,6 +187,15 @@ bool get(const AssociativeContainer& container,
    return true;
 }
 
+template <typename ContainerType>
+void append(ContainerType* pContainer, const ContainerType& other)
+{
+   pContainer->insert(
+            pContainer->end(),
+            other.begin(),
+            other.end());
+}
+
 } // namespace algorithm
 } // namespace core
 } // namespace rstudio

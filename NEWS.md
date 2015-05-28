@@ -17,10 +17,11 @@
 
 ### Miscellaneous
 
+* 'Edit -> Replace and Find' opens Find toolbar if not already open (e.g. with Cmd+Shift+J)
 * Improve performance of console for large and/or rapdily updating output
 * Roxygen quick reference available from the Help menu
 * Links to RStudio cheat sheets available on the Help menu
-* Add keyboard shortcut (Ctrl+Option+`) to toggle toolbar visibility
+* Add keyboard shortcut (Ctrl+Alt+`) to toggle toolbar visibility
 
 
 ### Server
@@ -39,6 +40,7 @@
 * Diagnostics: Resolve functions in correct namespace 
 * Enable outdenting in Rhtml documents
 * Find all now respects active search/replace options
-* Fix issue with cursor dissapearing in Rmd chunks for ambiance theme
+* Fix issue with cursor disappearing in Rmd chunks for ambiance theme
 * Publish button shows in the editor and viewer at the appropriate times
-
+* Avoid spurious R warnings when autocompletions requested
+* Allow completions in statements following infix operators
