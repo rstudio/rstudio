@@ -270,7 +270,7 @@
 })
 
 .rs.addFunction("rsconnectDeployList", function(target, asMultipleDoc) {
-  max_size <- 104857600   # 100MB
+  max_size <- 1048576000   # 1GB
   dirlist <- .rs.makeDeploymentList(target, asMultipleDoc, max_size)
   list (
     # if the directory is too large, no need to bother sending a potentially
