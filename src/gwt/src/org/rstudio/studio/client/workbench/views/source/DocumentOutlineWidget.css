@@ -1,0 +1,10 @@
+.node {
+}
+
+.activeNode {
+	background-color: #BBCCFF;
+}
+
+.visibleNode {
+	background-color: #CCDDEE;
+}

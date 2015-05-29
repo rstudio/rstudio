@@ -5,10 +5,13 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditing
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.RenderFinishedEvent;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.resources.client.ClientBundle;
+import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.FlowPanel;
@@ -91,16 +94,22 @@ public class DocumentOutlineWidget extends Composite
       DocumentOutlineTreeEntry entry = new DocumentOutlineTreeEntry(node);
       
       TreeItem item = new TreeItem(entry);
+      item.addStyleName(RES.styles().node());
       
-      if (isNodeVisible(node))
-         item.getElement().getStyle().setBackgroundColor("#DDEEFF");
-      else
-         item.getElement().getStyle().setBackgroundColor("#FFFFFF");
+      if (isActiveNode(node))
+         item.addStyleName(RES.styles().activeNode());
+      else if (isVisibleNode(node))
+         item.addStyleName(RES.styles().visibleNode());
       
       return item;
    }
    
-   private boolean isNodeVisible(Scope node)
+   private boolean isActiveNode(Scope node)
+   {
+      return node.equals(target_.getDocDisplay().getCurrentScope());
+   }
+   
+   private boolean isVisibleNode(Scope node)
    {
       Position nodePos = node.getPreamble();
       return target_.getDocDisplay().isPositionVisible(nodePos);
@@ -109,4 +118,25 @@ public class DocumentOutlineWidget extends Composite
    private final FlowPanel container_;
    private final Tree tree_;
    private final TextEditingTarget target_;
+   
+   // Styles, Resources etc. ----
+   public interface Styles extends CssResource
+   {
+      String node();
+      
+      String activeNode();
+      String visibleNode();
+   }
+   
+   public interface Resources extends ClientBundle
+   {
+      @Source("DocumentOutlineWidget.css")
+      Styles styles();
+   }
+   
+   private static Resources RES = GWT.create(Resources.class);
+   static {
+      RES.styles().ensureInjected();
+   }
+   
 }
