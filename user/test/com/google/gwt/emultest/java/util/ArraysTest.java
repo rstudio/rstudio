@@ -1294,13 +1294,20 @@ public class ArraysTest extends EmulTestBase {
     Object[] array = new Object[] {
         new int[] {1, 2, 3},
         new Object[] {1, 2L, "Hello"},
-        new double[] {1e-10},
+        new double[] {0.1},
         new Object[] {
             new Object[] {null}}};
-    assertEquals("[[1, 2, 3], [1, 2, Hello], [" + 1.0E-10 + "], [[null]]]" ,
+
+    assertEquals("[[1, 2, 3], [1, 2, Hello], [0.1], [[null]]]" ,
         Arrays.deepToString(array));
 
     assertEquals("null", Arrays.deepToString(null));
+
+    array = new Object[1];
+    array[0] = array;
+    assertEquals("[[...]]", Arrays.deepToString(array));
+
+    assertEquals("[[[...]], [[...]]]", Arrays.deepToString(new Object[] {array, array}));
   }
 
   /**
