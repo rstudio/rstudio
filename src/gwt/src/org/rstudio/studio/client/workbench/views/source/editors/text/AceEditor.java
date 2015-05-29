@@ -1589,6 +1589,13 @@ public class AceEditor implements DocDisplay,
    }
    
    @Override
+   public void ensureRowVisible(int row)
+   {
+      if (!widget_.getEditor().isRowFullyVisible(row))
+         setCursorPosition(Position.create(row, 0));
+   }
+   
+   @Override
    public boolean isCursorInSingleLineString()
    {
       return StringUtil.isEndOfLineInRStringState(getCurrentLineUpToCursor());
@@ -2272,6 +2279,11 @@ public class AceEditor implements DocDisplay,
    public Position screenCoordinatesToDocumentPosition(int pageX, int pageY)
    {
       return widget_.getEditor().getRenderer().screenToTextCoordinates(pageX, pageY);
+   }
+   
+   public boolean isPositionVisible(Position position)
+   {
+      return widget_.getEditor().isRowFullyVisible(position.getRow());
    }
    
    private static final int DEBUG_CONTEXT_LINES = 2;

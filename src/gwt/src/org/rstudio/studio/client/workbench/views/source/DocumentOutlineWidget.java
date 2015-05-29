@@ -2,10 +2,13 @@ package org.rstudio.studio.client.workbench.views.source;
 
 import org.rstudio.studio.client.workbench.views.source.editors.text.Scope;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.RenderFinishedEvent;
 
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.FlowPanel;
@@ -18,16 +21,29 @@ public class DocumentOutlineWidget extends Composite
 {
    private class DocumentOutlineTreeEntry extends Composite
    {
-      public DocumentOutlineTreeEntry(String text)
+      public DocumentOutlineTreeEntry(final Scope node)
       {
          DockLayoutPanel panel = new DockLayoutPanel(Unit.PX);
          
          Image icon = new Image(target_.getIcon()); // placeholder
+         String text = node.isChunk() ?
+               node.getChunkLabel() :
+                  node.getLabel();
          Label label = new Label(text);
          
          panel.addWest(icon, icon.getWidth() + 4);
          panel.add(label);
          panel.setHeight((icon.getHeight() + 4) + "px");
+         
+         panel.addDomHandler(new ClickHandler()
+         {
+            @Override
+            public void onClick(ClickEvent event)
+            {
+               target_.setCursorPosition(node.getPreamble());
+               target_.focus();
+            }
+         }, ClickEvent.getType());
          
          initWidget(panel);
       }
@@ -71,8 +87,22 @@ public class DocumentOutlineWidget extends Composite
    
    private TreeItem createEntry(Scope node)
    {
-      return new TreeItem(
-            new DocumentOutlineTreeEntry(node.getChunkLabel()));
+      DocumentOutlineTreeEntry entry = new DocumentOutlineTreeEntry(node);
+      
+      TreeItem item = new TreeItem(entry);
+      
+      if (isNodeVisible(node))
+         item.getElement().getStyle().setBackgroundColor("#DDEEFF");
+      else
+         item.getElement().getStyle().setBackgroundColor("#FFFFFF");
+      
+      return item;
+   }
+   
+   private boolean isNodeVisible(Scope node)
+   {
+      Position nodePos = node.getPreamble();
+      return target_.getDocDisplay().isPositionVisible(nodePos);
    }
    
    private final FlowPanel container_;

@@ -157,6 +157,8 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void ensureCursorVisible();
    boolean isCursorInSingleLineString();
    
+   void ensureRowVisible(int row);
+   
    InputEditorSelection search(String needle,
                                boolean backwards,
                                boolean wrap,
@@ -270,4 +272,5 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    Position screenCoordinatesToDocumentPosition(int pageX, int pageY);
    
    void forceImmediateRender();
+   boolean isPositionVisible(Position position);
 }
