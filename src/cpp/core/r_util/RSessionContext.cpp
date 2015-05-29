@@ -151,10 +151,6 @@ std::string sessionScopeFile(std::string prefix,
    std::string project = scope.project();
    if (!project.empty())
    {
-      // pluralize the prefix so there is no conflict when switching
-      // between the single file and directory based schemas
-      prefix += "s";
-
       if (!boost::algorithm::starts_with(project, "/"))
          project = "/" + project;
 
@@ -174,9 +170,24 @@ std::string sessionScopePrefix(const std::string& username)
    return username + kSessionSuffix;
 }
 
+std::string sessionScopesPrefix(const std::string& username)
+{
+   // pluralize the prefix so there is no conflict when switching
+   // between the single file and directory based schemas
+   return username + kSessionSuffix "s";
+}
+
 std::string sessionContextFile(const SessionContext& context)
 {
-   return sessionScopeFile(sessionScopePrefix(context.username), context.scope);
+   // determine prefix
+   std::string prefix;
+   if (!context.scope.project().empty())
+      prefix = sessionScopesPrefix(context.username);
+   else
+      prefix = sessionScopePrefix(context.username);
+
+   // return scope file
+   return sessionScopeFile(prefix, context.scope);
 }
 
 } // namespace r_util

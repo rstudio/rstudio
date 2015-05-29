@@ -128,6 +128,8 @@ std::string sessionScopeFile(std::string prefix,
 
 std::string sessionScopePrefix(const std::string& username);
 
+std::string sessionScopesPrefix(const std::string& username);
+
 std::string sessionContextFile(const SessionContext& context);
 
 } // namespace r_util
