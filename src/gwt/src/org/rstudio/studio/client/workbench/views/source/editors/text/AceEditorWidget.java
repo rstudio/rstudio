@@ -231,6 +231,7 @@ public class AceEditorWidget extends Composite
                @Override
                public void execute(Void event)
                {
+                  fireEvent(new RenderFinishedEvent());
                   events_.fireEvent(new AfterAceRenderEvent());
                }
             });

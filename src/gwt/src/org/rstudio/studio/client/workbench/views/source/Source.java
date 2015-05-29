@@ -19,6 +19,7 @@ import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.dom.client.KeyCodes;
@@ -32,7 +33,10 @@ import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Event.NativePreviewEvent;
 import com.google.gwt.user.client.Event.NativePreviewHandler;
 import com.google.gwt.user.client.Timer;
+import com.google.gwt.user.client.ui.DockLayoutPanel;
+import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.IsWidget;
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -109,6 +113,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Execute
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.FileTypeChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.FileTypeChangedHandler;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.RenderFinishedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.SourceOnSaveChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.SourceOnSaveChangedHandler;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ui.NewRMarkdownDialog;
@@ -2064,7 +2069,51 @@ public class Source implements InsertSourceHandler,
                }
             });
    }
+   
+   Widget createWidgetWithOutline(TextEditingTarget target)
+   {
+      final DockLayoutPanel panel = new DockLayoutPanel(Unit.PX);
+      
+      final FlowPanel outlinePanel = new FlowPanel();
+      outlinePanel.getElement().getStyle().setBackgroundColor("#DEDEDE");
+      
+      MouseDragHandler.addHandler(
+            outlinePanel,
+            new MouseDragHandler()
+      {
+         
+         @Override
+         public void onDrag(MouseDragEvent event)
+         {
+            int delta = event.getMouseDelta().getMouseX();
+            double oldWidth = panel.getWidgetSize(outlinePanel);
+            double newWidth = Math.max(0, oldWidth + delta);
+            panel.setWidgetSize(outlinePanel, newWidth);
+         }
+      });
+      
+      target.getDocDisplay().addRenderFinishedHandler(new RenderFinishedEvent.Handler()
+      {
+         @Override
+         public void onRenderFinished(RenderFinishedEvent event)
+         {
+            outlinePanel.add(new Label("Render finished!"));
+         }
+      });
+      
+      panel.addEast(outlinePanel, 100);
+      panel.add(target.asWidget());
+      
+      return panel.asWidget();
+   }
 
+   Widget createWidget(EditingTarget target)
+   {
+      if (target instanceof TextEditingTarget && target.getTextFileType().isRmd())
+         return createWidgetWithOutline((TextEditingTarget) target);
+      
+      return target.asWidget();
+   }
 
    private EditingTarget addTab(SourceDocument doc)
    {
@@ -2077,7 +2126,7 @@ public class Source implements InsertSourceHandler,
                }
             });
       
-      final Widget widget = target.asWidget();
+      final Widget widget = createWidget(target);
 
       editors_.add(target);
       view_.addTab(widget,

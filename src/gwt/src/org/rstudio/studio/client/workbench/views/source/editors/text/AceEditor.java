@@ -1901,9 +1901,9 @@ public class AceEditor implements DocDisplay,
       return handlers_.addHandler(FoldChangeEvent.TYPE, handler);
    }
    
-   public HandlerRegistration addAceRenderFinishedHandler(AceRenderFinishedEvent.Handler handler)
+   public HandlerRegistration addRenderFinishedHandler(RenderFinishedEvent.Handler handler)
    {
-      return handlers_.addHandler(AceRenderFinishedEvent.TYPE, handler);
+      return widget_.addHandler(handler, RenderFinishedEvent.TYPE);
    }
    
    public HandlerRegistration addCapturingKeyDownHandler(KeyDownHandler handler)
