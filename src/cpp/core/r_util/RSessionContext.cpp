@@ -151,6 +151,11 @@ std::string sessionScopeFile(std::string prefix,
    std::string project = scope.project();
    if (!project.empty())
    {
+      // pluralize in the presence of project context so there
+      // is no conflict when switching between single and multi-session
+      if (!scope.project().empty())
+         prefix += "s";
+
       if (!boost::algorithm::starts_with(project, "/"))
          project = "/" + project;
 
@@ -179,15 +184,7 @@ std::string sessionScopesPrefix(const std::string& username)
 
 std::string sessionContextFile(const SessionContext& context)
 {
-   // determine prefix
-   std::string prefix;
-   if (!context.scope.project().empty())
-      prefix = sessionScopesPrefix(context.username);
-   else
-      prefix = sessionScopePrefix(context.username);
-
-   // return scope file
-   return sessionScopeFile(prefix, context.scope);
+   return sessionScopeFile(sessionScopePrefix(context.username), context.scope);
 }
 
 } // namespace r_util
