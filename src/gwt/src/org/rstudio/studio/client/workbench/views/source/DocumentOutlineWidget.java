@@ -1,5 +1,7 @@
 package org.rstudio.studio.client.workbench.views.source;
 
+import org.rstudio.core.client.widget.Toolbar;
+import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.workbench.views.source.editors.text.Scope;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
@@ -12,9 +14,9 @@ import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
+import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
-import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Tree;
@@ -28,11 +30,13 @@ public class DocumentOutlineWidget extends Composite
       {
          DockLayoutPanel panel = new DockLayoutPanel(Unit.PX);
          
-         Image icon = new Image(target_.getIcon()); // placeholder
+         Image icon = new Image(getNodeIcon(node));
+         
          String text = node.isChunk() ?
                node.getChunkLabel() :
                   node.getLabel();
          Label label = new Label(text);
+         label.addStyleName(RES.styles().nodeLabel());
          
          panel.addWest(icon, icon.getWidth() + 4);
          panel.add(label);
@@ -51,12 +55,26 @@ public class DocumentOutlineWidget extends Composite
          
          initWidget(panel);
       }
+      
+      private ImageResource getNodeIcon(Scope node)
+      {
+         if (node.isChunk())
+            return StandardIcons.INSTANCE.chunk_menu();
+         else if (node.isFunction())
+            return StandardIcons.INSTANCE.functionLetter();
+         else
+            return StandardIcons.INSTANCE.right_arrow();
+         
+      }
    }
    
    public DocumentOutlineWidget(TextEditingTarget target)
    {
-      container_ = new FlowPanel();
+      container_ = new DockLayoutPanel(Unit.PX);
       target_ = target;
+      
+      toolbar_ = new Toolbar();
+      container_.addNorth(toolbar_, 21);
       
       tree_ = new Tree();
       container_.add(tree_);
@@ -115,7 +133,8 @@ public class DocumentOutlineWidget extends Composite
       return target_.getDocDisplay().isPositionVisible(nodePos);
    }
    
-   private final FlowPanel container_;
+   private final DockLayoutPanel container_;
+   private final Toolbar toolbar_;
    private final Tree tree_;
    private final TextEditingTarget target_;
    
@@ -126,6 +145,8 @@ public class DocumentOutlineWidget extends Composite
       
       String activeNode();
       String visibleNode();
+      
+      String nodeLabel();
    }
    
    public interface Resources extends ClientBundle

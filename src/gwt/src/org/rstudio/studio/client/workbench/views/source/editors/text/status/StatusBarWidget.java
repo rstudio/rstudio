@@ -115,11 +115,13 @@ public class StatusBarWidget extends Composite
    @UiField
    Image scopeIcon_;
    
-   interface Resources extends ClientBundle
+   public interface Resources extends ClientBundle
    {
       ImageResource chunk();
       ImageResource section();
       ImageResource slide();
    }
-   private static Resources RES = GWT.create(Resources.class);
+   
+   public static Resources RES = GWT.create(Resources.class);
+   
 }

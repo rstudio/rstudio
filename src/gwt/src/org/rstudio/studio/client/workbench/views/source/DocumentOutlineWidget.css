@@ -1,6 +1,10 @@
 .node {
 }
 
+.nodeLabel {
+	white-space: nowrap;
+}
+
 .activeNode {
 	background-color: #BBCCFF;
 }
