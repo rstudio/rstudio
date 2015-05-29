@@ -34,9 +34,7 @@ import com.google.gwt.user.client.Event.NativePreviewEvent;
 import com.google.gwt.user.client.Event.NativePreviewHandler;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
-import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.IsWidget;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -113,7 +111,6 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Execute
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.FileTypeChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.FileTypeChangedHandler;
-import org.rstudio.studio.client.workbench.views.source.editors.text.events.RenderFinishedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.SourceOnSaveChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.SourceOnSaveChangedHandler;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ui.NewRMarkdownDialog;
@@ -2073,12 +2070,12 @@ public class Source implements InsertSourceHandler,
    Widget createWidgetWithOutline(TextEditingTarget target)
    {
       final DockLayoutPanel panel = new DockLayoutPanel(Unit.PX);
+      final DocumentOutlineWidget outline = new DocumentOutlineWidget(target);
       
-      final FlowPanel outlinePanel = new FlowPanel();
-      outlinePanel.getElement().getStyle().setBackgroundColor("#DEDEDE");
+      outline.getElement().getStyle().setBackgroundColor("#DEDEDE");
       
       MouseDragHandler.addHandler(
-            outlinePanel,
+            outline,
             new MouseDragHandler()
       {
          
@@ -2086,22 +2083,13 @@ public class Source implements InsertSourceHandler,
          public void onDrag(MouseDragEvent event)
          {
             int delta = event.getMouseDelta().getMouseX();
-            double oldWidth = panel.getWidgetSize(outlinePanel);
+            double oldWidth = panel.getWidgetSize(outline);
             double newWidth = Math.max(0, oldWidth + delta);
-            panel.setWidgetSize(outlinePanel, newWidth);
+            panel.setWidgetSize(outline, newWidth);
          }
       });
       
-      target.getDocDisplay().addRenderFinishedHandler(new RenderFinishedEvent.Handler()
-      {
-         @Override
-         public void onRenderFinished(RenderFinishedEvent event)
-         {
-            outlinePanel.add(new Label("Render finished!"));
-         }
-      });
-      
-      panel.addEast(outlinePanel, 100);
+      panel.addEast(outline, 100);
       panel.add(target.asWidget());
       
       return panel.asWidget();
