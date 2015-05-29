@@ -1,7 +1,10 @@
 package org.rstudio.studio.client.workbench.views.source;
 
+import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.studio.client.common.icons.StandardIcons;
+import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.views.source.editors.text.Scope;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
@@ -10,12 +13,17 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.status.Stat
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.FlowPanel;
@@ -30,6 +38,8 @@ public class DocumentOutlineWidget extends Composite
    {
       public DocumentOutlineTreeEntry(final Scope node)
       {
+         node_ = node;
+         
          DockLayoutPanel panel = new DockLayoutPanel(Unit.PX);
          
          Image icon = createNodeIcon(node);
@@ -37,7 +47,7 @@ public class DocumentOutlineWidget extends Composite
          
          panel.addWest(icon, icon.getWidth() + 4);
          panel.add(label);
-         panel.setHeight((icon.getHeight() + 4) + "px");
+         panel.setHeight((icon.getHeight() + 8) + "px");
          
          panel.addDomHandler(new ClickHandler()
          {
@@ -83,6 +93,34 @@ public class DocumentOutlineWidget extends Composite
          icon.addStyleName(RES.styles().nodeIcon());
          return icon;
       }
+      
+      public Scope getScopeNode()
+      {
+         return node_;
+      }
+      
+      private final Scope node_;
+   }
+   
+   private class DocumentOutlineTreeItem extends TreeItem
+   {
+      public DocumentOutlineTreeItem(DocumentOutlineTreeEntry entry)
+      {
+         super(entry);
+         entry_ = entry;
+      }
+      
+      public DocumentOutlineTreeEntry getEntry()
+      {
+         return entry_;
+      }
+      
+      public Scope getScopeNode()
+      {
+         return entry_.getScopeNode();
+      }
+      
+      private final DocumentOutlineTreeEntry entry_;
    }
    
    public DocumentOutlineWidget(TextEditingTarget target)
@@ -103,6 +141,15 @@ public class DocumentOutlineWidget extends Composite
       container_.add(tree_);
       initHandlers();
       
+      renderTimer_ = new Timer()
+      {
+         @Override
+         public void run()
+         {
+            onRenderFinished();
+         }
+      };
+      
       initWidget(container_);
    }
    
@@ -113,35 +160,79 @@ public class DocumentOutlineWidget extends Composite
          @Override
          public void onRenderFinished(RenderFinishedEvent event)
          {
-            synchronize();
+            renderTimer_.schedule(10);
+         }
+      });
+      
+      target_.getDocDisplay().addValueChangeHandler(new ValueChangeHandler<Void>()
+      {
+         @Override
+         public void onValueChange(ValueChangeEvent<Void> event)
+         {
+            Scheduler.get().scheduleDeferred(new ScheduledCommand()
+            {
+               @Override
+               public void execute()
+               {
+                  DocumentOutlineWidget.this.onValueChanged();
+               }
+            });
          }
       });
    }
    
-   private void synchronize()
+   private void onRenderFinished()
    {
+      Debug.logToConsole("Render finished!");
+      ensureScopeTreePopulated();
+      resetTreeStyles();
+   }
+   
+   private void onValueChanged()
+   {
+      Debug.logToConsole("Value changed!");
+      buildScopeTree();
+      resetTreeStyles();
+   }
+   
+   private void buildScopeTree()
+   {
+      scopeTree_ = target_.getDocDisplay().getScopeTree();
       tree_.clear();
       JsArray<Scope> scopeTree = target_.getDocDisplay().getScopeTree();
       for (int i = 0; i < scopeTree.length(); i++)
       {
-         TreeItem item = createEntry(scopeTree.get(i));
+         DocumentOutlineTreeItem item = createEntry(scopeTree.get(i));
          tree_.addItem(item);
       }
    }
    
-   private TreeItem createEntry(Scope node)
+   private void resetTreeStyles()
+   {
+      for (int i = 0; i < tree_.getItemCount(); i++)
+         setTreeItemStyles((DocumentOutlineTreeItem) tree_.getItem(i));
+   }
+   
+   private void ensureScopeTreePopulated()
+   {
+      if (scopeTree_ == null)
+         buildScopeTree();
+   }
+   
+   private DocumentOutlineTreeItem createEntry(Scope node)
    {
       DocumentOutlineTreeEntry entry = new DocumentOutlineTreeEntry(node);
-      
-      TreeItem item = new TreeItem(entry);
-      item.addStyleName(RES.styles().node());
-      
-      if (isActiveNode(node))
-         item.addStyleName(RES.styles().activeNode());
-      else if (isVisibleNode(node))
-         item.addStyleName(RES.styles().visibleNode());
-      
+      DocumentOutlineTreeItem item = new DocumentOutlineTreeItem(entry);
+      setTreeItemStyles(item);
       return item;
+   }
+   
+   private void setTreeItemStyles(DocumentOutlineTreeItem item)
+   {
+      Scope node = item.getScopeNode();
+      item.addStyleName(RES.styles().node());
+      DomUtils.toggleClass(item.getElement(), RES.styles().activeNode(), isActiveNode(node));
+      DomUtils.toggleClass(item.getElement(), RES.styles().visibleNode(), isVisibleNode(node));
    }
    
    private boolean isActiveNode(Scope node)
@@ -160,6 +251,9 @@ public class DocumentOutlineWidget extends Composite
    private final FlowPanel separator_;
    private final Tree tree_;
    private final TextEditingTarget target_;
+   
+   private final Timer renderTimer_;
+   private JsArray<Scope> scopeTree_;
    
    // Styles, Resources etc. ----
    public interface Styles extends CssResource

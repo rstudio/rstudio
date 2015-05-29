@@ -4,23 +4,28 @@
 }
 
 .tree {
+	overflow-x: hidden;
 	overflow-y: scroll;
 }
 
 .node {
 	margin-left: -18px !important;
+	padding-top: 0px !important;
+	padding-bottom: 0px !important;
+	background-color: #FFFFFF;
 }
 
 .nodeIcon {
-	margin-top: 2px;
+	margin-top: 4px;
 }
 
 .nodeLabel {
+	padding-top: 2px;
 	white-space: nowrap;
 }
 
 .activeNode {
-	background-color: #BBCCFF;
+	background-color: #BBCCFF !important;
 }
 
 .visibleNode {

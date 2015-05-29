@@ -795,4 +795,15 @@ public class DomUtils
       return $wnd.getComputedStyle(el);
    }-*/;
    
+   public static void toggleClass(Element element,
+                                  String cssClass,
+                                  boolean value)
+   {
+      if (value && !element.hasClassName(cssClass))
+         element.addClassName(cssClass);
+      
+      if (!value && element.hasClassName(cssClass))
+         element.removeClassName(cssClass);
+   }
+   
 }

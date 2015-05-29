@@ -811,6 +811,7 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
    height: 23px;
    background: TOOLBARBACKGROUND repeat-x top;
    padding: 0 0 0 6px;
+   white-space: nowrap;
 }
 
 .toolbar * {
