@@ -126,6 +126,8 @@ std::ostream& operator<< (std::ostream& os, const SessionContext& context);
 std::string sessionScopeFile(std::string prefix,
                              const SessionScope& scope);
 
+std::string sessionScopePrefix(const std::string& username);
+
 std::string sessionContextFile(const SessionContext& context);
 
 } // namespace r_util

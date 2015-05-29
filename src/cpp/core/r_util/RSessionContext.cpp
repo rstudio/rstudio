@@ -169,9 +169,14 @@ std::string sessionScopeFile(std::string prefix,
    return prefix + project + scope.id();
 }
 
+std::string sessionScopePrefix(const std::string& username)
+{
+   return username + kSessionSuffix;
+}
+
 std::string sessionContextFile(const SessionContext& context)
 {
-   return sessionScopeFile(context.username + kSessionSuffix, context.scope);
+   return sessionScopeFile(sessionScopePrefix(context.username), context.scope);
 }
 
 } // namespace r_util
