@@ -1253,9 +1253,9 @@ public class Arrays {
           b.append(toString((float[]) obj));
         } else if (obj instanceof double[]) {
           b.append(toString((double[]) obj));
+        } else {
+          assert false : "Unexpected array type: " + obj.getClass().getName();
         }
-
-        assert false : "Unexpected array type: " + obj.getClass().getName();
       } else {
         b.append(String.valueOf(obj));
       }

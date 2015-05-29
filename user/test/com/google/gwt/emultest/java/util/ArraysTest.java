@@ -77,12 +77,12 @@ public class ArraysTest extends EmulTestBase {
 
   public void testArraysEqualsWithoutNullElementsEqual() {
     assertTrue(Arrays.equals(
-        new String[] { "foo" }, new String[]{ "foo" }));
+        new String[]{"foo"}, new String[]{"foo"}));
   }
 
   public void testArraysEqualsWithoutNullElementsNotEqual() {
     assertFalse(Arrays.equals(
-        new String[] { "foo" }, new String[]{ "bar" }));
+        new String[]{"foo"}, new String[]{"bar"}));
   }
 
   public void testArraysEqualsWithNullElementsEqual() {
@@ -95,14 +95,14 @@ public class ArraysTest extends EmulTestBase {
 
   public void testArraysEqualsWithNullAndNonNullElementsEqual() {
     assertTrue(Arrays.equals(
-        new String[]{ null, "foo", null, "bar" },
-        new String[]{ null, "foo", null, "bar" }));
+        new String[]{null, "foo", null, "bar"},
+        new String[]{null, "foo", null, "bar"}));
   }
 
   public void testArraysEqualsWithNullAndNonNullElementsNotEqual() {
     assertFalse(Arrays.equals(
-        new String[]{ null, "bar", null, "foo" },
-        new String[]{ null, "foo", null, "foo" }));
+        new String[]{null, "bar", null, "foo"},
+        new String[]{null, "foo", null, "foo"}));
   }
 
   /**
@@ -482,7 +482,7 @@ public class ArraysTest extends EmulTestBase {
     assertTrue(Arrays.equals(a1, ret));
 
     ret = Arrays.copyOf(a1, 2);
-    assertTrue(Arrays.equals(new boolean[] {true, true}, ret));
+    assertTrue(Arrays.equals(new boolean[]{true, true}, ret));
 
     ret = Arrays.copyOf(a1, a1.length * 2);
     assertEquals(a1.length * 2, ret.length);
@@ -1286,6 +1286,21 @@ public class ArraysTest extends EmulTestBase {
       }
       nextPermutation(permutation);
     }
+  }
+
+  public void testDeepToString() {
+    assertEquals("[1, 2, Hello]", Arrays.deepToString(new Object[]{1, 2L, "Hello"}));
+
+    Object[] array = new Object[] {
+        new int[] {1, 2, 3},
+        new Object[] {1, 2L, "Hello"},
+        new double[] {1e-10},
+        new Object[] {
+            new Object[] {null}}};
+    assertEquals("[[1, 2, 3], [1, 2, Hello], [" + 1.0E-10 + "], [[null]]]" ,
+        Arrays.deepToString(array));
+
+    assertEquals("null", Arrays.deepToString(null));
   }
 
   /**
