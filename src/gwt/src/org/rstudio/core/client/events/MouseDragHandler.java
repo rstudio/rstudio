@@ -162,7 +162,8 @@ public abstract class MouseDragHandler
          @Override
          public void onMouseDown(MouseDownEvent event)
          {
-            handler.beginDragImpl(event);
+            if (event.getNativeButton() == NativeEvent.BUTTON_LEFT)
+               handler.beginDragImpl(event);
          }
       }, MouseDownEvent.getType());
    }
