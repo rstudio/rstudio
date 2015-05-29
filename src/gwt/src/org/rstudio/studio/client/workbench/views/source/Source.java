@@ -2089,7 +2089,7 @@ public class Source implements InsertSourceHandler,
          }
       });
       
-      panel.addEast(outline, 100);
+      panel.addEast(outline, 200);
       panel.add(target.asWidget());
       
       return panel.asWidget();
