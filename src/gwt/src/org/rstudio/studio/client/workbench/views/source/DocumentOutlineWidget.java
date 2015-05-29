@@ -56,7 +56,16 @@ public class DocumentOutlineWidget extends Composite
             {
                target_.setCursorPosition(node.getPreamble());
                target_.getDocDisplay().alignCursor(node.getPreamble(), 0.1);
-               target_.focus();
+               
+               // Defer focus so it occurs after click has been fully handled
+               Scheduler.get().scheduleDeferred(new ScheduledCommand()
+               {
+                  @Override
+                  public void execute()
+                  {
+                     target_.focus();
+                  }
+               });
             }
          }, ClickEvent.getType());
          
@@ -141,6 +150,8 @@ public class DocumentOutlineWidget extends Composite
       container_.add(tree_);
       initHandlers();
       
+      // Since render events can be run in quick succession, we use a timer
+      // to ensure multiple render events are 'bundled' into a single run
       renderTimer_ = new Timer()
       {
          @Override

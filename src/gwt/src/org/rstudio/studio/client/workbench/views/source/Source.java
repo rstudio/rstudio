@@ -23,6 +23,7 @@ import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.event.dom.client.MouseDownEvent;
 import com.google.gwt.event.logical.shared.*;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.json.client.JSONString;
@@ -2078,14 +2079,20 @@ public class Source implements InsertSourceHandler,
             outline,
             new MouseDragHandler()
       {
+         @Override
+         public void beginDrag(MouseDownEvent event, State state)
+         {
+            state.set("initial.width", panel.getWidgetSize(outline));
+         }
          
          @Override
-         public void onDrag(MouseDragEvent event)
+         public void onDrag(MouseDragEvent event, State state)
          {
-            int delta = event.getMouseDelta().getMouseX();
-            double oldWidth = panel.getWidgetSize(outline);
-            double newWidth = Math.max(0, oldWidth + delta);
-            panel.setWidgetSize(outline, newWidth);
+            double initialWidth = state.get("initial.width");
+            MouseCoordinates delta = event.getTotalDelta();
+            double newWidth = initialWidth + delta.getMouseX();
+            double clamped = MathUtil.clamp(newWidth, 0, panel.getOffsetWidth());
+            panel.setWidgetSize(outline, clamped);
          }
       });
       
