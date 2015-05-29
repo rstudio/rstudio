@@ -1,4 +1,18 @@
+.leftSeparator {
+	background-color: #AAAAAA;
+	border-right: 1px solid #BBBBBB;
+}
+
+.tree {
+	overflow-y: scroll;
+}
+
 .node {
+	margin-left: -18px !important;
+}
+
+.nodeIcon {
+	margin-top: 2px;
 }
 
 .nodeLabel {

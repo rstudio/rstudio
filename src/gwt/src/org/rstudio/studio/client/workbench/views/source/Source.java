@@ -2097,7 +2097,7 @@ public class Source implements InsertSourceHandler,
 
    Widget createWidget(EditingTarget target)
    {
-      if (target instanceof TextEditingTarget && target.getTextFileType().isRmd())
+      if (target instanceof TextEditingTarget && ((TextEditingTarget) target).getDocDisplay().hasScopeTree())
          return createWidgetWithOutline((TextEditingTarget) target);
       
       return target.asWidget();

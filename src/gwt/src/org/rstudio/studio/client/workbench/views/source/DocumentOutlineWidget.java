@@ -6,6 +6,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.Scope;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.RenderFinishedEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBarWidget;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
@@ -17,6 +18,7 @@ import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
+import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Tree;
@@ -30,13 +32,8 @@ public class DocumentOutlineWidget extends Composite
       {
          DockLayoutPanel panel = new DockLayoutPanel(Unit.PX);
          
-         Image icon = new Image(getNodeIcon(node));
-         
-         String text = node.isChunk() ?
-               node.getChunkLabel() :
-                  node.getLabel();
-         Label label = new Label(text);
-         label.addStyleName(RES.styles().nodeLabel());
+         Image icon = createNodeIcon(node);
+         Label label = createLabel(node);
          
          panel.addWest(icon, icon.getWidth() + 4);
          panel.add(label);
@@ -56,15 +53,35 @@ public class DocumentOutlineWidget extends Composite
          initWidget(panel);
       }
       
+      private Label createLabel(Scope node)
+      {
+         String text = node.isChunk() ?
+            node.getChunkLabel() :
+            node.getLabel();
+         
+         if (text.equals(""))
+            text = node.isChunk() ? "(Unnamed Chunk)" : "(Unnamed Section)";
+         
+         Label label = new Label(text);
+         label.addStyleName(RES.styles().nodeLabel());
+         return label;
+      }
+      
       private ImageResource getNodeIcon(Scope node)
       {
          if (node.isChunk())
-            return StandardIcons.INSTANCE.chunk_menu();
+            return StatusBarWidget.RES.chunk();
          else if (node.isFunction())
             return StandardIcons.INSTANCE.functionLetter();
          else
-            return StandardIcons.INSTANCE.right_arrow();
-         
+            return StatusBarWidget.RES.section();
+      }
+      
+      private Image createNodeIcon(Scope node)
+      {
+         Image icon = new Image(getNodeIcon(node));
+         icon.addStyleName(RES.styles().nodeIcon());
+         return icon;
       }
    }
    
@@ -74,11 +91,16 @@ public class DocumentOutlineWidget extends Composite
       target_ = target;
       
       toolbar_ = new Toolbar();
-      container_.addNorth(toolbar_, 21);
+      container_.addNorth(toolbar_, 22);
+      
+      separator_ = new FlowPanel();
+      separator_.addStyleName(RES.styles().leftSeparator());
+      container_.addWest(separator_, 1);
       
       tree_ = new Tree();
+      tree_.addStyleName(RES.styles().tree());
+      
       container_.add(tree_);
-      container_.getElement().getStyle().setMarginLeft(-20, Unit.PX);
       initHandlers();
       
       initWidget(container_);
@@ -135,17 +157,23 @@ public class DocumentOutlineWidget extends Composite
    
    private final DockLayoutPanel container_;
    private final Toolbar toolbar_;
+   private final FlowPanel separator_;
    private final Tree tree_;
    private final TextEditingTarget target_;
    
    // Styles, Resources etc. ----
    public interface Styles extends CssResource
    {
+      String leftSeparator();
+      
+      String tree();
+      
       String node();
       
       String activeNode();
       String visibleNode();
       
+      String nodeIcon();
       String nodeLabel();
    }
    
