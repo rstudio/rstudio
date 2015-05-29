@@ -2025,6 +2025,21 @@ public class AceEditor implements DocDisplay,
             paddingHoriz, paddingHoriz,
             false);
    }
+   
+   public void scrollToLine(int row, boolean center)
+   {
+      widget_.getEditor().scrollToLine(row, center);
+   }
+   
+   public void centerSelection()
+   {
+      widget_.getEditor().centerSelection();
+   }
+   
+   public void alignCursor(Position position, double ratio)
+   {
+      widget_.getEditor().getRenderer().alignCursor(position, ratio);
+   }
 
    public void forceImmediateRender()
    {

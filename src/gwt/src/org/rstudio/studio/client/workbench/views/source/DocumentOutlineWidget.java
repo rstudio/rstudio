@@ -41,6 +41,7 @@ public class DocumentOutlineWidget extends Composite
             public void onClick(ClickEvent event)
             {
                target_.setCursorPosition(node.getPreamble());
+               target_.getDocDisplay().alignCursor(node.getPreamble(), 0.1);
                target_.focus();
             }
          }, ClickEvent.getType());

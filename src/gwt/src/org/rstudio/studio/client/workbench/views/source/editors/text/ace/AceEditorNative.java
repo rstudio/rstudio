@@ -236,6 +236,10 @@ public class AceEditorNative extends JavaScriptObject {
    public final native void scrollToRow(int row) /*-{
       this.scrollToRow(row);
    }-*/;
+   
+   public final native void centerSelection() /*-{
+      this.centerSelection();
+   }-*/;
 
    public final native void scrollToLine(int line, boolean center) /*-{
       this.scrollToLine(line, center);
