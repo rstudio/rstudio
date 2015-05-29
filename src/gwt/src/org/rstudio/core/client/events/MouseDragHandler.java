@@ -107,11 +107,16 @@ public abstract class MouseDragHandler
    
    private void beginDragImpl(MouseDownEvent event)
    {
+      didDrag_ = false;
+      
       initialCoordinates_ = lastCoordinates_ =
             MouseCoordinates.fromEvent(event);
       
       if (dragListener_ != null)
          dragListener_.removeHandler();
+      
+      if (clickSuppressor_ != null)
+         clickSuppressor_.removeHandler();
       
       dragListener_ = Event.addNativePreviewHandler(new NativePreviewHandler()
       {
@@ -121,6 +126,7 @@ public abstract class MouseDragHandler
             int type = npe.getTypeInt();
             if (type == Event.ONMOUSEMOVE)
             {
+               didDrag_ = true;
                MouseDragEvent event = new MouseDragEvent(
                      npe.getNativeEvent(),
                      getInitialMouseCoordinates(),
@@ -129,12 +135,31 @@ public abstract class MouseDragHandler
             }
             else if (type == Event.ONMOUSEUP)
             {
+               if (didDrag_)
+                  addClickSuppressor();
                endDragImpl();
             }
          }
       });
       
       beginDrag(event);
+   }
+   
+   private void addClickSuppressor()
+   {
+      clickSuppressor_ = Event.addNativePreviewHandler(new NativePreviewHandler()
+      {
+         @Override
+         public void onPreviewNativeEvent(NativePreviewEvent event)
+         {
+            if (event.getTypeInt() == Event.ONCLICK)
+            {
+               event.cancel();
+               clickSuppressor_.removeHandler();
+               clickSuppressor_ = null;
+            }
+         }
+      });
    }
    
    private void onDragImpl(MouseDragEvent event)
@@ -178,7 +203,10 @@ public abstract class MouseDragHandler
       return lastCoordinates_;
    }
    
+   private boolean didDrag_ = false;
+   
    private HandlerRegistration dragListener_;
+   private HandlerRegistration clickSuppressor_;
    
    private MouseCoordinates initialCoordinates_;
    private MouseCoordinates lastCoordinates_;
