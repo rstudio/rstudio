@@ -21,6 +21,7 @@ import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JFieldRef;
+import com.google.gwt.dev.jjs.ast.JInterfaceType;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JNode;
@@ -30,6 +31,9 @@ import com.google.gwt.dev.jjs.ast.js.JsniFieldRef;
 import com.google.gwt.dev.jjs.ast.js.JsniMethodRef;
 import com.google.gwt.thirdparty.guava.common.collect.HashMultimap;
 import com.google.gwt.thirdparty.guava.common.collect.Multimap;
+import com.google.gwt.thirdparty.guava.common.collect.Sets;
+
+import java.util.Set;
 
 /**
  * Verifies that all the references from AST nodes to AST nodes are reachable from the
@@ -41,6 +45,9 @@ import com.google.gwt.thirdparty.guava.common.collect.Multimap;
 public class JavaAstVerifier extends JVisitor {
 
   private Multimap<JDeclaredType, JNode> membersByType = HashMultimap.create();
+  private Set<String> seenTypeNames = Sets.newHashSet();
+  private Multimap<JDeclaredType, String> seenMethodsByType = HashMultimap.create();
+  private Multimap<JDeclaredType, String> seenFieldsByType = HashMultimap.create();
 
   JavaAstVerifier(JProgram program) {
     for (JDeclaredType type :program.getModuleDeclaredTypes()) {
@@ -60,12 +67,36 @@ public class JavaAstVerifier extends JVisitor {
 
   @Override
   public void endVisit(JClassType x, Context ctx) {
+    assertNotSeenBefore(x);
     assertJsoCorrectness(x);
+  }
+
+  @Override
+  public void endVisit(JField x, Context ctx) {
+    JDeclaredType enclosingType = x.getEnclosingType();
+    String fieldName = x.getName();
+    assert !seenFieldsByType.containsEntry(enclosingType, fieldName) :
+        "Field " + x + " is duplicated.";
+    seenFieldsByType.put(enclosingType, fieldName);
   }
 
   @Override
   public void endVisit(JFieldRef x, Context ctx) {
     assertReferencedFieldIsInAst(x);
+  }
+
+  @Override
+  public void endVisit(JInterfaceType x, Context ctx) {
+    assertNotSeenBefore(x);
+  }
+
+  @Override
+  public void endVisit(JMethod x, Context ctx) {
+    JDeclaredType enclosingType = x.getEnclosingType();
+    String methodSignature = x.getSignature();
+    assert !seenMethodsByType.containsEntry(enclosingType, methodSignature) :
+        "Method " + x + " is duplicated.";
+    seenMethodsByType.put(enclosingType, methodSignature);
   }
 
   @Override
@@ -87,14 +118,16 @@ public class JavaAstVerifier extends JVisitor {
     if (x.getTarget() == JMethod.NULL_METHOD) {
       return;
     }
-    assert membersByType.containsEntry(x.getTarget().getEnclosingType(), x.getTarget());
+    assert membersByType.containsEntry(x.getTarget().getEnclosingType(), x.getTarget()) :
+      "Method " + x.getTarget() + " is called but is not part of the AST";
   }
 
   private void assertReferencedFieldIsInAst(JFieldRef x) {
     if (x.getField() == JField.NULL_FIELD) {
       return;
     }
-    assert membersByType.containsEntry(x.getField().getEnclosingType(), x.getField());
+    assert membersByType.containsEntry(x.getField().getEnclosingType(), x.getField()) :
+        "Field " + x.getTarget() + " is referenced but is not part of the AST";
   }
 
   private void assertJsoCorrectness(JClassType x) {
@@ -105,6 +138,16 @@ public class JavaAstVerifier extends JVisitor {
         break;
       }
     }
-    assert isJSOorSubclassOfJSO == x.isJsoType();
+    assert isJSOorSubclassOfJSO == x.isJsoType() : x.isJsoType() ?
+        "Type " + x.getName() + " is considered a Jso but is not subclass of " +
+            JProgram.JAVASCRIPTOBJECT :
+        "Type " + x.getName() + " is subclass of " + JProgram.JAVASCRIPTOBJECT + " but is not " +
+            "considered a Jso";
+  }
+
+  private void assertNotSeenBefore(JDeclaredType type) {
+    assert !seenTypeNames.contains(type.getName()) :
+        "Found two types with same name " + type.getName();
+    seenTypeNames.add(type.getName());
   }
 }

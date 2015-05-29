@@ -583,7 +583,7 @@ public class Simplifier {
           new JConditional(sourceInfo, currentMethod.getType(), condExpr, thenExpression,
               elseExpression);
 
-      JReturnStatement returnStatement = new JReturnStatement(sourceInfo, conditional);
+      JReturnStatement returnStatement = conditional.makeReturnStatement();
       return returnStatement;
     }
 

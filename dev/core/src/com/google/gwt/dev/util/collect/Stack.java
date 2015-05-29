@@ -65,6 +65,13 @@ public final class Stack<T> implements Iterable<T> {
   }
 
   /**
+   * Returns the element at location index (from bottom of stack).
+   */
+  public T peekAt(int index) {
+    return elements.get(index);
+  }
+
+  /**
    * Returns the top of the stack and removes it.
    * @return
    */

@@ -35,7 +35,6 @@ import com.google.gwt.dev.js.ast.JsExprStmt;
 import com.google.gwt.dev.js.ast.JsFunction;
 import com.google.gwt.dev.js.ast.JsName;
 import com.google.gwt.dev.js.ast.JsNode;
-import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.js.ast.JsVisitor;
 import com.google.gwt.dev.util.Pair;
 import com.google.gwt.thirdparty.guava.common.collect.Sets;
@@ -100,13 +99,12 @@ public class CodeSplitterTest extends FullCompileTestBase {
 
   @Override
   public void setUp() throws Exception {
+    super.setUp();
     // Compilation Configuration Properties.
     BindingProperty stackMode = new BindingProperty("compiler.stackMode");
     stackMode.addDefinedValue(new ConditionNone(), "STRIP");
     setProperties(new BindingProperty[]{stackMode}, new String[]{"STRIP"},
         new ConfigurationProperty[]{initialSequenceProp});
-    super.setUp();
-    jsProgram = new JsProgram();
     currentJjsMap = null;
   }
 
@@ -134,7 +132,7 @@ public class CodeSplitterTest extends FullCompileTestBase {
     code.append("}\n");
 
     expectedFragmentCount = 4;
-    compileSnippet(code.toString());
+    compileSnippetToJS(code.toString());
 
     // init + 2 fragments + leftover.
     assertFragmentCount(4);
@@ -173,7 +171,7 @@ public class CodeSplitterTest extends FullCompileTestBase {
     code.append("}\n");
 
     expectedFragmentCount = 3;
-    compileSnippet(code.toString());
+    compileSnippetToJS(code.toString());
 
     // init + 1 fragments + leftover.
     assertFragmentCount(3);
@@ -256,7 +254,7 @@ public class CodeSplitterTest extends FullCompileTestBase {
 
     // Use 1 to 1 merging.
     expectedFragmentCount = -1;
-    compileSnippet(code.toString());
+    compileSnippetToJS(code.toString());
 
     // 1 initial + 2 fragments + leftover.
     assertFragmentCount(4);
@@ -321,7 +319,7 @@ public class CodeSplitterTest extends FullCompileTestBase {
     code.append("}\n");
 
     expectedFragmentCount = 6;
-    compileSnippet(code.toString());
+    compileSnippetToJS(code.toString());
 
     // 3 initial + 2 fragments + leftover.
     assertFragmentCount(6);
@@ -363,7 +361,7 @@ public class CodeSplitterTest extends FullCompileTestBase {
     code.append("}\n");
 
     expectedFragmentCount = 4;
-    compileSnippet(code.toString());
+    compileSnippetToJS(code.toString());
 
     // init + 2 fragments + leftover.
     assertFragmentCount(4);
@@ -397,7 +395,7 @@ public class CodeSplitterTest extends FullCompileTestBase {
 
     expectedFragmentCount = 2;
     leftOverMergeSize = 100 * 1024 /* 100k minumum */;
-    this.compileSnippet(code.toString());
+    this.compileSnippetToJS(code.toString());
 
     // init + leftover.
     assertFragmentCount(2);
@@ -441,7 +439,7 @@ public class CodeSplitterTest extends FullCompileTestBase {
     // we want don't want them to be merged
     leftOverMergeSize = 10;
     expectedFragmentCount = 5;
-    this.compileSnippet(code.toString());
+    this.compileSnippetToJS(code.toString());
 
     // init + 3 exlclusive fragments + leftover.
     assertFragmentCount(5);
@@ -470,7 +468,7 @@ public class CodeSplitterTest extends FullCompileTestBase {
     code.append("}\n");
 
     expectedFragmentCount = 2;
-    compileSnippet(code.toString());
+    compileSnippetToJS(code.toString());
 
     // There is no common code shared between any pair.
 
@@ -500,7 +498,7 @@ public class CodeSplitterTest extends FullCompileTestBase {
     code.append("}\n");
 
     expectedFragmentCount = 4;
-    compileSnippet(code.toString());
+    compileSnippetToJS(code.toString());
 
     // init + 2 fragments + leftover.
     assertFragmentCount(4);
@@ -699,9 +697,9 @@ public class CodeSplitterTest extends FullCompileTestBase {
   }
 
   @Override
-  protected Pair<JavaToJavaScriptMap, Set<JsNode>> compileSnippet(final String code)
+  protected Pair<JavaToJavaScriptMap, Set<JsNode>> compileSnippetToJS(final String code)
       throws UnableToCompleteException {
-    currentJjsMap = super.compileSnippet(code).getLeft();
+    currentJjsMap = super.compileSnippetToJS(code).getLeft();
     CodeSplitter.exec(logger, jProgram, jsProgram, currentJjsMap, expectedFragmentCount,
         leftOverMergeSize,
        NULL_RECORDER);

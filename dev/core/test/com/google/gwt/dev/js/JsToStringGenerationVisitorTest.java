@@ -52,7 +52,7 @@ public class JsToStringGenerationVisitorTest extends FullCompileTestBase {
     code.append("}\n");
 
     // Compiles EntryPoint to JS.
-    compileSnippet(code.toString());
+    compileSnippetToJS(code.toString());
     TextOutput text = new DefaultTextOutput(true);
     JsSourceGenerationVisitor jsSourceGenerationVisitor = new JsSourceGenerationVisitor(text);
     jsSourceGenerationVisitor.accept(jsProgram);

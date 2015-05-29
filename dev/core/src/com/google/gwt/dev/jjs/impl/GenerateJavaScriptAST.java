@@ -169,6 +169,7 @@ import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 import com.google.gwt.thirdparty.guava.common.base.Function;
+import com.google.gwt.thirdparty.guava.common.base.Joiner;
 import com.google.gwt.thirdparty.guava.common.base.Predicate;
 import com.google.gwt.thirdparty.guava.common.base.Predicates;
 import com.google.gwt.thirdparty.guava.common.collect.ImmutableList;
@@ -512,7 +513,7 @@ public class GenerateJavaScriptAST {
       }
 
       // My seed function name
-      JsName jsName = topScope.declareName(JjsUtils.getNameString(x), x.getShortName());
+      JsName jsName = topScope.declareName(JjsUtils.mangledNameString(x), x.getShortName());
       names.put(x, jsName);
       recordSymbol(x, jsName);
 
@@ -2656,7 +2657,7 @@ public class GenerateJavaScriptAST {
     private JsName declareSynthesizedClosureConstructor(JDeclaredType x,
         List<JsStatement> globalStmts) {
       SourceInfo sourceInfo = x.getSourceInfo();
-      JsName classVar = topScope.declareName(JjsUtils.getNameString(x));
+      JsName classVar = topScope.declareName(JjsUtils.mangledNameString(x));
       JsFunction closureCtor = JsUtils.createEmptyFunctionLiteral(sourceInfo, topScope, classVar);
       JsExprStmt statement = closureCtor.makeStmt();
       globalStmts.add(statement);
@@ -3493,13 +3494,14 @@ public class GenerateJavaScriptAST {
   }
 
   String mangleName(JField x) {
-    String s = JjsUtils.getNameString(x.getEnclosingType()) + '_' + JjsUtils.getNameString(x);
+    String s = JjsUtils.mangledNameString(x.getEnclosingType()) + '_' + JjsUtils.mangledNameString(
+        x);
     return s;
   }
 
   String mangleNameForGlobal(JMethod x) {
     String s =
-        JjsUtils.getNameString(x.getEnclosingType()) + '_' + JjsUtils.getNameString(x) + "__";
+        JjsUtils.mangledNameString(x.getEnclosingType()) + '_' + JjsUtils.mangledNameString(x) + "__";
     for (int i = 0; i < x.getOriginalParamTypes().size(); ++i) {
       JType type = x.getOriginalParamTypes().get(i);
       s += type.getJavahSignatureName();
@@ -3510,52 +3512,48 @@ public class GenerateJavaScriptAST {
 
   String mangleNameForPackagePrivatePoly(JMethod x) {
     assert x.isPackagePrivate() && !x.isStatic();
-    StringBuilder sb = new StringBuilder();
+    JMethod topDefinition = typeOracle.getTopMostDefinition(x);
     /*
      * Package private instance methods in different classes should not override each
      * other, so they must have distinct polymorphic names. Therefore, add the
      * class name of where the method is first defined to the mangled name.
      */
-    sb.append("package_private$");
-    JMethod topDefinition = typeOracle.getTopMostDefinition(x);
-    sb.append(JjsUtils.getNameString(topDefinition.getEnclosingType()));
-    sb.append("$");
-    sb.append(JjsUtils.getNameString(x));
-    JjsUtils.constructManglingSignature(x, sb);
-    return StringInterner.get().intern(sb.toString());
+    String mangledName = Joiner.on("$").join(
+        "package_private",
+        JjsUtils.mangledNameString(topDefinition.getEnclosingType()),
+        JjsUtils.mangledNameString(x));
+    return StringInterner.get().intern(JjsUtils.constructManglingSignature(x, mangledName));
   }
 
   String mangleNameForPoly(JMethod x) {
     assert !x.isPrivate() && !x.isStatic();
-    StringBuilder sb = new StringBuilder();
-    sb.append(JjsUtils.getNameString(x));
-    JjsUtils.constructManglingSignature(x, sb);
-    return StringInterner.get().intern(sb.toString());
+
+    return StringInterner.get().intern(
+        JjsUtils.constructManglingSignature(x, JjsUtils.mangledNameString(x)));
   }
 
   String mangleNameForPrivatePoly(JMethod x) {
     assert x.isPrivate() && !x.isStatic();
-    StringBuilder sb = new StringBuilder();
     /*
      * Private instance methods in different classes should not override each
      * other, so they must have distinct polymorphic names. Therefore, add the
      * class name to the mangled name.
      */
-    sb.append("private$");
-    sb.append(JjsUtils.getNameString(x.getEnclosingType()));
-    sb.append("$");
-    sb.append(JjsUtils.getNameString(x));
-    JjsUtils.constructManglingSignature(x, sb);
-    return StringInterner.get().intern(sb.toString());
+    String mangledName = Joiner.on("$").join(
+        "private",
+        JjsUtils.mangledNameString(x.getEnclosingType()),
+        JjsUtils.mangledNameString(x));
+
+    return StringInterner.get().intern(JjsUtils.constructManglingSignature(x, mangledName));
   }
 
   String mangleNameForJsProperty(JMethod x) {
     assert x.isOrOverridesJsProperty();
-    StringBuilder sb = new StringBuilder();
-    sb.append("jsproperty$");
-    sb.append(JjsUtils.getNameString(x));
-    JjsUtils.constructManglingSignature(x, sb);
-    return StringInterner.get().intern(sb.toString());
+    String mangledName = Joiner.on("$").join(
+        "jsproperty$",
+        JjsUtils.mangledNameString(x));
+
+    return StringInterner.get().intern(JjsUtils.constructManglingSignature(x, mangledName));
   }
 
   String mangleNameSpecialObfuscate(JField x) {

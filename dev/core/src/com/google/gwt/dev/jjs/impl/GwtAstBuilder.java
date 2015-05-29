@@ -230,7 +230,6 @@ import org.eclipse.jdt.internal.compiler.util.Util;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
@@ -331,18 +330,17 @@ public class GwtAstBuilder {
 
       @Override
       public void resolve(JsNameRef x) {
+        if (x.getQualifier() != null) {
+          return;
+        }
         // Only resolve unqualified names
-        if (x.getQualifier() == null) {
-          JsName name = getScope().findExistingName(x.getIdent());
+        JsName name = getScope().findExistingName(x.getIdent());
 
-          // Ensure that we're resolving a name from the function's parameters
-          JsNode node = name == null ? null : name.getStaticRef();
-          if (node instanceof JsParameter) {
-            JsParameter param = (JsParameter) node;
-            if (jsFunction.getParameters().contains(param)) {
-              x.resolve(name);
-            }
-          }
+        // Ensure that we're resolving a name from the function's parameters
+        JsNode node = name == null ? null : name.getStaticRef();
+        if (jsFunction.getParameters().contains(node)) {
+          assert node instanceof JsParameter;
+          x.resolve(name);
         }
       }
     }
@@ -1112,8 +1110,7 @@ public class GwtAstBuilder {
             dims.add(JAbsentArrayDimension.INSTANCE);
           }
           JNewArray newArray = JNewArray.createDims(synthMethod.getSourceInfo(), arrayType, dims);
-          JReturnStatement retArray = new JReturnStatement(synthMethod.getSourceInfo(), newArray);
-          body.getBlock().addStmt(retArray);
+          body.getBlock().addStmt(newArray.makeReturnStatement());
           synthMethod.setBody(body);
         }
         push(null); // no qualifier
@@ -1237,8 +1234,8 @@ public class GwtAstBuilder {
       List<JField> locals = new ArrayList<JField>();
       SyntheticArgumentBinding[] synthArgs = x.outerLocalVariables;
 
-      // create the constructor for the anonymous inner and return the field used to store the enclosing 'this'
-      // which is needed by the SAM method implementation later
+      // create the constructor for the anonymous inner and return the field used to store the
+      // enclosing 'this' which is needed by the SAM method implementation later
       JField outerField =
           createLambdaConstructor(x, info, innerLambdaClass, ctor, locals, synthArgs);
 
@@ -1246,10 +1243,11 @@ public class GwtAstBuilder {
       // it corresponds directly to the lambda expression itself, produced by JDT as a helper method
       JMethod lambdaMethod = createLambdaMethod(x);
 
-      // Now that we've added an implementation method for the lambda, we must create the inner class method
-      // that implements the target interface type that delegates to the target lambda method
-      JMethod samMethod = new JMethod(info, interfaceMethod.getName(), innerLambdaClass, interfaceMethod.getType(),
-          false, false, true, interfaceMethod.getAccess());
+      // Now that we've added an implementation method for the lambda, we must create the inner
+      // class method that implements the target interface type that delegates to the target lambda
+      // method
+      JMethod samMethod = new JMethod(info, interfaceMethod.getName(), innerLambdaClass,
+          interfaceMethod.getType(), false, false, true, interfaceMethod.getAccess());
 
       // implements the SAM, e.g. Callback.onCallback(), Runnable.run(), etc
       createLambdaSamMethod(x, interfaceMethod, info, innerLambdaClass, locals, outerField,
@@ -1269,7 +1267,8 @@ public class GwtAstBuilder {
     private void createLambdaSamMethod(LambdaExpression x, JMethod interfaceMethod, SourceInfo info,
         JClassType innerLambdaClass, List<JField> locals, JField outerField, JMethod lambdaMethod,
         JMethod samMethod) {
-      // The parameters to this method will be the same as the Java interface that must be implemented
+      // The parameters to this method will be the same as the Java interface that must be
+      // implemented
       for (JParameter origParam : interfaceMethod.getParams()) {
         JType origType = origParam.getType();
         samMethod.addParam(new JParameter(origParam.getSourceInfo(),
@@ -1284,23 +1283,23 @@ public class GwtAstBuilder {
           new JFieldRef(info, new JThisRef(info, innerLambdaClass), outerField, innerLambdaClass) :
           null, lambdaMethod);
 
-      // and add any locals that were storing captured outer variables as arguments to the call first
+      // and add any locals that were storing captured outer variables as arguments to the call
+      // first
       for (JField localField : locals) {
         samCall.addArg(new JFieldRef(info, new JThisRef(info, innerLambdaClass),
             localField, innerLambdaClass));
       }
 
-      // and now we propagate the rest of the actual interface method parameters on the end (e.g. ClickEvent e)
+      // and now we propagate the rest of the actual interface method parameters on the end
+      // (e.g. ClickEvent e)
       for (JParameter param : samMethod.getParams()) {
         samCall.addArg(new JParameterRef(info, param));
       }
 
       // we either add a return statement, or don't, depending on what the interface wants
-      if (samMethod.getType() != JPrimitiveType.VOID) {
-        samMethodBody.getBlock().addStmt(new JReturnStatement(info, samCall));
-      } else {
-        samMethodBody.getBlock().addStmt(samCall.makeStatement());
-      }
+      samMethodBody.getBlock().addStmt(
+          JjsUtils.makeMethodEndStatement(samMethod.getType(), samCall));
+
       samMethod.setBody(samMethodBody);
       innerLambdaClass.addMethod(samMethod);
     }
@@ -1331,10 +1330,12 @@ public class GwtAstBuilder {
           paramNames[i] = nameForSyntheticArgument(synthArgs[i]);
           JType captureType = typeMap.get(synthArgs[i].type);
           // adds ctor(..., param, ...) { ...this.param = param }
-          JField captureField = createAndBindCapturedLambdaParameter(info, paramNames[i], captureType, ctor, ctorBody);
+          JField captureField = createAndBindCapturedLambdaParameter(
+              info, paramNames[i], captureType, ctor, ctorBody);
           locals.add(captureField);
         } else {
-          // Record the names of the actual closure arguments, e.g. (ClickEvent x) -> expr will be 'x'
+          // Record the names of the actual closure arguments,
+          // e.g. (ClickEvent x) -> expr will be 'x'
           paramNames[i] = nameForArgument(x.arguments, i - numSynthArgs, i);
         }
       }
@@ -1345,7 +1346,8 @@ public class GwtAstBuilder {
     }
 
     private JMethod createLambdaMethod(LambdaExpression x) {
-      // First let's get that synthetic method we created in the visit() call on the containing class?
+      // First let's get that synthetic method we created in the visit() call on the
+      // containing class?
       JMethod lambdaMethod = curMethod.method;
 
       // And pop off the body nodes of the LambdaExpression that was processed as children
@@ -1357,9 +1359,7 @@ public class GwtAstBuilder {
 
       JMethodBody body = (JMethodBody) curMethod.method.getBody();
       // and copy those nodes into the body of our synthetic method
-      JStatement lambdaStatement = node instanceof JExpression ?
-          (((JExpression) node).getType() == JPrimitiveType.VOID ? ((JExpression) node).makeStatement() :
-              new JReturnStatement(node.getSourceInfo(), (JExpression) node)) : (JStatement) node;
+      JStatement lambdaStatement = getOrCreateLambdaStatement(node);
       body.getBlock().addStmt(lambdaStatement);
       lambdaMethod.setBody(body);
       return lambdaMethod;
@@ -1453,8 +1453,7 @@ public class GwtAstBuilder {
 
       // Add a getClass() implementation for all non-Object classes.
       createSyntheticMethod(info, "getClass", innerLambdaClass, javaLangClass, false, false, false,
-          AccessModifier.PUBLIC,
-          new JReturnStatement(info, new JClassLiteral(info, innerLambdaClass)));
+          AccessModifier.PUBLIC,new JClassLiteral(info, innerLambdaClass).makeReturnStatement());
 
       innerLambdaClass.setClassDisposition(JDeclaredType.NestedClassDisposition.LAMBDA);
       return innerLambdaClass;
@@ -1747,15 +1746,15 @@ public class GwtAstBuilder {
         throw translateException(x, e);
       }
 
-      // Constructors and overloading mean we need generate unique names
+      // Constructors and overloading means we need generate unique names
       String lambdaName = classNameForMethodReference(funcType,
           referredMethod,
           haveReceiver);
 
+      List<JExpression> enclosingThisRefs = Lists.newArrayList();
+
       // Create an inner class to hold the implementation of the interface
       JClassType innerLambdaClass = lambdaNameToInnerLambdaType.get(lambdaName);
-      List<JExpression> enclosingThisRefs = new ArrayList<JExpression>();
-
       if (innerLambdaClass == null) {
         innerLambdaClass = createInnerClass(lambdaName, x, info, funcType);
         lambdaNameToInnerLambdaType.put(lambdaName, innerLambdaClass);
@@ -1884,10 +1883,12 @@ public class GwtAstBuilder {
           samCall.addArg(newArray);
         }
 
+        // TODO(rluble): Make this a call to JjsUtils.makeMethodEndStatement once boxing/unboxing
+        // is handled there.
         if (samMethod.getType() != JPrimitiveType.VOID) {
           JExpression samExpression = boxOrUnboxExpression(samCall, x.binding.returnType,
               samBinding.returnType);
-          samMethodBody.getBlock().addStmt(new JReturnStatement(info, simplify(samExpression, x)));
+          samMethodBody.getBlock().addStmt(simplify(samExpression, x).makeReturnStatement());
         } else {
           samMethodBody.getBlock().addStmt(samCall.makeStatement());
         }
@@ -1930,21 +1931,11 @@ public class GwtAstBuilder {
      * that are a function of the samInterface (e.g. Runnable), the method being referred to,
      * and the qualifying disposition (this::foo vs Class::foo if foo is an instance method)
      */
-    private String classNameForMethodReference(JInterfaceType samInterface, JMethod referredMethod,
-        boolean haveReceiver) {
-      StringBuilder sb = new StringBuilder();
-      sb.append(samInterface.getPackageName());
-      sb.append('.');
-      sb.append(samInterface.getShortName());
-      sb.append("$");
-      if (!haveReceiver) {
-        sb.append("$");
-      }
-      sb.append(referredMethod.getEnclosingType().getName().replace('.', '$'));
-      sb.append("$");
-      sb.append(JjsUtils.getNameString(referredMethod));
-      JjsUtils.constructManglingSignature(referredMethod, sb);
-      return StringInterner.get().intern(sb.toString());
+    private String classNameForMethodReference(
+        JInterfaceType functionalInterface, JMethod referredMethod, boolean hasReceiver) {
+
+      return JjsUtils.classNameForMethodReference(typeMap.get(curCud.cud.types[0].binding),
+          functionalInterface, referredMethod, hasReceiver);
     }
 
     private JExpression boxOrUnboxExpression(JExpression expr, TypeBinding fromType,
@@ -1952,16 +1943,19 @@ public class GwtAstBuilder {
       if (fromType == TypeBinding.VOID || toType == TypeBinding.VOID) {
         return expr;
       }
-      int implicitConversion;
+
       if (fromType.isBaseType() && !toType.isBaseType()) {
-        implicitConversion = (fromType.id & TypeIds.IMPLICIT_CONVERSION_MASK) << 4;
+        int implicitConversion = (fromType.id & TypeIds.IMPLICIT_CONVERSION_MASK) << 4;
         implicitConversion = implicitConversion | TypeIds.BOXING;
-        expr = box(expr, implicitConversion);
-      } else if (!fromType.isBaseType() && toType.isBaseType()) {
-        implicitConversion = (toType.id & TypeIds.IMPLICIT_CONVERSION_MASK) << 4;
-        implicitConversion = implicitConversion | TypeIds.UNBOXING;
-        expr = unbox(expr, implicitConversion);
+        return box(expr, implicitConversion);
       }
+
+      if (!fromType.isBaseType() && toType.isBaseType()) {
+        int implicitConversion = (toType.id & TypeIds.IMPLICIT_CONVERSION_MASK) << 4;
+        implicitConversion = implicitConversion | TypeIds.UNBOXING;
+        return unbox(expr, implicitConversion);
+      }
+
       return expr;
     }
 
@@ -2208,8 +2202,8 @@ public class GwtAstBuilder {
             javaLangThrowable, false, curMethod.body);
     }
 
-    private JStatement createCloseBlockFor(final SourceInfo info,
-        JLocal resourceVar, JLocal exceptionVar) {
+    private JStatement createCloseBlockFor(
+        SourceInfo info, JLocal resourceVar, JLocal exceptionVar) {
       /**
        * Create the following code:
        *
@@ -2780,7 +2774,7 @@ public class GwtAstBuilder {
       if (bridgeMethod.getType() == JPrimitiveType.VOID) {
         body.getBlock().addStmt(call.makeStatement());
       } else {
-        body.getBlock().addStmt(new JReturnStatement(info, call));
+        body.getBlock().addStmt(call.makeReturnStatement());
       }
     }
 
@@ -2918,7 +2912,7 @@ public class GwtAstBuilder {
         info = method.getSourceInfo();
       }
       block.clear();
-      block.addStmt(new JReturnStatement(info, returnValue));
+      block.addStmt(returnValue.makeReturnStatement());
     }
 
     private JDeclarationStatement makeDeclaration(SourceInfo info, JLocal local,
@@ -3600,8 +3594,7 @@ public class GwtAstBuilder {
   static class ClassInfo {
     public final JClassType classType;
     public final ClassScope scope;
-    public final Map<SyntheticArgumentBinding, JField> syntheticFields =
-        new IdentityHashMap<SyntheticArgumentBinding, JField>();
+    public final Map<SyntheticArgumentBinding, JField> syntheticFields = Maps.newIdentityHashMap();
     public final JDeclaredType type;
     public final TypeDeclaration typeDecl;
 
@@ -3632,8 +3625,7 @@ public class GwtAstBuilder {
   static class MethodInfo {
     public final JMethodBody body;
     public final Map<String, JLabel> labels = Maps.newHashMap();
-    public final Map<LocalVariableBinding, JVariable> locals =
-        new IdentityHashMap<LocalVariableBinding, JVariable>();
+    public final Map<LocalVariableBinding, JVariable> locals = Maps.newIdentityHashMap();
     public final JMethod method;
     public final MethodScope scope;
 
@@ -3654,12 +3646,12 @@ public class GwtAstBuilder {
   private static final String ARRAY_LENGTH_FIELD = "length";
 
   private static final int MAX_INLINEABLE_ENUM_SIZE = 10;
+
   /**
    * Reflective access to {@link ForeachStatement#collectionElementType}.
    */
   private static final Field collectionElementTypeField;
   private static final Field haveReceiverField;
-
   private static final char[] CREATE_VALUE_OF_MAP = "createValueOfMap".toCharArray();
   private static final char[] HAS_NEXT = "hasNext".toCharArray();
   private static final char[] ITERATOR = "iterator".toCharArray();
@@ -3720,6 +3712,20 @@ public class GwtAstBuilder {
 
   static String intern(String s) {
     return stringInterner.intern(s);
+  }
+
+  /**
+   * Creates the statement that will constitute the method body implementing a lambda expression.
+   * <p>
+   * Lambda expressions might be represented in the JDT AST as Java expressions or Java statements.
+   */
+  private static JStatement getOrCreateLambdaStatement(JNode node) {
+    if (node instanceof JStatement) {
+      return (JStatement) node;
+    }
+    assert node instanceof JExpression;
+    JExpression expression = (JExpression) node;
+    return JjsUtils.makeMethodEndStatement(expression.getType(), expression);
   }
 
   private boolean isOptimizableCompileTimeConstant(Binding binding) {

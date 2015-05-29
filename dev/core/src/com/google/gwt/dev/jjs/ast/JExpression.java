@@ -28,7 +28,17 @@ public abstract class JExpression extends JNode implements HasType {
 
   public abstract boolean hasSideEffects();
 
-  public JExpressionStatement makeStatement() {
+  /**
+   * Returns a statement that executes this expression.
+   */
+  public final JExpressionStatement makeStatement() {
     return new JExpressionStatement(getSourceInfo(), this);
+  }
+
+  /**
+   * Returns a return statement that returns this expression.
+   */
+  public final JReturnStatement makeReturnStatement() {
+    return new JReturnStatement(getSourceInfo(), this);
   }
 }

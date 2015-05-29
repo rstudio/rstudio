@@ -29,8 +29,6 @@ import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JParameter;
 import com.google.gwt.dev.jjs.ast.JParameterRef;
 import com.google.gwt.dev.jjs.ast.JProgram;
-import com.google.gwt.dev.jjs.ast.JReturnStatement;
-import com.google.gwt.dev.jjs.ast.JStatement;
 import com.google.gwt.dev.jjs.ast.JThisRef;
 import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.ast.JVisitor;
@@ -206,13 +204,7 @@ public class MakeCallsStatic {
         JParameter param = x.getParams().get(i);
         newCall.addArg(new JParameterRef(sourceInfo, param));
       }
-      JStatement statement;
-      if (returnType == program.getTypeVoid()) {
-        statement = newCall.makeStatement();
-      } else {
-        statement = new JReturnStatement(sourceInfo, newCall);
-      }
-      newBody.getBlock().addStmt(statement);
+      newBody.getBlock().addStmt(JjsUtils.makeMethodEndStatement(returnType, newCall));
 
       /*
        * Rewrite the method body. Update all thisRefs to paramRefs. Update

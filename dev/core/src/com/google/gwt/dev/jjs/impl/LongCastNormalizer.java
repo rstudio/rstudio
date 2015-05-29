@@ -171,8 +171,7 @@ public class LongCastNormalizer {
       if (expr != null) {
         JExpression newExpr = checkAndReplace(expr, currentMethod.getType());
         if (expr != newExpr) {
-          JReturnStatement newStmt = new JReturnStatement(x.getSourceInfo(), newExpr);
-          ctx.replaceMe(newStmt);
+          ctx.replaceMe(newExpr.makeReturnStatement());
         }
       }
     }

@@ -21,6 +21,7 @@ import com.google.gwt.core.ext.linker.impl.StandardSymbolData;
 import com.google.gwt.dev.CompilerContext;
 import com.google.gwt.dev.cfg.BindingProperties;
 import com.google.gwt.dev.cfg.BindingProperty;
+import com.google.gwt.dev.cfg.ConditionNone;
 import com.google.gwt.dev.cfg.ConfigurationProperties;
 import com.google.gwt.dev.cfg.ConfigurationProperty;
 import com.google.gwt.dev.cfg.PermutationProperties;
@@ -59,13 +60,19 @@ public abstract class FullCompileTestBase extends JJSTestBase {
   @Override
   public void setUp() throws Exception {
     super.setUp();
+    // Stack mode is a required property.
+    BindingProperty stackMode = new BindingProperty("compiler.stackMode");
+    stackMode.addDefinedValue(new ConditionNone(), "STRIP");
+    setProperties(new BindingProperty[]{stackMode}, new String[]{"STRIP"},
+        new ConfigurationProperty[]{});
+
     jsProgram = new JsProgram();
   }
 
   /**
    * Compiles a Java class <code>test.EntryPoint</code> and use the code splitter on it.
    */
-  protected Pair<JavaToJavaScriptMap, Set<JsNode>> compileSnippet(final String code)
+  protected Pair<JavaToJavaScriptMap, Set<JsNode>> compileSnippetToJS(final String code)
       throws UnableToCompleteException {
     sourceOracle.addOrReplace(new MockJavaResource("test.EntryPoint") {
       @Override
@@ -110,7 +117,9 @@ public abstract class FullCompileTestBase extends JJSTestBase {
   abstract protected void optimizeJava();
 
   protected CompilerContext provideCompilerContext() {
-    return new CompilerContext.Builder().build();
+    CompilerContext compilerContext = new CompilerContext.Builder().build();
+    compilerContext.getOptions().setSourceLevel(sourceLevel);
+    return compilerContext;
   }
 
   public void setProperties(BindingProperty[] orderedProps, String[] orderedValues,

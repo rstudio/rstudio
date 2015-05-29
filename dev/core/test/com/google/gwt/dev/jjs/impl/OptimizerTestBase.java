@@ -448,12 +448,8 @@ public abstract class OptimizerTestBase extends JJSTestBase {
     }
 
     // Take care of the return type
-    JStatement multiStm;
-    if (!returnType.equals("void")) {
-      multiStm = new JReturnStatement(multi.getSourceInfo(), multi);
-    } else {
-      multiStm = multi.makeStatement();
-    }
+    JStatement multiStm =
+        returnType.equals("void") ? multi.makeStatement() : multi.makeReturnStatement();
 
     // Replace the method body
     JMethodBody newBody = new JMethodBody(method.getBody().getSourceInfo());

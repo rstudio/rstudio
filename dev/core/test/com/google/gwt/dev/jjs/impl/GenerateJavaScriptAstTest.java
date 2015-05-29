@@ -26,7 +26,6 @@ import com.google.gwt.dev.jjs.JsOutputOption;
 import com.google.gwt.dev.js.ast.JsFunction;
 import com.google.gwt.dev.js.ast.JsName;
 import com.google.gwt.dev.js.ast.JsNode;
-import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.thirdparty.guava.common.base.Joiner;
 import com.google.gwt.thirdparty.guava.common.collect.Iterables;
 import com.google.gwt.thirdparty.guava.common.collect.Sets;
@@ -47,7 +46,6 @@ public class GenerateJavaScriptAstTest extends FullCompileTestBase {
     setProperties(new BindingProperty[]{stackMode}, new String[]{"STRIP"},
         new ConfigurationProperty[]{});
     super.setUp();
-    jsProgram = new JsProgram();
   }
 
   public void testInlineJSNIMethod() throws UnableToCompleteException {
@@ -63,7 +61,7 @@ public class GenerateJavaScriptAstTest extends FullCompileTestBase {
     code.append("  }\n");
     code.append("}\n");
 
-    Set<JsNode> functionForJsInlining = compileSnippet(code.toString()).getRight();
+    Set<JsNode> functionForJsInlining = compileSnippetToJS(code.toString()).getRight();
     assertContainsAll(functionForJsInlining, "onModuleLoad", "inlinableJSNI");
     assertDoesNotContainsAny(functionForJsInlining, "functionA");
   }

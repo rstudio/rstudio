@@ -250,8 +250,7 @@ public class ResolvePermutationDependentValues {
       }
 
       // return new FooImpl();
-      JReturnStatement ret = new JReturnStatement(info, expression);
-      switchBody.addStmt(ret);
+      switchBody.addStmt(expression.makeReturnStatement());
     }
 
     assert switchBody.getStatements().size() > 0 : "No case statement emitted "
@@ -263,7 +262,7 @@ public class ResolvePermutationDependentValues {
 
     // return new FallbackImpl(); at the very end.
     assert mostUsedExpression != null : "No most-used expression";
-    JReturnStatement fallbackReturn = new JReturnStatement(info, mostUsedExpression);
+    JReturnStatement fallbackReturn = mostUsedExpression.makeReturnStatement();
 
     JMethodBody body = (JMethodBody) toReturn.getBody();
     body.getBlock().addStmt(sw);

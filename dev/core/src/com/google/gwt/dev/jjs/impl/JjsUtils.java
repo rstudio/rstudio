@@ -31,6 +31,7 @@ import com.google.gwt.dev.jjs.ast.JDoubleLiteral;
 import com.google.gwt.dev.jjs.ast.JExpression;
 import com.google.gwt.dev.jjs.ast.JFloatLiteral;
 import com.google.gwt.dev.jjs.ast.JIntLiteral;
+import com.google.gwt.dev.jjs.ast.JInterfaceType;
 import com.google.gwt.dev.jjs.ast.JLiteral;
 import com.google.gwt.dev.jjs.ast.JLongLiteral;
 import com.google.gwt.dev.jjs.ast.JMethod;
@@ -43,7 +44,7 @@ import com.google.gwt.dev.jjs.ast.JParameterRef;
 import com.google.gwt.dev.jjs.ast.JPrimitiveType;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
-import com.google.gwt.dev.jjs.ast.JReturnStatement;
+import com.google.gwt.dev.jjs.ast.JStatement;
 import com.google.gwt.dev.jjs.ast.JStringLiteral;
 import com.google.gwt.dev.jjs.ast.JThisRef;
 import com.google.gwt.dev.jjs.ast.JType;
@@ -56,8 +57,11 @@ import com.google.gwt.dev.js.ast.JsNullLiteral;
 import com.google.gwt.dev.js.ast.JsNumberLiteral;
 import com.google.gwt.dev.js.ast.JsObjectLiteral;
 import com.google.gwt.dev.js.ast.JsStringLiteral;
+import com.google.gwt.dev.util.StringInterner;
 import com.google.gwt.lang.LongLib;
+import com.google.gwt.thirdparty.guava.common.annotations.VisibleForTesting;
 import com.google.gwt.thirdparty.guava.common.base.Function;
+import com.google.gwt.thirdparty.guava.common.base.Joiner;
 import com.google.gwt.thirdparty.guava.common.base.Predicate;
 import com.google.gwt.thirdparty.guava.common.base.Predicates;
 import com.google.gwt.thirdparty.guava.common.collect.Collections2;
@@ -78,6 +82,42 @@ public class JjsUtils {
   public static boolean closureStyleLiteralsNeeded(PrecompileTaskOptions options) {
     return closureStyleLiteralsNeeded(options.isIncrementalCompileEnabled(),
         options.isClosureCompilerFormatEnabled());
+  }
+
+  /**
+   * Java8 Method References such as String::equalsIgnoreCase should produce inner class names
+   * that are a function of the samInterface (e.g. Runnable), the method being referred to,
+   * and the qualifying disposition (this::foo vs Class::foo if foo is an instance method)
+   */
+  public static String classNameForMethodReference(JType cuType,
+      JInterfaceType functionalInterface, JMethod referredMethod, boolean hasReceiver) {
+    String prefix = classNamePrefixForMethodReference(cuType.getPackageName(), cuType.getName(),
+        functionalInterface.getName(), referredMethod.getEnclosingType().getName(),
+        referredMethod.getName(), hasReceiver);
+
+    return StringInterner.get().intern(
+        constructManglingSignature(referredMethod, prefix));
+  }
+
+  /**
+   * Java8 Method References such as String::equalsIgnoreCase should produce inner class names
+   * that are a function of the samInterface (e.g. Runnable), the method being referred to,
+   * and the qualifying disposition (this::foo vs Class::foo if foo is an instance method)
+   */
+  @VisibleForTesting
+  static String classNamePrefixForMethodReference(String packageName, String cuTypeName,
+      String functionalInterfaceName, String referredMethodEnclosingClassName,
+      String referredMethodName, boolean hasReceiver) {
+    return packageName + "." + Joiner.on("$$").join(
+        // Make sure references to the same methods in different compilation units do not create
+        // inner classses with the same name.
+        mangledNameString(cuTypeName),
+        "__",
+        mangledNameString(functionalInterfaceName),
+        "__",
+        hasReceiver ? "instance" : "static",
+        mangledNameString(referredMethodEnclosingClassName),
+        mangledNameString(referredMethodName));
   }
 
   public static boolean closureStyleLiteralsNeeded(boolean incremental,
@@ -101,13 +141,15 @@ public class JjsUtils {
     return sb.toString();
   }
 
-  public static void constructManglingSignature(JMethod x, StringBuilder partialSignature) {
-    partialSignature.append("__");
+  public static String constructManglingSignature(JMethod x, String partialSignature) {
+    StringBuilder sb = new StringBuilder(partialSignature);
+    sb.append("__");
     for (int i = 0; i < x.getOriginalParamTypes().size(); ++i) {
       JType type = x.getOriginalParamTypes().get(i);
-      partialSignature.append(type.getJavahSignatureName());
+      sb.append(type.getJavahSignatureName());
     }
-    partialSignature.append(x.getOriginalReturnType().getJavahSignatureName());
+    sb.append(x.getOriginalReturnType().getJavahSignatureName());
+    return sb.toString();
   }
 
   /**
@@ -161,9 +203,7 @@ public class JjsUtils {
     }
 
     // return statement if not void return type
-    body.getBlock().addStmt(forwardingMethod.getType() == JPrimitiveType.VOID ?
-        forwardingCall.makeStatement() :
-        new JReturnStatement(methodToDelegateTo.getSourceInfo(), forwardingCall));
+    body.getBlock().addStmt(makeMethodEndStatement(forwardingMethod.getType(), forwardingCall));
     return forwardingMethod;
   }
 
@@ -262,9 +302,28 @@ public class JjsUtils {
   /**
    * Returns an valid identifier for a named Java entity.
    */
-  public static String getNameString(HasName hasName) {
-    String s = hasName.getName().replaceAll("_", "_1").replace('.', '_');
-    return s;
+  public static String mangledNameString(HasName hasName) {
+    return mangledNameString(hasName.getName());
+  }
+
+  /**
+   * Returns an valid identifier for a named Java entity.
+   */
+  public static String mangledNameString(String name) {
+    return name.replaceAll("_", "_1").replace('.', '_');
+  }
+
+  /**
+   * Returns the ending statement for a method based on an expression. If the return type is void
+   * then the ending statement just executes the expression otherwise it returns it.
+   */
+  public static JStatement makeMethodEndStatement(JType returnType, JExpression expression) {
+    // TODO(rluble): Check if something needs to be done here regarding boxing/unboxing/coercions
+    // when one of the types of expression and returnType is a boxed type and the other a primitive
+    // type or both are primitive of differnent coerceable types. Add the proper tests first.
+    return returnType == JPrimitiveType.VOID ?
+        expression.makeStatement() :
+        expression.makeReturnStatement();
   }
 
   /**
