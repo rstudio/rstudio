@@ -43,6 +43,8 @@ import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.debugging.model.Breakpoint;
+import org.rstudio.studio.client.events.BeginPasteEvent;
+import org.rstudio.studio.client.events.EndPasteEvent;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.output.lint.LintResources;
@@ -234,7 +236,53 @@ public class AceEditorWidget extends Composite
                   events_.fireEvent(new AfterAceRenderEvent());
                }
             });
+      
+      events_.addHandler(
+            BeginPasteEvent.TYPE,
+            new BeginPasteEvent.Handler()
+            {
+               
+               @Override
+               public void onBeginPaste(BeginPasteEvent event)
+               {
+                  maybeUnmapCtrlV();
+               }
+            });
+      
+      events_.addHandler(
+            EndPasteEvent.TYPE,
+            new EndPasteEvent.Handler()
+            {
+               
+               @Override
+               public void onEndPaste(EndPasteEvent event)
+               {
+                  maybeRemapCtrlV();
+               }
+            });
    }
+   
+   private static native final void maybeUnmapCtrlV() /*-{
+      var Vim = $wnd.require("ace/keyboard/vim").handler;
+      var keymap = Vim.defaultKeymap;
+      for (var i = 0; i < keymap.length; i++) {
+         if (keymap[i].keys === "<C-v>") {
+            keymap[i].keys = "<DISABLED:C-v>";
+            break;
+         }
+      }
+   }-*/;
+   
+   private static native final void maybeRemapCtrlV() /*-{
+      var Vim = $wnd.require("ace/keyboard/vim").handler;
+      var keymap = Vim.defaultKeymap;
+      for (var i = 0; i < keymap.length; i++) {
+         if (keymap[i].keys === "<DISABLED:C-v>") {
+            keymap[i].keys = "<C-v>";
+            break;
+         }
+      }
+   }-*/;
    
    @Inject
    private void initialize(EventBus events, ChunkIconsManager manager)
