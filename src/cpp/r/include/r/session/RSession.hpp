@@ -26,6 +26,7 @@
 #include <r/session/RSessionUtils.hpp>
 
 #define EX_CONTINUE 100
+#define EX_FORCE    101
 
 namespace rstudio {
 namespace core {
@@ -157,7 +158,7 @@ void reportAndLogWarning(const std::string& warning);
 
 // suspend/resume
 bool isSuspendable(const std::string& prompt);
-bool suspend(bool force);
+bool suspend(bool force, int status = EXIT_SUCCESS);
 
 struct RSuspendOptions
 {

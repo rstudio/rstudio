@@ -1098,14 +1098,14 @@ void polledEventHandler()
    }
 }
 
-bool suspendSession(bool force)
+bool suspendSession(bool force, int status = EXIT_SUCCESS)
 {
    // need to make sure the global environment is loaded before we
    // attemmpt to save it!
    rstudio::r::session::ensureDeserialized();
 
    // perform the suspend (does not return if successful)
-   return rstudio::r::session::suspend(force);
+   return rstudio::r::session::suspend(force, status);
 }
 
 void suspendIfRequested(const boost::function<bool()>& allowSuspend)
@@ -1135,7 +1135,7 @@ void suspendIfRequested(const boost::function<bool()>& allowSuspend)
       }
 
       // execute the forced suspend (does not return)
-      suspendSession(true);
+      suspendSession(true, EX_FORCE);
    }
 
    // cooperative suspend request

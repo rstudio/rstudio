@@ -1585,9 +1585,13 @@ bool suspend(const RSuspendOptions& options,
    }
 }
 
-bool suspend(bool force)
+bool suspend(bool force, int status)
 {
-   return suspend(RSuspendOptions(), s_suspendedSessionPath, false, force);
+   return suspend(RSuspendOptions(),
+                  s_suspendedSessionPath,
+                  false,
+                  force,
+                  status);
 }
 
 void suspendForRestart(const RSuspendOptions& options)
