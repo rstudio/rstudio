@@ -41,4 +41,6 @@
 * Avoid spurious R warnings when autocompletions requested
 * Allow completions in statements following infix operators
 * Completions in Install Packages are now correct for the case of multiple active repositories.
+* Vim mode: prevent paste operation from entering visual mode via Ctrl+V cross-talk
+
 
