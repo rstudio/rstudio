@@ -28,6 +28,8 @@
 ### Server
 
 * Include active project in document title (caption of browser tab) 
+* Server Pro: Support for multiple concurrent R sessions per-user
+* Server Pro: Don't close PAM sessions by default (configurable via an option)
 
 
 ### Bug Fixes
