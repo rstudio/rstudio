@@ -10,7 +10,7 @@ To learn more, see [Interactive Documents](http://rmarkdown.rstudio.com/authorin
 
 ## Interactive Plot
 
-```{r, echo=FALSE}
+```{r eruptions, echo=FALSE}
 inputPanel(
   selectInput("n_breaks", label = "Number of bins:",
               choices = c(10, 20, 35, 50), selected = 20),
@@ -36,7 +36,7 @@ renderPlot({
 
 ## R Output
 
-```{r}
+```{r cars}
 summary(cars)
 ```
 

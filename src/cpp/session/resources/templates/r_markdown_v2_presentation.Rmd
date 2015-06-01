@@ -16,13 +16,13 @@ When you click the **Knit** button a document will be generated that includes bo
 
 ## R Output
 
-```{r, echo=TRUE}
+```{r cars, echo=TRUE}
 summary(cars)
 ```
 
 ## Plots
 
-```{r}
-plot(cars)
+```{r pressure}
+plot(pressure)
 ```
 
