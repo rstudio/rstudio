@@ -119,6 +119,7 @@ class ClientEvent extends JavaScriptObject
    public static final String UpdateGutterMarkers = "update_gutter_markers";
    public static final String SnippetsChanged = "snippets_changed";
    public static final String JumpToFunction = "jump_to_function";
+   public static final String CollabEditStarted = "collab_edit_started";
    
    protected ClientEvent()
    {

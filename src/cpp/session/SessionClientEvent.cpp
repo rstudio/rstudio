@@ -128,6 +128,7 @@ const int kEnableRStudioConnect = 103;
 const int kUpdateGutterMarkers = 104;
 const int kSnippetsChanged = 105;
 const int kJumpToFunction = 106;
+const int kCollabEditStarted = 107;
 }
 
 void ClientEvent::init(int type, const json::Value& data)
@@ -343,6 +344,8 @@ std::string ClientEvent::typeName() const
          return "snippets_changed";
       case client_events::kJumpToFunction:
          return "jump_to_function";
+      case client_events::kCollabEditStarted:
+         return "collab_edit_started";
       default:
          LOG_WARNING_MESSAGE("unexpected event type: " + 
                              safe_convert::numberToString(type_));
