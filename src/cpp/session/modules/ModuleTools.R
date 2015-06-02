@@ -103,7 +103,10 @@
 
 .rs.addFunction("isPackageInstalled", function(name, libLoc = NULL)
 {
-  name %in% .packages(all.available = TRUE, lib.loc = libLoc)
+   paths <- vapply(name, FUN.VALUE = character(1), USE.NAMES = FALSE, function(pkg) {
+      system.file(package = pkg, lib.loc = libLoc)
+   })
+   nzchar(paths)
 })
 
 .rs.addFunction("isPackageVersionInstalled", function(name, version) {  
