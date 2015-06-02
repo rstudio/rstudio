@@ -16,10 +16,8 @@ package org.rstudio.studio.client.application.ui.impl;
 
 import java.util.ArrayList;
 
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
-import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.command.impl.DesktopMenuCallback;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.theme.res.ThemeResources;
@@ -59,8 +57,6 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
-import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Event.NativePreviewHandler;
