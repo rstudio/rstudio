@@ -3070,6 +3070,7 @@ int main (int argc, char * const argv[])
       rOptions.userHomePath = options.userHomePath();
       rOptions.userScratchPath = userScratchPath;
       rOptions.scopedScratchPath = module_context::scopedScratchPath();
+      rOptions.sessionScratchPath = module_context::sessionScratchPath();
       rOptions.logPath = options.userLogPath();
       rOptions.sessionPort = options.wwwPort();
       rOptions.startupEnvironmentFilePath = getStartupEnvironmentFilePath();
@@ -3095,6 +3096,7 @@ int main (int argc, char * const argv[])
       rOptions.saveWorkspace = saveWorkspaceOption();
       rOptions.rProfileOnResume = serverMode &&
                                   userSettings().rProfileOnResume();
+      rOptions.sessionScope = options.sessionScope();
       
       // r callbacks
       rstudio::r::session::RCallbacks rCallbacks;

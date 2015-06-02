@@ -406,7 +406,7 @@ Error initialize()
       std::string path = kGraphicsPath;
       if (utils::isR3())
          path += "-r3";
-      graphicsPath = s_options.scopedScratchPath.complete(path);
+      graphicsPath = s_options.sessionScratchPath.complete(path);
    }
    else
    {
@@ -1345,12 +1345,12 @@ Error run(const ROptions& options, const RCallbacks& callbacks)
    // initialize suspended session path
    FilePath userScratch = s_options.userScratchPath;
    FilePath oldSuspendedSessionPath = userScratch.complete("suspended-session");
-   FilePath scopedScratch = s_options.scopedScratchPath;
-   // SEE ALSO: activeClientId storage is also effectively per-suspend context
-   s_suspendedSessionPath = scopedScratch.complete("suspended-session-data");
+   FilePath sessionScratch = s_options.sessionScratchPath;
+   s_suspendedSessionPath = sessionScratch.complete("suspended-session-data");
 
-   // one time migration of global suspended to scoped suspended
-   if (!s_suspendedSessionPath.exists() && oldSuspendedSessionPath.exists())
+   // one time migration of global suspend to default project suspend
+   if ((s_options.sessionScope.id() == kDefaultSessionScopeId) &&
+       !s_suspendedSessionPath.exists() && oldSuspendedSessionPath.exists())
    {
      // try to move it first
      Error error = oldSuspendedSessionPath.move(s_suspendedSessionPath);

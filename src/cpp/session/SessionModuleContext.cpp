@@ -708,6 +708,24 @@ FilePath scopedScratchPath()
       return userScratchPath();
 }
 
+FilePath sessionScratchPath()
+{
+   std::string scopeId = options().sessionScope().id();
+   if (!scopeId.empty())
+   {
+      FilePath sessionScratch = module_context::userScratchPath()
+             .childPath("session-scratch/" + scopeId);
+      Error error = sessionScratch.ensureDirectory();
+      if (error)
+         LOG_ERROR(error);
+      return sessionScratch;
+   }
+   else
+   {
+      return scopedScratchPath();
+   }
+}
+
 FilePath oldScopedScratchPath()
 {
    if (projects::projectContext().hasProject())

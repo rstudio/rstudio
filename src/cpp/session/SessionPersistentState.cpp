@@ -49,8 +49,11 @@ Error PersistentState::initialize()
    // the session without reloading the client page
    desktopClientId_ = "33e600bb-c1b1-46bf-b562-ab5cba070b0e";
 
+   // active client id path is session scoped
+   activeClientIdPath_ = module_context::sessionScratchPath()
+                                       .childPath(kActiveClientId);
+
    FilePath scratchPath = module_context::scopedScratchPath();
-   activeClientIdPath_ = scratchPath.childPath(kActiveClientId);
    FilePath statePath = scratchPath.complete("persistent-state");
    return settings_.initialize(statePath);
 }

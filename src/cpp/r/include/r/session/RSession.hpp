@@ -22,6 +22,8 @@
 
 #include <core/FilePath.hpp>
 
+#include <core/r_util/RSessionContext.hpp>
+
 #include <R_ext/RStartup.h>
 #include <r/session/RSessionUtils.hpp>
 
@@ -66,6 +68,7 @@ struct ROptions
    core::FilePath userHomePath;
    core::FilePath userScratchPath;
    core::FilePath scopedScratchPath;
+   core::FilePath sessionScratchPath;
    core::FilePath logPath;
    core::FilePath startupEnvironmentFilePath;
    std::string sessionPort;
@@ -83,6 +86,7 @@ struct ROptions
    bool restoreWorkspace;
    SA_TYPE saveWorkspace;
    bool rProfileOnResume;
+   core::r_util::SessionScope sessionScope;
 };
       
 struct RInitInfo
