@@ -1,6 +1,5 @@
 package org.rstudio.studio.client.workbench.views.source;
 
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.studio.client.common.icons.StandardIcons;
@@ -119,11 +118,6 @@ public class DocumentOutlineWidget extends Composite
          entry_ = entry;
       }
       
-      public DocumentOutlineTreeEntry getEntry()
-      {
-         return entry_;
-      }
-      
       public Scope getScopeNode()
       {
          return entry_.getScopeNode();
@@ -194,14 +188,12 @@ public class DocumentOutlineWidget extends Composite
    
    private void onRenderFinished()
    {
-      Debug.logToConsole("Render finished!");
       ensureScopeTreePopulated();
       resetTreeStyles();
    }
    
    private void onValueChanged()
    {
-      Debug.logToConsole("Value changed!");
       buildScopeTree();
       resetTreeStyles();
    }
@@ -213,9 +205,19 @@ public class DocumentOutlineWidget extends Composite
       JsArray<Scope> scopeTree = target_.getDocDisplay().getScopeTree();
       for (int i = 0; i < scopeTree.length(); i++)
       {
-         DocumentOutlineTreeItem item = createEntry(scopeTree.get(i));
-         tree_.addItem(item);
+         Scope node = scopeTree.get(i);
+         if (shouldDisplayNode(node))
+            tree_.addItem(createEntry(node));
       }
+   }
+   
+   private boolean shouldDisplayNode(Scope node)
+   {
+      return node.isChunk() ||
+             node.isClass() ||
+             node.isFunction() ||
+             node.isNamespace() ||
+             node.isSection();
    }
    
    private void resetTreeStyles()
