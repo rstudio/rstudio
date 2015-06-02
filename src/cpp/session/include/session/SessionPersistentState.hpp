@@ -64,7 +64,7 @@ private:
    bool serverMode_;
    std::string desktopClientId_;
    core::Settings settings_;
-   core::FilePath activeClientIdPath_;
+   core::Settings sessionSettings_;
 };
    
 } // namespace session
