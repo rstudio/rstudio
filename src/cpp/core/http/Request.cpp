@@ -78,6 +78,15 @@ boost::posix_time::ptime Request::ifModifiedSince() const
       
 }
 
+std::string Request::path() const
+{
+   std::string::size_type pos = uri().find('?');
+   if (pos != std::string::npos)
+      return uri().substr(0, pos);
+   else
+      return uri();
+}
+
 std::string Request::queryString() const
 {
    // find ? in uri()
