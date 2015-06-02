@@ -6,7 +6,6 @@ import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.views.source.editors.text.Scope;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.RenderFinishedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBarWidget;
 
@@ -245,18 +244,11 @@ public class DocumentOutlineWidget extends Composite
       Scope node = item.getScopeNode();
       item.addStyleName(RES.styles().node());
       DomUtils.toggleClass(item.getElement(), RES.styles().activeNode(), isActiveNode(node));
-      DomUtils.toggleClass(item.getElement(), RES.styles().visibleNode(), isVisibleNode(node));
    }
    
    private boolean isActiveNode(Scope node)
    {
       return node.equals(target_.getDocDisplay().getCurrentScope());
-   }
-   
-   private boolean isVisibleNode(Scope node)
-   {
-      Position nodePos = node.getPreamble();
-      return target_.getDocDisplay().isPositionVisible(nodePos);
    }
    
    private final DockLayoutPanel container_;
