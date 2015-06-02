@@ -96,6 +96,8 @@ public class DocumentOutlineWidget extends Composite
             label.addStyleName(RES.styles().nodeLabelChunk());
          else if (node.isSection())
             label.addStyleName(RES.styles().nodeLabelSection());
+         else if (node.isFunction())
+            label.addStyleName(RES.styles().nodeLabelFunction());
          return label;
       }
       
@@ -218,7 +220,7 @@ public class DocumentOutlineWidget extends Composite
       tree_.clear();
       JsArray<Scope> scopeTree = target_.getDocDisplay().getScopeTree();
       for (int i = 0; i < scopeTree.length(); i++)
-         buildScopeTreeImpl(scopeTree.get(i), 0);
+         buildScopeTreeImpl(scopeTree.get(i), -1);
    }
    
    private void buildScopeTreeImpl(Scope node, int depth)
@@ -306,6 +308,7 @@ public class DocumentOutlineWidget extends Composite
       String nodeLabel();
       String nodeLabelChunk();
       String nodeLabelSection();
+      String nodeLabelFunction();
    }
    
    public interface Resources extends ClientBundle

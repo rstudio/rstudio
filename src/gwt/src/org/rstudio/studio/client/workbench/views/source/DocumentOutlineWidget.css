@@ -19,7 +19,7 @@
 }
 
 .activeNode {
-	background-color: #BBCCFF !important;
+	background-color: #92c1f0;
 }
 
 .nodeLabel {
@@ -31,10 +31,12 @@
 
 .nodeLabelChunk {
 	font-style: italic;
-	cursor: pointer;
 }
 
 .nodeLabelSection {
 	font-weight: bold;
-	cursor: pointer;
+}
+
+.nodeLabelFunction {
+	font-family: inherit;
 }
