@@ -41,6 +41,7 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.dom.DomUtils;
+import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.application.events.*;
 import org.rstudio.studio.client.application.model.InvalidSessionInfo;
@@ -575,7 +576,15 @@ public class Application implements ApplicationEventHandlers
    {
       cleanupWorkbench();
     
-      String url = GWT.getHostPageBaseURL() + relativeUrl;
+      // remove any session context from the url
+      String url = GWT.getHostPageBaseURL();
+      Pattern pattern = Pattern.create("/s/[A-Fa-f0-9]{32}[A-Fa-f0-9]+/");
+      url = pattern.replaceAll(url, "/");
+      
+      // add relative URL
+      url += relativeUrl;
+     
+      // navigate window
       Window.Location.replace(url);
    }
    
