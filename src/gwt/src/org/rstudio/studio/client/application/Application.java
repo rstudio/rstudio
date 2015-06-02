@@ -24,6 +24,7 @@ import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.http.client.URL;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
@@ -42,6 +43,7 @@ import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.application.events.*;
+import org.rstudio.studio.client.application.model.InvalidSessionInfo;
 import org.rstudio.studio.client.application.model.ProductInfo;
 import org.rstudio.studio.client.application.model.SessionSerializationAction;
 import org.rstudio.studio.client.application.ui.AboutDialog;
@@ -484,11 +486,19 @@ public class Application implements ApplicationEventHandlers
 
    public void onInvalidSession(InvalidSessionEvent event)
    {
+      // calculate the url without the scope
       String baseURL = GWT.getHostPageBaseURL();
-      String scopePath = event.getInfo().getScopePath();
+      InvalidSessionInfo info = event.getInfo();
+      String scopePath = info.getScopePath();
       int loc = baseURL.indexOf(scopePath);
       if (loc != -1)
          baseURL = baseURL.substring(0, loc) + "/";
+      
+      // add the scope info to the query string
+      baseURL = baseURL + 
+        "?project=" + URL.encodeQueryString(info.getSessionProject()) +
+        "&id=" + URL.encodeQueryString(info.getSessionProjectId());
+      
       navigateWindowWithDelay(baseURL);
    }
    
