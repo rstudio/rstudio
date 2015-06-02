@@ -15,19 +15,23 @@
 	background-color: #FFFFFF;
 }
 
-.nodeIcon {
-	margin-top: 4px;
+.activeNode {
+	background-color: #BBCCFF !important;
 }
 
 .nodeLabel {
 	padding-top: 2px;
 	white-space: nowrap;
+	font-family: sans-serif;
+	cursor: pointer;
 }
 
-.activeNode {
-	background-color: #BBCCFF !important;
+.nodeLabelChunk {
+	font-style: italic;
+	cursor: pointer;
 }
 
-.visibleNode {
-	background-color: #CCDDEE;
+.nodeLabelSection {
+	font-weight: bold;
+	cursor: pointer;
 }

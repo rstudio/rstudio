@@ -1,18 +1,17 @@
 package org.rstudio.studio.client.workbench.views.source;
 
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.widget.Toolbar;
-import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.views.source.editors.text.Scope;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.RenderFinishedEvent;
-import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBarWidget;
-
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
+import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -20,12 +19,11 @@ import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
-import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.Image;
+import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Tree;
 import com.google.gwt.user.client.ui.TreeItem;
@@ -34,18 +32,16 @@ public class DocumentOutlineWidget extends Composite
 {
    private class DocumentOutlineTreeEntry extends Composite
    {
-      public DocumentOutlineTreeEntry(final Scope node)
+      public DocumentOutlineTreeEntry(final Scope node, final int depth)
       {
          node_ = node;
+         FlowPanel panel = new FlowPanel();
          
-         DockLayoutPanel panel = new DockLayoutPanel(Unit.PX);
-         
-         Image icon = createNodeIcon(node);
+         Label indent = createIndent(depth);
          Label label = createLabel(node);
          
-         panel.addWest(icon, icon.getWidth() + 4);
+         panel.add(indent);
          panel.add(label);
-         panel.setHeight((icon.getHeight() + 8) + "px");
          
          panel.addDomHandler(new ClickHandler()
          {
@@ -81,24 +77,19 @@ public class DocumentOutlineWidget extends Composite
          
          Label label = new Label(text);
          label.addStyleName(RES.styles().nodeLabel());
+         if (node.isChunk())
+            label.addStyleName(RES.styles().nodeLabelChunk());
+         else if (node.isSection())
+            label.addStyleName(RES.styles().nodeLabelSection());
          return label;
       }
       
-      private ImageResource getNodeIcon(Scope node)
+      private HTML createIndent(int depth)
       {
-         if (node.isChunk())
-            return StatusBarWidget.RES.chunk();
-         else if (node.isFunction())
-            return StandardIcons.INSTANCE.functionLetter();
-         else
-            return StatusBarWidget.RES.section();
-      }
-      
-      private Image createNodeIcon(Scope node)
-      {
-         Image icon = new Image(getNodeIcon(node));
-         icon.addStyleName(RES.styles().nodeIcon());
-         return icon;
+         HTML indent = new HTML(StringUtil.repeat("&nbsp;", depth * 4));
+         indent.addStyleName(RES.styles().nodeLabel());
+         indent.getElement().getStyle().setFloat(Style.Float.LEFT);
+         return indent;
       }
       
       public Scope getScopeNode()
@@ -203,15 +194,29 @@ public class DocumentOutlineWidget extends Composite
       tree_.clear();
       JsArray<Scope> scopeTree = target_.getDocDisplay().getScopeTree();
       for (int i = 0; i < scopeTree.length(); i++)
-      {
-         Scope node = scopeTree.get(i);
-         if (shouldDisplayNode(node))
-            tree_.addItem(createEntry(node));
-      }
+         buildScopeTreeImpl(scopeTree.get(i), 0);
+   }
+   
+   private void buildScopeTreeImpl(Scope node, int depth)
+   {
+      if (shouldDisplayNode(node))
+         tree_.addItem(createEntry(node, depth));
+      
+      JsArray<Scope> children = node.getChildren();
+      for (int i = 0; i < children.length(); i++)
+         buildScopeTreeImpl(children.get(i), depth + 1);
    }
    
    private boolean shouldDisplayNode(Scope node)
    {
+      // NOTE: the 'is*' items are not mutually exclusive
+      if (node.isAnon() || node.isLambda())
+         return false;
+      
+      // TODO: Annotate scope tree in such a way that this isn't necessary
+      if (node.getLabel() != null && node.getLabel().startsWith("<function>"))
+         return false;
+      
       return node.isChunk() ||
              node.isClass() ||
              node.isFunction() ||
@@ -231,9 +236,9 @@ public class DocumentOutlineWidget extends Composite
          buildScopeTree();
    }
    
-   private DocumentOutlineTreeItem createEntry(Scope node)
+   private DocumentOutlineTreeItem createEntry(Scope node, int depth)
    {
-      DocumentOutlineTreeEntry entry = new DocumentOutlineTreeEntry(node);
+      DocumentOutlineTreeEntry entry = new DocumentOutlineTreeEntry(node, depth);
       DocumentOutlineTreeItem item = new DocumentOutlineTreeItem(entry);
       setTreeItemStyles(item);
       return item;
@@ -270,10 +275,10 @@ public class DocumentOutlineWidget extends Composite
       String node();
       
       String activeNode();
-      String visibleNode();
       
-      String nodeIcon();
       String nodeLabel();
+      String nodeLabelChunk();
+      String nodeLabelSection();
    }
    
    public interface Resources extends ClientBundle
