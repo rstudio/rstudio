@@ -72,7 +72,6 @@ struct ROptions
    core::FilePath logPath;
    core::FilePath startupEnvironmentFilePath;
    std::string sessionPort;
-   boost::function<core::Settings&()> persistentState;
    boost::function<core::FilePath()> rEnvironmentDir;
    boost::function<core::FilePath()> rHistoryDir;
    boost::function<bool()> alwaysSaveHistory;

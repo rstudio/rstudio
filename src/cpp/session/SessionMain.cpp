@@ -3074,8 +3074,6 @@ int main (int argc, char * const argv[])
       rOptions.logPath = options.userLogPath();
       rOptions.sessionPort = options.wwwPort();
       rOptions.startupEnvironmentFilePath = getStartupEnvironmentFilePath();
-      rOptions.persistentState = boost::bind(&PersistentState::settings,
-                                             &(persistentState()));
       rOptions.rEnvironmentDir = boost::bind(rEnvironmentDir);
       rOptions.rHistoryDir = boost::bind(rHistoryDir);
       rOptions.alwaysSaveHistory = boost::bind(alwaysSaveHistoryOption);
