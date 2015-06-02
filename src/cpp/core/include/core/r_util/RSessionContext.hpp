@@ -20,7 +20,7 @@
 
 #include <boost/function.hpp>
 
-#define kDefaultSessionScopeId "4d826f51"
+#define kDefaultSessionScopeId "4d826f31"
 
 namespace rstudio {
 namespace core {
