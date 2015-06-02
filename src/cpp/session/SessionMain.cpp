@@ -906,7 +906,7 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
 
                      scope = r_util::SessionScope::fromProjectPath(
                               projDir,
-                              "1",
+                              kDefaultSessionScopeId,
                               filePathToProjectId(options().userScratchPath()));
                   }
 

@@ -66,7 +66,8 @@ SessionScope SessionScope::fromProjectId(const std::string& project,
 
 SessionScope SessionScope::projectNone()
 {
-   return SessionScope("c005c13362fc48e9b486451c0fc7847a", "1");
+   return SessionScope("c005c13362fc48e9b486451c0fc7847a",
+                       kDefaultSessionScopeId);
 }
 
 std::string urlPathForSessionScope(const SessionScope& scope)
@@ -85,7 +86,7 @@ void parseSessionUrl(const std::string& url,
                      std::string* pUrlPrefix,
                      std::string* pUrlWithoutPrefix)
 {
-   static boost::regex re("/s/([A-Fa-f0-9]{32})(\\d+)/");
+   static boost::regex re("/s/([A-Fa-f0-9]{32})([A-Fa-f0-9]+)/");
 
    boost::smatch match;
    if (boost::regex_search(url, match, re))

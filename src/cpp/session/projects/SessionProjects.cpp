@@ -88,7 +88,7 @@ Error getProjectUrl(const json::JsonRpcRequest& request,
 
    r_util::SessionScope scope = r_util::SessionScope::fromProjectPath(
                      projectDir,
-                     "1",
+                     kDefaultSessionScopeId,
                      filePathToProjectId(module_context::userScratchPath()));
    pResponse->setResult(r_util::createSessionUrl(hostPageUrl, scope));
 
