@@ -2073,10 +2073,8 @@ public class Source implements InsertSourceHandler,
       final DockLayoutPanel panel = new DockLayoutPanel(Unit.PX);
       final DocumentOutlineWidget outline = new DocumentOutlineWidget(target);
       
-      outline.getElement().getStyle().setBackgroundColor("#DEDEDE");
-      
       MouseDragHandler.addHandler(
-            outline,
+            outline.getLeftSeparator(),
             new MouseDragHandler()
       {
          @Override

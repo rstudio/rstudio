@@ -7,6 +7,8 @@ import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.views.source.editors.text.Scope;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.RenderFinishedEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBarWidget;
+
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.Scheduler;
@@ -27,9 +29,22 @@ import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Tree;
 import com.google.gwt.user.client.ui.TreeItem;
+import com.google.gwt.user.client.ui.Widget;
 
 public class DocumentOutlineWidget extends Composite
 {
+   public class VerticalSeparator extends Composite
+   {
+      public VerticalSeparator()
+      {
+         panel_ = new FlowPanel();
+         panel_.addStyleName(RES.styles().leftSeparator());
+         initWidget(panel_);
+      }
+      
+      private final FlowPanel panel_;
+   }
+   
    private class DocumentOutlineTreeEntry extends Composite
    {
       public DocumentOutlineTreeEntry(final Scope node, final int depth)
@@ -119,14 +134,18 @@ public class DocumentOutlineWidget extends Composite
    public DocumentOutlineWidget(TextEditingTarget target)
    {
       container_ = new DockLayoutPanel(Unit.PX);
+      container_.addStyleName(RES.styles().container());
       target_ = target;
       
       toolbar_ = new Toolbar();
-      container_.addNorth(toolbar_, 22);
+      container_.addNorth(toolbar_, toolbar_.getHeight());
       
-      separator_ = new FlowPanel();
-      separator_.addStyleName(RES.styles().leftSeparator());
-      container_.addWest(separator_, 1);
+      statusBar_ = new StatusBarWidget();
+      statusBar_.setScopeVisible(false);
+      container_.addSouth(statusBar_, statusBar_.getHeight());
+      
+      separator_ = new VerticalSeparator();
+      container_.addWest(separator_, 6);
       
       tree_ = new Tree();
       tree_.addStyleName(RES.styles().tree());
@@ -146,6 +165,11 @@ public class DocumentOutlineWidget extends Composite
       };
       
       initWidget(container_);
+   }
+   
+   public Widget getLeftSeparator()
+   {
+      return separator_;
    }
    
    private void initHandlers()
@@ -258,7 +282,8 @@ public class DocumentOutlineWidget extends Composite
    
    private final DockLayoutPanel container_;
    private final Toolbar toolbar_;
-   private final FlowPanel separator_;
+   private final StatusBarWidget statusBar_;
+   private final VerticalSeparator separator_;
    private final Tree tree_;
    private final TextEditingTarget target_;
    
@@ -268,6 +293,8 @@ public class DocumentOutlineWidget extends Composite
    // Styles, Resources etc. ----
    public interface Styles extends CssResource
    {
+      String container();
+      
       String leftSeparator();
       
       String tree();

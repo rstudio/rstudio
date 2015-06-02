@@ -1,6 +1,9 @@
+.container {
+}
+
 .leftSeparator {
-	background-color: #AAAAAA;
-	border-right: 1px solid #BBBBBB;
+	background: linear-gradient(to right, #AAA, #FFF);
+	cursor: col-resize;
 }
 
 .tree {
