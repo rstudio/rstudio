@@ -27,6 +27,7 @@ import com.google.gwt.event.logical.shared.*;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.http.client.URL;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
@@ -166,8 +167,9 @@ public class TextEditingTarget implements
    private static final MyCommandBinder commandBinder =
          GWT.create(MyCommandBinder.class);
 
-   public interface Display extends TextDisplay, 
+   public interface Display extends TextDisplay,
                                     WarningBarDisplay,
+                                    HasHandlers,
                                     HasEnsureVisibleHandlers,
                                     HasEnsureHeightHandlers
    {
@@ -181,6 +183,8 @@ public class TextEditingTarget implements
       void replaceAndFind();
       
       StatusBar getStatusBar();
+      
+      void showOutlineIcon();
 
       boolean isAttached();
       
@@ -197,8 +201,12 @@ public class TextEditingTarget implements
                             List<String> extensions, 
                             String selected);
       void setFormatOptionsVisible(boolean visible);
+      
       HandlerRegistration addRmdFormatChangedHandler(
             RmdOutputFormatChangedEvent.Handler handler);
+      
+      HandlerRegistration addShowOutlineHandler(ShowOutlineEvent.Handler handler);
+      HandlerRegistration addHideOutlineHandler(HideOutlineEvent.Handler handler);
       
       void setPublishPath(String type, String publishPath);
    }
@@ -1525,7 +1533,7 @@ public class TextEditingTarget implements
       else
          return "";
    }
-
+   
    public HandlerRegistration addEnsureVisibleHandler(EnsureVisibleHandler handler)
    {
       return view_.addEnsureVisibleHandler(handler);
@@ -1539,6 +1547,16 @@ public class TextEditingTarget implements
    public HandlerRegistration addCloseHandler(CloseHandler<java.lang.Void> handler)
    {
       return handlers_.addHandler(CloseEvent.getType(), handler);
+   }
+   
+   public HandlerRegistration addHideOutlineHandler(HideOutlineEvent.Handler handler)
+   {
+      return view_.addHideOutlineHandler(handler);
+   }
+   
+   public HandlerRegistration addShowOutlineHandler(ShowOutlineEvent.Handler handler)
+   {
+      return view_.addShowOutlineHandler(handler);
    }
 
    public void fireEvent(GwtEvent<?> event)
@@ -4824,6 +4842,11 @@ public class TextEditingTarget implements
       {
          view_.setPublishPath(extendedType_, path);
       }
+   }
+   
+   public void showOutlineIcon()
+   {
+      view_.showOutlineIcon();
    }
    
    private StatusBar statusBar_;
