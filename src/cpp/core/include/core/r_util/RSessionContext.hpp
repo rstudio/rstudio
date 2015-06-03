@@ -20,8 +20,6 @@
 
 #include <boost/function.hpp>
 
-#define kDefaultSessionScopeId "4d826f31"
-
 namespace rstudio {
 namespace core {
 
@@ -54,11 +52,13 @@ public:
    static SessionScope fromProjectId(const std::string& project,
                                      const std::string& id);
 
-   static SessionScope projectNone();
+   static SessionScope projectNone(const std::string& id);
 
    SessionScope()
    {
    }
+
+   bool isProjectNone() const;
 
    const std::string& project() const { return project_; }
 

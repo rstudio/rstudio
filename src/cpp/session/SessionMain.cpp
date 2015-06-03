@@ -895,7 +895,8 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
                   r_util::SessionScope scope;
                   if (switchToProject == kProjectNone)
                   {
-                     scope = r_util::SessionScope::projectNone();
+                     scope = r_util::SessionScope::projectNone(
+                                          options().sessionScope().id());
                   }
                   else
                   {
@@ -906,7 +907,7 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
 
                      scope = r_util::SessionScope::fromProjectPath(
                               projDir,
-                              kDefaultSessionScopeId,
+                              options().sessionScope().id(),
                               filePathToProjectId(options().userScratchPath()));
                   }
 
@@ -2227,6 +2228,14 @@ void rQuit()
    {
       switchProjects = !projects::ProjectsSettings(options().userScratchPath())
                               .switchToProjectPath().empty();
+   }
+
+   // if we aren't switching projects then conclude the active session
+   if (!switchProjects)
+   {
+      Error error = module_context::activeSession().destroy();
+      if (error)
+         LOG_ERROR(error);
    }
 
    json::Object jsonData;

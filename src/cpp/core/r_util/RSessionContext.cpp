@@ -63,11 +63,16 @@ SessionScope SessionScope::fromProjectId(const std::string& project,
    return SessionScope(project, id);
 }
 
+#define kProjectNoneId "c005c13362fc48e9b486451c0fc7847a"
 
-SessionScope SessionScope::projectNone()
+SessionScope SessionScope::projectNone(const std::string& id)
 {
-   return SessionScope("c005c13362fc48e9b486451c0fc7847a",
-                       kDefaultSessionScopeId);
+   return SessionScope(kProjectNoneId, id);
+}
+
+bool SessionScope::isProjectNone() const
+{
+   return project() == kProjectNoneId;
 }
 
 std::string urlPathForSessionScope(const SessionScope& scope)

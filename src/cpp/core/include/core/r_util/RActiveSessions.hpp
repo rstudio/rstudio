@@ -17,42 +17,118 @@
 #ifndef CORE_R_UTIL_ACTIVE_SESSIONS_HPP
 #define CORE_R_UTIL_ACTIVE_SESSIONS_HPP
 
+#include <boost/noncopyable.hpp>
+
 #include <core/Error.hpp>
 #include <core/FilePath.hpp>
 #include <core/Log.hpp>
+#include <core/Settings.hpp>
 
 namespace rstudio {
-namespace session {
+namespace core {
+namespace r_util {
 
-class ActiveSession
+class ActiveSession : boost::noncopyable
 {
-public:
-   ActiveSession(const core::FilePath& storagePath, const std::string& id)
+private:
+   friend class ActiveSessions;
+   ActiveSession() {}
+   explicit ActiveSession(const FilePath& scratchPath)
+      : scratchPath_(scratchPath)
    {
-      scratchPath_ = storagePath.childPath(id);
       core::Error error = scratchPath_.ensureDirectory();
+      if (error)
+         LOG_ERROR(error);
+
+      error = properties_.initialize(scratchPath_.childPath("properites"));
       if (error)
          LOG_ERROR(error);
    }
 
-   const core::FilePath& scratchPath() const { return scratchPath_; }
+public:
 
-   // Settings& properites()
+   bool empty() const { return scratchPath_.empty(); }
+
+   const FilePath& scratchPath() const { return scratchPath_; }
+
+   std::string project() const
+   {
+      if (!empty())
+         return properties_.get("project");
+      else
+         return std::string();
+   }
+
+   void setProject(const std::string& project)
+   {
+      if (!empty())
+         properties_.set("project", project);
+   }
+
+   std::string workingDir() const
+   {
+      if (!empty())
+         return properties_.get("working-dir");
+      else
+         return std::string();
+   }
+
+   void setWorkingDir(const std::string& workingDir)
+   {
+      if (!empty())
+         properties_.set("working-dir", workingDir);
+   }
+
+   core::Error destroy()
+   {
+      if (!empty())
+         return scratchPath_.removeIfExists();
+      else
+         return Success();
+   }
+
+   bool hasRequiredProperties() const
+   {
+      return !project().empty() &&
+             !workingDir().empty();
+   }
 
 private:
-   core::FilePath scratchPath_;
+   FilePath scratchPath_;
+   Settings properties_;
 };
 
 
-class ActiveSessions
+class ActiveSessions : boost::noncopyable
 {
-   // allocate()
-   // list()
+public:
+   explicit ActiveSessions(const FilePath& rootStoragePath)
+   {
+      storagePath_ = rootStoragePath.childPath("active-sessions");
+      Error error = storagePath_.ensureDirectory();
+      if (error)
+         LOG_ERROR(error);
+   }
+
+   core::Error create(const std::string& projectDir, std::string* pId);
+
+   core::Error create(const std::string& projectDir,
+                      const std::string& workingDir,
+                      std::string* pId);
+
+   std::vector<boost::shared_ptr<ActiveSession> > list();
+
+   boost::shared_ptr<ActiveSession> get(const std::string& id);
+
+   static boost::shared_ptr<ActiveSession> emptySession();
+
+private:
+   core::FilePath storagePath_;
 };
 
 
-
-} // namespace session
+} // namespace r_util
+} // namespace core
 } // namespace rstudio
 
 #endif // CORE_R_UTIL_ACTIVE_SESSIONS_HPP

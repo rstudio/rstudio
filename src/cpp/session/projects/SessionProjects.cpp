@@ -77,8 +77,8 @@ Error getNewProjectContext(const json::JsonRpcRequest& request,
    return Success();
 }
 
-Error getProjectUrl(const json::JsonRpcRequest& request,
-                    json::JsonRpcResponse* pResponse)
+Error getNewSessionUrl(const json::JsonRpcRequest& request,
+                       json::JsonRpcResponse* pResponse)
 {
    // read params
    std::string hostPageUrl, projectDir;
@@ -86,9 +86,16 @@ Error getProjectUrl(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
+   // allocate a new session
+   std::string id;
+   error = module_context::activeSessions().create(projectDir, &id);
+   if (error)
+      return error;
+
+   // create the scope
    r_util::SessionScope scope = r_util::SessionScope::fromProjectPath(
                      projectDir,
-                     kDefaultSessionScopeId,
+                     id,
                      filePathToProjectId(module_context::userScratchPath()));
    pResponse->setResult(r_util::createSessionUrl(hostPageUrl, scope));
 
@@ -543,7 +550,7 @@ void startup()
    FilePath lastProjectPath = projSettings.lastProjectPath();
 
    // check for explicit project none scope
-   if (session::options().sessionScope() == r_util::SessionScope::projectNone())
+   if (session::options().sessionScope().isProjectNone())
    {
       projectFilePath = resolveProjectSwitch(kProjectNone);
    }
@@ -694,7 +701,7 @@ Error initialize()
    ExecBlock initBlock ;
    initBlock.addFunctions()
       (bind(registerRpcMethod, "get_new_project_context", getNewProjectContext))
-      (bind(registerRpcMethod, "get_project_url", getProjectUrl))
+      (bind(registerRpcMethod, "get_new_session_url", getNewSessionUrl))
       (bind(registerRpcMethod, "create_project", createProject))
       (bind(registerRpcMethod, "read_project_options", readProjectOptions))
       (bind(registerRpcMethod, "write_project_options", writeProjectOptions))

@@ -30,6 +30,7 @@
 #include <core/r_util/RProjectFile.hpp>
 #include <core/r_util/RUserData.hpp>
 #include <core/r_util/RSessionContext.hpp>
+#include <core/r_util/RActiveSessions.hpp>
 
 #include <monitor/MonitorConstants.hpp>
 
@@ -503,7 +504,7 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
 
    // initial project (can either be a command line param or via env)
    r_util::SessionScope scope = sessionScope();
-   if (!scope.empty() && (scope != r_util::SessionScope::projectNone()))
+   if (!scope.empty() && !scope.isProjectNone())
    {
       // lookup the project path by id
       std::string project = r_util::SessionScope::projectPathForScope(
@@ -516,8 +517,15 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
          if (projectDir.exists())
          {
             FilePath projectPath = r_util::projectFromDirectory(projectDir);
+
             if (projectPath.exists())
-               initialProjectPath_ = projectPath.absolutePath();
+            {
+               r_util::ActiveSessions activeSessions(userScratchPath());
+               boost::shared_ptr<r_util::ActiveSession> pSession =
+                                           activeSessions.get(scope.id());
+               if (pSession->hasRequiredProperties())
+                   initialProjectPath_ = projectPath.absolutePath();
+            }
          }
       }
 

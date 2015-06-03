@@ -1349,8 +1349,7 @@ Error run(const ROptions& options, const RCallbacks& callbacks)
    s_suspendedSessionPath = sessionScratch.complete("suspended-session-data");
 
    // one time migration of global suspend to default project suspend
-   if ((s_options.sessionScope.id() == kDefaultSessionScopeId) &&
-       !s_suspendedSessionPath.exists() && oldSuspendedSessionPath.exists())
+   if (!s_suspendedSessionPath.exists() && oldSuspendedSessionPath.exists())
    {
      // try to move it first
      Error error = oldSuspendedSessionPath.move(s_suspendedSessionPath);
