@@ -18,6 +18,8 @@
 #include <boost/foreach.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 
+#include <core/StringUtils.hpp>
+
 #include <core/system/System.hpp>
 
 #define kSessionDirPrefix "session-"
@@ -42,7 +44,7 @@ Error ActiveSessions::create(const std::string& project,
                              std::string* pId)
 {
    // generate a new id
-   std::string id = core::system::generateShortenedUuid();
+   std::string id = string_utils::toLower(core::system::generateShortenedUuid());
 
    // create the directory
    FilePath dir = storagePath_.childPath(kSessionDirPrefix + id);
