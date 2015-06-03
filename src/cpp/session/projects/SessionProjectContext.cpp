@@ -281,6 +281,8 @@ SEXP rs_hasFileMonitor()
 
 Error ProjectContext::initialize()
 {
+   using namespace module_context;
+
    r::routines::registerCallMethod(
             "rs_getProjectDirectory",
             (DL_FUNC) rs_getProjectDirectory,
@@ -293,6 +295,9 @@ Error ProjectContext::initialize()
    
    if (hasProject())
    {
+      // update activeSession
+      activeSession().setProject(createAliasedPath(directory()));
+
       // read build options for the side effect of updating buildOptions_
       RProjectBuildOptions buildOptions;
       Error error = readBuildOptions(&buildOptions);
@@ -318,7 +323,11 @@ Error ProjectContext::initialize()
                       boost::bind(&ProjectContext::onDeferredInit, this, _1));
       }
    }
-
+   else
+   {
+      // update activeSession
+      activeSession().setProject(kProjectNone);
+   }
    return Success();
 }
 
