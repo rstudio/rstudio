@@ -92,18 +92,11 @@ Error getNewSessionUrl(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-   r_util::SessionScope scope;
-   if (project == kProjectNone)
-   {
-      scope = r_util::SessionScope::projectNone(id);
-   }
-   else
-   {
-      scope = r_util::SessionScope::fromProjectPath(
-                        projectDir,
-                        id,
-                        filePathToProjectId(module_context::userScratchPath()));
-   }
+   // create the scope
+   r_util::SessionScope scope = r_util::SessionScope::fromProject(
+                    project,
+                    id,
+                    filePathToProjectId(module_context::userScratchPath()));
 
    pResponse->setResult(r_util::createSessionUrl(hostPageUrl, scope));
 

@@ -34,18 +34,26 @@
 #include <core/system/Environment.hpp>
 
 #define kSessionSuffix "-session"
+#define kProjectNone   "none"
 
 namespace rstudio {
 namespace core {
 namespace r_util {
 
-SessionScope SessionScope::fromProjectPath(
-                               const std::string& projPath,
+SessionScope SessionScope::fromProject(
+                               std::string project,
                                const std::string& id,
                                const FilePathToProjectId& filePathToProjectId)
 {
-   std::string project = filePathToProjectId(projPath);
-   return SessionScope(project, id);
+   if (project != kProjectNone)
+   {
+      project = filePathToProjectId(project);
+      return SessionScope(project, id);
+   }
+   else
+   {
+      return projectNone(id);
+   }
 }
 
 

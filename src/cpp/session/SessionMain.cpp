@@ -905,7 +905,7 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
                      FilePath projFile = resolveAliasedPath(switchToProject);
                      std::string projDir = createAliasedPath(projFile.parent());
 
-                     scope = r_util::SessionScope::fromProjectPath(
+                     scope = r_util::SessionScope::fromProject(
                               projDir,
                               options().sessionScope().id(),
                               filePathToProjectId(options().userScratchPath()));

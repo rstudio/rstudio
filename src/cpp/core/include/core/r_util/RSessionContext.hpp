@@ -40,8 +40,8 @@ private:
 
 public:
 
-   static SessionScope fromProjectPath(
-                           const std::string& projPath,
+   static SessionScope fromProject(
+                           std::string project,
                            const std::string& id,
                            const FilePathToProjectId& filePathToProjectId);
 
