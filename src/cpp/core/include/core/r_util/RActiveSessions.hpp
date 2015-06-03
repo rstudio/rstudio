@@ -33,8 +33,8 @@ class ActiveSession : boost::noncopyable
 private:
    friend class ActiveSessions;
    ActiveSession() {}
-   explicit ActiveSession(const FilePath& scratchPath)
-      : scratchPath_(scratchPath)
+   explicit ActiveSession(const std::string& id, const FilePath& scratchPath)
+      : id_(id), scratchPath_(scratchPath)
    {
       core::Error error = scratchPath_.ensureDirectory();
       if (error)
@@ -48,6 +48,8 @@ private:
 public:
 
    bool empty() const { return scratchPath_.empty(); }
+
+   std::string id() const { return id_; }
 
    const FilePath& scratchPath() const { return scratchPath_; }
 
@@ -94,6 +96,7 @@ public:
    }
 
 private:
+   std::string id_;
    FilePath scratchPath_;
    Settings properties_;
 };

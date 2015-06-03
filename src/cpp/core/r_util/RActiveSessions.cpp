@@ -51,7 +51,7 @@ Error ActiveSessions::create(const std::string& project,
       return error;
 
    // write initial settings
-   ActiveSession activeSession(dir);
+   ActiveSession activeSession(id, dir);
    activeSession.setProject(project);
    activeSession.setWorkingDir(workingDir);
 
@@ -102,7 +102,8 @@ boost::shared_ptr<ActiveSession> ActiveSessions::get(const std::string& id)
 {
    FilePath scratchPath = storagePath_.childPath(kSessionDirPrefix + id);
    if (scratchPath.exists())
-      return boost::shared_ptr<ActiveSession>(new ActiveSession(scratchPath));
+      return boost::shared_ptr<ActiveSession>(new ActiveSession(id,
+                                                                scratchPath));
    else
       return emptySession();
 }
