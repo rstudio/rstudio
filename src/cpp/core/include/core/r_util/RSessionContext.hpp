@@ -20,6 +20,8 @@
 
 #include <boost/function.hpp>
 
+#define kProjectNoneId "c005c13362fc48e9b486451c0fc7847a"
+
 namespace rstudio {
 namespace core {
 
