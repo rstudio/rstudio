@@ -42,7 +42,7 @@ namespace {
 inline core::FilePath projectIdsFilePath(const core::FilePath& userScratchPath)
 {
    core::FilePath filePath = userScratchPath.childPath(
-                                       kProjectsSettings "/project_ids");
+                                       kProjectsSettings "/project-id-map");
    core::Error error = filePath.parent().ensureDirectory();
    if (error)
       LOG_ERROR(error);
