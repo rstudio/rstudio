@@ -213,6 +213,10 @@ bool s_rSessionResumed = false;
 // url for next session
 std::string s_nextSessionUrl;
 
+// indicates whether we should destroy the session at cleanup time
+// (true if the user does a full quit)
+bool s_destroySession = false;
+
 // manage global state indicating whether R is processing input
 volatile sig_atomic_t s_rProcessingInput = 0;
 
@@ -2230,13 +2234,8 @@ void rQuit()
                               .switchToProjectPath().empty();
    }
 
-   // if we aren't switching projects then conclude the active session
-   if (!switchProjects)
-   {
-      Error error = module_context::activeSession().destroy();
-      if (error)
-         LOG_ERROR(error);
-   }
+   // if we aren't switching projects then destroy the active session at cleanup
+   s_destroySession = !switchProjects;
 
    json::Object jsonData;
    jsonData["switch_projects"] = switchProjects;
@@ -2297,6 +2296,14 @@ void rCleanup(bool terminatedNormally)
 
       // fire shutdown event to modules
       module_context::events().onShutdown(terminatedNormally);
+
+      // destroy session if requested
+      if (s_destroySession)
+      {
+         Error error = module_context::activeSession().destroy();
+         if (error)
+            LOG_ERROR(error);
+      }
 
       // cause graceful exit of clientEventService (ensures delivery
       // of any pending events prior to process termination). wait a
