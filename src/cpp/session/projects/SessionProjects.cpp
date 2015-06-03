@@ -81,22 +81,30 @@ Error getNewSessionUrl(const json::JsonRpcRequest& request,
                        json::JsonRpcResponse* pResponse)
 {
    // read params
-   std::string hostPageUrl, projectDir;
-   Error error = json::readParams(request.params, &hostPageUrl, &projectDir);
+   std::string hostPageUrl, project;
+   Error error = json::readParams(request.params, &hostPageUrl, &project);
    if (error)
       return error;
 
    // allocate a new session
    std::string id;
-   error = module_context::activeSessions().create(projectDir, &id);
+   error = module_context::activeSessions().create(project, &id);
    if (error)
       return error;
 
-   // create the scope
-   r_util::SessionScope scope = r_util::SessionScope::fromProjectPath(
-                     projectDir,
-                     id,
-                     filePathToProjectId(module_context::userScratchPath()));
+   r_util::SessionScope scope;
+   if (project == kProjectNone)
+   {
+      scope = r_util::SessionScope::projectNone(id);
+   }
+   else
+   {
+      scope = r_util::SessionScope::fromProjectPath(
+                        projectDir,
+                        id,
+                        filePathToProjectId(module_context::userScratchPath()));
+   }
+
    pResponse->setResult(r_util::createSessionUrl(hostPageUrl, scope));
 
    return Success();

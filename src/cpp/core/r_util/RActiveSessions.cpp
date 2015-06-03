@@ -32,12 +32,12 @@ namespace {
 } // anonymous namespace
 
 
-Error ActiveSessions::create(const std::string& projectDir, std::string* pId)
+Error ActiveSessions::create(const std::string& project, std::string* pId)
 {
-   return create(projectDir, projectDir, pId);
+   return create(projectDir, project, pId);
 }
 
-Error ActiveSessions::create(const std::string& projectDir,
+Error ActiveSessions::create(const std::string& project,
                              const std::string& workingDir,
                              std::string* pId)
 {
@@ -52,7 +52,7 @@ Error ActiveSessions::create(const std::string& projectDir,
 
    // write initial settings
    ActiveSession activeSession(dir);
-   activeSession.setProject(projectDir);
+   activeSession.setProject(project);
    activeSession.setWorkingDir(workingDir);
 
    // return the id

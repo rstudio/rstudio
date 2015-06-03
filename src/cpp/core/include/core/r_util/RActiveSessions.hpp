@@ -110,10 +110,10 @@ public:
          LOG_ERROR(error);
    }
 
-   core::Error create(const std::string& projectDir, std::string* pId);
+   core::Error create(const std::string& project, std::string* pId);
 
-   core::Error create(const std::string& projectDir,
-                      const std::string& workingDir,
+   core::Error create(const std::string& project,
+                      const std::string& working,
                       std::string* pId);
 
    std::vector<boost::shared_ptr<ActiveSession> > list();
