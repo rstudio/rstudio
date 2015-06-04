@@ -20,4 +20,9 @@ public class CollabEditor
    {
       
    }
+   
+   void endCollabSession(AceEditor editor)
+   {
+      
+   }
 }
