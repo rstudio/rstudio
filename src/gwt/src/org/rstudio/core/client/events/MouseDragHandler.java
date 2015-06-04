@@ -192,6 +192,11 @@ public abstract class MouseDragHandler
    {
       onDrag(event, state_);
       lastCoordinates_ = MouseCoordinates.fromEvent(event);
+      
+      // Suppress the native mouse move event to ensure e.g. text is not
+      // highlighted as we scroll over other elements
+      event.getNativeEvent().stopPropagation();
+      event.getNativeEvent().preventDefault();
    }
    
    private void endDragImpl()
