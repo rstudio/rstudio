@@ -578,7 +578,7 @@ public class Application implements ApplicationEventHandlers
     
       // remove any session context from the url
       String url = GWT.getHostPageBaseURL();
-      Pattern pattern = Pattern.create("/s/[A-Fa-f0-9]{32}[A-Fa-f0-9]+/");
+      Pattern pattern = Pattern.create("/s/[A-Fa-f0-9]{8}[A-Fa-f0-9]{8}/");
       url = pattern.replaceAll(url, "/");
       
       // add relative URL
