@@ -2281,6 +2281,12 @@ public class AceEditor implements DocDisplay,
       collab_.beginCollabSession(this, serverUrl);
    }
    
+   @Override
+   public void endCollabSession()
+   {
+      collab_.endCollabSession(this);
+   }
+   
    private static final int DEBUG_CONTEXT_LINES = 2;
    private final HandlerManager handlers_ = new HandlerManager(this);
    private final AceEditorWidget widget_;
@@ -2316,5 +2322,4 @@ public class AceEditor implements DocDisplay,
    
    private long lastCursorChangedTime_;
    private long lastModifiedTime_;
-   
 }
