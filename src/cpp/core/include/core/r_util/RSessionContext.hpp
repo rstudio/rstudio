@@ -87,6 +87,9 @@ private:
 };
 
 
+bool validateSessionScopeId(const FilePath& userScratchPath,
+                            const std::string& id);
+
 bool validateProjectSessionScope(
            const SessionScope& scope,
            const core::FilePath& userHomePath,

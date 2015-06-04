@@ -504,17 +504,27 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
 
    // initial project (can either be a command line param or via env)
    r_util::SessionScope scope = sessionScope();
-   if (!scope.empty() && !scope.isProjectNone())
+   if (!scope.empty())
    {
-      // validate scope and get initialProjectPath_ from scope if it's valid
-      if (!r_util::validateProjectSessionScope(
-                           scope,
-                           userHomePath(),
-                           userScratchPath(),
-                           projectIdToFilePath(userScratchPath()),
-                           &initialProjectPath_))
+      if (scope.isProjectNone())
       {
-         invalidScope_ = true;
+         if (!r_util::validateSessionScopeId(userScratchPath(), scope.id()))
+         {
+            invalidScope_ = true;
+         }
+      }
+      else
+      {
+         // validate scope and get initialProjectPath_ from scope if it's valid
+         if (!r_util::validateProjectSessionScope(
+                              scope,
+                              userHomePath(),
+                              userScratchPath(),
+                              projectIdToFilePath(userScratchPath()),
+                              &initialProjectPath_))
+         {
+            invalidScope_ = true;
+         }
       }
    }
    else

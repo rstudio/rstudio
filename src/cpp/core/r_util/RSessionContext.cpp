@@ -84,6 +84,14 @@ bool SessionScope::isProjectNone() const
    return project() == kProjectNoneId;
 }
 
+bool validateSessionScopeId(const FilePath& userScratchPath,
+                            const std::string& id)
+{
+   r_util::ActiveSessions activeSessions(userScratchPath);
+   boost::shared_ptr<r_util::ActiveSession> pSession = activeSessions.get(id);
+   return pSession->hasRequiredProperties();
+}
+
 bool validateProjectSessionScope(
            const SessionScope& scope,
            const core::FilePath& userHomePath,
@@ -104,10 +112,7 @@ bool validateProjectSessionScope(
 
          if (projectPath.exists())
          {
-            r_util::ActiveSessions activeSessions(userScratchPath);
-            boost::shared_ptr<r_util::ActiveSession> pSession =
-                                        activeSessions.get(scope.id());
-            if (pSession->hasRequiredProperties())
+            if (validateSessionScopeId(userScratchPath, scope.id()))
             {
                *pProjectFilePath = projectPath.absolutePath();
                return true;
