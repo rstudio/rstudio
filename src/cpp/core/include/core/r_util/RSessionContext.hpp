@@ -146,6 +146,9 @@ std::string sessionScopesPrefix(const std::string& username);
 
 std::string sessionContextFile(const SessionContext& context);
 
+std::string generateScopeId();
+
+
 } // namespace r_util
 } // namespace core 
 } // namespace rstudio

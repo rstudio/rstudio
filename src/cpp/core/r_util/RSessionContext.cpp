@@ -141,7 +141,7 @@ void parseSessionUrl(const std::string& url,
                      std::string* pUrlPrefix,
                      std::string* pUrlWithoutPrefix)
 {
-   static boost::regex re("/s/([A-Fa-f0-9]{32})([A-Fa-f0-9]+)/");
+   static boost::regex re("/s/([A-Fa-f0-9]{8})([A-Fa-f0-9]{8})/");
 
    boost::smatch match;
    if (boost::regex_search(url, match, re))
@@ -241,6 +241,31 @@ std::string sessionScopesPrefix(const std::string& username)
 std::string sessionContextFile(const SessionContext& context)
 {
    return sessionScopeFile(sessionScopePrefix(context.username), context.scope);
+}
+
+std::string generateScopeId()
+{
+   // generate id
+   std::string id = core::string_utils::toLower(
+                                 core::system::generateShortenedUuid());
+
+   // ensure 8 chracters
+   const size_t kLen = 8;
+   if (id.length() != kLen)
+   {
+      if (id.length() > kLen)
+      {
+         id = id.substr(0, kLen);
+      }
+      else
+      {
+         size_t diff = kLen - id.length();
+         std::string pad(diff, 'f');
+         id += pad;
+      }
+   }
+
+   return id;
 }
 
 } // namespace r_util

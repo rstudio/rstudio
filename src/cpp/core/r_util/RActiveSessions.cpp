@@ -22,6 +22,8 @@
 
 #include <core/system/System.hpp>
 
+#include <core/r_util/RSessionContext.hpp>
+
 #define kSessionDirPrefix "session-"
 
 namespace rstudio {
@@ -48,8 +50,7 @@ Error ActiveSessions::create(const std::string& project,
    FilePath dir;
    while (id.empty())
    {
-      std::string candidateId = string_utils::toLower(
-                              core::system::generateShortenedUuid());
+      std::string candidateId = core::r_util::generateScopeId();
       dir = storagePath_.childPath(kSessionDirPrefix + candidateId);
       if (!dir.exists())
          id = candidateId;

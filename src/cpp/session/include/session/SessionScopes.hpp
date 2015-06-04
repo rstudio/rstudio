@@ -43,7 +43,7 @@ namespace {
 inline core::FilePath projectIdsFilePath(const core::FilePath& userScratchPath)
 {
    core::FilePath filePath = userScratchPath.childPath(
-                                       kProjectsSettings "/project-identifiers");
+                                    kProjectsSettings "/project-id-mappings");
    core::Error error = filePath.parent().ensureDirectory();
    if (error)
       LOG_ERROR(error);
@@ -74,6 +74,7 @@ inline std::string toFilePath(const std::string& projectId,
    return idMap[projectId];
 }
 
+
 inline std::string toProjectId(const std::string& projectDir,
                                const core::FilePath& userScratchPath)
 {
@@ -94,8 +95,7 @@ inline std::string toProjectId(const std::string& projectDir,
    std::string id;
    while (id.empty())
    {
-      std::string candidateId = core::string_utils::toLower(
-                                    core::system::generateShortenedUuid());
+      std::string candidateId = core::r_util::generateScopeId();
       if (idMap.find(candidateId) == idMap.end())
          id = candidateId;
    }
