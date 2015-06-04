@@ -255,6 +255,8 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="saveWorkspace"/>
          <separator/>
          <cmd refid="clearWorkspace"/>
+         <separator/>
+         <cmd refid="quitSession"/>
       </menu>
         
       <menu label="_Build">
@@ -1396,8 +1398,11 @@ well as menu structures (for main menu and popup menus).
         menuLabel="_Import Editor Contents..."/>
    <cmd id="refreshSuperDevMode"/>
 
+   <cmd id="newSession"
+        menuLabel="_New Session"/>
+
    <cmd id="quitSession"
-        menuLabel="_Quit RStudio..."/>
+        menuLabel="_Quit Session..."/>
 
    <cmd id="showAboutDialog"
         menuLabel="_About RStudio"/>

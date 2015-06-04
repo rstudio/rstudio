@@ -15,6 +15,7 @@
 
 package org.rstudio.studio.client.application.ui.impl;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.ImageElement;
@@ -25,6 +26,8 @@ import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
+import com.google.gwt.resources.client.ClientBundle;
+import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.*;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -37,6 +40,7 @@ import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.HyperlinkLabel;
 import org.rstudio.core.client.widget.MessageDialogLabel;
 import org.rstudio.core.client.widget.ToolbarButton;
+import org.rstudio.core.client.widget.ToolbarLabel;
 import org.rstudio.core.client.widget.events.GlassVisibilityEvent;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -71,6 +75,7 @@ public class WebApplicationHeader extends Composite implements ApplicationHeader
                   final Session session,
                   Provider<CodeSearch> pCodeSearch)
    {
+      commands_ = commands;
       eventBus_ = eventBus;
       globalDisplay_ = globalDisplay; 
       
@@ -147,6 +152,7 @@ public class WebApplicationHeader extends Composite implements ApplicationHeader
 
       // commands panel (no widgets added until after session init)
       headerBarCommandsPanel_ = new HorizontalPanel();
+      headerBarCommandsPanel_.setVerticalAlignment(HasVerticalAlignment.ALIGN_MIDDLE);
       headerBarPanel_.add(headerBarCommandsPanel_);
       headerBarPanel_.setCellHorizontalAlignment(headerBarCommandsPanel_,
                                                 HorizontalPanel.ALIGN_RIGHT);
@@ -336,19 +342,23 @@ public class WebApplicationHeader extends Composite implements ApplicationHeader
    private void initCommandsPanel(final SessionInfo sessionInfo)
    {  
       // add username 
-      Label usernameLabel = new Label();
+      ToolbarLabel usernameLabel = new ToolbarLabel();
+      usernameLabel.getElement().getStyle().setMarginRight(2, Unit.PX);
       usernameLabel.setText(sessionInfo.getUserIdentity());
       headerBarCommandsPanel_.add(usernameLabel);
-      headerBarCommandsPanel_.add(createCommandSeparator());
-          
-      // signout link 
-      Widget signoutLink = createCommandLink("Sign Out", new ClickHandler() {
+     
+      ToolbarButton signOutButton = new ToolbarButton(RESOURCES.signOut(),
+           new ClickHandler() {
          public void onClick(ClickEvent event)
          {
             eventBus_.fireEvent(new LogoutRequestedEvent());
          }
       });
-      headerBarCommandsPanel_.add(signoutLink);
+      signOutButton.setTitle("Sign out");
+      headerBarCommandsPanel_.add(signOutButton);
+      headerBarCommandsPanel_.add(createCommandSeparator());
+      
+      headerBarCommandsPanel_.add(commands_.quitSession().createToolbarButton());
    }
 
    private Widget createCommandSeparator()
@@ -366,6 +376,14 @@ public class WebApplicationHeader extends Composite implements ApplicationHeader
    {
       return this;
    }
+   
+   interface Resources extends ClientBundle
+   {
+      ImageResource signOut();
+   }
+   
+   private static final Resources RESOURCES =  
+                              (Resources) GWT.create(Resources.class);
   
    private int preferredHeight_;
    private FlowPanel outerPanel_;
@@ -378,6 +396,7 @@ public class WebApplicationHeader extends Composite implements ApplicationHeader
    private GlobalToolbar toolbar_;
    private EventBus eventBus_;
    private GlobalDisplay globalDisplay_;
+   private Commands commands_;
    
    
 }
