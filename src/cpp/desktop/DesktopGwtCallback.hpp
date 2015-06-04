@@ -133,6 +133,7 @@ public slots:
    void setPendingQuit(int pendingQuit);
 
    void openProjectInNewWindow(QString projectFilePath);
+   void openSessionInNewWindow(QString workingDirectoryPath);
 
    void openTerminal(QString terminalPath,
                      QString workingDirectory,
