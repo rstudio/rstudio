@@ -238,6 +238,8 @@ well as menu structures (for main menu and popup menus).
       <separator/>
       
       <menu label="_Session">
+         <cmd refid="newSession"/>
+         <separator/>
          <cmd refid="interruptR"/>
          <cmd refid="restartR"/>
          <separator/> 

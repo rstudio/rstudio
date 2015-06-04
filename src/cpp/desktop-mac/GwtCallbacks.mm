@@ -12,6 +12,8 @@
 #include <core/system/System.hpp>
 #include <core/system/Environment.hpp>
 
+#include <core/r_util/RUserData.hpp>
+
 #import "GwtCallbacks.h"
 #import "Options.hpp"
 
@@ -794,6 +796,19 @@ private:
    [NSTask launchedTaskWithLaunchPath: exePath arguments: args];
 }
 
+- (void) openSessionInNewWindow: (NSString*) workingDirectoryPath
+{
+   workingDirectoryPath = resolveAliasedPath(workingDirectoryPath);
+   
+   NSString* exePath = [NSString stringWithUTF8String:
+                                              desktop::options().executablePath().absolutePath().c_str()];
+   
+   core::system::setenv(kRStudioInitialWorkingDir, [workingDirectoryPath UTF8String]);
+   [NSTask launchedTaskWithLaunchPath: exePath arguments: [NSArray array]];
+}
+
+
+
 - (void) openTerminal: (NSString*) terminalPath
          workingDirectory: (NSString*) workingDirectory
          extraPathEntries: (NSString*) extraPathEntries
@@ -1095,6 +1110,8 @@ enum RS_NSActivityOptions : uint64_t
       return @"setPendingQuit";
    else if (sel == @selector(openProjectInNewWindow:))
       return @"openProjectInNewWindow";
+   else if (sel == @selector(openSessionInNewWindow:))
+      return @"openSessionInNewWindow";
    else if (sel == @selector(openTerminal:workingDirectory:extraPathEntries:))
       return @"openTerminal";
    else if (sel == @selector(setFixedWidthFont:))
