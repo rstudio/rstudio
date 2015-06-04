@@ -123,7 +123,11 @@ public class TextEditingTargetWidget
       
       editorPanel_ = new DockLayoutPanel(Unit.PX);
       docOutlineWidget_ = new DocumentOutlineWidget(target);
-      editorPanel_.addEast(docOutlineWidget_, 250);
+      
+      // Only show outline by default for R Markdown widgets.
+      double initialSize = target.getTextFileType().isRmd() ? 250 : 0;
+         
+      editorPanel_.addEast(docOutlineWidget_, initialSize);
       editorPanel_.add(editor.asWidget());
       
       MouseDragHandler.addHandler(
@@ -144,7 +148,14 @@ public class TextEditingTargetWidget
                   double initialWidth = state.get("initial.width");
                   double xDiff = event.getTotalDelta().getMouseX();
                   double newSize = initialWidth + xDiff;
-                  double clamped = MathUtil.clamp(newSize, 0, editorPanel_.getOffsetWidth());
+                  
+                  // We allow an extra pixel here just to 'hide' the border
+                  // if the outline is maximized, since the 'separator'
+                  // lives as part of the outline instead of 'between' the
+                  // two widgets
+                  double maxSize = editorPanel_.getOffsetWidth() + 1;
+                  
+                  double clamped = MathUtil.clamp(newSize, 0, maxSize);
                   editorPanel_.setWidgetSize(docOutlineWidget_, clamped);
                }
             });
