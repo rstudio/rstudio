@@ -1342,7 +1342,12 @@ public class AceEditor implements DocDisplay,
       if (visible)
          widget_.getEditor().getRenderer().updateFontSize();
    }
-
+   
+   public void onResize()
+   {
+      widget_.onResize();
+   }
+   
    public void setHighlightSelectedLine(boolean on)
    {
       widget_.getEditor().setHighlightActiveLine(on);

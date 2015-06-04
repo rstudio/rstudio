@@ -116,6 +116,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void setFontSize(double size);
 
    void onVisibilityChanged(boolean visible);
+   void onResize();
 
    void setHighlightSelectedLine(boolean on);
    void setHighlightSelectedWord(boolean on);

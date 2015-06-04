@@ -165,6 +165,7 @@ public class TextEditingTargetWidget
                      clamped = 0;
                   
                   editorPanel_.setWidgetSize(docOutlineWidget_, clamped);
+                  editor_.onResize();
                }
             });
       
