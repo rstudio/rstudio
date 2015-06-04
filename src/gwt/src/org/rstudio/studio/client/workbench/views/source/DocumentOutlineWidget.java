@@ -2,17 +2,13 @@ package org.rstudio.studio.client.workbench.views.source;
 
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
-import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.views.source.editors.text.Scope;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
-import org.rstudio.studio.client.workbench.views.source.editors.text.events.HideOutlineEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.RenderFinishedEvent;
-import org.rstudio.studio.client.workbench.views.source.editors.text.events.ShowOutlineEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBarWidget;
 
-import com.google.gwt.animation.client.Animation;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.Scheduler;
@@ -23,7 +19,6 @@ import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
-import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.Timer;
@@ -31,7 +26,6 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HTML;
-import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Tree;
 import com.google.gwt.user.client.ui.TreeItem;
@@ -139,30 +133,13 @@ public class DocumentOutlineWidget extends Composite
       private final DocumentOutlineTreeEntry entry_;
    }
    
-   public DocumentOutlineWidget(DockLayoutPanel parent, TextEditingTarget target)
+   public DocumentOutlineWidget(TextEditingTarget target)
    {
-      parent_ = parent;
       container_ = new DockLayoutPanel(Unit.PX);
       container_.addStyleName(RES.styles().container());
       target_ = target;
       
       toolbar_ = new Toolbar();
-      Widget separator = Toolbar.getSeparator();
-      separator.getElement().getStyle().setMarginLeft(-3, Unit.PX);
-      toolbar_.addLeftWidget(separator);
-      toolbar_.setVisible(true);
-      
-      toggleVisibilityIcon_ = new Image(ThemeResources.INSTANCE.chevron());
-      toggleVisibilityIcon_.getElement().getStyle().setMarginRight(5, Unit.PX);
-      toggleVisibilityIcon_.addClickHandler(new ClickHandler()
-      {
-         @Override
-         public void onClick(ClickEvent event)
-         {
-            hideOutline();
-         }
-      });
-      toolbar_.addRightWidget(toggleVisibilityIcon_);
       container_.addNorth(toolbar_, toolbar_.getHeight());
       
       statusBar_ = new StatusBarWidget();
@@ -305,54 +282,10 @@ public class DocumentOutlineWidget extends Composite
       return node.equals(target_.getDocDisplay().getCurrentScope());
    }
    
-   public void ensureHideOutlineIconVisible()
-   {
-      toggleVisibilityIcon_.setVisible(true);
-   }
-   
-   public HandlerRegistration addShowOutlineHandler(ShowOutlineEvent.Handler handler)
-   {
-      return addHandler(handler, ShowOutlineEvent.TYPE);
-   }
-   
-   public HandlerRegistration addHideOutlineHandler(HideOutlineEvent.Handler handler)
-   {
-      return addHandler(handler, HideOutlineEvent.TYPE);
-   }
-   
-   public double getSize()
-   {
-      return parent_.getWidgetSize(this);
-   }
-   
-   public void setSize(double sizeInPixels)
-   {
-      parent_.setWidgetSize(this, sizeInPixels);
-   }
-   
-   private void hideOutline()
-   {
-      final int startSize = container_.getOffsetWidth();
-      fireEvent(new HideOutlineEvent());
-      toggleVisibilityIcon_.setVisible(false);
-      
-      new Animation()
-      {
-         @Override
-         protected void onUpdate(double progress)
-         {
-            int newSize = (int) (startSize * (1 - interpolate(progress)));
-            parent_.setWidgetSize(DocumentOutlineWidget.this, newSize);
-         }
-      }.run(1000);
-   }
-   
-   private final DockLayoutPanel parent_;
    private final DockLayoutPanel container_;
    private final Toolbar toolbar_;
    private final StatusBarWidget statusBar_;
    private final VerticalSeparator separator_;
-   private final Image toggleVisibilityIcon_;
    private final Tree tree_;
    private final TextEditingTarget target_;
    

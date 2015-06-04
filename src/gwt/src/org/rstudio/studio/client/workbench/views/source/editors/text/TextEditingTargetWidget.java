@@ -16,7 +16,6 @@ package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import java.util.List;
 
-import com.google.gwt.animation.client.Animation;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Style.Unit;
@@ -59,8 +58,6 @@ import org.rstudio.studio.client.workbench.views.edit.ui.EditDialog;
 import org.rstudio.studio.client.workbench.views.source.PanelWithToolbars;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetToolbar;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget.Display;
-import org.rstudio.studio.client.workbench.views.source.editors.text.events.HideOutlineEvent;
-import org.rstudio.studio.client.workbench.views.source.editors.text.events.ShowOutlineEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.findreplace.FindReplaceBar;
 import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBar;
 import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBarWidget;
@@ -259,21 +256,6 @@ public class TextEditingTargetWidget
                RSConnect.CONTENT_TYPE_APP, false, null);
          toolbar.addRightWidget(publishButton_);
       }
-      
-      toolbar.addRightSeparator();
-      viewOutlineIcon_ = new Image(ThemeResources.INSTANCE.chevron());
-      viewOutlineIcon_.getElement().getStyle().setMarginRight(5, Unit.PX);
-      viewOutlineIcon_.addHandler(new ClickHandler()
-      {
-         @Override
-         public void onClick(ClickEvent event)
-         {
-            fireEvent(new ShowOutlineEvent());
-            viewOutlineIcon_.setVisible(false);
-            toolbar_.invalidateSeparators();
-         }
-      }, ClickEvent.getType());
-      toolbar.addRightWidget(viewOutlineIcon_);
       
       return toolbar;
    }
@@ -764,7 +746,7 @@ public class TextEditingTargetWidget
       sourceButton_.setTitle(sourceCommandDesc);
       sourceButton_.setText(sourceCommandText_);
    }
-   
+
    public HandlerRegistration addEnsureVisibleHandler(EnsureVisibleHandler handler)
    {
       return addHandler(handler, EnsureVisibleEvent.TYPE);
@@ -806,36 +788,6 @@ public class TextEditingTargetWidget
       menu.addItem(rmdViewerWindowMenuItem_);
    }
    
-   public HandlerRegistration addShowOutlineHandler(ShowOutlineEvent.Handler handler)
-   {
-      return addHandler(handler, ShowOutlineEvent.TYPE);
-   }
-   
-   public HandlerRegistration addHideOutlineHandler(HideOutlineEvent.Handler handler)
-   {
-      return addHandler(handler, HideOutlineEvent.TYPE);
-   }
-   
-   public void showOutlineIcon()
-   {
-      new Animation()
-      {
-         @Override
-         protected void onStart()
-         {
-            viewOutlineIcon_.setVisible(true);
-            viewOutlineIcon_.getElement().getStyle().setOpacity(0);
-            toolbar_.invalidateSeparators();
-         }
-         
-         @Override
-         protected void onUpdate(double progress)
-         {
-            viewOutlineIcon_.getElement().getStyle().setOpacity(progress);
-         }
-      }.run(1000);
-   }
-   
    private final Commands commands_;
    private final UIPrefs uiPrefs_;
    private final Session session_;
@@ -862,7 +814,6 @@ public class TextEditingTargetWidget
    private ToolbarButton rcppHelpButton_;
    private ToolbarButton shinyLaunchButton_;
    private ToolbarButton editRmdFormatButton_;
-   private Image viewOutlineIcon_;
    private ToolbarPopupMenuButton rmdFormatButton_;
    private RSConnectPublishButton publishButton_;
    private MenuItem rmdViewerPaneMenuItem_;

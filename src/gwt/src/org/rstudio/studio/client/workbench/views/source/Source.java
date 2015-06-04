@@ -14,7 +14,6 @@
  */
 package org.rstudio.studio.client.workbench.views.source;
 
-import com.google.gwt.animation.client.Animation;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.core.client.Scheduler;
@@ -47,7 +46,6 @@ import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.command.ShortcutManager;
 import org.rstudio.core.client.events.*;
-import org.rstudio.core.client.events.MouseDragHandler.State;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.widget.Operation;
@@ -114,8 +112,6 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Execute
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.FileTypeChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.FileTypeChangedHandler;
-import org.rstudio.studio.client.workbench.views.source.editors.text.events.HideOutlineEvent;
-import org.rstudio.studio.client.workbench.views.source.editors.text.events.ShowOutlineEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.SourceOnSaveChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.SourceOnSaveChangedHandler;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ui.NewRMarkdownDialog;
@@ -2072,48 +2068,10 @@ public class Source implements InsertSourceHandler,
             });
    }
    
-   Widget createWidgetWithOutline(final TextEditingTarget target)
+   Widget createWidgetWithOutline(TextEditingTarget target)
    {
       final DockLayoutPanel panel = new DockLayoutPanel(Unit.PX);
-      final DocumentOutlineWidget outline = new DocumentOutlineWidget(panel, target);
-      
-      outline.addHideOutlineHandler(new HideOutlineEvent.Handler()
-      {
-         @Override
-         public void onHideOutline(HideOutlineEvent event)
-         {
-            target.showOutlineIcon();
-         }
-      });
-      
-      target.addShowOutlineHandler(new ShowOutlineEvent.Handler()
-      {
-         final State state = State.create();
-         
-         @Override
-         public void onShowOutline(ShowOutlineEvent event)
-         {
-            outline.ensureHideOutlineIconVisible();
-            new Animation()
-            {
-               @Override
-               protected void onStart()
-               {
-                  state.set("initial.size", outline.getSize());
-               }
-               
-               @Override
-               protected void onUpdate(double progress)
-               {
-                  double initialSize = state.get("initial.size");
-                  double ratio = interpolate(progress);
-                  outline.setSize(
-                        (200 * ratio) +
-                        (initialSize * (1 - ratio)));
-               }
-            }.run(1000);
-         }
-      });
+      final DocumentOutlineWidget outline = new DocumentOutlineWidget(target);
       
       MouseDragHandler.addHandler(
             outline.getLeftSeparator(),
@@ -2144,8 +2102,7 @@ public class Source implements InsertSourceHandler,
 
    Widget createWidget(EditingTarget target)
    {
-      if (target instanceof TextEditingTarget &&
-          ((TextEditingTarget) target).getDocDisplay().hasScopeTree())
+      if (target instanceof TextEditingTarget && ((TextEditingTarget) target).getDocDisplay().hasScopeTree())
          return createWidgetWithOutline((TextEditingTarget) target);
       
       return target.asWidget();

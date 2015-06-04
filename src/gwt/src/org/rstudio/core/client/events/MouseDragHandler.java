@@ -34,15 +34,17 @@ public abstract class MouseDragHandler
       protected State() {};
       
       public static final native State create() /*-{
-         return {};
+         var object = {};
+         object.$state = {};
+         return object;
       }-*/;
       
       public native final <T> void set(String name, T value) /*-{
-         this[name] = value;
+         this.$state[name] = value;
       }-*/;
       
       public native final <T> T get(String name) /*-{
-         return this[name];
+         return this.$state[name];
       }-*/;
    }
    
