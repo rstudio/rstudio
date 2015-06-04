@@ -137,7 +137,7 @@ public class DocumentOutlineWidget extends Composite
       target_ = target;
       
       separator_ = new VerticalSeparator();
-      container_.addWest(separator_, 6);
+      container_.addWest(separator_, 8);
       
       tree_ = new Tree();
       tree_.addStyleName(RES.styles().tree());

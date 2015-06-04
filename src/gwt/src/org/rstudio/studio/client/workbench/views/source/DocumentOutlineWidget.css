@@ -2,7 +2,7 @@
 }
 
 .leftSeparator {
-	background: linear-gradient(to right, #AAA, #FFF);
+	border-left: 1px solid rgb(196, 196, 196);
 	cursor: col-resize;
 }
 
