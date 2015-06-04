@@ -245,6 +245,14 @@ std::string sessionContextFile(const SessionContext& context)
 
 std::string generateScopeId()
 {
+   std::vector<std::string> reserved;
+   reserved.push_back(kProjectNoneId);
+   reserved.push_back(kWorkspacesId);
+   return generateScopeId(reserved);
+}
+
+std::string generateScopeId(const std::vector<std::string>& reserved)
+{
    // generate id
    std::string id = core::string_utils::toLower(
                                  core::system::generateShortenedUuid());
@@ -265,7 +273,11 @@ std::string generateScopeId()
       }
    }
 
-   return id;
+   // try again if this id is reserved
+   if (std::find(reserved.begin(), reserved.end(), id) != reserved.end())
+      return generateScopeId(reserved);
+   else
+      return id;
 }
 
 } // namespace r_util

@@ -17,10 +17,12 @@
 #define CORE_R_UTIL_R_SESSION_CONTEXT_HPP
 
 #include <string>
+#include <vector>
 
 #include <boost/function.hpp>
 
 #define kProjectNoneId "cfc78a31"
+#define kWorkspacesId  "3c286bd3"
 
 namespace rstudio {
 namespace core {
@@ -147,6 +149,7 @@ std::string sessionScopesPrefix(const std::string& username);
 std::string sessionContextFile(const SessionContext& context);
 
 std::string generateScopeId();
+std::string generateScopeId(const std::vector<std::string>& reserved);
 
 
 } // namespace r_util
