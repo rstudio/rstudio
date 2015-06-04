@@ -108,6 +108,7 @@ void detectWorkingDirectoryChanged()
 
       // update state
       s_lastWorkingDirectory = currentWorkingDirectory;
+      module_context::activeSession().setWorkingDir(path);
    }
 }
 
