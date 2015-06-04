@@ -444,8 +444,8 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="jumpTo" value="Shift+Alt+J" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="jumpTo" value="Cmd+Shift+Alt+J" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="jumpToMatching" value="Ctrl+P"/>
-         <shortcut refid="selectToMatching" value="Ctrl+Shift+Alt+E"/>
-         <shortcut refid="expandToMatching" value="Ctrl+Shift+E"/>
+         <shortcut refid="expandToMatching" value="Ctrl+Shift+E" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+         <shortcut refid="expandToMatching" value="Ctrl+Shift+Alt+E" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="splitIntoLines" value="Cmd+Alt+A"/>
          <shortcut value="Ctrl+Alt+Up" title="Add cursor above current cursor"/>
          <shortcut value="Ctrl+Alt+Down" title="Add cursor below current cursor"/>
