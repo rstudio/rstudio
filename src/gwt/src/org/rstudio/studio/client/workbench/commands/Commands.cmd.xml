@@ -1404,7 +1404,8 @@ well as menu structures (for main menu and popup menus).
         menuLabel="_New Session"/>
 
    <cmd id="quitSession"
-        menuLabel="_Quit Session..."/>
+        menuLabel="_Quit Session..."
+        desc="Quit the current R session"/>
 
    <cmd id="showAboutDialog"
         menuLabel="_About RStudio"/>
