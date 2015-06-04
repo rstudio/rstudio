@@ -29,8 +29,8 @@ fi
 
 if [[ $PLUGIN_PREFIX ==  "" ]]
 then
-  desktop/rstudio
+  desktop/rstudio "$@"
 else
-  QT_PLUGIN_PATH=$PLUGIN_PREFIX desktop/rstudio
+  QT_PLUGIN_PATH=$PLUGIN_PREFIX desktop/rstudio "$@"
 fi
 
