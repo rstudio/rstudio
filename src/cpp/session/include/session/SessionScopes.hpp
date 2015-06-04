@@ -24,6 +24,7 @@
 
 #include <core/FilePath.hpp>
 #include <core/FileSerializer.hpp>
+#include <core/StringUtils.hpp>
 #include <core/system/System.hpp>
 
 #ifndef _WIN32
@@ -42,7 +43,7 @@ namespace {
 inline core::FilePath projectIdsFilePath(const core::FilePath& userScratchPath)
 {
    core::FilePath filePath = userScratchPath.childPath(
-                                       kProjectsSettings "/project_ids");
+                                    kProjectsSettings "/project-id-mappings");
    core::Error error = filePath.parent().ensureDirectory();
    if (error)
       LOG_ERROR(error);
@@ -73,6 +74,7 @@ inline std::string toFilePath(const std::string& projectId,
    return idMap[projectId];
 }
 
+
 inline std::string toProjectId(const std::string& projectDir,
                                const core::FilePath& userScratchPath)
 {
@@ -88,8 +90,15 @@ inline std::string toProjectId(const std::string& projectDir,
          return projId.first;
    }
 
-   // if we didn't find it then we need to generate a new one
-   std::string id = core::system::generateUuid(false);
+   // if we didn't find it then we need to generate a new one (loop until
+   // we find one that isn't already in the map)
+   std::string id;
+   while (id.empty())
+   {
+      std::string candidateId = core::r_util::generateScopeId();
+      if (idMap.find(candidateId) == idMap.end())
+         id = candidateId;
+   }
 
    // add it to the map then save the map
    idMap[id] = projectDir;

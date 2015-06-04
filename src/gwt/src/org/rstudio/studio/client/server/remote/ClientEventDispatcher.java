@@ -116,6 +116,7 @@ import org.rstudio.studio.client.workbench.views.presentation.events.Presentatio
 import org.rstudio.studio.client.workbench.views.presentation.events.ShowPresentationPaneEvent;
 import org.rstudio.studio.client.workbench.views.presentation.model.PresentationState;
 import org.rstudio.studio.client.workbench.views.source.events.CodeBrowserNavigationEvent;
+import org.rstudio.studio.client.workbench.views.source.events.CollabEditStartedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.DataViewChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.FileEditEvent;
 import org.rstudio.studio.client.workbench.views.source.events.ShowContentEvent;
@@ -649,6 +650,11 @@ public class ClientEventDispatcher
          {
             JumpToFunctionEvent.Data data = event.getData();
             eventBus_.fireEvent(new JumpToFunctionEvent(data));
+         }
+         else if (type.equals(ClientEvent.CollabEditStarted))
+         {
+            CollabEditStartedEvent.Data data = event.getData();
+            eventBus_.fireEvent(new CollabEditStartedEvent(data));
          }
          else
          {

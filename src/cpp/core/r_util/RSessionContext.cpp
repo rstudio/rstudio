@@ -33,19 +33,30 @@
 #include <core/system/System.hpp>
 #include <core/system/Environment.hpp>
 
-#define kSessionSuffix "-session"
+#include <core/r_util/RActiveSessions.hpp>
+#include <core/r_util/RProjectFile.hpp>
+
+#define kSessionSuffix "-d"
+#define kProjectNone   "none"
 
 namespace rstudio {
 namespace core {
 namespace r_util {
 
-SessionScope SessionScope::fromProjectPath(
-                               const std::string& projPath,
+SessionScope SessionScope::fromProject(
+                               std::string project,
                                const std::string& id,
                                const FilePathToProjectId& filePathToProjectId)
 {
-   std::string project = filePathToProjectId(projPath);
-   return SessionScope(project, id);
+   if (project != kProjectNone)
+   {
+      project = filePathToProjectId(project);
+      return SessionScope(project, id);
+   }
+   else
+   {
+      return projectNone(id);
+   }
 }
 
 
@@ -63,10 +74,55 @@ SessionScope SessionScope::fromProjectId(const std::string& project,
    return SessionScope(project, id);
 }
 
-
-SessionScope SessionScope::projectNone()
+SessionScope SessionScope::projectNone(const std::string& id)
 {
-   return SessionScope("c005c13362fc48e9b486451c0fc7847a", "1");
+   return SessionScope(kProjectNoneId, id);
+}
+
+bool SessionScope::isProjectNone() const
+{
+   return project() == kProjectNoneId;
+}
+
+bool validateSessionScopeId(const FilePath& userScratchPath,
+                            const std::string& id)
+{
+   r_util::ActiveSessions activeSessions(userScratchPath);
+   boost::shared_ptr<r_util::ActiveSession> pSession = activeSessions.get(id);
+   return pSession->hasRequiredProperties();
+}
+
+bool validateProjectSessionScope(
+           const SessionScope& scope,
+           const core::FilePath& userHomePath,
+           const core::FilePath& userScratchPath,
+           core::r_util::ProjectIdToFilePath projectIdToFilePath,
+           std::string* pProjectFilePath)
+{
+   // lookup the project path by id
+   std::string project = r_util::SessionScope::projectPathForScope(
+                                   scope,
+                                   projectIdToFilePath);
+   if (!project.empty())
+   {
+      FilePath projectDir = FilePath::resolveAliasedPath(project, userHomePath);
+      if (projectDir.exists())
+      {
+         FilePath projectPath = r_util::projectFromDirectory(projectDir);
+
+         if (projectPath.exists())
+         {
+            if (validateSessionScopeId(userScratchPath, scope.id()))
+            {
+               *pProjectFilePath = projectPath.absolutePath();
+               return true;
+            }
+         }
+      }
+   }
+
+   // didn't succeed in validating the path
+   return false;
 }
 
 std::string urlPathForSessionScope(const SessionScope& scope)
@@ -85,7 +141,7 @@ void parseSessionUrl(const std::string& url,
                      std::string* pUrlPrefix,
                      std::string* pUrlWithoutPrefix)
 {
-   static boost::regex re("/s/([A-Fa-f0-9]{32})(\\d+)/");
+   static boost::regex re("/s/([A-Fa-f0-9]{8})([A-Fa-f0-9]{8})/");
 
    boost::smatch match;
    if (boost::regex_search(url, match, re))
@@ -151,9 +207,10 @@ std::string sessionScopeFile(std::string prefix,
    std::string project = scope.project();
    if (!project.empty())
    {
-      // pluralize the prefix so there is no conflict when switching
-      // between the single file and directory based schemas
-      prefix += "s";
+      // pluralize in the presence of project context so there
+      // is no conflict when switching between single and multi-session
+      if (!scope.project().empty())
+         prefix += "s";
 
       if (!boost::algorithm::starts_with(project, "/"))
          project = "/" + project;
@@ -169,9 +226,58 @@ std::string sessionScopeFile(std::string prefix,
    return prefix + project + scope.id();
 }
 
+std::string sessionScopePrefix(const std::string& username)
+{
+   return username + kSessionSuffix;
+}
+
+std::string sessionScopesPrefix(const std::string& username)
+{
+   // pluralize the prefix so there is no conflict when switching
+   // between the single file and directory based schemas
+   return username + kSessionSuffix "s";
+}
+
 std::string sessionContextFile(const SessionContext& context)
 {
-   return sessionScopeFile(context.username + kSessionSuffix, context.scope);
+   return sessionScopeFile(sessionScopePrefix(context.username), context.scope);
+}
+
+std::string generateScopeId()
+{
+   std::vector<std::string> reserved;
+   reserved.push_back(kProjectNoneId);
+   reserved.push_back(kWorkspacesId);
+   return generateScopeId(reserved);
+}
+
+std::string generateScopeId(const std::vector<std::string>& reserved)
+{
+   // generate id
+   std::string id = core::string_utils::toLower(
+                                 core::system::generateShortenedUuid());
+
+   // ensure 8 chracters
+   const size_t kLen = 8;
+   if (id.length() != kLen)
+   {
+      if (id.length() > kLen)
+      {
+         id = id.substr(0, kLen);
+      }
+      else
+      {
+         size_t diff = kLen - id.length();
+         std::string pad(diff, 'f');
+         id += pad;
+      }
+   }
+
+   // try again if this id is reserved
+   if (std::find(reserved.begin(), reserved.end(), id) != reserved.end())
+      return generateScopeId(reserved);
+   else
+      return id;
 }
 
 } // namespace r_util

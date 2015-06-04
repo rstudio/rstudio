@@ -659,6 +659,12 @@ public class CodeBrowserEditingTarget implements EditingTarget
    {
       docDisplay_.endDebugHighlighting();      
    } 
+   
+   @Override 
+   public void beginCollabSession(String url)
+   {
+      // collaborative editing isn't supported in the code browser
+   }
 
    // Private methods --------------------------------------------------------
    

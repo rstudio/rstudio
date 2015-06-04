@@ -36,6 +36,8 @@ import org.rstudio.studio.client.application.ui.ApplicationHeader;
 import org.rstudio.studio.client.application.ui.GlobalToolbar;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.debugging.ErrorManager;
+import org.rstudio.studio.client.events.BeginPasteEvent;
+import org.rstudio.studio.client.events.EndPasteEvent;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.codesearch.CodeSearch;
@@ -55,7 +57,11 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
+import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.user.client.Event;
+import com.google.gwt.user.client.Event.NativePreviewHandler;
 import com.google.gwt.user.client.Timer;
+import com.google.gwt.user.client.Event.NativePreviewEvent;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -214,6 +220,28 @@ public class DesktopApplicationHeader implements ApplicationHeader
    @Handler
    void onPasteDummy()
    {
+      eventBus_.fireEvent(new BeginPasteEvent());
+      keyListener_ = Event.addNativePreviewHandler(new NativePreviewHandler()
+      {
+         
+         @Override
+         public void onPreviewNativeEvent(NativePreviewEvent event)
+         {
+            // Defer so that this event can go through and execute unabated
+            Scheduler.get().scheduleDeferred(new ScheduledCommand()
+            {
+               
+               @Override
+               public void execute()
+               {
+                  eventBus_.fireEvent(new EndPasteEvent());
+                  keyListener_.removeHandler();
+                  keyListener_ = null;
+               }
+            });
+         }
+      });
+      
       Desktop.getFrame().clipboardPaste();
    }
 
@@ -364,4 +392,5 @@ public class DesktopApplicationHeader implements ApplicationHeader
    private IgnoredUpdates ignoredUpdates_;
    private boolean ignoredUpdatesDirty_ = false;
    private ApplicationQuit appQuit_; 
+   private HandlerRegistration keyListener_;
 }

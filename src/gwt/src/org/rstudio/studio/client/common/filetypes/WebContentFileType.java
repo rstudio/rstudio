@@ -49,8 +49,6 @@ public class WebContentFileType extends TextFileType
             true,
             false,
             false);
-      
-      isMarkdown_ = isMarkdown;
    }
    
    @Override
@@ -59,6 +57,4 @@ public class WebContentFileType extends TextFileType
       HashSet<AppCommand> result = super.getSupportedCommands(commands);
       return result;
    }
-   
-   private final boolean isMarkdown_;
 }

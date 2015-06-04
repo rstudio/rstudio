@@ -803,7 +803,7 @@ public class Projects implements OpenProjectFileHandler,
    private void serverOpenProjectInNewWindow(FileSystemItem project,
                                              final Command onSuccess)
    {
-      projServer_.getProjectUrl(
+      projServer_.getNewSessionUrl(
                     GWT.getHostPageBaseURL(),
                     project.getParentPathString(), 
         new SimpleRequestCallback<String>() {

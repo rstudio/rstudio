@@ -767,9 +767,29 @@ Error getGridData(const http::Request& request,
 
    std::ostringstream ostr;
    json::write(result, ostr);
+
+   // There are some unprintable ASCII control characters that are written
+   // verbatim by json::write, but that won't parse in most Javascript JSON
+   // parsing implementations, even if contained in a string literal. Scan the
+   // output data for these characters and replace them with spaces. Escaping
+   // is another option here for some character ranges but since (a) these are
+   // unprintable and (b) some characters are invalid *even if escaped* e.g.
+   // \v, there's little to be gained here in trying to marshal them to the
+   // viewer.
+   std::string output = ostr.str();
+   for (size_t i = 0; i < output.size(); i++) 
+   {
+      char c = output[i];
+      // These ranges for control character values come from empirical testing
+      if ((c >= 1 && c <= 7) || c == 11 || (c >= 14 && c <= 31))
+      {
+         output[i] = ' ';
+      }
+   }
+ 
    pResponse->setNoCacheHeaders();    // don't cache data/grid shape
    pResponse->setStatusCode(status);
-   pResponse->setBody(ostr.str());
+   pResponse->setBody(output);
 
    return Success();
 }

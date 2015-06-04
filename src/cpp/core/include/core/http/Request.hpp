@@ -72,6 +72,8 @@ public:
    
    boost::posix_time::ptime ifModifiedSince() const;
    
+   std::string path() const;
+
    std::string queryString() const;
    const Fields& queryParams() const;
    std::string queryParamValue(const std::string& name) const;

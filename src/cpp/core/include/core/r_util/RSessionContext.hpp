@@ -17,8 +17,12 @@
 #define CORE_R_UTIL_R_SESSION_CONTEXT_HPP
 
 #include <string>
+#include <vector>
 
 #include <boost/function.hpp>
+
+#define kProjectNoneId "cfc78a31"
+#define kWorkspacesId  "3c286bd3"
 
 namespace rstudio {
 namespace core {
@@ -40,8 +44,8 @@ private:
 
 public:
 
-   static SessionScope fromProjectPath(
-                           const std::string& projPath,
+   static SessionScope fromProject(
+                           std::string project,
                            const std::string& id,
                            const FilePathToProjectId& filePathToProjectId);
 
@@ -52,11 +56,13 @@ public:
    static SessionScope fromProjectId(const std::string& project,
                                      const std::string& id);
 
-   static SessionScope projectNone();
+   static SessionScope projectNone(const std::string& id);
 
    SessionScope()
    {
    }
+
+   bool isProjectNone() const;
 
    const std::string& project() const { return project_; }
 
@@ -82,6 +88,16 @@ private:
    std::string id_;
 };
 
+
+bool validateSessionScopeId(const FilePath& userScratchPath,
+                            const std::string& id);
+
+bool validateProjectSessionScope(
+           const SessionScope& scope,
+           const core::FilePath& userHomePath,
+           const core::FilePath& userScratchPath,
+           core::r_util::ProjectIdToFilePath projectIdToFilePath,
+           std::string* pProjectFilePath);
 
 std::string urlPathForSessionScope(const SessionScope& scope);
 
@@ -126,7 +142,15 @@ std::ostream& operator<< (std::ostream& os, const SessionContext& context);
 std::string sessionScopeFile(std::string prefix,
                              const SessionScope& scope);
 
+std::string sessionScopePrefix(const std::string& username);
+
+std::string sessionScopesPrefix(const std::string& username);
+
 std::string sessionContextFile(const SessionContext& context);
+
+std::string generateScopeId();
+std::string generateScopeId(const std::vector<std::string>& reserved);
+
 
 } // namespace r_util
 } // namespace core 

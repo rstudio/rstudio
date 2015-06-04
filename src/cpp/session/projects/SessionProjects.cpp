@@ -77,19 +77,27 @@ Error getNewProjectContext(const json::JsonRpcRequest& request,
    return Success();
 }
 
-Error getProjectUrl(const json::JsonRpcRequest& request,
-                    json::JsonRpcResponse* pResponse)
+Error getNewSessionUrl(const json::JsonRpcRequest& request,
+                       json::JsonRpcResponse* pResponse)
 {
    // read params
-   std::string hostPageUrl, projectDir;
-   Error error = json::readParams(request.params, &hostPageUrl, &projectDir);
+   std::string hostPageUrl, project;
+   Error error = json::readParams(request.params, &hostPageUrl, &project);
    if (error)
       return error;
 
-   r_util::SessionScope scope = r_util::SessionScope::fromProjectPath(
-                     projectDir,
-                     "1",
-                     filePathToProjectId(module_context::userScratchPath()));
+   // allocate a new session
+   std::string id;
+   error = module_context::activeSessions().create(project, &id);
+   if (error)
+      return error;
+
+   // create the scope
+   r_util::SessionScope scope = r_util::SessionScope::fromProject(
+                    project,
+                    id,
+                    filePathToProjectId(module_context::userScratchPath()));
+
    pResponse->setResult(r_util::createSessionUrl(hostPageUrl, scope));
 
    return Success();
@@ -543,7 +551,7 @@ void startup()
    FilePath lastProjectPath = projSettings.lastProjectPath();
 
    // check for explicit project none scope
-   if (session::options().sessionScope() == r_util::SessionScope::projectNone())
+   if (session::options().sessionScope().isProjectNone())
    {
       projectFilePath = resolveProjectSwitch(kProjectNone);
    }
@@ -621,18 +629,7 @@ void startup()
          openProjError["message"] = userErrMsg;
          ClientEvent event(client_events::kOpenProjectError, openProjError);
          module_context::enqueClientEvent(event);
-
-         projSettings.setLastProjectOpened(kProjectNone);
       }
-      else
-      {
-         projSettings.setLastProjectOpened(
-                 module_context::createAliasedPath(projectFilePath));
-      }
-   }
-   else
-   {
-      projSettings.setLastProjectOpened(kProjectNone);
    }
 }
 
@@ -694,7 +691,7 @@ Error initialize()
    ExecBlock initBlock ;
    initBlock.addFunctions()
       (bind(registerRpcMethod, "get_new_project_context", getNewProjectContext))
-      (bind(registerRpcMethod, "get_project_url", getProjectUrl))
+      (bind(registerRpcMethod, "get_new_session_url", getNewSessionUrl))
       (bind(registerRpcMethod, "create_project", createProject))
       (bind(registerRpcMethod, "read_project_options", readProjectOptions))
       (bind(registerRpcMethod, "write_project_options", writeProjectOptions))

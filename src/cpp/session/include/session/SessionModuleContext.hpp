@@ -30,6 +30,7 @@
 #include <core/http/UriHandler.hpp>
 #include <core/json/JsonRpc.hpp>
 #include <core/r_util/RToolsInfo.hpp>
+#include <core/r_util/RActiveSessions.hpp>
 #include <core/Thread.hpp>
 
 #include <session/SessionOptions.hpp>
@@ -82,6 +83,7 @@ std::string createFileUrl(const core::FilePath& path);
 core::FilePath resolveAliasedPath(const std::string& aliasedPath);
 core::FilePath userScratchPath();
 core::FilePath scopedScratchPath();
+core::FilePath sessionScratchPath();
 core::FilePath oldScopedScratchPath();
 bool isVisibleUserFile(const core::FilePath& filePath);
 
@@ -90,6 +92,10 @@ core::FilePath safeCurrentPath();
 core::json::Object createFileSystemItem(const core::FileInfo& fileInfo);
 core::json::Object createFileSystemItem(const core::FilePath& filePath);
    
+// active sessions
+core::r_util::ActiveSession& activeSession();
+core::r_util::ActiveSessions& activeSessions();
+
 // get a temp file
 core::FilePath tempFile(const std::string& prefix, 
                         const std::string& extension);

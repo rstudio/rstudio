@@ -213,6 +213,10 @@ bool s_rSessionResumed = false;
 // url for next session
 std::string s_nextSessionUrl;
 
+// indicates whether we should destroy the session at cleanup time
+// (true if the user does a full quit)
+bool s_destroySession = false;
+
 // manage global state indicating whether R is processing input
 volatile sig_atomic_t s_rProcessingInput = 0;
 
@@ -895,7 +899,8 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
                   r_util::SessionScope scope;
                   if (switchToProject == kProjectNone)
                   {
-                     scope = r_util::SessionScope::projectNone();
+                     scope = r_util::SessionScope::projectNone(
+                                          options().sessionScope().id());
                   }
                   else
                   {
@@ -904,9 +909,9 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
                      FilePath projFile = resolveAliasedPath(switchToProject);
                      std::string projDir = createAliasedPath(projFile.parent());
 
-                     scope = r_util::SessionScope::fromProjectPath(
+                     scope = r_util::SessionScope::fromProject(
                               projDir,
-                              "1",
+                              options().sessionScope().id(),
                               filePathToProjectId(options().userScratchPath()));
                   }
 
@@ -1098,14 +1103,14 @@ void polledEventHandler()
    }
 }
 
-bool suspendSession(bool force)
+bool suspendSession(bool force, int status = EXIT_SUCCESS)
 {
    // need to make sure the global environment is loaded before we
    // attemmpt to save it!
    rstudio::r::session::ensureDeserialized();
 
    // perform the suspend (does not return if successful)
-   return rstudio::r::session::suspend(force);
+   return rstudio::r::session::suspend(force, status);
 }
 
 void suspendIfRequested(const boost::function<bool()>& allowSuspend)
@@ -1135,7 +1140,7 @@ void suspendIfRequested(const boost::function<bool()>& allowSuspend)
       }
 
       // execute the forced suspend (does not return)
-      suspendSession(true);
+      suspendSession(true, EX_FORCE);
    }
 
    // cooperative suspend request
@@ -2229,6 +2234,9 @@ void rQuit()
                               .switchToProjectPath().empty();
    }
 
+   // if we aren't switching projects then destroy the active session at cleanup
+   s_destroySession = !switchProjects;
+
    json::Object jsonData;
    jsonData["switch_projects"] = switchProjects;
    jsonData["next_session_url"] = s_nextSessionUrl;
@@ -2288,6 +2296,14 @@ void rCleanup(bool terminatedNormally)
 
       // fire shutdown event to modules
       module_context::events().onShutdown(terminatedNormally);
+
+      // destroy session if requested
+      if (s_destroySession)
+      {
+         Error error = module_context::activeSession().destroy();
+         if (error)
+            LOG_ERROR(error);
+      }
 
       // cause graceful exit of clientEventService (ensures delivery
       // of any pending events prior to process termination). wait a
@@ -3070,11 +3086,10 @@ int main (int argc, char * const argv[])
       rOptions.userHomePath = options.userHomePath();
       rOptions.userScratchPath = userScratchPath;
       rOptions.scopedScratchPath = module_context::scopedScratchPath();
+      rOptions.sessionScratchPath = module_context::sessionScratchPath();
       rOptions.logPath = options.userLogPath();
       rOptions.sessionPort = options.wwwPort();
       rOptions.startupEnvironmentFilePath = getStartupEnvironmentFilePath();
-      rOptions.persistentState = boost::bind(&PersistentState::settings,
-                                             &(persistentState()));
       rOptions.rEnvironmentDir = boost::bind(rEnvironmentDir);
       rOptions.rHistoryDir = boost::bind(rHistoryDir);
       rOptions.alwaysSaveHistory = boost::bind(alwaysSaveHistoryOption);
@@ -3095,6 +3110,7 @@ int main (int argc, char * const argv[])
       rOptions.saveWorkspace = saveWorkspaceOption();
       rOptions.rProfileOnResume = serverMode &&
                                   userSettings().rProfileOnResume();
+      rOptions.sessionScope = options.sessionScope();
       
       // r callbacks
       rstudio::r::session::RCallbacks rCallbacks;

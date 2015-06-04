@@ -11,12 +11,13 @@
 
 ### R Markdown
 
-* New run chunk button overlaid at the top right of chunks in the editor
+* New run chunk and options buttons overlaid at the top right of chunks
 * New shortcut for run current chunk (Cmd+Shift+Enter)
 
 
 ### Miscellaneous
 
+* Raise limit on shinyapps uploads to 1GB from 100MB
 * 'Edit -> Replace and Find' opens Find toolbar if not already open (e.g. with Cmd+Shift+J)
 * Improve performance of console for large and/or rapdily updating output
 * Roxygen quick reference available from the Help menu
@@ -27,11 +28,8 @@
 ### Server
 
 * Include active project in document title (caption of browser tab) 
-
-
-### Miscelleous
-
-* Raise limit on shinyapps uploads to 1GB from 100MB
+* Server Pro: Support for multiple concurrent R sessions per-user
+* Server Pro: Don't close PAM sessions by default (configurable via an option)
 
 
 ### Bug Fixes
@@ -44,3 +42,7 @@
 * Publish button shows in the editor and viewer at the appropriate times
 * Avoid spurious R warnings when autocompletions requested
 * Allow completions in statements following infix operators
+* Completions in Install Packages are now correct for the case of multiple active repositories.
+* Vim mode: prevent paste operation from entering visual mode via Ctrl+V cross-talk
+
+

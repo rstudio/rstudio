@@ -1288,14 +1288,14 @@ public class RemoteServer implements Server
    }
    
    @Override
-   public void getProjectUrl(String hostPageUrl,
-                             String projectDir, 
-                             ServerRequestCallback<String> callback)
+   public void getNewSessionUrl(String hostPageUrl,
+                                String project, 
+                                ServerRequestCallback<String> callback)
    {
       JSONArray params = new JSONArray();
       params.set(0,  new JSONString(hostPageUrl));
-      params.set(1, new JSONString(projectDir));
-      sendRequest(RPC_SCOPE, GET_PROJECT_URL, params, callback);
+      params.set(1, new JSONString(project));
+      sendRequest(RPC_SCOPE, GET_NEW_SESSION_URL, params, callback);
    }
    
    @Override
@@ -4234,7 +4234,7 @@ public class RemoteServer implements Server
    private static final String EXECUTE_R_CODE = "execute_r_code";
 
    private static final String GET_NEW_PROJECT_CONTEXT = "get_new_project_context";
-   private static final String GET_PROJECT_URL = "get_project_url";
+   private static final String GET_NEW_SESSION_URL = "get_new_session_url";
    private static final String CREATE_PROJECT = "create_project";
    private static final String READ_PROJECT_OPTIONS = "read_project_options";
    private static final String WRITE_PROJECT_OPTIONS = "write_project_options";

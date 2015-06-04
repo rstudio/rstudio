@@ -19,6 +19,7 @@
 #include <core/Error.hpp>
 #include <core/FilePath.hpp>
 
+#include <core/system/System.hpp>
 #include <core/system/PosixUser.hpp>
 
 #include <core/http/LocalStreamSocketUtils.hpp>
@@ -60,6 +61,10 @@ private:
       http::SocketAcceptorService<boost::asio::local::stream_protocol>*
                                                                   pAcceptor)
    {
+      Error error = writePidFile();
+      if (error)
+         return error;
+
       return http::initLocalStreamAcceptor(*pAcceptor,
                                            localStreamPath_,
                                            streamFileMode_);
@@ -109,15 +114,46 @@ private:
 
    virtual Error cleanup()
    {
+      Error error = cleanupPidFile();
+      if (error)
+         LOG_ERROR(error);
+
       return localStreamPath_.removeIfExists();
    }
-
 
 protected:
 
    virtual bool authenticate(boost::shared_ptr<HttpConnection> ptrConnection)
    {
       return connection::authenticate(ptrConnection, secret_);
+   }
+
+private:
+   Error writePidFile()
+   {
+      // get path to pid file
+      FilePath pidFile = pidFilePath();
+
+      // write pid to it
+      std::ostringstream ostr;
+      ostr << core::system::currentProcessId();
+      Error error = core::writeStringToFile(pidFile, ostr.str());
+      if (error)
+         return error;
+
+      // chmod to ensure other users can read the file
+      return changeFileMode(pidFile,
+                            core::system::UserReadWriteGroupEveryoneReadMode);
+   }
+
+   Error cleanupPidFile()
+   {
+      return pidFilePath().removeIfExists();
+   }
+
+   FilePath pidFilePath()
+   {
+      return FilePath(localStreamPath_.absolutePath() + ".pid");
    }
 
 private:

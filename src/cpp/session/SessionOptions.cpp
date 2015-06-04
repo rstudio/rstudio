@@ -30,6 +30,7 @@
 #include <core/r_util/RProjectFile.hpp>
 #include <core/r_util/RUserData.hpp>
 #include <core/r_util/RSessionContext.hpp>
+#include <core/r_util/RActiveSessions.hpp>
 
 #include <monitor/MonitorConstants.hpp>
 
@@ -503,28 +504,27 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
 
    // initial project (can either be a command line param or via env)
    r_util::SessionScope scope = sessionScope();
-   if (!scope.empty() && (scope != r_util::SessionScope::projectNone()))
+   if (!scope.empty())
    {
-      // lookup the project path by id
-      std::string project = r_util::SessionScope::projectPathForScope(
-                                      scope,
-                                      projectIdToFilePath(userScratchPath()));
-      if (!project.empty())
+      if (scope.isProjectNone())
       {
-         FilePath projectDir = FilePath::resolveAliasedPath(project,
-                                                           userHomePath());
-         if (projectDir.exists())
+         if (!r_util::validateSessionScopeId(userScratchPath(), scope.id()))
          {
-            FilePath projectPath = r_util::projectFromDirectory(projectDir);
-            if (projectPath.exists())
-               initialProjectPath_ = projectPath.absolutePath();
+            invalidScope_ = true;
          }
       }
-
-      // if we failed to set the initialProjectPath_ then our scope is invalid
-      if (initialProjectPath_.empty())
+      else
       {
-         invalidScope_ = true;
+         // validate scope and get initialProjectPath_ from scope if it's valid
+         if (!r_util::validateProjectSessionScope(
+                              scope,
+                              userHomePath(),
+                              userScratchPath(),
+                              projectIdToFilePath(userScratchPath()),
+                              &initialProjectPath_))
+         {
+            invalidScope_ = true;
+         }
       }
    }
    else

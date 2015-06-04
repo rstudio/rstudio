@@ -708,6 +708,15 @@ FilePath scopedScratchPath()
       return userScratchPath();
 }
 
+FilePath sessionScratchPath()
+{
+   r_util::ActiveSession& active = activeSession();
+   if (!active.empty())
+      return active.scratchPath();
+   else
+      return scopedScratchPath();
+}
+
 FilePath oldScopedScratchPath()
 {
    if (projects::projectContext().hasProject())
@@ -1161,6 +1170,31 @@ json::Object createFileSystemItem(const FilePath& filePath)
 {
    return createFileSystemItem(FileInfo(filePath));
 }
+
+r_util::ActiveSession& activeSession()
+{
+   static boost::shared_ptr<r_util::ActiveSession> pSession;
+   if (!pSession)
+   {
+      std::string id = options().sessionScope().id();
+      if (!id.empty())
+         pSession = activeSessions().get(id);
+      else
+         pSession = activeSessions().emptySession();
+   }
+   return *pSession;
+}
+
+
+r_util::ActiveSessions& activeSessions()
+{
+   static boost::shared_ptr<r_util::ActiveSessions> pSessions;
+   if (!pSessions)
+      pSessions.reset(new r_util::ActiveSessions(userScratchPath()));
+   return *pSessions;
+}
+
+
 
 std::string libPathsString()
 {

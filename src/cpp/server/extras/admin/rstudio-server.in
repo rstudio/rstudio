@@ -37,7 +37,7 @@ case "$1" in
     stop)
         daemonCmd "stop"
         killall -s USR2 $2 $3 $4 $5 $6 $7 $8 $9  rsession
-        killall -s USR2 $2 $3 $4 $5 $6 $7 $8 $9  rworkspaces
+        killall -s USR2 $2 $3 $4 $5 $6 $7 $8 $9  rworkspaces 2>/dev/null
         ;;
 
     restart)
@@ -67,7 +67,7 @@ case "$1" in
 
     suspend-all)
         killall -s USR1 $2 $3 $4 $5 $6 $7 $8 $9 rsession
-        killall -s USR1 $2 $3 $4 $5 $6 $7 $8 $9 rworkspaces
+        killall -s USR1 $2 $3 $4 $5 $6 $7 $8 $9 rworkspaces 2>/dev/null
         ;;
 
     force-suspend-session)
@@ -82,7 +82,7 @@ case "$1" in
 
     force-suspend-all)
         killall -s USR2 $2 $3 $4 $5 $6 $7 $8 $9  rsession
-        killall -s USR2 $2 $3 $4 $5 $6 $7 $8 $9  rworkspaces
+        killall -s USR2 $2 $3 $4 $5 $6 $7 $8 $9  rworkspaces 2>/dev/null
         ;;
 
     offline)
