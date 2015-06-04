@@ -747,6 +747,12 @@ public class TextEditingTarget implements
       updateDebugWarningBar();
    }
    
+   @Override
+   public void beginCollabSession(String serverUrl)
+   {
+      docDisplay_.beginCollabSession(serverUrl);
+   }
+   
    private void updateDebugWarningBar()
    {
       // show the warning bar if we're debugging and the document is dirty

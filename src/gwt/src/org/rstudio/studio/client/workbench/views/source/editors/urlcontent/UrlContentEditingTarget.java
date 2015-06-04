@@ -273,6 +273,11 @@ public class UrlContentEditingTarget implements EditingTarget
    {
    } 
    
+   @Override
+   public void beginCollabSession(String serverUrl)
+   {
+   }
+   
    public boolean onBeforeDismiss()
    {
       return true;

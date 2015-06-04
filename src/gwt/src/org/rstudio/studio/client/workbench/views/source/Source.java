@@ -435,6 +435,23 @@ public class Source implements InsertSourceHandler,
          }
       });
       
+      events.addHandler(CollabEditStartedEvent.TYPE, 
+    		  new CollabEditStartedEvent.Handler() 
+      {
+         @Override
+         public void onCollabEditStarted(CollabEditStartedEvent collab) 
+         {
+            for (int i = 0; i < editors_.size(); i++)
+            {
+               String path = editors_.get(i).getPath();
+               if (path != null && path.equals(collab.getPath()))
+               {
+                  editors_.get(i).beginCollabSession(collab.getUrl());
+               }
+            }
+         }
+      });
+      
       // Suppress 'CTRL + ALT + SHIFT + click' to work around #2483 in Ace
       Event.addNativePreviewHandler(new NativePreviewHandler()
       {
