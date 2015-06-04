@@ -629,18 +629,7 @@ void startup()
          openProjError["message"] = userErrMsg;
          ClientEvent event(client_events::kOpenProjectError, openProjError);
          module_context::enqueClientEvent(event);
-
-         projSettings.setLastProjectOpened(kProjectNone);
       }
-      else
-      {
-         projSettings.setLastProjectOpened(
-                 module_context::createAliasedPath(projectFilePath));
-      }
-   }
-   else
-   {
-      projSettings.setLastProjectOpened(kProjectNone);
    }
 }
 

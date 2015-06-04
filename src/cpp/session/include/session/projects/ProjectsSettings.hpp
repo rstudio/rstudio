@@ -31,7 +31,6 @@
 #define kSwitchToProject               "switch-to-project"
 #define kProjectNone                   "none"
 #define kLastProjectPath               "last-project-path"
-#define kLastProjectOpenedPath         "last-project-opened-path"
 #define kAlwaysRestoreLastProject      "restoreLastProject"
 
 namespace rstudio {
@@ -81,27 +80,6 @@ public:
          writeSetting(kLastProjectPath, lastProjectPath.absolutePath());
       else
          writeSetting(kLastProjectPath, "");
-   }
-
-   std::string lastProjectOpened() const
-   {
-      std::string value = readSetting(kLastProjectOpenedPath);
-
-      // if we've never set this value before then migrate whatever
-      // value happens to be in nextSessionProject
-      if (value.empty())
-         value = nextSessionProject();
-
-      // if the value is still empty then set it to 'none'
-      if (value.empty())
-         value = kProjectNone;
-
-      return value;
-   }
-
-   void setLastProjectOpened(const std::string& lastProject)
-   {
-      writeSetting(kLastProjectOpenedPath, lastProject);
    }
 
    std::string readSetting(const char * const settingName) const
