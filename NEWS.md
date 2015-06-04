@@ -17,6 +17,7 @@
 
 ### Miscellaneous
 
+* New Session command (create new R session with same project or working directory)
 * Raise limit on shinyapps uploads to 1GB from 100MB
 * 'Edit -> Replace and Find' opens Find toolbar if not already open (e.g. with Cmd+Shift+J)
 * Improve performance of console for large and/or rapdily updating output
@@ -28,6 +29,7 @@
 ### Server
 
 * Include active project in document title (caption of browser tab) 
+* Quit session command now accessible from global toolbar
 * Server Pro: Support for multiple concurrent R sessions per-user
 * Server Pro: Don't close PAM sessions by default (configurable via an option)
 

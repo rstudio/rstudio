@@ -283,6 +283,17 @@ public class Workbench implements BusyHandler,
    }
    
    @Handler
+   void onNewSession()
+   {
+      String project = workbenchContext_.getActiveProjectFile();
+      if (project != null)
+         Desktop.getFrame().openProjectInNewWindow(project); 
+      else 
+         Desktop.getFrame().openSessionInNewWindow(
+               workbenchContext_.getCurrentWorkingDir().getPath());
+   }
+   
+   @Handler
    public void onSourceFile()
    {
       fileDialogs_.openFile(

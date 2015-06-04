@@ -320,6 +320,7 @@ public abstract class
    public abstract AppCommand viewerCopyToClipboard();
 
    // Application
+   public abstract AppCommand newSession();
    public abstract AppCommand quitSession();
    public abstract AppCommand updateCredentials();
    public abstract AppCommand diagnosticsReport();

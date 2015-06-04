@@ -34,6 +34,7 @@
 #include <core/SafeConvert.hpp>
 #include <core/system/System.hpp>
 #include <core/system/Environment.hpp>
+#include <core/r_util/RUserData.hpp>
 
 #include "DesktopAboutDialog.hpp"
 #include "DesktopOptions.hpp"
@@ -852,6 +853,16 @@ int GwtCallback::collectPendingQuitRequest()
 void GwtCallback::openProjectInNewWindow(QString projectFilePath)
 {
    launchProjectInNewInstance(resolveAliasedPath(projectFilePath));
+}
+
+void GwtCallback::openSessionInNewWindow(QString workingDirectoryPath)
+{
+   workingDirectoryPath = resolveAliasedPath(workingDirectoryPath);
+   core::system::setenv(kRStudioInitialWorkingDir,
+                        workingDirectoryPath.toStdString());
+   QString exePath = QString::fromUtf8(
+      desktop::options().executablePath().absolutePath().c_str());
+   QProcess::startDetached(exePath);
 }
 
 void GwtCallback::openTerminal(QString terminalPath,

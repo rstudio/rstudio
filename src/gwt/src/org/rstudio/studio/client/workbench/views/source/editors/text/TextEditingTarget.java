@@ -1978,6 +1978,8 @@ public class TextEditingTarget implements
       
       while (releaseOnDismiss_.size() > 0)
          releaseOnDismiss_.remove(0).removeHandler();
+      
+      docDisplay_.endCollabSession();
 
       codeExecution_.detachLastExecuted();
    }

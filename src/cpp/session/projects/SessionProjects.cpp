@@ -77,33 +77,6 @@ Error getNewProjectContext(const json::JsonRpcRequest& request,
    return Success();
 }
 
-Error getNewSessionUrl(const json::JsonRpcRequest& request,
-                       json::JsonRpcResponse* pResponse)
-{
-   // read params
-   std::string hostPageUrl, project;
-   Error error = json::readParams(request.params, &hostPageUrl, &project);
-   if (error)
-      return error;
-
-   // allocate a new session
-   std::string id;
-   error = module_context::activeSessions().create(project, &id);
-   if (error)
-      return error;
-
-   // create the scope
-   r_util::SessionScope scope = r_util::SessionScope::fromProject(
-                    project,
-                    id,
-                    filePathToProjectId(module_context::userScratchPath()));
-
-   pResponse->setResult(r_util::createSessionUrl(hostPageUrl, scope));
-
-   return Success();
-}
-
-
 Error createProject(const json::JsonRpcRequest& request,
                     json::JsonRpcResponse* pResponse)
 {
@@ -691,7 +664,6 @@ Error initialize()
    ExecBlock initBlock ;
    initBlock.addFunctions()
       (bind(registerRpcMethod, "get_new_project_context", getNewProjectContext))
-      (bind(registerRpcMethod, "get_new_session_url", getNewSessionUrl))
       (bind(registerRpcMethod, "create_project", createProject))
       (bind(registerRpcMethod, "read_project_options", readProjectOptions))
       (bind(registerRpcMethod, "write_project_options", writeProjectOptions))

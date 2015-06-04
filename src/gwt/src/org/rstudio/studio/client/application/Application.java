@@ -651,6 +651,12 @@ public class Application implements ApplicationEventHandlers
          commands_.zoomOut().remove();
       }
       
+      // hide new session in web mode
+      if (!Desktop.isDesktop())
+      {
+         commands_.newSession().remove();
+      }
+      
       // toolbar (must be after call to showWorkbenchView because
       // showing the toolbar repositions the workbench view widget)
       showToolbar( uiPrefs_.get().toolbarVisible().getValue());

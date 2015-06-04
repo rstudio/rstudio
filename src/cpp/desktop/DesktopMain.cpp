@@ -64,6 +64,11 @@ void initializeWorkingDirectory(int argc,
                                 char* argv[],
                                 const QString& filename)
 {
+   // bail if we've already got a working directory as a result of
+   // a call to openSessionInNewWindow
+   if (!core::system::getenv(kRStudioInitialWorkingDir).empty())
+      return;
+
    // calculate what our initial working directory should be
    std::string workingDir;
 

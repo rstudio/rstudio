@@ -398,10 +398,12 @@ public class AceEditor implements DocDisplay,
 
    @Inject
    void initialize(CodeToolsServerOperations server,
-                   UIPrefs uiPrefs)
+                   UIPrefs uiPrefs,
+                   CollabEditor collab)
    {
       server_ = server;
       uiPrefs_ = uiPrefs;
+      collab_ = collab;
    }
 
    public TextFileType getFileType()
@@ -2308,6 +2310,12 @@ public class AceEditor implements DocDisplay,
 
    public void beginCollabSession(String serverUrl)
    {
+      collab_.beginCollabSession(this, serverUrl);
+   }
+   
+   public void endCollabSession()
+   {
+      collab_.endCollabSession(this);
    }
 
    private static final int DEBUG_CONTEXT_LINES = 2;
@@ -2316,6 +2324,7 @@ public class AceEditor implements DocDisplay,
    private CompletionManager completionManager_;
    private CodeToolsServerOperations server_;
    private UIPrefs uiPrefs_;
+   private CollabEditor collab_;
    private TextFileType fileType_;
    private boolean passwordMode_;
    private boolean useVimMode_ = false;

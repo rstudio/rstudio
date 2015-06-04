@@ -238,6 +238,8 @@ well as menu structures (for main menu and popup menus).
       <separator/>
       
       <menu label="_Session">
+         <cmd refid="newSession"/>
+         <separator/>
          <cmd refid="interruptR"/>
          <cmd refid="restartR"/>
          <separator/> 
@@ -255,6 +257,8 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="saveWorkspace"/>
          <separator/>
          <cmd refid="clearWorkspace"/>
+         <separator/>
+         <cmd refid="quitSession"/>
       </menu>
         
       <menu label="_Build">
@@ -444,8 +448,8 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="jumpTo" value="Shift+Alt+J" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="jumpTo" value="Cmd+Shift+Alt+J" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="jumpToMatching" value="Ctrl+P"/>
-         <shortcut refid="selectToMatching" value="Ctrl+Shift+Alt+E"/>
-         <shortcut refid="expandToMatching" value="Ctrl+Shift+E"/>
+         <shortcut refid="expandToMatching" value="Ctrl+Shift+E" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+         <shortcut refid="expandToMatching" value="Ctrl+Shift+Alt+E" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="splitIntoLines" value="Cmd+Alt+A"/>
          <shortcut refid="showDocumentOutline" value="Ctrl+Alt+G"/>
          <shortcut value="Ctrl+Alt+Up" title="Add cursor above current cursor"/>
@@ -1401,8 +1405,12 @@ well as menu structures (for main menu and popup menus).
         menuLabel="_Import Editor Contents..."/>
    <cmd id="refreshSuperDevMode"/>
 
+   <cmd id="newSession"
+        menuLabel="_New Session"/>
+
    <cmd id="quitSession"
-        menuLabel="_Quit RStudio..."/>
+        menuLabel="_Quit Session..."
+        desc="Quit the current R session"/>
 
    <cmd id="showAboutDialog"
         menuLabel="_About RStudio"/>
