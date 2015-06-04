@@ -336,6 +336,7 @@ public class TextEditingTargetWidget
                               destination * interpolated +
                               initialSize * (1 - interpolated);
                         editorPanel_.setWidgetSize(docOutlineWidget_, size);
+                        editor_.onResize();
                      }
                   }.run(700);
                }
