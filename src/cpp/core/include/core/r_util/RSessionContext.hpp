@@ -87,6 +87,13 @@ private:
 };
 
 
+bool validateProjectSessionScope(
+           const SessionScope& scope,
+           const core::FilePath& userHomePath,
+           const core::FilePath& userScratchPath,
+           core::r_util::ProjectIdToFilePath projectIdToFilePath,
+           std::string* pProjectFilePath);
+
 std::string urlPathForSessionScope(const SessionScope& scope);
 
 std::string createSessionUrl(const std::string& hostPageUrl,

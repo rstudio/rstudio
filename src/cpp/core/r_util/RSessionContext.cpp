@@ -33,6 +33,9 @@
 #include <core/system/System.hpp>
 #include <core/system/Environment.hpp>
 
+#include <core/r_util/RActiveSessions.hpp>
+#include <core/r_util/RProjectFile.hpp>
+
 #define kSessionSuffix "-session"
 #define kProjectNone   "none"
 
@@ -79,6 +82,42 @@ SessionScope SessionScope::projectNone(const std::string& id)
 bool SessionScope::isProjectNone() const
 {
    return project() == kProjectNoneId;
+}
+
+bool validateProjectSessionScope(
+           const SessionScope& scope,
+           const core::FilePath& userHomePath,
+           const core::FilePath& userScratchPath,
+           core::r_util::ProjectIdToFilePath projectIdToFilePath,
+           std::string* pProjectFilePath)
+{
+   // lookup the project path by id
+   std::string project = r_util::SessionScope::projectPathForScope(
+                                   scope,
+                                   projectIdToFilePath);
+   if (!project.empty())
+   {
+      FilePath projectDir = FilePath::resolveAliasedPath(project, userHomePath);
+      if (projectDir.exists())
+      {
+         FilePath projectPath = r_util::projectFromDirectory(projectDir);
+
+         if (projectPath.exists())
+         {
+            r_util::ActiveSessions activeSessions(userScratchPath);
+            boost::shared_ptr<r_util::ActiveSession> pSession =
+                                        activeSessions.get(scope.id());
+            if (pSession->hasRequiredProperties())
+            {
+               *pProjectFilePath = projectPath.absolutePath();
+               return true;
+            }
+         }
+      }
+   }
+
+   // didn't succeed in validating the path
+   return false;
 }
 
 std::string urlPathForSessionScope(const SessionScope& scope)
