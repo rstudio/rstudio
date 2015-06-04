@@ -19,11 +19,9 @@ import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.dom.client.KeyCodes;
-import com.google.gwt.event.dom.client.MouseDownEvent;
 import com.google.gwt.event.logical.shared.*;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.json.client.JSONString;
@@ -34,7 +32,6 @@ import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Event.NativePreviewEvent;
 import com.google.gwt.user.client.Event.NativePreviewHandler;
 import com.google.gwt.user.client.Timer;
-import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -439,7 +436,7 @@ public class Source implements InsertSourceHandler,
       });
       
       events.addHandler(CollabEditStartedEvent.TYPE, 
-    		  new CollabEditStartedEvent.Handler() 
+            new CollabEditStartedEvent.Handler() 
       {
          @Override
          public void onCollabEditStarted(CollabEditStartedEvent collab) 
@@ -2085,43 +2082,8 @@ public class Source implements InsertSourceHandler,
             });
    }
    
-   Widget createWidgetWithOutline(TextEditingTarget target)
-   {
-      final DockLayoutPanel panel = new DockLayoutPanel(Unit.PX);
-      final DocumentOutlineWidget outline = new DocumentOutlineWidget(target);
-      
-      MouseDragHandler.addHandler(
-            outline.getLeftSeparator(),
-            new MouseDragHandler()
-      {
-         @Override
-         public void beginDrag(MouseDownEvent event, State state)
-         {
-            state.set("initial.width", panel.getWidgetSize(outline));
-         }
-         
-         @Override
-         public void onDrag(MouseDragEvent event, State state)
-         {
-            double initialWidth = state.get("initial.width");
-            MouseCoordinates delta = event.getTotalDelta();
-            double newWidth = initialWidth + delta.getMouseX();
-            double clamped = MathUtil.clamp(newWidth, 0, panel.getOffsetWidth());
-            panel.setWidgetSize(outline, clamped);
-         }
-      });
-      
-      panel.addEast(outline, 200);
-      panel.add(target.asWidget());
-      
-      return panel.asWidget();
-   }
-
    Widget createWidget(EditingTarget target)
    {
-      if (target instanceof TextEditingTarget && ((TextEditingTarget) target).getDocDisplay().hasScopeTree())
-         return createWidgetWithOutline((TextEditingTarget) target);
-      
       return target.asWidget();
    }
 

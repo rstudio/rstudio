@@ -811,7 +811,8 @@ public class TextEditingTarget implements
                                                           extendedType_, 
                                                           fileType_);
       
-      view_ = new TextEditingTargetWidget(commands_,
+      view_ = new TextEditingTargetWidget(this,
+                                          commands_,
                                           prefs_,
                                           fileTypeRegistry_,
                                           docDisplay_,
@@ -819,6 +820,7 @@ public class TextEditingTarget implements
                                           extendedType_,
                                           events_,
                                           session_);
+      
       docUpdateSentinel_ = new DocUpdateSentinel(
             server_,
             docDisplay_,

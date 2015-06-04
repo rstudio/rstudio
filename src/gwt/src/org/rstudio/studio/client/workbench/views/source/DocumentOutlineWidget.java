@@ -2,13 +2,10 @@ package org.rstudio.studio.client.workbench.views.source;
 
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
-import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.views.source.editors.text.Scope;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.RenderFinishedEvent;
-import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBarWidget;
-
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.Scheduler;
@@ -138,13 +135,6 @@ public class DocumentOutlineWidget extends Composite
       container_ = new DockLayoutPanel(Unit.PX);
       container_.addStyleName(RES.styles().container());
       target_ = target;
-      
-      toolbar_ = new Toolbar();
-      container_.addNorth(toolbar_, toolbar_.getHeight());
-      
-      statusBar_ = new StatusBarWidget();
-      statusBar_.setScopeVisible(false);
-      container_.addSouth(statusBar_, statusBar_.getHeight());
       
       separator_ = new VerticalSeparator();
       container_.addWest(separator_, 6);
@@ -283,8 +273,6 @@ public class DocumentOutlineWidget extends Composite
    }
    
    private final DockLayoutPanel container_;
-   private final Toolbar toolbar_;
-   private final StatusBarWidget statusBar_;
    private final VerticalSeparator separator_;
    private final Tree tree_;
    private final TextEditingTarget target_;

@@ -21,6 +21,7 @@ import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.MouseDownEvent;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerManager;
@@ -29,12 +30,14 @@ import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.*;
 
 import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.MathUtil;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.events.EnsureHeightEvent;
 import org.rstudio.core.client.events.EnsureHeightHandler;
 import org.rstudio.core.client.events.EnsureVisibleEvent;
 import org.rstudio.core.client.events.EnsureVisibleHandler;
+import org.rstudio.core.client.events.MouseDragHandler;
 import org.rstudio.core.client.layout.RequiresVisibilityChanged;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.*;
@@ -55,6 +58,7 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionUtils;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.edit.ui.EditDialog;
+import org.rstudio.studio.client.workbench.views.source.DocumentOutlineWidget;
 import org.rstudio.studio.client.workbench.views.source.PanelWithToolbars;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetToolbar;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget.Display;
@@ -66,7 +70,8 @@ public class TextEditingTargetWidget
       extends ResizeComposite
       implements Display, RequiresVisibilityChanged
 {
-   public TextEditingTargetWidget(Commands commands,
+   public TextEditingTargetWidget(TextEditingTarget target,
+                                  Commands commands,
                                   UIPrefs uiPrefs,
                                   FileTypeRegistry fileTypeRegistry,
                                   DocDisplay editor,
@@ -116,9 +121,39 @@ public class TextEditingTargetWidget
             } 
          });
       
-      panel_ = new PanelWithToolbars(toolbar_ = createToolbar(fileType),
-                                    editor.asWidget(),
-                                    statusBar_);
+      editorPanel_ = new DockLayoutPanel(Unit.PX);
+      docOutlineWidget_ = new DocumentOutlineWidget(target);
+      editorPanel_.addEast(docOutlineWidget_, 250);
+      editorPanel_.add(editor.asWidget());
+      
+      MouseDragHandler.addHandler(
+            docOutlineWidget_.getLeftSeparator(),
+            new MouseDragHandler()
+            {
+               @Override
+               public void beginDrag(MouseDownEvent event, State state)
+               {
+                  double initialWidth =
+                        editorPanel_.getWidgetSize(docOutlineWidget_);
+                  state.set("initial.width", initialWidth);
+               }
+               
+               @Override
+               public void onDrag(MouseDragEvent event, State state)
+               {
+                  double initialWidth = state.get("initial.width");
+                  double xDiff = event.getTotalDelta().getMouseX();
+                  double newSize = initialWidth + xDiff;
+                  double clamped = MathUtil.clamp(newSize, 0, editorPanel_.getOffsetWidth());
+                  editorPanel_.setWidgetSize(docOutlineWidget_, clamped);
+               }
+            });
+      
+      panel_ = new PanelWithToolbars(
+            toolbar_ = createToolbar(fileType),
+            editorPanel_,
+            statusBar_);
+      
       adaptToFileType(fileType);
 
       initWidget(panel_);
@@ -797,6 +832,8 @@ public class TextEditingTargetWidget
    private String extendedType_;
    private String publishPath_;
    private CheckBox sourceOnSave_;
+   private DockLayoutPanel editorPanel_;
+   private DocumentOutlineWidget docOutlineWidget_;
    private PanelWithToolbars panel_;
    private Toolbar toolbar_;
    private InfoBar warningBar_;
