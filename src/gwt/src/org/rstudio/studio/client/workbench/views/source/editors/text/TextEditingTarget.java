@@ -880,6 +880,7 @@ public class TextEditingTarget implements
          public void onValueChange(ValueChangeEvent<Void> event)
          {
             dirtyState_.markDirty(true);
+            docDisplay_.clearSelectionHistory();
          }
       });
 
@@ -2089,6 +2090,18 @@ public class TextEditingTarget implements
    void onInsertRoxygenSkeleton()
    {
       roxygenHelper_.insertRoxygenSkeleton();
+   }
+   
+   @Handler
+   void onExpandSelection()
+   {
+      docDisplay_.expandSelection();
+   }
+   
+   @Handler
+   void onShrinkSelection()
+   {
+      docDisplay_.shrinkSelection();
    }
    
    @Handler

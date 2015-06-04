@@ -345,4 +345,92 @@ public class AceEditorNative extends JavaScriptObject {
       return this.blockOutdent();
    }-*/;
    
+   public final native void expandSelection() /*-{
+      
+      // Bring items that we need into scope
+      var that = this;
+      
+      var Range = $wnd.require("ace/range").Range;
+      var TokenIterator = $wnd.require("ace/token_iterator").TokenIterator;
+      var Utils = $wnd.require("mode/utils");
+      
+      var session = this.getSession();
+      var selection = this.getSelection();
+      var range = selection.getRange();
+      
+      // Initialize the selection range history for this 'session' of
+      // 'expand'/'shrink'
+      if (this.$selectionRangeHistory == null)
+         this.$selectionRangeHistory = [];
+      var history = this.$selectionRangeHistory;
+      
+      // Update the history if this is a new range
+      var prevRange = history[history.length - 1];
+      if (prevRange == null || !range.isEqual(prevRange)) {
+         history.push(range);
+      }
+      
+      var iterator = Utils.createTokenIterator(this);
+      var token = iterator.getCurrentToken();
+      if (token == null)
+         return;
+      
+      // If we currently have no selection, select the current word.
+      if (selection.isEmpty()) {
+         
+         // Navigate left if the cursor is in the middle of the current word.
+         var prevChar = session.getLine(range.start.row)[range.start.column - 1];
+         if (Utils.isWordCharacter(prevChar))
+            this.navigateWordLeft();
+         selection.selectWordRight();
+         return;
+      }
+      
+      // If the current token is a string and we currently select something
+      // within that string, expand.
+      // TODO: Expand inside of parentheses within strings.
+      if (token.type === "string" && Utils.isSingleLineString(token.value)) {
+         var candidate = iterator.getCurrentTokenRange();
+         if (candidate.containsRange(range) && !range.isEqual(candidate)) {
+            selection.setSelectionRange(candidate);
+            return;
+         }
+      }
+      
+      while (token = iterator.stepBackward()) {
+         if (token == null)
+            break;
+            
+         var value = token.value;
+         if (value === "(" || value === "{" || value === "[") {
+            
+            var complement = "";
+            
+            var startPos = iterator.getCurrentTokenPosition();
+            startPos.column += 1; // place cursor ahead of opening bracket
+            var matchPos = session.$findClosingBracket(value, startPos);
+            if (matchPos != null) {
+               var range = Range.fromPoints(startPos, matchPos);
+               if (!selection.getRange().isEqual(range)) {
+                  selection.setSelectionRange(range);
+                  return;
+               }
+            }
+         }
+      }
+      
+      selection.selectAll();
+      
+   }-*/;
+   
+   public final native void shrinkSelection() /*-{
+      var history = this.$selectionRangeHistory;
+      if (history && history.length)
+         return this.getSelection().setSelectionRange(history.pop());
+   }-*/;
+   
+   public final native void clearSelectionHistory() /*-{
+      this.$selectionRangeHistory = null;
+   }-*/;
+   
 }

@@ -296,6 +296,8 @@ public class Source implements InsertSourceHandler,
       dynamicCommands_.add(commands.reformatCode());
       dynamicCommands_.add(commands.showDiagnosticsActiveDocument());
       dynamicCommands_.add(commands.insertRoxygenSkeleton());
+      dynamicCommands_.add(commands.expandSelection());
+      dynamicCommands_.add(commands.shrinkSelection());
       for (AppCommand command : dynamicCommands_)
       {
          command.setVisible(false);
