@@ -16,6 +16,7 @@ package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import java.util.List;
 
+import com.google.gwt.animation.client.Animation;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Style.Unit;
@@ -125,7 +126,8 @@ public class TextEditingTargetWidget
       docOutlineWidget_ = new DocumentOutlineWidget(target);
       
       // Only show outline by default for R Markdown widgets.
-      double initialSize = target.getTextFileType().isRmd() ? 250 : 0;
+      // TODO: Use Ui Pref to manage outline size.
+      double initialSize = target.getTextFileType().isRmd() ? 200 : 0;
          
       editorPanel_.addEast(docOutlineWidget_, initialSize);
       editorPanel_.add(editor.asWidget());
@@ -156,6 +158,12 @@ public class TextEditingTargetWidget
                   double maxSize = editorPanel_.getOffsetWidth() + 1;
                   
                   double clamped = MathUtil.clamp(newSize, 0, maxSize);
+                  
+                  // If the size is below '5px', interpret this as a request
+                  // to close the outline widget.
+                  if (clamped < 5)
+                     clamped = 0;
+                  
                   editorPanel_.setWidgetSize(docOutlineWidget_, clamped);
                }
             });
@@ -302,6 +310,40 @@ public class TextEditingTargetWidget
                RSConnect.CONTENT_TYPE_APP, false, null);
          toolbar.addRightWidget(publishButton_);
       }
+      
+      openDocOutlineButton_ = new ToolbarButton(
+            StandardIcons.INSTANCE.outline(),
+            new ClickHandler()
+            {
+               @Override
+               public void onClick(ClickEvent event)
+               {
+                  final double initialSize = editorPanel_.getWidgetSize(docOutlineWidget_);
+                  final double containerSize = editorPanel_.getOffsetWidth();
+                  final double destination =
+                        docOutlineWidget_.getOffsetWidth() > 5 ?
+                        0 :
+                        MathUtil.clamp(containerSize * 0.25, 100, containerSize);
+                  
+                  new Animation()
+                  {
+                     @Override
+                     protected void onUpdate(double progress)
+                     {
+                        double interpolated = interpolate(progress);
+                        double size =
+                              destination * interpolated +
+                              initialSize * (1 - interpolated);
+                        editorPanel_.setWidgetSize(docOutlineWidget_, size);
+                     }
+                  }.run(700);
+               }
+            });
+      
+      openDocOutlineButton_.setTitle("Show/hide document outline");
+      
+      toolbar.addRightSeparator();
+      toolbar.addRightWidget(openDocOutlineButton_);
       
       return toolbar;
    }
@@ -862,6 +904,7 @@ public class TextEditingTargetWidget
    private ToolbarButton rcppHelpButton_;
    private ToolbarButton shinyLaunchButton_;
    private ToolbarButton editRmdFormatButton_;
+   private ToolbarButton openDocOutlineButton_;
    private ToolbarPopupMenuButton rmdFormatButton_;
    private RSConnectPublishButton publishButton_;
    private MenuItem rmdViewerPaneMenuItem_;
