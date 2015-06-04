@@ -43,11 +43,19 @@ Error ActiveSessions::create(const std::string& project,
                              const std::string& workingDir,
                              std::string* pId)
 {
-   // generate a new id
-   std::string id = string_utils::toLower(core::system::generateShortenedUuid());
+   // generate a new id (loop until we find a unique one)
+   std::string id;
+   FilePath dir;
+   while (id.empty())
+   {
+      std::string candidateId = string_utils::toLower(
+                              core::system::generateShortenedUuid());
+      dir = storagePath_.childPath(kSessionDirPrefix + candidateId);
+      if (!dir.exists())
+         id = candidateId;
+   }
 
    // create the directory
-   FilePath dir = storagePath_.childPath(kSessionDirPrefix + id);
    Error error = dir.ensureDirectory();
    if (error)
       return error;

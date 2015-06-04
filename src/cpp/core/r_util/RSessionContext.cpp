@@ -36,7 +36,7 @@
 #include <core/r_util/RActiveSessions.hpp>
 #include <core/r_util/RProjectFile.hpp>
 
-#define kSessionSuffix "-session"
+#define kSessionSuffix "-d"
 #define kProjectNone   "none"
 
 namespace rstudio {

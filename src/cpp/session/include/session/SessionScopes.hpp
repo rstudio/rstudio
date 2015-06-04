@@ -24,6 +24,7 @@
 
 #include <core/FilePath.hpp>
 #include <core/FileSerializer.hpp>
+#include <core/StringUtils.hpp>
 #include <core/system/System.hpp>
 
 #ifndef _WIN32
@@ -88,8 +89,16 @@ inline std::string toProjectId(const std::string& projectDir,
          return projId.first;
    }
 
-   // if we didn't find it then we need to generate a new one
-   std::string id = core::system::generateUuid(false);
+   // if we didn't find it then we need to generate a new one (loop until
+   // we find one that isn't already in the map)
+   std::string id;
+   while (id.empty())
+   {
+      std::string candidateId = core::string_utils::toLower(
+                                    core::system::generateShortenedUuid());
+      if (idMap.find(candidateId) == idMap.end())
+         id = candidateId;
+   }
 
    // add it to the map then save the map
    idMap[id] = projectDir;
