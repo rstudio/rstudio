@@ -223,6 +223,11 @@ public class ProfilerEditingTarget implements EditingTarget
    {
    } 
    
+   @Override
+   public void beginCollabSession(String serverUrl)
+   {
+   }
+   
    public boolean onBeforeDismiss()
    {
       return true;

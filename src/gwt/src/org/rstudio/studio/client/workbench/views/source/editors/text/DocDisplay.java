@@ -252,6 +252,8 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void removeMarkersAtCursorPosition();
    void removeMarkersOnCursorLine();
    
+   void beginCollabSession(String serverUrl);
+
    void setPopupVisible(boolean visible);
    boolean isPopupVisible();
    void selectAll(String needle);

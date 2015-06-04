@@ -398,10 +398,12 @@ public class AceEditor implements DocDisplay,
 
    @Inject
    void initialize(CodeToolsServerOperations server,
-                   UIPrefs uiPrefs)
+                   UIPrefs uiPrefs,
+                   CollabEditor collab)
    {
       server_ = server;
       uiPrefs_ = uiPrefs;
+      collab_ = collab;
    }
 
    public TextFileType getFileType()
@@ -2274,12 +2276,18 @@ public class AceEditor implements DocDisplay,
       return widget_.getEditor().getRenderer().screenToTextCoordinates(pageX, pageY);
    }
    
+   public void beginCollabSession(String serverUrl)
+   {
+      collab_.beginCollabSession(this, serverUrl);
+   }
+   
    private static final int DEBUG_CONTEXT_LINES = 2;
    private final HandlerManager handlers_ = new HandlerManager(this);
    private final AceEditorWidget widget_;
    private CompletionManager completionManager_;
    private CodeToolsServerOperations server_;
    private UIPrefs uiPrefs_;
+   private CollabEditor collab_;
    private TextFileType fileType_;
    private boolean passwordMode_;
    private boolean useVimMode_ = false;
