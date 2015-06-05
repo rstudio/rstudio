@@ -15,7 +15,10 @@
 
 package org.rstudio.studio.client.application.ui.impl;
 
+import org.rstudio.studio.client.RStudioGinjector;
+
 import com.google.gwt.user.client.ui.Widget;
+import com.google.inject.Inject;
 
 public class WebApplicationHeaderOverlay
 {
@@ -27,6 +30,12 @@ public class WebApplicationHeaderOverlay
    
    public WebApplicationHeaderOverlay()
    {  
+      RStudioGinjector.INSTANCE.injectMembers(this);
+   }
+   
+   @Inject
+   public void initialize()
+   {
    }
    
    public void addCommands(Context context)
