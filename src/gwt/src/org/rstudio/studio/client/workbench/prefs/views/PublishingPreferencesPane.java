@@ -38,6 +38,7 @@ import org.rstudio.studio.client.rsconnect.model.RSConnectAccount;
 import org.rstudio.studio.client.rsconnect.model.RSConnectServerOperations;
 import org.rstudio.studio.client.rsconnect.ui.RSAccountConnector;
 import org.rstudio.studio.client.rsconnect.ui.RSConnectAccountList;
+import org.rstudio.studio.client.server.Int;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
@@ -116,6 +117,39 @@ public class PublishingPreferencesPane extends PreferencesPane
       accountPanel.add(hpanel);
       add(accountPanel);
       
+      // special UI to show when we detect that there are account records but
+      // the RSConnect package isn't installed
+      final VerticalPanel missingPkgPanel = new VerticalPanel();
+      missingPkgPanel.setVisible(false);
+      missingPkgPanel.add(new Label(
+            "Account records appear to exist, but cannot be viewed because a " +
+            "required package is not installed."));
+      ThemedButton installPkgs = new ThemedButton("Install Missing Packages");
+      installPkgs.addClickHandler(new ClickHandler()
+      {
+         @Override
+         public void onClick(ClickEvent arg0)
+         {
+            deps_.withRSConnect("Viewing publish accounts", null, new Command() 
+            {
+               @Override
+               public void execute()
+               {
+                  // refresh the account list to show the accounts
+                  accountList_.refreshAccountList();
+                  
+                  // remove the "missing package" UI
+                  missingPkgPanel.setVisible(false);
+               }
+            });
+         }
+      });
+      installPkgs.getElement().getStyle().setMarginLeft(0, Unit.PX);
+      installPkgs.getElement().getStyle().setMarginTop(10, Unit.PX);
+      missingPkgPanel.add(installPkgs);
+      missingPkgPanel.getElement().getStyle().setMarginBottom(20, Unit.PX);
+      add(missingPkgPanel);
+      
       add(headerLabel("Settings"));
       CheckBox chkEnablePublishing = checkboxPref("Enable publishing apps and documents", 
             uiPrefs_.showPublishUi());
@@ -127,6 +161,24 @@ public class PublishingPreferencesPane extends PreferencesPane
          }
       });
       add(chkEnablePublishing);
+      
+      server_.hasOrphanedAccounts(new ServerRequestCallback<Int>()
+      {
+         @Override
+         public void onResponseReceived(Int numOrphans)
+         {
+            missingPkgPanel.setVisible(numOrphans.getValue() > 0);
+         }
+
+         @Override
+         public void onError(ServerError error)
+         {
+            // if we can't determine whether orphans exist, presume that they
+            // don't (this state is recoverable as we'll attempt to install
+            // rsconnect if necessary and refresh the account list when the user
+            // tries to interact with it)
+         }
+      });
    }
 
    @Override

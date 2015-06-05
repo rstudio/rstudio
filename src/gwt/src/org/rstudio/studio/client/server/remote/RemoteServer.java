@@ -105,6 +105,7 @@ import org.rstudio.studio.client.rsconnect.model.RSConnectServerInfo;
 import org.rstudio.studio.client.rsconnect.model.RmdPublishDetails;
 import org.rstudio.studio.client.server.Bool;
 import org.rstudio.studio.client.server.ClientException;
+import org.rstudio.studio.client.server.Int;
 import org.rstudio.studio.client.server.Server;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -3823,6 +3824,16 @@ public class RemoteServer implements Server
    }
   
    @Override
+   public void hasOrphanedAccounts(
+         ServerRequestCallback<Int> requestCallback)
+   {
+      sendRequest(RPC_SCOPE,
+            HAS_ORPHANED_ACCOUNTS,
+            new JSONArray(),
+            requestCallback);
+   }
+
+   @Override
    public void getRMarkdownContext(
                   ServerRequestCallback<RMarkdownContext> requestCallback)
    {
@@ -4433,6 +4444,7 @@ public class RemoteServer implements Server
    private static final String REGISTER_USER_TOKEN = "register_user_token";
    private static final String GET_RSCONNECT_LINT_RESULTS = "get_rsconnect_lint_results";
    private static final String GET_RMD_PUBLISH_DETAILS = "get_rmd_publish_details";
+   private static final String HAS_ORPHANED_ACCOUNTS = "has_orphaned_accounts";
 
    private static final String RENDER_RMD = "render_rmd";
    private static final String RENDER_RMD_SOURCE = "render_rmd_source";
