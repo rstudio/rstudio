@@ -27,7 +27,7 @@ var Unicode = require("ace/unicode").packages;
       return {
          row: this.getCurrentTokenRow(),
          column: this.getCurrentTokenColumn()
-      }
+      };
    };
 
    this.getCurrentTokenRange = function()

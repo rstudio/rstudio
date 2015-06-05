@@ -30,6 +30,7 @@ var EditSession = require("ace/edit_session").EditSession;
 var UndoManager = require("ace/undomanager").UndoManager;
 var Range = require("ace/range").Range;
 var Utils = require("mode/utils");
+var ExpandSelection = require("util/expand_selection");
 
 var RStudioEditor = function(renderer, session) {
    Editor.call(this, renderer, session);
