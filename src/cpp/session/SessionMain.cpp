@@ -360,17 +360,19 @@ FilePath getDefaultWorkingDirectory()
 
 FilePath getInitialWorkingDirectory()
 {
-   // check for session scope
-   if (!options().sessionScope().empty())
+   // check for a project
+   if (projects::projectContext().hasProject())
+   {
+      return projects::projectContext().directory();
+   }
+
+   // check for working dir in project none
+   else if (options().sessionScope().isProjectNone())
    {
       return module_context::resolveAliasedPath(
                      module_context::activeSession().workingDir());
 
    }
-
-   // check for a project
-   if (projects::projectContext().hasProject())
-      return projects::projectContext().directory();
 
    // see if there is an override from the environment (perhaps based
    // on a folder drag and drop or other file association)
@@ -909,6 +911,11 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
                   {
                      scope = r_util::SessionScope::projectNone(
                                           options().sessionScope().id());
+
+                     // reset the working dir to the default
+                     using namespace module_context;
+                     activeSession().setWorkingDir(
+                             createAliasedPath(getDefaultWorkingDirectory()));
                   }
                   else
                   {
