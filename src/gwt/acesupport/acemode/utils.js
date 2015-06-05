@@ -15,9 +15,44 @@
 
 define("mode/utils", function(require, exports, module) {
 
+var Range = require("ace/range").Range;
+var TokenIterator = require("ace/token_iterator").TokenIterator;
+var Unicode = require("ace/unicode").packages;
+
+// Monkey-patching of TokenIterator 'class'
+(function() {
+
+   this.getCurrentTokenPosition = function()
+   {
+      return {
+         row: this.getCurrentTokenRow(),
+         column: this.getCurrentTokenColumn()
+      };
+   };
+
+   this.getCurrentTokenRange = function()
+   {
+      var start = this.getCurrentTokenPosition();
+      var end = {
+         row: start.row,
+         column: start.column + this.getCurrentToken().value.length
+      };
+
+      return Range.fromPoints(start, end);
+   };
+
+}).call(TokenIterator.prototype);
+
 (function() {
 
    var that = this;
+   var reWordCharacter = new RegExp(
+         "^[" +
+         Unicode.L +
+         Unicode.Mn + Unicode.Mc +
+         Unicode.Nd +
+         Unicode.Pc +
+         "._]+", "");
 
    // Simulate 'new Foo([args])'; ie, construction of an
    // object from an array of arguments
@@ -95,7 +130,42 @@ define("mode/utils", function(require, exports, module) {
          next : "start"
       });
    };
-   
+
+   this.isSingleLineString = function(string)
+   {
+      if (string.length < 2)
+         return false;
+
+      var firstChar = string[0];
+      if (firstChar !== "'" && firstChar !== "\"")
+         return false;
+
+      var lastChar = string[string.length - 1];
+      if (lastChar !== firstChar)
+         return false;
+
+      var isEscaped = string[string.length - 2] === "\\" &&
+                      string[string.length - 3] !== "\\";
+
+      if (isEscaped)
+         return false;
+
+      return true;
+   };
+
+   this.createTokenIterator = function(editor)
+   {
+      var position = editor.getSelectionRange().start;
+      var session = editor.getSession();
+      return new TokenIterator(session, position.row, position.column);
+   };
+
+   this.isWordCharacter = function(string)
+   {
+      return reWordCharacter.test(string);
+   };
+
+
 }).call(exports);
 
 });
