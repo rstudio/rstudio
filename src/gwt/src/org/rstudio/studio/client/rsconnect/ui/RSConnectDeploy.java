@@ -402,8 +402,9 @@ public class RSConnectDeploy extends Composite
       
       // if we're redeploying to the same account, use the previous app name;
       // otherwise, read the new name the user's entered
-      String appName = fromPrevious_ != null && 
-            getSelectedAccount().equals(fromPrevious_.getAccount()) ?
+      boolean isUpdate = fromPrevious_ != null && 
+            getSelectedAccount().equals(fromPrevious_.getAccount());
+      String appName = isUpdate ?
             fromPrevious_.getName() : getNewAppName();
             
       // if this was new content, set this account as the default to use for 
@@ -424,7 +425,8 @@ public class RSConnectDeploy extends Composite
                additionalFiles, 
                getIgnoredFileList(),
                asMultipleRmd_,
-               asStatic_));
+               asStatic_),
+            isUpdate);
    }
    
    public boolean isResultValid()
