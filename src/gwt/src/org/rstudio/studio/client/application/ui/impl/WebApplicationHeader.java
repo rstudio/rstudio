@@ -75,13 +75,12 @@ public class WebApplicationHeader extends Composite
                   GlobalDisplay globalDisplay,
                   ThemeResources themeResources,
                   final Session session,
-                  Provider<CodeSearch> pCodeSearch,
-                  WebApplicationHeaderAddIns addIns)
+                  Provider<CodeSearch> pCodeSearch)
    {
       commands_ = commands;
       eventBus_ = eventBus;
       globalDisplay_ = globalDisplay; 
-      addIns_ = addIns;
+      addIns_ = new WebApplicationHeaderAddIns();
       
       // Use the outer panel to just aggregate the menu bar/account area,
       // with the logo. The logo can't be inside the HorizontalPanel because
