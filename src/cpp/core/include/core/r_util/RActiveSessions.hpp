@@ -107,7 +107,7 @@ class ActiveSessions : boost::noncopyable
 public:
    explicit ActiveSessions(const FilePath& rootStoragePath)
    {
-      storagePath_ = rootStoragePath.childPath("current-sessions");
+      storagePath_ = rootStoragePath.childPath("session-storage");
       Error error = storagePath_.ensureDirectory();
       if (error)
          LOG_ERROR(error);
