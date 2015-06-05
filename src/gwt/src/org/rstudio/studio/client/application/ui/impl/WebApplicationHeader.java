@@ -59,8 +59,10 @@ import org.rstudio.studio.client.workbench.events.SessionInitHandler;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 
-public class WebApplicationHeader extends Composite implements ApplicationHeader
-{
+public class WebApplicationHeader extends Composite 
+                                  implements ApplicationHeader,
+                                  WebApplicationHeaderAddIns.Context
+{  
    public WebApplicationHeader()
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
@@ -73,11 +75,13 @@ public class WebApplicationHeader extends Composite implements ApplicationHeader
                   GlobalDisplay globalDisplay,
                   ThemeResources themeResources,
                   final Session session,
-                  Provider<CodeSearch> pCodeSearch)
+                  Provider<CodeSearch> pCodeSearch,
+                  WebApplicationHeaderAddIns addIns)
    {
       commands_ = commands;
       eventBus_ = eventBus;
       globalDisplay_ = globalDisplay; 
+      addIns_ = addIns;
       
       // Use the outer panel to just aggregate the menu bar/account area,
       // with the logo. The logo can't be inside the HorizontalPanel because
@@ -358,6 +362,8 @@ public class WebApplicationHeader extends Composite implements ApplicationHeader
       headerBarCommandsPanel_.add(signOutButton);
       headerBarCommandsPanel_.add(createCommandSeparator());
       
+      addIns_.initialize(this);
+      
       headerBarCommandsPanel_.add(commands_.quitSession().createToolbarButton());
    }
 
@@ -370,6 +376,18 @@ public class WebApplicationHeader extends Composite implements ApplicationHeader
    {
       HyperlinkLabel link = new HyperlinkLabel(caption, clickHandler);
       return link;
+   }
+   
+   @Override
+   public void addCommand(Widget widget)
+   {
+      headerBarCommandsPanel_.add(widget);
+   }
+
+   @Override
+   public void addCommandSeparator()
+   {
+      headerBarCommandsPanel_.add(createCommandSeparator());
    }
 
    public Widget asWidget()
@@ -396,7 +414,6 @@ public class WebApplicationHeader extends Composite implements ApplicationHeader
    private GlobalToolbar toolbar_;
    private EventBus eventBus_;
    private GlobalDisplay globalDisplay_;
-   private Commands commands_;
-   
-   
+   private Commands commands_; 
+   private WebApplicationHeaderAddIns addIns_;
 }
