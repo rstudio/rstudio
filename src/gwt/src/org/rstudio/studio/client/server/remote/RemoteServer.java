@@ -39,6 +39,7 @@ import org.rstudio.studio.client.application.events.InvalidClientVersionEvent;
 import org.rstudio.studio.client.application.events.InvalidSessionEvent;
 import org.rstudio.studio.client.application.events.ServerOfflineEvent;
 import org.rstudio.studio.client.application.events.UnauthorizedEvent;
+import org.rstudio.studio.client.application.model.ActiveSession;
 import org.rstudio.studio.client.application.model.InvalidSessionInfo;
 import org.rstudio.studio.client.application.model.ProductInfo;
 import org.rstudio.studio.client.application.model.SuspendOptions;
@@ -1298,6 +1299,14 @@ public class RemoteServer implements Server
       params.set(1, JSONBoolean.getInstance(isProject));
       params.set(2, new JSONString(directory));
       sendRequest(RPC_SCOPE, GET_NEW_SESSION_URL, params, callback);
+   }
+   
+   @Override
+   public void getActiveSessions(
+             String hostPageUrl,
+             ServerRequestCallback<JsArray<ActiveSession>> callback)
+   {
+      sendRequest(RPC_SCOPE, GET_ACTIVE_SESSIONS, hostPageUrl, callback);
    }
    
    @Override
@@ -4237,6 +4246,7 @@ public class RemoteServer implements Server
 
    private static final String GET_NEW_PROJECT_CONTEXT = "get_new_project_context";
    private static final String GET_NEW_SESSION_URL = "get_new_session_url";
+   private static final String GET_ACTIVE_SESSIONS = "get_active_sessions";
    private static final String CREATE_PROJECT = "create_project";
    private static final String READ_PROJECT_OPTIONS = "read_project_options";
    private static final String WRITE_PROJECT_OPTIONS = "write_project_options";
