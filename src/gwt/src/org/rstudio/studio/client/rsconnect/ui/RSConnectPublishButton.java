@@ -362,6 +362,13 @@ public class RSConnectPublishButton extends Composite
          break;
       case RSConnect.CONTENT_TYPE_DOCUMENT:
          // All R Markdown variants (single/multiple and static/Shiny)
+         if (docPreview_.getSourceFile() == null)
+         {
+            display_.showErrorMessage("Unsaved Document", 
+                  "Unsaved documents cannot be published. Save the document " +
+                  "before publishing it.");
+            break;
+         }
          events_.fireEvent(RSConnectActionEvent.DeployDocEvent(
                docPreview_, previous));
          break;
