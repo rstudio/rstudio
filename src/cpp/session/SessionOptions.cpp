@@ -529,8 +529,8 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
    }
    else
    {
-     initialProjectPath_ = core::system::getenv(kRStudioInitialProject);
-     core::system::unsetenv(kRStudioInitialProject);
+      initialProjectPath_ = core::system::getenv(kRStudioInitialProject);
+      core::system::unsetenv(kRStudioInitialProject);
    }
 
    // limit rpc client uid
