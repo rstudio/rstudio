@@ -113,8 +113,6 @@ public:
          LOG_ERROR(error);
    }
 
-   core::Error create(const std::string& project, std::string* pId);
-
    core::Error create(const std::string& project,
                       const std::string& working,
                       std::string* pId);

@@ -36,11 +36,6 @@ namespace {
 } // anonymous namespace
 
 
-Error ActiveSessions::create(const std::string& project, std::string* pId)
-{
-   return create(project, project, pId);
-}
-
 Error ActiveSessions::create(const std::string& project,
                              const std::string& workingDir,
                              std::string* pId)
