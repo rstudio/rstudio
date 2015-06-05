@@ -61,7 +61,7 @@ import org.rstudio.studio.client.workbench.model.SessionInfo;
 
 public class WebApplicationHeader extends Composite 
                                   implements ApplicationHeader,
-                                  WebApplicationHeaderAddIns.Context
+                                  WebApplicationHeaderOverlay.Context
 {  
    public WebApplicationHeader()
    {
@@ -80,7 +80,7 @@ public class WebApplicationHeader extends Composite
       commands_ = commands;
       eventBus_ = eventBus;
       globalDisplay_ = globalDisplay; 
-      addIns_ = new WebApplicationHeaderAddIns();
+      overlay_ = new WebApplicationHeaderOverlay();
       
       // Use the outer panel to just aggregate the menu bar/account area,
       // with the logo. The logo can't be inside the HorizontalPanel because
@@ -361,7 +361,7 @@ public class WebApplicationHeader extends Composite
       headerBarCommandsPanel_.add(signOutButton);
       headerBarCommandsPanel_.add(createCommandSeparator());
       
-      addIns_.initialize(this);
+      overlay_.addCommands(this);
       
       headerBarCommandsPanel_.add(commands_.quitSession().createToolbarButton());
    }
@@ -414,5 +414,5 @@ public class WebApplicationHeader extends Composite
    private EventBus eventBus_;
    private GlobalDisplay globalDisplay_;
    private Commands commands_; 
-   private WebApplicationHeaderAddIns addIns_;
+   private WebApplicationHeaderOverlay overlay_;
 }

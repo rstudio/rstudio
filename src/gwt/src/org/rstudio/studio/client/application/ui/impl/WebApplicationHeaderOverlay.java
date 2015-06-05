@@ -1,5 +1,5 @@
 /*
- * WebApplicationHeaderAddIns.java
+ * WebApplicationHeaderOverlay.java
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -17,7 +17,7 @@ package org.rstudio.studio.client.application.ui.impl;
 
 import com.google.gwt.user.client.ui.Widget;
 
-public class WebApplicationHeaderAddIns
+public class WebApplicationHeaderOverlay
 {
    public interface Context
    {
@@ -25,11 +25,11 @@ public class WebApplicationHeaderAddIns
       void addCommandSeparator();
    }
    
-   public WebApplicationHeaderAddIns()
+   public WebApplicationHeaderOverlay()
    {  
    }
    
-   public void initialize(Context context)
+   public void addCommands(Context context)
    {
    }
 }
