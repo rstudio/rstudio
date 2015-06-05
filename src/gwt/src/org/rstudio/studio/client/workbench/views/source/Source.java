@@ -562,7 +562,6 @@ public class Source implements InsertSourceHandler,
    
    private void vimExpandSelection()
    {
-      Debug.logToConsole("Hi!");
       if (activeEditor_ == null)
          return;
       

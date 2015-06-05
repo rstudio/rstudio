@@ -26,6 +26,8 @@ var TokenIterator = require("ace/token_iterator").TokenIterator;
 
 (function() {
 
+   var that = this;
+
    function isSingleLineString(string)
    {
       if (string.length < 2)
@@ -66,9 +68,20 @@ var TokenIterator = require("ace/token_iterator").TokenIterator;
       return Range.fromPoints(start, end);
    }
 
+   var onDocumentChange = function(editor)
+   {
+      editor.$clearSelectionHistory();
+   };
+
+   this.$onClearSelectionHistory = function()
+   {
+      return that.$clearSelectionHistory();
+   };
+   
    this.$clearSelectionHistory = function()
    {
       this.$selectionRangeHistory = null;
+      this.off("change", this.$clearSelectionHistory);
    };
 
    this.$acceptSelection = function(selection, newRange, oldRange)
@@ -87,6 +100,8 @@ var TokenIterator = require("ace/token_iterator").TokenIterator;
       var selection = this.getSelection();
       var range = selection.getRange();
 
+      this.on("change", this.$onClearSelectionHistory);
+      
       // Place a token iterator at the cursor position
       var position = range.start;
       var iterator = new TokenIterator(session, position.row, position.column);
@@ -156,6 +171,8 @@ var TokenIterator = require("ace/token_iterator").TokenIterator;
       var history = this.$selectionRangeHistory;
       if (history && history.length)
          this.getSelection().setSelectionRange(history.pop());
+      else
+         this.off("change", this.$onClearSelectionHistory);
    };
 
 }).call(Editor.prototype);

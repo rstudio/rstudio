@@ -211,7 +211,6 @@ public class SourceVimCommands
    
    public native final void expandShrinkSelection(Source source) /*-{
       
-      console.log("Hi!");
       var Vim = $wnd.require("ace/keyboard/vim").CodeMirror.Vim;
       
       var expandCallback = $entry(function(cm, args, vim) {
