@@ -26,31 +26,36 @@ public class RSConnectPublishResult
       appName_     = ""; 
       account_     = null; 
       source_      = source;
-      settings_ = new RSConnectPublishSettings(deployFiles, null, null, false,
+      settings_    = new RSConnectPublishSettings(deployFiles, null, null, false,
          true);
+      isUpdate_    = false;
    }
 
    public RSConnectPublishResult(String appName, 
          RSConnectAccount account, 
          RSConnectPublishSource source,
-         RSConnectPublishSettings settings)
+         RSConnectPublishSettings settings,
+         boolean isUpdate)
    {     
       this(settings.getAsStatic() ? 
                PUBLISH_STATIC : PUBLISH_CODE, 
-           appName, account, source, settings);
+           appName, account, source, settings,
+           isUpdate);
    }
    
    private RSConnectPublishResult(int publishType, 
          String appName, 
          RSConnectAccount account, 
          RSConnectPublishSource source,
-         RSConnectPublishSettings settings)
+         RSConnectPublishSettings settings,
+         boolean isUpdate)
    {
       publishType_ = publishType;
       appName_     = appName; 
       account_     = account; 
       source_      = source;
       settings_    = settings;
+      isUpdate_    = isUpdate;
    }
    
    public String getAppName()
@@ -77,12 +82,18 @@ public class RSConnectPublishResult
    {
       return source_;
    }
+   
+   public boolean isUpdate()
+   {
+      return isUpdate_;
+   }
 
    private final String appName_; 
    private final RSConnectAccount account_; 
    private final int publishType_;
    private final RSConnectPublishSettings settings_;
    private final RSConnectPublishSource source_;
+   private final boolean isUpdate_;
    
    public final static int PUBLISH_RPUBS  = 0;
    public final static int PUBLISH_STATIC = 1;
