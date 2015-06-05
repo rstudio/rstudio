@@ -360,6 +360,14 @@ FilePath getDefaultWorkingDirectory()
 
 FilePath getInitialWorkingDirectory()
 {
+   // check for session scope
+   if (!options().sessionScope().empty())
+   {
+      return module_context::resolveAliasedPath(
+                     module_context::activeSession().workingDir());
+
+   }
+
    // check for a project
    if (projects::projectContext().hasProject())
       return projects::projectContext().directory();

@@ -26,11 +26,7 @@ public interface ProjectsServerOperations extends PrefsServerOperations,
                                                   SourceServerOperations
 {  
    void getNewProjectContext(ServerRequestCallback<NewProjectContext> callback);
-   
-   void getNewSessionUrl(String hostPageUrl,
-                         String project, 
-                         ServerRequestCallback<String> callback);
-   
+     
    void createProject(String projectFile,
                       NewPackageOptions newPackageOptions,
                       NewShinyAppOptions newShinyAppOptions,

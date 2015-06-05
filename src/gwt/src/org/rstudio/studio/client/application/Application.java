@@ -651,8 +651,8 @@ public class Application implements ApplicationEventHandlers
          commands_.zoomOut().remove();
       }
       
-      // hide new session in web mode
-      if (!Desktop.isDesktop())
+      // show new session when appropriate
+      if (!Desktop.isDesktop() && !sessionInfo.getMultiSession())
       {
          commands_.newSession().remove();
       }

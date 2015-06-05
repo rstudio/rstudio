@@ -1289,12 +1289,14 @@ public class RemoteServer implements Server
    
    @Override
    public void getNewSessionUrl(String hostPageUrl,
-                                String project, 
+                                boolean isProject, 
+                                String directory,
                                 ServerRequestCallback<String> callback)
    {
       JSONArray params = new JSONArray();
-      params.set(0,  new JSONString(hostPageUrl));
-      params.set(1, new JSONString(project));
+      params.set(0, new JSONString(hostPageUrl));
+      params.set(1, JSONBoolean.getInstance(isProject));
+      params.set(2, new JSONString(directory));
       sendRequest(RPC_SCOPE, GET_NEW_SESSION_URL, params, callback);
    }
    
