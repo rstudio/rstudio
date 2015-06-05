@@ -133,6 +133,19 @@ inline core::r_util::FilePathToProjectId filePathToProjectId(
    return boost::bind(toProjectId, _1, userScratchPath);
 }
 
+inline std::string projectToProjectId(
+                            const core::FilePath& userScratchPath,
+                            const std::string& project)
+{
+   if (project == kProjectNone)
+      return kProjectNoneId;
+   else
+      return session::filePathToProjectId(userScratchPath)(project);
+}
+
+
+
+
 } // namespace session
 } // namespace rstudio
 

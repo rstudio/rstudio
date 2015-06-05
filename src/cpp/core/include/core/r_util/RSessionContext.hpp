@@ -21,6 +21,7 @@
 
 #include <boost/function.hpp>
 
+#define kProjectNone   "none"
 #define kProjectNoneId "cfc78a31"
 #define kWorkspacesId  "3c286bd3"
 
