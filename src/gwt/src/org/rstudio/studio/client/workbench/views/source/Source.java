@@ -557,6 +557,26 @@ public class Source implements InsertSourceHandler,
             RStudioGinjector.INSTANCE.getShortcutViewer());
       vimCommands_.showHelpAtCursor(this);
       vimCommands_.reindent(this);
+      vimCommands_.expandShrinkSelection(this);
+   }
+   
+   private void vimExpandSelection()
+   {
+      Debug.logToConsole("Hi!");
+      if (activeEditor_ == null)
+         return;
+      
+      if (activeEditor_ instanceof TextEditingTarget)
+         ((TextEditingTarget) activeEditor_).getDocDisplay().expandSelection();
+   }
+   
+   private void vimShrinkSelection()
+   {
+      if (activeEditor_ == null)
+         return;
+      
+      if (activeEditor_ instanceof TextEditingTarget)
+         ((TextEditingTarget) activeEditor_).getDocDisplay().shrinkSelection();
    }
    
    private void closeAllTabs(boolean interactive)

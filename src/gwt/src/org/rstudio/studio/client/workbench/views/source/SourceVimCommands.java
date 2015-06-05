@@ -208,4 +208,36 @@ public class SourceVimCommands
       
       $wnd.require("ace/keyboard/vim").CodeMirror.Vim.defineEx("help", "help", callback);
    }-*/;
+   
+   public native final void expandShrinkSelection(Source source) /*-{
+      
+      console.log("Hi!");
+      var Vim = $wnd.require("ace/keyboard/vim").CodeMirror.Vim;
+      
+      var expandCallback = $entry(function(cm, args, vim) {
+         source.@org.rstudio.studio.client.workbench.views.source.Source::vimExpandSelection()();
+      });
+      
+      Vim.defineMotion("expandSelection", expandCallback);
+      Vim.mapCommand({
+         keys: "v",
+         type: "motion",
+         motion: "expandSelection",
+         context: "visual"
+      });
+      
+      var shrinkCallback = $entry(function(cm, args, vim) {
+         source.@org.rstudio.studio.client.workbench.views.source.Source::vimShrinkSelection()();
+      });
+      
+      Vim.defineMotion("shrinkSelection", shrinkCallback);
+      Vim.mapCommand({
+         keys: "V",
+         type: "motion",
+         motion: "shrinkSelection",
+         isEdit: false,
+         context: "visual"
+      });
+   
+   }-*/;
 }
