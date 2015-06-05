@@ -805,7 +805,8 @@ void ensureLang()
          Error error = config_utils::extractVariables(FilePath(file), &vars);
          if (error)
          {
-            LOG_ERROR(error);
+            if (!core::isPathNotFoundError(error))
+               LOG_ERROR(error);
             continue;
          }
          std::string value = vars[var];
@@ -815,7 +816,14 @@ void ensureLang()
             break;
          }
       }
-   }
+
+      // log a warning if it's still empty
+      if (core::system::getenv("LANG").empty())
+      {
+         LOG_WARNING_MESSAGE(
+            "Unable to determine LANG (proceeding with no LANG set");
+      }
+   }   
 }
 #else
 void ensureLang()
