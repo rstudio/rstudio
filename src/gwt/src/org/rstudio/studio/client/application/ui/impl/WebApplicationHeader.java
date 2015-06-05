@@ -41,6 +41,7 @@ import org.rstudio.core.client.widget.HyperlinkLabel;
 import org.rstudio.core.client.widget.MessageDialogLabel;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarLabel;
+import org.rstudio.core.client.widget.ToolbarSeparator;
 import org.rstudio.core.client.widget.events.GlassVisibilityEvent;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -368,7 +369,10 @@ public class WebApplicationHeader extends Composite
 
    private Widget createCommandSeparator()
    {
-      return new HTML("&nbsp;|&nbsp;");
+      ToolbarSeparator sep = new ToolbarSeparator();
+      Style style = sep.getElement().getStyle();
+      style.setMarginTop(2, Unit.PX);
+      return sep;
    }
    
    private Widget createCommandLink(String caption, ClickHandler clickHandler)
