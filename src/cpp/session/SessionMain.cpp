@@ -1771,6 +1771,9 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
    // unset by the time we launch again then we didn't terminate normally
    // i.e. either the process dying unexpectedly or a call to R_Suicide)
    rsession::persistentState().setAbend(true);
+
+   // set active session flag indicating that we are running
+   module_context::activeSession().setRunning(true);
    
    // setup fork handlers
    setupForkHandlers();
@@ -2308,6 +2311,9 @@ void rCleanup(bool terminatedNormally)
       // note that we didn't abend
       if (terminatedNormally)
          rsession::persistentState().setAbend(false);
+
+      // set active session flag indicating we are no longer running
+      module_context::activeSession().setRunning(false);
 
       // fire shutdown event to modules
       module_context::events().onShutdown(terminatedNormally);

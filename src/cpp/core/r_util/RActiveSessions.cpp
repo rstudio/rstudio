@@ -60,6 +60,8 @@ Error ActiveSessions::create(const std::string& project,
    ActiveSession activeSession(id, dir);
    activeSession.setProject(project);
    activeSession.setWorkingDir(workingDir);
+   activeSession.setLastUsed();
+   activeSession.setRunning(false);
 
    // return the id
    *pId = id;

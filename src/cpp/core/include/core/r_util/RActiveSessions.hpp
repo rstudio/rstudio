@@ -23,6 +23,7 @@
 #include <core/FilePath.hpp>
 #include <core/Log.hpp>
 #include <core/Settings.hpp>
+#include <core/DateTime.hpp>
 
 namespace rstudio {
 namespace core {
@@ -79,6 +80,34 @@ public:
    {
       if (!empty())
          properties_.set("working-dir", workingDir);
+   }
+
+   double lastUsed() const
+   {
+      if (!empty())
+         return properties_.getDouble("last-used");
+      else
+         return 0;
+   }
+
+   void setLastUsed()
+   {
+      if (!empty())
+         properties_.set("last-used", date_time::millisecondsSinceEpoch());
+   }
+
+   bool running() const
+   {
+      if (!empty())
+         return properties_.getBool("running");
+      else
+         return false;
+   }
+
+   void setRunning(bool running)
+   {
+      if (!empty())
+         properties_.set("running", running);
    }
 
    core::Error destroy()
