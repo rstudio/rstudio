@@ -2313,6 +2313,7 @@ void rCleanup(bool terminatedNormally)
          rsession::persistentState().setAbend(false);
 
       // set active session flag indicating we are no longer running
+      module_context::activeSession().setLastUsed();
       module_context::activeSession().setRunning(false);
 
       // fire shutdown event to modules
