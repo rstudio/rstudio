@@ -19,30 +19,6 @@ var Range = require("ace/range").Range;
 var TokenIterator = require("ace/token_iterator").TokenIterator;
 var Unicode = require("ace/unicode").packages;
 
-// Monkey-patching of TokenIterator 'class'
-(function() {
-
-   this.getCurrentTokenPosition = function()
-   {
-      return {
-         row: this.getCurrentTokenRow(),
-         column: this.getCurrentTokenColumn()
-      };
-   };
-
-   this.getCurrentTokenRange = function()
-   {
-      var start = this.getCurrentTokenPosition();
-      var end = {
-         row: start.row,
-         column: start.column + this.getCurrentToken().value.length
-      };
-
-      return Range.fromPoints(start, end);
-   };
-
-}).call(TokenIterator.prototype);
-
 (function() {
 
    var that = this;
@@ -123,7 +99,7 @@ var Unicode = require("ace/unicode").packages;
 
       var embed = new EmbedRules().getRules();
       HighlightRules.addRules(embed, prefix + "-");
-      
+
       rules[prefix + "-start"].unshift({
          token: "support.function.codeend",
          regex: reEnd,
@@ -163,6 +139,48 @@ var Unicode = require("ace/unicode").packages;
    this.isWordCharacter = function(string)
    {
       return reWordCharacter.test(string);
+   };
+
+   // The default set of complements is R-centric.
+   var $complements = {
+
+      "'" : "'",
+      '"' : '"',
+      "`" : "`",
+
+      "{" : "}",
+      "(" : ")",
+      "[" : "]",
+      "<" : ">",
+
+      "}" : "{",
+      ")" : "(",
+      "]" : "[",
+      ">" : "<"
+   };
+
+   this.isOpeningBracket = function(string, allowArrow)
+   {
+      return string === "{" ||
+             string === "(" ||
+             string === "[" ||
+             (!!allowArrow && string === "<");
+   };
+
+   this.isClosingBracket = function(string, allowArrow)
+   {
+      return string === "}" ||
+             string === ")" ||
+             string === "]" ||
+             (!!allowArrow && string === ">");
+   };
+
+   this.getComplement = function(string, complements)
+   {
+      if (typeof complements === "undefined")
+         complements = $complements;
+
+      return complements[string];
    };
 
 

@@ -22,7 +22,9 @@ define("util/expand_selection", function(require, exports, module) {
 
 var Editor = require("ace/editor").Editor;
 var Range = require("ace/range").Range;
+var VimProvider = require("ace/keyboard/vim");
 var TokenIterator = require("ace/token_iterator").TokenIterator;
+var Utils = require("mode/utils");
 
 (function() {
 
@@ -48,24 +50,6 @@ var TokenIterator = require("ace/token_iterator").TokenIterator;
          return false;
 
       return true;
-   };
-
-   function getCurrentTokenPosition(tokenIterator)
-   {
-      return {
-         row: tokenIterator.getCurrentTokenRow(),
-         column: tokenIterator.getCurrentTokenColumn()
-      };
-   }
-
-   function getCurrentTokenRange(tokenIterator)
-   {
-      var start = getCurrentTokenPosition(tokenIterator);
-      var end = {
-         row: start.row,
-         column: start.column + this.getCurrentToken().value.length
-      };
-      return Range.fromPoints(start, end);
    }
 
    var onDocumentChange = function(editor)
@@ -77,7 +61,7 @@ var TokenIterator = require("ace/token_iterator").TokenIterator;
    {
       return that.$clearSelectionHistory();
    };
-   
+
    this.$clearSelectionHistory = function()
    {
       this.$selectionRangeHistory = null;
@@ -89,8 +73,15 @@ var TokenIterator = require("ace/token_iterator").TokenIterator;
       if (this.$selectionRangeHistory == null)
          this.$selectionRangeHistory = [];
       this.$selectionRangeHistory.push(oldRange);
+
       selection.setSelectionRange(newRange);
-      return true;
+      if (!(this.isRowFullyVisible(newRange.start.row) &&
+            this.isRowFullyVisible(newRange.end.row)))
+      {
+         this.centerSelection(selection);
+      }
+
+      return newRange;
    };
 
    this.$expandSelection = function()
@@ -101,7 +92,7 @@ var TokenIterator = require("ace/token_iterator").TokenIterator;
       var range = selection.getRange();
 
       this.on("change", this.$onClearSelectionHistory);
-      
+
       // Place a token iterator at the cursor position
       var position = range.start;
       var iterator = new TokenIterator(session, position.row, position.column);
@@ -135,33 +126,78 @@ var TokenIterator = require("ace/token_iterator").TokenIterator;
             return this.$acceptSelection(selection, candidate, range);
       }
 
+      // Handle 'small' expansions of the current
+      // selection.
+      var prevToken = iterator.peekBwd(1);
+      if (prevToken.type === "support.function.codebegin") {
+
+         var startPos = {
+            row: range.start.row - 1,
+            column: 0
+         };
+
+         var endPos = {
+            row: range.end.row + 1,
+            column: iterator.$session.getLine(range.end.row + 1).length
+         };
+
+         candidate = Range.fromPoints(startPos, endPos);
+         return this.$acceptSelection(selection, candidate, range);
+      }
+
+      if (Utils.isOpeningBracket(token.value)) {
+         clone = iterator.clone();
+         var startPos = iterator.getCurrentTokenPosition();
+         if (clone.fwdToMatchingToken()) {
+            candidate = Range.fromPoints(range.start, range.end);
+            candidate.start.column--;
+            candidate.end.column++;
+            return this.$acceptSelection(selection, candidate, range);
+         }
+      }
+
       // Look for matching bracket pairs.
       while ((token = iterator.stepBackward()))
       {
          if (token == null)
             break;
 
-         var value = token.value;
-         if (value === "(" || value === "{" || value === "[")
+         if (iterator.bwdToMatchingToken())
+            continue;
+
+         if (Utils.isOpeningBracket(token.value) ||
+             token.type === "support.function.codebegin")
          {
-            var startPos = getCurrentTokenPosition(iterator);
-            startPos.column += 1; // place cursor ahead of opening bracket
-            var matchPos = session.$findClosingBracket(value, startPos);
-            if (matchPos != null)
-            {
-               candidate = Range.fromPoints(startPos, matchPos);
+            var startPos = iterator.getCurrentTokenPosition();
+            if (token.type === "support.function.codebegin") {
+               startPos.row++;
+               startPos.column = 0;
+            } else {
+               startPos.column += token.value.length;
+            }
+
+            var clone = iterator.clone();
+            if (clone.fwdToMatchingToken()) {
+               var endPos = clone.getCurrentTokenPosition();
+               if (token.type === "support.function.codebegin") {
+                   endPos.row--;
+                   endPos.column = iterator.$session.getLine(startPos.row).length;
+               }
+               candidate = Range.fromPoints(startPos, endPos);
                if (!range.isEqual(candidate))
                   return this.$acceptSelection(selection, candidate, range);
             }
-            
+
          }
       }
 
       // If we get here, just select everything.
       selection.selectAll();
 
-      if (this.getSelectionRange().isEqual(range))
-         return this.$addRangeToSelectionHistory(range);
+      // If the new selection is not equal to the previous
+      // selection, add it to the selection history.
+      if (!this.getSelectionRange().isEqual(range))
+         return this.$acceptSelection(selection, selection.getRange(), range);
 
       return true;
    };
@@ -169,10 +205,17 @@ var TokenIterator = require("ace/token_iterator").TokenIterator;
    this.$shrinkSelection = function()
    {
       var history = this.$selectionRangeHistory;
-      if (history && history.length)
-         this.getSelection().setSelectionRange(history.pop());
-      else
-         this.off("change", this.$onClearSelectionHistory);
+      if (history && history.length) {
+          var range = history.pop();
+          this.getSelection().setSelectionRange(range);
+          if (!(this.isRowFullyVisible(range.start.row) &&
+                this.isRowFullyVisible(range.end.row)))
+          {
+             this.centerSelection(this.getSelection());
+          }
+          return range;
+      }
+      this.off("change", this.$onClearSelectionHistory);
    };
 
 }).call(Editor.prototype);

@@ -213,8 +213,19 @@ public class SourceVimCommands
       
       var Vim = $wnd.require("ace/keyboard/vim").CodeMirror.Vim;
       
-      var expandCallback = $entry(function(cm, args, vim) {
-         source.@org.rstudio.studio.client.workbench.views.source.Source::vimExpandSelection()();
+      function toVimSelection(range) {
+         return {
+            anchor: {
+               line: range.start.row, ch: range.start.column
+            },
+            head: {
+               line: range.end.row, ch: range.end.column - 1
+            }
+         };
+      }
+      
+      var expandCallback = $entry(function(cm, origHead, motionArgs, vim) {
+         vim.sel = toVimSelection(cm.ace.$expandSelection());
       });
       
       Vim.defineMotion("expandSelection", expandCallback);
@@ -225,8 +236,8 @@ public class SourceVimCommands
          context: "visual"
       });
       
-      var shrinkCallback = $entry(function(cm, args, vim) {
-         source.@org.rstudio.studio.client.workbench.views.source.Source::vimShrinkSelection()();
+      var shrinkCallback = $entry(function(cm, origHead, motionArgs, vim) {
+         vim.sel = toVimSelection(cm.ace.$shrinkSelection());
       });
       
       Vim.defineMotion("shrinkSelection", shrinkCallback);
@@ -234,7 +245,6 @@ public class SourceVimCommands
          keys: "V",
          type: "motion",
          motion: "shrinkSelection",
-         isEdit: false,
          context: "visual"
       });
    

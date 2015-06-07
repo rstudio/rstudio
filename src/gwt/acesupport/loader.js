@@ -32,6 +32,8 @@ var Range = require("ace/range").Range;
 var Utils = require("mode/utils");
 var ExpandSelection = require("util/expand_selection");
 
+require("mixins/token_iterator"); // adds mixins to TokenIterator.prototype
+
 var RStudioEditor = function(renderer, session) {
    Editor.call(this, renderer, session);
    this.setBehavioursEnabled(true);
@@ -76,11 +78,11 @@ oop.inherits(RStudioEditSession, EditSession);
    };
 
    this.reindent = function(range) {
-      
+
       var mode = this.getMode();
       if (!mode.getNextLineIndent)
          return;
-      
+
       var start = range.start.row;
       var end = range.end.row;
 
@@ -89,7 +91,7 @@ oop.inherits(RStudioEditSession, EditSession);
          this.applyIndent(0, "");
          start++;
       }
-      
+
       for (var i = start; i <= end; i++)
       {
          var state = Utils.getPrimaryState(this, i - 1);

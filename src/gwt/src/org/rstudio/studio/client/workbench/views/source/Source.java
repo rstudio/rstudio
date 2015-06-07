@@ -560,24 +560,6 @@ public class Source implements InsertSourceHandler,
       vimCommands_.expandShrinkSelection(this);
    }
    
-   private void vimExpandSelection()
-   {
-      if (activeEditor_ == null)
-         return;
-      
-      if (activeEditor_ instanceof TextEditingTarget)
-         ((TextEditingTarget) activeEditor_).getDocDisplay().expandSelection();
-   }
-   
-   private void vimShrinkSelection()
-   {
-      if (activeEditor_ == null)
-         return;
-      
-      if (activeEditor_ instanceof TextEditingTarget)
-         ((TextEditingTarget) activeEditor_).getDocDisplay().shrinkSelection();
-   }
-   
    private void closeAllTabs(boolean interactive)
    {
       if (interactive)
