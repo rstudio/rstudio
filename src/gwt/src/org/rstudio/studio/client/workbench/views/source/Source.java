@@ -558,6 +558,7 @@ public class Source implements InsertSourceHandler,
       vimCommands_.showHelpAtCursor(this);
       vimCommands_.reindent(this);
       vimCommands_.expandShrinkSelection(this);
+      vimCommands_.addStarRegister();
    }
    
    private void closeAllTabs(boolean interactive)

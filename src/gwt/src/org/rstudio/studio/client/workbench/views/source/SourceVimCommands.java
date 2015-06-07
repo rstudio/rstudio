@@ -249,4 +249,56 @@ public class SourceVimCommands
       });
    
    }-*/;
+   
+   public native final void addStarRegister() /*-{
+      
+      var SystemClipboardRegister = function(text, linewise, blockwise) {
+         this.clear();
+         this.keyBuffer = [text || ''];
+         this.insertModeChanges = [];
+         this.searchQueries = [];
+         this.linewise = !!linewise;
+         this.blockwise = !!blockwise;
+      }
+      
+      // TODO: Reimplement this and read/write
+      // from the system clipboard using appropriate
+      // callbacks.
+      SystemClipboardRegister.prototype = {
+         
+         setText: function(text, linewise, blockwise) {
+            this.keyBuffer = [text || ''];
+            this.linewise = !!linewise;
+            this.blockwise = !!blockwise;
+         },
+         
+         pushText: function(text, linewise) {
+            this.keyBuffer.push(text);
+            if (linewise) {
+               if (!this.linewise) {
+                  this.keyBuffer.push('\n');
+               }
+               this.linewise = true;
+            }
+            this.keyBuffer.push(text);
+         },
+         
+         clear: function() {
+            this.keyBuffer = [];
+            this.insertModeChanges = [];
+            this.searchQueries = [];
+            this.linewise = false;
+         },
+         
+         toString: function() {
+            return this.keyBuffer.join('');
+         }
+         
+      };
+      
+      var Vim = $wnd.require("ace/keyboard/vim").CodeMirror.Vim;
+      var controller = Vim.getRegisterController();
+      // controller.registers['*'] = new SystemClipboardRegister();
+   
+   }-*/;
 }
