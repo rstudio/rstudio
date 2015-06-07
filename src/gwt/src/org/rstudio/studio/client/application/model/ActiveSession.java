@@ -21,6 +21,19 @@ public class ActiveSession extends JavaScriptObject
    protected ActiveSession()
    {  
    }
+   
+   public native final String getDisplayName() /*-{
+      if (typeof(this.display) !== 'undefined')
+         return this.display;
+      else if (!this.project)
+         return this.working_dir;
+      else
+         return this.project;
+   }-*/;
+   
+   public native final void setDisplayName(String display) /*-{
+      this.display = display;
+   }-*/;
 
    public native final String getUrl() /*-{
       return this.url;
