@@ -239,6 +239,25 @@ public class Wizard<I,T> extends ModalDialog<T>
          return false;
    }
    
+   @Override
+   public void showModal()
+   {
+      super.showModal();
+
+      // set up state for the first page (some of this is ordinarily reached
+      // via navigation)
+      if (firstPage_ != null)
+      {
+         setOkButtonVisible(pageIsFinal(firstPage_));
+         firstPage_.onActivate(getProgressIndicator());
+      }
+   }
+   
+   protected WizardPage<I,T> getFirstPage()
+   {
+      return firstPage_;
+   }
+   
    private WizardPage<I,T> activeInputPage()
    {
       if (activePage_ != null && 

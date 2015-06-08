@@ -16,6 +16,8 @@
 package org.rstudio.studio.client.workbench.prefs.views;
 
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.dom.client.ChangeEvent;
+import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -80,7 +82,15 @@ public class PublishingPreferencesPane extends PreferencesPane
          @Override
          public void execute()
          {
-            setDisconnectButtonEnabledState();
+            setButtonEnabledState();
+         }
+      });
+      accountList_.addChangeHandler(new ChangeHandler()
+      {
+         @Override
+         public void onChange(ChangeEvent arg0)
+         {
+            setButtonEnabledState();
          }
       });
       
@@ -100,6 +110,21 @@ public class PublishingPreferencesPane extends PreferencesPane
          }
       });
       vpanel.add(connectButton_);
+
+      reconnectButton_ = new ThemedButton("Reconnect...");
+      reconnectButton_.getElement().getStyle().setMarginBottom(5, Unit.PX);
+      reconnectButton_.setWidth("100%");
+      reconnectButton_.setWrapperWidth("100%");
+      reconnectButton_.addClickHandler(new ClickHandler()
+      {
+         @Override
+         public void onClick(ClickEvent event)
+         {
+            onReconnect();
+         }
+      });
+      vpanel.add(reconnectButton_);
+      
       disconnectButton_ = new ThemedButton("Disconnect");
       disconnectButton_.setWidth("100%");
       disconnectButton_.setWrapperWidth("100%");
@@ -112,7 +137,8 @@ public class PublishingPreferencesPane extends PreferencesPane
          }
       });
       vpanel.add(disconnectButton_);
-      setDisconnectButtonEnabledState();
+      
+      setButtonEnabledState();
 
       accountPanel.add(hpanel);
       add(accountPanel);
@@ -287,6 +313,22 @@ public class PublishingPreferencesPane extends PreferencesPane
       }
    }
    
+   private void onReconnect()
+   {
+      connector_.showReconnectWizard(accountList_.getSelectedAccount(), 
+            new OperationWithInput<Boolean>()
+      {
+         @Override
+         public void execute(Boolean successful)
+         {
+            if (successful)
+            {
+               accountList_.refreshAccountList();
+            }
+         }
+      });
+   }
+   
    private void showAccountWizard()
    {
       connector_.showAccountWizard(false, true, 
@@ -303,10 +345,14 @@ public class PublishingPreferencesPane extends PreferencesPane
       });
    }
 
-   private void setDisconnectButtonEnabledState()
+   private void setButtonEnabledState()
    {
       disconnectButton_.setEnabled(
             accountList_.getSelectedAccount() != null);
+      
+      reconnectButton_.setEnabled(
+            accountList_.getSelectedAccount() != null &&
+            !accountList_.getSelectedAccount().isCloudAccount());
    }
    
    private final GlobalDisplay display_;
@@ -318,6 +364,7 @@ public class PublishingPreferencesPane extends PreferencesPane
    private RSConnectAccountList accountList_;
    private ThemedButton connectButton_;
    private ThemedButton disconnectButton_;
+   private ThemedButton reconnectButton_;
    private boolean reloadRequired_;
 }
 

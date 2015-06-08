@@ -1,5 +1,6 @@
 package org.rstudio.studio.client.rsconnect.ui;
 
+import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.WizardPage;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -10,6 +11,8 @@ import org.rstudio.studio.client.common.satellite.events.WindowClosedEvent;
 import org.rstudio.studio.client.rsconnect.model.NewRSConnectAccountInput;
 import org.rstudio.studio.client.rsconnect.model.NewRSConnectAccountResult;
 import org.rstudio.studio.client.rsconnect.model.RSConnectAuthUser;
+import org.rstudio.studio.client.rsconnect.model.RSConnectPreAuthToken;
+import org.rstudio.studio.client.rsconnect.model.RSConnectServerInfo;
 import org.rstudio.studio.client.rsconnect.model.RSConnectServerOperations;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -46,33 +49,49 @@ public class NewRSConnectAuthPage
    public void setIntermediateResult(NewRSConnectAccountResult result) 
    {
       result_ = result;
-      contents_.setClaimLink(result.getServerInfo().getName(),
-            result.getPreAuthToken().getClaimUrl());
    }
    
    @Override
-   public void onActivate(ProgressIndicator indicator) 
+   public void onActivate(final ProgressIndicator indicator) 
    {
       if (waitingForAuth_ || result_ == null)
          return;
 
-      // begin waiting for user to complete authentication
-      waitingForAuth_ = true;
-      contents_.showWaiting();
-      
-      // prepare a new window with the auth URL loaded
-      NewWindowOptions options = new NewWindowOptions();
-      options.setName(AUTH_WINDOW_NAME);
-      options.setAllowExternalNavigation(true);
-      options.setShowDesktopToolbar(false);
-      display_.openWebMinimalWindow(
-            result_.getPreAuthToken().getClaimUrl(),
-            false, 
-            700, 800, options);
-      
-      // close the window automatically when authentication finishes
-      pollForAuthCompleted();
+      indicator.onProgress("Checking server connection...");
+      server_.validateServerUrl(result_.getServerUrl(), 
+            new ServerRequestCallback<RSConnectServerInfo>()
+      {
+         @Override
+         public void onResponseReceived(RSConnectServerInfo info)
+         {
+            if (info.isValid()) 
+            {
+               result_.setServerInfo(info);
+               getPreAuthToken(indicator);
+            }
+            else
+            {
+               contents_.showError("Server Validation Failed", 
+                     "The URL '" + result_.getServerUrl() + 
+                     "' does not appear to belong to a valid server. Please " +
+                     "double check the URL, and contact your administrator " +
+                     "if the problem persists.\n\n" +
+                     info.getMessage());
+               indicator.clearProgress();
+            }
+         }
+
+         @Override
+         public void onError(ServerError error)
+         {
+            contents_.showError("Error Connecting Account", 
+                  "The server couldn't be validated. " + 
+                   error.getMessage());
+            indicator.clearProgress();
+         }
+      });
    }
+
 
    @Override
    public void onWindowClosed(WindowClosedEvent event)
@@ -244,6 +263,74 @@ public class NewRSConnectAuthPage
       
       contents_.showSuccess(result_.getServerName(), 
             result_.getAccountNickname());
+   }
+
+   private void getPreAuthToken(ProgressIndicator indicator)
+   {
+      getPreAuthToken(result_, result_.getServerInfo(), indicator, 
+            new OperationWithInput<NewRSConnectAccountResult>()
+            {
+               @Override
+               public void execute(NewRSConnectAccountResult input)
+               {
+                  // save intermediate result
+                  result_ = input;
+
+                  contents_.setClaimLink(result_.getServerInfo().getName(),
+                        result_.getPreAuthToken().getClaimUrl());
+
+                  // begin waiting for user to complete authentication
+                  waitingForAuth_ = true;
+                  contents_.showWaiting();
+                  
+                  // prepare a new window with the auth URL loaded
+                  NewWindowOptions options = new NewWindowOptions();
+                  options.setName(AUTH_WINDOW_NAME);
+                  options.setAllowExternalNavigation(true);
+                  options.setShowDesktopToolbar(false);
+                  display_.openWebMinimalWindow(
+                        result_.getPreAuthToken().getClaimUrl(),
+                        false, 
+                        700, 800, options);
+                  
+                  // close the window automatically when authentication finishes
+                  pollForAuthCompleted();
+               }
+            });
+   }
+
+   private void getPreAuthToken(
+         final NewRSConnectAccountResult result,
+         final RSConnectServerInfo serverInfo,
+         final ProgressIndicator indicator,
+         final OperationWithInput<NewRSConnectAccountResult> onResult)
+   {
+      indicator.onProgress("Setting up an account...");
+      server_.getPreAuthToken(serverInfo.getName(), 
+            new ServerRequestCallback<RSConnectPreAuthToken>()
+      {
+         @Override
+         public void onResponseReceived(final RSConnectPreAuthToken token)
+         {
+            NewRSConnectAccountResult newResult = result;
+            newResult.setPreAuthToken(token);
+            newResult.setServerInfo(serverInfo);
+            onResult.execute(newResult);
+            indicator.clearProgress();
+         }
+
+         @Override
+         public void onError(ServerError error)
+         {
+            display_.showErrorMessage("Error Connecting Account", 
+                  "The server appears to be valid, but rejected the " + 
+                  "request to authorize an account.\n\n"+
+                  serverInfo.getInfoString() + "\n" +
+                  error.getMessage());
+            indicator.clearProgress();
+            onResult.execute(null);
+         }
+      });
    }
 
    private NewRSConnectAccountResult result_;

@@ -45,6 +45,9 @@ public interface RSConnectServerOperations
                String account, String server, String appName, 
                RSConnectPublishSettings settings,
                ServerRequestCallback<Boolean> requestCallback);
+   
+   void getServerUrls(
+               ServerRequestCallback<JsArray<RSConnectServerEntry>> requestCallback);
 
    void validateServerUrl (String url, 
                ServerRequestCallback<RSConnectServerInfo> requestCallback);
