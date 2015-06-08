@@ -719,14 +719,6 @@ var RCodeModel = function(session, tokenizer,
          return null;
       }
 
-      // It's possible that determining the scope at 'position' may require
-      // parsing beyond the position itself--for example if the position is
-      // on the identifier of a function whose open brace is a few tokens later.
-      // Seems like it would be rare indeed for this distance to be more than 30
-      // rows.
-      var maxRow = Math.min(maxrow + 30, this.$doc.getLength() - 1);
-      this.$tokenizeUpToRow(maxRow);
-
       // We explicitly use a TokenIterator rather than a TokenCursor here.
       // We want to iterate over all token types here (including non-R code)
       // and the R code model, by default, will only tokenize within R chunks within
@@ -760,7 +752,7 @@ var RCodeModel = function(session, tokenizer,
       }
 
       token = iterator.getCurrentToken();
-      
+
       // Iterate through the token stream and build the scope tree.
       do
       {
@@ -783,10 +775,12 @@ var RCodeModel = function(session, tokenizer,
          {
             var label = "";
             var labelPos = {row: position.row, column: 0};
+            var depth = 0;
             
             // Check if this is a single-line heading, e.g. '# foo'.
             if (/^\s*#+\s*$/.test(value))
             {
+               depth = value.split("#").length - 1;
                var nextToken = iterator.peekFwd(1);
                label = nextToken ? nextToken.value : "";
             }
@@ -797,6 +791,7 @@ var RCodeModel = function(session, tokenizer,
             //    -------
             else if (/^[-=]{3,}\s*$/.test(value))
             {
+               depth = value.startsWith("=") ? 1 : 2;
                var prevToken = iterator.peekBwd(1);
                label = prevToken ? prevToken.value : "";
                labelPos.row--;
@@ -805,8 +800,8 @@ var RCodeModel = function(session, tokenizer,
             // Add to scope tree.
             if (label.length === 0)
                label = "(Untitled)";
-            
-            this.$scopes.onSectionHead(label, labelPos);
+
+            this.$scopes.onMarkdownHead(label, labelPos, depth);
          }
 
          // Add R-comment sections; e.g.
@@ -815,16 +810,10 @@ var RCodeModel = function(session, tokenizer,
          //
          // Note that sections can only be closed implicitly by new
          // sections following later in the document.
-         if (/\bsectionhead\b/.test(type))
+         else if (/\bsectionhead\b/.test(type))
          {
             var sectionHeadMatch = /^#+'?[-=#\s]*(.*?)\s*[-=#]+\s*$/.exec(value);
-
-            var label = "" + sectionHeadMatch[1];
-            if (label.length === 0)
-               label = "(Untitled)";
-            if (label.length > 50)
-               label = label.substring(0, 50) + "...";
-
+            var label = sectionHeadMatch[1];
             this.$scopes.onSectionHead(label, position);
          }
 
@@ -940,7 +929,8 @@ var RCodeModel = function(session, tokenizer,
             position.column++;
             this.$scopes.onScopeEnd(position);
          }
-      } while ((token = iterator.stepForward()));
+
+      } while ((token = iterator.moveToNextToken()));
    };
 
    this.$getFoldToken = function(session, foldStyle, row) {

@@ -63,6 +63,52 @@ define('mode/r_scope_tree', function(require, exports, module) {
          this.$root.addNode(new this.$ScopeNodeFactory(sectionLabel, sectionPos, sectionPos,
                                           ScopeNode.TYPE_SECTION));
       };
+      
+      // A little tricky: a new Markdown header will implicitly
+      // close all previously open headers of greater or equal depth.
+      //
+      // For example:
+      //
+      //    # Top Level
+      //    ## Sub Section
+      //    ### Sub-sub Section
+      //    ## Sub Section Two
+      //
+      // In the above case, the '## Sub Section Two' header will close both the
+      // '### Sub-sub section' as well as the '## Sub-Section'
+      this.closeMarkdownHeaderScopes = function(node, position, depth)
+      {
+         if (node.isRoot() || node == null)
+            return;
+         
+         var children = node.$children;
+         for (var i = children.length - 1; i >= 0; i--)
+         {
+            var child = children[i];
+            if (child.isSection() && child.attributes.depth >= depth)
+            {
+               this.$root.closeScope(position, ScopeNode.TYPE_SECTION);
+               if (child.attributes.depth === depth)
+                  return;
+            }
+         }
+         this.closeMarkdownHeaderScopes(node.parentScope, position, depth);
+      };
+
+      this.onMarkdownHead = function(label, position, depth)
+      {
+         var scopes = this.getActiveScopes(position);
+         if (scopes.length > 1)
+            this.closeMarkdownHeaderScopes(scopes[scopes.length - 2], position, depth);
+
+         this.$root.addNode(new this.$ScopeNodeFactory(
+            label,
+            position,
+            position,
+            ScopeNode.TYPE_SECTION,
+            {depth: depth}
+         ));
+      };
 
       this.onChunkStart = function(chunkLabel, label, chunkStartPos, chunkPos) {
          // Starting a chunk means closing the previous chunk, if any
@@ -224,9 +270,22 @@ define('mode/r_scope_tree', function(require, exports, module) {
          return this.isBrace() && !!this.label;
       };
 
+      this.equals = function(node) {
+         if (this.scopeType !== node.scopeType ||
+             this.start.row !== node.start.row ||
+             this.start.column !== node.start.column)
+            return false;
+
+         return true;
+      };
+
       this.addNode = function(node) {
          assert(!node.end, "New node is already closed");
          assert(node.$children.length == 0, "New node already had children");
+
+         // Avoid adding duplicate nodes.
+         if (this.equals(node))
+            return;
 
          // It's possible for this node to be already closed. If that's the
          // case, we need to open it back up. Example:
