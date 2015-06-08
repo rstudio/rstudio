@@ -38,6 +38,8 @@ namespace session {
 namespace modules { 
 namespace path {
 
+#ifdef __APPLE__
+
 namespace {
 
 Error readPathsFromFile(const FilePath& filePath,
@@ -79,7 +81,6 @@ void addToPathIfNecessary(const std::string& entry, std::string* pPath)
 
 Error initialize()
 {
-#ifdef __APPLE__
    // read /etc/paths
    std::vector<std::string> paths;
    safeReadPathsFromFile(FilePath("/etc/paths"), &paths);
@@ -121,12 +122,20 @@ Error initialize()
 
    // set the path
    core::system::setenv("PATH", path);
-#endif
 
    return Success();
 
 }
-   
+
+#else
+Error initialize()
+{
+   return Success();
+}
+#endif
+
+
+
    
 } // namespace path
 } // namespace modules

@@ -1753,7 +1753,7 @@ Error initialize()
 
 namespace module_context {
 
-#ifndef _WIN32
+#ifdef __APPLE__
 namespace {
 
 bool usingSystemMake()
