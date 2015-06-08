@@ -39,6 +39,8 @@ CSSValueList
 CSSVariablesMap
 CSSViewportRule
 CSSUnknownRule
+Cache
+CacheStorage
 CanvasGradient
 CanvasPattern
 CanvasRenderingContext2D
@@ -197,6 +199,14 @@ Intl
 JSON
 KeyboardEvent
 Location
+MIDIAccess
+MIDIConnectionEvent
+MIDIInput
+MIDIInputMap
+MIDIMessageEvent
+MIDIOutput
+MIDIOutputMap
+MIDIPort
 Math
 MediaController
 MediaElementAudioSourceNode
@@ -242,6 +252,8 @@ OscillatorNode
 OverflowEvent
 PageTransitionEvent
 Path2D
+PermissionStatus
+Permissions
 Performance
 PerformanceEntry
 PerformanceMark
@@ -264,6 +276,9 @@ RTCSessionDescription
 RadioNodeList
 Range
 RangeError
+ReadableByteStream
+ReadableStream
+ReadableStreamReader
 Rect
 ReferenceError
 RegExp
@@ -502,6 +517,7 @@ XPathExpression
 XPathResult
 XSLTProcessor
 applicationCache
+caches
 chrome
 clientInformation
 closed
