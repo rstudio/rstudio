@@ -57,6 +57,76 @@ var Range = require("ace/range").Range;
       return $complements[string];
    }
 
+   this.moveToStartOfRow = function()
+   {
+      this.$tokenIndex = 0;
+      return this.getCurrentToken();
+   };
+
+   this.moveToEndOfRow = function()
+   {
+      this.$tokenIndex = this.$rowTokens.length - 1;
+      return this.getCurrentToken();
+   };
+
+   this.moveToStartOfNextLine = function()
+   {
+      this.$tokenIndex = 0;
+      this.$row++;
+      this.$rowTokens = this.$session.getTokens(this.$row);
+      return this.getCurrentToken();
+   };
+
+   this.moveToStartOfPreviousLine = function()
+   {
+      this.$tokenIndex = 0;
+      this.$row--;
+      this.$rowTokens = this.$session.getTokens(this.$row);
+      return this.getCurrentToken();
+   };
+
+   this.moveToNextToken = this.stepForward;
+   this.moveToPreviousToken = this.stepBackward;
+
+   /**
+    * Move a TokenCursor to the token lying at position.
+    * If no such token exists at that position, then we instead
+    * move to the first token lying previous to that token.
+    */
+   this.moveToPosition = function(position)
+   {
+      // Try to get a token at the position supplied.
+      var token = this.$session.getTokenAt(position.row, position.column);
+
+      // If no token was returned, place a token cursor at the first
+      // cursor previous to that token.
+      //
+      // Based on some simple testing, we can see that:
+      //
+      //    session.getToken(0, -100) returns the first token,
+      //    session.getToken(0, 1000) returns null
+      //
+      // And so a 'null' result implies that we specified a column that was
+      // too large.
+      if (token == null) {
+         
+         // Temporarily move to the first token on the next row.
+         // It's okay if this doesn't actually exist.
+         this.$row = position.row + 1;
+         this.$tokenIndex = 0;
+         this.$rowTokens = this.$session.getTokens(this.$row);
+
+         // Move to the previous token.
+         return this.moveToPreviousToken();
+      }
+
+      // Otherwise, just set the indices to match that token.
+      this.$row = position.row,
+      this.$rowTokens = this.$session.getTokens(this.$row);
+      this.$tokenIndex = token.index;
+      return this.getCurrentToken();
+   };
+
    /**
     * Clones the current token iterator. The clone
     * keeps a reference to the same underlying session.

@@ -480,8 +480,13 @@ var TokenCursor = function(tokens, row, offset) {
          }
 
          this.$row = row;
-         
-         if (rightInclusive && rowTokens[index].column === column)
+
+         // It's possible for us to go too far, if the column passed
+         // in is too large. In that case, we still want to move to the
+         // final token on the line.
+         if (index === rowTokens.length)
+            this.$offset = index - 1;
+         else if (rightInclusive && rowTokens[index].column === column)
             this.$offset = index;
          else
             this.$offset = index - 1;
