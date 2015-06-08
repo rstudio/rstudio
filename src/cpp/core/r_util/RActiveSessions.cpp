@@ -15,12 +15,14 @@
 
 #include <core/r_util/RActiveSessions.hpp>
 
+#include <boost/bind.hpp>
 #include <boost/foreach.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 
 #include <core/StringUtils.hpp>
 
 #include <core/system/System.hpp>
+#include <core/system/FileMonitor.hpp>
 
 #include <core/r_util/RSessionContext.hpp>
 
@@ -38,7 +40,7 @@ namespace {
 
 Error ActiveSessions::create(const std::string& project,
                              const std::string& workingDir,
-                             std::string* pId)
+                             std::string* pId) const
 {
    // generate a new id (loop until we find a unique one)
    std::string id;
@@ -68,7 +70,7 @@ Error ActiveSessions::create(const std::string& project,
    return Success();
 }
 
-std::vector<boost::shared_ptr<ActiveSession> > ActiveSessions::list()
+std::vector<boost::shared_ptr<ActiveSession> > ActiveSessions::list() const
 {
    // list to return
    std::vector<boost::shared_ptr<ActiveSession> > sessions;
@@ -106,7 +108,12 @@ std::vector<boost::shared_ptr<ActiveSession> > ActiveSessions::list()
    return sessions;
 }
 
-boost::shared_ptr<ActiveSession> ActiveSessions::get(const std::string& id)
+size_t ActiveSessions::count() const
+{
+   return list().size();
+}
+
+boost::shared_ptr<ActiveSession> ActiveSessions::get(const std::string& id) const
 {
    FilePath scratchPath = storagePath_.childPath(kSessionDirPrefix + id);
    if (scratchPath.exists())
@@ -120,6 +127,36 @@ boost::shared_ptr<ActiveSession> ActiveSessions::get(const std::string& id)
 boost::shared_ptr<ActiveSession> ActiveSessions::emptySession()
 {
    return boost::shared_ptr<ActiveSession>(new ActiveSession());
+}
+
+
+namespace {
+
+void notifyCountChanged(boost::shared_ptr<ActiveSessions> pSessions,
+                        boost::function<void(size_t)> onCountChanged)
+{
+   onCountChanged(pSessions->count());
+}
+
+} // anonymous namespace
+
+void trackActiveSessionCount(const FilePath& rootStoragePath,
+                             boost::function<void(size_t)> onCountChanged)
+{
+
+   boost::shared_ptr<ActiveSessions> pSessions(
+                                          new ActiveSessions(rootStoragePath));
+
+   core::system::file_monitor::Callbacks cb;
+   cb.onRegistered = boost::bind(notifyCountChanged, pSessions, onCountChanged);
+   cb.onFilesChanged = boost::bind(notifyCountChanged, pSessions, onCountChanged);
+   cb.onRegistrationError = boost::bind(log::logError, _1, ERROR_LOCATION);
+
+   core::system::file_monitor::registerMonitor(
+                   pSessions->storagePath(),
+                   false,
+                   boost::function<bool(const FileInfo&)>(),
+                   cb);
 }
 
 } // namespace r_util

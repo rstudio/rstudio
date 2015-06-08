@@ -144,17 +144,24 @@ public:
 
    core::Error create(const std::string& project,
                       const std::string& working,
-                      std::string* pId);
+                      std::string* pId) const;
 
-   std::vector<boost::shared_ptr<ActiveSession> > list();
+   std::vector<boost::shared_ptr<ActiveSession> > list() const;
 
-   boost::shared_ptr<ActiveSession> get(const std::string& id);
+   size_t count() const;
+
+   boost::shared_ptr<ActiveSession> get(const std::string& id) const;
+
+   FilePath storagePath() const { return storagePath_; }
 
    static boost::shared_ptr<ActiveSession> emptySession();
 
 private:
    core::FilePath storagePath_;
 };
+
+void trackActiveSessionCount(const FilePath& rootStoragePath,
+                             boost::function<void(size_t)> onCountChanged);
 
 
 } // namespace r_util
