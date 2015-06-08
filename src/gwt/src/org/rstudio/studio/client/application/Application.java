@@ -433,6 +433,10 @@ public class Application implements ApplicationEventHandlers
                reloadWindowWithDelay(true);
             }
          }
+         else if (event.getOtherSessionsActive())
+         {
+            navigateWindowToRoot();
+         }
          else
          {
             view_.showApplicationQuit();
@@ -586,6 +590,11 @@ public class Application implements ApplicationEventHandlers
      
       // navigate window
       Window.Location.replace(url);
+   }
+   
+   private void navigateWindowToRoot()
+   {
+      navigateWindowTo("");
    }
    
    private void initializeWorkbench()
