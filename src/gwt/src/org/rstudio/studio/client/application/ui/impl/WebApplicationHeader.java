@@ -348,6 +348,8 @@ public class WebApplicationHeader extends Composite
       // add username 
       ToolbarLabel usernameLabel = new ToolbarLabel();
       usernameLabel.getElement().getStyle().setMarginRight(2, Unit.PX);
+      if (!BrowseCap.isFirefox())
+         usernameLabel.getElement().getStyle().setMarginTop(2, Unit.PX);
       usernameLabel.setText(sessionInfo.getUserIdentity());
       headerBarCommandsPanel_.add(usernameLabel);
      
@@ -372,6 +374,7 @@ public class WebApplicationHeader extends Composite
       ToolbarSeparator sep = new ToolbarSeparator();
       Style style = sep.getElement().getStyle();
       style.setMarginTop(2, Unit.PX);
+      style.setMarginLeft(3, Unit.PX);
       return sep;
    }
    
