@@ -656,6 +656,11 @@ public class ClientEventDispatcher
             CollabEditStartedEvent.Data data = event.getData();
             eventBus_.fireEvent(new CollabEditStartedEvent(data));
          }
+         else if (type.equals(ClientEvent.SessionCountChanged))
+         {
+            int count = event.getData();
+            eventBus_.fireEvent(new SessionCountChangedEvent(count));
+         }
          else
          {
             GWT.log("WARNING: Server event not dispatched: " + type, null);
