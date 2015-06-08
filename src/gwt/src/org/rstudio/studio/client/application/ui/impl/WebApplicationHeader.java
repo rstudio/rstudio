@@ -41,6 +41,7 @@ import org.rstudio.core.client.widget.HyperlinkLabel;
 import org.rstudio.core.client.widget.MessageDialogLabel;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarLabel;
+import org.rstudio.core.client.widget.ToolbarSeparator;
 import org.rstudio.core.client.widget.events.GlassVisibilityEvent;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -59,8 +60,10 @@ import org.rstudio.studio.client.workbench.events.SessionInitHandler;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 
-public class WebApplicationHeader extends Composite implements ApplicationHeader
-{
+public class WebApplicationHeader extends Composite 
+                                  implements ApplicationHeader,
+                                  WebApplicationHeaderOverlay.Context
+{  
    public WebApplicationHeader()
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
@@ -78,6 +81,7 @@ public class WebApplicationHeader extends Composite implements ApplicationHeader
       commands_ = commands;
       eventBus_ = eventBus;
       globalDisplay_ = globalDisplay; 
+      overlay_ = new WebApplicationHeaderOverlay();
       
       // Use the outer panel to just aggregate the menu bar/account area,
       // with the logo. The logo can't be inside the HorizontalPanel because
@@ -344,6 +348,8 @@ public class WebApplicationHeader extends Composite implements ApplicationHeader
       // add username 
       ToolbarLabel usernameLabel = new ToolbarLabel();
       usernameLabel.getElement().getStyle().setMarginRight(2, Unit.PX);
+      if (!BrowseCap.isFirefox())
+         usernameLabel.getElement().getStyle().setMarginTop(2, Unit.PX);
       usernameLabel.setText(sessionInfo.getUserIdentity());
       headerBarCommandsPanel_.add(usernameLabel);
      
@@ -358,18 +364,36 @@ public class WebApplicationHeader extends Composite implements ApplicationHeader
       headerBarCommandsPanel_.add(signOutButton);
       headerBarCommandsPanel_.add(createCommandSeparator());
       
+      overlay_.addCommands(this);
+      
       headerBarCommandsPanel_.add(commands_.quitSession().createToolbarButton());
    }
 
    private Widget createCommandSeparator()
    {
-      return new HTML("&nbsp;|&nbsp;");
+      ToolbarSeparator sep = new ToolbarSeparator();
+      Style style = sep.getElement().getStyle();
+      style.setMarginTop(2, Unit.PX);
+      style.setMarginLeft(3, Unit.PX);
+      return sep;
    }
    
    private Widget createCommandLink(String caption, ClickHandler clickHandler)
    {
       HyperlinkLabel link = new HyperlinkLabel(caption, clickHandler);
       return link;
+   }
+   
+   @Override
+   public void addCommand(Widget widget)
+   {
+      headerBarCommandsPanel_.add(widget);
+   }
+
+   @Override
+   public void addCommandSeparator()
+   {
+      headerBarCommandsPanel_.add(createCommandSeparator());
    }
 
    public Widget asWidget()
@@ -396,7 +420,6 @@ public class WebApplicationHeader extends Composite implements ApplicationHeader
    private GlobalToolbar toolbar_;
    private EventBus eventBus_;
    private GlobalDisplay globalDisplay_;
-   private Commands commands_;
-   
-   
+   private Commands commands_; 
+   private WebApplicationHeaderOverlay overlay_;
 }

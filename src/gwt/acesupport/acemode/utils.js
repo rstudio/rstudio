@@ -15,9 +15,20 @@
 
 define("mode/utils", function(require, exports, module) {
 
+var Range = require("ace/range").Range;
+var TokenIterator = require("ace/token_iterator").TokenIterator;
+var Unicode = require("ace/unicode").packages;
+
 (function() {
 
    var that = this;
+   var reWordCharacter = new RegExp(
+         "^[" +
+         Unicode.L +
+         Unicode.Mn + Unicode.Mc +
+         Unicode.Nd +
+         Unicode.Pc +
+         "._]+", "");
 
    // Simulate 'new Foo([args])'; ie, construction of an
    // object from an array of arguments
@@ -88,14 +99,91 @@ define("mode/utils", function(require, exports, module) {
 
       var embed = new EmbedRules().getRules();
       HighlightRules.addRules(embed, prefix + "-");
-      
+
       rules[prefix + "-start"].unshift({
          token: "support.function.codeend",
          regex: reEnd,
          next : "start"
       });
    };
-   
+
+   this.isSingleLineString = function(string)
+   {
+      if (string.length < 2)
+         return false;
+
+      var firstChar = string[0];
+      if (firstChar !== "'" && firstChar !== "\"")
+         return false;
+
+      var lastChar = string[string.length - 1];
+      if (lastChar !== firstChar)
+         return false;
+
+      var isEscaped = string[string.length - 2] === "\\" &&
+                      string[string.length - 3] !== "\\";
+
+      if (isEscaped)
+         return false;
+
+      return true;
+   };
+
+   this.createTokenIterator = function(editor)
+   {
+      var position = editor.getSelectionRange().start;
+      var session = editor.getSession();
+      return new TokenIterator(session, position.row, position.column);
+   };
+
+   this.isWordCharacter = function(string)
+   {
+      return reWordCharacter.test(string);
+   };
+
+   // The default set of complements is R-centric.
+   var $complements = {
+
+      "'" : "'",
+      '"' : '"',
+      "`" : "`",
+
+      "{" : "}",
+      "(" : ")",
+      "[" : "]",
+      "<" : ">",
+
+      "}" : "{",
+      ")" : "(",
+      "]" : "[",
+      ">" : "<"
+   };
+
+   this.isOpeningBracket = function(string, allowArrow)
+   {
+      return string === "{" ||
+             string === "(" ||
+             string === "[" ||
+             (!!allowArrow && string === "<");
+   };
+
+   this.isClosingBracket = function(string, allowArrow)
+   {
+      return string === "}" ||
+             string === ")" ||
+             string === "]" ||
+             (!!allowArrow && string === ">");
+   };
+
+   this.getComplement = function(string, complements)
+   {
+      if (typeof complements === "undefined")
+         complements = $complements;
+
+      return complements[string];
+   };
+
+
 }).call(exports);
 
 });

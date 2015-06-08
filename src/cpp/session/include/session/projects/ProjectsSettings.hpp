@@ -26,10 +26,11 @@
 #include <core/FilePath.hpp>
 #include <core/FileSerializer.hpp>
 
+#include <core/r_util/RSessionContext.hpp>
+
 #define kProjectsSettings              "projects_settings"
 #define kNextSessionProject            "next-session-project"
 #define kSwitchToProject               "switch-to-project"
-#define kProjectNone                   "none"
 #define kLastProjectPath               "last-project-path"
 #define kAlwaysRestoreLastProject      "restoreLastProject"
 

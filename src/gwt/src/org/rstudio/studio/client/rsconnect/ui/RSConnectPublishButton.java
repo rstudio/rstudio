@@ -87,7 +87,7 @@ public class RSConnectPublishButton extends Composite
                @Override
                public void onClick(ClickEvent arg0)
                {
-                  onPublishClick(defaultRec_);
+                  onPublishButtonClick();
                }
             });
       
@@ -107,6 +107,28 @@ public class RSConnectPublishButton extends Composite
       // compute initial visible state
       applyVisiblity();
       applyCaption("Publish");
+   }
+   
+   private void onPublishButtonClick()
+   {
+      // if the publish button is clicked without the droplist ever being 
+      // invoked, then we need to grab the list of existing deployments to
+      // determine what the default one will be.
+      if (defaultRec_ == null && populatedPath_ == null)
+      {
+         rebuildPopupMenu(new ToolbarPopupMenu.DynamicPopupMenuCallback()
+         {
+            @Override
+            public void onPopupMenu(ToolbarPopupMenu menu)
+            {
+               onPublishRecordClick(defaultRec_);
+            }
+         });
+      }
+      else
+      {
+         onPublishRecordClick(defaultRec_);
+      }
    }
    
    @Inject
@@ -315,7 +337,7 @@ public class RSConnectPublishButton extends Composite
       rebuildPopupMenu(null);
    }
    
-   private void onPublishClick(final RSConnectDeploymentRecord previous)
+   private void onPublishRecordClick(final RSConnectDeploymentRecord previous)
    {
       switch (contentType_)
       {
@@ -362,6 +384,13 @@ public class RSConnectPublishButton extends Composite
          break;
       case RSConnect.CONTENT_TYPE_DOCUMENT:
          // All R Markdown variants (single/multiple and static/Shiny)
+         if (docPreview_.getSourceFile() == null)
+         {
+            display_.showErrorMessage("Unsaved Document", 
+                  "Unsaved documents cannot be published. Save the document " +
+                  "before publishing it.");
+            break;
+         }
          events_.fireEvent(RSConnectActionEvent.DeployDocEvent(
                docPreview_, previous));
          break;
@@ -411,7 +440,7 @@ public class RSConnectPublishButton extends Composite
                   @Override
                   public void execute()
                   {
-                     onPublishClick(rec);
+                     onPublishRecordClick(rec);
                   }
                });
             publishMenu_.addItem(menuItem);
@@ -428,7 +457,7 @@ public class RSConnectPublishButton extends Composite
                   @Override
                   public void execute()
                   {
-                     onPublishClick(null);
+                     onPublishRecordClick(null);
                   }
                }));
       }
@@ -450,7 +479,7 @@ public class RSConnectPublishButton extends Composite
                   @Override
                   public void execute()
                   {
-                     onPublishClick(defaultRec_);
+                     onPublishRecordClick(defaultRec_);
                   }
                }));
       }

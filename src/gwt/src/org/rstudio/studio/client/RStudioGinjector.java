@@ -27,6 +27,7 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.ui.ProjectPopupMenu;
 import org.rstudio.studio.client.application.ui.impl.DesktopApplicationHeader;
 import org.rstudio.studio.client.application.ui.impl.WebApplicationHeader;
+import org.rstudio.studio.client.application.ui.impl.WebApplicationHeaderOverlay;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.compilepdf.dialog.CompilePdfProgressDialog;
@@ -125,6 +126,7 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(RSConnectDeploy deploy);
    void injectMembers(AceEditorWidget widget);
    void injectMembers(ChunkIconsManager manager);
+   void injectMembers(WebApplicationHeaderOverlay headerOverlay);
    
    public static final RStudioGinjector INSTANCE = GWT.create(RStudioGinjector.class);
 

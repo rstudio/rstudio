@@ -208,4 +208,97 @@ public class SourceVimCommands
       
       $wnd.require("ace/keyboard/vim").CodeMirror.Vim.defineEx("help", "help", callback);
    }-*/;
+   
+   public native final void expandShrinkSelection(Source source) /*-{
+      
+      var Vim = $wnd.require("ace/keyboard/vim").CodeMirror.Vim;
+      
+      function toVimSelection(range) {
+         return {
+            anchor: {
+               line: range.start.row, ch: range.start.column
+            },
+            head: {
+               line: range.end.row, ch: range.end.column - 1
+            }
+         };
+      }
+      
+      var expandCallback = $entry(function(cm, origHead, motionArgs, vim) {
+         vim.sel = toVimSelection(cm.ace.$expandSelection());
+      });
+      
+      Vim.defineMotion("expandSelection", expandCallback);
+      Vim.mapCommand({
+         keys: "v",
+         type: "motion",
+         motion: "expandSelection",
+         context: "visual"
+      });
+      
+      var shrinkCallback = $entry(function(cm, origHead, motionArgs, vim) {
+         vim.sel = toVimSelection(cm.ace.$shrinkSelection());
+      });
+      
+      Vim.defineMotion("shrinkSelection", shrinkCallback);
+      Vim.mapCommand({
+         keys: "V",
+         type: "motion",
+         motion: "shrinkSelection",
+         context: "visual"
+      });
+   
+   }-*/;
+   
+   public native final void addStarRegister() /*-{
+      
+      var SystemClipboardRegister = function(text, linewise, blockwise) {
+         this.clear();
+         this.keyBuffer = [text || ''];
+         this.insertModeChanges = [];
+         this.searchQueries = [];
+         this.linewise = !!linewise;
+         this.blockwise = !!blockwise;
+      }
+      
+      // TODO: Reimplement this and read/write
+      // from the system clipboard using appropriate
+      // callbacks.
+      SystemClipboardRegister.prototype = {
+         
+         setText: function(text, linewise, blockwise) {
+            this.keyBuffer = [text || ''];
+            this.linewise = !!linewise;
+            this.blockwise = !!blockwise;
+         },
+         
+         pushText: function(text, linewise) {
+            this.keyBuffer.push(text);
+            if (linewise) {
+               if (!this.linewise) {
+                  this.keyBuffer.push('\n');
+               }
+               this.linewise = true;
+            }
+            this.keyBuffer.push(text);
+         },
+         
+         clear: function() {
+            this.keyBuffer = [];
+            this.insertModeChanges = [];
+            this.searchQueries = [];
+            this.linewise = false;
+         },
+         
+         toString: function() {
+            return this.keyBuffer.join('');
+         }
+         
+      };
+      
+      var Vim = $wnd.require("ace/keyboard/vim").CodeMirror.Vim;
+      var controller = Vim.getRegisterController();
+      // controller.registers['*'] = new SystemClipboardRegister();
+   
+   }-*/;
 }

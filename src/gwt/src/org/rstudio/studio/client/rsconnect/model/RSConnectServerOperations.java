@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.rsconnect.model;
 
+import org.rstudio.studio.client.server.Int;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 
@@ -63,4 +64,6 @@ public interface RSConnectServerOperations
    
    void getRmdPublishDetails(String target,
                 ServerRequestCallback<RmdPublishDetails> resultCallback);
+   
+   void hasOrphanedAccounts(ServerRequestCallback<Int> resultCallback);
 }

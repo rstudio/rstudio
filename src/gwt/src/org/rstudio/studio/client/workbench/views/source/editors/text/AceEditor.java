@@ -1226,6 +1226,24 @@ public class AceEditor implements DocDisplay,
       }
       return false;
    }
+   
+   @Override
+   public void expandSelection()
+   {
+      widget_.getEditor().expandSelection();
+   }
+   
+   @Override
+   public void shrinkSelection()
+   {
+      widget_.getEditor().shrinkSelection();
+   }
+   
+   @Override
+   public void clearSelectionHistory()
+   {
+      widget_.getEditor().clearSelectionHistory();
+   }
 
    @Override
    public void reindent()

@@ -23,6 +23,7 @@
 #include <core/FilePath.hpp>
 #include <core/Log.hpp>
 #include <core/Settings.hpp>
+#include <core/DateTime.hpp>
 
 namespace rstudio {
 namespace core {
@@ -81,6 +82,34 @@ public:
          properties_.set("working-dir", workingDir);
    }
 
+   double lastUsed() const
+   {
+      if (!empty())
+         return properties_.getDouble("last-used");
+      else
+         return 0;
+   }
+
+   void setLastUsed()
+   {
+      if (!empty())
+         properties_.set("last-used", date_time::millisecondsSinceEpoch());
+   }
+
+   bool running() const
+   {
+      if (!empty())
+         return properties_.getBool("running");
+      else
+         return false;
+   }
+
+   void setRunning(bool running)
+   {
+      if (!empty())
+         properties_.set("running", running);
+   }
+
    core::Error destroy()
    {
       if (!empty())
@@ -107,27 +136,32 @@ class ActiveSessions : boost::noncopyable
 public:
    explicit ActiveSessions(const FilePath& rootStoragePath)
    {
-      storagePath_ = rootStoragePath.childPath("current-sessions");
+      storagePath_ = rootStoragePath.childPath("session-storage");
       Error error = storagePath_.ensureDirectory();
       if (error)
          LOG_ERROR(error);
    }
 
-   core::Error create(const std::string& project, std::string* pId);
-
    core::Error create(const std::string& project,
                       const std::string& working,
-                      std::string* pId);
+                      std::string* pId) const;
 
-   std::vector<boost::shared_ptr<ActiveSession> > list();
+   std::vector<boost::shared_ptr<ActiveSession> > list() const;
 
-   boost::shared_ptr<ActiveSession> get(const std::string& id);
+   size_t count() const;
+
+   boost::shared_ptr<ActiveSession> get(const std::string& id) const;
+
+   FilePath storagePath() const { return storagePath_; }
 
    static boost::shared_ptr<ActiveSession> emptySession();
 
 private:
    core::FilePath storagePath_;
 };
+
+void trackActiveSessionCount(const FilePath& rootStoragePath,
+                             boost::function<void(size_t)> onCountChanged);
 
 
 } // namespace r_util

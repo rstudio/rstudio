@@ -303,7 +303,6 @@ struct Events : boost::noncopyable
                                              onConsoleOutput;
    boost::signal<void (ChangeSource)>        onDetectChanges;
    boost::signal<void (core::FilePath)>      onSourceEditorFileSaved;
-   boost::signal<void (core::FilePath)>      onOpenDocument;
    boost::signal<void(bool)>                 onDeferredInit;
    boost::signal<void(bool)>                 afterSessionInitHook;
    boost::signal<void(bool)>                 onBackgroundProcessing;

@@ -362,7 +362,17 @@ FilePath getInitialWorkingDirectory()
 {
    // check for a project
    if (projects::projectContext().hasProject())
+   {
       return projects::projectContext().directory();
+   }
+
+   // check for working dir in project none
+   else if (options().sessionScope().isProjectNone())
+   {
+      return module_context::resolveAliasedPath(
+                     module_context::activeSession().workingDir());
+
+   }
 
    // see if there is an override from the environment (perhaps based
    // on a folder drag and drop or other file association)
@@ -901,6 +911,11 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
                   {
                      scope = r_util::SessionScope::projectNone(
                                           options().sessionScope().id());
+
+                     // reset the working dir to the default
+                     using namespace module_context;
+                     activeSession().setWorkingDir(
+                             createAliasedPath(getDefaultWorkingDirectory()));
                   }
                   else
                   {
@@ -1756,6 +1771,9 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
    // unset by the time we launch again then we didn't terminate normally
    // i.e. either the process dying unexpectedly or a call to R_Suicide)
    rsession::persistentState().setAbend(true);
+
+   // set active session flag indicating that we are running
+   module_context::activeSession().setRunning(true);
    
    // setup fork handlers
    setupForkHandlers();
@@ -2240,6 +2258,8 @@ void rQuit()
    json::Object jsonData;
    jsonData["switch_projects"] = switchProjects;
    jsonData["next_session_url"] = s_nextSessionUrl;
+   jsonData["other_sessions_active"] =
+     r_util::ActiveSessions(module_context::userScratchPath()).list().size()>1;
    ClientEvent quitEvent(kQuit, jsonData);
    rsession::clientEventQueue().add(quitEvent);
 }
@@ -2293,6 +2313,10 @@ void rCleanup(bool terminatedNormally)
       // note that we didn't abend
       if (terminatedNormally)
          rsession::persistentState().setAbend(false);
+
+      // set active session flag indicating we are no longer running
+      module_context::activeSession().setLastUsed();
+      module_context::activeSession().setRunning(false);
 
       // fire shutdown event to modules
       module_context::events().onShutdown(terminatedNormally);

@@ -25,6 +25,7 @@ public class QuitEvent extends GwtEvent<QuitHandler>
 
       public native final boolean getSwitchProjects() /*-{ return this.switch_projects; }-*/;
       public native final String getNextSessionUrl() /*-{ return this.next_session_url; }-*/;
+      public native final boolean getOtherSessionsActive() /*-{ return this.other_sessions_active; }-*/; 
    }
    
    public static final GwtEvent.Type<QuitHandler> TYPE =
@@ -43,6 +44,11 @@ public class QuitEvent extends GwtEvent<QuitHandler>
    public String getNextSessionUrl()
    {
       return data_.getNextSessionUrl();
+   }
+   
+   public boolean getOtherSessionsActive()
+   {
+      return data_.getOtherSessionsActive();
    }
    
    @Override

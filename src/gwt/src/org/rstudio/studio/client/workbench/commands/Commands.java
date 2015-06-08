@@ -104,6 +104,8 @@ public abstract class
    public abstract AppCommand expandToMatching();
    public abstract AppCommand splitIntoLines();
    public abstract AppCommand showDocumentOutline();
+   public abstract AppCommand expandSelection();
+   public abstract AppCommand shrinkSelection();
    public abstract AppCommand extractFunction();
    public abstract AppCommand extractLocalVariable();
    public abstract AppCommand commentUncomment();

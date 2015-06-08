@@ -219,9 +219,6 @@ Error openDocument(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-   // let anyone listening know we've just opened a doc
-   module_context::events().onOpenDocument(documentPath);
-
    // return the doc
    json::Object jsonDoc;
    writeDocToJson(pDoc, &jsonDoc);

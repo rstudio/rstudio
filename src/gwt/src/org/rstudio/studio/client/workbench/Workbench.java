@@ -286,11 +286,39 @@ public class Workbench implements BusyHandler,
    void onNewSession()
    {
       String project = workbenchContext_.getActiveProjectFile();
-      if (project != null)
-         Desktop.getFrame().openProjectInNewWindow(project); 
-      else 
-         Desktop.getFrame().openSessionInNewWindow(
-               workbenchContext_.getCurrentWorkingDir().getPath());
+      
+      if (Desktop.isDesktop())
+      {
+         if (project != null)
+         {
+            Desktop.getFrame().openProjectInNewWindow(project); 
+         }
+         else
+         {
+            Desktop.getFrame().openSessionInNewWindow(
+                  workbenchContext_.getCurrentWorkingDir().getPath());
+         }
+      }
+      else
+      {
+         // pass project dir or working dir
+         boolean isProject = project != null;
+         String directory = isProject ?
+                     workbenchContext_.getActiveProjectDir().getPath() :
+                     workbenchContext_.getCurrentWorkingDir().getPath();
+         
+         server_.getNewSessionUrl(
+            GWT.getHostPageBaseURL(), 
+            isProject, 
+            directory,
+            new SimpleRequestCallback<String>() {
+               @Override
+               public void onResponseReceived(String url)
+               {
+                  globalDisplay_.openWindow(url);
+               }
+            });
+      }      
    }
    
    @Handler

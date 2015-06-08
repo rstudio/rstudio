@@ -433,6 +433,10 @@ public class Application implements ApplicationEventHandlers
                reloadWindowWithDelay(true);
             }
          }
+         else if (event.getOtherSessionsActive())
+         {
+            navigateWindowToRoot();
+         }
          else
          {
             view_.showApplicationQuit();
@@ -588,6 +592,11 @@ public class Application implements ApplicationEventHandlers
       Window.Location.replace(url);
    }
    
+   private void navigateWindowToRoot()
+   {
+      navigateWindowTo("");
+   }
+   
    private void initializeWorkbench()
    {
       pAceThemes_.get();
@@ -651,8 +660,8 @@ public class Application implements ApplicationEventHandlers
          commands_.zoomOut().remove();
       }
       
-      // hide new session in web mode
-      if (!Desktop.isDesktop())
+      // show new session when appropriate
+      if (!Desktop.isDesktop() && !sessionInfo.getMultiSession())
       {
          commands_.newSession().remove();
       }
