@@ -20,7 +20,6 @@ import org.rstudio.core.client.widget.WizardIntermediatePage;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.rsconnect.model.NewRSConnectAccountInput;
 import org.rstudio.studio.client.rsconnect.model.NewRSConnectAccountResult;
-import org.rstudio.studio.client.rsconnect.model.RSConnectPreAuthToken;
 import org.rstudio.studio.client.rsconnect.model.RSConnectServerInfo;
 import org.rstudio.studio.client.rsconnect.model.RSConnectServerOperations;
 import org.rstudio.studio.client.server.ServerError;
@@ -57,7 +56,7 @@ public class NewRSConnectLocalPage
          final OperationWithInput<NewRSConnectAccountResult> onResult) 
    {
       // get the current configuration and abort if it's not valid
-      NewRSConnectAccountResult result = collectInput();
+      final NewRSConnectAccountResult result = collectInput();
       if (!validate(result))
       {
          onResult.execute(result);
@@ -74,8 +73,7 @@ public class NewRSConnectLocalPage
          {
             if (info.isValid()) 
             {
-               getPreAuthToken(getIntermediateResult(), info, indicator, 
-                     onResult);
+               onResult.execute(result);
             }
             else
             {
@@ -130,40 +128,6 @@ public class NewRSConnectLocalPage
       return input != null &&
             input.getServerUrl() != null && 
             !input.getServerUrl().isEmpty();
-   }
-
-   private void getPreAuthToken(
-         final NewRSConnectAccountResult result,
-         final RSConnectServerInfo serverInfo,
-         final ProgressIndicator indicator,
-         final OperationWithInput<NewRSConnectAccountResult> onResult)
-   {
-      indicator.onProgress("Setting up an account...");
-      server_.getPreAuthToken(serverInfo.getName(), 
-            new ServerRequestCallback<RSConnectPreAuthToken>()
-      {
-         @Override
-         public void onResponseReceived(final RSConnectPreAuthToken token)
-         {
-            NewRSConnectAccountResult newResult = result;
-            newResult.setPreAuthToken(token);
-            newResult.setServerInfo(serverInfo);
-            onResult.execute(newResult);
-            indicator.clearProgress();
-         }
-
-         @Override
-         public void onError(ServerError error)
-         {
-            display_.showErrorMessage("Error Connecting Account", 
-                  "The server appears to be valid, but rejected the " + 
-                  "request to authorize an account.\n\n"+
-                  serverInfo.getInfoString() + "\n" +
-                  error.getMessage());
-            indicator.clearProgress();
-            onResult.execute(null);
-         }
-      });
    }
 
    private RSConnectServerOperations server_;
