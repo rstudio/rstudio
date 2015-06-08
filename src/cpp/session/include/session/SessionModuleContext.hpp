@@ -295,6 +295,7 @@ struct firstNonEmpty
 // session events
 struct Events : boost::noncopyable
 {
+   boost::signal<void (core::json::Object*)> onSessionInfo;
    boost::signal<void ()>                    onClientInit;
    boost::signal<void ()>                    onBeforeExecute;
    boost::signal<void(const std::string&)>   onConsolePrompt;
