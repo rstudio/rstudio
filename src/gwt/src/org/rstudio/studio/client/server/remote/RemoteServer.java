@@ -101,6 +101,7 @@ import org.rstudio.studio.client.rsconnect.model.RSConnectLintResults;
 import org.rstudio.studio.client.rsconnect.model.RSConnectPreAuthToken;
 import org.rstudio.studio.client.rsconnect.model.RSConnectPublishSettings;
 import org.rstudio.studio.client.rsconnect.model.RSConnectPublishSource;
+import org.rstudio.studio.client.rsconnect.model.RSConnectServerEntry;
 import org.rstudio.studio.client.rsconnect.model.RSConnectServerInfo;
 import org.rstudio.studio.client.rsconnect.model.RmdPublishDetails;
 import org.rstudio.studio.client.server.Bool;
@@ -3742,6 +3743,16 @@ public class RemoteServer implements Server
    }
 
    @Override
+   public void getServerUrls(
+         ServerRequestCallback<JsArray<RSConnectServerEntry>> requestCallback)
+   {
+      sendRequest(RPC_SCOPE,
+            GET_SERVER_URLS,
+            new JSONArray(),
+            requestCallback);
+   }
+
+   @Override
    public void getPreAuthToken(String serverName, 
          ServerRequestCallback<RSConnectPreAuthToken> requestCallback)
    {
@@ -4439,6 +4450,7 @@ public class RemoteServer implements Server
    private static final String RSCONNECT_PUBLISH = "rsconnect_publish";
    private static final String GET_DEPLOYMENT_FILES = "get_deployment_files";
    private static final String VALIDATE_SERVER_URL = "validate_server_url";
+   private static final String GET_SERVER_URLS = "get_server_urls";
    private static final String GET_AUTH_TOKEN = "get_auth_token";
    private static final String GET_USER_FROM_TOKEN = "get_user_from_token";
    private static final String REGISTER_USER_TOKEN = "register_user_token";
