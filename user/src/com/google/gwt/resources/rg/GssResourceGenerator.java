@@ -64,6 +64,7 @@ import com.google.gwt.thirdparty.common.css.PrefixingSubstitutionMap;
 import com.google.gwt.thirdparty.common.css.SourceCode;
 import com.google.gwt.thirdparty.common.css.SourceCodeLocation;
 import com.google.gwt.thirdparty.common.css.SubstitutionMap;
+import com.google.gwt.thirdparty.common.css.compiler.ast.CssCompositeValueNode;
 import com.google.gwt.thirdparty.common.css.compiler.ast.CssDefinitionNode;
 import com.google.gwt.thirdparty.common.css.compiler.ast.CssNumericNode;
 import com.google.gwt.thirdparty.common.css.compiler.ast.CssTree;
@@ -1274,6 +1275,16 @@ public class GssResourceGenerator extends AbstractCssResourceGenerator implement
         return false;
       }
       CssValueNode valueNode = params.get(0);
+
+      // when a constant refers to another constant, closure-stylesheet wrap the CssNumericNode in
+      // a CssCompositeValueNode. Unwrap it.
+      if (valueNode instanceof CssCompositeValueNode) {
+        CssCompositeValueNode toUnwrap = (CssCompositeValueNode) valueNode;
+        if (toUnwrap.getValues().size() == 1) {
+          valueNode = toUnwrap.getValues().get(0);
+        }
+      }
+
       if (!(valueNode instanceof CssNumericNode)) {
         logger.log(TreeLogger.ERROR, "The value of the constant defined by @" + name + " is not a" +
             " numeric");

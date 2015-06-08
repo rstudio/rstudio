@@ -17,6 +17,9 @@
 
 @def WIDTH add(MARGIN, PADDING, 100px);
 
+@def FOO 1px;
+@def BAR FOO;
+
 div {
   width: WIDTH;
 }

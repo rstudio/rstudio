@@ -177,6 +177,8 @@ public interface TestResources extends ClientBundle {
     String padding2();
 
     int width();
+
+    int bar();
   }
 
   /**
