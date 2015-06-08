@@ -14,11 +14,19 @@
  */
 package org.rstudio.studio.client.application.events;
 
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
 public class SessionCountChangedEvent extends GwtEvent<SessionCountChangedEvent.Handler>
 {  
+   public static class Data extends JavaScriptObject
+   {
+      protected Data() {}
+
+      public native final int getCount() /*-{ return this.count; }-*/;
+    }
+   
    public interface Handler extends EventHandler
    {
       void onSessionCountChanged(SessionCountChangedEvent event);
@@ -27,14 +35,14 @@ public class SessionCountChangedEvent extends GwtEvent<SessionCountChangedEvent.
    public static final GwtEvent.Type<Handler> TYPE =
       new GwtEvent.Type<Handler>();
    
-   public SessionCountChangedEvent(int count)
+   public SessionCountChangedEvent(Data data)
    {
-      count_ = count;
+      data_ = data;
    }
    
    public int getCount()
    {
-      return count_;
+      return data_.getCount();
    }
    
    @Override
@@ -49,5 +57,5 @@ public class SessionCountChangedEvent extends GwtEvent<SessionCountChangedEvent.
       return TYPE;
    }
    
-   private final int count_;
+   private final Data data_;
 }
