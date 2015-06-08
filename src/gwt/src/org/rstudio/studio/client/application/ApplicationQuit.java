@@ -156,7 +156,28 @@ public class ApplicationQuit implements SaveActionChangedHandler,
       // no unsaved changes at all
       if (saveAction != SaveAction.SAVEASK && unsavedSourceDocs.size() == 0)
       {
-         quitContext.onReadyToQuit(saveAction == SaveAction.SAVE);
+         Operation quitOperation = new Operation() { public void execute()
+         {
+            quitContext.onReadyToQuit(saveAction == SaveAction.SAVE);      
+         }};
+         
+         // always prompt to quit for browser version (this is because
+         // in the browser context quit is always explicit (as opposed to
+         // a result of closing a window)
+         if (Desktop.isDesktop())
+         {
+            quitOperation.execute();
+         }
+         else
+         {
+            globalDisplay_.showYesNoMessage(
+               GlobalDisplay.MSG_QUESTION,
+               caption,
+               "Are you sure you want to quit the R session?",
+               quitOperation,
+               true);      
+         }
+         
          return;
       }
       
