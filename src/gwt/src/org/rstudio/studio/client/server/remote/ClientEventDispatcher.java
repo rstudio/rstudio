@@ -658,7 +658,7 @@ public class ClientEventDispatcher
          }
          else if (type.equals(ClientEvent.SessionCountChanged))
          {
-            int count = event.getData();
+            Integer count = event.getData();
             eventBus_.fireEvent(new SessionCountChangedEvent(count));
          }
          else
