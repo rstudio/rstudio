@@ -18,10 +18,49 @@ define("mixins/token_iterator", function(require, exports, module) {
 
 var TokenIterator = require("ace/token_iterator").TokenIterator;
 var Range = require("ace/range").Range;
-var Utils = require("mode/utils");
 
 (function() {
 
+   function isOpeningBracket(string, allowArrows)
+   {
+      return string.length === 1 && (
+         string === "{" ||
+         string === "(" ||
+         string === "[" ||
+         (!!allowArrows && string === "<"));
+   }
+
+   function isClosingBracket(string, allowArrows)
+   {
+      return string.length === 1 && (
+         string === "}" ||
+         string === ")" ||
+         string === "]" ||
+         (!!allowArrows && string === ">"));
+   }
+
+   var $complements = {
+
+      "(" : ")",
+      "{" : "}",
+      "[" : "]",
+      "<" : ">",
+
+      ")" : "(",
+      "}" : "{",
+      "]" : "[",
+      ">" : "<"
+   };
+
+   function getComplement(string)
+   {
+      return $complements[string];
+   }
+
+   /**
+    * Clones the current token iterator. The clone
+    * keeps a reference to the same underlying session.
+    */
    this.clone = function()
    {
       var clone = new TokenIterator(this.$session, 0, 0);
@@ -29,6 +68,10 @@ var Utils = require("mode/utils");
       return clone;
    };
 
+   /**
+    * Move a token iterator to the same position as a
+    * separate token iterator.
+    */
    this.moveToTokenIterator = function(tokenIterator)
    {
       for (var key in tokenIterator)
@@ -36,30 +79,48 @@ var Utils = require("mode/utils");
             this[key] = tokenIterator[key];
    };
 
-   this.$peek = function(offset, mover)
+   function $peek(cursor, offset, mover)
    {
-      var clone = this.clone();
+      var clone = cursor.clone();
       var token;
       for (var i = 0; i < offset; i++)
          token = mover.call(clone, offset);
       return token;
-   };
+   }
 
+   /**
+    * Get the token lying `offset` tokens ahead of
+    * the token iterator. Returns `null` if no such
+    * token exists.
+    */
    this.peekFwd = function(offset)
    {
-      return this.$peek(offset, this.stepForward);
+      return $peek(this, offset, this.stepForward);
    };
 
+   /**
+    * Get the token lying `offset` tokens behind
+    * the token iterator. Returns `null` if no such
+    * token exists.
+    */
    this.peekBwd = function(offset)
    {
-       return this.$peek(offset, this.stepBackward);
+       return $peek(this, offset, this.stepBackward);
    };
 
+   /**
+    * Get the value of the token at the TokenIterator's
+    * current position.
+    */
    this.getCurrentTokenValue = function()
    {
       return this.getCurrentToken().value;
    };
 
+   /**
+    * Get the document position of the token at the
+    * TokenIterator's current position.
+    */
    this.getCurrentTokenPosition = function()
    {
       return {
@@ -104,16 +165,22 @@ var Utils = require("mode/utils");
 
    }
 
+   /**
+    * Move forward to the 'matching' token for the current token.
+    * This amounts to moving from an opening bracket to the matching
+    * closing bracket (if found), or moving forward to a token with
+    * a matching type.
+    */
    this.fwdToMatchingToken = function()
    {
       var token = this.getCurrentToken();
-      if (Utils.isOpeningBracket(token.value, true)) {
+      if (isOpeningBracket(token.value, true)) {
          return $moveToMatchingToken(
                this,
                function(token) { return token.value;  },
                this.stepForward,
                token.value,
-               Utils.getComplement(token.value)
+               getComplement(token.value)
          );
 
       } else if (token.type === "support.function.codebegin") {
@@ -131,13 +198,13 @@ var Utils = require("mode/utils");
    this.bwdToMatchingToken = function()
    {
       var token = this.getCurrentToken();
-      if (Utils.isClosingBracket(token.value, true)) {
+      if (isClosingBracket(token.value, true)) {
          return $moveToMatchingToken(
                this,
                function(token) { return token.value; },
                this.stepBackward,
                token.value,
-               Utils.getComplement(token.value)
+               getComplement(token.value)
          );
 
       } else if (token.type === "support.function.codeend") {
