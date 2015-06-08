@@ -325,7 +325,7 @@ define('mode/r_scope_tree', function(require, exports, module) {
 
          // NB: This function will never close the "this" node. This is by
          // design as we don't want the top-level node to ever be closed.
-
+         
          // No children
          if (this.$children.length == 0)
             return null;

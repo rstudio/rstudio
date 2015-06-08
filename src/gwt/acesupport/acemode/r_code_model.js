@@ -728,13 +728,26 @@ var RCodeModel = function(session, tokenizer,
       // by a previous scope-tree building request). This avoids re-building portions
       // of the tree that have been already built.
       var iterator = new TokenIterator(this.$session);
+      var row = this.$scopes.parsePos.row;
+      var column = this.$scopes.parsePos.column;
+      
       iterator.moveToPosition({
          row: this.$scopes.parsePos.row,
          column: this.$scopes.parsePos.column
       });
 
-      // Grab local state that we'll use when building the scope tree.
+      // If this failed (ie, there are not tokens at or before this
+      // position in the document), then move to the first token in
+      // the stream.
       var token = iterator.getCurrentToken();
+      if (token == null)
+         token = iterator.moveToNextToken();
+
+      // If this still failed, give up.
+      if (token == null)
+         return;
+
+      // Grab local state that we'll use when building the scope tree.
       var value = token.value;
       var type = token.type;
       var position = iterator.getCurrentTokenPosition();
@@ -742,7 +755,7 @@ var RCodeModel = function(session, tokenizer,
       // Skip over YAML headers.
       if (position.row === 0 && value === "---")
       {
-         while ((token = iterator.moveToStartOfNextLine()))
+         while ((token = iterator.moveToStartOfNextRowWithTokens()))
          {
             if (token.value === "---") {
                iterator.moveToNextToken();
@@ -752,10 +765,9 @@ var RCodeModel = function(session, tokenizer,
       }
 
       token = iterator.getCurrentToken();
-
-      // Iterate through the token stream and build the scope tree.
       do
       {
+         
          // Cache access to the current token + cursor.
          value = token.value;
          type = token.type;
@@ -827,7 +839,7 @@ var RCodeModel = function(session, tokenizer,
          {
             var chunkStartPos = position;
             var chunkPos = {row: chunkStartPos.row + 1, column: 0};
-            var chunkNum = this.$scopes.getTopLevelScopeCount()+1;
+            var chunkNum = this.$scopes.getTopLevelScopeCount() + 1;
             var chunkLabel = getChunkLabel(this.$codeBeginPattern, value);
             var scopeName = "Chunk " + chunkNum;
             if (chunkLabel)
@@ -925,19 +937,22 @@ var RCodeModel = function(session, tokenizer,
          // A closing brace will close a scope.
          else if (value === "}")
          {
-            // Do some work to munge the range of the 
-            position.column++;
             this.$scopes.onScopeEnd(position);
          }
 
+         prevToken = token;
+
       } while ((token = iterator.moveToNextToken()));
+
+      // Update the parse position
+      this.$scopes.parsePos = iterator.getCurrentTokenPosition();
    };
 
    this.$getFoldToken = function(session, foldStyle, row) {
       this.$tokenizeUpToRow(row);
 
       if (this.$statePattern && !this.$statePattern.test(this.$endStates[row]))
-         return "";
+          return "";
 
       var rowTokens = this.$tokens[row];
 

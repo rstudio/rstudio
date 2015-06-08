@@ -57,6 +57,86 @@ var Range = require("ace/range").Range;
       return $complements[string];
    }
 
+   this.moveToPreviousToken = function()
+   {
+      // First, check to see if we can use a token on the same row.
+      var rowTokens = this.$rowTokens;
+      var newIdx = this.$tokenIndex - 1;
+      if (newIdx >= 0)
+      {
+         this.$tokenIndex--;
+         return rowTokens[newIdx];
+      }
+
+      // Otherwise, walk back rows until we find a row
+      // with tokens. Once we find one, put the iterator
+      // at the last token on the row and return that token.
+      var session = this.$session;
+      var row = this.$row;
+      
+      if (row < 0)
+         return null;
+
+      while (true)
+      {
+         row--;
+         if (row < 0)
+            return null;
+         
+         rowTokens = session.getTokens(row);
+         if (rowTokens && rowTokens.length)
+         {
+            this.$row = row;
+            this.$tokenIndex = rowTokens.length - 1;
+            this.$rowTokens = rowTokens;
+            return rowTokens[rowTokens.length - 1];
+         }
+      }
+
+      return null;
+      
+   };
+
+   this.moveToNextToken = function()
+   {
+      // Check to see if we can use a token on the same row.
+      var rowTokens = this.$rowTokens;
+      var newIdx = this.$tokenIndex + 1;
+      if (newIdx < rowTokens.length)
+      {
+         this.$tokenIndex++;
+         return rowTokens[newIdx];
+      };
+
+      // Otherwise, walk up rows until we find a row with tokens.
+      // Once found, set the token iterator to the first token on
+      // that line, and return that token.
+      var session = this.$session;
+      var max = session.getLength();
+      var row = this.$row;
+      if (row >= max)
+         return null;
+
+      while (true)
+      {
+         row++;
+         if (row >= max)
+            return null;
+
+         rowTokens = session.getTokens(row);
+         if (rowTokens && rowTokens.length)
+         {
+            this.$row = row;
+            this.$tokenIndex = 0;
+            this.$rowTokens = rowTokens;
+            return rowTokens[0];
+         }
+      }
+
+      return null;
+      
+   };
+
    this.moveToStartOfRow = function()
    {
       this.$tokenIndex = 0;
@@ -69,24 +149,27 @@ var Range = require("ace/range").Range;
       return this.getCurrentToken();
    };
 
-   this.moveToStartOfNextLine = function()
+   this.moveToStartOfNextRowWithTokens = function()
    {
-      this.$tokenIndex = 0;
-      this.$row++;
-      this.$rowTokens = this.$session.getTokens(this.$row);
-      return this.getCurrentToken();
+      var row = this.$row;
+      var session = this.$session;
+      var max = session.getLength();
+      while (true)
+      {
+         row++;
+         if (row >= max)
+            return null;
+         
+         var tokens = session.getTokens(row);
+         if (tokens && tokens.length)
+         {
+            this.$row = row;
+            this.$tokenIndex = 0;
+            this.$rowTokens = tokens;
+            return this.getCurrentToken();
+         }
+      }      
    };
-
-   this.moveToStartOfPreviousLine = function()
-   {
-      this.$tokenIndex = 0;
-      this.$row--;
-      this.$rowTokens = this.$session.getTokens(this.$row);
-      return this.getCurrentToken();
-   };
-
-   this.moveToNextToken = this.stepForward;
-   this.moveToPreviousToken = this.stepBackward;
 
    /**
     * Move a TokenCursor to the token lying at position.
@@ -97,7 +180,7 @@ var Range = require("ace/range").Range;
    {
       // Try to get a token at the position supplied.
       var token = this.$session.getTokenAt(position.row, position.column);
-
+ 
       // If no token was returned, place a token cursor at the first
       // cursor previous to that token.
       //
@@ -149,15 +232,6 @@ var Range = require("ace/range").Range;
             this[key] = tokenIterator[key];
    };
 
-   function $peek(cursor, offset, mover)
-   {
-      var clone = cursor.clone();
-      var token;
-      for (var i = 0; i < offset; i++)
-         token = mover.call(clone, offset);
-      return token;
-   }
-
    /**
     * Get the token lying `offset` tokens ahead of
     * the token iterator. Returns `null` if no such
@@ -165,7 +239,11 @@ var Range = require("ace/range").Range;
     */
    this.peekFwd = function(offset)
    {
-      return $peek(this, offset, this.stepForward);
+      var clone = this.clone();
+      var token = null;
+      for (var i = 0; i < offset; i++)
+         token = clone.moveToNextToken();
+      return token;
    };
 
    /**
@@ -175,7 +253,11 @@ var Range = require("ace/range").Range;
     */
    this.peekBwd = function(offset)
    {
-       return $peek(this, offset, this.stepBackward);
+      var clone = this.clone();
+      var token = null;
+      for (var i = 0; i < offset; i++)
+         token = clone.moveToPreviousToken();
+      return token;
    };
 
    /**
@@ -248,7 +330,7 @@ var Range = require("ace/range").Range;
          return $moveToMatchingToken(
                this,
                function(token) { return token.value;  },
-               this.stepForward,
+               this.moveToNextToken,
                token.value,
                getComplement(token.value)
          );
@@ -257,7 +339,7 @@ var Range = require("ace/range").Range;
          return $moveToMatchingToken(
                this,
                function(token) { return token.type; },
-               this.stepForward,
+               this.moveToNextToken,
                "support.function.codebegin",
                "support.function.codeend"
          );
@@ -272,7 +354,7 @@ var Range = require("ace/range").Range;
          return $moveToMatchingToken(
                this,
                function(token) { return token.value; },
-               this.stepBackward,
+               this.moveToPreviousToken,
                token.value,
                getComplement(token.value)
          );
@@ -281,7 +363,7 @@ var Range = require("ace/range").Range;
          return $moveToMatchingToken(
                this,
                function(token) { return token.type; },
-               this.stepBackward,
+               this.moveToPreviousToken,
                "support.function.codeend",
                "support.function.codebegin"
          );
