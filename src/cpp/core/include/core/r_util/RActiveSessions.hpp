@@ -121,7 +121,8 @@ public:
    bool hasRequiredProperties() const
    {
       return !project().empty() &&
-             !workingDir().empty();
+             !workingDir().empty() &&
+             (lastUsed() != 0);
    }
 
 private:
