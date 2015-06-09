@@ -1,0 +1,36 @@
+<html>
+   <head>
+      <title>RStudio JS Tests</title>
+      <link rel="stylesheet" href="qunit/qunit-1.18.0.css" />
+      <link rel="stylesheet" type="text/css" href="../../src/org/rstudio/studio/client/workbench/views/source/editors/text/themes/tomorrow_night_bright.css" />
+   </head>
+   <body>
+
+      <div id="qunit"></div>
+      <div id="qunit-fixture"></div>
+
+      <div id="editor" style="width: 600px; height: 200px; border: 1px solid #999; margin: 0 auto; margin-top: 40px;"></div>
+
+      <script src="qunit/qunit-1.18.0.js"></script>
+
+      <!-- Source all of our needed JavaScript files -->
+      <script type="text/javascript" src="../../tools/ace/build_support/mini_require.js"></script>
+      <script type="text/javascript" src="../../src/org/rstudio/studio/client/workbench/views/source/editors/text/ace/ace-uncompressed.js"></script>
+      <script type="text/javascript" src="../../acesupport/acemode/utils.js"></script>
+      <script type="text/javascript" src="../../acesupport/acemode/auto_brace_insert.js"></script>
+      <script type="text/javascript" src="../../acesupport/acemode/tex_highlight_rules.js"></script>
+      <script type="text/javascript" src="../../acesupport/acemode/token_cursor.js"></script>
+      <script type="text/javascript" src="../../acesupport/acemode/token_utils.js"></script>
+      <script type="text/javascript" src="../../acesupport/acemode/r_highlight_rules.js"></script>
+      <script type="text/javascript" src="../../acesupport/acemode/r_matching_brace_outdent.js"></script>
+      <script type="text/javascript" src="../../acesupport/acemode/r.js"></script>
+      <script type="text/javascript" src="../../acesupport/acemode/r_code_model.js"></script>
+      <script type="text/javascript" src="../../acesupport/acemode/r_scope_tree.js"></script>
+      <script type="text/javascript" src="../../acesupport/acemixins/token_iterator.js"></script>
+      <script type="text/javascript" src="../../tools/ace/build/src/keybinding-vim.js"></script>
+
+      <!-- Add in all test files here -->
+      <script type="text/javascript" src="token_iterator.js"></script>
+   </body>
+</html>
+

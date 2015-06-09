@@ -176,8 +176,12 @@ var Range = require("ace/range").Range;
     * If no such token exists at that position, then we instead
     * move to the first token lying previous to that token.
     */
-   this.moveToPosition = function(position)
+   this.moveToPosition = function(rowOrPosition, column)
    {
+      var position = rowOrPosition;
+      if (typeof column !== "undefined")
+         position = {row: rowOrPosition, column: column};
+         
       // Try to get a token at the position supplied.
       var token = this.$session.getTokenAt(position.row, position.column);
  
@@ -259,6 +263,14 @@ var Range = require("ace/range").Range;
          token = clone.moveToPreviousToken();
       return token;
    };
+
+   this.getCurrentToken = function()
+   {
+      var token = this.$rowTokens[this.$tokenIndex];
+      if (token)
+         token.row = this.$row;
+      return token;
+   }
 
    /**
     * Get the value of the token at the TokenIterator's

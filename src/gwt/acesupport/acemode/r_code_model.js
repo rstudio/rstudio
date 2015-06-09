@@ -731,10 +731,7 @@ var RCodeModel = function(session, tokenizer,
       var row = this.$scopes.parsePos.row;
       var column = this.$scopes.parsePos.column;
       
-      iterator.moveToPosition({
-         row: this.$scopes.parsePos.row,
-         column: this.$scopes.parsePos.column
-      });
+      iterator.moveToPosition({row: row, column: column});
 
       // If this failed (ie, there are not tokens at or before this
       // position in the document), then move to the first token in
@@ -765,9 +762,11 @@ var RCodeModel = function(session, tokenizer,
       }
 
       token = iterator.getCurrentToken();
+      if (token == null)
+         return;
+      
       do
       {
-         
          // Cache access to the current token + cursor.
          value = token.value;
          type = token.type;
