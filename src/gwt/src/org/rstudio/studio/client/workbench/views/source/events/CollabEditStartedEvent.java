@@ -34,6 +34,10 @@ public class CollabEditStartedEvent extends GwtEvent<CollabEditStartedEvent.Hand
       public final native String getPath() /*-{
          return this.path;
       }-*/;
+      
+      public final native boolean isMaster() /*-{
+         return this.master;
+      }-*/;
    }
 
    public interface Handler extends EventHandler
