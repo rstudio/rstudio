@@ -42,6 +42,11 @@ public class ApplicationEndedPopupPanel extends PopupPanel
       asyncShow(QUIT, "", null);
    }
    
+   public static void showMultiSessionQuit()
+   {
+      asyncShow(QUIT_MULTI, "", null);
+   }
+   
    public static void showSuicide(String reason)
    {
       String description = "<p>R encountered a fatal error.";
@@ -106,6 +111,7 @@ public class ApplicationEndedPopupPanel extends PopupPanel
    private static final int SUICIDE = 2;
    private static final int DISCONNECTED = 3;
    private static final int OFFLINE = 4;
+   private static final int QUIT_MULTI = 5;
    
    private ApplicationEndedPopupPanel(int mode, String description)
    {
@@ -156,7 +162,13 @@ public class ApplicationEndedPopupPanel extends PopupPanel
          captionLabel.setText("RStudio Temporarily Offline");
          button.setText("Reconnect");
          break;
-
+         
+      case QUIT_MULTI:
+         image = new Image(RESOURCES.applicationQuit());
+         captionLabel.setText("R Session Ended");
+         button.setText("Reconnect");
+         break;
+      
       default:
          throw new IllegalArgumentException("Unknown mode " + mode);
       }

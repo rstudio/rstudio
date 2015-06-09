@@ -433,6 +433,10 @@ public class Application implements ApplicationEventHandlers
                reloadWindowWithDelay(true);
             }
          }
+         else if (session_.getSessionInfo().getMultiSession())
+         {
+            view_.showApplicationMultiSessionQuit();
+         }
          else
          {
             view_.showApplicationQuit();

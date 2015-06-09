@@ -105,6 +105,11 @@ public class ApplicationWindow extends Composite
       ApplicationEndedPopupPanel.showQuit();
    }
    
+   public void showApplicationMultiSessionQuit()
+   {
+      ApplicationEndedPopupPanel.showMultiSessionQuit();
+   }
+   
    public void showApplicationSuicide(String reason)
    {
       ApplicationEndedPopupPanel.showSuicide(reason);
