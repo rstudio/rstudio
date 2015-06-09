@@ -246,8 +246,23 @@ std::string sessionContextFile(const SessionContext& context)
 std::string generateScopeId()
 {
    std::vector<std::string> reserved;
+
+   // reserved ids we are using now
    reserved.push_back(kProjectNoneId);
    reserved.push_back(kWorkspacesId);
+
+   // a few more for future expansion
+   reserved.push_back("21f2ed72");
+   reserved.push_back("2cb256d2");
+   reserved.push_back("3c9ab5a7");
+   reserved.push_back("f468a750");
+   reserved.push_back("6ae9dc1b");
+   reserved.push_back("1d717df9");
+   reserved.push_back("6d3c4c0e");
+   reserved.push_back("a142989c");
+   reserved.push_back("c2612a98");
+   reserved.push_back("2b84c99a");
+
    return generateScopeId(reserved);
 }
 
