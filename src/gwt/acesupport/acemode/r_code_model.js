@@ -677,7 +677,7 @@ var RCodeModel = function(session, tokenizer,
       
    }
 
-   this.$buildScopeTreeUpToRow = function(maxrow)
+   this.$buildScopeTreeUpToRow = function(maxRow)
    {
       function maybeEvaluateLiteralString(value) {
          // NOTE: We could evaluate escape sequences and whatnot here as well.
@@ -718,6 +718,11 @@ var RCodeModel = function(session, tokenizer,
 
          return null;
       }
+      
+      // Check if the scope tree has already been built up to this row.
+      var scopeRow = this.$scopes.parsePos.row;
+      if (scopeRow >= maxRow)
+          return;
 
       // We explicitly use a TokenIterator rather than a TokenCursor here.
       // We want to iterate over all token types here (including non-R code)
@@ -728,9 +733,9 @@ var RCodeModel = function(session, tokenizer,
       // by a previous scope-tree building request). This avoids re-building portions
       // of the tree that have been already built.
       var iterator = new TokenIterator(this.$session);
+
       var row = this.$scopes.parsePos.row;
       var column = this.$scopes.parsePos.column;
-      
       iterator.moveToPosition({row: row, column: column});
 
       // If this failed (ie, there are not tokens at or before this
@@ -767,6 +772,10 @@ var RCodeModel = function(session, tokenizer,
       
       do
       {
+         // Bail if we're now at the maxRow.
+         if (iterator.$row >= maxRow)
+             break;
+
          // Cache access to the current token + cursor.
          value = token.value;
          type = token.type;
@@ -943,8 +952,6 @@ var RCodeModel = function(session, tokenizer,
 
       } while ((token = iterator.moveToNextToken()));
 
-      // Update the parse position
-      this.$scopes.parsePos = iterator.getCurrentTokenPosition();
    };
 
    this.$getFoldToken = function(session, foldStyle, row) {
