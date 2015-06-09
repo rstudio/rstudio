@@ -441,19 +441,38 @@ public class Source implements InsertSourceHandler,
     		  new CollabEditStartedEvent.Handler() 
       {
          @Override
-         public void onCollabEditStarted(CollabEditStartedEvent collab) 
+         public void onCollabEditStarted(final CollabEditStartedEvent collab) 
          {
-            for (int i = 0; i < editors_.size(); i++)
-            {
-               String path = editors_.get(i).getPath();
-               if (path != null && path.equals(collab.getPath()))
+            inEditorForPath(collab.getPath(), 
+               new OperationWithInput<EditingTarget>()
                {
-                  editors_.get(i).beginCollabSession(collab.getUrl());
-               }
-            }
+                  @Override
+                  public void execute(EditingTarget editor)
+                  {
+                     editor.beginCollabSession(collab.getUrl());
+                  }
+               });
          }
       });
       
+      events.addHandler(CollabEditEndedEvent.TYPE, 
+    		  new CollabEditEndedEvent.Handler() 
+      {
+         @Override
+         public void onCollabEditEnded(final CollabEditEndedEvent collab) 
+         {
+            inEditorForPath(collab.getPath(), 
+               new OperationWithInput<EditingTarget>()
+               {
+                  @Override
+                  public void execute(EditingTarget editor)
+                  {
+                     editor.endCollabSession();
+                  }
+               });
+         }
+      });
+
       // Suppress 'CTRL + ALT + SHIFT + click' to work around #2483 in Ace
       Event.addNativePreviewHandler(new NativePreviewHandler()
       {
@@ -3054,6 +3073,20 @@ public class Source implements InsertSourceHandler,
                         nativeEvent);
                }
             });
+   }
+   
+   private void inEditorForPath(String path, 
+         OperationWithInput<EditingTarget> onEditorLocated)
+   {
+      for (int i = 0; i < editors_.size(); i++)
+      {
+         String editorPath = editors_.get(i).getPath();
+         if (editorPath != null && editorPath.equals(path))
+         {
+            onEditorLocated.execute(editors_.get(i));
+            break;
+         }
+      }
    }
    
    ArrayList<EditingTarget> editors_ = new ArrayList<EditingTarget>();

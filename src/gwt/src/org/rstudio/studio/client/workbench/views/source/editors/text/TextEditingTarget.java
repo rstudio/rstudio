@@ -753,6 +753,12 @@ public class TextEditingTarget implements
       docDisplay_.beginCollabSession(serverUrl);
    }
    
+   @Override
+   public void endCollabSession()
+   {
+      docDisplay_.endCollabSession();
+   }
+   
    private void updateDebugWarningBar()
    {
       // show the warning bar if we're debugging and the document is dirty

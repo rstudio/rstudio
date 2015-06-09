@@ -665,6 +665,11 @@ public class CodeBrowserEditingTarget implements EditingTarget
    {
       // collaborative editing isn't supported in the code browser
    }
+   
+   @Override
+   public void endCollabSession()
+   {
+   }
 
    // Private methods --------------------------------------------------------
    

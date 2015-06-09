@@ -228,6 +228,11 @@ public class ProfilerEditingTarget implements EditingTarget
    {
    }
    
+   @Override
+   public void endCollabSession()
+   {
+   }
+   
    public boolean onBeforeDismiss()
    {
       return true;

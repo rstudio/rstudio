@@ -2294,6 +2294,7 @@ public class AceEditor implements DocDisplay,
       return widget_.getEditor().getRenderer().screenToTextCoordinates(pageX, pageY);
    }
    
+   @Override
    public void beginCollabSession(String serverUrl)
    {
       collab_.beginCollabSession(this, serverUrl);
