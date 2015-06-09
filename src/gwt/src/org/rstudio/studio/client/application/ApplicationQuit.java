@@ -61,7 +61,7 @@ import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.Command;
-
+import com.google.gwt.user.client.Window;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
@@ -145,6 +145,12 @@ public class ApplicationQuit implements SaveActionChangedHandler,
       }
    }
    
+   public boolean isQuitSession()
+   {
+      return ("1".equals(Window.Location.getParameter("quit")));
+   }
+  
+   
    private void handleUnsavedChanges(String caption,
                                      final QuitContext quitContext)
    {   
@@ -156,7 +162,27 @@ public class ApplicationQuit implements SaveActionChangedHandler,
       // no unsaved changes at all
       if (saveAction != SaveAction.SAVEASK && unsavedSourceDocs.size() == 0)
       {
-         quitContext.onReadyToQuit(saveAction == SaveAction.SAVE);
+         // define quit operation
+         final Operation quitOperation = new Operation() { public void execute() 
+         {
+            quitContext.onReadyToQuit(saveAction == SaveAction.SAVE);
+         }};
+        
+         // if this is a quit session then we always prompt
+         if (isQuitSession())
+         {
+            globalDisplay_.showYesNoMessage(
+                  MessageDialog.QUESTION,
+                  caption,
+                  "Are you sure you want to quit the R session?", 
+                  quitOperation,
+                  true);
+         }
+         else
+         {
+            quitOperation.execute();
+         }
+         
          return;
       }
       
