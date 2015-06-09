@@ -17,6 +17,8 @@ package com.google.gwt.dev.jjs.ast;
 
 import com.google.gwt.dev.jjs.SourceOrigin;
 import com.google.gwt.dev.util.StringInterner;
+import com.google.gwt.thirdparty.guava.common.collect.ImmutableCollection;
+import com.google.gwt.thirdparty.guava.common.collect.ImmutableList;
 import com.google.gwt.thirdparty.guava.common.collect.Maps;
 
 import java.util.Map;
@@ -48,6 +50,9 @@ public class JPrimitiveType extends JType {
       new JPrimitiveType("short", "S", "java.lang.Short", JIntLiteral.ZERO, Coercion.TO_SHORT);
   public static final JPrimitiveType VOID =
       new JPrimitiveType("void", "V", "java.lang.VOID", null, Coercion.TO_VOID);
+
+  public static final ImmutableCollection<JPrimitiveType> types = ImmutableList.of(BOOLEAN, BYTE,
+      CHAR, DOUBLE, FLOAT, INT, LONG, SHORT, VOID);
 
   private final transient JValueLiteral defaultValue;
   private final transient String signatureName;

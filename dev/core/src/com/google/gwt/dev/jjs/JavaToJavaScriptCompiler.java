@@ -1179,7 +1179,7 @@ public final class JavaToJavaScriptCompiler {
         ConfigurationProperties config = new ConfigurationProperties(module);
         CodeSplitters.pickInitialLoadSequence(logger, jprogram, config);
       }
-      ImplementClassLiteralsAsFields.exec(jprogram);
+      ImplementClassLiteralsAsFields.exec(jprogram, shouldOptimize());
 
       // TODO(stalcup): hide metrics gathering in a callback or subclass
       logAstTypeMetrics(precompilationMetrics);

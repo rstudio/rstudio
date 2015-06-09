@@ -172,6 +172,7 @@ import com.google.gwt.thirdparty.guava.common.base.Function;
 import com.google.gwt.thirdparty.guava.common.base.Joiner;
 import com.google.gwt.thirdparty.guava.common.base.Predicate;
 import com.google.gwt.thirdparty.guava.common.base.Predicates;
+import com.google.gwt.thirdparty.guava.common.collect.FluentIterable;
 import com.google.gwt.thirdparty.guava.common.collect.ImmutableList;
 import com.google.gwt.thirdparty.guava.common.collect.ImmutableSortedSet;
 import com.google.gwt.thirdparty.guava.common.collect.Iterables;
@@ -1872,6 +1873,7 @@ public class GenerateJavaScriptAST {
       Set<JDeclaredType> alreadyProcessed =
           Sets.<JDeclaredType>newLinkedHashSet(program.immortalCodeGenTypes);
       alreadyProcessed.add(program.getTypeClassLiteralHolder());
+      alreadyRan.addAll(alreadyProcessed);
 
       List<JDeclaredType> classLiteralSupportClasses =
           computeClassLiteralsSupportClasses(program, alreadyProcessed);
@@ -1977,9 +1979,8 @@ public class GenerateJavaScriptAST {
     }
 
     private void generateEpilogue(List<JsStatement> globalStmts) {
-      // Emit all the class literals for classes that where pruned.
-      generateClassLiterals(globalStmts, Iterables.filter(classLiteralDeclarationsByType.keySet(),
-          Predicates.not(Predicates.<JType>in(alreadyRan))));
+
+      generateRemainingClassLiterals(globalStmts);
 
       // add all @JsExport assignments
       generateExports(globalStmts);
@@ -1998,6 +1999,33 @@ public class GenerateJavaScriptAST {
         JsFunction func = (JsFunction) name.getStaticRef();
         func.setArtificiallyRescued(true);
       }
+    }
+
+    private void generateRemainingClassLiterals(List<JsStatement> globalStmts) {
+      if (!incremental) {
+        // Emit classliterals that are references but whose classes are not live.
+        generateClassLiterals(globalStmts, Iterables.filter(classLiteralDeclarationsByType.keySet(),
+            Predicates.not(Predicates.<JType>in(alreadyRan))));
+        return;
+      }
+
+      // In incremental, class literal references to class literals that were not generated
+      // as part of the current compile have to be from reference only classes.
+      assert FluentIterable.from(classLiteralDeclarationsByType.keySet())
+          .filter(Predicates.instanceOf(JDeclaredType.class))
+          .filter(Predicates.not(Predicates.<JType>in(alreadyRan)))
+          .filter(
+              new Predicate<JType>() {
+                @Override
+                public boolean apply(JType type) {
+                  return !program.isReferenceOnly((JDeclaredType) type);
+                }
+              })
+          .isEmpty();
+
+      // In incremental only the class literals for the primitive types should be part of the
+      // epilogue.
+      generateClassLiterals(globalStmts, JPrimitiveType.types);
     }
 
     private void generateClassLiterals(List<JsStatement> globalStmts,

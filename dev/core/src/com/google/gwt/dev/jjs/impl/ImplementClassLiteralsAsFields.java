@@ -108,32 +108,31 @@ public class ImplementClassLiteralsAsFields {
             (JReferenceType) type));
         call.addArg(superclassLiteral);
 
-        maybeAddStandardMethodAsArg(info, program, type, "values()", call);
-        maybeAddStandardMethodAsArg(info, program, type, "valueOf(Ljava/lang/String;)", call);
+        call.addArg(getStandardMethodAsArg(info, program, type, "values()"));
+        call.addArg(getStandardMethodAsArg(info, program, type, "valueOf(Ljava/lang/String;)"));
         return call;
       }
 
-      private void maybeAddStandardMethodAsArg(SourceInfo info, JProgram program, JType type,
-          String methodSignature, JMethodCall call) {
+      private JExpression getStandardMethodAsArg(SourceInfo info, JProgram program, JType type,
+          String methodSignature) {
         JEnumType enumType = type.isEnumOrSubclass();
-        JMethod standardMethod = null;
 
-        if (enumType == type) {
-          for (JMethod method : enumType.getMethods()) {
-            if (method.isStatic() && method.getSignature().startsWith(methodSignature)) {
-              standardMethod = method;
-              break;
-            }
+        if (enumType != type) {
+          // The type is an anonymous subclass that represents one of the enum values
+          return JNullLiteral.INSTANCE;
+        }
+
+        // This type is the base enum type not one of the anonymous classes that represent
+        // enum values.
+        for (JMethod method : enumType.getMethods()) {
+          if (method.isStatic() && method.getSignature().startsWith(methodSignature)) {
+            return new JsniMethodRef(info, method.getJsniSignature(true, false),
+                method, program.getJavaScriptObject());
           }
         }
-        assert enumType != type || standardMethod != null
-            : "Could not find enum " + methodSignature + " method";
-        if (standardMethod == null) {
-          call.addArg(JNullLiteral.INSTANCE);
-        } else {
-          call.addArg(new JsniMethodRef(info, standardMethod.getJsniSignature(true, false),
-              standardMethod, program.getJavaScriptObject()));
-        }
+
+        // The method was pruned.
+        return JNullLiteral.INSTANCE;
       }
     },
     CREATE_FOR_CLASS() {
@@ -325,16 +324,11 @@ public class ImplementClassLiteralsAsFields {
 
       ctx.replaceMe(newBody);
     }
-
-    private void resolveClassLiteral(JClassLiteral x) {
-      JField field = resolveClassLiteralField(x.getRefType());
-      x.setField(field);
-    }
   }
 
-  public static void exec(JProgram program) {
+  public static void exec(JProgram program, boolean shouldOptimize) {
     Event normalizerEvent = SpeedTracerLogger.start(CompilerEventType.NORMALIZER);
-    new ImplementClassLiteralsAsFields(program).execImpl();
+    new ImplementClassLiteralsAsFields(program, shouldOptimize).execImpl();
     normalizerEvent.end();
   }
 
@@ -342,11 +336,13 @@ public class ImplementClassLiteralsAsFields {
   private final JMethodBody classLiteralHolderClinitBody;
   private final JProgram program;
   private final JClassType typeClassLiteralHolder;
+  private final boolean shouldOptimize;
 
-  private ImplementClassLiteralsAsFields(JProgram program) {
+  private ImplementClassLiteralsAsFields(JProgram program, boolean shouldOptimize) {
     this.program = program;
     this.typeClassLiteralHolder = program.getTypeClassLiteralHolder();
     this.classLiteralHolderClinitBody = (JMethodBody) typeClassLiteralHolder.getClinitMethod().getBody();
+    this.shouldOptimize = shouldOptimize;
     assert program.getDeclaredTypes().contains(typeClassLiteralHolder);
   }
 
@@ -375,6 +371,15 @@ public class ImplementClassLiteralsAsFields {
   }
 
   private void execImpl() {
+    if (!shouldOptimize) {
+      // Create all class literals regardless of whether they are referenced or not.
+      for (JPrimitiveType type : JPrimitiveType.types) {
+        resolveClassLiteralField(type);
+      }
+      for (JType type : program.getDeclaredTypes()) {
+        resolveClassLiteralField(type);
+      }
+    }
     NormalizeVisitor visitor = new NormalizeVisitor();
     visitor.accept(program);
     program.recordClassLiteralFields(classLiteralFields);
@@ -430,6 +435,11 @@ public class ImplementClassLiteralsAsFields {
 
     return literalFactoryMethodByTypeClass.get(typeClass).createCall(info, program, type,
         getSuperclassClassLiteral(info, type));
+  }
+
+  private void resolveClassLiteral(JClassLiteral x) {
+    JField field = resolveClassLiteralField(x.getRefType());
+    x.setField(field);
   }
 
   /**

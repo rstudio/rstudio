@@ -114,7 +114,7 @@ public class AstConstructor {
       }
     }
 
-    ImplementClassLiteralsAsFields.exec(jprogram);
+    ImplementClassLiteralsAsFields.exec(jprogram, true);
     return jprogram;
   }
 }

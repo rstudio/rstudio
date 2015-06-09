@@ -1071,9 +1071,20 @@ public class CompilerTest extends ArgProcessorTestBase {
         relinkMinimalRebuildCache.getProcessedStaleTypeNames().contains("com.foo.Bottom$Value"));
   }
 
-  public void testIncrementalRecompile_superClassOrder() throws UnableToCompleteException,
-      IOException,
-      InterruptedException {
+  public void testIncrementalRecompile_classLiteralNewReference()
+      throws UnableToCompleteException, IOException, InterruptedException {
+    checkIncrementalRecompile_classLiteralNewReference(JsOutputOption.OBFUSCATED);
+    checkIncrementalRecompile_classLiteralNewReference(JsOutputOption.DETAILED);
+  }
+
+  public void testIncrementalRecompile_primitiveClassLiteralReference()
+      throws UnableToCompleteException, IOException, InterruptedException {
+    checkIncrementalRecompile_primitiveClassLiteralReference(JsOutputOption.OBFUSCATED);
+    checkIncrementalRecompile_primitiveClassLiteralReference(JsOutputOption.DETAILED);
+  }
+
+  public void testIncrementalRecompile_superClassOrder()
+      throws UnableToCompleteException, IOException, InterruptedException {
     // Linked output is sorted alphabetically except that super-classes come before sub-classes. If
     // on recompile a sub-class -> super-class relationship is lost then a sub-class with an
     // alphabetically earlier name might start linking out before the super-class.
@@ -1081,9 +1092,8 @@ public class CompilerTest extends ArgProcessorTestBase {
     checkIncrementalRecompile_superClassOrder(JsOutputOption.DETAILED);
   }
 
-  public void testIncrementalRecompile_superFromStaleInner() throws UnableToCompleteException,
-      IOException,
-      InterruptedException {
+  public void testIncrementalRecompile_superFromStaleInner()
+      throws UnableToCompleteException, IOException, InterruptedException {
     checkIncrementalRecompile_superFromStaleInner(JsOutputOption.OBFUSCATED);
     checkIncrementalRecompile_superFromStaleInner(JsOutputOption.DETAILED);
   }
@@ -1438,6 +1448,113 @@ public class CompilerTest extends ArgProcessorTestBase {
             classImplementingInterfaceWithDefaultMethod, interfaceWithDefaultMethod),
         aSubclass, aSubclass, stringSet("com.foo.ASubclass", "com.foo.DefaultMethodEntryPoint"),
         output);
+  }
+
+  public void checkIncrementalRecompile_classLiteralNewReference(JsOutputOption output)
+      throws UnableToCompleteException, IOException, InterruptedException {
+    // Tests that when a superclass has a "inherits" a default method,
+    MockJavaResource interfaceA =
+        JavaResourceBase.createMockJavaResource(
+            "com.foo.A",
+            "package com.foo;",
+            "interface A {",
+            " static String b = \"\";",
+            "}");
+
+    MockJavaResource classBSansLiteralReference =
+        JavaResourceBase.createMockJavaResource(
+            "com.foo.B",
+            "package com.foo;",
+            "public class B {",
+            "}");
+
+    MockJavaResource classBWithLiteralReference =
+        JavaResourceBase.createMockJavaResource(
+            "com.foo.B",
+            "package com.foo;",
+            "public class B {",
+            "  public B() { Class c = A.class; }",
+            "}");
+
+    MockJavaResource classC =
+        JavaResourceBase.createMockJavaResource(
+            "com.foo.C",
+            "package com.foo;",
+            "import com.google.gwt.core.client.EntryPoint;",
+            "public class C implements EntryPoint {",
+            "  public void onModuleLoad() {",
+            "    if (A.b == null) ",
+            "      new B();",
+            "  }",
+            "}");
+
+    MockResource moduleResource =
+        JavaResourceBase.createMockResource(
+            "com/foo/ClassLiteralReference.gwt.xml",
+            "<module>",
+            "  <source path=''/>",
+            "  <entry-point class='com.foo.C'/>",
+            "</module>");
+
+    checkRecompiledModifiedApp("com.foo.ClassLiteralReference", Lists.newArrayList(
+            moduleResource, interfaceA, classC),
+        classBSansLiteralReference, classBWithLiteralReference,
+        stringSet("com.foo.B", "com.foo.C"), output);
+  }
+
+  public void checkIncrementalRecompile_primitiveClassLiteralReference(JsOutputOption output)
+      throws UnableToCompleteException, IOException, InterruptedException {
+    // Tests that when a superclass has a "inherits" a default method,
+    MockJavaResource classA =
+        JavaResourceBase.createMockJavaResource(
+            "com.foo.A",
+            "package com.foo;",
+            "public class A {",
+            "  public A() { ",
+            "    Class c = void.class; ",
+            "    c = int.class; ",
+            "    c = boolean.class;",
+            "    c = short.class;",
+            "    c = byte.class;",
+            "    c = long.class;",
+            "    c = float.class;",
+            "    c = double.class;",
+            "  }",
+            "}");
+
+    MockJavaResource classB =
+        JavaResourceBase.createMockJavaResource(
+            "com.foo.B",
+            "package com.foo;",
+            "public class B {",
+            "  public B() {  }",
+            "  public void m () { new A(); }",
+            "}");
+
+    MockJavaResource classC =
+        JavaResourceBase.createMockJavaResource(
+            "com.foo.C",
+            "package com.foo;",
+            "import com.google.gwt.core.client.EntryPoint;",
+            "public class C implements EntryPoint {",
+            "  public void onModuleLoad() {",
+            "      new B().m();",
+            "  }",
+            "}");
+
+    MockResource moduleResource =
+        JavaResourceBase.createMockResource(
+            "com/foo/PrimitiveClassLiteralReference.gwt.xml",
+            "<module>",
+            "  <source path=''/>",
+            "  <entry-point class='com.foo.C'/>",
+            "</module>");
+
+    checkRecompiledModifiedApp("com.foo.PrimitiveClassLiteralReference", Lists.newArrayList(
+            moduleResource, classA, classB),
+        classC, classC,
+        stringSet(getEntryMethodHolderTypeName("com.foo.PrimitiveClassLiteralReference"),
+            "com.foo.C"), output);
   }
 
   private void checkIncrementalRecompile_dateStampChange(JsOutputOption output)
