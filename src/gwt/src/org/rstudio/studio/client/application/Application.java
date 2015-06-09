@@ -41,6 +41,7 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.dom.DomUtils;
+import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.application.events.*;
@@ -424,13 +425,19 @@ public class Application implements ApplicationEventHandlers
          // (if we fail then fall through to default logic)
          if (isQuitSession())
          {
-            String returnTo = Window.Location.getParameter("return-to");
-            navigateWindowWithDelay(returnTo);
+            try
+            {
+               WindowEx.get().close();
+               return;
+            }
+            catch(Exception ex)
+            {
+            }
          }
          
          // if we are switching projects then reload after a delay (to allow
          // the R session to fully exit on the server)
-         else if (event.getSwitchProjects())
+         if (event.getSwitchProjects())
          {
             if (!StringUtil.isNullOrEmpty(event.getNextSessionUrl()))
             {
