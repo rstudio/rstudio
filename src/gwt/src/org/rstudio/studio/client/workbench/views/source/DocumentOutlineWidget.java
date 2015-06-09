@@ -200,8 +200,23 @@ public class DocumentOutlineWidget extends Composite
    
    private void onValueChanged()
    {
-      buildScopeTree();
-      resetTreeStyles();
+      // Debounce value changed events to avoid over-aggressively rebuilding
+      // the scope tree.
+      if (docUpdateTimer_ != null)
+         docUpdateTimer_.cancel();
+      
+      docUpdateTimer_ = new Timer()
+      {
+         
+         @Override
+         public void run()
+         {
+            buildScopeTree();
+            resetTreeStyles();
+         }
+      };
+      
+      docUpdateTimer_.schedule(1000);
    }
    
    private void buildScopeTree()
@@ -278,6 +293,7 @@ public class DocumentOutlineWidget extends Composite
    private final TextEditingTarget target_;
    
    private final Timer renderTimer_;
+   private Timer docUpdateTimer_;
    private JsArray<Scope> scopeTree_;
    
    // Styles, Resources etc. ----
