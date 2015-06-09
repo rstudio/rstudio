@@ -2260,8 +2260,6 @@ void rQuit()
    json::Object jsonData;
    jsonData["switch_projects"] = switchProjects;
    jsonData["next_session_url"] = s_nextSessionUrl;
-   jsonData["other_sessions_active"] =
-     r_util::ActiveSessions(module_context::userScratchPath()).list().size()>1;
    ClientEvent quitEvent(kQuit, jsonData);
    rsession::clientEventQueue().add(quitEvent);
 }

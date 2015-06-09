@@ -433,10 +433,6 @@ public class Application implements ApplicationEventHandlers
                reloadWindowWithDelay(true);
             }
          }
-         else if (event.getOtherSessionsActive())
-         {
-            navigateWindowToRoot();
-         }
          else
          {
             view_.showApplicationQuit();
