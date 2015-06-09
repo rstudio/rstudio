@@ -199,7 +199,7 @@ public class Cookies {
     var docCookie = $doc.cookie;
     if (docCookie && docCookie != '') {
       var crumbs = docCookie.split('; ');
-      for (var i = 0; i < crumbs.length; ++i) {
+      for (var i = crumbs.length - 1; i >= 0; --i) {
         var name, value;
         var eqIdx = crumbs[i].indexOf('=');
         if (eqIdx == -1) {

@@ -16,6 +16,8 @@
 package com.google.gwt.user.client;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.junit.DoNotRunWith;
+import com.google.gwt.junit.Platform;
 import com.google.gwt.junit.client.GWTTestCase;
 
 import java.util.Collection;
@@ -62,10 +64,25 @@ public class CookieTest extends GWTTestCase {
     assertEquals(Cookies.getCookie("novalue"), "");
     assertEquals(Cookies.getCookie("notpresent"), null);
   }
-  
+
+  // HTMLUnit doesn't match browsers in terms of the order of cookies.
+  @DoNotRunWith(Platform.HtmlUnitUnknown)
+  public void testCookiesWithTheSameName() {
+    // Make the cookie expire in one minute, so that they don't hang around
+    // past the end of this test.
+    Date expires = new Date(getClientTime() + (60 * 1000));
+
+    // Given multiple cookies with the same name, we should pick the cookie with the longest
+    // path.
+    Cookies.setCookie("token", "root", expires, null, "/", false);
+    Cookies.setCookie("token", "longest", expires, null, "/com.google.gwt.user.User.JUnit/junit.html", false);
+    Cookies.setCookie("token", "middle", expires, null, "/com.google.gwt.user.User.JUnit/", false);
+    assertEquals("longest", Cookies.getCookie("token"));
+  }
+
   /*
    * Test that the cookie will expire correctly after a set amount of time,
-   * but does not expire before that time. 
+   * but does not expire before that time.
    */
   public void testExpires() {
     // Generate a random ID for the cookies. Since cookies are shared across
