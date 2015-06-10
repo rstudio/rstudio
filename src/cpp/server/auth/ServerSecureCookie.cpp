@@ -41,6 +41,12 @@
 namespace rstudio {
 namespace server {
 namespace auth {
+
+std::string applicationRootCookiePath(const core::http::Request& request)
+{
+   return "/";
+}
+
 namespace secure_cookie {
 
 namespace {
