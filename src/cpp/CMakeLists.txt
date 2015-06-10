@@ -34,6 +34,7 @@ set(TESTS_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/tests/cpp" CACHE STRING "Test
 
 # UNIX specific global directivies
 if(UNIX)
+
    # cmake modules
    include(CheckFunctionExists REQUIRED)
    include(CheckSymbolExists REQUIRED)
@@ -43,7 +44,21 @@ if(UNIX)
 
    if(APPLE)
       add_definitions(-Wsign-compare)
-   endif()
+  else()
+
+      # RStudio fails to run when built with gcc-4.9; warn
+      # about this to avoid heartache later.
+      execute_process(
+          COMMAND ${CMAKE_CXX_COMPILER} -dumpversion
+          OUTPUT_VARIABLE CXX_VERSION
+          OUTPUT_STRIP_TRAILING_WHITESPACE)
+
+      message(STATUS "Using g++-" ${CXX_VERSION})
+      if(${CXX_VERSION} VERSION_GREATER "4.8.4")
+          message(FATAL_ERROR "RStudio must be compiled with gcc (<= 4.8.4)")
+      endif()
+
+  endif()
 
    # workaround boost bug (https://svn.boost.org/trac/boost/ticket/4568)
    # by disabling kqueue support. note that this bug was fixed in boost 1.45
