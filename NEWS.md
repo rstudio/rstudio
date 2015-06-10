@@ -19,6 +19,7 @@
 ### Miscellaneous
 
 * New Session command (create new R session with same project or working directory)
+* Open project in a new window from the projects recently used menu
 * Raise limit on shinyapps uploads to 1GB from 100MB
 * 'Edit -> Replace and Find' opens Find toolbar if not already open (e.g. with Cmd+Shift+J)
 * Improve performance of console for large and/or rapdily updating output

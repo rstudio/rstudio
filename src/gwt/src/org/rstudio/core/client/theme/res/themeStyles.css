@@ -323,6 +323,11 @@ pre {
    padding-right: 20px;
 }
 
+.menuRightImage {
+   cursor: pointer;
+}
+
+
 .highlight {
    color: #900 !important;
 }

@@ -20,12 +20,16 @@ import org.rstudio.core.client.DuplicateHelper;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.OperationWithInput;
+import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.projects.events.OpenProjectNewWindowEvent;
 import org.rstudio.studio.client.projects.events.SwitchToProjectEvent;
 import org.rstudio.studio.client.workbench.MRUList;
 import org.rstudio.studio.client.workbench.WorkbenchListManager;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.model.Session;
 
+import com.google.gwt.resources.client.ImageResource;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -35,7 +39,8 @@ public class ProjectMRUList extends MRUList
    @Inject 
    public ProjectMRUList(Commands commands, 
                          WorkbenchListManager listManager,
-                         final EventBus eventBus)
+                         final EventBus eventBus,
+                         Session session)
    {
       super(listManager.getProjectMruList(),
             new AppCommand[] {
@@ -57,9 +62,34 @@ public class ProjectMRUList extends MRUList
                @Override
                public void execute(String file)
                {
-                  eventBus.fireEvent(new SwitchToProjectEvent(file));
+                  if (openInNewWindow_)
+                     eventBus.fireEvent(new OpenProjectNewWindowEvent(file));
+                  else
+                     eventBus.fireEvent(new SwitchToProjectEvent(file));
                }
             });
+      
+      // set right image for project MRU commands
+      if (Desktop.isDesktop() || session.getSessionInfo().getMultiSession())
+      {
+         ImageResource image = commands.openHtmlExternal().getImageResource();
+         String desc = "Open project in new window";
+         commands.projectMru0().setRightImage(image, desc);
+         commands.projectMru1().setRightImage(image, desc);
+         commands.projectMru2().setRightImage(image, desc);
+         commands.projectMru3().setRightImage(image, desc);
+         commands.projectMru4().setRightImage(image, desc);
+         commands.projectMru5().setRightImage(image, desc);
+         commands.projectMru6().setRightImage(image, desc);
+         commands.projectMru7().setRightImage(image, desc);
+         commands.projectMru8().setRightImage(image, desc);
+         commands.projectMru9().setRightImage(image, desc);
+      }
+   }
+   
+   public static void setOpenInNewWindow(boolean openInNewWindow)
+   {
+      openInNewWindow_ = openInNewWindow;
    }
    
    @Override
@@ -75,5 +105,6 @@ public class ProjectMRUList extends MRUList
 	   return DuplicateHelper.getPathLabels(mruEntries, true);
    }
    
-
+   private static boolean openInNewWindow_ = false;
+   
 }

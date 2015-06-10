@@ -43,6 +43,8 @@ import org.rstudio.studio.client.projects.events.OpenProjectErrorEvent;
 import org.rstudio.studio.client.projects.events.OpenProjectErrorHandler;
 import org.rstudio.studio.client.projects.events.OpenProjectFileEvent;
 import org.rstudio.studio.client.projects.events.OpenProjectFileHandler;
+import org.rstudio.studio.client.projects.events.OpenProjectNewWindowEvent;
+import org.rstudio.studio.client.projects.events.OpenProjectNewWindowHandler;
 import org.rstudio.studio.client.projects.events.SwitchToProjectEvent;
 import org.rstudio.studio.client.projects.events.SwitchToProjectHandler;
 import org.rstudio.studio.client.projects.model.NewProjectContext;
@@ -75,7 +77,8 @@ import com.google.inject.Singleton;
 @Singleton
 public class Projects implements OpenProjectFileHandler,
                                  SwitchToProjectHandler,
-                                 OpenProjectErrorHandler
+                                 OpenProjectErrorHandler,
+                                 OpenProjectNewWindowHandler
 {
    public interface Binder extends CommandBinder<Commands, Projects> {}
    
@@ -97,6 +100,7 @@ public class Projects implements OpenProjectFileHandler,
                    Provider<UIPrefs> pUIPrefs)
    {
       globalDisplay_ = globalDisplay;
+      eventBus_ = eventBus;
       pMRUList_ = pMRUList;
       applicationQuit_ = applicationQuit;
       projServer_ = projServer;
@@ -114,6 +118,7 @@ public class Projects implements OpenProjectFileHandler,
       eventBus.addHandler(OpenProjectErrorEvent.TYPE, this);
       eventBus.addHandler(SwitchToProjectEvent.TYPE, this);
       eventBus.addHandler(OpenProjectFileEvent.TYPE, this);
+      eventBus.addHandler(OpenProjectNewWindowEvent.TYPE, this);
       
       eventBus.addHandler(SessionInitEvent.TYPE, new SessionInitHandler() {
          public void onSessionInit(SessionInitEvent sie)
@@ -594,16 +599,24 @@ public class Projects implements OpenProjectFileHandler,
                if (input == null)
                   return;
                
-               // call the desktop to open the project (since it is
-               // a conventional foreground gui application it has
-               // less chance of running afowl of desktop app creation
-               // & activation restrictions)
-               if (Desktop.isDesktop())
-                  Desktop.getFrame().openProjectInNewWindow(input.getPath());
-               else
-                  serverOpenProjectInNewWindow(input, null);
-            }   
+               eventBus_.fireEvent(
+                   new OpenProjectNewWindowEvent(input.getPath()));
+            }
          });
+   }
+   
+   @Override
+   public void onOpenProjectNewWindow(OpenProjectNewWindowEvent event)
+   {
+      // call the desktop to open the project (since it is
+      // a conventional foreground gui application it has
+      // less chance of running afowl of desktop app creation
+      // & activation restrictions)
+      FileSystemItem project = FileSystemItem.createFile(event.getProject());
+      if (Desktop.isDesktop())
+         Desktop.getFrame().openProjectInNewWindow(project.getPath());
+      else
+         serverOpenProjectInNewWindow(project, null);
    }
    
    
@@ -832,6 +845,7 @@ public class Projects implements OpenProjectFileHandler,
    private final FileDialogs fileDialogs_;
    private final RemoteFileSystemContext fsContext_;
    private final GlobalDisplay globalDisplay_;
+   private final EventBus eventBus_;
    private final Session session_;
    private final Provider<ProjectPreferencesDialog> pPrefDialog_;
    private final Provider<UIPrefs> pUIPrefs_;
