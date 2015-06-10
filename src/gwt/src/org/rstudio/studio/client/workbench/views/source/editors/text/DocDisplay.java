@@ -49,6 +49,7 @@ import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.IsWidget;
 
+import org.rstudio.studio.client.workbench.views.source.model.DirtyState;
 import org.rstudio.studio.client.workbench.views.source.model.RnwCompletionContext;
 import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
 
@@ -257,7 +258,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void removeMarkersAtCursorPosition();
    void removeMarkersOnCursorLine();
    
-   void beginCollabSession(String serverUrl);
+   void beginCollabSession(String serverUrl, DirtyState dirtyState);
    void endCollabSession();
 
    void setPopupVisible(boolean visible);
