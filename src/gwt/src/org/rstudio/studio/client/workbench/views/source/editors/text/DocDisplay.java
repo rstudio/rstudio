@@ -260,6 +260,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void removeMarkersOnCursorLine();
    
    void beginCollabSession(CollabEditStartParams params, DirtyState dirtyState);
+   boolean hasActiveCollabSession();
    void endCollabSession();
 
    void setPopupVisible(boolean visible);

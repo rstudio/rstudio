@@ -25,6 +25,11 @@ public class CollabEditor
       
    }
    
+   boolean hasActiveCollabSession(AceEditor editor)
+   {
+      return false;
+   }
+   
    void endCollabSession(AceEditor editor)
    {
       
