@@ -137,11 +137,12 @@ public class ControlFlowRecorder extends JVisitor {
           overriddenMethodName);
     }
 
-    if (x.isExported() || x.isOrOverridesJsTypeMethod()) {
+    if (x.isExported() || x.isOrOverridesJsTypeMethod() || x.isOrOverridesJsFunctionMethod()) {
+      stringAnalyzableTypeEnvironment.recordExportedMethodInType(currentMethodName, typeName);
+
       if (x.isStatic() || x.isConstructor()) {
         stringAnalyzableTypeEnvironment.recordExportedStaticReferenceInType(typeName);
       }
-      stringAnalyzableTypeEnvironment.recordExportedMethodInType(currentMethodName, typeName);
     }
 
     if (x.isConstructor()) {

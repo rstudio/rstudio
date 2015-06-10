@@ -17,6 +17,7 @@ package com.google.gwt.dev.jjs.ast;
 
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.impl.GwtAstBuilder;
+import com.google.gwt.dev.jjs.impl.JjsUtils;
 import com.google.gwt.dev.util.StringInterner;
 import com.google.gwt.dev.util.collect.Lists;
 import com.google.gwt.thirdparty.guava.common.base.Preconditions;
@@ -332,7 +333,7 @@ public abstract class JDeclaredType extends JReferenceType {
 
   @Override
   public String getJavahSignatureName() {
-    return "L" + name.replaceAll("_", "_1").replace('.', '_') + "_2";
+    return JjsUtils.javahSignatureFromName(name);
   }
 
   @Override

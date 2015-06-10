@@ -465,7 +465,7 @@ public class ImplementClassLiteralsAsFields {
 
       // Create a field in the class literal holder to hold the object.
       field =
-          new JField(info, getClassLiteralName(type), typeClassLiteralHolder, program
+          new JField(info, getClassLiteralFieldName(type), typeClassLiteralHolder, program
               .getTypeJavaLangClass(), true, Disposition.FINAL);
       typeClassLiteralHolder.addField(field);
       info.addCorrelation(info.getCorrelator().by(Literal.CLASS));
@@ -480,7 +480,7 @@ public class ImplementClassLiteralsAsFields {
     return field;
   }
 
-  private static String getClassLiteralName(JType type) {
-    return type.getJavahSignatureName() + "_classLit";
+  private static String getClassLiteralFieldName(JType type) {
+    return JjsUtils.classLiteralFieldNameFromJavahTypeSignatureName(type.getJavahSignatureName());
   }
 }

@@ -3522,14 +3522,11 @@ public class GenerateJavaScriptAST {
   }
 
   String mangleName(JField x) {
-    String s = JjsUtils.mangledNameString(x.getEnclosingType()) + '_' + JjsUtils.mangledNameString(
-        x);
-    return s;
+    return JjsUtils.mangleMemberName(x.getEnclosingType().getName(), x.getName());
   }
 
   String mangleNameForGlobal(JMethod x) {
-    String s =
-        JjsUtils.mangledNameString(x.getEnclosingType()) + '_' + JjsUtils.mangledNameString(x) + "__";
+    String s = JjsUtils.mangleMemberName(x.getEnclosingType().getName(), x.getName()) + "__";
     for (int i = 0; i < x.getOriginalParamTypes().size(); ++i) {
       JType type = x.getOriginalParamTypes().get(i);
       s += type.getJavahSignatureName();

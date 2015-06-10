@@ -85,6 +85,13 @@ public class JjsUtils {
   }
 
   /**
+   * Returns the class literal field name.
+   */
+  public static String classLiteralFieldNameFromJavahTypeSignatureName(String javahSignatureName) {
+    return javahSignatureName + "_classLit";
+  }
+
+  /**
    * Java8 Method References such as String::equalsIgnoreCase should produce inner class names
    * that are a function of the samInterface (e.g. Runnable), the method being referred to,
    * and the qualifying disposition (this::foo vs Class::foo if foo is an instance method)
@@ -297,6 +304,18 @@ public class JjsUtils {
             return (JReferenceType) typedNode.getType();
           }
         });
+  }
+
+  /**
+   * Mangles a qualified name into a Javah signature.
+   */
+  public static String javahSignatureFromName(String name) {
+    return "L" + mangledNameString(name) + "_2";
+  }
+
+  public static String mangleMemberName(String enclosingTypeName, String fieldName) {
+    return mangledNameString(
+        enclosingTypeName + '_' + mangledNameString(fieldName));
   }
 
   /**

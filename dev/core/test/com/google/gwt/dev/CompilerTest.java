@@ -27,6 +27,7 @@ import com.google.gwt.dev.javac.testing.impl.JavaResourceBase;
 import com.google.gwt.dev.javac.testing.impl.MockJavaResource;
 import com.google.gwt.dev.javac.testing.impl.MockResource;
 import com.google.gwt.dev.jjs.JsOutputOption;
+import com.google.gwt.dev.jjs.impl.JjsUtils;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.arg.OptionJsInteropMode;
 import com.google.gwt.dev.util.arg.SourceLevel;
@@ -950,6 +951,70 @@ public class CompilerTest extends ArgProcessorTestBase {
         new MinimalRebuildCache(), emptySet, JsOutputOption.OBFUSCATED);
   }
 
+   /**
+   * Test that some lightly referenced interface through a @JsFunction is included in the output.
+   */
+  public void testReferenceThroughJsFunction() throws Exception {
+    MockJavaResource someJsFunction =
+        JavaResourceBase.createMockJavaResource(
+            "com.foo.SomeJsFunction",
+            "package com.foo;",
+            "import com.google.gwt.core.client.js.JsFunction;",
+            "@JsFunction",
+            "public interface SomeJsFunction {",
+            "  void m();",
+            "}");
+
+    MockJavaResource jsFunctionInterfaceImplementation =
+        JavaResourceBase.createMockJavaResource(
+            "com.foo.Impl",
+            "package com.foo;",
+            "public class Impl implements SomeJsFunction {",
+            "  public void m() { SomeInterface.class.getName(); } ",
+            "}");
+
+    MockJavaResource someInterface =
+        JavaResourceBase.createMockJavaResource(
+            "com.foo.SomeInterface",
+            "package com.foo;",
+            "public interface SomeInterface {",
+            "}");
+
+    MockJavaResource testEntryPoint =
+        JavaResourceBase.createMockJavaResource(
+            "com.foo.TestEntryPoint",
+            "package com.foo;",
+            "import com.google.gwt.core.client.EntryPoint;",
+            "public class TestEntryPoint implements EntryPoint {",
+            "  private static native void f(SomeJsFunction f) /*-{}-*/;",
+            "  public void onModuleLoad() {",
+                // Create Impl and pass it to JS but do not explicitly call m
+            "    f(new Impl());",
+            "  }",
+            "}");
+
+    MockResource moduleResource =
+        JavaResourceBase.createMockResource(
+            "com/foo/TestEntryPoint.gwt.xml",
+            "<module>",
+            "  <source path=''/>",
+            "  <entry-point class='com.foo.TestEntryPoint'/>",
+            "</module>");
+
+    CompilerOptions compilerOptions = new CompilerOptionsImpl();
+    compilerOptions.setJsInteropMode(OptionJsInteropMode.Mode.JS);
+    String js = compileToJs(compilerOptions, Files.createTempDir(), testEntryPoint.getTypeName(),
+        Lists.newArrayList(moduleResource, testEntryPoint, someJsFunction,
+            jsFunctionInterfaceImplementation, someInterface),
+        new MinimalRebuildCache(), emptySet, JsOutputOption.DETAILED);
+    // Make sure the referenced class literals ends up beign included in the resulting JS.
+    String classliteralHolderVarName =
+        JjsUtils.mangleMemberName("com.google.gwt.lang.ClassLiteralHolder",
+        JjsUtils.classLiteralFieldNameFromJavahTypeSignatureName(
+            JjsUtils.javahSignatureFromName(someInterface.getTypeName())));
+    assertTrue(js.contains("var " + classliteralHolderVarName + " = "));
+  }
+
   public void testJsInteropNameCollision() throws Exception {
     MinimalRebuildCache minimalRebuildCache = new MinimalRebuildCache();
     File applicationDir = Files.createTempDir();
@@ -1452,7 +1517,6 @@ public class CompilerTest extends ArgProcessorTestBase {
 
   public void checkIncrementalRecompile_classLiteralNewReference(JsOutputOption output)
       throws UnableToCompleteException, IOException, InterruptedException {
-    // Tests that when a superclass has a "inherits" a default method,
     MockJavaResource interfaceA =
         JavaResourceBase.createMockJavaResource(
             "com.foo.A",
@@ -1504,7 +1568,6 @@ public class CompilerTest extends ArgProcessorTestBase {
 
   public void checkIncrementalRecompile_primitiveClassLiteralReference(JsOutputOption output)
       throws UnableToCompleteException, IOException, InterruptedException {
-    // Tests that when a superclass has a "inherits" a default method,
     MockJavaResource classA =
         JavaResourceBase.createMockJavaResource(
             "com.foo.A",
