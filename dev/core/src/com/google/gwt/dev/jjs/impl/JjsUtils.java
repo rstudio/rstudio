@@ -314,8 +314,7 @@ public class JjsUtils {
   }
 
   public static String mangleMemberName(String enclosingTypeName, String fieldName) {
-    return mangledNameString(
-        enclosingTypeName + '_' + mangledNameString(fieldName));
+    return mangledNameString(enclosingTypeName) + '_' + mangledNameString(fieldName);
   }
 
   /**
