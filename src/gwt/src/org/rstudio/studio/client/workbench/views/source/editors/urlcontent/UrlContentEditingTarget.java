@@ -278,6 +278,11 @@ public class UrlContentEditingTarget implements EditingTarget
    {
    }
    
+   @Override
+   public void endCollabSession()
+   {
+   }
+
    public boolean onBeforeDismiss()
    {
       return true;

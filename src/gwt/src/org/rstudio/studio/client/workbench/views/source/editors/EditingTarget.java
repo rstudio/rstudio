@@ -93,6 +93,7 @@ public interface EditingTarget extends IsWidget,
    void endDebugHighlighting();
    
    void beginCollabSession(String serverUrl);
+   void endCollabSession();
    
    /**
     * @return True if dismissal is allowed, false to cancel.

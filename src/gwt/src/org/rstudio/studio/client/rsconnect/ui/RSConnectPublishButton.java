@@ -107,6 +107,7 @@ public class RSConnectPublishButton extends Composite
       // compute initial visible state
       applyVisiblity();
       applyCaption("Publish");
+      setPreviousDeployments(null);
    }
    
    private void onPublishButtonClick()

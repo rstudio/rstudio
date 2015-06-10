@@ -1,5 +1,5 @@
 /*
- * CollabEditStartedEvent.java
+ * CollabEditEndedEvent.java
  *
  * Copyright (C) 2009-15 by RStudio, Inc.
  *
@@ -19,7 +19,7 @@ import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
-public class CollabEditStartedEvent extends GwtEvent<CollabEditStartedEvent.Handler>
+public class CollabEditEndedEvent extends GwtEvent<CollabEditEndedEvent.Handler>
 { 
    public static class Data extends JavaScriptObject
    {
@@ -27,28 +27,20 @@ public class CollabEditStartedEvent extends GwtEvent<CollabEditStartedEvent.Hand
       {
       }
       
-      public final native String getUrl() /*-{
-         return this.url;
-      }-*/;
-      
       public final native String getPath() /*-{
          return this.path;
-      }-*/;
-      
-      public final native boolean isMaster() /*-{
-         return this.master;
       }-*/;
    }
 
    public interface Handler extends EventHandler
    {
-      void onCollabEditStarted(CollabEditStartedEvent event);
+      void onCollabEditEnded(CollabEditEndedEvent event);
    }
 
-   public static final GwtEvent.Type<CollabEditStartedEvent.Handler> TYPE =
-      new GwtEvent.Type<CollabEditStartedEvent.Handler>();
+   public static final GwtEvent.Type<CollabEditEndedEvent.Handler> TYPE =
+      new GwtEvent.Type<CollabEditEndedEvent.Handler>();
    
-   public CollabEditStartedEvent(Data data)
+   public CollabEditEndedEvent(Data data)
    {
       data_ = data;
    }
@@ -58,19 +50,14 @@ public class CollabEditStartedEvent extends GwtEvent<CollabEditStartedEvent.Hand
       return data_.getPath();
    }
    
-   public String getUrl()
-   {
-      return data_.getUrl();
-   }
-   
    @Override
-   protected void dispatch(CollabEditStartedEvent.Handler handler)
+   protected void dispatch(CollabEditEndedEvent.Handler handler)
    {
-      handler.onCollabEditStarted(this);
+      handler.onCollabEditEnded(this);
    }
 
    @Override
-   public GwtEvent.Type<CollabEditStartedEvent.Handler> getAssociatedType()
+   public GwtEvent.Type<CollabEditEndedEvent.Handler> getAssociatedType()
    {
       return TYPE;
    }
