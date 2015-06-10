@@ -116,12 +116,6 @@ http::Cookie createSecureCookie(
 
 } // anonymous namespace
 
-std::string rootCookiePath(const core::http::Request& request,
-                           bool useApplicationRootPath)
-{
-   return "/";
-}
-
 std::string readSecureCookie(const core::http::Request& request,
                              const std::string& name)
 {
@@ -188,7 +182,7 @@ void set(const std::string& name,
          const std::string& value,
          const http::Request& request,
          const boost::posix_time::time_duration& validDuration,
-         bool useApplicationRootPath,
+         const std::string& path,
          http::Response* pResponse)
 {
    secure_cookie::set(name,
@@ -196,7 +190,7 @@ void set(const std::string& name,
                       request,
                       validDuration,
                       boost::none,
-                      useApplicationRootPath,
+                      path,
                       pResponse);
 }
 
@@ -205,18 +199,15 @@ void set(const std::string& name,
          const http::Request& request,
          const boost::posix_time::time_duration& validDuration,
          const boost::optional<boost::gregorian::days>& cookieExpiresDays,
-         bool useApplicationRootPath,
+         const std::string& path,
          http::Response* pResponse)
 {
-   // calculate root path
-   std::string path = rootCookiePath(request, useApplicationRootPath);
-
    // create secure cookie
    http::Cookie cookie = createSecureCookie(name,
                                             value,
                                             request,
                                             validDuration,
-                                            rootCookiePath(request, useApplicationRootPath));
+                                            path);
 
    // expire from browser as requested
    if (cookieExpiresDays.is_initialized())
@@ -228,12 +219,9 @@ void set(const std::string& name,
 
 void remove(const http::Request& request,
             const std::string& name,
-            bool useApplicationRootPath,
+            const std::string& path,
             core::http::Response* pResponse)
 {
-   // calculate root path
-   std::string path = rootCookiePath(request, useApplicationRootPath);
-
    // create vanilla cookie (no need for secure cookie since we are removing)
    http::Cookie cookie(request, name, std::string(), path);
 
