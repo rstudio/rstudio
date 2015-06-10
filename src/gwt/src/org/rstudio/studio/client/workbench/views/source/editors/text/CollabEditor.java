@@ -14,9 +14,12 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
+import org.rstudio.studio.client.workbench.views.source.model.DirtyState;
+
 public class CollabEditor
 {
-   void beginCollabSession(AceEditor editor, String serverUrl)
+   void beginCollabSession(AceEditor editor, String serverUrl, 
+         DirtyState dirtyState)
    {
       
    }

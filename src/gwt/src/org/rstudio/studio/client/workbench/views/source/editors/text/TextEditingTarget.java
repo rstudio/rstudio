@@ -750,7 +750,7 @@ public class TextEditingTarget implements
    @Override
    public void beginCollabSession(String serverUrl)
    {
-      docDisplay_.beginCollabSession(serverUrl);
+      docDisplay_.beginCollabSession(serverUrl, dirtyState_);
    }
    
    @Override

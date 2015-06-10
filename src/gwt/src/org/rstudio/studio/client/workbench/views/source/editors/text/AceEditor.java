@@ -80,6 +80,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppComp
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.*;
 import org.rstudio.studio.client.workbench.views.source.events.RecordNavigationPositionEvent;
 import org.rstudio.studio.client.workbench.views.source.events.RecordNavigationPositionHandler;
+import org.rstudio.studio.client.workbench.views.source.model.DirtyState;
 import org.rstudio.studio.client.workbench.views.source.model.RnwCompletionContext;
 import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
 
@@ -2295,9 +2296,9 @@ public class AceEditor implements DocDisplay,
    }
    
    @Override
-   public void beginCollabSession(String serverUrl)
+   public void beginCollabSession(String serverUrl, DirtyState dirtyState)
    {
-      collab_.beginCollabSession(this, serverUrl);
+      collab_.beginCollabSession(this, serverUrl, dirtyState);
    }
    
    @Override
