@@ -443,13 +443,13 @@ public class Source implements InsertSourceHandler,
          @Override
          public void onCollabEditStarted(final CollabEditStartedEvent collab) 
          {
-            inEditorForPath(collab.getPath(), 
+            inEditorForPath(collab.getStartParams().getPath(),
                new OperationWithInput<EditingTarget>()
                {
                   @Override
                   public void execute(EditingTarget editor)
                   {
-                     editor.beginCollabSession(collab.getUrl());
+                     editor.beginCollabSession(collab.getStartParams());
                   }
                });
          }

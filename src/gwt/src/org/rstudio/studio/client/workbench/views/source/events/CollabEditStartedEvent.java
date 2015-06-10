@@ -15,31 +15,11 @@
 
 package org.rstudio.studio.client.workbench.views.source.events;
 
-import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
 public class CollabEditStartedEvent extends GwtEvent<CollabEditStartedEvent.Handler>
 { 
-   public static class Data extends JavaScriptObject
-   {
-      protected Data() 
-      {
-      }
-      
-      public final native String getUrl() /*-{
-         return this.url;
-      }-*/;
-      
-      public final native String getPath() /*-{
-         return this.path;
-      }-*/;
-      
-      public final native boolean isMaster() /*-{
-         return this.master;
-      }-*/;
-   }
-
    public interface Handler extends EventHandler
    {
       void onCollabEditStarted(CollabEditStartedEvent event);
@@ -48,19 +28,14 @@ public class CollabEditStartedEvent extends GwtEvent<CollabEditStartedEvent.Hand
    public static final GwtEvent.Type<CollabEditStartedEvent.Handler> TYPE =
       new GwtEvent.Type<CollabEditStartedEvent.Handler>();
    
-   public CollabEditStartedEvent(Data data)
+   public CollabEditStartedEvent(CollabEditStartParams params)
    {
-      data_ = data;
+      params_ = params;
    }
    
-   public String getPath()
+   public CollabEditStartParams getStartParams()
    {
-      return data_.getPath();
-   }
-   
-   public String getUrl()
-   {
-      return data_.getUrl();
+      return params_;
    }
    
    @Override
@@ -75,5 +50,5 @@ public class CollabEditStartedEvent extends GwtEvent<CollabEditStartedEvent.Hand
       return TYPE;
    }
    
-   private final Data data_;
+   private final CollabEditStartParams params_;
 }
