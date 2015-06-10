@@ -32,6 +32,8 @@
 #include <core/http/Response.hpp>
 #include <core/http/Util.hpp>
 
+#include <core/r_util/RSessionContext.hpp>
+
 #include <core/system/Crypto.hpp>
 #include <core/system/PosixSystem.hpp>
 #include <core/system/FileMode.hpp>
@@ -44,7 +46,26 @@ namespace auth {
 
 std::string applicationRootCookiePath(const core::http::Request& request)
 {
-   return "/";
+   // get uri without session context prefix
+   std::string uri;
+   r_util::parseSessionUrl(request.uri(), NULL, NULL, &uri);
+
+   // remove any query string
+   std::string::size_type queryPos = uri.find('?');
+   if (queryPos != std::string::npos)
+      uri = uri.substr(0, queryPos);
+
+   // strip everything after the last slash
+   std::string::size_type slashPos = uri.find_last_of('/');
+   if (slashPos != std::string::npos)
+   {
+      return uri.substr(0, slashPos + 1);
+   }
+   // seems impossible but return something in any case
+   else
+   {
+      return "/";
+   }
 }
 
 namespace secure_cookie {
