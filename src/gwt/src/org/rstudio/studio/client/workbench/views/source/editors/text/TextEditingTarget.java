@@ -134,6 +134,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.status.Stat
 import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBarPopupMenu;
 import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBarPopupRequest;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ui.ChooseEncodingDialog;
+import org.rstudio.studio.client.workbench.views.source.events.CollabEditStartParams;
 import org.rstudio.studio.client.workbench.views.source.events.RecordNavigationPositionEvent;
 import org.rstudio.studio.client.workbench.views.source.events.RecordNavigationPositionHandler;
 import org.rstudio.studio.client.workbench.views.source.events.SourceFileSavedEvent;
@@ -748,9 +749,9 @@ public class TextEditingTarget implements
    }
    
    @Override
-   public void beginCollabSession(String serverUrl)
+   public void beginCollabSession(CollabEditStartParams params)
    {
-      docDisplay_.beginCollabSession(serverUrl, dirtyState_);
+      docDisplay_.beginCollabSession(params, dirtyState_);
    }
    
    @Override

@@ -39,6 +39,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.events.Curs
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.FindRequestedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.HasFoldChangeHandlers;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.UndoRedoHandler;
+import org.rstudio.studio.client.workbench.views.source.events.CollabEditStartParams;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
@@ -258,7 +259,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void removeMarkersAtCursorPosition();
    void removeMarkersOnCursorLine();
    
-   void beginCollabSession(String serverUrl, DirtyState dirtyState);
+   void beginCollabSession(CollabEditStartParams params, DirtyState dirtyState);
    void endCollabSession();
 
    void setPopupVisible(boolean visible);
