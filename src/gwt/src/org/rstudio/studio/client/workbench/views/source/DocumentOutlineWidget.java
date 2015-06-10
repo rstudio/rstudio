@@ -1,5 +1,20 @@
+/*
+ * DocumentOutlineWidget.java
+ *
+ * Copyright (C) 2009-12 by RStudio, Inc.
+ *
+ * Unless you have received this program directly from RStudio pursuant
+ * to the terms of a commercial license agreement with RStudio, then
+ * this program is licensed to you under the terms of version 3 of the
+ * GNU Affero General Public License. This program is distributed WITHOUT
+ * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+ * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+ *
+ */
 package org.rstudio.studio.client.workbench.views.source;
 
+import org.rstudio.core.client.Counter;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.studio.client.workbench.views.source.editors.text.Scope;
@@ -48,11 +63,11 @@ public class DocumentOutlineWidget extends Composite
          node_ = node;
          FlowPanel panel = new FlowPanel();
          
-         Label indent = createIndent(depth);
-         Label label = createLabel(node);
+         setIndent(depth);
+         setLabel(node);
          
-         panel.add(indent);
-         panel.add(label);
+         panel.add(indent_);
+         panel.add(label_);
          
          panel.addDomHandler(new ClickHandler()
          {
@@ -77,32 +92,46 @@ public class DocumentOutlineWidget extends Composite
          initWidget(panel);
       }
       
-      private Label createLabel(Scope node)
+      private void setLabel(Scope node)
       {
          String text = node.isChunk() ?
             node.getChunkLabel() :
             node.getLabel();
-         
+
          if (text.equals(""))
             text = node.isChunk() ? "(Unnamed Chunk)" : "(Unnamed Section)";
+
+         if (label_ == null)
+            label_ = new Label(text);
+         else
+            label_.setText(text);
          
-         Label label = new Label(text);
-         label.addStyleName(RES.styles().nodeLabel());
+         label_.addStyleName(RES.styles().nodeLabel());
          if (node.isChunk())
-            label.addStyleName(RES.styles().nodeLabelChunk());
+            label_.addStyleName(RES.styles().nodeLabelChunk());
          else if (node.isSection())
-            label.addStyleName(RES.styles().nodeLabelSection());
+            label_.addStyleName(RES.styles().nodeLabelSection());
          else if (node.isFunction())
-            label.addStyleName(RES.styles().nodeLabelFunction());
-         return label;
+            label_.addStyleName(RES.styles().nodeLabelFunction());
       }
       
-      private HTML createIndent(int depth)
+      private void setIndent(int depth)
       {
-         HTML indent = new HTML(StringUtil.repeat("&nbsp;", depth * 4));
-         indent.addStyleName(RES.styles().nodeLabel());
-         indent.getElement().getStyle().setFloat(Style.Float.LEFT);
-         return indent;
+         String text = StringUtil.repeat("&nbsp;", depth * 4);
+         if (indent_ == null)
+            indent_ = new HTML(text);
+         else
+            indent_.setHTML(text);
+
+         indent_.addStyleName(RES.styles().nodeLabel());
+         indent_.getElement().getStyle().setFloat(Style.Float.LEFT);
+      }
+      
+      public void update(Scope node, int depth)
+      {
+         node_ = node;
+         setLabel(node);
+         setIndent(depth);
       }
       
       public Scope getScopeNode()
@@ -110,7 +139,9 @@ public class DocumentOutlineWidget extends Composite
          return node_;
       }
       
-      private final Scope node_;
+      private Scope node_;
+      private HTML indent_;
+      private Label label_;
    }
    
    private class DocumentOutlineTreeItem extends TreeItem
@@ -121,9 +152,9 @@ public class DocumentOutlineWidget extends Composite
          entry_ = entry;
       }
       
-      public Scope getScopeNode()
+      public DocumentOutlineTreeEntry getEntry()
       {
-         return entry_.getScopeNode();
+         return entry_;
       }
       
       private final DocumentOutlineTreeEntry entry_;
@@ -220,29 +251,54 @@ public class DocumentOutlineWidget extends Composite
       docUpdateTimer_.schedule(1000);
    }
    
+   private void addOrSetItem(Scope node, int depth, int index)
+   {
+      int treeSize = tree_.getItemCount();
+      if (index < treeSize)
+      {
+         DocumentOutlineTreeItem item =
+            (DocumentOutlineTreeItem) tree_.getItem(index);
+         item.getEntry().update(node, depth);
+      }
+      else
+      {
+         tree_.addItem(createEntry(node, depth));
+      }
+   }
+   
    private void updateScopeTree(DocumentChangedEvent event)
    {
-      // TODO: Only update portions of the tree that need to be changed.
-      rebuildWholeScopeTree();
+      rebuildScopeTree();
    }
    
-   private void rebuildWholeScopeTree()
+   private void rebuildScopeTree()
    {
       scopeTree_ = target_.getDocDisplay().getScopeTree();
-      tree_.clear();
+      Counter counter = new Counter(-1);
       JsArray<Scope> scopeTree = target_.getDocDisplay().getScopeTree();
       for (int i = 0; i < scopeTree.length(); i++)
-         buildScopeTreeImpl(scopeTree.get(i), -1);
+         buildScopeTreeImpl(scopeTree.get(i), -1, counter);
+      
+      // Clean up leftovers in the tree. 
+      int oldTreeSize = tree_.getItemCount();
+      int newTreeSize = counter.increment();
+      
+      for (int i = oldTreeSize - 1; i >= newTreeSize; i--)
+      {
+         TreeItem item = tree_.getItem(i);
+         if (item != null)
+            item.remove();
+      }
    }
    
-   private void buildScopeTreeImpl(Scope node, int depth)
+   private void buildScopeTreeImpl(Scope node, int depth, Counter counter)
    {
       if (shouldDisplayNode(node))
-         tree_.addItem(createEntry(node, depth));
+         addOrSetItem(node, depth, counter.increment());
       
       JsArray<Scope> children = node.getChildren();
       for (int i = 0; i < children.length(); i++)
-         buildScopeTreeImpl(children.get(i), depth + 1);
+         buildScopeTreeImpl(children.get(i), depth + 1, counter);
    }
    
    private boolean shouldDisplayNode(Scope node)
@@ -271,7 +327,7 @@ public class DocumentOutlineWidget extends Composite
    private void ensureScopeTreePopulated()
    {
       if (scopeTree_ == null)
-         rebuildWholeScopeTree();
+         rebuildScopeTree();
    }
    
    private DocumentOutlineTreeItem createEntry(Scope node, int depth)
@@ -284,7 +340,7 @@ public class DocumentOutlineWidget extends Composite
    
    private void setTreeItemStyles(DocumentOutlineTreeItem item)
    {
-      Scope node = item.getScopeNode();
+      Scope node = item.getEntry().getScopeNode();
       item.addStyleName(RES.styles().node());
       DomUtils.toggleClass(item.getElement(), RES.styles().activeNode(), isActiveNode(node));
    }
