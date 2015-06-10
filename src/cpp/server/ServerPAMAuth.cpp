@@ -168,7 +168,7 @@ void signIn(const http::Request& request,
 {
    auth::secure_cookie::remove(request,
                                kUserId,
-                               auth::applicationRootCookiePath(request),
+                               "/",
                                pResponse);
 
    std::map<std::string,std::string> variables;
@@ -228,7 +228,7 @@ void setSignInCookies(const core::http::Request& request,
                                                              0,
                                                              0),
                             expiry,
-                            auth::applicationRootCookiePath(request),
+                            "/",
                             pResponse);
 }
 
@@ -338,7 +338,7 @@ void signOut(const http::Request& request,
 
    auth::secure_cookie::remove(request,
                                kUserId,
-                               auth::applicationRootCookiePath(request),
+                               "/",
                                pResponse);
 
    pResponse->setMovedTemporarily(request, auth::handler::kSignIn);
