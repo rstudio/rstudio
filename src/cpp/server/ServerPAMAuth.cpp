@@ -166,7 +166,7 @@ void refreshCredentialsThenContinue(
 void signIn(const http::Request& request,
             http::Response* pResponse)
 {
-   auth::secure_cookie::remove(request, kUserId, "", pResponse);
+   auth::secure_cookie::remove(request, kUserId, pResponse);
 
    std::map<std::string,std::string> variables;
    variables["action"] = applicationURL(request, kDoSignIn);
@@ -225,7 +225,6 @@ void setSignInCookies(const core::http::Request& request,
                                                              0,
                                                              0),
                             expiry,
-                            std::string(),
                             pResponse);
 }
 
@@ -333,7 +332,7 @@ void signOut(const http::Request& request,
       onUserUnauthenticated(username);
    }
 
-   auth::secure_cookie::remove(request, kUserId, "", pResponse);
+   auth::secure_cookie::remove(request, kUserId, pResponse);
    pResponse->setMovedTemporarily(request, auth::handler::kSignIn);
 }
 
