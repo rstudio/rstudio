@@ -78,8 +78,10 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.spellin
 import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionContext;
 import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionManager;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.*;
+import org.rstudio.studio.client.workbench.views.source.events.CollabEditStartParams;
 import org.rstudio.studio.client.workbench.views.source.events.RecordNavigationPositionEvent;
 import org.rstudio.studio.client.workbench.views.source.events.RecordNavigationPositionHandler;
+import org.rstudio.studio.client.workbench.views.source.model.DirtyState;
 import org.rstudio.studio.client.workbench.views.source.model.RnwCompletionContext;
 import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
 
@@ -2332,8 +2334,18 @@ public class AceEditor implements DocDisplay,
    }
 
    public void beginCollabSession(String serverUrl)
+   
+   @Override
+   public void beginCollabSession(CollabEditStartParams params, 
+         DirtyState dirtyState)
    {
-      collab_.beginCollabSession(this, serverUrl);
+      collab_.beginCollabSession(this, params, dirtyState);
+   }
+   
+   @Override
+   public boolean hasActiveCollabSession()
+   {
+      return collab_.hasActiveCollabSession(this);
    }
    
    public void endCollabSession()

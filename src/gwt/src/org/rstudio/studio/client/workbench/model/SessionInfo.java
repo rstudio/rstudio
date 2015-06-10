@@ -371,4 +371,8 @@ public class SessionInfo extends JavaScriptObject
    public final native boolean getMultiSession() /*-{
       return this.multi_session;
    }-*/;
+   
+   public final native int getActiveSessionCount() /*-{
+      return this.active_session_count;
+   }-*/;
 }

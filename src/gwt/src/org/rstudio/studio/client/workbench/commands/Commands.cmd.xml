@@ -55,6 +55,11 @@ well as menu structures (for main menu and popup menus).
             <cmd refid="mru7"/>
             <cmd refid="mru8"/>
             <cmd refid="mru9"/>
+            <cmd refid="mru10"/>
+            <cmd refid="mru11"/>
+            <cmd refid="mru12"/>
+            <cmd refid="mru13"/>
+            <cmd refid="mru14"/>
             <separator/>
             <cmd refid="clearRecentFiles"/>
          </menu>
@@ -72,6 +77,11 @@ well as menu structures (for main menu and popup menus).
             <cmd refid="projectMru7"/>
             <cmd refid="projectMru8"/>
             <cmd refid="projectMru9"/>
+            <cmd refid="projectMru10"/>
+            <cmd refid="projectMru11"/>
+            <cmd refid="projectMru12"/>
+            <cmd refid="projectMru13"/>
+            <cmd refid="projectMru14"/>
             <separator/>
             <cmd refid="clearRecentProjects"/>
          </menu>
@@ -706,6 +716,11 @@ well as menu structures (for main menu and popup menus).
    <cmd id="mru7" visible="false"/>
    <cmd id="mru8" visible="false"/>
    <cmd id="mru9" visible="false"/>
+   <cmd id="mru10" visible="false"/>
+   <cmd id="mru11" visible="false"/>
+   <cmd id="mru12" visible="false"/>
+   <cmd id="mru13" visible="false"/>
+   <cmd id="mru14" visible="false"/>
    <cmd id="clearRecentFiles" menuLabel="Clear List"/>
    
    <cmd id="newProject"
@@ -731,6 +746,11 @@ well as menu structures (for main menu and popup menus).
    <cmd id="projectMru7" visible="false"/>
    <cmd id="projectMru8" visible="false"/>
    <cmd id="projectMru9" visible="false"/>
+   <cmd id="projectMru10" visible="false"/>
+   <cmd id="projectMru11" visible="false"/>
+   <cmd id="projectMru12" visible="false"/>
+   <cmd id="projectMru13" visible="false"/>
+   <cmd id="projectMru14" visible="false"/>
    <cmd id="clearRecentProjects" menuLabel="Clear Project List"/>     
 
    <cmd id="closeProject"

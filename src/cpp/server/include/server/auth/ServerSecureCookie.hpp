@@ -35,6 +35,7 @@ using namespace rstudio::core;
 namespace rstudio {
 namespace server {
 namespace auth {
+
 namespace secure_cookie {
 
 std::string readSecureCookie(const core::http::Request& request,

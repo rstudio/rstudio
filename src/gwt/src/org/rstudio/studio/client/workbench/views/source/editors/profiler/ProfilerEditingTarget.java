@@ -37,6 +37,7 @@ import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
+import org.rstudio.studio.client.workbench.views.source.events.CollabEditStartParams;
 import org.rstudio.studio.client.workbench.views.source.events.SourceNavigationEvent;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 import org.rstudio.studio.client.workbench.views.source.model.SourceNavigation;
@@ -224,7 +225,12 @@ public class ProfilerEditingTarget implements EditingTarget
    } 
    
    @Override
-   public void beginCollabSession(String serverUrl)
+   public void beginCollabSession(CollabEditStartParams params)
+   {
+   }
+   
+   @Override
+   public void endCollabSession()
    {
    }
    

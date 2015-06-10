@@ -323,6 +323,11 @@ pre {
    padding-right: 20px;
 }
 
+.menuRightImage {
+   cursor: pointer;
+}
+
+
 .highlight {
    color: #900 !important;
 }
@@ -893,6 +898,10 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
    white-space: nowrap;
 }
 
+.toolbarButtonInfoLabel {
+   color: #82868C;
+}
+
 .toolbarButtonLatchable {
   padding-right: 6px;
   padding-left: 4px;
@@ -929,6 +938,10 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
 .globalToolbar .toolbarButtonMenu .toolbarButtonLabel {
    margin-left: 4px;
    margin-right: 2px;
+}
+
+.globalToolbar .toolbarButtonMenu .toolbarButtonInfoLabel {
+   margin-left: 1px;
 }
 
 .emptyProjectMenu .toolbarButtonRightImage {

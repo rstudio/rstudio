@@ -30,6 +30,7 @@ import org.rstudio.studio.client.common.filetypes.FileType;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.workbench.model.UnsavedChangesTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
+import org.rstudio.studio.client.workbench.views.source.events.CollabEditStartParams;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
 
@@ -92,7 +93,8 @@ public interface EditingTarget extends IsWidget,
          boolean executing);   
    void endDebugHighlighting();
    
-   void beginCollabSession(String serverUrl);
+   void beginCollabSession(CollabEditStartParams params);
+   void endCollabSession();
    
    /**
     * @return True if dismissal is allowed, false to cancel.

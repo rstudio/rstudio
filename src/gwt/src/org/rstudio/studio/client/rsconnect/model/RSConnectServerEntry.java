@@ -1,5 +1,5 @@
 /*
- * CollabEditor.java
+ * RSConnectServerEntry.java
  *
  * Copyright (C) 2009-15 by RStudio, Inc.
  *
@@ -11,27 +11,21 @@
  * MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
- */
-package org.rstudio.studio.client.workbench.views.source.editors.text;
+ */package org.rstudio.studio.client.rsconnect.model;
 
-import org.rstudio.studio.client.workbench.views.source.events.CollabEditStartParams;
-import org.rstudio.studio.client.workbench.views.source.model.DirtyState;
+import com.google.gwt.core.client.JavaScriptObject;
 
-public class CollabEditor
+public class RSConnectServerEntry extends JavaScriptObject
 {
-   void beginCollabSession(AceEditor editor, CollabEditStartParams params, 
-         DirtyState dirtyState)
+   protected RSConnectServerEntry()
    {
-      
    }
    
-   boolean hasActiveCollabSession(AceEditor editor)
-   {
-      return false;
-   }
-   
-   void endCollabSession(AceEditor editor)
-   {
-      
-   }
+   public final native String getName() /*-{
+      return this.name;
+   }-*/;
+
+   public final native String getUrl() /*-{
+      return this.url;
+   }-*/;
 }

@@ -134,6 +134,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.status.Stat
 import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBarPopupMenu;
 import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBarPopupRequest;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ui.ChooseEncodingDialog;
+import org.rstudio.studio.client.workbench.views.source.events.CollabEditStartParams;
 import org.rstudio.studio.client.workbench.views.source.events.RecordNavigationPositionEvent;
 import org.rstudio.studio.client.workbench.views.source.events.RecordNavigationPositionHandler;
 import org.rstudio.studio.client.workbench.views.source.events.SourceFileSavedEvent;
@@ -748,9 +749,15 @@ public class TextEditingTarget implements
    }
    
    @Override
-   public void beginCollabSession(String serverUrl)
+   public void beginCollabSession(CollabEditStartParams params)
    {
-      docDisplay_.beginCollabSession(serverUrl);
+      docDisplay_.beginCollabSession(params, dirtyState_);
+   }
+   
+   @Override
+   public void endCollabSession()
+   {
+      docDisplay_.endCollabSession();
    }
    
    private void updateDebugWarningBar()
@@ -4387,6 +4394,16 @@ public class TextEditingTarget implements
 
       // If the doc has never been saved, don't even bother checking
       if (getPath() == null)
+         return;
+      
+      // If we're in a collaborative session, we rely on it to sync contents
+      // (including saved/unsaved state); otherwise we'd need to (a) distinguish
+      // between "external edits" caused by other people in the session saving
+      // the file (already synced) and true external edits from other
+      // programs/processes,  and (b) and figure out what to when > 1 person
+      // gets the "file has changed externally" prompt (even at best this
+      // creates a "last writer wins" race condition)
+      if (docDisplay_ != null && docDisplay_.hasActiveCollabSession())
          return;
 
       final Invalidation.Token token = externalEditCheckInvalidation_.getInvalidationToken();

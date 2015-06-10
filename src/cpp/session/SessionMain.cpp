@@ -637,6 +637,8 @@ void handleClientInit(const boost::function<void()>& initFunction,
 
    sessionInfo["multi_session"] = options.multiSession();
 
+   module_context::events().onSessionInfo(&sessionInfo);
+
    // send response  (we always set kEventsPending to false so that the client
    // won't poll for events until it is ready)
    json::JsonRpcResponse jsonRpcResponse ;
@@ -2258,8 +2260,6 @@ void rQuit()
    json::Object jsonData;
    jsonData["switch_projects"] = switchProjects;
    jsonData["next_session_url"] = s_nextSessionUrl;
-   jsonData["other_sessions_active"] =
-     r_util::ActiveSessions(module_context::userScratchPath()).list().size()>1;
    ClientEvent quitEvent(kQuit, jsonData);
    rsession::clientEventQueue().add(quitEvent);
 }

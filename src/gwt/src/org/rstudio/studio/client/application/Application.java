@@ -41,6 +41,7 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.dom.DomUtils;
+import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.application.events.*;
@@ -420,6 +421,20 @@ public class Application implements ApplicationEventHandlers
       // own handling triggered to process exit)
       if (!Desktop.isDesktop())
       {
+         // attempt to close the window if this is a quit session
+         // (if we fail then fall through to default logic)
+         if (isQuitSession())
+         {
+            try
+            {
+               WindowEx.get().close();
+               return;
+            }
+            catch(Exception ex)
+            {
+            }
+         }
+         
          // if we are switching projects then reload after a delay (to allow
          // the R session to fully exit on the server)
          if (event.getSwitchProjects())
@@ -433,9 +448,9 @@ public class Application implements ApplicationEventHandlers
                reloadWindowWithDelay(true);
             }
          }
-         else if (event.getOtherSessionsActive())
+         else if (session_.getSessionInfo().getMultiSession())
          {
-            navigateWindowToRoot();
+            view_.showApplicationMultiSessionQuit();
          }
          else
          {
@@ -443,6 +458,13 @@ public class Application implements ApplicationEventHandlers
          }
       }
    }
+   
+   
+   private boolean isQuitSession()
+   {
+      return pApplicationQuit_.get().isQuitSession();
+   }
+  
    
    
    private void reloadWindowWithDelay(final boolean baseUrlOnly)
@@ -578,23 +600,27 @@ public class Application implements ApplicationEventHandlers
    
    private void navigateWindowTo(String relativeUrl)
    {
+      navigateWindowTo(relativeUrl, true);
+   }
+   
+   private void navigateWindowTo(String relativeUrl, boolean includeContext)
+   {
       cleanupWorkbench();
     
       // remove any session context from the url
       String url = GWT.getHostPageBaseURL();
-      Pattern pattern = Pattern.create("/s/[A-Fa-f0-9]{8}[A-Fa-f0-9]{8}/");
-      url = pattern.replaceAll(url, "/");
+      
+      if (!includeContext)
+      {
+         Pattern pattern = Pattern.create("/s/[A-Fa-f0-9]{8}[A-Fa-f0-9]{8}/");
+         url = pattern.replaceAll(url, "/");
+      }
       
       // add relative URL
       url += relativeUrl;
      
       // navigate window
       Window.Location.replace(url);
-   }
-   
-   private void navigateWindowToRoot()
-   {
-      navigateWindowTo("");
    }
    
    private void initializeWorkbench()
@@ -681,6 +707,10 @@ public class Application implements ApplicationEventHandlers
       });
       
       clientStateUpdaterInstance_ = clientStateUpdater_.get();
+      
+      // initiate quit if requested
+      if (isQuitSession())
+         commands_.quitSession().execute();
    }
    
    private void setToolbarPref(boolean showToolbar)

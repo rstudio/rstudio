@@ -41,6 +41,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.events.HasD
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.HasFoldChangeHandlers;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.HasRenderFinishedHandlers;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.UndoRedoHandler;
+import org.rstudio.studio.client.workbench.views.source.events.CollabEditStartParams;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
@@ -51,6 +52,7 @@ import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.IsWidget;
 
+import org.rstudio.studio.client.workbench.views.source.model.DirtyState;
 import org.rstudio.studio.client.workbench.views.source.model.RnwCompletionContext;
 import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
 
@@ -269,7 +271,8 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void removeMarkersAtCursorPosition();
    void removeMarkersOnCursorLine();
    
-   void beginCollabSession(String serverUrl);
+   void beginCollabSession(CollabEditStartParams params, DirtyState dirtyState);
+   boolean hasActiveCollabSession();
    void endCollabSession();
 
    void setPopupVisible(boolean visible);

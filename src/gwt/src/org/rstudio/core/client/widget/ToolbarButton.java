@@ -244,6 +244,7 @@ public class ToolbarButton extends FocusWidget
       this.addStyleName(styles_.handCursor());
 
       setText(text);
+      setInfoText(null);
       if (leftImage != null && 
           leftImage.getImageResource() != null)
       {
@@ -391,6 +392,19 @@ public class ToolbarButton extends FocusWidget
       }
    }
    
+   public void setInfoText(String infoText)
+   {
+      if (!StringUtil.isNullOrEmpty(infoText))
+      {
+         infoLabel_.setInnerText(infoText);
+         infoLabel_.getStyle().setDisplay(Display.BLOCK);
+      }
+      else
+      {
+         infoLabel_.getStyle().setDisplay(Display.NONE);
+      }
+   }
+   
    public String getText()
    {
       return StringUtil.notNull(label_.getInnerText());
@@ -413,6 +427,8 @@ public class ToolbarButton extends FocusWidget
    TableCellElement rightImageCell_;
    @UiField
    DivElement label_;
+   @UiField
+   DivElement infoLabel_;
    private Image leftImageWidget_;
    private Image rightImageWidget_;
 }

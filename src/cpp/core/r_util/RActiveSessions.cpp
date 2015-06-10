@@ -90,16 +90,16 @@ std::vector<boost::shared_ptr<ActiveSession> > ActiveSessions::list() const
       {
          std::string id = child.filename().substr(prefix.length());
          boost::shared_ptr<ActiveSession> pSession = get(id);
-         if (pSession->hasRequiredProperties())
+         if (!pSession->empty())
          {
             sessions.push_back(pSession);
-         }
-         else
-         {
-            // this session isn't valid so destroy it
-            Error error = pSession->destroy();
-            if (error)
-               LOG_ERROR(error);
+
+            // validate we have all the properites and log if we don't
+            if (!pSession->hasRequiredProperties())
+            {
+               LOG_WARNING_MESSAGE("Session " + child.filename() + "does "
+                                   "not have all required properites.");
+            }
          }
       }
 

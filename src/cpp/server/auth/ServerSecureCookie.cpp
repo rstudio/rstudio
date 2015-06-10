@@ -32,6 +32,8 @@
 #include <core/http/Response.hpp>
 #include <core/http/Util.hpp>
 
+#include <core/r_util/RSessionContext.hpp>
+
 #include <core/system/Crypto.hpp>
 #include <core/system/PosixSystem.hpp>
 #include <core/system/FileMode.hpp>

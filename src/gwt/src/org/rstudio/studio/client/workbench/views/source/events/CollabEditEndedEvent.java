@@ -1,5 +1,5 @@
 /*
- * CollabEditStartedEvent.java
+ * CollabEditEndedEvent.java
  *
  * Copyright (C) 2009-15 by RStudio, Inc.
  *
@@ -15,40 +15,52 @@
 
 package org.rstudio.studio.client.workbench.views.source.events;
 
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
-public class CollabEditStartedEvent extends GwtEvent<CollabEditStartedEvent.Handler>
+public class CollabEditEndedEvent extends GwtEvent<CollabEditEndedEvent.Handler>
 { 
+   public static class Data extends JavaScriptObject
+   {
+      protected Data() 
+      {
+      }
+      
+      public final native String getPath() /*-{
+         return this.path;
+      }-*/;
+   }
+
    public interface Handler extends EventHandler
    {
-      void onCollabEditStarted(CollabEditStartedEvent event);
+      void onCollabEditEnded(CollabEditEndedEvent event);
    }
 
-   public static final GwtEvent.Type<CollabEditStartedEvent.Handler> TYPE =
-      new GwtEvent.Type<CollabEditStartedEvent.Handler>();
+   public static final GwtEvent.Type<CollabEditEndedEvent.Handler> TYPE =
+      new GwtEvent.Type<CollabEditEndedEvent.Handler>();
    
-   public CollabEditStartedEvent(CollabEditStartParams params)
+   public CollabEditEndedEvent(Data data)
    {
-      params_ = params;
+      data_ = data;
    }
    
-   public CollabEditStartParams getStartParams()
+   public String getPath()
    {
-      return params_;
+      return data_.getPath();
    }
    
    @Override
-   protected void dispatch(CollabEditStartedEvent.Handler handler)
+   protected void dispatch(CollabEditEndedEvent.Handler handler)
    {
-      handler.onCollabEditStarted(this);
+      handler.onCollabEditEnded(this);
    }
 
    @Override
-   public GwtEvent.Type<CollabEditStartedEvent.Handler> getAssociatedType()
+   public GwtEvent.Type<CollabEditEndedEvent.Handler> getAssociatedType()
    {
       return TYPE;
    }
    
-   private final CollabEditStartParams params_;
+   private final Data data_;
 }

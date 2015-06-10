@@ -1,5 +1,5 @@
 /*
- * QuitEvent.java
+ * SessionCountChangedEvent.java
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -15,44 +15,44 @@
 package org.rstudio.studio.client.application.events;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
-public class QuitEvent extends GwtEvent<QuitHandler>
-{
+public class SessionCountChangedEvent extends GwtEvent<SessionCountChangedEvent.Handler>
+{  
    public static class Data extends JavaScriptObject
    {
       protected Data() {}
 
-      public native final boolean getSwitchProjects() /*-{ return this.switch_projects; }-*/;
-      public native final String getNextSessionUrl() /*-{ return this.next_session_url; }-*/;
+      public native final int getCount() /*-{ return this.count; }-*/;
+    }
+   
+   public interface Handler extends EventHandler
+   {
+      void onSessionCountChanged(SessionCountChangedEvent event);
    }
    
-   public static final GwtEvent.Type<QuitHandler> TYPE =
-      new GwtEvent.Type<QuitHandler>();
+   public static final GwtEvent.Type<Handler> TYPE =
+      new GwtEvent.Type<Handler>();
    
-   public QuitEvent(Data data)
+   public SessionCountChangedEvent(Data data)
    {
       data_ = data;
    }
    
-   public boolean getSwitchProjects()
+   public int getCount()
    {
-      return data_.getSwitchProjects();
-   }
-   
-   public String getNextSessionUrl()
-   {
-      return data_.getNextSessionUrl();
+      return data_.getCount();
    }
    
    @Override
-   protected void dispatch(QuitHandler handler)
+   protected void dispatch(Handler handler)
    {
-      handler.onQuit(this);
+      handler.onSessionCountChanged(this);
    }
 
    @Override
-   public GwtEvent.Type<QuitHandler> getAssociatedType()
+   public GwtEvent.Type<Handler> getAssociatedType()
    {
       return TYPE;
    }

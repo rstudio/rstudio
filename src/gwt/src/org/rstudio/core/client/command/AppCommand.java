@@ -19,13 +19,18 @@ import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.AbstractImagePrototype;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.MenuItem;
+
+import org.rstudio.core.client.SafeHtmlUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.theme.res.ThemeResources;
+import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 
@@ -288,6 +293,17 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
    {
       imageResource_ = imageResource;
    }
+   
+   public void setRightImage(ImageResource image)
+   {
+      setRightImage(image, null);
+   }
+   
+   public void setRightImage(ImageResource image, String desc)
+   {
+      rightImage_ = image;
+      rightImageDesc_ = desc;
+   }
 
    public HandlerRegistration addHandler(CommandHandler handler)
    {
@@ -338,20 +354,44 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
       String shortcut = shortcut_ != null ? shortcut_.toString(true) : "";
 
       return formatMenuLabel(
-            getImageResource(), label, shortcut);
+            getImageResource(), label, shortcut, rightImage_, rightImageDesc_);
+   }
+   
+   public static String formatMenuLabel(ImageResource icon, 
+         String label,
+         String shortcut)
+   {
+      return formatMenuLabel(icon, label, shortcut, null, null);
    }
 
    public static String formatMenuLabel(ImageResource icon, 
                                          String label,
-                                         String shortcut)
+                                         String shortcut,
+                                         ImageResource rightImage,
+                                         String rightImageDesc)
    {
-      return formatMenuLabel(icon, label, shortcut, null);
+      return formatMenuLabel(icon, 
+                             label, 
+                             shortcut, 
+                             null, 
+                             rightImage,
+                             rightImageDesc);
+   }
+   
+   public static String formatMenuLabel(ImageResource icon, 
+                                        String label,
+                                        String shortcut, 
+                                        Integer iconOffsetY)
+   {
+      return formatMenuLabel(icon, label, shortcut, iconOffsetY, null, null);
    }
    
    public static String formatMenuLabel(ImageResource icon, 
                                          String label,
                                          String shortcut, 
-                                         Integer iconOffsetY)
+                                         Integer iconOffsetY,
+                                         ImageResource rightImage,
+                                         String rightImageDesc)
    {
       StringBuilder text = new StringBuilder();
       int topOffset = -10;
@@ -372,8 +412,15 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
       text.append("</div></td>");
 
       text.append("<td>" + DomUtils.textToHtml(StringUtil.notNull(label)) + "</td>");
-      if (shortcut != null)
+      if (rightImage != null)
+      {
+         SafeHtml imageHtml = createRightImageHtml(rightImage, rightImageDesc);
+         text.append("<td align=right width=\"25\"><div style=\"width: 25px; float: right; margin-top: -7px; margin-bottom: -10px;\">" + imageHtml.asString() + "</div></td>");
+      }
+      else if (shortcut != null)
+      {
          text.append("<td align=right nowrap>&nbsp;&nbsp;&nbsp;&nbsp;" + shortcut + "</td>");
+      }
       text.append("</tr></table>");
 
       return text.toString();
@@ -404,6 +451,18 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
       enableNoHandlerAssertions_ = false;
    }
    
+   private static SafeHtml createRightImageHtml(ImageResource image, 
+                                                String desc)
+   {
+      SafeHtmlBuilder sb = new SafeHtmlBuilder();
+      sb.append(SafeHtmlUtil.createOpenTag("img",
+        "class", ThemeStyles.INSTANCE.menuRightImage(),
+        "title", StringUtil.notNull(desc),
+        "src", image.getSafeUri().asString()));
+      sb.appendHtmlConstant("</img>");   
+      return sb.toSafeHtml();
+   }
+   
    private boolean enabled_ = true;
    private boolean visible_ = true;
    private boolean removed_ = false;
@@ -419,6 +478,8 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
    private ImageResource imageResource_;
    private KeyboardShortcut shortcut_;
    private String id_;
+   private ImageResource rightImage_ = null;
+   private String rightImageDesc_ = null;
    
    private boolean executedFromShortcut_ = false;
  

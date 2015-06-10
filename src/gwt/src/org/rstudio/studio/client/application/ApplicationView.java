@@ -38,6 +38,7 @@ public interface ApplicationView
    
    // application exit states
    void showApplicationQuit();
+   void showApplicationMultiSessionQuit();
    void showApplicationSuicide(String reason);
    void showApplicationDisconnected();
    void showApplicationOffline();

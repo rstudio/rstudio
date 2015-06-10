@@ -62,6 +62,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditing
 import org.rstudio.studio.client.workbench.views.source.editors.text.WarningBarDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.FindRequestedEvent;
+import org.rstudio.studio.client.workbench.views.source.events.CollabEditStartParams;
 import org.rstudio.studio.client.workbench.views.source.model.CodeBrowserContents;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
@@ -661,9 +662,14 @@ public class CodeBrowserEditingTarget implements EditingTarget
    } 
    
    @Override 
-   public void beginCollabSession(String url)
+   public void beginCollabSession(CollabEditStartParams params)
    {
       // collaborative editing isn't supported in the code browser
+   }
+   
+   @Override
+   public void endCollabSession()
+   {
    }
 
    // Private methods --------------------------------------------------------

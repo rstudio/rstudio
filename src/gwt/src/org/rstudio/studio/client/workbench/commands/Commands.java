@@ -132,6 +132,11 @@ public abstract class
    public abstract AppCommand projectMru7();
    public abstract AppCommand projectMru8();
    public abstract AppCommand projectMru9();
+   public abstract AppCommand projectMru10();
+   public abstract AppCommand projectMru11();
+   public abstract AppCommand projectMru12();
+   public abstract AppCommand projectMru13();
+   public abstract AppCommand projectMru14();
    public abstract AppCommand clearRecentProjects();
    public abstract AppCommand closeProject();
    public abstract AppCommand projectOptions();
@@ -363,6 +368,11 @@ public abstract class
    public abstract AppCommand mru7();
    public abstract AppCommand mru8();
    public abstract AppCommand mru9();
+   public abstract AppCommand mru10();
+   public abstract AppCommand mru11();
+   public abstract AppCommand mru12();
+   public abstract AppCommand mru13();
+   public abstract AppCommand mru14();
    public abstract AppCommand clearRecentFiles();
 
    // Debugging

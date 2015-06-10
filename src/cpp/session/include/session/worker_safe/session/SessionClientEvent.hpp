@@ -130,6 +130,8 @@ extern const int kUpdateGutterMarkers;
 extern const int kSnippetsChanged;
 extern const int kJumpToFunction;
 extern const int kCollabEditStarted;
+extern const int kSessionCountChanged;
+extern const int kCollabEditEnded;
 }
    
 class ClientEvent

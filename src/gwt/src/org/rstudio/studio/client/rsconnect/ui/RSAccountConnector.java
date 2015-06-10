@@ -26,8 +26,10 @@ import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.rsconnect.events.EnableRStudioConnectUIEvent;
 import org.rstudio.studio.client.rsconnect.model.NewRSConnectAccountResult;
 import org.rstudio.studio.client.rsconnect.model.NewRSConnectAccountResult.AccountType;
+import org.rstudio.studio.client.rsconnect.model.RSConnectAccount;
 import org.rstudio.studio.client.rsconnect.model.RSConnectAuthUser;
 import org.rstudio.studio.client.rsconnect.model.RSConnectPreAuthToken;
+import org.rstudio.studio.client.rsconnect.model.RSConnectServerEntry;
 import org.rstudio.studio.client.rsconnect.model.RSConnectServerInfo;
 import org.rstudio.studio.client.rsconnect.model.RSConnectServerOperations;
 import org.rstudio.studio.client.server.ServerError;
@@ -40,6 +42,7 @@ import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.prefs.views.PublishingPreferencesPane;
 import org.rstudio.studio.client.workbench.ui.OptionsLoader;
 
+import com.google.gwt.core.client.JsArray;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
@@ -99,6 +102,59 @@ public class RSAccountConnector implements
       {
          showShinyAppsDialog(onCompleted);
       }
+   }
+   
+   public void showReconnectWizard(
+         final RSConnectAccount account,
+         final OperationWithInput<Boolean> onCompleted)
+   {
+      server_.getServerUrls(new ServerRequestCallback<JsArray<RSConnectServerEntry>>()
+      {
+         @Override
+         public void onResponseReceived(JsArray<RSConnectServerEntry> entries)
+         {
+            boolean found = false;
+            for (int i = 0; i < entries.length(); i++)
+            {
+               if (entries.get(i).getName().equalsIgnoreCase(
+                     account.getServer()))
+               {
+                  RSConnectReconnectWizard wizard = 
+                        new RSConnectReconnectWizard(
+                        server_,
+                        display_,
+                        account,
+                        entries.get(i).getUrl(),
+                        new ProgressOperationWithInput<NewRSConnectAccountResult>()
+                  {
+                     @Override
+                     public void execute(NewRSConnectAccountResult input,
+                           final ProgressIndicator indicator)
+                     {
+                        processDialogResult(input, indicator, onCompleted);
+                     }
+                  });
+                  wizard.showModal();
+                  found = true;
+                  break;
+               }
+            }
+
+            if (!found)
+            {
+               display_.showErrorMessage("Server Information Not Found", 
+                     "RStudio could not retrieve server information for " +
+                     "the selected account.");
+            }
+         }
+
+         @Override
+         public void onError(ServerError error)
+         {
+            display_.showErrorMessage("Can't Find Servers", 
+                  "RStudio could not retrieve server information.");
+         }
+      });
    }
    
    @Handler

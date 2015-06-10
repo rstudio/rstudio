@@ -391,3 +391,14 @@
   return(.rs.scalar(0))
 })
 
+.rs.addJsonRpcHandler("get_server_urls", function() {
+  servers <- rsconnect::servers()
+
+  # convert from factors if necessary
+  for (col in c("name", "url")) {
+    if (col %in% colnames(servers)) {
+      servers[[col]] <- as.character(servers[[col]])
+    }
+  }
+  .rs.scalarListFromFrame(servers)
+})

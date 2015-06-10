@@ -1,5 +1,5 @@
 /*
- * CollabEditor.java
+ * CollabEditStartParams.java
  *
  * Copyright (C) 2009-15 by RStudio, Inc.
  *
@@ -12,26 +12,26 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.workbench.views.source.editors.text;
 
-import org.rstudio.studio.client.workbench.views.source.events.CollabEditStartParams;
-import org.rstudio.studio.client.workbench.views.source.model.DirtyState;
+package org.rstudio.studio.client.workbench.views.source.events;
 
-public class CollabEditor
+import com.google.gwt.core.client.JavaScriptObject;
+
+public class CollabEditStartParams extends JavaScriptObject
 {
-   void beginCollabSession(AceEditor editor, CollabEditStartParams params, 
-         DirtyState dirtyState)
+   protected CollabEditStartParams() 
    {
-      
    }
    
-   boolean hasActiveCollabSession(AceEditor editor)
-   {
-      return false;
-   }
+   public final native String getUrl() /*-{
+      return this.url;
+   }-*/;
    
-   void endCollabSession(AceEditor editor)
-   {
-      
-   }
+   public final native String getPath() /*-{
+      return this.path;
+   }-*/;
+   
+   public final native boolean isMaster() /*-{
+      return this.master;
+   }-*/;
 }
