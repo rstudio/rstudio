@@ -600,23 +600,27 @@ public class Application implements ApplicationEventHandlers
    
    private void navigateWindowTo(String relativeUrl)
    {
+      navigateWindowTo(relativeUrl, true);
+   }
+   
+   private void navigateWindowTo(String relativeUrl, boolean includeContext)
+   {
       cleanupWorkbench();
     
       // remove any session context from the url
       String url = GWT.getHostPageBaseURL();
-      Pattern pattern = Pattern.create("/s/[A-Fa-f0-9]{8}[A-Fa-f0-9]{8}/");
-      url = pattern.replaceAll(url, "/");
+      
+      if (!includeContext)
+      {
+         Pattern pattern = Pattern.create("/s/[A-Fa-f0-9]{8}[A-Fa-f0-9]{8}/");
+         url = pattern.replaceAll(url, "/");
+      }
       
       // add relative URL
       url += relativeUrl;
      
       // navigate window
       Window.Location.replace(url);
-   }
-   
-   private void navigateWindowToRoot()
-   {
-      navigateWindowTo("");
    }
    
    private void initializeWorkbench()
