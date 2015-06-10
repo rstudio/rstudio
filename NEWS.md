@@ -35,6 +35,7 @@
 * Quit session command now accessible from global toolbar
 * Server Pro: Support for multiple concurrent R sessions per-user
 * Server Pro: Don't close PAM sessions by default (configurable via an option)
+* Server Pro: Remove Google OpenID auth (deprecated by Google in favor of OAuth)
 
 
 ### Bug Fixes
