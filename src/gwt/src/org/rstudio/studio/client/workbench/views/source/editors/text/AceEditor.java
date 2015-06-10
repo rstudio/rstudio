@@ -2333,8 +2333,6 @@ public class AceEditor implements DocDisplay,
       return widget_.getEditor().isRowFullyVisible(position.getRow());
    }
 
-   public void beginCollabSession(String serverUrl)
-   
    @Override
    public void beginCollabSession(CollabEditStartParams params, 
          DirtyState dirtyState)
