@@ -44,7 +44,7 @@ void set(const std::string& name,
          const std::string& value,
          const http::Request& request,
          const boost::posix_time::time_duration& validDuration,
-         const std::string& path,
+         bool useApplicationRootPath,
          http::Response* pResponse);
 
 void set(const std::string& name,
@@ -52,12 +52,12 @@ void set(const std::string& name,
          const http::Request& request,
          const boost::posix_time::time_duration& validDuration,
          const boost::optional<boost::gregorian::days>& cookieExpiresDays,
-         const std::string& path,
+         bool useApplicationRootPath,
          http::Response* pResponse);
 
 void remove(const http::Request& request,
             const std::string& name,
-            const std::string& path,
+            bool useApplicationRootPath,
             core::http::Response* pResponse);
 
 core::Error initialize();

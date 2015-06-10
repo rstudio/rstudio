@@ -225,7 +225,7 @@ void setSignInCookies(const core::http::Request& request,
                                                              0,
                                                              0),
                             expiry,
-                            std::string(),
+                            true,
                             pResponse);
 }
 
