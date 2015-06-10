@@ -53,7 +53,12 @@ public class ProjectMRUList extends MRUList
                   commands.projectMru6(),
                   commands.projectMru7(),
                   commands.projectMru8(),
-                  commands.projectMru9()
+                  commands.projectMru9(),
+                  commands.projectMru10(),
+                  commands.projectMru11(),
+                  commands.projectMru12(),
+                  commands.projectMru13(),
+                  commands.projectMru14()
             },
             commands.clearRecentProjects(),
             false,
@@ -84,6 +89,11 @@ public class ProjectMRUList extends MRUList
          commands.projectMru7().setRightImage(image, desc);
          commands.projectMru8().setRightImage(image, desc);
          commands.projectMru9().setRightImage(image, desc);
+         commands.projectMru10().setRightImage(image, desc);
+         commands.projectMru11().setRightImage(image, desc);
+         commands.projectMru12().setRightImage(image, desc);
+         commands.projectMru13().setRightImage(image, desc);
+         commands.projectMru14().setRightImage(image, desc);
       }
    }
    

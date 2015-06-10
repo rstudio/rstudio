@@ -31,6 +31,7 @@ import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
+import com.google.gwt.user.client.Window;
 import com.google.inject.Inject;
 
 public class ProjectPopupMenu extends ToolbarPopupMenu
@@ -38,6 +39,8 @@ public class ProjectPopupMenu extends ToolbarPopupMenu
    public ProjectPopupMenu(SessionInfo sessionInfo, Commands commands)
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
+      
+      commands_ = commands;
       
       addItem(commands.newProject().createMenuItem(false));
       addSeparator();
@@ -55,6 +58,11 @@ public class ProjectPopupMenu extends ToolbarPopupMenu
       addItem(commands.projectMru7().createMenuItem(false));
       addItem(commands.projectMru8().createMenuItem(false));
       addItem(commands.projectMru9().createMenuItem(false));
+      addItem(commands.projectMru10().createMenuItem(false));
+      addItem(commands.projectMru11().createMenuItem(false));
+      addItem(commands.projectMru12().createMenuItem(false));
+      addItem(commands.projectMru13().createMenuItem(false));
+      addItem(commands.projectMru14().createMenuItem(false));
       addSeparator();
       addItem(commands.clearRecentProjects().createMenuItem(false));
       addSeparator();
@@ -134,6 +142,17 @@ public class ProjectPopupMenu extends ToolbarPopupMenu
    @Override
    public void getDynamicPopupMenu(DynamicPopupMenuCallback callback)
    {
+      // truncate the MRU list size for smaller client heights
+      if (Window.getClientHeight() < 700)
+      {
+         commands_.projectMru10().setVisible(false);
+         commands_.projectMru11().setVisible(false);
+         commands_.projectMru12().setVisible(false);
+         commands_.projectMru13().setVisible(false);
+         commands_.projectMru14().setVisible(false);
+      }
+      
+      
       ProjectMRUList.setOpenInNewWindow(false);
       callback.onPopupMenu(this);
    }
@@ -149,4 +168,5 @@ public class ProjectPopupMenu extends ToolbarPopupMenu
    private final String activeProjectFile_;
    private ToolbarButton toolbarButton_ = null;
    private ProjectMRUList mruList_;
+   private final Commands commands_;
 }

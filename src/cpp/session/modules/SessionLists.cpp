@@ -324,8 +324,8 @@ json::Object allListsAsJson()
 Error initialize()
 {  
    // register lists / max sizes
-   s_lists[kFileMru] = 10;
-   s_lists[kProjectMru] = 10;
+   s_lists[kFileMru] = 15;
+   s_lists[kProjectMru] = 15;
    s_lists[kHelpHistory] = 15;
    s_lists[kUserDictioanry] = 10000;
 

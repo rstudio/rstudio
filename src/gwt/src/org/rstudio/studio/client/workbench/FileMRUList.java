@@ -46,7 +46,12 @@ public class FileMRUList extends MRUList
                   commands.mru6(),
                   commands.mru7(),
                   commands.mru8(),
-                  commands.mru9()
+                  commands.mru9(),
+                  commands.mru10(),
+                  commands.mru11(),
+                  commands.mru12(),
+                  commands.mru13(),
+                  commands.mru14()
             },
             commands.clearRecentFiles(),
             true,

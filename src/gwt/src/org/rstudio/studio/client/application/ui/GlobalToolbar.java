@@ -82,6 +82,11 @@ public class GlobalToolbar extends Toolbar
       mruMenu.addItem(commands.mru7().createMenuItem(false));
       mruMenu.addItem(commands.mru8().createMenuItem(false));
       mruMenu.addItem(commands.mru9().createMenuItem(false));
+      mruMenu.addItem(commands.mru10().createMenuItem(false));
+      mruMenu.addItem(commands.mru11().createMenuItem(false));
+      mruMenu.addItem(commands.mru12().createMenuItem(false));
+      mruMenu.addItem(commands.mru13().createMenuItem(false));
+      mruMenu.addItem(commands.mru14().createMenuItem(false));
       mruMenu.addSeparator();
       mruMenu.addItem(commands.clearRecentFiles().createMenuItem(false));
       
