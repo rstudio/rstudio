@@ -182,6 +182,7 @@ void set(const std::string& name,
          const std::string& value,
          const http::Request& request,
          const boost::posix_time::time_duration& validDuration,
+         const std::string& path,
          http::Response* pResponse)
 {
    secure_cookie::set(name,
@@ -189,6 +190,7 @@ void set(const std::string& name,
                       request,
                       validDuration,
                       boost::none,
+                      path,
                       pResponse);
 }
 
@@ -197,11 +199,9 @@ void set(const std::string& name,
          const http::Request& request,
          const boost::posix_time::time_duration& validDuration,
          const boost::optional<boost::gregorian::days>& cookieExpiresDays,
+         const std::string& path,
          http::Response* pResponse)
 {
-   // calculate path
-   std::string path = "/";
-
    // create secure cookie
    http::Cookie cookie = createSecureCookie(name,
                                             value,
@@ -219,11 +219,9 @@ void set(const std::string& name,
 
 void remove(const http::Request& request,
             const std::string& name,
+            const std::string& path,
             core::http::Response* pResponse)
 {
-   // calculate path
-   std::string path = "/";
-
    // create vanilla cookie (no need for secure cookie since we are removing)
    http::Cookie cookie(request, name, std::string(), path);
 
