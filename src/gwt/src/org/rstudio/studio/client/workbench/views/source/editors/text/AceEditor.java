@@ -245,7 +245,7 @@ public class AceEditor implements DocDisplay,
       diagnosticsBgPopup_ = new DiagnosticsBackgroundPopup(this);
 
       RStudioGinjector.INSTANCE.injectMembers(this);
-
+      
       widget_.addValueChangeHandler(new ValueChangeHandler<Void>()
       {
          public void onValueChange(ValueChangeEvent<Void> evt)
@@ -1936,6 +1936,11 @@ public class AceEditor implements DocDisplay,
    public HandlerRegistration addRenderFinishedHandler(RenderFinishedEvent.Handler handler)
    {
       return widget_.addHandler(handler, RenderFinishedEvent.TYPE);
+   }
+   
+   public HandlerRegistration addDocumentChangedHandler(DocumentChangedEvent.Handler handler)
+   {
+      return widget_.addHandler(handler, DocumentChangedEvent.TYPE);
    }
 
    public HandlerRegistration addCapturingKeyDownHandler(KeyDownHandler handler)

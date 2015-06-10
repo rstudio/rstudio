@@ -37,6 +37,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.events.Brea
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CommandClickEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedHandler;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.FindRequestedEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.HasDocumentChangedHandlers;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.HasFoldChangeHandlers;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.HasRenderFinishedHandlers;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.UndoRedoHandler;
@@ -59,6 +60,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
                                     HasFocusHandlers,
                                     HasKeyDownHandlers,
                                     HasRenderFinishedHandlers,
+                                    HasDocumentChangedHandlers,
                                     InputEditorDisplay,
                                     NavigableSourceEditor
 {

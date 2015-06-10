@@ -2,10 +2,11 @@ package org.rstudio.studio.client.workbench.views.source;
 
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
-import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.views.source.editors.text.Scope;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.DocumentChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.RenderFinishedEvent;
+
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.Scheduler;
@@ -14,8 +15,6 @@ import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.event.logical.shared.ValueChangeEvent;
-import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.Timer;
@@ -175,21 +174,23 @@ public class DocumentOutlineWidget extends Composite
          }
       });
       
-      target_.getDocDisplay().addValueChangeHandler(new ValueChangeHandler<Void>()
-      {
-         @Override
-         public void onValueChange(ValueChangeEvent<Void> event)
-         {
-            Scheduler.get().scheduleDeferred(new ScheduledCommand()
+      target_.getDocDisplay().addDocumentChangedHandler(
+            new DocumentChangedEvent.Handler()
             {
                @Override
-               public void execute()
+               public void onDocumentChanged(final DocumentChangedEvent event)
                {
-                  DocumentOutlineWidget.this.onValueChanged();
+                  Scheduler.get().scheduleDeferred(new ScheduledCommand()
+                  {
+                     @Override
+                     public void execute()
+                     {
+                        DocumentOutlineWidget.this.onDocumentChanged(event);
+                     }
+                  });
                }
             });
-         }
-      });
+      
    }
    
    private void onRenderFinished()
@@ -198,7 +199,7 @@ public class DocumentOutlineWidget extends Composite
       resetTreeStyles();
    }
    
-   private void onValueChanged()
+   private void onDocumentChanged(final DocumentChangedEvent event)
    {
       // Debounce value changed events to avoid over-aggressively rebuilding
       // the scope tree.
@@ -211,7 +212,7 @@ public class DocumentOutlineWidget extends Composite
          @Override
          public void run()
          {
-            buildScopeTree();
+            updateScopeTree(event);
             resetTreeStyles();
          }
       };
@@ -219,7 +220,13 @@ public class DocumentOutlineWidget extends Composite
       docUpdateTimer_.schedule(1000);
    }
    
-   private void buildScopeTree()
+   private void updateScopeTree(DocumentChangedEvent event)
+   {
+      // TODO: Only update portions of the tree that need to be changed.
+      rebuildWholeScopeTree();
+   }
+   
+   private void rebuildWholeScopeTree()
    {
       scopeTree_ = target_.getDocDisplay().getScopeTree();
       tree_.clear();
@@ -264,7 +271,7 @@ public class DocumentOutlineWidget extends Composite
    private void ensureScopeTreePopulated()
    {
       if (scopeTree_ == null)
-         buildScopeTree();
+         rebuildWholeScopeTree();
    }
    
    private DocumentOutlineTreeItem createEntry(Scope node, int depth)
