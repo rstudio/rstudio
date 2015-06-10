@@ -28,6 +28,7 @@ import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.*;
 
 import org.rstudio.core.client.BrowseCap;
@@ -312,7 +313,8 @@ public class TextEditingTargetWidget
          toolbar.addRightWidget(publishButton_);
       }
       
-      openDocOutlineButton_ = new ToolbarButton(
+      openDocOutlineButton_ = new LatchingToolbarButton(
+         "",
             StandardIcons.INSTANCE.outline(),
             new ClickHandler()
             {
@@ -321,10 +323,16 @@ public class TextEditingTargetWidget
                {
                   final double initialSize = editorPanel_.getWidgetSize(docOutlineWidget_);
                   final double containerSize = editorPanel_.getOffsetWidth();
+                  
+                  // Clicking the icon toggles the outline widget's visibility. The
+                  // 'destination' below is the width we would like to set -- we
+                  // animate to that position for a slightly nicer visual treatment.
                   final double destination =
                         docOutlineWidget_.getOffsetWidth() > 5 ?
                         0 :
                         MathUtil.clamp(containerSize * 0.25, 100, containerSize);
+                  
+                  openDocOutlineButton_.setLatched(destination != 0);
                   
                   new Animation()
                   {
@@ -343,6 +351,17 @@ public class TextEditingTargetWidget
             });
       
       openDocOutlineButton_.setTitle("Show/hide document outline");
+      
+      // Time-out setting the latch just to ensure the document outline
+      // has actually been appropriately rendered
+      new Timer()
+      {
+         @Override
+         public void run()
+         {
+            openDocOutlineButton_.setLatched(docOutlineWidget_.getOffsetWidth() > 0);
+         }
+      }.schedule(100);
       
       toolbar.addRightSeparator();
       toolbar.addRightWidget(openDocOutlineButton_);
@@ -906,7 +925,7 @@ public class TextEditingTargetWidget
    private ToolbarButton rcppHelpButton_;
    private ToolbarButton shinyLaunchButton_;
    private ToolbarButton editRmdFormatButton_;
-   private ToolbarButton openDocOutlineButton_;
+   private LatchingToolbarButton openDocOutlineButton_;
    private ToolbarPopupMenuButton rmdFormatButton_;
    private RSConnectPublishButton publishButton_;
    private MenuItem rmdViewerPaneMenuItem_;
