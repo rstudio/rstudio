@@ -1277,6 +1277,16 @@ var RCodeModel = function(session, tokenizer,
          // The first loop looks for an open brace for indentation.
          do
          {
+            // If we hit a chunk start/end, just use the same indentation.
+            var currentType = tokenCursor.currentType();
+            if (currentType === "support.function.codebegin" ||
+                currentType === "support.function.codeend")
+            {
+               return this.$getIndent(
+                  this.$doc.getLine(tokenCursor.$row)
+               ) + continuationIndent;
+            }
+
             var currentValue = tokenCursor.currentValue();
 
             if (tokenCursor.isAtStartOfNewExpression(false))
