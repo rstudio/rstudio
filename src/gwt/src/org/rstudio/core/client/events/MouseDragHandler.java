@@ -14,7 +14,6 @@
  */
 package org.rstudio.core.client.events;
 
-import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.HasNativeEvent;
 import com.google.gwt.event.dom.client.MouseDownEvent;
@@ -29,23 +28,6 @@ import com.google.gwt.user.client.ui.Widget;
 // events work.
 public abstract class MouseDragHandler
 {
-   public static class State extends JavaScriptObject
-   {
-      protected State() {};
-      
-      public static final native State create() /*-{
-         return {};
-      }-*/;
-      
-      public native final <T> void set(String name, T value) /*-{
-         this[name] = value;
-      }-*/;
-      
-      public native final <T> T get(String name) /*-{
-         return this[name];
-      }-*/;
-   }
-   
    public static class MouseCoordinates
    {
       public MouseCoordinates(int mouseX, int mouseY)
@@ -122,11 +104,11 @@ public abstract class MouseDragHandler
    }
    
    // Must be overriden
-   public abstract void onDrag(MouseDragEvent event, State state);
+   public abstract void onDrag(MouseDragEvent event);
    
    // Optional to override
-   public void beginDrag(MouseDownEvent event, State state) {}
-   public void endDrag(State state) {}
+   public void beginDrag(MouseDownEvent event) {}
+   public void endDrag() {}
    
    // Privates ----
    
@@ -167,8 +149,7 @@ public abstract class MouseDragHandler
          }
       });
       
-      state_ = State.create();
-      beginDrag(event, state_);
+      beginDrag(event);
    }
    
    private void addClickSuppressor()
@@ -190,7 +171,7 @@ public abstract class MouseDragHandler
    
    private void onDragImpl(MouseDragEvent event)
    {
-      onDrag(event, state_);
+      onDrag(event);
       lastCoordinates_ = MouseCoordinates.fromEvent(event);
       
       // Suppress the native mouse move event to ensure e.g. text is not
@@ -207,7 +188,7 @@ public abstract class MouseDragHandler
          dragListener_ = null;
       }
       
-      endDrag(state_);
+      endDrag();
    }
    
    public static void addHandler(final Widget widget,
@@ -235,7 +216,6 @@ public abstract class MouseDragHandler
    }
    
    private boolean didDrag_ = false;
-   private State state_;
    
    private HandlerRegistration dragListener_;
    private HandlerRegistration clickSuppressor_;

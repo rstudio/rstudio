@@ -72,7 +72,7 @@ public class TextEditingTargetWidget
       extends ResizeComposite
       implements Display, RequiresVisibilityChanged
 {
-   public TextEditingTargetWidget(TextEditingTarget target,
+   public TextEditingTargetWidget(final TextEditingTarget target,
                                   Commands commands,
                                   UIPrefs uiPrefs,
                                   FileTypeRegistry fileTypeRegistry,
@@ -82,6 +82,7 @@ public class TextEditingTargetWidget
                                   EventBus events,
                                   Session session)
    {
+      target_ = target;
       commands_ = commands;
       uiPrefs_ = uiPrefs;
       session_ = session;
@@ -126,29 +127,37 @@ public class TextEditingTargetWidget
       editorPanel_ = new DockLayoutPanel(Unit.PX);
       docOutlineWidget_ = new DocumentOutlineWidget(target);
       
-      // Only show outline by default for R Markdown widgets.
-      // TODO: Use Ui Pref to manage outline size.
-      double initialSize = target.getTextFileType().isRmd() ? 200 : 0;
-         
-      editorPanel_.addEast(docOutlineWidget_, initialSize);
+      editorPanel_.addEast(docOutlineWidget_, 0);
       editorPanel_.add(editor.asWidget());
+      
+      // Need to set the widget size deferred to ensure the docUpdateSentinel
+      // has been initialized as well
+      new Timer()
+      {
+         @Override
+         public void run()
+         {
+            double size = getPreferredOutlineWidgetWidth(target);
+            editorPanel_.setWidgetSize(docOutlineWidget_, size);
+         }
+      }.schedule(100);
       
       MouseDragHandler.addHandler(
             docOutlineWidget_.getLeftSeparator(),
             new MouseDragHandler()
             {
+               double initialWidth_ = 0;
+               
                @Override
-               public void beginDrag(MouseDownEvent event, State state)
+               public void beginDrag(MouseDownEvent event)
                {
-                  double initialWidth =
-                        editorPanel_.getWidgetSize(docOutlineWidget_);
-                  state.set("initial.width", initialWidth);
+                  initialWidth_ = editorPanel_.getWidgetSize(docOutlineWidget_);
                }
                
                @Override
-               public void onDrag(MouseDragEvent event, State state)
+               public void onDrag(MouseDragEvent event)
                {
-                  double initialWidth = state.get("initial.width");
+                  double initialWidth = initialWidth_;
                   double xDiff = event.getTotalDelta().getMouseX();
                   double newSize = initialWidth + xDiff;
                   
@@ -169,6 +178,15 @@ public class TextEditingTargetWidget
                   openDocOutlineButton_.setLatched(clamped != 0);
                   editor_.onResize();
                }
+               
+               @Override
+               public void endDrag()
+               {
+                  double size = editorPanel_.getWidgetSize(docOutlineWidget_);
+                  target_.setProperty(
+                        "preferred_outline_widget_width",
+                        size + "");
+               }
             });
       
       panel_ = new PanelWithToolbars(
@@ -179,6 +197,14 @@ public class TextEditingTargetWidget
       adaptToFileType(fileType);
 
       initWidget(panel_);
+   }
+   
+   private double getPreferredOutlineWidgetWidth(TextEditingTarget target)
+   {
+      String widthString = target.getProperty("preferred_outline_widget_width");
+      if (!org.rstudio.core.client.StringUtil.isNullOrEmpty(widthString))
+         return Double.parseDouble(widthString);
+      return 150;
    }
 
    private StatusBarWidget statusBar_;
@@ -898,6 +924,7 @@ public class TextEditingTargetWidget
       menu.addItem(rmdViewerWindowMenuItem_);
    }
    
+   private final TextEditingTarget target_;
    private final Commands commands_;
    private final UIPrefs uiPrefs_;
    private final Session session_;

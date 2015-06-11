@@ -103,7 +103,7 @@ public class DocumentOutlineWidget extends Composite
             node.getLabel();
 
          if (text.equals(""))
-            text = node.isChunk() ? "(Unnamed Chunk)" : "(Unnamed Section)";
+            text = "(Untitled)";
 
          if (label_ == null)
             label_ = new Label(text);

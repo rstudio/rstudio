@@ -4866,6 +4866,22 @@ public class TextEditingTarget implements
       }
    }
    
+   public String getProperty(String key)
+   {
+      if (docUpdateSentinel_ == null)
+         return "";
+      
+      return docUpdateSentinel_.getProperty(key);
+   }
+   
+   public void setProperty(String key, String value)
+   {
+      if (docUpdateSentinel_ == null)
+         return;
+      
+      docUpdateSentinel_.setProperty(key, value);
+   }
+   
    private StatusBar statusBar_;
    private final DocDisplay docDisplay_;
    private final UIPrefs prefs_;
