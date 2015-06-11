@@ -751,13 +751,73 @@ public class TextEditingTarget implements
    @Override
    public void beginCollabSession(CollabEditStartParams params)
    {
-      docDisplay_.beginCollabSession(params, dirtyState_);
+      if (commandHandlerReg_ != null)
+      {
+         // if we're the active doc, begin the collab session right away
+         beginQueuedCollabSession(params);
+      }
+      else
+      {
+         // otherwise, save the params for when the doc is activated 
+         queuedCollabParams_ = params;
+      }
    }
    
    @Override
    public void endCollabSession()
    {
-      docDisplay_.endCollabSession();
+      if (docDisplay_.hasActiveCollabSession())
+         docDisplay_.endCollabSession();
+      
+      // a collaboration session may have come and gone while the tab was not
+      // focused
+      queuedCollabParams_ = null;
+   }
+   
+   private void beginQueuedCollabSession(final CollabEditStartParams params)
+   {
+      // do nothing if we don't have an active path
+      if (docUpdateSentinel_ == null || docUpdateSentinel_.getPath() == null)
+         return;
+      
+      // if we have local changes, and we're not the master copy, we need to 
+      // prompt the user 
+      if (dirtyState().getValue() && !params.isMaster())
+      {
+         String filename = 
+               FilePathUtils.friendlyFileName(docUpdateSentinel_.getPath());
+         globalDisplay_.showYesNoMessage(
+               GlobalDisplay.MSG_QUESTION, 
+               "Join Edit Session", 
+               "You have unsaved changes to " + filename + ", but another " +
+               "user is editing the file. Do you want to discard your " + 
+               "changes and join their edit session, or make your own copy " +
+               "of the file to work on?",
+               false, // includeCancel
+               new Operation() 
+               {
+                  @Override
+                  public void execute()
+                  {
+                     docDisplay_.beginCollabSession(params, dirtyState_);
+                  }
+               },
+               new Operation() 
+               {
+                  @Override
+                  public void execute()
+                  {
+                     events_.fireEvent(new NewWorkingCopyEvent(fileType_, 
+                           docUpdateSentinel_.getPath(), 
+                           docUpdateSentinel_.getContents()));
+                  }
+               }, 
+               null, // cancelOperation,
+               "Join Edit Session", 
+               "Work on a Copy", 
+               true  // yesIsDefault
+               );
+      }
    }
    
    private void updateDebugWarningBar()
@@ -895,15 +955,24 @@ public class TextEditingTarget implements
       {
          public void onFocus(FocusEvent event)
          {
-            Scheduler.get().scheduleFixedDelay(new RepeatingCommand()
+            if (queuedCollabParams_ != null)
             {
-               public boolean execute()
+               // join an in-progress collab session
+               beginQueuedCollabSession(queuedCollabParams_);
+            }
+            else
+            {
+               // check to see if the file's been saved externally
+               Scheduler.get().scheduleFixedDelay(new RepeatingCommand()
                {
-                  if (view_.isAttached())
-                     checkForExternalEdit();
-                  return false;
-               }
-            }, 500);
+                  public boolean execute()
+                  {
+                     if (view_.isAttached())
+                        checkForExternalEdit();
+                     return false;
+                  }
+               }, 500);
+            }
          }
       });
 
@@ -4899,6 +4968,7 @@ public class TextEditingTarget implements
    private BreakpointManager breakpointManager_;
    private final LintManager lintManager_;
    private final SnippetHelper snippets_;
+   private CollabEditStartParams queuedCollabParams_;
 
    // Allows external edit checks to supercede one another
    private final Invalidation externalEditCheckInvalidation_ =
