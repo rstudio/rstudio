@@ -15,18 +15,20 @@
 package org.rstudio.studio.client.workbench.views.source;
 
 import org.rstudio.core.client.Counter;
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
+import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.views.source.editors.text.Scope;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.DocumentChangedEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorThemeChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.RenderFinishedEvent;
-
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -42,6 +44,7 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Tree;
 import com.google.gwt.user.client.ui.TreeItem;
 import com.google.gwt.user.client.ui.Widget;
+import com.google.inject.Inject;
 
 public class DocumentOutlineWidget extends Composite
 {
@@ -166,8 +169,16 @@ public class DocumentOutlineWidget extends Composite
       private final DocumentOutlineTreeEntry entry_;
    }
    
+   @Inject
+   private void initialize(EventBus events)
+   {
+      events_ = events;
+   }
+   
    public DocumentOutlineWidget(TextEditingTarget target)
    {
+      RStudioGinjector.INSTANCE.injectMembers(this);
+      
       container_ = new DockLayoutPanel(Unit.PX);
       container_.addStyleName(RES.styles().container());
       target_ = target;
@@ -191,6 +202,16 @@ public class DocumentOutlineWidget extends Composite
             onRenderFinished();
          }
       };
+      
+      // Sync themes with editor on startup
+      new Timer()
+      {
+         @Override
+         public void run()
+         {
+            syncThemesWithEditor();
+         }
+      }.schedule(100);
       
       initWidget(container_);
    }
@@ -228,6 +249,17 @@ public class DocumentOutlineWidget extends Composite
                }
             });
       
+      events_.addHandler(
+            EditorThemeChangedEvent.TYPE,
+            new EditorThemeChangedEvent.Handler()
+            {
+               @Override
+               public void onEditorThemeChanged(EditorThemeChangedEvent event)
+               {
+                  syncThemesWithEditor();
+               }
+            });
+      
    }
    
    private void onRenderFinished()
@@ -255,6 +287,24 @@ public class DocumentOutlineWidget extends Composite
       };
       
       docUpdateTimer_.schedule(1000);
+   }
+   
+   private void syncThemesWithEditor()
+   {
+      Element editorContainer = target_.asWidget().getElement();
+      Element[] aceContentElements =
+            DomUtils.getElementsByClassName(editorContainer, "ace_scroller");
+      
+      int n = aceContentElements.length;
+      assert n == 1
+            : "Expected a single editor instance; found " + n;
+      
+      Element content = aceContentElements[0];
+      Style computed = DomUtils.getComputedStyles(content);
+      Style outlineStyles = getElement().getStyle();
+      
+      outlineStyles.setBackgroundColor(computed.getBackgroundColor());
+      outlineStyles.setColor(computed.getColor());
    }
    
    private void addOrSetItem(Scope node, int depth, int index)
@@ -380,6 +430,8 @@ public class DocumentOutlineWidget extends Composite
    private final Timer renderTimer_;
    private Timer docUpdateTimer_;
    private JsArray<Scope> scopeTree_;
+   
+   private EventBus events_;
    
    // Styles, Resources etc. ----
    public interface Styles extends CssResource

@@ -2,7 +2,7 @@
 }
 
 .leftSeparator {
-	border-left: 1px solid rgb(196, 196, 196);
+	border-left: 1px solid rgba(128, 128, 128, 0.5);
 	cursor: col-resize;
 }
 
@@ -17,7 +17,6 @@
 	padding-bottom: 0px !important;
 	padding-right: 5px !important;
 	padding-left: 8px !important;
-	background-color: #FFFFFF;
 }
 
 .activeNode {

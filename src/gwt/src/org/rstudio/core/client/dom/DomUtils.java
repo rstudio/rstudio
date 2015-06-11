@@ -769,9 +769,15 @@ public class DomUtils
       element.style[name] = value;
    }-*/;
    
-   public static final native Element[] getElementsByClassName(String classes) /*-{
+   public static Element[] getElementsByClassName(String classes)
+   {
+      Element documentEl = Document.get().cast();
+      return getElementsByClassName(documentEl, classes);
+   }
+   
+   public static final native Element[] getElementsByClassName(Element parent, String classes) /*-{
       var result = [];
-      var elements = $wnd.document.getElementsByClassName(classes);
+      var elements = parent.getElementsByClassName(classes);
       for (var i = 0; i < elements.length; i++) {
          result.push(elements[i]);
       }
