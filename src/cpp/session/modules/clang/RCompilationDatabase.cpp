@@ -732,7 +732,13 @@ RCompilationDatabase::CompilationConfig
 {
    // validation: if this is Rcpp11 and we don't have the attributes
    // package then there's no way for us to execute sourceCpp
-   if (rcppPkg == "Rcpp11" && !module_context::isPackageInstalled("attributes"))
+   using namespace module_context;
+   if (rcppPkg == "Rcpp11" && !isPackageInstalled("attributes"))
+      return CompilationConfig();
+
+   // validation: if we don't have any version of Rcpp installed then
+   // we can't do sourceCpp
+   if (rcppPkg == "Rcpp" && !isPackageVersionInstalled("Rcpp", "0.10.1"))
       return CompilationConfig();
 
    // start with base args
