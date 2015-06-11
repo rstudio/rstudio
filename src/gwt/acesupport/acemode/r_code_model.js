@@ -737,18 +737,6 @@ var RCodeModel = function(session, tokenizer,
       var type = token.type;
       var position = iterator.getCurrentTokenPosition();
 
-      // Skip over YAML headers.
-      if (position.row === 0 && value === "---")
-      {
-         while ((token = iterator.moveToStartOfNextRowWithTokens()))
-         {
-            if (token.value === "---") {
-               iterator.moveToNextToken();
-               break;
-            }
-         }
-      }
-
       token = iterator.getCurrentToken();
       if (token == null)
          return;
