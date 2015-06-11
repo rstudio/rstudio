@@ -252,7 +252,10 @@ public class AceEditor implements DocDisplay,
       {
          public void onValueChange(ValueChangeEvent<Void> evt)
          {
-            ValueChangeEvent.fire(AceEditor.this, null);
+            if (!valueChangeSuppressed_)
+            {
+               ValueChangeEvent.fire(AceEditor.this, null);
+            }
          }
       });
 
@@ -2337,7 +2340,20 @@ public class AceEditor implements DocDisplay,
    public void beginCollabSession(CollabEditStartParams params, 
          DirtyState dirtyState)
    {
-      collab_.beginCollabSession(this, params, dirtyState);
+      // suppress external value change events while the editor's contents are
+      // being swapped out for the contents of the collab session--otherwise
+      // there's going to be a lot of flickering as dirty state (etc) try to
+      // keep up
+      valueChangeSuppressed_ = true;
+
+      collab_.beginCollabSession(this, params, dirtyState, new Command()
+      {
+         @Override
+         public void execute()
+         {
+            valueChangeSuppressed_ = false;
+         }
+      });
    }
    
    @Override
@@ -2367,7 +2383,8 @@ public class AceEditor implements DocDisplay,
    private Integer lineHighlightMarkerId_ = null;
    private Integer lineDebugMarkerId_ = null;
    private Integer executionLine_ = null;
-
+   private boolean valueChangeSuppressed_ = false;
+    
    private static final ExternalJavaScriptLoader aceLoader_ =
          new ExternalJavaScriptLoader(AceResources.INSTANCE.acejs().getSafeUri().asString());
    private static final ExternalJavaScriptLoader aceSupportLoader_ =

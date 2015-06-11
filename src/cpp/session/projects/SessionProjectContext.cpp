@@ -65,7 +65,8 @@ bool canWriteToProjectDir(const FilePath& projectDirPath)
 }  // anonymous namespace
 
 
-Error computeScratchPath(const FilePath& projectFile, FilePath* pScratchPath)
+Error computeScratchPaths(const FilePath& projectFile, 
+      FilePath* pScratchPath, FilePath* pSharedScratchPath)
 {
    // ensure project user dir
    FilePath projectUserDir = projectFile.parent().complete(".Rproj.user");
@@ -85,13 +86,30 @@ Error computeScratchPath(const FilePath& projectFile, FilePath* pScratchPath)
    }
 
    // now add context id to form scratch path
-   FilePath scratchPath = projectUserDir.complete(userSettings().contextId());
-   Error error = scratchPath.ensureDirectory();
-   if (error)
-      return error;
+   if (pScratchPath)
+   {
+      FilePath scratchPath = projectUserDir.complete(userSettings().contextId());
+      Error error = scratchPath.ensureDirectory();
+      if (error)
+         return error;
 
-   // return the path
-   *pScratchPath = scratchPath;
+      // return the path
+      *pScratchPath = scratchPath;
+   }
+
+   // add "shared" to form shared path (shared among all sessions that have
+   // this project open)
+   if (pSharedScratchPath)
+   {
+      FilePath sharedScratchPath = projectUserDir.complete("shared");
+      Error error = sharedScratchPath.ensureDirectory();
+      if (error)
+         return error;
+
+      // return the path
+      *pSharedScratchPath = sharedScratchPath;
+   }
+
    return Success();
 }
 
@@ -146,7 +164,9 @@ Error ProjectContext::startup(const FilePath& projectFile,
 
    // calculate project scratch path
    FilePath scratchPath;
-   Error error = computeScratchPath(projectFile, &scratchPath);
+   FilePath sharedScratchPath;
+   Error error = computeScratchPaths(projectFile, &scratchPath,
+         &sharedScratchPath);
    if (error)
    {
       *pUserErrMsg = "unable to initialize project - " + error.summary();
@@ -188,6 +208,7 @@ Error ProjectContext::startup(const FilePath& projectFile,
    file_ = projectFile;
    directory_ = file_.parent();
    scratchPath_ = scratchPath;
+   sharedScratchPath_ = sharedScratchPath;
    config_ = config;
 
    // assume true so that the initial files pane listing doesn't register

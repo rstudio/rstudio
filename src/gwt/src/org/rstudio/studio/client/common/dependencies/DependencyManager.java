@@ -95,23 +95,28 @@ public class DependencyManager implements InstallShinyEvent.Handler
    }
    
    public void withRSConnect(String userAction, 
+         boolean requiresRmarkdown,
          CommandWith2Args<String, Command> userPrompt, 
          final Command command)
    {
+      // build dependency array
+      ArrayList<Dependency> deps = new ArrayList<Dependency>();
+      deps.add(Dependency.cranPackage("digest", "0.6"));
+      deps.add(Dependency.cranPackage("RCurl", "1.95"));
+      deps.add(Dependency.cranPackage("RJSONIO", "1.0"));
+      deps.add(Dependency.cranPackage("PKI", "0.1"));
+      deps.add(Dependency.cranPackage("packrat", "0.4.3"));
+      deps.add(Dependency.cranPackage("rstudioapi", "0.2"));
+      deps.add(Dependency.cranPackage("yaml", "2.1.5"));
+      if (requiresRmarkdown)
+         deps.addAll(rmarkdownDependencies());
+      deps.add(Dependency.embeddedPackage("rsconnect"));
+      
       withDependencies(
         "Publishing",
         userAction,
         userPrompt,
-        new Dependency[] {
-          Dependency.cranPackage("digest", "0.6"),
-          Dependency.cranPackage("RCurl", "1.95"),
-          Dependency.cranPackage("RJSONIO", "1.0"),
-          Dependency.cranPackage("PKI", "0.1"),
-          Dependency.cranPackage("packrat", "0.4.3"),
-          Dependency.cranPackage("rstudioapi", "0.2"),
-          Dependency.cranPackage("yaml", "2.1.5"),
-          Dependency.embeddedPackage("rsconnect")
-        },
+        deps.toArray(new Dependency[deps.size()]),
         true, // we want the embedded rsconnect package to be updated if needed
         command
       );
@@ -122,17 +127,28 @@ public class DependencyManager implements InstallShinyEvent.Handler
      withDependencies(   
         "R Markdown",
         userAction, 
-        new Dependency[] {
-          Dependency.cranPackage("knitr", "1.6"),
-          Dependency.cranPackage("yaml", "2.1.5"),
-          Dependency.cranPackage("htmltools", "0.2.4"),
-          Dependency.cranPackage("caTools", "1.14"),
-          Dependency.cranPackage("bitops", "1.0-6"),
-          Dependency.embeddedPackage("rmarkdown")
-        }, 
+        rmarkdownDependenciesArray(), 
         false,
         command
      );
+   }
+   
+   private ArrayList<Dependency> rmarkdownDependencies()
+   {
+      ArrayList<Dependency> deps = new ArrayList<Dependency>();
+      deps.add(Dependency.cranPackage("knitr", "1.6"));
+      deps.add(Dependency.cranPackage("yaml", "2.1.5"));
+      deps.add(Dependency.cranPackage("htmltools", "0.2.4"));
+      deps.add(Dependency.cranPackage("caTools", "1.14"));
+      deps.add(Dependency.cranPackage("bitops", "1.0-6"));
+      deps.add(Dependency.embeddedPackage("rmarkdown"));
+      return deps;
+   }
+   
+   private Dependency[] rmarkdownDependenciesArray()
+   {
+      ArrayList<Dependency> deps = rmarkdownDependencies();
+      return deps.toArray(new Dependency[deps.size()]);
    }
  
    public void withShiny(final String userAction, final Command command)

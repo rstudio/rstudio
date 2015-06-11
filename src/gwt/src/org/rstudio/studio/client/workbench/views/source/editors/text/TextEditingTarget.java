@@ -379,7 +379,7 @@ public class TextEditingTarget implements
 
       docDisplay_ = docDisplay;
       dirtyState_ = new DirtyState(docDisplay_, false);
-      lintManager_ = new LintManager(this);
+      lintManager_ = new LintManager(this, cppCompletionContext_);
       prefs_ = prefs;
       codeExecution_ = new EditingTargetCodeExecution(docDisplay_, this);
       compilePdfHelper_ = new TextEditingTargetCompilePdfHelper(docDisplay_);
@@ -751,13 +751,96 @@ public class TextEditingTarget implements
    @Override
    public void beginCollabSession(CollabEditStartParams params)
    {
-      docDisplay_.beginCollabSession(params, dirtyState_);
+      // the server may notify us of a collab session we're already
+      // participating in; this is okay
+      if (docDisplay_.hasActiveCollabSession())
+      {
+         return;
+      }
+      
+      // were we waiting to process another set of params when these arrived?
+      boolean paramQueueClear = queuedCollabParams_ == null;
+
+      // save params 
+      queuedCollabParams_ = params;
+
+      // if we're not waiting for another set of params to resolve, and we're
+      // the active doc, process these params immediately
+      if (paramQueueClear && commandHandlerReg_ != null)
+      {
+         beginQueuedCollabSession();
+      }
    }
    
    @Override
    public void endCollabSession()
    {
-      docDisplay_.endCollabSession();
+      if (docDisplay_.hasActiveCollabSession())
+         docDisplay_.endCollabSession();
+      
+      // a collaboration session may have come and gone while the tab was not
+      // focused
+      queuedCollabParams_ = null;
+   }
+   
+   private void beginQueuedCollabSession()
+   {
+      // do nothing if we don't have an active path
+      if (docUpdateSentinel_ == null || docUpdateSentinel_.getPath() == null)
+         return;
+      
+      // do nothing if we don't have queued params
+      final CollabEditStartParams params = queuedCollabParams_;
+      if (params == null)
+         return;
+      
+      // if we have local changes, and we're not the master copy, we need to 
+      // prompt the user 
+      if (dirtyState().getValue() && !params.isMaster())
+      {
+         String filename = 
+               FilePathUtils.friendlyFileName(docUpdateSentinel_.getPath());
+         globalDisplay_.showYesNoMessage(
+               GlobalDisplay.MSG_QUESTION, 
+               "Join Edit Session", 
+               "You have unsaved changes to " + filename + ", but another " +
+               "user is editing the file. Do you want to discard your " + 
+               "changes and join their edit session, or make your own copy " +
+               "of the file to work on?",
+               false, // includeCancel
+               new Operation() 
+               {
+                  @Override
+                  public void execute()
+                  {
+                     docDisplay_.beginCollabSession(params, dirtyState_);
+                     queuedCollabParams_ = null;
+                  }
+               },
+               new Operation() 
+               {
+                  @Override
+                  public void execute()
+                  {
+                     events_.fireEvent(new NewWorkingCopyEvent(fileType_, 
+                           docUpdateSentinel_.getPath(), 
+                           docUpdateSentinel_.getContents()));
+                     
+                     queuedCollabParams_ = null;
+                  }
+               }, 
+               null, // cancelOperation,
+               "Join Edit Session", 
+               "Work on a Copy", 
+               true  // yesIsDefault
+               );
+      }
+      else
+      {
+         // just begin the session right away
+         docDisplay_.beginCollabSession(params, dirtyState_);
+         queuedCollabParams_ = null;
+      }
    }
    
    private void updateDebugWarningBar()
@@ -897,15 +980,28 @@ public class TextEditingTarget implements
       {
          public void onFocus(FocusEvent event)
          {
-            Scheduler.get().scheduleFixedDelay(new RepeatingCommand()
+            if (queuedCollabParams_ != null)
             {
-               public boolean execute()
+               // join an in-progress collab session if we aren't already part
+               // of one
+               if (docDisplay_ != null && !docDisplay_.hasActiveCollabSession())
                {
-                  if (view_.isAttached())
-                     checkForExternalEdit();
-                  return false;
+                  beginQueuedCollabSession();
                }
-            }, 500);
+            }
+            else
+            {
+               // check to see if the file's been saved externally
+               Scheduler.get().scheduleFixedDelay(new RepeatingCommand()
+               {
+                  public boolean execute()
+                  {
+                     if (view_.isAttached())
+                        checkForExternalEdit();
+                     return false;
+                  }
+               }, 500);
+            }
          }
       });
 
@@ -4922,6 +5018,7 @@ public class TextEditingTarget implements
    private BreakpointManager breakpointManager_;
    private final LintManager lintManager_;
    private final SnippetHelper snippets_;
+   private CollabEditStartParams queuedCollabParams_;
 
    // Allows external edit checks to supercede one another
    private final Invalidation externalEditCheckInvalidation_ =

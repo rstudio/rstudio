@@ -92,13 +92,19 @@ std::vector<boost::shared_ptr<ActiveSession> > ActiveSessions::list() const
          boost::shared_ptr<ActiveSession> pSession = get(id);
          if (!pSession->empty())
          {
-            sessions.push_back(pSession);
-
-            // validate we have all the properites and log if we don't
-            if (!pSession->hasRequiredProperties())
+            if (pSession->hasRequiredProperties())
             {
-               LOG_WARNING_MESSAGE("Session " + child.filename() + "does "
-                                   "not have all required properites.");
+               sessions.push_back(pSession);
+            }
+            else
+            {
+               // remove sessions that don't have required properties
+               // (they may be here as a result of a race condition where
+               // they are removed but then suspended session data is
+               // written back into them)
+               Error error = pSession->destroy();
+               if (error)
+                  LOG_ERROR(error);
             }
          }
       }

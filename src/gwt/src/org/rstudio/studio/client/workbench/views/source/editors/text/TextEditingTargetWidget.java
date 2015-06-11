@@ -468,7 +468,7 @@ public class TextEditingTargetWidget
       
       // don't show the run buttons for cpp files, or R files in Shiny
       runButton_.setVisible(canExecuteCode && !isCpp && !isShinyFile());
-      runLastButton_.setVisible(runButton_.isVisible());
+      runLastButton_.setVisible(runButton_.isVisible() && !canExecuteChunks);
       
       sourceOnSave_.setVisible(canSourceOnSave);
       srcOnSaveLabel_.setVisible(canSourceOnSave);

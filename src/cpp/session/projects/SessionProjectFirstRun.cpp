@@ -39,7 +39,7 @@ const char* const kFirstRunDocs = "first_run_docs";
 void addFirstRunDoc(const FilePath& projectFile, const std::string& doc)
 {
    FilePath scratchPath;
-   Error error = computeScratchPath(projectFile, &scratchPath);
+   Error error = computeScratchPaths(projectFile, &scratchPath, NULL);
    if (error)
    {
       LOG_ERROR(error);
@@ -60,7 +60,7 @@ std::vector<std::string> collectFirstRunDocs(const FilePath& projectFile)
 
    // get the scratch path
    FilePath scratchPath;
-   Error error = computeScratchPath(projectFile, &scratchPath);
+   Error error = computeScratchPaths(projectFile, &scratchPath, NULL);
    if (error)
    {
       LOG_ERROR(error);
