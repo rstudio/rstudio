@@ -109,6 +109,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Execute
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.FileTypeChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.FileTypeChangedHandler;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.NewWorkingCopyEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.SourceOnSaveChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.SourceOnSaveChangedHandler;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ui.NewRMarkdownDialog;
@@ -470,6 +471,16 @@ public class Source implements InsertSourceHandler,
                      editor.endCollabSession();
                   }
                });
+         }
+      });
+      
+      events.addHandler(NewWorkingCopyEvent.TYPE, 
+            new NewWorkingCopyEvent.Handler()
+      {
+         @Override
+         public void onNewWorkingCopy(NewWorkingCopyEvent event)
+         {
+            newDoc(event.getType(), event.getContents(), null);
          }
       });
 

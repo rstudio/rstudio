@@ -154,10 +154,10 @@ std::ostream& operator<<(std::ostream& os, const RToolsInfo& info)
    return os;
 }
 
-Error scanRegistryForRTools(std::vector<RToolsInfo>* pRTools)
+Error scanRegistryForRTools(std::vector<RToolsInfo>* pRTools, HKEY key)
 {
    core::system::RegistryKey regKey;
-   Error error = regKey.open(HKEY_LOCAL_MACHINE,
+   Error error = regKey.open(key,
                              "Software\\R-core\\Rtools",
                              KEY_READ | KEY_WOW64_32KEY);
    if (error)
@@ -200,6 +200,19 @@ Error scanRegistryForRTools(std::vector<RToolsInfo>* pRTools)
    return Success();
 }
 
+Error scanRegistryForRTools(std::vector<RToolsInfo>* pRTools)
+{
+   // try HKLM first (backwards compatible with previous code)
+   Error error = scanRegistryForRTools(pRTools, HKEY_LOCAL_MACHINE);
+   if (error)
+      return error;
+
+   // try HKCU as a fallback
+   if (pRTools->empty())
+      return scanRegistryForRTools(pRTools, HKEY_CURRENT_USER);
+   else
+      return Success();
+}
 
 } // namespace r_util
 } // namespace core 
