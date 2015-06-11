@@ -17,12 +17,14 @@ package org.rstudio.studio.client.workbench.views.source.editors.text;
 import org.rstudio.studio.client.workbench.views.source.events.CollabEditStartParams;
 import org.rstudio.studio.client.workbench.views.source.model.DirtyState;
 
+import com.google.gwt.user.client.Command;
+
 public class CollabEditor
 {
    void beginCollabSession(AceEditor editor, CollabEditStartParams params, 
-         DirtyState dirtyState)
+         DirtyState dirtyState, Command onCompleted)
    {
-      
+      onCompleted.execute();
    }
    
    boolean hasActiveCollabSession(AceEditor editor)

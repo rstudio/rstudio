@@ -759,14 +759,14 @@ public class TextEditingTarget implements
       }
       
       // were we waiting to process another set of params when these arrived?
-      boolean hadQueuedParams = queuedCollabParams_ == null;
+      boolean paramQueueClear = queuedCollabParams_ == null;
 
       // save params 
       queuedCollabParams_ = params;
 
       // if we're not waiting for another set of params to resolve, and we're
       // the active doc, process these params immediately
-      if (!hadQueuedParams && commandHandlerReg_ != null)
+      if (paramQueueClear && commandHandlerReg_ != null)
       {
          beginQueuedCollabSession();
       }
