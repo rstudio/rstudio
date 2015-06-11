@@ -156,7 +156,7 @@ public class PublishingPreferencesPane extends PreferencesPane
          @Override
          public void onClick(ClickEvent arg0)
          {
-            deps_.withRSConnect("Viewing publish accounts", null, new Command() 
+            deps_.withRSConnect("Viewing publish accounts", false, null, new Command() 
             {
                @Override
                public void execute()
@@ -297,7 +297,7 @@ public class PublishingPreferencesPane extends PreferencesPane
       }
       else
       {
-         deps_.withRSConnect("Connecting a publishing account", null, new Command() 
+         deps_.withRSConnect("Connecting a publishing account", false, null, new Command() 
          {
             @Override
             public void execute()

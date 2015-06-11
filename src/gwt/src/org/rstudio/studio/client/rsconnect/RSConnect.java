@@ -140,7 +140,9 @@ public class RSConnect implements SessionInitHandler,
    {
       // see if we have the requisite R packages
       dependencyManager_.withRSConnect(
-         "Publishing content", null, new Command() {
+         "Publishing content", 
+         event.getContentType() == CONTENT_TYPE_DOCUMENT,
+         null, new Command() {
             @Override
             public void execute()
             {
