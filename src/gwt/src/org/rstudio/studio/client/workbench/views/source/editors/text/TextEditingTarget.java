@@ -818,6 +818,11 @@ public class TextEditingTarget implements
                true  // yesIsDefault
                );
       }
+      else
+      {
+         // just begin the session right away
+         docDisplay_.beginCollabSession(params, dirtyState_);
+      }
    }
    
    private void updateDebugWarningBar()
@@ -957,8 +962,15 @@ public class TextEditingTarget implements
          {
             if (queuedCollabParams_ != null)
             {
-               // join an in-progress collab session
-               beginQueuedCollabSession(queuedCollabParams_);
+               // join an in-progress collab session if we aren't already part
+               // of one
+               if (docDisplay_ != null && !docDisplay_.hasActiveCollabSession())
+               {
+                  beginQueuedCollabSession(queuedCollabParams_);
+               }
+               
+               // clear queued params so we don't try to join again
+               queuedCollabParams_ = null;
             }
             else
             {
