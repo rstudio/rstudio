@@ -12,14 +12,22 @@
 }
 
 .node {
-	margin-left: -18px !important;
+	/* TODO: Neater way to override Tree item styles */
 	padding-top: 0px !important;
 	padding-bottom: 0px !important;
+	padding-right: 5px !important;
+	padding-left: 8px !important;
 	background-color: #FFFFFF;
 }
 
 .activeNode {
-	background-color: #92c1f0;
+	border-left: 2px solid #67890a;
+	padding-left: 6px !important;
+}
+
+.activeParentNode {
+	border-left: 2px solid #abcdef;
+	padding-left: 6px !important;
 }
 
 .nodeLabel {
