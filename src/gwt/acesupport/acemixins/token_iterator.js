@@ -176,7 +176,7 @@ var Range = require("ace/range").Range;
     * If no such token exists at that position, then we instead
     * move to the first token lying previous to that token.
     */
-   this.moveToPosition = function(rowOrPosition, column)
+   this.moveToPosition = function(rowOrPosition, column, seekForward)
    {
       var position = rowOrPosition;
       if (typeof column !== "undefined")
@@ -196,15 +196,25 @@ var Range = require("ace/range").Range;
       // And so a 'null' result implies that we specified a column that was
       // too large.
       if (token == null) {
-         
-         // Temporarily move to the first token on the next row.
-         // It's okay if this doesn't actually exist.
-         this.$row = position.row + 1;
-         this.$tokenIndex = 0;
-         this.$rowTokens = this.$session.getTokens(this.$row);
 
-         // Move to the previous token.
-         return this.moveToPreviousToken();
+         if (seekForward)
+         {
+            // Place the token cursor at the last token on the row
+            // desired, and then move forward.
+            this.$row = position.row;
+            this.$rowTokens = this.$session.getTokens(this.$row);
+            this.$tokenIndex = this.$rowTokens.length - 1;
+            return this.moveToNextToken();
+         }
+         else
+         {
+            // Temporarily move to the first token on the next row.
+            // It's okay if this doesn't actually exist.
+            this.$row = position.row + 1;
+            this.$tokenIndex = 0;
+            this.$rowTokens = this.$session.getTokens(this.$row);
+            return this.moveToPreviousToken();
+         }
       }
 
       // Otherwise, just set the indices to match that token.

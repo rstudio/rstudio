@@ -183,6 +183,28 @@ var Unicode = require("ace/unicode").packages;
       return complements[string];
    };
 
+   this.stripEnclosingQuotes = function(string)
+   {
+      var n = string.length;
+      if (n < 2)
+         return string;
+      
+      var firstChar = string[0];
+      if (firstChar !== "'" ||
+          firstChar !== "\"" ||
+          firstChar !== "`")
+      {
+         return string;
+      }
+
+      var lastChar = string[n - 1];
+      if (lastChar !== firstChar)
+         return string;
+
+      return string.substr(1, n - 2);
+      
+   };
+
 
 }).call(exports);
 

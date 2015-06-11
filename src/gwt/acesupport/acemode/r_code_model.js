@@ -679,17 +679,6 @@ var RCodeModel = function(session, tokenizer,
 
    this.$buildScopeTreeUpToRow = function(maxRow)
    {
-      function maybeEvaluateLiteralString(value) {
-         // NOTE: We could evaluate escape sequences and whatnot here as well.
-         //       Hard to imagine who would abuse Rnw by putting escape
-         //       sequences in chunk labels, though.
-         var match = /^(['"])(.*)\1$/.exec(value);
-         if (!match)
-            return value;
-         else
-            return match[2];
-      }
-
       function getChunkLabel(reOptions, comment) {
 
          if (typeof reOptions === "undefined")
@@ -710,15 +699,13 @@ var RCodeModel = function(session, tokenizer,
 
          for (var i = 0; i < values.length; i++) {
             match = /^\s*label\s*=\s*(.*)$/.exec(values[i]);
-            if (match) {
-               return maybeEvaluateLiteralString(
-                                        match[1].replace(/(^\s+)|(\s+$)/g, ''));
-            }
+            if (match)
+               return Utils.stripEnclosingQuotes(match[1].trim());
          }
 
          return null;
       }
-      
+       
       // Check if the scope tree has already been built up to this row.
       var scopeRow = this.$scopes.parsePos.row;
       if (scopeRow >= maxRow)
@@ -736,16 +723,12 @@ var RCodeModel = function(session, tokenizer,
 
       var row = this.$scopes.parsePos.row;
       var column = this.$scopes.parsePos.column;
-      iterator.moveToPosition({row: row, column: column});
 
-      // If this failed (ie, there are not tokens at or before this
-      // position in the document), then move to the first token in
-      // the stream.
+      iterator.moveToPosition(row, column, true);
+      
       var token = iterator.getCurrentToken();
-      if (token == null)
-         token = iterator.moveToNextToken();
-
-      // If this still failed, give up.
+      
+      // If this failed, give up.
       if (token == null)
          return;
 
@@ -772,18 +755,14 @@ var RCodeModel = function(session, tokenizer,
       
       do
       {
-         // Bail if we're now at the maxRow.
-         if (iterator.$row >= maxRow)
+         // Bail if we've stepped past the max row.
+         if (iterator.$row > maxRow)
              break;
 
          // Cache access to the current token + cursor.
          value = token.value;
          type = token.type;
          position = iterator.getCurrentTokenPosition();
-
-         // Update the current parse position.
-         this.$scopes.parsePos = position;
-         this.$scopes.parsePos.column += value.length;
 
          // Add Markdown headers.
          //
@@ -951,6 +930,14 @@ var RCodeModel = function(session, tokenizer,
          prevToken = token;
 
       } while ((token = iterator.moveToNextToken()));
+
+      // Update the current parse position. We want to set this just
+      // after the current token; in practice, since the tokenization
+      // happens row-wise this means setting the parse position at the
+      // start of the next row.
+      this.$scopes.parsePos = {
+         row: maxRow + 1, column: -1
+      };
 
    };
 
