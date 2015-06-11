@@ -33,8 +33,9 @@ void startup();
 
 core::Error initialize();
 
-core::Error computeScratchPath(const core::FilePath& projectFile,
-                               core::FilePath* pScratchPath);
+core::Error computeScratchPaths(const core::FilePath& projectFile,
+                                core::FilePath* pScratchPath,
+                                core::FilePath* pSharedScratchPath);
 
 } // namespace projects
 } // namesapce session
