@@ -32,6 +32,8 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
+import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionContext;
+import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionOperation;
 import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionRequest;
 import org.rstudio.studio.client.workbench.views.source.model.CppDiagnostic;
 
@@ -84,10 +86,12 @@ public class LintManager
               ((type.isR() || type.isRmd() || type.isRnw() || type.isRpres()) && uiPrefs_.showDiagnosticsR().getValue()));
    }
    
-   public LintManager(TextEditingTarget target)
+   public LintManager(TextEditingTarget target, 
+                      CppCompletionContext cppCompletionContext)
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
       target_ = target;
+      cppCompletionContext_ = cppCompletionContext;
       docDisplay_ = target.getDocDisplay();
       showMarkers_ = false;
       explicit_ = false;
@@ -217,7 +221,12 @@ public class LintManager
 
    private void performCppLintServerRequest(final LintContext context)
    {
-      server_.getCppDiagnostics(
+      cppCompletionContext_.cppCompletionOperation(new CppCompletionOperation(){
+
+         @Override
+         public void execute(String docPath, int line, int column)
+         {
+            server_.getCppDiagnostics(
             target_.getPath(),
             new ServerRequestCallback<JsArray<CppDiagnostic>>()
             {
@@ -266,6 +275,8 @@ public class LintManager
                   Debug.logError(error);
                }
             });
+         } 
+      });
    }
 
    private void performRLintServerRequest(final LintContext context)
@@ -373,6 +384,7 @@ public class LintManager
    private LintServerOperations server_;
    private UIPrefs uiPrefs_;
    private EventBus eventBus_;
+   private final CppCompletionContext cppCompletionContext_;
    
    static {
       LintResources.INSTANCE.styles().ensureInjected();

@@ -379,7 +379,7 @@ public class TextEditingTarget implements
 
       docDisplay_ = docDisplay;
       dirtyState_ = new DirtyState(docDisplay_, false);
-      lintManager_ = new LintManager(this);
+      lintManager_ = new LintManager(this, cppCompletionContext_);
       prefs_ = prefs;
       codeExecution_ = new EditingTargetCodeExecution(docDisplay_, this);
       compilePdfHelper_ = new TextEditingTargetCompilePdfHelper(docDisplay_);
