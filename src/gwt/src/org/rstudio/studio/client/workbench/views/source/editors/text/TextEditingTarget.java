@@ -751,15 +751,24 @@ public class TextEditingTarget implements
    @Override
    public void beginCollabSession(CollabEditStartParams params)
    {
-      if (commandHandlerReg_ != null)
+      // the server may notify us of a collab session we're already
+      // participating in; this is okay
+      if (docDisplay_.hasActiveCollabSession())
       {
-         // if we're the active doc, begin the collab session right away
-         beginQueuedCollabSession(params);
+         return;
       }
-      else
+      
+      // were we waiting to process another set of params when these arrived?
+      boolean hadQueuedParams = queuedCollabParams_ == null;
+
+      // save params 
+      queuedCollabParams_ = params;
+
+      // if we're not waiting for another set of params to resolve, and we're
+      // the active doc, process these params immediately
+      if (!hadQueuedParams && commandHandlerReg_ != null)
       {
-         // otherwise, save the params for when the doc is activated 
-         queuedCollabParams_ = params;
+         beginQueuedCollabSession();
       }
    }
    
@@ -774,10 +783,15 @@ public class TextEditingTarget implements
       queuedCollabParams_ = null;
    }
    
-   private void beginQueuedCollabSession(final CollabEditStartParams params)
+   private void beginQueuedCollabSession()
    {
       // do nothing if we don't have an active path
       if (docUpdateSentinel_ == null || docUpdateSentinel_.getPath() == null)
+         return;
+      
+      // do nothing if we don't have queued params
+      final CollabEditStartParams params = queuedCollabParams_;
+      if (params == null)
          return;
       
       // if we have local changes, and we're not the master copy, we need to 
@@ -800,6 +814,7 @@ public class TextEditingTarget implements
                   public void execute()
                   {
                      docDisplay_.beginCollabSession(params, dirtyState_);
+                     queuedCollabParams_ = null;
                   }
                },
                new Operation() 
@@ -810,6 +825,8 @@ public class TextEditingTarget implements
                      events_.fireEvent(new NewWorkingCopyEvent(fileType_, 
                            docUpdateSentinel_.getPath(), 
                            docUpdateSentinel_.getContents()));
+                     
+                     queuedCollabParams_ = null;
                   }
                }, 
                null, // cancelOperation,
@@ -822,6 +839,7 @@ public class TextEditingTarget implements
       {
          // just begin the session right away
          docDisplay_.beginCollabSession(params, dirtyState_);
+         queuedCollabParams_ = null;
       }
    }
    
@@ -966,11 +984,8 @@ public class TextEditingTarget implements
                // of one
                if (docDisplay_ != null && !docDisplay_.hasActiveCollabSession())
                {
-                  beginQueuedCollabSession(queuedCollabParams_);
+                  beginQueuedCollabSession();
                }
-               
-               // clear queued params so we don't try to join again
-               queuedCollabParams_ = null;
             }
             else
             {
