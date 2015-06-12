@@ -131,7 +131,7 @@ public class DocumentOutlineWidget extends Composite
          
          if (node.isChunk())
             label_.addStyleName(RES.styles().nodeLabelChunk());
-         else if (node.isSection())
+         else if (node.isSection() && !node.isMarkdownHeader())
             label_.addStyleName(RES.styles().nodeLabelSection());
          else if (node.isFunction())
             label_.addStyleName(RES.styles().nodeLabelFunction());

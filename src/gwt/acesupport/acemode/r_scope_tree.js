@@ -106,7 +106,7 @@ define('mode/r_scope_tree', function(require, exports, module) {
             position,
             position,
             ScopeNode.TYPE_SECTION,
-            {depth: depth}
+            {depth: depth, isMarkdown: true}
          ));
       };
 
