@@ -804,6 +804,22 @@ var RCodeModel = function(session, tokenizer,
             this.$scopes.onSectionHead(label, position);
          }
 
+         // Check specifically for YAML header boundaries ('---')
+         //
+         // TODO: We should encode the state we're transitioning into
+         // in the token type, so we don't have to 'guess' based on the
+         // value.
+         else if (/\bcodebegin\b/.test(type) && value === "---")
+         {
+            var yamlLabel = "YAML Header";
+            this.$scopes.onSectionHead("YAML Header", position);
+         }
+
+         else if (/\bcodeend\b/.test(type) && value === "---")
+         {
+            this.$scopes.onSectionEnd(position);
+         }
+
          // Add chunks to the scope tree; e.g. (for R Markdown)
          //
          //    ```{r}
@@ -816,19 +832,15 @@ var RCodeModel = function(session, tokenizer,
             var chunkPos = {row: chunkStartPos.row + 1, column: 0};
             var chunkNum = this.$scopes.getTopLevelScopeCount() + 1;
 
-            // TODO: We should encode the state we're transitioning into
-            // in the token type.
-            var chunkLabel = value === "---"
-                   ? "YAML Header"
-                   : getChunkLabel(this.$codeBeginPattern, value);
-            
-            var scopeName = "Chunk " + chunkNum;
-            if (chunkLabel)
-               scopeName += ": " + chunkLabel;
-            this.$scopes.onChunkStart(chunkLabel,
-                                      scopeName,
-                                      chunkStartPos,
-                                      chunkPos);
+               var chunkLabel = getChunkLabel(this.$codeBeginPattern, value);
+               
+               var scopeName = "Chunk " + chunkNum;
+               if (chunkLabel && value !== "YAML Header")
+                  scopeName += ": " + chunkLabel;
+               this.$scopes.onChunkStart(chunkLabel,
+                                         scopeName,
+                                         chunkStartPos,
+                                         chunkPos);
          }
 
          // End chunks on 'codeend' type tokens.

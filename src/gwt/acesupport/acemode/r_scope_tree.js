@@ -63,7 +63,12 @@ define('mode/r_scope_tree', function(require, exports, module) {
          this.$root.addNode(new this.$ScopeNodeFactory(sectionLabel, sectionPos, sectionPos,
                                           ScopeNode.TYPE_SECTION));
       };
-      
+
+      this.onSectionEnd = function(position)
+      {
+         this.$root.closeScope(position, ScopeNode.TYPE_SECTION);
+      };
+
       // A little tricky: a new Markdown header will implicitly
       // close all previously open headers of greater or equal depth.
       //
@@ -151,6 +156,10 @@ define('mode/r_scope_tree', function(require, exports, module) {
          );
          
          this.printScopeTree();
+      };
+
+      this.onNamedScopeStart = function(label, pos) {
+         this.$root.addNode(new this.$ScopeNodeFactory(label, pos, null, ScopeNode.TYPE_BRACE));
       };
 
       this.onScopeStart = function(pos) {
@@ -250,7 +259,7 @@ define('mode/r_scope_tree', function(require, exports, module) {
       this.parentScope = null;
 
       // Generalized attributes (an object with names)
-      this.attributes = attributes;
+      this.attributes = attributes || {};
 
       this.$children = [];
    };
