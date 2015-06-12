@@ -914,8 +914,9 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
                      scope = r_util::SessionScope::projectNone(
                                           options().sessionScope().id());
 
-                     // reset the working dir to the default
+                     // update the project and working dir
                      using namespace module_context;
+                     activeSession().setProject(kProjectNone);
                      activeSession().setWorkingDir(
                              createAliasedPath(getDefaultWorkingDirectory()));
                   }
@@ -930,6 +931,10 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
                               projDir,
                               options().sessionScope().id(),
                               filePathToProjectId(options().userScratchPath()));
+
+                     // update the project and working dir
+                     activeSession().setProject(projDir);
+                     activeSession().setWorkingDir(projDir);
                   }
 
                   s_nextSessionUrl = r_util::createSessionUrl(hostPageUrl,

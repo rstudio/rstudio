@@ -84,45 +84,59 @@ bool SessionScope::isProjectNone() const
    return project() == kProjectNoneId;
 }
 
-bool validateSessionScopeId(const FilePath& userScratchPath,
-                            const std::string& id)
+
+bool validateSessionScope(const SessionScope& scope,
+                          const core::FilePath& userHomePath,
+                          const core::FilePath& userScratchPath,
+                          core::r_util::ProjectIdToFilePath projectIdToFilePath,
+                          std::string* pProjectFilePath)
 {
+   // does this session exist?
    r_util::ActiveSessions activeSessions(userScratchPath);
-   boost::shared_ptr<r_util::ActiveSession> pSession = activeSessions.get(id);
-   return pSession->hasRequiredProperties();
-}
+   boost::shared_ptr<r_util::ActiveSession> pSession
+                                          = activeSessions.get(scope.id());
+   if (pSession->empty() || !pSession->hasRequiredProperties())
+      return false;
 
-bool validateProjectSessionScope(
-           const SessionScope& scope,
-           const core::FilePath& userHomePath,
-           const core::FilePath& userScratchPath,
-           core::r_util::ProjectIdToFilePath projectIdToFilePath,
-           std::string* pProjectFilePath)
-{
-   // lookup the project path by id
-   std::string project = r_util::SessionScope::projectPathForScope(
-                                   scope,
-                                   projectIdToFilePath);
-   if (!project.empty())
+   // if this isn't project none then check if the project exists
+   if (!scope.isProjectNone())
    {
+      // lookup the project path by id
+      std::string project = r_util::SessionScope::projectPathForScope(
+               scope,
+               projectIdToFilePath);
+      if (project.empty())
+         return false;
+
+      // if session points to another project then the scope is invalid
+      if (project != pSession->project())
+         return false;
+
+      // get the path to the project directory
       FilePath projectDir = FilePath::resolveAliasedPath(project, userHomePath);
-      if (projectDir.exists())
-      {
-         FilePath projectPath = r_util::projectFromDirectory(projectDir);
+      if (!projectDir.exists())
+         return false;
 
-         if (projectPath.exists())
-         {
-            if (validateSessionScopeId(userScratchPath, scope.id()))
-            {
-               *pProjectFilePath = projectPath.absolutePath();
-               return true;
-            }
-         }
-      }
+      // get the path to the project file
+      FilePath projectPath = r_util::projectFromDirectory(projectDir);
+      if (!projectPath.exists())
+         return false;
+
+      // record path to project file
+      *pProjectFilePath = projectPath.absolutePath();
+
+      // success!
+      return true;
    }
+   else
+   {
+      // if the session project isn't project none then it's invalid
+      if (pSession->project() != kProjectNone)
+         return false;
 
-   // didn't succeed in validating the path
-   return false;
+      // success!
+      return true;
+   }
 }
 
 std::string urlPathForSessionScope(const SessionScope& scope)

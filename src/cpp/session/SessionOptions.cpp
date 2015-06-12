@@ -506,25 +506,14 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
    r_util::SessionScope scope = sessionScope();
    if (!scope.empty())
    {
-      if (scope.isProjectNone())
+      if (!r_util::validateSessionScope(
+                       scope,
+                       userHomePath(),
+                       userScratchPath(),
+                       session::projectIdToFilePath(userScratchPath()),
+                       &initialProjectPath_))
       {
-         if (!r_util::validateSessionScopeId(userScratchPath(), scope.id()))
-         {
-            invalidScope_ = true;
-         }
-      }
-      else
-      {
-         // validate scope and get initialProjectPath_ from scope if it's valid
-         if (!r_util::validateProjectSessionScope(
-                              scope,
-                              userHomePath(),
-                              userScratchPath(),
-                              projectIdToFilePath(userScratchPath()),
-                              &initialProjectPath_))
-         {
-            invalidScope_ = true;
-         }
+         invalidScope_ = true;
       }
    }
    else

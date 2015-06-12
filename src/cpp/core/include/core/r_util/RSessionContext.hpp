@@ -89,16 +89,11 @@ private:
    std::string id_;
 };
 
-
-bool validateSessionScopeId(const FilePath& userScratchPath,
-                            const std::string& id);
-
-bool validateProjectSessionScope(
-           const SessionScope& scope,
-           const core::FilePath& userHomePath,
-           const core::FilePath& userScratchPath,
-           core::r_util::ProjectIdToFilePath projectIdToFilePath,
-           std::string* pProjectFilePath);
+bool validateSessionScope(const SessionScope& scope,
+                          const core::FilePath& userHomePath,
+                          const core::FilePath& userScratchPath,
+                          core::r_util::ProjectIdToFilePath projectIdToFilePath,
+                          std::string* pProjectFilePath);
 
 std::string urlPathForSessionScope(const SessionScope& scope);
 
