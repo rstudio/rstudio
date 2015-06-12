@@ -189,7 +189,11 @@ public class WebApplicationHeader extends Composite
                                    eventBus,
                                    pCodeSearch);
       toolbar_.addStyleName(themeResources.themeStyles().webGlobalToolbar());
-     
+      
+      // create host for project commands
+      projectBarCommandsPanel_ = new HorizontalPanel();
+      toolbar_.addRightWidget(projectBarCommandsPanel_);
+      
       // initialize widget
       initWidget(outerPanel_);
    }
@@ -395,6 +399,19 @@ public class WebApplicationHeader extends Composite
    {
       headerBarCommandsPanel_.add(createCommandSeparator());
    }
+   
+   @Override
+   public void addProjectCommand(Widget widget)
+   {
+      projectBarCommandsPanel_.add(widget);
+   }
+
+   @Override
+   public void addProjectCommandSeparator()
+   {
+      projectBarCommandsPanel_.add(createCommandSeparator());
+   }
+   
 
    public Widget asWidget()
    {
@@ -415,6 +432,7 @@ public class WebApplicationHeader extends Composite
    private Image logoSmall_;
    private HorizontalPanel headerBarPanel_;
    private HorizontalPanel headerBarCommandsPanel_;
+   private HorizontalPanel projectBarCommandsPanel_;
    private ToolbarButton projectMenuButton_;
    private AppMenuBar mainMenu_;
    private GlobalToolbar toolbar_;
