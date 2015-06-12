@@ -131,6 +131,7 @@ const int kJumpToFunction = 106;
 const int kCollabEditStarted = 107;
 const int kSessionCountChanged = 108;
 const int kCollabEditEnded = 109;
+const int kProjectUsersChanged = 110;
 }
 
 void ClientEvent::init(int type, const json::Value& data)
@@ -352,6 +353,8 @@ std::string ClientEvent::typeName() const
          return "session_count_changed";
       case client_events::kCollabEditEnded:
          return "collab_edit_ended";
+      case client_events::kProjectUsersChanged:
+         return "project_users_changed";
       default:
          LOG_WARNING_MESSAGE("unexpected event type: " + 
                              safe_convert::numberToString(type_));

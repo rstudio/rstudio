@@ -53,6 +53,7 @@ import org.rstudio.studio.client.htmlpreview.events.HTMLPreviewOutputEvent;
 import org.rstudio.studio.client.htmlpreview.events.HTMLPreviewStartedEvent;
 import org.rstudio.studio.client.htmlpreview.model.HTMLPreviewResult;
 import org.rstudio.studio.client.projects.events.OpenProjectErrorEvent;
+import org.rstudio.studio.client.projects.events.ProjectUserChangedEvent;
 import org.rstudio.studio.client.projects.model.OpenProjectError;
 import org.rstudio.studio.client.rmarkdown.events.RmdRenderCompletedEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdRenderOutputEvent;
@@ -667,6 +668,11 @@ public class ClientEventDispatcher
          {
             CollabEditEndedEvent.Data data = event.getData();
             eventBus_.fireEvent(new CollabEditEndedEvent(data));
+         }
+         else if (type.equals(ClientEvent.ProjectUsersChanged))
+         {
+            ProjectUserChangedEvent.Data data = event.getData();
+            eventBus_.fireEvent(new ProjectUserChangedEvent(data));
          }
          else
          {

@@ -122,6 +122,7 @@ class ClientEvent extends JavaScriptObject
    public static final String CollabEditStarted = "collab_edit_started";
    public static final String SessionCountChanged = "session_count_changed";
    public static final String CollabEditEnded = "collab_edit_ended";
+   public static final String ProjectUsersChanged = "project_users_changed";
    
    protected ClientEvent()
    {
