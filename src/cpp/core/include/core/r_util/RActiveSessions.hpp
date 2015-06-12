@@ -24,6 +24,7 @@
 #include <core/Log.hpp>
 #include <core/Settings.hpp>
 #include <core/DateTime.hpp>
+#include <core/SafeConvert.hpp>
 
 namespace rstudio {
 namespace core {
@@ -41,7 +42,8 @@ private:
       if (error)
          LOG_ERROR(error);
 
-      error = properties_.initialize(scratchPath_.childPath("properites"));
+      propertiesPath_ = scratchPath_.childPath("properites");
+      error = propertiesPath_.ensureDirectory();
       if (error)
          LOG_ERROR(error);
    }
@@ -57,7 +59,7 @@ public:
    std::string project() const
    {
       if (!empty())
-         return properties_.get("project");
+         return readProperty("project");
       else
          return std::string();
    }
@@ -65,13 +67,13 @@ public:
    void setProject(const std::string& project)
    {
       if (!empty())
-         properties_.set("project", project);
+         writeProperty("project", project);
    }
 
    std::string workingDir() const
    {
       if (!empty())
-         return properties_.get("working-dir");
+         return readProperty("working-dir");
       else
          return std::string();
    }
@@ -79,27 +81,45 @@ public:
    void setWorkingDir(const std::string& workingDir)
    {
       if (!empty())
-         properties_.set("working-dir", workingDir);
+         writeProperty("working-dir", workingDir);
    }
 
    double lastUsed() const
    {
       if (!empty())
-         return properties_.getDouble("last-used");
+      {
+         std::string value = readProperty("last-used");
+         if (!value.empty())
+            return safe_convert::stringTo<double>(value, 0);
+         else
+            return 0;
+      }
       else
+      {
          return 0;
+      }
    }
 
    void setLastUsed()
    {
       if (!empty())
-         properties_.set("last-used", date_time::millisecondsSinceEpoch());
+      {
+         double now = date_time::millisecondsSinceEpoch();
+         std::string value = safe_convert::numberToString(now);
+         writeProperty("last-used", value);
+      }
    }
 
    bool running() const
    {
       if (!empty())
-         return properties_.getBool("running");
+      {
+         std::string value = readProperty("running");
+         if (!value.empty())
+            return safe_convert::stringTo<bool>(value, false);
+         else
+            return false;
+      }
       else
          return false;
    }
@@ -107,7 +127,10 @@ public:
    void setRunning(bool running)
    {
       if (!empty())
-         properties_.set("running", running);
+      {
+         std::string value = safe_convert::numberToString(running);
+         writeProperty("running", value);
+      }
    }
 
    core::Error destroy()
@@ -126,9 +149,13 @@ public:
    }
 
 private:
+   void writeProperty(const std::string& name, const std::string& value) const;
+   std::string readProperty(const std::string& name) const;
+
+private:
    std::string id_;
    FilePath scratchPath_;
-   Settings properties_;
+   FilePath propertiesPath_;
 };
 
 
@@ -137,7 +164,7 @@ class ActiveSessions : boost::noncopyable
 public:
    explicit ActiveSessions(const FilePath& rootStoragePath)
    {
-      storagePath_ = rootStoragePath.childPath("sessions/storage");
+      storagePath_ = rootStoragePath.childPath("sessions/active");
       Error error = storagePath_.ensureDirectory();
       if (error)
          LOG_ERROR(error);

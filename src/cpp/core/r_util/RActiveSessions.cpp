@@ -20,6 +20,7 @@
 #include <boost/algorithm/string/predicate.hpp>
 
 #include <core/StringUtils.hpp>
+#include <core/FileSerializer.hpp>
 
 #include <core/system/System.hpp>
 #include <core/system/FileMonitor.hpp>
@@ -37,6 +38,36 @@ namespace {
 
 } // anonymous namespace
 
+
+void ActiveSession::writeProperty(const std::string& name,
+                                 const std::string& value) const
+{
+   FilePath propertyFile = propertiesPath_.childPath(name);
+   Error error = core::writeStringToFile(propertyFile, value);
+   if (error)
+      LOG_ERROR(error);
+}
+
+std::string ActiveSession::readProperty(const std::string& name) const
+{
+   using namespace rstudio::core;
+   FilePath readPath = propertiesPath_.childPath(name);
+   if (readPath.exists())
+   {
+      std::string value;
+      Error error = core::readStringFromFile(readPath, &value);
+      if (error)
+      {
+         LOG_ERROR(error);
+         return std::string();
+      }
+      return boost::algorithm::trim_copy(value);
+   }
+   else
+   {
+      return std::string();
+   }
+}
 
 Error ActiveSessions::create(const std::string& project,
                              const std::string& workingDir,
