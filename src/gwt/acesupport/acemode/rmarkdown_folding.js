@@ -44,9 +44,7 @@ oop.inherits(FoldMode, BaseFoldMode);
       {
          if (line[0] === "#")
             return "start";
-         else if (line[0] === "=" && line[1] === "=" && line[2] === "=")
-            return "start";
-         else if (line[0] === "-" && line[1] === "-" && line[2] === "-")
+         else if (/^[=-]{3,}\s*$/.test(line))
             return "start";
       }
 
@@ -128,14 +126,14 @@ oop.inherits(FoldMode, BaseFoldMode);
       for (var i = row + 1; i < n; i++)
       {
          var line = session.getLine(i);
-         if (depth === 1 && line[0] === "=" && line[1] === "=" && line[2] === "=")
+         if (depth === 1 && /^[=]{3,}\s*/.test(line))
             return i - 2;
          
-         if (depth === 2 && line[0] === "-" && line[1] === "-" && line[2] === "-")
+         if (depth === 2 && /^[-]{3,}\s*/.test(line))
             return i - 2;
 
          var match = /^(#+)(?:.*)$/.exec(line);
-         if (match && match[1].length === depth)
+         if (match && match[1].length <= depth)
             return i - 1;
       }
       return n;
