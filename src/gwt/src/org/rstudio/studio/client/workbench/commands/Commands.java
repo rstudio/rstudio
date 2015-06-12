@@ -103,7 +103,7 @@ public abstract class
    public abstract AppCommand selectToMatching();
    public abstract AppCommand expandToMatching();
    public abstract AppCommand splitIntoLines();
-   public abstract AppCommand showDocumentOutline();
+   public abstract AppCommand toggleDocumentOutline();
    public abstract AppCommand expandSelection();
    public abstract AppCommand shrinkSelection();
    public abstract AppCommand extractFunction();

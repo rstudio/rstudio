@@ -2181,7 +2181,7 @@ public class TextEditingTarget implements
    }
    
    @Handler
-   void onShowDocumentOutline()
+   void onToggleDocumentOutline()
    {
    }
    

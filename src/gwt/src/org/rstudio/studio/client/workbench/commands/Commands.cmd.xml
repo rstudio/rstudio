@@ -461,7 +461,7 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="expandToMatching" value="Ctrl+Shift+E" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="expandToMatching" value="Ctrl+Shift+Alt+E" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="splitIntoLines" value="Cmd+Alt+A"/>
-         <shortcut refid="showDocumentOutline" value="Ctrl+Alt+G"/>
+         <shortcut refid="toggleDocumentOutline" value="Ctrl+Alt+G"/>
          <shortcut value="Ctrl+Alt+Up" title="Add cursor above current cursor"/>
          <shortcut value="Ctrl+Alt+Down" title="Add cursor below current cursor"/>
          <shortcut refid="expandSelection" value="Ctrl+Shift+Up" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
@@ -973,7 +973,7 @@ well as menu structures (for main menu and popup menus).
         menuLabel="_Roxygen Quick Reference"
         desc="Roxygen quick reference"/>
         
-   <cmd id="showDocumentOutline"
+   <cmd id="toggleDocumentOutline"
         menuLabel="Show Document Outline"
         desc="Show document outline"/>
         
