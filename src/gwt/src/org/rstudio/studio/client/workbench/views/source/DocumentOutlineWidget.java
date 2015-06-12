@@ -401,25 +401,11 @@ public class DocumentOutlineWidget extends Composite
       // Figure out if this node is active, or the parent of an active node.
       Scope node = item.getEntry().getScopeNode();
       DomUtils.toggleClass(item.getElement(), RES.styles().activeNode(), isActiveNode(node));
-      DomUtils.toggleClass(item.getElement(), RES.styles().activeParentNode(), isParentOfActiveNode(node));
    }
    
    private boolean isActiveNode(Scope node)
    {
       return node.equals(target_.getDocDisplay().getCurrentScope());
-   }
-   
-   private boolean isParentOfActiveNode(Scope node)
-   {
-      Scope activeScope = target_.getDocDisplay().getCurrentScope();
-      for (Scope parent = activeScope.getParentScope();
-           parent != null;
-           parent = parent.getParentScope())
-      {
-         if (parent.equals(node))
-            return true;
-      }
-      return false;
    }
    
    private final DockLayoutPanel container_;
