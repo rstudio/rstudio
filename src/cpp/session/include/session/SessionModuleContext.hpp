@@ -83,6 +83,7 @@ std::string createFileUrl(const core::FilePath& path);
 core::FilePath resolveAliasedPath(const std::string& aliasedPath);
 core::FilePath userScratchPath();
 core::FilePath scopedScratchPath();
+core::FilePath sharedScratchPath();
 core::FilePath sessionScratchPath();
 core::FilePath oldScopedScratchPath();
 bool isVisibleUserFile(const core::FilePath& filePath);

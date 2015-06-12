@@ -708,6 +708,14 @@ FilePath scopedScratchPath()
       return userScratchPath();
 }
 
+FilePath sharedScratchPath()
+{
+   if (projects::projectContext().hasProject())
+      return projects::projectContext().sharedScratchPath();
+   else
+      return userScratchPath();
+}
+
 FilePath sessionScratchPath()
 {
    r_util::ActiveSession& active = activeSession();
