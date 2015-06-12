@@ -808,14 +808,20 @@ var RCodeModel = function(session, tokenizer,
          //
          //    ```{r}
          //
-         // The $codeBeginPattern determiens what begins a chunk for
+         // The $codeBeginPattern determines what begins a chunk for
          // multimode documents.
          else if (/\bcodebegin\b/.test(type))
          {
             var chunkStartPos = position;
             var chunkPos = {row: chunkStartPos.row + 1, column: 0};
             var chunkNum = this.$scopes.getTopLevelScopeCount() + 1;
-            var chunkLabel = getChunkLabel(this.$codeBeginPattern, value);
+
+            // TODO: We should encode the state we're transitioning into
+            // in the token type.
+            var chunkLabel = value === "---"
+                   ? "YAML Header"
+                   : getChunkLabel(this.$codeBeginPattern, value);
+            
             var scopeName = "Chunk " + chunkNum;
             if (chunkLabel)
                scopeName += ": " + chunkLabel;

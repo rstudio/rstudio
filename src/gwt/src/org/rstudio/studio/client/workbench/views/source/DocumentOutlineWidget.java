@@ -139,7 +139,7 @@ public class DocumentOutlineWidget extends Composite
       
       private void setIndent(int depth)
       {
-         String text = StringUtil.repeat("&nbsp;", depth * 4);
+         String text = StringUtil.repeat("&nbsp;", depth * 3);
          if (indent_ == null)
             indent_ = new HTML(text);
          else
@@ -346,7 +346,7 @@ public class DocumentOutlineWidget extends Composite
       Counter counter = new Counter(-1);
       JsArray<Scope> scopeTree = target_.getDocDisplay().getScopeTree();
       for (int i = 0; i < scopeTree.length(); i++)
-         buildScopeTreeImpl(scopeTree.get(i), -1, counter);
+         buildScopeTreeImpl(scopeTree.get(i), 0, counter);
       
       // Clean up leftovers in the tree. 
       int oldTreeSize = tree_.getItemCount();
@@ -373,7 +373,7 @@ public class DocumentOutlineWidget extends Composite
    private boolean shouldDisplayNode(Scope node)
    {
       // NOTE: the 'is*' items are not mutually exclusive
-      if (node.isAnon() || node.isLambda())
+      if (node.isAnon() || node.isLambda() || node.isTopLevel())
          return false;
       
       // TODO: Annotate scope tree in such a way that this isn't necessary
