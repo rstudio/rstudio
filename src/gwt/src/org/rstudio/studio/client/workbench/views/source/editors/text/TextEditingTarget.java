@@ -202,6 +202,7 @@ public class TextEditingTarget implements
             RmdOutputFormatChangedEvent.Handler handler);
       
       void setPublishPath(String type, String publishPath);
+      void initWidgetSize();
    }
 
    private class SaveProgressIndicator implements ProgressIndicator
@@ -918,6 +919,8 @@ public class TextEditingTarget implements
             globalDisplay_.getProgressIndicator("Save File"),
             dirtyState_,
             events_);
+      
+      view_.initWidgetSize();
 
       roxygenHelper_ = new RoxygenHelper(docDisplay_, view_);
       

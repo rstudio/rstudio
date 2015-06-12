@@ -33,6 +33,7 @@ import com.google.gwt.user.client.ui.*;
 
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.MathUtil;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.events.EnsureHeightEvent;
@@ -130,18 +131,6 @@ public class TextEditingTargetWidget
       editorPanel_.addEast(docOutlineWidget_, 0);
       editorPanel_.add(editor.asWidget());
       
-      // Need to set the widget size deferred to ensure the docUpdateSentinel
-      // has been initialized as well
-      new Timer()
-      {
-         @Override
-         public void run()
-         {
-            double size = getPreferredOutlineWidgetWidth(target);
-            editorPanel_.setWidgetSize(docOutlineWidget_, size);
-         }
-      }.schedule(100);
-      
       MouseDragHandler.addHandler(
             docOutlineWidget_.getLeftSeparator(),
             new MouseDragHandler()
@@ -175,7 +164,7 @@ public class TextEditingTargetWidget
                      clamped = 0;
                   
                   editorPanel_.setWidgetSize(docOutlineWidget_, clamped);
-                  openDocOutlineButton_.setLatched(clamped != 0);
+                  toggleDocOutlineButton_.setLatched(clamped != 0);
                   editor_.onResize();
                }
                
@@ -199,12 +188,22 @@ public class TextEditingTargetWidget
       initWidget(panel_);
    }
    
+   public void initWidgetSize()
+   {
+      double size = getPreferredOutlineWidgetWidth(target_);
+      editorPanel_.setWidgetSize(docOutlineWidget_, size);
+   }
+   
    private double getPreferredOutlineWidgetWidth(TextEditingTarget target)
    {
       String widthString = target.getProperty("preferred_outline_widget_width");
-      if (!org.rstudio.core.client.StringUtil.isNullOrEmpty(widthString))
+      if (!StringUtil.isNullOrEmpty(widthString))
          return Double.parseDouble(widthString);
-      return 150;
+      
+      if (target.getTextFileType().isRmd())
+         return 150;
+      
+      return 0;
    }
 
    private StatusBarWidget statusBar_;
@@ -340,7 +339,7 @@ public class TextEditingTargetWidget
          toolbar.addRightWidget(publishButton_);
       }
       
-      openDocOutlineButton_ = new LatchingToolbarButton(
+      toggleDocOutlineButton_ = new LatchingToolbarButton(
          "",
             StandardIcons.INSTANCE.outline(),
             new ClickHandler()
@@ -359,7 +358,7 @@ public class TextEditingTargetWidget
                         0 :
                         MathUtil.clamp(containerSize * 0.25, 100, containerSize);
                   
-                  openDocOutlineButton_.setLatched(destination != 0);
+                  toggleDocOutlineButton_.setLatched(destination != 0);
                   
                   new Animation()
                   {
@@ -373,11 +372,20 @@ public class TextEditingTargetWidget
                         editorPanel_.setWidgetSize(docOutlineWidget_, size);
                         editor_.onResize();
                      }
+                     
+                     @Override
+                     protected void onComplete()
+                     {
+                        double size = editorPanel_.getWidgetSize(docOutlineWidget_);
+                        target_.setProperty(
+                              "preferred_outline_widget_width",
+                              size + "");
+                     }
                   }.run(700);
                }
             });
       
-      openDocOutlineButton_.setTitle("Show/hide document outline");
+      toggleDocOutlineButton_.setTitle("Show/hide document outline");
       
       // Time-out setting the latch just to ensure the document outline
       // has actually been appropriately rendered
@@ -386,12 +394,12 @@ public class TextEditingTargetWidget
          @Override
          public void run()
          {
-            openDocOutlineButton_.setLatched(docOutlineWidget_.getOffsetWidth() > 0);
+            toggleDocOutlineButton_.setLatched(docOutlineWidget_.getOffsetWidth() > 0);
          }
       }.schedule(100);
       
       toolbar.addRightSeparator();
-      toolbar.addRightWidget(openDocOutlineButton_);
+      toolbar.addRightWidget(toggleDocOutlineButton_);
       
       return toolbar;
    }
@@ -953,7 +961,7 @@ public class TextEditingTargetWidget
    private ToolbarButton rcppHelpButton_;
    private ToolbarButton shinyLaunchButton_;
    private ToolbarButton editRmdFormatButton_;
-   private LatchingToolbarButton openDocOutlineButton_;
+   private LatchingToolbarButton toggleDocOutlineButton_;
    private ToolbarPopupMenuButton rmdFormatButton_;
    private RSConnectPublishButton publishButton_;
    private MenuItem rmdViewerPaneMenuItem_;
