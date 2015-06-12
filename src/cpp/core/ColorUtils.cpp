@@ -89,10 +89,10 @@ rgb hsv2rgb(const hsv& in)
 // given RGB values, convert to an HTML color string
 std::string rgb2html(const rgb& in)
 {
-   return (boost::format("#%1$#x%2$#x%3$#x") %
-      static_cast<int>((in.r/100.0)*255.0) %
-      static_cast<int>((in.g/100.0)*255.0) %
-      static_cast<int>((in.b/100.0)*255.0)).str();
+   return (boost::format("#%02X%02X%02X") %
+      static_cast<int>(in.r * 255.0) %
+      static_cast<int>(in.g * 255.0) %
+      static_cast<int>(in.b * 255.0)).str();
 }
 
 } // namespace color_utils
