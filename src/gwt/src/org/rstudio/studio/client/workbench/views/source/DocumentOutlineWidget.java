@@ -20,10 +20,12 @@ import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.views.source.editors.text.Scope;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ScopeFunction;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.DocumentChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorThemeChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.RenderFinishedEvent;
+
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.Scheduler;
@@ -98,9 +100,20 @@ public class DocumentOutlineWidget extends Composite
       
       private void setLabel(Scope node)
       {
-         String text = node.isChunk() ?
-            node.getChunkLabel() :
-            node.getLabel();
+         String text = "";
+         if (node.isChunk())
+         {
+            text = node.getChunkLabel();
+         }
+         else if (node.isFunction())
+         {
+            ScopeFunction asFunctionNode = (ScopeFunction) node;
+            text = asFunctionNode.getFunctionName();
+         }
+         else
+         {
+            text = node.getLabel();
+         }
 
          if (text.equals(""))
             text = "(Untitled)";
