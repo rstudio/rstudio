@@ -31,6 +31,10 @@ public class CollabEditStartParams extends JavaScriptObject
       return this.path;
    }-*/;
    
+   public final native String cursorColor() /*-{
+      return this.cursor_color;
+   }-*/;
+   
    public final native boolean isMaster() /*-{
       return this.master;
    }-*/;
