@@ -26,6 +26,8 @@
 #include <core/DateTime.hpp>
 #include <core/SafeConvert.hpp>
 
+#include <core/r_util/RSessionContext.hpp>
+
 namespace rstudio {
 namespace core {
 namespace r_util {
@@ -141,11 +143,28 @@ public:
          return Success();
    }
 
-   bool hasRequiredProperties() const
+   bool validate(const FilePath& userHomePath) const
    {
-      return !project().empty() &&
-             !workingDir().empty() &&
-             (lastUsed() != 0);
+      // ensure the scratch path and properties paths exist
+      if (!scratchPath_.exists() || !propertiesPath_.exists())
+         return false;
+
+      // ensure the properties are there
+      if (project().empty() || workingDir().empty() || (lastUsed() == 0))
+          return false;
+
+      // for projects validate that the base directory still exists
+      std::string theProject = project();
+      if (theProject != kProjectNone)
+      {
+         FilePath projectDir = FilePath::resolveAliasedPath(theProject,
+                                                            userHomePath);
+         if (!projectDir.exists())
+            return false;
+      }
+
+      // validated!
+      return true;
    }
 
 private:
@@ -174,9 +193,10 @@ public:
                       const std::string& working,
                       std::string* pId) const;
 
-   std::vector<boost::shared_ptr<ActiveSession> > list() const;
+   std::vector<boost::shared_ptr<ActiveSession> > list(
+                                    const FilePath& userHomePath) const;
 
-   size_t count() const;
+   size_t count(const FilePath& userHomePath) const;
 
    boost::shared_ptr<ActiveSession> get(const std::string& id) const;
 
@@ -189,6 +209,7 @@ private:
 };
 
 void trackActiveSessionCount(const FilePath& rootStoragePath,
+                             const FilePath& userHomePath,
                              boost::function<void(size_t)> onCountChanged);
 
 

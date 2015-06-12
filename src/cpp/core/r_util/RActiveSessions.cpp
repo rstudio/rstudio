@@ -101,7 +101,8 @@ Error ActiveSessions::create(const std::string& project,
    return Success();
 }
 
-std::vector<boost::shared_ptr<ActiveSession> > ActiveSessions::list() const
+std::vector<boost::shared_ptr<ActiveSession> > ActiveSessions::list(
+                                       const FilePath& userHomePath) const
 {
    // list to return
    std::vector<boost::shared_ptr<ActiveSession> > sessions;
@@ -123,7 +124,7 @@ std::vector<boost::shared_ptr<ActiveSession> > ActiveSessions::list() const
          boost::shared_ptr<ActiveSession> pSession = get(id);
          if (!pSession->empty())
          {
-            if (pSession->hasRequiredProperties())
+            if (pSession->validate(userHomePath))
             {
                sessions.push_back(pSession);
             }
@@ -145,9 +146,9 @@ std::vector<boost::shared_ptr<ActiveSession> > ActiveSessions::list() const
    return sessions;
 }
 
-size_t ActiveSessions::count() const
+size_t ActiveSessions::count(const FilePath& userHomePath) const
 {
-   return list().size();
+   return list(userHomePath).size();
 }
 
 boost::shared_ptr<ActiveSession> ActiveSessions::get(const std::string& id) const
@@ -170,14 +171,16 @@ boost::shared_ptr<ActiveSession> ActiveSessions::emptySession()
 namespace {
 
 void notifyCountChanged(boost::shared_ptr<ActiveSessions> pSessions,
+                        const FilePath& userHomePath,
                         boost::function<void(size_t)> onCountChanged)
 {
-   onCountChanged(pSessions->count());
+   onCountChanged(pSessions->count(userHomePath));
 }
 
 } // anonymous namespace
 
 void trackActiveSessionCount(const FilePath& rootStoragePath,
+                             const FilePath& userHomePath,
                              boost::function<void(size_t)> onCountChanged)
 {
 
@@ -185,8 +188,14 @@ void trackActiveSessionCount(const FilePath& rootStoragePath,
                                           new ActiveSessions(rootStoragePath));
 
    core::system::file_monitor::Callbacks cb;
-   cb.onRegistered = boost::bind(notifyCountChanged, pSessions, onCountChanged);
-   cb.onFilesChanged = boost::bind(notifyCountChanged, pSessions, onCountChanged);
+   cb.onRegistered = boost::bind(notifyCountChanged,
+                                 pSessions,
+                                 userHomePath,
+                                 onCountChanged);
+   cb.onFilesChanged = boost::bind(notifyCountChanged,
+                                   pSessions,
+                                   userHomePath,
+                                   onCountChanged);
    cb.onRegistrationError = boost::bind(log::logError, _1, ERROR_LOCATION);
 
    core::system::file_monitor::registerMonitor(

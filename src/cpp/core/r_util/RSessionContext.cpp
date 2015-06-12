@@ -95,7 +95,7 @@ bool validateSessionScope(const SessionScope& scope,
    r_util::ActiveSessions activeSessions(userScratchPath);
    boost::shared_ptr<r_util::ActiveSession> pSession
                                           = activeSessions.get(scope.id());
-   if (pSession->empty() || !pSession->hasRequiredProperties())
+   if (pSession->empty() || !pSession->validate(userHomePath))
       return false;
 
    // if this isn't project none then check if the project exists
