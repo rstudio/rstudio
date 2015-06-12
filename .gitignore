@@ -28,5 +28,3 @@ CMakeLists.txt.user
 *.autosave
 *~
 .orig
-dependencies/common/*.tar.bz2
-

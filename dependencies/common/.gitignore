@@ -13,3 +13,4 @@ shinyapps/
 shinyapps*.tar.gz
 rsconnect/
 rsconnect*.tar.gz
+*.tar.bz
