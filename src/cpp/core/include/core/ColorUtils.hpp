@@ -16,6 +16,8 @@
 #ifndef CORE_COLOR_UTILS_HPP
 #define CORE_COLOR_UTILS_HPP
 
+#include <string>
+
 namespace rstudio {
 namespace core {
 namespace color_utils {
@@ -35,6 +37,7 @@ typedef struct
 } hsv;
 
 rgb hsv2rgb(const hsv& in);
+std::string rgb2html(const rgb& in);
 
 } // namespace color_utils
 } // namespace core 

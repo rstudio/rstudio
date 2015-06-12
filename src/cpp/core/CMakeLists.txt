@@ -50,6 +50,7 @@ set (CORE_SOURCE_FILES
    Settings.cpp
    StderrLogWriter.cpp
    StringUtils.cpp
+   ColorUtils.cpp
    Thread.cpp
    Trace.cpp
    WaitUtils.cpp
