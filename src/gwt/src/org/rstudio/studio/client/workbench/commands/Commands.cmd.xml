@@ -461,7 +461,7 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="expandToMatching" value="Ctrl+Shift+E" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="expandToMatching" value="Ctrl+Shift+Alt+E" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="splitIntoLines" value="Cmd+Alt+A"/>
-         <shortcut refid="toggleDocumentOutline" value="Ctrl+Alt+G"/>
+         <shortcut refid="toggleDocumentOutline" value="Cmd+Shift+O"/>
          <shortcut value="Ctrl+Alt+Up" title="Add cursor above current cursor"/>
          <shortcut value="Ctrl+Alt+Down" title="Add cursor below current cursor"/>
          <shortcut refid="expandSelection" value="Ctrl+Shift+Up" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
@@ -521,7 +521,7 @@ well as menu structures (for main menu and popup menus).
       <shortcutgroup name="Execute">
          <shortcut refid="sourceActiveDocument" value="Cmd+Shift+S" title="Source Active File"/>
          <shortcut refid="sourceActiveDocumentWithEcho" value="Cmd+Shift+Enter"/>;
-         <shortcut refid="sourceFile" value="Cmd+Shift+O" title="Source a File..."/>
+         <shortcut refid="sourceFile" value="Ctrl+Alt+G" title="Source a File..."/>
          <shortcut refid="executeLastCode" value="Cmd+Shift+P"/>
          <shortcut refid="executeCode" value="Cmd+R" if="org.rstudio.core.client.BrowseCap.isWindowsDesktop()" disableModes="vim"/>
          <shortcut refid="executeCode" value="Cmd+Enter"/>
