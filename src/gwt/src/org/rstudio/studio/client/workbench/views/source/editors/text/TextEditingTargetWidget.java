@@ -33,7 +33,6 @@ import com.google.gwt.user.client.ui.*;
 
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.MathUtil;
-import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.events.EnsureHeightEvent;
@@ -172,9 +171,13 @@ public class TextEditingTargetWidget
                public void endDrag()
                {
                   double size = editorPanel_.getWidgetSize(docOutlineWidget_);
-                  target_.setProperty(
-                        "preferred_outline_widget_width",
-                        size + "");
+                  
+                  // We only update the preferred size if the user hasn't closed
+                  // the widget.
+                  if (size > 0)
+                     target_.setPreferredOutlineWidgetSize(size);
+                  
+                  target_.setPreferredOutlineWidgetVisibility(size > 0);
                }
             });
       
@@ -190,22 +193,13 @@ public class TextEditingTargetWidget
    
    public void initWidgetSize()
    {
-      double size = getPreferredOutlineWidgetWidth(target_);
-      editorPanel_.setWidgetSize(docOutlineWidget_, size);
+      if (target_.getPreferredOutlineWidgetVisibility())
+      {
+         double size = target_.getPreferredOutlineWidgetSize();
+         editorPanel_.setWidgetSize(docOutlineWidget_, size);
+      }
    }
    
-   private double getPreferredOutlineWidgetWidth(TextEditingTarget target)
-   {
-      String widthString = target.getProperty("preferred_outline_widget_width");
-      if (!StringUtil.isNullOrEmpty(widthString))
-         return Double.parseDouble(widthString);
-      
-      if (target.getTextFileType().isRmd())
-         return 150;
-      
-      return 0;
-   }
-
    private StatusBarWidget statusBar_;
 
    private Toolbar createToolbar(TextFileType fileType)
@@ -348,15 +342,13 @@ public class TextEditingTargetWidget
                public void onClick(ClickEvent event)
                {
                   final double initialSize = editorPanel_.getWidgetSize(docOutlineWidget_);
-                  final double containerSize = editorPanel_.getOffsetWidth();
                   
                   // Clicking the icon toggles the outline widget's visibility. The
                   // 'destination' below is the width we would like to set -- we
                   // animate to that position for a slightly nicer visual treatment.
-                  final double destination =
-                        docOutlineWidget_.getOffsetWidth() > 5 ?
-                        0 :
-                        MathUtil.clamp(containerSize * 0.25, 100, containerSize);
+                  final double destination = docOutlineWidget_.getOffsetWidth() > 5
+                        ? 0
+                        : target_.getPreferredOutlineWidgetSize();
                   
                   toggleDocOutlineButton_.setLatched(destination != 0);
                   
@@ -376,10 +368,7 @@ public class TextEditingTargetWidget
                      @Override
                      protected void onComplete()
                      {
-                        double size = editorPanel_.getWidgetSize(docOutlineWidget_);
-                        target_.setProperty(
-                              "preferred_outline_widget_width",
-                              size + "");
+                        target_.setPreferredOutlineWidgetVisibility(destination != 0);
                      }
                   }.run(700);
                }

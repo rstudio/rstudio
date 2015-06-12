@@ -524,6 +524,11 @@ public class DocUpdateSentinel
                }
             });
    }
+   
+   public void modifyProperties(final HashMap<String, String> properties)
+   {
+      modifyProperties(properties, null);
+   }
 
    private void applyProperties(JsObject properties,
                                 HashMap<String, String> newProperties)

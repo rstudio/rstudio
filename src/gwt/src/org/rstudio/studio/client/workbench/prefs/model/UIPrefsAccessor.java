@@ -486,11 +486,6 @@ public class UIPrefsAccessor extends Prefs
       return object("preferred_publish_account");
    }
    
-   public PrefValue<Integer> preferredOutlineWidgetWidth()
-   {
-      return integer("preferred_outline_widget_width", 150);
-   }
-
    private String getDefaultPdfPreview()
    {
       if (Desktop.isDesktop())

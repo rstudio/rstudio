@@ -4965,20 +4965,47 @@ public class TextEditingTarget implements
       }
    }
    
-   public String getProperty(String key)
+   public void setPreferredOutlineWidgetSize(double size)
    {
-      if (docUpdateSentinel_ == null)
-         return "";
-      
-      return docUpdateSentinel_.getProperty(key);
+      docUpdateSentinel_.setProperty("docOutlineSize", size + "");
    }
    
-   public void setProperty(String key, String value)
+   public double getPreferredOutlineWidgetSize()
    {
-      if (docUpdateSentinel_ == null)
-         return;
+      String property = docUpdateSentinel_.getProperty("docOutlineSize");
+      if (StringUtil.isNullOrEmpty(property))
+         return 150;
       
-      docUpdateSentinel_.setProperty(key, value);
+      try {
+         double value = Double.parseDouble(property);
+         
+         // Don't allow too-small widget sizes. This helps to protect against
+         // a user who might drag the outline width to just a few pixels, and
+         // then toggle its visibility by clicking on the 'toggle outline'
+         // button. It's unlikely that, realistically, any user would desire an
+         // outline width less than ~30 pixels; at minimum we just need to
+         // ensure they will be able to see + drag the widget to a larger
+         // size if desired.
+         if (value < 30)
+            return 30;
+         
+         return value;
+      } catch (Exception e) {
+         return 150;
+      }
+   }
+   
+   public void setPreferredOutlineWidgetVisibility(boolean visible)
+   {
+      docUpdateSentinel_.setProperty("docOutlineVisible", visible ? "1" : "0");
+   }
+   
+   public boolean getPreferredOutlineWidgetVisibility()
+   {
+      String property = docUpdateSentinel_.getProperty("docOutlineVisible");
+      return StringUtil.isNullOrEmpty(property)
+            ? getTextFileType().isRmd()
+            : Integer.parseInt(property) > 0;
    }
    
    private StatusBar statusBar_;
