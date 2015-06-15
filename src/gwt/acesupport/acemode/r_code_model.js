@@ -811,8 +811,7 @@ var RCodeModel = function(session, tokenizer,
          // value.
          else if (/\bcodebegin\b/.test(type) && value === "---")
          {
-            var yamlLabel = "YAML Header";
-            this.$scopes.onSectionHead("YAML Header", position);
+            this.$scopes.onSectionHead("Title", position);
          }
 
          else if (/\bcodeend\b/.test(type) && value === "---")
