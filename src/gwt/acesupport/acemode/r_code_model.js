@@ -832,7 +832,6 @@ var RCodeModel = function(session, tokenizer,
             var chunkNum = this.$scopes.getTopLevelScopeCount() + 1;
 
                var chunkLabel = getChunkLabel(this.$codeBeginPattern, value);
-               
                var scopeName = "Chunk " + chunkNum;
                if (chunkLabel && value !== "YAML Header")
                   scopeName += ": " + chunkLabel;
@@ -846,12 +845,6 @@ var RCodeModel = function(session, tokenizer,
          // TODO: Check $codeEndPattern?
          else if (/\bcodeend\b/.test(type))
          {
-            // Close all scopes. Chunks live at the top level and so
-            // we want to close all 'stuff' within.
-            while (this.$scopes.onScopeEnd(position))
-            {
-            }
-
             position.column += value.length;
             this.$scopes.onChunkEnd(position);
          }

@@ -83,9 +83,6 @@ define('mode/r_scope_tree', function(require, exports, module) {
       // '### Sub-sub section' as well as the '## Sub-Section'
       this.closeMarkdownHeaderScopes = function(node, position, depth)
       {
-         if (node.isRoot() || node == null)
-            return;
-         
          var children = node.$children;
          for (var i = children.length - 1; i >= 0; i--)
          {
@@ -97,6 +94,10 @@ define('mode/r_scope_tree', function(require, exports, module) {
                   return;
             }
          }
+
+         if (node.isRoot() || node == null)
+            return;
+         
          this.closeMarkdownHeaderScopes(node.parentScope, position, depth);
       };
 
