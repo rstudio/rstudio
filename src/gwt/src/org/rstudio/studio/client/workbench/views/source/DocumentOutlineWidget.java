@@ -64,7 +64,7 @@ public class DocumentOutlineWidget extends Composite
    
    private class DocumentOutlineTreeEntry extends Composite
    {
-      public DocumentOutlineTreeEntry(final Scope node, final int depth)
+      public DocumentOutlineTreeEntry(Scope node, int depth)
       {
          node_ = node;
          FlowPanel panel = new FlowPanel();
@@ -80,8 +80,8 @@ public class DocumentOutlineWidget extends Composite
             @Override
             public void onClick(ClickEvent event)
             {
-               target_.setCursorPosition(node.getPreamble());
-               target_.getDocDisplay().alignCursor(node.getPreamble(), 0.1);
+               target_.setCursorPosition(node_.getPreamble());
+               target_.getDocDisplay().alignCursor(node_.getPreamble(), 0.1);
                
                // Defer focus so it occurs after click has been fully handled
                Scheduler.get().scheduleDeferred(new ScheduledCommand()
@@ -327,6 +327,7 @@ public class DocumentOutlineWidget extends Composite
       {
          DocumentOutlineTreeItem item =
             (DocumentOutlineTreeItem) tree_.getItem(index);
+         
          item.getEntry().update(node, depth);
       }
       else
