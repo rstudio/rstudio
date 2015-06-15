@@ -4967,6 +4967,7 @@ public class TextEditingTarget implements
    
    public void setPreferredOutlineWidgetSize(double size)
    {
+      prefs_.preferredDocumentOutlineWidth().setGlobalValue((int) size);
       docUpdateSentinel_.setProperty("docOutlineSize", size + "");
    }
    
@@ -4974,7 +4975,7 @@ public class TextEditingTarget implements
    {
       String property = docUpdateSentinel_.getProperty("docOutlineSize");
       if (StringUtil.isNullOrEmpty(property))
-         return 150;
+         return prefs_.preferredDocumentOutlineWidth().getGlobalValue();
       
       try {
          double value = Double.parseDouble(property);
@@ -4991,7 +4992,7 @@ public class TextEditingTarget implements
          
          return value;
       } catch (Exception e) {
-         return 150;
+         return prefs_.preferredDocumentOutlineWidth().getGlobalValue();
       }
    }
    

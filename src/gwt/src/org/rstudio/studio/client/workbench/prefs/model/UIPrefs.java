@@ -112,6 +112,10 @@ public class UIPrefs extends UIPrefsAccessor implements UiPrefsChangedHandler
          showIndentGuides().setGlobalValue(
                               newUiPrefs.showIndentGuides().getGlobalValue());
          
+         // document outline width
+         preferredDocumentOutlineWidth().setGlobalValue(
+                              newUiPrefs.preferredDocumentOutlineWidth().getGlobalValue());
+         
          // use vim mode
          useVimMode().setGlobalValue(
                               newUiPrefs.useVimMode().getGlobalValue());
