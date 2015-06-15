@@ -236,7 +236,7 @@ public class AceEditorWidget extends Composite
                public void execute(Void event)
                {
                   fireEvent(new RenderFinishedEvent());
-                  events_.fireEvent(new AfterAceRenderEvent());
+                  events_.fireEvent(new AfterAceRenderEvent(AceEditorWidget.this.getEditor()));
                }
             });
       
