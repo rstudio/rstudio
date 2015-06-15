@@ -38,4 +38,8 @@ public class CollabEditStartParams extends JavaScriptObject
    public final native boolean isMaster() /*-{
       return this.master;
    }-*/;
+   
+   public final native boolean isRejoining() /*-{
+      return this.rejoining;
+   }-*/;
 }
