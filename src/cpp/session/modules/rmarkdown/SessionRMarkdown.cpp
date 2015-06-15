@@ -709,14 +709,37 @@ bool isRenderRunning()
 
 void initEnvironment()
 {
+   // environment variables to initialize
+   const char * const kRStudioPandoc = "RSTUDIO_PANDOC";
+   const char * const kRmarkdownMathjaxPath = "RMARKDOWN_MATHJAX_PATH";
+
+   // track whether we need to call Sys.setenv (at least one var to set)
+   bool initRequired = false;
+
+   // set RSTUDIO_PANDOC if it doens't already exist
    r::exec::RFunction sysSetenv("Sys.setenv");
-   sysSetenv.addParam("RSTUDIO_PANDOC",
-                      session::options().pandocPath().absolutePath());
-   sysSetenv.addParam("RMARKDOWN_MATHJAX_PATH",
-                      session::options().mathjaxPath().absolutePath());
-   Error error = sysSetenv.call();
-   if (error)
-      LOG_ERROR(error);
+   if (core::system::getenv(kRStudioPandoc).empty())
+   {
+      initRequired = true;
+      sysSetenv.addParam(kRStudioPandoc,
+                         session::options().pandocPath().absolutePath());
+   }
+
+   // set RMARKDOWN_MATHJAX_PATH if it doesn't already exist
+   if (core::system::getenv(kRmarkdownMathjaxPath).empty())
+   {
+      initRequired = true;
+      sysSetenv.addParam(kRmarkdownMathjaxPath,
+                         session::options().mathjaxPath().absolutePath());
+   }
+
+   // set environment variables if required
+   if (initRequired)
+   {
+      Error error = sysSetenv.call();
+      if (error)
+         LOG_ERROR(error);
+   }
 }
 
 bool haveMarkdownToHTMLOption()
