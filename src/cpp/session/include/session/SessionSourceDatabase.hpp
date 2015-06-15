@@ -57,6 +57,7 @@ public:
    int relativeOrder() const { return relativeOrder_; } 
    const core::json::Object& properties() const { return properties_; }
    const std::string& folds() const { return folds_; }
+   const std::string& collabServer() const { return collabServer_; }
    std::string getProperty(const std::string& name) const;
 
    // is this an untitled document?
@@ -96,6 +97,11 @@ public:
    void setRelativeOrder(int order) 
    {
       relativeOrder_ = order;
+   }
+
+   void setCollabServer(const std::string& server) 
+   {
+      collabServer_ = server;
    }
 
    void checkForExternalEdit(std::time_t* pTime);
@@ -147,6 +153,7 @@ private:
    double created_;
    bool sourceOnSave_;
    int relativeOrder_;
+   std::string collabServer_;
    core::json::Object properties_;
    
 public:

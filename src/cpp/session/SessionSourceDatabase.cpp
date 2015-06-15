@@ -401,6 +401,10 @@ Error SourceDocument::readFromJson(json::Object* pDocJson)
       json::Value order = docJson["relative_order"];
       relativeOrder_ = !order.is_null() ? order.get_int() : 0;
 
+      json::Value collabServer = docJson["collab_server"];
+      collabServer_ = !collabServer.is_null() ? collabServer.get_str() : 
+                                                std::string();
+
       return Success();
    }
    catch(const std::exception& e)
@@ -429,6 +433,7 @@ void SourceDocument::writeToJson(json::Object* pDocJson) const
    jsonDoc["lastKnownWriteTime"] = json::Value(
          static_cast<boost::int64_t>(lastKnownWriteTime_));
    jsonDoc["encoding"] = encoding_;
+   jsonDoc["collab_server"] = collabServer();
 }
 
 Error SourceDocument::writeToFile(const FilePath& filePath) const
