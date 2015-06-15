@@ -1659,6 +1659,11 @@ bool isDefaultPrompt(const std::string& prompt)
    return prompt == r::options::getOption<std::string>("prompt");
 }
 
+bool isServerMode()
+{
+   return s_options.serverMode;
+}
+
 const FilePath& userHomePath()
 {
    return s_options.userHomePath;

@@ -39,6 +39,8 @@ bool isDevtoolsDevModeOn();
 
 bool isDefaultPrompt(const std::string& prompt);
 
+bool isServerMode();
+
 // user home path
 const core::FilePath& userHomePath();  
 

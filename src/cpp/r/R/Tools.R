@@ -188,6 +188,23 @@ assign(envir = .rs.Env, ".rs.getVar", function(name)
    invisible(.Call("rs_activateGD"))
 })
 
+.rs.addFunction( "newDesktopGraphicsDevice", function()
+{
+   sysName <- Sys.info()[['sysname']]
+   if (identical(sysName, "Windows"))
+      windows()
+   else if (identical(sysName, "Darwin"))
+      quartz()
+   else if (capabilities("X11"))
+      X11()
+   else {
+      warning("Unable to create a new graphics device ",
+              "(RStudio device already active and only a ",
+              "single RStudio device is supported)", 
+              call. = FALSE)
+   }
+})
+
 # record an object to a file
 .rs.addFunction( "saveGraphicsSnapshot", function(snapshot, filename)
 {
