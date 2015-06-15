@@ -794,9 +794,10 @@ public class TextEditingTarget implements
       if (params == null)
          return;
       
-      // if we have local changes, and we're not the master copy, we need to 
-      // prompt the user 
-      if (dirtyState().getValue() && !params.isMaster())
+      // if we have local changes, and we're not the master copy nor rejoining a
+      // previous edit session, we need to prompt the user 
+      if (dirtyState().getValue() && !params.isMaster() && 
+          !params.isRejoining())
       {
          String filename = 
                FilePathUtils.friendlyFileName(docUpdateSentinel_.getPath());
@@ -822,10 +823,13 @@ public class TextEditingTarget implements
                   @Override
                   public void execute()
                   {
+                     // open a new tab for the user's local changes
                      events_.fireEvent(new NewWorkingCopyEvent(fileType_, 
                            docUpdateSentinel_.getPath(), 
                            docUpdateSentinel_.getContents()));
-                     
+
+                     // let the collab session initiate in this tab 
+                     docDisplay_.beginCollabSession(params, dirtyState_);
                      queuedCollabParams_ = null;
                   }
                }, 
