@@ -32,6 +32,9 @@ namespace r_util {
 struct RVersion
 {
    RVersion() {}
+
+   bool empty() const { return number.empty(); }
+
    std::string number;
    core::system::Options environment;
 
