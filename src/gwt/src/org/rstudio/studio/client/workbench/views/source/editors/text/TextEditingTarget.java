@@ -4968,6 +4968,7 @@ public class TextEditingTarget implements
    public void setPreferredOutlineWidgetSize(double size)
    {
       prefs_.preferredDocumentOutlineWidth().setGlobalValue((int) size);
+      prefs_.writeUIPrefs();
       docUpdateSentinel_.setProperty("docOutlineSize", size + "");
    }
    
@@ -5005,7 +5006,7 @@ public class TextEditingTarget implements
    {
       String property = docUpdateSentinel_.getProperty("docOutlineVisible");
       return StringUtil.isNullOrEmpty(property)
-            ? getTextFileType().isRmd()
+            ? (getTextFileType().isRmd() && prefs_.showDocumentOutlineRmd().getGlobalValue())
             : Integer.parseInt(property) > 0;
    }
    
