@@ -32,15 +32,12 @@
 }
 
 .nodeLabel {
-	padding-top: 2px;
 	white-space: nowrap;
 	font-family: sans-serif;
 	cursor: pointer;
 	font-size: 0.9em;
 	text-overflow: ellipsis;
 	overflow: hidden;
-	vertical-align: middle;
-	display: list-item;
 }
 
 .nodeLabelChunk {
