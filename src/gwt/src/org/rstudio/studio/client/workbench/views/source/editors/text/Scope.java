@@ -113,6 +113,10 @@ public class Scope extends JavaScriptObject
       return this.attributes && this.attributes.isMarkdown === true;
    }-*/;
    
+   public native final boolean isYaml() /*-{
+      return this.attributes && this.attributes.isYaml === true;
+   }-*/;
+   
    public native final JavaScriptObject getAttribute(String name) /*-{
       return this.attributes[name];
    }-*/;

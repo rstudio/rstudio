@@ -32,6 +32,8 @@ define('mode/r_scope_tree', function(require, exports, module) {
    }
 
 
+   // The 'ScopeNodeFactory' is a constructor of scope nodes -- it exists so that
+   // we can properly perform inheritance for specializations of the ScopeNode 'class'.
    var ScopeManager = function(ScopeNodeFactory) {
       this.$ScopeNodeFactory = ScopeNodeFactory;
       this.parsePos = {row: 0, column: 0};
@@ -41,7 +43,11 @@ define('mode/r_scope_tree', function(require, exports, module) {
 
    (function() {
 
-      this.onSectionHead = function(sectionLabel, sectionPos) {
+      this.onSectionHead = function(sectionLabel, sectionPos, attributes) {
+
+         if (typeof attributes == "undefined")
+            attributes = {};
+
          var existingScopes = this.getActiveScopes(sectionPos);
 
          // A section will close a previous section that exists as part
@@ -60,8 +66,15 @@ define('mode/r_scope_tree', function(require, exports, module) {
             }
          }
 
-         this.$root.addNode(new this.$ScopeNodeFactory(sectionLabel, sectionPos, sectionPos,
-                                          ScopeNode.TYPE_SECTION));
+         var node = new this.$ScopeNodeFactory(
+            sectionLabel,
+            sectionPos,
+            sectionPos,
+            ScopeNode.TYPE_SECTION,
+            attributes
+         );
+
+         this.$root.addNode(node);
       };
 
       this.onSectionEnd = function(position)
