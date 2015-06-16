@@ -8,21 +8,21 @@ This is an R Markdown presentation. Markdown is a simple formatting syntax for a
 
 When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document.
 
-## Bullets
+## Slide with Bullets
 
 - Bullet 1
 - Bullet 2
 - Bullet 3
 
-## R Output
+## Slide with R Output
 
 ```{r cars, echo=TRUE}
 summary(cars)
 ```
 
-## Plots
+## Slide with Plot
 
-```{r pressure}
+```{r pressure, echo=FALSE}
 plot(pressure)
 ```
 
