@@ -515,7 +515,10 @@ var CppCodeModel = function(session, tokenizer,
                         this.$scopes.onFunctionScopeStart(
                            fullFnName,
                            localCursor.currentPosition(),
-                           tokenCursor.currentPosition());
+                           tokenCursor.currentPosition(),
+                           fnName.trim(),
+                           fnArgs.split(",")
+                        );
                      }
                   }
                }

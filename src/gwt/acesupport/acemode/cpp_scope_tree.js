@@ -80,8 +80,7 @@ var CppScopeManager = function(ScopeNodeFactory) {
       "(Top Level)",
       this.parsePos,
       null,
-      ScopeNode.TYPE_ROOT,
-      {}
+      ScopeNode.TYPE_ROOT
    );
    
 };
@@ -105,19 +104,35 @@ oop.mixin(CppScopeManager.prototype, ScopeManager.prototype);
       this.printScopeTree();
    };
 
-   this.onFunctionScopeStart = function(label, startPos, scopePos) {
+   this.onFunctionScopeStart = function(label, startPos, scopePos, name, args) {
       debuglog("adding function scope " + label);
-      this.$root.addNode(
-         new this.$ScopeNodeFactory(label, scopePos, startPos, ScopeNode.TYPE_BRACE, CppScopeNode.CATEGORY_FUNCTION)
+
+      var node = new this.$ScopeNodeFactory(
+         label,
+         scopePos,
+         startPos,
+         ScopeNode.TYPE_BRACE,
+         CppScopeNode.CATEGORY_FUNCTION,
+         {name: name, args: args}
       );
+      this.$root.addNode(node);
+
       this.printScopeTree();
    };
 
-   this.onLambdaScopeStart = function(label, startPos, scopePos) {
+   this.onLambdaScopeStart = function(label, startPos, scopePos, args) {
       debuglog("adding lambda scope " + label);
-      this.$root.addNode(
-         new this.$ScopeNodeFactory(label, scopePos, startPos, ScopeNode.TYPE_BRACE, CppScopeNode.CATEGORY_LAMBDA)
+
+      var node = new this.$ScopeNodeFactory(
+         label,
+         scopePos,
+         startPos,
+         ScopeNode.TYPE_BRACE,
+         CppScopeNode.CATEGORY_LAMBDA,
+         {args: args}
       );
+      this.$root.addNode(node);
+
       this.printScopeTree();
    };
 

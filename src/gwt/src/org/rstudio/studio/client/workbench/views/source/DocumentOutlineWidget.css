@@ -40,7 +40,7 @@
 	text-overflow: ellipsis;
 	overflow: hidden;
 	vertical-align: middle;
-	display: table-row;
+	display: list-item;
 }
 
 .nodeLabelChunk {
