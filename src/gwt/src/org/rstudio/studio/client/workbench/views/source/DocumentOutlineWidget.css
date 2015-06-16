@@ -40,7 +40,6 @@
 	font-size: 0.9em;
 	text-overflow: ellipsis;
 	overflow: hidden;
-	padding-bottom: 2px;
 }
 
 .nodeLabelChunk {
