@@ -745,7 +745,16 @@ var RCodeModel = function(session, tokenizer,
       {
          // Bail if we've stepped past the max row.
          if (iterator.$row > maxRow)
-             break;
+            break;
+
+         // Skip over comments.
+         while (/\bcomment\b/.test(type))
+         {
+            token = iterator.moveToStartOfNextRowWithTokens();
+            value = token.value;
+            type = token.type;
+            position = iterator.getCurrentTokenPosition();
+         }
 
          // Cache access to the current token + cursor.
          value = token.value;
@@ -924,8 +933,6 @@ var RCodeModel = function(session, tokenizer,
          {
             this.$scopes.onScopeEnd(position);
          }
-
-         prevToken = token;
 
       } while ((token = iterator.moveToNextToken()));
 
