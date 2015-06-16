@@ -366,7 +366,7 @@
   # apply sort
   if (col > 0 && length(x[[col]]) > 0)
   {
-    if (is.list(x[1,col]) || length(x[1,col]) > 1)
+    if (is.list(x[[col]][[1]]) || length(x[[col]][[1]]) > 1)
     {
       # extract the first value from each cell for ordering (handle
       # vector-valued columns gracefully)
