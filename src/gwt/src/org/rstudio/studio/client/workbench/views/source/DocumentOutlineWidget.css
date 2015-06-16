@@ -10,7 +10,7 @@
 
 .tree {
 	overflow-x: hidden;
-	overflow-y: scroll;
+	overflow-y: auto;
 	padding-top: 3px;
 	padding-bottom: 3px;
 }
