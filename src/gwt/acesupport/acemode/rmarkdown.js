@@ -79,7 +79,7 @@ var Mode = function(suppressHighlighting, session) {
          var mode = that.getLanguageMode(position);
          var line = session.getLine(row);
 
-         if (mode === "Markdown" || line.startsWith("```"))
+         if (mode === "Markdown" || Utils.startsWith(line, "```"))
             return rMarkdownFoldingRules.getFoldWidget(session, foldStyle, row);
          else if (mode === "C_CPP")
             return cFoldingRules.getFoldWidget(session, foldStyle, row);
@@ -93,7 +93,7 @@ var Mode = function(suppressHighlighting, session) {
          var mode = that.getLanguageMode(position);
          var line = session.getLine(row);
          
-         if (mode === "Markdown" || line.startsWith("```"))
+         if (mode === "Markdown" || Utils.startsWith(line, "```"))
             return rMarkdownFoldingRules.getFoldWidgetRange(session, foldStyle, row);
          else if (mode === "C_CPP")
             return cFoldingRules.getFoldWidgetRange(session, foldStyle, row);

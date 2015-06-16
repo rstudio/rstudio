@@ -60,7 +60,7 @@ oop.inherits(FoldMode, BaseFoldMode);
       }
 
       // Chunk
-      if (trimmed.startsWith("```"))
+      if (Utils.startsWith(trimmed, "```"))
       {
          // I know this looks weird. However, the state associated
          // with blocks that begin 'chunks', or GitHub-style fenced
@@ -104,8 +104,9 @@ oop.inherits(FoldMode, BaseFoldMode);
          idx += increment;
          if (idx === limit)
             break;
-         
-         if (session.getLine(idx).trim().startsWith(prefix))
+
+         var trimmed = session.getLine(idx).trim();
+         if (Utils.startsWith(trimmed, prefix))
             break;
       }
       
@@ -146,13 +147,13 @@ oop.inherits(FoldMode, BaseFoldMode);
       var trimmed = line.trim();
 
       // Handle chunk folds.
-      if (line.startsWith("```"))
+      if (Utils.startsWith(line, "```"))
          return $getBracedWidgetRange(session, state, row, "```");
 
       // Handle YAML header.
       var prevState = row > 0 ? session.getState(row - 1) : "start";
       var isYamlStart = row === 0 && trimmed === "---";
-      var isYamlEnd = prevState.startsWith("yaml");
+      var isYamlEnd = Utils.startsWith(prevState, "yaml");
       
       if (isYamlStart || isYamlEnd)
          return $getBracedWidgetRange(session, state, row, "---");

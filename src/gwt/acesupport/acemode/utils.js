@@ -202,7 +202,19 @@ var Unicode = require("ace/unicode").packages;
          return string;
 
       return string.substr(1, n - 2);
-      
+   };
+
+   this.startsWith = function(string, prefix)
+   {
+      if (typeof string !== "string") return false;
+      if (typeof prefix !== "string") return false;
+      if (string.length < prefix.length) return false;
+
+      for (var i = 0; i < prefix.length; i++)
+         if (string[i] !== prefix[i])
+            return false;
+
+      return true;
    };
 
 

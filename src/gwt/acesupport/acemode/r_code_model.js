@@ -767,7 +767,7 @@ var RCodeModel = function(session, tokenizer,
          // 'types' are not really consistent. Likely due to the lack
          // of general lookahead / lookbehind in the Ace tokenizer. We
          // just manually check for each 'state'.
-         if (type.startsWith("markup.heading"))
+         if (Utils.startsWith("markup.heading"))
          {
             var label = "";
             var labelPos = {row: position.row, column: 0};
@@ -787,7 +787,7 @@ var RCodeModel = function(session, tokenizer,
             //    -------
             else if (/^[-=]{3,}\s*$/.test(value))
             {
-               depth = value.startsWith("=") ? 1 : 2;
+               depth = value[0] === "=" ? 1 : 2;
                var prevToken = iterator.peekBwd(1);
                label = prevToken ? prevToken.value : "";
                labelPos.row--;
