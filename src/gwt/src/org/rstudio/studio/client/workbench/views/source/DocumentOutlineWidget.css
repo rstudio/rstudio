@@ -4,6 +4,8 @@
 .leftSeparator {
 	border-left: 1px solid rgba(128, 128, 128, 0.5);
 	cursor: col-resize;
+	width: 8px;
+	z-index: 1;
 }
 
 .tree {
@@ -18,17 +20,17 @@
 	padding-top: 0px !important;
 	padding-bottom: 0px !important;
 	padding-right: 5px !important;
-	padding-left: 6px !important;
+	padding-left: 4px !important;
 }
 
 .activeNode {
 	border-left: 2px solid #67890a;
-	padding-left: 4px !important;
+	padding-left: 2px !important;
 }
 
 .activeParentNode {
 	border-left: 2px solid #abcdef;
-	padding-left: 4px !important;
+	padding-left: 2px !important;
 }
 
 .nodeLabel {

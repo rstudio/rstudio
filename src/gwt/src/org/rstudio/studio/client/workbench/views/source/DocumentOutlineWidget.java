@@ -197,7 +197,13 @@ public class DocumentOutlineWidget extends Composite
       target_ = target;
       
       separator_ = new VerticalSeparator();
-      container_.addWest(separator_, 6);
+      container_.addWest(separator_, 4);
+      
+      // This is a somewhat hacky way of allowing the separator to 'fit'
+      // to a size of 4px, but overflow an extra 4px (to provide extra
+      // space for a mouse cursor to drag or resize)
+      Element parent = separator_.getElement().getParentElement();
+      parent.getStyle().setPaddingRight(4, Unit.PX);
       
       tree_ = new Tree();
       tree_.addStyleName(RES.styles().tree());
