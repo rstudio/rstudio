@@ -23,12 +23,12 @@
 
 .activeNode {
 	border-left: 2px solid #67890a;
-	padding-left: 6px !important;
+	padding-left: 4px !important;
 }
 
 .activeParentNode {
 	border-left: 2px solid #abcdef;
-	padding-left: 6px !important;
+	padding-left: 4px !important;
 }
 
 .nodeLabel {
