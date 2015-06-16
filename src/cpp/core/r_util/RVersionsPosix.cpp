@@ -54,8 +54,6 @@ std::vector<FilePath> removeNonExistent(const std::vector<FilePath>& paths)
 std::ostream& operator<<(std::ostream& os, const RVersion& version)
 {
    os << version.number;
-   if (version.isDefault)
-      os << " [default]";
    os << std::endl;
    os << version.homeDir() << std::endl;
    BOOST_FOREACH(const core::system::Option& option, version.environment)
@@ -76,8 +74,7 @@ std::vector<RVersion> enumerateRVersions(
 
    // start with all of the typical script locations
    std::vector<FilePath> rScriptPaths;
-   const char* const kDefaultVersion = "/usr/bin/R";
-   rScriptPaths.push_back(FilePath(kDefaultVersion));
+   rScriptPaths.push_back(FilePath("/usr/bin/R"));
    rScriptPaths.push_back(FilePath("/usr/local/bin/R"));
    rScriptPaths.push_back(FilePath("/opt/local/bin/R"));
 
@@ -124,7 +121,6 @@ std::vector<RVersion> enumerateRVersions(
                              &errMsg))
       {
          RVersion version;
-         version.isDefault = (rScriptPath.absolutePath() == kDefaultVersion);
          version.number = rVersion;
          version.environment = env;
          rVersions.push_back(version);

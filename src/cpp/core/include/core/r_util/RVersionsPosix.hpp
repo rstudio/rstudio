@@ -31,8 +31,7 @@ namespace r_util {
 
 struct RVersion
 {
-   RVersion() : isDefault(false) {}
-   bool isDefault;
+   RVersion() {}
    std::string number;
    core::system::Options environment;
 
