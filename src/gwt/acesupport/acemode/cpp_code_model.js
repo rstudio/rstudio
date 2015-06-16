@@ -370,7 +370,8 @@ var CppCodeModel = function(session, tokenizer,
                var namespaceName = localCursor.currentValue();
                this.$scopes.onNamespaceScopeStart("namespace " + namespaceName,
                                                   localCursor.currentPosition(),
-                                                  tokenCursor.currentPosition());
+                                                  tokenCursor.currentPosition(),
+                                                  namespaceName);
                
             }
 
@@ -378,7 +379,8 @@ var CppCodeModel = function(session, tokenizer,
             else if (localCursor.peekBwd().currentValue() === "namespace") {
                this.$scopes.onNamespaceScopeStart("anonymous namespace",
                                                   startPos,
-                                                  tokenCursor.currentPosition());
+                                                  tokenCursor.currentPosition(),
+                                                  "<anonymous>");
             }
 
             // class (struct)
@@ -405,7 +407,8 @@ var CppCodeModel = function(session, tokenizer,
                
                this.$scopes.onClassScopeStart(classText,
                                               localCursor.currentPosition(),
-                                              tokenCursor.currentPosition());
+                                              tokenCursor.currentPosition(),
+                                              classText);
             }
 
             // function and lambdas
@@ -429,7 +432,8 @@ var CppCodeModel = function(session, tokenizer,
                      ));
 
                      lambdaText = $normalizeWhitespace("lambda " + lambdaText);
-                     
+
+                     // TODO: Extract lambda arguments.
                      this.$scopes.onLambdaScopeStart(lambdaText,
                                                      startPos,
                                                      tokenCursor.currentPosition());

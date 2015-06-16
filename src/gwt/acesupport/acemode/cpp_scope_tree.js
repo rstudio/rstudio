@@ -88,19 +88,35 @@ oop.mixin(CppScopeManager.prototype, ScopeManager.prototype);
 
 (function() {
 
-   this.onClassScopeStart = function(label, startPos, scopePos) {
+   this.onClassScopeStart = function(label, startPos, scopePos, name) {
       debuglog("adding class scope " + label);
-      this.$root.addNode(
-         new this.$ScopeNodeFactory(label, scopePos, startPos, ScopeNode.TYPE_BRACE, CppScopeNode.CATEGORY_CLASS)
+
+      var node = new this.$ScopeNodeFactory(
+         label,
+         scopePos,
+         startPos,
+         ScopeNode.TYPE_BRACE,
+         CppScopeNode.CATEGORY_CLASS,
+         {name: name}
       );
+      this.$root.addNode(node);
+
       this.printScopeTree();
    };
 
-   this.onNamespaceScopeStart = function(label, startPos, scopePos) {
+   this.onNamespaceScopeStart = function(label, startPos, scopePos, name) {
       debuglog("adding namespace scope " + label);
-      this.$root.addNode(
-         new this.$ScopeNodeFactory(label, scopePos, startPos, ScopeNode.TYPE_BRACE, CppScopeNode.CATEGORY_NAMESPACE)
+
+      var node = new this.$ScopeNodeFactory(
+         label,
+         scopePos,
+         startPos,
+         ScopeNode.TYPE_BRACE,
+         CppScopeNode.CATEGORY_NAMESPACE,
+         {name: name}
       );
+      this.$root.addNode(node);
+
       this.printScopeTree();
    };
 

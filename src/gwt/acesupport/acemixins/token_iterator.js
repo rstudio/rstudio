@@ -93,7 +93,7 @@ var Range = require("ace/range").Range;
          }
       }
 
-      return null;
+      // cannot be reached
       
    };
 
@@ -133,7 +133,7 @@ var Range = require("ace/range").Range;
          }
       }
 
-      return null;
+      // cannot be reached
       
    };
 
