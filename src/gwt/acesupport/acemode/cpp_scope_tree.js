@@ -30,7 +30,7 @@ var CppScopeNode = function(label, start, preamble, scopeType, scopeCategory, at
    this.end = null;
    this.scopeType = scopeType;
    this.scopeCategory = scopeCategory;
-   this.attributes = attributes;
+   this.attributes = attributes || {};
    this.parentScope = null;
    this.$children = [];
 };
@@ -76,11 +76,13 @@ var CppScopeManager = function(ScopeNodeFactory) {
       column: 0
    };
 
-   this.$root = new ScopeNodeFactory("(Top Level)",
-                                 this.parsePos,
-                                 null,
-                                 ScopeNode.TYPE_ROOT,
-                                 null);
+   this.$root = new ScopeNodeFactory(
+      "(Top Level)",
+      this.parsePos,
+      null,
+      ScopeNode.TYPE_ROOT,
+      {}
+   );
    
 };
 oop.mixin(CppScopeManager.prototype, ScopeManager.prototype);
