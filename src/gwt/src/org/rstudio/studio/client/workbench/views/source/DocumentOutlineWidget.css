@@ -9,6 +9,8 @@
 .tree {
 	overflow-x: hidden;
 	overflow-y: scroll;
+	padding-top: 3px;
+	padding-bottom: 3px;
 }
 
 .node {
@@ -37,6 +39,8 @@
 	font-size: 0.9em;
 	text-overflow: ellipsis;
 	overflow: hidden;
+	vertical-align: middle;
+	display: table-row;
 }
 
 .nodeLabelChunk {
