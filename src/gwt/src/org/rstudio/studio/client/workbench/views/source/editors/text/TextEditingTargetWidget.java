@@ -362,10 +362,9 @@ public class TextEditingTargetWidget
                      @Override
                      protected void onUpdate(double progress)
                      {
-                        double interpolated = interpolate(progress);
                         double size =
-                              destination * interpolated +
-                              initialSize * (1 - interpolated);
+                              destination * progress +
+                              initialSize * (1 - progress);
                         editorPanel_.setWidgetSize(docOutlineWidget_, size);
                         editor_.onResize();
                      }
@@ -375,7 +374,7 @@ public class TextEditingTargetWidget
                      {
                         target_.setPreferredOutlineWidgetVisibility(destination != 0);
                      }
-                  }.run(700);
+                  }.run(500);
                }
             });
       
