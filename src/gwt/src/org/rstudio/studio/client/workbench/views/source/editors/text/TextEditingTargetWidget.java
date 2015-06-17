@@ -379,7 +379,8 @@ public class TextEditingTargetWidget
                }
             });
       
-      toggleDocOutlineButton_.setTitle("Show/hide document outline");
+      toggleDocOutlineButton_.setTitle(
+            commands_.toggleDocumentOutline().getTooltip());
       
       // Time-out setting the latch just to ensure the document outline
       // has actually been appropriately rendered
