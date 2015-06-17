@@ -48,6 +48,23 @@ std::vector<FilePath> removeNonExistent(const std::vector<FilePath>& paths)
    return filteredPaths;
 }
 
+void scanForRHomePaths(const core::FilePath& rootDir,
+                       std::vector<FilePath>* pHomePaths)
+{
+   if (rootDir.exists())
+   {
+      std::vector<FilePath> rDirs;
+      Error error = rootDir.children(&rDirs);
+      if (error)
+         LOG_ERROR(error);
+      BOOST_FOREACH(const FilePath& rDir, rDirs)
+      {
+         if (rDir.childPath("bin/R").exists())
+            pHomePaths->push_back(rDir);
+      }
+   }
+}
+
 
 } // anonymous namespace
 
@@ -73,43 +90,34 @@ std::vector<RVersion> enumerateRVersions(
    std::vector<RVersion> rVersions;
 
    // start with all of the typical script locations
-   std::vector<FilePath> rScriptPaths;
-   rScriptPaths.push_back(FilePath("/usr/bin/R"));
-   rScriptPaths.push_back(FilePath("/usr/local/bin/R"));
-   rScriptPaths.push_back(FilePath("/opt/local/bin/R"));
+   std::vector<FilePath> rHomePaths;
+   rHomePaths.push_back(FilePath("/usr/lib/R"));
+   rHomePaths.push_back(FilePath("/usr/local/lib/R"));
+   rHomePaths.push_back(FilePath("/opt/local/lib/R"));
 
-   // scan /opt/R
-   FilePath optRDir("/opt/R");
-   if (optRDir.exists())
-   {
-      std::vector<FilePath> optRDirs;
-      Error error = optRDir.children(&optRDirs);
-      if (error)
-         LOG_ERROR(error);
-      BOOST_FOREACH(const FilePath& optRDir, optRDirs)
-      {
-         FilePath rScriptPath = optRDir.childPath("bin/R");
-         if (rScriptPath.exists())
-            rScriptPaths.push_back(rScriptPath);
-      }
-   }
+   // scan /opt/R and /opt/local/R
+   scanForRHomePaths(FilePath("/opt/R"), &rHomePaths);
+   scanForRHomePaths(FilePath("/opt/local/R"), &rHomePaths);
 
    // add the additional R homes
    BOOST_FOREACH(const FilePath& otherRHome, otherRHomes)
    {
-      FilePath rScriptPath = otherRHome.childPath("bin/R");
-      if (rScriptPath.exists())
-         rScriptPaths.push_back(rScriptPath);
+      rHomePaths.push_back(otherRHome);
    }
 
    // filter on existence and eliminate duplicates
-   rScriptPaths = removeNonExistent(rScriptPaths);
-   std::sort(rScriptPaths.begin(), rScriptPaths.end());
-   std::unique(rScriptPaths.begin(), rScriptPaths.end());
+   rHomePaths = removeNonExistent(rHomePaths);
+   std::sort(rHomePaths.begin(), rHomePaths.end());
+   std::unique(rHomePaths.begin(), rHomePaths.end());
 
    // probe versions
-   BOOST_FOREACH(const FilePath& rScriptPath, rScriptPaths)
+   BOOST_FOREACH(const FilePath& rHomePath, rHomePaths)
    {
+      // compute R script path
+      FilePath rScriptPath = rHomePath.childPath("bin/R");
+      if (!rScriptPath.exists())
+         continue;
+
       std::string rDiscoveredScriptPath, rVersion, errMsg;
       core::system::Options env;
       if (detectREnvironment(rScriptPath,
@@ -282,7 +290,7 @@ RVersion selectVersion(const RVersionInfo& matchVersion,
 
 
 } // namespace r_util
-} // namespace core 
+} // namespace core
 } // namespace rstudio
 
 
