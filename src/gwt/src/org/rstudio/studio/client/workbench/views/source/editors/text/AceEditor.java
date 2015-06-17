@@ -1641,10 +1641,20 @@ public class AceEditor implements DocDisplay,
    {
       widget_.getEditor().revealRange(range, animate);
    }
+   
+   public CodeModel getCodeModel()
+   {
+      return getSession().getMode().getCodeModel();
+   }
+   
+   public boolean hasCodeModel()
+   {
+      return getSession().getMode().hasCodeModel();
+   }
 
    public boolean hasScopeTree()
    {
-      return getSession().getMode().getCodeModel().hasScopes();
+      return hasCodeModel() && getCodeModel().hasScopes();
    }
 
    public JsArray<Scope> getScopeTree()

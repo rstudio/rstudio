@@ -38,6 +38,10 @@ public class Mode extends JavaScriptObject
    protected Mode()
    {
    }
+   
+   public native final boolean hasCodeModel() /*-{
+      return typeof this.codeModel !== "undefined";
+   }-*/;
 
    public native final CodeModel getCodeModel() /*-{
       return this.codeModel || {};
