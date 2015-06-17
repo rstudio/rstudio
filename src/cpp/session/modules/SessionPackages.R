@@ -591,7 +591,7 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
       Package = packageName,
       Type = "Package",
       Title = "What the Package Does (Title Case)",
-      Version = "0.1",
+      Version = "0.1.0",
       Date = as.character(Sys.Date()),
       Author = Author,
       Maintainer = Maintainer,
