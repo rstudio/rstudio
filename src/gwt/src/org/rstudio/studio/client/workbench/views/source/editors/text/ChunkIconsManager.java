@@ -76,6 +76,14 @@ public class ChunkIconsManager
       return el.getOffsetHeight() == 0 || el.getOffsetWidth() == 0;
    }
    
+   private boolean shouldDisplayIcons(AceEditorNative editor)
+   {
+      String id = editor.getSession().getMode().getId();
+      return id.equals("mode/rmarkdown") || // also Rpres
+             id.equals("mode/rhtml") ||
+             id.equals("mode/sweave");
+   }
+   
    private void manageChunkIcons(AceEditorNative editor)
    {
       Element[] icons = DomUtils.getElementsByClassName(
@@ -85,6 +93,9 @@ public class ChunkIconsManager
          icon.removeFromParent();
       
       if (!uiPrefs_.showInlineToolbarForRCodeChunks().getValue())
+         return;
+      
+      if (!shouldDisplayIcons(editor))
          return;
       
       Element[] chunkStarts = DomUtils.getElementsByClassName(
