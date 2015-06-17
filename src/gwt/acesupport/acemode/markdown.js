@@ -55,11 +55,25 @@ var TextMode = require("ace/mode/text").Mode;
 var JavaScriptMode = require("ace/mode/javascript").Mode;
 var XmlMode = require("ace/mode/xml").Mode;
 var HtmlMode = require("ace/mode/html").Mode;
-var MarkdownHighlightRules = require("mode/markdown_highlight_rules").MarkdownHighlightRules;
+var Tokenizer = require("ace/tokenizer").Tokenizer;
+var RMarkdownHighlightRules = require("mode/rmarkdown_highlight_rules").RMarkdownHighlightRules;
+var RMarkdownFoldMode = require("rstudio/folding/rmarkdown").FoldMode;
 var MarkdownFoldMode = require("mode/markdown_folding").FoldMode;
+var RCodeModel = require("mode/r_code_model").RCodeModel;
 
-var Mode = function() {
-   this.HighlightRules = MarkdownHighlightRules;
+
+var Mode = function(suppressHighlighting, session) {
+
+   this.$session = session;
+   this.$tokenizer = new Tokenizer(new RMarkdownHighlightRules().getRules());
+
+   this.codeModel = new RCodeModel(
+      session,
+      this.$tokenizer,
+         /^r-/,
+      new RegExp(RMarkdownHighlightRules.prototype.$reRChunkStartString),
+      new RegExp(RMarkdownHighlightRules.prototype.$reChunkEndString)
+   );
 
    this.createModeDelegates({
       "js-": JavaScriptMode,
@@ -67,7 +81,7 @@ var Mode = function() {
       "html-": HtmlMode
    });
 
-   this.foldingRules = new MarkdownFoldMode();
+   this.foldingRules = new RMarkdownFoldMode();
 };
 oop.inherits(Mode, TextMode);
 
@@ -78,7 +92,6 @@ oop.inherits(Mode, TextMode);
    this.getNextLineIndent = function(state, line, tab) {
       return this.$getIndent(line);
    };
-
 
    this.$id = "mode/markdown";
 }).call(Mode.prototype);
