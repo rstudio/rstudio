@@ -59,21 +59,21 @@ struct link_ref {
 /*   returns the number of chars taken care of */
 /*   data is the pointer of the beginning of the span */
 /*   offset is the number of valid chars before data */
-struct rs_sd_markdown;
+struct sd_markdown;
 typedef size_t
-(*char_trigger)(struct buf *ob, struct rs_sd_markdown *rndr, uint8_t *data, size_t offset, size_t size);
+(*char_trigger)(struct buf *ob, struct sd_markdown *rndr, uint8_t *data, size_t offset, size_t size);
 
-static size_t char_emphasis(struct buf *ob, struct rs_sd_markdown *rndr, uint8_t *data, size_t offset, size_t size);
-static size_t char_linebreak(struct buf *ob, struct rs_sd_markdown *rndr, uint8_t *data, size_t offset, size_t size);
-static size_t char_codespan(struct buf *ob, struct rs_sd_markdown *rndr, uint8_t *data, size_t offset, size_t size);
-static size_t char_escape(struct buf *ob, struct rs_sd_markdown *rndr, uint8_t *data, size_t offset, size_t size);
-static size_t char_entity(struct buf *ob, struct rs_sd_markdown *rndr, uint8_t *data, size_t offset, size_t size);
-static size_t char_langle_tag(struct buf *ob, struct rs_sd_markdown *rndr, uint8_t *data, size_t offset, size_t size);
-static size_t char_autolink_url(struct buf *ob, struct rs_sd_markdown *rndr, uint8_t *data, size_t offset, size_t size);
-static size_t char_autolink_email(struct buf *ob, struct rs_sd_markdown *rndr, uint8_t *data, size_t offset, size_t size);
-static size_t char_autolink_www(struct buf *ob, struct rs_sd_markdown *rndr, uint8_t *data, size_t offset, size_t size);
-static size_t char_link(struct buf *ob, struct rs_sd_markdown *rndr, uint8_t *data, size_t offset, size_t size);
-static size_t char_superscript(struct buf *ob, struct rs_sd_markdown *rndr, uint8_t *data, size_t offset, size_t size);
+static size_t char_emphasis(struct buf *ob, struct sd_markdown *rndr, uint8_t *data, size_t offset, size_t size);
+static size_t char_linebreak(struct buf *ob, struct sd_markdown *rndr, uint8_t *data, size_t offset, size_t size);
+static size_t char_codespan(struct buf *ob, struct sd_markdown *rndr, uint8_t *data, size_t offset, size_t size);
+static size_t char_escape(struct buf *ob, struct sd_markdown *rndr, uint8_t *data, size_t offset, size_t size);
+static size_t char_entity(struct buf *ob, struct sd_markdown *rndr, uint8_t *data, size_t offset, size_t size);
+static size_t char_langle_tag(struct buf *ob, struct sd_markdown *rndr, uint8_t *data, size_t offset, size_t size);
+static size_t char_autolink_url(struct buf *ob, struct sd_markdown *rndr, uint8_t *data, size_t offset, size_t size);
+static size_t char_autolink_email(struct buf *ob, struct sd_markdown *rndr, uint8_t *data, size_t offset, size_t size);
+static size_t char_autolink_www(struct buf *ob, struct sd_markdown *rndr, uint8_t *data, size_t offset, size_t size);
+static size_t char_link(struct buf *ob, struct sd_markdown *rndr, uint8_t *data, size_t offset, size_t size);
+static size_t char_superscript(struct buf *ob, struct sd_markdown *rndr, uint8_t *data, size_t offset, size_t size);
 
 enum markdown_char_t {
 	MD_CHAR_NONE = 0,
@@ -106,7 +106,7 @@ static char_trigger markdown_char_ptrs[] = {
 };
 
 /* render • structure containing one particular render */
-struct rs_sd_markdown {
+struct sd_markdown {
 	struct sd_callbacks	cb;
 	void *opaque;
 
@@ -123,7 +123,7 @@ struct rs_sd_markdown {
  ***************************/
 
 static inline struct buf *
-rndr_newbuf(struct rs_sd_markdown *rndr, int type)
+rndr_newbuf(struct sd_markdown *rndr, int type)
 {
 	static const size_t buf_size[2] = {256, 64};
 	struct buf *work = NULL;
@@ -142,7 +142,7 @@ rndr_newbuf(struct rs_sd_markdown *rndr, int type)
 }
 
 static inline void
-rndr_popbuf(struct rs_sd_markdown *rndr, int type)
+rndr_popbuf(struct sd_markdown *rndr, int type)
 {
 	rndr->work_bufs[type].size--;
 }
@@ -350,7 +350,7 @@ tag_length(uint8_t *data, size_t size, enum mkd_autolink *autolink)
 
 /* parse_inline • parses inline markdown elements */
 static void
-parse_inline(struct buf *ob, struct rs_sd_markdown *rndr, uint8_t *data, size_t size)
+parse_inline(struct buf *ob, struct sd_markdown *rndr, uint8_t *data, size_t size)
 {
 	size_t i = 0, end = 0;
 	uint8_t action = 0;
@@ -481,7 +481,7 @@ find_emph_char(uint8_t *data, size_t size, uint8_t c)
 /* parse_emph1 • parsing single emphase */
 /* closed by a symbol not preceded by whitespace and not followed by symbol */
 static size_t
-parse_emph1(struct buf *ob, struct rs_sd_markdown *rndr, uint8_t *data, size_t size, uint8_t c)
+parse_emph1(struct buf *ob, struct sd_markdown *rndr, uint8_t *data, size_t size, uint8_t c)
 {
 	size_t i = 0, len;
 	struct buf *work = 0;
@@ -518,7 +518,7 @@ parse_emph1(struct buf *ob, struct rs_sd_markdown *rndr, uint8_t *data, size_t s
 
 /* parse_emph2 • parsing single emphase */
 static size_t
-parse_emph2(struct buf *ob, struct rs_sd_markdown *rndr, uint8_t *data, size_t size, uint8_t c)
+parse_emph2(struct buf *ob, struct sd_markdown *rndr, uint8_t *data, size_t size, uint8_t c)
 {
 	int (*render_method)(struct buf *ob, const struct buf *text, void *opaque);
 	size_t i = 0, len;
@@ -550,7 +550,7 @@ parse_emph2(struct buf *ob, struct rs_sd_markdown *rndr, uint8_t *data, size_t s
 /* parse_emph3 • parsing single emphase */
 /* finds the first closing tag, and delegates to the other emph */
 static size_t
-parse_emph3(struct buf *ob, struct rs_sd_markdown *rndr, uint8_t *data, size_t size, uint8_t c)
+parse_emph3(struct buf *ob, struct sd_markdown *rndr, uint8_t *data, size_t size, uint8_t c)
 {
 	size_t i = 0, len;
 	int r;
@@ -591,7 +591,7 @@ parse_emph3(struct buf *ob, struct rs_sd_markdown *rndr, uint8_t *data, size_t s
 
 /* char_emphasis • single and double emphasis parsing */
 static size_t
-char_emphasis(struct buf *ob, struct rs_sd_markdown *rndr, uint8_t *data, size_t offset, size_t size)
+char_emphasis(struct buf *ob, struct sd_markdown *rndr, uint8_t *data, size_t offset, size_t size)
 {
 	uint8_t c = data[0];
 	size_t ret;
@@ -625,7 +625,7 @@ char_emphasis(struct buf *ob, struct rs_sd_markdown *rndr, uint8_t *data, size_t
 
 /* char_linebreak • '\n' preceded by two spaces (assuming linebreak != 0) */
 static size_t
-char_linebreak(struct buf *ob, struct rs_sd_markdown *rndr, uint8_t *data, size_t offset, size_t size)
+char_linebreak(struct buf *ob, struct sd_markdown *rndr, uint8_t *data, size_t offset, size_t size)
 {
 	if (offset < 2 || data[-1] != ' ' || data[-2] != ' ')
 		return 0;
@@ -640,7 +640,7 @@ char_linebreak(struct buf *ob, struct rs_sd_markdown *rndr, uint8_t *data, size_
 
 /* char_codespan • '`' parsing a code span (assuming codespan != 0) */
 static size_t
-char_codespan(struct buf *ob, struct rs_sd_markdown *rndr, uint8_t *data, size_t offset, size_t size)
+char_codespan(struct buf *ob, struct sd_markdown *rndr, uint8_t *data, size_t offset, size_t size)
 {
 	size_t end, nb = 0, i, f_begin, f_end;
 
@@ -683,7 +683,7 @@ char_codespan(struct buf *ob, struct rs_sd_markdown *rndr, uint8_t *data, size_t
 
 /* char_escape • '\\' backslash escape */
 static size_t
-char_escape(struct buf *ob, struct rs_sd_markdown *rndr, uint8_t *data, size_t offset, size_t size)
+char_escape(struct buf *ob, struct sd_markdown *rndr, uint8_t *data, size_t offset, size_t size)
 {
 	static const char *escape_chars = "\\`*_{}[]()#+-.!:|&<>^~$";
 	struct buf work = { 0, 0, 0, 0 };
@@ -708,7 +708,7 @@ char_escape(struct buf *ob, struct rs_sd_markdown *rndr, uint8_t *data, size_t o
 /* char_entity • '&' escaped when it doesn't belong to an entity */
 /* valid entities are assumed to be anything matching &#?[A-Za-z0-9]+; */
 static size_t
-char_entity(struct buf *ob, struct rs_sd_markdown *rndr, uint8_t *data, size_t offset, size_t size)
+char_entity(struct buf *ob, struct sd_markdown *rndr, uint8_t *data, size_t offset, size_t size)
 {
 	size_t end = 1;
 	struct buf work = { 0, 0, 0, 0 };
@@ -736,7 +736,7 @@ char_entity(struct buf *ob, struct rs_sd_markdown *rndr, uint8_t *data, size_t o
 
 /* char_langle_tag • '<' when tags or autolinks are allowed */
 static size_t
-char_langle_tag(struct buf *ob, struct rs_sd_markdown *rndr, uint8_t *data, size_t offset, size_t size)
+char_langle_tag(struct buf *ob, struct sd_markdown *rndr, uint8_t *data, size_t offset, size_t size)
 {
 	enum mkd_autolink altype = MKDA_NOT_AUTOLINK;
 	size_t end = tag_length(data, size, &altype);
@@ -761,7 +761,7 @@ char_langle_tag(struct buf *ob, struct rs_sd_markdown *rndr, uint8_t *data, size
 }
 
 static size_t
-char_autolink_www(struct buf *ob, struct rs_sd_markdown *rndr, uint8_t *data, size_t offset, size_t size)
+char_autolink_www(struct buf *ob, struct sd_markdown *rndr, uint8_t *data, size_t offset, size_t size)
 {
 	struct buf *link, *link_url, *link_text;
 	size_t link_len, rewind;
@@ -771,7 +771,7 @@ char_autolink_www(struct buf *ob, struct rs_sd_markdown *rndr, uint8_t *data, si
 
 	link = rndr_newbuf(rndr, BUFFER_SPAN);
 
-   if ((link_len = rs_sd_autolink__www(&rewind, link, data, offset, size)) > 0) {
+	if ((link_len = sd_autolink__www(&rewind, link, data, offset, size)) > 0) {
 		link_url = rndr_newbuf(rndr, BUFFER_SPAN);
 		BUFPUTSL(link_url, "http://");
 		bufput(link_url, link->data, link->size);
@@ -793,7 +793,7 @@ char_autolink_www(struct buf *ob, struct rs_sd_markdown *rndr, uint8_t *data, si
 }
 
 static size_t
-char_autolink_email(struct buf *ob, struct rs_sd_markdown *rndr, uint8_t *data, size_t offset, size_t size)
+char_autolink_email(struct buf *ob, struct sd_markdown *rndr, uint8_t *data, size_t offset, size_t size)
 {
 	struct buf *link;
 	size_t link_len, rewind;
@@ -803,7 +803,7 @@ char_autolink_email(struct buf *ob, struct rs_sd_markdown *rndr, uint8_t *data, 
 
 	link = rndr_newbuf(rndr, BUFFER_SPAN);
 
-   if ((link_len = rs_sd_autolink__email(&rewind, link, data, offset, size)) > 0) {
+	if ((link_len = sd_autolink__email(&rewind, link, data, offset, size)) > 0) {
 		ob->size -= rewind;
 		rndr->cb.autolink(ob, link, MKDA_EMAIL, rndr->opaque);
 	}
@@ -813,7 +813,7 @@ char_autolink_email(struct buf *ob, struct rs_sd_markdown *rndr, uint8_t *data, 
 }
 
 static size_t
-char_autolink_url(struct buf *ob, struct rs_sd_markdown *rndr, uint8_t *data, size_t offset, size_t size)
+char_autolink_url(struct buf *ob, struct sd_markdown *rndr, uint8_t *data, size_t offset, size_t size)
 {
 	struct buf *link;
 	size_t link_len, rewind;
@@ -823,7 +823,7 @@ char_autolink_url(struct buf *ob, struct rs_sd_markdown *rndr, uint8_t *data, si
 
 	link = rndr_newbuf(rndr, BUFFER_SPAN);
 
-   if ((link_len = rs_sd_autolink__url(&rewind, link, data, offset, size)) > 0) {
+	if ((link_len = sd_autolink__url(&rewind, link, data, offset, size)) > 0) {
 		ob->size -= rewind;
 		rndr->cb.autolink(ob, link, MKDA_NORMAL, rndr->opaque);
 	}
@@ -834,7 +834,7 @@ char_autolink_url(struct buf *ob, struct rs_sd_markdown *rndr, uint8_t *data, si
 
 /* char_link • '[': parsing a link or an image */
 static size_t
-char_link(struct buf *ob, struct rs_sd_markdown *rndr, uint8_t *data, size_t offset, size_t size)
+char_link(struct buf *ob, struct sd_markdown *rndr, uint8_t *data, size_t offset, size_t size)
 {
 	int is_img = (offset && data[-1] == '!'), level;
 	size_t i = 1, txt_e, link_b = 0, link_e = 0, title_b = 0, title_e = 0;
@@ -1069,7 +1069,7 @@ cleanup:
 }
 
 static size_t
-char_superscript(struct buf *ob, struct rs_sd_markdown *rndr, uint8_t *data, size_t offset, size_t size)
+char_superscript(struct buf *ob, struct sd_markdown *rndr, uint8_t *data, size_t offset, size_t size)
 {
 	size_t sup_start, sup_len;
 	struct buf *sup;
@@ -1244,7 +1244,7 @@ is_codefence(uint8_t *data, size_t size, struct buf *syntax)
 
 /* is_atxheader • returns whether the line is a hash-prefixed header */
 static int
-is_atxheader(struct rs_sd_markdown *rndr, uint8_t *data, size_t size)
+is_atxheader(struct sd_markdown *rndr, uint8_t *data, size_t size)
 {
 	if (data[0] != '#')
 		return 0;
@@ -1374,13 +1374,13 @@ prefix_uli(uint8_t *data, size_t size)
 
 
 /* parse_block • parsing of one block, returning next uint8_t to parse */
-static void parse_block(struct buf *ob, struct rs_sd_markdown *rndr,
+static void parse_block(struct buf *ob, struct sd_markdown *rndr,
 			uint8_t *data, size_t size);
 
 
 /* parse_blockquote • handles parsing of a blockquote fragment */
 static size_t
-parse_blockquote(struct buf *ob, struct rs_sd_markdown *rndr, uint8_t *data, size_t size)
+parse_blockquote(struct buf *ob, struct sd_markdown *rndr, uint8_t *data, size_t size)
 {
 	size_t beg, end = 0, pre, work_size = 0;
 	uint8_t *work_data = 0;
@@ -1421,11 +1421,11 @@ parse_blockquote(struct buf *ob, struct rs_sd_markdown *rndr, uint8_t *data, siz
 }
 
 static size_t
-parse_htmlblock(struct buf *ob, struct rs_sd_markdown *rndr, uint8_t *data, size_t size, int do_render);
+parse_htmlblock(struct buf *ob, struct sd_markdown *rndr, uint8_t *data, size_t size, int do_render);
 
 /* parse_blockquote • handles parsing of a regular paragraph */
 static size_t
-parse_paragraph(struct buf *ob, struct rs_sd_markdown *rndr, uint8_t *data, size_t size)
+parse_paragraph(struct buf *ob, struct sd_markdown *rndr, uint8_t *data, size_t size)
 {
 	size_t i = 0, end = 0;
 	int level = 0;
@@ -1534,7 +1534,7 @@ parse_paragraph(struct buf *ob, struct rs_sd_markdown *rndr, uint8_t *data, size
 
 /* parse_fencedcode • handles parsing of a block-level code fragment */
 static size_t
-parse_fencedcode(struct buf *ob, struct rs_sd_markdown *rndr, uint8_t *data, size_t size)
+parse_fencedcode(struct buf *ob, struct sd_markdown *rndr, uint8_t *data, size_t size)
 {
 	size_t beg, end;
 	struct buf *work = 0;
@@ -1578,7 +1578,7 @@ parse_fencedcode(struct buf *ob, struct rs_sd_markdown *rndr, uint8_t *data, siz
 }
 
 static size_t
-parse_blockcode(struct buf *ob, struct rs_sd_markdown *rndr, uint8_t *data, size_t size)
+parse_blockcode(struct buf *ob, struct sd_markdown *rndr, uint8_t *data, size_t size)
 {
 	size_t beg, end, pre;
 	struct buf *work = 0;
@@ -1621,7 +1621,7 @@ parse_blockcode(struct buf *ob, struct rs_sd_markdown *rndr, uint8_t *data, size
 /* parse_listitem • parsing of a single list item */
 /*	assuming initial prefix is already removed */
 static size_t
-parse_listitem(struct buf *ob, struct rs_sd_markdown *rndr, uint8_t *data, size_t size, int *flags)
+parse_listitem(struct buf *ob, struct sd_markdown *rndr, uint8_t *data, size_t size, int *flags)
 {
 	struct buf *work = 0, *inter = 0;
 	size_t beg = 0, end, pre, sublist = 0, orgpre = 0, i;
@@ -1758,7 +1758,7 @@ parse_listitem(struct buf *ob, struct rs_sd_markdown *rndr, uint8_t *data, size_
 
 /* parse_list • parsing ordered or unordered list block */
 static size_t
-parse_list(struct buf *ob, struct rs_sd_markdown *rndr, uint8_t *data, size_t size, int flags)
+parse_list(struct buf *ob, struct sd_markdown *rndr, uint8_t *data, size_t size, int flags)
 {
 	struct buf *work = 0;
 	size_t i = 0, j;
@@ -1781,7 +1781,7 @@ parse_list(struct buf *ob, struct rs_sd_markdown *rndr, uint8_t *data, size_t si
 
 /* parse_atxheader • parsing of atx-style headers */
 static size_t
-parse_atxheader(struct buf *ob, struct rs_sd_markdown *rndr, uint8_t *data, size_t size)
+parse_atxheader(struct buf *ob, struct sd_markdown *rndr, uint8_t *data, size_t size)
 {
 	size_t level = 0;
 	size_t i, end, skip;
@@ -1821,7 +1821,7 @@ static size_t
 htmlblock_end_tag(
 	const char *tag,
 	size_t tag_len,
-   struct rs_sd_markdown *rndr,
+	struct sd_markdown *rndr,
 	uint8_t *data,
 	size_t size)
 {
@@ -1849,7 +1849,7 @@ htmlblock_end_tag(
 
 static size_t
 htmlblock_end(const char *curtag,
-   struct rs_sd_markdown *rndr,
+	struct sd_markdown *rndr,
 	uint8_t *data,
 	size_t size,
 	int start_of_line)
@@ -1891,7 +1891,7 @@ htmlblock_end(const char *curtag,
 
 /* parse_htmlblock • parsing of inline HTML block */
 static size_t
-parse_htmlblock(struct buf *ob, struct rs_sd_markdown *rndr, uint8_t *data, size_t size, int do_render)
+parse_htmlblock(struct buf *ob, struct sd_markdown *rndr, uint8_t *data, size_t size, int do_render)
 {
 	size_t i, j = 0, tag_end;
 	const char *curtag = NULL;
@@ -1977,7 +1977,7 @@ parse_htmlblock(struct buf *ob, struct rs_sd_markdown *rndr, uint8_t *data, size
 static void
 parse_table_row(
 	struct buf *ob,
-   struct rs_sd_markdown *rndr,
+	struct sd_markdown *rndr,
 	uint8_t *data,
 	size_t size,
 	size_t columns,
@@ -2034,7 +2034,7 @@ parse_table_row(
 static size_t
 parse_table_header(
 	struct buf *ob,
-   struct rs_sd_markdown *rndr,
+	struct sd_markdown *rndr,
 	uint8_t *data,
 	size_t size,
 	size_t *columns,
@@ -2123,7 +2123,7 @@ parse_table_header(
 static size_t
 parse_table(
 	struct buf *ob,
-   struct rs_sd_markdown *rndr,
+	struct sd_markdown *rndr,
 	uint8_t *data,
 	size_t size)
 {
@@ -2180,7 +2180,7 @@ parse_table(
 
 /* parse_block • parsing of one block, returning next uint8_t to parse */
 static void
-parse_block(struct buf *ob, struct rs_sd_markdown *rndr, uint8_t *data, size_t size)
+parse_block(struct buf *ob, struct sd_markdown *rndr, uint8_t *data, size_t size)
 {
 	size_t beg, end, i;
 	uint8_t *txt_data;
@@ -2388,18 +2388,18 @@ static void expand_tabs(struct buf *ob, const uint8_t *line, size_t size)
  * EXPORTED FUNCTIONS *
  **********************/
 
-struct rs_sd_markdown *
+struct sd_markdown *
 sd_markdown_new(
 	unsigned int extensions,
 	size_t max_nesting,
 	const struct sd_callbacks *callbacks,
 	void *opaque)
 {
-   struct rs_sd_markdown *md = NULL;
+	struct sd_markdown *md = NULL;
 
 	assert(max_nesting > 0 && callbacks);
 
-   md = malloc(sizeof(struct rs_sd_markdown));
+	md = malloc(sizeof(struct sd_markdown));
 	if (!md)
 		return NULL;
 
@@ -2449,7 +2449,7 @@ sd_markdown_new(
 }
 
 void
-rs_sd_markdown_render(struct buf *ob, const uint8_t *document, size_t doc_size, struct rs_sd_markdown *md)
+sd_markdown_render(struct buf *ob, const uint8_t *document, size_t doc_size, struct sd_markdown *md)
 {
 #define MARKDOWN_GROW(x) ((x) + ((x) >> 1))
 	static const char UTF8_BOM[] = {0xEF, 0xBB, 0xBF};
@@ -2524,7 +2524,7 @@ rs_sd_markdown_render(struct buf *ob, const uint8_t *document, size_t doc_size, 
 }
 
 void
-rs_sd_markdown_free(struct rs_sd_markdown *md)
+sd_markdown_free(struct sd_markdown *md)
 {
 	size_t i;
 
@@ -2541,7 +2541,7 @@ rs_sd_markdown_free(struct rs_sd_markdown *md)
 }
 
 void
-rs_sd_version(int *ver_major, int *ver_minor, int *ver_revision)
+sd_version(int *ver_major, int *ver_minor, int *ver_revision)
 {
 	*ver_major = SUNDOWN_VER_MAJOR;
 	*ver_minor = SUNDOWN_VER_MINOR;

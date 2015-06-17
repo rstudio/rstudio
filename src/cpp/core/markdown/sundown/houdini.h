@@ -18,17 +18,17 @@ extern "C" {
 #	define _isdigit(c) ((c) >= '0' && (c) <= '9')
 #endif
 
-extern void rs_houdini_escape_html(struct buf *ob, const uint8_t *src, size_t size);
-extern void rs_houdini_escape_html0(struct buf *ob, const uint8_t *src, size_t size, int secure);
-extern void rs_houdini_unescape_html(struct buf *ob, const uint8_t *src, size_t size);
-extern void rs_houdini_escape_xml(struct buf *ob, const uint8_t *src, size_t size);
-extern void rs_houdini_escape_uri(struct buf *ob, const uint8_t *src, size_t size);
-extern void rs_houdini_escape_url(struct buf *ob, const uint8_t *src, size_t size);
-extern void rs_houdini_escape_href(struct buf *ob, const uint8_t *src, size_t size);
-extern void rs_houdini_unescape_uri(struct buf *ob, const uint8_t *src, size_t size);
-extern void rs_houdini_unescape_url(struct buf *ob, const uint8_t *src, size_t size);
-extern void rs_houdini_escape_js(struct buf *ob, const uint8_t *src, size_t size);
-extern void rs_houdini_unescape_js(struct buf *ob, const uint8_t *src, size_t size);
+extern void houdini_escape_html(struct buf *ob, const uint8_t *src, size_t size);
+extern void houdini_escape_html0(struct buf *ob, const uint8_t *src, size_t size, int secure);
+extern void houdini_unescape_html(struct buf *ob, const uint8_t *src, size_t size);
+extern void houdini_escape_xml(struct buf *ob, const uint8_t *src, size_t size);
+extern void houdini_escape_uri(struct buf *ob, const uint8_t *src, size_t size);
+extern void houdini_escape_url(struct buf *ob, const uint8_t *src, size_t size);
+extern void houdini_escape_href(struct buf *ob, const uint8_t *src, size_t size);
+extern void houdini_unescape_uri(struct buf *ob, const uint8_t *src, size_t size);
+extern void houdini_unescape_url(struct buf *ob, const uint8_t *src, size_t size);
+extern void houdini_escape_js(struct buf *ob, const uint8_t *src, size_t size);
+extern void houdini_unescape_js(struct buf *ob, const uint8_t *src, size_t size);
 
 #ifdef __cplusplus
 }

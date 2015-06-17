@@ -126,7 +126,7 @@ public:
    ~SundownMarkdown()
    {
       if (pMD_)
-         ::rs_sd_markdown_free(pMD_);
+         ::sd_markdown_free(pMD_);
    }
 
    // COPYING: prohibited (boost::noncopyable)
@@ -135,14 +135,14 @@ public:
 
    void render(const SundownBuffer& input, SundownBuffer* pOutput)
    {
-      ::rs_sd_markdown_render(pOutput->pBuff_,
+      ::sd_markdown_render(pOutput->pBuff_,
                            input.pBuff_->data,
                            input.pBuff_->size,
                            pMD_);
    }
 
 private:
-   struct rs_sd_markdown* pMD_;
+   struct sd_markdown* pMD_;
 };
 
 Error allocationError(const ErrorLocation& location)
@@ -190,7 +190,7 @@ Error renderMarkdown(const SundownBuffer& inputBuffer,
       if (!smartyBuffer.allocated())
          return allocationError(ERROR_LOCATION);
 
-      ::rs_sdhtml_smartypants(smartyBuffer,
+      ::sdhtml_smartypants(smartyBuffer,
                            outputBuffer.data(),
                            outputBuffer.size());
 
@@ -392,7 +392,7 @@ Error markdownToHTML(const std::string& markdownInput,
    {
       struct sd_callbacks htmlCallbacks;
       struct html_renderopt htmlOptions;
-      ::rs_sdhtml_toc_renderer(&htmlCallbacks, &htmlOptions);
+      ::sdhtml_toc_renderer(&htmlCallbacks, &htmlOptions);
       std::string tocOutput;
       Error error = renderMarkdown(inputBuffer,
                                    extensions,
@@ -431,7 +431,7 @@ Error markdownToHTML(const std::string& markdownInput,
       htmlRenderMode |= HTML_SKIP_LINKS;
    if (options.escape)
       htmlRenderMode |= HTML_ESCAPE;
-   ::rs_sdhtml_renderer(&htmlCallbacks, &htmlOptions, htmlRenderMode);
+   ::sdhtml_renderer(&htmlCallbacks, &htmlOptions, htmlRenderMode);
 
    // render page
    std::string output;

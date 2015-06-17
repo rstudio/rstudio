@@ -61,13 +61,13 @@ int
 sdhtml_is_tag(const uint8_t *tag_data, size_t tag_size, const char *tagname);
 
 extern void
-rs_sdhtml_renderer(struct sd_callbacks *callbacks, struct html_renderopt *options_ptr, unsigned int render_flags);
+sdhtml_renderer(struct sd_callbacks *callbacks, struct html_renderopt *options_ptr, unsigned int render_flags);
 
 extern void
-rs_sdhtml_toc_renderer(struct sd_callbacks *callbacks, struct html_renderopt *options_ptr);
+sdhtml_toc_renderer(struct sd_callbacks *callbacks, struct html_renderopt *options_ptr);
 
 extern void
-rs_sdhtml_smartypants(struct buf *ob, const uint8_t *text, size_t size);
+sdhtml_smartypants(struct buf *ob, const uint8_t *text, size_t size);
 
 #ifdef __cplusplus
 }
