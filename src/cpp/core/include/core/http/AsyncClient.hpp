@@ -28,6 +28,8 @@
 #include <boost/asio/read_until.hpp>
 #include <boost/asio/deadline_timer.hpp>
 
+#include <boost/algorithm/string/predicate.hpp>
+
 #include <core/Error.hpp>
 #include <core/Log.hpp>
 #include <core/system/System.hpp>
@@ -166,10 +168,19 @@ protected:
    // they finish connecting)
    void writeRequest()
    {
+      // specify closing of the connection after the request unless this is
+      // an attempt to upgrade to websockets
+      Header overrideHeader;
+      if (!boost::algorithm::iequals(request_.headerValue("Connection"),
+                                     "Upgrade"))
+      {
+         overrideHeader = Header::connectionClose();
+      }
+
       // write
       boost::asio::async_write(
           socket(),
-          request_.toBuffers(Header::connectionClose()),
+          request_.toBuffers(overrideHeader),
           boost::bind(
                &AsyncClient<SocketService>::handleWrite,
                AsyncClient<SocketService>::shared_from_this(),
