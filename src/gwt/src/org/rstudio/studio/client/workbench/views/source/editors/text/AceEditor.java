@@ -1957,6 +1957,11 @@ public class AceEditor implements DocDisplay,
    {
       return widget_.addHandler(handler, DocumentChangedEvent.TYPE);
    }
+   
+   public HandlerRegistration addEditorLoadedHandler(EditorLoadedHandler handler)
+   {
+      return widget_.addHandler(handler, EditorLoadedEvent.TYPE);
+   }
 
    public HandlerRegistration addCapturingKeyDownHandler(KeyDownHandler handler)
    {
