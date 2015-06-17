@@ -483,12 +483,15 @@ decidePolicyForMIMEType: (NSDictionary *) actionInformation
        decisionListener: (id < WebPolicyDecisionListener >)listener
 {
    
-   // get the response; if it isn't a NSHTTPURLResponse, ignore it (we need
-   // access to the headers below)
+   // get the response; if it isn't a NSHTTPURLResponse, don't process it here
+   // (we need access to the headers below)
    NSHTTPURLResponse* response = (NSHTTPURLResponse*)
                                  [[frame provisionalDataSource] response];
    if (![response isKindOfClass: [NSHTTPURLResponse class]])
+   {
+      [listener use];
       return;
+   }
 
    // get the Content-Disposition header to see if this file is intended to be
    // downloaded
@@ -501,10 +504,16 @@ decidePolicyForMIMEType: (NSDictionary *) actionInformation
       NSSavePanel* attSavePanel = [NSSavePanel savePanel];
       if ([self runSavePanelForFilename: attSavePanel filename: filename])
       {
+         // save the file ourselves and don't handle it in the webview
          desktop::downloadAndSaveFile(request,
                                       [[attSavePanel URL] path]);
+         [listener ignore];
+         return;
       }
    }
+   
+   // for other types, proceed normally
+   [listener use];
 }
 
 - (NSWindow*) uiWindow

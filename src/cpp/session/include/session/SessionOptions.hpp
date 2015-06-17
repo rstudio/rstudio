@@ -523,6 +523,9 @@ private:
    std::string libclangPath_;
    std::string libclangHeadersPath_;
 
+   // root directory for locating resources
+   core::FilePath resourcePath_;
+
    bool allowFileDownloads_;
    bool allowShell_;
    bool allowPackageInstallation_;

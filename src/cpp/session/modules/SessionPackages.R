@@ -522,6 +522,10 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
                                                    sourceFiles,
                                                    usingRcpp)
 {
+   # sourceFiles is passed in as a list -- convert back to
+   # character vector
+   sourceFiles <- as.character(sourceFiles)
+   
    # Make sure we expand the aliased path if necessary
    # (note this is a no-op if there is no leading '~')
    packageDirectory <- path.expand(packageDirectory)
@@ -591,8 +595,7 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
       Package = packageName,
       Type = "Package",
       Title = "What the Package Does (Title Case)",
-      Version = "0.1",
-      Date = as.character(Sys.Date()),
+      Version = "0.1.0",
       Author = Author,
       Maintainer = Maintainer,
       Description = "More about what it does (maybe more than one line)",
@@ -835,7 +838,7 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    else if (length(sourceFiles))
    {
       # Copy the source files to the appropriate sub-directory
-      sourceFileExtensions <- gsub(".*\\.", "", sourceFiles, perl = TRUE)
+      sourceFileExtensions <- tolower(gsub(".*\\.", "", sourceFiles, perl = TRUE))
       sourceDirs <- .rs.swap(
          sourceFileExtensions,
          "R" = c("r", "q", "s"),
@@ -846,17 +849,27 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
          default = ""
       )
       
-      copyPaths <- gsub("/+", "", file.path(
+      copyPaths <- gsub("/+", "/", file.path(
          packageDirectory,
          sourceDirs,
          basename(sourceFiles)
       ))
       
       dirPaths <- dirname(copyPaths)
-      dir.create(dirPaths, recursive = TRUE)
       
-      success <- file.copy(sourceFiles,
-                           copyPaths)
+      success <- unlist(lapply(dirPaths, function(path) {
+         
+         if (isTRUE(file.info(path)$isdir))
+            return(TRUE)
+         
+         dir.create(path, recursive = TRUE, showWarnings = FALSE)
+         
+      }))
+      
+      if (!all(success))
+         return(.rs.error("Failed to create package directory structure"))
+      
+      success <- file.copy(sourceFiles, copyPaths)
       
       if (!all(success))
          return(.rs.error("Failed to copy one or more source files"))
