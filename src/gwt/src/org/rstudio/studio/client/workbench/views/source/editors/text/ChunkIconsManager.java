@@ -14,7 +14,6 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
@@ -114,7 +113,6 @@ public class ChunkIconsManager
             editor.getRenderer().screenToTextCoordinates(pageX, pageY);
       
       String line = editor.getSession().getLine(position.getRow());
-      Debug.logObject(line);
       
       return line.contains("r setup");
    }
