@@ -173,9 +173,9 @@ std::vector<RVersion> enumerateRVersions(
                                                    ldLibraryPath));
          core::system::setenv(&env, "R_ARCH", "/x86_64");
 
-         RVersion version;
-         version.number = versionPath.filename();
-         version.environment = env;
+         RVersion version(versionPath.filename(),
+                          versionPath.absolutePath(),
+                          env);
 
          // improve on the version by asking R for it's version
          FilePath rBinaryPath = rHomePath.childPath("bin/exec/R");
@@ -183,11 +183,15 @@ std::vector<RVersion> enumerateRVersions(
             rBinaryPath = rHomePath.childPath("bin/exec/x86_64/R");
          if (rBinaryPath.exists())
          {
+            std::string versionNumber = version.number();
             Error error = rVersion(rHomePath,
                                    rBinaryPath,
-                                   &version.number);
+                                   &versionNumber);
             if (error)
                LOG_ERROR(error);
+            version = RVersion(versionNumber,
+                               version.directory(),
+                               version.environment());
          }
 
          rVersions.push_back(version);
