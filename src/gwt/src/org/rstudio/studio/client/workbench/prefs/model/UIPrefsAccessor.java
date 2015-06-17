@@ -485,7 +485,17 @@ public class UIPrefsAccessor extends Prefs
    {
       return object("preferred_publish_account");
    }
-
+   
+   public PrefValue<Integer> preferredDocumentOutlineWidth()
+   {
+      return integer("preferred_document_outline_width", 150);
+   }
+   
+   public PrefValue<Boolean> showDocumentOutlineRmd()
+   {
+      return bool("show_document_outline_rmd", true);
+   }
+   
    private String getDefaultPdfPreview()
    {
       if (Desktop.isDesktop())

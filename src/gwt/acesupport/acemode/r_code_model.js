@@ -677,19 +677,8 @@ var RCodeModel = function(session, tokenizer,
       
    }
 
-   this.$buildScopeTreeUpToRow = function(maxrow)
+   this.$buildScopeTreeUpToRow = function(maxRow)
    {
-      function maybeEvaluateLiteralString(value) {
-         // NOTE: We could evaluate escape sequences and whatnot here as well.
-         //       Hard to imagine who would abuse Rnw by putting escape
-         //       sequences in chunk labels, though.
-         var match = /^(['"])(.*)\1$/.exec(value);
-         if (!match)
-            return value;
-         else
-            return match[2];
-      }
-
       function getChunkLabel(reOptions, comment) {
 
          if (typeof reOptions === "undefined")
@@ -710,74 +699,175 @@ var RCodeModel = function(session, tokenizer,
 
          for (var i = 0; i < values.length; i++) {
             match = /^\s*label\s*=\s*(.*)$/.exec(values[i]);
-            if (match) {
-               return maybeEvaluateLiteralString(
-                                        match[1].replace(/(^\s+)|(\s+$)/g, ''));
-            }
+            if (match)
+               return Utils.stripEnclosingQuotes(match[1].trim());
          }
 
          return null;
       }
+       
+      // Check if the scope tree has already been built up to this row.
+      var scopeRow = this.$scopes.parsePos.row;
+      if (scopeRow >= maxRow)
+          return;
 
-      // It's possible that determining the scope at 'position' may require
-      // parsing beyond the position itself--for example if the position is
-      // on the identifier of a function whose open brace is a few tokens later.
-      // Seems like it would be rare indeed for this distance to be more than 30
-      // rows.
-      var maxRow = Math.min(maxrow + 30, this.$doc.getLength() - 1);
-      this.$tokenizeUpToRow(maxRow);
+      // We explicitly use a TokenIterator rather than a TokenCursor here.
+      // We want to iterate over all token types here (including non-R code)
+      // and the R code model, by default, will only tokenize within R chunks within
+      // multi-mode documents.
+      //
+      // Create a TokenIterator and place it as the previous parse position (as stored
+      // by a previous scope-tree building request). This avoids re-building portions
+      // of the tree that have been already built.
+      var iterator = new TokenIterator(this.$session);
 
-      var tokenCursor = this.getTokenCursor();
-      if (!tokenCursor.seekToNearestToken(this.$scopes.parsePos, maxRow))
+      var row = this.$scopes.parsePos.row;
+      var column = this.$scopes.parsePos.column;
+
+      iterator.moveToPosition(row, column, true);
+      
+      var token = iterator.getCurrentToken();
+      
+      // If this failed, give up.
+      if (token == null)
          return;
 
+      // Grab local state that we'll use when building the scope tree.
+      var value = token.value;
+      var type = token.type;
+      var position = iterator.getCurrentTokenPosition();
+
+      token = iterator.getCurrentToken();
+      if (token == null)
+         return;
+      
       do
       {
-         this.$scopes.parsePos = tokenCursor.currentPosition();
-         this.$scopes.parsePos.column += tokenCursor.currentValue().length;
+         // Bail if we've stepped past the max row.
+         if (iterator.$row > maxRow)
+            break;
 
-         var tokenType = tokenCursor.currentToken().type;
-         if (/\bsectionhead\b/.test(tokenType))
+         // Skip over comments.
+         while (/\bcomment\b/.test(type))
          {
-            var sectionHeadMatch = /^#+'?[-=#\s]*(.*?)\s*[-=#]+\s*$/.exec(
-                  tokenCursor.currentValue());
-
-            var label = "" + sectionHeadMatch[1];
-            if (label.length === 0)
-               label = "(Untitled)";
-            if (label.length > 50)
-               label = label.substring(0, 50) + "...";
-
-            this.$scopes.onSectionHead(label, tokenCursor.currentPosition());
+            token = iterator.moveToStartOfNextRowWithTokens();
+            value = token.value;
+            type = token.type;
+            position = iterator.getCurrentTokenPosition();
          }
-         else if (/\bcodebegin\b/.test(tokenType))
+
+         // Cache access to the current token + cursor.
+         value = token.value;
+         type = token.type;
+         position = iterator.getCurrentTokenPosition();
+
+         // Add Markdown headers.
+         //
+         // The markdown highlight rules are a bit strange in that
+         // 'types' are not really consistent. Likely due to the lack
+         // of general lookahead / lookbehind in the Ace tokenizer. We
+         // just manually check for each 'state'.
+         if (Utils.startsWith(type, "markup.heading"))
          {
-            var chunkStartPos = tokenCursor.currentPosition();
-            var chunkPos = {row: chunkStartPos.row + 1, column: 0};
-            var chunkNum = this.$scopes.getTopLevelScopeCount()+1;
-            var chunkLabel = getChunkLabel(this.$codeBeginPattern,
-                                           tokenCursor.currentValue());
-            var scopeName = "Chunk " + chunkNum;
-            if (chunkLabel)
-               scopeName += ": " + chunkLabel;
-            this.$scopes.onChunkStart(chunkLabel,
-                                      scopeName,
-                                      chunkStartPos,
-                                      chunkPos);
-         }
-         else if (/\bcodeend\b/.test(tokenType))
-         {
-            var pos = tokenCursor.currentPosition();
-            // Close any open functions
-            while (this.$scopes.onScopeEnd(pos))
+            var label = "";
+            var labelPos = {row: position.row, column: 0};
+            var depth = 0;
+            
+            // Check if this is a single-line heading, e.g. '# foo'.
+            if (/^\s*#+\s*$/.test(value))
             {
+               depth = value.split("#").length - 1;
+               var nextToken = iterator.peekFwd(1);
+               label = nextToken ? nextToken.value : "";
             }
 
-            pos.column += tokenCursor.currentValue().length;
-            this.$scopes.onChunkEnd(pos);
+            // Check if this is a 2-line heading, e.g.
+            //
+            //    A title
+            //    -------
+            else if (/^[-=]{3,}\s*$/.test(value))
+            {
+               depth = value[0] === "=" ? 1 : 2;
+               var prevToken = iterator.peekBwd(1);
+               label = prevToken ? prevToken.value : "";
+               labelPos.row--;
+            }
+
+            // Add to scope tree.
+            if (label.length === 0)
+               label = "(Untitled)";
+
+            this.$scopes.onMarkdownHead(label, labelPos, depth);
          }
-         else if (tokenCursor.currentValue() === "{")
+
+         // Add R-comment sections; e.g.
+         //
+         //    # Section ----
+         //
+         // Note that sections can only be closed implicitly by new
+         // sections following later in the document.
+         else if (/\bsectionhead\b/.test(type))
          {
+            var sectionHeadMatch = /^#+'?[-=#\s]*(.*?)\s*[-=#]+\s*$/.exec(value);
+            var label = sectionHeadMatch[1];
+            this.$scopes.onSectionHead(label, position);
+         }
+
+         // Check specifically for YAML header boundaries ('---')
+         //
+         // TODO: We should encode the state we're transitioning into
+         // in the token type, so we don't have to 'guess' based on the
+         // value.
+         else if (/\bcodebegin\b/.test(type) && value === "---")
+         {
+            this.$scopes.onSectionHead("Title", position, {isYaml: true});
+         }
+
+         else if (/\bcodeend\b/.test(type) && value === "---")
+         {
+            this.$scopes.onSectionEnd(position);
+         }
+
+         // Add chunks to the scope tree; e.g. (for R Markdown)
+         //
+         //    ```{r}
+         //
+         // The $codeBeginPattern determines what begins a chunk for
+         // multimode documents.
+         else if (/\bcodebegin\b/.test(type))
+         {
+            var chunkStartPos = position;
+            var chunkPos = {row: chunkStartPos.row + 1, column: 0};
+            var chunkNum = this.$scopes.getTopLevelScopeCount() + 1;
+
+               var chunkLabel = getChunkLabel(this.$codeBeginPattern, value);
+               var scopeName = "Chunk " + chunkNum;
+               if (chunkLabel && value !== "YAML Header")
+                  scopeName += ": " + chunkLabel;
+               this.$scopes.onChunkStart(chunkLabel,
+                                         scopeName,
+                                         chunkStartPos,
+                                         chunkPos);
+         }
+
+         // End chunks on 'codeend' type tokens.
+         // TODO: Check $codeEndPattern?
+         else if (/\bcodeend\b/.test(type))
+         {
+            position.column += value.length;
+            this.$scopes.onChunkEnd(position);
+         }
+
+         // Open braces create scopes. A lot of logic is within to
+         // determine the 'type' of brace -- e.g. is it associated
+         // with a function definition, or just it's own code block?
+         // And so on.
+         else if (value === "{")
+         {
+            // Within here, since we know that we're dealing with R code, we
+            // can fall back to using the R token cursor.
+            var tokenCursor = this.getTokenCursor();
+            tokenCursor.moveToPosition(position, true);
             var localCursor = tokenCursor.cloneCursor();
             var bracePos = localCursor.currentPosition();
             
@@ -837,27 +927,30 @@ var RCodeModel = function(session, tokenizer,
                this.$scopes.onScopeStart(startPos);
             }
          }
-         else if (tokenCursor.currentValue() === "}")
+
+         // A closing brace will close a scope.
+         else if (value === "}")
          {
-            var pos = tokenCursor.currentPosition();
-            if (tokenCursor.isLastSignificantTokenOnLine())
-            {
-               pos.column = this.$getLine(pos.row).length + 1;
-            }
-            else
-            {
-               pos.column++;
-            }
-            this.$scopes.onScopeEnd(pos);
+            this.$scopes.onScopeEnd(position);
          }
-      } while (tokenCursor.moveToNextToken(maxRow));
+
+      } while ((token = iterator.moveToNextToken()));
+
+      // Update the current parse position. We want to set this just
+      // after the current token; in practice, since the tokenization
+      // happens row-wise this means setting the parse position at the
+      // start of the next row.
+      this.$scopes.parsePos = {
+         row: maxRow + 1, column: -1
+      };
+
    };
 
    this.$getFoldToken = function(session, foldStyle, row) {
       this.$tokenizeUpToRow(row);
 
       if (this.$statePattern && !this.$statePattern.test(this.$endStates[row]))
-         return "";
+          return "";
 
       var rowTokens = this.$tokens[row];
 
@@ -1189,6 +1282,16 @@ var RCodeModel = function(session, tokenizer,
          // The first loop looks for an open brace for indentation.
          do
          {
+            // If we hit a chunk start/end, just use the same indentation.
+            var currentType = tokenCursor.currentType();
+            if (currentType === "support.function.codebegin" ||
+                currentType === "support.function.codeend")
+            {
+               return this.$getIndent(
+                  this.$doc.getLine(tokenCursor.$row)
+               ) + continuationIndent;
+            }
+
             var currentValue = tokenCursor.currentValue();
 
             if (tokenCursor.isAtStartOfNewExpression(false))

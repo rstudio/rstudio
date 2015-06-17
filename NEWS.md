@@ -8,6 +8,7 @@
 * Split into lines command for multiple cursors (Ctrl+Alt+A)
 * New keyboard shortcuts for expand/contract selection
 * Enhanced display of sections in R scope navigator
+* Added document outline display to Rmd, R, C++ documents
 
 
 ### R Markdown

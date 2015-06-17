@@ -37,7 +37,9 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.events.Brea
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CommandClickEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedHandler;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.FindRequestedEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.HasDocumentChangedHandlers;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.HasFoldChangeHandlers;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.HasRenderFinishedHandlers;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.UndoRedoHandler;
 import org.rstudio.studio.client.workbench.views.source.events.CollabEditStartParams;
 
@@ -59,6 +61,8 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
                                     IsWidget,
                                     HasFocusHandlers,
                                     HasKeyDownHandlers,
+                                    HasRenderFinishedHandlers,
+                                    HasDocumentChangedHandlers,
                                     InputEditorDisplay,
                                     NavigableSourceEditor
 {
@@ -121,6 +125,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void setFontSize(double size);
 
    void onVisibilityChanged(boolean visible);
+   void onResize();
 
    void setHighlightSelectedLine(boolean on);
    void setHighlightSelectedWord(boolean on);
@@ -162,6 +167,8 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void ensureCursorVisible();
    boolean isCursorInSingleLineString();
    
+   void ensureRowVisible(int row);
+   
    InputEditorSelection search(String needle,
                                boolean backwards,
                                boolean wrap,
@@ -178,6 +185,11 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    
    int getScrollTop();
    void scrollToY(int y);
+   
+   void scrollToLine(int row, boolean center);
+   
+   void alignCursor(Position position, double ratio);
+   void centerSelection();
    
    Scope getCurrentScope();
    Scope getCurrentChunk();
@@ -279,4 +291,5 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    Position screenCoordinatesToDocumentPosition(int pageX, int pageY);
    
    void forceImmediateRender();
+   boolean isPositionVisible(Position position);
 }

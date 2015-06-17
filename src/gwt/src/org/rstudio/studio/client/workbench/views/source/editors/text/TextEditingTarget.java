@@ -202,6 +202,7 @@ public class TextEditingTarget implements
             RmdOutputFormatChangedEvent.Handler handler);
       
       void setPublishPath(String type, String publishPath);
+      void initWidgetSize();
    }
 
    private class SaveProgressIndicator implements ProgressIndicator
@@ -905,7 +906,8 @@ public class TextEditingTarget implements
                                                           extendedType_, 
                                                           fileType_);
       
-      view_ = new TextEditingTargetWidget(commands_,
+      view_ = new TextEditingTargetWidget(this,
+                                          commands_,
                                           prefs_,
                                           fileTypeRegistry_,
                                           docDisplay_,
@@ -913,6 +915,7 @@ public class TextEditingTarget implements
                                           extendedType_,
                                           events_,
                                           session_);
+      
       docUpdateSentinel_ = new DocUpdateSentinel(
             server_,
             docDisplay_,
@@ -920,6 +923,8 @@ public class TextEditingTarget implements
             globalDisplay_.getProgressIndicator("Save File"),
             dirtyState_,
             events_);
+      
+      view_.initWidgetSize();
 
       roxygenHelper_ = new RoxygenHelper(docDisplay_, view_);
       
@@ -2180,6 +2185,11 @@ public class TextEditingTarget implements
    public TextFileType getTextFileType()
    {
       return fileType_;
+   }
+   
+   @Handler
+   void onToggleDocumentOutline()
+   {
    }
    
    @Handler
@@ -4957,6 +4967,51 @@ public class TextEditingTarget implements
       {
          view_.setPublishPath(extendedType_, path);
       }
+   }
+   
+   public void setPreferredOutlineWidgetSize(double size)
+   {
+      prefs_.preferredDocumentOutlineWidth().setGlobalValue((int) size);
+      prefs_.writeUIPrefs();
+      docUpdateSentinel_.setProperty("docOutlineSize", size + "");
+   }
+   
+   public double getPreferredOutlineWidgetSize()
+   {
+      String property = docUpdateSentinel_.getProperty("docOutlineSize");
+      if (StringUtil.isNullOrEmpty(property))
+         return prefs_.preferredDocumentOutlineWidth().getGlobalValue();
+      
+      try {
+         double value = Double.parseDouble(property);
+         
+         // Don't allow too-small widget sizes. This helps to protect against
+         // a user who might drag the outline width to just a few pixels, and
+         // then toggle its visibility by clicking on the 'toggle outline'
+         // button. It's unlikely that, realistically, any user would desire an
+         // outline width less than ~30 pixels; at minimum we just need to
+         // ensure they will be able to see + drag the widget to a larger
+         // size if desired.
+         if (value < 30)
+            return 30;
+         
+         return value;
+      } catch (Exception e) {
+         return prefs_.preferredDocumentOutlineWidth().getGlobalValue();
+      }
+   }
+   
+   public void setPreferredOutlineWidgetVisibility(boolean visible)
+   {
+      docUpdateSentinel_.setProperty("docOutlineVisible", visible ? "1" : "0");
+   }
+   
+   public boolean getPreferredOutlineWidgetVisibility()
+   {
+      String property = docUpdateSentinel_.getProperty("docOutlineVisible");
+      return StringUtil.isNullOrEmpty(property)
+            ? (getTextFileType().isRmd() && prefs_.showDocumentOutlineRmd().getGlobalValue())
+            : Integer.parseInt(property) > 0;
    }
    
    private StatusBar statusBar_;

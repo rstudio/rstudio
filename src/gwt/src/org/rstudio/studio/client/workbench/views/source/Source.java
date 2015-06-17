@@ -439,7 +439,7 @@ public class Source implements InsertSourceHandler,
       });
       
       events.addHandler(CollabEditStartedEvent.TYPE, 
-    		  new CollabEditStartedEvent.Handler() 
+            new CollabEditStartedEvent.Handler() 
       {
          @Override
          public void onCollabEditStarted(final CollabEditStartedEvent collab) 
@@ -2115,7 +2115,11 @@ public class Source implements InsertSourceHandler,
                }
             });
    }
-
+   
+   Widget createWidget(EditingTarget target)
+   {
+      return target.asWidget();
+   }
 
    private EditingTarget addTab(SourceDocument doc)
    {
@@ -2128,7 +2132,7 @@ public class Source implements InsertSourceHandler,
                }
             });
       
-      final Widget widget = target.asWidget();
+      final Widget widget = createWidget(target);
 
       editors_.add(target);
       view_.addTab(widget,

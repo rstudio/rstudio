@@ -477,7 +477,7 @@ public class DocUpdateSentinel
       JsObject properties = sourceDoc_.getProperties();
       return properties.getString(propertyName);
    }
-
+   
    public void setProperty(String name,
                            String value,
                            ProgressIndicator progress)
@@ -485,6 +485,11 @@ public class DocUpdateSentinel
       HashMap<String, String> props = new HashMap<String, String>();
       props.put(name, value);
       modifyProperties(props, progress);
+   }
+   
+   public void setProperty(String name, String value)
+   {
+      setProperty(name, value, null);
    }
 
    /**
@@ -518,6 +523,11 @@ public class DocUpdateSentinel
                      progress.onCompleted();
                }
             });
+   }
+   
+   public void modifyProperties(final HashMap<String, String> properties)
+   {
+      modifyProperties(properties, null);
    }
 
    private void applyProperties(JsObject properties,

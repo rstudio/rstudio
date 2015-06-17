@@ -16,6 +16,7 @@ package org.rstudio.studio.client.workbench.views.source.editors.text.themes;
 
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.LinkElement;
+import com.google.gwt.user.client.Timer;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
@@ -24,6 +25,8 @@ import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.resources.StaticDataResource;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorThemeChangedEvent;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -63,11 +66,12 @@ public class AceThemes
    @Inject
    public AceThemes(AceThemeResources res,
                     final Provider<UIPrefs> prefs,
-                    EventBus eventBus)
+                    EventBus events)
    {
       themes_ = new ArrayList<String>();
       themesByName_ = new HashMap<String, String>();
       darkThemes_ = new HashMap<String, Boolean>();
+      events_ = events;
       
       addTheme(AMBIANCE, res.ambiance(), true);
       addTheme(CHAOS, res.chaos(), true);
@@ -137,7 +141,7 @@ public class AceThemes
          return darkThemes_.containsKey(themeName);
    }
    
-   private void applyTheme(String themeName)
+   private void applyTheme(final String themeName)
    {
       // add theme styles
       if (currentStyleEl_ != null)
@@ -150,6 +154,16 @@ public class AceThemes
       Document.get().getBody().appendChild(currentStyleEl_);
       
       addDarkClassIfNecessary(themeName);
+      
+      // Deferred so that the browser can render the styles.
+      new Timer()
+      {
+         @Override
+         public void run()
+         {
+            events_.fireEvent(new EditorThemeChangedEvent(themeName));
+         }
+      }.schedule(100);
    }
    
    public void addDarkClassIfNecessary(String themeName)
@@ -167,6 +181,7 @@ public class AceThemes
              : defaultThemeName_;
    }
 
+   private final EventBus events_;
    private final ArrayList<String> themes_;
    private final HashMap<String, String> themesByName_;
    private final HashMap<String, Boolean> darkThemes_;

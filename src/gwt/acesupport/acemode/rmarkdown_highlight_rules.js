@@ -24,13 +24,14 @@ var RHighlightRules = require("mode/r_highlight_rules").RHighlightRules;
 var c_cppHighlightRules = require("mode/c_cpp_highlight_rules").c_cppHighlightRules;
 var MarkdownHighlightRules = require("mode/markdown_highlight_rules").MarkdownHighlightRules;
 var TextHighlightRules = require("ace/mode/text_highlight_rules").TextHighlightRules;
+var YamlHighlightRules = require("ace/mode/yaml_highlight_rules").YamlHighlightRules;
 var Utils = require("mode/utils");
 
 var RMarkdownHighlightRules = function() {
 
    // Base rule set (markdown)
    this.$rules = new MarkdownHighlightRules().getRules();
-
+   
    // Embed R highlight rules
    Utils.embedRules(
       this,
@@ -48,6 +49,30 @@ var RMarkdownHighlightRules = function() {
       this.$reCppChunkStartString,
       this.$reChunkEndString
    );
+
+   // Embed YAML highlight rules, but ensure that they can only be
+   // found at the start of a document. We do this by moving all of the
+   // start rules to a second '$start' state, and ensuring that YAML headers
+   // can only be encountered in the initial 'start' state.
+   this.$rules["$start"] = this.$rules["start"].slice();
+   for (var key in this.$rules)
+   {
+      var stateRules = this.$rules[key];
+      for (var i = 0; i < stateRules.length; i++)
+      {
+         if (stateRules[i].next === "start")
+            stateRules[i].next = "$start";
+      }
+   }
+   
+   Utils.embedRules(
+      this,
+      YamlHighlightRules,
+      "yaml",
+      "---",
+      "---"
+   );
+
 };
 oop.inherits(RMarkdownHighlightRules, TextHighlightRules);
 

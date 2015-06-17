@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
@@ -22,6 +23,7 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.PopupPositioner;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.DisplayChunkOptionsEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.ExecuteChunkEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
@@ -52,7 +54,7 @@ public class ChunkIconsManager
                @Override
                public void onAfterAceRender(AfterAceRenderEvent event)
                {
-                  manageChunkIcons();
+                  manageChunkIcons(event.getEditor());
                }
             });
       optionsPanel_ = new ChunkOptionsPopupPanel();
@@ -75,7 +77,7 @@ public class ChunkIconsManager
       return el.getOffsetHeight() == 0 || el.getOffsetWidth() == 0;
    }
    
-   private void manageChunkIcons()
+   private void manageChunkIcons(AceEditorNative editor)
    {
       Element[] icons = DomUtils.getElementsByClassName(
             ThemeStyles.INSTANCE.inlineChunkToolbar());
@@ -99,25 +101,51 @@ public class ChunkIconsManager
          if (el.getChildCount() > 0)
             el.removeAllChildren();
          
-         addToolbar(el);
+         addToolbar(el, isSetupChunk(el, editor));
       }
    }
    
-   private void addToolbar(Element el)
+   private boolean isSetupChunk(Element el, AceEditorNative editor)
    {
-      FlowPanel panel = new FlowPanel();
-      panel.addStyleName(ThemeStyles.INSTANCE.inlineChunkToolbar());
+      int pageX = el.getAbsoluteLeft();
+      int pageY = el.getAbsoluteTop();
+      
+      Position position =
+            editor.getRenderer().screenToTextCoordinates(pageX, pageY);
+      
+      String line = editor.getSession().getLine(position.getRow());
+      Debug.logObject(line);
+      
+      return line.contains("r setup");
+   }
+   
+   private void addToolbar(Element el, boolean isSetupChunk)
+   {
+      FlowPanel toolbarPanel = new FlowPanel();
+      toolbarPanel.addStyleName(ThemeStyles.INSTANCE.inlineChunkToolbar());
     
-      boolean dark = themes_.isDark(
+      boolean isDark = themes_.isDark(
             themes_.getEffectiveThemeName(uiPrefs_.theme().getValue()));
-      Image optionsIcon = createOptionsIcon(dark);
-      optionsIcon.getElement().getStyle().setMarginRight(5, Unit.PX);
-      panel.add(optionsIcon);
       
-      Image runIcon = createRunIcon();
-      panel.add(runIcon);
+      if (isSetupChunk)
+      {
+         // TODO -- need a special icon / behaviour for setup chunk
+         Image optionsIcon = createOptionsIcon(isDark);
+         optionsIcon.getElement().getStyle().setMarginRight(5, Unit.PX);
+         toolbarPanel.add(optionsIcon);
+      }
+      else
+      {
+         Image optionsIcon = createOptionsIcon(isDark);
+         optionsIcon.getElement().getStyle().setMarginRight(5, Unit.PX);
+         toolbarPanel.add(optionsIcon);
+
+         Image runIcon = createRunIcon();
+         toolbarPanel.add(runIcon);
+
+      }
       
-      display(panel, el);
+      display(toolbarPanel, el);
    }
    
    private void display(Widget panel, Element underlyingMarker)
@@ -196,7 +224,7 @@ public class ChunkIconsManager
       NativeEvent event = (NativeEvent) object;
       events_.fireEvent(new DisplayChunkOptionsEvent(event));
    }
-      
+   
    public void displayChunkOptions(AceEditor editor, NativeEvent event)
    {
       // Translate the 'pageX' + 'pageY' position to document position

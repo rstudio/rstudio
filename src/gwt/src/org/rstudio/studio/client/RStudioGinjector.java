@@ -69,6 +69,7 @@ import org.rstudio.studio.client.workbench.views.console.shell.assist.HelpStrate
 import org.rstudio.studio.client.workbench.views.console.shell.assist.RCompletionManager;
 import org.rstudio.studio.client.workbench.views.output.lint.LintManager;
 import org.rstudio.studio.client.workbench.views.source.DocsMenu;
+import org.rstudio.studio.client.workbench.views.source.DocumentOutlineWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetCodeExecution;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditorWidget;
@@ -127,6 +128,7 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(AceEditorWidget widget);
    void injectMembers(ChunkIconsManager manager);
    void injectMembers(WebApplicationHeaderOverlay headerOverlay);
+   void injectMembers(DocumentOutlineWidget widget);
    
    public static final RStudioGinjector INSTANCE = GWT.create(RStudioGinjector.class);
 

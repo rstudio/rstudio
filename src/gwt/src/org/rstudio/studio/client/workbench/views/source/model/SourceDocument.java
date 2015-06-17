@@ -114,7 +114,7 @@ public class SourceDocument extends JavaScriptObject
          this.properties = {};
       return this.properties;
    }-*/;
-
+   
    public native final String getFoldSpec() /*-{
       return this.folds || "";
    }-*/;

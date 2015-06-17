@@ -95,7 +95,7 @@ public class AceEditorWidget extends Composite
       editor_.delegateEventsTo(AceEditorWidget.this);
       editor_.onChange(new CommandWithArg<AceDocumentChangeEventNative>()
       {
-         public void execute(AceDocumentChangeEventNative changeEvent)
+         public void execute(AceDocumentChangeEventNative event)
          {
             // Case 3815: It appears to be possible for change events to be
             // fired recursively, which exhausts the stack. This shouldn't 
@@ -110,8 +110,10 @@ public class AceEditorWidget extends Composite
             try
             {
                ValueChangeEvent.fire(AceEditorWidget.this, null);
-               updateBreakpoints(changeEvent);
-               updateAnnotations(changeEvent);
+               AceEditorWidget.this.fireEvent(new DocumentChangedEvent(event));
+               
+               updateBreakpoints(event);
+               updateAnnotations(event);
                
                // Immediately re-render on change if we have markers, to
                // ensure they're re-drawn in the correct locations.
@@ -233,7 +235,8 @@ public class AceEditorWidget extends Composite
                @Override
                public void execute(Void event)
                {
-                  events_.fireEvent(new AfterAceRenderEvent());
+                  fireEvent(new RenderFinishedEvent());
+                  events_.fireEvent(new AfterAceRenderEvent(AceEditorWidget.this.getEditor()));
                }
             });
       

@@ -14,6 +14,8 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text.ace.events;
 
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative;
+
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
@@ -24,8 +26,14 @@ public class AfterAceRenderEvent extends GwtEvent<AfterAceRenderEvent.Handler>
       void onAfterAceRender(AfterAceRenderEvent event);
    }
 
-   public AfterAceRenderEvent()
+   public AfterAceRenderEvent(AceEditorNative editor)
    {
+      editor_ = editor;
+   }
+   
+   public AceEditorNative getEditor()
+   {
+      return editor_;
    }
    
    @Override
@@ -39,6 +47,8 @@ public class AfterAceRenderEvent extends GwtEvent<AfterAceRenderEvent.Handler>
    {
       handler.onAfterAceRender(this);
    }
+   
+   private final AceEditorNative editor_;
 
    public static final Type<Handler> TYPE = new Type<Handler>();
 }

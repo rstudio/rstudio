@@ -104,6 +104,7 @@ public class EditingPreferencesPane extends PreferencesPane
       
       
       VerticalPanel displayPanel = new VerticalPanel();
+      displayPanel.add(headerLabel("General"));
       displayPanel.add(checkboxPref("Highlight selected word", prefs.highlightSelectedWord()));
       displayPanel.add(checkboxPref("Highlight selected line", prefs.highlightSelectedLine()));
       displayPanel.add(checkboxPref("Show line numbers", prefs.showLineNumbers()));
@@ -113,7 +114,12 @@ public class EditingPreferencesPane extends PreferencesPane
       displayPanel.add(checkboxPref("Show indent guides", prefs_.showIndentGuides()));
       displayPanel.add(checkboxPref("Blinking cursor", prefs_.blinkingCursor()));
       displayPanel.add(checkboxPref("Show syntax highlighting in console input", prefs_.syntaxColorConsole()));
+      
+      Label rMarkdownLabel = headerLabel("R Markdown");
+      rMarkdownLabel.getElement().getStyle().setPaddingTop(14, Unit.PX);
+      displayPanel.add(rMarkdownLabel);
       displayPanel.add(checkboxPref("Show inline toolbar for R code chunks", prefs_.showInlineToolbarForRCodeChunks()));
+      displayPanel.add(checkboxPref("Show document outline", prefs_.showDocumentOutlineRmd()));
       
       VerticalPanel completionPanel = new VerticalPanel();
       

@@ -16,25 +16,30 @@ package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import java.util.List;
 
+import com.google.gwt.animation.client.Animation;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.MouseDownEvent;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.*;
 
 import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.MathUtil;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.events.EnsureHeightEvent;
 import org.rstudio.core.client.events.EnsureHeightHandler;
 import org.rstudio.core.client.events.EnsureVisibleEvent;
 import org.rstudio.core.client.events.EnsureVisibleHandler;
+import org.rstudio.core.client.events.MouseDragHandler;
 import org.rstudio.core.client.layout.RequiresVisibilityChanged;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.*;
@@ -55,6 +60,7 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionUtils;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.edit.ui.EditDialog;
+import org.rstudio.studio.client.workbench.views.source.DocumentOutlineWidget;
 import org.rstudio.studio.client.workbench.views.source.PanelWithToolbars;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetToolbar;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget.Display;
@@ -66,7 +72,8 @@ public class TextEditingTargetWidget
       extends ResizeComposite
       implements Display, RequiresVisibilityChanged
 {
-   public TextEditingTargetWidget(Commands commands,
+   public TextEditingTargetWidget(final TextEditingTarget target,
+                                  Commands commands,
                                   UIPrefs uiPrefs,
                                   FileTypeRegistry fileTypeRegistry,
                                   DocDisplay editor,
@@ -75,6 +82,7 @@ public class TextEditingTargetWidget
                                   EventBus events,
                                   Session session)
    {
+      target_ = target;
       commands_ = commands;
       uiPrefs_ = uiPrefs;
       session_ = session;
@@ -116,14 +124,82 @@ public class TextEditingTargetWidget
             } 
          });
       
-      panel_ = new PanelWithToolbars(toolbar_ = createToolbar(fileType),
-                                    editor.asWidget(),
-                                    statusBar_);
+      editorPanel_ = new DockLayoutPanel(Unit.PX);
+      docOutlineWidget_ = new DocumentOutlineWidget(target);
+      
+      editorPanel_.addEast(docOutlineWidget_, 0);
+      editorPanel_.add(editor.asWidget());
+      
+      MouseDragHandler.addHandler(
+            docOutlineWidget_.getLeftSeparator(),
+            new MouseDragHandler()
+            {
+               double initialWidth_ = 0;
+               
+               @Override
+               public void beginDrag(MouseDownEvent event)
+               {
+                  initialWidth_ = editorPanel_.getWidgetSize(docOutlineWidget_);
+               }
+               
+               @Override
+               public void onDrag(MouseDragEvent event)
+               {
+                  double initialWidth = initialWidth_;
+                  double xDiff = event.getTotalDelta().getMouseX();
+                  double newSize = initialWidth + xDiff;
+                  
+                  // We allow an extra pixel here just to 'hide' the border
+                  // if the outline is maximized, since the 'separator'
+                  // lives as part of the outline instead of 'between' the
+                  // two widgets
+                  double maxSize = editorPanel_.getOffsetWidth() + 1;
+                  
+                  double clamped = MathUtil.clamp(newSize, 0, maxSize);
+                  
+                  // If the size is below '5px', interpret this as a request
+                  // to close the outline widget.
+                  if (clamped < 5)
+                     clamped = 0;
+                  
+                  editorPanel_.setWidgetSize(docOutlineWidget_, clamped);
+                  toggleDocOutlineButton_.setLatched(clamped != 0);
+                  editor_.onResize();
+               }
+               
+               @Override
+               public void endDrag()
+               {
+                  double size = editorPanel_.getWidgetSize(docOutlineWidget_);
+                  
+                  // We only update the preferred size if the user hasn't closed
+                  // the widget.
+                  if (size > 0)
+                     target_.setPreferredOutlineWidgetSize(size);
+                  
+                  target_.setPreferredOutlineWidgetVisibility(size > 0);
+               }
+            });
+      
+      panel_ = new PanelWithToolbars(
+            toolbar_ = createToolbar(fileType),
+            editorPanel_,
+            statusBar_);
+      
       adaptToFileType(fileType);
 
       initWidget(panel_);
    }
-
+   
+   public void initWidgetSize()
+   {
+      if (target_.getPreferredOutlineWidgetVisibility())
+      {
+         double size = target_.getPreferredOutlineWidgetSize();
+         editorPanel_.setWidgetSize(docOutlineWidget_, size);
+      }
+   }
+   
    private StatusBarWidget statusBar_;
 
    private Toolbar createToolbar(TextFileType fileType)
@@ -256,6 +332,63 @@ public class TextEditingTargetWidget
                RSConnect.CONTENT_TYPE_APP, false, null);
          toolbar.addRightWidget(publishButton_);
       }
+      
+      toggleDocOutlineButton_ = new LatchingToolbarButton(
+         "",
+            StandardIcons.INSTANCE.outline(),
+            new ClickHandler()
+            {
+               @Override
+               public void onClick(ClickEvent event)
+               {
+                  final double initialSize = editorPanel_.getWidgetSize(docOutlineWidget_);
+                  
+                  // Clicking the icon toggles the outline widget's visibility. The
+                  // 'destination' below is the width we would like to set -- we
+                  // animate to that position for a slightly nicer visual treatment.
+                  final double destination = docOutlineWidget_.getOffsetWidth() > 5
+                        ? 0
+                        : target_.getPreferredOutlineWidgetSize();
+                  
+                  toggleDocOutlineButton_.setLatched(destination != 0);
+                  
+                  new Animation()
+                  {
+                     @Override
+                     protected void onUpdate(double progress)
+                     {
+                        double interpolated = interpolate(progress);
+                        double size =
+                              destination * interpolated +
+                              initialSize * (1 - interpolated);
+                        editorPanel_.setWidgetSize(docOutlineWidget_, size);
+                        editor_.onResize();
+                     }
+                     
+                     @Override
+                     protected void onComplete()
+                     {
+                        target_.setPreferredOutlineWidgetVisibility(destination != 0);
+                     }
+                  }.run(700);
+               }
+            });
+      
+      toggleDocOutlineButton_.setTitle("Show/hide document outline");
+      
+      // Time-out setting the latch just to ensure the document outline
+      // has actually been appropriately rendered
+      new Timer()
+      {
+         @Override
+         public void run()
+         {
+            toggleDocOutlineButton_.setLatched(docOutlineWidget_.getOffsetWidth() > 0);
+         }
+      }.schedule(100);
+      
+      toolbar.addRightSeparator();
+      toolbar.addRightWidget(toggleDocOutlineButton_);
       
       return toolbar;
    }
@@ -788,6 +921,7 @@ public class TextEditingTargetWidget
       menu.addItem(rmdViewerWindowMenuItem_);
    }
    
+   private final TextEditingTarget target_;
    private final Commands commands_;
    private final UIPrefs uiPrefs_;
    private final Session session_;
@@ -797,6 +931,8 @@ public class TextEditingTargetWidget
    private String extendedType_;
    private String publishPath_;
    private CheckBox sourceOnSave_;
+   private DockLayoutPanel editorPanel_;
+   private DocumentOutlineWidget docOutlineWidget_;
    private PanelWithToolbars panel_;
    private Toolbar toolbar_;
    private InfoBar warningBar_;
@@ -814,6 +950,7 @@ public class TextEditingTargetWidget
    private ToolbarButton rcppHelpButton_;
    private ToolbarButton shinyLaunchButton_;
    private ToolbarButton editRmdFormatButton_;
+   private LatchingToolbarButton toggleDocOutlineButton_;
    private ToolbarPopupMenuButton rmdFormatButton_;
    private RSConnectPublishButton publishButton_;
    private MenuItem rmdViewerPaneMenuItem_;
