@@ -126,13 +126,25 @@ public:
          return false;
    }
 
-   void setRunning(bool running)
+   std::string rVersion()
    {
       if (!empty())
-      {
-         std::string value = safe_convert::numberToString(running);
-         writeProperty("running", value);
-      }
+         return readProperty("r-version");
+      else
+         return std::string();
+   }
+
+   void beginSession(const std::string& rVersion)
+   {
+      setLastUsed();
+      setRunning(true);
+      setRVersion(rVersion);
+   }
+
+   void endSession()
+   {
+      setLastUsed();
+      setRunning(false);
    }
 
    core::Error destroy()
@@ -168,6 +180,22 @@ public:
    }
 
 private:
+
+   void setRunning(bool running)
+   {
+      if (!empty())
+      {
+         std::string value = safe_convert::numberToString(running);
+         writeProperty("running", value);
+      }
+   }
+
+   void setRVersion(const std::string& rVersion)
+   {
+      if (!empty())
+         writeProperty("r-version", rVersion);
+   }
+
    void writeProperty(const std::string& name, const std::string& value) const;
    std::string readProperty(const std::string& name) const;
 

@@ -1782,8 +1782,14 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
    // i.e. either the process dying unexpectedly or a call to R_Suicide)
    rsession::persistentState().setAbend(true);
 
+   // get the current R version
+   std::string rVersion;
+   error = rstudio::r::exec::RFunction(".rs.rVersionString").call(&rVersion);
+   if (error)
+      LOG_ERROR(error);
+
    // set active session flag indicating that we are running
-   module_context::activeSession().setRunning(true);
+   module_context::activeSession().beginSession(rVersion);
    
    // setup fork handlers
    setupForkHandlers();
@@ -2323,8 +2329,7 @@ void rCleanup(bool terminatedNormally)
          rsession::persistentState().setAbend(false);
 
       // set active session flag indicating we are no longer running
-      module_context::activeSession().setLastUsed();
-      module_context::activeSession().setRunning(false);
+      module_context::activeSession().endSession();
 
       // fire shutdown event to modules
       module_context::events().onShutdown(terminatedNormally);

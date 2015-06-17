@@ -627,3 +627,8 @@ assign(envir = .rs.Env, ".rs.getVar", function(name)
       FALSE
    }
 })
+
+.rs.addFunction("rVersionString", function() {
+   as.character(getRversion())
+})
+
