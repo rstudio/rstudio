@@ -36,7 +36,6 @@
 .nodeLabel {
 	white-space: nowrap;
 	font-family: sans-serif;
-	cursor: pointer;
 	font-size: 0.9em;
 	text-overflow: ellipsis;
 	overflow: hidden;

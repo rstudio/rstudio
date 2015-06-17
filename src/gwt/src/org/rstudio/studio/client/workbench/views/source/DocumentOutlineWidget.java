@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.views.source;
 import org.rstudio.core.client.Counter;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
+import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.views.source.editors.text.Scope;
@@ -124,6 +125,7 @@ public class DocumentOutlineWidget extends Composite
             label_.setText(text);
          
          label_.addStyleName(RES.styles().nodeLabel());
+         label_.addStyleName(ThemeStyles.INSTANCE.handCursor());
          
          label_.removeStyleName(RES.styles().nodeLabelChunk());
          label_.removeStyleName(RES.styles().nodeLabelSection());
