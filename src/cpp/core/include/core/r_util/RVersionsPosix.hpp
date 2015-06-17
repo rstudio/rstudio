@@ -58,6 +58,10 @@ private:
    core::system::Options environment_;
 };
 
+inline bool compareVersion(const RVersion& a, const RVersion& b)
+{
+   return RVersionNumber::parse(a.number()) < RVersionNumber::parse(b.number());
+}
 
 std::ostream& operator<<(std::ostream& os, const RVersion& version);
 

@@ -216,11 +216,6 @@ bool isMajorMinorVersion(RVersionNumber& test, const RVersion& item)
            test.minor() == itemNumber.minor());
 }
 
-bool compareVersion(const RVersion& a, const RVersion& b)
-{
-   return RVersionNumber::parse(a.number()) <
-          RVersionNumber::parse(b.number());
-}
 
 bool compareVersionInfo(const RVersionInfo& versionInfo,
                         const RVersion& version)
