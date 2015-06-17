@@ -108,7 +108,8 @@ std::vector<RVersion> enumerateRVersions(
    // filter on existence and eliminate duplicates
    rHomePaths = removeNonExistent(rHomePaths);
    std::sort(rHomePaths.begin(), rHomePaths.end());
-   std::unique(rHomePaths.begin(), rHomePaths.end());
+   rHomePaths.erase(std::unique(rHomePaths.begin(), rHomePaths.end()),
+                    rHomePaths.end());
 
    // probe versions
    BOOST_FOREACH(const FilePath& rHomePath, rHomePaths)
