@@ -374,13 +374,25 @@ public class DocumentOutlineWidget extends Composite
       
       JsArray<Scope> children = node.getChildren();
       for (int i = 0; i < children.length(); i++)
-         buildScopeTreeImpl(children.get(i), depth + 1, counter);
+      {
+         int newDepth = depth + 1;
+         
+         // Don't add extra indentation for items within namespaces
+         if (node.isNamespace())
+            newDepth--;
+         
+         buildScopeTreeImpl(children.get(i), newDepth, counter);
+      }
    }
    
    private boolean shouldDisplayNode(Scope node)
    {
       // NOTE: the 'is*' items are not mutually exclusive
       if (node.isAnon() || node.isLambda() || node.isTopLevel())
+         return false;
+      
+      // Don't show namespaces in the scope tree
+      if (node.isNamespace())
          return false;
       
       // TODO: Annotate scope tree in such a way that this isn't necessary
