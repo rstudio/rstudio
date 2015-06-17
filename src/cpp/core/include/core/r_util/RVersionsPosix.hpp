@@ -29,19 +29,33 @@ namespace rstudio {
 namespace core {
 namespace r_util {
 
-struct RVersion
+class RVersion
 {
+public:
    RVersion() {}
+   RVersion(const std::string& number,
+            const std::string& directory,
+            const core::system::Options& environment)
+      : number_(number), directory_(directory), environment_(environment)
+   {
+   }
 
-   bool empty() const { return number.empty(); }
-
-   std::string number;
-   core::system::Options environment;
+public:
+   bool empty() const { return number_.empty(); }
 
    FilePath homeDir() const
    {
-      return FilePath(core::system::getenv(environment, "R_HOME"));
+      return FilePath(core::system::getenv(environment_, "R_HOME"));
    }
+
+   const std::string& number() const { return number_; }
+   const std::string& directory() const { return directory_; }
+   const core::system::Options& environment() const { return environment_; }
+
+private:
+   std::string number_;
+   std::string directory_;
+   core::system::Options environment_;
 };
 
 

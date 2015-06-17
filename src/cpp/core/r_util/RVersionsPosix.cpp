@@ -70,10 +70,10 @@ void scanForRHomePaths(const core::FilePath& rootDir,
 
 std::ostream& operator<<(std::ostream& os, const RVersion& version)
 {
-   os << version.number;
+   os << version.number();
    os << std::endl;
    os << version.homeDir() << std::endl;
-   BOOST_FOREACH(const core::system::Option& option, version.environment)
+   BOOST_FOREACH(const core::system::Option& option, version.environment())
    {
       os << option.first << "=" << option.second << std::endl;
    }
@@ -129,9 +129,7 @@ std::vector<RVersion> enumerateRVersions(
                              &env,
                              &errMsg))
       {
-         RVersion version;
-         version.number = rVersion;
-         version.environment = env;
+         RVersion version(rVersion, rHomePath.absolutePath(), env);
          rVersions.push_back(version);
       }
       else
@@ -204,27 +202,27 @@ namespace {
 
 bool isVersion(const RVersionNumber& test, const RVersion& item)
 {
-   return test == RVersionNumber::parse(item.number);
+   return test == RVersionNumber::parse(item.number());
 }
 
 bool isMajorMinorVersion(RVersionNumber& test, const RVersion& item)
 {
-   RVersionNumber itemNumber = RVersionNumber::parse(item.number);
+   RVersionNumber itemNumber = RVersionNumber::parse(item.number());
    return (test.major() == itemNumber.major() &&
            test.minor() == itemNumber.minor());
 }
 
 bool compareVersion(const RVersion& a, const RVersion& b)
 {
-   return RVersionNumber::parse(a.number) <
-          RVersionNumber::parse(b.number);
+   return RVersionNumber::parse(a.number()) <
+          RVersionNumber::parse(b.number());
 }
 
 bool compareVersionInfo(const RVersionInfo& versionInfo,
                         const RVersion& version)
 {
    return RVersionNumber::parse(versionInfo.number) <
-          RVersionNumber::parse(version.number);
+          RVersionNumber::parse(version.number());
 }
 
 RVersion findClosest(const RVersionInfo& matchVersion,
