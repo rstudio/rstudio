@@ -202,7 +202,10 @@ public class TextEditingTarget implements
             RmdOutputFormatChangedEvent.Handler handler);
       
       void setPublishPath(String type, String publishPath);
+      
       void initWidgetSize();
+      
+      void toggleDocumentOutline();
    }
 
    private class SaveProgressIndicator implements ProgressIndicator
@@ -2190,6 +2193,7 @@ public class TextEditingTarget implements
    @Handler
    void onToggleDocumentOutline()
    {
+     view_.toggleDocumentOutline();
    }
    
    @Handler

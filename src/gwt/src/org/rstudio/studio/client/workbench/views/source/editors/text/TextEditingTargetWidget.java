@@ -200,6 +200,11 @@ public class TextEditingTargetWidget
       }
    }
    
+   public void toggleDocumentOutline()
+   {
+      toggleDocOutlineButton_.click();
+   }
+   
    private StatusBarWidget statusBar_;
 
    private Toolbar createToolbar(TextFileType fileType)
