@@ -99,7 +99,7 @@ struct sd_callbacks {
 	void (*doc_footer)(struct buf *ob, void *opaque);
 };
 
-struct sd_markdown;
+struct rs_sd_markdown;
 
 /*********
  * FLAGS *
@@ -113,7 +113,7 @@ struct sd_markdown;
  * EXPORTED FUNCTIONS *
  **********************/
 
-extern struct sd_markdown *
+extern struct rs_sd_markdown *
 sd_markdown_new(
 	unsigned int extensions,
 	size_t max_nesting,
@@ -121,13 +121,13 @@ sd_markdown_new(
 	void *opaque);
 
 extern void
-sd_markdown_render(struct buf *ob, const uint8_t *document, size_t doc_size, struct sd_markdown *md);
+rs_sd_markdown_render(struct buf *ob, const uint8_t *document, size_t doc_size, struct rs_sd_markdown *md);
 
 extern void
-sd_markdown_free(struct sd_markdown *md);
+rs_sd_markdown_free(struct rs_sd_markdown *md);
 
 extern void
-sd_version(int *major, int *minor, int *revision);
+rs_sd_version(int *major, int *minor, int *revision);
 
 #ifdef __cplusplus
 }

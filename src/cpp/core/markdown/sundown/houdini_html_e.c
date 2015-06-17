@@ -47,7 +47,7 @@ static const char *HTML_ESCAPES[] = {
 };
 
 void
-houdini_escape_html0(struct buf *ob, const uint8_t *src, size_t size, int secure)
+rs_houdini_escape_html0(struct buf *ob, const uint8_t *src, size_t size, int secure)
 {
 	size_t i = 0, org, esc = 0;
 
@@ -77,8 +77,8 @@ houdini_escape_html0(struct buf *ob, const uint8_t *src, size_t size, int secure
 }
 
 void
-houdini_escape_html(struct buf *ob, const uint8_t *src, size_t size)
+rs_houdini_escape_html(struct buf *ob, const uint8_t *src, size_t size)
 {
-	houdini_escape_html0(ob, src, size, 1);
+	rs_houdini_escape_html0(ob, src, size, 1);
 }
 

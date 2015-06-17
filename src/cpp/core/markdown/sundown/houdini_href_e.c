@@ -51,7 +51,7 @@ static const char HREF_SAFE[] = {
 };
 
 void
-houdini_escape_href(struct buf *ob, const uint8_t *src, size_t size)
+rs_houdini_escape_href(struct buf *ob, const uint8_t *src, size_t size)
 {
 	static const char hex_chars[] = "0123456789ABCDEF";
 	size_t  i = 0, org;

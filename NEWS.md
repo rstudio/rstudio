@@ -50,6 +50,7 @@
 * Avoid spurious R warnings when autocompletions requested
 * Allow completions in statements following infix operators
 * Completions in Install Packages are now correct for the case of multiple active repositories.
+* Rename sundown functions to eliminate link conflict with markdown package on Debian.
 * Vim mode: prevent paste operation from entering visual mode via Ctrl+V cross-talk
 
 

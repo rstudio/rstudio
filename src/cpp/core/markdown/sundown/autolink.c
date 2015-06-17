@@ -26,7 +26,7 @@
 #endif
 
 int
-sd_autolink_issafe(const uint8_t *link, size_t link_len)
+rs_sd_autolink_issafe(const uint8_t *link, size_t link_len)
 {
 	static const size_t valid_uris_count = 5;
 	static const char *valid_uris[] = {
@@ -150,7 +150,7 @@ check_domain(uint8_t *data, size_t size)
 }
 
 size_t
-sd_autolink__www(size_t *rewind_p, struct buf *link, uint8_t *data, size_t offset, size_t size)
+rs_sd_autolink__www(size_t *rewind_p, struct buf *link, uint8_t *data, size_t offset, size_t size)
 {
 	size_t link_end;
 
@@ -180,7 +180,7 @@ sd_autolink__www(size_t *rewind_p, struct buf *link, uint8_t *data, size_t offse
 }
 
 size_t
-sd_autolink__email(size_t *rewind_p, struct buf *link, uint8_t *data, size_t offset, size_t size)
+rs_sd_autolink__email(size_t *rewind_p, struct buf *link, uint8_t *data, size_t offset, size_t size)
 {
 	size_t link_end, rewind;
 	int nb = 0, np = 0;
@@ -229,7 +229,7 @@ sd_autolink__email(size_t *rewind_p, struct buf *link, uint8_t *data, size_t off
 }
 
 size_t
-sd_autolink__url(size_t *rewind_p, struct buf *link, uint8_t *data, size_t offset, size_t size)
+rs_sd_autolink__url(size_t *rewind_p, struct buf *link, uint8_t *data, size_t offset, size_t size)
 {
 	size_t link_end, rewind = 0, domain_len;
 
@@ -239,7 +239,7 @@ sd_autolink__url(size_t *rewind_p, struct buf *link, uint8_t *data, size_t offse
 	while (rewind < offset && isalpha(data[-rewind - 1]))
 		rewind++;
 
-	if (!sd_autolink_issafe(data - rewind, size + rewind))
+   if (!rs_sd_autolink_issafe(data - rewind, size + rewind))
 		return 0;
 	link_end = strlen("://");
 

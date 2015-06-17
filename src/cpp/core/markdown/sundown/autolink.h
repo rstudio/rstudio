@@ -24,16 +24,16 @@ extern "C" {
 #endif
 
 extern int
-sd_autolink_issafe(const uint8_t *link, size_t link_len);
+rs_sd_autolink_issafe(const uint8_t *link, size_t link_len);
 
 extern size_t
-sd_autolink__www(size_t *rewind_p, struct buf *link, uint8_t *data, size_t offset, size_t size);
+rs_sd_autolink__www(size_t *rewind_p, struct buf *link, uint8_t *data, size_t offset, size_t size);
 
 extern size_t
-sd_autolink__email(size_t *rewind_p, struct buf *link, uint8_t *data, size_t offset, size_t size);
+rs_sd_autolink__email(size_t *rewind_p, struct buf *link, uint8_t *data, size_t offset, size_t size);
 
 extern size_t
-sd_autolink__url(size_t *rewind_p, struct buf *link, uint8_t *data, size_t offset, size_t size);
+rs_sd_autolink__url(size_t *rewind_p, struct buf *link, uint8_t *data, size_t offset, size_t size);
 
 #ifdef __cplusplus
 }

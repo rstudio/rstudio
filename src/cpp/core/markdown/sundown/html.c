@@ -62,12 +62,12 @@ sdhtml_is_tag(const uint8_t *tag_data, size_t tag_size, const char *tagname)
 
 static inline void escape_html(struct buf *ob, const uint8_t *source, size_t length)
 {
-	houdini_escape_html0(ob, source, length, 0);
+	rs_houdini_escape_html0(ob, source, length, 0);
 }
 
 static inline void escape_href(struct buf *ob, const uint8_t *source, size_t length)
 {
-	houdini_escape_href(ob, source, length);
+	rs_houdini_escape_href(ob, source, length);
 }
 
 /********************
@@ -82,7 +82,7 @@ rndr_autolink(struct buf *ob, const struct buf *link, enum mkd_autolink type, vo
 		return 0;
 
 	if ((options->flags & HTML_SAFELINK) != 0 &&
-		!sd_autolink_issafe(link->data, link->size) &&
+		!rs_sd_autolink_issafe(link->data, link->size) &&
 		type != MKDA_EMAIL)
 		return 0;
 
@@ -234,7 +234,7 @@ rndr_link(struct buf *ob, const struct buf *link, const struct buf *title, const
 {
 	struct html_renderopt *options = opaque;
 
-	if (link != NULL && (options->flags & HTML_SAFELINK) != 0 && !sd_autolink_issafe(link->data, link->size))
+	if (link != NULL && (options->flags & HTML_SAFELINK) != 0 && !rs_sd_autolink_issafe(link->data, link->size))
 		return 0;
 
 	BUFPUTSL(ob, "<a href=\"");
@@ -540,7 +540,7 @@ toc_finalize(struct buf *ob, void *opaque)
 }
 
 void
-sdhtml_toc_renderer(struct sd_callbacks *callbacks, struct html_renderopt *options)
+rs_sdhtml_toc_renderer(struct sd_callbacks *callbacks, struct html_renderopt *options)
 {
 	static const struct sd_callbacks cb_default = {
 		NULL,
@@ -581,7 +581,7 @@ sdhtml_toc_renderer(struct sd_callbacks *callbacks, struct html_renderopt *optio
 }
 
 void
-sdhtml_renderer(struct sd_callbacks *callbacks, struct html_renderopt *options, unsigned int render_flags)
+rs_sdhtml_renderer(struct sd_callbacks *callbacks, struct html_renderopt *options, unsigned int render_flags)
 {
 	static const struct sd_callbacks cb_default = {
 		rndr_blockcode,
