@@ -539,6 +539,8 @@ public class TextEditingTargetWidget
       
       // set the content type based on the extended type
       setPublishPath(extendedType_, publishPath_);
+      toggleDocOutlineButton_.setVisible(
+            target_.getDocDisplay().hasScopeTree());
       
       toolbar_.invalidateSeparators();
    }
