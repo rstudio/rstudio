@@ -20,17 +20,17 @@
 	padding-top: 1px !important;
 	padding-bottom: 1px !important;
 	padding-right: 5px !important;
-	padding-left: 4px !important;
+	padding-left: 5px !important;
 }
 
 .activeNode {
 	border-left: 2px solid #67890a;
-	padding-left: 2px !important;
+	padding-left: 3px !important;
 }
 
 .activeParentNode {
 	border-left: 2px solid #abcdef;
-	padding-left: 2px !important;
+	padding-left: 3px !important;
 }
 
 .nodeLabel {
