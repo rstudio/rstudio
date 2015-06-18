@@ -64,8 +64,6 @@ import org.rstudio.studio.client.workbench.views.source.DocumentOutlineWidget;
 import org.rstudio.studio.client.workbench.views.source.PanelWithToolbars;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetToolbar;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget.Display;
-import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorLoadedEvent;
-import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorLoadedHandler;
 import org.rstudio.studio.client.workbench.views.source.editors.text.findreplace.FindReplaceBar;
 import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBar;
 import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBarWidget;
@@ -189,21 +187,8 @@ public class TextEditingTargetWidget
             statusBar_);
       
       adaptToFileType(fileType);
-      addHandlers();
+
       initWidget(panel_);
-   }
-   
-   private void addHandlers()
-   {
-      target_.getDocDisplay().addEditorLoadedHandler(new EditorLoadedHandler()
-      {
-         @Override
-         public void onEditorLoaded(EditorLoadedEvent event)
-         {
-            toggleDocOutlineButton_.setVisible(
-                  target_.getDocDisplay().hasScopeTree());
-         }
-      });
    }
    
    public void initWidgetSize()
@@ -541,6 +526,9 @@ public class TextEditingTargetWidget
       setPublishPath(extendedType_, publishPath_);
       toggleDocOutlineButton_.setVisible(
             target_.getDocDisplay().hasScopeTree());
+      
+      // make toggle outline visible if we have a scope tree
+      toggleDocOutlineButton_.setVisible(fileType.canShowScopeTree());
       
       toolbar_.invalidateSeparators();
    }
