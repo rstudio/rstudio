@@ -31,6 +31,7 @@
 #include <core/r_util/RUserData.hpp>
 #include <core/r_util/RSessionContext.hpp>
 #include <core/r_util/RActiveSessions.hpp>
+#include <core/r_util/RVersionsPosix.hpp>
 
 #include <monitor/MonitorConstants.hpp>
 
@@ -529,6 +530,10 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
       limitRpcClientUid_ = core::safe_convert::stringTo<int>(limitUid, -1);
       core::system::unsetenv(kRStudioLimitRpcClientUid);
    }
+
+   // get R versions path
+   rVersionsPath_ = core::system::getenv(kRStudioRVersionsPath);
+   core::system::unsetenv(kRStudioRVersionsPath);
 
    // return status
    return status;

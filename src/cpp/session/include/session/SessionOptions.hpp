@@ -399,6 +399,14 @@ public:
          return core::FilePath();
    }
 
+   core::FilePath rVersionsPath()
+   {
+      if (!rVersionsPath_.empty())
+         return core::FilePath(rVersionsPath_.c_str());
+      else
+         return core::FilePath();
+   }
+
    void clearInitialContextSettings()
    {
       initialWorkingDirOverride_.clear();
@@ -552,6 +560,7 @@ private:
 
    // initial project
    std::string initialProjectPath_;
+   std::string rVersionsPath_;
 
    // monitor
    std::string monitorSharedSecret_;
