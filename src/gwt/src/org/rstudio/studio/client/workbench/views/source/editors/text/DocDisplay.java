@@ -36,7 +36,6 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.events.Brea
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.BreakpointSetEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CommandClickEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedHandler;
-import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorLoadedHandler;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.FindRequestedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.HasDocumentChangedHandlers;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.HasFoldChangeHandlers;
@@ -290,8 +289,6 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void splitIntoLines();
    
    Position screenCoordinatesToDocumentPosition(int pageX, int pageY);
-   
-   HandlerRegistration addEditorLoadedHandler(EditorLoadedHandler handler);
    
    void forceImmediateRender();
    boolean isPositionVisible(Position position);
