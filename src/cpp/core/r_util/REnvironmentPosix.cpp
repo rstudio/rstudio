@@ -66,7 +66,6 @@ FilePath scanForRScript(const std::vector<std::string>& rScriptPaths,
 
    // didn't find it
    *pErrMsg = "Unable to locate R binary by scanning standard locations";
-   LOG_ERROR_MESSAGE(*pErrMsg);
    return FilePath();
 }
 
@@ -216,13 +215,11 @@ FilePath systemDefaultRScript(std::string* pErrMsg)
       if (error)
       {
          *pErrMsg = "Error calling which R: " + error.summary();
-         LOG_ERROR_MESSAGE(*pErrMsg);
       }
       else
       {
          *pErrMsg = "Unable to find an installation of R on the system "
                     "(which R didn't return valid output)";
-         LOG_ERROR_MESSAGE(*pErrMsg);
       }
 
       // scan in standard locations as a fallback
