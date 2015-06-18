@@ -751,6 +751,12 @@ var RCodeModel = function(session, tokenizer,
          while (/\bcomment\b/.test(type))
          {
             token = iterator.moveToStartOfNextRowWithTokens();
+
+            // It's possible that the document ends with comments -- in that
+            // case we should break out early.
+            if (token == null)
+               break;
+
             value = token.value;
             type = token.type;
             position = iterator.getCurrentTokenPosition();
