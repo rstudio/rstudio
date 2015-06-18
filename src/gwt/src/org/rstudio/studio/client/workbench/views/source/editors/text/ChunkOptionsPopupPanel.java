@@ -21,17 +21,24 @@ import org.rstudio.core.client.Pair;
 import org.rstudio.core.client.RegexUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.TextCursor;
+import org.rstudio.core.client.dom.DomUtils;
+import org.rstudio.core.client.dom.DomUtils.NativeEventHandler;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.widget.MiniPopupPanel;
+import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.core.client.widget.SmallButton;
 import org.rstudio.core.client.widget.TextBoxWithCue;
 import org.rstudio.core.client.widget.TriStateCheckBox;
+import org.rstudio.core.client.widget.TriStateCheckBox.State;
 import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
+import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
@@ -44,9 +51,12 @@ import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
+import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
 
 public class ChunkOptionsPopupPanel extends MiniPopupPanel
@@ -56,6 +66,8 @@ public class ChunkOptionsPopupPanel extends MiniPopupPanel
       super(true);
       
       chunkOptions_ = new HashMap<String, String>();
+      originalChunkOptions_ = new HashMap<String, String>();
+      
       checkboxMap_ = new HashMap<String, TriStateCheckBox>();
       
       panel_ = new VerticalPanel();
@@ -120,10 +132,72 @@ public class ChunkOptionsPopupPanel extends MiniPopupPanel
       
       panel_.add(labelPanel);
       
-      for (Map.Entry<String, String> entry : BOOLEAN_CHUNK_OPTIONS.entrySet())
+      outputComboBox_ = new SelectWidget(
+            "Output:",
+            new String[] {
+                  OUTPUT_USE_DOCUMENT_DEFAULT,
+                  OUTPUT_SHOW_CODE_AND_OUTPUT,
+                  OUTPUT_SHOW_OUTPUT_ONLY
+            });
+      
+      outputComboBox_.addChangeHandler(new ChangeHandler()
       {
-         addCheckboxController(entry.getKey(), entry.getValue());
-      }
+         @Override
+         public void onChange(ChangeEvent event)
+         {
+            String value = outputComboBox_.getValue();
+            if (value.equals(OUTPUT_SHOW_CODE_AND_OUTPUT))
+            {
+               set("echo", "TRUE");
+               set("include", "TRUE");
+            }
+            else if (value.equals(OUTPUT_SHOW_OUTPUT_ONLY))
+            {
+               set("echo", "FALSE");
+               set("include", "FALSE");
+            }
+            else if (value.equals(OUTPUT_USE_DOCUMENT_DEFAULT))
+            {
+               revert("echo");
+               revert("include");
+            }
+            synchronize();
+         }
+      });
+      
+      panel_.add(outputComboBox_);
+      
+      useCustomFigureCheckbox_ = new CheckBox("Use custom figure size?");
+      useCustomFigureCheckbox_.addValueChangeHandler(new ValueChangeHandler<Boolean>()
+      {
+         @Override
+         public void onValueChange(ValueChangeEvent<Boolean> event)
+         {
+            figureDimensionsPanel_.setVisible(event.getValue());
+         }
+      });
+      panel_.add(useCustomFigureCheckbox_);
+      
+      figureDimensionsPanel_ = new Grid(2, 2);
+      
+      figWidthBox_ = makeInputBox("fig.width");
+      figureDimensionsPanel_.setWidget(0, 0, new Label("Width (in inches):"));
+      figureDimensionsPanel_.setWidget(0, 1, figWidthBox_);
+      
+      figHeightBox_ = makeInputBox("fig.height");
+      figureDimensionsPanel_.setWidget(1, 0, new Label("Height (in inches):"));
+      figureDimensionsPanel_.setWidget(1, 1, figHeightBox_);
+      
+      panel_.add(figureDimensionsPanel_);
+      
+      showWarningsInOutputCb_ = makeTriStateCheckBox(
+            "Show warnings in generated document?",
+            "warning");
+      panel_.add(showWarningsInOutputCb_);
+      showMessagesInOutputCb_ = makeTriStateCheckBox(
+            "Show messages in generated document?",
+            "message");
+      panel_.add(showMessagesInOutputCb_);
       
       HorizontalPanel footerPanel = new HorizontalPanel();
       footerPanel.getElement().getStyle().setWidth(100, Unit.PCT);
@@ -172,9 +246,96 @@ public class ChunkOptionsPopupPanel extends MiniPopupPanel
       panel_.add(footerPanel);
    }
    
+  
+   
    public void focus()
    {
       tbChunkLabel_.setFocus(true);
+   }
+   
+   private TextBox makeInputBox(final String option)
+   {
+      final TextBox box = new TextBox();
+      box.getElement().setAttribute("placeholder", "Default");
+      box.setWidth("40px");
+      
+      DomUtils.addKeyHandlers(box, new NativeEventHandler()
+      {
+         @Override
+         public void onNativeEvent(NativeEvent event)
+         {
+            Scheduler.get().scheduleDeferred(new ScheduledCommand()
+            {
+               @Override
+               public void execute()
+               {
+                  String text = box.getText().trim();
+                  if (StringUtil.isNullOrEmpty(text))
+                     unset(option);
+                  else
+                     set(option, text);
+                  synchronize();
+               }
+            });
+         }
+      });
+      
+      return box;
+   }
+   
+   private TriStateCheckBox makeTriStateCheckBox(String label, final String option)
+   {
+      TriStateCheckBox checkBox = new TriStateCheckBox(label);
+      checkBox.addValueChangeHandler(
+            new ValueChangeHandler<TriStateCheckBox.State>()
+            {
+               @Override
+               public void onValueChange(ValueChangeEvent<State> event)
+               {
+                  State state = event.getValue();
+                  if (state == TriStateCheckBox.STATE_INDETERMINATE)
+                     unset(option);
+                  else if (state == TriStateCheckBox.STATE_OFF)
+                     set(option, "FALSE");
+                  else if (state == TriStateCheckBox.STATE_ON)
+                     set(option, "TRUE");
+                  synchronize();
+               }
+            });
+      return checkBox;
+   }
+   
+   private boolean has(String key)
+   {
+      return chunkOptions_.containsKey(key);
+   }
+   
+   public String get(String key)
+   {
+      return chunkOptions_.get(key);
+   }
+   
+   private boolean getBoolean(String key)
+   {
+      return isTrue(chunkOptions_.get(key));
+   }
+   
+   private void set(String key, String value)
+   {
+      chunkOptions_.put(key,  value);
+   }
+   
+   private void unset(String key)
+   {
+      chunkOptions_.remove(key);
+   }
+   
+   private void revert(String key)
+   {
+      if (originalChunkOptions_.containsKey(key))
+         chunkOptions_.put(key, originalChunkOptions_.get(key));
+      else
+         chunkOptions_.remove(key);
    }
    
    public void init(AceEditorWidget widget, Position position)
@@ -182,29 +343,35 @@ public class ChunkOptionsPopupPanel extends MiniPopupPanel
       widget_ = widget;
       position_ = position;
       chunkOptions_.clear();
+      originalChunkOptions_.clear();
       
       originalLine_ = widget_.getEditor().getSession().getLine(position_.getRow());
-      parseChunkHeader(originalLine_, chunkOptions_);
+      parseChunkHeader(originalLine_, originalChunkOptions_);
+      for (Map.Entry<String, String> pair : originalChunkOptions_.entrySet())
+         chunkOptions_.put(pair.getKey(), pair.getValue());
       
-      for (String option : BOOLEAN_CHUNK_OPTIONS.keySet())
-      {
-         TriStateCheckBox cb = checkboxMap_.get(option);
-         assert cb != null :
-            "No checkbox for boolean option '" + option + "'";
-         
-         if (chunkOptions_.containsKey(option))
-         {
-            boolean truthy = isTrue(chunkOptions_.get(option));
-            if (truthy)
-               cb.setState(TriStateCheckBox.STATE_ON);
-            else
-               cb.setState(TriStateCheckBox.STATE_OFF);
-         }
-         else
-         {
-            cb.setState(TriStateCheckBox.STATE_INDETERMINATE);
-         }
-      }
+      boolean hasRelevantFigureSettings =
+            has("fig.width") ||
+            has("fig.height");
+      
+      useCustomFigureCheckbox_.setValue(hasRelevantFigureSettings);
+      figureDimensionsPanel_.setVisible(hasRelevantFigureSettings);
+      
+      if (has("fig.width"))
+         figWidthBox_.setText(get("fig.width"));
+      else
+         figWidthBox_.setText("");
+      
+      if (has("fig.height"))
+         figHeightBox_.setText(get("fig.height"));
+      else
+         figHeightBox_.setText("");
+      
+      if (has("warning"))
+         showWarningsInOutputCb_.setValue(getBoolean("warning"));
+      
+      if (has("message"))
+         showMessagesInOutputCb_.setValue(getBoolean("message"));
    }
    
    private boolean isTrue(String string)
@@ -366,30 +533,6 @@ public class ChunkOptionsPopupPanel extends MiniPopupPanel
                   Position.create(position_.getRow() + 1, 0)), newLine);
    }
    
-   private void addCheckboxController(final String optionName,
-                                      final String label)
-   {
-      final TriStateCheckBox cb = new TriStateCheckBox(label);
-      cb.addStyleName(RES.styles().checkBox());
-      cb.addValueChangeHandler(new ValueChangeHandler<TriStateCheckBox.State>()
-      {
-         @Override
-         public void onValueChange(ValueChangeEvent<TriStateCheckBox.State> event)
-         {
-            TriStateCheckBox.State state = event.getValue();
-            if (state == TriStateCheckBox.STATE_INDETERMINATE)
-               chunkOptions_.remove(optionName);
-            else if (state == TriStateCheckBox.STATE_OFF)
-               chunkOptions_.put(optionName, "FALSE");
-            else
-               chunkOptions_.put(optionName,  "TRUE");
-            synchronize();
-         }
-      });
-      checkboxMap_.put(optionName, cb);
-      panel_.add(cb);
-   }
-   
    private void revert()
    {
       if (position_ == null)
@@ -412,23 +555,32 @@ public class ChunkOptionsPopupPanel extends MiniPopupPanel
    
    private final VerticalPanel panel_;
    private final TextBoxWithCue tbChunkLabel_;
+   private final SelectWidget outputComboBox_;
+   private final Grid figureDimensionsPanel_;
+   private final TextBox figWidthBox_;
+   private final TextBox figHeightBox_;
+   private final CheckBox useCustomFigureCheckbox_;
+   private final TriStateCheckBox showWarningsInOutputCb_;
+   private final TriStateCheckBox showMessagesInOutputCb_;
    private final HashMap<String, TriStateCheckBox> checkboxMap_;
    
    private String originalLine_;
    private String chunkPreamble_;
+   
    private HashMap<String, String> chunkOptions_;
+   private HashMap<String, String> originalChunkOptions_;
    
    private AceEditorWidget widget_;
    private Position position_;
    
-   private static final HashMap<String, String> BOOLEAN_CHUNK_OPTIONS;
-   
-   static {
-      BOOLEAN_CHUNK_OPTIONS = new HashMap<String, String>();
-      BOOLEAN_CHUNK_OPTIONS.put("eval", "Evaluate R code");
-      BOOLEAN_CHUNK_OPTIONS.put("include", "Include chunk output");
-      BOOLEAN_CHUNK_OPTIONS.put("echo", "Echo R code");
-   }
+   private static final String OUTPUT_USE_DOCUMENT_DEFAULT =
+         "(Use Current Settings)";
+
+   private static final String OUTPUT_SHOW_CODE_AND_OUTPUT =
+         "Show Code and Output";
+
+   private static final String OUTPUT_SHOW_OUTPUT_ONLY =
+         "Show Output Only (Hide Code)";
    
    public interface Styles extends CssResource
    {
