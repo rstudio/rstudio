@@ -123,7 +123,7 @@ public class ChunkOptionsPopupPanel extends MiniPopupPanel
       labelPanel.addStyleName(RES.styles().labelPanel());
       labelPanel.setVerticalAlignment(VerticalPanel.ALIGN_MIDDLE);
       
-      Label chunkLabel = new Label("Chunk name:");
+      Label chunkLabel = new Label("Name:");
       chunkLabel.addStyleName(RES.styles().chunkLabel());
       labelPanel.add(chunkLabel);
       
@@ -167,7 +167,17 @@ public class ChunkOptionsPopupPanel extends MiniPopupPanel
       
       panel_.add(outputComboBox_);
       
-      useCustomFigureCheckbox_ = new CheckBox("Use custom figure size?");
+      showWarningsInOutputCb_ = makeTriStateCheckBox(
+            "Show warnings in output",
+            "warning");
+      panel_.add(showWarningsInOutputCb_);
+      showMessagesInOutputCb_ = makeTriStateCheckBox(
+            "Show messages in output",
+            "message");
+      panel_.add(showMessagesInOutputCb_);
+      
+      useCustomFigureCheckbox_ = new CheckBox("Use custom figure size");
+      useCustomFigureCheckbox_.addStyleName(RES.styles().checkBox());
       useCustomFigureCheckbox_.addValueChangeHandler(new ValueChangeHandler<Boolean>()
       {
          @Override
@@ -190,15 +200,6 @@ public class ChunkOptionsPopupPanel extends MiniPopupPanel
       
       panel_.add(figureDimensionsPanel_);
       
-      showWarningsInOutputCb_ = makeTriStateCheckBox(
-            "Show warnings in generated document?",
-            "warning");
-      panel_.add(showWarningsInOutputCb_);
-      showMessagesInOutputCb_ = makeTriStateCheckBox(
-            "Show messages in generated document?",
-            "message");
-      panel_.add(showMessagesInOutputCb_);
-      
       HorizontalPanel footerPanel = new HorizontalPanel();
       footerPanel.getElement().getStyle().setWidth(100, Unit.PCT);
       
@@ -212,6 +213,7 @@ public class ChunkOptionsPopupPanel extends MiniPopupPanel
       
       SmallButton revertButton = new SmallButton("Revert");
       revertButton.getElement().getStyle().setMarginRight(8, Unit.PX);
+      revertButton.getElement().getStyle().setMarginTop(-1, Unit.PX);
       revertButton.addClickHandler(new ClickHandler()
       {
          
@@ -225,6 +227,7 @@ public class ChunkOptionsPopupPanel extends MiniPopupPanel
       buttonPanel.add(revertButton);
       
       SmallButton applyButton = new SmallButton("Apply");
+      applyButton.getElement().getStyle().setMarginTop(-1, Unit.PX);
       applyButton.addClickHandler(new ClickHandler()
       {
          
@@ -574,7 +577,7 @@ public class ChunkOptionsPopupPanel extends MiniPopupPanel
    private Position position_;
    
    private static final String OUTPUT_USE_DOCUMENT_DEFAULT =
-         "(Use Current Settings)";
+         "(Use Document Default)";
 
    private static final String OUTPUT_SHOW_CODE_AND_OUTPUT =
          "Show Code and Output";
