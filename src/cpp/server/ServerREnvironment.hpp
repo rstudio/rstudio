@@ -36,10 +36,6 @@ bool initialize(std::string* pErrMsg);
 
 std::vector<std::pair<std::string,std::string> > variables();
 
-bool detectREnvironment(const core::FilePath& filePath,
-                        core::r_util::EnvironmentVars* pVars,
-                        std::string* pErrMsg);
-
 } // namespace r_environment
 } // namespace server
 } // namespace rstudio
