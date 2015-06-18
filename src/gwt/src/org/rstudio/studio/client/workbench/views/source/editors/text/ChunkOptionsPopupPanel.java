@@ -29,6 +29,7 @@ import org.rstudio.core.client.widget.MiniPopupPanel;
 import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.core.client.widget.SmallButton;
 import org.rstudio.core.client.widget.TextBoxWithCue;
+import org.rstudio.core.client.widget.ThemedCheckBox;
 import org.rstudio.core.client.widget.TriStateCheckBox;
 import org.rstudio.core.client.widget.TriStateCheckBox.State;
 import org.rstudio.studio.client.common.HelpLink;
@@ -51,7 +52,6 @@ import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
-import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.HorizontalPanel;
@@ -67,8 +67,6 @@ public class ChunkOptionsPopupPanel extends MiniPopupPanel
       
       chunkOptions_ = new HashMap<String, String>();
       originalChunkOptions_ = new HashMap<String, String>();
-      
-      checkboxMap_ = new HashMap<String, TriStateCheckBox>();
       
       panel_ = new VerticalPanel();
       add(panel_);
@@ -176,7 +174,12 @@ public class ChunkOptionsPopupPanel extends MiniPopupPanel
             "message");
       panel_.add(showMessagesInOutputCb_);
       
-      useCustomFigureCheckbox_ = new CheckBox("Use custom figure size");
+      FlowPanel spacer = new FlowPanel();
+      spacer.setWidth("100%");
+      spacer.setHeight("5px");
+      panel_.add(spacer);
+      
+      useCustomFigureCheckbox_ = new ThemedCheckBox("Use custom figure size");
       useCustomFigureCheckbox_.addStyleName(RES.styles().checkBox());
       useCustomFigureCheckbox_.addValueChangeHandler(new ValueChangeHandler<Boolean>()
       {
@@ -562,10 +565,9 @@ public class ChunkOptionsPopupPanel extends MiniPopupPanel
    private final Grid figureDimensionsPanel_;
    private final TextBox figWidthBox_;
    private final TextBox figHeightBox_;
-   private final CheckBox useCustomFigureCheckbox_;
+   private final ThemedCheckBox useCustomFigureCheckbox_;
    private final TriStateCheckBox showWarningsInOutputCb_;
    private final TriStateCheckBox showMessagesInOutputCb_;
-   private final HashMap<String, TriStateCheckBox> checkboxMap_;
    
    private String originalLine_;
    private String chunkPreamble_;
