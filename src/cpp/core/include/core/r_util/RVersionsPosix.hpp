@@ -21,6 +21,8 @@
 
 #include <core/FilePath.hpp>
 
+#include <core/json/Json.hpp>
+
 #include <core/system/Environment.hpp>
 
 #include <core/r_util/RVersionInfo.hpp>
@@ -72,6 +74,13 @@ std::vector<RVersion> enumerateRVersions(
 
 RVersion selectVersion(const RVersionInfo& matchVersion,
                        std::vector<RVersion> versions);
+
+json::Object rVersionToJson(const r_util::RVersion& version);
+
+r_util::RVersion rVersionFromJson(const json::Object& versionJson);
+
+json::Array versionsAsJson(const std::vector<r_util::RVersion>& versions);
+
 
 } // namespace r_util
 } // namespace core 

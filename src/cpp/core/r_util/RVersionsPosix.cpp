@@ -23,6 +23,7 @@
 
 #include <core/Algorithm.hpp>
 #include <core/r_util/REnvironment.hpp>
+#include <core/json/JsonRpc.hpp>
 
 #include <core/system/Environment.hpp>
 
@@ -284,6 +285,45 @@ RVersion selectVersion(const RVersionInfo& matchVersion,
    {
       return findClosest(matchVersion, versions);
    }
+}
+
+json::Object rVersionToJson(const RVersion& version)
+{
+   json::Object versionJson;
+   versionJson["number"] = version.number();
+   versionJson["directory"] = version.directory();
+   versionJson["environment"] = json::toJsonObject(version.environment());
+   return versionJson;
+}
+
+r_util::RVersion rVersionFromJson(const json::Object& versionJson)
+{
+   std::string number, directory;
+   json::Object environmentJson;
+   Error error = json::readObject(versionJson,
+                                  "number", &number,
+                                  "directory", &directory,
+                                  "environment", &environmentJson);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return RVersion();
+   }
+
+   RVersion version(number,
+                    directory,
+                    json::optionsFromJson(environmentJson));
+   return version;
+}
+
+json::Array versionsAsJson(const std::vector<RVersion>& versions)
+{
+   json::Array versionsJson;
+   std::transform(versions.begin(),
+                  versions.end(),
+                  std::back_inserter(versionsJson),
+                  rVersionToJson);
+   return versionsJson;
 }
 
 
