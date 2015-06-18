@@ -102,13 +102,19 @@ define('mode/r_scope_tree', function(require, exports, module) {
             var child = children[i];
             if (child.isSection() && child.attributes.depth >= depth)
             {
+               debuglog("Closing Markdown scope: '" + child.label + "'");
                this.$root.closeScope(position, ScopeNode.TYPE_SECTION);
                if (child.attributes.depth === depth)
                   return;
+
+               if (node.isRoot() || node === null)
+                  return;
+
+               return this.closeMarkdownHeaderScopes(node.parentScope, position, depth);
             }
          }
 
-         if (node.isRoot() || node == null)
+         if (node.isRoot() || node === null)
             return;
          
          this.closeMarkdownHeaderScopes(node.parentScope, position, depth);
@@ -116,6 +122,7 @@ define('mode/r_scope_tree', function(require, exports, module) {
 
       this.onMarkdownHead = function(label, position, depth)
       {
+         debuglog("Adding Markdown header: '" + label + "' [" + depth + "]");
          var scopes = this.getActiveScopes(position);
          if (scopes.length > 1)
             this.closeMarkdownHeaderScopes(scopes[scopes.length - 2], position, depth);

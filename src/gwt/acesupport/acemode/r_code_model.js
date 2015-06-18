@@ -751,6 +751,12 @@ var RCodeModel = function(session, tokenizer,
          while (/\bcomment\b/.test(type))
          {
             token = iterator.moveToStartOfNextRowWithTokens();
+
+            // It's possible that the document ends with comments -- in that
+            // case we should break out early.
+            if (token == null)
+               break;
+
             value = token.value;
             type = token.type;
             position = iterator.getCurrentTokenPosition();
@@ -796,6 +802,12 @@ var RCodeModel = function(session, tokenizer,
             // Add to scope tree.
             if (label.length === 0)
                label = "(Untitled)";
+
+            // Trim off Markdown IDs from the label. Assume that
+            // anything following a '{' is a label.
+            var braceIdx = label.indexOf("{");
+            if (braceIdx !== -1)
+               label = label.substr(0, braceIdx).trim();
 
             this.$scopes.onMarkdownHead(label, labelPos, depth);
          }
