@@ -22,6 +22,7 @@
 #include <boost/foreach.hpp>
 
 #include <core/Algorithm.hpp>
+#include <core/FileSerializer.hpp>
 #include <core/r_util/REnvironment.hpp>
 #include <core/json/JsonRpc.hpp>
 
@@ -296,7 +297,8 @@ json::Object rVersionToJson(const RVersion& version)
    return versionJson;
 }
 
-r_util::RVersion rVersionFromJson(const json::Object& versionJson)
+Error rVersionFromJson(const json::Object& versionJson,
+                       r_util::RVersion* pVersion)
 {
    std::string number, directory;
    json::Object environmentJson;
@@ -305,18 +307,15 @@ r_util::RVersion rVersionFromJson(const json::Object& versionJson)
                                   "directory", &directory,
                                   "environment", &environmentJson);
    if (error)
-   {
-      LOG_ERROR(error);
-      return RVersion();
-   }
+      return error;
 
-   RVersion version(number,
-                    directory,
-                    json::optionsFromJson(environmentJson));
-   return version;
+   *pVersion = RVersion(number,
+                        directory,
+                        json::optionsFromJson(environmentJson));
+   return Success();
 }
 
-json::Array versionsAsJson(const std::vector<RVersion>& versions)
+json::Array versionsToJson(const std::vector<RVersion>& versions)
 {
    json::Array versionsJson;
    std::transform(versions.begin(),
@@ -324,6 +323,57 @@ json::Array versionsAsJson(const std::vector<RVersion>& versions)
                   std::back_inserter(versionsJson),
                   rVersionToJson);
    return versionsJson;
+}
+
+Error rVersionsFromJson(const json::Array& versionsJson,
+                        std::vector<RVersion>* pVersions)
+{
+   BOOST_FOREACH(const json::Value& versionJson, versionsJson)
+   {
+      if (!json::isType<json::Object>(versionJson))
+         return systemError(boost::system::errc::bad_message, ERROR_LOCATION);
+
+      r_util::RVersion rVersion;
+      Error error = rVersionFromJson(versionJson.get_obj(), &rVersion);
+      if (error)
+          return error;
+
+      pVersions->push_back(rVersion);
+   }
+
+   return Success();
+}
+
+
+Error writeToFile(const FilePath& filePath,
+                  const std::vector<r_util::RVersion>& versions)
+{
+   std::ostringstream ostr;
+   json::writeFormatted(versionsToJson(versions), ostr);
+   return core::writeStringToFile(filePath, ostr.str());
+}
+
+Error readFromFile(const FilePath& filePath,
+                   std::vector<r_util::RVersion>* pVersions)
+{
+   // read file contents
+   std::string contents;
+   Error error = core::readStringFromFile(filePath, &contents);
+   if (error)
+      return error;
+
+   // parse json
+   using namespace json;
+   json::Value jsonValue;
+   if (!parse(contents, &jsonValue) || !isType<json::Array>(jsonValue))
+   {
+      Error error = systemError(boost::system::errc::bad_message,
+                                ERROR_LOCATION);
+      error.addProperty("contents", contents);
+      return error;
+   }
+
+   return rVersionsFromJson(jsonValue.get_array(), pVersions);
 }
 
 

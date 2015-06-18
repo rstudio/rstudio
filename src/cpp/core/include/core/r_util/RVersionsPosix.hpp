@@ -79,8 +79,16 @@ json::Object rVersionToJson(const r_util::RVersion& version);
 
 r_util::RVersion rVersionFromJson(const json::Object& versionJson);
 
-json::Array versionsAsJson(const std::vector<r_util::RVersion>& versions);
+Error rVersionsFromJson(const json::Array& versionsJson,
+                        std::vector<RVersion>* pVersions);
 
+json::Array versionsToJson(const std::vector<r_util::RVersion>& versions);
+
+Error writeToFile(const FilePath& filePath,
+                  const std::vector<r_util::RVersion>& versions);
+
+Error readFromFile(const FilePath& filePath,
+                   std::vector<r_util::RVersion>* pVersions);
 
 } // namespace r_util
 } // namespace core 
