@@ -2193,8 +2193,7 @@ public class TextEditingTarget implements
    @Handler
    void onToggleDocumentOutline()
    {
-      if (getDocDisplay().hasScopeTree())
-         view_.toggleDocumentOutline();
+     view_.toggleDocumentOutline();
    }
    
    @Handler

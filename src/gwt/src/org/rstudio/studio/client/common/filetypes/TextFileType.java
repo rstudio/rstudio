@@ -352,6 +352,10 @@ public class TextFileType extends EditableFileType
       {
          results.add(commands.checkSpelling());
       }
+      if (canShowScopeTree())
+      {
+         results.add(commands.toggleDocumentOutline());
+      }
       results.add(commands.findReplace());
       results.add(commands.findNext());
       results.add(commands.findPrevious());
