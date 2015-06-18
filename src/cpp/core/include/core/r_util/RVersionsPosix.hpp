@@ -84,11 +84,11 @@ Error rVersionsFromJson(const json::Array& versionsJson,
 
 json::Array versionsToJson(const std::vector<r_util::RVersion>& versions);
 
-Error writeToFile(const FilePath& filePath,
-                  const std::vector<r_util::RVersion>& versions);
+Error writeRVersionsToFile(const FilePath& filePath,
+                          const std::vector<r_util::RVersion>& versions);
 
-Error readFromFile(const FilePath& filePath,
-                   std::vector<r_util::RVersion>* pVersions);
+Error readRVersionsFromFile(const FilePath& filePath,
+                            std::vector<r_util::RVersion>* pVersions);
 
 } // namespace r_util
 } // namespace core 

@@ -345,16 +345,16 @@ Error rVersionsFromJson(const json::Array& versionsJson,
 }
 
 
-Error writeToFile(const FilePath& filePath,
-                  const std::vector<r_util::RVersion>& versions)
+Error writeRVersionsToFile(const FilePath& filePath,
+                           const std::vector<r_util::RVersion>& versions)
 {
    std::ostringstream ostr;
    json::writeFormatted(versionsToJson(versions), ostr);
    return core::writeStringToFile(filePath, ostr.str());
 }
 
-Error readFromFile(const FilePath& filePath,
-                   std::vector<r_util::RVersion>* pVersions)
+Error readRVersionsFromFile(const FilePath& filePath,
+                            std::vector<r_util::RVersion>* pVersions)
 {
    // read file contents
    std::string contents;
