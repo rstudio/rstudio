@@ -680,6 +680,13 @@ Error removeAll()
 
 namespace {
 
+void onQuit()
+{
+   Error error = supervisor::saveMostRecentDocuments();
+   if (error)
+      LOG_ERROR(error);
+}
+
 void onShutdown(bool)
 {
    Error error = supervisor::detachFromSourceDatabase();
@@ -704,7 +711,8 @@ Error initialize()
    if (error)
       return error;
 
-   // signup for the shutdown event
+   // signup for the quit and shutdown events
+   module_context::events().onQuit.connect(onQuit);
    module_context::events().onShutdown.connect(onShutdown);
 
    return Success();
