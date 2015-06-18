@@ -53,7 +53,7 @@ bool initialize(std::string* pErrMsg)
                                       pErrMsg);
 
    // use fallback if possible
-   if (!detected && !s_fallbackEnvironmentVars.empty())
+   if (!detected && hasFallbackVariables())
    {
       s_rEnvironmentVars = s_fallbackEnvironmentVars;
       detected = true;
@@ -78,6 +78,11 @@ std::vector<std::pair<std::string,std::string> > variables()
 
    // mutex related error
    return r_util::EnvironmentVars();
+}
+
+bool hasFallbackVariables()
+{
+   return !s_fallbackEnvironmentVars.empty();
 }
 
 void setFallbackVariables(const core::r_util::EnvironmentVars& vars)

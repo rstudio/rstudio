@@ -32,6 +32,7 @@ namespace rstudio {
 namespace server {
 namespace r_environment {
 
+bool hasFallbackVariables();
 void setFallbackVariables(const core::r_util::EnvironmentVars& vars);
 
 bool initialize(std::string* pErrMsg);
