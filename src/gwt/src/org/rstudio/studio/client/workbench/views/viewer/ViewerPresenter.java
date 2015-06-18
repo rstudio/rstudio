@@ -190,6 +190,8 @@ public class ViewerPresenter extends BasePresenter
       {
          manageCommands(true);
          display_.bringToFront();
+         if (Desktop.isDesktop())
+            Desktop.getFrame().setViewerUrl(event.getParams().getUrl());
          display_.previewShiny(event.getParams());
          runningShinyAppParams_ = event.getParams();
       }
