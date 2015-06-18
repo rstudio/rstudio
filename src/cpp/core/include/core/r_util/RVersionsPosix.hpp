@@ -16,6 +16,8 @@
 #ifndef CORE_R_UTIL_R_VERSIONS_HPP
 #define CORE_R_UTIL_R_VERSIONS_HPP
 
+#define kRStudioRVersionsPath "RS_R_VERSIONS_PATH"
+
 #include <vector>
 #include <iosfwd>
 
