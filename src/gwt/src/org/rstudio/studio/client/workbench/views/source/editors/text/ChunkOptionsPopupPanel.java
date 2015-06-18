@@ -135,7 +135,8 @@ public class ChunkOptionsPopupPanel extends MiniPopupPanel
             new String[] {
                   OUTPUT_USE_DOCUMENT_DEFAULT,
                   OUTPUT_SHOW_CODE_AND_OUTPUT,
-                  OUTPUT_SHOW_OUTPUT_ONLY
+                  OUTPUT_SHOW_OUTPUT_ONLY,
+                  OUTPUT_SHOW_NOTHING
             });
       
       outputComboBox_.addChangeHandler(new ChangeHandler()
@@ -144,20 +145,29 @@ public class ChunkOptionsPopupPanel extends MiniPopupPanel
          public void onChange(ChangeEvent event)
          {
             String value = outputComboBox_.getValue();
-            if (value.equals(OUTPUT_SHOW_CODE_AND_OUTPUT))
+            if (value.equals(OUTPUT_USE_DOCUMENT_DEFAULT))
+            {
+               unset("echo");
+               unset("eval");
+               unset("include");
+            }
+            else if (value.equals(OUTPUT_SHOW_CODE_AND_OUTPUT))
             {
                set("echo", "TRUE");
-               set("include", "TRUE");
+               unset("eval");
+               unset("include");
             }
             else if (value.equals(OUTPUT_SHOW_OUTPUT_ONLY))
             {
                set("echo", "FALSE");
-               set("include", "FALSE");
+               unset("eval");
+               unset("include");
             }
-            else if (value.equals(OUTPUT_USE_DOCUMENT_DEFAULT))
+            else if (value.equals(OUTPUT_SHOW_NOTHING))
             {
-               revert("echo");
-               revert("include");
+               unset("echo");
+               unset("eval");
+               set("include", "FALSE");
             }
             synchronize();
          }
@@ -586,6 +596,9 @@ public class ChunkOptionsPopupPanel extends MiniPopupPanel
 
    private static final String OUTPUT_SHOW_OUTPUT_ONLY =
          "Show Output Only (Hide Code)";
+   
+   private static final String OUTPUT_SHOW_NOTHING =
+         "Show Nothing";
    
    public interface Styles extends CssResource
    {
