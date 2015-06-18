@@ -31,7 +31,9 @@ namespace core {
 namespace rstudio {
 namespace server {
 namespace r_environment {
-   
+
+void setFallbackVariables(const core::r_util::EnvironmentVars& vars);
+
 bool initialize(std::string* pErrMsg);
 
 std::vector<std::pair<std::string,std::string> > variables();

@@ -404,16 +404,6 @@ int main(int argc, char * const argv[])
       if (!optionsWarnings.empty())
          program_options::reportWarnings(optionsWarnings, ERROR_LOCATION);
 
-      // detect R environment variables (calls R (and this forks) so must
-      // happen after daemonize so that upstart script can correctly track us
-      std::string errMsg;
-      bool detected = r_environment::initialize(&errMsg);
-      if (!detected)
-      {
-         program_options::reportError(errMsg, ERROR_LOCATION);
-         return EXIT_FAILURE;
-      }
-
       // increase the number of open files allowed (need more files
       // so we can supports lots of concurrent connectins)
       if (core::system::realUserIsRoot())
@@ -466,6 +456,16 @@ int main(int argc, char * const argv[])
       error = overlay::initialize();
       if (error)
          return core::system::exitFailure(error, ERROR_LOCATION);
+
+      // detect R environment variables (calls R (and this forks) so must
+      // happen after daemonize so that upstart script can correctly track us
+      std::string errMsg;
+      bool detected = r_environment::initialize(&errMsg);
+      if (!detected)
+      {
+         program_options::reportError(errMsg, ERROR_LOCATION);
+         return EXIT_FAILURE;
+      }
 
       // add handlers and initiliaze addins (offline has distinct behavior)
       if (server::options().serverOffline())

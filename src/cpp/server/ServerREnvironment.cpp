@@ -34,6 +34,9 @@ namespace {
 // static R environment vars detected during initialization
 r_util::EnvironmentVars s_rEnvironmentVars;
 
+// fallback variables to use if no R environment is detected
+r_util::EnvironmentVars s_fallbackEnvironmentVars;
+
 }
 
 bool initialize(std::string* pErrMsg)
@@ -45,9 +48,19 @@ bool initialize(std::string* pErrMsg)
       rWhichRPath = FilePath(whichROverride);
 
    // attempt to detect R environment
-   return detectREnvironment(rWhichRPath,
-                             &s_rEnvironmentVars,
-                             pErrMsg);
+   bool detected = detectREnvironment(rWhichRPath,
+                                      &s_rEnvironmentVars,
+                                      pErrMsg);
+
+   // use fallback if possible
+   if (!detected && !s_fallbackEnvironmentVars.empty())
+   {
+      s_rEnvironmentVars = s_fallbackEnvironmentVars;
+      detected = true;
+   }
+
+   // return status
+   return detected;
 }
 
 std::vector<std::pair<std::string,std::string> > variables()
@@ -65,6 +78,11 @@ std::vector<std::pair<std::string,std::string> > variables()
 
    // mutex related error
    return r_util::EnvironmentVars();
+}
+
+void setFallbackVariables(const core::r_util::EnvironmentVars& vars)
+{
+   s_fallbackEnvironmentVars = vars;
 }
 
 bool detectREnvironment(const core::FilePath& rScriptPath,
