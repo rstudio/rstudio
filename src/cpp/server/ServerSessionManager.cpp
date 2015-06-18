@@ -188,6 +188,17 @@ Error SessionManager::launchSession(const r_util::SessionContext& context)
    return Success();
 }
 
+namespace {
+
+core::system::ProcessConfigFilter s_processConfigFilter;
+
+} // anonymous namespace
+
+
+void setProcessConfigFilter(const core::system::ProcessConfigFilter& filter)
+{
+   s_processConfigFilter = filter;
+}
 
 // default session launcher -- does the launch then tracks the pid
 // for later reaping
@@ -203,6 +214,7 @@ Error SessionManager::launchAndTrackSession(
    Error error = launchChildProcess(profile.executablePath,
                                     runAsUser,
                                     profile.config,
+                                    s_processConfigFilter,
                                     &pid);
    if (error)
       return error;
@@ -258,6 +270,7 @@ Error launchSession(const r_util::SessionContext& context,
    return core::system::launchChildProcess(rsessionPath,
                                            runAsUser,
                                            config,
+                                           core::system::ProcessConfigFilter(),
                                            pPid);
 }
 

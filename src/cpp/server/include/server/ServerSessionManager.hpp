@@ -98,6 +98,9 @@ private:
    core::system::ChildProcessTracker processTracker_;
 };
 
+// set a process config filter
+void setProcessConfigFilter(const core::system::ProcessConfigFilter& filter);
+
 // Lower-level global functions for launching sessions. These are used
 // internally by the SessionManager as well as for verify-installation
 core::Error launchSession(const core::r_util::SessionContext& context,

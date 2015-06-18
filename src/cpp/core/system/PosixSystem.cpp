@@ -1265,6 +1265,7 @@ Error waitForProcessExit(PidType processId)
 Error launchChildProcess(std::string path,
                          std::string runAsUser,
                          ProcessConfig config,
+                         ProcessConfigFilter configFilter,
                          PidType* pProcessId)
 {
    pid_t pid = ::fork();
@@ -1366,6 +1367,10 @@ Error launchChildProcess(std::string path,
       core::system::setenv(&env, "LOGNAME", user.username);
       core::system::setenv(&env, "HOME", user.homeDirectory);
       copyEnvironmentVar("SHELL", &env);
+
+      // apply config filter if we have one
+      if (configFilter)
+         configFilter(user, &config);
 
       // add custom environment vars (overriding as necessary)
       for (core::system::Options::const_iterator it = config.environment.begin();
