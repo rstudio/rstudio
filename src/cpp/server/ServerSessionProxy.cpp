@@ -89,7 +89,6 @@ Error launchSessionRecovery(const http::Request& request,
    if (error)
       LOG_ERROR(error);
 
-   return sessionManager().launchSession(context);
    // attempt to launch the session only if this is the first recovery attempt
    if (firstAttempt)
       return sessionManager().launchSession(context);
