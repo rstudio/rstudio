@@ -53,7 +53,7 @@ FilePath oldSourceDatabaseRoot()
 
 FilePath sourceDatabaseRoot()
 {
-   return module_context::scopedScratchPath().complete("sdb");
+   return module_context::sessionScratchPath().complete("sdb");
 }
 
 FilePath persistentTitledDir()
