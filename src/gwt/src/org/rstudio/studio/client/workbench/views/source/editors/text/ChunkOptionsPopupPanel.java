@@ -225,7 +225,7 @@ public class ChunkOptionsPopupPanel extends MiniPopupPanel
       
       panel_.add(figureDimensionsPanel_);
       
-      panel_.add(verticalSpacer(2));
+      panel_.add(verticalSpacer(4));
       
       HorizontalPanel footerPanel = new HorizontalPanel();
       footerPanel.getElement().getStyle().setWidth(100, Unit.PCT);
