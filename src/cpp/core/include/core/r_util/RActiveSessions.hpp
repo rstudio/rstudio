@@ -134,6 +134,12 @@ public:
          return std::string();
    }
 
+   void setRVersion(const std::string& rVersion)
+   {
+      if (!empty())
+         writeProperty("r-version", rVersion);
+   }
+
    void beginSession(const std::string& rVersion)
    {
       setLastUsed();
@@ -188,12 +194,6 @@ private:
          std::string value = safe_convert::numberToString(running);
          writeProperty("running", value);
       }
-   }
-
-   void setRVersion(const std::string& rVersion)
-   {
-      if (!empty())
-         writeProperty("r-version", rVersion);
    }
 
    void writeProperty(const std::string& name, const std::string& value) const;

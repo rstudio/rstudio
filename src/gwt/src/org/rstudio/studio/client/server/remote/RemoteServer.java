@@ -42,6 +42,7 @@ import org.rstudio.studio.client.application.events.UnauthorizedEvent;
 import org.rstudio.studio.client.application.model.ActiveSession;
 import org.rstudio.studio.client.application.model.InvalidSessionInfo;
 import org.rstudio.studio.client.application.model.ProductInfo;
+import org.rstudio.studio.client.application.model.RVersion;
 import org.rstudio.studio.client.application.model.SuspendOptions;
 import org.rstudio.studio.client.application.model.UpdateCheckResult;
 import org.rstudio.studio.client.common.JSONUtils;
@@ -331,13 +332,15 @@ public class RemoteServer implements Server
    
    public void quitSession(boolean saveWorkspace, 
                            String switchToProject,
+                           String switchToRVersion,
                            String hostPageUrl,
                            ServerRequestCallback<Boolean> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, JSONBoolean.getInstance(saveWorkspace));
       params.set(1, new JSONString(StringUtil.notNull(switchToProject)));
-      params.set(2, new JSONString(StringUtil.notNull(hostPageUrl)));
+      params.set(2, new JSONString(StringUtil.notNull(switchToRVersion)));
+      params.set(3, new JSONString(StringUtil.notNull(hostPageUrl)));
       sendRequest(RPC_SCOPE, QUIT_SESSION, params, requestCallback);
    }
    
@@ -1309,6 +1312,13 @@ public class RemoteServer implements Server
              ServerRequestCallback<JsArray<ActiveSession>> callback)
    {
       sendRequest(RPC_SCOPE, GET_ACTIVE_SESSIONS, hostPageUrl, callback);
+   }
+   
+   @Override
+   public void getAvailableRVersions(
+         ServerRequestCallback<JsArray<RVersion>> callback)
+   {
+      sendRequest(RPC_SCOPE, GET_AVAILABLE_R_VERSIONS, callback);
    }
    
    @Override
@@ -4269,6 +4279,7 @@ public class RemoteServer implements Server
    private static final String GET_NEW_PROJECT_CONTEXT = "get_new_project_context";
    private static final String GET_NEW_SESSION_URL = "get_new_session_url";
    private static final String GET_ACTIVE_SESSIONS = "get_active_sessions";
+   private static final String GET_AVAILABLE_R_VERSIONS = "get_available_r_versions";
    private static final String CREATE_PROJECT = "create_project";
    private static final String READ_PROJECT_OPTIONS = "read_project_options";
    private static final String WRITE_PROJECT_OPTIONS = "write_project_options";

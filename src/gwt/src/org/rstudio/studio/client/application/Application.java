@@ -44,6 +44,7 @@ import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.widget.Operation;
+import org.rstudio.studio.client.application.ApplicationQuit.QuitContext;
 import org.rstudio.studio.client.application.events.*;
 import org.rstudio.studio.client.application.model.InvalidSessionInfo;
 import org.rstudio.studio.client.application.model.ProductInfo;
@@ -127,6 +128,7 @@ public class Application implements ApplicationEventHandlers
       events.addHandler(InvalidClientVersionEvent.TYPE, this);
       events.addHandler(ServerOfflineEvent.TYPE, this);
       events.addHandler(InvalidSessionEvent.TYPE, this);
+      events.addHandler(SwitchToRVersionEvent.TYPE, this);
       
       // register for uncaught exceptions
       uncaughtExHandler.register();
@@ -405,6 +407,27 @@ public class Application implements ApplicationEventHandlers
    {
       view_.hideSerializationProgress();
    }
+   
+   @Override
+   public void onSwitchToRVersion(final SwitchToRVersionEvent event)
+   {
+      final ApplicationQuit applicaitonQuit = pApplicationQuit_.get();
+      applicaitonQuit.prepareForQuit("Switch R Version", 
+                                             new QuitContext() {
+         public void onReadyToQuit(boolean saveChanges)
+         {
+            // see if we have a project (otherwise switch to "None")
+            String project = session_.getSessionInfo().getActiveProjectFile();
+            if (project == null)
+               project = Projects.NONE;
+            
+            // do the quit
+            applicaitonQuit.performQuit(saveChanges, 
+                                        project, 
+                                        event.getRVersion());
+         }   
+      });
+   }
 
    public void onReload(ReloadEvent event)
    {
@@ -566,6 +589,7 @@ public class Application implements ApplicationEventHandlers
                      Desktop.getFrame().setPendingQuit(
                                        DesktopFrame.PENDING_QUIT_AND_EXIT);
                      server_.quitSession(false,
+                                         null,
                                          null,
                                          GWT.getHostPageBaseURL(),
                                          new SimpleRequestCallback<Boolean>());

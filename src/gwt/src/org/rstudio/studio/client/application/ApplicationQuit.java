@@ -276,27 +276,47 @@ public class ApplicationQuit implements SaveActionChangedHandler,
       
    }
    
+   
+   public void performQuit(boolean saveChanges)
+   {
+      performQuit(saveChanges, null, null);
+   }
+   
    public void performQuit(boolean saveChanges, 
                            String switchToProject)
    {
-      performQuit(null, saveChanges, switchToProject);
+      performQuit(saveChanges, switchToProject, null);
    }
    
-   public void performQuit(String progressMessage,
-                           boolean saveChanges, 
-                           String switchToProject)
+   public void performQuit(boolean saveChanges, 
+                           String switchToProject,
+                           String switchToRVersion)
    {
-      performQuit(progressMessage, saveChanges, switchToProject, null);
+      performQuit(null, saveChanges, switchToProject, switchToRVersion);
    }
    
    public void performQuit(String progressMessage,
                            boolean saveChanges, 
                            String switchToProject,
+                           String switchToRVersion)
+   {
+      performQuit(progressMessage, 
+                  saveChanges, 
+                  switchToProject, 
+                  switchToRVersion,
+                  null);
+   }
+   
+   public void performQuit(String progressMessage,
+                           boolean saveChanges, 
+                           String switchToProject,
+                           String switchToRVersion,
                            Command onQuitAcknowledged)
    {
       new QuitCommand(progressMessage, 
                       saveChanges, 
                       switchToProject,
+                      switchToRVersion,
                       onQuitAcknowledged).execute();
    }
    
@@ -517,7 +537,7 @@ public class ApplicationQuit implements SaveActionChangedHandler,
       prepareForQuit("Quit R Session", new QuitContext() {
          public void onReadyToQuit(boolean saveChanges)
          {
-            performQuit(saveChanges, null);
+            performQuit(saveChanges);
          }   
       });
    }
@@ -564,11 +584,13 @@ public class ApplicationQuit implements SaveActionChangedHandler,
       public QuitCommand(String progressMessage, 
                          boolean saveChanges, 
                          String switchToProject,
+                         String switchToRVersion,
                          Command onQuitAcknowledged)
       {
          progressMessage_ = progressMessage;
          saveChanges_ = saveChanges;
          switchToProject_ = switchToProject;
+         switchToRVersion_ = switchToRVersion;
          onQuitAcknowledged_ = onQuitAcknowledged;
       }
       
@@ -608,6 +630,7 @@ public class ApplicationQuit implements SaveActionChangedHandler,
                server_.quitSession(
                   saveChanges_,
                   switchToProject_,
+                  switchToRVersion_,
                   GWT.getHostPageBaseURL(),
                   new ServerRequestCallback<Boolean>()
                   {
@@ -668,6 +691,7 @@ public class ApplicationQuit implements SaveActionChangedHandler,
 
       private final boolean saveChanges_;
       private final String switchToProject_;
+      private final String switchToRVersion_;
       private final String progressMessage_;
       private final Command onQuitAcknowledged_;
 

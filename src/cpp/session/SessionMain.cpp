@@ -898,10 +898,11 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
 
             // see whether we should save the workspace
             bool saveWorkspace = true;
-            std::string switchToProject, hostPageUrl;
+            std::string switchToProject, switchToRVersion, hostPageUrl;
             Error error = json::readParams(jsonRpcRequest.params,
                                            &saveWorkspace,
                                            &switchToProject,
+                                           &switchToRVersion,
                                            &hostPageUrl) ;
             if (error)
                LOG_ERROR(error);
@@ -911,6 +912,8 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
             {
                if (options().switchProjectsWithUrl())
                {
+                  using namespace module_context;
+
                   r_util::SessionScope scope;
                   if (switchToProject == kProjectNone)
                   {
@@ -918,7 +921,6 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
                                           options().sessionScope().id());
 
                      // update the project and working dir
-                     using namespace module_context;
                      activeSession().setProject(kProjectNone);
                      activeSession().setWorkingDir(
                              createAliasedPath(getDefaultWorkingDirectory()));
@@ -939,6 +941,10 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
                      activeSession().setProject(projDir);
                      activeSession().setWorkingDir(projDir);
                   }
+
+                  // note switch to R version if requested
+                  if (!switchToRVersion.empty())
+                     activeSession().setRVersion(switchToRVersion);
 
                   s_nextSessionUrl = r_util::createSessionUrl(hostPageUrl,
                                                               scope);
