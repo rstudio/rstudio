@@ -1318,13 +1318,6 @@ public class RemoteServer implements Server
    }
    
    @Override
-   public void getAvailableRVersions(
-         ServerRequestCallback<JsArray<RVersionSpec>> callback)
-   {
-      sendRequest(RPC_SCOPE, GET_AVAILABLE_R_VERSIONS, callback);
-   }
-   
-   @Override
    public void executeRCode(String code,
                             ServerRequestCallback<String> requestCallback)
    {
@@ -4282,7 +4275,6 @@ public class RemoteServer implements Server
    private static final String GET_NEW_PROJECT_CONTEXT = "get_new_project_context";
    private static final String GET_NEW_SESSION_URL = "get_new_session_url";
    private static final String GET_ACTIVE_SESSIONS = "get_active_sessions";
-   private static final String GET_AVAILABLE_R_VERSIONS = "get_available_r_versions";
    private static final String CREATE_PROJECT = "create_project";
    private static final String READ_PROJECT_OPTIONS = "read_project_options";
    private static final String WRITE_PROJECT_OPTIONS = "write_project_options";

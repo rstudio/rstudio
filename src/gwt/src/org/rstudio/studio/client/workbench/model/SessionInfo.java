@@ -18,6 +18,7 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.jsonrpc.RpcObjectList;
+import org.rstudio.studio.client.application.model.RVersionSpec;
 import org.rstudio.studio.client.common.compilepdf.model.CompilePdfState;
 import org.rstudio.studio.client.common.console.ConsoleProcessInfo;
 import org.rstudio.studio.client.common.debugging.model.ErrorManagerState;
@@ -376,8 +377,8 @@ public class SessionInfo extends JavaScriptObject
       return this.active_session_count;
    }-*/;
    
-   public final native boolean getMultiVersion() /*-{
-      return this.multi_version;
+   public final native JsArray<RVersionSpec> getAvailableRVersions() /*-{
+      return this.available_r_versions;
    }-*/;
    
    public final native String getRVersion() /*-{
