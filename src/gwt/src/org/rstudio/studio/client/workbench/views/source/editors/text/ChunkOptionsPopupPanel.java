@@ -130,8 +130,8 @@ public class ChunkOptionsPopupPanel extends MiniPopupPanel
       outputComboBox_ = new ListBox();
       String[] options = new String[] {
             OUTPUT_USE_DOCUMENT_DEFAULT,
-            OUTPUT_SHOW_CODE_AND_OUTPUT,
             OUTPUT_SHOW_OUTPUT_ONLY,
+            OUTPUT_SHOW_CODE_AND_OUTPUT,
             OUTPUT_SHOW_NOTHING,
             OUTPUT_SKIP_THIS_CHUNK
       };
@@ -187,15 +187,18 @@ public class ChunkOptionsPopupPanel extends MiniPopupPanel
       panel_.add(verticalSpacer(4));
       
       showWarningsInOutputCb_ = makeTriStateCheckBox(
-            "Show warnings in output",
+            "Show warnings",
             "warning");
       panel_.add(showWarningsInOutputCb_);
+      
+      panel_.add(verticalSpacer(3));
+      
       showMessagesInOutputCb_ = makeTriStateCheckBox(
-            "Show messages in output",
+            "Show messages",
             "message");
       panel_.add(showMessagesInOutputCb_);
       
-      panel_.add(verticalSpacer(4));
+      panel_.add(verticalSpacer(6));
       
       useCustomFigureCheckbox_ = new ThemedCheckBox("Use custom figure size");
       useCustomFigureCheckbox_.addStyleName(RES.styles().checkBox());
@@ -210,6 +213,7 @@ public class ChunkOptionsPopupPanel extends MiniPopupPanel
       panel_.add(useCustomFigureCheckbox_);
       
       figureDimensionsPanel_ = new Grid(2, 2);
+      figureDimensionsPanel_.getElement().getStyle().setMarginTop(5, Unit.PX);
       
       figWidthBox_ = makeInputBox("fig.width");
       Label widthLabel = new Label("Width (inches):");
@@ -225,7 +229,7 @@ public class ChunkOptionsPopupPanel extends MiniPopupPanel
       
       panel_.add(figureDimensionsPanel_);
       
-      panel_.add(verticalSpacer(4));
+      panel_.add(verticalSpacer(8));
       
       HorizontalPanel footerPanel = new HorizontalPanel();
       footerPanel.getElement().getStyle().setWidth(100, Unit.PCT);
@@ -611,11 +615,11 @@ public class ChunkOptionsPopupPanel extends MiniPopupPanel
    private static final String OUTPUT_USE_DOCUMENT_DEFAULT =
          "(Use Document Default)";
 
+   private static final String OUTPUT_SHOW_OUTPUT_ONLY =
+         "Show Output";
+   
    private static final String OUTPUT_SHOW_CODE_AND_OUTPUT =
          "Show Code and Output";
-
-   private static final String OUTPUT_SHOW_OUTPUT_ONLY =
-         "Show Output Only (Hide Code)";
    
    private static final String OUTPUT_SHOW_NOTHING =
          "Show Nothing (Run Code)";
