@@ -31,38 +31,26 @@ namespace r_environment {
   
 namespace {
 
-// static R version detected during initialization
-core::r_util::RVersion s_rVersion;
+// system R version detected during intialization
+core::r_util::RVersion s_systemVersion;
 
 // fallback version to use if no R environment is detected
 core::r_util::RVersion s_fallbackVersion;
+
+// R version detected during initialization (either the system
+// R version or the provided fallback)
+core::r_util::RVersion s_rVersion;
+
 
 }
 
 bool initialize(std::string* pErrMsg)
 {
-   // check for which R override
-   FilePath rWhichRPath;
-   std::string whichROverride = server::options().rsessionWhichR();
-   if (!whichROverride.empty())
-      rWhichRPath = FilePath(whichROverride);
+   // attempt to detect system R version
+   bool detected = detectSystemRVersion(&s_rVersion, pErrMsg);
 
-   // attempt to detect R environment
-   std::string rVersion;
-   r_util::EnvironmentVars environment;
-   bool detected = detectREnvironment(rWhichRPath,
-                                      &rVersion,
-                                      &environment,
-                                      pErrMsg);
-
-   // populate the R version if we successfully detected
-   if (detected)
-   {
-      s_rVersion = r_util::RVersion(rVersion, environment);
-   }
-
-   // use fallback if possible
-   else if (!detected && hasFallbackVersion())
+   // if we didn't detect then use fallback if possible
+   if (!detected && hasFallbackVersion())
    {
       s_rVersion = s_fallbackVersion;
       detected = true;
@@ -99,23 +87,58 @@ void setFallbackVersion(const core::r_util::RVersion& version)
    s_fallbackVersion = version;
 }
 
-bool detectREnvironment(const core::FilePath& rScriptPath,
-                        std::string* pVersion,
-                        core::r_util::EnvironmentVars* pVars,
-                        std::string* pErrMsg)
+bool detectSystemRVersion(core::r_util::RVersion* pVersion,
+                          std::string* pErrMsg)
+{
+   // return cached version if we have it
+   if (!s_systemVersion.empty())
+   {
+      *pVersion = s_systemVersion;
+      return true;
+   }
+
+   // check for which R override
+   FilePath rWhichRPath;
+   std::string whichROverride = server::options().rsessionWhichR();
+   if (!whichROverride.empty())
+      rWhichRPath = FilePath(whichROverride);
+
+   // attempt to detect R version
+   bool result = detectRVersion(rWhichRPath, pVersion, pErrMsg);
+
+   // if we detected it then cache it
+   if (result)
+      s_systemVersion = *pVersion;
+
+   // return result
+   return result;
+}
+
+bool detectRVersion(const core::FilePath& rScriptPath,
+                    core::r_util::RVersion* pVersion,
+                    std::string* pErrMsg)
 {
    // determine rLdPaths script location
    FilePath rLdScriptPath(server::options().rldpathPath());
    std::string ldLibraryPath = server::options().rsessionLdLibraryPath();
 
    std::string rDetectedScriptPath;
-   return r_util::detectREnvironment(rScriptPath,
+   std::string rVersion;
+   core::r_util::EnvironmentVars environment;
+   bool result = r_util::detectREnvironment(
+                                     rScriptPath,
                                      rLdScriptPath,
                                      ldLibraryPath,
                                      &rDetectedScriptPath,
-                                     pVersion,
-                                     pVars,
+                                     &rVersion,
+                                     &environment,
                                      pErrMsg);
+   if (result)
+   {
+      *pVersion = core::r_util::RVersion(rVersion, environment);
+   }
+
+   return result;
 }
 
 } // namespace r_environment

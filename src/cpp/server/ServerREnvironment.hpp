@@ -40,10 +40,12 @@ bool initialize(std::string* pErrMsg);
 
 core::r_util::RVersion rVersion();
 
-bool detectREnvironment(const core::FilePath& filePath,
-                        std::string* pVersion,
-                        core::r_util::EnvironmentVars* pVars,
-                        std::string* pErrMsg);
+bool detectSystemRVersion(core::r_util::RVersion* pVersion,
+                          std::string* pErrMsg);
+
+bool detectRVersion(const core::FilePath& rScriptPath,
+                    core::r_util::RVersion* pVersion,
+                    std::string* pErrMsg);
 
 } // namespace r_environment
 } // namespace server
