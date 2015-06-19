@@ -105,11 +105,6 @@ var Unicode = require("ace/unicode").packages;
       startStates = that.asArray(startStates);
 
       var rules = HighlightRules.$rules;
-      var startRule = {
-         token: "support.function.codebegin",
-         regex: reStart,
-         next : prefix + "-start"
-      };
 
       for (var i = 0; i < startStates.length; i++) {
          rules[startStates[i]].unshift({
