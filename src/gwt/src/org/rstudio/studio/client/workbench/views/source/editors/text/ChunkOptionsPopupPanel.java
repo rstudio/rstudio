@@ -191,7 +191,7 @@ public class ChunkOptionsPopupPanel extends MiniPopupPanel
             "warning");
       panel_.add(showWarningsInOutputCb_);
       
-      panel_.add(verticalSpacer(3));
+      panel_.add(verticalSpacer(6));
       
       showMessagesInOutputCb_ = makeTriStateCheckBox(
             "Show messages",
@@ -616,7 +616,7 @@ public class ChunkOptionsPopupPanel extends MiniPopupPanel
          "(Use Document Default)";
 
    private static final String OUTPUT_SHOW_OUTPUT_ONLY =
-         "Show Output";
+         "Show Output Only";
    
    private static final String OUTPUT_SHOW_CODE_AND_OUTPUT =
          "Show Code and Output";
