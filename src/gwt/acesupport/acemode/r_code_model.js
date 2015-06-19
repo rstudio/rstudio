@@ -762,6 +762,9 @@ var RCodeModel = function(session, tokenizer,
             position = iterator.getCurrentTokenPosition();
          }
 
+         if (token == null)
+            break;
+
          // Cache access to the current token + cursor.
          value = token.value;
          type = token.type;
