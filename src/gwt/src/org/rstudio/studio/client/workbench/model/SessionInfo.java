@@ -375,4 +375,12 @@ public class SessionInfo extends JavaScriptObject
    public final native int getActiveSessionCount() /*-{
       return this.active_session_count;
    }-*/;
+   
+   public final native String getRVersion() /*-{
+      return this.r_version;
+   }-*/;
+   
+   public final native String getRHomeDir() /*-{
+      return this.r_home_dir;
+   }-*/;  
 }
