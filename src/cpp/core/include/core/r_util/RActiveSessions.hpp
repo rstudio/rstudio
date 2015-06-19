@@ -134,17 +134,30 @@ public:
          return std::string();
    }
 
-   void setRVersion(const std::string& rVersion)
+   std::string rVersionHome()
    {
       if (!empty())
-         writeProperty("r-version", rVersion);
+         return readProperty("r-version-home");
+      else
+         return std::string();
    }
 
-   void beginSession(const std::string& rVersion)
+   void setRVersion(const std::string& rVersion,
+                    const std::string& rVersionHome)
+   {
+      if (!empty())
+      {
+         writeProperty("r-version", rVersion);
+         writeProperty("r-version-home", rVersionHome);
+      }
+   }
+
+   void beginSession(const std::string& rVersion,
+                     const std::string& rVersionHome)
    {
       setLastUsed();
       setRunning(true);
-      setRVersion(rVersion);
+      setRVersion(rVersion, rVersionHome);
    }
 
    void endSession()

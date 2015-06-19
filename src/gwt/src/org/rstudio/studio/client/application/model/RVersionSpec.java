@@ -1,5 +1,5 @@
 /*
- * RVersion.java
+ * RVersionSpec.java
  *
  * Copyright (C) 2009-13 by RStudio, Inc.
  *
@@ -16,9 +16,9 @@ package org.rstudio.studio.client.application.model;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
-public class RVersion extends JavaScriptObject
+public class RVersionSpec extends JavaScriptObject
 {
-   protected RVersion() {}
+   protected RVersionSpec() {}
    
    public final native String getVersion() /*-{
       return this.version;
@@ -26,5 +26,9 @@ public class RVersion extends JavaScriptObject
 
    public final native String getDirectory() /*-{
       return this.directory;
+   }-*/;
+   
+   public final native String getRHome() /*-{
+      return this.r_home;
    }-*/;
 }

@@ -898,11 +898,12 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
 
             // see whether we should save the workspace
             bool saveWorkspace = true;
-            std::string switchToProject, switchToRVersion, hostPageUrl;
+            std::string switchToProject, hostPageUrl;
+            json::Value switchToVersionJson;
             Error error = json::readParams(jsonRpcRequest.params,
                                            &saveWorkspace,
                                            &switchToProject,
-                                           &switchToRVersion,
+                                           &switchToVersionJson,
                                            &hostPageUrl) ;
             if (error)
                LOG_ERROR(error);
@@ -943,9 +944,20 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
                   }
 
                   // note switch to R version if requested
-                  if (!switchToRVersion.empty())
-                     activeSession().setRVersion(switchToRVersion);
+                  if (json::isType<json::Object>(switchToVersionJson))
+                  {
+                     std::string version, rHome;
+                     Error error = json::readObject(
+                                                switchToVersionJson.get_obj(),
+                                                "version", &version,
+                                                "r_home", &rHome);
+                     if (!error)
+                        activeSession().setRVersion(version, rHome);
+                     else
+                        LOG_ERROR(error);
+                  }
 
+                  // set next session url
                   s_nextSessionUrl = r_util::createSessionUrl(hostPageUrl,
                                                               scope);
                }
@@ -1794,8 +1806,14 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
    if (error)
       LOG_ERROR(error);
 
+   // get the current R home directory
+   std::string rVersionHome;
+   error = rstudio::r::exec::RFunction("R.home").call(&rVersionHome);
+   if (error)
+      LOG_ERROR(error);
+
    // set active session flag indicating that we are running
-   module_context::activeSession().beginSession(rVersion);
+   module_context::activeSession().beginSession(rVersion, rVersionHome);
    
    // setup fork handlers
    setupForkHandlers();

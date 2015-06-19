@@ -37,6 +37,7 @@ import org.rstudio.studio.client.application.events.SaveActionChangedHandler;
 import org.rstudio.studio.client.application.events.SuspendAndRestartEvent;
 import org.rstudio.studio.client.application.events.SuspendAndRestartHandler;
 import org.rstudio.studio.client.application.model.ApplicationServerOperations;
+import org.rstudio.studio.client.application.model.RVersionSpec;
 import org.rstudio.studio.client.application.model.SaveAction;
 import org.rstudio.studio.client.application.model.SuspendOptions;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -290,7 +291,7 @@ public class ApplicationQuit implements SaveActionChangedHandler,
    
    public void performQuit(boolean saveChanges, 
                            String switchToProject,
-                           String switchToRVersion)
+                           RVersionSpec switchToRVersion)
    {
       performQuit(null, saveChanges, switchToProject, switchToRVersion);
    }
@@ -298,7 +299,7 @@ public class ApplicationQuit implements SaveActionChangedHandler,
    public void performQuit(String progressMessage,
                            boolean saveChanges, 
                            String switchToProject,
-                           String switchToRVersion)
+                           RVersionSpec switchToRVersion)
    {
       performQuit(progressMessage, 
                   saveChanges, 
@@ -310,7 +311,7 @@ public class ApplicationQuit implements SaveActionChangedHandler,
    public void performQuit(String progressMessage,
                            boolean saveChanges, 
                            String switchToProject,
-                           String switchToRVersion,
+                           RVersionSpec switchToRVersion,
                            Command onQuitAcknowledged)
    {
       new QuitCommand(progressMessage, 
@@ -584,7 +585,7 @@ public class ApplicationQuit implements SaveActionChangedHandler,
       public QuitCommand(String progressMessage, 
                          boolean saveChanges, 
                          String switchToProject,
-                         String switchToRVersion,
+                         RVersionSpec switchToRVersion,
                          Command onQuitAcknowledged)
       {
          progressMessage_ = progressMessage;
@@ -691,7 +692,7 @@ public class ApplicationQuit implements SaveActionChangedHandler,
 
       private final boolean saveChanges_;
       private final String switchToProject_;
-      private final String switchToRVersion_;
+      private final RVersionSpec switchToRVersion_;
       private final String progressMessage_;
       private final Command onQuitAcknowledged_;
 

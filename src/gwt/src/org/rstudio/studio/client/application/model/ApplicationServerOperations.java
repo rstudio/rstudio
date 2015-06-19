@@ -51,7 +51,7 @@ public interface ApplicationServerOperations extends PrefsServerOperations
    // quit the current session
    void quitSession(boolean saveWorkspace, 
                     String switchToProjectPath,
-                    String switchToRVersion,
+                    RVersionSpec switchToRVersion,
                     String hostPageUrl,
                     ServerRequestCallback<Boolean> requestCallback);
    
@@ -84,5 +84,5 @@ public interface ApplicationServerOperations extends PrefsServerOperations
       ServerRequestCallback<JsArray<ActiveSession>> callback);
    
    void getAvailableRVersions(
-      ServerRequestCallback<JsArray<RVersion>> callback);
+      ServerRequestCallback<JsArray<RVersionSpec>> callback);
 }

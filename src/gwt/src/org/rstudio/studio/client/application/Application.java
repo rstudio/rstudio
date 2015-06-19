@@ -424,7 +424,7 @@ public class Application implements ApplicationEventHandlers
             // do the quit
             applicaitonQuit.performQuit(saveChanges, 
                                         project, 
-                                        event.getRVersion());
+                                        event.getRVersionSpec());
          }   
       });
    }

@@ -14,6 +14,8 @@
  */
 package org.rstudio.studio.client.application.events;
 
+import org.rstudio.studio.client.application.model.RVersionSpec;
+
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
@@ -24,14 +26,14 @@ public class SwitchToRVersionEvent extends GwtEvent<SwitchToRVersionEvent.Handle
       void onSwitchToRVersion(SwitchToRVersionEvent event);
    }
 
-   public SwitchToRVersionEvent(String rVersion)
+   public SwitchToRVersionEvent(RVersionSpec rVersionSpec)
    {
-      rVersion_ = rVersion;
+      rVersionSpec_ = rVersionSpec;
    }
    
-   public String getRVersion()
+   public RVersionSpec getRVersionSpec()
    {
-      return rVersion_;
+      return rVersionSpec_;
    }
 
    @Override
@@ -48,5 +50,5 @@ public class SwitchToRVersionEvent extends GwtEvent<SwitchToRVersionEvent.Handle
 
    public static final Type<Handler> TYPE = new Type<Handler>();
    
-   private final String rVersion_;
+   private final RVersionSpec rVersionSpec_;
 }

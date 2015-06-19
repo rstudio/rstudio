@@ -42,7 +42,7 @@ import org.rstudio.studio.client.application.events.UnauthorizedEvent;
 import org.rstudio.studio.client.application.model.ActiveSession;
 import org.rstudio.studio.client.application.model.InvalidSessionInfo;
 import org.rstudio.studio.client.application.model.ProductInfo;
-import org.rstudio.studio.client.application.model.RVersion;
+import org.rstudio.studio.client.application.model.RVersionSpec;
 import org.rstudio.studio.client.application.model.SuspendOptions;
 import org.rstudio.studio.client.application.model.UpdateCheckResult;
 import org.rstudio.studio.client.common.JSONUtils;
@@ -332,14 +332,17 @@ public class RemoteServer implements Server
    
    public void quitSession(boolean saveWorkspace, 
                            String switchToProject,
-                           String switchToRVersion,
+                           RVersionSpec switchToRVersion,
                            String hostPageUrl,
                            ServerRequestCallback<Boolean> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, JSONBoolean.getInstance(saveWorkspace));
       params.set(1, new JSONString(StringUtil.notNull(switchToProject)));
-      params.set(2, new JSONString(StringUtil.notNull(switchToRVersion)));
+      if (switchToRVersion != null) 
+         params.set(2, new JSONObject(switchToRVersion));
+      else
+         params.set(2, JSONNull.getInstance());
       params.set(3, new JSONString(StringUtil.notNull(hostPageUrl)));
       sendRequest(RPC_SCOPE, QUIT_SESSION, params, requestCallback);
    }
@@ -1316,7 +1319,7 @@ public class RemoteServer implements Server
    
    @Override
    public void getAvailableRVersions(
-         ServerRequestCallback<JsArray<RVersion>> callback)
+         ServerRequestCallback<JsArray<RVersionSpec>> callback)
    {
       sendRequest(RPC_SCOPE, GET_AVAILABLE_R_VERSIONS, callback);
    }
