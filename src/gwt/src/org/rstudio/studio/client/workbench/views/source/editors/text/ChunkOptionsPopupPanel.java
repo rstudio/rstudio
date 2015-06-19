@@ -132,7 +132,8 @@ public class ChunkOptionsPopupPanel extends MiniPopupPanel
             OUTPUT_USE_DOCUMENT_DEFAULT,
             OUTPUT_SHOW_CODE_AND_OUTPUT,
             OUTPUT_SHOW_OUTPUT_ONLY,
-            OUTPUT_SHOW_NOTHING
+            OUTPUT_SHOW_NOTHING,
+            OUTPUT_SKIP_THIS_CHUNK
       };
       
       for (String option : options)
@@ -167,6 +168,12 @@ public class ChunkOptionsPopupPanel extends MiniPopupPanel
                unset("echo");
                unset("eval");
                set("include", "FALSE");
+            }
+            else if (value.equals(OUTPUT_SKIP_THIS_CHUNK))
+            {
+               set("eval", "FALSE");
+               set("include", "FALSE");
+               unset("echo");
             }
             synchronize();
          }
@@ -611,7 +618,10 @@ public class ChunkOptionsPopupPanel extends MiniPopupPanel
          "Show Output Only (Hide Code)";
    
    private static final String OUTPUT_SHOW_NOTHING =
-         "Show Nothing";
+         "Show Nothing (Run Code)";
+   
+   private static final String OUTPUT_SKIP_THIS_CHUNK =
+         "Show Nothing (Don't Run Code)";
    
    public interface Styles extends CssResource
    {
