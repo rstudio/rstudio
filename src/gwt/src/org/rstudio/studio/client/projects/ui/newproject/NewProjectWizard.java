@@ -43,7 +43,7 @@ public class NewProjectWizard extends Wizard<NewProjectInput,NewProjectResult>
             operation);
     
       sessionInfo_ = sessionInfo;
-      openInNewWindow_ = new CheckBox("Open in new window");
+      openInNewWindow_ = new CheckBox("Open in a new R session");
       addLeftWidget(openInNewWindow_);
       openInNewWindow_.setVisible(false);
    }  

@@ -732,9 +732,9 @@ well as menu structures (for main menu and popup menus).
         buttonLabel=""
         desc="Open a project"/>
      <cmd id="openProjectInNewWindow"
-        menuLabel="Open Project in New _Window..."
+        menuLabel="Open Project in New _Session..."
         buttonLabel=""
-        desc="Open a project in a new window"/>
+        desc="Open project in a new R session"/>
    
    <cmd id="projectMru0" visible="false"/>
    <cmd id="projectMru1" visible="false"/>

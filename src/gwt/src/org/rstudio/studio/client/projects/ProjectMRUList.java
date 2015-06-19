@@ -78,7 +78,7 @@ public class ProjectMRUList extends MRUList
       if (Desktop.isDesktop() || session.getSessionInfo().getMultiSession())
       {
          ImageResource image = commands.openHtmlExternal().getImageResource();
-         String desc = "Open project in new window";
+         String desc = "Open project in a new R session";
          commands.projectMru0().setRightImage(image, desc);
          commands.projectMru1().setRightImage(image, desc);
          commands.projectMru2().setRightImage(image, desc);
