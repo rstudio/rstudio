@@ -56,6 +56,11 @@ var Unicode = require("ace/unicode").packages;
       return Object.prototype.toString.call(object) === '[object Array]';
    };
 
+   this.asArray = function(object)
+   {
+      return that.isArray(object) ? object : [object];
+   };
+
    this.getPrimaryState = function(session, row)
    {
       return that.primaryState(session.getState(row));
@@ -88,23 +93,38 @@ var Unicode = require("ace/unicode").packages;
    };
 
    this.embedRules = function(HighlightRules, EmbedRules,
-                              prefix, reStart, reEnd)
+                              prefix, reStart, reEnd,
+                              startStates, endState)
    {
+      if (typeof startStates === "undefined")
+         startStates = ["start"];
+
+      if (typeof endState === "undefined")
+         endState = "start";
+
+      startStates = that.asArray(startStates);
+
       var rules = HighlightRules.$rules;
-      rules["start"].unshift({
+      var startRule = {
          token: "support.function.codebegin",
          regex: reStart,
          next : prefix + "-start"
-      });
+      };
 
-      var embed = new EmbedRules().getRules();
-      HighlightRules.addRules(embed, prefix + "-");
+      for (var i = 0; i < startStates.length; i++) {
+         rules[startStates[i]].unshift({
+            token: "support.function.codebegin",
+            regex: reStart,
+            next: prefix + "-start"
+         });
+      }
 
-      rules[prefix + "-start"].unshift({
+      HighlightRules.embedRules(EmbedRules, prefix + "-", [{
          token: "support.function.codeend",
          regex: reEnd,
-         next : "start"
-      });
+         next: "start"
+      }]);
+      
    };
 
    this.isSingleLineString = function(string)
