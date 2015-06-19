@@ -56,6 +56,11 @@ FilePath sourceDatabaseRoot()
    return module_context::sessionScratchPath().complete("sdb");
 }
 
+FilePath mostRecentTitledDir()
+{
+   return module_context::scopedScratchPath().complete("sdb/mt");
+}
+
 FilePath persistentTitledDir()
 {
    return sourceDatabaseRoot().complete("per/t");
@@ -239,9 +244,18 @@ Error createSessionDirFromPersistent(FilePath* pSessionDir)
    if (error)
       return error;
 
-   // move persistent titled files
+   // move persistent titled files. if we don't have any this is a
+   // brand new instantiation of this project within this session
+   // so we try to grab the MRU list
    if (persistentTitledDir().exists())
+   {
       attemptToMoveSourceDbFiles(persistentTitledDir(), *pSessionDir);
+   }
+   else if (!module_context::activeSession().empty() &&
+            mostRecentTitledDir().exists())
+   {
+      attemptToMoveSourceDbFiles(mostRecentTitledDir(), *pSessionDir);
+   }
 
    // get legacy titled docs if they exist
    if (oldPersistentTitledDir().exists())
@@ -336,6 +350,44 @@ Error attachToSourceDatabase(FilePath* pSessionDir)
    // attempt to create from persistent
    else
       return createSessionDirFromPersistent(pSessionDir);
+}
+
+// preserve all titled documents for re-opening in a future session
+Error saveMostRecentDocuments()
+{
+   // only do this for multi-session contexts
+   if (!module_context::activeSession().empty())
+   {
+      // get the path to the most recent titled directory
+      FilePath mostRecentDir = mostRecentTitledDir();
+
+      // blow it away if it exists then recreate it
+      Error error = mostRecentDir.removeIfExists();
+      if (error)
+         LOG_ERROR(error);
+      error = mostRecentDir.ensureDirectory();
+      if (error)
+         return error;
+
+      // list all current source docs
+      std::vector<boost::shared_ptr<SourceDocument> > sourceDocs;
+      error = source_database::list(&sourceDocs);
+      if (error)
+         return error;
+
+      // write the titled docs into the mru directory
+      BOOST_FOREACH(boost::shared_ptr<SourceDocument> pDoc, sourceDocs)
+      {
+         if (!pDoc->isUntitled())
+         {
+            error = pDoc->writeToFile(mostRecentDir.complete(pDoc->id()));
+            if (error)
+               LOG_ERROR(error);
+         }
+      }
+   }
+
+   return Success();
 }
 
 Error detachFromSourceDatabase()

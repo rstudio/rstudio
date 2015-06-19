@@ -30,6 +30,8 @@ namespace supervisor {
 
 core::Error attachToSourceDatabase(core::FilePath* pSessionDir);
 
+core::Error saveMostRecentDocuments();
+
 core::Error detachFromSourceDatabase();
 
 } // namespace supervisor
