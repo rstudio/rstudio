@@ -1,5 +1,5 @@
 /*
- * TriStateCheckBox.java
+ * ThemedCheckBox.java
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -13,8 +13,6 @@
  *
  */
 package org.rstudio.core.client.widget;
-
-import org.rstudio.core.client.theme.res.ThemeResources;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.Unit;
@@ -35,17 +33,11 @@ import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.InlineHTML;
 import com.google.gwt.user.client.ui.Label;
 
-// A three state checkbox that toggles between
-// off -> indeterminate -> on
-public class TriStateCheckBox extends Composite
-   implements HasValueChangeHandlers<TriStateCheckBox.State>
+import org.rstudio.core.client.theme.res.ThemeResources;
+
+public class ThemedCheckBox extends Composite implements HasValueChangeHandlers<Boolean>
 {
-   public static class State
-   {
-      private State () {}
-   }
-   
-   public TriStateCheckBox(String label)
+   public ThemedCheckBox(String label, boolean initialValue)
    {
       panel_ = new HorizontalPanel();
       panel_.setVerticalAlignment(HorizontalPanel.ALIGN_MIDDLE);
@@ -54,7 +46,7 @@ public class TriStateCheckBox extends Composite
          @Override
          public void onClick(ClickEvent event)
          {
-            toggleState();
+            toggleValue();
          }
       }, ClickEvent.getType());
       
@@ -63,6 +55,7 @@ public class TriStateCheckBox extends Composite
       
       checkboxInner_ = new Image();
       checkboxOuter_ = new FlowPanel();
+      checkboxOuter_.getElement().getStyle().setHeight(12, Unit.PX);
       checkboxOuter_.add(alignHelper_);
       checkboxOuter_.add(checkboxInner_);
       panel_.add(checkboxOuter_);
@@ -71,49 +64,48 @@ public class TriStateCheckBox extends Composite
       label_.addStyleName(RES.styles().checkboxLabel());
       panel_.add(label_);
       
-      setState(STATE_INDETERMINATE);
+      setValue(initialValue, true);
       
       initWidget(panel_);
    }
    
-   public void setState(State state)
+   public ThemedCheckBox(String label)
    {
-      if (state == STATE_INDETERMINATE)
-         checkboxInner_.setResource(ThemeResources.INSTANCE.checkboxTri());
-      else if (state == STATE_OFF)
-         checkboxInner_.setResource(ThemeResources.INSTANCE.checkboxOff());
-      else if (state == STATE_ON)
-         checkboxInner_.setResource(ThemeResources.INSTANCE.checkboxOn());
-      
-      checkboxOuter_.getElement().getStyle().setHeight(
-            checkboxInner_.getHeight(), Unit.PX);
-      state_ = state;
+      this(label, false);
+   }
+   
+   public boolean toggleValue()
+   {
+      setValue(!getValue());
+      return getValue();
+   }
+   
+   public boolean getValue()
+   {
+      return value_;
+   }
+   
+   private void setValue(boolean value, boolean force)
+   {
+      if (force || value_ != value)
+      {
+         value_ = value;
+         updateCheckboxImage();
+         ValueChangeEvent.fire(this, value);
+      }
    }
    
    public void setValue(boolean value)
    {
-      if (value)
-      {
-         checkboxInner_.setResource(ThemeResources.INSTANCE.checkboxOn());
-         state_ = STATE_ON;
-      }
-      else
-      {
-         checkboxInner_.setResource(ThemeResources.INSTANCE.checkboxOff());
-         state_ = STATE_OFF;
-      }
+      setValue(value, false);
    }
    
-   private void toggleState()
+   private void updateCheckboxImage()
    {
-      if (state_ == STATE_OFF)
-         setState(STATE_ON);
-      else if (state_ == STATE_INDETERMINATE)
-         setState(STATE_OFF);
-      else if (state_ == STATE_ON)
-         setState(STATE_INDETERMINATE);
-      
-      ValueChangeEvent.fire(this, state_);
+      if (getValue())
+         checkboxInner_.setResource(ThemeResources.INSTANCE.checkboxOn());
+      else
+         checkboxInner_.setResource(ThemeResources.INSTANCE.checkboxOff());
    }
    
    private final HorizontalPanel panel_;
@@ -122,18 +114,14 @@ public class TriStateCheckBox extends Composite
    private final InlineHTML alignHelper_;
    private final Image checkboxInner_;
    private final FlowPanel checkboxOuter_;
-   private State state_;
    
-   public static final State STATE_INDETERMINATE = new State();
-   public static final State STATE_OFF = new State();
-   public static final State STATE_ON = new State();
+   private boolean value_;
    
    public interface Styles extends CssResource
    {
       String alignHelper();
       String checkboxLabel();
    }
-   
    public interface Resources extends ClientBundle
    {
       @Source("TriStateCheckBox.css")
@@ -148,7 +136,7 @@ public class TriStateCheckBox extends Composite
    private final HandlerManager handlerManager_ = new HandlerManager(this);
    
    @Override
-   public HandlerRegistration addValueChangeHandler(ValueChangeHandler<State> handler)
+   public HandlerRegistration addValueChangeHandler(ValueChangeHandler<Boolean> handler)
    {
       return handlerManager_.addHandler(
             ValueChangeEvent.getType(),
@@ -161,4 +149,5 @@ public class TriStateCheckBox extends Composite
       handlerManager_.fireEvent(event);
    }
    
+
 }

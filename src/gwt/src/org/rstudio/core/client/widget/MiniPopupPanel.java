@@ -240,7 +240,7 @@ public class MiniPopupPanel extends DecoratedPopupPanel
    private HandlerRegistration clickAfterDragHandler_;
    
    private static final String[] TAGS_EXCLUDE_DRAG = new String[] {
-      "a", "input", "button"
+      "a", "input", "button", "select"
    };
    
    // Styles ------------------------------------------

@@ -1,8 +1,8 @@
 .textBox {
+	width: 97%;
     border: 1px solid #999;
     border-radius: 3px;
     padding-left: 3px !important;
-    margin-left: 5px;
 }
 
 .textBox:focus {
@@ -11,11 +11,9 @@
 }
 
 .chunkLabel {
-	padding: 0 0px;
 }
 
 .chunkName {
-	padding: 2px;
 }
 
 .labelPanel {
@@ -23,9 +21,8 @@
 }
 
 .buttonPanel {
-	margin-top: 8px;
+	margin-bottom: 2px;
 }
 
 .checkBox {
-	margin-bottom: 5px;
 }

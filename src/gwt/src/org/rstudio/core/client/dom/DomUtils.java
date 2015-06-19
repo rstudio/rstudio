@@ -20,6 +20,13 @@ import com.google.gwt.core.client.JsArrayMixed;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.dom.client.*;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.event.dom.client.HasAllKeyHandlers;
+import com.google.gwt.event.dom.client.KeyDownEvent;
+import com.google.gwt.event.dom.client.KeyDownHandler;
+import com.google.gwt.event.dom.client.KeyPressEvent;
+import com.google.gwt.event.dom.client.KeyPressHandler;
+import com.google.gwt.event.dom.client.KeyUpEvent;
+import com.google.gwt.event.dom.client.KeyUpHandler;
 import com.google.gwt.user.client.*;
 import com.google.gwt.user.client.ui.UIObject;
 
@@ -810,6 +817,42 @@ public class DomUtils
       
       if (!value && element.hasClassName(cssClass))
          element.removeClassName(cssClass);
+   }
+   
+   public interface NativeEventHandler
+   {
+      public void onNativeEvent(NativeEvent event);
+   }
+   
+   public static void addKeyHandlers(HasAllKeyHandlers widget,
+                                     final NativeEventHandler handler)
+   {
+      widget.addKeyDownHandler(new KeyDownHandler()
+      {
+         @Override
+         public void onKeyDown(final KeyDownEvent event)
+         {
+            handler.onNativeEvent(event.getNativeEvent());
+         }
+      });
+      
+      widget.addKeyPressHandler(new KeyPressHandler()
+      {
+         @Override
+         public void onKeyPress(final KeyPressEvent event)
+         {
+            handler.onNativeEvent(event.getNativeEvent());
+         }
+      });
+      
+      widget.addKeyUpHandler(new KeyUpHandler()
+      {
+         @Override
+         public void onKeyUp(final KeyUpEvent event)
+         {
+            handler.onNativeEvent(event.getNativeEvent());
+         }
+      });
    }
    
 }
