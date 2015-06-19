@@ -204,6 +204,9 @@ std::vector<RVersion> enumerateRVersions(
    rVersions.erase(std::unique(rVersions.begin(), rVersions.end()),
                    rVersions.end());
 
+   // reverse the order so more recent versions come first
+   std::reverse(rVersions.begin(), rVersions.end());
+
    // return the versions
    return rVersions;
 }
