@@ -116,12 +116,12 @@ public class ProjectPopupMenu extends ToolbarPopupMenu
    @Override
    protected ToolbarMenuBar createMenuBar()
    {
-      return new SessionsPopupMenuBar();
+      return new ProjectsPopupMenuBar();
    }
    
-   private class SessionsPopupMenuBar extends ToolbarMenuBar
+   private class ProjectsPopupMenuBar extends ToolbarMenuBar
    {
-      public SessionsPopupMenuBar()
+      public ProjectsPopupMenuBar()
       {
          super(true);
       }
