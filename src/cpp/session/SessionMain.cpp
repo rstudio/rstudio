@@ -1800,21 +1800,10 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
    // i.e. either the process dying unexpectedly or a call to R_Suicide)
    rsession::persistentState().setAbend(true);
 
-   // get the current R version
-   std::string rVersion;
-   error = rstudio::r::exec::RFunction(".rs.rVersionString").call(&rVersion);
-   if (error)
-      LOG_ERROR(error);
+   // begin session
+   using namespace module_context;
+   activeSession().beginSession(rVersion(), rHomeDir());
 
-   // get the current R home directory
-   std::string rVersionHome;
-   error = rstudio::r::exec::RFunction("R.home").call(&rVersionHome);
-   if (error)
-      LOG_ERROR(error);
-
-   // set active session flag indicating that we are running
-   module_context::activeSession().beginSession(rVersion, rVersionHome);
-   
    // setup fork handlers
    setupForkHandlers();
 

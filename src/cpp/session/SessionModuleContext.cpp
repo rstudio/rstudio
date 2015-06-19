@@ -1179,6 +1179,27 @@ json::Object createFileSystemItem(const FilePath& filePath)
    return createFileSystemItem(FileInfo(filePath));
 }
 
+std::string rVersion()
+{
+   std::string rVersion;
+   Error error = rstudio::r::exec::RFunction(".rs.rVersionString").call(
+                                                                  &rVersion);
+   if (error)
+      LOG_ERROR(error);
+   return rVersion;
+}
+
+std::string rHomeDir()
+{
+   // get the current R home directory
+   std::string rVersionHome;
+   Error error = rstudio::r::exec::RFunction("R.home").call(&rVersionHome);
+   if (error)
+      LOG_ERROR(error);
+   return rVersionHome;
+}
+
+
 r_util::ActiveSession& activeSession()
 {
    static boost::shared_ptr<r_util::ActiveSession> pSession;

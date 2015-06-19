@@ -93,6 +93,10 @@ core::FilePath safeCurrentPath();
 core::json::Object createFileSystemItem(const core::FileInfo& fileInfo);
 core::json::Object createFileSystemItem(const core::FilePath& filePath);
    
+// r session info
+std::string rVersion();
+std::string rHomeDir();
+
 // active sessions
 core::r_util::ActiveSession& activeSession();
 core::r_util::ActiveSessions& activeSessions();
