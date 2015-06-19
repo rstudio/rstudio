@@ -91,6 +91,14 @@ core::system::ProcessConfig sessionProcessConfig(
                            kRStudioLimitRpcClientUid,
                            safe_convert::numberToString(uid)));
 
+   // set session scope id if we have one
+   if (!context.scope.id().empty())
+   {
+      environment.push_back(std::make_pair(
+                              kRStudioSessionScopeId,
+                              context.scope.id()));
+   }
+
    // log to stderr if we aren't daemonized
    if (!options.serverDaemonize())
       args.push_back(std::make_pair("--log-stderr", "1"));
