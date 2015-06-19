@@ -197,6 +197,14 @@ std::vector<RVersion> enumerateRVersions(
    }
 #endif
 
+   // sort the versions
+   std::sort(rVersions.begin(), rVersions.end());
+
+   // remove duplicates
+   rVersions.erase(std::unique(rVersions.begin(), rVersions.end()),
+                   rVersions.end());
+
+   // return the versions
    return rVersions;
 }
 
@@ -228,7 +236,7 @@ RVersion findClosest(const RVersionNumber& versionNumber,
                      std::vector<RVersion> versions)
 {
    // sort so algorithms work correctly
-   std::sort(versions.begin(), versions.end(), compareVersion);
+   std::sort(versions.begin(), versions.end());
 
    // first look for an upper_bound
    std::vector<RVersion>::const_iterator it;
@@ -240,7 +248,7 @@ RVersion findClosest(const RVersionNumber& versionNumber,
       return *it;
 
    // can't find a greater version, use the newest version
-   return *std::max_element(versions.begin(), versions.end(), compareVersion);
+   return *std::max_element(versions.begin(), versions.end());
 }
 
 }
@@ -258,7 +266,7 @@ RVersion selectVersion(const std::string& number,
    RVersionNumber matchNumber = RVersionNumber::parse(number);
 
    // order correctly for algorithms
-   std::sort(versions.begin(), versions.end(), compareVersion);
+   std::sort(versions.begin(), versions.end());
 
    // first seek an exact match
    std::vector<RVersion>::const_iterator it;

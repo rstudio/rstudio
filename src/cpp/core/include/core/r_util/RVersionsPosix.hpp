@@ -53,15 +53,27 @@ public:
    const std::string& number() const { return number_; }
    const core::system::Options& environment() const { return environment_; }
 
+   bool operator<(const RVersion& other) const
+   {
+      RVersionNumber ver = RVersionNumber::parse(number());
+      RVersionNumber otherVer = RVersionNumber::parse(other.number());
+
+      if (ver == otherVer)
+         return homeDir().absolutePath() < other.homeDir().absolutePath();
+      else
+         return ver < otherVer;
+   }
+
+   bool operator==(const RVersion& other) const
+   {
+      return number() == other.number() &&
+            homeDir().absolutePath() == other.homeDir().absolutePath();
+   }
+
 private:
    std::string number_;
    core::system::Options environment_;
 };
-
-inline bool compareVersion(const RVersion& a, const RVersion& b)
-{
-   return RVersionNumber::parse(a.number()) < RVersionNumber::parse(b.number());
-}
 
 std::ostream& operator<<(std::ostream& os, const RVersion& version);
 
