@@ -44,6 +44,7 @@ import org.rstudio.core.client.widget.ToolbarLabel;
 import org.rstudio.core.client.widget.ToolbarSeparator;
 import org.rstudio.core.client.widget.events.GlassVisibilityEvent;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.LogoutRequestedEvent;
 import org.rstudio.studio.client.application.ui.ApplicationHeader;
@@ -167,13 +168,13 @@ public class WebApplicationHeader extends Composite
          {
             SessionInfo sessionInfo = session.getSessionInfo();
             
-            // only show the user identity if we are in server mode
-           if (sessionInfo.getShowIdentity())
-               initCommandsPanel(sessionInfo);
-            
             // complete toolbar initialization
             toolbar_.completeInitialization(sessionInfo);
-            
+             
+            // init commands panel in server mode
+            if (!Desktop.isDesktop())
+               initCommandsPanel(sessionInfo);
+                
             // add project tools to main menu
             projectMenuButton_ = 
                new ProjectPopupMenu(sessionInfo, commands).getToolbarButton();
@@ -350,23 +351,26 @@ public class WebApplicationHeader extends Composite
    private void initCommandsPanel(final SessionInfo sessionInfo)
    {  
       // add username 
-      ToolbarLabel usernameLabel = new ToolbarLabel();
-      usernameLabel.getElement().getStyle().setMarginRight(2, Unit.PX);
-      if (!BrowseCap.isFirefox())
-         usernameLabel.getElement().getStyle().setMarginTop(2, Unit.PX);
-      usernameLabel.setText(sessionInfo.getUserIdentity());
-      headerBarCommandsPanel_.add(usernameLabel);
-     
-      ToolbarButton signOutButton = new ToolbarButton(RESOURCES.signOut(),
-           new ClickHandler() {
-         public void onClick(ClickEvent event)
-         {
-            eventBus_.fireEvent(new LogoutRequestedEvent());
-         }
-      });
-      signOutButton.setTitle("Sign out");
-      headerBarCommandsPanel_.add(signOutButton);
-      headerBarCommandsPanel_.add(createCommandSeparator());
+      if (sessionInfo.getShowIdentity())
+      {
+         ToolbarLabel usernameLabel = new ToolbarLabel();
+         usernameLabel.getElement().getStyle().setMarginRight(2, Unit.PX);
+         if (!BrowseCap.isFirefox())
+            usernameLabel.getElement().getStyle().setMarginTop(2, Unit.PX);
+         usernameLabel.setText(sessionInfo.getUserIdentity());
+         headerBarCommandsPanel_.add(usernameLabel);
+        
+         ToolbarButton signOutButton = new ToolbarButton(RESOURCES.signOut(),
+              new ClickHandler() {
+            public void onClick(ClickEvent event)
+            {
+               eventBus_.fireEvent(new LogoutRequestedEvent());
+            }
+         });
+         signOutButton.setTitle("Sign out");
+         headerBarCommandsPanel_.add(signOutButton);
+         headerBarCommandsPanel_.add(createCommandSeparator());
+      }
       
       overlay_.addCommands(this);
       
@@ -410,6 +414,18 @@ public class WebApplicationHeader extends Composite
    public void addProjectCommandSeparator()
    {
       projectBarCommandsPanel_.add(createCommandSeparator());
+   }
+   
+   @Override
+   public void addProjectRightCommand(Widget widget)
+   {
+      toolbar_.addRightWidget(widget);   
+   }
+
+   @Override
+   public void addProjectRightCommandSeparator()
+   {
+      toolbar_.addRightSeparator();
    }
    
 

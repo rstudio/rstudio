@@ -28,6 +28,8 @@ public class WebApplicationHeaderOverlay
       void addCommandSeparator();
       void addProjectCommand(Widget widget);
       void addProjectCommandSeparator();
+      void addProjectRightCommand(Widget widget);
+      void addProjectRightCommandSeparator();
    }
    
    public WebApplicationHeaderOverlay()
