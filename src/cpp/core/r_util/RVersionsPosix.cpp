@@ -131,7 +131,7 @@ std::vector<RVersion> enumerateRVersions(
                              &env,
                              &errMsg))
       {
-         RVersion version(rVersion, rHomePath.absolutePath(), env);
+         RVersion version(rVersion, env);
          rVersions.push_back(version);
       }
       else
@@ -175,9 +175,7 @@ std::vector<RVersion> enumerateRVersions(
                                                    ldLibraryPath));
          core::system::setenv(&env, "R_ARCH", "/x86_64");
 
-         RVersion version(versionPath.filename(),
-                          versionPath.absolutePath(),
-                          env);
+         RVersion version(versionPath.filename(), env);
 
          // improve on the version by asking R for it's version
          FilePath rBinaryPath = rHomePath.childPath("bin/exec/R");
@@ -191,9 +189,7 @@ std::vector<RVersion> enumerateRVersions(
                                    &versionNumber);
             if (error)
                LOG_ERROR(error);
-            version = RVersion(versionNumber,
-                               version.directory(),
-                               version.environment());
+            version = RVersion(versionNumber, version.environment());
          }
 
          rVersions.push_back(version);
@@ -295,7 +291,6 @@ json::Object rVersionToJson(const RVersion& version)
 {
    json::Object versionJson;
    versionJson["number"] = version.number();
-   versionJson["directory"] = version.directory();
    versionJson["environment"] = json::toJsonObject(version.environment());
    return versionJson;
 }
@@ -303,17 +298,15 @@ json::Object rVersionToJson(const RVersion& version)
 Error rVersionFromJson(const json::Object& versionJson,
                        r_util::RVersion* pVersion)
 {
-   std::string number, directory;
+   std::string number;
    json::Object environmentJson;
    Error error = json::readObject(versionJson,
                                   "number", &number,
-                                  "directory", &directory,
                                   "environment", &environmentJson);
    if (error)
       return error;
 
    *pVersion = RVersion(number,
-                        directory,
                         json::optionsFromJson(environmentJson));
    return Success();
 }

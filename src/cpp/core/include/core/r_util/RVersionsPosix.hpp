@@ -37,10 +37,8 @@ class RVersion
 {
 public:
    RVersion() {}
-   RVersion(const std::string& number,
-            const std::string& directory,
-            const core::system::Options& environment)
-      : number_(number), directory_(directory), environment_(environment)
+   RVersion(const std::string& number, const core::system::Options& environment)
+      : number_(number), environment_(environment)
    {
    }
 
@@ -53,12 +51,10 @@ public:
    }
 
    const std::string& number() const { return number_; }
-   const std::string& directory() const { return directory_; }
    const core::system::Options& environment() const { return environment_; }
 
 private:
    std::string number_;
-   std::string directory_;
    core::system::Options environment_;
 };
 

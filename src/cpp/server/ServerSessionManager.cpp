@@ -99,7 +99,7 @@ core::system::ProcessConfig sessionProcessConfig(
    std::copy(extraArgs.begin(), extraArgs.end(), std::back_inserter(args));
 
    // append R environment variables
-   core::system::Options rEnvVars = r_environment::variables();
+   core::system::Options rEnvVars = r_environment::rVersion().environment();
    environment.insert(environment.end(), rEnvVars.begin(), rEnvVars.end());
 
    // add monitor shared secret

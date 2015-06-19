@@ -20,6 +20,7 @@
 #include <vector>
 
 #include <core/r_util/REnvironment.hpp>
+#include <core/r_util/RVersionsPosix.hpp>
 
 namespace rstudio {
 namespace core {
@@ -32,14 +33,15 @@ namespace rstudio {
 namespace server {
 namespace r_environment {
 
-bool hasFallbackVariables();
-void setFallbackVariables(const core::r_util::EnvironmentVars& vars);
+bool hasFallbackVersion();
+void setFallbackVersion(const core::r_util::RVersion& version);
 
 bool initialize(std::string* pErrMsg);
 
-std::vector<std::pair<std::string,std::string> > variables();
+core::r_util::RVersion rVersion();
 
 bool detectREnvironment(const core::FilePath& filePath,
+                        std::string* pVersion,
                         core::r_util::EnvironmentVars* pVars,
                         std::string* pErrMsg);
 

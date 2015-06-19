@@ -31,11 +31,11 @@ namespace r_environment {
   
 namespace {
 
-// static R environment vars detected during initialization
-r_util::EnvironmentVars s_rEnvironmentVars;
+// static R version detected during initialization
+core::r_util::RVersion s_rVersion;
 
-// fallback variables to use if no R environment is detected
-r_util::EnvironmentVars s_fallbackEnvironmentVars;
+// fallback version to use if no R environment is detected
+core::r_util::RVersion s_fallbackVersion;
 
 }
 
@@ -48,14 +48,23 @@ bool initialize(std::string* pErrMsg)
       rWhichRPath = FilePath(whichROverride);
 
    // attempt to detect R environment
+   std::string rVersion;
+   r_util::EnvironmentVars environment;
    bool detected = detectREnvironment(rWhichRPath,
-                                      &s_rEnvironmentVars,
+                                      &rVersion,
+                                      &environment,
                                       pErrMsg);
 
-   // use fallback if possible
-   if (!detected && hasFallbackVariables())
+   // populate the R version if we successfully detected
+   if (detected)
    {
-      s_rEnvironmentVars = s_fallbackEnvironmentVars;
+      s_rVersion = r_util::RVersion(rVersion, environment);
+   }
+
+   // use fallback if possible
+   else if (!detected && hasFallbackVersion())
+   {
+      s_rVersion = s_fallbackVersion;
       detected = true;
    }
 
@@ -63,34 +72,35 @@ bool initialize(std::string* pErrMsg)
    return detected;
 }
 
-std::vector<std::pair<std::string,std::string> > variables()
+core::r_util::RVersion rVersion()
 {
    // make a copy protected by a mutex just to be on the safest
    // possible side (the copy is cheap and we're not sure what
    // universal guarantees about multi-threaded read access to
    // std::vector are)
-   static boost::mutex s_variablesMutex ;
-   LOCK_MUTEX(s_variablesMutex)
+   static boost::mutex s_versionMutex ;
+   LOCK_MUTEX(s_versionMutex)
    {
-      return s_rEnvironmentVars;
+      return s_rVersion;
    }
    END_LOCK_MUTEX
 
    // mutex related error
-   return r_util::EnvironmentVars();
+   return r_util::RVersion();
 }
 
-bool hasFallbackVariables()
+bool hasFallbackVersion()
 {
-   return !s_fallbackEnvironmentVars.empty();
+   return !s_fallbackVersion.empty();
 }
 
-void setFallbackVariables(const core::r_util::EnvironmentVars& vars)
+void setFallbackVersion(const core::r_util::RVersion& version)
 {
-   s_fallbackEnvironmentVars = vars;
+   s_fallbackVersion = version;
 }
 
 bool detectREnvironment(const core::FilePath& rScriptPath,
+                        std::string* pVersion,
                         core::r_util::EnvironmentVars* pVars,
                         std::string* pErrMsg)
 {
@@ -98,12 +108,12 @@ bool detectREnvironment(const core::FilePath& rScriptPath,
    FilePath rLdScriptPath(server::options().rldpathPath());
    std::string ldLibraryPath = server::options().rsessionLdLibraryPath();
 
-   std::string rScriptPathOut, rVersion;
+   std::string rDetectedScriptPath;
    return r_util::detectREnvironment(rScriptPath,
                                      rLdScriptPath,
                                      ldLibraryPath,
-                                     &rScriptPathOut,
-                                     &rVersion,
+                                     &rDetectedScriptPath,
+                                     pVersion,
                                      pVars,
                                      pErrMsg);
 }

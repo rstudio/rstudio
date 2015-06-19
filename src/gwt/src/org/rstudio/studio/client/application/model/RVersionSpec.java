@@ -24,10 +24,6 @@ public class RVersionSpec extends JavaScriptObject
       return this.version;
    }-*/;
 
-   public final native String getDirectory() /*-{
-      return this.directory;
-   }-*/;
-   
    public final native String getRHome() /*-{
       return this.r_home;
    }-*/;
