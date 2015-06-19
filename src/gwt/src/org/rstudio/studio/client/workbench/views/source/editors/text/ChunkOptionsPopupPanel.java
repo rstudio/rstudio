@@ -56,6 +56,7 @@ import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
 
@@ -117,34 +118,32 @@ public class ChunkOptionsPopupPanel extends MiniPopupPanel
          }
       });
       
-      HorizontalPanel labelPanel = new HorizontalPanel();
-      labelPanel.addStyleName(RES.styles().labelPanel());
-      labelPanel.setVerticalAlignment(VerticalPanel.ALIGN_MIDDLE);
+      Grid nameAndOutputGrid = new Grid(2, 2);
       
       Label chunkLabel = new Label("Name:");
       chunkLabel.addStyleName(RES.styles().chunkLabel());
-      labelPanel.add(chunkLabel);
+      nameAndOutputGrid.setWidget(0, 0, chunkLabel);
       
       tbChunkLabel_.addStyleName(RES.styles().chunkName());
-      labelPanel.add(tbChunkLabel_);
+      nameAndOutputGrid.setWidget(0, 1, tbChunkLabel_);
       
-      panel_.add(labelPanel);
+      outputComboBox_ = new ListBox();
+      String[] options = new String[] {
+            OUTPUT_USE_DOCUMENT_DEFAULT,
+            OUTPUT_SHOW_CODE_AND_OUTPUT,
+            OUTPUT_SHOW_OUTPUT_ONLY,
+            OUTPUT_SHOW_NOTHING
+      };
       
-      outputComboBox_ = new SelectWidget(
-            "Output:",
-            new String[] {
-                  OUTPUT_USE_DOCUMENT_DEFAULT,
-                  OUTPUT_SHOW_CODE_AND_OUTPUT,
-                  OUTPUT_SHOW_OUTPUT_ONLY,
-                  OUTPUT_SHOW_NOTHING
-            });
+      for (String option : options)
+         outputComboBox_.addItem(option);
       
       outputComboBox_.addChangeHandler(new ChangeHandler()
       {
          @Override
          public void onChange(ChangeEvent event)
          {
-            String value = outputComboBox_.getValue();
+            String value = outputComboBox_.getItemText(outputComboBox_.getSelectedIndex());
             if (value.equals(OUTPUT_USE_DOCUMENT_DEFAULT))
             {
                unset("echo");
@@ -173,7 +172,12 @@ public class ChunkOptionsPopupPanel extends MiniPopupPanel
          }
       });
       
-      panel_.add(outputComboBox_);
+      nameAndOutputGrid.setWidget(1, 0, new Label("Output:"));
+      nameAndOutputGrid.setWidget(1, 1, outputComboBox_);
+      
+      panel_.add(nameAndOutputGrid);
+      
+      panel_.add(verticalSpacer(4));
       
       showWarningsInOutputCb_ = makeTriStateCheckBox(
             "Show warnings in output",
@@ -184,10 +188,7 @@ public class ChunkOptionsPopupPanel extends MiniPopupPanel
             "message");
       panel_.add(showMessagesInOutputCb_);
       
-      FlowPanel spacer = new FlowPanel();
-      spacer.setWidth("100%");
-      spacer.setHeight("5px");
-      panel_.add(spacer);
+      panel_.add(verticalSpacer(4));
       
       useCustomFigureCheckbox_ = new ThemedCheckBox("Use custom figure size");
       useCustomFigureCheckbox_.addStyleName(RES.styles().checkBox());
@@ -204,11 +205,15 @@ public class ChunkOptionsPopupPanel extends MiniPopupPanel
       figureDimensionsPanel_ = new Grid(2, 2);
       
       figWidthBox_ = makeInputBox("fig.width");
-      figureDimensionsPanel_.setWidget(0, 0, new Label("Width (in inches):"));
+      Label widthLabel = new Label("Width (inches):");
+      widthLabel.getElement().getStyle().setMarginLeft(10, Unit.PX);
+      figureDimensionsPanel_.setWidget(0, 0, widthLabel);
       figureDimensionsPanel_.setWidget(0, 1, figWidthBox_);
       
       figHeightBox_ = makeInputBox("fig.height");
-      figureDimensionsPanel_.setWidget(1, 0, new Label("Height (in inches):"));
+      Label heightLabel = new Label("Height (inches):");
+      heightLabel.getElement().getStyle().setMarginLeft(10, Unit.PX);
+      figureDimensionsPanel_.setWidget(1, 0, heightLabel);
       figureDimensionsPanel_.setWidget(1, 1, figHeightBox_);
       
       panel_.add(figureDimensionsPanel_);
@@ -569,9 +574,17 @@ public class ChunkOptionsPopupPanel extends MiniPopupPanel
       widget_.getEditor().focus();
    }
    
+   private FlowPanel verticalSpacer(int sizeInPixels)
+   {
+      FlowPanel panel = new FlowPanel();
+      panel.setWidth("100%");
+      panel.setHeight("" + sizeInPixels + "px");
+      return panel;
+   }
+   
    private final VerticalPanel panel_;
    private final TextBoxWithCue tbChunkLabel_;
-   private final SelectWidget outputComboBox_;
+   private final ListBox outputComboBox_;
    private final Grid figureDimensionsPanel_;
    private final TextBox figWidthBox_;
    private final TextBox figHeightBox_;

@@ -64,7 +64,7 @@ public class ThemedCheckBox extends Composite implements HasValueChangeHandlers<
       label_.addStyleName(RES.styles().checkboxLabel());
       panel_.add(label_);
       
-      setValue(initialValue);
+      setValue(initialValue, true);
       
       initWidget(panel_);
    }
@@ -85,14 +85,19 @@ public class ThemedCheckBox extends Composite implements HasValueChangeHandlers<
       return value_;
    }
    
-   public void setValue(boolean value)
+   private void setValue(boolean value, boolean force)
    {
-      if (value_ != value)
+      if (force || value_ != value)
       {
          value_ = value;
          updateCheckboxImage();
          ValueChangeEvent.fire(this, value);
       }
+   }
+   
+   public void setValue(boolean value)
+   {
+      setValue(value, false);
    }
    
    private void updateCheckboxImage()
