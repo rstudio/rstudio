@@ -773,6 +773,16 @@ var RCodeModel = function(session, tokenizer,
          // 'types' are not really consistent. Likely due to the lack
          // of general lookahead / lookbehind in the Ace tokenizer. We
          // just manually check for each 'state'.
+         //
+         // Furthermore, the Ace tokenizer does not handle
+         // bold or italic headers, e.g. this header is tokenized as:
+         //
+         //    ## __Foo__
+         //    ^              markup.heading.2
+         //      ^            heading
+         //       ^^^^^^^     string.strong
+         //
+         // So make sure we manually scrape the header text out of the line.
          if (Utils.startsWith(type, "markup.heading"))
          {
             var label = "";
@@ -783,8 +793,8 @@ var RCodeModel = function(session, tokenizer,
             if (/^\s*#+\s*$/.test(value))
             {
                depth = value.split("#").length - 1;
-               var nextToken = iterator.peekFwd(1);
-               label = nextToken ? nextToken.value : "";
+               var line = this.$session.getLine(position.row);
+               label = line.replace(/^\s*[#]+\s*/, "");
             }
 
             // Check if this is a 2-line heading, e.g.
@@ -794,8 +804,7 @@ var RCodeModel = function(session, tokenizer,
             else if (/^[-=]{3,}\s*$/.test(value))
             {
                depth = value[0] === "=" ? 1 : 2;
-               var prevToken = iterator.peekBwd(1);
-               label = prevToken ? prevToken.value : "";
+               label = this.$session.getLine(position.row - 1).trim();
                labelPos.row--;
             }
 
