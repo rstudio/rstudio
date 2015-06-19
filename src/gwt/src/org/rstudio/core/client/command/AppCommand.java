@@ -361,17 +361,36 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
          String label,
          String shortcut)
    {
-      return formatMenuLabel(icon, label, shortcut, null, null);
+      return formatMenuLabel(icon, label, false, shortcut);
+   }
+   
+   public static String formatMenuLabel(ImageResource icon, 
+         String label,
+         boolean html,
+         String shortcut)
+   {
+      return formatMenuLabel(icon, label, html, shortcut, null, null);
+   }
+   
+   public static String formatMenuLabel(ImageResource icon, 
+         String label,
+         String shortcut,
+         ImageResource rightImage,
+         String rightImageDesc)
+   {
+      return formatMenuLabel(icon, label, false, shortcut, rightImage, rightImageDesc);
    }
 
    public static String formatMenuLabel(ImageResource icon, 
                                          String label,
+                                         boolean html,
                                          String shortcut,
                                          ImageResource rightImage,
                                          String rightImageDesc)
    {
       return formatMenuLabel(icon, 
                              label, 
+                             html,
                              shortcut, 
                              null, 
                              rightImage,
@@ -379,15 +398,25 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
    }
    
    public static String formatMenuLabel(ImageResource icon, 
+         String label,
+         String shortcut, 
+         Integer iconOffsetY)
+   {
+      return formatMenuLabel(icon, label, false, shortcut, iconOffsetY);
+   }
+   
+   public static String formatMenuLabel(ImageResource icon, 
                                         String label,
+                                        boolean html,
                                         String shortcut, 
                                         Integer iconOffsetY)
    {
-      return formatMenuLabel(icon, label, shortcut, iconOffsetY, null, null);
+      return formatMenuLabel(icon, label, html, shortcut, iconOffsetY, null, null);
    }
    
    public static String formatMenuLabel(ImageResource icon, 
                                          String label,
+                                         boolean html,
                                          String shortcut, 
                                          Integer iconOffsetY,
                                          ImageResource rightImage,
@@ -411,7 +440,10 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
       }
       text.append("</div></td>");
 
-      text.append("<td>" + DomUtils.textToHtml(StringUtil.notNull(label)) + "</td>");
+      label = StringUtil.notNull(label);
+      if (!html)
+         label = DomUtils.textToHtml(label);
+      text.append("<td>" + label + "</td>");
       if (rightImage != null)
       {
          SafeHtml imageHtml = createRightImageHtml(rightImage, rightImageDesc);
