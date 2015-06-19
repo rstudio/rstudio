@@ -213,17 +213,19 @@ public class ChunkOptionsPopupPanel extends MiniPopupPanel
       
       figWidthBox_ = makeInputBox("fig.width");
       Label widthLabel = new Label("Width (inches):");
-      widthLabel.getElement().getStyle().setMarginLeft(10, Unit.PX);
+      widthLabel.getElement().getStyle().setMarginLeft(20, Unit.PX);
       figureDimensionsPanel_.setWidget(0, 0, widthLabel);
       figureDimensionsPanel_.setWidget(0, 1, figWidthBox_);
       
       figHeightBox_ = makeInputBox("fig.height");
       Label heightLabel = new Label("Height (inches):");
-      heightLabel.getElement().getStyle().setMarginLeft(10, Unit.PX);
+      heightLabel.getElement().getStyle().setMarginLeft(20, Unit.PX);
       figureDimensionsPanel_.setWidget(1, 0, heightLabel);
       figureDimensionsPanel_.setWidget(1, 1, figHeightBox_);
       
       panel_.add(figureDimensionsPanel_);
+      
+      panel_.add(verticalSpacer(2));
       
       HorizontalPanel footerPanel = new HorizontalPanel();
       footerPanel.getElement().getStyle().setWidth(100, Unit.PCT);
@@ -238,7 +240,6 @@ public class ChunkOptionsPopupPanel extends MiniPopupPanel
       
       SmallButton revertButton = new SmallButton("Revert");
       revertButton.getElement().getStyle().setMarginRight(8, Unit.PX);
-      revertButton.getElement().getStyle().setMarginTop(-1, Unit.PX);
       revertButton.addClickHandler(new ClickHandler()
       {
          
@@ -252,7 +253,6 @@ public class ChunkOptionsPopupPanel extends MiniPopupPanel
       buttonPanel.add(revertButton);
       
       SmallButton applyButton = new SmallButton("Apply");
-      applyButton.getElement().getStyle().setMarginTop(-1, Unit.PX);
       applyButton.addClickHandler(new ClickHandler()
       {
          
