@@ -767,6 +767,14 @@ var RCodeModel = function(session, tokenizer,
          type = token.type;
          position = iterator.getCurrentTokenPosition();
 
+         // Figure out if we're in R mode. This is a hack since
+         // unfortunately the code model is handling both R and
+         // non-R modes right now -- for example, '{' should only
+         // create a scope when encountered within a chunk.
+         var isInRMode = true;
+         if (this.$codeBeginPattern)
+            isInRMode = /^r-/.test(this.$session.getState(iterator.$row));
+
          // Add Markdown headers.
          //
          // The markdown highlight rules are a bit strange in that
@@ -818,7 +826,7 @@ var RCodeModel = function(session, tokenizer,
          //
          // Note that sections can only be closed implicitly by new
          // sections following later in the document.
-         else if (/\bsectionhead\b/.test(type))
+         else if (isInRMode && /\bsectionhead\b/.test(type))
          {
             var sectionHeadMatch = /^#+'?[-=#\s]*(.*?)\s*[-=#]+\s*$/.exec(value);
             var label = sectionHeadMatch[1];
@@ -874,7 +882,7 @@ var RCodeModel = function(session, tokenizer,
          // determine the 'type' of brace -- e.g. is it associated
          // with a function definition, or just it's own code block?
          // And so on.
-         else if (value === "{")
+         else if (isInRMode && value === "{")
          {
             // Within here, since we know that we're dealing with R code, we
             // can fall back to using the R token cursor.
@@ -941,7 +949,7 @@ var RCodeModel = function(session, tokenizer,
          }
 
          // A closing brace will close a scope.
-         else if (value === "}")
+         else if (isInRMode && value === "}")
          {
             this.$scopes.onScopeEnd(position);
          }
