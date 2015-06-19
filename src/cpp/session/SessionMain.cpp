@@ -640,6 +640,8 @@ void handleClientInit(const boost::function<void()>& initFunction,
 
    sessionInfo["multi_session"] = options.multiSession();
 
+   sessionInfo["multi_version"] = false;
+
    module_context::events().onSessionInfo(&sessionInfo);
 
    // send response  (we always set kEventsPending to false so that the client

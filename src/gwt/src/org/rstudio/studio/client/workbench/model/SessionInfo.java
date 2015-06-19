@@ -377,6 +377,10 @@ public class SessionInfo extends JavaScriptObject
       return this.active_session_count;
    }-*/;
    
+   public final native boolean getMultiVersion() /*-{
+      return this.multi_version;
+   }-*/;
+   
    public final native JsArray<RVersionSpec> getAvailableRVersions() /*-{
       return this.available_r_versions;
    }-*/;
