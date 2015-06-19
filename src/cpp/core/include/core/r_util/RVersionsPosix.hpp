@@ -74,7 +74,8 @@ std::vector<RVersion> enumerateRVersions(
                               const FilePath& ldPathsScript,
                               const std::string& ldLibraryPath);
 
-RVersion selectVersion(const RVersionInfo& matchVersion,
+RVersion selectVersion(const std::string& number,
+                       const std::string& rHomeDir,
                        std::vector<RVersion> versions);
 
 json::Object rVersionToJson(const r_util::RVersion& version);

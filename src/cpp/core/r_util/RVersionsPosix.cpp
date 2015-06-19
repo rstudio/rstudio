@@ -206,12 +206,15 @@ std::vector<RVersion> enumerateRVersions(
 
 namespace {
 
-bool isVersion(const RVersionNumber& test, const RVersion& item)
+bool isVersion(const RVersionNumber& number,
+               const std::string& rHomeDir,
+               const RVersion& item)
 {
-   return test == RVersionNumber::parse(item.number());
+   return number == RVersionNumber::parse(item.number()) &&
+          rHomeDir == item.homeDir().absolutePath();
 }
 
-bool isMajorMinorVersion(RVersionNumber& test, const RVersion& item)
+bool isMajorMinorVersion(const RVersionNumber& test, const RVersion& item)
 {
    RVersionNumber itemNumber = RVersionNumber::parse(item.number());
    return (test.major() == itemNumber.major() &&
@@ -219,14 +222,13 @@ bool isMajorMinorVersion(RVersionNumber& test, const RVersion& item)
 }
 
 
-bool compareVersionInfo(const RVersionInfo& versionInfo,
+bool compareVersionInfo(const RVersionNumber& versionNumber,
                         const RVersion& version)
 {
-   return RVersionNumber::parse(versionInfo.number) <
-          RVersionNumber::parse(version.number());
+   return versionNumber < RVersionNumber::parse(version.number());
 }
 
-RVersion findClosest(const RVersionInfo& matchVersion,
+RVersion findClosest(const RVersionNumber& versionNumber,
                      std::vector<RVersion> versions)
 {
    // sort so algorithms work correctly
@@ -236,7 +238,7 @@ RVersion findClosest(const RVersionInfo& matchVersion,
    std::vector<RVersion>::const_iterator it;
    it = std::upper_bound(versions.begin(),
                          versions.end(),
-                         matchVersion,
+                         versionNumber,
                          compareVersionInfo);
    if (it != versions.end())
       return *it;
@@ -248,7 +250,8 @@ RVersion findClosest(const RVersionInfo& matchVersion,
 }
 
 
-RVersion selectVersion(const RVersionInfo& matchVersion,
+RVersion selectVersion(const std::string& number,
+                       const std::string& rHomeDir,
                        std::vector<RVersion> versions)
 {
    // check for empty
@@ -256,7 +259,7 @@ RVersion selectVersion(const RVersionInfo& matchVersion,
       return RVersion();
 
    // version we are seeking
-   RVersionNumber matchNumber = RVersionNumber::parse(matchVersion.number);
+   RVersionNumber matchNumber = RVersionNumber::parse(number);
 
    // order correctly for algorithms
    std::sort(versions.begin(), versions.end(), compareVersion);
@@ -265,7 +268,7 @@ RVersion selectVersion(const RVersionInfo& matchVersion,
    std::vector<RVersion>::const_iterator it;
    it = std::find_if(versions.begin(),
                      versions.end(),
-                     boost::bind(isVersion, matchNumber, _1));
+                     boost::bind(isVersion, matchNumber, rHomeDir, _1));
    if (it != versions.end())
       return *it;
 
@@ -279,12 +282,12 @@ RVersion selectVersion(const RVersionInfo& matchVersion,
    // find the closest match in the series
    if (seriesVersions.size() > 0)
    {
-      return findClosest(matchVersion, seriesVersions);
+      return findClosest(matchNumber, seriesVersions);
    }
    // otherwise find the closest match in the whole list
    else
    {
-      return findClosest(matchVersion, versions);
+      return findClosest(matchNumber, versions);
    }
 }
 
