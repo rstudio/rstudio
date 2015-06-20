@@ -496,6 +496,11 @@ public class UIPrefsAccessor extends Prefs
       return bool("show_document_outline_rmd", true);
    }
    
+   public PrefValue<Boolean> showUnnamedEntriesInDocumentOutline()
+   {
+      return bool("show_unnamed_entries_in_document_outline", false);
+   }
+   
    private String getDefaultPdfPreview()
    {
       if (Desktop.isDesktop())

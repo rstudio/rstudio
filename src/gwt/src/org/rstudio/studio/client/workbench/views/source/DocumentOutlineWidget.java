@@ -15,11 +15,13 @@
 package org.rstudio.studio.client.workbench.views.source;
 
 import org.rstudio.core.client.Counter;
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.source.editors.text.Scope;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ScopeFunction;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
@@ -185,9 +187,11 @@ public class DocumentOutlineWidget extends Composite
    }
    
    @Inject
-   private void initialize(EventBus events)
+   private void initialize(EventBus events,
+                           UIPrefs uiPrefs)
    {
       events_ = events;
+      uiPrefs_ = uiPrefs;
    }
    
    public DocumentOutlineWidget(TextEditingTarget target)
@@ -387,8 +391,21 @@ public class DocumentOutlineWidget extends Composite
       }
    }
    
+   private boolean isUnnamedNode(Scope node)
+   {
+      if (node.isChunk())
+         return StringUtil.isNullOrEmpty(node.getChunkLabel());
+      return StringUtil.isNullOrEmpty(node.getLabel());
+   }
+   
    private boolean shouldDisplayNode(Scope node)
    {
+      if (!uiPrefs_.showUnnamedEntriesInDocumentOutline().getGlobalValue() &&
+          isUnnamedNode(node))
+      {
+         return false;
+      }
+      
       // NOTE: the 'is*' items are not mutually exclusive
       if (node.isAnon() || node.isLambda() || node.isTopLevel())
          return false;
@@ -452,6 +469,7 @@ public class DocumentOutlineWidget extends Composite
    private JsArray<Scope> scopeTree_;
    
    private EventBus events_;
+   private UIPrefs uiPrefs_;
    
    // Styles, Resources etc. ----
    public interface Styles extends CssResource
