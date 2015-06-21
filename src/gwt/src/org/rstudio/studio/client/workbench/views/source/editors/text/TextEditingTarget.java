@@ -88,7 +88,6 @@ import org.rstudio.studio.client.rmarkdown.model.RmdOutputFormat;
 import org.rstudio.studio.client.rmarkdown.model.RmdTemplateFormat;
 import org.rstudio.studio.client.rmarkdown.model.RmdYamlData;
 import org.rstudio.studio.client.rmarkdown.model.YamlFrontMatter;
-import org.rstudio.studio.client.rmarkdown.ui.RmdFormatOption;
 import org.rstudio.studio.client.rmarkdown.ui.RmdTemplateOptionsDialog;
 import org.rstudio.studio.client.rsconnect.RSConnect;
 import org.rstudio.studio.client.rsconnect.events.RSConnectActionEvent;
