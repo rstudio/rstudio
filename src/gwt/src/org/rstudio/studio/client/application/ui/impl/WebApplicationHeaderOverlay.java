@@ -26,6 +26,8 @@ public class WebApplicationHeaderOverlay
    {
       void addCommand(Widget widget);
       void addCommandSeparator();
+      void addRightCommand(Widget widget);
+      void addRightCommandSeparator();
       void addProjectCommand(Widget widget);
       void addProjectCommandSeparator();
       void addProjectRightCommand(Widget widget);
@@ -43,6 +45,10 @@ public class WebApplicationHeaderOverlay
    }
    
    public void addCommands(Context context)
+   {
+   }
+   
+   public void setGlobalToolbarVisible(boolean visible)
    {
    }
 }

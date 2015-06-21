@@ -181,7 +181,8 @@ public class WebApplicationHeader extends Composite
             projectMenuButton_.addStyleName(
                        ThemeStyles.INSTANCE.webHeaderBarCommandsProjectMenu());
             headerBarPanel_.add(projectMenuButton_);
-            showProjectMenu(!toolbar_.isVisible());     
+            showProjectMenu(!toolbar_.isVisible());
+            overlay_.setGlobalToolbarVisible(toolbar_.isVisible());
          }
       });
       
@@ -221,6 +222,8 @@ public class WebApplicationHeader extends Composite
          preferredHeight_ = 45;
          showProjectMenu(true);
       }
+      
+      overlay_.setGlobalToolbarVisible(showToolbar);
    }
    
    public boolean isToolbarVisible()
@@ -402,6 +405,18 @@ public class WebApplicationHeader extends Composite
    public void addCommandSeparator()
    {
       headerBarCommandsPanel_.add(createCommandSeparator());
+   }
+   
+   @Override
+   public void addRightCommand(Widget widget)
+   {
+      headerBarPanel_.add(widget);
+   }
+   
+   @Override
+   public void addRightCommandSeparator()
+   {
+      headerBarPanel_.add(createCommandSeparator());
    }
    
    @Override
