@@ -38,7 +38,8 @@ var RMarkdownHighlightRules = function() {
       RHighlightRules,
       "r",
       this.$reRChunkStartString,
-      this.$reChunkEndString
+      this.$reChunkEndString,
+      ["start", "listblock", "allowBlock"]
    );
 
    // Embed C++ highlight rules
@@ -47,7 +48,8 @@ var RMarkdownHighlightRules = function() {
       c_cppHighlightRules,
       "r-cpp",
       this.$reCppChunkStartString,
-      this.$reChunkEndString
+      this.$reChunkEndString,
+      ["start", "listblock", "allowBlock"]
    );
 
    // Embed YAML highlight rules, but ensure that they can only be

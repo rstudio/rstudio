@@ -120,6 +120,7 @@ public class EditingPreferencesPane extends PreferencesPane
       displayPanel.add(rMarkdownLabel);
       displayPanel.add(checkboxPref("Show inline toolbar for R code chunks", prefs_.showInlineToolbarForRCodeChunks()));
       displayPanel.add(checkboxPref("Show document outline by default", prefs_.showDocumentOutlineRmd()));
+      displayPanel.add(checkboxPref("Show unnamed entries in document outline", prefs_.showUnnamedEntriesInDocumentOutline()));
       
       VerticalPanel completionPanel = new VerticalPanel();
       
