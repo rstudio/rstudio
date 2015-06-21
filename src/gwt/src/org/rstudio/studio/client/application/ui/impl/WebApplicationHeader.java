@@ -414,9 +414,11 @@ public class WebApplicationHeader extends Composite
    }
    
    @Override
-   public void addRightCommandSeparator()
+   public Widget addRightCommandSeparator()
    {
-      headerBarPanel_.add(createCommandSeparator());
+      Widget separator = createCommandSeparator();
+      headerBarPanel_.add(separator);
+      return separator;
    }
    
    @Override
