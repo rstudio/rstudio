@@ -284,9 +284,11 @@ void setDynamicContentResponse(const std::string& content,
    if (request.acceptsEncoding(http::kGzipEncoding))
       pResponse->setContentEncoding(http::kGzipEncoding);
    
-   // if the response doesn't already have Cache-Control then
-   // send an eTag back and force revalidation
-   if (!pResponse->containsHeader("Cache-Control"))
+   // if the response doesn't already have Cache-Control then send an eTag back
+   // and force revalidation (not for desktop mode since it doesn't handle
+   // eTag-based caching)
+   if (!pResponse->containsHeader("Cache-Control") &&
+       options().programMode() == kSessionProgramModeServer)
    {
       // force cache revalidation since this is dynamic content
       pResponse->setCacheWithRevalidationHeaders();
@@ -398,9 +400,6 @@ void handleHttpdResult(SEXP httpdSEXP,
          // get file path
          FilePath filePath(fileName);
          
-         // cache with revalidation
-         pResponse->setCacheWithRevalidationHeaders();
-         
          // read file contents
          std::string contents;
          Error error = readStringFromFile(filePath, &contents);
@@ -409,15 +408,24 @@ void handleHttpdResult(SEXP httpdSEXP,
             pResponse->setError(error);
             return;
          }
-          
+
+         if (options().programMode() == kSessionProgramModeServer)
+            pResponse->setCacheWithRevalidationHeaders();
+
          // set body (apply filter to html)
          if (pResponse->contentType() == kTextHtml)
          {
-            pResponse->setCacheableBody(contents, request, htmlFilter);
+            if (options().programMode() == kSessionProgramModeServer)
+               pResponse->setCacheableBody(contents, request, htmlFilter);
+            else
+               pResponse->setBody(contents, htmlFilter);
          }
          else
          {
-            pResponse->setCacheableBody(contents, request);
+            if (options().programMode() == kSessionProgramModeServer)
+               pResponse->setCacheableBody(contents, request);
+            else
+               pResponse->setBody(contents);
          }
       }
       else // from dynamic content
