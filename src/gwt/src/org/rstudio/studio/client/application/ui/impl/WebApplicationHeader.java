@@ -186,7 +186,8 @@ public class WebApplicationHeader extends Composite
                initCommandsPanel(sessionInfo);
                       
             // notify overlay of global toolbar state
-            overlay_.setGlobalToolbarVisible(toolbar_.isVisible());
+            overlay_.setGlobalToolbarVisible(WebApplicationHeader.this, 
+                                             toolbar_.isVisible());
          }
       });
       
@@ -227,7 +228,7 @@ public class WebApplicationHeader extends Composite
          showProjectMenu(true);
       }
       
-      overlay_.setGlobalToolbarVisible(showToolbar);
+      overlay_.setGlobalToolbarVisible(this, showToolbar);
    }
    
    public boolean isToolbarVisible()

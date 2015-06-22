@@ -50,7 +50,7 @@ public class WebApplicationHeaderOverlay
    {
    }
    
-   public void setGlobalToolbarVisible(boolean visible)
+   public void setGlobalToolbarVisible(Context context, boolean visible)
    {
    }
 }

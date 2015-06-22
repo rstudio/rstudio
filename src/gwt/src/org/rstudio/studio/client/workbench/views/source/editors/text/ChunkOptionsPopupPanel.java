@@ -26,7 +26,6 @@ import org.rstudio.core.client.dom.DomUtils.NativeEventHandler;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.widget.MiniPopupPanel;
-import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.core.client.widget.SmallButton;
 import org.rstudio.core.client.widget.TextBoxWithCue;
 import org.rstudio.core.client.widget.ThemedCheckBox;
@@ -362,6 +361,7 @@ public class ChunkOptionsPopupPanel extends MiniPopupPanel
       chunkOptions_.remove(key);
    }
    
+   @SuppressWarnings("unused")
    private void revert(String key)
    {
       if (originalChunkOptions_.containsKey(key))
