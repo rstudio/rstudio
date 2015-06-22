@@ -13,6 +13,18 @@
 #
 #
 
+.rs.registerReplaceHook("object.size", "utils", function(original, x)
+{
+   if (is.null(attributes(x)))
+      return(original(x))
+   
+   for (el in attributes(x))
+      if (identical(x, el))
+         return(0)
+   
+   original(x)
+})
+
 .rs.addFunction("valueFromStr", function(val)
 {
    capture.output(try({ str(val) }, silent = TRUE));

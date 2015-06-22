@@ -367,6 +367,12 @@ assign(envir = .rs.Env, ".rs.getVar", function(name)
       unlockBinding(name, packageEnv)
       assign(name, new, packageName)
       lockBinding(name, packageEnv)
+      
+      # re-map in namesapce
+      nsEnv <- asNamespace(package)
+      unlockBinding(name, nsEnv)
+      assign(name, new, nsEnv)
+      lockBinding(name, nsEnv)
    }
    else
    {
