@@ -14,6 +14,10 @@
  */
 package org.rstudio.studio.client.workbench.prefs.views;
 
+import java.util.ArrayList;
+
+import com.google.gwt.core.client.JsArray;
+import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -31,6 +35,7 @@ import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.core.client.widget.TextBoxWithButton;
 import org.rstudio.studio.client.application.Desktop;
+import org.rstudio.studio.client.application.model.RVersionSpec;
 import org.rstudio.studio.client.application.model.SaveAction;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -91,6 +96,21 @@ public class GeneralPreferencesPane extends PreferencesPane
             add(rVersion_);
          }
       }
+      else if (session_.getSessionInfo().getMultiVersion())
+      {
+         rServerRVersion_ = new RVersionSelectWidget(
+                        session_.getSessionInfo().getAvailableRVersions());
+         add(tight(rServerRVersion_));
+         
+         rememberRVersionForProjects_ = 
+                        new CheckBox("Restore last used R version for projects");
+         
+         rememberRVersionForProjects_.setValue(true);
+         Style style = rememberRVersionForProjects_.getElement().getStyle();
+         style.setMarginTop(5, Unit.PX);
+         style.setMarginBottom(12, Unit.PX);
+         add(rememberRVersionForProjects_);
+      }
 
       Label defaultLabel = new Label("Default working directory (when not in a project):");
       nudgeRight(defaultLabel);
@@ -141,14 +161,14 @@ public class GeneralPreferencesPane extends PreferencesPane
       // version doesn't support them, don't show these options. 
       if (session_.getSessionInfo().getHaveSrcrefAttribute())
       {
-	      add(checkboxPref(
-	            "Use debug error handler only when my code contains errors", 
-	            prefs_.handleErrorsInUserCodeOnly()));
-	      CheckBox chkTracebacks = checkboxPref(
-	            "Automatically expand tracebacks in error inspector", 
-	            prefs_.autoExpandErrorTracebacks());
-	      chkTracebacks.getElement().getStyle().setMarginBottom(15, Unit.PX);
-	      add(chkTracebacks);
+         add(checkboxPref(
+               "Use debug error handler only when my code contains errors", 
+               prefs_.handleErrorsInUserCodeOnly()));
+         CheckBox chkTracebacks = checkboxPref(
+               "Automatically expand tracebacks in error inspector", 
+               prefs_.autoExpandErrorTracebacks());
+         chkTracebacks.getElement().getStyle().setMarginBottom(15, Unit.PX);
+         add(chkTracebacks);
       }
       
       encodingValue_ = prefs_.defaultEncoding().getGlobalValue();
@@ -248,6 +268,15 @@ public class GeneralPreferencesPane extends PreferencesPane
       
       rProfileOnResume_.setValue(generalPrefs.getRprofileOnResume());
       rProfileOnResume_.setEnabled(true);
+      
+      if (rServerRVersion_ != null)
+         rServerRVersion_.setRVersion(generalPrefs.getDefaultRVersion());
+      
+      if (rememberRVersionForProjects_ != null)
+      {
+         rememberRVersionForProjects_.setValue(
+                                   generalPrefs.getRestoreProjectRVersion()); 
+      }
      
       // projects prefs
       ProjectsPrefs projectsPrefs = rPrefs.getProjectsPrefs();
@@ -290,7 +319,9 @@ public class GeneralPreferencesPane extends PreferencesPane
          GeneralPrefs generalPrefs = GeneralPrefs.create(saveAction, 
                                                          loadRData_.getValue(),
                                                          rProfileOnResume_.getValue(),
-                                                         dirChooser_.getText());
+                                                         dirChooser_.getText(),
+                                                         getDefaultRVersion(),
+                                                         getRestoreProjectRVersion());
          rPrefs.setGeneralPrefs(generalPrefs);
          
          // set history prefs
@@ -323,11 +354,119 @@ public class GeneralPreferencesPane extends PreferencesPane
       else
          encoding_.setText(encoding);
    }
+   
+   private RVersionSpec getDefaultRVersion()
+   {
+      if (rServerRVersion_ != null)
+         return rServerRVersion_.getRVersion();
+      else
+         return RVersionSpec.createEmpty();
+   }
+   
+   private boolean getRestoreProjectRVersion()
+   {
+      if (rememberRVersionForProjects_ != null)
+         return rememberRVersionForProjects_.getValue();
+      else
+         return false;
+   }
+   
+    
 
+   private static class RVersionSelectWidget extends SelectWidget
+   {
+      public RVersionSelectWidget(JsArray<RVersionSpec> rVersions)
+      {
+         super("R version for new sessions:",
+               rVersionChoices(rVersions),
+               rVersionValues(rVersions),
+               false, 
+               true, 
+               false);
+      }
+      
+      public void setRVersion(RVersionSpec version)
+      {
+         if (!setValue(rVersionSpecToString(version)))
+            setValue(rVersionSpecToString(RVersionSpec.createEmpty()));
+      }
+      
+      public RVersionSpec getRVersion()
+      {
+         return rVersionSpecFromString(getValue());
+      }
+      
+      
+      private static String[] rVersionChoices(JsArray<RVersionSpec> rVersions)
+      {
+         // do we need to disambiguate identical version numbers
+         boolean disambiguate = RVersionSpec.hasDuplicates(rVersions);
+
+         // build list of choices
+         ArrayList<String> choices = new ArrayList<String>();
+
+         // always include "default" lable
+         choices.add(USE_DEFAULT_VERSION);
+
+         for (int i=0; i<rVersions.length(); i++)
+         {
+            RVersionSpec version = rVersions.get(i);
+            String choice = "R version " + version.getVersion();
+            if (disambiguate)
+               choice = choice + " (" + version.getRHome() + ")";
+            choices.add(choice);
+         }
+
+         return choices.toArray(new String[0]);
+      }
+
+      private static String[] rVersionValues(JsArray<RVersionSpec> rVersions)
+      {
+         ArrayList<String> values = new ArrayList<String>();
+
+         values.add(rVersionSpecToString(RVersionSpec.createEmpty()));
+
+         for (int i=0; i<rVersions.length(); i++)
+            values.add(rVersionSpecToString(rVersions.get(i)));
+
+         return values.toArray(new String[0]);
+      }
+      
+      private static RVersionSpec rVersionSpecFromString(String str)
+      {
+         if (str != null)
+         {
+            int loc = str.indexOf(SEP);
+            if (loc != -1)
+            {
+               String version = str.substring(0, loc);
+               String rHomeDir = str.substring(loc + SEP.length());
+               if (version.length() > 0 && rHomeDir.length() > 0)
+                  return RVersionSpec.create(version, rHomeDir);
+            }
+         }
+         
+         // couldn't parse it
+         return RVersionSpec.createEmpty();
+      }
+      
+      private static String rVersionSpecToString(RVersionSpec version)
+      {
+         if (version.getVersion().length() == 0)
+            return "";
+         else
+            return version.getVersion() + SEP + version.getRHome();
+      }
+
+      private final static String USE_DEFAULT_VERSION = "(Use Server Default)";
+      private final static String SEP = "::::";
+   }
 
    
    private final FileSystemContext fsContext_;
    private final FileDialogs fileDialogs_;
+   private RVersionSelectWidget rServerRVersion_ = null;
+   private CheckBox rememberRVersionForProjects_ = null;
    private SelectWidget saveWorkspace_;
    private TextBoxWithButton rVersion_;
    private TextBoxWithButton dirChooser_;

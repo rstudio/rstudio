@@ -14,6 +14,8 @@
  */
 package org.rstudio.studio.client.workbench.prefs.model;
 
+import org.rstudio.studio.client.application.model.RVersionSpec;
+
 import com.google.gwt.core.client.JavaScriptObject;
 
 public class GeneralPrefs extends JavaScriptObject
@@ -23,12 +25,16 @@ public class GeneralPrefs extends JavaScriptObject
    public static final native GeneralPrefs create(int saveAction,
                                                   boolean loadRData,
                                                   boolean rProfileOnResume,
-                                                  String initialWorkingDir) /*-{
+                                                  String initialWorkingDir,
+                                                  RVersionSpec defaultRVersion,
+                                                  boolean restoreProjectRVersion) /*-{
       var prefs = new Object();
       prefs.save_action = saveAction;
       prefs.load_rdata = loadRData;
       prefs.rprofile_on_resume = rProfileOnResume;
       prefs.initial_working_dir = initialWorkingDir;
+      prefs.default_r_version = defaultRVersion;
+      prefs.restore_project_r_version = restoreProjectRVersion;
       return prefs ;
    }-*/;
 
@@ -48,4 +54,13 @@ public class GeneralPrefs extends JavaScriptObject
    public native final String getInitialWorkingDirectory() /*-{
       return this.initial_working_dir;
    }-*/;
+   
+   public native final RVersionSpec getDefaultRVersion() /*-{
+      return this.default_r_version;
+   }-*/;
+   
+   public native final boolean getRestoreProjectRVersion() /*-{
+      return this.restore_project_r_version;
+   }-*/;
+   
 }

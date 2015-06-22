@@ -33,6 +33,9 @@
 #define kSwitchToProject               "switch-to-project"
 #define kLastProjectPath               "last-project-path"
 #define kAlwaysRestoreLastProject      "restoreLastProject"
+#define kDefaultRVersion               "defaultRVersion"
+#define kDefaultRVersionHome           "defaultRVersionHome"
+#define kRestoreProjectRVersion        "restoreProjectRVersion"
 
 namespace rstudio {
 namespace session {
@@ -81,6 +84,33 @@ public:
          writeSetting(kLastProjectPath, lastProjectPath.absolutePath());
       else
          writeSetting(kLastProjectPath, "");
+   }
+
+   std::string defaultRVersion()
+   {
+      return readSetting(kDefaultRVersion);
+   }
+
+   std::string defaultRVersionHome()
+   {
+      return readSetting(kDefaultRVersionHome);
+   }
+
+   void setDefaultRVersion(const std::string& version,
+                           const std::string& versionHome)
+   {
+      writeSetting(kDefaultRVersion, version);
+      writeSetting(kDefaultRVersionHome, versionHome);
+   }
+
+   bool restoreProjectRVersion()
+   {
+      return readSetting(kRestoreProjectRVersion) != "0";
+   }
+
+   void setRestoreProjectRVersion(bool restoreProjectRVersion)
+   {
+      writeSetting(kRestoreProjectRVersion, restoreProjectRVersion ? "1" : "0");
    }
 
    std::string readSetting(const char * const settingName) const

@@ -40,6 +40,7 @@
 #include <r/RFunctionHook.hpp>
 
 #include <session/projects/SessionProjects.hpp>
+#include <session/projects/ProjectsSettings.hpp>
 
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionUserSettings.hpp>
@@ -187,13 +188,16 @@ Error setPrefs(const json::JsonRpcRequest& request, json::JsonRpcResponse*)
 
    // read and set general prefs
    int saveAction;
-   bool loadRData, rProfileOnResume;
+   bool loadRData, rProfileOnResume, restoreProjectRVersion;
    std::string initialWorkingDir;
+   json::Object defaultRVersionJson;
    error = json::readObject(generalPrefs,
                             "save_action", &saveAction,
                             "load_rdata", &loadRData,
                             "rprofile_on_resume", &rProfileOnResume,
-                            "initial_working_dir", &initialWorkingDir);
+                            "initial_working_dir", &initialWorkingDir,
+                            "default_r_version", &defaultRVersionJson,
+                            "restore_project_r_version", &restoreProjectRVersion);
    if (error)
       return error;
 
@@ -206,6 +210,18 @@ Error setPrefs(const json::JsonRpcRequest& request, json::JsonRpcResponse*)
 
    // sync underlying R save action
    module_context::syncRSaveAction();
+
+   // versions prefs
+   std::string defaultRVersion, defaultRVersionHome;
+   error = json::readObject(defaultRVersionJson,
+                            "version", &defaultRVersion,
+                            "r_home", &defaultRVersionHome);
+   if (error)
+      return error;
+
+   projects::ProjectsSettings projSettings(module_context::userScratchPath());
+   projSettings.setDefaultRVersion(defaultRVersion, defaultRVersionHome);
+   projSettings.setRestoreProjectRVersion(restoreProjectRVersion);
 
    // read and set history prefs
    bool alwaysSave, removeDuplicates;
@@ -357,6 +373,12 @@ json::Object toBioconductorMirrorJson(
 Error getRPrefs(const json::JsonRpcRequest& request,
                 json::JsonRpcResponse* pResponse)
 {
+   // proj settings
+   projects::ProjectsSettings projSettings(module_context::userScratchPath());
+   json::Object defaultRVersionJson;
+   defaultRVersionJson["version"] = projSettings.defaultRVersion();
+   defaultRVersionJson["r_home"] = projSettings.defaultRVersionHome();
+
    // get general prefs
    json::Object generalPrefs;
    generalPrefs["save_action"] = userSettings().saveAction();
@@ -364,6 +386,8 @@ Error getRPrefs(const json::JsonRpcRequest& request,
    generalPrefs["rprofile_on_resume"] = userSettings().rProfileOnResume();
    generalPrefs["initial_working_dir"] = module_context::createAliasedPath(
          userSettings().initialWorkingDirectory());
+   generalPrefs["default_r_version"] = defaultRVersionJson;
+   generalPrefs["restore_project_r_version"] = projSettings.restoreProjectRVersion();
 
    // get history prefs
    json::Object historyPrefs;

@@ -20,6 +20,19 @@ import com.google.gwt.core.client.JsArray;
 public class RVersionSpec extends JavaScriptObject
 {
    protected RVersionSpec() {}
+ 
+   public final static RVersionSpec createEmpty()
+   {
+      return create("","");
+   }
+   
+   public final static native RVersionSpec create(String version, 
+                                                  String rHome) /*-{
+      return {
+         version: version,
+         r_home: rHome
+      };
+   }-*/;                               
    
    public final native String getVersion() /*-{
       return this.version;
