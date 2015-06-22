@@ -641,6 +641,8 @@ void handleClientInit(const boost::function<void()>& initFunction,
    sessionInfo["multi_session"] = options.multiSession();
 
    sessionInfo["multi_version"] = false;
+   sessionInfo["r_version"] = module_context::rVersion();
+   sessionInfo["r_home_dir"] = module_context::rHomeDir();
 
    module_context::events().onSessionInfo(&sessionInfo);
 

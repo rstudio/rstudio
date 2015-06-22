@@ -82,4 +82,7 @@ public interface ApplicationServerOperations extends PrefsServerOperations
    void getActiveSessions(
       String hostPageUrl,
       ServerRequestCallback<JsArray<ActiveSession>> callback);
+   
+   void getAvailableRVersions(
+      ServerRequestCallback<JsArray<RVersionSpec>> callback);
 }
