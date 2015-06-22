@@ -41,4 +41,22 @@ public class ActiveSession extends JavaScriptObject
    public native final String getWorkingDir() /*-{
       return this.working_dir;
    }-*/;
+   
+   public native final boolean getRunning() /*-{
+      return this.running;
+   }-*/;
+   
+   public native final double getLastUsed() /*-{
+      return this.last_used;
+   }-*/;
+   
+   public native final String getRVersion() /*-{
+      return this.r_version;
+   }-*/;
+   
+   public native final String getRVersionHome() /*-{
+      return this.r_version_home;
+   }-*/;
+   
+   
 }
