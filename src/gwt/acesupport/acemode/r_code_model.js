@@ -677,6 +677,36 @@ var RCodeModel = function(session, tokenizer,
       
    }
 
+   function $extractYamlTitle(session)
+   {
+      var row = 0;
+
+      // Protect against unclosed YAML blocks in large documents.
+      // It seems unlikely that a YAML block would span more than
+      // 100 lines...
+      var n = Math.min(session.getLength(), 100);
+
+      // Default title (in case a 'title:' field is not found)
+      var title = "Title";
+
+      while (row++ < n)
+      {
+         var line = session.getLine(row);
+         if (/^\s*[-]{3}\s*$/.test(line))
+            break;
+
+         var match = /^\s*title:\s+(.*?)\s*$/.exec(line);
+         if (match !== null)
+         {
+            title = match[1];
+            break;
+         }
+      }
+
+      return Utils.stripEnclosingQuotes(title.trim());
+
+   }
+
    this.$buildScopeTreeUpToRow = function(maxRow)
    {
       function getChunkLabel(reOptions, comment) {
@@ -852,7 +882,8 @@ var RCodeModel = function(session, tokenizer,
          // value.
          else if (/\bcodebegin\b/.test(type) && value === "---")
          {
-            this.$scopes.onSectionHead("Title", position, {isYaml: true});
+            var title = $extractYamlTitle(this.$session);
+            this.$scopes.onSectionHead(title, position, {isYaml: true});
          }
 
          else if (/\bcodeend\b/.test(type) && value === "---")
