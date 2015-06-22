@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.application.model;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.JsArray;
 
 public class RVersionSpec extends JavaScriptObject
 {
@@ -27,4 +28,19 @@ public class RVersionSpec extends JavaScriptObject
    public final native String getRHome() /*-{
       return this.r_home;
    }-*/;
+   
+   public static boolean hasDuplicates(JsArray<RVersionSpec> rVersions)
+   {
+      for (int i = 0; i<rVersions.length(); i++)
+      {
+         for (int j = 0; j<rVersions.length(); j++)
+         {
+            if (i != j && rVersions.get(i).getVersion().equals(
+                          rVersions.get(j).getVersion())) 
+               return true;
+         }
+      }
+      
+      return false;
+   }
 }
