@@ -205,12 +205,13 @@ var Unicode = require("ace/unicode").packages;
          return string;
       
       var firstChar = string[0];
-      if (firstChar !== "'" ||
-          firstChar !== "\"" ||
-          firstChar !== "`")
-      {
+      var isQuote =
+             firstChar === "'" ||
+             firstChar === "\"" ||
+             firstChar === "`";
+
+      if (!isQuote)
          return string;
-      }
 
       var lastChar = string[n - 1];
       if (lastChar !== firstChar)
