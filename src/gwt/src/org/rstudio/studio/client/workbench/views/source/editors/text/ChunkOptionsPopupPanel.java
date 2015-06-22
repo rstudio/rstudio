@@ -51,6 +51,7 @@ import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
+import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.HorizontalPanel;
@@ -119,9 +120,9 @@ public class ChunkOptionsPopupPanel extends MiniPopupPanel
       
       Grid nameAndOutputGrid = new Grid(2, 2);
       
-      Label chunkLabel = new Label("Name:");
-      chunkLabel.addStyleName(RES.styles().chunkLabel());
-      nameAndOutputGrid.setWidget(0, 0, chunkLabel);
+      chunkLabel_ = new Label("Name:");
+      chunkLabel_.addStyleName(RES.styles().chunkLabel());
+      nameAndOutputGrid.setWidget(0, 0, chunkLabel_);
       
       tbChunkLabel_.addStyleName(RES.styles().chunkName());
       nameAndOutputGrid.setWidget(0, 1, tbChunkLabel_);
@@ -277,8 +278,6 @@ public class ChunkOptionsPopupPanel extends MiniPopupPanel
       panel_.add(footerPanel);
    }
    
-  
-   
    public void focus()
    {
       tbChunkLabel_.setFocus(true);
@@ -336,7 +335,7 @@ public class ChunkOptionsPopupPanel extends MiniPopupPanel
       return checkBox;
    }
    
-   private boolean has(String key)
+   protected boolean has(String key)
    {
       return chunkOptions_.containsKey(key);
    }
@@ -346,28 +345,28 @@ public class ChunkOptionsPopupPanel extends MiniPopupPanel
       return chunkOptions_.get(key);
    }
    
-   private boolean getBoolean(String key)
+   protected boolean getBoolean(String key)
    {
       return isTrue(chunkOptions_.get(key));
    }
    
-   private void set(String key, String value)
+   protected void set(String key, String value)
    {
       chunkOptions_.put(key,  value);
    }
    
-   private void unset(String key)
+   protected void unset(String key)
    {
       chunkOptions_.remove(key);
    }
    
-   @SuppressWarnings("unused")
-   private void revert(String key)
+   protected void initOptions(Command afterInit)
    {
-      if (originalChunkOptions_.containsKey(key))
-         chunkOptions_.put(key, originalChunkOptions_.get(key));
-      else
-         chunkOptions_.remove(key);
+      originalLine_ = widget_.getEditor().getSession().getLine(position_.getRow());
+      parseChunkHeader(originalLine_, originalChunkOptions_);
+      for (Map.Entry<String, String> pair : originalChunkOptions_.entrySet())
+         chunkOptions_.put(pair.getKey(), pair.getValue());
+      afterInit.execute();
    }
    
    public void init(AceEditorWidget widget, Position position)
@@ -377,33 +376,38 @@ public class ChunkOptionsPopupPanel extends MiniPopupPanel
       chunkOptions_.clear();
       originalChunkOptions_.clear();
       
-      originalLine_ = widget_.getEditor().getSession().getLine(position_.getRow());
-      parseChunkHeader(originalLine_, originalChunkOptions_);
-      for (Map.Entry<String, String> pair : originalChunkOptions_.entrySet())
-         chunkOptions_.put(pair.getKey(), pair.getValue());
+      Command afterInit = new Command()
+      {
+         @Override
+         public void execute()
+         {
+            boolean hasRelevantFigureSettings =
+                  has("fig.width") ||
+                  has("fig.height");
+
+            useCustomFigureCheckbox_.setValue(hasRelevantFigureSettings);
+            figureDimensionsPanel_.setVisible(hasRelevantFigureSettings);
+
+            if (has("fig.width"))
+               figWidthBox_.setText(get("fig.width"));
+            else
+               figWidthBox_.setText("");
+
+            if (has("fig.height"))
+               figHeightBox_.setText(get("fig.height"));
+            else
+               figHeightBox_.setText("");
+
+            if (has("warning"))
+               showWarningsInOutputCb_.setValue(getBoolean("warning"));
+
+            if (has("message"))
+               showMessagesInOutputCb_.setValue(getBoolean("message"));
+         }
+      };
       
-      boolean hasRelevantFigureSettings =
-            has("fig.width") ||
-            has("fig.height");
+      initOptions(afterInit);
       
-      useCustomFigureCheckbox_.setValue(hasRelevantFigureSettings);
-      figureDimensionsPanel_.setVisible(hasRelevantFigureSettings);
-      
-      if (has("fig.width"))
-         figWidthBox_.setText(get("fig.width"));
-      else
-         figWidthBox_.setText("");
-      
-      if (has("fig.height"))
-         figHeightBox_.setText(get("fig.height"));
-      else
-         figHeightBox_.setText("");
-      
-      if (has("warning"))
-         showWarningsInOutputCb_.setValue(getBoolean("warning"));
-      
-      if (has("message"))
-         showMessagesInOutputCb_.setValue(getBoolean("message"));
    }
    
    private boolean isTrue(String string)
@@ -509,7 +513,7 @@ public class ChunkOptionsPopupPanel extends MiniPopupPanel
       super.hide();
    }
    
-   private Pair<String, String> getChunkHeaderBounds(String modeId)
+   protected Pair<String, String> getChunkHeaderBounds(String modeId)
    {
       if (modeId.equals("mode/rmarkdown"))
          return new Pair<String, String>("```{", "}");
@@ -523,7 +527,7 @@ public class ChunkOptionsPopupPanel extends MiniPopupPanel
       return null;
    }
    
-   private void synchronize()
+   protected void synchronize()
    {
       String modeId = widget_.getEditor().getSession().getMode().getId();
       Pair<String, String> chunkHeaderBounds =
@@ -565,7 +569,7 @@ public class ChunkOptionsPopupPanel extends MiniPopupPanel
                   Position.create(position_.getRow() + 1, 0)), newLine);
    }
    
-   private void revert()
+   protected void revert()
    {
       if (position_ == null)
          return;
@@ -593,24 +597,25 @@ public class ChunkOptionsPopupPanel extends MiniPopupPanel
       return panel;
    }
    
-   private final VerticalPanel panel_;
-   private final TextBoxWithCue tbChunkLabel_;
-   private final ListBox outputComboBox_;
-   private final Grid figureDimensionsPanel_;
-   private final TextBox figWidthBox_;
-   private final TextBox figHeightBox_;
-   private final ThemedCheckBox useCustomFigureCheckbox_;
-   private final TriStateCheckBox showWarningsInOutputCb_;
-   private final TriStateCheckBox showMessagesInOutputCb_;
+   protected final VerticalPanel panel_;
+   protected final Label chunkLabel_;
+   protected final TextBoxWithCue tbChunkLabel_;
+   protected final ListBox outputComboBox_;
+   protected final Grid figureDimensionsPanel_;
+   protected final TextBox figWidthBox_;
+   protected final TextBox figHeightBox_;
+   protected final ThemedCheckBox useCustomFigureCheckbox_;
+   protected final TriStateCheckBox showWarningsInOutputCb_;
+   protected final TriStateCheckBox showMessagesInOutputCb_;
    
-   private String originalLine_;
-   private String chunkPreamble_;
+   protected String originalLine_;
+   protected String chunkPreamble_;
    
-   private HashMap<String, String> chunkOptions_;
-   private HashMap<String, String> originalChunkOptions_;
+   protected HashMap<String, String> chunkOptions_;
+   protected HashMap<String, String> originalChunkOptions_;
    
-   private AceEditorWidget widget_;
-   private Position position_;
+   protected AceEditorWidget widget_;
+   protected Position position_;
    
    private static final String OUTPUT_USE_DOCUMENT_DEFAULT =
          "(Use Document Default)";

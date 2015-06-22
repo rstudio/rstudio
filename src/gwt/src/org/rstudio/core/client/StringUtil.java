@@ -31,6 +31,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class StringUtil
 {
@@ -221,6 +222,34 @@ public class StringUtil
          return str;
 
       return indent + str.replaceAll("\n", "\n" + indent);
+   }
+   
+   public static String joinMap(Map<String, String> map,
+                                String keyValueDelim,
+                                String fieldDelim)
+   {
+      Set<String> keys = map.keySet();
+      if (keys.isEmpty())
+         return "";
+      
+      StringBuilder builder = new StringBuilder();
+      Iterator<String> it = keys.iterator();
+      
+      if (it.hasNext())
+      {
+         String key = it.next();
+         String value = map.get(key);
+         builder.append(key + keyValueDelim + value);
+      }
+      
+      while (it.hasNext())
+      {
+         String key = it.next();
+         String value = map.get(key);
+         builder.append(fieldDelim + key + keyValueDelim + value);
+      }
+      
+      return builder.toString();
    }
 
    public static String join(Collection<?> collection,

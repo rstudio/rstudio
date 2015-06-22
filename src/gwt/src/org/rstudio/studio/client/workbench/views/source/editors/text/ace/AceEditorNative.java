@@ -309,6 +309,16 @@ public class AceEditorNative extends JavaScriptObject {
       });
    }-*/;
    
+   public final native void clearSelection() /*-{ return this.clearSelection(); }-*/;
+   
+   public final native void moveCursorTo(int row, int column) /*-{
+      return this.moveCursorTo(row, column);
+   }-*/;
+   
+   public final native void moveCursorToPosition(Position pos) /*-{
+      return this.moveCursorToPosition(pos);
+   }-*/;
+   
    public final native void moveCursorLeft(int times) /*-{
       var that = this;
       this.forEachSelection(function() {

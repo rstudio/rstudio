@@ -74,6 +74,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetCod
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditorWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkIconsManager;
+import org.rstudio.studio.client.workbench.views.source.editors.text.SetupChunkOptionsPopupPanel;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetCompilePdfHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetCppHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetPresentationHelper;
@@ -129,6 +130,7 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(ChunkIconsManager manager);
    void injectMembers(WebApplicationHeaderOverlay headerOverlay);
    void injectMembers(DocumentOutlineWidget widget);
+   void injectMembers(SetupChunkOptionsPopupPanel panel);
    
    public static final RStudioGinjector INSTANCE = GWT.create(RStudioGinjector.class);
 

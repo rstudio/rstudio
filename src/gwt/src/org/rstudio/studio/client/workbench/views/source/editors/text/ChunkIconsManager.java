@@ -30,9 +30,12 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Rendere
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.events.AfterAceRenderEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceThemes;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.resources.client.ClientBundle;
+import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Widget;
@@ -56,7 +59,6 @@ public class ChunkIconsManager
                   manageChunkIcons(event.getEditor());
                }
             });
-      optionsPanel_ = new ChunkOptionsPopupPanel();
    }
    
    @Inject
@@ -138,14 +140,13 @@ public class ChunkIconsManager
       
       if (isSetupChunk)
       {
-         // TODO -- need a special icon / behaviour for setup chunk
-         Image optionsIcon = createOptionsIcon(isDark);
+         Image optionsIcon = createOptionsIcon(isDark, true);
          optionsIcon.getElement().getStyle().setMarginRight(5, Unit.PX);
          toolbarPanel.add(optionsIcon);
       }
       else
       {
-         Image optionsIcon = createOptionsIcon(isDark);
+         Image optionsIcon = createOptionsIcon(isDark, false);
          optionsIcon.getElement().getStyle().setMarginRight(5, Unit.PX);
          toolbarPanel.add(optionsIcon);
 
@@ -189,12 +190,16 @@ public class ChunkIconsManager
       return icon;
    }
    
-   private Image createOptionsIcon(boolean dark)
+   private Image createOptionsIcon(boolean dark, boolean setupChunk)
    {
       Image icon = new Image(dark ? 
             ThemeResources.INSTANCE.chunkOptionsDark() :
             ThemeResources.INSTANCE.chunkOptionsLight());
       icon.addStyleName(ThemeStyles.INSTANCE.highlightIcon());
+      
+      if (setupChunk)
+         icon.addStyleName(RES.styles().setupChunk());
+         
       icon.setTitle("Modify chunk options");
       bindNativeClickToOpenOptions(this, icon.getElement());
       return icon;
@@ -242,6 +247,16 @@ public class ChunkIconsManager
       
       Renderer renderer = editor.getWidget().getEditor().getRenderer();
       Position position = renderer.screenToTextCoordinates(pageX, pageY);
+      
+      if (optionsPanel_ != null)
+         optionsPanel_ = null;
+      
+      Element el = event.getEventTarget().cast();
+      if (el.hasClassName(RES.styles().setupChunk()))
+         optionsPanel_ = new SetupChunkOptionsPopupPanel();
+      else
+         optionsPanel_ = new ChunkOptionsPopupPanel();
+      
       optionsPanel_.init(editor.getWidget(), position);
       optionsPanel_.show();
       optionsPanel_.focus();
@@ -253,11 +268,28 @@ public class ChunkIconsManager
       
    }
    
-   private final ChunkOptionsPopupPanel optionsPanel_;
+   private ChunkOptionsPopupPanel optionsPanel_;
    
    private Commands commands_;
    private EventBus events_;
    private UIPrefs uiPrefs_;
    private AceThemes themes_;
+   
+   public interface Styles extends CssResource
+   {
+      String setupChunk();
+   }
+   
+   public interface Resources extends ClientBundle
+   {
+      @Source("ChunkIconsManager.css")
+      Styles styles();
+   }
+   
+   private static Resources RES = GWT.create(Resources.class);
+   static {
+      RES.styles().ensureInjected();
+   }
+   
 
 }

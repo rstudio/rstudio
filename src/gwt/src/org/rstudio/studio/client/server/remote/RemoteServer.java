@@ -700,6 +700,18 @@ public class RemoteServer implements Server
             requestCallback);
    }
    
+   public void extractChunkOptions(
+         String chunkText,
+         ServerRequestCallback<JsObject> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(chunkText));
+      sendRequest(RPC_SCOPE,
+                  EXTRACT_CHUNK_OPTIONS,
+                  params,
+                  requestCallback);
+   }
+   
    public void saveSnippets(JsArray<SnippetData> snippets,
                             ServerRequestCallback<Void> callback)
    {
@@ -4217,6 +4229,7 @@ public class RemoteServer implements Server
          "get_dplyr_join_completions_string";
    private static final String GET_DPLYR_JOIN_COMPLETIONS = "get_dplyr_join_completions";
    private static final String GET_ARGS = "get_args";
+   private static final String EXTRACT_CHUNK_OPTIONS = "extract_chunk_options";
    private static final String GET_COMPLETIONS = "get_completions";
    private static final String IS_FUNCTION = "is_function";
    private static final String GET_HELP_AT_CURSOR = "get_help_at_cursor";
