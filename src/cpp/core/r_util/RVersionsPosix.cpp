@@ -85,26 +85,24 @@ std::ostream& operator<<(std::ostream& os, const RVersion& version)
 }
 
 std::vector<RVersion> enumerateRVersions(
-                              const std::vector<FilePath>& otherRHomes,
+                              std::vector<FilePath> rHomePaths,
+                              bool scanForOtherVersions,
                               const FilePath& ldPathsScript,
                               const std::string& ldLibraryPath)
 {
    std::vector<RVersion> rVersions;
 
-   // start with all of the typical script locations
-   std::vector<FilePath> rHomePaths;
-   rHomePaths.push_back(FilePath("/usr/lib/R"));
-   rHomePaths.push_back(FilePath("/usr/local/lib/R"));
-   rHomePaths.push_back(FilePath("/opt/local/lib/R"));
-
-   // scan /opt/R and /opt/local/R
-   scanForRHomePaths(FilePath("/opt/R"), &rHomePaths);
-   scanForRHomePaths(FilePath("/opt/local/R"), &rHomePaths);
-
-   // add the additional R homes
-   BOOST_FOREACH(const FilePath& otherRHome, otherRHomes)
+   // scan if requested
+   if (scanForOtherVersions)
    {
-      rHomePaths.push_back(otherRHome);
+      // start with all of the typical script locations
+      rHomePaths.push_back(FilePath("/usr/lib/R"));
+      rHomePaths.push_back(FilePath("/usr/local/lib/R"));
+      rHomePaths.push_back(FilePath("/opt/local/lib/R"));
+
+      // scan /opt/R and /opt/local/R
+      scanForRHomePaths(FilePath("/opt/R"), &rHomePaths);
+      scanForRHomePaths(FilePath("/opt/local/R"), &rHomePaths);
    }
 
    // filter on existence and eliminate duplicates

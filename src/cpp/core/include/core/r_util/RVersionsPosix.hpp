@@ -78,7 +78,8 @@ private:
 std::ostream& operator<<(std::ostream& os, const RVersion& version);
 
 std::vector<RVersion> enumerateRVersions(
-                              const std::vector<FilePath>& otherRHomes,
+                              std::vector<FilePath> rHomePaths,
+                              bool scanForOtherVersions,
                               const FilePath& ldPathsScript,
                               const std::string& ldLibraryPath);
 
