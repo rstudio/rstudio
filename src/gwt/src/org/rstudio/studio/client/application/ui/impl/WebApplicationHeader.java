@@ -171,17 +171,21 @@ public class WebApplicationHeader extends Composite
             // complete toolbar initialization
             toolbar_.completeInitialization(sessionInfo);
              
-            // init commands panel in server mode
-            if (!Desktop.isDesktop())
-               initCommandsPanel(sessionInfo);
-                
             // add project tools to main menu
+            projectMenuSeparator_ = createCommandSeparator();
+            headerBarPanel_.add(projectMenuSeparator_);
             projectMenuButton_ = 
                new ProjectPopupMenu(sessionInfo, commands).getToolbarButton();
             projectMenuButton_.addStyleName(
                        ThemeStyles.INSTANCE.webHeaderBarCommandsProjectMenu());
             headerBarPanel_.add(projectMenuButton_);
             showProjectMenu(!toolbar_.isVisible());
+                
+            // init commands panel in server mode
+            if (!Desktop.isDesktop())
+               initCommandsPanel(sessionInfo);
+                      
+            // notify overlay of global toolbar state
             overlay_.setGlobalToolbarVisible(toolbar_.isVisible());
          }
       });
@@ -206,18 +210,18 @@ public class WebApplicationHeader extends Composite
       
       if (showToolbar)
       {
+         outerPanel_.add(logoLarge_);
          HeaderPanel headerPanel = new HeaderPanel(headerBarPanel_, toolbar_);
          outerPanel_.add(headerPanel);
-         outerPanel_.add(logoLarge_);
          mainMenu_.getElement().getStyle().setMarginLeft(18, Unit.PX);
          preferredHeight_ = 65;
          showProjectMenu(false);
       }
       else
       {
+         outerPanel_.add(logoSmall_);
          MenubarPanel menubarPanel = new MenubarPanel(headerBarPanel_);
          outerPanel_.add(menubarPanel);
-         outerPanel_.add(logoSmall_);
          mainMenu_.getElement().getStyle().setMarginLeft(0, Unit.PX);
          preferredHeight_ = 45;
          showProjectMenu(true);
@@ -238,6 +242,7 @@ public class WebApplicationHeader extends Composite
    
    private void showProjectMenu(boolean show)
    {
+      projectMenuSeparator_.setVisible(show);
       projectMenuButton_.setVisible(show);
    }
    
@@ -277,8 +282,8 @@ public class WebApplicationHeader extends Composite
          {
             MessageDialogLabel label = new MessageDialogLabel();
             label.setHtml("Your browser does not allow access to your<br/>" +
-            		        "computer's clipboard. As a result you must<br/>" +
-            		        "use keyboard shortcuts for:" +
+                          "computer's clipboard. As a result you must<br/>" +
+                          "use keyboard shortcuts for:" +
                           "<br/><br/><table cellpadding=0 cellspacing=0 border=0>" +
                           makeRow(commands.undoDummy()) +
                           makeRow(commands.redoDummy()) +
@@ -372,7 +377,8 @@ public class WebApplicationHeader extends Composite
          });
          signOutButton.setTitle("Sign out");
          headerBarCommandsPanel_.add(signOutButton);
-         headerBarCommandsPanel_.add(createCommandSeparator());
+         headerBarCommandsPanel_.add(
+                  signOutSeparator_ = createCommandSeparator());
       }
       
       overlay_.addCommands(this);
@@ -466,6 +472,8 @@ public class WebApplicationHeader extends Composite
    private HorizontalPanel headerBarPanel_;
    private HorizontalPanel headerBarCommandsPanel_;
    private HorizontalPanel projectBarCommandsPanel_;
+   private Widget signOutSeparator_;
+   private Widget projectMenuSeparator_;
    private ToolbarButton projectMenuButton_;
    private AppMenuBar mainMenu_;
    private GlobalToolbar toolbar_;
