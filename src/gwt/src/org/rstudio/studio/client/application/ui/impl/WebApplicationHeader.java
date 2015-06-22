@@ -451,6 +451,12 @@ public class WebApplicationHeader extends Composite
       toolbar_.addRightSeparator();
    }
    
+   @Override
+   public AppMenuBar getMainMenu()
+   {
+      return mainMenu_;
+   }
+   
 
    public Widget asWidget()
    {

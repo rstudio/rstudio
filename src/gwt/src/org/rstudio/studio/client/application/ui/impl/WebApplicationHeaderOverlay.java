@@ -15,6 +15,7 @@
 
 package org.rstudio.studio.client.application.ui.impl;
 
+import org.rstudio.core.client.command.AppMenuBar;
 import org.rstudio.studio.client.RStudioGinjector;
 
 import com.google.gwt.user.client.ui.Widget;
@@ -32,6 +33,7 @@ public class WebApplicationHeaderOverlay
       void addProjectCommandSeparator();
       void addProjectRightCommand(Widget widget);
       void addProjectRightCommandSeparator();
+      AppMenuBar getMainMenu();
    }
    
    public WebApplicationHeaderOverlay()
