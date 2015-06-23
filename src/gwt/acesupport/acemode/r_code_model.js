@@ -994,6 +994,9 @@ var RCodeModel = function(session, tokenizer,
          // A closing brace will close a scope.
          else if (isInRMode && value === "}")
          {
+            // Ensure that the closing '}' is treated as part of the scope
+            position.column += 1;
+
             this.$scopes.onScopeEnd(position);
          }
 
