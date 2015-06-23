@@ -91,6 +91,7 @@ extern "C" const char *locale2charset(const char *);
 #include <session/SessionPersistentState.hpp>
 #include <session/SessionContentUrls.hpp>
 #include <session/SessionScopes.hpp>
+#include <session/RVersionSettings.hpp>
 
 #include "SessionAddins.hpp"
 
@@ -920,6 +921,7 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
                {
                   using namespace module_context;
 
+                  std::string projDir;
                   r_util::SessionScope scope;
                   if (switchToProject == kProjectNone)
                   {
@@ -936,7 +938,7 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
                      // extract the directory (aliased)
                      using namespace module_context;
                      FilePath projFile = resolveAliasedPath(switchToProject);
-                     std::string projDir = createAliasedPath(projFile.parent());
+                     projDir = createAliasedPath(projFile.parent());
 
                      scope = r_util::SessionScope::fromProject(
                               projDir,
@@ -957,7 +959,22 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
                                                 "version", &version,
                                                 "r_home", &rHome);
                      if (!error)
+                     {
+                        // set version for active session
                         activeSession().setRVersion(version, rHome);
+
+                        // if we had a project directory as well then
+                        // set it's version (this is necessary because
+                        // project versions override session versions)
+                        if (!projDir.empty())
+                        {
+                           RVersionSettings verSettings(
+                                                options().userScratchPath());
+                           verSettings.setProjectLastRVersion(projDir,
+                                                              version,
+                                                              rHome);
+                        }
+                     }
                      else
                         LOG_ERROR(error);
                   }
