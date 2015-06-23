@@ -32,6 +32,7 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 
 import java.util.HashMap;
+import java.util.Set;
 
 public class SetupChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
 {
@@ -146,17 +147,6 @@ public class SetupChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
    protected void initOptions(final Command afterInit)
    {
       String chunkText = getChunkText();
-      
-      // Eagerly try to set the checked-ness of the 'Use custom figure size' checkbox
-      // to avoid a brief flicker while we're waiting for the server.
-      String trimmed = chunkText.replaceAll("#+[^\\n]*", "");
-      
-      if (trimmed.contains("fig.width") || trimmed.contains("fig.height"))
-      {
-         useCustomFigureCheckbox_.setValue(true);
-         figureDimensionsPanel_.setVisible(true);
-      }
-      
       server_.extractChunkOptions(
             chunkText,
             new ServerRequestCallback<JsObject>()
@@ -188,6 +178,10 @@ public class SetupChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
       syncSelection();
       
       HashMap<String, String> options = new HashMap<String, String>();
+      
+      Set<String> keys = chunkOptions_.keySet();
+      for (String key : keys)
+         options.put(key, chunkOptions_.get(key));
       
       addParam(options, "echo");
       addParam(options, "eval");

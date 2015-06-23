@@ -72,6 +72,7 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
    public ChunkOptionsPopupPanel(boolean includeChunkNameUI)
    {
       super(true);
+      setVisible(false);
       
       chunkOptions_ = new HashMap<String, String>();
       originalChunkOptions_ = new HashMap<String, String>();
@@ -365,11 +366,17 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
    
    protected String get(String key)
    {
+      if (!has(key))
+         return null;
+      
       return chunkOptions_.get(key);
    }
    
    protected boolean getBoolean(String key)
    {
+      if (!has(key))
+         return false;
+      
       return isTrue(chunkOptions_.get(key));
    }
    
@@ -381,6 +388,40 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
    protected void unset(String key)
    {
       chunkOptions_.remove(key);
+   }
+   
+   protected boolean select(String option)
+   {
+      for (int i = 0; i < outputComboBox_.getItemCount(); i++)
+      {
+         if (outputComboBox_.getItemText(i).equals(option))
+         {
+            outputComboBox_.setSelectedIndex(i);
+            return true;
+         }
+      }
+      
+      return false;
+   }
+   
+   private void updateOutputComboBox()
+   {
+      boolean hasEcho = has("echo");
+      boolean hasEval = has("eval");
+      boolean hasIncl = has("include");
+      
+      boolean isEcho = hasEcho && getBoolean("echo");
+      boolean isEval = hasEval && getBoolean("eval");
+      boolean isIncl = hasIncl && getBoolean("include");
+      
+      if (hasEcho && !hasEval && !hasIncl)
+         select(isEcho ? OUTPUT_SHOW_CODE_AND_OUTPUT : OUTPUT_SHOW_OUTPUT_ONLY);
+     
+      if (!hasEcho && !hasEval && hasIncl && !isIncl)
+         select(OUTPUT_SHOW_NOTHING);
+      
+      if (!hasEcho && hasEval && !isEval && hasIncl && !isIncl)
+         select(OUTPUT_SKIP_THIS_CHUNK);
    }
    
    public void init(AceEditorWidget widget, Position position)
@@ -398,6 +439,7 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
          @Override
          public void execute()
          {
+            updateOutputComboBox();
             boolean hasRelevantFigureSettings =
                   has("fig.width") ||
                   has("fig.height");
@@ -420,6 +462,8 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
 
             if (has("message"))
                showMessagesInOutputCb_.setValue(getBoolean("message"));
+            
+            setVisible(true);
          }
       };
       
