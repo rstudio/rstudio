@@ -3679,7 +3679,7 @@ public class TextEditingTarget implements
                         "UTF-8",
                         activeCodeIsAscii(),
                         forceEcho ? true : echo,
-                        true,
+                        prefs_.focusConsoleAfterExec().getValue(),
                         docDisplay_.hasBreakpoints()); 
                }
             });
@@ -3700,7 +3700,7 @@ public class TextEditingTarget implements
                            docUpdateSentinel_.getEncoding(),
                            activeCodeIsAscii(),
                            forceEcho ? true : echo,
-                           true,
+                           prefs_.focusConsoleAfterExec().getValue(),
                            docDisplay_.hasBreakpoints());   
                   }
                };
