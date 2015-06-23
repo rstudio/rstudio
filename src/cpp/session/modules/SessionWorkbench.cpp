@@ -40,11 +40,11 @@
 #include <r/RFunctionHook.hpp>
 
 #include <session/projects/SessionProjects.hpp>
-#include <session/projects/ProjectsSettings.hpp>
 
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionUserSettings.hpp>
 #include <session/SessionConsoleProcess.hpp>
+#include <session/RVersionSettings.hpp>
 
 #include "SessionVCS.hpp"
 #include "SessionGit.hpp"
@@ -219,9 +219,9 @@ Error setPrefs(const json::JsonRpcRequest& request, json::JsonRpcResponse*)
    if (error)
       return error;
 
-   projects::ProjectsSettings projSettings(module_context::userScratchPath());
-   projSettings.setDefaultRVersion(defaultRVersion, defaultRVersionHome);
-   projSettings.setRestoreProjectRVersion(restoreProjectRVersion);
+   RVersionSettings versionSettings(module_context::userScratchPath());
+   versionSettings.setDefaultRVersion(defaultRVersion, defaultRVersionHome);
+   versionSettings.setRestoreProjectRVersion(restoreProjectRVersion);
 
    // read and set history prefs
    bool alwaysSave, removeDuplicates;
@@ -374,10 +374,10 @@ Error getRPrefs(const json::JsonRpcRequest& request,
                 json::JsonRpcResponse* pResponse)
 {
    // proj settings
-   projects::ProjectsSettings projSettings(module_context::userScratchPath());
+   RVersionSettings versionSettings(module_context::userScratchPath());
    json::Object defaultRVersionJson;
-   defaultRVersionJson["version"] = projSettings.defaultRVersion();
-   defaultRVersionJson["r_home"] = projSettings.defaultRVersionHome();
+   defaultRVersionJson["version"] = versionSettings.defaultRVersion();
+   defaultRVersionJson["r_home"] = versionSettings.defaultRVersionHome();
 
    // get general prefs
    json::Object generalPrefs;
@@ -387,7 +387,7 @@ Error getRPrefs(const json::JsonRpcRequest& request,
    generalPrefs["initial_working_dir"] = module_context::createAliasedPath(
          userSettings().initialWorkingDirectory());
    generalPrefs["default_r_version"] = defaultRVersionJson;
-   generalPrefs["restore_project_r_version"] = projSettings.restoreProjectRVersion();
+   generalPrefs["restore_project_r_version"] = versionSettings.restoreProjectRVersion();
 
    // get history prefs
    json::Object historyPrefs;
