@@ -20,10 +20,14 @@
 
 #include <core/SharedSettings.hpp>
 
+#include <session/SessionScopes.hpp>
+
 #define kRVersionSettings              "rversion-settings"
 #define kDefaultRVersion               "defaultRVersion"
 #define kDefaultRVersionHome           "defaultRVersionHome"
 #define kRestoreProjectRVersion        "restoreProjectRVersion"
+#define kRVersionSuffix                "-RVersion"
+#define kRVersionHomeSuffix            "-RVersionHome"
 
 namespace rstudio {
 namespace session {
@@ -32,7 +36,8 @@ class RVersionSettings : public core::SharedSettings
 {
 public:
    explicit RVersionSettings(const core::FilePath& userScratchPath)
-      : core::SharedSettings(rVersionSettingsPath(userScratchPath))
+      : core::SharedSettings(rVersionSettingsPath(userScratchPath)),
+        userScratchPath_(userScratchPath)
    {
    }
 
@@ -63,6 +68,48 @@ public:
       writeSetting(kRestoreProjectRVersion, restoreProjectRVersion ? "1" : "0");
    }
 
+   void setProjectLastRVersion(const std::string& projectDir,
+                               const std::string& version,
+                               const std::string& versionHome)
+   {
+      // get a project id
+      core::r_util::FilePathToProjectId filePathToProjectId =
+                           session::filePathToProjectId(userScratchPath_);
+      std::string projectId = filePathToProjectId(projectDir);
+
+      // save the version
+      writeProjectSetting(projectId, kRVersionSuffix, version);
+      writeProjectSetting(projectId, kRVersionHomeSuffix, versionHome);
+   }
+
+   void readProjectLastRVersion(const std::string& projectDir,
+                                std::string* pVersion,
+                                std::string* pVersionHome)
+   {
+      // get a project id
+      core::r_util::FilePathToProjectId filePathToProjectId =
+                           session::filePathToProjectId(userScratchPath_);
+      std::string projectId = filePathToProjectId(projectDir);
+
+      *pVersion = readProjectSetting(projectId, kRVersionSuffix);
+      *pVersionHome = readProjectSetting(projectId, kRVersionHomeSuffix);
+   }
+
+private:
+   void writeProjectSetting(const std::string& projectId,
+                            const char* name,
+                            const std::string& value)
+   {
+      writeSetting((projectId + name).c_str(), value);
+   }
+
+   std::string readProjectSetting(const std::string& projectId,
+                                  const char* name)
+
+   {
+      return readSetting((projectId + name).c_str());
+   }
+
 private:
 
    static core::FilePath rVersionSettingsPath(
@@ -76,6 +123,8 @@ private:
 
       return settingsPath;
    }
+
+   core::FilePath userScratchPath_;
 };
 
 
