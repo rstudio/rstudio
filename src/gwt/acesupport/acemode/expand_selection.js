@@ -30,6 +30,29 @@ var Utils = require("mode/utils");
 
    var that = this;
 
+   function isComment(editor, row)
+   {
+      var token = editor.getSession().getTokenAt(row, 0);
+      if (token === null)
+         return false;
+
+      return /\bcomment\b/.test(token.type);
+   }
+
+   function commentRange(editor)
+   {
+      var startRow = editor.getCursorPosition().row;
+      var endRow = startRow;
+
+      while (isComment(editor, startRow))
+         startRow--;
+
+      while (isComment(editor, endRow))
+         endRow++;
+
+      return new Range(startRow + 1, 0, endRow, 0);
+   }
+
    function isSingleLineString(string)
    {
       if (string.length < 2)
@@ -154,6 +177,15 @@ var Utils = require("mode/utils");
             candidate.end.column++;
             return this.$acceptSelection(selection, candidate, range);
          }
+      }
+
+      // If the current selection is in, or contains, a comment block,
+      // expand selection to entire comment block.
+      if (/\bcomment\b/.test(token.type))
+      {
+         var candidate = commentRange(this);
+         selection.setSelectionRange(range);
+         return this.$acceptSelection(selection, candidate, range);
       }
 
       // Look for matching bracket pairs.
