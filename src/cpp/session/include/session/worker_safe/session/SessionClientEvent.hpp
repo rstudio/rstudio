@@ -133,6 +133,7 @@ extern const int kCollabEditStarted;
 extern const int kSessionCountChanged;
 extern const int kCollabEditEnded;
 extern const int kProjectUsersChanged;
+extern const int kRVersionsChanged;
 }
    
 class ClientEvent

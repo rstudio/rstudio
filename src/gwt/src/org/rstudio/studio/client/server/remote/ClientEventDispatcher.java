@@ -25,6 +25,7 @@ import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.jsonrpc.RpcObjectList;
 import org.rstudio.studio.client.application.events.*;
+import org.rstudio.studio.client.application.model.RVersionSpec;
 import org.rstudio.studio.client.application.model.SaveAction;
 import org.rstudio.studio.client.application.model.SessionSerializationAction;
 import org.rstudio.studio.client.common.compile.CompileOutput;
@@ -673,6 +674,11 @@ public class ClientEventDispatcher
          {
             ProjectUserChangedEvent.Data data = event.getData();
             eventBus_.fireEvent(new ProjectUserChangedEvent(data));
+         }
+         else if (type.equals(ClientEvent.RVersionsChanged))
+         {
+            JsArray<RVersionSpec> versions = event.getData();
+            eventBus_.fireEvent(new RVersionsChangedEvent(versions));
          }
          else
          {
