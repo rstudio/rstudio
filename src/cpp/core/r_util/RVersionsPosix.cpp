@@ -381,6 +381,31 @@ Error readRVersionsFromFile(const FilePath& filePath,
    return rVersionsFromJson(jsonValue.get_array(), pVersions);
 }
 
+Error validatedReadRVersionsFromFile(const FilePath& filePath,
+                                     std::vector<r_util::RVersion>* pVersions)
+{
+   std::vector<r_util::RVersion> versions;
+   Error error = readRVersionsFromFile(filePath, &versions);
+   if (error)
+      return error;
+
+   // ensure the home path exists before returning
+   BOOST_FOREACH(const r_util::RVersion& version, versions)
+   {
+      if (version.homeDir().exists())
+      {
+         pVersions->push_back(version);
+      }
+      else
+      {
+         LOG_WARNING_MESSAGE("R version home directory not found: " +
+                             version.homeDir().absolutePath());
+      }
+   }
+
+   return Success();
+}
+
 
 } // namespace r_util
 } // namespace core

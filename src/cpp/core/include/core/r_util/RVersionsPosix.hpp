@@ -102,6 +102,9 @@ Error writeRVersionsToFile(const FilePath& filePath,
 Error readRVersionsFromFile(const FilePath& filePath,
                             std::vector<r_util::RVersion>* pVersions);
 
+Error validatedReadRVersionsFromFile(const FilePath& filePath,
+                                     std::vector<r_util::RVersion>* pVersions);
+
 } // namespace r_util
 } // namespace core 
 } // namespace rstudio
