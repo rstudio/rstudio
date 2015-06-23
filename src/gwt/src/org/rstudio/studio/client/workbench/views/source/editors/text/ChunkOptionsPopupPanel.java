@@ -14,7 +14,13 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
@@ -496,6 +502,45 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
       panel.setWidth("100%");
       panel.setHeight("" + sizeInPixels + "px");
       return panel;
+   }
+   
+   private int getPriority(String key)
+   {
+      if (key.equals("eval"))
+         return 10;
+      else if (key.equals("echo"))
+         return 9;
+      else if (key.equals("warning") || key.equals("error") || key.equals("message"))
+         return 8;
+      else if (key.startsWith("fig."))
+         return 8;
+      return 0;
+   }
+   
+   protected Map<String, String> sortedOptions(Map<String, String> options)
+   {
+      List<Map.Entry<String, String>> entries = new ArrayList<Map.Entry<String, String>>(options.entrySet());
+
+      Collections.sort(entries, new Comparator<Map.Entry<String, String>>() {
+         public int compare(Map.Entry<String, String> a, Map.Entry<String, String> b)
+         {
+            int lhsGroup = getPriority(a.getKey());
+            int rhsGroup = getPriority(b.getKey());
+            
+            if (lhsGroup < rhsGroup)
+               return 1;
+            else if (lhsGroup > rhsGroup)
+               return -1;
+            
+            return a.getKey().compareToIgnoreCase(b.getKey());
+         }
+      });
+
+      LinkedHashMap<String, String> sortedMap = new LinkedHashMap<String, String>();
+      for (Map.Entry<String, String> entry : entries) {
+         sortedMap.put(entry.getKey(), entry.getValue());
+      }
+      return sortedMap;
    }
    
    protected final VerticalPanel panel_;

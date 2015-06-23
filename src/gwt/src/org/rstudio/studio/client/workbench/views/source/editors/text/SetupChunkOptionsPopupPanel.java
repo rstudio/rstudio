@@ -31,7 +31,14 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 public class SetupChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
@@ -76,13 +83,13 @@ public class SetupChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
       return value ? "TRUE" : "FALSE";
    }
    
-   private void addParam(HashMap<String, String> options, String name)
+   private void addParam(Map<String, String> options, String name)
    {
       if (has(name))
          options.put(name, get(name));
    }
    
-   private void addCheckboxParam(HashMap<String, String> options,
+   private void addCheckboxParam(Map<String, String> options,
                                  TriStateCheckBox checkBox,
                                  String name)
    {
@@ -90,7 +97,7 @@ public class SetupChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
          options.put(name, trueString(checkBox.isChecked()));
    }
    
-   private void addTextBoxParam(HashMap<String, String> options,
+   private void addTextBoxParam(Map<String, String> options,
                                 TextBox textBox,
                                 String name)
    {
@@ -129,9 +136,9 @@ public class SetupChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
       }
    }
    
-   private String joinOptions(HashMap<String, String> options)
+   private String joinOptions(Map<String, String> options)
    {
-      return StringUtil.joinMap(options, " = ", ",\n\t");
+      return StringUtil.collapse(options, " = ", ",\n\t");
    }
    
    private String getChunkText()
@@ -177,7 +184,7 @@ public class SetupChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
       
       syncSelection();
       
-      HashMap<String, String> options = new HashMap<String, String>();
+      Map<String, String> options = new LinkedHashMap<String, String>();
       
       Set<String> keys = chunkOptions_.keySet();
       for (String key : keys)
@@ -199,8 +206,10 @@ public class SetupChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
          return;
       }
       
+      Map<String, String> sorted = sortedOptions(options);
+      
       String code = "knitr::opts_chunk$set(\n\t";
-      code += joinOptions(options);
+      code += joinOptions(sorted);
       code += "\n)\n";
       
       widget_.getEditor().insert(code);

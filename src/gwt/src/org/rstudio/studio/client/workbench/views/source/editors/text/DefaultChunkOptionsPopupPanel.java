@@ -54,13 +54,14 @@ public class DefaultChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
       
       if (!chunkOptions_.isEmpty())
       {
+         Map<String, String> sorted = sortedOptions(chunkOptions_);
          if (!(StringUtil.isNullOrEmpty(chunkPreamble_) &&
              label.isEmpty()))
          {
             newLine += ", ";
          }
          
-         newLine += StringUtil.collapse(chunkOptions_, "=", ", ");
+         newLine += StringUtil.collapse(sorted, "=", ", ");
       }
       
       newLine +=

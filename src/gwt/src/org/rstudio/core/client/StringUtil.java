@@ -224,34 +224,6 @@ public class StringUtil
       return indent + str.replaceAll("\n", "\n" + indent);
    }
    
-   public static String joinMap(Map<String, String> map,
-                                String keyValueDelim,
-                                String fieldDelim)
-   {
-      Set<String> keys = map.keySet();
-      if (keys.isEmpty())
-         return "";
-      
-      StringBuilder builder = new StringBuilder();
-      Iterator<String> it = keys.iterator();
-      
-      if (it.hasNext())
-      {
-         String key = it.next();
-         String value = map.get(key);
-         builder.append(key + keyValueDelim + value);
-      }
-      
-      while (it.hasNext())
-      {
-         String key = it.next();
-         String value = map.get(key);
-         builder.append(fieldDelim + key + keyValueDelim + value);
-      }
-      
-      return builder.toString();
-   }
-
    public static String join(Collection<?> collection,
                              String delim)
    {

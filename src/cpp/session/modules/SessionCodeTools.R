@@ -1525,7 +1525,11 @@
             names <- names(node)
             for (i in 2:length(node))
             {
-               chunkOptionsEnv[[ names[[i]] ]] <- as.character(node[[i]])
+               key <- names[[i]]
+               if (key == "")
+                  next
+               val <- as.character(node[[i]])
+               chunkOptionsEnv[[key]] <- val
             }
          }
       })
