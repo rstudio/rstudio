@@ -19,12 +19,7 @@
 // header-only file for access to projects settings from many contexts
 // (main session thread, background threads, other processes, etc.)
 
-#include <string>
-
-#include <boost/algorithm/string/trim.hpp>
-
-#include <core/FilePath.hpp>
-#include <core/FileSerializer.hpp>
+#include <core/SharedSettings.hpp>
 
 #include <core/r_util/RSessionContext.hpp>
 
@@ -41,11 +36,11 @@ namespace rstudio {
 namespace session {
 namespace projects {
 
-class ProjectsSettings
+class ProjectsSettings : public core::SharedSettings
 {
 public:
    explicit ProjectsSettings(const core::FilePath& userScratchPath)
-      : settingsPath_(projectsSettingsPath(userScratchPath))
+      : core::SharedSettings(projectsSettingsPath(userScratchPath))
    {
    }
 
@@ -113,16 +108,6 @@ public:
       writeSetting(kRestoreProjectRVersion, restoreProjectRVersion ? "1" : "0");
    }
 
-   std::string readSetting(const char * const settingName) const
-   {
-      return readProjectsSetting(settingsPath_, settingName);
-   }
-
-   void writeSetting(const char * const settingName, const std::string& value)
-   {
-      writeProjectsSetting(settingsPath_, settingName, value);
-   }
-
 private:
 
    static core::FilePath projectsSettingsPath(
@@ -136,43 +121,6 @@ private:
 
       return settingsPath;
    }
-
-   static std::string readProjectsSetting(const core::FilePath& settingsPath,
-                                          const char * const settingName)
-   {
-      using namespace rstudio::core;
-      FilePath readPath = settingsPath.complete(settingName);
-      if (readPath.exists())
-      {
-         std::string value;
-         Error error = core::readStringFromFile(readPath, &value);
-         if (error)
-         {
-            LOG_ERROR(error);
-            return std::string();
-         }
-         boost::algorithm::trim(value);
-         return value;
-      }
-      else
-      {
-         return std::string();
-      }
-   }
-
-   static void writeProjectsSetting(const core::FilePath& settingsPath,
-                                    const char * const settingName,
-                                    const std::string& value)
-   {
-      using namespace rstudio::core;
-      FilePath writePath = settingsPath.complete(settingName);
-      Error error = core::writeStringToFile(writePath, value);
-      if (error)
-         LOG_ERROR(error);
-   }
-
-private:
-   core::FilePath settingsPath_;
 };
 
 
