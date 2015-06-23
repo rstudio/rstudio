@@ -1528,7 +1528,8 @@
                key <- names[[i]]
                if (key == "")
                   next
-               val <- as.character(node[[i]])
+               
+               val <- format(node[[i]])
                chunkOptionsEnv[[key]] <- val
             }
          }
