@@ -950,35 +950,6 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
                      activeSession().setWorkingDir(projDir);
                   }
 
-                  // note switch to R version if requested
-                  if (json::isType<json::Object>(switchToVersionJson))
-                  {
-                     std::string version, rHome;
-                     Error error = json::readObject(
-                                                switchToVersionJson.get_obj(),
-                                                "version", &version,
-                                                "r_home", &rHome);
-                     if (!error)
-                     {
-                        // set version for active session
-                        activeSession().setRVersion(version, rHome);
-
-                        // if we had a project directory as well then
-                        // set it's version (this is necessary because
-                        // project versions override session versions)
-                        if (!projDir.empty())
-                        {
-                           RVersionSettings verSettings(
-                                                options().userScratchPath());
-                           verSettings.setProjectLastRVersion(projDir,
-                                                              version,
-                                                              rHome);
-                        }
-                     }
-                     else
-                        LOG_ERROR(error);
-                  }
-
                   // set next session url
                   s_nextSessionUrl = r_util::createSessionUrl(hostPageUrl,
                                                               scope);
@@ -987,6 +958,38 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
                {
                   projects::ProjectsSettings(options().userScratchPath()).
                                     setSwitchToProjectPath(switchToProject);
+               }
+
+               // note switch to R version if requested
+               if (json::isType<json::Object>(switchToVersionJson))
+               {
+                  using namespace module_context;
+                  std::string version, rHome;
+                  Error error = json::readObject(
+                                            switchToVersionJson.get_obj(),
+                                            "version", &version,
+                                            "r_home", &rHome);
+                  if (!error)
+                  {
+                     // set version for active session
+                     activeSession().setRVersion(version, rHome);
+
+                     // if we had a project directory as well then
+                     // set it's version (this is necessary because
+                     // project versions override session versions)
+                     if (switchToProject != kProjectNone)
+                     {
+                        FilePath projFile = resolveAliasedPath(switchToProject);
+                        std::string projDir = createAliasedPath(projFile.parent());
+                        RVersionSettings verSettings(
+                                               options().userScratchPath());
+                        verSettings.setProjectLastRVersion(projDir,
+                                                           version,
+                                                           rHome);
+                     }
+                 }
+                 else
+                    LOG_ERROR(error);
                }
             }
 
