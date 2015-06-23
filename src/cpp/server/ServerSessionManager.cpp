@@ -91,6 +91,14 @@ core::system::ProcessConfig sessionProcessConfig(
                            kRStudioLimitRpcClientUid,
                            safe_convert::numberToString(uid)));
 
+   // set session scope project if we have one
+   if (!context.scope.project().empty())
+   {
+      environment.push_back(std::make_pair(
+                              kRStudioSessionScopeProject,
+                              context.scope.project()));
+   }
+
    // set session scope id if we have one
    if (!context.scope.id().empty())
    {
