@@ -68,7 +68,6 @@ import com.google.gwt.dev.jjs.impl.CatchBlockNormalizer;
 import com.google.gwt.dev.jjs.impl.CompileTimeConstantsReplacer;
 import com.google.gwt.dev.jjs.impl.ComputeCastabilityInformation;
 import com.google.gwt.dev.jjs.impl.ComputeExhaustiveCastabilityInformation;
-import com.google.gwt.dev.jjs.impl.ComputeInstantiatedJsoInterfaces;
 import com.google.gwt.dev.jjs.impl.ControlFlowAnalyzer;
 import com.google.gwt.dev.jjs.impl.ControlFlowRecorder;
 import com.google.gwt.dev.jjs.impl.DeadCodeElimination;
@@ -478,7 +477,6 @@ public final class JavaToJavaScriptCompiler {
             !shouldOptimize() /* recordTrivialCasts */);
       }
 
-      ComputeInstantiatedJsoInterfaces.exec(jprogram);
       ImplementCastsAndTypeChecks.exec(jprogram, options.isCastCheckingDisabled(),
           shouldOptimize() /* pruneTrivialCasts */);
       ArrayNormalizer.exec(jprogram, options.isCastCheckingDisabled());

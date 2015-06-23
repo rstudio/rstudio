@@ -31,7 +31,6 @@ import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JExpression;
 import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JFieldRef;
-import com.google.gwt.dev.jjs.ast.JInterfaceType;
 import com.google.gwt.dev.jjs.ast.JLocal;
 import com.google.gwt.dev.jjs.ast.JLocalRef;
 import com.google.gwt.dev.jjs.ast.JMethod;
@@ -408,7 +407,7 @@ public class Pruner {
 
     @Override
     public boolean visit(JDeclaredType type, Context ctx) {
-      assert (referencedTypes.contains(type) || type instanceof JInterfaceType);
+      assert referencedTypes.contains(type);
       Predicate<JNode> notReferenced = Predicates.not(Predicates.in(referencedNonTypes));
       removeFields(notReferenced, type);
       removeMethods(notReferenced, type);
@@ -481,12 +480,9 @@ public class Pruner {
 
     @Override
     public boolean visit(JProgram program, Context ctx) {
-      for (JMethod method : program.getEntryMethods()) {
-        accept(method);
-      }
       for (Iterator<JDeclaredType> it = program.getDeclaredTypes().iterator(); it.hasNext();) {
         JDeclaredType type = it.next();
-        if (referencedTypes.contains(type) || program.typeOracle.isInstantiatedType(type)) {
+        if (referencedTypes.contains(type)) {
           accept(type);
         } else {
           prunedMethods.addAll(type.getMethods());
@@ -657,11 +653,6 @@ public class Pruner {
     OptimizerStats stats = new OptimizerStats(NAME);
 
     ControlFlowAnalyzer livenessAnalyzer = new ControlFlowAnalyzer(program);
-    // Don't prune JSOs, JsTypes that were considered instantiated before removing
-    // casts at {@link ImplementCastsAndTypeChecks}.
-    // TODO(rluble): the AST should have been left in a state that whatever method, attribute, etc
-    // from a JSO, JsType needs to be live, should have been already reachable from the AST.
-    livenessAnalyzer.rescue(program.typeOracle.getInstantiatedJsoTypesViaCast());
     livenessAnalyzer.setForPruning();
 
     // SPECIAL: Immortal codegen types are never pruned

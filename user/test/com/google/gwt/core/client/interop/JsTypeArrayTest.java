@@ -49,8 +49,7 @@ public class JsTypeArrayTest extends GWTTestCase {
     @JsProperty int getId();
   }
 
-  // TODO: Fix CFA
-  public void _disabled_testJsTypeArray_returnFromNativeWithACall() {
+  public void testJsTypeArray_returnFromNativeWithACall() {
     SimpleJsTypeReturnFromNativeWithACall[] array = returnJsTypeWithIdsFromNative();
     assertEquals(2, array[1].getId());
   }
@@ -67,8 +66,8 @@ public class JsTypeArrayTest extends GWTTestCase {
     public SimpleJsTypeAsAField[] arrayField;
   }
 
-  // TODO: Fix CFA
-  public void _disabled_testJsTypeArray_asAField() {
+  // TODO(rluble): Needs fixes in ImlementCastsAndTypeChecks, ArrayNormalizer and maybe type oracle.
+  public void __disabled__testJsTypeArray_asAField() {
     SimpleJsTypeAsAFieldHolder holder = new SimpleJsTypeAsAFieldHolder();
     fillArrayField(holder);
     SimpleJsTypeAsAField[] array = holder.arrayField;
@@ -109,8 +108,8 @@ public class JsTypeArrayTest extends GWTTestCase {
     @JsProperty int getId();
   }
 
-  // TODO: Fix CFA
-  public void _disabled_testJsType3DimArray_castedFromNativeWithACall() {
+  // TODO(rluble): Needs fixes in ImlementCastsAndTypeChecks, ArrayNormalizer and maybe type oracle.
+  public void __disabled__testJsType3DimArray_castedFromNativeWithACall() {
     SimpleJsTypeReturnForMultiDimArray[][][] array =
         (SimpleJsTypeReturnForMultiDimArray[][][]) returnJsType3DimFromNative();
     assertEquals(1, array.length);
@@ -123,16 +122,14 @@ public class JsTypeArrayTest extends GWTTestCase {
     return [ [ [{id:1}, {id:2}, {}], [] ] ];
   }-*/;
 
-  // TODO: Fix CFA
-  public void _disabled_testString3DimArray_castedFromNative() {
-    String[][][] array = (String[][][]) returnString3DimFromNative();
-    assertEquals(1, array.length);
-    assertEquals(2, array[0].length);
-    assertEquals(3, array[0][0].length);
-    assertEquals("1", array[0][0][0]);
+  // TODO(rluble): Needs fixes in ImlementCastsAndTypeChecks, ArrayNormalizer and maybe type oracle.
+  public void __disabled__testObjectArray_castedFromNative() {
+    Object[] array = (Object[]) returnObjectArrayFromNative();
+    assertEquals(3, array.length);
+    assertEquals("1", array[0]);
   }
 
-  private native Object returnString3DimFromNative() /*-{
-    return [ [ ["1", "2", "3"], [] ] ];
+  private native Object returnObjectArrayFromNative() /*-{
+    return ["1", "2", "3"];
   }-*/;
 }

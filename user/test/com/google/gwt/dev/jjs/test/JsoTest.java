@@ -533,6 +533,15 @@ public class JsoTest extends GWTTestCase {
     }
   }
 
+  static class MyJSO extends JavaScriptObject {
+    protected MyJSO() {
+    }
+
+    public final boolean equalMethod(Object o) {
+      return this == o;
+    }
+  }
+
   public void testEquality() {
     JavaScriptObject jso = makeJSO();
     assertEquals(jso, jso);
@@ -543,6 +552,11 @@ public class JsoTest extends GWTTestCase {
 
     jso2 = returnMe(jso);
     assertEquals(jso, jso2);
+
+    MyJSO jso3 = (MyJSO) makeJSO();
+    MyJSO jso4 = (MyJSO) makeJSO();
+    assertTrue(jso3.equalMethod(jso3));
+    assertFalse(jso3.equalMethod(jso4));
   }
 
   public void testGenericsJsos() {

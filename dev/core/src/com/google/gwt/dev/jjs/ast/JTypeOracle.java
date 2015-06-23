@@ -132,16 +132,6 @@ public class JTypeOracle implements Serializable {
     private String javaLangObject;
   }
 
-  private Set<JReferenceType> instantiatedJsoTypesViaCast = Sets.newHashSet();
-
-  public void setInstantiatedJsoTypesViaCast(Set<JReferenceType> instantiatedJsoTypesViaCast) {
-    this.instantiatedJsoTypesViaCast = instantiatedJsoTypesViaCast;
-  }
-
-  public Set<JReferenceType> getInstantiatedJsoTypesViaCast() {
-    return instantiatedJsoTypesViaCast;
-  }
-
   /**
    * A method needs a JsInterop bridge if any of the following are true:
    * 1) the method name conflicts with a method name of a non-JsType/JsExport method in a superclass
@@ -546,13 +536,6 @@ public class JTypeOracle implements Serializable {
       }
     }
     return false;
-  }
-
-  /**
-   * True if the type is a JSO or interface implemented by a JSO, or a JsType, or a JsFunction.
-   */
-  public boolean canBeInstantiatedInJavascript(JType type) {
-    return canBeJavaScriptObject(type) || isJsType(type) || isJsFunction(type);
   }
 
   public boolean castFailsTrivially(JReferenceType fromType, JReferenceType toType) {
@@ -999,14 +982,8 @@ public class JTypeOracle implements Serializable {
         return true;
       }
     }
-    // TODO(rluble): ControlFlowAnalyzer should be responsible for making sure that these types
-    // are considered live. THIS IS A HACK. In particular this method and the specialized
-    // version for JDeclaredType should have the same semantics.
-    return isJsType(type) || hasAnyExports(type) || isJsFunction(type);
-  }
 
-  private boolean hasAnyExports(JReferenceType type) {
-    return type instanceof JDeclaredType ? ((JDeclaredType) type).hasAnyExports() : false;
+    return false;
   }
 
   private boolean isArrayInterface(JType type) {
