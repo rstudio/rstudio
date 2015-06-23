@@ -15,16 +15,10 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import java.util.HashMap;
-import java.util.Map;
 
-import org.rstudio.core.client.Pair;
-import org.rstudio.core.client.RegexUtil;
 import org.rstudio.core.client.StringUtil;
-import org.rstudio.core.client.TextCursor;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.DomUtils.NativeEventHandler;
-import org.rstudio.core.client.regex.Match;
-import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.widget.MiniPopupPanel;
 import org.rstudio.core.client.widget.SmallButton;
 import org.rstudio.core.client.widget.TextBoxWithCue;
@@ -33,7 +27,6 @@ import org.rstudio.core.client.widget.TriStateCheckBox;
 import org.rstudio.core.client.widget.TriStateCheckBox.State;
 import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
@@ -60,9 +53,23 @@ import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
 
-public class ChunkOptionsPopupPanel extends MiniPopupPanel
+public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
 {
-   public ChunkOptionsPopupPanel()
+   // Sub-classes must implement these methods.
+   //
+   // initOptions should fill the 'chunkOptions_' map and call 'afterInit'
+   // after this has completed.
+   //
+   // synchronize should modify the document to reflect the current state
+   // of the UI selection.
+   //
+   // revert should return the document state to how it was before editing
+   // was initiated.
+   protected abstract void initOptions(Command afterInit);
+   protected abstract void synchronize();
+   protected abstract void revert();
+   
+   public ChunkOptionsPopupPanel(boolean includeChunkNameUI)
    {
       super(true);
       
@@ -118,14 +125,19 @@ public class ChunkOptionsPopupPanel extends MiniPopupPanel
          }
       });
       
-      Grid nameAndOutputGrid = new Grid(2, 2);
-      
+      int gridRows = includeChunkNameUI ? 2 : 1;
+      Grid nameAndOutputGrid = new Grid(gridRows, 2);
+
       chunkLabel_ = new Label("Name:");
       chunkLabel_.addStyleName(RES.styles().chunkLabel());
-      nameAndOutputGrid.setWidget(0, 0, chunkLabel_);
       
+      if (includeChunkNameUI)
+         nameAndOutputGrid.setWidget(0, 0, chunkLabel_);
+
       tbChunkLabel_.addStyleName(RES.styles().chunkName());
-      nameAndOutputGrid.setWidget(0, 1, tbChunkLabel_);
+      
+      if (includeChunkNameUI)
+         nameAndOutputGrid.setWidget(0, 1, tbChunkLabel_);
       
       outputComboBox_ = new ListBox();
       String[] options = new String[] {
@@ -179,8 +191,9 @@ public class ChunkOptionsPopupPanel extends MiniPopupPanel
          }
       });
       
-      nameAndOutputGrid.setWidget(1, 0, new Label("Output:"));
-      nameAndOutputGrid.setWidget(1, 1, outputComboBox_);
+      int row = includeChunkNameUI ? 1 : 0;
+      nameAndOutputGrid.setWidget(row, 0, new Label("Output:"));
+      nameAndOutputGrid.setWidget(row, 1, outputComboBox_);
       
       panel_.add(nameAndOutputGrid);
       
@@ -207,7 +220,17 @@ public class ChunkOptionsPopupPanel extends MiniPopupPanel
          @Override
          public void onValueChange(ValueChangeEvent<Boolean> event)
          {
-            figureDimensionsPanel_.setVisible(event.getValue());
+            boolean value = event.getValue();
+            figureDimensionsPanel_.setVisible(value);
+            
+            if (!value)
+            {
+               figWidthBox_.setText("");
+               figHeightBox_.setText("");
+               unset("fig.width");
+               unset("fig.height");
+               synchronize();
+            }
          }
       });
       panel_.add(useCustomFigureCheckbox_);
@@ -340,7 +363,7 @@ public class ChunkOptionsPopupPanel extends MiniPopupPanel
       return chunkOptions_.containsKey(key);
    }
    
-   public String get(String key)
+   protected String get(String key)
    {
       return chunkOptions_.get(key);
    }
@@ -360,15 +383,6 @@ public class ChunkOptionsPopupPanel extends MiniPopupPanel
       chunkOptions_.remove(key);
    }
    
-   protected void initOptions(Command afterInit)
-   {
-      originalLine_ = widget_.getEditor().getSession().getLine(position_.getRow());
-      parseChunkHeader(originalLine_, originalChunkOptions_);
-      for (Map.Entry<String, String> pair : originalChunkOptions_.entrySet())
-         chunkOptions_.put(pair.getKey(), pair.getValue());
-      afterInit.execute();
-   }
-   
    public void init(AceEditorWidget widget, Position position)
    {
       widget_ = widget;
@@ -376,6 +390,9 @@ public class ChunkOptionsPopupPanel extends MiniPopupPanel
       chunkOptions_.clear();
       originalChunkOptions_.clear();
       
+      useCustomFigureCheckbox_.setValue(false);
+      figureDimensionsPanel_.setVisible(false);
+            
       Command afterInit = new Command()
       {
          @Override
@@ -415,172 +432,12 @@ public class ChunkOptionsPopupPanel extends MiniPopupPanel
       return string.equals("TRUE") || string.equals("T");
    }
    
-   private String extractChunkPreamble(String extractedChunkHeader,
-                                       String modeId)
-   {
-      if (modeId.equals("mode/sweave"))
-         return "";
-      
-      int firstSpaceIdx = extractedChunkHeader.indexOf(' ');
-      if (firstSpaceIdx == -1)
-         return extractedChunkHeader;
-      
-      int firstCommaIdx = extractedChunkHeader.indexOf(',');
-      if (firstCommaIdx == -1)
-         firstCommaIdx = extractedChunkHeader.length();
-      
-      String label = extractedChunkHeader.substring(
-            0, Math.min(firstSpaceIdx, firstCommaIdx)).trim();
-      
-      return label;
-   }
-   
-   private String extractChunkLabel(String extractedChunkHeader)
-   {
-      int firstSpaceIdx = extractedChunkHeader.indexOf(' ');
-      if (firstSpaceIdx == -1)
-         return "";
-      
-      int firstCommaIdx = extractedChunkHeader.indexOf(',');
-      if (firstCommaIdx == -1)
-         firstCommaIdx = extractedChunkHeader.length();
-      
-      return firstCommaIdx <= firstSpaceIdx ?
-            "" :
-            extractedChunkHeader.substring(firstSpaceIdx + 1, firstCommaIdx).trim();
-   }
-   
-   private void parseChunkHeader(String line,
-                                 HashMap<String, String> chunkOptions)
-   {
-      String modeId = widget_.getEditor().getSession().getMode().getId();
-      
-      Pattern pattern = null;
-      if (modeId.equals("mode/rmarkdown"))
-         pattern = RegexUtil.RE_RMARKDOWN_CHUNK_BEGIN;
-      else if (modeId.equals("mode/sweave"))
-         pattern = RegexUtil.RE_SWEAVE_CHUNK_BEGIN;
-      else if (modeId.equals("mode/rhtml"))
-         pattern = RegexUtil.RE_RHTML_CHUNK_BEGIN;
-      
-      if (pattern == null) return;
-      
-      Match match = pattern.match(line,  0);
-      if (match == null) return;
-      
-      String extracted = match.getGroup(1);
-      chunkPreamble_ = extractChunkPreamble(extracted, modeId);
-      
-      String chunkLabel = extractChunkLabel(extracted);
-      if (StringUtil.isNullOrEmpty(chunkLabel))
-      {
-         tbChunkLabel_.setCueMode(true);
-      }
-      else
-      {
-         tbChunkLabel_.setCueMode(false);
-         tbChunkLabel_.setText(extractChunkLabel(extracted));
-      }
-      
-      int firstCommaIndex = extracted.indexOf(',');
-      String arguments = extracted.substring(firstCommaIndex + 1);
-      TextCursor cursor = new TextCursor(arguments);
-      
-      int startIndex = 0;
-      while (true)
-      {
-         if (!cursor.fwdToCharacter('=', false))
-            break;
-         
-         int equalsIndex = cursor.getIndex();
-         int endIndex = arguments.length();
-         if (cursor.fwdToCharacter(',', true))
-            endIndex = cursor.getIndex();
-         
-         chunkOptions.put(
-               arguments.substring(startIndex, equalsIndex).trim(),
-               arguments.substring(equalsIndex + 1, endIndex).trim());
-         
-         startIndex = cursor.getIndex() + 1;
-      }
-   }
-   
    @Override
    public void hide()
    {
       position_ = null;
       chunkOptions_.clear();
       super.hide();
-   }
-   
-   protected Pair<String, String> getChunkHeaderBounds(String modeId)
-   {
-      if (modeId.equals("mode/rmarkdown"))
-         return new Pair<String, String>("```{", "}");
-      else if (modeId.equals("mode/sweave"))
-         return new Pair<String, String>("<<", ">>=");
-      else if (modeId.equals("mode/rhtml"))
-         return new Pair<String, String>("<!--", "");
-      else if (modeId.equals("mode/c_cpp"))
-         return new Pair<String, String>("/***", "");
-      
-      return null;
-   }
-   
-   protected void synchronize()
-   {
-      String modeId = widget_.getEditor().getSession().getMode().getId();
-      Pair<String, String> chunkHeaderBounds =
-            getChunkHeaderBounds(modeId);
-      if (chunkHeaderBounds == null)
-         return;
-      
-      String label = tbChunkLabel_.getText();
-      String newLine =
-            chunkHeaderBounds.first +
-            chunkPreamble_;
-      
-      if (!label.isEmpty())
-      {
-         if (StringUtil.isNullOrEmpty(chunkPreamble_))
-            newLine += label;
-         else
-            newLine += " " + label;
-      }
-      
-      if (!chunkOptions_.isEmpty())
-      {
-         if (!(StringUtil.isNullOrEmpty(chunkPreamble_) &&
-             label.isEmpty()))
-         {
-            newLine += ", ";
-         }
-         
-         newLine += StringUtil.collapse(chunkOptions_, "=", ", ");
-      }
-      
-      newLine +=
-            chunkHeaderBounds.second +
-            "\n";
-      
-      widget_.getEditor().getSession().replace(
-            Range.fromPoints(
-                  Position.create(position_.getRow(), 0),
-                  Position.create(position_.getRow() + 1, 0)), newLine);
-   }
-   
-   protected void revert()
-   {
-      if (position_ == null)
-         return;
-      
-      Range replaceRange = Range.fromPoints(
-            Position.create(position_.getRow(), 0),
-            Position.create(position_.getRow() + 1, 0));
-      
-      widget_.getEditor().getSession().replace(
-            replaceRange,
-            originalLine_ + "\n");
    }
    
    private void hideAndFocusEditor()

@@ -255,7 +255,7 @@ public class ChunkIconsManager
       if (el.hasClassName(RES.styles().setupChunk()))
          optionsPanel_ = new SetupChunkOptionsPopupPanel();
       else
-         optionsPanel_ = new ChunkOptionsPopupPanel();
+         optionsPanel_ = new DefaultChunkOptionsPopupPanel();
       
       optionsPanel_.init(editor.getWidget(), position);
       optionsPanel_.show();

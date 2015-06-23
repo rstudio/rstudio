@@ -43,12 +43,8 @@ public class SetupChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
    
    public SetupChunkOptionsPopupPanel()
    {
-      super();
-      
+      super(false);
       RStudioGinjector.INSTANCE.injectMembers(this);
-      
-      chunkLabel_.setVisible(false);
-      tbChunkLabel_.setVisible(false);
    }
    
    String indented(String text)
@@ -150,6 +146,17 @@ public class SetupChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
    protected void initOptions(final Command afterInit)
    {
       String chunkText = getChunkText();
+      
+      // Eagerly try to set the checked-ness of the 'Use custom figure size' checkbox
+      // to avoid a brief flicker while we're waiting for the server.
+      String trimmed = chunkText.replaceAll("#+[^\\n]*", "");
+      
+      if (trimmed.contains("fig.width") || trimmed.contains("fig.height"))
+      {
+         useCustomFigureCheckbox_.setValue(true);
+         figureDimensionsPanel_.setVisible(true);
+      }
+      
       server_.extractChunkOptions(
             chunkText,
             new ServerRequestCallback<JsObject>()
