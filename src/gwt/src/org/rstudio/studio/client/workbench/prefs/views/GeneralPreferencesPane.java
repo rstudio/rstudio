@@ -463,7 +463,7 @@ public class GeneralPreferencesPane extends PreferencesPane
             return version.getVersion() + SEP + version.getRHome();
       }
 
-      private final static String USE_DEFAULT_VERSION = "(Use Server Default)";
+      private final static String USE_DEFAULT_VERSION = "(Use System Default)";
       private final static String SEP = "::::";
    }
 
