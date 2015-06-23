@@ -409,9 +409,11 @@ public class WebApplicationHeader extends Composite
    }
 
    @Override
-   public void addCommandSeparator()
+   public Widget addCommandSeparator()
    {
-      headerBarCommandsPanel_.add(createCommandSeparator());
+      Widget separator = createCommandSeparator();
+      headerBarCommandsPanel_.add(separator);
+      return separator;
    }
    
    @Override
@@ -435,9 +437,11 @@ public class WebApplicationHeader extends Composite
    }
 
    @Override
-   public void addProjectCommandSeparator()
+   public Widget addProjectCommandSeparator()
    {
-      projectBarCommandsPanel_.add(createCommandSeparator());
+      Widget separator = createCommandSeparator();
+      projectBarCommandsPanel_.add(separator);
+      return separator;
    }
    
    @Override
@@ -447,9 +451,9 @@ public class WebApplicationHeader extends Composite
    }
 
    @Override
-   public void addProjectRightCommandSeparator()
+   public Widget addProjectRightCommandSeparator()
    {
-      toolbar_.addRightSeparator();
+      return toolbar_.addRightSeparator();
    }
    
    @Override

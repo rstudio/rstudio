@@ -26,13 +26,13 @@ public class WebApplicationHeaderOverlay
    public interface Context
    {
       void addCommand(Widget widget);
-      void addCommandSeparator();
+      Widget addCommandSeparator();
       void addRightCommand(Widget widget);
       Widget addRightCommandSeparator();
       void addProjectCommand(Widget widget);
-      void addProjectCommandSeparator();
+      Widget addProjectCommandSeparator();
       void addProjectRightCommand(Widget widget);
-      void addProjectRightCommandSeparator();
+      Widget addProjectRightCommandSeparator();
       AppMenuBar getMainMenu();
    }
    
