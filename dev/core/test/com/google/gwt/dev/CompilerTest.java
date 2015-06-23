@@ -1973,9 +1973,6 @@ public class CompilerTest extends ArgProcessorTestBase {
     compilerOptions.setModuleNames(ImmutableList.of(moduleName));
     compilerOptions.setOutput(output);
 
-    CompilerContext compilerContext = new CompilerContext.Builder().options(compilerOptions)
-        .minimalRebuildCache(minimalRebuildCache).build();
-
     // Write the Java/XML/etc resources that make up the test application.
     for (MockResource applicationResource : applicationResources) {
       writeResourceTo(applicationResource, applicationDir);
@@ -1984,7 +1981,7 @@ public class CompilerTest extends ArgProcessorTestBase {
     // Cause the module to be cached with a reference to the prefixed resource loader so that the
     // compile process will see those resources.
     ModuleDefLoader.clearModuleCache();
-    ModuleDefLoader.loadFromResources(logger, compilerContext, moduleName, resourceLoader, true);
+    ModuleDefLoader.loadFromResources(logger, moduleName, resourceLoader, true);
 
     // Run the compile.
     Compiler compiler = new Compiler(compilerOptions, minimalRebuildCache);

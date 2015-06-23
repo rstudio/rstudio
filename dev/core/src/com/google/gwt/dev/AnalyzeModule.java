@@ -133,11 +133,8 @@ public class AnalyzeModule {
 
   private final AnalyzeModuleOptionsImpl options;
 
-  private final CompilerContext compilerContext;
-
   public AnalyzeModule(AnalyzeModuleOptions options) {
     this.options = new AnalyzeModuleOptionsImpl(options);
-    compilerContext = new CompilerContext.Builder().options(options).build();
   }
 
   public boolean run(TreeLogger logger) throws UnableToCompleteException {
@@ -147,8 +144,7 @@ public class AnalyzeModule {
       // No need to check mkdirs result because an IOException will occur anyway
       compilerWorkDir.mkdirs();
 
-      ModuleDef module =
-          ModuleDefLoader.loadFromClassPath(logger, compilerContext, moduleName);
+      ModuleDef module = ModuleDefLoader.loadFromClassPath(logger, moduleName);
       if (logger.isLoggable(TreeLogger.INFO)) {
         logger.log(TreeLogger.INFO, "Analyzing module " + module.getName());
       }

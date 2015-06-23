@@ -941,8 +941,7 @@ public abstract class DevModeBase implements DoneCallback {
    */
   protected ModuleDef loadModule(TreeLogger logger, String moduleName, boolean refresh)
       throws UnableToCompleteException {
-    ModuleDef moduleDef =
-        ModuleDefLoader.loadFromClassPath(logger, compilerContext, moduleName, refresh);
+    ModuleDef moduleDef = ModuleDefLoader.loadFromClassPath(logger, moduleName, refresh);
     compilerContext = compilerContextBuilder.module(moduleDef).build();
     assert (moduleDef != null) : "Required module state is absent";
     return moduleDef;

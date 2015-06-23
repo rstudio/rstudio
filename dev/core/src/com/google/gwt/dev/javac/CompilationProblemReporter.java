@@ -148,7 +148,7 @@ public class CompilationProblemReporter {
     }
 
     if (hint) {
-      logHints(logger, compilerContext, typeSourceName);
+      logHints(logger, typeSourceName);
     }
   }
 
@@ -309,8 +309,7 @@ public class CompilationProblemReporter {
     return visited.size() > 1;
   }
 
-  private static void logHints(TreeLogger logger, CompilerContext compilerContext,
-      String typeSourceName) {
+  private static void logHints(TreeLogger logger, String typeSourceName) {
     ClassLoader cl = Thread.currentThread().getContextClassLoader();
 
     URL sourceURL = Util.findSourceInClassPath(cl, typeSourceName);
@@ -321,11 +320,6 @@ public class CompilationProblemReporter {
         Messages.HINT_CHECK_MODULE_NONCLIENT_SOURCE_DECL.log(logger, null);
       }
     } else if (!typeSourceName.equals("java.lang.Object")) {
-      boolean strictSourceResources =
-          compilerContext.getOptions().enforceStrictSourceResources();
-      if (strictSourceResources) {
-        Messages.HINT_STRICT_SOURCE_ENTRIES.log(logger, null);
-      }
       Messages.HINT_CHECK_TYPENAME.log(logger, typeSourceName, null);
       Messages.HINT_CHECK_CLASSPATH_SOURCE_ENTRIES.log(logger, null);
     }

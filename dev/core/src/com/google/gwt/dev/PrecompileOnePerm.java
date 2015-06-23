@@ -162,10 +162,6 @@ public class PrecompileOnePerm {
       logger.log(TreeLogger.WARN,
       "-XdisableGeneratingOnShards has no effect in PrecompileOnePerm");
     }
-    if (options.getMaxPermsPerPrecompile() != -1) {
-      logger.log(TreeLogger.WARN,
-      "-XmaxPermsPerPrecompile has no effect in PrecompileOnePerm");
-    }
 
     return true;
   }
@@ -194,7 +190,7 @@ public class PrecompileOnePerm {
     String moduleName = moduleNames.get(0);
     File compilerWorkDir = options.getCompilerWorkDir(moduleName);
 
-    ModuleDef module = ModuleDefLoader.loadFromClassPath(logger, compilerContext, moduleName);
+    ModuleDef module = ModuleDefLoader.loadFromClassPath(logger, moduleName);
     compilerContext = compilerContextBuilder.module(module).build();
     StandardLinkerContext linkerContext = new StandardLinkerContext(
         TreeLogger.NULL, module, compilerContext.getPublicResourceOracle(), options.getOutput());

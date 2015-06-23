@@ -19,7 +19,6 @@ import com.google.gwt.dev.jjs.JJSOptions;
 import com.google.gwt.dev.util.arg.OptionDisableUpdateCheck;
 import com.google.gwt.dev.util.arg.OptionEnableGeneratingOnShards;
 import com.google.gwt.dev.util.arg.OptionGenDir;
-import com.google.gwt.dev.util.arg.OptionMaxPermsPerPrecompile;
 import com.google.gwt.dev.util.arg.OptionSaveSource;
 import com.google.gwt.dev.util.arg.OptionSetProperties;
 import com.google.gwt.dev.util.arg.OptionSourceMapFilePrefix;
@@ -30,6 +29,5 @@ import com.google.gwt.dev.util.arg.OptionValidateOnly;
  */
 public interface PrecompileTaskOptions extends JJSOptions, CompileTaskOptions, OptionGenDir,
     OptionSaveSource, OptionSourceMapFilePrefix, OptionValidateOnly, OptionDisableUpdateCheck,
-    OptionEnableGeneratingOnShards, OptionMaxPermsPerPrecompile, PrecompilationResult,
-    OptionSetProperties {
+    OptionEnableGeneratingOnShards, PrecompilationResult, OptionSetProperties {
 }

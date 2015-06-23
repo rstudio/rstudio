@@ -42,8 +42,6 @@ class CompilerOptionsImpl extends UnmodifiableCompilerOptions {
   private final TreeLogger.Type logLevel;
   private final List<String> moduleNames;
   private final SourceLevel sourceLevel;
-  private final boolean strictPublicResources;
-  private final boolean strictSourceResources;
   private final OptionJsInteropMode.Mode jsInteropMode;
   private final OptionMethodNameDisplayMode.Mode methodNameDisplayMode;
   private final ListMultimap<String, String> properties;
@@ -56,24 +54,12 @@ class CompilerOptionsImpl extends UnmodifiableCompilerOptions {
     this.moduleNames = Lists.newArrayList(moduleName);
     this.sourceLevel = options.getSourceLevel();
     this.failOnError = options.isFailOnError();
-    this.strictSourceResources = options.enforceStrictResources();
-    this.strictPublicResources = options.enforceStrictResources();
     this.logLevel = options.getLogLevel();
     this.jsInteropMode = options.getJsInteropMode();
     this.methodNameDisplayMode = options.getMethodNameDisplayMode();
     this.properties = LinkedListMultimap.create(options.getProperties());
     this.closureFormattedOutput = options.isClosureFormattedOutput();
     this.output = options.getOutput();
-  }
-
-  @Override
-  public boolean enforceStrictPublicResources() {
-    return strictPublicResources;
-  }
-
-  @Override
-  public boolean enforceStrictSourceResources() {
-    return strictSourceResources;
   }
 
   @Override
@@ -122,11 +108,6 @@ class CompilerOptionsImpl extends UnmodifiableCompilerOptions {
   @Override
   public TreeLogger.Type getLogLevel() {
     return logLevel;
-  }
-
-  @Override
-  public int getMaxPermsPerPrecompile() {
-    return -1;
   }
 
   @Override

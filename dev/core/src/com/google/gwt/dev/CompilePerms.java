@@ -327,9 +327,8 @@ public class CompilePerms {
           return false;
         }
       } else {
-        compilerContext = compilerContextBuilder.options(options).build();
-        ModuleDef module = ModuleDefLoader.loadFromClassPath(logger, compilerContext, moduleName);
-        compilerContext = compilerContextBuilder.module(module).build();
+        ModuleDef module = ModuleDefLoader.loadFromClassPath(logger, moduleName);
+        compilerContext = compilerContextBuilder.options(options).module(module).build();
         Precompilation precompilation = (Precompilation) precompileResults;
         // Choose which permutations go with this permutation
         Permutation[] subPerms = selectPermutationsForPrecompilation(
@@ -352,10 +351,9 @@ public class CompilePerms {
       File compilerWorkDir, PrecompileTaskOptions precompilationOptions)
       throws UnableToCompleteException {
     precompilationOptions.setGenDir(null);
-    compilerContext = compilerContextBuilder.options(precompilationOptions).build();
 
-    ModuleDef module = ModuleDefLoader.loadFromClassPath(logger, compilerContext, moduleName);
-    compilerContext = compilerContextBuilder.module(module).build();
+    ModuleDef module = ModuleDefLoader.loadFromClassPath(logger, moduleName);
+    compilerContext = compilerContextBuilder.options(precompilationOptions).module(module).build();
     PropertyCombinations allPermutations = new PropertyCombinations(
         module.getProperties(), module.getActiveLinkerNames());
     List<PropertyCombinations> collapsedPermutations = allPermutations.collapseProperties();

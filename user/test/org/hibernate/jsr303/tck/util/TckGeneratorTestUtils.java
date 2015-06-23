@@ -48,10 +48,8 @@ public class TckGeneratorTestUtils {
 
   static StandardGeneratorContext createGeneratorContext(String moduleName,
       TreeLogger logger) throws UnableToCompleteException {
-    CompilerContext.Builder compilerContextBuilder = new CompilerContext.Builder();
-    CompilerContext compilerContext = compilerContextBuilder.build();
-    ModuleDef module = ModuleDefLoader.loadFromClassPath(logger, compilerContext, moduleName);
-    compilerContext = compilerContextBuilder.module(module).build();
+    ModuleDef module = ModuleDefLoader.loadFromClassPath(logger, moduleName);
+    CompilerContext compilerContext = new CompilerContext.Builder().module(module).build();
     compilerContext.getOptions().setGenDir(new File(System.getProperty("java.io.tmpdir")));
 
     ArtifactSet allGenreatedArtifacts = new ArtifactSet();

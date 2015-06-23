@@ -436,7 +436,7 @@ public class Recompiler {
 
     // ModuleDefLoader.loadFromResources() checks for modified .gwt.xml files.
     ModuleDef moduleDef = ModuleDefLoader.loadFromResources(
-        logger, compilerContext, inputModuleName, resources, true);
+        logger, inputModuleName, resources, true);
     compilerContext = compilerContextBuilder.module(moduleDef).build();
 
     // Undo all permutation restriction customizations from previous compiles.

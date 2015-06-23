@@ -17,7 +17,6 @@ package com.google.gwt.dev.cfg;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
-import com.google.gwt.dev.CompilerContext;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 
 import junit.framework.TestCase;
@@ -53,8 +52,7 @@ public class PropertyTest extends TestCase {
   public PropertyTest() throws UnableToCompleteException {
     // Module has the same name as this class.
     String moduleName = getClass().getCanonicalName();
-    moduleDef =
-        ModuleDefLoader.loadFromClassPath(getRootLogger(), new CompilerContext(), moduleName);
+    moduleDef = ModuleDefLoader.loadFromClassPath(getRootLogger(), moduleName);
   }
 
   public void testModule() {
@@ -145,7 +143,7 @@ public class PropertyTest extends TestCase {
     for (String name : Arrays.asList("A", "B", "C", "D")) {
       try {
         ModuleDefLoader.loadFromClassPath(
-            TreeLogger.NULL, new CompilerContext(), moduleName + "Bad" + name);
+            TreeLogger.NULL, moduleName + "Bad" + name);
         fail("Test " + name + " should have thrown UnableToCompleteException");
       } catch (UnableToCompleteException e) {
         // OK
@@ -178,7 +176,7 @@ public class PropertyTest extends TestCase {
   }
 
   public void testRestrictAndReleaseProperty() throws UnableToCompleteException {
-    ModuleDef moduleDef = ModuleDefLoader.loadFromClassPath(getRootLogger(), new CompilerContext(),
+    ModuleDef moduleDef = ModuleDefLoader.loadFromClassPath(getRootLogger(),
         getClass().getCanonicalName() + "2");
     Properties properties = moduleDef.getProperties();
 

@@ -37,10 +37,8 @@ class ModuleContext {
       oracle = typeOracleMap.get(moduleName);
       if (oracle == null) {
         CompilerContext.Builder compilerContextBuilder = new CompilerContext.Builder();
-        CompilerContext compilerContext = compilerContextBuilder.build();
-        ModuleDef moduleDef =
-            ModuleDefLoader.loadFromClassPath(logger, compilerContext, moduleName);
-        compilerContext = compilerContextBuilder.module(moduleDef).build();
+        ModuleDef moduleDef = ModuleDefLoader.loadFromClassPath(logger, moduleName);
+        CompilerContext compilerContext = compilerContextBuilder.module(moduleDef).build();
         oracle = moduleDef.getCompilationState(logger, compilerContext).getTypeOracle();
         typeOracleMap.put(moduleName, oracle);
       }

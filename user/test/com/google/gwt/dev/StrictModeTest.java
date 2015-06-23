@@ -124,7 +124,7 @@ public class StrictModeTest extends TestCase {
   }
 
   private void precompile(TreeLogger logger, String moduleName) throws UnableToCompleteException {
-    ModuleDef module = ModuleDefLoader.loadFromClassPath(logger, compilerContext, moduleName);
+    ModuleDef module = ModuleDefLoader.loadFromClassPath(logger, moduleName);
     compilerContext = compilerContextBuilder.module(module).build();
     if (Precompile.precompile(logger, compilerContext) == null) {
       throw new UnableToCompleteException();
@@ -134,7 +134,7 @@ public class StrictModeTest extends TestCase {
   private boolean validate(TreeLogger logger, String moduleName) {
     ModuleDef module;
     try {
-      module = ModuleDefLoader.loadFromClassPath(logger, compilerContext, moduleName);
+      module = ModuleDefLoader.loadFromClassPath(logger, moduleName);
       compilerContext = compilerContextBuilder.module(module).build();
     } catch (UnableToCompleteException e) {
       fail("Failed to load the module definition");

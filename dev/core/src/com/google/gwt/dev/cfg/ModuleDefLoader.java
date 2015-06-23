@@ -17,7 +17,6 @@ package com.google.gwt.dev.cfg;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
-import com.google.gwt.dev.CompilerContext;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
@@ -71,15 +70,14 @@ public class ModuleDefLoader {
    * <code>.gwt.xml</code> file on disk.
    *
    * @param logger logs the process
-   * @param compilerContext shared read only compiler state
    * @param moduleName the synthetic module to create
    * @param inherits a set of modules to inherit from
    * @param refresh whether to refresh the module
    * @return the loaded module
    * @throws UnableToCompleteException
    */
-  public static ModuleDef createSyntheticModule(TreeLogger logger,
-      CompilerContext compilerContext, String moduleName, final String[] inherits, boolean refresh)
+  public static ModuleDef createSyntheticModule(TreeLogger logger, String moduleName,
+      final String[] inherits, boolean refresh)
       throws UnableToCompleteException {
     ModuleDef moduleDef = tryGetLoadedModule(moduleName, refresh);
     if (moduleDef != null) {
@@ -88,7 +86,7 @@ public class ModuleDefLoader {
 
     ResourceLoader resources = ResourceLoaders.forClassLoader(Thread.currentThread());
 
-    ModuleDefLoader loader = new ModuleDefLoader(compilerContext, resources) {
+    ModuleDefLoader loader = new ModuleDefLoader(resources) {
       @Override
       protected void load(TreeLogger logger, String nameOfModuleToLoad, ModuleDef dest)
           throws UnableToCompleteException {
@@ -113,29 +111,27 @@ public class ModuleDefLoader {
    * Loads a new module from the class path and defers scanning associated directories for
    * resources.
    */
-  public static ModuleDef loadFromClassPath(
-      TreeLogger logger, CompilerContext compilerContext, String moduleName)
+  public static ModuleDef loadFromClassPath(TreeLogger logger, String moduleName)
       throws UnableToCompleteException {
-    return loadFromClassPath(logger, compilerContext, moduleName, false);
+    return loadFromClassPath(logger, moduleName, false);
   }
 
   /**
    * Loads a new module from the class path and may or may not immediately scan associated
    * directories for resources.
    */
-  public static ModuleDef loadFromClassPath(
-      TreeLogger logger, CompilerContext compilerContext, String moduleName, boolean refresh)
+  public static ModuleDef loadFromClassPath(TreeLogger logger, String moduleName, boolean refresh)
       throws UnableToCompleteException {
     ResourceLoader resources = ResourceLoaders.forClassLoader(Thread.currentThread());
-    return loadFromResources(logger, compilerContext, moduleName, resources, refresh);
+    return loadFromResources(logger, moduleName, resources, refresh);
   }
 
   /**
    * Loads a new module from the given ResourceLoader and may or may not immediately scan associated
    * directories for resources.
    */
-  public static ModuleDef loadFromResources(TreeLogger logger, CompilerContext compilerContext,
-      String moduleName, ResourceLoader resources, boolean refresh)
+  public static ModuleDef loadFromResources(TreeLogger logger, String moduleName,
+      ResourceLoader resources, boolean refresh)
       throws UnableToCompleteException {
 
     Event moduleDefLoadFromClassPathEvent = SpeedTracerLogger.start(
@@ -151,7 +147,7 @@ public class ModuleDefLoader {
       if (moduleDef != null) {
         return moduleDef;
       }
-      ModuleDefLoader loader = new ModuleDefLoader(compilerContext, resources);
+      ModuleDefLoader loader = new ModuleDefLoader(resources);
       return ModuleDefLoader.doLoadModule(loader, logger, moduleName, resources, true, true);
     } finally {
       moduleDefLoadFromClassPathEvent.end();
@@ -232,21 +228,10 @@ public class ModuleDefLoader {
     return moduleDef;
   }
 
-  private final CompilerContext compilerContext;
-
   private final ResourceLoader resourceLoader;
 
-  private ModuleDefLoader(CompilerContext compilerContext, ResourceLoader loader) {
-    this.compilerContext = compilerContext;
+  private ModuleDefLoader(ResourceLoader loader) {
     this.resourceLoader = loader;
-  }
-
-  public boolean enforceStrictSourceResources() {
-    return compilerContext.getOptions().enforceStrictSourceResources();
-  }
-
-  public boolean enforceStrictPublicResources() {
-    return compilerContext.getOptions().enforceStrictPublicResources();
   }
 
   /**

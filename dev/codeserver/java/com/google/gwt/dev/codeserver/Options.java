@@ -85,7 +85,6 @@ public class Options {
   // Use the same default as the GWT compiler.
   private SourceLevel sourceLevel = SourceLevel.DEFAULT_SOURCE_LEVEL;
   private boolean failOnError = false;
-  private boolean strictResources = false;
   private int compileTestRecompiles = 0;
   private OptionJsInteropMode.Mode jsInteropMode = OptionJsInteropMode.Mode.NONE;
   private OptionMethodNameDisplayMode.Mode methodNameDisplayMode =
@@ -291,13 +290,6 @@ public class Options {
     return port;
   }
 
-  /**
-   * Whether to implicitly import client and public directories when no explicit imports exist.
-   */
-  boolean enforceStrictResources() {
-    return strictResources;
-  }
-
   List<File> getSourcePath() {
     return sourcePath;
   }
@@ -341,7 +333,6 @@ public class Options {
       registerHandler(new NoPrecompileFlag());
       registerHandler(new PortFlag());
       registerHandler(new SourceFlag());
-      registerHandler(new StrictResourcesFlag());
       registerHandler(new WorkDirFlag());
       registerHandler(new LauncherDir());
       registerHandler(new ArgHandlerScriptStyle(new OptionScriptStyle() {
@@ -620,40 +611,6 @@ public class Options {
     public boolean setFlag(boolean value) {
       failOnError = value;
       return true;
-    }
-  }
-
-  private class StrictResourcesFlag extends ArgHandlerFlag {
-
-    public StrictResourcesFlag() {
-      addTagValue("-XstrictResources", true);
-    }
-
-    @Override
-    public boolean isExperimental() {
-      return true;
-    }
-
-    @Override
-    public String getLabel() {
-      return "enforceStrictResources";
-    }
-
-    @Override
-    public String getPurposeSnippet() {
-      return "Don't implicitly depend on \"client\" and \"public\" when "
-          + "a module doesn't define any dependencies.";
-    }
-
-    @Override
-    public boolean setFlag(boolean value) {
-      strictResources = value;
-      return true;
-    }
-
-    @Override
-    public boolean getDefaultValue() {
-      return false;
     }
   }
 

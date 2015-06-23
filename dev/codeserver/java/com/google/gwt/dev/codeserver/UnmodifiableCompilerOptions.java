@@ -96,16 +96,6 @@ abstract class UnmodifiableCompilerOptions implements CompilerOptions {
   }
 
   @Override
-  public void setEnforceStrictPublicResources(boolean strictPublicResources) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public void setEnforceStrictSourceResources(boolean strictSourceResources) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
   public final void setExtraDir(File extraDir) {
     throw new UnsupportedOperationException();
   }
@@ -152,11 +142,6 @@ abstract class UnmodifiableCompilerOptions implements CompilerOptions {
 
   @Override
   public final void setLogLevel(TreeLogger.Type logLevel) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public final void setMaxPermsPerPrecompile(int maxPerms) {
     throw new UnsupportedOperationException();
   }
 

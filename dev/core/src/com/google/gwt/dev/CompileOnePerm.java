@@ -132,10 +132,10 @@ public class CompileOnePerm {
   private static boolean compileSpecificPermutation(TreeLogger logger,
       String moduleName, PrecompileTaskOptions precompilationOptions, int permId,
       File compilerWorkDir) throws UnableToCompleteException {
-    CompilerContext.Builder compilerContextBuilder = new CompilerContext.Builder();
-    CompilerContext compilerContext = compilerContextBuilder.options(precompilationOptions).build();
-    ModuleDef module = ModuleDefLoader.loadFromClassPath(logger, compilerContext, moduleName);
-    compilerContext = compilerContextBuilder.module(module).build();
+    ModuleDef module = ModuleDefLoader.loadFromClassPath(logger, moduleName);
+
+    CompilerContext compilerContext = new CompilerContext.Builder()
+        .options(precompilationOptions).module(module).build();
 
     logger = logger.branch(TreeLogger.INFO, "Compiling permutation " + permId);
 

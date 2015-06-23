@@ -1463,16 +1463,12 @@ public class ModuleDefSchema extends Schema {
   }
 
   protected void __module_end(NullableName renameTo, String type) {
-    // If we're not being strict about source resources and no source paths have been added, go
-    // ahead and implicitly add the "client" directory.
-    if (!loader.enforceStrictSourceResources() && !foundExplicitSourceOrSuperSource) {
+    if (!foundExplicitSourceOrSuperSource) {
       bodySchema.addSourcePackage(modulePackageAsPath, "client", Empty.STRINGS,
           Empty.STRINGS, Empty.STRINGS, true, true, false);
     }
 
-    // If we're not being strict about public resources and no public paths have been added, go
-    // ahead and implicitly add the "public" directory.
-    if (!loader.enforceStrictPublicResources() && !foundAnyPublic) {
+    if (!foundAnyPublic) {
       bodySchema.addPublicPackage(modulePackageAsPath, "public", Empty.STRINGS,
           Empty.STRINGS, Empty.STRINGS, true, true);
     }

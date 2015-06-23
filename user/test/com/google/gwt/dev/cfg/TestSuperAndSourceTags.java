@@ -17,7 +17,6 @@ package com.google.gwt.dev.cfg;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
-import com.google.gwt.dev.CompilerContext;
 import com.google.gwt.dev.cfg.test.caseinsensitive.GOO;
 import com.google.gwt.dev.cfg.test.caseinsensitive.Good;
 import com.google.gwt.dev.cfg.test.casesensitive.CaseSensitive_A_Foo;
@@ -67,8 +66,7 @@ public abstract class TestSuperAndSourceTags extends TestCase {
   public TestSuperAndSourceTags() throws UnableToCompleteException {
     // Module has the same name as this class.
     String moduleName = getClass().getCanonicalName();
-    moduleDef =
-        ModuleDefLoader.loadFromClassPath(getRootLogger(), new CompilerContext(), moduleName);
+    moduleDef = ModuleDefLoader.loadFromClassPath(getRootLogger(), moduleName);
   }
 
   /**

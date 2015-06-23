@@ -392,8 +392,7 @@ public class Precompile {
 
       File precompilationFile = new File(compilerWorkDir, PRECOMPILE_FILENAME);
 
-      ModuleDef module =
-          ModuleDefLoader.loadFromClassPath(logger, compilerContext, moduleName);
+      ModuleDef module = ModuleDefLoader.loadFromClassPath(logger, moduleName);
       compilerContext = compilerContextBuilder.module(module).build();
 
       StandardLinkerContext linkerContext = new StandardLinkerContext(

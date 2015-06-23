@@ -37,7 +37,6 @@ public class PrecompileTaskOptionsImpl extends CompileTaskOptionsImpl
   private boolean enableGeneratingOnShards = true;
   private File genDir;
   private final JJSOptionsImpl jjsOptions = new JJSOptionsImpl();
-  private int maxPermsPerPrecompile;
   private boolean saveSource;
   private String sourceMapFilePrefix;
   private boolean validateOnly;
@@ -71,20 +70,9 @@ public class PrecompileTaskOptionsImpl extends CompileTaskOptionsImpl
     setGenDir(other.getGenDir());
     setSaveSource(other.shouldSaveSource());
     setSourceMapFilePrefix(other.getSourceMapFilePrefix());
-    setMaxPermsPerPrecompile(other.getMaxPermsPerPrecompile());
     setValidateOnly(other.isValidateOnly());
     setEnabledGeneratingOnShards(other.isEnabledGeneratingOnShards());
     properties.putAll(other.getProperties());
-  }
-
-  @Override
-  public boolean enforceStrictPublicResources() {
-    return jjsOptions.enforceStrictPublicResources();
-  }
-
-  @Override
-  public boolean enforceStrictSourceResources() {
-    return jjsOptions.enforceStrictSourceResources();
   }
 
   @Override
@@ -104,11 +92,6 @@ public class PrecompileTaskOptionsImpl extends CompileTaskOptionsImpl
 
   @Override public OptionJsInteropMode.Mode getJsInteropMode() {
     return jjsOptions.getJsInteropMode();
-  }
-
-  @Override
-  public int getMaxPermsPerPrecompile() {
-    return maxPermsPerPrecompile;
   }
 
   @Override
@@ -271,16 +254,6 @@ public class PrecompileTaskOptionsImpl extends CompileTaskOptionsImpl
   }
 
   @Override
-  public void setEnforceStrictPublicResources(boolean strictPublicResources) {
-    jjsOptions.setEnforceStrictPublicResources(strictPublicResources);
-  }
-
-  @Override
-  public void setEnforceStrictSourceResources(boolean strictSourceResources) {
-    jjsOptions.setEnforceStrictSourceResources(strictSourceResources);
-  }
-
-  @Override
   public void setFragmentCount(int numFragments) {
     jjsOptions.setFragmentCount(numFragments);
   }
@@ -312,11 +285,6 @@ public class PrecompileTaskOptionsImpl extends CompileTaskOptionsImpl
   @Override
   public void setJsonSoycEnabled(boolean enabled) {
     jjsOptions.setJsonSoycEnabled(enabled);
-  }
-
-  @Override
-  public void setMaxPermsPerPrecompile(int maxPermsPerPrecompile) {
-    this.maxPermsPerPrecompile = maxPermsPerPrecompile;
   }
 
   @Override

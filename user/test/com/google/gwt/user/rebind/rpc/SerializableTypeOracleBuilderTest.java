@@ -249,12 +249,11 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
     if (sTypeOracle == null) {
       TreeLogger logger = createLogger();
       CompilerContext.Builder compilerContextBuilder = new CompilerContext.Builder();
-      CompilerContext compilerContext = compilerContextBuilder.build();
-      ModuleDef moduleDef = ModuleDefLoader.createSyntheticModule(logger, compilerContext,
+      ModuleDef moduleDef = ModuleDefLoader.createSyntheticModule(logger,
           "com.google.gwt.user.rebind.rpc.testcases.RebindRPCTestCases.JUnit", new String[] {
               "com.google.gwt.user.rebind.rpc.testcases.RebindRPCTestCases",
               "com.google.gwt.junit.JUnit"}, true);
-      compilerContext = compilerContextBuilder.module(moduleDef).build();
+      CompilerContext compilerContext = new CompilerContext.Builder().module(moduleDef).build();
       sTypeOracle = moduleDef.getCompilationState(logger, compilerContext).getTypeOracle();
     }
     return sTypeOracle;

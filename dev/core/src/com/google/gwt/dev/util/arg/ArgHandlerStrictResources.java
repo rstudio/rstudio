@@ -16,52 +16,16 @@
 
 package com.google.gwt.dev.util.arg;
 
-import com.google.gwt.util.tools.ArgHandlerFlag;
+import com.google.gwt.util.tools.ArgHandlerNoopDeprecatedFlag;
 
 /**
  * Generally whether to be strict about resource loading and in particular whether to implicitly add
  * "client" and "public" resource dependencies when none are mentioned.
  */
-public class ArgHandlerStrictResources extends ArgHandlerFlag {
+@Deprecated
+public class ArgHandlerStrictResources extends ArgHandlerNoopDeprecatedFlag {
 
-  private final OptionStrictSourceResources optionStrictSourceResources;
-  private final OptionStrictPublicResources optionStrictPublicResources;
-
-  public <T extends OptionStrictSourceResources &
-                    OptionStrictPublicResources> ArgHandlerStrictResources(T options) {
-    this.optionStrictSourceResources = options;
-    this.optionStrictPublicResources = options;
-
-    addTagValue("-XstrictResources", true);
-  }
-
-  @Override
-  public boolean getDefaultValue() {
-    assert optionStrictSourceResources.enforceStrictSourceResources()
-        == optionStrictPublicResources.enforceStrictPublicResources();
-    return optionStrictSourceResources.enforceStrictSourceResources();
-  }
-
-  @Override
-  public String getLabel() {
-    return "enforceStrictResources";
-  }
-
-  @Override
-  public String getPurposeSnippet() {
-    return "Avoid adding implicit dependencies on \"client\" and \"public\" for "
-        + "modules that don't define any dependencies.";
-  }
-
-  @Override
-  public boolean isExperimental() {
-    return true;
-  }
-
-  @Override
-  public boolean setFlag(boolean value) {
-    optionStrictSourceResources.setEnforceStrictSourceResources(value);
-    optionStrictPublicResources.setEnforceStrictPublicResources(value);
-    return true;
+  public ArgHandlerStrictResources() {
+    super("XstrictResources", "enforceStrictResources");
   }
 }

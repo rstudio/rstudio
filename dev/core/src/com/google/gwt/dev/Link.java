@@ -45,12 +45,10 @@ import com.google.gwt.dev.util.PersistenceBackedObject;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.arg.ArgHandlerDeployDir;
 import com.google.gwt.dev.util.arg.ArgHandlerExtraDir;
-import com.google.gwt.dev.util.arg.ArgHandlerJsInteropMode;
 import com.google.gwt.dev.util.arg.ArgHandlerSaveSourceOutput;
 import com.google.gwt.dev.util.arg.ArgHandlerWarDir;
 import com.google.gwt.dev.util.arg.OptionDeployDir;
 import com.google.gwt.dev.util.arg.OptionExtraDir;
-import com.google.gwt.dev.util.arg.OptionJsInteropMode;
 import com.google.gwt.dev.util.arg.OptionSaveSourceOutput;
 import com.google.gwt.dev.util.arg.OptionWarDir;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
@@ -82,8 +80,7 @@ public class Link {
    * Options for Link.
    */
   public interface LinkOptions extends OptionExtraDir,
-      OptionWarDir, OptionDeployDir, OptionSaveSourceOutput, CompileTaskOptions,
-      OptionJsInteropMode {
+      OptionWarDir, OptionDeployDir, OptionSaveSourceOutput, CompileTaskOptions {
   }
 
   static class ArgProcessor extends CompileArgProcessor {
@@ -93,7 +90,6 @@ public class Link {
       registerHandler(new ArgHandlerWarDir(options));
       registerHandler(new ArgHandlerDeployDir(options));
       registerHandler(new ArgHandlerSaveSourceOutput(options));
-      registerHandler(new ArgHandlerJsInteropMode(options));
     }
 
     @Override
@@ -619,8 +615,7 @@ public class Link {
 
   public boolean run(TreeLogger logger) throws UnableToCompleteException {
     loop_modules : for (String moduleName : options.getModuleNames()) {
-      ModuleDef module =
-          ModuleDefLoader.loadFromClassPath(logger, compilerContext, moduleName);
+      ModuleDef module = ModuleDefLoader.loadFromClassPath(logger, moduleName);
       compilerContext = compilerContextBuilder.module(module).build();
       ResourceOracle publicResourceOracle = compilerContext.getPublicResourceOracle();
 

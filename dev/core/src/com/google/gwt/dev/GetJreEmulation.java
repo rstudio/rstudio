@@ -71,7 +71,7 @@ public class GetJreEmulation {
       CompilerContext.Builder compilerContextBuilder = new CompilerContext.Builder();
       CompilerContext compilerContext = compilerContextBuilder.build();
       ModuleDef module =
-          ModuleDefLoader.loadFromClassPath(logger, compilerContext, "com.google.gwt.core.Core");
+          ModuleDefLoader.loadFromClassPath(logger, "com.google.gwt.core.Core");
       compilerContext = compilerContextBuilder.module(module).build();
       CompilationState compilationState = module.getCompilationState(logger, compilerContext);
       TypeOracle typeOracle = compilationState.getTypeOracle();
