@@ -37,6 +37,12 @@ public class ApplicationClientInit
    
    public void execute(final ServerRequestCallback<SessionInfo> requestCallback)
    {
+      execute(requestCallback, true);
+   }
+   
+   public void execute(final ServerRequestCallback<SessionInfo> requestCallback,
+                       final boolean retryOnTransmissionError)
+   {
       // reset internal state 
       timedOut_ = false;
       timeoutTimer_ = null;
@@ -59,7 +65,26 @@ public class ApplicationClientInit
             if (!timedOut_)
             {
                cancelTimeoutTimer();
-               requestCallback.onError(error);
+               
+               if ((error.getCode() == ServerError.TRANSMISSION) &&
+                    retryOnTransmissionError)
+               {
+                  // transmission error can occur due to a race 
+                  // condition when switching projects or versions, for
+                  // this case wait 1000ms then retry
+                  new Timer() {
+                     @Override
+                     public void run()
+                     {
+                        // retry (specify flag to ensure we only retry once)
+                        execute(requestCallback, false);
+                     }
+                  }.schedule(1000);
+               }
+               else
+               {
+                  requestCallback.onError(error);
+               }
             }
          }                                    
       };
