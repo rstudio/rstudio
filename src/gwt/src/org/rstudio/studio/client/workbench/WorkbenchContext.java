@@ -17,7 +17,9 @@ package org.rstudio.studio.client.workbench;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.application.events.RVersionsChangedEvent;
 import org.rstudio.studio.client.application.events.RestartStatusEvent;
+import org.rstudio.studio.client.application.model.RVersionsInfo;
 import org.rstudio.studio.client.workbench.events.BusyEvent;
 import org.rstudio.studio.client.workbench.events.BusyHandler;
 import org.rstudio.studio.client.workbench.model.Session;
@@ -90,6 +92,18 @@ public class WorkbenchContext
             }
          }
       });
+      
+      
+      // track R version info
+      eventBus.addHandler(RVersionsChangedEvent.TYPE, 
+                          new RVersionsChangedEvent.Handler()
+      {
+         @Override
+         public void onRVersionsChanged(RVersionsChangedEvent event)
+         {
+            rVersionsInfo_ = event.getRVersionsInfo();
+         }
+      });
    }
    
   
@@ -105,6 +119,14 @@ public class WorkbenchContext
          return defaultFileDialogDir_;
       else
          return getCurrentWorkingDir();
+   }
+   
+   public RVersionsInfo getRVersionsInfo()
+   {
+      if (rVersionsInfo_ != null)
+         return rVersionsInfo_;
+      else
+         return session_.getSessionInfo().getRVersionsInfo();
    }
    
    public void setDefaultFileDialogDir(FileSystemItem dir)
@@ -183,5 +205,6 @@ public class WorkbenchContext
    private FileSystemItem defaultFileDialogDir_ = FileSystemItem.home();
    private FileSystemItem activeProjectDir_ = null;
    private Session session_; 
+   private RVersionsInfo rVersionsInfo_ = null;
    
 }

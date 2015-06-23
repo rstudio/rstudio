@@ -14,27 +14,27 @@
  */
 package org.rstudio.studio.client.application.events;
 
-import org.rstudio.studio.client.application.model.RVersionSpec;
+import org.rstudio.studio.client.application.model.RVersionsInfo;
 
-import com.google.gwt.core.client.JsArray;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
-public class RVersionsChangedEvent extends GwtEvent<RVersionsChangedEvent.Handler>
+public class RVersionsChangedEvent 
+                     extends GwtEvent<RVersionsChangedEvent.Handler>
 {
    public interface Handler extends EventHandler
    {
       void onRVersionsChanged(RVersionsChangedEvent event);
    }
 
-   public RVersionsChangedEvent(JsArray<RVersionSpec> rVersions)
+   public RVersionsChangedEvent(RVersionsInfo rVersions)
    {
-      rVersions_ = rVersions;
+      rVersionsInfo_ = rVersions;
    }
    
-   public JsArray<RVersionSpec> getRVersions()
+   public RVersionsInfo getRVersionsInfo()
    {
-      return rVersions_;
+      return rVersionsInfo_;
    }
 
    @Override
@@ -51,5 +51,5 @@ public class RVersionsChangedEvent extends GwtEvent<RVersionsChangedEvent.Handle
 
    public static final Type<Handler> TYPE = new Type<Handler>();
    
-   private final JsArray<RVersionSpec> rVersions_;
+   private final RVersionsInfo rVersionsInfo_;
 }

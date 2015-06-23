@@ -36,10 +36,12 @@ import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.core.client.widget.TextBoxWithButton;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.model.RVersionSpec;
+import org.rstudio.studio.client.application.model.RVersionsInfo;
 import org.rstudio.studio.client.application.model.SaveAction;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
+import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.GeneralPrefs;
@@ -59,6 +61,7 @@ public class GeneralPreferencesPane extends PreferencesPane
                                  UIPrefs prefs,
                                  Session session,
                                  final GlobalDisplay globalDisplay,
+                                 WorkbenchContext context,
                                  SourceServerOperations server)
    {
       fsContext_ = fsContext;
@@ -66,6 +69,8 @@ public class GeneralPreferencesPane extends PreferencesPane
       prefs_ = prefs;
       server_ = server;
       session_ = session;
+      
+      RVersionsInfo versionsInfo = context.getRVersionsInfo();
 
       if (Desktop.isDesktop())
       {
@@ -96,10 +101,10 @@ public class GeneralPreferencesPane extends PreferencesPane
             add(rVersion_);
          }
       }
-      else if (session_.getSessionInfo().getMultiVersion())
+      else if (versionsInfo.isMultiVersion())
       {
          rServerRVersion_ = new RVersionSelectWidget(
-                        session_.getSessionInfo().getAvailableRVersions());
+                                       versionsInfo.getAvailableRVersions());
          add(tight(rServerRVersion_));
          
          rememberRVersionForProjects_ = 
