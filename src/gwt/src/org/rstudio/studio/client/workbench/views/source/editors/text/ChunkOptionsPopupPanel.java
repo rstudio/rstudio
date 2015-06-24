@@ -86,6 +86,11 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
       panel_ = new VerticalPanel();
       add(panel_);
       
+      header_ = new Label();
+      header_.addStyleName(RES.styles().headerLabel());
+      header_.setVisible(false);
+      panel_.add(header_);
+      
       tbChunkLabel_ = new TextBoxWithCue("Unnamed chunk");
       tbChunkLabel_.addStyleName(RES.styles().textBox());
       tbChunkLabel_.addChangeHandler(new ChangeHandler()
@@ -306,6 +311,12 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
       footerPanel.add(buttonPanel);
       
       panel_.add(footerPanel);
+   }
+   
+   protected void setHeader(String text, boolean visible)
+   {
+      header_.setText(text);
+      header_.setVisible(visible);
    }
    
    public void focus()
@@ -544,6 +555,7 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
    }
    
    protected final VerticalPanel panel_;
+   protected final Label header_;
    protected final Label chunkLabel_;
    protected final TextBoxWithCue tbChunkLabel_;
    protected final ListBox outputComboBox_;
@@ -580,6 +592,8 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
    
    public interface Styles extends CssResource
    {
+      String headerLabel();
+      
       String textBox();
       
       String chunkLabel();
