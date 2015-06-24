@@ -117,8 +117,8 @@ public class Scope extends JavaScriptObject
       return this.attributes && this.attributes.isYaml === true;
    }-*/;
    
-   public native final JavaScriptObject getAttribute(String name) /*-{
-      return this.attributes[name];
+   public native final int getDepth() /*-{
+      return this.attributes && this.attributes.depth || 0;
    }-*/;
 
 }

@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench.views.source;
 
 import org.rstudio.core.client.Counter;
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.theme.res.ThemeStyles;
@@ -32,9 +33,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
-import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.ParagraphElement;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -46,9 +45,7 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HTML;
-import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Tree;
 import com.google.gwt.user.client.ui.TreeItem;
 import com.google.gwt.user.client.ui.Widget;
@@ -146,7 +143,8 @@ public class DocumentOutlineWidget extends Composite
       
       private void setIndent(int depth)
       {
-         String text = StringUtil.repeat("&nbsp;", depth * 3);
+         depth = Math.max(0, depth);
+         String text = StringUtil.repeat("&nbsp;", depth * 2);
          if (indent_ == null)
             indent_ = new HTML(text);
          else
@@ -388,9 +386,22 @@ public class DocumentOutlineWidget extends Composite
       
       setActiveWidget(tree_);
       
+      int h1Count = 0;
+      for (int i = 0; i < scopeTree_.length(); i++)
+      {
+         Scope node = scopeTree_.get(i);
+         if (node.isMarkdownHeader())
+         {
+            if (node.getDepth() == 1)
+               h1Count++;
+         }
+      }
+      
+      int initialDepth = h1Count == 1 ? -1 : 0;
+      
       Counter counter = new Counter(-1);
       for (int i = 0; i < scopeTree_.length(); i++)
-         buildScopeTreeImpl(scopeTree_.get(i), 0, counter);
+         buildScopeTreeImpl(scopeTree_.get(i), initialDepth, counter);
       
       // Clean up leftovers in the tree. 
       int oldTreeSize = tree_.getItemCount();
