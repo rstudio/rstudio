@@ -155,6 +155,8 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="jumpTo"/>
          <cmd refid="goToFileFunction"/>
          <separator/>
+         <cmd refid="toggleDocumentOutline"/>
+         <separator/>
          <cmd refid="goToHelp"/>
          <cmd refid="goToFunctionDefinition"/>
          <cmd refid="findUsages"/>
@@ -168,9 +170,6 @@ well as menu structures (for main menu and popup menus).
          <separator/>
          <cmd refid="reindent"/>
          <cmd refid="reformatCode"/>
-         <separator/>
-         <cmd refid="showDiagnosticsActiveDocument"/>
-         <cmd refid="showDiagnosticsProject"/>
          <separator/>
          <cmd refid="executeCode"/>
          <cmd refid="executeLastCode"/>
@@ -199,8 +198,6 @@ well as menu structures (for main menu and popup menus).
       <menu label="_View">
          <cmd refid="showToolbar"/>
          <cmd refid="hideToolbar"/>
-         <separator/>
-         <cmd refid="toggleDocumentOutline"/>
          <separator/>
          <cmd refid="zoomActualSize"/>
          <cmd refid="zoomIn"/>
@@ -322,6 +319,9 @@ well as menu structures (for main menu and popup menus).
          <separator/>
          <cmd refid="installPackage"/>
          <cmd refid="updatePackages"/>
+         <separator/>
+         <cmd refid="showDiagnosticsActiveDocument"/>
+         <cmd refid="showDiagnosticsProject"/>
          <separator/>
          <menu label="_Version Control">
             <cmd refid="vcsFileDiff"/>
