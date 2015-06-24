@@ -14,7 +14,6 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
-import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.TextBox;
@@ -31,14 +30,8 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 
 public class SetupChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
@@ -53,6 +46,9 @@ public class SetupChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
    {
       super(false);
       RStudioGinjector.INSTANCE.injectMembers(this);
+      
+      figureDimensionsPanel_.setVisible(false);
+      useCustomFigureCheckbox_.setVisible(false);
    }
    
    String indented(String text)
