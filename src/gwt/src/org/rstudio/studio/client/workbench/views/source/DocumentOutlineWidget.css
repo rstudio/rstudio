@@ -1,4 +1,8 @@
+@external gwt-Label;
+
 .container {
+	width: 100%;
+	height: 100%;
 }
 
 .leftSeparator {
@@ -6,6 +10,23 @@
 	cursor: col-resize;
 	width: 8px;
 	z-index: 1;
+}
+
+.emptyPlaceholder {
+	margin: 0 auto;
+	width: 100%;
+	height: 100%;
+}
+
+.emptyPlaceholder .gwt-Label {
+	text-align: center;
+	vertical-align: middle;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	overflow: hidden;
+	margin-top: 20px;
+	font-style: italic;
+	color: rgb(128, 128, 128) !important;
 }
 
 .tree {

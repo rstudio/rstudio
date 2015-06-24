@@ -32,7 +32,9 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
+import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.ParagraphElement;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -44,7 +46,9 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HTML;
+import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Tree;
 import com.google.gwt.user.client.ui.TreeItem;
 import com.google.gwt.user.client.ui.Widget;
@@ -197,6 +201,10 @@ public class DocumentOutlineWidget extends Composite
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
       
+      emptyPlaceholder_ = new FlowPanel();
+      emptyPlaceholder_.add(new Label("No outline available"));
+      emptyPlaceholder_.addStyleName(RES.styles().emptyPlaceholder());
+      
       container_ = new DockLayoutPanel(Unit.PX);
       container_.addStyleName(RES.styles().container());
       target_ = target;
@@ -213,11 +221,14 @@ public class DocumentOutlineWidget extends Composite
       tree_ = new Tree();
       tree_.addStyleName(RES.styles().tree());
       
-      container_.add(tree_);
+      panel_ = new FlowPanel();
+      panel_.add(tree_);
+      
+      container_.add(panel_);
       initHandlers();
       
       // Since render events can be run in quick succession, we use a timer
-      // to ensure multiple render events are 'bundled' into a single run
+      // to ensure multiple render events are 'bundled' into a single run (debounced)
       renderTimer_ = new Timer()
       {
          @Override
@@ -227,7 +238,8 @@ public class DocumentOutlineWidget extends Composite
          }
       };
       
-      // Sync themes with editor on startup
+      // Sync themes with editor on startup. Because this requires the CSS
+      // styles to have been read and rendered, we briefly time this out.
       new Timer()
       {
          @Override
@@ -325,8 +337,14 @@ public class DocumentOutlineWidget extends Composite
       
       Element content = aceContentElements[0];
       Style computed = DomUtils.getComputedStyles(content);
-      Style outlineStyles = getElement().getStyle();
       
+      updateStyles(container_, computed);
+      updateStyles(emptyPlaceholder_, computed);
+   }
+   
+   private void updateStyles(Widget widget, Style computed)
+   {
+      Style outlineStyles = widget.getElement().getStyle();
       outlineStyles.setBackgroundColor(computed.getBackgroundColor());
       outlineStyles.setColor(computed.getColor());
    }
@@ -352,13 +370,27 @@ public class DocumentOutlineWidget extends Composite
       rebuildScopeTree();
    }
    
+   private void setActiveWidget(Widget widget)
+   {
+      panel_.clear();
+      panel_.add(widget);
+   }
+   
    private void rebuildScopeTree()
    {
       scopeTree_ = target_.getDocDisplay().getScopeTree();
+      
+      if (scopeTree_.length() == 0)
+      {
+         setActiveWidget(emptyPlaceholder_);
+         return;
+      }
+      
+      setActiveWidget(tree_);
+      
       Counter counter = new Counter(-1);
-      JsArray<Scope> scopeTree = target_.getDocDisplay().getScopeTree();
-      for (int i = 0; i < scopeTree.length(); i++)
-         buildScopeTreeImpl(scopeTree.get(i), 0, counter);
+      for (int i = 0; i < scopeTree_.length(); i++)
+         buildScopeTreeImpl(scopeTree_.get(i), 0, counter);
       
       // Clean up leftovers in the tree. 
       int oldTreeSize = tree_.getItemCount();
@@ -459,8 +491,10 @@ public class DocumentOutlineWidget extends Composite
    }
    
    private final DockLayoutPanel container_;
+   private final FlowPanel panel_;
    private final VerticalSeparator separator_;
    private final Tree tree_;
+   private final FlowPanel emptyPlaceholder_;
    private final TextEditingTarget target_;
    
    private final Timer renderTimer_;
@@ -476,6 +510,7 @@ public class DocumentOutlineWidget extends Composite
       String container();
       
       String leftSeparator();
+      String emptyPlaceholder();
       
       String tree();
       
