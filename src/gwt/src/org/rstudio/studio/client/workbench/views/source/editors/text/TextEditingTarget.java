@@ -927,8 +927,6 @@ public class TextEditingTarget implements
             dirtyState_,
             events_);
       
-      view_.initWidgetSize();
-
       roxygenHelper_ = new RoxygenHelper(docDisplay_, view_);
       
       // ensure that Makefile and Makevars always use tabs
@@ -946,8 +944,11 @@ public class TextEditingTarget implements
       });
       
       name_.setValue(getNameFromDocument(document, defaultNameProvider), true);
-      docDisplay_.setCode(document.getContents(), false);
-
+      String contents = document.getContents();
+      if (!StringUtil.isNullOrEmpty(contents))
+         view_.initWidgetSize();
+      docDisplay_.setCode(contents, false);
+      
       final ArrayList<Fold> folds = Fold.decode(document.getFoldSpec());
       Scheduler.get().scheduleDeferred(new ScheduledCommand()
       {
