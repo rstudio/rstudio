@@ -462,6 +462,8 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
                   has("fig.height");
 
             useCustomFigureCheckbox_.setValue(hasRelevantFigureSettings);
+            if (hasRelevantFigureSettings)
+               useCustomFigureCheckbox_.setVisible(true);
             figureDimensionsPanel_.setVisible(hasRelevantFigureSettings);
 
             if (has("fig.width"))
