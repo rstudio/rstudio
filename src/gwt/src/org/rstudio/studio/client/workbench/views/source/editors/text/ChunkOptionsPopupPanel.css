@@ -1,3 +1,9 @@
+.headerLabel {
+	padding: 2px 4px;
+	font-weight: bold;
+	font-size: 1em;
+}
+
 .textBox {
 	width: 97%;
     border: 1px solid #999;

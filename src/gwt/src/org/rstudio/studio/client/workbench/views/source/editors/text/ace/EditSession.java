@@ -18,6 +18,7 @@ import org.rstudio.studio.client.workbench.views.output.lint.model.AceAnnotation
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.JsArrayString;
 
 public class EditSession extends JavaScriptObject
 {
@@ -65,6 +66,10 @@ public class EditSession extends JavaScriptObject
 
    public native final String getLine(int row) /*-{
       return this.getLine(row);
+   }-*/;
+   
+   public native final JsArrayString getLines(int startRow, int endRow) /*-{
+      return this.getLines(startRow, endRow);
    }-*/;
 
    public native final void setUseWrapMode(boolean useWrapMode) /*-{

@@ -14,17 +14,17 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
-import org.rstudio.core.client.Pair;
-import org.rstudio.core.client.RegexUtil;
 import org.rstudio.core.client.StringUtil;
-import org.rstudio.core.client.TextCursor;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.DomUtils.NativeEventHandler;
-import org.rstudio.core.client.regex.Match;
-import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.widget.MiniPopupPanel;
 import org.rstudio.core.client.widget.SmallButton;
 import org.rstudio.core.client.widget.TextBoxWithCue;
@@ -33,7 +33,6 @@ import org.rstudio.core.client.widget.TriStateCheckBox;
 import org.rstudio.core.client.widget.TriStateCheckBox.State;
 import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
@@ -51,6 +50,7 @@ import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
+import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.HorizontalPanel;
@@ -59,17 +59,37 @@ import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
 
-public class ChunkOptionsPopupPanel extends MiniPopupPanel
+public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
 {
-   public ChunkOptionsPopupPanel()
+   // Sub-classes must implement these methods.
+   //
+   // initOptions should fill the 'chunkOptions_' map and call 'afterInit'
+   // after this has completed.
+   //
+   // synchronize should modify the document to reflect the current state
+   // of the UI selection.
+   //
+   // revert should return the document state to how it was before editing
+   // was initiated.
+   protected abstract void initOptions(Command afterInit);
+   protected abstract void synchronize();
+   protected abstract void revert();
+   
+   public ChunkOptionsPopupPanel(boolean includeChunkNameUI)
    {
       super(true);
+      setVisible(false);
       
       chunkOptions_ = new HashMap<String, String>();
       originalChunkOptions_ = new HashMap<String, String>();
       
       panel_ = new VerticalPanel();
       add(panel_);
+      
+      header_ = new Label();
+      header_.addStyleName(RES.styles().headerLabel());
+      header_.setVisible(false);
+      panel_.add(header_);
       
       tbChunkLabel_ = new TextBoxWithCue("Unnamed chunk");
       tbChunkLabel_.addStyleName(RES.styles().textBox());
@@ -117,14 +137,19 @@ public class ChunkOptionsPopupPanel extends MiniPopupPanel
          }
       });
       
-      Grid nameAndOutputGrid = new Grid(2, 2);
+      int gridRows = includeChunkNameUI ? 2 : 1;
+      Grid nameAndOutputGrid = new Grid(gridRows, 2);
+
+      chunkLabel_ = new Label("Name:");
+      chunkLabel_.addStyleName(RES.styles().chunkLabel());
       
-      Label chunkLabel = new Label("Name:");
-      chunkLabel.addStyleName(RES.styles().chunkLabel());
-      nameAndOutputGrid.setWidget(0, 0, chunkLabel);
-      
+      if (includeChunkNameUI)
+         nameAndOutputGrid.setWidget(0, 0, chunkLabel_);
+
       tbChunkLabel_.addStyleName(RES.styles().chunkName());
-      nameAndOutputGrid.setWidget(0, 1, tbChunkLabel_);
+      
+      if (includeChunkNameUI)
+         nameAndOutputGrid.setWidget(0, 1, tbChunkLabel_);
       
       outputComboBox_ = new ListBox();
       String[] options = new String[] {
@@ -178,8 +203,9 @@ public class ChunkOptionsPopupPanel extends MiniPopupPanel
          }
       });
       
-      nameAndOutputGrid.setWidget(1, 0, new Label("Output:"));
-      nameAndOutputGrid.setWidget(1, 1, outputComboBox_);
+      int row = includeChunkNameUI ? 1 : 0;
+      nameAndOutputGrid.setWidget(row, 0, new Label("Output:"));
+      nameAndOutputGrid.setWidget(row, 1, outputComboBox_);
       
       panel_.add(nameAndOutputGrid);
       
@@ -206,7 +232,17 @@ public class ChunkOptionsPopupPanel extends MiniPopupPanel
          @Override
          public void onValueChange(ValueChangeEvent<Boolean> event)
          {
-            figureDimensionsPanel_.setVisible(event.getValue());
+            boolean value = event.getValue();
+            figureDimensionsPanel_.setVisible(value);
+            
+            if (!value)
+            {
+               figWidthBox_.setText("");
+               figHeightBox_.setText("");
+               unset("fig.width");
+               unset("fig.height");
+               synchronize();
+            }
          }
       });
       panel_.add(useCustomFigureCheckbox_);
@@ -277,7 +313,11 @@ public class ChunkOptionsPopupPanel extends MiniPopupPanel
       panel_.add(footerPanel);
    }
    
-  
+   protected void setHeader(String text, boolean visible)
+   {
+      header_.setText(text);
+      header_.setVisible(visible);
+   }
    
    public void focus()
    {
@@ -336,38 +376,69 @@ public class ChunkOptionsPopupPanel extends MiniPopupPanel
       return checkBox;
    }
    
-   private boolean has(String key)
+   protected boolean has(String key)
    {
       return chunkOptions_.containsKey(key);
    }
    
-   public String get(String key)
+   protected String get(String key)
    {
+      if (!has(key))
+         return null;
+      
       return chunkOptions_.get(key);
    }
    
-   private boolean getBoolean(String key)
+   protected boolean getBoolean(String key)
    {
+      if (!has(key))
+         return false;
+      
       return isTrue(chunkOptions_.get(key));
    }
    
-   private void set(String key, String value)
+   protected void set(String key, String value)
    {
       chunkOptions_.put(key,  value);
    }
    
-   private void unset(String key)
+   protected void unset(String key)
    {
       chunkOptions_.remove(key);
    }
    
-   @SuppressWarnings("unused")
-   private void revert(String key)
+   protected boolean select(String option)
    {
-      if (originalChunkOptions_.containsKey(key))
-         chunkOptions_.put(key, originalChunkOptions_.get(key));
-      else
-         chunkOptions_.remove(key);
+      for (int i = 0; i < outputComboBox_.getItemCount(); i++)
+      {
+         if (outputComboBox_.getItemText(i).equals(option))
+         {
+            outputComboBox_.setSelectedIndex(i);
+            return true;
+         }
+      }
+      
+      return false;
+   }
+   
+   private void updateOutputComboBox()
+   {
+      boolean hasEcho = has("echo");
+      boolean hasEval = has("eval");
+      boolean hasIncl = has("include");
+      
+      boolean isEcho = hasEcho && getBoolean("echo");
+      boolean isEval = hasEval && getBoolean("eval");
+      boolean isIncl = hasIncl && getBoolean("include");
+      
+      if (hasEcho && !hasEval && !hasIncl)
+         select(isEcho ? OUTPUT_SHOW_CODE_AND_OUTPUT : OUTPUT_SHOW_OUTPUT_ONLY);
+     
+      if (!hasEcho && !hasEval && hasIncl && !isIncl)
+         select(OUTPUT_SHOW_NOTHING);
+      
+      if (!hasEcho && hasEval && !isEval && hasIncl && !isIncl)
+         select(OUTPUT_SKIP_THIS_CHUNK);
    }
    
    public void init(AceEditorWidget widget, Position position)
@@ -377,128 +448,51 @@ public class ChunkOptionsPopupPanel extends MiniPopupPanel
       chunkOptions_.clear();
       originalChunkOptions_.clear();
       
-      originalLine_ = widget_.getEditor().getSession().getLine(position_.getRow());
-      parseChunkHeader(originalLine_, originalChunkOptions_);
-      for (Map.Entry<String, String> pair : originalChunkOptions_.entrySet())
-         chunkOptions_.put(pair.getKey(), pair.getValue());
+      useCustomFigureCheckbox_.setValue(false);
+      figureDimensionsPanel_.setVisible(false);
+            
+      Command afterInit = new Command()
+      {
+         @Override
+         public void execute()
+         {
+            updateOutputComboBox();
+            boolean hasRelevantFigureSettings =
+                  has("fig.width") ||
+                  has("fig.height");
+
+            useCustomFigureCheckbox_.setValue(hasRelevantFigureSettings);
+            if (hasRelevantFigureSettings)
+               useCustomFigureCheckbox_.setVisible(true);
+            figureDimensionsPanel_.setVisible(hasRelevantFigureSettings);
+
+            if (has("fig.width"))
+               figWidthBox_.setText(get("fig.width"));
+            else
+               figWidthBox_.setText("");
+
+            if (has("fig.height"))
+               figHeightBox_.setText(get("fig.height"));
+            else
+               figHeightBox_.setText("");
+
+            if (has("warning"))
+               showWarningsInOutputCb_.setValue(getBoolean("warning"));
+
+            if (has("message"))
+               showMessagesInOutputCb_.setValue(getBoolean("message"));
+            
+            setVisible(true);
+         }
+      };
       
-      boolean hasRelevantFigureSettings =
-            has("fig.width") ||
-            has("fig.height");
+      initOptions(afterInit);
       
-      useCustomFigureCheckbox_.setValue(hasRelevantFigureSettings);
-      figureDimensionsPanel_.setVisible(hasRelevantFigureSettings);
-      
-      if (has("fig.width"))
-         figWidthBox_.setText(get("fig.width"));
-      else
-         figWidthBox_.setText("");
-      
-      if (has("fig.height"))
-         figHeightBox_.setText(get("fig.height"));
-      else
-         figHeightBox_.setText("");
-      
-      if (has("warning"))
-         showWarningsInOutputCb_.setValue(getBoolean("warning"));
-      
-      if (has("message"))
-         showMessagesInOutputCb_.setValue(getBoolean("message"));
    }
    
    private boolean isTrue(String string)
    {
       return string.equals("TRUE") || string.equals("T");
-   }
-   
-   private String extractChunkPreamble(String extractedChunkHeader,
-                                       String modeId)
-   {
-      if (modeId.equals("mode/sweave"))
-         return "";
-      
-      int firstSpaceIdx = extractedChunkHeader.indexOf(' ');
-      if (firstSpaceIdx == -1)
-         return extractedChunkHeader;
-      
-      int firstCommaIdx = extractedChunkHeader.indexOf(',');
-      if (firstCommaIdx == -1)
-         firstCommaIdx = extractedChunkHeader.length();
-      
-      String label = extractedChunkHeader.substring(
-            0, Math.min(firstSpaceIdx, firstCommaIdx)).trim();
-      
-      return label;
-   }
-   
-   private String extractChunkLabel(String extractedChunkHeader)
-   {
-      int firstSpaceIdx = extractedChunkHeader.indexOf(' ');
-      if (firstSpaceIdx == -1)
-         return "";
-      
-      int firstCommaIdx = extractedChunkHeader.indexOf(',');
-      if (firstCommaIdx == -1)
-         firstCommaIdx = extractedChunkHeader.length();
-      
-      return firstCommaIdx <= firstSpaceIdx ?
-            "" :
-            extractedChunkHeader.substring(firstSpaceIdx + 1, firstCommaIdx).trim();
-   }
-   
-   private void parseChunkHeader(String line,
-                                 HashMap<String, String> chunkOptions)
-   {
-      String modeId = widget_.getEditor().getSession().getMode().getId();
-      
-      Pattern pattern = null;
-      if (modeId.equals("mode/rmarkdown"))
-         pattern = RegexUtil.RE_RMARKDOWN_CHUNK_BEGIN;
-      else if (modeId.equals("mode/sweave"))
-         pattern = RegexUtil.RE_SWEAVE_CHUNK_BEGIN;
-      else if (modeId.equals("mode/rhtml"))
-         pattern = RegexUtil.RE_RHTML_CHUNK_BEGIN;
-      
-      if (pattern == null) return;
-      
-      Match match = pattern.match(line,  0);
-      if (match == null) return;
-      
-      String extracted = match.getGroup(1);
-      chunkPreamble_ = extractChunkPreamble(extracted, modeId);
-      
-      String chunkLabel = extractChunkLabel(extracted);
-      if (StringUtil.isNullOrEmpty(chunkLabel))
-      {
-         tbChunkLabel_.setCueMode(true);
-      }
-      else
-      {
-         tbChunkLabel_.setCueMode(false);
-         tbChunkLabel_.setText(extractChunkLabel(extracted));
-      }
-      
-      int firstCommaIndex = extracted.indexOf(',');
-      String arguments = extracted.substring(firstCommaIndex + 1);
-      TextCursor cursor = new TextCursor(arguments);
-      
-      int startIndex = 0;
-      while (true)
-      {
-         if (!cursor.fwdToCharacter('=', false))
-            break;
-         
-         int equalsIndex = cursor.getIndex();
-         int endIndex = arguments.length();
-         if (cursor.fwdToCharacter(',', true))
-            endIndex = cursor.getIndex();
-         
-         chunkOptions.put(
-               arguments.substring(startIndex, equalsIndex).trim(),
-               arguments.substring(equalsIndex + 1, endIndex).trim());
-         
-         startIndex = cursor.getIndex() + 1;
-      }
    }
    
    @Override
@@ -507,76 +501,6 @@ public class ChunkOptionsPopupPanel extends MiniPopupPanel
       position_ = null;
       chunkOptions_.clear();
       super.hide();
-   }
-   
-   private Pair<String, String> getChunkHeaderBounds(String modeId)
-   {
-      if (modeId.equals("mode/rmarkdown"))
-         return new Pair<String, String>("```{", "}");
-      else if (modeId.equals("mode/sweave"))
-         return new Pair<String, String>("<<", ">>=");
-      else if (modeId.equals("mode/rhtml"))
-         return new Pair<String, String>("<!--", "");
-      else if (modeId.equals("mode/c_cpp"))
-         return new Pair<String, String>("/***", "");
-      
-      return null;
-   }
-   
-   private void synchronize()
-   {
-      String modeId = widget_.getEditor().getSession().getMode().getId();
-      Pair<String, String> chunkHeaderBounds =
-            getChunkHeaderBounds(modeId);
-      if (chunkHeaderBounds == null)
-         return;
-      
-      String label = tbChunkLabel_.getText();
-      String newLine =
-            chunkHeaderBounds.first +
-            chunkPreamble_;
-      
-      if (!label.isEmpty())
-      {
-         if (StringUtil.isNullOrEmpty(chunkPreamble_))
-            newLine += label;
-         else
-            newLine += " " + label;
-      }
-      
-      if (!chunkOptions_.isEmpty())
-      {
-         if (!(StringUtil.isNullOrEmpty(chunkPreamble_) &&
-             label.isEmpty()))
-         {
-            newLine += ", ";
-         }
-         
-         newLine += StringUtil.collapse(chunkOptions_, "=", ", ");
-      }
-      
-      newLine +=
-            chunkHeaderBounds.second +
-            "\n";
-      
-      widget_.getEditor().getSession().replace(
-            Range.fromPoints(
-                  Position.create(position_.getRow(), 0),
-                  Position.create(position_.getRow() + 1, 0)), newLine);
-   }
-   
-   private void revert()
-   {
-      if (position_ == null)
-         return;
-      
-      Range replaceRange = Range.fromPoints(
-            Position.create(position_.getRow(), 0),
-            Position.create(position_.getRow() + 1, 0));
-      
-      widget_.getEditor().getSession().replace(
-            replaceRange,
-            originalLine_ + "\n");
    }
    
    private void hideAndFocusEditor()
@@ -593,24 +517,65 @@ public class ChunkOptionsPopupPanel extends MiniPopupPanel
       return panel;
    }
    
-   private final VerticalPanel panel_;
-   private final TextBoxWithCue tbChunkLabel_;
-   private final ListBox outputComboBox_;
-   private final Grid figureDimensionsPanel_;
-   private final TextBox figWidthBox_;
-   private final TextBox figHeightBox_;
-   private final ThemedCheckBox useCustomFigureCheckbox_;
-   private final TriStateCheckBox showWarningsInOutputCb_;
-   private final TriStateCheckBox showMessagesInOutputCb_;
+   private int getPriority(String key)
+   {
+      if (key.equals("eval"))
+         return 10;
+      else if (key.equals("echo"))
+         return 9;
+      else if (key.equals("warning") || key.equals("error") || key.equals("message"))
+         return 8;
+      else if (key.startsWith("fig."))
+         return 8;
+      return 0;
+   }
    
-   private String originalLine_;
-   private String chunkPreamble_;
+   protected Map<String, String> sortedOptions(Map<String, String> options)
+   {
+      List<Map.Entry<String, String>> entries = new ArrayList<Map.Entry<String, String>>(options.entrySet());
+
+      Collections.sort(entries, new Comparator<Map.Entry<String, String>>() {
+         public int compare(Map.Entry<String, String> a, Map.Entry<String, String> b)
+         {
+            int lhsGroup = getPriority(a.getKey());
+            int rhsGroup = getPriority(b.getKey());
+            
+            if (lhsGroup < rhsGroup)
+               return 1;
+            else if (lhsGroup > rhsGroup)
+               return -1;
+            
+            return a.getKey().compareToIgnoreCase(b.getKey());
+         }
+      });
+
+      LinkedHashMap<String, String> sortedMap = new LinkedHashMap<String, String>();
+      for (Map.Entry<String, String> entry : entries) {
+         sortedMap.put(entry.getKey(), entry.getValue());
+      }
+      return sortedMap;
+   }
    
-   private HashMap<String, String> chunkOptions_;
-   private HashMap<String, String> originalChunkOptions_;
+   protected final VerticalPanel panel_;
+   protected final Label header_;
+   protected final Label chunkLabel_;
+   protected final TextBoxWithCue tbChunkLabel_;
+   protected final ListBox outputComboBox_;
+   protected final Grid figureDimensionsPanel_;
+   protected final TextBox figWidthBox_;
+   protected final TextBox figHeightBox_;
+   protected final ThemedCheckBox useCustomFigureCheckbox_;
+   protected final TriStateCheckBox showWarningsInOutputCb_;
+   protected final TriStateCheckBox showMessagesInOutputCb_;
    
-   private AceEditorWidget widget_;
-   private Position position_;
+   protected String originalLine_;
+   protected String chunkPreamble_;
+   
+   protected HashMap<String, String> chunkOptions_;
+   protected HashMap<String, String> originalChunkOptions_;
+   
+   protected AceEditorWidget widget_;
+   protected Position position_;
    
    private static final String OUTPUT_USE_DOCUMENT_DEFAULT =
          "(Use Document Default)";
@@ -629,6 +594,8 @@ public class ChunkOptionsPopupPanel extends MiniPopupPanel
    
    public interface Styles extends CssResource
    {
+      String headerLabel();
+      
       String textBox();
       
       String chunkLabel();

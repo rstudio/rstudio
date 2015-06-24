@@ -116,6 +116,26 @@ public class TriStateCheckBox extends Composite
       ValueChangeEvent.fire(this, state_);
    }
    
+   public State getState()
+   {
+      return state_;
+   }
+   
+   public boolean isChecked()
+   {
+      return state_ == STATE_ON;
+   }
+   
+   public boolean isUnchecked()
+   {
+      return state_ == STATE_OFF;
+   }
+   
+   public boolean isIndeterminate()
+   {
+      return state_ == STATE_INDETERMINATE;
+   }
+   
    private final HorizontalPanel panel_;
    private final Label label_;
    

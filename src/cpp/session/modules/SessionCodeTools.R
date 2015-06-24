@@ -86,6 +86,11 @@
    })
 })
 
+.rs.addFunction("surround", function(string, with)
+{
+   paste(with, string, with, sep = "")
+})
+
 .rs.addFunction("guessToken", function(line, cursorPos)
 {
    utils:::.assignLinebuffer(line)
@@ -1496,4 +1501,54 @@
       return(.rs.extractNativeSymbols(DLL))
    })))
    
+})
+
+.rs.addJsonRpcHandler("extract_chunk_options", function(chunkText)
+{
+   # Attempt to parse the chunk as R code
+   parsed <- try(parse(text = chunkText), silent = TRUE)
+   if (inherits(parsed, "try-error"))
+      return(list())
+   
+   # Iterate through the expression tree, looking for calls to opts_chunk$set and
+   # extracting their values. Load them up into an environment (which we then return
+   # as a list back to the client)
+   chunkOptionsEnv <- new.env(parent = emptyenv())
+   lapply(parsed, function(node) {
+      .rs.recursiveWalk(node, function(node) {
+         
+         if (!is.call(node) || length(node) < 2)
+            return()
+         
+         # Perhaps not the most efficient, but probably the easiest way to detect
+         # appropriate calls to `opts_chunk$set`.
+         callName <- as.character(node)
+         if (callName == "knitr:::opts_chunk$set" ||
+             callName == "knitr::opts_chunk$set" ||
+             callName == "opts_chunk$set")
+         {
+            names <- names(node)
+            for (i in 2:length(node))
+            {
+               key <- names[[i]]
+               if (key == "")
+                  next
+               
+               val <- if (is.character(node[[i]]))
+                  .rs.surround(val, with = "\"")
+               else
+                  format(node[[i]])
+               chunkOptionsEnv[[key]] <- val
+            }
+         }
+      })
+   })
+   
+   # Convert to a list, and ensure each element is interpretted as a scalar
+   # (rather than an array containing a single element)
+   result <- as.list(chunkOptionsEnv)
+   for (i in seq_along(result))
+      result[[i]] <- .rs.scalar(result[[i]])
+   
+   return(result)
 })

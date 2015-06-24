@@ -355,6 +355,14 @@ public class TextEditingTargetWidget
                         ? 0
                         : target_.getPreferredOutlineWidgetSize();
                   
+                  // Update tooltip ('Show'/'Hide' depending on current visibility)
+                  String title = toggleDocOutlineButton_.getTitle();
+                  if (destination != 0)
+                     title = title.replace("Show ", "Hide ");
+                  else
+                     title = title.replace("Hide ", "Show ");
+                  toggleDocOutlineButton_.setTitle(title);
+                  
                   toggleDocOutlineButton_.setLatched(destination != 0);
                   
                   new Animation()
@@ -378,16 +386,18 @@ public class TextEditingTargetWidget
                }
             });
       
-      toggleDocOutlineButton_.setTitle(
-            commands_.toggleDocumentOutline().getTooltip());
-      
       // Time-out setting the latch just to ensure the document outline
-      // has actually been appropriately rendered
+      // has actually been appropriately rendered.
       new Timer()
       {
          @Override
          public void run()
          {
+            String title = commands_.toggleDocumentOutline().getTooltip();
+            title = editorPanel_.getWidgetSize(docOutlineWidget_) > 0
+                  ? title.replace("Show ", "Hide ")
+                  : title.replace("Hide ", "Show ");
+            toggleDocOutlineButton_.setTitle(title);
             toggleDocOutlineButton_.setLatched(docOutlineWidget_.getOffsetWidth() > 0);
          }
       }.schedule(100);
