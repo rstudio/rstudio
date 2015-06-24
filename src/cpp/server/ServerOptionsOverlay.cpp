@@ -39,5 +39,10 @@ void Options::resolveOverlayOptions()
 {
 }
 
+std::string Options::gwtPrefix() const
+{
+   return std::string();
+}
+
 } // namespace server
 } // namespace rstudio

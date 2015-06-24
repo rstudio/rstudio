@@ -94,6 +94,7 @@ void handleFileRequest(const std::string& wwwLocalPath,
                        const std::string& baseUri,
                        core::http::UriFilterFunction mainPageFilter,
                        const std::string& initJs,
+                       const std::string& gwtPrefix,
                        bool useEmulatedStack,
                        const http::Request& request, 
                        http::Response* pResponse)
@@ -177,6 +178,9 @@ void handleFileRequest(const std::string& wwwLocalPath,
       else
          vars["head_tags"] = std::string();
 
+      // gwt prefix
+      vars["gwt_prefix"] = gwtPrefix;
+
       // return the page
       pResponse->setNoCacheHeaders();
       pResponse->setFile(filePath, request, text::TemplateFilter(vars));
@@ -199,6 +203,7 @@ http::UriHandlerFunction fileHandlerFunction(
                                        const std::string& baseUri,
                                        http::UriFilterFunction mainPageFilter,
                                        const std::string& initJs,
+                                       const std::string& gwtPrefix,
                                        bool useEmulatedStack)
 {
    return boost::bind(handleFileRequest,
@@ -206,6 +211,7 @@ http::UriHandlerFunction fileHandlerFunction(
                       baseUri,
                       mainPageFilter,
                       initJs,
+                      gwtPrefix,
                       useEmulatedStack,
                       _1,
                       _2);

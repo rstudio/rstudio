@@ -185,6 +185,8 @@ public:
    {
       return monitorIntervalSeconds_;
    }
+
+   std::string gwtPrefix() const;
    
    std::string getOverlayOption(const std::string& name)
    {
