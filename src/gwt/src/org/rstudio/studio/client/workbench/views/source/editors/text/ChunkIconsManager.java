@@ -15,6 +15,8 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import org.rstudio.core.client.dom.DomUtils;
+import org.rstudio.core.client.regex.Match;
+import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -86,6 +88,30 @@ public class ChunkIconsManager
              id.equals("mode/sweave");
    }
    
+   private Position toDocumentPosition(Element el, AceEditorNative editor)
+   {
+      int pageX = el.getAbsoluteLeft();
+      int pageY = el.getAbsoluteTop();
+      
+      return editor.getRenderer().screenToTextCoordinates(pageX, pageY);
+   }
+   
+   private boolean isRunnableChunk(Element el, AceEditorNative editor)
+   {
+      Position pos = toDocumentPosition(el, editor);
+      String text = editor.getSession().getLine(pos.getRow());
+      
+      Pattern pattern = Pattern.create("engine\\s*=\\s*['\"]([^'\"]*)['\"]", "");
+      Match match = pattern.match(text, 0);
+      
+      if (match == null)
+         return true;
+      
+      String engine = match.getGroup(1).toLowerCase();
+      
+      return engine.equals("r") || engine.equals("rscript");
+   }
+   
    private void manageChunkIcons(AceEditorNative editor)
    {
       Element[] icons = DomUtils.getElementsByClassName(
@@ -108,6 +134,9 @@ public class ChunkIconsManager
          Element el = chunkStarts[i];
          
          if (isPseudoMarker(el))
+            continue;
+         
+         if (!isRunnableChunk(el, editor))
             continue;
          
          if (el.getChildCount() > 0)
