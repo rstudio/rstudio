@@ -141,7 +141,6 @@ public class ChunkIconsManager
       if (isSetupChunk)
       {
          Image optionsIcon = createOptionsIcon(isDark, true);
-         optionsIcon.getElement().getStyle().setMarginRight(5, Unit.PX);
          toolbarPanel.add(optionsIcon);
       }
       else
