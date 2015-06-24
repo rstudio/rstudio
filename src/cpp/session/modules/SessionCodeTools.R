@@ -86,6 +86,11 @@
    })
 })
 
+.rs.addFunction("surround", function(string, with)
+{
+   paste(with, string, with, sep = "")
+})
+
 .rs.addFunction("guessToken", function(line, cursorPos)
 {
    utils:::.assignLinebuffer(line)
@@ -1529,7 +1534,10 @@
                if (key == "")
                   next
                
-               val <- format(node[[i]])
+               val <- if (is.character(node[[i]]))
+                  .rs.surround(val, with = "\"")
+               else
+                  format(node[[i]])
                chunkOptionsEnv[[key]] <- val
             }
          }
