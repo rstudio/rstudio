@@ -105,7 +105,11 @@
                                          reStart,
                                          reEnd)
 {
+   # This function should be called with content that is already known
+   # to be UTF-8 encoded; however, that encoding can be lost when forming
+   # this call so bring the encoding back.
    Encoding(content) <- "UTF-8"
+   
    splat <- strsplit(content, "\n", fixed = TRUE)[[1]]
    starts <- grep(reStart, splat, perl = TRUE)
    ends <- grep(reEnd, splat, perl = TRUE)
@@ -126,12 +130,16 @@
       start <- pair[[1]]
       end <- pair[[2]]
       
-      # Ignore pairs that include 'eval = FALSE'
-      if (grepl(",\\s*eval\\s*=\\s*F", splat[[start]], perl = TRUE))
+      # Ignore pairs that include 'eval = FALSE'.
+      if (grepl("eval\\s*=\\s*F", splat[[start]], perl = TRUE))
          next
       
-      # Ignore pairs that include 'engine=', assuming they're non-R chunks
-      if (grepl(",\\s*engine\\s*=", splat[[start]], perl = TRUE))
+      # Ignore pairs that include 'engine=', assuming they're non-R chunks.
+      #
+      # 'Rscript' chunks would work standalone and hence the linter would not
+      # properly understand that it should discard the parse tree generated
+      # from prior chunks, so we just don't lint it.
+      if (grepl("engine\\s*=", splat[[start]], perl = TRUE))
          next
       
       # If the chunk end lies immediately after the chunk start, bail
