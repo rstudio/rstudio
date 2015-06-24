@@ -1,5 +1,4 @@
 ```{r setup, include=FALSE}
-# setup chunk (set chunk options, load packages, etc)
 knitr::opts_chunk$set(echo = FALSE)
 ```
 
