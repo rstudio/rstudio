@@ -35,7 +35,7 @@ namespace system {
 namespace {
 
 void standardStreamCaptureThread(
-       int readFd,
+       HANDLE hReadPipe,
        const boost::function<void(const std::string&)>& outputHandler)
 {
    try
@@ -44,23 +44,13 @@ void standardStreamCaptureThread(
       {
          const int kBufferSize = 512;
          char buffer[kBufferSize];
-         // read from the descriptor; this descriptor is attached to a pipe,
-         // and this _read call blocks until we have some bytes or until the
-         // descriptor is closed
-         DWORD bytesRead = ::_read(readFd, &buffer, kBufferSize);
-         if (bytesRead > 0)
+         DWORD bytesRead = 0;
+         if (::ReadFile(hReadPipe, &buffer, kBufferSize, &bytesRead, NULL))
          {
-            // if we got some bytes, invoke the output handler
-            outputHandler(std::string(buffer, bytesRead));
+            if (bytesRead > 0)
+               outputHandler(std::string(buffer, bytesRead));
          }
-         else if (bytesRead == 0)
-         {
-            // reading 0 bytes indicates that we've reached EOF, so we can
-            // quit capturing (we don't expect this to happen)
-            LOG_WARNING_MESSAGE("Reached end of input on standard stream");
-            break;
-         }
-         else if (bytesRead < 0)
+         else
          {
             // we don't expect errors to ever occur (since the standard
             // streams are never closed) so log any that do and continue
@@ -82,29 +72,22 @@ Error ioError(const std::string& description, const ErrorLocation& location)
 
 Error redirectToPipe(DWORD stdHandle,
                      FILE* fpStdFile,
-                     int* pReadFd)
+                     HANDLE* phReadPipe)
 {
+   // create pipe
    HANDLE hWritePipe;
-
-   // Create pipe--this returns two file descriptors corresponding to the
-   // read and write ends of the pipe, respectively. Note that we formerly used
-   // CreatePipe here; for reasons that are unclear, we couldn't reassign
-   // the descriptor (i.e. the _dup2 call below) for pipe handles created
-   // this way when more than one user has RStudio open (see case 4230).
-   int pdfs[2];
-   if (!::_pipe(pdfs, 4096, O_TEXT))
+   if (!::CreatePipe(phReadPipe, &hWritePipe, NULL, 0))
       return systemError(::GetLastError(), ERROR_LOCATION);
 
    // reset win32 standard handle
-   hWritePipe = reinterpret_cast<HANDLE>(::_get_osfhandle(pdfs[1]));
-   if (hWritePipe == INVALID_HANDLE_VALUE)
-      return systemError(errno, ERROR_LOCATION);
    if (!::SetStdHandle(stdHandle, hWritePipe))
       return systemError(::GetLastError(), ERROR_LOCATION);
 
-   // reassign the standard output/error file descriptor to the write end of
-   // the pipe
-   if (::_dup2(pdfs[1], _fileno(fpStdFile)) != 0)
+   // reset c runtime library handle
+   int fd = ::_open_osfhandle((intptr_t)hWritePipe, _O_TEXT);
+   if (fd == -1)
+      return ioError("_open_osfhandle", ERROR_LOCATION);
+   if (::_dup2(fd, _fileno(fpStdFile)) != 0)
       return systemError(errno, ERROR_LOCATION);
 
    // turn off buffering
@@ -114,8 +97,6 @@ Error redirectToPipe(DWORD stdHandle,
    // sync c++ std streams
    std::ios::sync_with_stdio();
 
-   // return read descriptor
-   *pReadFd = pdfs[0];
    return Success();
 }
 
@@ -129,28 +110,28 @@ Error captureStandardStreams(
    try
    {
       // redirect stdout
-      int stdoutFd = 0;
-      Error error = redirectToPipe(STD_OUTPUT_HANDLE, stdout, &stdoutFd);
+      HANDLE hReadStdoutPipe = NULL;
+      Error error = redirectToPipe(STD_OUTPUT_HANDLE, stdout, &hReadStdoutPipe);
       if (error)
          return error;
 
       // capture stdout
       boost::thread stdoutThread(boost::bind(standardStreamCaptureThread,
-                                             stdoutFd,
+                                             hReadStdoutPipe,
                                              stdoutHandler));
 
       // optionally redirect stderror if handler was provided
-      int stderrFd = 0;
+      HANDLE hReadStderrPipe = NULL;
       if (stderrHandler)
       {
          // redirect stderr
-         error = redirectToPipe(STD_ERROR_HANDLE, stderr, &stderrFd);
+         error = redirectToPipe(STD_ERROR_HANDLE, stderr, &hReadStderrPipe);
          if (error)
             return error;
 
          // capture stderr
          boost::thread stderrThread(boost::bind(standardStreamCaptureThread,
-                                                stderrFd,
+                                                hReadStderrPipe,
                                                 stderrHandler));
       }
 
