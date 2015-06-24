@@ -349,10 +349,12 @@ public abstract class JDeclaredType extends JReferenceType {
     return methods;
   }
 
+  @Override
   public boolean isJsType() {
     return isJsType;
   }
 
+  @Override
   public boolean isOrExtendsJsType() {
     if (isJsType()) {
       return true;
@@ -365,10 +367,12 @@ public abstract class JDeclaredType extends JReferenceType {
     return false;
   }
 
+  @Override
   public boolean isJsFunction() {
     return isJsFunction;
   }
 
+  @Override
   public boolean isOrExtendsJsFunction() {
     if (isJsFunction()) {
       return true;

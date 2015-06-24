@@ -555,6 +555,7 @@ public class TypeTightener {
         assert !x.isStaticDispatchOnly();
         JMethodCall newCall = new JMethodCall(x.getSourceInfo(), x.getInstance(), concreteMethod);
         newCall.addArgs(x.getArgs());
+        newCall.setCannotBePolymorphic();
         ctx.replaceMe(newCall);
       }
     }
@@ -625,7 +626,7 @@ public class TypeTightener {
      * type.
      */
     private JReferenceType getSingleConcreteType(JType type) {
-      if (!(type instanceof JReferenceType)) {
+      if (!(type instanceof JReferenceType) || type.isJsType() || type.isJsFunction()) {
         return null;
       }
 
