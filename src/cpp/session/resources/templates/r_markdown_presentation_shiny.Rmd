@@ -1,5 +1,6 @@
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(eval = TRUE, include = TRUE, echo = TRUE)
+# setup chunk (set chunk options, load packages, etc)
+knitr::opts_chunk$set(echo = FALSE)
 ```
 
 ## Shiny Presentation
@@ -10,7 +11,7 @@ To learn more, see [Interactive Documents](http://rmarkdown.rstudio.com/authorin
 
 ## Interactive Plot
 
-```{r eruptions, echo=FALSE}
+```{r eruptions}
 inputPanel(
   selectInput("n_breaks", label = "Number of bins:",
               choices = c(10, 20, 35, 50), selected = 20),

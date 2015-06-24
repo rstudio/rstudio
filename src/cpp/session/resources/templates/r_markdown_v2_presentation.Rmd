@@ -1,5 +1,6 @@
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(eval = TRUE, include = TRUE, echo = FALSE)
+# setup chunk (set chunk options, load packages, etc)
+knitr::opts_chunk$set(echo = FALSE)
 ```
 
 ## R Markdown
@@ -16,13 +17,13 @@ When you click the **Knit** button a document will be generated that includes bo
 
 ## Slide with R Output
 
-```{r cars, echo=TRUE}
+```{r cars, echo = TRUE}
 summary(cars)
 ```
 
 ## Slide with Plot
 
-```{r pressure, echo=FALSE}
+```{r pressure}
 plot(pressure)
 ```
 

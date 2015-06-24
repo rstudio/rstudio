@@ -1,5 +1,6 @@
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(eval = TRUE, include = TRUE, echo = TRUE)
+# setup chunk (set chunk options, load packages, etc)
+knitr::opts_chunk$set(echo = TRUE)
 ```
 
 This R Markdown document is made interactive using Shiny. Unlike the more traditional workflow of creating static reports, you can now create documents that allow your readers to change the assumptions underlying your analysis and see the results immediately. 
