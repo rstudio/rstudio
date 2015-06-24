@@ -205,6 +205,15 @@ public class SetupChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
          return;
       }
       
+      // For 2 or fewer options, display all on one line
+      if (options.size() <= 2)
+      {
+         String joined = StringUtil.collapse(options, " = ", ", ");
+         String code = "knitr::opts_chunk$set(" + joined + ")\n";
+         widget_.getEditor().insert(code);
+         return;
+      }
+      
       Map<String, String> sorted = sortedOptions(options);
       
       String code = "knitr::opts_chunk$set(\n\t";
