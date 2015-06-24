@@ -1535,7 +1535,7 @@
                   next
                
                val <- if (is.character(node[[i]]))
-                  .rs.surround(val, with = "\"")
+                  .rs.surround(node[[i]], with = "\"")
                else
                   format(node[[i]])
                chunkOptionsEnv[[key]] <- val
