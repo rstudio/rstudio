@@ -79,6 +79,7 @@ import org.rstudio.studio.client.rmarkdown.ui.RmdOutputPanel;
 import org.rstudio.studio.client.rmarkdown.ui.RmdOutputPresenter;
 import org.rstudio.studio.client.rmarkdown.ui.RmdOutputWindow;
 import org.rstudio.studio.client.rsconnect.RSConnect;
+import org.rstudio.studio.client.rsconnect.model.PlotPublishMRUList;
 import org.rstudio.studio.client.rsconnect.model.RSConnectServerOperations;
 import org.rstudio.studio.client.rsconnect.ui.RSAccountConnector;
 import org.rstudio.studio.client.server.Server;
@@ -240,6 +241,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(RmdOutput.class).in(Singleton.class);
       bind(HelpStrategy.class).in(Singleton.class);
       bind(RSAccountConnector.class).in(Singleton.class);
+      bind(PlotPublishMRUList.class).asEagerSingleton();
 
       bind(ApplicationView.class).to(ApplicationWindow.class)
             .in(Singleton.class) ;

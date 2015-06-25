@@ -1,0 +1,108 @@
+/*
+ * PlotPublishMRUList.java
+ *
+ * Copyright (C) 2009-15 by RStudio, Inc.
+ *
+ * Unless you have received this program directly from RStudio pursuant
+ * to the terms of a commercial license agreement with RStudio, then
+ * this program is licensed to you under the terms of version 3 of the
+ * GNU Affero General Public License. This program is distributed WITHOUT
+ * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+ * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+ *
+ */
+package org.rstudio.studio.client.rsconnect.model;
+
+import java.util.ArrayList;
+
+import org.rstudio.core.client.widget.OperationWithInput;
+import org.rstudio.studio.client.workbench.WorkbenchList;
+import org.rstudio.studio.client.workbench.WorkbenchListManager;
+import org.rstudio.studio.client.workbench.events.ListChangedEvent;
+import org.rstudio.studio.client.workbench.events.ListChangedHandler;
+
+import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.ui.MenuBar;
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
+
+@Singleton
+public class PlotPublishMRUList
+{
+   public static class Entry 
+   {
+      public Entry(String accountIn, String serverIn, String nameIn)
+      {
+         account = accountIn;
+         server = serverIn;
+         name = nameIn;
+      }
+      
+      public String asText()
+      {
+         return account + "|" + server + "|" + name;
+      }
+      
+      public static Entry fromText(String text)
+      {
+         String[] pieces = text.split("|");
+         if (pieces.length < 3)
+            return null;
+         
+         return new Entry(pieces[0], pieces[1], pieces[2]);
+      }
+
+      public final String account;
+      public final String server;
+      public final String name;
+   }
+
+   @Inject 
+   public PlotPublishMRUList(WorkbenchListManager listManager)
+   {
+      WorkbenchList plotMru_ = listManager.getPlotPublishMruList();
+      plotMru_.addListChangedHandler(new ListChangedHandler()
+      {
+         @Override
+         public void onListChanged(ListChangedEvent event)
+         {
+            plotMruList_ = event.getList();
+         }
+      });
+   }
+   
+   public MenuBar createPlotMruMenu(final OperationWithInput<Entry> onSelected)
+   {
+      // don't build an empty flyout
+      if (plotMruList_.isEmpty())
+         return null;
+      
+      MenuBar bar = new MenuBar();
+      for (String entry: plotMruList_)
+      {
+         final Entry mruEntry = Entry.fromText(entry);
+         if (entry == null)
+            continue;
+         
+         bar.addItem(mruEntry.name, new Command() 
+         {
+            @Override
+            public void execute()
+            {
+               onSelected.execute(mruEntry);
+            }
+         });
+      }
+      return bar;
+   }
+   
+   public void addPlotMruEntry(String account, String server, String name)
+   {
+      Entry mruEntry = new Entry(account, server, name);
+      plotMru_.prepend(mruEntry.asText());
+   }
+   
+   private WorkbenchList plotMru_;
+   private ArrayList<String> plotMruList_ = new ArrayList<String>();
+}

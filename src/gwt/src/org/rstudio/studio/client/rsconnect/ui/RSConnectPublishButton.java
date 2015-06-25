@@ -31,6 +31,7 @@ import org.rstudio.studio.client.rmarkdown.model.RmdPreviewParams;
 import org.rstudio.studio.client.rsconnect.RSConnect;
 import org.rstudio.studio.client.rsconnect.events.RSConnectActionEvent;
 import org.rstudio.studio.client.rsconnect.events.RSConnectDeploymentCompletedEvent;
+import org.rstudio.studio.client.rsconnect.model.PlotPublishMRUList;
 import org.rstudio.studio.client.rsconnect.model.PublishHtmlSource;
 import org.rstudio.studio.client.rsconnect.model.RSConnectDeploymentRecord;
 import org.rstudio.studio.client.rsconnect.model.RSConnectServerOperations;
@@ -49,6 +50,7 @@ import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.MenuBar;
 import com.google.gwt.user.client.ui.MenuItem;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -138,7 +140,8 @@ public class RSConnectPublishButton extends Composite
          Commands commands,
          GlobalDisplay display,
          Provider<UIPrefs> pUiPrefs,
-         Session session)
+         Session session,
+         PlotPublishMRUList plotMru)
    {
       server_ = server;
       events_ = events;
@@ -146,6 +149,7 @@ public class RSConnectPublishButton extends Composite
       display_ = display;
       session_ = session;
       pUiPrefs_ = pUiPrefs;
+      plotMru_ = plotMru;
       
       // initialize visibility if requested
       if (boundCommand_ != null) 
@@ -485,6 +489,15 @@ public class RSConnectPublishButton extends Composite
                }));
       }
 
+      // if it's a plot, show an MRU of recently deployed plot "names"
+      if (contentType_ == RSConnect.CONTENT_TYPE_PLOT)
+      {
+         MenuBar plotFlyout = plotMru_.createPlotMruMenu(null);
+         if (plotFlyout != null)
+         {
+            publishMenu_.addItem(new MenuItem("Republish To", plotFlyout));
+         }
+      }
       publishMenu_.addSeparator();
       publishMenu_.addItem(
             commands_.rsconnectManageAccounts().createMenuItem(false));
@@ -654,6 +667,7 @@ public class RSConnectPublishButton extends Composite
    private GlobalDisplay display_;
    private Session session_;
    private Provider<UIPrefs> pUiPrefs_;
+   private PlotPublishMRUList plotMru_;
 
    private String contentPath_;
    private String outputPath_;
