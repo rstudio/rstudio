@@ -310,22 +310,38 @@ public class CompletionPopupPanel extends ThemedPopupPanel
       int bottom = top + getOffsetHeight();
       int width = getOffsetWidth();
       
-      // If displaying the help with the top aligned to the completion list
-      // would place the help offscreen, then re-align it so that the bottom of the
-      // help is aligned with the completion popup.
-      
       if (!help_.isShowing())
          help_.show();
       
+      // If displaying the help with the top aligned to the completion list
+      // would place the help offscreen, then re-align it so that the bottom of the
+      // help is aligned with the completion popup.
+      //
       // NOTE: Help has not been positioned yet so what we're really asking is,
       // 'if we align the top of help with the top of the completion list, will
       // it flow offscreen?'
       
       if (top + help_.getOffsetHeight() + 20 > Window.getClientHeight())
-         top = bottom - help_.getOffsetHeight()
-               - 9; // fudge factor
+         top = bottom - help_.getOffsetHeight() - 9;
       
-      help_.setPopupPosition(left + width - 4, top + 3);
+      // It is also possible that the help could flow offscreen to the right,
+      // e.g. if the user has decided to place the source / console windows on
+      // the right. Check for this and position help to the left if it prevents
+      // overflow.
+      //
+      // It's a bit strange having help to the left of the completion list but
+      // it's better than the alternative (having help overflow on the right)
+      int destinationLeft = left + width - 4;
+      int destinationTop = top + 3;
+      
+      if (destinationLeft + help_.getOffsetWidth() > Window.getClientWidth())
+      {
+         int potentialLeft = left - help_.getOffsetWidth();
+         if (potentialLeft > 0)
+            destinationLeft = potentialLeft;
+      }
+      
+      help_.setPopupPosition(destinationLeft, destinationTop);
       help_.setVisible(setVisible);
    }
    

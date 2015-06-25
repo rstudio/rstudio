@@ -35,18 +35,61 @@ public class PopupPositioner implements PositionCallback
    {
       if (cursorBounds_ == null)
       {
-         assert false : "Positioning popup but no cursor bounds available" ;
+         assert false : "Positioning popup but no cursor bounds available";
          return;
       }
       
-      int windowBottom = Window.getScrollTop() + Window.getClientHeight() ;
-      int cursorBottom = cursorBounds_.getBottom() ;
+      Coordinates coords = getPopupPosition(
+            popupWidth,
+            popupHeight,
+            cursorBounds_.getLeft(),
+            cursorBounds_.getBottom(),
+            5);
       
-      if (windowBottom - cursorBottom >= popupHeight)
-         popup_.setPopupPosition(cursorBounds_.getLeft(), cursorBottom) ;
-      else
-         popup_.setPopupPosition(cursorBounds_.getLeft(), 
-                                 cursorBounds_.getTop() - popupHeight) ;
+      popup_.setPopupPosition(coords.getLeft(), coords.getTop());
+   }
+   
+   private static class Coordinates
+   {
+      public Coordinates(int left, int top)
+      {
+         left_ = left;
+         top_ = top;
+      }
+      
+      public int getLeft() { return left_; }
+      public int getTop() { return top_; }
+      
+      private final int left_;
+      private final int top_;
+   }
+   
+   public static Coordinates getPopupPosition(int width,
+                                              int height,
+                                              int pageX,
+                                              int pageY,
+                                              int fudgeFactor)
+   {
+      int windowTop = Window.getScrollTop();
+      int windowLeft = Window.getScrollLeft();
+      int windowRight = windowLeft + Window.getClientWidth();
+      int windowBottom = windowTop + Window.getClientHeight();
+      
+      boolean positionRight =
+            pageX + width + fudgeFactor < windowRight;
+      
+      boolean positionBottom =
+            pageY + height + fudgeFactor < windowBottom;
+      
+      int left = positionRight ?
+            pageX + fudgeFactor :
+            pageX - width - fudgeFactor;
+      
+      int top = positionBottom ?
+            pageY + fudgeFactor :
+            pageY - height - fudgeFactor;
+      
+      return new Coordinates(left, top);
    }
    
    public static void setPopupPosition(PopupPanel panel,
@@ -54,29 +97,15 @@ public class PopupPositioner implements PositionCallback
                                        int pageY,
                                        int fudgeFactor)
    {
-      int windowTop = Window.getScrollTop();
-      int windowLeft = Window.getScrollLeft();
-      int windowRight = windowLeft + Window.getClientWidth();
-      int windowBottom = windowTop + Window.getClientHeight();
+      Coordinates transformed = getPopupPosition(
+            panel.getOffsetWidth(),
+            panel.getOffsetHeight(),
+            pageX,
+            pageY,
+            fudgeFactor);
       
-      int panelWidth = panel.getOffsetWidth();
-      int panelHeight = panel.getOffsetHeight();
-      
-      boolean positionRight =
-            pageX + panelWidth + fudgeFactor < windowRight;
-      
-      boolean positionBottom =
-            pageY + panelHeight + fudgeFactor < windowBottom;
-      
-      int left = positionRight ?
-            pageX + fudgeFactor :
-            pageX - panelWidth - fudgeFactor;
-      
-      int top = positionBottom ?
-            pageY + fudgeFactor :
-            pageY - panelHeight - fudgeFactor;
-      
-      panel.setPopupPosition(left, top);
-
+      panel.setPopupPosition(
+            transformed.getLeft(),
+            transformed.getTop());
    }
 }
