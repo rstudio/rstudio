@@ -2458,6 +2458,8 @@ void addAllProjectSymbols(std::set<std::string>* pSymbols)
    if (projects::projectContext().isPackageProject())
    {
       std::string pkgName = projects::projectContext().packageInfo().name();
+      if (pkgName.empty())
+         return;
       std::vector<std::string> nativeRoutineNames;
       r::exec::RFunction getNativeSymbols(".rs.getNativeSymbols");
       getNativeSymbols.addParam(pkgName);
