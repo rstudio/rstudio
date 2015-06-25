@@ -219,6 +219,7 @@ public class DocumentOutlineWidget extends Composite
       tree_.addStyleName(RES.styles().tree());
       
       panel_ = new FlowPanel();
+      panel_.addStyleName(RES.styles().panel());
       panel_.add(tree_);
       
       container_.add(panel_);
@@ -517,6 +518,7 @@ public class DocumentOutlineWidget extends Composite
    // Styles, Resources etc. ----
    public interface Styles extends CssResource
    {
+      String panel();
       String container();
       
       String leftSeparator();
