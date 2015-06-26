@@ -108,6 +108,8 @@ http::ConnectionRetryProfile sessionRetryProfile(const r_util::SessionContext& c
 
 ProxyFilter s_proxyFilter;
 
+ProxyRequestFilter s_proxyRequestFilter;
+
 bool applyProxyFilter(
       boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
       const std::string& username)
@@ -468,6 +470,10 @@ void proxyRequest(
    // assign request
    pClient->request().assign(ptrConnection->request());
 
+   // call request filter if we have one
+   if (s_proxyRequestFilter)
+      s_proxyRequestFilter(&(pClient->request()));
+
    // execute
    pClient->execute(
          boost::bind(handleProxyResponse, ptrConnection, context, _1),
@@ -607,6 +613,10 @@ void proxyLocalhostRequest(
    http::Request request;
    request.assign(ptrConnection->request());
 
+   // call request filter if we have one
+   if (s_proxyRequestFilter)
+      s_proxyRequestFilter(&request);
+
    // extract the port
    boost::regex re("/p/(\\d+)/");
    boost::smatch match;
@@ -660,6 +670,11 @@ bool requiresSession(const http::Request& request)
 void setProxyFilter(ProxyFilter filter)
 {
    s_proxyFilter = filter;
+}
+
+void setProxyRequestFilter(ProxyRequestFilter filter)
+{
+   s_proxyRequestFilter = filter;
 }
 
 void setSessionContextSource(SessionContextSource source)

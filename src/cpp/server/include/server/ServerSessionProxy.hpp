@@ -62,6 +62,9 @@ typedef boost::function<bool(
     )> ProxyFilter;
 void setProxyFilter(ProxyFilter filter);
 
+typedef boost::function<void(core::http::Request*)> ProxyRequestFilter;
+void setProxyRequestFilter(ProxyRequestFilter filter);
+
 typedef boost::function<bool(
     boost::shared_ptr<core::http::AsyncConnection>,
     const std::string&,
