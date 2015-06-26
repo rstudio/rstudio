@@ -650,13 +650,22 @@ public class RSConnectPublishButton extends Composite
       final ToolbarPopupMenu menu = publishMenu_;
 
       // prevent reentrancy
-      if (contentPath_ == null || populating_)
+      if (populating_)
       {
          if (callback != null)
             callback.onPopupMenu(menu);
          return;
       }
-      
+
+      // handle case where we don't have a content path (i.e. plots)
+      if (contentPath_ == null)
+      {
+         setPreviousDeployments(null);
+         if (callback != null)
+            callback.onPopupMenu(menu);
+         return;
+      }
+
       // avoid populating if we've already set the deployments for this path
       // (unless we're forcefully repopulating)
       if (populatedPath_ != null && populatedPath_.equals(contentPath_))

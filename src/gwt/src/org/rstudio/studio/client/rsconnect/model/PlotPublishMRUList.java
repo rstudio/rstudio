@@ -75,7 +75,8 @@ public class PlotPublishMRUList
       });
    }
    
-   public void addPlotMruEntries(ToolbarPopupMenu menu, final OperationWithInput<Entry> onSelected)
+   public void addPlotMruEntries(ToolbarPopupMenu menu, 
+         final OperationWithInput<Entry> onSelected)
    {
       for (String entry: plotMruList_)
       {
