@@ -983,15 +983,35 @@
          # Explicitly load the library, and do everything we can to hide any
          # package startup messages (because we don't want to put non-JSON
          # on stdout)
-         invisible(capture.output(suppressPackageStartupMessages(suppressWarnings(
-            success <- library(x, character.only = TRUE, quietly = TRUE, logical.return = TRUE)
-         ))))
+         invisible(capture.output(suppressPackageStartupMessages(suppressWarnings({
+            
+            ## Don't load the package if a corresponding 00LOCK directory exists.
+            ## This gives partial protection against attempting to load a package
+            ## while another R process is attempting to modify the library directory.
+            has00LOCK <- FALSE
+            for (libPath in .libPaths())
+            {
+               globalLockPath <- file.path(libPath, "00LOCK")
+               pkgLockPath <- file.path(libPath, paste("00LOCK", basename(x), sep = "-"))
+               if (file.exists(globalLockPath) || file.exists(pkgLockPath))
+               {
+                  has00LOCK <- TRUE
+                  break
+               }
+            }
+            
+            success <- if (has00LOCK)
+               FALSE
+            else
+               library(x, character.only = TRUE, quietly = TRUE, logical.return = TRUE)
+            
+         }))))
          
          if (!success)
             return(.rs.emptyFunctionInfo())
          
-         # Get the exported items in the NAMESPACE (for search path + `::`
-         # completions).
+         # Get the exported items in the NAMESPACE
+         # (for search path + `::` completions).
          ns <- asNamespace(x)
          exports <- getNamespaceExports(ns)
          objects <- mget(exports, ns, inherits = TRUE)
