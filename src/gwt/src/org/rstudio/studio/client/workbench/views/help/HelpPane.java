@@ -381,6 +381,9 @@ public class HelpPane extends WorkbenchPane
                      // check for term
                      String term = findTextBox_.getValue().trim();
                      
+                     int modifier = KeyboardShortcut.getModifierValue(event.getNativeEvent());
+                     boolean isShift = modifier == KeyboardShortcut.SHIFT;
+                     
                      // if there is a term then search for it
                      if (term.length() > 0)
                      { 
@@ -394,12 +397,12 @@ public class HelpPane extends WorkbenchPane
                             !event.isAnyModifierKeyDown() &&
                             (event.getNativeKeyCode() != KeyCodes.KEY_ENTER);   
                            
-                           performFind(term, true, incremental);
+                           performFind(term, !isShift, incremental);
                         }
                         else
                         {
                            if (event.getNativeKeyCode() == KeyCodes.KEY_ENTER)
-                              performFind(term, true, false);
+                              performFind(term, !isShift, false);
                         }
                      }
                      
