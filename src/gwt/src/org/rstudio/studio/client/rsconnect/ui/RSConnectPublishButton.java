@@ -492,11 +492,7 @@ public class RSConnectPublishButton extends Composite
       // if it's a plot, show an MRU of recently deployed plot "names"
       if (contentType_ == RSConnect.CONTENT_TYPE_PLOT)
       {
-         MenuBar plotFlyout = plotMru_.createPlotMruMenu(null);
-         if (plotFlyout != null)
-         {
-            publishMenu_.addItem(new MenuItem("Republish To", plotFlyout));
-         }
+         plotMru_.addPlotMruEntries(publishMenu_, null);
       }
       publishMenu_.addSeparator();
       publishMenu_.addItem(

@@ -16,7 +16,10 @@ package org.rstudio.studio.client.rsconnect.model;
 
 import java.util.ArrayList;
 
+import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.widget.OperationWithInput;
+import org.rstudio.core.client.widget.ToolbarPopupMenu;
+import org.rstudio.studio.client.rsconnect.ui.RSConnectResources;
 import org.rstudio.studio.client.workbench.WorkbenchList;
 import org.rstudio.studio.client.workbench.WorkbenchListManager;
 import org.rstudio.studio.client.workbench.events.ListChangedEvent;
@@ -24,6 +27,7 @@ import org.rstudio.studio.client.workbench.events.ListChangedHandler;
 
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.MenuBar;
+import com.google.gwt.user.client.ui.MenuItem;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -46,7 +50,7 @@ public class PlotPublishMRUList
       
       public static Entry fromText(String text)
       {
-         String[] pieces = text.split("|");
+         String[] pieces = text.split("\\|");
          if (pieces.length < 3)
             return null;
          
@@ -61,7 +65,7 @@ public class PlotPublishMRUList
    @Inject 
    public PlotPublishMRUList(WorkbenchListManager listManager)
    {
-      WorkbenchList plotMru_ = listManager.getPlotPublishMruList();
+      plotMru_ = listManager.getPlotPublishMruList();
       plotMru_.addListChangedHandler(new ListChangedHandler()
       {
          @Override
@@ -72,29 +76,25 @@ public class PlotPublishMRUList
       });
    }
    
-   public MenuBar createPlotMruMenu(final OperationWithInput<Entry> onSelected)
+   public void addPlotMruEntries(ToolbarPopupMenu menu, final OperationWithInput<Entry> onSelected)
    {
-      // don't build an empty flyout
-      if (plotMruList_.isEmpty())
-         return null;
-      
-      MenuBar bar = new MenuBar();
       for (String entry: plotMruList_)
       {
          final Entry mruEntry = Entry.fromText(entry);
          if (entry == null)
             continue;
          
-         bar.addItem(mruEntry.name, new Command() 
+         menu.addItem(new MenuItem(AppCommand.formatMenuLabel(
+               RSConnectResources.INSTANCE.republishPlot(), 
+               mruEntry.name, null), true, new Command() 
          {
             @Override
             public void execute()
             {
                onSelected.execute(mruEntry);
             }
-         });
+         }));
       }
-      return bar;
    }
    
    public void addPlotMruEntry(String account, String server, String name)
