@@ -14,28 +14,36 @@
  */
 package org.rstudio.studio.client.rsconnect.ui;
 
+import java.util.ArrayList;
+
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.EnabledChangedHandler;
 import org.rstudio.core.client.command.VisibleChangedHandler;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.FilePathUtils;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.rpubs.events.RPubsUploadStatusEvent;
 import org.rstudio.studio.client.htmlpreview.model.HTMLPreviewResult;
 import org.rstudio.studio.client.rmarkdown.model.RmdPreviewParams;
 import org.rstudio.studio.client.rsconnect.RSConnect;
 import org.rstudio.studio.client.rsconnect.events.RSConnectActionEvent;
+import org.rstudio.studio.client.rsconnect.events.RSConnectDeployInitiatedEvent;
 import org.rstudio.studio.client.rsconnect.events.RSConnectDeploymentCompletedEvent;
 import org.rstudio.studio.client.rsconnect.model.PlotPublishMRUList;
 import org.rstudio.studio.client.rsconnect.model.PublishHtmlSource;
 import org.rstudio.studio.client.rsconnect.model.RSConnectDeploymentRecord;
+import org.rstudio.studio.client.rsconnect.model.RSConnectPublishSettings;
+import org.rstudio.studio.client.rsconnect.model.RSConnectPublishSource;
 import org.rstudio.studio.client.rsconnect.model.RSConnectServerOperations;
 import org.rstudio.studio.client.rsconnect.model.RenderedDocPreview;
+import org.rstudio.studio.client.rsconnect.model.PlotPublishMRUList.Entry;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.shiny.model.ShinyApplicationParams;
@@ -50,7 +58,6 @@ import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HorizontalPanel;
-import com.google.gwt.user.client.ui.MenuBar;
 import com.google.gwt.user.client.ui.MenuItem;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -377,7 +384,8 @@ public class RSConnectPublishButton extends Composite
                      public void execute(String htmlFile)
                      {
                         events_.fireEvent(
-                              RSConnectActionEvent.DeployPlotEvent(htmlFile));
+                              RSConnectActionEvent.DeployPlotEvent(htmlFile,
+                                    previous));
                      }
                   });
          }
@@ -492,11 +500,49 @@ public class RSConnectPublishButton extends Composite
       // if it's a plot, show an MRU of recently deployed plot "names"
       if (contentType_ == RSConnect.CONTENT_TYPE_PLOT)
       {
-         plotMru_.addPlotMruEntries(publishMenu_, null);
+         plotMru_.addPlotMruEntries(publishMenu_, 
+               new OperationWithInput<PlotPublishMRUList.Entry>()
+         {
+            @Override
+            public void execute(Entry plot)
+            {
+               republishPlot(plot);
+            }
+         });
       }
       publishMenu_.addSeparator();
       publishMenu_.addItem(
             commands_.rsconnectManageAccounts().createMenuItem(false));
+   }
+   
+   private void republishPlot(final PlotPublishMRUList.Entry plot)
+   {
+      if (publishHtmlSource_ != null)
+      {
+         publishHtmlSource_.generatePublishHtml(
+               new CommandWithArg<String>()
+               {
+                  @Override
+                  public void execute(String htmlFile)
+                  {
+                     RSConnectPublishSource source = 
+                           new RSConnectPublishSource(htmlFile, true, "Plot", 
+                                 contentType_);
+                     ArrayList<String> deployFiles = new ArrayList<String>();
+                     deployFiles.add(FilePathUtils.friendlyFileName(htmlFile));
+                     RSConnectPublishSettings settings = 
+                           new RSConnectPublishSettings(
+                                 deployFiles, 
+                                 new ArrayList<String>(), 
+                                 new ArrayList<String>(), 
+                                 false, true);
+                     events_.fireEvent(
+                           new RSConnectDeployInitiatedEvent(source, settings, 
+                                 true, RSConnectDeploymentRecord.create(
+                                       plot.name, plot.account, plot.server)));
+                  }
+               });
+      }
    }
    
    private void applyVisiblity()
