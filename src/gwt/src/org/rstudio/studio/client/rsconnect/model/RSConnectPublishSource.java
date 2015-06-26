@@ -48,7 +48,8 @@ public class RSConnectPublishSource
       // consider plots and raw HTML published from the viewer pane to be 
       // plots 
       contentCategory_ = (type == RSConnect.CONTENT_TYPE_PLOT  ||
-            type == RSConnect.CONTENT_TYPE_HTML) ? "plot" : null;
+            type == RSConnect.CONTENT_TYPE_HTML) ? 
+                  RSConnect.CONTENT_CATEGORY_PLOT : null;
 
       deployDir_ = FileSystemItem.createFile(outputFile).getParentPathString();
    }

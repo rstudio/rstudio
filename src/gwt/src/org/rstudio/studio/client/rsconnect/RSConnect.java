@@ -42,6 +42,7 @@ import org.rstudio.studio.client.rsconnect.events.RSConnectActionEvent;
 import org.rstudio.studio.client.rsconnect.events.RSConnectDeployInitiatedEvent;
 import org.rstudio.studio.client.rsconnect.events.RSConnectDeploymentCompletedEvent;
 import org.rstudio.studio.client.rsconnect.events.RSConnectDeploymentStartedEvent;
+import org.rstudio.studio.client.rsconnect.model.PlotPublishMRUList;
 import org.rstudio.studio.client.rsconnect.model.RSConnectAccount;
 import org.rstudio.studio.client.rsconnect.model.RSConnectApplicationInfo;
 import org.rstudio.studio.client.rsconnect.model.RSConnectDeploymentRecord;
@@ -97,7 +98,8 @@ public class RSConnect implements SessionInitHandler,
                     SourceServerOperations sourceServer,
                     RPubsServerOperations rpubsServer,
                     RSAccountConnector connector,
-                    Provider<UIPrefs> pUiPrefs)
+                    Provider<UIPrefs> pUiPrefs,
+                    PlotPublishMRUList plotMru)
                     
    {
       commands_ = commands;
@@ -111,6 +113,7 @@ public class RSConnect implements SessionInitHandler,
       satellite_ = satellite;
       connector_ = connector;
       pUiPrefs_ = pUiPrefs;
+      plotMru_ = plotMru;
 
       binder.bind(commands, this);
 
@@ -772,7 +775,6 @@ public class RSConnect implements SessionInitHandler,
             false);
    }
    
-   
    private void handleRSConnectAction(RSConnectActionEvent event)
    {
       if (event.getAction() == RSConnectActionEvent.ACTION_TYPE_DEPLOY)
@@ -807,6 +809,13 @@ public class RSConnect implements SessionInitHandler,
                dirState_.addDeployment(event.getSource().getDeployDir(), 
                      event.getRecord());
                dirStateDirty_ = true;
+               if (event.getSource().getContentCategory() == 
+                     RSConnect.CONTENT_CATEGORY_PLOT)
+               {
+                  plotMru_.addPlotMruEntry(event.getRecord().getAccountName(),
+                        event.getRecord().getServer(),
+                        event.getRecord().getName());
+               }
                launchBrowser_ = event.getLaunchBrowser();
                events_.fireEvent(new RSConnectDeploymentStartedEvent(
                      event.getSource().getDeployKey(), 
@@ -830,6 +839,7 @@ public class RSConnect implements SessionInitHandler,
          }
       });
    }
+
    // Manage, step 1: create a list of apps deployed from this directory
    private void configureShinyApp(final String dir)
    {
@@ -1033,6 +1043,7 @@ public class RSConnect implements SessionInitHandler,
    private final Satellite satellite_;
    private final RSAccountConnector connector_;
    private final Provider<UIPrefs> pUiPrefs_;
+   private final PlotPublishMRUList plotMru_;
    
    private boolean launchBrowser_ = false;
    private boolean sessionInited_ = false;
@@ -1062,4 +1073,6 @@ public class RSConnect implements SessionInitHandler,
    
    // A .Rpres presentation
    public final static int CONTENT_TYPE_PRES     = 5;
+   
+   public final static String CONTENT_CATEGORY_PLOT = "plot";
 }
