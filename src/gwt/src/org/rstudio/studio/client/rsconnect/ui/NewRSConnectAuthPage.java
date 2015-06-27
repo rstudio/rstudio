@@ -56,6 +56,9 @@ public class NewRSConnectAuthPage
    {
       if (waitingForAuth_ || result_ == null)
          return;
+      
+      // save reference to parent wizard's progress indicator for retries
+      wizardIndicator_ = indicator;
 
       indicator.onProgress("Checking server connection...");
       server_.validateServerUrl(result_.getServerUrl(), 
@@ -121,7 +124,7 @@ public class NewRSConnectAuthPage
          @Override
          public void execute()
          {
-            onActivate(null);
+            onActivate(wizardIndicator_);
          }
       });
       return contents_;
@@ -339,5 +342,6 @@ public class NewRSConnectAuthPage
    private RSConnectAuthWait contents_;
    private boolean waitingForAuth_ = false;
    private boolean runningAuthCompleteCheck_ = false;
+   private ProgressIndicator wizardIndicator_;
    private final static String AUTH_WINDOW_NAME = "rstudio_rsconnect_auth";
 }
