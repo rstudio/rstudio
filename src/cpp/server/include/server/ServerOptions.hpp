@@ -135,6 +135,11 @@ public:
       return authValidateUsers_;
    }
 
+   int authStaySignedInDays()
+   {
+      return authStaySignedInDays_;
+   }
+
    bool authEncryptPassword()
    {
       return authEncryptPassword_;
@@ -242,6 +247,7 @@ private:
    bool wwwProxyLocalhost_;
    bool authNone_;
    bool authValidateUsers_;
+   int authStaySignedInDays_;
    bool authEncryptPassword_;
    std::string authRequiredUserGroup_;
    std::string authPamHelperPath_;

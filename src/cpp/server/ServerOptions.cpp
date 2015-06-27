@@ -211,6 +211,9 @@ ProgramStatus Options::read(int argc,
         value<bool>(&authValidateUsers_)->default_value(
                                  core::system::effectiveUserIsRoot()),
         "validate that authenticated users exist on the target system")
+      ("auth-stay-signed-in-days",
+        value<int>(&authStaySignedInDays_)->default_value(30),
+       "number of days for stay signed in option")
       ("auth-encrypt-password",
         value<bool>(&authEncryptPassword_)->default_value(true),
         "encrypt password sent from login form")
