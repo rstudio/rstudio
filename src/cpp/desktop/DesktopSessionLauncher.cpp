@@ -51,7 +51,7 @@ void launchProcess(std::string absPath,
    if (options().runDiagnostics())
       pProcess->setProcessChannelMode(QProcess::ForwardedChannels);
    else
-      pProcess->setProcessChannelMode(QProcess::ForwardedOutputChannel);
+      pProcess->setProcessChannelMode(QProcess::SeparateChannels);
    pProcess->start(QString::fromUtf8(absPath.c_str()), argList);
    *ppProc = pProcess;
 }
