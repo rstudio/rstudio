@@ -394,6 +394,7 @@ public class TextEditingTarget implements
                                                                   docDisplay_);
       reformatHelper_ = new TextEditingTargetReformatHelper(docDisplay_);
       snippets_ = new SnippetHelper((AceEditor) docDisplay_);
+      renameHelper_ = new TextEditingTargetRenameHelper(docDisplay_);
       
       docDisplay_.setRnwCompletionContext(compilePdfHelper_);
       docDisplay_.setCppCompletionContext(cppCompletionContext_);
@@ -2208,6 +2209,12 @@ public class TextEditingTarget implements
       }
       
       reformatHelper_.insertPrettyNewlines();
+   }
+   
+   @Handler
+   void onRenameInFile()
+   {
+      renameHelper_.renameInFile();
    }
    
    @Handler
@@ -5059,6 +5066,7 @@ public class TextEditingTarget implements
    private BreakpointManager breakpointManager_;
    private final LintManager lintManager_;
    private final SnippetHelper snippets_;
+   private final TextEditingTargetRenameHelper renameHelper_;
    private CollabEditStartParams queuedCollabParams_;
 
    // Allows external edit checks to supercede one another

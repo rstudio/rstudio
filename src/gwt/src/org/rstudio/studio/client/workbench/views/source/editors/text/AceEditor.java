@@ -1083,6 +1083,11 @@ public class AceEditor implements DocDisplay,
    {
       setCode("", false);
    }
+   
+   public void clearSelection()
+   {
+      widget_.getEditor().clearSelection();
+   }
 
    public void collapseSelection(boolean collapseToStart)
    {
@@ -1525,6 +1530,11 @@ public class AceEditor implements DocDisplay,
    {
       return getSession().getMode().getCodeModel().getCurrentScope(
             getCursorPosition());
+   }
+   
+   public Scope getScopeAtPosition(Position position)
+   {
+      return getSession().getMode().getCodeModel().getCurrentScope(position);
    }
 
    @Override
