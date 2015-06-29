@@ -325,13 +325,20 @@ bool performKnit(const FilePath& rmdPath,
                                     "message=FALSE, "
                                     "comment=NA); "
                      "render_markdown(); "
-                     "knit('%2%', output = '%3%', encoding='%4%');");
+                     "knit('%2%', output = '%3%', encoding='%4%'); "
+                     "deps <- knit_meta(); "
+                     "deps <- rmarkdown:::flatten_html_dependencies(deps); "
+                     "deps <- rmarkdown:::html_dependency_resolver(deps); "
+                     "deps <- rmarkdown:::html_dependencies_as_string( "
+                        "deps, '%1%-libs', '%5%'); "
+                     "writeLines(deps, '%1%.deps'); ");
    std::string encoding = projects::projectContext().defaultEncoding();
    std::string cmd = boost::str(
       fmt % string_utils::utf8ToSystem(rmdPath.stem())
           % string_utils::utf8ToSystem(rmdPath.filename())
           % string_utils::utf8ToSystem(mdPath.filename())
-          % encoding);
+          % encoding
+          % string_utils::utf8ToSystem(rmdPath.parent().absolutePath()));
    args.push_back(cmd);
 
    // options
@@ -351,7 +358,8 @@ bool performKnit(const FilePath& rmdPath,
       *pErrorResponse = ErrorResponse(error.summary());
       return false;
    }
-   else if (result.exitStatus != EXIT_SUCCESS)
+
+   if (result.exitStatus != EXIT_SUCCESS)
    {
       // if the markdown file doesn't exist then create one to
       // play the error text back into
@@ -547,6 +555,16 @@ bool readPresentation(SlideDeck* pSlideDeck,
       return false;
    }
 
+   // read html depencencies
+   std::string htmlDeps;
+   FilePath depsFile = rmdFile.parent().childPath(rmdFile.stem() + ".deps");
+   if (depsFile.exists())
+   {
+      error = core::readStringFromFile(depsFile, &htmlDeps);
+      if (error)
+         LOG_ERROR(error);
+   }
+
    // build template variables
    std::map<std::string,std::string>& vars = *pVars;
    vars["title"] = pSlideDeck->title();
@@ -557,6 +575,7 @@ bool readPresentation(SlideDeck* pSlideDeck,
    vars["r_highlight"] = resourceFiles().get("r_highlight.html");
    vars["reveal_config"] = revealConfig;
    vars["preamble"] = pSlideDeck->preamble();
+   vars["html_dependencies"] = htmlDeps;
 
    return true;
 }
@@ -974,6 +993,17 @@ void handlePresentationHelpMarkdownRequest(const FilePath& filePath,
       return;
    }
 
+   // read html depencencies
+   std::string htmlDeps;
+   FilePath depsFile = mdFilePath.parent().childPath(
+                                              mdFilePath.stem() + ".deps");
+   if (depsFile.exists())
+   {
+      error = core::readStringFromFile(depsFile, &htmlDeps);
+      if (error)
+         LOG_ERROR(error);
+   }
+
    // process the template
    std::map<std::string,std::string> vars;
    vars["title"] = html_utils::defaultTitle(helpDoc);
@@ -985,6 +1015,7 @@ void handlePresentationHelpMarkdownRequest(const FilePath& filePath,
       vars["mathjax"] = "";
    vars["content"] = helpDoc;
    vars["js_callbacks"] = jsCallbacks;
+   vars["html_dependencies"] = htmlDeps;
    pResponse->setNoCacheHeaders();
    pResponse->setContentType("text/html");
    pResponse->setBody(resourceFiles().get("presentation/helpdoc.html"),
