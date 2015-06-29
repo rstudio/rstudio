@@ -336,7 +336,7 @@ SEXP rs_viewer(SEXP urlSEXP, SEXP heightSEXP)
 
 FilePath historySerializationPath()
 {
-   FilePath historyPath = module_context::scopedScratchPath()
+   FilePath historyPath = module_context::sessionScratchPath()
                                     .childPath("viewer_history");
    Error error = historyPath.ensureDirectory();
    if (error)
