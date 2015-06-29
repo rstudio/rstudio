@@ -24,12 +24,17 @@ namespace audit {
 
 struct Command
 {
+   Command() : timestamp(0) {}
+
    Command(const std::string& username,
            double timestamp,
            const std::string& command)
       : username(username), timestamp(timestamp), command(command)
    {
    }
+
+   bool empty() const { return username.empty(); }
+
    std::string username;
    double timestamp;
    std::string command;
