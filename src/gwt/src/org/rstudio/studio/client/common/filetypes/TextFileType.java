@@ -288,6 +288,7 @@ public class TextFileType extends EditableFileType
       results.add(commands.goToLine());
       results.add(commands.expandSelection());
       results.add(commands.shrinkSelection());
+      results.add(commands.renameInFile());
       if (canExecuteCode() || isC())
       {
          results.add(commands.reindent());
