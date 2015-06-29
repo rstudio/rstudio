@@ -615,6 +615,7 @@ public class UiBinderTest extends GWTTestCase {
     assertEquals(Constants.MyEnum.ENUM_1.name() + " "
         + Constants.MyEnum.ENUM_2.name(),
         widgetUi.bracedParagraph.getAttribute("enum"));
+    assertEquals(Constants.InterfaceConst.someValue, widgetUi.labelWithImportedText.getText());
   }
 
   public void suppressForIEfail_testBizarrelyElementedWidgets() {

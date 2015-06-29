@@ -215,6 +215,7 @@ public class WidgetBasedUi extends Composite {
   @UiField HTML htmlWithComputedSafeHtml;
   @UiField HTML htmlWithComputedText;
   @UiField Label labelWithComputedText;
+  @UiField Label labelWithImportedText;
   @UiField FlowPanel flowPanelWithTag;
   @UiField Element myElementWithTagName;
   @UiField DataResource embeddedSvgData;

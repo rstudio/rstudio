@@ -41,6 +41,10 @@ public class Constants {
     private static String PRIVATE = "private";
   }
 
+  interface InterfaceConst {
+    String someValue = "imported text";
+  }
+
   public static String CONST_FOO = "Foo";
 
   public SafeHtml getSafeHtml() {
