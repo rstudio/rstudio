@@ -233,6 +233,20 @@ std::string embeddedWebFonts()
 
 }
 
+std::string readHtmlDepsFile(const FilePath& rootFile)
+{
+   std::string htmlDeps;
+   FilePath depsFile = rootFile.parent().childPath(rootFile.stem() +
+                                                   "-libs/deps.html");
+   if (depsFile.exists())
+   {
+      Error error = core::readStringFromFile(depsFile, &htmlDeps);
+      if (error)
+         LOG_ERROR(error);
+   }
+   return htmlDeps;
+}
+
 bool hasKnitrVersion_1_2()
 {
    return module_context::isPackageVersionInstalled("knitr", "1.2");
@@ -331,7 +345,7 @@ bool performKnit(const FilePath& rmdPath,
                      "deps <- rmarkdown:::html_dependency_resolver(deps); "
                      "deps <- rmarkdown:::html_dependencies_as_string( "
                         "deps, '%1%-libs', '%5%'); "
-                     "writeLines(deps, '%1%.deps'); ");
+                     "writeLines(deps, '%1%-libs/deps.html'); ");
    std::string encoding = projects::projectContext().defaultEncoding();
    std::string cmd = boost::str(
       fmt % string_utils::utf8ToSystem(rmdPath.stem())
@@ -555,16 +569,6 @@ bool readPresentation(SlideDeck* pSlideDeck,
       return false;
    }
 
-   // read html depencencies
-   std::string htmlDeps;
-   FilePath depsFile = rmdFile.parent().childPath(rmdFile.stem() + ".deps");
-   if (depsFile.exists())
-   {
-      error = core::readStringFromFile(depsFile, &htmlDeps);
-      if (error)
-         LOG_ERROR(error);
-   }
-
    // build template variables
    std::map<std::string,std::string>& vars = *pVars;
    vars["title"] = pSlideDeck->title();
@@ -575,7 +579,7 @@ bool readPresentation(SlideDeck* pSlideDeck,
    vars["r_highlight"] = resourceFiles().get("r_highlight.html");
    vars["reveal_config"] = revealConfig;
    vars["preamble"] = pSlideDeck->preamble();
-   vars["html_dependencies"] = htmlDeps;
+   vars["html_dependencies"] = readHtmlDepsFile(rmdFile);
 
    return true;
 }
@@ -993,17 +997,6 @@ void handlePresentationHelpMarkdownRequest(const FilePath& filePath,
       return;
    }
 
-   // read html depencencies
-   std::string htmlDeps;
-   FilePath depsFile = mdFilePath.parent().childPath(
-                                              mdFilePath.stem() + ".deps");
-   if (depsFile.exists())
-   {
-      error = core::readStringFromFile(depsFile, &htmlDeps);
-      if (error)
-         LOG_ERROR(error);
-   }
-
    // process the template
    std::map<std::string,std::string> vars;
    vars["title"] = html_utils::defaultTitle(helpDoc);
@@ -1015,7 +1008,7 @@ void handlePresentationHelpMarkdownRequest(const FilePath& filePath,
       vars["mathjax"] = "";
    vars["content"] = helpDoc;
    vars["js_callbacks"] = jsCallbacks;
-   vars["html_dependencies"] = htmlDeps;
+   vars["html_dependencies"] = readHtmlDepsFile(mdFilePath);
    pResponse->setNoCacheHeaders();
    pResponse->setContentType("text/html");
    pResponse->setBody(resourceFiles().get("presentation/helpdoc.html"),
