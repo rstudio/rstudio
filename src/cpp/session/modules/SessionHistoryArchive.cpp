@@ -25,6 +25,8 @@
 
 #include <r/session/RConsoleHistory.hpp>
 
+#include <monitor/MonitorClient.hpp>
+
 #include <session/SessionModuleContext.hpp>
 
 
@@ -67,8 +69,15 @@ void rotateHistoryDatabase()
 
 void writeEntry(double timestamp, const std::string& command, std::ostream* pOS)
 {
+   // write to local disk
    *pOS << std::fixed << std::setprecision(0)
         << timestamp << ":" << command;
+
+   // write to monitor
+   monitor::audit::Command auditCommand(options().userIdentity(),
+                                        timestamp,
+                                        command);
+   monitor::client().logCommand(auditCommand);
 }
 
 std::string migratedHistoryEntry(const std::string& command)

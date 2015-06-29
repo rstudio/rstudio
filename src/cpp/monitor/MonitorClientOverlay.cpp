@@ -57,6 +57,14 @@ void AsyncClient::logEvent(const Event& event)
 {
 }
 
+void SyncClient::logCommand(const audit::Command& command)
+{
+}
+
+void AsyncClient::logCommand(const audit::Command& command)
+{
+}
+
 
 } // namespace monitor
 } // namespace rstudio

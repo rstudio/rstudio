@@ -23,6 +23,7 @@
 #include <core/system/System.hpp>
 #include <core/LogWriter.hpp>
 
+#include <monitor/audit/Command.hpp>
 #include <monitor/events/Event.hpp>
 #include <monitor/metrics/Metric.hpp>
 
@@ -57,6 +58,8 @@ public:
                         const std::vector<metrics::MultiMetric>& metrics) = 0;
 
    virtual void logEvent(const Event& event) = 0;
+
+   virtual void logCommand(const audit::Command& command) = 0;
 
 protected:
    const std::string& metricsSocket() const { return metricsSocket_; }
