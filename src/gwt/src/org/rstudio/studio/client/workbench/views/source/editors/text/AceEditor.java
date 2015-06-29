@@ -235,18 +235,22 @@ public class AceEditor implements DocDisplay,
          }
       });
    }
-
+   
    @Inject
    public AceEditor()
    {
+      this(ElementIds.SOURCE_TEXT_EDITOR);
+   }
+   
+   public AceEditor(String elementId)
+   {
       widget_ = new AceEditorWidget();
-      ElementIds.assignElementId(widget_.getElement(),
-                                 ElementIds.SOURCE_TEXT_EDITOR);
+      if (!StringUtil.isNullOrEmpty(elementId))
+         ElementIds.assignElementId(widget_.getElement(), elementId);
+      RStudioGinjector.INSTANCE.injectMembers(this);
 
       completionManager_ = new NullCompletionManager();
       diagnosticsBgPopup_ = new DiagnosticsBackgroundPopup(this);
-
-      RStudioGinjector.INSTANCE.injectMembers(this);
       
       widget_.addValueChangeHandler(new ValueChangeHandler<Void>()
       {
@@ -692,6 +696,20 @@ public class AceEditor implements DocDisplay,
    public void insertCode(String code)
    {
       insertCode(code, false);
+   }
+   
+   public void prepend(String text)
+   {
+      widget_.getEditor().getSession().insert(
+            Position.create(0, 0),
+            text);
+   }
+   
+   public void append(String text)
+   {
+      widget_.getEditor().getSession().insert(
+            Position.create(getSession().getLength(), 0),
+            text);
    }
 
    public void insertCode(String code, boolean blockMode)

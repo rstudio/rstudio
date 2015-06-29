@@ -82,9 +82,13 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void setRnwCompletionContext(RnwCompletionContext rnwContext);
    void setCppCompletionContext(CppCompletionContext cppContext);
    void setRCompletionContext(RCompletionContext rContext);
+   
    String getCode();
    void setCode(String code, boolean preserveCursorPosition);
    void insertCode(String code, boolean blockMode);
+   void prepend(String text);
+   void append(String text);
+   
    void focus();
    boolean isFocused();
    void print();

@@ -32,6 +32,10 @@ public class EditSession extends JavaScriptObject
       return this.getState(row);
    }-*/;
    
+   public native final void remove(Range range) /*-{
+      this.remove(range);
+   }-*/;
+   
    public native final String getTabString() /*-{
       return this.getTabString();
    }-*/;
