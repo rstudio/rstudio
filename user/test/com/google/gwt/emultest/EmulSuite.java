@@ -16,7 +16,9 @@
 package com.google.gwt.emultest;
 
 import com.google.gwt.emultest.java.io.ByteArrayInputStreamTest;
+import com.google.gwt.emultest.java.io.ByteArrayOutputStreamTest;
 import com.google.gwt.emultest.java.io.InputStreamTest;
+import com.google.gwt.emultest.java.io.OutputStreamTest;
 import com.google.gwt.emultest.java.lang.BooleanTest;
 import com.google.gwt.emultest.java.lang.ByteTest;
 import com.google.gwt.emultest.java.lang.CharacterTest;
@@ -57,7 +59,9 @@ public class EmulSuite {
     // $JUnit-BEGIN$
     //-- java.io
     suite.addTestSuite(ByteArrayInputStreamTest.class);
+    suite.addTestSuite(ByteArrayOutputStreamTest.class);
     suite.addTestSuite(InputStreamTest.class);
+    suite.addTestSuite(OutputStreamTest.class);
     //-- java.lang
     suite.addTestSuite(BooleanTest.class);
     suite.addTestSuite(ByteTest.class);

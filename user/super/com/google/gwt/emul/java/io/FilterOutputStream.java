@@ -23,4 +23,7 @@ public class FilterOutputStream extends OutputStream {
   public FilterOutputStream(OutputStream out) {
   }
 
+  @Override
+  public void write(int oneByte) throws IOException {
+  }
 }
