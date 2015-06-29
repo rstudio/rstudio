@@ -40,6 +40,7 @@
 * Server Pro: Support for running against multiple versions of R
 * Server Pro: Don't close PAM sessions by default (configurable via an option)
 * Server Pro: Remove Google OpenID auth (deprecated by Google in favor of OAuth)
+* Server Pro: Add option to specify client-id for Graphite metrics back end
 
 
 ### Bug Fixes
