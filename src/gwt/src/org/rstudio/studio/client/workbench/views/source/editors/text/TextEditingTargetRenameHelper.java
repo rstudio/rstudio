@@ -76,7 +76,12 @@ public class TextEditingTargetRenameHelper
          scope = scope.getParentScope();
       }
       
-      return 0;
+      // Otherwise, just rename the variable within the current scope.
+      // TODO: Do we need to look into parent scopes?
+      return renameVariablesInScope(
+            editor_.getCurrentScope(),
+            targetValue,
+            targetType);
    }
    
    private int renameVariablesInScope(Scope scope, String targetValue, String targetType)
@@ -98,7 +103,7 @@ public class TextEditingTargetRenameHelper
       // ended the cursor remains where it started.
       Position cursorPos = editor_.getCursorPosition();
       
-      while (cursor.moveToNextToken())
+      do
       {
          // Left brackets push on the stack.
          if (cursor.isLeftBracket())
@@ -116,17 +121,20 @@ public class TextEditingTargetRenameHelper
                pushState(STATE_DEFAULT);
             }
             
-            // Update protected names.
-            updateProtectedNames(cursor.currentPosition(), scope, false);
+            // Update protected names for braces.
+            if (cursor.valueEquals("{"))
+               updateProtectedNames(cursor.currentPosition(), scope, false);
          }
          
          // Right brackets pop the stack.
          if (cursor.isRightBracket())
          {
             popState();
-            updateProtectedNames(cursor.currentPosition(), scope, true);
+            if (cursor.valueEquals("}"))
+               updateProtectedNames(cursor.currentPosition(), scope, true);
          }
          
+         // Bail if we've reached the end of the scope.
          if (cursor.currentPosition().isAfterOrEqualTo(endPos))
             break;
          
@@ -154,7 +162,14 @@ public class TextEditingTargetRenameHelper
             //    bar <- bar + 1; foo <- function(bar) { ... }
             //    ~~~    ~~~        
             //
-            if (peekState() == STATE_FUNCTION_DEFINITION)
+            // This is tricky because we only want to perform this skip for nested
+            // functions; parent function definitions should be fine.
+            // E.g.
+            //
+            //    foo <- function(bar) { bar <- bar + 1 }
+            //                    ~~~    ~~~    ~~~
+            if (peekState() == STATE_FUNCTION_DEFINITION &&
+                editor_.getScopeAtPosition(cursor.currentPosition()) != scope)
             {
                String prevValue = cursor.peekBwd(1).getValue();
                if (prevValue.equals("(") ||
@@ -169,14 +184,18 @@ public class TextEditingTargetRenameHelper
             if (!tokenRange.contains(cursorPos))
                ranges_.add(tokenRange);
          }
-      }
+      } while (cursor.moveToNextToken());
       
+      // Add the initial range last (ensuring that the cursor is placed here
+      // after exiting 'multi-select' mode)
       if (cursor.moveToPosition(cursorPos, true))
          ranges_.add(getTokenRange(cursor));
       
+      // Clear any old selection...
       if (ranges_.size() > 0)
          editor_.clearSelection();
       
+      // ... and select all of the new ranges of tokens.
       for (Range range : ranges_)
          editor_.getNativeSelection().addRange(range, false);
       
