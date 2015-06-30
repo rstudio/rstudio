@@ -26,38 +26,13 @@
 
 namespace rstudio {
 namespace core {
+
+using namespace html_utils;
+
 namespace markdown {
 
 namespace {
 
-struct TextRange
-{
-   TextRange(bool process,
-             const std::string::const_iterator& begin,
-             const std::string::const_iterator& end)
-      : process(process), begin(begin), end(end)
-   {
-   }
-
-   bool process;
-   std::string::const_iterator begin;
-   std::string::const_iterator end;
-};
-
-
-TextRange findClosestRange(std::string::const_iterator pos,
-                           const std::vector<TextRange>& ranges)
-{
-   TextRange closestRange = ranges.front();
-
-   BOOST_FOREACH(const TextRange& range, ranges)
-   {
-      if (std::abs(range.begin - pos) < std::abs(closestRange.begin - pos))
-         closestRange = range;
-   }
-
-   return closestRange;
-}
 
 bool hasLessThanThreeNewlines(const std::string& str)
 {
@@ -66,7 +41,7 @@ bool hasLessThanThreeNewlines(const std::string& str)
 
 }
 
-MathJaxFilter::MathJaxFilter(const std::vector<ExcludePattern>& excludePatterns,
+MathJaxFilter::MathJaxFilter(const std::vector<html_utils::ExcludePattern>& excludePatterns,
                              std::string* pInput,
                              std::string* pHTMLOutput)
    : pHTMLOutput_(pHTMLOutput)
@@ -81,7 +56,7 @@ MathJaxFilter::MathJaxFilter(const std::vector<ExcludePattern>& excludePatterns,
    {
       // try all of the exclude patterns
       std::vector<TextRange> matchedRanges;
-      BOOST_FOREACH(const ExcludePattern& pattern, excludePatterns)
+      BOOST_FOREACH(const html_utils::ExcludePattern& pattern, excludePatterns)
       {
          boost::smatch m;
          if (boost::regex_search(pos, inputEnd, m, pattern.begin))

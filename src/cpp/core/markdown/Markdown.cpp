@@ -351,6 +351,7 @@ Error markdownToHTML(const std::string& markdownInput,
 
 {
    // exclude fenced code blocks
+   using namespace rstudio::core::html_utils;
    std::vector<ExcludePattern> excludePatterns;
    excludePatterns.push_back(ExcludePattern(boost::regex("^`{3,}[^\\n]*?$"),
                                             boost::regex("^`{3,}\\s*$")));

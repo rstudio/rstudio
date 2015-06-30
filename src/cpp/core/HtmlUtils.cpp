@@ -16,6 +16,7 @@
 #include <core/HtmlUtils.hpp>
 
 #include <boost/format.hpp>
+#include <boost/foreach.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 
 #include <core/Base64.hpp>
@@ -127,6 +128,20 @@ std::string CssUrlFilter::toBase64Url(const boost::cmatch& match)
    {
       return match[0];
    }
+}
+
+TextRange findClosestRange(std::string::const_iterator pos,
+                           const std::vector<TextRange>& ranges)
+{
+   TextRange closestRange = ranges.front();
+
+   BOOST_FOREACH(const TextRange& range, ranges)
+   {
+      if (std::abs(range.begin - pos) < std::abs(closestRange.begin - pos))
+         closestRange = range;
+   }
+
+   return closestRange;
 }
 
 
