@@ -462,10 +462,7 @@ public class RSConnectDeploy extends Composite
    private void setFileList(ArrayList<String> files,
          ArrayList<String> additionalFiles, ArrayList<String> ignoredFiles)
    {
-      if (forDocument_)
-      {
-         fileChecks_ = new ArrayList<CheckBox>();
-      }
+      fileChecks_ = new ArrayList<CheckBox>();
       
       // clear existing file list
       fileListPanel_.clear(); 
@@ -685,17 +682,10 @@ public class RSConnectDeploy extends Composite
 
    private void addFile(String path, boolean checked)
    {
-      if (forDocument_)
-      {
-         CheckBox fileCheck = new CheckBox(path);
-         fileCheck.setValue(checked);
-         fileListPanel_.add(fileCheck);
-         fileChecks_.add(fileCheck);
-      }
-      else
-      {
-         fileListPanel_.add(new Label(path));
-      }
+      CheckBox fileCheck = new CheckBox(path);
+      fileCheck.setValue(checked);
+      fileListPanel_.add(fileCheck);
+      fileChecks_.add(fileCheck);
    }
    
    private ArrayList<String> getCheckedFileList(boolean checked)
