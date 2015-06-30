@@ -89,6 +89,10 @@ public class TextEditingTargetRenameHelper
       Position startPos = scope.getPreamble();
       Position endPos = scope.getEnd();
       
+      // NOTE: Top-level scope does not have 'end' position
+      if (scope.isTopLevel())
+         endPos = Position.create(editor_.getSession().getLength(), 0);
+      
       TokenCursor cursor = editor_.getSession().getMode().getCodeModel().getTokenCursor();
       if (!cursor.moveToPosition(startPos, true))
          return 0;
