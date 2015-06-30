@@ -2273,10 +2273,28 @@ assign(x = ".rs.acCompletionTypes",
    {
       splat <- strsplit(token, ":{2,3}", perl = TRUE)[[1]]
       pkg <- splat[[1]]
+      
       token <- if (length(splat) > 1)
          splat[[2]]
       else
          ""
+      
+      ## If the help topics for this package have not been loaded,
+      ## explicitly load and save them now.
+      if (!(pkg %in% names(aliases)))
+      {
+         pkgPath <- tryCatch(
+            find.package(pkg, quiet = TRUE),
+            error = function(e) NULL
+         )
+         
+         if (!is.null(pkgPath))
+         {
+            aliases[[pkg]] <- .rs.readAliases(pkgPath)
+            assign(helpTopicsName, aliases, pos = rsEnvPos)
+         }
+      }
+      
       aliases <- tryCatch(
          aliases[[pkg]],
          error = function(e) character()
@@ -2284,12 +2302,12 @@ assign(x = ".rs.acCompletionTypes",
    }
    
    aliases <- unlist(aliases)
-   completions <- .rs.selectFuzzyMatches(aliases, token)
+   results <- .rs.selectFuzzyMatches(aliases, token)
    
    completions <- .rs.makeCompletions(
       token = token,
-      results = completions,
-      quote = quote || grepl("[^a-zA-Z0-9._]", completions, perl = TRUE),
+      results = results,
+      quote = quote,
       type = .rs.acCompletionTypes$HELP,
       overrideInsertParens = TRUE
    )
