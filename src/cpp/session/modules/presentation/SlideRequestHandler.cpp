@@ -330,7 +330,7 @@ bool performKnit(const FilePath& rmdPath,
    args.push_back("--no-save");
    args.push_back("--no-restore");
    args.push_back("-e");
-   boost::format fmt("library(knitr); "
+   std::string fmStr("library(knitr); "
                      "opts_chunk$set(cache.path='%1%-cache/', "
                                     "fig.path='%1%-figure/', "
                                     "tidy=FALSE, "
@@ -339,15 +339,22 @@ bool performKnit(const FilePath& rmdPath,
                                     "message=FALSE, "
                                     "comment=NA); "
                      "render_markdown(); "
-                     "knit('%2%', output = '%3%', encoding='%4%'); "
-                     "deps <- knit_meta(); "
+                     "knit('%2%', output = '%3%', encoding='%4%'); ");
+
+   // if we have rmarkdown installed then use it to resolve dependencies
+   if (module_context::isPackageVersionInstalled("rmarkdown", "0.6"))
+   {
+      fmStr +=       "deps <- knit_meta(); "
                      "if (length(deps) > 0) { "
                      "  deps <- rmarkdown:::flatten_html_dependencies(deps); "
                      "  deps <- rmarkdown:::html_dependency_resolver(deps); "
                      "  deps <- rmarkdown:::html_dependencies_as_string( "
                           "deps, '%1%-libs', '%5%'); "
                      "  writeLines(deps, '%1%-libs/deps.html');"
-                     "};");
+                     "};";
+   }
+
+   boost::format fmt(fmStr);
    std::string encoding = projects::projectContext().defaultEncoding();
    std::string cmd = boost::str(
       fmt % string_utils::utf8ToSystem(rmdPath.stem())
