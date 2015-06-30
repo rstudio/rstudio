@@ -79,13 +79,22 @@ public class Wizard<I,T> extends ModalDialog<T>
                      new OperationWithInput<T>()
                      {
                         @Override
-                        public void execute(T input)
+                        public void execute(final T input)
                         {
-                           if (page.validate(input))
+                           page.validateAsync(input, 
+                                 new OperationWithInput<Boolean>()
                            {
-                              intermediateResult_ = input;
-                              page.advance();
-                           }
+                              
+                              @Override
+                              public void execute(Boolean valid)
+                              {
+                                 if (valid)
+                                 {
+                                    intermediateResult_ = input;
+                                    page.advance();
+                                 }
+                              }
+                           });
                         }
                      });
             }
@@ -230,13 +239,14 @@ public class Wizard<I,T> extends ModalDialog<T>
    }
 
    @Override
-   protected boolean validate(T input)
+   protected void validateAsync(T input, 
+         OperationWithInput<Boolean> onValidated)
    {
       WizardPage<I,T> inputPage = activeInputPage();
       if (inputPage != null)
-         return inputPage.validate(input);
+         inputPage.validateAsync(input, onValidated);
       else
-         return false;
+         onValidated.execute(false);
    }
    
    @Override

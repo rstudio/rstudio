@@ -135,7 +135,16 @@ public abstract class WizardPage<I,T> extends Composite
       
    abstract protected T collectInput();
    
-   abstract protected boolean validate(T input);
+   protected boolean validate(T input)
+   {
+      return true;
+   }
+   
+   protected void validateAsync(T input, 
+         OperationWithInput<Boolean> onValidated)
+   {
+      onValidated.execute(validate(input));
+   }
   
    protected boolean acceptNavigation()
    {

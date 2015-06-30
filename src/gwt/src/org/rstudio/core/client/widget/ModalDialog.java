@@ -113,10 +113,19 @@ public abstract class ModalDialog<T> extends ModalDialogBase
    
    protected abstract T collectInput();
 
-   protected void validateAndGo(T input, Command executeOnSuccess)
+   protected void validateAndGo(T input, final Command executeOnSuccess)
    {
-      if (validate(input))
-         executeOnSuccess.execute();
+      validateAsync(input, new OperationWithInput<Boolean>()
+      {
+         @Override
+         public void execute(Boolean valid)
+         {
+            if (valid)
+            {
+               executeOnSuccess.execute();
+            }
+         }
+      });
    }
    
    protected ProgressIndicator getProgressIndicator()
@@ -124,7 +133,16 @@ public abstract class ModalDialog<T> extends ModalDialogBase
       return progressIndicator_;
    }
 
-   protected abstract boolean validate(T input);
+   protected boolean validate(T input) 
+   {
+      return true;
+   }
+   
+   protected void validateAsync(T input, 
+         OperationWithInput<Boolean> onValidated)
+   {
+      onValidated.execute(validate(input));
+   }
   
    private final ProgressIndicator progressIndicator_;
 }

@@ -22,6 +22,7 @@ import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
+import org.rstudio.core.client.widget.ProgressOperation;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -402,9 +403,7 @@ public class RSConnectDeploy extends Composite
       
       // if we're redeploying to the same account, use the previous app name;
       // otherwise, read the new name the user's entered
-      boolean isUpdate = fromPrevious_ != null && 
-            getSelectedAccount().equals(fromPrevious_.getAccount());
-      String appName = isUpdate ?
+      String appName = isUpdate() ?
             fromPrevious_.getName() : getNewAppName();
             
       // if this was new content, set this account as the default to use for 
@@ -426,12 +425,25 @@ public class RSConnectDeploy extends Composite
                getIgnoredFileList(),
                asMultipleRmd_,
                asStatic_),
-            isUpdate);
+            isUpdate());
    }
    
-   public boolean isResultValid()
+   public void validateResult(OperationWithInput<Boolean> onComplete)
    {
-      return appName_.validateAppName();
+      // if the name isn't valid to begin with, we know the result immediately
+      if (!appName_.validateAppName())
+      {
+         onComplete.execute(false);
+         return;
+      }
+      
+      // no need to validate names for updates
+      if (isUpdate())
+      {
+         onComplete.execute(true);
+      }
+      
+      checkForExistingApp(getSelectedAccount(), getNewAppName(), onComplete);
    }
    
    // Private methods --------------------------------------------------------
@@ -821,6 +833,85 @@ public class RSConnectDeploy extends Composite
       if (illustration != null)
          deployIllustration_.setResource(illustration);
    }
+   
+   private boolean isUpdate()
+   {
+      return fromPrevious_ != null && 
+            getSelectedAccount().equals(fromPrevious_.getAccount());
+   }
+   
+   private void checkForExistingApp(final RSConnectAccount account, 
+         final String appName,
+         final OperationWithInput<Boolean> onValidated)
+   {
+      server_.getRSConnectAppList(account.getName(), account.getServer(), 
+            new ServerRequestCallback<JsArray<RSConnectApplicationInfo>>()
+            {
+               @Override
+               public void onResponseReceived(
+                     JsArray<RSConnectApplicationInfo> apps)
+               {
+                  String url = null;
+                  for (int i = 0; i < apps.length(); i++)
+                  {
+                     if (apps.get(i).getName().equalsIgnoreCase(appName)) 
+                     {
+                        url = apps.get(i).getUrl();
+                        break;
+                     }
+                  }
+                  
+                  if (url == null)
+                  {
+                     // no name conflicts
+                     onValidated.execute(true);
+                  }
+                  else
+                  {
+                     display_.showYesNoMessage(
+                           GlobalDisplay.MSG_QUESTION, 
+                           "Overwrite " + appName + "?", 
+                           "You've already published an application named '" + 
+                           appName +"' to " + account.getServer() + " (" + 
+                           url + "). Do you want to replace the existing " + 
+                           "application with this content?", false, 
+                           new ProgressOperation()
+                           {
+                              @Override
+                              public void execute(ProgressIndicator indicator)
+                              {
+                                 indicator.onCompleted();
+                                 onValidated.execute(true);
+                              }
+                           }, 
+                           new ProgressOperation()
+                           {
+                              @Override
+                              public void execute(ProgressIndicator indicator)
+                              {
+                                 indicator.onCompleted();
+                                 onValidated.execute(false);
+                              }
+                           }, 
+                           "Replace", 
+                           "Cancel", 
+                           true);
+                  }
+               }
+
+               @Override
+               public void onError(ServerError error)
+               {
+                  // just treat it as valid--the alternative is to show an error
+                  // message that says "hey, we couldn't figure out what apps
+                  // are already on the server, so we have no idea whether or
+                  // not this name is taken--publish anyway?", which does not
+                  // inspire confidence
+                  onValidated.execute(true);
+               }
+            });
+   }
+   
    
    @UiField Anchor addAccountAnchor_;
    @UiField Anchor urlAnchor_;

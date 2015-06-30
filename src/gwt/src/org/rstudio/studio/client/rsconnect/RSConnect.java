@@ -25,7 +25,6 @@ import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.widget.ModalDialogTracker;
-import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperation;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
@@ -43,7 +42,6 @@ import org.rstudio.studio.client.rsconnect.events.RSConnectDeployInitiatedEvent;
 import org.rstudio.studio.client.rsconnect.events.RSConnectDeploymentCompletedEvent;
 import org.rstudio.studio.client.rsconnect.events.RSConnectDeploymentStartedEvent;
 import org.rstudio.studio.client.rsconnect.model.PlotPublishMRUList;
-import org.rstudio.studio.client.rsconnect.model.RSConnectAccount;
 import org.rstudio.studio.client.rsconnect.model.RSConnectApplicationInfo;
 import org.rstudio.studio.client.rsconnect.model.RSConnectDeploymentRecord;
 import org.rstudio.studio.client.rsconnect.model.RSConnectDirectoryState;
@@ -599,37 +597,7 @@ public class RSConnect implements SessionInitHandler,
       return "Content";
    }
  
-   public void fireRSConnectPublishEvent(final RSConnectPublishResult result,
-         final boolean launchBrowser)
-   {
-      // we arrive here both when publishing via dialog and via wizard, so 
-      // do any last-minute shared validation
-      if (result.isUpdate())
-      {
-         // the user indicated they wanted to update an existing app
-         fireValidatedRSconnectPublish(result, launchBrowser);
-      }
-      else
-      {
-         // the user didn't indicate an update, so make sure they're not 
-         // unintentionally replacing existing content
-         checkForExistingApp(result.getAccount(), 
-               result.getAppName(), 
-               new OperationWithInput<Boolean>()
-               {
-                  @Override
-                  public void execute(Boolean input)
-                  {
-                     if (input)
-                     {
-                        fireValidatedRSconnectPublish(result, launchBrowser);
-                     }
-                  }
-               });
-      }
-   }
-   
-   private void fireValidatedRSconnectPublish(RSConnectPublishResult result,
+   public void fireRSConnectPublishEvent(RSConnectPublishResult result,
          boolean launchBrowser)
    {
       if (satellite_.isCurrentWindowSatellite())
@@ -676,78 +644,6 @@ public class RSConnect implements SessionInitHandler,
       }
    }
    
-   public void checkForExistingApp(final RSConnectAccount account, 
-         final String appName,
-         final OperationWithInput<Boolean> onValidated)
-   {
-      server_.getRSConnectAppList(account.getName(), account.getServer(), 
-            new ServerRequestCallback<JsArray<RSConnectApplicationInfo>>()
-            {
-               @Override
-               public void onResponseReceived(
-                     JsArray<RSConnectApplicationInfo> apps)
-               {
-                  String url = null;
-                  for (int i = 0; i < apps.length(); i++)
-                  {
-                     if (apps.get(i).getName().equalsIgnoreCase(appName)) 
-                     {
-                        url = apps.get(i).getUrl();
-                        break;
-                     }
-                  }
-                  
-                  if (url == null)
-                  {
-                     // no name conflicts
-                     onValidated.execute(true);
-                  }
-                  else
-                  {
-                     display_.showYesNoMessage(
-                           GlobalDisplay.MSG_QUESTION, 
-                           "Overwrite " + appName + "?", 
-                           "You've already published an application named '" + 
-                           appName +"' to " + account.getServer() + " (" + 
-                           url + "). Do you want to replace the existing " + 
-                           "application with this content?", false, 
-                           new ProgressOperation()
-                           {
-                              @Override
-                              public void execute(ProgressIndicator indicator)
-                              {
-                                 indicator.onCompleted();
-                                 onValidated.execute(true);
-                              }
-                           }, 
-                           new ProgressOperation()
-                           {
-                              @Override
-                              public void execute(ProgressIndicator indicator)
-                              {
-                                 indicator.onCompleted();
-                                 onValidated.execute(false);
-                              }
-                           }, 
-                           "Replace", 
-                           "Cancel", 
-                           true);
-                  }
-               }
-
-               @Override
-               public void onError(ServerError error)
-               {
-                  // just treat it as valid--the alternative is to show an error
-                  // message that says "hey, we couldn't figure out what apps
-                  // are already on the server, so we have no idea whether or
-                  // not this name is taken--publish anyway?", which does not
-                  // inspire confidence
-                  onValidated.execute(true);
-               }
-            });
-   }
-
    // Private methods ---------------------------------------------------------
    
    private void uploadToRPubs(RSConnectPublishInput input, 
