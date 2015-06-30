@@ -50,6 +50,11 @@ public class FactoryHandler implements InvocationHandler {
     Class<?> beanType;
     Object toWrap = null;
     String name = method.getName();
+    if (BeanMethod.OBJECT.matches(method)) {
+      // Redirect all methods of Object early on
+      return method.invoke(this, args);
+    }
+
     if (name.equals("create")) {
       // Dynamic create. Guaranteed to have at least one argument
       // create(clazz); or create(clazz, toWrap);
