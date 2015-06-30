@@ -231,14 +231,17 @@ bool WebPage::acceptNavigationRequest(QWebFrame* pWebFrame,
       {
          handleBase64Download(pWebFrame, url);
       }
-      else if (navType == QWebPage::NavigationTypeLinkClicked)
-      {
-         desktop::openUrl(url);
-      }
       else if (allowExternalNav_)
       {
+         // if allowing external navigation, follow this (even if a link click)
          navigated_ = true;
          return true;
+      }
+      else if (navType == QWebPage::NavigationTypeLinkClicked)
+      {
+         // when not allowing external navigation, open an external browser
+         // to view the URL
+         desktop::openUrl(url);
       }
 
       if (!navigated_)
