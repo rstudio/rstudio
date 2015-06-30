@@ -341,11 +341,13 @@ bool performKnit(const FilePath& rmdPath,
                      "render_markdown(); "
                      "knit('%2%', output = '%3%', encoding='%4%'); "
                      "deps <- knit_meta(); "
-                     "deps <- rmarkdown:::flatten_html_dependencies(deps); "
-                     "deps <- rmarkdown:::html_dependency_resolver(deps); "
-                     "deps <- rmarkdown:::html_dependencies_as_string( "
-                        "deps, '%1%-libs', '%5%'); "
-                     "writeLines(deps, '%1%-libs/deps.html'); ");
+                     "if (length(deps) > 0) { "
+                     "  deps <- rmarkdown:::flatten_html_dependencies(deps); "
+                     "  deps <- rmarkdown:::html_dependency_resolver(deps); "
+                     "  deps <- rmarkdown:::html_dependencies_as_string( "
+                          "deps, '%1%-libs', '%5%'); "
+                     "  writeLines(deps, '%1%-libs/deps.html');"
+                     "};");
    std::string encoding = projects::projectContext().defaultEncoding();
    std::string cmd = boost::str(
       fmt % string_utils::utf8ToSystem(rmdPath.stem())
