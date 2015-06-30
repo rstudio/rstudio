@@ -428,12 +428,13 @@ public class RSConnectDeploy extends Composite
             isUpdate());
    }
    
-   public void validateResult(OperationWithInput<Boolean> onComplete)
+   public void validateResult(final OperationWithInput<Boolean> onComplete)
    {
       // if the name isn't valid to begin with, we know the result immediately
       if (!appName_.validateAppName())
       {
          onComplete.execute(false);
+         focus();
          return;
       }
       
@@ -443,7 +444,17 @@ public class RSConnectDeploy extends Composite
          onComplete.execute(true);
       }
       
-      checkForExistingApp(getSelectedAccount(), getNewAppName(), onComplete);
+      checkForExistingApp(getSelectedAccount(), getNewAppName(), 
+            new OperationWithInput<Boolean>()
+            {
+               @Override
+               public void execute(Boolean valid)
+               {
+                  onComplete.execute(valid);
+                  if (!valid)
+                     focus();
+               }
+            });
    }
    
    // Private methods --------------------------------------------------------
