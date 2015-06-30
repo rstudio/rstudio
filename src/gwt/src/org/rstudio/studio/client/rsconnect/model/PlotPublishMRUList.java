@@ -86,7 +86,8 @@ public class PlotPublishMRUList
          
          menu.addItem(new MenuItem(AppCommand.formatMenuLabel(
                RSConnectResources.INSTANCE.republishPlot(), 
-               mruEntry.name, null), true, new Command() 
+               mruEntry.name + " (" + mruEntry.server + ")", null), true, 
+               new Command() 
          {
             @Override
             public void execute()
