@@ -40,7 +40,10 @@ oop.inherits(FoldMode, BaseFoldMode);
       var line = session.getLine(row);
       var state = session.getState(row);
 
-      if (state === "$start")
+      // Check for header starts. Note that we don't check the state
+      // explicitly here as not all headers will occur at the 'start' state;
+      // this is done to support YAML blocks and R Presentation features.
+      if (Utils.startsWith(line, "===") || Utils.startsWith(line, "---"))
       {
          if (line[0] === "#")
             return "start";
@@ -174,7 +177,7 @@ oop.inherits(FoldMode, BaseFoldMode);
          depth = match[1].length;
       }
 
-      if (depth == null)
+      if (depth === null)
          return;
 
       var endRow = $findNextHeader(session, row, depth);

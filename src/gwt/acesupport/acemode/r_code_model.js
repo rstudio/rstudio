@@ -755,7 +755,7 @@ var RCodeModel = function(session, tokenizer,
       var column = this.$scopes.parsePos.column;
 
       iterator.moveToPosition(row, column, true);
-      
+
       var token = iterator.getCurrentToken();
       
       // If this failed, give up.
@@ -766,10 +766,6 @@ var RCodeModel = function(session, tokenizer,
       var value = token.value;
       var type = token.type;
       var position = iterator.getCurrentTokenPosition();
-
-      token = iterator.getCurrentToken();
-      if (token == null)
-         return;
       
       do
       {
@@ -778,20 +774,11 @@ var RCodeModel = function(session, tokenizer,
             break;
 
          // Skip over comments.
-         while (/\bcomment\b/.test(type))
-         {
+         while (token != null && /\bcomment\b/.test(token.type))
             token = iterator.moveToStartOfNextRowWithTokens();
 
-            // It's possible that the document ends with comments -- in that
-            // case we should break out early.
-            if (token == null)
-               break;
-
-            value = token.value;
-            type = token.type;
-            position = iterator.getCurrentTokenPosition();
-         }
-
+         // Bail if the current token is null (can occur if the document
+         // ends with tokens)
          if (token == null)
             break;
 
@@ -826,8 +813,15 @@ var RCodeModel = function(session, tokenizer,
          // So make sure we manually scrape the header text out of the line.
          if (Utils.startsWith(type, "markup.heading"))
          {
+            // Track both the 'start' and the 'end' of the label position.
+            // The scope 'begins' after the end of the label, although we want
+            // to include the label as part of the 'preamble'. Note that this is
+            // necessary for the scope tree to be able to properly incrementally
+            // tokenize; if the start position were set at the start of the label then
+            // this scope would get duplicated within the scope tree.
             var label = "";
-            var labelPos = {row: position.row, column: 0};
+            var labelStartPos = {row: position.row, column: 0};
+            var labelEndPos = {row: position.row + 1, column: 0};
             var depth = 0;
             
             // Check if this is a single-line heading, e.g. '# foo'.
@@ -846,7 +840,7 @@ var RCodeModel = function(session, tokenizer,
             {
                depth = value[0] === "=" ? 1 : 2;
                label = this.$session.getLine(position.row - 1).trim();
-               labelPos.row--;
+               labelStartPos.row--;
             }
 
             // Add to scope tree.
@@ -859,7 +853,7 @@ var RCodeModel = function(session, tokenizer,
             if (braceIdx !== -1)
                label = label.substr(0, braceIdx).trim();
 
-            this.$scopes.onMarkdownHead(label, labelPos, depth);
+            this.$scopes.onMarkdownHead(label, labelEndPos, labelStartPos, depth);
          }
 
          // Add R-comment sections; e.g.
@@ -968,7 +962,7 @@ var RCodeModel = function(session, tokenizer,
                ));
 
                var functionLabel;
-               if (functionName === null)
+               if (functionName == null)
                   functionLabel = $normalizeWhitespace("<function>" + functionArgsString);
                else
                   functionLabel = $normalizeWhitespace(functionName + functionArgsString);
@@ -1006,8 +1000,9 @@ var RCodeModel = function(session, tokenizer,
       // after the current token; in practice, since the tokenization
       // happens row-wise this means setting the parse position at the
       // start of the next row.
+      var rowTokenizedUpTo = Math.max(maxRow, iterator.$row);
       this.$scopes.parsePos = {
-         row: maxRow + 1, column: -1
+         row: rowTokenizedUpTo, column: -1
       };
 
    };

@@ -107,30 +107,30 @@ define('mode/r_scope_tree', function(require, exports, module) {
                if (child.attributes.depth === depth)
                   return;
 
-               if (node.isRoot() || node === null)
+               if (node.isRoot() || node == null)
                   return;
 
                return this.closeMarkdownHeaderScopes(node.parentScope, position, depth);
             }
          }
 
-         if (node.isRoot() || node === null)
+         if (node.isRoot() || node == null)
             return;
          
          this.closeMarkdownHeaderScopes(node.parentScope, position, depth);
       };
 
-      this.onMarkdownHead = function(label, position, depth)
+      this.onMarkdownHead = function(label, labelStartPos, labelEndPos, depth)
       {
          debuglog("Adding Markdown header: '" + label + "' [" + depth + "]");
-         var scopes = this.getActiveScopes(position);
+         var scopes = this.getActiveScopes(labelStartPos);
          if (scopes.length > 1)
-            this.closeMarkdownHeaderScopes(scopes[scopes.length - 2], position, depth);
+            this.closeMarkdownHeaderScopes(scopes[scopes.length - 2], labelStartPos, depth);
 
          this.$root.addNode(new this.$ScopeNodeFactory(
             label,
-            position,
-            position,
+            labelEndPos,
+            labelStartPos,
             ScopeNode.TYPE_SECTION,
             {depth: depth, isMarkdown: true}
          ));
@@ -261,16 +261,27 @@ define('mode/r_scope_tree', function(require, exports, module) {
 
 
    var ScopeNode = function(label, start, preamble, scopeType, attributes) {
+
+      // The label associated with the scope.
       this.label = label;
 
-      // The position of the open brace
+      // The 'start' and the 'preamble' both denote where the node begins;
+      // however, the 'start' is where parsing for the scope should begin (for
+      // incremental scope tree builds).
+      //
+      // For example, given the function definition:
+      //
+      //    foo <- function(a, b, c) {
+      //    ^ -- start
+      //                             ^ -- start
+      //
+      // In general, these should be supplied separately -- otherwise, the
+      // scope tree builder runs the risk of improperly adding duplicates of a
+      // node when change events are emitted.
       this.start = start;
-
-      // The position of the start of the function declaration (possibly
-      // with added whitespace)
       this.preamble = preamble || start;
 
-      // The position of the close brance (possibly with added whitespace)
+      // The end position of the scope.
       this.end = null;
 
       // Whether this scope is
@@ -304,7 +315,9 @@ define('mode/r_scope_tree', function(require, exports, module) {
          if (this.scopeType !== node.scopeType ||
              this.start.row !== node.start.row ||
              this.start.column !== node.start.column)
+         {
             return false;
+         }
 
          return true;
       };
