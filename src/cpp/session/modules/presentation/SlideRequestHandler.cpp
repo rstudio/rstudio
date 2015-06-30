@@ -44,6 +44,11 @@
 #include "SlideParser.hpp"
 #include "SlideRenderer.hpp"
 
+
+// TODO: html-preserve issues
+
+// TODO: sizing/css issues
+
 using namespace rstudio::core;
 
 namespace rstudio {
@@ -252,6 +257,11 @@ bool hasKnitrVersion_1_2()
    return module_context::isPackageVersionInstalled("knitr", "1.2");
 }
 
+bool haveRequiredRMarkdown()
+{
+   return module_context::isPackageVersionInstalled("rmarkdown", "0.6");
+}
+
 std::string extractKnitrError(const std::string& stdError)
 {
    std::string knitrError = stdError;
@@ -342,7 +352,7 @@ bool performKnit(const FilePath& rmdPath,
                      "knit('%2%', output = '%3%', encoding='%4%'); ");
 
    // if we have rmarkdown installed then use it to resolve dependencies
-   if (module_context::isPackageVersionInstalled("rmarkdown", "0.6"))
+   if (haveRequiredRMarkdown())
    {
       fmStr +=       "deps <- knit_meta(); "
                      "if (length(deps) > 0) { "
@@ -814,13 +824,34 @@ bool createStandalonePresentation(const FilePath& targetFile,
       return false;
    }
 
-   // create image filter
-   FilePath dirPath = presentation::state::directory();
+   // if we don't have rmarkdown available then we need to manually
+   // base64 encode images using a custom filter
    std::vector<boost::iostreams::regex_filter> filters;
-   filters.push_back(html_utils::Base64ImageFilter(dirPath));
+   if (!haveRequiredRMarkdown())
+   {
+      FilePath dirPath = presentation::state::directory();
+      filters.push_back(html_utils::Base64ImageFilter(dirPath));
+   }
 
    // render presentation
-   return renderPresentation(vars, filters, *pOfs, pErrorResponse);
+   bool result = renderPresentation(vars, filters, *pOfs, pErrorResponse);
+   if (!result)
+      return false;
+
+   // if we have rmarkdown then use it to do base64 encoding
+   if (haveRequiredRMarkdown())
+   {
+      Error error = module_context::createSelfContainedHtml(targetFile,
+                                                            targetFile);
+      if (error)
+      {
+         LOG_ERROR(error);
+         *pErrorResponse = ErrorResponse(error.summary());
+         return false;
+      }
+   }
+
+   return true;
 }
 
 
