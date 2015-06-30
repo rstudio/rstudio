@@ -38,7 +38,8 @@ struct Extensions
         strikethrough(true),
         superscript(true),
         ignoreMath(true),
-        stripMetadata(true)
+        stripMetadata(true),
+        htmlPreserve(false)
    {
    }
 
@@ -52,6 +53,7 @@ struct Extensions
    bool superscript;
    bool ignoreMath;
    bool stripMetadata;
+   bool htmlPreserve;
 };
 
 struct HTMLOptions

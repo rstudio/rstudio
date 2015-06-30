@@ -105,6 +105,16 @@ TextRange findClosestRange(std::string::const_iterator pos,
                            const std::vector<TextRange>& ranges);
 
 
+class HtmlPreserver : boost::noncopyable
+{
+public:
+   void preserve(std::string* pInput);
+   void restore(std::string* pOutput);
+
+private:
+   std::map<std::string,std::string> preserved_;
+};
+
 } // namespace regex_utils
 } // namespace core 
 } // namespace rstudio

@@ -28,6 +28,7 @@
 #include <core/FilePath.hpp>
 #include <core/StringUtils.hpp>
 #include <core/FileSerializer.hpp>
+#include <core/HtmlUtils.hpp>
 
 #include "MathJax.hpp"
 
@@ -372,6 +373,11 @@ Error markdownToHTML(const std::string& markdownInput,
                                           pHTMLOutput));
    }
 
+   // respect html-preserve
+   html_utils::HtmlPreserver htmlPreserver;
+   if (extensions.htmlPreserve)
+      htmlPreserver.preserve(&input);
+
    // strip yaml front-matter / pandoc metadata if requested
    if (extensions.stripMetadata)
       stripMetadata(&input);
@@ -445,8 +451,13 @@ Error markdownToHTML(const std::string& markdownInput,
    if (error)
       return error;
 
-   // append output and return success
+   // append output
    pHTMLOutput->append(output);
+
+   // restore htmlPreserve
+   if (extensions.htmlPreserve)
+      htmlPreserver.restore(pHTMLOutput);
+
    return Success();
 }
 

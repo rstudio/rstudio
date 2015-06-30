@@ -44,9 +44,6 @@
 #include "SlideParser.hpp"
 #include "SlideRenderer.hpp"
 
-
-// TODO: html-preserve issues
-
 // TODO: sizing/css issues
 
 using namespace rstudio::core;
@@ -1027,8 +1024,10 @@ void handlePresentationHelpMarkdownRequest(const FilePath& filePath,
 
    // read in the file (process markdown)
    std::string helpDoc;
+   markdown::Extensions extensions;
+   extensions.htmlPreserve = true;
    Error error = markdown::markdownToHTML(mdFilePath,
-                                          markdown::Extensions(),
+                                          extensions,
                                           markdown::HTMLOptions(),
                                           &helpDoc);
    if (error)
