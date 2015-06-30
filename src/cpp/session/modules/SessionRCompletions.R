@@ -1470,6 +1470,17 @@ assign(x = ".rs.acCompletionTypes",
    if (.rs.isBrowserActive())
       offset <- offset + 1L
    
+   # We also need to further munge this if JIT compilation is
+   # active. It looks like it can optimize out a frame somewhere?
+   if ("compiler" %in% loadedNamespaces())
+   {
+      tryCatch({
+         compilerLevel <- compiler::getCompilerOption("optimize")
+         if (compilerLevel == 2)
+            offset <- offset - 1L
+      }, error = function(e) NULL)
+   }
+   
    .Call(.rs.routines$rs_getActiveFrame, as.integer(n) + offset)
 })
 
