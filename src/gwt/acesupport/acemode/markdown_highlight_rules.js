@@ -321,7 +321,69 @@ var MarkdownHighlightRules = function() {
         }, {
             token : "support.function",
             regex : ".+"
+        }],
+
+         "fieldblock" : [{
+            token : function(value) {
+                var field = value.slice(0,-1);
+                if (slideFields[field])
+                    return "comment.doc.tag";
+                else
+                    return "text";
+            },
+            regex : "^" +"[\\w-]+\\:",
+            next  : "fieldblockvalue"
+        }, {
+            token : "text",
+            regex : "(?=.+)",
+            next  : "start"
+        }],
+
+        "fieldblockvalue" : [{
+            token : "text",
+            regex : "$",
+            next  : "fieldblock"
+        }, {
+            token : "text",
+            regex : ".+"
+        }],
+
+        "mathjaxdisplay" : [{
+            token : "markup.list",
+            regex : "\\${2}",
+            next  : "start"
+        }, {
+            token : "support.function",
+            regex : "[^\\$]+"
+        }],
+        
+        "mathjaxnativedisplay" : [{
+            token : "markup.list",
+            regex : "\\\\\\]",
+            next  : "start"
+        }, {
+            token : "support.function",
+            regex : "[\\s\\S]+?"
+        }],
+        
+        "mathjaxinline" : [{
+            token : "markup.list",
+            regex : "\\$",
+            next  : "start"
+        }, {
+            token : "support.function",
+            regex : "[^\\$]+"
+        }],
+
+        "mathjaxnativeinline" : [{
+            token : "markup.list",
+            regex : "\\\\\\)",
+            next  : "start"
+        }, {
+            token : "support.function",
+            regex : "[\\s\\S]+?"
         }]
+
     };
 
     this.embedRules(JavaScriptHighlightRules, "jscode-", [{
