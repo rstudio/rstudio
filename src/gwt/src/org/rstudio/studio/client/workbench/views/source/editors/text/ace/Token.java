@@ -83,6 +83,23 @@ public class Token extends JavaScriptObject
       );
    }-*/;
    
+   public native final boolean isValidForFunctionCall() /*-{
+      return this.type && (
+         this.type === "identifier" ||
+         this.type === "string" ||
+         this.type === "keyword"
+      );
+   }-*/;
+   
+   public native final boolean isExtractionOperator() /*-{
+      return this.value && (
+         this.value === "$" ||
+         this.value === "@" ||
+         this.value === "?" ||
+         this.value === "~"
+      );
+   }-*/;
+   
    // NOTE: Tokens attached to a document should be considered immutable;
    // use setters only when applying to a tokenized line separate from an
    // active editor!

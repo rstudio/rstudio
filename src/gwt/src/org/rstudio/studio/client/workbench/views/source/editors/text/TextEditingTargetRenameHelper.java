@@ -2,6 +2,7 @@ package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import com.google.gwt.core.client.JsArrayString;
 
+import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.TokenCursor;
@@ -25,7 +26,8 @@ public class TextEditingTargetRenameHelper
    public void renameInFile()
    {
       init();
-      if (editor_.getFileType().isR())
+      TextFileType type = editor_.getFileType();
+      if (type.isR() || type.isRhtml() || type.isRmd() || type.isRnw() || type.isRpres())
          renameInFileR();
    }
    
@@ -37,7 +39,7 @@ public class TextEditingTargetRenameHelper
             
       TokenCursor cursor = editor_.getSession().getMode().getCodeModel().getTokenCursor();
       if (!cursor.moveToPosition(position, true))
-         return 0;
+         return -1;
       
       editor_.setCursorPosition(position);
       
@@ -51,7 +53,31 @@ public class TextEditingTargetRenameHelper
             targetType.equals("constant.language");
       
       if (!isVariableType)
-         return 0;
+         return -1;
+      
+      // Check to see if we're refactoring the name of an argument in a function call,
+      // e.g.
+      //
+      //    if (foo(apple = 1)) { ... }
+      //            ^^^^^
+      //
+      // If this is the case, then we want to search for all calls of this
+      // form and rename just that argument.
+      if (cursor.peekFwd(1).valueEquals("="))
+      {
+         String argName = cursor.currentValue();
+         TokenCursor clone = cursor.cloneCursor();
+         
+         while (clone.findOpeningBracket("(", false))
+         {
+            if (!clone.moveToPreviousToken())
+               break;
+            
+            String functionName = clone.currentValue();
+            return renameFunctionArgument(functionName, argName);
+            
+         }
+      }
       
       // Check to see if this is the name of a function argument. If so, we only want
       // to rename within that scope.
@@ -82,6 +108,54 @@ public class TextEditingTargetRenameHelper
             editor_.getCurrentScope(),
             targetValue,
             targetType);
+   }
+   
+   private int renameFunctionArgument(String functionName, String argName)
+   {
+      TokenCursor cursor = editor_.getSession().getMode().getCodeModel().getTokenCursor();
+      Stack<String> functionNames = new Stack<String>();
+      boolean renaming = false;
+      
+      do
+      {
+         if (cursor.isLeftBracket())
+         {
+            if (cursor.valueEquals("(") &&
+                cursor.peekBwd(1).isValidForFunctionCall())
+            {
+               String currentFunctionName = cursor.peekBwd(1).getValue();
+               renaming = currentFunctionName.equals(functionName);
+               functionNames.push(functionName);
+               pushState(STATE_FUNCTION_CALL);
+            }
+            else
+            {
+               pushState(STATE_DEFAULT);
+            }
+         }
+         
+         if (cursor.isRightBracket())
+         {
+            popState();
+            if (cursor.valueEquals(")") && !functionNames.empty())
+            {
+               functionNames.pop();
+               renaming = !functionNames.empty() && functionNames.peek().equals(functionName);
+            }
+         }
+         
+         if (renaming &&
+             peekState() == STATE_FUNCTION_CALL &&
+             cursor.valueEquals(argName) &&
+             cursor.peekFwd(1).valueEquals("="))
+         {
+            ranges_.add(getTokenRange(cursor));
+         }
+         
+      } while (cursor.moveToNextToken());
+      
+      return applyRanges();
+      
    }
    
    private int renameVariablesInScope(Scope scope, String targetValue, String targetType)
@@ -194,17 +268,22 @@ public class TextEditingTargetRenameHelper
       // after exiting 'multi-select' mode)
       if (cursor.moveToPosition(cursorPos, true))
          ranges_.add(getTokenRange(cursor));
+
+      return applyRanges();
       
+   }
+   
+   private int applyRanges()
+   {
       // Clear any old selection...
       if (ranges_.size() > 0)
          editor_.clearSelection();
-      
+
       // ... and select all of the new ranges of tokens.
       for (Range range : ranges_)
          editor_.getNativeSelection().addRange(range, false);
-      
+
       return ranges_.size();
-         
    }
    
    private void init()

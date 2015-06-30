@@ -203,5 +203,20 @@ public class TokenCursor extends JavaScriptObject
       return value === "$" || value === "@" || value === "?" || value === "~";
    }-*/;
    
+   public final boolean isWithinFunctionCall()
+   {
+      TokenCursor clone = cloneCursor();
+      do
+      {
+         if (clone.peekBwd(1).isValidForFunctionCall())
+            return true;
+         
+         if (!clone.moveToPreviousToken())
+            return false;
+         
+      } while (clone.findOpeningBracket("(", false));
+      return false;
+   }
+   
 }
 
