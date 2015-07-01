@@ -1413,7 +1413,7 @@
    parsed <- .rs.rpc.get_set_ref_class_call(callString)
    as.character(c(
       parsed$field.names,
-      parsed$method.name
+      parsed$method.names
    ))
 })
 
