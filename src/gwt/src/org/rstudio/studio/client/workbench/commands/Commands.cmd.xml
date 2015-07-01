@@ -507,6 +507,7 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="newSourceDoc" value="Cmd+Shift+Alt+N" if="org.rstudio.core.client.BrowseCap.isChrome()" title="New R Script"/>
          <shortcut refid="openSourceDoc" value="Cmd+O"/>
          <shortcut refid="closeSourceDoc" value="Cmd+W"/>
+         <shortcut refid="closeOtherSourceDocs" value="Cmd+Shift+Alt+W"/>
          <shortcut refid="closeAllSourceDocs" value="Cmd+Shift+W"/>
          <shortcut refid="findInFiles" value="Cmd+Shift+F"/>
       </shortcutgroup>
