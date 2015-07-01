@@ -1579,11 +1579,14 @@ public class Source implements InsertSourceHandler,
    public void closeAllSourceDocs(String caption, Command onCompleted, 
          final boolean excludeActive)
    { 
+      // save active editor for exclusion (it changes as we close tabs)
+      final EditingTarget activeEditor = activeEditor_;
+      
       // collect up a list of dirty documents
       ArrayList<EditingTarget> dirtyTargets = new ArrayList<EditingTarget>();
       for (EditingTarget target : editors_)
       {
-         if (excludeActive && target == activeEditor_)
+         if (excludeActive && target == activeEditor)
             continue;
          if (target.dirtyState().getValue())
             dirtyTargets.add(target);
@@ -1600,7 +1603,12 @@ public class Source implements InsertSourceHandler,
                @Override
                public void execute(EditingTarget target, Command continuation)
                {
-                  if (!excludeActive || target != activeEditor_)
+                  if (excludeActive && target == activeEditor)
+                  {
+                     continuation.execute();
+                     return;
+                  }
+                  else
                   {
                      view_.closeTab(target.asWidget(), false, continuation);
                   }
