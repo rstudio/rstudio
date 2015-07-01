@@ -233,9 +233,28 @@ std::string embeddedWebFonts()
 
 }
 
+std::string readHtmlDepsFile(const FilePath& rootFile)
+{
+   std::string htmlDeps;
+   FilePath depsFile = rootFile.parent().childPath(rootFile.stem() +
+                                                   "-libs/deps.html");
+   if (depsFile.exists())
+   {
+      Error error = core::readStringFromFile(depsFile, &htmlDeps);
+      if (error)
+         LOG_ERROR(error);
+   }
+   return htmlDeps;
+}
+
 bool hasKnitrVersion_1_2()
 {
    return module_context::isPackageVersionInstalled("knitr", "1.2");
+}
+
+bool haveRequiredRMarkdown()
+{
+   return module_context::isPackageVersionInstalled("rmarkdown", "0.6");
 }
 
 std::string extractKnitrError(const std::string& stdError)
@@ -316,7 +335,7 @@ bool performKnit(const FilePath& rmdPath,
    args.push_back("--no-save");
    args.push_back("--no-restore");
    args.push_back("-e");
-   boost::format fmt("library(knitr); "
+   std::string fmStr("library(knitr); "
                      "opts_chunk$set(cache.path='%1%-cache/', "
                                     "fig.path='%1%-figure/', "
                                     "tidy=FALSE, "
@@ -325,13 +344,29 @@ bool performKnit(const FilePath& rmdPath,
                                     "message=FALSE, "
                                     "comment=NA); "
                      "render_markdown(); "
-                     "knit('%2%', output = '%3%', encoding='%4%');");
+                     "knit('%2%', output = '%3%', encoding='%4%'); ");
+
+   // if we have rmarkdown installed then use it to resolve dependencies
+   if (haveRequiredRMarkdown())
+   {
+      fmStr +=       "deps <- knit_meta(); "
+                     "if (length(deps) > 0) { "
+                     "  deps <- rmarkdown:::flatten_html_dependencies(deps); "
+                     "  deps <- rmarkdown:::html_dependency_resolver(deps); "
+                     "  deps <- rmarkdown:::html_dependencies_as_string( "
+                          "deps, '%1%-libs', '%5%'); "
+                     "  writeLines(deps, '%1%-libs/deps.html');"
+                     "};";
+   }
+
+   boost::format fmt(fmStr);
    std::string encoding = projects::projectContext().defaultEncoding();
    std::string cmd = boost::str(
       fmt % string_utils::utf8ToSystem(rmdPath.stem())
           % string_utils::utf8ToSystem(rmdPath.filename())
           % string_utils::utf8ToSystem(mdPath.filename())
-          % encoding);
+          % encoding
+          % string_utils::utf8ToSystem(rmdPath.parent().absolutePath()));
    args.push_back(cmd);
 
    // options
@@ -351,7 +386,8 @@ bool performKnit(const FilePath& rmdPath,
       *pErrorResponse = ErrorResponse(error.summary());
       return false;
    }
-   else if (result.exitStatus != EXIT_SUCCESS)
+
+   if (result.exitStatus != EXIT_SUCCESS)
    {
       // if the markdown file doesn't exist then create one to
       // play the error text back into
@@ -557,6 +593,7 @@ bool readPresentation(SlideDeck* pSlideDeck,
    vars["r_highlight"] = resourceFiles().get("r_highlight.html");
    vars["reveal_config"] = revealConfig;
    vars["preamble"] = pSlideDeck->preamble();
+   vars["html_dependencies"] = readHtmlDepsFile(rmdFile);
 
    return true;
 }
@@ -782,13 +819,34 @@ bool createStandalonePresentation(const FilePath& targetFile,
       return false;
    }
 
-   // create image filter
-   FilePath dirPath = presentation::state::directory();
+   // if we don't have rmarkdown available then we need to manually
+   // base64 encode images using a custom filter
    std::vector<boost::iostreams::regex_filter> filters;
-   filters.push_back(html_utils::Base64ImageFilter(dirPath));
+   if (!haveRequiredRMarkdown())
+   {
+      FilePath dirPath = presentation::state::directory();
+      filters.push_back(html_utils::Base64ImageFilter(dirPath));
+   }
 
    // render presentation
-   return renderPresentation(vars, filters, *pOfs, pErrorResponse);
+   bool result = renderPresentation(vars, filters, *pOfs, pErrorResponse);
+   if (!result)
+      return false;
+
+   // if we have rmarkdown then use it to do base64 encoding
+   if (haveRequiredRMarkdown())
+   {
+      Error error = module_context::createSelfContainedHtml(targetFile,
+                                                            targetFile);
+      if (error)
+      {
+         LOG_ERROR(error);
+         *pErrorResponse = ErrorResponse(error.summary());
+         return false;
+      }
+   }
+
+   return true;
 }
 
 
@@ -964,8 +1022,10 @@ void handlePresentationHelpMarkdownRequest(const FilePath& filePath,
 
    // read in the file (process markdown)
    std::string helpDoc;
+   markdown::Extensions extensions;
+   extensions.htmlPreserve = true;
    Error error = markdown::markdownToHTML(mdFilePath,
-                                          markdown::Extensions(),
+                                          extensions,
                                           markdown::HTMLOptions(),
                                           &helpDoc);
    if (error)
@@ -985,6 +1045,7 @@ void handlePresentationHelpMarkdownRequest(const FilePath& filePath,
       vars["mathjax"] = "";
    vars["content"] = helpDoc;
    vars["js_callbacks"] = jsCallbacks;
+   vars["html_dependencies"] = readHtmlDepsFile(mdFilePath);
    pResponse->setNoCacheHeaders();
    pResponse->setContentType("text/html");
    pResponse->setBody(resourceFiles().get("presentation/helpdoc.html"),

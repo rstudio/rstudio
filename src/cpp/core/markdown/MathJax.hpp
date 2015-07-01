@@ -21,27 +21,11 @@
 #include <boost/regex.hpp>
 #include <boost/function.hpp>
 
+#include <core/HtmlUtils.hpp>
+
 namespace rstudio {
 namespace core {
 namespace markdown {
-
-struct ExcludePattern
-{
-   ExcludePattern(const boost::regex& pattern)
-      : begin(pattern)
-   {
-   }
-
-   ExcludePattern(const boost::regex& beginPattern,
-                  const boost::regex& endPattern)
-      : begin(beginPattern), end(endPattern)
-   {
-   }
-
-   boost::regex begin;
-   boost::regex end;
-};
-
 
 struct MathBlock
 {
@@ -58,7 +42,7 @@ struct MathBlock
 class MathJaxFilter : boost::noncopyable
 {
 public:
-   MathJaxFilter(const std::vector<ExcludePattern>& excludePatterns,
+   MathJaxFilter(const std::vector<html_utils::ExcludePattern>& excludePatterns,
                  std::string* pInput,
                  std::string* pHTMLOutput);
    ~MathJaxFilter();

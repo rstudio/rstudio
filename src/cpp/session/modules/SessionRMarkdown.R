@@ -115,6 +115,36 @@
    }
 })
 
+.rs.addFunction("pandocSelfContainedHtml", function(input, output) {
+   
+   # make input file path absolute
+   input <- normalizePath(input)
+   
+   # ensure output file exists and make it's path absolute
+   if (!file.exists(output))
+      file.create(output)
+   output <- normalizePath(output)
+   
+   # create a simple body-only template
+   template <- tempfile(fileext = ".html")
+   writeLines("$body$", template)
+   
+   # call pandoc with from format of "markdown_strict" to
+   # get as close as possible to html -> html conversion
+   rmarkdown::pandoc_convert(
+      input = input,
+      from = "markdown_strict",
+      output = output,
+      options = c(
+         "--self-contained",
+         "--template", template,
+         "+RTS", "-K512m", "-RTS"
+      )
+   )
+   
+   invisible(output)
+})
+
 .rs.addJsonRpcHandler("convert_to_yaml", function(input)
 {
    yaml <- yaml::as.yaml(input)
@@ -158,4 +188,5 @@
   else
     NULL
 })
+
 
