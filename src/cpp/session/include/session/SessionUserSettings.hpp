@@ -126,6 +126,9 @@ public:
    BioconductorMirror bioconductorMirror() const;
    void setBioconductorMirror(const BioconductorMirror& bioconductorMirror);
 
+   bool securePackageDownload() const;
+   void setSecurePackageDownload(bool secureDownload);
+
    bool vcsEnabled() const;
    void setVcsEnabled(bool enabled);
 

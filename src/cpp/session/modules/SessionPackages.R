@@ -351,12 +351,12 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    # RStudio mirror
    rstudioDF <- data.frame(name = "Global (CDN)",
                            host = "RStudio",
-                           url = "http://cran.rstudio.com",
+                           url = .Call("rs_rstudioCRANReposUrl"),
                            country = "us",
                            stringsAsFactors = FALSE)
 
    # CRAN mirrors
-   cranMirrors <- utils::getCRANmirrors()
+   cranMirrors <- utils::getCRANmirrors(local.only = TRUE)
    cranDF <- data.frame(name = cranMirrors$Name,
                         host = cranMirrors$Host,
                         url = cranMirrors$URL,
@@ -943,3 +943,154 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    .rs.success()
    
 })
+
+
+.rs.addFunction("secureDownloadMethod", function()
+{
+   # Check whether we are running R 3.2 and whether we have libcurl
+   isR32 <- getRversion() >= "3.2"
+   haveLibcurl <- isR32 && capabilities("libcurl")
+   
+   # Utility function to bind to libcurl or a fallback utility (e.g. wget)
+   posixMethod <- function(utility) {
+      if (haveLibcurl)
+         "libcurl"
+      else if (nzchar(Sys.which(utility)))
+         utility
+      else
+         ""
+   }
+   
+   # Determine the right secure download method per-system
+   sysName <- Sys.info()[['sysname']]
+   
+   # For windows we prefer binding directly to wininet if we can (since
+   # that doesn't rely on the value of setInternet2). If it's R <= 3.1
+   # then we can use "internal" for https so long as internet2 is enabled 
+   # (we don't use libcurl on Windows because it doesn't check certs).
+   if (identical(sysName, "Windows")) {
+      if (isR32)
+         "wininet"
+      else if (setInternet2(NA))
+         "internal"
+      else
+         ""
+   }
+   
+   # For Darwin and Linux we use libcurl if we can and then fall back
+   # to curl or wget as appropriate. We prefer libcurl because it honors
+   # the same proxy configuration that "internal" does so it less likely
+   # to break downloads for users behind proxy servers. 
+   
+   else if (identical(sysName, "Darwin")) {
+      posixMethod("curl")
+   }
+   
+   else if (identical(sysName, "Linux")) {
+      method <- posixMethod("wget")
+      if (!nzchar(method))
+         method <- posixMethod("curl")
+      method
+   } 
+   
+   # Another OS, don't even attempt detection since RStudio currently
+   # only runs on Windows, Linux, and Mac
+   else {
+      ""
+   }
+})
+
+.rs.addFunction("autoDownloadMethod", function() {
+   if (capabilities("http/ftp"))
+      "internal"
+   else if (nzchar(Sys.which("wget")))
+      "wget"
+   else if (nzchar(Sys.which("curl")))
+      "curl"
+   else
+      ""
+})
+
+.rs.addFunction("isDownloadMethodSecure", function(method) {
+   
+   # resolve auto if needed
+   if (identical(method, "auto"))
+      method <- .rs.autoDownloadMethod()
+   
+   # check for methods known to work securely
+   if (method %in% c("wininet", "libcurl", "wget", "curl")) {
+      TRUE
+   }
+   
+   # if internal then see if were using windows internal with inet2
+   else if (identical(method, "internal")) {
+      identical(Sys.info()[['sysname']], "Windows") && setInternet2(NA)
+   }
+   
+   # method with unknown properties (e.g. "lynx") or unresolved auto
+   else {
+      FALSE
+   }
+})
+
+.rs.addFunction("haveSecureDownloadFileMethod", function() {
+   .rs.isDownloadMethodSecure(getOption("download.file.method", "auto"))
+})
+
+.rs.addFunction("showSecureDownloadWarning", function() {
+   is.na(Sys.getenv("RSTUDIO_DISABLE_SECURE_DOWNLOAD_WARNING", unset = NA))
+})
+
+.rs.addFunction("insecureReposWarning", function(msg) {
+   if (.rs.showSecureDownloadWarning()) {
+      message("WARNING: ", msg, " You should either switch to a repository ",
+              "that supports HTTPS or change your options to not require HTTPS ",
+              "downloads.\n\nTo learn more and/or disable this warning ",
+              "message see the \"Use secure download method for HTTP\" option ",
+              "in Tools -> Global Options -> Packages.")
+   }
+})
+
+.rs.addFunction("insecureMethodWarning", function(msg) {
+   if (.rs.showSecureDownloadWarning()) {
+      message("WARNING: ", msg,
+              "\n\nTo learn more and/or disable this warning ",
+              "message see the \"Use secure download method for HTTP\" option ",
+              "in Tools -> Global Options -> Packages.")
+   }
+})
+
+.rs.addFunction("initSecureDownload", function() {
+      
+   # check if the user has already established a download.file.method and
+   # if so verify that it is secure
+   method <- getOption("download.file.method")
+   if (!is.null(method)) {
+      if (!.rs.isDownloadMethodSecure(method)) {
+         .rs.insecureMethodWarning(
+             paste("The download.file.method option is \"", method, "\" ",
+                   "however that method cannot provide secure (HTTPS) downloads ",
+                   "on this platform. ", 
+                   "This option was likely specified in .Rprofile or ",
+                   "Rprofile.site so if you wish to change it you may need ",
+                   "to edit one of those files.",
+                   sep = "")
+         )
+      }
+   } 
+   
+   # no user specified method, automatically set a secure one if we can
+   else {
+      secureMethod <- .rs.secureDownloadMethod()
+      if (nzchar(secureMethod)) {
+         options(download.file.method = secureMethod) 
+      }
+      else {
+         .rs.insecureMethodWarning(
+            "Unable to set a secure (HTTPS) download.file.method (no ",
+            "compatible method available in this installation of R)."
+         )
+      }
+   }
+})
+   
