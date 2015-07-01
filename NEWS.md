@@ -8,13 +8,15 @@
 * Split into lines command for multiple cursors (Ctrl+Alt+A)
 * New keyboard shortcuts for expand/contract selection
 * Enhanced display of sections in R scope navigator
-* Added document outline display to Rmd, R, C++ documents
+* Added document outline display to R and C++ documents
 
 
 ### R Markdown
 
 * New run chunk and options buttons overlaid at the top right of chunks
 * New shortcut for run current chunk (Cmd+Shift+Enter)
+* Outline view for quick navigation between sections/code chunks
+* Support for htmlwidgets in R Presentations
 
 
 ### Miscellaneous
