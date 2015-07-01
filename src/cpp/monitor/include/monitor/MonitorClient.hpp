@@ -18,8 +18,6 @@
 
 #include <string>
 
-#include <boost/asio/io_service.hpp>
-
 #include <core/system/System.hpp>
 #include <core/LogWriter.hpp>
 
@@ -28,6 +26,14 @@
 #include <monitor/metrics/Metric.hpp>
 
 #include "MonitorConstants.hpp"
+
+// forward declaration; boost/asio/io_service may cause errors if included more
+// than once (Boost 1.50 on Win x64 only)
+namespace boost {
+namespace asio {
+   class io_service;
+}
+}
 
 namespace rstudio {
 namespace monitor {
