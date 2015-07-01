@@ -43,6 +43,7 @@ public abstract class
    public abstract AppCommand saveSourceDocWithEncoding();
    public abstract AppCommand saveAllSourceDocs();
    public abstract AppCommand closeSourceDoc();
+   public abstract AppCommand closeOtherSourceDocs();
    public abstract AppCommand closeAllSourceDocs();
    public abstract AppCommand executeAllCode();
    public abstract AppCommand sourceFile();

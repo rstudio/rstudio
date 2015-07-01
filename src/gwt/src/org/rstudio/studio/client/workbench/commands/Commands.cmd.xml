@@ -101,6 +101,7 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="printSourceDoc"/>
          <separator/>
          <cmd refid="closeSourceDoc"/>
+         <cmd refid="closeOtherSourceDocs"/>
          <cmd refid="closeAllSourceDocs"/>
          <separator/>
          <cmd refid="closeProject"/>
@@ -684,6 +685,8 @@ well as menu structures (for main menu and popup menus).
         menuLabel="_Close"
         enabled="false"
         preventShortcutWhenDisabled="org.rstudio.studio.client.application.Desktop.isDesktop()"/>
+   <cmd id="closeOtherSourceDocs"
+        menuLabel="Close _Other"/>
    <cmd id="closeAllSourceDocs"
         menuLabel="C_lose All"/>
    <cmd id="vcsFileDiff"

@@ -1567,16 +1567,27 @@ public class Source implements InsertSourceHandler,
    @Handler
    public void onCloseAllSourceDocs()
    {
-      closeAllSourceDocs("Close All",  null);
+      closeAllSourceDocs("Close All",  null, false);
    }
    
-   public void closeAllSourceDocs(String caption, Command onCompleted)
+   @Handler
+   public void onCloseOtherSourceDocs()
+   {
+      closeAllSourceDocs("Close Other",  null, true);
+   }
+   
+   public void closeAllSourceDocs(String caption, Command onCompleted, 
+         final boolean excludeActive)
    { 
       // collect up a list of dirty documents
       ArrayList<EditingTarget> dirtyTargets = new ArrayList<EditingTarget>();
       for (EditingTarget target : editors_)
+      {
+         if (excludeActive && target == activeEditor_)
+            continue;
          if (target.dirtyState().getValue())
             dirtyTargets.add(target);
+      }
       
       // create a command used to close all tabs 
       final Command closeAllTabsCommand = new Command()
@@ -1589,7 +1600,10 @@ public class Source implements InsertSourceHandler,
                @Override
                public void execute(EditingTarget target, Command continuation)
                {
-                  view_.closeTab(target.asWidget(), false, continuation);
+                  if (!excludeActive || target != activeEditor_)
+                  {
+                     view_.closeTab(target.asWidget(), false, continuation);
+                  }
                }
             });
             
@@ -2426,6 +2440,7 @@ public class Source implements InsertSourceHandler,
       boolean hasDocs = editors_.size() > 0;
 
       commands_.closeSourceDoc().setEnabled(hasDocs);
+      commands_.closeOtherSourceDocs().setEnabled(editors_.size() > 1);
       commands_.closeAllSourceDocs().setEnabled(hasDocs);
       commands_.nextTab().setEnabled(hasDocs);
       commands_.previousTab().setEnabled(hasDocs);

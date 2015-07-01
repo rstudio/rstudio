@@ -88,6 +88,8 @@ public class SourceShim extends Composite
       @Handler
       public abstract void onSaveAllSourceDocs();
       @Handler
+      public abstract void onCloseOtherSourceDocs();
+      @Handler
       public abstract void onCloseAllSourceDocs();
       @Handler
       public abstract void onFindInFiles();
@@ -238,7 +240,7 @@ public class SourceShim extends Composite
    {
       if (source_ != null)
       {
-         source_.closeAllSourceDocs(caption, onCompleted);
+         source_.closeAllSourceDocs(caption, onCompleted, false);
       }
       else
       {
