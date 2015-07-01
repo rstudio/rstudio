@@ -44,8 +44,6 @@
 #include "SlideParser.hpp"
 #include "SlideRenderer.hpp"
 
-// TODO: sizing/css issues
-
 using namespace rstudio::core;
 
 namespace rstudio {
