@@ -456,12 +456,19 @@ assign(envir = .rs.Env, ".rs.getVar", function(name)
       .rs.setCRANRepos(reposUrl)
 })
 
+
+.rs.addFunction( "isCRANReposFromSettings", function()
+{
+   !is.null(attr(getOption("repos"), "RStudio"))
+})
+
+
 .rs.addFunction( "setCRANReposFromSettings", function(reposUrl)
 {
    # only set the repository if the repository was set by us
    # in the first place (it wouldn't be if the user defined a
    # repository in .Rprofile or called setRepositories directly)
-   if (!is.null(attr(getOption("repos"), "RStudio")))
+   if (.rs.isCRANReposFromSettings())
       .rs.setCRANRepos(reposUrl)
 })
 
@@ -627,3 +634,9 @@ assign(envir = .rs.Env, ".rs.getVar", function(name)
       FALSE
    }
 })
+
+
+.rs.addFunction("rVersionString", function() {
+   as.character(getRversion())
+})
+

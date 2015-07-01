@@ -348,14 +348,21 @@ Error installDependencies(const json::JsonRpcRequest& request,
    {
       std::string pkgList = boost::algorithm::join(cranPackages, ",");
       cmd += "utils::install.packages(c(" + pkgList + "), " +
-             "repos = '"+ module_context::CRANReposURL() + "');";
+             "repos = '"+ module_context::CRANReposURL() + "'";
+      std::string method = module_context::downloadFileMethod();
+      if (!method.empty())
+         cmd += ", method = '" + module_context::downloadFileMethod() + "'";
+      cmd += ");";
    }
    if (!cranSourcePackages.empty())
    {
       std::string pkgList = boost::algorithm::join(cranSourcePackages, ",");
       cmd += "utils::install.packages(c(" + pkgList + "), " +
-             "repos = '"+ module_context::CRANReposURL() +
-             "', type = 'source');";
+             "repos = '"+ module_context::CRANReposURL() + "', ";
+      std::string method = module_context::downloadFileMethod();
+      if (!method.empty())
+         cmd += "method = '" + module_context::downloadFileMethod() + "', ";
+      cmd += "type = 'source');";
    }
    BOOST_FOREACH(const std::string& pkg, embeddedPackages)
    {

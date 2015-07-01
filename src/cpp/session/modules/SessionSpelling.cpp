@@ -233,7 +233,9 @@ Error installAllDictionaries(const json::JsonRpcRequest& request,
                                     allLanguagesDir().absolutePath());
 
    // perform the download
-   r::exec::RFunction dlFunc(".rs.downloadAllDictionaries", targetDir);
+   r::exec::RFunction dlFunc(".rs.downloadAllDictionaries",
+                                targetDir,
+                                module_context::haveSecureDownloadFileMethod());
    Error error = dlFunc.call();
    if (error)
    {

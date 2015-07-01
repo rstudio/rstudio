@@ -1656,6 +1656,51 @@ std::string CRANReposURL()
    return url;
 }
 
+std::string rstudioCRANReposURL()
+{
+   std::string protocol = userSettings().securePackageDownload() ?
+                                                           "https" : "http";
+   return protocol + "://cran.rstudio.com/";
+}
+
+SEXP rs_rstudioCRANReposUrl()
+{
+   r::sexp::Protect rProtect;
+   return r::sexp::create(rstudioCRANReposURL(), &rProtect);
+}
+
+std::string downloadFileMethod(const std::string& defaultMethod)
+{
+   std::string method;
+   Error error = r::exec::evaluateString(
+                           "getOption('download.file.method', '" +
+                            defaultMethod + "')", &method);
+   if (error)
+      LOG_ERROR(error);
+   return method;
+}
+
+std::string CRANDownloadOptions()
+{
+   std::string options("options(repos = c(CRAN='" +
+                    module_context::CRANReposURL() + "')");
+   std::string method = module_context::downloadFileMethod();
+   if (!method.empty())
+      options += ", download.file.method = '" + method + "'";
+   options += ")";
+   return options;
+}
+
+bool haveSecureDownloadFileMethod()
+{
+   bool secure = false;
+   Error error = r::exec::RFunction(".rs.haveSecureDownloadFileMethod").call(
+                                                                      &secure);
+   if (error)
+      LOG_ERROR(error);
+   return secure;
+}
+
 shell_utils::ShellCommand RCommand::buildRCmd(const core::FilePath& rBinDir)
 {
 #if defined(_WIN32)
@@ -1919,6 +1964,13 @@ Error initialize()
    methodDef14.fun = (DL_FUNC) rs_restartR;
    methodDef14.numArgs = 1;
    r::routines::addCallMethod(methodDef14);
+
+   // register rs_restartR
+   R_CallMethodDef methodDef15;
+   methodDef15.name = "rs_rstudioCRANReposUrl" ;
+   methodDef15.fun = (DL_FUNC) rs_rstudioCRANReposUrl;
+   methodDef15.numArgs = 0;
+   r::routines::addCallMethod(methodDef15);
    
    // register rs_isRScriptInPackageBuildTarget
    r::routines::registerCallMethod(

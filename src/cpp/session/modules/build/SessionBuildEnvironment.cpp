@@ -122,7 +122,7 @@ bool doAddRtoolsToPathIfNecessary(T* pTarget,
              "not compatible with the currently running version of R."
              "\n\nPlease download and install the appropriate version of "
              "Rtools to ensure that packages are built correctly:"
-             "\n\nhttp://cran.rstudio.com/bin/windows/Rtools/"
+             "\n\nhttps://cran.rstudio.com/bin/windows/Rtools/"
              "\n\nNote that in addition to installing a compatible verison you "
              "also need to remove the incompatible version from your PATH");
             *pWarningMessage = boost::str(
@@ -163,7 +163,7 @@ bool doAddRtoolsToPathIfNecessary(T* pTarget,
            "currently installed. "
            "Please download and install the appropriate "
            "version of Rtools before proceeding:\n\n"
-           "http://cran.rstudio.com/bin/windows/Rtools/";
+           "https://cran.rstudio.com/bin/windows/Rtools/";
     }
     else
     {
@@ -185,7 +185,7 @@ bool doAddRtoolsToPathIfNecessary(T* pTarget,
        pWarningMessage->append(
           "\nPlease download and install the appropriate "
           "version of Rtools before proceeding:\n\n"
-          "http://cran.rstudio.com/bin/windows/Rtools/");
+          "https://cran.rstudio.com/bin/windows/Rtools/");
     }
 
     return false;

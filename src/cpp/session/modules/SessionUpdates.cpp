@@ -60,6 +60,8 @@ json::Object jsonFromProcessResult(const core::system::ProcessResult& result)
 void beginUpdateCheck(bool manual,
    const boost::function<void(const core::system::ProcessResult&)>& onCompleted)
 {
+   using namespace module_context;
+
    // Find the path to R 
    FilePath rProgramPath;
    Error error = module_context::rScriptPath(&rProgramPath);
@@ -101,6 +103,11 @@ void beginUpdateCheck(bool manual,
 #endif
    cmd.append("', ");
    cmd.append(manual ? "TRUE" : "FALSE");
+   cmd.append(", ");
+   cmd.append(haveSecureDownloadFileMethod() ? "TRUE" : "FALSE");
+   cmd.append(", '");
+   cmd.append(downloadFileMethod("auto"));
+   cmd.append("'");
    cmd.append(")");
    args.push_back(cmd);
    

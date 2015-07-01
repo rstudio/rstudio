@@ -78,8 +78,7 @@ public:
    {
       boost::shared_ptr<RSConnectPublish> pDeploy(new RSConnectPublish(file));
 
-      std::string cmd("{ options(repos = c(CRAN='" +
-                       module_context::CRANReposURL() + "')); ");
+      std::string cmd("{ " + module_context::CRANDownloadOptions() + "; ");
 
       // join and quote incoming filenames to deploy
       std::string deployFiles = quotedFilesFromArray(fileList, true);
