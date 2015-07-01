@@ -56,6 +56,7 @@ import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.GlobalProgressDelayer;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
+import org.rstudio.studio.client.common.dependencies.DependencyManager;
 import org.rstudio.studio.client.common.filetypes.EditableFileType;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
@@ -207,7 +208,8 @@ public class Source implements InsertSourceHandler,
                  Provider<FileMRUList> pMruList,
                  UIPrefs uiPrefs,
                  RnwWeaveRegistry rnwWeaveRegistry,
-                 ChunkIconsManager chunkIconsManager)
+                 ChunkIconsManager chunkIconsManager,
+                 DependencyManager dependencyManager)
    {
       commands_ = commands;
       view_ = view;
@@ -226,6 +228,7 @@ public class Source implements InsertSourceHandler,
       uiPrefs_ = uiPrefs;
       rnwWeaveRegistry_ = rnwWeaveRegistry;
       chunkIconsManager_ = chunkIconsManager;
+      dependencyManager_ = dependencyManager;
       
       vimCommands_ = new SourceVimCommands();
       
@@ -1002,51 +1005,57 @@ public class Source implements InsertSourceHandler,
    @Handler
    public void onNewRPresentationDoc()
    {
-      fileDialogs_.saveFile(
-         "New R Presentation", 
-         fileContext_,
-         workbenchContext_.getDefaultFileDialogDir(), 
-         ".Rpres", 
-         true, 
-         new ProgressOperationWithInput<FileSystemItem>() {
-
+      dependencyManager_.withRMarkdown(
+         "Authoring R Presentations", new Command() {
             @Override
-            public void execute(final FileSystemItem input,
-                                final ProgressIndicator indicator)
+            public void execute()
             {
-               if (input == null)
-               {
-                  indicator.onCompleted();
-                  return;
-               }
-               
-               indicator.onProgress("Creating Presentation...");
-               
-               server_.createNewPresentation(
-                 input.getPath(),
-                 new VoidServerRequestCallback(indicator) {
-                    @Override
-                    public void onSuccess()
-                    { 
-                       openFile(input, 
-                          FileTypeRegistry.RPRESENTATION,
-                          new CommandWithArg<EditingTarget>() {
+               fileDialogs_.saveFile(
+                  "New R Presentation", 
+                  fileContext_,
+                  workbenchContext_.getDefaultFileDialogDir(), 
+                  ".Rpres", 
+                  true, 
+                  new ProgressOperationWithInput<FileSystemItem>() {
 
-                           @Override
-                           public void execute(EditingTarget arg)
-                           {
-                              server_.showPresentationPane(
-                                          input.getPath(),
-                                          new VoidServerRequestCallback());
-                              
-                           }
-                          
-                       });
-                    }
-                 });
+                     @Override
+                     public void execute(final FileSystemItem input,
+                                         final ProgressIndicator indicator)
+                     {
+                        if (input == null)
+                        {
+                           indicator.onCompleted();
+                           return;
+                        }
+                        
+                        indicator.onProgress("Creating Presentation...");
+                        
+                        server_.createNewPresentation(
+                          input.getPath(),
+                          new VoidServerRequestCallback(indicator) {
+                             @Override
+                             public void onSuccess()
+                             { 
+                                openFile(input, 
+                                   FileTypeRegistry.RPRESENTATION,
+                                   new CommandWithArg<EditingTarget>() {
+
+                                    @Override
+                                    public void execute(EditingTarget arg)
+                                    {
+                                       server_.showPresentationPane(
+                                           input.getPath(),
+                                           new VoidServerRequestCallback());
+                                       
+                                    }
+                                   
+                                });
+                             }
+                          });  
+                     }
+               });
                
             }
-      
       });
    }
    
@@ -3141,4 +3150,5 @@ public class Source implements InsertSourceHandler,
    private int newTabPending_;
    
    private ChunkIconsManager chunkIconsManager_;
+   private DependencyManager dependencyManager_;
 }
