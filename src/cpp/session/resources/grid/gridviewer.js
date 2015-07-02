@@ -539,7 +539,8 @@ var createFilterUI = function(idx, col) {
 
   var setUnfiltered = function() {
     if (ui !== null) {
-      host.replaceChild(val, ui);
+      if (ui.parentNode === host)
+        host.replaceChild(val, ui);
       ui = null;
     }
     host.className = "colFilter unfiltered";
