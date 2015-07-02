@@ -9,7 +9,7 @@
 * New keyboard shortcuts for expand/contract selection
 * Enhanced display of sections in R scope navigator
 * Added document outline display to R and C++ documents
-
+* New Close All Except Current command
 
 ### R Markdown
 
