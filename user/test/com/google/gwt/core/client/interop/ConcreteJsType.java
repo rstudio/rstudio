@@ -47,4 +47,20 @@ class ConcreteJsType {
   protected int protectedField = 10;
 
   int packageField = 10;
+
+  interface A {
+    int x();
+  }
+
+  public static class AImpl1 implements A {
+    @Override
+    public int x() { return 42; }
+  }
+
+  public static class AImpl2 implements A {
+    @Override
+    public int x() { return 101; }
+  }
+
+  public A notTypeTightenedField = new AImpl1();
 }

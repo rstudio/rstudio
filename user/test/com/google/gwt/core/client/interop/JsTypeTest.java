@@ -100,6 +100,17 @@ public class JsTypeTest extends GWTTestCase {
         == callIntFunction(concreteJsTypeSubclass, "publicMethod"));
   }
 
+  public void testConcreteJsTypeNoTypeTightenField() {
+    // If we type-tighten, java side will see no calls and think that field could only AImpl1.
+    ConcreteJsType concreteJsType = new ConcreteJsType();
+    setTheField(concreteJsType, new ConcreteJsType.AImpl2());
+    assertEquals(101, concreteJsType.notTypeTightenedField.x());
+  }
+
+  private native void setTheField(ConcreteJsType obj, ConcreteJsType.A value)/*-{
+    obj.notTypeTightenedField = value;
+  }-*/;
+
   public void testRevealedOverrideJsType() {
     PlainParentType plainParentType = new PlainParentType();
     RevealedOverrideSubType revealedOverrideSubType = new RevealedOverrideSubType();

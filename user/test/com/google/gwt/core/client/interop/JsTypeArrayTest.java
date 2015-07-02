@@ -67,7 +67,7 @@ public class JsTypeArrayTest extends GWTTestCase {
   }
 
   // TODO(rluble): Needs fixes in ImlementCastsAndTypeChecks, ArrayNormalizer and maybe type oracle.
-  public void __disabled__testJsTypeArray_asAField() {
+  public void testJsTypeArray_asAField() {
     SimpleJsTypeAsAFieldHolder holder = new SimpleJsTypeAsAFieldHolder();
     fillArrayField(holder);
     SimpleJsTypeAsAField[] array = holder.arrayField;
