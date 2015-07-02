@@ -1,7 +1,7 @@
 #
 # SessionShinyViewer.R
 #
-# Copyright (C) 2009-14 by RStudio, Inc.
+# Copyright (C) 2009-15 by RStudio, Inc.
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -21,6 +21,10 @@
    invisible(.Call("rs_shinyviewer", url, getwd(), 3))
 }, attrs = list(shinyViewerType = 3))
 
+.rs.addFunction("invokeShinyWindowExternal", function(url) {
+   invisible(.Call("rs_shinyviewer", url, getwd(), 4))
+}, attrs = list(shinyViewerType = 4))
+
 .rs.addFunction("setShinyViewerType", function(type) {
    if (type == 1)
       options(shiny.launch.browser = FALSE)
@@ -29,7 +33,7 @@
    else if (type == 3)
       options(shiny.launch.browser = .rs.invokeShinyWindowViewer)
    else if (type == 4)
-      options(shiny.launch.browser = TRUE)
+      options(shiny.launch.browser = .rs.invokeShinyWindowExternal)
 })
 
 .rs.addFunction("getShinyViewerType", function() {

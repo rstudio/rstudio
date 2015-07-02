@@ -98,6 +98,8 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.shiny.events.ShinyApplicationStatusEvent;
+import org.rstudio.studio.client.shiny.model.ShinyApplicationParams;
+import org.rstudio.studio.client.shiny.model.ShinyViewerType;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
@@ -576,8 +578,17 @@ public class TextEditingTarget implements
                   if (getPath() != null &&
                       getPath().startsWith(event.getParams().getPath()))
                   {
-                     view_.onShinyApplicationStateChanged(
-                           event.getParams().getState());
+                     String state = event.getParams().getState();
+                     if (event.getParams().getViewerType() != 
+                            ShinyViewerType.SHINY_VIEWER_PANE &&
+                         event.getParams().getViewerType() != 
+                            ShinyViewerType.SHINY_VIEWER_WINDOW)
+                     {
+                        // we can't control the state when it's not in an
+                        // RStudio-owned window, so treat the app as stopped
+                        state = ShinyApplicationParams.STATE_STOPPED;
+                     }
+                     view_.onShinyApplicationStateChanged(state);
                   }
                }
             });
