@@ -754,7 +754,7 @@ var RCodeModel = function(session, tokenizer,
       var row = this.$scopes.parsePos.row;
       var column = this.$scopes.parsePos.column;
 
-      iterator.moveToPosition(row, column, true);
+      iterator.moveToPosition({row: row, column: column}, true);
 
       var token = iterator.getCurrentToken();
       
@@ -853,7 +853,7 @@ var RCodeModel = function(session, tokenizer,
             if (braceIdx !== -1)
                label = label.substr(0, braceIdx).trim();
 
-            this.$scopes.onMarkdownHead(label, labelEndPos, labelStartPos, depth);
+            this.$scopes.onMarkdownHead(label, labelStartPos, labelEndPos, depth);
          }
 
          // Add R-comment sections; e.g.

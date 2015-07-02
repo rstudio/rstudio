@@ -28,29 +28,49 @@ var Utils = require("mode/utils");
 
 (function() {
 
-   var that = this;
+   var self = this;
 
-   function isComment(editor, row)
+   var $debuggingEnabled = false;
+   function debuglog(/*...*/)
+   {
+      if ($debuggingEnabled)
+         for (var i = 0; i < arguments.length; i++)
+            console.log(arguments[i]);
+   }
+
+   function isCommentedRow(editor, row)
    {
       var token = editor.getSession().getTokenAt(row, 0);
-      if (token === null)
+      if (token == null)
          return false;
 
       return /\bcomment\b/.test(token.type);
    }
 
-   function commentRange(editor)
+   function isExpansionOf(candidate, range)
    {
-      var startRow = editor.getCursorPosition().row;
-      var endRow = startRow;
+      var isLeftExpansion =
+             candidate.start.row < range.start.row ||
+             (candidate.start.row === range.start.row && candidate.start.column < range.start.column);
 
-      while (isComment(editor, startRow))
-         startRow--;
+      var isLeftSame =
+             candidate.start.row === range.start.row &&
+             candidate.start.column === range.start.column;
 
-      while (isComment(editor, endRow))
-         endRow++;
+      var isRightExpansion =
+             candidate.end.row > range.end.row ||
+             (candidate.end.row === range.end.row && candidate.end.column > range.end.column);
 
-      return new Range(startRow + 1, 0, endRow, 0);
+      var isRightSame =
+             candidate.end.row === range.end.row &&
+             candidate.end.column === range.end.column;
+
+      if (isLeftExpansion)
+         return isRightExpansion || isRightSame;
+      else if (isRightExpansion)
+         return isLeftExpansion || isLeftSame;
+      else
+         return false;
    }
 
    function isSingleLineString(string)
@@ -75,14 +95,44 @@ var Utils = require("mode/utils");
       return true;
    }
 
-   var onDocumentChange = function(editor)
+   var $handlersAttached = false;
+   function ensureOnChangeHandlerAttached()
    {
-      editor.$clearSelectionHistory();
-   };
+      if (!$handlersAttached)
+      {
+         self.on("change", self.$onClearSelectionHistory);
+         $handlersAttached = true;
+      }
+   }
+
+   function ensureOnChangeHandlerDetached()
+   {
+      if ($handlersAttached)
+      {
+         self.off("change", self.$onClearSelectionHistory);
+         $handlersAttached = false;
+      }
+   }
+
+   function indexOfFirstNonWhitespaceChar(line, ifNotFound)
+   {
+      var index = line.search(/\S/);
+      if (index === -1)
+         return ifNotFound;
+      return index;
+   }
+
+   function indexOfLastNonWhitespaceChar(line, ifNotFound)
+   {
+      var index = line.search(/\S/);
+      if (index === -1)
+         return ifNotFound;
+      return line.trim().length + index;
+   }
 
    this.$onClearSelectionHistory = function()
    {
-      return that.$clearSelectionHistory();
+      return self.$clearSelectionHistory();
    };
 
    this.$clearSelectionHistory = function()
@@ -93,11 +143,16 @@ var Utils = require("mode/utils");
 
    this.$acceptSelection = function(selection, newRange, oldRange)
    {
+      debuglog("Accepting selection: ", oldRange, newRange);
       if (this.$selectionRangeHistory == null)
          this.$selectionRangeHistory = [];
-      this.$selectionRangeHistory.push(oldRange);
 
       selection.setSelectionRange(newRange);
+
+      var normalizedRange = selection.getRange();
+      if (!normalizedRange.isEqual(oldRange))
+         this.$selectionRangeHistory.push(oldRange);
+
       if (!(this.isRowFullyVisible(newRange.start.row) &&
             this.isRowFullyVisible(newRange.end.row)))
       {
@@ -107,88 +162,186 @@ var Utils = require("mode/utils");
       return newRange;
    };
 
-   this.$expandSelection = function()
+   var $expansionFunctions = [];
+   function addExpansionRule(name, immediate, method)
    {
-      // Extract some useful objects / variables
-      var session = this.getSession();
-      var selection = this.getSelection();
-      var range = selection.getRange();
+      $expansionFunctions.push({
+         name: name,
+         immediate: immediate,
+         execute: method
+      });
+   }
 
-      this.on("change", this.$onClearSelectionHistory);
+   addExpansionRule("word", true, function(editor, session, selection, range) {
 
-      // Place a token iterator at the cursor position
-      var position = range.start;
-      var iterator = new TokenIterator(session, position.row, position.column);
-      var token = iterator.getCurrentToken();
-
-      // A null token implies the document is empty.
-      if (token == null)
-         return false;
-
-      // If we currently have no selection, select the current word.
-      if (selection.isEmpty())
+      var candidate = session.getWordRange(range.start.row, range.start.column);
+      if (candidate)
       {
-         var prevChar = session.getLine(range.start.row)[range.start.column - 1];
-         if (prevChar !== ' ' &&
-             prevChar !== '\n' &&
-             prevChar !== '\t')
-         {
-            this.navigateWordLeft();
-         }
-         selection.selectWordRight();
-         return this.$acceptSelection(selection, selection.getRange(), range);
+         var text = session.getTextRange(candidate);
+         if (text.trim().length !== 0)
+            return candidate;
       }
+
+      return null;
+
+   });
+
+   addExpansionRule("string", true, function(editor, session, selection, range) {
 
       // If the current token is a string and the current selection lies within
       // the string, then expand to select the string.
-      var candidate;
-      if (token.type === "string" && isSingleLineString(token.value))
+      var iterator = new TokenIterator(session);
+      var token = iterator.moveToPosition(range.start, true);
+      if (token && token.type === "string" && isSingleLineString(token.value))
+         return iterator.getCurrentTokenRange();
+
+      return null;
+
+   });
+
+   addExpansionRule("comment", true, function(editor, session, selection, range) {
+
+      // First, check that the whole selection is commented.
+      var startRow = range.start.row;
+      var endRow = range.end.row;
+
+      for (var row = startRow; row <= endRow; row++)
       {
-         candidate = iterator.getCurrentTokenRange();
-         if (candidate.containsRange(range) && !range.isEqual(candidate))
-            return this.$acceptSelection(selection, candidate, range);
+         if (!isCommentedRow(editor, row))
+            return null;
       }
 
-      // Handle 'small' expansions of the current
-      // selection.
-      var prevToken = iterator.peekBwd(1);
-      if (prevToken.type === "support.function.codebegin") {
+      // Now, expand the selection to include any other comments attached.
+      while (isCommentedRow(editor, startRow))
+         startRow--;
 
-         var startPos = {
-            row: range.start.row - 1,
-            column: 0
-         };
+      while (isCommentedRow(editor, endRow))
+         endRow++;
 
-         var endPos = {
-            row: range.end.row + 1,
-            column: iterator.$session.getLine(range.end.row + 1).length
-         };
+      var endColumn = editor.getSession().getLine(endRow - 1).length;
+      return new Range(startRow + 1, 0, endRow - 1, endColumn);
 
-         candidate = Range.fromPoints(startPos, endPos);
-         return this.$acceptSelection(selection, candidate, range);
-      }
+   });
 
-      if (Utils.isOpeningBracket(token.value)) {
-         clone = iterator.clone();
-         var startPos = iterator.getCurrentTokenPosition();
-         if (clone.fwdToMatchingToken()) {
-            candidate = Range.fromPoints(range.start, range.end);
-            candidate.start.column--;
-            candidate.end.column++;
-            return this.$acceptSelection(selection, candidate, range);
+   addExpansionRule("includeBoundaries", true, function(editor, session, selection, range) {
+
+      var lhsItr = new TokenIterator(session);
+      var lhsToken = lhsItr.moveToPosition(range.start);
+      if (range.start.column === 0)
+         lhsToken = lhsItr.moveToPreviousToken();
+
+      var rhsItr = new TokenIterator(session);
+      var rhsToken = rhsItr.moveToPosition(range.end, true);
+
+      if (lhsToken && rhsToken)
+      {
+         // Check for complementing types
+         var isMatching =
+                lhsToken.type === "support.function.codebegin" &&
+                rhsToken.type === "support.function.codeend";
+
+         if (!isMatching)
+         {
+            // Check for complementing brace types
+            isMatching =
+               Utils.isOpeningBracket(lhsToken.value) &&
+               Utils.getComplement(lhsToken.value) === rhsToken.value;
+         }
+
+         if (isMatching)
+         {
+            debuglog("Expanding to match selection");
+            var lhsPos = lhsItr.getCurrentTokenPosition();
+            var rhsPos = rhsItr.getCurrentTokenPosition();
+            rhsPos.column += rhsToken.value.length;
+            return Range.fromPoints(lhsPos, rhsPos);
          }
       }
 
-      // If the current selection is in, or contains, a comment block,
-      // expand selection to entire comment block.
-      if (/\bcomment\b/.test(token.type))
+      return null;
+
+   });
+
+   addExpansionRule("expandLines", false, function(editor, session, selection, range) {
+
+      var startLine = session.getLine(range.start.row);
+      var startRowFirstCharIdx = indexOfFirstNonWhitespaceChar(startLine, 0);
+
+      var endLine = session.getLine(range.end.row);
+      var endRowLastCharIdx = indexOfLastNonWhitespaceChar(endLine, endLine.length);
+
+      if (range.start.column > startRowFirstCharIdx ||
+          range.end.column < endRowLastCharIdx)
       {
-         var candidate = commentRange(this);
-         selection.setSelectionRange(range);
-         return this.$acceptSelection(selection, candidate, range);
+         var candidate = new Range(
+            range.start.row,
+            startRowFirstCharIdx,
+            range.end.row,
+            endRowLastCharIdx
+         );
+
+         // Avoid single-line selections of just whitespace.
+         if (candidate.start.row === candidate.end.row &&
+             session.getLine(candidate.start.row).trim().length === 0)
+         {
+            return null;
+         }
+
+         return candidate;
       }
 
-      // Look for matching bracket pairs.
+      return null;
+
+   });
+
+   addExpansionRule("nonBlankLines", false, function(editor, session, selection, range) {
+
+      // Only apply in Markdown mode for now.
+      var mode = session.getMode();
+      if (mode.getLanguageMode)
+      {
+         for (var row = range.start.row; row <= range.end.row; row++)
+         {
+            var lang = mode.getLanguageMode({row: row, column: 0});
+            if (lang !== "Markdown")
+               return null;
+         }
+      }
+
+      var startRow = range.start.row;
+      var endRow = range.end.row;
+
+      var n = session.getLength();
+
+      while (startRow >= 0 && session.getLine(startRow).trim().length > 0)
+         startRow--;
+
+      while (endRow < n && session.getLine(endRow).trim().length > 0)
+         endRow++;
+
+      if (session.getLine(startRow).trim().length === 0)
+         startRow++;
+
+      if (session.getLine(endRow).trim().length === 0)
+         endRow--;
+
+      if (startRow >= endRow)
+         return null;
+
+      var startCol = indexOfFirstNonWhitespaceChar(session.getLine(startRow), 0);
+      var endCol = indexOfLastNonWhitespaceChar(session.getLine(endRow), 0);
+      return new Range(startRow, startCol, endRow, endCol);
+
+   });
+
+   addExpansionRule("matching", false, function(editor, session, selection, range) {
+
+      // Look for matching bracket pairs. Note that this block does not
+      // immediately return if a candidate range is found -- if the expansion
+      // spans new rows, we may instead choose to just expand the current
+      // selection to fill both the start and end rows.
+      var iterator = new TokenIterator(session);
+      var token = iterator.moveToPosition(range.start);
       while ((token = iterator.stepBackward()))
       {
          if (token == null)
@@ -213,25 +366,139 @@ var Utils = require("mode/utils");
                var endPos = clone.getCurrentTokenPosition();
                if (token.type === "support.function.codebegin") {
                    endPos.row--;
-                   endPos.column = iterator.$session.getLine(startPos.row).length;
+                   endPos.column = session.getLine(endPos.row).length;
                }
-               candidate = Range.fromPoints(startPos, endPos);
-               if (!range.isEqual(candidate))
-                  return this.$acceptSelection(selection, candidate, range);
+               return Range.fromPoints(startPos, endPos);
             }
 
          }
       }
 
-      // If we get here, just select everything.
-      selection.selectAll();
+      return null;
 
-      // If the new selection is not equal to the previous
-      // selection, add it to the selection history.
-      if (!this.getSelectionRange().isEqual(range))
-         return this.$acceptSelection(selection, selection.getRange(), range);
+   });
 
-      return true;
+   addExpansionRule("scope", false, function(editor, session, selection, range) {
+
+      var mode = session.getMode();
+      if (mode.codeModel == null || mode.codeModel.getCurrentScope == null)
+         return null;
+
+      var candidates = [];
+
+      var scope = mode.codeModel.getCurrentScope(range.start);
+      while (scope != null)
+      {
+         var startPos = scope.preamble;
+         var endPos = scope.end;
+
+         if (endPos == null && scope.parentScope)
+         {
+            var siblings = scope.parentScope.$children;
+            for (var i = siblings.length - 2; i >= 0; i--)
+            {
+               if (siblings[i].equals(scope))
+               {
+                  endPos = siblings[i + 1].preamble;
+                  break;
+               }
+            }
+         }
+
+         if (endPos == null)
+            endPos = {row: session.getLength(), column: 0};
+
+         candidates.push(Range.fromPoints(startPos, endPos));
+         scope = scope.parentScope;
+      }
+
+      if (candidates.length === 0)
+         return null;
+
+      return candidates;
+
+   });
+
+   addExpansionRule("everything", false, function(editor, session, selection, range) {
+
+      var n = session.getLength();
+      if (n === 0)
+         return new Range(0, 0, 0, 0);
+
+      var lastLine = session.getLine(n - 1);
+      return new Range(0, 0, n - 1, lastLine.length);
+
+   });
+
+   this.$expandSelection = function()
+   {
+      debuglog("Begin new expand selection session");
+      debuglog("----------------------------------");
+
+      ensureOnChangeHandlerAttached();
+
+      // Extract some useful objects / variables.
+      var session = this.getSession();
+      var selection = this.getSelection();
+      var initialRange = selection.getRange();
+
+      // Loop through the registered expansion functions, and apply them.
+      // Store the candidate ranges for later selection.
+      var allCandidates = [];
+      for (var i = 0; i < $expansionFunctions.length; i++)
+      {
+         var rule = $expansionFunctions[i];
+
+         // Get the candidate range to use for expansion.
+         var candidates = rule.execute(this, session, selection, initialRange);
+         if (!Utils.isArray(candidates))
+            candidates = [candidates];
+
+         for (var j = 0; j < candidates.length; j++)
+         {
+            var candidate = candidates[j];
+
+            // Check to see if we should apply it immediately.
+            if (candidate && rule.immediate && isExpansionOf(candidate, initialRange))
+               return this.$acceptSelection(selection, candidate, initialRange);
+
+            // Otherwise, add it to the list of candidates for later filtering.
+            if (candidate && isExpansionOf(candidate, initialRange))
+            {
+               allCandidates.push({
+                  name: rule.name,
+                  range: candidate
+               });
+            }
+         }
+
+      }
+
+      // Sort candidates by size of range. We want to choose the smallest range
+      // that is still an expansion of the initial range.
+      allCandidates.sort(function(lhs, rhs) {
+
+         var lhs = lhs.range;
+         var rhs = rhs.range;
+
+         var lhsRowSpan = lhs.end.row - lhs.start.row;
+         var rhsRowSpan = rhs.end.row - rhs.start.row;
+
+         if (lhsRowSpan !== rhsRowSpan)
+            return lhsRowSpan > rhsRowSpan;
+
+         var lhsColSpan = lhs.end.column - lhs.start.column;
+         var rhsColSpan = rhs.end.column - rhs.start.column;
+
+         return lhsColSpan > rhsColSpan;
+
+      });
+
+      // Choose the smallest expansion.
+      var bestFit = allCandidates[0].range;
+      debuglog("Selected candidate '" + allCandidates[0].name + "'", bestFit);
+      return this.$acceptSelection(selection, bestFit, initialRange);
+
    };
 
    this.$shrinkSelection = function()
@@ -247,7 +514,11 @@ var Utils = require("mode/utils");
           }
           return range;
       }
-      this.off("change", this.$onClearSelectionHistory);
+
+      // No more history means we don't need to track
+      // document changed any more.
+      ensureOnChangeHandlerDetached();
+
    };
 
 }).call(Editor.prototype);

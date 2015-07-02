@@ -176,15 +176,16 @@ var Range = require("ace/range").Range;
     * If no such token exists at that position, then we instead
     * move to the first token lying previous to that token.
     */
-   this.moveToPosition = function(rowOrPosition, column, seekForward)
+   this.moveToPosition = function(position, seekForward)
    {
-      var position = rowOrPosition;
-      if (typeof column !== "undefined")
-         position = {row: rowOrPosition, column: column};
-         
-      // Try to get a token at the position supplied.
+      // Try to get a token at the position supplied. Note that the
+      // default behaviour of 'session.getTokenAt' is to return the first
+      // token prior to the position supplied; for 'seekForward' behaviour
+      // this is undesired.
       var token = this.$session.getTokenAt(position.row, position.column);
- 
+      if (token && seekForward && token.column < position.column)
+         token = this.$session.getTokenAt(position.row, position.column + 1);
+
       // If no token was returned, place a token cursor at the first
       // cursor previous to that token.
       //
