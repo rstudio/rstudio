@@ -272,27 +272,40 @@ define('mode/r_scope_tree', function(require, exports, module) {
       // For example, given the function definition:
       //
       //    foo <- function(a, b, c) {
-      //    ^ -- start
+      //    ^ -- preamble
       //                             ^ -- start
       //
       // In general, these should be supplied separately -- otherwise, the
       // scope tree builder runs the risk of improperly adding duplicates of a
       // node when change events are emitted.
       this.start = start;
+
+      // Validate that the preamble lies before the start.
+      if (start && preamble)
+      {
+         if (preamble.row > start.row ||
+             (preamble.row === start.row && preamble.column > start.column))
+         {
+            throw new Error("Malformed preamble: should lie before start position");
+         }
+      }
+
       this.preamble = preamble || start;
 
       // The end position of the scope.
       this.end = null;
 
-      // Whether this scope is
+      // The type of this scope (e.g. a braced scope, a section, and so on)
       this.scopeType = scopeType;
       
-      // A pointer to the parent scope (if any) 
+      // A pointer to the parent scope (if any; only the root scope should
+      // have no parent)
       this.parentScope = null;
 
       // Generalized attributes (an object with names)
       this.attributes = attributes || {};
 
+      // Child nodes
       this.$children = [];
    };
 

@@ -23,7 +23,7 @@ Editor.prototype.clear = function() {
    var end = {
       row: this.getSession().getLength(),
       column: 0
-   }
+   };
 
    this.getSession().remove(Range.fromPoints(start, end));
 }
@@ -35,7 +35,7 @@ Editor.prototype.getContents = function() {
 Editor.prototype.setContents = function(text) {
     this.clear();
     this.insert(text);
-}
+};
 
 // Initialize editor + provide aliases
 var editor = ace.edit("editor");
@@ -68,7 +68,7 @@ QUnit.test("TokenIterator works as expected", function(assert) {
     editor.insert("foo <- function(x) {\n  print(x)\n}");
     var iterator = new TokenIterator(editor.getSession());
 
-    iterator.moveToPosition(0, 0);
+    iterator.moveToPosition({row: 0, column: 0});
     assert.equal(iterator.getCurrentTokenRow(), 0, "First token lies at row 0");
     assert.equal(iterator.getCurrentTokenColumn(), 0, "First token lies on column 0");
 
@@ -94,5 +94,44 @@ QUnit.test("TokenIterator works as expected", function(assert) {
 
     assert.ok(prevToken.value === "}", "The final token is a closing bracket (was '" + prevToken.value + "')");
 
-})
+});
+
+QUnit.test("TokenIterator moves to position as expected", function(assert) {
+
+    // NOTE: The column indices are written above the text just
+    // as a means of double-checking the test.
+    //
+    //             012345678
+    editor.insert("(((abc)))");
+
+    var iterator = new TokenIterator(editor.getSession());
+
+    iterator.moveToPosition({row: 0, column: 0});
+    assert.equal(iterator.getCurrentToken().value, "(");
+
+    iterator.moveToPosition({row: 0, column: 3});
+    assert.equal(iterator.getCurrentToken().value, "(");
+
+    iterator.moveToPosition({row: 0, column: 3}, true);
+    assert.equal(iterator.getCurrentToken().value, "abc");
+
+    iterator.moveToPosition({row: 0, column: 4});
+    assert.equal(iterator.getCurrentToken().value, "abc");
+
+    iterator.moveToPosition({row: 0, column: 4}, true);
+    assert.equal(iterator.getCurrentToken().value, "abc");
+
+    iterator.moveToPosition({row: 0, column: 5});
+    assert.equal(iterator.getCurrentToken().value, "abc");
+
+    iterator.moveToPosition({row: 0, column: 5}, true);
+    assert.equal(iterator.getCurrentToken().value, "abc");
+
+    iterator.moveToPosition({row: 0, column: 6});
+    assert.equal(iterator.getCurrentToken().value, "abc");
+
+    iterator.moveToPosition({row: 0, column: 6}, true);
+    assert.equal(iterator.getCurrentToken().value, ")");
+
+});
 
