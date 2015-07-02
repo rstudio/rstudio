@@ -350,24 +350,70 @@ var createNumericFilterUI = function(idx, col, onDismiss) {
   return ele;
 };
 
+// shared among factor and text filter UI
+var createTextFilterBox = function(ele, idx, col, onDismiss) {
+  var input = document.createElement("input");
+  input.type = "text";
+  input.className = "textFilterBox";
+
+  // apply the search filter value if this column is filtered as character
+  var searchvals = table.columns(idx).search()[0].split("|");
+  if (searchvals.length > 1 && searchvals[0] === "character") 
+    input.value = searchvals[1];
+
+  var updateView = debounce(function() {
+      table.columns(idx).search("character|" + input.value).draw();
+    }, 200);
+  input.addEventListener("keyup", function(evt) {
+    updateView();
+  });
+  input.addEventListener("keydown", function(evt) {
+    if (evt.keyCode === 27) {
+      onDismiss();
+    }
+  });
+  ele.addEventListener("click", function(evt) {
+    input.focus();
+    evt.preventDefault();
+    evt.stopPropagation();
+  });
+  ele.appendChild(input);
+  return input;
+};
+
 var createFactorFilterUI = function(idx, col, onDismiss) {
   var ele = document.createElement("div");
-  var display = document.createElement("span");
-  display.innerHTML = "&nbsp;";
-  ele.appendChild(display);
+  var input = createTextFilterBox(ele, idx, col, onDismiss);
+  input.addEventListener("keyup", function(evt) {
+    // when the user starts typing in the text box, hide the drop list
+    if (dismissActivePopup) {
+      dismissActivePopup(false);
+    }
+  });
+  input.addEventListener("blur", function(evt) {
+    if (!dismissActivePopup) 
+      onDismiss();
+  });
+  input.addEventListener("focus", function(evt) {
+    if (dismissActivePopup)
+      dismissActivePopup(false);
+  });
 
   var setValHandler = function(factor, text) {
       return function(evt) {
         var searchText = "factor|" + factor.toString();
         table.columns(idx).search(searchText).draw();
-        display.textContent = text;
+        input.value = text;
       };
   };
+
   invokeFilterPopup(ele, function(popup) {
     var list = document.createElement("div");
     list.className = "choiceList";
-    var val = parseSearchVal(idx);
-    var current = val.length > 0 ? parseInt(val) : 0;
+    var current = 0;
+    var searchvals = table.columns(idx).search()[0].split("|");
+    if (searchvals.length > 1 && searchvals[0] === "factor") 
+      current = parseInt(searchvals[1]);
     for (var i = 0; i < col.col_vals.length; i++) {
       var opt = document.createElement("div");
       opt.textContent = col.col_vals[i];
@@ -383,34 +429,14 @@ var createFactorFilterUI = function(idx, col, onDismiss) {
 
 var createTextFilterUI = function(idx, col, onDismiss) {
   var ele = document.createElement("div");
-  var input = document.createElement("input");
-  input.type = "text";
-  input.className = "textFilterBox";
-  input.value = parseSearchVal(idx);
-  var updateView = debounce(function() {
-      table.columns(idx).search("character|" + input.value).draw();
-    }, 200);
-  input.addEventListener("keyup", function(evt) {
-    updateView();
-  });
-  input.addEventListener("keydown", function(evt) {
-    if (evt.keyCode === 27) {
-      onDismiss();
-    }
-  });
+  var input = createTextFilterBox(ele, idx, col, onDismiss);
   input.addEventListener("blur", function(evt) {
     onDismiss();
   });
   input.addEventListener("focus", function(evt) {
     if (dismissActivePopup)
-      dismissActivePopup();
+      dismissActivePopup(true);
   });
-  ele.addEventListener("click", function(evt) {
-    input.focus();
-    evt.preventDefault();
-    evt.stopPropagation();
-  });
-  ele.appendChild(input);
   return ele;
 };
 
@@ -432,7 +458,7 @@ var createBooleanFilterUI = function(idx, col, onDismiss) {
     var list = document.createElement("div");
     list.className = "choiceList";
     var values = ["TRUE", "FALSE"];
-    for (logical in values) {
+    for (var logical in values) {
       var opt = document.createElement("div");
       opt.textContent = values[logical];
       opt.className = "choiceListItem";
@@ -448,14 +474,15 @@ var createBooleanFilterUI = function(idx, col, onDismiss) {
 var invokeFilterPopup = function (ele, buildPopup, onDismiss, dismissOnClick) {
   var popup = null;
 
-  var dismissPopup = function() {
+  var dismissPopup = function(actionComplete) {
     if (popup) {
       document.body.removeChild(popup);
       document.body.removeEventListener("click", checkLightDismiss);
       document.body.removeEventListener("keydown", checkEscDismiss);
       dismissActivePopup = null;
       popup = null;
-      onDismiss();
+      if (actionComplete)
+        onDismiss();
       return true;
     }
     return false;
@@ -463,23 +490,23 @@ var invokeFilterPopup = function (ele, buildPopup, onDismiss, dismissOnClick) {
   
   var checkLightDismiss = function(evt) {
     if (popup && (!dismissOnClick || !popup.contains(evt.target))) {
-      dismissPopup();
+      dismissPopup(true);
     }
   };
 
   var checkEscDismiss = function(evt) {
     if (popup && evt.keyCode === 27) {
-      dismissPopup();
+      dismissPopup(true);
     }
   };
 
   ele.addEventListener("click", function(evt) {
     // dismiss any other popup
     if (dismissActivePopup && dismissActivePopup != dismissPopup) {
-      dismissActivePopup();
+      dismissActivePopup(true);
     }
     if (popup) {
-      dismissPopup();
+      dismissPopup(true);
     } else {
       popup = createFilterPopup();
       buildPopup(popup);
@@ -531,7 +558,7 @@ var createFilterUI = function(idx, col) {
   clear.style.display = "none";
   clear.addEventListener("click", function(evt) {
     if (dismissActivePopup)
-      dismissActivePopup();
+      dismissActivePopup(true);
     table.columns(idx).search("").draw();
     setUnfiltered();
     evt.preventDefault();
@@ -728,7 +755,7 @@ var bootstrap = function() {
 
   // dismiss any active popups
   if (dismissActivePopup)
-    dismissActivePopup();
+    dismissActivePopup(true);
 
   // clean state
   table = null;   
@@ -807,7 +834,7 @@ window.setFilterUIVisible = function(visible) {
     table.columns().search("");
     // close any popup
     if (dismissActivePopup)
-      dismissActivePopup();
+      dismissActivePopup(true);
   }
   for (var i = 0; i < Math.min(thead.children.length, cols.length); i++) {
     var col = cols[i];
