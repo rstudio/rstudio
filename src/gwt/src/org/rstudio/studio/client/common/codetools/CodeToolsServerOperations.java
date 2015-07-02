@@ -22,7 +22,6 @@ import org.rstudio.studio.client.workbench.codesearch.model.CodeSearchServerOper
 import org.rstudio.studio.client.workbench.views.help.model.HelpServerOperations;
 import org.rstudio.studio.client.workbench.views.source.model.CppServerOperations;
 
-import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArrayString;
 
 public interface CodeToolsServerOperations extends HelpServerOperations,
