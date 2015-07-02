@@ -2214,7 +2214,20 @@ public class TextEditingTarget implements
    @Handler
    void onRenameInFile()
    {
-      renameHelper_.renameInFile();
+      int matches = renameHelper_.renameInFile();
+      if (matches > 0)
+      {
+         String message = "Found " + matches;
+         if (matches == 1)
+            message += " match";
+         else
+            message += " matches";
+         
+         String selectedItem = docDisplay_.getSelectionValue();
+         message += " for '" + selectedItem + "'";
+         
+         docDisplay_.showInfoBar(message);
+      }
    }
    
    @Handler

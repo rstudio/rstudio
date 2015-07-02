@@ -23,12 +23,13 @@ public class TextEditingTargetRenameHelper
       ranges_ = new ArrayList<Range>();
    }
    
-   public void renameInFile()
+   public int renameInFile()
    {
       init();
       TextFileType type = editor_.getFileType();
       if (type.isR() || type.isRhtml() || type.isRmd() || type.isRnw() || type.isRpres())
-         renameInFileR();
+         return renameInFileR();
+      return -1;
    }
    
    private int renameInFileR()

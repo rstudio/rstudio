@@ -2319,6 +2319,27 @@ public class AceEditor implements DocDisplay,
    {
       widget_.clearLint();
    }
+   
+   @Override
+   public void showInfoBar(String message)
+   {
+      if (infoBar_ == null)
+      {
+         infoBar_ = new AceInfoBar(widget_);
+         widget_.addKeyDownHandler(new KeyDownHandler()
+         {
+            @Override
+            public void onKeyDown(KeyDownEvent event)
+            {
+               if (event.getNativeKeyCode() == KeyCodes.KEY_ESCAPE)
+                  infoBar_.hide();
+            }
+         });
+      }
+         
+      infoBar_.setText(message);
+      infoBar_.show();
+   }
 
    public Range createAnchoredRange(Position start,
                                     Position end)
@@ -2404,6 +2425,7 @@ public class AceEditor implements DocDisplay,
    private Integer lineDebugMarkerId_ = null;
    private Integer executionLine_ = null;
    private boolean valueChangeSuppressed_ = false;
+   private AceInfoBar infoBar_;
     
    private static final ExternalJavaScriptLoader aceLoader_ =
          new ExternalJavaScriptLoader(AceResources.INSTANCE.acejs().getSafeUri().asString());
