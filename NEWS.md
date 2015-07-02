@@ -29,7 +29,6 @@
 * Improve performance of console for large and/or rapdily updating output
 * Roxygen quick reference available from the Help menu
 * Links to RStudio cheat sheets available on the Help menu
-* Add keyboard shortcut (Ctrl+Alt+`) to toggle toolbar visibility
 * Scan for Rtools in both HKCU and HKLM (for non-Admin installs of Rtools)
 
 
