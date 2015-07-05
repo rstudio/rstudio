@@ -18,6 +18,7 @@
 #include <iostream>
 
 #include <boost/foreach.hpp>
+#include <boost/algorithm/string/predicate.hpp>
 
 #include <core/Error.hpp>
 #include <core/FilePath.hpp>
@@ -447,7 +448,14 @@ CRANMirror UserSettings::cranMirror() const
 
    // re-map cran.rstudio.org to cran.rstudio.com
    if (mirror.url == "http://cran.rstudio.org")
-      mirror.url = "http://cran.rstudio.com";
+      mirror.url = module_context::rstudioCRANReposURL();
+
+   // if this is the RStudio mirror then migrate any http url to https
+   if (boost::algorithm::contains(mirror.url, "cran.rstudio.com") &&
+       securePackageDownload())
+   {
+      boost::algorithm::replace_first(mirror.url, "http://", "https://");
+   }
 
    mirror.country = settings_.get(kCRANMirrorCountry);
 
@@ -456,7 +464,7 @@ CRANMirror UserSettings::cranMirror() const
    {
       mirror.name = "Global (CDN)";
       mirror.host = "RStudio";
-      mirror.url = "http://cran.rstudio.com";
+      mirror.url = module_context::rstudioCRANReposURL();
       mirror.country = "us";
    }
 
@@ -499,6 +507,17 @@ void UserSettings::setBioconductorMirror(
 
    setBioconductorReposOption(bioconductorMirror.url);
 }
+
+bool UserSettings::securePackageDownload() const
+{
+   return settings_.getBool("securePackageDownload", true);
+}
+
+void UserSettings::setSecurePackageDownload(bool secureDownload)
+{
+   settings_.set("securePackageDownload", secureDownload);
+}
+
 
 bool UserSettings::vcsEnabled() const
 {

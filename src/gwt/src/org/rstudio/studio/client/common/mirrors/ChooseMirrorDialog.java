@@ -114,6 +114,8 @@ public class ChooseMirrorDialog<T extends JavaScriptObject> extends ModalDialog<
                for(int i=0; i<mirrors.length(); i++)
                {
                   T mirror = mirrors.get(i);
+                  if (mirrorSource_.getLabel(mirror).startsWith("0-Cloud"))
+                     continue;
                   mirrors_.add(mirror);
                   String item = mirrorSource_.getLabel(mirror);
                   String value = mirrorSource_.getURL(mirror);

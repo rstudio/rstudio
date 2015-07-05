@@ -237,7 +237,7 @@ Error setPrefs(const json::JsonRpcRequest& request, json::JsonRpcResponse*)
 
    // read and set packages prefs
    bool useInternet2, cleanupAfterCheckSuccess, viewDirAfterCheckFailure;
-   bool hideObjectFiles, useDevtools;
+   bool hideObjectFiles, useDevtools, useSecureDownload;
    json::Object cranMirrorJson;
    error = json::readObject(packagesPrefs,
                             "cran_mirror", &cranMirrorJson,
@@ -248,12 +248,14 @@ Error setPrefs(const json::JsonRpcRequest& request, json::JsonRpcResponse*)
                             "cleanup_after_check_success", &cleanupAfterCheckSuccess,
                             "viewdir_after_check_failure", &viewDirAfterCheckFailure,
                             "hide_object_files", &hideObjectFiles,
-                            "use_devtools", &useDevtools);
+                            "use_devtools", &useDevtools,
+                            "use_secure_download", &useSecureDownload);
 
    if (error)
        return error;
    userSettings().beginUpdate();
    userSettings().setUseDevtools(useDevtools);
+   userSettings().setSecurePackageDownload(useSecureDownload);
    userSettings().setCRANMirror(toCRANMirror(cranMirrorJson));
    userSettings().setUseInternet2(useInternet2);
    userSettings().setCleanupAfterRCmdCheck(cleanupAfterCheckSuccess);
@@ -269,6 +271,9 @@ Error setPrefs(const json::JsonRpcRequest& request, json::JsonRpcResponse*)
    */
    userSettings().endUpdate();
 
+   // verify cran mirror security (will either update to https or
+   // will print a warning)
+   module_context::reconcileSecureDownloadConfiguration();
 
    // read and set projects prefs
    bool restoreLastProject;
@@ -405,6 +410,7 @@ Error getRPrefs(const json::JsonRpcRequest& request,
    packagesPrefs["cleanup_after_check_success"] = userSettings().cleanupAfterRCmdCheck();
    packagesPrefs["viewdir_after_check_failure"] = userSettings().viewDirAfterRCmdCheck();
    packagesPrefs["hide_object_files"] = userSettings().hideObjectFiles();
+   packagesPrefs["use_secure_download"] = userSettings().securePackageDownload();
 
    // get projects prefs
    json::Object projectsPrefs;
@@ -753,6 +759,10 @@ Error setCRANMirror(const json::JsonRpcRequest& request,
    userSettings().beginUpdate();
    userSettings().setCRANMirror(cranMirror);
    userSettings().endUpdate();
+
+   // verify cran mirror security (will either update to https or
+   // will print a warning)
+   module_context::reconcileSecureDownloadConfiguration();
 
    return Success();
 }

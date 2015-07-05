@@ -16,6 +16,7 @@
 
 package org.rstudio.studio.client.workbench.prefs.views;
 
+import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -23,9 +24,11 @@ import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.CheckBox;
+import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.widget.HelpButton;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.TextBoxWithButton;
@@ -90,8 +93,22 @@ public class PackagesPreferencesPane extends PreferencesPane
          }
       });
       if (!session.getSessionInfo().getDisablePackages())
+      {
+         lessSpaced(chkEnablePackages);
          add(chkEnablePackages);
-
+      }
+      
+      HorizontalPanel secureDownloadPanel = new HorizontalPanel();
+      useSecurePackageDownload_ = new CheckBox(
+            "Use secure download method for HTTP");
+      secureDownloadPanel.add(useSecurePackageDownload_);
+      HelpButton helpButton = new HelpButton("secure_download", false);
+      Style helpStyle = helpButton.getElement().getStyle();
+      helpStyle.setMarginTop(1, Unit.PX);
+      helpStyle.setMarginLeft(6, Unit.PX);
+      secureDownloadPanel.add(helpButton);
+      lessSpaced(secureDownloadPanel);
+      add(secureDownloadPanel);
       
       useInternet2_ = new CheckBox(
                         "Use Internet Explorer library/proxy for HTTP",
@@ -104,8 +121,8 @@ public class PackagesPreferencesPane extends PreferencesPane
       }
       else
       {
-         spaced(chkEnablePackages);
-         chkEnablePackages.getElement().getStyle().setMarginBottom(12, Unit.PX);
+         spaced(useSecurePackageDownload_);
+         useSecurePackageDownload_.getElement().getStyle().setMarginBottom(12, Unit.PX);
       }
       
       add(headerLabel("Package development"));
@@ -142,6 +159,7 @@ public class PackagesPreferencesPane extends PreferencesPane
       viewDirAfterCheckFailure_.setEnabled(false); 
       hideObjectFiles_.setEnabled(false);
       useDevtools_.setEnabled(false);
+      useSecurePackageDownload_.setEnabled(false);
    }
 
 
@@ -201,6 +219,9 @@ public class PackagesPreferencesPane extends PreferencesPane
       
       useDevtools_.setEnabled(true);
       useDevtools_.setValue(packagesPrefs.getUseDevtools());
+      
+      useSecurePackageDownload_.setEnabled(true);
+      useSecurePackageDownload_.setValue(packagesPrefs.getUseSecureDownload());
    }
 
    @Override
@@ -216,7 +237,8 @@ public class PackagesPreferencesPane extends PreferencesPane
                                               cleanupAfterCheckSuccess_.getValue(),
                                               viewDirAfterCheckFailure_.getValue(),
                                               hideObjectFiles_.getValue(),
-                                              useDevtools_.getValue());
+                                              useDevtools_.getValue(),
+                                              useSecurePackageDownload_.getValue());
       rPrefs.setPackagesPrefs(packagesPrefs);
       
       return reload || reloadRequired_;
@@ -233,5 +255,6 @@ public class PackagesPreferencesPane extends PreferencesPane
    private CheckBox viewDirAfterCheckFailure_;
    private CheckBox hideObjectFiles_;
    private CheckBox useDevtools_;
+   private CheckBox useSecurePackageDownload_;
    private boolean reloadRequired_ = false;
 }
