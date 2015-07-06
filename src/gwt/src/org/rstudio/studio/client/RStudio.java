@@ -195,7 +195,8 @@ public class RStudio implements EntryPoint
                            RootLayoutPanel.get(), 
                            dismissProgressAnimation);
                   }
-                  else if (view.startsWith(SourceSatellite.NAME_PREFIX))
+                  else if (view != null && 
+                           view.startsWith(SourceSatellite.NAME_PREFIX))
                   {
                      SourceSatellite satellite = new SourceSatellite(view);
                      satellite.go(RootLayoutPanel.get(), 
