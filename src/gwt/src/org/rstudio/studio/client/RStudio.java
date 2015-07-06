@@ -82,6 +82,7 @@ import org.rstudio.studio.client.workbench.views.packages.ui.InstallPackageDialo
 import org.rstudio.studio.client.workbench.views.packages.ui.PackagesCellTableResources;
 import org.rstudio.studio.client.workbench.views.packages.ui.actions.ActionCenter;
 import org.rstudio.studio.client.workbench.views.plots.ui.manipulator.ManipulatorResources;
+import org.rstudio.studio.client.workbench.views.source.SourceSatellite;
 import org.rstudio.studio.client.workbench.views.source.editors.codebrowser.CodeBrowserEditingTargetWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionResources;
@@ -192,6 +193,12 @@ public class RStudio implements EntryPoint
                   {
                      RStudioGinjector.INSTANCE.getDataViewerSatellite().go(
                            RootLayoutPanel.get(), 
+                           dismissProgressAnimation);
+                  }
+                  else if (view.startsWith(SourceSatellite.NAME_PREFIX))
+                  {
+                     SourceSatellite satellite = new SourceSatellite(view);
+                     satellite.go(RootLayoutPanel.get(), 
                            dismissProgressAnimation);
                   }
                   else

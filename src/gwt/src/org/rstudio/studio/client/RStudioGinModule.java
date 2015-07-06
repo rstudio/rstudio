@@ -175,6 +175,8 @@ import org.rstudio.studio.client.workbench.views.presentation.PresentationTab;
 import org.rstudio.studio.client.workbench.views.presentation.model.PresentationServerOperations;
 import org.rstudio.studio.client.workbench.views.source.Source;
 import org.rstudio.studio.client.workbench.views.source.SourcePane;
+import org.rstudio.studio.client.workbench.views.source.SourceSatelliteView;
+import org.rstudio.studio.client.workbench.views.source.SourceSatelliteWindow;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetSource;
 import org.rstudio.studio.client.workbench.views.source.editors.profiler.ProfilerPresenter;
 import org.rstudio.studio.client.workbench.views.source.editors.profiler.model.ProfilerServerOperations;
@@ -254,6 +256,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(ShinyApplicationView.class).to(ShinyApplicationWindow.class);
       bind(RmdOutputView.class).to(RmdOutputWindow.class);
       bind(DataTableView.class).to(DataViewerWindow.class);
+      bind(SourceSatelliteView.class).to(SourceSatelliteWindow.class);
       
       bind(Server.class).to(RemoteServer.class) ;
       bind(WorkbenchServerOperations.class).to(RemoteServer.class) ;
