@@ -229,6 +229,7 @@ public class Source implements InsertSourceHandler,
       rnwWeaveRegistry_ = rnwWeaveRegistry;
       chunkIconsManager_ = chunkIconsManager;
       dependencyManager_ = dependencyManager;
+      windowManager_ = new SourceWindowManager();
       
       vimCommands_ = new SourceVimCommands();
       
@@ -1673,6 +1674,11 @@ public class Source implements InsertSourceHandler,
       });   
    }
    
+   public Display getView()
+   {
+      return view_;
+   }
+   
    private void revertActiveDocument()
    {
       if (activeEditor_ == null)
@@ -2153,7 +2159,7 @@ public class Source implements InsertSourceHandler,
       return target.asWidget();
    }
 
-   private EditingTarget addTab(SourceDocument doc)
+   public EditingTarget addTab(SourceDocument doc)
    {
       final EditingTarget target = editingTargetSource_.getEditingTarget(
             doc, fileContext_, new Provider<String>()
@@ -3168,6 +3174,8 @@ public class Source implements InsertSourceHandler,
    private static final String KEY_ACTIVETAB = "activeTab";
    private boolean initialized_;
    private Timer debugSelectionTimer_ = null;
+   
+   private final SourceWindowManager windowManager_;
 
    // If positive, a new tab is about to be created
    private int newTabPending_;

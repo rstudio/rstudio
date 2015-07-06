@@ -19,7 +19,6 @@ import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.studio.client.workbench.commands.Commands;
 
 import com.google.gwt.user.client.ui.IsWidget;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
@@ -30,13 +29,21 @@ public class SourceSatellitePresenter implements IsWidget
    {}
 
    @Inject
-   public SourceSatellitePresenter()
+   public SourceSatellitePresenter(Source source)
    {
-   }     
+      source_ = source;
+   }
+   
+   public Source getSource()
+   {
+      return source_;
+   }
 
    @Override
    public Widget asWidget()
    {
-      return new Label("Source Satellite");
+      return (SourcePane)source_.getView();
    }
+   
+   private Source source_;
 }

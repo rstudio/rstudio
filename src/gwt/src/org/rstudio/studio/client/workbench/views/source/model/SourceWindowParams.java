@@ -23,10 +23,10 @@ public class SourceWindowParams extends JavaScriptObject
    }
    
    public final static native SourceWindowParams create(String windowId, 
-         String docId) /*-{
+         SourceDocument document) /*-{
       return {
          source_window_id: windowId,
-         doc_id: docId
+         doc: document
       };
    }-*/;
    
@@ -34,7 +34,7 @@ public class SourceWindowParams extends JavaScriptObject
       return this.source_window_id;
    }-*/;
    
-   public final native String getDocId() /*-{
-      return this.doc_id;
+   public final native SourceDocument getDoc() /*-{
+      return this.doc;
    }-*/;
 }

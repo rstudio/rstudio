@@ -14,6 +14,8 @@
  */
 package org.rstudio.studio.client.workbench.views.source.events;
 
+import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
+
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
@@ -24,14 +26,14 @@ public class PopoutDocEvent extends GwtEvent<PopoutDocEvent.Handler>
       void onPopoutDoc(PopoutDocEvent e);
    }
    
-   public PopoutDocEvent(String id)
+   public PopoutDocEvent(SourceDocument doc)
    {
-      id_ = id;
+      doc_ = doc;
    }
 
-   public String getId()
+   public SourceDocument getDoc()
    {
-      return id_;
+      return doc_;
    }
   
    @Override
@@ -46,7 +48,7 @@ public class PopoutDocEvent extends GwtEvent<PopoutDocEvent.Handler>
       handler.onPopoutDoc(this);
    }
 
-   private final String id_;
+   private final SourceDocument doc_;
    
    public static final Type<Handler> TYPE = new Type<Handler>();
 }

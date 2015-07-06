@@ -2609,8 +2609,13 @@ public class TextEditingTarget implements
    @Handler
    void onPopoutDoc()
    {
-      events_.fireEvent(new PopoutDocEvent(getId()));
-      CloseEvent.fire(TextEditingTarget.this, null);
+      if (docUpdateSentinel_ != null)
+         events_.fireEvent(new PopoutDocEvent(docUpdateSentinel_.getDoc()));
+      // TODO: close this instance of the document when popout is finished:
+      // a) with some way to suppress removal of the doc from the source db, or
+      // b) when the satellite window opens, or
+      // c) a + support multiple windows into one doc
+      // CloseEvent.fire(TextEditingTarget.this, null);
    }
 
    private void doCommentUncomment(String c)

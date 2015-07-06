@@ -27,6 +27,7 @@ import com.google.inject.Singleton;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.satellite.SatelliteWindow;
 import org.rstudio.studio.client.workbench.ui.FontSizeManager;
+import org.rstudio.studio.client.workbench.views.source.model.SourceWindowParams;
 
 @Singleton
 public class SourceSatelliteWindow extends SatelliteWindow
@@ -46,6 +47,7 @@ public class SourceSatelliteWindow extends SatelliteWindow
    protected void onInitialize(LayoutPanel mainPanel, JavaScriptObject params)
    {
       Window.setTitle("RStudio");
+      SourceWindowParams openParams = params.cast();
 
       SourceSatellitePresenter appPresenter = pPresenter_.get();
       
@@ -54,6 +56,9 @@ public class SourceSatelliteWindow extends SatelliteWindow
       mainPanel.add(presWidget);
       mainPanel.setWidgetLeftRight(presWidget, 0, Unit.PX, 0, Unit.PX);
       mainPanel.setWidgetTopBottom(presWidget, 0, Unit.PX, 0, Unit.PX);
+      
+      // open the initial doc
+      pPresenter_.get().getSource().addTab(openParams.getDoc());
    }
 
    @Override

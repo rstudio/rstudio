@@ -43,7 +43,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler
    {
       String windowId = createSourceWindowId();
       SourceWindowParams params = SourceWindowParams.create(windowId, 
-            evt.getId());
+            evt.getDoc());
       satelliteManager_.openSatellite(
             SourceSatellite.NAME_PREFIX + windowId, params, 
             new Size(500, 800));

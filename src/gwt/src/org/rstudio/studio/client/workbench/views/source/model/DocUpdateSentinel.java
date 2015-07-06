@@ -564,6 +564,11 @@ public class DocUpdateSentinel
    {
       return sourceDoc_.getContents();
    }
+   
+   public SourceDocument getDoc()
+   {
+      return sourceDoc_;
+   }
 
    public void stop()
    {
