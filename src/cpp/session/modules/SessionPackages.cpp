@@ -124,7 +124,7 @@ public:
       std::string cmd("{ " + module_context::CRANDownloadOptions() + "; ");
       cmd += "tmp <- tempfile(); ";
       cmd += "download.file(paste(contrib.url('" + mirror.url +
-              "'), '/PACKAGES', sep = ''), destfile = tmp); ";
+              "'), '/PACKAGES.gz', sep = ''), destfile = tmp); ";
       cmd += "cat(readLines(tmp)); ";
       cmd += "} ";
 

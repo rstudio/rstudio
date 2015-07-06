@@ -1598,7 +1598,7 @@ SEXP rs_installBuildTools()
    else
    {
       ClientEvent event = browseUrlEvent(
-          "http://www.rstudio.org/links/install_osx_build_tools");
+          "https://www.rstudio.org/links/install_osx_build_tools");
       module_context::enqueClientEvent(event);
    }
    return R_NilValue;
