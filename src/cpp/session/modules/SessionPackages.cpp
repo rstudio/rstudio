@@ -22,6 +22,7 @@
 
 #include <boost/bind.hpp>
 #include <boost/regex.hpp>
+#include <boost/format.hpp>
 
 #include <core/Error.hpp>
 #include <core/Exec.hpp>
@@ -70,6 +71,27 @@ void insecureReposURLWarning(const std::string& url,
    Error error = r::exec::RFunction(".rs.insecureReposWarning", msg).call();
    if (error)
       LOG_ERROR(error);
+}
+
+void insecureDownloadWarning(const std::string& msg)
+{
+   Error error = r::exec::RFunction(".rs.insecureDownloadWarning", msg).call();
+   if (error)
+      LOG_ERROR(error);
+}
+
+
+void unableToSecureConnectionWarning(const std::string& url)
+{
+   boost::format fmt(
+      "You are configured to use the CRAN mirror at %1%. This mirror "
+      "supports secure (HTTPS) downloads however your system is unable to "
+      "communicate securely with the server (possibly due to out of date "
+      "certificate files on your system). Falling back to using insecure "
+      "URL for this mirror."
+   );
+
+   insecureDownloadWarning(boost::str(fmt % url));
 }
 
 bool isCRANReposFromSettings()
@@ -125,7 +147,11 @@ public:
       }
       else
       {
-         insecureReposURLWarning(userSettings().cranMirror().url);
+         std::string url = userSettings().cranMirror().url;
+         if (isKnownSecureMirror(url))
+            unableToSecureConnectionWarning(secureMirror_.url);
+         else
+            insecureReposURLWarning(url);
       }
    }
 
@@ -133,6 +159,13 @@ private:
    bool checkOutputForSuccess()
    {
       return boost::algorithm::contains(output_, "Package: Matrix");
+   }
+
+   bool isKnownSecureMirror(const std::string& url)
+   {
+      std::vector<std::string> mirrors;
+      mirrors.push_back("http://cran.rstudio.com/");
+      return std::find(mirrors.begin(), mirrors.end(), url) != mirrors.end();
    }
 
 private:

@@ -446,24 +446,23 @@ CRANMirror UserSettings::cranMirror() const
    mirror.url = settings_.get(kCRANMirrorUrl);
 
    // re-map cran.rstudio.org to cran.rstudio.com
-   if (mirror.url == "http://cran.rstudio.org")
-      mirror.url = module_context::rstudioCRANReposURL();
+   if (boost::algorithm::starts_with(mirror.url, "http://cran.rstudio.org"))
+      mirror.url = "http://cran.rstudio.com/";
 
-   // if this is the RStudio mirror then migrate any http url to https
-   if (boost::algorithm::contains(mirror.url, "cran.rstudio.com") &&
-       securePackageDownload())
-   {
-      boost::algorithm::replace_first(mirror.url, "http://", "https://");
-   }
+   // remap url without trailing slash
+   if (!boost::algorithm::ends_with(mirror.url, "/"))
+      mirror.url += "/";
 
    mirror.country = settings_.get(kCRANMirrorCountry);
 
    // if there is no URL then return the default RStudio mirror
+   // (return the insecure version so we can rely on probing for
+   // the secure version)
    if (mirror.url.empty())
    {
       mirror.name = "Global (CDN)";
       mirror.host = "RStudio";
-      mirror.url = module_context::rstudioCRANReposURL();
+      mirror.url = "http://cran.rstudio.com/";
       mirror.country = "us";
    }
 
