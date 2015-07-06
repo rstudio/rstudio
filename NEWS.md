@@ -18,6 +18,9 @@
 * Outline view for quick navigation between sections/code chunks
 * Support for htmlwidgets in R Presentations
 
+### Data Viewer
+
+* Improved interface for filtering factor columns; can now filter by either text or level
 
 ### Miscellaneous
 
@@ -26,10 +29,11 @@
 * Increase the number of items on file and project recently used menus to 15
 * Raise limit on shinyapps uploads to 1GB from 100MB
 * 'Edit -> Replace and Find' opens Find toolbar if not already open (e.g. with Cmd+Shift+J)
-* Improve performance of console for large and/or rapdily updating output
+* Improve performance of console for large and/or rapidly updating output
 * Roxygen quick reference available from the Help menu
 * Links to RStudio cheat sheets available on the Help menu
 * Scan for Rtools in both HKCU and HKLM (for non-Admin installs of Rtools)
+* Move running Shiny apps between IDE panes and windows without restarting the app
 
 
 ### Server
