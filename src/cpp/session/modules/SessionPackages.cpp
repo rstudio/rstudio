@@ -62,7 +62,7 @@ void insecureReposURLWarning(const std::string& url,
                              const std::string& extraMsg = "")
 {
    std::string msg =
-         "Your server's CRAN repository is set to \"" + url + "\" which "
+         "Your CRAN mirror is set to \"" + url + "\" which "
          "has an insecure (non-HTTPS) URL.";
    
    if (!extraMsg.empty())

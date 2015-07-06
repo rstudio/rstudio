@@ -1045,7 +1045,7 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
 .rs.addFunction("insecureReposWarning", function(msg) {
    if (.rs.showSecureDownloadWarning()) {
       message("WARNING: ", msg, " You should either switch to a repository ",
-              "that supports HTTPS or change your options to not require HTTPS ",
+              "that supports HTTPS or change your RStudio options to not require HTTPS ",
               "downloads.\n\nTo learn more and/or disable this warning ",
               "message see the \"Use secure download method for HTTP\" option ",
               "in Tools -> Global Options -> Packages.")
