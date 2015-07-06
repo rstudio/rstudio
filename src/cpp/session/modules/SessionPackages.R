@@ -1088,8 +1088,8 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
       }
       else {
          .rs.insecureMethodWarning(
-            "Unable to set a secure (HTTPS) download.file.method (no ",
-            "compatible method available in this installation of R)."
+            paste("Unable to set a secure (HTTPS) download.file.method (no",
+                  "compatible method available in this installation of R).")
          )
       }
    }
