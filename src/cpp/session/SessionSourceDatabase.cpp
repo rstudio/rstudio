@@ -405,6 +405,10 @@ Error SourceDocument::readFromJson(json::Object* pDocJson)
       collabServer_ = !collabServer.is_null() ? collabServer.get_str() : 
                                                 std::string();
 
+      json::Value sourceWindow = docJson["source_window"];
+      sourceWindow_ = !sourceWindow.is_null() ? sourceWindow.get_str() :
+                                                std::string();
+
       return Success();
    }
    catch(const std::exception& e)
@@ -434,6 +438,7 @@ void SourceDocument::writeToJson(json::Object* pDocJson) const
          static_cast<boost::int64_t>(lastKnownWriteTime_));
    jsonDoc["encoding"] = encoding_;
    jsonDoc["collab_server"] = collabServer();
+   jsonDoc["source_window"] = sourceWindow_;
 }
 
 Error SourceDocument::writeToFile(const FilePath& filePath) const

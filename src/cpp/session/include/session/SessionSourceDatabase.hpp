@@ -154,6 +154,7 @@ private:
    bool sourceOnSave_;
    int relativeOrder_;
    std::string collabServer_;
+   std::string sourceWindow_;
    core::json::Object properties_;
    
 public:
