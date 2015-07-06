@@ -2225,8 +2225,7 @@ public class TextEditingTarget implements
          
          String selectedItem = docDisplay_.getSelectionValue();
          message += " for '" + selectedItem + "'";
-         
-         docDisplay_.showInfoBar(message);
+         view_.getStatusBar().showMessage(message);
       }
    }
    

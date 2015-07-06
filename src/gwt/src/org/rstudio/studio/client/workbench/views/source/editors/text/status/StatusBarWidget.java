@@ -15,10 +15,15 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text.status;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.Event;
+import com.google.gwt.user.client.Event.NativePreviewEvent;
+import com.google.gwt.user.client.Event.NativePreviewHandler;
 import com.google.gwt.user.client.ui.*;
 
 import org.rstudio.core.client.widget.IsWidgetWithHeight;
@@ -37,12 +42,11 @@ public class StatusBarWidget extends Composite
    public StatusBarWidget()
    {
       Binder binder = GWT.create(Binder.class);
-      HorizontalPanel hpanel = binder.createAndBindUi(this);
-      hpanel.setVerticalAlignment(HorizontalPanel.ALIGN_TOP);
-
-      hpanel.setCellWidth(hpanel.getWidget(2), "100%");
+      panel_ = binder.createAndBindUi(this);
+      panel_.setVerticalAlignment(HorizontalPanel.ALIGN_TOP);
+      panel_.setCellWidth(scope_, "100%");
    
-      initWidget(hpanel);
+      initWidget(panel_);
 
       height_ = 16;
    }
@@ -60,6 +64,11 @@ public class StatusBarWidget extends Composite
    public StatusBarElement getPosition()
    {
       return position_;
+   }
+   
+   public StatusBarElement getMessage()
+   {
+      return message_;
    }
 
    public StatusBarElement getScope()
@@ -105,15 +114,51 @@ public class StatusBarWidget extends Composite
       else
          scopeIcon_.setResource(CodeIcons.INSTANCE.function());
    }
+   
+   public void showMessage(String message)
+   {
+      scope_.setVisible(false);
+      panel_.setCellWidth(scope_, "0");
+      
+      message_.setVisible(true);
+      panel_.setCellWidth(message_, "100%");
+      
+      message_.setValue(message);
+      if (handler_ != null)
+      {
+         handler_.removeHandler();
+         handler_ = null;
+      }
+      
+      handler_ = Event.addNativePreviewHandler(new NativePreviewHandler()
+      {
+         
+         @Override
+         public void onPreviewNativeEvent(NativePreviewEvent event)
+         {
+            if (event.getTypeInt() == Event.ONKEYDOWN &&
+                event.getNativeEvent().getKeyCode() == KeyCodes.KEY_ESCAPE)
+            {
+               panel_.setCellWidth(message_, "0");
+               message_.setVisible(false);
+               message_.setValue("");
+               
+               scope_.setVisible(true);
+               panel_.setCellWidth(scope_, "100%");
+               
+               handler_.removeHandler();
+               handler_ = null;
+            }
+         }
+      });
+         
+   }
 
-   @UiField
-   StatusBarElementWidget position_;
-   @UiField
-   StatusBarElementWidget scope_;
-   @UiField
-   StatusBarElementWidget language_;
-   @UiField
-   Image scopeIcon_;
+   @UiField StatusBarElementWidget position_;
+   @UiField StatusBarElementWidget scope_;
+   @UiField StatusBarElementWidget message_;
+   @UiField StatusBarElementWidget language_;
+   @UiField Image scopeIcon_;
    
    public interface Resources extends ClientBundle
    {
@@ -123,5 +168,7 @@ public class StatusBarWidget extends Composite
    }
    
    public static Resources RES = GWT.create(Resources.class);
+   private final HorizontalPanel panel_;
+   private HandlerRegistration handler_;
    
 }

@@ -32,4 +32,5 @@ public interface StatusBar
    StatusBarElement getLanguage();
    void setScopeVisible(boolean visible);
    void setScopeType(int type);
+   void showMessage(String message);
 }
