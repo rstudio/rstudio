@@ -351,7 +351,7 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    # RStudio mirror
    rstudioDF <- data.frame(name = "Global (CDN)",
                            host = "RStudio",
-                           url = .Call("rs_rstudioCRANReposUrl"),
+                           url = "http://cran.rstudio.com/",
                            country = "us",
                            stringsAsFactors = FALSE)
 
@@ -1051,7 +1051,7 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    }
 })
 
-.rs.addFunction("insecureMethodWarning", function(msg) {
+.rs.addFunction("insecureDownloadWarning", function(msg) {
    if (.rs.showSecureDownloadWarning()) {
       message("WARNING: ", msg,
               "\n\nTo learn more and/or disable this warning ",
@@ -1067,7 +1067,7 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    method <- getOption("download.file.method")
    if (!is.null(method)) {
       if (!.rs.isDownloadMethodSecure(method)) {
-         .rs.insecureMethodWarning(
+         .rs.insecureDownloadWarning(
              paste("The download.file.method option is \"", method, "\" ",
                    "however that method cannot provide secure (HTTPS) downloads ",
                    "on this platform. ", 
@@ -1086,7 +1086,7 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
          options(download.file.method = secureMethod) 
       }
       else {
-         .rs.insecureMethodWarning(
+         .rs.insecureDownloadWarning(
             paste("Unable to set a secure (HTTPS) download.file.method (no",
                   "compatible method available in this installation of R).")
          )
