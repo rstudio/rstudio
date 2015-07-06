@@ -212,6 +212,8 @@ public class TextEditingTargetWidget
       Toolbar toolbar = new EditingTargetToolbar(commands_);
        
       toolbar.addLeftWidget(commands_.saveSourceDoc().createToolbarButton());
+      if (uiPrefs_.enableSourceWindows().getGlobalValue())
+         toolbar.addLeftWidget(commands_.popoutDoc().createToolbarButton());
       sourceOnSave_.getElement().getStyle().setMarginRight(0, Unit.PX);
       toolbar.addLeftWidget(sourceOnSave_);
       srcOnSaveLabel_.getElement().getStyle().setMarginRight(9, Unit.PX);

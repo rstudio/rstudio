@@ -137,6 +137,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.status.Stat
 import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBarPopupRequest;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ui.ChooseEncodingDialog;
 import org.rstudio.studio.client.workbench.views.source.events.CollabEditStartParams;
+import org.rstudio.studio.client.workbench.views.source.events.PopoutDocEvent;
 import org.rstudio.studio.client.workbench.views.source.events.RecordNavigationPositionEvent;
 import org.rstudio.studio.client.workbench.views.source.events.RecordNavigationPositionHandler;
 import org.rstudio.studio.client.workbench.views.source.events.SourceFileSavedEvent;
@@ -2605,6 +2606,13 @@ public class TextEditingTarget implements
          doCommentUncomment("//"); 
    }
    
+   @Handler
+   void onPopoutDoc()
+   {
+      events_.fireEvent(new PopoutDocEvent(getId()));
+      CloseEvent.fire(TextEditingTarget.this, null);
+   }
+
    private void doCommentUncomment(String c)
    {
       InputEditorSelection initialSelection = docDisplay_.getSelection();

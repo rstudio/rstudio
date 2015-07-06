@@ -501,6 +501,11 @@ public class UIPrefsAccessor extends Prefs
       return bool("show_unnamed_entries_in_document_outline", false);
    }
    
+   public PrefValue<Boolean> enableSourceWindows()
+   {
+      return bool("enable_source_windows", false);
+   }
+   
    private String getDefaultPdfPreview()
    {
       if (Desktop.isDesktop())
