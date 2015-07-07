@@ -62,7 +62,14 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
       .Call(.rs.routines$rs_packageUnloaded, pkgname)
    }
    
-   sapply(.packages(TRUE), function(packageName) 
+   # NOTE: `list.dirs()` was introduced with R 2.13 but was buggy until 3.0
+   # (the 'full.names' argument was not properly respected)
+   pkgNames <- if (getRversion() >= "3.0.0")
+      base::list.dirs(.libPaths(), full.names = FALSE, recursive = FALSE)
+   else
+      .packages(TRUE)
+   
+   sapply(pkgNames, function(packageName)
    {
       if ( !(packageName %in% .rs.hookedPackages) )
       {
