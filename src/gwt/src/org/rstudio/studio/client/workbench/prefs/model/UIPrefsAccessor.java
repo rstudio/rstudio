@@ -498,7 +498,7 @@ public class UIPrefsAccessor extends Prefs
    
    public PrefValue<Boolean> showUnnamedEntriesInDocumentOutline()
    {
-      return bool("show_unnamed_entries_in_document_outline", false);
+      return bool("show_unnamed_chunks_in_document_outline", true);
    }
    
    public PrefValue<Boolean> enableSourceWindows()
