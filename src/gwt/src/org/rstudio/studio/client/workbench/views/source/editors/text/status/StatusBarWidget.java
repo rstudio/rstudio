@@ -15,7 +15,7 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text.status;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.ImageResource;
@@ -33,8 +33,7 @@ import org.rstudio.studio.client.common.icons.code.CodeIcons;
 public class StatusBarWidget extends Composite
       implements StatusBar, IsWidgetWithHeight
 {
-   private int height_;
-
+   
    interface Binder extends UiBinder<HorizontalPanel, StatusBarWidget>
    {
    }
@@ -44,11 +43,35 @@ public class StatusBarWidget extends Composite
       Binder binder = GWT.create(Binder.class);
       panel_ = binder.createAndBindUi(this);
       panel_.setVerticalAlignment(HorizontalPanel.ALIGN_TOP);
+      
       panel_.setCellWidth(scope_, "100%");
+      panel_.setCellWidth(message_, "100%");
+      
+      // The message widget should initially be hidden, but be shown in lieu of
+      // the scope tree when requested.
+      show(scope_);
+      show(scopeIcon_);
+      hide(message_);
    
       initWidget(panel_);
 
       height_ = 16;
+   }
+   
+   // NOTE: The 'show' + 'hide' methods here take advantage of the fact that
+   // status bar widgets live within table cells; to ensure proper sizing we
+   // need to set the display property on those cells rather than the widgets
+   // themselves.
+   private void hide(Widget widget)
+   {
+      widget.setVisible(false);
+      widget.getElement().getParentElement().getStyle().setDisplay(Display.NONE);
+   }
+   
+   private void show(Widget widget)
+   {
+      widget.setVisible(true);
+      widget.getElement().getParentElement().getStyle().clearDisplay();
    }
 
    public int getHeight()
@@ -90,6 +113,7 @@ public class StatusBarWidget extends Composite
    
    public void setScopeType(int type)
    {
+      scopeType_ = type;
       if (type == StatusBar.SCOPE_TOP_LEVEL || message_.isVisible())
          scopeIcon_.setVisible(false);
       else
@@ -115,15 +139,34 @@ public class StatusBarWidget extends Composite
          scopeIcon_.setResource(CodeIcons.INSTANCE.function());
    }
    
-   public void showMessage(String message)
+   private void initMessage(String message)
    {
-      scope_.setVisible(false);
-      panel_.setCellWidth(scope_, "0");
-      
-      message_.setVisible(true);
-      panel_.setCellWidth(message_, "100%");
+      hide(scope_);
+      hide(scopeIcon_);
       
       message_.setValue(message);
+      show(message_);
+   }
+   
+   private void endMessage()
+   {
+      show(scope_);
+      show(scopeIcon_);
+      
+      hide(message_);
+   }
+   
+   public void hideMessage()
+   {
+      endMessage();
+   }
+   
+   @Override
+   public void showMessage(String message, final HideMessageHandler handler)
+   {
+      initMessage(message);
+      
+      // Protect against multiple messages shown at same time
       if (handler_ != null)
       {
          handler_.removeHandler();
@@ -132,26 +175,17 @@ public class StatusBarWidget extends Composite
       
       handler_ = Event.addNativePreviewHandler(new NativePreviewHandler()
       {
-         
          @Override
          public void onPreviewNativeEvent(NativePreviewEvent event)
          {
-            if (event.getTypeInt() == Event.ONKEYDOWN &&
-                event.getNativeEvent().getKeyCode() == KeyCodes.KEY_ESCAPE)
+            if (handler.onNativePreviewEvent(event))
             {
-               panel_.setCellWidth(message_, "0");
-               message_.setVisible(false);
-               message_.setValue("");
-               
-               scope_.setVisible(true);
-               panel_.setCellWidth(scope_, "100%");
-               
+               endMessage();
                handler_.removeHandler();
                handler_ = null;
             }
          }
       });
-         
    }
 
    @UiField StatusBarElementWidget position_;
@@ -169,6 +203,9 @@ public class StatusBarWidget extends Composite
    
    public static Resources RES = GWT.create(Resources.class);
    private final HorizontalPanel panel_;
+   
+   private int height_;
    private HandlerRegistration handler_;
+   private int scopeType_;
    
 }

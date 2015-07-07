@@ -14,8 +14,16 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text.status;
 
+import com.google.gwt.user.client.Event.NativePreviewEvent;
+
 public interface StatusBar
 {
+   public static interface HideMessageHandler
+   {
+      // return 'true' to indicate message should be hidden
+      public boolean onNativePreviewEvent(NativePreviewEvent preview);
+   }
+   
    public static final int SCOPE_FUNCTION   = 1;
    public static final int SCOPE_CHUNK      = 2;
    public static final int SCOPE_SECTION    = 3;
@@ -26,11 +34,11 @@ public interface StatusBar
    public static final int SCOPE_ANON       = 8;
    public static final int SCOPE_TOP_LEVEL  = 9;
    
-   
    StatusBarElement getPosition();
    StatusBarElement getScope();
    StatusBarElement getLanguage();
    void setScopeVisible(boolean visible);
    void setScopeType(int type);
-   void showMessage(String message);
+   
+   void showMessage(String message, HideMessageHandler handler);
 }

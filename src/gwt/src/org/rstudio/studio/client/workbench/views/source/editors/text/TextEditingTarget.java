@@ -31,6 +31,8 @@ import com.google.gwt.http.client.URL;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.Event;
+import com.google.gwt.user.client.Event.NativePreviewEvent;
 import com.google.gwt.user.client.ui.HasValue;
 import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.UIObject;
@@ -131,6 +133,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppComp
 import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionOperation;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.*;
 import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBar;
+import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBar.HideMessageHandler;
 import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBarPopupMenu;
 import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBarPopupRequest;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ui.ChooseEncodingDialog;
@@ -2225,7 +2228,27 @@ public class TextEditingTarget implements
          
          String selectedItem = docDisplay_.getSelectionValue();
          message += " for '" + selectedItem + "'";
-         view_.getStatusBar().showMessage(message);
+         
+         view_.getStatusBar().showMessage(message, new HideMessageHandler()
+         {
+            @Override
+            public boolean onNativePreviewEvent(NativePreviewEvent preview)
+            {
+               if (preview.getTypeInt() == Event.ONKEYDOWN)
+               {
+                  switch (preview.getNativeEvent().getKeyCode())
+                  {
+                  case KeyCodes.KEY_ENTER:
+                     preview.cancel();
+                  case KeyCodes.KEY_ESCAPE:
+                     docDisplay_.exitMultiSelectMode();
+                     docDisplay_.clearSelection();
+                     return true;
+                  }
+               }
+               return false;
+            }
+         });
       }
    }
    
