@@ -47,7 +47,7 @@ public class EventBus extends HandlerManager
           pSatellite_.get().isCurrentWindowSatellite())
       {
          SerializableEvent<?,?> serializable = (SerializableEvent<?,?>)event;
-         fireEventToMainWindow(serializable.serializeToJSO());
+         fireEventToMainWindow(serializable.serializeToJSO(event));
       }
       else
       {

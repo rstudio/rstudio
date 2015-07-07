@@ -20,25 +20,25 @@ import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
-public abstract class SerializableEvent<T extends EventSerializer<?>, 
+public abstract class SerializableEvent<T, 
        H extends EventHandler> extends GwtEvent<H>
 {
-   public SerializableEvent(T serializer)
+   public SerializableEvent(EventSerializer<T> serializer)
    {
       serializer_ = serializer;
    }
 
-   public JavaScriptObject serializeToJSO()
+   public JavaScriptObject serializeToJSO(GwtEvent<?> event)
    {
       Debug.devlog("serializing");
-      Debug.logObject(serializer_.serializeToJSO());
-      return serializer_.serializeToJSO();
+      Debug.logObject(serializer_.serializeToJSO(event));
+      return serializer_.serializeToJSO(event);
    }
 
-   public void deserializeFromJSO(JavaScriptObject jso)
+   public T deserializeFromJSO(JavaScriptObject jso)
    {
-      serializer_.deserializeFromJSO(jso);
+      return serializer_.deserializeFromJSO(jso);
    }
    
-   private final T serializer_;
+   private final EventSerializer<T> serializer_;
 }

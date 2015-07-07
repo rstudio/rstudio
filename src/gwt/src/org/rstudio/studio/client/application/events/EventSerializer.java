@@ -18,6 +18,6 @@ import com.google.gwt.core.client.JavaScriptObject;
 
 public interface EventSerializer<T>
 {
-   JavaScriptObject serializeToJSO();
-   void deserializeFromJSO(JavaScriptObject source);
+   JavaScriptObject serializeToJSO(Object source);
+   T deserializeFromJSO(JavaScriptObject source);
 }

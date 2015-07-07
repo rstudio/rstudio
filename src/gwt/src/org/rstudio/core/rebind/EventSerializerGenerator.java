@@ -68,7 +68,8 @@ public class EventSerializerGenerator extends Generator
 
       private void emitBody(SourceWriter w) throws NotFoundException
       {
-         w.println("public final native JavaScriptObject serializeToJSO() /*-{");
+         w.print("public final native JavaScriptObject serializeToJSO(");
+         w.println("Object source) /*-{");
          w.indent();
          w.println("return {");
          w.indent();
@@ -76,11 +77,11 @@ public class EventSerializerGenerator extends Generator
          for (int i = 0; i < fields.length; i++) 
          {
             JField field = fields[i];
-            if ((field.isPublic() || field.isProtected()) && 
-                !field.isStatic())
+            if (!field.isStatic())
             {
                w.println("\"" + field.getName() + "\": " + 
-                         "this.@" + serializedType_.getPackage().getName() + "." + serializedType_.getName() + "::" + field.getName() + 
+                         "source.@" + serializedType_.getPackage().getName() + "." 
+                         + serializedType_.getName() + "::" + field.getName() + 
                          (i < (fields.length - 1) ? ", " : ""));
             }
          }
@@ -88,20 +89,35 @@ public class EventSerializerGenerator extends Generator
          w.println("};");
          w.outdent();
          w.println("}-*/;");
+         w.println();
 
-         w.println("public final native void deserializeFromJSO(JavaScriptObject jso) /*-{");
+         w.println("private final native void deserializeJSO(Object dest, " +
+                   "JavaScriptObject source) /*-{");
          w.indent();
          for (JField field : serializedType_.getFields())
          {
-            if ((field.isPublic() || field.isProtected()) && 
-                !field.isStatic())
+            if (!field.isStatic())
             {
-               w.println("this.@" + serializedType_.getPackage().getName() + "." + serializedType_.getName() + "::" + field.getName() + " = " + 
-                         "jso[\"" + field.getName() + "\"];");
+               w.println("dest.@" + serializedType_.getPackage().getName() + "." 
+                         + serializedType_.getName() + "::" + field.getName() + 
+                         " = " + "source[\"" + field.getName() + "\"];");
             }
          }
          w.outdent();
          w.println("}-*/;");
+
+         w.println("public final " + serializedType_.getName() + 
+                   " deserializeFromJSO(JavaScriptObject source)");
+         w.println("{");
+         w.indent();
+         w.println(serializedType_.getName() + " n = new " + 
+                   serializedType_.getName() + "();");
+         w.println("deserializeJSO(n, source);");
+         w.println("return n;");
+         w.outdent();
+         w.println("}");
+         w.println();
+
       }
 
       private final TreeLogger logger_;
