@@ -2234,7 +2234,7 @@ public class TextEditingTarget implements
             @Override
             public boolean onNativePreviewEvent(NativePreviewEvent preview)
             {
-               if (!docDisplay_.isFocused())
+               if (!docDisplay_.isFocused() || !docDisplay_.inMultiSelectMode())
                {
                   docDisplay_.exitMultiSelectMode();
                   docDisplay_.clearSelection();

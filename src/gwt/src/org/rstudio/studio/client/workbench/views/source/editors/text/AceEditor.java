@@ -1084,6 +1084,11 @@ public class AceEditor implements DocDisplay,
       setCode("", false);
    }
    
+   public boolean inMultiSelectMode()
+   {
+      return widget_.getEditor().inMultiSelectMode();
+   }
+   
    public void exitMultiSelectMode()
    {
       widget_.getEditor().exitMultiSelectMode();

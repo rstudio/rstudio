@@ -99,6 +99,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    // "TeX". Use SweaveFileType constants to test for these values.
    String getLanguageMode(Position position);
    
+   boolean inMultiSelectMode();
    void exitMultiSelectMode();
    
    void clearSelection();
