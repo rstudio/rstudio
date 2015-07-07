@@ -164,6 +164,7 @@ well as menu structures (for main menu and popup menus).
          <separator/>
          <cmd refid="extractFunction"/>
          <cmd refid="extractLocalVariable"/>
+         <cmd refid="renameInFile"/>
          <separator/>
          <cmd refid="reflowComment"/>
          <cmd refid="commentUncomment"/>
