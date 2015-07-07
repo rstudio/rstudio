@@ -44,7 +44,7 @@ public class TextEditingTargetRenameHelper
       
       editor_.setCursorPosition(position);
       
-      // Validate that we're looking at an R identifier (TODO: refactor strings?)
+      // Validate that we're looking at an R identifier
       String targetValue = cursor.currentValue();
       String targetType = cursor.currentType();
       
@@ -104,7 +104,6 @@ public class TextEditingTargetRenameHelper
       }
       
       // Otherwise, just rename the variable within the current scope.
-      // TODO: Do we need to look into parent scopes?
       return renameVariablesInScope(
             editor_.getCurrentScope(),
             targetValue,
