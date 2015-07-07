@@ -152,8 +152,9 @@ public class StatusBarWidget extends Composite
    {
       show(scope_);
       show(scopeIcon_);
-      
       hide(message_);
+      
+      setScopeType(scopeType_);
    }
    
    public void hideMessage()

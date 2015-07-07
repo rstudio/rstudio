@@ -44,6 +44,10 @@ public class TextEditingTargetRenameHelper
       
       editor_.setCursorPosition(position);
       
+      // Ensure the scope tree is built, since we use that for determining
+      // the scope for the current refactor.
+      editor_.buildScopeTree();
+      
       // Validate that we're looking at an R identifier
       String targetValue = cursor.currentValue();
       String targetType = cursor.currentType();
@@ -83,6 +87,7 @@ public class TextEditingTargetRenameHelper
       // Check to see if this is the name of a function argument. If so, we only want
       // to rename within that scope.
       Scope scope = editor_.getCurrentScope();
+      
       while (!scope.isTopLevel())
       {
          if (scope.isFunction())

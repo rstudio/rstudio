@@ -1671,6 +1671,13 @@ public class AceEditor implements DocDisplay,
    {
       return hasCodeModel() && getCodeModel().hasScopes();
    }
+   
+   public void buildScopeTree()
+   {
+      // Builds the scope tree as a side effect
+      if (hasScopeTree())
+         getScopeTree();
+   }
 
    public JsArray<Scope> getScopeTree()
    {

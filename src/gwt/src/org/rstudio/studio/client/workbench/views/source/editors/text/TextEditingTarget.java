@@ -2234,12 +2234,21 @@ public class TextEditingTarget implements
             @Override
             public boolean onNativePreviewEvent(NativePreviewEvent preview)
             {
+               if (!docDisplay_.isFocused())
+               {
+                  docDisplay_.exitMultiSelectMode();
+                  docDisplay_.clearSelection();
+                  return true;
+               }
+               
                if (preview.getTypeInt() == Event.ONKEYDOWN)
                {
                   switch (preview.getNativeEvent().getKeyCode())
                   {
                   case KeyCodes.KEY_ENTER:
                      preview.cancel();
+                  case KeyCodes.KEY_UP:
+                  case KeyCodes.KEY_DOWN:
                   case KeyCodes.KEY_ESCAPE:
                      docDisplay_.exitMultiSelectMode();
                      docDisplay_.clearSelection();
