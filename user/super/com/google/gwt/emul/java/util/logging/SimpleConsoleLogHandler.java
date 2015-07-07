@@ -13,14 +13,13 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.logging.impl;
+package java.util.logging;
 
-import com.google.gwt.core.client.impl.ConsoleLogger;
+import javaemul.internal.ConsoleLogger;
 
-import java.util.logging.Handler;
-import java.util.logging.Level;
-import java.util.logging.LogRecord;
-
+/**
+ * A simple console logger used in super dev mode.
+ */
 class SimpleConsoleLogHandler extends Handler {
 
   @Override

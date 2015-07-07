@@ -59,4 +59,23 @@
 
   <add-linker name="soycReport" />
   <add-linker name="symbolMaps" />
+
+  <!-- Set up and handle the gwt.logging property
+   Setting this value to FALSE will compile out all logging.  Setting it to SEVERE
+   or WARNING means that the logging framework will not compile out, but the basic
+   logging calls like logger.info() and logger.fine() will compile out if it is below
+   the level that is set.  Note that something like logger.log(Level.INFO, "foo", e)
+   *will not* compile out at this point.  If you have something that is important to
+   have compiled out, you should put it behind a
+   LogConfiguration.isLoggingEnabled(Level.INFO) guard.
+   -->
+  <define-property name="gwt.logging.enabled" values="TRUE, FALSE, SEVERE, WARNING" />
+  <set-property name="gwt.logging.enabled" value="FALSE"/>
+
+  <define-property name="gwt.logging.simpleConsoleHandler" values="ENABLED, DISABLED" />
+  <set-property name="gwt.logging.simpleConsoleHandler" value="ENABLED"/>
+
+  <set-property name="gwt.logging.enabled" value="TRUE">
+    <when-property-is name="superdevmode" value="on"/>
+  </set-property>
 </module>

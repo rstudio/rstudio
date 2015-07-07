@@ -75,7 +75,7 @@
   </replace-with>
 
   <!-- Replace default consoleHandler for better SuperDevMode logging -->
-  <replace-with class="com.google.gwt.logging.impl.SimpleConsoleLogHandler">
+  <replace-with class="javaemul.internal.SimpleConsoleLogHandler">
     <when-type-is class="com.google.gwt.logging.client.ConsoleLogHandler" />
     <all>
       <when-property-is name="superdevmode" value="on"/>
@@ -136,7 +136,5 @@
   <entry-point class="com.google.gwt.logging.client.LogConfiguration"/>
 
   <!-- Disable simple logging as the app already opted into Logging by inheriting this module -->
-  <replace-with class="com.google.gwt.logging.impl.LoggerConfiguratorNull">
-    <when-type-is class="com.google.gwt.logging.impl.LoggerConfigurator"/>
-  </replace-with>
+  <set-property name="gwt.logging.simpleConsoleHandler" value="DISABLED"/>
 </module>

@@ -16,8 +16,6 @@
 <!-- Do not inherit this module directly; inherit com.google.gwt.core.Core. -->
 <module>
   <inherits name="javaemul.internal.Internal"/>
-  <inherits name="com.google.gwt.logging.LogImpl"/>
-  <public path="public" />
 
   <extend-configuration-property name="compiler.enum.obfuscate.names.blacklist"
       value="java.math.RoundingMode" />
