@@ -371,4 +371,8 @@ public class AceEditorNative extends JavaScriptObject {
       return this.$clearSelectionHistory();
    }-*/;
    
+   public final native Element getContainer() /*-{
+      return this.container;
+   }-*/;
+   
 }

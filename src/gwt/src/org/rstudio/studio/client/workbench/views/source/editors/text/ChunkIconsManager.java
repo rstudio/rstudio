@@ -114,7 +114,12 @@ public class ChunkIconsManager
    
    private void manageChunkIcons(AceEditorNative editor)
    {
+      Element container = editor.getContainer();
+      if (container == null)
+         return;
+      
       Element[] icons = DomUtils.getElementsByClassName(
+            container,
             ThemeStyles.INSTANCE.inlineChunkToolbar());
       
       for (Element icon : icons)
