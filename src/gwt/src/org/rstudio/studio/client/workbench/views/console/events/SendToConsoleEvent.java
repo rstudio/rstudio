@@ -14,10 +14,17 @@
  */
 package org.rstudio.studio.client.workbench.views.console.events;
 
+import org.rstudio.studio.client.application.events.EventSerializer;
+import org.rstudio.studio.client.application.events.SerializableEvent;
+
+import com.google.gwt.core.shared.GWT;
 import com.google.gwt.event.shared.GwtEvent;
 
-public class SendToConsoleEvent extends GwtEvent<SendToConsoleHandler>
+public class SendToConsoleEvent extends SerializableEvent<
+   SendToConsoleEvent.Serializer, SendToConsoleHandler>
 {
+   public interface Serializer extends EventSerializer<SendToConsoleEvent>{};
+
    public static final GwtEvent.Type<SendToConsoleHandler> TYPE =
       new GwtEvent.Type<SendToConsoleHandler>();
   
@@ -36,6 +43,7 @@ public class SendToConsoleEvent extends GwtEvent<SendToConsoleHandler>
                              boolean focus,
                              boolean animate)
    {
+      super((Serializer)GWT.create(Serializer.class));
       code_ = code;
       execute_ = execute;
       focus_ = focus;
@@ -74,8 +82,8 @@ public class SendToConsoleEvent extends GwtEvent<SendToConsoleHandler>
       sendToConsoleHandler.onSendToConsole(this);
    }
 
-   private final String code_;
-   private final boolean execute_;
-   private final boolean focus_;
-   private final boolean animate_;
+   protected final String code_;
+   protected final boolean execute_;
+   protected final boolean focus_;
+   protected final boolean animate_;
 }

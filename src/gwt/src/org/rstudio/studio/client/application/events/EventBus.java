@@ -1,7 +1,7 @@
 /*
  * EventBus.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-15 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,21 +14,45 @@
  */
 package org.rstudio.studio.client.application.events;
 
+import org.rstudio.studio.client.common.satellite.Satellite;
+
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.event.logical.shared.AttachEvent;
 import com.google.gwt.event.logical.shared.AttachEvent.Handler;
 import com.google.gwt.event.logical.shared.HasAttachHandlers;
 import com.google.gwt.event.shared.EventHandler;
+import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.GwtEvent.Type;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.inject.Singleton;
 
 @Singleton
 public class EventBus extends HandlerManager
 {
-   public EventBus()
+   @Inject
+   public EventBus(Provider<Satellite> pSatellite)
    {
-      super(null) ;
+      super(null);
+      pSatellite_ = pSatellite;
+      exportNativeCallbacks();
+   }
+   
+   @Override
+   public void fireEvent(GwtEvent<?> event)
+   {
+      if (event instanceof SerializableEvent &&
+          pSatellite_.get().isCurrentWindowSatellite())
+      {
+         SerializableEvent<?,?> serializable = (SerializableEvent<?,?>)event;
+         fireEventToMainWindow(serializable.serializeToJSO());
+      }
+      else
+      {
+         super.fireEvent(event);
+      }
    }
 
    /**
@@ -52,4 +76,24 @@ public class EventBus extends HandlerManager
          }
       });
    }
+   
+   private final native void exportNativeCallbacks() /*-{
+      var thiz = this;
+      $wnd.fireRStudioSatelliteEvent = $entry(
+         function(eventData) {
+            thiz.@org.rstudio.studio.client.application.events.EventBus::fireEventFromSatellite(Lcom/google/gwt/core/client/JavaScriptObject;)(eventData);
+         }
+      ); 
+   }-*/;
+   
+   private void fireEventFromSatellite(JavaScriptObject data)
+   {
+      
+   }
+
+   private final native void fireEventToMainWindow(JavaScriptObject data) /*-{
+      $wnd.opener.fireRStudioSatelliteEvent(data);
+   }-*/;
+   
+   private Provider<Satellite> pSatellite_;
 }
