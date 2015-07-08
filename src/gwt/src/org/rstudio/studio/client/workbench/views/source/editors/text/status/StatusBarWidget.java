@@ -15,10 +15,15 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text.status;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Style.Display;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.Event;
+import com.google.gwt.user.client.Event.NativePreviewEvent;
+import com.google.gwt.user.client.Event.NativePreviewHandler;
 import com.google.gwt.user.client.ui.*;
 
 import org.rstudio.core.client.widget.IsWidgetWithHeight;
@@ -28,8 +33,7 @@ import org.rstudio.studio.client.common.icons.code.CodeIcons;
 public class StatusBarWidget extends Composite
       implements StatusBar, IsWidgetWithHeight
 {
-   private int height_;
-
+   
    interface Binder extends UiBinder<HorizontalPanel, StatusBarWidget>
    {
    }
@@ -37,14 +41,37 @@ public class StatusBarWidget extends Composite
    public StatusBarWidget()
    {
       Binder binder = GWT.create(Binder.class);
-      HorizontalPanel hpanel = binder.createAndBindUi(this);
-      hpanel.setVerticalAlignment(HorizontalPanel.ALIGN_TOP);
-
-      hpanel.setCellWidth(hpanel.getWidget(2), "100%");
+      panel_ = binder.createAndBindUi(this);
+      panel_.setVerticalAlignment(HorizontalPanel.ALIGN_TOP);
+      
+      panel_.setCellWidth(scope_, "100%");
+      panel_.setCellWidth(message_, "100%");
+      
+      // The message widget should initially be hidden, but be shown in lieu of
+      // the scope tree when requested.
+      show(scope_);
+      show(scopeIcon_);
+      hide(message_);
    
-      initWidget(hpanel);
+      initWidget(panel_);
 
       height_ = 16;
+   }
+   
+   // NOTE: The 'show' + 'hide' methods here take advantage of the fact that
+   // status bar widgets live within table cells; to ensure proper sizing we
+   // need to set the display property on those cells rather than the widgets
+   // themselves.
+   private void hide(Widget widget)
+   {
+      widget.setVisible(false);
+      widget.getElement().getParentElement().getStyle().setDisplay(Display.NONE);
+   }
+   
+   private void show(Widget widget)
+   {
+      widget.setVisible(true);
+      widget.getElement().getParentElement().getStyle().clearDisplay();
    }
 
    public int getHeight()
@@ -60,6 +87,11 @@ public class StatusBarWidget extends Composite
    public StatusBarElement getPosition()
    {
       return position_;
+   }
+   
+   public StatusBarElement getMessage()
+   {
+      return message_;
    }
 
    public StatusBarElement getScope()
@@ -81,7 +113,8 @@ public class StatusBarWidget extends Composite
    
    public void setScopeType(int type)
    {
-      if (type == StatusBar.SCOPE_TOP_LEVEL)
+      scopeType_ = type;
+      if (type == StatusBar.SCOPE_TOP_LEVEL || message_.isVisible())
          scopeIcon_.setVisible(false);
       else
          scopeIcon_.setVisible(true);
@@ -105,15 +138,62 @@ public class StatusBarWidget extends Composite
       else
          scopeIcon_.setResource(CodeIcons.INSTANCE.function());
    }
+   
+   private void initMessage(String message)
+   {
+      hide(scope_);
+      hide(scopeIcon_);
+      
+      message_.setValue(message);
+      show(message_);
+   }
+   
+   private void endMessage()
+   {
+      show(scope_);
+      show(scopeIcon_);
+      hide(message_);
+      
+      setScopeType(scopeType_);
+   }
+   
+   public void hideMessage()
+   {
+      endMessage();
+   }
+   
+   @Override
+   public void showMessage(String message, final HideMessageHandler handler)
+   {
+      initMessage(message);
+      
+      // Protect against multiple messages shown at same time
+      if (handler_ != null)
+      {
+         handler_.removeHandler();
+         handler_ = null;
+      }
+      
+      handler_ = Event.addNativePreviewHandler(new NativePreviewHandler()
+      {
+         @Override
+         public void onPreviewNativeEvent(NativePreviewEvent event)
+         {
+            if (handler.onNativePreviewEvent(event))
+            {
+               endMessage();
+               handler_.removeHandler();
+               handler_ = null;
+            }
+         }
+      });
+   }
 
-   @UiField
-   StatusBarElementWidget position_;
-   @UiField
-   StatusBarElementWidget scope_;
-   @UiField
-   StatusBarElementWidget language_;
-   @UiField
-   Image scopeIcon_;
+   @UiField StatusBarElementWidget position_;
+   @UiField StatusBarElementWidget scope_;
+   @UiField StatusBarElementWidget message_;
+   @UiField StatusBarElementWidget language_;
+   @UiField Image scopeIcon_;
    
    public interface Resources extends ClientBundle
    {
@@ -123,5 +203,10 @@ public class StatusBarWidget extends Composite
    }
    
    public static Resources RES = GWT.create(Resources.class);
+   private final HorizontalPanel panel_;
+   
+   private int height_;
+   private HandlerRegistration handler_;
+   private int scopeType_;
    
 }

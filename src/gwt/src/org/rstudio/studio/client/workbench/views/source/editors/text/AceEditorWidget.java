@@ -67,8 +67,7 @@ public class AceEditorWidget extends Composite
       implements RequiresResize,
                  HasValueChangeHandlers<Void>,
                  HasFoldChangeHandlers,
-                 HasKeyDownHandlers,
-                 HasKeyPressHandlers
+                 HasAllKeyHandlers
 {
    
    public AceEditorWidget()
@@ -411,6 +410,11 @@ public class AceEditorWidget extends Composite
    public HandlerRegistration addKeyPressHandler(KeyPressHandler handler)
    {
       return addHandler(handler, KeyPressEvent.getType());
+   }
+   
+   public HandlerRegistration addKeyUpHandler(KeyUpHandler handler)
+   {
+      return addHandler(handler, KeyUpEvent.getType());
    }
 
    public HandlerRegistration addCapturingKeyDownHandler(KeyDownHandler handler)

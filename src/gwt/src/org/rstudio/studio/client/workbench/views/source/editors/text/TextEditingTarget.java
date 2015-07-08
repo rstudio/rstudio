@@ -31,6 +31,8 @@ import com.google.gwt.http.client.URL;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.Event;
+import com.google.gwt.user.client.Event.NativePreviewEvent;
 import com.google.gwt.user.client.ui.HasValue;
 import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.UIObject;
@@ -133,6 +135,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppComp
 import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionOperation;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.*;
 import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBar;
+import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBar.HideMessageHandler;
 import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBarPopupMenu;
 import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBarPopupRequest;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ui.ChooseEncodingDialog;
@@ -397,6 +400,7 @@ public class TextEditingTarget implements
                                                                   docDisplay_);
       reformatHelper_ = new TextEditingTargetReformatHelper(docDisplay_);
       snippets_ = new SnippetHelper((AceEditor) docDisplay_);
+      renameHelper_ = new TextEditingTargetRenameHelper(docDisplay_);
       
       docDisplay_.setRnwCompletionContext(compilePdfHelper_);
       docDisplay_.setCppCompletionContext(cppCompletionContext_);
@@ -2220,6 +2224,53 @@ public class TextEditingTarget implements
       }
       
       reformatHelper_.insertPrettyNewlines();
+   }
+   
+   @Handler
+   void onRenameInFile()
+   {
+      int matches = renameHelper_.renameInFile();
+      if (matches > 0)
+      {
+         String message = "Found " + matches;
+         if (matches == 1)
+            message += " match";
+         else
+            message += " matches";
+         
+         String selectedItem = docDisplay_.getSelectionValue();
+         message += " for '" + selectedItem + "'";
+         
+         view_.getStatusBar().showMessage(message, new HideMessageHandler()
+         {
+            @Override
+            public boolean onNativePreviewEvent(NativePreviewEvent preview)
+            {
+               if (!docDisplay_.isFocused() || !docDisplay_.inMultiSelectMode())
+               {
+                  docDisplay_.exitMultiSelectMode();
+                  docDisplay_.clearSelection();
+                  return true;
+               }
+               
+               if (preview.getTypeInt() == Event.ONKEYDOWN)
+               {
+                  switch (preview.getNativeEvent().getKeyCode())
+                  {
+                  case KeyCodes.KEY_ENTER:
+                     preview.cancel();
+                  case KeyCodes.KEY_UP:
+                  case KeyCodes.KEY_DOWN:
+                  case KeyCodes.KEY_ESCAPE:
+                     docDisplay_.exitMultiSelectMode();
+                     docDisplay_.clearSelection();
+                     return true;
+                  }
+               }
+               return false;
+            }
+         });
+      }
    }
    
    @Handler
@@ -5083,6 +5134,7 @@ public class TextEditingTarget implements
    private BreakpointManager breakpointManager_;
    private final LintManager lintManager_;
    private final SnippetHelper snippets_;
+   private final TextEditingTargetRenameHelper renameHelper_;
    private CollabEditStartParams queuedCollabParams_;
 
    // Allows external edit checks to supercede one another

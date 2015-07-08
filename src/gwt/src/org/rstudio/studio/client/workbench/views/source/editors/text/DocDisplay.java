@@ -98,6 +98,11 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    // This returns null for most file types, but for Sweave it returns "R" or
    // "TeX". Use SweaveFileType constants to test for these values.
    String getLanguageMode(Position position);
+   
+   boolean inMultiSelectMode();
+   void exitMultiSelectMode();
+   
+   void clearSelection();
    void replaceSelection(String code);
    boolean moveSelectionToNextLine(boolean skipBlankLines);
    boolean moveSelectionToBlankLine(); 
@@ -292,4 +297,6 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    
    void forceImmediateRender();
    boolean isPositionVisible(Position position);
+   
+   void showInfoBar(String message);
 }

@@ -300,6 +300,7 @@ public class Source implements InsertSourceHandler,
       dynamicCommands_.add(commands.editRmdFormatOptions());
       dynamicCommands_.add(commands.reformatCode());
       dynamicCommands_.add(commands.showDiagnosticsActiveDocument());
+      dynamicCommands_.add(commands.renameInFile());
       dynamicCommands_.add(commands.insertRoxygenSkeleton());
       dynamicCommands_.add(commands.expandSelection());
       dynamicCommands_.add(commands.shrinkSelection());

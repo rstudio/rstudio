@@ -529,7 +529,8 @@ public class RCompletionManager implements CompletionManager
          }
          
          // continue showing completions on backspace
-         if (keycode == KeyCodes.KEY_BACKSPACE && modifier == KeyboardShortcut.NONE)
+         if (keycode == KeyCodes.KEY_BACKSPACE && modifier == KeyboardShortcut.NONE &&
+             !docDisplay_.inMultiSelectMode())
          {
             int cursorColumn = input_.getCursorPosition().getColumn();
             String currentLine = docDisplay_.getCurrentLine();

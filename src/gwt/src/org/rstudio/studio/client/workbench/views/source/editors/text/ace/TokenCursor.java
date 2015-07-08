@@ -40,6 +40,39 @@ public class TokenCursor extends JavaScriptObject
       return this.currentValue();
    }-*/;
    
+   public final boolean valueEquals(String value)
+   {
+      return currentToken().valueEquals(value);
+   }
+   
+   public final boolean typeEquals(String type)
+   {
+      return currentToken().typeEquals(type);
+   }
+   
+   public final Token peek(int offset)
+   {
+      return offset > 0 ? peekFwd(offset) : peekBwd(-offset);
+   }
+   
+   public final Token peekFwd(int offset)
+   {
+      TokenCursor clone = cloneCursor();
+      for (int i = 0; i < offset; i++)
+         if (!clone.moveToNextToken())
+            return Token.create();
+      return clone.currentToken();
+   }
+   
+   public final Token peekBwd(int offset)
+   {
+      TokenCursor clone = cloneCursor();
+      for (int i = 0; i < offset; i++)
+         if (!clone.moveToPreviousToken())
+            return Token.create();
+      return clone.currentToken();
+   }
+   
    public final String nextValue(int offset)
    {
       TokenCursor clone = cloneCursor();
@@ -157,13 +190,33 @@ public class TokenCursor extends JavaScriptObject
    
    public native final boolean isLeftBracket() /*-{
       var value = this.currentValue();
-      return ["(", "[", "{"].some(function(x) { return x === value; });
+      return value === "(" || value === "[" || value === "{";
+   }-*/;
+   
+   public native final boolean isRightBracket() /*-{
+      var value = this.currentValue();
+      return value === ")" || value === "]" || value === "}";
    }-*/;
    
    public native final boolean isExtractionOperator() /*-{
       var value = this.currentValue();
-      return ["$", "@", "?", "~"].some(function(x) { return x === value; });
+      return value === "$" || value === "@" || value === "?" || value === "~";
    }-*/;
+   
+   public final boolean isWithinFunctionCall()
+   {
+      TokenCursor clone = cloneCursor();
+      do
+      {
+         if (clone.peekBwd(1).isValidForFunctionCall())
+            return true;
+         
+         if (!clone.moveToPreviousToken())
+            return false;
+         
+      } while (clone.findOpeningBracket("(", false));
+      return false;
+   }
    
 }
 
