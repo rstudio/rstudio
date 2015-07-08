@@ -247,7 +247,17 @@ public class TextEditingTargetWidget
       toolbar.addLeftWidget(compilePdfButton_ = commands_.compilePDF().createToolbarButton());
       rmdFormatButton_ = new ToolbarPopupMenuButton(false, true);
       toolbar.addLeftWidget(rmdFormatButton_);
-      toolbar.addLeftWidget(editRmdFormatButton_ = commands_.editRmdFormatOptions().createToolbarButton(false));
+      
+      ToolbarPopupMenu rmdOptionsMenu = new ToolbarPopupMenu();
+      rmdOptionsMenu.addItem(commands_.editRmdFormatOptions().createMenuItem(false));
+      
+      rmdOptionsButton_ = new ToolbarButton(
+            null,  
+            StandardIcons.INSTANCE.options(),
+            rmdOptionsMenu, 
+            true);
+      
+      toolbar.addLeftWidget(rmdOptionsButton_);
 
       toolbar.addLeftSeparator();
       toolbar.addLeftWidget(commands_.synctexSearch().createToolbarButton());
@@ -498,8 +508,8 @@ public class TextEditingTargetWidget
       knitDocumentButton_.setVisible(canKnitToHTML);
       
       rmdFormatButton_.setVisible(isRMarkdown2);
-      editRmdFormatButton_.setVisible(isRMarkdown2);
-      editRmdFormatButton_.setEnabled(isRMarkdown2);
+      rmdOptionsButton_.setVisible(isRMarkdown2);
+      rmdOptionsButton_.setEnabled(isRMarkdown2);
      
       if (isShinyFile())
       {
@@ -754,10 +764,9 @@ public class TextEditingTargetWidget
          rmdFormatButton_.addMenuItem(item, values.get(i));
       }
       if (!hasSubFormat && selectedOption.equals("HTML"))
-      {
-         rmdFormatButton_.getMenu().addSeparator();
-         addRmdViewerMenuItems(rmdFormatButton_.getMenu());
-      }
+         showRmdViewerMenuItems(true);
+      else
+         showRmdViewerMenuItems(false);
       setFormatOptionsVisible(true);
       if (publishButton_ != null)
          publishButton_.setIsStatic(true);
@@ -772,24 +781,18 @@ public class TextEditingTargetWidget
          setFormatText("");
       }
       rmdFormatButton_.setVisible(visible);
-      editRmdFormatButton_.setVisible(visible);
+      rmdOptionsButton_.setVisible(visible);
       rmdFormatButton_.setEnabled(visible);
-      editRmdFormatButton_.setEnabled(visible);
+      rmdOptionsButton_.setEnabled(visible);
    }
    
    @Override
    public void setIsShinyFormat(boolean isPresentation)
    {
-      if (isPresentation)
-      {
-         rmdFormatButton_.setVisible(false);
-      }
-      else
-      {
-         rmdFormatButton_.setVisible(true);
-         rmdFormatButton_.clearMenu();
-         addRmdViewerMenuItems(rmdFormatButton_.getMenu());
-      }
+      rmdFormatButton_.setVisible(false);
+      
+      showRmdViewerMenuItems(!isPresentation);
+   
       String docType = isPresentation ? "Presentation" : "Document";
       
       knitCommandText_ = "Run " + docType;
@@ -914,7 +917,7 @@ public class TextEditingTargetWidget
             RmdOutputFormatChangedEvent.TYPE, handler);
    }
    
-   private void addRmdViewerMenuItems(ToolbarPopupMenu menu)
+   private void showRmdViewerMenuItems(boolean show)
    {
       if (rmdViewerPaneMenuItem_ == null)
          rmdViewerPaneMenuItem_ = new UIPrefMenuItem<Integer>(
@@ -926,8 +929,16 @@ public class TextEditingTargetWidget
                uiPrefs_.rmdViewerType(),
                RmdOutput.RMD_VIEWER_TYPE_WINDOW, 
                "View in Window", uiPrefs_);
-      menu.addItem(rmdViewerPaneMenuItem_);
-      menu.addItem(rmdViewerWindowMenuItem_);
+      
+      ToolbarPopupMenu menu = rmdOptionsButton_.getMenu();
+      menu.clearItems();
+      if (show)
+      {
+         menu.addItem(rmdViewerPaneMenuItem_);
+         menu.addItem(rmdViewerWindowMenuItem_);
+         menu.addSeparator();
+      }
+      menu.addItem(commands_.editRmdFormatOptions().createMenuItem(false));
    }
    
    private final TextEditingTarget target_;
@@ -956,7 +967,7 @@ public class TextEditingTargetWidget
    private ToolbarButton sourceMenuButton_;
    private ToolbarButton chunksButton_;
    private ToolbarButton shinyLaunchButton_;
-   private ToolbarButton editRmdFormatButton_;
+   private ToolbarButton rmdOptionsButton_;
    private LatchingToolbarButton toggleDocOutlineButton_;
    private ToolbarPopupMenuButton rmdFormatButton_;
    private RSConnectPublishButton publishButton_;
