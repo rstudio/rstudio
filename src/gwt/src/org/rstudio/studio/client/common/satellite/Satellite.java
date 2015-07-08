@@ -153,6 +153,13 @@ public class Satellite implements HasCloseHandlers<Satellite>
          satellite.@org.rstudio.studio.client.common.satellite.Satellite::notifyPendingReactivate()();
       });
 
+      $wnd.addEventListener(
+            "unload",
+            $entry(function() {
+               $wnd.opener.notifyRStudioSatelliteClosed(name);
+            }),
+            true);
+
       // register (this will call the setSessionInfo back)
       $wnd.opener.registerAsRStudioSatellite(name, $wnd);
    }-*/;

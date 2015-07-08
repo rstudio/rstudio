@@ -32,6 +32,7 @@ import org.rstudio.studio.client.application.ApplicationUncaughtExceptionHandler
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay.NewWindowOptions;
+import org.rstudio.studio.client.common.satellite.events.SatelliteClosedEvent;
 import org.rstudio.studio.client.common.satellite.events.WindowClosedEvent;
 import org.rstudio.studio.client.common.satellite.events.WindowOpenedEvent;
 import org.rstudio.studio.client.workbench.model.Session;
@@ -403,6 +404,7 @@ public class SatelliteManager implements CloseHandler<Window>
       if (SatelliteUtils.windowNameIsSatellite(name))
          name = SatelliteUtils.getWindowNameFromSatelliteName(name);
       events_.fireEvent(new WindowClosedEvent(name));
+      events_.fireEvent(new SatelliteClosedEvent(name));
 
       // remove this satellite from the list of active satellites; ordinarily
       // we'd rely on the window object's isClosed() method, but it's possible
@@ -470,7 +472,17 @@ public class SatelliteManager implements CloseHandler<Window>
             manager.@org.rstudio.studio.client.common.satellite.SatelliteManager::unregisterDesktopChildWindow(Ljava/lang/String;)(name);
          }
       );
+      $wnd.notifyRStudioSatelliteClosed = $entry(
+         function(name) {
+            manager.@org.rstudio.studio.client.common.satellite.SatelliteManager::notifyRStudioSatelliteClosed(Ljava/lang/String;)(name);
+         }
+      );
    }-*/;
+   
+   private void notifyRStudioSatelliteClosed(String name)
+   {
+      events_.fireEvent(new SatelliteClosedEvent(name));
+   }
    
    // call setSessionInfo on a satellite
    private native void callSetSessionInfo(JavaScriptObject satellite,

@@ -22,9 +22,11 @@ import org.rstudio.core.client.Size;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
+import org.rstudio.studio.client.common.satellite.events.SatelliteClosedEvent;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.views.source.events.LastSourceDocClosedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.LastSourceDocClosedHandler;
 import org.rstudio.studio.client.workbench.views.source.events.PopoutDocEvent;
@@ -42,7 +44,8 @@ import com.google.inject.Singleton;
 @Singleton
 public class SourceWindowManager implements PopoutDocEvent.Handler,
                                             SourceDocAddedEvent.Handler,
-                                            LastSourceDocClosedHandler
+                                            LastSourceDocClosedHandler,
+                                            SatelliteClosedEvent.Handler
 {
    @Inject
    public SourceWindowManager(
@@ -56,8 +59,31 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
       events_.addHandler(PopoutDocEvent.TYPE, this);
       events_.addHandler(SourceDocAddedEvent.TYPE, this);
       events_.addHandler(LastSourceDocClosedEvent.TYPE, this);
+      events_.addHandler(SatelliteClosedEvent.TYPE, this);
    }
 
+   // Public methods ----------------------------------------------------------
+   public String getSourceWindowId()
+   {
+      return sourceWindowId(Window.Location.getParameter("view"));
+   }
+   
+   public void setSourceDocs(JsArray<SourceDocument> sourceDocs)
+   {
+      JsArrayUtil.fillList(sourceDocs, sourceDocs_);
+   }
+   
+   public JsArray<SourceDocument> getSourceDocs()
+   {
+      return JsArrayUtil.toJsArray(sourceDocs_);
+   }
+   
+   public boolean isSourceWindowOpen(String windowId)
+   {
+      return sourceWindows_.containsKey(windowId);
+   }
+
+   // Event handlers ----------------------------------------------------------
    @Override
    public void onPopoutDoc(final PopoutDocEvent evt)
    {
@@ -106,39 +132,29 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
       sourceDocs_.add(e.getDoc());
    }
 
-   public boolean isSourceWindowOpen(String windowId)
-   {
-      return sourceWindows_.containsKey(windowId);
-   }
-   
-   public String getSourceWindowId()
-   {
-      String view = Window.Location.getParameter("view");
-      if (view != null && view.startsWith(SourceSatellite.NAME_PREFIX))
-      {
-         return view.substring(SourceSatellite.NAME_PREFIX.length());
-      }
-      return "";
-   }
-   
-   public void setSourceDocs(JsArray<SourceDocument> sourceDocs)
-   {
-      JsArrayUtil.fillList(sourceDocs, sourceDocs_);
-   }
-   
-   public JsArray<SourceDocument> getSourceDocs()
-   {
-      return JsArrayUtil.toJsArray(sourceDocs_);
-   }
-   
-
    @Override
    public void onLastSourceDocClosed(LastSourceDocClosedEvent event)
    {
+      // if this is a source document window and its last document closed,
+      // close the doc itself
       if (!getSourceWindowId().isEmpty())
       {
-         // TODO: close all source docs open in this window first
          WindowEx.get().close();
+      }
+   }
+
+   @Override
+   public void onSatelliteClosed(SatelliteClosedEvent event)
+   {
+      // when a satellite closes, close all the source docs it contained
+      for (SourceDocument doc: sourceDocs_)
+      {
+         if (doc.getProperties().getString(SOURCE_WINDOW_ID) == 
+               sourceWindowId(event.getName()))
+         {
+            server_.closeDocument(doc.getId(), new VoidServerRequestCallback());
+            sourceDocs_.remove(doc);
+         }
       }
    }
 
@@ -153,6 +169,15 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
          id += alphanum.charAt((int)(Math.random() * alphanum.length()));
       }
       return id;
+   }
+   
+   private String sourceWindowId(String input)
+   {
+      if (input != null && input.startsWith(SourceSatellite.NAME_PREFIX))
+      {
+         return input.substring(SourceSatellite.NAME_PREFIX.length());
+      }
+      return "";
    }
    
    private EventBus events_;
