@@ -17,7 +17,6 @@ package org.rstudio.studio.client.workbench.views.source;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.Size;
 import org.rstudio.core.client.dom.WindowEx;
@@ -26,6 +25,8 @@ import org.rstudio.studio.client.common.satellite.SatelliteManager;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.workbench.views.source.events.LastSourceDocClosedEvent;
+import org.rstudio.studio.client.workbench.views.source.events.LastSourceDocClosedHandler;
 import org.rstudio.studio.client.workbench.views.source.events.PopoutDocEvent;
 import org.rstudio.studio.client.workbench.views.source.events.SourceDocAddedEvent;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
@@ -40,7 +41,8 @@ import com.google.inject.Singleton;
 
 @Singleton
 public class SourceWindowManager implements PopoutDocEvent.Handler,
-                                            SourceDocAddedEvent.Handler
+                                            SourceDocAddedEvent.Handler,
+                                            LastSourceDocClosedHandler
 {
    @Inject
    public SourceWindowManager(
@@ -53,6 +55,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
       pSatelliteManager_ = pSatelliteManager;
       events_.addHandler(PopoutDocEvent.TYPE, this);
       events_.addHandler(SourceDocAddedEvent.TYPE, this);
+      events_.addHandler(LastSourceDocClosedEvent.TYPE, this);
    }
 
    @Override
@@ -128,6 +131,17 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
       return JsArrayUtil.toJsArray(sourceDocs_);
    }
    
+
+   @Override
+   public void onLastSourceDocClosed(LastSourceDocClosedEvent event)
+   {
+      if (!getSourceWindowId().isEmpty())
+      {
+         // TODO: close all source docs open in this window first
+         WindowEx.get().close();
+      }
+   }
+
    // Private methods ---------------------------------------------------------
    
    private String createSourceWindowId()

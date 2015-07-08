@@ -145,7 +145,8 @@ public class Source implements InsertSourceHandler,
                              CodeBrowserHighlightEvent.Handler,
                              SourceExtendedTypeDetectedEvent.Handler,
                              BeforeShowHandler,
-                             SnippetsChangedEvent.Handler
+                             SnippetsChangedEvent.Handler,
+                             PopoutDocEvent.Handler
 {
    public interface Display extends IsWidget,
                                     HasTabClosingHandlers,
@@ -489,6 +490,8 @@ public class Source implements InsertSourceHandler,
             newDoc(event.getType(), event.getContents(), null);
          }
       });
+      
+      events.addHandler(PopoutDocEvent.TYPE, this);
 
       // Suppress 'CTRL + ALT + SHIFT + click' to work around #2483 in Ace
       Event.addNativePreviewHandler(new NativePreviewHandler()
@@ -1414,6 +1417,21 @@ public class Source implements InsertSourceHandler,
          setPhysicalTabIndex(view_.getTabCount() - 1);
    }
 
+   @Override
+   public void onPopoutDoc(PopoutDocEvent e)
+   {
+      suspendDocumentClose_ = true;
+      for (int i = 0; i < editors_.size(); i++)
+      {
+         if (editors_.get(i).getId() == e.getDoc().getId())
+         {
+            view_.closeTab(i, false);
+            break;
+         }
+      }
+      suspendDocumentClose_ = false;
+   }
+
    @Handler
    public void onCloseSourceDoc()
    {
@@ -2330,15 +2348,15 @@ public class Source implements InsertSourceHandler,
          }
       }
    }
-
-   public void onTabClosed(TabClosedEvent event)
+   
+   private void closeTabIndex(int idx, boolean closeDocument)
    {
-      EditingTarget target = editors_.remove(event.getTabIndex());
+      EditingTarget target = editors_.remove(idx);
 
-      tabOrder_.remove(new Integer(event.getTabIndex()));
+      tabOrder_.remove(new Integer(idx));
       for (int i = 0; i < tabOrder_.size(); i++)
       {
-         if (tabOrder_.get(i) > event.getTabIndex())
+         if (tabOrder_.get(i) > idx)
          {
             tabOrder_.set(i, tabOrder_.get(i) - 1);
          }
@@ -2350,8 +2368,12 @@ public class Source implements InsertSourceHandler,
          activeEditor_.onDeactivate();
          activeEditor_ = null;
       }
-      server_.closeDocument(target.getId(),
-                            new VoidServerRequestCallback());
+
+      if (closeDocument)
+      {
+         server_.closeDocument(target.getId(),
+                               new VoidServerRequestCallback());
+      }
 
       manageCommands();
       fireDocTabsChanged();
@@ -2361,6 +2383,11 @@ public class Source implements InsertSourceHandler,
          sourceNavigationHistory_.clear();
          events_.fireEvent(new LastSourceDocClosedEvent());
       }
+   }
+
+   public void onTabClosed(TabClosedEvent event)
+   {
+      closeTabIndex(event.getTabIndex(), !suspendDocumentClose_);
    }
 
    
@@ -3188,6 +3215,7 @@ public class Source implements InsertSourceHandler,
    private final SourceVimCommands vimCommands_;
 
    private boolean suspendSourceNavigationAdding_;
+   private boolean suspendDocumentClose_ = false;
   
    private static final String MODULE_SOURCE = "source-pane";
    private static final String KEY_ACTIVETAB = "activeTab";
