@@ -53,6 +53,17 @@ public class JsArrayUtil
       }
    }
    
+   public static <T extends JavaScriptObject> JsArray<T> toJsArray(List<T> list)
+   {
+      JsArray<T> array = JsArray.createArray().cast();
+      for (T item: list)
+      {
+         array.push(item);
+      }
+      return array;
+   }
+   
+   
    public static JsArrayString toJsArrayString(List<String> in)
    {
       JsArrayString out = JavaScriptObject.createArray().cast();

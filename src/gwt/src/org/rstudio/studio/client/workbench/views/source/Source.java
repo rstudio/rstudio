@@ -211,7 +211,8 @@ public class Source implements InsertSourceHandler,
                  Satellite satellite,
                  RnwWeaveRegistry rnwWeaveRegistry,
                  ChunkIconsManager chunkIconsManager,
-                 DependencyManager dependencyManager)
+                 DependencyManager dependencyManager,
+                 SourceWindowManager windowManager)
    {
       commands_ = commands;
       view_ = view;
@@ -231,7 +232,7 @@ public class Source implements InsertSourceHandler,
       rnwWeaveRegistry_ = rnwWeaveRegistry;
       chunkIconsManager_ = chunkIconsManager;
       dependencyManager_ = dependencyManager;
-      windowManager_ = new SourceWindowManager();
+      windowManager_ = windowManager;
       
       vimCommands_ = new SourceVimCommands();
       
@@ -2175,7 +2176,7 @@ public class Source implements InsertSourceHandler,
       return target.asWidget();
    }
 
-   public EditingTarget addTab(SourceDocument doc)
+   private EditingTarget addTab(SourceDocument doc)
    {
       final EditingTarget target = editingTargetSource_.getEditingTarget(
             doc, fileContext_, new Provider<String>()
@@ -2233,6 +2234,8 @@ public class Source implements InsertSourceHandler,
             view_.closeTab(widget, false);
          }
       });
+      
+      events_.fireEvent(new SourceDocAddedEvent(doc));
 
       return target;
    }

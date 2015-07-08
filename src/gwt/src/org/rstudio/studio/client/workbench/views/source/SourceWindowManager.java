@@ -14,39 +14,45 @@
  */
 package org.rstudio.studio.client.workbench.views.source;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 
+import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.Size;
 import org.rstudio.core.client.dom.WindowEx;
-import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.views.source.events.PopoutDocEvent;
+import org.rstudio.studio.client.workbench.views.source.events.SourceDocAddedEvent;
+import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
 import org.rstudio.studio.client.workbench.views.source.model.SourceWindowParams;
 
+import com.google.gwt.core.client.JsArray;
 import com.google.gwt.user.client.Window;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
+import com.google.inject.Singleton;
 
-public class SourceWindowManager implements PopoutDocEvent.Handler
+@Singleton
+public class SourceWindowManager implements PopoutDocEvent.Handler,
+                                            SourceDocAddedEvent.Handler
 {
-   public SourceWindowManager()
-   {
-      RStudioGinjector.INSTANCE.injectMembers(this);
-   }
-   
    @Inject
-   public void initialize(SatelliteManager satelliteManager, 
+   public SourceWindowManager(
+         Provider<SatelliteManager> pSatelliteManager, 
          SourceServerOperations server,
          EventBus events)
    {
       events_ = events;
       server_ = server;
-      satelliteManager_ = satelliteManager;
+      pSatelliteManager_ = pSatelliteManager;
       events_.addHandler(PopoutDocEvent.TYPE, this);
+      events_.addHandler(SourceDocAddedEvent.TYPE, this);
    }
 
    @Override
@@ -68,11 +74,11 @@ public class SourceWindowManager implements PopoutDocEvent.Handler
                {
                   SourceWindowParams params = SourceWindowParams.create(
                         windowId, evt.getDoc());
-                  satelliteManager_.openSatellite(
+                  pSatelliteManager_.get().openSatellite(
                         SourceSatellite.NAME_PREFIX + windowId, params, 
                         new Size(500, 800));
                   sourceWindows_.put(windowId, 
-                        satelliteManager_.getSatelliteWindowObject(
+                        pSatelliteManager_.get().getSatelliteWindowObject(
                               SourceSatellite.NAME_PREFIX + windowId));
                }
 
@@ -84,6 +90,19 @@ public class SourceWindowManager implements PopoutDocEvent.Handler
             });
    }
    
+   @Override
+   public void onSourceDocAdded(SourceDocAddedEvent e)
+   {
+      // ensure the doc isn't already in our index
+      for (SourceDocument doc: sourceDocs_)
+      {
+         if (doc.getId() == e.getDoc().getId())
+            return;
+      }
+      
+      sourceDocs_.add(e.getDoc());
+   }
+
    public boolean isSourceWindowOpen(String windowId)
    {
       return sourceWindows_.containsKey(windowId);
@@ -97,6 +116,16 @@ public class SourceWindowManager implements PopoutDocEvent.Handler
          return view.substring(SourceSatellite.NAME_PREFIX.length());
       }
       return "";
+   }
+   
+   public void setSourceDocs(JsArray<SourceDocument> sourceDocs)
+   {
+      JsArrayUtil.fillList(sourceDocs, sourceDocs_);
+   }
+   
+   public JsArray<SourceDocument> getSourceDocs()
+   {
+      return JsArrayUtil.toJsArray(sourceDocs_);
    }
    
    // Private methods ---------------------------------------------------------
@@ -113,10 +142,12 @@ public class SourceWindowManager implements PopoutDocEvent.Handler
    }
    
    private EventBus events_;
-   private SatelliteManager satelliteManager_;
+   private Provider<SatelliteManager> pSatelliteManager_;
    private SourceServerOperations server_;
    private HashMap<String, WindowEx> sourceWindows_ = 
          new HashMap<String,WindowEx>();
+   private ArrayList<SourceDocument> sourceDocs_ = 
+         new ArrayList<SourceDocument>();
    
    public final static String SOURCE_WINDOW_ID = "source_window_id";
 }

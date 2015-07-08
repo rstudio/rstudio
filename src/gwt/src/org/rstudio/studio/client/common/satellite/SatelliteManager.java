@@ -35,6 +35,8 @@ import org.rstudio.studio.client.common.GlobalDisplay.NewWindowOptions;
 import org.rstudio.studio.client.common.satellite.events.WindowClosedEvent;
 import org.rstudio.studio.client.common.satellite.events.WindowOpenedEvent;
 import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.model.SessionInfo;
+import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.dom.client.Document;
@@ -51,10 +53,12 @@ public class SatelliteManager implements CloseHandler<Window>
    public SatelliteManager(
          Session session,
          EventBus events,
+         Provider<SourceWindowManager> pSourceWindowManager,
          Provider<ApplicationUncaughtExceptionHandler> pUncaughtExceptionHandler)
    {
       session_ = session;
       events_ = events;
+      pSourceWindowManager_ = pSourceWindowManager;
       pUncaughtExceptionHandler_ = pUncaughtExceptionHandler;
    }
    
@@ -371,8 +375,14 @@ public class SatelliteManager implements CloseHandler<Window>
       if (!satellites_.contains(satellite))
          satellites_.add(satellite);
       
-      // call setSessionInfo
-      callSetSessionInfo(satelliteWnd, session_.getSessionInfo());
+      // augment the current session info with an up-to-date set of source 
+      // documents
+      SessionInfo sessionInfo = session_.getSessionInfo();
+      sessionInfo.setSourceDocuments(
+            pSourceWindowManager_.get().getSourceDocs());
+      
+      // pass the session info to the satellite
+      callSetSessionInfo(satelliteWnd, sessionInfo);
       
       // call setParams
       JavaScriptObject params = satelliteParams_.get(name);
@@ -518,6 +528,7 @@ public class SatelliteManager implements CloseHandler<Window>
    
    private final Session session_;
    private final EventBus events_;
+   private final Provider<SourceWindowManager> pSourceWindowManager_;
    private final Provider<ApplicationUncaughtExceptionHandler> pUncaughtExceptionHandler_;
    private final ArrayList<ActiveSatellite> satellites_ = 
                                           new ArrayList<ActiveSatellite>();
