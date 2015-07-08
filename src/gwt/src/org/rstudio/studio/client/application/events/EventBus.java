@@ -16,7 +16,6 @@ package org.rstudio.studio.client.application.events;
 
 import org.rstudio.core.client.js.JavaScriptSerializer;
 import org.rstudio.studio.client.common.satellite.Satellite;
-import org.rstudio.studio.client.workbench.views.console.events.CrossWindowEvent;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.shared.GWT;

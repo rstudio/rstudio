@@ -91,8 +91,8 @@ public class JavaScriptSerializerGenerator extends Generator
           if (classType.isAbstract())
               continue;
           w.println();
-          w.println("if (source.getClass().getName() == \"" + 
-                classType.getQualifiedSourceName() + "\")");
+          w.println("if (source.getClass().getName() == " +
+                classType.getQualifiedSourceName() + ".class.getName())");
           w.println("{");
           w.indent();
           w.println("return serializeJso((" + 

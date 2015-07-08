@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench.views.console.events;
 
 import org.rstudio.core.client.js.JavaScriptSerializable;
+import org.rstudio.studio.client.application.events.CrossWindowEvent;
 
 import com.google.gwt.event.shared.GwtEvent;
 
@@ -81,8 +82,8 @@ public class SendToConsoleEvent extends CrossWindowEvent<SendToConsoleHandler>
       sendToConsoleHandler.onSendToConsole(this);
    }
 
-   protected String code_;
-   protected boolean execute_;
-   protected boolean focus_;
-   protected boolean animate_;
+   private String code_;
+   private boolean execute_;
+   private boolean focus_;
+   private boolean animate_;
 }
