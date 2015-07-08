@@ -1,5 +1,5 @@
 /*
- * EventSerializer.java
+ * JavaScriptSerializer.java
  *
  * Copyright (C) 2009-15 by RStudio, Inc.
  *
@@ -12,12 +12,12 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.application.events;
+package org.rstudio.core.client.js;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
-public interface EventSerializer<T>
+public interface JavaScriptSerializer
 {
-   JavaScriptObject serializeToJSO(Object source);
-   T deserializeFromJSO(JavaScriptObject source);
+   <T> JavaScriptObject serialize(T source);
+   <T> T deserialize(JavaScriptObject jso);
 }

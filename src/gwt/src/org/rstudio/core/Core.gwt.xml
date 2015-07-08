@@ -24,9 +24,9 @@
       <when-type-assignable
             class="org.rstudio.core.client.js.JsObjectInjector"/>
    </generate-with>
-   <generate-with class="org.rstudio.core.rebind.EventSerializerGenerator">
+   <generate-with class="org.rstudio.core.rebind.JavaScriptSerializerGenerator">
       <when-type-assignable
-            class="org.rstudio.studio.client.application.events.EventSerializer"/>
+            class="org.rstudio.core.client.js.JavaScriptSerializer"/>
    </generate-with>
 
    <replace-with class="org.rstudio.core.client.dom.impl.DomUtilsStandardImpl">

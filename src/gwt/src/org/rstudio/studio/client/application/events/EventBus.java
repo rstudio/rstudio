@@ -14,9 +14,12 @@
  */
 package org.rstudio.studio.client.application.events;
 
+import org.rstudio.core.client.js.JavaScriptSerializer;
 import org.rstudio.studio.client.common.satellite.Satellite;
+import org.rstudio.studio.client.workbench.views.console.events.CrossWindowEvent;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.shared.GWT;
 import com.google.gwt.event.logical.shared.AttachEvent;
 import com.google.gwt.event.logical.shared.AttachEvent.Handler;
 import com.google.gwt.event.logical.shared.HasAttachHandlers;
@@ -36,6 +39,7 @@ public class EventBus extends HandlerManager
    public EventBus(Provider<Satellite> pSatellite)
    {
       super(null);
+      serializer_ = GWT.create(JavaScriptSerializer.class);
       pSatellite_ = pSatellite;
       exportNativeCallbacks();
    }
@@ -43,11 +47,19 @@ public class EventBus extends HandlerManager
    @Override
    public void fireEvent(GwtEvent<?> event)
    {
-      if (event instanceof SerializableEvent &&
+      if (event instanceof CrossWindowEvent &&
           pSatellite_.get().isCurrentWindowSatellite())
       {
-         SerializableEvent<?,?> serializable = (SerializableEvent<?,?>)event;
-         fireEventToMainWindow(serializable.serializeToJSO(event));
+         CrossWindowEvent<?> crossWindow = (CrossWindowEvent<?>)(event);
+         if (crossWindow.forward())
+         {
+            JavaScriptObject jso = serializer_.serialize(event);
+            fireEventToMainWindow(jso);
+         }
+         else
+         {
+            super.fireEvent(event);
+         }
       }
       else
       {
@@ -88,7 +100,7 @@ public class EventBus extends HandlerManager
    
    private void fireEventFromSatellite(JavaScriptObject data)
    {
-      
+      fireEvent((GwtEvent<?>)serializer_.deserialize(data));
    }
 
    private final native void fireEventToMainWindow(JavaScriptObject data) /*-{
@@ -96,4 +108,5 @@ public class EventBus extends HandlerManager
    }-*/;
    
    private Provider<Satellite> pSatellite_;
+   private JavaScriptSerializer serializer_;
 }
