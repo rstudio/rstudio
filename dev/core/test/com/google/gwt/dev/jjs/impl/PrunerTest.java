@@ -297,7 +297,7 @@ public class PrunerTest extends OptimizerTestBase {
         "}", fun.toSource());
   }
 
-  public void testJsFunction_pruneUnusedJsFunction() throws Exception {
+  public void testJsFunction_notPruneUnusedJsFunction() throws Exception {
     addSnippetImport("com.google.gwt.core.client.js.JsFunction");
     addSnippetClassDecl(
         "@JsFunction interface MyJsFunctionInterface {",
@@ -326,7 +326,7 @@ public class PrunerTest extends OptimizerTestBase {
 
     assertNotNull(result.findClass("EntryPoint$MyJsFunctionInterface"));
     assertNotNull(result.findClass("EntryPoint$MyPlainInterface"));
-    assertNull(result.findClass("EntryPoint$MyJsFunctionInterfaceUnused"));
+    assertNotNull(result.findClass("EntryPoint$MyJsFunctionInterfaceUnused"));
 
     // Function in JsFunction interface may be implicitly called in JS, should not be pruned.
     assertNotNull(OptimizerTestBase.findMethod(result.findClass("EntryPoint$1"), "foo"));

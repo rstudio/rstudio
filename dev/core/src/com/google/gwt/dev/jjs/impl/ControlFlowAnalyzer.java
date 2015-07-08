@@ -616,18 +616,6 @@ public class ControlFlowAnalyzer {
       }
 
       if (liveFieldsAndMethods.add(method)) {
-        JDeclaredType enclosingType = method.getEnclosingType();
-        // If any method reachable for JsType/Function interface, we rescue it so it is not pruned.
-        // This is simpler than tracking where the objects may enter the system and cheap as
-        // interfaces doesn't cost much in the output.
-        // More appropriate solution is to track casts and JSNI methods (see
-        // #canBeInstantiatedInJavaScript) but unfortunately casts are replaced at a later stage
-        // that causes type and all calls to be pruned.
-        if (enclosingType instanceof JInterfaceType
-            && (method.isJsTypeMember() || method.isJsFunctionMethod())) {
-          rescue(enclosingType, true);
-        }
-
         membersToRescueIfTypeIsInstantiated.remove(method);
         if (dependencyRecorder != null) {
           curMethodStack.add(method);
@@ -652,7 +640,8 @@ public class ControlFlowAnalyzer {
         if (method == getClassMethod) {
           rescueClassLiteralsIfGetClassIsLive();
         }
-        if (program.isJsTypePrototype(enclosingType)) {
+
+        if (program.isJsTypePrototype(method.getEnclosingType())) {
           // for JsInterface Prototype methods, rescue all parameters
           // because these are stub methods and the parameters would get pruned ordinarily
           for (JParameter param : method.getParams()) {
@@ -1039,6 +1028,16 @@ public class ControlFlowAnalyzer {
      */
     List<JDeclaredType> declaredTypes = program.getDeclaredTypes();
     for (JDeclaredType type : declaredTypes) {
+      // We rescue any JsType/JsFunction interfaces immediately. Although it is not precise, as
+      // interfaces are mostly free, we are fine. This is simpler than tracking where the objects
+      // may enter the system.
+      // More appropriate solution is to track casts and JSNI methods (see
+      // #canBeInstantiatedInJavaScript) but unfortunately casts are replaced at a later stage
+      // that causes type and all calls to be pruned.
+      if (type instanceof JInterfaceType && (type.isJsType() || type.isJsFunction())) {
+        rescuer.rescue(type, true);
+      }
+
       // first time through, record all exported methods
       for (JMethod method : type.getMethods()) {
         if (method.isExported()) {
