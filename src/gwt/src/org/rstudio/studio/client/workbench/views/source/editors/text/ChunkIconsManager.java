@@ -114,7 +114,12 @@ public class ChunkIconsManager
    
    private void manageChunkIcons(AceEditorNative editor)
    {
+      Element container = editor.getContainer();
+      if (container == null)
+         return;
+      
       Element[] icons = DomUtils.getElementsByClassName(
+            container,
             ThemeStyles.INSTANCE.inlineChunkToolbar());
       
       for (Element icon : icons)
@@ -142,7 +147,7 @@ public class ChunkIconsManager
          if (el.getChildCount() > 0)
             el.removeAllChildren();
          
-         addToolbar(el, isSetupChunk(el, editor));
+         addToolbar(el, isSetupChunk(el, editor), editor);
       }
    }
    
@@ -159,7 +164,7 @@ public class ChunkIconsManager
       return line.contains("r setup");
    }
    
-   private void addToolbar(Element el, boolean isSetupChunk)
+   private void addToolbar(Element el, boolean isSetupChunk, AceEditorNative editor)
    {
       FlowPanel toolbarPanel = new FlowPanel();
       toolbarPanel.addStyleName(ThemeStyles.INSTANCE.inlineChunkToolbar());
@@ -178,9 +183,12 @@ public class ChunkIconsManager
          optionsIcon.getElement().getStyle().setMarginRight(5, Unit.PX);
          toolbarPanel.add(optionsIcon);
 
-         Image runIcon = createRunIcon();
-         toolbarPanel.add(runIcon);
-
+         // Note that 'run current chunk' currently only operates within Rmd
+         if (editor.getSession().getMode().getId().equals("mode/rmarkdown"))
+         {
+            Image runIcon = createRunIcon();
+            toolbarPanel.add(runIcon);
+         }
       }
       
       display(toolbarPanel, el);

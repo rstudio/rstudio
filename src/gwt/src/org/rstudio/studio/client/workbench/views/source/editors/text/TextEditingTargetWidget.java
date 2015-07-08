@@ -537,11 +537,14 @@ public class TextEditingTargetWidget
       
       // set the content type based on the extended type
       setPublishPath(extendedType_, publishPath_);
-      toggleDocOutlineButton_.setVisible(
-            target_.getDocDisplay().hasScopeTree());
       
       // make toggle outline visible if we have a scope tree
       toggleDocOutlineButton_.setVisible(fileType.canShowScopeTree());
+      if (!fileType.canShowScopeTree())
+      {
+         editorPanel_.setWidgetSize(docOutlineWidget_, 0);
+         toggleDocOutlineButton_.setLatched(false);
+      }
       
       toolbar_.invalidateSeparators();
    }

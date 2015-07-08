@@ -578,19 +578,19 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
    protected Position position_;
    
    private static final String OUTPUT_USE_DOCUMENT_DEFAULT =
-         "(Use Document Default)";
+         "(Use document default)";
 
    private static final String OUTPUT_SHOW_OUTPUT_ONLY =
-         "Show Output Only";
+         "Show output only";
    
    private static final String OUTPUT_SHOW_CODE_AND_OUTPUT =
-         "Show Code and Output";
+         "Show code and output";
    
    private static final String OUTPUT_SHOW_NOTHING =
-         "Show Nothing (Run Code)";
+         "Show nothing (run code)";
    
    private static final String OUTPUT_SKIP_THIS_CHUNK =
-         "Show Nothing (Don't Run Code)";
+         "Show nothing (don't run code)";
    
    public interface Styles extends CssResource
    {
