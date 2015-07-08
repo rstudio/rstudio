@@ -17,6 +17,26 @@ package org.rstudio.core.client.js;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Target;
 
+/*
+ * JavaScriptSerializable is an annotation that may be placed on any class to
+ * make it possible to both serialize the class to a JavaScriptObject and to
+ * deserialize the JavaScriptObject into a new instance of the class.
+ * 
+ * There are a few prerequisites that must be met for classes that wish to be
+ * serialized:
+ * 
+ * 1. The class must contain only "plain old data" fields (e.g. String, int,
+ *    boolean, JavaScriptObject). The behavior for other fields is not
+ *    currently defined; these fields may be null on hydration.
+ *    
+ * 2. The class must have an empty constructor; the deserializer works by 
+ *    constructing an empty instance of the class and then using JSNI to 
+ *    populate its fields.
+ * 
+ * See remarks in JavaScriptSerializer for notes on how to serialize and 
+ * deserialize annotated classes, and example usage.
+ * 
+ */
 @Target(ElementType.TYPE)
 public @interface JavaScriptSerializable
 {
