@@ -73,10 +73,12 @@ public abstract class AbstractCollection<E> implements Collection<E> {
     return true;
   }
 
+  @Override
   public boolean isEmpty() {
     return size() == 0;
   }
 
+  @Override
   public abstract Iterator<E> iterator();
 
   @Override

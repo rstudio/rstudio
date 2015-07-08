@@ -1,12 +1,12 @@
 /*
  * Copyright 2007 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -26,7 +26,7 @@ import static com.google.gwt.core.shared.impl.InternalPreconditions.checkState;
  * Skeletal implementation of the List interface. <a
  * href="http://java.sun.com/j2se/1.5.0/docs/api/java/util/AbstractList.html">[Sun
  * docs]</a>
- * 
+ *
  * @param <E> the element type.
  */
 public abstract class AbstractList<E> extends AbstractCollection<E> implements
@@ -41,16 +41,19 @@ public abstract class AbstractList<E> extends AbstractCollection<E> implements
 
     int i = 0, last = -1;
 
+    @Override
     public boolean hasNext() {
       return i < AbstractList.this.size();
     }
 
+    @Override
     public E next() {
       checkElement(hasNext());
 
       return AbstractList.this.get(last = i++);
     }
 
+    @Override
     public void remove() {
       checkState(last != -1);
 
@@ -81,30 +84,36 @@ public abstract class AbstractList<E> extends AbstractCollection<E> implements
       i = start;
     }
 
+    @Override
     public void add(E o) {
       AbstractList.this.add(i, o);
       i++;
       last = -1;
     }
 
+    @Override
     public boolean hasPrevious() {
       return i > 0;
     }
 
+    @Override
     public int nextIndex() {
       return i;
     }
 
+    @Override
     public E previous() {
       checkElement(hasPrevious());
 
       return AbstractList.this.get(last = --i);
     }
 
+    @Override
     public int previousIndex() {
       return i - 1;
     }
 
+    @Override
     public void set(E o) {
       checkState(last != -1);
 
@@ -173,6 +182,7 @@ public abstract class AbstractList<E> extends AbstractCollection<E> implements
     return true;
   }
 
+  @Override
   public void add(int index, E element) {
     throw new UnsupportedOperationException("Add not supported on this list");
   }
@@ -220,6 +230,7 @@ public abstract class AbstractList<E> extends AbstractCollection<E> implements
     return true;
   }
 
+  @Override
   public abstract E get(int index);
 
   @Override
@@ -227,6 +238,7 @@ public abstract class AbstractList<E> extends AbstractCollection<E> implements
     return Collections.hashCode(this);
   }
 
+  @Override
   public int indexOf(Object toFind) {
     for (int i = 0, n = size(); i < n; ++i) {
       if (Objects.equals(toFind, get(i))) {
@@ -241,6 +253,7 @@ public abstract class AbstractList<E> extends AbstractCollection<E> implements
     return new IteratorImpl();
   }
 
+  @Override
   public int lastIndexOf(Object toFind) {
     for (int i = size() - 1; i > -1; --i) {
       if (Objects.equals(toFind, get(i))) {
@@ -250,22 +263,27 @@ public abstract class AbstractList<E> extends AbstractCollection<E> implements
     return -1;
   }
 
+  @Override
   public ListIterator<E> listIterator() {
     return listIterator(0);
   }
 
+  @Override
   public ListIterator<E> listIterator(int from) {
     return new ListIteratorImpl(from);
   }
 
+  @Override
   public E remove(int index) {
     throw new UnsupportedOperationException("Remove not supported on this list");
   }
 
+  @Override
   public E set(int index, E o) {
     throw new UnsupportedOperationException("Set not supported on this list");
   }
 
+  @Override
   public List<E> subList(int fromIndex, int toIndex) {
     return new SubList<E>(this, fromIndex, toIndex);
   }

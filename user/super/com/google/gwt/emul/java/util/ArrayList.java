@@ -61,6 +61,7 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>,
   /**
    * This field holds a JavaScript array.
    */
+  @SuppressWarnings("unchecked")
   private transient E[] array = (E[]) new Object[0];
 
   /**

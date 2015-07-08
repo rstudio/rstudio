@@ -384,6 +384,7 @@ public final class Class<T> implements Type {
     return (modifiers & PRIMITIVE) != 0;
   }
 
+  @Override
   public String toString() {
     return (isInterface() ? "interface " : (isPrimitive() ? "" : "class "))
         + getName();

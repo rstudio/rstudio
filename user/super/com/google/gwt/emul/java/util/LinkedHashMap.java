@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -26,7 +26,7 @@ import static java.util.ConcurrentModificationDetector.recordLastKnownStructure;
  * order. <a
  * href="http://java.sun.com/j2se/1.5.0/docs/api/java/util/LinkedHashMap.html">[Sun
  * docs]</a>
- * 
+ *
  * @param <K> key type.
  * @param <V> value type.
  */
@@ -36,7 +36,7 @@ public class LinkedHashMap<K, V> extends HashMap<K, V> implements Map<K, V> {
    * The entry we use includes next/prev pointers for a doubly-linked circular
    * list with a head node. This reduces the special cases we have to deal with
    * in the list operations.
-   * 
+   *
    * Note that we duplicate the key from the underlying hash map so we can find
    * the eldest entry. The alternative would have been to modify HashMap so more
    * of the code was directly usable here, but this would have added some
@@ -98,10 +98,12 @@ public class LinkedHashMap<K, V> extends HashMap<K, V> implements Map<K, V> {
         recordLastKnownStructure(map, this);
       }
 
+      @Override
       public boolean hasNext() {
         return next != head;
       }
 
+      @Override
       public Map.Entry<K, V> next() {
         checkStructuralChange(map, this);
         checkCriticalElement(hasNext());
@@ -111,6 +113,7 @@ public class LinkedHashMap<K, V> extends HashMap<K, V> implements Map<K, V> {
         return last;
       }
 
+      @Override
       public void remove() {
         checkState(last != null);
         checkStructuralChange(map, this);
@@ -163,7 +166,7 @@ public class LinkedHashMap<K, V> extends HashMap<K, V> implements Map<K, V> {
   /*
    * The head of the LRU/insert order chain, which is a doubly-linked circular
    * list. The key and value of head should never be read.
-   * 
+   *
    * The most recently inserted/accessed node is at the end of the chain, ie.
    * chain.prev.
    */

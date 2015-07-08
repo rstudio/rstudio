@@ -67,6 +67,7 @@ public abstract class OutputStream implements Closeable, Flushable {
      * @throws IOException
      *             if an error occurs while closing this stream.
      */
+    @Override
     public void close() throws IOException {
         /* empty */
     }
@@ -78,6 +79,7 @@ public abstract class OutputStream implements Closeable, Flushable {
      * @throws IOException
      *             if an error occurs while flushing this stream.
      */
+    @Override
     public void flush() throws IOException {
         /* empty */
     }

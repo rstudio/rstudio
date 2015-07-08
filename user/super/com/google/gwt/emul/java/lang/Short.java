@@ -100,6 +100,7 @@ public final class Short extends Number implements Comparable<Short> {
     return (byte) value;
   }
 
+  @Override
   public int compareTo(Short b) {
     return compare(value, b.value);
   }

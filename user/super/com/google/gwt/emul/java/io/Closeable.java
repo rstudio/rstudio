@@ -32,5 +32,6 @@ public interface Closeable extends AutoCloseable {
      * overridden {@code AutoCloseable.close()}, which may be called at most
      * once.
      */
+    @Override
     void close() throws IOException;
 }

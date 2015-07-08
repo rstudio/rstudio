@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -27,7 +27,7 @@ import com.google.gwt.lang.Array;
  * A {@link java.util.Set} of {@link Enum}s. <a
  * href="http://java.sun.com/j2se/1.5.0/docs/api/java/util/EnumSet.html">[Sun
  * docs]</a>
- * 
+ *
  * @param <E> enumeration type
  */
 public abstract class EnumSet<E extends Enum<E>> extends AbstractSet<E> {
@@ -36,7 +36,7 @@ public abstract class EnumSet<E extends Enum<E>> extends AbstractSet<E> {
    * Implemented via sparse array since the set size is finite. Iteration takes
    * linear time with respect to the set of the enum rather than the number of
    * items in the set.
-   * 
+   *
    * Note: Implemented as a subclass instead of a concrete final EnumSet class.
    * This is because declaring an EnumSet.add(E) causes hosted mode to bind to
    * the tighter method rather than the bridge method; but the tighter method
@@ -56,10 +56,12 @@ public abstract class EnumSet<E extends Enum<E>> extends AbstractSet<E> {
         findNext();
       }
 
+      @Override
       public boolean hasNext() {
         return i < capacity();
       }
 
+      @Override
       public E next() {
         checkElement(hasNext());
         last = i;
@@ -67,6 +69,7 @@ public abstract class EnumSet<E extends Enum<E>> extends AbstractSet<E> {
         return set[last];
       }
 
+      @Override
       public void remove() {
         checkState(last != -1);
         assert (set[last] != null);
@@ -124,6 +127,7 @@ public abstract class EnumSet<E extends Enum<E>> extends AbstractSet<E> {
       return false;
     }
 
+    @Override
     public EnumSet<E> clone() {
       E[] clonedSet = Array.clone(set);
       return new EnumSetImpl<E>(all, clonedSet, size);

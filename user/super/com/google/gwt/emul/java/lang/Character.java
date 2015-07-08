@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -81,14 +81,17 @@ public final class Character implements Comparable<Character>, Serializable {
       this.end = end;
     }
 
+    @Override
     public char charAt(int index) {
       return charArray[index + start];
     }
 
+    @Override
     public int length() {
       return end - start;
     }
 
+    @Override
     public java.lang.CharSequence subSequence(int start, int end) {
       return new CharSequenceAdapter(charArray, this.start + start,
           this.start + end);
@@ -297,24 +300,24 @@ public final class Character implements Comparable<Character>, Serializable {
   public static boolean isSurrogatePair(char highSurrogate, char lowSurrogate) {
     return isHighSurrogate(highSurrogate) && isLowSurrogate(lowSurrogate);
   }
-  
+
   /*
    * TODO: correct Unicode handling.
    */
   public static boolean isUpperCase(char c) {
     return toUpperCase(c) == c && isLetter(c);
   }
-  
+
   public static boolean isValidCodePoint(int codePoint) {
     return codePoint >= MIN_CODE_POINT && codePoint <= MAX_CODE_POINT;
   }
-  
+
   public static int offsetByCodePoints(char[] a, int start, int count, int index,
       int codePointOffset) {
     return offsetByCodePoints(new CharSequenceAdapter(a, start, count), index,
         codePointOffset);
   }
-  
+
   public static int offsetByCodePoints(CharSequence seq, int index,
       int codePointOffset) {
     if (codePointOffset < 0) {
@@ -434,7 +437,7 @@ public final class Character implements Comparable<Character>, Serializable {
   /**
    * Computes the high surrogate character of the UTF16 representation of a
    * non-BMP code point. See {@link getLowSurrogate}.
-   * 
+   *
    * @param codePoint requested codePoint, required to be >=
    *          MIN_SUPPLEMENTARY_CODE_POINT
    * @return high surrogate character
@@ -447,7 +450,7 @@ public final class Character implements Comparable<Character>, Serializable {
   /**
    * Computes the low surrogate character of the UTF16 representation of a
    * non-BMP code point. See {@link getHighSurrogate}.
-   * 
+   *
    * @param codePoint requested codePoint, required to be >=
    *          MIN_SUPPLEMENTARY_CODE_POINT
    * @return low surrogate character
@@ -466,6 +469,7 @@ public final class Character implements Comparable<Character>, Serializable {
     return value;
   }
 
+  @Override
   public int compareTo(Character c) {
     return compare(value, c.value);
   }

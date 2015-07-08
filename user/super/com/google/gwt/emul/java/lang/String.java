@@ -167,6 +167,7 @@ public final class String implements Comparable<String>, CharSequence,
   }
 
   public static final Comparator<String> CASE_INSENSITIVE_ORDER = new Comparator<String>() {
+    @Override
     public int compare(String a, String b) {
       return a.compareToIgnoreCase(b);
     }
@@ -606,6 +607,7 @@ public final class String implements Comparable<String>, CharSequence,
     _String(sb);
   }
 
+  @Override
   public native char charAt(int index) /*-{
     return this.charCodeAt(index);
   }-*/;
@@ -622,6 +624,7 @@ public final class String implements Comparable<String>, CharSequence,
     return Character.codePointCount(this, beginIndex, endIndex);
   }
 
+  @Override
   public int compareTo(String other) {
     return compareTo(this, other);
   }
@@ -756,6 +759,7 @@ public final class String implements Comparable<String>, CharSequence,
     return this.lastIndexOf(str, start);
   }-*/;
 
+  @Override
   public native int length() /*-{
     return this.length;
   }-*/;
@@ -930,6 +934,7 @@ public final class String implements Comparable<String>, CharSequence,
     return toffset >= 0 && __substr(this, toffset, prefix.length()).equals(prefix);
   }
 
+  @Override
   public CharSequence subSequence(int beginIndex, int endIndex) {
     return this.substring(beginIndex, endIndex);
   }
