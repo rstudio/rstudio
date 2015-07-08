@@ -63,7 +63,6 @@ public abstract class
    public abstract AppCommand executeCurrentChunk();
    public abstract AppCommand executeNextChunk();
    public abstract AppCommand goToHelp();
-   public abstract AppCommand rcppHelp();
    public abstract AppCommand goToFunctionDefinition();
    public abstract AppCommand sourceNavigateBack();
    public abstract AppCommand sourceNavigateForward();
@@ -75,8 +74,6 @@ public abstract class
    public abstract AppCommand openRMarkdownReferenceGuide();
    public abstract AppCommand openShinyCheatSheet();
    public abstract AppCommand openRoxygenQuickReference();
-   public abstract AppCommand usingRMarkdownHelp();
-   public abstract AppCommand authoringRPresentationsHelp();
    public abstract AppCommand knitDocument();
    public abstract AppCommand previewHTML();
    public abstract AppCommand publishHTML();

@@ -3877,15 +3877,6 @@ public class TextEditingTarget implements
    }
    
    @Handler
-   void onUsingRMarkdownHelp()
-   {
-      if (extendedType_.equals("rmarkdown"))
-         globalDisplay_.openRStudioLink("using_rmarkdown");
-      else
-         globalDisplay_.openRStudioLink("using_markdown");
-   }
-   
-   @Handler
    void onPreviewHTML()
    {
       // last ditch extended type detection

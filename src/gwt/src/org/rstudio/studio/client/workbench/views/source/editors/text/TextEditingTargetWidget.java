@@ -239,18 +239,6 @@ public class TextEditingTargetWidget
       texSeparatorWidget_ = toolbar.addLeftSeparator();
       toolbar.addLeftWidget(texToolbarButton_ = createLatexFormatButton());
       
-      ToolbarPopupMenu helpMenu = new ToolbarPopupMenu();
-      helpMenu.addItem(commands_.usingRMarkdownHelp().createMenuItem(false));
-      helpMenu.addItem(commands_.authoringRPresentationsHelp().createMenuItem(false));
-      helpMenu.addSeparator();
-      helpMenu.addItem(commands_.markdownHelp().createMenuItem(false));
-      
-      helpMenuButton_ = new ToolbarButton(null, 
-                                          StandardIcons.INSTANCE.help(), 
-                                          helpMenu);
-      toolbar.addLeftWidget(helpMenuButton_);
-      toolbar.addLeftWidget(rcppHelpButton_ = commands_.rcppHelp().createToolbarButton());
-      
       toolbar.addLeftSeparator();
       toolbar.addLeftWidget(previewHTMLButton_ = commands_.previewHTML().createToolbarButton());
       knitDocumentButton_ = commands_.knitDocument().createToolbarButton(false);
@@ -473,9 +461,7 @@ public class TextEditingTargetWidget
       boolean canSourceOnSave = fileType.canSourceOnSave();
       boolean canExecuteCode = fileType.canExecuteCode();
       boolean canExecuteChunks = fileType.canExecuteChunks();
-      boolean isMarkdown = fileType.isMarkdown();
       boolean isPlainMarkdown = fileType.isPlainMarkdown();
-      boolean isRPresentation = fileType.isRpres();
       boolean isCpp = fileType.isCpp();
       boolean isScript = fileType.isScript();
       boolean isRMarkdown2 = extendedType_.equals("rmarkdown");
@@ -514,10 +500,7 @@ public class TextEditingTargetWidget
       rmdFormatButton_.setVisible(isRMarkdown2);
       editRmdFormatButton_.setVisible(isRMarkdown2);
       editRmdFormatButton_.setEnabled(isRMarkdown2);
-
-      helpMenuButton_.setVisible(isMarkdown || isRPresentation);
-      rcppHelpButton_.setVisible(isCpp);
-      
+     
       if (isShinyFile())
       {
          sourceOnSave_.setVisible(false);
@@ -972,8 +955,6 @@ public class TextEditingTargetWidget
    private ToolbarButton sourceButton_;
    private ToolbarButton sourceMenuButton_;
    private ToolbarButton chunksButton_;
-   private ToolbarButton helpMenuButton_;
-   private ToolbarButton rcppHelpButton_;
    private ToolbarButton shinyLaunchButton_;
    private ToolbarButton editRmdFormatButton_;
    private LatchingToolbarButton toggleDocOutlineButton_;

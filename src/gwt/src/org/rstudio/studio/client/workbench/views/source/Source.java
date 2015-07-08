@@ -264,8 +264,6 @@ public class Source implements InsertSourceHandler,
       dynamicCommands_.add(commands.executeNextChunk());
       dynamicCommands_.add(commands.sourceActiveDocument());
       dynamicCommands_.add(commands.sourceActiveDocumentWithEcho());
-      dynamicCommands_.add(commands.usingRMarkdownHelp());
-      dynamicCommands_.add(commands.authoringRPresentationsHelp());
       dynamicCommands_.add(commands.knitDocument());
       dynamicCommands_.add(commands.previewHTML());
       dynamicCommands_.add(commands.compilePDF());
@@ -293,7 +291,6 @@ public class Source implements InsertSourceHandler,
       dynamicCommands_.add(commands.checkSpelling());
       dynamicCommands_.add(commands.codeCompletion());
       dynamicCommands_.add(commands.findUsages());
-      dynamicCommands_.add(commands.rcppHelp());
       dynamicCommands_.add(commands.debugBreakpoint());
       dynamicCommands_.add(commands.vcsViewOnGitHub());
       dynamicCommands_.add(commands.vcsBlameOnGitHub());
