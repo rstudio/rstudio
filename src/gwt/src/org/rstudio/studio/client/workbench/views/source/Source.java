@@ -66,6 +66,7 @@ import org.rstudio.studio.client.common.filetypes.events.OpenSourceFileEvent.Nav
 import org.rstudio.studio.client.common.filetypes.events.OpenSourceFileHandler;
 import org.rstudio.studio.client.common.rnw.RnwWeave;
 import org.rstudio.studio.client.common.rnw.RnwWeaveRegistry;
+import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.common.synctex.Synctex;
 import org.rstudio.studio.client.common.synctex.events.SynctexStatusChangedEvent;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownContext;
@@ -207,6 +208,7 @@ public class Source implements InsertSourceHandler,
                  WorkbenchContext workbenchContext,
                  Provider<FileMRUList> pMruList,
                  UIPrefs uiPrefs,
+                 Satellite satellite,
                  RnwWeaveRegistry rnwWeaveRegistry,
                  ChunkIconsManager chunkIconsManager,
                  DependencyManager dependencyManager)
@@ -684,7 +686,23 @@ public class Source implements InsertSourceHandler,
 
       for (int i = 0; i < docs.length(); i++)
       {
-         addTab(docs.get(i));
+         // restore the docs assigned to this source window
+         SourceDocument doc = docs.get(i);
+         String docWindowId = 
+               doc.getProperties().getString(
+                     SourceWindowManager.SOURCE_WINDOW_ID);
+         if (docWindowId == null)
+            docWindowId = "";
+         String currentSourceWindowId = windowManager_.getSourceWindowId();
+         
+         // it belongs in this window if (a) it's assigned to it, or (b) this
+         // is the main window, and the window it's assigned to isn't open.
+         if (currentSourceWindowId == docWindowId ||
+             (currentSourceWindowId.isEmpty() && 
+              !windowManager_.isSourceWindowOpen(docWindowId)))
+         {
+            addTab(doc);
+         }
       }
    }
    
