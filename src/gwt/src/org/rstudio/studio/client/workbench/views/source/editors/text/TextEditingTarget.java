@@ -3493,12 +3493,16 @@ public class TextEditingTarget implements
    private boolean isRChunk(Scope scope)
    {
       String labelText = docDisplay_.getLine(scope.getPreamble().getRow());
-      Pattern reEngine = Pattern.create(".*engine\\s*=['\"]([^'\"]*)['\"]");
+      Pattern reEngine = Pattern.create(".*engine\\s*=\\s*['\"]([^'\"]*)['\"]");
       Match match = reEngine.match(labelText, 0);
       if (match == null)
          return true;
       
       String engine = match.getGroup(1).toLowerCase();
+      
+      // NOTE: We might want to include 'Rscript' but such chunks are typically
+      // intended to be run in their own process so it might not make sense to
+      // collect those here.
       return engine.equals("r");
    }
    
