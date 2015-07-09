@@ -48,6 +48,17 @@ public class JsFunctionTest extends GWTTestCase {
     assertEquals(12, jsFunctionInterface.foo(10));
   }
 
+  public void testJsFunctionBasic_javaAndJs() {
+    MyJsFunctionInterface jsFunctionInterface = new MyJsFunctionInterface() {
+      @Override
+      public int foo(int a) {
+        return a + 2;
+      }
+    };
+    assertEquals(12, jsFunctionInterface.foo(10));
+    assertEquals(13, callAsFunction(jsFunctionInterface, 11));
+  }
+
   public void testJsFunctionViaFunctionMethods() {
     MyJsFunctionInterface jsFunctionInterface = new MyJsFunctionInterface() {
       @Override

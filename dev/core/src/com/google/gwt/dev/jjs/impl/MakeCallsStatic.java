@@ -309,7 +309,7 @@ public class MakeCallsStatic {
         return false;
       }
 
-      if (method.isOrOverridesJsTypeMethod()) {
+      if (program.isJsTypePrototype(method.getEnclosingType())) {
         return false;
       }
 
