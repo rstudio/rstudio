@@ -306,6 +306,8 @@ public class Source implements InsertSourceHandler,
       dynamicCommands_.add(commands.expandSelection());
       dynamicCommands_.add(commands.shrinkSelection());
       dynamicCommands_.add(commands.toggleDocumentOutline());
+      dynamicCommands_.add(commands.knitWithParameters());
+      dynamicCommands_.add(commands.editRmdParameters());
       for (AppCommand command : dynamicCommands_)
       {
          command.setVisible(false);

@@ -4211,6 +4211,20 @@ public class TextEditingTarget implements
       
       handlePdfCommand(action, useInternalPreview, null);
    }
+   
+   @Handler
+   void onEditRmdParameters()
+   {
+      globalDisplay_.showMessage(MessageDisplay.MSG_WARNING, 
+         "Not Yet Implemented", "This command is not yet implemented.");
+   }
+   
+   @Handler
+   void onKnitWithParameters()
+   {
+      globalDisplay_.showMessage(MessageDisplay.MSG_WARNING, 
+            "Not Yet Implemented", "This command is not yet implemented.");      
+   }
 
    @Handler
    void onSynctexSearch()
