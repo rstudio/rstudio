@@ -49,7 +49,7 @@ import org.rstudio.studio.client.common.debugging.model.UnhandledError;
 import org.rstudio.studio.client.common.debugging.ui.ConsoleError;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.events.OpenSourceFileEvent;
-import org.rstudio.studio.client.common.filetypes.events.OpenSourceFileEvent.NavigationMethod;
+import org.rstudio.studio.client.common.filetypes.model.NavigationMethods;
 import org.rstudio.studio.client.workbench.model.ConsoleAction;
 import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
 import org.rstudio.studio.client.workbench.views.console.events.RunCommandWithDebugEvent;
@@ -297,7 +297,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
                                    frame.getLineNumber(),
                                    frame.getCharacterNumber()),
                              FileTypeRegistry.R,
-                             NavigationMethod.HighlightLine));      
+                             NavigationMethods.HIGHLIGHT_LINE));
    }
    
    @Override

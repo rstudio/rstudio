@@ -62,8 +62,8 @@ import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.common.filetypes.events.OpenPresentationSourceFileEvent;
 import org.rstudio.studio.client.common.filetypes.events.OpenSourceFileEvent;
-import org.rstudio.studio.client.common.filetypes.events.OpenSourceFileEvent.NavigationMethod;
 import org.rstudio.studio.client.common.filetypes.events.OpenSourceFileHandler;
+import org.rstudio.studio.client.common.filetypes.model.NavigationMethods;
 import org.rstudio.studio.client.common.rnw.RnwWeave;
 import org.rstudio.studio.client.common.rnw.RnwWeaveRegistry;
 import org.rstudio.studio.client.common.satellite.Satellite;
@@ -1824,7 +1824,7 @@ public class Source implements InsertSourceHandler,
                        event.getFileType(),
                        event.getPosition(),
                        event.getPattern(),
-                       NavigationMethod.HighlightLine,
+                       NavigationMethods.HIGHLIGHT_LINE,
                        true);
       
    }
@@ -1850,7 +1850,7 @@ public class Source implements InsertSourceHandler,
                                  final TextFileType fileType,
                                  final FilePosition position,
                                  final String pattern,
-                                 final NavigationMethod navMethod, 
+                                 final int navMethod, 
                                  final boolean forceHighlightMode)
    {
       // if this is the main window, check to see if we should route an event
@@ -1868,8 +1868,8 @@ public class Source implements InsertSourceHandler,
       }
       
       final boolean isDebugNavigation = 
-            navMethod == NavigationMethod.DebugStep ||
-            navMethod == NavigationMethod.DebugEnd;
+            navMethod == NavigationMethods.DEBUG_STEP ||
+            navMethod == NavigationMethods.DEBUG_END;
       
       final CommandWithArg<EditingTarget> editingTargetAction = 
             new CommandWithArg<EditingTarget>() 
@@ -1889,7 +1889,7 @@ public class Source implements InsertSourceHandler,
                         filePos.getEndColumn() + 1);
                   
                   if (Desktop.isDesktop() && 
-                      navMethod != NavigationMethod.DebugEnd)
+                      navMethod != NavigationMethods.DEBUG_END)
                       Desktop.getFrame().bringMainFrameToFront();
                }
                navigate(target, 
@@ -1918,14 +1918,14 @@ public class Source implements InsertSourceHandler,
                @Override
                public void execute()
                {
-                  if (navMethod == NavigationMethod.DebugStep)
+                  if (navMethod == NavigationMethods.DEBUG_STEP)
                   {
                      target.highlightDebugLocation(
                            srcPosition, 
                            srcEndPosition, 
                            true);
                   }
-                  else if (navMethod == NavigationMethod.DebugEnd)
+                  else if (navMethod == NavigationMethods.DEBUG_END)
                   {
                      target.endDebugHighlighting();
                   }
@@ -1937,7 +1937,7 @@ public class Source implements InsertSourceHandler,
                      
                      // now navigate to the new position
                      boolean highlight = 
-                           navMethod == NavigationMethod.HighlightLine &&
+                           navMethod == NavigationMethods.HIGHLIGHT_LINE &&
                            !uiPrefs_.highlightSelectedLine().getValue();
                      target.navigateToPosition(srcPosition,
                                                false,
@@ -1974,7 +1974,7 @@ public class Source implements InsertSourceHandler,
             if (path != null && path.equalsIgnoreCase(file.getPath()))
             {
                // the file's open; just update its highlighting 
-               if (navMethod == NavigationMethod.DebugEnd)
+               if (navMethod == NavigationMethods.DEBUG_END)
                {
                   target.endDebugHighlighting();
                }
@@ -1989,7 +1989,7 @@ public class Source implements InsertSourceHandler,
          
          // If we're here, the target file wasn't open in an editor. Don't
          // open a file just to turn off debug highlighting in the file!
-         if (navMethod == NavigationMethod.DebugEnd)
+         if (navMethod == NavigationMethods.DEBUG_END)
             return;
       }
 

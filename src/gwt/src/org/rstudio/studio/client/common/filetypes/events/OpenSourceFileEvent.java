@@ -22,6 +22,7 @@ import org.rstudio.core.client.js.JavaScriptSerializable;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.CrossWindowEvent;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
+import org.rstudio.studio.client.common.filetypes.model.NavigationMethods;
 
 @JavaScriptSerializable
 public class OpenSourceFileEvent extends CrossWindowEvent<OpenSourceFileHandler>
@@ -29,14 +30,6 @@ public class OpenSourceFileEvent extends CrossWindowEvent<OpenSourceFileHandler>
    public static final GwtEvent.Type<OpenSourceFileHandler> TYPE =
       new GwtEvent.Type<OpenSourceFileHandler>();
 
-   public enum NavigationMethod
-   {
-      Default,
-      HighlightLine,
-      DebugStep,
-      DebugEnd
-   }
-   
    public OpenSourceFileEvent()
    {
    }
@@ -50,13 +43,13 @@ public class OpenSourceFileEvent extends CrossWindowEvent<OpenSourceFileHandler>
                               FilePosition position, 
                               TextFileType fileType)
    {
-      this(file, position, fileType, NavigationMethod.Default);
+      this(file, position, fileType, NavigationMethods.DEFAULT);
    }
    
    public OpenSourceFileEvent(FileSystemItem file, 
                               FilePosition position, 
                               TextFileType fileType,
-                              NavigationMethod navMethod)
+                              int navMethod)
    {
       file_ = file;
       position_ = position;
@@ -93,7 +86,7 @@ public class OpenSourceFileEvent extends CrossWindowEvent<OpenSourceFileHandler>
       return position_;
    }
    
-   public NavigationMethod getNavigationMethod()
+   public int getNavigationMethod()
    {
       return navigationMethod_;
    }
@@ -113,5 +106,5 @@ public class OpenSourceFileEvent extends CrossWindowEvent<OpenSourceFileHandler>
    private FileSystemItem file_;
    private FilePosition position_;
    private TextFileType fileType_;
-   private NavigationMethod navigationMethod_;
+   private int navigationMethod_;
 }
