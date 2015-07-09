@@ -18,9 +18,13 @@ import com.google.gwt.event.shared.GwtEvent;
 
 import org.rstudio.core.client.FilePosition;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.js.JavaScriptSerializable;
+import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.events.CrossWindowEvent;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 
-public class OpenSourceFileEvent extends GwtEvent<OpenSourceFileHandler>
+@JavaScriptSerializable
+public class OpenSourceFileEvent extends CrossWindowEvent<OpenSourceFileHandler>
 {
    public static final GwtEvent.Type<OpenSourceFileHandler> TYPE =
       new GwtEvent.Type<OpenSourceFileHandler>();
@@ -31,6 +35,10 @@ public class OpenSourceFileEvent extends GwtEvent<OpenSourceFileHandler>
       HighlightLine,
       DebugStep,
       DebugEnd
+   }
+   
+   public OpenSourceFileEvent()
+   {
    }
    
    public OpenSourceFileEvent(FileSystemItem file, TextFileType fileType)
@@ -56,6 +64,12 @@ public class OpenSourceFileEvent extends GwtEvent<OpenSourceFileHandler>
       navigationMethod_ = navMethod;
    }
    
+   @Override
+   public boolean forward()
+   {
+      return false;
+   }
+   
    public FileSystemItem getFile()
    {
       return file_;
@@ -63,7 +77,15 @@ public class OpenSourceFileEvent extends GwtEvent<OpenSourceFileHandler>
 
    public TextFileType getFileType()
    {
-      return fileType_;
+      if (fileType_ == null)
+      {
+         return RStudioGinjector.INSTANCE.getFileTypeRegistry()
+                                         .getTextTypeForFile(file_);
+      }
+      else
+      {
+         return fileType_;
+      }
    }
    
    public FilePosition getPosition()
@@ -88,8 +110,8 @@ public class OpenSourceFileEvent extends GwtEvent<OpenSourceFileHandler>
       return TYPE;
    }
    
-   private final FileSystemItem file_;
-   private final FilePosition position_;
-   private final TextFileType fileType_;
-   private final NavigationMethod navigationMethod_;
+   private FileSystemItem file_;
+   private FilePosition position_;
+   private TextFileType fileType_;
+   private NavigationMethod navigationMethod_;
 }

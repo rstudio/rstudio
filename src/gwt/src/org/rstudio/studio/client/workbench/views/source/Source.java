@@ -708,7 +708,7 @@ public class Source implements InsertSourceHandler,
          // it belongs in this window if (a) it's assigned to it, or (b) this
          // is the main window, and the window it's assigned to isn't open.
          if (currentSourceWindowId == docWindowId ||
-             (currentSourceWindowId.isEmpty() && 
+             (windowManager_.isMainSourceWindow() && 
               !windowManager_.isSourceWindowOpen(docWindowId)))
          {
             addTab(doc);
@@ -1853,6 +1853,20 @@ public class Source implements InsertSourceHandler,
                                  final NavigationMethod navMethod, 
                                  final boolean forceHighlightMode)
    {
+      // if this is the main window, check to see if we should route an event
+      // there instead
+      if (windowManager_.isMainSourceWindow())
+      {
+         String sourceWindowId = 
+               windowManager_.getWindowIdOfDocPath(file.getPath());
+         if (!StringUtil.isNullOrEmpty(sourceWindowId))
+         {
+            windowManager_.fireEventToSourceWindow(sourceWindowId, 
+                  new OpenSourceFileEvent(file, position, null, navMethod));
+            return;
+         }
+      }
+      
       final boolean isDebugNavigation = 
             navMethod == NavigationMethod.DebugStep ||
             navMethod == NavigationMethod.DebugEnd;
@@ -2083,6 +2097,7 @@ public class Source implements InsertSourceHandler,
          return;
       }
 
+      // check to see if any local editors have the file open
       for (int i = 0; i < editors_.size(); i++)
       {
          EditingTarget target = editors_.get(i);
@@ -2097,7 +2112,7 @@ public class Source implements InsertSourceHandler,
             return;
          }
       }
-
+      
       EditingTarget target = editingTargetSource_.getEditingTarget(fileType);
 
       if (file.getLength() > target.getFileSizeLimit())
