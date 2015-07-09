@@ -124,7 +124,6 @@ import org.rstudio.studio.client.workbench.views.presentation.model.Presentation
 import org.rstudio.studio.client.workbench.views.source.SourceBuildHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetCodeExecution;
-import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay.AnchoredSelection;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ScopeList.ContainsFoldPredicate;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetRMarkdownHelper.RmdSelectedTemplate;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceFold;
@@ -3479,40 +3478,25 @@ public class TextEditingTarget implements
    
    public void executePreviousChunks(final Position position)
    {  
-      withPreservedSelection(new Command() {
-
-         @Override
-         public void execute()
-         {
-            // HACK: This is just to force the entire function tree to be built.
-            // It's the easiest way to make sure getCurrentScope() returns
-            // a Scope with an end.
-            docDisplay_.getScopeTree();
-            // execute the previous chunks
-            Scope[] previousScopes = scopeHelper_.getPreviousSweaveChunks(position);
-            for (Scope scope : previousScopes)
-               executeSweaveChunk(scope, false);
-         }
-      });    
+      // HACK: This is just to force the entire function tree to be built.
+      // It's the easiest way to make sure getCurrentScope() returns
+      // a Scope with an end.
+      docDisplay_.getScopeTree();
+      
+      // execute the previous chunks
+      Scope[] previousScopes = scopeHelper_.getPreviousSweaveChunks(position);
+      for (Scope scope : previousScopes)
+         if (isRChunk(scope))
+            executeSweaveChunk(scope, false);
    }
    
-   private void withPreservedSelection(Command command)
-   { 
-      // save the selection and scroll position for restoration
-      int scrollPosition = docDisplay_.getScrollTop();
-      Position start = docDisplay_.getSelectionStart();
-      Position end = docDisplay_.getSelectionEnd();
-      AnchoredSelection anchoredSelection = 
-                           docDisplay_.createAnchoredSelection(start,end);
-      
-      // execute the command
-      command.execute();
-      
-      // restore the selection and scroll position
-      anchoredSelection.apply();
-      docDisplay_.scrollToY(scrollPosition);
+   private boolean isRChunk(Scope scope)
+   {
+      String labelText = docDisplay_.getLine(scope.getPreamble().getRow());
+      Pattern reEngine = Pattern.create("engine\\s*=");
+      return !reEngine.test(labelText);
    }
-
+   
    private void executeSweaveChunk(final Scope chunk, 
                                    final boolean scrollNearTop)
    {
@@ -3533,14 +3517,11 @@ public class TextEditingTarget implements
                                            range.getStart().getColumn()),
                      true);
             }
-            docDisplay_.setSelection(
-                docDisplay_.createSelection(range.getStart(), range.getEnd()));
             if (!range.isEmpty())
             {
                codeExecution_.setLastExecuted(range.getStart(), range.getEnd());
                String code = scopeHelper_.getSweaveChunkText(chunk);
                events_.fireEvent(new SendToConsoleEvent(code, true));
-
                docDisplay_.collapseSelection(true);
             }
          }
