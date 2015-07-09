@@ -208,7 +208,8 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
          // reload the app.
          if (currentViewType_ == ShinyViewerType.SHINY_VIEWER_WINDOW)
          {
-            satelliteManager_.dispatchCommand(commands_.reloadShinyApp());
+            satelliteManager_.dispatchCommand(commands_.reloadShinyApp(), 
+                  ShinyApplicationSatellite.NAME);
             activateWindow();
          } 
          else if (currentViewType_ == ShinyViewerType.SHINY_VIEWER_PANE &&

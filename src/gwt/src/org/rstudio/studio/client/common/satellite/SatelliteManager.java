@@ -24,6 +24,7 @@ import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.Point;
 import org.rstudio.core.client.Size;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.layout.ScreenUtils;
@@ -61,6 +62,7 @@ public class SatelliteManager implements CloseHandler<Window>
       events_ = events;
       pSourceWindowManager_ = pSourceWindowManager;
       pUncaughtExceptionHandler_ = pUncaughtExceptionHandler;
+      initializeCommonCallbacks();
    }
    
    // the main window should call this method during startup to set itself
@@ -343,12 +345,24 @@ public class SatelliteManager implements CloseHandler<Window>
       }
    }
    
-   // dispatch a command to all satellites. 
-   public void dispatchCommand(AppCommand command)
+   // dispatch a command to the named satellite window, or to the main window
+   // if no target is specified
+   public void dispatchCommand(AppCommand command, String target)
    {
-      for (ActiveSatellite satellite: satellites_)
+      if (StringUtil.isNullOrEmpty(target))
       {
-         callDispatchCommand(satellite.getWindow(), command.getId());
+         callDispatchCommandMain(command.getId());
+      }
+      else
+      {
+         for (ActiveSatellite satellite: satellites_)
+         {
+            if (satellite.getName() == target)
+            {
+               callDispatchCommandSatellite(
+                     satellite.getWindow(), command.getId());
+            }
+         }
       }
    }
 
@@ -479,6 +493,24 @@ public class SatelliteManager implements CloseHandler<Window>
       );
    }-*/;
    
+   private final native void initializeCommonCallbacks() /*-{
+      var manager = this;
+      $wnd.dispatchRStudioCommandExternal = $entry(
+         function(commandId) {
+            manager.@org.rstudio.studio.client.common.satellite.SatelliteManager::dispatchCommandExternal(Ljava/lang/String;)(commandId);
+         }
+      ); 
+      
+   }-*/;
+   
+   private void dispatchCommandExternal(String commandId)
+   {  
+      AppCommand cmd = RStudioGinjector.INSTANCE.getCommands()
+            .getCommandById(commandId);
+      if (cmd != null)
+         cmd.execute();
+   }
+   
    private void notifyRStudioSatelliteClosed(String name)
    {
       events_.fireEvent(new SatelliteClosedEvent(name));
@@ -509,9 +541,13 @@ public class SatelliteManager implements CloseHandler<Window>
    }-*/;
    
    // dispatch command to a satellite
-   private native void callDispatchCommand(JavaScriptObject satellite,
+   private native void callDispatchCommandSatellite(JavaScriptObject satellite,
                                            String commandId) /*-{
-      satellite.dispatchCommandToRStudioSatellite(commandId);
+      satellite.dispatchRStudioCommandExternal(commandId);
+   }-*/;
+   
+   private native void callDispatchCommandMain(String commandId) /*-{
+      $wnd.opener.dispatchRStudioCommandExternal(commandId);
    }-*/;
    
    // check whether the current window is a satellite (note this method

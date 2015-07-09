@@ -141,13 +141,6 @@ public class Satellite implements HasCloseHandlers<Satellite>
          }
       ); 
       
-      // export command notification callback
-      $wnd.dispatchCommandToRStudioSatellite = $entry(
-         function(commandId) {
-            satellite.@org.rstudio.studio.client.common.satellite.Satellite::dispatchCommand(Ljava/lang/String;)(commandId);
-         }
-      ); 
-      
       // export request activation callback
       $wnd.notifyPendingReactivate = $entry(function() {
          satellite.@org.rstudio.studio.client.common.satellite.Satellite::notifyPendingReactivate()();
@@ -232,12 +225,6 @@ public class Satellite implements HasCloseHandlers<Satellite>
    private void dispatchEvent(JavaScriptObject clientEvent)
    {  
       eventDispatcher_.enqueEventAsJso(clientEvent);
-   }
-   
-   // called by main window to deliver commands
-   private void dispatchCommand(String commandId)
-   {  
-      commands_.getCommandById(commandId).execute();
    }
    
    // called by the main window to notify us that we're about to be reactivated

@@ -41,6 +41,7 @@ import org.rstudio.studio.client.common.rnw.RnwWeaveRegistry;
 import org.rstudio.studio.client.common.rnw.RnwWeaveSelectWidget;
 import org.rstudio.studio.client.common.rpubs.ui.RPubsUploadDialog;
 import org.rstudio.studio.client.common.satellite.Satellite;
+import org.rstudio.studio.client.common.satellite.SatelliteManager;
 import org.rstudio.studio.client.common.spelling.SpellChecker;
 import org.rstudio.studio.client.common.spelling.ui.SpellingCustomDictionariesWidget;
 import org.rstudio.studio.client.dataviewer.DataViewerSatellite;
@@ -161,4 +162,5 @@ public interface RStudioGinjector extends Ginjector
    HelpStrategy getHelpStrategy();
    ShortcutViewer getShortcutViewer();
    Satellite getSatellite();
+   SatelliteManager getSatelliteManager();
 }

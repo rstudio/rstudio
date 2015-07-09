@@ -33,6 +33,9 @@ import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
+import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.common.satellite.Satellite;
+import org.rstudio.studio.client.common.satellite.SatelliteManager;
 
 public class AppCommand implements Command, ClickHandler, ImageResourceProvider
 {
@@ -121,6 +124,19 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
       assert visible_ : "AppCommand executed when it was not visible";
       if (!visible_)
          return;
+      
+      // if this window is a satellite but the command only wants to be handled
+      // in the main window, activate the main window and execute the command
+      // there instead
+      Satellite satellite = RStudioGinjector.INSTANCE.getSatellite();
+      if (satellite.isCurrentWindowSatellite() 
+          && getWindowMode().equals(WINDOW_MODE_MAIN))
+      {
+         satellite.focusMainWindow();
+         SatelliteManager mgr = RStudioGinjector.INSTANCE.getSatelliteManager();
+         mgr.dispatchCommand(this, null);
+         return;
+      }
 
       if (enableNoHandlerAssertions_)
       {
@@ -189,6 +205,16 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
    public void setPreventShortcutWhenDisabled(boolean preventShortcut)
    {
       preventShortcutWhenDisabled_ = preventShortcut;
+   }
+   
+   public String getWindowMode()
+   {
+      return windowMode_;
+   }
+   
+   public void setWindowMode(String mode)
+   {
+      windowMode_ = mode;
    }
 
    /**
@@ -501,6 +527,7 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
    private boolean preventShortcutWhenDisabled_ = true;
    private boolean checkable_ = false;
    private boolean checked_ = false;
+   private String windowMode_ = "any";
    private final HandlerManager handlers_ = new HandlerManager(this);
 
    private String label_ = null;
@@ -516,4 +543,5 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
    private boolean executedFromShortcut_ = false;
  
    private static boolean enableNoHandlerAssertions_ = true;
+   private static final String WINDOW_MODE_MAIN = "main";
 }
