@@ -16,12 +16,14 @@ package org.rstudio.studio.client.common.codetools;
 
 import java.util.List;
 
+import org.rstudio.core.client.CustomKeyboardShortcutDispatcher.UserCommandResult;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.server.*;
 import org.rstudio.studio.client.workbench.codesearch.model.CodeSearchServerOperations;
 import org.rstudio.studio.client.workbench.views.help.model.HelpServerOperations;
 import org.rstudio.studio.client.workbench.views.source.model.CppServerOperations;
 
+import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
 
 public interface CodeToolsServerOperations extends HelpServerOperations,
@@ -72,4 +74,14 @@ public interface CodeToolsServerOperations extends HelpServerOperations,
    void extractChunkOptions(
          String chunkText,
          ServerRequestCallback<JsObject> callback);
+   
+   void executeUserCommand(
+         String functionName,
+         String content,
+         int rowStart,
+         int columnStart,
+         int rowEnd,
+         int columnEnd,
+         ServerRequestCallback<JsArray<UserCommandResult>> callback);
+         
 }

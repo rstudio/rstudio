@@ -38,6 +38,7 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 
 import org.rstudio.core.client.*;
+import org.rstudio.core.client.CustomKeyboardShortcutDispatcher.UserCommandResult;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.command.KeyboardShortcut;
@@ -77,6 +78,7 @@ import org.rstudio.studio.client.rmarkdown.model.RmdTemplateData;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
+import org.rstudio.studio.client.server.remote.ExecuteUserCommandEvent;
 import org.rstudio.studio.client.workbench.FileMRUList;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -492,6 +494,21 @@ public class Source implements InsertSourceHandler,
       });
       
       events.addHandler(PopoutDocEvent.TYPE, this);
+      
+      events.addHandler(
+            ExecuteUserCommandEvent.TYPE,
+            new ExecuteUserCommandEvent.Handler()
+            {
+               @Override
+               public void onExecuteUserCommand(ExecuteUserCommandEvent event)
+               {
+                  if (activeEditor_ == null || !(activeEditor_ instanceof TextEditingTarget))
+                     return;
+                  
+                  TextEditingTarget target = (TextEditingTarget) activeEditor_;
+                  target.onExecuteUserCommand(event);
+               }
+            });
 
       // Suppress 'CTRL + ALT + SHIFT + click' to work around #2483 in Ace
       Event.addNativePreviewHandler(new NativePreviewHandler()

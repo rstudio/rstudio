@@ -20,6 +20,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.rstudio.core.client.CustomKeyboardShortcutDispatcher.UserCommandResult;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.WindowEx;
@@ -708,6 +709,30 @@ public class RemoteServer implements Server
       params.set(0, new JSONString(chunkText));
       sendRequest(RPC_SCOPE,
                   EXTRACT_CHUNK_OPTIONS,
+                  params,
+                  requestCallback);
+   }
+   
+   public void executeUserCommand(String functionName,
+                                  String content,
+                                  int rowStart,
+                                  int columnStart,
+                                  int rowEnd,
+                                  int columnEnd,
+                                  ServerRequestCallback<JsArray<UserCommandResult>> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      
+      params.set(0, new JSONString(functionName));
+      params.set(1, new JSONString(content));
+      
+      params.set(2, new JSONNumber(rowStart));
+      params.set(3, new JSONNumber(columnStart));
+      params.set(4, new JSONNumber(rowEnd));
+      params.set(5, new JSONNumber(columnEnd));
+      
+      sendRequest(RPC_SCOPE,
+                  EXECUTE_USER_COMMAND,
                   params,
                   requestCallback);
    }
@@ -4230,6 +4255,7 @@ public class RemoteServer implements Server
    private static final String GET_DPLYR_JOIN_COMPLETIONS = "get_dplyr_join_completions";
    private static final String GET_ARGS = "get_args";
    private static final String EXTRACT_CHUNK_OPTIONS = "extract_chunk_options";
+   private static final String EXECUTE_USER_COMMAND = "execute_user_command";
    private static final String GET_COMPLETIONS = "get_completions";
    private static final String IS_FUNCTION = "is_function";
    private static final String GET_HELP_AT_CURSOR = "get_help_at_cursor";

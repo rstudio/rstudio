@@ -16,8 +16,11 @@ package org.rstudio.core.client;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.user.client.ui.AttachDetachException;
+
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.studio.client.server.ServerError;
 
@@ -132,5 +135,18 @@ public class Debug
                                       arg == null ? "NULL" : arg.toString());
       }
       devlog(format);
+   }
+   
+   public static void logToRConsole(String message)
+   {
+      Element consoleEl = Document.get().getElementById("rstudio_console_output");
+      if (consoleEl == null)
+         return;
+      
+      Element textEl = Document.get().createSpanElement();
+      textEl.setInnerHTML("* " + message);
+      consoleEl.appendChild(textEl);
+      consoleEl.appendChild(Document.get().createBRElement());
+      consoleEl.setScrollTop(Integer.MAX_VALUE);
    }
 }

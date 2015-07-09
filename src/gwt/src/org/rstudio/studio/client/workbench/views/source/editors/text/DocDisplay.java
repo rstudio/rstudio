@@ -104,6 +104,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    
    void clearSelection();
    void replaceSelection(String code);
+   void replaceRange(Range range, String text);
    boolean moveSelectionToNextLine(boolean skipBlankLines);
    boolean moveSelectionToBlankLine(); 
    

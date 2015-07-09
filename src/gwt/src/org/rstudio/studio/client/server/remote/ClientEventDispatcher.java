@@ -680,6 +680,11 @@ public class ClientEventDispatcher
             RVersionsInfo versions = event.getData();
             eventBus_.fireEvent(new RVersionsChangedEvent(versions));
          }
+         else if (type.equals(ClientEvent.RegisterUserCommand))
+         {
+            RegisterUserCommandEvent.Data userCommand = event.getData();
+            eventBus_.fireEvent(new RegisterUserCommandEvent(userCommand));
+         }
          else
          {
             GWT.log("WARNING: Server event not dispatched: " + type, null);

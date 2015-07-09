@@ -75,6 +75,15 @@ public class KeyboardShortcut
       result = (result << 8) + keycode_;
       return result;
    }
+   
+   public String toAceStyleShortcutString()
+   {
+       return ((modifiers_ & CTRL) == CTRL ? "ctrl-" : "")
+              + ((modifiers_ & ALT) == ALT ? "alt-" : "")
+              + ((modifiers_ & META) == META ? "cmd-" : "")
+              + ((modifiers_ & SHIFT) == SHIFT ? "shift-" : "")
+              + getKeyName(false).toLowerCase();
+   }
 
    @Override
    public String toString()

@@ -41,6 +41,7 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 
 import org.rstudio.core.client.*;
+import org.rstudio.core.client.CustomKeyboardShortcutDispatcher.UserCommandResult;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
@@ -99,6 +100,7 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
+import org.rstudio.studio.client.server.remote.ExecuteUserCommandEvent;
 import org.rstudio.studio.client.shiny.events.ShinyApplicationStatusEvent;
 import org.rstudio.studio.client.shiny.model.ShinyApplicationParams;
 import org.rstudio.studio.client.shiny.model.ShinyViewerType;
@@ -694,6 +696,48 @@ public class TextEditingTarget implements
                   }
                }
             });
+   }
+   
+   public void onExecuteUserCommand(final ExecuteUserCommandEvent event)
+   {
+      withSavedDoc(new Command()
+      {
+         @Override
+         public void execute()
+         {
+            Range range = docDisplay_.getSelectionRange();
+            server_.executeUserCommand(
+                  event.getCommandName(),
+                  docDisplay_.getCode(),
+                  range.getStart().getRow(),
+                  range.getStart().getColumn(),
+                  range.getEnd().getRow(),
+                  range.getEnd().getColumn(),
+                  new ServerRequestCallback<JsArray<UserCommandResult>>()
+                  {
+                     @Override
+                     public void onResponseReceived(JsArray<UserCommandResult> results)
+                     {
+                        applyUserCommandResult(results);
+                     }
+
+                     @Override
+                     public void onError(ServerError error)
+                     {
+                        Debug.logError(error);
+                     }
+                  });
+         }
+      });
+   }
+   
+   private void applyUserCommandResult(JsArray<UserCommandResult> results)
+   {
+      for (int i = 0; i < results.length(); i++)
+      {
+         UserCommandResult result = results.get(i);
+         docDisplay_.replaceRange(result.getRange(), result.getText());
+      }
    }
    
    @Override
