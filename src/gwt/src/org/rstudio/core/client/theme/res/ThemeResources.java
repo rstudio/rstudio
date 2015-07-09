@@ -212,6 +212,8 @@ public interface ThemeResources extends ClientBundle
    
    ImageResource executeChunk();
    ImageResource runChunk();
+   ImageResource runPreviousChunksLight();
+   ImageResource runPreviousChunksDark();
    ImageResource chunkOptionsLight();
    ImageResource chunkOptionsDark();
    

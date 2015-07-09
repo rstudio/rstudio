@@ -107,7 +107,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditing
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetRMarkdownHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.DisplayChunkOptionsEvent;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.ExecuteChunkEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.ExecuteChunksEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.FileTypeChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.FileTypeChangedHandler;
@@ -424,10 +424,10 @@ public class Source implements InsertSourceHandler,
          }
       });
       
-      events.addHandler(ExecuteChunkEvent.TYPE, new ExecuteChunkEvent.Handler()
+      events.addHandler(ExecuteChunksEvent.TYPE, new ExecuteChunksEvent.Handler()
       {
          @Override
-         public void onExecuteChunk(ExecuteChunkEvent event)
+         public void onExecuteChunks(ExecuteChunksEvent event)
          {
             if (activeEditor_ == null)
                return;
@@ -440,7 +440,11 @@ public class Source implements InsertSourceHandler,
                   target.screenCoordinatesToDocumentPosition(
                         event.getPageX(), event.getPageY());
             
-            target.executeChunk(position);
+            if (event.getScope() == ExecuteChunksEvent.Scope.Current)
+               target.executeChunk(position);
+            else if (event.getScope() == ExecuteChunksEvent.Scope.Previous)
+               target.executePreviousChunks(position);
+            
             target.focus();
          }
       });

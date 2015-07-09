@@ -1,5 +1,5 @@
 /*
- * ExecuteChunkEvent.java
+ * ExecuteChunksEvent.java
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -17,19 +17,27 @@ package org.rstudio.studio.client.workbench.views.source.editors.text.ace;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
-public class ExecuteChunkEvent extends GwtEvent<ExecuteChunkEvent.Handler>
+public class ExecuteChunksEvent extends GwtEvent<ExecuteChunksEvent.Handler>
 {
+   public static enum Scope 
+   {
+      Current,
+      Previous
+   }
+   
    public interface Handler extends EventHandler
    {
-      void onExecuteChunk(ExecuteChunkEvent event);
+      void onExecuteChunks(ExecuteChunksEvent event);
    }
 
-   public ExecuteChunkEvent(int pageX, int pageY)
+   public ExecuteChunksEvent(Scope scope, int pageX, int pageY)
    {
+      scope_ = scope;
       pageX_ = pageX;
       pageY_ = pageY;
    }
    
+   public Scope getScope() { return scope_; }
    public int getPageX() { return pageX_; }
    public int getPageY() { return pageY_; }
    
@@ -42,9 +50,10 @@ public class ExecuteChunkEvent extends GwtEvent<ExecuteChunkEvent.Handler>
    @Override
    protected void dispatch(Handler handler)
    {
-      handler.onExecuteChunk(this);
+      handler.onExecuteChunks(this);
    }
 
+   private final Scope scope_;
    private final int pageX_;
    private final int pageY_;
    
