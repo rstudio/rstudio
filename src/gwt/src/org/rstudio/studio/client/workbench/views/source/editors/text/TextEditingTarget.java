@@ -3474,6 +3474,11 @@ public class TextEditingTarget implements
    @Handler
    void onExecutePreviousChunks()
    {
+      executePreviousChunks(null);
+   }
+   
+   public void executePreviousChunks(final Position position)
+   {  
       withPreservedSelection(new Command() {
 
          @Override
@@ -3483,30 +3488,10 @@ public class TextEditingTarget implements
             // It's the easiest way to make sure getCurrentScope() returns
             // a Scope with an end.
             docDisplay_.getScopeTree();
-            
-            // see if there is a region of code in the current chunk to execute
-            Range currentChunkRange = null;
-            Scope currentScope = scopeHelper_.getCurrentSweaveChunk();
-            if (currentScope != null)
-            {
-               // get end position (always execute the current line unless
-               // the cursor is at the beginning of it)
-               Position endPos = docDisplay_.getCursorPosition();
-               if (endPos.getColumn() >0)
-                  endPos = Position.create(endPos.getRow()+1, 0);
-               
-               currentChunkRange = Range.fromPoints(currentScope.getBodyStart(),
-                                                    endPos);
-            }
-            
             // execute the previous chunks
-            Scope[] previousScopes = scopeHelper_.getPreviousSweaveChunks();
+            Scope[] previousScopes = scopeHelper_.getPreviousSweaveChunks(position);
             for (Scope scope : previousScopes)
                executeSweaveChunk(scope, false);
-            
-            // execute code from the current chunk if we have it
-            if (currentChunkRange != null)
-              codeExecution_.executeRange(currentChunkRange);
          }
       });    
    }

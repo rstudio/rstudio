@@ -1408,7 +1408,7 @@ body.ubuntu_mono .searchBox {
 
 .inlineChunkToolbar {
 	position: absolute;
-	right: 10px;
+	right: 5px;
 	z-index: 10;
 	padding-left: 5px;
 	padding-right: 5px;

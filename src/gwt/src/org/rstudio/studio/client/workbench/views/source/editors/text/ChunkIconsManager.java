@@ -26,7 +26,7 @@ import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.PopupPositioner;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.DisplayChunkOptionsEvent;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.ExecuteChunkEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.ExecuteChunksEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Renderer;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.events.AfterAceRenderEvent;
@@ -178,12 +178,16 @@ public class ChunkIconsManager
       else
       {
          Image optionsIcon = createOptionsIcon(isDark, false);
-         optionsIcon.getElement().getStyle().setMarginRight(5, Unit.PX);
+         optionsIcon.getElement().getStyle().setMarginRight(9, Unit.PX);
          toolbarPanel.add(optionsIcon);
 
          // Note that 'run current chunk' currently only operates within Rmd
          if (editor.getSession().getMode().getId().equals("mode/rmarkdown"))
          {
+            Image runPreviousIcon = createRunPreviousIcon(isDark);
+            runPreviousIcon.getElement().getStyle().setMarginRight(8, Unit.PX);
+            toolbarPanel.add(runPreviousIcon);
+            
             Image runIcon = createRunIcon();
             toolbarPanel.add(runIcon);
          }
@@ -224,6 +228,18 @@ public class ChunkIconsManager
       return icon;
    }
    
+   private Image createRunPreviousIcon(boolean dark)
+   {
+      Image icon = new Image(dark ? 
+            ThemeResources.INSTANCE.runPreviousChunksDark() :
+            ThemeResources.INSTANCE.runPreviousChunksLight());
+      icon.addStyleName(ThemeStyles.INSTANCE.highlightIcon());
+           
+      icon.setTitle(commands_.executePreviousChunks().getTooltip());
+      bindNativeClickToExecutePreviousChunks(this, icon.getElement());
+      return icon;
+   }
+   
    private Image createOptionsIcon(boolean dark, boolean setupChunk)
    {
       Image icon = new Image(dark ? 
@@ -239,29 +255,51 @@ public class ChunkIconsManager
       return icon;
    }
    
+   private static final native void bindNativeClickToExecutePreviousChunks(
+                                   ChunkIconsManager manager, Element element) 
+   /*-{
+      element.addEventListener("click", $entry(function(evt) {
+         manager.@org.rstudio.studio.client.workbench.views.source.editors.text.ChunkIconsManager::fireExecutePreviousChunksEvent(Ljava/lang/Object;)(evt);
+      }));
+   }-*/;
+
+   
    private static final native void bindNativeClickToExecuteChunk(ChunkIconsManager manager,
                                                                   Element element) 
    /*-{
-      element.addEventListener("click", function(evt) {
+      element.addEventListener("click", $entry(function(evt) {
          manager.@org.rstudio.studio.client.workbench.views.source.editors.text.ChunkIconsManager::fireExecuteChunkEvent(Ljava/lang/Object;)(evt);
-      });
+      }));
    }-*/;
    
    private static final native void bindNativeClickToOpenOptions(ChunkIconsManager manager,
                                                                  Element element) 
    /*-{
-      element.addEventListener("click", function(evt) {
+      element.addEventListener("click", $entry(function(evt) {
          manager.@org.rstudio.studio.client.workbench.views.source.editors.text.ChunkIconsManager::fireDisplayChunkOptionsEvent(Ljava/lang/Object;)(evt);
-      });
+      }));
    }-*/;
    
    private final void fireExecuteChunkEvent(Object object)
+   {
+      fireExecuteChunksEvent(ExecuteChunksEvent.Scope.Current, object);
+   }
+   
+   private final void fireExecutePreviousChunksEvent(Object object)
+   {
+      fireExecuteChunksEvent(ExecuteChunksEvent.Scope.Previous, object);
+   }
+   
+   private final void fireExecuteChunksEvent(ExecuteChunksEvent.Scope scope,
+                                             Object object)
    {
       if (!(object instanceof NativeEvent))
          return;
       
       NativeEvent event = (NativeEvent) object;
-      events_.fireEvent(new ExecuteChunkEvent(event.getClientX(), event.getClientY()));
+      events_.fireEvent(new ExecuteChunksEvent(scope, 
+                                               event.getClientX(), 
+                                               event.getClientY()));
    }
    
    private final void fireDisplayChunkOptionsEvent(Object object)
