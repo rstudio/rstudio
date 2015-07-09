@@ -15,13 +15,13 @@
  */
 package java.lang;
 
-import com.google.gwt.core.client.JsDate;
-import com.google.gwt.core.client.impl.Impl;
-import com.google.gwt.lang.Array;
-
 import static java.internal.InternalPreconditions.checkArrayType;
 import static java.internal.InternalPreconditions.checkNotNull;
 
+import com.google.gwt.core.client.JsDate;
+import com.google.gwt.core.client.impl.Impl;
+
+import java.internal.ArrayHelper;
 import java.io.PrintStream;
 
 /**
@@ -85,7 +85,7 @@ public final class System {
         }
       }
     } else if (len > 0) {
-      Array.nativeArraycopy(src, srcOfs, dest, destOfs, len);
+      ArrayHelper.arrayCopy(src, srcOfs, dest, destOfs, len);
     }
   }
 

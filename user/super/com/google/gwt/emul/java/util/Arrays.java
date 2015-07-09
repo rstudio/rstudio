@@ -18,15 +18,15 @@ package java.util;
 
 import static com.google.gwt.core.client.impl.Coercions.ensureInt;
 
-import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.core.client.UnsafeNativeLong;
-import com.google.gwt.lang.Array;
-
 import static java.internal.InternalPreconditions.checkArgument;
 import static java.internal.InternalPreconditions.checkArraySize;
 import static java.internal.InternalPreconditions.checkElementIndex;
 import static java.internal.InternalPreconditions.checkPositionIndexes;
 
+import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.UnsafeNativeLong;
+
+import java.internal.ArrayHelper;
 import java.io.Serializable;
 
 /**
@@ -78,7 +78,7 @@ public class Arrays {
      */
     @Override
     public Object[] toArray() {
-      return Array.clone(array);
+      return ArrayHelper.clone(array, 0, array.length);
     }
 
     /*
@@ -89,7 +89,7 @@ public class Arrays {
     public <T> T[] toArray(T[] out) {
       int size = size();
       if (out.length < size) {
-        out = Array.createFrom(out, size);
+        out = ArrayHelper.createFrom(out, size);
       }
       for (int i = 0; i < size; ++i) {
         out[i] = (T) array[i];
@@ -502,7 +502,7 @@ public class Arrays {
 
   public static <T> T[] copyOfRange(T[] original, int from, int to) {
     int newLength = getLengthFromRange(from, to);
-    T[] copy = Array.createFrom(original, newLength);
+    T[] copy = ArrayHelper.createFrom(original, newLength);
     System.arraycopy(original, from, copy, 0,
         Math.min(original.length - from, newLength));
     return copy;
@@ -1428,7 +1428,7 @@ public class Arrays {
     var temp = array.slice(fromIndex, toIndex);
     temp.sort(@com.google.gwt.lang.LongLib::compare(Lcom/google/gwt/lang/LongLibBase$LongEmul;Lcom/google/gwt/lang/LongLibBase$LongEmul;));
     var n = toIndex - fromIndex;
-    @com.google.gwt.lang.Array::nativeArraycopy(Ljava/lang/Object;ILjava/lang/Object;II)(
+    @java.internal.ArrayHelper::arrayCopy(Ljava/lang/Object;ILjava/lang/Object;II)(
         temp, 0, array, fromIndex, n)
   }-*/;
 
@@ -1451,7 +1451,7 @@ public class Arrays {
       return a - b;
     });
     var n = toIndex - fromIndex;
-    @com.google.gwt.lang.Array::nativeArraycopy(Ljava/lang/Object;ILjava/lang/Object;II)(
+    @java.internal.ArrayHelper::arrayCopy(Ljava/lang/Object;ILjava/lang/Object;II)(
         temp, 0, array, fromIndex, n)
   }-*/;
 

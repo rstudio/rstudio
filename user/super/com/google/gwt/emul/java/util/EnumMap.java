@@ -15,10 +15,10 @@
  */
 package java.util;
 
-import com.google.gwt.lang.Array;
-
 import static java.internal.InternalPreconditions.checkArgument;
 import static java.internal.InternalPreconditions.checkState;
+
+import java.internal.ArrayHelper;
 
 /**
  * A {@link java.util.Map} of {@link Enum}s. <a
@@ -210,7 +210,7 @@ public class EnumMap<K extends Enum<K>, V> extends AbstractMap<K, V> {
 
   private void init(EnumMap<K, ? extends V> m) {
     keySet = m.keySet.clone();
-    values = Array.clone(m.values);
+    values = ArrayHelper.clone(m.values, 0, m.values.length);
   }
 
   private V set(int ordinal, V value) {

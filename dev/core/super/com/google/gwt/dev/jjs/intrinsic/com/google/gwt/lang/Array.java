@@ -38,15 +38,6 @@ public final class Array {
   private static final int TYPE_PRIMITIVE_NUMBER = 7;
   private static final int TYPE_PRIMITIVE_BOOLEAN = 8;
 
-  private static final int ARRAY_PROCESS_BATCH_SIZE = 10000;
-
-  /**
-   * Creates a copy of the specified array.
-   */
-  public static <T> T[] clone(T[] array) {
-    return cloneSubrange(array, 0, array.length);
-  }
-
   /**
    * Creates a copy of a subrange of the specified array.
    */
@@ -56,13 +47,6 @@ public final class Array {
         Array.getElementTypeCategory(array), result);
     // implicit type arg not inferred (as of JDK 1.5.0_07)
     return Array.<T> asArray(result);
-  }
-
-  /**
-   * Creates a new array of the exact same type and length as a given array.
-   */
-  public static <T> T[] createFrom(T[] array) {
-    return createFrom(array, array.length);
   }
 
   /**
@@ -156,61 +140,6 @@ public final class Array {
     Array.setElementTypeCategory(array, elementTypeCategory);
     return array;
   }
-
-  /**
-   * Copy an array using native Javascript. The destination array must be a real
-   * Java array (ie, already has the GWT type info on it). No error checking is performed -- the
-   * caller is expected to have verified everything first.
-   *
-   * @param src source array for copy
-   * @param srcOfs offset into source array
-   * @param dest destination array for copy
-   * @param destOfs offset into destination array
-   * @param len number of elements to copy
-   */
-  public static void nativeArraycopy(Object src, int srcOfs, Object dest, int destOfs, int len) {
-    nativeArraySplice(src, srcOfs, dest, destOfs, len, true);
-  }
-
-  /**
-   * Insert one array into another native Javascript. The destination array must be a real
-   * Java array (ie, already has the GWT type info on it). No error checking is performed -- the
-   * caller is expected to have verified everything first.
-   *
-   * @param src source array where the data is taken from
-   * @param srcOfs offset into source array
-   * @param dest destination array for the data to be inserted
-   * @param destOfs offset into destination array
-   * @param len number of elements to insert
-   */
-  public static void nativeArrayInsert(Object src, int srcOfs, Object dest, int destOfs,
-      int len) {
-    nativeArraySplice(src, srcOfs, dest, destOfs, len, false);
-  }
-
-  /**
-   * A replacement for Array.prototype.splice to overcome the limits imposed to the number of
-   * function parameters by browsers.
-   */
-  private static native void nativeArraySplice(
-      Object src, int srcOfs, Object dest, int destOfs, int len, boolean overwrite) /*-{
-    // Work around function.prototype.apply call stack size limits:
-    // https://code.google.com/p/v8/issues/detail?id=2896
-    // Performance: http://jsperf.com/java-system-arraycopy/2
-    if (src === dest) {
-      // copying to the same array, make a copy first
-      src = src.slice(srcOfs, srcOfs + len);
-      srcOfs = 0;
-    }
-    for (var batchStart = srcOfs, end = srcOfs + len; batchStart < end;) { // increment in block
-      var batchEnd = Math.min(batchStart + @Array::ARRAY_PROCESS_BATCH_SIZE, end);
-      len = batchEnd - batchStart;
-      Array.prototype.splice.apply(dest, [destOfs, overwrite ? len : 0]
-          .concat(src.slice(batchStart, batchEnd)));
-      batchStart = batchEnd;
-      destOfs += len;
-    }
-  }-*/;
 
   /**
    * Performs an array assignment, after validating the type of the value being

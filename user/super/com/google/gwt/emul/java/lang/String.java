@@ -282,7 +282,7 @@ public final class String implements Comparable<String>, CharSequence,
     // Work around function.prototype.apply call stack size limits:
     // https://code.google.com/p/v8/issues/detail?id=2896
     // Performance: http://jsperf.com/string-fromcharcode-test/13
-    var batchSize = @com.google.gwt.lang.Array::ARRAY_PROCESS_BATCH_SIZE;
+    var batchSize = @java.internal.ArrayHelper::ARRAY_PROCESS_BATCH_SIZE;
     var s = "";
     for (var batchStart = start; batchStart < end;) { // increment in block
       var batchEnd = Math.min(batchStart + batchSize, end);
