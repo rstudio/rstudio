@@ -3467,7 +3467,10 @@ public class TextEditingTarget implements
       // a Scope with an end.
       docDisplay_.getScopeTree();
       
-      executeSweaveChunk(scopeHelper_.getNextSweaveChunk(), true);
+      Scope nextChunk = scopeHelper_.getNextSweaveChunk();
+      executeSweaveChunk(nextChunk, true);
+      docDisplay_.setCursorPosition(nextChunk.getBodyStart());
+      docDisplay_.ensureCursorVisible();
    }
    
    @Handler
