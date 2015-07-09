@@ -104,7 +104,7 @@ public class RSConnectPublishButton extends Composite
       
       // create drop menu of previous deployments/other commands
       publishMenu_ = new DeploymentPopupMenu();
-      publishMenuButton_ = new ToolbarButton(publishMenu_, false);
+      publishMenuButton_ = new ToolbarButton(publishMenu_, true);
       panel.add(publishMenuButton_);
       
       // initialize composite widget

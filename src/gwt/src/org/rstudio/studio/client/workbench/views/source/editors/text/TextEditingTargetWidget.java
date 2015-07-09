@@ -255,7 +255,7 @@ public class TextEditingTargetWidget
             null,  
             StandardIcons.INSTANCE.options(),
             rmdOptionsMenu, 
-            true);
+            false);
       
       toolbar.addLeftWidget(rmdOptionsButton_);
 
