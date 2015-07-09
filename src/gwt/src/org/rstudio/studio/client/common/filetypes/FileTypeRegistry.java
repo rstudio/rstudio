@@ -28,6 +28,7 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperations;
+import org.rstudio.studio.client.workbench.views.source.SourceSatellite;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.resources.client.ImageResource;
@@ -473,7 +474,10 @@ public class FileTypeRegistry
                         FilePosition position,
                         boolean highlightLine)
    {
-      if (satellite_.isCurrentWindowSatellite())
+      // edit the file in the main window unless this is a source satellite
+      // (in which case we want to edit it locally)
+      if (satellite_.isCurrentWindowSatellite() && 
+          !satellite_.getSatelliteName().startsWith(SourceSatellite.NAME_PREFIX))
       {
          satellite_.focusMainWindow();
          callSatelliteEditFile(file.cast(), position.cast(), highlightLine);
