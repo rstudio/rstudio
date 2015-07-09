@@ -3493,8 +3493,13 @@ public class TextEditingTarget implements
    private boolean isRChunk(Scope scope)
    {
       String labelText = docDisplay_.getLine(scope.getPreamble().getRow());
-      Pattern reEngine = Pattern.create("engine\\s*=");
-      return !reEngine.test(labelText);
+      Pattern reEngine = Pattern.create(".*engine\\s*=['\"]([^'\"]*)['\"]");
+      Match match = reEngine.match(labelText, 0);
+      if (match == null)
+         return true;
+      
+      String engine = match.getGroup(1).toLowerCase();
+      return engine.equals("r");
    }
    
    private void executeSweaveChunk(final Scope chunk, 
