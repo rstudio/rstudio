@@ -15,13 +15,13 @@
  */
 package java.util;
 
-import static com.google.gwt.core.shared.impl.InternalPreconditions.checkArgument;
-import static com.google.gwt.core.shared.impl.InternalPreconditions.checkElement;
-import static com.google.gwt.core.shared.impl.InternalPreconditions.checkNotNull;
-import static com.google.gwt.core.shared.impl.InternalPreconditions.checkState;
-
 import com.google.gwt.core.client.impl.SpecializeMethod;
 import com.google.gwt.lang.Array;
+
+import static java.internal.InternalPreconditions.checkArgument;
+import static java.internal.InternalPreconditions.checkElement;
+import static java.internal.InternalPreconditions.checkNotNull;
+import static java.internal.InternalPreconditions.checkState;
 
 /**
  * A {@link java.util.Set} of {@link Enum}s. <a

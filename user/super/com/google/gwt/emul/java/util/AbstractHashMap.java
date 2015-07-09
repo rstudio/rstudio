@@ -15,10 +15,9 @@
  */
 package java.util;
 
-import static com.google.gwt.core.shared.impl.InternalPreconditions.checkArgument;
-import static com.google.gwt.core.shared.impl.InternalPreconditions.checkElement;
-import static com.google.gwt.core.shared.impl.InternalPreconditions.checkState;
-
+import static java.internal.InternalPreconditions.checkArgument;
+import static java.internal.InternalPreconditions.checkElement;
+import static java.internal.InternalPreconditions.checkState;
 import static java.util.ConcurrentModificationDetector.checkStructuralChange;
 import static java.util.ConcurrentModificationDetector.recordLastKnownStructure;
 import static java.util.ConcurrentModificationDetector.structureChanged;

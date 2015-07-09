@@ -15,9 +15,9 @@
  */
 package java.util;
 
-import static com.google.gwt.core.shared.impl.InternalPreconditions.checkNotNull;
-
 import com.google.gwt.lang.Array;
+
+import static java.internal.InternalPreconditions.checkNotNull;
 
 /**
  * Skeletal implementation of the Collection interface. <a

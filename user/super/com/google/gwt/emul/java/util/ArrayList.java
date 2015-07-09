@@ -15,12 +15,12 @@
  */
 package java.util;
 
-import static com.google.gwt.core.shared.impl.InternalPreconditions.checkArgument;
-import static com.google.gwt.core.shared.impl.InternalPreconditions.checkElementIndex;
-import static com.google.gwt.core.shared.impl.InternalPreconditions.checkPositionIndex;
-import static com.google.gwt.core.shared.impl.InternalPreconditions.checkPositionIndexes;
-
 import com.google.gwt.lang.Array;
+
+import static java.internal.InternalPreconditions.checkArgument;
+import static java.internal.InternalPreconditions.checkElementIndex;
+import static java.internal.InternalPreconditions.checkPositionIndex;
+import static java.internal.InternalPreconditions.checkPositionIndexes;
 
 import java.io.Serializable;
 
@@ -61,7 +61,6 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>,
   /**
    * This field holds a JavaScript array.
    */
-  @SuppressWarnings("unchecked")
   private transient E[] array = (E[]) new Object[0];
 
   /**

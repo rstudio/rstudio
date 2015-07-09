@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.core.shared.impl;
+package java.internal;
 
 import java.util.NoSuchElementException;
 

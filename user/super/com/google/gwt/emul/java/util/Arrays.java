@@ -18,14 +18,14 @@ package java.util;
 
 import static com.google.gwt.core.client.impl.Coercions.ensureInt;
 
-import static com.google.gwt.core.shared.impl.InternalPreconditions.checkArgument;
-import static com.google.gwt.core.shared.impl.InternalPreconditions.checkArraySize;
-import static com.google.gwt.core.shared.impl.InternalPreconditions.checkElementIndex;
-import static com.google.gwt.core.shared.impl.InternalPreconditions.checkPositionIndexes;
-
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.UnsafeNativeLong;
 import com.google.gwt.lang.Array;
+
+import static java.internal.InternalPreconditions.checkArgument;
+import static java.internal.InternalPreconditions.checkArraySize;
+import static java.internal.InternalPreconditions.checkElementIndex;
+import static java.internal.InternalPreconditions.checkPositionIndexes;
 
 import java.io.Serializable;
 

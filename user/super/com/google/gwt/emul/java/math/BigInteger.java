@@ -34,8 +34,8 @@
  */
 package java.math;
 
-import static com.google.gwt.core.shared.impl.InternalPreconditions.checkCriticalArgument;
-import static com.google.gwt.core.shared.impl.InternalPreconditions.checkNotNull;
+import static java.internal.InternalPreconditions.checkCriticalArgument;
+import static java.internal.InternalPreconditions.checkNotNull;
 
 import java.io.Serializable;
 import java.util.Random;

@@ -15,7 +15,7 @@
  */
 package com.google.gwt.lang;
 
-import static com.google.gwt.core.shared.impl.InternalPreconditions.checkArrayType;
+import static java.internal.InternalPreconditions.checkArrayType;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.impl.DoNotInline;

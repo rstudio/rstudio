@@ -15,7 +15,7 @@
  */
 package java.util;
 
-import static com.google.gwt.core.shared.impl.InternalPreconditions.checkNotNull;
+import static java.internal.InternalPreconditions.checkNotNull;
 
 import java.io.Serializable;
 

@@ -15,12 +15,12 @@
  */
 package java.util;
 
-import static com.google.gwt.core.shared.impl.InternalPreconditions.checkCriticalPositionIndexes;
-import static com.google.gwt.core.shared.impl.InternalPreconditions.checkElement;
-import static com.google.gwt.core.shared.impl.InternalPreconditions.checkElementIndex;
-import static com.google.gwt.core.shared.impl.InternalPreconditions.checkNotNull;
-import static com.google.gwt.core.shared.impl.InternalPreconditions.checkPositionIndex;
-import static com.google.gwt.core.shared.impl.InternalPreconditions.checkState;
+import static java.internal.InternalPreconditions.checkCriticalPositionIndexes;
+import static java.internal.InternalPreconditions.checkElement;
+import static java.internal.InternalPreconditions.checkElementIndex;
+import static java.internal.InternalPreconditions.checkNotNull;
+import static java.internal.InternalPreconditions.checkPositionIndex;
+import static java.internal.InternalPreconditions.checkState;
 
 /**
  * Skeletal implementation of the List interface. <a

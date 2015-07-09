@@ -19,7 +19,7 @@
 
 package java.io;
 
-import static com.google.gwt.core.shared.impl.InternalPreconditions.checkNotNull;
+import static java.internal.InternalPreconditions.checkNotNull;
 
 /**
  * A readable source of bytes.

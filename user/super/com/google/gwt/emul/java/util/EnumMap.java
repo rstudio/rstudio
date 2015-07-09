@@ -15,10 +15,10 @@
  */
 package java.util;
 
-import static com.google.gwt.core.shared.impl.InternalPreconditions.checkArgument;
-import static com.google.gwt.core.shared.impl.InternalPreconditions.checkState;
-
 import com.google.gwt.lang.Array;
+
+import static java.internal.InternalPreconditions.checkArgument;
+import static java.internal.InternalPreconditions.checkState;
 
 /**
  * A {@link java.util.Map} of {@link Enum}s. <a

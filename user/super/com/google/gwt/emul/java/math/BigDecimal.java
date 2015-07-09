@@ -34,9 +34,9 @@
  */
 package java.math;
 
-import static com.google.gwt.core.shared.impl.InternalPreconditions.checkNotNull;
-
 import com.google.gwt.core.client.JavaScriptObject;
+
+import static java.internal.InternalPreconditions.checkNotNull;
 
 import java.io.Serializable;
 

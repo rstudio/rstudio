@@ -15,7 +15,7 @@
  */
 package java.util;
 
-import static com.google.gwt.core.shared.impl.InternalPreconditions.checkElement;
+import static java.internal.InternalPreconditions.checkElement;
 
 import java.io.Serializable;
 

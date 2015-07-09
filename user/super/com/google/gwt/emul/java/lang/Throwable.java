@@ -15,11 +15,11 @@
  */
 package java.lang;
 
-import static com.google.gwt.core.shared.impl.InternalPreconditions.checkCriticalArgument;
-import static com.google.gwt.core.shared.impl.InternalPreconditions.checkNotNull;
-import static com.google.gwt.core.shared.impl.InternalPreconditions.checkState;
-
 import com.google.gwt.core.client.impl.StackTraceCreator;
+
+import static java.internal.InternalPreconditions.checkCriticalArgument;
+import static java.internal.InternalPreconditions.checkNotNull;
+import static java.internal.InternalPreconditions.checkState;
 
 import java.io.PrintStream;
 import java.io.Serializable;
