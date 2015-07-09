@@ -247,7 +247,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(RSAccountConnector.class).in(Singleton.class);
       bind(PlotPublishMRUList.class).asEagerSingleton();
       bind(SourceWindowManager.class).in(Singleton.class);
-      bind(CodeSearchLauncher.class).asEagerSingleton();
+      bind(CodeSearchLauncher.class).in(Singleton.class);
 
       bind(ApplicationView.class).to(ApplicationWindow.class)
             .in(Singleton.class) ;

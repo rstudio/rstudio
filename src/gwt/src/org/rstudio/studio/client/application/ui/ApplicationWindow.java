@@ -38,7 +38,8 @@ public class ApplicationWindow extends Composite
 {
    @Inject
    public ApplicationWindow(ApplicationHeader applicationHeader,
-                            GlobalDisplay globalDisplay)
+                            GlobalDisplay globalDisplay,
+                            CodeSearchLauncher launcher)
    {
       globalDisplay_ = globalDisplay;
       

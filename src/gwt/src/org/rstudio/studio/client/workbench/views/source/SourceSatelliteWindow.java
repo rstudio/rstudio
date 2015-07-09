@@ -25,6 +25,7 @@ import com.google.inject.Provider;
 import com.google.inject.Singleton;
 
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.application.ui.CodeSearchLauncher;
 import org.rstudio.studio.client.common.satellite.SatelliteWindow;
 import org.rstudio.studio.client.workbench.ui.FontSizeManager;
 
@@ -36,7 +37,8 @@ public class SourceSatelliteWindow extends SatelliteWindow
    @Inject
    public SourceSatelliteWindow(Provider<EventBus> pEventBus,
                                 Provider<FontSizeManager> pFSManager, 
-                                Provider<SourceSatellitePresenter> pPresenter)
+                                Provider<SourceSatellitePresenter> pPresenter,
+                                CodeSearchLauncher launcher)
    {
       super(pEventBus, pFSManager);
       pPresenter_ = pPresenter;
