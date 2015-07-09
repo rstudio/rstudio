@@ -83,9 +83,7 @@ public class ChunkIconsManager
    private boolean shouldDisplayIcons(AceEditorNative editor)
    {
       String id = editor.getSession().getMode().getId();
-      return id.equals("mode/rmarkdown") || // also Rpres
-             id.equals("mode/rhtml") ||
-             id.equals("mode/sweave");
+      return id.equals("mode/rmarkdown");  // also Rpres
    }
    
    private Position toDocumentPosition(Element el, AceEditorNative editor)
