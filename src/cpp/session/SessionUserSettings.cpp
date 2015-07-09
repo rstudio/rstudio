@@ -444,6 +444,19 @@ CRANMirror UserSettings::cranMirror() const
    mirror.name = settings_.get(kCRANMirrorName);
    mirror.host = settings_.get(kCRANMirrorHost);
    mirror.url = settings_.get(kCRANMirrorUrl);
+   mirror.country = settings_.get(kCRANMirrorCountry);
+
+   // if there is no URL then return the default RStudio mirror
+   // (return the insecure version so we can rely on probing for
+   // the secure version). also check for "/" to cleanup from
+   // a previous bug/regression
+   if (mirror.url.empty() || (mirror.url == "/"))
+   {
+      mirror.name = "Global (CDN)";
+      mirror.host = "RStudio";
+      mirror.url = "http://cran.rstudio.com/";
+      mirror.country = "us";
+   }
 
    // re-map cran.rstudio.org to cran.rstudio.com
    if (boost::algorithm::starts_with(mirror.url, "http://cran.rstudio.org"))
@@ -452,19 +465,6 @@ CRANMirror UserSettings::cranMirror() const
    // remap url without trailing slash
    if (!boost::algorithm::ends_with(mirror.url, "/"))
       mirror.url += "/";
-
-   mirror.country = settings_.get(kCRANMirrorCountry);
-
-   // if there is no URL then return the default RStudio mirror
-   // (return the insecure version so we can rely on probing for
-   // the secure version)
-   if (mirror.url.empty())
-   {
-      mirror.name = "Global (CDN)";
-      mirror.host = "RStudio";
-      mirror.url = "http://cran.rstudio.com/";
-      mirror.country = "us";
-   }
 
    return mirror;
 }
@@ -476,7 +476,12 @@ void UserSettings::setCRANMirror(const CRANMirror& mirror)
    settings_.set(kCRANMirrorUrl, mirror.url);
    settings_.set(kCRANMirrorCountry, mirror.country);
 
-   setCRANReposOption(mirror.url);
+   // only set the underlying option if it's not empty (some
+   // evidence exists that this is possible, it doesn't appear to
+   // be possible in the current code however previous releases
+   // may have let this in)
+   if (!mirror.url.empty())
+      setCRANReposOption(mirror.url);
 }
 
 BioconductorMirror UserSettings::bioconductorMirror() const
