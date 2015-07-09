@@ -29,21 +29,17 @@ public class SourceSatellitePresenter implements IsWidget
    {}
 
    @Inject
-   public SourceSatellitePresenter(Source source)
+   public SourceSatellitePresenter(SourceShim source)
    {
       source_ = source;
    }
    
-   public Source getSource()
-   {
-      return source_;
-   }
-
    @Override
    public Widget asWidget()
    {
-      return (SourcePane)source_.getView();
+      source_.forceLoad();
+      return source_.asWidget();
    }
    
-   private Source source_;
+   private SourceShim source_;
 }

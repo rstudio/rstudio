@@ -903,8 +903,8 @@ well as menu structures (for main menu and popup menus).
         menuLabel="_Insert Section..."
         desc="Insert a new code section"/>
    <cmd id="executePreviousChunks"
-        menuLabel="Run _Previous Code"
-        desc="Run all previous code in the source file"/>
+        menuLabel="Run _Previous Chunks"
+        desc="Run all previous chunks in the source file"/>
    <cmd id="executeCurrentChunk"
         menuLabel="Run _Current Chunk"
         desc="Run the current code chunk"/>
