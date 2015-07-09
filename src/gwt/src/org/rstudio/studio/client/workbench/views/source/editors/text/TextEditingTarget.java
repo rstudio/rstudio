@@ -708,7 +708,7 @@ public class TextEditingTarget implements
             Range range = docDisplay_.getSelectionRange();
             server_.executeUserCommand(
                   event.getCommandName(),
-                  docDisplay_.getCode(),
+                  docDisplay_.getLines(),
                   range.getStart().getRow(),
                   range.getStart().getColumn(),
                   range.getEnd().getRow(),

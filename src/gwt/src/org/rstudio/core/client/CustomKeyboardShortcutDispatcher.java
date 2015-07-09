@@ -143,7 +143,6 @@ public class CustomKeyboardShortcutDispatcher
                }
                
                // If there's a match in our key map, execute it.
-               Debug.logToRConsole("Key buffer: " + buffer_);
                if (commandMap_.containsKey(buffer_))
                {
                   UserCommand command = commandMap_.get(buffer_);
@@ -237,7 +236,6 @@ public class CustomKeyboardShortcutDispatcher
          String shortcut = entry.getValue().getShortcutAceStyle();
          if (shortcut == null)
             continue;
-         Debug.logToRConsole("Shortcut: " + shortcut);;
          kbdCommandMap.put(shortcut, entry.getValue());
       }
       

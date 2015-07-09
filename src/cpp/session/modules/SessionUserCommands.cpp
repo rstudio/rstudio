@@ -49,10 +49,6 @@ json::Array jsonFromUserCommandResult(SEXP resultSEXP)
       json::Object jsonResult;
       SEXP elementSEXP = VECTOR_ELT(resultSEXP, i);
       
-      std::cout << "\n\n\n";
-      r::sexp::printValue(elementSEXP);
-      std::cout << "\n\n\n";
-      
       std::string action;
       error = r::sexp::getNamedListElement(elementSEXP, "action", &action);
       if (error)
@@ -103,14 +99,14 @@ Error executeUserCommand(const json::JsonRpcRequest& request,
    
    // Read JSON params
    std::string name;
-   std::string content;
+   json::Array contentJson;
    int rowStart;
    int columnStart;
    int rowEnd;
    int columnEnd;
    error = json::readParams(request.params,
                             &name,
-                            &content,
+                            &contentJson,
                             &rowStart,
                             &columnStart,
                             &rowEnd,
@@ -120,6 +116,10 @@ Error executeUserCommand(const json::JsonRpcRequest& request,
       LOG_ERROR(error);
       return error;
    }
+   
+   std::vector<std::string> content;
+   if (!json::fillVectorString(contentJson, &content))
+      return Error(json::errc::ParamTypeMismatch, ERROR_LOCATION);
    
    // Locate the function with this name
    SEXP userCommandsEnvSEXP = r::sexp::findVar(".rs.userCommands", R_GlobalEnv);

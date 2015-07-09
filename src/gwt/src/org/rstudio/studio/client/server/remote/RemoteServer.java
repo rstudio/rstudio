@@ -714,7 +714,7 @@ public class RemoteServer implements Server
    }
    
    public void executeUserCommand(String functionName,
-                                  String content,
+                                  JsArrayString content,
                                   int rowStart,
                                   int columnStart,
                                   int rowEnd,
@@ -724,7 +724,7 @@ public class RemoteServer implements Server
       JSONArray params = new JSONArray();
       
       params.set(0, new JSONString(functionName));
-      params.set(1, new JSONString(content));
+      setArrayString(params, 1, content);
       
       params.set(2, new JSONNumber(rowStart));
       params.set(3, new JSONNumber(columnStart));

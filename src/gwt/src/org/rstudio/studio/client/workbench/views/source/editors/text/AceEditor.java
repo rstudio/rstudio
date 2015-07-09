@@ -16,6 +16,7 @@ package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
@@ -752,7 +753,19 @@ public class AceEditor implements DocDisplay,
       return getCode(((AceInputEditorPosition)selection.getStart()).getValue(),
                      ((AceInputEditorPosition)selection.getEnd()).getValue());
    }
-
+   
+   @Override
+   public JsArrayString getLines()
+   {
+      return getLines(0, getSession().getLength());
+   }
+   
+   @Override
+   public JsArrayString getLines(int startRow, int endRow)
+   {
+      return getSession().getLines(startRow, endRow);
+   }
+   
    public void focus()
    {
       widget_.getEditor().focus();

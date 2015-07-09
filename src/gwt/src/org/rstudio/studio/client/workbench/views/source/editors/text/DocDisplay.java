@@ -45,6 +45,7 @@ import org.rstudio.studio.client.workbench.views.source.events.CollabEditStartPa
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.event.dom.client.FocusHandler;
 import com.google.gwt.event.dom.client.HasFocusHandlers;
 import com.google.gwt.event.dom.client.HasKeyDownHandlers;
@@ -83,6 +84,8 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void setCppCompletionContext(CppCompletionContext cppContext);
    void setRCompletionContext(RCompletionContext rContext);
    String getCode();
+   JsArrayString getLines();
+   JsArrayString getLines(int startRow, int endRow);
    void setCode(String code, boolean preserveCursorPosition);
    void insertCode(String code, boolean blockMode);
    void focus();
