@@ -21,6 +21,7 @@ import org.rstudio.core.client.UnicodeLetters;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.regex.Pattern;
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.filetypes.events.OpenSourceFileEvent;
 import org.rstudio.studio.client.common.filetypes.model.NavigationMethods;
@@ -366,7 +367,10 @@ public class TextFileType extends EditableFileType
       results.add(commands.setWorkingDirToActiveDoc());
       results.add(commands.debugDumpContents());
       results.add(commands.debugImportDump());
-      results.add(commands.popoutDoc());
+      
+      // support popout if not already in a satellite
+      if (!RStudioGinjector.INSTANCE.getSatellite().isCurrentWindowSatellite())
+         results.add(commands.popoutDoc());
 
       return results;
    }
