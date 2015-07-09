@@ -142,6 +142,9 @@ public class ChunkIconsManager
          if (!isRunnableChunk(el, editor))
             continue;
          
+         if (!DomUtils.isVisibleVert(container, el))
+            continue;
+         
          if (el.getChildCount() > 0)
             el.removeAllChildren();
          
