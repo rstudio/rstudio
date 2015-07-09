@@ -1,7 +1,7 @@
 /*
  * ApplicationWindow.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-15 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -23,15 +23,12 @@ import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.*;
 import com.google.inject.Inject;
-import com.google.inject.Provider;
 import com.google.inject.Singleton;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.application.ApplicationView;
 import org.rstudio.studio.client.application.ui.appended.ApplicationEndedPopupPanel;
 import org.rstudio.studio.client.application.ui.serializationprogress.ApplicationSerializationProgress;
 import org.rstudio.studio.client.common.GlobalDisplay;
-import org.rstudio.studio.client.workbench.codesearch.CodeSearch;
-import org.rstudio.studio.client.workbench.codesearch.ui.CodeSearchDialog;
 
 @Singleton
 public class ApplicationWindow extends Composite 
@@ -41,11 +38,9 @@ public class ApplicationWindow extends Composite
 {
    @Inject
    public ApplicationWindow(ApplicationHeader applicationHeader,
-                            GlobalDisplay globalDisplay,
-                            Provider<CodeSearch> pCodeSearch)
+                            GlobalDisplay globalDisplay)
    {
       globalDisplay_ = globalDisplay;
-      pCodeSearch_ = pCodeSearch;
       
       // occupy full client area of the window
       Window.enableScrolling(false);
@@ -79,11 +74,6 @@ public class ApplicationWindow extends Composite
       return applicationHeader_.isToolbarVisible();
    }
    
-   public void performGoToFunction()
-   {
-      new CodeSearchDialog(pCodeSearch_).showModal();  
-   }
-      
    public void showApplicationAgreement(String title,
                                         String contents,
                                         Operation doNotAcceptOperation,
@@ -282,19 +272,16 @@ public class ApplicationWindow extends Composite
       applicationPanel_.onResize();
    }
    
-   // main applilcation UI components
+   // main application UI components
    private LayoutPanel applicationPanel_ ;
    private ApplicationHeader applicationHeader_ ;
 
    // active serialization progress message
    private ApplicationSerializationProgress activeSerializationProgress_;
-  
-   
 
    private static final int COMPONENT_SPACING = 6;
    private Widget workbenchScreen_;
    private WarningBar warningBar_;
    private int workbenchBottom_ = COMPONENT_SPACING;
    private final GlobalDisplay globalDisplay_;
-   private final Provider<CodeSearch> pCodeSearch_;
 }

@@ -210,13 +210,6 @@ public class Application implements ApplicationEventHandlers
       });
    }
    
-   @Handler
-   public void onGoToFileFunction()
-   {
-      view_.performGoToFunction();
-   }
-   
-    
    public void onUnauthorized(UnauthorizedEvent event)
    {
       navigateToSignIn();
