@@ -150,7 +150,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
          @Override
          public Boolean getValue(CommandBinding binding)
          {
-            return true;
+            return false;
          }
       };
       

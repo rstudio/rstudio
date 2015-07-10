@@ -864,10 +864,10 @@ well as menu structures (for main menu and popup menus).
         menuLabel="Expand All"/>
    <cmd id="jumpToMatching"
         menuLabel="Jump To _Matching"
-        desc="Jump to matching brace or paren"/>
-   <cmd id="selectToMatching"
-        menuLabel="Select To _Matching"
-        desc="Select to matching brace or paren"/>
+        desc="Jump to matching bracket"/>
+   <cmd id="expandToMatching"
+        menuLabel="Expand To _Matching"
+        desc="Expand selection to matching bracket"/>
    <cmd id="executeAllCode"
         buttonLabel=""
         menuLabel="Run _All"
