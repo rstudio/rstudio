@@ -158,7 +158,7 @@ public class ApplicationQuit implements SaveActionChangedHandler,
       // see what the unsaved changes situation is and prompt accordingly
       final int saveAction = saveAction_.getAction();
       ArrayList<UnsavedChangesTarget> unsavedSourceDocs = 
-                                        sourceShim_.getUnsavedChanges(true);
+                                             sourceShim_.getUnsavedChanges();
       
       // no unsaved changes at all
       if (saveAction != SaveAction.SAVEASK && unsavedSourceDocs.size() == 0)

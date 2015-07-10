@@ -1676,19 +1676,11 @@ public class Source implements InsertSourceHandler,
    
    public ArrayList<UnsavedChangesTarget> getUnsavedChanges()
    {
-      return getUnsavedChanges(false);
-   }
-   
-   public ArrayList<UnsavedChangesTarget> getUnsavedChanges(boolean includeUntitled)
-   {
       ArrayList<UnsavedChangesTarget> targets = 
                                        new ArrayList<UnsavedChangesTarget>();
       for (EditingTarget target : editors_)
-         if (isUnsavedFileBackedTarget(target) ||
-             (includeUntitled && target.dirtyState().getValue()))
-         {
+         if (isUnsavedFileBackedTarget(target))
             targets.add(target);
-         }
       
       return targets;
    }
