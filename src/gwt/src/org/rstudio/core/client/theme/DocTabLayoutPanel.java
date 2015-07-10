@@ -40,6 +40,7 @@ import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Node;
 import com.google.gwt.dom.client.Style;
+import com.google.gwt.dom.client.Style.BorderStyle;
 import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.dom.client.Style.Float;
 import com.google.gwt.dom.client.Style.Position;
@@ -381,17 +382,31 @@ public class DocTabLayoutPanel
          dragElement_.getStyle().setPosition(Position.ABSOLUTE);
          dragElement_.getStyle().setLeft(lastElementX_, Unit.PX);
          dragElement_.getStyle().setZIndex(100);
-         DOM.setCapture(getElement());
+         Scheduler.get().scheduleDeferred(new ScheduledCommand()
+         {
+            @Override
+            public void execute()
+            {
+              dragElement_.getStyle().setDisplay(Display.NONE);
+            }
+         });
+
 
          // create the placeholder that shows where this tab will go when the
          // mouse is released
          dragPlaceholder_ = Document.get().createDivElement();
          dragPlaceholder_.getStyle().setWidth(dragElement_.getClientWidth(), 
                Unit.PX);
-         dragPlaceholder_.getStyle().setHeight(2, Unit.PX);
+         dragPlaceholder_.getStyle().setHeight(100, Unit.PCT);
          dragPlaceholder_.getStyle().setDisplay(Display.INLINE_BLOCK);
          dragPlaceholder_.getStyle().setPosition(Position.RELATIVE);
          dragPlaceholder_.getStyle().setFloat(Float.LEFT);
+         dragPlaceholder_.getStyle().setBorderStyle(BorderStyle.DOTTED);
+         dragPlaceholder_.getStyle().setBorderColor("#414243");
+         dragPlaceholder_.getStyle().setBorderWidth(2, Unit.PX);
+         dragPlaceholder_.getStyle().setProperty("boxSizing", "border-box");
+         dragPlaceholder_.getStyle().setProperty("borderRadius", "3px");
+         dragPlaceholder_.getStyle().setProperty("borderBottom", "0px");
          dragTabsHost_.insertAfter(dragPlaceholder_, dragElement_);
       }
       
@@ -558,6 +573,7 @@ public class DocTabLayoutPanel
          dragElement_.getStyle().clearLeft();
          dragElement_.getStyle().clearPosition();
          dragElement_.getStyle().clearZIndex();
+         dragElement_.getStyle().clearDisplay();
          
          // insert this tab where the placeholder landed
          dragTabsHost_.removeChild(dragElement_);
