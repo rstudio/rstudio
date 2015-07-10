@@ -117,11 +117,12 @@ public class SourcePane extends Composite implements Display,
 
    public void addTab(Widget widget,
                       ImageResource icon,
+                      String docId,
                       String name,
                       String tooltip,
                       boolean switchToTab)
    {
-      tabPanel_.add(widget, icon, name, tooltip);
+      tabPanel_.add(widget, icon, docId, name, tooltip);
       if (switchToTab)
          tabPanel_.selectTab(widget);
    }

@@ -1,7 +1,7 @@
 /*
  * DocTabLayoutPanel.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-15 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -13,6 +13,8 @@
  *
  */
 package org.rstudio.core.client.theme;
+
+import java.util.ArrayList;
 
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.dom.DomUtils;
@@ -29,13 +31,16 @@ import org.rstudio.core.client.events.TabClosingEvent;
 import org.rstudio.core.client.events.TabClosingHandler;
 import org.rstudio.core.client.events.TabReorderEvent;
 import org.rstudio.core.client.events.TabReorderHandler;
+import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 
 import com.google.gwt.animation.client.Animation;
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
+import com.google.gwt.dom.client.DataTransfer;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Node;
@@ -51,7 +56,9 @@ import com.google.gwt.event.dom.client.DragHandler;
 import com.google.gwt.event.dom.client.DragStartEvent;
 import com.google.gwt.event.dom.client.DragStartHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.json.client.JSONParser;
 import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.thirdparty.json.JSONObject;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
@@ -120,17 +127,23 @@ public class DocTabLayoutPanel
    @Override
    public void add(final Widget child, String text)
    {
-      add(child, null, text, null);
+      add(child, null, null, text, null);
+   }
+
+   public void add(final Widget child, String docId, String text)
+   {
+      add(child, null, docId, text, null);
    }
    
    public void add(final Widget child,
                    ImageResource icon,
+                   String docId,
                    final String text,
                    String tooltip)
    {
       if (closeableTabs_)
       {
-         DocTab tab = new DocTab(icon, text, tooltip, 
+         DocTab tab = new DocTab(icon, docId, text, tooltip, 
          new TabCloseObserver()
          {
             public void onTabClose()
@@ -142,6 +155,7 @@ public class DocTabLayoutPanel
                }
             }
          });
+         docTabs_.add(tab);
          super.add(child, tab);
       }
       else
@@ -298,6 +312,7 @@ public class DocTabLayoutPanel
       if (!super.remove(index))
          return false;
 
+      docTabs_.remove(index);
       fireEvent(new TabClosedEvent(index));
       ensureSelectedTabIsVisible(true);
       return true;
@@ -318,12 +333,12 @@ public class DocTabLayoutPanel
       throw new UnsupportedOperationException("Not supported");
    }
    
+
    private class DragManager implements EventListener
    {
       @Override
       public void onBrowserEvent(Event event)
       {
-         Debug.devlog("got " + event.getType() + " @ " + event.getClientX() + ", " + event.getClientY());
          if (event.getType() == "drag")
          {
             drag(event);
@@ -333,6 +348,7 @@ public class DocTabLayoutPanel
          }
          else if (event.getType() == "dragenter")
          {
+            beginDrag(event);
             event.preventDefault();
          }
          else if (event.getType() == "dragover")
@@ -345,12 +361,34 @@ public class DocTabLayoutPanel
          }
       }
       
-      public void beginDrag(DocTab srcTab, DragStartEvent evt)
+      public void beginDrag(Event evt)
       {
+         DataTransfer dt = evt.getDataTransfer();
+         String[] pieces = dt.getData("text").split("\\|");
+         
+         // doesn't look like our data
+         if (pieces.length != 2)
+         {
+            return;
+         }
+
+         String docId = pieces[0];
+         int dragTabWidth = Integer.parseInt(pieces[1]);
+         
+         // attempt to ascertain whether the element being dragged is one of
+         // our own documents
+         for (DocTab tab: docTabs_)
+         {
+            if (tab.getDocId() == docId)
+            {
+               dragElement_ = tab.getElement();
+               break;
+            }
+         }
+         
          // set drag element state
          dragging_ = true;
-         dragElement_ = srcTab.getElement().getParentElement().getParentElement();
-         dragTabsHost_ = dragElement_.getParentElement();
+         dragTabsHost_ = getTabBarElement();
          dragScrollHost_ = dragTabsHost_.getParentElement();
          outOfBounds_ = 0;
          candidatePos_ = 0;
@@ -378,7 +416,7 @@ public class DocTabLayoutPanel
 
          // snap the element out of the tabset
          lastElementX_ = DomUtils.leftRelativeTo(dragTabsHost_, dragElement_);
-         lastCursorX_= evt.getNativeEvent().getClientX();
+         lastCursorX_= evt.getClientX();
          dragElement_.getStyle().setPosition(Position.ABSOLUTE);
          dragElement_.getStyle().setLeft(lastElementX_, Unit.PX);
          dragElement_.getStyle().setZIndex(100);
@@ -391,12 +429,10 @@ public class DocTabLayoutPanel
             }
          });
 
-
          // create the placeholder that shows where this tab will go when the
          // mouse is released
          dragPlaceholder_ = Document.get().createDivElement();
-         dragPlaceholder_.getStyle().setWidth(dragElement_.getClientWidth(), 
-               Unit.PX);
+         dragPlaceholder_.getStyle().setWidth(dragTabWidth, Unit.PX);
          dragPlaceholder_.getStyle().setHeight(100, Unit.PCT);
          dragPlaceholder_.getStyle().setDisplay(Display.INLINE_BLOCK);
          dragPlaceholder_.getStyle().setPosition(Position.RELATIVE);
@@ -625,24 +661,24 @@ public class DocTabLayoutPanel
 
    private class DocTab extends Composite
    {
-
       private DocTab(ImageResource icon,
+                     String docId,
                      String title,
                      String tooltip,
                      TabCloseObserver closeHandler)
       {
-         HorizontalPanel layoutPanel = new HorizontalPanel();
+         docId_ = docId;
+         
+         final HorizontalPanel layoutPanel = new HorizontalPanel();
          layoutPanel.setStylePrimaryName(styles_.tabLayout());
          layoutPanel.setVerticalAlignment(HasVerticalAlignment.ALIGN_BOTTOM);
          layoutPanel.getElement().setDraggable("true");
-         final DocTab tab = this;
          layoutPanel.addDomHandler(new DragStartHandler()
          {
             @Override
             public void onDragStart(DragStartEvent evt)
             {
-               evt.setData("text", "foo");
-               dragManager_.beginDrag(tab, evt);
+               evt.getDataTransfer().setData("text", docId_);
             }
          }, DragStartEvent.getType());
 
@@ -708,6 +744,11 @@ public class DocTabLayoutPanel
          contentPanel_.insert(imageForIcon(icon), 0);
       }
       
+      public String getDocId()
+      {
+         return docId_;
+      }
+      
       private Image imageForIcon(ImageResource icon)
       {
          Image image = new Image(icon);
@@ -752,6 +793,7 @@ public class DocTabLayoutPanel
       private TabCloseObserver closeHandler_;
       private Element closeElement_;
       private final Label label_;
+      private final String docId_;
 
       private final HorizontalPanel contentPanel_;
    }
@@ -850,4 +892,5 @@ public class DocTabLayoutPanel
    private final ThemeStyles styles_;
    private Animation currentAnimation_;
    private DragManager dragManager_;
+   private ArrayList<DocTab> docTabs_ = new ArrayList<DocTab>();
 }

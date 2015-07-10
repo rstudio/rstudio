@@ -158,6 +158,7 @@ public class Source implements InsertSourceHandler,
    {
       void addTab(Widget widget,
                   ImageResource icon,
+                  String docId,
                   String name,
                   String tooltip,
                   boolean switchToTab);
@@ -2231,6 +2232,7 @@ public class Source implements InsertSourceHandler,
       editors_.add(target);
       view_.addTab(widget,
                    target.getIcon(),
+                   target.getId(),
                    target.getName().getValue(),
                    target.getTabTooltip(), // used as tooltip, if non-null
                    true);
