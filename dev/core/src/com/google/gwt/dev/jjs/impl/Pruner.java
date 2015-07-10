@@ -57,6 +57,7 @@ import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 import com.google.gwt.thirdparty.guava.common.base.Predicate;
 import com.google.gwt.thirdparty.guava.common.base.Predicates;
 import com.google.gwt.thirdparty.guava.common.collect.ArrayListMultimap;
+import com.google.gwt.thirdparty.guava.common.collect.ImmutableList;
 import com.google.gwt.thirdparty.guava.common.collect.Iterables;
 import com.google.gwt.thirdparty.guava.common.collect.ListMultimap;
 import com.google.gwt.thirdparty.guava.common.collect.Sets;
@@ -452,7 +453,7 @@ public class Pruner {
           return true;
         }
 
-        priorParametersByMethod.putAll(x, x.getParams());
+        List<JParameter> originalParameters = ImmutableList.copyOf(x.getParams());
 
         for (int i = 0; i < x.getParams().size(); ++i) {
           JParameter param = x.getParams().get(i);
@@ -461,6 +462,11 @@ public class Pruner {
             madeChanges();
             --i;
           }
+        }
+
+        if (x.getParams().size() != originalParameters.size()) {
+          // Parameters were pruned. record the original parameters for the cleanup pass.
+          priorParametersByMethod.putAll(x, originalParameters);
         }
       }
 
