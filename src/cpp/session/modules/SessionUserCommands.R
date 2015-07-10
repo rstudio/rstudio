@@ -15,7 +15,7 @@ assign(".rs.userCommands", new.env(parent = emptyenv()), envir = .rs.toolsEnv())
 
 .rs.addFunction("isValidShortcut", function(shortcut)
 {
-   if (length(shortcut) != 1 || !is.character(shortcut))
+   if (!is.character(shortcut))
       return(FALSE)
    
    # TODO
@@ -24,35 +24,44 @@ assign(".rs.userCommands", new.env(parent = emptyenv()), envir = .rs.toolsEnv())
 
 .rs.addFunction("normalizeKeyboardShortcut", function(shortcut)
 {
-   # Ensure lower case
-   shortcut <- tolower(shortcut)
-   
-   # Normalize aliases
-   aliases <- list(
-      "ctrl" = "control",
-      "cmd" = c("meta", "command", "win", "super")
-   )
-   
-   for (i in seq_along(aliases))
-   {
-      destination <- names(aliases)[[i]]
-      potentials <- aliases[[i]]
-      for (item in potentials)
+   # A shortcut may be a vector of 'strings', each to be pressed
+   # in sequence to trigger the shortcut. Normalize each set and
+   # then paste together.
+   normalized <- lapply(shortcut, function(shortcut) {
+      
+      # Ensure lower case
+      shortcut <- tolower(shortcut)
+      
+      # Normalize aliases
+      aliases <- list(
+         "ctrl" = "control",
+         "cmd" = c("meta", "command", "win", "super")
+      )
+      
+      for (i in seq_along(aliases))
       {
-         bounded <- paste("\\b", item, "\\b", sep = "")
-         shortcut <- gsub(bounded, destination, shortcut, perl = TRUE)
+         destination <- names(aliases)[[i]]
+         potentials <- aliases[[i]]
+         for (item in potentials)
+         {
+            bounded <- paste("\\b", item, "\\b", sep = "")
+            shortcut <- gsub(bounded, destination, shortcut, perl = TRUE)
+         }
       }
-   }
+      
+      # Normalize modifier key names
+      for (modifier in c("ctrl", "alt", "cmd", "shift"))
+      {
+         reFrom <- paste(modifier, "\\s*[-+]\\s*", sep = "")
+         reTo <- paste(modifier, "-", sep = "")
+         shortcut <- gsub(reFrom, reTo, shortcut, perl = TRUE)
+      }
+      
+      shortcut
+      
+   })
    
-   # Normalize modifier key names
-   for (modifier in c("ctrl", "alt", "cmd", "shift"))
-   {
-      reFrom <- paste(modifier, "\\s*[-+]\\s*", sep = "")
-      reTo <- paste(modifier, "-", sep = "")
-      shortcut <- gsub(reFrom, reTo, shortcut, perl = TRUE)
-   }
-   
-   shortcut
+   paste(normalized, collapse = " ")
    
 })
 
@@ -87,6 +96,13 @@ assign(".rs.userCommands", new.env(parent = emptyenv()), envir = .rs.toolsEnv())
           shortcut)
    
    TRUE
+})
+
+.rs.addFunction("userCommandResult", function(...)
+{
+   result <- list(...)
+   class(result) <- "user_command"
+   result
 })
 
 .rs.addFunction("replaceTextAction", function(range, text)
