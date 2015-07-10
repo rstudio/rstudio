@@ -428,6 +428,11 @@ bool isLanguage(SEXP object)
 {
    return Rf_isLanguage(object);
 }
+
+bool isList(SEXP object)
+{
+   return TYPEOF(object) == VECSXP;
+}
    
 bool isString(SEXP object)
 {

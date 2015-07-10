@@ -13,6 +13,10 @@
  *
  */
 
+// #define RSTUDIO_ENABLE_DEBUG_MACROS
+#define RSTUDIO_DEBUG_LABEL "commands"
+#include <core/Macros.hpp>
+
 #include "SessionUserCommands.hpp"
 
 #include <boost/bind.hpp>
@@ -35,50 +39,60 @@ using namespace rstudio::core;
 
 namespace {
 
+bool isUserCommandResult(SEXP resultSEXP)
+{
+   return r::sexp::isList(resultSEXP) &&
+          r::sexp::inherits(resultSEXP, "user_command");
+}
+
+template <typename T>
+bool extractField(SEXP elementSEXP, const std::string& name, T* field)
+{
+   Error error = r::sexp::getNamedListElement(elementSEXP, name, field);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return false;
+   }
+      
+   return true;
+}
+
 json::Array jsonFromUserCommandResult(SEXP resultSEXP)
 {
    json::Array jsonData;
-   if (TYPEOF(resultSEXP) != VECSXP)
+   
+   if (!isUserCommandResult(resultSEXP))
+   {
+      Error error(r::errc::UnexpectedDataTypeError, ERROR_LOCATION);
+      LOG_ERROR(error);
       return jsonData;
+   }
    
-   Error error;
    std::size_t n = r::sexp::length(resultSEXP);
-   
    for (std::size_t i = 0; i < n; ++i)
    {
       json::Object jsonResult;
       SEXP elementSEXP = VECTOR_ELT(resultSEXP, i);
       
       std::string action;
-      error = r::sexp::getNamedListElement(elementSEXP, "action", &action);
-      if (error)
-      {
-         LOG_ERROR(error);
+      if (!extractField(elementSEXP, "action", &action))
          return json::Array();
-      }
       jsonResult["action"] = action;
       
       std::vector<int> range;
-      error = r::sexp::getNamedListElement(elementSEXP, "range", &range);
-      if (error)
-      {
-         LOG_ERROR(error);
+      if (!extractField(elementSEXP, "range", &range))
          return json::Array();
-      }
-      
       jsonResult["range"] = json::toJsonArray(range);
       
       std::string text;
-      error = r::sexp::getNamedListElement(elementSEXP, "text", &text);
-      if (error)
-      {
-         LOG_ERROR(error);
+      if (!extractField(elementSEXP, "text", &text))
          return json::Array();
-      }
       jsonResult["text"]  = text;
       
       jsonData.push_back(jsonResult);
    }
+   
    return jsonData;
 }
 
@@ -119,7 +133,11 @@ Error executeUserCommand(const json::JsonRpcRequest& request,
    
    std::vector<std::string> content;
    if (!json::fillVectorString(contentJson, &content))
-      return Error(json::errc::ParamTypeMismatch, ERROR_LOCATION);
+   {
+      error = Error(json::errc::ParamTypeMismatch, ERROR_LOCATION);
+      LOG_ERROR(error);
+      return error;
+   }
    
    // Locate the function with this name
    SEXP userCommandsEnvSEXP = r::sexp::findVar(".rs.userCommands", R_GlobalEnv);
@@ -144,7 +162,10 @@ Error executeUserCommand(const json::JsonRpcRequest& request,
    
    error = userCommand.call(&resultSEXP, &protect);
    if (error)
+   {
+      LOG_ERROR(error);
       return error;
+   }
    
    // Create JSON data from result
    json::Array jsonData = jsonFromUserCommandResult(resultSEXP);
