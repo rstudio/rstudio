@@ -35,6 +35,7 @@ import org.rstudio.core.client.theme.res.ThemeStyles;
 import com.google.gwt.animation.client.Animation;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Node;
@@ -44,12 +45,8 @@ import com.google.gwt.dom.client.Style.Float;
 import com.google.gwt.dom.client.Style.Position;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.DomEvent;
-import com.google.gwt.event.dom.client.DragEnterEvent;
-import com.google.gwt.event.dom.client.DragEnterHandler;
 import com.google.gwt.event.dom.client.DragEvent;
 import com.google.gwt.event.dom.client.DragHandler;
-import com.google.gwt.event.dom.client.DragOverEvent;
-import com.google.gwt.event.dom.client.DragOverHandler;
 import com.google.gwt.event.dom.client.DragStartEvent;
 import com.google.gwt.event.dom.client.DragStartHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
@@ -57,6 +54,7 @@ import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
+import com.google.gwt.user.client.EventListener;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HasVerticalAlignment;
@@ -86,7 +84,7 @@ public class DocTabLayoutPanel
    {
       public void onTabMove(Widget tab, int oldPos, int newPos);
    }
-
+   
    public DocTabLayoutPanel(boolean closeableTabs,
                             int padding,
                             int rightMargin)
@@ -98,13 +96,24 @@ public class DocTabLayoutPanel
       styles_ = ThemeResources.INSTANCE.themeStyles();
       addStyleName(styles_.docTabPanel());
       addStyleName(styles_.moduleTabPanel());
+      dragManager_ = new DragManager();
       
-      Element tabBar = getTabBarElement();
-      DOM.sinkBitlessEvent(tabBar, "drag");
-      DOM.sinkBitlessEvent(tabBar, "dragstart");
-      DOM.sinkBitlessEvent(tabBar, "dragenter");
-      DOM.sinkBitlessEvent(tabBar, "dragover");
-      DOM.sinkBitlessEvent(tabBar, "drop");
+      // sink drag-related events on the tab bar element; unfortunately
+      // GWT does not provide bits for the drag-related events, and 
+      Scheduler.get().scheduleDeferred(new ScheduledCommand()
+      {
+         @Override
+         public void execute()
+         {
+            Element tabBar = getTabBarElement();
+            DOM.sinkBitlessEvent(tabBar, "drag");
+            DOM.sinkBitlessEvent(tabBar, "dragstart");
+            DOM.sinkBitlessEvent(tabBar, "dragenter");
+            DOM.sinkBitlessEvent(tabBar, "dragover");
+            DOM.sinkBitlessEvent(tabBar, "drop");
+            Event.setEventListener(tabBar, dragManager_);
+         }
+      });
    }
 
    @Override
@@ -130,15 +139,6 @@ public class DocTabLayoutPanel
                {
                   tryCloseTab(index, null);
                }
-            }
-         }, 
-         new TabMoveObserver()
-         {
-            @Override
-            public void onTabMove(Widget tab, int oldPos, int newPos)
-            {
-               TabReorderEvent event = new TabReorderEvent(oldPos, newPos);
-               fireEvent(event);
             }
          });
          super.add(child, tab);
@@ -317,151 +317,38 @@ public class DocTabLayoutPanel
       throw new UnsupportedOperationException("Not supported");
    }
    
-   private class DocTab extends Composite
+   private class DragManager implements EventListener
    {
-
-      private DocTab(ImageResource icon,
-                     String title,
-                     String tooltip,
-                     TabCloseObserver closeHandler,
-                     TabMoveObserver moveHandler)
-      {
-         HorizontalPanel layoutPanel = new HorizontalPanel();
-         layoutPanel.setStylePrimaryName(styles_.tabLayout());
-         layoutPanel.setVerticalAlignment(HasVerticalAlignment.ALIGN_BOTTOM);
-         layoutPanel.getElement().setDraggable("true");
-         layoutPanel.addDomHandler(new DragStartHandler()
-         {
-            @Override
-            public void onDragStart(DragStartEvent evt)
-            {
-               evt.setData("text", "foo");
-               beginDrag(evt);
-            }
-         }, DragStartEvent.getType());
-         layoutPanel.addDomHandler(new DragHandler()
-         {
-            
-            @Override
-            public void onDrag(DragEvent evt)
-            {
-               drag(evt);
-            }
-         }, DragEvent.getType());
-
-         HTML left = new HTML();
-         left.setStylePrimaryName(styles_.tabLayoutLeft());
-         layoutPanel.add(left);
-
-         contentPanel_ = new HorizontalPanel();
-         contentPanel_.setTitle(tooltip);
-         contentPanel_.setStylePrimaryName(styles_.tabLayoutCenter());
-         contentPanel_.setVerticalAlignment(HasVerticalAlignment.ALIGN_MIDDLE);
-
-         if (icon != null)
-            contentPanel_.add(imageForIcon(icon));
-
-         label_ = new Label(title, false);
-         label_.addStyleName(styles_.docTabLabel());
-         contentPanel_.add(label_);
-
-         appendDirtyMarker();
-
-         Image img = new Image(ThemeResources.INSTANCE.closeTab());
-         img.setStylePrimaryName(styles_.closeTabButton());
-         img.addStyleName(ThemeStyles.INSTANCE.handCursor());
-         contentPanel_.add(img);
-
-         layoutPanel.add(contentPanel_);
-
-         HTML right = new HTML();
-         right.setStylePrimaryName(styles_.tabLayoutRight());
-         layoutPanel.add(right);
-
-         initWidget(layoutPanel);
-
-         this.sinkEvents(Event.ONMOUSEMOVE |
-               Event.ONMOUSEUP |
-               Event.ONLOSECAPTURE);
-         closeHandler_ = closeHandler;
-         moveHandler_ = moveHandler;
-         closeElement_ = img.getElement();
-      }
-      
-      private void appendDirtyMarker()
-      {
-         Label marker = new Label("*");
-         marker.setStyleName(styles_.dirtyTabIndicator());
-         contentPanel_.insert(marker, 2);
-      }
-
-      public void replaceTitle(String title)
-      {
-         label_.setText(title);
-      }
-
-      public void replaceTooltip(String tooltip)
-      {
-         contentPanel_.setTitle(tooltip);
-      }
-
-      public void replaceIcon(ImageResource icon)
-      {
-         if (contentPanel_.getWidget(0) instanceof Image)
-            contentPanel_.remove(0);
-         contentPanel_.insert(imageForIcon(icon), 0);
-      }
-      
-      private Image imageForIcon(ImageResource icon)
-      {
-         Image image = new Image(icon);
-         image.setStylePrimaryName(styles_.docTabIcon());
-         return image;
-      }
-
       @Override
-      public void onBrowserEvent(Event event) 
-      {  
-         switch(DOM.eventGetType(event))
+      public void onBrowserEvent(Event event)
+      {
+         Debug.devlog("got " + event.getType() + " @ " + event.getClientX() + ", " + event.getClientY());
+         if (event.getType() == "drag")
          {
-            case Event.ONMOUSEUP:
-            {
-               // middlemouse should close a tab
-               if (event.getButton() == Event.BUTTON_MIDDLE)
-               {
-                  event.stopPropagation();
-                  event.preventDefault();
-                  closeHandler_.onTabClose();
-                  break;
-               }
-               
-               // note: fallthrough
-            }
-            case Event.ONLOSECAPTURE: 
-            {
-               if (Element.as(event.getEventTarget()) == closeElement_)
-               {
-                  // handle click on close button
-                  closeHandler_.onTabClose();
-               }
-               else if (dragging_)
-               {
-                  // complete dragging
-                  endDrag(event);
-               }
-               event.preventDefault();
-               event.stopPropagation();
-               break;   
-            }
+            drag(event);
          }
-         super.onBrowserEvent(event);
+         else if (event.getType() == "dragstart")
+         {
+         }
+         else if (event.getType() == "dragenter")
+         {
+            event.preventDefault();
+         }
+         else if (event.getType() == "dragover")
+         {
+            event.preventDefault();
+         }
+         else if (event.getType() == "drop")
+         {
+            endDrag(event);
+         }
       }
-
-      public void beginDrag(DragStartEvent evt)
+      
+      public void beginDrag(DocTab srcTab, DragStartEvent evt)
       {
          // set drag element state
          dragging_ = true;
-         dragElement_ = getElement().getParentElement().getParentElement();
+         dragElement_ = srcTab.getElement().getParentElement().getParentElement();
          dragTabsHost_ = dragElement_.getParentElement();
          dragScrollHost_ = dragTabsHost_.getParentElement();
          outOfBounds_ = 0;
@@ -508,80 +395,10 @@ public class DocTabLayoutPanel
          dragTabsHost_.insertAfter(dragPlaceholder_, dragElement_);
       }
       
-      private void endDrag(final Event evt)
+      private void drag(Event evt) 
       {
-         // remove the properties used to position for dragging
-         dragElement_.getStyle().clearLeft();
-         dragElement_.getStyle().clearPosition();
-         dragElement_.getStyle().clearZIndex();
-         
-         // insert this tab where the placeholder landed
-         dragTabsHost_.removeChild(dragElement_);
-         dragTabsHost_.insertAfter(dragElement_, dragPlaceholder_);
-         dragTabsHost_.removeChild(dragPlaceholder_);
-
-         // finish dragging
-         DOM.releaseCapture(getElement());
-         dragging_ = false;
-         
-         // unsink mousedown/mouseup and simulate a click to activate the tab
-         simulateClick(evt);
-         
-         // let observer know we moved; adjust the destination position one to
-         // the left if we're right of the start position to account for the
-         // position of the tab prior to movement
-         if (startPos_ != destPos_)
-         {
-            moveHandler_.onTabMove(this, startPos_, destPos_);
-         }
-      }
-      
-      private void simulateClick(Event evt)
-      {
-         this.unsinkEvents(Event.ONMOUSEDOWN | Event.ONMOUSEUP);
-         DomEvent.fireNativeEvent(Document.get().createClickEvent(0,
-               evt.getScreenX(), evt.getScreenY(), 
-               evt.getClientX(), evt.getClientY(), 
-               evt.getCtrlKey(), evt.getAltKey(), 
-               evt.getShiftKey(), evt.getMetaKey()), this.getParent());
-         this.sinkEvents(Event.ONMOUSEDOWN | Event.ONMOUSEUP);
-         
-      }
-      
-      private boolean autoScroll(int dir)
-      {
-         // move while the mouse is still out of bounds 
-         if (dragging_ && outOfBounds_ != 0)
-         {
-            // if mouse is far out of bounds, use it to accelerate movement
-            if (Math.abs(outOfBounds_) > 100)
-            {
-               dir *= 1 + Math.round(Math.abs(outOfBounds_) / 75);
-            }
-            // move if there's moving to be done
-            if (dir < 0 && lastElementX_ > 0 ||
-                dir > 0 && lastElementX_ < dragMax_)
-            {
-               commitPosition(lastElementX_ + dir);
-
-               // scroll if there's scrolling to be done
-               int left = dragScrollHost_.getScrollLeft();
-               if ((dir < 0 && left > 0) || 
-                   (dir > 0 && left < dragScrollHost_.getScrollWidth() - 
-                        dragScrollHost_.getClientWidth()))
-               {
-                  dragScrollHost_.setScrollLeft(left + dir);
-               }
-            }
-            return true;
-         }
-         return false;
-      }
-      
-      private void drag(DragEvent evt) 
-      {
-         int offset = evt.getNativeEvent().getClientX() - lastCursorX_;
-         lastCursorX_ = evt.getNativeEvent().getClientX();
+         int offset = evt.getClientX() - lastCursorX_;
+         lastCursorX_ = evt.getClientX();
          // cursor is outside the tab area
          if (outOfBounds_ != 0)
          {
@@ -613,6 +430,7 @@ public class DocTabLayoutPanel
             targetLeft = dragMax_;
             outOfBounds_ += offset;
          }
+
          if (targetLeft - scrollLeft < SCROLL_THRESHOLD &&
                scrollLeft > 0)
          {
@@ -702,12 +520,78 @@ public class DocTabLayoutPanel
                      candidatePos_ - 1 : candidatePos_;
             }
          }
-         
+      }
+
+      private boolean autoScroll(int dir)
+      {
+         // move while the mouse is still out of bounds 
+         if (dragging_ && outOfBounds_ != 0)
+         {
+            // if mouse is far out of bounds, use it to accelerate movement
+            if (Math.abs(outOfBounds_) > 100)
+            {
+               dir *= 1 + Math.round(Math.abs(outOfBounds_) / 75);
+            }
+            // move if there's moving to be done
+            if (dir < 0 && lastElementX_ > 0 ||
+                dir > 0 && lastElementX_ < dragMax_)
+            {
+               commitPosition(lastElementX_ + dir);
+
+               // scroll if there's scrolling to be done
+               int left = dragScrollHost_.getScrollLeft();
+               if ((dir < 0 && left > 0) || 
+                   (dir > 0 && left < dragScrollHost_.getScrollWidth() - 
+                        dragScrollHost_.getClientWidth()))
+               {
+                  dragScrollHost_.setScrollLeft(left + dir);
+               }
+            }
+            return true;
+         }
+         return false;
       }
       
-      private TabCloseObserver closeHandler_;
-      private TabMoveObserver moveHandler_;
-      private Element closeElement_;
+      private void endDrag(final Event evt)
+      {
+         // remove the properties used to position for dragging
+         dragElement_.getStyle().clearLeft();
+         dragElement_.getStyle().clearPosition();
+         dragElement_.getStyle().clearZIndex();
+         
+         // insert this tab where the placeholder landed
+         dragTabsHost_.removeChild(dragElement_);
+         dragTabsHost_.insertAfter(dragElement_, dragPlaceholder_);
+         dragTabsHost_.removeChild(dragPlaceholder_);
+
+         // finish dragging
+         DOM.releaseCapture(getElement());
+         dragging_ = false;
+         
+         // unsink mousedown/mouseup and simulate a click to activate the tab
+         simulateClick(evt);
+         
+         // let observer know we moved; adjust the destination position one to
+         // the left if we're right of the start position to account for the
+         // position of the tab prior to movement
+         if (startPos_ != destPos_)
+         {
+            TabReorderEvent event = new TabReorderEvent(startPos_, destPos_);
+            fireEvent(event);
+         }
+      }
+
+      private void simulateClick(Event evt)
+      {
+         /*
+         DomEvent.fireNativeEvent(Document.get().createClickEvent(0,
+               evt.getScreenX(), evt.getScreenY(), 
+               evt.getClientX(), evt.getClientY(), 
+               evt.getCtrlKey(), evt.getAltKey(), 
+               evt.getShiftKey(), evt.getMetaKey()), this.getParent());
+               */
+      }
+      
       private boolean dragging_ = false;
       private int lastCursorX_ = 0;
       private int lastElementX_ = 0;
@@ -720,8 +604,138 @@ public class DocTabLayoutPanel
       private Element dragTabsHost_;
       private Element dragScrollHost_;
       private Element dragPlaceholder_;
-      private final Label label_;
       private final static int SCROLL_THRESHOLD = 25;
+   }
+
+   private class DocTab extends Composite
+   {
+
+      private DocTab(ImageResource icon,
+                     String title,
+                     String tooltip,
+                     TabCloseObserver closeHandler)
+      {
+         HorizontalPanel layoutPanel = new HorizontalPanel();
+         layoutPanel.setStylePrimaryName(styles_.tabLayout());
+         layoutPanel.setVerticalAlignment(HasVerticalAlignment.ALIGN_BOTTOM);
+         layoutPanel.getElement().setDraggable("true");
+         final DocTab tab = this;
+         layoutPanel.addDomHandler(new DragStartHandler()
+         {
+            @Override
+            public void onDragStart(DragStartEvent evt)
+            {
+               evt.setData("text", "foo");
+               dragManager_.beginDrag(tab, evt);
+            }
+         }, DragStartEvent.getType());
+
+         HTML left = new HTML();
+         left.setStylePrimaryName(styles_.tabLayoutLeft());
+         layoutPanel.add(left);
+
+         contentPanel_ = new HorizontalPanel();
+         contentPanel_.setTitle(tooltip);
+         contentPanel_.setStylePrimaryName(styles_.tabLayoutCenter());
+         contentPanel_.setVerticalAlignment(HasVerticalAlignment.ALIGN_MIDDLE);
+
+         if (icon != null)
+            contentPanel_.add(imageForIcon(icon));
+
+         label_ = new Label(title, false);
+         label_.addStyleName(styles_.docTabLabel());
+         contentPanel_.add(label_);
+
+         appendDirtyMarker();
+
+         Image img = new Image(ThemeResources.INSTANCE.closeTab());
+         img.setStylePrimaryName(styles_.closeTabButton());
+         img.addStyleName(ThemeStyles.INSTANCE.handCursor());
+         contentPanel_.add(img);
+
+         layoutPanel.add(contentPanel_);
+
+         HTML right = new HTML();
+         right.setStylePrimaryName(styles_.tabLayoutRight());
+         layoutPanel.add(right);
+
+         initWidget(layoutPanel);
+
+         this.sinkEvents(Event.ONMOUSEMOVE |
+               Event.ONMOUSEUP |
+               Event.ONLOSECAPTURE);
+         closeHandler_ = closeHandler;
+         closeElement_ = img.getElement();
+      }
+      
+      private void appendDirtyMarker()
+      {
+         Label marker = new Label("*");
+         marker.setStyleName(styles_.dirtyTabIndicator());
+         contentPanel_.insert(marker, 2);
+      }
+
+      public void replaceTitle(String title)
+      {
+         label_.setText(title);
+      }
+
+      public void replaceTooltip(String tooltip)
+      {
+         contentPanel_.setTitle(tooltip);
+      }
+
+      public void replaceIcon(ImageResource icon)
+      {
+         if (contentPanel_.getWidget(0) instanceof Image)
+            contentPanel_.remove(0);
+         contentPanel_.insert(imageForIcon(icon), 0);
+      }
+      
+      private Image imageForIcon(ImageResource icon)
+      {
+         Image image = new Image(icon);
+         image.setStylePrimaryName(styles_.docTabIcon());
+         return image;
+      }
+
+      @Override
+      public void onBrowserEvent(Event event) 
+      {  
+         switch(DOM.eventGetType(event))
+         {
+            case Event.ONMOUSEUP:
+            {
+               // middlemouse should close a tab
+               if (event.getButton() == Event.BUTTON_MIDDLE)
+               {
+                  event.stopPropagation();
+                  event.preventDefault();
+                  closeHandler_.onTabClose();
+                  break;
+               }
+               
+               // note: fallthrough
+            }
+            case Event.ONLOSECAPTURE: 
+            {
+               if (Element.as(event.getEventTarget()) == closeElement_)
+               {
+                  // handle click on close button
+                  closeHandler_.onTabClose();
+               }
+               event.preventDefault();
+               event.stopPropagation();
+               break;   
+            }
+         }
+         super.onBrowserEvent(event);
+      }
+
+      
+      private TabCloseObserver closeHandler_;
+      private Element closeElement_;
+      private final Label label_;
 
       private final HorizontalPanel contentPanel_;
    }
@@ -781,24 +795,6 @@ public class DocTabLayoutPanel
    @Override
    public void onBrowserEvent(Event event) 
    {  
-      Debug.devlog("got " + event.getType() + " @ " + event.getClientX() + ", " + event.getClientY());
-      if (event.getType() == "drag")
-      {
-      }
-      else if (event.getType() == "dragstart")
-      {
-      }
-      else if (event.getType() == "dragenter")
-      {
-         event.preventDefault();
-      }
-      else if (event.getType() == "dragover")
-      {
-         event.preventDefault();
-      }
-      else if (event.getType() == "drop")
-      {
-      }
       super.onBrowserEvent(event);
    }
    
@@ -837,4 +833,5 @@ public class DocTabLayoutPanel
    private int rightMargin_;
    private final ThemeStyles styles_;
    private Animation currentAnimation_;
+   private DragManager dragManager_;
 }
