@@ -23,6 +23,10 @@ import com.google.gwt.dom.client.Style.Float;
 import com.google.gwt.dom.client.Style.Position;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.DomEvent;
+import com.google.gwt.event.dom.client.DragEvent;
+import com.google.gwt.event.dom.client.DragHandler;
+import com.google.gwt.event.dom.client.DragStartEvent;
+import com.google.gwt.event.dom.client.DragStartHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.Command;
@@ -30,9 +34,11 @@ import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.*;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.DomUtils.NodePredicate;
 import org.rstudio.core.client.events.*;
+import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 
@@ -68,6 +74,27 @@ public class DocTabLayoutPanel
       styles_ = ThemeResources.INSTANCE.themeStyles();
       addStyleName(styles_.docTabPanel());
       addStyleName(styles_.moduleTabPanel());
+
+      addDomHandler(new DragStartHandler()
+      {
+         
+         @Override
+         public void onDragStart(DragStartEvent arg0)
+         {
+            Debug.devlog("drag start - panel");
+            
+         }
+      }, DragStartEvent.getType());
+
+      addDomHandler(new DragHandler()
+      {
+         
+         @Override
+         public void onDrag(DragEvent arg0)
+         {
+            Debug.devlog("dragging - " + arg0.getNativeEvent().getClientX());
+         }
+      }, DragEvent.getType());
    }
 
    @Override
@@ -292,6 +319,30 @@ public class DocTabLayoutPanel
          HorizontalPanel layoutPanel = new HorizontalPanel();
          layoutPanel.setStylePrimaryName(styles_.tabLayout());
          layoutPanel.setVerticalAlignment(HasVerticalAlignment.ALIGN_BOTTOM);
+         layoutPanel.getElement().setDraggable("true");
+         layoutPanel.addDomHandler(new DragStartHandler()
+         {
+            
+            @Override
+            public void onDragStart(DragStartEvent evt)
+            {
+               evt.setData("text", "foo");
+               JsObject jso = (JsObject)
+                     evt.getNativeEvent().getDataTransfer().cast();
+               jso.setString("effectAllowed", "move");
+
+               beginDrag(evt);
+            }
+         }, DragStartEvent.getType());
+         layoutPanel.addDomHandler(new DragHandler()
+         {
+            
+            @Override
+            public void onDrag(DragEvent evt)
+            {
+               drag(evt);
+            }
+         }, DragEvent.getType());
 
          HTML left = new HTML();
          left.setStylePrimaryName(styles_.tabLayoutLeft());
@@ -324,10 +375,9 @@ public class DocTabLayoutPanel
 
          initWidget(layoutPanel);
 
-         this.sinkEvents(Event.ONMOUSEDOWN | 
-                        Event.ONMOUSEMOVE | 
-                        Event.ONMOUSEUP |
-                        Event.ONLOSECAPTURE);
+         this.sinkEvents(Event.ONMOUSEMOVE |
+               Event.ONMOUSEUP |
+               Event.ONLOSECAPTURE);
          closeHandler_ = closeHandler;
          moveHandler_ = moveHandler;
          closeElement_ = img.getElement();
@@ -369,31 +419,6 @@ public class DocTabLayoutPanel
       {  
          switch(DOM.eventGetType(event))
          {
-            case Event.ONMOUSEDOWN: 
-            {
-               // handle mousedowns as drag initiations (unless user is reaching
-               // for the close button)
-               if (event.getButton() == Event.BUTTON_LEFT && 
-                     Element.as(event.getEventTarget()) != closeElement_)
-               {
-                  beginDrag(event);
-                  event.preventDefault();
-                  event.stopPropagation();
-               }
-               break;
-            }
-           
-            case Event.ONMOUSEMOVE: 
-            {
-               if (dragging_) 
-               {
-                  drag(event);
-                  event.preventDefault();
-                  event.stopPropagation();
-               }
-               break;
-            }
-           
             case Event.ONMOUSEUP:
             {
                // middlemouse should close a tab
@@ -427,7 +452,7 @@ public class DocTabLayoutPanel
          super.onBrowserEvent(event);
       }
 
-      private void beginDrag(Event evt)
+      public void beginDrag(DragStartEvent evt)
       {
          // set drag element state
          dragging_ = true;
@@ -460,7 +485,7 @@ public class DocTabLayoutPanel
 
          // snap the element out of the tabset
          lastElementX_ = DomUtils.leftRelativeTo(dragTabsHost_, dragElement_);
-         lastCursorX_= evt.getClientX();
+         lastCursorX_= evt.getNativeEvent().getClientX();
          dragElement_.getStyle().setPosition(Position.ABSOLUTE);
          dragElement_.getStyle().setLeft(lastElementX_, Unit.PX);
          dragElement_.getStyle().setZIndex(100);
@@ -548,10 +573,10 @@ public class DocTabLayoutPanel
          return false;
       }
       
-      private void drag(Event evt) 
+      private void drag(DragEvent evt) 
       {
-         int offset = evt.getClientX() - lastCursorX_;
-         lastCursorX_ = evt.getClientX();
+         int offset = evt.getNativeEvent().getClientX() - lastCursorX_;
+         lastCursorX_ = evt.getNativeEvent().getClientX();
          // cursor is outside the tab area
          if (outOfBounds_ != 0)
          {
