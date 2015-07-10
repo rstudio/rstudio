@@ -452,6 +452,32 @@ Error detachFromSourceDatabase()
 }
 
 
+// clear the persistent documents for a session (we need to do this
+// whenever we switch projects so that new projects don't inherit
+// the persistent docs of old projects). Note that for multi-session
+// contexts the saveMostRecentDocuments call (above) takes care of
+// persistent open documents for projects
+Error clearSessionPersistentDocuments()
+{
+   // only do this for multi-session contexts
+   if (!module_context::activeSession().empty())
+   {
+      FilePath titledDir = persistentTitledDir();
+      Error error = titledDir.removeIfExists();
+      if (error)
+         LOG_ERROR(error);
+
+      FilePath untitledDir = persistentUntitledDir();
+      error = untitledDir.removeIfExists();
+      if (error)
+         LOG_ERROR(error);
+
+   }
+
+   return Success();
+}
+
+
 } // namespace supervisor
 } // namespace source_database
 } // namespace session

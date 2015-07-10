@@ -34,6 +34,8 @@ core::Error saveMostRecentDocuments();
 
 core::Error detachFromSourceDatabase();
 
+core::Error clearSessionPersistentDocuments();
+
 } // namespace supervisor
 } // namespace source_database
 } // namespace session

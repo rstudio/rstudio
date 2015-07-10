@@ -685,8 +685,12 @@ Error removeAll()
 
 namespace {
 
+bool s_wasQuit = false;
+
 void onQuit()
 {
+   s_wasQuit = true;
+
    Error error = supervisor::saveMostRecentDocuments();
    if (error)
       LOG_ERROR(error);
@@ -697,6 +701,13 @@ void onShutdown(bool)
    Error error = supervisor::detachFromSourceDatabase();
    if (error)
       LOG_ERROR(error);
+
+   if (s_wasQuit)
+   {
+      Error error = supervisor::clearSessionPersistentDocuments();
+      if (error)
+         LOG_ERROR(error);
+   }
 }
 
 } // anonymous namespace

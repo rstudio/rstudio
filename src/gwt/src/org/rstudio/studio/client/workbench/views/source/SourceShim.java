@@ -250,8 +250,13 @@ public class SourceShim extends Composite
    
    public ArrayList<UnsavedChangesTarget> getUnsavedChanges()
    {
+      return getUnsavedChanges(false);
+   }
+   
+   public ArrayList<UnsavedChangesTarget> getUnsavedChanges(boolean includeUntitled)
+   {
       if (source_ != null)
-         return source_.getUnsavedChanges();
+         return source_.getUnsavedChanges(includeUntitled);
       else
          return new ArrayList<UnsavedChangesTarget>();
    }
