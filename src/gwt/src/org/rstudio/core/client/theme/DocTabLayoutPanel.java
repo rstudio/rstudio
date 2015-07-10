@@ -14,17 +14,42 @@
  */
 package org.rstudio.core.client.theme;
 
+import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.dom.DomUtils;
+import org.rstudio.core.client.dom.DomUtils.NodePredicate;
+import org.rstudio.core.client.events.HasTabCloseHandlers;
+import org.rstudio.core.client.events.HasTabClosedHandlers;
+import org.rstudio.core.client.events.HasTabClosingHandlers;
+import org.rstudio.core.client.events.HasTabReorderHandlers;
+import org.rstudio.core.client.events.TabCloseEvent;
+import org.rstudio.core.client.events.TabCloseHandler;
+import org.rstudio.core.client.events.TabClosedEvent;
+import org.rstudio.core.client.events.TabClosedHandler;
+import org.rstudio.core.client.events.TabClosingEvent;
+import org.rstudio.core.client.events.TabClosingHandler;
+import org.rstudio.core.client.events.TabReorderEvent;
+import org.rstudio.core.client.events.TabReorderHandler;
+import org.rstudio.core.client.theme.res.ThemeResources;
+import org.rstudio.core.client.theme.res.ThemeStyles;
+
 import com.google.gwt.animation.client.Animation;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
-import com.google.gwt.dom.client.*;
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.Node;
+import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.dom.client.Style.Float;
 import com.google.gwt.dom.client.Style.Position;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.DomEvent;
+import com.google.gwt.event.dom.client.DragEnterEvent;
+import com.google.gwt.event.dom.client.DragEnterHandler;
 import com.google.gwt.event.dom.client.DragEvent;
 import com.google.gwt.event.dom.client.DragHandler;
+import com.google.gwt.event.dom.client.DragOverEvent;
+import com.google.gwt.event.dom.client.DragOverHandler;
 import com.google.gwt.event.dom.client.DragStartEvent;
 import com.google.gwt.event.dom.client.DragStartHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
@@ -32,15 +57,14 @@ import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
-import com.google.gwt.user.client.ui.*;
-
-import org.rstudio.core.client.Debug;
-import org.rstudio.core.client.dom.DomUtils;
-import org.rstudio.core.client.dom.DomUtils.NodePredicate;
-import org.rstudio.core.client.events.*;
-import org.rstudio.core.client.js.JsObject;
-import org.rstudio.core.client.theme.res.ThemeResources;
-import org.rstudio.core.client.theme.res.ThemeStyles;
+import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.HTML;
+import com.google.gwt.user.client.ui.HasVerticalAlignment;
+import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.Image;
+import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.TabLayoutPanel;
+import com.google.gwt.user.client.ui.Widget;
 
 
 /**
@@ -74,27 +98,13 @@ public class DocTabLayoutPanel
       styles_ = ThemeResources.INSTANCE.themeStyles();
       addStyleName(styles_.docTabPanel());
       addStyleName(styles_.moduleTabPanel());
-
-      addDomHandler(new DragStartHandler()
-      {
-         
-         @Override
-         public void onDragStart(DragStartEvent arg0)
-         {
-            Debug.devlog("drag start - panel");
-            
-         }
-      }, DragStartEvent.getType());
-
-      addDomHandler(new DragHandler()
-      {
-         
-         @Override
-         public void onDrag(DragEvent arg0)
-         {
-            Debug.devlog("dragging - " + arg0.getNativeEvent().getClientX());
-         }
-      }, DragEvent.getType());
+      
+      Element tabBar = getTabBarElement();
+      DOM.sinkBitlessEvent(tabBar, "drag");
+      DOM.sinkBitlessEvent(tabBar, "dragstart");
+      DOM.sinkBitlessEvent(tabBar, "dragenter");
+      DOM.sinkBitlessEvent(tabBar, "dragover");
+      DOM.sinkBitlessEvent(tabBar, "drop");
    }
 
    @Override
@@ -322,15 +332,10 @@ public class DocTabLayoutPanel
          layoutPanel.getElement().setDraggable("true");
          layoutPanel.addDomHandler(new DragStartHandler()
          {
-            
             @Override
             public void onDragStart(DragStartEvent evt)
             {
                evt.setData("text", "foo");
-               JsObject jso = (JsObject)
-                     evt.getNativeEvent().getDataTransfer().cast();
-               jso.setString("effectAllowed", "move");
-
                beginDrag(evt);
             }
          }, DragStartEvent.getType());
@@ -773,6 +778,29 @@ public class DocTabLayoutPanel
       return lastChild.getOffsetLeft() + lastChild.getOffsetWidth();
    }
    
+   @Override
+   public void onBrowserEvent(Event event) 
+   {  
+      Debug.devlog("got " + event.getType() + " @ " + event.getClientX() + ", " + event.getClientY());
+      if (event.getType() == "drag")
+      {
+      }
+      else if (event.getType() == "dragstart")
+      {
+      }
+      else if (event.getType() == "dragenter")
+      {
+         event.preventDefault();
+      }
+      else if (event.getType() == "dragover")
+      {
+         event.preventDefault();
+      }
+      else if (event.getType() == "drop")
+      {
+      }
+      super.onBrowserEvent(event);
+   }
    
    private Element getTabBarElement()
    {
