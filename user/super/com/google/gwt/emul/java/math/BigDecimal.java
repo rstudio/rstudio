@@ -34,8 +34,6 @@
  */
 package java.math;
 
-import com.google.gwt.core.client.JavaScriptObject;
-
 import static java.internal.InternalPreconditions.checkNotNull;
 
 import java.io.Serializable;
@@ -135,7 +133,10 @@ public class BigDecimal extends Number implements Comparable<BigDecimal>,
    */
   public static final BigDecimal ZERO = new BigDecimal(0, 0);
 
-  protected static JavaScriptObject unscaledRegex;
+  /**
+   * Stores a regular expression object to verify the format of unscaled bigdecimal values.
+   */
+  private static Object unscaledRegex;
 
   private static final int BI_SCALED_BY_ZERO_LENGTH = 11;
 
@@ -397,17 +398,29 @@ public class BigDecimal extends Number implements Comparable<BigDecimal>,
     return quotient > 0 ? Math.floor(quotient) : Math.ceil(quotient);
   }
 
-  private static native double parseUnscaled(String str) /*-{
-    var unscaledRegex = @java.math.BigDecimal::unscaledRegex;
-    if (!unscaledRegex) {
-      unscaledRegex = @java.math.BigDecimal::unscaledRegex = /^[+-]?\d*$/i;
+  private static boolean isValidBigUnscaledDecimal(String str) {
+    if (unscaledRegex == null) {
+      unscaledRegex = createBigDecimalUnscaledRegex();
     }
-    if (unscaledRegex.test(str)) {
-      return parseInt(str, 10);
-    } else {
-      return Number.NaN;
-    }
+
+    return regexTest(unscaledRegex, str);
+  }
+
+  public static native double parseInt(String value, int base) /*-{
+    return parseInt(value, base);
   }-*/;
+
+  private static native Object createBigDecimalUnscaledRegex() /*-{
+    return /^[+-]?\d*$/i;
+  }-*/;
+
+  private static native boolean regexTest(Object regex, String value) /*-{
+    return regex.test(value);
+  }-*/;
+
+  private static double parseUnscaled(String str) {
+    return isValidBigUnscaledDecimal(str) ? parseInt(str, 10) : Double.NaN;
+  }
 
   /**
    * Return an increment that can be -1,0 or 1, depending of {@code
