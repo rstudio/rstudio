@@ -29,7 +29,6 @@ import com.google.inject.Inject;
 import org.rstudio.core.client.CustomKeyboardShortcutDispatcher;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.CustomKeyboardShortcutDispatcher.UserCommand;
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.cellview.ScrollingDataGrid;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -183,7 +182,18 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
       for (Map.Entry<String, UserCommand> entry : userCommands.entrySet())
       {
          String name = entry.getValue().getName();
-         String shortcut = entry.getKey();
+         String rawShortcut = entry.getKey();
+         
+         // Convert display to match internal 'raw' shortcut display
+         String[] splat = rawShortcut.split("-");
+         for (int i = 0; i < splat.length; i++)
+            splat[i] = StringUtil.capitalize(splat[i]);
+         String shortcut = StringUtil.join(splat, "+");
+         
+         // Fix up shortcuts ending with '-'
+         if (rawShortcut.endsWith("-"))
+            shortcut += "+-";
+         
          String type = CommandBinding.TYPE_USER_COMMAND;
          bindings.add(new CommandBinding(name, shortcut, type));
       }
@@ -198,8 +208,6 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
          String type = CommandBinding.TYPE_INTERNAL_COMMAND;
          bindings.add(new CommandBinding(name, shortcut, type));
       }
-      
-      Debug.logToRConsole("Found " + bindings.size() + " bindings");
       
       dataProvider_.setList(bindings);
    }

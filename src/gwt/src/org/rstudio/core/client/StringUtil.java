@@ -25,6 +25,7 @@ import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.regex.Pattern.ReplaceOperation;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
@@ -221,6 +222,11 @@ public class StringUtil
          return str;
 
       return indent + str.replaceAll("\n", "\n" + indent);
+   }
+   
+   public static String join(String[] collection, String delim)
+   {
+      return join(Arrays.asList(collection), delim);
    }
    
    public static String join(Collection<?> collection,
