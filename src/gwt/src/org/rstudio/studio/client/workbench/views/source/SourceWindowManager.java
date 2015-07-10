@@ -28,6 +28,7 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
+import org.rstudio.studio.client.workbench.views.source.events.DocTabDragStartedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.LastSourceDocClosedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.LastSourceDocClosedHandler;
 import org.rstudio.studio.client.workbench.views.source.events.PopoutDocEvent;
@@ -46,7 +47,8 @@ import com.google.inject.Singleton;
 public class SourceWindowManager implements PopoutDocEvent.Handler,
                                             SourceDocAddedEvent.Handler,
                                             LastSourceDocClosedHandler,
-                                            SatelliteClosedEvent.Handler
+                                            SatelliteClosedEvent.Handler,
+                                            DocTabDragStartedEvent.Handler
 {
    @Inject
    public SourceWindowManager(
@@ -64,6 +66,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
       events_.addHandler(SourceDocAddedEvent.TYPE, this);
       events_.addHandler(LastSourceDocClosedEvent.TYPE, this);
       events_.addHandler(SatelliteClosedEvent.TYPE, this);
+      events_.addHandler(DocTabDragStartedEvent.TYPE, this);
       
       // the main window maintains an array of all open source documents 
       // across all satellites; rather than attempt to synchronize this list 
@@ -202,6 +205,25 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
          {
             server_.closeDocument(doc.getId(), new VoidServerRequestCallback());
          }
+      }
+   }
+
+   @Override
+   public void onDocTabDragStarted(DocTabDragStartedEvent event)
+   {
+      if (isMainSourceWindow())
+      {
+         // if this the main source window, fire the event to all the source
+         // satellites
+         for (String sourceWindowId: sourceWindows_.keySet())
+         {
+            fireEventToSourceWindow(sourceWindowId, event);
+         }
+      }
+      else if (!event.isFromMainWindow())
+      {
+         // if this is a satellite, broadcast the event to the main window
+         events_.fireEventToMainWindow(event);
       }
    }
 

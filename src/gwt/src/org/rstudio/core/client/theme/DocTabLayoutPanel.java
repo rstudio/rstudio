@@ -16,7 +16,6 @@ package org.rstudio.core.client.theme;
 
 import java.util.ArrayList;
 
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.DomUtils.NodePredicate;
 import org.rstudio.core.client.events.HasTabCloseHandlers;
@@ -31,16 +30,16 @@ import org.rstudio.core.client.events.TabClosingEvent;
 import org.rstudio.core.client.events.TabClosingHandler;
 import org.rstudio.core.client.events.TabReorderEvent;
 import org.rstudio.core.client.events.TabReorderHandler;
-import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
+import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.workbench.views.source.events.DocTabDragStartedEvent;
 
 import com.google.gwt.animation.client.Animation;
-import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
-import com.google.gwt.dom.client.DataTransfer;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Node;
@@ -50,15 +49,10 @@ import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.dom.client.Style.Float;
 import com.google.gwt.dom.client.Style.Position;
 import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.event.dom.client.DomEvent;
-import com.google.gwt.event.dom.client.DragEvent;
-import com.google.gwt.event.dom.client.DragHandler;
 import com.google.gwt.event.dom.client.DragStartEvent;
 import com.google.gwt.event.dom.client.DragStartHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.json.client.JSONParser;
 import com.google.gwt.resources.client.ImageResource;
-import com.google.gwt.thirdparty.json.JSONObject;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
@@ -106,6 +100,11 @@ public class DocTabLayoutPanel
       addStyleName(styles_.moduleTabPanel());
       dragManager_ = new DragManager();
       
+      // listen for global drag events (these are broadcasted from other windows
+      // to notify us of incoming drags)
+      EventBus events = RStudioGinjector.INSTANCE.getEventBus();
+      events.addHandler(DocTabDragStartedEvent.TYPE, dragManager_);
+
       // sink drag-related events on the tab bar element; unfortunately
       // GWT does not provide bits for the drag-related events, and 
       Scheduler.get().scheduleDeferred(new ScheduledCommand()
@@ -334,7 +333,8 @@ public class DocTabLayoutPanel
    }
    
 
-   private class DragManager implements EventListener
+   private class DragManager implements EventListener,
+      DocTabDragStartedEvent.Handler
    {
       @Override
       public void onBrowserEvent(Event event)
@@ -360,20 +360,18 @@ public class DocTabLayoutPanel
             endDrag(event);
          }
       }
+
+      @Override
+      public void onDocTabDragStarted(DocTabDragStartedEvent event)
+      {
+         initDragWidth_ = event.getWidth();
+         initDragDocId_ = event.getDocId();
+      }
       
       public void beginDrag(Event evt)
       {
-         DataTransfer dt = evt.getDataTransfer();
-         String[] pieces = dt.getData("text").split("\\|");
-         
-         // doesn't look like our data
-         if (pieces.length != 2)
-         {
-            return;
-         }
-
-         String docId = pieces[0];
-         int dragTabWidth = Integer.parseInt(pieces[1]);
+         String docId = initDragDocId_;
+         int dragTabWidth = initDragWidth_;
          
          // attempt to ascertain whether the element being dragged is one of
          // our own documents
@@ -395,39 +393,49 @@ public class DocTabLayoutPanel
 
          // find the current position of this tab among its siblings--we'll use
          // this later to determine whether to shift siblings left or right
-         for (int i = 0; i < dragTabsHost_.getChildCount(); i++)
+         if (dragElement_ != null)
          {
-            Node node = dragTabsHost_.getChild(i);
-            if (node.getNodeType() == Node.ELEMENT_NODE)
+            for (int i = 0; i < dragTabsHost_.getChildCount(); i++)
             {
-               if (Element.as(node) == dragElement_)
+               Node node = dragTabsHost_.getChild(i);
+               if (node.getNodeType() == Node.ELEMENT_NODE)
                {
-                  candidatePos_ = i;
-                  destPos_ = i;
+                  if (Element.as(node) == dragElement_)
+                  {
+                     candidatePos_ = i;
+                     destPos_ = i;
+                  }
+                  // the relative position of the last node determines how far we
+                  // can drag--add 10px so it stretches a little
+                  dragMax_ = DomUtils.leftRelativeTo(dragTabsHost_, Element.as(node)) 
+                        + (Element.as(node).getClientWidth() - dragElement_.getClientWidth())
+                        + 10;
                }
-               // the relative position of the last node determines how far we
-               // can drag--add 10px so it stretches a little
-               dragMax_ = DomUtils.leftRelativeTo(dragTabsHost_, Element.as(node)) 
-                     + (Element.as(node).getClientWidth() - dragElement_.getClientWidth())
-                     + 10;
             }
          }
          startPos_ = candidatePos_;
 
          // snap the element out of the tabset
-         lastElementX_ = DomUtils.leftRelativeTo(dragTabsHost_, dragElement_);
          lastCursorX_= evt.getClientX();
-         dragElement_.getStyle().setPosition(Position.ABSOLUTE);
-         dragElement_.getStyle().setLeft(lastElementX_, Unit.PX);
-         dragElement_.getStyle().setZIndex(100);
-         Scheduler.get().scheduleDeferred(new ScheduledCommand()
+         
+         // if we're dragging one of our own tabs, snap it out of the 
+         // tabset
+         if (dragElement_ != null)
          {
-            @Override
-            public void execute()
+            lastElementX_ = DomUtils.leftRelativeTo(dragTabsHost_, dragElement_);
+
+            dragElement_.getStyle().setPosition(Position.ABSOLUTE);
+            dragElement_.getStyle().setLeft(lastElementX_, Unit.PX);
+            dragElement_.getStyle().setZIndex(100);
+            Scheduler.get().scheduleDeferred(new ScheduledCommand()
             {
-              dragElement_.getStyle().setDisplay(Display.NONE);
-            }
-         });
+               @Override
+               public void execute()
+               {
+                 dragElement_.getStyle().setDisplay(Display.NONE);
+               }
+            });
+         }
 
          // create the placeholder that shows where this tab will go when the
          // mouse is released
@@ -443,7 +451,9 @@ public class DocTabLayoutPanel
          dragPlaceholder_.getStyle().setProperty("boxSizing", "border-box");
          dragPlaceholder_.getStyle().setProperty("borderRadius", "3px");
          dragPlaceholder_.getStyle().setProperty("borderBottom", "0px");
-         dragTabsHost_.insertAfter(dragPlaceholder_, dragElement_);
+         
+         if (dragElement_ != null)
+            dragTabsHost_.insertAfter(dragPlaceholder_, dragElement_);
       }
       
       private void drag(Event evt) 
@@ -652,11 +662,13 @@ public class DocTabLayoutPanel
       private int destPos_ = 0;
       private int dragMax_ = 0;
       private int outOfBounds_ = 0;
+      private int initDragWidth_;
       private Element dragElement_;
       private Element dragTabsHost_;
       private Element dragScrollHost_;
       private Element dragPlaceholder_;
       private final static int SCROLL_THRESHOLD = 25;
+      private String initDragDocId_;
    }
 
    private class DocTab extends Composite
@@ -679,6 +691,9 @@ public class DocTabLayoutPanel
             public void onDragStart(DragStartEvent evt)
             {
                evt.getDataTransfer().setData("text", docId_);
+               RStudioGinjector.INSTANCE.getEventBus().fireEvent(new
+                     DocTabDragStartedEvent(docId_, 
+                           getElement().getClientWidth()));
             }
          }, DragStartEvent.getType());
 

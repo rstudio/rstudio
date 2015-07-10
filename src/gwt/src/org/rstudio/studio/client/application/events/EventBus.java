@@ -63,7 +63,7 @@ public class EventBus extends HandlerManager
          if (crossWindow.forward())
          {
             JavaScriptObject jso = serializer_.serialize(event);
-            fireEventToMainWindow(jso);
+            fireEventToMainWindow(jso, pSatellite_.get().getSatelliteName());
          }
          else
          {
@@ -82,6 +82,12 @@ public class EventBus extends HandlerManager
    {
       fireEventToSatellite(serializer_.serialize(event), 
             satelliteWindow);
+   }
+   
+   public void fireEventToMainWindow(CrossWindowEvent<?> event)
+   {
+      fireEventToMainWindow(serializer_.serialize(event), 
+            pSatellite_.get().getSatelliteName());
    }
 
    /**
@@ -109,24 +115,29 @@ public class EventBus extends HandlerManager
    private final native void exportNativeCallbacks() /*-{
       var thiz = this;
       $wnd.fireRStudioEventExternal = $entry(
-         function(eventData) {
-            thiz.@org.rstudio.studio.client.application.events.EventBus::fireEventFromOtherWindow(Lcom/google/gwt/core/client/JavaScriptObject;)(eventData);
+         function(eventData, windowName) {
+            thiz.@org.rstudio.studio.client.application.events.EventBus::fireEventFromOtherWindow(Lcom/google/gwt/core/client/JavaScriptObject;Ljava/lang/String;)(eventData, windowName);
          }
       ); 
    }-*/;
    
-   private void fireEventFromOtherWindow(JavaScriptObject data)
+   private void fireEventFromOtherWindow(JavaScriptObject data, 
+         String windowName)
    {
-      fireEvent((GwtEvent<?>)serializer_.deserialize(data), true);
+      CrossWindowEvent<?> evt = 
+            (CrossWindowEvent<?>)serializer_.deserialize(data);
+      evt.setOriginWindowName(windowName);
+      fireEvent(evt, true);
    }
    
-   private final native void fireEventToMainWindow(JavaScriptObject data) /*-{
-      $wnd.opener.fireRStudioEventExternal(data);
+   private final native void fireEventToMainWindow(JavaScriptObject data,
+         String windowName) /*-{
+      $wnd.opener.fireRStudioEventExternal(data, windowName);
    }-*/;
    
    private final native void fireEventToSatellite(JavaScriptObject data,
          WindowEx target) /*-{
-      target.fireRStudioEventExternal(data);
+      target.fireRStudioEventExternal(data, "");
    }-*/;
    
    private Provider<Satellite> pSatellite_;

@@ -14,6 +14,9 @@
  */
 package org.rstudio.studio.client.application.events;
 
+import org.rstudio.core.client.StringUtil;
+import org.rstudio.studio.client.RStudioGinjector;
+
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
@@ -24,9 +27,32 @@ import com.google.gwt.event.shared.GwtEvent;
 public abstract class CrossWindowEvent<T extends EventHandler> 
                       extends GwtEvent<T>
 {
+   public CrossWindowEvent()
+   {
+      setOriginWindowName(
+            RStudioGinjector.INSTANCE.getSatellite().getSatelliteName());
+   }
+
    // Whether the event should be forwarded to the main window by default 
    public boolean forward()
    {
       return true;
    }
+   
+   public boolean isFromMainWindow()
+   {
+      return StringUtil.isNullOrEmpty(originWindowName_);
+   }
+   
+   public String originWindowName()
+   {
+      return originWindowName_;
+   }
+   
+   public void setOriginWindowName(String originWindow)
+   {
+      originWindowName_ = originWindow;
+   }
+   
+   private String originWindowName_;
 }
