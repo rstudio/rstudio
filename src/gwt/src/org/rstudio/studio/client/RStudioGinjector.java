@@ -22,6 +22,7 @@ import org.rstudio.core.client.command.ShortcutViewer;
 import org.rstudio.core.client.files.filedialog.PathBreadcrumbWidget;
 import org.rstudio.core.client.widget.CaptionWithHelp;
 import org.rstudio.core.client.widget.LocalRepositoriesWidget;
+import org.rstudio.core.client.widget.ModifyKeyboardShortcutsWidget;
 import org.rstudio.studio.client.application.Application;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.ui.ProjectPopupMenu;
@@ -133,6 +134,7 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(DocumentOutlineWidget widget);
    void injectMembers(SetupChunkOptionsPopupPanel panel);
    void injectMembers(SourceSatellite satellite);
+   void injectMembers(ModifyKeyboardShortcutsWidget widget);
    
    public static final RStudioGinjector INSTANCE = GWT.create(RStudioGinjector.class);
 

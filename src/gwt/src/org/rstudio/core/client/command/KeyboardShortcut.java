@@ -56,7 +56,7 @@ public class KeyboardShortcut
          }
       }
    }
-
+   
    @Override
    public boolean equals(Object o)
    {

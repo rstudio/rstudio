@@ -65,7 +65,6 @@ public class CustomKeyboardShortcutDispatcher
       
       public native final String getAction() /*-{ return this.action; }-*/;
       public native final String getText() /*-{ return this.text; }-*/;
-      
       private native final JsArrayInteger getRangeVector() /*-{ return this.range; }-*/;
       public final Range getRange()
       {
@@ -76,7 +75,6 @@ public class CustomKeyboardShortcutDispatcher
                rangeVector.get(2),
                rangeVector.get(3));
       }
-         
    }
    
    public void addCommandBinding(String shortcut, UserCommand command)
@@ -377,6 +375,13 @@ public class CustomKeyboardShortcutDispatcher
       return map;
    
    }-*/;
+   
+   // TODO: This should really be considered mutable, or we should
+   // return some interface to the object.
+   public Map<String, UserCommand> getCommandMap()
+   {
+      return commandMap_;
+   }
    
    // NOTE: The 'commandMap_' below and the 'commandShortcuts_' array
    // must be synchronized.

@@ -288,6 +288,7 @@ public abstract class
    public abstract AppCommand showShellDialog();
    public abstract AppCommand macPreferences();
    public abstract AppCommand showOptions();
+   public abstract AppCommand modifyKeyboardShortcuts();
 
    // Help
    public abstract AppCommand helpBack();

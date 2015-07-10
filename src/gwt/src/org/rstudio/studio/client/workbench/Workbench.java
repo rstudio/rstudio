@@ -24,6 +24,7 @@ import org.rstudio.core.client.TimeBufferedCommand;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.widget.ModifyKeyboardShortcutsWidget;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
@@ -421,6 +422,12 @@ public class Workbench implements BusyHandler,
             }
          });
       }
+   }
+   
+   @Handler
+   public void onModifyKeyboardShortcuts()
+   {
+      new ModifyKeyboardShortcutsWidget().showModal();
    }
    
    @Handler
