@@ -36,6 +36,7 @@ import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.views.source.events.DocTabDragStartedEvent;
+import org.rstudio.studio.client.workbench.views.source.events.DocWindowChangedEvent;
 
 import com.google.gwt.animation.client.Animation;
 import com.google.gwt.core.client.Scheduler;
@@ -419,6 +420,8 @@ public class DocTabLayoutPanel
          if (candidatePos_ == null)
             return;
 
+         startPos_ = candidatePos_;
+
          // the relative position of the last node determines how far we
          // can drag--add 10px so it stretches a little
          dragMax_ = DomUtils.leftRelativeTo(dragTabsHost_, 
@@ -435,7 +438,8 @@ public class DocTabLayoutPanel
          {
             if (tab.getDocId() == docId)
             {
-               dragElement_ = tab.getElement();
+               dragElement_ = 
+                     tab.getElement().getParentElement().getParentElement();
                break;
             }
          }
@@ -471,8 +475,6 @@ public class DocTabLayoutPanel
          dragPlaceholder_.getStyle().setProperty("boxSizing", "border-box");
          dragPlaceholder_.getStyle().setProperty("borderRadius", "3px");
          dragPlaceholder_.getStyle().setProperty("borderBottom", "0px");
-         Debug.devlog("inserting placeholder");
-         Debug.logObject(dragTabsHost_.getChild(candidatePos_));
          dragTabsHost_.insertAfter(dragPlaceholder_, 
                dragTabsHost_.getChild(candidatePos_));
       }
@@ -654,16 +656,27 @@ public class DocTabLayoutPanel
          DOM.releaseCapture(getElement());
          dragging_ = false;
          
-         // unsink mousedown/mouseup and simulate a click to activate the tab
-         simulateClick(evt);
-         
-         // let observer know we moved; adjust the destination position one to
-         // the left if we're right of the start position to account for the
-         // position of the tab prior to movement
-         if (startPos_ != destPos_)
+         if (dragElement_ != null)
          {
-            TabReorderEvent event = new TabReorderEvent(startPos_, destPos_);
-            fireEvent(event);
+            // unsink mousedown/mouseup and simulate a click to activate the tab
+            simulateClick(evt);
+            
+            // let observer know we moved; adjust the destination position one to
+            // the left if we're right of the start position to account for the
+            // position of the tab prior to movement
+            if (startPos_ != destPos_)
+            {
+               TabReorderEvent event = new TabReorderEvent(startPos_, destPos_);
+               fireEvent(event);
+            }
+         }
+         
+         // this is the case when we adopt someone else's doc
+         if (dragElement_ == null)
+         {
+            RStudioGinjector.INSTANCE.getEventBus().fireEvent(new
+                  DocWindowChangedEvent(evt.getDataTransfer().getData("text"),
+                        destPos_));
          }
       }
 

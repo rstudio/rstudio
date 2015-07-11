@@ -146,7 +146,8 @@ public class Source implements InsertSourceHandler,
                              SourceExtendedTypeDetectedEvent.Handler,
                              BeforeShowHandler,
                              SnippetsChangedEvent.Handler,
-                             PopoutDocEvent.Handler
+                             PopoutDocEvent.Handler,
+                             DocWindowChangedEvent.Handler
 {
    public interface Display extends IsWidget,
                                     HasTabClosingHandlers,
@@ -499,6 +500,7 @@ public class Source implements InsertSourceHandler,
       });
       
       events.addHandler(PopoutDocEvent.TYPE, this);
+      events.addHandler(DocWindowChangedEvent.TYPE, this);
 
       // Suppress 'CTRL + ALT + SHIFT + click' to work around #2483 in Ace
       Event.addNativePreviewHandler(new NativePreviewHandler()
@@ -1427,10 +1429,22 @@ public class Source implements InsertSourceHandler,
    @Override
    public void onPopoutDoc(PopoutDocEvent e)
    {
+      disownDoc(e.getDoc().getId());
+   }
+   
+   @Override
+   public void onDocWindowChanged(DocWindowChangedEvent e)
+   {
+      // TODO: if we're the receiving window, adopt rather than disown
+      disownDoc(e.getDocId());
+   }
+   
+   private void disownDoc(String docId)
+   {
       suspendDocumentClose_ = true;
       for (int i = 0; i < editors_.size(); i++)
       {
-         if (editors_.get(i).getId() == e.getDoc().getId())
+         if (editors_.get(i).getId() == docId)
          {
             view_.closeTab(i, false);
             break;
