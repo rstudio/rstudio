@@ -35,6 +35,12 @@ public class StackTracePrintStreamTest extends GWTTestCase {
     expected.append("custom msg\n");
     expected.append("\tat c1.m1(f1:1)\n");
     expected.append("\tat c2.m2(f2:2)\n");
+    expected.append("\tSuppressed: custom msg supressed 1\n");
+    expected.append("\t\tat c5.m5(f5:5)\n");
+    expected.append("\tCaused by: custom msg supressed 1 cause\n");
+    expected.append("\t\tat c6.m6(f6:6)\n");
+    expected.append("\tSuppressed: custom msg supressed 2\n");
+    expected.append("\t\tat c7.m7(f7:7)\n");
     expected.append("Caused by: custom msg cause\n");
     expected.append("\tat c3.m3(f3:3)\n");
     expected.append("\tat c4.m4(f4:4)\n");
@@ -60,7 +66,36 @@ public class StackTracePrintStreamTest extends GWTTestCase {
     };
     cause.setStackTrace(new StackTraceElement[] {
         new StackTraceElement("c3", "m3", "f3", 3), new StackTraceElement("c4", "m4", "f4", 4)});
+    exception.initCause(cause);
 
-    return exception.initCause(cause);
+    Exception supressed1 = new Exception() {
+      @Override
+      public String toString() {
+        return "custom msg supressed 1";
+      }
+    };
+    supressed1.setStackTrace(new StackTraceElement[] {new StackTraceElement("c5", "m5", "f5", 5)});
+
+    Exception s1Cause = new Exception() {
+      @Override
+      public String toString() {
+        return "custom msg supressed 1 cause";
+      }
+    };
+    s1Cause.setStackTrace(new StackTraceElement[] {new StackTraceElement("c6", "m6", "f6", 6)});
+    supressed1.initCause(s1Cause);
+
+    exception.addSuppressed(supressed1);
+
+    Exception s2 = new Exception() {
+      @Override
+      public String toString() {
+        return "custom msg supressed 2";
+      }
+    };
+    s2.setStackTrace(new StackTraceElement[] {new StackTraceElement("c7", "m7", "f7", 7)});
+    exception.addSuppressed(s2);
+
+    return exception;
   }
 }

@@ -15,11 +15,11 @@
  */
 package java.lang;
 
-import com.google.gwt.core.client.impl.StackTraceCreator;
-
 import static java.internal.InternalPreconditions.checkCriticalArgument;
 import static java.internal.InternalPreconditions.checkNotNull;
 import static java.internal.InternalPreconditions.checkState;
+
+import com.google.gwt.core.client.impl.StackTraceCreator;
 
 import java.io.PrintStream;
 import java.io.Serializable;
@@ -164,14 +164,26 @@ public class Throwable implements Serializable {
   }
 
   public void printStackTrace(PrintStream out) {
-    for (Throwable t = this; t != null; t = t.getCause()) {
-      if (t != this) {
-        out.print("Caused by: ");
-      }
-      out.println(t);
-      for (StackTraceElement element : t.getStackTrace()) {
-        out.println("\tat " + element);
-      }
+    printStackTraceImpl(out, "", "");
+  }
+
+  private void printStackTraceImpl(PrintStream out, String prefix, String ident) {
+    out.println(ident + prefix + this);
+    printStackTraceItems(out, ident);
+
+    for (Throwable t : getSuppressed()) {
+      t.printStackTraceImpl(out, "Suppressed: ", "\t" + ident);
+    }
+
+    Throwable theCause = getCause();
+    if (theCause != null) {
+      theCause.printStackTraceImpl(out, "Caused by: ", ident);
+    }
+  }
+
+  private void printStackTraceItems(PrintStream out, String ident) {
+    for (StackTraceElement element : getStackTrace()) {
+      out.println(ident + "\tat " + element);
     }
   }
 
