@@ -23,9 +23,6 @@ import static java.internal.InternalPreconditions.checkArraySize;
 import static java.internal.InternalPreconditions.checkElementIndex;
 import static java.internal.InternalPreconditions.checkPositionIndexes;
 
-import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.core.client.UnsafeNativeLong;
-
 import java.internal.ArrayHelper;
 import java.io.Serializable;
 
@@ -1026,20 +1023,10 @@ public class Arrays {
   }
 
   public static void sort(Object[] array) {
-    // Can't use native JS sort because it isn't stable.
-
-    // -- Commented out implementation that uses the native sort with a fixup.
-    // nativeObjSort(array, 0, array.length, getNativeComparator(array,
-    //     Comparators.natural()));
     mergeSort(array, 0, array.length, Comparators.natural());
   }
 
   public static void sort(Object[] x, int fromIndex, int toIndex) {
-    // Can't use native JS sort because it isn't stable.
-
-    // -- Commented out implementation that uses the native sort with a fixup.
-    // nativeObjSort(x, fromIndex, toIndex, getNativeComparator(x,
-    //     Comparators.natural()));
     mergeSort(x, fromIndex, toIndex, Comparators.natural());
   }
 
@@ -1053,20 +1040,12 @@ public class Arrays {
   }
 
   public static <T> void sort(T[] x, Comparator<? super T> c) {
-    // Commented out implementation that uses the native sort with a fixup.
-
-    // nativeObjSort(x, 0, x.length, getNativeComparator(x, c != null ? c :
-    // Comparators.natural()));
     mergeSort(x, 0, x.length, c);
   }
 
   public static <T> void sort(T[] x, int fromIndex, int toIndex,
       Comparator<? super T> c) {
-    // Commented out implementation that uses the native sort with a fixup.
-
     checkPositionIndexes(fromIndex, toIndex, x.length);
-    // nativeObjSort(x, fromIndex, toIndex, getNativeComparator(x, c != null ? c
-    // : Comparators.natural()));
     mergeSort(x, fromIndex, toIndex, c);
   }
 
@@ -1271,41 +1250,6 @@ public class Arrays {
   }
 
   /**
-   * Return a JavaScript function object which will compare elements of the
-   * specified object array.
-   *
-   * Note that this function isn't currently used but is kept because the native
-   * sort/fixup approach is faster everywhere but IE. In the future, we may
-   * choose to use deferred binding in the JRE to make those platforms faster.
-   *
-   * @param array the array of objects to compare
-   * @param comp the Comparator to use to compare individual objects.
-   * @return a JavaScript function object taking indices into the array to
-   *         compare. Returns the result of the comparator, or the comparison of
-   *         the indices if the comparator indicates equality so the sort is
-   *         stable. The comparator has a property <code>swap</code> which is
-   *         true if any elements were discovered to be out of order.
-   */
-  @SuppressWarnings("unused")
-  // see above
-  private static native JavaScriptObject getNativeComparator(Object array,
-      Comparator<?> comp) /*-{
-    function compare(a, b) {
-      var elementCompare = comp.@java.util.Comparator::compare(Ljava/lang/Object;Ljava/lang/Object;)(array[a], array[b]);
-      var indexCompare = a - b;
-      // If elements compare equal, use the index comparison.
-      elementCompare = elementCompare || indexCompare;
-      // Keep track of having seen out-of-order elements.  Note that we don't
-      // have to worry about the sort algorithm comparing an element to itself
-      // since it can't be swapped anyway, so we can just check for less-than.
-      compare.swap = compare.swap || (elementCompare < 0 != indexCompare < 0);
-      return elementCompare;
-    }
-    compare.swap = false;
-    return compare;
-  }-*/;
-
-  /**
    * Sort a small subsection of an array by insertion sort.
    *
    * @param array array to sort
@@ -1414,7 +1358,6 @@ public class Arrays {
   /**
    * Sort an entire array of number primitives.
    */
-  @UnsafeNativeLong
   private static native void nativeLongSort(Object array) /*-{
     array.sort(@com.google.gwt.lang.LongLib::compare(Lcom/google/gwt/lang/LongLibBase$LongEmul;Lcom/google/gwt/lang/LongLibBase$LongEmul;));
   }-*/;
@@ -1422,7 +1365,6 @@ public class Arrays {
   /**
    * Sort a subset of an array of number primitives.
    */
-  @UnsafeNativeLong
   private static native void nativeLongSort(Object array, int fromIndex,
       int toIndex) /*-{
     var temp = array.slice(fromIndex, toIndex);
@@ -1453,48 +1395,5 @@ public class Arrays {
     var n = toIndex - fromIndex;
     @java.internal.ArrayHelper::arrayCopy(Ljava/lang/Object;ILjava/lang/Object;II)(
         temp, 0, array, fromIndex, n)
-  }-*/;
-
-  /**
-   * Sort a subset of an array with the specified comparison function. Note that
-   * the array is also referenced via closure in the comparison function.
-   *
-   * This implementation sorts it using the native (unstable) sort using an
-   * index array and comparing the indices if they are otherwise equal, then
-   * making another pass through the array to put them into the proper order.
-   * This adds O(2*n) space for the index array and a temporary copy for
-   * re-ordering (one of which is required anyway since JavaScript can't sort
-   * subsets of an array), and the re-order pass takes O(n) time.
-   *
-   * Note that this function isn't currently used but is kept because the native
-   * sort/fixup approach is faster everywhere but IE. In the future, we may
-   * choose to use deferred binding in the JRE to make those platforms faster.
-   *
-   * @param array an array of either Java primitives or Object references
-   * @param fromIndex the start of the range to sort
-   * @param toIndex one past the end of the range to sort
-   * @param comp a JavaScript comparison function (which holds reference to the
-   *          array to sort), which will be passed indices into the array. The
-   *          comparison function must also have a property swap which is true
-   *          if any elements were out of order.
-   */
-  @SuppressWarnings("unused")
-  // Currently unused, but useful for future; see above comment.
-  private static native void nativeObjSort(Object array, int fromIndex,
-      int toIndex, JavaScriptObject comp) /*-{
-    var n = toIndex - fromIndex;
-    var indexArray = new Array(n);
-    var arrayIdx = fromIndex;
-    for ( var i = 0; i < n; ++i) {
-      indexArray[i] = arrayIdx++;
-    }
-    indexArray.sort(comp);
-    if (comp.swap) { // only reorder elements if we made a swap
-      var temp = array.slice(fromIndex, toIndex);
-      arrayIdx = fromIndex;
-      for ( var i = 0; i < n; ++i) {
-        array[arrayIdx++] = temp[indexArray[i] - fromIndex];
-      }
-    }
   }-*/;
 }
