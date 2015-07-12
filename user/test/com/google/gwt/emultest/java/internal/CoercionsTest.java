@@ -13,13 +13,13 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.core.client.impl;
-
-import static com.google.gwt.core.client.impl.Coercions.ensureInt;
+package com.google.gwt.emultest.java.internal;
 
 import com.google.gwt.junit.client.GWTTestCase;
 
 import java.util.Random;
+
+import javaemul.internal.Coercions;
 
 /**
  * Tests for {@link Coercions}.
@@ -27,7 +27,7 @@ import java.util.Random;
 public class CoercionsTest extends GWTTestCase {
   @Override
   public String getModuleName() {
-    return "com.google.gwt.core.Core";
+    return "com.google.gwt.emultest.EmulSuite";
   }
 
   @SuppressWarnings("NumericOverflow")
@@ -36,6 +36,6 @@ public class CoercionsTest extends GWTTestCase {
     // This variable holds value of 1.
     // We use it to prevent static compiler optimizations.
     int _1 = random.nextInt(1) + 1;
-    assertEquals(Integer.MIN_VALUE, ensureInt(Integer.MAX_VALUE + _1));
+    assertEquals(Integer.MIN_VALUE, Coercions.ensureInt(Integer.MAX_VALUE + _1));
   }
 }

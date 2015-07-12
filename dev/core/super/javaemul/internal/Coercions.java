@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.core.client.impl;
+package javaemul.internal;
 
 /**
  * Private implementation class for GWT. This API should not be

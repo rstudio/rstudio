@@ -15,7 +15,7 @@
  */
 package java.security;
 
-import static com.google.gwt.core.client.impl.Coercions.ensureInt;
+import static javaemul.internal.Coercions.ensureInt;
 
 /**
  * Message Digest algorithm - <a href=

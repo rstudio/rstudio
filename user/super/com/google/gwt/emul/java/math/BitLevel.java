@@ -34,7 +34,7 @@
  */
 package java.math;
 
-import static com.google.gwt.core.client.impl.Coercions.ensureInt;
+import static javaemul.internal.Coercions.ensureInt;
 
 /**
  * Static library that provides all the <b>bit level</b> operations for
