@@ -19,10 +19,11 @@ import static java.internal.InternalPreconditions.checkArrayType;
 import static java.internal.InternalPreconditions.checkNotNull;
 
 import com.google.gwt.core.client.JsDate;
-import com.google.gwt.core.client.impl.Impl;
 
 import java.internal.ArrayHelper;
 import java.io.PrintStream;
+
+import javaemul.internal.HashCodes;
 
 /**
  * General-purpose low-level utility methods. GWT only supports a limited subset
@@ -35,13 +36,13 @@ public final class System {
    * Does nothing in web mode. To get output in web mode, subclass PrintStream
    * and call {@link #setErr(PrintStream)}.
    */
-  public static final PrintStream err = new PrintStream(null);
+  public static PrintStream err = new PrintStream(null);
 
   /**
    * Does nothing in web mode. To get output in web mode, subclass
    * {@link PrintStream} and call {@link #setOut(PrintStream)}.
    */
-  public static final PrintStream out = new PrintStream(null);
+  public static PrintStream out = new PrintStream(null);
 
   public static void arraycopy(Object src, int srcOfs, Object dest, int destOfs, int len) {
     checkNotNull(src, "src");
@@ -116,22 +117,16 @@ public final class System {
   }
 
   public static int identityHashCode(Object o) {
-    return (o == null) ? 0 : (!(o instanceof String)) ? Impl.getHashCode(o)
-        : String.HashCache.getHashCode(unsafeCast(o));
+    return HashCodes.getIdentityHashCode(o);
   }
 
-  // TODO(goktug): replace unsafeCast with a real cast when the compiler can optimize it.
-  private static native String unsafeCast(Object string) /*-{
-    return string;
-  }-*/;
+  public static void setErr(PrintStream err) {
+    System.err = err;
+  }
 
-  public static native void setErr(PrintStream err) /*-{
-    @java.lang.System::err = err;
-  }-*/;
-
-  public static native void setOut(PrintStream out) /*-{
-    @java.lang.System::out = out;
-  }-*/;
+  public static void setOut(PrintStream out) {
+    System.out = out;
+  }
 
   private static boolean arrayTypeMatch(Class<?> srcComp, Class<?> destComp) {
     if (srcComp.isPrimitive()) {

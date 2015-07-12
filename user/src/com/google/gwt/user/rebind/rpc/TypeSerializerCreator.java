@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -68,10 +68,10 @@ public class TypeSerializerCreator {
    * Default number of types to split createMethodMap entries into. Zero means
    * no sharding occurs. Stored as a string since it is used as a default
    * property value.
-   * 
+   *
    * Note that the inliner will likely reassemble the shards if it is used in
    * Production Mode, but it isn't needed there anyway.
-   * 
+   *
    * TODO: remove this (and related code) when it is no longer needed.
    */
   private static final String DEFAULT_CREATEMETHODMAP_SHARD_SIZE = "0";
@@ -413,7 +413,7 @@ public class TypeSerializerCreator {
 
   /**
    * Writes constructor.
-   * 
+   *
    * <pre>
    * public SchoolCalendarService_TypeSerializer() {
    *   super(methodMapJava, methodMapNative, signatureMapJava, signatureMapNative);
@@ -435,7 +435,7 @@ public class TypeSerializerCreator {
    * Writes a method to produce a map of type string -> class name of
    * {@link TypeHandler} for Java. We are forced to use repeated helper methods to populate the map
    * because of the limit on Java method size.
-   * 
+   *
    * <pre>
    * private static Map&lt;String, String&gt; loadMethodsJava() {
    *   Map&lt;String, String&gt; result = new HashMap&lt;String, String&gt;();
@@ -521,7 +521,7 @@ public class TypeSerializerCreator {
 
   /**
    * Writes a method to produce a native map of type string -> handler funcs.
-   * 
+   *
    * <pre>
    * private static native MethodMap loadMethodsNative() /&#42;-{
    *     var result = {};
@@ -682,7 +682,7 @@ public class TypeSerializerCreator {
 
   /**
    * Writes a method to produce a native map of system hash code to type string.
-   * 
+   *
    * <pre>
    * private static native JsArrayString loadSignaturesNative() /*-{
    *   var result = [];
@@ -720,7 +720,7 @@ public class TypeSerializerCreator {
       }
 
       srcWriter
-          .println("result[@com.google.gwt.core.client.impl.Impl::getHashCode(Ljava/lang/Object;)(@"
+          .println("result[@javaemul.internal.HashCodes::getObjectIdentityHashCode(*)(@"
               + type.getQualifiedSourceName() + "::class)] = \"" + typeString + "\";");
     }
 
@@ -736,7 +736,7 @@ public class TypeSerializerCreator {
 
   /**
    * Writes the class's static fields.
-   * 
+   *
    * <pre>
    * private static final Map&lt;String, String&gt; methodMapJava;
    * private static final MethodMap methodMapNative;
@@ -757,7 +757,7 @@ public class TypeSerializerCreator {
 
   /**
    * Statically initializes the class fields either for script or JVM.
-   * 
+   *
    * <pre>
    * static {
    *   if (GWT.isScript()) {
@@ -791,7 +791,7 @@ public class TypeSerializerCreator {
 
   /**
    * Write an entry in the methodMapNative for one type.
-   * 
+   *
    * @param type type to generate entry for
    */
   private void writeTypeMethodsNative(JType type) {

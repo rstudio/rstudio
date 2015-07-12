@@ -16,15 +16,14 @@
 
 package java.lang;
 
-import static com.google.gwt.core.client.impl.Coercions.ensureInt;
-
-import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.impl.DoNotInline;
 
 import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
 import java.util.Comparator;
 import java.util.Locale;
+
+import javaemul.internal.HashCodes;
 
 /**
  * Intrinsic string class.
@@ -84,88 +83,6 @@ public final class String implements Comparable<String>, CharSequence,
    * IMPORTANT NOTE: if newer JREs add new interfaces to String, please update
    * {@link Devirtualizer} and {@link JavaResourceBase}
    */
-
-  /**
-   * Hashcode caching for strings.
-   */
-  static final class HashCache {
-    /**
-     * The "old" cache; it will be dumped when front is full.
-     */
-    static JavaScriptObject back = JavaScriptObject.createObject();
-    /**
-     * Tracks the number of entries in front.
-     */
-    static int count = 0;
-    /**
-     * The "new" cache; it will become back when it becomes full.
-     */
-    static JavaScriptObject front = JavaScriptObject.createObject();
-    /**
-     * Pulled this number out of thin air.
-     */
-    static final int MAX_CACHE = 256;
-
-    public static native int getHashCode(String str) /*-{
-      // Accesses must to be prefixed with ':' to prevent conflict with built-in
-      // JavaScript properties.
-      var key = ':' + str;
-
-      // Check the front store.
-      var result = @java.lang.String.HashCache::front[key];
-      if (result != null) {
-        return result;
-      }
-
-      // Check the back store.
-      result = @java.lang.String.HashCache::back[key];
-      if (result == null) {
-        // Compute the value.
-        result = @java.lang.String.HashCache::compute(Ljava/lang/String;)(str);
-      }
-      // Increment can trigger the swap/flush; call after checking back but
-      // before writing to front.
-      @java.lang.String.HashCache::increment()();
-      return @java.lang.String.HashCache::front[key] = result;
-    }-*/;
-
-    static int compute(String str) {
-      int hashCode = 0;
-      int n = str.length();
-      int nBatch = n - 4;
-      int i = 0;
-
-      // Process batches of 4 characters at a time and add them to the hash coercing to 32 bits
-      while (i < nBatch) {
-        hashCode = str.charAt(i + 3)
-            + 31 * (str.charAt(i + 2)
-            + 31 * (str.charAt(i + 1)
-            + 31 * (str.charAt(i)
-            + 31 * hashCode)));
-
-        hashCode = ensureInt(hashCode); // make sure we don't overflow
-        i += 4;
-      }
-
-      // Now process the leftovers
-      while (i < n) {
-        hashCode = hashCode * 31 + str.charAt(i++);
-      }
-      hashCode = ensureInt(hashCode); // make sure we don't overflow
-
-      return hashCode;
-    }
-
-    static void increment() {
-      if (count == MAX_CACHE) {
-        back = front;
-        front = JavaScriptObject.createObject();
-        count = 0;
-      }
-      ++count;
-    }
-  }
-
   public static final Comparator<String> CASE_INSENSITIVE_ORDER = new Comparator<String>() {
     @Override
     public int compare(String a, String b) {
@@ -716,7 +633,7 @@ public final class String implements Comparable<String>, CharSequence,
 
   @Override
   public int hashCode() {
-    return HashCache.getHashCode(this);
+    return HashCodes.hashCodeForString(this);
   }
 
   public int indexOf(int codePoint) {
