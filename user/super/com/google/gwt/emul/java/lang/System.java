@@ -18,11 +18,10 @@ package java.lang;
 import static java.internal.InternalPreconditions.checkArrayType;
 import static java.internal.InternalPreconditions.checkNotNull;
 
-import com.google.gwt.core.client.JsDate;
-
 import java.internal.ArrayHelper;
 import java.io.PrintStream;
 
+import javaemul.internal.DateUtil;
 import javaemul.internal.HashCodes;
 
 /**
@@ -91,7 +90,7 @@ public final class System {
   }
 
   public static long currentTimeMillis() {
-    return (long) JsDate.now();
+    return (long) DateUtil.now();
   }
 
   /**
