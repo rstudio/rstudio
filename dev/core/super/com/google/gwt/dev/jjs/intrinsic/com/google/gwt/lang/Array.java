@@ -18,8 +18,9 @@ package com.google.gwt.lang;
 import static java.internal.InternalPreconditions.checkArrayType;
 
 import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.core.client.impl.DoNotInline;
-import com.google.gwt.core.client.impl.HasNoSideEffects;
+
+import javaemul.internal.annotations.DoNotInline;
+import javaemul.internal.annotations.HasNoSideEffects;
 
 /**
  * This is an intrinsic class that contains the implementation details for Java arrays. <p>

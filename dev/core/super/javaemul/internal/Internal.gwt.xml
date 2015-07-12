@@ -1,5 +1,5 @@
 <!--                                                                        -->
-<!-- Copyright 2008 Google Inc.                                             -->
+<!-- Copyright 2015 Google Inc.                                             -->
 <!-- Licensed under the Apache License, Version 2.0 (the "License"); you    -->
 <!-- may not use this file except in compliance with the License. You may   -->
 <!-- may obtain a copy of the License at                                    -->
@@ -12,14 +12,11 @@
 <!-- implied. License for the specific language governing permissions and   -->
 <!-- limitations under the License.                                         -->
 
-<!-- A JavaScript-based emulation of the Java Runtime library.              -->
+<!-- Internal JRE emultation helpers.                                       -->
 <!-- Do not inherit this module directly; inherit com.google.gwt.core.Core. -->
+<!--                                                                        -->
+<!-- Types from this module should never be used in any user code           -->
+<!--                                                                        -->
 <module>
-  <inherits name="javaemul.internal.Internal"/>
-  <inherits name="com.google.gwt.logging.LogImpl"/>
-  <public path="public" />
-
-  <extend-configuration-property name="compiler.enum.obfuscate.names.blacklist"
-      value="java.math.RoundingMode" />
-  <super-source/>
+  <source path=""/>
 </module>

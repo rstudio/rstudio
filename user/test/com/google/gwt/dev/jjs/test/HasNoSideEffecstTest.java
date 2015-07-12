@@ -15,11 +15,12 @@
  */
 package com.google.gwt.dev.jjs.test;
 
-import com.google.gwt.core.client.impl.DoNotInline;
-import com.google.gwt.core.client.impl.HasNoSideEffects;
 import com.google.gwt.junit.DoNotRunWith;
 import com.google.gwt.junit.Platform;
 import com.google.gwt.junit.client.GWTTestCase;
+
+import javaemul.internal.annotations.DoNotInline;
+import javaemul.internal.annotations.HasNoSideEffects;
 
 /**
  * Tests for {@link HasNoSideEffects}.

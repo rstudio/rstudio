@@ -20,9 +20,9 @@ import static java.internal.InternalPreconditions.checkElement;
 import static java.internal.InternalPreconditions.checkNotNull;
 import static java.internal.InternalPreconditions.checkState;
 
-import com.google.gwt.core.client.impl.SpecializeMethod;
-
 import java.internal.ArrayHelper;
+
+import javaemul.internal.annotations.SpecializeMethod;
 
 /**
  * A {@link java.util.Set} of {@link Enum}s. <a

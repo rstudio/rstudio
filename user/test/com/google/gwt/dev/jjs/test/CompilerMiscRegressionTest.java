@@ -15,7 +15,6 @@
  */
 package com.google.gwt.dev.jjs.test;
 
-import com.google.gwt.core.client.impl.DoNotInline;
 import com.google.gwt.core.client.js.JsType;
 import com.google.gwt.dev.jjs.test.overrides.package1.Caller;
 import com.google.gwt.dev.jjs.test.overrides.package1.ClassExposingM;
@@ -35,6 +34,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import javaemul.internal.annotations.DoNotInline;
 
 /**
  * Tests Miscelaneous fixes.

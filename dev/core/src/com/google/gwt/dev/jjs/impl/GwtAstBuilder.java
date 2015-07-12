@@ -15,9 +15,6 @@
  */
 package com.google.gwt.dev.jjs.impl;
 
-import com.google.gwt.core.client.impl.DoNotInline;
-import com.google.gwt.core.client.impl.HasNoSideEffects;
-import com.google.gwt.core.client.impl.SpecializeMethod;
 import com.google.gwt.dev.CompilerContext;
 import com.google.gwt.dev.javac.JSORestrictionsChecker;
 import com.google.gwt.dev.javac.JdtUtil;
@@ -4089,21 +4086,21 @@ public class GwtAstBuilder {
 
   private void maybeSetDoNotInline(AbstractMethodDeclaration x,
       JMethod method) {
-    if (JdtUtil.getAnnotation(x.binding, DoNotInline.class.getName()) != null) {
+    if (JdtUtil.getAnnotation(x.binding, "javaemul.internal.annotations.DoNotInline") != null) {
       method.setInliningAllowed(false);
     }
   }
 
   private void maybeSetHasNoSideEffects(AbstractMethodDeclaration x,
       JMethod method) {
-    if (JdtUtil.getAnnotation(x.binding, HasNoSideEffects.class.getName()) != null) {
+    if (JdtUtil.getAnnotation(x.binding, "javaemul.internal.annotations.HasNoSideEffects") != null) {
       method.setHasSideEffects(false);
     }
   }
 
   private void maybeAddMethodSpecialization(AbstractMethodDeclaration x, JMethod method) {
     AnnotationBinding specializeAnnotation =
-        JdtUtil.getAnnotation(x.binding, SpecializeMethod.class.getName());
+        JdtUtil.getAnnotation(x.binding, "javaemul.internal.annotations.SpecializeMethod");
     if (specializeAnnotation == null) {
       return;
     }

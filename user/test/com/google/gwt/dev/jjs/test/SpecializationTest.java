@@ -15,10 +15,11 @@
  */
 package com.google.gwt.dev.jjs.test;
 
-import com.google.gwt.core.client.impl.SpecializeMethod;
 import com.google.gwt.junit.DoNotRunWith;
 import com.google.gwt.junit.Platform;
 import com.google.gwt.junit.client.GWTTestCase;
+
+import javaemul.internal.annotations.SpecializeMethod;
 
 /**
  * Tests for {@link SpecializeMethod}.

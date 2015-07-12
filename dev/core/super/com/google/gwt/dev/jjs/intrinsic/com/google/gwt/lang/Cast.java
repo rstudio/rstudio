@@ -18,7 +18,8 @@ package com.google.gwt.lang;
 import static java.internal.InternalPreconditions.checkType;
 
 import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.core.client.impl.HasNoSideEffects;
+
+import javaemul.internal.annotations.HasNoSideEffects;
 
 // CHECKSTYLE_NAMING_OFF: Uses legacy conventions of underscore prefixes.
 

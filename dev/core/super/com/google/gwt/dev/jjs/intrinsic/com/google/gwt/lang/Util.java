@@ -16,7 +16,8 @@
 package com.google.gwt.lang;
 
 import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.core.client.impl.DoNotInline;
+
+import javaemul.internal.annotations.DoNotInline;
 
 /**
  * This class is used to access the private, GWT-specific

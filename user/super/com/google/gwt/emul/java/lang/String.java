@@ -16,14 +16,13 @@
 
 package java.lang;
 
-import com.google.gwt.core.client.impl.DoNotInline;
-
 import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
 import java.util.Comparator;
 import java.util.Locale;
 
 import javaemul.internal.HashCodes;
+import javaemul.internal.annotations.DoNotInline;
 
 /**
  * Intrinsic string class.

@@ -447,7 +447,7 @@ public class UnifyAstTest extends OptimizerTestBase {
     final MockJavaResource SpecializedImpl =
         JavaResourceBase.createMockJavaResource("test.SpecializedImpl",
             "package test;",
-            "import com.google.gwt.core.client.impl.SpecializeMethod;",
+            "import javaemul.internal.annotations.SpecializeMethod;",
             "public class SpecializedImpl<K> extends Impl<K> implements I {",
             "  @SpecializeMethod(params = {String.class}, target = \"putString\")",
             "  public void put(K k) { }",

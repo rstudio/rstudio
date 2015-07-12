@@ -16,8 +16,9 @@
 package com.google.gwt.lang;
 
 import com.google.gwt.core.client.JavaScriptException;
-import com.google.gwt.core.client.impl.DoNotInline;
 import com.google.gwt.core.client.impl.StackTraceCreator;
+
+import javaemul.internal.annotations.DoNotInline;
 
 /**
  * This is a magic class the compiler uses to throw and check exceptions.
