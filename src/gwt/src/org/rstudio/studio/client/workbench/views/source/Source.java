@@ -174,6 +174,7 @@ public class Source implements InsertSourceHandler,
       void setDirty(Widget widget, boolean dirty);
       void manageChevronVisibility();
       void showOverflowPopup();
+      void cancelTabDrag();
       
       void showUnsavedChangesDialog(
             String title,
@@ -1458,6 +1459,9 @@ public class Source implements InsertSourceHandler,
       }
       else if (e.getOldWindowId() == windowManager_.getSourceWindowId())
       {
+         // cancel tab drag if it was occurring
+         view_.cancelTabDrag();
+         
          // disown this doc if it was our own
          disownDoc(e.getDocId());
       }

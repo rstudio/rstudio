@@ -336,6 +336,10 @@ public class DocTabLayoutPanel
       throw new UnsupportedOperationException("Not supported");
    }
    
+   public void cancelTabDrag()
+   {
+      dragManager_.endDrag(null, true);
+   }
 
    private class DragManager implements EventListener,
       DocTabDragStartedEvent.Handler
@@ -643,7 +647,7 @@ public class DocTabLayoutPanel
          return false;
       }
       
-      private void endDrag(final Event evt, boolean cancel)
+      public void endDrag(final Event evt, boolean cancel)
       {
          // remove the properties used to position for dragging
          if (dragElement_ != null)
@@ -664,10 +668,15 @@ public class DocTabLayoutPanel
          DOM.releaseCapture(getElement());
          dragging_ = false;
          
+         // no need to fire events if this is a cancel
+         if (cancel)
+            return;
+         
          if (dragElement_ != null)
          {
             // unsink mousedown/mouseup and simulate a click to activate the tab
-            simulateClick(evt);
+            if (evt != null)
+               simulateClick(evt);
             
             // let observer know we moved; adjust the destination position one to
             // the left if we're right of the start position to account for the
@@ -680,7 +689,7 @@ public class DocTabLayoutPanel
          }
          
          // this is the case when we adopt someone else's doc
-         if (dragElement_ == null && !cancel)
+         if (dragElement_ == null && evt != null)
          {
             // pull the document ID and source window out
             String data = evt.getDataTransfer().getData("text");

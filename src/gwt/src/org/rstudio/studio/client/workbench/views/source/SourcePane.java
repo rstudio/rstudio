@@ -300,7 +300,11 @@ public class SourcePane extends Composite implements Display,
             ((RequiresVisibilityChanged)w).onVisibilityChanged(visible);
       }
    }
-
+   
+   public void cancelTabDrag()
+   {
+      tabPanel_.cancelTabDrag();
+   }
 
    private DocTabLayoutPanel tabPanel_;
    private HTML utilPanel_;
