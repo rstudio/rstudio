@@ -34,15 +34,22 @@ const char * const kBrowserUnsupported = "/unsupported_browser.htm";
 bool supportedBrowserFilter(const http::Request& request,
                             http::Response* pResponse)
 {
-   std::string userAgent = request.headerValue("User-Agent");
-   if (browser_utils::hasRequiredBrowser(userAgent))
+   if (options().wwwVerifyUserAgent())
    {
-      return true;
-	}
+      std::string userAgent = request.headerValue("User-Agent");
+      if (browser_utils::hasRequiredBrowser(userAgent))
+      {
+         return true;
+      }
+      else
+      {
+         pResponse->setMovedTemporarily(request, kBrowserUnsupported);
+         return false;
+      }
+   }
    else
    {
-      pResponse->setMovedTemporarily(request, kBrowserUnsupported);
-      return false;
+      return true;
    }
 }
 

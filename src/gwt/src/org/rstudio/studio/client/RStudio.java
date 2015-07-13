@@ -59,7 +59,6 @@ import org.rstudio.studio.client.common.vcs.SshKeyWidget;
 import org.rstudio.studio.client.common.vcs.ignore.IgnoreDialog;
 import org.rstudio.studio.client.dataviewer.DataViewerSatellite;
 import org.rstudio.studio.client.htmlpreview.HTMLPreviewApplication;
-import org.rstudio.studio.client.impl.BrowserFence;
 import org.rstudio.studio.client.notebookv2.CompileNotebookv2OptionsDialog;
 import org.rstudio.studio.client.packrat.ui.PackratActionDialog;
 import org.rstudio.studio.client.packrat.ui.PackratResolveConflictDialog;
@@ -97,18 +96,9 @@ public class RStudio implements EntryPoint
    public void onModuleLoad() 
    {
       Debug.injectDebug();
-
       Document.get().getBody().getStyle().setBackgroundColor("#e1e2e5");
-
-      BrowserFence fence = GWT.create(BrowserFence.class);
-      fence.go(new Command()
-      {
-         public void execute()
-         {
-            Command dismissProgressAnimation = showProgress();
-            delayLoadApplication(dismissProgressAnimation);
-         }
-      });
+      Command dismissProgressAnimation = showProgress();
+      delayLoadApplication(dismissProgressAnimation);
    }
 
    private Command showProgress()
