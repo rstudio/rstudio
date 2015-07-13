@@ -15,7 +15,6 @@
 
 package org.rstudio.studio.client.workbench.views.source.events;
 
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.js.JavaScriptSerializable;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.CrossWindowEvent;
@@ -39,9 +38,11 @@ public class DocWindowChangedEvent
    {
    }
    
+   // this event is fired by the window on which the document was dropped; it
+   // is rebroadcast to the the window from which the drop originated to 
+   // negotiate its end of the transfer
    public DocWindowChangedEvent(String docId, String oldWindowId, int pos)
    {
-      Debug.devlog("adopted: " + docId + " at " + pos + " in window " + originWindowName());
       docId_ = docId;
       oldWindowId_ = oldWindowId;
       newWindowId_ = RStudioGinjector.INSTANCE.getSourceWindowManager()

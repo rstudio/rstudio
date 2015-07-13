@@ -162,6 +162,7 @@ public class Source implements InsertSourceHandler,
                   String docId,
                   String name,
                   String tooltip,
+                  Integer position,
                   boolean switchToTab);
       void selectTab(int tabIndex);
       void selectTab(Widget widget);
@@ -1434,7 +1435,7 @@ public class Source implements InsertSourceHandler,
    }
    
    @Override
-   public void onDocWindowChanged(DocWindowChangedEvent e)
+   public void onDocWindowChanged(final DocWindowChangedEvent e)
    {
       if (e.getNewWindowId() == windowManager_.getSourceWindowId())
       {
@@ -1452,7 +1453,7 @@ public class Source implements InsertSourceHandler,
                         @Override
                         public void execute()
                         {
-                           addTab(doc);
+                           addTab(doc, e.getPos());
                         }
                      });
             }
@@ -2266,8 +2267,13 @@ public class Source implements InsertSourceHandler,
    {
       return target.asWidget();
    }
-
+   
    private EditingTarget addTab(SourceDocument doc)
+   {
+      return addTab(doc, null);
+   }
+
+   private EditingTarget addTab(SourceDocument doc, Integer position)
    {
       final EditingTarget target = editingTargetSource_.getEditingTarget(
             doc, fileContext_, new Provider<String>()
@@ -2286,6 +2292,7 @@ public class Source implements InsertSourceHandler,
                    target.getId(),
                    target.getName().getValue(),
                    target.getTabTooltip(), // used as tooltip, if non-null
+                   position,
                    true);
       fireDocTabsChanged();
 

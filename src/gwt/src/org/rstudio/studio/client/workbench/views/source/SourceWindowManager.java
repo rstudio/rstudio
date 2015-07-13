@@ -151,30 +151,6 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
       }
    }
 
-   // Event handlers ----------------------------------------------------------
-   @Override
-   public void onPopoutDoc(final PopoutDocEvent evt)
-   {
-      // assign a new window ID to the source document
-      final String windowId = createSourceWindowId();
-      assignSourceDocWindowId(evt.getDoc(), windowId, 
-            new Command()
-            {
-               @Override
-               public void execute()
-               {
-                  SourceWindowParams params = SourceWindowParams.create(
-                        windowId, evt.getDoc());
-                  pSatelliteManager_.get().openSatellite(
-                        SourceSatellite.NAME_PREFIX + windowId, params, 
-                        new Size(800, 800));
-                  sourceWindows_.put(windowId, 
-                        pSatelliteManager_.get().getSatelliteWindowObject(
-                              SourceSatellite.NAME_PREFIX + windowId));
-               }
-            });
-   }
-   
    public void assignSourceDocWindowId(final SourceDocument doc, 
          String windowId, final Command onComplete)
    {
@@ -197,6 +173,30 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
                         "The document " + doc.getPath() + " could not be " +
                         "moved to a different window: \n" + 
                         error.getMessage());
+               }
+            });
+   }
+   
+   // Event handlers ----------------------------------------------------------
+   @Override
+   public void onPopoutDoc(final PopoutDocEvent evt)
+   {
+      // assign a new window ID to the source document
+      final String windowId = createSourceWindowId();
+      assignSourceDocWindowId(evt.getDoc(), windowId, 
+            new Command()
+            {
+               @Override
+               public void execute()
+               {
+                  SourceWindowParams params = SourceWindowParams.create(
+                        windowId, evt.getDoc());
+                  pSatelliteManager_.get().openSatellite(
+                        SourceSatellite.NAME_PREFIX + windowId, params, 
+                        new Size(800, 800));
+                  sourceWindows_.put(windowId, 
+                        pSatelliteManager_.get().getSatelliteWindowObject(
+                              SourceSatellite.NAME_PREFIX + windowId));
                }
             });
    }

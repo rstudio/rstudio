@@ -117,8 +117,6 @@ public class DocTabLayoutPanel
          public void execute()
          {
             Element tabBar = getTabBarElement();
-            DOM.sinkBitlessEvent(tabBar, "drag");
-            DOM.sinkBitlessEvent(tabBar, "dragstart");
             DOM.sinkBitlessEvent(tabBar, "dragenter");
             DOM.sinkBitlessEvent(tabBar, "dragover");
             DOM.sinkBitlessEvent(tabBar, "dragend");
@@ -132,19 +130,20 @@ public class DocTabLayoutPanel
    @Override
    public void add(final Widget child, String text)
    {
-      add(child, null, null, text, null);
+      add(child, null, null, text, null, null);
    }
 
    public void add(final Widget child, String docId, String text)
    {
-      add(child, null, docId, text, null);
+      add(child, null, docId, text, null, null);
    }
    
    public void add(final Widget child,
                    ImageResource icon,
                    String docId,
                    final String text,
-                   String tooltip)
+                   String tooltip,
+                   Integer position)
    {
       if (closeableTabs_)
       {
@@ -161,11 +160,17 @@ public class DocTabLayoutPanel
             }
          });
          docTabs_.add(tab);
-         super.add(child, tab);
+         if (position == null || position < 0)
+            super.add(child, tab);
+         else
+            super.insert(child, tab, position);
       }
       else
       {
-         super.add(child, text);
+         if (position == null || position < 0)
+            super.add(child, text);
+         else
+            super.insert(child, text, position);
       }
    }
 
@@ -349,15 +354,7 @@ public class DocTabLayoutPanel
       @Override
       public void onBrowserEvent(Event event)
       {
-         if (event.getType() == "drag")
-         {
-            if (dragging_)
-               drag(event);
-         }
-         else if (event.getType() == "dragstart")
-         {
-         }
-         else if (event.getType() == "dragenter")
+         if (event.getType() == "dragenter")
          {
             if (!dragging_)
                beginDrag(event);
@@ -365,6 +362,8 @@ public class DocTabLayoutPanel
          }
          else if (event.getType() == "dragover")
          {
+            if (dragging_)
+               drag(event);
             event.preventDefault();
          }
          else if (event.getType() == "drop")
@@ -375,7 +374,9 @@ public class DocTabLayoutPanel
          else if (event.getType() == "dragend")
          {
             if (dragging_)
+            {
                endDrag(event, true);
+            }
          }
          else if (event.getType() == "dragleave")
          {
@@ -389,7 +390,6 @@ public class DocTabLayoutPanel
                   event.getClientY());
             do
             {
-               Debug.devlog(ele.getClassName());
                if (ele.getClassName().contains("gwt-TabLayoutPanelTabs"))
                {
                   return;
@@ -532,6 +532,7 @@ public class DocTabLayoutPanel
             {
                // cursor is still out of bounds
                outOfBounds_ += offset;
+               Debug.devlog("out of bounds by " + outOfBounds_);
                return;
             }
          }
@@ -614,7 +615,7 @@ public class DocTabLayoutPanel
             int right = left + ele.getClientWidth();
             int minOverlap = Math.min(initDragWidth_ / 2, 
                   ele.getClientWidth() / 2);
-
+            
             // a little complicated: compute the number of overlapping pixels
             // with this element; if the overlap is more than half of our width
             // (or the width of the candidate), it's swapping time
@@ -634,8 +635,16 @@ public class DocTabLayoutPanel
 
                // account for the extra element when moving to the right of the
                // original location
-               destPos_ = startPos_ <= candidatePos_ ? 
-                     candidatePos_ - 1 : candidatePos_;
+               if (dragElement_ != null)
+               {
+                  destPos_ = startPos_ <= candidatePos_ ? 
+                        candidatePos_ - 1 : candidatePos_;
+               }
+               else
+               {
+                  destPos_ = candidatePos_;
+               }
+               Debug.devlog("new dest pos: " + destPos_);
             }
          }
       }
