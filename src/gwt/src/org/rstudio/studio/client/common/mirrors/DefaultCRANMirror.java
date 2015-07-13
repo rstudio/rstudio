@@ -77,12 +77,6 @@ public class DefaultCRANMirror
       new ChooseMirrorDialog.Source<CRANMirror>() {
          
          @Override
-         public String getType()
-         {
-            return "CRAN";
-         }
-
-         @Override
          public String getLabel(CRANMirror mirror)
          {
             return mirror.getName() + " - " + mirror.getHost();
