@@ -284,7 +284,7 @@ var MarkdownHighlightRules = function() {
 
         "listblock" : [ { // Lists only escape on completely blank lines.
             token : "empty_line",
-            regex : "^$",
+            regex : "^\\s*$",
             next  : "start"
         }, { // list
             token : "text",
