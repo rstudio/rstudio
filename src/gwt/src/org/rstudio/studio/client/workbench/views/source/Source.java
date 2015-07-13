@@ -1443,9 +1443,18 @@ public class Source implements InsertSourceHandler,
                new ServerRequestCallback<SourceDocument>()
          {
             @Override
-            public void onResponseReceived(SourceDocument doc)
+            public void onResponseReceived(final SourceDocument doc)
             {
-               addTab(doc);
+               windowManager_.assignSourceDocWindowId(doc, 
+                     windowManager_.getSourceWindowId(), 
+                     new Command()
+                     {
+                        @Override
+                        public void execute()
+                        {
+                           addTab(doc);
+                        }
+                     });
             }
 
             @Override

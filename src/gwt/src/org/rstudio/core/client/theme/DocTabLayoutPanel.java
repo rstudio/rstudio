@@ -1,4 +1,5 @@
 /*
+ * 
  * DocTabLayoutPanel.java
  *
  * Copyright (C) 2009-15 by RStudio, Inc.
@@ -668,11 +669,7 @@ public class DocTabLayoutPanel
          DOM.releaseCapture(getElement());
          dragging_ = false;
          
-         // no need to fire events if this is a cancel
-         if (cancel)
-            return;
-         
-         if (dragElement_ != null)
+         if (dragElement_ != null && !cancel)
          {
             // unsink mousedown/mouseup and simulate a click to activate the tab
             if (evt != null)
@@ -689,7 +686,7 @@ public class DocTabLayoutPanel
          }
          
          // this is the case when we adopt someone else's doc
-         if (dragElement_ == null && evt != null)
+         if (dragElement_ == null && evt != null && !cancel)
          {
             // pull the document ID and source window out
             String data = evt.getDataTransfer().getData("text");
@@ -707,6 +704,8 @@ public class DocTabLayoutPanel
                         pieces.length > 1 ? pieces[1] : "", 
                               destPos_));
          }
+         
+         dragElement_ = null;
       }
 
       private void simulateClick(Event evt)

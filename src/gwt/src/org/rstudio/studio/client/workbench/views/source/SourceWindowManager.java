@@ -21,6 +21,7 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.studio.client.application.events.CrossWindowEvent;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
@@ -40,6 +41,7 @@ import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperat
 import org.rstudio.studio.client.workbench.views.source.model.SourceWindowParams;
 
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Window;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -59,12 +61,15 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
          Provider<Satellite> pSatellite,
          SourceServerOperations server,
          EventBus events,
-         FileTypeRegistry registry)
+         FileTypeRegistry registry,
+         GlobalDisplay display)
    {
       events_ = events;
       server_ = server;
       pSatelliteManager_ = pSatelliteManager;
       pSatellite_ = pSatellite;
+      display_ = display;
+      
       events_.addHandler(PopoutDocEvent.TYPE, this);
       events_.addHandler(SourceDocAddedEvent.TYPE, this);
       events_.addHandler(LastSourceDocClosedEvent.TYPE, this);
@@ -152,17 +157,11 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
    {
       // assign a new window ID to the source document
       final String windowId = createSourceWindowId();
-      HashMap<String,String> props = new HashMap<String,String>();
-      props.put(SOURCE_WINDOW_ID, windowId);
-      evt.getDoc().getProperties().setString(
-            SOURCE_WINDOW_ID, windowId);
-      
-      // update the document's properties to assign this ID
-      server_.modifyDocumentProperties(
-            evt.getDoc().getId(), props, new ServerRequestCallback<Void>()
+      assignSourceDocWindowId(evt.getDoc(), windowId, 
+            new Command()
             {
                @Override
-               public void onResponseReceived(Void v)
+               public void execute()
                {
                   SourceWindowParams params = SourceWindowParams.create(
                         windowId, evt.getDoc());
@@ -173,11 +172,31 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
                         pSatelliteManager_.get().getSatelliteWindowObject(
                               SourceSatellite.NAME_PREFIX + windowId));
                }
+            });
+   }
+   
+   public void assignSourceDocWindowId(final SourceDocument doc, 
+         String windowId, final Command onComplete)
+   {
+      HashMap<String,String> props = new HashMap<String,String>();
+      props.put(SOURCE_WINDOW_ID, windowId);
+      doc.getProperties().setString(SOURCE_WINDOW_ID, windowId);
+      server_.modifyDocumentProperties(doc.getId(),
+             props, new ServerRequestCallback<Void>()
+            {
+               @Override
+               public void onResponseReceived(Void v)
+               {
+                  onComplete.execute();
+               }
 
                @Override
                public void onError(ServerError error)
                {
-                  // do nothing here (we just won't pop out the doc)
+                  display_.showErrorMessage("Can't Move Doc", 
+                        "The document " + doc.getPath() + " could not be " +
+                        "moved to a different window: \n" + 
+                        error.getMessage());
                }
             });
    }
@@ -285,6 +304,8 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
    private Provider<SatelliteManager> pSatelliteManager_;
    private Provider<Satellite> pSatellite_;
    private SourceServerOperations server_;
+   private GlobalDisplay display_;
+
    private HashMap<String, WindowEx> sourceWindows_ = 
          new HashMap<String,WindowEx>();
    private JsArray<SourceDocument> sourceDocs_ = 
