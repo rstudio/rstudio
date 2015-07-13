@@ -17,6 +17,7 @@ package org.rstudio.core.client.theme;
 import java.util.ArrayList;
 
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.DomUtils.NodePredicate;
 import org.rstudio.core.client.events.HasTabCloseHandlers;
@@ -119,6 +120,7 @@ public class DocTabLayoutPanel
             DOM.sinkBitlessEvent(tabBar, "dragstart");
             DOM.sinkBitlessEvent(tabBar, "dragenter");
             DOM.sinkBitlessEvent(tabBar, "dragover");
+            DOM.sinkBitlessEvent(tabBar, "dragend");
             DOM.sinkBitlessEvent(tabBar, "drop");
             Event.setEventListener(tabBar, dragManager_);
          }
@@ -360,7 +362,13 @@ public class DocTabLayoutPanel
          }
          else if (event.getType() == "drop")
          {
-            endDrag(event);
+            endDrag(event, false);
+            event.preventDefault();
+         }
+         else if (event.getType() == "dragend")
+         {
+            if (dragging_)
+               endDrag(event, true);
          }
       }
 
@@ -635,7 +643,7 @@ public class DocTabLayoutPanel
          return false;
       }
       
-      private void endDrag(final Event evt)
+      private void endDrag(final Event evt, boolean cancel)
       {
          // remove the properties used to position for dragging
          if (dragElement_ != null)
@@ -672,11 +680,23 @@ public class DocTabLayoutPanel
          }
          
          // this is the case when we adopt someone else's doc
-         if (dragElement_ == null)
+         if (dragElement_ == null && !cancel)
          {
+            // pull the document ID and source window out
+            String data = evt.getDataTransfer().getData("text");
+            if (StringUtil.isNullOrEmpty(data))
+               return;
+            
+            // the data format is docID|windowID; windowID can be omitted if
+            // the main window is the origin
+            String pieces[] = data.split("\\|");
+            if (pieces.length < 1)
+               return;
+            
             RStudioGinjector.INSTANCE.getEventBus().fireEvent(new
-                  DocWindowChangedEvent(evt.getDataTransfer().getData("text"),
-                        destPos_));
+                  DocWindowChangedEvent(pieces[0], 
+                        pieces.length > 1 ? pieces[1] : "", 
+                              destPos_));
          }
       }
 
@@ -727,7 +747,9 @@ public class DocTabLayoutPanel
             @Override
             public void onDragStart(DragStartEvent evt)
             {
-               evt.getDataTransfer().setData("text", docId_);
+               evt.getDataTransfer().setData("text", docId_ + "|" + 
+                  RStudioGinjector.INSTANCE.getSourceWindowManager()
+                                           .getSourceWindowId());
                RStudioGinjector.INSTANCE.getEventBus().fireEvent(new
                      DocTabDragStartedEvent(docId_, 
                            getElement().getClientWidth()));

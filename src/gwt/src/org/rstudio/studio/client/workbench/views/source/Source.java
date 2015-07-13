@@ -1435,7 +1435,7 @@ public class Source implements InsertSourceHandler,
    @Override
    public void onDocWindowChanged(DocWindowChangedEvent e)
    {
-      if (e.getWindowId() == windowManager_.getSourceWindowId())
+      if (e.getNewWindowId() == windowManager_.getSourceWindowId())
       {
          // if we're the adopting window, add the doc
          server_.getSourceDocument(e.getDocId(),
@@ -1456,7 +1456,7 @@ public class Source implements InsertSourceHandler,
             }
          });
       }
-      else
+      else if (e.getOldWindowId() == windowManager_.getSourceWindowId())
       {
          // disown this doc if it was our own
          disownDoc(e.getDocId());

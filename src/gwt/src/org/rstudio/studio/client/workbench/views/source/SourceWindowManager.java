@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.views.source;
 import java.util.HashMap;
 
 import org.rstudio.core.client.Size;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.studio.client.application.events.CrossWindowEvent;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -126,13 +127,22 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
    
    public void fireEventToSourceWindow(String windowId, CrossWindowEvent<?> evt)
    {
-      pSatelliteManager_.get().activateSatelliteWindow(
-            SourceSatellite.NAME_PREFIX + windowId);
-      WindowEx window = pSatelliteManager_.get().getSatelliteWindowObject(
-            SourceSatellite.NAME_PREFIX + windowId);
-      if (window != null)
+      if (StringUtil.isNullOrEmpty(windowId) && !isMainSourceWindow())
       {
-         events_.fireEventToSatellite(evt, window);
+         pSatellite_.get().focusMainWindow();
+         events_.fireEventToMainWindow(evt);
+      }
+      else
+      {
+         pSatelliteManager_.get().activateSatelliteWindow(
+               SourceSatellite.NAME_PREFIX + windowId);
+         WindowEx window = pSatelliteManager_.get().getSatelliteWindowObject(
+               SourceSatellite.NAME_PREFIX + windowId);
+         if (window != null)
+         {
+            events_.fireEventToSatellite(evt, window);
+         }
+         
       }
    }
 
@@ -233,6 +243,12 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
    @Override
    public void onDocWindowChanged(DocWindowChangedEvent event)
    {
+      // if we're the window to which the doc was moved, fire the event to the
+      // window that it was moved from
+      if (event.getNewWindowId() == getSourceWindowId())
+      {
+         fireEventToSourceWindow(event.getOldWindowId(), event);
+      }
    }
 
    // Private methods ---------------------------------------------------------

@@ -39,11 +39,12 @@ public class DocWindowChangedEvent
    {
    }
    
-   public DocWindowChangedEvent(String docId, int pos)
+   public DocWindowChangedEvent(String docId, String oldWindowId, int pos)
    {
       Debug.devlog("adopted: " + docId + " at " + pos + " in window " + originWindowName());
       docId_ = docId;
-      windowId_ = RStudioGinjector.INSTANCE.getSourceWindowManager()
+      oldWindowId_ = oldWindowId;
+      newWindowId_ = RStudioGinjector.INSTANCE.getSourceWindowManager()
             .getSourceWindowId();
       pos_ = pos;
    }
@@ -53,9 +54,14 @@ public class DocWindowChangedEvent
       return docId_;
    }
    
-   public String getWindowId()
+   public String getOldWindowId()
    {
-      return windowId_;
+      return oldWindowId_;
+   }
+   
+   public String getNewWindowId()
+   {
+      return newWindowId_;
    }
 
    public int getPos()
@@ -82,6 +88,7 @@ public class DocWindowChangedEvent
    }
    
    private String docId_;
-   private String windowId_;
+   private String oldWindowId_;
+   private String newWindowId_;
    private int pos_;
 }
