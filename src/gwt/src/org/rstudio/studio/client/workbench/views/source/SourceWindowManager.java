@@ -262,11 +262,18 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
    @Override
    public void onDocWindowChanged(DocWindowChangedEvent event)
    {
-      // if we're the window to which the doc was moved, fire the event to the
-      // window that it was moved from
-      if (event.getNewWindowId() == getSourceWindowId())
+      if (isMainSourceWindow() && 
+         event.getOldWindowId() != getSourceWindowId())
       {
+         // this is the main window; pass the event on to the window that just
+         // lost its doc
          fireEventToSourceWindow(event.getOldWindowId(), event);
+      }
+      else if (event.getNewWindowId() == getSourceWindowId())
+      {
+         // this is a satellite; pass the event on to the main window for
+         // routing
+         events_.fireEventToMainWindow(event);
       }
    }
 

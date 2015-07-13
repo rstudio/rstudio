@@ -631,7 +631,6 @@ public class DocTabLayoutPanel
                   dragTabsHost_.insertAfter(dragPlaceholder_, ele);
                }
                candidatePos_ = i;
-               Debug.devlog(lastElementX_ + " - " + candidatePos_);
 
                // account for the extra element when moving to the right of the
                // original location
