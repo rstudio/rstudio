@@ -17,7 +17,6 @@ package org.rstudio.core.client.theme;
 
 import java.util.ArrayList;
 
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.DomUtils.NodePredicate;
@@ -430,7 +429,8 @@ public class DocTabLayoutPanel
             if (ele.getClassName().contains("gwt-TabLayoutPanelTabs"))
             {
                // the cursor is over the tab panel itself--append to end
-               candidatePos_ = docTabs_.size() - 1;
+               // (0 - based)
+               candidatePos_ = dragTabsHost_.getChildCount();
                break;
             }
             else if (ele.getClassName().contains("gwt-TabLayoutPanelTab "))
@@ -456,6 +456,7 @@ public class DocTabLayoutPanel
             return;
 
          startPos_ = candidatePos_;
+         destPos_ = startPos_;
 
          // the relative position of the last node determines how far we
          // can drag--add 10px so it stretches a little
@@ -464,8 +465,6 @@ public class DocTabLayoutPanel
                getLastChildElement(dragTabsHost_).getClientWidth() + 
                10;
          lastCursorX_= evt.getClientX();
-         lastElementX_ = DomUtils.leftRelativeTo(
-               dragTabsHost_, Element.as(dragTabsHost_.getChild(candidatePos_)));
          
          // attempt to ascertain whether the element being dragged is one of
          // our own documents
@@ -479,10 +478,25 @@ public class DocTabLayoutPanel
             }
          }
          
+         // compute the start location for the drag
+         if (candidatePos_ >= dragTabsHost_.getChildCount())
+         {
+            Element lastTab = getLastChildElement(dragTabsHost_);
+            lastElementX_ = DomUtils.leftRelativeTo(dragTabsHost_, lastTab) +
+                  lastTab.getOffsetWidth();
+         }
+         else
+         {
+            lastElementX_ = DomUtils.leftRelativeTo(
+                  dragTabsHost_, Element.as(dragTabsHost_.getChild(candidatePos_)));
+         }
+         
          // if we're dragging one of our own tabs, snap it out of the 
          // tabset
          if (dragElement_ != null)
          {
+            lastElementX_ = DomUtils.leftRelativeTo(
+                  dragTabsHost_, Element.as(dragTabsHost_.getChild(candidatePos_)));
             dragElement_.getStyle().setPosition(Position.ABSOLUTE);
             dragElement_.getStyle().setLeft(lastElementX_, Unit.PX);
             dragElement_.getStyle().setZIndex(100);
@@ -510,8 +524,11 @@ public class DocTabLayoutPanel
          dragPlaceholder_.getStyle().setProperty("boxSizing", "border-box");
          dragPlaceholder_.getStyle().setProperty("borderRadius", "3px");
          dragPlaceholder_.getStyle().setProperty("borderBottom", "0px");
-         dragTabsHost_.insertAfter(dragPlaceholder_, 
-               dragTabsHost_.getChild(candidatePos_));
+         if (candidatePos_ < dragTabsHost_.getChildCount())
+            dragTabsHost_.insertAfter(dragPlaceholder_, 
+                  dragTabsHost_.getChild(candidatePos_));
+         else
+            dragTabsHost_.appendChild(dragPlaceholder_);
       }
       
       private void drag(Event evt) 
@@ -532,7 +549,6 @@ public class DocTabLayoutPanel
             {
                // cursor is still out of bounds
                outOfBounds_ += offset;
-               Debug.devlog("out of bounds by " + outOfBounds_);
                return;
             }
          }
@@ -644,7 +660,6 @@ public class DocTabLayoutPanel
                {
                   destPos_ = candidatePos_;
                }
-               Debug.devlog("new dest pos: " + destPos_);
             }
          }
       }
