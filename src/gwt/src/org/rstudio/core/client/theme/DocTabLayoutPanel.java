@@ -122,6 +122,7 @@ public class DocTabLayoutPanel
             DOM.sinkBitlessEvent(tabBar, "dragenter");
             DOM.sinkBitlessEvent(tabBar, "dragover");
             DOM.sinkBitlessEvent(tabBar, "dragend");
+            DOM.sinkBitlessEvent(tabBar, "dragleave");
             DOM.sinkBitlessEvent(tabBar, "drop");
             Event.setEventListener(tabBar, dragManager_);
          }
@@ -350,7 +351,8 @@ public class DocTabLayoutPanel
       {
          if (event.getType() == "drag")
          {
-            drag(event);
+            if (dragging_)
+               drag(event);
          }
          else if (event.getType() == "dragstart")
          {
@@ -374,6 +376,29 @@ public class DocTabLayoutPanel
          {
             if (dragging_)
                endDrag(event, true);
+         }
+         else if (event.getType() == "dragleave")
+         {
+            if (!dragging_)
+               return;
+
+            // look at where the cursor is now--if it's inside the tab panel,
+            // do nothing, but if it's outside the tab panel, treat that as
+            // a cancel
+            Element ele = DomUtils.elementFromPoint(event.getClientX(), 
+                  event.getClientY());
+            do
+            {
+               Debug.devlog(ele.getClassName());
+               if (ele.getClassName().contains("gwt-TabLayoutPanelTabs"))
+               {
+                  return;
+               }
+               ele = ele.getParentElement();
+            } while (ele != null && ele != Document.get().getBody());
+            
+            // cursor moved outside tab panel
+            endDrag(event, true);
          }
       }
 
@@ -400,14 +425,12 @@ public class DocTabLayoutPanel
          // start position in the drag
          Element ele = DomUtils.elementFromPoint(evt.getClientX(), 
                evt.getClientY());
-         Debug.logObject(ele);
          do
          {
             if (ele.getClassName().contains("gwt-TabLayoutPanelTabs"))
             {
                // the cursor is over the tab panel itself--append to end
                candidatePos_ = docTabs_.size() - 1;
-               Debug.devlog("panel drag: " + candidatePos_);
                break;
             }
             else if (ele.getClassName().contains("gwt-TabLayoutPanelTab "))
@@ -420,7 +443,6 @@ public class DocTabLayoutPanel
                       Element.as(node) == ele)
                   {
                      candidatePos_ = i;
-                     Debug.devlog("tab drag: " + candidatePos_);
                      break;
                   }
                }
@@ -496,6 +518,7 @@ public class DocTabLayoutPanel
       {
          int offset = evt.getClientX() - lastCursorX_;
          lastCursorX_ = evt.getClientX();
+
          // cursor is outside the tab area
          if (outOfBounds_ != 0)
          {
@@ -650,6 +673,9 @@ public class DocTabLayoutPanel
       
       public void endDrag(final Event evt, boolean cancel)
       {
+         if (!dragging_)
+            return;
+         
          // remove the properties used to position for dragging
          if (dragElement_ != null)
          {
@@ -658,12 +684,20 @@ public class DocTabLayoutPanel
             dragElement_.getStyle().clearZIndex();
             dragElement_.getStyle().clearDisplay();
             
-            // insert this tab where the placeholder landed
-            dragTabsHost_.removeChild(dragElement_);
-            dragTabsHost_.insertAfter(dragElement_, dragPlaceholder_);
+            // insert this tab where the placeholder landed if we're not
+            // cancelling
+            if (!cancel)
+            {
+               dragTabsHost_.removeChild(dragElement_);
+               dragTabsHost_.insertAfter(dragElement_, dragPlaceholder_);
+            }
          }
          
-         dragTabsHost_.removeChild(dragPlaceholder_);
+         if (dragPlaceholder_ != null)
+         {
+            dragTabsHost_.removeChild(dragPlaceholder_);
+            dragPlaceholder_ = null;
+         }
 
          // finish dragging
          DOM.releaseCapture(getElement());
