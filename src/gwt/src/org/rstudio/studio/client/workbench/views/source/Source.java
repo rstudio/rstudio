@@ -1435,8 +1435,32 @@ public class Source implements InsertSourceHandler,
    @Override
    public void onDocWindowChanged(DocWindowChangedEvent e)
    {
-      // TODO: if we're the receiving window, adopt rather than disown
-      disownDoc(e.getDocId());
+      if (e.getWindowId() == windowManager_.getSourceWindowId())
+      {
+         // if we're the adopting window, add the doc
+         server_.getSourceDocument(e.getDocId(),
+               new ServerRequestCallback<SourceDocument>()
+         {
+            @Override
+            public void onResponseReceived(SourceDocument doc)
+            {
+               addTab(doc);
+            }
+
+            @Override
+            public void onError(ServerError error)
+            {
+               globalDisplay_.showErrorMessage("Document Tab Move Failed", 
+                     "Couldn't move the tab to this window: \n" + 
+                      error.getMessage());
+            }
+         });
+      }
+      else
+      {
+         // disown this doc if it was our own
+         disownDoc(e.getDocId());
+      }
    }
    
    private void disownDoc(String docId)
