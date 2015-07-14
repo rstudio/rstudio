@@ -25,6 +25,7 @@ import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
+import org.rstudio.studio.client.common.satellite.events.AllSatellitesClosingEvent;
 import org.rstudio.studio.client.common.satellite.events.SatelliteClosedEvent;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -53,7 +54,8 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
                                             LastSourceDocClosedHandler,
                                             SatelliteClosedEvent.Handler,
                                             DocTabDragStartedEvent.Handler,
-                                            DocWindowChangedEvent.Handler
+                                            DocWindowChangedEvent.Handler,
+                                            AllSatellitesClosingEvent.Handler
 {
    @Inject
    public SourceWindowManager(
@@ -76,6 +78,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
       events_.addHandler(SatelliteClosedEvent.TYPE, this);
       events_.addHandler(DocTabDragStartedEvent.TYPE, this);
       events_.addHandler(DocWindowChangedEvent.TYPE, this);
+      events_.addHandler(AllSatellitesClosingEvent.TYPE, this);
       
       // the main window maintains an array of all open source documents 
       // across all satellites; rather than attempt to synchronize this list 
@@ -242,7 +245,13 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
    @Override
    public void onSatelliteClosed(SatelliteClosedEvent event)
    {
-      // when a satellite closes, close all the source docs it contained
+      // if this satellite is closing for quit/shutdown/close/etc., ignore it
+      // (we only care about user-initiated window closure)
+      if (windowsClosing_)
+         return;
+      
+      // when the user closes a source window, close all the source docs it
+      // contained
       for (int i = 0; i < sourceDocs_.length(); i++)
       {
          final SourceDocument doc = sourceDocs_.get(i);
@@ -262,6 +271,12 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
             });
          }
       }
+   }
+
+   @Override
+   public void onAllSatellitesClosing(AllSatellitesClosingEvent event)
+   {
+      windowsClosing_ = true;
    }
 
    @Override
@@ -363,6 +378,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
          new HashMap<String,WindowEx>();
    private JsArray<SourceDocument> sourceDocs_ = 
          JsArray.createArray().cast();
+   private boolean windowsClosing_ = false;
    
    public final static String SOURCE_WINDOW_ID = "source_window_id";
 }

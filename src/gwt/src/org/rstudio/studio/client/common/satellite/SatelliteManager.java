@@ -33,6 +33,7 @@ import org.rstudio.studio.client.application.ApplicationUncaughtExceptionHandler
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay.NewWindowOptions;
+import org.rstudio.studio.client.common.satellite.events.AllSatellitesClosingEvent;
 import org.rstudio.studio.client.common.satellite.events.SatelliteClosedEvent;
 import org.rstudio.studio.client.common.satellite.events.WindowClosedEvent;
 import org.rstudio.studio.client.common.satellite.events.WindowOpenedEvent;
@@ -258,6 +259,11 @@ public class SatelliteManager implements CloseHandler<Window>
    // close all satellite windows
    public void closeAllSatellites()
    {
+      // let anyone interested know that we're tearing things down; this allows 
+      // listeners to distinguish between user-initiated window closure and 
+      // the closes we initiate on shutdown/restart/quit/etc.
+      events_.fireEvent(new AllSatellitesClosingEvent());
+
       for (ActiveSatellite satellite : satellites_)
       {
          try
