@@ -31,6 +31,7 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
+import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.views.source.events.DocTabDragStartedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.DocWindowChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.LastSourceDocClosedEvent;
@@ -39,7 +40,6 @@ import org.rstudio.studio.client.workbench.views.source.events.PopoutDocEvent;
 import org.rstudio.studio.client.workbench.views.source.events.SourceDocAddedEvent;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
-import org.rstudio.studio.client.workbench.views.source.model.SourceWindowParams;
 
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.user.client.Command;
@@ -64,7 +64,8 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
          SourceServerOperations server,
          EventBus events,
          FileTypeRegistry registry,
-         GlobalDisplay display)
+         GlobalDisplay display, 
+         Session session)
    {
       events_ = events;
       server_ = server;
@@ -80,13 +81,29 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
       events_.addHandler(DocWindowChangedEvent.TYPE, this);
       events_.addHandler(AllSatellitesClosingEvent.TYPE, this);
       
-      // the main window maintains an array of all open source documents 
-      // across all satellites; rather than attempt to synchronize this list 
-      // among satellites, the main window exposes it on its window object for
-      // the satellites to read 
       if (isMainSourceWindow())
       {
+         JsArray<SourceDocument> docs = 
+               session.getSessionInfo().getSourceDocuments();
+         sourceDocs_ = docs;
+
+         // the main window maintains an array of all open source documents 
+         // across all satellites; rather than attempt to synchronize this list
+         // among satellites, the main window exposes it on its window object
+         // for the satellites to read 
          exportSourceDocs();
+         
+         // open this session's source windows
+         for (int i = 0; i < docs.length(); i++)
+         {
+            String windowId = 
+                  docs.get(i).getProperties().getString(SOURCE_WINDOW_ID);
+            if (!StringUtil.isNullOrEmpty(windowId) &&
+                !isSourceWindowOpen(windowId))
+            {
+               openSourceWindow(windowId);
+            }
+         }
       }
    }
 
@@ -194,6 +211,16 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
             });
    }
    
+   public void openSourceWindow(String windowId)
+   {
+      pSatelliteManager_.get().openSatellite(
+            SourceSatellite.NAME_PREFIX + windowId, null, 
+            new Size(800, 800));
+      sourceWindows_.put(windowId, 
+            pSatelliteManager_.get().getSatelliteWindowObject(
+                  SourceSatellite.NAME_PREFIX + windowId));
+   }
+   
    // Event handlers ----------------------------------------------------------
    @Override
    public void onPopoutDoc(final PopoutDocEvent evt)
@@ -206,14 +233,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
                @Override
                public void execute()
                {
-                  SourceWindowParams params = SourceWindowParams.create(
-                        windowId, evt.getDoc());
-                  pSatelliteManager_.get().openSatellite(
-                        SourceSatellite.NAME_PREFIX + windowId, params, 
-                        new Size(800, 800));
-                  sourceWindows_.put(windowId, 
-                        pSatelliteManager_.get().getSatelliteWindowObject(
-                              SourceSatellite.NAME_PREFIX + windowId));
+                  openSourceWindow(windowId);
                }
             });
    }
