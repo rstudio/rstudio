@@ -18,29 +18,192 @@ import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
 
 import org.rstudio.core.client.BrowseCap;
+import java.util.ArrayList;
+import java.util.List;
 
 public class KeyboardShortcut
 {
-   public KeyboardShortcut(int keycode)
+   public static class KeyPress
    {
-      this(keycode, "");
-   }
+      public KeyPress(int keyCode, int modifiers)
+      {
+         keyCode_ = keyCode;
+         modifiers_ = modifiers;
+      }
+      
+      public int getKeyCode()
+      {
+         return keyCode_;
+      }
+      
+      public int getModifier()
+      {
+         return modifiers_;
+      }
+      
+      @Override
+      public String toString()
+      {
+         return toString(false);
+      }
+      
+      public String toString(boolean pretty)
+      {
+         if (BrowseCap.hasMetaKey() && pretty)
+         {
+            return ((modifiers_ & CTRL) == CTRL ? "&#8963;" : "")
+                  + ((modifiers_ & SHIFT) == SHIFT ? "&#8679;" : "")
+                  + ((modifiers_ & ALT) == ALT ? "&#8997;" : "")
+                  + ((modifiers_ & META) == META ? "&#8984;" : "")
+                  + getKeyName(true);
+         }
+         else
+         {
+            return ((modifiers_ & CTRL) == CTRL ? "Ctrl+" : "")
+                  + ((modifiers_ & SHIFT) == SHIFT ? "Shift+" : "")
+                  + ((modifiers_ & ALT) == ALT ? "Alt+" : "")
+                  + ((modifiers_ & META) == META ? "Meta+" : "")
+                  + getKeyName(pretty);
+         }
+      }
+      
+      private String getKeyName(boolean pretty)
+      {
+         boolean macStyle = BrowseCap.hasMetaKey() && pretty;
 
-   public KeyboardShortcut(int keycode, String groupName)
-   {
-      this(KeyboardShortcut.NONE, keycode, groupName, "", "");
+         if (keyCode_ == KeyCodes.KEY_ENTER)
+            return macStyle ? "&#8617;" : "Enter";
+         else if (keyCode_ == KeyCodes.KEY_LEFT)
+            return macStyle ? "&#8592;" : "Left";
+         else if (keyCode_ == KeyCodes.KEY_RIGHT)
+            return macStyle ? "&#8594;" : "Right";
+         else if (keyCode_ == KeyCodes.KEY_UP)
+            return macStyle ? "&#8593;" : "Up";
+         else if (keyCode_ == KeyCodes.KEY_DOWN)
+            return macStyle ? "&#8595;" : "Down";
+         else if (keyCode_ == KeyCodes.KEY_TAB)
+            return macStyle ? "&#8677;" : "Tab";
+         else if (keyCode_ == KeyCodes.KEY_PAGEUP)
+            return pretty ? "PgUp" : "PageUp";
+         else if (keyCode_ == KeyCodes.KEY_PAGEDOWN)
+            return pretty ? "PgDn" : "PageDown";
+         else if (keyCode_ == 191)
+            return "/";
+         else if (keyCode_ == 192)
+            return "`";
+         else if (keyCode_ == 190)
+            return ".";
+         else if (keyCode_ == 187)
+            return "=";
+         else if (keyCode_ == 188)
+            return "<";
+         else if (KeyboardHelper.isHyphenKeycode(keyCode_))
+            return "-";
+         else if (keyCode_ >= 112 && keyCode_ <= 123)
+            return "F" + (keyCode_ - 111);
+         else if (keyCode_ == 8)
+            return macStyle ? "&#9003;" : "Backspace";
+
+         return Character.toUpperCase((char) keyCode_) + "";
+      }
+      
+      @Override
+      public int hashCode()
+      {
+         int result = modifiers_;
+         result = (result << 8) + keyCode_;
+         return result;
+      }
+      
+      @Override
+      public boolean equals(Object object)
+      {
+         if (object == null || !(object instanceof KeyPress))
+            return false;
+         
+         KeyPress other = (KeyPress) object;
+         return keyCode_ == other.keyCode_ &&
+                modifiers_ == other.modifiers_;
+      }
+      
+      private final int keyCode_;
+      private final int modifiers_;
    }
    
-   public KeyboardShortcut(int modifiers, int keycode)
+   public static class KeySequence
    {
-      this(modifiers, keycode, "", "", "");
+      public KeySequence(int keyCode, int modifiers)
+      {
+         keyPresses_ = new ArrayList<KeyPress>();
+         keyPresses_.add(new KeyPress(keyCode, modifiers));
+      }
+      
+      @Override
+      public String toString()
+      {
+         return toString(false);
+      }
+      
+      public String toString(boolean pretty)
+      {
+         if (keyPresses_.size() == 0)
+            return "";
+         
+         StringBuilder builder = new StringBuilder();
+         builder.append(keyPresses_.get(0).toString(pretty));
+         for (int i = 1; i < keyPresses_.size(); i++)
+         {
+            builder.append(", ");
+            builder.append(keyPresses_.get(i).toString(pretty));
+         }
+         return builder.toString();
+      }
+      
+      @Override
+      public int hashCode()
+      {
+         int code = 1;
+         for (int i = 0; i < keyPresses_.size(); i++)
+            code += (1 << (10 + i)) + keyPresses_.get(i).hashCode();
+         return code;
+      }
+      
+      @Override
+      public boolean equals(Object object)
+      {
+         if (object == null || !(object instanceof KeySequence))
+            return false;
+         
+         KeySequence other = (KeySequence) object;
+         for (int i = 0; i < keyPresses_.size(); i++)
+            if (!keyPresses_.get(i).equals(other.keyPresses_.get(i)))
+               return false;
+         
+         return true;
+      }
+      
+      private final List<KeyPress> keyPresses_;
+   }
+   
+   public KeyboardShortcut(int keyCode)
+   {
+      this(keyCode, "");
    }
 
-   public KeyboardShortcut(int modifiers, int keycode, 
+   public KeyboardShortcut(int keyCode, String groupName)
+   {
+      this(KeyboardShortcut.NONE, keyCode, groupName, "", "");
+   }
+   
+   public KeyboardShortcut(int modifiers, int keyCode)
+   {
+      this(modifiers, keyCode, "", "", "");
+   }
+
+   public KeyboardShortcut(int modifiers, int keyCode, 
                            String groupName, String title, String disableModes)
    {
-      modifiers_ = modifiers;
-      keycode_ = keycode;
+      keySequence_ = new KeySequence(keyCode, modifiers);
       groupName_ = groupName;
       order_ = ORDER++;
       title_ = title;
@@ -58,59 +221,32 @@ public class KeyboardShortcut
    }
    
    @Override
-   public boolean equals(Object o)
+   public boolean equals(Object object)
    {
-      if (o == null) return false;
-
-      KeyboardShortcut that = (KeyboardShortcut) o;
-
-      return keycode_ == that.keycode_
-            && modifiers_ == that.modifiers_;
+      if (object == null || !(object instanceof KeyboardShortcut))
+         return false;
+      
+      KeyboardShortcut other = (KeyboardShortcut) object;
+      return keySequence_.equals(other.keySequence_);
    }
 
    @Override
    public int hashCode()
    {
-      int result = modifiers_;
-      result = (result << 8) + keycode_;
-      return result;
+      return keySequence_.hashCode();
    }
    
-   public String toAceStyleShortcutString()
-   {
-       return ((modifiers_ & CTRL) == CTRL ? "ctrl-" : "")
-              + ((modifiers_ & ALT) == ALT ? "alt-" : "")
-              + ((modifiers_ & META) == META ? "cmd-" : "")
-              + ((modifiers_ & SHIFT) == SHIFT ? "shift-" : "")
-              + getKeyName(false).toLowerCase();
-   }
-
    @Override
    public String toString()
    {
-      return toString(false);
-   }
-
-   public String toString(boolean pretty)
-   {
-      if (BrowseCap.hasMetaKey() && pretty)
-      {
-         return ((modifiers_ & CTRL) == CTRL ? "&#8963;" : "")
-                + ((modifiers_ & SHIFT) == SHIFT ? "&#8679;" : "")
-                + ((modifiers_ & ALT) == ALT ? "&#8997;" : "")
-                + ((modifiers_ & META) == META ? "&#8984;" : "")
-                + getKeyName(true);
-      }
-      else
-      {
-         return ((modifiers_ & CTRL) == CTRL ? "Ctrl+" : "")
-                + ((modifiers_ & SHIFT) == SHIFT ? "Shift+" : "")
-                + ((modifiers_ & ALT) == ALT ? "Alt+" : "")
-                + ((modifiers_ & META) == META ? "Meta+" : "")
-                + getKeyName(pretty);
-      }
+      return keySequence_.toString(false);
    }
    
+   public String toString(boolean pretty)
+   {
+      return keySequence_.toString(pretty);
+   }
+
    public String getGroupName()
    {
       return groupName_;
@@ -126,46 +262,6 @@ public class KeyboardShortcut
       return title_;
    }
 
-   private String getKeyName(boolean pretty)
-   {
-      boolean macStyle = BrowseCap.hasMetaKey() && pretty;
-
-      if (keycode_ == KeyCodes.KEY_ENTER)
-         return macStyle ? "&#8617;" : "Enter";
-      else if (keycode_ == KeyCodes.KEY_LEFT)
-         return macStyle ? "&#8592;" : "Left";
-      else if (keycode_ == KeyCodes.KEY_RIGHT)
-         return macStyle ? "&#8594;" : "Right";
-      else if (keycode_ == KeyCodes.KEY_UP)
-         return macStyle ? "&#8593;" : "Up";
-      else if (keycode_ == KeyCodes.KEY_DOWN)
-         return macStyle ? "&#8595;" : "Down";
-      else if (keycode_ == KeyCodes.KEY_TAB)
-         return macStyle ? "&#8677;" : "Tab";
-      else if (keycode_ == KeyCodes.KEY_PAGEUP)
-         return pretty ? "PgUp" : "PageUp";
-      else if (keycode_ == KeyCodes.KEY_PAGEDOWN)
-         return pretty ? "PgDn" : "PageDown";
-      else if (keycode_ == 191)
-         return "/";
-      else if (keycode_ == 192)
-         return "`";
-      else if (keycode_ == 190)
-         return ".";
-      else if (keycode_ == 187)
-         return "=";
-      else if (keycode_ == 188)
-         return "<";
-      else if (KeyboardHelper.isHyphenKeycode(keycode_))
-         return "-";
-      else if (keycode_ >= 112 && keycode_ <= 123)
-         return "F" + (keycode_ - 111);
-      else if (keycode_ == 8)
-         return macStyle ? "&#9003;" : "Backspace";
-
-      return Character.toUpperCase((char)keycode_) + "";
-   }
-   
    public boolean isModeDisabled(int mode)
    {
       return (mode & disableModes_) > 0;
@@ -190,8 +286,8 @@ public class KeyboardShortcut
       return modifiers;
    }
 
-   private final int modifiers_;
-   private final int keycode_;
+   private final KeySequence keySequence_;
+   
    private String groupName_;
    private int order_ = 0;
    private String title_ = "";

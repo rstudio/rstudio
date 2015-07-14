@@ -231,7 +231,7 @@ public class CustomKeyboardShortcutDispatcher
       HashMap<String, AppCommand> commandMap = commands.getCommands();
       for (Map.Entry<String, AppCommand> entry : commandMap.entrySet())
       {
-         String shortcut = entry.getValue().getShortcutAceStyle();
+         String shortcut = entry.getValue().getShortcutRaw();
          if (shortcut == null)
             continue;
          kbdCommandMap.put(shortcut, entry.getValue());

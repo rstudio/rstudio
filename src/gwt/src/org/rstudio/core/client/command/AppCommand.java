@@ -463,11 +463,6 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
       shortcut_ = shortcut;
    }
    
-   public String getShortcutAceStyle()
-   {
-      return shortcut_ != null ? shortcut_.toAceStyleShortcutString() : null;
-   }
-
    public String getShortcutRaw()
    {
       return shortcut_ != null ? shortcut_.toString(false) : null;
