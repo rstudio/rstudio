@@ -358,9 +358,10 @@ public class DocTabLayoutPanel
             if (curState_ == STATE_EXTERNAL)
             {
                // element that was being dragged around outside boundaries 
-               // has come back in
+               // has come back in; clear it and treat like a new drag
                dragElement_.getStyle().clearOpacity();
-               beginDrag(event);
+               dragElement_ = null;
+               curState_ = STATE_NONE;
             }
             if (curState_ == STATE_NONE)
             {
@@ -396,14 +397,14 @@ public class DocTabLayoutPanel
             // a cancel
             Element ele = DomUtils.elementFromPoint(event.getClientX(), 
                   event.getClientY());
-            do
+            while (ele != null && ele != Document.get().getBody())
             {
                if (ele.getClassName().contains("gwt-TabLayoutPanelTabs"))
                {
                   return;
                }
                ele = ele.getParentElement();
-            } while (ele != null && ele != Document.get().getBody());
+            } 
             
             if (dragElement_ != null)
             {
@@ -512,8 +513,6 @@ public class DocTabLayoutPanel
          // tabset
          if (dragElement_ != null)
          {
-            lastElementX_ = DomUtils.leftRelativeTo(
-                  dragTabsHost_, Element.as(dragTabsHost_.getChild(candidatePos_)));
             dragElement_.getStyle().setPosition(Position.ABSOLUTE);
             dragElement_.getStyle().setLeft(lastElementX_, Unit.PX);
             dragElement_.getStyle().setZIndex(100);
@@ -536,10 +535,12 @@ public class DocTabLayoutPanel
          dragPlaceholder_.getStyle().setPosition(Position.RELATIVE);
          dragPlaceholder_.getStyle().setFloat(Float.LEFT);
          dragPlaceholder_.getStyle().setBorderStyle(BorderStyle.DOTTED);
-         dragPlaceholder_.getStyle().setBorderColor("#414243");
-         dragPlaceholder_.getStyle().setBorderWidth(2, Unit.PX);
+         dragPlaceholder_.getStyle().setBorderColor("#A1A2A3");
+         dragPlaceholder_.getStyle().setBorderWidth(1, Unit.PX);
+         dragPlaceholder_.getStyle().setMarginLeft(1, Unit.PX);
+         dragPlaceholder_.getStyle().setMarginRight(1, Unit.PX);
          dragPlaceholder_.getStyle().setProperty("boxSizing", "border-box");
-         dragPlaceholder_.getStyle().setProperty("borderRadius", "3px");
+         dragPlaceholder_.getStyle().setProperty("borderRadius", "4px");
          dragPlaceholder_.getStyle().setProperty("borderBottom", "0px");
          if (candidatePos_ < dragTabsHost_.getChildCount())
             dragTabsHost_.insertAfter(dragPlaceholder_, 
