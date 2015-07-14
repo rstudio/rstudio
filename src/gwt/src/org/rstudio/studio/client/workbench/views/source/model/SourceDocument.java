@@ -16,6 +16,7 @@ package org.rstudio.studio.client.workbench.views.source.model;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import org.rstudio.core.client.js.JsObject;
+import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
 
 public class SourceDocument extends JavaScriptObject
 {
@@ -122,4 +123,13 @@ public class SourceDocument extends JavaScriptObject
    public native final void setFoldSpec(String foldSpec) /*-{
       this.folds = foldSpec;
    }-*/;
+   
+   public final String getSourceWindowId() 
+   {
+      String windowId = getProperties().getAsString(
+            SourceWindowManager.SOURCE_WINDOW_ID);
+      if (windowId == null)
+         return "";
+      return windowId;
+   }
 }

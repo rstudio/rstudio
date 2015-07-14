@@ -96,8 +96,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
          // open this session's source windows
          for (int i = 0; i < docs.length(); i++)
          {
-            String windowId = 
-                  docs.get(i).getProperties().getString(SOURCE_WINDOW_ID);
+            String windowId = docs.get(i).getSourceWindowId();
             if (!StringUtil.isNullOrEmpty(windowId) &&
                 !isSourceWindowOpen(windowId))
             {
@@ -139,8 +138,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
          if (docs.get(i).getPath() != null && 
              docs.get(i).getPath().equals(path))
          {
-            String windowId = 
-                  docs.get(i).getProperties().getString(SOURCE_WINDOW_ID);
+            String windowId = docs.get(i).getSourceWindowId();
             if (windowId != null)
                return windowId;
             else
@@ -275,8 +273,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
       for (int i = 0; i < sourceDocs_.length(); i++)
       {
          final SourceDocument doc = sourceDocs_.get(i);
-         if (doc.getProperties().getString(SOURCE_WINDOW_ID) == 
-               sourceWindowId(event.getName()))
+         if (doc.getSourceWindowId() == sourceWindowId(event.getName()))
          {
             // change the window ID of the doc back to the main window
             assignSourceDocWindowId(doc.getId(), "", new Command()
