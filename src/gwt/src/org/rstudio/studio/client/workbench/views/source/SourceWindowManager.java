@@ -16,9 +16,11 @@ package org.rstudio.studio.client.workbench.views.source;
 
 import java.util.HashMap;
 
+import org.rstudio.core.client.Point;
 import org.rstudio.core.client.Size;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.WindowEx;
+import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.application.events.CrossWindowEvent;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -27,11 +29,14 @@ import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
 import org.rstudio.studio.client.common.satellite.events.AllSatellitesClosingEvent;
 import org.rstudio.studio.client.common.satellite.events.SatelliteClosedEvent;
+import org.rstudio.studio.client.common.satellite.model.SatelliteWindowGeometry;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
+import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
 import org.rstudio.studio.client.workbench.views.source.events.DocTabDragStartedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.DocWindowChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.LastSourceDocClosedEvent;
@@ -93,6 +98,32 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
          // for the satellites to read 
          exportSourceDocs();
          
+         new JSObjectStateValue(
+                 "source-windows",
+                 "sourceWindowGeometry",
+                 ClientState.PROJECT_PERSISTENT,
+                 session.getSessionInfo().getClientState(),
+                 false)
+         {
+            @Override
+            protected void onInit(JsObject value)
+            {
+               windowGeometry_ = value;
+            }
+
+            @Override
+            protected JsObject getValue()
+            {
+               return windowGeometry_;
+            }
+            
+            @Override
+            protected boolean hasChanged()
+            {
+               return updateWindowGeometry();
+            }
+         };
+         
          // open this session's source windows
          for (int i = 0; i < docs.length(); i++)
          {
@@ -103,6 +134,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
                openSourceWindow(windowId);
             }
          }
+         
       }
    }
 
@@ -211,9 +243,20 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
    
    public void openSourceWindow(String windowId)
    {
+      // create default options
+      Size size = new Size(800, 800);
+      Point position = null;
+
+      // if we have geometry for the window, apply it
+      SatelliteWindowGeometry geometry = windowGeometry_.getObject(windowId);
+      if (geometry != null)
+      {
+         size = geometry.getSize();
+         position = geometry.getPosition();
+      }
+
       pSatelliteManager_.get().openSatellite(
-            SourceSatellite.NAME_PREFIX + windowId, null, 
-            new Size(800, 800));
+            SourceSatellite.NAME_PREFIX + windowId, null, size, position);
       sourceWindows_.put(windowId, 
             pSatelliteManager_.get().getSatelliteWindowObject(
                   SourceSatellite.NAME_PREFIX + windowId));
@@ -360,7 +403,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
    private String createSourceWindowId()
    {
       String alphanum = "0123456789abcdefghijklmnopqrstuvwxyz";
-      String id = "";
+      String id = "w";
       for (int i = 0; i < 12; i++)
       {
          id += alphanum.charAt((int)(Math.random() * alphanum.length()));
@@ -385,6 +428,46 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
       $wnd.rstudioSourceDocs = this.@org.rstudio.studio.client.workbench.views.source.SourceWindowManager::sourceDocs_;
    }-*/;
    
+   private boolean updateWindowGeometry()
+   {
+      boolean geometryChanged = false;
+      JsObject newGeometries = JsObject.createJsObject();
+      for (String windowId: sourceWindows_.keySet())
+      {
+         WindowEx window = pSatelliteManager_.get().getSatelliteWindowObject(
+               SourceSatellite.NAME_PREFIX + windowId);
+         if (window == null)
+            continue;
+
+         // read the window's current geometry
+         SatelliteWindowGeometry newGeometry = 
+               SatelliteWindowGeometry.create(
+                     window.getScreenX(), 
+                     window.getScreenY(), 
+                     window.getOuterWidth(), 
+                     window.getOuterHeight());
+         
+         // compare to the old geometry (if any)
+         if (windowGeometry_.hasKey(windowId))
+         {
+            SatelliteWindowGeometry oldGeometry = 
+                  windowGeometry_.getObject(windowId);
+            if (!oldGeometry.equals(newGeometry))
+               geometryChanged = true;
+         }
+         else 
+         {
+            geometryChanged = true;
+         }
+         newGeometries.setObject(windowId, newGeometry);
+      }
+      
+      if (geometryChanged)
+         windowGeometry_ = newGeometries;
+      
+      return geometryChanged;
+   }
+   
    private EventBus events_;
    private Provider<SatelliteManager> pSatelliteManager_;
    private Provider<Satellite> pSatellite_;
@@ -396,6 +479,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
    private JsArray<SourceDocument> sourceDocs_ = 
          JsArray.createArray().cast();
    private boolean windowsClosing_ = false;
+   private JsObject windowGeometry_ = JsObject.createJsObject();
    
    public final static String SOURCE_WINDOW_ID = "source_window_id";
 }

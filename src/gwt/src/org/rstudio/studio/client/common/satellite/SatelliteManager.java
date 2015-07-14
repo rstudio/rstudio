@@ -84,6 +84,14 @@ public class SatelliteManager implements CloseHandler<Window>
    {
       openSatellite(name, params, preferredSize, true, null);
    }
+   
+   public void openSatellite(String name,
+                             JavaScriptObject params,
+                             Size preferredSize,
+                             Point position)
+   {
+      openSatellite(name, params, preferredSize, true, position);
+   }
 
    // open a satellite window (re-activate existing if possible)
    private void openSatellite(String name,
