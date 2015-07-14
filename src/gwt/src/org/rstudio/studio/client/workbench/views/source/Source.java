@@ -1445,16 +1445,7 @@ public class Source implements InsertSourceHandler,
             @Override
             public void onResponseReceived(final SourceDocument doc)
             {
-               windowManager_.assignSourceDocWindowId(doc, 
-                     windowManager_.getSourceWindowId(), 
-                     new Command()
-                     {
-                        @Override
-                        public void execute()
-                        {
-                           addTab(doc, e.getPos());
-                        }
-                     });
+               addTab(doc, e.getPos());
             }
 
             @Override

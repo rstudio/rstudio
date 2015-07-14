@@ -151,13 +151,27 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
       }
    }
 
-   public void assignSourceDocWindowId(final SourceDocument doc, 
+   public void assignSourceDocWindowId(String docId, 
          String windowId, final Command onComplete)
    {
+      // create the new property map
       HashMap<String,String> props = new HashMap<String,String>();
       props.put(SOURCE_WINDOW_ID, windowId);
-      doc.getProperties().setString(SOURCE_WINDOW_ID, windowId);
-      server_.modifyDocumentProperties(doc.getId(),
+      
+      // update the doc window ID in place
+      JsArray<SourceDocument> docs = getSourceDocs();
+      for (int i = 0; i < docs.length(); i++)
+      {
+         SourceDocument doc = docs.get(i);
+         if (doc.getId() == docId)
+         {
+            doc.getProperties().setString(SOURCE_WINDOW_ID, windowId);
+            break;
+         }
+      }
+      
+      // update the doc window ID on the server
+      server_.modifyDocumentProperties(docId,
              props, new ServerRequestCallback<Void>()
             {
                @Override
@@ -170,7 +184,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
                public void onError(ServerError error)
                {
                   display_.showErrorMessage("Can't Move Doc", 
-                        "The document " + doc.getPath() + " could not be " +
+                        "The document could not be " +
                         "moved to a different window: \n" + 
                         error.getMessage());
                }
@@ -183,7 +197,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
    {
       // assign a new window ID to the source document
       final String windowId = createSourceWindowId();
-      assignSourceDocWindowId(evt.getDoc(), windowId, 
+      assignSourceDocWindowId(evt.getDoc().getId(), windowId, 
             new Command()
             {
                @Override
@@ -260,7 +274,31 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
    }
 
    @Override
-   public void onDocWindowChanged(DocWindowChangedEvent event)
+   public void onDocWindowChanged(final DocWindowChangedEvent event)
+   {
+      if (event.getNewWindowId() == getSourceWindowId())
+      {
+         // if the doc is moving to this window, assign the ID before firing
+         // events
+         assignSourceDocWindowId(event.getDocId(), 
+               event.getNewWindowId(), new Command()
+               {
+                  @Override
+                  public void execute()
+                  {
+                     broadcastDocWindowChanged(event);
+                  }
+               });
+      }
+      else
+      {
+         broadcastDocWindowChanged(event);
+      }
+   }
+
+   // Private methods ---------------------------------------------------------
+   
+   private void broadcastDocWindowChanged(DocWindowChangedEvent event)
    {
       if (isMainSourceWindow() && 
          event.getOldWindowId() != getSourceWindowId())
@@ -276,8 +314,6 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
          events_.fireEventToMainWindow(event);
       }
    }
-
-   // Private methods ---------------------------------------------------------
    
    private String createSourceWindowId()
    {
