@@ -108,7 +108,8 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
             @Override
             protected void onInit(JsObject value)
             {
-               windowGeometry_ = value;
+               if (value != null)
+                  windowGeometry_ = value;
             }
 
             @Override
