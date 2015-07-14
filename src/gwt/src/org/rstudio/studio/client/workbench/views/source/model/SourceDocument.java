@@ -126,10 +126,14 @@ public class SourceDocument extends JavaScriptObject
    
    public final String getSourceWindowId() 
    {
-      String windowId = getProperties().getAsString(
-            SourceWindowManager.SOURCE_WINDOW_ID);
-      if (windowId == null)
-         return "";
-      return windowId;
+      if (getProperties().hasKey(SourceWindowManager.SOURCE_WINDOW_ID))
+      {
+         String windowId = getProperties().getAsString(
+               SourceWindowManager.SOURCE_WINDOW_ID);
+         if (windowId == null)
+            return "";
+         return windowId;
+      }
+      return "";
    }
 }
