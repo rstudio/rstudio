@@ -37,6 +37,7 @@ import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.views.source.events.DocTabDragStartedEvent;
+import org.rstudio.studio.client.workbench.views.source.events.DocTabDragStateChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.DocWindowChangedEvent;
 
 import com.google.gwt.animation.client.Animation;
@@ -105,8 +106,8 @@ public class DocTabLayoutPanel
       
       // listen for global drag events (these are broadcasted from other windows
       // to notify us of incoming drags)
-      EventBus events = RStudioGinjector.INSTANCE.getEventBus();
-      events.addHandler(DocTabDragStartedEvent.TYPE, dragManager_);
+      events_ = RStudioGinjector.INSTANCE.getEventBus();
+      events_.addHandler(DocTabDragStartedEvent.TYPE, dragManager_);
 
       // sink drag-related events on the tab bar element; unfortunately
       // GWT does not provide bits for the drag-related events, and 
@@ -437,6 +438,12 @@ public class DocTabLayoutPanel
          dragScrollHost_ = dragTabsHost_.getParentElement();
          outOfBounds_ = 0;
          candidatePos_ = null;
+         
+         // let the rest of the IDE know we're dragging (this will enable us to
+         // disable drag targets that might otherwise be happy to accept the
+         // data)
+         events_.fireEvent(new DocTabDragStateChangedEvent(
+               DocTabDragStateChangedEvent.STATE_DRAGGING));
 
          // figure out which tab the cursor is over so we can use this as the
          // start position in the drag
@@ -753,6 +760,8 @@ public class DocTabLayoutPanel
          {
             // otherwise, we're back to pristine
             curState_ = STATE_NONE;
+            events_.fireEvent(new DocTabDragStateChangedEvent(
+                  DocTabDragStateChangedEvent.STATE_NONE));
          }
 
          if (dragElement_ != null && action == ACTION_COMMIT)
@@ -785,10 +794,8 @@ public class DocTabLayoutPanel
             if (pieces.length < 1)
                return;
             
-            RStudioGinjector.INSTANCE.getEventBus().fireEvent(new
-                  DocWindowChangedEvent(pieces[0], 
-                        pieces.length > 1 ? pieces[1] : "", 
-                              destPos_));
+            events_.fireEvent(new DocWindowChangedEvent(pieces[0], 
+                        pieces.length > 1 ? pieces[1] : "", destPos_));
          }
          
          if (curState_ != STATE_EXTERNAL)
@@ -867,8 +874,7 @@ public class DocTabLayoutPanel
                evt.getDataTransfer().setData("text", docId_ + "|" + 
                   RStudioGinjector.INSTANCE.getSourceWindowManager()
                                            .getSourceWindowId());
-               RStudioGinjector.INSTANCE.getEventBus().fireEvent(new
-                     DocTabDragStartedEvent(docId_, 
+               events_.fireEvent(new DocTabDragStartedEvent(docId_, 
                            getElement().getClientWidth()));
             }
          }, DragStartEvent.getType());
@@ -1078,6 +1084,8 @@ public class DocTabLayoutPanel
    public static final int BAR_HEIGHT = 24;
 
    private final boolean closeableTabs_;
+   private final EventBus events_;
+   
    private int padding_;
    private int rightMargin_;
    private final ThemeStyles styles_;

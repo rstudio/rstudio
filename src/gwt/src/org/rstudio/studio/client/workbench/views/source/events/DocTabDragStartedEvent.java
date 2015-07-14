@@ -37,6 +37,10 @@ public class DocTabDragStartedEvent
    {
    }
    
+   // this event is broadcast to all satellites when a document tab drag 
+   // begins; since the data being dragged is not available until the drop 
+   // occurs, this side channel allows the satellites to know e.g. how wide
+   // to draw the shadow tab when the tab is dragged over them
    public DocTabDragStartedEvent(String docId, int width)
    {
       docId_ = docId;
