@@ -960,13 +960,6 @@ public class TextEditingTargetWidget
          menu.addSeparator();
       }
       
-      // if we aren't in runtime: shiny then show the params
-      if (!isShinyDoc)
-      {
-         menu.addItem(commands_.editRmdParameters().createMenuItem(false));
-         menu.addSeparator();
-      }
-      
       menu.addItem(commands_.editRmdFormatOptions().createMenuItem(false));
    }
    
