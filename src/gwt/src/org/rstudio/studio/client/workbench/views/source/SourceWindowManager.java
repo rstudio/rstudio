@@ -245,11 +245,21 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
       // when a satellite closes, close all the source docs it contained
       for (int i = 0; i < sourceDocs_.length(); i++)
       {
-         SourceDocument doc = sourceDocs_.get(i);
+         final SourceDocument doc = sourceDocs_.get(i);
          if (doc.getProperties().getString(SOURCE_WINDOW_ID) == 
                sourceWindowId(event.getName()))
          {
-            server_.closeDocument(doc.getId(), new VoidServerRequestCallback());
+            // change the window ID of the doc back to the main window
+            assignSourceDocWindowId(doc.getId(), "", new Command()
+            {
+               @Override
+               public void execute()
+               {
+                  // close the document when finished
+                  server_.closeDocument(doc.getId(), 
+                        new VoidServerRequestCallback());
+               }
+            });
          }
       }
    }

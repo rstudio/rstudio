@@ -1902,7 +1902,8 @@ public class Source implements InsertSourceHandler,
       {
          String sourceWindowId = 
                windowManager_.getWindowIdOfDocPath(file.getPath());
-         if (!StringUtil.isNullOrEmpty(sourceWindowId))
+         if (!StringUtil.isNullOrEmpty(sourceWindowId) && 
+             windowManager_.isSourceWindowOpen(sourceWindowId))
          {
             windowManager_.fireEventToSourceWindow(sourceWindowId, 
                   new OpenSourceFileEvent(file, position, null, navMethod));

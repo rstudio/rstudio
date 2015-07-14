@@ -703,7 +703,6 @@ public class TextEditingTarget implements
                public void onDocTabDragStateChanged(
                      DocTabDragStateChangedEvent e)
                {
-                  Debug.devlog("setting drag state - " + e.getState());
                   docDisplay_.setDragEnabled(e.getState() == 
                         DocTabDragStateChangedEvent.STATE_NONE);
                }
