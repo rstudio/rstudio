@@ -529,8 +529,10 @@ public class DocTabLayoutPanel
          // create the placeholder that shows where this tab will go when the
          // mouse is released
          dragPlaceholder_ = Document.get().createDivElement();
-         dragPlaceholder_.getStyle().setWidth(dragTabWidth, Unit.PX);
-         dragPlaceholder_.getStyle().setHeight(100, Unit.PCT);
+         dragPlaceholder_.getStyle().setWidth(
+               dragTabWidth - 4, Unit.PX);
+         dragPlaceholder_.getStyle().setHeight(
+               dragTabsHost_.getClientHeight() - 3, Unit.PX);
          dragPlaceholder_.getStyle().setDisplay(Display.INLINE_BLOCK);
          dragPlaceholder_.getStyle().setPosition(Position.RELATIVE);
          dragPlaceholder_.getStyle().setFloat(Float.LEFT);
@@ -539,8 +541,8 @@ public class DocTabLayoutPanel
          dragPlaceholder_.getStyle().setBorderWidth(1, Unit.PX);
          dragPlaceholder_.getStyle().setMarginLeft(1, Unit.PX);
          dragPlaceholder_.getStyle().setMarginRight(1, Unit.PX);
-         dragPlaceholder_.getStyle().setProperty("boxSizing", "border-box");
-         dragPlaceholder_.getStyle().setProperty("borderRadius", "4px");
+         dragPlaceholder_.getStyle().setProperty("borderTopLeftRadius", "4px");
+         dragPlaceholder_.getStyle().setProperty("borderTopRightRadius", "4px");
          dragPlaceholder_.getStyle().setProperty("borderBottom", "0px");
          if (candidatePos_ < dragTabsHost_.getChildCount())
             dragTabsHost_.insertAfter(dragPlaceholder_, 
