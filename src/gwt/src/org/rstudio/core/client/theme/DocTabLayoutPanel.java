@@ -344,7 +344,7 @@ public class DocTabLayoutPanel
    
    public void cancelTabDrag()
    {
-      dragManager_.endDrag(null, true);
+      dragManager_.endDrag(null, DragManager.ACTION_CANCEL);
    }
 
    private class DragManager implements EventListener,
@@ -355,31 +355,40 @@ public class DocTabLayoutPanel
       {
          if (event.getType() == "dragenter")
          {
-            if (!dragging_)
+            if (curState_ == STATE_EXTERNAL)
+            {
+               // element that was being dragged around outside boundaries 
+               // has come back in
+               dragElement_.getStyle().clearOpacity();
                beginDrag(event);
+            }
+            if (curState_ == STATE_NONE)
+            {
+               beginDrag(event);
+            }
             event.preventDefault();
          }
          else if (event.getType() == "dragover")
          {
-            if (dragging_)
+            if (curState_ == STATE_DRAGGING)
                drag(event);
             event.preventDefault();
          }
          else if (event.getType() == "drop")
          {
-            endDrag(event, false);
+            endDrag(event, ACTION_COMMIT);
             event.preventDefault();
          }
          else if (event.getType() == "dragend")
          {
-            if (dragging_)
+            if (curState_ != STATE_NONE)
             {
-               endDrag(event, true);
+               endDrag(event, ACTION_CANCEL);
             }
          }
          else if (event.getType() == "dragleave")
          {
-            if (!dragging_)
+            if (curState_ == STATE_NONE)
                return;
 
             // look at where the cursor is now--if it's inside the tab panel,
@@ -396,8 +405,16 @@ public class DocTabLayoutPanel
                ele = ele.getParentElement();
             } while (ele != null && ele != Document.get().getBody());
             
-            // cursor moved outside tab panel
-            endDrag(event, true);
+            if (dragElement_ != null)
+            {
+               // dim the element being drag to hint that it'll be moved
+               endDrag(event, ACTION_EXTERNAL);
+            }
+            else
+            {
+               // if this wasn't our element, we can cancel the drag entirely
+               endDrag(event, ACTION_CANCEL);
+            }
          }
       }
 
@@ -414,7 +431,7 @@ public class DocTabLayoutPanel
          int dragTabWidth = initDragWidth_;
          
          // set drag element state
-         dragging_ = true;
+         curState_ = STATE_DRAGGING;
          dragTabsHost_ = getTabBarElement();
          dragScrollHost_ = dragTabsHost_.getParentElement();
          outOfBounds_ = 0;
@@ -667,7 +684,7 @@ public class DocTabLayoutPanel
       private boolean autoScroll(int dir)
       {
          // move while the mouse is still out of bounds 
-         if (dragging_ && outOfBounds_ != 0)
+         if (curState_ == STATE_DRAGGING && outOfBounds_ != 0)
          {
             // if mouse is far out of bounds, use it to accelerate movement
             if (Math.abs(outOfBounds_) > 100)
@@ -694,9 +711,9 @@ public class DocTabLayoutPanel
          return false;
       }
       
-      public void endDrag(final Event evt, boolean cancel)
+      public void endDrag(final Event evt, int action)
       {
-         if (!dragging_)
+         if (curState_ == STATE_NONE)
             return;
          
          // remove the properties used to position for dragging
@@ -706,10 +723,11 @@ public class DocTabLayoutPanel
             dragElement_.getStyle().clearPosition();
             dragElement_.getStyle().clearZIndex();
             dragElement_.getStyle().clearDisplay();
+            dragElement_.getStyle().clearOpacity();
             
             // insert this tab where the placeholder landed if we're not
             // cancelling
-            if (!cancel)
+            if (action == ACTION_COMMIT)
             {
                dragTabsHost_.removeChild(dragElement_);
                dragTabsHost_.insertAfter(dragElement_, dragPlaceholder_);
@@ -721,12 +739,20 @@ public class DocTabLayoutPanel
             dragTabsHost_.removeChild(dragPlaceholder_);
             dragPlaceholder_ = null;
          }
-
-         // finish dragging
-         DOM.releaseCapture(getElement());
-         dragging_ = false;
          
-         if (dragElement_ != null && !cancel)
+         if (dragElement_ != null && action == ACTION_EXTERNAL)
+         {
+            // if we own the dragged tab, change to external drag state
+            dragElement_.getStyle().setOpacity(0.4);
+            curState_ = STATE_EXTERNAL;
+         }
+         else
+         {
+            // otherwise, we're back to pristine
+            curState_ = STATE_NONE;
+         }
+
+         if (dragElement_ != null && action == ACTION_COMMIT)
          {
             // unsink mousedown/mouseup and simulate a click to activate the tab
             if (evt != null)
@@ -743,7 +769,7 @@ public class DocTabLayoutPanel
          }
          
          // this is the case when we adopt someone else's doc
-         if (dragElement_ == null && evt != null && !cancel)
+         if (dragElement_ == null && evt != null && action == ACTION_COMMIT)
          {
             // pull the document ID and source window out
             String data = evt.getDataTransfer().getData("text");
@@ -762,7 +788,11 @@ public class DocTabLayoutPanel
                               destPos_));
          }
          
-         dragElement_ = null;
+         if (curState_ != STATE_EXTERNAL)
+         {
+            // if we're in an end state, clear the drag element
+            dragElement_ = null;
+         }
       }
 
       private void simulateClick(Event evt)
@@ -776,7 +806,6 @@ public class DocTabLayoutPanel
                */
       }
       
-      private boolean dragging_ = false;
       private int lastCursorX_ = 0;
       private int lastElementX_ = 0;
       private int startPos_ = 0;
@@ -789,8 +818,28 @@ public class DocTabLayoutPanel
       private Element dragTabsHost_;
       private Element dragScrollHost_;
       private Element dragPlaceholder_;
-      private final static int SCROLL_THRESHOLD = 25;
       private String initDragDocId_;
+      private int curState_ = STATE_NONE;
+
+      private final static int SCROLL_THRESHOLD = 25;
+      
+      // No drag operation is taking place 
+      private final static int STATE_NONE = 0;
+      
+      // A tab is being dragged inside this tab panel
+      private final static int STATE_DRAGGING = 1;
+      
+      // A tab from this panel is being dragged elsewhere
+      private final static int STATE_EXTERNAL = 2;
+      
+      // the drag operation should be cancelled
+      private final static int ACTION_CANCEL = 0;
+      
+      // the drag operation should be continued outside this window
+      private final static int ACTION_EXTERNAL = 1;
+      
+      // the drag operation should be committed in this window
+      private final static int ACTION_COMMIT = 2;
    }
 
    private class DocTab extends Composite
