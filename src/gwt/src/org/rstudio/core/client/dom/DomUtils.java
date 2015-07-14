@@ -882,4 +882,7 @@ public class DomUtils
       return null;
    }
    
+   public final static native Element elementFromPoint(int x, int y) /*-{
+      return $doc.elementFromPoint(x, y);
+   }-*/;
 }

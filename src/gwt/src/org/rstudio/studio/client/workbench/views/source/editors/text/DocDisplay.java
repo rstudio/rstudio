@@ -299,4 +299,6 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    boolean isPositionVisible(Position position);
    
    void showInfoBar(String message);
+   
+   void setDragEnabled(boolean enabled);
 }

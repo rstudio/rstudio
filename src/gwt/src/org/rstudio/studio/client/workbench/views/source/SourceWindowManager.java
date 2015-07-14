@@ -17,9 +17,11 @@ package org.rstudio.studio.client.workbench.views.source;
 import java.util.HashMap;
 
 import org.rstudio.core.client.Size;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.studio.client.application.events.CrossWindowEvent;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
@@ -28,6 +30,8 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
+import org.rstudio.studio.client.workbench.views.source.events.DocTabDragStartedEvent;
+import org.rstudio.studio.client.workbench.views.source.events.DocWindowChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.LastSourceDocClosedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.LastSourceDocClosedHandler;
 import org.rstudio.studio.client.workbench.views.source.events.PopoutDocEvent;
@@ -37,6 +41,7 @@ import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperat
 import org.rstudio.studio.client.workbench.views.source.model.SourceWindowParams;
 
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Window;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -46,7 +51,9 @@ import com.google.inject.Singleton;
 public class SourceWindowManager implements PopoutDocEvent.Handler,
                                             SourceDocAddedEvent.Handler,
                                             LastSourceDocClosedHandler,
-                                            SatelliteClosedEvent.Handler
+                                            SatelliteClosedEvent.Handler,
+                                            DocTabDragStartedEvent.Handler,
+                                            DocWindowChangedEvent.Handler
 {
    @Inject
    public SourceWindowManager(
@@ -54,16 +61,21 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
          Provider<Satellite> pSatellite,
          SourceServerOperations server,
          EventBus events,
-         FileTypeRegistry registry)
+         FileTypeRegistry registry,
+         GlobalDisplay display)
    {
       events_ = events;
       server_ = server;
       pSatelliteManager_ = pSatelliteManager;
       pSatellite_ = pSatellite;
+      display_ = display;
+      
       events_.addHandler(PopoutDocEvent.TYPE, this);
       events_.addHandler(SourceDocAddedEvent.TYPE, this);
       events_.addHandler(LastSourceDocClosedEvent.TYPE, this);
       events_.addHandler(SatelliteClosedEvent.TYPE, this);
+      events_.addHandler(DocTabDragStartedEvent.TYPE, this);
+      events_.addHandler(DocWindowChangedEvent.TYPE, this);
       
       // the main window maintains an array of all open source documents 
       // across all satellites; rather than attempt to synchronize this list 
@@ -120,33 +132,62 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
    
    public void fireEventToSourceWindow(String windowId, CrossWindowEvent<?> evt)
    {
-      pSatelliteManager_.get().activateSatelliteWindow(
-            SourceSatellite.NAME_PREFIX + windowId);
-      WindowEx window = pSatelliteManager_.get().getSatelliteWindowObject(
-            SourceSatellite.NAME_PREFIX + windowId);
-      if (window != null)
+      if (StringUtil.isNullOrEmpty(windowId) && !isMainSourceWindow())
       {
-         events_.fireEventToSatellite(evt, window);
+         pSatellite_.get().focusMainWindow();
+         events_.fireEventToMainWindow(evt);
+      }
+      else
+      {
+         pSatelliteManager_.get().activateSatelliteWindow(
+               SourceSatellite.NAME_PREFIX + windowId);
+         WindowEx window = pSatelliteManager_.get().getSatelliteWindowObject(
+               SourceSatellite.NAME_PREFIX + windowId);
+         if (window != null)
+         {
+            events_.fireEventToSatellite(evt, window);
+         }
+         
       }
    }
 
+   public void assignSourceDocWindowId(final SourceDocument doc, 
+         String windowId, final Command onComplete)
+   {
+      HashMap<String,String> props = new HashMap<String,String>();
+      props.put(SOURCE_WINDOW_ID, windowId);
+      doc.getProperties().setString(SOURCE_WINDOW_ID, windowId);
+      server_.modifyDocumentProperties(doc.getId(),
+             props, new ServerRequestCallback<Void>()
+            {
+               @Override
+               public void onResponseReceived(Void v)
+               {
+                  onComplete.execute();
+               }
+
+               @Override
+               public void onError(ServerError error)
+               {
+                  display_.showErrorMessage("Can't Move Doc", 
+                        "The document " + doc.getPath() + " could not be " +
+                        "moved to a different window: \n" + 
+                        error.getMessage());
+               }
+            });
+   }
+   
    // Event handlers ----------------------------------------------------------
    @Override
    public void onPopoutDoc(final PopoutDocEvent evt)
    {
       // assign a new window ID to the source document
       final String windowId = createSourceWindowId();
-      HashMap<String,String> props = new HashMap<String,String>();
-      props.put(SOURCE_WINDOW_ID, windowId);
-      evt.getDoc().getProperties().setString(
-            SOURCE_WINDOW_ID, windowId);
-      
-      // update the document's properties to assign this ID
-      server_.modifyDocumentProperties(
-            evt.getDoc().getId(), props, new ServerRequestCallback<Void>()
+      assignSourceDocWindowId(evt.getDoc(), windowId, 
+            new Command()
             {
                @Override
-               public void onResponseReceived(Void v)
+               public void execute()
                {
                   SourceWindowParams params = SourceWindowParams.create(
                         windowId, evt.getDoc());
@@ -156,12 +197,6 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
                   sourceWindows_.put(windowId, 
                         pSatelliteManager_.get().getSatelliteWindowObject(
                               SourceSatellite.NAME_PREFIX + windowId));
-               }
-
-               @Override
-               public void onError(ServerError error)
-               {
-                  // do nothing here (we just won't pop out the doc)
                }
             });
    }
@@ -205,6 +240,43 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
       }
    }
 
+   @Override
+   public void onDocTabDragStarted(DocTabDragStartedEvent event)
+   {
+      if (isMainSourceWindow())
+      {
+         // if this the main source window, fire the event to all the source
+         // satellites
+         for (String sourceWindowId: sourceWindows_.keySet())
+         {
+            fireEventToSourceWindow(sourceWindowId, event);
+         }
+      }
+      else if (!event.isFromMainWindow())
+      {
+         // if this is a satellite, broadcast the event to the main window
+         events_.fireEventToMainWindow(event);
+      }
+   }
+
+   @Override
+   public void onDocWindowChanged(DocWindowChangedEvent event)
+   {
+      if (isMainSourceWindow() && 
+         event.getOldWindowId() != getSourceWindowId())
+      {
+         // this is the main window; pass the event on to the window that just
+         // lost its doc
+         fireEventToSourceWindow(event.getOldWindowId(), event);
+      }
+      else if (event.getNewWindowId() == getSourceWindowId())
+      {
+         // this is a satellite; pass the event on to the main window for
+         // routing
+         events_.fireEventToMainWindow(event);
+      }
+   }
+
    // Private methods ---------------------------------------------------------
    
    private String createSourceWindowId()
@@ -239,6 +311,8 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
    private Provider<SatelliteManager> pSatelliteManager_;
    private Provider<Satellite> pSatellite_;
    private SourceServerOperations server_;
+   private GlobalDisplay display_;
+
    private HashMap<String, WindowEx> sourceWindows_ = 
          new HashMap<String,WindowEx>();
    private JsArray<SourceDocument> sourceDocs_ = 

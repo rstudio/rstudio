@@ -139,6 +139,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.status.Stat
 import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBarPopupRequest;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ui.ChooseEncodingDialog;
 import org.rstudio.studio.client.workbench.views.source.events.CollabEditStartParams;
+import org.rstudio.studio.client.workbench.views.source.events.DocTabDragStateChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.PopoutDocEvent;
 import org.rstudio.studio.client.workbench.views.source.events.RecordNavigationPositionEvent;
 import org.rstudio.studio.client.workbench.views.source.events.RecordNavigationPositionHandler;
@@ -691,6 +692,20 @@ public class TextEditingTarget implements
                   {
                      addAdditionalResourceFiles(settings.getAdditionalFiles());
                   }
+               }
+            });
+
+      events_.addHandler(DocTabDragStateChangedEvent.TYPE, 
+            new DocTabDragStateChangedEvent.Handler()
+            {
+               
+               @Override
+               public void onDocTabDragStateChanged(
+                     DocTabDragStateChangedEvent e)
+               {
+                  Debug.devlog("setting drag state - " + e.getState());
+                  docDisplay_.setDragEnabled(e.getState() == 
+                        DocTabDragStateChangedEvent.STATE_NONE);
                }
             });
    }

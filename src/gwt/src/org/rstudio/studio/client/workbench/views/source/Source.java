@@ -146,7 +146,8 @@ public class Source implements InsertSourceHandler,
                              SourceExtendedTypeDetectedEvent.Handler,
                              BeforeShowHandler,
                              SnippetsChangedEvent.Handler,
-                             PopoutDocEvent.Handler
+                             PopoutDocEvent.Handler,
+                             DocWindowChangedEvent.Handler
 {
    public interface Display extends IsWidget,
                                     HasTabClosingHandlers,
@@ -158,8 +159,10 @@ public class Source implements InsertSourceHandler,
    {
       void addTab(Widget widget,
                   ImageResource icon,
+                  String docId,
                   String name,
                   String tooltip,
+                  Integer position,
                   boolean switchToTab);
       void selectTab(int tabIndex);
       void selectTab(Widget widget);
@@ -172,6 +175,7 @@ public class Source implements InsertSourceHandler,
       void setDirty(Widget widget, boolean dirty);
       void manageChevronVisibility();
       void showOverflowPopup();
+      void cancelTabDrag();
       
       void showUnsavedChangesDialog(
             String title,
@@ -497,6 +501,7 @@ public class Source implements InsertSourceHandler,
       });
       
       events.addHandler(PopoutDocEvent.TYPE, this);
+      events.addHandler(DocWindowChangedEvent.TYPE, this);
 
       // Suppress 'CTRL + ALT + SHIFT + click' to work around #2483 in Ace
       Event.addNativePreviewHandler(new NativePreviewHandler()
@@ -1425,10 +1430,58 @@ public class Source implements InsertSourceHandler,
    @Override
    public void onPopoutDoc(PopoutDocEvent e)
    {
+      disownDoc(e.getDoc().getId());
+   }
+   
+   @Override
+   public void onDocWindowChanged(final DocWindowChangedEvent e)
+   {
+      if (e.getNewWindowId() == windowManager_.getSourceWindowId())
+      {
+         // if we're the adopting window, add the doc
+         server_.getSourceDocument(e.getDocId(),
+               new ServerRequestCallback<SourceDocument>()
+         {
+            @Override
+            public void onResponseReceived(final SourceDocument doc)
+            {
+               windowManager_.assignSourceDocWindowId(doc, 
+                     windowManager_.getSourceWindowId(), 
+                     new Command()
+                     {
+                        @Override
+                        public void execute()
+                        {
+                           addTab(doc, e.getPos());
+                        }
+                     });
+            }
+
+            @Override
+            public void onError(ServerError error)
+            {
+               globalDisplay_.showErrorMessage("Document Tab Move Failed", 
+                     "Couldn't move the tab to this window: \n" + 
+                      error.getMessage());
+            }
+         });
+      }
+      else if (e.getOldWindowId() == windowManager_.getSourceWindowId())
+      {
+         // cancel tab drag if it was occurring
+         view_.cancelTabDrag();
+         
+         // disown this doc if it was our own
+         disownDoc(e.getDocId());
+      }
+   }
+   
+   private void disownDoc(String docId)
+   {
       suspendDocumentClose_ = true;
       for (int i = 0; i < editors_.size(); i++)
       {
-         if (editors_.get(i).getId() == e.getDoc().getId())
+         if (editors_.get(i).getId() == docId)
          {
             view_.closeTab(i, false);
             break;
@@ -2213,8 +2266,13 @@ public class Source implements InsertSourceHandler,
    {
       return target.asWidget();
    }
-
+   
    private EditingTarget addTab(SourceDocument doc)
+   {
+      return addTab(doc, null);
+   }
+
+   private EditingTarget addTab(SourceDocument doc, Integer position)
    {
       final EditingTarget target = editingTargetSource_.getEditingTarget(
             doc, fileContext_, new Provider<String>()
@@ -2230,8 +2288,10 @@ public class Source implements InsertSourceHandler,
       editors_.add(target);
       view_.addTab(widget,
                    target.getIcon(),
+                   target.getId(),
                    target.getName().getValue(),
                    target.getTabTooltip(), // used as tooltip, if non-null
+                   position,
                    true);
       fireDocTabsChanged();
 
