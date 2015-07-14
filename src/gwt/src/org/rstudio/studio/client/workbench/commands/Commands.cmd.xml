@@ -99,7 +99,6 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="saveAllSourceDocs"/>
          <separator/>
          <cmd refid="knitDocument"/>
-         <cmd refid="knitWithParameters"/>
          <cmd refid="previewHTML"/>
          <cmd refid="compilePDF"/>
          <cmd refid="compileNotebook"/>
