@@ -26,6 +26,7 @@ import org.rstudio.core.client.Point;
 import org.rstudio.core.client.Size;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.AppCommand;
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.layout.ScreenUtils;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -293,6 +294,11 @@ public class SatelliteManager implements CloseHandler<Window>
          if (isPointWithinSatellite(satellite.getWindow(), x, y))
             return satellite.getName();
       } 
+      if (DomUtils.elementFromPoint(x - WindowEx.get().getScreenX(), 
+            y - WindowEx.get().getScreenY()) != null)
+      {
+         return "";
+      }
       return null;
    }
    
@@ -524,6 +530,12 @@ public class SatelliteManager implements CloseHandler<Window>
             manager.@org.rstudio.studio.client.common.satellite.SatelliteManager::dispatchCommandExternal(Ljava/lang/String;)(commandId);
          }
       ); 
+      
+      $wnd.getWindowAtPoint = $entry(
+         function(x, y) {
+            return manager.@org.rstudio.studio.client.common.satellite.SatelliteManager::getWindowAtPoint(II)(x,y);
+         }
+      );
       
    }-*/;
    

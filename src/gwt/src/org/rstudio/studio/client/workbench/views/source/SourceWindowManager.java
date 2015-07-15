@@ -49,7 +49,6 @@ import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
 
 import com.google.gwt.core.client.JsArray;
-import com.google.gwt.core.client.JsArrayUtils;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Window;
 import com.google.inject.Inject;

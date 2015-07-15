@@ -175,6 +175,12 @@ public class Satellite implements HasCloseHandlers<Satellite>
       return $wnd.RStudioSatelliteName;
    }-*/;
    
+   // satellites only: call the main window to ask if it knows about any windows
+   // (including itself) at the given location
+   public native String getWindowAtPoint(int x, int y) /*-{
+      return $wnd.opener.getWindowAtPoint(x, y);
+   }-*/;
+   
    public JavaScriptObject getParams()
    {
       return params_;

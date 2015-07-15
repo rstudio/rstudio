@@ -38,6 +38,7 @@ import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.workbench.views.source.events.DocTabDragStartedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.DocTabDragStateChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.DocWindowChangedEvent;
@@ -814,9 +815,21 @@ public class DocTabLayoutPanel
                   evt.getClientY()) == null)
             {
                // did it end in any RStudio satellite window?
-               String targetWindowName = 
+               String targetWindowName;
+               Satellite satellite = RStudioGinjector.INSTANCE.getSatellite();
+               if (satellite.isCurrentWindowSatellite())
+               {
+                  // this is a satellite, ask the main window 
+                  targetWindowName = satellite.getWindowAtPoint(
+                        evt.getScreenX(), evt.getScreenY());
+               }
+               else
+               {
+                  // this is the main window, query our own satellites
+                  targetWindowName = 
                      RStudioGinjector.INSTANCE.getSatelliteManager()
                          .getWindowAtPoint(evt.getScreenX(), evt.getScreenY());
+               }
                if (targetWindowName == null)
                {
                   // it was dragged over nothing RStudio owns--pop it out
