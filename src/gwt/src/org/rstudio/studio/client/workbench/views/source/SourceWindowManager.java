@@ -132,7 +132,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
             if (!StringUtil.isNullOrEmpty(windowId) &&
                 !isSourceWindowOpen(windowId))
             {
-               openSourceWindow(windowId);
+               openSourceWindow(windowId, null);
             }
          }
          
@@ -242,40 +242,19 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
             });
    }
    
-   public void openSourceWindow(String windowId)
-   {
-      // create default options
-      Size size = new Size(800, 800);
-      Point position = null;
-
-      // if we have geometry for the window, apply it
-      SatelliteWindowGeometry geometry = windowGeometry_.getObject(windowId);
-      if (geometry != null)
-      {
-         size = geometry.getSize();
-         position = geometry.getPosition();
-      }
-
-      pSatelliteManager_.get().openSatellite(
-            SourceSatellite.NAME_PREFIX + windowId, null, size, position);
-      sourceWindows_.put(windowId, 
-            pSatelliteManager_.get().getSatelliteWindowObject(
-                  SourceSatellite.NAME_PREFIX + windowId));
-   }
-   
    // Event handlers ----------------------------------------------------------
    @Override
    public void onPopoutDoc(final PopoutDocEvent evt)
    {
       // assign a new window ID to the source document
       final String windowId = createSourceWindowId();
-      assignSourceDocWindowId(evt.getDoc().getId(), windowId, 
+      assignSourceDocWindowId(evt.getDocId(), windowId, 
             new Command()
             {
                @Override
                public void execute()
                {
-                  openSourceWindow(windowId);
+                  openSourceWindow(windowId, evt.getPosition());
                }
             });
    }
@@ -383,6 +362,27 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
    }
 
    // Private methods ---------------------------------------------------------
+   
+   private void openSourceWindow(String windowId, Point position)
+   {
+      // create default options
+      Size size = new Size(800, 800);
+
+      // if we have geometry for the window, apply it
+      SatelliteWindowGeometry geometry = windowGeometry_.getObject(windowId);
+      if (geometry != null)
+      {
+         size = geometry.getSize();
+         if (position == null)
+            position = geometry.getPosition();
+      }
+
+      pSatelliteManager_.get().openSatellite(
+            SourceSatellite.NAME_PREFIX + windowId, null, size, position);
+      sourceWindows_.put(windowId, 
+            pSatelliteManager_.get().getSatelliteWindowObject(
+                  SourceSatellite.NAME_PREFIX + windowId));
+   }
    
    private void broadcastDocWindowChanged(DocWindowChangedEvent event)
    {

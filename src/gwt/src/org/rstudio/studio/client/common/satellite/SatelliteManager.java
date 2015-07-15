@@ -1,7 +1,7 @@
 /*
  * SatelliteManager.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-15 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -286,6 +286,16 @@ public class SatelliteManager implements CloseHandler<Window>
       pendingEventsBySatelliteName_.clear();
    }
    
+   public String getWindowAtPoint(int x, int y)
+   {
+      for (ActiveSatellite satellite : satellites_)
+      {
+         if (isPointWithinSatellite(satellite.getWindow(), x, y))
+            return satellite.getName();
+      } 
+      return null;
+   }
+   
    // close one satellite window 
    public void closeSatelliteWindow(String name)
    {
@@ -558,6 +568,11 @@ public class SatelliteManager implements CloseHandler<Window>
    private native void callDispatchCommandSatellite(JavaScriptObject satellite,
                                            String commandId) /*-{
       satellite.dispatchRStudioCommandExternal(commandId);
+   }-*/;
+   
+   private native boolean isPointWithinSatellite(JavaScriptObject satellite, 
+         int x, int y) /*-{
+      return satellite.isPointWithinSatellite(x, y);
    }-*/;
    
    private native void callDispatchCommandMain(String commandId) /*-{

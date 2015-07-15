@@ -17,6 +17,7 @@ package org.rstudio.core.client.theme;
 
 import java.util.ArrayList;
 
+import org.rstudio.core.client.Point;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.DomUtils.NodePredicate;
@@ -39,6 +40,7 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.views.source.events.DocTabDragStartedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.DocTabDragStateChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.DocWindowChangedEvent;
+import org.rstudio.studio.client.workbench.views.source.events.PopoutDocEvent;
 
 import com.google.gwt.animation.client.Animation;
 import com.google.gwt.core.client.Scheduler;
@@ -796,6 +798,31 @@ public class DocTabLayoutPanel
             
             events_.fireEvent(new DocWindowChangedEvent(pieces[0], 
                         pieces.length > 1 ? pieces[1] : "", destPos_));
+         }
+         
+         // this is the case when our own drag ends; if it ended outside our
+         // window and outside all satellites, treat it as a tab tear-off
+         // (only if multiple source windows are enabled)
+         if (dragElement_ != null && evt != null && action == ACTION_CANCEL &&
+             RStudioGinjector.INSTANCE.getUIPrefs().enableSourceWindows()
+                                                   .getGlobalValue())
+         {
+            // did the drag end outside our doc?
+            if (DomUtils.elementFromPoint(evt.getClientX(), 
+                  evt.getClientY()) == null)
+            {
+               // did it end in any RStudio satellite window?
+               String targetWindowName = 
+                     RStudioGinjector.INSTANCE.getSatelliteManager()
+                         .getWindowAtPoint(evt.getScreenX(), evt.getScreenY());
+               if (targetWindowName == null)
+               {
+                  // it was dragged over nothing RStudio owns--pop it out
+                  events_.fireEvent(new PopoutDocEvent(
+                        initDragDocId_, new Point(
+                              evt.getScreenX(), evt.getScreenY())));
+               }
+            }
          }
          
          if (curState_ != STATE_EXTERNAL)

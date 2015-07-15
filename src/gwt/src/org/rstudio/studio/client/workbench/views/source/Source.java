@@ -1430,7 +1430,7 @@ public class Source implements InsertSourceHandler,
    @Override
    public void onPopoutDoc(PopoutDocEvent e)
    {
-      disownDoc(e.getDoc().getId());
+      disownDoc(e.getDocId());
    }
    
    @Override

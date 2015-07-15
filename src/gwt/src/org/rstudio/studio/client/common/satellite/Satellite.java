@@ -145,6 +145,13 @@ public class Satellite implements HasCloseHandlers<Satellite>
       $wnd.notifyPendingReactivate = $entry(function() {
          satellite.@org.rstudio.studio.client.common.satellite.Satellite::notifyPendingReactivate()();
       });
+      
+      // export point containment callback
+      $wnd.isPointWithinSatellite = $entry(function(x, y) {
+         // x and y are screen coordinates; translate them into window
+         // (viewport) coordinates
+         return $wnd.document.elementFromPoint(x - $wnd.screenX, y - $wnd.screenY) != null;
+      });
 
       $wnd.addEventListener(
             "unload",

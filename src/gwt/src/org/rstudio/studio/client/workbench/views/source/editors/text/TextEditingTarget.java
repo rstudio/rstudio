@@ -2674,7 +2674,7 @@ public class TextEditingTarget implements
    void onPopoutDoc()
    {
       if (docUpdateSentinel_ != null)
-         events_.fireEvent(new PopoutDocEvent(docUpdateSentinel_.getDoc()));
+         events_.fireEvent(new PopoutDocEvent(getId(), null));
    }
 
    private void doCommentUncomment(String c)

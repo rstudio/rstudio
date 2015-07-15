@@ -14,7 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.source.events;
 
-import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
+import org.rstudio.core.client.Point;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
@@ -26,14 +26,20 @@ public class PopoutDocEvent extends GwtEvent<PopoutDocEvent.Handler>
       void onPopoutDoc(PopoutDocEvent e);
    }
    
-   public PopoutDocEvent(SourceDocument doc)
+   public PopoutDocEvent(String docId, Point position)
    {
-      doc_ = doc;
+      docId_ = docId;
+      position_ = position;
    }
 
-   public SourceDocument getDoc()
+   public String getDocId()
    {
-      return doc_;
+      return docId_;
+   }
+   
+   public Point getPosition()
+   {
+      return position_;
    }
   
    @Override
@@ -48,7 +54,8 @@ public class PopoutDocEvent extends GwtEvent<PopoutDocEvent.Handler>
       handler.onPopoutDoc(this);
    }
 
-   private final SourceDocument doc_;
+   private final String docId_;
+   private final Point position_;
    
    public static final Type<Handler> TYPE = new Type<Handler>();
 }
