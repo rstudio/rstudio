@@ -147,6 +147,11 @@ public class KeyboardShortcut
          return clone;
       }
       
+      public boolean isEmpty()
+      {
+         return keyCombinations_.isEmpty();
+      }
+      
       public void add(NativeEvent event)
       {
          add(new KeyCombination(event.getKeyCode(), getModifierValue(event)));
@@ -164,11 +169,8 @@ public class KeyboardShortcut
       
       public boolean startsWith(KeySequence other)
       {
-         if (other.keyCombinations_.size() >
-             keyCombinations_.size())
-         {
+         if (other.keyCombinations_.size() > keyCombinations_.size())
             return false;
-         }
          
          for (int i = 0; i < keyCombinations_.size(); i++)
             if (!keyCombinations_.get(i).equals(other.keyCombinations_.get(i)))

@@ -185,6 +185,9 @@ public class ShortcutManager implements NativePreviewHandler,
    
    private void updateKeyBuffer()
    {
+      if (keyBuffer_.isEmpty())
+         return;
+      
       // If we have a prefix match, keep the keybuffer alive.
       for (KeyboardShortcut shortcut : commands_.keySet())
          if (shortcut.startsWith(keyBuffer_))
