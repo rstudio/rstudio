@@ -17,6 +17,7 @@ package org.rstudio.core.client.theme;
 
 import java.util.ArrayList;
 
+import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Point;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
@@ -786,7 +787,8 @@ public class DocTabLayoutPanel
          if (dragElement_ == null && evt != null && action == ACTION_COMMIT)
          {
             // pull the document ID and source window out
-            String data = evt.getDataTransfer().getData("text");
+            String data = evt.getDataTransfer().getData(
+                  getDataTransferFormat());
             if (StringUtil.isNullOrEmpty(data))
                return;
             
@@ -898,7 +900,8 @@ public class DocTabLayoutPanel
             @Override
             public void onDragStart(DragStartEvent evt)
             {
-               evt.getDataTransfer().setData("text", docId_ + "|" + 
+               evt.getDataTransfer().setData(
+                     getDataTransferFormat(), docId_ + "|" + 
                   RStudioGinjector.INSTANCE.getSourceWindowManager()
                                            .getSourceWindowId());
                events_.fireEvent(new DocTabDragStartedEvent(docId_, 
@@ -1106,6 +1109,16 @@ public class DocTabLayoutPanel
          lastTab = lastTab.getPreviousSibling();
       }
       return Element.as(lastTab);
+   }
+   
+   private String getDataTransferFormat()
+   {
+      // IE only supports textual data; for other browsers, though, use our own
+      // format so it doesn't activate text drag targets in other apps
+      if (BrowseCap.INSTANCE.isInternetExplorer()) 
+         return "text";
+      else
+         return "application/rstudio-tab";
    }
 
    public static final int BAR_HEIGHT = 24;
