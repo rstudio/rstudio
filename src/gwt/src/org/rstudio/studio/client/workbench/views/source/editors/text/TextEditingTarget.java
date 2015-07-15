@@ -4939,6 +4939,11 @@ public class TextEditingTarget implements
                public void execute(Boolean arg) {
                   docDisplay.setUseVimMode(arg);
                }}));
+      releaseOnDismiss.add(prefs.enableEmacsKeybindings().bind(
+            new CommandWithArg<Boolean>() {
+               public void execute(Boolean arg) {
+                  docDisplay.setUseEmacsKeybindings(arg);
+               }}));
       releaseOnDismiss.add(prefs.codeCompleteOther().bind(
             new CommandWithArg<String>() {
                public void execute(String arg) {

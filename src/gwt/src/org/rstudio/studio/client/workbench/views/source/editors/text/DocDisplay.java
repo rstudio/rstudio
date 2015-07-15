@@ -148,6 +148,8 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void setShowIndentGuides(boolean show);
    void setBlinkingCursor(boolean blinking);
    
+   void setUseEmacsKeybindings(boolean use);
+   
    void setUseVimMode(boolean use);
    boolean isVimModeOn();
    boolean isVimInInsertMode();

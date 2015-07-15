@@ -64,7 +64,14 @@ public class EditingPreferencesPane extends PreferencesPane
             "Continue comment when inserting new line",
             prefs_.continueCommentsOnNewline(),
             "When enabled, pressing enter will continue comments on new lines. Press Shift + Enter to exit a comment."));
-      editingPanel.add(checkboxPref("Enable vim editing mode", prefs_.useVimMode()));
+      
+      vim_ = checkboxPref("Enable vim editing mode", prefs_.useVimMode());
+      emacs_ = checkboxPref("Enable Emacs keybindings", prefs_.enableEmacsKeybindings());
+      
+      canOnlyEnableOnePref(vim_, emacs_);
+      
+      editingPanel.add(vim_);
+      editingPanel.add(emacs_);
      
       Label executionLabel = headerLabel("Execution");
       editingPanel.add(executionLabel);
@@ -284,7 +291,29 @@ public class EditingPreferencesPane extends PreferencesPane
       checkBox.setEnabled(true);
       checkBox.setVisible(true);
    }
-   
+   private void canOnlyEnableOnePref(final CheckBox cb1, final CheckBox cb2)
+   {
+      cb1.addValueChangeHandler(new ValueChangeHandler<Boolean>()
+      {
+         @Override
+         public void onValueChange(ValueChangeEvent<Boolean> event)
+         {
+            if (event.getValue())
+               cb2.setValue(false);
+         }
+      });
+
+      cb2.addValueChangeHandler(new ValueChangeHandler<Boolean>()
+      {
+         @Override
+         public void onValueChange(ValueChangeEvent<Boolean> event)
+         {
+            if (event.getValue())
+               cb1.setValue(false);
+         }
+      });
+   }
+ 
    private void addEnabledDependency(final CheckBox speaker,
                                      final CheckBox listener)
    {
@@ -355,6 +384,8 @@ public class EditingPreferencesPane extends PreferencesPane
    private final NumericValueWidget backgroundDiagnosticsDelayMs_;
    private final CheckBox spacesForTab_;
    private final CheckBox showMargin_;
+   private CheckBox vim_;
+   private CheckBox emacs_;
    private final SelectWidget showCompletions_;
    private final SelectWidget showCompletionsOther_;
    

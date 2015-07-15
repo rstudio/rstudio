@@ -593,20 +593,15 @@ public class AceEditor implements DocDisplay,
    private void updateKeyboardHandlers()
    {
       // create a keyboard previewer for our special hooks
-      AceKeyboardPreviewer previewer = new AceKeyboardPreviewer(
-                                                         completionManager_);
+      AceKeyboardPreviewer previewer = new AceKeyboardPreviewer(completionManager_);
 
-      // reset keyboard handlers
-      widget_.getEditor().setKeyboardHandler(null);
-
-      // if required add vim handlers to main editor
+      // set default key handler
       if (useVimMode_)
-      {
-         widget_.getEditor().addKeyboardHandler(KeyboardHandler.vim());
-      }
-
-      // add the previewer's handler
-      widget_.getEditor().addKeyboardHandler(previewer.getKeyboardHandler());
+         widget_.getEditor().setKeyboardHandler(KeyboardHandler.vim());
+      else if (useEmacsKeybindings_)
+         widget_.getEditor().setKeyboardHandler(KeyboardHandler.emacs());
+      else
+         widget_.getEditor().setKeyboardHandler(null);
    }
 
    public String getCode()
@@ -1454,6 +1449,16 @@ public class AceEditor implements DocDisplay,
       widget_.getEditor().getRenderer().setShowPrintMargin(on);
    }
 
+   @Override
+   public void setUseEmacsKeybindings(boolean use)
+   {
+      if (widget_.getEditor().getReadOnly())
+         return;
+
+      useEmacsKeybindings_ = use;
+      updateKeyboardHandlers();
+   }
+   
    @Override
    public void setUseVimMode(boolean use)
    {
@@ -2447,6 +2452,7 @@ public class AceEditor implements DocDisplay,
    private CollabEditor collab_;
    private TextFileType fileType_;
    private boolean passwordMode_;
+   private boolean useEmacsKeybindings_ = false;
    private boolean useVimMode_ = false;
    private RnwCompletionContext rnwContext_;
    private CppCompletionContext cppContext_;

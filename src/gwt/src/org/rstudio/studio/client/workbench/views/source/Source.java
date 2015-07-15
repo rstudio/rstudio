@@ -577,6 +577,17 @@ public class Source implements InsertSourceHandler,
                   KeyboardShortcut.MODE_NONE);
          }
       });
+      
+      uiPrefs_.enableEmacsKeybindings().bind(new CommandWithArg<Boolean>()
+      {
+         @Override
+         public void execute(Boolean arg)
+         {
+            ShortcutManager.INSTANCE.setEditorMode(arg ?
+                  KeyboardShortcut.MODE_EMACS :
+                  KeyboardShortcut.MODE_NONE);
+         }
+      });
 
       initialized_ = true;
 

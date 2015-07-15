@@ -277,9 +277,12 @@ public class KeyboardShortcut
          for (String disableMode: disableModeList)
          {
             if (disableMode.equals("vim"))
-            {
-               disableModes_ = disableModes_ | MODE_VIM;
-            }
+               disableModes_ |= MODE_VIM;
+            else if (disableMode.equals("emacs"))
+               disableModes_ |= MODE_EMACS;
+            else
+               assert false :
+                  "Unexpected 'disableModes' mode (" + disableMode + ")";
          }
       }
    }

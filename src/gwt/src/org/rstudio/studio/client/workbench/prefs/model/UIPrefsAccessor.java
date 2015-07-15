@@ -103,6 +103,11 @@ public class UIPrefsAccessor extends Prefs
       return bool("use_vim_mode", false);
    }
    
+   public PrefValue<Boolean> enableEmacsKeybindings()
+   {
+      return bool("enable_emacs_keybindings", false);
+   }
+   
    public PrefValue<Boolean> insertMatching()
    {
       return bool("insert_matching", true);
