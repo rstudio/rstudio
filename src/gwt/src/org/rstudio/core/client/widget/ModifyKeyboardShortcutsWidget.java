@@ -30,12 +30,15 @@ import com.google.gwt.view.client.ProvidesKey;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.CustomKeyboardShortcutDispatcher;
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.cellview.ScrollingDataGrid;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.KeyboardHelper;
-import org.rstudio.core.client.command.KeyboardShortcut.KeyCombination;
 import org.rstudio.core.client.command.KeyboardShortcut.KeySequence;
+import org.rstudio.core.client.command.ShortcutManager;
+import org.rstudio.core.client.dom.DomUtils;
+import org.rstudio.core.client.dom.DomUtils.ElementPredicate;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.workbench.commands.Commands;
 
@@ -82,7 +85,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
       {
          if (commandType_ == TYPE_USER_COMMAND)
             return "User-Defined Command";
-         else if (commandType_ == TYPE_INTERNAL_COMMAND)
+         else if (commandType_ == TYPE_RSTUDIO_COMMAND)
             return "RStudio Command";
          else if (commandType_ == TYPE_EDITOR_COMMAND)
             return "Editor Command";
@@ -95,15 +98,17 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
       private final KeySequence keySequence_;
       private final int commandType_;
       
-      public static final int TYPE_USER_COMMAND =     0;
-      public static final int TYPE_INTERNAL_COMMAND = 1;
-      public static final int TYPE_EDITOR_COMMAND =   2;
+      public static final int TYPE_USER_COMMAND =     0; // execute user R code
+      public static final int TYPE_RSTUDIO_COMMAND =  1; // RStudio AppCommands
+      public static final int TYPE_EDITOR_COMMAND =   2; // e.g. Ace commands
    }
    
    public ModifyKeyboardShortcutsWidget()
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
+      
       changes_ = new HashMap<CommandBinding, CommandBinding>();
+      buffer_ = new KeySequence();
       
       table_ = new ScrollingDataGrid<CommandBinding>(1000, KEY_PROVIDER);
       table_.setWidth("500px");
@@ -129,7 +134,24 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
    
    private void applyChanges()
    {
-      // TODO: Update command in ShortcutManager
+      for (Map.Entry<CommandBinding, CommandBinding> entry : changes_.entrySet())
+      {
+         CommandBinding newBinding = entry.getValue();
+         int commandType = newBinding.getCommandType();
+         if (commandType == CommandBinding.TYPE_RSTUDIO_COMMAND)
+         {
+            AppCommand command = commands_.getCommandById(newBinding.getId());
+            assert command != null :
+               "Failed to discover AppCommand with id '" + newBinding.getId() + "'";
+            
+            Debug.logToRConsole("Updating command '" + newBinding.getId() + "' -> '" + newBinding.getKeySequence().toString() + "'");
+            ShortcutManager.INSTANCE.replaceBinding(
+                  newBinding.getKeySequence(),
+                  command);
+         }
+      }
+      
+      closeDialog();
    }
    
    @Inject
@@ -198,19 +220,42 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
    private void onShortcutCellPreview(CellPreviewEvent<CommandBinding> preview)
    {
       NativeEvent event = preview.getNativeEvent();
-      if (event.getType().equals("keydown"))
+      String type = event.getType();
+      if (type.equals("focus") || type.equals("blur"))
+      {
+         buffer_.clear();
+      }
+      else if (event.getType().equals("keydown"))
       {
          if (KeyboardHelper.isModifierKey(event.getKeyCode()))
             return;
          
-         KeyCombination keyPress = new KeyCombination(event);
+         buffer_.add(event);
          Element target = event.getEventTarget().cast();
-         target.setInnerHTML(keyPress.toString());
+         target.setInnerHTML(buffer_.toString());
          
+         // Provide a visual cue that this row has changed
+         Element rowEl = DomUtils.findParentElement(
+               target,
+               new ElementPredicate()
+               {
+                  @Override
+                  public boolean test(Element el)
+                  {
+                     return el.getTagName().toLowerCase().equals("tr");
+                  }
+               });
+         
+         if (rowEl != null)
+         {
+            rowEl.addClassName(RES.styles().modifiedRow());
+         }
+         
+         // Add the new command binding to later be accepted + registered
          CommandBinding oldBinding = preview.getValue();
          CommandBinding newBinding = new CommandBinding(
                oldBinding.getId(),
-               new KeySequence(keyPress.getKeyCode(), keyPress.getModifier()),
+               buffer_.clone(),
                oldBinding.getCommandType());
                
          changes_.put(oldBinding, newBinding);
@@ -238,7 +283,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
          
          String name = command.getId();
          KeySequence keySequence = command.getKeySequence();
-         int type = CommandBinding.TYPE_INTERNAL_COMMAND;
+         int type = CommandBinding.TYPE_RSTUDIO_COMMAND;
          bindings.add(new CommandBinding(name, keySequence, type));
       }
       
@@ -265,6 +310,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
              result.substring(1);
    }
    
+   private final KeySequence buffer_;
    private final ScrollingDataGrid<CommandBinding> table_;
    private final ListDataProvider<CommandBinding> dataProvider_;
    private final Map<CommandBinding, CommandBinding> changes_;
@@ -282,6 +328,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
    
    public interface Styles extends CssResource
    {
+      String modifiedRow();
       String checkColumn();
    }
    

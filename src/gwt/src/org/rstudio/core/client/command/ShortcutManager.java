@@ -21,6 +21,7 @@ import java.util.HashMap;
 import java.util.List;
 
 import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.command.KeyboardShortcut.KeySequence;
 import org.rstudio.core.client.events.NativeKeyDownEvent;
 import org.rstudio.core.client.events.NativeKeyDownHandler;
@@ -78,7 +79,16 @@ public class ShortcutManager implements NativePreviewHandler,
          }
       };
    }
-
+   
+   public void replaceBinding(KeySequence keys, AppCommand command)
+   {
+      KeyboardShortcut shortcut = new KeyboardShortcut(keys);
+      if (commands_.containsKey(shortcut))
+         commands_.remove(shortcut);
+      
+      register(keys, command, "", "", "");
+   }
+   
    public void register(int modifiers, 
                         int keyCode, 
                         AppCommand command, 
@@ -89,8 +99,29 @@ public class ShortcutManager implements NativePreviewHandler,
       if (!BrowseCap.hasMetaKey() && (modifiers & KeyboardShortcut.META) != 0)
          return;
       
+      register(
+            new KeySequence(keyCode, modifiers),
+            command,
+            groupName,
+            title,
+            disableModes);
+   }
+   
+   public void register(KeySequence keys, AppCommand command)
+   {
+      register(keys, command, "", "", "");
+   }
+   
+   public void register(KeySequence keys,
+                        AppCommand command,
+                        String groupName,
+                        String title,
+                        String disableModes)
+   {
+   
       KeyboardShortcut shortcut = 
-            new KeyboardShortcut(modifiers, keyCode, groupName, title, disableModes);
+            new KeyboardShortcut(keys, groupName, title, disableModes);
+      
       if (command == null)
       {
          // If the shortcut is unbound, check to see whether there's another
@@ -138,8 +169,14 @@ public class ShortcutManager implements NativePreviewHandler,
    
    private void updateKeyBuffer()
    {
-      // TODO: Check for prefix matches -- if none, clear buffer.
-      keyBuffer_.clear();
+      // If we have a prefix match, keep the keybuffer alive.
+      // If we have an exact match, clear the keybuffer.
+      for (KeyboardShortcut shortcut : commands_.keySet())
+         if (shortcut.startsWith(keyBuffer_))
+            return;
+      
+      // Otherwise, clear the keybuffer.
+      resetKeyBuffer();
    }
 
    public void onKeyDown(NativeKeyDownEvent evt)
@@ -148,9 +185,14 @@ public class ShortcutManager implements NativePreviewHandler,
          return;
 
       if (handleKeyDown(evt.getEvent()))
+      {
          evt.cancel();
-      
-      updateKeyBuffer();
+         resetKeyBuffer();
+      }
+      else
+      {
+         updateKeyBuffer();
+      }
    }
 
    public void onPreviewNativeEvent(NativePreviewEvent event)
@@ -161,9 +203,14 @@ public class ShortcutManager implements NativePreviewHandler,
       if (event.getTypeInt() == Event.ONKEYDOWN)
       {
          if (handleKeyDown(event.getNativeEvent()))
+         {
             event.cancel();
-         
-         updateKeyBuffer();
+            resetKeyBuffer();
+         }
+         else
+         {
+            updateKeyBuffer();
+         }
       }
    }
    
@@ -242,6 +289,7 @@ public class ShortcutManager implements NativePreviewHandler,
          return false;
       
       keyBuffer_.add(e);
+      Debug.logToRConsole("Keybuffer: '" + keyBuffer_.toString() + "'");
       KeyboardShortcut shortcut = new KeyboardShortcut(keyBuffer_);
 
       // check for disabled modal shortcuts if we're modal

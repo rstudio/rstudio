@@ -1,3 +1,13 @@
+@def MODIFIED_COLOUR #cdefcd;
+
 .checkColumn {
 	padding: 0;
+}
+
+.modifiedRow {
+	background-color: MODIFIED_COLOUR !important;
+}
+
+.modifiedRow td {
+	border-color: MODIFIED_COLOUR !important;
 }

@@ -140,25 +140,47 @@ public class KeyboardShortcut
    {
       public KeySequence()
       {
-         keyPresses_ = new ArrayList<KeyCombination>();
+         keyCombinations_ = new ArrayList<KeyCombination>();
       }
       
       public KeySequence(int keyCode, int modifiers)
       {
          this();
-         keyPresses_.add(new KeyCombination(keyCode, modifiers));
+         keyCombinations_.add(new KeyCombination(keyCode, modifiers));
       }
       
       public void clear()
       {
-         keyPresses_.clear();
+         keyCombinations_.clear();
+      }
+      
+      public KeySequence clone()
+      {
+         KeySequence clone = new KeySequence();
+         clone.keyCombinations_.addAll(keyCombinations_);
+         return clone;
       }
       
       public void add(NativeEvent event)
       {
-         keyPresses_.add(new KeyCombination(
+         keyCombinations_.add(new KeyCombination(
                event.getKeyCode(),
                getModifierValue(event)));
+      }
+      
+      public boolean startsWith(KeySequence other)
+      {
+         if (other.keyCombinations_.size() >
+             keyCombinations_.size())
+         {
+            return false;
+         }
+         
+         for (int i = 0; i < keyCombinations_.size(); i++)
+            if (!keyCombinations_.get(i).equals(other.keyCombinations_.get(i)))
+               return false;
+         
+         return true;
       }
       
       @Override
@@ -169,15 +191,15 @@ public class KeyboardShortcut
       
       public String toString(boolean pretty)
       {
-         if (keyPresses_.size() == 0)
+         if (keyCombinations_.size() == 0)
             return "";
          
          StringBuilder builder = new StringBuilder();
-         builder.append(keyPresses_.get(0).toString(pretty));
-         for (int i = 1; i < keyPresses_.size(); i++)
+         builder.append(keyCombinations_.get(0).toString(pretty));
+         for (int i = 1; i < keyCombinations_.size(); i++)
          {
-            builder.append(", ");
-            builder.append(keyPresses_.get(i).toString(pretty));
+            builder.append(" ");
+            builder.append(keyCombinations_.get(i).toString(pretty));
          }
          return builder.toString();
       }
@@ -186,8 +208,8 @@ public class KeyboardShortcut
       public int hashCode()
       {
          int code = 1;
-         for (int i = 0; i < keyPresses_.size(); i++)
-            code += (1 << (10 + i)) + keyPresses_.get(i).hashCode();
+         for (int i = 0; i < keyCombinations_.size(); i++)
+            code += (1 << (10 + i)) + keyCombinations_.get(i).hashCode();
          return code;
       }
       
@@ -198,14 +220,14 @@ public class KeyboardShortcut
             return false;
          
          KeySequence other = (KeySequence) object;
-         for (int i = 0; i < keyPresses_.size(); i++)
-            if (!keyPresses_.get(i).equals(other.keyPresses_.get(i)))
+         for (int i = 0; i < keyCombinations_.size(); i++)
+            if (!keyCombinations_.get(i).equals(other.keyCombinations_.get(i)))
                return false;
          
          return true;
       }
       
-      private final List<KeyCombination> keyPresses_;
+      private final List<KeyCombination> keyCombinations_;
    }
    
    public KeyboardShortcut(int keyCode)
@@ -257,6 +279,16 @@ public class KeyboardShortcut
    public KeySequence getKeySequence()
    {
       return keySequence_;
+   }
+   
+   public boolean startsWith(KeyboardShortcut other)
+   {
+      return getKeySequence().startsWith(other.getKeySequence());
+   }
+   
+   public boolean startsWith(KeySequence sequence)
+   {
+      return getKeySequence().startsWith(sequence);
    }
    
    @Override
