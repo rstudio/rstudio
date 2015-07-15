@@ -2527,6 +2527,10 @@ public class Source implements InsertSourceHandler,
          ids.add(editors_.get(tabOrder_.get(i)).getId());
       }
       server_.setDocOrder(ids, new VoidServerRequestCallback());
+      
+      // activate the tab 
+      setPhysicalTabIndex(event.getNewPos());
+
       fireDocTabsChanged();
    }
 

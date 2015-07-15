@@ -771,10 +771,6 @@ public class DocTabLayoutPanel
 
          if (dragElement_ != null && action == ACTION_COMMIT)
          {
-            // unsink mousedown/mouseup and simulate a click to activate the tab
-            if (evt != null)
-               simulateClick(evt);
-            
             // let observer know we moved; adjust the destination position one to
             // the left if we're right of the start position to account for the
             // position of the tab prior to movement
@@ -848,17 +844,6 @@ public class DocTabLayoutPanel
          }
       }
 
-      private void simulateClick(Event evt)
-      {
-         /*
-         DomEvent.fireNativeEvent(Document.get().createClickEvent(0,
-               evt.getScreenX(), evt.getScreenY(), 
-               evt.getClientX(), evt.getClientY(), 
-               evt.getCtrlKey(), evt.getAltKey(), 
-               evt.getShiftKey(), evt.getMetaKey()), this.getParent());
-               */
-      }
-      
       private int lastCursorX_ = 0;
       private int lastElementX_ = 0;
       private int startPos_ = 0;
