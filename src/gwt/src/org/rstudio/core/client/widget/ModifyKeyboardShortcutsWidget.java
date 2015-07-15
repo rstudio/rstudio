@@ -29,7 +29,6 @@ import com.google.gwt.view.client.ListDataProvider;
 import com.google.gwt.view.client.ProvidesKey;
 import com.google.inject.Inject;
 
-import org.rstudio.core.client.CustomKeyboardShortcutDispatcher;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.cellview.ScrollingDataGrid;
@@ -155,11 +154,9 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
    }
    
    @Inject
-   public void initialize(Commands commands,
-                          CustomKeyboardShortcutDispatcher shortcuts)
+   public void initialize(Commands commands)
    {
       commands_ = commands;
-      shortcuts_ = shortcuts;
    }
    
    private void addColumns()
@@ -259,6 +256,9 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
                oldBinding.getCommandType());
                
          changes_.put(oldBinding, newBinding);
+         
+         // Highlight any existing conflicts.
+         
       }
    }
    
@@ -317,7 +317,6 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
    
    // Injected ----
    private Commands commands_;
-   private CustomKeyboardShortcutDispatcher shortcuts_;
    
    // Resources, etc ----
    public interface Resources extends ClientBundle

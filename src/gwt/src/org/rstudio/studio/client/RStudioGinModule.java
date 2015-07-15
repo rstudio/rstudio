@@ -20,7 +20,6 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Singleton;
 import com.google.inject.name.Names;
 
-import org.rstudio.core.client.CustomKeyboardShortcutDispatcher;
 import org.rstudio.core.client.command.ShortcutViewer;
 import org.rstudio.studio.client.application.ApplicationInterrupt;
 import org.rstudio.studio.client.application.ApplicationQuit;
@@ -247,7 +246,6 @@ public class RStudioGinModule extends AbstractGinModule
       bind(RSAccountConnector.class).in(Singleton.class);
       bind(PlotPublishMRUList.class).asEagerSingleton();
       bind(SourceWindowManager.class).in(Singleton.class);
-      bind(CustomKeyboardShortcutDispatcher.class).asEagerSingleton();
 
       bind(ApplicationView.class).to(ApplicationWindow.class)
             .in(Singleton.class) ;

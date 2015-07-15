@@ -16,7 +16,7 @@ package org.rstudio.studio.client.common.codetools;
 
 import java.util.List;
 
-import org.rstudio.core.client.CustomKeyboardShortcutDispatcher.UserCommandResult;
+import org.rstudio.core.client.command.UserCommandManager.UserCommandResult;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.server.*;
 import org.rstudio.studio.client.workbench.codesearch.model.CodeSearchServerOperations;

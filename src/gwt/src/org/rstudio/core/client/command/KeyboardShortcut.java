@@ -163,9 +163,17 @@ public class KeyboardShortcut
       
       public void add(NativeEvent event)
       {
-         keyCombinations_.add(new KeyCombination(
-               event.getKeyCode(),
-               getModifierValue(event)));
+         add(new KeyCombination(event.getKeyCode(), getModifierValue(event)));
+      }
+      
+      public void add(int keyCode, int modifiers)
+      {
+         add(new KeyCombination(keyCode, modifiers));
+      }
+      
+      public void add(KeyCombination combination)
+      {
+         keyCombinations_.add(combination);
       }
       
       public boolean startsWith(KeySequence other)

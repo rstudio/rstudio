@@ -41,12 +41,12 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 
 import org.rstudio.core.client.*;
-import org.rstudio.core.client.CustomKeyboardShortcutDispatcher.UserCommandResult;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.command.KeyboardHelper;
 import org.rstudio.core.client.command.KeyboardShortcut;
+import org.rstudio.core.client.command.UserCommandManager.UserCommandResult;
 import org.rstudio.core.client.events.EnsureHeightHandler;
 import org.rstudio.core.client.events.EnsureVisibleHandler;
 import org.rstudio.core.client.events.HasEnsureHeightHandlers;

@@ -26,6 +26,8 @@ import org.rstudio.core.client.command.KeyboardShortcut.KeySequence;
 import org.rstudio.core.client.events.NativeKeyDownEvent;
 import org.rstudio.core.client.events.NativeKeyDownHandler;
 
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Event;
@@ -54,6 +56,18 @@ public class ShortcutManager implements NativePreviewHandler,
             resetKeyBuffer();
          }
       };
+      
+      // Because the ShortcutManager is created staticly, we need
+      // to defer the construction of the 'UserCommandManager' to
+      // ensure that the Ginjector has also been initialized.
+      Scheduler.get().scheduleDeferred(new ScheduledCommand()
+      {
+         @Override
+         public void execute()
+         {
+            userCommands_ = new UserCommandManager(INSTANCE);
+         }
+      });
       
       Event.addNativePreviewHandler(this);
    }
@@ -304,7 +318,12 @@ public class ShortcutManager implements NativePreviewHandler,
             }
          }
       }
+      
+      // Check for user-defined commands.
+      if (userCommands_.dispatch(shortcut))
+         return true;
 
+      // Check for RStudio AppCommands.
       if (!commands_.containsKey(shortcut) || commands_.get(shortcut) == null) 
       {
          return false;
@@ -341,6 +360,7 @@ public class ShortcutManager implements NativePreviewHandler,
    private int disableCount_ = 0;
    private int editorMode_ = KeyboardShortcut.MODE_NONE;
    
+   private UserCommandManager userCommands_;
    private final KeySequence keyBuffer_;
    private final Timer keyTimer_;
    
