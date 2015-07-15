@@ -93,24 +93,10 @@ public class KeyboardShortcut
             return pretty ? "PgUp" : "PageUp";
          else if (keyCode_ == KeyCodes.KEY_PAGEDOWN)
             return pretty ? "PgDn" : "PageDown";
-         else if (keyCode_ == 191)
-            return "/";
-         else if (keyCode_ == 192)
-            return "`";
-         else if (keyCode_ == 190)
-            return ".";
-         else if (keyCode_ == 187)
-            return "=";
-         else if (keyCode_ == 188)
-            return "<";
-         else if (KeyboardHelper.isHyphenKeycode(keyCode_))
-            return "-";
-         else if (keyCode_ >= 112 && keyCode_ <= 123)
-            return "F" + (keyCode_ - 111);
          else if (keyCode_ == 8)
             return macStyle ? "&#9003;" : "Backspace";
 
-         return Character.toUpperCase((char) keyCode_) + "";
+         return KeyboardHelper.keyNameFromKeyCode(keyCode_);
       }
       
       @Override

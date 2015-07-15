@@ -76,6 +76,16 @@ public class KeyboardHelper
       }
    }
    
+   public static String keyNameFromKeyCode(int keyCode)
+   {
+      return keyNameFromKeyCode(keyCode, KEY_CODE_TO_KEY_NAME_MAP);
+   }
+   
+   private static final native String keyNameFromKeyCode(int keyCode, JavaScriptObject map)
+   /*-{
+      return map[keyCode] || String.fromCharCode(keyCode);
+   }-*/;
+   
    public static int keyCodeFromKeyName(String keyName)
    {
       return keyCodeFromKeyName(keyName, KEY_NAME_TO_KEY_CODE_MAP);
@@ -91,26 +101,26 @@ public class KeyboardHelper
       // Map array indices as key codes to corresponding name.
       var map = new Array(256);
       
-      map[8] = "backspace";
-      map[9] = "tab";
-      map[12] = "numlock";
-      map[13] = "enter";
-      map[16] = "shift";
-      map[17] = "ctrl";
-      map[18] = "alt";
-      map[19] = "pause";
-      map[20] = "capslock";
-      map[27] = "escape";
-      map[33] = "pageup";
-      map[34] = "pagedown";
-      map[35] = "end";
-      map[36] = "home";
-      map[37] = "left";
-      map[38] = "up";
-      map[39] = "right";
-      map[40] = "down";
-      map[45] = "insert";
-      map[46] = "delete";
+      map[8] = "Backspace";
+      map[9] = "Tab";
+      map[12] = "NumLock";
+      map[13] = "Enter";
+      map[16] = "Shift";
+      map[17] = "Ctrl";
+      map[18] = "Alt";
+      map[19] = "Pause";
+      map[20] = "CapsLock";
+      map[27] = "Escape";
+      map[33] = "PageUp";
+      map[34] = "PageDown";
+      map[35] = "End";
+      map[36] = "Home";
+      map[37] = "Left";
+      map[38] = "Up";
+      map[39] = "Right";
+      map[40] = "Down";
+      map[45] = "Insert";
+      map[46] = "Delete";
       
       // Add in numbers 0-9
       for (var i = 48; i <= 57; i++)
@@ -118,13 +128,15 @@ public class KeyboardHelper
          
       // Add in letters
       for (var i = 65; i <= 90; i++)
-         map[i] = String.fromCharCode(i).toLowerCase();
+         map[i] = String.fromCharCode(i);
          
-      map[91] = "left.window";
-      map[92] = "right.window";
+      // TODO: Treat these keys differently?
+      map[91] = "Meta";
+      map[92] = "Meta";
+      map[93] = "Meta";
       
       for (var i = 96; i <= 105; i++)
-         map[i] = "numpad" + (i - 96);
+         map[i] = "NumPad" + (i - 96);
       
       map[106] = "*";
       map[107] = "+";
@@ -136,11 +148,13 @@ public class KeyboardHelper
       map[110] = "." 
       
       map[111] = "/";
-      for (var i = 112; i <= 123; i++)
-         map[i] = "f" + (i - 111);
       
-      map[144] = "num.lock";
-      map[145] = "scroll.lock";
+      // Function keys
+      for (var i = 112; i <= 123; i++)
+         map[i] = "F" + (i - 111);
+      
+      map[144] = "NumLock";
+      map[145] = "ScrollLock";
       map[186] = ";";
       map[187] = "=";
       map[188] = ",";
