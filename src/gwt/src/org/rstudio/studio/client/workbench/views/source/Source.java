@@ -1428,9 +1428,18 @@ public class Source implements InsertSourceHandler,
    }
 
    @Override
-   public void onPopoutDoc(PopoutDocEvent e)
+   public void onPopoutDoc(final PopoutDocEvent e)
    {
-      disownDoc(e.getDocId());
+      // disowning the doc may cause the entire window to close, so defer it
+      // to allow any other popout processing to occur
+      Scheduler.get().scheduleDeferred(new ScheduledCommand()
+      {
+         @Override
+         public void execute()
+         {
+            disownDoc(e.getDocId());
+         }
+      });
    }
    
    @Override

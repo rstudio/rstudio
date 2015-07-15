@@ -246,17 +246,26 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
    @Override
    public void onPopoutDoc(final PopoutDocEvent evt)
    {
-      // assign a new window ID to the source document
-      final String windowId = createSourceWindowId();
-      assignSourceDocWindowId(evt.getDocId(), windowId, 
-            new Command()
-            {
-               @Override
-               public void execute()
+      if (isMainSourceWindow())
+      {
+         // assign a new window ID to the source document
+         final String windowId = createSourceWindowId();
+         assignSourceDocWindowId(evt.getDocId(), windowId, 
+               new Command()
                {
-                  openSourceWindow(windowId, evt.getPosition());
-               }
-            });
+                  @Override
+                  public void execute()
+                  {
+                     openSourceWindow(windowId, evt.getPosition());
+                  }
+               });
+      }
+      else
+      {
+         // can't pop out directly from a satellite to another satellite; fire
+         // this one on the main window
+         events_.fireEventToMainWindow(evt);
+      }
    }
    
    @Override
