@@ -220,7 +220,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
          SourceDocument doc = docs.get(i);
          if (doc.getId() == docId)
          {
-            doc.getProperties().setString(SOURCE_WINDOW_ID, windowId);
+            doc.assignSourceWindowId(windowId);
             break;
          }
       }
@@ -232,7 +232,8 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
                @Override
                public void onResponseReceived(Void v)
                {
-                  onComplete.execute();
+                  if (onComplete != null)
+                     onComplete.execute();
                }
 
                @Override
@@ -275,6 +276,14 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
    @Override
    public void onSourceDocAdded(SourceDocAddedEvent e)
    {
+      // if the window that fired the event is not already the owner of the
+      // document, make it the owner
+      if (e.getDoc().getSourceWindowId() != e.getWindowId())
+      {
+         assignSourceDocWindowId(e.getDoc().getId(), 
+               e.getWindowId(), null);
+      }
+
       // ensure the doc isn't already in our index
       for (int i = 0; i < sourceDocs_.length(); i++)
       {

@@ -136,4 +136,9 @@ public class SourceDocument extends JavaScriptObject
       }
       return "";
    }
+   
+   public final void assignSourceWindowId(String windowId)
+   {
+      getProperties().setString(SourceWindowManager.SOURCE_WINDOW_ID, windowId);
+   }
 }

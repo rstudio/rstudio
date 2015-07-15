@@ -391,6 +391,7 @@ public class DocTabLayoutPanel
             {
                endDrag(event, ACTION_CANCEL);
             }
+            event.preventDefault();
          }
          else if (event.getType() == "dragleave")
          {
