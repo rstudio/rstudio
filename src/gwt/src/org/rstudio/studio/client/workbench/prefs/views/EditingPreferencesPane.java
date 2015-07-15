@@ -65,8 +65,8 @@ public class EditingPreferencesPane extends PreferencesPane
             prefs_.continueCommentsOnNewline(),
             "When enabled, pressing enter will continue comments on new lines. Press Shift + Enter to exit a comment."));
       
-      vim_ = checkboxPref("Enable vim editing mode", prefs_.useVimMode());
-      emacs_ = checkboxPref("Enable Emacs keybindings", prefs_.enableEmacsKeybindings());
+      vim_ = checkboxPref("Enable Vim editing mode", prefs_.useVimMode());
+      emacs_ = checkboxPref("Enable Emacs editing mode", prefs_.enableEmacsKeybindings());
       
       canOnlyEnableOnePref(vim_, emacs_);
       
