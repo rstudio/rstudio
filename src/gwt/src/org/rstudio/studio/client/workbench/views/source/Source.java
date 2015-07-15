@@ -715,7 +715,7 @@ public class Source implements InsertSourceHandler,
              (windowManager_.isMainSourceWindow() && 
               !windowManager_.isSourceWindowOpen(docWindowId)))
          {
-            addTab(doc);
+            addTab(doc, true);
          }
       }
    }
@@ -2261,7 +2261,13 @@ public class Source implements InsertSourceHandler,
    
    private EditingTarget addTab(SourceDocument doc)
    {
-      return addTab(doc, null);
+      return addTab(doc, false);
+   }
+   
+   private EditingTarget addTab(SourceDocument doc, boolean atEnd)
+   {
+      // by default, add at the tab immediately after the current tab
+      return addTab(doc, atEnd ? null : getPhysicalTabIndex() + 1);
    }
 
    private EditingTarget addTab(SourceDocument doc, Integer position)
@@ -2277,7 +2283,11 @@ public class Source implements InsertSourceHandler,
       
       final Widget widget = createWidget(target);
 
-      editors_.add(target);
+      if (position == null)
+         editors_.add(target);
+      else
+         editors_.add(position, target);
+
       view_.addTab(widget,
                    target.getIcon(),
                    target.getId(),
