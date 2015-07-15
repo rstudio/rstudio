@@ -23,15 +23,15 @@ import java.util.List;
 
 public class KeyboardShortcut
 {
-   public static class KeyPress
+   public static class KeyCombination
    {
-      public KeyPress(NativeEvent event)
+      public KeyCombination(NativeEvent event)
       {
          keyCode_ = event.getKeyCode();
          modifiers_ = getModifierValue(event);
       }
       
-      public KeyPress(int keyCode, int modifiers)
+      public KeyCombination(int keyCode, int modifiers)
       {
          keyCode_ = keyCode;
          modifiers_ = modifiers;
@@ -124,10 +124,10 @@ public class KeyboardShortcut
       @Override
       public boolean equals(Object object)
       {
-         if (object == null || !(object instanceof KeyPress))
+         if (object == null || !(object instanceof KeyCombination))
             return false;
          
-         KeyPress other = (KeyPress) object;
+         KeyCombination other = (KeyCombination) object;
          return keyCode_ == other.keyCode_ &&
                 modifiers_ == other.modifiers_;
       }
@@ -140,13 +140,13 @@ public class KeyboardShortcut
    {
       public KeySequence()
       {
-         keyPresses_ = new ArrayList<KeyPress>();
+         keyPresses_ = new ArrayList<KeyCombination>();
       }
       
       public KeySequence(int keyCode, int modifiers)
       {
          this();
-         keyPresses_.add(new KeyPress(keyCode, modifiers));
+         keyPresses_.add(new KeyCombination(keyCode, modifiers));
       }
       
       public void clear()
@@ -156,7 +156,7 @@ public class KeyboardShortcut
       
       public void add(NativeEvent event)
       {
-         keyPresses_.add(new KeyPress(
+         keyPresses_.add(new KeyCombination(
                event.getKeyCode(),
                getModifierValue(event)));
       }
@@ -205,7 +205,7 @@ public class KeyboardShortcut
          return true;
       }
       
-      private final List<KeyPress> keyPresses_;
+      private final List<KeyCombination> keyPresses_;
    }
    
    public KeyboardShortcut(int keyCode)

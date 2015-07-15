@@ -34,7 +34,7 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.cellview.ScrollingDataGrid;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.KeyboardHelper;
-import org.rstudio.core.client.command.KeyboardShortcut.KeyPress;
+import org.rstudio.core.client.command.KeyboardShortcut.KeyCombination;
 import org.rstudio.core.client.command.KeyboardShortcut.KeySequence;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -203,7 +203,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
          if (KeyboardHelper.isModifierKey(event.getKeyCode()))
             return;
          
-         KeyPress keyPress = new KeyPress(event);
+         KeyCombination keyPress = new KeyCombination(event);
          Element target = event.getEventTarget().cast();
          target.setInnerHTML(keyPress.toString());
          
