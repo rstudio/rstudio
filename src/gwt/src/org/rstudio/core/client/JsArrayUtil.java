@@ -83,4 +83,8 @@ public class JsArrayUtil
       }
       return out;
    }
+   
+   public final static native void remove(JsArray<?> array, int index) /*-{
+      array.splice(index, 1);
+   }-*/;
 }

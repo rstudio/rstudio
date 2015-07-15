@@ -2479,6 +2479,7 @@ public class Source implements InsertSourceHandler,
 
       if (closeDocument)
       {
+         events_.fireEvent(new DocTabClosedEvent(target.getId()));
          server_.closeDocument(target.getId(),
                                new VoidServerRequestCallback());
       }

@@ -16,6 +16,7 @@ package org.rstudio.studio.client.workbench.views.source;
 
 import java.util.HashMap;
 
+import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.Point;
 import org.rstudio.core.client.Size;
 import org.rstudio.core.client.StringUtil;
@@ -37,6 +38,7 @@ import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
+import org.rstudio.studio.client.workbench.views.source.events.DocTabClosedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.DocTabDragStartedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.DocWindowChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.LastSourceDocClosedEvent;
@@ -47,6 +49,7 @@ import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
 
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.JsArrayUtils;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Window;
 import com.google.inject.Inject;
@@ -60,6 +63,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
                                             SatelliteClosedEvent.Handler,
                                             DocTabDragStartedEvent.Handler,
                                             DocWindowChangedEvent.Handler,
+                                            DocTabClosedEvent.Handler,
                                             AllSatellitesClosingEvent.Handler
 {
    @Inject
@@ -83,6 +87,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
       events_.addHandler(LastSourceDocClosedEvent.TYPE, this);
       events_.addHandler(SatelliteClosedEvent.TYPE, this);
       events_.addHandler(DocTabDragStartedEvent.TYPE, this);
+      events_.addHandler(DocTabClosedEvent.TYPE, this);
       events_.addHandler(DocWindowChangedEvent.TYPE, this);
       events_.addHandler(AllSatellitesClosingEvent.TYPE, this);
       
@@ -367,6 +372,20 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
       else
       {
          broadcastDocWindowChanged(event);
+      }
+   }
+
+   @Override
+   public void onDocTabClosed(DocTabClosedEvent event)
+   {
+      JsArray<SourceDocument> sourceDocs = getSourceDocs();
+      for (int i = 0; i < sourceDocs.length(); i++)
+      {
+         if (sourceDocs.get(i).getId() == event.getDocId())
+         {
+            JsArrayUtil.remove(sourceDocs, i);
+            break;
+         }
       }
    }
 
