@@ -17,6 +17,7 @@ package org.rstudio.core.client.command;
 import org.rstudio.core.client.BrowseCap;
 
 import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.event.dom.client.KeyCodes;
 
 public class KeyboardHelper
 {
@@ -55,5 +56,22 @@ public class KeyboardHelper
    {
       return keyCode == 190;
    }
-
+   
+   public static boolean isModifierKey(int keyCode)
+   {
+      switch (keyCode)
+      {
+      case KeyCodes.KEY_CTRL:
+      case KeyCodes.KEY_ALT:
+      case KeyCodes.KEY_SHIFT:
+      case KeyCodes.KEY_WIN_IME:
+      case KeyCodes.KEY_WIN_KEY:
+      case KeyCodes.KEY_WIN_KEY_FF_LINUX:
+      case KeyCodes.KEY_WIN_KEY_RIGHT:
+      case KeyCodes.KEY_WIN_KEY_LEFT_META:
+         return true;
+      default:
+         return false;
+      }
+   }
 }

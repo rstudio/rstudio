@@ -25,6 +25,12 @@ public class KeyboardShortcut
 {
    public static class KeyPress
    {
+      public KeyPress(NativeEvent event)
+      {
+         keyCode_ = event.getKeyCode();
+         modifiers_ = getModifierValue(event);
+      }
+      
       public KeyPress(int keyCode, int modifiers)
       {
          keyCode_ = keyCode;
@@ -132,10 +138,27 @@ public class KeyboardShortcut
    
    public static class KeySequence
    {
-      public KeySequence(int keyCode, int modifiers)
+      public KeySequence()
       {
          keyPresses_ = new ArrayList<KeyPress>();
+      }
+      
+      public KeySequence(int keyCode, int modifiers)
+      {
+         this();
          keyPresses_.add(new KeyPress(keyCode, modifiers));
+      }
+      
+      public void clear()
+      {
+         keyPresses_.clear();
+      }
+      
+      public void add(NativeEvent event)
+      {
+         keyPresses_.add(new KeyPress(
+               event.getKeyCode(),
+               getModifierValue(event)));
       }
       
       @Override
@@ -199,11 +222,22 @@ public class KeyboardShortcut
    {
       this(modifiers, keyCode, "", "", "");
    }
-
+   
    public KeyboardShortcut(int modifiers, int keyCode, 
                            String groupName, String title, String disableModes)
    {
-      keySequence_ = new KeySequence(keyCode, modifiers);
+      this(new KeySequence(keyCode, modifiers), groupName, title, disableModes);
+   }
+   
+   public KeyboardShortcut(KeySequence keySequence)
+   {
+      this(keySequence, "", "", "");
+   }
+   
+   public KeyboardShortcut(KeySequence keySequence,
+                           String groupName, String title, String disableModes)
+   {
+      keySequence_ = keySequence;
       groupName_ = groupName;
       order_ = ORDER++;
       title_ = title;
@@ -218,6 +252,11 @@ public class KeyboardShortcut
             }
          }
       }
+   }
+   
+   public KeySequence getKeySequence()
+   {
+      return keySequence_;
    }
    
    @Override
@@ -285,7 +324,7 @@ public class KeyboardShortcut
          modifiers += SHIFT;
       return modifiers;
    }
-
+   
    private final KeySequence keySequence_;
    
    private String groupName_;

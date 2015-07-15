@@ -28,6 +28,7 @@ import com.google.gwt.user.client.ui.MenuItem;
 
 import org.rstudio.core.client.SafeHtmlUtil;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.command.KeyboardShortcut.KeySequence;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
@@ -456,6 +457,19 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
       text.append("</tr></table>");
 
       return text.toString();
+   }
+   
+   public KeyboardShortcut getShortcut()
+   {
+      return shortcut_;
+   }
+   
+   public KeySequence getKeySequence()
+   {
+      if (shortcut_ == null)
+         return null;
+      
+      return shortcut_.getKeySequence();
    }
 
    public void setShortcut(KeyboardShortcut shortcut)

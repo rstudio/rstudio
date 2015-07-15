@@ -21,6 +21,7 @@ import java.util.HashMap;
 import java.util.List;
 
 import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.command.KeyboardShortcut.KeySequence;
 import org.rstudio.core.client.events.NativeKeyDownEvent;
 import org.rstudio.core.client.events.NativeKeyDownHandler;
 
@@ -29,6 +30,7 @@ import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Event.NativePreviewEvent;
 import com.google.gwt.user.client.Event.NativePreviewHandler;
+import com.google.gwt.user.client.Timer;
 
 public class ShortcutManager implements NativePreviewHandler,
                                         NativeKeyDownHandler
@@ -42,6 +44,16 @@ public class ShortcutManager implements NativePreviewHandler,
 
    private ShortcutManager()
    {
+      keyBuffer_ = new KeySequence();
+      keyTimer_ = new Timer()
+      {
+         @Override
+         public void run()
+         {
+            resetKeyBuffer();
+         }
+      };
+      
       Event.addNativePreviewHandler(this);
    }
 
@@ -118,6 +130,17 @@ public class ShortcutManager implements NativePreviewHandler,
          modalShortcuts_.add(shortcut);
       }
    }
+   
+   private void resetKeyBuffer()
+   {
+      keyBuffer_.clear();
+   }
+   
+   private void updateKeyBuffer()
+   {
+      // TODO: Check for prefix matches -- if none, clear buffer.
+      keyBuffer_.clear();
+   }
 
    public void onKeyDown(NativeKeyDownEvent evt)
    {
@@ -126,6 +149,8 @@ public class ShortcutManager implements NativePreviewHandler,
 
       if (handleKeyDown(evt.getEvent()))
          evt.cancel();
+      
+      updateKeyBuffer();
    }
 
    public void onPreviewNativeEvent(NativePreviewEvent event)
@@ -137,6 +162,8 @@ public class ShortcutManager implements NativePreviewHandler,
       {
          if (handleKeyDown(event.getNativeEvent()))
             event.cancel();
+         
+         updateKeyBuffer();
       }
    }
    
@@ -209,10 +236,13 @@ public class ShortcutManager implements NativePreviewHandler,
 
    private boolean handleKeyDown(NativeEvent e)
    {
-      int modifiers = KeyboardShortcut.getModifierValue(e);
-
-      KeyboardShortcut shortcut = new KeyboardShortcut(modifiers,
-                                                       e.getKeyCode());
+      // Don't dispatch on bare modifier keypresses.
+      // TODO: We might want to enable e.g. 'Shift + Shift' dispatch in the future.
+      if (KeyboardHelper.isModifierKey(e.getKeyCode()))
+         return false;
+      
+      keyBuffer_.add(e);
+      KeyboardShortcut shortcut = new KeyboardShortcut(keyBuffer_);
 
       // check for disabled modal shortcuts if we're modal
       if (editorMode_ > 0)
@@ -262,8 +292,13 @@ public class ShortcutManager implements NativePreviewHandler,
 
    private int disableCount_ = 0;
    private int editorMode_ = KeyboardShortcut.MODE_NONE;
+   
+   private final KeySequence keyBuffer_;
+   private final Timer keyTimer_;
+   
    private final HashMap<KeyboardShortcut, ArrayList<AppCommand> > commands_
                                   = new HashMap<KeyboardShortcut, ArrayList<AppCommand> >();
+   
    private ArrayList<KeyboardShortcut> unboundShortcuts_
                                   = new ArrayList<KeyboardShortcut>();
    private ArrayList<KeyboardShortcut> modalShortcuts_ 

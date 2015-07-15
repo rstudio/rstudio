@@ -20,6 +20,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import org.rstudio.core.client.command.AppCommand;
+import org.rstudio.core.client.command.KeyboardHelper;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
 import org.rstudio.studio.client.server.remote.ExecuteUserCommandEvent;
@@ -31,7 +32,6 @@ import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArrayInteger;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Event;
@@ -124,7 +124,7 @@ public class CustomKeyboardShortcutDispatcher
                // buffer -- just record it in 'current' so that the status bar can
                // see it. A key combination is not 'pushed' to the buffer until a
                // non-modifier key is pressed.
-               if (isModifierKey(keyCode))
+               if (KeyboardHelper.isModifierKey(keyCode))
                {
                   current_ = keyString;
                }
@@ -240,24 +240,6 @@ public class CustomKeyboardShortcutDispatcher
       return kbdCommandMap;
    }
    
-   private static boolean isModifierKey(int keyCode)
-   {
-      switch (keyCode)
-      {
-      case KeyCodes.KEY_CTRL:
-      case KeyCodes.KEY_ALT:
-      case KeyCodes.KEY_SHIFT:
-      case KeyCodes.KEY_WIN_IME:
-      case KeyCodes.KEY_WIN_KEY:
-      case KeyCodes.KEY_WIN_KEY_FF_LINUX:
-      case KeyCodes.KEY_WIN_KEY_RIGHT:
-      case KeyCodes.KEY_WIN_KEY_LEFT_META:
-         return true;
-      default:
-         return false;
-      }
-   }
-   
    private void showKeyBuffer()
    {
       
@@ -282,7 +264,7 @@ public class CustomKeyboardShortcutDispatcher
       int keyCode = event.getKeyCode();
       
       // Don't duplicate modifier keys.
-      if (isModifierKey(keyCode))
+      if (KeyboardHelper.isModifierKey(keyCode))
          return builder.toString();
       
       builder.append(keyCodeToString(keyCode));
