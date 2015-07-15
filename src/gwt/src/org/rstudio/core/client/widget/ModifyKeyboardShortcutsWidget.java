@@ -34,8 +34,10 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.cellview.ScrollingDataGrid;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.KeyboardHelper;
+import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.command.KeyboardShortcut.KeySequence;
 import org.rstudio.core.client.command.ShortcutManager;
+import org.rstudio.core.client.command.UserCommandManager.UserCommand;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.DomUtils.ElementPredicate;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -135,7 +137,9 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
    {
       for (Map.Entry<CommandBinding, CommandBinding> entry : changes_.entrySet())
       {
+         CommandBinding oldBinding = entry.getKey();
          CommandBinding newBinding = entry.getValue();
+         
          int commandType = newBinding.getCommandType();
          if (commandType == CommandBinding.TYPE_RSTUDIO_COMMAND)
          {
@@ -147,6 +151,22 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
             ShortcutManager.INSTANCE.replaceBinding(
                   newBinding.getKeySequence(),
                   command);
+         }
+         else if (commandType == CommandBinding.TYPE_USER_COMMAND)
+         {
+            Map<KeyboardShortcut, UserCommand> userCommands =
+                  ShortcutManager.INSTANCE.getUserCommands();
+            
+            UserCommand command = userCommands.get(
+                  new KeyboardShortcut(oldBinding.getKeySequence()));
+            assert command != null :
+               "Failed to find user command bound to '" + oldBinding.getKeySequence().toString() + "'";
+            
+            KeyboardShortcut oldShortcut = new KeyboardShortcut(oldBinding.getKeySequence());
+            userCommands.remove(oldShortcut);
+            
+            KeyboardShortcut newShortcut = new KeyboardShortcut(newBinding.getKeySequence());
+            userCommands.put(newShortcut, command);
          }
       }
       
@@ -276,6 +296,21 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
    {
       List<CommandBinding> bindings = new ArrayList<CommandBinding>();
       
+      // User Commands
+      Map<KeyboardShortcut, UserCommand> userCommands = 
+            ShortcutManager.INSTANCE.getUserCommands();
+      for (Map.Entry<KeyboardShortcut, UserCommand> entry : userCommands.entrySet())
+      {
+         KeyboardShortcut shortcut = entry.getKey();
+         UserCommand command = entry.getValue();
+         
+         bindings.add(new CommandBinding(
+               command.getName(),
+               shortcut.getKeySequence(),
+               CommandBinding.TYPE_USER_COMMAND));
+      }
+      
+      // RStudio Commands
       Map<String, AppCommand> commands = commands_.getCommands();
       for (Map.Entry<String, AppCommand> entry : commands.entrySet())
       {

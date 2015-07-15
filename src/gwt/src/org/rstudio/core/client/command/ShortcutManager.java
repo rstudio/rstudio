@@ -19,10 +19,12 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.command.KeyboardShortcut.KeySequence;
+import org.rstudio.core.client.command.UserCommandManager.UserCommand;
 import org.rstudio.core.client.events.NativeKeyDownEvent;
 import org.rstudio.core.client.events.NativeKeyDownHandler;
 
@@ -184,8 +186,11 @@ public class ShortcutManager implements NativePreviewHandler,
    private void updateKeyBuffer()
    {
       // If we have a prefix match, keep the keybuffer alive.
-      // If we have an exact match, clear the keybuffer.
       for (KeyboardShortcut shortcut : commands_.keySet())
+         if (shortcut.startsWith(keyBuffer_))
+            return;
+      
+      for (KeyboardShortcut shortcut : userCommands_.getKeyboardShortcuts())
          if (shortcut.startsWith(keyBuffer_))
             return;
       
@@ -198,6 +203,7 @@ public class ShortcutManager implements NativePreviewHandler,
       if (evt.isCanceled())
          return;
 
+      keyTimer_.schedule(3000);
       if (handleKeyDown(evt.getEvent()))
       {
          evt.cancel();
@@ -214,6 +220,7 @@ public class ShortcutManager implements NativePreviewHandler,
       if (event.isCanceled())
          return;
 
+      keyTimer_.schedule(3000);
       if (event.getTypeInt() == Event.ONKEYDOWN)
       {
          if (handleKeyDown(event.getNativeEvent()))
@@ -355,6 +362,11 @@ public class ShortcutManager implements NativePreviewHandler,
       }
 
       return command != null;
+   }
+   
+   public Map<KeyboardShortcut, UserCommand> getUserCommands()
+   {
+      return userCommands_.getCommands();
    }
 
    private int disableCount_ = 0;

@@ -16,6 +16,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 public class UserCommandManager
 {
@@ -56,7 +57,7 @@ public class UserCommandManager
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
       manager_ = manager;
-      commandMap_ = new HashMap<KeyboardShortcut, Command>();
+      commandMap_ = new HashMap<KeyboardShortcut, UserCommand>();
       
       events_.addHandler(
             RegisterUserCommandEvent.TYPE,
@@ -80,7 +81,7 @@ public class UserCommandManager
    {
       if (commandMap_.containsKey(shortcut))
       {
-         Command command = commandMap_.get(shortcut);
+         UserCommand command = commandMap_.get(shortcut);
          command.execute();
          return true;
       }
@@ -140,21 +141,32 @@ public class UserCommandManager
          assert sequence != null : "Failed to parse string '" + shortcutString + "'";
          
          KeyboardShortcut shortcut = new KeyboardShortcut(sequence);
-         Command command = new Command() {
+         UserCommand command = new UserCommand(name, new Command()
+         {
             @Override
             public void execute()
             {
                events_.fireEvent(new ExecuteUserCommandEvent(name));
             }
-         };
+         });
          
          Debug.logToRConsole("Registered shortcut '" + shortcutString + "'");
          commandMap_.put(shortcut, command);
       }
    }
    
+   public Set<KeyboardShortcut> getKeyboardShortcuts()
+   {
+      return commandMap_.keySet();
+   }
+   
+   public Map<KeyboardShortcut, UserCommand> getCommands()
+   {
+      return commandMap_;
+   }
+   
    private final ShortcutManager manager_;
-   private final Map<KeyboardShortcut, Command> commandMap_;
+   private final Map<KeyboardShortcut, UserCommand> commandMap_;
    
    // Injected ----
    private EventBus events_;
