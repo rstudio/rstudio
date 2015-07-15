@@ -130,9 +130,11 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
       // there instead
       Satellite satellite = RStudioGinjector.INSTANCE.getSatellite();
       if (satellite.isCurrentWindowSatellite() 
-          && getWindowMode().equals(WINDOW_MODE_MAIN))
+          && (getWindowMode().equals(WINDOW_MODE_MAIN) ||
+              getWindowMode().equals(WINDOW_MODE_BACKGROUND)))
       {
-         satellite.focusMainWindow();
+         if (getWindowMode().equals(WINDOW_MODE_MAIN))
+            satellite.focusMainWindow();
          SatelliteManager mgr = RStudioGinjector.INSTANCE.getSatelliteManager();
          mgr.dispatchCommand(this, null);
          return;
@@ -544,4 +546,5 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
  
    private static boolean enableNoHandlerAssertions_ = true;
    private static final String WINDOW_MODE_MAIN = "main";
+   private static final String WINDOW_MODE_BACKGROUND = "background";
 }

@@ -99,6 +99,7 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
+import org.rstudio.studio.client.shiny.events.LaunchShinyApplicationEvent;
 import org.rstudio.studio.client.shiny.events.ShinyApplicationStatusEvent;
 import org.rstudio.studio.client.shiny.model.ShinyApplicationParams;
 import org.rstudio.studio.client.shiny.model.ShinyViewerType;
@@ -3789,8 +3790,7 @@ public class TextEditingTarget implements
          @Override
          public void execute()
          {
-            RStudioGinjector.INSTANCE.getShinyApplication()
-                                     .launchShinyApplication(getPath());
+            events_.fireEvent(new LaunchShinyApplicationEvent(getPath()));
          }
       }, "Run Shiny Application");
    }

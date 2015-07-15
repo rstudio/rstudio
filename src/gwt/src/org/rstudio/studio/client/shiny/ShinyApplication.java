@@ -31,6 +31,7 @@ import org.rstudio.studio.client.common.satellite.events.WindowClosedEvent;
 import org.rstudio.studio.client.common.shiny.model.ShinyServerOperations;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.shiny.events.LaunchShinyApplicationEvent;
 import org.rstudio.studio.client.shiny.events.ShinyApplicationStatusEvent;
 import org.rstudio.studio.client.shiny.model.ShinyApplicationParams;
 import org.rstudio.studio.client.shiny.model.ShinyRunCmd;
@@ -53,7 +54,8 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
                                          ConsoleBusyEvent.Handler,
                                          DebugModeChangedEvent.Handler,
                                          RestartStatusEvent.Handler, 
-                                         WindowClosedEvent.Handler
+                                         WindowClosedEvent.Handler,
+                                         LaunchShinyApplicationEvent.Handler
 {
    public interface Binder
    extends CommandBinder<Commands, ShinyApplication> {}
@@ -81,6 +83,7 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
       interrupt_ = interrupt;
       
       eventBus_.addHandler(ShinyApplicationStatusEvent.TYPE, this);
+      eventBus_.addHandler(LaunchShinyApplicationEvent.TYPE, this);
       eventBus_.addHandler(ConsoleBusyEvent.TYPE, this);
       eventBus_.addHandler(DebugModeChangedEvent.TYPE, this);
       eventBus_.addHandler(RestartStatusEvent.TYPE, this);
@@ -114,6 +117,12 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
       {
          params_ = null;
       }
+   }
+
+   @Override
+   public void onLaunchShinyApplication(LaunchShinyApplicationEvent event)
+   {
+      launchShinyApplication(event.getPath());
    }
 
    @Override
@@ -199,7 +208,9 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
    
    // Public methods ----------------------------------------------------------
 
-   public void launchShinyApplication(String filePath)
+   // Private methods ---------------------------------------------------------
+   
+   private void launchShinyApplication(String filePath)
    {
       final String dir = filePath.substring(0, filePath.lastIndexOf("/"));
       if (dir.equals(currentAppPath()))
@@ -248,8 +259,6 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
       }
    }
 
-   // Private methods ---------------------------------------------------------
-   
    private String currentAppPath()
    {
       if (params_ != null)

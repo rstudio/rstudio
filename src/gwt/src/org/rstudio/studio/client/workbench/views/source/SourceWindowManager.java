@@ -35,6 +35,7 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
+import org.rstudio.studio.client.shiny.events.ShinyApplicationStatusEvent;
 import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
@@ -63,7 +64,8 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
                                             DocTabDragStartedEvent.Handler,
                                             DocWindowChangedEvent.Handler,
                                             DocTabClosedEvent.Handler,
-                                            AllSatellitesClosingEvent.Handler
+                                            AllSatellitesClosingEvent.Handler,
+                                            ShinyApplicationStatusEvent.Handler
 {
    @Inject
    public SourceWindowManager(
@@ -89,6 +91,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
       events_.addHandler(DocTabClosedEvent.TYPE, this);
       events_.addHandler(DocWindowChangedEvent.TYPE, this);
       events_.addHandler(AllSatellitesClosingEvent.TYPE, this);
+      events_.addHandler(ShinyApplicationStatusEvent.TYPE, this);
       
       if (isMainSourceWindow())
       {
@@ -348,10 +351,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
       {
          // if this the main source window, fire the event to all the source
          // satellites
-         for (String sourceWindowId: sourceWindows_.keySet())
-         {
-            fireEventToSourceWindow(sourceWindowId, event);
-         }
+         fireEventToAllSourceWindows(event);
       }
       else if (!event.isFromMainWindow())
       {
@@ -395,6 +395,15 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
             break;
          }
       }
+   }
+
+
+   @Override
+   public void onShinyApplicationStatus(ShinyApplicationStatusEvent event)
+   {
+      // fire this event from the main window to all source satellites
+      if (isMainSourceWindow())
+         fireEventToAllSourceWindows(event);
    }
 
    // Private methods ---------------------------------------------------------
@@ -503,6 +512,14 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
          windowGeometry_ = newGeometries;
       
       return geometryChanged;
+   }
+   
+   private void fireEventToAllSourceWindows(CrossWindowEvent<?> event)
+   {
+      for (String sourceWindowId: sourceWindows_.keySet())
+      {
+         fireEventToSourceWindow(sourceWindowId, event);
+      }
    }
    
    private EventBus events_;

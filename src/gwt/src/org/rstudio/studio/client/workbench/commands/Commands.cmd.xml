@@ -26,7 +26,8 @@ well as menu structures (for main menu and popup menus).
       suppressed when the command is disabled
   @windowMode: Which window the command wants to operate on; possible values:
       "any": operates on current window (the default),
-      "main": always operates on main window
+      "main": always operates on main window, and raises main window
+      "background": always operates on main window, but in the background
 -->
 <commands>
    <menu id="mainMenu" vertical="false">
@@ -1629,15 +1630,18 @@ well as menu structures (for main menu and popup menus).
    <cmd id="shinyRunInPane"
         menuLabel="Run in Viewer Pane"
         desc="Run the Shiny application in an RStudio pane"
-        checkable="true"/>
+        checkable="true"
+        windowMode="background"/>
    <cmd id="shinyRunInViewer"
         menuLabel="Run in Window"
         desc="Run the Shiny application in an RStudio viewer window"
-        checkable="true"/>
+        checkable="true"
+        windowMode="background"/>
    <cmd id="shinyRunInBrowser"
         menuLabel="Run External"
         desc="Run the Shiny application in the system's default Web browser"
-        checkable="true"/>
+        checkable="true"
+        windowMode="background"/>
 
    <cmd id="rsconnectDeploy"
         menuLabel="_Publish..."
