@@ -1898,10 +1898,12 @@ public class Source implements InsertSourceHandler,
    {
       // if this is the main window, check to see if we should route an event
       // there instead
+      String sourceWindowId = 
+            windowManager_.getWindowIdOfDocPath(file.getPath());
       if (windowManager_.isMainSourceWindow())
       {
-         String sourceWindowId = 
-               windowManager_.getWindowIdOfDocPath(file.getPath());
+         // if this is the main window but the doc is open in a satellite,
+         // forward the navigation event to the appropriate source window
          if (!StringUtil.isNullOrEmpty(sourceWindowId) && 
              windowManager_.isSourceWindowOpen(sourceWindowId))
          {
@@ -1909,6 +1911,21 @@ public class Source implements InsertSourceHandler,
                   new OpenSourceFileEvent(file, position, null, navMethod));
             return;
          }
+      }
+      else if (sourceWindowId != null && 
+               sourceWindowId != windowManager_.getSourceWindowId())
+      {
+         // if this is the satellite, and we know the doc is open somewhere
+         // else, forward the event there (route through main window)
+         events_.fireEventToMainWindow(
+               new OpenSourceFileEvent(file, position, null, navMethod));
+         
+         // if the destination is the main window, raise it
+         if (sourceWindowId.isEmpty())
+         {
+            RStudioGinjector.INSTANCE.getSatellite().focusMainWindow();
+         }
+         return;
       }
       
       final boolean isDebugNavigation = 
