@@ -15,6 +15,8 @@
 package org.rstudio.core.client.widget;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -32,11 +34,14 @@ import com.google.inject.Inject;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.cellview.ScrollingDataGrid;
+import org.rstudio.core.client.command.AceCommandManager;
+import org.rstudio.core.client.command.AceCommandManager.AceCommand;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.KeyboardHelper;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.command.KeyboardShortcut.KeySequence;
 import org.rstudio.core.client.command.ShortcutManager;
+import org.rstudio.core.client.command.UserCommandManager;
 import org.rstudio.core.client.command.UserCommandManager.UserCommand;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.DomUtils.ElementPredicate;
@@ -154,9 +159,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
          }
          else if (commandType == CommandBinding.TYPE_USER_COMMAND)
          {
-            Map<KeyboardShortcut, UserCommand> userCommands =
-                  ShortcutManager.INSTANCE.getUserCommands();
-            
+            Map<KeyboardShortcut, UserCommand> userCommands = userCommands_.getCommands();
             UserCommand command = userCommands.get(
                   new KeyboardShortcut(oldBinding.getKeySequence()));
             assert command != null :
@@ -174,8 +177,12 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
    }
    
    @Inject
-   public void initialize(Commands commands)
+   public void initialize(UserCommandManager userCommands,
+                          AceCommandManager aceCommands,
+                          Commands commands)
    {
+      userCommands_ = userCommands;
+      aceCommands_ = aceCommands;
       commands_ = commands;
    }
    
@@ -297,8 +304,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
       List<CommandBinding> bindings = new ArrayList<CommandBinding>();
       
       // User Commands
-      Map<KeyboardShortcut, UserCommand> userCommands = 
-            ShortcutManager.INSTANCE.getUserCommands();
+      Map<KeyboardShortcut, UserCommand> userCommands = userCommands_.getCommands();
       for (Map.Entry<KeyboardShortcut, UserCommand> entry : userCommands.entrySet())
       {
          KeyboardShortcut shortcut = entry.getKey();
@@ -308,6 +314,30 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
                command.getName(),
                shortcut.getKeySequence(),
                CommandBinding.TYPE_USER_COMMAND));
+      }
+      
+      // Ace Commands
+      JsArray<AceCommand> aceCommands = AceCommandManager.getAceCommands();
+      Debug.logObject(aceCommands);
+      
+      for (int i = 0; i < aceCommands.length(); i++)
+      {
+         AceCommand command = aceCommands.get(i);
+         String name = command.getName();
+         JsArrayString shortcuts = command.getBindingsForCurrentPlatform();
+         Debug.logToRConsole("Shortcuts: " + shortcuts.toString());
+         
+         if (shortcuts != null)
+         {
+            for (int j = 0; j < shortcuts.length(); j++)
+            {
+               String shortcut = shortcuts.get(j);
+               Debug.logToRConsole("Parsing Ace shortcut: '" + shortcut + "'");
+               KeySequence keys = KeySequence.fromShortcutString(shortcut);
+               int type = CommandBinding.TYPE_EDITOR_COMMAND;
+               bindings.add(new CommandBinding(name, keys, type));
+            }
+         }
       }
       
       // RStudio Commands
@@ -351,6 +381,8 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
    private final Map<CommandBinding, CommandBinding> changes_;
    
    // Injected ----
+   private UserCommandManager userCommands_;
+   private AceCommandManager aceCommands_;
    private Commands commands_;
    
    // Resources, etc ----

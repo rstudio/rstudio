@@ -5,6 +5,7 @@ import com.google.gwt.core.client.JsArrayInteger;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
+import com.google.inject.Singleton;
 
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.command.KeyboardShortcut.KeySequence;
@@ -18,6 +19,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+@Singleton
 public class UserCommandManager
 {
    public static class UserCommand
@@ -53,10 +55,9 @@ public class UserCommandManager
       }
    }
    
-   public UserCommandManager(ShortcutManager manager)
+   public UserCommandManager()
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
-      manager_ = manager;
       commandMap_ = new HashMap<KeyboardShortcut, UserCommand>();
       
       events_.addHandler(
@@ -89,46 +90,6 @@ public class UserCommandManager
       return false;
    }
    
-   private KeySequence parseShortcutString(String shortcutString)
-   {
-      KeySequence sequence = new KeySequence();
-      String[] splat = shortcutString.split("\\s+");
-      for (int i = 0; i < splat.length; i++)
-      {
-         String sc = splat[i];
-         
-         int modifiers = KeyboardShortcut.NONE;
-         if (sc.indexOf("ctrl") != -1)
-            modifiers |= KeyboardShortcut.CTRL;
-         if (sc.indexOf("alt") != -1)
-            modifiers |= KeyboardShortcut.ALT;
-         if (sc.indexOf("shift") != -1)
-            modifiers |= KeyboardShortcut.SHIFT;
-         if (sc.indexOf("meta") != -1 || sc.indexOf("cmd") != -1)
-            modifiers |= KeyboardShortcut.META;
-         
-         int keyCode = 0;
-         if (sc.endsWith("-"))
-         {
-            keyCode = '-';
-         }
-         else
-         {
-            String[] keySplit = sc.split("[-]");
-            String keyName = keySplit[keySplit.length - 1];
-            
-            keyCode = KeyboardHelper.keyCodeFromKeyName(keyName);
-            Debug.logToRConsole("Key name: '" + keyName + "'");
-            Debug.logToRConsole("Key code: '" + keyCode + "'");
-         }
-            
-         sequence.add(keyCode, modifiers);
-      }
-      
-      Debug.logToRConsole("Parsed shortcut string: '" + shortcutString + "' -> '" + sequence.toString() + "'");
-      return sequence;
-   }
-   
    private void onRegisterUserCommand(RegisterUserCommandEvent event)
    {
       final String name = event.getData().getName();
@@ -137,7 +98,7 @@ public class UserCommandManager
       for (int i = 0; i < shortcutStrings.length(); i++)
       {
          String shortcutString = shortcutStrings.get(i);
-         KeySequence sequence = parseShortcutString(shortcutString);
+         KeySequence sequence = KeySequence.fromShortcutString(shortcutString);
          assert sequence != null : "Failed to parse string '" + shortcutString + "'";
          
          KeyboardShortcut shortcut = new KeyboardShortcut(sequence);
@@ -165,7 +126,6 @@ public class UserCommandManager
       return commandMap_;
    }
    
-   private final ShortcutManager manager_;
    private final Map<KeyboardShortcut, UserCommand> commandMap_;
    
    // Injected ----

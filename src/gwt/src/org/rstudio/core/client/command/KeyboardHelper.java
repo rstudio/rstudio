@@ -93,7 +93,7 @@ public class KeyboardHelper
    
    private static final native int keyCodeFromKeyName(String keyName, JavaScriptObject map)
    /*-{
-      return map[keyName] || -1;
+      return map[keyName.toLowerCase()] || -1;
    }-*/;
    
    private static final native JavaScriptObject makeKeyCodeToKeyNameMap()
@@ -176,7 +176,7 @@ public class KeyboardHelper
       var result = {};
       for (var key in map) {
          var value = map[key];
-         result[value] = parseInt(key);
+         result[value.toLowerCase()] = parseInt(key);
       }
       return result;
       

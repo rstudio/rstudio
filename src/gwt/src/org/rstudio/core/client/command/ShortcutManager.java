@@ -27,6 +27,7 @@ import org.rstudio.core.client.command.KeyboardShortcut.KeySequence;
 import org.rstudio.core.client.command.UserCommandManager.UserCommand;
 import org.rstudio.core.client.events.NativeKeyDownEvent;
 import org.rstudio.core.client.events.NativeKeyDownHandler;
+import org.rstudio.studio.client.RStudioGinjector;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
@@ -36,6 +37,7 @@ import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Event.NativePreviewEvent;
 import com.google.gwt.user.client.Event.NativePreviewHandler;
 import com.google.gwt.user.client.Timer;
+import com.google.inject.Inject;
 
 public class ShortcutManager implements NativePreviewHandler,
                                         NativeKeyDownHandler
@@ -59,19 +61,24 @@ public class ShortcutManager implements NativePreviewHandler,
          }
       };
       
-      // Because the ShortcutManager is created staticly, we need
-      // to defer the construction of the 'UserCommandManager' to
-      // ensure that the Ginjector has also been initialized.
       Scheduler.get().scheduleDeferred(new ScheduledCommand()
       {
          @Override
          public void execute()
          {
-            userCommands_ = new UserCommandManager(INSTANCE);
+            RStudioGinjector.INSTANCE.injectMembers(ShortcutManager.this);
          }
       });
       
       Event.addNativePreviewHandler(this);
+   }
+   
+   @Inject
+   private void initialize(UserCommandManager userCommands,
+                           AceCommandManager aceCommands)
+   {
+      aceCommands_ = aceCommands;
+      userCommands_ = userCommands;
    }
 
    public boolean isEnabled()
@@ -376,6 +383,8 @@ public class ShortcutManager implements NativePreviewHandler,
    private int editorMode_ = KeyboardShortcut.MODE_NONE;
    
    private UserCommandManager userCommands_;
+   private AceCommandManager aceCommands_;
+   
    private final KeySequence keyBuffer_;
    private final Timer keyTimer_;
    

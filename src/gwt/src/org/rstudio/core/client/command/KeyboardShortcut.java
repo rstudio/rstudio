@@ -18,6 +18,8 @@ import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
 
 import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.Debug;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -133,6 +135,47 @@ public class KeyboardShortcut
       {
          this();
          keyCombinations_.add(new KeyCombination(keyCode, modifiers));
+      }
+      
+      public static KeySequence fromShortcutString(String shortcut)
+      {
+         KeySequence sequence = new KeySequence();
+         String[] splat = shortcut.split("\\s+");
+         for (int i = 0; i < splat.length; i++)
+         {
+            String sc = splat[i].toLowerCase();
+
+            int modifiers = KeyboardShortcut.NONE;
+            if (sc.indexOf("ctrl") != -1)
+               modifiers |= KeyboardShortcut.CTRL;
+            if (sc.indexOf("alt") != -1)
+               modifiers |= KeyboardShortcut.ALT;
+            if (sc.indexOf("shift") != -1)
+               modifiers |= KeyboardShortcut.SHIFT;
+            if (sc.indexOf("meta") != -1 || sc.indexOf("cmd") != -1 || sc.indexOf("command") != -1)
+               modifiers |= KeyboardShortcut.META;
+
+            int keyCode = 0;
+            if (sc.endsWith("-"))
+            {
+               keyCode = '-';
+            }
+            else if (sc.endsWith("+"))
+            {
+               keyCode = '+';
+            }
+            else
+            {
+               String[] keySplit = sc.split("[-+]");
+               String keyName = keySplit[keySplit.length - 1];
+
+               keyCode = KeyboardHelper.keyCodeFromKeyName(keyName);
+               Debug.logToRConsole("Key name: '" + keyName + "'");
+               Debug.logToRConsole("Key code: '" + keyCode + "'");
+            }
+            sequence.add(keyCode, modifiers);
+         }
+         return sequence;
       }
       
       public void clear()

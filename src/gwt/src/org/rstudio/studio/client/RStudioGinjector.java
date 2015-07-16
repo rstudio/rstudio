@@ -18,6 +18,8 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.inject.client.GinModules;
 import com.google.gwt.inject.client.Ginjector;
 
+import org.rstudio.core.client.command.AceCommandManager;
+import org.rstudio.core.client.command.ShortcutManager;
 import org.rstudio.core.client.command.ShortcutViewer;
 import org.rstudio.core.client.command.UserCommandManager;
 import org.rstudio.core.client.files.filedialog.PathBreadcrumbWidget;
@@ -136,7 +138,9 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(SetupChunkOptionsPopupPanel panel);
    void injectMembers(SourceSatellite satellite);
    void injectMembers(ModifyKeyboardShortcutsWidget widget);
+   void injectMembers(ShortcutManager manager);
    void injectMembers(UserCommandManager manager);
+   void injectMembers(AceCommandManager manager);
    
    public static final RStudioGinjector INSTANCE = GWT.create(RStudioGinjector.class);
 
