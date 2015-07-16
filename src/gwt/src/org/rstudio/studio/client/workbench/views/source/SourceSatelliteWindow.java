@@ -28,6 +28,7 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.ui.CodeSearchLauncher;
 import org.rstudio.studio.client.common.satellite.SatelliteWindow;
 import org.rstudio.studio.client.workbench.ui.FontSizeManager;
+import org.rstudio.studio.client.workbench.views.source.model.SourceWindowParams;
 
 @Singleton
 public class SourceSatelliteWindow extends SatelliteWindow
@@ -47,7 +48,16 @@ public class SourceSatelliteWindow extends SatelliteWindow
    @Override
    protected void onInitialize(LayoutPanel mainPanel, JavaScriptObject params)
    {
-      Window.setTitle("RStudio");
+      SourceWindowParams windowParams = params.cast();
+      String title = null;
+      if (windowParams != null)
+         title = windowParams.getTitle();
+      if (title == null)
+         title = "";
+      else
+         title += " - ";
+      title += "RStudio Source Editor";
+      Window.setTitle(title);
 
       SourceSatellitePresenter appPresenter = pPresenter_.get();
       
@@ -69,5 +79,5 @@ public class SourceSatelliteWindow extends SatelliteWindow
       return this;
    }
    
-   private Provider<SourceSatellitePresenter> pPresenter_;
+   private final Provider<SourceSatellitePresenter> pPresenter_;
 }

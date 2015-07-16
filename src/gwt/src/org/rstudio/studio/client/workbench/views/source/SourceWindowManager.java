@@ -36,6 +36,7 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.shiny.events.ShinyApplicationStatusEvent;
+import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
@@ -48,6 +49,7 @@ import org.rstudio.studio.client.workbench.views.source.events.PopoutDocEvent;
 import org.rstudio.studio.client.workbench.views.source.events.SourceDocAddedEvent;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
+import org.rstudio.studio.client.workbench.views.source.model.SourceWindowParams;
 
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.user.client.Command;
@@ -71,6 +73,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
    public SourceWindowManager(
          Provider<SatelliteManager> pSatelliteManager, 
          Provider<Satellite> pSatellite,
+         Provider<WorkbenchContext> pWorkbenchContext,
          SourceServerOperations server,
          EventBus events,
          FileTypeRegistry registry,
@@ -81,6 +84,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
       server_ = server;
       pSatelliteManager_ = pSatelliteManager;
       pSatellite_ = pSatellite;
+      pWorkbenchContext_ = pWorkbenchContext;
       display_ = display;
       
       events_.addHandler(PopoutDocEvent.TYPE, this);
@@ -427,7 +431,10 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
       }
 
       pSatelliteManager_.get().openSatellite(
-            SourceSatellite.NAME_PREFIX + windowId, null, size, position);
+            SourceSatellite.NAME_PREFIX + windowId, 
+            SourceWindowParams.create(
+                  pWorkbenchContext_.get().createWindowTitle()), 
+            size, position);
       sourceWindows_.put(windowId, 
             pSatelliteManager_.get().getSatelliteWindowObject(
                   SourceSatellite.NAME_PREFIX + windowId));
@@ -526,11 +533,12 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
       }
    }
    
-   private EventBus events_;
-   private Provider<SatelliteManager> pSatelliteManager_;
-   private Provider<Satellite> pSatellite_;
-   private SourceServerOperations server_;
-   private GlobalDisplay display_;
+   private final EventBus events_;
+   private final Provider<SatelliteManager> pSatelliteManager_;
+   private final Provider<Satellite> pSatellite_;
+   private final Provider<WorkbenchContext> pWorkbenchContext_;
+   private final SourceServerOperations server_;
+   private final GlobalDisplay display_;
 
    private HashMap<String, WindowEx> sourceWindows_ = 
          new HashMap<String,WindowEx>();
