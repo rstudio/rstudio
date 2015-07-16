@@ -15,12 +15,12 @@
  */
 package java.util;
 
-import static java.internal.InternalPreconditions.checkCriticalPositionIndexes;
-import static java.internal.InternalPreconditions.checkElement;
-import static java.internal.InternalPreconditions.checkElementIndex;
-import static java.internal.InternalPreconditions.checkNotNull;
-import static java.internal.InternalPreconditions.checkPositionIndex;
-import static java.internal.InternalPreconditions.checkState;
+import static javaemul.internal.InternalPreconditions.checkCriticalPositionIndexes;
+import static javaemul.internal.InternalPreconditions.checkElement;
+import static javaemul.internal.InternalPreconditions.checkElementIndex;
+import static javaemul.internal.InternalPreconditions.checkNotNull;
+import static javaemul.internal.InternalPreconditions.checkPositionIndex;
+import static javaemul.internal.InternalPreconditions.checkState;
 
 /**
  * Skeletal implementation of the List interface. <a

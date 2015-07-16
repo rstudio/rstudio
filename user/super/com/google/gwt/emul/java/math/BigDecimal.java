@@ -34,7 +34,7 @@
  */
 package java.math;
 
-import static java.internal.InternalPreconditions.checkNotNull;
+import static javaemul.internal.InternalPreconditions.checkNotNull;
 
 import java.io.Serializable;
 

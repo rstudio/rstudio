@@ -15,10 +15,11 @@
  */
 package java.util;
 
-import static java.internal.InternalPreconditions.checkCriticalElement;
-import static java.internal.InternalPreconditions.checkState;
 import static java.util.ConcurrentModificationDetector.checkStructuralChange;
 import static java.util.ConcurrentModificationDetector.recordLastKnownStructure;
+
+import static javaemul.internal.InternalPreconditions.checkCriticalElement;
+import static javaemul.internal.InternalPreconditions.checkState;
 
 /**
  * Hash table implementation of the Map interface with predictable iteration

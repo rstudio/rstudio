@@ -20,6 +20,8 @@ import com.google.gwt.core.client.JavaScriptObject;
 /**
  * A simple wrapper around a native JS Date object.
  */
+// TODO(dankurka): Turn this into a @JsType and move to dev/.../javaemul/internal
+// Currently it can not be moved because of its dep on JavaScriptObject
 public class JsDate extends JavaScriptObject {
 
   /**

@@ -15,7 +15,7 @@
  */
 package com.google.gwt.lang;
 
-import static java.internal.InternalPreconditions.checkType;
+import static javaemul.internal.InternalPreconditions.checkType;
 
 import com.google.gwt.core.client.JavaScriptObject;
 

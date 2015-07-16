@@ -15,9 +15,9 @@
  */
 package java.util;
 
-import static java.internal.InternalPreconditions.checkNotNull;
+import static javaemul.internal.InternalPreconditions.checkNotNull;
 
-import java.internal.ArrayHelper;
+import javaemul.internal.ArrayHelper;
 
 /**
  * Skeletal implementation of the Collection interface. <a

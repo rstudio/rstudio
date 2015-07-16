@@ -34,8 +34,8 @@
  */
 package java.util;
 
-import static java.internal.InternalPreconditions.checkCriticalArgument;
-import static java.internal.InternalPreconditions.checkNotNull;
+import static javaemul.internal.InternalPreconditions.checkCriticalArgument;
+import static javaemul.internal.InternalPreconditions.checkNotNull;
 
 import javaemul.internal.DateUtil;
 

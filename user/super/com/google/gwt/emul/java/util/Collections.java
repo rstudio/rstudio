@@ -15,10 +15,9 @@
  */
 package java.util;
 
-import static java.internal.InternalPreconditions.checkArgument;
-import static java.internal.InternalPreconditions.checkElementIndex;
-
 import static javaemul.internal.Coercions.ensureInt;
+import static javaemul.internal.InternalPreconditions.checkArgument;
+import static javaemul.internal.InternalPreconditions.checkElementIndex;
 
 import java.io.Serializable;
 

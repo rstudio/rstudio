@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -15,9 +15,9 @@
  */
 package java.lang;
 
-import static java.internal.InternalPreconditions.checkCriticalArgument;
-import static java.internal.InternalPreconditions.checkNotNull;
-import static java.internal.InternalPreconditions.checkState;
+import static javaemul.internal.InternalPreconditions.checkCriticalArgument;
+import static javaemul.internal.InternalPreconditions.checkNotNull;
+import static javaemul.internal.InternalPreconditions.checkState;
 
 import com.google.gwt.core.client.impl.StackTraceCreator;
 
@@ -36,7 +36,7 @@ public class Throwable implements Serializable {
    * The client uses the generated field serializers which can use JSNI. That
    * leaves the server free to special case Throwable so that only the
    * detailMessage field is serialized.
-   * 
+   *
    * Throwable is given special treatment by server's SerializabilityUtil class
    * to ensure that only the detailMessage field is serialized. Changing the
    * field modifiers below may necessitate a change to the server's
@@ -108,7 +108,7 @@ public class Throwable implements Serializable {
 
   /**
    * Populates the stack trace information for the Throwable.
-   * 
+   *
    * @return this
    */
   public Throwable fillInStackTrace() {

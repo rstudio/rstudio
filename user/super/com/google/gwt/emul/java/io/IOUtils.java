@@ -15,7 +15,7 @@
  */
 package java.io;
 
-import static java.internal.InternalPreconditions.checkNotNull;
+import static javaemul.internal.InternalPreconditions.checkNotNull;
 
 /**
  * Provides a series of utilities to be reused between IO classes.

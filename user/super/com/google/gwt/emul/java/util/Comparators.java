@@ -15,7 +15,7 @@
  */
 package java.util;
 
-import static java.internal.InternalPreconditions.checkNotNull;
+import static javaemul.internal.InternalPreconditions.checkNotNull;
 
 class Comparators {
   /*

@@ -15,10 +15,10 @@
  */
 package java.lang;
 
-import com.google.gwt.core.client.JavaScriptObject;
+import static javaemul.internal.InternalPreconditions.checkCriticalArgument;
+import static javaemul.internal.InternalPreconditions.checkNotNull;
 
-import static java.internal.InternalPreconditions.checkCriticalArgument;
-import static java.internal.InternalPreconditions.checkNotNull;
+import com.google.gwt.core.client.JavaScriptObject;
 
 import java.io.Serializable;
 

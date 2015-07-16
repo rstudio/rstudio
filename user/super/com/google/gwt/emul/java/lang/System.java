@@ -15,12 +15,12 @@
  */
 package java.lang;
 
-import static java.internal.InternalPreconditions.checkArrayType;
-import static java.internal.InternalPreconditions.checkNotNull;
+import static javaemul.internal.InternalPreconditions.checkArrayType;
+import static javaemul.internal.InternalPreconditions.checkNotNull;
 
-import java.internal.ArrayHelper;
 import java.io.PrintStream;
 
+import javaemul.internal.ArrayHelper;
 import javaemul.internal.DateUtil;
 import javaemul.internal.HashCodes;
 

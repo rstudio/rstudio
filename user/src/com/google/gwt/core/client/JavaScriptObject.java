@@ -15,6 +15,8 @@
  */
 package com.google.gwt.core.client;
 
+import javaemul.internal.HashCodes;
+
 /**
  * An opaque handle to a native JavaScript object. A
  * <code>JavaScriptObject</code> cannot be created directly.
@@ -145,9 +147,9 @@ public class JavaScriptObject {
    * @return the hash code of the object
    */
   @Override
-  public final native int hashCode() /*-{
-    return @javaemul.internal.HashCodes::getObjectIdentityHashCode(*)(this);
-  }-*/;
+  public final int hashCode() {
+    return HashCodes.getObjectIdentityHashCode(this);
+  }
 
   /**
    * Call the toSource() on the JSO.

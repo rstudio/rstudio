@@ -21,6 +21,7 @@ import java.io.UnsupportedEncodingException;
 import java.util.Comparator;
 import java.util.Locale;
 
+import javaemul.internal.ArrayHelper;
 import javaemul.internal.HashCodes;
 import javaemul.internal.annotations.DoNotInline;
 
@@ -194,11 +195,14 @@ public final class String implements Comparable<String>, CharSequence,
     return replaceStr;
   }
 
-  static native String __valueOf(char x[], int start, int end) /*-{
+  static String __valueOf(char x[], int start, int end) {
+    return __valueOf(x, start, end, ArrayHelper.ARRAY_PROCESS_BATCH_SIZE);
+  }
+
+  private static native String __valueOf(char x[], int start, int end, int batchSize) /*-{
     // Work around function.prototype.apply call stack size limits:
     // https://code.google.com/p/v8/issues/detail?id=2896
     // Performance: http://jsperf.com/string-fromcharcode-test/13
-    var batchSize = @java.internal.ArrayHelper::ARRAY_PROCESS_BATCH_SIZE;
     var s = "";
     for (var batchStart = start; batchStart < end;) { // increment in block
       var batchEnd = Math.min(batchStart + batchSize, end);

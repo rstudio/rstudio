@@ -15,13 +15,12 @@
  */
 package java.util;
 
-import static java.internal.InternalPreconditions.checkArgument;
-import static java.internal.InternalPreconditions.checkElement;
-import static java.internal.InternalPreconditions.checkNotNull;
-import static java.internal.InternalPreconditions.checkState;
+import static javaemul.internal.InternalPreconditions.checkArgument;
+import static javaemul.internal.InternalPreconditions.checkElement;
+import static javaemul.internal.InternalPreconditions.checkNotNull;
+import static javaemul.internal.InternalPreconditions.checkState;
 
-import java.internal.ArrayHelper;
-
+import javaemul.internal.ArrayHelper;
 import javaemul.internal.annotations.SpecializeMethod;
 
 /**

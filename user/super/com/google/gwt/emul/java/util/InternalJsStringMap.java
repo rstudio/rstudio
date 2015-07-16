@@ -15,10 +15,10 @@
  */
 package java.util;
 
-import com.google.gwt.core.client.JavaScriptObject;
+import static javaemul.internal.InternalPreconditions.checkElement;
+import static javaemul.internal.InternalPreconditions.checkState;
 
-import static java.internal.InternalPreconditions.checkElement;
-import static java.internal.InternalPreconditions.checkState;
+import com.google.gwt.core.client.JavaScriptObject;
 
 import java.util.Map.Entry;
 

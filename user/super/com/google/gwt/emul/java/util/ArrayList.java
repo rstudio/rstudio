@@ -15,13 +15,14 @@
  */
 package java.util;
 
-import static java.internal.InternalPreconditions.checkArgument;
-import static java.internal.InternalPreconditions.checkElementIndex;
-import static java.internal.InternalPreconditions.checkPositionIndex;
-import static java.internal.InternalPreconditions.checkPositionIndexes;
+import static javaemul.internal.InternalPreconditions.checkArgument;
+import static javaemul.internal.InternalPreconditions.checkElementIndex;
+import static javaemul.internal.InternalPreconditions.checkPositionIndex;
+import static javaemul.internal.InternalPreconditions.checkPositionIndexes;
 
-import java.internal.ArrayHelper;
 import java.io.Serializable;
+
+import javaemul.internal.ArrayHelper;
 
 /**
  * Resizeable array implementation of the List interface. <a

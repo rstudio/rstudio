@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -15,9 +15,9 @@
  */
 package java.util;
 
-import static java.internal.InternalPreconditions.checkElement;
-import static java.internal.InternalPreconditions.checkPositionIndex;
-import static java.internal.InternalPreconditions.checkState;
+import static javaemul.internal.InternalPreconditions.checkElement;
+import static javaemul.internal.InternalPreconditions.checkPositionIndex;
+import static javaemul.internal.InternalPreconditions.checkState;
 
 import java.io.Serializable;
 
@@ -25,14 +25,14 @@ import java.io.Serializable;
  * Linked list implementation. <a
  * href="http://java.sun.com/j2se/1.5.0/docs/api/java/util/LinkedList.html">[Sun
  * docs]</a>
- * 
+ *
  * @param <E> element type.
  */
 public class LinkedList<E> extends AbstractSequentialList<E> implements
     Cloneable, List<E>, Deque<E>, Serializable {
   /*
    * This implementation uses a doubly-linked list with a header/tail node.
-   * 
+   *
    * TODO(jat): add more efficient subList implementation.
    */
 
@@ -157,7 +157,7 @@ public class LinkedList<E> extends AbstractSequentialList<E> implements
 
   /**
    * Internal class representing a doubly-linked list node.
-   * 
+   *
    * @param <E> element type
    */
   private static class Node<E> {

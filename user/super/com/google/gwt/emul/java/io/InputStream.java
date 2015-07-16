@@ -19,7 +19,7 @@
 
 package java.io;
 
-import static java.internal.InternalPreconditions.checkNotNull;
+import static javaemul.internal.InternalPreconditions.checkNotNull;
 
 /**
  * A readable source of bytes.

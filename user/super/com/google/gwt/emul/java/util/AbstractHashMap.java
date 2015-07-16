@@ -15,12 +15,13 @@
  */
 package java.util;
 
-import static java.internal.InternalPreconditions.checkArgument;
-import static java.internal.InternalPreconditions.checkElement;
-import static java.internal.InternalPreconditions.checkState;
 import static java.util.ConcurrentModificationDetector.checkStructuralChange;
 import static java.util.ConcurrentModificationDetector.recordLastKnownStructure;
 import static java.util.ConcurrentModificationDetector.structureChanged;
+
+import static javaemul.internal.InternalPreconditions.checkArgument;
+import static javaemul.internal.InternalPreconditions.checkElement;
+import static javaemul.internal.InternalPreconditions.checkState;
 
 import com.google.gwt.core.client.GWT;
 

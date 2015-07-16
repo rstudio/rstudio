@@ -1,12 +1,12 @@
 /*
  * Copyright 2009 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -21,21 +21,21 @@
  * licenses this file to You under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- * 
+ *
  * INCLUDES MODIFICATIONS BY RICHARD ZSCHECH AS WELL AS GOOGLE.
  */
 package java.math;
 
-import static java.internal.InternalPreconditions.checkCriticalArgument;
-import static java.internal.InternalPreconditions.checkNotNull;
+import static javaemul.internal.InternalPreconditions.checkCriticalArgument;
+import static javaemul.internal.InternalPreconditions.checkNotNull;
 
 import java.io.Serializable;
 
@@ -98,7 +98,7 @@ public final class MathContext implements Serializable {
    * the rounding mode {@link RoundingMode#HALF_UP HALF_UP}. If the precision
    * passed is zero, then this implies that the computations have to be
    * performed exact, the rounding mode in this case is irrelevant.
-   * 
+   *
    * @param precision the precision for the new {@code MathContext}.
    * @throws IllegalArgumentException if {@code precision < 0}.
    */
@@ -111,7 +111,7 @@ public final class MathContext implements Serializable {
    * the specified rounding mode. If the precision passed is zero, then this
    * implies that the computations have to be performed exact, the rounding mode
    * in this case is irrelevant.
-   * 
+   *
    * @param precision the precision for the new {@code MathContext}.
    * @param roundingMode the rounding mode for the new {@code MathContext}.
    * @throws IllegalArgumentException if {@code precision < 0}.
@@ -131,7 +131,7 @@ public final class MathContext implements Serializable {
    * the following syntax:
    * "precision=&lt;precision&gt; roundingMode=&lt;roundingMode&gt;" This is the
    * same form as the one returned by the {@link #toString} method.
-   * 
+   *
    * @param val a string describing the precision and rounding mode for the new
    *          {@code MathContext}.
    * @throws IllegalArgumentException if the string is not in the correct format
@@ -162,7 +162,7 @@ public final class MathContext implements Serializable {
   /**
    * Returns true if x is a {@code MathContext} with the same precision setting
    * and the same rounding mode as this {@code MathContext} instance.
-   * 
+   *
    * @param x object to be compared.
    * @return {@code true} if this {@code MathContext} instance is equal to the
    *         {@code x} argument; {@code false} otherwise.
@@ -170,7 +170,7 @@ public final class MathContext implements Serializable {
   @Override
   public boolean equals(Object x) {
     return ((x instanceof MathContext)
-        && (((MathContext) x).getPrecision() == precision) 
+        && (((MathContext) x).getPrecision() == precision)
         && (((MathContext) x).getRoundingMode() == roundingMode));
   }
 
@@ -180,7 +180,7 @@ public final class MathContext implements Serializable {
    * guaranteed to be non negative. If the precision is zero, then the
    * computations have to be performed exact, results are not rounded in this
    * case.
-   * 
+   *
    * @return the precision.
    */
   public int getPrecision() {
@@ -196,7 +196,7 @@ public final class MathContext implements Serializable {
    * {@link RoundingMode#FLOOR}, {@link RoundingMode#HALF_UP},
    * {@link RoundingMode#HALF_DOWN}, {@link RoundingMode#HALF_EVEN}, or
    * {@link RoundingMode#UNNECESSARY}.
-   * 
+   *
    * @return the rounding mode.
    */
   public RoundingMode getRoundingMode() {
@@ -205,7 +205,7 @@ public final class MathContext implements Serializable {
 
   /**
    * Returns the hash code for this {@code MathContext} instance.
-   * 
+   *
    * @return the hash code for this {@code MathContext}.
    */
   @Override
@@ -221,7 +221,7 @@ public final class MathContext implements Serializable {
    * {@code <precision>} is an integer describing the number of digits
    * used for operations and {@code <roundingMode>} is the string
    * representation of the rounding mode.
-   * 
+   *
    * @return a string representation for this {@code MathContext} instance
    */
   @Override

@@ -15,6 +15,8 @@
  */
 package com.google.gwt.emultest.java.lang;
 
+import javaemul.internal.ArrayHelper;
+
 /**
  * Constants shared between various tests.
  */
@@ -59,7 +61,7 @@ public class C {
     return largeCharArray;
   }
 
-  private static native int numberOfCopies() /*-{
-    return @java.internal.ArrayHelper::ARRAY_PROCESS_BATCH_SIZE * 3;
-  }-*/;
+  private static int numberOfCopies() {
+    return ArrayHelper.ARRAY_PROCESS_BATCH_SIZE * 3;
+  }
 }

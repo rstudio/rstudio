@@ -16,15 +16,15 @@
 
 package java.util;
 
-import static java.internal.InternalPreconditions.checkArgument;
-import static java.internal.InternalPreconditions.checkArraySize;
-import static java.internal.InternalPreconditions.checkElementIndex;
-import static java.internal.InternalPreconditions.checkPositionIndexes;
-
 import static javaemul.internal.Coercions.ensureInt;
+import static javaemul.internal.InternalPreconditions.checkArgument;
+import static javaemul.internal.InternalPreconditions.checkArraySize;
+import static javaemul.internal.InternalPreconditions.checkElementIndex;
+import static javaemul.internal.InternalPreconditions.checkPositionIndexes;
 
-import java.internal.ArrayHelper;
 import java.io.Serializable;
+
+import javaemul.internal.ArrayHelper;
 
 /**
  * Utility methods related to native arrays. <a
@@ -1370,7 +1370,7 @@ public class Arrays {
     var temp = array.slice(fromIndex, toIndex);
     temp.sort(@com.google.gwt.lang.LongLib::compare(Lcom/google/gwt/lang/LongLibBase$LongEmul;Lcom/google/gwt/lang/LongLibBase$LongEmul;));
     var n = toIndex - fromIndex;
-    @java.internal.ArrayHelper::arrayCopy(Ljava/lang/Object;ILjava/lang/Object;II)(
+    @javaemul.internal.ArrayHelper::arrayCopy(Ljava/lang/Object;ILjava/lang/Object;II)(
         temp, 0, array, fromIndex, n)
   }-*/;
 
@@ -1393,7 +1393,7 @@ public class Arrays {
       return a - b;
     });
     var n = toIndex - fromIndex;
-    @java.internal.ArrayHelper::arrayCopy(Ljava/lang/Object;ILjava/lang/Object;II)(
+    @javaemul.internal.ArrayHelper::arrayCopy(Ljava/lang/Object;ILjava/lang/Object;II)(
         temp, 0, array, fromIndex, n)
   }-*/;
 }

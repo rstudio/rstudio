@@ -13,14 +13,14 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package java.internal;
+package javaemul.internal;
 
 /**
  * Forwards array operations to GWT's internal array class.
  */
 public class ArrayHelper {
 
-  private static final int ARRAY_PROCESS_BATCH_SIZE = 10000;
+  public static final int ARRAY_PROCESS_BATCH_SIZE = 10000;
 
   public static native <T> T[] clone(T[] array, int fromIndex, int toIndex) /*-{
     return @com.google.gwt.lang.Array::cloneSubrange(*)(array, fromIndex, toIndex);
