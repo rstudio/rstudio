@@ -20,6 +20,7 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.RVersionsChangedEvent;
 import org.rstudio.studio.client.application.events.RestartStatusEvent;
 import org.rstudio.studio.client.application.model.RVersionsInfo;
+import org.rstudio.studio.client.common.vcs.BranchesInfo;
 import org.rstudio.studio.client.workbench.events.BusyEvent;
 import org.rstudio.studio.client.workbench.events.BusyHandler;
 import org.rstudio.studio.client.workbench.model.Session;
@@ -210,10 +211,13 @@ public class WorkbenchContext
       if (projDir != null)
       {
          String title = projDir.getPath();
-         String branch = pGitState_.get().getBranchInfo()
-                                         .getActiveBranch();
-         if (branch != null)
-            title = title + " - " + branch;
+         BranchesInfo branchInfo = pGitState_.get().getBranchInfo();
+         if (branchInfo != null)
+         {
+            String branch = branchInfo.getActiveBranch();
+            if (branch != null)
+               title = title + " - " + branch;
+         }
          return title;
       }
       return null;

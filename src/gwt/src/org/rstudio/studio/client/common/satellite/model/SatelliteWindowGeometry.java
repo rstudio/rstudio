@@ -23,16 +23,21 @@ public class SatelliteWindowGeometry extends JavaScriptObject
 {
    protected SatelliteWindowGeometry() {}
    
-   public final native static SatelliteWindowGeometry create(
+   public final native static SatelliteWindowGeometry create(int ordinal,
          int x, int y, int width, int height) /*-{
       return {
-         "x"     : x,
-         "y"     : y,
-         "width" : width,
-         "height": height
+         "ordinal": ordinal,
+         "x"      : x,
+         "y"      : y,
+         "width"  : width,
+         "height" : height
       };
    }-*/;
    
+   public final native int getOrdinal() /*-{
+      return this.ordinal;
+   }-*/;
+
    public final native int getX() /*-{
       return this.x;
    }-*/;
@@ -51,10 +56,11 @@ public class SatelliteWindowGeometry extends JavaScriptObject
    
    public final boolean equals(SatelliteWindowGeometry other)
    {
-      return getX()      == other.getX() &&
-             getY()      == other.getY() &&
-             getWidth()  == other.getWidth() &&
-             getHeight() == other.getHeight();
+      return getOrdinal() == other.getOrdinal() &&
+             getX()       == other.getX() &&
+             getY()       == other.getY() &&
+             getWidth()   == other.getWidth() &&
+             getHeight()  == other.getHeight();
    }
    
    public final Point getPosition() 

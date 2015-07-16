@@ -22,13 +22,19 @@ public class SourceWindowParams extends JavaScriptObject
    {
    }
 
-   public final static native SourceWindowParams create(String title) /*-{
+   public final static native SourceWindowParams create(int ordinal, 
+         String title) /*-{
       return { 
-         "title": title 
+         "ordinal": ordinal,
+         "title"  : title 
       };
    }-*/;
    
    public final native String getTitle() /*-{
       return this.title;
+   }-*/;
+
+   public final native int getOrdinal() /*-{
+      return this.ordinal;
    }-*/;
 }

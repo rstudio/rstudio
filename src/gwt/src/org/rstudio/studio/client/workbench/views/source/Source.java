@@ -523,8 +523,16 @@ public class Source implements InsertSourceHandler,
       });
       
       restoreDocuments(session);
+      
+      // get the key to use for active tab persistence; use ordinal-based key
+      // for source windows rather than their ID to avoid unbounded accumulation
+      String activeTabKey = KEY_ACTIVETAB;
+      if (!windowManager_.isMainSourceWindow())
+         activeTabKey += "SourceWindow" + 
+                         windowManager_.getSourceWindowOrdinal();
 
-      new IntStateValue(MODULE_SOURCE, KEY_ACTIVETAB, ClientState.PROJECT_PERSISTENT,
+      new IntStateValue(MODULE_SOURCE, activeTabKey, 
+                        ClientState.PROJECT_PERSISTENT,
                         session.getSessionInfo().getClientState())
       {
          @Override

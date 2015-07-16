@@ -39,10 +39,12 @@ public class SourceSatelliteWindow extends SatelliteWindow
    public SourceSatelliteWindow(Provider<EventBus> pEventBus,
                                 Provider<FontSizeManager> pFSManager, 
                                 Provider<SourceSatellitePresenter> pPresenter,
+                                Provider<SourceWindowManager> pWindowManager,
                                 CodeSearchLauncher launcher)
    {
       super(pEventBus, pFSManager);
       pPresenter_ = pPresenter;
+      pWindowManager_ = pWindowManager;
    }
 
    @Override
@@ -51,13 +53,18 @@ public class SourceSatelliteWindow extends SatelliteWindow
       SourceWindowParams windowParams = params.cast();
       String title = null;
       if (windowParams != null)
+      {
+         pWindowManager_.get().setSourceWindowOrdinal(
+               windowParams.getOrdinal());
          title = windowParams.getTitle();
+      }
       if (title == null)
          title = "";
       else
          title += " - ";
       title += "RStudio Source Editor";
       Window.setTitle(title);
+      
 
       SourceSatellitePresenter appPresenter = pPresenter_.get();
       
@@ -80,4 +87,5 @@ public class SourceSatelliteWindow extends SatelliteWindow
    }
    
    private final Provider<SourceSatellitePresenter> pPresenter_;
+   private final Provider<SourceWindowManager> pWindowManager_;
 }

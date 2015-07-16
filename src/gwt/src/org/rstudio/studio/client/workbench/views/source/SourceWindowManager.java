@@ -52,6 +52,7 @@ import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperat
 import org.rstudio.studio.client.workbench.views.source.model.SourceWindowParams;
 
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Window;
 import com.google.inject.Inject;
@@ -110,7 +111,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
          exportSourceDocs();
          
          new JSObjectStateValue(
-                 "source-windows",
+                 "source-window",
                  "sourceWindowGeometry",
                  ClientState.PROJECT_PERSISTENT,
                  session.getSessionInfo().getClientState(),
@@ -119,8 +120,18 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
             @Override
             protected void onInit(JsObject value)
             {
+               // save the window geometries 
                if (value != null)
                   windowGeometry_ = value;
+
+               // compute the max ordinal value in the geometry set
+               JsArrayString windowIds = windowGeometry_.keys();
+               for (int i = 0; i < windowIds.length(); i++) 
+               {
+                  SatelliteWindowGeometry geometry = 
+                        windowGeometry_.getObject(windowIds.get(i)).cast();
+                  maxOrdinal_ = Math.max(geometry.getOrdinal(), maxOrdinal_);
+               }
             }
 
             @Override
@@ -151,9 +162,20 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
    }
 
    // Public methods ----------------------------------------------------------
+   
    public String getSourceWindowId()
    {
       return sourceWindowId(Window.Location.getParameter("view"));
+   }
+   
+   public int getSourceWindowOrdinal()
+   {
+      return thisWindowOrdinal_;
+   }
+   
+   public void setSourceWindowOrdinal(int ordinal)
+   {
+      thisWindowOrdinal_ = ordinal;
    }
    
    public boolean isMainSourceWindow()
@@ -420,24 +442,30 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
    {
       // create default options
       Size size = new Size(800, 800);
+      Integer ordinal = null;
 
       // if we have geometry for the window, apply it
       SatelliteWindowGeometry geometry = windowGeometry_.getObject(windowId);
       if (geometry != null)
       {
          size = geometry.getSize();
+         ordinal = geometry.getOrdinal();
          if (position == null)
             position = geometry.getPosition();
       }
 
+      // assign ordinal if not already assigned
+      if (ordinal == null)
+         ordinal = ++maxOrdinal_;
+      
       pSatelliteManager_.get().openSatellite(
             SourceSatellite.NAME_PREFIX + windowId, 
             SourceWindowParams.create(
+                  ordinal,
                   pWorkbenchContext_.get().createWindowTitle()), 
             size, position);
-      sourceWindows_.put(windowId, 
-            pSatelliteManager_.get().getSatelliteWindowObject(
-                  SourceSatellite.NAME_PREFIX + windowId));
+      
+      sourceWindows_.put(windowId, ordinal);
    }
    
    private void broadcastDocWindowChanged(DocWindowChangedEvent event)
@@ -499,6 +527,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
          // read the window's current geometry
          SatelliteWindowGeometry newGeometry = 
                SatelliteWindowGeometry.create(
+                     sourceWindows_.get(windowId),
                      window.getScreenX(), 
                      window.getScreenY(), 
                      window.getOuterWidth(), 
@@ -540,12 +569,14 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
    private final SourceServerOperations server_;
    private final GlobalDisplay display_;
 
-   private HashMap<String, WindowEx> sourceWindows_ = 
-         new HashMap<String,WindowEx>();
+   private HashMap<String, Integer> sourceWindows_ = 
+         new HashMap<String,Integer>();
    private JsArray<SourceDocument> sourceDocs_ = 
          JsArray.createArray().cast();
    private boolean windowsClosing_ = false;
    private JsObject windowGeometry_ = JsObject.createJsObject();
+   private int maxOrdinal_ = 0;
+   private int thisWindowOrdinal_ = 0;
    
    public final static String SOURCE_WINDOW_ID = "source_window_id";
 }
