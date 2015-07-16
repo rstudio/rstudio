@@ -397,6 +397,11 @@ public class DocTabLayoutPanel
          {
             if (curState_ == STATE_NONE)
                return;
+            
+            // Qt occasionally fires a dragleave @ 0, 0 even though the cursor
+            // is elsewhere; ignore this
+            if (event.getClientX() == 0 && event.getClientY() == 0)
+               return;
 
             // look at where the cursor is now--if it's inside the tab panel,
             // do nothing, but if it's outside the tab panel, treat that as
