@@ -316,6 +316,10 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
       if (windowsClosing_)
          return;
       
+      // ignore closure when not a source window
+      if (!event.getName().startsWith(SourceSatellite.NAME_PREFIX))
+         return;
+      
       // when the user closes a source window, close all the source docs it
       // contained
       for (int i = 0; i < sourceDocs_.length(); i++)

@@ -289,11 +289,16 @@ public class SatelliteManager implements CloseHandler<Window>
    
    public String getWindowAtPoint(int x, int y)
    {
+      // check to see if the point is in any of our satellites
       for (ActiveSatellite satellite : satellites_)
       {
+         if (satellite.getWindow() == null || satellite.getWindow().isClosed())
+            continue;
          if (isPointWithinSatellite(satellite.getWindow(), x, y))
             return satellite.getName();
       } 
+      
+      // check to see if the point is inside our own window
       if (DomUtils.elementFromPoint(x - WindowEx.get().getScreenX(), 
             y - WindowEx.get().getScreenY()) != null)
       {
