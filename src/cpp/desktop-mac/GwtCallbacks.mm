@@ -502,11 +502,16 @@ private:
 }
 
 - (void) prepareForSatelliteWindow: (NSString*) name
-                             width: (int) width height: (int) height
+                                 x: (int) x
+                                 y: (int) y
+                             width: (int) width
+                            height: (int) height
 {
    [WebViewController prepareForSatelliteWindow: name
+                                              x: x
+                                              y: y
                                           width: width
-                                          height: height];
+                                         height: height];
 }
 
 - (void) prepareForNamedWindow: (NSString*) name
@@ -1092,7 +1097,7 @@ enum RS_NSActivityOptions : uint64_t
       return @"activateMinimalWindow";
    else if (sel == @selector(activateSatelliteWindow:))
       return @"activateSatelliteWindow";
-   else if (sel == @selector(prepareForSatelliteWindow:width:height:))
+   else if (sel == @selector(prepareForSatelliteWindow:x:y:width:height:))
       return @"prepareForSatelliteWindow";
    else if (sel == @selector(copyImageToClipboard:top:width:height:))
       return @"copyImageToClipboard";
