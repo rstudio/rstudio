@@ -792,6 +792,10 @@ public class Source implements InsertSourceHandler,
 
    public void onShowData(ShowDataEvent event)
    {
+      // ignore if we're a satellite
+      if (!windowManager_.isMainSourceWindow())
+         return;
+      
       DataItem data = event.getData();
 
       for (int i = 0; i < editors_.size(); i++)
