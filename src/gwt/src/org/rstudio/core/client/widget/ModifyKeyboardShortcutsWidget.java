@@ -58,11 +58,12 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
    public static class CommandBinding
    {
       public CommandBinding(String id,
+                            String displayName,
                             KeySequence keySequence,
                             int commandType)
       {
          id_ = id;
-         name_ = prettyCamel(id);
+         name_ = displayName;
          keySequence_ = keySequence;
          commandType_ = commandType;
       }
@@ -279,6 +280,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
          CommandBinding oldBinding = preview.getValue();
          CommandBinding newBinding = new CommandBinding(
                oldBinding.getId(),
+               oldBinding.getName(),
                buffer_.clone(),
                oldBinding.getCommandType());
                
@@ -312,6 +314,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
          
          bindings.add(new CommandBinding(
                command.getName(),
+               StringUtil.prettyCamel(command.getName()),
                shortcut.getKeySequence(),
                CommandBinding.TYPE_USER_COMMAND));
       }
@@ -323,7 +326,8 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
       for (int i = 0; i < aceCommands.length(); i++)
       {
          AceCommand command = aceCommands.get(i);
-         String name = command.getName();
+         String id = command.getInternalName();
+         String name = command.getDisplayName();
          JsArrayString shortcuts = command.getBindingsForCurrentPlatform();
          Debug.logToRConsole("Shortcuts: " + shortcuts.toString());
          
@@ -335,7 +339,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
                Debug.logToRConsole("Parsing Ace shortcut: '" + shortcut + "'");
                KeySequence keys = KeySequence.fromShortcutString(shortcut);
                int type = CommandBinding.TYPE_EDITOR_COMMAND;
-               bindings.add(new CommandBinding(name, keys, type));
+               bindings.add(new CommandBinding(id, name, keys, type));
             }
          }
       }
@@ -346,10 +350,11 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
       {
          AppCommand command = entry.getValue();
          
-         String name = command.getId();
+         String id = command.getId();
+         String name = StringUtil.prettyCamel(command.getId());
          KeySequence keySequence = command.getKeySequence();
          int type = CommandBinding.TYPE_RSTUDIO_COMMAND;
-         bindings.add(new CommandBinding(name, keySequence, type));
+         bindings.add(new CommandBinding(id, name, keySequence, type));
       }
       
       dataProvider_.setList(bindings);
@@ -364,16 +369,6 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
                return item.getName();
             }
    };
-   
-   private static String prettyCamel(String string)
-   {
-      if (StringUtil.isNullOrEmpty(string))
-         return string;
-      
-      String result = string.replaceAll("\\s*([A-Z])", " $1");
-      return result.substring(0, 1).toUpperCase() +
-             result.substring(1);
-   }
    
    private final KeySequence buffer_;
    private final ScrollingDataGrid<CommandBinding> table_;

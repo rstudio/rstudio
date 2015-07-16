@@ -960,6 +960,16 @@ public class StringUtil
       return builder.toString();
    }
    
+   public static String prettyCamel(String string)
+   {
+      if (isNullOrEmpty(string))
+         return string;
+      
+      String result = string.replaceAll("\\s*([A-Z])", " $1");
+      return result.substring(0, 1).toUpperCase() +
+             result.substring(1);
+   }
+   
    public static final HashMap<String, String> COMPLEMENTS =
          makeComplementsMap();
    
