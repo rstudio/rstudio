@@ -15,10 +15,15 @@
 package org.rstudio.core.client.command;
 
 import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.command.KeyboardShortcut.KeyCombination;
+import org.rstudio.core.client.command.KeyboardShortcut.KeySequence;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.events.AddEditorCommandEvent;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.application.events.RetrieveEditorCommandsEvent;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
@@ -29,24 +34,6 @@ import com.google.inject.Singleton;
 @Singleton
 public class AceCommandManager
 {
-   public static class AceCommandAlias
-   {
-      public AceCommandAlias(String name, String binding, boolean replace)
-      {
-         name_ = name;
-         binding_ = binding;
-         replace_ = replace;
-      }
-      
-      public String getName() { return name_; }
-      public String getBinding() { return binding_; }
-      public boolean getReplace() { return replace_; }
-      
-      private final String name_;
-      private final String binding_;
-      private final boolean replace_;
-   }
-   
    public static class AceCommand extends JavaScriptObject
    {
       protected AceCommand() {}
@@ -206,6 +193,67 @@ public class AceCommandManager
       private static final JsObject DISPLAY_NAME_MAP = makeDisplayNameMap();
    }
    
+   // The actual native CommandManager used as part of an Ace editor instance
+   public static class Manager extends JavaScriptObject
+   {
+      protected Manager() {}
+      
+      private static final String toAceStyleShortcutString(KeyCombination keys)
+      {
+         StringBuilder builder = new StringBuilder();
+         
+         if (keys.isCtrlPressed()) builder.append("ctrl-");
+         if (keys.isMetaPressed()) builder.append("cmd-");
+         if (keys.isAltPressed()) builder.append("alt-");
+         if (keys.isShiftPressed()) builder.append("shift-");
+         
+         String keyName =
+               KeyboardHelper.keyNameFromKeyCode(keys.getKeyCode());
+         builder.append(keyName.toLowerCase());
+         return builder.toString();
+      }
+      
+      private static final String toAceStyleShortcutString(KeySequence sequence)
+      {
+         if (sequence.size() == 0)
+            return "";
+         
+         StringBuilder builder = new StringBuilder();
+         builder.append(toAceStyleShortcutString(sequence.get(0)));
+         for (int i = 1; i < sequence.size(); i++)
+         {
+            builder.append(" ");
+            builder.append(toAceStyleShortcutString(sequence.get(i)));
+         }
+         
+         return builder.toString();
+         
+      }
+      
+      public final native boolean hasCommand(String id) /*-{
+         return this.byName[id] != null;
+      }-*/;
+      
+      public final boolean hasBinding(KeySequence keys)
+      {
+         String transformed = toAceStyleShortcutString(keys);
+         Debug.logToRConsole("Checking for ace binding on '" + transformed + "'");
+         return hasBinding(transformed);
+      }
+      
+      private final native boolean hasBinding(String shortcut) /*-{
+         return this.commandKeyBinding[shortcut] != null;
+      }-*/;
+      
+      public final native JsObject getCommandKeyBindings() /*-{
+         return this.commandKeyBinding;
+      }-*/;
+      
+      public final native JsArray<AceCommand> getCommands() /*-{
+         return this.commands;
+      }-*/;
+   }
+   
    public AceCommandManager()
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
@@ -217,9 +265,31 @@ public class AceCommandManager
       events_ = events;
    }
    
-   public static final native JsArray<AceCommand> getAceCommands() /*-{
+   public static final native JsArray<AceCommand> getDefaultAceCommands() /*-{
       return $wnd.require("ace/commands/default_commands").commands;
    }-*/;
+   
+   private Manager getActiveManager()
+   {
+      RetrieveEditorCommandsEvent event = new RetrieveEditorCommandsEvent();
+      events_.fireEvent(event);
+      return event.getCommandManager();
+   }
+   
+   public boolean hasBinding(KeySequence keys)
+   {
+      Manager manager = getActiveManager();
+      if (manager == null)
+         return false;
+      
+      return manager.hasBinding(keys);
+   }
+   
+   public void rebindCommand(String id, KeySequence keySequence)
+   {
+      events_.fireEvent(new AddEditorCommandEvent(id, keySequence, true));
+   }
+   
    
    // Injected ----
    private EventBus events_;

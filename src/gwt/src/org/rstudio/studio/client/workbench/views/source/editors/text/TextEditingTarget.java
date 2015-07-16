@@ -59,9 +59,11 @@ import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.widget.*;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
+import org.rstudio.studio.client.application.events.AddEditorCommandEvent;
 import org.rstudio.studio.client.application.events.ChangeFontSizeEvent;
 import org.rstudio.studio.client.application.events.ChangeFontSizeHandler;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.application.events.RetrieveEditorCommandsEvent;
 import org.rstudio.studio.client.common.*;
 import org.rstudio.studio.client.common.debugging.BreakpointManager;
 import org.rstudio.studio.client.common.debugging.events.BreakpointsSavedEvent;
@@ -694,6 +696,36 @@ public class TextEditingTarget implements
                   {
                      addAdditionalResourceFiles(settings.getAdditionalFiles());
                   }
+               }
+            });
+      
+      events_.addHandler(
+            AddEditorCommandEvent.TYPE,
+            new AddEditorCommandEvent.Handler()
+            {
+               @Override
+               public void onAddEditorCommand(AddEditorCommandEvent event)
+               {
+                  getDocDisplay().addEditorCommandBinding(
+                        event.getId(),
+                        event.getKeySequence(),
+                        event.replaceOldBindings());
+               }
+            });
+      
+      events_.addHandler(
+            RetrieveEditorCommandsEvent.TYPE,
+            new RetrieveEditorCommandsEvent.Handler()
+            {
+               @Override
+               public void onRetrieveEditorCommands(RetrieveEditorCommandsEvent event)
+               {
+                  if (event.getCommandManager() != null)
+                     return;
+                  
+                  DocDisplay docDisplay = getDocDisplay();
+                  if (docDisplay.isFocused())
+                     event.setCommandManager(docDisplay.getCommandManager());
                }
             });
    }

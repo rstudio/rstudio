@@ -21,6 +21,8 @@ import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.user.client.Command;
 
 import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.command.AceCommandManager.Manager;
+
 import java.util.LinkedList;
 
 public class AceEditorNative extends JavaScriptObject {
@@ -375,6 +377,35 @@ public class AceEditorNative extends JavaScriptObject {
    
    public final native Element getContainer() /*-{
       return this.container;
+   }-*/;
+   
+   public final native void addEditorCommandBinding(String id,
+                                                    String keys,
+                                                    boolean replace)
+   /*-{
+      
+      var commands = this.commands;
+      var command = commands.byName[id];
+      
+      if (command == null) {
+         throw new Error("No command with id '" + id + "'");
+      }
+      
+      if (replace) {
+         commands.removeCommand(id);
+      }
+      
+      command.bindKey = keys;
+      commands.addCommand(command);
+      
+      console.log(command);
+      console.log(commands);
+      
+   }-*/;
+   
+   public final native Manager getCommands()
+   /*-{
+      return this.commands;
    }-*/;
    
 }

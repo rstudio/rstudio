@@ -204,6 +204,9 @@ public class ShortcutManager implements NativePreviewHandler,
          if (shortcut.startsWith(keyBuffer_))
             return;
       
+      if (aceCommands_.hasBinding(keyBuffer_))
+         return;
+      
       // Otherwise, clear the keybuffer.
       resetKeyBuffer();
    }
@@ -339,7 +342,7 @@ public class ShortcutManager implements NativePreviewHandler,
       // Check for user-defined commands.
       if (userCommands_.dispatch(shortcut))
          return true;
-
+      
       // Check for RStudio AppCommands.
       if (!commands_.containsKey(shortcut) || commands_.get(shortcut) == null) 
       {

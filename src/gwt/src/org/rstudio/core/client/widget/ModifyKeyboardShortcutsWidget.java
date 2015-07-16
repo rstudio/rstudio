@@ -172,6 +172,12 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
             KeyboardShortcut newShortcut = new KeyboardShortcut(newBinding.getKeySequence());
             userCommands.put(newShortcut, command);
          }
+         else if (commandType == CommandBinding.TYPE_EDITOR_COMMAND)
+         {
+            aceCommands_.rebindCommand(
+                  newBinding.getId(),
+                  newBinding.getKeySequence());
+         }
       }
       
       closeDialog();
@@ -286,7 +292,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
                
          changes_.put(oldBinding, newBinding);
          
-         // Highlight any existing conflicts.
+         // TODO: Highlight any existing conflicts.
          
       }
    }
@@ -320,7 +326,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
       }
       
       // Ace Commands
-      JsArray<AceCommand> aceCommands = AceCommandManager.getAceCommands();
+      JsArray<AceCommand> aceCommands = AceCommandManager.getDefaultAceCommands();
       Debug.logObject(aceCommands);
       
       for (int i = 0; i < aceCommands.length(); i++)
@@ -349,8 +355,11 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
       for (Map.Entry<String, AppCommand> entry : commands.entrySet())
       {
          AppCommand command = entry.getValue();
+         if (isExcludedCommand(command))
+            continue;
          
          String id = command.getId();
+         
          String name = StringUtil.prettyCamel(command.getId());
          KeySequence keySequence = command.getKeySequence();
          int type = CommandBinding.TYPE_RSTUDIO_COMMAND;
@@ -358,6 +367,20 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
       }
       
       dataProvider_.setList(bindings);
+   }
+   
+   private boolean isExcludedCommand(AppCommand command)
+   {
+      String id = command.getId();
+      
+      if (id == null)
+         return false;
+      
+      if (id.startsWith("mru"))
+         return true;
+      if (command.getKeySequence() == null || command.getKeySequence().size() == 0)
+         return true;
+      return false;
    }
    
    private static final ProvidesKey<CommandBinding> KEY_PROVIDER =

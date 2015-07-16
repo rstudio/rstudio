@@ -49,6 +49,26 @@ public class KeyboardShortcut
          return modifiers_;
       }
       
+      public boolean isCtrlPressed()
+      {
+         return (modifiers_ & CTRL) == CTRL;
+      }
+      
+      public boolean isAltPressed()
+      {
+         return (modifiers_ & ALT) == ALT;
+      }
+      
+      public boolean isShiftPressed()
+      {
+         return (modifiers_ & SHIFT) == SHIFT;
+      }
+      
+      public boolean isMetaPressed()
+      {
+         return (modifiers_ & META) == META;
+      }
+      
       @Override
       public String toString()
       {
@@ -193,6 +213,16 @@ public class KeyboardShortcut
       public boolean isEmpty()
       {
          return keyCombinations_.isEmpty();
+      }
+      
+      public int size()
+      {
+         return keyCombinations_.size();
+      }
+      
+      public KeyCombination get(int index)
+      {
+         return keyCombinations_.get(index);
       }
       
       public void add(NativeEvent event)
