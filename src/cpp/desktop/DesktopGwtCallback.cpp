@@ -451,11 +451,13 @@ void GwtCallback::activateMinimalWindow(QString name)
 }
 
 void GwtCallback::prepareForSatelliteWindow(QString name,
+                                            int x,
+                                            int y,
                                             int width,
                                             int height)
 {
    pOwner_->webPage()->prepareForWindow(
-                PendingWindow(name, pMainWindow_, width, height));
+                PendingWindow(name, pMainWindow_, x, y, width, height));
 }
 
 void GwtCallback::prepareForNamedWindow(QString name,

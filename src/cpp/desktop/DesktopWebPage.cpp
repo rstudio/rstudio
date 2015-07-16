@@ -88,6 +88,8 @@ QWebPage* WebPage::createWindow(QWebPage::WebWindowType)
    bool allowExternalNavigate = false;
    int width = 0;
    int height = 0;
+   int x = -1;
+   int y = -1;
    MainWindow* pMainWindow = NULL;
    BrowserWindow* pWindow = NULL;
 
@@ -105,6 +107,8 @@ QWebPage* WebPage::createWindow(QWebPage::WebWindowType)
       double dpiZoomScaling = getDpiZoomScaling();
       width = pendingWindow_.width * dpiZoomScaling;
       height = pendingWindow_.height * dpiZoomScaling;
+      x = pendingWindow_.x;
+      y = pendingWindow_.y;
 
       pendingWindow_ = PendingWindow();
 
@@ -125,10 +129,16 @@ QWebPage* WebPage::createWindow(QWebPage::WebWindowType)
       pWindow = new SatelliteWindow(pMainWindow, name);
       pWindow->resize(width, height);
 
-      // try to tile the window (but leave pdf window alone
-      // since it is so large)
-      if (name != QString::fromUtf8("pdf"))
+      if (x >= 0 && y >= 0)
       {
+         // if the window specified its location, use it
+         pWindow->move(x, y);
+      }
+      else if (name != QString::fromUtf8("pdf"))
+      {
+         // window location was left for us to determine; try to tile the window
+         // (but leave pdf window alone since it is so large)
+
          // calculate location to move to
 
          // y always attempts to be 25 pixels above then faults back
