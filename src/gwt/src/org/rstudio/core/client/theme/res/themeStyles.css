@@ -1167,6 +1167,10 @@ body.ubuntu_mono .searchBox {
    cursor: crosshair;
 }
 
+.tabOverflowPopup {
+   z-index: 10;
+}
+
 .tabOverflowPopup .gwt-MenuBar>table {
    width: 100%;
 }

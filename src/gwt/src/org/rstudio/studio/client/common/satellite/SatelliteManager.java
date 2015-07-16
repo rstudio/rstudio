@@ -28,10 +28,12 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.WindowEx;
+import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.layout.ScreenUtils;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.ApplicationUncaughtExceptionHandler;
 import org.rstudio.studio.client.application.Desktop;
+import org.rstudio.studio.client.application.events.CrossWindowEvent;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay.NewWindowOptions;
 import org.rstudio.studio.client.common.satellite.events.AllSatellitesClosingEvent;
@@ -328,7 +330,7 @@ public class SatelliteManager implements CloseHandler<Window>
    }
    
    // dispatch an event to all satellites
-   public void dispatchEvent(JavaScriptObject clientEvent)
+   public void dispatchClientEvent(JavaScriptObject clientEvent)
    {
       // list of windows to remove (because they were closed)
       ArrayList<ActiveSatellite> removeWindows = null;
@@ -400,7 +402,16 @@ public class SatelliteManager implements CloseHandler<Window>
          }
       }
    }
-
+   
+   // dispatch a cross-window event to all satellites
+   public void dispatchCrossWindowEvent(CrossWindowEvent<?> event)
+   {
+      for (ActiveSatellite satellite: satellites_)
+      {
+         events_.fireEventToSatellite(event, satellite.getWindow());
+      }
+   }
+   
    // close all satellites when we are closed
    @Override
    public void onClose(CloseEvent<Window> event)
@@ -431,8 +442,10 @@ public class SatelliteManager implements CloseHandler<Window>
       sessionInfo.setSourceDocuments(
             pSourceWindowManager_.get().getSourceDocs());
       
-      // pass the session info to the satellite
-      callSetSessionInfo(satelliteWnd, sessionInfo);
+      // clone the session info so the satellites aren't reading/writing the
+      // same copy as the main window; pass the cloned copy along
+      JsObject sessionInfoJs = session_.getSessionInfo().cast();
+      callSetSessionInfo(satelliteWnd, sessionInfoJs.clone());
       
       // call setParams
       JavaScriptObject params = satelliteParams_.get(name);

@@ -203,7 +203,7 @@ public class RemoteServer implements Server
             @Override
             public void onClientEvent(JavaScriptObject clientEvent)
             {
-               satelliteManager.dispatchEvent(clientEvent);     
+               satelliteManager.dispatchClientEvent(clientEvent);
             } 
          };
       }

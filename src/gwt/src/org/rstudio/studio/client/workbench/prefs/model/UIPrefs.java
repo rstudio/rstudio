@@ -21,9 +21,12 @@ import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.satellite.SatelliteManager;
 import org.rstudio.studio.client.notebook.CompileNotebookPrefs;
 import org.rstudio.studio.client.notebookv2.CompileNotebookv2Prefs;
-import org.rstudio.studio.client.server.VoidServerRequestCallback;
+import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.exportplot.model.ExportPlotOptions;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.events.UiPrefsChangedEvent;
@@ -36,13 +39,15 @@ public class UIPrefs extends UIPrefsAccessor implements UiPrefsChangedHandler
    @Inject
    public UIPrefs(Session session, 
                   EventBus eventBus,
-                  PrefsServerOperations server)
+                  PrefsServerOperations server,
+                  SatelliteManager satelliteManager)
    {
       super(session.getSessionInfo().getUiPrefs(),
             session.getSessionInfo().getProjectUIPrefs());
       
       session_ = session;
       server_ = server;
+      satelliteManager_ = satelliteManager;
       
       eventBus.addHandler(UiPrefsChangedEvent.TYPE, this);
    }
@@ -51,7 +56,23 @@ public class UIPrefs extends UIPrefsAccessor implements UiPrefsChangedHandler
    {
       server_.setUiPrefs(
          session_.getSessionInfo().getUiPrefs(),
-         new VoidServerRequestCallback());
+         new ServerRequestCallback<Void>() 
+         {
+            @Override
+            public void onResponseReceived(Void v)
+            {
+               // let satellites know prefs have changed
+               satelliteManager_.dispatchCrossWindowEvent(
+                     new UiPrefsChangedEvent(UiPrefsChangedEvent.Data.create(
+                           UiPrefsChangedEvent.GLOBAL_TYPE,
+                           session_.getSessionInfo().getUiPrefs())));
+            }
+            @Override
+            public void onError(ServerError error)
+            {
+               Debug.logError(error);
+            }
+         });
    }
    
    @Override
@@ -436,4 +457,5 @@ public class UIPrefs extends UIPrefsAccessor implements UiPrefsChangedHandler
    
    private final Session session_;
    private final PrefsServerOperations server_;
+   private final SatelliteManager satelliteManager_;
 }
