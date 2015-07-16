@@ -42,9 +42,11 @@ public class SystemGetPropertyTest extends GWTTestCase {
   public void testConfigurationProperties() {
     assertEquals("conf", System.getProperty("someConfigurationProperty"));
     assertEquals("conf", System.getProperty("someConfigurationProperty", "default"));
-  }
 
-  public void testDefaultValues() {
-    assertEquals("default", System.getProperty("nonExistent", "default"));
+    String someConf = System.getProperty("nonExistent", "default");
+    assertEquals("default", someConf);
+
+    // Note that default is not a String literal.
+    assertEquals("default", System.getProperty("otherNonExistent", someConf));
   }
 }

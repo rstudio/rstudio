@@ -23,21 +23,21 @@ import java.util.List;
 /**
  * Represents a GWT.create() or a GWT.getProperty call before deferred binding decisions are
  * finalized. These nodes are replaced by the appropriate expressions by
- * {@link ResolvePermutationDependentValues}.
+ * {@link com.google.gwt.dev.jjs.impl.ResolvePermutationDependentValues}.
  */
 public class JPermutationDependentValue extends JExpression {
 
-  private enum Type { PROPERTY, TYPE_REBIND};
+  private enum Type { PROPERTY, TYPE_REBIND };
 
   private final List<JExpression> resultExpressions;
   private final List<String> resultValues;
-  private final String defaultValue;
+  private final JExpression defaultValueExpression;
   private final String requestedValue;
   private final Type valueType;
   private JType type;
 
   private JPermutationDependentValue(SourceInfo info, Type valueType, String requestedValue,
-      List<String> resultValues, String defaultValue, JType resultType,
+      List<String> resultValues, JExpression defaultValueExpression, JType resultType,
       List<JExpression> resultExpressions) {
     super(info);
     this.requestedValue = requestedValue;
@@ -45,23 +45,24 @@ public class JPermutationDependentValue extends JExpression {
     this.type = resultType;
     this.resultExpressions = resultExpressions;
     this.valueType = valueType;
-    this.defaultValue = defaultValue;
+    this.defaultValueExpression = defaultValueExpression;
   }
 
-  public static JPermutationDependentValue createTypeRebind(JProgram program,  SourceInfo info,
+  public static JPermutationDependentValue createTypeRebind(JProgram program, SourceInfo info,
       String requestedType, List<String> resultTypes, List<JExpression> instantiationExpressions) {
     return new JPermutationDependentValue(info, Type.TYPE_REBIND, requestedType, resultTypes, null,
         program.getTypeJavaLangObject(), instantiationExpressions);
   }
 
-  public static JPermutationDependentValue createRuntimeProperty(JProgram program,  SourceInfo info,
-      String propertyName, String defaultValue) {
-    return new JPermutationDependentValue(info, Type.PROPERTY, propertyName, null, defaultValue,
-        program.getTypeJavaLangString(), Collections.<JExpression>emptyList());
+  public static JPermutationDependentValue createRuntimeProperty(
+      JProgram program, SourceInfo info, String propertyName, JExpression defaultValueExpression) {
+    return new JPermutationDependentValue(info, Type.PROPERTY, propertyName, null,
+        defaultValueExpression, program.getTypeJavaLangString(),
+        Collections.<JExpression>emptyList());
   }
 
-  public String getDefaultValue() {
-    return defaultValue;
+  public JExpression getDefaultValueExpression() {
+    return defaultValueExpression;
   }
 
   public List<JExpression> getResultExpressions() {

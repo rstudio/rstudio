@@ -418,10 +418,9 @@ public class UnifyAst {
       JExpression defaultValueExpression = defaultVersionCalled ?
           gwtGetPropertyCall.getArgs().get(1) : null;
 
-      if (!(propertyNameExpression instanceof JStringLiteral) ||
-          (defaultVersionCalled && !(defaultValueExpression instanceof JStringLiteral))) {
+      if (!(propertyNameExpression instanceof JStringLiteral)) {
         error(gwtGetPropertyCall,
-            "Only string constants may be used as arguments to System.getProperty()");
+            "Only string constants may be used as property name in System.getProperty()");
         return null;
       }
       String propertyName = ((JStringLiteral) propertyNameExpression).getValue();
@@ -438,11 +437,12 @@ public class UnifyAst {
         return null;
       }
 
-      String defaultValue = defaultValueExpression == null ? null :
-          ((JStringLiteral) defaultValueExpression).getValue();
-      return JPermutationDependentValue
-          .createRuntimeProperty(program, gwtGetPropertyCall.getSourceInfo(),
-              propertyName, defaultValue);
+      if (defaultValueExpression != null) {
+        defaultValueExpression = accept(defaultValueExpression);
+      }
+
+      return JPermutationDependentValue.createRuntimeProperty(
+          program, gwtGetPropertyCall.getSourceInfo(), propertyName, defaultValueExpression);
     }
 
     private JExpression createRebindExpression(JMethodCall gwtCreateCall) {
