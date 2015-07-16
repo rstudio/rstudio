@@ -706,6 +706,10 @@ public class TextEditingTarget implements
                @Override
                public void onAddEditorCommand(AddEditorCommandEvent event)
                {
+                  Debug.logToRConsole(
+                        "Binding '" + event.getKeySequence() +
+                        "' to '" + event.getId() + "'");
+                  
                   getDocDisplay().addEditorCommandBinding(
                         event.getId(),
                         event.getKeySequence(),
@@ -724,8 +728,7 @@ public class TextEditingTarget implements
                      return;
                   
                   DocDisplay docDisplay = getDocDisplay();
-                  if (docDisplay.isFocused())
-                     event.setCommandManager(docDisplay.getCommandManager());
+                  event.setCommandManager(docDisplay.getCommandManager());
                }
             });
    }

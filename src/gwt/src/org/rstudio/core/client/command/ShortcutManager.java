@@ -204,7 +204,7 @@ public class ShortcutManager implements NativePreviewHandler,
          if (shortcut.startsWith(keyBuffer_))
             return;
       
-      if (aceCommands_.hasBinding(keyBuffer_))
+      if (aceCommands_.hasPrefix(keyBuffer_))
          return;
       
       // Otherwise, clear the keybuffer.

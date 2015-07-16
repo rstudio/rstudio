@@ -15,7 +15,6 @@
 package org.rstudio.core.client.command;
 
 import org.rstudio.core.client.BrowseCap;
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.KeyboardShortcut.KeyCombination;
 import org.rstudio.core.client.command.KeyboardShortcut.KeySequence;
@@ -237,12 +236,23 @@ public class AceCommandManager
       public final boolean hasBinding(KeySequence keys)
       {
          String transformed = toAceStyleShortcutString(keys);
-         Debug.logToRConsole("Checking for ace binding on '" + transformed + "'");
          return hasBinding(transformed);
       }
       
       private final native boolean hasBinding(String shortcut) /*-{
-         return this.commandKeyBinding[shortcut] != null;
+         var binding = this.commandKeyBinding[shortcut];
+         return binding != null && binding !== "chainKeys";
+      }-*/;
+      
+      public final boolean hasPrefix(KeySequence keys)
+      {
+         String transformed = toAceStyleShortcutString(keys);
+         return hasPrefix(transformed);
+      }
+      
+      private final native boolean hasPrefix(String shortcut) /*-{
+         var binding = this.commandKeyBinding[shortcut];
+         return binding != null && binding === "chainKeys";
       }-*/;
       
       public final native JsObject getCommandKeyBindings() /*-{
@@ -269,7 +279,7 @@ public class AceCommandManager
       return $wnd.require("ace/commands/default_commands").commands;
    }-*/;
    
-   private Manager getActiveManager()
+   private Manager getManager()
    {
       RetrieveEditorCommandsEvent event = new RetrieveEditorCommandsEvent();
       events_.fireEvent(event);
@@ -278,18 +288,20 @@ public class AceCommandManager
    
    public boolean hasBinding(KeySequence keys)
    {
-      Manager manager = getActiveManager();
-      if (manager == null)
-         return false;
-      
+      Manager manager = getManager();
       return manager.hasBinding(keys);
+   }
+   
+   public boolean hasPrefix(KeySequence keys)
+   {
+      Manager manager = getManager();
+      return manager.hasPrefix(keys);
    }
    
    public void rebindCommand(String id, KeySequence keySequence)
    {
       events_.fireEvent(new AddEditorCommandEvent(id, keySequence, true));
    }
-   
    
    // Injected ----
    private EventBus events_;
