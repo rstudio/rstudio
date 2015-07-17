@@ -488,7 +488,7 @@ public class UIPrefsAccessor extends Prefs
    
    public PrefValue<Integer> preferredDocumentOutlineWidth()
    {
-      return integer("preferred_document_outline_width", 150);
+      return integer("preferred_document_outline_width", 125);
    }
    
    public PrefValue<Boolean> showDocumentOutlineRmd()
