@@ -15,105 +15,169 @@
  */
 package java.util;
 
-import java.util.InternalJsHashCodeMap.InternalJsHashCodeMapLegacy;
-import java.util.InternalJsStringMap.InternalJsStringMapLegacy;
-import java.util.InternalJsStringMap.InternalJsStringMapWithKeysWorkaround;
+import com.google.gwt.core.client.JavaScriptObject;
 
 /**
- * A factory to create internal JS map instances for modern browsers.
+ * A factory to create JavaScript Map instances.
  */
 class InternalJsMapFactory {
 
-  public <K, V> InternalJsHashCodeMap<K, V> createJsHashCodeMap() {
-    return new InternalJsHashCodeMap<K, V>();
-  }
+  private static final JavaScriptObject jsMapCtor = getJsMapConstructor();
 
-  public <K, V> InternalJsStringMap<K, V> createJsStringMap() {
-    return new InternalJsStringMap<K, V>();
-  }
+  private static native JavaScriptObject getJsMapConstructor() /*-{
+    if (typeof Map === 'function' && Map.prototype.entries) {
+      return Map;
+    } else {
+      return @InternalJsMapFactory::getJsMapPolyFill()();
+    }
+  }-*/;
+
+  public static native <V> InternalJsMap<V> newJsMap() /*-{
+    return new @InternalJsMapFactory::jsMapCtor;
+  }-*/;
 
   /**
-   * A {@code InternalJsMapFactory} that returns JS map instances compatible with legacy browsers.
+   * Returns a partial polyfill for Map that can handle String keys.
+   * <p>Implementation notes:
+   * <p>String keys are mapped to their values via a JS associative map. String keys could collide
+   * with intrinsic properties (like watch, constructor). To avoid that; the polyfill uses
+   * {@code Object.create(null)} so it doesn't inherit any properties.
+   * <p>For legacy browsers where {@code Object.create} is not available or handling of
+   * {@code __proto__} is broken, the polyfill is patched to prepend each key with a ':' while
+   * storing.
    */
-  static class LegacyInternalJsMapFactory extends InternalJsMapFactory {
-    @Override
-    public <K, V> InternalJsHashCodeMap<K, V> createJsHashCodeMap() {
-      return new InternalJsHashCodeMapLegacy<K, V>();
+  private static native JavaScriptObject getJsMapPolyFill() /*-{
+    function Stringmap() {
+      this.obj = this.createObject();
+    };
+
+    Stringmap.prototype.createObject = function(key) {
+      return Object.create(null);
     }
 
-    @Override
-    public <K, V> InternalJsStringMap<K, V> createJsStringMap() {
-      return new InternalJsStringMapLegacy<K, V>();
+    Stringmap.prototype.get = function(key) {
+      return this.obj[key];
+    };
+
+    Stringmap.prototype.set = function(key, value) {
+      this.obj[key] = value;
+    };
+
+    Stringmap.prototype['delete'] = function(key) {
+      delete this.obj[key];
+    };
+
+    Stringmap.prototype.keys = function() {
+      return Object.getOwnPropertyNames(this.obj);
+    };
+
+    Stringmap.prototype.entries = function() {
+      var keys = this.keys();
+      var map = this;
+      var nextIndex = 0;
+      return {
+        next: function() {
+          if (nextIndex >= keys.length) return {done: true};
+          var key = keys[nextIndex++];
+          return {value: [key, map.get(key)], done: false};
+        }
+      };
+    };
+
+    if (!@InternalJsMapFactory::canHandleObjectCreateAndProto()()) {
+      // Patches the polyfill to drop Object.create(null) and prefix each key with ':" so it will
+      // not interfere with intrinsic fields.
+
+      Stringmap.prototype.createObject = function() { return {}; };
+
+      Stringmap.prototype.get = function(key) {
+        return this.obj[':' + key];
+      };
+
+      Stringmap.prototype.set = function(key, value) {
+        this.obj[':' + key] = value;
+      };
+
+      Stringmap.prototype['delete'] = function(key) {
+        delete this.obj[':' + key];
+      };
+
+      Stringmap.prototype.keys = function() {
+        var result = [];
+        for (var key in this.obj) {
+          // char code for ':' is 58
+          if (key.charCodeAt(0) == 58) {
+            result.push(key.substring(1));
+          }
+        }
+        return result;
+      };
     }
-  }
+
+    return Stringmap;
+  }-*/;
 
   /**
-   * A {@code InternalJsMapFactory} that returns JS map instances that works around keys bug.
+   * Return {@code true} if the browser is modern enough to handle Object.create and also properly
+   * handles '__proto__' field with Object.create(null). (Safari 5, Android, old Firefox)
    */
-  static class KeysWorkaroundJsMapFactory extends InternalJsMapFactory {
-    @Override
-    public <K, V> InternalJsStringMap<K, V> createJsStringMap() {
-      return new InternalJsStringMapWithKeysWorkaround<K, V>();
+  private static native boolean canHandleObjectCreateAndProto() /*-{
+    if (!Object.create || !Object.getOwnPropertyNames) {
+      return false;
     }
+
+    var protoField = "__proto__";
+
+    var map = Object.create(null);
+    if (map[protoField] !== undefined) {
+      return false;
+    }
+
+    var keys = Object.getOwnPropertyNames(map);
+    if (keys.length != 0) {
+      return false;
+    }
+
+    map[protoField] = 42;
+    if (map[protoField] !== 42) {
+      return false;
+    }
+
+    // For old Firefox version who doesn't have native Map. See the Firefox bug:
+    // https://bugzilla.mozilla.org/show_bug.cgi?id=837630
+    if (Object.getOwnPropertyNames(map).length == 0) {
+      return false;
+    }
+
+    // Looks like the browser has a workable handling of proto field.
+    return true;
+  }-*/;
+
+  static class InternalJsIterator<V> extends JavaScriptObject {
+    protected InternalJsIterator() { }
+    public final native InternalJsIteratorEntry<V> next() /*-{ return this.next(); }-*/;
   }
 
-  /**
-   * A replacement factory that chooses best JS map implementation based on capability check.
-   */
-  static class BackwardCompatibleJsMapFactory extends InternalJsMapFactory {
+  static class InternalJsIteratorEntry<V> extends JavaScriptObject {
+    protected InternalJsIteratorEntry() { }
+    public final native boolean done() /*-{ return this.done; }-*/;
+    public final native String getKey() /*-{ return this.value[0]; }-*/;
+    public final native V getValue() /*-{ return this.value[1]; }-*/;
+  }
 
-    private static InternalJsMapFactory delegate = createFactory();
+  static class InternalJsMap<V> extends JavaScriptObject {
+    protected InternalJsMap() { }
+    public final native V get(int key) /*-{ return this.get(key); }-*/;
+    public final native V get(String key) /*-{ return this.get(key); }-*/;
+    public final native void set(int key, V value) /*-{ this.set(key, value); }-*/;
+    public final native void set(String key, V value) /*-{ this.set(key, value); }-*/;
+    // Calls delete via brackets to be workable with polyfills
+    public final native void delete(int key) /*-{ this['delete'](key); }-*/;
+    public final native void delete(String key) /*-{ this['delete'](key); }-*/;
+    public final native InternalJsIterator<V> entries() /*-{ return this.entries(); }-*/;
+  }
 
-    private static InternalJsMapFactory createFactory() {
-      if (isModern() && canHandleProto()) {
-        return needsKeysWorkaround() ? new KeysWorkaroundJsMapFactory()
-            : new InternalJsMapFactory();
-      }
-      return new LegacyInternalJsMapFactory();
-    }
-
-    private static native boolean isModern() /*-{
-      return Object.create && Object.getOwnPropertyNames;
-    }-*/;
-
-    // See the Firefox bug: https://bugzilla.mozilla.org/show_bug.cgi?id=837630
-    private static native boolean needsKeysWorkaround() /*-{
-      var map = Object.create(null);
-      map["__proto__"] = 42;
-      return Object.getOwnPropertyNames(map).length == 0;
-    }-*/;
-
-    // Some older browsers doesn't properly handle __proto__ at all (Safari 5, Android).
-    private static native boolean canHandleProto() /*-{
-      var protoField = "__proto__";
-
-      var map = Object.create(null);
-      if (map[protoField] !== undefined) {
-        return false;
-      }
-
-      var keys = Object.getOwnPropertyNames(map);
-      if (keys.length != 0) {
-        return false;
-      }
-
-      map[protoField] = 42;
-      if (map[protoField] !== 42) {
-        return false;
-      }
-
-      // Looks like the browser has a workable handling of proto field.
-      return true;
-    }-*/;
-
-    @Override
-    public <K, V> InternalJsHashCodeMap<K, V> createJsHashCodeMap() {
-      return delegate.createJsHashCodeMap();
-    }
-
-    @Override
-    public <K, V> InternalJsStringMap<K, V> createJsStringMap() {
-      return delegate.createJsStringMap();
-    }
+  private InternalJsMapFactory() {
+    // Hides the constructor.
   }
 }

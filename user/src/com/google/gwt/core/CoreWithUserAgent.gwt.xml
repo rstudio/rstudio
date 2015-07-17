@@ -16,11 +16,6 @@
 <module>
   <inherits name="com.google.gwt.core.Core"/>
 
-  <!-- Replace JS map factory to support older browsers -->
-  <replace-with class="java.util.InternalJsMapFactory.BackwardCompatibleJsMapFactory">
-    <when-type-is class="java.util.InternalJsMapFactory"/>
-  </replace-with>
-
   <!-- Disable source maps for non-Chrome browsers -->
   <!-- TODO(goktug): enable source maps for non-Chrome browsers -->
   <set-property name="compiler.useSourceMaps" value="false">
