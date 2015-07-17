@@ -75,7 +75,7 @@
   </replace-with>
 
   <!-- Replace default consoleHandler for better SuperDevMode logging -->
-  <replace-with class="javaemul.internal.SimpleConsoleLogHandler">
+  <replace-with class="java.util.logging.SimpleConsoleLogHandler">
     <when-type-is class="com.google.gwt.logging.client.ConsoleLogHandler" />
     <all>
       <when-property-is name="superdevmode" value="on"/>
