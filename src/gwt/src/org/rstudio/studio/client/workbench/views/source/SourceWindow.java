@@ -34,6 +34,7 @@ import org.rstudio.studio.client.workbench.views.source.events.PopoutDocEvent;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.Window.ClosingEvent;
@@ -225,7 +226,18 @@ public class SourceWindow implements LastSourceDocClosedHandler,
                public void onReadyToQuit(boolean saveChanges)
                {
                   markReadyToClose();
-                  WindowEx.get().close();
+                  
+                  // we may be in the middle of closing the window already, so
+                  // defer the closure request
+                  Scheduler.get().scheduleDeferred(
+                        new Scheduler.ScheduledCommand()
+                  {
+                     @Override
+                     public void execute()
+                     {
+                        WindowEx.get().close();
+                     }
+                  });
                }
             };
 
