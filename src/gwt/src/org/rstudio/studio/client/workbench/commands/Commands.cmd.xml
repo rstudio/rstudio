@@ -412,6 +412,8 @@ well as menu structures (for main menu and popup menus).
       -->
       <!-- Valid modifiers are Ctrl, Alt, Meta, Shift, and Cmd -->
       <!-- "Cmd" means Ctrl OR Meta -->
+      <!-- Use spaces for key sequences, e.g. 'Ctrl+X Ctrl+F' -->
+      <!-- Separate shortcuts with '|', e.g. 'Cmd+O|Ctrl+X Ctrl+F' -->
       <shortcutgroup name="Source Editor">
          <shortcut refid="insertChunk" value="Cmd+Alt+I"/>
          <shortcut refid="insertSection" value="Cmd+Shift+R"/>
