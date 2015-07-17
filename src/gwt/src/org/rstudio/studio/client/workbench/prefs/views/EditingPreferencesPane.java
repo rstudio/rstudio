@@ -65,14 +65,25 @@ public class EditingPreferencesPane extends PreferencesPane
             prefs_.continueCommentsOnNewline(),
             "When enabled, pressing enter will continue comments on new lines. Press Shift + Enter to exit a comment."));
       
-      vim_ = checkboxPref("Enable Vim editing mode", prefs_.useVimMode());
-      emacs_ = checkboxPref("Enable Emacs editing mode", prefs_.enableEmacsKeybindings());
+      editorMode_ = new SelectWidget(
+            "Editor Keybindings:",
+            new String[] {
+                  "Default",
+                  "Vim",
+                  "Emacs"
+            },
+            new String[] {
+                  UIPrefsAccessor.EDITOR_KEYBINDINGS_DEFAULT,
+                  UIPrefsAccessor.EDITOR_KEYBINDINGS_VIM,
+                  UIPrefsAccessor.EDITOR_KEYBINDINGS_EMACS
+            },
+            false,
+            true,
+            false);
       
-      canOnlyEnableOnePref(vim_, emacs_);
+      spaced(editorMode_);
+      editingPanel.add(editorMode_);
       
-      editingPanel.add(vim_);
-      editingPanel.add(emacs_);
-     
       Label executionLabel = headerLabel("Execution");
       editingPanel.add(executionLabel);
       executionLabel.getElement().getStyle().setMarginTop(8, Unit.PX);
@@ -292,29 +303,7 @@ public class EditingPreferencesPane extends PreferencesPane
       checkBox.setEnabled(true);
       checkBox.setVisible(true);
    }
-   private void canOnlyEnableOnePref(final CheckBox cb1, final CheckBox cb2)
-   {
-      cb1.addValueChangeHandler(new ValueChangeHandler<Boolean>()
-      {
-         @Override
-         public void onValueChange(ValueChangeEvent<Boolean> event)
-         {
-            if (event.getValue())
-               cb2.setValue(false);
-         }
-      });
-
-      cb2.addValueChangeHandler(new ValueChangeHandler<Boolean>()
-      {
-         @Override
-         public void onValueChange(ValueChangeEvent<Boolean> event)
-         {
-            if (event.getValue())
-               cb1.setValue(false);
-         }
-      });
-   }
- 
+   
    private void addEnabledDependency(final CheckBox speaker,
                                      final CheckBox listener)
    {
@@ -340,6 +329,12 @@ public class EditingPreferencesPane extends PreferencesPane
    {
       showCompletions_.setValue(prefs_.codeComplete().getValue());
       showCompletionsOther_.setValue(prefs_.codeCompleteOther().getValue());
+      if (prefs_.useVimMode().getValue())
+         editorMode_.setValue(UIPrefsAccessor.EDITOR_KEYBINDINGS_VIM);
+      else if (prefs_.enableEmacsKeybindings().getValue())
+         editorMode_.setValue(UIPrefsAccessor.EDITOR_KEYBINDINGS_EMACS);
+      else
+         editorMode_.setValue(UIPrefsAccessor.EDITOR_KEYBINDINGS_DEFAULT);
    }
    
    @Override
@@ -350,10 +345,15 @@ public class EditingPreferencesPane extends PreferencesPane
       prefs_.codeComplete().setGlobalValue(showCompletions_.getValue());
       prefs_.codeCompleteOther().setGlobalValue(showCompletionsOther_.getValue());
       
+      String editorMode = editorMode_.getValue();
+      boolean isVim = editorMode.equals(UIPrefsAccessor.EDITOR_KEYBINDINGS_VIM);
+      boolean isEmacs = editorMode.equals(UIPrefsAccessor.EDITOR_KEYBINDINGS_EMACS);
+      
+      prefs_.useVimMode().setGlobalValue(isVim);
+      prefs_.enableEmacsKeybindings().setGlobalValue(isEmacs);
+      
       return reload;
    }
-   
-   
  
    @Override
    public ImageResource getIcon()
@@ -385,10 +385,9 @@ public class EditingPreferencesPane extends PreferencesPane
    private final NumericValueWidget backgroundDiagnosticsDelayMs_;
    private final CheckBox spacesForTab_;
    private final CheckBox showMargin_;
-   private CheckBox vim_;
-   private CheckBox emacs_;
    private final SelectWidget showCompletions_;
    private final SelectWidget showCompletionsOther_;
+   private final SelectWidget editorMode_;
    
    
 }
