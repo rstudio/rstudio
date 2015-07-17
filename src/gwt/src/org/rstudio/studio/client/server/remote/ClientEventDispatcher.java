@@ -554,7 +554,7 @@ public class ClientEventDispatcher
          else if (type.equals(ClientEvent.ShinyViewer))
          {
             ShinyApplicationParams data = event.getData();
-            eventBus_.fireEvent(new ShinyApplicationStatusEvent(data));
+            eventBus_.fireEvent(new ShinyApplicationStatusEvent(data, true));
          }
          else if (type.equals(ClientEvent.DebugSourceCompleted))
          {

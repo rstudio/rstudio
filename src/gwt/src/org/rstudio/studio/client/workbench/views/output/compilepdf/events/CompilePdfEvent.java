@@ -15,16 +15,22 @@
 package org.rstudio.studio.client.workbench.views.output.compilepdf.events;
 
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.js.JavaScriptSerializable;
+import org.rstudio.studio.client.application.events.CrossWindowEvent;
 import org.rstudio.studio.client.common.synctex.model.SourceLocation;
 
 import com.google.gwt.event.shared.EventHandler;
-import com.google.gwt.event.shared.GwtEvent;
 
-public class CompilePdfEvent extends GwtEvent<CompilePdfEvent.Handler>
+@JavaScriptSerializable
+public class CompilePdfEvent extends CrossWindowEvent<CompilePdfEvent.Handler>
 {
    public interface Handler extends EventHandler
    {
       void onCompilePdf(CompilePdfEvent event);
+   }
+   
+   public CompilePdfEvent()
+   {
    }
 
    public CompilePdfEvent(FileSystemItem targetFile,
@@ -77,11 +83,11 @@ public class CompilePdfEvent extends GwtEvent<CompilePdfEvent.Handler>
       handler.onCompilePdf(this);
    }
    
-   private final FileSystemItem targetFile_;
-   private final String encoding_;
-   private final SourceLocation sourceLocation_;
-   private final String completedAction_;
-   private final boolean useInternalPreview_;
+   private FileSystemItem targetFile_;
+   private String encoding_;
+   private SourceLocation sourceLocation_;
+   private String completedAction_;
+   private boolean useInternalPreview_;
 
    public static final Type<Handler> TYPE = new Type<Handler>();
 }

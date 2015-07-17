@@ -25,12 +25,12 @@ using namespace rstudio;
 struct PendingWindow
 {
    PendingWindow()
-      : name(), width(-1), height(-1)
+      : name(), x(-1), y(-1), width(-1), height(-1)
    {
    }
    
-   PendingWindow(std::string name, int width, int height)
-      : name(name), width(width), height(height), isSatellite(true)
+   PendingWindow(std::string name, int x, int y, int width, int height)
+      : name(name), x(x), y(y), width(width), height(height), isSatellite(true)
    {
    }
    
@@ -43,6 +43,8 @@ struct PendingWindow
    bool empty() const { return name.empty(); }
    
    std::string name;
+   int x;
+   int y;
    int width;
    int height;
    bool allowExternalNavigate;
@@ -83,10 +85,12 @@ static PendingWindow pendingWindow_;
 }
 
 + (void) prepareForSatelliteWindow: (NSString*) name
+                                 x: (int) x
+                                 y: (int) y
                              width: (int) width
                             height: (int) height
 {
-   pendingWindow_ = PendingWindow([name UTF8String], width, height);
+   pendingWindow_ = PendingWindow([name UTF8String], x, y, width, height);
 }
 
 + (void) prepareForNamedWindow: (NSString *) name

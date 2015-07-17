@@ -2457,6 +2457,12 @@ public class AceEditor implements DocDisplay,
    {
       collab_.endCollabSession(this);
    }
+   
+   @Override
+   public void setDragEnabled(boolean enabled)
+   {
+      widget_.setDragEnabled(enabled);
+   }
 
    private static final int DEBUG_CONTEXT_LINES = 2;
    private final HandlerManager handlers_ = new HandlerManager(this);

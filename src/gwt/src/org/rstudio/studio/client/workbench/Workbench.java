@@ -1,7 +1,7 @@
 /*
  * Workbench.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-15 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -164,16 +164,9 @@ public class Workbench implements BusyHandler,
             @Override
             public void onVcsRefresh(VcsRefreshEvent event)
             {
-               FileSystemItem projDir = workbenchContext_.getActiveProjectDir();
-               if (projDir != null)
-               {
-                  String title = projDir.getPath();
-                  String branch = pGitState_.get().getBranchInfo()
-                                                        .getActiveBranch();
-                  if (branch != null)
-                     title = title + " - " + branch;
+               String title = workbenchContext_.createWindowTitle();
+               if (title != null)
                   Desktop.getFrame().setWindowTitle(title);
-               }
             }
          });
       }
@@ -459,7 +452,6 @@ public class Workbench implements BusyHandler,
       }
    }
     
-   
    public void onUserPrompt(UserPromptEvent event)
    {
       // is cancel supported?

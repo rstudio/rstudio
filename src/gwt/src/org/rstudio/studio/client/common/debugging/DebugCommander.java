@@ -25,7 +25,7 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.RestartStatusEvent;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.events.OpenSourceFileEvent;
-import org.rstudio.studio.client.common.filetypes.events.OpenSourceFileEvent.NavigationMethod;
+import org.rstudio.studio.client.common.filetypes.model.NavigationMethods;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.BusyEvent;
 import org.rstudio.studio.client.workbench.events.BusyHandler;
@@ -203,8 +203,8 @@ public class DebugCommander
                              (FilePosition) position.cast(),
                              FileTypeRegistry.R,
                              finished ?
-                                NavigationMethod.DebugEnd :
-                                NavigationMethod.DebugStep));
+                                NavigationMethods.DEBUG_END :
+                                NavigationMethods.DEBUG_STEP));
    }
 
    private void setDebugging(boolean debugging)

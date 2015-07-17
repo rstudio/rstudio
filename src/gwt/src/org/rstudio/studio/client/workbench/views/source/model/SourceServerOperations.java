@@ -216,4 +216,7 @@ public interface SourceServerOperations extends FilesServerOperations,
    
    public void executeRCode(String code,
                             ServerRequestCallback<String> requestCallback);
+   
+   public void getSourceDocument(String docId,
+                ServerRequestCallback<SourceDocument> requestCallback);
 }

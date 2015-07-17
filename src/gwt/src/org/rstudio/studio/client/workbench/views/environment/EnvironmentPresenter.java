@@ -38,7 +38,7 @@ import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.events.OpenDataFileEvent;
 import org.rstudio.studio.client.common.filetypes.events.OpenDataFileHandler;
 import org.rstudio.studio.client.common.filetypes.events.OpenSourceFileEvent;
-import org.rstudio.studio.client.common.filetypes.events.OpenSourceFileEvent.NavigationMethod;
+import org.rstudio.studio.client.common.filetypes.model.NavigationMethods;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
@@ -279,7 +279,7 @@ public class EnvironmentPresenter extends BasePresenter
                   event.getFileName());
             eventBus_.fireEvent(new OpenSourceFileEvent(destFile, pos,
                                    FileTypeRegistry.R,
-                                   NavigationMethod.Default));
+                                   NavigationMethods.DEFAULT));
          }
       });
       
@@ -682,8 +682,8 @@ public class EnvironmentPresenter extends BasePresenter
                                 (FilePosition) currentBrowsePosition_.cast(),
                                 FileTypeRegistry.R,
                                 debugging ? 
-                                      NavigationMethod.DebugStep :
-                                      NavigationMethod.DebugEnd));
+                                      NavigationMethods.DEBUG_STEP :
+                                      NavigationMethods.DEBUG_END));
       }
 
       // otherwise, if we have a copy of the source from the server, load

@@ -204,7 +204,7 @@ public class RemoteServer implements Server
             @Override
             public void onClientEvent(JavaScriptObject clientEvent)
             {
-               satelliteManager.dispatchEvent(clientEvent);     
+               satelliteManager.dispatchClientEvent(clientEvent);
             } 
          };
       }
@@ -1518,6 +1518,14 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, GET_SOURCE_TEMPLATE, params, requestCallback);
    }
    
+   public void getSourceDocument(String docId,
+                        ServerRequestCallback<SourceDocument> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(docId));
+      sendRequest(RPC_SCOPE, GET_SOURCE_DOCUMENT, params, requestCallback);
+   }
+
    public void createRdShell(
                         String name,
                         String type,
@@ -4352,6 +4360,7 @@ public class RemoteServer implements Server
    private static final String REMOVE_CACHED_DATA = "remove_cached_data";
    private static final String DUPLICATE_DATA_VIEW = "duplicate_data_view";
    private static final String ENSURE_FILE_EXISTS = "ensure_file_exists";
+   private static final String GET_SOURCE_DOCUMENT = "get_source_document";
 
    private static final String GET_RECENT_HISTORY = "get_recent_history";
    private static final String GET_HISTORY_ITEMS = "get_history_items";

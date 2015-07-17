@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.ui;
 
+import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
@@ -39,6 +40,7 @@ import org.rstudio.core.client.theme.PrimaryWindowFrame;
 import org.rstudio.core.client.theme.WindowFrame;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.ToolbarButton;
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.ClientState;
@@ -51,6 +53,7 @@ import org.rstudio.studio.client.workbench.views.console.ConsolePane;
 import org.rstudio.studio.client.workbench.views.output.find.FindOutputTab;
 import org.rstudio.studio.client.workbench.views.output.markers.MarkersOutputTab;
 import org.rstudio.studio.client.workbench.views.source.SourceShim;
+import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -154,14 +157,28 @@ public class PaneManager
 
       panel_ = pSplitPanel.get();
       panel_.initialize(left_, right_);
-
-      if (session_.getSessionInfo().getSourceDocuments().length() == 0
-            && sourceLogicalWindow_.getState() != WindowState.HIDE)
+      
+      // count the number of source docs assigned to this window
+      JsArray<SourceDocument> docs = 
+            session_.getSessionInfo().getSourceDocuments();
+      String windowId = RStudioGinjector.INSTANCE.getSourceWindowManager()
+                                                 .getSourceWindowId();
+      int numDocs = 0;
+      for (int i = 0; i < docs.length(); i++)
+      {
+         String docWindowId = docs.get(i).getSourceWindowId();
+         if (docWindowId == windowId)
+         {
+            numDocs++;
+         }
+      }
+      
+      if (numDocs == 0 && sourceLogicalWindow_.getState() != WindowState.HIDE)
       {
          sourceLogicalWindow_.onWindowStateChange(
                new WindowStateChangeEvent(WindowState.HIDE));
       }
-      else if (session_.getSessionInfo().getSourceDocuments().length() > 0
+      else if (numDocs > 0
                && sourceLogicalWindow_.getState() == WindowState.HIDE)
       {
          sourceLogicalWindow_.onWindowStateChange(

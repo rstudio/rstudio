@@ -23,7 +23,7 @@ import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.filetypes.events.OpenSourceFileEvent;
-import org.rstudio.studio.client.common.filetypes.events.OpenSourceFileEvent.NavigationMethod;
+import org.rstudio.studio.client.common.filetypes.model.NavigationMethods;
 import org.rstudio.studio.client.common.reditor.EditorLanguage;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Token;
@@ -74,7 +74,7 @@ public class TextFileType extends EditableFileType
    @Override
    public void openFile(FileSystemItem file,
                         FilePosition position,
-                        NavigationMethod navMethod,
+                        int navMethod,
                         EventBus eventBus)
    {
       eventBus.fireEvent(new OpenSourceFileEvent(file,
@@ -86,7 +86,7 @@ public class TextFileType extends EditableFileType
    @Override
    public void openFile(FileSystemItem file, EventBus eventBus)
    {
-      openFile(file, null, NavigationMethod.Default, eventBus);
+      openFile(file, null, NavigationMethods.DEFAULT, eventBus);
    }
 
    public EditorLanguage getEditorLanguage()
@@ -323,6 +323,7 @@ public class TextFileType extends EditableFileType
       if (canKnitToHTML())
       {
          results.add(commands.editRmdFormatOptions());
+         results.add(commands.knitWithParameters());
       }
       if (canKnitToHTML() || canCompileNotebook())
       {

@@ -250,6 +250,7 @@ SEXP findNamespace(const std::string& name)
    
 void listEnvironment(SEXP env, 
                      bool includeAll,
+                     bool includeLastDotValue,
                      Protect* pProtect,
                      std::vector<Variable>* pVariables)
 {
@@ -271,7 +272,7 @@ void listEnvironment(SEXP env,
    }
    
    // add in .Last.value if it exists
-   if (!includeAll)
+   if (!includeAll && includeLastDotValue)
    {
       SEXP lastValueSEXP = Rf_findVar(Rf_install(".Last.value"), env);
       if (lastValueSEXP != R_UnboundValue)

@@ -53,7 +53,7 @@ FilePath oldSourceDatabaseRoot()
 
 FilePath sourceDatabaseRoot()
 {
-   return module_context::sessionScratchPath().complete("sdb");
+   return module_context::scopedScratchPath().complete("sdb");
 }
 
 FilePath mostRecentTitledDir()
@@ -63,7 +63,15 @@ FilePath mostRecentTitledDir()
 
 FilePath persistentTitledDir()
 {
-   return sourceDatabaseRoot().complete("per/t");
+   if (!module_context::activeSession().empty())
+   {
+      std::string id = module_context::activeSession().id();
+      return sourceDatabaseRoot().complete("per/t/" + id);
+   }
+   else
+   {
+      return sourceDatabaseRoot().complete("per/t");
+   }
 }
 
 FilePath oldPersistentTitledDir()
@@ -77,7 +85,15 @@ FilePath oldPersistentTitledDir()
 
 FilePath persistentUntitledDir()
 {
-   return sourceDatabaseRoot().complete("per/u");
+   if (!module_context::activeSession().empty())
+   {
+      std::string id = module_context::activeSession().id();
+      return sourceDatabaseRoot().complete("per/u/" + id);
+   }
+   else
+   {
+      return sourceDatabaseRoot().complete("per/u");
+   }
 }
 
 FilePath oldPersistentUntitledDir()

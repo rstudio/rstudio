@@ -149,4 +149,27 @@ public class JsObject extends JavaScriptObject
       return keys;
    }-*/;
    
+   public final native JsObject clone() /*-{
+      // recursive function to handle cloning the object
+      var cloneObj = function(obj) {
+         var cloned = null;
+         if (obj == null || typeof obj != "object") 
+            return obj;
+         if (obj instanceof Array) {
+            cloned = [];
+            for (var i = 0; i < obj.length; i++) {
+               cloned[i] = cloneObj(obj[i]);
+            }
+         } else if (obj instanceof Object) {
+            cloned = {};
+            for (var attrib in obj)
+               if (obj.hasOwnProperty(attrib))
+                  cloned[attrib] = cloneObj(obj[attrib]);
+         } 
+         return cloned;
+      };
+      
+      // perform the clone on ourselves
+      return cloneObj(this);
+   }-*/;
 }

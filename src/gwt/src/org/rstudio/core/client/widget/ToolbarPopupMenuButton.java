@@ -74,6 +74,11 @@ public class ToolbarPopupMenuButton extends ToolbarButton
       getMenu().addItem(item);
    }
    
+   public void addSeparator()
+   {
+      getMenu().addSeparator();
+   }
+   
    public void clearMenu()
    {
       getMenu().clearItems();

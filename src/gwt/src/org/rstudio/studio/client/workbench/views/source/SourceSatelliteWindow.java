@@ -25,8 +25,10 @@ import com.google.inject.Provider;
 import com.google.inject.Singleton;
 
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.application.ui.CodeSearchLauncher;
 import org.rstudio.studio.client.common.satellite.SatelliteWindow;
 import org.rstudio.studio.client.workbench.ui.FontSizeManager;
+import org.rstudio.studio.client.workbench.views.source.model.SourceWindowParams;
 
 @Singleton
 public class SourceSatelliteWindow extends SatelliteWindow
@@ -36,16 +38,33 @@ public class SourceSatelliteWindow extends SatelliteWindow
    @Inject
    public SourceSatelliteWindow(Provider<EventBus> pEventBus,
                                 Provider<FontSizeManager> pFSManager, 
-                                Provider<SourceSatellitePresenter> pPresenter)
+                                Provider<SourceSatellitePresenter> pPresenter,
+                                Provider<SourceWindowManager> pWindowManager,
+                                CodeSearchLauncher launcher)
    {
       super(pEventBus, pFSManager);
       pPresenter_ = pPresenter;
+      pWindowManager_ = pWindowManager;
    }
 
    @Override
    protected void onInitialize(LayoutPanel mainPanel, JavaScriptObject params)
    {
-      Window.setTitle("RStudio");
+      SourceWindowParams windowParams = params.cast();
+      String title = null;
+      if (windowParams != null)
+      {
+         pWindowManager_.get().setSourceWindowOrdinal(
+               windowParams.getOrdinal());
+         title = windowParams.getTitle();
+      }
+      if (title == null)
+         title = "";
+      else
+         title += " - ";
+      title += "RStudio Source Editor";
+      Window.setTitle(title);
+      
 
       SourceSatellitePresenter appPresenter = pPresenter_.get();
       
@@ -67,5 +86,6 @@ public class SourceSatelliteWindow extends SatelliteWindow
       return this;
    }
    
-   private Provider<SourceSatellitePresenter> pPresenter_;
+   private final Provider<SourceSatellitePresenter> pPresenter_;
+   private final Provider<SourceWindowManager> pWindowManager_;
 }

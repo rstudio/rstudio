@@ -62,8 +62,8 @@ import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.common.filetypes.events.OpenPresentationSourceFileEvent;
 import org.rstudio.studio.client.common.filetypes.events.OpenSourceFileEvent;
-import org.rstudio.studio.client.common.filetypes.events.OpenSourceFileEvent.NavigationMethod;
 import org.rstudio.studio.client.common.filetypes.events.OpenSourceFileHandler;
+import org.rstudio.studio.client.common.filetypes.model.NavigationMethods;
 import org.rstudio.studio.client.common.rnw.RnwWeave;
 import org.rstudio.studio.client.common.rnw.RnwWeaveRegistry;
 import org.rstudio.studio.client.common.satellite.Satellite;
@@ -108,7 +108,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditing
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetRMarkdownHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.DisplayChunkOptionsEvent;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.ExecuteChunkEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.ExecuteChunksEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.FileTypeChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.FileTypeChangedHandler;
@@ -147,7 +147,8 @@ public class Source implements InsertSourceHandler,
                              SourceExtendedTypeDetectedEvent.Handler,
                              BeforeShowHandler,
                              SnippetsChangedEvent.Handler,
-                             PopoutDocEvent.Handler
+                             PopoutDocEvent.Handler,
+                             DocWindowChangedEvent.Handler
 {
    public interface Display extends IsWidget,
                                     HasTabClosingHandlers,
@@ -159,8 +160,10 @@ public class Source implements InsertSourceHandler,
    {
       void addTab(Widget widget,
                   ImageResource icon,
+                  String docId,
                   String name,
                   String tooltip,
+                  Integer position,
                   boolean switchToTab);
       void selectTab(int tabIndex);
       void selectTab(Widget widget);
@@ -173,6 +176,7 @@ public class Source implements InsertSourceHandler,
       void setDirty(Widget widget, boolean dirty);
       void manageChevronVisibility();
       void showOverflowPopup();
+      void cancelTabDrag();
       
       void showUnsavedChangesDialog(
             String title,
@@ -307,6 +311,7 @@ public class Source implements InsertSourceHandler,
       dynamicCommands_.add(commands.expandSelection());
       dynamicCommands_.add(commands.shrinkSelection());
       dynamicCommands_.add(commands.toggleDocumentOutline());
+      dynamicCommands_.add(commands.knitWithParameters());
       for (AppCommand command : dynamicCommands_)
       {
          command.setVisible(false);
@@ -425,10 +430,10 @@ public class Source implements InsertSourceHandler,
          }
       });
       
-      events.addHandler(ExecuteChunkEvent.TYPE, new ExecuteChunkEvent.Handler()
+      events.addHandler(ExecuteChunksEvent.TYPE, new ExecuteChunksEvent.Handler()
       {
          @Override
-         public void onExecuteChunk(ExecuteChunkEvent event)
+         public void onExecuteChunks(ExecuteChunksEvent event)
          {
             if (activeEditor_ == null)
                return;
@@ -441,7 +446,11 @@ public class Source implements InsertSourceHandler,
                   target.screenCoordinatesToDocumentPosition(
                         event.getPageX(), event.getPageY());
             
-            target.executeChunk(position);
+            if (event.getScope() == ExecuteChunksEvent.Scope.Current)
+               target.executeChunk(position);
+            else if (event.getScope() == ExecuteChunksEvent.Scope.Previous)
+               target.executePreviousChunks(position);
+            
             target.focus();
          }
       });
@@ -509,6 +518,8 @@ public class Source implements InsertSourceHandler,
                }
             });
 
+      events.addHandler(DocWindowChangedEvent.TYPE, this);
+
       // Suppress 'CTRL + ALT + SHIFT + click' to work around #2483 in Ace
       Event.addNativePreviewHandler(new NativePreviewHandler()
       {
@@ -529,8 +540,16 @@ public class Source implements InsertSourceHandler,
       });
       
       restoreDocuments(session);
+      
+      // get the key to use for active tab persistence; use ordinal-based key
+      // for source windows rather than their ID to avoid unbounded accumulation
+      String activeTabKey = KEY_ACTIVETAB;
+      if (!windowManager_.isMainSourceWindow())
+         activeTabKey += "SourceWindow" + 
+                         windowManager_.getSourceWindowOrdinal();
 
-      new IntStateValue(MODULE_SOURCE, KEY_ACTIVETAB, ClientState.PROJECT_PERSISTENT,
+      new IntStateValue(MODULE_SOURCE, activeTabKey, 
+                        ClientState.PROJECT_PERSISTENT,
                         session.getSessionInfo().getClientState())
       {
          @Override
@@ -729,10 +748,10 @@ public class Source implements InsertSourceHandler,
          // it belongs in this window if (a) it's assigned to it, or (b) this
          // is the main window, and the window it's assigned to isn't open.
          if (currentSourceWindowId == docWindowId ||
-             (currentSourceWindowId.isEmpty() && 
+             (windowManager_.isMainSourceWindow() && 
               !windowManager_.isSourceWindowOpen(docWindowId)))
          {
-            addTab(doc);
+            addTab(doc, true);
          }
       }
    }
@@ -809,6 +828,10 @@ public class Source implements InsertSourceHandler,
 
    public void onShowData(ShowDataEvent event)
    {
+      // ignore if we're a satellite
+      if (!windowManager_.isMainSourceWindow())
+         return;
+      
       DataItem data = event.getData();
 
       for (int i = 0; i < editors_.size(); i++)
@@ -1445,12 +1468,60 @@ public class Source implements InsertSourceHandler,
    }
 
    @Override
-   public void onPopoutDoc(PopoutDocEvent e)
+   public void onPopoutDoc(final PopoutDocEvent e)
+   {
+      // disowning the doc may cause the entire window to close, so defer it
+      // to allow any other popout processing to occur
+      Scheduler.get().scheduleDeferred(new ScheduledCommand()
+      {
+         @Override
+         public void execute()
+         {
+            disownDoc(e.getDocId());
+         }
+      });
+   }
+   
+   @Override
+   public void onDocWindowChanged(final DocWindowChangedEvent e)
+   {
+      if (e.getNewWindowId() == windowManager_.getSourceWindowId())
+      {
+         // if we're the adopting window, add the doc
+         server_.getSourceDocument(e.getDocId(),
+               new ServerRequestCallback<SourceDocument>()
+         {
+            @Override
+            public void onResponseReceived(final SourceDocument doc)
+            {
+               addTab(doc, e.getPos());
+            }
+
+            @Override
+            public void onError(ServerError error)
+            {
+               globalDisplay_.showErrorMessage("Document Tab Move Failed", 
+                     "Couldn't move the tab to this window: \n" + 
+                      error.getMessage());
+            }
+         });
+      }
+      else if (e.getOldWindowId() == windowManager_.getSourceWindowId())
+      {
+         // cancel tab drag if it was occurring
+         view_.cancelTabDrag();
+         
+         // disown this doc if it was our own
+         disownDoc(e.getDocId());
+      }
+   }
+   
+   private void disownDoc(String docId)
    {
       suspendDocumentClose_ = true;
       for (int i = 0; i < editors_.size(); i++)
       {
-         if (editors_.get(i).getId() == e.getDoc().getId())
+         if (editors_.get(i).getId() == docId)
          {
             view_.closeTab(i, false);
             break;
@@ -1845,7 +1916,7 @@ public class Source implements InsertSourceHandler,
                        event.getFileType(),
                        event.getPosition(),
                        event.getPattern(),
-                       NavigationMethod.HighlightLine,
+                       NavigationMethods.HIGHLIGHT_LINE,
                        true);
       
    }
@@ -1871,12 +1942,44 @@ public class Source implements InsertSourceHandler,
                                  final TextFileType fileType,
                                  final FilePosition position,
                                  final String pattern,
-                                 final NavigationMethod navMethod, 
+                                 final int navMethod, 
                                  final boolean forceHighlightMode)
    {
+      // if this is the main window, check to see if we should route an event
+      // there instead
+      String sourceWindowId = 
+            windowManager_.getWindowIdOfDocPath(file.getPath());
+      if (windowManager_.isMainSourceWindow())
+      {
+         // if this is the main window but the doc is open in a satellite,
+         // forward the navigation event to the appropriate source window
+         if (!StringUtil.isNullOrEmpty(sourceWindowId) && 
+             windowManager_.isSourceWindowOpen(sourceWindowId))
+         {
+            windowManager_.fireEventToSourceWindow(sourceWindowId, 
+                  new OpenSourceFileEvent(file, position, null, navMethod));
+            return;
+         }
+      }
+      else if (sourceWindowId != null && 
+               sourceWindowId != windowManager_.getSourceWindowId())
+      {
+         // if this is the satellite, and we know the doc is open somewhere
+         // else, forward the event there (route through main window)
+         events_.fireEventToMainWindow(
+               new OpenSourceFileEvent(file, position, null, navMethod));
+         
+         // if the destination is the main window, raise it
+         if (sourceWindowId.isEmpty())
+         {
+            RStudioGinjector.INSTANCE.getSatellite().focusMainWindow();
+         }
+         return;
+      }
+      
       final boolean isDebugNavigation = 
-            navMethod == NavigationMethod.DebugStep ||
-            navMethod == NavigationMethod.DebugEnd;
+            navMethod == NavigationMethods.DEBUG_STEP ||
+            navMethod == NavigationMethods.DEBUG_END;
       
       final CommandWithArg<EditingTarget> editingTargetAction = 
             new CommandWithArg<EditingTarget>() 
@@ -1896,7 +1999,7 @@ public class Source implements InsertSourceHandler,
                         filePos.getEndColumn() + 1);
                   
                   if (Desktop.isDesktop() && 
-                      navMethod != NavigationMethod.DebugEnd)
+                      navMethod != NavigationMethods.DEBUG_END)
                       Desktop.getFrame().bringMainFrameToFront();
                }
                navigate(target, 
@@ -1925,14 +2028,14 @@ public class Source implements InsertSourceHandler,
                @Override
                public void execute()
                {
-                  if (navMethod == NavigationMethod.DebugStep)
+                  if (navMethod == NavigationMethods.DEBUG_STEP)
                   {
                      target.highlightDebugLocation(
                            srcPosition, 
                            srcEndPosition, 
                            true);
                   }
-                  else if (navMethod == NavigationMethod.DebugEnd)
+                  else if (navMethod == NavigationMethods.DEBUG_END)
                   {
                      target.endDebugHighlighting();
                   }
@@ -1944,7 +2047,7 @@ public class Source implements InsertSourceHandler,
                      
                      // now navigate to the new position
                      boolean highlight = 
-                           navMethod == NavigationMethod.HighlightLine &&
+                           navMethod == NavigationMethods.HIGHLIGHT_LINE &&
                            !uiPrefs_.highlightSelectedLine().getValue();
                      target.navigateToPosition(srcPosition,
                                                false,
@@ -1981,7 +2084,7 @@ public class Source implements InsertSourceHandler,
             if (path != null && path.equalsIgnoreCase(file.getPath()))
             {
                // the file's open; just update its highlighting 
-               if (navMethod == NavigationMethod.DebugEnd)
+               if (navMethod == NavigationMethods.DEBUG_END)
                {
                   target.endDebugHighlighting();
                }
@@ -1996,7 +2099,7 @@ public class Source implements InsertSourceHandler,
          
          // If we're here, the target file wasn't open in an editor. Don't
          // open a file just to turn off debug highlighting in the file!
-         if (navMethod == NavigationMethod.DebugEnd)
+         if (navMethod == NavigationMethods.DEBUG_END)
             return;
       }
 
@@ -2104,6 +2207,7 @@ public class Source implements InsertSourceHandler,
          return;
       }
 
+      // check to see if any local editors have the file open
       for (int i = 0; i < editors_.size(); i++)
       {
          EditingTarget target = editors_.get(i);
@@ -2118,7 +2222,7 @@ public class Source implements InsertSourceHandler,
             return;
          }
       }
-
+      
       EditingTarget target = editingTargetSource_.getEditingTarget(fileType);
 
       if (file.getLength() > target.getFileSizeLimit())
@@ -2220,8 +2324,19 @@ public class Source implements InsertSourceHandler,
    {
       return target.asWidget();
    }
-
+   
    private EditingTarget addTab(SourceDocument doc)
+   {
+      return addTab(doc, false);
+   }
+   
+   private EditingTarget addTab(SourceDocument doc, boolean atEnd)
+   {
+      // by default, add at the tab immediately after the current tab
+      return addTab(doc, atEnd ? null : getPhysicalTabIndex() + 1);
+   }
+
+   private EditingTarget addTab(SourceDocument doc, Integer position)
    {
       final EditingTarget target = editingTargetSource_.getEditingTarget(
             doc, fileContext_, new Provider<String>()
@@ -2234,11 +2349,17 @@ public class Source implements InsertSourceHandler,
       
       final Widget widget = createWidget(target);
 
-      editors_.add(target);
+      if (position == null)
+         editors_.add(target);
+      else
+         editors_.add(position, target);
+
       view_.addTab(widget,
                    target.getIcon(),
+                   target.getId(),
                    target.getName().getValue(),
                    target.getTabTooltip(), // used as tooltip, if non-null
+                   position,
                    true);
       fireDocTabsChanged();
 
@@ -2398,6 +2519,7 @@ public class Source implements InsertSourceHandler,
 
       if (closeDocument)
       {
+         events_.fireEvent(new DocTabClosedEvent(target.getId()));
          server_.closeDocument(target.getId(),
                                new VoidServerRequestCallback());
       }
@@ -2445,6 +2567,10 @@ public class Source implements InsertSourceHandler,
          ids.add(editors_.get(tabOrder_.get(i)).getId());
       }
       server_.setDocOrder(ids, new VoidServerRequestCallback());
+      
+      // activate the tab 
+      setPhysicalTabIndex(event.getNewPos());
+
       fireDocTabsChanged();
    }
 

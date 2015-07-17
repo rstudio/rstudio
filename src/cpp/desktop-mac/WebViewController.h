@@ -21,6 +21,8 @@
 + (void) activateNamedWindow: (NSString*) name;
 
 + (void) prepareForSatelliteWindow: (NSString*) name
+                                 x: (int) x
+                                 y: (int) y
                              width: (int) width
                             height: (int) height;
 

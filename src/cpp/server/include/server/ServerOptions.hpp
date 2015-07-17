@@ -124,6 +124,11 @@ public:
       return wwwProxyLocalhost_;
    }
 
+   bool wwwVerifyUserAgent() const
+   {
+      return wwwVerifyUserAgent_;
+   }
+
    // auth
    bool authNone()
    {
@@ -245,6 +250,7 @@ private:
    bool wwwUseEmulatedStack_;
    int wwwThreadPoolSize_;
    bool wwwProxyLocalhost_;
+   bool wwwVerifyUserAgent_;
    bool authNone_;
    bool authValidateUsers_;
    int authStaySignedInDays_;

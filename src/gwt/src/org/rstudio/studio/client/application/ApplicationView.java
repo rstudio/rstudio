@@ -33,9 +33,6 @@ public interface ApplicationView
    void showToolbar(boolean showToolbar);
    boolean isToolbarShowing();
    
-   // go to function
-   void performGoToFunction();
-   
    // application exit states
    void showApplicationQuit();
    void showApplicationMultiSessionQuit();

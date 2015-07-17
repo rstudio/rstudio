@@ -320,6 +320,7 @@ class CommandBundleGeneratorHelper
       setProperty(writer, name, props.get(name), "label");
       setProperty(writer, name, props.get(name), "buttonLabel");
       setProperty(writer, name, props.get(name), "menuLabel");
+      setProperty(writer, name, props.get(name), "windowMode");
       // Any additional textual properties would be added here...
 
       setPropertyBool(writer, name, props.get(name), "visible");

@@ -211,9 +211,14 @@ public class TextEditingTargetWidget
    {
       Toolbar toolbar = new EditingTargetToolbar(commands_);
        
-      toolbar.addLeftWidget(commands_.saveSourceDoc().createToolbarButton());
       if (uiPrefs_.enableSourceWindows().getGlobalValue())
+      {
+         toolbar.addLeftSeparator();
          toolbar.addLeftWidget(commands_.popoutDoc().createToolbarButton());
+         toolbar.addLeftSeparator();
+      }
+
+      toolbar.addLeftWidget(commands_.saveSourceDoc().createToolbarButton());
       sourceOnSave_.getElement().getStyle().setMarginRight(0, Unit.PX);
       toolbar.addLeftWidget(sourceOnSave_);
       srcOnSaveLabel_.getElement().getStyle().setMarginRight(9, Unit.PX);
@@ -242,7 +247,7 @@ public class TextEditingTargetWidget
       toolbar.addLeftSeparator();
       toolbar.addLeftWidget(previewHTMLButton_ = commands_.previewHTML().createToolbarButton());
       knitDocumentButton_ = commands_.knitDocument().createToolbarButton(false);
-      knitDocumentButton_.getElement().getStyle().setMarginRight(2, Unit.PX);
+      knitDocumentButton_.getElement().getStyle().setMarginRight(0, Unit.PX);
       toolbar.addLeftWidget(knitDocumentButton_);
       toolbar.addLeftWidget(compilePdfButton_ = commands_.compilePDF().createToolbarButton());
       rmdFormatButton_ = new ToolbarPopupMenuButton(false, true);
@@ -255,7 +260,7 @@ public class TextEditingTargetWidget
             null,  
             StandardIcons.INSTANCE.options(),
             rmdOptionsMenu, 
-            true);
+            false);
       
       toolbar.addLeftWidget(rmdOptionsButton_);
 
@@ -743,7 +748,7 @@ public class TextEditingTargetWidget
          hasSubFormat = true;
       }
       setFormatText(selectedOption);
-      String prefix = fileType.isPlainMarkdown() ? "Preview " : "Knit ";
+      String prefix = fileType.isPlainMarkdown() ? "Preview " : "Knit to ";
       for (int i = 0; i < Math.min(options.size(), values.size()); i++)
       {
          ImageResource img = fileTypeRegistry_.getIconForFilename("output." + 
@@ -763,10 +768,32 @@ public class TextEditingTargetWidget
                                               cmd, 2);
          rmdFormatButton_.addMenuItem(item, values.get(i));
       }
+      
+      /*
+      final AppCommand knitWithParams = commands_.knitWithParameters();
+      if (fileType.isRmd())
+      {
+         rmdFormatButton_.addSeparator();
+         ScheduledCommand cmd = new ScheduledCommand()
+         {
+            @Override
+            public void execute()
+            {
+               knitWithParams.execute();
+            }
+         };
+         MenuItem item = new MenuItem(knitWithParams.getMenuHTML(false),
+                                      true,
+                                      cmd); 
+         rmdFormatButton_.addMenuItem(item, 
+                                      knitWithParams.getMenuLabel(false));
+      }
+      */
+      
       if (!hasSubFormat && selectedOption.equals("HTML"))
-         showRmdViewerMenuItems(true);
+         showRmdViewerMenuItems(true, false);
       else
-         showRmdViewerMenuItems(false);
+         showRmdViewerMenuItems(false, false);
       setFormatOptionsVisible(true);
       if (publishButton_ != null)
          publishButton_.setIsStatic(true);
@@ -791,7 +818,7 @@ public class TextEditingTargetWidget
    {
       rmdFormatButton_.setVisible(false);
       
-      showRmdViewerMenuItems(!isPresentation);
+      showRmdViewerMenuItems(!isPresentation, true);
    
       String docType = isPresentation ? "Presentation" : "Document";
       
@@ -917,7 +944,7 @@ public class TextEditingTargetWidget
             RmdOutputFormatChangedEvent.TYPE, handler);
    }
    
-   private void showRmdViewerMenuItems(boolean show)
+   private void showRmdViewerMenuItems(boolean show, boolean isShinyDoc)
    {
       if (rmdViewerPaneMenuItem_ == null)
          rmdViewerPaneMenuItem_ = new UIPrefMenuItem<Integer>(
@@ -938,6 +965,7 @@ public class TextEditingTargetWidget
          menu.addItem(rmdViewerWindowMenuItem_);
          menu.addSeparator();
       }
+      
       menu.addItem(commands_.editRmdFormatOptions().createMenuItem(false));
    }
    

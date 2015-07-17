@@ -55,7 +55,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceDocu
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceMouseEventNative;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Anchor;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.ExecuteChunkEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.ExecuteChunksEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Marker;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
@@ -457,9 +457,9 @@ public class AceEditorWidget extends Composite
       return addHandler(handler, AceClickEvent.TYPE);
    }
    
-   public HandlerRegistration addExecuteChunkHandler(ExecuteChunkEvent.Handler handler)
+   public HandlerRegistration addExecuteChunkHandler(ExecuteChunksEvent.Handler handler)
    {
-      return addHandler(handler, ExecuteChunkEvent.TYPE);
+      return addHandler(handler, ExecuteChunksEvent.TYPE);
    }
    
    public void forceResize()
@@ -950,6 +950,16 @@ public class AceEditorWidget extends Composite
             
          }
       });
+   }
+   
+   public void setDragEnabled(boolean enabled)
+   {
+      // the ACE API currently provides no way to disable dropping text 
+      // from external sources specifically (the dragEnabled option affects
+      // only internal ACE dragging); for now, just put the whole editor into
+      // read-only mode while dragging, which prevents it from accepting the
+      // text 
+      editor_.setReadOnly(!enabled);
    }
    
    private final AceEditorNative editor_;

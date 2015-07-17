@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.application.events;
 
+import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.js.JavaScriptSerializer;
 import org.rstudio.studio.client.common.satellite.Satellite;
 
@@ -46,14 +47,23 @@ public class EventBus extends HandlerManager
    @Override
    public void fireEvent(GwtEvent<?> event)
    {
+      fireEvent(event, false);
+   }
+   
+   private void fireEvent(GwtEvent<?> event, boolean fromOtherWindow)
+   {
+      // if this is a cross-window event that originated in this satellite 
+      // window (and wasn't itself forwarded from somewhere else), pass it to
+      // the main window
       if (event instanceof CrossWindowEvent &&
-          pSatellite_.get().isCurrentWindowSatellite())
+          pSatellite_.get().isCurrentWindowSatellite() &&
+          !fromOtherWindow)
       {
          CrossWindowEvent<?> crossWindow = (CrossWindowEvent<?>)(event);
          if (crossWindow.forward())
          {
             JavaScriptObject jso = serializer_.serialize(event);
-            fireEventToMainWindow(jso);
+            fireEventToMainWindow(jso, pSatellite_.get().getSatelliteName());
          }
          else
          {
@@ -64,6 +74,20 @@ public class EventBus extends HandlerManager
       {
          super.fireEvent(event);
       }
+      
+   }
+   
+   public void fireEventToSatellite(CrossWindowEvent<?> event, 
+         WindowEx satelliteWindow)
+   {
+      fireEventToSatellite(serializer_.serialize(event), 
+            satelliteWindow);
+   }
+   
+   public void fireEventToMainWindow(CrossWindowEvent<?> event)
+   {
+      fireEventToMainWindow(serializer_.serialize(event), 
+            pSatellite_.get().getSatelliteName());
    }
 
    /**
@@ -90,20 +114,30 @@ public class EventBus extends HandlerManager
    
    private final native void exportNativeCallbacks() /*-{
       var thiz = this;
-      $wnd.fireRStudioSatelliteEvent = $entry(
-         function(eventData) {
-            thiz.@org.rstudio.studio.client.application.events.EventBus::fireEventFromSatellite(Lcom/google/gwt/core/client/JavaScriptObject;)(eventData);
+      $wnd.fireRStudioEventExternal = $entry(
+         function(eventData, windowName) {
+            thiz.@org.rstudio.studio.client.application.events.EventBus::fireEventFromOtherWindow(Lcom/google/gwt/core/client/JavaScriptObject;Ljava/lang/String;)(eventData, windowName);
          }
       ); 
    }-*/;
    
-   private void fireEventFromSatellite(JavaScriptObject data)
+   private void fireEventFromOtherWindow(JavaScriptObject data, 
+         String windowName)
    {
-      fireEvent((GwtEvent<?>)serializer_.deserialize(data));
+      CrossWindowEvent<?> evt = 
+            (CrossWindowEvent<?>)serializer_.deserialize(data);
+      evt.setOriginWindowName(windowName);
+      fireEvent(evt, true);
    }
-
-   private final native void fireEventToMainWindow(JavaScriptObject data) /*-{
-      $wnd.opener.fireRStudioSatelliteEvent(data);
+   
+   private final native void fireEventToMainWindow(JavaScriptObject data,
+         String windowName) /*-{
+      $wnd.opener.fireRStudioEventExternal(data, windowName);
+   }-*/;
+   
+   private final native void fireEventToSatellite(JavaScriptObject data,
+         WindowEx target) /*-{
+      target.fireRStudioEventExternal(data, "");
    }-*/;
    
    private Provider<Satellite> pSatellite_;

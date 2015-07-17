@@ -36,6 +36,7 @@
 * Scan for Rtools in both HKCU and HKLM (for non-Admin installs of Rtools)
 * Move running Shiny apps between IDE panes and windows without restarting the app
 * Parse TeX magic comments that start with "%%" (ESS compatibility).
+* Change default Rpres template to specify autosize: true
 
 
 ### Server
