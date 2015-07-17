@@ -601,6 +601,26 @@ decidePolicyForMIMEType: (NSDictionary *) actionInformation
    [win setValue: gwtCallbacks forKey:@"desktop"];
 }
 
+- (id) invokeCommand: (NSString*) command
+{
+   static NSArray* noRefocusCommands = [[NSArray alloc] initWithObjects:
+                                        @"undoDummy", @"redoDummy",
+                                        @"cutDummy", @"copyDummy", @"pasteDummy",
+                                        nil];
+   
+   if (![noRefocusCommands containsObject: command])
+      [[self window] makeKeyAndOrderFront: self];
+   
+   return [self evaluateJavaScript: [NSString stringWithFormat: @"window.desktopHooks.invokeCommand(\"%@\");",
+                                     command]];
+}
+
+- (BOOL) isCommandEnabled: (NSString*) command
+{
+   return [[self evaluateJavaScript: [NSString stringWithFormat: @"window.desktopHooks.isCommandEnabled(\"%@\");",
+                                      command]] boolValue];
+}
+
 - (BOOL) performKeyEquivalent: (NSEvent *)theEvent
 {
    NSString* chr = [theEvent charactersIgnoringModifiers];
@@ -610,7 +630,16 @@ decidePolicyForMIMEType: (NSDictionary *) actionInformation
          (NSDeviceIndependentModifierFlagsMask ^ NSAlphaShiftKeyMask);
    if ([chr isEqualToString: @"w"] && mod == NSCommandKeyMask)
    {
-      [[webView_ window] performClose: self];
+      if ([clientName_ hasPrefix: @"_rstudio_satellite_source_window_"])
+      {
+         // in the source window, cmd+w should close the current tab
+         [self invokeCommand: @"closeSourceDoc"];
+      }
+      else
+      {
+         // cmd+w closes other satellites
+         [[webView_ window] performClose: self];
+      }
       return YES;
    }
 

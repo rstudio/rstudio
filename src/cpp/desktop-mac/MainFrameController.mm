@@ -215,27 +215,6 @@ const static NSString *kRunningApplicationsContext = @"RunningAppsContext";
    [self evaluateJavaScript: [NSString stringWithUTF8String: js.c_str()]];
 }
 
-
-- (id) invokeCommand: (NSString*) command
-{
-   static NSArray* noRefocusCommands = [[NSArray alloc] initWithObjects:
-                                        @"undoDummy", @"redoDummy",
-                                        @"cutDummy", @"copyDummy", @"pasteDummy",
-                                        nil];
-
-   if (![noRefocusCommands containsObject: command])
-      [[self window] makeKeyAndOrderFront: self];
-   
-   return [self evaluateJavaScript: [NSString stringWithFormat: @"window.desktopHooks.invokeCommand(\"%@\");",
-                                     command]];
-}
-
-- (BOOL) isCommandEnabled: (NSString*) command
-{
-   return [[self evaluateJavaScript: [NSString stringWithFormat: @"window.desktopHooks.isCommandEnabled(\"%@\");",
-                                     command]] boolValue];
-}
-
 - (BOOL) hasDesktopObject
 {
    WebScriptObject* script = [webView_ windowScriptObject];
@@ -255,7 +234,6 @@ const static NSString *kRunningApplicationsContext = @"RunningAppsContext";
    quitConfirmed_ = YES;
    [[self window] performClose: self];
 }
-
 
 - (void) windowDidLoad
 {

@@ -58,5 +58,12 @@
 // evaluate javascript
 - (id) evaluateJavaScript: (NSString*) js;
 
+// invoke a command (satellite or main frame)
+- (id) invokeCommand: (NSString*) command;
+
+// check to see whether a command is enabled (satellite or main frame)
+- (BOOL) isCommandEnabled: (NSString*) command;
+
+
 @end
 
