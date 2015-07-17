@@ -239,8 +239,7 @@ public class EditingPreferencesPane extends PreferencesPane
         
       
       VerticalPanel diagnosticsPanel = new VerticalPanel();
-      Label rLabel = headerLabel("R Diagnostics");
-      diagnosticsPanel.add(spacedBefore(rLabel));
+      diagnosticsPanel.add(headerLabel("R Diagnostics"));
       final CheckBox chkShowRDiagnostics = checkboxPref("Show diagnostics for R", prefs.showDiagnosticsR());
       diagnosticsPanel.add(chkShowRDiagnostics);
       
