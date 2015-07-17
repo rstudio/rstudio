@@ -18,7 +18,7 @@ import com.google.gwt.junit.Platform;
 import com.google.gwt.junit.client.GWTTestCase;
 
 /**
- * Tests GWT.getProperty.
+ * Tests System.getProperty with collapsed properties.
  */
 public class SystemGetPropertyTest extends GWTTestCase {
 
@@ -36,17 +36,5 @@ public class SystemGetPropertyTest extends GWTTestCase {
     String expectedResult = "safari".equals(System.getProperty("user.agent")) ?
         "InSafari" : "NotInSafari";
     assertEquals(expectedResult, System.getProperty("someDynamicProperty"));
-  }
-
-  @DoNotRunWith(Platform.Devel)
-  public void testConfigurationProperties() {
-    assertEquals("conf", System.getProperty("someConfigurationProperty"));
-    assertEquals("conf", System.getProperty("someConfigurationProperty", "default"));
-
-    String someConf = System.getProperty("nonExistent", "default");
-    assertEquals("default", someConf);
-
-    // Note that default is not a String literal.
-    assertEquals("default", System.getProperty("otherNonExistent", someConf));
   }
 }

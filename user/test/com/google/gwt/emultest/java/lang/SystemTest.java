@@ -15,6 +15,8 @@
  */
 package com.google.gwt.emultest.java.lang;
 
+import com.google.gwt.junit.DoNotRunWith;
+import com.google.gwt.junit.Platform;
 import com.google.gwt.junit.client.GWTTestCase;
 
 import java.util.Arrays;
@@ -294,7 +296,15 @@ public class SystemTest extends GWTTestCase {
     assertEquals('a', charDest[offset + manyNulls.length]);
   }
 
+  @DoNotRunWith(Platform.Devel)
   public void testGetProperty() {
-    assertEquals("default", System.getProperty("key", "default"));
+    assertEquals("conf", System.getProperty("someConfigurationProperty"));
+    assertEquals("conf", System.getProperty("someConfigurationProperty", "default"));
+
+    String someConf = System.getProperty("nonExistent", "default");
+    assertEquals("default", someConf);
+
+    // Note that default is not a String literal.
+    assertEquals("default", System.getProperty("otherNonExistent", someConf));
   }
 }

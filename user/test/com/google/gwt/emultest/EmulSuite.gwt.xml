@@ -17,4 +17,7 @@
   <inherits name='com.google.gwt.testing.TestUtils' />
   <inherits name='org.apache.commons.Collections' />
   <source path='java' />
+
+  <define-configuration-property name="someConfigurationProperty" is-multi-valued='false'/>
+  <set-configuration-property name="someConfigurationProperty" value="conf"/>
 </module>

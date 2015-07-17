@@ -33,9 +33,4 @@
   <set-property name="someOtherDynamicProperty" value="blue">
     <when-property-is name="collapsedProperty" value="two"/>
   </set-property>
-  <define-configuration-property name="someConfigurationProperty" is-multi-valued='false'/>
-  <set-configuration-property name="someConfigurationProperty" value="conf"/>
-  <define-configuration-property name="someMultivaluedConfigurationProperty" is-multi-valued='true'/>
-  <set-configuration-property name="someMultivaluedConfigurationProperty" value="v1"/>
-  <extend-configuration-property name="someMultivaluedConfigurationProperty" value="v2"/>
 </module>
