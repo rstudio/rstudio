@@ -130,6 +130,21 @@ public class ShortcutManager implements NativePreviewHandler,
             disableModes);
    }
    
+   public void register(int m1,
+                        int k1,
+                        int m2,
+                        int k2,
+                        AppCommand command,
+                        String groupName,
+                        String title,
+                        String disableModes)
+   {
+      KeySequence sequence = new KeySequence();
+      sequence.add(k1, m1);
+      sequence.add(k2, m2);
+      register(sequence, command, groupName, title, disableModes);
+   }
+   
    public void register(KeySequence keys, AppCommand command)
    {
       register(keys, command, "", "", "");
