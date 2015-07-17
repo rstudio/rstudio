@@ -18,8 +18,6 @@ import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
 
 import org.rstudio.core.client.BrowseCap;
-import org.rstudio.core.client.Debug;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -190,11 +188,10 @@ public class KeyboardShortcut
                String keyName = keySplit[keySplit.length - 1];
 
                keyCode = KeyboardHelper.keyCodeFromKeyName(keyName);
-               Debug.logToRConsole("Key name: '" + keyName + "'");
-               Debug.logToRConsole("Key code: '" + keyCode + "'");
             }
             sequence.add(keyCode, modifiers);
          }
+         
          return sequence;
       }
       

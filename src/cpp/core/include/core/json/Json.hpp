@@ -210,7 +210,10 @@ bool parse(const std::string& input, Value* pValue);
 
 void write(const Value& value, std::ostream& os);
 void writeFormatted(const Value& value, std::ostream& os);
-   
+
+std::string write(const Value& value);
+std::string writeFormatted(const Value& value);
+
 } // namespace json
 } // namespace core
 } // namespace rstudio

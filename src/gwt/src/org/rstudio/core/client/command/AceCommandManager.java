@@ -14,7 +14,11 @@
  */
 package org.rstudio.core.client.command;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.KeyboardShortcut.KeyCombination;
 import org.rstudio.core.client.command.KeyboardShortcut.KeySequence;
@@ -23,6 +27,9 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.AddEditorCommandEvent;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.RetrieveEditorCommandsEvent;
+import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperations;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
@@ -40,6 +47,11 @@ public class AceCommandManager
       public final native String getInternalName()
       /*-{
          return this.name;
+      }-*/;
+      
+      public final native JavaScriptObject getInternalBindings()
+      /*-{
+         return this.bindKeys;
       }-*/;
       
       public final String getDisplayName()
@@ -259,8 +271,56 @@ public class AceCommandManager
          return this.commandKeyBinding;
       }-*/;
       
-      public final native JsArray<AceCommand> getCommands() /*-{
+      public final native JsObject getCommands() /*-{
          return this.commands;
+      }-*/;
+   }
+   
+   // The command binding saved when serializing Ace keybindings
+   private static class AceKeyBindings extends JavaScriptObject
+   {
+      protected AceKeyBindings() {}
+      
+      public final native AceKeyBinding get(String key) /*-{
+         return this[key];
+      }-*/;
+      
+      public final native JsArrayString getKeys() /*-{
+         return Object.keys(this);
+      }-*/;
+   }
+   
+   private static class AceKeyBinding extends JavaScriptObject
+   {
+      protected AceKeyBinding() {}
+      
+      public final List<KeySequence> getBoundKeys()
+      {
+         String keyString = getKeyBinding(BrowseCap.isWindows());
+         if (StringUtil.isNullOrEmpty(keyString))
+            return null;
+         
+         List<KeySequence> keys = new ArrayList<KeySequence>();
+         for (String string : keyString.split("\\|"))
+         {
+            keys.add(KeySequence.fromShortcutString(string));
+         }
+         return keys;
+      }
+      
+      private final native String getKeyBinding(boolean isWindows)
+      /*-{
+         
+         if (this == null) {
+            return this;
+         }
+         
+         if (typeof this === "string") {
+            return this;
+         }
+         
+         return isWindows ? this.win : this.mac;
+         
       }-*/;
    }
    
@@ -270,9 +330,11 @@ public class AceCommandManager
    }
    
    @Inject
-   private void initialize(EventBus events)
+   private void initialize(EventBus events,
+                           FilesServerOperations files)
    {
       events_ = events;
+      files_ = files;
    }
    
    public static final native JsArray<AceCommand> getDefaultAceCommands() /*-{
@@ -303,6 +365,74 @@ public class AceCommandManager
       events_.fireEvent(new AddEditorCommandEvent(id, keySequence, true));
    }
    
+   private static final native JsObject createBindings(JsObject commands)
+   /*-{
+      var result = {};
+      for (var key in commands) {
+         result[key] = commands[key].bindKey;
+      }
+      return result;
+   }-*/;
+   
+   public void saveBindings()
+   {
+      Manager manager = getManager();
+      JsObject bindings = createBindings(manager.getCommands());
+      
+      files_.writeJSON(
+            KEYBINDINGS_PATH,
+            bindings,
+            new ServerRequestCallback<Boolean>()
+            {
+               @Override
+               public void onResponseReceived(Boolean success)
+               {
+               }
+               
+               @Override
+               public void onError(ServerError error)
+               {
+                  Debug.logError(error);
+               }
+            });
+   }
+   
+   public void loadBindings()
+   {
+      files_.readJSON(
+            KEYBINDINGS_PATH,
+            new ServerRequestCallback<JavaScriptObject>()
+            {
+               @Override
+               public void onResponseReceived(JavaScriptObject jso)
+               {
+                  AceKeyBindings bindings = (AceKeyBindings) jso;
+                  JsArrayString keys = bindings.getKeys();
+                  for (int i = 0; i < keys.length(); i++)
+                  {
+                     String commandName = keys.get(i);
+                     AceKeyBinding binding = bindings.get(commandName);
+                     List<KeySequence> keySequences = binding.getBoundKeys();
+                     for (KeySequence sequence : keySequences)
+                     {
+                        Debug.logToRConsole("Binding '" + commandName + "' -> '" + sequence.toString() + "'");
+                        rebindCommand(commandName, sequence);
+                     }
+                  }
+               }
+               
+               @Override
+               public void onError(ServerError error)
+               {
+                  Debug.logError(error);
+               }
+            });
+   }
+   
    // Injected ----
    private EventBus events_;
+   private FilesServerOperations files_;
+   
+   public static final String KEYBINDINGS_PATH =
+         "~/.R/keybindings/editor_bindings.json";
 }

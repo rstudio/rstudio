@@ -405,4 +405,7 @@ public abstract class
    // Other
    public abstract AppCommand checkSpelling();   
    public abstract AppCommand maximizeConsole();
+   
+   public static final String KEYBINDINGS_PATH =
+         "~/.R/keybindings/rstudio_commands.json";
 }

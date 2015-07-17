@@ -31,7 +31,6 @@ import com.google.gwt.view.client.ListDataProvider;
 import com.google.gwt.view.client.ProvidesKey;
 import com.google.inject.Inject;
 
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.cellview.ScrollingDataGrid;
 import org.rstudio.core.client.command.AceCommandManager;
@@ -47,6 +46,7 @@ import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.DomUtils.ElementPredicate;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperations;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -153,7 +153,6 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
             assert command != null :
                "Failed to discover AppCommand with id '" + newBinding.getId() + "'";
             
-            Debug.logToRConsole("Updating command '" + newBinding.getId() + "' -> '" + newBinding.getKeySequence().toString() + "'");
             ShortcutManager.INSTANCE.replaceBinding(
                   newBinding.getKeySequence(),
                   command);
@@ -180,17 +179,20 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
          }
       }
       
+      ShortcutManager.INSTANCE.saveBindings();
       closeDialog();
    }
    
    @Inject
    public void initialize(UserCommandManager userCommands,
                           AceCommandManager aceCommands,
-                          Commands commands)
+                          Commands commands,
+                          FilesServerOperations files)
    {
       userCommands_ = userCommands;
       aceCommands_ = aceCommands;
       commands_ = commands;
+      files_ = files;
    }
    
    private void addColumns()
@@ -327,7 +329,6 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
       
       // Ace Commands
       JsArray<AceCommand> aceCommands = AceCommandManager.getDefaultAceCommands();
-      Debug.logObject(aceCommands);
       
       for (int i = 0; i < aceCommands.length(); i++)
       {
@@ -335,14 +336,12 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
          String id = command.getInternalName();
          String name = command.getDisplayName();
          JsArrayString shortcuts = command.getBindingsForCurrentPlatform();
-         Debug.logToRConsole("Shortcuts: " + shortcuts.toString());
          
          if (shortcuts != null)
          {
             for (int j = 0; j < shortcuts.length(); j++)
             {
                String shortcut = shortcuts.get(j);
-               Debug.logToRConsole("Parsing Ace shortcut: '" + shortcut + "'");
                KeySequence keys = KeySequence.fromShortcutString(shortcut);
                int type = CommandBinding.TYPE_EDITOR_COMMAND;
                bindings.add(new CommandBinding(id, name, keys, type));
@@ -402,6 +401,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
    private UserCommandManager userCommands_;
    private AceCommandManager aceCommands_;
    private Commands commands_;
+   private FilesServerOperations files_;
    
    // Resources, etc ----
    public interface Resources extends ClientBundle

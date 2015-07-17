@@ -19,15 +19,13 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.rstudio.core.client.BrowseCap;
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.command.KeyboardShortcut.KeySequence;
-import org.rstudio.core.client.command.UserCommandManager.UserCommand;
 import org.rstudio.core.client.events.NativeKeyDownEvent;
 import org.rstudio.core.client.events.NativeKeyDownHandler;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperations;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
@@ -75,10 +73,12 @@ public class ShortcutManager implements NativePreviewHandler,
    
    @Inject
    private void initialize(UserCommandManager userCommands,
-                           AceCommandManager aceCommands)
+                           AceCommandManager aceCommands,
+                           FilesServerOperations files)
    {
       aceCommands_ = aceCommands;
       userCommands_ = userCommands;
+      files_ = files;
    }
 
    public boolean isEnabled()
@@ -338,7 +338,6 @@ public class ShortcutManager implements NativePreviewHandler,
          return false;
       
       keyBuffer_.add(e);
-      Debug.logToRConsole("Keybuffer: '" + keyBuffer_.toString() + "'");
       KeyboardShortcut shortcut = new KeyboardShortcut(keyBuffer_);
 
       // check for disabled modal shortcuts if we're modal
@@ -392,16 +391,18 @@ public class ShortcutManager implements NativePreviewHandler,
       return command != null;
    }
    
-   public Map<KeyboardShortcut, UserCommand> getUserCommands()
+   public void saveBindings()
    {
-      return userCommands_.getCommands();
+      aceCommands_.saveBindings();
    }
-
+   
+   public void loadBindings()
+   {
+      aceCommands_.loadBindings();
+   }
+   
    private int disableCount_ = 0;
    private int editorMode_ = KeyboardShortcut.MODE_NONE;
-   
-   private UserCommandManager userCommands_;
-   private AceCommandManager aceCommands_;
    
    private final KeySequence keyBuffer_;
    private final Timer keyTimer_;
@@ -413,4 +414,11 @@ public class ShortcutManager implements NativePreviewHandler,
                                   = new ArrayList<KeyboardShortcut>();
    private ArrayList<KeyboardShortcut> modalShortcuts_ 
                                   = new ArrayList<KeyboardShortcut>();
+   
+   // Injected ----
+   private UserCommandManager userCommands_;
+   private AceCommandManager aceCommands_;
+   private FilesServerOperations files_;
+   
+   
 }

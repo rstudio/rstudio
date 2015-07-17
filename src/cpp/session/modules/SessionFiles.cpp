@@ -864,6 +864,75 @@ bool isMonitoringDirectory(const FilePath& directory)
    return !monitoredPath.empty() && (directory == monitoredPath);
 }
 
+Error writeJSON(const core::json::JsonRpcRequest& request,
+                json::JsonRpcResponse* pResponse)
+{
+   pResponse->setResult(false);
+   
+   std::string path;
+   json::Object object;
+   Error error = json::readParams(request.params, &path, &object);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return error;
+   }
+   
+   FilePath filePath = module_context::resolveAliasedPath(path);
+   std::string contents = json::writeFormatted(object);
+   error = writeStringToFile(filePath, contents);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return error;
+   }
+   
+   pResponse->setResult(true);
+   return Success();
+}
+
+Error readJSON(const core::json::JsonRpcRequest& request,
+               json::JsonRpcResponse* pResponse)
+{
+   pResponse->setResult(json::Object());
+   
+   std::string path;
+   Error error = json::readParams(request.params, &path);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return error;
+   }
+   
+   FilePath filePath = module_context::resolveAliasedPath(path);
+   if (!filePath.exists())
+   {
+      Error error = fileNotFoundError(ERROR_LOCATION);
+      LOG_ERROR(error);
+      return error;
+   }
+   
+   std::string contents;
+   error = readStringFromFile(filePath, &contents);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return error;
+   }
+   
+   json::Value valueJson;
+   bool success = json::parse(contents, &valueJson);
+   if (!success)
+   {
+      Error error(json::errc::ParseError, ERROR_LOCATION);
+      LOG_ERROR(error);
+      return error;
+   }
+   
+   pResponse->setResult(valueJson);
+   return Success();
+}
+
 Error initialize()
 {
    // register suspend handler
@@ -898,6 +967,8 @@ Error initialize()
       (bind(registerUriHandler, "/upload", handleFileUploadRequest))
       (bind(registerUriHandler, "/export", handleFileExportRequest))
       (bind(registerRpcMethod, "complete_upload", completeUpload))
+      (bind(registerRpcMethod, "write_json", writeJSON))
+      (bind(registerRpcMethod, "read_json", readJSON))
       (bind(sourceModuleRFile, "SessionFiles.R"))
       (bind(quotas::initialize));
    return initBlock.execute();
