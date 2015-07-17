@@ -58,6 +58,7 @@ SEXP asNamespace(const std::string& name);
 typedef std::pair<std::string,SEXP> Variable ;
 void listEnvironment(SEXP env, 
                      bool includeAll,
+                     bool includeLastDotValue,
                      Protect* pProtect,
                      std::vector<Variable>* pVariables);
       

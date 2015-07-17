@@ -433,6 +433,17 @@ void UserSettings::setLoadRData(bool loadRData)
    settings_.set(kLoadRData, loadRData);
 }
 
+bool UserSettings::showLastDotValue() const
+{
+   return settings_.getBool("showLastDotValue", false);
+}
+
+void UserSettings::setShowLastDotValue(bool show)
+{
+   settings_.set("showLastDotValue", show);
+}
+
+
 core::FilePath UserSettings::initialWorkingDirectory() const
 {
    return getWorkingDirectoryValue(kInitialWorkingDirectory);

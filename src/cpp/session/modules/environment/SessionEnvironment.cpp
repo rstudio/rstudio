@@ -31,6 +31,8 @@
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionSourceDatabase.hpp>
 #include <session/SessionPersistentState.hpp>
+#include <session/SessionUserSettings.hpp>
+
 #include <boost/foreach.hpp>
 
 #include "EnvironmentUtils.hpp"
@@ -498,7 +500,11 @@ json::Array environmentListAsJson()
     {
        SEXP env = s_pEnvironmentMonitor->getMonitoredEnvironment();
        if (env != NULL)
-          listEnvironment(env, false, &rProtect, &vars);
+          listEnvironment(env,
+                          false,
+                          userSettings().showLastDotValue(),
+                          &rProtect,
+                          &vars);
 
        // get object details and transform to json
        std::transform(vars.begin(),

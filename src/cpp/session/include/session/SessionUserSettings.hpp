@@ -111,6 +111,9 @@ public:
    bool loadRData() const;
    void setLoadRData(bool loadRData);
 
+   bool showLastDotValue() const;
+   void setShowLastDotValue(bool show);
+
    core::FilePath initialWorkingDirectory() const;
    void setInitialWorkingDirectory(const core::FilePath& filePath);
 
