@@ -190,11 +190,11 @@ public static final String GLOBAL_LOGGER_NAME = "global";
       return;
     }
     if (LOGGING_SEVERE) {
-      if (level.intValue() >= 1000) {
+      if (record.getLevel().intValue() >= 1000) {
         actuallyLog(record);
       }
     } else if (LOGGING_WARNING) {
-      if (level.intValue() >= Level.WARNING.intValue()) {
+      if (record.getLevel().intValue() >= Level.WARNING.intValue()) {
         actuallyLog(record);
       }
     } else {
