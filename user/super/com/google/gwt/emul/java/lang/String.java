@@ -21,8 +21,8 @@ import java.io.UnsupportedEncodingException;
 import java.util.Comparator;
 import java.util.Locale;
 
-import javaemul.internal.ArrayHelper;
 import javaemul.internal.HashCodes;
+import javaemul.internal.StringHelper;
 import javaemul.internal.annotations.DoNotInline;
 
 /**
@@ -113,12 +113,12 @@ public final class String implements Comparable<String>, CharSequence,
 
   public static String valueOf(char x[], int offset, int count) {
     int end = offset + count;
-    __checkBounds(x.length, offset, end);
-    return __valueOf(x, offset, end);
+    StringHelper.checkBounds(x.length, offset, end);
+    return StringHelper.valueOf(x, offset, end);
   }
 
   public static String valueOf(char[] x) {
-    return __valueOf(x, 0, x.length);
+    return StringHelper.valueOf(x, 0, x.length);
   }
 
   public static String valueOf(double x) {
@@ -142,27 +142,6 @@ public final class String implements Comparable<String>, CharSequence,
   }
 
   // CHECKSTYLE_OFF: This class has special needs.
-
-  /**
-   * Checks that bounds are correct.
-   *
-   * @param legalCount the end of the legal range
-   * @param start must be >= 0
-   * @param end must be <= legalCount and must be >= start
-   * @throw StringIndexOutOfBoundsException if the range is not legal
-   * @skip
-   */
-  static void __checkBounds(int legalCount, int start, int end) {
-    if (start < 0) {
-      throw new StringIndexOutOfBoundsException(start);
-    }
-    if (end < start) {
-      throw new StringIndexOutOfBoundsException(end - start);
-    }
-    if (end > legalCount) {
-      throw new StringIndexOutOfBoundsException(end);
-    }
-  }
 
   /**
    * @skip
@@ -194,23 +173,6 @@ public final class String implements Comparable<String>, CharSequence,
     }
     return replaceStr;
   }
-
-  static String __valueOf(char x[], int start, int end) {
-    return __valueOf(x, start, end, ArrayHelper.ARRAY_PROCESS_BATCH_SIZE);
-  }
-
-  private static native String __valueOf(char x[], int start, int end, int batchSize) /*-{
-    // Work around function.prototype.apply call stack size limits:
-    // https://code.google.com/p/v8/issues/detail?id=2896
-    // Performance: http://jsperf.com/string-fromcharcode-test/13
-    var s = "";
-    for (var batchStart = start; batchStart < end;) { // increment in block
-      var batchEnd = Math.min(batchStart + batchSize, end);
-      s += String.fromCharCode.apply(null, x.slice(batchStart, batchEnd));
-      batchStart = batchEnd;
-    }
-    return s;
-  }-*/;
 
   /**
    * @skip

@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -14,6 +14,8 @@
  * the License.
  */
 package java.lang;
+
+import javaemul.internal.StringHelper;
 
 /**
  * Wraps a primitive <code>long</code> as an object.
@@ -95,11 +97,11 @@ public final class Long extends Number implements Comparable<Long> {
   public static long parseLong(String s) throws NumberFormatException {
     return parseLong(s, 10);
   }
-  
+
   public static long parseLong(String s, int radix) throws NumberFormatException {
     return __parseAndValidateLong(s, radix);
   }
- 
+
   public static long reverse(long i) {
     int high = (int) (i >>> 32);
     int low = (int) i;
@@ -191,7 +193,7 @@ public final class Long extends Number implements Comparable<Long> {
       buf[pos--] = Character.forDigit(-((int) value));
       buf[pos] = '-';
     }
-    return String.__valueOf(buf, pos, bufSize);
+    return StringHelper.valueOf(buf, pos, bufSize);
   }
 
   public static Long valueOf(long i) {
@@ -229,7 +231,7 @@ public final class Long extends Number implements Comparable<Long> {
       value >>>= shift;
     } while (value != 0);
 
-    return String.__valueOf(buf, pos, bufSize);
+    return StringHelper.valueOf(buf, pos, bufSize);
   }
 
   private final transient long value;

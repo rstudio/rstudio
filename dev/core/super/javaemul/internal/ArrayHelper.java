@@ -60,7 +60,7 @@ public class ArrayHelper {
     }
   }
 
-  private static native Object nativeArraySlice(Object arrayToSclice, int start, int end) /*-{
+  static native Object nativeArraySlice(Object arrayToSclice, int start, int end) /*-{
     return arrayToSclice.slice(start, end);
   }-*/;
 
