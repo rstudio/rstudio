@@ -879,6 +879,13 @@ Error writeJSON(const core::json::JsonRpcRequest& request,
    }
    
    FilePath filePath = module_context::resolveAliasedPath(path);
+   error = filePath.parent().ensureDirectory();
+   if (error)
+   {
+      LOG_ERROR(error);
+      return error;
+   }
+   
    std::string contents = json::writeFormatted(object);
    error = writeStringToFile(filePath, contents);
    if (error)
