@@ -141,17 +141,24 @@ public class Satellite implements HasCloseHandlers<Satellite>
          }
       ); 
       
-      // export command notification callback
-      $wnd.dispatchCommandToRStudioSatellite = $entry(
-         function(commandId) {
-            satellite.@org.rstudio.studio.client.common.satellite.Satellite::dispatchCommand(Ljava/lang/String;)(commandId);
-         }
-      ); 
-      
       // export request activation callback
       $wnd.notifyPendingReactivate = $entry(function() {
          satellite.@org.rstudio.studio.client.common.satellite.Satellite::notifyPendingReactivate()();
       });
+      
+      // export point containment callback
+      $wnd.isPointWithinSatellite = $entry(function(x, y) {
+         // x and y are screen coordinates; translate them into window
+         // (viewport) coordinates
+         return $wnd.document.elementFromPoint(x - $wnd.screenX, y - $wnd.screenY) != null;
+      });
+
+      $wnd.addEventListener(
+            "unload",
+            $entry(function() {
+               $wnd.opener.notifyRStudioSatelliteClosed(name);
+            }),
+            true);
 
       // register (this will call the setSessionInfo back)
       $wnd.opener.registerAsRStudioSatellite(name, $wnd);
@@ -166,6 +173,12 @@ public class Satellite implements HasCloseHandlers<Satellite>
    // get the name of the current satellite window (null if not a satellite)
    public native String getSatelliteName() /*-{
       return $wnd.RStudioSatelliteName;
+   }-*/;
+   
+   // satellites only: call the main window to ask if it knows about any windows
+   // (including itself) at the given location
+   public native String getWindowAtPoint(int x, int y) /*-{
+      return $wnd.opener.getWindowAtPoint(x, y);
    }-*/;
    
    public JavaScriptObject getParams()
@@ -225,12 +238,6 @@ public class Satellite implements HasCloseHandlers<Satellite>
    private void dispatchEvent(JavaScriptObject clientEvent)
    {  
       eventDispatcher_.enqueEventAsJso(clientEvent);
-   }
-   
-   // called by main window to deliver commands
-   private void dispatchCommand(String commandId)
-   {  
-      commands_.getCommandById(commandId).execute();
    }
    
    // called by the main window to notify us that we're about to be reactivated

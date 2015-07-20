@@ -250,6 +250,7 @@ SEXP findNamespace(const std::string& name)
    
 void listEnvironment(SEXP env, 
                      bool includeAll,
+                     bool includeLastDotValue,
                      Protect* pProtect,
                      std::vector<Variable>* pVariables)
 {
@@ -268,6 +269,14 @@ void listEnvironment(SEXP env,
    {
       LOG_ERROR(error);
       return;
+   }
+   
+   // add in .Last.value if it exists
+   if (!includeAll && includeLastDotValue)
+   {
+      SEXP lastValueSEXP = Rf_findVar(Rf_install(".Last.value"), env);
+      if (lastValueSEXP != R_UnboundValue)
+         vars.push_back(".Last.value");
    }
 
    // populate pVariables
@@ -295,6 +304,11 @@ void listEnvironment(SEXP env,
 
 bool isActiveBinding(const std::string& name, const SEXP env)
 {
+   // R_BindingIsActive throws error on .Last.value check; avoid that and
+   // just assume that it's not an active binding (and hence is okay to eval)
+   if (name == ".Last.value")
+      return false;
+   
    return R_BindingIsActive(Rf_install(name.c_str()), env);
 }
 

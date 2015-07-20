@@ -1,5 +1,5 @@
 /*
- * BrowserFence.java
+ * Mutable.java
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -12,11 +12,25 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.impl;
+package org.rstudio.core.client;
 
-import com.google.gwt.user.client.Command;
-
-public interface BrowserFence
+// A utility class primarily used for creating mutable integers etc.
+public class Mutable<T>
 {
-   void go(Command command);
+   public Mutable(T data)
+   {
+      data_ = data;
+   }
+   
+   public T get()
+   {
+      return data_;
+   }
+   
+   public void set(T data)
+   {
+      data_ = data;
+   }
+   
+   private T data_;
 }

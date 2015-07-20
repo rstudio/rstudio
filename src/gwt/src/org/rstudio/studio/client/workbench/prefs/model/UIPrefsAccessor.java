@@ -488,7 +488,7 @@ public class UIPrefsAccessor extends Prefs
    
    public PrefValue<Integer> preferredDocumentOutlineWidth()
    {
-      return integer("preferred_document_outline_width", 150);
+      return integer("preferred_document_outline_width", 125);
    }
    
    public PrefValue<Boolean> showDocumentOutlineRmd()
@@ -498,7 +498,7 @@ public class UIPrefsAccessor extends Prefs
    
    public PrefValue<Boolean> showUnnamedEntriesInDocumentOutline()
    {
-      return bool("show_unnamed_entries_in_document_outline", false);
+      return bool("show_unnamed_chunks_in_document_outline", true);
    }
    
    public PrefValue<Boolean> enableSourceWindows()

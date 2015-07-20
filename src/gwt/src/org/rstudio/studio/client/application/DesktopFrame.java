@@ -47,7 +47,8 @@ public interface DesktopFrame extends JavaScriptPassthrough
    void openMinimalWindow(String name, String url, int width, int height);
    void activateMinimalWindow(String name);
    void activateSatelliteWindow(String name);
-   void prepareForSatelliteWindow(String name, int width, int height);
+   void prepareForSatelliteWindow(String name, int x, int y, int width,
+                                  int height);
    void prepareForNamedWindow(String name, boolean allowExternalNavigation,
          boolean showDesktopToolbar);
    void closeNamedWindow(String name);

@@ -27,7 +27,8 @@ public class GeneralPrefs extends JavaScriptObject
                                                   boolean rProfileOnResume,
                                                   String initialWorkingDir,
                                                   RVersionSpec defaultRVersion,
-                                                  boolean restoreProjectRVersion) /*-{
+                                                  boolean restoreProjectRVersion,
+                                                  boolean showLastDotValue) /*-{
       var prefs = new Object();
       prefs.save_action = saveAction;
       prefs.load_rdata = loadRData;
@@ -35,6 +36,7 @@ public class GeneralPrefs extends JavaScriptObject
       prefs.initial_working_dir = initialWorkingDir;
       prefs.default_r_version = defaultRVersion;
       prefs.restore_project_r_version = restoreProjectRVersion;
+      prefs.show_last_dot_value = showLastDotValue;
       return prefs ;
    }-*/;
 
@@ -61,6 +63,10 @@ public class GeneralPrefs extends JavaScriptObject
    
    public native final boolean getRestoreProjectRVersion() /*-{
       return this.restore_project_r_version;
+   }-*/;
+   
+   public native final boolean getShowLastDotValue() /*-{
+      return this.show_last_dot_value;
    }-*/;
    
 }

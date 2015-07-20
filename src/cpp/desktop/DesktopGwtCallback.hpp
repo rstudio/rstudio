@@ -87,7 +87,8 @@ public slots:
    void openMinimalWindow(QString name, QString url, int width, int height);
    void activateMinimalWindow(QString name);
    void activateSatelliteWindow(QString name);
-   void prepareForSatelliteWindow(QString name, int width, int height);
+   void prepareForSatelliteWindow(QString name, int x, int y, int width,
+                                  int height);
    void prepareForNamedWindow(QString name, bool allowExternalNavigate,
                               bool showToolbar);
    void closeNamedWindow(QString name);

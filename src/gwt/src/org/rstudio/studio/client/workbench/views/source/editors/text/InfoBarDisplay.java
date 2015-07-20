@@ -1,5 +1,5 @@
 /*
- * BrowserFenceUnsupported.java
+ * InfoBarDisplay.java
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -12,17 +12,12 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.impl;
+package org.rstudio.studio.client.workbench.views.source.editors.text;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.ui.IsWidget;
 
-public class BrowserFenceUnsupported implements BrowserFence
+public interface InfoBarDisplay extends IsWidget
 {
-   public void go(Command command)
-   { 
-      String url = GWT.getHostPageBaseURL() + "unsupported_browser.htm";
-      Window.Location.replace(url);
-   }
+   void showInfoBar(String message);
+   void hideInfoBar();
 }

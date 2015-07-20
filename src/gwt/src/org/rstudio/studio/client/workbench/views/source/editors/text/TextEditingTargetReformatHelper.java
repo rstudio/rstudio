@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Stack;
 
+import org.rstudio.core.client.Mutable;
 import org.rstudio.core.client.Pair;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.regex.Match;
@@ -34,26 +35,6 @@ public class TextEditingTargetReformatHelper
    public TextEditingTargetReformatHelper(DocDisplay docDisplay)
    {
       docDisplay_ = docDisplay;
-   }
-   
-   class MutableInteger {
-      
-      public MutableInteger(int data)
-      {
-         data_ = data;
-      }
-      
-      public void set(int data)
-      {
-         data_ = data;
-      }
-      
-      public int get()
-      {
-         return data_;
-      }
-      
-      private int data_;
    }
    
    private static final Pattern ENDS_WITH_NEWLINE =
@@ -223,7 +204,7 @@ public class TextEditingTargetReformatHelper
          return fwdToMatchingToken(null);
       }
       
-      public boolean fwdToMatchingToken(MutableInteger counter)
+      public boolean fwdToMatchingToken(Mutable<Integer> counter)
       {
          String lhs = this.currentValue();
          if (!isLeftBrace())
@@ -679,7 +660,7 @@ public class TextEditingTargetReformatHelper
                   clone.fwdToMatchingToken();
                else
                {
-                  MutableInteger counter = new MutableInteger(0);
+                  Mutable<Integer> counter = new Mutable<Integer>(0);
                   clone.fwdToMatchingToken(counter);
                   accumulatedLength += counter.get();
                }

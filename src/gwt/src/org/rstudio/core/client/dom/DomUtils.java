@@ -791,6 +791,14 @@ public class DomUtils
       return result;
    }-*/;
    
+   public static final Element getFirstElementWithClassName(Element parent, String classes)
+   {
+      Element[] elements = getElementsByClassName(parent, classes);
+      if (elements.length == 0)
+   	   return null;
+      return elements[0];
+   }
+   
    public static final Element getParent(Element element, int times)
    {
       Element parent = element;
@@ -855,4 +863,26 @@ public class DomUtils
       });
    }
    
+   public interface ElementPredicate
+   {
+      public boolean test(Element el);
+   }
+   
+   public static Element findParentElement(Element el,
+   	                                     ElementPredicate predicate)
+   {
+      Element parent = el.getParentElement();
+      while (parent != null)
+      {
+         if (predicate.test(parent))
+            return parent;
+
+         parent = parent.getParentElement();
+      }
+      return null;
+   }
+   
+   public final static native Element elementFromPoint(int x, int y) /*-{
+      return $doc.elementFromPoint(x, y);
+   }-*/;
 }

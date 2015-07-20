@@ -188,7 +188,7 @@ Error setPrefs(const json::JsonRpcRequest& request, json::JsonRpcResponse*)
 
    // read and set general prefs
    int saveAction;
-   bool loadRData, rProfileOnResume, restoreProjectRVersion;
+   bool loadRData, rProfileOnResume, restoreProjectRVersion, showLastDotValue;
    std::string initialWorkingDir;
    json::Object defaultRVersionJson;
    error = json::readObject(generalPrefs,
@@ -197,16 +197,29 @@ Error setPrefs(const json::JsonRpcRequest& request, json::JsonRpcResponse*)
                             "rprofile_on_resume", &rProfileOnResume,
                             "initial_working_dir", &initialWorkingDir,
                             "default_r_version", &defaultRVersionJson,
-                            "restore_project_r_version", &restoreProjectRVersion);
+                            "restore_project_r_version", &restoreProjectRVersion,
+                            "show_last_dot_value", &showLastDotValue);
    if (error)
       return error;
 
+   // detect if lastDotValue changed
+   bool lastDotValueChanged = userSettings().showLastDotValue() != showLastDotValue;
+
+   // update settings
    userSettings().beginUpdate();
    userSettings().setSaveAction(saveAction);
    userSettings().setLoadRData(loadRData);
    userSettings().setRprofileOnResume(rProfileOnResume);
+   userSettings().setShowLastDotValue(showLastDotValue);
    userSettings().setInitialWorkingDirectory(FilePath(initialWorkingDir));
    userSettings().endUpdate();
+
+   // refresh environment if lastDotValueChanged
+   if (lastDotValueChanged)
+   {
+      ClientEvent refreshEvent(client_events::kEnvironmentRefresh);
+      module_context::enqueClientEvent(refreshEvent);
+   }
 
    // sync underlying R save action
    module_context::syncRSaveAction();
@@ -393,6 +406,7 @@ Error getRPrefs(const json::JsonRpcRequest& request,
          userSettings().initialWorkingDirectory());
    generalPrefs["default_r_version"] = defaultRVersionJson;
    generalPrefs["restore_project_r_version"] = versionSettings.restoreProjectRVersion();
+   generalPrefs["show_last_dot_value"] = userSettings().showLastDotValue();
 
    // get history prefs
    json::Object historyPrefs;

@@ -10,6 +10,7 @@
 * Enhanced display of sections in R scope navigator
 * Added document outline display to R and C++ documents
 * New Close All Except Current command
+* Rename variable in scope (Cmd+Shift+Alt+M)
 
 ### R Markdown
 
@@ -35,6 +36,7 @@
 * Scan for Rtools in both HKCU and HKLM (for non-Admin installs of Rtools)
 * Move running Shiny apps between IDE panes and windows without restarting the app
 * Parse TeX magic comments that start with "%%" (ESS compatibility).
+* Change default Rpres template to specify autosize: true
 
 
 ### Server

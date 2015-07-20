@@ -18,6 +18,7 @@
 #include <r/RSexp.hpp>
 #include <r/RInterface.hpp>
 #include <session/SessionModuleContext.hpp>
+#include <session/SessionUserSettings.hpp>
 
 #include "EnvironmentUtils.hpp"
 
@@ -119,7 +120,11 @@ bool EnvironmentMonitor::hasEnvironment()
 void EnvironmentMonitor::listEnv(std::vector<r::sexp::Variable>* pEnv)
 {
    r::sexp::Protect rProtect;
-   r::sexp::listEnvironment(getMonitoredEnvironment(), false, &rProtect, pEnv);
+   r::sexp::listEnvironment(getMonitoredEnvironment(),
+                            false,
+                            userSettings().showLastDotValue(),
+                            &rProtect,
+                            pEnv);
 }
 
 void EnvironmentMonitor::checkForChanges()

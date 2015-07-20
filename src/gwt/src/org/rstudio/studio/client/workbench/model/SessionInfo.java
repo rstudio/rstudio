@@ -133,6 +133,10 @@ public class SessionInfo extends JavaScriptObject
       return this.source_documents;
    }-*/;
    
+   public final native void setSourceDocuments(JsArray<SourceDocument> docs) /*-{
+      this.source_documents = docs;
+   }-*/;
+   
    public final native WorkbenchLists getLists() /*-{
       return this.lists;
    }-*/;

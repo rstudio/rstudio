@@ -307,13 +307,19 @@ public:
       if (cache_.find(contribUrl) != cache_.end())
          return;
 
+      // build code to execute
+      boost::format fmt(
+               "row.names(available.packages(contriburl = '%1%'))");
+      std::string code = boost::str(fmt % contribUrl);
+
       // get the packages
       std::vector<std::string> packages;
-      Error error = r::exec::evaluateString(
-            "row.names(available.packages())", &packages);
+      Error error = r::exec::evaluateString(code, &packages);
       if (error)
       {
-         LOG_ERROR(error);
+         // log error if it wasn't merly a null return value
+         if (error.code() != r::errc::UnexpectedDataTypeError)
+            LOG_ERROR(error);
          return;
       }
 
@@ -495,9 +501,8 @@ void onDeferredInit(bool newSession)
    detectLibPathsChanges();
    module_context::events().onDetectChanges.connect(onDetectChanges);
 
-   // if this is a new session then verify CRAN mirror security
-   if (newSession)
-      module_context::reconcileSecureDownloadConfiguration();
+   // ensure we have a secure connection to CRAN
+   module_context::reconcileSecureDownloadConfiguration();
 }
 
 Error getPackageState(const json::JsonRpcRequest& request,

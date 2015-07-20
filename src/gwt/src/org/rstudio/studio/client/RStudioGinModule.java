@@ -27,6 +27,7 @@ import org.rstudio.studio.client.application.ApplicationView;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.model.ApplicationServerOperations;
 import org.rstudio.studio.client.application.ui.ApplicationWindow;
+import org.rstudio.studio.client.application.ui.CodeSearchLauncher;
 import org.rstudio.studio.client.common.ConsoleDispatcher;
 import org.rstudio.studio.client.common.DefaultGlobalDisplay;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -177,6 +178,7 @@ import org.rstudio.studio.client.workbench.views.source.Source;
 import org.rstudio.studio.client.workbench.views.source.SourcePane;
 import org.rstudio.studio.client.workbench.views.source.SourceSatelliteView;
 import org.rstudio.studio.client.workbench.views.source.SourceSatelliteWindow;
+import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetSource;
 import org.rstudio.studio.client.workbench.views.source.editors.profiler.ProfilerPresenter;
 import org.rstudio.studio.client.workbench.views.source.editors.profiler.model.ProfilerServerOperations;
@@ -244,6 +246,8 @@ public class RStudioGinModule extends AbstractGinModule
       bind(HelpStrategy.class).in(Singleton.class);
       bind(RSAccountConnector.class).in(Singleton.class);
       bind(PlotPublishMRUList.class).asEagerSingleton();
+      bind(SourceWindowManager.class).in(Singleton.class);
+      bind(CodeSearchLauncher.class).in(Singleton.class);
 
       bind(ApplicationView.class).to(ApplicationWindow.class)
             .in(Singleton.class) ;

@@ -1,7 +1,7 @@
 /*
  * SendToConsoleEvent.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-15 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,13 +14,21 @@
  */
 package org.rstudio.studio.client.workbench.views.console.events;
 
+import org.rstudio.core.client.js.JavaScriptSerializable;
+import org.rstudio.studio.client.application.events.CrossWindowEvent;
+
 import com.google.gwt.event.shared.GwtEvent;
 
-public class SendToConsoleEvent extends GwtEvent<SendToConsoleHandler>
+@JavaScriptSerializable
+public class SendToConsoleEvent extends CrossWindowEvent<SendToConsoleHandler>
 {
    public static final GwtEvent.Type<SendToConsoleHandler> TYPE =
       new GwtEvent.Type<SendToConsoleHandler>();
   
+   public SendToConsoleEvent()
+   {
+   }
+
    public SendToConsoleEvent(String code, boolean execute)
    {
       this(code, execute, false);
@@ -74,8 +82,8 @@ public class SendToConsoleEvent extends GwtEvent<SendToConsoleHandler>
       sendToConsoleHandler.onSendToConsole(this);
    }
 
-   private final String code_;
-   private final boolean execute_;
-   private final boolean focus_;
-   private final boolean animate_;
+   private String code_;
+   private boolean execute_;
+   private boolean focus_;
+   private boolean animate_;
 }

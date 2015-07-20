@@ -159,6 +159,14 @@ public class WindowEx extends JavaScriptObject
       return this.scrollY;
    }-*/;
    
+   public final native int getScreenX() /*-{
+      return this.screenX;
+   }-*/;
+   
+   public final native int getScreenY() /*-{
+      return this.screenY;
+   }-*/;
+
    public final native void postMessage(JavaScriptObject data, 
                                         String origin) /*-{
       this.postMessage(data, origin);

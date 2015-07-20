@@ -31,6 +31,8 @@ import com.google.gwt.http.client.URL;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.Event;
+import com.google.gwt.user.client.Event.NativePreviewEvent;
 import com.google.gwt.user.client.ui.HasValue;
 import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.UIObject;
@@ -54,7 +56,6 @@ import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.widget.*;
-import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.ChangeFontSizeEvent;
 import org.rstudio.studio.client.application.events.ChangeFontSizeHandler;
@@ -97,6 +98,7 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
+import org.rstudio.studio.client.shiny.events.LaunchShinyApplicationEvent;
 import org.rstudio.studio.client.shiny.events.ShinyApplicationStatusEvent;
 import org.rstudio.studio.client.shiny.model.ShinyApplicationParams;
 import org.rstudio.studio.client.shiny.model.ShinyViewerType;
@@ -122,7 +124,6 @@ import org.rstudio.studio.client.workbench.views.presentation.model.Presentation
 import org.rstudio.studio.client.workbench.views.source.SourceBuildHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetCodeExecution;
-import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay.AnchoredSelection;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ScopeList.ContainsFoldPredicate;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetRMarkdownHelper.RmdSelectedTemplate;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceFold;
@@ -133,10 +134,12 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppComp
 import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionOperation;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.*;
 import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBar;
+import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBar.HideMessageHandler;
 import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBarPopupMenu;
 import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBarPopupRequest;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ui.ChooseEncodingDialog;
 import org.rstudio.studio.client.workbench.views.source.events.CollabEditStartParams;
+import org.rstudio.studio.client.workbench.views.source.events.DocTabDragStateChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.PopoutDocEvent;
 import org.rstudio.studio.client.workbench.views.source.events.RecordNavigationPositionEvent;
 import org.rstudio.studio.client.workbench.views.source.events.RecordNavigationPositionHandler;
@@ -397,6 +400,7 @@ public class TextEditingTarget implements
                                                                   docDisplay_);
       reformatHelper_ = new TextEditingTargetReformatHelper(docDisplay_);
       snippets_ = new SnippetHelper((AceEditor) docDisplay_);
+      renameHelper_ = new TextEditingTargetRenameHelper(docDisplay_);
       
       docDisplay_.setRnwCompletionContext(compilePdfHelper_);
       docDisplay_.setCppCompletionContext(cppCompletionContext_);
@@ -688,6 +692,19 @@ public class TextEditingTarget implements
                   {
                      addAdditionalResourceFiles(settings.getAdditionalFiles());
                   }
+               }
+            });
+
+      events_.addHandler(DocTabDragStateChangedEvent.TYPE, 
+            new DocTabDragStateChangedEvent.Handler()
+            {
+               
+               @Override
+               public void onDocTabDragStateChanged(
+                     DocTabDragStateChangedEvent e)
+               {
+                  docDisplay_.setDragEnabled(e.getState() == 
+                        DocTabDragStateChangedEvent.STATE_NONE);
                }
             });
    }
@@ -2223,6 +2240,53 @@ public class TextEditingTarget implements
    }
    
    @Handler
+   void onRenameInFile()
+   {
+      int matches = renameHelper_.renameInFile();
+      if (matches > 0)
+      {
+         String message = "Found " + matches;
+         if (matches == 1)
+            message += " match";
+         else
+            message += " matches";
+         
+         String selectedItem = docDisplay_.getSelectionValue();
+         message += " for '" + selectedItem + "'";
+         
+         view_.getStatusBar().showMessage(message, new HideMessageHandler()
+         {
+            @Override
+            public boolean onNativePreviewEvent(NativePreviewEvent preview)
+            {
+               if (!docDisplay_.isFocused() || !docDisplay_.inMultiSelectMode())
+               {
+                  docDisplay_.exitMultiSelectMode();
+                  docDisplay_.clearSelection();
+                  return true;
+               }
+               
+               if (preview.getTypeInt() == Event.ONKEYDOWN)
+               {
+                  switch (preview.getNativeEvent().getKeyCode())
+                  {
+                  case KeyCodes.KEY_ENTER:
+                     preview.cancel();
+                  case KeyCodes.KEY_UP:
+                  case KeyCodes.KEY_DOWN:
+                  case KeyCodes.KEY_ESCAPE:
+                     docDisplay_.exitMultiSelectMode();
+                     docDisplay_.clearSelection();
+                     return true;
+                  }
+               }
+               return false;
+            }
+         });
+      }
+   }
+   
+   @Handler
    void onInsertRoxygenSkeleton()
    {
       roxygenHelper_.insertRoxygenSkeleton();
@@ -2610,12 +2674,7 @@ public class TextEditingTarget implements
    void onPopoutDoc()
    {
       if (docUpdateSentinel_ != null)
-         events_.fireEvent(new PopoutDocEvent(docUpdateSentinel_.getDoc()));
-      // TODO: close this instance of the document when popout is finished:
-      // a) with some way to suppress removal of the doc from the source db, or
-      // b) when the satellite window opens, or
-      // c) a + support multiple windows into one doc
-      // CloseEvent.fire(TextEditingTarget.this, null);
+         events_.fireEvent(new PopoutDocEvent(getId(), null));
    }
 
    private void doCommentUncomment(String c)
@@ -3417,66 +3476,48 @@ public class TextEditingTarget implements
       // a Scope with an end.
       docDisplay_.getScopeTree();
       
-      executeSweaveChunk(scopeHelper_.getNextSweaveChunk(), true);
+      Scope nextChunk = scopeHelper_.getNextSweaveChunk();
+      executeSweaveChunk(nextChunk, true);
+      docDisplay_.setCursorPosition(nextChunk.getBodyStart());
+      docDisplay_.ensureCursorVisible();
    }
    
    @Handler
    void onExecutePreviousChunks()
    {
-      withPreservedSelection(new Command() {
-
-         @Override
-         public void execute()
-         {
-            // HACK: This is just to force the entire function tree to be built.
-            // It's the easiest way to make sure getCurrentScope() returns
-            // a Scope with an end.
-            docDisplay_.getScopeTree();
-            
-            // see if there is a region of code in the current chunk to execute
-            Range currentChunkRange = null;
-            Scope currentScope = scopeHelper_.getCurrentSweaveChunk();
-            if (currentScope != null)
-            {
-               // get end position (always execute the current line unless
-               // the cursor is at the beginning of it)
-               Position endPos = docDisplay_.getCursorPosition();
-               if (endPos.getColumn() >0)
-                  endPos = Position.create(endPos.getRow()+1, 0);
-               
-               currentChunkRange = Range.fromPoints(currentScope.getBodyStart(),
-                                                    endPos);
-            }
-            
-            // execute the previous chunks
-            Scope[] previousScopes = scopeHelper_.getPreviousSweaveChunks();
-            for (Scope scope : previousScopes)
-               executeSweaveChunk(scope, false);
-            
-            // execute code from the current chunk if we have it
-            if (currentChunkRange != null)
-              codeExecution_.executeRange(currentChunkRange);
-         }
-      });    
+      executePreviousChunks(null);
    }
    
-   private void withPreservedSelection(Command command)
-   { 
-      // save the selection and scroll position for restoration
-      int scrollPosition = docDisplay_.getScrollTop();
-      Position start = docDisplay_.getSelectionStart();
-      Position end = docDisplay_.getSelectionEnd();
-      AnchoredSelection anchoredSelection = 
-                           docDisplay_.createAnchoredSelection(start,end);
+   public void executePreviousChunks(final Position position)
+   {  
+      // HACK: This is just to force the entire function tree to be built.
+      // It's the easiest way to make sure getCurrentScope() returns
+      // a Scope with an end.
+      docDisplay_.getScopeTree();
       
-      // execute the command
-      command.execute();
-      
-      // restore the selection and scroll position
-      anchoredSelection.apply();
-      docDisplay_.scrollToY(scrollPosition);
+      // execute the previous chunks
+      Scope[] previousScopes = scopeHelper_.getPreviousSweaveChunks(position);
+      for (Scope scope : previousScopes)
+         if (isRChunk(scope))
+            executeSweaveChunk(scope, false);
    }
-
+   
+   private boolean isRChunk(Scope scope)
+   {
+      String labelText = docDisplay_.getLine(scope.getPreamble().getRow());
+      Pattern reEngine = Pattern.create(".*engine\\s*=\\s*['\"]([^'\"]*)['\"]");
+      Match match = reEngine.match(labelText, 0);
+      if (match == null)
+         return true;
+      
+      String engine = match.getGroup(1).toLowerCase();
+      
+      // NOTE: We might want to include 'Rscript' but such chunks are typically
+      // intended to be run in their own process so it might not make sense to
+      // collect those here.
+      return engine.equals("r");
+   }
+   
    private void executeSweaveChunk(final Scope chunk, 
                                    final boolean scrollNearTop)
    {
@@ -3497,14 +3538,11 @@ public class TextEditingTarget implements
                                            range.getStart().getColumn()),
                      true);
             }
-            docDisplay_.setSelection(
-                docDisplay_.createSelection(range.getStart(), range.getEnd()));
             if (!range.isEmpty())
             {
                codeExecution_.setLastExecuted(range.getStart(), range.getEnd());
                String code = scopeHelper_.getSweaveChunkText(chunk);
                events_.fireEvent(new SendToConsoleEvent(code, true));
-
                docDisplay_.collapseSelection(true);
             }
          }
@@ -3751,8 +3789,7 @@ public class TextEditingTarget implements
          @Override
          public void execute()
          {
-            RStudioGinjector.INSTANCE.getShinyApplication()
-                                     .launchShinyApplication(getPath());
+            events_.fireEvent(new LaunchShinyApplicationEvent(getPath()));
          }
       }, "Run Shiny Application");
    }
@@ -3823,15 +3860,6 @@ public class TextEditingTarget implements
    void onKnitDocument()
    {
       onPreviewHTML();
-   }
-   
-   @Handler
-   void onUsingRMarkdownHelp()
-   {
-      if (extendedType_.equals("rmarkdown"))
-         globalDisplay_.openRStudioLink("using_rmarkdown");
-      else
-         globalDisplay_.openRStudioLink("using_markdown");
    }
    
    @Handler
@@ -4168,6 +4196,14 @@ public class TextEditingTarget implements
          action = "view_external";
       
       handlePdfCommand(action, useInternalPreview, null);
+   }
+   
+   
+   @Handler
+   void onKnitWithParameters()
+   {
+      globalDisplay_.showMessage(MessageDisplay.MSG_WARNING, 
+            "Not Yet Implemented", "This command is not yet implemented.");      
    }
 
    @Handler
@@ -5083,6 +5119,7 @@ public class TextEditingTarget implements
    private BreakpointManager breakpointManager_;
    private final LintManager lintManager_;
    private final SnippetHelper snippets_;
+   private final TextEditingTargetRenameHelper renameHelper_;
    private CollabEditStartParams queuedCollabParams_;
 
    // Allows external edit checks to supercede one another

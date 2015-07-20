@@ -268,18 +268,6 @@ public class Help extends BasePresenter implements ShowHelpHandler
    }
    
    @Handler
-   void onAuthoringRPresentationsHelp()
-   {
-      globalDisplay_.openRStudioLink("authoring_presentations");
-   }
-   
-   @Handler
-   void onRcppHelp()
-   {
-      globalDisplay_.openRStudioLink("rcpp_help");
-   }
-   
-   @Handler
    void onDebugHelp()
    {
       globalDisplay_.openRStudioLink("visual_debugger");

@@ -20,11 +20,13 @@ import com.google.inject.Provider;
 import org.rstudio.core.client.prefs.PreferencesDialogBase;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressIndicator;
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
+import org.rstudio.studio.client.workbench.prefs.events.UiPrefsChangedEvent;
 import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
 
 public class PreferencesDialog extends PreferencesDialogBase<RPrefs>
@@ -101,6 +103,11 @@ public class PreferencesDialog extends PreferencesDialogBase<RPrefs>
             }           
          });  
       
+      // broadcast UI pref changes to satellites
+      RStudioGinjector.INSTANCE.getSatelliteManager().dispatchCrossWindowEvent(
+                     new UiPrefsChangedEvent(UiPrefsChangedEvent.Data.create(
+                           UiPrefsChangedEvent.GLOBAL_TYPE,
+                           session_.getSessionInfo().getUiPrefs())));
    }
   
    public static void ensureStylesInjected()

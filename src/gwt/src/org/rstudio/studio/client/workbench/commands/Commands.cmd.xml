@@ -19,7 +19,15 @@ well as menu structures (for main menu and popup menus).
       string if no label should be used
    @menuLabel: Label that should be used in a menu.
    @desc: Extended description (e.g. for tooltip)
-
+   @checkable: Indicates whether the command has a stateful checked state, 
+      which is shown by the command when rendered in a menu (both GWT and
+      native menus)
+  @preventShortcutWhenDisabled: Whether the command's shortcut should be 
+      suppressed when the command is disabled
+  @windowMode: Which window the command wants to operate on; possible values:
+      "any": operates on current window (the default),
+      "main": always operates on main window, and raises main window
+      "background": always operates on main window, but in the background
 -->
 <commands>
    <menu id="mainMenu" vertical="false">
@@ -164,6 +172,7 @@ well as menu structures (for main menu and popup menus).
          <separator/>
          <cmd refid="extractFunction"/>
          <cmd refid="extractLocalVariable"/>
+         <cmd refid="renameInFile"/>
          <separator/>
          <cmd refid="reflowComment"/>
          <cmd refid="commentUncomment"/>
@@ -439,6 +448,7 @@ well as menu structures (for main menu and popup menus).
          <shortcut value="Ctrl+T" title="Transpose Letters" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut value="Alt+-" title="Insert Assignment Operator"/>
          <shortcut value="Cmd+Shift+M" title="Insert Pipe Operator" />
+         <shortcut refid="renameInFile" value="Cmd+Alt+Shift+M" />
          <shortcut refid="insertRoxygenSkeleton" value="Cmd+Shift+Alt+R" title="Insert Roxygen Skeleton" />
          <shortcut refid="insertSnippet" value="Shift+Tab" title="Insert Snippet"/>
       </shortcutgroup>
@@ -788,29 +798,41 @@ well as menu structures (for main menu and popup menus).
    <cmd id="goToFileFunction"
         menuLabel="Go To File/F_unction..."/>   
    <cmd id="activateSource"
-        menuLabel="Move Focus to Sou_rce"/>
+        menuLabel="Move Focus to Sou_rce"
+        windowMode="main"/>
    <cmd id="activateConsole"
-        menuLabel="Move Focus to _Console"/>
+        menuLabel="Move Focus to _Console"
+        windowMode="main"/>
    <cmd id="activateEnvironment"
-        menuLabel="Show _Environment"/>
+        menuLabel="Show _Environment"
+        windowMode="main"/>
    <cmd id="activateData"
-        menuLabel="Show _Data"/>
+        menuLabel="Show _Data"
+        windowMode="main"/>
    <cmd id="activateHistory"
-        menuLabel="Show Histor_y"/>
+        menuLabel="Show Histor_y"
+        windowMode="main"/>
    <cmd id="activateFiles"
-        menuLabel="Show F_iles"/>
+        menuLabel="Show F_iles"
+        windowMode="main"/>
    <cmd id="activatePlots"
-        menuLabel="Show Pl_ots"/>
+        menuLabel="Show Pl_ots"
+        windowMode="main"/>
    <cmd id="activatePackages"
-        menuLabel="Show P_ackages"/>
+        menuLabel="Show P_ackages"
+        windowMode="main"/>
    <cmd id="activateHelp"
-        menuLabel="Move Focus to _Help"/>
+        menuLabel="Move Focus to _Help"
+        windowMode="main"/>
    <cmd id="activateVcs"
-        menuLabel="Show _Vcs"/>
+        menuLabel="Show _Vcs"
+        windowMode="main"/>
    <cmd id="activateBuild"
-        menuLabel="Show _Build"/>
+        menuLabel="Show _Build"
+        windowMode="main"/>
    <cmd id="activatePresentation"  
-        menuLabel="Show Presentation"/>
+        menuLabel="Show Presentation"
+        windowMode="main"/>
    <cmd id="jumpTo"
         menuLabel="_Jump To..."/>
    <cmd id="switchToTab"
@@ -849,7 +871,8 @@ well as menu structures (for main menu and popup menus).
         menuLabel="_Replace and Find"
         desc="Replace and find next occurrence"/>  
    <cmd id="findInFiles"
-        menuLabel="Find _in Files..."/>
+        menuLabel="Find _in Files..."
+        windowMode="main"/>
    <cmd id="fold"
         menuLabel="Collapse"/>
    <cmd id="unfold"
@@ -900,8 +923,8 @@ well as menu structures (for main menu and popup menus).
         menuLabel="_Insert Section..."
         desc="Insert a new code section"/>
    <cmd id="executePreviousChunks"
-        menuLabel="Run _Previous Code"
-        desc="Run all previous code in the source file"/>
+        menuLabel="Run _Previous Chunks"
+        desc="Run all previous chunks in the source file"/>
    <cmd id="executeCurrentChunk"
         menuLabel="Run _Current Chunk"
         desc="Run the current code chunk"/>
@@ -935,7 +958,8 @@ well as menu structures (for main menu and popup menus).
    <cmd id="sourceFile"
         buttonLabel=""
         menuLabel="Source _File..."
-        desc="Source the contents of an R file"/>
+        desc="Source the contents of an R file"
+        windowMode="main"/>
    <cmd id="sourceActiveDocument"
         buttonLabel="Source"
         menuLabel="_Source"
@@ -962,6 +986,9 @@ well as menu structures (for main menu and popup menus).
    <cmd id="reflowComment"
         menuLabel="Reflow Co_mment"
         desc="Reflow selected comment lines so they wrap evenly"/>
+   <cmd id="renameInFile"
+        menuLabel="Rename in File"
+        desc="Rename symbol in current file"/>
    <cmd id="insertRoxygenSkeleton"
         menuLabel="Insert Ro_xygen Skeleton"
         desc="Insert a roxygen comment for the current function"/>
@@ -1016,7 +1043,7 @@ well as menu structures (for main menu and popup menus).
   
    <cmd id="knitDocument"
         buttonLabel="Knit"
-        menuLabel="_Knit"
+        menuLabel="_Knit Document"
         desc="Knit the current document"/>
  
    <cmd id="previewHTML"
@@ -1039,8 +1066,12 @@ well as menu structures (for main menu and popup menus).
         desc="Compile a notebook from the current R script"/>
 
    <cmd id="editRmdFormatOptions"
-        menuLabel="_Format Options..."
+        menuLabel="_Output Options..."
         desc="Edit the R Markdown format options for the current file"/>
+       
+   <cmd id="knitWithParameters"
+        menuLabel="Knit _with Parameters..."
+        desc="Knit the document with a set of custom parameters"/>
 
    <cmd id="synctexSearch"
         menuLabel="S_ync PDF View to Editor"
@@ -1471,11 +1502,13 @@ well as menu structures (for main menu and popup menus).
    <cmd id="buildAll"
         buttonLabel="Build &amp; Reload"
         menuLabel="_Build and Reload"
-        desc="Build and reload the package"/>
+        desc="Build and reload the package"
+        windowMode="main"/>
         
    <cmd id="rebuildAll"
         menuLabel="Clean and _Rebuild"
-        desc="Clean previous output and rebuild all"/>
+        desc="Clean previous output and rebuild all"
+        windowMode="main"/>
         
    <cmd id="cleanAll"
         menuLabel="_Clean All"
@@ -1492,24 +1525,29 @@ well as menu structures (for main menu and popup menus).
         
    <cmd id="devtoolsLoadAll"
         menuLabel="_Load All"
-        desc="Execute devtools::load_all"/>     
+        desc="Execute devtools::load_all"
+        windowMode="main"/>
         
    <cmd id="roxygenizePackage"
         menuLabel="_Document"
-        desc="Run roxygen2 to document this package"/>     
+        desc="Run roxygen2 to document this package"
+        windowMode="main"/>
 
    <cmd id="checkPackage"
         buttonLabel="Check"
         menuLabel="_Check Package"
-        desc="R CMD check"/>
+        desc="R CMD check"
+        windowMode="main"/>
         
    <cmd id="testPackage"
         menuLabel="_Test Package"
-        desc="Run tests for package"/>
+        desc="Run tests for package"
+        windowMode="main"/>
 
    <cmd id="stopBuild"
         menuLabel="Sto_p Build"
-        desc="Stop the current build"/>
+        desc="Stop the current build"
+        windowMode="main"/>
 
    <cmd id="buildToolsProjectSetup"
         menuLabel="Configure Build _Tools..."
@@ -1592,15 +1630,18 @@ well as menu structures (for main menu and popup menus).
    <cmd id="shinyRunInPane"
         menuLabel="Run in Viewer Pane"
         desc="Run the Shiny application in an RStudio pane"
-        checkable="true"/>
+        checkable="true"
+        windowMode="background"/>
    <cmd id="shinyRunInViewer"
         menuLabel="Run in Window"
         desc="Run the Shiny application in an RStudio viewer window"
-        checkable="true"/>
+        checkable="true"
+        windowMode="background"/>
    <cmd id="shinyRunInBrowser"
         menuLabel="Run External"
         desc="Run the Shiny application in the system's default Web browser"
-        checkable="true"/>
+        checkable="true"
+        windowMode="background"/>
 
    <cmd id="rsconnectDeploy"
         menuLabel="_Publish..."

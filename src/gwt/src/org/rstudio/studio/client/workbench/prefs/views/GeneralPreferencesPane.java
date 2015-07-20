@@ -175,6 +175,10 @@ public class GeneralPreferencesPane extends PreferencesPane
          chkTracebacks.getElement().getStyle().setMarginBottom(15, Unit.PX);
          add(chkTracebacks);
       }
+        
+      showLastDotValue_ = new CheckBox("Show .Last.value in environment listing");
+      spaced(showLastDotValue_);
+      add(showLastDotValue_);
       
       encodingValue_ = prefs_.defaultEncoding().getGlobalValue();
       add(encoding_ = new TextBoxWithButton(
@@ -230,6 +234,7 @@ public class GeneralPreferencesPane extends PreferencesPane
       alwaysSaveHistory_.setEnabled(false);
       removeHistoryDuplicates_.setEnabled(false);
       rProfileOnResume_.setEnabled(false);
+      showLastDotValue_.setEnabled(false);
       restoreLastProject_.setEnabled(false);
    }
    
@@ -273,6 +278,9 @@ public class GeneralPreferencesPane extends PreferencesPane
       
       rProfileOnResume_.setValue(generalPrefs.getRprofileOnResume());
       rProfileOnResume_.setEnabled(true);
+      
+      showLastDotValue_.setValue(generalPrefs.getShowLastDotValue());
+      showLastDotValue_.setEnabled(true);
       
       if (rServerRVersion_ != null)
          rServerRVersion_.setRVersion(generalPrefs.getDefaultRVersion());
@@ -326,7 +334,8 @@ public class GeneralPreferencesPane extends PreferencesPane
                                                          rProfileOnResume_.getValue(),
                                                          dirChooser_.getText(),
                                                          getDefaultRVersion(),
-                                                         getRestoreProjectRVersion());
+                                                         getRestoreProjectRVersion(),
+                                                         showLastDotValue_.getValue());
          rPrefs.setGeneralPrefs(generalPrefs);
          
          // set history prefs
@@ -480,6 +489,7 @@ public class GeneralPreferencesPane extends PreferencesPane
    private final CheckBox removeHistoryDuplicates_;
    private CheckBox restoreLastProject_;
    private CheckBox rProfileOnResume_;
+   private CheckBox showLastDotValue_;
    private final SourceServerOperations server_;
    private final UIPrefs prefs_;
    private final TextBoxWithButton encoding_;

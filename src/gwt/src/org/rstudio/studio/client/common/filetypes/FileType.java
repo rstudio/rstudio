@@ -17,7 +17,6 @@ package org.rstudio.studio.client.common.filetypes;
 import org.rstudio.core.client.FilePosition;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.application.events.EventBus;
-import org.rstudio.studio.client.common.filetypes.events.OpenSourceFileEvent.NavigationMethod;
 
 import java.util.ArrayList;
 
@@ -45,10 +44,10 @@ public abstract class FileType
 
    public void openFile(FileSystemItem file, 
                         FilePosition position,
-                        NavigationMethod navMethod,
+                        int navMethod,
                         EventBus eventBus)
    {
-      openFile(file, null, NavigationMethod.Default, eventBus);
+      openFile(file, null, navMethod, eventBus);
    }
    
    protected abstract void openFile(FileSystemItem file, EventBus eventBus);

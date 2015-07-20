@@ -117,11 +117,13 @@ public class SourcePane extends Composite implements Display,
 
    public void addTab(Widget widget,
                       ImageResource icon,
+                      String docId,
                       String name,
                       String tooltip,
+                      Integer position,
                       boolean switchToTab)
    {
-      tabPanel_.add(widget, icon, name, tooltip);
+      tabPanel_.add(widget, icon, docId, name, tooltip, position);
       if (switchToTab)
          tabPanel_.selectTab(widget);
    }
@@ -299,7 +301,11 @@ public class SourcePane extends Composite implements Display,
             ((RequiresVisibilityChanged)w).onVisibilityChanged(visible);
       }
    }
-
+   
+   public void cancelTabDrag()
+   {
+      tabPanel_.cancelTabDrag();
+   }
 
    private DocTabLayoutPanel tabPanel_;
    private HTML utilPanel_;

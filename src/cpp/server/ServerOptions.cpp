@@ -169,7 +169,10 @@ ProgramStatus Options::read(int argc,
          "thread pool size")
       ("www-proxy-localhost",
          value<bool>(&wwwProxyLocalhost_)->default_value(true),
-         "proxy requests to localhost ports over main server port");
+         "proxy requests to localhost ports over main server port")
+      ("www-verify-user-agent",
+         value<bool>(&wwwVerifyUserAgent_)->default_value(true),
+         "verify that the user agent is compatible");
 
    // rsession
    Deprecated dep;

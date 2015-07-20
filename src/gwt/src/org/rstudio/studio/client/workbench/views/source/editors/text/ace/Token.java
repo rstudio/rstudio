@@ -50,6 +50,56 @@ public class Token extends JavaScriptObject
       return this.column;
    }-*/;
    
+   public final boolean valueEquals(String value)
+   {
+      return value.equals(getValue());
+   }
+   
+   public final boolean typeEquals(String type)
+   {
+      return type.equals(getType());
+   }
+   
+   public native final boolean isLeftBracket() /*-{
+      return this.value && (
+         this.value === "{" ||
+         this.value === "(" ||
+         this.value === "["
+      );
+   }-*/;
+   
+   public native final boolean isRightBracket() /*-{
+      return this.value && (
+         this.value === "}" ||
+         this.value === ")" ||
+         this.value === "]"
+      );
+   }-*/;
+   
+   public native final boolean isLeftAssign() /*-{
+      return this.value && (
+         this.value === "=" ||
+         this.value === "<-"
+      );
+   }-*/;
+   
+   public native final boolean isValidForFunctionCall() /*-{
+      return this.type && (
+         this.type === "identifier" ||
+         this.type === "string" ||
+         this.type === "keyword"
+      );
+   }-*/;
+   
+   public native final boolean isExtractionOperator() /*-{
+      return this.value && (
+         this.value === "$" ||
+         this.value === "@" ||
+         this.value === "?" ||
+         this.value === "~"
+      );
+   }-*/;
+   
    // NOTE: Tokens attached to a document should be considered immutable;
    // use setters only when applying to a tokenized line separate from an
    // active editor!

@@ -28,17 +28,20 @@ class MainWindow;
 struct PendingWindow
 {
    PendingWindow()
-      : name(), pMainWindow(NULL), width(-1), height(-1),
+      : name(), pMainWindow(NULL), x(-1), y(-1), width(-1), height(-1),
         isSatellite(false), allowExternalNavigate(false), showToolbar(false)
    {
    }
 
    PendingWindow(QString name,
                  MainWindow* pMainWindow,
+                 int screenX,
+                 int screenY,
                  int width,
                  int height)
-      : name(name), pMainWindow(pMainWindow), width(width), height(height),
-        isSatellite(true), allowExternalNavigate(false), showToolbar(false)
+      : name(name), pMainWindow(pMainWindow), x(screenX), y(screenY),
+        width(width), height(height), isSatellite(true),
+        allowExternalNavigate(false), showToolbar(false)
    {
    }
 
@@ -56,6 +59,8 @@ struct PendingWindow
 
    MainWindow* pMainWindow;
 
+   int x;
+   int y;
    int width;
    int height;
    bool isSatellite;

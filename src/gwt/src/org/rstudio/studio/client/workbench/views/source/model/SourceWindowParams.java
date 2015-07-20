@@ -21,20 +21,20 @@ public class SourceWindowParams extends JavaScriptObject
    protected SourceWindowParams()
    {
    }
-   
-   public final static native SourceWindowParams create(String windowId, 
-         SourceDocument document) /*-{
-      return {
-         source_window_id: windowId,
-         doc: document
+
+   public final static native SourceWindowParams create(int ordinal, 
+         String title) /*-{
+      return { 
+         "ordinal": ordinal,
+         "title"  : title 
       };
    }-*/;
    
-   public final native String getSourceWindowId() /*-{
-      return this.source_window_id;
+   public final native String getTitle() /*-{
+      return this.title;
    }-*/;
-   
-   public final native SourceDocument getDoc() /*-{
-      return this.doc;
+
+   public final native int getOrdinal() /*-{
+      return this.ordinal;
    }-*/;
 }

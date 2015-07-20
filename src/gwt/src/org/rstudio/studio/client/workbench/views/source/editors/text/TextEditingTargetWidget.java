@@ -211,9 +211,14 @@ public class TextEditingTargetWidget
    {
       Toolbar toolbar = new EditingTargetToolbar(commands_);
        
-      toolbar.addLeftWidget(commands_.saveSourceDoc().createToolbarButton());
       if (uiPrefs_.enableSourceWindows().getGlobalValue())
+      {
+         toolbar.addLeftSeparator();
          toolbar.addLeftWidget(commands_.popoutDoc().createToolbarButton());
+         toolbar.addLeftSeparator();
+      }
+
+      toolbar.addLeftWidget(commands_.saveSourceDoc().createToolbarButton());
       sourceOnSave_.getElement().getStyle().setMarginRight(0, Unit.PX);
       toolbar.addLeftWidget(sourceOnSave_);
       srcOnSaveLabel_.getElement().getStyle().setMarginRight(9, Unit.PX);
@@ -239,27 +244,25 @@ public class TextEditingTargetWidget
       texSeparatorWidget_ = toolbar.addLeftSeparator();
       toolbar.addLeftWidget(texToolbarButton_ = createLatexFormatButton());
       
-      ToolbarPopupMenu helpMenu = new ToolbarPopupMenu();
-      helpMenu.addItem(commands_.usingRMarkdownHelp().createMenuItem(false));
-      helpMenu.addItem(commands_.authoringRPresentationsHelp().createMenuItem(false));
-      helpMenu.addSeparator();
-      helpMenu.addItem(commands_.markdownHelp().createMenuItem(false));
-      
-      helpMenuButton_ = new ToolbarButton(null, 
-                                          StandardIcons.INSTANCE.help(), 
-                                          helpMenu);
-      toolbar.addLeftWidget(helpMenuButton_);
-      toolbar.addLeftWidget(rcppHelpButton_ = commands_.rcppHelp().createToolbarButton());
-      
       toolbar.addLeftSeparator();
       toolbar.addLeftWidget(previewHTMLButton_ = commands_.previewHTML().createToolbarButton());
       knitDocumentButton_ = commands_.knitDocument().createToolbarButton(false);
-      knitDocumentButton_.getElement().getStyle().setMarginRight(2, Unit.PX);
+      knitDocumentButton_.getElement().getStyle().setMarginRight(0, Unit.PX);
       toolbar.addLeftWidget(knitDocumentButton_);
       toolbar.addLeftWidget(compilePdfButton_ = commands_.compilePDF().createToolbarButton());
       rmdFormatButton_ = new ToolbarPopupMenuButton(false, true);
       toolbar.addLeftWidget(rmdFormatButton_);
-      toolbar.addLeftWidget(editRmdFormatButton_ = commands_.editRmdFormatOptions().createToolbarButton(false));
+      
+      ToolbarPopupMenu rmdOptionsMenu = new ToolbarPopupMenu();
+      rmdOptionsMenu.addItem(commands_.editRmdFormatOptions().createMenuItem(false));
+      
+      rmdOptionsButton_ = new ToolbarButton(
+            null,  
+            StandardIcons.INSTANCE.options(),
+            rmdOptionsMenu, 
+            false);
+      
+      toolbar.addLeftWidget(rmdOptionsButton_);
 
       toolbar.addLeftSeparator();
       toolbar.addLeftWidget(commands_.synctexSearch().createToolbarButton());
@@ -438,6 +441,7 @@ public class TextEditingTargetWidget
          menu.addSeparator();
          menu.addItem(commands_.extractFunction().createMenuItem(false));
          menu.addItem(commands_.extractLocalVariable().createMenuItem(false));
+         menu.addItem(commands_.renameInFile().createMenuItem(false));
          menu.addSeparator();
          menu.addItem(commands_.reflowComment().createMenuItem(false));
          menu.addItem(commands_.commentUncomment().createMenuItem(false));
@@ -472,9 +476,7 @@ public class TextEditingTargetWidget
       boolean canSourceOnSave = fileType.canSourceOnSave();
       boolean canExecuteCode = fileType.canExecuteCode();
       boolean canExecuteChunks = fileType.canExecuteChunks();
-      boolean isMarkdown = fileType.isMarkdown();
       boolean isPlainMarkdown = fileType.isPlainMarkdown();
-      boolean isRPresentation = fileType.isRpres();
       boolean isCpp = fileType.isCpp();
       boolean isScript = fileType.isScript();
       boolean isRMarkdown2 = extendedType_.equals("rmarkdown");
@@ -511,12 +513,9 @@ public class TextEditingTargetWidget
       knitDocumentButton_.setVisible(canKnitToHTML);
       
       rmdFormatButton_.setVisible(isRMarkdown2);
-      editRmdFormatButton_.setVisible(isRMarkdown2);
-      editRmdFormatButton_.setEnabled(isRMarkdown2);
-
-      helpMenuButton_.setVisible(isMarkdown || isRPresentation);
-      rcppHelpButton_.setVisible(isCpp);
-      
+      rmdOptionsButton_.setVisible(isRMarkdown2);
+      rmdOptionsButton_.setEnabled(isRMarkdown2);
+     
       if (isShinyFile())
       {
          sourceOnSave_.setVisible(false);
@@ -536,11 +535,14 @@ public class TextEditingTargetWidget
       
       // set the content type based on the extended type
       setPublishPath(extendedType_, publishPath_);
-      toggleDocOutlineButton_.setVisible(
-            target_.getDocDisplay().hasScopeTree());
       
       // make toggle outline visible if we have a scope tree
       toggleDocOutlineButton_.setVisible(fileType.canShowScopeTree());
+      if (!fileType.canShowScopeTree())
+      {
+         editorPanel_.setWidgetSize(docOutlineWidget_, 0);
+         toggleDocOutlineButton_.setLatched(false);
+      }
       
       toolbar_.invalidateSeparators();
    }
@@ -746,7 +748,7 @@ public class TextEditingTargetWidget
          hasSubFormat = true;
       }
       setFormatText(selectedOption);
-      String prefix = fileType.isPlainMarkdown() ? "Preview " : "Knit ";
+      String prefix = fileType.isPlainMarkdown() ? "Preview " : "Knit to ";
       for (int i = 0; i < Math.min(options.size(), values.size()); i++)
       {
          ImageResource img = fileTypeRegistry_.getIconForFilename("output." + 
@@ -766,11 +768,32 @@ public class TextEditingTargetWidget
                                               cmd, 2);
          rmdFormatButton_.addMenuItem(item, values.get(i));
       }
-      if (!hasSubFormat && selectedOption.equals("HTML"))
+      
+      /*
+      final AppCommand knitWithParams = commands_.knitWithParameters();
+      if (fileType.isRmd())
       {
-         rmdFormatButton_.getMenu().addSeparator();
-         addRmdViewerMenuItems(rmdFormatButton_.getMenu());
+         rmdFormatButton_.addSeparator();
+         ScheduledCommand cmd = new ScheduledCommand()
+         {
+            @Override
+            public void execute()
+            {
+               knitWithParams.execute();
+            }
+         };
+         MenuItem item = new MenuItem(knitWithParams.getMenuHTML(false),
+                                      true,
+                                      cmd); 
+         rmdFormatButton_.addMenuItem(item, 
+                                      knitWithParams.getMenuLabel(false));
       }
+      */
+      
+      if (!hasSubFormat && selectedOption.equals("HTML"))
+         showRmdViewerMenuItems(true, false);
+      else
+         showRmdViewerMenuItems(false, false);
       setFormatOptionsVisible(true);
       if (publishButton_ != null)
          publishButton_.setIsStatic(true);
@@ -785,24 +808,18 @@ public class TextEditingTargetWidget
          setFormatText("");
       }
       rmdFormatButton_.setVisible(visible);
-      editRmdFormatButton_.setVisible(visible);
+      rmdOptionsButton_.setVisible(visible);
       rmdFormatButton_.setEnabled(visible);
-      editRmdFormatButton_.setEnabled(visible);
+      rmdOptionsButton_.setEnabled(visible);
    }
    
    @Override
    public void setIsShinyFormat(boolean isPresentation)
    {
-      if (isPresentation)
-      {
-         rmdFormatButton_.setVisible(false);
-      }
-      else
-      {
-         rmdFormatButton_.setVisible(true);
-         rmdFormatButton_.clearMenu();
-         addRmdViewerMenuItems(rmdFormatButton_.getMenu());
-      }
+      rmdFormatButton_.setVisible(false);
+      
+      showRmdViewerMenuItems(!isPresentation, true);
+   
       String docType = isPresentation ? "Presentation" : "Document";
       
       knitCommandText_ = "Run " + docType;
@@ -927,7 +944,7 @@ public class TextEditingTargetWidget
             RmdOutputFormatChangedEvent.TYPE, handler);
    }
    
-   private void addRmdViewerMenuItems(ToolbarPopupMenu menu)
+   private void showRmdViewerMenuItems(boolean show, boolean isShinyDoc)
    {
       if (rmdViewerPaneMenuItem_ == null)
          rmdViewerPaneMenuItem_ = new UIPrefMenuItem<Integer>(
@@ -939,8 +956,17 @@ public class TextEditingTargetWidget
                uiPrefs_.rmdViewerType(),
                RmdOutput.RMD_VIEWER_TYPE_WINDOW, 
                "View in Window", uiPrefs_);
-      menu.addItem(rmdViewerPaneMenuItem_);
-      menu.addItem(rmdViewerWindowMenuItem_);
+      
+      ToolbarPopupMenu menu = rmdOptionsButton_.getMenu();
+      menu.clearItems();
+      if (show)
+      {
+         menu.addItem(rmdViewerPaneMenuItem_);
+         menu.addItem(rmdViewerWindowMenuItem_);
+         menu.addSeparator();
+      }
+      
+      menu.addItem(commands_.editRmdFormatOptions().createMenuItem(false));
    }
    
    private final TextEditingTarget target_;
@@ -968,10 +994,8 @@ public class TextEditingTargetWidget
    private ToolbarButton sourceButton_;
    private ToolbarButton sourceMenuButton_;
    private ToolbarButton chunksButton_;
-   private ToolbarButton helpMenuButton_;
-   private ToolbarButton rcppHelpButton_;
    private ToolbarButton shinyLaunchButton_;
-   private ToolbarButton editRmdFormatButton_;
+   private ToolbarButton rmdOptionsButton_;
    private LatchingToolbarButton toggleDocOutlineButton_;
    private ToolbarPopupMenuButton rmdFormatButton_;
    private RSConnectPublishButton publishButton_;

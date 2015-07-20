@@ -36,19 +36,6 @@
    <set-property name="user.agent" value="safari,gecko1_8,ie10" />
    <collapse-property name="user.agent" values="*" />
 
-   <replace-with class="org.rstudio.studio.client.impl.BrowserFenceUnsupported">
-      <when-type-is class="org.rstudio.studio.client.impl.BrowserFence" />
-   </replace-with>
-   
-   <replace-with class="org.rstudio.studio.client.impl.BrowserFenceSupported">
-      <when-type-is class="org.rstudio.studio.client.impl.BrowserFence" />
-      <any>
-         <when-property-is name="user.agent" value="safari" />
-         <when-property-is name="user.agent" value="gecko1_8" />
-         <when-property-is name="user.agent" value="ie10" />
-      </any>
-   </replace-with>
-
    <replace-with class="org.rstudio.studio.client.common.impl.WebWindowOpener">
       <when-type-is class="org.rstudio.studio.client.common.WindowOpener" />
    </replace-with>

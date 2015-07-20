@@ -112,13 +112,17 @@ public class DocumentOutlineWidget extends Composite
             ScopeFunction asFunctionNode = (ScopeFunction) node;
             text = asFunctionNode.getFunctionName();
          }
+         else if (node.isYaml())
+         {
+            text = "Title";
+         }
          else
          {
             text = node.getLabel();
          }
 
          if (text.equals(""))
-            text = "(Untitled)";
+            text = "(untitled)";
 
          if (label_ == null)
             label_ = new Label(text);

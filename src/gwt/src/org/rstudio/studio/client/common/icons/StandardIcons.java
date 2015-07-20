@@ -41,4 +41,5 @@ public interface StandardIcons extends ClientBundle
    ImageResource methodLetter();
    ImageResource lambdaLetter();
    ImageResource outline();
+   ImageResource options();
 }

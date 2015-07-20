@@ -62,7 +62,14 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
       .Call(.rs.routines$rs_packageUnloaded, pkgname)
    }
    
-   sapply(.packages(TRUE), function(packageName) 
+   # NOTE: `list.dirs()` was introduced with R 2.13 but was buggy until 3.0
+   # (the 'full.names' argument was not properly respected)
+   pkgNames <- if (getRversion() >= "3.0.0")
+      base::list.dirs(.libPaths(), full.names = FALSE, recursive = FALSE)
+   else
+      .packages(TRUE)
+   
+   sapply(pkgNames, function(packageName)
    {
       if ( !(packageName %in% .rs.hookedPackages) )
       {
@@ -348,22 +355,52 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
 
 .rs.addJsonRpcHandler( "get_cran_mirrors", function()
 {
-   # RStudio mirror
-   rstudioDF <- data.frame(name = "Global (CDN)",
-                           host = "RStudio",
-                           url = "http://cran.rstudio.com/",
-                           country = "us",
-                           stringsAsFactors = FALSE)
-
-   # CRAN mirrors
-   cranMirrors <- utils::getCRANmirrors(local.only = TRUE)
+   # get CRAN mirrors (securely if we are configured to do so)
+   haveSecureMethod <- .rs.haveSecureDownloadFileMethod()
+   protocol <- ifelse(haveSecureMethod, "https", "http")
+   cranMirrors <- try(silent = TRUE, {
+      mirrors_csv_url <- paste(protocol, "://cran.r-project.org/CRAN_mirrors.csv",
+                               sep = "")
+      mirrors_csv <- tempfile("mirrors", fileext = ".csv")
+      download.file(mirrors_csv_url, destfile = mirrors_csv, quiet = TRUE)
+      
+      # read them
+      read.csv(mirrors_csv, as.is = TRUE, encoding = "UTF-8")
+   })
+   
+   # if we got an error then use local only
+   if (is.null(cranMirrors) || inherits(cranMirrors, "try-error"))
+      cranMirrors <- utils::getCRANmirrors(local.only = TRUE)
+   
+   # create data frame
    cranDF <- data.frame(name = cranMirrors$Name,
                         host = cranMirrors$Host,
                         url = cranMirrors$URL,
                         country = cranMirrors$CountryCode,
+                        ok = cranMirrors$OK,
                         stringsAsFactors = FALSE)
 
-   # return mirrors
+   # filter by OK status
+   cranDF <- cranDF[as.logical(cranDF$ok), ]
+
+   # filter by mirror type supported by the current download.file.method
+   # (also verify that https urls are provided inline -- if we didn't do
+   # this and CRAN changed the format we could end up with no mirrors)
+   secureMirror <- grepl("^https", cranDF[, "url"])
+   useHttpsURL <- haveSecureMethod && any(secureMirror)
+   if (useHttpsURL)
+      cranDF <- cranDF[secureMirror,]
+   else
+      cranDF <- cranDF[!secureMirror,]
+
+   # prepend RStudio mirror and return
+   rstudioDF <- data.frame(name = "Global (CDN)",
+                           host = "RStudio",
+                           url = paste(ifelse(useHttpsURL, "https", "http"), 
+                                       "://cran.rstudio.com/", sep=""),
+                           country = "us",
+                           ok = TRUE,
+                           stringsAsFactors = FALSE)
    rbind(rstudioDF, cranDF)
 })
 

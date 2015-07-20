@@ -44,8 +44,6 @@ public class HelpTab extends DelayLoadWorkbenchTab<Help>
       @Handler public abstract void onOpenRMarkdownReferenceGuide();
       @Handler public abstract void onOpenShinyCheatSheet();
       @Handler public abstract void onOpenRoxygenQuickReference();
-      @Handler public abstract void onAuthoringRPresentationsHelp();
-      @Handler public abstract void onMarkdownHelp();
       
       public abstract void bringToFront();
    }

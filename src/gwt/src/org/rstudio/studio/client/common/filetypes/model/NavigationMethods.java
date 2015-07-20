@@ -1,7 +1,7 @@
 /*
- * BrowserFenceSupported.java
+ * NavigationMethods.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-15 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -12,14 +12,12 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.impl;
+package org.rstudio.studio.client.common.filetypes.model;
 
-import com.google.gwt.user.client.Command;
-
-public class BrowserFenceSupported implements BrowserFence
+public class NavigationMethods
 {
-   public void go(Command command)
-   {
-      command.execute();
-   }
+   public final static int DEFAULT = 0;
+   public final static int HIGHLIGHT_LINE = 1;
+   public final static int DEBUG_STEP = 2;
+   public final static int DEBUG_END = 3;
 }
