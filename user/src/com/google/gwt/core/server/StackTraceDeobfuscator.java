@@ -400,6 +400,13 @@ public abstract class StackTraceDeobfuscator {
           int idx = line.indexOf(',');
           String symbol = line.substring(0, idx);
           String symbolData = line.substring(idx + 1);
+
+          // Is it a method symbol?
+          if (!symbolData.substring(0, symbolData.indexOf(",")).contains(")")) {
+            // Methods jsni names have to contain parens.
+            continue;
+          }
+
           if (requiredSymbols.contains(symbol) || !lazyLoad) {
             symbolsLeftToFind.remove(symbol);
             toReturn.put(symbol, symbolData);

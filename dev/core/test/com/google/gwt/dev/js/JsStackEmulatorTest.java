@@ -172,7 +172,7 @@ public class JsStackEmulatorTest extends FullCompileTestBase {
         "var stackIndex;$stack[stackIndex=++$stackDepth]=onModuleLoad;" +
         "$location[stackIndex]='EntryPoint.java:'+'6',$clinit_EntryPoint();" +
         "throw new RuntimeException(" +
-        "($tmp=($location[stackIndex]='EntryPoint.java:'+'4',thing).toString$()," +
+        "($tmp=($location[stackIndex]='EntryPoint.java:'+'4',thing).toString()," +
         "$location[stackIndex]='EntryPoint.java:'+'7',$tmp))" +
         "}");
   }

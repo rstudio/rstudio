@@ -22,8 +22,10 @@ import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.arg.OptionOptimize;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 import com.google.gwt.thirdparty.guava.common.base.Function;
+import com.google.gwt.thirdparty.guava.common.collect.HashMultimap;
 import com.google.gwt.thirdparty.guava.common.collect.Iterables;
 import com.google.gwt.thirdparty.guava.common.collect.Maps;
+import com.google.gwt.thirdparty.guava.common.collect.Multimap;
 import com.google.gwt.util.tools.Utility;
 
 import junit.framework.TestCase;
@@ -34,6 +36,7 @@ import java.io.FileFilter;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.Map;
 
 /**
@@ -217,30 +220,50 @@ public class SymbolMapTest extends TestCase {
       new com.google.gwt.dev.Compiler(options).run(logger);
       // Change parentDir for cached/pre-built reports
       String parentDir = options.getExtraDir() + "/" + benchmark;
-      for (Map<String, SimpleSymbolData> symbolDataBySymbolName :
+      for (Map<String, SimpleSymbolData> symbolDataByJsniIdentifier :
           loadSymbolMaps(new File(parentDir + "/symbolMaps/"))) {
-        assertTrue(!symbolDataBySymbolName.isEmpty());
-        assertNotNull(symbolDataBySymbolName.get(JSE_METHOD));
-        assertTrue(symbolDataBySymbolName.get(JSE_METHOD).isMethod());
-        assertFalse(symbolDataBySymbolName.get(JSE_METHOD).isField());
-        assertFalse(symbolDataBySymbolName.get(JSE_METHOD).isClass());
-        assertNotNull(symbolDataBySymbolName.get(JSE_FIELD));
-        assertTrue(symbolDataBySymbolName.get(JSE_FIELD).isField());
-        assertFalse(symbolDataBySymbolName.get(JSE_FIELD).isMethod());
-        assertFalse(symbolDataBySymbolName.get(JSE_FIELD).isClass());
-        assertNotNull(symbolDataBySymbolName.get(JSE_CLASS));
-        assertTrue(symbolDataBySymbolName.get(JSE_CLASS).isClass());
-        assertFalse(symbolDataBySymbolName.get(JSE_CLASS).isField());
-        assertFalse(symbolDataBySymbolName.get(JSE_CLASS).isMethod());
+        assertTrue(!symbolDataByJsniIdentifier.isEmpty());
+        assertNotNull(symbolDataByJsniIdentifier.get(JSE_METHOD));
+        assertTrue(symbolDataByJsniIdentifier.get(JSE_METHOD).isMethod());
+        assertFalse(symbolDataByJsniIdentifier.get(JSE_METHOD).isField());
+        assertFalse(symbolDataByJsniIdentifier.get(JSE_METHOD).isClass());
+        assertNotNull(symbolDataByJsniIdentifier.get(JSE_FIELD));
+        assertTrue(symbolDataByJsniIdentifier.get(JSE_FIELD).isField());
+        assertFalse(symbolDataByJsniIdentifier.get(JSE_FIELD).isMethod());
+        assertFalse(symbolDataByJsniIdentifier.get(JSE_FIELD).isClass());
+        assertNotNull(symbolDataByJsniIdentifier.get(JSE_CLASS));
+        assertTrue(symbolDataByJsniIdentifier.get(JSE_CLASS).isClass());
+        assertFalse(symbolDataByJsniIdentifier.get(JSE_CLASS).isField());
+        assertFalse(symbolDataByJsniIdentifier.get(JSE_CLASS).isMethod());
         if (optimizeLevel == OptionOptimize.OPTIMIZE_LEVEL_DRAFT) {
-          assertNotNull(symbolDataBySymbolName.get(UNINSTANTIABLE_CLASS));
+          assertNotNull(symbolDataByJsniIdentifier.get(UNINSTANTIABLE_CLASS));
         } else {
-          assertNull(symbolDataBySymbolName.get(UNINSTANTIABLE_CLASS));
+          assertNull(symbolDataByJsniIdentifier.get(UNINSTANTIABLE_CLASS));
         }
+        assertSymbolUniquenessForMethods(symbolDataByJsniIdentifier);
       }
     } finally {
       Util.recursiveDelete(work, false);
     }
+  }
+
+  private void assertSymbolUniquenessForMethods(
+      Map<String, SimpleSymbolData> symbolDataByJsniIdentifier) {
+    Multimap<String, SymbolData> methodSymbolDataBySymbol = HashMultimap.create();
+    for (SymbolData symbolData : symbolDataByJsniIdentifier.values()) {
+      if (symbolData.isMethod()) {
+        methodSymbolDataBySymbol.put(symbolData.getSymbolName(), symbolData);
+      }
+    }
+    Iterator<String> iterator = methodSymbolDataBySymbol.keySet().iterator();
+    while (iterator.hasNext()) {
+      String key = iterator.next();
+      if (methodSymbolDataBySymbol.get(key).size() <= 1) {
+        iterator.remove();
+      }
+    }
+    assertTrue("The following method symbols where not unique " + methodSymbolDataBySymbol,
+        methodSymbolDataBySymbol.isEmpty());
   }
 
   public void testSymbolMapSanityDraft() throws Exception {

@@ -23,7 +23,6 @@ import com.google.gwt.dev.PrecompileTaskOptions;
 import com.google.gwt.dev.cfg.PermutationProperties;
 import com.google.gwt.dev.jjs.HasSourceInfo;
 import com.google.gwt.dev.jjs.InternalCompilerException;
-import com.google.gwt.dev.jjs.JsOutputOption;
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.SourceOrigin;
 import com.google.gwt.dev.jjs.ast.Context;
@@ -436,10 +435,7 @@ public class GenerateJavaScriptAST {
         recordSymbol(x, jsName);
       } else {
         JsName jsName;
-        if (specialObfuscatedFields.containsKey(x)) {
-          jsName = scopeStack.peek().declareName(mangleNameSpecialObfuscate(x));
-          jsName.setObfuscatable(false);
-        } else if (x.isJsTypeMember()) {
+        if (x.isJsTypeMember()) {
           jsName = scopeStack.peek().declareName(name, name);
           jsName.setObfuscatable(false);
         } else {
@@ -567,10 +563,6 @@ public class GenerateJavaScriptAST {
             // so that it can be referred when generating the vtable of a subclass that
             // increases the visibility of this method.
             polymorphicNames.put(typeOracle.getTopMostDefinition(x), polyName);
-          } else if (specialObfuscatedMethodSigs.containsKey(x.getSignature())) {
-            polyName = interfaceScope.declareName(mangleNameSpecialObfuscate(x));
-            polyName.setObfuscatable(false);
-            // if a JsType and we can set set the interface method to non-obfuscatable
           } else if (x.isOrOverridesJsTypeMethod() && !typeOracle.needsJsInteropBridgeMethod(x)) {
             if (x.isOrOverridesJsProperty()) {
               // Prevent JsProperty functions like x() from colliding with intended JS native
@@ -3390,8 +3382,6 @@ public class GenerateJavaScriptAST {
    */
   private Set<HasName> nameOfTargets = Sets.newHashSet();
 
-  private final JsOutputOption output;
-
   private final boolean optimize;
 
   private final TreeLogger logger;
@@ -3399,16 +3389,6 @@ public class GenerateJavaScriptAST {
   // This is also used to do some final optimizations.
   // TODO(rluble) move optimizations to a Java AST optimization pass.
   private final boolean incremental;
-
-  /**
-   * All of the fields in String and Array need special handling for interop.
-   */
-  private final Map<JField, String> specialObfuscatedFields = Maps.newHashMap();
-
-  /**
-   * All of the methods in String and Array need special handling for interop.
-   */
-  private final Map<String, String> specialObfuscatedMethodSigs = Maps.newHashMap();
 
   /**
    * If true, polymorphic functions are made anonymous vtable declarations and
@@ -3458,7 +3438,6 @@ public class GenerateJavaScriptAST {
     this.properties = properties;
 
     PrecompileTaskOptions options = compilerContext.getOptions();
-    this.output = options.getOutput();
     this.optimize = options.getOptimizationLevel() > OptionOptimize.OPTIMIZE_LEVEL_DRAFT;
     this.methodNameMappingMode = options.getMethodNameDisplayMode();
     assert methodNameMappingMode != null;
@@ -3466,45 +3445,6 @@ public class GenerateJavaScriptAST {
 
     this.stripStack = JsStackEmulator.getStackMode(properties) == JsStackEmulator.StackMode.STRIP;
     this.closureCompilerFormatEnabled = options.isClosureCompilerFormatEnabled();
-
-    /*
-     * Because we modify the JavaScript String prototype, all fields and
-     * polymorphic methods on String and super types need special handling.
-     */
-
-    // Object polymorphic
-    Map<String, String> namesToIdents = Maps.newHashMap();
-    namesToIdents.put("getClass", "gC");
-    namesToIdents.put("hashCode", "hC");
-    namesToIdents.put("equals", "eQ");
-    namesToIdents.put("toString", "tS");
-    namesToIdents.put("finalize", "fZ");
-
-    List<JMethod> methods = Lists.newArrayList(program.getTypeJavaLangObject().getMethods());
-    for (JMethod method : methods) {
-      if (method.canBePolymorphic()) {
-        String ident = namesToIdents.get(method.getName());
-        assert ident != null : method.getEnclosingType().getName() + "::" + method.getName() +
-            " is not in the list of known methods.";
-        specialObfuscatedMethodSigs.put(method.getSignature(), ident);
-      }
-    }
-
-    namesToIdents.clear();
-    // Object fields
-    namesToIdents.put("expando", "eX");
-    namesToIdents.put("typeMarker", "tM");
-    namesToIdents.put("castableTypeMap", "cM");
-    namesToIdents.put("___clazz", "cZ");
-
-    for (JField field : program.getTypeJavaLangObject().getFields()) {
-      if (!field.isStatic()) {
-        String ident = namesToIdents.get(field.getName());
-        assert ident != null : field.getEnclosingType().getName() + "::" + field.getName() +
-            " is not in the list of known fields.";
-        specialObfuscatedFields.put(field, ident);
-      }
-    }
   }
 
   /**
@@ -3579,32 +3519,6 @@ public class GenerateJavaScriptAST {
         JjsUtils.mangledNameString(x));
 
     return StringInterner.get().intern(JjsUtils.constructManglingSignature(x, mangledName));
-  }
-
-  String mangleNameSpecialObfuscate(JField x) {
-    assert (specialObfuscatedFields.containsKey(x));
-    switch (output) {
-      case OBFUSCATED:
-        return specialObfuscatedFields.get(x);
-      case PRETTY:
-        return x.getName() + "$";
-      case DETAILED:
-        return mangleName(x) + "$";
-    }
-    throw new InternalCompilerException("Unknown output mode");
-  }
-
-  String mangleNameSpecialObfuscate(JMethod x) {
-    assert (specialObfuscatedMethodSigs.containsKey(x.getSignature()));
-    switch (output) {
-      case OBFUSCATED:
-        return specialObfuscatedMethodSigs.get(x.getSignature());
-      case PRETTY:
-        return x.getName() + "$";
-      case DETAILED:
-        return mangleNameForPoly(x) + "$";
-    }
-    throw new InternalCompilerException("Unknown output mode");
   }
 
   private final Map<JType, JDeclarationStatement> classLiteralDeclarationsByType =
