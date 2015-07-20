@@ -3946,6 +3946,11 @@ public class TextEditingTarget implements
    }
    
    void renderRmd()
+   {
+      renderRmd(null);
+   }
+   
+   void renderRmd(final String paramsFile)
    { 
       saveThenExecute(null, new Command() {
          @Override
@@ -3958,6 +3963,7 @@ public class TextEditingTarget implements
                docDisplay_.getCursorPosition().getRow() + 1,
                null,
                docUpdateSentinel_.getEncoding(),
+               paramsFile,
                asTempfile,
                isShinyDoc(),
                false);
@@ -4202,8 +4208,23 @@ public class TextEditingTarget implements
    @Handler
    void onKnitWithParameters()
    {
-      globalDisplay_.showMessage(MessageDisplay.MSG_WARNING, 
-            "Not Yet Implemented", "This command is not yet implemented.");      
+      saveThenExecute(null, new Command() {
+         @Override
+         public void execute()
+         {
+            rmarkdownHelper_.getRMarkdownParamsFile(
+               docUpdateSentinel_.getPath(), 
+               new CommandWithArg<String>() {
+                  @Override
+                  public void execute(String paramsFile)
+                  {
+                     // null return means user cancelled
+                     if (paramsFile != null)
+                        renderRmd(paramsFile);
+                  }
+             });
+         }
+      });  
    }
 
    @Handler

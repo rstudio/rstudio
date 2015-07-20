@@ -252,6 +252,7 @@ public class TextEditingTargetRMarkdownHelper
                                              1, 
                                              format, 
                                              sourceDoc.getEncoding(),
+                                             null,
                                              false,
                                              false));
    }
@@ -260,6 +261,7 @@ public class TextEditingTargetRMarkdownHelper
                                final int sourceLine,
                                final String format,
                                final String encoding, 
+                               final String paramsFile,
                                final boolean asTempfile,
                                final boolean isShinyDoc,
                                final boolean asShiny)
@@ -274,6 +276,7 @@ public class TextEditingTargetRMarkdownHelper
                                                    sourceLine,
                                                    format,
                                                    encoding, 
+                                                   paramsFile,
                                                    asTempfile,
                                                    asShiny));
          }
@@ -700,6 +703,40 @@ public class TextEditingTargetRMarkdownHelper
       });
    }
 
+   public void getRMarkdownParamsFile(final String file, 
+                                      final CommandWithArg<String> onReady)
+   {
+      // meet all dependencies then ask for params
+      final String action = "Specifying Knit parameters";
+      dependencyManager_.withRMarkdown(
+         action, 
+         new Command() {
+            @Override
+            public void execute()
+            {
+               dependencyManager_.withShiny(
+                  action,
+                  new Command() {
+
+                     @Override
+                     public void execute()
+                     {
+                        server_.getRMarkdownParams(
+                           file, new SimpleRequestCallback<String>() {
+
+                           @Override
+                           public void onResponseReceived(String paramsFile)
+                           {
+                              onReady.execute(paramsFile);
+                           }
+                        });  
+                     }
+                  });                 
+            }
+      });
+   }
+   
+   
    // Private methods ---------------------------------------------------------
    
    private void cleanAndCreateTemplate(final RmdChosenTemplate template, 

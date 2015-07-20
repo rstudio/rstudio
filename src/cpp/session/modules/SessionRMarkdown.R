@@ -190,3 +190,23 @@
 })
 
 
+.rs.addJsonRpcHandler("get_rmarkdown_params", function(file) {
+   
+   # check for parameters (return null if there are none)
+   if (length(knitr::knit_params(readLines(file))) == 0) 
+      return(NULL)
+   
+   # allocate temp file to hold parameter values
+   paramsFile <- tempfile(fileext = ".rds")
+      
+   # ask for parameters
+   require(shiny)
+   params <- rmarkdown:::knit_params_ask(file)
+   if (!is.null(params)) {
+      saveRDS(params, file = paramsFile)
+      paramsFile
+   } else {
+      NULL
+   }
+})
+

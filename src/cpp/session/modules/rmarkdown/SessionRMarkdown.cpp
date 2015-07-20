@@ -84,6 +84,7 @@ public:
                                               int sourceLine,
                                               const std::string& format,
                                               const std::string& encoding,
+                                              const std::string& paramsFile,
                                               bool sourceNavigation,
                                               bool asTempfile,
                                               bool asShiny)
@@ -92,7 +93,7 @@ public:
                                                          sourceLine,
                                                          sourceNavigation,
                                                          asShiny));
-      pRender->start(format, encoding, asTempfile);
+      pRender->start(format, encoding, paramsFile, asTempfile);
       return pRender;
    }
 
@@ -139,6 +140,7 @@ private:
 
    void start(const std::string& format,
               const std::string& encoding,
+              const std::string& paramsFile,
               bool asTempfile)
    {
       Error error;
@@ -185,6 +187,12 @@ private:
       if (!format.empty())
       {
          renderOptions += ", output_format = '" + format + "'";
+      }
+
+      // include params if specified
+      if (!paramsFile.empty())
+      {
+         renderOptions += ", params = readRDS('" + paramsFile + "')";
       }
 
       // output to a temporary directory if specified (no need to do this
@@ -790,6 +798,7 @@ void doRenderRmd(const std::string& file,
                  int line,
                  const std::string& format,
                  const std::string& encoding,
+                 const std::string& paramsFile,
                  bool sourceNavigation,
                  bool asTempfile,
                  bool asShiny,
@@ -807,6 +816,7 @@ void doRenderRmd(const std::string& file,
                line,
                format,
                encoding,
+               paramsFile,
                sourceNavigation,
                asTempfile,
                asShiny);
@@ -818,20 +828,21 @@ Error renderRmd(const json::JsonRpcRequest& request,
                 json::JsonRpcResponse* pResponse)
 {
    int line = -1;
-   std::string file, format, encoding;
+   std::string file, format, encoding, paramsFile;
    bool asTempfile, asShiny = false;
    Error error = json::readParams(request.params,
                                   &file,
                                   &line,
                                   &format,
                                   &encoding,
+                                  &paramsFile,
                                   &asTempfile,
                                   &asShiny);
    if (error)
       return error;
 
-   doRenderRmd(file, line, format, encoding, true, asTempfile, asShiny,
-               pResponse);
+   doRenderRmd(file, line, format, encoding, paramsFile,
+               true, asTempfile, asShiny, pResponse);
 
    return Success();
 }
@@ -850,8 +861,8 @@ Error renderRmdSource(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-   doRenderRmd(rmdTempFile.absolutePath(), -1, "", "UTF-8", false, false, false,
-               pResponse);
+   doRenderRmd(rmdTempFile.absolutePath(), -1, "", "UTF-8", "",
+               false, false, false, pResponse);
 
    return Success();
 }

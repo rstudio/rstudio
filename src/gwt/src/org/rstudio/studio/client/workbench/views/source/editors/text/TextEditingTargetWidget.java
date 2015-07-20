@@ -33,6 +33,7 @@ import com.google.gwt.user.client.ui.*;
 
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.MathUtil;
+import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.events.EnsureHeightEvent;
@@ -769,7 +770,6 @@ public class TextEditingTargetWidget
          rmdFormatButton_.addMenuItem(item, values.get(i));
       }
       
-      /*
       final AppCommand knitWithParams = commands_.knitWithParameters();
       if (fileType.isRmd())
       {
@@ -788,7 +788,6 @@ public class TextEditingTargetWidget
          rmdFormatButton_.addMenuItem(item, 
                                       knitWithParams.getMenuLabel(false));
       }
-      */
       
       if (!hasSubFormat && selectedOption.equals("HTML"))
          showRmdViewerMenuItems(true, false);
