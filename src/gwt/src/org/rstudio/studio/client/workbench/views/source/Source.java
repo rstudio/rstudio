@@ -1682,9 +1682,32 @@ public class Source implements InsertSourceHandler,
       closeAllSourceDocs("Close Other",  null, true);
    }
    
-   public void closeAllSourceDocs(String caption, Command onCompleted, 
-         final boolean excludeActive)
+   public void closeAllSourceDocs(final String caption, 
+         final Command onCompleted, final boolean excludeActive)
    { 
+      if (windowManager_.isMainSourceWindow() && !excludeActive)
+      {
+         // if this is the main window, close docs in the satellites first 
+         windowManager_.closeAllSatelliteDocs(caption, new Command()
+         {
+            @Override
+            public void execute()
+            {
+               closeAllLocalSourceDocs(caption, onCompleted, excludeActive);
+            }
+         });
+      }
+      else
+      {
+         // this is a satellite (or we don't need to query satellites)--just
+         // close our own tabs
+         closeAllLocalSourceDocs(caption, onCompleted, excludeActive);
+      }
+  }
+
+  private void closeAllLocalSourceDocs(String caption, Command onCompleted,
+           final boolean excludeActive)
+  {
       // save active editor for exclusion (it changes as we close tabs)
       final EditingTarget activeEditor = activeEditor_;
       
