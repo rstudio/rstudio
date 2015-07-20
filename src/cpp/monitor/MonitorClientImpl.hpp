@@ -41,6 +41,8 @@ public:
    void logEvent(const Event& event);
 
    void logCommand(const audit::Command& command);
+
+   void logConsoleAction(const audit::ConsoleAction& action);
 };
 
 class AsyncClient : public Client
@@ -65,6 +67,8 @@ public:
    void logEvent(const Event& event);
 
    void logCommand(const audit::Command& command);
+
+   void logConsoleAction(const audit::ConsoleAction& action);
 
 protected:
    boost::asio::io_service& ioService() { return ioService_; }

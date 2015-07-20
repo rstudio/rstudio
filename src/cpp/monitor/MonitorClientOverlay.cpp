@@ -65,6 +65,13 @@ void AsyncClient::logCommand(const audit::Command& command)
 {
 }
 
+void SyncClient::logConsoleAction(const audit::ConsoleAction& action)
+{
+}
+
+void AsyncClient::logConsoleAction(const audit::ConsoleAction& action)
+{
+}
 
 } // namespace monitor
 } // namespace rstudio

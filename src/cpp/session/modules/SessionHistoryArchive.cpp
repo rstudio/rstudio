@@ -74,10 +74,13 @@ void writeEntry(double timestamp, const std::string& command, std::ostream* pOS)
         << timestamp << ":" << command;
 
    // write to monitor
+   // (disable for now in luix of console action logging)
+   /*
    monitor::audit::Command auditCommand(options().userIdentity(),
                                         timestamp,
                                         command);
    monitor::client().logCommand(auditCommand);
+   */
 }
 
 std::string migratedHistoryEntry(const std::string& command)
