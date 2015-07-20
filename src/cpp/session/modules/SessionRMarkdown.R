@@ -193,13 +193,15 @@
 # TODO: Knitr to CRAN
 # TODO: When no parameters show some help on param reports
 # TODO: Host shiny UI within dialog/frame
-
+# TODO: Save last .rds file within session
+# TODO: Closing window hangs process (because app still running).
+#       (ensure that however we do the dialog can never hang)
 
 .rs.addJsonRpcHandler("get_rmarkdown_params", function(file) {
    
-   # check for parameters (return null if there are none)
+   # check for parameters (return special "none" value if there are no params)
    if (length(knitr::knit_params(readLines(file))) == 0) 
-      return(NULL)
+      return(.rs.scalar("none"))
    
    # allocate temp file to hold parameter values
    paramsFile <- tempfile(fileext = ".rds")

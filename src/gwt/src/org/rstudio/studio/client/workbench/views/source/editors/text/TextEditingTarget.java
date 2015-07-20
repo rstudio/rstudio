@@ -4220,7 +4220,20 @@ public class TextEditingTarget implements
                   {
                      // null return means user cancelled
                      if (paramsFile != null)
-                        renderRmd(paramsFile);
+                     {
+                        // special "none" value means no parameters
+                        if (paramsFile.equals("none"))
+                        {
+                           globalDisplay_.showMessage(
+                                 MessageDisplay.MSG_WARNING, 
+                                 "Knit with Parameters", 
+                                 "No parameters declared for this document.");
+                        }
+                        else
+                        {
+                           renderRmd(paramsFile);
+                        }
+                     }
                   }
              });
          }
