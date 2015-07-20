@@ -26,6 +26,8 @@ import com.google.inject.Provider;
 
 public class SourceSatellite extends SatelliteApplication
 {
+   // note that there's special behavior attached to this name in the desktop
+   // frame 
    public static final String NAME_PREFIX = "source_window_";
    
    public SourceSatellite(String name)
