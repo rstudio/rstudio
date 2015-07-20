@@ -1087,6 +1087,12 @@ Error prepareForRmdChunkExecution(const json::JsonRpcRequest& request,
 
 } // anonymous namespace
 
+bool knitParamsAvailable()
+{
+   return module_context::isPackageVersionInstalled("rmarkdown", "0.7.2") &&
+          module_context::isPackageVersionInstalled("knitr", "1.10.17");
+}
+
 bool rmarkdownPackageAvailable()
 {
    if (!haveMarkdownToHTMLOption())

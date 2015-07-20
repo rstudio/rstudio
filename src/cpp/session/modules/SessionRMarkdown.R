@@ -204,7 +204,7 @@
    params <- rmarkdown:::knit_params_ask(file)
    if (!is.null(params)) {
       saveRDS(params, file = paramsFile)
-      paramsFile
+      .rs.scalar(paramsFile)
    } else {
       NULL
    }

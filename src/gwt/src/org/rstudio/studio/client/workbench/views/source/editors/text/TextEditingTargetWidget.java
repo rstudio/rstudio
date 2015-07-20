@@ -770,23 +770,26 @@ public class TextEditingTargetWidget
          rmdFormatButton_.addMenuItem(item, values.get(i));
       }
       
-      final AppCommand knitWithParams = commands_.knitWithParameters();
-      if (fileType.isRmd())
+      if (session_.getSessionInfo().getKnitParamsAvailable())
       {
-         rmdFormatButton_.addSeparator();
-         ScheduledCommand cmd = new ScheduledCommand()
+         final AppCommand knitWithParams = commands_.knitWithParameters();
+         if (fileType.isRmd())
          {
-            @Override
-            public void execute()
+            rmdFormatButton_.addSeparator();
+            ScheduledCommand cmd = new ScheduledCommand()
             {
-               knitWithParams.execute();
-            }
-         };
-         MenuItem item = new MenuItem(knitWithParams.getMenuHTML(false),
-                                      true,
-                                      cmd); 
-         rmdFormatButton_.addMenuItem(item, 
-                                      knitWithParams.getMenuLabel(false));
+               @Override
+               public void execute()
+               {
+                  knitWithParams.execute();
+               }
+            };
+            MenuItem item = new MenuItem(knitWithParams.getMenuHTML(false),
+                                         true,
+                                         cmd); 
+            rmdFormatButton_.addMenuItem(item, 
+                                         knitWithParams.getMenuLabel(false));
+         }
       }
       
       if (!hasSubFormat && selectedOption.equals("HTML"))
