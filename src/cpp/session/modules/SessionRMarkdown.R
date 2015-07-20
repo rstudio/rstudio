@@ -190,6 +190,11 @@
 })
 
 
+# TODO: Knitr to CRAN
+# TODO: When no parameters show some help on param reports
+# TODO: Host shiny UI within dialog/frame
+
+
 .rs.addJsonRpcHandler("get_rmarkdown_params", function(file) {
    
    # check for parameters (return null if there are none)
