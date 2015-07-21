@@ -20,7 +20,7 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Singleton;
 import com.google.inject.name.Names;
 
-import org.rstudio.core.client.command.AceCommandManager;
+import org.rstudio.core.client.command.EditorCommandManager;
 import org.rstudio.core.client.command.ShortcutViewer;
 import org.rstudio.core.client.command.UserCommandManager;
 import org.rstudio.studio.client.application.ApplicationInterrupt;
@@ -249,7 +249,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(RSAccountConnector.class).in(Singleton.class);
       bind(PlotPublishMRUList.class).asEagerSingleton();
       bind(SourceWindowManager.class).in(Singleton.class);
-      bind(AceCommandManager.class).in(Singleton.class);
+      bind(EditorCommandManager.class).in(Singleton.class);
       bind(UserCommandManager.class).in(Singleton.class);
       bind(CodeSearchLauncher.class).in(Singleton.class);
 

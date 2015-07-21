@@ -14,7 +14,6 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
-import org.rstudio.core.client.command.AceCommandManager.Manager;
 import org.rstudio.core.client.command.KeyboardShortcut.KeySequence;
 import org.rstudio.studio.client.common.debugging.model.Breakpoint;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
@@ -26,6 +25,7 @@ import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEdito
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorSelection;
 import org.rstudio.studio.client.workbench.views.output.lint.model.AceAnnotation;
 import org.rstudio.studio.client.workbench.views.output.lint.model.LintItem;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceCommandManager;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceFold;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Anchor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Mode.InsertChunkInfo;
@@ -165,7 +165,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    
    void toggleCommentLines();
    
-   Manager getCommandManager();
+   AceCommandManager getCommandManager();
    void addEditorCommandBinding(String id, KeySequence keys, boolean replace);
 
    HandlerRegistration addEditorFocusHandler(FocusHandler handler);

@@ -21,8 +21,6 @@ import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.user.client.Command;
 
 import org.rstudio.core.client.CommandWithArg;
-import org.rstudio.core.client.command.AceCommandManager.Manager;
-
 import java.util.LinkedList;
 
 public class AceEditorNative extends JavaScriptObject {
@@ -403,7 +401,7 @@ public class AceEditorNative extends JavaScriptObject {
       
    }-*/;
    
-   public final native Manager getCommands()
+   public final native AceCommandManager getCommandManager()
    /*-{
       return this.commands;
    }-*/;

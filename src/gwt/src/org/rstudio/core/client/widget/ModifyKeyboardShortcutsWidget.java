@@ -33,9 +33,8 @@ import com.google.inject.Inject;
 
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.cellview.ScrollingDataGrid;
-import org.rstudio.core.client.command.AceCommandManager;
-import org.rstudio.core.client.command.AceCommandManager.AceCommand;
 import org.rstudio.core.client.command.AppCommand;
+import org.rstudio.core.client.command.EditorCommandManager;
 import org.rstudio.core.client.command.KeyboardHelper;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.command.KeyboardShortcut.KeySequence;
@@ -47,6 +46,8 @@ import org.rstudio.core.client.dom.DomUtils.ElementPredicate;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperations;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceCommand;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceCommandManager;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -173,24 +174,24 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
          }
          else if (commandType == CommandBinding.TYPE_EDITOR_COMMAND)
          {
-            aceCommands_.rebindCommand(
+            editorCommands_.rebindCommand(
                   newBinding.getId(),
                   newBinding.getKeySequence());
          }
       }
       
-      ShortcutManager.INSTANCE.saveBindings();
+      // TODO: Save bindings
       closeDialog();
    }
    
    @Inject
    public void initialize(UserCommandManager userCommands,
-                          AceCommandManager aceCommands,
+                          EditorCommandManager editorCommands,
                           Commands commands,
                           FilesServerOperations files)
    {
       userCommands_ = userCommands;
-      aceCommands_ = aceCommands;
+      editorCommands_ = editorCommands;
       commands_ = commands;
       files_ = files;
    }
@@ -328,8 +329,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
       }
       
       // Ace Commands
-      JsArray<AceCommand> aceCommands = AceCommandManager.getDefaultAceCommands();
-      
+      JsArray<AceCommand> aceCommands = AceCommandManager.getDefaultCommands();
       for (int i = 0; i < aceCommands.length(); i++)
       {
          AceCommand command = aceCommands.get(i);
@@ -399,7 +399,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
    
    // Injected ----
    private UserCommandManager userCommands_;
-   private AceCommandManager aceCommands_;
+   private EditorCommandManager editorCommands_;
    private Commands commands_;
    private FilesServerOperations files_;
    

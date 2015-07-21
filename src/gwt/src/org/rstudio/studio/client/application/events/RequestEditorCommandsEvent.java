@@ -1,5 +1,5 @@
 /*
- * RetrieveEditorCommandsEvent.java
+ * RequestEditorCommandsEvent.java
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -14,33 +14,34 @@
  */
 package org.rstudio.studio.client.application.events;
 
-import org.rstudio.core.client.command.AceCommandManager.Manager;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
-public class RetrieveEditorCommandsEvent extends GwtEvent<RetrieveEditorCommandsEvent.Handler>
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceCommandManager;
+
+public class RequestEditorCommandsEvent extends GwtEvent<RequestEditorCommandsEvent.Handler>
 {
    public interface Handler extends EventHandler
    {
-      void onRetrieveEditorCommands(RetrieveEditorCommandsEvent event);
+      void onRetrieveEditorCommands(RequestEditorCommandsEvent event);
    }
 
-   public RetrieveEditorCommandsEvent()
+   public RequestEditorCommandsEvent()
    {
       manager_ = null;
    }
    
-   public Manager getCommandManager()
+   public AceCommandManager getAceCommandManager()
    {
       return manager_;
    }
    
-   public void setCommandManager(Manager manager)
+   public void setAceCommandManager(AceCommandManager manager)
    {
       manager_ = manager;
    }
    
-   private Manager manager_;
+   private AceCommandManager manager_;
    
    @Override
    public Type<Handler> getAssociatedType()

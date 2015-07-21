@@ -41,7 +41,6 @@ import org.rstudio.core.client.ExternalJavaScriptLoader;
 import org.rstudio.core.client.ExternalJavaScriptLoader.Callback;
 import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.StringUtil;
-import org.rstudio.core.client.command.AceCommandManager.Manager;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.command.KeyboardShortcut.KeySequence;
 import org.rstudio.core.client.dom.DomUtils;
@@ -404,9 +403,9 @@ public class AceEditor implements DocDisplay,
       getSession().reindent(range);
    }
    
-   public Manager getCommandManager()
+   public AceCommandManager getCommandManager()
    {
-      return getWidget().getEditor().getCommands();
+      return getWidget().getEditor().getCommandManager();
    }
    
    public void addEditorCommandBinding(String id, KeySequence keys, boolean replace)

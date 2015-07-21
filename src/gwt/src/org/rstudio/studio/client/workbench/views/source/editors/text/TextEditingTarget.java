@@ -64,7 +64,7 @@ import org.rstudio.studio.client.application.events.ChangeFontSizeEvent;
 import org.rstudio.studio.client.application.events.ChangeFontSizeHandler;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.LoadEditorKeybindingsEvent;
-import org.rstudio.studio.client.application.events.RetrieveEditorCommandsEvent;
+import org.rstudio.studio.client.application.events.RequestEditorCommandsEvent;
 import org.rstudio.studio.client.common.*;
 import org.rstudio.studio.client.common.debugging.BreakpointManager;
 import org.rstudio.studio.client.common.debugging.events.BreakpointsSavedEvent;
@@ -716,17 +716,17 @@ public class TextEditingTarget implements
             });
       
       events_.addHandler(
-            RetrieveEditorCommandsEvent.TYPE,
-            new RetrieveEditorCommandsEvent.Handler()
+            RequestEditorCommandsEvent.TYPE,
+            new RequestEditorCommandsEvent.Handler()
             {
                @Override
-               public void onRetrieveEditorCommands(RetrieveEditorCommandsEvent event)
+               public void onRetrieveEditorCommands(RequestEditorCommandsEvent event)
                {
-                  if (event.getCommandManager() != null)
+                  if (event.getAceCommandManager() != null)
                      return;
                   
                   DocDisplay docDisplay = getDocDisplay();
-                  event.setCommandManager(docDisplay.getCommandManager());
+                  event.setAceCommandManager(docDisplay.getCommandManager());
                }
             });
       

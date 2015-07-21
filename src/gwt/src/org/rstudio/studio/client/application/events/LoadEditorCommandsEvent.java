@@ -14,9 +14,10 @@
  */
 package org.rstudio.studio.client.application.events;
 
-import org.rstudio.core.client.command.AceCommandManager.Manager;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
+
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceCommandManager;
 
 public class LoadEditorCommandsEvent extends GwtEvent<LoadEditorCommandsEvent.Handler>
 {
@@ -30,17 +31,17 @@ public class LoadEditorCommandsEvent extends GwtEvent<LoadEditorCommandsEvent.Ha
       manager_ = null;
    }
    
-   public Manager getCommandManager()
+   public AceCommandManager getCommandAceCommandManager()
    {
       return manager_;
    }
    
-   public void setCommandManager(Manager manager)
+   public void setCommandAceCommandManager(AceCommandManager manager)
    {
       manager_ = manager;
    }
    
-   private Manager manager_;
+   private AceCommandManager manager_;
    
    @Override
    public Type<Handler> getAssociatedType()

@@ -73,10 +73,10 @@ public class ShortcutManager implements NativePreviewHandler,
    
    @Inject
    private void initialize(UserCommandManager userCommands,
-                           AceCommandManager aceCommands,
+                           EditorCommandManager editorCommands,
                            FilesServerOperations files)
    {
-      aceCommands_ = aceCommands;
+      editorCommands_ = editorCommands;
       userCommands_ = userCommands;
       files_ = files;
    }
@@ -219,7 +219,7 @@ public class ShortcutManager implements NativePreviewHandler,
          if (shortcut.startsWith(keyBuffer_))
             return;
       
-      if (aceCommands_.hasPrefix(keyBuffer_))
+      if (editorCommands_.hasPrefix(keyBuffer_))
          return;
       
       // Otherwise, clear the keybuffer.
@@ -391,16 +391,6 @@ public class ShortcutManager implements NativePreviewHandler,
       return command != null;
    }
    
-   public void saveBindings()
-   {
-      aceCommands_.saveBindings();
-   }
-   
-   public void loadBindings()
-   {
-      aceCommands_.loadBindings();
-   }
-   
    private int disableCount_ = 0;
    private int editorMode_ = KeyboardShortcut.MODE_NONE;
    
@@ -417,7 +407,7 @@ public class ShortcutManager implements NativePreviewHandler,
    
    // Injected ----
    private UserCommandManager userCommands_;
-   private AceCommandManager aceCommands_;
+   private EditorCommandManager editorCommands_;
    private FilesServerOperations files_;
    
    
