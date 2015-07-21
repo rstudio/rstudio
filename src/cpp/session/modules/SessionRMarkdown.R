@@ -190,7 +190,7 @@
 })
 
 
-# TODO: what happens for mismatched parameters?
+# TODO: desktop is blocking the embedded shinyapp 
 # TODO: test IDE file uploads
 
 .rs.addGlobalFunction("knit_with_parameters", 
