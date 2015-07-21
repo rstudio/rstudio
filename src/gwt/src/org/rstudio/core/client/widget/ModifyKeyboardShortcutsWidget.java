@@ -37,7 +37,6 @@ import com.google.gwt.view.client.ListDataProvider;
 import com.google.gwt.view.client.ProvidesKey;
 import com.google.inject.Inject;
 
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.cellview.ScrollingDataGrid;
 import org.rstudio.core.client.command.AppCommand;
@@ -323,11 +322,26 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
          {
             int result = 0;
             if (column == 0)
+            {
                result = o1.getName().compareTo(o2.getName());
+            }
             else if (column == 1)
-               result = o1.getKeySequence().toString().compareTo(o2.getKeySequence().toString());
+            {
+               KeySequence k1 = o1.getKeySequence();
+               KeySequence k2 = o2.getKeySequence();
+               if (k1 == null && k2 == null)
+                  result = 0;
+               else if (k1 == null)
+                  result = 1;
+               else if (k2 == null)
+                  result = -1;
+               else
+                  result = k1.toString().compareTo(k2.toString());
+            }
             else if (column == 2)
+            {
                result = o1.getCommandType() > o2.getCommandType() ? 1 : -1;
+            }
                
             return ascending ? result : -result;
          }
@@ -336,7 +350,6 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
    
    private void filter(String query)
    {
-      Debug.logToRConsole("Filtering with query '" + query + "'");
       List<CommandBinding> filtered = new ArrayList<CommandBinding>();
       for (int i = 0; i < originalBindings_.size(); i++)
       {
