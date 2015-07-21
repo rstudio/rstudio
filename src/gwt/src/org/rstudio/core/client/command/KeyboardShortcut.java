@@ -242,7 +242,7 @@ public class KeyboardShortcut
          if (other.keyCombinations_.size() > keyCombinations_.size())
             return false;
          
-         for (int i = 0; i < keyCombinations_.size(); i++)
+         for (int i = 0; i < other.keyCombinations_.size(); i++)
             if (!keyCombinations_.get(i).equals(other.keyCombinations_.get(i)))
                return false;
          
