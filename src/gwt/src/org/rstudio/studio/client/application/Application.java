@@ -439,7 +439,7 @@ public class Application implements ApplicationEventHandlers
       {
          // attempt to close the window if this is a quit session
          // (if we fail then fall through to default logic)
-         if (isQuitSession())
+         if (ApplicationQuit.isQuitSession())
          {
             try
             {
@@ -474,14 +474,6 @@ public class Application implements ApplicationEventHandlers
          }
       }
    }
-   
-   
-   private boolean isQuitSession()
-   {
-      return pApplicationQuit_.get().isQuitSession();
-   }
-  
-   
    
    private void reloadWindowWithDelay(final boolean baseUrlOnly)
    {
@@ -730,7 +722,7 @@ public class Application implements ApplicationEventHandlers
       clientStateUpdaterInstance_ = clientStateUpdater_.get();
       
       // initiate quit if requested
-      if (isQuitSession())
+      if (ApplicationQuit.isQuitSession())
          commands_.quitSession().execute();
    }
    

@@ -346,23 +346,39 @@ public class DocTabLayoutPanel
    {
       throw new UnsupportedOperationException("Not supported");
    }
-   
+
    public void cancelTabDrag()
    {
       dragManager_.endDrag(null, DragManager.ACTION_CANCEL);
    }
 
-   private class DragManager implements EventListener,
-      DocTabDragStartedEvent.Handler
+   private class DragManager implements EventListener, 
+                                        DocTabDragStartedEvent.Handler
    {
       @Override
       public void onBrowserEvent(Event event)
       {
          if (event.getType() == "dragenter")
          {
+            if (dropPoint_ != null && event.getClientX() == dropPoint_.getX() &&
+                  event.getClientY() == dropPoint_.getY())
+            {
+               // Very occasionally (~5%?), dropping a tab will generate a
+               // superfluous "dragenter" event immediately after the drop event
+               // at exactly the same coordinates. We want to ignore this since
+               // it will send us into dragging state; to do so, we cache the 
+               // coordinates when a tab is dropped and suppress entering drag
+               // mode from those coordinates very briefly (note that this won't
+               // keep the user from immediately dragging the tab around since
+               // you need to move the cursor in some way to initiate a drag,
+               // invalidating the coordinates.)
+               dropPoint_ = null;
+               return;
+            }
+
             if (curState_ == STATE_EXTERNAL)
             {
-               // element that was being dragged around outside boundaries 
+               // element that was being dragged around outside boundaries
                // has come back in; clear it and treat like a new drag
                dragElement_.getStyle().clearOpacity();
                dragElement_ = null;
@@ -384,6 +400,19 @@ public class DocTabLayoutPanel
          {
             endDrag(event, ACTION_COMMIT);
             event.preventDefault();
+
+            // cache the drop point for 250ms (see comments in event handler for
+            // dragenter)
+            dropPoint_ = new Point(event.getClientX(), event.getClientY());
+            Scheduler.get().scheduleFixedDelay(new Scheduler.RepeatingCommand()
+            {
+               @Override
+               public boolean execute()
+               {
+                  dropPoint_ = null;
+                  return false;
+               }
+            }, 250);
          }
          else if (event.getType() == "dragend")
          {
@@ -863,6 +892,7 @@ public class DocTabLayoutPanel
       private Element dragPlaceholder_;
       private String initDragDocId_;
       private int curState_ = STATE_NONE;
+      private Point dropPoint_;
 
       private final static int SCROLL_THRESHOLD = 25;
       
