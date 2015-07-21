@@ -136,6 +136,7 @@ extern const int kProjectUsersChanged;
 extern const int kRVersionsChanged;
 extern const int kRmdParamsEdit;
 extern const int kRmdParamsReady;
+extern const int kRegisterUserCommand;
 }
    
 class ClientEvent

@@ -692,6 +692,11 @@ public class ClientEventDispatcher
             String paramsFile = event.getData();
             eventBus_.fireEvent(new RmdParamsReadyEvent(paramsFile));
          }
+         else if (type.equals(ClientEvent.RegisterUserCommand))
+         {
+            RegisterUserCommandEvent.Data data = event.getData();
+            eventBus_.fireEvent(new RegisterUserCommandEvent(data));
+         }
          else
          {
             GWT.log("WARNING: Server event not dispatched: " + type, null);
