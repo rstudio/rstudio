@@ -1653,7 +1653,7 @@ public class Source implements InsertSourceHandler,
    }
    
    private void saveChanges(ArrayList<UnsavedChangesTarget> targets,
-                            Command onCompleted)
+                                 Command onCompleted)
    {
       // convert back to editing targets
       ArrayList<EditingTarget> saveTargets = 
@@ -1793,6 +1793,14 @@ public class Source implements InsertSourceHandler,
    {
       ArrayList<UnsavedChangesTarget> targets = 
                                        new ArrayList<UnsavedChangesTarget>();
+
+      // if this is the main window, collect all unsaved changes from 
+      // the satellite windows as well
+      if (windowManager_.isMainSourceWindow())
+      {
+         targets.addAll(windowManager_.getAllSatelliteUnsavedChanges());
+      }
+
       for (EditingTarget target : editors_)
          if (isUnsavedFileBackedTarget(target))
             targets.add(target);
@@ -1809,25 +1817,44 @@ public class Source implements InsertSourceHandler,
                               Command onCompleted,
                               Command onCancelled)
    {
+      // TODO: needs to handle case where editing target is in another window
       EditingTarget editingTarget = getEditingTargetForId(target.getId());
       if (editingTarget != null)
          editingTarget.saveWithPrompt(onCompleted, onCancelled);
    }
    
    public void handleUnsavedChangesBeforeExit(
-                        ArrayList<UnsavedChangesTarget> saveTargets,
+                        final ArrayList<UnsavedChangesTarget> saveTargets,
                         final Command onCompleted)
    {
       // first handle saves, then revert unsaved, then callback on completed
-      saveChanges(saveTargets, new Command() {
-
+      final Command completed = new Command() {
          @Override
          public void execute()
          {
             // revert unsaved
             revertUnsavedTargets(onCompleted);
          }
-      });   
+      };   
+
+      // if this is the main source window, let satellite windows save any
+      // changes first
+      if (windowManager_.isMainSourceWindow())
+      {
+         windowManager_.handleUnsavedChangesBeforeExit(
+               saveTargets, new Command()
+         {
+            @Override
+            public void execute()
+            {
+               saveChanges(saveTargets, completed);
+            }
+         });
+      }
+      else
+      {
+         saveChanges(saveTargets, completed);
+      }
    }
    
    public Display getView()

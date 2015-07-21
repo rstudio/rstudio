@@ -72,6 +72,29 @@ public class ConsoleDispatcher
       eventBus_.fireEvent(new SendToConsoleEvent(code, true));
    }
    
+   public void executeCommandWithFileEncoding(String command,
+                                              String path,
+                                              String encoding,
+                                              boolean contentIsAscii)
+   {
+      String escapedPath = escapedPath(path);
+      String systemEncoding = session_.getSessionInfo().getSystemEncoding();
+      boolean isSystemEncoding =
+       normalizeEncoding(encoding).equals(normalizeEncoding(systemEncoding));
+      
+      StringBuilder code = new StringBuilder();
+      code.append(command + "(" + escapedPath);
+      
+      if (!isSystemEncoding && !contentIsAscii)
+      {
+         code.append(", encoding = '" +
+               (!StringUtil.isNullOrEmpty(encoding) ? encoding : "UTF-8") +
+               "'");
+      }
+      code.append(")");
+      eventBus_.fireEvent(new SendToConsoleEvent(code.toString(), true));
+   }
+   
    
    public void saveFileAsThenExecuteCommand(String caption,
                                             final String defaultExtension,

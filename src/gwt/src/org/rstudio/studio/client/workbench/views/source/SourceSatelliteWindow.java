@@ -24,7 +24,6 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
 
-import org.rstudio.studio.client.application.DesktopHooks;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.ui.CodeSearchLauncher;
 import org.rstudio.studio.client.common.satellite.SatelliteWindow;
@@ -41,20 +40,23 @@ public class SourceSatelliteWindow extends SatelliteWindow
                                 Provider<FontSizeManager> pFSManager, 
                                 Provider<SourceSatellitePresenter> pPresenter,
                                 Provider<SourceWindowManager> pWindowManager,
-                                Provider<DesktopHooks> pDesktopHooks,
+                                Provider<SourceWindow> pSourceWindow,
                                 CodeSearchLauncher launcher)
    {
       super(pEventBus, pFSManager);
       pPresenter_ = pPresenter;
       pWindowManager_ = pWindowManager;
-      
-      // inject desktop hooks
-      pDesktopHooks.get(); 
+      pSourceWindow_ = pSourceWindow;
    }
 
    @Override
    protected void onInitialize(LayoutPanel mainPanel, JavaScriptObject params)
    {
+      
+      // set up the source window
+      pSourceWindow_.get();
+      
+      // read the params and set up window ordinal / title
       SourceWindowParams windowParams = params.cast();
       String title = null;
       if (windowParams != null)
@@ -93,4 +95,5 @@ public class SourceSatelliteWindow extends SatelliteWindow
    
    private final Provider<SourceSatellitePresenter> pPresenter_;
    private final Provider<SourceWindowManager> pWindowManager_;
+   private final Provider<SourceWindow> pSourceWindow_;
 }

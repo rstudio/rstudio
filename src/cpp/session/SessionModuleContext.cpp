@@ -128,7 +128,11 @@ SEXP rs_enqueClientEvent(SEXP nameSEXP, SEXP dataSEXP)
          type = session::client_events::kUnhandledError;
       else if (name == "enable_rstudio_connect")
          type = session::client_events::kEnableRStudioConnect;
-      
+      else if (name == "rmd_params_edit")
+         type = session::client_events::kRmdParamsEdit;
+      else if (name == "rmd_params_ready")
+         type = session::client_events::kRmdParamsReady;
+
       if (type != -1)
       {
          ClientEvent event(type, data);

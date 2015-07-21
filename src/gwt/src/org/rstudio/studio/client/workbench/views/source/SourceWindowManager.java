@@ -14,14 +14,19 @@
  */
 package org.rstudio.studio.client.workbench.views.source;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 
 import org.rstudio.core.client.JsArrayUtil;
+import org.rstudio.core.client.Pair;
 import org.rstudio.core.client.Point;
+import org.rstudio.core.client.SerializedCommand;
+import org.rstudio.core.client.SerializedCommandQueue;
 import org.rstudio.core.client.Size;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.js.JsObject;
+import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.application.events.CrossWindowEvent;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -39,12 +44,12 @@ import org.rstudio.studio.client.shiny.events.ShinyApplicationStatusEvent;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.model.UnsavedChangesItem;
+import org.rstudio.studio.client.workbench.model.UnsavedChangesTarget;
 import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
 import org.rstudio.studio.client.workbench.views.source.events.DocTabClosedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.DocTabDragStartedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.DocWindowChangedEvent;
-import org.rstudio.studio.client.workbench.views.source.events.LastSourceDocClosedEvent;
-import org.rstudio.studio.client.workbench.views.source.events.LastSourceDocClosedHandler;
 import org.rstudio.studio.client.workbench.views.source.events.PopoutDocEvent;
 import org.rstudio.studio.client.workbench.views.source.events.SourceDocAddedEvent;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
@@ -62,7 +67,6 @@ import com.google.inject.Singleton;
 @Singleton
 public class SourceWindowManager implements PopoutDocEvent.Handler,
                                             SourceDocAddedEvent.Handler,
-                                            LastSourceDocClosedHandler,
                                             SatelliteClosedEvent.Handler,
                                             DocTabDragStartedEvent.Handler,
                                             DocWindowChangedEvent.Handler,
@@ -88,20 +92,20 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
       pSatellite_ = pSatellite;
       pWorkbenchContext_ = pWorkbenchContext;
       display_ = display;
-      sourceShim_ = sourceShim;
       
-      events_.addHandler(PopoutDocEvent.TYPE, this);
-      events_.addHandler(SourceDocAddedEvent.TYPE, this);
-      events_.addHandler(LastSourceDocClosedEvent.TYPE, this);
-      events_.addHandler(SatelliteClosedEvent.TYPE, this);
-      events_.addHandler(DocTabDragStartedEvent.TYPE, this);
-      events_.addHandler(DocTabClosedEvent.TYPE, this);
       events_.addHandler(DocWindowChangedEvent.TYPE, this);
-      events_.addHandler(AllSatellitesClosingEvent.TYPE, this);
-      events_.addHandler(ShinyApplicationStatusEvent.TYPE, this);
       
       if (isMainSourceWindow())
       {
+         // most event handlers only make sense on the main window
+         events_.addHandler(PopoutDocEvent.TYPE, this);
+         events_.addHandler(DocTabDragStartedEvent.TYPE, this);
+         events_.addHandler(ShinyApplicationStatusEvent.TYPE, this);
+         events_.addHandler(AllSatellitesClosingEvent.TYPE, this);
+         events_.addHandler(SourceDocAddedEvent.TYPE, this);
+         events_.addHandler(SatelliteClosedEvent.TYPE, this);
+         events_.addHandler(DocTabClosedEvent.TYPE, this);
+
          JsArray<SourceDocument> docs = 
                session.getSessionInfo().getSourceDocuments();
          sourceDocs_ = docs;
@@ -156,10 +160,6 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
             }
          }
       }
-      else
-      {
-         exportFromSatellite();
-      }
    }
 
    // Public methods ----------------------------------------------------------
@@ -213,6 +213,51 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
          }
       }
       return null;
+   }
+   
+   public String getWindowIdOfDocId(String id)
+   {
+      JsArray<SourceDocument> docs = getSourceDocs();
+      for (int i = 0; i < docs.length(); i++)
+      {
+         if (docs.get(i).getId() == id)
+         {
+            String windowId = docs.get(i).getSourceWindowId();
+            if (windowId != null)
+               return windowId;
+            else
+               return "";
+         }
+      }
+      return null;
+   }
+   
+   public void handleUnsavedChangesBeforeExit(
+         ArrayList<UnsavedChangesTarget> targets,
+         Command onCompleted)
+   {
+      // accumulate the unsaved change targets that represent satellite windows
+      final JsArray<UnsavedChangesItem> items = JsArray.createArray().cast();
+      for (UnsavedChangesTarget target: targets)
+      {
+         if (target instanceof UnsavedChangesItem)
+         {
+            items.push((UnsavedChangesItem)target);
+         }
+      }
+      
+      // let each window have a crack at saving the targets (the windows will
+      // discard any targets they don't own)
+      doForAllSourceWindows(new SourceWindowCommand() 
+      {
+         @Override
+         public void execute(String windowId, WindowEx window,
+               Command continuation)
+         {
+            handleUnsavedChangesBeforeExit(window, items, continuation);
+         }
+      },
+      onCompleted);
    }
    
    public void fireEventToSourceWindow(String windowId, CrossWindowEvent<?> evt)
@@ -277,49 +322,55 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
             });
    }
    
-   public void closeAllSatelliteDocs(String caption, Command onCompleted)
+   public void closeAllSatelliteDocs(final String caption, 
+         final Command onCompleted)
    {
-      for (String windowId: sourceWindows_.keySet())
+      doForAllSourceWindows(new OperationWithInput<Pair<String,WindowEx>>()
       {
-         WindowEx window = pSatelliteManager_.get().getSatelliteWindowObject(
-               SourceSatellite.NAME_PREFIX + windowId);
-         if (window == null)
-            continue;
-
-         // focus the satellite and ask it to close all its docs
-         window.focus();
-         closeAllDocs(window, caption, onCompleted);
-      }
-
+         @Override
+         public void execute(Pair<String, WindowEx> input)
+         {
+            // focus the satellite and ask it to close all its docs
+            input.second.focus();
+            closeAllDocs(input.second, caption, onCompleted);
+         }
+      });
+      
       // return focus to the main window when done
       pSatellite_.get().focusMainWindow();
    }
    
+   public ArrayList<UnsavedChangesTarget> getAllSatelliteUnsavedChanges()
+   {
+      final ArrayList<UnsavedChangesTarget> targets = 
+            new ArrayList<UnsavedChangesTarget>();
+      doForAllSourceWindows(new OperationWithInput<Pair<String,WindowEx>>()
+      {
+         @Override
+         public void execute(Pair<String, WindowEx> input)
+         {
+            targets.addAll(JsArrayUtil.toArrayList(
+                  getUnsavedChanges(input.second)));
+         }
+      });
+      return targets;
+   }
    
    // Event handlers ----------------------------------------------------------
    @Override
    public void onPopoutDoc(final PopoutDocEvent evt)
    {
-      if (isMainSourceWindow())
-      {
-         // assign a new window ID to the source document
-         final String windowId = createSourceWindowId();
-         assignSourceDocWindowId(evt.getDocId(), windowId, 
-               new Command()
+      // assign a new window ID to the source document 
+      final String windowId = createSourceWindowId();
+      assignSourceDocWindowId(evt.getDocId(), windowId, 
+            new Command()
+            {
+               @Override
+               public void execute()
                {
-                  @Override
-                  public void execute()
-                  {
-                     openSourceWindow(windowId, evt.getPosition());
-                  }
-               });
-      }
-      else
-      {
-         // can't pop out directly from a satellite to another satellite; fire
-         // this one on the main window
-         events_.fireEventToMainWindow(evt);
-      }
+                  openSourceWindow(windowId, evt.getPosition());
+               }
+            });
    }
    
    @Override
@@ -341,17 +392,6 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
       }
       
       sourceDocs_.push(e.getDoc());
-   }
-
-   @Override
-   public void onLastSourceDocClosed(LastSourceDocClosedEvent event)
-   {
-      // if this is a source document window and its last document closed,
-      // close the doc itself
-      if (!isMainSourceWindow())
-      {
-         WindowEx.get().close();
-      }
    }
 
    @Override
@@ -397,17 +437,9 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
    @Override
    public void onDocTabDragStarted(DocTabDragStartedEvent event)
    {
-      if (isMainSourceWindow())
-      {
-         // if this the main source window, fire the event to all the source
-         // satellites
-         fireEventToAllSourceWindows(event);
-      }
-      else if (!event.isFromMainWindow())
-      {
-         // if this is a satellite, broadcast the event to the main window
-         events_.fireEventToMainWindow(event);
-      }
+      // we are the main source window; fire the event to all the source 
+      // satellites
+      fireEventToAllSourceWindows(event);
    }
 
    @Override
@@ -447,13 +479,10 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
       }
    }
 
-
    @Override
    public void onShinyApplicationStatus(ShinyApplicationStatusEvent event)
    {
-      // fire this event from the main window to all source satellites
-      if (isMainSourceWindow())
-         fireEventToAllSourceWindows(event);
+      fireEventToAllSourceWindows(event);
    }
 
    // Private methods ---------------------------------------------------------
@@ -537,63 +566,63 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
       $wnd.rstudioSourceDocs = this.@org.rstudio.studio.client.workbench.views.source.SourceWindowManager::sourceDocs_;
    }-*/;
 
-   private final native void exportFromSatellite() /*-{
-      var satellite = this;
-      $wnd.rstudioCloseAllDocs = $entry(function(caption, onCompleted) {
-         satellite.@org.rstudio.studio.client.workbench.views.source.SourceWindowManager::closeAllDocs(Ljava/lang/String;Lcom/google/gwt/user/client/Command;)(caption, onCompleted);
-      });
-   }-*/;
-   
-   
    private final native void closeAllDocs(WindowEx satellite, String caption, 
          Command onCompleted) /*-{
       satellite.rstudioCloseAllDocs(caption, onCompleted);
    }-*/;
 
-   private void closeAllDocs(String caption, Command onCompleted)
-   {
-      sourceShim_.closeAllSourceDocs(caption, onCompleted);
-   }
+   private final native JsArray<UnsavedChangesItem> getUnsavedChanges(
+         WindowEx satellite) /*-{
+      return satellite.rstudioGetUnsavedChanges();
+   }-*/;
+   
+   private final native void handleUnsavedChangesBeforeExit(WindowEx satellite, 
+         JsArray<UnsavedChangesItem> items, Command onCompleted) /*-{
+      satellite.rstudioHandleUnsavedChangesBeforeExit(items, onCompleted);
+   }-*/;
    
    private boolean updateWindowGeometry()
    {
-      boolean geometryChanged = false;
-      JsObject newGeometries = JsObject.createJsObject();
-      for (String windowId: sourceWindows_.keySet())
-      {
-         WindowEx window = pSatelliteManager_.get().getSatelliteWindowObject(
-               SourceSatellite.NAME_PREFIX + windowId);
-         if (window == null)
-            continue;
+      final ArrayList<String> changedWindows = new ArrayList<String>();
+      final JsObject newGeometries = JsObject.createJsObject();
 
-         // read the window's current geometry
-         SatelliteWindowGeometry newGeometry = 
-               SatelliteWindowGeometry.create(
-                     sourceWindows_.get(windowId),
-                     window.getScreenX(), 
-                     window.getScreenY(), 
-                     window.getOuterWidth(), 
-                     window.getOuterHeight());
-         
-         // compare to the old geometry (if any)
-         if (windowGeometry_.hasKey(windowId))
+      doForAllSourceWindows(new OperationWithInput<Pair<String,WindowEx>>()
+      {
+         @Override
+         public void execute(Pair<String, WindowEx> input)
          {
-            SatelliteWindowGeometry oldGeometry = 
-                  windowGeometry_.getObject(windowId);
-            if (!oldGeometry.equals(newGeometry))
-               geometryChanged = true;
-         }
-         else 
-         {
-            geometryChanged = true;
-         }
-         newGeometries.setObject(windowId, newGeometry);
-      }
+            String windowId = input.first;
+            WindowEx window = input.second;
+
+            // read the window's current geometry
+            SatelliteWindowGeometry newGeometry = 
+                  SatelliteWindowGeometry.create(
+                        sourceWindows_.get(windowId),
+                        window.getScreenX(), 
+                        window.getScreenY(), 
+                        window.getOuterWidth(), 
+                        window.getOuterHeight());
+            
+            // compare to the old geometry (if any)
+            if (windowGeometry_.hasKey(windowId))
+            {
+               SatelliteWindowGeometry oldGeometry = 
+                     windowGeometry_.getObject(windowId);
+               if (!oldGeometry.equals(newGeometry))
+                  changedWindows.add(windowId);
+            }
+            else 
+            {
+               changedWindows.add(windowId);
+            }
+            newGeometries.setObject(windowId, newGeometry);
+         };
+      });
       
-      if (geometryChanged)
+      if (changedWindows.size() > 0)
          windowGeometry_ = newGeometries;
       
-      return geometryChanged;
+      return changedWindows.size() > 0;
    }
    
    private void fireEventToAllSourceWindows(CrossWindowEvent<?> event)
@@ -604,13 +633,67 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
       }
    }
    
+   // execute a command on all source windows (synchronously)
+   private void doForAllSourceWindows(
+         OperationWithInput<Pair<String,WindowEx>> command)
+   {
+      for (final String windowId: sourceWindows_.keySet())
+      {
+         final WindowEx window = pSatelliteManager_.get()
+               .getSatelliteWindowObject(
+                     SourceSatellite.NAME_PREFIX + windowId);
+         if (window == null || window.isClosed())
+            continue;
+         
+         command.execute(new Pair<String,WindowEx>(windowId, window));
+      }
+   }
+   
+   // execute a command on all source windows (async continuation-style)
+   private void doForAllSourceWindows(final SourceWindowCommand command, 
+         final Command completedCommand)
+   {
+      final SerializedCommandQueue queue = new SerializedCommandQueue();
+      doForAllSourceWindows(new OperationWithInput<Pair<String,WindowEx>>()
+      {
+         @Override
+         public void execute(final Pair<String, WindowEx> input)
+         {
+            queue.addCommand(new SerializedCommand()
+            {
+               @Override
+               public void onExecute(Command continuation)
+               {
+                  command.execute(input.first, input.second, continuation);
+               }
+            });
+         }
+      });
+      
+      if (completedCommand != null)
+      {
+         queue.addCommand(new SerializedCommand() {
+            public void onExecute(Command continuation)
+            {
+               completedCommand.execute();
+               continuation.execute();
+            }  
+         });
+      }
+   }
+   
+   public interface SourceWindowCommand
+   {
+      public void execute(String windowId, WindowEx window, 
+            Command continuation);
+   }
+   
    private final EventBus events_;
    private final Provider<SatelliteManager> pSatelliteManager_;
    private final Provider<Satellite> pSatellite_;
    private final Provider<WorkbenchContext> pWorkbenchContext_;
    private final SourceServerOperations server_;
    private final GlobalDisplay display_;
-   private final SourceShim sourceShim_;
 
    private HashMap<String, Integer> sourceWindows_ = 
          new HashMap<String,Integer>();

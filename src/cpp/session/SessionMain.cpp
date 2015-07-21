@@ -634,6 +634,9 @@ void handleClientInit(const boost::function<void()>& initFunction,
    sessionInfo["rmarkdown_available"] =
          modules::rmarkdown::rmarkdownPackageAvailable();
 
+   sessionInfo["knit_params_available"] =
+         modules::rmarkdown::knitParamsAvailable();
+
    sessionInfo["clang_available"] = modules::clang::isAvailable();
 
    // don't show help home until we figure out a sensible heuristic
