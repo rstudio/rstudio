@@ -59,12 +59,26 @@ void SatelliteWindow::finishLoading(bool ok)
 
 void SatelliteWindow::closeEvent(QCloseEvent *event)
 {
-    webView()->page()->mainFrame()->evaluateJavaScript(QString::fromUtf8(
-         "if (window.notifyRStudioSatelliteClosing) "
-         "   window.notifyRStudioSatelliteClosing();"));
+   QWebFrame* pFrame = webView()->page()->mainFrame();
 
-    // forward the close event to the web view
-    webView()->event(event);
+   // the source window has special close semantics
+   if (getName().startsWith(QString::fromUtf8(SOURCE_WINDOW_PREFIX)))
+   {
+     if (!pFrame->evaluateJavaScript(
+            QString::fromUtf8("window.rstudioReadyToClose")).toBool())
+     {
+        pFrame->evaluateJavaScript(
+            QString::fromUtf8("window.rstudioCloseSourceWindow();"));
+        event->ignore();
+        return;
+     }
+   }
+   pFrame->evaluateJavaScript(QString::fromUtf8(
+        "if (window.notifyRStudioSatelliteClosing) "
+        "   window.notifyRStudioSatelliteClosing();"));
+
+   // forward the close event to the web view
+   webView()->event(event);
 }
 
 void SatelliteWindow::onActivated()

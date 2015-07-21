@@ -176,5 +176,10 @@ void BrowserWindow::onJavaScriptWindowObjectCleared()
    webView()->page()->mainFrame()->evaluateJavaScript(cmd);
 }
 
+QString BrowserWindow::getName()
+{
+   return name_;
+}
+
 } // namespace desktop
 } // namespace rstudio

@@ -22,6 +22,8 @@
 
 #include "DesktopGwtCallback.hpp"
 
+#define SOURCE_WINDOW_PREFIX "_rstudio_satellite_source_window_"
+
 namespace rstudio {
 namespace desktop {
 
