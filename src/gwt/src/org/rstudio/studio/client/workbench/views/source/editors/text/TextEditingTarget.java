@@ -53,7 +53,6 @@ import org.rstudio.core.client.events.HasEnsureHeightHandlers;
 import org.rstudio.core.client.events.HasEnsureVisibleHandlers;
 import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.core.client.files.FileSystemItem;
-import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
@@ -63,7 +62,6 @@ import org.rstudio.studio.client.application.events.AddEditorCommandEvent;
 import org.rstudio.studio.client.application.events.ChangeFontSizeEvent;
 import org.rstudio.studio.client.application.events.ChangeFontSizeHandler;
 import org.rstudio.studio.client.application.events.EventBus;
-import org.rstudio.studio.client.application.events.LoadEditorKeybindingsEvent;
 import org.rstudio.studio.client.application.events.RequestEditorCommandsEvent;
 import org.rstudio.studio.client.common.*;
 import org.rstudio.studio.client.common.debugging.BreakpointManager;
@@ -731,21 +729,6 @@ public class TextEditingTarget implements
                }
             });
       
-      events_.addHandler(
-            LoadEditorKeybindingsEvent.TYPE,
-            new LoadEditorKeybindingsEvent.Handler()
-            {
-               @Override
-               public void onLoadEditorKeybindings(LoadEditorKeybindingsEvent event)
-               {
-                  JsObject bindings = event.getKeyBindings();
-                  JsArrayString keys = bindings.keys();
-                  for (int i = 0; i < keys.length(); i++)
-                  {
-                  }
-               }
-            });
-
       events_.addHandler(DocTabDragStateChangedEvent.TYPE, 
             new DocTabDragStateChangedEvent.Handler()
             {
