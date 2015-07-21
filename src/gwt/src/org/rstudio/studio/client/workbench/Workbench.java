@@ -45,6 +45,7 @@ import org.rstudio.studio.client.htmlpreview.HTMLPreview;
 import org.rstudio.studio.client.pdfviewer.PDFViewer;
 import org.rstudio.studio.client.rmarkdown.RmdOutput;
 import org.rstudio.studio.client.rmarkdown.events.RmdParamsEditEvent;
+import org.rstudio.studio.client.rmarkdown.ui.RmdParamsEditDialog;
 import org.rstudio.studio.client.server.Server;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -243,17 +244,7 @@ public class Workbench implements BusyHandler,
    @Override
    public void onRmdParamsEdit(RmdParamsEditEvent event)
    {
-      NewWindowOptions options = new NewWindowOptions();
-      options.setFocus(true);
-      options.setAllowExternalNavigation(false);
-      options.setShowDesktopToolbar(false);
-      globalDisplay_.openWebMinimalWindow(
-                       event.getUrl(), 
-                       false, 
-                       350, 
-                       400, 
-                       options);
-      
+      new RmdParamsEditDialog(event.getUrl()).showModal();
    }
   
    @Handler
