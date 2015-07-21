@@ -22,6 +22,7 @@ import java.util.Comparator;
 import java.util.Locale;
 
 import javaemul.internal.HashCodes;
+import javaemul.internal.InternalPreconditions;
 import javaemul.internal.StringHelper;
 import javaemul.internal.annotations.DoNotInline;
 
@@ -113,7 +114,7 @@ public final class String implements Comparable<String>, CharSequence,
 
   public static String valueOf(char x[], int offset, int count) {
     int end = offset + count;
-    StringHelper.checkBounds(x.length, offset, end);
+    InternalPreconditions.checkStringBounds(offset, end, x.length);
     return StringHelper.valueOf(x, offset, end);
   }
 

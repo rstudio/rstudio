@@ -235,6 +235,23 @@ public class InternalPreconditions {
   }
 
   /**
+   * Checks that bounds are correct.
+   *
+   * @throw StringIndexOutOfBoundsException if the range is not legal
+   */
+  public static void checkStringBounds(int start, int end, int size) {
+    if (start < 0) {
+      throw new StringIndexOutOfBoundsException("fromIndex: " + start + " < 0");
+    }
+    if (end > size) {
+      throw new StringIndexOutOfBoundsException("toIndex: " + end + " > size " + size);
+    }
+    if (end < start) {
+      throw new StringIndexOutOfBoundsException("fromIndex: " + start + " > toIndex: " + end);
+    }
+  }
+
+  /**
    * Substitutes each {@code %s} in {@code template} with an argument. These are matched by
    * position: the first {@code %s} gets {@code args[0]}, etc.  If there are more arguments than
    * placeholders, the unmatched arguments will be appended to the end of the formatted message in
