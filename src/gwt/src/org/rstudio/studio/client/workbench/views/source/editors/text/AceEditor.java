@@ -616,6 +616,9 @@ public class AceEditor implements DocDisplay,
          widget_.getEditor().setKeyboardHandler(KeyboardHandler.emacs());
       else
          widget_.getEditor().setKeyboardHandler(null);
+      
+      // add the previewer
+      widget_.getEditor().addKeyboardHandler(previewer.getKeyboardHandler());
    }
 
    public String getCode()
