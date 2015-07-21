@@ -3884,13 +3884,6 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, "get_rmarkdown_context", requestCallback);
    }
    
-   @Override
-   public void getRMarkdownParams(String file,
-                                  ServerRequestCallback<String> callback)
-   {
-      sendRequest(RPC_SCOPE, GET_R_MARKDOWN_PARAMS, file, callback);
-   }
-
 
    @Override
    public void renderRmd(String file, int line, String format, String encoding,
@@ -4503,7 +4496,6 @@ public class RemoteServer implements Server
    private static final String GET_RMD_PUBLISH_DETAILS = "get_rmd_publish_details";
    private static final String HAS_ORPHANED_ACCOUNTS = "has_orphaned_accounts";
 
-   private static final String GET_R_MARKDOWN_PARAMS = "get_rmarkdown_params";
    private static final String RENDER_RMD = "render_rmd";
    private static final String RENDER_RMD_SOURCE = "render_rmd_source";
    private static final String TERMINATE_RENDER_RMD = "terminate_render_rmd";

@@ -56,6 +56,7 @@ import org.rstudio.studio.client.htmlpreview.model.HTMLPreviewResult;
 import org.rstudio.studio.client.projects.events.OpenProjectErrorEvent;
 import org.rstudio.studio.client.projects.events.ProjectUserChangedEvent;
 import org.rstudio.studio.client.projects.model.OpenProjectError;
+import org.rstudio.studio.client.rmarkdown.events.RmdParamsReadyEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdRenderCompletedEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdRenderOutputEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdRenderStartedEvent;
@@ -679,6 +680,11 @@ public class ClientEventDispatcher
          {
             RVersionsInfo versions = event.getData();
             eventBus_.fireEvent(new RVersionsChangedEvent(versions));
+         }
+         else if (type.equals(ClientEvent.RmdParamsReady))
+         {
+            String paramsFile = event.getData();
+            eventBus_.fireEvent(new RmdParamsReadyEvent(paramsFile));
          }
          else
          {

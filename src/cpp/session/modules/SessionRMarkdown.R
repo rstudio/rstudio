@@ -193,27 +193,37 @@
 
 # TODO: Save last .rds file within session
 # TODO: Host shiny UI within dialog/frame
-# TODO: Closing window hangs process (because app still running).
-#       (ensure that however we do the dialog can never hang)
-# TODO: Consider whether we should run the param editor in another process
 
-.rs.addJsonRpcHandler("get_rmarkdown_params", function(file) {
+.rs.addGlobalFunction("knit_with_parameters", function(file) {
    
-   # check for parameters (return special "none" value if there are no params)
-   if (length(knitr::knit_params(readLines(file))) == 0) 
-      return(.rs.scalar("none"))
+   # result to return via event
+   result <- NULL
    
-   # allocate temp file to hold parameter values
-   paramsFile <- tempfile(fileext = ".rds")
+   # check for parameters 
+   if (length(knitr::knit_params(readLines(file))) > 0) {
       
-   # ask for parameters
-   require(shiny)
-   params <- rmarkdown:::knit_params_ask(file)
-   if (!is.null(params)) {
-      saveRDS(params, file = paramsFile)
-      .rs.scalar(paramsFile)
+      # allocate temp file to hold parameter values
+      paramsFile <- tempfile(fileext = ".rds")
+      
+      # ask for parameters
+      params <- rmarkdown::knit_params_ask(file, shiny_args = list(
+         quiet = TRUE  
+      ))
+      
+      if (!is.null(params)) {
+         saveRDS(params, file = paramsFile)
+         result <- paramsFile
+      }
+      
    } else {
-      NULL
+      # return special "none" value if there are no params
+      result <- "none"
    }
+   
+   .rs.enqueClientEvent("rmd_params_ready", result)
+
+   invisible(NULL)
 })
+
+
 
