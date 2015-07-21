@@ -15,6 +15,7 @@
 package org.rstudio.core.client.files;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Timer;
 import com.google.inject.Inject;
 
@@ -118,17 +119,21 @@ public class FileBacked<T extends JavaScriptObject>
       executionTimer.schedule(0);
    }
    
-   public void set(final T object)
+   public void set(final T object, final Command command)
    {
+      Debug.logToRConsole("Saving editor bindings...");
+      Debug.logObject(object);
       server_.writeJSON(
             filePath_,
-            object_,
+            object,
             new ServerRequestCallback<Boolean>()
             {
                @Override
                public void onResponseReceived(Boolean success)
                {
                   object_ = object;
+                  if (command != null)
+                     command.execute();
                }
                
                @Override
@@ -137,6 +142,11 @@ public class FileBacked<T extends JavaScriptObject>
                   Debug.logError(error);
                }
             });
+   }
+   
+   public void set(final T object)
+   {
+      set(object, null);
    }
    
    private final String filePath_;

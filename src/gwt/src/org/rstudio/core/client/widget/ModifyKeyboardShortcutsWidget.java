@@ -179,13 +179,14 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
          }
          else if (commandType == CommandBinding.TYPE_EDITOR_COMMAND)
          {
-            editorCommands_.rebindCommand(
+            editorBindings.setBinding(
                   newBinding.getId(),
                   newBinding.getKeySequence());
          }
       }
       
-      editorCommands_.updateBindings(editorBindings);
+      editorCommands_.addBindingsAndSave(editorBindings);
+      
       closeDialog();
    }
    

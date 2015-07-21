@@ -30,6 +30,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.events.Edit
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -46,6 +47,11 @@ public class EditorCommandManager
       public final EditorKeyBinding get(String key)
       {
          return getObject(key).cast();
+      }
+      
+      public final void setBinding(String key, KeySequence binding)
+      {
+         setString(key,  binding.toString());
       }
       
       protected EditorKeyBindings() {}
@@ -119,7 +125,7 @@ public class EditorCommandManager
       events_.fireEvent(new AddEditorCommandEvent(id, keySequence, true));
    }
    
-   public void updateBindings(final EditorKeyBindings newBindings)
+   public void addBindingsAndSave(final EditorKeyBindings newBindings)
    {
       bindings_.execute(new CommandWithArg<EditorKeyBindings>()
       {
@@ -127,14 +133,16 @@ public class EditorCommandManager
          public void execute(final EditorKeyBindings currentBindings)
          {
             currentBindings.insert(newBindings);
-            bindings_.set(currentBindings);
+            bindings_.set(currentBindings, new Command()
+            {
+               @Override
+               public void execute()
+               {
+                  loadBindings();
+               }
+            });
          }
       });
-   }
-   
-   public void saveBindings(EditorKeyBindings bindings)
-   {
-      bindings_.set(bindings);
    }
    
    public void loadBindings()
