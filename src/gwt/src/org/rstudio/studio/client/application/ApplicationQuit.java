@@ -257,7 +257,7 @@ public class ApplicationQuit implements SaveActionChangedHandler,
                   
                   // save specified documents and then quit
                   sourceShim_.handleUnsavedChangesBeforeExit(
-                        saveTargets,                                     
+                        saveTargets,
                         new Command() {
                            @Override
                            public void execute()
