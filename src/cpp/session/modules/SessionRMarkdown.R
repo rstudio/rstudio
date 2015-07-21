@@ -192,7 +192,6 @@
 
 
 # TODO: Save last .rds file within session
-# TODO: Host shiny UI within dialog/frame
 
 .rs.addGlobalFunction("knit_with_parameters", function(file) {
    
@@ -207,7 +206,10 @@
       
       # ask for parameters
       params <- rmarkdown::knit_params_ask(file, shiny_args = list(
-         quiet = TRUE  
+         launch.browser = function(url, ...) {
+            .Call("rs_showRmdParamsEditor", url)
+         },
+         quiet = TRUE
       ))
       
       if (!is.null(params)) {

@@ -133,7 +133,8 @@ const int kSessionCountChanged = 108;
 const int kCollabEditEnded = 109;
 const int kProjectUsersChanged = 110;
 const int kRVersionsChanged = 111;
-const int kRmdParamsReady = 112;
+const int kRmdParamsEdit = 112;
+const int kRmdParamsReady = 113;
 }
 
 void ClientEvent::init(int type, const json::Value& data)
@@ -359,6 +360,8 @@ std::string ClientEvent::typeName() const
          return "project_users_changed";
       case client_events::kRVersionsChanged:
          return "r_versions_changed";
+      case client_events::kRmdParamsEdit:
+         return "rmd_params_edit";
       case client_events::kRmdParamsReady:
          return "rmd_params_ready";
       default:

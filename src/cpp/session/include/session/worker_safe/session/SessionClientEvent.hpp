@@ -134,6 +134,7 @@ extern const int kSessionCountChanged;
 extern const int kCollabEditEnded;
 extern const int kProjectUsersChanged;
 extern const int kRVersionsChanged;
+extern const int kRmdParamsEdit;
 extern const int kRmdParamsReady;
 }
    

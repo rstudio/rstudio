@@ -33,6 +33,7 @@
 #include <r/RJson.hpp>
 #include <r/ROptions.hpp>
 #include <r/RUtil.hpp>
+#include <r/RRoutines.hpp>
 
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionConsoleProcess.hpp>
@@ -1085,6 +1086,20 @@ Error prepareForRmdChunkExecution(const json::JsonRpcRequest& request,
    return Success();
 }
 
+
+SEXP rs_showRmdParamsEditor(SEXP urlSEXP)
+{
+   // get transformed URL
+   std::string url = r::sexp::safeAsString(urlSEXP);
+   url = module_context::mapUrlPorts(url);
+
+   // enque client evnet
+   ClientEvent event(client_events::kRmdParamsEdit, url);
+   module_context::enqueClientEvent(event);
+
+   return R_NilValue;
+}
+
 } // anonymous namespace
 
 bool knitParamsAvailable()
@@ -1109,6 +1124,13 @@ Error initialize()
 {
    using boost::bind;
    using namespace module_context;
+
+   R_CallMethodDef methodDef ;
+   methodDef.name = "rs_showRmdParamsEditor" ;
+   methodDef.fun = (DL_FUNC)rs_showRmdParamsEditor ;
+   methodDef.numArgs = 1;
+   r::routines::addCallMethod(methodDef);
+
 
    initEnvironment();
 
