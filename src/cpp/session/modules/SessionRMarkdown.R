@@ -191,7 +191,6 @@
 
 
 # TODO: desktop is blocking the embedded shinyapp 
-# TODO: test IDE file uploads
 
 .rs.addGlobalFunction("knit_with_parameters", 
                       function(file, encoding = getOption("encoding")) {
