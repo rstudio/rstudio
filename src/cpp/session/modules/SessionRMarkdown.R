@@ -190,9 +190,6 @@
 })
 
 
-
-# TODO: Save last .rds file within session
-
 .rs.addGlobalFunction("knit_with_parameters", function(file) {
    
    # result to return via event
@@ -202,14 +199,20 @@
    if (length(knitr::knit_params(readLines(file))) > 0) {
       
       # allocate temp file to hold parameter values
-      paramsFile <- tempfile(fileext = ".rds")
+      paramsFile <- .Call("rs_paramsFileForRmd", file)
+     
+      # read any existing parameters contained therin
+      params <- list()
+      if (file.exists(paramsFile))
+         params <- readRDS(paramsFile)
       
       # ask for parameters
-      params <- rmarkdown::knit_params_ask(file, shiny_args = list(
-         launch.browser = function(url, ...) {
-            .Call("rs_showRmdParamsEditor", url)
-         },
-         quiet = TRUE
+      params <- rmarkdown::knit_params_ask(file, params = params,
+         shiny_args = list(
+            launch.browser = function(url, ...) {
+               .Call("rs_showRmdParamsEditor", url)
+            },
+            quiet = TRUE
       ))
       
       if (!is.null(params)) {

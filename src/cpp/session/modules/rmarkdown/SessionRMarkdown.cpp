@@ -1100,6 +1100,22 @@ SEXP rs_showRmdParamsEditor(SEXP urlSEXP)
    return R_NilValue;
 }
 
+SEXP rs_paramsFileForRmd(SEXP fileSEXP)
+{
+   static std::map<std::string,std::string> s_paramsFiles;
+
+   std::string file = r::sexp::safeAsString(fileSEXP);
+
+   using namespace module_context;
+   if (s_paramsFiles.find(file) == s_paramsFiles.end())
+      s_paramsFiles[file] = createAliasedPath(tempFile("rmdparams", "rds"));
+
+   r::sexp::Protect rProtect;
+   return r::sexp::create(s_paramsFiles[file], &rProtect);
+}
+
+
+
 } // anonymous namespace
 
 bool knitParamsAvailable()
@@ -1131,6 +1147,10 @@ Error initialize()
    methodDef.numArgs = 1;
    r::routines::addCallMethod(methodDef);
 
+   methodDef.name = "rs_paramsFileForRmd" ;
+   methodDef.fun = (DL_FUNC)rs_paramsFileForRmd ;
+   methodDef.numArgs = 1;
+   r::routines::addCallMethod(methodDef);
 
    initEnvironment();
 

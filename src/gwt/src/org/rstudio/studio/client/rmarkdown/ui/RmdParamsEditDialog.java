@@ -38,7 +38,7 @@ public class RmdParamsEditDialog extends ModalDialogBase
       frame_ = new RStudioFrame();
       
       // compute the widget size and set it
-      Size size = new Size(500, 400);
+      Size size = new Size(400, 300);
       Size minimumSize = new Size(300, 250);
       size = DomMetrics.adjustedElementSize(size, 
                                             minimumSize, 
