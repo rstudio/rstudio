@@ -687,6 +687,10 @@ public class Application implements ApplicationEventHandlers
       if (!session_.getSessionInfo().hasAgreement())
          commands_.rstudioAgreement().setVisible(false);
            
+      // remove knit params if they aren't supported
+      if (!sessionInfo.getKnitParamsAvailable())
+         commands_.knitWithParameters().remove();
+         
       // show workbench
       view_.showWorkbenchView(wb.getMainView().asWidget());
       

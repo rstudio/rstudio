@@ -3883,10 +3883,11 @@ public class RemoteServer implements Server
    {
       sendRequest(RPC_SCOPE, "get_rmarkdown_context", requestCallback);
    }
+   
 
    @Override
    public void renderRmd(String file, int line, String format, String encoding,
-                         boolean asTempfile, boolean asShiny,
+                         String paramsFile, boolean asTempfile, boolean asShiny,
          ServerRequestCallback<Boolean> requestCallback)
    {
       JSONArray params = new JSONArray();
@@ -3894,8 +3895,9 @@ public class RemoteServer implements Server
       params.set(1, new JSONNumber(line));
       params.set(2, new JSONString(StringUtil.notNull(format)));
       params.set(3, new JSONString(encoding));
-      params.set(4, JSONBoolean.getInstance(asTempfile));
-      params.set(5, JSONBoolean.getInstance(asShiny));
+      params.set(4, new JSONString(StringUtil.notNull(paramsFile)));
+      params.set(5, JSONBoolean.getInstance(asTempfile));
+      params.set(6, JSONBoolean.getInstance(asShiny));
       sendRequest(RPC_SCOPE,
             RENDER_RMD,
             params,

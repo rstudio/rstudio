@@ -204,6 +204,7 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
                               event.getSourceLine(),
                               event.getFormat(),
                               event.getEncoding(), 
+                              event.getParamsFile(),
                               event.asTempfile(),
                               event.asShiny(),
                   new SimpleRequestCallback<Boolean>());
@@ -335,7 +336,7 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
    {
       events_.fireEvent(new RenderRmdEvent(
             result.getTargetFile(), result.getTargetLine(), 
-            null, result.getTargetEncoding(), false, true));
+            null, result.getTargetEncoding(), null, false, true));
    }
    
    private void displayRenderResult(final RmdRenderResult result)

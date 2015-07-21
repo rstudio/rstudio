@@ -190,3 +190,45 @@
 })
 
 
+.rs.addGlobalFunction("knit_with_parameters", function(file) {
+   
+   # result to return via event
+   result <- NULL
+   
+   # check for parameters 
+   if (length(knitr::knit_params(readLines(file))) > 0) {
+      
+      # allocate temp file to hold parameter values
+      paramsFile <- .Call("rs_paramsFileForRmd", file)
+     
+      # read any existing parameters contained therin
+      params <- list()
+      if (file.exists(paramsFile))
+         params <- readRDS(paramsFile)
+      
+      # ask for parameters
+      params <- rmarkdown::knit_params_ask(file, params = params,
+         shiny_args = list(
+            launch.browser = function(url, ...) {
+               .Call("rs_showRmdParamsEditor", url)
+            },
+            quiet = TRUE
+      ))
+      
+      if (!is.null(params)) {
+         saveRDS(params, file = paramsFile)
+         result <- paramsFile
+      }
+      
+   } else {
+      # return special "none" value if there are no params
+      result <- "none"
+   }
+   
+   .rs.enqueClientEvent("rmd_params_ready", result)
+
+   invisible(NULL)
+})
+
+
+

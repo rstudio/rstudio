@@ -44,6 +44,8 @@ import org.rstudio.studio.client.common.vcs.VCSConstants;
 import org.rstudio.studio.client.htmlpreview.HTMLPreview;
 import org.rstudio.studio.client.pdfviewer.PDFViewer;
 import org.rstudio.studio.client.rmarkdown.RmdOutput;
+import org.rstudio.studio.client.rmarkdown.events.RmdParamsEditEvent;
+import org.rstudio.studio.client.rmarkdown.ui.RmdParamsEditDialog;
 import org.rstudio.studio.client.server.Server;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -70,7 +72,8 @@ public class Workbench implements BusyHandler,
                                   QuotaStatusHandler,
                                   WorkbenchLoadedHandler,
                                   WorkbenchMetricsChangedHandler,
-                                  InstallRtoolsEvent.Handler
+                                  InstallRtoolsEvent.Handler,
+                                  RmdParamsEditEvent.Handler
 {
    interface Binder extends CommandBinder<Commands, Workbench> {}
    
@@ -123,6 +126,7 @@ public class Workbench implements BusyHandler,
       eventBus.addHandler(WorkbenchLoadedEvent.TYPE, this);
       eventBus.addHandler(WorkbenchMetricsChangedEvent.TYPE, this);
       eventBus.addHandler(InstallRtoolsEvent.TYPE, this);
+      eventBus.addHandler(RmdParamsEditEvent.TYPE, this);
 
       // We don't want to send setWorkbenchMetrics more than once per 1/2-second
       metricsChangedCommand_ = new TimeBufferedCommand(-1, -1, 500)
@@ -235,6 +239,12 @@ public class Workbench implements BusyHandler,
          
          nearQuotaWarningShown_ = true;
       }
+   }
+   
+   @Override
+   public void onRmdParamsEdit(RmdParamsEditEvent event)
+   {
+      new RmdParamsEditDialog(event.getUrl()).showModal();
    }
   
    @Handler
@@ -511,4 +521,5 @@ public class Workbench implements BusyHandler,
    private final TimeBufferedCommand metricsChangedCommand_;
    private WorkbenchMetrics lastWorkbenchMetrics_;
    private boolean nearQuotaWarningShown_ = false;
+   
 }
