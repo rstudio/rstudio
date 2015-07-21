@@ -35,6 +35,16 @@ didClearWindowObject:(WebScriptObject *)windowObject
 - (BOOL) windowShouldClose: (id) sender
 {
    id win = [webView_ windowScriptObject];
+   if ([clientName_ hasPrefix: SOURCE_WINDOW_PREFIX])
+   {
+      // the source window has special close semantics (consider: should it also
+      // have its own controller object?)
+      if (![[win evaluateWebScript:@"window.rstudioReadyToClose"] boolValue])
+      {
+         [win evaluateWebScript: @"window.rstudioCloseSourceWindow();"];
+         return NO;
+      }
+   }
    [win evaluateWebScript:
       @"if (window.notifyRStudioSatelliteClosing) "
       "   window.notifyRStudioSatelliteClosing();"];

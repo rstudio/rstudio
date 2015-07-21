@@ -17,8 +17,10 @@ package org.rstudio.studio.client.workbench.views.source;
 import java.util.ArrayList;
 
 import org.rstudio.core.client.dom.WindowEx;
+import org.rstudio.studio.client.application.ApplicationQuit;
 import org.rstudio.studio.client.application.DesktopHooks;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.application.model.SaveAction;
 import org.rstudio.studio.client.workbench.model.UnsavedChangesItem;
 import org.rstudio.studio.client.workbench.model.UnsavedChangesTarget;
 import org.rstudio.studio.client.workbench.views.source.events.DocTabDragStartedEvent;
@@ -110,6 +112,11 @@ public class SourceWindow implements LastSourceDocClosedHandler,
       $wnd.rstudioHandleUnsavedChangesBeforeExit = $entry(function(targets, onCompleted) {
          satellite.@org.rstudio.studio.client.workbench.views.source.SourceWindow::handleUnsavedChangesBeforeExit(Lcom/google/gwt/core/client/JavaScriptObject;Lcom/google/gwt/user/client/Command;)(targets, onCompleted);
       });
+      
+      $wnd.rstudioReadyToClose = false;
+      $wnd.rstudioCloseSourceWindow = $entry(function() {
+         satellite.@org.rstudio.studio.client.workbench.views.source.SourceWindow::closeSourceWindow()();
+      });
    }-*/;
    
    private void handleUnsavedChangesBeforeExit(JavaScriptObject jsoItems, 
@@ -140,6 +147,25 @@ public class SourceWindow implements LastSourceDocClosedHandler,
       }
       return items;
    }
+   
+   private void closeSourceWindow()
+   {
+      ApplicationQuit.handleUnsavedChanges(SaveAction.SAVEASK, 
+            "Close Source Window", sourceShim_, null, null, 
+            new ApplicationQuit.QuitContext()
+            {
+               @Override
+               public void onReadyToQuit(boolean saveChanges)
+               {
+                  markReadyToClose();
+                  WindowEx.get().close();
+               }
+            });
+   }
+   
+   private final native void markReadyToClose() /*-{
+      $wnd.rstudioReadyToClose = true;
+   }-*/;
    
    private final EventBus events_;
    private final SourceShim sourceShim_;

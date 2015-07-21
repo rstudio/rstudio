@@ -630,7 +630,7 @@ decidePolicyForMIMEType: (NSDictionary *) actionInformation
          (NSDeviceIndependentModifierFlagsMask ^ NSAlphaShiftKeyMask);
    if ([chr isEqualToString: @"w"] && mod == NSCommandKeyMask)
    {
-      if ([clientName_ hasPrefix: @"_rstudio_satellite_source_window_"])
+      if ([clientName_ hasPrefix: SOURCE_WINDOW_PREFIX])
       {
          // in the source window, cmd+w should close the current tab
          [self invokeCommand: @"closeSourceDoc"];

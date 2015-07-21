@@ -28,6 +28,7 @@ import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.HandleUnsavedChangesEvent;
 import org.rstudio.studio.client.application.events.HandleUnsavedChangesHandler;
@@ -146,19 +147,28 @@ public class ApplicationQuit implements SaveActionChangedHandler,
       }
    }
    
-   public boolean isQuitSession()
+   public static boolean isQuitSession()
    {
       return ("1".equals(Window.Location.getParameter("quit")));
    }
   
    
-   private void handleUnsavedChanges(String caption,
+   private void handleUnsavedChanges(String caption, QuitContext quitContext)
+   {
+      handleUnsavedChanges(saveAction_.getAction(), caption,
+            sourceShim_, workbenchContext_, globalEnvTarget_, quitContext);
+   }
+   
+   public static void handleUnsavedChanges(final int saveAction, 
+                                     String caption,
+                                     final SourceShim sourceShim,
+                                     final WorkbenchContext workbenchContext,
+                                     final UnsavedChangesTarget globalEnvTarget,
                                      final QuitContext quitContext)
    {   
       // see what the unsaved changes situation is and prompt accordingly
-      final int saveAction = saveAction_.getAction();
       ArrayList<UnsavedChangesTarget> unsavedSourceDocs = 
-                                             sourceShim_.getUnsavedChanges();
+                                             sourceShim.getUnsavedChanges();
       
       // no unsaved changes at all
       if (saveAction != SaveAction.SAVEASK && unsavedSourceDocs.size() == 0)
@@ -172,10 +182,10 @@ public class ApplicationQuit implements SaveActionChangedHandler,
          // if this is a quit session then we always prompt
          if (isQuitSession())
          {
-            globalDisplay_.showYesNoMessage(
+            RStudioGinjector.INSTANCE.getGlobalDisplay().showYesNoMessage(
                   MessageDialog.QUESTION,
                   caption,
-                  "Are you sure you want to quit the R session?", 
+                  "Are you sure you want to quit the R session?",
                   quitOperation,
                   true);
          }
@@ -188,12 +198,12 @@ public class ApplicationQuit implements SaveActionChangedHandler,
       }
       
       // just an unsaved environment
-      if (unsavedSourceDocs.size() == 0) 
+      if (unsavedSourceDocs.size() == 0 && workbenchContext != null) 
       {        
          // confirm quit and do it
          String prompt = "Save workspace image to " + 
-                         workbenchContext_.getREnvironmentPath() + "?";
-         globalDisplay_.showYesNoMessage(
+                         workbenchContext.getREnvironmentPath() + "?";
+         RStudioGinjector.INSTANCE.getGlobalDisplay().showYesNoMessage(
                GlobalDisplay.MSG_QUESTION,
                caption,
                prompt,
@@ -218,9 +228,9 @@ public class ApplicationQuit implements SaveActionChangedHandler,
       else if (saveAction != SaveAction.SAVEASK && 
                unsavedSourceDocs.size() == 1)
       {
-         sourceShim_.saveWithPrompt(
+         sourceShim.saveWithPrompt(
            unsavedSourceDocs.get(0), 
-           sourceShim_.revertUnsavedChangesBeforeExitCommand(new Command() {
+           sourceShim.revertUnsavedChangesBeforeExitCommand(new Command() {
                @Override
                public void execute()
                {
@@ -234,8 +244,8 @@ public class ApplicationQuit implements SaveActionChangedHandler,
       {
          ArrayList<UnsavedChangesTarget> unsaved = 
                                       new ArrayList<UnsavedChangesTarget>();
-         if (saveAction == SaveAction.SAVEASK)
-            unsaved.add(globalEnvTarget_);
+         if (saveAction == SaveAction.SAVEASK && globalEnvTarget != null)
+            unsaved.add(globalEnvTarget);
          unsaved.addAll(unsavedSourceDocs);
          new UnsavedChangesDialog(
             caption,
@@ -251,12 +261,13 @@ public class ApplicationQuit implements SaveActionChangedHandler,
                   // remote global env target from list (if specified) and 
                   // compute the saveChanges value
                   boolean saveGlobalEnv = saveAction == SaveAction.SAVE;
-                  if (saveAction == SaveAction.SAVEASK)
-                     saveGlobalEnv = saveTargets.remove(globalEnvTarget_);
+                  if (saveAction == SaveAction.SAVEASK && 
+                      globalEnvTarget != null)
+                     saveGlobalEnv = saveTargets.remove(globalEnvTarget);
                   final boolean saveChanges = saveGlobalEnv;
                   
                   // save specified documents and then quit
-                  sourceShim_.handleUnsavedChangesBeforeExit(
+                  sourceShim.handleUnsavedChangesBeforeExit(
                         saveTargets,
                         new Command() {
                            @Override
@@ -266,17 +277,13 @@ public class ApplicationQuit implements SaveActionChangedHandler,
                            }
                         });
                }
-               
             },
             
             // no cancel operation
             null
-            
             ).showModal();
       }
-      
    }
-   
    
    public void performQuit(boolean saveChanges)
    {

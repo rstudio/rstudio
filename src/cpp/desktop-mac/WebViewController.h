@@ -6,6 +6,8 @@
 #import "WebViewWithKeyEquiv.h"
 #import "GwtCallbacks.h"
 
+#define SOURCE_WINDOW_PREFIX @"_rstudio_satellite_source_window_"
+
 @interface WebViewController :
           NSWindowController<NSWindowDelegate,GwtCallbacksUIDelegate> {
    WebViewWithKeyEquiv* webView_;
