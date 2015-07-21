@@ -79,6 +79,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
          EventBus events,
          FileTypeRegistry registry,
          GlobalDisplay display, 
+         SourceShim sourceShim,
          Session session)
    {
       events_ = events;
@@ -87,6 +88,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
       pSatellite_ = pSatellite;
       pWorkbenchContext_ = pWorkbenchContext;
       display_ = display;
+      sourceShim_ = sourceShim;
       
       events_.addHandler(PopoutDocEvent.TYPE, this);
       events_.addHandler(SourceDocAddedEvent.TYPE, this);
@@ -104,11 +106,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
                session.getSessionInfo().getSourceDocuments();
          sourceDocs_ = docs;
 
-         // the main window maintains an array of all open source documents 
-         // across all satellites; rather than attempt to synchronize this list
-         // among satellites, the main window exposes it on its window object
-         // for the satellites to read 
-         exportSourceDocs();
+         exportFromMain();
          
          new JSObjectStateValue(
                  "source-window",
@@ -157,7 +155,10 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
                openSourceWindow(windowId, null);
             }
          }
-         
+      }
+      else
+      {
+         exportFromSatellite();
       }
    }
 
@@ -275,6 +276,25 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
                }
             });
    }
+   
+   public void closeAllSatelliteDocs(String caption, Command onCompleted)
+   {
+      for (String windowId: sourceWindows_.keySet())
+      {
+         WindowEx window = pSatelliteManager_.get().getSatelliteWindowObject(
+               SourceSatellite.NAME_PREFIX + windowId);
+         if (window == null)
+            continue;
+
+         // focus the satellite and ask it to close all its docs
+         window.focus();
+         closeAllDocs(window, caption, onCompleted);
+      }
+
+      // return focus to the main window when done
+      pSatellite_.get().focusMainWindow();
+   }
+   
    
    // Event handlers ----------------------------------------------------------
    @Override
@@ -509,9 +529,31 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
       return $wnd.opener.rstudioSourceDocs;
    }-*/;
    
-   private final native void exportSourceDocs() /*-{
+   private final native void exportFromMain() /*-{
+      // the main window maintains an array of all open source documents 
+      // across all satellites; rather than attempt to synchronize this list
+      // among satellites, the main window exposes it on its window object
+      // for the satellites to read 
       $wnd.rstudioSourceDocs = this.@org.rstudio.studio.client.workbench.views.source.SourceWindowManager::sourceDocs_;
    }-*/;
+
+   private final native void exportFromSatellite() /*-{
+      var satellite = this;
+      $wnd.rstudioCloseAllDocs = $entry(function(caption, onCompleted) {
+         satellite.@org.rstudio.studio.client.workbench.views.source.SourceWindowManager::closeAllDocs(Ljava/lang/String;Lcom/google/gwt/user/client/Command;)(caption, onCompleted);
+      });
+   }-*/;
+   
+   
+   private final native void closeAllDocs(WindowEx satellite, String caption, 
+         Command onCompleted) /*-{
+      satellite.rstudioCloseAllDocs(caption, onCompleted);
+   }-*/;
+
+   private void closeAllDocs(String caption, Command onCompleted)
+   {
+      sourceShim_.closeAllSourceDocs(caption, onCompleted);
+   }
    
    private boolean updateWindowGeometry()
    {
@@ -568,6 +610,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
    private final Provider<WorkbenchContext> pWorkbenchContext_;
    private final SourceServerOperations server_;
    private final GlobalDisplay display_;
+   private final SourceShim sourceShim_;
 
    private HashMap<String, Integer> sourceWindows_ = 
          new HashMap<String,Integer>();
