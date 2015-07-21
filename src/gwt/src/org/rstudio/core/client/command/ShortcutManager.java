@@ -25,8 +25,6 @@ import org.rstudio.core.client.command.KeyboardShortcut.KeySequence;
 import org.rstudio.core.client.events.NativeKeyDownEvent;
 import org.rstudio.core.client.events.NativeKeyDownHandler;
 import org.rstudio.studio.client.RStudioGinjector;
-import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperations;
-
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.NativeEvent;
@@ -72,13 +70,13 @@ public class ShortcutManager implements NativePreviewHandler,
    }
    
    @Inject
-   private void initialize(UserCommandManager userCommands,
+   private void initialize(ApplicationCommandManager appCommands,
                            EditorCommandManager editorCommands,
-                           FilesServerOperations files)
+                           UserCommandManager userCommands)
    {
+      appCommands_ = appCommands;
       editorCommands_ = editorCommands;
       userCommands_ = userCommands;
-      files_ = files;
    }
 
    public boolean isEnabled()
@@ -408,7 +406,6 @@ public class ShortcutManager implements NativePreviewHandler,
    // Injected ----
    private UserCommandManager userCommands_;
    private EditorCommandManager editorCommands_;
-   private FilesServerOperations files_;
-   
+   @SuppressWarnings("unused") private ApplicationCommandManager appCommands_;
    
 }

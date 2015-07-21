@@ -76,7 +76,10 @@ public class EditorCommandManager
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
       
-      bindings_ = new FileBacked<EditorKeyBindings>(KEYBINDINGS_PATH);
+      bindings_ = new FileBacked<EditorKeyBindings>(
+            KEYBINDINGS_PATH,
+            EditorKeyBindings.create());
+      
       events_.addHandler(
             EditorLoadedEvent.TYPE,
             new EditorLoadedHandler()

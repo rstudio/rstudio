@@ -34,12 +34,12 @@ import com.google.inject.Inject;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.cellview.ScrollingDataGrid;
 import org.rstudio.core.client.command.AppCommand;
+import org.rstudio.core.client.command.ApplicationCommandManager;
 import org.rstudio.core.client.command.EditorCommandManager;
 import org.rstudio.core.client.command.EditorCommandManager.EditorKeyBindings;
 import org.rstudio.core.client.command.KeyboardHelper;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.command.KeyboardShortcut.KeySequence;
-import org.rstudio.core.client.command.ShortcutManager;
 import org.rstudio.core.client.command.UserCommandManager;
 import org.rstudio.core.client.command.UserCommandManager.UserCommand;
 import org.rstudio.core.client.dom.DomUtils;
@@ -145,6 +145,8 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
    {
       // Build up command diffs for save after application
       EditorKeyBindings editorBindings = EditorKeyBindings.create();
+      EditorKeyBindings appBindings = EditorKeyBindings.create();
+      
       
       // Loop through all changes and apply based on type
       for (Map.Entry<CommandBinding, CommandBinding> entry : changes_.entrySet())
@@ -155,13 +157,15 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
          int commandType = newBinding.getCommandType();
          if (commandType == CommandBinding.TYPE_RSTUDIO_COMMAND)
          {
-            AppCommand command = commands_.getCommandById(newBinding.getId());
-            assert command != null :
-               "Failed to discover AppCommand with id '" + newBinding.getId() + "'";
-            
-            ShortcutManager.INSTANCE.replaceBinding(
-                  newBinding.getKeySequence(),
-                  command);
+            appBindings.setBinding(
+                  newBinding.getId(),
+                  newBinding.getKeySequence());
+         }
+         else if (commandType == CommandBinding.TYPE_EDITOR_COMMAND)
+         {
+            editorBindings.setBinding(
+                  newBinding.getId(),
+                  newBinding.getKeySequence());
          }
          else if (commandType == CommandBinding.TYPE_USER_COMMAND)
          {
@@ -177,14 +181,9 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
             KeyboardShortcut newShortcut = new KeyboardShortcut(newBinding.getKeySequence());
             userCommands.put(newShortcut, command);
          }
-         else if (commandType == CommandBinding.TYPE_EDITOR_COMMAND)
-         {
-            editorBindings.setBinding(
-                  newBinding.getId(),
-                  newBinding.getKeySequence());
-         }
       }
       
+      appCommands_.addBindingsAndSave(appBindings);
       editorCommands_.addBindingsAndSave(editorBindings);
       
       closeDialog();
@@ -193,11 +192,13 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
    @Inject
    public void initialize(UserCommandManager userCommands,
                           EditorCommandManager editorCommands,
+                          ApplicationCommandManager appCommands,
                           Commands commands,
                           FilesServerOperations files)
    {
       userCommands_ = userCommands;
       editorCommands_ = editorCommands;
+      appCommands_ = appCommands;
       commands_ = commands;
       files_ = files;
    }
@@ -404,6 +405,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
    // Injected ----
    private UserCommandManager userCommands_;
    private EditorCommandManager editorCommands_;
+   private ApplicationCommandManager appCommands_;
    private Commands commands_;
    private FilesServerOperations files_;
    

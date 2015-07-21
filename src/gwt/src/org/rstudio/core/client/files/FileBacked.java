@@ -28,10 +28,11 @@ import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperatio
 
 public class FileBacked<T extends JavaScriptObject>
 {
-   public FileBacked(String filePath)
+   public FileBacked(String filePath, T defaultValue)
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
       filePath_ = filePath;
+      object_ = defaultValue;
       loaded_ = false;
       loading_ = false;
    }
@@ -71,6 +72,7 @@ public class FileBacked<T extends JavaScriptObject>
                public void onError(ServerError error)
                {
                   Debug.logError(error);
+                  loaded_ = true;
                   loading_ = false;
                }
             });

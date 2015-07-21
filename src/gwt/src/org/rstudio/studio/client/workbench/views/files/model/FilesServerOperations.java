@@ -86,9 +86,9 @@ public interface FilesServerOperations
                            ArrayList<String> filenames);
    
    void writeJSON(String path,
-              JavaScriptObject object,
-              ServerRequestCallback<Boolean> requestCallback);
+                  JavaScriptObject object,
+                  ServerRequestCallback<Boolean> requestCallback);
    
    void readJSON(String path,
-             ServerRequestCallback<JavaScriptObject> requestCallback);
+                 ServerRequestCallback<JavaScriptObject> requestCallback);
 }

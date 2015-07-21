@@ -18,6 +18,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.inject.client.GinModules;
 import com.google.gwt.inject.client.Ginjector;
 
+import org.rstudio.core.client.command.ApplicationCommandManager;
 import org.rstudio.core.client.command.EditorCommandManager;
 import org.rstudio.core.client.command.ShortcutManager;
 import org.rstudio.core.client.command.ShortcutViewer;
@@ -145,6 +146,7 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(ShortcutManager manager);
    void injectMembers(UserCommandManager manager);
    void injectMembers(EditorCommandManager manager);
+   void injectMembers(ApplicationCommandManager manager);
    void injectMembers(FileBacked<?> object);
    
    public static final RStudioGinjector INSTANCE = GWT.create(RStudioGinjector.class);

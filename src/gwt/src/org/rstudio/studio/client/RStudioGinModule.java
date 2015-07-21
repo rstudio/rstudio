@@ -20,6 +20,7 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Singleton;
 import com.google.inject.name.Names;
 
+import org.rstudio.core.client.command.ApplicationCommandManager;
 import org.rstudio.core.client.command.EditorCommandManager;
 import org.rstudio.core.client.command.ShortcutViewer;
 import org.rstudio.core.client.command.UserCommandManager;
@@ -251,6 +252,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(SourceWindowManager.class).in(Singleton.class);
       bind(EditorCommandManager.class).in(Singleton.class);
       bind(UserCommandManager.class).in(Singleton.class);
+      bind(ApplicationCommandManager.class).in(Singleton.class);
       bind(CodeSearchLauncher.class).in(Singleton.class);
 
       bind(ApplicationView.class).to(ApplicationWindow.class)
