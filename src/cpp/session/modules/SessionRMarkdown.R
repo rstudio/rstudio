@@ -190,6 +190,11 @@
 })
 
 
+# TODO: pass encoding
+# TODO: keyboard shortcut?
+# TODO: what happens for mismatched parameters?
+# TODO: test IDE file uploads
+
 .rs.addGlobalFunction("knit_with_parameters", function(file) {
    
    # result to return via event
@@ -207,13 +212,16 @@
          params <- readRDS(paramsFile)
       
       # ask for parameters
-      params <- rmarkdown::knit_params_ask(file, params = params,
+      params <- rmarkdown::knit_params_ask(
+         file, 
+         params = params,
          shiny_args = list(
             launch.browser = function(url, ...) {
                .Call("rs_showRmdParamsEditor", url)
             },
-            quiet = TRUE
-      ))
+            quiet = TRUE),
+         save_caption = "Knit"
+      )
       
       if (!is.null(params)) {
          saveRDS(params, file = paramsFile)

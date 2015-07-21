@@ -1093,7 +1093,7 @@ SEXP rs_showRmdParamsEditor(SEXP urlSEXP)
    std::string url = r::sexp::safeAsString(urlSEXP);
    url = module_context::mapUrlPorts(url);
 
-   // enque client evnet
+   // enque client event
    ClientEvent event(client_events::kRmdParamsEdit, url);
    module_context::enqueClientEvent(event);
 
