@@ -27,6 +27,7 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.widget.OperationWithInput;
+import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.CrossWindowEvent;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -47,6 +48,8 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.UnsavedChangesItem;
 import org.rstudio.studio.client.workbench.model.UnsavedChangesTarget;
 import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
+import org.rstudio.studio.client.workbench.views.help.events.ShowHelpEvent;
+import org.rstudio.studio.client.workbench.views.help.events.ShowHelpHandler;
 import org.rstudio.studio.client.workbench.views.source.events.DocTabClosedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.DocTabDragStartedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.DocWindowChangedEvent;
@@ -72,7 +75,8 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
                                             DocWindowChangedEvent.Handler,
                                             DocTabClosedEvent.Handler,
                                             AllSatellitesClosingEvent.Handler,
-                                            ShinyApplicationStatusEvent.Handler
+                                            ShinyApplicationStatusEvent.Handler,
+                                            ShowHelpHandler
 {
    @Inject
    public SourceWindowManager(
@@ -105,6 +109,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
          events_.addHandler(SourceDocAddedEvent.TYPE, this);
          events_.addHandler(SatelliteClosedEvent.TYPE, this);
          events_.addHandler(DocTabClosedEvent.TYPE, this);
+         events_.addHandler(ShowHelpEvent.TYPE, this);
 
          JsArray<SourceDocument> docs = 
                session.getSessionInfo().getSourceDocuments();
@@ -485,6 +490,19 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
       fireEventToAllSourceWindows(event);
    }
 
+
+   @Override
+   public void onShowHelp(ShowHelpEvent event)
+   {
+      // when help requests come in from satellites, focus the main frame 
+      if (!event.isFromMainWindow())
+      {
+         if (Desktop.isDesktop())
+            Desktop.getFrame().bringMainFrameToFront();
+         else
+            WindowEx.get().focus();
+      }
+   }
    // Private methods ---------------------------------------------------------
    
    private void openSourceWindow(String windowId, Point position)

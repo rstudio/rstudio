@@ -14,13 +14,21 @@
  */
 package org.rstudio.studio.client.workbench.views.help.events;
 
+import org.rstudio.core.client.js.JavaScriptSerializable;
+import org.rstudio.studio.client.application.events.CrossWindowEvent;
+
 import com.google.gwt.event.shared.GwtEvent;
 
-public class ShowHelpEvent extends GwtEvent<ShowHelpHandler>
+@JavaScriptSerializable
+public class ShowHelpEvent extends CrossWindowEvent<ShowHelpHandler>
 {
    public static final GwtEvent.Type<ShowHelpHandler> TYPE =
       new GwtEvent.Type<ShowHelpHandler>();
    
+   public ShowHelpEvent()
+   {
+   }
+
    public ShowHelpEvent(String topicUrl)
    {
       topicUrl_ = topicUrl;
@@ -43,5 +51,5 @@ public class ShowHelpEvent extends GwtEvent<ShowHelpHandler>
       return TYPE;
    }
    
-   private final String topicUrl_;
+   private String topicUrl_;
 }
