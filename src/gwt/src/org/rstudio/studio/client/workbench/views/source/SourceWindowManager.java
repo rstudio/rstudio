@@ -50,15 +50,12 @@ import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
 import org.rstudio.studio.client.workbench.views.source.events.DocTabClosedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.DocTabDragStartedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.DocWindowChangedEvent;
-import org.rstudio.studio.client.workbench.views.source.events.LastSourceDocClosedEvent;
-import org.rstudio.studio.client.workbench.views.source.events.LastSourceDocClosedHandler;
 import org.rstudio.studio.client.workbench.views.source.events.PopoutDocEvent;
 import org.rstudio.studio.client.workbench.views.source.events.SourceDocAddedEvent;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
 import org.rstudio.studio.client.workbench.views.source.model.SourceWindowParams;
 
-import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.user.client.Command;
@@ -70,7 +67,6 @@ import com.google.inject.Singleton;
 @Singleton
 public class SourceWindowManager implements PopoutDocEvent.Handler,
                                             SourceDocAddedEvent.Handler,
-                                            LastSourceDocClosedHandler,
                                             SatelliteClosedEvent.Handler,
                                             DocTabDragStartedEvent.Handler,
                                             DocWindowChangedEvent.Handler,
@@ -96,20 +92,20 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
       pSatellite_ = pSatellite;
       pWorkbenchContext_ = pWorkbenchContext;
       display_ = display;
-      sourceShim_ = sourceShim;
       
-      events_.addHandler(PopoutDocEvent.TYPE, this);
-      events_.addHandler(SourceDocAddedEvent.TYPE, this);
-      events_.addHandler(LastSourceDocClosedEvent.TYPE, this);
-      events_.addHandler(SatelliteClosedEvent.TYPE, this);
-      events_.addHandler(DocTabDragStartedEvent.TYPE, this);
-      events_.addHandler(DocTabClosedEvent.TYPE, this);
       events_.addHandler(DocWindowChangedEvent.TYPE, this);
-      events_.addHandler(AllSatellitesClosingEvent.TYPE, this);
-      events_.addHandler(ShinyApplicationStatusEvent.TYPE, this);
       
       if (isMainSourceWindow())
       {
+         // most event handlers only make sense on the main window
+         events_.addHandler(PopoutDocEvent.TYPE, this);
+         events_.addHandler(DocTabDragStartedEvent.TYPE, this);
+         events_.addHandler(ShinyApplicationStatusEvent.TYPE, this);
+         events_.addHandler(AllSatellitesClosingEvent.TYPE, this);
+         events_.addHandler(SourceDocAddedEvent.TYPE, this);
+         events_.addHandler(SatelliteClosedEvent.TYPE, this);
+         events_.addHandler(DocTabClosedEvent.TYPE, this);
+
          JsArray<SourceDocument> docs = 
                session.getSessionInfo().getSourceDocuments();
          sourceDocs_ = docs;
@@ -163,10 +159,6 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
                openSourceWindow(windowId, null);
             }
          }
-      }
-      else
-      {
-         exportFromSatellite();
       }
    }
 
@@ -368,26 +360,17 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
    @Override
    public void onPopoutDoc(final PopoutDocEvent evt)
    {
-      if (isMainSourceWindow())
-      {
-         // assign a new window ID to the source document
-         final String windowId = createSourceWindowId();
-         assignSourceDocWindowId(evt.getDocId(), windowId, 
-               new Command()
+      // assign a new window ID to the source document 
+      final String windowId = createSourceWindowId();
+      assignSourceDocWindowId(evt.getDocId(), windowId, 
+            new Command()
+            {
+               @Override
+               public void execute()
                {
-                  @Override
-                  public void execute()
-                  {
-                     openSourceWindow(windowId, evt.getPosition());
-                  }
-               });
-      }
-      else
-      {
-         // can't pop out directly from a satellite to another satellite; fire
-         // this one on the main window
-         events_.fireEventToMainWindow(evt);
-      }
+                  openSourceWindow(windowId, evt.getPosition());
+               }
+            });
    }
    
    @Override
@@ -409,17 +392,6 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
       }
       
       sourceDocs_.push(e.getDoc());
-   }
-
-   @Override
-   public void onLastSourceDocClosed(LastSourceDocClosedEvent event)
-   {
-      // if this is a source document window and its last document closed,
-      // close the doc itself
-      if (!isMainSourceWindow())
-      {
-         WindowEx.get().close();
-      }
    }
 
    @Override
@@ -465,17 +437,9 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
    @Override
    public void onDocTabDragStarted(DocTabDragStartedEvent event)
    {
-      if (isMainSourceWindow())
-      {
-         // if this the main source window, fire the event to all the source
-         // satellites
-         fireEventToAllSourceWindows(event);
-      }
-      else if (!event.isFromMainWindow())
-      {
-         // if this is a satellite, broadcast the event to the main window
-         events_.fireEventToMainWindow(event);
-      }
+      // we are the main source window; fire the event to all the source 
+      // satellites
+      fireEventToAllSourceWindows(event);
    }
 
    @Override
@@ -515,13 +479,10 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
       }
    }
 
-
    @Override
    public void onShinyApplicationStatus(ShinyApplicationStatusEvent event)
    {
-      // fire this event from the main window to all source satellites
-      if (isMainSourceWindow())
-         fireEventToAllSourceWindows(event);
+      fireEventToAllSourceWindows(event);
    }
 
    // Private methods ---------------------------------------------------------
@@ -605,22 +566,6 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
       $wnd.rstudioSourceDocs = this.@org.rstudio.studio.client.workbench.views.source.SourceWindowManager::sourceDocs_;
    }-*/;
 
-   private final native void exportFromSatellite() /*-{
-      var satellite = this;
-      $wnd.rstudioCloseAllDocs = $entry(function(caption, onCompleted) {
-         satellite.@org.rstudio.studio.client.workbench.views.source.SourceWindowManager::closeAllDocs(Ljava/lang/String;Lcom/google/gwt/user/client/Command;)(caption, onCompleted);
-      });
-      
-      $wnd.rstudioGetUnsavedChanges = $entry(function() {
-         return satellite.@org.rstudio.studio.client.workbench.views.source.SourceWindowManager::getUnsavedChanges()();
-      });
-      
-      $wnd.rstudioHandleUnsavedChangesBeforeExit = $entry(function(targets, onCompleted) {
-         satellite.@org.rstudio.studio.client.workbench.views.source.SourceWindowManager::handleUnsavedChangesBeforeExit(Lcom/google/gwt/core/client/JavaScriptObject;Lcom/google/gwt/user/client/Command;)(targets, onCompleted);
-      });
-   }-*/;
-   
-   
    private final native void closeAllDocs(WindowEx satellite, String caption, 
          Command onCompleted) /*-{
       satellite.rstudioCloseAllDocs(caption, onCompleted);
@@ -635,35 +580,6 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
          JsArray<UnsavedChangesItem> items, Command onCompleted) /*-{
       satellite.rstudioHandleUnsavedChangesBeforeExit(items, onCompleted);
    }-*/;
-   
-   private void closeAllDocs(String caption, Command onCompleted)
-   {
-      sourceShim_.closeAllSourceDocs(caption, onCompleted);
-   }
-   
-   private void handleUnsavedChangesBeforeExit(JavaScriptObject jsoItems, 
-         Command onCompleted)
-   {
-      JsArray<UnsavedChangesItem> items = jsoItems.cast();
-      ArrayList<UnsavedChangesTarget> targets = 
-            new ArrayList<UnsavedChangesTarget>();
-      for (int i = 0; i < items.length(); i++)
-      {
-         targets.add(items.get(i));
-      }
-      sourceShim_.handleUnsavedChangesBeforeExit(targets, onCompleted);
-   }
-   
-   private JsArray<UnsavedChangesItem> getUnsavedChanges()
-   {
-      JsArray<UnsavedChangesItem> items = JsArray.createArray().cast();
-      ArrayList<UnsavedChangesTarget> targets = sourceShim_.getUnsavedChanges();
-      for (UnsavedChangesTarget target: targets)
-      {
-         items.push(UnsavedChangesItem.create(target));
-      }
-      return items;
-   }
    
    private boolean updateWindowGeometry()
    {
@@ -778,7 +694,6 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
    private final Provider<WorkbenchContext> pWorkbenchContext_;
    private final SourceServerOperations server_;
    private final GlobalDisplay display_;
-   private final SourceShim sourceShim_;
 
    private HashMap<String, Integer> sourceWindows_ = 
          new HashMap<String,Integer>();
