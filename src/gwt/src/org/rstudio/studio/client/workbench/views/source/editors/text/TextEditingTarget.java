@@ -138,6 +138,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.status.Stat
 import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBarPopupMenu;
 import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBarPopupRequest;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ui.ChooseEncodingDialog;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ui.RMarkdownNoParamsDialog;
 import org.rstudio.studio.client.workbench.views.source.events.CollabEditStartParams;
 import org.rstudio.studio.client.workbench.views.source.events.DocTabDragStateChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.PopoutDocEvent;
@@ -4224,10 +4225,7 @@ public class TextEditingTarget implements
                         // special "none" value means no parameters
                         if (paramsFile.equals("none"))
                         {
-                           globalDisplay_.showMessage(
-                                 MessageDisplay.MSG_WARNING, 
-                                 "Knit with Parameters", 
-                                 "No parameters declared for this document.");
+                           new RMarkdownNoParamsDialog().showModal();
                         }
                         else
                         {

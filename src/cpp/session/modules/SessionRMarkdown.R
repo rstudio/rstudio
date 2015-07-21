@@ -190,12 +190,12 @@
 })
 
 
-# TODO: Knitr to CRAN
-# TODO: When no parameters show some help on param reports
-# TODO: Host shiny UI within dialog/frame
+
 # TODO: Save last .rds file within session
+# TODO: Host shiny UI within dialog/frame
 # TODO: Closing window hangs process (because app still running).
 #       (ensure that however we do the dialog can never hang)
+# TODO: Consider whether we should run the param editor in another process
 
 .rs.addJsonRpcHandler("get_rmarkdown_params", function(file) {
    
