@@ -360,6 +360,10 @@ public class JsInteropRestrictionChecker extends JVisitor {
     if (type.getSuperClass() != jprogram.getTypeJavaLangObject()) {
       logError("JsFunction implementation '%s' cannot extend a class.", type);
     }
+
+    if (!jprogram.typeOracle.getSubTypeNames(type.getName()).isEmpty()) {
+      logError("JsFunction implementation '%s' cannot be extended by other classes.", type);
+    }
   }
 
   private void logError(String format, JType type) {

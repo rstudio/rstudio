@@ -848,6 +848,19 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
     assertBuggyFails("JsFunction implementation 'test.EntryPoint$Buggy' cannot extend a class.");
   }
 
+  public void testJsFunctionImplementationWithSubclassesFails() throws Exception {
+    addAll(jsFunctionInterface);
+    addSnippetClassDecl(
+        "public static class BaseClass implements MyJsFunctionInterface {",
+        "  public int foo(int x) { return 0; }",
+        "}",
+        "public static class Buggy extends BaseClass  {",
+        "}");
+
+    assertBuggyFails("JsFunction implementation 'test.EntryPoint$BaseClass' cannot be extended by "
+        + "other classes.");
+  }
+
   public void testJsFunctionImplementationMarkedAsJsTypeFails() throws Exception {
     addAll(jsFunctionInterface);
     addSnippetImport("com.google.gwt.core.client.js.JsType");
