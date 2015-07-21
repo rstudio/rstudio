@@ -20,6 +20,7 @@ import com.google.inject.Singleton;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.js.JsUtil;
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
 import org.rstudio.studio.client.notebook.CompileNotebookPrefs;
@@ -61,11 +62,22 @@ public class UIPrefs extends UIPrefsAccessor implements UiPrefsChangedHandler
             @Override
             public void onResponseReceived(Void v)
             {
-               // let satellites know prefs have changed
-               satelliteManager_.dispatchCrossWindowEvent(
-                     new UiPrefsChangedEvent(UiPrefsChangedEvent.Data.create(
-                           UiPrefsChangedEvent.GLOBAL_TYPE,
-                           session_.getSessionInfo().getUiPrefs())));
+               UiPrefsChangedEvent event = new UiPrefsChangedEvent(
+                     UiPrefsChangedEvent.Data.create(
+                              UiPrefsChangedEvent.GLOBAL_TYPE,
+                              session_.getSessionInfo().getUiPrefs()));
+
+               if (RStudioGinjector.INSTANCE.getSatellite()
+                                            .isCurrentWindowSatellite())
+               {
+                  RStudioGinjector.INSTANCE.getEventBus()
+                     .fireEventToMainWindow(event);
+               }
+               else
+               {
+                  // let satellites know prefs have changed
+                  satelliteManager_.dispatchCrossWindowEvent(event);
+               }
             }
             @Override
             public void onError(ServerError error)
@@ -407,6 +419,10 @@ public class UIPrefs extends UIPrefsAccessor implements UiPrefsChangedHandler
          // whether to show publish UI 
          showPublishUi().setGlobalValue(
                newUiPrefs.showPublishUi().getGlobalValue());
+         
+         // how to view R Markdown documents
+         rmdViewerType().setGlobalValue(
+               newUiPrefs.rmdViewerType().getGlobalValue());
       }
       else if (e.getType().equals(UiPrefsChangedEvent.PROJECT_TYPE))
       {
