@@ -54,7 +54,6 @@ public class FileBacked<T extends JavaScriptObject>
          return;
       loading_ = true;
       
-      Debug.logToRConsole("Requesting load (should only be seen once)");
       server_.readJSON(
             filePath_,
             new ServerRequestCallback<JavaScriptObject>()
@@ -62,7 +61,6 @@ public class FileBacked<T extends JavaScriptObject>
                @Override
                public void onResponseReceived(JavaScriptObject object)
                {
-                  Debug.logToRConsole("Load finished!");
                   object_ = object.cast();
                   loaded_ = true;
                   loading_ = false;
@@ -82,7 +80,6 @@ public class FileBacked<T extends JavaScriptObject>
    {
       if (loaded_)
       {
-         Debug.logToRConsole("Object already loaded; executing");
          command.execute(object_);
          return;
       }
@@ -99,7 +96,6 @@ public class FileBacked<T extends JavaScriptObject>
             
             if (loading_)
             {
-               Debug.logToRConsole("Object is loading; waiting for " + DELAY_MS + "ms...");
                retryCount++;
                schedule(DELAY_MS);
                return;
@@ -107,13 +103,11 @@ public class FileBacked<T extends JavaScriptObject>
             
             if (!loaded_)
             {
-               Debug.logToRConsole("Requesting load...");
                load();
                schedule(DELAY_MS * 2);
                return;
             }
             
-            Debug.logToRConsole("Loading!");
             command.execute(object_);
          }
       };
@@ -123,8 +117,6 @@ public class FileBacked<T extends JavaScriptObject>
    
    public void set(final T object, final Command command)
    {
-      Debug.logToRConsole("Saving editor bindings...");
-      Debug.logObject(object);
       server_.writeJSON(
             filePath_,
             object,

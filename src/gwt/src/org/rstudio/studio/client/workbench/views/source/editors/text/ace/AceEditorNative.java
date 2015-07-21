@@ -381,7 +381,6 @@ public class AceEditorNative extends JavaScriptObject {
                                                     String keys,
                                                     boolean replace)
    /*-{
-      
       var commands = this.commands;
       var command = commands.byName[id];
       
@@ -395,10 +394,6 @@ public class AceEditorNative extends JavaScriptObject {
       
       command.bindKey = keys;
       commands.addCommand(command);
-      
-      console.log(command);
-      console.log(commands);
-      
    }-*/;
    
    public final native AceCommandManager getCommandManager()

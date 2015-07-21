@@ -15,7 +15,6 @@
 package org.rstudio.core.client.command;
 
 import org.rstudio.core.client.CommandWithArg;
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.command.EditorCommandManager.EditorKeyBindings;
 import org.rstudio.core.client.command.KeyboardShortcut.KeySequence;
 import org.rstudio.core.client.files.FileBacked;
@@ -91,7 +90,7 @@ public class ApplicationCommandManager
                AppCommand command = commands_.getCommandById(commandId);
                if (command == null)
                {
-                  Debug.log("Failed to locate command with id '" + commandId + "'");
+                  // TODO: How should mis-named commands be reported?
                   continue;
                }
                
