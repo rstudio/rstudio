@@ -17,6 +17,24 @@ public class AceCommandManager extends JavaScriptObject
       return $wnd.require("ace/commands/default_commands").commands;
    }-*/;
    
+   public static final JsArray<AceCommand> getRelevantCommands()
+   {
+      JsArray<AceCommand> allCommands = getDefaultCommands();
+      JsArray<AceCommand> filtered = JavaScriptObject.createArray().cast();
+      for (int i = 0; i < allCommands.length(); i++)
+      {
+         AceCommand command = allCommands.get(i);
+         String name = command.getInternalName();
+         if (!EXCLUDED_COMMANDS_MAP.hasKey(name))
+         {
+            filtered.push(command);
+         }
+      }
+      
+      return filtered;
+      
+   }
+   
    public final native boolean hasCommand(String id) /*-{
       return this.byName[id] != null;
    }-*/;
@@ -81,6 +99,28 @@ public class AceCommandManager extends JavaScriptObject
    private final native boolean hasPrefix(String shortcut) /*-{
       var binding = this.commandKeyBinding[shortcut];
       return binding != null && binding === "chainKeys";
+   }-*/;
+   
+   private static final JsObject EXCLUDED_COMMANDS_MAP =
+         makeExcludedCommandsMap();
+   
+   private static final native JsObject makeExcludedCommandsMap()
+   /*-{
+      
+      var bad = [
+         "showSettingsMenu", "goToNextError", "goToPreviousError",
+         "togglerecording", "replaymacro", "passKeysToBrowser",
+         "copy", "cut", "cut_or_delete", "paste", "replace",
+         "insertstring", "inserttext"
+      ];
+      
+      var map = {};
+      for (var i = 0; i < bad.length; i++) {
+         map[bad[i]] = true;
+      }
+      
+      return map;
+      
    }-*/;
    
 }

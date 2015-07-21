@@ -15,10 +15,9 @@
 package org.rstudio.core.client.command;
 
 import org.rstudio.core.client.CommandWithArg;
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.command.KeyboardShortcut.KeySequence;
 import org.rstudio.core.client.files.FileBacked;
-import org.rstudio.core.client.js.JsUtil;
+import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.AddEditorCommandEvent;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -37,46 +36,34 @@ import com.google.inject.Singleton;
 @Singleton
 public class EditorCommandManager
 {
-   public static class EditorKeyBindings extends JsArray<EditorKeyBinding>
+   public static class EditorKeyBindings extends JsObject
    {
-      protected EditorKeyBindings() {}
-      
       public static final EditorKeyBindings create()
       {
-         return createArray().cast();
+         return JavaScriptObject.createObject().cast();
       }
       
-      public static final EditorKeyBindings create(int size)
+      public final EditorKeyBinding get(String key)
       {
-         return createArray(size).cast();
+         return getObject(key).cast();
       }
+      
+      protected EditorKeyBindings() {}
    }
    
    public static class EditorKeyBinding extends JavaScriptObject
    {
       protected EditorKeyBinding() {}
       
-      public final EditorKeyBinding create(String name, KeySequence keys)
-      {
-         return create(name, keys.toString());
-      }
-      
-      public final native String getName() /*-{ return this.name; }-*/;
-      
       public final KeySequence getKeyBinding()
       {
          return KeySequence.fromShortcutString(getBindingString());
       }
       
-      private final native EditorKeyBinding create(String name, String keys)
+      private final native String getBindingString()
       /*-{
-         return {
-            name: name,
-            binding: keys
-         };
+         return this;
       }-*/;
-      
-      private final native String getBindingString() /*-{ return this.binding; }-*/;
    }
    
    public EditorCommandManager()
@@ -132,6 +119,19 @@ public class EditorCommandManager
       events_.fireEvent(new AddEditorCommandEvent(id, keySequence, true));
    }
    
+   public void updateBindings(final EditorKeyBindings newBindings)
+   {
+      bindings_.execute(new CommandWithArg<EditorKeyBindings>()
+      {
+         @Override
+         public void execute(final EditorKeyBindings currentBindings)
+         {
+            currentBindings.insert(newBindings);
+            bindings_.set(currentBindings);
+         }
+      });
+   }
+   
    public void saveBindings(EditorKeyBindings bindings)
    {
       bindings_.set(bindings);
@@ -139,16 +139,16 @@ public class EditorCommandManager
    
    public void loadBindings()
    {
-      Debug.logToRConsole("Requesting bindings load");
       bindings_.execute(new CommandWithArg<EditorKeyBindings>()
       {
          @Override
          public void execute(EditorKeyBindings bindings)
          {
-            for (EditorKeyBinding binding : JsUtil.asIterable(bindings))
+            for (String commandName : bindings.iterableKeys())
             {
+               EditorKeyBinding binding = bindings.get(commandName);
                rebindCommand(
-                     binding.getName(),
+                     commandName,
                      binding.getKeyBinding());
             }
          }

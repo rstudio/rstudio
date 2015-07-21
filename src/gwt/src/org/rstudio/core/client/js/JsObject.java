@@ -142,11 +142,18 @@ public class JsObject extends JavaScriptObject
    }-*/;
 
    public final native JsArrayString keys() /*-{
-      var keys = [];
-      for (var key in this) {
-         keys.push(key);
+      return Object.keys(this);
+   }-*/;
+   
+   public final Iterable<String> iterableKeys()
+   {
+      return JsUtil.asIterable(keys());
+   }
+   
+   public final native void insert(JsObject other) /*-{
+      for (var key in other) {
+         this[key] = other[key];
       }
-      return keys;
    }-*/;
    
    public final native JsObject clone() /*-{

@@ -35,6 +35,7 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.cellview.ScrollingDataGrid;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.EditorCommandManager;
+import org.rstudio.core.client.command.EditorCommandManager.EditorKeyBindings;
 import org.rstudio.core.client.command.KeyboardHelper;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.command.KeyboardShortcut.KeySequence;
@@ -142,6 +143,10 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
    
    private void applyChanges()
    {
+      // Build up command diffs for save after application
+      EditorKeyBindings editorBindings = EditorKeyBindings.create();
+      
+      // Loop through all changes and apply based on type
       for (Map.Entry<CommandBinding, CommandBinding> entry : changes_.entrySet())
       {
          CommandBinding oldBinding = entry.getKey();
@@ -180,7 +185,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
          }
       }
       
-      // TODO: Save bindings
+      editorCommands_.updateBindings(editorBindings);
       closeDialog();
    }
    
@@ -329,7 +334,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
       }
       
       // Ace Commands
-      JsArray<AceCommand> aceCommands = AceCommandManager.getDefaultCommands();
+      JsArray<AceCommand> aceCommands = AceCommandManager.getRelevantCommands();
       for (int i = 0; i < aceCommands.length(); i++)
       {
          AceCommand command = aceCommands.get(i);
@@ -358,7 +363,6 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
             continue;
          
          String id = command.getId();
-         
          String name = StringUtil.prettyCamel(command.getId());
          KeySequence keySequence = command.getKeySequence();
          int type = CommandBinding.TYPE_RSTUDIO_COMMAND;
@@ -377,8 +381,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
       
       if (id.startsWith("mru"))
          return true;
-      if (command.getKeySequence() == null || command.getKeySequence().size() == 0)
-         return true;
+      
       return false;
    }
    
