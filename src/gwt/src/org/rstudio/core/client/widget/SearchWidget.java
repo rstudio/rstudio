@@ -318,6 +318,11 @@ public class SearchWidget extends Composite implements SearchDisplay
    {
       return lastValueSent_;
    }
+   
+   public void setPlaceholderText(String value)
+   {
+      suggestBox_.getElement().setAttribute("placeholder", value);
+   }
 
    @UiField(provided=true)
    FocusSuggestBox suggestBox_;

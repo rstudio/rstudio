@@ -19,18 +19,25 @@ import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
+import com.google.gwt.user.cellview.client.ColumnSortEvent;
 import com.google.gwt.user.cellview.client.TextColumn;
+import com.google.gwt.user.cellview.client.TextHeader;
 import com.google.gwt.user.client.ui.DockPanel;
+import com.google.gwt.user.client.ui.SuggestOracle;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.CellPreviewEvent;
 import com.google.gwt.view.client.ListDataProvider;
 import com.google.gwt.view.client.ProvidesKey;
 import com.google.inject.Inject;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.cellview.ScrollingDataGrid;
 import org.rstudio.core.client.command.AppCommand;
@@ -51,6 +58,8 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceComm
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceCommandManager;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -139,6 +148,33 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
          }
       }));
       addCancelButton();
+      
+      searchWidget_ = new SearchWidget(new SuggestOracle() {
+
+         @Override
+         public void requestSuggestions(Request request, Callback callback)
+         {
+            callback.onSuggestionsReady(
+                  request,
+                  new Response(new ArrayList<Suggestion>()));
+         }
+         
+      });
+      
+      searchWidget_.addValueChangeHandler(new ValueChangeHandler<String>()
+      {
+         @Override
+         public void onValueChange(ValueChangeEvent<String> event)
+         {
+            filter(event.getValue());
+         }
+      });
+      
+      searchWidget_.getElement().getStyle().setMarginTop(3, Unit.PX);
+      searchWidget_.getElement().getStyle().setMarginLeft(3, Unit.PX);
+      searchWidget_.setPlaceholderText("Filter...");
+      
+      addLeftWidget(searchWidget_);
    }
    
    private void applyChanges()
@@ -205,7 +241,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
    
    private void addColumns()
    {
-      addTextColumn("Name", new TextColumn<CommandBinding>()
+      nameColumn_ = textColumn("Name", new TextColumn<CommandBinding>()
       {
          @Override
          public String getValue(CommandBinding object)
@@ -214,7 +250,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
          }
       });
       
-      addTextColumn("Shortcut", new TextColumn<CommandBinding>()
+      shortcutColumn_ = textColumn("Shortcut", new TextColumn<CommandBinding>()
       {
          @Override
          public String getValue(CommandBinding object)
@@ -224,7 +260,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
          }
       });
       
-      addTextColumn("Type", new TextColumn<CommandBinding>()
+      typeColumn_ = textColumn("Type", new TextColumn<CommandBinding>()
       {
          @Override
          public String getValue(CommandBinding object)
@@ -234,10 +270,11 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
       });
    }
    
-   private void addTextColumn(String name, TextColumn<CommandBinding> column)
+   private TextColumn<CommandBinding> textColumn(String name, TextColumn<CommandBinding> column)
    {
       column.setSortable(true);
-      table_.addColumn(column, name);
+      table_.addColumn(column, new TextHeader(name));
+      return column;
    }
    
    private void addHandlers()
@@ -256,6 +293,62 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
                ;
          }
       });
+      
+      table_.addColumnSortHandler(new ColumnSortEvent.Handler()
+      {
+         @Override
+         public void onColumnSort(ColumnSortEvent event)
+         {
+            List<CommandBinding> data = dataProvider_.getList();
+            if (event.getColumn().equals(nameColumn_))
+               sort(data, 0, event.isSortAscending());
+            else if (event.getColumn().equals(shortcutColumn_))
+               sort(data, 1, event.isSortAscending());
+            else if (event.getColumn().equals(typeColumn_))
+               sort(data, 2, event.isSortAscending());
+            
+            dataProvider_.setList(data);
+         }
+      });
+   }
+   
+   private void sort(List<CommandBinding> data,
+                     final int column,
+                     final boolean ascending)
+   {
+      Collections.sort(data, new Comparator<CommandBinding>()
+      {
+         @Override
+         public int compare(CommandBinding o1, CommandBinding o2)
+         {
+            int result = 0;
+            if (column == 0)
+               result = o1.getName().compareTo(o2.getName());
+            else if (column == 1)
+               result = o1.getKeySequence().toString().compareTo(o2.getKeySequence().toString());
+            else if (column == 2)
+               result = o1.getCommandType() > o2.getCommandType() ? 1 : -1;
+               
+            return ascending ? result : -result;
+         }
+      });
+   }
+   
+   private void filter(String query)
+   {
+      Debug.logToRConsole("Filtering with query '" + query + "'");
+      List<CommandBinding> filtered = new ArrayList<CommandBinding>();
+      for (int i = 0; i < originalBindings_.size(); i++)
+      {
+         CommandBinding binding = originalBindings_.get(i);
+         String name = binding.getName();
+         if (StringUtil.isNullOrEmpty(name))
+            continue;
+         
+         if (name.toLowerCase().indexOf(query.toLowerCase()) != -1)
+            filtered.add(binding);
+      }
+      dataProvider_.setList(filtered);
    }
    
    private void onShortcutCellPreview(CellPreviewEvent<CommandBinding> preview)
@@ -371,6 +464,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
          bindings.add(new CommandBinding(id, name, keySequence, type));
       }
       
+      originalBindings_ = bindings;
       dataProvider_.setList(bindings);
    }
    
@@ -401,6 +495,14 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
    private final ScrollingDataGrid<CommandBinding> table_;
    private final ListDataProvider<CommandBinding> dataProvider_;
    private final Map<CommandBinding, CommandBinding> changes_;
+   private final SearchWidget searchWidget_;
+   
+   private List<CommandBinding> originalBindings_;
+   
+   // Columns ----
+   private TextColumn<CommandBinding> nameColumn_;
+   private TextColumn<CommandBinding> shortcutColumn_;
+   private TextColumn<CommandBinding> typeColumn_;
    
    // Injected ----
    private UserCommandManager userCommands_;
