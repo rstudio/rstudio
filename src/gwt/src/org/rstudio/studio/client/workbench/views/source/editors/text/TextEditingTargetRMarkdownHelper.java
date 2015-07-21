@@ -713,6 +713,8 @@ public class TextEditingTargetRMarkdownHelper
    }
 
    public void getRMarkdownParamsFile(final String file, 
+                                      final String encoding,
+                                      final boolean contentKnownToBeAscii,
                                       final CommandWithArg<String> onReady)
    {
       // can't do this if the server is already busy
@@ -758,8 +760,11 @@ public class TextEditingTargetRMarkdownHelper
                         // execute knit_with_parameters in the console
                         FileSystemItem targetFile = 
                                           FileSystemItem.createFile(file);
-                        consoleDispatcher_.executeCommand(
-                                          "knit_with_parameters", targetFile);
+                        consoleDispatcher_.executeCommandWithFileEncoding(
+                                             "knit_with_parameters", 
+                                             targetFile.getPath(),
+                                             encoding,
+                                             contentKnownToBeAscii);
                      }
                   });                 
             }

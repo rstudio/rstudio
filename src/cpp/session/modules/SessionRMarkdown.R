@@ -190,18 +190,20 @@
 })
 
 
-# TODO: pass encoding
 # TODO: keyboard shortcut?
 # TODO: what happens for mismatched parameters?
 # TODO: test IDE file uploads
 
-.rs.addGlobalFunction("knit_with_parameters", function(file) {
+.rs.addGlobalFunction("knit_with_parameters", 
+                      function(file, encoding = getOption("encoding")) {
    
    # result to return via event
    result <- NULL
    
    # check for parameters 
-   if (length(knitr::knit_params(readLines(file))) > 0) {
+   if (length(knitr::knit_params(readLines(file, 
+                                           warn = FALSE, 
+                                           encoding = encoding))) > 0) {
       
       # allocate temp file to hold parameter values
       paramsFile <- .Call("rs_paramsFileForRmd", file)
@@ -220,7 +222,8 @@
                .Call("rs_showRmdParamsEditor", url)
             },
             quiet = TRUE),
-         save_caption = "Knit"
+         save_caption = "Knit",
+         encoding = encoding
       )
       
       if (!is.null(params)) {

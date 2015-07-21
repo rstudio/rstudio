@@ -4215,6 +4215,8 @@ public class TextEditingTarget implements
          {
             rmarkdownHelper_.getRMarkdownParamsFile(
                docUpdateSentinel_.getPath(), 
+               docUpdateSentinel_.getEncoding(),
+               activeCodeIsAscii(),
                new CommandWithArg<String>() {
                   @Override
                   public void execute(String paramsFile)
