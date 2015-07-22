@@ -1146,7 +1146,8 @@ well as menu structures (for main menu and popup menus).
    <cmd id="vcsCommit"
         buttonLabel="Commit"
         menuLabel="_Commit..."
-        desc="Commit pending changes"/>
+        desc="Commit pending changes"
+        windowMode="main"/>
    <cmd id="vcsRevert"
         buttonLabel="Revert"
         menuLabel="Revert..."
