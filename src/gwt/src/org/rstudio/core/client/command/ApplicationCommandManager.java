@@ -103,7 +103,7 @@ public class ApplicationCommandManager
    
    private final FileBacked<EditorKeyBindings> bindings_;
    public static final String KEYBINDINGS_PATH =
-         "~/.R/keybindings/rstudio_bindings.json";
+         "~/.R/rstudio/keybindings/rstudio_bindings.json";
    
    // Injected ----
    private EventBus events_;

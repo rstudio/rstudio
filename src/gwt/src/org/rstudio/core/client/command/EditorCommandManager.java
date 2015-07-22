@@ -168,7 +168,8 @@ public class EditorCommandManager
    
    private final FileBacked<EditorKeyBindings> bindings_;
    private boolean isBindingsLoaded_ = false;
-   public static final String KEYBINDINGS_PATH = "~/.R/keybindings/editor_bindings.json";
+   public static final String KEYBINDINGS_PATH =
+         "~/.R/rstudio/keybindings/editor_bindings.json";
    
    // Injected ----
    private EventBus events_;
