@@ -5,6 +5,7 @@ used by these components are included below):
 - Qt (LGPL v2.1)
 - QtSingleApplication
 - Ace (LGPL v2.1)
+- Stan Ace Mode (LGPL 2.1)
 - Boost
 - RapidXml
 - JSON Spirit

@@ -3,6 +3,10 @@
  *
  * Copyright (C) 2009-15 by RStudio, Inc.
  *
+ * The Initial Developer of the Original Code is Jeffrey Arnold
+ * Portions created by the Initial Developer are Copyright (C) 2015
+ * the Initial Developer. All Rights Reserved.
+ *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
  * this program is licensed to you under the terms of version 3 of the
