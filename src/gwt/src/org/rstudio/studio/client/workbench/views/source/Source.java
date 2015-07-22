@@ -86,6 +86,7 @@ import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.model.SessionUtils;
+import org.rstudio.studio.client.workbench.model.UnsavedChangesItem;
 import org.rstudio.studio.client.workbench.model.UnsavedChangesTarget;
 import org.rstudio.studio.client.workbench.model.helper.IntStateValue;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
@@ -1817,7 +1818,15 @@ public class Source implements InsertSourceHandler,
                               Command onCompleted,
                               Command onCancelled)
    {
-      // TODO: needs to handle case where editing target is in another window
+      if (windowManager_.isMainSourceWindow() &&
+          !windowManager_.getWindowIdOfDocId(target.getId()).isEmpty())
+      {
+         // we are the main window, and we're being asked to save a document
+         // that's in a different window; perform the save over there
+         windowManager_.saveWithPrompt(UnsavedChangesItem.create(target), 
+               onCompleted);
+         return;
+      }
       EditingTarget editingTarget = getEditingTargetForId(target.getId());
       if (editingTarget != null)
          editingTarget.saveWithPrompt(onCompleted, onCancelled);

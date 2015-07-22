@@ -237,6 +237,20 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
       return null;
    }
    
+   public void saveWithPrompt(UnsavedChangesItem item, Command onCompleted)
+   {
+      String windowId = getWindowIdOfDocId(item.getId());
+      WindowEx window = getSourceWindowObject(windowId);
+      if (window == null || window.isClosed())
+      {
+         onCompleted.execute();
+         return;
+      }
+      // raise the window and ask it to save the item
+      window.focus();
+      saveWithPrompt(getSourceWindowObject(windowId), item, onCompleted);
+   }
+   
    public void handleUnsavedChangesBeforeExit(
          ArrayList<UnsavedChangesTarget> targets,
          Command onCompleted)
@@ -276,8 +290,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
       {
          pSatelliteManager_.get().activateSatelliteWindow(
                SourceSatellite.NAME_PREFIX + windowId);
-         WindowEx window = pSatelliteManager_.get().getSatelliteWindowObject(
-               SourceSatellite.NAME_PREFIX + windowId);
+         WindowEx window = getSourceWindowObject(windowId);
          if (window != null)
          {
             events_.fireEventToSatellite(evt, window);
@@ -599,6 +612,11 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
       satellite.rstudioHandleUnsavedChangesBeforeExit(items, onCompleted);
    }-*/;
    
+   private final native void saveWithPrompt(WindowEx satellite, 
+         UnsavedChangesItem item, Command onCompleted) /*-{
+      satellite.rstudioSaveWithPrompt(item, onCompleted);
+   }-*/;
+   
    private boolean updateWindowGeometry()
    {
       final ArrayList<String> changedWindows = new ArrayList<String>();
@@ -657,9 +675,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
    {
       for (final String windowId: sourceWindows_.keySet())
       {
-         final WindowEx window = pSatelliteManager_.get()
-               .getSatelliteWindowObject(
-                     SourceSatellite.NAME_PREFIX + windowId);
+         final WindowEx window = getSourceWindowObject(windowId);
          if (window == null || window.isClosed())
             continue;
          
@@ -700,11 +716,21 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
       }
    }
    
-   public interface SourceWindowCommand
+   private WindowEx getSourceWindowObject(String windowId)
+   {
+      return pSatelliteManager_.get().getSatelliteWindowObject(
+            SourceSatellite.NAME_PREFIX + windowId);
+   }
+   
+   // Private types -----------------------------------------------------------
+   
+   private interface SourceWindowCommand
    {
       public void execute(String windowId, WindowEx window, 
             Command continuation);
    }
+   
+   // Members -----------------------------------------------------------------
    
    private final EventBus events_;
    private final Provider<SatelliteManager> pSatelliteManager_;

@@ -50,6 +50,7 @@ import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.LastChanceSaveEvent;
+import org.rstudio.studio.client.workbench.model.UnsavedChangesItem;
 import org.rstudio.studio.client.workbench.model.UnsavedChangesTarget;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.ui.unsaved.UnsavedChangesDialog;
@@ -224,9 +225,12 @@ public class ApplicationQuit implements SaveActionChangedHandler,
                true);        
       }
       
-      // a single unsaved document
+      // a single unsaved document (can be any document in desktop mode, but 
+      // must be from the main window in web mode)
       else if (saveAction != SaveAction.SAVEASK && 
-               unsavedSourceDocs.size() == 1)
+               unsavedSourceDocs.size() == 1 &&
+               (Desktop.isDesktop() || 
+                !(unsavedSourceDocs.get(0) instanceof UnsavedChangesItem)))
       {
          sourceShim.saveWithPrompt(
            unsavedSourceDocs.get(0), 
