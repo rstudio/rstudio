@@ -88,7 +88,6 @@ public class SnippetHelper
    
    public ArrayList<String> getAvailableSnippets()
    {
-      ensureSnippetsLoaded();
       return JsArrayUtil.fromJsArrayString(
             getAvailableSnippetsImpl(manager_, getActiveMode()));
    }
@@ -178,7 +177,8 @@ public class SnippetHelper
             
          manager.files[id] = m;
          if (!m.snippets && m.snippetText)
-         m.snippets = manager.parseSnippetFile(m.snippetText);
+            m.snippets = manager.parseSnippetFile(m.snippetText);
+            
          manager.register(m.snippets || [], m.scope);
       }
       
