@@ -26,7 +26,6 @@ import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.studio.client.RStudioGinjector;
-import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.FilePathUtils;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -62,24 +61,20 @@ public class SnippetHelper
       
       RStudioGinjector.INSTANCE.injectMembers(this);
       
-      events_.addHandler(
-            EditorLoadedEvent.TYPE,
-            new EditorLoadedHandler()
-            {
-               @Override
-               public void onEditorLoaded(EditorLoadedEvent event)
-               {
-                  ensureSnippetsLoaded();
-               }
-            });
+      editor_.getWidget().addEditorLoadedHandler(new EditorLoadedHandler()
+      {
+         @Override
+         public void onEditorLoaded(EditorLoadedEvent event)
+         {
+            ensureSnippetsLoaded();
+         }
+      });
    }
    
    @Inject
-   public void initialize(SnippetServerOperations server,
-                          EventBus events)
+   public void initialize(SnippetServerOperations server)
    {
       server_ = server;
-      events_ = events;
    }
    
    private static final native SnippetManager getSnippetManager() /*-{
@@ -430,6 +425,5 @@ public class SnippetHelper
    
    // Injected ----
    private SnippetServerOperations server_;
-   private EventBus events_;
    
 }

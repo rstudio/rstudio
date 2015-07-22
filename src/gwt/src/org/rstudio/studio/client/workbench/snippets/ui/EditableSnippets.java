@@ -88,6 +88,7 @@ public class EditableSnippets extends Composite
    }
    
    private static native String getSnippetText(String mode) /*-{
+      
       // Try to get RStudio custom snippets first; if that fails,
       // then get Ace snippets.
       var rsSnippetId = "rstudio/snippets/" + mode;
