@@ -46,6 +46,7 @@ import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.command.KeyboardHelper;
 import org.rstudio.core.client.command.KeyboardShortcut;
+import org.rstudio.core.client.command.UserCommandManager.UserCommandResult;
 import org.rstudio.core.client.events.EnsureHeightHandler;
 import org.rstudio.core.client.events.EnsureVisibleHandler;
 import org.rstudio.core.client.events.HasEnsureHeightHandlers;
@@ -57,9 +58,11 @@ import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.widget.*;
 import org.rstudio.studio.client.application.Desktop;
+import org.rstudio.studio.client.application.events.AddEditorCommandEvent;
 import org.rstudio.studio.client.application.events.ChangeFontSizeEvent;
 import org.rstudio.studio.client.application.events.ChangeFontSizeHandler;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.application.events.RequestEditorCommandsEvent;
 import org.rstudio.studio.client.common.*;
 import org.rstudio.studio.client.common.debugging.BreakpointManager;
 import org.rstudio.studio.client.common.debugging.events.BreakpointsSavedEvent;
@@ -98,6 +101,7 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
+import org.rstudio.studio.client.server.remote.ExecuteUserCommandEvent;
 import org.rstudio.studio.client.shiny.events.LaunchShinyApplicationEvent;
 import org.rstudio.studio.client.shiny.events.ShinyApplicationStatusEvent;
 import org.rstudio.studio.client.shiny.model.ShinyApplicationParams;
@@ -695,7 +699,36 @@ public class TextEditingTarget implements
                   }
                }
             });
-
+      
+      events_.addHandler(
+            AddEditorCommandEvent.TYPE,
+            new AddEditorCommandEvent.Handler()
+            {
+               @Override
+               public void onAddEditorCommand(AddEditorCommandEvent event)
+               {
+                  getDocDisplay().addEditorCommandBinding(
+                        event.getId(),
+                        event.getKeySequence(),
+                        event.replaceOldBindings());
+               }
+            });
+      
+      events_.addHandler(
+            RequestEditorCommandsEvent.TYPE,
+            new RequestEditorCommandsEvent.Handler()
+            {
+               @Override
+               public void onRetrieveEditorCommands(RequestEditorCommandsEvent event)
+               {
+                  if (event.getAceCommandManager() != null)
+                     return;
+                  
+                  DocDisplay docDisplay = getDocDisplay();
+                  event.setAceCommandManager(docDisplay.getCommandManager());
+               }
+            });
+      
       events_.addHandler(DocTabDragStateChangedEvent.TYPE, 
             new DocTabDragStateChangedEvent.Handler()
             {
@@ -708,6 +741,50 @@ public class TextEditingTarget implements
                         DocTabDragStateChangedEvent.STATE_NONE);
                }
             });
+
+   }
+   
+   public void onExecuteUserCommand(final ExecuteUserCommandEvent event)
+   {
+      withSavedDoc(new Command()
+      {
+         @Override
+         public void execute()
+         {
+            Range range = docDisplay_.getSelectionRange();
+            server_.executeUserCommand(
+                  event.getCommandName(),
+                  docDisplay_.getLines(),
+                  range.getStart().getRow(),
+                  range.getStart().getColumn(),
+                  range.getEnd().getRow(),
+                  range.getEnd().getColumn(),
+                  new ServerRequestCallback<JsArray<UserCommandResult>>()
+                  {
+                     @Override
+                     public void onResponseReceived(JsArray<UserCommandResult> results)
+                     {
+                        applyUserCommandResult(results);
+                     }
+
+                     @Override
+                     public void onError(ServerError error)
+                     {
+                        Debug.logError(error);
+                     }
+                  });
+         }
+      });
+   }
+   
+   private void applyUserCommandResult(JsArray<UserCommandResult> results)
+   {
+      for (int i = 0; i < results.length(); i++)
+      {
+         UserCommandResult result = results.get(i);
+         docDisplay_.replaceRange(result.getRange(), result.getText());
+      }
+
    }
    
    @Override
@@ -4922,6 +4999,11 @@ public class TextEditingTarget implements
             new CommandWithArg<Boolean>() {
                public void execute(Boolean arg) {
                   docDisplay.setUseVimMode(arg);
+               }}));
+      releaseOnDismiss.add(prefs.enableEmacsKeybindings().bind(
+            new CommandWithArg<Boolean>() {
+               public void execute(Boolean arg) {
+                  docDisplay.setUseEmacsKeybindings(arg);
                }}));
       releaseOnDismiss.add(prefs.codeCompleteOther().bind(
             new CommandWithArg<String>() {

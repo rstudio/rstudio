@@ -1,5 +1,5 @@
 /*
- * KeyboardHandler.java
+ * SessionUserCommands.hpp
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -12,20 +12,26 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.workbench.views.source.editors.text.ace;
 
-import com.google.gwt.core.client.JavaScriptObject;
+#ifndef SESSION_USER_COMMANDS_HPP
+#define SESSION_USER_COMMANDS_HPP
 
-public class KeyboardHandler extends JavaScriptObject
-{
-   protected KeyboardHandler() {}
-   
-   public static native KeyboardHandler vim() /*-{
-      return $wnd.require("ace/keyboard/vim").handler;
-   }-*/;
-   
-   public static native KeyboardHandler emacs() /*-{
-      return $wnd.require("ace/keyboard/emacs").handler;
-   }-*/;
-   
-}
+namespace rstudio {
+namespace core {
+class Error;
+} // namespace core
+} // namespace rstudio
+
+namespace rstudio {
+namespace session {
+namespace modules {
+namespace user_commands {
+
+core::Error initialize();
+
+} // namespace user_commands
+} // namespace modules
+} // namespace session
+} // namespace rstudio
+
+#endif /* SESSION_USER_COMMANDS_HPP */

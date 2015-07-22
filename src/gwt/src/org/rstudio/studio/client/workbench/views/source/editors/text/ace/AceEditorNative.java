@@ -377,4 +377,28 @@ public class AceEditorNative extends JavaScriptObject {
       return this.container;
    }-*/;
    
+   public final native void addEditorCommandBinding(String id,
+                                                    String keys,
+                                                    boolean replace)
+   /*-{
+      var commands = this.commands;
+      var command = commands.byName[id];
+      
+      if (command == null) {
+         throw new Error("No command with id '" + id + "'");
+      }
+      
+      if (replace) {
+         commands.removeCommand(id);
+      }
+      
+      command.bindKey = keys;
+      commands.addCommand(command);
+   }-*/;
+   
+   public final native AceCommandManager getCommandManager()
+   /*-{
+      return this.commands;
+   }-*/;
+   
 }

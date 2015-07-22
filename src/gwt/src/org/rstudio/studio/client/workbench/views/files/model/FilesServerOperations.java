@@ -14,8 +14,10 @@
  */
 package org.rstudio.studio.client.workbench.views.files.model;
 
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
+
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
@@ -82,4 +84,11 @@ public interface FilesServerOperations
    String getFileExportUrl(String name,
                            FileSystemItem parentDirectory,
                            ArrayList<String> filenames);
+   
+   void writeJSON(String path,
+                  JavaScriptObject object,
+                  ServerRequestCallback<Boolean> requestCallback);
+   
+   void readJSON(String path,
+                 ServerRequestCallback<JavaScriptObject> requestCallback);
 }

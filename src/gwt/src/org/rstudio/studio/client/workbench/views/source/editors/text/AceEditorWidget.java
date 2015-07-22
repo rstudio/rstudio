@@ -335,7 +335,8 @@ public class AceEditorWidget extends Composite
       editor_.getRenderer().updateFontSize();
       onResize();
       
-      fireEvent(new EditorLoadedEvent());
+      fireEvent(new EditorLoadedEvent(editor_));
+      events_.fireEvent(new EditorLoadedEvent(editor_));
 
       int delayMs = initToEmptyString_ ? 100 : 500;
 

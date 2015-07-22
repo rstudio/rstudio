@@ -157,6 +157,10 @@ public class UIPrefs extends UIPrefsAccessor implements UiPrefsChangedHandler
          useVimMode().setGlobalValue(
                               newUiPrefs.useVimMode().getGlobalValue());
          
+         // emacs keybindings
+         enableEmacsKeybindings().setGlobalValue(
+                              newUiPrefs.enableEmacsKeybindings().getGlobalValue());
+         
          continueCommentsOnNewline().setGlobalValue(
                               newUiPrefs.continueCommentsOnNewline().getGlobalValue());
          

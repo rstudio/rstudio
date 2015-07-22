@@ -135,6 +135,7 @@ const int kProjectUsersChanged = 110;
 const int kRVersionsChanged = 111;
 const int kRmdParamsEdit = 112;
 const int kRmdParamsReady = 113;
+const int kRegisterUserCommand = 114;
 }
 
 void ClientEvent::init(int type, const json::Value& data)
@@ -364,6 +365,8 @@ std::string ClientEvent::typeName() const
          return "rmd_params_edit";
       case client_events::kRmdParamsReady:
          return "rmd_params_ready";
+      case client_events::kRegisterUserCommand:
+         return "register_user_command";
       default:
          LOG_WARNING_MESSAGE("unexpected event type: " + 
                              safe_convert::numberToString(type_));

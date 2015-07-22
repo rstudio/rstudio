@@ -77,6 +77,7 @@ import org.rstudio.studio.client.rmarkdown.model.RmdTemplateData;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
+import org.rstudio.studio.client.server.remote.ExecuteUserCommandEvent;
 import org.rstudio.studio.client.workbench.FileMRUList;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -501,6 +502,22 @@ public class Source implements InsertSourceHandler,
       });
       
       events.addHandler(PopoutDocEvent.TYPE, this);
+      
+      events.addHandler(
+            ExecuteUserCommandEvent.TYPE,
+            new ExecuteUserCommandEvent.Handler()
+            {
+               @Override
+               public void onExecuteUserCommand(ExecuteUserCommandEvent event)
+               {
+                  if (activeEditor_ == null || !(activeEditor_ instanceof TextEditingTarget))
+                     return;
+                  
+                  TextEditingTarget target = (TextEditingTarget) activeEditor_;
+                  target.onExecuteUserCommand(event);
+               }
+            });
+
       events.addHandler(DocWindowChangedEvent.TYPE, this);
 
       // Suppress 'CTRL + ALT + SHIFT + click' to work around #2483 in Ace
@@ -576,6 +593,17 @@ public class Source implements InsertSourceHandler,
          {
             ShortcutManager.INSTANCE.setEditorMode(arg ? 
                   KeyboardShortcut.MODE_VIM :
+                  KeyboardShortcut.MODE_NONE);
+         }
+      });
+      
+      uiPrefs_.enableEmacsKeybindings().bind(new CommandWithArg<Boolean>()
+      {
+         @Override
+         public void execute(Boolean arg)
+         {
+            ShortcutManager.INSTANCE.setEditorMode(arg ?
+                  KeyboardShortcut.MODE_EMACS :
                   KeyboardShortcut.MODE_NONE);
          }
       });

@@ -33,6 +33,11 @@ public abstract class CommandBundle
 
       commandsById_.put(id, command);
    }
+   
+   public HashMap<String, AppCommand> getCommands()
+   {
+      return commandsById_;
+   }
 
    private final HashMap<String, AppCommand> commandsById_ =
          new HashMap<String, AppCommand>();

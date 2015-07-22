@@ -21,14 +21,19 @@ import java.util.HashMap;
 import java.util.List;
 
 import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.command.KeyboardShortcut.KeySequence;
 import org.rstudio.core.client.events.NativeKeyDownEvent;
 import org.rstudio.core.client.events.NativeKeyDownHandler;
-
+import org.rstudio.studio.client.RStudioGinjector;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Event.NativePreviewEvent;
 import com.google.gwt.user.client.Event.NativePreviewHandler;
+import com.google.gwt.user.client.Timer;
+import com.google.inject.Inject;
 
 public class ShortcutManager implements NativePreviewHandler,
                                         NativeKeyDownHandler
@@ -42,7 +47,36 @@ public class ShortcutManager implements NativePreviewHandler,
 
    private ShortcutManager()
    {
+      keyBuffer_ = new KeySequence();
+      keyTimer_ = new Timer()
+      {
+         @Override
+         public void run()
+         {
+            resetKeyBuffer();
+         }
+      };
+      
+      Scheduler.get().scheduleDeferred(new ScheduledCommand()
+      {
+         @Override
+         public void execute()
+         {
+            RStudioGinjector.INSTANCE.injectMembers(ShortcutManager.this);
+         }
+      });
+      
       Event.addNativePreviewHandler(this);
+   }
+   
+   @Inject
+   private void initialize(ApplicationCommandManager appCommands,
+                           EditorCommandManager editorCommands,
+                           UserCommandManager userCommands)
+   {
+      appCommands_ = appCommands;
+      editorCommands_ = editorCommands;
+      userCommands_ = userCommands;
    }
 
    public boolean isEnabled()
@@ -66,7 +100,16 @@ public class ShortcutManager implements NativePreviewHandler,
          }
       };
    }
-
+   
+   public void replaceBinding(KeySequence keys, AppCommand command)
+   {
+      KeyboardShortcut shortcut = new KeyboardShortcut(keys);
+      if (commands_.containsKey(shortcut))
+         commands_.remove(shortcut);
+      
+      register(keys, command, "", "", "");
+   }
+   
    public void register(int modifiers, 
                         int keyCode, 
                         AppCommand command, 
@@ -77,8 +120,44 @@ public class ShortcutManager implements NativePreviewHandler,
       if (!BrowseCap.hasMetaKey() && (modifiers & KeyboardShortcut.META) != 0)
          return;
       
+      register(
+            new KeySequence(keyCode, modifiers),
+            command,
+            groupName,
+            title,
+            disableModes);
+   }
+   
+   public void register(int m1,
+                        int k1,
+                        int m2,
+                        int k2,
+                        AppCommand command,
+                        String groupName,
+                        String title,
+                        String disableModes)
+   {
+      KeySequence sequence = new KeySequence();
+      sequence.add(k1, m1);
+      sequence.add(k2, m2);
+      register(sequence, command, groupName, title, disableModes);
+   }
+   
+   public void register(KeySequence keys, AppCommand command)
+   {
+      register(keys, command, "", "", "");
+   }
+   
+   public void register(KeySequence keys,
+                        AppCommand command,
+                        String groupName,
+                        String title,
+                        String disableModes)
+   {
+   
       KeyboardShortcut shortcut = 
-            new KeyboardShortcut(modifiers, keyCode, groupName, title, disableModes);
+            new KeyboardShortcut(keys, groupName, title, disableModes);
+      
       if (command == null)
       {
          // If the shortcut is unbound, check to see whether there's another
@@ -118,14 +197,48 @@ public class ShortcutManager implements NativePreviewHandler,
          modalShortcuts_.add(shortcut);
       }
    }
+   
+   private void resetKeyBuffer()
+   {
+      keyBuffer_.clear();
+   }
+   
+   private void updateKeyBuffer()
+   {
+      if (keyBuffer_.isEmpty())
+         return;
+      
+      // If we have a prefix match, keep the keybuffer alive.
+      for (KeyboardShortcut shortcut : commands_.keySet())
+         if (shortcut.startsWith(keyBuffer_))
+            return;
+      
+      for (KeyboardShortcut shortcut : userCommands_.getKeyboardShortcuts())
+         if (shortcut.startsWith(keyBuffer_))
+            return;
+      
+      if (editorCommands_.hasPrefix(keyBuffer_))
+         return;
+      
+      // Otherwise, clear the keybuffer.
+      resetKeyBuffer();
+   }
 
    public void onKeyDown(NativeKeyDownEvent evt)
    {
       if (evt.isCanceled())
          return;
 
+      keyTimer_.schedule(3000);
       if (handleKeyDown(evt.getEvent()))
+      {
          evt.cancel();
+         resetKeyBuffer();
+      }
+      else
+      {
+         updateKeyBuffer();
+      }
    }
 
    public void onPreviewNativeEvent(NativePreviewEvent event)
@@ -133,10 +246,18 @@ public class ShortcutManager implements NativePreviewHandler,
       if (event.isCanceled())
          return;
 
+      keyTimer_.schedule(3000);
       if (event.getTypeInt() == Event.ONKEYDOWN)
       {
          if (handleKeyDown(event.getNativeEvent()))
+         {
             event.cancel();
+            resetKeyBuffer();
+         }
+         else
+         {
+            updateKeyBuffer();
+         }
       }
    }
    
@@ -209,10 +330,13 @@ public class ShortcutManager implements NativePreviewHandler,
 
    private boolean handleKeyDown(NativeEvent e)
    {
-      int modifiers = KeyboardShortcut.getModifierValue(e);
-
-      KeyboardShortcut shortcut = new KeyboardShortcut(modifiers,
-                                                       e.getKeyCode());
+      // Don't dispatch on bare modifier keypresses.
+      // TODO: We might want to enable e.g. 'Shift + Shift' dispatch in the future.
+      if (KeyboardHelper.isModifierKey(e.getKeyCode()))
+         return false;
+      
+      keyBuffer_.add(e);
+      KeyboardShortcut shortcut = new KeyboardShortcut(keyBuffer_);
 
       // check for disabled modal shortcuts if we're modal
       if (editorMode_ > 0)
@@ -226,7 +350,12 @@ public class ShortcutManager implements NativePreviewHandler,
             }
          }
       }
-
+      
+      // Check for user-defined commands.
+      if (userCommands_.dispatch(shortcut))
+         return true;
+      
+      // Check for RStudio AppCommands.
       if (!commands_.containsKey(shortcut) || commands_.get(shortcut) == null) 
       {
          return false;
@@ -259,13 +388,24 @@ public class ShortcutManager implements NativePreviewHandler,
 
       return command != null;
    }
-
+   
    private int disableCount_ = 0;
    private int editorMode_ = KeyboardShortcut.MODE_NONE;
+   
+   private final KeySequence keyBuffer_;
+   private final Timer keyTimer_;
+   
    private final HashMap<KeyboardShortcut, ArrayList<AppCommand> > commands_
                                   = new HashMap<KeyboardShortcut, ArrayList<AppCommand> >();
+   
    private ArrayList<KeyboardShortcut> unboundShortcuts_
                                   = new ArrayList<KeyboardShortcut>();
    private ArrayList<KeyboardShortcut> modalShortcuts_ 
                                   = new ArrayList<KeyboardShortcut>();
+   
+   // Injected ----
+   private UserCommandManager userCommands_;
+   private EditorCommandManager editorCommands_;
+   @SuppressWarnings("unused") private ApplicationCommandManager appCommands_;
+   
 }

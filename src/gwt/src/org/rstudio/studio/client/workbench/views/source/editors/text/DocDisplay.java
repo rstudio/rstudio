@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
+import org.rstudio.core.client.command.KeyboardShortcut.KeySequence;
 import org.rstudio.studio.client.common.debugging.model.Breakpoint;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.server.Void;
@@ -24,6 +25,7 @@ import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEdito
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorSelection;
 import org.rstudio.studio.client.workbench.views.output.lint.model.AceAnnotation;
 import org.rstudio.studio.client.workbench.views.output.lint.model.LintItem;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceCommandManager;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceFold;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Anchor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Mode.InsertChunkInfo;
@@ -45,6 +47,7 @@ import org.rstudio.studio.client.workbench.views.source.events.CollabEditStartPa
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.event.dom.client.FocusHandler;
 import com.google.gwt.event.dom.client.HasFocusHandlers;
 import com.google.gwt.event.dom.client.HasKeyDownHandlers;
@@ -83,6 +86,8 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void setCppCompletionContext(CppCompletionContext cppContext);
    void setRCompletionContext(RCompletionContext rContext);
    String getCode();
+   JsArrayString getLines();
+   JsArrayString getLines(int startRow, int endRow);
    void setCode(String code, boolean preserveCursorPosition);
    void insertCode(String code, boolean blockMode);
    void focus();
@@ -104,6 +109,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    
    void clearSelection();
    void replaceSelection(String code);
+   void replaceRange(Range range, String text);
    boolean moveSelectionToNextLine(boolean skipBlankLines);
    boolean moveSelectionToBlankLine(); 
    
@@ -144,6 +150,8 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void setShowIndentGuides(boolean show);
    void setBlinkingCursor(boolean blinking);
    
+   void setUseEmacsKeybindings(boolean use);
+   
    void setUseVimMode(boolean use);
    boolean isVimModeOn();
    boolean isVimInInsertMode();
@@ -156,6 +164,9 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void unfold(Range range);
    
    void toggleCommentLines();
+   
+   AceCommandManager getCommandManager();
+   void addEditorCommandBinding(String id, KeySequence keys, boolean replace);
 
    HandlerRegistration addEditorFocusHandler(FocusHandler handler);
    

@@ -64,8 +64,26 @@ public class EditingPreferencesPane extends PreferencesPane
             "Continue comment when inserting new line",
             prefs_.continueCommentsOnNewline(),
             "When enabled, pressing enter will continue comments on new lines. Press Shift + Enter to exit a comment."));
-      editingPanel.add(checkboxPref("Enable vim editing mode", prefs_.useVimMode()));
-     
+      
+      editorMode_ = new SelectWidget(
+            "Editor Keybindings:",
+            new String[] {
+                  "Default",
+                  "Vim",
+                  "Emacs"
+            },
+            new String[] {
+                  UIPrefsAccessor.EDITOR_KEYBINDINGS_DEFAULT,
+                  UIPrefsAccessor.EDITOR_KEYBINDINGS_VIM,
+                  UIPrefsAccessor.EDITOR_KEYBINDINGS_EMACS
+            },
+            false,
+            true,
+            false);
+      
+      spaced(editorMode_);
+      editingPanel.add(editorMode_);
+      
       Label executionLabel = headerLabel("Execution");
       editingPanel.add(executionLabel);
       executionLabel.getElement().getStyle().setMarginTop(8, Unit.PX);
@@ -221,8 +239,7 @@ public class EditingPreferencesPane extends PreferencesPane
         
       
       VerticalPanel diagnosticsPanel = new VerticalPanel();
-      Label rLabel = headerLabel("R Diagnostics");
-      diagnosticsPanel.add(spacedBefore(rLabel));
+      diagnosticsPanel.add(headerLabel("R Diagnostics"));
       final CheckBox chkShowRDiagnostics = checkboxPref("Show diagnostics for R", prefs.showDiagnosticsR());
       diagnosticsPanel.add(chkShowRDiagnostics);
       
@@ -311,6 +328,12 @@ public class EditingPreferencesPane extends PreferencesPane
    {
       showCompletions_.setValue(prefs_.codeComplete().getValue());
       showCompletionsOther_.setValue(prefs_.codeCompleteOther().getValue());
+      if (prefs_.useVimMode().getValue())
+         editorMode_.setValue(UIPrefsAccessor.EDITOR_KEYBINDINGS_VIM);
+      else if (prefs_.enableEmacsKeybindings().getValue())
+         editorMode_.setValue(UIPrefsAccessor.EDITOR_KEYBINDINGS_EMACS);
+      else
+         editorMode_.setValue(UIPrefsAccessor.EDITOR_KEYBINDINGS_DEFAULT);
    }
    
    @Override
@@ -321,10 +344,15 @@ public class EditingPreferencesPane extends PreferencesPane
       prefs_.codeComplete().setGlobalValue(showCompletions_.getValue());
       prefs_.codeCompleteOther().setGlobalValue(showCompletionsOther_.getValue());
       
+      String editorMode = editorMode_.getValue();
+      boolean isVim = editorMode.equals(UIPrefsAccessor.EDITOR_KEYBINDINGS_VIM);
+      boolean isEmacs = editorMode.equals(UIPrefsAccessor.EDITOR_KEYBINDINGS_EMACS);
+      
+      prefs_.useVimMode().setGlobalValue(isVim);
+      prefs_.enableEmacsKeybindings().setGlobalValue(isEmacs);
+      
       return reload;
    }
-   
-   
  
    @Override
    public ImageResource getIcon()
@@ -358,6 +386,7 @@ public class EditingPreferencesPane extends PreferencesPane
    private final CheckBox showMargin_;
    private final SelectWidget showCompletions_;
    private final SelectWidget showCompletionsOther_;
+   private final SelectWidget editorMode_;
    
    
 }

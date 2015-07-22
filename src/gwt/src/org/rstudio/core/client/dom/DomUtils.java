@@ -776,6 +776,10 @@ public class DomUtils
       element.style[name] = value;
    }-*/;
    
+   public static native final Element getElementById(String id) /*-{
+      return $doc.getElementById(id);
+   }-*/;
+   
    public static Element[] getElementsByClassName(String classes)
    {
       Element documentEl = Document.get().cast();

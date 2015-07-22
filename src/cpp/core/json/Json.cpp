@@ -143,8 +143,18 @@ void write(const Value& value, std::ostream& os)
 void writeFormatted(const Value& value, std::ostream& os)
 {
    json_spirit::write_formatted(value, os);
-}   
-   
+}
+
+std::string write(const Value& value)
+{
+   return json_spirit::write(value);
+}
+
+std::string writeFormatted(const Value& value)
+{
+   return json_spirit::write_formatted(value);
+}
+
 } // namespace json
 } // namespace core
 } // namespace rstudio

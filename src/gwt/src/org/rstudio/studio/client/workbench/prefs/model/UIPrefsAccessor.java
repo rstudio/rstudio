@@ -98,9 +98,18 @@ public class UIPrefsAccessor extends Prefs
       return bool("continue_comments_on_newline", false);
    }
    
+   public static final String EDITOR_KEYBINDINGS_DEFAULT = "default";
+   public static final String EDITOR_KEYBINDINGS_VIM = "vim";
+   public static final String EDITOR_KEYBINDINGS_EMACS = "emacs";
+   
    public PrefValue<Boolean> useVimMode()
    {
       return bool("use_vim_mode", false);
+   }
+   
+   public PrefValue<Boolean> enableEmacsKeybindings()
+   {
+      return bool("enable_emacs_keybindings", false);
    }
    
    public PrefValue<Boolean> insertMatching()

@@ -289,6 +289,7 @@ public abstract class
    public abstract AppCommand showShellDialog();
    public abstract AppCommand macPreferences();
    public abstract AppCommand showOptions();
+   public abstract AppCommand modifyKeyboardShortcuts();
 
    // Help
    public abstract AppCommand helpBack();
@@ -404,4 +405,7 @@ public abstract class
    // Other
    public abstract AppCommand checkSpelling();   
    public abstract AppCommand maximizeConsole();
+   
+   public static final String KEYBINDINGS_PATH =
+         "~/.R/keybindings/rstudio_commands.json";
 }

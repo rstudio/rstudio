@@ -85,6 +85,7 @@ SEXP functionBody(SEXP functionSEXP);
 // type checking
 bool isString(SEXP object);
 bool isLanguage(SEXP object);
+bool isList(SEXP object);
 bool isMatrix(SEXP object);
 bool isDataFrame(SEXP object);   
 bool isNull(SEXP object);

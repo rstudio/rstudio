@@ -16,6 +16,7 @@ package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
@@ -41,6 +42,7 @@ import org.rstudio.core.client.ExternalJavaScriptLoader.Callback;
 import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.KeyboardShortcut;
+import org.rstudio.core.client.command.KeyboardShortcut.KeySequence;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.regex.Match;
@@ -400,6 +402,19 @@ public class AceEditor implements DocDisplay,
 
       getSession().reindent(range);
    }
+   
+   public AceCommandManager getCommandManager()
+   {
+      return getWidget().getEditor().getCommandManager();
+   }
+   
+   public void addEditorCommandBinding(String id, KeySequence keys, boolean replace)
+   {
+      getWidget().getEditor().addEditorCommandBinding(
+            id,
+            keys.toString(),
+            replace);
+   }
 
    @Inject
    void initialize(CodeToolsServerOperations server,
@@ -592,19 +607,17 @@ public class AceEditor implements DocDisplay,
    private void updateKeyboardHandlers()
    {
       // create a keyboard previewer for our special hooks
-      AceKeyboardPreviewer previewer = new AceKeyboardPreviewer(
-                                                         completionManager_);
+      AceKeyboardPreviewer previewer = new AceKeyboardPreviewer(completionManager_);
 
-      // reset keyboard handlers
-      widget_.getEditor().setKeyboardHandler(null);
-
-      // if required add vim handlers to main editor
+      // set default key handler
       if (useVimMode_)
-      {
-         widget_.getEditor().addKeyboardHandler(KeyboardHandler.vim());
-      }
-
-      // add the previewer's handler
+         widget_.getEditor().setKeyboardHandler(KeyboardHandler.vim());
+      else if (useEmacsKeybindings_)
+         widget_.getEditor().setKeyboardHandler(KeyboardHandler.emacs());
+      else
+         widget_.getEditor().setKeyboardHandler(null);
+      
+      // add the previewer
       widget_.getEditor().addKeyboardHandler(previewer.getKeyboardHandler());
    }
 
@@ -752,7 +765,19 @@ public class AceEditor implements DocDisplay,
       return getCode(((AceInputEditorPosition)selection.getStart()).getValue(),
                      ((AceInputEditorPosition)selection.getEnd()).getValue());
    }
-
+   
+   @Override
+   public JsArrayString getLines()
+   {
+      return getLines(0, getSession().getLength());
+   }
+   
+   @Override
+   public JsArrayString getLines(int startRow, int endRow)
+   {
+      return getSession().getLines(startRow, endRow);
+   }
+   
    public void focus()
    {
       widget_.getEditor().focus();
@@ -1441,6 +1466,16 @@ public class AceEditor implements DocDisplay,
       widget_.getEditor().getRenderer().setShowPrintMargin(on);
    }
 
+   @Override
+   public void setUseEmacsKeybindings(boolean use)
+   {
+      if (widget_.getEditor().getReadOnly())
+         return;
+
+      useEmacsKeybindings_ = use;
+      updateKeyboardHandlers();
+   }
+   
    @Override
    public void setUseVimMode(boolean use)
    {
@@ -2440,6 +2475,7 @@ public class AceEditor implements DocDisplay,
    private CollabEditor collab_;
    private TextFileType fileType_;
    private boolean passwordMode_;
+   private boolean useEmacsKeybindings_ = false;
    private boolean useVimMode_ = false;
    private RnwCompletionContext rnwContext_;
    private CppCompletionContext cppContext_;

@@ -352,6 +352,8 @@ well as menu structures (for main menu and popup menus).
             <cmd refid="versionControlProjectSetup"/>
          </menu>
          <separator/>
+         <cmd refid="modifyKeyboardShortcuts"/>
+         <separator/>
          <cmd refid="showShellDialog"/>
          <separator/>
          <cmd refid="projectOptions"/>
@@ -418,6 +420,8 @@ well as menu structures (for main menu and popup menus).
       -->
       <!-- Valid modifiers are Ctrl, Alt, Meta, Shift, and Cmd -->
       <!-- "Cmd" means Ctrl OR Meta -->
+      <!-- Use spaces for key sequences, e.g. 'Ctrl+X Ctrl+F' -->
+      <!-- Separate shortcuts with '|', e.g. 'Cmd+O|Ctrl+X Ctrl+F' -->
       <shortcutgroup name="Source Editor">
          <shortcut refid="insertChunk" value="Cmd+Alt+I"/>
          <shortcut refid="insertSection" value="Cmd+Shift+R"/>
@@ -470,7 +474,7 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="goToLine" value="Cmd+Shift+Alt+G" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="jumpTo" value="Shift+Alt+J" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="jumpTo" value="Cmd+Shift+Alt+J" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
-         <shortcut refid="jumpToMatching" value="Ctrl+P"/>
+         <shortcut refid="jumpToMatching" value="Ctrl+P" disableModes="emacs"/>
          <shortcut refid="expandToMatching" value="Ctrl+Shift+E" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="expandToMatching" value="Ctrl+Shift+Alt+E" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="splitIntoLines" value="Cmd+Alt+A"/>
@@ -512,11 +516,11 @@ well as menu structures (for main menu and popup menus).
       </shortcutgroup>
       <shortcutgroup name="Files">
          <shortcut refid="saveSourceDoc" value="Cmd+S"/>
-         <shortcut refid="saveAllSourceDocs" value= "Cmd+Alt+S"/>
+         <shortcut refid="saveAllSourceDocs" value="Cmd+Alt+S"/>
          <shortcut refid="newSourceDoc" value="Cmd+Shift+N" if="!org.rstudio.core.client.BrowseCap.isChrome()" title="New R Script"/>
          <shortcut refid="newSourceDoc" value="Cmd+Shift+Alt+N" if="org.rstudio.core.client.BrowseCap.isChrome()" title="New R Script"/>
-         <shortcut refid="openSourceDoc" value="Cmd+O"/>
-         <shortcut refid="closeSourceDoc" value="Cmd+W"/>
+         <shortcut refid="openSourceDoc" value="Cmd+O|Ctrl+X Ctrl+F"/>
+         <shortcut refid="closeSourceDoc" value="Cmd+W" disableModes="emacs"/>
          <shortcut refid="closeOtherSourceDocs" value="Cmd+Shift+Alt+W"/>
          <shortcut refid="closeAllSourceDocs" value="Cmd+Shift+W"/>
          <shortcut refid="findInFiles" value="Cmd+Shift+F"/>
@@ -883,10 +887,13 @@ well as menu structures (for main menu and popup menus).
         menuLabel="Expand All"/>
    <cmd id="jumpToMatching"
         menuLabel="Jump To _Matching"
-        desc="Jump to matching brace or paren"/>
-   <cmd id="selectToMatching"
-        menuLabel="Select To _Matching"
-        desc="Select to matching brace or paren"/>
+        desc="Jump to matching bracket"/>
+   <cmd id="expandToMatching"
+        menuLabel="Expand To _Matching"
+        desc="Expand selection to matching bracket"/>
+   <cmd id="splitIntoLines"
+        menuLabel="Split Into Lines"
+        desc="Create a new cursor on each line in current selection"/>
    <cmd id="executeAllCode"
         buttonLabel=""
         menuLabel="Run _All"
@@ -989,6 +996,9 @@ well as menu structures (for main menu and popup menus).
    <cmd id="renameInFile"
         menuLabel="Rename in File"
         desc="Rename symbol in current file"/>
+   <cmd id="insertSnippet"
+        menuLabel="Insert Snippet"
+        desc="Expand snippet at cursor"/>
    <cmd id="insertRoxygenSkeleton"
         menuLabel="Insert Ro_xygen Skeleton"
         desc="Insert a roxygen comment for the current function"/>
@@ -1385,6 +1395,10 @@ well as menu structures (for main menu and popup menus).
              
    <cmd id="showOptions"
         menuLabel="_Global Options..."/>
+        
+   <cmd id="modifyKeyboardShortcuts"
+        menuLabel="Modify Keyboard Shortcuts..."
+        desc="Modify keyboard shortcuts"/>
 
    <cmd id="checkForUpdates"
         menuLabel="Check for _Updates"
