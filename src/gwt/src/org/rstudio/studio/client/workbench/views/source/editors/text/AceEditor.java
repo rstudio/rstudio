@@ -59,6 +59,7 @@ import org.rstudio.studio.client.workbench.model.ChangeTracker;
 import org.rstudio.studio.client.workbench.model.EventBasedChangeTracker;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefsAccessor;
+import org.rstudio.studio.client.workbench.snippets.SnippetHelper;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionManager;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionManager.InitCompletionFilter;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionPopupPanel;
@@ -243,6 +244,7 @@ public class AceEditor implements DocDisplay,
    public AceEditor()
    {
       widget_ = new AceEditorWidget();
+      snippets_ = new SnippetHelper(this);
       ElementIds.assignElementId(widget_.getElement(),
                                  ElementIds.SOURCE_TEXT_EDITOR);
 
@@ -521,6 +523,7 @@ public class AceEditor implements DocDisplay,
       syncCompletionPrefs();
       syncDiagnosticsPrefs();
       
+      snippets_.ensureSnippetsLoaded();
       getSession().setEditorMode(
             fileType_.getEditorLanguage().getParserName(),
             false);
@@ -2467,10 +2470,16 @@ public class AceEditor implements DocDisplay,
    {
       widget_.setDragEnabled(enabled);
    }
+   
+   public boolean onInsertSnippet()
+   {
+      return snippets_.onInsertSnippet();
+   }
 
    private static final int DEBUG_CONTEXT_LINES = 2;
    private final HandlerManager handlers_ = new HandlerManager(this);
    private final AceEditorWidget widget_;
+   private final SnippetHelper snippets_;
    private CompletionManager completionManager_;
    private CodeToolsServerOperations server_;
    private UIPrefs uiPrefs_;

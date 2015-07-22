@@ -404,7 +404,6 @@ public class TextEditingTarget implements
       presentationHelper_ = new TextEditingTargetPresentationHelper(
                                                                   docDisplay_);
       reformatHelper_ = new TextEditingTargetReformatHelper(docDisplay_);
-      snippets_ = new SnippetHelper((AceEditor) docDisplay_);
       renameHelper_ = new TextEditingTargetRenameHelper(docDisplay_);
       
       docDisplay_.setRnwCompletionContext(compilePdfHelper_);
@@ -2387,7 +2386,7 @@ public class TextEditingTarget implements
    {
       // NOTE: Bound to Shift + Tab so we delegate back there
       // if this isn't dispatched
-      if (!snippets_.onInsertSnippet())
+      if (!docDisplay_.onInsertSnippet())
          docDisplay_.blockOutdent();
    }
    
@@ -5234,7 +5233,6 @@ public class TextEditingTarget implements
    private TextEditingTargetSpelling spelling_;
    private BreakpointManager breakpointManager_;
    private final LintManager lintManager_;
-   private final SnippetHelper snippets_;
    private final TextEditingTargetRenameHelper renameHelper_;
    private CollabEditStartParams queuedCollabParams_;
 

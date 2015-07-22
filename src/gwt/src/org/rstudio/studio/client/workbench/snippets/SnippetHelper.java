@@ -87,7 +87,7 @@ public class SnippetHelper
             getAvailableSnippetsImpl(manager_, getActiveMode()));
    }
    
-   private final void ensureSnippetsLoaded()
+   public final void ensureSnippetsLoaded()
    {
       ensureSnippetsLoadedImpl(
             getActiveMode(), manager_);
@@ -146,7 +146,7 @@ public class SnippetHelper
    private static final native void ensureSnippetsLoadedImpl(
          String mode,
          SnippetManager manager) /*-{
-
+            
       var snippetsForMode = manager.snippetNameMap[mode];
       if (!snippetsForMode) {
          
