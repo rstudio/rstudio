@@ -172,6 +172,8 @@ public slots:
    void setViewerUrl(QString url);
    void reloadViewerZoomWindow(QString url);
 
+   void setShinyDialogUrl(QString url);
+
    QString getScrollingCompensationType();
 
    bool isOSXMavericks();

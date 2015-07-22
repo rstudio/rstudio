@@ -146,6 +146,8 @@ public interface DesktopFrame extends JavaScriptPassthrough
    void setViewerUrl(String url);
    void reloadViewerZoomWindow(String url);
    
+   void setShinyDialogUrl(String url);
+   
    boolean isOSXMavericks();
 
    String getScrollingCompensationType();

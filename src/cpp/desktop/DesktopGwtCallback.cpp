@@ -1052,6 +1052,11 @@ void GwtCallback::setViewerUrl(QString url)
    pOwner_->webPage()->setViewerUrl(url);
 }
 
+void GwtCallback::setShinyDialogUrl(QString url)
+{
+   pOwner_->webPage()->setShinyDialogUrl(url);
+}
+
 void GwtCallback::reloadViewerZoomWindow(QString url)
 {
    BrowserWindow* pBrowser = s_windowTracker.getWindow(

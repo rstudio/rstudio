@@ -233,6 +233,13 @@ bool WebPage::acceptNavigationRequest(QWebFrame* pWebFrame,
       navigated_ = true;
       return true;
    }
+   // allow shiny dialiog urls to be handled internally by Qt
+   else if (isLocal && !shinyDialogUrl_.isEmpty() &&
+            url.toString().startsWith(shinyDialogUrl_))
+   {
+      navigated_ = true;
+      return true;
+   }
    else
    {
       if (url.scheme() == QString::fromUtf8("data") &&
@@ -365,5 +372,12 @@ void WebPage::setViewerUrl(const QString& viewerUrl)
    viewerUrl_ = url.scheme() + QString::fromUtf8("://") +
                 url.authority() + QString::fromUtf8("/");
 }
+
+
+void WebPage::setShinyDialogUrl(const QString &shinyDialogUrl)
+{
+   shinyDialogUrl_ = shinyDialogUrl;
+}
+
 }
 }

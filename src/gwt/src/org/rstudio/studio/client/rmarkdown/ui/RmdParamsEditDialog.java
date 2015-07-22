@@ -19,6 +19,7 @@ import org.rstudio.core.client.Size;
 import org.rstudio.core.client.dom.DomMetrics;
 import org.rstudio.core.client.widget.ModalDialogBase;
 import org.rstudio.core.client.widget.RStudioFrame;
+import org.rstudio.studio.client.application.Desktop;
 
 import com.google.gwt.user.client.ui.Widget;
 
@@ -45,6 +46,9 @@ public class RmdParamsEditDialog extends ModalDialogBase
                                             0,   // pad
                                             100); // client margin
       frame_.setSize(size.width + "px", size.height + "px");
+      
+      if (Desktop.isDesktop())
+         Desktop.getFrame().setShinyDialogUrl(url_);
       
       frame_.setUrl(url_);
       return frame_;

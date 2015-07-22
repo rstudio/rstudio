@@ -79,6 +79,7 @@ public:
 
    void setBaseUrl(const QUrl& baseUrl);
    void setViewerUrl(const QString& viewerUrl);
+   void setShinyDialogUrl(const QString& shinyDialogUrl);
    void prepareExternalNavigate(const QString& externalUrl);
 
    void activateWindow(QString name);
@@ -103,6 +104,7 @@ private:
 private:
    QUrl baseUrl_;
    QString viewerUrl_;
+   QString shinyDialogUrl_;
    bool navigated_;
    bool allowExternalNav_;
    PendingWindow pendingWindow_;
