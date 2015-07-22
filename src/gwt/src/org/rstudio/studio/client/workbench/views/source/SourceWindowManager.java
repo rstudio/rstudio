@@ -17,6 +17,8 @@ package org.rstudio.studio.client.workbench.views.source;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.FilePosition;
 import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.Pair;
 import org.rstudio.core.client.Point;
@@ -25,6 +27,7 @@ import org.rstudio.core.client.SerializedCommandQueue;
 import org.rstudio.core.client.Size;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.WindowEx;
+import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.application.Desktop;
@@ -32,6 +35,7 @@ import org.rstudio.studio.client.application.events.CrossWindowEvent;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
+import org.rstudio.studio.client.common.filetypes.events.OpenSourceFileEvent;
 import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
 import org.rstudio.studio.client.common.satellite.events.AllSatellitesClosingEvent;
@@ -167,6 +171,39 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
       }
    }
 
+   // Public types ------------------------------------------------------------
+
+   public class NavigationResult
+   {
+      public NavigationResult(int type, String docId)
+      {
+         type_ = type;
+         docId_ = docId;
+      }
+
+      public NavigationResult(int type)
+      {
+         this(type, null);
+      }
+      
+      
+      public int getType()
+      {
+         return type_;
+      }
+      
+      public String getDocId()
+      {
+         return docId_;
+      }
+      
+      private final int type_;
+      private final String docId_;
+      public final static int RESULT_NONE = 0;
+      public final static int RESULT_RELOCATE = 1;
+      public final static int RESULT_NAVIGATED = 2;
+   }
+
    // Public methods ----------------------------------------------------------
    
    public String getSourceWindowId()
@@ -299,47 +336,6 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
       }
    }
 
-   public void assignSourceDocWindowId(String docId, 
-         String windowId, final Command onComplete)
-   {
-      // create the new property map
-      HashMap<String,String> props = new HashMap<String,String>();
-      props.put(SOURCE_WINDOW_ID, windowId);
-      
-      // update the doc window ID in place
-      JsArray<SourceDocument> docs = getSourceDocs();
-      for (int i = 0; i < docs.length(); i++)
-      {
-         SourceDocument doc = docs.get(i);
-         if (doc.getId() == docId)
-         {
-            doc.assignSourceWindowId(windowId);
-            break;
-         }
-      }
-      
-      // update the doc window ID on the server
-      server_.modifyDocumentProperties(docId,
-             props, new ServerRequestCallback<Void>()
-            {
-               @Override
-               public void onResponseReceived(Void v)
-               {
-                  if (onComplete != null)
-                     onComplete.execute();
-               }
-
-               @Override
-               public void onError(ServerError error)
-               {
-                  display_.showErrorMessage("Can't Move Doc", 
-                        "The document could not be " +
-                        "moved to a different window: \n" + 
-                        error.getMessage());
-               }
-            });
-   }
-   
    public void closeAllSatelliteDocs(final String caption, 
          final Command onCompleted)
    {
@@ -374,6 +370,89 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
       return targets;
    }
    
+   // navigates to the file in a source window
+   public NavigationResult navigateToFile(FileSystemItem file,
+         FilePosition position,
+         int navMethod)
+   {
+      // if this is the main window, check to see if we should route an event
+      // there instead
+      String sourceWindowId = getWindowIdOfDocPath(file.getPath());
+      if (isMainSourceWindow())
+      {
+         // if this is the main window but the doc is open in a satellite...
+         if (!StringUtil.isNullOrEmpty(sourceWindowId) && 
+             isSourceWindowOpen(sourceWindowId))
+         {
+            if (Desktop.isDesktop() || BrowseCap.INSTANCE.isInternetExplorer())
+            {
+               // in desktop mode (and IE) we can bring the appropriate window
+               // forward 
+               fireEventToSourceWindow(sourceWindowId, 
+                     new OpenSourceFileEvent(file, position, null, navMethod));
+               return new NavigationResult(NavigationResult.RESULT_NAVIGATED);
+            }
+            else
+            {
+               // otherwise, move the tab over to this window by closing it in
+               // in its origin window
+               JsArray<SourceDocument> sourceDocs = getSourceDocs();
+               for (int i = 0; i < sourceDocs.length(); i++)
+               {
+                  if (sourceDocs.get(i).getPath() == file.getPath())
+                  {
+                     assignSourceDocWindowId(sourceDocs.get(i).getId(), 
+                           getSourceWindowId(), null);
+                     fireEventToSourceWindow(sourceWindowId, 
+                           new DocWindowChangedEvent(
+                                 sourceDocs.get(i).getId(), sourceWindowId, 0));
+                     return new NavigationResult(
+                           NavigationResult.RESULT_RELOCATE, 
+                           sourceDocs.get(i).getId());
+                  }
+               }
+            }
+         }
+      }
+      else if (sourceWindowId != null && 
+               sourceWindowId != getSourceWindowId())
+      {
+         if (Desktop.isDesktop() || BrowseCap.INSTANCE.isInternetExplorer())
+         {
+            // in desktop mode (and IE) we can just route to the main window
+           events_.fireEventToMainWindow(
+                  new OpenSourceFileEvent(file, position, null, navMethod));
+            
+            // if the destination is the main window, raise it
+            if (sourceWindowId.isEmpty())
+            {
+               pSatellite_.get().focusMainWindow();
+            }
+            return new NavigationResult(NavigationResult.RESULT_NAVIGATED);
+         }
+         else
+         {
+            // otherwise, move the tab over to this window by closing it in
+            // in its origin window
+            JsArray<SourceDocument> sourceDocs = getSourceDocs();
+            for (int i = 0; i < sourceDocs.length(); i++)
+            {
+               if (sourceDocs.get(i).getPath() == file.getPath())
+               {
+                  // take ownership of the doc immediately 
+                  assignSourceDocWindowId(sourceDocs.get(i).getId(), 
+                        getSourceWindowId(), null);
+                  events_.fireEventToMainWindow(new DocWindowChangedEvent(
+                              sourceDocs.get(i).getId(), sourceWindowId, 0));
+                  return new NavigationResult(NavigationResult.RESULT_RELOCATE,
+                        sourceDocs.get(i).getId());
+               }
+            }
+         }
+      }
+      return new NavigationResult(NavigationResult.RESULT_NONE);
+   }
+
    // Event handlers ----------------------------------------------------------
    @Override
    public void onPopoutDoc(final PopoutDocEvent evt)
@@ -720,6 +799,51 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
    {
       return pSatelliteManager_.get().getSatelliteWindowObject(
             SourceSatellite.NAME_PREFIX + windowId);
+   }
+   
+   private void assignSourceDocWindowId(String docId, 
+         String windowId, final Command onComplete)
+   {
+      // assign locally
+      JsArray<SourceDocument> docs = getSourceDocs();
+      for (int i = 0; i < docs.length(); i++)
+      {
+         SourceDocument doc = docs.get(i);
+         if (doc.getId() == docId)
+         {
+            // no point in writing a value to the server if we're not changing
+            // it 
+            if (doc.getSourceWindowId() == windowId)
+               return;
+            doc.assignSourceWindowId(windowId);
+            break;
+         }
+      }
+      
+      // create the new property map
+      HashMap<String,String> props = new HashMap<String,String>();
+      props.put(SOURCE_WINDOW_ID, windowId);
+      
+      // update the doc window ID on the server
+      server_.modifyDocumentProperties(docId,
+             props, new ServerRequestCallback<Void>()
+            {
+               @Override
+               public void onResponseReceived(Void v)
+               {
+                  if (onComplete != null)
+                     onComplete.execute();
+               }
+
+               @Override
+               public void onError(ServerError error)
+               {
+                  display_.showErrorMessage("Can't Move Doc", 
+                        "The document could not be " +
+                        "moved to a different window: \n" + 
+                        error.getMessage());
+               }
+            });
    }
    
    // Private types -----------------------------------------------------------
