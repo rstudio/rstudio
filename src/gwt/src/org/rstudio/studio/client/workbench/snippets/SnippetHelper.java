@@ -26,6 +26,7 @@ import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.FilePathUtils;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -35,6 +36,8 @@ import org.rstudio.studio.client.workbench.snippets.model.SnippetsChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorLoadedEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorLoadedHandler;
 
 import java.util.ArrayList;
 
@@ -58,12 +61,25 @@ public class SnippetHelper
       path_ = path;
       
       RStudioGinjector.INSTANCE.injectMembers(this);
+      
+      events_.addHandler(
+            EditorLoadedEvent.TYPE,
+            new EditorLoadedHandler()
+            {
+               @Override
+               public void onEditorLoaded(EditorLoadedEvent event)
+               {
+                  ensureSnippetsLoaded();
+               }
+            });
    }
    
    @Inject
-   public void initialize(SnippetServerOperations server)
+   public void initialize(SnippetServerOperations server,
+                          EventBus events)
    {
       server_ = server;
+      events_ = events;
    }
    
    private static final native SnippetManager getSnippetManager() /*-{
@@ -104,19 +120,19 @@ public class SnippetHelper
       delete manager.snippetMap[mode];
       delete manager.snippetNameMap[mode];
       
-      // Overwrite the old snippets stored.
+      // Overwrite the old snippets stored. This amounts to
+      // either overwriting the old RStudio snippets or the
+      // Ace snippets themselves (if no such RStudio snippets
+      // exist)
       var old = $wnd.require("rstudio/snippets/" + mode);
+      if (old == null)
+         old = $wnd.require("ace/snippets/" + mode);
+         
       if (old != null) {
          old.$snippetText = old.snippetText;
          old.snippetText = snippetText;
-      } else {
-         old = $wnd.require("ace/snippets/" + mode);
-         if (old != null) {
-            old.$snippetText = old.snippetText;
-            old.snippetText = snippetText;
-         }
       }
-      
+         
       // Apply new snippets
       manager.register(snippets, mode);
       return null;
@@ -406,11 +422,14 @@ public class SnippetHelper
    private final SnippetManager manager_;
    private final String path_;
    
-   private SnippetServerOperations server_;
-   
    private static boolean customCppSnippetsLoaded_;
    private static boolean customRSnippetsLoaded_;
    
    private static final Pattern RE_R_CODE =
          Pattern.create("`[Rr]\\s+[^`]+`", "");
+   
+   // Injected ----
+   private SnippetServerOperations server_;
+   private EventBus events_;
+   
 }
