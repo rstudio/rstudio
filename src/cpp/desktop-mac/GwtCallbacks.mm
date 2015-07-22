@@ -919,6 +919,11 @@ private:
    [[MainFrameController instance] setViewerURL: url];
 }
 
+- (void) setShinyDialogUrl: (NSString*) url
+{
+   [[MainFrameController instance] setShinyDialogURL: url];
+}
+
 - (void) reloadViewerZoomWindow: (NSString*) url
 {
    WebViewController* controller =
@@ -1131,6 +1136,8 @@ enum RS_NSActivityOptions : uint64_t
       return @"launchSession";
    else if (sel == @selector(setViewerUrl:))
       return @"setViewerUrl";
+   else if (sel == @selector(setShinyDialogUrl:))
+      return @"setShinyDialogUrl";
    else if (sel == @selector(filterText:))
       return @"filterText";
    else if (sel == @selector(setBusy:))

@@ -15,6 +15,7 @@
    NSString* clientName_;
    NSURL* baseUrl_;
    NSString* viewerUrl_;
+   NSString* shinyDialogUrl_;
    bool allowExternalNav_;
 }
 
@@ -44,6 +45,9 @@
 
 // set the current viewer url
 - (void) setViewerURL: (NSString*) url;
+
+// set the current shiny dialog url
+- (void) setShinyDialogURL: (NSString*) url;
 
 // Get the embedded WebView
 - (WebView*) webView;

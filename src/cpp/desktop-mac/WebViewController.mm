@@ -129,6 +129,7 @@ static PendingWindow pendingWindow_;
    [webView_ release];
    [baseUrl_ release];
    [viewerUrl_ release];
+   [shinyDialogUrl_ release];
    [super dealloc];
 }
 
@@ -267,6 +268,15 @@ static PendingWindow pendingWindow_;
       }
       
       viewerUrl_ = [authorityFromUrl(url) retain];
+   }
+}
+
+- (void) setShinyDialogURL:(NSString *) url
+{
+   if (url != shinyDialogUrl_)
+   {
+      [shinyDialogUrl_ release];
+      shinyDialogUrl_ = [authorityFromUrl(url) retain];
    }
 }
 
@@ -421,6 +431,11 @@ runJavaScriptAlertPanelWithMessage: (NSString *) message
    }
    else if (isLocal && (viewerUrl_ != nil) &&
             [[url absoluteString] hasPrefix: viewerUrl_])
+   {
+      [listener use];
+   }
+   else if (isLocal && (shinyDialogUrl_ != nil) &&
+            [[url absoluteString] hasPrefix: shinyDialogUrl_])
    {
       [listener use];
    }

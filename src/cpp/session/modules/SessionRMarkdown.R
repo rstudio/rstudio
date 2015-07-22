@@ -189,9 +189,6 @@
     NULL
 })
 
-
-# TODO: desktop is blocking the embedded shinyapp 
-
 .rs.addGlobalFunction("knit_with_parameters", 
                       function(file, encoding = getOption("encoding")) {
    
