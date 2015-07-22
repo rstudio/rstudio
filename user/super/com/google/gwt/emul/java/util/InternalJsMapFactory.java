@@ -25,7 +25,16 @@ class InternalJsMapFactory {
   private static final JavaScriptObject jsMapCtor = getJsMapConstructor();
 
   private static native JavaScriptObject getJsMapConstructor() /*-{
-    if (typeof Map === 'function' && Map.prototype.entries) {
+    // Firefox 24 & 25 throws StopIteration to signal the end of iteration.
+    function isCorrectIterationProtocol() {
+      try {
+        return new Map().entries().next().done;
+      } catch(e) {
+        return false;
+      }
+    }
+
+    if (typeof Map === 'function' && Map.prototype.entries && isCorrectIterationProtocol()) {
       return Map;
     } else {
       return @InternalJsMapFactory::getJsMapPolyFill()();
