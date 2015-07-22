@@ -40,8 +40,6 @@ public:
 
    void logEvent(const Event& event);
 
-   void logCommand(const audit::Command& command);
-
    void logConsoleAction(const audit::ConsoleAction& action);
 };
 
@@ -65,8 +63,6 @@ public:
    void sendMultiMetrics(const std::vector<metrics::MultiMetric>& metrics);
 
    void logEvent(const Event& event);
-
-   void logCommand(const audit::Command& command);
 
    void logConsoleAction(const audit::ConsoleAction& action);
 
