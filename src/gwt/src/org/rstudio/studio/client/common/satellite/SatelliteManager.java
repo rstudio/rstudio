@@ -207,15 +207,7 @@ public class SatelliteManager implements CloseHandler<Window>
             preferredSize = new Size(doc.getClientWidth(), doc.getClientHeight());
             preferredPos = new Point(win.getLeft(), win.getTop());
             callNotifyPendingReactivate(win);
-
-            // close the window
-            try 
-            { 
-               win.close();
-            }
-            catch(Throwable e)
-            {
-            }
+            satellite.close();
             break;
          }
       }   
@@ -277,13 +269,7 @@ public class SatelliteManager implements CloseHandler<Window>
 
       for (ActiveSatellite satellite : satellites_)
       {
-         try
-         {
-            satellite.getWindow().close();
-         }
-         catch(Throwable e)
-         {
-         }
+         satellite.close();
       } 
       satellites_.clear();
       pendingEventsBySatelliteName_.clear();
@@ -317,13 +303,7 @@ public class SatelliteManager implements CloseHandler<Window>
          if (satellite.getName().equals(name) && 
              !satellite.getWindow().isClosed())
          {
-            try 
-            { 
-               satellite.getWindow().close();
-            }
-            catch(Throwable e)
-            {
-            }
+            satellite.close();
             break;
          }
       }   
@@ -422,6 +402,11 @@ public class SatelliteManager implements CloseHandler<Window>
    // call notifyPendingReactivate on a satellite
    public native static void callNotifyPendingReactivate(JavaScriptObject satellite) /*-{
       satellite.notifyPendingReactivate();
+   }-*/;
+
+   // call notifyPendingClosure on a satellite
+   public native static void callNotifyPendingClosure(JavaScriptObject satellite) /*-{
+      satellite.notifyPendingClosure();
    }-*/;
 
    // called by satellites to connect themselves with the main window
@@ -662,6 +647,18 @@ public class SatelliteManager implements CloseHandler<Window>
       public WindowEx getWindow()
       {
          return window_;
+      }
+      
+      public void close()
+      {
+         try
+         {
+            callNotifyPendingClosure(getWindow());
+            getWindow().close();
+         }
+         catch(Throwable e)
+         {
+         }
       }
       
       @Override 

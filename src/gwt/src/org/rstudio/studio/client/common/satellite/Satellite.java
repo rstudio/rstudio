@@ -89,6 +89,11 @@ public class Satellite implements HasCloseHandlers<Satellite>
    {
       return pendingReactivate_;
    }
+   
+   public boolean isClosePending()
+   {
+      return pendingClose_;
+   }
 
    public native final void flushPendingEvents(String name) /*-{
       $wnd.opener.flushPendingEvents(name);
@@ -144,6 +149,11 @@ public class Satellite implements HasCloseHandlers<Satellite>
       // export request activation callback
       $wnd.notifyPendingReactivate = $entry(function() {
          satellite.@org.rstudio.studio.client.common.satellite.Satellite::notifyPendingReactivate()();
+      });
+      
+      // export pending closure callback
+      $wnd.notifyPendingClosure = $entry(function() {
+         satellite.@org.rstudio.studio.client.common.satellite.Satellite::notifyPendingClosure()();
       });
       
       // export point containment callback
@@ -245,6 +255,12 @@ public class Satellite implements HasCloseHandlers<Satellite>
    {
       pendingReactivate_ = true;
    }
+
+   // called by the main window to notify us that we're about to be closed
+   private void notifyPendingClosure()
+   {
+      pendingClose_ = true;
+   }
    
    private final Session session_;
    private final Provider<UIPrefs> pUIPrefs_;
@@ -252,6 +268,7 @@ public class Satellite implements HasCloseHandlers<Satellite>
    private final HandlerManager handlerManager_ = new HandlerManager(this);
    private final Commands commands_;
    private boolean pendingReactivate_ = false;
+   private boolean pendingClose_ = false;
    private JavaScriptObject params_ = null;
    private CommandWithArg<JavaScriptObject> onReactivated_ = null;
 }

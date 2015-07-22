@@ -18,9 +18,12 @@ import java.util.ArrayList;
 
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.studio.client.application.ApplicationQuit;
+import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.DesktopHooks;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.model.SaveAction;
+import org.rstudio.studio.client.common.FilePathUtils;
+import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.workbench.model.UnsavedChangesItem;
 import org.rstudio.studio.client.workbench.model.UnsavedChangesTarget;
 import org.rstudio.studio.client.workbench.views.source.events.DocTabDragStartedEvent;
@@ -31,6 +34,9 @@ import org.rstudio.studio.client.workbench.views.source.events.PopoutDocEvent;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.Window.ClosingEvent;
+import com.google.gwt.user.client.Window.ClosingHandler;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
@@ -43,12 +49,14 @@ public class SourceWindow implements LastSourceDocClosedHandler,
    @Inject
    public SourceWindow(
          Provider<DesktopHooks> pDesktopHooks,
+         Satellite satellite,
          SourceWindowManager windowManager,
          EventBus events,
          SourceShim shim)
    {
       sourceShim_ = shim;
       events_ = events;
+      satellite_ = satellite;
       
       // this class is for satellite source windows only; if an instance gets
       // created in the main window, don't hook up any of its behaviors
@@ -66,6 +74,53 @@ public class SourceWindow implements LastSourceDocClosedHandler,
       
       // export callbacks for main window
       exportFromSatellite();
+      
+      // in desktop mode, the frame checks to see if we want to be closed, but
+      // in web mode the best we can do is prompt if the user attempts to close
+      // a source window with unsaved chaanges.
+      if (!Desktop.isDesktop())
+      {
+         Window.addWindowClosingHandler(new ClosingHandler() {
+            @Override
+            public void onWindowClosing(ClosingEvent event)
+            {
+               // ignore window closure if initiated from the main window
+               if (satellite_.isClosePending())
+               {
+                  markReadyToClose();
+                  return;
+               }
+               
+               ArrayList<UnsavedChangesTarget> unsaved = 
+                     sourceShim_.getUnsavedChanges();
+
+               if (unsaved.size() > 0)
+               {
+                  String msg = "Your edits to the ";
+                  if (unsaved.size() == 1)
+                  {
+                     msg += "file " + FilePathUtils.friendlyFileName(
+                           unsaved.get(0).getPath());
+                  }
+                  else
+                  {
+                     msg += "files ";
+                     for (int i = 0; i < unsaved.size(); i++)
+                     {
+                        msg += FilePathUtils.friendlyFileName(
+                           unsaved.get(i).getPath());
+                        if (i == unsaved.size() - 2)
+                           msg += " and ";
+                        else if (i < unsaved.size() - 2)
+                           msg += ", ";
+                     }
+                  }
+                  msg += " have not been saved.";
+                  event.setMessage(msg);
+               }
+            }
+         });
+      }
    }
    
    // Event handlers ----------------------------------------------------------
@@ -113,11 +168,21 @@ public class SourceWindow implements LastSourceDocClosedHandler,
          satellite.@org.rstudio.studio.client.workbench.views.source.SourceWindow::handleUnsavedChangesBeforeExit(Lcom/google/gwt/core/client/JavaScriptObject;Lcom/google/gwt/user/client/Command;)(targets, onCompleted);
       });
       
+      $wnd.rstudioSaveWithPrompt = $entry(function(target, onCompleted) {
+         satellite.@org.rstudio.studio.client.workbench.views.source.SourceWindow::saveWithPrompt(Lcom/google/gwt/core/client/JavaScriptObject;Lcom/google/gwt/user/client/Command;)(target, onCompleted);
+      });
+      
       $wnd.rstudioReadyToClose = false;
       $wnd.rstudioCloseSourceWindow = $entry(function() {
          satellite.@org.rstudio.studio.client.workbench.views.source.SourceWindow::closeSourceWindow()();
       });
    }-*/;
+   
+   private void saveWithPrompt(JavaScriptObject jsoItem, Command onCompleted)
+   {
+      UnsavedChangesItem item = jsoItem.cast();
+      sourceShim_.saveWithPrompt(item, onCompleted, null);
+   }
    
    private void handleUnsavedChangesBeforeExit(JavaScriptObject jsoItems, 
          Command onCompleted)
@@ -169,4 +234,5 @@ public class SourceWindow implements LastSourceDocClosedHandler,
    
    private final EventBus events_;
    private final SourceShim sourceShim_;
+   private final Satellite satellite_;
 }
