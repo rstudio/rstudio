@@ -18,7 +18,7 @@
 
 #include <string>
 
-#include <core/system/System.hpp>
+#include <core/json/Json.hpp>
 
 #define kConsoleActionPrompt        0
 #define kConsoleActionInput         1
@@ -35,7 +35,7 @@ struct ConsoleAction
 
    ConsoleAction(const std::string& sessionId,
                  const std::string& project,
-                 PidType pid,
+                 double pid,
                  const std::string& username,
                  double timestamp,
                  int type,
@@ -54,12 +54,15 @@ struct ConsoleAction
 
    std::string sessionId;
    std::string project;
-   PidType pid;
+   double pid;
    std::string username;
    double timestamp;
    int type;
    std::string data;
 };
+
+core::json::Object consoleActionToJson(const ConsoleAction& action);
+ConsoleAction consoleActionFromJson(const core::json::Object& actionJson);
 
 
 } // namespace audit
