@@ -70,16 +70,6 @@ public class JsFunctionTest extends GWTTestCase {
     assertEquals(12, callWithFunctionCall(jsFunctionInterface, 10));
   }
 
-  public void testJsFunctionSubImpl_js() {
-    MySubclassOfJsFunctionInterfaceImpl impl = new MySubclassOfJsFunctionInterfaceImpl();
-    assertEquals(21, callAsFunction(impl, 10));
-  }
-
-  public void testJsFunctionSubImpl_java() {
-    MySubclassOfJsFunctionInterfaceImpl impl = new MySubclassOfJsFunctionInterfaceImpl();
-    assertEquals(21, impl.foo(10));
-  }
-
   public void testJsFunctionIdentity_js() {
     MyJsFunctionIdentityInterface id = new MyJsFunctionIdentityInterface() {
       @Override
