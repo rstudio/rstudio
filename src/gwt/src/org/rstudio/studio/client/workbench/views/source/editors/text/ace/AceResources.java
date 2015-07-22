@@ -41,4 +41,8 @@ public interface AceResources extends ClientBundle
    
    @Source("ext-language_tools.js")
    StaticDataResource extLanguageTools();
+   
+   @Source("ext-language_tools-uncompressed.js")
+   StaticDataResource extLanguageToolsUncompressed();
+   
 }

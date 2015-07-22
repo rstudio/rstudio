@@ -520,10 +520,11 @@ public class AceEditor implements DocDisplay,
       updateKeyboardHandlers();
       syncCompletionPrefs();
       syncDiagnosticsPrefs();
-
+      
       getSession().setEditorMode(
             fileType_.getEditorLanguage().getParserName(),
             false);
+      
       getSession().setUseWrapMode(fileType_.getWordWrap());
       syncWrapLimit();
    }
@@ -2504,8 +2505,17 @@ public class AceEditor implements DocDisplay,
          new ExternalJavaScriptLoader(AceResources.INSTANCE.keybindingVimJs().getSafeUri().asString());
    private static final ExternalJavaScriptLoader emacsLoader_ =
          new ExternalJavaScriptLoader(AceResources.INSTANCE.keybindingEmacsJs().getSafeUri().asString());
+   
    private static final ExternalJavaScriptLoader extLanguageToolsLoader_ =
-         new ExternalJavaScriptLoader(AceResources.INSTANCE.extLanguageTools().getSafeUri().asString());
+         getExtLanguageToolsLoader();
+   
+   private static final ExternalJavaScriptLoader getExtLanguageToolsLoader()
+   {
+      if (SuperDevMode.isActive())
+         return new ExternalJavaScriptLoader(AceResources.INSTANCE.extLanguageToolsUncompressed().getSafeUri().asString());
+      else
+         return new ExternalJavaScriptLoader(AceResources.INSTANCE.extLanguageTools().getSafeUri().asString());
+   }
 
    private boolean popupVisible_;
 
