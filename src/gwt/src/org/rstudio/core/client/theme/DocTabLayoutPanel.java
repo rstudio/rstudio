@@ -34,6 +34,7 @@ import org.rstudio.core.client.events.TabClosingEvent;
 import org.rstudio.core.client.events.TabClosingHandler;
 import org.rstudio.core.client.events.TabReorderEvent;
 import org.rstudio.core.client.events.TabReorderHandler;
+import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -938,6 +939,8 @@ public class DocTabLayoutPanel
                      getDataTransferFormat(), docId_ + "|" + 
                   RStudioGinjector.INSTANCE.getSourceWindowManager()
                                            .getSourceWindowId());
+               JsObject dt = evt.getDataTransfer().cast();
+               dt.setString("effectAllowed", "move");
                events_.fireEvent(new DocTabDragStartedEvent(docId_, 
                            getElement().getClientWidth()));
             }
