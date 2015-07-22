@@ -49,6 +49,7 @@ import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.widget.DynamicIFrame;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.common.SuperDevMode;
 import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
 import org.rstudio.studio.client.common.debugging.model.Breakpoint;
 import org.rstudio.studio.client.common.filetypes.DocumentMode;
@@ -2487,7 +2488,16 @@ public class AceEditor implements DocDisplay,
    private AceInfoBar infoBar_;
     
    private static final ExternalJavaScriptLoader aceLoader_ =
-         new ExternalJavaScriptLoader(AceResources.INSTANCE.acejs().getSafeUri().asString());
+         getAceLoader();
+   
+   private static final ExternalJavaScriptLoader getAceLoader()
+   {
+      if (SuperDevMode.isActive())
+         return new ExternalJavaScriptLoader(AceResources.INSTANCE.acejsUncompressed().getSafeUri().asString());
+      else
+         return new ExternalJavaScriptLoader(AceResources.INSTANCE.acejs().getSafeUri().asString());
+   }
+   
    private static final ExternalJavaScriptLoader aceSupportLoader_ =
          new ExternalJavaScriptLoader(AceResources.INSTANCE.acesupportjs().getSafeUri().asString());
    private static final ExternalJavaScriptLoader vimLoader_ =
